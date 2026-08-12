@@ -1,8 +1,9 @@
 """RouteBuilder package (S57 W1 decomp from base.py 648 LOC).
 
-76 mixin-классов в MRO (36 top-level declared в class-decl ниже + 40
-sub-mixin'ов от composite-mixin'ов: ``IntegrationMixin``, ``AgentDSLMixin``,
-``EIPMixin``, ``TransportSourcesMixin``, ``AIRPAMixin`` и т.д.).
+76 mixin-классов в MRO (36 top-level declared в class-decl ниже + 42
+sub-mixin'а от composite-mixin'ов: ``IntegrationMixin``, ``AgentDSLMixin``,
+``EIPMixin``, ``TransportSourcesMixin``, ``AIRPAMixin``,
+``IntegrationCoreMixin`` и т.д.).
 Ядро (6 core-методов) остаётся в этом ``__init__.py``:
 ``from_``, ``from_registered_source``, ``_add``, ``_add_lazy``, ``process``,
 ``build``. Decomp pattern: god-class → mixin-tree, чтобы новые фичи

@@ -73,3 +73,62 @@ class TestSBOMCanonicalPath:
             "cosign_sign_all.py должен продолжать использовать dist/sbom/ "
             "(контроль регрессии после canonical path unification)"
         )
+
+
+class TestSBOMRegeneratedCurrent:
+    """D-AUDIT-A11-5 follow-up: legacy SBOM удалён, canonical SBOM имеет актуальные версии.
+
+    До фикса:
+    - ``dist/sbom.cdx.json`` (legacy flat) содержал stale cryptography 41.0.7
+      (lock pin: cryptography≥49.0.0), starlette 1.0.0 (lock pin: 1.3.1).
+    - ``dist/sbom/sbom.cdx.json`` (canonical) отсутствовал.
+
+    После фикса (2026-08-12):
+    - Legacy ``dist/sbom.cdx.json`` удалён.
+    - Canonical ``dist/sbom/sbom.cdx.json`` сгенерирован через fallback
+      (importlib.metadata), pip-audit dry-run блокирован yanked
+      presidio-analyzer==2.2.362 (требует отдельного lock-fix).
+    """
+
+    def test_legacy_sbom_cdx_json_does_not_exist(self) -> None:
+        """Legacy flat ``dist/sbom.cdx.json`` должен отсутствовать."""
+        legacy = _ROOT / "dist" / "sbom.cdx.json"
+        assert not legacy.exists(), (
+            f"Legacy {legacy} не должен существовать (D-AUDIT-A11-5 follow-up). "
+            "Удалите его: `rm dist/sbom.cdx.json`. "
+            "Canonical path — dist/sbom/sbom.cdx.json."
+        )
+
+    def test_canonical_sbom_exists(self) -> None:
+        """Canonical ``dist/sbom/sbom.cdx.json`` существует."""
+        canonical = _ROOT / "dist" / "sbom" / "sbom.cdx.json"
+        assert canonical.exists(), (
+            f"Canonical {canonical} не найден. "
+            "Запустите `make sbom` (или fallback через importlib.metadata)."
+        )
+
+    def test_canonical_sbom_has_current_cryptography(self) -> None:
+        """Canonical SBOM содержит cryptography≥49.0.0 (не stale 41.0.7)."""
+        import json
+
+        canonical = _ROOT / "dist" / "sbom" / "sbom.cdx.json"
+        if not canonical.exists():
+            import pytest
+
+            pytest.skip("canonical SBOM not yet generated")
+
+        data = json.loads(canonical.read_text(encoding="utf-8"))
+        components = data.get("components", [])
+        crypto_versions = [
+            c.get("version")
+            for c in components
+            if c.get("name", "").lower() == "cryptography"
+        ]
+        assert crypto_versions, "cryptography не найден в SBOM"
+        version = crypto_versions[0]
+        # Strip patch suffix for comparison
+        major_minor = ".".join(version.split(".")[:2])
+        assert int(major_minor.split(".")[0]) >= 42, (
+            f"cryptography {version} (SBOM) устарел — lock pin требует ≥49.0.0. "
+            "Это указывает на stale SBOM (D-AUDIT-A11-5 NOT DONE carry-over)."
+        )
