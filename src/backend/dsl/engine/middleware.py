@@ -203,5 +203,12 @@ class MiddlewareChain:
             for mw in reversed(self._middlewares):
                 try:
                     await mw.after(name, exchange, context, error, duration_ms)
-                except Exception as _:
-                    logger.warning("Middleware %s.after() failed", type(mw).__name__)
+                except Exception as exc:
+                    # D-AUDIT-14301 fix (cycle 143): narrow от bare
+                    # 'except Exception: _' (swallow'ил exc_type/exc_msg) +
+                    # structured warn log. Другие middlewares не должны
+                    # fail из-за одного broken after() callback.
+                    logger.warning(
+                        "Middleware %s.after() failed (exc_type=%s exc_msg=%s)",
+                        type(mw).__name__, type(exc).__name__, exc,
+                    )
