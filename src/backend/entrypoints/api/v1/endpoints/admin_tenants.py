@@ -126,6 +126,17 @@ async def list_tenants(limit: int = _DEFAULT_AUDIT_LIMIT) -> dict[str, Any]:
     safe_limit = max(1, min(int(limit), 10000))
     rows = await _query_audit_safe(limit=safe_limit)
     if rows is None:
+        # D-AUDIT-10801 fix (cycle 108, API-P1-007): explicit WARN
+        # log при stub-возврате. Раньше silent return → admin UI
+        # не отличал 'реально пусто' от 'ClickHouse offline'. Stub=True
+        # в payload + WARN-лог с structured context делает degradation
+        # видимым в observability.
+        logger.warning(
+            "list_tenants: audit log unavailable (ClickHouse offline или "
+            "модуль не импортирован) — returning stub=True with empty list. "
+            "limit=%d",
+            safe_limit,
+        )
         return {
             "tenants": [],
             "total": 0,
