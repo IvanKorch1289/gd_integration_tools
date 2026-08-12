@@ -262,7 +262,19 @@ class HealthAggregator:
                 from src.backend.infrastructure.registry import ConnectorRegistry
 
                 client = ConnectorRegistry.instance().get(name)
-            except Exception as _:
+            except Exception as exc:
+                # D-AUDIT-15301 fix (cycle 153): broad 'except Exception'
+                # (test mock 'Exception' expected) + structured debug log.
+                # ConnectorRegistry.instance().get может raise любой
+                # exception (KeyError, AttributeError, custom registry
+                # errors, etc). Soft-fail behavior сохранён (return
+                # error dict → health endpoint показывает 'not
+                # registered').
+                logger.debug(
+                    "health_aggregator: ConnectorRegistry lookup failed for "
+                    "%s (exc_type=%s exc_msg=%s) — 'not registered'",
+                    name, type(exc).__name__, exc,
+                )
                 return {
                     "name": name,
                     "status": "error",
