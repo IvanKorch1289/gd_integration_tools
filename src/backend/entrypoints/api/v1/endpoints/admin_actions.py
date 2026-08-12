@@ -155,33 +155,53 @@ def _mock_spec(name: str) -> ActionSpec:
 async def list_actions() -> list[ActionSummary]:
     """Возвращает список actions из реестра.
 
+    D-AUDIT-9701 fix (cycle 97, API-P1-005): silent mock-fallback заменён
+    на fail-LOUD HTTP 503. Раньше: при registry=None ИЛИ registry.list_all()
+    exception → silent return _mock_actions() → admin UI получал mock-список
+    вместо индикатора сбоя, decisions принимались на недостоверных данных.
+
     Returns:
         Список :class:`ActionSummary` с name, description, namespace, tier.
 
     Raises:
         HTTPException: 503 если feature_flags.admin_marketplace_endpoints=False.
+        HTTPException: 503 если registry недоступен или list_all() падает.
 
     """
     _check_flag_enabled()
 
     registry = _get_registry()
     if registry is None:
-        return _mock_actions()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="ActionHandlerRegistry недоступен — список actions не может быть получен",
+        )
 
     try:
         specs = registry.list_all()
-        return [
-            ActionSummary(
-                name=spec.name,
-                description=getattr(spec, "description", ""),
-                namespace=getattr(spec, "namespace", "default"),
-                tier=str(getattr(spec, "tier", "1")),
-            )
-            for spec in specs
-        ]
     except Exception as exc:
-        logger.warning("Ошибка чтения реестра actions: %s — возврат mock", exc)
-        return _mock_actions()
+        # narrow: registry.list_all() может кинуть AttributeError (API mismatch),
+        # RuntimeError (corrupted state), OSError (storage backend). Bоt
+        # ВСЕ → 503 (fail-LOUD, не silent mock).
+        logger.error(
+            "Ошибка чтения реестра actions (exc_type=%s exc_msg=%s) — 503",
+            type(exc).__name__,
+            exc,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Не удалось прочитать реестр actions: {exc}",
+        ) from exc
+
+    return [
+        ActionSummary(
+            name=spec.name,
+            description=getattr(spec, "description", ""),
+            namespace=getattr(spec, "namespace", "default"),
+            tier=str(getattr(spec, "tier", "1")),
+        )
+        for spec in specs
+    ]
 
 
 @router.post(
