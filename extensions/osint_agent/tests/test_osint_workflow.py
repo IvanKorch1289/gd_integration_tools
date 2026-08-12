@@ -27,8 +27,13 @@ class TestValidateInn:
         assert validate_inn("7707083893") is True
 
     def test_valid_12_digit_inn(self) -> None:
-        """Test: valid 12 digit inn."""
-        assert validate_inn("770708389307") is True
+        r"""Test: valid 12 digit inn.
+
+        Cycle-94 (D-AUDIT-9401): test data `770708389307` — invalid
+        checksum (weights1 fail). Replaced with synthetic valid INN
+        `123456789047` (checksum-verified via validate_inn).
+        """
+        assert validate_inn("123456789047") is True
 
     def test_invalid_inn_wrong_checksum(self) -> None:
         """Test: invalid inn wrong checksum."""
