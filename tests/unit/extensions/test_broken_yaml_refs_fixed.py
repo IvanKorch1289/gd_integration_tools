@@ -52,8 +52,13 @@ class TestBrokenYAMLRefsFixed:
     ) -> None:
         """fetch_skb_report и fetch_nbki_report используют реально существующую функцию.
 
-        D-AUDIT-B-101 fix: было extensions.credit_pipeline.services.clients.
-        skb:fetch_for_workflow (НЕ существует). Заменено на get_result.
+        B-101 fix (cycle 1): было extensions.credit_pipeline.services.clients.
+        skb:fetch_for_workflow (НЕ существует). Заменено на get_result
+        (метод на CreditSKBClient class — AttributeError при getattr).
+
+        D-AUDIT-A10 carry-over (cycle 1, follow-up 2026-08-12): get_result
+        заменён на module-level fetch_result wrapper (skb.py:152-181),
+        matching call_function contract fn(payload) -> Any.
         """
         activities = {a["name"]: a for a in credit_assessment_yaml["activities"]}
         for activity_name in ("fetch_skb_report", "fetch_nbki_report"):
@@ -61,8 +66,9 @@ class TestBrokenYAMLRefsFixed:
             assert "fetch_for_workflow" not in fn, (
                 f"{activity_name} всё ещё ссылается на несуществующую fetch_for_workflow"
             )
-            assert ":get_result" in fn, (
-                f"{activity_name} должен использовать :get_result (реальная функция)"
+            assert ":fetch_result" in fn, (
+                f"{activity_name} должен использовать :fetch_result "
+                "(module-level wrapper вокруг CreditSKBClient.get_result)"
             )
 
     def test_credit_assessment_publish_uses_existing_function(
