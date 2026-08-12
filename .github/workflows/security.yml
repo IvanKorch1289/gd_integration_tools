@@ -127,15 +127,19 @@ jobs:
         # pip-audit уже в pyproject.toml dev-deps.
         # S29 W1: pip-audit 2.10.0 always exits 0, используем wrapper-скрипт
         # для проверки JSON-выхода и enforce exit code.
-        # S30: diskcache CVE-2025-69872 MITIGATED — DiskTTLCache uses JSONDisk
-        # (pip-audit checks VERSION, not usage — CVE stays in ignore).
-        # S29 W2 carryover: PYSEC-2026-87 (lxml) — dependency constraint
+        # D-AUDIT-10601 fix (cycle 106, DEPENDENCIES-P0-001): inline
+        # --ignore-vuln PYSEC-2026-87 (lxml) удалён — installed lxml ≥ fix
+        # (D-AUDIT-02 cycle 3). PYSEC-2026-87 НЕ в canonical allowlist,
+        # inline ignore был stale. Single CVE-2025-69872 (diskcache)
+        # оставлен — DiskTTLCache uses JSONDisk (CVE mitigated, but
+        # pip-audit checks VERSION, not usage → CVE stays in ignore).
+        # Canonical allowlist (.security/pip-audit-allowlist.txt) — single
+        # source of truth (loaded by tools/pip_audit_gate.py, D-AUDIT-10301).
         run: |
           uv run pip-audit \
             --format json \
             --output pip-audit.json \
-            --ignore-vuln CVE-2025-69872 \
-            --ignore-vuln PYSEC-2026-87
+            --ignore-vuln CVE-2025-69872
           uv run python tools/pip_audit_gate.py
 
       - name: Upload pip-audit report
