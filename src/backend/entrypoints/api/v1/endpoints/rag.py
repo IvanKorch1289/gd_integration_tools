@@ -28,6 +28,7 @@ from src.backend.entrypoints.api.generator.actions import (
 )
 from src.backend.entrypoints.dependencies.rate_limit import get_default_rate_limiter
 from src.backend.services.ai.document_parsers import parse_document, sniff_mime
+from src.backend.services.ai.rag_ingest_service import get_rag_ingest_service
 from src.backend.services.ai.rag_service import get_rag_service
 
 logger = get_logger(__name__)
@@ -198,7 +199,13 @@ def _check_enabled() -> None:
 
 
 class _RAGFacade:
-    """Адаптер над ``RAGService`` с проверкой rag_settings.enabled."""
+    """Адаптер над ``RagIngestService`` (single-doc) с проверкой rag_settings.enabled.
+
+    Single-doc endpoint'ы (``POST /ingest``, ``POST /upload``) маршрутизируются
+    через :meth:`RagIngestService.ingest_text` — это даёт единый путь с bulk
+    ingest'ом и применяет ``_maybe_mask_pii`` (Block 1.3, ADR-0072) до записи
+    в vector store.
+    """
 
     async def ingest(
         self,
@@ -338,7 +345,12 @@ class _RAGFacade:
         namespace: str = "default",
         metadata_json: str | None = None,
     ) -> UploadResponse:
-        """Multipart-upload: парсит PDF/DOCX/MD/TXT → ingest в RAG."""
+        """Multipart-upload: парсит PDF/DOCX/MD/TXT → ingest в RAG.
+
+        Текст из файла прогоняется через :meth:`RagIngestService.ingest_text`
+        (PII-mask + provenance). Подсчёт chunks для ответа выполняется
+        отдельным вызовом ``RAGService.chunk_text`` (read-only операция).
+        """
         _check_enabled()
 
         raw = await file.read()
@@ -374,7 +386,10 @@ class _RAGFacade:
                 logger.warning("rag_upload: metadata_json invalid, ignored")
 
         rag = get_rag_service()
-        doc_id = await rag.ingest(content=text, metadata=meta, namespace=namespace)
+        ingest_svc = get_rag_ingest_service()
+        doc_id = await ingest_svc.ingest_text(
+            content=text, filename=file.filename, namespace=namespace, metadata=meta
+        )
         chunks = len(rag.chunk_text(text))
         return UploadResponse(
             doc_id=doc_id,
