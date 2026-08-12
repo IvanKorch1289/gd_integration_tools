@@ -105,9 +105,11 @@ async def scoring_agent(payload: dict[str, Any]) -> dict[str, Any]:
             # Audit emission не должен блокировать scoring decision,
             # но failure должен быть видимым в логах для diagnostics.
             # Cycle-86 (D-AUDIT-8601): bare pass → logged warning.
+            # Cycle-89 (D-AUDIT-8901): client_id is the closest available
+            # correlation field (tenant_id not in payload).
             _logger.warning(
-                "scoring_agent.audit_emit_failed (tenant=%s): %s",
-                tenant_id, audit_exc,
+                "scoring_agent.audit_emit_failed (client_id=%s): %s",
+                client_id, audit_exc,
             )
         return {
             "agent": "scoring_agent",
