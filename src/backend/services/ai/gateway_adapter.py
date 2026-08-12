@@ -239,7 +239,13 @@ def get_ai_gateway() -> AIGateway:
             if gateway is not None:
                 return gateway
     except Exception as exc:
-        logger.debug("AIGateway app.state lookup skipped: %s", exc)
+        # D-AUDIT-13501 fix (cycle 135): logger was undefined
+        # (bare 'logger.debug' использовался без module-level import).
+        # Inline import + get_logger(__name__) pattern matches
+        # other usages в этом файле.
+        from src.backend.core.logging import get_logger
+
+        get_logger(__name__).debug("AIGateway app.state lookup skipped: %s", exc)
 
     try:
         from src.backend.core.di.providers.ai import get_ai_gateway_provider
