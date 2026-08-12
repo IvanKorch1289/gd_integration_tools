@@ -116,7 +116,20 @@ def _current_tenant() -> str:
             return "_system"
         # Может быть object или str — берём tenant_id.
         return getattr(tenant, "tenant_id", None) or str(tenant) or "_system"
-    except Exception as _:
+    except (AttributeError, TypeError) as exc:
+        # D-AUDIT-15001 fix (cycle 150): narrow от bare
+        # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt
+        # + unexpected exceptions) до конкретных типов.
+        # _resolve_tenant_id helper может fail с:
+        # - AttributeError: tenant без tenant_id и без __str__
+        # - TypeError: str(tenant) failed (rare)
+        # Soft-fail behavior сохранён (return "_system" → metrics
+        # fall back to system bucket).
+        logger.debug(
+            "client_metrics._resolve_tenant_id: tenant resolution failed "
+            "(exc_type=%s exc_msg=%s) — fallback to '_system'",
+            type(exc).__name__, exc,
+        )
         return "_system"
 
 
