@@ -22,7 +22,30 @@ from typing import Any
 
 from src.backend.services.ai.rag.multimodal._tenant import _resolve_effective_tenant_id
 
-__all__ = ("CrossModalQueryResult", "ModalKind", "MultimodalPipeline")
+__all__ = (
+    "CrossModalQueryResult",
+    "ModalKind",
+    "MultimodalPipeline",
+    "UnsupportedModalityError",
+)
+
+
+class UnsupportedModalityError(NotImplementedError):
+    """Исключение для модальностей, которые ещё не реализованы.
+
+    D-AUDIT-10001 fix (cycle 100, RAG-P2-005): выделено в named class
+    чтобы callers могли явно ловить (например, REST API → 501 Not
+    Implemented вместо 500 Internal Server Error). Bare NotImplementedError
+    не имел этой границы — caller не знал, как обрабатывать.
+    """
+
+    def __init__(self, modality: str, *, planned_release: str | None = None) -> None:
+        self.modality = modality
+        self.planned_release = planned_release
+        msg = f"modality {modality!r} not yet implemented"
+        if planned_release:
+            msg += f" (planned: {planned_release})"
+        super().__init__(msg)
 
 
 ModalKind = str  # ``text|image|audio|video``
@@ -107,9 +130,11 @@ class MultimodalPipeline:
                 transcript = await self._service.transcribe_audio(payload)
                 chunk_id = await self._ingest_text(transcript, collection, meta)
             case "video":
-                # Stage 1: только аудиодорожка через ffmpeg → audio path.
-                # На этой Wave — placeholder; видеоингест без extras.
-                raise NotImplementedError("video modality is staged for S12")
+                # D-AUDIT-10001 fix (cycle 100, RAG-P2-005): named exception
+                # вместо bare NotImplementedError. Callers могут явно
+                # обработать (REST → 501 Not Implemented, batch ingest →
+                # skip с WARNING-логом, etc).
+                raise UnsupportedModalityError("video", planned_release="S12")
             case _:
                 raise ValueError(f"unknown modality: {modal}")
         return chunk_id
