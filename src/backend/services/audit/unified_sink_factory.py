@@ -35,7 +35,17 @@ def _create_emit_ai_invocation_event() -> None:
             from src.backend.core.config.features import feature_flags
 
             enabled = bool(feature_flags.ai_audit_unified_enabled)
-        except Exception as _:
+        except ImportError as exc:
+            # D-AUDIT-13101 fix (cycle 131): narrow от bare
+            # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt
+            # + unexpected exceptions) до конкретного ImportError
+            # от feature_flags module. Soft-fail behavior сохранён
+            # (enabled=False → unified_sink = None).
+            logger.debug(
+                "UnifiedSinkFactory: feature_flags import failed "
+                "(exc_type=%s exc_msg=%s) — ai_audit_unified_enabled=False",
+                type(exc).__name__, exc,
+            )
             enabled = False
 
         if enabled:
