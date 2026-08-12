@@ -390,7 +390,18 @@ class AIToolDispatchProcessor(BaseAIProcessor):
             from src.backend.services.ai.tools.registry import get_tool_registry
 
             registry = get_tool_registry()
-        except Exception as _:
+        except (ImportError, RuntimeError) as exc:
+            # D-AUDIT-13801 fix (cycle 138): narrow от bare
+            # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt
+            # + unexpected exceptions) до конкретного ImportError
+            # от tools.registry module. Soft-fail behavior сохранён
+            # (registry=None → generic description without parameters).
+            _logger.debug(
+                "ai_tool_dispatch: tool_registry import failed "
+                "(exc_type=%s exc_msg=%s) — registry=None, "
+                "returning generic tool descriptions",
+                type(exc).__name__, exc,
+            )
             registry = None
 
         if registry is None:
