@@ -46,8 +46,26 @@ async def list_training_runs(limit: int = 10) -> dict[str, Any]:
 
     В production runs хранятся в LangfusePromptStorage; пока возвращается
     пустой список — отображается заголовок «Нет завершённых runs».
+
+    D-AUDIT-10901 fix (cycle 109, API-P1-009): добавлен explicit
+    stub=True + NOTE в payload. Раньше: 'runs: []' silent → admin UI
+    не отличал 'реально пусто' от 'storage не подключён'. Теперь
+    stub=True + warn-лог при каждом вызове — UI может показать
+    warning banner ("Storage not configured"), ops увидит signal.
     """
-    return {"runs": [], "count": 0, "limit": limit}
+    logger.warning(
+        "list_training_runs: LangfusePromptStorage не подключён "
+        "(in-memory stub) — returning empty list. limit=%d",
+        limit,
+    )
+    return {
+        "runs": [],
+        "count": 0,
+        "limit": limit,
+        "stub": True,
+        "note": "LangfusePromptStorage не подключён (in-memory stub). "
+        "Training runs history unavailable until storage integration.",
+    }
 
 
 @router.get(
