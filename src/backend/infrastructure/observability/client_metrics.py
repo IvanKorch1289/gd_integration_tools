@@ -22,10 +22,13 @@ TIBCO EMS per-topic statistics.
 
 from __future__ import annotations
 
+import logging
 import time
 from collections.abc import AsyncIterator
 from contextlib import AbstractAsyncContextManager as AsyncContextManager
 from contextlib import asynccontextmanager
+
+logger = logging.getLogger(__name__)
 from typing import TYPE_CHECKING, Final, Literal
 
 from src.backend.core.utils.metrics_registry import metrics_registry
