@@ -62,8 +62,9 @@ src/backend/entrypoints/api/generator/actions/__init__.py	entrypoints	src.backen
 src/backend/entrypoints/api/generator/actions/crud/__init__.py	entrypoints	src.backend.dsl.commands.action_registry
 src/backend/entrypoints/api/generator/auto_register.py	entrypoints	src.backend.dsl.commands.action_registry
 src/backend/entrypoints/api/generator/registry.py	entrypoints	src.backend.dsl.commands.action_registry
+src/backend/entrypoints/api/v1/endpoints/admin_actions.py	entrypoints	src.backend.dsl.commands.action_registry
 src/backend/entrypoints/api/v1/endpoints/admin_parallelism.py	entrypoints	src.backend.dsl.analysis.parallelism_analyzer
-src/backend/entrypoints/api/v1/endpoints/admin_parallelism.py	entrypoints	src.backend.dsl.route_loader.registry
+src/backend/entrypoints/api/v1/endpoints/admin_parallelism.py	entrypoints	src.backend.dsl.registry
 src/backend/entrypoints/api/v1/endpoints/admin_workflow_versioning.py	entrypoints	src.backend.dsl.workflow.versioning
 src/backend/entrypoints/api/v1/endpoints/admin_workflows/helpers.py	entrypoints	src.backend.dsl.commands.registry
 src/backend/entrypoints/api/v1/endpoints/dsl_console.py	entrypoints	src.backend.dsl.engine.dry_run
@@ -76,7 +77,7 @@ src/backend/entrypoints/api/v1/endpoints/dsl_routes.py	entrypoints	src.backend.d
 src/backend/entrypoints/api/v1/endpoints/health.py	entrypoints	src.backend.dsl.commands.registry
 src/backend/entrypoints/api/v1/endpoints/imports.py	entrypoints	src.backend.dsl.builder
 src/backend/entrypoints/api/v1/endpoints/imports.py	entrypoints	src.backend.dsl.engine.execution_engine
-src/backend/entrypoints/api/v1/endpoints/imports.py	entrypoints	src.backend.dsl.engine.pipeline_registry
+src/backend/entrypoints/api/v1/endpoints/imports.py	entrypoints	src.backend.dsl.registry
 src/backend/entrypoints/api/v1/endpoints/processors_catalog.py	entrypoints	src.backend.dsl.builder
 src/backend/entrypoints/api/v1/endpoints/processors_catalog.py	entrypoints	src.backend.dsl.engine.processors
 src/backend/entrypoints/base.py	entrypoints	src.backend.dsl.commands.registry

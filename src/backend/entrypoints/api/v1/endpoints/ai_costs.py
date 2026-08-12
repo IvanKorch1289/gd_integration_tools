@@ -15,10 +15,7 @@ from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, Query
 
-from src.backend.core.auth.auth_selector import (
-    AuthMethod,
-    require_auth,
-)
+from src.backend.core.auth.auth_selector import AuthMethod, require_auth
 
 __all__ = ("router",)
 

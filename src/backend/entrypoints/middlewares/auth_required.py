@@ -176,9 +176,7 @@ class AuthRequiredMiddleware:
         с public API auth_selector (S93 W3 refactor).
         """
         # S93 W3: public verify_request вместо private _VERIFIERS access.
-        from src.backend.core.auth.auth_selector import (
-            verify_request,
-        )
+        from src.backend.core.auth.auth_selector import verify_request
 
         request = Request(scope, receive=receive)
         return await verify_request(request, methods=self._accepted_methods)
