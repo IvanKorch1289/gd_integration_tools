@@ -34,6 +34,15 @@ Out of scope: Pydantic schemas (route_schemas/*) — extension-specific,
 """
 
 # Plugin lifecycle (canonical from core.interfaces.plugin)
+# Session manager (canonical from core.database.session)
+from src.backend.core.database.session import main_session_manager
+
+# Base ORM model (canonical from core.domain.models.base)
+from src.backend.core.domain.models.base import BaseModel
+
+# Repository base (canonical from core.repositories.base)
+# Common errors (canonical from core.errors)
+from src.backend.core.errors import NotFoundError, ServiceError
 from src.backend.core.interfaces.plugin import (
     ActionRegistryProtocol,
     BasePlugin,
@@ -43,22 +52,6 @@ from src.backend.core.interfaces.plugin import (
     RepositoryRegistryProtocol,
 )
 
-# Service base (canonical from core.services.base_service)
-from src.backend.core.services.base_service import BaseService
-
-# Repository base (canonical from core.repositories.base)
-# Common errors (canonical from core.errors)
-from src.backend.core.errors import (
-    NotFoundError,
-    ServiceError,
-)
-
-# Session manager (canonical from core.database.session)
-from src.backend.core.database.session import main_session_manager
-
-# Base ORM model (canonical from core.domain.models.base)
-from src.backend.core.domain.models.base import BaseModel
-
 # Repository Protocols (canonical from core.interfaces.repositories)
 from src.backend.core.interfaces.repositories import (
     FileRepositoryProtocol,
@@ -67,6 +60,8 @@ from src.backend.core.interfaces.repositories import (
     UserRepositoryProtocol,
 )
 
+# Service base (canonical from core.services.base_service)
+from src.backend.core.services.base_service import BaseService
 
 __all__ = [
     # Plugin lifecycle

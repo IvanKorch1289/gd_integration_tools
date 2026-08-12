@@ -9,15 +9,14 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from src.backend.core.di.providers import get_file_repo_provider
-from src.backend.core.interfaces.repositories import FileRepositoryProtocol
-from src.backend.core.services.base_service import BaseService
 from extensions.core_entities.files.schemas.route import (  # S168 W15-17 P2-10
-
     FileSchemaIn,
     FileSchemaOut,
     FileVersionSchemaOut,
 )
+from src.backend.core.di.providers import get_file_repo_provider
+from src.backend.core.interfaces.repositories import FileRepositoryProtocol
+from src.backend.core.services.base_service import BaseService
 
 __all__ = ("FileService", "get_file_service")
 

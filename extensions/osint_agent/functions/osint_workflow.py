@@ -19,8 +19,10 @@ from __future__ import annotations
 
 import re
 from datetime import UTC, datetime
+
 from src.backend.core.logging import get_logger
 from src.backend.dsl.helpers.banking import validate_inn
+
 logger = get_logger("osint_agent.workflow")
 from typing import Any
 

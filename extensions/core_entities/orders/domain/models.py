@@ -13,12 +13,11 @@ from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy_utils.types import EmailType, UUIDType
 
-from src.backend.core.domain.models.base import BaseModel, nullable_str
-from src.backend.core.tenancy.sqlalchemy_filter import TenantMixin
-
 from extensions.core_entities.files.domain.models import (  # S168 W14 P2-10
     OrderFile,  # moved from src/backend/core/domain/models/files.py
 )
+from src.backend.core.domain.models.base import BaseModel, nullable_str
+from src.backend.core.tenancy.sqlalchemy_filter import TenantMixin
 
 __all__ = ("Order",)
 

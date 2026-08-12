@@ -28,9 +28,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.backend.core.ai.retry_policy import RetryPolicy
 from src.backend.core.config.constants import consts
 from src.backend.core.config.settings import settings
-from src.backend.core.ai.retry_policy import RetryPolicy
 from src.backend.dsl.workflow.builder import WorkflowBuilder
 from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,
@@ -87,9 +87,7 @@ async def _call_create_skb_order(body: dict[str, Any]) -> dict[str, Any]:
     вместо прямого импорта ``src.backend.entrypoints.base.dispatch_action``.
     Это соответствует правилу extensions → core-only.
     """
-    from src.backend.core.di.providers.workflow import (
-        get_action_bus_service_provider,
-    )
+    from src.backend.core.di.providers.workflow import get_action_bus_service_provider
 
     order_id = body.get("order_id") or body.get("id")
     if order_id is None:
@@ -111,9 +109,7 @@ async def _call_get_skb_result(body: dict[str, Any]) -> dict[str, Any]:
 
     Phase 1 fix: использует core facade вместо entrypoints direct.
     """
-    from src.backend.core.di.providers.workflow import (
-        get_action_bus_service_provider,
-    )
+    from src.backend.core.di.providers.workflow import get_action_bus_service_provider
 
     order_id = body.get("order_id") or body.get("id")
     bus = get_action_bus_service_provider()()
@@ -133,9 +129,7 @@ async def _call_send_skb_result(body: dict[str, Any]) -> dict[str, Any]:
 
     Phase 1 fix: использует core facade вместо entrypoints direct.
     """
-    from src.backend.core.di.providers.workflow import (
-        get_action_bus_service_provider,
-    )
+    from src.backend.core.di.providers.workflow import get_action_bus_service_provider
 
     order_id = body.get("order_id") or body.get("id")
     bus = get_action_bus_service_provider()()

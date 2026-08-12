@@ -36,12 +36,15 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 
+from src.backend.core.logging import get_logger
 from src.backend.infrastructure.security.presidio_sanitizer import (
     PresidioSanitizer,
     get_presidio_sanitizer,
 )
 
 __all__ = ("PiiStreamPolicy", "stream_filter")
+
+_logger = get_logger("security.pii_streaming")
 
 # Размер «хвостового» буфера в **Unicode-символах** (≈ байт для ASCII).
 # 4 KB подобрано как максимум длины потенциального PII (IBAN, JWT, URL).
@@ -139,6 +142,17 @@ async def _safe_sanitize(
 ) -> str:
     """Вызывает sanitizer и проглатывает исключения (best-effort).
 
+    D-AUDIT-8701 fix (cycle 87): при ошибке sanitizer-а логируем ERROR
+    со структурным контекстом (entity_whitelist, chunk_length, exc_type,
+    exc_msg) вместо silent swallow. Раньше: bare `except Exception: _`
+    → PII leak невидим в observability.
+
+    PONYTAIL: оригинальный text ВСЁ ЕЩЁ возвращается (stream integrity
+    > strict fail-closed для SSE/WS). Fail-CLOSED через raise — отдельный
+    config flag (``PII_STREAM_FAIL_CLOSED``), не в этом цикле.
+    Lint-сигналы (Datadog/Sentry error-rate spike) теперь сразу
+    укажут на degradation sanitizer-а.
+
     Args:
         sanitizer: Активный :class:`PresidioSanitizer`.
         text: Текст для маскировки.
@@ -146,13 +160,25 @@ async def _safe_sanitize(
 
     Returns:
         Маскированный текст; при ошибке sanitizer-а — оригинал
-        (caller предпочтёт «протекание» PII над разрывом SSE-stream'а).
+        (caller предпочтёт «протекание» PII над разрывом SSE-stream'а,
+        но логирует ERROR для observability).
 
     """
     try:
         result = await sanitizer.sanitize(
             text, entities=list(entities) if entities else None,
         )
-    except Exception as _:
+    except Exception as exc:
+        # narrow: bare Exception _ намеренно оставлен для backward-compat
+        # (sanitizer может кинуть любой из ~10 типов: ValueError/TypeError/
+        # RuntimeError/aiohttp ClientError/...).
+        _logger.error(
+            "PII sanitizer failed — PII LEAK POSSIBLE (DOMAIN-P0-003): "
+            "exc_type=%s exc_msg=%s chunk_len=%d entities=%s",
+            type(exc).__name__,
+            exc,
+            len(text),
+            entities,
+        )
         return text
     return result.sanitized_text

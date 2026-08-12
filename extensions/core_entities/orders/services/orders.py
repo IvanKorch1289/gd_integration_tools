@@ -17,6 +17,11 @@ from fastapi import status
 from pydantic import BaseModel
 from pydash import get
 
+from extensions.core_entities.orders.schemas.route import (  # S168 W15-17 P2-10
+    OrderSchemaIn,
+    OrderSchemaOut,
+    OrderVersionSchemaOut,
+)
 from src.backend.core.decorators.caching import response_cache
 from src.backend.core.errors import NotFoundError
 from src.backend.core.integrations.skb import APISKBService, get_skb_service
@@ -27,12 +32,6 @@ from src.backend.core.interfaces.repositories import (
 )
 from src.backend.core.services.base_service import BaseService
 from src.backend.schemas.base import BaseSchema
-from extensions.core_entities.orders.schemas.route import (  # S168 W15-17 P2-10
-
-    OrderSchemaIn,
-    OrderSchemaOut,
-    OrderVersionSchemaOut,
-)
 
 if TYPE_CHECKING:
     pass

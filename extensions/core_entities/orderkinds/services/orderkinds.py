@@ -11,16 +11,15 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from src.backend.core.errors import ServiceError
-from src.backend.core.integrations.skb import APISKBService, get_skb_service
-from src.backend.core.interfaces.repositories import OrderKindRepositoryProtocol
-from src.backend.core.services.base_service import BaseService
 from extensions.core_entities.orderkinds.schemas.route import (  # S168 W15-17 P2-10
-
     OrderKindSchemaIn,
     OrderKindSchemaOut,
     OrderKindVersionSchemaOut,
 )
+from src.backend.core.errors import ServiceError
+from src.backend.core.integrations.skb import APISKBService, get_skb_service
+from src.backend.core.interfaces.repositories import OrderKindRepositoryProtocol
+from src.backend.core.services.base_service import BaseService
 
 __all__ = ("OrderKindService", "get_order_kind_service")
 
