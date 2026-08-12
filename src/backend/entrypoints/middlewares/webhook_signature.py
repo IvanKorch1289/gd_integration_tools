@@ -78,7 +78,10 @@ class WebhookSignatureMiddleware:
         signature_header: Имя header'а с подписью (default ``X-Webhook-Signature``).
         timestamp_header: Имя header'а с timestamp (default ``X-Webhook-Timestamp``).
         timestamp_window: Окно валидности timestamp (default 300с).
-
+        fail_closed: Если True, при отсутствии секрета для protected prefix
+            возвращается 503 (server-side misconfiguration). Default True
+            (safe-by-default). False — пропуск без verify с debug-логом
+            (только для dev/test).
     """
 
     def __init__(
@@ -90,6 +93,7 @@ class WebhookSignatureMiddleware:
         signature_header: str = "X-Webhook-Signature",
         timestamp_header: str = "X-Webhook-Timestamp",
         timestamp_window: int = DEFAULT_TIMESTAMP_WINDOW,
+        fail_closed: bool = True,
     ) -> None:
         """Инициализирует middleware.
 
@@ -100,7 +104,7 @@ class WebhookSignatureMiddleware:
             signature_header: Имя header'а с подписью.
             timestamp_header: Имя header'а с timestamp.
             timestamp_window: Окно валидности timestamp.
-
+            fail_closed: 503 при missing secret (default True).
         """
         self.app = app
         self._prefixes = tuple(path_prefixes)
@@ -110,6 +114,7 @@ class WebhookSignatureMiddleware:
         self._ts_header = timestamp_header
         self._ts_header_lower = timestamp_header.lower().encode("latin-1")
         self._window = timestamp_window
+        self._fail_closed = fail_closed
 
     def _resolve_secret(self, path: str) -> str | None:
         """Возвращает наиболее специфичный secret для ``path`` или ``None``."""
@@ -145,6 +150,15 @@ class WebhookSignatureMiddleware:
 
         secret = self._resolve_secret(path)
         if secret is None:
+            if not self._fail_closed:
+                # Простой dev/test escape через параметр: debug-лог и
+                # passthrough без метрик/B-02-логики.
+                _logger.debug(
+                    "WebhookSignatureMiddleware: no secret for path=%s, skipping",
+                    path,
+                )
+                await self.app(scope, receive, send)
+                return
             # B-02 fix (cycle 33): fail-closed. Protected path-prefix без
             # сконфигурированного secret раньше skip-verify с debug-логом
             # — это давало обход подписи при drift конфигурации. Теперь
