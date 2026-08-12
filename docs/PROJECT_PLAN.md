@@ -178,6 +178,7 @@ convention: «PLAN.md» ≡ `docs/PROJECT_PLAN.md` в V22 era.
 | Дата | Изменение | Sprint |
 |------|-----------|--------|
 | 2026-08-04 | Initial commit (this file); replaces missing PLAN.md as canonical V22 roadmap | Sprint 7 Docs |
+| 2026-08-12 | **Cycle 121+ bulk cleanup**: 50+ merge conflict resolution (cycles 117-120), B-101 SKB callable fix, D-A7-02/D-A10-100 regression tests, D-9601 follow-up (UnifiedRateLimiter removal — fail-OPEN scaffold), D-11-5 follow-up (SBOM canonical regen + RouteBuilder docstring drift), presidio-analyzer lock fix (yanked 2.2.362 → 2.2.364), D-15001 _current_tenant narrow exceptions. 6+ параллельных subagents, total 12 commits, 0 regressions. Documentation drift (RouteBuilder 40→42 sub-mixin) corrected. | S121+ |
 
-**Total**: 1 entry. Дальнейшие правки фиксируются в этом changelog
+**Total**: 2 entries. Дальнейшие правки фиксируются в этом changelog
 только при изменении V22-инвариантов или target scores.
