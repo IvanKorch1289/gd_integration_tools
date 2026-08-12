@@ -208,7 +208,16 @@ class BaseAIProcessor(BaseProcessor):
             )
 
             return get_capability_gate()
-        except Exception as _:
+        except ImportError as exc:
+            # D-AUDIT-13901 fix (cycle 139): narrow от bare
+            # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt)
+            # до конкретного ImportError. Soft-fail behavior сохранён
+            # (return None → caller continues without capability gate).
+            _logger.debug(
+                "agent_dsl._base: capability_gate import failed "
+                "(exc_type=%s exc_msg=%s) — gate=None",
+                type(exc).__name__, exc,
+            )
             return None
 
     async def _audit_safe_emit(
@@ -253,5 +262,13 @@ class BaseAIProcessor(BaseProcessor):
             )
 
             return get_unified_audit_service()
-        except Exception as _:
+        except ImportError as exc:
+            # D-AUDIT-13901 fix (cycle 139): narrow от bare
+            # 'except Exception: _' до конкретного ImportError.
+            # Soft-fail behavior сохранён.
+            _logger.debug(
+                "agent_dsl._base: unified_audit_service import failed "
+                "(exc_type=%s exc_msg=%s) — service=None",
+                type(exc).__name__, exc,
+            )
             return None
