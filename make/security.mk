@@ -8,6 +8,7 @@
         cosign-sign cosign-sign-all supply-chain-strict supply-chain-strict-fast \
         supply-chain-finale \
         check-feature-flags check-team-ownership \
+        verify-versions verify-pypi-versions verify-npm-versions \
         team-worktree team-worktree-list team-worktree-remove \
         check-plugin-semver check-plugin-semver-strict
 
@@ -176,3 +177,25 @@ team-worktree-list: ## К10 S2: показать активные team worktree 
 team-worktree-remove: ## К10 S2: удалить team worktree (TEAM=k1..k10) после merge
 	@test -n "$(TEAM)" || { $(ERROR) "Usage: make team-worktree-remove TEAM=k1..k10"; exit 1; }
 	@.venv/bin/python tools/team_worktree.py remove $(TEAM)
+
+##@ К10 — Phantom-version gates (S44 W3, TD-006)
+
+# D-AUDIT-11101 fix (cycle 111, DEPENDENCIES-P2-002): phantom-version
+# gates (tools/verify_pypi_versions.py, tools/verify_npm_versions.py)
+# были orphan scripts — созданы для TD-006 closure, но НЕ подключены
+# ни к Makefile, ни к CI. Risk: AI security advisories могут
+# hallucinate version numbers (chromadb>=1.5.20 не существует в
+# PyPI; vite@^6.4.6 не существует в npm). Эти tools ловят phantom
+# versions ДО apply patches.
+
+verify-versions: verify-pypi-versions verify-npm-versions ## К10 S2: verify pyproject + package.json version pins against registries
+
+verify-pypi-versions: ## К10 S2: verify pyproject.toml version pins against PyPI (D-AUDIT-11101)
+	@$(INFO) "Verifying pyproject.toml version pins against PyPI..."
+	@.venv/bin/python tools/verify_pypi_versions.py
+	@$(SUCCESS) "pyproject.toml version pins OK"
+
+verify-npm-versions: ## К10 S2: verify package.json version pins against npm (D-AUDIT-11101)
+	@$(INFO) "Verifying package.json version pins against npm..."
+	@.venv/bin/python tools/verify_npm_versions.py
+	@$(SUCCESS) "package.json version pins OK"
