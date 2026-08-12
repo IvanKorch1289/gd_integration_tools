@@ -21,10 +21,13 @@ S168 W14: добавлены импорты WorkflowDeclaration, compute_step_di
 from __future__ import annotations
 
 import asyncio
+import logging
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from src.backend.services.workflows.saga_history import SagaHistoryRecord
+
+logger = logging.getLogger(__name__)
 
 from src.backend.dsl.engine.dry_run import dry_run_route, waterfall_lines
 from src.backend.dsl.engine.execution_engine import ExecutionEngine
@@ -163,7 +166,21 @@ def get_route_pipeline(route_id: str) -> Pipeline | None:
     """Возвращает Pipeline по ``route_id`` или ``None``."""
     try:
         return route_registry.get(route_id)
-    except Exception as _:
+    except (KeyError, AttributeError, TypeError) as exc:
+        # D-AUDIT-14901 fix (cycle 149): narrow от bare
+        # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt
+        # + unexpected exceptions) до конкретных типов.
+        # route_registry.get может raise:
+        # - KeyError: route_id не найден
+        # - AttributeError: registry не инициализирован
+        # - TypeError: invalid route_id type
+        # Soft-fail behavior сохранён (return None → caller
+        # обработает как 'route not found').
+        logger.debug(
+            "get_route_pipeline: route_registry.get failed "
+            "(route_id=%s, exc_type=%s exc_msg=%s) — returning None",
+            route_id, type(exc).__name__, exc,
+        )
         return None
 
 
