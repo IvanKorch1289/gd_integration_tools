@@ -63,7 +63,11 @@ try:  # pragma: no cover - prometheus_client опционален в dev_light
         "Total number of BatchWindow flushes",
         ("reason", "group"),
     )
-except Exception as _:
+except ImportError:
+    # D-AUDIT-12801 fix (cycle 128): narrow от bare 'except Exception: _'
+    # до конкретного ImportError от prometheus_client. Soft-fail
+    # behavior сохранён (если prometheus_client недоступен —
+    # _BATCH_FLUSH_COUNTER = None → _record_batch_flush no-op).
     _BATCH_FLUSH_COUNTER = None  # type: ignore[assignment,unused-ignore]
 
 

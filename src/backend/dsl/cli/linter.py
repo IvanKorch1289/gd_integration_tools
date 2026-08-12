@@ -33,11 +33,13 @@ suggestion, file, line). Exit-code 0 при отсутствии errors, 1 пр�
 
 from __future__ import annotations
 
+import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import click
 import typer
 from rich.console import Console
 
@@ -460,10 +462,10 @@ def main(argv: list[str] | None = None) -> int:
                 }
                 for iss in issues
             ]
-            # cycle-9/D-AUDIT-3013: mark intentional payload для F841
-            # silence (TODO: implement stdout write когда test
-            # test_cli_json_output переедет на typer.testing.CliRunner).
-            _ = payload
+            # S121 W1: stdout write для CLI --json output (test_cli_json_output).
+            # Раньше payload silence'ился через ``_ = payload`` (запланирован
+            # TODO с cycle 9), но test продолжал ждать stdout → fail.
+            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
         else:
             for iss in issues:
                 style = {"error": "red", "warning": "yellow", "info": "blue"}.get(
