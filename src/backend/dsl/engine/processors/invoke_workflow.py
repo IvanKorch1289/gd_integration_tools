@@ -144,7 +144,17 @@ class InvokeWorkflowProcessor(BaseProcessor):
 
             if not feature_flags.workflow_versioning_routes:
                 return self.workflow_name
-        except Exception as _:
+        except ImportError as exc:
+            # D-AUDIT-14001 fix (cycle 140): narrow от bare
+            # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt
+            # + unexpected exceptions) до конкретного ImportError.
+            # Soft-fail behavior сохранён (return workflow_name →
+            # backward-compat with feature_flag disabled).
+            _logger.debug(
+                "_resolve_workflow_version: feature_flags import failed "
+                "(exc_type=%s exc_msg=%s) — returning workflow_name",
+                type(exc).__name__, exc,
+            )
             return self.workflow_name
 
         try:
