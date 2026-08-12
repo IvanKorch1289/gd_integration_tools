@@ -20,12 +20,20 @@ D11 (S17 K2-W2 sweep):
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.utils.metrics_registry import metrics_registry
-from src.backend.dsl.engine.context import ExecutionContext
-from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.middleware import ProcessorMiddleware
+
+# D-AUDIT-8801 fix (cycle 88): type hints (Exchange/ExecutionContext)
+# перенесены в TYPE_CHECKING — DSL types в infra/observability/ это
+# layer violation по определению (infrastructure ⊥ dsl). Реальный
+# архитектурный fix — перенос PrometheusMetricsMiddleware в dsl/ слой
+# (out of scope для atomic commit, отслеживается отдельно).
+# ProcessorMiddleware остаётся real import (base class).
+if TYPE_CHECKING:
+    from src.backend.dsl.engine.context import ExecutionContext
+    from src.backend.dsl.engine.exchange import Exchange
 
 __all__ = (
     "PrometheusMetricsMiddleware",

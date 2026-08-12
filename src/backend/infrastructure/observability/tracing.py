@@ -5,12 +5,17 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from src.backend.dsl.engine.context import ExecutionContext
-from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.middleware import ProcessorMiddleware
 from src.backend.infrastructure.observability.correlation import get_correlation_id
+
+# D-AUDIT-8801 fix (cycle 88): type hints (Exchange/ExecutionContext)
+# перенесены в TYPE_CHECKING. Реальный архитектурный fix — перенос
+# TracingMiddleware в dsl/ (out of scope для atomic commit).
+if TYPE_CHECKING:
+    from src.backend.dsl.engine.context import ExecutionContext
+    from src.backend.dsl.engine.exchange import Exchange
 
 __all__ = ("TracingMiddleware", "get_tracer")
 
