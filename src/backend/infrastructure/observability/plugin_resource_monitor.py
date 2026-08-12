@@ -168,7 +168,21 @@ class PluginResourceMonitor:
             import psutil
 
             return float(psutil.Process().cpu_percent(interval=None))
-        except Exception as _:
+        except (ImportError, OSError, AttributeError) as exc:
+            # D-AUDIT-15201 fix (cycle 152): narrow от bare
+            # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt
+            # + unexpected exceptions) до конкретных psutil-специфичных
+            # типов:
+            # - ImportError: psutil не установлен
+            # - OSError: psutil process query failed
+            # - AttributeError: psutil API mismatch
+            # Soft-fail behavior сохранён (return 0.0 → CPU share
+            # не считается, но plugin продолжает работу).
+            _logger.debug(
+                "plugin_resource_monitor._process_cpu_percent: psutil "
+                "query failed (exc_type=%s exc_msg=%s) — returning 0.0",
+                type(exc).__name__, exc,
+            )
             return 0.0
 
     def _collect_cpu_share(self) -> dict[str, float]:
