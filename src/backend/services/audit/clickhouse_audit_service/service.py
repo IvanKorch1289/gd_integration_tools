@@ -11,6 +11,7 @@ Backward-compat: legacy ``dlq_path`` (JSONL) сохранён с WARNING.
 from __future__ import annotations
 
 import threading
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.audit import AuditBackend, AuditRecord
