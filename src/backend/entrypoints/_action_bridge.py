@@ -101,13 +101,17 @@ async def dispatch_action_or_dsl(
         idempotency_key: Ключ идемпотентности (если транспорт его передаёт).
         attributes: Произвольные атрибуты транспорта (sync_id, client_id,
             event_type и т.п.) — попадут в ``DispatchContext.attributes``.
-        principal: Sprint 1.1 — идентификатор аутентифицированного
-            пользователя (пробрасывается в ``ExecutionContext`` для
-            route-wide permission enforcement). По умолчанию ``""`` →
-            ``DslService`` трактует как ``"anonymous"`` (fail-closed).
-        permissions: Sprint 1.1 — кортеж permissions principal'а
-            (пробрасывается в ``ExecutionContext.permissions``). По
-            умолчанию пустой кортеж.
+        principal: Sprint 1.1 — идентификатор текущего principal'а для
+            DSL-fallback path (``DslService.dispatch`` →
+            ``check_route_permission``). Если не задан (по умолчанию
+            ``""``) — downstream трактует как ``"anonymous"`` и
+            protected routes fail-closed (403). Backward-compat
+            preserved: callers, которые не передают principal, получают
+            ту же семантику, что до Sprint 1.1.
+        permissions: Sprint 1.1 — кортеж permissions principal'а для
+            DSL-fallback path. Используется
+            ``check_route_permission`` при enforce
+            ``route.toml [security] requires_permission``.
 
     Returns:
         :class:`BridgeResult``. Поле ``via`` показывает, какой путь
@@ -271,8 +275,8 @@ async def _dispatch_dsl(
     «маршрут не найден» (``via="missing"``), любая другая — как сбой
     выполнения (``via="dsl"``, ``success=False``).
 
-    Sprint 1.1: ``principal``/``permissions`` пробрасываются в
-    :class:`ExecutionContext` для route-wide permission enforcement
+    Sprint 1.1 (L5 Security Chain): ``principal``/``permissions`` пробрасываются
+    в :class:`ExecutionContext` для route-wide permission enforcement
     (``DslService._enforce_route_permission``). ``RoutePermissionDeniedError``
     ловится ``except Exception`` и конвертируется в ``BridgeResult(success=False)``
     — вышестоящий HTTP/WS-layer решает, что делать с failure-result.
@@ -286,11 +290,19 @@ async def _dispatch_dsl(
         permissions: Кортеж permissions principal'а (для
             ``ExecutionContext.permissions``).
 
+    Returns:
+        :class:`BridgeResult` с результатом маршрута.
     """
     from src.backend.dsl.engine.context import ExecutionContext
     from src.backend.dsl.service import get_dsl_service
 
     dsl = get_dsl_service()
+    # Sprint 1.1 (L5 Security Chain): проброс principal/permissions
+    # через ExecutionContext в DslService.dispatch →
+    # check_route_permission → AuthorizationGateway. Если
+    # principal пустой — DslService трактует как "anonymous" и
+    # protected routes fail-closed (backward-compat для callers,
+    # которые не передают auth-контекст).
     context = ExecutionContext(
         route_id=dsl_route_id,
         principal=principal,
