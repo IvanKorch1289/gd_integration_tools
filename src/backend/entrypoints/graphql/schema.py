@@ -195,12 +195,11 @@ async def _dispatch_dsl(
 ) -> DslResult:
     """Диспетчеризует вызов через DslService.
 
-    Round 5 Sprint 1.1 fix (graphql entrypoint parity с SOAP/REST):
-    принимает ``principal``/``permissions`` (defaulted kwargs для
-    backward-compat со старыми callsites) и пробрасывает в
-    :class:`ExecutionContext` через :meth:`ExecutionContext.from_auth`
-    чтобы :class:`DslService.dispatch` применил route-wide
-    permission check (Sprint 1.1).
+    Sprint 1.1 (L5 Security Chain): принимает ``principal`` и
+    ``permissions`` для проброса в ``ExecutionContext`` →
+    ``DslService.dispatch`` → ``check_route_permission``. Без
+    аргументов — backward-compat (``"anonymous"`` / ``()``,
+    fail-closed для protected routes).
 
     Args:
         route_id: Имя DSL-маршрута.
@@ -216,12 +215,10 @@ async def _dispatch_dsl(
     """
     try:
         dsl = get_dsl_service()
-        # Round 5 Sprint 1.1: используем _make_auth_from_principal для
-        # построения AuthContext-подобного объекта, который ExecutionContext
-        # сможет разобрать (delegates в extract_user_permissions).
-        auth_ctx = _make_auth_from_principal(principal, permissions)
-        context = ExecutionContext.from_auth(
-            auth_ctx, route_id=route_id,
+        context = ExecutionContext(
+            route_id=route_id,
+            principal=principal,
+            permissions=permissions,
         )
         exchange = await dsl.dispatch(
             route_id=route_id,
@@ -442,20 +439,21 @@ class Query:
 
     @strawberry.field(description="Выполнить произвольный DSL-маршрут (read-only).")
     async def dsl_query(
-        self, route_id: str, payload: JSON | None = None, info: Info = None,  # type: ignore[assignment]
+        self,
+        route_id: str,
+        payload: JSON | None = None,
+        info: Info = None,  # type: ignore[assignment]
     ) -> DslResult:
         """Выполнить операцию dsl query.
 
-        Round 5 Sprint 1.1: extract principal/permissions из
-        ``info.context.auth`` (через :func:`_extract_auth_from_info`)
-        и пробрасываем в ``_dispatch_dsl`` для route-wide permission check.
+        ``info`` инжектится strawberry автоматически per-resolver call.
         """
-        principal, permissions = _extract_auth_from_info(info)
+        info_obj: Info | None = info
         return await _dispatch_dsl(
             route_id,
             payload or {},
-            principal=principal,
-            permissions=permissions,
+            principal=_principal_from_info(info_obj),
+            permissions=_permissions_from_info(info_obj),
         )
 
     @strawberry.field(description="Список зарегистрированных DSL-маршрутов.")
@@ -548,14 +546,14 @@ class Mutation:
     ) -> DslResult:
         """Выполнить операцию dsl execute.
 
-        Round 5 Sprint 1.1: extract principal/permissions из info.context.auth.
+        ``info`` инжектится strawberry автоматически per-resolver call.
         """
-        principal, permissions = _extract_auth_from_info(info)
+        info_obj: Info | None = info
         return await _dispatch_dsl(
             route_id,
             payload or {},
-            principal=principal,
-            permissions=permissions,
+            principal=_principal_from_info(info_obj),
+            permissions=_permissions_from_info(info_obj),
         )
 
 
@@ -781,12 +779,45 @@ async def _execute_with_timeout(*args: object, **kwargs: object) -> object:
 
 schema.execute = _execute_with_timeout  # type: ignore[method-assign]
 
+
+# Sprint 1.4 (L5 Security Chain): context-getter для проброса
+# ``request.state.auth`` (выставленного ``require_auth`` dependency
+# / ``AuthRequiredMiddleware``) в strawberry-резолверы через
+# ``info.context``. Без этого resolvers ``dsl_query`` / ``dsl_execute``
+# не имели бы доступа к principal/permissions и пробрасывали бы
+# пустые значения → protected routes fail-closed как anonymous.
+async def _graphql_context_getter(
+    request: Any = None,  # FastAPI Request — strawberry сам инжектит через Depends
+) -> dict[str, Any]:
+    """Строит ``info.context`` для GraphQL-резолверов.
+
+    Возвращает dict с ключами ``"request"`` (сырой Starlette Request)
+    и ``"auth"`` (текущий :class:`AuthContext` или ``None``). Резолверы
+    читают ``info.context["auth"]`` и пробрасывают ``principal`` /
+    ``permissions`` в ``_dispatch_dsl`` → ``DslService.dispatch``.
+
+    Args:
+        request: Starlette ``Request``, инжектится strawberry через
+            ``Depends`` (см. ``strawberry.fastapi.GraphQLRouter.__get_context_getter``).
+
+    Returns:
+        Dict с ``request`` и ``auth`` для downstream resolvers.
+    """
+    auth = getattr(getattr(request, "state", None), "auth", None)
+    return {"request": request, "auth": auth}
+
+
 # S204 retro-audit C-NEW-5: GraphQL был смонтирован без auth — mutations
 # ``executeAction``/``dsl_execute`` доступны любому неаутентифицированному
 # клиенту. Добавляем обязательную auth-проверку (API_KEY + JWT + mTLS).
+# Sprint 1.4: context_getter= обеспечивает доступ resolvers к
+# ``request.state.auth`` через ``info.context["auth"]`` — без
+# которого protected DSL routes получали бы ``"anonymous"`` и
+# fail-closed на ``check_route_permission``.
 graphql_router = GraphQLRouter(
     schema,
     path="/graphql",
+    context_getter=_graphql_context_getter,
     dependencies=[
         Depends(require_auth([AuthMethod.API_KEY, AuthMethod.JWT, AuthMethod.MTLS])),
     ],
