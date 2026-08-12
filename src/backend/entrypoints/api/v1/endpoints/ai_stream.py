@@ -24,7 +24,7 @@ from pydantic import BaseModel, Field
 from starlette.responses import StreamingResponse
 
 from src.backend.core.logging import get_logger
-from src.backend.entrypoints.api.dependencies.auth_selector import (
+from src.backend.core.auth.auth_selector import (
     AuthMethod,
     require_auth,
 )

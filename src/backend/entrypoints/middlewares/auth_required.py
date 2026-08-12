@@ -176,7 +176,7 @@ class AuthRequiredMiddleware:
         с public API auth_selector (S93 W3 refactor).
         """
         # S93 W3: public verify_request вместо private _VERIFIERS access.
-        from src.backend.entrypoints.api.dependencies.auth_selector import (
+        from src.backend.core.auth.auth_selector import (
             verify_request,
         )
 

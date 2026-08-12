@@ -15,7 +15,7 @@ from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, Query
 
-from src.backend.entrypoints.api.dependencies.auth_selector import (
+from src.backend.core.auth.auth_selector import (
     AuthMethod,
     require_auth,
 )

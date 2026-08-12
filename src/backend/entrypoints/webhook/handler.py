@@ -35,7 +35,7 @@ webhook_router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
 
 def _require_auth_dep():
     """Lazy import require_auth to avoid circular imports."""
-    from src.backend.entrypoints.api.dependencies.auth_selector import require_auth
+    from src.backend.core.auth.auth_selector import require_auth
 
     return require_auth()
 
