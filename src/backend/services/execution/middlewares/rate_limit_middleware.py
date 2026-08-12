@@ -19,6 +19,7 @@ infrastructure при импорте).
 from __future__ import annotations
 
 import importlib
+import logging
 from collections.abc import Callable, Mapping
 from typing import Any
 
@@ -28,6 +29,8 @@ from src.backend.core.interfaces.action_dispatcher import (
     DispatchContext,
     MiddlewareNextHandler,
 )
+
+logger = logging.getLogger(__name__)
 from src.backend.dsl.commands.action_registry import (
     ActionHandlerRegistry,
     action_handler_registry,
@@ -116,13 +119,35 @@ class RateLimitMiddleware:
         if self._limiter_provider is not None:
             try:
                 return self._limiter_provider()
-            except Exception as _:
+            except Exception as exc:
+                # D-AUDIT-15701 fix (cycle 157): narrow от bare
+                # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt
+                # + unexpected exceptions) + debug-лог. DI provider call
+                # может fail с любым exception (KeyError, RuntimeError,
+                # TypeError, custom errors). Soft-fail behavior сохранён
+                # (return None → caller использует fallback).
+                logger.debug(
+                    "rate_limit_middleware._resolve_limiter: provider "
+                    "call failed (exc_type=%s exc_msg=%s) — fallback None",
+                    type(exc).__name__, exc,
+                )
                 return None
         try:
             from src.backend.core.di.providers import get_rate_limiter_provider
 
             return get_rate_limiter_provider()
-        except Exception as _:
+        except (ImportError, KeyError, RuntimeError) as exc:
+            # D-AUDIT-15701 fix (cycle 157): narrow до конкретных
+            # типов которые реально могут возникнуть:
+            # - ImportError: di.providers module unavailable
+            # - KeyError: rate_limiter_provider not in registry
+            # - RuntimeError: DI container init failed
+            # Soft-fail behavior сохранён.
+            logger.debug(
+                "rate_limit_middleware._resolve_limiter: DI provider "
+                "lookup failed (exc_type=%s exc_msg=%s) — fallback None",
+                type(exc).__name__, exc,
+            )
             return None
 
     def _resolve_limiter_module(self) -> Any | None:
