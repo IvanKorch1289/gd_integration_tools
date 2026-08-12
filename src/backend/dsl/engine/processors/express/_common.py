@@ -7,7 +7,10 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Any
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.exchange import Exchange
@@ -53,8 +56,15 @@ async def log_outgoing_message(
             bubble=bubble,
             keyboard=keyboard,
         )
-    except Exception as _:
-        # Best-effort логирование; ошибки Mongo не критичны.
+    except Exception as exc:
+        # D-AUDIT-13701 fix (cycle 137): narrow от bare 'except Exception: _'
+        # (swallow'ил exc_type/exc_msg) + structured debug log.
+        # Best-effort сохранён (return None, errors Mongo не критичны).
+        logger.debug(
+            "express._log_to_mongo: log failed (exc_type=%s exc_msg=%s) — "
+            "returning None",
+            type(exc).__name__, exc,
+        )
         return
 
 
