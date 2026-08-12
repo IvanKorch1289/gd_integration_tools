@@ -24,9 +24,12 @@ import uuid
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
+from src.backend.core.logging import get_logger
 from src.backend.core.workflow.backend import WorkflowBackend
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry import processor
+
+_logger = get_logger(__name__)
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -153,8 +156,21 @@ class InvokeWorkflowProcessor(BaseProcessor):
             launcher = WorkflowLauncher()
             resolved = launcher.resolve(self.workflow_name, self.version)
             return resolved.name
-        except WorkflowResolutionError:
-            # Fallback to original name if resolution fails
+        except WorkflowResolutionError as exc:
+            # D-AUDIT-8501 fix (cycle 85): логируем silent fallback.
+            # Без warning'a audit-trail не покажет, что SemVer constraint
+            # был нарушен — workflow запустится с default version, и
+            # observability потеряет сигнал о mismatch (DOMAIN-WF-P1-001).
+            # PONYTAIL: re-raise не делаем — backward-compat с callers,
+            # которые полагаются на default-fallback. Превращение в
+            # hard-fail — отдельный breaking change.
+            _logger.warning(
+                "invoke_workflow: SemVer resolution failed for %r spec=%r: %s — "
+                "falling back to workflow_name without version constraint",
+                self.workflow_name,
+                self.version,
+                exc,
+            )
             return self.workflow_name
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
