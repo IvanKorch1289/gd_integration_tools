@@ -310,12 +310,15 @@ async def _import_bulk_objects(
     if dry_run:
         return {"parsed": len(rows), "sample": rows[:3], "dry_run": True}
 
+    # D-AUDIT-11501 fix (cycle 115): canonical path
+    # src.backend.dsl.registry — re-exports route_registry singleton
+    # (НЕ src.backend.dsl.engine.pipeline_registry, которого не
+    # существует). get_pipeline_registry() → route_registry singleton
+    # с .get(route_id) для lookup pipeline.
     from src.backend.dsl.engine.execution_engine import ExecutionEngine
-    from src.backend.dsl.engine.pipeline_registry import (
-        get_pipeline_registry,  # type: ignore[import-not-found]
-    )
+    from src.backend.dsl.registry import route_registry
 
-    pipeline = get_pipeline_registry().get(route_id)
+    pipeline = route_registry.get(route_id)
     if pipeline is None:
         raise HTTPException(404, f"Pipeline '{route_id}' не найден")
 
