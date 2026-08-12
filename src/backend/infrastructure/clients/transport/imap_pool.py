@@ -224,7 +224,21 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
         try:
             await asyncio.wait_for(conn.noop(), timeout=1.5)
             return True
-        except Exception as _:
+        except (ConnectionError, TimeoutError, OSError) as exc:
+            # D-AUDIT-15501 fix (cycle 155): narrow от bare
+            # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt
+            # + unexpected exceptions) до конкретных network-related
+            # типов. IMAP NOOP probe может fail с:
+            # - ConnectionError: IMAP connection closed
+            # - TimeoutError: NOOP timeout
+            # - OSError: socket/network errors
+            # Soft-fail behavior сохранён (return False → connection
+            # marked dead, pool removes).
+            logger.debug(
+                "imap_pool._is_alive: NOOP probe failed (exc_type=%s "
+                "exc_msg=%s) — connection dead",
+                type(exc).__name__, exc,
+            )
             return False
 
 
