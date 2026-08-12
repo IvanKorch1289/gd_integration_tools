@@ -55,7 +55,6 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.ai import AIGateway, AIRequest
 from src.backend.core.interfaces.capability_gateway import CapabilityGatewayProtocol
-from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
     pass

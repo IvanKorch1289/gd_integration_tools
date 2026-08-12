@@ -14,6 +14,7 @@ src/backend/core/audit/facade/__init__.py	core	src.backend.infrastructure.audit.
 src/backend/core/audit/facade/audit_service.py	core	src.backend.services.audit.clickhouse_audit_service
 src/backend/core/auth/ad_directory.py	core	src.backend.services.auth.ad_directory_client
 src/backend/core/auth/facade.py	core	src.backend.services.security.facade
+src/backend/core/di/providers/ai.py	core	src.backend.services.ai.gateway_adapter
 src/backend/core/di/providers/ai.py	core	src.backend.services.ai.pii.presidio_analyzer
 src/backend/core/di/providers/billing.py	core	src.backend.services.billing
 src/backend/core/di/providers/cdc_bridge.py	core	src.backend.infrastructure.cdc.cdc_client_adapter
@@ -39,8 +40,6 @@ src/backend/core/di/providers/search_bridge.py	core	src.backend.infrastructure.c
 src/backend/core/di/providers/storage.py	core	src.backend.services.storage.facade
 src/backend/core/frontend_facade.py	core	src.backend.services.dsl_portal
 src/backend/core/integrations/skb.py	core	src.backend.services.integrations.skb
-src/backend/core/interfaces/sink.py	core	src.backend.infrastructure.clients.base_connector
-src/backend/core/interfaces/source.py	core	src.backend.infrastructure.clients.base_connector
 src/backend/core/io/__init__.py	core	src.backend.services.io.indexers
 src/backend/core/io/indexers.py	core	src.backend.services.io.indexers
 src/backend/core/messaging/eventbus/facade.py	core	src.backend.infrastructure.clients.messaging.event_bus
@@ -48,8 +47,6 @@ src/backend/core/messaging/stream_facade.py	core	src.backend.infrastructure.clie
 src/backend/core/notifications/__init__.py	core	src.backend.infrastructure.notifications
 src/backend/core/notifications/__init__.py	core	src.backend.infrastructure.notifications.gateway
 src/backend/core/observability/log_indexer.py	core	src.backend.services.io.indexers.log_indexer
-src/backend/core/resilience/rate_limiter.py	core	src.backend.infrastructure.resilience.unified_rate_limiter
-src/backend/core/scaling/bulkhead_scaler.py	core	src.backend.infrastructure.resilience.bulkhead
 src/backend/core/scheduler/__init__.py	core	src.backend.infrastructure.scheduler.cron_validator
 src/backend/core/security/connector_auth.py	core	src.backend.services.authorization.facade
 src/backend/core/services/__init__.py	core	src.backend.services.core.base_external_api
@@ -120,17 +117,13 @@ src/backend/infrastructure/clients/external/cdc/client.py	infrastructure	src.bac
 src/backend/infrastructure/clients/messaging/event_bus.py	infrastructure	src.backend.services.schema_registry.registry
 src/backend/infrastructure/database/migrations/env.py	infrastructure	src.backend.services.plugins.loader
 src/backend/infrastructure/notifications/adapters/express.py	infrastructure	src.backend.dsl.engine.processors.express._common
-src/backend/infrastructure/observability/metrics.py	infrastructure	src.backend.dsl.engine.context
-src/backend/infrastructure/observability/metrics.py	infrastructure	src.backend.dsl.engine.exchange
 src/backend/infrastructure/observability/metrics.py	infrastructure	src.backend.dsl.engine.middleware
-src/backend/infrastructure/observability/tracing.py	infrastructure	src.backend.dsl.engine.context
-src/backend/infrastructure/observability/tracing.py	infrastructure	src.backend.dsl.engine.exchange
 src/backend/infrastructure/observability/tracing.py	infrastructure	src.backend.dsl.engine.middleware
 src/backend/infrastructure/scheduler/scheduled_tasks.py	infrastructure	src.backend.services.ai.memory.langmem_service
 src/backend/infrastructure/security/presidio_sanitizer.py	infrastructure	src.backend.services.ai.pii.presidio_analyzer
-src/backend/infrastructure/workflow/executor/sequential_mixin.py	infrastructure	src.backend.dsl.engine.exchange
-src/backend/infrastructure/workflow/worker.py	infrastructure	src.backend.dsl.commands.setup
-src/backend/infrastructure/workflow/worker.py	infrastructure	src.backend.dsl.routes
+src/backend/infrastructure/workflow/executor/sequential_mixin.py	workflows	src.backend.dsl.engine.exchange
+src/backend/infrastructure/workflow/worker.py	workflows	src.backend.dsl.commands.setup
+src/backend/infrastructure/workflow/worker.py	workflows	src.backend.dsl.routes
 src/backend/services/admin/clickhouse_admin.py	services	src.backend.infrastructure.clients.storage.clickhouse_admin_client
 src/backend/services/ai/ai_graph.py	services	src.backend.dsl.commands.registry
 src/backend/services/audit/clickhouse_audit_service/service.py	services	src.backend.infrastructure.messaging.dlq_base
@@ -142,7 +135,6 @@ src/backend/services/core/admin.py	services	src.backend.dsl.commands.action_regi
 src/backend/services/core/admin.py	services	src.backend.dsl.commands.registry
 src/backend/services/core/tech.py	services	src.backend.dsl.codec.converters
 src/backend/services/dsl/builder_service.py	services	src.backend.dsl.commands.registry
-src/backend/services/dsl/builder_service.py	services	src.backend.dsl.engine.pipeline
 src/backend/services/dsl/builder_service.py	services	src.backend.dsl.yaml_store
 src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.dry_run
 src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.execution_engine
@@ -164,7 +156,6 @@ src/backend/services/ops/notify_actions.py	services	src.backend.dsl.commands.act
 src/backend/services/ops/scheduled_reports.py	services	src.backend.dsl.commands.registry
 src/backend/services/ops/webhook_scheduler.py	services	src.backend.dsl.engine.processors.scraping
 src/backend/services/plugins/registries.py	services	src.backend.dsl.commands.action_registry
-src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.plugin_registry
 src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.processors
 src/backend/services/resilience/rate_limiter.py	services	src.backend.infrastructure.resilience.unified_rate_limiter
 src/backend/services/scheduler/admin.py	services	src.backend.infrastructure.scheduler.dlq

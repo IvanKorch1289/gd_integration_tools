@@ -32,7 +32,6 @@ from typing import Any, ClassVar
 
 from src.backend.core.config.services.sms import sms_settings
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
-from src.backend.core.net import OutboundHttpClient
 from src.backend.core.resilience.connector_breaker import with_breaker
 from src.backend.core.resilience.retry import with_retry
 from src.backend.core.security.connector_auth import require_capability
