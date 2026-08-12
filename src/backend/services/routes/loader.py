@@ -448,7 +448,16 @@ class RouteLoader:
             from src.backend.core.config.features import feature_flags
 
             return bool(feature_flags.routes_capability_gate_strict)
-        except Exception as _:
+        except ImportError as exc:
+            # D-AUDIT-13401 fix (cycle 134): narrow от bare
+            # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt)
+            # до конкретного ImportError. Soft-fail behavior сохранён
+            # (False → capability gate не enforced в degraded env).
+            _logger.debug(
+                "_resolve_strict_capabilities: feature_flags import failed "
+                "(exc_type=%s exc_msg=%s) — strict=False",
+                type(exc).__name__, exc,
+            )
             return False
 
     def _audit_emit(self, event: dict[str, Any]) -> None:
