@@ -24,9 +24,15 @@ from pathlib import Path
 # canonical allowlist живёт в .security/pip-audit-allowlist.txt.
 IGNORED_VULNS: frozenset[str] = frozenset(
     [
-        # NOTE: PYSEC-2026-161 (starlette) FIXED in s30/w1 - starlette 1.1.0
-        # NOTE: CVE-2025-69872 (diskcache) REMOVED in s170 — diskcache
-        # dependency eliminated; replaced with custom JSONDisk cache.
+        # NOTE: PYSEC-2026-161 (starlette) FIXED in s30/w1 — installed
+        # starlette 1.3.1 > 1.1.0 (CVE patched).
+        # D-AUDIT-10201 fix (cycle 102, DEPENDENCIES-P0-004): removed
+        # СТАРЫЙ комментарий "CVE-2025-69872 (diskcache) REMOVED in
+        # s170 — diskcache dependency eliminated" — это НЕВЕРНО.
+        # Фактчек 2026-08-11: diskcache 5.6.3 всё ещё установлен и
+        # используется (src/backend/infrastructure/decorators/caching/
+        # storage/disk.py). Если CVE-2025-69872 ещё актуален, его
+        # нужно либо fix в allowlist, либо upgrade.
     ]
 )
 
