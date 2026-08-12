@@ -23,9 +23,12 @@ NotificationCallable = Callable[[dict[str, Any]], Awaitable[None]]
 
 async def _express_send(payload: dict[str, Any]) -> None:
     """Primary: BotX через ``ExpressBotClient``."""
-    from src.backend.infrastructure.clients.transport.express import (
-        get_express_client,  # type: ignore[import-not-found]
-    )
+    # D-AUDIT-11801 fix (cycle 118): canonical path
+    # src.backend.infrastructure.clients.external.express (НЕ
+    # src.backend.infrastructure.clients.transport.express — модуль
+    # НЕ существует, type: ignore suppress'ил lint но runtime всегда
+    # падал в ImportError → _express_send silent fail).
+    from src.backend.infrastructure.clients.external.express import get_express_client
 
     client = get_express_client()
     await client.send_message(chat_id=payload["recipient"], text=payload["message"])
