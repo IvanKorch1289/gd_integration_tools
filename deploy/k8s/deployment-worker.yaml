@@ -81,6 +81,18 @@ spec:
             limits:
               cpu: "4"
               memory: 4Gi
+          # D-AUDIT-11001 fix (cycle 110, ENVSET-P1-003): добавлен
+          # preStop hook (sleep 30) для синхронизации с helm template
+          # (deploy/helm/gd-integration-tools/templates/deployment-worker.yaml
+          # уже имел preStop). Без него worker не успевает отправить
+          # SIGTERM to in-flight Temporal activities до принудительного
+          # SIGKILL через terminationGracePeriodSeconds=300.
+          # С sleep 30 in-flight workflows получают до 270s на
+          # graceful drain (300 - 30 sleep - safety margin).
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "30"]
           readinessProbe:
             httpGet:
               path: /probe/ready
