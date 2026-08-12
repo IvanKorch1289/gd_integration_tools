@@ -78,7 +78,9 @@ class TestResolveEventBusFacade:
             # Cycle 96 L10: ``__import__`` is called with MODULE name, not
             # attribute name. ``from X import Y`` triggers __import__('X').
             # Match on the provider MODULE path, not the function name.
-            if "infrastructure_facade" in name:
+            # Cycle-92 (D-AUDIT-9201): renamed ``infrastructure_facade`` →
+            # ``infrastructure_locator`` (S31 Task 5) — update test match.
+            if "infrastructure_locator" in name:
                 raise ImportError("provider module not found")
             return original_import(name, *args, **kwargs)
 
