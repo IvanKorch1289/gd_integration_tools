@@ -98,6 +98,12 @@ def _get_version_service() -> Any | None:
     """Получить :class:`PluginVersionService` из app.state, если есть.
 
     Lazy-import чтобы не тянуть infrastructure при сборке schema.
+
+    D-AUDIT-9401 fix (cycle 94, API-P1-002): bare 'except Exception' сужен
+    до конкретных типов + WARN-лог при любой из них. Раньше: silent
+    None-return на ЛЮБОМ exception → ops не видели, почему versioning
+    API возвращает None (ImportError модуля, AttributeError signature
+    mismatch, OSError на extensions_dir — все скрывались).
     """
     try:
         from src.backend.main import app as fastapi_app
@@ -108,5 +114,11 @@ def _get_version_service() -> Any | None:
         from src.backend.services.plugins.versioning import PluginVersionService
 
         return PluginVersionService(loader=loader, extensions_dir=Path("extensions"))
-    except Exception as _:
+    except (ImportError, AttributeError, OSError) as exc:
+        logger.warning(
+            "_get_version_service: PluginVersionService init failed "
+            "(exc_type=%s exc_msg=%s) — versioning API вернёт None",
+            type(exc).__name__,
+            exc,
+        )
         return None
