@@ -35,11 +35,19 @@ def test_orders_manifest_loads_and_is_core_compatible() -> None:
     assert manifest.entry_class.endswith(".OrdersPlugin")
 
 
-def test_orders_capabilities_declare_db_read_write_and_kinds_ref() -> None:
-    """capability-список содержит db.read/write на orders + db.read на orderkinds."""
+def test_orders_capabilities_declare_db_read_write() -> None:
+    r"""capability-список содержит db.read/write на orders.
+
+    Cycle-93 (D-AUDIT-9301): ранее тест ожидал отдельный `db.read`
+    на `orderkinds` scope, но Cycle-17 (D-AUDIT-1701) удалил его —
+    CapabilityGate.declare reject'ит дубликаты (uses `name` как
+    bucket-key, без scope), а FK relationship на OrderKind реализован
+    через `lazy="joined"` JOIN без отдельного capability check
+    (см. ``extensions/core_entities/orders/plugin.toml`` comment block).
+    Тест обновлён чтобы отражать актуальный contract.
+    """
     manifest = load_plugin_manifest(_MANIFEST_PATH)
     cap_pairs = {(c.name, c.scope) for c in manifest.capabilities}
     assert ("db.read", "orders") in cap_pairs
     assert ("db.write", "orders") in cap_pairs
-    assert ("db.read", "orderkinds") in cap_pairs
-    assert len(cap_pairs) == 3
+    assert len(cap_pairs) == 2
