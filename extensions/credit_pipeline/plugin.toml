@@ -33,10 +33,28 @@ scope = "credit_reports"
 name = "db.write"
 scope = "credit_reports"
 
+[[capabilities]]
+name = "db.read"
+scope = "credit_applications"
+
+[[capabilities]]
+name = "db.write"
+scope = "credit_applications"
+
 # mq.publish — GlobScopeMatcher: события кредитного процесса.
 [[capabilities]]
 name = "mq.publish"
 scope = "credit.events.*"
+
+# Cycle-90 (D-AUDIT-9001): net.outbound capabilities для external API
+# (SKB credit bureau, NBKI scoring). WAF enforces эти scopes per tenant.
+[[capabilities]]
+name = "net.outbound"
+scope = "*.skb-techno.ru"
+
+[[capabilities]]
+name = "net.outbound"
+scope = "*.nbki.ru"
 
 # ─── Декларативный inventory ──────────────────────────────────────
 # S76 W2: 3 real actions (scoring, document_parser, decision agents).
