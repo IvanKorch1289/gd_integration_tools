@@ -310,13 +310,11 @@ class ActivityBridge:
             self._cache[action_id] = decorated
 
 
-def _iter_activity_names(step: WorkflowStep) -> list[str]:
-    """Извлечь action_id всех activity-шагов из step (включая saga-вложения).
-
-    Сохранён для backward-compatibility; внутренний код использует
-    :func:`_iter_activity_specs` для получения capabilities.
-    """
-    return [name for name, _ in _iter_activity_specs(step)]
+# D-AUDIT-10501 fix (cycle 105, WORKFLOW-P2-001): removed dead
+# helper _iter_activity_names (определён 'для backward-compat' но
+# не использовался НИГДЕ кроме собственного определения — verified
+# через 'grep -rn _iter_activity_names src/ tests/'). Внутренний
+# код использует _iter_activity_specs (ниже) для capabilities.
 
 
 def _iter_activity_specs(step: WorkflowStep) -> list[tuple[str, tuple[str, ...]]]:
