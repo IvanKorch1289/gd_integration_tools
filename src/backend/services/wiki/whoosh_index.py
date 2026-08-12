@@ -175,8 +175,15 @@ class WhooshIndex:
             for stale in set(existing_mtimes) - seen:
                 writer.delete_by_term("path", stale)
             writer.commit()
-        except Exception as _:
+        except Exception as exc:
+            # D-AUDIT-13201 fix (cycle 132): narrow от bare
+            # 'except Exception: _' (swallow'ил exc_type/exc_msg).
+            # Добавлен logger.exception перед re-raise — captures
+            # full traceback (logger.exception = logger.error
+            # + exc_info=True). Cancel writer для cleanup,
+            # затем re-raise для caller.
             writer.cancel()
+            logger.exception("WhooshIndex: commit failed: %s", exc)
             raise
 
         self._ix = ix
