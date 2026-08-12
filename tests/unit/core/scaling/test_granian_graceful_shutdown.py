@@ -21,7 +21,7 @@ def _import_granian_tuning():
 
 
 def test_graceful_shutdown_default_emits_flag() -> None:
-    """Default graceful_shutdown_timeout=30 → --workers-kill-timeout 30 в CLI."""
+    """Default granian_kill_timeout=30 → --workers-kill-timeout 30 в CLI."""
     GranianTuning = _import_granian_tuning()
     cfg = GranianTuning()
 
@@ -41,9 +41,9 @@ def test_graceful_shutdown_default_emits_flag() -> None:
 
 
 def test_graceful_shutdown_explicit_value_emits_flag() -> None:
-    """graceful_shutdown_timeout=300 → --workers-kill-timeout 300 в CLI."""
+    """granian_kill_timeout=300 → --workers-kill-timeout 300 в CLI."""
     GranianTuning = _import_granian_tuning()
-    cfg = GranianTuning(graceful_shutdown_timeout=300)
+    cfg = GranianTuning(granian_kill_timeout=300)
 
     with patch(
         "src.backend.core.config.features.feature_flags.granian_rsgi_mode_enabled",
@@ -61,9 +61,9 @@ def test_graceful_shutdown_explicit_value_emits_flag() -> None:
 
 
 def test_graceful_shutdown_zero_omits_flag() -> None:
-    """graceful_shutdown_timeout=0 → флаг ОПУЩЕН (backward-compat escape hatch)."""
+    """granian_kill_timeout=0 → флаг ОПУЩЕН (backward-compat escape hatch)."""
     GranianTuning = _import_granian_tuning()
-    cfg = GranianTuning(graceful_shutdown_timeout=0)
+    cfg = GranianTuning(granian_kill_timeout=0)
 
     with patch(
         "src.backend.core.config.features.feature_flags.granian_rsgi_mode_enabled",
@@ -78,10 +78,10 @@ def test_graceful_shutdown_zero_omits_flag() -> None:
 
 
 def test_graceful_shutdown_rejects_value_above_cap() -> None:
-    """graceful_shutdown_timeout=400 (> 300 cap) → ValidationError."""
+    """granian_kill_timeout=400 (> 300 cap) → ValidationError."""
     GranianTuning = _import_granian_tuning()
     with pytest.raises(ValidationError) as exc_info:
-        GranianTuning(graceful_shutdown_timeout=400)
+        GranianTuning(granian_kill_timeout=400)
 
     # Уточнение причины — должна упоминаться верхняя граница 300.
     assert "300" in str(exc_info.value) or "less_than_equal" in str(
@@ -90,10 +90,10 @@ def test_graceful_shutdown_rejects_value_above_cap() -> None:
 
 
 def test_graceful_shutdown_rejects_negative() -> None:
-    """graceful_shutdown_timeout=-1 → ValidationError."""
+    """granian_kill_timeout=-1 → ValidationError."""
     GranianTuning = _import_granian_tuning()
     with pytest.raises(ValidationError) as exc_info:
-        GranianTuning(graceful_shutdown_timeout=-1)
+        GranianTuning(granian_kill_timeout=-1)
 
     assert "greater_than_equal" in str(exc_info.value) or "0" in str(
         exc_info.value,
@@ -103,7 +103,7 @@ def test_graceful_shutdown_rejects_negative() -> None:
 def test_graceful_shutdown_flag_positioned_before_app() -> None:
     """--workers-kill-timeout эмитится ДО app (порядок аргументов важен для Granian)."""
     GranianTuning = _import_granian_tuning()
-    cfg = GranianTuning(graceful_shutdown_timeout=15)
+    cfg = GranianTuning(granian_kill_timeout=15)
 
     with patch(
         "src.backend.core.config.features.feature_flags.granian_rsgi_mode_enabled",

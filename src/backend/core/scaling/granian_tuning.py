@@ -123,13 +123,21 @@ class GranianTuning(BaseSettingsWithLoader):
         ge=128,
     )
 
-    graceful_shutdown_timeout: int = Field(  # D-AUDIT-95 fix (S183 W1.2)
+    # D-AUDIT-9501 fix (cycle 95, ENVSET-P0-002): renamed
+    # graceful_shutdown_timeout → granian_kill_timeout. Раньше — name
+    # collision с app_base.graceful_shutdown_timeout (uvicorn), что
+    # создавало путаницу: оператор менял APP_ graceful_shutdown_timeout,
+    # а Granian продолжал использовать GRANIAN_ graceful_shutdown_timeout
+    # (разные env-prefixes, разные ranges — ge=1 для uvicorn, ge=0 для
+    # granian с escape hatch).
+    granian_kill_timeout: int = Field(
         default=30,
-        title="Graceful shutdown timeout (секунды)",
+        title="Granian --workers-kill-timeout (секунды)",
         description=(
             "Granian --workers-kill-timeout: сколько секунд ждать drain in-flight "
             "запросов после SIGTERM. Default 30 (k8s terminationGracePeriodSeconds). "
-            "0 — отключить эмиссию флага (escape hatch)."
+            "0 — отключить эмиссию флага (escape hatch). "
+            "ОТДЕЛЬНО от app_base.graceful_shutdown_timeout (uvicorn)."
         ),
         ge=0,
         le=300,
@@ -226,8 +234,8 @@ class GranianTuning(BaseSettingsWithLoader):
         # '--shutdown-timeout' — невалидный флаг, вызывает
         # 'Error: No such option: --shutdown-timeout', exit 2).
         # Verified: 'python -m granian --help' 2026-08-11.
-        if self.graceful_shutdown_timeout > 0:
-            cmd.extend(["--workers-kill-timeout", str(self.graceful_shutdown_timeout)])
+        if self.granian_kill_timeout > 0:
+            cmd.extend(["--workers-kill-timeout", str(self.granian_kill_timeout)])
         cmd.append(app)
         return cmd
 
