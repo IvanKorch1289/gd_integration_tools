@@ -7,10 +7,13 @@
 
 from __future__ import annotations
 
+import logging
 import time
 from typing import Any
 
 from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
+
+logger = logging.getLogger(__name__)
 
 __all__ = ("HttpAntivirusBackend",)
 
@@ -31,7 +34,20 @@ class HttpAntivirusBackend(AntivirusBackend):
             return True  # сервис не объявляет ping — считаем доступным
         try:
             return bool(await check())
-        except Exception as _:
+        except (ConnectionError, TimeoutError, OSError) as exc:
+            # D-AUDIT-15101 fix (cycle 151): narrow от bare
+            # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt
+            # + unexpected exceptions) до конкретных network-related
+            # exceptions. AV HTTP ping может fail с:
+            # - ConnectionError: HTTP service down
+            # - TimeoutError: request timeout
+            # - OSError: socket/network errors
+            # Soft-fail behavior сохранён (return False → AV unavailable).
+            logger.debug(
+                "antivirus.http.is_available: ping failed (exc_type=%s "
+                "exc_msg=%s) — AV unavailable",
+                type(exc).__name__, exc,
+            )
             return False
 
     async def scan_bytes(self, payload: bytes) -> AntivirusScanResult:
