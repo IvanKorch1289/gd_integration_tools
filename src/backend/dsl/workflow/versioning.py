@@ -27,10 +27,13 @@ References:
 
 from __future__ import annotations
 
+import logging
 import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, TypeVar
+
+logger = logging.getLogger(__name__)
 
 __all__ = (
     "WorkflowVersion",
@@ -150,7 +153,16 @@ class WorkflowVersionRegistry:
                 strict = bool(
                     getattr(feature_flags, "workflow_versioning_strict", False),
                 )
-            except Exception as _:
+            except ImportError as exc:
+                # D-AUDIT-14601 fix (cycle 146): narrow от bare
+                # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt
+                # + unexpected exceptions) до конкретного ImportError.
+                # Soft-fail behavior сохранён (strict=False → default mode).
+                logger.debug(
+                    "workflow_versioning: feature_flags import failed "
+                    "(exc_type=%s exc_msg=%s) — strict=False",
+                    type(exc).__name__, exc,
+                )
                 strict = False
 
             if strict:
