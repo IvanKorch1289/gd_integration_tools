@@ -270,8 +270,15 @@ class FeatureFlagGuardProcessor(BaseProcessor):
         if self._resolver:
             try:
                 enabled = bool(self._resolver(self.flag))
-            except Exception as _:
-                logger.warning("feature flag resolver failed for %s", self.flag)
+            except Exception as exc:
+                # D-AUDIT-14401 fix (cycle 144): narrow от bare
+                # 'except Exception: _' (swallow'ил exc_type/exc_msg) +
+                # structured warn log. Feature flag resolver — user
+                # callback, может fail с любым exception.
+                logger.warning(
+                    "feature flag resolver failed for %s (exc_type=%s exc_msg=%s)",
+                    self.flag, type(exc).__name__, exc,
+                )
         else:
             flags = exchange.get_property("_feature_flags") or {}
             enabled = bool(flags.get(self.flag, False))
