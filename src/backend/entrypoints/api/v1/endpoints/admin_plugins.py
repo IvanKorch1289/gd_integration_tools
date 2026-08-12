@@ -107,9 +107,13 @@ def _get_plugin_registry() -> Any:
     При недоступности возвращает None — эндпоинты используют mock.
     """
     try:
-        from src.backend.core.plugin_runtime.loader import (
-            PluginLoader,  # type: ignore[import-not-found]  # lazy import
-        )
+        # D-AUDIT-11401 fix (cycle 114): канонический путь
+        # src.backend.services.plugins.loader (НЕ src.backend.core.
+        # plugin_runtime.loader — этого модуля НЕ существует, import
+        # был сломан с type: ignore, runtime всегда падал в
+        # except → mock-fallback. Реальный PluginLoader:
+        # src/backend/services/plugins/loader/__init__.py:65).
+        from src.backend.services.plugins.loader import PluginLoader
 
         return PluginLoader.get_instance()
     except (ImportError, AttributeError, RuntimeError):
