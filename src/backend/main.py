@@ -111,6 +111,20 @@ def _run_granian() -> None:
     }
     if settings.app.granian_blocking_threads is not None:
         kwargs["blocking_threads"] = settings.app.granian_blocking_threads
+    # D-AUDIT-10401 fix (cycle 104, ENVSET-P1-002): проброс
+    # workers_kill_timeout в Granian constructor. Раньше:
+    # Granian(**kwargs).serve() НЕ передавал shutdown timeout →
+    # SIGTERM drain window не работал при programmatic server start
+    # (tools/granian_runner.py через CLI работал — там build_cli_command
+    # уже эмитил --workers-kill-timeout, cycle 92 fix).
+    #
+    # Используем settings.app.graceful_shutdown_timeout (uvicorn-side
+    # timeout). Если 0 — НЕ передаём (default Granian behavior, без
+    # explicit override; matches escape hatch в build_cli_command).
+    if settings.app.graceful_shutdown_timeout > 0:
+        kwargs["workers_kill_timeout"] = int(
+            settings.app.graceful_shutdown_timeout,
+        )
 
     Granian(**kwargs).serve()
 
