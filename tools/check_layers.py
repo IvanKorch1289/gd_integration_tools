@@ -157,6 +157,8 @@ def _file_layer(path: Path, root: Path) -> str | None:
        проверять ``root.name == EXTENSIONS_LAYER``.
     2. ``--root .`` → rel path = "extensions/...", нужно проверять
        ``rel.parts[0] == EXTENSIONS_LAYER``.
+
+    S121 W1: infrastructure/workflow/* → workflows layer (sub-layer detection).
     """
     try:
         rel = path.relative_to(root)
@@ -170,6 +172,15 @@ def _file_layer(path: Path, root: Path) -> str | None:
         candidate = rel.parts[1]
     else:
         candidate = rel.parts[0]
+    # S121 W1: src/backend/infrastructure/workflow/* → workflows layer
+    # (historical workflow package теперь workflow под in infrastructure).
+    if (
+        rel.parts[0] == "backend"
+        and len(rel.parts) > 2
+        and rel.parts[1] == "infrastructure"
+        and rel.parts[2] == "workflow"
+    ):
+        return "workflows"
     if candidate in LAYERS or candidate == PLUGINS_LAYER:
         return candidate
     # S103 W1: extensions — отдельный layer (root.name OR rel.parts[0])
