@@ -41,6 +41,7 @@ transitive-зависимость). Reference use-case — credit_scoring rulese
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
@@ -48,6 +49,8 @@ from pydantic import BaseModel, Field
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.engine.processors.documents import _resolve_path, _set_path
 from src.backend.dsl.registry import processor
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -121,7 +124,17 @@ class EvaluateRulesProcessor(BaseProcessor):
                 if bool(evaluator.eval(rule.expr)):
                     matched = rule
                     break
-            except Exception as _:
+            except Exception as exc:
+                # D-AUDIT-13601 fix (cycle 136): narrow от bare
+                # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt
+                # + unexpected exceptions) + structured debug log.
+                # Soft-fail behavior сохранён (skip rule, continue to
+                # next). Operator видит КАКОЕ rule упало с каким exc.
+                logger.debug(
+                    "RuleEngineProcessor: rule %r eval failed "
+                    "(exc_type=%s exc_msg=%s) — skipping",
+                    rule.name, type(exc).__name__, exc,
+                )
                 continue
 
         decision = matched.decision if matched else self.params.default_decision
