@@ -10,11 +10,14 @@
 
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass
 
 from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.validation import ValidationIssue, ValidationResult
+
+logger = logging.getLogger(__name__)
 
 __all__ = ("DSLLinter", "LintIssue", "dsl_linter")
 
@@ -103,8 +106,16 @@ class DSLLinter:
             from src.backend.dsl.commands.registry import action_handler_registry
 
             known_actions = set(action_handler_registry.list_actions())
-        except Exception as _:
-            # Если registry недоступен — пропускаем проверку
+        except ImportError as exc:
+            # D-AUDIT-12601 fix (cycle 126): narrow от bare
+            # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt)
+            # до конкретного ImportError от registry module. Soft-fail
+            # behavior сохранён (если registry недоступен — skip check).
+            logger.debug(
+                "E002 check: action_handler_registry import failed "
+                "(exc_type=%s exc_msg=%s) — skipping check",
+                type(exc).__name__, exc,
+            )
             return
 
         for i, p in enumerate(pipeline.processors):
