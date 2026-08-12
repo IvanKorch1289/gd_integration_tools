@@ -29,7 +29,16 @@ def _mount_mcp_http() -> None:
     """Wave D.4: монтирует FastMCP HTTP transport если ``MCP_HTTP_ENABLED=true``."""
     try:
         from src.backend.core.config.ai_stack import mcp_settings
-    except Exception as _:
+    except ImportError as exc:
+        # D-AUDIT-12101 fix (cycle 121): narrow + structured warn.
+        # Bare 'except Exception: _' swallowing module-level failure
+        # без observability — MCP HTTP mount failure оставался silent.
+        get_logger(__name__).warning(
+            "MCP HTTP transport: mcp_settings import failed (exc_type=%s "
+            "exc_msg=%s) — mount skipped",
+            type(exc).__name__,
+            exc,
+        )
         return
     if not mcp_settings.http_enabled:
         return
