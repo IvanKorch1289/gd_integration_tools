@@ -49,9 +49,24 @@ class ThreeTierRagCache:
         return None, None
 
     async def lookup_chunks(
-        self, query: str, *, tenant: str | None = None, namespace: str | None = None,
+        self,
+        query: str,
+        *,
+        tenant: str | None = None,
+        namespace: str | None = None,
     ) -> tuple[list[dict[str, Any]] | None, str | None]:
-        """Ищет сырые retrieval-чанки в L3 (с tenant-scope)."""
+        """Ищет сырые retrieval-чанки в L3 с tenant-isolation (Sprint 2.1).
+
+        Args:
+            query: Query string.
+            tenant: Optional tenant scope (Sprint 2.1 — L5 RAG/Memory).
+                Если не указан, ключ пишется в ``_unscoped_`` namespace —
+                consistent с :class:`TenantCacheBackend`.
+            namespace: Optional namespace scope.
+
+        Returns:
+            (chunks, tier) или ``(None, None)`` если miss/disabled.
+        """
         if not self._l3_enabled:
             return None, None
         chunks = await self._l3.get(query, tenant=tenant, namespace=namespace)
@@ -76,12 +91,12 @@ class ThreeTierRagCache:
         tenant: str | None = None,
         namespace: str | None = None,
     ) -> None:
-        """Store retrieval chunks in L3 cache (с tenant-scope).
+        """Store retrieval chunks in L3 cache (tenant-scoped, Sprint 2.1).
 
         Args:
             query: Query string.
             chunks: List of chunk dictionaries.
-            tenant: Optional tenant scope (изоляция между tenant'ами).
+            tenant: Optional tenant scope (Sprint 2.1 — L5 RAG/Memory).
             namespace: Optional namespace scope.
 
         """
