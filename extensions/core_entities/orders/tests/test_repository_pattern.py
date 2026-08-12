@@ -21,7 +21,6 @@ def test_repository_inherits_sqlalchemy_base() -> None:
 def test_repository_protocol_satisfied() -> None:
     """OrderRepository удовлетворяет OrderRepositoryProtocol."""
     from extensions.core_entities.orders.repositories.orders import OrderRepository
-    from src.backend.core.interfaces.repositories import OrderRepositoryProtocol
     # Protocol — duck typing проверка
     assert hasattr(OrderRepository, "add")
     assert hasattr(OrderRepository, "update")

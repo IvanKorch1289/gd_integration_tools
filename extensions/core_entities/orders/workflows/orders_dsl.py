@@ -34,7 +34,6 @@ from src.backend.core.ai.retry_policy import RetryPolicy
 from src.backend.dsl.workflow.builder import WorkflowBuilder
 from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,
-    SagaDeclaration,
     SensorDeclaration,
     SleepDeclaration,
     WorkflowDeclaration,
