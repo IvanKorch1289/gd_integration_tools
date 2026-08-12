@@ -21,7 +21,10 @@ from typing import Any as Any
 from src.backend.core.logging import get_logger as get_logger
 from src.backend.entrypoints.mcp.mcp_server.helpers import (
     _action_input_schema_json,
+    _authz_manual_tool,
+    _check_mcp_manual_tool_authz,
     _check_mcp_tool_authz,
+    _manual_tool_deny_envelope,
     _register_single_tool,
 )
 from src.backend.entrypoints.mcp.mcp_server.tools_convert import _register_convert_tools
@@ -39,7 +42,13 @@ logger = get_logger(__name__)
 
 __all__ = (
     "_action_input_schema_json",
+    "_authz_manual_tool",
+    "_check_mcp_manual_tool_authz",
     "_check_mcp_tool_authz",
+    "_manual_tool_deny_envelope",
+    "_register_single_tool",
+    "_register_route_tools",
+    "_register_template_tools",
     "_register_convert_tools",
     "_register_document_tools",
     "_register_route_tools",
