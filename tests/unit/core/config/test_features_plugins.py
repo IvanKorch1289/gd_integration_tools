@@ -14,8 +14,13 @@ class TestPluginsFlagsClass:
 
     def test_plugins_flags_instantiates(self) -> None:
         flags = PluginsFlags()
-        for f in ("extensions_credit_workflow", "credit_pipeline_v2"):
-            assert getattr(flags, f) is True, f"{f} default не False"
+        # Cycle-91 (D-AUDIT-9101): credit_pipeline_v2 default-OFF per
+        # plugin.toml/README contract ("default-OFF до Sprint 8 flip ON").
+        # extensions_credit_workflow остаётся default-ON (активирован).
+        assert flags.extensions_credit_workflow is True
+        assert flags.credit_pipeline_v2 is False, (
+            "credit_pipeline_v2 default должен быть False (default-OFF)"
+        )
 
     def test_plugins_env_vars(self) -> None:
         os.environ["FEATURE_EXTENSIONS_CREDIT_WORKFLOW"] = "true"

@@ -39,7 +39,7 @@ class PluginsFlags(BaseSettings):
     )
 
     credit_pipeline_v2: bool = Field(
-        default=True,
+        default=False,
         title="T3 S7: credit_pipeline plugin (SKB/НБКИ) — V11 layout",
         description=(
             "Sprint 7 Team T3. Owner: T3. Активирует "
