@@ -23,6 +23,9 @@ from extensions.core_entities.orders.schemas.route import (  # S168 W15-17 P2-10
     OrderVersionSchemaOut,
 )
 from src.backend.core.decorators.caching import response_cache
+from src.backend.core.di.providers import (  # D-AUDIT-9601 fix (cycle 96)
+    get_s3_service_provider,
+)
 from src.backend.core.errors import NotFoundError
 from src.backend.core.integrations.skb import APISKBService, get_skb_service
 from src.backend.core.interfaces.order_storage import OrderStorageProtocol
@@ -409,7 +412,12 @@ def get_order_service() -> OrderService:
     if _order_service_instance is None:
         order_repo = importlib.import_module(_REPO_ORDERS_MOD).get_order_repo()
         file_repo = importlib.import_module(_REPO_FILES_MOD).get_file_repo()
-        s3_service = importlib.import_module(_S3_MOD).get_s3_service_dependency()
+        # D-AUDIT-9601 fix (cycle 96): заменён dynamic import S3 на
+        # canonical DI provider. Раньше:
+        #   s3_service = importlib.import_module(_S3_MOD).get_s3_service_dependency()
+        # Это обходило AST layer check (extensions → infrastructure напрямую).
+        # Теперь: capability-checked facade через core/di/providers.
+        s3_service = get_s3_service_provider()
         _order_service_instance = OrderService(
             repo=order_repo,
             schema_out=OrderSchemaOut,
