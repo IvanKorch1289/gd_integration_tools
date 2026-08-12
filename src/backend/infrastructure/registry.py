@@ -24,6 +24,7 @@ Registry **не заменяет** svcs DI (ADR-002) — он дополняет
 from __future__ import annotations
 
 import asyncio
+import threading
 import time
 from contextlib import suppress
 from dataclasses import dataclass, field
@@ -75,6 +76,12 @@ class ConnectorRegistry:
     """
 
     _instance: ConnectorRegistry | None = None
+    # D-AUDIT-8401 fix (cycle 84): thread-safe singleton.
+    # PONYTAIL: double-checked locking — fast-path без lock для hot read,
+    # затем lock + re-check для cold create. Lock на уровне classmethod
+    # (а не asyncio.Lock) потому что instance() вызывается из sync startup
+    # paths (см. core/di/providers/db.py:90) ДО старта event loop.
+    _instance_lock: threading.Lock = threading.Lock()
 
     def __init__(self) -> None:
         self._connectors: dict[str, ConnectorSpec] = {}
@@ -84,15 +91,24 @@ class ConnectorRegistry:
 
     @classmethod
     def instance(cls) -> ConnectorRegistry:
-        """Метод instance (см. signature)."""
-        if cls._instance is None:
-            cls._instance = cls()
+        """Вернуть process-wide singleton (thread-safe, double-checked locking).
+
+        PONYTAIL: hot-path без lock (99% случаев — instance уже создан в
+        startup). Cold-path: lock + re-check + construct. Это standard
+        pattern из Effective Java item 83 / Python docs.
+        """
+        if cls._instance is not None:
+            return cls._instance
+        with cls._instance_lock:
+            if cls._instance is None:
+                cls._instance = cls()
         return cls._instance
 
     @classmethod
     def reset(cls) -> None:
         """Очистить singleton (использовать только в тестах/dev)."""
-        cls._instance = None
+        with cls._instance_lock:
+            cls._instance = None
 
     # -- Регистрация ---------------------------------------------------
 

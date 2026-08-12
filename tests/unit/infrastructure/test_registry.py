@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 from collections.abc import Iterator
 from unittest.mock import AsyncMock, MagicMock
 
@@ -45,6 +46,67 @@ class TestSingleton:
         ConnectorRegistry.reset()
         r2 = ConnectorRegistry.instance()
         assert r1 is not r2
+
+    def test_concurrent_instance_returns_same_singleton(self) -> None:
+        """D-AUDIT-8401: double-checked locking — N потоков одновременно
+        вызывают instance() и должны получить ОДИН объект.
+        """
+        results: list[ConnectorRegistry] = []
+        errors: list[BaseException] = []
+        barrier = threading.Barrier(20)
+
+        def worker() -> None:
+            try:
+                barrier.wait(timeout=2.0)
+                results.append(ConnectorRegistry.instance())
+            except BaseException as exc:  # noqa: BLE001 — collect
+                errors.append(exc)
+
+        threads = [threading.Thread(target=worker) for _ in range(20)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=3.0)
+
+        assert errors == [], f"Unexpected errors in threads: {errors}"
+        assert len(results) == 20
+        # Все должны ссылаться на ОДИН singleton.
+        first = results[0]
+        assert all(r is first for r in results)
+
+    def test_concurrent_reset_and_instance_no_corruption(self) -> None:
+        """D-AUDIT-8401: при concurrent reset() + instance() не должно
+        быть 'split' singleton'ов (двух разных экземпляров, перезаписанных
+        гонкой).
+        """
+        stop_flag = threading.Event()
+        errors: list[BaseException] = []
+
+        def reader() -> None:
+            try:
+                while not stop_flag.is_set():
+                    ConnectorRegistry.instance()
+            except BaseException as exc:  # noqa: BLE001 — collect
+                errors.append(exc)
+
+        def resetter() -> None:
+            try:
+                for _ in range(200):
+                    ConnectorRegistry.reset()
+            except BaseException as exc:  # noqa: BLE001 — collect
+                errors.append(exc)
+
+        readers = [threading.Thread(target=reader) for _ in range(4)]
+        resetters = [threading.Thread(target=resetter) for _ in range(2)]
+        for t in readers + resetters:
+            t.start()
+        for t in resetters:
+            t.join(timeout=5.0)
+        stop_flag.set()
+        for t in readers:
+            t.join(timeout=5.0)
+
+        assert errors == [], f"Errors during concurrent stress: {errors}"
 
     def test_get_registry(self) -> None:
         assert isinstance(get_registry(), ConnectorRegistry)
