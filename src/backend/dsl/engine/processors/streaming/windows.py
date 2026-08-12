@@ -392,7 +392,15 @@ class GroupByKeyProcessor(_BaseWindow):
             import jmespath
 
             key = jmespath.search(self._key_path, exchange.in_message.body)
-        except Exception as _:
+        except (jmespath.exceptions.ParseError, jmespath.exceptions.JsonStringError) as exc:
+            # D-AUDIT-12701 fix (cycle 127): narrow от bare
+            # 'except Exception: _' (swallow'ил SystemExit, KeyboardInterrupt)
+            # до конкретных jmespath exceptions. Fallback key=None —
+            # message попадает в default group (None key).
+            logger.debug(
+                "StreamingWindow: jmespath search failed for key_path=%r: %s",
+                self._key_path, exc,
+            )
             key = None
 
         async with self._lock:
