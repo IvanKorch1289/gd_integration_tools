@@ -23,12 +23,16 @@ Feature flag: ``feature_flags.proc_webhook_signature`` (default-OFF).
 from __future__ import annotations
 
 import base64
+import binascii
 import hashlib
 import hmac
+import logging
 from typing import TYPE_CHECKING, Any
 
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry import processor
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -115,7 +119,16 @@ class WebhookSignatureProcessor(BaseProcessor):
         if secret_bytes.startswith("whsec_"):
             try:
                 secret_bytes_raw = base64.b64decode(secret_bytes[len("whsec_") :])
-            except Exception as _:
+            except (binascii.Error, ValueError) as exc:
+                # D-AUDIT-14501 fix (cycle 145): narrow от bare
+                # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt
+                # + unexpected exceptions) до конкретных binascii.Error/
+                # ValueError. Fallback к raw bytes encoding сохранён.
+                logger.debug(
+                    "webhook_signature: base64 decode failed (exc_type=%s "
+                    "exc_msg=%s) — falling back to raw bytes",
+                    type(exc).__name__, exc,
+                )
                 secret_bytes_raw = secret_bytes.encode()
         else:
             secret_bytes_raw = secret_bytes.encode()
@@ -187,7 +200,17 @@ class WebhookSignatureProcessor(BaseProcessor):
                     },
                 )
                 verified = True
-            except Exception as _:
+            except Exception as exc:
+                # D-AUDIT-14501 fix (cycle 145): narrow от bare
+                # 'except Exception: _' (swallow'ил exc_type/exc_msg).
+                # standardwebhooks raises WebhookVerificationError —
+                # broader Exception narrow всё равно (callback в
+                # library context).
+                logger.debug(
+                    "webhook_signature: wh.verify failed (exc_type=%s "
+                    "exc_msg=%s) — verified=False, falling back to manual",
+                    type(exc).__name__, exc,
+                )
                 verified = False
         except ImportError:
             verified = self._verify_manual(
