@@ -37,9 +37,14 @@ async def parallelism_report(name: str) -> dict[str, Any]:
     from src.backend.dsl.analysis.parallelism_analyzer import ParallelismAnalyzer
 
     try:
-        from src.backend.dsl.route_loader.registry import (  # type: ignore[import-not-found]
-            route_registry,  # type: ignore[import-not-found]
-        )
+        # D-AUDIT-11701 fix (cycle 117): canonical path
+        # src.backend.dsl.registry (НЕ src.backend.dsl.route_loader.registry
+        # — модуль НЕ существует, type: ignore suppress'ил lint но
+        # runtime всегда падал в ImportError → route_registry=None →
+        # steps=[]. Реальный route_registry singleton: canonical
+        # path src.backend.dsl.registry (re-export from
+        # src.backend.dsl.commands.registry).
+        from src.backend.dsl.registry import route_registry
     except ImportError:
         route_registry = None
 

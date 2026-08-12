@@ -18,12 +18,14 @@ import X`` остаются валидными за счёт re-export'ов.
 - :mod:`rate_limiter` — ``RateLimit`` / ``RateLimitExceeded`` / ``RateLimiter``
   Protocol; re-export ``RedisRateLimiter`` для multi-instance use case.
   Канонический низкоуровневый API (``check(identifier, policy) -> dict``).
-- :mod:`unified_rate_limiter` — high-level facade ``UnifiedRateLimiter`` +
-  typed ``RateLimitResult`` dataclass. Используется только DI-wiring
-  (``core/di/providers/infrastructure_locator``, ``resilience_bridge``)
-  и unit-тестами; намеренно НЕ re-exported в ``__all__`` чтобы DSL
-  callsite'ы зависели от канонического ``RateLimiter`` Protocol, а не
-  от typed-фасада (разные слои абстракции, не дубликаты).
+
+Примечание (D-AUDIT-9601 follow-up): ранее существовавший
+``unified_rate_limiter.py`` (``UnifiedRateLimiter`` + ``RateLimitResult``)
+удалён в 2026-08-12 — facade scaffold (S174) не имел production callsites,
+содержал fail-OPEN fallback при ошибке DI (``allowed=True`` при
+Exception), что является security risk. DSL/extensions продолжают
+использовать канонический ``RateLimiter`` Protocol через
+``infrastructure.resilience.unified_rate_limiter``.
 
 Step 3.2 объединил ``infrastructure/resilience/{breaker,retry}.py`` и
 ``core/orchestration/retry.py`` в этот пакет; OLD-модули остаются как
