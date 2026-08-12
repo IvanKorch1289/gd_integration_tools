@@ -13,9 +13,12 @@ Cross-domain ref: :func:`_build_jwt_blacklist_or_none` вызывает
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 from src.backend.core.di.module_registry import resolve_module
+
+if TYPE_CHECKING:
+    from src.backend.core.auth.jwt_backend import JwtBackend
 
 _overrides: dict[str, Any] = {}
 
@@ -43,16 +46,19 @@ def set_api_key_manager_provider(manager: Any) -> None:
 # ─────────────── Wave [s2/k1-2-jwt-jwks]: JWT backend (joserfc) ───────────────
 
 
-def get_jwt_backend_provider() -> Any:
+def get_jwt_backend_provider() -> JwtBackend:
     """Возвращает singleton :class:`JwtBackend` (joserfc-based).
 
     Wave [s2/k1-2-jwt-jwks]: заменяет прямое использование ``python-jose``
     в :func:`_verify_jwt` (auth_selector). Backend строится из
     :class:`SecureSettings` (для HS-алгоритмов) либо :class:`JwksSettings`
     (для RS/ES — pull JWKS из IdP). Если в overrides — берётся override.
+
+    Returns:
+        Типизированный экземпляр :class:`JwtBackend`.
     """
     if "jwt_backend" in _overrides:
-        return _overrides["jwt_backend"]
+        return cast("JwtBackend", _overrides["jwt_backend"])
     from src.backend.core.auth.jwt_backend import JwtBackend
     from src.backend.core.config.security import secure_settings
 

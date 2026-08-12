@@ -372,7 +372,9 @@ class AIToolDispatchProcessor(BaseAIProcessor):
         if len(raw) > self._MAX_QUERY_LEN:
             _logger.warning(
                 "%s: query truncated from %d to %d chars (S227 cycle 4 hardening)",
-                self.name, len(raw), self._MAX_QUERY_LEN,
+                self.name,
+                len(raw),
+                self._MAX_QUERY_LEN,
             )
             return raw[: self._MAX_QUERY_LEN]
         return raw

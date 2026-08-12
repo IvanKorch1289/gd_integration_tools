@@ -104,12 +104,23 @@ def _build_workflow_tool(
     она валидирует payload перед созданием инстанса. JSON-Schema
     для MCP-клиента не выставляется напрямую в FastMCP (sig-based),
     но описание в ``description`` упоминает обязательные поля.
+
+    Block 1.4-extension: workflow_* tools оборачиваются через
+    ``_authz_manual_tool`` (single wrapper above tool function level),
+    а не через прямой ``@mcp.tool(...)`` — это добавляет per-call
+    authz-проверку при ``tool_authz_enabled=True`` и непустом
+    ``tool_manual_allowlist``.
     """
+    # Локальный import, чтобы не тащить helpers.py в module-load-time
+    # (workflow_tools.py импортируется из mcp_server.create_mcp_server,
+    # а helpers.py доступен через тот же пакет).
+    from src.backend.entrypoints.mcp.mcp_server.helpers import _authz_manual_tool
+
     tool_name = _sanitize_tool_name(descriptor.name)
     description = _tool_description(descriptor)
     input_schema = descriptor.input_schema
 
-    @mcp.tool(name=tool_name, description=description)
+    @_authz_manual_tool(mcp, name=tool_name, description=description)
     async def tool_handler(
         payload: str = "{}",
         wait: bool = False,
@@ -262,8 +273,13 @@ async def _trigger_and_maybe_wait(
 
 def _register_catalog_tools(mcp: Any) -> None:
     """Регистрирует служебные tools для обнаружения и статуса."""
+    # Block 1.4-extension: см. _build_workflow_tool — manual tools
+    # оборачиваются через ``_authz_manual_tool`` (single wrapper above
+    # tool function level).
+    from src.backend.entrypoints.mcp.mcp_server.helpers import _authz_manual_tool
 
-    @mcp.tool(
+    @_authz_manual_tool(
+        mcp,
         name="workflow_list",
         description=(
             "Список всех зарегистрированных durable workflows с "
@@ -292,7 +308,8 @@ def _register_catalog_tools(mcp: Any) -> None:
             )
         return orjson.dumps(items, default=str).decode()
 
-    @mcp.tool(
+    @_authz_manual_tool(
+        mcp,
         name="workflow_status",
         description=(
             "Получить текущий статус ранее запущенного workflow-инстанса "

@@ -46,6 +46,15 @@ spec:
         - name: worker
           image: {{ printf "%s:%s" .Values.image.repository .Values.image.tag }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          # Worker entry-point. Dockerfile CMD по умолчанию — ``python manage.py
+          # run`` (FastAPI app); без явного override Helm-worker крутил бы ASGI
+          # вместо Temporal-polling-loop, и pod никогда бы не поднял очереди.
+          # K-OPS-4 fix (2026-08-03 deploy audit). Соответствует
+          # deploy/k8s/deployment-worker.yaml::command.
+          command:
+            - python
+            - -m
+            - src.backend.infrastructure.workflow.worker
           ports:
             - name: metrics
               containerPort: 9090

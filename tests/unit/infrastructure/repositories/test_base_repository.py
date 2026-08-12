@@ -1,11 +1,10 @@
 """Unit-тесты SQLAlchemyRepository.
 
 Покрывают CRUD, list, filter, pagination, count, first_or_last,
-а также NotFoundError при отсутствии записи.
+bulk_create, а также NotFoundError при отсутствии записи.
 
 Примечание: в текущей реализации ``SQLAlchemyRepository`` отсутствуют
-методы ``exists``, ``bulk_create``, ``bulk_update`` — они не включены
-в тестовый набор.
+методы ``exists`` и ``bulk_update`` — они не включены в тестовый набор.
 """
 
 from __future__ import annotations
@@ -332,3 +331,89 @@ async def test_delete_idempotent(repo: SQLAlchemyRepository[_TestItem]) -> None:
 
     assert first == obj_id
     assert second is None
+
+
+# ====================================================================
+# Sprint 3.1: bulk_create через SQLAlchemy 2.0 executemany
+# ====================================================================
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_bulk_create_empty_returns_zero(
+    repo: SQLAlchemyRepository[_TestItem],
+) -> None:
+    """``bulk_create`` с пустым ``data`` возвращает 0 и не трогает БД."""
+    inserted = await repo.bulk_create(model=_TestItem, data=[])
+
+    assert inserted == 0
+    assert await repo.count() == 0
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_bulk_create_inserts_rows_and_commits(
+    repo: SQLAlchemyRepository[_TestItem],
+) -> None:
+    """``bulk_create`` вставляет все строки в одной транзакции и коммитит.
+
+    После вызова данные видны в новой сессии (commit выполняется
+    декоратором ``main_session_manager.connection``).
+    """
+    rows = [
+        {"name": "alpha", "value": 1},
+        {"name": "beta", "value": 2},
+        {"name": "gamma", "value": 3},
+    ]
+
+    inserted = await repo.bulk_create(model=_TestItem, data=rows)
+
+    assert inserted == 3
+    assert await repo.count() == 3
+
+    # После commit данные видны через get()
+    items = await repo.get()
+    assert isinstance(items, list)
+    assert {it.name for it in items} == {"alpha", "beta", "gamma"}
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+@pytest.mark.parametrize("batch_size", [10, 100, 1000])
+async def test_bulk_create_realistic_batch_sizes(
+    repo: SQLAlchemyRepository[_TestItem], batch_size: int
+) -> None:
+    """``bulk_create`` обрабатывает реалистичные размеры батчей (10/100/1000).
+
+    Все строки должны быть вставлены одним executemany без per-row commit
+    и видны после возврата (commit на уровне декоратора).
+    """
+    rows = [{"name": f"item-{i}", "value": i} for i in range(batch_size)]
+
+    inserted = await repo.bulk_create(model=_TestItem, data=rows)
+
+    assert inserted == batch_size
+    assert await repo.count() == batch_size
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_bulk_create_uses_single_executemany(
+    repo: SQLAlchemyRepository[_TestItem],
+) -> None:
+    """``bulk_create`` использует одну транзакцию, без per-row commit.
+
+    Вызывается один раз ``add``-эквивалент — если бы был per-row commit,
+    после rollback все 100 строк пропали бы. Здесь же — после
+    ``bulk_create`` все строки видны.
+    """
+    rows = [{"name": f"item-{i}", "value": i} for i in range(100)]
+
+    await repo.bulk_create(model=_TestItem, data=rows)
+    # После bulk_create — все 100 строк должны быть в БД (одна транзакция)
+    assert await repo.count() == 100
+
+    # Дополнительная проверка: последующие операции видят эти данные
+    paginated = await repo.get_paginated(pagination=Params(page=1, size=50))
+    assert paginated["total"] == 100
+    assert len(paginated["items"]) == 50

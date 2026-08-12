@@ -14,26 +14,38 @@ class TestObservabilityFlagsClass:
 
     def test_observability_flags_instantiates(self) -> None:
         flags = ObservabilityFlags()
-        assert flags.tracing_baggage_strict is True  # default=True per code (S171 M9 sync)  # default-OFF feature flag
-        assert flags.audit_clickhouse_enabled is True  # default=True per code (S171 M9 sync)  # default-OFF feature flag
+        assert (
+            flags.tracing_baggage_strict is True
+        )  # default=True per code (S171 M9 sync)  # default-OFF feature flag
+        assert (
+            flags.audit_clickhouse_enabled is True
+        )  # default=True per code (S171 M9 sync)  # default-OFF feature flag
+        # B-series 2026-08-03: opt-in (default OFF) — флаг фиксации
+        # ``start_audit_verify`` в startup-хуке (FIX-H5).
+        assert flags.audit_hmac_verify_enabled is False
 
     def test_observability_env_vars(self) -> None:
         os.environ["FEATURE_TRACING_BAGGAGE_STRICT"] = "true"
         os.environ["FEATURE_AUDIT_CLICKHOUSE_ENABLED"] = "true"
+        os.environ["FEATURE_AUDIT_HMAC_VERIFY_ENABLED"] = "true"
         try:
             flags = ObservabilityFlags()
             assert flags.tracing_baggage_strict is True
             assert flags.audit_clickhouse_enabled is True
+            assert flags.audit_hmac_verify_enabled is True
         finally:
             del os.environ["FEATURE_TRACING_BAGGAGE_STRICT"]
             del os.environ["FEATURE_AUDIT_CLICKHOUSE_ENABLED"]
+            del os.environ["FEATURE_AUDIT_HMAC_VERIFY_ENABLED"]
 
     def test_observability_field_count(self) -> None:
-        # 2 fields: tracing_baggage_strict + audit_clickhouse_enabled
+        # 3 fields: tracing_baggage_strict + audit_clickhouse_enabled +
+        # audit_hmac_verify_enabled (B-series 2026-08-03).
         fields = ObservabilityFlags.model_fields
         obs_names = list(fields.keys())
         assert "tracing_baggage_strict" in obs_names
         assert "audit_clickhouse_enabled" in obs_names
+        assert "audit_hmac_verify_enabled" in obs_names
         assert len(obs_names) == 3  # +1 Sprint 4.6 (audit_hmac_verify_enabled)
 
 
@@ -41,8 +53,16 @@ class TestObservabilityFlagsComposition:
     def test_feature_flags_inherits_observability_fields(self) -> None:
         assert hasattr(feature_flags, "tracing_baggage_strict")
         assert hasattr(feature_flags, "audit_clickhouse_enabled")
-        assert feature_flags.tracing_baggage_strict is True  # default=True per code (S171 M9 sync)  # default-OFF feature flag
-        assert feature_flags.audit_clickhouse_enabled is True  # default=True per code (S171 M9 sync)  # default-OFF feature flag
+        assert hasattr(feature_flags, "audit_hmac_verify_enabled")
+        assert (
+            feature_flags.tracing_baggage_strict is True
+        )  # default=True per code (S171 M9 sync)  # default-OFF feature flag
+        assert (
+            feature_flags.audit_clickhouse_enabled is True
+        )  # default=True per code (S171 M9 sync)  # default-OFF feature flag
+        assert (
+            feature_flags.audit_hmac_verify_enabled is False
+        )  # B-series 2026-08-03 (opt-in)
 
     def test_feature_flags_class_mro(self) -> None:
         from src.backend.core.config.features import FeatureFlags

@@ -22,8 +22,12 @@ from src.backend.core.serialization.msgspec_hotpath import encode_json
 
 def _register_system_tools(mcp: Any) -> None:
     """Tools для мониторинга и управления системой."""
+    # Block 1.4-extension: см. tools_route.py — manual tools оборачиваются
+    # через ``_authz_manual_tool`` (single wrapper above tool function level).
+    from src.backend.entrypoints.mcp.mcp_server.helpers import _authz_manual_tool
 
-    @mcp.tool(
+    @_authz_manual_tool(
+        mcp,
         name="system_health",
         description="Проверка здоровья всех компонентов системы (DB, Redis, S3, ES, etc.).",
     )
@@ -41,7 +45,8 @@ def _register_system_tools(mcp: Any) -> None:
         except Exception as exc:
             return encode_json({"error": str(exc)}).decode("utf-8")
 
-    @mcp.tool(
+    @_authz_manual_tool(
+        mcp,
         name="system_actions",
         description="Список всех доступных actions с группировкой по домену. "
         "Полезно для обнаружения возможностей системы.",
@@ -57,7 +62,8 @@ def _register_system_tools(mcp: Any) -> None:
 
         return encode_json({"total": len(actions), "domains": domains}).decode("utf-8")
 
-    @mcp.tool(
+    @_authz_manual_tool(
+        mcp,
         name="system_processors",
         description="Список всех доступных DSL-процессоров с описаниями. "
         "Процессоры — строительные блоки для создания интеграционных маршрутов.",
@@ -82,7 +88,8 @@ def _register_system_tools(mcp: Any) -> None:
         result.sort(key=lambda x: x["name"])
         return encode_json(result).decode("utf-8")
 
-    @mcp.tool(
+    @_authz_manual_tool(
+        mcp,
         name="system_feature_flags",
         description="Показывает состояние feature flags. "
         "Feature flags позволяют включать/отключать маршруты без рестарта.",

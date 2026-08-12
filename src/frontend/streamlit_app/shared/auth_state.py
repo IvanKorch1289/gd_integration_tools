@@ -1,9 +1,8 @@
 # ruff: noqa: S105 — false positive (config field name, not a password)
 """Auth session state — Streamlit session helpers для login/logout.
 
-S169: Управление JWT token в ``st.session_state``.
-``api_client.set_token(token)`` вызывается при логине для распространения
-JWT на все доменные клиенты.
+S169: Управление JWT token в ``st.session_state``. ``BaseAPIClient`` читает
+его при сборке заголовков и передаёт всем доменным клиентам текущей сессии.
 """
 
 from __future__ import annotations

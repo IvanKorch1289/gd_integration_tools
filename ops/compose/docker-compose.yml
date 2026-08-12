@@ -59,7 +59,11 @@ services:
     build:
       context: ../..
       dockerfile: ops/compose/Dockerfile
-    entrypoint: ["python", "-m", "src.workflows.worker"]
+    # Worker entry-point: src.backend.infrastructure.workflow.worker.main() (см.
+    # src/backend/infrastructure/workflow/worker.py:411). Раньше было
+    # ``src.workflows.worker`` — модуль не существует, контейнер падал в
+    # CrashLoopBackOff (worker не поднимал Temporal polling). K-OPS-4 fix.
+    entrypoint: ["python", "-m", "src.backend.infrastructure.workflow.worker"]
     command: ["run"]
     env_file:
       - ../../.env

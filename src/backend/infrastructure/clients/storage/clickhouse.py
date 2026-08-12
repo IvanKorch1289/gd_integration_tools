@@ -22,6 +22,8 @@ import re
 import time
 from typing import Any
 
+import httpx
+
 from src.backend.core.di import app_state_singleton
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience.connector_resilience import resilient
@@ -109,8 +111,6 @@ class ClickHouseClient:
 
     def _build_client(self) -> Any:
         """Создаёт новый HTTP-клиент с pool-настройками через WAF-фасад."""
-        import httpx
-
         from src.backend.core.net.migration_helper import make_http_client
 
         # max_keepalive_connections не должно превышать max_connections (httpx требование).
@@ -189,7 +189,7 @@ class ClickHouseClient:
                 response = await self._client.get("/ping")
                 if response.status_code != 200:
                     raise RuntimeError(f"ping returned {response.status_code}")
-            except (ConnectionError, TimeoutError, OSError, RuntimeError) as exc:
+            except (ConnectionError, TimeoutError, OSError, RuntimeError, httpx.HTTPError) as exc:
                 logger.warning("ClickHouse pre-ping failed (%s) — recreating pool", exc)
                 await self.close()
                 await self.connect()
@@ -335,7 +335,7 @@ class ClickHouseClient:
             client = await self._ensure_client()
             response = await client.get("/ping")
             return response.status_code == 200
-        except (ConnectionError, TimeoutError, OSError):
+        except (ConnectionError, TimeoutError, OSError, httpx.HTTPError):
             return False
 
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:

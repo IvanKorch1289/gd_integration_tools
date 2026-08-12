@@ -219,24 +219,39 @@ def _is_in_type_checking_block(tree: ast.AST, target_lineno: int) -> bool:
 
     S27: TYPE_CHECKING импорты (например, ``DLQEnvelope`` в dlq_policy.py)
     не создают runtime-зависимостей и не должны считаться нарушениями слоёв.
+
+    Sprint 5.3 (L2 typing ratchet): распознаёт обе формы записи условия:
+
+    * ``typing.TYPE_CHECKING`` — qualified form (``import typing``);
+    * ``TYPE_CHECKING`` — unqualified form (``from typing import TYPE_CHECKING``).
+
+    Раньше функция ловила только qualified form, что давало ~20-24 false
+    positives в allowlist (см. ``tests/unit/tools/test_check_layers_lazy_imports.py``).
     """
     for node in ast.walk(tree):
-        if isinstance(node, ast.If):
-            test = node.test
-            if (
-                isinstance(test, ast.Attribute)
-                and isinstance(test.value, ast.Name)
-                and test.value.id == "typing"
-                and test.attr == "TYPE_CHECKING"
-            ):
-                if node.col_offset <= 0:  # top-level only
-                    for child in ast.walk(node):
-                        if isinstance(child, (ast.Import, ast.ImportFrom)):
-                            if (
-                                hasattr(child, "lineno")
-                                and child.lineno == target_lineno
-                            ):
-                                return True
+        if not isinstance(node, ast.If):
+            continue
+        test = node.test
+        # Pattern 1: qualified ``typing.TYPE_CHECKING``.
+        is_qualified = (
+            isinstance(test, ast.Attribute)
+            and isinstance(test.value, ast.Name)
+            and test.value.id == "typing"
+            and test.attr == "TYPE_CHECKING"
+        )
+        # Pattern 2: unqualified ``TYPE_CHECKING`` (from ``from typing import ...``).
+        is_unqualified = isinstance(test, ast.Name) and test.id == "TYPE_CHECKING"
+        if not (is_qualified or is_unqualified):
+            continue
+        if node.col_offset > 0:  # top-level only
+            continue
+        for child in ast.walk(node):
+            if isinstance(child, (ast.Import, ast.ImportFrom)):
+                if (
+                    hasattr(child, "lineno")
+                    and child.lineno == target_lineno
+                ):
+                    return True
     return False
 
 

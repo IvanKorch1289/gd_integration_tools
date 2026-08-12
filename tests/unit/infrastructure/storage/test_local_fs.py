@@ -20,10 +20,25 @@ def test_init_creates_base_path(tmp_path: Path) -> None:
     assert base.exists()
 
 
-def test_init_warns_in_production(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_init_does_not_warn_in_production(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Sprint 3.2: production-check вынесен из ``__init__`` в composition root.
+
+    Прямая инстанцияция ``LocalFSStorage`` (в т.ч. в production env) больше
+    НЕ эмитит ``RuntimeWarning`` — hot-path чистый. fail-stop живёт в
+    :func:`infrastructure.storage.factory._enforce_local_fs_safe_in_prod`
+    и тестируется отдельно в ``test_factory.py``.
+    """
+    import warnings as _warnings
+
     monkeypatch.setenv("APP_ENVIRONMENT", "production")
-    with pytest.warns(RuntimeWarning, match="небезопасно"):
+    with _warnings.catch_warnings(record=True) as caught:
+        _warnings.simplefilter("always")
         LocalFSStorage(base_path="/tmp/test_local_fs_prod")
+    prod_warnings = [w for w in caught if "LocalFSStorage" in str(w.message)]
+    assert prod_warnings == [], (
+        f"LocalFSStorage.__init__ не должен эмитить warning в production, "
+        f"получено: {[str(w.message) for w in prod_warnings]}"
+    )
 
 
 def test_safe_path_valid(storage: LocalFSStorage, tmp_path: Path) -> None:

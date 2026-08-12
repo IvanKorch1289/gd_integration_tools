@@ -25,6 +25,7 @@ Wave: ``[wave:s8/k2-w2-outbox-dispatcher-impl]``.
 from __future__ import annotations
 
 import asyncio
+import random
 from collections.abc import Awaitable, Callable, Sequence
 from datetime import UTC, datetime
 from typing import Protocol, runtime_checkable
@@ -116,6 +117,7 @@ class OutboxDispatcher:
             batch_size=100,
             max_retries=5,
             retry_backoff_seconds=2.0,
+            retry_jitter=0.2,                          # ±20% jitter
             enabled=True,
         )
         await dispatcher.start()
@@ -126,7 +128,9 @@ class OutboxDispatcher:
 
     * При ``enabled=False`` ``start()`` — no-op; задача не создаётся.
     * Между итерациями ждём ``poll_interval`` через ``asyncio.sleep``.
-    * Per-event retry: до ``max_retries`` попыток с exponential backoff.
+    * Per-event retry: до ``max_retries`` попыток с exponential backoff
+      и ±``retry_jitter`` jitter (consistent with
+      :class:`DurableWorkflowRunner._compute_backoff`).
     * При исчерпании retry — handoff в DLQ + structured-log WARNING.
     * При ``stop()`` дренажа текущей итерации идёт до её естественного
       завершения (или cancel при timeout).
@@ -144,6 +148,7 @@ class OutboxDispatcher:
         batch_size: int = 100,
         max_retries: int = 5,
         retry_backoff_seconds: float = 2.0,
+        retry_jitter: float = 0.2,
         enabled: bool = True,
         task_registry: TaskRegistry | None = None,
     ) -> None:
@@ -160,6 +165,10 @@ class OutboxDispatcher:
             batch_size: размер пачки за одну итерацию.
             max_retries: максимум попыток доставки (включая первую).
             retry_backoff_seconds: начальный backoff между retry-попытками.
+            retry_jitter: доля случайного jitter (±) поверх exponential
+                backoff; ``0.0`` отключает jitter (детерминированный
+                backoff). По умолчанию ``0.2`` (±20%) — consistent with
+                :class:`DurableWorkflowRunner._compute_backoff`.
             enabled: feature-flag; ``False`` → ``start`` no-op.
             task_registry: реестр фоновых задач; ``None`` → singleton.
 
@@ -173,6 +182,7 @@ class OutboxDispatcher:
         self._batch_size = batch_size
         self._max_retries = max(1, max_retries)
         self._retry_backoff_seconds = retry_backoff_seconds
+        self._retry_jitter = retry_jitter
         self._enabled = enabled
         self._task_registry = task_registry or get_task_registry()
         self._task: asyncio.Task[None] | None = None
@@ -303,8 +313,9 @@ class OutboxDispatcher:
                 )
                 if attempt >= self._max_retries:
                     break
-                # Exponential backoff: 2.0 * 2^(attempt-1) — 2, 4, 8, ...
-                sleep_for = self._retry_backoff_seconds * (2 ** (attempt - 1))
+                # Exponential backoff с jitter — consistent with
+                # DurableWorkflowRunner._compute_backoff.
+                sleep_for = self._compute_sleep_for(attempt)
                 try:
                     await asyncio.wait_for(self._stopping.wait(), timeout=sleep_for)
                     # Пробудились по stop — выходим без повторной попытки.
@@ -339,3 +350,25 @@ class OutboxDispatcher:
                 "outbox.dispatcher.dlq_handoff_failed",
                 extra={"event_id": event.event_id, "error": repr(exc)},
             )
+
+    def _compute_sleep_for(self, attempt: int) -> float:
+        """Exponential backoff с jitter для одной retry-итерации.
+
+        Формула (consistent with :class:`DurableWorkflowRunner._compute_backoff`):
+
+            raw = retry_backoff_seconds * 2 ** (attempt - 1)
+            sleep_for = raw * (1 + uniform(-retry_jitter, +retry_jitter))
+
+        Args:
+            attempt: номер неудачной попытки (1-based).
+
+        Returns:
+            Длительность паузы в секундах перед следующей попыткой. Всегда
+            неотрицательная и ограниченная диапазоном
+            ``[raw * (1 - jitter), raw * (1 + jitter)]``.
+        """
+        raw = self._retry_backoff_seconds * (2 ** (attempt - 1))
+        jitter = self._retry_jitter
+        # Зануление jitter приводит к детерминированному backoff —
+        # поведение совместимо со старой реализацией без jitter.
+        return raw * (1.0 + random.uniform(-jitter, jitter))  # noqa: S311  # retry-jitter, не криптография

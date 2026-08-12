@@ -57,13 +57,14 @@ jobs:
 
       - name: Coverage gate ([wave:s19/k2-w4-coverage-ratchet-75])
         # S19 K2 W4 — coverage gate ratchet 70% → 75%.
-        # Threshold читается из .baselines/coverage.json (baseline-aware).
+        # coverage_percent из baseline задаёт ratchet; threshold 75 задан явно.
         # Любое падение coverage > 0.5% от baseline блокирует CI в --strict.
         run: |
           uv run python tools/check_coverage_gate.py \
               --coverage-xml coverage.xml \
               --baseline .baselines/coverage.json \
-              --threshold 75
+              --threshold 75 \
+              --strict
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4

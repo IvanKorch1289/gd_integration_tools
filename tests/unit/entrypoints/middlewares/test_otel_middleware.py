@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -378,3 +379,173 @@ class TestOtelMiddlewarePureASGI:
         assert attrs.get("correlation.id") == "corr-1"
         assert attrs.get("request.id") == "req-1"
         assert attrs.get("app.tenant_id") == "t1"  # from x-tenant-id header
+
+    @pytest.mark.asyncio
+    async def test_concurrent_requests_keep_status_per_span(
+        self, middleware_with_tracer: OtelMiddleware
+    ) -> None:
+        """Параллельные запросы не смешивают HTTP-статусы своих span-ов."""
+        both_started = asyncio.Event()
+        started_count = 0
+        spans: dict[str, MagicMock] = {}
+
+        async def downstream(scope, receive, send):
+            nonlocal started_count
+            status = 500 if scope["path"] == "/failure" else 200
+            await send({"type": "http.response.start", "status": status, "headers": []})
+            started_count += 1
+            if started_count == 2:
+                both_started.set()
+            await asyncio.wait_for(both_started.wait(), timeout=1)
+            await send({"type": "http.response.body", "body": b"ok"})
+
+        def start_span(name: str, **kwargs: object) -> MagicMock:
+            span = MagicMock()
+            span_cm = MagicMock()
+            span_cm.__enter__.return_value = span
+            span_cm.__exit__.return_value = None
+            spans[name] = span
+            return span_cm
+
+        middleware_with_tracer.app = downstream
+        middleware_with_tracer._tracer.start_as_current_span.side_effect = start_span
+
+        async def invoke(path: str, send: AsyncMock) -> None:
+            await middleware_with_tracer(
+                _make_scope("GET", path), _make_receive(), send
+            )
+
+        with patch("opentelemetry.trace.SpanKind", MagicMock()):
+            results = await asyncio.gather(
+                invoke("/failure", AsyncMock()),
+                invoke("/success", AsyncMock()),
+                return_exceptions=True,
+            )
+
+        assert results == [None, None]
+        spans["http.get /failure"].set_attribute.assert_any_call(
+            "http.status_code", 500
+        )
+        spans["http.get /success"].set_attribute.assert_any_call(
+            "http.status_code", 200
+        )
+
+    @pytest.mark.asyncio
+    async def test_incoming_traceparent_forwarded_to_span_context(
+        self, middleware_with_tracer: OtelMiddleware
+    ) -> None:
+        """Sprint 1.5 / cycle 56: входящий `traceparent` header извлекается
+        из scope и пробрасывается в downstream trace-context через
+        ``start_as_current_span(context=...)``.
+
+        Без этого инварианта downstream handler создаёт orphan span-ы
+        и distributed trace разрывается на границе сервиса.
+        """
+        incoming_traceparent = "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"
+        extracted_ctx = MagicMock(name="extracted_ctx")
+        middleware_with_tracer._propagator.extract.return_value = extracted_ctx
+        middleware_with_tracer._propagator.inject.side_effect = lambda carrier: (
+            carrier.update({"traceparent": "00-out-out-out-01"})
+        )
+
+        app = AsyncMock()
+        app.side_effect = _downstream_ok()
+        middleware_with_tracer.app = app
+
+        span_mock = MagicMock()
+        cm_mock = MagicMock()
+        cm_mock.__enter__ = MagicMock(return_value=span_mock)
+        cm_mock.__exit__ = MagicMock(return_value=None)
+        middleware_with_tracer._tracer.start_as_current_span.return_value = cm_mock
+
+        with (
+            patch(
+                "opentelemetry.trace.get_tracer",
+                return_value=middleware_with_tracer._tracer,
+            ),
+            patch("opentelemetry.trace.SpanKind", MagicMock()),
+        ):
+            send = AsyncMock()
+            await middleware_with_tracer(
+                _make_scope(
+                    "GET",
+                    "/api/v1/foo",
+                    headers=[(b"traceparent", incoming_traceparent.encode("ascii"))],
+                ),
+                _make_receive(),
+                send,
+            )
+
+        # 1) Пропагатор вызван с carrier, содержащим входящий traceparent.
+        middleware_with_tracer._propagator.extract.assert_called_once()
+        extract_kwargs = middleware_with_tracer._propagator.extract.call_args.kwargs
+        extract_carrier = extract_kwargs["carrier"]
+        assert extract_carrier["traceparent"] == incoming_traceparent
+
+        # 2) Извлечённый context передан в start_as_current_span как
+        #    context=... — иначе downstream handler не слинкуется с parent.
+        middleware_with_tracer._tracer.start_as_current_span.assert_called_once()
+        span_kwargs = (
+            middleware_with_tracer._tracer.start_as_current_span.call_args.kwargs
+        )
+        assert span_kwargs["context"] is extracted_ctx
+        assert span_kwargs["kind"] is not None  # SpanKind.SERVER
+        assert span_kwargs["attributes"]["http.route"] == "/api/v1/foo"
+
+    @pytest.mark.asyncio
+    async def test_status_holder_is_per_request_after_sprint15(
+        self, middleware_with_tracer: OtelMiddleware
+    ) -> None:
+        """Sprint 1.5 fix: ``status_holder`` живёт в closure текущего запроса,
+        а не на общем ``self._cycle56_status`` (иначе race при concurrent
+        requests ломает http.status_code атрибут).
+        """
+
+        # Downstream возвращает разные статусы для разных path; никакого
+        # shared self-атрибута не должно остаться.
+        async def downstream(scope, receive, send):
+            status = 201 if scope["path"] == "/created" else 404
+            await send({"type": "http.response.start", "status": status, "headers": []})
+            await send({"type": "http.response.body", "body": b"ok"})
+
+        middleware_with_tracer.app = downstream
+
+        # Sanity: pre-Sprint-1.5 атрибут не должен существовать на middleware.
+        assert not hasattr(middleware_with_tracer, "_cycle56_status"), (
+            "Sprint 1.5 race-fix regression: shared self._cycle56_status "
+            "must be replaced by per-request closure (status_holder)."
+        )
+
+        spans: dict[str, MagicMock] = {}
+
+        def start_span(name: str, **kwargs: object) -> MagicMock:
+            span = MagicMock()
+            span_cm = MagicMock()
+            span_cm.__enter__.return_value = span
+            span_cm.__exit__.return_value = None
+            spans[name] = span
+            return span_cm
+
+        middleware_with_tracer._tracer.start_as_current_span.side_effect = start_span
+        middleware_with_tracer._propagator.inject.side_effect = lambda carrier: (
+            carrier.update({"traceparent": "00-x-x-01"})
+        )
+
+        with patch("opentelemetry.trace.SpanKind", MagicMock()):
+            await asyncio.gather(
+                middleware_with_tracer(
+                    _make_scope("POST", "/created"), _make_receive(), AsyncMock()
+                ),
+                middleware_with_tracer(
+                    _make_scope("GET", "/missing"), _make_receive(), AsyncMock()
+                ),
+                return_exceptions=True,
+            )
+
+        # Оба span-а получили СВОИ статусы, без cross-contamination.
+        spans["http.post /created"].set_attribute.assert_any_call(
+            "http.status_code", 201
+        )
+        spans["http.get /missing"].set_attribute.assert_any_call(
+            "http.status_code", 404
+        )

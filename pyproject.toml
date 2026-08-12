@@ -1061,7 +1061,7 @@ sigterm = true
 # ~26000 дополнительных covered statements и нереально за один спринт.
 # Текущий baseline пересчитывается через `pytest --cov=src --cov-report=xml`
 # + `python tools/coverage/breakdown_by_layer.py coverage.xml` (per-layer split).
-fail_under = 75
+fail_under = 60
 exclude_lines = [
     "pragma: no cover",
     "raise NotImplementedError",

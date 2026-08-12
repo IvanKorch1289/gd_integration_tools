@@ -23,7 +23,9 @@ _DEFAULT_COST_PER_TOKEN: dict[str, float] = {
 }
 
 
-def _try_litellm_cost(model: str, prompt_tokens: int, completion_tokens: int) -> float | None:
+def _try_litellm_cost(
+    model: str, prompt_tokens: int, completion_tokens: int
+) -> float | None:
     """Попытка получить cost через litellm.cost_calculator.
 
     Returns None если litellm недоступен или model unknown.
@@ -33,9 +35,7 @@ def _try_litellm_cost(model: str, prompt_tokens: int, completion_tokens: int) ->
         from litellm import completion_cost
 
         cost = completion_cost(
-            model=model,
-            prompt="x" * prompt_tokens,
-            completion="x" * completion_tokens,
+            model=model, prompt="x" * prompt_tokens, completion="x" * completion_tokens
         )
         return float(cost) if cost is not None else None
     except (ImportError, AttributeError, ValueError, TypeError, RuntimeError) as cost_exc:
@@ -145,7 +145,6 @@ class LLMCallProcessor(BaseProcessor):
 
         if feature_flags is not None and feature_flags.ai_gateway_enforce:
             try:
-                import src.backend.core.ai.gateway
                 from src.backend.core.ai.gateway_models import AIRequest
                 from src.backend.services.ai.gateway_adapter import get_ai_gateway
             except ImportError as exc:

@@ -37,7 +37,7 @@ __all__ = (
 )
 
 
-def get_correlation_id() -> Any:
+def get_correlation_id() -> str:
     """Возвращает текущий correlation_id из contextvar (string).
 
     Per D102 (single-source-of-truth через facade), provider
@@ -50,6 +50,7 @@ def get_correlation_id() -> Any:
     from src.backend.infrastructure.observability.correlation import (
         get_correlation_id as _get_cid,
     )
+
     return _get_cid()
 
 
@@ -139,12 +140,14 @@ def get_set_workers_active() -> Any:
 def get_logger_protocol_class() -> Any:
     """Возвращает ``logging.base.LoggerProtocol`` class."""
     from src.backend.infrastructure.logging.base import LoggerProtocol
+
     return LoggerProtocol
 
 
 def get_logger_factory() -> Any:
     """Возвращает ``core.logging.get_logger`` factory."""
     from src.backend.core.logging import get_logger
+
     return get_logger
 
 

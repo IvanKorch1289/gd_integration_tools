@@ -83,6 +83,35 @@ def test_type_checking_import_is_skipped() -> None:
         )
 
 
+def test_type_checking_unqualified_import_is_skipped() -> None:
+    """Sprint 5.3: ``if TYPE_CHECKING:`` (через ``from typing import TYPE_CHECKING``) — НЕ нарушение.
+
+    Pre-Sprint 5.3 функция распознавала только qualified form
+    (``typing.TYPE_CHECKING``), unqualified (``TYPE_CHECKING``) ошибочно
+    считалась violation → ~20-24 false positives в allowlist (real
+    примеры: ``core/audit/facade/audit_service.py``,
+    ``services/dsl/builder_service.py``, ``services/plugins/registries.py``,
+    ``services/ops/notify_actions.py``, ``services/schema_registry/populator.py``).
+    """
+    src = textwrap.dedent(
+        """
+        from __future__ import annotations
+        from typing import TYPE_CHECKING
+
+        if TYPE_CHECKING:
+            from src.backend.infrastructure.cache import redis_cache
+            from src.backend.services.ai.gateway import LLMGateway
+        """
+    ).strip()
+    tree = ast.parse(src)
+    for _module, lineno, _is_lazy in check_layers._imports(tree):
+        if lineno < 5:  # pragma: no cover — out of TYPE_CHECKING block
+            continue
+        assert check_layers._is_in_type_checking_block(tree, lineno), (
+            f"Line {lineno} should be in TYPE_CHECKING block (unqualified form)"
+        )
+
+
 def test_violation_key_format() -> None:
     """Violation key — ``{rel}\\t{layer}\\t{module}``, stable для allowlist."""
     key = check_layers._violation_key(

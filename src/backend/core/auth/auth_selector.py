@@ -30,7 +30,6 @@ implementation в core (избежание downward layer violation:
 
 from __future__ import annotations
 
-import base64
 from collections.abc import Callable
 from typing import Any
 
@@ -95,53 +94,18 @@ async def _verify_jwt(request: Request) -> AuthContext | None:
 
 
 async def _verify_basic(request: Request) -> AuthContext | None:
-    auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Basic "):
-        return None
-    try:
-        decoded = base64.b64decode(auth[6:]).decode()
-        user, _, password = decoded.partition(":")
-        if not user or not password:
-            return None
-        return AuthContext(AuthMethod.BASIC, user, {"auth_type": "basic"})
-    except Exception as _:
-        return None
+    """Отклоняет Basic до подключения проверяющего credentials backend."""
+    return None
 
 
 async def _verify_mtls(request: Request) -> AuthContext | None:
-    """Проверка client certificate (mTLS) через :class:`MtlsBackend`.
+    """Отклоняет proxy mTLS headers без настроенной границы доверия.
 
-    Envoy/Nginx с TLS-termination передают:
-    * ``X-Client-Cert-Fingerprint`` — sha256 fingerprint;
-    * ``X-Client-Cert-Subject`` — subject DN;
-    * ``X-Client-Cert`` (опц.) — PEM-encoded для full validation.
-
-    V15 S2: backend выполняет expiry-check и опц. CA-pinning.
+    Заголовки ``X-Client-Cert-*`` полностью контролируются клиентом, пока
+    приложение не проверяет адрес trusted TLS-terminating proxy. Такой config
+    в auth-стеке отсутствует, поэтому headers не являются credentials.
     """
-    from src.backend.core.auth.mtls_backend import (
-        MtlsBackend,
-        MtlsVerificationError,
-        default_cryptography_parser,
-    )
-
-    parser = None
-    try:
-        parser = default_cryptography_parser()
-    except RuntimeError:
-        # cryptography не установлена — fallback на headers-only валидацию.
-        parser = None
-
-    backend = MtlsBackend(cert_parser=parser)
-    try:
-        result = backend.verify(request)
-    except MtlsVerificationError as exc:
-        logger.warning("mTLS verification failed: %s", exc.reason)
-        return None
-    if result is None:
-        return None
-    return AuthContext(
-        AuthMethod.MTLS, principal=str(result["principal"]), metadata=result,
-    )
+    return None
 
 
 async def _verify_saml(request: Request) -> AuthContext | None:

@@ -35,6 +35,7 @@ from src.backend.dsl.service import get_dsl_service
 from src.backend.entrypoints._action_bridge import dispatch_action_or_dsl
 from src.backend.entrypoints.websocket.ws_auth import (
     WSAuthError,
+    WSSession,
     extract_credential,
     get_ws_authenticator,
 )
@@ -307,6 +308,25 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
 
             # Унифицированная диспетчеризация Wave 1.5.
             try:
+                # Sprint 1.1 (L5 Security Chain): пробрасываем
+                # principal и permissions из WSSession (выставленного
+                # _authenticate_handshake) в DSL-fallback path.
+                # Без auth — backward-compat ("anonymous", fail-closed).
+                # ``isinstance`` guard: в unit-тестах ``ws.state``
+                # это MagicMock (без WSSession), и без проверки мы бы
+                # передали MagicMock в ``ExecutionContext.principal``.
+                ws_session = getattr(websocket.state, "ws_session", None)
+                ws_principal = ""
+                ws_permissions: tuple[str, ...] = ()
+                if ws_session is not None and isinstance(
+                    ws_session, WSSession
+                ):
+                    ws_principal = ws_session.principal or ws_session.client_id
+                    ws_permissions = tuple(
+                        f"group:{group}"
+                        for group in sorted(ws_session.allowed_groups)
+                    )
+
                 bridge = await dispatch_action_or_dsl(
                     action_id=action,
                     dsl_route_id=action,
@@ -314,6 +334,8 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                     transport="ws",
                     headers={"ws-client-id": client_id, "ws-action": action},
                     attributes={"client_id": client_id},
+                    principal=ws_principal,
+                    permissions=ws_permissions,
                 )
                 if bridge.error_code == "action_not_found":
                     await ws_manager.send_json(

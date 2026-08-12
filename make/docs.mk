@@ -54,7 +54,7 @@ coverage-gate: ## К3 S6 [wave:s6/k3-coverage-gate-70] — pytest coverage gate 
 	$(UV_RUN) pytest tests --cov=src/backend --cov-report=xml --cov-report=term --maxfail=20 -n auto
 	$(UV_RUN) python -m coverage combine  # S53 W4: merge per-worker .coverage.<id> files
 	$(UV_RUN) python -m coverage report  # S53 W4: regenerate report from combined
-	$(UV_RUN) python tools/check_coverage_gate.py --coverage-xml coverage.xml --baseline .baselines/coverage.json --threshold 50
+	$(UV_RUN) python tools/check_coverage_gate.py --coverage-xml coverage.xml --baseline .baselines/coverage.json --threshold 50 --strict
 	@$(SUCCESS) "Coverage gate passed"
 
 coverage-gate-strict: ## [wave:s19/k2-w4-coverage-ratchet-75] — coverage gate strict 70→75%
@@ -67,7 +67,7 @@ coverage-gate-strict: ## [wave:s19/k2-w4-coverage-ratchet-75] — coverage gate 
 
 coverage-gate-fast: ## Fast coverage gate (skip pytest, reuse existing coverage.xml)
 	@$(INFO) "Running coverage gate (fast, reuse coverage.xml)..."
-	$(UV_RUN) python tools/check_coverage_gate.py --coverage-xml coverage.xml --baseline .baselines/coverage.json --threshold 50
+	$(UV_RUN) python tools/check_coverage_gate.py --coverage-xml coverage.xml --baseline .baselines/coverage.json --threshold 50 --strict
 	@$(SUCCESS) "Coverage gate (fast) passed"
 
 pre-prod-check: ## S36 w4: 30+ gate pre-prod-check (BLOCKING, ratchet-aware)

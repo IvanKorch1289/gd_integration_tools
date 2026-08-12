@@ -1,6 +1,7 @@
 from functools import lru_cache
 from typing import Any
 
+from src.backend.core.errors import RoutePermissionDeniedError
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.execution_engine import ExecutionEngine
@@ -40,6 +41,9 @@ class DslService:
 
         Raises:
             RouteDisabledError: Маршрут заблокирован feature-флагом.
+            RoutePermissionDeniedError: K3 S19 W3 — маршрут декларирует
+                ``requires_permission`` в ``route.toml [security]``, но
+                principal не прошёл :func:`check_route_permission`.
             KeyError: Маршрут не зарегистрирован.
             RoutePermissionDeniedError: principal не имеет требуемой
                 permission (V22 R-V15-1 / Sprint 1).
@@ -48,45 +52,52 @@ class DslService:
         if context is None:
             context = ExecutionContext()
         pipeline = route_registry.get(route_id)
-        # Sprint 1: route-wide permission enforcement (V22 R-V15-1).
-        # Если pipeline.security декларирует требуемые permissions и
-        # ``AuthorizationGateway`` зарегистрирован, делаем check.
-        # Иначе — fail-closed (anonymous → deny).
-        await self._enforce_route_permission(pipeline, context)
+        # K3 S19 W3: route-level authorization enforcement.
+        # Pipeline.security заполняется RouteLoader'ом из
+        # ``manifest.security.requires_permission``. Непустой кортеж —
+        # сигнал для вызова AuthorizationGateway через check_route_permission.
+        # Если security=None/empty — поведение backward-compat (no check).
+        if pipeline.security:
+            await self._enforce_route_permission(pipeline.route_id, pipeline.security, context)
         return await self._engine.execute(
             pipeline, body=body, headers=headers, context=context,
         )
 
     @staticmethod
     async def _enforce_route_permission(
-        pipeline: Any, context: ExecutionContext,
+        route_id: str,
+        required_permissions: tuple[str, ...],
+        context: ExecutionContext | None,
     ) -> None:
-        """Sprint 1: route-wide permission enforcement (V22 R-V15-1).
+        """K3 S19 W3: вызывает ``check_route_permission`` и валит на deny.
 
-        Если ``pipeline.security`` пустой — public route, skip check.
-        Иначе проверяет ``context.principal`` против требуемых permissions
-        через :class:`AuthorizationGateway`. Fail-closed: anonymous
-        (principal="") → deny; gateway not registered → deny.
+        Principal и фактические permissions берутся из
+        :class:`ExecutionContext`; пустые значения трактуются как
+        ``"anonymous"`` / ``()`` — это fail-closed при включённом
+        feature-flag.
+        Импорт локальный, чтобы не создавать циклическую зависимость
+        ``services.routes.route_authz`` → ``dsl`` (см. ADR-043 layering).
         """
-        from src.backend.core.errors import RoutePermissionDeniedError
         from src.backend.services.routes.route_authz import check_route_permission
 
-        required = getattr(pipeline, "security", ()) or ()
-        if not required:
-            return  # public route, no permission check
-        principal = getattr(context, "principal", "") or "anonymous"
+        ctx_dict: dict[str, Any] = {"route_id": route_id}
+        principal = "anonymous"
+        actual_permissions: tuple[str, ...] = ()
+        if context is not None:
+            principal = context.principal or "anonymous"
+            actual_permissions = context.permissions or ()
+            ctx_dict["correlation_id"] = context.route_id or ""
+        # Фактические permissions-principal'а передаём в ctx — permission_step
+        # читает ``ctx["permissions"]`` (см. permission_mixin.permission_step).
+        ctx_dict["permissions"] = actual_permissions
         allowed, reason = await check_route_permission(
-            route_id=getattr(pipeline, "route_id", ""),
+            route_id=route_id,
             principal=principal,
-            permissions=tuple(required),
+            permissions=required_permissions,
+            context=ctx_dict,
         )
         if not allowed:
-            raise RoutePermissionDeniedError(
-                route_id=getattr(pipeline, "route_id", ""),
-                principal=principal,
-                required_permissions=tuple(required),
-                reason=reason,
-            )
+            raise RoutePermissionDeniedError(route_id=route_id, reason=reason)
 
     @staticmethod
     def list_routes() -> tuple[str, ...]:

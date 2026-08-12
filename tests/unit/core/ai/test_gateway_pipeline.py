@@ -215,14 +215,18 @@ async def test_pipeline_strict_policy_raises_when_missing(
 async def test_capability_gate_called_with_workflow_id(
     enforced: None, basic_request: AIRequest,
 ) -> None:
-    """CapabilityGate.check получает строку ``ai.invoke.<workflow_id>``."""
+    """CapabilityGate.check получает 3-arg ``(plugin, capability, scope)``.
+
+    Sprint 1.5: pipeline переключён на canonical signature, чтобы
+    ``CapabilityGate.check`` не падал с ``TypeError`` и не глушил deny.
+    """
     gate = MagicMock()
     gate.check = MagicMock(return_value=None)
     llm = _FakeLiteLLMGateway()
 
     gateway = AIGateway(capability_gate=gate, sanitizer=None, llm_gateway=llm)
     await gateway.invoke(basic_request)
-    gate.check.assert_called_once_with("ai.invoke.credit_check")
+    gate.check.assert_called_once_with("core", "ai.invoke.credit_check", "credit_check")
 
 
 @pytest.mark.asyncio

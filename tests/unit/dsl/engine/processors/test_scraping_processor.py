@@ -1,4 +1,12 @@
-"""Unit-тесты scraping processors — _validate_url, _is_blocked_host, ScrapeProcessor, PaginateProcessor, ApiProxyProcessor."""
+"""Unit-тесты scraping processors — _validate_url, _is_blocked_host, ScrapeProcessor, PaginateProcessor, ApiProxyProcessor.
+
+S202 audit closure: все три процессора имеют ``required_capability =
+"rpa.http.request"`` (existing vocabulary). Capability-facade stub
+возвращает denied в unit-тестах, поэтому ``auth_check`` подменяется
+на no-op через ``_bypass_auth_check`` fixture. Round-trip тесты
+проверяют что ``required_capability`` объявлен и соответствует
+existing vocabulary.
+"""
 
 
 from __future__ import annotations
@@ -17,9 +25,82 @@ from src.backend.dsl.engine.processors.scraping import (
     _validate_url,
 )
 
+# ── auth_check bypass (S202 audit pattern) ──
+
+
+@pytest.fixture(autouse=True)
+def _bypass_auth_check(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Подменяет ``auth_check`` на no-op для всех 3 scraping processors."""
+    for proc_cls in (ScrapeProcessor, PaginateProcessor, ApiProxyProcessor):
+        monkeypatch.setattr(proc_cls, "auth_check", AsyncMock(return_value=True))
+
 
 def _ex(body: Any = None, headers: dict[str, Any] | None = None) -> Exchange[Any]:
     return Exchange(in_message=Message(body=body, headers=headers or {}))
+
+
+# ── required_capability round-trip (S202 audit, D-4 closure) ─────────────
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "proc_cls", [ScrapeProcessor, PaginateProcessor, ApiProxyProcessor]
+)
+def test_required_capability_matches_vocabulary(proc_cls: type) -> None:
+    """Round-trip: ``required_capability`` соответствует existing vocabulary."""
+    assert proc_cls.required_capability == "rpa.http.request"
+    assert proc_cls.audit_event == "rpa.http.request"
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_scrape_auth_check_denied_short_circuits() -> None:
+    """Если ``auth_check`` denied → processor не выполняет HTTP fetch.
+
+    Когда ``auth_check`` patched — это mock, не вызывающий exchange
+    side-effects. Поэтому проверяем, что ``set_out`` / ``set_property``
+    не вызываются (page.goto not awaited equivalent).
+    """
+    proc = ScrapeProcessor(url="https://example.com", selectors={"title": "h1"})
+    ex = _ex()
+
+    with patch.object(ScrapeProcessor, "auth_check", new=AsyncMock(return_value=False)):
+        await proc.process(ex, MagicMock())
+
+    assert "scraped" not in ex.properties
+    assert ex.out_message is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_paginate_auth_check_denied_short_circuits() -> None:
+    """Если ``auth_check`` denied → processor не начинает crawling."""
+    proc = PaginateProcessor(start_url="https://example.com")
+    ex = _ex()
+
+    with patch.object(
+        PaginateProcessor, "auth_check", new=AsyncMock(return_value=False)
+    ):
+        await proc.process(ex, MagicMock())
+
+    assert "paginated_results" not in ex.properties
+    assert ex.out_message is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_api_proxy_auth_check_denied_short_circuits() -> None:
+    """Если ``auth_check`` denied → processor не делает proxy-вызов."""
+    proc = ApiProxyProcessor(base_url="https://api.example.com")
+    ex = _ex()
+
+    with patch.object(
+        ApiProxyProcessor, "auth_check", new=AsyncMock(return_value=False)
+    ):
+        await proc.process(ex, MagicMock())
+
+    assert "proxy_url" not in ex.properties
+    assert ex.out_message is None
 
 
 # ── _validate_url / _is_blocked_host ──

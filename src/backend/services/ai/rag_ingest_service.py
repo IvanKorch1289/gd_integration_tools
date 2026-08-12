@@ -76,6 +76,52 @@ class RagIngestService:
         self._rag_service = rag
         return rag
 
+    async def ingest_text(
+        self,
+        content: str | bytes,
+        *,
+        filename: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        namespace: str = "default",
+    ) -> str:
+        """Single-document ingest с PII-mask + chunker/embedding provenance.
+
+        Делегирует в ``RAGService.ingest`` через ту же ``_maybe_mask_pii``
+        + ``_chunker_fingerprint`` + ``_resolve_embedding_provenance``
+        pipeline, что и bulk :meth:`ingest`, но без task-tracking — для
+        low-latency single-doc endpoint'ов (``POST /ingest``, ``POST /upload``).
+
+        Args:
+            content: Текст (str) или bytes (UTF-8, ``errors='replace'``).
+            filename: Имя файла — попадает в ``metadata.filename``.
+            metadata: Доп. пользовательские поля (override/extend).
+            namespace: Логическая партиция в коллекции.
+
+        Returns:
+            ``doc_id`` (sha256 prefix) от ``RAGService.ingest``.
+        """
+        if isinstance(content, bytes):
+            content_text = content.decode("utf-8", errors="replace")
+        else:
+            content_text = content
+
+        content_text, pii_meta = _maybe_mask_pii(content_text)
+
+        full_metadata: dict[str, Any] = {
+            "chunker_fingerprint": _chunker_fingerprint(),
+            **_resolve_embedding_provenance(),
+            **pii_meta,
+        }
+        if filename:
+            full_metadata["filename"] = filename
+        if metadata:
+            full_metadata.update(metadata)
+
+        rag = self._ensure_rag()
+        return await rag.ingest(
+            content_text, metadata=full_metadata, namespace=namespace
+        )
+
     async def ingest(
         self, files: list[tuple[str, bytes]], *, collection: str = "default",
     ) -> dict[str, Any]:

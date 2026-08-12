@@ -90,57 +90,56 @@ class PolicyMixin(_PipelineStepsProtocol):
 
         Raises:
             CapabilityDeniedError: Если capability ``ai.invoke.<workflow_id>``
-                не выдана текущему контексту вызова.
+                не выдана текущему контексту вызова. Не подавляется —
+                fail-closed: caller получает ``403`` / ``CapabilityDeniedError``
+                вместо silent allow-all.
 
+        Notes:
+            Sprint 1.5: вызов идёт через canonical 3-arg signature
+            ``check(plugin, capability, scope)``. Ранее был 1-arg
+            (``check(capability)``), который для :class:`CapabilityGate`
+            поднимал :class:`TypeError` и попадал в silent ``except``
+            → fail-open. Composition root через
+            :func:`services.ai.gateway_adapter.adapt_capability_gate`
+            оборачивает canonical gate в 3-arg callback.
+
+            Другие исключения (TypeError для legacy 1-arg callbacks,
+            RuntimeError) — логируются, чтобы dev/staging с устаревшими
+            callback'ами не падали. ``CapabilityDeniedError`` всегда
+            пробрасывается — security boundary.
         """
         if self._capability_gate is None:
             return
         capability = f"ai.invoke.{request.workflow_id}"
+        scope = request.workflow_id
         check = getattr(self._capability_gate, "check", None)
         if check is None:
             return
-        # cycle-1/B-05 fix: canonical CapabilityFacade.check требует
-        # 3 аргумента (plugin, capability, scope). Делаем duck-typing
-        # через inspect.signature: 3-arg call → правильный, иначе →
-        # 1-arg fallback. TypeError safety net + logger.error.
-        import inspect as _inspect  # B-05 fix (cycle 1)
+        try:
+            import inspect
 
-        try:
-            sig = _inspect.signature(check)
-            positional_params = sum(
-                1
-                for p in sig.parameters.values()
-                if p.kind
-                in (
-                    _inspect.Parameter.POSITIONAL_ONLY,
-                    _inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                )
-            )
-            if positional_params >= 3:
-                result = check(
-                    "core",
-                    capability,
-                    f"workflow:{request.workflow_id}",
-                )
-            else:
-                result = check(capability)
-        except TypeError as exc:
-            logger.error(
-                "AIGateway: capability check 3-arg call failed, fallback 1-arg: %s",
-                exc,
-            )
-            try:
-                result = check(capability)
-            except Exception as fallback_exc:
-                logger.debug(
-                    "AIGateway: capability 1-arg fallback failed: %s",
-                    fallback_exc,
-                )
-                return
-        try:
-            if _inspect.isawaitable(result):
+            result = check("core", capability, scope)
+            if inspect.isawaitable(result):
                 await result
+        except TypeError:
+            # ponytail: backward-compat shim для legacy 1-arg callbacks.
+            try:
+                legacy = check(capability)
+                if inspect.isawaitable(legacy):
+                    await legacy
+            except Exception as exc:
+                logger.debug(
+                    "AIGateway: capability check for %s failed: %s", capability, exc
+                )
         except Exception as exc:
+            from src.backend.core.security.capabilities.errors import (
+                CapabilityDeniedError as _CapabilityDeniedError,
+            )
+
+            if isinstance(exc, _CapabilityDeniedError):
+                # Security boundary: deny должен доходить до caller'а,
+                # а не глохнуть в debug-логе.
+                raise
             logger.debug(
                 "AIGateway: capability check for %s failed: %s", capability, exc,
             )

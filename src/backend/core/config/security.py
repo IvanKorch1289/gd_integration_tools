@@ -198,6 +198,19 @@ class SecureSettings(BaseSettingsWithLoader):
         ),
         examples=[{"/webhooks/stripe": "whsec_xxx"}],
     )
+    # Fail-closed при отсутствии секрета для protected prefix (default ON).
+    # Если True и path матчит prefix, но соответствующий секрет не сконфигурирован —
+    # middleware возвращает 503 вместо пропуска без проверки. Safe-by-default;
+    # отключать только явно для dev/test, где вебхуки без подписи — штатный кейс.
+    webhook_signature_fail_closed: bool = Field(
+        default=True,
+        description=(
+            "Fail-closed для protected prefix без сконфигурированного секрета. "
+            "True = 503 при missing secret (рекомендуется для prod). "
+            "False = skip-verify с debug-логом (только dev/test)."
+        ),
+        examples=[True, False],
+    )
 
     # S204 retro-audit C-NEW-7: allowlist для MCP stdio-серверов.
     # ``LocalMCPClient.connect_stdio`` запускает subprocess по ``command[0]`` —

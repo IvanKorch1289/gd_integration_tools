@@ -127,7 +127,7 @@ def _build_toml(
 # route.toml (V11): manifest for route '{name}' (S33 W1 wizard).
 name = "{name}"
 version = "0.1.0"
-requires_core = "{_default_requires_core()}"
+requires_core = ">=0.20,<0.21"
 capabilities = {cap_str}
 tenant_aware = {str(tenant_aware).lower()}
 feature_flag = {{ enabled = true, gate = "{name}_enabled" }}

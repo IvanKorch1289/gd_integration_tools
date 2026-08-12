@@ -1,16 +1,17 @@
 """Mypy budget gate (Sprint 9 K2 W6 + DoD-12).
 
 Запускает mypy, считает уникальные ошибки, fail'ит если их больше
-``MAX_MYPY_ERRORS`` (ratcheting baseline). При успехе автоматически
-обновляет ``.baselines/mypy.json`` с новым (меньшим) значением.
+``MAX_MYPY_ERRORS`` или сохранённого ratcheting baseline. С ``--ratchet``
+обновляет ``.baselines/mypy.json`` только новым меньшим значением.
 
 Запуск:
 
 .. code-block:: bash
 
     python tools/checks/mypy_budget.py --max 30
-    # exit 0 — ok (errors <= max)
-    # exit 1 — превышен budget
+    # exit 0 — ok (errors <= max и baseline)
+    # exit 1 — превышен budget или baseline
+    # exit 2 — mypy не вернул валидный результат
 
 Idea: budget уменьшается со временем (S9: 30, S10: 25, S11: 15, S12: 0).
 """
@@ -94,6 +95,13 @@ def main() -> int:
     baseline = load_baseline()
 
     print(f"mypy errors: {errors} (max={args.max}, baseline={baseline})")
+
+    if code not in (0, 1) or (code == 1 and errors == 0):
+        print(
+            f"ERROR: mypy exited with code {code} without a valid result",
+            file=sys.stderr,
+        )
+        return 2
 
     if errors > args.max:
         print(f"FAIL: {errors} errors exceeds budget {args.max}", file=sys.stderr)

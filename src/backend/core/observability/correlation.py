@@ -52,7 +52,7 @@ def set_correlation_context(
 
     """
     bind: dict[str, str] = {}
-    if correlation_id:
+    if correlation_id is not None:
         correlation_id_var.set(correlation_id)
         bind["correlation_id"] = correlation_id
     if request_id:

@@ -28,8 +28,12 @@ def _register_document_tools(mcp: Any) -> None:
     fallback). Используется AI-агентами для подачи структурированного
     контекста в LLM.
     """
+    # Block 1.4-extension: см. tools_route.py — manual tools оборачиваются
+    # через ``_authz_manual_tool`` (single wrapper above tool function level).
+    from src.backend.entrypoints.mcp.mcp_server.helpers import _authz_manual_tool
 
-    @mcp.tool(
+    @_authz_manual_tool(
+        mcp,
         name="documents_to_markdown",
         description=(
             "Конвертирует файл в Markdown через markitdown (PDF/DOCX/PPTX/"

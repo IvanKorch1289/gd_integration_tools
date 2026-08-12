@@ -14,6 +14,7 @@ from sqlalchemy import (
     delete,
     desc,
     func,
+    insert,
     inspect,
     select,
 )
@@ -330,6 +331,37 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         :return: Созданный объект.
         """
         return await self.helper._prepare_and_save_object(session=session, data=data)
+
+    @main_session_manager.connection()
+    async def bulk_create(
+        self,
+        session: AsyncSession,
+        model: type[ConcreteTable],
+        data: list[dict[str, Any]],
+    ) -> int:
+        """
+        Массово вставить строки через SQLAlchemy 2.0 ``session.execute(insert(model), data)``.
+
+        Выполняет один ``INSERT INTO model ... VALUES (...), (...), (...)``
+        в одной транзакции (без per-row commit). Для пустого ``data``
+        возвращает ``0`` без обращения к БД.
+
+        :param session: Асинхронная сессия SQLAlchemy.
+        :param model: Класс ORM-модели, в которую выполняется вставка.
+        :param data: Список словарей с данными строк (по одному на строку).
+        :return: Количество вставленных строк (``len(data)``).
+        """
+        if not data:
+            return 0
+
+        unsecret_data: list[dict[str, Any]] = [
+            await model.get_value_from_secret_str(item) for item in data
+        ]
+
+        await session.execute(insert(model), unsecret_data)
+        await session.flush()
+
+        return len(unsecret_data)
 
     @main_session_manager.connection()
     async def update(

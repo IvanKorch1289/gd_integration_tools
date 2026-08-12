@@ -50,6 +50,14 @@ def _make_scope(method: str = "GET", path: str = "/api/v1/protected") -> dict:
 class TestAuthRequiredMiddlewarePureASGI:
     """Cycle 43: pure ASGI regression-тесты для AuthRequiredMiddleware."""
 
+    def test_default_methods_exclude_unverified_credentials(self) -> None:
+        """Глобальный guard не предлагает неподтверждённые Basic/SAML/mTLS."""
+        middleware = AuthRequiredMiddleware(app=AsyncMock())
+
+        assert AuthMethod.BASIC not in middleware._accepted_methods
+        assert AuthMethod.SAML not in middleware._accepted_methods
+        assert AuthMethod.MTLS not in middleware._accepted_methods
+
     @pytest.mark.asyncio
     async def test_public_path_passes_through_without_auth(
         self, monkeypatch: pytest.MonkeyPatch,

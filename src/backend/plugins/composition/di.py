@@ -98,6 +98,14 @@ def register_app_state(app: FastAPI) -> None:
 
     app.state.ai_gateway = get_ai_gateway_provider()
 
+    # Sprint 1.3: единый security-wired AIGateway singleton (L5 Security Chain).
+    # Регистрация в composition root гарантирует, что production
+    # AIGatewayProductionWiringError (S177 M2) никогда не сработает
+    # на composition-root singleton. См. SPRINT_PLAN_9_10.md Sprint 1.3.
+    from src.backend.core.di.providers.ai import get_ai_gateway_provider
+
+    app.state.ai_gateway = get_ai_gateway_provider()
+
     # W22 техдолг: composition root для Invoker + ReplyChannelRegistry.
     # Concrete реализация регистрируется здесь, чтобы services/execution
     # и entrypoints зависели только от Protocol через core/di.dependencies.
@@ -324,3 +332,18 @@ async def get_langfuse_client(request: Request) -> LangFuseClient:
 async def get_watermark_store(request: Request) -> WatermarkStore:
     """Возвращает :class:`WatermarkStore` из app.state (FastAPI Depends)."""
     return request.app.state.watermark_store
+
+
+async def get_authorization_gateway(request: Request) -> AuthorizationGateway:
+    """Возвращает :class:`AuthorizationGateway` из app.state (FastAPI Depends).
+
+    Используется в эндпоинтах, которым нужен явный доступ к gateway
+    (admin/feature-flag/role-assignment). Для batch-вызовов и policy-mixin
+    используется ``app.state.authorization_gateway`` напрямую через
+    :func:`src.backend.core.di.app_state.get_app_ref`.
+
+    Raises:
+        AttributeError: Если ``register_app_state`` ещё не вызывался
+            (атрибут ``authorization_gateway`` отсутствует).
+    """
+    return request.app.state.authorization_gateway

@@ -147,6 +147,14 @@ async def bootstrap_v11_route_loader(app: FastAPI) -> None:
             pipeline = load_pipeline_from_file(pipeline_path)
             if bool(getattr(manifest, "tenant_aware", False)):
                 pipeline.tenant_aware = True
+            # K3 S19 W3: пробрасываем [security] requires_permission из
+            # manifest в pipeline.security — DslService.dispatch читает это
+            # поле и вызывает AuthorizationGateway через check_route_permission.
+            manifest_security = getattr(manifest, "security", None)
+            if manifest_security is not None:
+                req_perms = getattr(manifest_security, "requires_permission", ())
+                if req_perms:
+                    pipeline.security = tuple(req_perms)
             if route_overrides:
                 # Merge поверх существующих overrides (например, из DSL setters).
                 pipeline.route_overrides.update(route_overrides)

@@ -78,7 +78,7 @@ class TestInfraS3GetProcessor:
         ctx = MagicMock()
         # Patch get_object_storage_class at module level
         storage_instance = MagicMock()
-        storage_instance.get = AsyncMock(return_value=b'{"data": 1}')
+        storage_instance.download = AsyncMock(return_value=b'{"data": 1}')
         storage_class = MagicMock(return_value=storage_instance)
         with patch(
             "src.backend.core.di.providers.infrastructure_locator.get_object_storage_class",
@@ -189,7 +189,7 @@ class TestDSLProcessorErrorPropagation:
         ex.in_message.body = {}
         ctx = MagicMock()
         storage_instance = MagicMock()
-        storage_instance.get = AsyncMock(side_effect=ConnectionError("S3 down"))
+        storage_instance.download = AsyncMock(side_effect=ConnectionError("S3 down"))
         storage_class = MagicMock(return_value=storage_instance)
         with patch(
             "src.backend.core.di.providers.infrastructure_locator.get_object_storage_class",

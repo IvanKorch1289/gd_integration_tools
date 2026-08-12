@@ -24,8 +24,15 @@ from src.backend.core.serialization.msgspec_hotpath import encode_json
 
 def _register_route_tools(mcp: Any) -> None:
     """Tools для управления DSL-маршрутами."""
+    # Block 1.4-extension: manual tools оборачиваются через
+    # ``_authz_manual_tool`` (single wrapper above tool function level),
+    # а не через прямой ``@mcp.tool(...)`` — это добавляет per-call
+    # authz-проверку при ``tool_authz_enabled=True`` и непустом
+    # ``tool_manual_allowlist`` (см. helpers.py).
+    from src.backend.entrypoints.mcp.mcp_server.helpers import _authz_manual_tool
 
-    @mcp.tool(
+    @_authz_manual_tool(
+        mcp,
         name="route_list",
         description="Список всех зарегистрированных DSL-маршрутов с описаниями и процессорами",
     )
@@ -50,7 +57,8 @@ def _register_route_tools(mcp: Any) -> None:
                 )
         return encode_json(routes).decode("utf-8")
 
-    @mcp.tool(
+    @_authz_manual_tool(
+        mcp,
         name="route_execute",
         description="Выполняет DSL-маршрут по route_id с указанным payload. Возвращает результат Exchange.",
     )
@@ -92,7 +100,8 @@ def _register_route_tools(mcp: Any) -> None:
             },
         ).decode("utf-8")
 
-    @mcp.tool(
+    @_authz_manual_tool(
+        mcp,
         name="route_inspect",
         description="Детальная информация о DSL-маршруте: процессоры, pipeline metadata, feature flags.",
     )

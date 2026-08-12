@@ -24,7 +24,12 @@ spec:
         - name: migration
           image: {{ printf "%s:%s" .Values.image.repository .Values.image.tag }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["python", "-m", "alembic", "upgrade", "head"]
+          # Alembic invocation. ``-c alembic.ini`` обязателен: ``python -m
+          # alembic`` без ``-c`` находит ``alembic.ini`` только если CWD = /app,
+          # что зависит от WORKDIR образа. Явный ``-c`` делает Job идемпотентным
+          # относительно WORKDIR и совпадает с deploy/k8s/jobs/migration.yaml
+          # (где уже было ``alembic -c alembic.ini upgrade head``). K-OPS-4 fix.
+          command: ["python", "-m", "alembic", "-c", "alembic.ini", "upgrade", "head"]
           envFrom:
             - configMapRef:
                 name: gd-app-config

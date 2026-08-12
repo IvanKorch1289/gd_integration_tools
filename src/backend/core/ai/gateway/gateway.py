@@ -218,7 +218,49 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
                 "ai_gateway_enforce=False is no longer supported (S85). "
                 "Set feature_flags.ai_gateway_enforce=True.",
             )
+        # S177 M2: на production require обязательные DI-инъекции
+        # (policy_resolver, capability_gate, token_budget). Без них pipeline
+        # выполнил бы LLM-вызов без policy/capability/budget проверок —
+        # silent fail-open. Backward-compat: development/staging без
+        # зависимостей работают как раньше.
+        self._enforce_production_wiring()
         return await self._enforced_invoke(request)
+
+    def _enforce_production_wiring(self) -> None:
+        """Fail-closed guard обязательных DI-зависимостей на production.
+
+        Raises:
+            AIGatewayProductionWiringError: при ``app.environment ==
+                "production"`` и отсутствии ``policy_resolver``,
+                ``capability_gate`` или ``token_budget``.
+        """
+        try:
+            from src.backend.core.config.settings import settings
+        except Exception:
+            # Не удалось загрузить settings (test env без YAML) — пропускаем
+            # guard, чтобы не ломать unit-тесты с dependency-injection.
+            return
+        environment = getattr(getattr(settings, "app", None), "environment", "")
+        if environment != "production":
+            return
+        missing: list[str] = [
+            name
+            for name, value in (
+                ("policy_resolver", self._policy_resolver),
+                ("capability_gate", self._capability_gate),
+                ("token_budget", self._token_budget),
+            )
+            if value is None
+        ]
+        if missing:
+            from src.backend.core.ai.errors import AIGatewayProductionWiringError
+
+            raise AIGatewayProductionWiringError(
+                "AIGateway invoked on production without mandatory DI: "
+                + ", ".join(missing)
+                + ". Wire them through AIGateway(policy_resolver=..., "
+                "capability_gate=..., token_budget=...) at composition root."
+            )
 
     # S166 W2: Sandbox integration для AI-generated code (Rule 10).
     # Per skill: Sandbox = CodeSandbox Protocol. When AIGateway runs

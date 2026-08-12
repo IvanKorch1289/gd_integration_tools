@@ -1,8 +1,19 @@
 """AuthContext helpers (Sprint 125 W3).
 
-Утилиты для извлечения tenant_id / groups из AuthContext.metadata.
-Вынесены в отдельный модуль для переиспользования между
-``require_sso_auth`` (W3) и будущими SSO-aware слоями (W4+).
+Утилиты для извлечения tenant_id / groups / permissions из
+``AuthContext.metadata``. Вынесены в отдельный модуль для
+переиспользования между ``require_sso_auth`` (W3) и будущими
+SSO-aware слоями (W4+).
+
+Sprint 1.1 (L5 Security Chain): ``extract_user_permissions`` —
+источник прав для ``ExecutionContext.permissions``. Если в
+``AuthContext.metadata`` уже есть ``"permissions"`` (список /
+кортеж строк) — отдаём как есть. Иначе пробуем OAuth-style
+``"scope"`` (строка ``"a b c"`` → префиксуем ``"scope:"``). Пусто
+или отсутствует — пустой кортеж. Fail-closed downstream:
+:func:`DslService.dispatch` при пустых permissions и non-empty
+``pipeline.security`` рейзит ``RoutePermissionDeniedError`` через
+:func:`check_route_permission`.
 """
 
 from __future__ import annotations
@@ -51,28 +62,37 @@ def extract_user_groups(auth: Any) -> list[str]:
 
 
 def extract_user_permissions(auth: Any) -> tuple[str, ...]:
-    """Извлекает user permissions из AuthContext.metadata.
+    """Извлекает permissions principal'а из ``AuthContext.metadata``.
 
-    Sprint 1 (route-wide permission enforcement): permissions хранятся в
-    ``metadata["permissions"]`` (list/tuple of str) или в OAuth-style
-    ``metadata["scope"]`` (space-separated string с префиксом ``scope:``).
+    Источники (по приоритету):
+    1. ``metadata["permissions"]`` — список / кортеж строк (например,
+       ``["role:admin", "scope:credit.read"]``). Возвращается как есть.
+    2. ``metadata["scope"]`` — строка с OAuth-style scopes
+       (``"credit.read credit.write"``). Парсится по whitespace и
+       каждый scope префиксуется ``"scope:"`` → нормализованный
+       кортеж ``("scope:credit.read", "scope:credit.write")``.
 
     Args:
-        auth: :class:`AuthContext` (или duck-typed объект с ``metadata``).
+        auth: :class:`AuthContext` (или duck-typed объект с
+            ``metadata``). ``None`` допустим — вернётся пустой кортеж.
 
     Returns:
-        Кортеж строк-permissions. Пустой кортеж если отсутствуют.
-        Нормализация: ``"read:users" → "scope:read:users"`` для
-        совместимости с :class:`AuthorizationGateway` API.
-
+        Кортеж permission-строк. Пустой кортеж если ничего не
+        найдено — fail-closed downstream в
+        :func:`DslService.dispatch`.
     """
+    if auth is None:
+        return ()
     metadata = getattr(auth, "metadata", None)
     if not isinstance(metadata, dict):
         return ()
-    permissions = metadata.get("permissions")
-    if isinstance(permissions, (list, tuple)):
-        return tuple(p for p in permissions if isinstance(p, str))
-    scope = metadata.get("scope")
-    if isinstance(scope, str):
-        return tuple(f"scope:{p}" for p in scope.split() if p)
+
+    raw_permissions = metadata.get("permissions")
+    if isinstance(raw_permissions, (list, tuple)):
+        return tuple(p for p in raw_permissions if isinstance(p, str) and p)
+
+    raw_scope = metadata.get("scope")
+    if isinstance(raw_scope, str) and raw_scope.strip():
+        return tuple(f"scope:{token}" for token in raw_scope.split() if token)
+
     return ()

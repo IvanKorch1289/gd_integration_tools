@@ -119,9 +119,6 @@ class AuthRequiredMiddleware:
             else (
                 AuthMethod.API_KEY,
                 AuthMethod.JWT,
-                AuthMethod.MTLS,
-                AuthMethod.SAML,
-                AuthMethod.BASIC,
                 AuthMethod.EXPRESS_JWT,
             )
         )

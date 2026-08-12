@@ -1,7 +1,7 @@
 from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from functools import lru_cache, wraps
-from typing import Any, ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -200,8 +200,14 @@ async def get_smart_write_session() -> AsyncGenerator[AsyncSession]:
         yield session
 
 
-def __getattr__(name: str) -> Any:
-    """Module-level lazy accessor для backward compat ``main_session_manager``."""
+def __getattr__(name: str) -> DatabaseSessionManager:
+    """Module-level lazy accessor для backward compat ``main_session_manager``.
+
+    Return type narrowed from ``Any`` to :class:`DatabaseSessionManager` (S3.5):
+    единственный успешный return-path возвращает ``get_main_session_manager()``,
+    все прочие имена приводят к ``AttributeError`` и, следовательно, не имеют
+    значения для статической типизации.
+    """
     if name == "main_session_manager":
         return get_main_session_manager()
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

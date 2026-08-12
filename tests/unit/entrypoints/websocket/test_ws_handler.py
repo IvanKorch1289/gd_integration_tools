@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -167,6 +168,115 @@ class TestWebsocketEndpoint:
             if "boom" in str(c[0][1].get("error", ""))
         ]
         assert len(calls) == 1
+
+    @pytest.mark.asyncio
+    async def test_sprint_1_1_propagates_principal_from_ws_session(
+        self, websocket: MagicMock
+    ) -> None:
+        """Sprint 1.1: ``ws.state.ws_session.principal`` →
+        ``dispatch_action_or_dsl(principal=...)``.
+
+        Auth fixture (``_mock_ws_authenticator`` autouse) даёт фейковую
+        :class:`WSSession`. WS-handler должен пробрасывать ``principal``
+        и ``allowed_groups`` в DSL-fallback path. Без auth session —
+        backward-compat (anonymous).
+        """
+        # Переписываем state: реальная WSSession с известным principal.
+        # (autouse fixture потом перепишет на _fake_session(), но мы
+        # пере-устанавливаем ПОСЛЕ auth через patch на _authenticate_handshake)
+        websocket.state = MagicMock()
+        expected_session = WSSession(
+            client_id="admin-user",
+            api_key_hash="hash",
+            allowed_groups={"ops", "billing"},
+            is_admin=True,
+            principal="admin-user",
+            auth_source="api_key",
+        )
+        websocket.receive_json.side_effect = [
+            {"action": "orders.list", "payload": {"x": 1}},
+            WebSocketDisconnect(),
+        ]
+
+        bridge = MagicMock()
+        bridge.error_code = None
+        bridge.data = {"items": []}
+        bridge.error = None
+
+        async def fake_authenticate_handshake(_ws: Any) -> bool:
+            """Подменяет реальный auth — ставит нашу WSSession в state."""
+            _ws.state.ws_session = expected_session
+            return True
+
+        with patch.object(ws_handler.ws_manager, "connect", AsyncMock()):
+            with patch.object(
+                ws_handler, "dispatch_action_or_dsl", AsyncMock(return_value=bridge)
+            ) as mock_dispatch:
+                with patch.object(
+                    ws_handler.ws_manager, "send_json", AsyncMock()
+                ):
+                    with patch.object(
+                        ws_handler.ws_manager, "disconnect", MagicMock()
+                    ):
+                        with patch.object(
+                            ws_handler,
+                            "_authenticate_handshake",
+                            AsyncMock(side_effect=fake_authenticate_handshake),
+                        ):
+                            await ws_handler.websocket_endpoint(websocket)
+
+        kwargs = mock_dispatch.await_args.kwargs
+        assert kwargs["principal"] == "admin-user"
+        # WSSession.allowed_groups → "group:..." prefix.
+        assert set(kwargs["permissions"]) == {"group:ops", "group:billing"}
+
+    @pytest.mark.asyncio
+    async def test_sprint_1_1_no_session_backward_compat(
+        self, websocket: MagicMock
+    ) -> None:
+        """Sprint 1.1: без ``ws.state.ws_session`` → anonymous (backward-compat).
+
+        Если auth не проставил WSSession (например, dev/test режим с
+        ``require_auth=False``), WS-handler не падает на MagicMock —
+        isinstance-guard оставляет ``principal=""``/``permissions=()``.
+        """
+        from src.backend.core.config.services.websocket import WSSettings
+
+        # Отключаем auth чтобы state.ws_session не переписался autouse.
+        original = ws_handler.ws_settings
+        ws_handler.ws_settings = WSSettings(require_auth=False)
+        websocket.state = MagicMock()
+        websocket.state.ws_session = None
+        websocket.receive_json.side_effect = [
+            {"action": "orders.list", "payload": {"x": 1}},
+            WebSocketDisconnect(),
+        ]
+
+        bridge = MagicMock()
+        bridge.error_code = None
+        bridge.data = {"items": []}
+        bridge.error = None
+
+        try:
+            with patch.object(ws_handler.ws_manager, "connect", AsyncMock()):
+                with patch.object(
+                    ws_handler,
+                    "dispatch_action_or_dsl",
+                    AsyncMock(return_value=bridge),
+                ) as mock_dispatch:
+                    with patch.object(
+                        ws_handler.ws_manager, "send_json", AsyncMock()
+                    ):
+                        with patch.object(
+                            ws_handler.ws_manager, "disconnect", MagicMock()
+                        ):
+                            await ws_handler.websocket_endpoint(websocket)
+
+            kwargs = mock_dispatch.await_args.kwargs
+            assert kwargs["principal"] == ""
+            assert kwargs["permissions"] == ()
+        finally:
+            ws_handler.ws_settings = original
 
 
 class TestWebsocketAuthGate:

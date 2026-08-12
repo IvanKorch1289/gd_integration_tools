@@ -18,6 +18,50 @@ from __future__ import annotations
 import warnings
 
 import pytest
+from starlette.requests import Request
+
+from src.backend.core.auth import AuthMethod
+from src.backend.core.auth.auth_selector import verify_request
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("method", "headers", "cookies"),
+    [
+        (AuthMethod.BASIC, [(b"authorization", b"Basic YWxpY2U6YW55dGhpbmc=")], {}),
+        (
+            AuthMethod.MTLS,
+            [
+                (b"x-client-cert-fingerprint", b"attacker"),
+                (b"x-client-cert-subject", b"CN=attacker"),
+            ],
+            {},
+        ),
+        (AuthMethod.SAML, [], {"saml_session": "attacker|session"}),
+        (AuthMethod.SAML, [(b"x-saml-session-id", b"attacker")], {}),
+    ],
+)
+async def test_unverified_credentials_are_rejected(
+    method: AuthMethod,
+    headers: list[tuple[bytes, bytes]],
+    cookies: dict[str, str],
+) -> None:
+    """Неподтверждённые Basic/SAML/mTLS данные не создают AuthContext."""
+    cookie_headers = (
+        [(b"cookie", "; ".join(f"{key}={value}" for key, value in cookies.items()).encode())]
+        if cookies
+        else []
+    )
+    request = Request(
+        {
+            "type": "http",
+            "method": "GET",
+            "path": "/protected",
+            "headers": [*headers, *cookie_headers],
+        }
+    )
+
+    assert await verify_request(request, methods=method) is None
 
 
 def test_core_auth_selector_has_canonical_impl() -> None:

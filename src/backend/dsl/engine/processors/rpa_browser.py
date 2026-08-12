@@ -15,11 +15,17 @@
 Все процессоры — best-effort с явным ``exchange.fail`` при ошибке;
 tracing-on-failure: при exception пишется screenshot + page.content()
 в exchange.properties для диагностики.
+
+Capability-gate (S202 audit closure, D-4): каждый процессор объявляет
+``required_capability`` в формате ``rpa.browser.<verb>`` (per
+``docs/rpa/RPA_GUIDE.md`` vocabulary) и вызывает ``auth_check`` в
+начале ``process()``. При отсутствии capability — fail-closed через
+:meth:`BaseProcessor.auth_check`.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.config.features import feature_flags
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -108,6 +114,8 @@ class BrowserLaunchProcessor(BaseProcessor):
     """
 
     name = "browser_launch"
+    required_capability: ClassVar[str | None] = "rpa.browser.launch"
+    audit_event: str | None = "rpa.browser.launch"
 
     def __init__(
         self,
@@ -130,6 +138,8 @@ class BrowserLaunchProcessor(BaseProcessor):
         гарантированного освобождения context в ``playwright pool`` после
         прохождения всего route (иначе poll_size запусков deadlock'нет semaphore).
         """
+        if not await self.auth_check(exchange, action="execute"):
+            return
         try:
             pool = _get_pool(context)
             cm = pool.acquire()
@@ -164,6 +174,8 @@ class NavigateProcessor(BaseProcessor):
     """
 
     name = "rpa_navigate"
+    required_capability: ClassVar[str | None] = "rpa.browser.navigate"
+    audit_event: str | None = "rpa.browser.navigate"
 
     def __init__(self, *, url: str, name: str | None = None) -> None:
         super().__init__(name=name or self.name)
@@ -177,6 +189,8 @@ class NavigateProcessor(BaseProcessor):
             context: Контекст выполнения процессора.
 
         """
+        if not await self.auth_check(exchange, action="execute"):
+            return
         try:
             page = _get_or_create_page(exchange)
             ctx = exchange.properties.get("rpa.context")
@@ -228,6 +242,8 @@ class ClickProcessor(BaseProcessor):
     """Клик по селектору (CSS / XPath / text=)."""
 
     name = "rpa_click"
+    required_capability: ClassVar[str | None] = "rpa.browser.click"
+    audit_event: str | None = "rpa.browser.click"
 
     def __init__(
         self, *, selector: str, timeout: float = 30.0, name: str | None = None,
@@ -238,6 +254,8 @@ class ClickProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange: browser click по selector."""
+        if not await self.auth_check(exchange, action="execute"):
+            return
         try:
             page = _get_or_create_page(exchange)
             await page.click(self._selector, timeout=self._timeout_ms)
@@ -250,6 +268,8 @@ class FillProcessor(BaseProcessor):
     """Заполнение input по селектору."""
 
     name = "rpa_fill"
+    required_capability: ClassVar[str | None] = "rpa.browser.fill"
+    audit_event: str | None = "rpa.browser.fill"
 
     def __init__(self, *, selector: str, value: str, name: str | None = None) -> None:
         super().__init__(name=name or self.name)
@@ -258,6 +278,8 @@ class FillProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange: fill form fields."""
+        if not await self.auth_check(exchange, action="write"):
+            return
         try:
             page = _get_or_create_page(exchange)
             await page.fill(self._selector, self._value)
@@ -278,6 +300,8 @@ class ExtractProcessor(BaseProcessor):
     """
 
     name = "rpa_extract"
+    required_capability: ClassVar[str | None] = "rpa.browser.extract"
+    audit_event: str | None = "rpa.browser.extract"
 
     def __init__(
         self,
@@ -294,6 +318,8 @@ class ExtractProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange: extract text/data from page."""
+        if not await self.auth_check(exchange, action="read"):
+            return
         try:
             page = _get_or_create_page(exchange)
             element = await page.query_selector(self._selector)
@@ -340,6 +366,8 @@ class WaitForProcessor(BaseProcessor):
     """
 
     name = "rpa_wait_for"
+    required_capability: ClassVar[str | None] = "rpa.browser.wait"
+    audit_event: str | None = "rpa.browser.wait"
 
     def __init__(
         self,
@@ -362,6 +390,8 @@ class WaitForProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange: WaitForProcessor browser automation."""
+        if not await self.auth_check(exchange, action="read"):
+            return
         try:
             page = _get_or_create_page(exchange)
             if self._selector is not None:
@@ -381,6 +411,8 @@ class ScreenshotProcessor(BaseProcessor):
     """
 
     name = "rpa_screenshot"
+    required_capability: ClassVar[str | None] = "rpa.browser.screenshot"
+    audit_event: str | None = "rpa.browser.screenshot"
 
     def __init__(
         self,
@@ -397,6 +429,8 @@ class ScreenshotProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Делает скриншот страницы и сохраняет в property или body."""
+        if not await self.auth_check(exchange, action="execute"):
+            return
         try:
             page = _get_or_create_page(exchange)
             kwargs: dict[str, Any] = {"full_page": self._full_page}
@@ -424,6 +458,8 @@ class PdfProcessor(BaseProcessor):
     """Рендер страницы в PDF (chromium-only)."""
 
     name = "rpa_pdf"
+    required_capability: ClassVar[str | None] = "rpa.browser.pdf"
+    audit_event: str | None = "rpa.browser.pdf"
 
     def __init__(
         self,
@@ -442,6 +478,8 @@ class PdfProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange: PdfProcessor browser automation."""
+        if not await self.auth_check(exchange, action="execute"):
+            return
         try:
             page = _get_or_create_page(exchange)
             kwargs: dict[str, Any] = {

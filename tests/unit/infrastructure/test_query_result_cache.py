@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from datetime import UTC
+from typing import Any
 
 import pytest
 
+from src.backend.core.interfaces.cache import CacheBackend
 from src.backend.infrastructure.cache.backends.memory import MemoryBackend
 from src.backend.infrastructure.database.query_result_cache import (
     JsonSerializer,
@@ -141,3 +143,93 @@ class TestQueryResultCache:
         await cache.set("replica", "SELECT 1", result=[2])
         assert await cache.get("main", "SELECT 1") == [1]
         assert await cache.get("replica", "SELECT 1") == [2]
+
+
+class TestPickleRuntimeGuard:
+    """Sprint 3.3: ``PickleSerializer`` + non-MemoryBackend → RuntimeError.
+
+    Pickle — RCE-vector для shared cache namespace (Redis/Memcached/KeyDB):
+    любой writer в namespace может исполнить код при ``pickle.loads``.
+    MemoryBackend — единственный trusted бэкенд (данные под контролем
+    текущего процесса). Guard срабатывает в ``__init__`` QueryResultCache
+    (fail-fast, до первого set/get).
+    """
+
+    @staticmethod
+    def _fake_non_memory_backend() -> Any:
+        """Минимальный CacheBackend-stub, не являющийся MemoryBackend."""
+
+        class _FakeBackend(CacheBackend):  # type: ignore[misc]
+            """Подделка shared-бэкенда (Redis/Memcached/KeyDB-семантика)."""
+
+            async def get(self, key: str) -> bytes | None:
+                return None
+
+            async def set(self, key: str, value: bytes, ttl: int | None = None) -> None:
+                return None
+
+            async def delete(self, *keys: str) -> None:
+                return None
+
+            async def delete_pattern(self, pattern: str) -> None:
+                return None
+
+            async def exists(self, key: str) -> bool:
+                return False
+
+        return _FakeBackend()
+
+    def test_pickle_with_memory_backend_allowed(self):
+        """Pickle + MemoryBackend — допустимая комбинация."""
+        backend = MemoryBackend(maxsize=10)
+        cache = QueryResultCache(backend=backend, serializer=PickleSerializer())
+        assert isinstance(cache._serializer, PickleSerializer)
+
+    def test_pickle_with_non_memory_backend_rejected(self):
+        """Pickle + shared-бэкенд → RuntimeError (fail-fast в __init__)."""
+        backend = self._fake_non_memory_backend()
+        with pytest.raises(RuntimeError) as exc_info:
+            QueryResultCache(backend=backend, serializer=PickleSerializer())
+        msg = str(exc_info.value)
+        assert "PickleSerializer" in msg
+        assert "RCE-vector" in msg or "RCE" in msg
+
+    def test_pickle_with_non_memory_subclass_rejected(self):
+        """Любой CacheBackend, не наследующий MemoryBackend → RuntimeError."""
+        backend = self._fake_non_memory_backend()
+        # Проверяем даже для подкласса, не наследующего MemoryBackend
+        with pytest.raises(RuntimeError):
+            QueryResultCache(backend=backend, serializer=PickleSerializer())
+
+    @pytest.mark.asyncio
+    async def test_orjson_with_non_memory_backend_allowed(self):
+        """OrjsonSerializer + shared-бэкенд — guard не срабатывает."""
+        backend = self._fake_non_memory_backend()
+        cache = QueryResultCache(backend=backend, serializer=OrjsonSerializer())
+        # set/get работают (бэкенд-fake возвращает None → get вернёт None)
+        await cache.set("p", "SELECT 1", result=[1])
+        assert await cache.get("p", "SELECT 1") is None
+
+    @pytest.mark.asyncio
+    async def test_json_with_non_memory_backend_allowed(self):
+        """JsonSerializer + shared-бэкенд — guard не срабатывает."""
+        backend = self._fake_non_memory_backend()
+        cache = QueryResultCache(backend=backend, serializer=JsonSerializer())
+        await cache.set("p", "SELECT 1", result={"rows": [1, 2]})
+        assert await cache.get("p", "SELECT 1") is None
+
+    def test_default_serializer_with_non_memory_backend_allowed(self):
+        """Default (orjson) + shared-бэкенд — guard не срабатывает."""
+        backend = self._fake_non_memory_backend()
+        cache = QueryResultCache(backend=backend)
+        assert isinstance(cache._serializer, OrjsonSerializer)
+
+    def test_memory_backend_subclass_pickle_allowed(self):
+        """Подкласс MemoryBackend наследует 'trusted' статус."""
+
+        class _TrustedMemoryLike(MemoryBackend):
+            """Подкласс MemoryBackend — данные остаются in-process."""
+
+        backend = _TrustedMemoryLike(maxsize=10)
+        cache = QueryResultCache(backend=backend, serializer=PickleSerializer())
+        assert isinstance(cache._serializer, PickleSerializer)

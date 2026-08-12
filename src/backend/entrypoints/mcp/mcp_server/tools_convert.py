@@ -24,8 +24,12 @@ from src.backend.core.serialization.msgspec_hotpath import encode_json
 
 def _register_convert_tools(mcp: Any) -> None:
     """Tools для конвертации форматов данных."""
+    # Block 1.4-extension: см. tools_route.py — manual tools оборачиваются
+    # через ``_authz_manual_tool`` (single wrapper above tool function level).
+    from src.backend.entrypoints.mcp.mcp_server.helpers import _authz_manual_tool
 
-    @mcp.tool(
+    @_authz_manual_tool(
+        mcp,
         name="convert_format",
         description="Конвертирует данные между форматами: json, yaml, xml, csv, msgpack, bson. "
         "Пример: from_format='json', to_format='yaml', data='{\"key\": \"value\"}'",
@@ -70,7 +74,8 @@ def _register_convert_tools(mcp: Any) -> None:
         except Exception as exc:
             return encode_json({"error": str(exc)}).decode("utf-8")
 
-    @mcp.tool(
+    @_authz_manual_tool(
+        mcp,
         name="convert_list_formats",
         description="Показывает все доступные конвертации форматов (from→to пары).",
     )

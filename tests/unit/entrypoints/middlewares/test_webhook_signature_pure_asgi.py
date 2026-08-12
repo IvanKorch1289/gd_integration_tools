@@ -36,6 +36,7 @@ def _compute_signature(body: bytes, secret: str, timestamp: int) -> str:
 
 def _downstream_ok():
     """Downstream возвращающий 200 OK."""
+
     async def downstream(scope, receive, send):
         # consume body to verify replay works
         body = b""
@@ -48,10 +49,13 @@ def _downstream_ok():
             more_body = msg.get("more_body", False)
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"ok"})
+
     return downstream
 
 
-def _make_scope(method: str, path: str, headers: list[tuple[bytes, bytes]] | None = None) -> dict:
+def _make_scope(
+    method: str, path: str, headers: list[tuple[bytes, bytes]] | None = None
+) -> dict:
     return {
         "type": "http",
         "method": method,
@@ -63,8 +67,10 @@ def _make_scope(method: str, path: str, headers: list[tuple[bytes, bytes]] | Non
 
 def _make_receive(body: bytes):
     """ASGI receive callable возвращающая body chunk(s)."""
+
     async def receive():
         return {"type": "http.request", "body": body, "more_body": False}
+
     return receive
 
 
@@ -80,9 +86,7 @@ class TestWebhookSignatureMiddlewarePureASGI:
 
         send = AsyncMock()
         await mw(
-            _make_scope("POST", "/api/v1/users"),
-            _make_receive(b'{"test": 1}'),
-            send,
+            _make_scope("POST", "/api/v1/users"), _make_receive(b'{"test": 1}'), send
         )
 
         start = _start_message(send)
@@ -169,11 +173,7 @@ class TestWebhookSignatureMiddlewarePureASGI:
         )
 
         send = AsyncMock()
-        await mw(
-            _make_scope("POST", "/webhooks/stripe"),
-            _make_receive(b"{}"),
-            send,
-        )
+        await mw(_make_scope("POST", "/webhooks/stripe"), _make_receive(b"{}"), send)
 
         start = _start_message(send)
         assert start is not None
@@ -234,16 +234,69 @@ class TestWebhookSignatureMiddlewarePureASGI:
         )
 
         send = AsyncMock()
-        await mw(
-            _make_scope("POST", "/webhooks/stripe"),
-            _make_receive(b"{}"),
-            send,
-        )
+        await mw(_make_scope("POST", "/webhooks/stripe"), _make_receive(b"{}"), send)
 
         start = _start_message(send)
         assert start is not None
         assert start["status"] == 503
         app.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_protected_prefix_without_secret_passes(self) -> None:
+        """fail_closed=False: protected prefix без secret passes through."""
+        app = AsyncMock()
+
+        async def downstream(scope, receive, send):
+            await send({"type": "http.response.start", "status": 200, "headers": []})
+            await send({"type": "http.response.body", "body": b""})
+
+        app.side_effect = downstream
+        mw = WebhookSignatureMiddleware(
+            app=app,
+            path_prefixes=("/webhooks/",),
+            secrets_by_prefix={},  # No secret для protected path.
+            fail_closed=False,
+        )
+
+        send = AsyncMock()
+        await mw(_make_scope("POST", "/webhooks/stripe"), _make_receive(b"{}"), send)
+
+        start = _start_message(send)
+        assert start is not None
+        assert start["status"] == 200
+
+    @pytest.mark.asyncio
+    async def test_protected_prefix_without_secret_fail_closed_returns_503(
+        self,
+    ) -> None:
+        """Default fail_closed=True: missing secret → 503 (server misconfiguration)."""
+        app = AsyncMock()
+
+        async def downstream(scope, receive, send):
+            raise AssertionError("downstream НЕ должен быть вызван при 503")
+
+        app.side_effect = downstream
+        mw = WebhookSignatureMiddleware(
+            app=app,
+            path_prefixes=("/webhooks/",),
+            secrets_by_prefix={},  # No secret для protected path.
+        )
+
+        send = AsyncMock()
+        await mw(_make_scope("POST", "/webhooks/stripe"), _make_receive(b"{}"), send)
+
+        start = _start_message(send)
+        assert start is not None
+        assert start["status"] == 503
+        # Проверяем тело ответа с detail.
+        body_msgs = [
+            c.args[0]
+            for c in send.await_args_list
+            if c.args[0]["type"] == "http.response.body"
+        ]
+        assert body_msgs, "503 response должен содержать body с detail"
+        body = body_msgs[0]["body"].decode("utf-8")
+        assert "not configured" in body.lower()
 
     @pytest.mark.asyncio
     async def test_most_specific_prefix_wins(self) -> None:

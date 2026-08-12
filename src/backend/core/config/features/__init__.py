@@ -164,7 +164,8 @@ class FeatureFlags(
     - Sprint5K2Flags (Sprint 5 K2 Resilience+Perf: 5 fields, T1.3.22 → features/sprint5_k2.py)
     - Sprint5DSLFlags (Sprint 5 K3 DSL+Workflow: 25 fields, T1.3.16 → features/sprint5_dsl.py)
     - Sprint6Flags (Sprint 6 K1 Security + K2 Resilience+Perf + K3 DSL+Workflow +
-      K4 AI+Quality + K5 Frontend+Chaos: 21 fields, T1.3.14 → features/sprint6.py)
+      K4 AI+Quality + K5 Frontend+Chaos: 20 fields, T1.3.14 → features/sprint6.py;
+      один K2-batching flag удалён в S4.1 YAGNI — см. git-log)
     - Sprint7Flags (Sprint 7 K4 AI+RAG + K3 DSL+Workflow: 5 fields, T1.3.15 → features/sprint7.py)
     - Sprint19AIFlags (Sprint 19 K1 Security + K2 Resilience + K4 AI/RAG + K5 Frontend/DX:
       11 fields, T1.3.24 → features/sprint19_ai.py)

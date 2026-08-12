@@ -2,12 +2,18 @@
 
 Cycle 29 P2: тесты НЕ зависят от optional ``clickhouse_driver`` —
 используем только встроенный ``httpx`` путь через ``_ensure_client`` patch.
+
+Sprint 3.6: regression-тесты для ``ping()`` и ``_ensure_client()`` pre-ping —
+CH-down сценарий не должен пробрасывать ``httpx.HTTPError`` наружу
+(httpx.ConnectError / ConnectTimeout НЕ наследуются от stdlib
+ConnectionError/TimeoutError/OSError).
 """
 
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
 
 from src.backend.infrastructure.clients.storage.clickhouse import (
@@ -141,3 +147,85 @@ async def test_chunking_covers_all_rows_without_duplicates() -> None:
             row = orjson.loads(line)
             seen_ids.add(row["id"])
     assert seen_ids == set(range(10))
+
+
+# ── Sprint 3.6: ping() / pre-ping не должны пробрасывать httpx.HTTPError ──
+# ── когда CH down: httpx.ConnectError/ConnectTimeout НЕ являются ──
+# ── наследниками (ConnectionError, TimeoutError, OSError) stdlib'а. ──
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "exc",
+    [
+        httpx.ConnectError("connection refused"),
+        httpx.ConnectTimeout("connect timeout"),
+        httpx.ReadTimeout("read timeout"),
+        httpx.PoolTimeout("pool timeout"),
+        httpx.ReadError("read error"),
+    ],
+)
+async def test_ping_returns_false_on_httpx_transport_error(exc: Exception) -> None:
+    """Sprint 3.6: ping() возвращает False при недоступном CH.
+
+    CH-down → httpx бросает ``httpx.ConnectError``/``ConnectTimeout``/etc.
+    Они НЕ наследуются от ``ConnectionError``/``TimeoutError``/``OSError``,
+    поэтому except должен включать ``httpx.HTTPError``.
+    """
+    client = ClickHouseClient()
+    fake_http = AsyncMock()
+    fake_http.get = AsyncMock(side_effect=exc)
+    with patch.object(client, "_ensure_client", return_value=fake_http):
+        result = await client.ping()
+    assert result is False
+
+
+@pytest.mark.asyncio
+async def test_ensure_client_pre_ping_recreates_pool_on_httpx_error() -> None:
+    """Sprint 3.6: _ensure_client pre-ping ловит httpx.HTTPError и recreate'ит пул.
+
+    Раньше except ловил только (ConnectionError, TimeoutError, OSError, RuntimeError)
+    и пропускал httpx.ConnectError → propagate'илось в execute/query/insert.
+    """
+    client = ClickHouseClient(keepalive_expiry=0.0, pool_pre_ping=True)
+    # Force pre-ping path: last_used far in the past.
+    client._client = AsyncMock()
+    client._client.get = AsyncMock(side_effect=httpx.ConnectError("down"))
+    client._client_created_at = 0.0
+    client._last_used_at = 0.0
+
+    close_calls = 0
+    original_close = client.close
+
+    async def _track_close() -> None:
+        nonlocal close_calls
+        close_calls += 1
+        await original_close()
+
+    with patch.object(client, "close", side_effect=_track_close):
+        with patch.object(client, "connect", new=AsyncMock()) as connect_mock:
+            # Should NOT raise — pre-ping failure must be caught.
+            await client._ensure_client()
+    assert close_calls == 1
+    assert connect_mock.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_ping_does_not_block_when_ch_is_down() -> None:
+    """Sprint 3.6: ping() не блокирует production-мониторинг при CH-down.
+
+    Сценарий: HealthAggregator периодически пингует CH. Если CH down и
+    ``ping()`` бросает ``httpx.ConnectError`` вместо возврата False,
+    HealthAggregator упадёт и положит весь health-probe pipeline.
+
+    После фикса: ping() всегда возвращает bool.
+    """
+    import asyncio
+
+    client = ClickHouseClient()
+    fake_http = AsyncMock()
+    fake_http.get = AsyncMock(side_effect=httpx.ConnectError("ECONNREFUSED"))
+    with patch.object(client, "_ensure_client", return_value=fake_http):
+        # Должен завершиться быстро и без raise.
+        result = await asyncio.wait_for(client.ping(), timeout=2.0)
+    assert result is False

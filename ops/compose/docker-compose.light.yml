@@ -50,7 +50,9 @@ services:
       dockerfile: ops/compose/Dockerfile
     image: gd-integration-tools:light
     container_name: gd-worker-light
-    command: ["python", "-m", "src.workflows.worker", "run"]
+    # Worker entry-point: src.backend.infrastructure.workflow.worker.main().
+    # См. подробности в docker-compose.yml (там же про K-OPS-4 fix).
+    command: ["python", "-m", "src.backend.infrastructure.workflow.worker", "run"]
     env_file:
       - ../../.env
     environment:
@@ -63,7 +65,11 @@ services:
     deploy:
       replicas: ${WORKER_COUNT:-1}
     healthcheck:
-      test: ["CMD-SHELL", "ps aux | grep -v grep | grep -q 'workflows.worker' || exit 1"]
+      # Worker запускается как ``python -m src.backend.infrastructure.workflow.worker run``;
+      # ps ищет подстроку в командной строке процесса. Старая маска
+      # ``workflows.worker`` была привязана к несуществующему модулю и не
+      # срабатывала — healthcheck всегда был unhealthy.
+      test: ["CMD-SHELL", "ps aux | grep -v grep | grep -q 'src.backend.infrastructure.workflow.worker' || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3

@@ -30,6 +30,7 @@ import orjson
 from src.backend.core.interfaces.cache import CacheBackend
 from src.backend.core.logging import get_logger
 from src.backend.core.utils.json_utils import dumps_bytes, loads
+from src.backend.infrastructure.cache.backends.memory import MemoryBackend
 
 __all__ = (
     "JsonSerializer",
@@ -189,6 +190,21 @@ class QueryResultCache:
         self._prefix = prefix
         self._default_ttl = default_ttl
         self._serializer = serializer or get_default_serializer()
+        # Sprint 3.3 (L7 Infra completion): PickleSerializer — RCE-vector
+        # для shared бэкендов (Redis/Memcached/KeyDB): любой writer в namespace
+        # может исполнить код при ``pickle.loads``. MemoryBackend — единственный
+        # trusted бэкенд: данные под полным контролем приложения в текущем
+        # процессе. Явная защита от misconfig: pickle + не-memory → RuntimeError.
+        if isinstance(self._serializer, PickleSerializer) and not isinstance(
+            backend, MemoryBackend
+        ):
+            raise RuntimeError(
+                "PickleSerializer запрещён с non-MemoryBackend "
+                "(RCE-vector при shared cache namespace). "
+                "Используйте JsonSerializer/OrjsonSerializer для "
+                "shared-бэкендов (Redis/Memcached/KeyDB) или "
+                "MemoryBackend для in-process кэша."
+            )
 
     # ------------------------------------------------------------------ #
     # Key generation

@@ -24,8 +24,12 @@ from src.backend.core.serialization.msgspec_hotpath import encode_json
 
 def _register_template_tools(mcp: Any) -> None:
     """Tools для работы с шаблонами Pipeline."""
+    # Block 1.4-extension: см. tools_route.py — manual tools оборачиваются
+    # через ``_authz_manual_tool`` (single wrapper above tool function level).
+    from src.backend.entrypoints.mcp.mcp_server.helpers import _authz_manual_tool
 
-    @mcp.tool(
+    @_authz_manual_tool(
+        mcp,
         name="template_list",
         description="Список всех доступных шаблонов DSL Pipeline с параметрами. "
         "Шаблоны — готовые паттерны для типовых задач (ETL, scraping, AI Q&A, CRUD и т.д.).",
@@ -35,7 +39,8 @@ def _register_template_tools(mcp: Any) -> None:
 
         return encode_json(list_templates()).decode("utf-8")
 
-    @mcp.tool(
+    @_authz_manual_tool(
+        mcp,
         name="template_instantiate",
         description="Создаёт Pipeline из шаблона с указанными параметрами. "
         'Пример: template_id=\'etl.postgres_to_clickhouse\', params=\'{"source_query": "SELECT...", "target_table": "analytics.orders"}\'',
@@ -78,7 +83,8 @@ def _register_template_tools(mcp: Any) -> None:
         except Exception as exc:
             return encode_json({"error": str(exc)}).decode("utf-8")
 
-    @mcp.tool(
+    @_authz_manual_tool(
+        mcp,
         name="macro_list",
         description="Список всех DSL-макросов (pre-built pipeline patterns). "
         "Макросы — функции для создания типовых интеграционных pipelines.",

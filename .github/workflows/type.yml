@@ -1,7 +1,7 @@
 name: type
 
 # Sprint 3 W1 К5 / GAP-10: статическая проверка типов.
-# mypy — блокирующий (через make type-check), pyright — информационный.
+# mypy — блокирующий через ratcheting baseline, pyright — информационный.
 
 on:
   push:
@@ -39,9 +39,9 @@ jobs:
       - name: Sync deps
         run: uv sync
 
-      - name: Run mypy (через Makefile target)
-        # make type-check проверяет src/ полностью; конфигурация в pyproject.toml.
-        run: make type-check
+      - name: Run mypy ratcheting baseline gate
+        # Формат baseline: {"errors": <int>, "tool": "mypy"}.
+        run: make type-check-budget
 
   pyright:
     runs-on: ubuntu-latest

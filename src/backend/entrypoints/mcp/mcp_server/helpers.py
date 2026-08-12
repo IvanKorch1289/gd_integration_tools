@@ -13,7 +13,7 @@
 - System tools: health check, metrics, feature flags
 """
 
-from typing import Any
+from typing import Any, Callable
 
 import orjson
 
@@ -190,3 +190,109 @@ def _check_mcp_tool_authz(action_name: str) -> str | None:
         return "capability_check_failed"
 
     return "not_in_allowlist_or_public_ns"
+
+
+# ── manual tool authz wrapper (Block 1.4-extension) ──────────────────
+#
+# Action tools (ActionHandlerRegistry-backed) вызывают
+# ``_check_mcp_tool_authz`` inline в своих handler'ах. Manual tools
+# (``route_*``, ``pipeline_*``, ``documents_*``, ``workflow_*``, ...)
+# зарегистрированы через :func:`_authz_manual_tool` — единый wrapper
+# выше уровня tool function, который делает тот же fail-closed check
+# для каждого вызова. При ``tool_authz_enabled=False`` или пустом
+# ``tool_manual_allowlist`` — passthrough (backward-compat).
+
+
+def _check_mcp_manual_tool_authz(tool_name: str) -> str | None:
+    """Block 1.4-extension: per-tool authz для manual MCP tools (fail-closed).
+
+    Возвращает причину деная (str) либо ``None`` если доступ разрешён.
+
+    Алгоритм:
+        1. ``mcp_settings.tool_authz_enabled=False`` → allow (passthrough).
+        2. ``mcp_settings.tool_manual_allowlist`` пуст → allow (passthrough).
+        3. ``tool_name`` в ``tool_manual_allowlist`` → allow.
+        4. Иначе → deny с причиной ``"not_in_manual_allowlist"``.
+
+    Args:
+        tool_name: Имя manual tool (напр. ``"route_execute"``).
+
+    Returns:
+        Причина деная (str) либо None.
+    """
+    try:
+        from src.backend.core.config.ai_stack import mcp_settings
+    except Exception as exc:
+        # Fail-CLOSED — settings import error means we cannot verify policy.
+        logger.warning(
+            "MCP manual tool authz fail-CLOSED: cannot import mcp_settings (%s)", exc
+        )
+        return f"mcp_settings unavailable: {type(exc).__name__}"
+
+    if not mcp_settings.tool_authz_enabled:
+        return None
+    allowlist = set(mcp_settings.tool_manual_allowlist or ())
+    if not allowlist:
+        # No policy set → passthrough (backward-compat). Оператор явно
+        # включает authz, заполняя tool_manual_allowlist.
+        return None
+    if tool_name in allowlist:
+        return None
+    return "not_in_manual_allowlist"
+
+
+def _manual_tool_deny_envelope(tool_name: str, reason: str) -> str:
+    """Единый error-envelope для denied manual tool call.
+
+    Args:
+        tool_name: Имя tool.
+        reason: Причина деная из :func:`_check_mcp_manual_tool_authz`.
+
+    Returns:
+        JSON-строка для отдачи клиенту.
+    """
+    return encode_json(
+        {"error": "mcp.tool.denied", "tool": tool_name, "reason": reason}
+    ).decode("utf-8")
+
+
+def _authz_manual_tool(
+    mcp: Any, *, name: str, description: str
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Decorator: register manual MCP tool с per-call authz wrapper.
+
+    Single wrapper выше уровня tool function (Block 1.4-extension). Заменяет
+    прямой вызов ``@mcp.tool(name=..., description=...)`` для manual tools
+    (``route_*``, ``pipeline_*``, ``documents_*``, ``workflow_*``, ...).
+
+    При каждом вызове обёрнутого tool'а выполняется
+    :func:`_check_mcp_manual_tool_authz`; при deny возвращается error-envelope,
+    иначе — делегирование исходной функции. ``functools.wraps`` сохраняет
+    сигнатуру/имя/docstring для FastMCP introspection (tool schema строится
+    по сигнатуре).
+
+    Args:
+        mcp: Экземпляр FastMCP.
+        name: Имя tool в реестре MCP.
+        description: Описание tool (для MCP-клиента).
+
+    Returns:
+        Decorator factory для оборачиваемой функции.
+    """
+    import functools
+
+    def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
+        @functools.wraps(fn)
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
+            deny_reason = _check_mcp_manual_tool_authz(name)
+            if deny_reason is not None:
+                logger.warning(
+                    "mcp_manual_tool_denied",
+                    extra={"tool": name, "reason": deny_reason, "source": "mcp"},
+                )
+                return _manual_tool_deny_envelope(name, deny_reason)
+            return await fn(*args, **kwargs)
+
+        return mcp.tool(name=name, description=description)(wrapper)
+
+    return decorator

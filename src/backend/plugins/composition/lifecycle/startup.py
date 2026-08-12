@@ -342,6 +342,24 @@ async def run_startup(app: FastAPI, task_registry: object) -> None:
             log_exc,
         )
 
+    # ── Audit HMAC-chain verify (B-series 2026-08-03, FIX-H5) ──
+    # Periodic :meth:`ImmutableAuditStore.verify` через TaskRegistry. Opt-in
+    # через feature_flags.audit_hmac_verify_enabled (default False).
+    # Best-effort: фиаско verify-store не блокирует startup.
+    try:
+        from src.backend.infrastructure.database.database import get_db_session
+        from src.backend.infrastructure.observability.audit_verify_lifecycle import (
+            try_start_default as _start_audit_verify_default,
+        )
+
+        started = await _start_audit_verify_default(session_factory=get_db_session)
+        if started:
+            _logger.info("Audit HMAC-chain verify scheduler started")
+    except Exception as audit_verify_exc:
+        _logger.warning(
+            "Audit verify scheduler bootstrap skipped: %s", audit_verify_exc
+        )
+
     register_app_state(app)
     register_storage_singletons(app)
 
@@ -394,6 +412,31 @@ async def run_startup(app: FastAPI, task_registry: object) -> None:
     from src.backend.plugins.composition.service_setup import register_all_services
 
     register_all_services()
+
+    # ── AIGateway composition singleton (Sprint 1.5: L5 Security Chain) ──
+    # Регистрирует canonical AIGateway (app.state.ai_gateway + svcs_registry)
+    # c обязательными DI — capability_gate через 3-arg adapter, policy_resolver,
+    # token_budget. На production fail-closed guard проверит, что все 3
+    # присутствуют; на dev/staging — best-effort.
+    try:
+        from src.backend.core.ai import AIGateway
+        from src.backend.core.di.app_state import get_app_ref
+        from src.backend.core.di.providers.ai import get_ai_gateway_provider
+        from src.backend.core.svcs_registry import has_service, register_factory
+
+        gateway = get_ai_gateway_provider()
+        if not has_service(AIGateway):
+            register_factory(AIGateway, lambda: gateway)
+        app = get_app_ref()
+        if app is not None:
+            # Sprint 1.3: composition root в register_app_state уже ставит
+            # singleton (см. di.py: app.state.ai_gateway). Здесь — идемпотентная
+            # re-bind, чтобы AIGateway был доступен даже если register_app_state
+            # не вызывался (например, в CLI / DSL-контекстах).
+            app.state.ai_gateway = gateway
+        _logger.info("AIGateway composition singleton wired (Sprint 1.5)")
+    except Exception as ai_gw_exc:
+        _logger.warning("AIGateway composition singleton skipped: %s", ai_gw_exc)
 
     # AI Safety cleanup-loop (Wave 1.6, S1).
     try:

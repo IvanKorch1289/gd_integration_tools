@@ -43,6 +43,12 @@ class Pipeline:
             (ws_handler, grpc_server, graphql) для override стандартных
             settings (``WSSettings``, ``GRPCSettings``, ``GraphQLSettings``).
             Дефолт — пустой dict (handlers используют settings defaults).
+        security: K3 S19 W3 — кортеж ``requires_permission`` из
+            ``route.toml [security]``. Непустое значение активирует
+            enforcement в :class:`src.backend.dsl.service.DslService.dispatch`
+            через :func:`src.backend.services.routes.route_authz.check_route_permission`.
+            ``None`` (default) — маршрут без security-декларации,
+            enforcement пропускается (backward-compat).
     """
 
     route_id: str
@@ -55,7 +61,7 @@ class Pipeline:
     tenant_aware: bool = False
     middlewares: list[Any] = field(default_factory=list)
     route_overrides: dict[str, Any] = field(default_factory=dict)  # S163 W15
-    security: tuple[str, ...] = field(default_factory=tuple)  # Sprint 1: requires_permission
+    security: tuple[str, ...] | None = None  # K3 S19 W3: requires_permission enforcement
 
     def add_processor(self, processor: BaseProcessor) -> Pipeline:
         """Добавляет процессор в конец маршрута.

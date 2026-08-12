@@ -257,8 +257,12 @@ async def test_ai_tool_dispatch_end_to_end_happy_path(
 
     mock_gateway_instance = MagicMock()
     mock_gateway_instance.invoke = _mock_invoke
+    # Sprint 1.3: код идёт через ``get_ai_gateway()`` resolver — патчим
+    # symbol в модуле ``services.ai.gateway_adapter`` (импортируется
+    # внутри ``_ask_llm_for_tool_selection``).
     monkeypatch.setattr(
-        "src.backend.core.ai.gateway.AIGateway", lambda *a, **kw: mock_gateway_instance,
+        "src.backend.services.ai.gateway_adapter.get_ai_gateway",
+        lambda: mock_gateway_instance,
     )
 
     # Mock tool callable — captures args for assertion
@@ -328,8 +332,12 @@ async def test_ai_tool_dispatch_end_to_end_blocks_tool_outside_whitelist(
 
     mock_gateway_instance = MagicMock()
     mock_gateway_instance.invoke = _mock_invoke
+    # Sprint 1.3: код идёт через ``get_ai_gateway()`` resolver — патчим
+    # symbol в модуле ``services.ai.gateway_adapter`` (импортируется
+    # внутри ``_ask_llm_for_tool_selection``).
     monkeypatch.setattr(
-        "src.backend.core.ai.gateway.AIGateway", lambda *a, **kw: mock_gateway_instance,
+        "src.backend.services.ai.gateway_adapter.get_ai_gateway",
+        lambda: mock_gateway_instance,
     )
 
     # Registry: _resolve_tools_description calls registry.get("safe_tool")

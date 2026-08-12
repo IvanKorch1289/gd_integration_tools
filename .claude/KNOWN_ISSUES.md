@@ -1,5 +1,26 @@
 # KNOWN_ISSUES.md
 
+## Sprint 5.6 — exit semantics quality targets (verified 2026-08-04)
+
+- **`make type-check` остаётся soft/warn-only:** `make/quality.mk:17-21`
+  завершает mypy через `|| printf '%s\n'` и затем печатает success. Проверка с
+  `UV_RUN=false` подтвердила итоговый exit `0` при принудительной ошибке
+  инструмента. Для блокирующего ratchet-гейта использовать существующий
+  `make type-check-budget` (`make/quality.mk:23-26`).
+- **`make lint` остаётся soft/warn-only:** `make/quality.mk:4-10` тем же способом
+  маскирует ошибки Ruff, mypy и vulture; `UV_RUN=false` также дал exit `0`.
+  Блокирующие существующие цели: `make lint-strict`, `make type-check-budget` и
+  `make vulture-gate`. Makefile в Sprint 5.6 намеренно не менялся (вне scope).
+- **Layer-orphan gate уже fail-stop, правка не нужна:** отдельного символа
+  `_check_layers_orphans` в актуальном коде нет; canonical
+  `tools/check_layers.py::main` возвращает `1` для новых или stale allowlist
+  записей (`tools/check_layers.py:431-462`), а `make layers` вызывает его без
+  маскирования (`make/runtime.mk:4-5`). Фактический запуск на текущем worktree
+  завершился exit `1` на 9 новых нарушениях, то есть finding безопасно закрыт
+  текущей семантикой.
+
+---
+
 ## Audit Verification Cycle 33 — 2026-08-04 (drift report)
 
 > Методологическая заметка: значительная часть находок из внешнего

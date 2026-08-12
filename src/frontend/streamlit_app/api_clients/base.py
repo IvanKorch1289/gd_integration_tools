@@ -12,6 +12,7 @@ import time
 from typing import Any
 
 import httpx
+import streamlit as st
 
 from src.frontend.streamlit_app.config import get_api_base_url
 
@@ -76,13 +77,17 @@ class BaseAPIClient:
         self._token = token
 
     def _headers(self) -> dict[str, str]:
-        """Собрать headers с auth token."""
+        """Собрать headers с auth token текущей Streamlit-сессии."""
         headers: dict[str, str] = {
             "Content-Type": "application/json",
             "Accept": "application/json",
         }
-        if self._token:
-            headers["Authorization"] = f"Bearer {self._token}"
+        token = self._token
+        if token is None:
+            session_token = st.session_state.get("auth_token")
+            token = session_token if isinstance(session_token, str) else None
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
         return headers
 
     def _get_max_retries_for_path(self, path: str) -> int:

@@ -127,3 +127,41 @@ class TestCheckPython3Syntax:
         violations = check_file(path)
         assert len(violations) == 1
         assert violations[0].rule == RULE_EXCEPT_TUPLE_NO_PAREN
+
+    def test_syntax_error_fallback_regex_detected(self, tmp_path: Path) -> None:
+        """Regression: legacy comma-separated except без скобок
+        приводит к ``SyntaxError`` при ``ast.parse`` (Python 3.10+).
+
+        Cycle 2: ``hub_run_orchestrator.py:154`` имел legacy ``except``
+        без скобок — файл не компилируется. Gate обязан ловить через
+        fallback-regex, когда основной ``ast.walk``-путь не срабатывает.
+
+        Тело файла воспроизводит оригинальную регрессию (тот же набор
+        исключений и формат ``from None``).
+        """
+        path = _write(
+            tmp_path,
+            "regression.py",
+            '''"""Regression source file for syntax gate fallback."""
+from __future__ import annotations
+
+
+def guard() -> None:
+    try:
+        from src.backend.core.config.features import feature_flags
+    except ImportError, AttributeError:
+        raise RuntimeError("feature missing") from None
+''',
+        )
+        violations = check_file(path)
+        # Ровно одно нарушение — на строке с legacy except (line 8).
+        code_violations = [
+            v for v in violations
+            if v.line >= 6  # исключаем docstring (line 1), который
+                            # случайно может триггернуть regex
+        ]
+        assert len(code_violations) == 1, (
+            f"Expected 1 violation via SyntaxError-fallback, got {violations}"
+        )
+        assert code_violations[0].rule == RULE_EXCEPT_TUPLE_NO_PAREN
+        assert code_violations[0].line == 8

@@ -82,6 +82,7 @@ async def test_delete_pattern_raises_not_implemented(
     """
     with pytest.raises(NotImplementedError, match="pattern-delete"):
         await backend.delete_pattern("any:*")
+        await backend.delete_pattern("other:*")
     backend._client.delete.assert_not_called()
 
 

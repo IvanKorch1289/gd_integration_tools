@@ -4,21 +4,33 @@
 
 1. tenant_id обязателен (ValueError при пустом).
 2. get_messages/save_message → short_term.get_conversation/add_message.
-3. get_facts(session_id=...) → short_term.get_facts; без session_id → long_term.recall.
-4. recall_semantic → long_term.recall.
-5. save_fact → long_term.add_semantic; fallback на short_term при long_term=None.
+3. get_facts(session_id=...) → short_term.get_facts; без session_id → canonical recall.
+4. recall_semantic → canonical LangMemService.recall.
+5. save_fact → canonical LangMemService.remember_fact; fallback в short_term.
 6. consolidate → long_term.consolidate; 0 при отсутствии long_term.
 7. scratchpad → short_term.{get,set}_scratchpad.
 """
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
 
 from src.backend.core.interfaces.agent_memory import MemoryMessage
+from src.backend.services.ai.memory.langmem_service import LangMemService
 from src.backend.services.ai.memory_gateway import UnifiedMemoryGateway
+
+pytestmark = pytest.mark.unit
+
+
+class _EmbeddingStub:
+    """Детерминированный embedding-провайдер для unit-тестов."""
+
+    async def embed(self, texts: list[str]) -> list[list[float]]:
+        """Возвращает по одному тестовому вектору на входной текст."""
+        return [[0.1, 0.2] for _ in texts]
 
 
 def _make_short_mock() -> AsyncMock:
@@ -34,10 +46,10 @@ def _make_short_mock() -> AsyncMock:
 
 
 def _make_long_mock() -> AsyncMock:
-    """Builder: LangMemService stub."""
+    """Builder: canonical LangMemService stub."""
     m = AsyncMock()
     m.recall = AsyncMock(return_value=[])
-    m.add_semantic = AsyncMock(return_value="fact-id-123")
+    m.remember_fact = AsyncMock(return_value=SimpleNamespace(entry_id="fact-id-123"))
     m.consolidate = AsyncMock(return_value=5)
     return m
 
@@ -111,7 +123,7 @@ async def test_get_facts_with_session_uses_short_term() -> None:
 
 @pytest.mark.asyncio
 async def test_get_facts_without_session_uses_long_term() -> None:
-    """get_facts(session_id=None) → long_term.recall."""
+    """get_facts(session_id=None) вызывает canonical semantic recall."""
     short = _make_short_mock()
     long_ = _make_long_mock()
     long_.recall = AsyncMock(
@@ -123,19 +135,19 @@ async def test_get_facts_without_session_uses_long_term() -> None:
     gw = UnifiedMemoryGateway(short_term=short, long_term=long_)
     facts = await gw.get_facts(tenant_id="t1")
     assert len(facts) == 2
-    long_.recall.assert_awaited_once()
+    long_.recall.assert_awaited_once_with("t1", "semantic", query=None, top_k=50)
 
 
 @pytest.mark.asyncio
 async def test_recall_semantic_uses_long_term() -> None:
-    """recall_semantic → long_term.recall(query, top_k)."""
+    """recall_semantic передаёт tenant как canonical agent_id."""
     long_ = _make_long_mock()
     long_.recall = AsyncMock(return_value=[{"content": "found", "confidence": 0.95}])
     gw = UnifiedMemoryGateway(short_term=_make_short_mock(), long_term=long_)
     facts = await gw.recall_semantic(tenant_id="t1", query="кредит", top_k=3)
     assert len(facts) == 1
     assert facts[0].content == "found"
-    long_.recall.assert_awaited_once_with(tenant_id="t1", query="кредит", top_k=3)
+    long_.recall.assert_awaited_once_with("t1", "semantic", query="кредит", top_k=3)
 
 
 @pytest.mark.asyncio
@@ -147,15 +159,41 @@ async def test_recall_semantic_empty_when_long_term_none() -> None:
 
 
 @pytest.mark.asyncio
-async def test_save_fact_uses_long_term() -> None:
-    """save_fact → long_term.add_semantic."""
+async def test_save_fact_uses_canonical_remember_fact() -> None:
+    """save_fact вызывает canonical remember_fact с embedding."""
     long_ = _make_long_mock()
-    gw = UnifiedMemoryGateway(short_term=_make_short_mock(), long_term=long_)
+    gw = UnifiedMemoryGateway(
+        short_term=_make_short_mock(),
+        long_term=long_,
+        embedding_provider=_EmbeddingStub(),
+    )
     fact_id = await gw.save_fact(
         tenant_id="t1", content="x", confidence=0.8, tags=("preference",),
     )
     assert fact_id == "fact-id-123"
-    long_.add_semantic.assert_awaited_once()
+    long_.remember_fact.assert_awaited_once_with("t1", "x", [0.1, 0.2])
+
+
+@pytest.mark.asyncio
+async def test_canonical_langmem_round_trip_is_tenant_scoped() -> None:
+    """Canonical LangMem не теряет факт из-за TypeError и изолирует tenant."""
+    long_term = LangMemService(enabled=True, use_inmemory=True)
+    gw = UnifiedMemoryGateway(
+        short_term=_make_short_mock(),
+        long_term=long_term,
+        embedding_provider=_EmbeddingStub(),
+    )
+
+    fact_id = await gw.save_fact(tenant_id="tenant-a", content="изолированный факт")
+    own_facts = await gw.recall_semantic(tenant_id="tenant-a", query="факт", top_k=5)
+    foreign_facts = await gw.recall_semantic(
+        tenant_id="tenant-b", query="факт", top_k=5
+    )
+
+    assert fact_id
+    assert own_facts
+    assert all(fact.content == "изолированный факт" for fact in own_facts)
+    assert foreign_facts == []
 
 
 @pytest.mark.asyncio

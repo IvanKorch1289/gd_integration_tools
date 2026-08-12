@@ -11,11 +11,110 @@ Singleton cache ``_overrides`` is per-domain (NOT shared).
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 from src.backend.core.di.module_registry import resolve_module
 
+if TYPE_CHECKING:
+    from src.backend.core.ai import AIGateway
+    from src.backend.core.ai.policy.resolver import PolicyResolver
+
 _overrides: dict[str, Any] = {}
+
+
+# ─────────────── AIGateway composition singleton (Sprint 1.5) ──────────────
+
+
+def get_ai_gateway_provider() -> AIGateway:
+    """Собрать AIGateway singleton c обязательными DI (Sprint 1.5).
+
+    Безопасный fail-closed composition: для production регистрирует
+    ``policy_resolver``, ``capability_gate`` (через canonical 3-arg
+    adapter) и ``token_budget``. На dev/staging недостающие зависимости
+    пропускаются, чтобы не ломать backward-compat (см. S177 M2 guard).
+
+    Результат мемоизируется через :func:`lru_cache` — composition root
+    гарантирует singleton-семантику в рамках процесса. Test-override через
+    :func:`set_ai_gateway_provider` имеет приоритет.
+
+    Returns:
+        Типизированный singleton :class:`AIGateway` с заполненными DI.
+    """
+    if "ai_gateway" in _overrides:
+        return cast("AIGateway", _overrides["ai_gateway"])
+    return _build_ai_gateway_singleton()
+
+
+@lru_cache(maxsize=1)
+def _build_ai_gateway_singleton() -> AIGateway:
+    """Внутренний builder для :func:`get_ai_gateway_provider` (мемоизация)."""
+    from src.backend.core.ai import AIGateway
+    from src.backend.core.config.settings import settings as app_settings
+    from src.backend.core.security.capabilities import (
+        CapabilityGate,
+        build_default_vocabulary,
+    )
+    from src.backend.services.ai.gateway_adapter import adapt_capability_gate
+
+    environment = getattr(getattr(app_settings, "app", None), "environment", "")
+
+    policy_resolver: PolicyResolver | None = None
+    try:
+        from src.backend.core.ai.policy.resolver import PolicyResolver
+
+        policy_resolver = PolicyResolver(roots=[])
+    except Exception:
+        policy_resolver = None
+
+    capability_gate_obj: object | None = None
+    try:
+        gate = CapabilityGate(vocabulary=build_default_vocabulary())
+        if environment == "production":
+            from src.backend.core.security.capabilities import CapabilityRef
+
+            # ponytail: минимальная декларация ядра — production-плагины
+            # обязаны переобъявить свой scope через loader.
+            gate.declare("core", (CapabilityRef(name="ai.invoke", scope="*"),))
+        capability_gate_obj = adapt_capability_gate(gate)
+    except Exception:
+        capability_gate_obj = None
+
+    token_budget: object | None = None
+    try:
+        from src.backend.core.tenancy.token_budget import (
+            BudgetPeriod,
+            InMemoryTokenBudgetBackend,
+            TokenBudget,
+            TokenBudgetConfig,
+        )
+
+        token_budget = TokenBudget(
+            backend=InMemoryTokenBudgetBackend(),
+            default_config=TokenBudgetConfig(
+                soft_limit=10_000_000, hard_limit=100_000_000, period=BudgetPeriod.DAILY
+            ),
+        )
+    except Exception:
+        token_budget = None
+
+    return AIGateway(
+        policy_resolver=policy_resolver,
+        capability_gate=capability_gate_obj,
+        token_budget=token_budget,
+    )
+
+
+def set_ai_gateway_provider(gateway: Any) -> None:
+    """Установить override для ``ai_gateway`` provider (test-инжекция).
+
+    При ``gateway is None`` — сбрасывает override и чистит :func:`lru_cache`
+    singleton-билдера (используется в тестах между сценариями).
+    """
+    if gateway is None:
+        _overrides.pop("ai_gateway", None)
+        _build_ai_gateway_singleton.cache_clear()
+    else:
+        _overrides["ai_gateway"] = gateway
 
 
 # ─────────────── AI sanitizer (Wave 6.3) ───────────────
@@ -115,6 +214,7 @@ def _resolve_pii_token_registry() -> Any:
     from src.backend.core.di.providers.infrastructure_locator import (
         get_redis_token_registry_class as _get_rtr_cls,
     )
+
     EnvAESGCMKeyProvider = _get_eakp_cls()
     RedisTokenRegistry = _get_rtr_cls()
 

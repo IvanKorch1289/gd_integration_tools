@@ -380,3 +380,165 @@ async def test_dispatcher_handles_incremental_pending(outbox: FakeOutbox) -> Non
 
     assert len(ack.acked) == 2
     assert deliverer.calls == 2
+
+
+# ---------------------------------------------------------------------------
+# Sprint 4.2 (L10 Observability): jitter в _compute_sleep_for.
+# Mirror pattern из infrastructure/workflow/runner.py:_compute_backoff.
+# ---------------------------------------------------------------------------
+
+
+def _make_dispatcher_for_sleep_test(
+    outbox: FakeOutbox,
+    *,
+    retry_backoff_seconds: float,
+    retry_jitter: float | None = None,
+    max_retries: int = 5,
+) -> OutboxDispatcher:
+    """Хелпер: bare-bones диспетчер для unit-тестов _compute_sleep_for."""
+    kwargs: dict[str, object] = dict(
+        backend=outbox,
+        pending_source=_ListPendingSource([]),
+        ack=_AckRecorder(),
+        deliverer=_noop_deliverer,
+        retry_backoff_seconds=retry_backoff_seconds,
+        max_retries=max_retries,
+        enabled=False,  # не запускаем background-task в unit-тестах
+    )
+    if retry_jitter is not None:
+        kwargs["retry_jitter"] = retry_jitter
+    return OutboxDispatcher(**kwargs)  # type: ignore[arg-type]
+
+
+def test_compute_sleep_for_zero_jitter_is_deterministic(outbox: FakeOutbox) -> None:
+    """retry_jitter=0 → sleep_for == base * 2 ** (attempt-1), без randomness.
+
+    Сохраняем backward-compat со старой реализацией без jitter.
+    """
+    dispatcher = _make_dispatcher_for_sleep_test(
+        outbox, retry_backoff_seconds=0.5, retry_jitter=0.0
+    )
+    for attempt in range(1, 8):
+        expected = 0.5 * (2 ** (attempt - 1))
+        assert dispatcher._compute_sleep_for(attempt) == expected
+
+
+def test_compute_sleep_for_default_jitter_within_bounds(outbox: FakeOutbox) -> None:
+    """retry_jitter=0.2 → sleep_for ∈ [raw*0.8, raw*1.2] для любого attempt.
+
+    Покрывает consistent-pattern с DurableWorkflowRunner._compute_backoff.
+    """
+    base = 0.1
+    dispatcher = _make_dispatcher_for_sleep_test(
+        outbox, retry_backoff_seconds=base, retry_jitter=0.2
+    )
+    raw_for = lambda attempt: base * (2 ** (attempt - 1))  # noqa: E731
+    for attempt in range(1, 6):
+        raw = raw_for(attempt)
+        for _ in range(50):  # многократные samples для robustness
+            sleep_for = dispatcher._compute_sleep_for(attempt)
+            assert raw * 0.8 <= sleep_for <= raw * 1.2, (
+                f"attempt={attempt} raw={raw} sleep_for={sleep_for}"
+            )
+
+
+def test_compute_sleep_for_default_jitter_is_randomized(outbox: FakeOutbox) -> None:
+    """retry_jitter=0.2 → последовательные вызовы дают разные sleep_for.
+
+    Защита от регрессии «забыл применить uniform».
+    """
+    dispatcher = _make_dispatcher_for_sleep_test(
+        outbox, retry_backoff_seconds=1.0, retry_jitter=0.2
+    )
+    samples = {dispatcher._compute_sleep_for(2) for _ in range(30)}
+    # 30 samples с ±20% jitter — крайне маловероятно все совпадут.
+    assert len(samples) > 5
+
+
+def test_compute_sleep_for_never_negative(outbox: FakeOutbox) -> None:
+    """Даже при экстремальном jitter=0.999 sleep_for остаётся ≥ 0."""
+    dispatcher = _make_dispatcher_for_sleep_test(
+        outbox, retry_backoff_seconds=0.01, retry_jitter=0.999
+    )
+    for attempt in range(1, 6):
+        sleep_for = dispatcher._compute_sleep_for(attempt)
+        assert sleep_for >= 0.0
+        # Конечное значение, не NaN/inf.
+        assert sleep_for == sleep_for
+        assert abs(sleep_for) != float("inf")
+
+
+def test_outbox_dispatcher_default_retry_jitter_is_zero_point_two(
+    outbox: FakeOutbox,
+) -> None:
+    """Default retry_jitter=0.2 (±20%) — consistent с workflow runner."""
+    dispatcher = _make_dispatcher_for_sleep_test(outbox, retry_backoff_seconds=1.0)
+    assert dispatcher._retry_jitter == 0.2  # noqa: S101  # default check
+
+
+async def test_dispatch_one_applies_jitter_via_wait_for_timeout(
+    outbox: FakeOutbox,
+) -> None:
+    """Integration: retry-loop передаёт jittered sleep_for в asyncio.wait_for.
+
+    Перехватываем asyncio.wait_for в модуле dispatcher'а — фиксируем
+    ``timeout``-аргумент для каждого retry-вызова и проверяем, что он
+    лежит в jittered-диапазоне, а не равен детерминированному base*2^(n-1).
+    """
+    captured: list[float] = []
+
+    real_wait_for = asyncio.wait_for
+
+    async def capturing_wait_for(awaitable, *, timeout=None, **kwargs):  # type: ignore[no-untyped-def]
+        # Ловим только retry-вызовы (timeout есть + позиционный аргумент —
+        # ``_stopping.wait()``). Фильтруем ``_poll_and_dispatch`` pause-вызов
+        # по типу awaitable (Event.wait() vs Event.wait()).
+        if timeout is not None:
+            captured.append(float(timeout))
+        return await real_wait_for(awaitable, timeout=timeout, **kwargs)
+
+    # Monkeypatch на уровне модуля dispatcher'а — внутри retry-loop'а
+    # ``asyncio.wait_for`` смотрит на этот binding.
+    import src.backend.infrastructure.messaging.outbox.dispatcher as _dsp
+
+    original_wait_for = _dsp.asyncio.wait_for
+    _dsp.asyncio.wait_for = capturing_wait_for
+    try:
+        base = 0.05
+        event = _make_event("jitter.integration")
+        dispatcher = OutboxDispatcher(
+            backend=outbox,
+            pending_source=_ListPendingSource([event]),
+            ack=_AckRecorder(),
+            deliverer=_AlwaysFailDeliverer(),
+            poll_interval=0.01,
+            max_retries=3,
+            retry_backoff_seconds=base,
+            retry_jitter=0.2,
+        )
+        await dispatcher.start()
+        for _ in range(100):
+            dlq_calls = await outbox.list_dlq()
+            if dlq_calls:
+                break
+            await asyncio.sleep(0.01)
+        await dispatcher.stop(timeout=1.0)
+    finally:
+        _dsp.asyncio.wait_for = original_wait_for
+
+    # Было ровно max_retries-1 backoff-вызовов (после последней попытки
+    # sleep не нужен — сразу DLQ). Отфильтровываем poll_interval (< base/2)
+    # и stop timeout (> 2 * base * (1 + jitter)) — оставляем только retry-паузы.
+    upper = 2 * base * 1.5
+    retry_timeouts = [t for t in captured if base * 0.5 <= t <= upper]
+    assert len(retry_timeouts) == 2, f"expected 2 retry timeouts, got {captured}"
+    # attempt=1 → raw=base, attempt=2 → raw=2*base
+    raw_seq = [base * (2 ** (i - 1)) for i in (1, 2)]
+    for raw, t in zip(raw_seq, retry_timeouts, strict=True):
+        assert raw * 0.8 <= t <= raw * 1.2, (
+            f"raw={raw} captured={t} outside ±20% jitter window"
+        )
+    # И хотя бы один sleep отличается от детерминированного raw → jitter применён.
+    assert any(
+        abs(t - raw) > 1e-9 for raw, t in zip(raw_seq, retry_timeouts, strict=True)
+    ), f"all timeouts match deterministic raw — jitter not applied: {retry_timeouts}"

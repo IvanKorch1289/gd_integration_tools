@@ -87,8 +87,8 @@ def is_allowlisted(node_id: str, entries: list[AllowlistEntry]) -> bool:
     return False
 
 
-def run_pytest(*, run: bool) -> str:
-    """Запускает pytest и возвращает stdout (utf-8).
+def run_pytest(*, run: bool) -> tuple[int, str]:
+    """Запускает pytest и возвращает ``(exit_code, output)``.
 
     При ``run=False`` — ``--co`` (collect only), быстро.
     При ``run=True`` — полный прогон.
@@ -97,7 +97,7 @@ def run_pytest(*, run: bool) -> str:
     if not run:
         cmd.append("--co")
     cmd.extend(["-q", "--no-header"])
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603 -- sys.executable и фиксированный pytest target
         cmd,
         cwd=REPO_ROOT,
         capture_output=True,
@@ -107,12 +107,11 @@ def run_pytest(*, run: bool) -> str:
         check=False,
     )
     # pytest пишет summary в stderr при failures, в stdout при --co.
-    return (result.stdout or "") + "\n" + (result.stderr or "")
+    output = (result.stdout or "") + "\n" + (result.stderr or "")
+    return result.returncode, output
 
 
-_NODE_ID_RE = re.compile(
-    r"^(?P<status>ERROR|FAILED|SKIPPED)\s+(?P<node_id>\S+)"
-)
+_NODE_ID_RE = re.compile(r"^(?P<status>ERROR|FAILED|SKIPPED)\s+(?P<node_id>\S+)")
 
 
 def parse_failures(output: str) -> list[str]:
@@ -131,9 +130,7 @@ def parse_failures(output: str) -> list[str]:
 
 def main() -> int:
     """Точка входа: парсинг args, run pytest, классификация, exit code."""
-    parser = argparse.ArgumentParser(
-        description="Test baseline gate (S106 W5)."
-    )
+    parser = argparse.ArgumentParser(description="Test baseline gate (S106 W5).")
     parser.add_argument(
         "--run",
         action="store_true",
@@ -152,9 +149,19 @@ def main() -> int:
     print(f"Pytest target: {PYTEST_TARGET} (run={args.run})")
     print()
 
-    output = run_pytest(run=args.run)
+    pytest_code, output = run_pytest(run=args.run)
     failures = parse_failures(output)
+    if pytest_code not in (0, 1, 2):
+        print(f"ERROR: pytest exited with code {pytest_code}", file=sys.stderr)
+        return 2
     if not failures:
+        if pytest_code != 0:
+            print(
+                f"ERROR: pytest exited with code {pytest_code} "
+                "without parseable failures",
+                file=sys.stderr,
+            )
+            return 2
         print("No failures detected (pre-existing or new).")
         return 0
 

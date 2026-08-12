@@ -126,7 +126,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from gd_integration_tools.core.plugin_runtime import BasePlugin
+from gd_integration_tools.core.interfaces.plugin import BasePlugin
 
 
 @dataclass
@@ -147,7 +147,7 @@ def _build_toml(
     description: str,
     tenant_aware: bool,
     trust_tier: str,
-    requires_core: str = _default_requires_core(),
+    requires_core: str = ">=0.20,<0.21",
 ) -> str:
     """Build plugin.toml manifest."""
     return f"""\
@@ -242,7 +242,7 @@ def _write_scaffold(
     *,
     tenant_aware: bool = True,
     trust_tier: str = "B",
-    requires_core: str = _default_requires_core(),
+    requires_core: str = ">=0.20,<0.21",
     force: bool = False,
 ) -> Path:
     """Write plugin.toml + __init__.py + plugin.py. Returns path to directory."""
@@ -294,7 +294,7 @@ def cli(
     ] = None,
     tenant_aware: bool = True,
     trust_tier: str = "B",
-    requires_core: str = _default_requires_core(),
+    requires_core: str = ">=0.20,<0.21",
     dry_run: bool = dry_run_option,
     force: bool = force_option,
     extensions_dir: Path = extensions_dir_option,
@@ -336,10 +336,9 @@ def cli(
 
         requires_core = (
             questionary.text(
-                "requires_core (core version constraint):",
-                default=_default_requires_core(),
+                "requires_core (core version constraint):", default=">=0.20,<0.21"
             ).ask()
-            or _default_requires_core()
+            or ">=0.20,<0.21"
         )
 
         console.print("[bold cyan]== Preview ==[/bold cyan]")

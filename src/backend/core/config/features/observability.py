@@ -1,8 +1,8 @@
 """Observability feature-flags (T1.3.4 split from core.config.features.__init__).
 
-Извлечено 2 fields из 2 sections (S38 P1.1 epic, T1.3.4 PR):
+Извлечено 3 fields из 2 sections (S38 P1.1 epic, T1.3.4 PR; B-series 2026-08):
 - K1 — Tracing & Observability: tracing_baggage_strict
-- K8 — Audit & ClickHouse: audit_clickhouse_enabled
+- K8 — Audit & ClickHouse: audit_clickhouse_enabled, audit_hmac_verify_enabled
 """
 
 from __future__ import annotations
@@ -52,14 +52,14 @@ class ObservabilityFlags(BaseSettings):
 
     audit_hmac_verify_enabled: bool = Field(
         default=False,
-        title="Audit: HMAC-chain verify scheduler",
+        title="Audit: periodic HMAC-chain verify (tamper detection)",
         description=(
-            "Sprint 4.6 (B-series 2026-08-03, FIX-H5). Owner: K8 Audit. "
-            "Opt-in (default False) — dev/dev_light не должны поднимать "
-            "Postgres audit_log_immutable таблицу только ради verify-цикла; "
-            "в prod выставляется через env ``FEATURE_AUDIT_HMAC_VERIFY_ENABLED=true``. "
-            "При True запускает :func:`audit_verify_lifecycle.try_start_default` "
-            "в lifespan startup; verify-цикл каждые 24h."
+            "B-series 2026-08-03. Owner: K8 Audit. "
+            "Активирует периодический вызов :meth:`ImmutableAuditStore.verify` "
+            "через :mod:`audit_verify_lifecycle` (default интервал 24h). "
+            "Opt-in (default False) — dev/dev_light не должны поднимать Postgres "
+            "audit_log_immutable таблицу только ради verify-цикла; в prod "
+            "выставляется через env ``FEATURE_AUDIT_HMAC_VERIFY_ENABLED=true``."
         ),
     )
 

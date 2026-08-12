@@ -3,13 +3,20 @@
 Wave: ``[wave:s8/k3-rpa-universal-stage1]``. Используют AsyncMock для page
 (playwright/patchright не запускается); проверяют контракт и обработку
 ошибок (exchange.fail) каждого из 8 процессоров.
+
+S202 audit closure (D-4): каждый процессор имеет ``required_capability``
+в формате ``rpa.browser.<verb>`` (per ``docs/rpa/RPA_GUIDE.md`` vocabulary).
+Capability-facade stub возвращает denied в unit-тестах, поэтому
+``auth_check`` подменяется на no-op через ``_bypass_auth_check`` fixture.
+Round-trip тесты проверяют что ``required_capability`` объявлен и
+соответствует documented vocabulary.
 """
 
 
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -25,6 +32,30 @@ from src.backend.dsl.engine.processors.rpa_browser import (
     WaitForProcessor,
 )
 
+# All 8 processors — bypass auth_check in unit tests (S202 audit pattern).
+_BYPASS_AUTH_TARGETS = (
+    BrowserLaunchProcessor,
+    NavigateProcessor,
+    ClickProcessor,
+    FillProcessor,
+    ExtractProcessor,
+    WaitForProcessor,
+    ScreenshotProcessor,
+    PdfProcessor,
+)
+
+
+@pytest.fixture(autouse=True)
+def _bypass_auth_check(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Подменяет ``auth_check`` на no-op для всех 8 процессоров.
+
+    В unit-тестах capability-facade stub возвращает denied (fail-closed),
+    поэтому ``auth_check`` patch-ится на ``AsyncMock(return_value=True)``.
+    Без bypass каждый тест упал бы с ``exchange.set_error("capability denied")``.
+    """
+    for proc_cls in _BYPASS_AUTH_TARGETS:
+        monkeypatch.setattr(proc_cls, "auth_check", AsyncMock(return_value=True))
+
 
 def _exchange_with_page(page: Any) -> Exchange[Any]:
     ex: Exchange[Any] = Exchange(in_message=Message(body={}, headers={}))
@@ -34,6 +65,53 @@ def _exchange_with_page(page: Any) -> Exchange[Any]:
 
 def _empty_exchange() -> Exchange[Any]:
     return Exchange(in_message=Message(body={}, headers={}))
+
+
+# ── required_capability round-trip (S202 audit, D-4 closure) ────────────
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("proc_cls", "expected_capability"),
+    [
+        (BrowserLaunchProcessor, "rpa.browser.launch"),
+        (NavigateProcessor, "rpa.browser.navigate"),
+        (ClickProcessor, "rpa.browser.click"),
+        (FillProcessor, "rpa.browser.fill"),
+        (ExtractProcessor, "rpa.browser.extract"),
+        (WaitForProcessor, "rpa.browser.wait"),
+        (ScreenshotProcessor, "rpa.browser.screenshot"),
+        (PdfProcessor, "rpa.browser.pdf"),
+    ],
+)
+def test_required_capability_matches_vocabulary(
+    proc_cls: type, expected_capability: str
+) -> None:
+    """Round-trip: ``required_capability`` соответствует documented vocabulary."""
+    assert proc_cls.required_capability == expected_capability
+    assert proc_cls.audit_event == expected_capability
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_auth_check_denied_short_circuits_processor() -> None:
+    """Если ``auth_check`` denied → processor не выполняет основной код.
+
+    Подменяем ``auth_check`` на ``return_value=False`` через ``patch.object``
+    (временно поверх autouse fixture). Когда ``auth_check`` patched — это
+    mock, не вызывающий ``exchange.set_error`` / ``exchange.stop()``, поэтому
+    проверяем короткое замыкание через ``page.goto.assert_not_awaited()``.
+    """
+    page = AsyncMock()
+    proc = NavigateProcessor(url="https://example.com/")
+    ex = _exchange_with_page(page)
+
+    with patch.object(
+        NavigateProcessor, "auth_check", new=AsyncMock(return_value=False)
+    ):
+        await proc.process(ex, context=MagicMock())
+
+    page.goto.assert_not_awaited()
 
 
 # ── NavigateProcessor ────────────────────────────────────────────────────

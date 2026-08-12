@@ -92,6 +92,18 @@ async def run_shutdown(app: FastAPI, task_registry: Any) -> None:
     except Exception as ai_safety_stop_exc:
         _logger.warning("AI safety shutdown error: %s", ai_safety_stop_exc)
 
+    # ── 4b. Audit HMAC-chain verify (B-series 2026-08-03, FIX-H5) ──
+    # Stop periodic verify-loop, чтобы ``TaskRegistry.shutdown_all`` (ниже)
+    # не наткнулся на running task без явного reason. Idempotent.
+    try:
+        from src.backend.infrastructure.observability.audit_verify_lifecycle import (
+            stop_audit_verify,
+        )
+
+        await stop_audit_verify()
+    except Exception as audit_verify_stop_exc:
+        _logger.debug("audit verify scheduler stop skipped: %s", audit_verify_stop_exc)
+
     # ── 5. V11 loaders (route → plugin order) ──
     # R1.fin (V11): shutdown в обратном порядке (route → plugin) ДО Wave 4
     # PluginLoader, чтобы их on_shutdown успел отработать до закрытия общих

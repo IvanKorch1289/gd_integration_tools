@@ -140,6 +140,11 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
         guards). При :class:`BudgetExceeded` пробрасывает
         :class:`BudgetEnforcementError` через pipeline → caller endpoint
         → 429 (mapping в :mod:`tenancy.budget_enforcer`).
+        При :class:`BudgetBackendUnavailable` (production fail-closed +
+        Redis-outage per cycle 36 / P0-15) — маппит в
+        :class:`BudgetEnforcementError` с body для 503
+        (:func:`render_503`), чтобы endpoint-слой мог различить hard_limit
+        breach (429) и backend outage (503 + Retry-After).
 
         Args:
             request: AIRequest с ``tenant_id`` (обязательное поле для budget).
@@ -151,16 +156,21 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
             иначе ``None``.
 
         Raises:
-            BudgetEnforcementError: При hard_limit pre-exceeded.
+            BudgetEnforcementError: При hard_limit pre-exceeded (body —
+                :func:`render_429`) или при backend outage в fail-closed
+                mode (body — :func:`render_503`).
 
         Notes:
-            * Fail-open semantics если Redis-outage или backend missing —
-              budget enforcement не блокирует запросы (dev-friendly).
+            * Fail-open semantics если Redis-outage или backend missing
+              И ``token_budget_fail_closed=False`` — budget enforcement
+              не блокирует запросы (dev-friendly).
             * Если ``_token_budget`` attribute отсутствует (gateway
               без DI) — return ``None``, no-op backward-compat.
             * Если ``request.tenant_id`` пустой — return ``None``
               (tenant-less invocation budget-bypass, как pre-M4).
-
+            * Sprint 1.6: добавлен ``except BudgetBackendUnavailable`` —
+              ранее exception прорастал raw как bare ``Exception``,
+              ломая единый error-envelope (P0-15).
         """
         budget = getattr(self, "_token_budget", None)
         if budget is None:
@@ -207,8 +217,10 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
             from src.backend.core.tenancy.budget_enforcer import (
                 enforce_pre_call,
                 render_429,
+                render_503,
             )
             from src.backend.core.tenancy.token_budget import (
+                BudgetBackendUnavailable,
                 BudgetEnforcementError,
                 BudgetExceeded,
             )
@@ -233,6 +245,23 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 },
             )
             raise BudgetEnforcementError(body=render_429(exc)) from exc
+        except BudgetBackendUnavailable as exc:
+            # Sprint 1.6 (P0-15): fail-closed production override.
+            # TokenBudget бросил typed exception (Redis-outage + flag ON /
+            # per-tenant fail_mode='closed'). Endpoint-слой маппит body в 503
+            # (vs 429 для hard_limit) — разные категории ошибок.
+            logger.error(
+                "ai.budget.backend_unavailable.pre",
+                extra={
+                    "tenant_id": tenant_id,
+                    "correlation_id": getattr(
+                        request, "correlation_id", ""
+                    ),
+                    "workflow_id": getattr(request, "workflow_id", ""),
+                    "backend": exc.backend,
+                },
+            )
+            raise BudgetEnforcementError(body=render_503(exc)) from exc
 
     async def _enforce_token_budget_post_call(
         self,
@@ -245,6 +274,13 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
 
         Вызывается ПОСЛЕ ``_invoke_llm`` + output guards. Differenti-
         aльная reservation: refинансирование если actual > estimated.
+        При :class:`BudgetExceeded` пробрасывает
+        :class:`BudgetEnforcementError` через pipeline → caller endpoint
+        → 429 (mapping в :mod:`tenancy.budget_enforcer`).
+        При :class:`BudgetBackendUnavailable` (production fail-closed +
+        Redis-outage per cycle 36 / P0-15) — маппит в
+        :class:`BudgetEnforcementError` с body для 503
+        (:func:`render_503`), симметрично с pre-call.
 
         Args:
             request: AIRequest с ``tenant_id``.
@@ -256,6 +292,17 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
             Updated BudgetSnapshot или ``None`` если budget disabled /
             tenant-less / пропаgated.
 
+        Raises:
+            BudgetEnforcementError: При hard_limit post-exceeded (body —
+                :func:`render_429`) или при backend outage в fail-closed
+                mode (body — :func:`render_503`).
+
+        Notes:
+            * Sprint 1.6: добавлен ``except BudgetBackendUnavailable`` —
+              post-call correction может сорваться на refинансировании
+              diff (actual > estimated) при Redis-outage; раньше
+              exception прорастал raw, ломая cost-tracking error
+              envelope (P0-15).
         """
         budget = getattr(self, "_token_budget", None)
         if budget is None:
@@ -273,8 +320,10 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
             from src.backend.core.tenancy.budget_enforcer import (
                 enforce_post_call,
                 render_429,
+                render_503,
             )
             from src.backend.core.tenancy.token_budget import (
+                BudgetBackendUnavailable,
                 BudgetEnforcementError,
                 BudgetExceeded,
             )
@@ -299,6 +348,23 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 },
             )
             raise BudgetEnforcementError(body=render_429(exc)) from exc
+        except BudgetBackendUnavailable as exc:
+            # Sprint 1.6 (P0-15): симметрично pre-call — backend outage
+            # в fail-closed mode маппится в 503-body, чтобы caller
+            # мог отличить 429 (caller-throttling) от 503 (infrastructure).
+            logger.error(
+                "ai.budget.backend_unavailable.post",
+                extra={
+                    "tenant_id": tenant_id,
+                    "correlation_id": getattr(
+                        request, "correlation_id", ""
+                    ),
+                    "workflow_id": getattr(request, "workflow_id", ""),
+                    "backend": exc.backend,
+                    "actual_tokens": actual_tokens,
+                },
+            )
+            raise BudgetEnforcementError(body=render_503(exc)) from exc
 
     async def _enforced_invoke(self, request: AIRequest) -> AIResponse:
         """Полный 9-step pipeline (impl S25 W1..W5 + S27 W2..W5).

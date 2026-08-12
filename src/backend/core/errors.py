@@ -265,34 +265,29 @@ class TenantContextRequiredError(BaseError):
 
 
 class RoutePermissionDeniedError(BaseError):
-    """Маршрут декларирует ``requires_permission``, но principal не имеет нужной role/scope.
+    """K3 S19 W3: route-level ``requires_permission`` не выполнен.
 
-    Sprint 1: route-wide permission enforcement (V22 R-V15-1 / K-ARCH-1).
-    ``DsлService.dispatch`` валит pipeline с этой ошибкой при наличии
-    ненулевого ``pipeline.security`` и отсутствии требуемой permission
-    у ``ExecutionContext.principal``.
+    Маршрут декларирует ``[security] requires_permission`` в ``route.toml``,
+    но :func:`src.backend.services.routes.route_authz.check_route_permission`
+    вернул ``allowed=False``. Возможные причины:
 
-    Отличие от :class:`AuthorizationError`: эта ошибка возникает
-    на уровне DSL pipeline (route-wide), а не endpoint-guard.
+    * principal не имеет требуемой роли/scope;
+    * :class:`AuthorizationGateway` не зарегистрирован в
+      ``ai_agent._authz_gateway`` (fail-closed);
+    * feature-flag ``route_authz_requires_permission`` не позволяет
+      выполнение (policy вернёт deny);
+    * auth-контекст запроса не передал ``principal`` / ``permissions``
+      в :class:`src.backend.dsl.engine.context.ExecutionContext`.
+
+    HTTP-статус 403. Приложение НЕ должно вызывать pipeline до устранения.
     """
 
-    def __init__(
-        self,
-        *_: Any,
-        route_id: str = "",
-        principal: str = "",
-        required_permissions: tuple[str, ...] = (),
-        reason: str = "",
-    ) -> None:
+    def __init__(self, *_: Any, route_id: str = "", reason: str = "") -> None:
         self.route_id = route_id
-        self.principal = principal
-        self.required_permissions = required_permissions
         self.reason = reason
         super().__init__(
             message=(
-                f"Route '{route_id}' requires permissions {list(required_permissions)} "
-                f"but principal '{principal}' lacks them"
-                + (f" (reason: {reason})" if reason else "")
+                f"Route '{route_id}' requires permissions not satisfied: {reason}"
             ),
             status_code=status.HTTP_403_FORBIDDEN,
         )

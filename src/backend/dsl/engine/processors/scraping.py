@@ -6,12 +6,17 @@ Provides web scraping capabilities within DSL routes:
 - ScrapeProcessor: extract structured data via CSS selectors
 - PaginateProcessor: multi-page crawling with automatic next-page detection
 - ApiProxyProcessor: transparent API proxy with request/response transformation
+
+Capability-gate (S202 audit closure, D-4 follow-up): все три процессора
+декларируют ``required_capability = "rpa.http.request"`` (existing
+vocabulary, см. :class:`HttpRequestProcessor`) и вызывают ``auth_check``
+в начале ``process()``. При отсутствии capability — fail-closed.
 """
 
 from __future__ import annotations
 
 import contextlib
-from typing import Any
+from typing import Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
@@ -124,6 +129,9 @@ class ScrapeProcessor(BaseProcessor):
         .scrape("https://example.com", selectors={"title": "h1", "price": ".price"})
     """
 
+    required_capability: ClassVar[str | None] = "rpa.http.request"
+    audit_event: str | None = "rpa.http.request"
+
     def __init__(
         self,
         url: str | None = None,
@@ -154,6 +162,8 @@ class ScrapeProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Scrape HTML and extract structured data via CSS selectors."""
+        if not await self.auth_check(exchange, action="read"):
+            return
         url = self._url
         if self._url_property:
             url = exchange.properties.get(self._url_property, url)
@@ -222,6 +232,9 @@ class PaginateProcessor(BaseProcessor):
                   item_selector=".product-card")
     """
 
+    required_capability: ClassVar[str | None] = "rpa.http.request"
+    audit_event: str | None = "rpa.http.request"
+
     def __init__(
         self,
         *,
@@ -260,6 +273,8 @@ class PaginateProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Crawl multiple pages and collect items."""
+        if not await self.auth_check(exchange, action="read"):
+            return
         from src.backend.infrastructure.clients.transport.http import (
             get_http_client_dependency,
         )
@@ -369,6 +384,9 @@ class ApiProxyProcessor(BaseProcessor):
         .api_proxy(base_url="https://api.example.com", method="POST", path="/v1/data")
     """
 
+    required_capability: ClassVar[str | None] = "rpa.http.request"
+    audit_event: str | None = "rpa.http.request"
+
     def __init__(
         self,
         base_url: str,
@@ -401,6 +419,8 @@ class ApiProxyProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Forward exchange to external API with optional transformation."""
+        if not await self.auth_check(exchange, action="execute"):
+            return
         from src.backend.infrastructure.clients.transport.http import (
             get_http_client_dependency,
         )

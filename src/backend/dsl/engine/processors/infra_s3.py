@@ -46,5 +46,5 @@ class InfraS3GetProcessor(BaseProcessor):
             get_object_storage_class,
         )
         storage = get_object_storage_class()(context)
-        content = await storage.get(self.key)
+        content = await storage.download(self.key)
         self.set_result(exchange, self.target, content)

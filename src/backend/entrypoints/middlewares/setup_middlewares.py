@@ -224,7 +224,13 @@ def build_default_registry() -> MiddlewareRegistry:
     registry.register_builtin(
         "webhook_signature",
         WebhookSignatureMiddleware,
-        {"secrets_by_prefix": settings.secure.webhook_signature_secrets},
+        {
+            "secrets_by_prefix": settings.secure.webhook_signature_secrets,
+            # Safe-by-default: missing secret для protected prefix → 503,
+            # а не silent skip. Operator отключает явно через SEC_WEBHOOK_SIGNATURE_FAIL_CLOSED=false
+            # только для dev/test, где вебхуки без подписи — штатный кейс.
+            "fail_closed": settings.secure.webhook_signature_fail_closed,
+        },
         order=680,
     )
     # S183: PII masking in response (Layer 3, after auth).

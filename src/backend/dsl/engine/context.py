@@ -1,11 +1,16 @@
 import logging
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from src.backend.dsl.commands.registry import (
     ActionHandlerRegistry,
     action_handler_registry,
 )
+
+if TYPE_CHECKING:
+    # Только для type-checker; реальный импорт ленивый, чтобы не
+    # создавать циклическую зависимость ``core.auth → dsl``.
+    pass
 
 __all__ = ("ExecutionContext",)
 
@@ -22,10 +27,18 @@ class ExecutionContext:
         logger: Опциональный logger для трассировки выполнения.
         state: Общий изменяемый словарь для обмена данными между процессорами.
         route_id: Идентификатор текущего маршрута (для логирования).
-        principal: Sprint 1 — идентификатор аутентифицированного пользователя
-            (для route-wide permission enforcement через :class:`AuthorizationGateway`).
-        permissions: Sprint 1 — кортеж строк-permissions principal'а для
-            авторизации.
+        principal: K3 S19 W3 / Sprint 1 — идентификатор текущего principal'а
+            (user / plugin / service). Используется
+            :func:`check_route_permission` для enforcement
+            ``route.toml [security] requires_permission`` (через
+            :class:`AuthorizationGateway`). По умолчанию пустая строка —
+            ``check_route_permission`` трактует как ``"anonymous"``
+            (fail-closed при включённом флаге).
+        permissions: K3 S19 W3 / Sprint 1 — кортеж permissions-principal'а
+            (формат ``"role:..."`` или ``"scope:..."``). По умолчанию
+            пустой кортеж; должен выставляться auth-middleware'ю до
+            вызова :meth:`DslService.dispatch`. Используется для
+            route-wide permission enforcement.
 
     """
 
@@ -33,8 +46,8 @@ class ExecutionContext:
     logger: logging.Logger | None = None
     route_id: str = ""
     state: dict[str, Any] = field(default_factory=dict)
-    principal: str = ""
-    permissions: tuple[str, ...] = ()
+    principal: str = ""  # K3 S19 W3
+    permissions: tuple[str, ...] = ()  # K3 S19 W3
 
     @classmethod
     def from_auth(
@@ -47,11 +60,14 @@ class ExecutionContext:
     ) -> ExecutionContext:
         """Собирает ``ExecutionContext`` из ``AuthContext``.
 
-        Sprint 1: проброс ``principal/permissions`` из middleware auth
-        в DSL pipeline для route-wide permission enforcement.
+        Sprint 1 / K3 S19 W3: проброс ``principal/permissions`` из
+        middleware auth в DSL pipeline для route-wide permission
+        enforcement.
 
         Args:
             auth: :class:`AuthContext` (или duck-typed ``metadata: dict``).
+                ``None`` допустим — вернётся ``ExecutionContext`` с
+                пустым principal и пустым permissions (fail-closed).
             route_id: Идентификатор текущего маршрута.
             logger: Опциональный logger.
             state: Опциональный shared state.
@@ -60,12 +76,15 @@ class ExecutionContext:
             ``ExecutionContext`` с заполненными ``principal`` и ``permissions``.
 
         """
+        # Ленивый импорт — иначе цикл ``core.auth → dsl → core.auth``.
         from src.backend.core.auth.auth_context_helpers import extract_user_permissions
 
-        principal: str = ""
+        principal = ""
         permissions: tuple[str, ...] = ()
         if auth is not None:
-            principal = getattr(auth, "principal", "") or ""
+            raw_principal = getattr(auth, "principal", "")
+            if isinstance(raw_principal, str):
+                principal = raw_principal
             permissions = extract_user_permissions(auth)
         return cls(
             route_id=route_id,

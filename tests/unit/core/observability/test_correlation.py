@@ -104,6 +104,17 @@ def test_set_correlation_context_none_args_skipped() -> None:
     assert get_tenant_id() == "initial-tenant"
 
 
+@pytest.mark.unit
+def test_set_correlation_context_empty_correlation_id_clears_existing_value() -> None:
+    """Пустой correlation_id затирает предыдущее значение во всех контекстах."""
+    set_correlation_context(correlation_id="existing-cid")
+
+    set_correlation_context(correlation_id="")
+
+    assert get_correlation_id() == ""
+    assert structlog.contextvars.get_contextvars()["correlation_id"] == ""
+
+
 def test_set_correlation_context_binds_to_structlog() -> None:
     """set_correlation_context зеркалит values в structlog contextvars.
 

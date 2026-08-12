@@ -11,6 +11,9 @@ Key paths:
   (backward-compat with callers that don't wire budget).
 * Empty ``tenant_id`` → skip (current ARC-007 design).
 * :class:`BudgetExceeded` → :class:`BudgetEnforcementError` raised.
+* Sprint 1.6 (P0-15): :class:`BudgetBackendUnavailable` (production
+  fail-closed + Redis-outage) → :class:`BudgetEnforcementError` with
+  503 body (per :func:`render_503`).
 
 Используем :class:`InMemoryTokenBudgetBackend` (не Redis).
 """
@@ -22,8 +25,10 @@ from typing import Any
 import pytest
 
 from src.backend.core.ai.gateway_orchestrator_mixin import EnforcedInvokeMixin
-from src.backend.core.tenancy.budget_enforcer import render_429
+from src.backend.core.config.features import feature_flags
+from src.backend.core.tenancy.budget_enforcer import render_429, render_503
 from src.backend.core.tenancy.token_budget import (
+    BudgetBackendUnavailable,
     BudgetEnforcementError,
     BudgetExceeded,
     BudgetPeriod,
@@ -351,3 +356,219 @@ class TestPreCallHelperUnit:
             request, estimated_tokens=1000,
         )
         assert snapshot is None
+
+
+# ─── Sprint 1.6 (P0-15) ──────────────────────────────────────────
+
+
+class _FlakyBackend(InMemoryTokenBudgetBackend):
+    """Backend с always-failing ``increment`` — имитирует Redis-outage."""
+
+    async def increment(
+        self, *, key: str, amount: int, ttl_seconds: int
+    ) -> int:
+        raise ConnectionError("simulated redis outage")
+
+
+class TestBudgetBackendUnavailableFailClosed:
+    """Sprint 1.6 (P0-15): production fail-closed + Redis-outage.
+
+    Сценарий: ``feature_flags.token_budget_fail_closed=True`` (production
+    override) + Redis недоступен → :class:`TokenBudget` бросает typed
+    :class:`BudgetBackendUnavailable`. AIGateway pre/post-call должны
+    поймать его и re-raise :class:`BudgetEnforcementError` с 503-body
+    (через :func:`render_503`), чтобы endpoint-слой корректно
+    отличал hard_limit breach (429) от infrastructure outage (503 +
+    Retry-After).
+
+    До Sprint 1.6: ``BudgetBackendUnavailable`` прорастал raw через
+    pipeline → caller endpoint получал неподготовленный ``Exception``
+    с потерей error-envelope.
+    """
+
+    @pytest.mark.asyncio
+    async def test_pre_call_fail_closed_maps_to_503(
+        self, audit_service: _StubAuditService, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """flag=ON + failing backend → BudgetEnforcementError с body=render_503."""
+
+        class _Gateway(EnforcedInvokeMixin, _StubPipeline):
+            _audit_service = audit_service
+
+        monkeypatch.setattr(feature_flags, "token_budget_fail_closed", True)
+        budget = TokenBudget(
+            backend=_FlakyBackend(),
+            default_config=TokenBudgetConfig(
+                soft_limit=100,
+                hard_limit=200,
+                period=BudgetPeriod.DAILY,
+                fail_mode="open",  # per-tenant open, но flag=ON → fail-closed
+            ),
+        )
+        gw = _Gateway()
+        gw._token_budget = budget  # type: ignore[attr-defined]
+        request = _build_request(tenant_id="t-redis-down")
+
+        with pytest.raises(BudgetEnforcementError) as ctx:
+            await gw._enforce_token_budget_pre_call(
+                request, estimated_tokens=100
+            )
+        body = ctx.value.body
+        assert body["error"] == "token_budget_backend_unavailable"
+        assert body["tenant_id"] == "t-redis-down"
+        assert body["backend"] == "token_budget"
+        assert "message" in body
+
+    @pytest.mark.asyncio
+    async def test_pre_call_flag_off_preserves_fail_open(
+        self, audit_service: _StubAuditService, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """flag=OFF + failing backend + per-tenant open → no raise (fail-open).
+
+        Backward-compat invariant: dev/test environments с flag=OFF
+        продолжают работать как раньше (fail-open swallow).
+        """
+
+        class _Gateway(EnforcedInvokeMixin, _StubPipeline):
+            _audit_service = audit_service
+
+        monkeypatch.setattr(feature_flags, "token_budget_fail_closed", False)
+        budget = TokenBudget(
+            backend=_FlakyBackend(),
+            default_config=TokenBudgetConfig(
+                soft_limit=100,
+                hard_limit=200,
+                period=BudgetPeriod.DAILY,
+                fail_mode="open",
+            ),
+        )
+        gw = _Gateway()
+        gw._token_budget = budget  # type: ignore[attr-defined]
+        request = _build_request(tenant_id="t-dev")
+
+        snapshot = await gw._enforce_token_budget_pre_call(
+            request, estimated_tokens=100
+        )
+        # Fail-open: вернулся BudgetSnapshot с used=0, без raise.
+        assert snapshot is not None
+        assert snapshot.used == 0
+
+    @pytest.mark.asyncio
+    async def test_post_call_fail_closed_maps_to_503(
+        self, audit_service: _StubAuditService, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Post-call correction с actual > estimated + fail-closed → 503 body.
+
+        Реальный сценарий: pre-call прошёл (Redis ещё жил), LLM ответил
+        с большим actual_tokens, post-call пытается дорезервировать diff —
+        и тут Redis умирает. Без Sprint 1.6 — exception прорастал bare.
+        """
+
+        class _Gateway(EnforcedInvokeMixin, _StubPipeline):
+            _audit_service = audit_service
+
+            async def _invoke_llm(  # type: ignore[override]
+                self, rendered: Any, policy: Any, stream: bool
+            ) -> Any:
+                class _C:
+                    content = "stub"
+                    tokens_prompt = 5000
+                    tokens_completion = 5000
+                    cost_usd = 0.0
+                    model_used = "stub"
+                    pii_detected = False
+                    guardrails_verdict: dict[str, str] = {"output": "safe"}
+
+                return _C()
+
+        monkeypatch.setattr(feature_flags, "token_budget_fail_closed", True)
+        budget = TokenBudget(
+            backend=_FlakyBackend(),
+            default_config=TokenBudgetConfig(
+                soft_limit=100,
+                hard_limit=200,
+                period=BudgetPeriod.DAILY,
+                fail_mode="open",
+            ),
+        )
+        gw = _Gateway()
+        gw._token_budget = budget  # type: ignore[attr-defined]
+        request = _build_request(tenant_id="t-post-outage")
+
+        # Pre-call пройдёт успешно (тут бэкенд ещё работал до pre-call).
+        # Post-call споткнётся на refинансировании — это и есть целевой тест.
+        # Прямой вызов post-call с broken budget → ожидаем 503-body.
+        completion = type(
+            "_C",
+            (),
+            {
+                "tokens_prompt": 5000,
+                "tokens_completion": 5000,
+            },
+        )()
+        with pytest.raises(BudgetEnforcementError) as ctx:
+            await gw._enforce_token_budget_post_call(
+                request, completion, estimated_tokens=200
+            )
+        body = ctx.value.body
+        assert body["error"] == "token_budget_backend_unavailable"
+        assert body["tenant_id"] == "t-post-outage"
+        assert body["backend"] == "token_budget"
+
+    @pytest.mark.asyncio
+    async def test_per_tenant_fail_closed_via_config(
+        self, audit_service: _StubAuditService, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Per-tenant fail_mode='closed' (без feature_flag) → 503 body.
+
+        Backward-compat: TokenBudget.fail_mode='closed' существовал до
+        feature_flag. AIGateway должен одинаково маппить оба пути.
+        """
+
+        class _Gateway(EnforcedInvokeMixin, _StubPipeline):
+            _audit_service = audit_service
+
+        # flag=OFF, но per-tenant = closed.
+        monkeypatch.setattr(feature_flags, "token_budget_fail_closed", False)
+        budget = TokenBudget(
+            backend=_FlakyBackend(),
+            default_config=TokenBudgetConfig(
+                soft_limit=100,
+                hard_limit=200,
+                period=BudgetPeriod.DAILY,
+                fail_mode="closed",
+            ),
+        )
+        gw = _Gateway()
+        gw._token_budget = budget  # type: ignore[attr-defined]
+        request = _build_request(tenant_id="t-per-tenant-closed")
+
+        with pytest.raises(BudgetEnforcementError) as ctx:
+            await gw._enforce_token_budget_pre_call(
+                request, estimated_tokens=100
+            )
+        assert ctx.value.body["error"] == "token_budget_backend_unavailable"
+
+    def test_render_503_shape(self) -> None:
+        """render_503 возвращает JSON-ready dict с error+tenant_id+backend."""
+        exc = BudgetBackendUnavailable(backend="token_budget", tenant_id="t-1")
+        body = render_503(exc)
+        assert body["error"] == "token_budget_backend_unavailable"
+        assert body["tenant_id"] == "t-1"
+        assert body["backend"] == "token_budget"
+        assert "message" in body
+
+    def test_render_503_distinct_from_render_429(self) -> None:
+        """render_503 и render_429 имеют разные error-keys (caller dispatch)."""
+        backend_exc = BudgetBackendUnavailable(
+            backend="token_budget", tenant_id="t-1"
+        )
+        hard_exc = BudgetExceeded(
+            tenant_id="t-1", used=200, hard_limit=100, period="daily"
+        )
+        body_503 = render_503(backend_exc)
+        body_429 = render_429(hard_exc)
+        # 503 — infrastructure outage (Retry-After), 429 — caller throttling.
+        assert body_503["error"] != body_429["error"]
+        assert body_503["error"] == "token_budget_backend_unavailable"
+        assert body_429["error"] == "token_budget_exceeded"

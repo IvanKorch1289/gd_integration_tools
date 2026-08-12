@@ -329,6 +329,18 @@ class McpSettings(BaseSettingsWithLoader):
             "(public tools). Format: 'system.*' = все system.<action> допустимы."
         ),
     )
+    tool_manual_allowlist: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Block 1.4-extension: явный whitelist manual MCP tool names "
+            "(route_list, pipeline_export, documents_to_markdown, workflow_*, "
+            "и т.п. — все, что зарегистрировано через @_authz_manual_tool "
+            "выше уровня tool function). При tool_authz_enabled=True и "
+            "пустом списке — passthrough (authz не действует на manual "
+            "tools, backward-compat). При непустом — fail-closed: только "
+            "имена из списка допускаются."
+        ),
+    )
 
 
 class StreamingLLMSettings(BaseSettingsWithLoader):

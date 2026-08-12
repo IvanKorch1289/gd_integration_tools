@@ -8,7 +8,7 @@
   - owasp_zap_gate_enabled (Sprint 6 K1 W4)
   - custom_code_audit_enabled (Sprint 6 K1 W5)
   - codeclone_fail_on_new (Sprint 6 K1 W6)
-- Sprint 6 K2 Resilience+Perf (7):
+- Sprint 6 K2 Resilience+Perf (6):
   - perf_gate_strict (Sprint 6 K2 W1)
   - granian_rsgi_mode_enabled (Sprint 6 K2 W2)
   - processor_health_checks_strict (Sprint 6 K2 W5)

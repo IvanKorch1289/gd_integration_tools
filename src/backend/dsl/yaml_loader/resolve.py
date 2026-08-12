@@ -24,11 +24,44 @@ def _is_route_composition_include_enabled() -> bool:
         return False
 
 
+def _resolve_contained_path(
+    ref: str, base_path: Path | None, trusted_root: Path
+) -> Path:
+    """Резолвит ``ref`` относительно ``base_path`` и проверяет containment.
+
+    Defense-in-depth против path traversal: ``extends: ../../../etc/passwd``
+    и абсолютные пути (``extends: /etc/passwd``) режутся здесь, до
+    ``read_text``. Возвращает ``.resolve()``-нутый путь; бросает
+    ``ValueError`` если итоговый путь выходит за ``trusted_root``.
+
+    Args:
+        ref: Строка из YAML (``extends``/``include``).
+        base_path: Директория файла-источника (или None → ``Path.cwd()``).
+        trusted_root: Граница, наружу которую нельзя выходить.
+
+    Returns:
+        Path: Абсолютный путь к YAML-файлу.
+
+    Raises:
+        ValueError: Путь выходит за ``trusted_root``.
+    """
+    candidate = (
+        (base_path / ref).resolve() if base_path is not None else Path(ref).resolve()
+    )
+    if not candidate.is_relative_to(trusted_root):
+        raise ValueError(
+            f"extends/include path escapes trusted root {trusted_root}: "
+            f"{ref!r} resolves to {candidate}"
+        )
+    return candidate
+
+
 def _resolve_include_extends(
     data: dict[str, Any],
     base_path: Path | None = None,
     _visited: set[str] | None = None,
     _is_root: bool = True,
+    _trusted_root: Path | None = None,
 ) -> dict[str, Any]:
     """Resolve include: and extends: fields in a YAML spec with cycle detection.
 
@@ -40,13 +73,24 @@ def _resolve_include_extends(
             the parent directory of the extended/included file.
         _visited: Internal set for cycle detection (files being processed).
         _is_root: True for the initial call, False for recursive calls.
+        _trusted_root: Граница containment для path-traversal защиты.
+            Пинится на первом вызове из ``base_path`` (или ``Path.cwd()``,
+            если ``base_path`` не задан — для прямых вызовов
+            ``load_pipeline_from_yaml`` без файла).
 
     Raises:
         RuntimeError: If a cycle is detected in include/extends chain.
-
+        ValueError: If extends/include path escapes ``_trusted_root``.
     """
     if _visited is None:
         _visited = set()
+
+    # Pin trusted_root на первом вызове — все extends/include
+    # должны оставаться внутри этой директории.
+    if _is_root:
+        _trusted_root = (
+            base_path.resolve() if base_path is not None else Path.cwd().resolve()
+        )
 
     # Work on a copy to avoid mutating the original
     spec = dict(data)
@@ -55,19 +99,7 @@ def _resolve_include_extends(
     extends_path = spec.pop("extends", None)
     if extends_path is not None:
         ext_str = str(extends_path)
-
-        if base_path is not None:
-            # _is_root=True means first call: base_path is directory, use it directly.
-            # _is_root=False means recursive call: base_path is already a directory.
-            if _is_root:
-                # First call: base_path is already a directory (file.parent from loader)
-                base_dir = base_path
-            else:
-                # Recursive: base_path is directory of the file that has extends
-                base_dir = base_path
-            resolved_path = (base_dir / ext_str).resolve()
-        else:
-            resolved_path = Path(ext_str).resolve()
+        resolved_path = _resolve_contained_path(ext_str, base_path, _trusted_root)
 
         if not resolved_path.exists():
             raise FileNotFoundError(f"Extended YAML file not found: {resolved_path}")
@@ -91,7 +123,11 @@ def _resolve_include_extends(
 
         # Recursively resolve the base (in case it also has include/extends)
         base_data = _resolve_include_extends(
-            base_data, resolved_path.parent, _visited, _is_root=False,
+            base_data,
+            resolved_path.parent,
+            _visited,
+            _is_root=False,
+            _trusted_root=_trusted_root,
         )
 
         # Merge: child overrides parent
@@ -126,11 +162,7 @@ def _resolve_include_extends(
 
         for inc_path in include_paths:
             inc_str = str(inc_path)
-
-            if base_path is not None:
-                resolved_inc = (base_path / inc_str).resolve()
-            else:
-                resolved_inc = Path(inc_str).resolve()
+            resolved_inc = _resolve_contained_path(inc_str, base_path, _trusted_root)
 
             # Check existence BEFORE tracking to avoid false-positive on first pass
             if not resolved_inc.exists():
@@ -155,7 +187,11 @@ def _resolve_include_extends(
 
             # Get steps from included file (recursive resolution for nested includes)
             inc_data = _resolve_include_extends(
-                inc_data, resolved_inc.parent, _visited, _is_root=False,
+                inc_data,
+                resolved_inc.parent,
+                _visited,
+                _is_root=False,
+                _trusted_root=_trusted_root,
             )
             inc_steps = inc_data.get("steps", [])
             if not isinstance(inc_steps, list):

@@ -105,34 +105,31 @@ async def test_adapter_stream_flag_propagated(monkeypatch: pytest.MonkeyPatch) -
 async def test_adapter_default_gateway_construction(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Без передачи ``gateway`` создаётся default AIGateway()."""
+    """Без передачи ``gateway`` ``invoke_via_gateway`` использует ``get_ai_gateway()``.
+
+    Sprint 1.3: AIGateway singleton берётся из composition root через
+    :func:`get_ai_gateway` resolver. Тест патчит этот resolver и проверяет,
+    что вызов НЕ создаёт ``AIGateway()`` напрямую.
+    """
     from src.backend.core.config import features as features_module
+    from src.backend.core.di.app_state import reset_app_state
 
     monkeypatch.setattr(features_module.feature_flags, "ai_gateway_enforce", True)
+    reset_app_state()
 
+    response = AIResponse(content="default-gw")
     constructed: list[Any] = []
 
-    def _capture(*args: Any, **kwargs: Any) -> AIGateway:
+    def _capture() -> AIGateway:
         instance = AIGateway()
+        instance.invoke = AsyncMock(return_value=response)  # type: ignore[method-assign]
         constructed.append(instance)
         return instance
 
-    # Round 5 R1.1 fix: invoke_via_gateway больше не вызывает AIGateway()
-    # напрямую — он делегирует в get_ai_gateway() (R5 Imp.1 + Sprint 1.3
-    # composition root). Подменяем get_ai_gateway вместо AIGateway.
+    # Подменяем резолвер, который импортирован внутри ``invoke_via_gateway``.
     monkeypatch.setattr(
-        "src.backend.services.ai.gateway_adapter.get_ai_gateway", _capture,
+        "src.backend.services.ai.gateway_adapter.get_ai_gateway", _capture
     )
-    response = AIResponse(content="default-gw")
-
-    # Подменяем invoke для всех новых instance'ов
-    original_init = AIGateway.__init__
-
-    def _patched_init(self: AIGateway, *args: Any, **kwargs: Any) -> None:
-        original_init(self, *args, **kwargs)
-        self.invoke = AsyncMock(return_value=response)  # type: ignore[method-assign]
-
-    monkeypatch.setattr(AIGateway, "__init__", _patched_init)
 
     result = await invoke_via_gateway(
         workflow_id="doc_summarize",
@@ -143,6 +140,7 @@ async def test_adapter_default_gateway_construction(
     )
     assert result == "default-gw"
     assert len(constructed) == 1
+    reset_app_state()
 
 
 @pytest.mark.asyncio

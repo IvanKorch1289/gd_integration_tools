@@ -56,10 +56,13 @@ spec:
         - name: worker
           image: ${GD_IMAGE:-gd-integration-tools:latest}
           imagePullPolicy: IfNotPresent
+          # Worker entry-point: src.backend.infrastructure.workflow.worker.
+          # Раньше было ``src.backend.workflows.worker`` — модуль не существует,
+          # pod падал в CrashLoopBackOff. K-OPS-4 fix (2026-08-03 deploy audit).
           command:
             - python
             - -m
-            - src.backend.workflows.worker
+            - src.backend.infrastructure.workflow.worker
           ports:
             - name: metrics
               containerPort: 9090

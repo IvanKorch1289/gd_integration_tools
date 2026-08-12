@@ -18,6 +18,7 @@ from typing import Any
 
 from src.backend.core.tenancy import TenantContext
 from src.backend.core.tenancy.token_budget import (
+    BudgetBackendUnavailable,
     BudgetExceeded,
     BudgetSnapshot,
     TokenBudget,
@@ -27,6 +28,7 @@ __all__ = (
     "enforce_post_call",
     "enforce_pre_call",
     "render_429",
+    "render_503",
     "tenant_from_saml_attributes",
 )
 
@@ -68,6 +70,32 @@ def render_429(exc: BudgetExceeded) -> dict[str, Any]:
         "used_tokens": exc.used,
         "hard_limit": exc.hard_limit,
         "period": exc.period,
+        "message": str(exc),
+    }
+
+
+def render_503(exc: BudgetBackendUnavailable) -> dict[str, Any]:
+    """Сформировать стандартный JSON для 503 при недоступном budget backend.
+
+    Sprint 1.6 (P0-15): production fail-closed сценарий — Redis-outage +
+    ``feature_flags.token_budget_fail_closed=True`` (или per-tenant
+    ``fail_mode='closed'``). Endpoint-слой маппит этот body в HTTP 503
+    (Service Unavailable) с ``Retry-After`` header, в отличие от
+    :func:`render_429` который соответствует hard_limit breach (429 +
+    caller-throttling).
+
+    Args:
+        exc: :class:`BudgetBackendUnavailable` — поднят
+            :class:`TokenBudget` при backend outage.
+
+    Returns:
+        JSON-ready dict для 503-ответа. Содержит ``error`` (str),
+        ``tenant_id``, ``backend`` (имя backend'а), ``message``.
+    """
+    return {
+        "error": "token_budget_backend_unavailable",
+        "tenant_id": exc.tenant_id,
+        "backend": exc.backend,
         "message": str(exc),
     }
 
