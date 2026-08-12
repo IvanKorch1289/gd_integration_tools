@@ -37,6 +37,18 @@ def reset() -> None:
     reset_mobile_state()
 
 
+@pytest.fixture(autouse=True)
+def enable_mobile_demo_auth(monkeypatch: pytest.MonkeyPatch) -> None:
+    """D-AUDIT-9101: legacy tests используют mobile:* tokens — enable flag
+    через monkeypatch. Production код остаётся fail-CLOSED (default OFF)."""
+    import src.backend.core.config.features as features_mod
+
+    class _Flags:
+        mobile_demo_auth_enabled = True
+
+    monkeypatch.setattr(features_mod, "feature_flags", _Flags())
+
+
 def _auth(user_id: str = "user_test") -> dict[str, str]:
     return {"Authorization": f"Bearer mobile:{user_id}:abc123"}
 

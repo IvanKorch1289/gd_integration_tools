@@ -67,11 +67,18 @@ _sync_states: dict[str, MobileSyncState] = {}
 async def _verify_mobile_token(authorization: str | None) -> str:
     """Verify mobile bearer token, return user_id.
 
-    Production: JWT validation с mobile-specific claims (device_id, tenant_id).
-    For demo: simple bearer format ``mobile:<user_id>:<token>``.
+    D-AUDIT-9101 fix (cycle 91, API-P0-005): добавлен fail-CLOSED gate
+    на feature flag ``mobile_demo_auth_enabled``. В production
+    (default OFF) ЛЮБОЙ mobile:* токен → 401, потому что demo
+    format не валидируется (fail-OPEN vulnerability). В dev_light
+    / dev / staging (flag ON) — старое поведение сохранено для
+    удобства разработки.
+
+    Production: JWT validation с mobile-specific claims (device_id, tenant_id) — TODO.
+    For demo (flag ON only): simple bearer format ``mobile:<user_id>:<token>``.
 
     Raises:
-        HTTPException 401 if invalid/missing.
+        HTTPException 401 if invalid/missing or demo auth disabled.
 
     """
     if not authorization or not authorization.startswith("Bearer "):
@@ -81,6 +88,33 @@ async def _verify_mobile_token(authorization: str | None) -> str:
             headers={"WWW-Authenticate": "Bearer"},
         )
     token = authorization[7:]
+
+    # D-AUDIT-9101: demo-auth fail-CLOSED gate. Если feature flag
+    # выключен (default) — не пропускаем mobile:* токены вообще.
+    try:
+        from src.backend.core.config.features import feature_flags
+
+        demo_auth_enabled = bool(
+            getattr(feature_flags, "mobile_demo_auth_enabled", False),
+        )
+    except Exception as _:
+        # Если feature_flags недоступен — fail-CLOSED (production safety).
+        demo_auth_enabled = False
+
+    if not demo_auth_enabled:
+        # Real JWT validation ещё не реализован (TODO epic), поэтому
+        # единственный fail-closed вариант — 401 на любой mobile:* токен.
+        # Production mobile clients должны использовать JWT (когда
+        # будет реализован) или этот endpoint не доступен.
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=(
+                "Mobile demo auth disabled (FEATURE_MOBILE_DEMO_AUTH_ENABLED=false). "
+                "JWT-based mobile auth not yet implemented — production access requires "
+                "explicit feature flag enable or proper JWT validation."
+            ),
+        )
+
     if not token.startswith("mobile:"):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

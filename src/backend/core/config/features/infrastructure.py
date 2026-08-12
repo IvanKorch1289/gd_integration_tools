@@ -151,6 +151,23 @@ class InfrastructureFlags(BaseSettings):
         ),
     )
 
+    # ─── Cycle 91 — Mobile BFF demo-auth security gate ────────────────
+    mobile_demo_auth_enabled: bool = Field(
+        default=False,
+        title="S91: Mobile BFF demo-auth (mobile:<user_id>:<token> format) — default OFF for prod safety",
+        description=(
+            "D-AUDIT-9101 fix (cycle 91, API-P0-005): Mobile BFF "
+            "(_verify_mobile_token в entrypoints/api/mobile/router.py) "
+            "принимает ЛЮБОЙ bearer token формата 'mobile:<user_id>:<token>' "
+            "без валидации — fail-OPEN auth. Production трафик: любой "
+            "может залогиниться от имени user_<device_id[:8]>. "
+            "Default OFF: production → 401 на любой mobile:* токен. "
+            "dev_light / dev / staging могут включить через "
+            "FEATURE_MOBILE_DEMO_AUTH_ENABLED=true. Реальный JWT-validation "
+            "с mobile-specific claims — TODO (отдельный epic)."
+        ),
+    )
+
     # ─── Cycle 36 — Token budget fail-closed safety ─────────────────────
     token_budget_fail_closed: bool = Field(
         default=False,
