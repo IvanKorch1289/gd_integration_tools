@@ -234,7 +234,7 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
             # - OSError: socket/network errors
             # Soft-fail behavior сохранён (return False → connection
             # marked dead, pool removes).
-            logger.debug(
+            _logger.debug(
                 "imap_pool._is_alive: NOOP probe failed (exc_type=%s "
                 "exc_msg=%s) — connection dead",
                 type(exc).__name__, exc,
