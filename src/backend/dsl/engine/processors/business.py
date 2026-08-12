@@ -68,7 +68,16 @@ class TenantScopeProcessor(BaseProcessor):
                 import jmespath
 
                 tenant_id = jmespath.search(self._body_path, exchange.in_message.body)
-            except Exception as _:
+            except (jmespath.exceptions.ParseError, jmespath.exceptions.JsonStringError) as exc:
+                # D-AUDIT-12301 fix (cycle 123): narrow от broad
+                # 'except Exception: _' (которое swallow'ило ANY exception
+                # включая SystemExit, KeyboardInterrupt) до конкретных
+                # jmespath exceptions. Fallback tenant_id=None — sensible
+                # default (caller uses header instead).
+                logger.debug(
+                    "ExtractTenantIdFromBody: jmespath search failed for body_path=%r: %s",
+                    self._body_path, exc,
+                )
                 tenant_id = None
         if tenant_id is None:
             if self._required:
