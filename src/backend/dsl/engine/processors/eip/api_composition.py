@@ -87,11 +87,17 @@ def _default_http_fetcher() -> HTTPFetcher:
     async def fetcher(
         url: str, method: str, headers: dict[str, str], body: Any, timeout: float,
     ) -> Any:
-        from src.backend.infrastructure.external_apis.http_client import (
-            get_http_client,  # type: ignore[import-not-found]
+        # D-AUDIT-11901 fix (cycle 119): canonical path
+        # src.backend.infrastructure.clients.transport.http.factory
+        # (НЕ src.backend.infrastructure.external_apis.http_client —
+        # модуль НЕ существует). Реальная get_http_client в
+        # src/backend/infrastructure/clients/transport/http/factory.py:46
+        # (sync) или :27 (FastAPI dependency).
+        from src.backend.infrastructure.clients.transport.http.factory import (
+            get_http_client_typed,
         )
 
-        client = get_http_client()
+        client = get_http_client_typed()
         return await client.request(
             method=method, url=url, headers=headers, json_body=body, timeout=timeout,
         )
