@@ -26,11 +26,14 @@ Feature flag: ``feature_flags.db_call_procedure_enabled`` (default-OFF).
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 from src.backend.dsl.registry import processor
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -168,7 +171,17 @@ class DbCallProcedureProcessor(BaseProcessor):
             try:
                 rows = result.mappings().all()
                 payload: Any = [dict(r) for r in rows]
-            except Exception as _:
+            except (AttributeError, TypeError) as exc:
+                # D-AUDIT-14101 fix (cycle 141): narrow от bare
+                # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt
+                # + unexpected exceptions) до конкретных AttributeError/
+                # TypeError. Soft-fail behavior сохранён (payload=None →
+                # caller обработает как 'no result').
+                logger.debug(
+                    "DBCallProcedure: result mappings conversion failed "
+                    "(exc_type=%s exc_msg=%s) — payload=None",
+                    type(exc).__name__, exc,
+                )
                 payload = None
             await session.commit()
 
