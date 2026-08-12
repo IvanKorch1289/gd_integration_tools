@@ -27,12 +27,15 @@ Wave: ``[wave:s76/w1-real-credit-agents]``.
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Literal
 
 from extensions.credit_pipeline.domain.models import CreditDecision
 from extensions.credit_pipeline.functions.normalize import apply_rules
 
 __all__ = ("decision_agent", "document_parser_agent", "scoring_agent")
+
+_logger = logging.getLogger(__name__)
 
 
 # Threshold для approval — 600 FICO-equivalent (из supervisor stub).
@@ -98,9 +101,14 @@ async def scoring_agent(payload: dict[str, Any]) -> dict[str, Any]:
                     "agent": "scoring_agent",
                 },
             )
-        except Exception:
-            # Audit emission не должен блокировать scoring decision.
-            pass
+        except Exception as audit_exc:
+            # Audit emission не должен блокировать scoring decision,
+            # но failure должен быть видимым в логах для diagnostics.
+            # Cycle-86 (D-AUDIT-8601): bare pass → logged warning.
+            _logger.warning(
+                "scoring_agent.audit_emit_failed (tenant=%s): %s",
+                tenant_id, audit_exc,
+            )
         return {
             "agent": "scoring_agent",
             "credit_score": 0,
