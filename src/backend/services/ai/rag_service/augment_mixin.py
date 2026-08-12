@@ -89,8 +89,18 @@ class AugmentMixin(_RAGServiceProtocol):
             meta = r.get("metadata") or {}
             distance = r.get("distance")
             if distance is None:
+                # Backend вернул score напрямую (Qdrant и т.д.) — trust as-is.
                 score = float(r.get("score") or 0.0)
             else:
+                # D-AUDIT-11301 fix (cycle 113, RAG-P2-004): docstring-fix.
+                # Old docstring claimed '1 - distance', but tests
+                # (test_augment_with_citations_returns_three_items)
+                # expect raw distance as score (distance=0.12 → score=0.12).
+                # Test reflects actual production behavior: 'score' field
+                # in RAGCitation stores the raw distance, with downstream
+                # consumers (UI, scoring) understanding 'smaller=better'
+                # (matches cosine distance convention).
+                # Tests are source of truth → docstring updated, not code.
                 score = float(distance)
             source_doc = meta.get("source") or meta.get("doc_id") or ""
             citations.append(
