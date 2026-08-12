@@ -389,7 +389,17 @@ def patched(patch_id: str) -> bool:
 
     try:
         return bool(temporal_workflow.patched(patch_id))
-    except Exception as _:
-        # Вызов вне workflow-контекста — Temporal бросает RuntimeError.
-        # Для dryrun / unit-тестов возвращаем False (legacy ветка).
+    except RuntimeError as exc:
+        # D-AUDIT-14701 fix (cycle 147): narrow от bare
+        # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt
+        # + unexpected exceptions) до конкретного RuntimeError.
+        # Temporal raises RuntimeError when called outside workflow
+        # context (dryrun / unit tests). Soft-fail behavior сохранён
+        # (return False → legacy branch).
+        logger.debug(
+            "workflow.patched: temporal_workflow.patched raised "
+            "RuntimeError (likely called outside workflow context) "
+            "(exc_msg=%s) — returning False (legacy branch)",
+            exc,
+        )
         return False
