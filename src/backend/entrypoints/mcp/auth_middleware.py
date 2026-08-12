@@ -2,9 +2,14 @@
 
 Проверяет:
 
-* ``Authorization: Bearer <jwt>`` через ``_verify_jwt`` из
-  :mod:`entrypoints.api.dependencies.auth_selector` (Track C JWT);
-* либо ``X-API-Key`` через ``_verify_api_key`` оттуда же.
+* ``Authorization: Bearer <jwt>`` через public :func:`verify_request`
+  из :mod:`core.auth.auth_selector` (Track C JWT);
+* либо ``X-API-Key`` через тот же public API.
+
+D-AUDIT-10101 fix (cycle 101, SECURITY-P1-004): заменён импорт
+приватных ``_verify_api_key`` / ``_verify_jwt`` (S93 W3 encapsulation
+violation) на public ``verify_request``. Создаём Starlette Request
+из ASGI scope и передаём в public API.
 
 При успехе вызов передаётся внутрь ASGI app FastMCP.
 
@@ -18,6 +23,8 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 from typing import Any
 
+from starlette.requests import Request
+
 from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -25,51 +32,53 @@ logger = get_logger(__name__)
 __all__ = ("McpAuthMiddleware",)
 
 
-class _DummyHeadersRequest:
-    """Минимальный shim под :func:`_verify_jwt` (ожидает ``request.headers``)."""
-
-    def __init__(self, headers: dict[str, str]) -> None:
-        """Инициализирует middleware.
-
-        :param headers: значение headers.
-        """
-        self.headers = headers
-
-
 async def _verify(scope: dict[str, Any]) -> bool:
-    """Возвращает True, если запрос успешно прошёл API_KEY или JWT auth."""
-    from src.backend.core.auth.auth_selector import _verify_api_key, _verify_jwt
+    """Возвращает True, если запрос успешно прошёл auth через public API.
+
+    D-AUDIT-10101 fix (cycle 101): использует public ``verify_request``
+    (из core.auth.auth_selector) вместо импорта приватных
+    ``_verify_api_key`` / ``_verify_jwt``. Public API iterates через
+    enabled methods (api_key, jwt, basic, ...) и возвращает первый
+    successful AuthContext — для MCP не нужны explicit dispatch на
+    method.
+    """
+    from src.backend.core.auth.auth_selector import verify_request
     from src.backend.core.config.ai_stack import mcp_settings
 
-    raw_headers = scope.get("headers") or []
-    headers: dict[str, str] = {}
-    for k, v in raw_headers:
-        try:
-            headers[k.decode("latin1").lower()] = v.decode("latin1")
-        except Exception as _:
-            continue
+    # Build minimal ASGI receive/send для Starlette Request.
+    # Для auth verification нужен только headers — body не читается.
+    async def _receive() -> dict[str, Any]:
+        return {"type": "http.request", "body": b"", "more_body": False}
 
-    request = _DummyHeadersRequest(headers)
+    async def _send(_: dict[str, Any]) -> None:
+        return None  # no-op; мы не отправляем response
+
+    try:
+        request = Request(scope, receive=_receive)
+    except Exception as exc:
+        # D-AUDIT-10101: не 'except Exception: _' (silent), а narrow +
+        # structured log. Request construction может fail только при
+        # malformed scope (TypeError/ValueError).
+        logger.warning(
+            "MCP _verify: failed to construct Request from scope "
+            "(exc_type=%s exc_msg=%s)",
+            type(exc).__name__,
+            exc,
+        )
+        return False
+
     methods = [m.lower().strip() for m in (mcp_settings.auth_methods or [])]
+    if not methods:
+        # No methods configured → fail-CLOSED (default secure).
+        return False
 
-    if "api_key" in methods and headers.get("x-api-key"):
-        try:
-            ctx = await _verify_api_key(request)
-            if ctx is not None:
-                return True
-        except Exception as exc:
-            logger.debug("MCP api_key verify failed: %s", exc)
+    try:
+        ctx = await verify_request(request, methods=methods)
+    except Exception as exc:
+        logger.debug("MCP verify_request failed: %s", exc)
+        return False
 
-    if "jwt" in methods and headers.get("authorization", "").lower().startswith(
-        "bearer ",
-    ):
-        try:
-            ctx = await _verify_jwt(request)
-            if ctx is not None:
-                return True
-        except Exception as exc:
-            logger.debug("MCP jwt verify failed: %s", exc)
-    return False
+    return ctx is not None
 
 
 class McpAuthMiddleware:
