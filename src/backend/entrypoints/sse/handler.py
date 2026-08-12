@@ -244,6 +244,14 @@ async def sse_invoke(request: Request, body: _InvokeRequest) -> StreamingRespons
     idempotency_key = request.headers.get("idempotency-key")
     principal, permissions = _extract_auth_from_request(request)
 
+    # Sprint 1.4 (L5 Security Chain): пробрасываем principal и
+    # permissions из ``request.state.auth`` (выставленного
+    # ``require_auth`` dependency / ``AuthRequiredMiddleware``) в
+    # ``dispatch_action_or_dsl`` → DSL-fallback path →
+    # ``DslService.dispatch`` → ``check_route_permission``. Без auth —
+    # backward-compat (``"anonymous"`` / ``()`` — fail-closed для
+    # protected routes). Симметрично с SOAP/WS обработчиками.
+
     async def stream() -> Any:
         """Генератор SSE-событий: start → result|error → end."""
         yield (f"event: start\ndata: {encode_json_str({'action': body.action})}\n\n")
