@@ -21,7 +21,7 @@ from src.backend.core.config.settings import SKBAPISettings, settings
 from src.backend.core.errors import ServiceError
 from src.backend.core.services.base import BaseExternalAPIClient
 
-__all__ = ("CreditSKBClient", "get_credit_skb_client")
+__all__ = ("CreditSKBClient", "get_credit_skb_client", "fetch_result")
 
 
 class CreditSKBClient(BaseExternalAPIClient):
@@ -147,3 +147,32 @@ def get_credit_skb_client() -> CreditSKBClient:
             skb_settings=settings.skb_api_settings
         )
     return _credit_skb_client_instance
+
+
+# B-101 fix (cycle 1): module-level callable для DSL ``call_function``.
+# Метод ``CreditSKBClient.get_result`` не виден через ``getattr(module, ...)``,
+# поэтому оборачиваем в top-level функцию, совместимую с контрактом
+# ``call_function``: ``fn(payload: dict) -> Any`` (sync или async).
+async def fetch_result(body: dict[str, Any]) -> Any | dict[str, Any]:
+    """Module-level wrapper для :meth:`CreditSKBClient.get_result`.
+
+    Используется DSL workflow ``credit_assessment`` через
+    ``call_function('extensions.credit_pipeline.services.clients.skb:fetch_result')``
+    — позволяет обращаться к SKB из YAML-декларации под
+    ``feature_flag.credit_pipeline_v2``.
+
+    Args:
+        body: Payload с обязательным ``order_uuid`` (UUID-строка) и
+            опциональным ``response_type_str`` (``"JSON"`` / ``"PDF"``).
+
+    Returns:
+        Результат запроса (JSON-словарь или bytes PDF).
+
+    Raises:
+        ServiceError: Если запрос не удался.
+        KeyError: Если ``order_uuid`` отсутствует в ``body``.
+    """
+    client = get_credit_skb_client()
+    order_uuid = UUID(str(body["order_uuid"]))
+    response_type = body.get("response_type_str")
+    return await client.get_result(order_uuid, response_type)
