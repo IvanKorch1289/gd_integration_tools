@@ -8,11 +8,14 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends
 
 from src.backend.core.auth.admin_roles import AdminRole, require_admin
+
+logger = logging.getLogger(__name__)
 
 # S202 audit fix: require admin role
 _ADMIN_GUARD_READ = Depends(
@@ -62,12 +65,26 @@ async def list_training_runs(limit: int = 10) -> dict[str, Any]:
     },
 )
 async def labeled_count(tenant_id: str | None = None) -> dict[str, Any]:
-    """Кол-во labeled feedback (по tenant'у или глобально)."""
+    """Кол-во labeled feedback (по tenant'у или глобально).
+
+    D-AUDIT-9901 fix (cycle 99, API-P1-009): bare 'except Exception'
+    заменён на narrow + WARNING-лог. Раньше: silent return count=0
+    при ЛЮБОМ exception (ImportError AIFeedbackService, AttributeError
+    list_labeled mismatch, OSError storage backend) — admin UI
+    показывал '0 labeled', хотя реально storage мог быть сломан.
+    """
     try:
         from src.backend.services.ai.feedback.feedback_service import AIFeedbackService
 
         service = AIFeedbackService()
         items = await service.list_labeled(tenant_id=tenant_id, limit=10_000)
         return {"tenant_id": tenant_id, "count": len(items)}
-    except Exception as _:
-        return {"tenant_id": tenant_id, "count": 0}
+    except (ImportError, AttributeError, OSError) as exc:
+        logger.warning(
+            "AIFeedbackService.list_labeled failed (tenant_id=%s): "
+            "exc_type=%s exc_msg=%s — returning count=0 (possible storage degradation)",
+            tenant_id,
+            type(exc).__name__,
+            exc,
+        )
+        return {"tenant_id": tenant_id, "count": 0, "stub": True}
