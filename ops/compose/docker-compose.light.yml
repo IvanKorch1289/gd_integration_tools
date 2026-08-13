@@ -50,9 +50,15 @@ services:
       dockerfile: ops/compose/Dockerfile
     image: gd-integration-tools:light
     container_name: gd-worker-light
-    # Worker entry-point: src.backend.infrastructure.workflow.worker.main().
-    # См. подробности в docker-compose.yml (там же про K-OPS-4 fix).
-    command: ["python", "-m", "src.backend.infrastructure.workflow.worker", "run"]
+    # Worker entry-point: src.backend.infrastructure.workflow.worker.main()
+    # (см. K-OPS-4 fix в docker-compose.yml).
+    # D-AUDIT-15901 fix (cycle 159): use entrypoint to override
+    # Dockerfile ENTRYPOINT (tini + manage.py). 'command: [...]'
+    # appended to entrypoint → 'python manage.py python -m ...' →
+    # 'No such command python'. Light compose не имел entrypoint,
+    # worker restart'ился бесконечно.
+    entrypoint: ["python", "-m", "src.backend.infrastructure.workflow.worker"]
+    command: ["run"]
     env_file:
       - ../../.env
     environment:
