@@ -103,12 +103,16 @@ class APIKeyMiddleware:
         # для interop с audit_log/rpa_policy (audit_log читает
         # scope['state']['auth'].principal, rpa_policy — .roles через
         # duck-typed fallback). Без этого audit_log видел anonymous.
+        # S124 W2: добавлены admin роли (operator, super_admin) для доступа
+        # к POST /api/v1/admin/workflows/trigger (require_admin.extract_admin_roles
+        # читает metadata['admin_roles'] НЕ groups, поэтому нужно дублировать).
         scope.setdefault("state", {})["auth"] = AuthContext(
             method=AuthMethod.API_KEY,
             principal="api_key_consumer",
             metadata={
                 "tenant_id": "default",
                 "groups": ("api_key_consumer",),
+                "admin_roles": ["operator", "super_admin"],
             },
         )
 

@@ -149,6 +149,13 @@ class AuthRequiredMiddleware:
             return
 
         # Authenticate.
+        # S124 W2: если предыдущий middleware (api_key, jwt, etc.) уже
+        # установил scope['state']['auth'], не переписываем — это
+        # ломало admin_roles и группы от API-ключа.
+        existing_auth = scope.get("state", {}).get("auth") if isinstance(scope.get("state"), dict) else None
+        if existing_auth is not None:
+            await self.app(scope, receive, send)
+            return
         ctx = await self._authenticate(scope, receive)
         if ctx is None:
             # 401 через send (no-raise, cycle 39).
