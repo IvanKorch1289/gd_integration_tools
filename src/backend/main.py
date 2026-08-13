@@ -109,7 +109,7 @@ def _run_granian() -> None:
         "target": "src.backend.main:app",
         "address": settings.app.host,
         "port": settings.app.port,
-        "interface": Interfaces.ASGI,
+        "interface": Interfaces.ASGINL,  # S121 W1: asginl bypass — lifespan errored в light stack
         "workers": settings.app.workers,
         "runtime_threads": settings.app.granian_runtime_threads,
         "runtime_mode": runtime_mode,

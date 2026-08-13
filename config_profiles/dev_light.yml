@@ -21,7 +21,7 @@ vault:
 app:
   environment: "development"
   debug_mode: true
-  host: "127.0.0.1"
+  host: "0.0.0.0"  # S121 W2: 0.0.0.0 для docker-compose port mapping
   port: 8000
   use_ssl: false
   opentelemetry_endpoint: ""
