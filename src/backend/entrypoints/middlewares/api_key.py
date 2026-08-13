@@ -106,7 +106,7 @@ class APIKeyMiddleware:
         # S124 W2: добавлены admin роли (operator, super_admin) для доступа
         # к POST /api/v1/admin/workflows/trigger (require_admin.extract_admin_roles
         # читает metadata['admin_roles'] НЕ groups, поэтому нужно дублировать).
-        scope.setdefault("state", {})["auth"] = AuthContext(
+        auth_ctx = AuthContext(
             method=AuthMethod.API_KEY,
             principal="api_key_consumer",
             metadata={
@@ -114,6 +114,16 @@ class APIKeyMiddleware:
                 "groups": ("api_key_consumer",),
                 "admin_roles": ["operator", "super_admin"],
             },
+        )
+        scope.setdefault("state", {})["auth"] = auth_ctx
+        # S124 W3: debug log для trace auth flow (временно).
+        import logging
+        _auth_log = logging.getLogger("auth.debug")
+        _auth_log.warning(
+            "API_KEY auth set: principal=%s admin_roles=%s scope_state_keys=%s",
+            auth_ctx.principal,
+            auth_ctx.metadata.get("admin_roles"),
+            list(scope.get("state", {}).keys()),
         )
 
         # API-ключ валиден → пробрасываем downstream.
