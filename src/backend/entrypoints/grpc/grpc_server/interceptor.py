@@ -5,6 +5,7 @@ Classes: AuthInterceptor.
 
 from __future__ import annotations
 
+import grpc
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -19,11 +20,15 @@ grpc_logger = get_grpc_logger_provider()
 # без protobuf-stubs (top-level ``invoker_pb2`` требует sys.path-magic).
 
 
-class AuthInterceptor:
+class AuthInterceptor(grpc.aio.ServerInterceptor):
     """gRPC server interceptor — проверяет API-ключ в metadata.
 
     Используется совместно с TLS (ADR-004): TLS обеспечивает канал,
     AuthInterceptor — authn/authz уровня приложения.
+
+    D-AUDIT-18001 fix (cycle 180): inherit from grpc.aio.ServerInterceptor
+    (was bare class — gRPC server rejected with 'Interceptor must be
+    ServerInterceptor'). gRPC port 50051 was CLOSED due to this bug.
     """
 
     def __init__(self, expected_key: str) -> None:
