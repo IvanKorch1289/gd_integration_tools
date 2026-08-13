@@ -122,8 +122,33 @@ def _patch_rpc_methods() -> None:
             if not hasattr(_method, "response_streaming"):
                 _method.response_streaming = False  # type: ignore[attr-defined]
 
+    # D-AUDIT-19401 fix (cycle 194): Cython aio server accesses
+    # `request_streaming` on the method in a way that bypasses our
+    # direct attribute setting. Use `__getattr__` fallback on each
+    # servicer class to return False for `request_streaming` and
+    # `response_streaming` if not set.
+    def _make_getattr_fallback():
+        def __getattr__(self, name):
+            if name in ("request_streaming", "response_streaming"):
+                return False
+            raise AttributeError(
+                f"{type(self).__name__!r} object has no attribute {name!r}"
+            )
+        return __getattr__
 
-_patch_rpc_methods()
+    for _cls_name in (
+        "InvokerGRPCServicer",
+        "OrderGRPCServicer",
+        "FileStreamGRPCServicer",
+    ):
+        try:
+            _cls = globals()[_cls_name]
+        except KeyError:
+            continue
+        if not hasattr(_cls, "__getattr__"):
+            _cls.__getattr__ = _make_getattr_fallback()
+
+    _patch_rpc_methods()
 
 __all__ = (
     "AuthInterceptor",

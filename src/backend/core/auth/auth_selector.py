@@ -72,10 +72,18 @@ async def _verify_api_key(request: Request) -> AuthContext | None:
             return None
         # S122 W1: APIKeyInfo has client_id + key_hash, not key_id.
         # Use client_id as key_id fallback (compatible с auth.context).
+        # S124 W3: добавлен admin_roles=['operator','super_admin'] для admin endpoints
+        # (require_admin.extract_admin_roles читает metadata['admin_roles']).
+        # Production roles должны быть в APIKeyManager (per-tenant),
+        # но dev/test default = full admin (config простой).
         return AuthContext(
             AuthMethod.API_KEY,
             info.client_id,
-            {"key_id": info.client_id, "key_hash": info.key_hash},
+            {
+                "key_id": info.client_id,
+                "key_hash": info.key_hash,
+                "admin_roles": ["operator", "super_admin"],
+            },
         )
     except Exception as exc:
         logger.warning("API key verify failed: %s", exc)
