@@ -81,6 +81,10 @@ class DataMaskingMiddleware:
         content_type: dict[str, str] = {"value": ""}
         response_status: dict[str, int] = {"status": 0}
         original_headers: list[tuple[bytes, bytes]] = []
+        # D-AUDIT-17201 fix: should_mask flag для non-JSON pass-through.
+        # JSON → suppress start, collect body, re-send masked.
+        # Non-JSON → pass through both start + body immediately.
+        should_mask: bool = True
 
         async def send_wrapper(message) -> None:
             if message["type"] == "http.response.start":
@@ -92,8 +96,15 @@ class DataMaskingMiddleware:
                         content_type["value"] = v.decode(
                             "latin-1", errors="replace",
                         )
-                # Suppress original — отправим свой с masked body
-                # (cycle 58 invariant: suppress всегда для content-length update).
+                # D-AUDIT-17201 fix (cycle 172, retry): for non-JSON
+                # responses, pass through original start immediately
+                # (BEFORE body) instead of suppressing. Suppressing
+                # without re-sending caused ASGI protocol error →
+                # 500 'Internal server error' на /docs, /redoc, etc.
+                if "application/json" not in content_type["value"]:
+                    should_mask = False
+                    await send(message)
+                # else: Suppress original (JSON, will re-send with masked body)
             elif message["type"] == "http.response.body":
                 if "application/json" in content_type["value"]:
                     # JSON: collect body для masking.
@@ -108,22 +119,12 @@ class DataMaskingMiddleware:
         await self.app(scope, receive, send_wrapper)
 
         # Skip non-JSON content type (уже пробрасывали в send_wrapper).
-        # D-AUDIT-17101 fix (cycle 171): SUPPRESSED start (line 113) для
-        # non-JSON responses тоже пропущен → client получает body без
-        # start = ASGI protocol error. Fix: pass через original start
-        # (если body уже был отправлен в send_wrapper — non-JSON
-        # pass through, original start тоже должен пройти).
-        if "application/json" not in content_type["value"]:
-            # Non-JSON: original start/body уже пробрасывались в
-            # send_wrapper. Original start никогда не был отправлен
-            # (мы suppressed его). Нужно отправить original start сейчас.
-            await send(
-                {
-                    "type": "http.response.start",
-                    "status": response_status["status"],
-                    "headers": original_headers,
-                },
-            )
+        # D-AUDIT-17201 fix (cycle 172): non-JSON responses передают
+        # original start + body через send_wrapper (line 95-100). Здесь
+        # ничего не делаем.
+        if not should_mask:
+            # Non-JSON: original start + body уже отправлены в
+            # send_wrapper. Ничего не делаем.
             return
 
         body = b"".join(body_chunks)
