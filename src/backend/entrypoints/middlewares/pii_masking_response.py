@@ -104,16 +104,26 @@ class PIIMaskingResponseMiddleware:
                 original_status = message.get("status", 200)
                 original_headers = list(message.get("headers", []))
 
-                # Check content-type перед сбором body.
+                # Check content-type + content-encoding перед сбором body.
                 # ponytail: инициализируем как str, чтобы ``"application/json" not in content_type``
                 # работал и для случая, когда content-type header отсутствует (ранее
                 # крашилось с TypeError str-in-bytes).
                 content_type = ""
+                content_encoding = ""
                 for k, v in original_headers:
                     if k.lower() == b"content-type":
                         content_type = v.decode("latin-1", errors="replace")
-                        break
-                if "application/json" not in content_type:
+                    elif k.lower() == b"content-encoding":
+                        content_encoding = v.decode("latin-1", errors="replace")
+                # D-AUDIT-16601 fix (cycle 166): skip PII masking for:
+                # 1. Non-JSON content types (binary endpoints, prometheus)
+                # 2. Gzip-compressed responses (GZipMiddleware compresses
+                #    /metrics and other binary content → UTF-8 decode fails)
+                # Раньше /metrics → 500 'response_masking_failed' (0x8b gzip
+                # byte не декодируется как UTF-8 → fallback error).
+                is_json = "application/json" in content_type
+                is_gzip = "gzip" in content_encoding.lower()
+                if not is_json or is_gzip:
                     # Skip PII masking — пробрасываем original.
                     state["should_mask"] = False
                     # Send start immediately (downstream-уже-ждёт).
