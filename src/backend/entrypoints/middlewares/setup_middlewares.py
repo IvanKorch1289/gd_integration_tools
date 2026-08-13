@@ -179,9 +179,16 @@ def build_default_registry() -> MiddlewareRegistry:
             },
             order=540,
         )
+    # D-AUDIT-17601 fix (cycle 176): use custom GZipCompressionExcluding
+    # middleware (pure ASGI + path exclusion) instead of FastAPI's
+    # default GZipMiddleware (BaseHTTPMiddleware — incompatible с
+    # project's pure ASGI chain на /docs, /redoc, /metrics).
+    from src.backend.entrypoints.middlewares.gzip_compression_excluding import (
+        GZipCompressionExcludingMiddleware,
+    )
     registry.register_builtin(
         "gzip",
-        GZipMiddleware,
+        GZipCompressionExcludingMiddleware,
         {
             "minimum_size": settings.app.gzip_minimum_size,
             "compresslevel": settings.app.gzip_compresslevel,
