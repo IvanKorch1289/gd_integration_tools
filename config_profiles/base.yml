@@ -49,6 +49,7 @@ security:
     - "/docs"
     - "/documents"
     - "/docs/"
+    - "/redoc"
     - "/openapi*"
     - "/asyncapi*"
     - "/documents/"
