@@ -58,8 +58,8 @@ def _patch_rpc_methods() -> None:
     _parent_class_method_map = {
         invoker_pb2_grpc.InvokerServiceServicer: ("Invoke",),
         invoker_pb2_grpc.InvokerServiceStub: ("Invoke",),
-        files_pb2_grpc.FileStreamServiceServicer: ("Read", "Write", "Open"),
-        files_pb2_grpc.FileStreamServiceStub: ("Read", "Write", "Open"),
+        files_pb2_grpc.FileServiceServicer: ("Read", "Write", "Open"),
+        files_pb2_grpc.FileServiceStub: ("Read", "Write", "Open"),
     }
     for _parent_cls, _method_names in _parent_class_method_map.items():
         for _method_name in _method_names:
