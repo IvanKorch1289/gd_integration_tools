@@ -46,8 +46,9 @@ def _patch_rpc_methods() -> None:
     """Patch servicer methods с gRPC v1.66+ streaming metadata.
 
     Patches BOTH subclass (InvokerGRPCServicer.Invoke) AND parent
-    class (InvokerServiceServicer.Invoke) — gRPC.register uses
-    parent class methods when registering.
+    class (InvokerServiceServicer.Invoke). Также patches auto-generated
+    Stub (InvokerServiceStub.Invoke) — channel.unary_unary возвращает
+    callable, gRPC проверяет request_streaming на stub method тоже.
     """
     from src.backend.entrypoints.grpc.protobuf import (
         invoker_pb2_grpc,
@@ -56,8 +57,9 @@ def _patch_rpc_methods() -> None:
     )
     _parent_class_method_map = {
         invoker_pb2_grpc.InvokerServiceServicer: ("Invoke",),
-        order_pb2_grpc.OrderServiceServicer: tuple(),  # Order methods come from generated code, check separately
+        invoker_pb2_grpc.InvokerServiceStub: ("Invoke",),
         files_pb2_grpc.FileStreamServiceServicer: ("Read", "Write", "Open"),
+        files_pb2_grpc.FileStreamServiceStub: ("Read", "Write", "Open"),
     }
     for _parent_cls, _method_names in _parent_class_method_map.items():
         for _method_name in _method_names:
