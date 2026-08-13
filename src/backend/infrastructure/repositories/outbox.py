@@ -267,9 +267,34 @@ async def claim_pending(
                 return []
 
             # 2. S72 W2: per-row claim с status='processing' + claimed_by +
-            # claimed_at + claimed_until. Один atomic statement с
-            # FOR UPDATE SKIP LOCKED предотвращает гонки даже в пределах
-            # одной сессии.
+            # claimed_at + claimed_until.
+            # D-AUDIT-16001 fix (cycle 160): detect DB backend и use
+            # appropriate lock syntax. PostgreSQL: FOR UPDATE SKIP
+            # LOCKED (native). SQLite: simple ORDER BY + LIMIT
+            # (transaction IS the lock через BEGIN IMMEDIATE).
+            # Раньше: bare PostgreSQL syntax на SQLite → 'near FOR:
+            # syntax error' → DatabaseError → outbox iteration_failed.
+            bind = session.get_bind()
+            backend = bind.dialect.name if bind is not None else "postgresql"
+            if backend == "sqlite":
+                # SQLite: BEGIN IMMEDIATE transaction provides lock.
+                select_inner = (
+                    "SELECT id FROM outbox_messages "
+                    "WHERE status = 'pending' "
+                    "AND next_attempt_at <= :now "
+                    "ORDER BY created_at "
+                    "LIMIT :limit"
+                )
+            else:
+                # PostgreSQL: SKIP LOCKED для multi-writer concurrency.
+                select_inner = (
+                    "SELECT id FROM outbox_messages "
+                    "WHERE status = 'pending' "
+                    "AND next_attempt_at <= :now "
+                    "ORDER BY created_at "
+                    "LIMIT :limit "
+                    "FOR UPDATE SKIP LOCKED"
+                )
             result = await session.execute(
                 text(
                     """
@@ -280,12 +305,9 @@ async def claim_pending(
                         claimed_at = :now,
                         claimed_until = :claimed_until
                     WHERE id IN (
-                        SELECT id FROM outbox_messages
-                        WHERE status = 'pending'
-                          AND next_attempt_at <= :now
-                        ORDER BY created_at
-                        LIMIT :limit
-                        FOR UPDATE SKIP LOCKED
+                        """
+                    + select_inner
+                    + """
                     )
                     RETURNING id, topic, payload, headers, status, retry_count,
                               last_error, transport, published_at, next_attempt_at,
