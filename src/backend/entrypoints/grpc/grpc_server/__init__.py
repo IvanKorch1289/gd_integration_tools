@@ -148,6 +148,25 @@ def _patch_rpc_methods() -> None:
         if not hasattr(_cls, "__getattr__"):
             _cls.__getattr__ = _make_getattr_fallback()
 
+    # D-AUDIT-19501 fix (cycle 195): try different approach — set
+    # `request_streaming` / `response_streaming` as CLASS ATTRIBUTES
+    # (not instance/method). The gRPC Cython code may look at the
+    # class via `type(servicer_instance).__getattribute__`.
+    for _cls_name in (
+        "InvokerGRPCServicer",
+        "OrderGRPCServicer",
+        "FileStreamGRPCServicer",
+    ):
+        try:
+            _cls = globals()[_cls_name]
+        except KeyError:
+            continue
+        # Set as class attributes (not just method attributes).
+        for _method_name in ("Invoke", "Execute", "Stream", "Read", "Write", "Open"):
+            if hasattr(_cls, _method_name):
+                setattr(_cls, f"{_method_name}_request_streaming", False)
+                setattr(_cls, f"{_method_name}_response_streaming", False)
+
     _patch_rpc_methods()
 
 __all__ = (
