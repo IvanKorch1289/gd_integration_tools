@@ -238,10 +238,28 @@ async def claim_pending(
     async with main_session_manager.create_session() as session:
         async with main_session_manager.transaction(session):
             # 1. Try acquire per-worker advisory lock (coarse batch-level)
-            got_lock = bool(
-                (
-                    await session.execute(
-                        text("SELECT pg_try_advisory_xact_lock(:k)"), {"k": lock_key},
+            # D-AUDIT-15801 fix (cycle 158): detect DB backend через
+            # session.get_bind().dialect.name. PostgreSQL использует
+            # pg_try_advisory_xact_lock (native), SQLite использует
+            # work-table fallback (since aiosqlite не имеет advisory locks).
+            # Раньше: bare pg_try_advisory_xact_lock вызывался на
+            # SQLite → 'no such function: pg_try_advisory_xact_lock'
+            # → DatabaseError → outbox dispatcher iteration_failed
+            # (worker restart loop в dev_light profile).
+            bind = session.get_bind()
+            backend = bind.dialect.name if bind is not None else "postgresql"
+            if backend == "sqlite":
+                # SQLite fallback: SQLite BEGIN IMMEDIATE transaction
+                # provides single-writer semantics (BUSY error для
+                # concurrent writers). Advisory lock не нужен →
+                # всегда return True (мы внутри transaction).
+                got_lock = True
+            else:
+                # PostgreSQL: native advisory lock.
+                got_lock = bool(
+                    (
+                        await session.execute(
+                            text("SELECT pg_try_advisory_xact_lock(:k)"), {"k": lock_key},
                     )
                 ).scalar(),
             )
