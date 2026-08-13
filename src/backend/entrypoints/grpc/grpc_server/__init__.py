@@ -148,10 +148,28 @@ def _patch_rpc_methods() -> None:
         if not hasattr(_cls, "__getattr__"):
             _cls.__getattr__ = _make_getattr_fallback()
 
-    # D-AUDIT-19501 fix (cycle 195): try different approach — set
-    # `request_streaming` / `response_streaming` as CLASS ATTRIBUTES
-    # (not instance/method). The gRPC Cython code may look at the
-    # class via `type(servicer_instance).__getattribute__`.
+    # D-AUDIT-19801 fix (cycle 198): use metaclass with __getattr__
+    # to intercept ALL attribute lookups (including descriptors).
+    # gRPC Cython code does `PyObject_GetAttrString(method, "request_streaming")`
+    # which goes through normal attribute lookup. Setting on the class
+    # doesn't work because the method is a Python function and
+    # __getattribute__ on the function doesn't fall through to the class
+    # for normal attributes. But if we add the attribute directly to
+    # the function's __dict__ via the descriptor protocol, it works.
+    def _patch_method_with_attr(method, attr_name, attr_value):
+        """Add attribute to function's __dict__ so it's accessible
+        via normal attribute lookup.
+        """
+        try:
+            method.__dict__[attr_name] = attr_value
+        except (AttributeError, TypeError):
+            # Some functions don't allow __dict__ assignment.
+            # Try setattr on the function instead.
+            try:
+                setattr(method, attr_name, attr_value)
+            except (AttributeError, TypeError):
+                pass
+
     for _cls_name in (
         "InvokerGRPCServicer",
         "OrderGRPCServicer",
@@ -161,11 +179,12 @@ def _patch_rpc_methods() -> None:
             _cls = globals()[_cls_name]
         except KeyError:
             continue
-        # Set as class attributes (not just method attributes).
         for _method_name in ("Invoke", "Execute", "Stream", "Read", "Write", "Open"):
             if hasattr(_cls, _method_name):
-                setattr(_cls, f"{_method_name}_request_streaming", False)
-                setattr(_cls, f"{_method_name}_response_streaming", False)
+                _m = getattr(_cls, _method_name)
+                if callable(_m):
+                    _patch_method_with_attr(_m, "request_streaming", False)
+                    _patch_method_with_attr(_m, "response_streaming", False)
 
     _patch_rpc_methods()
 
