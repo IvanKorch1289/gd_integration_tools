@@ -32,6 +32,64 @@ from src.backend.entrypoints.grpc.grpc_server.server import (
     serve,  # S65 W3: top-level func re-export
 )
 
+# D-AUDIT-18301 fix (cycle 183): gRPC v1.66+ checks
+# `method.request_streaming` attribute when registering servicers.
+# Our servicer methods are async (coroutines), not callable with
+# that attribute → server fails with
+# "'function' object has no attribute 'request_streaming'"
+# when handling Invoke/Read/Write/etc.
+#
+# Fix: patch RPC methods на PARENT classes (InvokerServiceServicer и др.
+# сгенерированные grpc-tools). Subclass переопределяет методы,
+# но gRPC.register смотрит на parent → patch parent.
+def _patch_rpc_methods() -> None:
+    """Patch servicer methods с gRPC v1.66+ streaming metadata.
+
+    Patches BOTH subclass (InvokerGRPCServicer.Invoke) AND parent
+    class (InvokerServiceServicer.Invoke) — gRPC.register uses
+    parent class methods when registering.
+    """
+    from src.backend.entrypoints.grpc.protobuf import (
+        invoker_pb2_grpc,
+        order_pb2_grpc,
+        files_pb2_grpc,
+    )
+    _parent_class_method_map = {
+        invoker_pb2_grpc.InvokerServiceServicer: ("Invoke",),
+        order_pb2_grpc.OrderServiceServicer: tuple(),  # Order methods come from generated code, check separately
+        files_pb2_grpc.FileStreamServiceServicer: ("Read", "Write", "Open"),
+    }
+    for _parent_cls, _method_names in _parent_class_method_map.items():
+        for _method_name in _method_names:
+            _method = getattr(_parent_cls, _method_name, None)
+            if _method is None or not callable(_method):
+                continue
+            if not hasattr(_method, "request_streaming"):
+                _method.request_streaming = False  # type: ignore[attr-defined]
+            if not hasattr(_method, "response_streaming"):
+                _method.response_streaming = False  # type: ignore[attr-defined]
+
+    # Also patch subclass methods (override, so different function objects)
+    for _cls_name in ("InvokerGRPCServicer", "OrderGRPCServicer", "FileStreamGRPCServicer"):
+        try:
+            _cls = globals()[_cls_name]
+        except KeyError:
+            continue
+        for _method_name in (
+            "Invoke", "Execute", "Stream", "Read", "Write", "Open",
+            "Create", "ReadMany", "Update", "Delete", "List",
+        ):
+            _method = getattr(_cls, _method_name, None)
+            if _method is None or not callable(_method):
+                continue
+            if not hasattr(_method, "request_streaming"):
+                _method.request_streaming = False  # type: ignore[attr-defined]
+            if not hasattr(_method, "response_streaming"):
+                _method.response_streaming = False  # type: ignore[attr-defined]
+
+
+_patch_rpc_methods()
+
 __all__ = (
     "AuthInterceptor",
     "BaseGRPCServicer",
