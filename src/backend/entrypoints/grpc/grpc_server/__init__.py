@@ -71,6 +71,39 @@ def _patch_rpc_methods() -> None:
             if not hasattr(_method, "response_streaming"):
                 _method.response_streaming = False  # type: ignore[attr-defined]
 
+    # D-AUDIT-18801 fix (cycle 188): wrap Stub.__init__ methods to
+    # add request_streaming/response_streaming attributes to the
+    # Invoke/Read/Write callables AFTER they are assigned.
+    # Auto-generated Stub class sets self.Invoke = channel.unary_unary(...)
+    # in __init__ — we patch these callables post-assignment.
+    from src.backend.entrypoints.grpc.protobuf import (
+        invoker_pb2_grpc,
+        files_pb2_grpc,
+    )
+    _stub_method_map = {
+        invoker_pb2_grpc.InvokerServiceStub: ("Invoke",),
+        files_pb2_grpc.FileServiceStub: ("Read", "Write", "Open"),
+    }
+
+    def _wrap_stub_init(original_init):
+        def wrapped_init(self, channel):
+            original_init(self, channel)
+            for method_name in _stub_method_map.get(type(self), ()):
+                method = getattr(self, method_name, None)
+                if method is None or not callable(method):
+                    continue
+                if not hasattr(method, "request_streaming"):
+                    method.request_streaming = False  # type: ignore[attr-defined]
+                if not hasattr(method, "response_streaming"):
+                    method.response_streaming = False  # type: ignore[attr-defined]
+
+        return wrapped_init
+
+    for _stub_cls in _stub_method_map:
+        if hasattr(_stub_cls, "__init__"):
+            _orig_init = _stub_cls.__init__
+            _stub_cls.__init__ = _wrap_stub_init(_orig_init)  # type: ignore[method-assign]
+
     # Also patch subclass methods (override, so different function objects)
     for _cls_name in ("InvokerGRPCServicer", "OrderGRPCServicer", "FileStreamGRPCServicer"):
         try:
