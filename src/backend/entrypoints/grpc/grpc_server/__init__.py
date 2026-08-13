@@ -52,7 +52,7 @@ def _patch_rpc_methods() -> None:
     """
     from src.backend.entrypoints.grpc.protobuf import (
         invoker_pb2_grpc,
-        order_pb2_grpc,
+        orders_pb2_grpc,
         files_pb2_grpc,
     )
     _parent_class_method_map = {
