@@ -70,7 +70,13 @@ async def _verify_api_key(request: Request) -> AuthContext | None:
         info = await manager.validate_key(key)
         if info is None:
             return None
-        return AuthContext(AuthMethod.API_KEY, info.client_id, {"key_id": info.key_id})
+        # S122 W1: APIKeyInfo has client_id + key_hash, not key_id.
+        # Use client_id as key_id fallback (compatible с auth.context).
+        return AuthContext(
+            AuthMethod.API_KEY,
+            info.client_id,
+            {"key_id": info.client_id, "key_hash": info.key_hash},
+        )
     except Exception as exc:
         logger.warning("API key verify failed: %s", exc)
         return None

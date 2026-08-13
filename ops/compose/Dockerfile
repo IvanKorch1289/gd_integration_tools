@@ -31,7 +31,8 @@ COPY pyproject.toml uv.lock ./
 
 # Установка только runtime-зависимостей (без dev-группы) в /app/.venv.
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --no-install-project --extra dev-light
+    uv sync --frozen --no-dev --no-install-project --extra dev-light && \
+    uv pip install ruamel-yaml
 
 COPY src ./src
 COPY manage.py ./manage.py
