@@ -285,6 +285,11 @@ def _configure_root_endpoint(app: FastAPI) -> None:
         """Liveness probe: приложение работает, event loop отвечает."""
         return {"status": "alive", "version": settings.app.version}
 
+    @app.get("/health/live", include_in_schema=False)
+    async def liveness_alias():
+        """Alias for /health (k8s livenessProbe convention)."""
+        return await liveness()
+
     @app.get("/ready", name="Readiness probe", tags=["Health"])
     async def readiness():
         """Readiness probe: агрегированная проверка критичных компонентов.
@@ -300,4 +305,9 @@ def _configure_root_endpoint(app: FastAPI) -> None:
 
         report = await get_health_aggregator().check_all()
         ok = report.get("status") == "ok"
+
+    @app.get("/health/ready", include_in_schema=False)
+    async def readiness_alias():
+        """Alias for /ready (k8s readinessProbe convention)."""
+        return await readiness()
         return JSONResponse(status_code=200 if ok else 503, content=report)
