@@ -46,6 +46,7 @@ __all__ = ("DEFAULT_PUBLIC_PATH_PREFIXES", "AuthRequiredMiddleware", "is_path_pu
 DEFAULT_PUBLIC_PATH_PREFIXES: tuple[str, ...] = (
     "/health",
     "/healthz",
+    "/ready",
     "/readyz",
     "/livez",
     "/metrics",
