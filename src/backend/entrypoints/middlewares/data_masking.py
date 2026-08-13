@@ -108,7 +108,22 @@ class DataMaskingMiddleware:
         await self.app(scope, receive, send_wrapper)
 
         # Skip non-JSON content type (уже пробрасывали в send_wrapper).
+        # D-AUDIT-17101 fix (cycle 171): SUPPRESSED start (line 113) для
+        # non-JSON responses тоже пропущен → client получает body без
+        # start = ASGI protocol error. Fix: pass через original start
+        # (если body уже был отправлен в send_wrapper — non-JSON
+        # pass through, original start тоже должен пройти).
         if "application/json" not in content_type["value"]:
+            # Non-JSON: original start/body уже пробрасывались в
+            # send_wrapper. Original start никогда не был отправлен
+            # (мы suppressed его). Нужно отправить original start сейчас.
+            await send(
+                {
+                    "type": "http.response.start",
+                    "status": response_status["status"],
+                    "headers": original_headers,
+                },
+            )
             return
 
         body = b"".join(body_chunks)
