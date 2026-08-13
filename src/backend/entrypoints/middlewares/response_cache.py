@@ -93,12 +93,12 @@ class ResponseCacheMiddleware:
                         content_type["value"] = v.decode("latin-1", errors="replace")
                 # Suppress original start — мы отправим свой с ETag + Cache-Control.
             elif message["type"] == "http.response.body":
-                if content_type["value"] and "application/json" in content_type["value"]:
-                    body_chunks.append(message.get("body", b""))
-                # Cycle 55: пропускаем body downstream (он не модифицирован).
-                # Соберём в конце и отправим с обновлённым ETag + Cache-Control headers.
-            # НО для простоты в cycle 55 — используем suppress pattern:
-                # пропускаем (мы отправим сами в конце).
+                # D-AUDIT-17301 fix (cycle 173): collect body для ALL
+                # content types. Original code only collected JSON,
+                # dropping non-JSON body (HTML / text / binary).
+                # /docs, /redoc, /metrics потеряли body → 500 'Internal
+                # server error'.
+                body_chunks.append(message.get("body", b""))
             else:
                 pass  # ignore other message types
 
