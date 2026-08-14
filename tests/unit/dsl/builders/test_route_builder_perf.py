@@ -106,15 +106,19 @@ def test_route_builder_attr_lookup_baseline() -> None:
     и проверяет что latency < 5 us (явный regression marker).
     """
     rb = _build_route_builder()
+    # Use methods that ACTUALLY exist on RouteBuilder MRO.
+    # ``add_middleware`` не существует → каждый lookup уходит в __getattr__
+    # (cycle 204 Tier 3 diagnostic fallback) → perf baseline ломается.
+    # Используем реальные public methods + cross-mixin methods.
     attrs = [
-        "description",
-        "route_id",
-        "source",
-        "protocol",
-        "cache",
-        "feature_flag",
-        "add_middleware",
-        "add_processor",
+        "description",     # __slots__ attr (0.05 us)
+        "route_id",        # __slots__ attr
+        "source",          # __slots__ attr
+        "_add",            # core method (1-step MRO)
+        "from_",           # classmethod
+        "notebook_execute",  # NotebookMixin (cross-mixin, ~0.2 us)
+        "feature_flag",    # FeatureMixin (cross-mixin)
+        "cache",           # CacheMixin (cross-mixin)
     ]
 
     results = {}

@@ -22,6 +22,8 @@ _protocol, _transport_config, _feature_flag).
 
 from __future__ import annotations
 
+import pytest
+
 
 def test_route_builder_init_with_args() -> None:
     """``__init__(route_id, source, description)``."""
@@ -35,6 +37,71 @@ def test_route_builder_init_with_args() -> None:
     assert b.route_id == "orders.create"
     assert b.source == "kafka:orders"
     assert b.description == "Order creation consumer"
+
+
+# ── D-AUDIT-20402 (cycle 204 Tier 3): __getattr__ diagnostic ─────
+
+
+def test_getattr_diagnostic_for_missing_attribute() -> None:
+    """``__getattr__`` raises informative AttributeError для missing attrs.
+
+    Вместо generic Python error — message содержит ссылку на protocols
+    catalog (8 categories × 36 mixins) для быстрого debugging.
+    """
+    from src.backend.dsl.builders.base import RouteBuilder
+
+    rb = RouteBuilder("test", source="config")
+    with pytest.raises(AttributeError) as exc_info:
+        rb.nonexistent_method()
+    msg = str(exc_info.value)
+    assert "nonexistent_method" in msg
+    assert "protocols.py" in msg  # ссылка на protocols catalog
+    assert "76 mixins" in msg
+
+
+def test_getattr_diagnostic_typo_hint() -> None:
+    """Typos получают hint о similar mixin-name и его category."""
+    from src.backend.dsl.builders.base import RouteBuilder
+
+    rb = RouteBuilder("test", source="config")
+    with pytest.raises(AttributeError) as exc_info:
+        rb.notebook_execut()  # typo: missing 'e'
+    msg = str(exc_info.value)
+    assert "notebook_execut" in msg
+    assert "NotebookMixin" in msg
+    assert "AIAgentProtocol" in msg
+
+
+def test_getattr_diagnostic_does_not_break_existing_attrs() -> None:
+    """__getattr__ fallback не должен ломать нормальный attribute lookup.
+
+    Python вызывает __getattr__ только если normal lookup fails. Для
+    существующих attrs (description, _add, etc.) __getattr__ не вызывается.
+    """
+    from src.backend.dsl.builders.base import RouteBuilder
+
+    rb = RouteBuilder("test_route", source="config", description="d1")
+    assert rb.description == "d1"  # __slots__ attr
+    assert rb.route_id == "test_route"
+    assert rb.source == "config"
+    assert rb._middlewares == []
+    assert rb.notebook_execute is not None  # real mixin method
+
+
+def test_getattr_diagnostic_private_attrs_raise_cleanly() -> None:
+    """Private attrs (с префиксом ``_``) НЕ получают diagnostic hint.
+
+    Они framework-level, не user-facing. Diagnostic hint для них — noise.
+    """
+    from src.backend.dsl.builders.base import RouteBuilder
+
+    rb = RouteBuilder("test", source="config")
+    with pytest.raises(AttributeError) as exc_info:
+        rb._nonexistent_private
+    msg = str(exc_info.value)
+    assert "_nonexistent_private" in msg
+    assert "protocols.py" not in msg  # NO catalog hint for private
+    assert "76 mixins" not in msg
 
 
 def test_from_creates_builder() -> None:
