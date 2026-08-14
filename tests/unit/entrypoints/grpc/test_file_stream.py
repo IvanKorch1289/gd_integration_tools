@@ -40,11 +40,28 @@ def _install_protobuf_stubs() -> None:
             # Provide ALL message classes that the servicers might import
             mod.InvokeResponse = MagicMock()
             mod.InvokerServiceServicer = type("Stub", (), {})
+            mod.InvokerServiceStub = type("Stub", (), {})
             mod.add_InvokerServiceServicer_to_server = MagicMock()
             mod.DeleteResponse = MagicMock()
             mod.OrderDetailResponse = MagicMock()
             mod.OrderResponse = MagicMock()
+            # D-AUDIT-20201 (cycle 202): OrderService classes define 7 RPC
+            # methods per orders.proto. Use empty Stub classes здесь
+            # (FileStream tests не тестируют patch).
             mod.OrderServiceServicer = type("Stub", (), {})
+            mod.OrderServiceStub = type("Stub", (), {})
+            # D-AUDIT-20201 (cycle 202): 7 RPC methods (per orders.proto)
+            # на OrderServiceServicer/Stub classes. Use real `def` (not
+            # MagicMock) so hasattr() returns False до patch.
+            def _stub_method(self, request, context):  # pragma: no cover
+                return None
+
+            for _m in (
+                "CreateOrder", "GetOrderResult", "GetOrder", "DeleteOrder",
+                "CreateSKBOrder", "GetFileAndJson", "SendOrderData",
+            ):
+                setattr(mod.OrderServiceServicer, _m, _stub_method)
+                setattr(mod.OrderServiceStub, _m, _stub_method)
             mod.add_OrderServiceServicer_to_server = MagicMock()
             # New streaming classes (TD-026)
             mod.FileChunk = _make_msg_class("FileChunk")
@@ -52,6 +69,7 @@ def _install_protobuf_stubs() -> None:
             mod.FileUploadResponse = _make_msg_class("FileUploadResponse")
             mod.DownloadFileRequest = _make_msg_class("DownloadFileRequest")
             mod.FileServiceServicer = type("Stub", (), {})
+            mod.FileServiceStub = type("Stub", (), {})
             mod.add_FileServiceServicer_to_server = MagicMock()
             sys.modules[name] = mod
 

@@ -60,6 +60,20 @@ def _patch_rpc_methods() -> None:
         invoker_pb2_grpc.InvokerServiceStub: ("Invoke",),
         files_pb2_grpc.FileServiceServicer: ("Read", "Write", "Open"),
         files_pb2_grpc.FileServiceStub: ("Read", "Write", "Open"),
+        # D-AUDIT-20201 fix (cycle 202): OrderService 7 RPC methods
+        # (CreateOrder, GetOrderResult, GetOrder, DeleteOrder, CreateSKBOrder,
+        # GetFileAndJson, SendOrderData) — per orders.proto. Раньше
+        # OrderServiceServicer / OrderServiceStub были MISSING из
+        # _parent_class_method_map → gRPC server падал с 'OrderService'
+        # has no method 'HelperMethods' / AttributeError при Invoke.
+        orders_pb2_grpc.OrderServiceServicer: (
+            "CreateOrder", "GetOrderResult", "GetOrder", "DeleteOrder",
+            "CreateSKBOrder", "GetFileAndJson", "SendOrderData",
+        ),
+        orders_pb2_grpc.OrderServiceStub: (
+            "CreateOrder", "GetOrderResult", "GetOrder", "DeleteOrder",
+            "CreateSKBOrder", "GetFileAndJson", "SendOrderData",
+        ),
     }
     for _parent_cls, _method_names in _parent_class_method_map.items():
         for _method_name in _method_names:
@@ -79,10 +93,17 @@ def _patch_rpc_methods() -> None:
     from src.backend.entrypoints.grpc.protobuf import (
         invoker_pb2_grpc,
         files_pb2_grpc,
+        orders_pb2_grpc,
     )
     _stub_method_map = {
         invoker_pb2_grpc.InvokerServiceStub: ("Invoke",),
         files_pb2_grpc.FileServiceStub: ("Read", "Write", "Open"),
+        # D-AUDIT-20201 fix (cycle 202): OrderServiceStub 7 RPC methods
+        # (mirror of parent_class_method_map for OrderService).
+        orders_pb2_grpc.OrderServiceStub: (
+            "CreateOrder", "GetOrderResult", "GetOrder", "DeleteOrder",
+            "CreateSKBOrder", "GetFileAndJson", "SendOrderData",
+        ),
     }
 
     def _wrap_stub_init(original_init):
@@ -113,6 +134,11 @@ def _patch_rpc_methods() -> None:
         for _method_name in (
             "Invoke", "Execute", "Stream", "Read", "Write", "Open",
             "Create", "ReadMany", "Update", "Delete", "List",
+            # D-AUDIT-20201 fix (cycle 202): OrderService 7 RPC methods
+            # (OrderGRPCServicer subclasses OrderServiceServicer и
+            # override все 7 methods).
+            "CreateOrder", "GetOrderResult", "GetOrder", "DeleteOrder",
+            "CreateSKBOrder", "GetFileAndJson", "SendOrderData",
         ):
             _method = getattr(_cls, _method_name, None)
             if _method is None or not callable(_method):
@@ -179,14 +205,25 @@ def _patch_rpc_methods() -> None:
             _cls = globals()[_cls_name]
         except KeyError:
             continue
-        for _method_name in ("Invoke", "Execute", "Stream", "Read", "Write", "Open"):
+        for _method_name in (
+            "Invoke", "Execute", "Stream", "Read", "Write", "Open",
+            # D-AUDIT-20201 fix (cycle 202): OrderService 7 RPC methods.
+            "CreateOrder", "GetOrderResult", "GetOrder", "DeleteOrder",
+            "CreateSKBOrder", "GetFileAndJson", "SendOrderData",
+        ):
             if hasattr(_cls, _method_name):
                 _m = getattr(_cls, _method_name)
                 if callable(_m):
                     _patch_method_with_attr(_m, "request_streaming", False)
                     _patch_method_with_attr(_m, "response_streaming", False)
 
-    _patch_rpc_methods()
+
+# D-AUDIT-20201 fix (cycle 202): call _patch_rpc_methods() at MODULE
+# LEVEL (0 indent). Pre-20201 the call was inside the function body
+# (4 spaces indent) → infinite recursion never triggered → patches
+# никогда не применялись на import (cycles 188/194/198 fixes broken).
+# Ponytail: dedent + 2 blank lines для PEP-8 separation.
+_patch_rpc_methods()
 
 __all__ = (
     "AuthInterceptor",

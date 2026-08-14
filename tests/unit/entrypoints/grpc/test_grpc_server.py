@@ -28,16 +28,53 @@ def _install_protobuf_stubs() -> None:
         "src.backend.entrypoints.grpc.protobuf.invoker_pb2_grpc",
         "src.backend.entrypoints.grpc.protobuf.orders_pb2",
         "src.backend.entrypoints.grpc.protobuf.orders_pb2_grpc",
+        "src.backend.entrypoints.grpc.protobuf.files_pb2",
+        "src.backend.entrypoints.grpc.protobuf.files_pb2_grpc",
     ):
         if name not in sys.modules:
             mod = types.ModuleType(name)
+
+            # D-AUDIT-20201 (cycle 202): real `def` для methods
+            # (MagicMock auto-creates attrs → hasattr always True).
+            # Empty stub classes для Invoker/FileStream (no methods to
+            # patch в test scope); OrderService classes полные.
+            def _stub_method(self, request, context):  # pragma: no cover
+                return None
+
+            _order_methods = (
+                "CreateOrder", "GetOrderResult", "GetOrder", "DeleteOrder",
+                "CreateSKBOrder", "GetFileAndJson", "SendOrderData",
+            )
+
+            # PB2 messages (used by add_*_to_server imports в grpc_server).
             mod.InvokeResponse = MagicMock()
-            mod.InvokerServiceServicer = type("Stub", (), {})
-            mod.add_InvokerServiceServicer_to_server = MagicMock()
             mod.DeleteResponse = MagicMock()
             mod.OrderDetailResponse = MagicMock()
             mod.OrderResponse = MagicMock()
-            mod.OrderServiceServicer = type("Stub", (), {})
+            mod.FileResponse = MagicMock()
+
+            # PB2_grpc servicers + stubs.
+            if "invoker" in name:
+                mod.InvokerServiceServicer = type("Stub", (), {})
+                mod.InvokerServiceStub = type("Stub", (), {})
+            elif "files" in name:
+                mod.FileServiceServicer = type("Stub", (), {})
+                mod.FileServiceStub = type("Stub", (), {})
+            elif "orders" in name:
+                mod.OrderServiceServicer = type(
+                    "OrderServiceServicer",
+                    (),
+                    {m: _stub_method for m in _order_methods},
+                )
+                mod.OrderServiceStub = type(
+                    "OrderServiceStub",
+                    (),
+                    {m: _stub_method for m in _order_methods},
+                )
+
+            # add_*_to_server functions (callable import).
+            mod.add_InvokerServiceServicer_to_server = MagicMock()
+            mod.add_FileServiceServicer_to_server = MagicMock()
             mod.add_OrderServiceServicer_to_server = MagicMock()
             sys.modules[name] = mod
 
@@ -133,6 +170,104 @@ def test_load_tls_credentials_disabled_returns_none(grpc_server_module) -> None:
     with patch.object(server, "settings", fake_settings):
         result = grpc_server_module._load_tls_credentials()
     assert result is None
+
+
+# ── D-AUDIT-20201: OrderService RPC method patching (cycle 202) ─────
+
+
+@pytest.mark.unit
+def test_order_service_servicer_methods_have_streaming_attrs(
+    grpc_server_module,
+) -> None:
+    """OrderServiceServicer 7 RPC methods (per orders.proto) receive
+    request_streaming/response_streaming=False after _patch_rpc_methods().
+
+    Cycle 188/194/198 fixes patches InvokerServiceServicer и
+    FileServiceServicer, но OrderServiceServicer был MISSING →
+    gRPC server падал с ``'OrderService' object has no attribute
+    'HelperMethods'`` при Invoke. Cycle 202 closes the gap.
+    """
+    from src.backend.entrypoints.grpc.protobuf import orders_pb2_grpc
+
+    order_methods = (
+        "CreateOrder", "GetOrderResult", "GetOrder", "DeleteOrder",
+        "CreateSKBOrder", "GetFileAndJson", "SendOrderData",
+    )
+    for method_name in order_methods:
+        method = getattr(orders_pb2_grpc.OrderServiceServicer, method_name)
+        assert method is not None, (
+            f"OrderServiceServicer.{method_name} missing"
+        )
+        assert getattr(method, "request_streaming", "MISSING") is False, (
+            f"OrderServiceServicer.{method_name}.request_streaming "
+            "not patched to False"
+        )
+        assert getattr(method, "response_streaming", "MISSING") is False, (
+            f"OrderServiceServicer.{method_name}.response_streaming "
+            "not patched to False"
+        )
+
+
+@pytest.mark.unit
+def test_order_service_stub_methods_have_streaming_attrs(
+    grpc_server_module,
+) -> None:
+    """OrderServiceStub 7 RPC methods (per orders.proto) receive
+    request_streaming/response_streaming=False after _patch_rpc_methods().
+
+    Stub методы назначаются в ``__init__`` (после class definition),
+    поэтому D-AUDIT-18801 wrap __init__ патчит их post-assignment.
+    Cycle 202 добавляет OrderServiceStub в _stub_method_map.
+    """
+    from src.backend.entrypoints.grpc.protobuf import orders_pb2_grpc
+
+    order_methods = (
+        "CreateOrder", "GetOrderResult", "GetOrder", "DeleteOrder",
+        "CreateSKBOrder", "GetFileAndJson", "SendOrderData",
+    )
+    for method_name in order_methods:
+        method = getattr(orders_pb2_grpc.OrderServiceStub, method_name)
+        assert method is not None, (
+            f"OrderServiceStub.{method_name} missing"
+        )
+        assert getattr(method, "request_streaming", "MISSING") is False, (
+            f"OrderServiceStub.{method_name}.request_streaming "
+            "not patched to False"
+        )
+        assert getattr(method, "response_streaming", "MISSING") is False, (
+            f"OrderServiceStub.{method_name}.response_streaming "
+            "not patched to False"
+        )
+
+
+@pytest.mark.unit
+def test_order_grpc_servicer_subclass_methods_have_streaming_attrs(
+    grpc_server_module,
+) -> None:
+    """OrderGRPCServicer subclass overrides all 7 OrderService methods.
+
+    Subclass methods — different function objects (override), поэтому
+    D-AUDIT-18301 patch loop итерирует каждый subclass и patch
+    request_streaming/response_streaming на override methods.
+    """
+    order_methods = (
+        "CreateOrder", "GetOrderResult", "GetOrder", "DeleteOrder",
+        "CreateSKBOrder", "GetFileAndJson", "SendOrderData",
+    )
+    subclass = grpc_server_module.OrderGRPCServicer
+    for method_name in order_methods:
+        method = getattr(subclass, method_name, None)
+        assert method is not None, (
+            f"OrderGRPCServicer.{method_name} missing"
+        )
+        assert getattr(method, "request_streaming", "MISSING") is False, (
+            f"OrderGRPCServicer.{method_name}.request_streaming "
+            "not patched to False"
+        )
+        assert getattr(method, "response_streaming", "MISSING") is False, (
+            f"OrderGRPCServicer.{method_name}.response_streaming "
+            "not patched to False"
+        )
 
 
 # ── Property test: _safe_error preserves BaseError.message verbatim ─────
