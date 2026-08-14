@@ -149,8 +149,11 @@ class TestRequestBodyCacheMiddleware:
 
         # state['body'] кэширован.
         assert cached_body(scope) == b"hello"
-        # Replay receive доступен в scope.
-        assert "replay_receive" in scope
+        # 2026-08-14 fix: replay receive переехал из scope["replay_receive"]
+        # в scope["receive"] (FastAPI читает scope["receive"], не отдельный
+        # replay ключ). original сохраняется в scope["original_receive"].
+        assert "original_receive" in scope
+        assert scope["receive"] is not scope["original_receive"]
         # Downstream получил body через replay.
         assert b"".join(captured_body["chunks"]) == b"hello"
 
@@ -173,9 +176,11 @@ class TestRequestBodyCacheMiddleware:
 
         # Body > max → НЕ кэширован.
         assert cached_body(scope) is None
-        # Replay receive всё равно установлен (cycle 52 invariant:
-        # даже без кэша downstream не должен повиснуть).
-        assert "replay_receive" in scope
+        # 2026-08-14 fix: replay receive переехал в scope["receive"].
+        # Даже без кэша downstream не должен повиснуть — replay_receive
+        # всё равно установлен (для случая когда body > max но уже прочитан).
+        assert "original_receive" in scope
+        assert scope["receive"] is not scope["original_receive"]
 
     @pytest.mark.asyncio
     async def test_body_read_failure(
@@ -240,9 +245,15 @@ class TestRequestBodyCacheMiddleware:
     ) -> None:
         """_install_replay_receive provides correct ASGI messages в scope."""
         scope = _make_scope("POST", "/path")
-        middleware._install_replay_receive(scope, _make_receive(), b"payload")
+        original = _make_receive()
+        replay = middleware._install_replay_receive(scope, original, b"payload")
 
-        replay = scope["replay_receive"]
+        # 2026-08-14 fix: scope["receive"] теперь replay_receive (раньше original_receive).
+        # scope["original_receive"] = original raw channel (new key для downstream).
+        assert scope["receive"] is replay
+        assert scope["original_receive"] is original
+
+        # replay_receive возвращает http.request с body, потом http.disconnect.
         msg1 = await replay()
         assert msg1 == {"type": "http.request", "body": b"payload", "more_body": False}
         msg2 = await replay()
@@ -326,10 +337,16 @@ class TestRequestBodyCacheMiddlewarePureASGI:
         assert cached_body(scope) == b"hello"
 
     @pytest.mark.asyncio
-    async def test_original_receive_stored_in_scope(
+    async def test_replay_receive_is_scope_receive_for_downstream(
         self, middleware: RequestBodyCacheMiddleware,
     ) -> None:
-        """Cycle 52: original receive сохранён в scope['receive'] для downstream."""
+        """2026-08-14 fix (Task 4 unblock): scope['receive'] = replay_receive.
+
+        Pre-fix: scope['receive'] = original_receive → FastAPI body-parser
+        hangs 10 сек на consumed channel → 400 "error parsing the body".
+        Post-fix: downstream получает replay через scope['receive'] (не
+        через параметр) И через parameter (см. line 149 в middleware).
+        """
         app = AsyncMock()
         app.side_effect = _downstream_ok()
         middleware.app = app
@@ -343,17 +360,24 @@ class TestRequestBodyCacheMiddlewarePureASGI:
             send,
         )
 
-        # original_receive сохранён.
-        assert scope["receive"] is original_receive
+        # 2026-08-14: scope["receive"] теперь replay_receive, не original.
+        assert scope["receive"] is not original_receive
+        # original сохраняется в scope["original_receive"] (new key).
+        assert scope["original_receive"] is original_receive
 
     @pytest.mark.asyncio
-    async def test_replay_receive_returns_cached_body(
+    async def test_downstream_app_receives_replay_receive(
         self, middleware: RequestBodyCacheMiddleware,
     ) -> None:
-        """replay_receive возвращает cached body + http.disconnect."""
-        app = AsyncMock()
-        app.side_effect = _downstream_ok()
-        middleware.app = app
+        """Downstream получает replay_receive как parameter (line 149 fix)."""
+        received_receive = []
+
+        async def downstream(scope, receive, send):
+            received_receive.append(receive)
+            await send({"type": "http.response.start", "status": 200, "headers": []})
+            await send({"type": "http.response.body", "body": b""})
+
+        middleware.app = downstream
 
         send = AsyncMock()
         scope = _make_scope("POST", "/path")
@@ -363,11 +387,13 @@ class TestRequestBodyCacheMiddlewarePureASGI:
             send,
         )
 
-        replay = scope["replay_receive"]
-        msg1 = await replay()
+        # Downstream получил replay_receive (тот же, что scope["receive"]).
+        assert len(received_receive) == 1
+        # Replay receive должен вернуть body при первом вызове.
+        msg1 = await received_receive[0]()
         assert msg1["type"] == "http.request"
         assert msg1["body"] == b"cached"
         assert msg1["more_body"] is False
 
-        msg2 = await replay()
+        msg2 = await received_receive[0]()
         assert msg2["type"] == "http.disconnect"

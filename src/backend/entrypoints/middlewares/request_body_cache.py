@@ -136,17 +136,23 @@ class RequestBodyCacheMiddleware:
                 len(body),
                 self.max_body_size,
             )
-            self._install_replay_receive(scope, receive, body)
-            await self.app(scope, receive, send)
+            replay_receive = self._install_replay_receive(scope, receive, body)
+            # 2026-08-14 fix (Task 4 unblock): downstream ДОЛЖЕН получать
+            # replay_receive, не consumed original (см. нормальный путь ниже).
+            await self.app(scope, replay_receive, send)
             return
 
         # Нормальный путь: кеш + replay receive для downstream.
         if "state" not in scope:
             scope["state"] = {}
         scope["state"]["body"] = body
-        self._install_replay_receive(scope, receive, body)
+        replay_receive = self._install_replay_receive(scope, receive, body)
 
-        await self.app(scope, receive, send)
+        # 2026-08-14 fix (Task 4 unblock): downstream ДОЛЖЕН получать
+        # replay_receive, не consumed original — иначе FastAPI body-parser
+        # (``fastapi/routing.py:451`` JSON-decode) hangs 30 сек и
+        # возвращает ``400 "There was an error parsing the body"``.
+        await self.app(scope, replay_receive, send)
 
     @staticmethod
     async def _read_body(receive: Receive) -> bytes:
@@ -180,11 +186,20 @@ class RequestBodyCacheMiddleware:
     @staticmethod
     def _install_replay_receive(
         scope: Scope, original_receive: Receive, body: bytes,
-    ) -> None:
+    ) -> Receive:
         """Устанавливает replay receive в scope для downstream (cycle 52).
 
         First receive() returns http.request with cached body,
         subsequent return http.disconnect (ASGI protocol).
+
+        2026-08-14 fix (Task 4 unblock): возвращает replay_receive
+        callable, который caller ДОЛЖЕН передать в ``self.app(scope,
+        replay_receive, send)``. Без этого downstream FastAPI
+        body-parser получает consumed original_receive →
+        ``await receive()`` hangs 30 сек → ``400 "There was an error
+        parsing the body"`` (см. fastapi/routing.py:471).
+        Также сохраняет ``scope["original_receive"]`` для downstream,
+        которым нужен raw channel.
         """
         delivered = {"done": False}
 
@@ -198,7 +213,9 @@ class RequestBodyCacheMiddleware:
                 }
             return {"type": "http.disconnect"}
 
-        # Сохраняем original_receive в scope для downstream, которые
-        # могут захотеть read body снова (cycle 45/46 pattern).
-        scope["receive"] = original_receive
-        scope["replay_receive"] = replay_receive
+        # Pre-fix bug: ``scope["receive"] = original_receive`` —
+        # downstream FastAPI body-parser получал consumed channel и
+        # hangs. Теперь downstream получает replay_receive.
+        scope["receive"] = replay_receive
+        scope["original_receive"] = original_receive  # для downstream, нужен raw channel
+        return replay_receive
