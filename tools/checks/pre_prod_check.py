@@ -26,8 +26,7 @@
 10. codeclone strict (ratchet)
 11. docstring coverage (ratchet)
 12. docs Vale (no errors)
-13. sphinx -W build (warnings → errors)
-14. WAF coverage strict (0 violations)
+13. WAF coverage strict (0 violations)
 15. feature-flags audit (новые default-OFF)
 16. team-ownership valid
 17. side-effect audit
@@ -257,11 +256,6 @@ def _check_feature_flags_default_off() -> CheckResult:
     return _check_warning(
         "feature-flags-default-off", "check_feature_flags.py не найден"
     )
-
-
-def _check_sphinx_docs_coverage() -> CheckResult:
-    """#28 Sphinx docs coverage ≥95% (S20 target; partial S17)."""
-    return _check_warning("sphinx-docs-coverage", "≥95% target — S20")
 
 
 def _check_numeric_perf() -> CheckResult:
@@ -736,11 +730,7 @@ def define_checks() -> list[tuple[str, Callable[[], CheckResult]]]:
         ),
         ("12 docs Vale", lambda: _check_optional("docs-vale", "requires vale binary")),
         (
-            "13 sphinx -W",
-            lambda: _check_optional("sphinx", "requires full docs build environment"),
-        ),
-        (
-            "14 WAF coverage strict",
+            "13 WAF coverage strict",
             lambda: _check_python_script("waf-coverage", "check_waf_coverage.py"),
         ),
         (
@@ -788,8 +778,7 @@ def define_checks() -> list[tuple[str, Callable[[], CheckResult]]]:
         ("25 Authz audit emit", _check_authorization_audit),
         ("26 Metrics labels cov", _check_metrics_registry_labels),
         ("27 FF default-OFF", _check_feature_flags_default_off),
-        ("28 Sphinx docs cov", _check_sphinx_docs_coverage),
-        ("29 Numeric perf p95", _check_numeric_perf),
+        ("28 Numeric perf p95", _check_numeric_perf),
         ("30 DR backup fresh", _check_dr_backup_freshness),
         # S36 w4 gap closure (K1): +3 gates (Batch 2)
         ("31 chaos-suite", _check_chaos_suite_integration),

@@ -71,7 +71,7 @@ ERROR := printf '\033[31m%s\033[0m\n'
 	fix-check-push ship ship-release \
 	docker-build docker-run docker-stop \
 	tag all \
-	docs-clean docs-apidoc docs-html docs-rebuild docs \
+	docs-clean docs-rebuild docs \
 	layers layers-update config-audit \
 	config-new config-apply config-extract \
 	new-service new-repository codegen-extract \

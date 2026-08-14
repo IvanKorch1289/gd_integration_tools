@@ -290,7 +290,7 @@ class MyMixin:
 - ADR для архитектурных решений: `docs/adr/`.
 - Cookbooks для типовых сценариев: `docs/cookbooks/`.
 - Tutorials для onboarding: `docs/tutorials/`.
-- После изменения API обновить `docs/api/` (autoapi) и `CHANGELOG.md`.
+- После изменения API обновить mkdocs (mkdocstrings генерирует автоматически) и `CHANGELOG.md`.
 
 ## 11. Проверка перед коммитом
 

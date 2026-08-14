@@ -1,13 +1,11 @@
 ##@ Docs
 ##@ Docs
 
-# FW3: docs/build pipeline — mkdocs canonical (CLAUDE.md),
-# Sphinx помечен DEPRECATED. Удалить через 1-2 sprint после
-# миграции CI с docs-publish на mkdocs.
+# FW3: docs/build pipeline — mkdocs canonical (CLAUDE.md).
+# Sphinx tooling удалён (P2-001 RESIDUAL): scripts, docs/api/, AUTOAPI.md.
 #
 # Использование:
 #   make docs-mkdocs              # build mkdocs (canonical, FW3+)
-#   make docs-html                # Sphinx build (DEPRECATED, удалить в Sprint 37)
 #   make docs-coverage            # docstring + HTML coverage gate
 
 docs-mkdocs: ## FW3: build mkdocs HTML (canonical, per CLAUDE.md)
@@ -19,22 +17,8 @@ docs-mkdocs-serve: ## FW3: live-reload mkdocs dev server
 	@$(INFO) "Starting mkdocs serve on :8000..."
 	$(UV_RUN) mkdocs serve --dev-addr 127.0.0.1:8000
 
-docs-clean: ## К10 S2 W5: clean ALL docs build artifacts (mkdocs + sphinx)
+docs-clean: ## К10 S2 W5: clean ALL docs build artifacts (mkdocs only)
 	rm -rf $(DOCS_BUILD)/*
-
-docs-apidoc:
-	@# autoapi (sphinx-autoapi) делает discovery сам — sphinx-apidoc не нужен.
-	@true
-
-# DEPRECATED: используйте docs-mkdocs. Sphinx build сохраняется
-# только для readthedocs.org build (S178 back-compat).
-docs-html: ## К10 S2 W5: build Sphinx HTML (DEPRECATED — use docs-mkdocs)
-	@$(WARN) "docs-html is DEPRECATED, use docs-mkdocs (mkdocs canonical per CLAUDE.md)"
-	uv run sphinx-build -b html -W --keep-going $(DOCS_SOURCE) $(DOCS_BUILD)/html
-
-docs-multiversion: ## K1 S8 [wave:s8/k1-sphinx-multiversion]: build всех whitelist-ref'ов в $(DOCS_BUILD)/multi/<ref> (DEPRECATED)
-	@$(WARN) "docs-multiversion uses Sphinx; will be removed when mkdocs multiversion lands"
-	uv run sphinx-multiversion $(DOCS_SOURCE) $(DOCS_BUILD)/multi
 
 # DEPRECATED: route → docs-mkdocs.
 docs-rebuild: ## DEPRECATED — use docs-mkdocs
