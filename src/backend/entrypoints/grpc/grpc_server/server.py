@@ -121,3 +121,12 @@ async def serve() -> None:
     finally:
         await grpc_server.stop(5)
         executor.shutdown(wait=True)
+
+
+# D-AUDIT-20801 (cycle 208): entrypoint для ``python -m`` invocation.
+# Без этого server.py загружается, define'ит ``serve()``, но никогда
+# не вызывает её → unix socket не создаётся → ``healthy: starting``
+# в docker healthcheck (см. cycle 207b follow-up).
+# Используется в compose.light.yml ``grpc-server`` service.
+if __name__ == "__main__":
+    asyncio.run(serve())

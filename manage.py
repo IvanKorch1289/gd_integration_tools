@@ -15,6 +15,7 @@ Usage:
 
 from __future__ import annotations
 
+import asyncio
 import os
 import signal
 import subprocess
@@ -90,6 +91,56 @@ def http3_serve(
 
     typer.echo("Starting HTTP/3 server (aioquic) ...")
     run_from_settings()
+
+
+@app.command("grpc-serve")
+def grpc_serve(
+    socket_path: str | None = typer.Option(
+        None, "--socket", help="Unix socket path (override grpc.socket_path)"
+    ),
+    max_workers: int | None = typer.Option(
+        None, "--max-workers", help="ThreadPoolExecutor size (override grpc.max_workers)"
+    ),
+) -> None:
+    """Запуск standalone gRPC-сервера на Unix socket (D-AUDIT-20801).
+
+    Lightweight вариант для dev/test (cycle 207b deferred — теперь
+    реализовано). В production gRPC server поднимается как отдельный
+    compose service или K8s pod. Использует `settings.grpc.socket_path`
+    (default ``/tmp/order_service.sock``) если --socket не задан.
+
+    Examples:
+        # Default (Unix socket из base.yml)
+        uv run manage.py grpc-serve
+
+        # Custom socket
+        uv run manage.py grpc-serve --socket /tmp/test.sock
+    """
+    if socket_path is not None:
+        os.environ["GRPC_SOCKET_PATH"] = socket_path
+    if max_workers is not None:
+        os.environ["GRPC_MAX_WORKERS"] = str(max_workers)
+
+    from src.backend.entrypoints.grpc.grpc_server.server import serve
+
+    typer.echo(
+        f"Starting gRPC server (socket={socket_path or settings_default('grpc.socket_path')}, "
+        f"workers={max_workers or settings_default('grpc.max_workers')}) ..."
+    )
+    asyncio.run(serve())
+
+
+def settings_default(field: str) -> str:
+    """Возвращает default value для path из settings (для echo в cli)."""
+    try:
+        from src.backend.core.config.settings import settings as _s
+        parts = field.split(".")
+        obj = _s
+        for p in parts:
+            obj = getattr(obj, p)
+        return str(obj)
+    except Exception:
+        return "<default>"
 
 
 @app.command("run-frontend")

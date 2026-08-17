@@ -88,3 +88,41 @@ services:
 
   # Нет postgres, redis, clamav, migration-runner — dev_light profile
   # использует SQLite/in-memory backends.
+
+  # D-AUDIT-20801 (cycle 208): standalone gRPC-сервер для functional testing.
+  # Поднимает OrderGRPCServicer/InvokerGRPCServicer/FileStreamGRPCServicer на
+  # Unix socket ``/tmp/order_service.sock`` (default из base.yml). Lightweight:
+  # ~512 MB mem, no replicas. Volume mount разделяет /tmp между app + grpc-server.
+  # Используется manage.py ``grpc-serve`` command (cycle 208) вместо
+  # ``python -m <module>`` потому что latter has cyclic-import warnings
+  # из-за package __init__.py exports.
+  grpc-server:
+    build:
+      context: ../..
+      dockerfile: ops/compose/Dockerfile
+    image: gd-integration-tools:light
+    container_name: gd-grpc-light
+    # D-AUDIT-20801 fix (cycle 208): ``python -c`` с deferred import ВНУТРИ
+    # main body (не на top-level) чтобы обойти cyclic-import warning из
+    # __init__.py → from .server import serve. После import serve()
+    # вызывается через asyncio.run.
+    entrypoint: ["python", "-c"]
+    # ruff: noqa: E501 (line length)
+    command: ["import asyncio; from src.backend.entrypoints.grpc.grpc_server.server import serve; asyncio.run(serve())"]
+    env_file:
+      - ../../.env
+    environment:
+      APP_PROFILE: dev_light
+      GRPC_SOCKET_PATH: /tmp/order_service.sock
+      GRPC_MAX_WORKERS: "10"
+    volumes:
+      - ../../.run:/app/.run
+    restart: unless-stopped
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import socket; s=socket.socket(socket.AF_UNIX); s.settimeout(3); s.connect('/tmp/order_service.sock'); s.close()\" || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
