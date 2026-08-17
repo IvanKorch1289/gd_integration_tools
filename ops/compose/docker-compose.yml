@@ -12,7 +12,13 @@ services:
     entrypoint: ["sh", "-c"]
     command: ["python -m alembic -c alembic.ini upgrade head || true"]
     environment:
-      APP_PROFILE: prod
+      # S124 W4: dev profile (DB_HOST=postgres, REDIS_HOST=redis)
+      # вместо prod (DB_HOST=postgres, REDIS_HOST=redis-prod) —
+      # в docker-compose network нет redis-prod.
+      APP_PROFILE: dev
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      REDIS_PASSWORD: ""
     env_file:
       - ../../.env
     depends_on:
@@ -36,6 +42,12 @@ services:
       CLAMAV_HOST: ${CLAMAV_HOST:-clamav}
       CLAMAV_PORT: ${CLAMAV_PORT:-3310}
       CLAMAV_MODE: ${CLAMAV_MODE:-tcp}
+      # 2026-08-14: enable workflow YAML auto-loader
+      # (FEATURE_WORKFLOW_YAML_ROUND_TRIP=true). Без этого
+      # credit_assessment.workflow.yaml НЕ регистрируется в
+      # workflow_registry → POST /api/v1/admin/workflows/trigger/*
+      # возвращает «workflow not registered».
+      FEATURE_WORKFLOW_YAML_ROUND_TRIP: "true"
     depends_on:
       postgres:
         condition: service_healthy
@@ -72,6 +84,11 @@ services:
       DB_HOST: postgres
       WORKFLOW_WORKER_EXECUTOR: ${WORKFLOW_WORKER_EXECUTOR:-dsl}
       SHUTDOWN_GRACE_SECONDS: ${SHUTDOWN_GRACE_SECONDS:-30}
+      # NEW-9 (2026-08-14): workflow auto-load требует
+      # FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для парсинга workflow YAML.
+      # Без этого worker вызывает start_workflow_runtime, но spec'и
+      # не загружаются (FeatureDisabledError) → "spec not found" при execution.
+      FEATURE_WORKFLOW_YAML_ROUND_TRIP: ${FEATURE_WORKFLOW_YAML_ROUND_TRIP:-true}
     depends_on:
       postgres:
         condition: service_healthy
@@ -90,6 +107,18 @@ services:
         reservations:
           cpus: "0.25"
           memory: 256M
+    # 2026-08-14 fix (D-AUDIT-20701): заменён ps-grep healthcheck
+    # (FAILED — `ps` не установлен в slim image + `grep -v grep` semantics).
+    # Worker слушает K8s probes на :9100 (WorkerProbesServer, см.
+    # src/backend/infrastructure/workflow/worker_probes.py:79).
+    # TCP check на :9100 — universal (binary в image есть `python -c`).
+    # Override Dockerfile-baked healthcheck (cycle 198 → image re-bake deferred).
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import socket; socket.create_connection(('127.0.0.1', 9100), timeout=3)\" || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
   postgres:
     image: postgres:16-alpine
@@ -97,8 +126,12 @@ services:
       POSTGRES_DB: ${DB_NAME:-gd_integration}
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    # 2026-08-13 fix (variant A): host port 5432 conflict с локальным
+    # /usr/lib/postgresql/16 (pid 1839). Сдвигаем host port на 5433 —
+    # worker'ы ходят через compose-DNS `postgres:5432`, host port им
+    # не нужен. Доступ из host-утилит (psql/pgAdmin): localhost:5433.
     ports:
-      - "5432:5432"  # port-host-binding #
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:

@@ -30,6 +30,12 @@ services:
       APP_PROFILE: dev_light
       APP_SERVER: ${APP_SERVER:-granian}
       APP_WORKERS: ${APP_WORKERS:-2}
+      # 2026-08-13: MCP HTTP transport НЕ включается в light-profile.
+      # Причина: ``fastmcp>=3.2.4`` (ADR-0070 §3) входит в ``[mcp]`` extra,
+      # но НЕ в ``[dev-light]`` extra (``pyproject.toml``). Монтирование
+      # ``/mcp`` в ``light`` стеке даёт 404 ("fastmcp is not installed").
+      # Для тестирования MCP нужен ``[dev]`` или ``[mcp]`` extra +
+      # ``MCP_HTTP_ENABLED=true``. См. docs/audit/SYNTHESIS_2026-08-13.md §10.
     # D-A12-05 fix (cycle 23): mem_limit/cpus для light-профиля (dev_light).
     # Консервативные defaults (override через env): 1 GB / 0.5 CPU.
     mem_limit: ${APP_MEM_LIMIT:-1g}
@@ -71,11 +77,10 @@ services:
     deploy:
       replicas: ${WORKER_COUNT:-1}
     healthcheck:
-      # Worker запускается как ``python -m src.backend.infrastructure.workflow.worker run``;
-      # ps ищет подстроку в командной строке процесса. Старая маска
-      # ``workflows.worker`` была привязана к несуществующему модулю и не
-      # срабатывала — healthcheck всегда был unhealthy.
-      test: ["CMD-SHELL", "ps aux | grep -v grep | grep -q 'src.backend.infrastructure.workflow.worker' || exit 1"]
+      # 2026-08-14 fix (D-AUDIT-20701): заменён ps-grep (FAILED — `ps`
+      # не в $PATH slim image). Worker слушает K8s probes на :9100
+      # (WorkerProbesServer). TCP check на :9100 universal.
+      test: ["CMD-SHELL", "python -c \"import socket; socket.create_connection(('127.0.0.1', 9100), timeout=3)\" || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
