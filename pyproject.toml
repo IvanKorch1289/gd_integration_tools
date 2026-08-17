@@ -375,6 +375,12 @@ workflow = [
 ]
 dev-light = [
     "aiosqlite>=0.20.0,<1.0.0",
+    # D-AUDIT-20803 fix (cycle 209): fastmcp в dev-light extra включён
+    # чтобы MCP /mcp endpoint был тестируем в light-stack (S168 W9+).
+    # Без этого — `import fastmcp` в compose-app-1 fails → /mcp 404.
+    # Альтернатива: image rebuild с `[mcp]` extra, но это удваивает
+    # image variants. Ponytail: одна light-stack должна покрывать core use cases.
+    "fastmcp>=3.2.4",
 ]
 sources-cdc = [
     "psycopg[binary]>=3.1,<4.0.0",

@@ -30,12 +30,11 @@ services:
       APP_PROFILE: dev_light
       APP_SERVER: ${APP_SERVER:-granian}
       APP_WORKERS: ${APP_WORKERS:-2}
-      # 2026-08-13: MCP HTTP transport НЕ включается в light-profile.
-      # Причина: ``fastmcp>=3.2.4`` (ADR-0070 §3) входит в ``[mcp]`` extra,
-      # но НЕ в ``[dev-light]`` extra (``pyproject.toml``). Монтирование
-      # ``/mcp`` в ``light`` стеке даёт 404 ("fastmcp is not installed").
-      # Для тестирования MCP нужен ``[dev]`` или ``[mcp]`` extra +
-      # ``MCP_HTTP_ENABLED=true``. См. docs/audit/SYNTHESIS_2026-08-13.md §10.
+      # D-AUDIT-20803 fix (cycle 209): fastmcp теперь в ``[dev-light]`` extra
+      # (pyproject.toml), поэтому MCP HTTP transport может включаться в
+      # light-стек. ``MCP_HTTP_ENABLED=true`` → /mcp ASGI mount → JSON-RPC
+      # over HTTP (через FastMCP streamable_http_app / http_app).
+      MCP_HTTP_ENABLED: ${MCP_HTTP_ENABLED:-true}
     # D-A12-05 fix (cycle 23): mem_limit/cpus для light-профиля (dev_light).
     # Консервативные defaults (override через env): 1 GB / 0.5 CPU.
     mem_limit: ${APP_MEM_LIMIT:-1g}
