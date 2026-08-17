@@ -81,11 +81,16 @@ def create_mcp_http_app() -> tuple[Any, Any]:
         logger.info("MCP HTTP app: using legacy mcp_server")
 
     inner_app = _resolve_http_app(mcp)
-    # D-AUDIT-20805 fix (cycle 211): возвращаем BOTH inner app (для lifespan)
-    # AND wrapped app (с auth middleware). Caller wire'ит inner_app.lifespan
+    # D-AUDIT-20805 fix (cycle 211/213): возвращаем BOTH inner app (для lifespan)
+    # AND wrapped app (с auth middleware). Caller wire'ит inner_app.lifespan_context
     # в основной app lifespan. Без этого request_streaming RuntimeError.
+    #
+    # Cycle 213 fix: use `lifespan_context` (not `lifespan`) — `lifespan` is
+    # a Starlette `method` object on Router (descriptor, requires router
+    # instance binding), `lifespan_context` is the actual context-manager
+    # function with signature `(app: Starlette) -> AsyncGenerator[None, None]`.
     wrapped = McpAuthMiddleware(inner_app)
-    return wrapped, inner_app.router.lifespan
+    return wrapped, inner_app.router.lifespan_context
 
 
 def _is_namespaces_enabled() -> bool:
