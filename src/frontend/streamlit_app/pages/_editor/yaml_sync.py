@@ -18,6 +18,10 @@ from typing import Any, cast
 
 import yaml as _yaml
 
+# 2026-08-14 cycle 206: миграция на ``core.frontend_facade`` (D-AUDIT-20601).
+# ``Pipeline`` и ``load_pipeline_from_yaml`` уже re-exported в facade
+# (через src.backend.services.dsl_portal). Устраняет layer-violation
+# (frontend → backend.dsl напрямую).
 from src.backend.core.frontend_facade import Pipeline, load_pipeline_from_yaml
 
 __all__ = ("build_yaml_from_steps", "sync_yaml", "try_load", "yaml_to_steps")

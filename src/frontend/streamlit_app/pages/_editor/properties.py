@@ -107,6 +107,7 @@ def render_properties_panel(client: Any) -> None:
     st.divider()
     st.subheader("📋 Спецификация конвейера")
     try:
+        # 2026-08-14 cycle 206: миграция на ``core.frontend_facade`` (D-AUDIT-20601).
         from src.backend.core.frontend_facade import load_pipeline_from_yaml
 
         pipeline = load_pipeline_from_yaml(st.session_state.yaml_output)
