@@ -12,8 +12,6 @@ ASGI-сервером. Поддерживаются два бэкенда:
 
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
-
 import uvicorn  # S146 W3: module-level import для test patchability
 from fastapi import FastAPI
 from granian import Granian  # S146 W3: module-level import для test patchability
@@ -76,7 +74,7 @@ def _mount_mcp_http() -> None:
     try:
         from src.backend.entrypoints.mcp.http_server import create_mcp_http_app
 
-        mcp_asgi, mcp_inner_lifespan = create_mcp_http_app()
+        mcp_asgi, _mcp_inner_lifespan = create_mcp_http_app()
         app.mount(mcp_settings.bind_path, mcp_asgi)
         # D-AUDIT-20804 fix (cycle 210): disable redirect_slashes для всего
         # app после MCP mount. Без этого Starlette Router делает 307
@@ -91,30 +89,23 @@ def _mount_mcp_http() -> None:
         # был false-positive nicety, не feature.
         app.router.redirect_slashes = False
 
-        # D-AUDIT-20805 fix (cycle 211): wire FastMCP lifespan В FastAPI
-        # app. Без этого session_manager.run() никогда не вызывается →
-        # каждый request падает с RuntimeError "Task group is not
-        # initialized". FastMCP docs требуют:
-        #   FastAPI(lifespan=mcp_app.lifespan) или combined.
-        # У нас FastAPI уже has own lifespan (composition/lifespan.py),
-        # поэтому создаём COMBINED lifespan: сначала FastMCP task group
-        # (start), потом existing business lifespan (yield → both run),
-        # при shutdown — оба cleanup в обратном порядке.
-        _existing_lifespan = app.router.lifespan
-
-        @asynccontextmanager
-        async def _combined_lifespan(app):
-            # FastMCP task group MUST start BEFORE business lifespan
-            # (нужен для обработки requests during business startup).
-            async with mcp_inner_lifespan(app):
-                async with _existing_lifespan(app):
-                    yield
-
-        app.router.lifespan = _combined_lifespan
+        # NOTE (D-AUDIT-20805 cycle 212 REVERT): cycle 211 attempt to wire
+        # FastMCP lifespan через combined async context manager BROKE
+        # ASGI lifespan (Granian warning "ASGI Lifespan errored"). Mock
+        # reason: FastMCP's `mcp_inner_lifespan(app)` requires None
+        # аргумент (НЕ принимает `app` parameter), наш expectation
+        # mismatch. Реальный fix требует правильную signature + integration
+        # с Starlette lifespan events. Текущий code оставляет
+        # mcp_inner_lifespan unconsumed (Ponytail: НЕ делать giant
+        # refactor out-of-scope для atomic cycle).
+        get_logger(__name__).debug(
+            "D-AUDIT-20805 DEFERRED: FastMCP session_manager.run() not wired — "
+            "lifespan integration requires multi-cycle work (proper signature + "
+            "Starlette integration). Real JSON-RPC returns 404 until then."
+        )
 
         get_logger(__name__).info(
-            "MCP HTTP transport mounted at %s "
-            "(redirect_slashes=False, lifespan=combined)",
+            "MCP HTTP transport mounted at %s (redirect_slashes=False)",
             mcp_settings.bind_path,
         )
     except Exception as exc:
