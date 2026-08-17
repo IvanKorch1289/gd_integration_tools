@@ -34,12 +34,25 @@ def _resolve_http_app(mcp: Any) -> Any:
         if candidate is None:
             continue
         try:
-            asgi = candidate() if callable(candidate) else candidate
+            # D-AUDIT-20806 fix (cycle 214): use stateless_http=True
+            # для http_app и streamable_http_app. Без этого FastMCP
+            # внутренне создаёт session_manager (через lifespan), но
+            # RequestBodyLimitMiddleware(self._handle_request) держит
+            # stale reference на original session_manager (task group=None).
+            # Stateless mode creates new transport per request → task group
+            # check bypassed → 404 → 200.
+            if attr in ("http_app", "streamable_http_app"):
+                asgi = candidate(stateless_http=True)
+            else:
+                asgi = candidate() if callable(candidate) else candidate
         except Exception as exc:
             logger.debug("FastMCP.%s() failed: %s", attr, exc)
             continue
         if asgi is not None:
-            logger.info("FastMCP HTTP transport resolved via .%s()", attr)
+            logger.info(
+                "FastMCP HTTP transport resolved via .%s() (stateless_http=True)",
+                attr,
+            )
             return asgi
     raise RuntimeError(
         "FastMCP не предоставляет ASGI HTTP API; ожидался один из методов: "
