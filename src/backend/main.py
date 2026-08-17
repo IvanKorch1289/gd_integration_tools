@@ -25,6 +25,35 @@ from src.backend.plugins.composition.app_factory import create_app
 app: FastAPI = create_app()
 
 
+def _auto_register_workflows_fallback() -> None:
+    """2026-08-14: FALLBACK auto-load workflow YAML если PluginLoader не bootstrap'нут.
+
+    При ``ASGI = Interfaces.ASGI`` (default) lifespan должен вызывать
+    PluginLoader.discover_and_load() → register_workflow_declarations().
+    Если PluginLoader не инициализирован (bootstrap skipped) —
+    workflows не зарегистрированы → ``POST /api/v1/admin/workflows/trigger/credit_assessment``
+    возвращает 404 «Workflow not registered».
+
+    Эта функция вызывается синхронно при import main — fallback
+    для случая, когда lifespan bootstrap пропустил PluginLoader init.
+    """
+    try:
+        from src.backend.plugins.composition.workflow_setup import (
+            _register_workflow_declarations_from_filesystem,
+        )
+        count = _register_workflow_declarations_from_filesystem()
+        _logger.info(
+            "workflow.fallback_auto_load: %d declarations registered from EXTENSIONS_DIR",
+            count,
+        )
+    except Exception as exc:
+        _logger.warning("workflow.fallback_auto_load failed: %s", exc)
+
+
+_logger = get_logger(__name__)
+_auto_register_workflows_fallback()
+
+
 def _mount_mcp_http() -> None:
     """Wave D.4: монтирует FastMCP HTTP transport если ``MCP_HTTP_ENABLED=true``."""
     try:
@@ -46,6 +75,22 @@ def _mount_mcp_http() -> None:
         from src.backend.entrypoints.mcp.http_server import create_mcp_http_app
 
         app.mount(mcp_settings.bind_path, create_mcp_http_app())
+        # D-AUDIT-20804 fix (cycle 210): disable redirect_slashes для всего
+        # app после MCP mount. Без этого Starlette Router делает 307
+        # redirect /mcp → /mcp/ (Starlette default `redirect_slashes=True`).
+        # Но FastMCP 3.x mount создаёт route на /mcp exactly
+        # (`Route(path='/mcp', name='StreamableHTTPASGIApp')`) — без
+        # trailing slash. redirect на /mcp/ не резолвится в FastMCP route.
+        # Глобальное отключение — минимальный Ponytail fix (1-line).
+        # Потенциальный downside: legacy routes с trailing-slash variants
+        # больше не auto-redirect — НО legacy routes в FastAPI router
+        # имеют exact matches (через OpenAPI), redirect_slashes default
+        # был false-positive nicety, не feature.
+        app.router.redirect_slashes = False
+        get_logger(__name__).info(
+            "MCP HTTP transport mounted at %s (redirect_slashes=False)",
+            mcp_settings.bind_path,
+        )
     except Exception as exc:
         get_logger(__name__).warning("MCP HTTP transport mount skipped: %s", exc)
 
@@ -109,7 +154,14 @@ def _run_granian() -> None:
         "target": "src.backend.main:app",
         "address": settings.app.host,
         "port": settings.app.port,
-        "interface": Interfaces.ASGINL,  # S121 W1: asginl bypass — lifespan errored в light stack
+        # 2026-08-14: ASGI (default interface) — включает lifespan,
+        # которая нужна для ``start_workflow_runtime`` (auto-load
+        # workflow YAML из EXTENSIONS_DIR). ASGINL bypass lifespan —
+        # workflow runtime не стартует, workflows не регистрируются.
+        # S121 W1 причина выбора ASGINL: «lifespan errored в light
+        # stack» — fix был workaround. С cycle 188+ workflow_setup
+        # стабилен, возвращаемся на ASGI.
+        "interface": Interfaces.ASGI,
         "workers": settings.app.workers,
         "runtime_threads": settings.app.granian_runtime_threads,
         "runtime_mode": runtime_mode,
