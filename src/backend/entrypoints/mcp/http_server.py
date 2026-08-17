@@ -47,7 +47,7 @@ def _resolve_http_app(mcp: Any) -> Any:
     )
 
 
-def create_mcp_http_app() -> Any:
+def create_mcp_http_app() -> tuple[Any, Any]:
     """Создаёт ASGI-приложение MCP HTTP transport с auth middleware.
 
     При ``mcp_gateway_namespaces_enabled=True`` использует MCPGateway
@@ -55,8 +55,12 @@ def create_mcp_http_app() -> Any:
     При False — legacy монолитный mcp_server.
 
     Returns:
-        ASGI-приложение (Starlette-совместимое) с прикрученной авторизацией.
-        Может быть смонтировано через ``app.mount(prefix, asgi_app)``.
+        (asgi_app, lifespan) — пара где:
+        - asgi_app: ASGI-приложение (Starlette-совместимое) с прикрученной
+          авторизацией. Может быть смонтировано через ``app.mount(prefix, asgi)``.
+        - lifespan: функция-lifespan от inner FastMCP Starlette app.
+          Нужна для интеграции session_manager.run() в lifespan главного
+          приложения (D-AUDIT-20805, cycle 211 fix).
 
     Raises:
         ImportError: если ``fastmcp`` не установлен.
@@ -76,8 +80,12 @@ def create_mcp_http_app() -> Any:
         mcp = create_mcp_server()
         logger.info("MCP HTTP app: using legacy mcp_server")
 
-    asgi = _resolve_http_app(mcp)
-    return McpAuthMiddleware(asgi)
+    inner_app = _resolve_http_app(mcp)
+    # D-AUDIT-20805 fix (cycle 211): возвращаем BOTH inner app (для lifespan)
+    # AND wrapped app (с auth middleware). Caller wire'ит inner_app.lifespan
+    # в основной app lifespan. Без этого request_streaming RuntimeError.
+    wrapped = McpAuthMiddleware(inner_app)
+    return wrapped, inner_app.router.lifespan
 
 
 def _is_namespaces_enabled() -> bool:

@@ -12,6 +12,8 @@ ASGI-сервером. Поддерживаются два бэкенда:
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+
 import uvicorn  # S146 W3: module-level import для test patchability
 from fastapi import FastAPI
 from granian import Granian  # S146 W3: module-level import для test patchability
@@ -74,7 +76,8 @@ def _mount_mcp_http() -> None:
     try:
         from src.backend.entrypoints.mcp.http_server import create_mcp_http_app
 
-        app.mount(mcp_settings.bind_path, create_mcp_http_app())
+        mcp_asgi, mcp_inner_lifespan = create_mcp_http_app()
+        app.mount(mcp_settings.bind_path, mcp_asgi)
         # D-AUDIT-20804 fix (cycle 210): disable redirect_slashes для всего
         # app после MCP mount. Без этого Starlette Router делает 307
         # redirect /mcp → /mcp/ (Starlette default `redirect_slashes=True`).
@@ -87,8 +90,31 @@ def _mount_mcp_http() -> None:
         # имеют exact matches (через OpenAPI), redirect_slashes default
         # был false-positive nicety, не feature.
         app.router.redirect_slashes = False
+
+        # D-AUDIT-20805 fix (cycle 211): wire FastMCP lifespan В FastAPI
+        # app. Без этого session_manager.run() никогда не вызывается →
+        # каждый request падает с RuntimeError "Task group is not
+        # initialized". FastMCP docs требуют:
+        #   FastAPI(lifespan=mcp_app.lifespan) или combined.
+        # У нас FastAPI уже has own lifespan (composition/lifespan.py),
+        # поэтому создаём COMBINED lifespan: сначала FastMCP task group
+        # (start), потом existing business lifespan (yield → both run),
+        # при shutdown — оба cleanup в обратном порядке.
+        _existing_lifespan = app.router.lifespan
+
+        @asynccontextmanager
+        async def _combined_lifespan(app):
+            # FastMCP task group MUST start BEFORE business lifespan
+            # (нужен для обработки requests during business startup).
+            async with mcp_inner_lifespan(app):
+                async with _existing_lifespan(app):
+                    yield
+
+        app.router.lifespan = _combined_lifespan
+
         get_logger(__name__).info(
-            "MCP HTTP transport mounted at %s (redirect_slashes=False)",
+            "MCP HTTP transport mounted at %s "
+            "(redirect_slashes=False, lifespan=combined)",
             mcp_settings.bind_path,
         )
     except Exception as exc:

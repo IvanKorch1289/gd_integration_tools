@@ -147,3 +147,87 @@ def test_http_enabled_guard_present() -> None:
                 "early return; otherwise mount runs on every import even "
                 "when feature disabled"
             )
+
+
+def test_combined_lifespan_present() -> None:
+    """D-AUDIT-20805 (cycle 211): FastMCP lifespan combined с FastAPI.
+
+    Без lifespan wiring FastMCP session_manager.run() никогда не
+    вызывается → request_streaming RuntimeError при каждом RPC.
+    """
+    tree = ast.parse(_get_main_source())
+
+    # Ищем `from contextlib import asynccontextmanager` import на module
+    # level в main.py. Используем path-resolve вместо __import__ чтобы
+    # НЕ trigger full main.py import chain.
+    import src.backend.main as m
+    main_path = m.__file__
+    with open(main_path, encoding="utf-8") as f:
+        main_source = f.read()
+    main_tree = ast.parse(main_source)
+    has_asynccontextmanager_import = False
+    for node in ast.walk(main_tree):
+        if isinstance(node, ast.ImportFrom) and node.module == "contextlib":
+            for alias in node.names:
+                if alias.name == "asynccontextmanager":
+                    has_asynccontextmanager_import = True
+                    break
+
+    assert has_asynccontextmanager_import, (
+        "main.py must import `asynccontextmanager` from contextlib "
+        "for combined lifespan (cycle 211 fix)"
+    )
+
+    # Ищем определение combined_lifespan (или _combined_lifespan) внутри
+    # _mount_mcp_http
+    for stmt in tree.body:
+        if isinstance(stmt, ast.FunctionDef) and stmt.name == "_mount_mcp_http":
+            has_combined = False
+            for node in ast.walk(stmt):
+                if isinstance(node, ast.AsyncFunctionDef) and (
+                    "combined" in node.name.lower() or "lifespan" in node.name.lower()
+                ):
+                    has_combined = True
+                    break
+
+            assert has_combined, (
+                "_mount_mcp_http must define combined_lifespan "
+                "function (D-AUDIT-20805 cycle 211 fix)"
+            )
+            return
+
+    raise AssertionError("_mount_mcp_http function not found")
+
+
+def test_app_router_lifespan_assignment_present() -> None:
+    """D-AUDIT-20805: combined lifespan присваивается в app.router.lifespan."""
+    tree = ast.parse(_get_main_source())
+
+    for stmt in tree.body:
+        if isinstance(stmt, ast.FunctionDef) and stmt.name == "_mount_mcp_http":
+            # Ищем строку вида \`app.router.lifespan = ...\`
+            found = False
+            for node in ast.walk(stmt):
+                if isinstance(node, ast.Assign):
+                    for target in node.targets:
+                        if isinstance(target, ast.Attribute):
+                            # app.router.lifespan
+                            attrs = []
+                            cur = target
+                            while isinstance(cur, ast.Attribute):
+                                attrs.append(cur.attr)
+                                cur = cur.value
+                            if "lifespan" in attrs and "router" in attrs:
+                                found = True
+                            # app.router.lifespan (without nested)
+                            if (
+                                isinstance(target.value, ast.Attribute)
+                                and target.value.attr == "router"
+                                and target.attr == "lifespan"
+                            ):
+                                found = True
+            assert found, (
+                "_mount_mcp_http must assign combined lifespan to "
+                "app.router.lifespan (cycle 211 fix); без этого FastMCP "
+                "session_manager.run() никогда не вызывается"
+            )

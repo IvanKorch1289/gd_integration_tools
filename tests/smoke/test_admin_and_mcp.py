@@ -56,7 +56,7 @@ def test_mcp_http_app_created_when_enabled(monkeypatch) -> None:
 
     from src.backend.entrypoints.mcp.http_server import create_mcp_http_app
 
-    app = create_mcp_http_app()
+    app, _lifespan = create_mcp_http_app()
     # Smoke: app should be truthy (FastMCP ASGI app)
     assert app is not None
 
@@ -66,7 +66,7 @@ def test_mcp_http_app_routes_exist() -> None:
     pytest.importorskip("fastmcp")
     from src.backend.entrypoints.mcp.http_server import create_mcp_http_app
 
-    app = create_mcp_http_app()
+    app, _lifespan = create_mcp_http_app()
     routes = [r.path for r in app.routes]
     # FastMCP mounts /tools and /resources under its prefix
     assert any("/tools" in r or r == "/mcp" or "/mcp/" in r for r in routes)
