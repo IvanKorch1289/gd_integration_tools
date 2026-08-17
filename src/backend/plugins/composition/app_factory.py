@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
@@ -77,6 +81,14 @@ def _configure_application_components(app: FastAPI) -> None:
     # Middleware для обработки запросов
     setup_middlewares(app=app)
 
+    # D-AUDIT-20807 fix (cycle 216): mount MCP HTTP transport ВНУТРИ
+    # create_app() (а не module-level в main.py). Cycle 215 investigation
+    # обнаружил что granian/uvicorn импортирует ТОЛЬКО атрибут `app`
+    # (через "src.backend.main:app"), НЕ module body — поэтому
+    # module-level _mount_mcp_http() вызов НЕ выполняется в runtime.
+    # Решение: mount ВНУТРИ create_app() (которая IS called при import).
+    _mount_mcp_http(app)
+
     # Настройка распределенной трассировки. OTLP-коллектор может быть
     # недоступен в dev/ci — ловим исключения чтобы не ломать старт приложения.
     if settings.app.telemetry_enabled:
@@ -95,6 +107,55 @@ def _configure_application_components(app: FastAPI) -> None:
     # Настройка системы мониторинга
     if settings.app.monitoring_enabled:
         setup_monitoring(app=app)
+
+
+def _mount_mcp_http(app: FastAPI) -> None:
+    """Mount FastMCP HTTP transport в FastAPI app (cycle 209-216, D-AUDIT-20803+).
+
+    Вызывается из ``_configure_application_components()`` (НЕ module-level
+    в main.py) потому что granian/uvicorn импортирует ТОЛЬКО атрибут
+    ``app`` (через "src.backend.main:app"), НЕ module body — module-level
+    вызовы НЕ выполняются в runtime (D-AUDIT-20807, cycle 216).
+
+    Ponytail: 1 функция, 1 mount point. Skip если ``mcp_settings.http_enabled=False``.
+    """
+    try:
+        from src.backend.core.config.ai_stack import mcp_settings
+    except ImportError as exc:
+        get_logger(__name__).warning(
+            "MCP HTTP transport: mcp_settings import failed — mount skipped (%s: %s)",
+            type(exc).__name__,
+            exc,
+        )
+        return
+    if not mcp_settings.http_enabled:
+        return
+    try:
+        from src.backend.entrypoints.mcp.http_server import create_mcp_http_app
+
+        mcp_asgi, mcp_inner_lifespan = create_mcp_http_app()
+        app.mount(mcp_settings.bind_path, mcp_asgi)
+        # D-AUDIT-20804 (cycle 210): disable redirect_slashes (см. main.py history).
+        app.router.redirect_slashes = False
+
+        # D-AUDIT-20805 (cycle 213): wire FastMCP lifespan (lifespan_context function).
+        _existing_lifespan = app.router.lifespan
+
+        @asynccontextmanager
+        async def _combined_lifespan(app_arg):
+            async with mcp_inner_lifespan(app_arg):
+                async with _existing_lifespan(app_arg):
+                    yield
+
+        app.router.lifespan = _combined_lifespan
+
+        get_logger(__name__).info(
+            "MCP HTTP transport mounted at %s "
+            "(redirect_slashes=False, lifespan=combined)",
+            mcp_settings.bind_path,
+        )
+    except Exception as exc:
+        get_logger(__name__).warning("MCP HTTP transport mount skipped: %s", exc)
 
 
 def _configure_business_routers(app: FastAPI) -> None:
@@ -136,6 +197,30 @@ def _configure_business_routers(app: FastAPI) -> None:
         return RedirectResponse(url=f"/api/v1/admin/{path}", status_code=303)
 
     app.include_router(_admin_bridge_router)
+
+    # NEW-3a fix (2026-08-14): ``/asyncapi`` (bare, без префикса v1)
+    # включён в ``routes_without_api_key`` (``auth_required.py:54``),
+    # но ни один router не mounted at root-level ``/asyncapi`` → 404.
+    # Streamlit pages 65 + registry_tab ссылаются на ``/asyncapi``.
+    # Решение: bridge-endpoint отдаёт AsyncAPI spec **напрямую** (не redirect),
+    # чтобы избежать проблем с prefix-matching ``.json``/``.yaml`` суффиксов
+    # в ``auth_required.is_public_path`` (см. ``middleware/auth_required.py:75-81``).
+    _asyncapi_bridge_router = APIRouter()
+
+    @_asyncapi_bridge_router.get("/asyncapi", include_in_schema=False)
+    async def asyncapi_legacy_serve():
+        """Сервит AsyncAPI 3.0 JSON spec по bare ``/asyncapi`` пути.
+
+        Streaminglit pages и registry_tab ссылаются на ``/asyncapi`` как
+        на public endpoint — отдаём spec напрямую, без HTTP-redirect.
+        """
+        from fastapi.responses import JSONResponse
+
+        from src.backend.entrypoints.asyncapi import build_asyncapi_json
+
+        return JSONResponse(content=build_asyncapi_json(), media_type="application/json")
+
+    app.include_router(_asyncapi_bridge_router)
 
     # Основное API приложения
     app.include_router(get_v1_routers(), prefix="/api/v1")
