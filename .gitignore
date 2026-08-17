@@ -213,3 +213,9 @@ artifacts/ragas/*.json
 # Mimocode tool local state (plans, skills, node_modules, audit reports)
 /.mimocode/
 
+# Kimi Code export sessions (transient agent artifacts, can be 1-10 MB)
+/kimi-export-session_*.md
+
+# Kimi Code runtime config (not source — agents override locally)
+/.kimi-code/config.toml
+
