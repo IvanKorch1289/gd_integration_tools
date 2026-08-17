@@ -383,7 +383,7 @@ dev-light = [
     "fastmcp>=3.2.4",
 ]
 sources-cdc = [
-    "psycopg[binary]>=3.1,<4.0.0",
+    "psycopg[binary]>=3.3.4,<4.0.0",
 ]
 sources-mq-nats = [
     "faststream[nats]>=0.6.7,<1.0.0",
