@@ -121,10 +121,6 @@ src/backend/services/audit/clickhouse_audit_service/service.py	services	src.back
 src/backend/services/authorization/facade.py	services	src.backend.infrastructure.clients.storage.redis
 src/backend/services/cache/metrics.py	services	src.backend.infrastructure.cache.metrics_collector
 src/backend/services/cache/metrics.py	services	src.backend.infrastructure.cache.rag.metrics
-src/backend/services/core/admin.py	services	src.backend.dsl.commands.action_registry
-src/backend/services/core/admin.py	services	src.backend.dsl.commands.registry
-src/backend/services/dsl/builder_service.py	services	src.backend.dsl.commands.registry
-src/backend/services/dsl/builder_service.py	services	src.backend.dsl.yaml_store
 src/backend/services/execution/action_dispatcher.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/execution/middlewares/rate_limit_middleware.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/jupyter/hub_actions.py	services	src.backend.dsl.commands.action_registry

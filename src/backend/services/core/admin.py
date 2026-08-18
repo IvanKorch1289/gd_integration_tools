@@ -1,4 +1,4 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import HTTPException, Request
 
@@ -10,8 +10,41 @@ from src.backend.core.di.providers import (
 )
 from src.backend.core.state.runtime import disabled_feature_flags
 from src.backend.core.svcs_registry import list_services as _list_services
-from src.backend.dsl.commands.action_registry import action_handler_registry
-from src.backend.dsl.commands.registry import route_registry
+
+if TYPE_CHECKING:
+    from src.backend.dsl.commands.action_registry import action_handler_registry
+    from src.backend.dsl.commands.registry import route_registry
+
+# Sprint 225: 2 services → dsl imports converted to lazy __getattr__ proxy.
+# action_handler_registry и route_registry — глобальные singleton registries,
+# кэшируются в module globals при первом lookup.
+_LAZY_MAP: dict[str, tuple[str, str]] = {
+    "action_handler_registry": (
+        "src.backend.dsl.commands.action_registry",
+        "action_handler_registry",
+    ),
+    "route_registry": (
+        "src.backend.dsl.commands.registry",
+        "route_registry",
+    ),
+}
+
+
+def __getattr__(name: str) -> Any:
+    """Lazy proxy: import DSL только при lookup атрибута.
+
+    Cache result в module globals — function bodies (которые
+    lookup в module __dict__ напрямую) находить cached symbols.
+    """
+    if name in _LAZY_MAP:
+        import importlib
+
+        mod_path, attr = _LAZY_MAP[name]
+        value = getattr(importlib.import_module(mod_path), attr)
+        globals()[name] = value  # cache for function body lookups
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = ("AdminService", "get_admin_service")
 
