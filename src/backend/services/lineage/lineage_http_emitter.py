@@ -105,7 +105,7 @@ class OpenLineageHttpEmitter(InMemoryLineageEmitter):
         # Unsigned buffer (events waiting to be sent).
         # Каждый event — dict в OpenLineage format (уже serialized).
         self._pending: list[dict[str, Any]] = []
-        self._buffer_lock = threading.Lock()
+        self._buffer_lock = threading.Lock()  # noqa: violation-check — sync __call__/flush
         # Stats
         self._sent_count = 0
         self._failed_count = 0

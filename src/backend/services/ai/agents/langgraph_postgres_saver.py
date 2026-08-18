@@ -193,7 +193,7 @@ class LangGraphPostgresSaverWrapper:
 
 
 _wrapper: LangGraphPostgresSaverWrapper | None = None
-_wrapper_lock = threading.Lock()
+_wrapper_lock = threading.Lock()  # noqa: violation-check — sync _factory
 
 
 def _factory() -> LangGraphPostgresSaverWrapper:

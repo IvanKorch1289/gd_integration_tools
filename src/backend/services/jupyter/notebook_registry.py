@@ -175,7 +175,7 @@ class NotebookRegistry:
 
 # Singleton accessor
 _registry_singleton: NotebookRegistry | None = None
-_registry_lock = threading.Lock()
+_registry_lock = threading.Lock()  # noqa: violation-check — sync get_notebook_registry
 
 
 def get_notebook_registry() -> NotebookRegistry:

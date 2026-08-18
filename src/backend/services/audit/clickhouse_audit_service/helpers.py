@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 # `_service_instance` + `_service_lock` должны жить в module scope,
 # иначе `global` declaration в `get_audit_service` падает с NameError.
 _service_instance: ClickHouseAuditService | None = None
-_service_lock = threading.Lock()
+_service_lock = threading.Lock()  # noqa: violation-check — sync get_audit_service
 
 
 def _make_default_event_id() -> str:

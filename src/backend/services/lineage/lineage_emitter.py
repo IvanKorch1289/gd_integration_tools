@@ -58,7 +58,7 @@ class InMemoryLineageEmitter:
 
     def __init__(self) -> None:
         self._events: list[dict[str, Any]] = []
-        self._lock = threading.Lock()
+        self._lock = threading.Lock()  # noqa: violation-check — sync __call__/list_events/clear
 
     def __call__(self, event: Any) -> None:
         """Append event к in-memory store."""
@@ -145,7 +145,7 @@ def _iso_timestamp(unix_ts: float) -> str:
 
 # ── Module-level singleton (DI-friendly) ──────────────────────────────
 _emitter: InMemoryLineageEmitter | None = None
-_emitter_lock = threading.Lock()
+_emitter_lock = threading.Lock()  # noqa: violation-check — sync get_lineage_emitter
 
 
 def get_lineage_emitter() -> InMemoryLineageEmitter:
