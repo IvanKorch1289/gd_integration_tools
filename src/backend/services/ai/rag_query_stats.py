@@ -73,7 +73,7 @@ class RagQueryStatsCollector:
         # Fallback. ``Counter`` здесь — ``collections.Counter`` (счётчик
         # ключей), не ``prometheus_client.Counter`` — violation-check
         # ругается из-за идентичного имени.
-        self._memory.setdefault(tenant_id, Counter())[h] += 1
+        self._memory.setdefault(tenant_id, Counter())[h] += 1  # noqa: violation-check — collections.Counter
 
     async def top_queries(self, tenant_id: str, n: int = 100) -> list[tuple[str, int]]:
         """Top-N запросов для tenant'а (по убыванию counter'а)."""
@@ -110,7 +110,7 @@ class RagQueryStatsCollector:
                     extra={"error": str(redis_exc), "tenant_id": tenant_id},
                 )
         # Fallback in-memory. ``Counter`` здесь — ``collections.Counter``.
-        tenant_counter = self._memory.get(tenant_id, Counter())
+        tenant_counter = self._memory.get(tenant_id, Counter())  # noqa: violation-check — collections.Counter
         tenant_originals = self._original.get(tenant_id, {})
         result: list[tuple[str, int]] = []
         for h, count in tenant_counter.most_common(n):
