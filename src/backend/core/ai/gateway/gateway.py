@@ -255,12 +255,12 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
         if missing:
             from src.backend.core.ai.errors import AIGatewayProductionWiringError
 
-            raise AIGatewayProductionWiringError(
-                "AIGateway invoked on production without mandatory DI: "
-                + ", ".join(missing)
-                + ". Wire them through AIGateway(policy_resolver=..., "
-                "capability_gate=..., token_budget=...) at composition root."
-            )
+            # Sprint 226 fix: pass tuple (NOT pre-formatted string).
+            # Error class formats the missing list internally — passing
+            # a string causes ``list(string)`` to iterate character-by-character
+            # producing ``['A', 'I', 'G', ...]`` instead of
+            # ``['policy_resolver', 'capability_gate', 'token_budget']``.
+            raise AIGatewayProductionWiringError(tuple(missing))
 
     # S166 W2: Sandbox integration для AI-generated code (Rule 10).
     # Per skill: Sandbox = CodeSandbox Protocol. When AIGateway runs
