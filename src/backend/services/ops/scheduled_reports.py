@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from src.backend.core.di.app_state import app_state_singleton
@@ -117,7 +117,6 @@ class ScheduledReportsService:
         start = time.monotonic()
 
         try:
-            from src.backend.dsl.commands.registry import action_handler_registry
             from src.backend.schemas.invocation import ActionCommandSchema
 
             command = ActionCommandSchema(
@@ -208,3 +207,23 @@ class ScheduledReportsService:
 def get_reports_service() -> ScheduledReportsService:
     """Фабрика: ScheduledReportsService."""
     raise NotImplementedError  # заменяется декоратором
+
+
+# Sprint 226: lazy __getattr__ proxy for action_handler_registry
+_LAZY_MAP: dict[str, tuple[str, str]] = {
+    "action_handler_registry": (
+        "src.backend.dsl.commands.registry",
+        "action_handler_registry",
+    ),
+}
+
+
+def __getattr__(name: str) -> Any:
+    if name in _LAZY_MAP:
+        import importlib
+
+        mod_path, attr = _LAZY_MAP[name]
+        value = getattr(importlib.import_module(mod_path), attr)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

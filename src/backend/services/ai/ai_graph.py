@@ -23,7 +23,7 @@ Lazy-import:
 from __future__ import annotations
 
 import uuid
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
 from src.backend.core.request_context import RequestContext
@@ -59,7 +59,6 @@ def _make_action_tool(action_name: str) -> Any:
     """
     from langchain_core.tools import StructuredTool
 
-    from src.backend.dsl.commands.registry import action_handler_registry
     from src.backend.schemas.invocation import ActionCommandSchema
 
     async def _run_action(**kwargs: Any) -> str:
@@ -251,3 +250,23 @@ async def build_and_run_agent(
     except Exception as exc:
         logger.error("Agent execution error: %s", exc, exc_info=True)
         return {"error": str(exc)}
+
+
+# Sprint 226: lazy __getattr__ proxy for action_handler_registry
+_LAZY_MAP: dict[str, tuple[str, str]] = {
+    "action_handler_registry": (
+        "src.backend.dsl.commands.registry",
+        "action_handler_registry",
+    ),
+}
+
+
+def __getattr__(name: str) -> Any:
+    if name in _LAZY_MAP:
+        import importlib
+
+        mod_path, attr = _LAZY_MAP[name]
+        value = getattr(importlib.import_module(mod_path), attr)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

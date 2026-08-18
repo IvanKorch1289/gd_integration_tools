@@ -23,7 +23,7 @@ from __future__ import annotations
 import base64
 import binascii
 from dataclasses import asdict
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
 from src.backend.services.jupyter.hub_run_orchestrator import (
@@ -112,7 +112,8 @@ def register_jupyter_hub_actions(registry: Any) -> list[str]:
         Список зарегистрированных action-имён.
 
     """
-    from src.backend.dsl.commands.action_registry import ActionHandlerSpec
+    # ActionHandlerSpec resolved via module-level __getattr__ proxy (Sprint 226)
+
 
     spec = ActionHandlerSpec(
         action="jupyter.hub_run",
@@ -143,3 +144,23 @@ def register_jupyter_hub_actions(registry: Any) -> list[str]:
 
 
 __all__ = ("get_jupyter_hub_run_service", "register_jupyter_hub_actions")
+
+
+# Sprint 226: lazy __getattr__ proxy for ActionHandlerSpec
+_LAZY_MAP: dict[str, tuple[str, str]] = {
+    "ActionHandlerSpec": (
+        "src.backend.dsl.commands.action_registry",
+        "ActionHandlerSpec",
+    ),
+}
+
+
+def __getattr__(name: str) -> Any:
+    if name in _LAZY_MAP:
+        import importlib
+
+        mod_path, attr = _LAZY_MAP[name]
+        value = getattr(importlib.import_module(mod_path), attr)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
