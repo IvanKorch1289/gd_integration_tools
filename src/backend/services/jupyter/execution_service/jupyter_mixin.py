@@ -164,7 +164,7 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
                             connection_dead.set()
                             break
             except asyncio.CancelledError:
-                pass  # Normal shutdown
+                pass  # noqa: violation-check — normal heartbeat shutdown
             except Exception as exc:
                 _logger.warning("Heartbeat task error: %s", exc)
                 connection_dead.set()
@@ -178,8 +178,14 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
 
                 ws.pong_handler = _on_pong_received  # type: ignore[attr-defined]
 
-                # Start heartbeat AFTER setting up pong handler
-                heartbeat_task = asyncio.create_task(_heartbeat_loop())
+                # Start heartbeat AFTER setting up pong handler.
+                # TaskRegistry — graceful shutdown + tracing (V22 §5).
+                from src.backend.core.utils.task_registry import get_task_registry
+
+                heartbeat_task = get_task_registry().create_task(
+                    _heartbeat_loop(),
+                    name=f"jupyter.heartbeat.{kernel_id}",
+                )
 
                 await ws.send(json.dumps(execute_msg))
 
@@ -251,7 +257,9 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
                 heartbeat_task.cancel()
                 try:
                     await heartbeat_task
-                except (asyncio.CancelledError, Exception):
-                    pass
+                except asyncio.CancelledError:
+                    pass  # noqa: violation-check — expected after cancel
+                except Exception as exc:
+                    _logger.warning("heartbeat task finalisation error: %s", exc)
 
         return outputs
