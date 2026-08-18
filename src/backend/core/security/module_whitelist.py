@@ -42,7 +42,8 @@ def validate_module_whitelist(
         ValueError: Если пустой whitelist требует ``ValueError``.
 
     """
-    whitelist_set = set(whitelist)
+    # ponytail: None → пустой set → fail-closed (treat same as []).
+    whitelist_set = set(whitelist or ())
     if not whitelist_set:
         if empty_mode == "allow":
             return
