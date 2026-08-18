@@ -237,7 +237,7 @@ class StepAuditMiddleware:
                     effective_correlation_id = get_correlation_id()
                 if not effective_tenant_id:
                     effective_tenant_id = get_tenant_id()
-            except ImportError:
+            except ImportError:  # noqa: violation-check — correlation/tenant context optional
                 pass
         ctx = _StepContext()
         started = time.perf_counter()
@@ -294,7 +294,7 @@ class StepAuditMiddleware:
                 span.set_attribute("workflow.step.duration_ms", duration_ms)
             if status is not None:
                 span.set_attribute("workflow.step.status", status)
-        except ImportError:
+        except ImportError:  # noqa: violation-check — OTel optional
             pass
         except Exception as exc:
             _logger.debug("StepAuditMiddleware: feature flag check failed: %s", exc)
@@ -305,6 +305,6 @@ class StepAuditMiddleware:
                 await asyncio.wait_for(
                     self._stop_event.wait(), timeout=self._flush_interval_s,
                 )
-            except TimeoutError:
+            except TimeoutError:  # noqa: violation-check — periodic flush wakeup, expected
                 pass
             await self.flush()

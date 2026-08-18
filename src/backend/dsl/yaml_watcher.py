@@ -132,7 +132,7 @@ class DSLYamlWatcher:
                 self._task.cancel()
                 with contextlib.suppress(asyncio.CancelledError):
                     await self._task
-            except asyncio.CancelledError:
+            except asyncio.CancelledError:  # noqa: violation-check — expected post-cancel
                 pass
         self._task = None
         logger.info("DSLYamlWatcher stopped: dir=%s", self._dir)

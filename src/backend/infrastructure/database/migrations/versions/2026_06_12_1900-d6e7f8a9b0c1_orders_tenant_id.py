@@ -56,7 +56,7 @@ def upgrade() -> None:
         from sqlalchemy import inspect
 
         inspector = inspect(bind)
-    except ImportError:
+    except ImportError:  # noqa: violation-check — alembic/sa optional for column existence check
         pass
 
     if inspector is not None:

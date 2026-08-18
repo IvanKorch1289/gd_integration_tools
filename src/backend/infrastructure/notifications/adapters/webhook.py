@@ -125,7 +125,7 @@ def _url_is_safe(url: str, allow_internal: bool) -> bool:
         ip = ipaddress.ip_address(host)
         if ip.is_private or ip.is_loopback or ip.is_link_local:
             return False
-    except ValueError:
+    except ValueError:  # noqa: violation-check — hostname (not IP) — DNS-rebind check deferred
         # Не IP — это доменное имя. Оставляем, но предупреждаем в логах
         # (подробный DNS-rebind-fix выходит за рамки IL2.2).
         pass
