@@ -60,11 +60,11 @@ def main() -> int:
     if len(sys.argv) < 2:
         return 2
     errors = lint_file(sys.argv[1])
-    if errors:
-        for _e in errors:
-            pass
-        return 1
-    return 0
+    # D-AUDIT-20819 (cycle 228): removed no-op loop \`for _e in errors: pass\`
+    # (Ponytail: deletion > addition, boring > clever). Lint errors
+    # выводятся в stderr caller'ом (manage.py или shell redirect),
+    # не здесь. Возвращаем exit code 1 при errors, 0 при clean.
+    return 1 if errors else 0
 
 
 if __name__ == "__main__":
