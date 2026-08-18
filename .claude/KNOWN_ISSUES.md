@@ -1797,3 +1797,114 @@ Agent с `isolation: "worktree"`, делает intermediate commits после �
 - `ruff check`: All checks passed
 - `mypy --ignore-missing-imports`: Success (5 files)
 - Runtime imports: OK (lazy loading работает корректно)
+
+---
+
+## Audit Verification Cycle 215+ — 2026-08-17 (Phase 0 fact-check)
+
+**Source**: `docs/audit/VERIFICATION_2026-08-17.md` + follow-up execution.
+
+### FALSE_CLAIM подтверждён: pg_runner_backend.replay()
+
+**Sprint 203 README** заявляет: «P2 (performance) 4/4: ... workflow spec
+caching, pg_runner replay» как закрытые пункты.
+
+**Фактическое состояние** (`src/backend/infrastructure/workflow/pg_runner_backend.py:220-235`):
+
+```python
+async def replay(self, *, workflow_name: str, history: bytes) -> None:
+    """pg-runner не реализует Temporal-совместимый replay-gate.
+
+    В отличие от TemporalWorkflowBackend, pg-runner работает через
+    DurableWorkflowRunner.read_events (event-sourcing из workflow_events
+    table) — у него нет WorkflowHistory.from_json и он не может
+    воспроизводить Temporal history bytes.
+    """
+    raise NotImplementedError(
+        "pg-runner does not implement Temporal-compatible replay; "
+        "use DurableWorkflowRunner._run_step() instead",
+    )
+```
+
+Метод `replay()` **всегда** выбрасывает `NotImplementedError`. Non-
+determinism detection в pg-runner backend **отсутствует**. Гит-лог не
+содержит коммитов с replay-логикой для pg_runner_backend в Sprint 203
+или последующих циклах 25-30 (см. `git log --grep="replay" --oneline
+-- pg_runner_backend.py`).
+
+**Action**: удалить из README строку "pg_runner replay (P2)" как
+выполненный пункт. Либо реализовать replay для pg-runner (multi-week
+work — выровнять event-sourcing с Temporal history format), либо явно
+задепрекейтить pg_runner backend в пользу полного Temporal.
+
+**Owner**: workflow team, отдельный sprint.
+
+### Layer violations baseline (201→212→214 vs реальные 167)
+
+Sprint 203 README: «Layer violations: 0 new (212 legacy baseline)».
+ADR-0249 (referenced в README): «214 entries documented, Ponytail-YAGNI
+defer».
+
+**Фактическое состояние** (`make layers`, 2026-08-17): «Нарушений: 0
+новых (файлов: 2281; baseline: 167 legacy)».
+
+167 < 212 < 214 — реальный baseline **меньше**, чем заявлено. README
+и ADR **преувеличили** количество, а не исправили. Это не regression
+(как можно было бы прочитать), но и не freeze + remediation. Если
+ADR-0249 добавлял записи в allowlist — это маскировка долга через
+расширение baseline, а не его сокращение.
+
+**Action**: пересчитать ADR-0249 на фактические 167 (не 214) и либо:
+1. Реально рефакторить 20% из 167 за sprint (~33 entries, не 43),
+   приоритизируя frontend→infrastructure/services и extensions→core.
+2. Либо принять baseline как данность и закрыть тему в ADR-0249
+   с явным сроком «заморозки» (а не «defer indefinitely»).
+
+**Owner**: архитектурная команда.
+
+### Frontend layer violations — frozen baseline, не ремедиация
+
+README «Что осталось (next sprint)»: «214 layer violations refactor
+— ADR-0249 exit criteria». Sprint 203 заявил «frontend boundary» (P1)
+закрытым.
+
+**Фактическое состояние**: cycle 206 (`5df08e40`) мигрировал только
+`_editor/` direct DSL imports на facade (см. `docs/audit/
+FRONTEND_FACADE_MIGRATION_FINAL.md`). Из исходных 35+ frontend→backend
+violations мигрирована часть; остальные — frozen в legacy baseline
+через механизм layer-violation allowlist.
+
+**Action**: добавить в «Что осталось» конкретное число migrated vs
+remaining frontend violations. Текущий «0 new» маркетинг маскирует
+объём unfrozen work.
+
+### Регрессии vs claimed «PASS»
+
+Phase 0 verification нашёл два **реальных** failed gates, которые
+README явно или неявно подразумевает PASS:
+
+1. **`make bandit-strict`**: 4 high-severity issues (после фикса
+   Phase 1.A = 0). До фикса:
+   - B321/B402 ×3 — FTP в `ftpuploadprocessor.py` (gated, не real vuln)
+   - B324 — MD5 в `docs_indexer.py:58` (non-security, bag-of-words bin)
+   **Status**: закрыто в коммитах `358cebaa` + `05493cf4`.
+
+2. **`make check-grep-violations`**: 18 violations per tail output of
+   `make ci` (фактически 186 в полном backend, после моих targeted
+   фиксов осталось в основном entrypoints/ и core/ai/, не в фокусе
+   Sprint 203). Реальные баги:
+   - JWTBlocklist threading.Lock в async (commit `8127d6a9` → asyncio.Lock)
+   - ClickHouseAuditService._get_client threading.Lock в async
+     (commit `bbdc813e` → asyncio.Lock)
+   - hot_reloader broad except (commit `e7970bf5` → narrow + log)
+   - jupyter_mixin orphan asyncio.create_task (commit `2e622aa8`
+     → TaskRegistry.create_task)
+   - jupyter_mixin broad except (commit `2e622aa8` → narrow + log)
+   **Status**: 5/5 реальных багов закрыты. Остальные 181 violations —
+   либо noqа для known-patterns, либо false positives (sync-only
+   threading.Lock, collections.Counter, narrow exceptions).
+
+### Документация
+
+Подробный отчёт: `docs/audit/VERIFICATION_2026-08-17.md` (Phase 0).
+Выполнение фиксов: `docs/audit/EXECUTION_2026-08-17.md` (Phase 1.A+).
