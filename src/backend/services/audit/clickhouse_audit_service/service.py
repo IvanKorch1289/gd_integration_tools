@@ -10,7 +10,7 @@ Backward-compat: legacy ``dlq_path`` (JSONL) сохранён с WARNING.
 
 from __future__ import annotations
 
-import threading
+import asyncio
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.audit import AuditBackend, AuditRecord
@@ -77,11 +77,13 @@ class ClickHouseAuditService:
 
         """
         self._client: Any | None = client
-        self._lock = threading.Lock()
+        # asyncio.Lock — _get_client() async. self._dlq_lock остаётся sync
+        # (используется только из sync _get_dlq_backend).
+        self._lock = asyncio.Lock()
         self._dlq_writer: DLQWriter | None = dlq_writer
         self._dlq_path = dlq_path
         self._dlq_backend: AuditBackend | None = None
-        self._dlq_lock = threading.Lock()
+        self._dlq_lock = threading.Lock()  # noqa: violation-check — sync _get_dlq_backend
 
     def set_dlq_writer(self, writer: DLQWriter | None) -> None:
         """Установить/сбросить canonical DLQWriter (composition root wiring).
@@ -107,7 +109,7 @@ class ClickHouseAuditService:
         """
         if self._client is not None:
             return self._client
-        with self._lock:
+        async with self._lock:
             if self._client is not None:
                 return self._client
             # Lazy-импорт тяжёлой зависимости только при включённом flag
