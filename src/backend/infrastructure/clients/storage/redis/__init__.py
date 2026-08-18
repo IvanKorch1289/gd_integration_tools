@@ -89,6 +89,24 @@ class RedisClient(ConnectionMixin, CacheMixin, HelpersMixin, StreamMixin):
         result = await self.health_check()
         return result.get("status") == "ok"
 
+    # D-AUDIT-20815 fix (cycle 225): public ``pubsub()`` for HITL signal store.
+    # Caller: ``src/backend/services/workflows/hitl_signal_store_redis.py:328``
+    #   \`pubsub = client.pubsub()\`
+    # но RedisClient не expose'ил \`pubsub\` (только StreamMixin для
+    # xadd/xread, НЕ pubsub). Per Ponytail: тонкая wrapper → get_client
+    # + native pubsub().
+    async def pubsub(self, kind: RedisKind = "queue") -> Any:
+        """Public Pub/Sub handle (delegates to underlying \`redis.asyncio.Redis.pubsub\`).
+
+        Args:
+            kind: Redis kind (default: \"queue\" — most appropriate for events).
+
+        Returns:
+            \`redis.asyncio.client.PubSub\` instance для subscribe().
+        """
+        client = await self.get_client(kind)
+        return client.pubsub()
+
     def __init__(self, settings: RedisSettings) -> None:
         """Args:
         settings: конфигурация Redis-подключений.
