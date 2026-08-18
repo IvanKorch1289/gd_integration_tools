@@ -74,6 +74,21 @@ class RedisClient(ConnectionMixin, CacheMixin, HelpersMixin, StreamMixin):
     # either stubbed ``__init__`` or never exercised ``RedisClient()``.
     __slots__ = ("_breakers", "_clients", "_locks", "logger", "settings")
 
+    # D-AUDIT-20814 fix (cycle 224): public ``ping()`` для health-check'ов
+    # (был: \`ConnectionMixin.get_client()\` вызывает \`await client.ping()\`,
+    # но \`RedisClient\` имел только приватный \`_ping\` от \`ManagedAsyncClient\`.
+    # Health endpoint \`/api/v1/admin/health/components\` падал с
+    # \`'RedisClient' object has no attribute 'ping'\`).
+    # Ponytail: 1-line public method, delegates to existing \`health_check\`.
+    async def ping(self) -> bool:
+        """Public health-check. Delegates to ``ManagedAsyncClient.health_check``.
+
+        Returns:
+            True если Redis alive, иначе False.
+        """
+        result = await self.health_check()
+        return result.get("status") == "ok"
+
     def __init__(self, settings: RedisSettings) -> None:
         """Args:
         settings: конфигурация Redis-подключений.
