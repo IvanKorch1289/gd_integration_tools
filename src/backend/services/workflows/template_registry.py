@@ -156,7 +156,7 @@ class WorkflowTemplateRegistry:
                 score = float(fuzz.partial_ratio(query.lower(), text.lower()))
                 scored_rf.append((t, score))
             return sorted(scored_rf, key=lambda x: -x[1])[:top_k]
-        except ImportError:
+        except ImportError:  # noqa: violation-check — rapidfuzz optional, fallback scoring below
             pass
 
         query_words = {w for w in query.lower().split() if len(w) >= 3}
