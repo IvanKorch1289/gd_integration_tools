@@ -1,25 +1,29 @@
-"""Capability-checked facade для BaseService (S120 W3).
+"""Capability-checked facade для BaseService (S120 W3 + Sprint 225 lazy proxy).
 
-ADR-0207: extensions/* services импортируют ``BaseService`` из
-``services.core.base``. Это базовый класс для CRUD-сервисов с
-mixin'ами (cache/crud/versioning). Не должен протекать в extensions —
-должен быть в ``core.services.base_service``.
+ADR-0207: extensions/* services импортируют ``BaseService``.
 
-Migration path:
-- ``from src.backend.services.core.base import BaseService``
-  → ``from src.backend.core.services.base_service import BaseService``
-
-Related:
-- AGENTS.md (boundary rules)
-- ADR-0207 (S120 W5 closure)
+Sprint 225 refactor: convert direct re-export to ``__getattr__``-based lazy
+proxy. Устраняет layer-violation ``core → services``.
 """
 
 from __future__ import annotations
 
-from src.backend.services.core.base import (
-    BaseService,
-    create_service_class,
-    get_service_for_model,
-)
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from src.backend.services.core.base import (
+        BaseService,
+        create_service_class,
+        get_service_for_model,
+    )
 
 __all__ = ("BaseService", "create_service_class", "get_service_for_model")
+
+
+def __getattr__(name: str) -> Any:
+    """Lazy proxy: импорт services только при lookup атрибута."""
+    if name in {"BaseService", "create_service_class", "get_service_for_model"}:
+        from src.backend.services.core import base as _m
+
+        return getattr(_m, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -12,7 +12,6 @@ src/backend/core/ai/policy/enforcer/input_guard_mixin.py	core	src.backend.servic
 src/backend/core/audit/__init__.py	core	src.backend.infrastructure.audit.event_log
 src/backend/core/audit/facade/__init__.py	core	src.backend.infrastructure.audit.jsonl_audit
 src/backend/core/audit/facade/audit_service.py	core	src.backend.services.audit.clickhouse_audit_service
-src/backend/core/auth/ad_directory.py	core	src.backend.services.auth.ad_directory_client
 src/backend/core/auth/facade.py	core	src.backend.services.security.facade
 src/backend/core/di/providers/ai.py	core	src.backend.services.ai.gateway_adapter
 src/backend/core/di/providers/ai.py	core	src.backend.services.ai.pii.presidio_analyzer
@@ -39,9 +38,6 @@ src/backend/core/di/providers/search_bridge.py	core	src.backend.infrastructure.c
 src/backend/core/di/providers/search_bridge.py	core	src.backend.infrastructure.clients.external.search_providers
 src/backend/core/di/providers/storage.py	core	src.backend.services.storage.facade
 src/backend/core/frontend_facade.py	core	src.backend.services.dsl_portal
-src/backend/core/integrations/skb.py	core	src.backend.services.integrations.skb
-src/backend/core/io/__init__.py	core	src.backend.services.io.indexers
-src/backend/core/io/indexers.py	core	src.backend.services.io.indexers
 src/backend/core/messaging/eventbus/facade.py	core	src.backend.infrastructure.clients.messaging.event_bus
 src/backend/core/messaging/stream_facade.py	core	src.backend.infrastructure.clients.messaging.stream
 src/backend/core/notifications/__init__.py	core	src.backend.infrastructure.notifications
@@ -49,9 +45,6 @@ src/backend/core/notifications/__init__.py	core	src.backend.infrastructure.notif
 src/backend/core/observability/log_indexer.py	core	src.backend.services.io.indexers.log_indexer
 src/backend/core/scheduler/__init__.py	core	src.backend.infrastructure.scheduler.cron_validator
 src/backend/core/security/connector_auth.py	core	src.backend.services.authorization.facade
-src/backend/core/services/__init__.py	core	src.backend.services.core.base_external_api
-src/backend/core/services/base.py	core	src.backend.services.core.base_external_api
-src/backend/core/services/base_service.py	core	src.backend.services.core.base
 src/backend/core/workflow/__init__.py	core	src.backend.infrastructure.workflow.factory
 src/backend/entrypoints/_action_bridge.py	entrypoints	src.backend.dsl.engine.context
 src/backend/entrypoints/_action_bridge.py	entrypoints	src.backend.dsl.service
