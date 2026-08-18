@@ -125,16 +125,6 @@ src/backend/services/core/admin.py	services	src.backend.dsl.commands.action_regi
 src/backend/services/core/admin.py	services	src.backend.dsl.commands.registry
 src/backend/services/dsl/builder_service.py	services	src.backend.dsl.commands.registry
 src/backend/services/dsl/builder_service.py	services	src.backend.dsl.yaml_store
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.dry_run
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.execution_engine
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.pipeline
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.tracer
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.registry
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.workflow.spec
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.workflow.versioning
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.workflow.visualize
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.workflow.yaml_io
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.yaml_loader.loaders
 src/backend/services/execution/action_dispatcher.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/execution/middlewares/rate_limit_middleware.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/jupyter/hub_actions.py	services	src.backend.dsl.commands.action_registry

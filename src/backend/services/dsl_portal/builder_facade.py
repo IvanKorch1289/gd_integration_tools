@@ -26,30 +26,84 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from src.backend.services.workflows.saga_history import SagaHistoryRecord
+    from src.backend.dsl.engine.dry_run import dry_run_route, waterfall_lines
+    from src.backend.dsl.engine.execution_engine import ExecutionEngine
+    from src.backend.dsl.engine.pipeline import Pipeline
+    from src.backend.dsl.engine.tracer import get_tracer
+    from src.backend.dsl.registry import route_registry
+    from src.backend.dsl.workflow.spec import WorkflowDeclaration
+    from src.backend.dsl.workflow.versioning import get_global_registry
+    from src.backend.dsl.workflow.visualize import (
+        compute_step_diff,
+        to_graphviz,
+        to_mermaid,
+    )
+    from src.backend.dsl.workflow.yaml_io import (
+        load_all_workflows_from_directory,
+        load_workflow_from_file,
+        load_workflow_from_yaml,
+    )
+    from src.backend.dsl.yaml_loader.loaders import load_pipeline_from_yaml
+    from src.backend.services.workflows.template_registry import get_template_registry
 
 logger = logging.getLogger(__name__)
 
-from src.backend.dsl.engine.dry_run import dry_run_route, waterfall_lines
-from src.backend.dsl.engine.execution_engine import ExecutionEngine
-from src.backend.dsl.engine.pipeline import Pipeline
-from src.backend.dsl.engine.tracer import get_tracer
-from src.backend.dsl.registry import route_registry
-from src.backend.dsl.workflow.spec import (
-    WorkflowDeclaration,  # noqa: F401 — re-export for frontend facade (allowlist matches dsl.workflow.spec)
+# get_template_registry is services→services import (no layer violation),
+# НЕ в lazy map — держим direct import для use in function bodies
+# (Python module __getattr__ не вызывается при lookup из function locals).
+from src.backend.services.workflows.template_registry import (  # noqa: E402 — direct for function body
+    get_template_registry as get_template_registry,
 )
-from src.backend.dsl.workflow.versioning import get_global_registry
-from src.backend.dsl.workflow.visualize import (
-    compute_step_diff,
-    to_graphviz,
-    to_mermaid,
-)
-from src.backend.dsl.workflow.yaml_io import (
-    load_all_workflows_from_directory,
-    load_workflow_from_file,
-    load_workflow_from_yaml,
-)
-from src.backend.dsl.yaml_loader.loaders import load_pipeline_from_yaml
-from src.backend.services.workflows.template_registry import get_template_registry
+
+# Sprint 225: 10 services → dsl imports converted to lazy __getattr__ proxy.
+# DSL modules импортируются только при lookup атрибута, не при module load.
+# Public API identical (symbol identity preserved via `is` checks).
+_LAZY_MAP: dict[str, tuple[str, str]] = {
+    "dry_run_route": ("src.backend.dsl.engine.dry_run", "dry_run_route"),
+    "waterfall_lines": ("src.backend.dsl.engine.dry_run", "waterfall_lines"),
+    "ExecutionEngine": ("src.backend.dsl.engine.execution_engine", "ExecutionEngine"),
+    "Pipeline": ("src.backend.dsl.engine.pipeline", "Pipeline"),
+    "get_tracer": ("src.backend.dsl.engine.tracer", "get_tracer"),
+    "route_registry": ("src.backend.dsl.registry", "route_registry"),
+    "WorkflowDeclaration": ("src.backend.dsl.workflow.spec", "WorkflowDeclaration"),
+    "get_global_registry": ("src.backend.dsl.workflow.versioning", "get_global_registry"),
+    "compute_step_diff": ("src.backend.dsl.workflow.visualize", "compute_step_diff"),
+    "to_graphviz": ("src.backend.dsl.workflow.visualize", "to_graphviz"),
+    "to_mermaid": ("src.backend.dsl.workflow.visualize", "to_mermaid"),
+    "load_all_workflows_from_directory": (
+        "src.backend.dsl.workflow.yaml_io",
+        "load_all_workflows_from_directory",
+    ),
+    "load_workflow_from_file": (
+        "src.backend.dsl.workflow.yaml_io",
+        "load_workflow_from_file",
+    ),
+    "load_workflow_from_yaml": (
+        "src.backend.dsl.workflow.yaml_io",
+        "load_workflow_from_yaml",
+    ),
+    "load_pipeline_from_yaml": (
+        "src.backend.dsl.yaml_loader.loaders",
+        "load_pipeline_from_yaml",
+    ),
+}
+
+
+def __getattr__(name: str) -> Any:
+    """Lazy proxy: import DSL/services только при lookup атрибута.
+
+    Cache result в module globals после первого lookup — это позволяет
+    function bodies (которые lookup в module __dict__ напрямую, не через
+    __getattr__) находить symbols.
+    """
+    if name in _LAZY_MAP:
+        import importlib
+
+        mod_path, attr = _LAZY_MAP[name]
+        value = getattr(importlib.import_module(mod_path), attr)
+        globals()[name] = value  # cache for subsequent __dict__ lookups
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def list_workflow_templates() -> list[Any]:
