@@ -57,7 +57,7 @@ async def test_parallelism_report_with_registry() -> None:
     fake_module = _fake_registry_module(FakeRoute())
 
     with patch.dict(
-        sys.modules, {"src.backend.dsl.route_loader.registry": fake_module},
+        sys.modules, {"src.backend.dsl.registry": fake_module},
     ):
         result = await mod.parallelism_report("test-route")
 
@@ -76,7 +76,7 @@ async def test_parallelism_report_route_not_found() -> None:
     fake_module = _fake_registry_module(None)
 
     with patch.dict(
-        sys.modules, {"src.backend.dsl.route_loader.registry": fake_module},
+        sys.modules, {"src.backend.dsl.registry": fake_module},
     ), pytest.raises(HTTPException) as exc_info:
         await mod.parallelism_report("missing")
 
@@ -88,10 +88,10 @@ async def test_parallelism_report_route_not_found() -> None:
 async def test_parallelism_report_registry_import_error() -> None:
     """parallelism_report works when route_registry import fails."""
     with patch.dict(
-        sys.modules, {"src.backend.dsl.route_loader.registry": None}, clear=False,
+        sys.modules, {"src.backend.dsl.registry": None}, clear=False,
     ):
         # Remove the module from sys.modules to force ImportError
-        original = sys.modules.pop("src.backend.dsl.route_loader.registry", None)
+        original = sys.modules.pop("src.backend.dsl.registry", None)
         try:
             result = await mod.parallelism_report("any")
         finally:
@@ -115,7 +115,7 @@ async def test_parallelism_report_registry_exception() -> None:
     fake_module.route_registry = fake_registry
 
     with patch.dict(
-        sys.modules, {"src.backend.dsl.route_loader.registry": fake_module},
+        sys.modules, {"src.backend.dsl.registry": fake_module},
     ):
         result = await mod.parallelism_report("any")
 
@@ -136,7 +136,7 @@ def test_parallelism_report_http_200() -> None:
     fake_module = _fake_registry_module(FakeRoute())
 
     with patch.dict(
-        sys.modules, {"src.backend.dsl.route_loader.registry": fake_module},
+        sys.modules, {"src.backend.dsl.registry": fake_module},
     ):
         client = TestClient(app)
         resp = client.get("/api/v1/admin/routes/test-route/parallelism-report")
@@ -153,7 +153,7 @@ def test_parallelism_report_http_404() -> None:
     fake_module = _fake_registry_module(None)
 
     with patch.dict(
-        sys.modules, {"src.backend.dsl.route_loader.registry": fake_module},
+        sys.modules, {"src.backend.dsl.registry": fake_module},
     ):
         client = TestClient(app, raise_server_exceptions=False)
         resp = client.get("/api/v1/admin/routes/missing/parallelism-report")
