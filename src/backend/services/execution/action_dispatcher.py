@@ -19,7 +19,7 @@ Middleware-цепочка строится при каждом ``dispatch`` из
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.action_dispatcher import (
     ActionDispatcher,
@@ -32,10 +32,39 @@ from src.backend.core.interfaces.action_dispatcher import (
     MiddlewareNextHandler,
     TransportName,
 )
-from src.backend.dsl.commands.action_registry import (
-    ActionHandlerRegistry,
-    action_handler_registry,
-)
+if TYPE_CHECKING:
+    from src.backend.dsl.commands.action_registry import ActionHandlerRegistry
+
+# Sprint 226: action_handler_registry + ActionHandlerRegistry converted
+# to lazy __getattr__ proxy.
+_LAZY_MAP: dict[str, tuple[str, str]] = {
+    "action_handler_registry": (
+        "src.backend.dsl.commands.action_registry",
+        "action_handler_registry",
+    ),
+    "ActionHandlerRegistry": (
+        "src.backend.dsl.commands.action_registry",
+        "ActionHandlerRegistry",
+    ),
+}
+
+
+def __getattr__(name: str) -> Any:
+    """Lazy proxy: import DSL только при lookup атрибута.
+
+    Cache result в module globals — function body references
+    (e.g. __init__ method) находить cached symbol.
+    """
+    if name in _LAZY_MAP:
+        import importlib
+
+        mod_path, attr = _LAZY_MAP[name]
+        value = getattr(importlib.import_module(mod_path), attr)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
 from src.backend.schemas.invocation import ActionCommandSchema
 
 __all__ = ("DefaultActionDispatcher", "get_action_dispatcher")
