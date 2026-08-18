@@ -101,7 +101,7 @@ class CodecFacade:
     def _encode_json(self, data: Any) -> bytes:
         import orjson
 
-        from src.backend.dsl.codec.json import to_jsonable
+        from src.backend.core.codec.json import to_jsonable
 
         return orjson.dumps(to_jsonable(data))
 
@@ -155,7 +155,7 @@ class CodecFacade:
             raise ServiceError("msgpack not installed")
         import msgpack
 
-        from src.backend.dsl.codec.json import to_jsonable
+        from src.backend.core.codec.json import to_jsonable
 
         return msgpack.packb(to_jsonable(data), use_bin_type=True)
 
