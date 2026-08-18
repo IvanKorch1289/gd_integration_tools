@@ -41,8 +41,14 @@ def _resolve_http_app(mcp: Any) -> Any:
             # stale reference на original session_manager (task group=None).
             # Stateless mode creates new transport per request → task group
             # check bypassed → 404 → 200.
+            #
+            # D-AUDIT-20812 fix (cycle 218): use path="/" to fix
+            # Starlette Mount path mismatch. Starlette Mount re-roots
+            # request path to "/" при match. FastMCP inner has route
+            # at "/mcp" by default → 404. Pass path="/" so inner route
+            # becomes "/" → matches re-rooted request.
             if attr in ("http_app", "streamable_http_app"):
-                asgi = candidate(stateless_http=True)
+                asgi = candidate(stateless_http=True, path="/")
             else:
                 asgi = candidate() if callable(candidate) else candidate
         except Exception as exc:
@@ -50,7 +56,8 @@ def _resolve_http_app(mcp: Any) -> Any:
             continue
         if asgi is not None:
             logger.info(
-                "FastMCP HTTP transport resolved via .%s() (stateless_http=True)",
+                "FastMCP HTTP transport resolved via .%s() "
+                "(stateless_http=True, path='/')",
                 attr,
             )
             return asgi
