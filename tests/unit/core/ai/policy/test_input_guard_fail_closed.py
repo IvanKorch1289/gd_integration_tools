@@ -54,7 +54,9 @@ async def test_provider_failure_with_fail_open_warns() -> None:
             "src.backend.services.ai.guardrails.lakera_client.LakeraClient",
         ) as mock_cls,
         patch(
-            "src.backend.core.audit.facade.emit_audit_safe",
+            # Patch at LOOKUP location, not source location (import shadows
+            # the source name in destination module's namespace).
+            "src.backend.core.ai.policy.enforcer.input_guard_mixin.emit_audit_safe",
         ) as mock_audit,
     ):
         mock_client = MagicMock()

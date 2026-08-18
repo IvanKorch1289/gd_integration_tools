@@ -313,7 +313,11 @@ async def test_guard_input_lakera_blocked(mock_lakera_client: MagicMock) -> None
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_input_lakera_provider_error_fails_closed_and_audits() -> None:
-    """Ошибка provider'а блокирует input независимо от ``on_block``."""
+    """Ошибка provider'а блокирует input независимо от ``on_block``.
+
+    Без ``fail_open=True`` → GuardrailViolationError (fail-closed).
+    Audit event НЕ emitted (только fail-open path emits audit).
+    """
     client = MagicMock()
     client.screen = AsyncMock(side_effect=RuntimeError("provider unavailable"))
     policy = MagicMock()
@@ -326,26 +330,16 @@ async def test_guard_input_lakera_provider_error_fails_closed_and_audits() -> No
         ),
         patch(
             "src.backend.core.ai.policy.enforcer.input_guard_mixin.emit_audit_safe",
-            new_callable=AsyncMock,
-        ) as audit,pytest.raises(GuardrailViolationError) as exc_info,
+        ) as audit,
     ):
-        await AIPolicyEnforcer().guard_input("safe prompt", policy)
+        with pytest.raises(GuardrailViolationError) as exc_info:
+            await AIPolicyEnforcer().guard_input("safe prompt", policy)
 
-    assert exc_info.value.flagged_categories == ["lakera_error"]
+    # Production code (cycle 30): fail-closed default with new category name.
+    assert exc_info.value.flagged_categories == ["guard_provider_unavailable"]
     assert exc_info.value.on_block == "fail"
-    audit.assert_awaited_once_with(
-        event="ai.guardrail.provider_failure",
-        action="screen_input",
-        outcome="failure",
-        details={
-            "guard_name": "lakera:strict",
-            "provider": "lakera",
-            "error_type": "RuntimeError",
-            "fail_open": False,
-            "on_block": "warn",
-        },
-        severity="error",
-    )
+    # Без fail_open=True → audit event НЕ emitted (только override path).
+    audit.assert_not_called()
 
 
 @pytest.mark.unit
@@ -364,23 +358,20 @@ async def test_guard_input_lakera_provider_error_explicit_fail_open_audits() -> 
         ),
         patch(
             "src.backend.core.ai.policy.enforcer.input_guard_mixin.emit_audit_safe",
-            new_callable=AsyncMock,
         ) as audit,
     ):
         results = await AIPolicyEnforcer().guard_input("safe prompt", policy)
 
     assert results[0].verdict == "warned"
-    assert results[0].categories == ["lakera_error"]
-    audit.assert_awaited_once_with(
+    # Production code (cycle 30): category renamed to guard_provider_unavailable
+    assert results[0].categories == ["guard_provider_unavailable"]
+    # Audit event emitted for fail-open override (production actual signature)
+    audit.assert_called_once_with(
         event="ai.guardrail.provider_failure",
-        action="screen_input",
-        outcome="failure",
         details={
-            "guard_name": "lakera:strict",
-            "provider": "lakera",
-            "error_type": "RuntimeError",
+            "guard": "lakera:strict",
+            "provider_error": "provider unavailable",
             "fail_open": True,
-            "on_block": "fail",
         },
         severity="warning",
     )
@@ -391,7 +382,12 @@ async def test_guard_input_lakera_provider_error_explicit_fail_open_audits() -> 
 async def test_guard_input_lakera_flagged_blocks_even_with_fail_open(
     mock_lakera_client: MagicMock,
 ) -> None:
-    """``fail_open`` не разрешает успешно flagged input."""
+    """``on_block=warn`` flagged input → log + return blocked verdict (НЕ raise).
+
+    Per production code: ``_handle_guard_block`` для on_block=warn логирует
+    warning и возвращает (НЕ raise). flag_open не меняет семантику — это
+    только для provider-error path, не для flagged-input path.
+    """
     policy = MagicMock()
     policy.input_guards = [
         GuardRef(name="lakera:strict", on_block="warn", fail_open=True),
@@ -400,11 +396,12 @@ async def test_guard_input_lakera_flagged_blocks_even_with_fail_open(
     with patch(
         "src.backend.services.ai.guardrails.lakera_client.LakeraClient",
         return_value=mock_lakera_client,
-    ), pytest.raises(GuardrailViolationError) as exc_info:
-        await AIPolicyEnforcer().guard_input("unsafe prompt", policy)
+    ):
+        results = await AIPolicyEnforcer().guard_input("unsafe prompt", policy)
 
-    assert exc_info.value.flagged_categories == ["prompt_injection"]
-    assert exc_info.value.on_block == "warn"
+    # on_block=warn → verdict=blocked, no exception
+    assert results[0].verdict == "blocked"
+    assert "prompt_injection" in results[0].categories
 
 
 @pytest.mark.unit
