@@ -122,9 +122,9 @@ class RouteHotReloader:
             self._task.cancel()
             try:
                 await self._task
-            except asyncio.CancelledError:
+            except asyncio.CancelledError:  # noqa: violation-check — expected post-cancel exception
                 # Ожидаемое исключение после cancel() — не логируем.
-                pass  # noqa: violation-check — expected post-cancel exception
+                pass
             except Exception as exc:
                 # Нештатное завершение — логируем для observability.
                 _logger.warning("hot_reloader.stop_task_error: %s", exc)

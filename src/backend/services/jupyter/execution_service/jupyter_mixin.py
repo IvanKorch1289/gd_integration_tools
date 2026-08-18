@@ -163,8 +163,8 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
                             )
                             connection_dead.set()
                             break
-            except asyncio.CancelledError:
-                pass  # noqa: violation-check — normal heartbeat shutdown
+            except asyncio.CancelledError:  # noqa: violation-check — normal heartbeat shutdown
+                pass
             except Exception as exc:
                 _logger.warning("Heartbeat task error: %s", exc)
                 connection_dead.set()
@@ -257,8 +257,8 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
                 heartbeat_task.cancel()
                 try:
                     await heartbeat_task
-                except asyncio.CancelledError:
-                    pass  # noqa: violation-check — expected after cancel
+                except asyncio.CancelledError:  # noqa: violation-check — expected after cancel
+                    pass
                 except Exception as exc:
                     _logger.warning("heartbeat task finalisation error: %s", exc)
 

@@ -268,9 +268,9 @@ class SlaTracker:
             self._task.cancel()
             try:
                 await self._task
-            except asyncio.CancelledError:
+            except asyncio.CancelledError:  # noqa: violation-check — expected post-cancel exception
                 # Ожидаемое исключение после cancel() — логировать не нужно.
-                pass  # noqa: violation-check — expected post-cancel exception
+                pass
             except Exception as exc:
                 _logger.debug("sla.tracker_stop_error: %s", exc)
             self._task = None
@@ -279,8 +279,8 @@ class SlaTracker:
         while not self._stop.is_set():
             try:
                 await asyncio.wait_for(self._stop.wait(), timeout=self._check_interval)
-            except TimeoutError:
-                pass  # noqa: violation-check — periodic wakeup timeout, expected
+            except TimeoutError:  # noqa: violation-check — periodic wakeup timeout, expected
+                pass
             await self._check_once()
 
     async def _check_once(self) -> list[SlaBreachRecord]:
