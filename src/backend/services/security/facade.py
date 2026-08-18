@@ -379,25 +379,26 @@ class _InMemoryJwtBlacklist:
     """
 
     def __init__(self) -> None:
-        import threading
+        import asyncio
 
         # ttl: 24h default. Per-entry granularity теряется, но экономим
         # ~40 LOC ручного TTL-check. JWT обычно живут < 24h.
         self._store: TTLCache[str, bool] = TTLCache(maxsize=10_000, ttl=86400)
-        # cachetools.TTLCache НЕ thread-safe по дизайну → Lock обязателен.
-        self._lock = threading.Lock()
+        # cachetools.TTLCache НЕ thread-safe по дизайну → asyncio.Lock обязателен
+        # (методы revoke/unvoke/is_revoked — async; threading.Lock блокирует event loop).
+        self._lock = asyncio.Lock()
 
     async def revoke(self, jti: str, expires_at: int) -> None:
         # expires_at учтён через ttl=86400; bool-значение не нужно хранить.
-        with self._lock:
+        async with self._lock:
             self._store[jti] = True
 
     async def unrevoke(self, jti: str) -> None:
-        with self._lock:
+        async with self._lock:
             self._store.pop(jti, None)
 
     async def is_revoked(self, jti: str) -> bool:
-        with self._lock:
+        async with self._lock:
             return jti in self._store
 
     async def is_iat_revoked(self, iat: int | None) -> bool:
