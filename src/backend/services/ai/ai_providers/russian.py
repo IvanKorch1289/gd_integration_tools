@@ -79,7 +79,7 @@ class _BaseRussianProvider:
             if choices:
                 msg = choices[0].get("message", {})
                 return msg.get("content", "") or ""
-        except (AttributeError, IndexError, TypeError):
+        except (AttributeError, IndexError, TypeError):  # noqa: violation-check — narrow API-shape fallback
             pass
         return ""
 
