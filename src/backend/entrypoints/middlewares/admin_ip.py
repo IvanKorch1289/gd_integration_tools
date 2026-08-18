@@ -22,7 +22,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 from src.backend.core.config.settings import settings
 from src.backend.core.security.ip_restriction_store import get_ip_restriction_store
-from src.backend.dsl.codec.converters import convert_pattern
+from src.backend.core.utils.converters import convert_pattern
 
 __all__ = ("IPRestrictionMiddleware",)
 

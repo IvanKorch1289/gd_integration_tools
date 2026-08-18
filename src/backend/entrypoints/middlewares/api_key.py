@@ -29,7 +29,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 from src.backend.core.auth import AuthContext, AuthMethod
 from src.backend.core.config.settings import settings
-from src.backend.dsl.codec.converters import convert_pattern
+from src.backend.core.utils.converters import convert_pattern
 
 __all__ = ("APIKeyMiddleware",)
 

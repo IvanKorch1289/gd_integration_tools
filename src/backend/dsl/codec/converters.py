@@ -1,47 +1,19 @@
-"""Конвертеры значений: numpy-скаляры, regex-паттерны, pydantic-модели."""
+"""Back-compat shim — re-exports из :mod:`core.utils.converters` (Sprint 224).
 
-from typing import Any
+Pure value converters (numpy scalars, glob patterns, pydantic models)
+перенесены в ``core/utils/converters.py`` для устранения 3 layer-violation
+(services/tech.py, entrypoints/middlewares/admin_ip.py,
+entrypoints/middlewares/api_key.py импортировали эти утилиты из dsl/).
+Dsl re-export shim сохранён для backward compatibility.
 
-from pydantic import BaseModel
+Новые потребители должны импортировать из:
+    ``from src.backend.core.utils.converters import convert_numpy_types, convert_pattern, transfer_model_to_schema``
+"""
 
-from src.backend.core.logging import get_logger
-
-app_logger = get_logger("application")
+from src.backend.core.utils.converters import (  # noqa: F401 — back-compat re-export
+    convert_numpy_types,
+    convert_pattern,
+    transfer_model_to_schema,
+)
 
 __all__ = ("convert_numpy_types", "convert_pattern", "transfer_model_to_schema")
-
-
-def convert_numpy_types(value: Any) -> Any:
-    """numpy/Arrow скаляр → нативный Python тип."""
-    if isinstance(value, bool):
-        return bool(value)
-    if isinstance(value, int):
-        return int(value)
-    if isinstance(value, float):
-        return float(value)
-    item = getattr(value, "item", None)
-    if callable(item):
-        try:
-            return item()
-        except Exception as _:
-            return value
-    return value
-
-
-def convert_pattern(pattern: str) -> str:
-    """Glob-подобный pattern → regex (`*` → `.*`, якоря по краям)."""
-    started_symbol = "^" if pattern == "/" else "^.*"
-    return f"{started_symbol}{pattern.replace('*', '.*')}$"
-
-
-def transfer_model_to_schema(
-    instance: Any, schema: type[BaseModel], from_attributes: bool = False,
-) -> BaseModel:
-    """ORM/dict → pydantic-схема через `model_validate`."""
-    try:
-        return schema.model_validate(instance, from_attributes=from_attributes)
-    except Exception as exc:
-        app_logger.error(
-            "Ошибка преобразования модели в схему: %s", str(exc), exc_info=True,
-        )
-        raise ValueError("Ошибка преобразования модели в схему") from exc
