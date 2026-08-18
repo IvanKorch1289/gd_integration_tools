@@ -112,7 +112,7 @@ class ConfigHotReloader:
             self._task.cancel()
             try:
                 await self._task
-            except asyncio.CancelledError:
+            except asyncio.CancelledError:  # noqa: violation-check — expected after cancel
                 pass
 
     async def _watch_loop(self) -> None:

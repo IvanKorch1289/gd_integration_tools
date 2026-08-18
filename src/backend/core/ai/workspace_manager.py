@@ -247,8 +247,10 @@ class AIWorkspaceManager:
             task.cancel()
             try:
                 await task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError:  # noqa: violation-check — expected after cancel
                 pass
+            except Exception as exc:
+                _logger.warning("workspace_manager.task_finalisation_error: %s", exc)
 
 
 def _dir_size(path: Path) -> int:

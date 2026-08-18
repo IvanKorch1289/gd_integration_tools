@@ -125,8 +125,10 @@ class AIWorkspaceCleaner:
             task.cancel()
             try:
                 await task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError:  # noqa: violation-check — expected after cancel
                 pass
+            except Exception as exc:
+                _logger.warning("workspace_cleaner.task_finalisation_error: %s", exc)
 
     def cleanup_expired(self, now: datetime, ttl_days: int | None = None) -> int:
         """Удалить session-каталоги старше TTL.

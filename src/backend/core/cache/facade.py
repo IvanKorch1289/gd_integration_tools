@@ -374,7 +374,7 @@ class DiskCacheFacade(UnifiedCacheFacade):
                 path = self._path(key)
                 try:
                     os.remove(path)
-                except FileNotFoundError:
+                except FileNotFoundError:  # noqa: violation-check — file already removed by another worker
                     pass
 
     async def delete_by_tag(self, tag: str) -> int:

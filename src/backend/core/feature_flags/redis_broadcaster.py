@@ -204,7 +204,7 @@ class RedisFeatureFlagBroadcaster:
             self._task.cancel()
             try:
                 await self._task
-            except asyncio.CancelledError:
+            except asyncio.CancelledError:  # noqa: violation-check — expected after cancel
                 pass
             except Exception as exc:
                 _logger.debug("feature_flag.broadcast.subscriber.stop_error: %s", exc)

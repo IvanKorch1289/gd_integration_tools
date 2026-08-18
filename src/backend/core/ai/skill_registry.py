@@ -348,7 +348,7 @@ class SkillRegistry:
             _capability_check = getattr(
                 sandbox_module, "_global_capability_check", None,
             )
-        except ImportError:
+        except ImportError:  # noqa: violation-check — sandbox module optional
             pass  # sandbox module not available — skip check
 
         if _capability_check is not None:
@@ -440,7 +440,7 @@ class SkillRegistry:
             sibling = repo_root / "extensions"
             if sibling.exists():
                 return sibling.resolve()
-        except (OSError, ValueError):
+        except (OSError, ValueError):  # noqa: violation-check — filesystem walk failure → return None
             pass
 
         return None
