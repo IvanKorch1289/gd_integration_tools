@@ -78,7 +78,7 @@ class MetricsRegistry:
     ) -> None:
         self._default_labels = tuple(default_labels)
         self._registry = registry  # None → global
-        self._lock = threading.Lock()
+        self._lock = threading.Lock()  # noqa: violation-check — sync counter/histogram/gauge/registered_names
         self._counters: dict[str, Counter] = {}
         self._histograms: dict[str, Histogram] = {}
         self._gauges: dict[str, Gauge] = {}

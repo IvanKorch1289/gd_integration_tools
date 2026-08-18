@@ -50,7 +50,7 @@ class WorkflowRegistry:
 
     def __init__(self) -> None:
         self._classes: dict[str, type] = {}
-        self._lock = threading.Lock()
+        self._lock = threading.Lock()  # noqa: violation-check — sync register/get/all/names/clear/__contains__
 
     def register(self, cls: type) -> type:
         """Регистрирует workflow-класс.

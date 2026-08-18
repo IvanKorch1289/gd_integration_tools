@@ -48,7 +48,7 @@ T = TypeVar("T")
 _factories: dict[Hashable, Callable[[], Any]] = {}
 # Кеш синглтонов: factory вызывается один раз, результат кешируется.
 _singletons: dict[Hashable, Any] = {}
-_lock = threading.Lock()
+_lock = threading.Lock()  # noqa: violation-check — sync register_factory/has_service/list_services/get_service/clear_registry
 
 
 def register_factory(key: Hashable, factory: Callable[[], Any]) -> None:

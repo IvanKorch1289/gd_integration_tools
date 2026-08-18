@@ -81,7 +81,7 @@ class RuntimeFeatureFlagOverrides:
     def __init__(self) -> None:
         self._global: dict[str, Any] = {}
         self._per_tenant: dict[str, dict[str, Any]] = {}
-        self._lock = threading.Lock()
+        self._lock = threading.Lock()  # noqa: violation-check — sync get/set/clear/has_override/list/reset
 
     def get(self, flag: str, default: Any, *, tenant_id: str | None = None) -> Any:
         """Резолвит значение flag по приоритету tenant→global→default.
@@ -212,7 +212,7 @@ class RuntimeFeatureFlagOverrides:
 
 
 _singleton: RuntimeFeatureFlagOverrides | None = None
-_singleton_lock = threading.Lock()
+_singleton_lock = threading.Lock()  # noqa: violation-check — sync get_runtime_overrides singleton
 
 
 def get_runtime_overrides() -> RuntimeFeatureFlagOverrides:
