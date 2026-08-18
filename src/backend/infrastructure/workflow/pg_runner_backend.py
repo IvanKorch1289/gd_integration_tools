@@ -70,7 +70,19 @@ def _status_to_protocol(status: WorkflowStatus) -> str:
 
 
 class PgRunnerWorkflowBackend(WorkflowBackend):
-    """``WorkflowBackend`` поверх ADR-031 pg-runner stack."""
+    """``WorkflowBackend`` поверх ADR-031 pg-runner stack.
+
+    .. deprecated::
+        DEPRECATED since Sprint 217 (2026-08-17) — pg-runner backend
+        не реализует Temporal-совместимый replay API и не детектирует
+        non-determinism (Phase 0 verification, MULTI_SPRINT_2026-08-17.md).
+
+        Production callers → :class:`TemporalWorkflowBackend`.
+        Dev/test/CI может продолжать использовать этот backend,
+        но :meth:`replay` всегда raise ``NotImplementedError``.
+
+        Removal: Sprint 220+ (после полной миграции callers).
+    """
 
     def __init__(
         self,
@@ -225,13 +237,21 @@ class PgRunnerWorkflowBackend(WorkflowBackend):
         ``workflow_events`` table) — у него нет ``WorkflowHistory.from_json``
         и он не может воспроизводить Temporal history bytes.
 
+        .. deprecated::
+            DEPRECATED since Sprint 217 (2026-08-17). pg-runner backend
+            deprecated entirely — production callers must migrate to
+            :class:`TemporalWorkflowBackend`. This method will be removed
+            in Sprint 220+.
+
         Raises:
             NotImplementedError: всегда (pg-runner не реализует replay API).
 
         """
         raise NotImplementedError(
-            "pg-runner does not implement Temporal-compatible replay; "
-            "use DurableWorkflowRunner._run_step() instead",
+            "PgRunnerWorkflowBackend.replay() is DEPRECATED since Sprint 217 "
+            "(2026-08-17) — pg-runner backend does not implement Temporal-"
+            "compatible replay. Migrate to TemporalWorkflowBackend. "
+            "See MULTI_SPRINT_2026-08-17.md Sprint 7 for deprecation timeline.",
         )
 
     async def await_external_signal(
