@@ -74,20 +74,42 @@ class RedisClient(ConnectionMixin, CacheMixin, HelpersMixin, StreamMixin):
     # either stubbed ``__init__`` or never exercised ``RedisClient()``.
     __slots__ = ("_breakers", "_clients", "_locks", "logger", "settings")
 
-    # D-AUDIT-20814 fix (cycle 224): public ``ping()`` для health-check'ов
-    # (был: \`ConnectionMixin.get_client()\` вызывает \`await client.ping()\`,
-    # но \`RedisClient\` имел только приватный \`_ping\` от \`ManagedAsyncClient\`.
-    # Health endpoint \`/api/v1/admin/health/components\` падал с
-    # \`'RedisClient' object has no attribute 'ping'\`).
-    # Ponytail: 1-line public method, delegates to existing \`health_check\`.
+    # D-AUDIT-20814 fix (cycle 224) + D-AUDIT-20818 (cycle 226):
+    # public ``ping()`` И ``health_check()`` для health-check'ов.
+    # Раньше \`RedisClient\` не inheritил от \`ManagedAsyncClient\`,
+    # а only 4 mixins. Caller \`setup_infra/health.py\` вызывал
+    # \`client.ping()\` и \`client.health_check()\` → AttributeError.
+    #
+    # Fix per Ponytail (D-AUDIT-20818): оба метода — ``ping()`` И
+    # ``health_check()`` — добавлены как 1-line public wrappers.
+    # \`ping()`` — boolean (alive? dead?), \`health_check()`` — dict
+    # (как в ManagedAsyncClient). Оба делают реальный Redis PING через
+    # первый available client (cache kind — наиболее вероятно alive).
     async def ping(self) -> bool:
-        """Public health-check. Delegates to ``ManagedAsyncClient.health_check``.
+        """Public health-check. Returns True if Redis alive.
 
         Returns:
-            True если Redis alive, иначе False.
+            True если Redis alive, False иначе.
         """
-        result = await self.health_check()
-        return result.get("status") == "ok"
+        try:
+            client = await self.get_client("cache")
+            await client.ping()
+            return True
+        except Exception:
+            return False
+
+    async def health_check(self) -> dict[str, Any]:
+        """Public health-check (returns dict like ManagedAsyncClient).
+
+        Returns:
+            \`{\"status\": \"ok\"|\"down\", \"error\": str|None}\`.
+        """
+        try:
+            client = await self.get_client("cache")
+            await client.ping()
+            return {"status": "ok", "error": None}
+        except Exception as exc:
+            return {"status": "down", "error": str(exc)[:200]}
 
     # D-AUDIT-20815 fix (cycle 225): public ``pubsub()`` for HITL signal store.
     # Caller: ``src/backend/services/workflows/hitl_signal_store_redis.py:328``
