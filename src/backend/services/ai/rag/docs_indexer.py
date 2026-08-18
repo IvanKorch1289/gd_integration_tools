@@ -55,7 +55,9 @@ def _embed_offline(text: str, dim: int = _EMBED_DIM) -> list[float]:
     """
     vec = [0.0] * dim
     for tok in re.findall(r"\w+", (text or "").lower()):
-        vec[int(hashlib.md5(tok.encode()).hexdigest(), 16) % dim] += 1.0
+        # ponytail: bag-of-words hash binning, not a security primitive.
+        # usedforsecurity=False silences bandit B324 without weakening crypto.
+        vec[int(hashlib.md5(tok.encode(), usedforsecurity=False).hexdigest(), 16) % dim] += 1.0
     n = sum(v * v for v in vec) ** 0.5
     return [v / n for v in vec] if n > 0 else vec
 
