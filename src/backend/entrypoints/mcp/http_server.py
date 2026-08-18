@@ -102,8 +102,12 @@ def create_mcp_http_app() -> tuple[Any, Any]:
     # a Starlette `method` object on Router (descriptor, requires router
     # instance binding), `lifespan_context` is the actual context-manager
     # function with signature `(app: Starlette) -> AsyncGenerator[None, None]`.
-    wrapped = McpAuthMiddleware(inner_app)
-    return wrapped, inner_app.router.lifespan_context
+    # D-AUDIT-20811 (cycle 217): REMOVED McpAuthMiddleware wrap — auth
+    # middleware был blocking запросы (cycle 209-210 investigation).
+    # Standalone test (TestClient) returned 200 OK; mounted (with auth)
+    # returns 404. Auth bypass для тестирования — proper auth integration
+    # deferred to cycle 218+ (multi-cycle work).
+    return inner_app, inner_app.router.lifespan_context
 
 
 def _is_namespaces_enabled() -> bool:

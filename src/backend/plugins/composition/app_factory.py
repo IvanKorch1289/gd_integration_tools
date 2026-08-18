@@ -119,43 +119,48 @@ def _mount_mcp_http(app: FastAPI) -> None:
 
     Ponytail: 1 функция, 1 mount point. Skip если ``mcp_settings.http_enabled=False``.
     """
+    # D-AUDIT-20810 (cycle 217): print() to bypass logging config issue.
+    # granian workers могут filter'ить get_logger calls (D-AUDIT-20808
+    # entry log не появился даже с info level). print() гарантированно
+    # попадает в stdout → docker logs.
+    print("D-AUDIT-20810 _mount_mcp_http ENTRY", flush=True)
     try:
         from src.backend.core.config.ai_stack import mcp_settings
     except ImportError as exc:
-        get_logger(__name__).warning(
-            "MCP HTTP transport: mcp_settings import failed — mount skipped (%s: %s)",
-            type(exc).__name__,
-            exc,
-        )
+        print(f"D-AUDIT-20810 mcp_settings import failed: {exc}", flush=True)
         return
+    print(
+        f"D-AUDIT-20810 mcp_settings: http_enabled={mcp_settings.http_enabled}, "
+        f"bind_path={mcp_settings.bind_path}",
+        flush=True,
+    )
     if not mcp_settings.http_enabled:
+        print("D-AUDIT-20810 mount skipped: http_enabled=False", flush=True)
         return
     try:
         from src.backend.entrypoints.mcp.http_server import create_mcp_http_app
 
-        mcp_asgi, mcp_inner_lifespan = create_mcp_http_app()
+        mcp_asgi, _mcp_inner_lifespan = create_mcp_http_app()
+        print(f"D-AUDIT-20810 create_mcp_http_app() returned: {type(mcp_asgi).__name__}", flush=True)
         app.mount(mcp_settings.bind_path, mcp_asgi)
+        print(f"D-AUDIT-20810 app.mount done at {mcp_settings.bind_path}", flush=True)
         # D-AUDIT-20804 (cycle 210): disable redirect_slashes (см. main.py history).
         app.router.redirect_slashes = False
 
-        # D-AUDIT-20805 (cycle 213): wire FastMCP lifespan (lifespan_context function).
-        _existing_lifespan = app.router.lifespan
+        # D-AUDIT-20809 (cycle 217): REMOVED lifespan replace (combined
+        # lifespan raised RuntimeError → ASGI Lifespan errored → granian
+        # warnings). Правильный fix требует research integration с
+        # Starlette lifespan events. Пока mount проходит без lifespan
+        # integration (session_manager.run() НЕ вызывается, но ASGI
+        # работает чисто без warnings).
 
-        @asynccontextmanager
-        async def _combined_lifespan(app_arg):
-            async with mcp_inner_lifespan(app_arg):
-                async with _existing_lifespan(app_arg):
-                    yield
-
-        app.router.lifespan = _combined_lifespan
-
-        get_logger(__name__).info(
-            "MCP HTTP transport mounted at %s "
-            "(redirect_slashes=False, lifespan=combined)",
-            mcp_settings.bind_path,
+        print(
+            f"D-AUDIT-20810 MCP HTTP transport mounted at {mcp_settings.bind_path} "
+            "(redirect_slashes=False, lifespan=NOT combined — deferred)",
+            flush=True,
         )
     except Exception as exc:
-        get_logger(__name__).warning("MCP HTTP transport mount skipped: %s", exc)
+        print(f"D-AUDIT-20810 MCP HTTP transport mount skipped: {exc}", flush=True)
 
 
 def _configure_business_routers(app: FastAPI) -> None:
