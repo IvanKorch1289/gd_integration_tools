@@ -325,7 +325,9 @@ class RedisHitlSignalStore:
         # Subscribe на ВСЕ tenant channels (pattern subscribe), фильтруем
         # по signal_id в payload. Это покрывает cross-tenant listener use case
         # без необходимости знать tenant_id.
-        pubsub = client.pubsub()
+        # D-AUDIT-20816 (cycle 225): \`await\` — RedisClient.pubsub() is async
+        # (cycle 225 fix). Caller должен await coroutine.
+        pubsub = await client.pubsub()
         await pubsub.psubscribe("hitl:resolved:*")
         try:
             deadline = time.monotonic() + timeout if timeout else None
