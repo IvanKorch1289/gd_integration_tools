@@ -94,9 +94,9 @@ class FtpUploadProcessor(BaseProcessor):
                 # Plaintext FTP path — gated by ctor ``allow_insecure_ftp=True``
                 # AND env ``FTP_INSECURE_OK=1`` (fail-closed in production).
                 # Used only for legacy dev/test servers that lack FTPS.
-                from ftplib import FTP
+                from ftplib import FTP  # nosec B402 — gated opt-in path
 
-                ftp = FTP()
+                ftp = FTP()  # nosec B321 — gated opt-in path
                 # Rationale: opt-in legacy path; both flags required,
                 # logged via ``_rpa_logger.info(tls=...)`` for audit.
                 ftp.connect(self.host, self.port)
@@ -123,7 +123,7 @@ class FtpUploadProcessor(BaseProcessor):
 
             # TLS path: explicit AUTH TLS + encrypted data channel + cert
             # validation. Fail-closed on any handshake / cert error.
-            from ftplib import FTP_TLS
+            from ftplib import FTP_TLS  # nosec B402 — encrypted FTPS, cert-validated
 
             tls_context = ssl.create_default_context()
             tls_context.check_hostname = True
