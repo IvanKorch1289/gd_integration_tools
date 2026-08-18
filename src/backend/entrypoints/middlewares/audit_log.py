@@ -118,7 +118,7 @@ class AuditLogMiddleware:
             if header_name == b"user-agent":
                 try:
                     user_agent = header_value.decode("latin-1")[:200]
-                except UnicodeDecodeError:
+                except UnicodeDecodeError:  # noqa: violation-check — malformed header → fall through
                     pass
                 break
 

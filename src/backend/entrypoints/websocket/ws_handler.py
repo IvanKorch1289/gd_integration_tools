@@ -261,12 +261,16 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
     # Клиент должен ответить {"action": "pong"} в течение message_timeout_s.
     heartbeat_task: asyncio.Task[None] | None = None
     if ws_settings.heartbeat_interval_s > 0:
-        heartbeat_task = asyncio.create_task(
+        # TaskRegistry — graceful shutdown + tracing (V22 §5).
+        from src.backend.core.utils.task_registry import get_task_registry
+
+        heartbeat_task = get_task_registry().create_task(
             _ws_heartbeat_loop(
                 websocket=websocket,
                 client_id=client_id,
                 interval_s=ws_settings.heartbeat_interval_s,
             ),
+            name=f"ws.heartbeat.{client_id}",
         )
 
     try:

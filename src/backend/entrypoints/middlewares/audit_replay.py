@@ -180,7 +180,7 @@ class AuditReplayMiddleware:
             if header_name == b"x-correlation-id":
                 try:
                     correlation_id = header_value.decode("latin-1")
-                except UnicodeDecodeError:
+                except UnicodeDecodeError:  # noqa: violation-check — malformed header → fall through
                     pass
                 break
 

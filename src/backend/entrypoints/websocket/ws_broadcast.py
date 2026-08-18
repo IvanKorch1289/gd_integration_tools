@@ -81,7 +81,7 @@ class WSBroadcast:
         self._listener_task.cancel()
         try:
             await self._listener_task
-        except asyncio.CancelledError:
+        except asyncio.CancelledError:  # noqa: violation-check — expected post-cancel
             pass
         self._listener_task = None
 

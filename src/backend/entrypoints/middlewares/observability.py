@@ -84,7 +84,7 @@ def _emit_otel(event: dict[str, Any], service_name: str) -> None:
             },
         ):
             pass  # span created/closed via context manager
-    except ImportError:
+    except ImportError:  # noqa: violation-check — opentelemetry optional, no-op
         pass  # opentelemetry not installed → no-op
 
 
@@ -108,7 +108,7 @@ def _emit_prometheus(event: dict[str, Any]) -> None:
         if all(k in labels for k in metrics._LABELS):
             # Просто no-op signal — PrometheusMiddleware сделает настоящий emit
             pass
-    except ImportError:
+    except ImportError:  # noqa: violation-check — prometheus optional, no-op
         pass
 
 

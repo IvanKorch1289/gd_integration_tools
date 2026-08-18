@@ -102,7 +102,7 @@ class ExceptionHandlerMiddleware:
                     import sentry_sdk
 
                     sentry_sdk.capture_exception(exc)
-                except ImportError:
+                except ImportError:  # noqa: violation-check — sentry_sdk optional, no-op
                     pass
                 error_data = {
                     "code": "internal_error",
