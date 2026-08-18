@@ -91,7 +91,7 @@ class DiskCacheBackend(CacheBackend):
             path = self._safe_path(key)
             try:
                 await aiofiles.os.remove(str(path))
-            except FileNotFoundError:
+            except FileNotFoundError:  # noqa: violation-check — file already removed, expected
                 pass
             except OSError as exc:
                 _logger.debug("DiskCache delete failed key=%s: %s", key, exc)

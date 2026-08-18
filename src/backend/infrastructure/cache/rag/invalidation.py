@@ -97,7 +97,7 @@ class RagInvalidationBus:
         self._task.cancel()
         try:
             await self._task
-        except asyncio.CancelledError:
+        except asyncio.CancelledError:  # noqa: violation-check — expected after cancel
             pass
         except Exception as exc:
             logger.debug("Listener stop с ошибкой: %s", exc)
