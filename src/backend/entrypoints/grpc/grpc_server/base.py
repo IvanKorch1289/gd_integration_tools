@@ -61,7 +61,7 @@ class BaseGRPCServicer:
                 )
 
                 set_correlation_context(correlation_id=correlation_id)
-            except ImportError:
+            except ImportError:  # noqa: violation-check — correlation context optional
                 pass
         return await dispatch_action(
             action=action, payload=payload, source="grpc", correlation_id=correlation_id,

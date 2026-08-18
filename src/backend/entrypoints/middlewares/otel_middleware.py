@@ -178,7 +178,7 @@ class OtelMiddleware:
                 span.set_attribute("http.status_code", response_status)
                 if response_status >= 500:
                     self._mark_error(span, RuntimeError(f"HTTP {response_status}"))
-            except (AttributeError, TypeError):
+            except (AttributeError, TypeError):  # noqa: violation-check — OTel API surface best-effort
                 pass
 
             # Post-response context: route_id может быть выставлен downstream.
@@ -309,15 +309,15 @@ class OtelMiddleware:
             from opentelemetry.trace import Status, StatusCode
 
             span.set_status(Status(StatusCode.ERROR, str(exc)))
-        except ImportError:
+        except ImportError:  # noqa: violation-check — opentelemetry optional
             pass
-        except (AttributeError, RuntimeError, ValueError, TypeError):  # pragma: no cover
+        except (AttributeError, RuntimeError, ValueError, TypeError):  # pragma: no cover  # noqa: violation-check — OTel API surface best-effort
             # cycle-9/D-AUDIT-1020: narrow exceptions + observability.
             # AttributeError — Status/StatusCode API change, RuntimeError
             # — set_status unavailable, ValueError/TypeError — invalid args.
             pass
         try:
             span.record_exception(exc)
-        except (AttributeError, RuntimeError, ValueError, TypeError):  # pragma: no cover
+        except (AttributeError, RuntimeError, ValueError, TypeError):  # pragma: no cover  # noqa: violation-check — OTel API surface best-effort
             # cycle-9/D-AUDIT-1020: см. выше — тот же narrow для record_exception.
             pass

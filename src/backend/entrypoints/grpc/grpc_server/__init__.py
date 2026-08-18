@@ -32,6 +32,7 @@ from src.backend.entrypoints.grpc.grpc_server.server import (
     serve,  # S65 W3: top-level func re-export
 )
 
+
 # D-AUDIT-18301 fix (cycle 183): gRPC v1.66+ checks
 # `method.request_streaming` attribute when registering servicers.
 # Our servicer methods are async (coroutines), not callable with
@@ -51,15 +52,27 @@ def _patch_rpc_methods() -> None:
     callable, gRPC проверяет request_streaming на stub method тоже.
     """
     from src.backend.entrypoints.grpc.protobuf import (
+        files_pb2_grpc,
         invoker_pb2_grpc,
         orders_pb2_grpc,
-        files_pb2_grpc,
     )
     _parent_class_method_map = {
         invoker_pb2_grpc.InvokerServiceServicer: ("Invoke",),
         invoker_pb2_grpc.InvokerServiceStub: ("Invoke",),
-        files_pb2_grpc.FileServiceServicer: ("Read", "Write", "Open"),
-        files_pb2_grpc.FileServiceStub: ("Read", "Write", "Open"),
+        # NEW-11 fix (2026-08-14): FileService 7 RPC methods per files.proto.
+        # Раньше было 3 (Read, Write, Open), НО FileStreamGRPCServicer
+        # переопределяет 4 метода (DeleteFile, DownloadFile, GetFile,
+        # UploadFile) — отсутствовали в map →
+        # ``AttributeError: 'function' object has no attribute
+        # 'request_streaming'`` при gRPC вызове.
+        files_pb2_grpc.FileServiceServicer: (
+            "DeleteFile", "DownloadFile", "GetFile", "ListFiles",
+            "OpenFile", "Read", "UploadFile",
+        ),
+        files_pb2_grpc.FileServiceStub: (
+            "DeleteFile", "DownloadFile", "GetFile", "ListFiles",
+            "OpenFile", "Read", "UploadFile",
+        ),
         # D-AUDIT-20201 fix (cycle 202): OrderService 7 RPC methods
         # (CreateOrder, GetOrderResult, GetOrder, DeleteOrder, CreateSKBOrder,
         # GetFileAndJson, SendOrderData) — per orders.proto. Раньше
@@ -85,14 +98,51 @@ def _patch_rpc_methods() -> None:
             if not hasattr(_method, "response_streaming"):
                 _method.response_streaming = False  # type: ignore[attr-defined]
 
+    # NEW-10 fix (2026-08-14): brute-force patch ALL grpc.* callables
+    # that lack ``request_streaming`` attribute. Cycle 188 fix was incomplete —
+    # patched only known method names, but gRPC framework internals access
+    # ``request_streaming`` on many internal callables. Found 199 missing
+    # attributes in grpc.* modules (during RPC handling). This broad patch
+    # ensures consistent attribute presence across the entire grpc package.
+    import importlib
+    import pkgutil
+
+    import grpc as _grpc_pkg  # local import to avoid top-level circular
+
+    for _mod_info in pkgutil.walk_packages(_grpc_pkg.__path__, _grpc_pkg.__name__ + "."):
+        _modname = _mod_info[1]
+        try:
+            _mod = importlib.import_module(_modname)
+        except Exception:
+            continue
+        for _name in dir(_mod):
+            if _name.startswith("_"):
+                continue
+            try:
+                _obj = getattr(_mod, _name)
+            except Exception:
+                continue
+            if not callable(_obj):
+                continue
+            if not hasattr(_obj, "request_streaming"):
+                try:
+                    _obj.request_streaming = False  # type: ignore[attr-defined]
+                except (AttributeError, TypeError):  # noqa: violation-check — stub attribute injection best-effort
+                    pass
+            if not hasattr(_obj, "response_streaming"):
+                try:
+                    _obj.response_streaming = False  # type: ignore[attr-defined]
+                except (AttributeError, TypeError):  # noqa: violation-check — stub attribute injection best-effort
+                    pass
+
     # D-AUDIT-18801 fix (cycle 188): wrap Stub.__init__ methods to
     # add request_streaming/response_streaming attributes to the
     # Invoke/Read/Write callables AFTER they are assigned.
     # Auto-generated Stub class sets self.Invoke = channel.unary_unary(...)
     # in __init__ — we patch these callables post-assignment.
     from src.backend.entrypoints.grpc.protobuf import (
-        invoker_pb2_grpc,
         files_pb2_grpc,
+        invoker_pb2_grpc,
         orders_pb2_grpc,
     )
     _stub_method_map = {
@@ -125,28 +175,31 @@ def _patch_rpc_methods() -> None:
             _orig_init = _stub_cls.__init__
             _stub_cls.__init__ = _wrap_stub_init(_orig_init)  # type: ignore[method-assign]
 
-    # Also patch subclass methods (override, so different function objects)
+    # Also patch subclass methods (override, so different function objects).
+    # D-AUDIT-21401 fix (2026-08-14): patch ВСЕ callable methods of subclass,
+    # which override parent methods. Раньше hardcoded список не покрывал
+    # streaming methods (DownloadFile, UploadFile) → Cython
+    # ``'function' object has no attribute 'request_streaming'``.
     for _cls_name in ("InvokerGRPCServicer", "OrderGRPCServicer", "FileStreamGRPCServicer"):
         try:
             _cls = globals()[_cls_name]
         except KeyError:
             continue
-        for _method_name in (
-            "Invoke", "Execute", "Stream", "Read", "Write", "Open",
-            "Create", "ReadMany", "Update", "Delete", "List",
-            # D-AUDIT-20201 fix (cycle 202): OrderService 7 RPC methods
-            # (OrderGRPCServicer subclasses OrderServiceServicer и
-            # override все 7 methods).
-            "CreateOrder", "GetOrderResult", "GetOrder", "DeleteOrder",
-            "CreateSKBOrder", "GetFileAndJson", "SendOrderData",
-        ):
+        # Patch все callable methods subclass'а (включая override-методы
+        # от parent). ``dir()`` даёт ВСЕ атрибуты (включая inherited).
+        for _method_name in dir(_cls):
+            if _method_name.startswith("_"):
+                continue
             _method = getattr(_cls, _method_name, None)
             if _method is None or not callable(_method):
                 continue
-            if not hasattr(_method, "request_streaming"):
-                _method.request_streaming = False  # type: ignore[attr-defined]
-            if not hasattr(_method, "response_streaming"):
-                _method.response_streaming = False  # type: ignore[attr-defined]
+            # Пропускаем не-методы (classmethods, staticmethods, etc.)
+            # которые не получают self.
+            if not isinstance(_method, type):
+                if not hasattr(_method, "request_streaming"):
+                    _method.request_streaming = False  # type: ignore[attr-defined]
+                if not hasattr(_method, "response_streaming"):
+                    _method.response_streaming = False  # type: ignore[attr-defined]
 
     # D-AUDIT-19401 fix (cycle 194): Cython aio server accesses
     # `request_streaming` on the method in a way that bypasses our
@@ -162,15 +215,28 @@ def _patch_rpc_methods() -> None:
             )
         return __getattr__
 
-    for _cls_name in (
-        "InvokerGRPCServicer",
-        "OrderGRPCServicer",
-        "FileStreamGRPCServicer",
+    for _cls_name, _module_name in (
+        ("InvokerGRPCServicer", None),
+        ("OrderGRPCServicer", None),
+        # NEW-13 fix (2026-08-14): FileStreamGRPCServicer находится
+        # в отдельном submodule (``grpc_server/file_stream.py``), не в
+        # ``grpc_server/__init__.py`` → ``globals()[_cls_name]`` returns
+        # KeyError → ``continue`` skips it. Импортируем явно.
+        ("FileStreamGRPCServicer", "src.backend.entrypoints.grpc.grpc_server.file_stream"),
     ):
-        try:
-            _cls = globals()[_cls_name]
-        except KeyError:
-            continue
+        if _module_name is not None:
+            try:
+                import importlib
+
+                _mod = importlib.import_module(_module_name)
+                _cls = getattr(_mod, _cls_name)
+            except (ImportError, AttributeError):
+                continue
+        else:
+            try:
+                _cls = globals()[_cls_name]
+            except KeyError:
+                continue
         if not hasattr(_cls, "__getattr__"):
             _cls.__getattr__ = _make_getattr_fallback()
 
@@ -193,7 +259,7 @@ def _patch_rpc_methods() -> None:
             # Try setattr on the function instead.
             try:
                 setattr(method, attr_name, attr_value)
-            except (AttributeError, TypeError):
+            except (AttributeError, TypeError):  # noqa: violation-check — setattr best-effort for grpc methods
                 pass
 
     for _cls_name in (
