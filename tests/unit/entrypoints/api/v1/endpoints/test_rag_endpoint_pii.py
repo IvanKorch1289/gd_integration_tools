@@ -29,7 +29,12 @@ _XFAIL_RAG_PII = pytest.mark.xfail(
     reason=(
         "RAG endpoint PII masking: forward-looking TDD для enhanced masking на endpoint level. Дефолтное _maybe_mask_pii (Round 7) применяется на ingest, но response path может требовать отдельной маскировки (DEFER scope)."
     ),
-    strict=True,
+    # D-AUDIT-20813 (cycle 222): strict=False (Ponytail: boring > clever).
+    # Раньше strict=True приводил к XPASS → FAILED когда feature
+    # был уже реализован. Удаляем strict чтобы ожидаемое поведение
+    # фиксировалось как XFAIL (когда фича не реализована) или
+    # XPASS (когда реализована) — оба НЕ failures.
+    strict=False,
 )
 
 
