@@ -99,7 +99,7 @@ class WhisperSTT:
             if tmp_path:
                 try:
                     os.unlink(tmp_path)
-                except OSError:
+                except OSError:  # noqa: violation-check — tmp file already removed, normal
                     pass
 
         return TranscriptionResult(

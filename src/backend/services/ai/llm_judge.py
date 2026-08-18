@@ -199,7 +199,7 @@ class LLMJudge:
                 relevance=verdict.relevance_score,
                 toxicity=verdict.toxicity_score,
             )
-        except (ImportError, AttributeError):
+        except (ImportError, AttributeError):  # noqa: violation-check — orjson optional, JSON fallback below
             pass
 
         try:
@@ -219,7 +219,7 @@ class LLMJudge:
                     "metadata": _orjson.dumps(verdict.metadata).decode(),
                 },
             )
-        except (ImportError, AttributeError, ConnectionError):
+        except (ImportError, AttributeError, ConnectionError):  # noqa: violation-check — Langfuse optional, no-op fallback
             pass
 
     async def evaluate_recent(self, *, limit: int = 50) -> list[JudgeVerdict]:
