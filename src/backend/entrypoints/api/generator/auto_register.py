@@ -170,7 +170,6 @@ def auto_register_unrouted_actions(
     reg = registry if registry is not None else action_handler_registry
     existing_names = _collect_existing_route_names(app)
 
-    auto_router = APIRouter()
     added = 0
 
     for action in reg.list_actions():
@@ -189,8 +188,15 @@ def auto_register_unrouted_actions(
 
         method = _infer_method_for_action(action)
         endpoint = _build_auto_endpoint(action=action, registry=reg)
-        auto_router.add_api_route(
-            path=f"/{action}",
+        # Sprint 226 fix: use ``app.add_api_route`` directly (NOT
+        # ``APIRouter.add_api_route`` + ``app.include_router``) — in
+        # FastAPI 0.141.1 routes added to separate APIRouter via
+        # include_router do NOT appear in ``app.routes`` (bug or
+        # behavior change). Direct registration ensures the route is
+        # visible in ``app.routes`` and properly registered with the
+        # auto-prefix path.
+        app.add_api_route(
+            path=f"{_AUTO_PREFIX}/{action}",
             endpoint=endpoint,
             methods=[method],
             name=route_name,
@@ -204,8 +210,5 @@ def auto_register_unrouted_actions(
         )
         added += 1
         existing_names.add(route_name)
-
-    if added:
-        app.include_router(auto_router, prefix=_AUTO_PREFIX)
 
     return added
