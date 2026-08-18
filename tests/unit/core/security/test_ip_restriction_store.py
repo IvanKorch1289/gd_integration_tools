@@ -115,3 +115,45 @@ routes:
         store.set_route_rule("/b", ["5.6.7.8"])
         store.clear_route_rules()
         assert store.snapshot()["route_rules"] == {}
+
+    def test_admin_pattern_matches_nested_api_path(self) -> None:
+        """P0-S1 (audit 2026-08-18): ``/admin/*`` должен матчить ``/api/v1/admin/foo``.
+
+        Без fix ``fnmatch.translate('/admin/*')`` даёт ``(?s:admin\\/.*)\\Z``,
+        и ``re.match`` (anchored at start) не находит совпадения в
+        ``/api/v1/admin/foo`` — admin-эндпоинты становятся доступны с любого IP.
+        """
+        store = get_ip_restriction_store()
+        store.update_admin(
+            admin_ips={"192.168.1.1"},
+            admin_routes=["/admin/*"],
+        )
+        # Должно совпасть (это и есть баг)
+        assert store.is_allowed("/api/v1/admin/users", "192.168.1.1") is True
+        assert store.is_allowed("/api/v1/admin/users", "10.0.0.1") is False
+        # Прямой /admin/* тоже работает (regression)
+        assert store.is_allowed("/admin/users", "192.168.1.1") is True
+        assert store.is_allowed("/admin/users", "10.0.0.1") is False
+
+    def test_admin_empty_ips_fail_closed(self) -> None:
+        """P0-S1: admin_routes настроен, но admin_ips пуст → fail-closed (deny).
+
+        Без fix — паттерн не матчил, доступ разрешался для всех (silent allow-all).
+        """
+        store = get_ip_restriction_store()
+        store.update_admin(admin_ips=set(), admin_routes=["/admin/*"])
+        assert store.is_allowed("/admin/users", "192.168.1.1") is False
+        assert store.is_allowed("/api/v1/admin/users", "192.168.1.1") is False
+
+    def test_per_route_empty_ips_fail_closed(self) -> None:
+        """P0-S1: per-route rule с пустым allowed_ips → fail-closed."""
+        store = get_ip_restriction_store()
+        store.set_route_rule("/api/v1/secret/*", set())
+        assert store.is_allowed("/api/v1/secret/foo", "127.0.0.1") is False
+
+    def test_per_route_matches_nested_path(self) -> None:
+        """P0-S1: per-route rule ``/foo/*`` матчит ``/api/v1/foo/bar``."""
+        store = get_ip_restriction_store()
+        store.set_route_rule("/foo/*", ["127.0.0.1"])
+        assert store.is_allowed("/api/v1/foo/bar", "127.0.0.1") is True
+        assert store.is_allowed("/api/v1/foo/bar", "10.0.0.1") is False

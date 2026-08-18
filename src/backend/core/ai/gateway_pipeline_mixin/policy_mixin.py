@@ -67,7 +67,7 @@ class PolicyMixin(_PipelineStepsProtocol):
         if self._policy_resolver is None:
             return None
         policy = await self._policy_resolver.resolve(
-            workflow_id=request.workflow_id, tenant_id=request.tenant_id,
+            workflow_id=request.workflow_id, tenant_id=request.tenant_id
         )
         if policy is None:
             try:
@@ -103,17 +103,26 @@ class PolicyMixin(_PipelineStepsProtocol):
             :func:`services.ai.gateway_adapter.adapt_capability_gate`
             оборачивает canonical gate в 3-arg callback.
 
+            P0-S4 fix (audit 2026-08-18): если ``_capability_gate is None``,
+            поведение зависит от feature flag ``ai_policy_enforce``:
+            * ``ai_policy_enforce=True`` (production) — raise
+              ``CapabilityDeniedError`` (fail-closed).
+            * ``ai_policy_enforce=False`` (dev/staging) — log warning +
+              silent allow (backward compat).
+
             Другие исключения (TypeError для legacy 1-arg callbacks,
             RuntimeError) — логируются, чтобы dev/staging с устаревшими
             callback'ами не падали. ``CapabilityDeniedError`` всегда
             пробрасывается — security boundary.
         """
         if self._capability_gate is None:
+            await self._handle_missing_capability_gate(request)
             return
         capability = f"ai.invoke.{request.workflow_id}"
         scope = request.workflow_id
         check = getattr(self._capability_gate, "check", None)
         if check is None:
+            await self._handle_missing_capability_gate(request)
             return
         try:
             import inspect
@@ -141,8 +150,69 @@ class PolicyMixin(_PipelineStepsProtocol):
                 # а не глохнуть в debug-логе.
                 raise
             logger.debug(
-                "AIGateway: capability check for %s failed: %s", capability, exc,
+                "AIGateway: capability check for %s failed: %s", capability, exc
             )
+
+    async def _handle_missing_capability_gate(self, request: AIRequest) -> None:
+        """P0-S4 (audit 2026-08-18): capability gate не настроен.
+
+        Без fix — silent allow, любая prompt injection проходит.
+        С fix:
+        * ``ai_policy_enforce=True`` (production) — raise CapabilityDeniedError
+          с audit event (security boundary).
+        * ``ai_policy_enforce=False`` (dev/staging) — log warning + allow
+          (backward compat для legacy dev setups).
+        """
+        try:
+            from src.backend.core.config.features import feature_flags
+
+            enforce = bool(feature_flags.ai_policy_enforce)
+        except Exception as exc:  # pragma: no cover — feature_flags optional
+            logger.debug(
+                "AIGateway: feature_flags.ai_policy_enforce unavailable (%s); "
+                "defaulting to enforce=True for safety",
+                exc,
+            )
+            enforce = True  # fail-closed when feature_flags unavailable
+
+        if enforce:
+            try:
+                import inspect
+
+                from src.backend.core.audit.facade import emit_audit_safe
+
+                audit_result = emit_audit_safe(
+                    event="ai.gateway.capability_gate_missing",
+                    details={
+                        "workflow_id": request.workflow_id,
+                        "tenant_id": getattr(request, "tenant_id", None),
+                        "reason": "no_capability_gate_configured",
+                    },
+                    severity="error",
+                )
+                if inspect.isawaitable(audit_result):
+                    await audit_result
+            except Exception:  # pragma: no cover — audit must never block
+                pass
+            from src.backend.core.security.capabilities.errors import (
+                CapabilityDeniedError,
+            )
+
+            raise CapabilityDeniedError(
+                plugin="ai.gateway",
+                capability=f"ai.invoke.{request.workflow_id}",
+                requested_scope=request.workflow_id,
+                declared_scope=None,
+                tenant=request.tenant_id,
+                correlation_id=request.correlation_id,
+            )
+
+        logger.warning(
+            "AIGateway: capability gate не настроен — silent allow "
+            "(ai_policy_enforce=False). Это OK для dev/staging, "
+            "НЕ для production. workflow_id=%s",
+            request.workflow_id,
+        )
 
     @staticmethod
     def _language_from_policy(policy: AIPolicySpec | None, *, default: str) -> str:

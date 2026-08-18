@@ -27,7 +27,7 @@ class InputGuardMixin:
         _protocol_self: _AIPolicyEnforcerProtocol
 
     async def guard_input(
-        self: _AIPolicyEnforcerProtocol, prompt: str, policy: AIPolicySpec,
+        self: _AIPolicyEnforcerProtocol, prompt: str, policy: AIPolicySpec
     ) -> list[GuardResult]:
         """Применить :attr:`AIPolicySpec.input_guards` к sanitized prompt.
 
@@ -50,7 +50,7 @@ class InputGuardMixin:
         return results
 
     async def _guard_input_one(
-        self: _AIPolicyEnforcerProtocol, prompt: str, ref: GuardRef,
+        self: _AIPolicyEnforcerProtocol, prompt: str, ref: GuardRef
     ) -> GuardResult | None:
         """Apply single input guard ref.
 
@@ -62,12 +62,23 @@ class InputGuardMixin:
 
         # S172 audit: nemo runtime call deferred — requires architecturally clean
         # integration path. See research/agent-framework/REPORT.md F4.1.
+        # P0-S3 fix (audit 2026-08-18): fail-closed — guard не выполняется,
+        # но если политика требует ``on_block="fail"``, raise GuardrailViolationError
+        # вместо silent skip. Иначе credit_check_strict.policy.yaml декларирует
+        # ``nemo:colang:topics``, guard never runs, политика молча нарушается.
         if name.startswith("nemo:"):
             logger.warning(
                 "AIPolicyEnforcer: nemo guard %r skipped (S172 deferred integration)",
                 name,
                 extra={"guard_ref": name, "category": "policy_deferred"},
             )
+            if on_block == "fail":
+                raise GuardrailViolationError(
+                    guard_name=ref.name,
+                    flagged_categories=["guard_provider_unavailable"],
+                    on_block="fail",
+                    content=prompt,
+                )
             return None
 
         # S172 audit: llm_guard archived 2026-07-16 (upstream gone).
@@ -86,7 +97,7 @@ class InputGuardMixin:
                     content=prompt,
                 )
             return GuardResult(
-                guard_name=ref.name, verdict="warned", categories=["llm_guard_archived"],
+                guard_name=ref.name, verdict="warned", categories=["llm_guard_archived"]
             )
 
         # S172 audit: Rebuff archived 2026-07-16 (upstream gone).
@@ -105,18 +116,27 @@ class InputGuardMixin:
                     content=prompt,
                 )
             return GuardResult(
-                guard_name=ref.name, verdict="warned", categories=["rebuff_archived"],
+                guard_name=ref.name, verdict="warned", categories=["rebuff_archived"]
             )
 
         # Lakera
         if name.startswith("lakera:"):
             return await self._guard_input_lakera(prompt, ref, on_block)
 
+        # P0-S3 fix: неизвестный guard — fail-closed для on_block="fail",
+        # иначе политика молча нарушается.
         logger.warning("AIPolicyEnforcer: unknown input guard %r — skipped", name)
+        if on_block == "fail":
+            raise GuardrailViolationError(
+                guard_name=ref.name,
+                flagged_categories=["unknown_guard"],
+                on_block="fail",
+                content=prompt,
+            )
         return None
 
     async def _guard_input_lakera(
-        self: _AIPolicyEnforcerProtocol, prompt: str, ref: GuardRef, on_block: str,
+        self: _AIPolicyEnforcerProtocol, prompt: str, ref: GuardRef, on_block: str
     ) -> GuardResult:
         """Lakera input guard check."""
         try:
@@ -167,11 +187,16 @@ class InputGuardMixin:
                     },
                     severity="warning",
                 )
-            except (ImportError, AttributeError, RuntimeError) as audit_exc:  # pragma: no cover — audit must never block
+            except (
+                ImportError,
+                AttributeError,
+                RuntimeError,
+            ) as audit_exc:  # pragma: no cover — audit must never block
                 # cycle-9/D-AUDIT-1034: narrow exceptions + observability.
                 # ImportError — audit facade missing, AttributeError —
                 # API change, RuntimeError — backend unavailable.
                 import logging
+
                 logging.getLogger(__name__).debug(
                     "input_guard_mixin.audit_failed",
                     extra={"guard": ref.name, "error": str(audit_exc)},

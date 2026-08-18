@@ -109,19 +109,49 @@ class TestSanitizeInputNormal:
 
 
 class TestSanitizeInputException:
-    """Tokenizer exception → fail-soft (return original prompt)."""
+    """Tokenizer exception handling (P0-S5)."""
 
     @pytest.mark.asyncio
-    async def test_tokenizer_exception_returns_original(
+    async def test_tokenizer_exception_fails_closed_in_production(
         self, enforcer: _StubEnforcer, policy: MagicMock,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Если tokenizer throws → return original prompt (не propagate)."""
+        """P0-S5: tokenizer throws в production → propagate exception (fail-closed)."""
         mock_tokenizer = AsyncMock(side_effect=RuntimeError("PII service down"))
         mock_pii_tokenizer = MagicMock()
         mock_pii_tokenizer.sanitize_async = mock_tokenizer
         enforcer._pii_tokenizer = mock_pii_tokenizer
 
         request = _make_request(prompt_inline="user@example.com text")
+
+        # P0-S5: production (ai_policy_enforce=True) → fail-closed (raise).
+        monkeypatch.setattr(
+            "src.backend.core.config.features.feature_flags.ai_policy_enforce",
+            True,
+            raising=False,
+        )
+        with pytest.raises(RuntimeError, match="PII service down"):
+            await enforcer.sanitize_input(request, policy)
+
+    @pytest.mark.asyncio
+    async def test_tokenizer_exception_failsoft_in_dev(
+        self, enforcer: _StubEnforcer, policy: MagicMock,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """P0-S5: dev (ai_policy_enforce=False) → fail-soft (return original)."""
+        mock_tokenizer = AsyncMock(side_effect=RuntimeError("PII service down"))
+        mock_pii_tokenizer = MagicMock()
+        mock_pii_tokenizer.sanitize_async = mock_tokenizer
+        enforcer._pii_tokenizer = mock_pii_tokenizer
+
+        request = _make_request(prompt_inline="user@example.com text")
+
+        # dev/staging (ai_policy_enforce=False) → backward compat fail-soft.
+        monkeypatch.setattr(
+            "src.backend.core.config.features.feature_flags.ai_policy_enforce",
+            False,
+            raising=False,
+        )
         result = await enforcer.sanitize_input(request, policy)
         assert result == "user@example.com text"
 
@@ -202,12 +232,14 @@ class TestSanitizeOutputNormal:
 
 
 class TestSanitizeOutputException:
-    """Tokenizer exception → return original response (fail-soft)."""
+    """Tokenizer exception handling (P0-S5)."""
 
     @pytest.mark.asyncio
-    async def test_tokenizer_exception_returns_original_response(
+    async def test_tokenizer_exception_fails_closed_in_production(
         self, enforcer: _StubEnforcer, policy: MagicMock,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        """P0-S5: production → propagate exception (fail-closed)."""
         mock_tokenizer = AsyncMock(side_effect=RuntimeError("service down"))
         mock_pii_tokenizer = MagicMock()
         mock_pii_tokenizer.sanitize_async = mock_tokenizer
@@ -217,6 +249,37 @@ class TestSanitizeOutputException:
             content="Contains PII",
             model_used="test",
             guardrails_verdict={"flagged": True},
+        )
+
+        monkeypatch.setattr(
+            "src.backend.core.config.features.feature_flags.ai_policy_enforce",
+            True,
+            raising=False,
+        )
+        with pytest.raises(RuntimeError, match="service down"):
+            await enforcer.sanitize_output(response, policy)
+
+    @pytest.mark.asyncio
+    async def test_tokenizer_exception_failsoft_in_dev(
+        self, enforcer: _StubEnforcer, policy: MagicMock,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """P0-S5: dev → fail-soft (return original)."""
+        mock_tokenizer = AsyncMock(side_effect=RuntimeError("service down"))
+        mock_pii_tokenizer = MagicMock()
+        mock_pii_tokenizer.sanitize_async = mock_tokenizer
+        enforcer._pii_tokenizer = mock_pii_tokenizer
+
+        response = AIResponse(
+            content="Contains PII",
+            model_used="test",
+            guardrails_verdict={"flagged": True},
+        )
+
+        monkeypatch.setattr(
+            "src.backend.core.config.features.feature_flags.ai_policy_enforce",
+            False,
+            raising=False,
         )
         result = await enforcer.sanitize_output(response, policy)
         assert result is response

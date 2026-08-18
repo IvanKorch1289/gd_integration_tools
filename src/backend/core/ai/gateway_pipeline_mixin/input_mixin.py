@@ -52,7 +52,7 @@ class InputMixin(_PipelineStepsProtocol):
     _sanitizer: Any
 
     async def _apply_input_sanitizers(
-        self, request: AIRequest, policy: AIPolicySpec | None,
+        self, request: AIRequest, policy: AIPolicySpec | None
     ) -> str:
         """Шаг 3: input sanitizers (PII через Presidio / PIITokenizer).
 
@@ -82,9 +82,26 @@ class InputMixin(_PipelineStepsProtocol):
         try:
             result = await sanitizer.sanitize_async(prompt, language=language)
         except RuntimeError as exc:
+            # P0-S5 fix (audit 2026-08-18): sanitizer сконфигурирован, но
+            # недоступен → fail-closed в production (ai_policy_enforce=True),
+            # иначе PII утекает в LLM. Backward compat: dev/staging (FF off)
+            # → log warning + original prompt (legacy behavior).
+            if self._is_ai_policy_enforce():
+                logger.error(
+                    "AIGateway: input sanitizer недоступен — fail-closed (%s)", exc
+                )
+                raise
             logger.warning("AIGateway: sanitize_async недоступен (%s)", exc)
             return prompt
         except Exception as exc:
+            # P0-S5 fix: то же самое для general Exception.
+            if self._is_ai_policy_enforce():
+                logger.error(
+                    "AIGateway: input sanitize failed — fail-closed: %s",
+                    exc,
+                    exc_info=True,
+                )
+                raise
             logger.error("AIGateway: input sanitize failed: %s", exc, exc_info=True)
             return prompt
 
@@ -94,7 +111,7 @@ class InputMixin(_PipelineStepsProtocol):
         return getattr(result, "sanitized_text", prompt)
 
     async def _apply_input_guards(
-        self, sanitized: str, policy: AIPolicySpec | None,
+        self, sanitized: str, policy: AIPolicySpec | None
     ) -> list[GuardResult]:
         """Шаг 4: input guards (NeMo Colang + Lakera).
 
@@ -121,7 +138,7 @@ class InputMixin(_PipelineStepsProtocol):
             return results if results is not None else []
         except NotImplementedError:
             logger.debug(
-                "AIGateway: input guards не реализованы (Wave S24 W2 deferred)",
+                "AIGateway: input guards не реализованы (Wave S24 W2 deferred)"
             )
             return []
 
@@ -141,3 +158,21 @@ class InputMixin(_PipelineStepsProtocol):
             sanitizer = None
         self._sanitizer = sanitizer
         return sanitizer
+
+    def _is_ai_policy_enforce(self) -> bool:
+        """Проверить feature flag ``ai_policy_enforce``.
+
+        P0-S5: используется для fail-closed решения в sanitizers / guards.
+        Default — ``True`` (fail-closed) если feature_flags недоступен.
+        """
+        try:
+            from src.backend.core.config.features import feature_flags
+
+            return bool(feature_flags.ai_policy_enforce)
+        except Exception as exc:  # pragma: no cover — feature_flags optional
+            logger.debug(
+                "AIGateway: feature_flags.ai_policy_enforce unavailable (%s); "
+                "defaulting to True for fail-closed safety",
+                exc,
+            )
+            return True

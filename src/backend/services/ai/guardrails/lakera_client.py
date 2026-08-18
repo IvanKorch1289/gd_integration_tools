@@ -4,8 +4,13 @@ Async httpx-client поверх ``core.net.migration_helper.make_http_client``
 (WAF фасад при ``waf_outbound_via_facade``; capability
 ``ai.guardrails.lakera``).
 
-При отсутствии ``LAKERA_API_KEY`` клиент возвращает no-op результат
-(``flagged=False``) — fail-open для dev_light окружения.
+P0-S2 fix (audit 2026-08-18): при отсутствии ``LAKERA_API_KEY`` клиент
+**raise** ``LakeraGuardrailUnavailableError`` (fail-closed). Upstream
+``input_guard_mixin._guard_input_lakera`` ловит ``Exception`` и fail-closed
+блокирует prompt через ``GuardrailViolationError`` (если ``fail_open=False``).
+
+Для dev_light и профилей без API key — используйте ``fail_open=True`` в
+политике guard'а или фиктивный ключ через mock-Lakera.
 """
 
 from __future__ import annotations
@@ -16,9 +21,17 @@ from typing import Any
 
 import httpx
 
-__all__ = ("LakeraClient", "LakeraResult")
+__all__ = ("LakeraClient", "LakeraGuardrailUnavailableError", "LakeraResult")
 
 _DEFAULT_BASE = "https://api.lakera.ai/v2"
+
+
+class LakeraGuardrailUnavailableError(RuntimeError):
+    """Lakera provider недоступен (нет API key, network down, 5xx).
+
+    P0-S2: при отсутствии API key — клиент raise эту ошибку вместо
+    no-op return, чтобы upstream guard_mixin fail-closed блокировал prompt.
+    """
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,7 +56,8 @@ class LakeraClient:
 
     Args:
         api_key: Lakera API token. Если ``None`` — читается из env
-            ``LAKERA_API_KEY``; при отсутствии — клиент в no-op режиме.
+            ``LAKERA_API_KEY``; при отсутствии — клиент raise
+            :class:`LakeraGuardrailUnavailableError` (fail-closed).
         base_url: URL API; default ``https://api.lakera.ai/v2``.
         timeout: HTTP timeout (sec); default 5.
 
@@ -68,12 +82,18 @@ class LakeraClient:
                 разбивку по категориям (default True).
 
         Returns:
-            :class:`LakeraResult`. Если ``api_key`` отсутствует — возвращает
-            no-op (``flagged=False, score=0.0, categories=[]``).
+            :class:`LakeraResult`.
+
+        Raises:
+            LakeraGuardrailUnavailableError: Если ``api_key`` отсутствует.
+                Upstream guard_mixin обработает это fail-closed.
+            httpx.HTTPError: Network/HTTP ошибки.
 
         """
         if not self._api_key:
-            return LakeraResult(flagged=False, score=0.0, categories=[])
+            raise LakeraGuardrailUnavailableError(
+                "LAKERA_API_KEY не задан — guardrail недоступен (fail-closed)"
+            )
 
         from src.backend.core.net.migration_helper import make_http_client
 

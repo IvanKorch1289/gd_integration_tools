@@ -27,6 +27,58 @@ def _bypass_auth() -> None:
     )
 
 
+class TestRunWorkflowByIdReal:
+    """P1-W2 (audit 2026-08-18): ``run_workflow_by_id`` реально стартует child workflow."""
+
+    @pytest.mark.asyncio
+    async def test_calls_backend_start_workflow(self) -> None:
+        """С fake backend — получает child_workflow_id и handle_workflow_id."""
+        from src.backend.core.workflow.fake_backend import FakeWorkflowBackend
+
+        backend = FakeWorkflowBackend()
+
+        with patch(
+            "src.backend.infrastructure.workflow.factory.create_workflow_backend",
+            new=AsyncMock(return_value=backend),
+        ):
+            from src.backend.dsl.engine.processors.workflow.workflow_subprocess import (
+                run_workflow_by_id,
+            )
+
+            result = await run_workflow_by_id(
+                "child_wf", input_data={"x": 1}, timeout=30.0,
+            )
+
+        # Реальные поля от backend, не stub:
+        assert result["status"] == "started"
+        assert "child_workflow_id" in result
+        assert "handle_workflow_id" in result
+        assert result["input"] == {"x": 1}
+        assert result["workflow_id"] == "child_wf"
+        # resolved_version должен быть not None (WorkflowLauncher нашёл version)
+        assert result["resolved_version"] is not None
+
+    @pytest.mark.asyncio
+    async def test_returns_failed_on_backend_error(self) -> None:
+        """При ошибке backend → status='failed' с error message (не raise)."""
+        with patch(
+            "src.backend.infrastructure.workflow.factory.create_workflow_backend",
+            new=AsyncMock(side_effect=RuntimeError("backend down")),
+        ):
+            from src.backend.dsl.engine.processors.workflow.workflow_subprocess import (
+                run_workflow_by_id,
+            )
+
+            result = await run_workflow_by_id(
+                "child_wf", input_data={"x": 1}, timeout=30.0,
+            )
+
+        # Fallback тоже падает (тот же mock) — backend = None,
+        # затем backend.start_workflow → AttributeError, возвращаем failed.
+        assert result["status"] == "failed"
+        assert "error" in result
+
+
 class TestWorkflowSubprocessProcessor:
     def test_instantiates(self) -> None:
         from src.backend.dsl.engine.processors.workflow.workflow_subprocess import (

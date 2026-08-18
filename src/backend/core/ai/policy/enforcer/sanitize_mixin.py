@@ -21,7 +21,7 @@ class SanitizeMixin:
         _protocol_self: _AIPolicyEnforcerProtocol
 
     async def sanitize_input(
-        self: _AIPolicyEnforcerProtocol, request: AIRequest, policy: AIPolicySpec,
+        self: _AIPolicyEnforcerProtocol, request: AIRequest, policy: AIPolicySpec
     ) -> str:
         """Применить :attr:`AIPolicySpec.input_sanitizers` (PIITokenizer).
 
@@ -53,13 +53,20 @@ class SanitizeMixin:
         try:
             result = await tokenizer(prompt, language=language)
         except Exception as exc:
+            # P0-S5 fix (audit 2026-08-18): sanitizer сконфигурирован, но
+            # недоступен → fail-closed в production (ai_policy_enforce=True).
+            # Иначе PII утекает в LLM. Backward compat: dev/staging (FF off)
+            # → log + original prompt (legacy fail-soft).
+            if self._is_ai_policy_enforce():
+                logger.error("sanitize_input failed — fail-closed: %s", exc)
+                raise
             logger.error("sanitize_input failed: %s", exc)
             return prompt
 
         return getattr(result, "sanitized_text", prompt)
 
     async def sanitize_output(
-        self: _AIPolicyEnforcerProtocol, response: AIResponse, policy: AIPolicySpec,
+        self: _AIPolicyEnforcerProtocol, response: AIResponse, policy: AIPolicySpec
     ) -> AIResponse:
         """Применить :attr:`AIPolicySpec.output_sanitizers` (PII redaction).
 
@@ -85,6 +92,10 @@ class SanitizeMixin:
         try:
             result = await tokenizer(response.content, language=language)
         except Exception as exc:
+            # P0-S5 fix: fail-closed в production для output sanitizers.
+            if self._is_ai_policy_enforce():
+                logger.error("sanitize_output failed — fail-closed: %s", exc)
+                raise
             logger.error("sanitize_output failed: %s", exc)
             return response
 
@@ -105,3 +116,21 @@ class SanitizeMixin:
             pii_detected=pii_detected,
             guardrails_verdict=response.guardrails_verdict or {},
         )
+
+    def _is_ai_policy_enforce(self: _AIPolicyEnforcerProtocol) -> bool:
+        """Проверить feature flag ``ai_policy_enforce``.
+
+        P0-S5: используется для fail-closed решения в sanitizers.
+        Default — ``True`` (fail-closed) если feature_flags недоступен.
+        """
+        try:
+            from src.backend.core.config.features import feature_flags
+
+            return bool(feature_flags.ai_policy_enforce)
+        except Exception as exc:  # pragma: no cover — feature_flags optional
+            logger.debug(
+                "AIPolicyEnforcer: feature_flags.ai_policy_enforce unavailable (%s); "
+                "defaulting to True for fail-closed safety",
+                exc,
+            )
+            return True

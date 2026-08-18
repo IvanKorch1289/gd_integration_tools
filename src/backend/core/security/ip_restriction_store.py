@@ -74,13 +74,25 @@ class IPRestrictionStore:
             if admin_routes is not None:
                 self._admin_routes = list(admin_routes)
                 self._admin_patterns = [
-                    re.compile(fnmatch.translate(route)) for route in self._admin_routes
+                    self._compile_admin_pattern(route) for route in self._admin_routes
                 ]
         logger.info(
             "IP restriction admin config updated: %d ips, %d routes",
             len(self._admin_ips),
             len(self._admin_routes),
         )
+
+    @staticmethod
+    def _compile_admin_pattern(route: str) -> re.Pattern[str]:
+        """Скомпилировать admin-паттерн с glob-семантикой для path.
+
+        Issue (P0-S1, audit 2026-08-18): ``fnmatch.translate('/admin/*')`` даёт
+        regex ``(?s:admin\\/.*)\\Z`` — ``re.match`` ищет совпадение от начала
+        строки, поэтому ``/api/v1/admin/foo`` НЕ совпадает с ``/admin/*``.
+        Решение: используем ``re.search`` вместо ``re.match`` в :meth:`is_allowed`,
+        а здесь сохраняем ``\\Z`` (якорь конца), чтобы ``*`` не «съедал» суффикс.
+        """
+        return re.compile(fnmatch.translate(route))
 
     def set_route_rule(
         self,
@@ -150,6 +162,12 @@ class IPRestrictionStore:
         1. Если есть активное per-route правило для ``path`` — проверяем по нему.
         2. Иначе если путь попадает под admin_routes — проверяем admin_ips.
         3. Иначе доступ разрешён.
+
+        Note:
+            Glob-паттерны используют **substring match** (а не prefix-anchored),
+            поэтому ``/admin/*`` совпадает с реальным FastAPI-маршрутом
+            ``/api/v1/admin/foo``. fnmatch.translate добавляет ``\\Z`` (end-anchor),
+            поэтому суффиксная часть паттерна всё ещё строгая.
         """
         if client_ip is None:
             return False
@@ -160,14 +178,35 @@ class IPRestrictionStore:
             admin_ips = set(self._admin_ips)
 
         # Per-route rules have priority.
+        # P0-S1 fix: используем search вместо match (см. docstring).
         for pattern, rule in route_rules.items():
             if not rule.enabled:
                 continue
-            if fnmatch.fnmatch(path, pattern):
+            if re.search(fnmatch.translate(pattern), path):
+                if not rule.allowed_ips:
+                    logger.warning(
+                        "IP restriction: per-route rule %r enabled, но allowed_ips пуст — "
+                        "fail-closed, доступ заблокирован. Проверьте config.",
+                        pattern,
+                    )
+                    return False
                 return self._ip_matches(client_ip, rule.allowed_ips)
 
         # Global admin routes.
-        if any(p.match(path) for p in admin_patterns):
+        # P0-S1 fix (audit 2026-08-18): используем ``search`` вместо ``match``,
+        # чтобы паттерн ``/admin/*`` совпадал с реальными путями типа
+        # ``/api/v1/admin/foo``. fnmatch.translate уже добавляет ``\Z`` в конце,
+        # что гарантирует, что ``*`` соответствует только суффиксу.
+        if any(p.search(path) for p in admin_patterns):
+            if not admin_ips:
+                # Misconfiguration: паттерн настроен, но список IP пуст.
+                # Fail-closed: блокируем доступ и логируем warning.
+                logger.warning(
+                    "IP restriction: admin_routes настроен (%d), но admin_ips пуст — "
+                    "доступ к admin-маршрутам заблокирован. Проверьте config.",
+                    len(self._admin_routes),
+                )
+                return False
             return self._ip_matches(client_ip, admin_ips)
 
         return True

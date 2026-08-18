@@ -128,3 +128,24 @@ async def test_successful_guard_returns_passed() -> None:
 
         assert result is not None
         assert result.verdict == "passed"
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_no_api_key_fail_closed(monkeypatch: pytest.MonkeyPatch) -> None:
+    """P0-S2 (audit 2026-08-18): LAKERA_API_KEY отсутствует → fail-closed.
+
+    Без fix клиент возвращал no-op (``flagged=False``), и guard не блокировал
+    prompt — prompt_injection проходил свободно.
+    """
+
+    monkeypatch.delenv("LAKERA_API_KEY", raising=False)
+    enforcer = _StubEnforcer()
+    ref = GuardRef(name="lakera:strict", on_block="fail")
+
+    # Без patch — реальный LakeraClient без API key должен raise.
+    with pytest.raises(Exception) as exc_info:
+        await enforcer._guard_input_lakera("malicious", ref, "fail")
+
+    # Должно подняться GuardrailViolationError (fail-closed)
+    assert "guard_provider_unavailable" in str(exc_info.value) or "LAKERA_API_KEY" in str(exc_info.value)

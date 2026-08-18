@@ -67,12 +67,12 @@ __all__ = [
     "Pipeline",
     # === App State decorator (re-exported) ===
     "app_state_singleton",
-    "emit_audit_safe",                  # AuditService.safe (never-raises emit)
-    "get_auth_facade",                  # AuthFacade (verify + capability)
-    "get_cache_facade",                 # UnifiedCacheFacade (get/set/delete/tag)
+    "emit_audit_safe",  # AuditService.safe (never-raises emit)
+    "get_auth_facade",  # AuthFacade (verify + capability)
+    "get_cache_facade",  # UnifiedCacheFacade (get/set/delete/tag)
     "get_clickhouse_client_class",
     "get_elasticsearch_client_class",
-    "get_external_db_facade",           # ExternalDBFacade (queries + transactions)
+    "get_external_db_facade",  # ExternalDBFacade (queries + transactions)
     "get_mongodb_client_class",
     "get_redis_client_class",
     # === Cycle 29 additions: P1-#1 explicit categories ===
@@ -83,7 +83,7 @@ __all__ = [
     # === Cycle 31 P2.1 additions: Domain Facades ===
     # Capability-checked facades (via DI providers, lazy).
     # Extensions should prefer these over direct infrastructure imports.
-    "get_storage_facade_provider",      # StorageFacade (CRUD + presign + list)
+    "get_storage_facade_provider",  # StorageFacade (CRUD + presign + list)
     "is_extension_path",
     "register_factory",
     "register_infra_module",
@@ -157,21 +157,53 @@ def __getattr__(name: str) -> Any:
         from src.backend.core.audit.facade import emit_audit_safe
 
         return emit_audit_safe
+    if name == "OutboxBackend":
+        from src.backend.core.messaging.outbox import OutboxBackend
+
+        return OutboxBackend
+    if name == "OutboxEvent":
+        from src.backend.core.messaging.outbox import OutboxEvent
+
+        return OutboxEvent
+    if name == "FakeOutbox":
+        from src.backend.core.messaging.outbox import FakeOutbox
+
+        return FakeOutbox
+    if name == "OutboxEventStatus":
+        from src.backend.core.messaging.outbox import OutboxEventStatus
+
+        return OutboxEventStatus
+    if name == "get_logger":
+        from src.backend.core.logging import get_logger
+
+        return get_logger
+    if name == "feature_flags":
+        # P0-D2 fix (audit 2026-08-18): Frontend pages импортируют
+        # ``from src.backend.core.api import feature_flags`` — 6+ файлов в
+        # ``src/frontend/streamlit_app/pages/``. Без этого fix каждый
+        # файл оборачивает import в try/except и silent swallows.
+        from src.backend.core.config.features import feature_flags
+
+        return feature_flags
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def __dir__() -> list[str]:
     """Tab-completion support: include all __all__ + __getattr__ symbols."""
-    return sorted([*__all__,
-        "get_scheduler_provider",
-        "get_redis_client_class",
-        "get_mongodb_client_class",
-        "get_elasticsearch_client_class",
-        "get_clickhouse_client_class",
-        "AIGateway",
-        "get_storage_facade_provider",
-        "get_external_db_facade",
-        "get_auth_facade",
-        "get_cache_facade",
-        "emit_audit_safe",
-    ])
+    return sorted(
+        [
+            *__all__,
+            "get_scheduler_provider",
+            "get_redis_client_class",
+            "get_mongodb_client_class",
+            "get_elasticsearch_client_class",
+            "get_clickhouse_client_class",
+            "AIGateway",
+            "get_storage_facade_provider",
+            "get_external_db_facade",
+            "get_auth_facade",
+            "get_cache_facade",
+            "emit_audit_safe",
+            "feature_flags",
+        ]
+    )

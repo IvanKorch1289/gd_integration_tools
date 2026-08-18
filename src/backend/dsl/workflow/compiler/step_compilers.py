@@ -31,6 +31,7 @@ from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,
     AgentInvokeDeclaration,
     CheckpointDeclaration,
+    ContinueAsNewDeclaration,
     EscalateDeclaration,
     GuardrailDeclaration,
     PauseDeclaration,
@@ -71,6 +72,7 @@ __all__ = (
     "compile_activity_step",
     "compile_agent_invoke_step",
     "compile_checkpoint_step",
+    "compile_continue_as_new_step",
     "compile_escalate_step",
     "compile_guardrail_step",
     "compile_pause_step",
@@ -123,6 +125,7 @@ class GuardrailValueTypeError(RuntimeError):
     explosion без alerting. D-A8-07 cycle 1 fix.
     """
 
+
 # Сигнатура компилятора шага: декларация + рантайм-контекст → coroutine.
 # ``ctx`` — словарь в котором workflow держит output_key значения,
 # семафор сигналов и default-настройки.
@@ -130,7 +133,7 @@ StepCompiler = Callable[[Any, dict[str, Any]], Any]
 
 
 def _build_retry_policy(
-    decl_policy: RetryPolicy | None, default_policy: RetryPolicy | None,
+    decl_policy: RetryPolicy | None, default_policy: RetryPolicy | None
 ) -> Any:
     """Сконструировать ``temporalio.common.RetryPolicy`` из декларации.
 
@@ -198,7 +201,7 @@ async def compile_activity_step(decl: ActivityDeclaration, ctx: dict[str, Any]) 
 
     timeout_s = decl.timeout_s or ctx["_default_timeout_s"]
     retry_policy = _build_retry_policy(
-        decl.retry_policy, ctx.get("_default_retry_policy"),
+        decl.retry_policy, ctx.get("_default_retry_policy")
     )
 
     # args передаются как single-dict (Temporal сериализует через DataConverter).
@@ -242,15 +245,11 @@ async def compile_saga_step(decl: SagaDeclaration, ctx: dict[str, Any]) -> Any:
         for fwd_name, comp_name in decl.compensate_map.items():
             if fwd_name not in forward_by_name:
                 workflow.logger.warning(
-                    "saga compensate_map references unknown forward step: %s",
-                    fwd_name,
+                    "saga compensate_map references unknown forward step: %s", fwd_name
                 )
                 continue
             # comp_name must reference an ActivityDeclaration in compensate[]
-            comp_step = next(
-                (s for s in decl.compensate if s.name == comp_name),
-                None,
-            )
+            comp_step = next((s for s in decl.compensate if s.name == comp_name), None)
             if comp_step is None:
                 workflow.logger.warning(
                     "saga compensate_map: forward=%s → compensate=%s "
@@ -303,9 +302,7 @@ async def compile_saga_step(decl: SagaDeclaration, ctx: dict[str, Any]) -> Any:
             except Exception as comp_exc:
                 comp_errors.append(comp_exc)
                 workflow.logger.warning(
-                    "saga compensation failed for step %s: %s",
-                    comp_step.name,
-                    comp_exc,
+                    "saga compensation failed for step %s: %s", comp_step.name, comp_exc
                 )
         if comp_errors and decl.strict_compensate:
             # Chain: original exc is the primary, comp errors are cause chain.
@@ -321,7 +318,7 @@ async def compile_saga_step(decl: SagaDeclaration, ctx: dict[str, Any]) -> Any:
 
 
 async def compile_signal_wait_step(
-    decl: SignalWaitDeclaration, ctx: dict[str, Any],
+    decl: SignalWaitDeclaration, ctx: dict[str, Any]
 ) -> Any:
     """Дождаться внешнего сигнала через ``workflow.wait_condition``.
 
@@ -339,15 +336,14 @@ async def compile_signal_wait_step(
     if decl.timeout_s is not None:
         try:
             await workflow.wait_condition(
-                _signal_received, timeout=timedelta(seconds=decl.timeout_s),
+                _signal_received, timeout=timedelta(seconds=decl.timeout_s)
             )
         except TimeoutError:
             # Cycle 27 H1: default behavior is "raise" (fail-loud).
             # Operators must explicitly set on_timeout="continue" for
             # legacy silent-skip behavior.
             workflow.logger.warning(
-                "wait_signal timeout: signal %r not received within %ss; "
-                "on_timeout=%r",
+                "wait_signal timeout: signal %r not received within %ss; on_timeout=%r",
                 decl.signal_name,
                 decl.timeout_s,
                 decl.on_timeout,
@@ -355,7 +351,7 @@ async def compile_signal_wait_step(
             if decl.on_timeout == "raise":
                 raise TimeoutError(
                     f"wait_signal: signal {decl.signal_name!r} not received "
-                    f"within {decl.timeout_s}s",
+                    f"within {decl.timeout_s}s"
                 ) from None
             # "continue" branch: return None, downstream MUST handle None
             return None
@@ -433,12 +429,12 @@ async def compile_sensor_step(decl: SensorDeclaration, ctx: dict[str, Any]) -> A
     if decl.timeout_s is None:
         raise SensorTimeoutRequiredError(
             f"sensor {decl.predicate!r} requires explicit timeout_s "
-            f"(D-A8-10 cycle 1 — default-OFF, иначе infinite polling).",
+            f"(D-A8-10 cycle 1 — default-OFF, иначе infinite polling)."
         )
     if decl.poll_interval_s <= 0:
         raise SensorPollIntervalError(
             f"sensor {decl.predicate!r} poll_interval_s={decl.poll_interval_s} "
-            f"must be > 0 (D-A8-10 cycle 1 — иначе tight loop DoS).",
+            f"must be > 0 (D-A8-10 cycle 1 — иначе tight loop DoS)."
         )
     max_iterations = _SENSOR_MAX_ITERATIONS_DEFAULT
     elapsed = 0.0
@@ -451,7 +447,7 @@ async def compile_sensor_step(decl: SensorDeclaration, ctx: dict[str, Any]) -> A
             raise SensorMaxIterationsError(
                 f"sensor {decl.predicate!r} exceeded max_iterations={max_iterations} "
                 f"(elapsed={elapsed}s, timeout_s={decl.timeout_s}s) "
-                f"(D-A8-10 cycle 1).",
+                f"(D-A8-10 cycle 1)."
             )
         result = await workflow.execute_activity(
             decl.predicate,
@@ -462,14 +458,14 @@ async def compile_sensor_step(decl: SensorDeclaration, ctx: dict[str, Any]) -> A
             return result
         if elapsed >= decl.timeout_s:
             raise TimeoutError(
-                f"sensor {decl.predicate!r} timed out after {decl.timeout_s}s",
+                f"sensor {decl.predicate!r} timed out after {decl.timeout_s}s"
             )
         await workflow.sleep(timedelta(seconds=decl.poll_interval_s))
         elapsed += decl.poll_interval_s
 
 
 async def compile_agent_invoke_step(
-    decl: AgentInvokeDeclaration, ctx: dict[str, Any],
+    decl: AgentInvokeDeclaration, ctx: dict[str, Any]
 ) -> Any:
     """Выполнить AI-агент через AIGateway (S27 W6, R-V15-9).
 
@@ -612,11 +608,11 @@ async def compile_reflect_step(decl: ReflectDeclaration, ctx: dict[str, Any]) ->
     if decl.async_mode:
         # Background (no await) — Temporal worker handles scheduling.
         await workflow.start_activity(
-            "memory.reflect", payload, start_to_close_timeout=timedelta(seconds=60),
+            "memory.reflect", payload, start_to_close_timeout=timedelta(seconds=60)
         )
     else:
         await workflow.execute_activity(
-            "memory.reflect", payload, start_to_close_timeout=timedelta(seconds=60),
+            "memory.reflect", payload, start_to_close_timeout=timedelta(seconds=60)
         )
     if decl.output_key:
         ctx.setdefault("_outputs", {})[decl.output_key] = {"reflected": True}
@@ -624,7 +620,7 @@ async def compile_reflect_step(decl: ReflectDeclaration, ctx: dict[str, Any]) ->
 
 
 async def compile_checkpoint_step(
-    decl: CheckpointDeclaration, ctx: dict[str, Any],
+    decl: CheckpointDeclaration, ctx: dict[str, Any]
 ) -> Any:
     """Checkpoint-шаг: workflow state persistence (S28 W3 + S7).
 
@@ -669,7 +665,7 @@ async def compile_checkpoint_step(
 
 
 async def compile_guardrail_step(
-    decl: GuardrailDeclaration, ctx: dict[str, Any],
+    decl: GuardrailDeclaration, ctx: dict[str, Any]
 ) -> Any:
     """Guardrail-шаг: проверка лимита + action on exceed (S28 W3 + S7).
 
@@ -728,7 +724,7 @@ async def compile_guardrail_step(
             f"Guardrail {decl.rule!r} target={target!r} value type "
             f"{type(raw_value).__name__} (value={raw_value!r}) — "
             f"expected numeric (int/float) для banking-context cost safety. "
-            f"Fallback к 0.0 был silent fail-OPEN (D-A8-07 cycle 1).",
+            f"Fallback к 0.0 был silent fail-OPEN (D-A8-07 cycle 1)."
         )
 
     value: float = float(raw_value)
@@ -739,7 +735,7 @@ async def compile_guardrail_step(
         if decl.on_exceed == "fail":
             raise RuntimeError(
                 f"Guardrail {decl.rule!r} exceeded: value={value} > "
-                f"threshold={decl.threshold}",
+                f"threshold={decl.threshold}"
             )
         if decl.on_exceed == "warn":
             _logger.warning(
@@ -750,7 +746,7 @@ async def compile_guardrail_step(
             )
         elif decl.on_exceed == "dlq":
             ctx.setdefault("_dlq_events", []).append(
-                {"rule": decl.rule, "value": value, "threshold": decl.threshold},
+                {"rule": decl.rule, "value": value, "threshold": decl.threshold}
             )
         elif decl.on_exceed == "escalate":
             ctx["_escalate_requested"] = True
@@ -794,6 +790,57 @@ async def compile_escalate_step(decl: EscalateDeclaration, ctx: dict[str, Any]) 
     return result
 
 
+async def compile_continue_as_new_step(
+    decl: ContinueAsNewDeclaration, ctx: dict[str, Any]
+) -> Any:
+    """Continue-As-New шаг: пересоздать execution с чистой историей (D169).
+
+    P1-W1 fix (audit 2026-08-18): wire существующего
+    :class:`ContinueAsNewHandler` в workflow runtime.
+
+    Без этого шага WorkflowContinueAsNewProcessor ставил marker в exchange,
+    но никто его не читал — Temporal ``workflow.continue_as_new()`` НЕ вызывался.
+    Теперь DSL может декларировать ``- type: continue_as_new`` прямо в
+    ``WorkflowDeclaration.steps`` — handler wired и Temporal API вызывается.
+
+    Args:
+        decl: ContinueAsNewDeclaration (same_workflow_id, same_input, search_attributes).
+        ctx: Runtime-context workflow (нужен ``_input`` для same_input).
+
+    Returns:
+        ``{"continued_as_new": True, "same_workflow_id": bool, ...}``.
+
+    Raises:
+        ImportError: Если temporalio не установлен.
+
+    """
+    from src.backend.dsl.workflow.handlers.continue_as_new_handler import (
+        ContinueAsNewHandler,
+    )
+
+    handler = ContinueAsNewHandler()
+    marker = {
+        "requested": True,
+        "same_workflow_id": decl.same_workflow_id,
+        "same_input": decl.same_input,
+        "search_attributes": decl.search_attributes,
+    }
+    # same_input=True → передаём текущий input workflow, иначе пустой dict.
+    current_input = ctx.get("_input") if decl.same_input else None
+    handler.perform_continue(marker, current_input=current_input)
+    _logger.info(
+        "workflow continue_as_new invoked same_wf_id=%s same_input=%s sa=%d",
+        decl.same_workflow_id,
+        decl.same_input,
+        len(decl.search_attributes),
+    )
+    return {
+        "continued_as_new": True,
+        "same_workflow_id": decl.same_workflow_id,
+        "same_input": decl.same_input,
+    }
+
+
 _STEP_DISPATCH: dict[type, StepCompiler] = {
     ActivityDeclaration: compile_activity_step,
     SagaDeclaration: compile_saga_step,
@@ -808,6 +855,8 @@ _STEP_DISPATCH: dict[type, StepCompiler] = {
     CheckpointDeclaration: compile_checkpoint_step,
     GuardrailDeclaration: compile_guardrail_step,
     EscalateDeclaration: compile_escalate_step,
+    # P1-W1 fix (audit 2026-08-18): wire ContinueAsNewHandler.
+    ContinueAsNewDeclaration: compile_continue_as_new_step,
 }
 
 
@@ -830,6 +879,6 @@ async def dispatch_step_compile(step: WorkflowStep, ctx: dict[str, Any]) -> Any:
     if compiler is None:
         raise TypeError(
             f"No step compiler registered for {type(step).__name__}; "
-            "did you add a new WorkflowStep without updating step_compilers?",
+            "did you add a new WorkflowStep without updating step_compilers?"
         )
     return await compiler(step, ctx)

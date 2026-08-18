@@ -1,8 +1,8 @@
 """S56 W1 — advanced_declarations.py part of workflow spec decomp.
 
-Schemas: SensorDeclaration, AgentInvokeDeclaration, ReflectDeclaration, CheckpointDeclaration, GuardrailDeclaration, EscalateDeclaration.
+Schemas: SensorDeclaration, AgentInvokeDeclaration, ReflectDeclaration, CheckpointDeclaration, GuardrailDeclaration, EscalateDeclaration, ContinueAsNewDeclaration.
 
-advanced declarations (sensor/agent/reflect/checkpoint/guardrail/escalate).
+advanced declarations (sensor/agent/reflect/checkpoint/guardrail/escalate/continue_as_new).
 """
 
 from __future__ import annotations
@@ -30,10 +30,10 @@ class SensorDeclaration(BaseModel):
         description="Имя callable-ссылки (``module:fn``) или JMESPath-выражение.",
     )
     poll_interval_s: float = Field(
-        default=60.0, gt=0.0, description="Интервал опроса предиката.",
+        default=60.0, gt=0.0, description="Интервал опроса предиката."
     )
     timeout_s: float | None = Field(
-        default=None, gt=0.0, description="Полный timeout; None — бесконечно.",
+        default=None, gt=0.0, description="Полный timeout; None — бесконечно."
     )
 
 
@@ -113,7 +113,7 @@ class AgentInvokeDeclaration(BaseModel):
         ),
     )
     output_key: str | None = Field(
-        default=None, description="Имя property для сохранения результата агента.",
+        default=None, description="Имя property для сохранения результата агента."
     )
     max_turns: int = Field(
         default=10,
@@ -194,20 +194,20 @@ class ReflectDeclaration(BaseModel):
 
     type: Literal["reflect"] = "reflect"
     trigger: str | None = Field(
-        default=None, description="Dot-path condition для запуска reflect.",
+        default=None, description="Dot-path condition для запуска reflect."
     )
     source_step: str | None = Field(
-        default=None, description="WorkflowStep.id, чей output анализировать.",
+        default=None, description="WorkflowStep.id, чей output анализировать."
     )
     memory_writes: list[str] = Field(
-        default_factory=list, description="Memory resource names для записи.",
+        default_factory=list, description="Memory resource names для записи."
     )
     consolidation_policy: Literal["summarize", "dedup", "reflect", "none"] = "reflect"
     async_mode: bool = Field(
-        default=True, description="Выполнять в background (True) или синхронно (False).",
+        default=True, description="Выполнять в background (True) или синхронно (False)."
     )
     output_key: str | None = Field(
-        default=None, description="Имя property для сохранения результата reflect.",
+        default=None, description="Имя property для сохранения результата reflect."
     )
 
 
@@ -239,17 +239,17 @@ class CheckpointDeclaration(BaseModel):
 
     type: Literal["checkpoint"] = "checkpoint"
     checkpoint_id: str | None = Field(
-        default=None, description="Явный id checkpoint'а (None = auto-generated UUID).",
+        default=None, description="Явный id checkpoint'а (None = auto-generated UUID)."
     )
     include_steps: tuple[str, ...] = Field(
         default=(),
         description="Кортеж step-id, output которых сохранить. Пустой = весь state.",
     )
     metadata: dict[str, Any] = Field(
-        default_factory=dict, description="Произвольные metadata для checkpoint.",
+        default_factory=dict, description="Произвольные metadata для checkpoint."
     )
     output_key: str | None = Field(
-        default=None, description="Имя property для сохранения checkpoint_id.",
+        default=None, description="Имя property для сохранения checkpoint_id."
     )
 
 
@@ -288,14 +288,14 @@ class GuardrailDeclaration(BaseModel):
     )
     threshold: float = Field(description="Пороговое значение для сравнения.")
     on_exceed: Literal["escalate", "fail", "warn", "dlq"] = Field(
-        default="fail", description="Действие при превышении threshold.",
+        default="fail", description="Действие при превышении threshold."
     )
     target: str | None = Field(
         default=None,
         description="Dot-path до значения для проверки (None = текущий шаг).",
     )
     output_key: str | None = Field(
-        default=None, description="Имя property для сохранения результата проверки.",
+        default=None, description="Имя property для сохранения результата проверки."
     )
 
 
@@ -326,14 +326,53 @@ class EscalateDeclaration(BaseModel):
 
     type: Literal["escalate"] = "escalate"
     to_agent: str | None = Field(
-        default=None, description="Target agent_id для escalation.",
+        default=None, description="Target agent_id для escalation."
     )
     to_model: str | None = Field(
-        default=None, description="Target model (``provider:model``) для escalation.",
+        default=None, description="Target model (``provider:model``) для escalation."
     )
     reason: str | None = Field(
-        default=None, description="Причина escalation (логируется в audit).",
+        default=None, description="Причина escalation (логируется в audit)."
     )
     output_key: str | None = Field(
-        default=None, description="Имя property для сохранения результата escalation.",
+        default=None, description="Имя property для сохранения результата escalation."
+    )
+
+
+class ContinueAsNewDeclaration(BaseModel):
+    """Continue-As-New шаг: пересоздать execution с чистой историей (D169).
+
+    Temporal best practice для долгоживущих workflow: периодически
+    пересоздавать execution, чтобы избежать роста Event History.
+
+    Используется в YAML DSL как ``- type: continue_as_new`` внутри
+    ``WorkflowDeclaration.steps``. Wired to
+    :class:`src.backend.dsl.workflow.handlers.continue_as_new_handler.ContinueAsNewHandler`
+    — handler вызывает ``temporalio.workflow.continue_as_new(input)``.
+
+    References:
+        https://docs.temporal.io/best-practices/worker#manage-event-history-growth
+        https://docs.temporal.io/workflow-execution/continue-as-new
+
+    Attributes:
+        type: Discriminator literal (``"continue_as_new"``).
+        same_workflow_id: Сохранить тот же ``workflow_id`` (default True).
+        same_input: Сохранить текущий ``input`` (default True).
+        search_attributes: Атрибуты для поиска, передаются через
+            ``workflow.upsert_search_attributes``.
+
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["continue_as_new"] = "continue_as_new"
+    same_workflow_id: bool = Field(
+        default=True, description="Сохранить тот же workflow_id."
+    )
+    same_input: bool = Field(
+        default=True, description="Сохранить текущий input (default True)."
+    )
+    search_attributes: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Атрибуты поиска (будут upsert-нуты перед continue_as_new).",
     )

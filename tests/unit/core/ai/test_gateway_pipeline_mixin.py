@@ -231,11 +231,32 @@ async def test_resolve_policy_none_in_soft_mode_returns_none() -> None:
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_check_capability_no_gate_is_noop() -> None:
-    """Без ``capability_gate`` — no-op, не падает."""
+async def test_check_capability_no_gate_fails_closed_in_production() -> None:
+    """P0-S4 (audit 2026-08-18): без ``capability_gate`` → fail-closed в production."""
     mixin = _make_mixin()
     req = AIRequest(
         workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi",
+    )
+    # Default ai_policy_enforce=True → CapabilityDeniedError.
+    from src.backend.core.security.capabilities.errors import CapabilityDeniedError
+    with pytest.raises(CapabilityDeniedError):
+        await mixin._check_capability(req)
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_check_capability_no_gate_allows_in_dev(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """P0-S4: dev (ai_policy_enforce=False) → backward-compat silent allow."""
+    mixin = _make_mixin()
+    req = AIRequest(
+        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi",
+    )
+    monkeypatch.setattr(
+        "src.backend.core.config.features.feature_flags.ai_policy_enforce",
+        False,
+        raising=False,
     )
     await mixin._check_capability(req)  # should not raise
 
@@ -243,7 +264,7 @@ async def test_check_capability_no_gate_is_noop() -> None:
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_check_capability_sync_check_called() -> None:
-    """CapabilityGate.check вызывается с ``ai.invoke.<workflow_id>``."""
+    """CapabilityGate.check вызывается с ``(plugin, capability, scope)``."""
     gate = MagicMock()
     gate.check = MagicMock(return_value=None)
     mixin = _make_mixin(_capability_gate=gate)
@@ -254,7 +275,7 @@ async def test_check_capability_sync_check_called() -> None:
         prompt_inline="hi",
     )
     await mixin._check_capability(req)
-    gate.check.assert_called_once_with("ai.invoke.credit_check")
+    gate.check.assert_called_once_with("core", "ai.invoke.credit_check", "credit_check")
 
 
 @pytest.mark.unit
@@ -273,14 +294,16 @@ async def test_check_capability_async_check_awaited() -> None:
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_check_capability_gate_without_check_attr_skipped() -> None:
-    """CapabilityGate без метода ``check`` — silently no-op."""
+async def test_check_capability_gate_without_check_attr_fails_closed() -> None:
+    """P0-S4: CapabilityGate без метода ``check`` → fail-closed в production."""
     gate = MagicMock(spec=[])  # no `check` attribute
     mixin = _make_mixin(_capability_gate=gate)
     req = AIRequest(
         workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi",
     )
-    await mixin._check_capability(req)  # no raise
+    from src.backend.core.security.capabilities.errors import CapabilityDeniedError
+    with pytest.raises(CapabilityDeniedError):
+        await mixin._check_capability(req)
 
 
 # ── _apply_input_sanitizers ──────────────────────────────────────────────────
@@ -291,9 +314,16 @@ async def test_check_capability_gate_without_check_attr_skipped() -> None:
 async def test_input_sanitizers_no_sanitizer_returns_prompt(
     basic_request: AIRequest,
 ) -> None:
-    """Без sanitizer — возвращается исходный prompt как есть."""
+    """Без sanitizer — возвращается исходный prompt как есть.
+
+    Тест патчит presidio-резолв чтобы вернуть None (имитация «Presidio недоступен»).
+    """
     mixin = _make_mixin()
-    result = await mixin._apply_input_sanitizers(basic_request, None)
+    with patch(
+        "src.backend.services.ai.pii.presidio_analyzer.get_presidio_sanitizer_adapter",
+        return_value=None,
+    ):
+        result = await mixin._apply_input_sanitizers(basic_request, None)
     assert result == "Контакт: alice@x.io"
 
 
@@ -326,33 +356,72 @@ async def test_input_sanitizers_happy_path_masks_pii(
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_input_sanitizers_runtime_error_falls_back(
+async def test_input_sanitizers_runtime_error_fails_closed_in_production(
     basic_request: AIRequest, caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """RuntimeError из sanitizer → возвращается исходный prompt, warning logged."""
+    """P0-S5 (audit 2026-08-18): RuntimeError из sanitizer → fail-closed в production."""
     sanitizer = _FakeSanitizer(fail=True)
     mixin = _make_mixin(_sanitizer=sanitizer)
+    # Default ai_policy_enforce=True (production) → exception пробрасывается.
+    with pytest.raises(RuntimeError):
+        await mixin._apply_input_sanitizers(basic_request, None)
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_input_sanitizers_runtime_error_failsoft_in_dev(
+    basic_request: AIRequest, caplog: pytest.LogCaptureFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """P0-S5: dev (ai_policy_enforce=False) → fail-soft (original prompt)."""
+    sanitizer = _FakeSanitizer(fail=True)
+    mixin = _make_mixin(_sanitizer=sanitizer)
+    monkeypatch.setattr(
+        "src.backend.core.config.features.feature_flags.ai_policy_enforce",
+        False,
+        raising=False,
+    )
     with caplog.at_level(
         logging.WARNING, logger="src.backend.core.ai.gateway_pipeline_mixin",
     ):
         result = await mixin._apply_input_sanitizers(basic_request, None)
-    # mixin обрабатывает RuntimeError и возвращает original prompt без raise
     assert result == "Контакт: alice@x.io"
     assert any("sanitize_async недоступен" in rec.message for rec in caplog.records)
 
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_input_sanitizers_generic_exception_falls_back(
+async def test_input_sanitizers_generic_exception_fails_closed_in_production(
     basic_request: AIRequest,
 ) -> None:
-    """Generic Exception в sanitizer → fallback на original prompt (не raise)."""
+    """P0-S5: Generic Exception в sanitizer → fail-closed в production."""
 
     class _BadSanitizer:
         async def sanitize_async(self, text: str, **kwargs: Any) -> Any:
             raise ValueError("kaboom")
 
     mixin = _make_mixin(_sanitizer=_BadSanitizer())
+    with pytest.raises(ValueError, match="kaboom"):
+        await mixin._apply_input_sanitizers(basic_request, None)
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_input_sanitizers_generic_exception_failsoft_in_dev(
+    basic_request: AIRequest, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """P0-S5: dev (ai_policy_enforce=False) → fail-soft на original prompt."""
+
+    class _BadSanitizer:
+        async def sanitize_async(self, text: str, **kwargs: Any) -> Any:
+            raise ValueError("kaboom")
+
+    mixin = _make_mixin(_sanitizer=_BadSanitizer())
+    monkeypatch.setattr(
+        "src.backend.core.config.features.feature_flags.ai_policy_enforce",
+        False,
+        raising=False,
+    )
     result = await mixin._apply_input_sanitizers(basic_request, None)
     assert result == "Контакт: alice@x.io"
 
@@ -638,10 +707,17 @@ async def test_output_sanitizers_empty_content_passthrough() -> None:
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_output_sanitizers_no_sanitizer_passthrough() -> None:
-    """Без sanitizer — response возвращается unchanged."""
+    """Без sanitizer — response возвращается unchanged.
+
+    Тест патчит presidio-резолв чтобы вернуть None (имитация «Presidio недоступен»).
+    """
     mixin = _make_mixin()
     response = AIResponse(content="hello world")
-    result = await mixin._apply_output_sanitizers(response, None)
+    with patch(
+        "src.backend.services.ai.pii.presidio_analyzer.get_presidio_sanitizer_adapter",
+        return_value=None,
+    ):
+        result = await mixin._apply_output_sanitizers(response, None)
     assert result is response
 
 

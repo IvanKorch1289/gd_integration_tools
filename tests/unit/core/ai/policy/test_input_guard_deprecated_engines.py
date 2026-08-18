@@ -94,32 +94,67 @@ async def test_rebuff_engine_warn_mode_passes() -> None:
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_unknown_engine_returns_none_skip() -> None:
-    """Unknown engine → None (skip with warning, no raise).
+async def test_unknown_engine_returns_none_skip_when_warn() -> None:
+    """Unknown engine + on_block=warn → None (skip with warning, no raise).
 
-    Backward compat для custom engines или unsupported names."""
+    Backward compat для custom engines или unsupported names — только в warn-режиме.
+    """
     enforcer = _StubEnforcer()
-    ref = GuardRef(name="custom:engine", on_block="fail")
+    ref = GuardRef(name="custom:engine", on_block="warn")
 
     result = await enforcer._guard_input_one(
         prompt="test prompt",
         ref=ref,
     )
-    # Unknown engine → пропускается (None result)
-    # Per docs: "AIPolicyEnforcer: unknown input guard — skipped"
+    # Unknown engine + warn → пропускается (None result)
     assert result is None
 
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_nemo_engine_deferred_returns_none() -> None:
-    """nemo:* — deferred integration (S172). Returns None без raise."""
+async def test_unknown_engine_fails_closed_when_fail() -> None:
+    """P0-S3 (audit 2026-08-18): Unknown engine + on_block=fail → fail-closed.
+
+    Без fix неизвестный guard silently пропускался, и политика молча нарушалась.
+    """
     enforcer = _StubEnforcer()
-    ref = GuardRef(name="nemo:colang:topics", on_block="fail")
+    ref = GuardRef(name="custom:engine", on_block="fail")
+
+    with pytest.raises(GuardrailViolationError, match="unknown_guard"):
+        await enforcer._guard_input_one(
+            prompt="test prompt",
+            ref=ref,
+        )
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_nemo_engine_deferred_returns_none_when_warn() -> None:
+    """nemo:* — deferred integration (S172). on_block=warn → None без raise."""
+    enforcer = _StubEnforcer()
+    ref = GuardRef(name="nemo:colang:topics", on_block="warn")
 
     result = await enforcer._guard_input_one(
         prompt="test prompt",
         ref=ref,
     )
-    # nemo deferred → None (per S172 audit F4.1)
+    # nemo deferred + warn → None (per S172 audit F4.1)
     assert result is None
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_nemo_engine_fails_closed_when_fail() -> None:
+    """P0-S3 (audit 2026-08-18): nemo + on_block=fail → fail-closed.
+
+    Без fix credit_check_strict.policy.yaml декларирует ``nemo:colang:topics``
+    с ``on_block: fail``, но guard silently skip → политика молча нарушалась.
+    """
+    enforcer = _StubEnforcer()
+    ref = GuardRef(name="nemo:colang:topics", on_block="fail")
+
+    with pytest.raises(GuardrailViolationError, match="guard_provider_unavailable"):
+        await enforcer._guard_input_one(
+            prompt="test prompt",
+            ref=ref,
+        )

@@ -22,6 +22,7 @@ from src.backend.dsl.workflow.spec.activity_declarations import (
 from src.backend.dsl.workflow.spec.advanced_declarations import (
     AgentInvokeDeclaration,  # S56 W1: re-export
     CheckpointDeclaration,  # S56 W1: re-export
+    ContinueAsNewDeclaration,  # P1-W1 fix (audit 2026-08-18)
     EscalateDeclaration,  # S56 W1: re-export
     GuardrailDeclaration,  # S56 W1: re-export
     ReflectDeclaration,  # S56 W1: re-export
@@ -41,6 +42,7 @@ __all__ = (
     "ActivityDeclaration",
     "AgentInvokeDeclaration",
     "CheckpointDeclaration",
+    "ContinueAsNewDeclaration",
     "EscalateDeclaration",
     "GuardrailDeclaration",
     "MemoryScope",
