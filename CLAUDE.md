@@ -552,8 +552,10 @@ python tools/checks/check_layers.py
 ## Sprint 171 M7 — Integration Layer (2026-06-25)
 
 ### Унифицированные middleware facades (D160)
-- `src/backend/core/facades.py` — единая точка импорта для 17 primitives
+- `src/backend/core/api/__init__.py` — единая точка импорта для 17 primitives
   (auth + timeout + retry + ratelimit + CB + bulkhead)
+- (P1-4 cycle 241 → Sprint 18): `core/facades.py` существует как backward-compat shim (4 LOC re-export из `core/api/__init__.py`).
+  Рекомендуется использовать `core.api` напрямую.
 - Заменяет 40+ unique facade imports
 - Lazy `__getattr__` для circular deps
 - 8/8 tests pass

@@ -69,10 +69,12 @@ Sprint 35 закрыт (5 волн: SBOM+cosign, OWASP ZAP, chaos, hypothesis, p
 - См. `docs/config/SETTINGS_GUIDE.md`
 
 **Sprint 171 (S170+): M7 Integration Layer complete (commits 8038907-0ea7b28).**
-- Unified middleware facades: `src/backend/core/facades.py` (D160)
+- Unified middleware facades: `src/backend/core/api/__init__.py` (D160)
   - 17 primitives: auth + timeout + retry + ratelimit + CB + bulkhead
   - Replaces 40+ unique facade imports
   - 8/8 tests pass
+  - (P1-4 cycle 241 → Sprint 18): `core/facades.py` существует как backward-compat shim (4 LOC re-export из `core/api/__init__.py`).
+    Рекомендуется использовать `core.api` напрямую.
 - Per-route policies: `policy_mixin.py` (8 types, already exists)
   - cache/CB/rate_limit/timeout/retry/bulkhead/adaptive_timeout/idempotency
 - Multi-protocol: 14+ (REST/SOAP/WSDL/gRPC/GraphQL/AsyncAPI/WS/SSE/MCP/MQTT/HTTP3/CDC/email/filewatcher/scheduler)
