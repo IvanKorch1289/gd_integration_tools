@@ -7,10 +7,16 @@ import os
 from src.backend.core.config.features import feature_flags
 from src.backend.core.config.features.sprint6 import Sprint6Flags
 
+<<<<<<< Updated upstream
 # Round 7 fix: 20 fields total после удаления ``structlog_batching_enabled``
 # (YAGNI cleanup — wrapper был dead code без production callers). Распределение:
 #   K1 Security: 6
 #   K2 Resilience+Perf: 6 (было 7 — minus structlog_batching_enabled)
+=======
+# 20 fields total, distributed across 5 K-domains (Sprint 6):
+#   K1 Security: 6
+#   K2 Resilience+Perf: 6  (structlog_batching_enabled удалён в S4.1 — YAGNI)
+>>>>>>> Stashed changes
 #   K3 DSL+Workflow: 2
 #   K4 AI+Quality: 3
 #   K5 Frontend+Chaos: 3
@@ -22,7 +28,11 @@ SPRINT6_FIELD_NAMES = (
     "owasp_zap_gate_enabled",
     "custom_code_audit_enabled",
     "codeclone_fail_on_new",
+<<<<<<< Updated upstream
     # K2 Resilience+Perf (6) — Round 7: structlog_batching_enabled удалён
+=======
+    # K2 Resilience+Perf (6)
+>>>>>>> Stashed changes
     "perf_gate_strict",
     "processor_health_checks_strict",
     "backpressure_streaming_enabled",

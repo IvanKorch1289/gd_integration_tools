@@ -73,6 +73,7 @@ async def test_delete_multiple_keys(backend: MemcachedBackend) -> None:
 async def test_delete_pattern_raises_not_implemented(
     backend: MemcachedBackend,
 ) -> None:
+<<<<<<< Updated upstream
     """``delete_pattern`` raises NotImplementedError вместо silent no-op.
 
     S181 P0-#10 — silent warning был foot-gun (cache invalidation silently
@@ -84,6 +85,14 @@ async def test_delete_pattern_raises_not_implemented(
         await backend.delete_pattern("any:*")
         await backend.delete_pattern("other:*")
     backend._client.delete.assert_not_called()
+=======
+    """``delete_pattern`` логирует только один warning за процесс и не вызывает client."""
+    with caplog.at_level(logging.WARNING):
+        await backend.delete_pattern("any:*")
+        await backend.delete_pattern("other:*")
+    backend._client.delete.assert_not_called()
+    assert sum("delete_pattern" in r.message for r in caplog.records) == 1
+>>>>>>> Stashed changes
 
 
 async def test_exists_true(backend: MemcachedBackend) -> None:

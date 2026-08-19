@@ -55,6 +55,7 @@ services:
       dockerfile: ops/compose/Dockerfile
     image: gd-integration-tools:light
     container_name: gd-worker-light
+<<<<<<< Updated upstream
     # Worker entry-point: src.backend.infrastructure.workflow.worker.main()
     # (см. K-OPS-4 fix в docker-compose.yml).
     # D-AUDIT-15901 fix (cycle 159): use entrypoint to override
@@ -64,6 +65,11 @@ services:
     # worker restart'ился бесконечно.
     entrypoint: ["python", "-m", "src.backend.infrastructure.workflow.worker"]
     command: ["run"]
+=======
+    # Worker entry-point: src.backend.infrastructure.workflow.worker.main().
+    # См. подробности в docker-compose.yml (там же про K-OPS-4 fix).
+    command: ["python", "-m", "src.backend.infrastructure.workflow.worker", "run"]
+>>>>>>> Stashed changes
     env_file:
       - ../../.env
     environment:
@@ -76,10 +82,18 @@ services:
     deploy:
       replicas: ${WORKER_COUNT:-1}
     healthcheck:
+<<<<<<< Updated upstream
       # 2026-08-14 fix (D-AUDIT-20701): заменён ps-grep (FAILED — `ps`
       # не в $PATH slim image). Worker слушает K8s probes на :9100
       # (WorkerProbesServer). TCP check на :9100 universal.
       test: ["CMD-SHELL", "python -c \"import socket; socket.create_connection(('127.0.0.1', 9100), timeout=3)\" || exit 1"]
+=======
+      # Worker запускается как ``python -m src.backend.infrastructure.workflow.worker run``;
+      # ps ищет подстроку в командной строке процесса. Старая маска
+      # ``workflows.worker`` была привязана к несуществующему модулю и не
+      # срабатывала — healthcheck всегда был unhealthy.
+      test: ["CMD-SHELL", "ps aux | grep -v grep | grep -q 'src.backend.infrastructure.workflow.worker' || exit 1"]
+>>>>>>> Stashed changes
       interval: 30s
       timeout: 5s
       retries: 3

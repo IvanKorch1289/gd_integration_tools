@@ -80,14 +80,18 @@ def test_top_level_dsl_imports() -> None:
 def test_no_duplicate_dsl_imports() -> None:
     """No duplicate dsl module imports (был get_tracer imported 2x).
 
+<<<<<<< Updated upstream
     cycle-9/D-AUDIT-915 fix: schema.py grew to 5 dsl imports (canonical
     4 + 1 additional per concurrent work). Тест не привязан к
     фиксированному count=4, проверяет только отсутствие дубликатов.
+=======
+>>>>>>> Stashed changes
     Sprint 1.1 (L5 Security Chain): ``src.backend.dsl.engine.context``
     добавлен к top-level imports (для ``ExecutionContext.from_auth``).
     Ожидаем 5 уникальных dsl submodule imports.
     """
     source = Path("src/backend/entrypoints/graphql/schema.py").read_text()
+<<<<<<< Updated upstream
     import re
 
     dsl_imports = re.findall(r"^from src\.backend\.dsl[.\w]* import", source, re.MULTILINE)
@@ -98,6 +102,13 @@ def test_no_duplicate_dsl_imports() -> None:
     # Sprint 1.1 (L5 Security Chain): should be 5 unique dsl imports.
     assert len(dsl_imports) == 5, (
         f"Found {len(dsl_imports)} `from src.backend.dsl` imports, expected 5"
+=======
+    dsl_imports = source.count("from src.backend.dsl")
+    # Should be 5: service + registry + commands.registry + engine.tracer
+    # + engine.context (Sprint 1.1).
+    assert dsl_imports == 5, (
+        f"Found {dsl_imports} `from src.backend.dsl` imports, expected 5"
+>>>>>>> Stashed changes
     )
 
 
