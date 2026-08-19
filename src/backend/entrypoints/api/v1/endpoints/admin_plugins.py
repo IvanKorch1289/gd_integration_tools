@@ -118,7 +118,7 @@ def _get_plugin_registry() -> Any:
         from src.backend.services.plugins.loader import PluginLoader
 
         return PluginLoader.get_instance()
-    except ImportError, AttributeError, RuntimeError:
+    except (ImportError, AttributeError, RuntimeError):
         logger.warning("PluginLoader недоступен — используется mock")
         return None
 
@@ -361,7 +361,7 @@ def _get_version_service() -> Any | None:
         from src.backend.services.plugins.versioning import PluginVersionService
 
         return PluginVersionService(loader=loader, extensions_dir=Path("extensions"))
-    except ImportError, AttributeError, OSError, TypeError:
+    except (ImportError, AttributeError, OSError, TypeError):
         return None
 
 

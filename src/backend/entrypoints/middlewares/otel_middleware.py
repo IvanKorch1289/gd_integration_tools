@@ -192,7 +192,7 @@ class OtelMiddleware:
             if route_id:
                 try:
                     span.set_attribute("app.route_id", str(route_id))
-                except AttributeError, TypeError:
+                except (AttributeError, TypeError):
                     pass
 
     def _extract_context(self, scope: Scope) -> Any:

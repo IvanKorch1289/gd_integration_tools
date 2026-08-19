@@ -217,7 +217,7 @@ class DocsIndexer:
             return
         try:
             self._qdrant.get_collection(self._collection_name)
-        except AttributeError, RuntimeError, ValueError, ConnectionError:
+        except (AttributeError, RuntimeError, ValueError, ConnectionError):
             # cycle-9/D-AUDIT-906: narrow exceptions + observability.
             # Qdrant raises RuntimeError/ValueError для invalid collections,
             # ConnectionError для network issues. Bare `except Exception`
@@ -231,7 +231,7 @@ class DocsIndexer:
                         size=_EMBED_DIM, distance=Distance.COSINE
                     ),
                 )
-            except ImportError, AttributeError:
+            except (ImportError, AttributeError):
                 # cycle-9/D-AUDIT-906: см. выше — narrow для fallback API
                 # (legacy qdrant без VectorParams — old signature).
                 self._qdrant.create_collection(self._collection_name)

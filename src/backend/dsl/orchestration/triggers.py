@@ -83,7 +83,7 @@ class FileSensorTaskWrapper:
             self._task.cancel()
             try:
                 await self._task
-            except asyncio.CancelledError, Exception:
+            except (asyncio.CancelledError, Exception):
                 pass
 
 
@@ -182,7 +182,7 @@ class IntervalTrigger:
             self._task.cancel()
             try:
                 await self._task
-            except asyncio.CancelledError, Exception:
+            except (asyncio.CancelledError, Exception):
                 pass
             self._task = None
         _log.info("IntervalTrigger: %s stopped", self.name)
@@ -302,7 +302,7 @@ class CronTrigger:
             self._task.cancel()
             try:
                 await self._task
-            except asyncio.CancelledError, Exception:
+            except (asyncio.CancelledError, Exception):
                 pass
             self._task = None
         _log.info("CronTrigger: %s stopped", self.name)

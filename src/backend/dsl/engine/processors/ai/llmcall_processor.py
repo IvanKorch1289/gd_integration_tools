@@ -275,7 +275,7 @@ class LLMCallProcessor(BaseProcessor):
                         provider=self._provider,
                         model=self._model or "default",
                     )
-                except GatewayRateLimited, ValueError:
+                except (GatewayRateLimited, ValueError):
                     # Non-retryable + non-CB-failing — propagate.
                     raise
                 except RuntimeError as exc:

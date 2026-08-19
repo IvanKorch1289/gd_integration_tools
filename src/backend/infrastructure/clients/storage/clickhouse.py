@@ -341,7 +341,7 @@ class ClickHouseClient:
             client = await self._ensure_client()
             response = await client.get("/ping")
             return response.status_code == 200
-        except ConnectionError, TimeoutError, OSError, httpx.HTTPError:
+        except (ConnectionError, TimeoutError, OSError, httpx.HTTPError):
             return False
 
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:

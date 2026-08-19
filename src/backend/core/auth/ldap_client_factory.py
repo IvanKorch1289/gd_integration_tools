@@ -123,7 +123,7 @@ def get_ad_client(
         client = get_ad_directory_client_provider()(
             config=config, connection_factory=connection_factory
         )
-    except ImportError, RuntimeError, KeyError:
+    except (ImportError, RuntimeError, KeyError):
         # dev_light: DI module not registered → no LDAP client.
         _logger.debug("get_ad_client: DI provider unavailable, skipping")
         return None

@@ -336,7 +336,7 @@ class MongoDBClient:
                 return False
             await self._client.admin.command("ping")
             return True
-        except ConnectionError, TimeoutError, OSError:
+        except (ConnectionError, TimeoutError, OSError):
             return False
 
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:

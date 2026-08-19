@@ -114,7 +114,7 @@ def _get_registry() -> Any:
         from src.backend.dsl.commands.action_registry import ActionHandlerRegistry
 
         return ActionHandlerRegistry.get_instance()
-    except ImportError, AttributeError, RuntimeError:
+    except (ImportError, AttributeError, RuntimeError):
         logger.warning("ActionHandlerRegistry недоступен — используется mock")
         return None
 

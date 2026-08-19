@@ -291,7 +291,7 @@ class AIRLMProcessor(BaseProcessor):
 
         try:
             parsed = orjson.loads(content)
-        except ValueError, TypeError:
+        except (ValueError, TypeError):
             # Fallback heuristic: keep backward-compat with non-JSON responses.
             return '"relevant"' in content and "true" in content.lower()
 

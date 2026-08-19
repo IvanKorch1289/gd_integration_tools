@@ -276,7 +276,7 @@ def _patch_rpc_methods() -> None:
 
                 _mod = importlib.import_module(_module_name)
                 _cls = getattr(_mod, _cls_name)
-            except ImportError, AttributeError:
+            except (ImportError, AttributeError):
                 continue
         else:
             try:
@@ -300,7 +300,7 @@ def _patch_rpc_methods() -> None:
         """
         try:
             method.__dict__[attr_name] = attr_value
-        except AttributeError, TypeError:
+        except (AttributeError, TypeError):
             # Some functions don't allow __dict__ assignment.
             # Try setattr on the function instead.
             try:
