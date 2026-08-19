@@ -291,5 +291,34 @@ class Sprint5DSLFlags(BaseSettings):
         ),
     )
 
+    # P0-NEW-2 (cycle 242): routes/* feature flags declared.
+    # DSL-3 audit: these are referenced in YAML routes (route.toml + *.dsl.yaml)
+    # but missing from config — env-override не действует, fallback на YAML default.
+    demo_routes_enabled: bool = Field(
+        default=True,
+        title="DSL-3 fix: routes/echo_demo + routes/composition_demo enabled",
+        description="P0-NEW-2 cycle 242. DSL-3 fix.",
+    )
+    external_health_proxy_enabled: bool = Field(
+        default=False,
+        title="DSL-3 fix: routes/health_proxy_demo gate",
+        description="P0-NEW-2 cycle 242. DSL-3 fix.",
+    )
+    osint_agent_enabled: bool = Field(
+        default=False,
+        title="DSL-3 fix: routes/osint_agent gate",
+        description="P0-NEW-2 cycle 242. DSL-3 fix.",
+    )
+    hello_route_enabled: bool = Field(
+        default=False,
+        title="DSL-3 fix: routes/hello_route gate",
+        description="P0-NEW-2 cycle 242. DSL-3 fix.",
+    )
+    test_route_w1_enabled: bool = Field(
+        default=False,
+        title="DSL-3 fix: routes/test_route_w1 gate",
+        description="P0-NEW-2 cycle 242. DSL-3 fix.",
+    )
+
 
 __all__ = ("Sprint5DSLFlags",)

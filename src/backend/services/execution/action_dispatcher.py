@@ -1,3 +1,4 @@
+# ruff: noqa: F821 — `action_handler_registry` resolved via module-level __getattr__ proxy (Sprint 226)
 """Реализация ActionDispatcher / ActionGatewayDispatcher (W14.1, W14.1.C).
 
 Двойной контракт:
@@ -32,6 +33,7 @@ from src.backend.core.interfaces.action_dispatcher import (
     MiddlewareNextHandler,
     TransportName,
 )
+
 if TYPE_CHECKING:
     from src.backend.dsl.commands.action_registry import ActionHandlerRegistry
 
@@ -134,7 +136,7 @@ class DefaultActionDispatcher(ActionDispatcher, ActionGatewayDispatcher):
         # Gateway-режим.
         action = command_or_action
         return await self.dispatch_action(
-            action, payload or {}, context or DispatchContext(),
+            action, payload or {}, context or DispatchContext()
         )
 
     def is_registered(self, action: str) -> bool:
@@ -146,7 +148,7 @@ class DefaultActionDispatcher(ActionDispatcher, ActionGatewayDispatcher):
     # ------------------------------------------------------------------ #
 
     async def dispatch_action(
-        self, action: str, payload: Mapping[str, Any], context: DispatchContext,
+        self, action: str, payload: Mapping[str, Any], context: DispatchContext
     ) -> ActionResult:
         """Gateway-вариант dispatch с middleware-цепочкой.
 
@@ -166,7 +168,7 @@ class DefaultActionDispatcher(ActionDispatcher, ActionGatewayDispatcher):
             )
 
         return await self._run_middleware_chain(
-            action, payload, context, self._terminal_handler,
+            action, payload, context, self._terminal_handler
         )
 
     def get_metadata(self, action: str) -> ActionMetadata | None:
@@ -180,7 +182,7 @@ class DefaultActionDispatcher(ActionDispatcher, ActionGatewayDispatcher):
         return tuple(m.action for m in self._registry.list_metadata(transport))
 
     def list_metadata(
-        self, transport: TransportName | None = None,
+        self, transport: TransportName | None = None
     ) -> tuple[ActionMetadata, ...]:
         """Список всех metadata (для admin/debug)."""
         return self._registry.list_metadata(transport)
@@ -214,19 +216,19 @@ class DefaultActionDispatcher(ActionDispatcher, ActionGatewayDispatcher):
 
     @staticmethod
     def _wrap(
-        middleware: ActionMiddleware, next_handler: MiddlewareNextHandler,
+        middleware: ActionMiddleware, next_handler: MiddlewareNextHandler
     ) -> MiddlewareNextHandler:
         """Превращает (middleware, next) в новый MiddlewareNextHandler."""
 
         async def _wrapped(
-            action: str, payload: Mapping[str, Any], context: DispatchContext,
+            action: str, payload: Mapping[str, Any], context: DispatchContext
         ) -> ActionResult:
             return await middleware(action, payload, context, next_handler)
 
         return _wrapped
 
     async def _terminal_handler(
-        self, action: str, payload: Mapping[str, Any], context: DispatchContext,
+        self, action: str, payload: Mapping[str, Any], context: DispatchContext
     ) -> ActionResult:
         """Терминальный обработчик: вызов реестра + маппинг в ActionResult."""
         command = ActionCommandSchema(action=action, payload=dict(payload))

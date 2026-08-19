@@ -87,5 +87,23 @@ class WorkflowFlags(BaseSettings):
         ),
     )
 
+    # Sprint 8 P1-1: WorkflowSubprocess standalone guard flag.
+    # default=True (fail-closed) — в production subworkflow без parent workflow
+    # отвергается (избегаем orphan workflows). dev/test могут переключить в False
+    # через FEATURE_WORKFLOW_SUBPROCESS_REQUIRE_PARENT=false.
+    # Без explicit поля код в workflow_subprocess.py:127-131 fallback на True
+    # через except — silent default. Этот флаг делает default observable.
+    workflow_subprocess_require_parent: bool = Field(
+        default=True,
+        title="Workflow: WorkflowSubprocess требует parent_workflow_handle",
+        description=(
+            "Sprint 8 P1-1: при True WorkflowSubprocessProcessor refuses to start "
+            "child workflow если parent_workflow_handle is None (избегаем orphan "
+            "workflows без Cancel/ContinueAsNew propagation). "
+            "default=True (fail-closed) — production-safe; dev/test могут "
+            "переключить в False через FEATURE_WORKFLOW_SUBPROCESS_REQUIRE_PARENT=false."
+        ),
+    )
+
 
 __all__ = ("WorkflowFlags",)

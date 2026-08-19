@@ -108,8 +108,6 @@ src/backend/infrastructure/clients/external/cdc/client.py	infrastructure	src.bac
 src/backend/infrastructure/clients/messaging/event_bus.py	infrastructure	src.backend.services.schema_registry.registry
 src/backend/infrastructure/database/migrations/env.py	infrastructure	src.backend.services.plugins.loader
 src/backend/infrastructure/notifications/adapters/express.py	infrastructure	src.backend.dsl.engine.processors.express._common
-src/backend/infrastructure/observability/metrics.py	infrastructure	src.backend.dsl.engine.middleware
-src/backend/infrastructure/observability/tracing.py	infrastructure	src.backend.dsl.engine.middleware
 src/backend/infrastructure/scheduler/scheduled_tasks.py	infrastructure	src.backend.services.ai.memory.langmem_service
 src/backend/infrastructure/security/presidio_sanitizer.py	infrastructure	src.backend.services.ai.pii.presidio_analyzer
 src/backend/infrastructure/workflow/executor/sequential_mixin.py	workflows	src.backend.dsl.engine.exchange
@@ -139,3 +137,7 @@ src/backend/services/security/pii_streaming_facade.py	services	src.backend.infra
 src/backend/services/workflow/__init__.py	services	src.backend.infrastructure.workflow
 src/backend/services/workflows/cost_estimator.py	services	src.backend.dsl.workflow.versioning
 src/backend/services/workflows/hitl_pubsub.py	services	src.backend.infrastructure.clients.storage.redis
+src/backend/core/api/__init__.py	core	src.backend.dsl.helpers.banking
+src/backend/core/api/__init__.py	core	src.backend.schemas.base
+src/backend/services/ai/ai_graph.py	services	src.backend.dsl.commands.registry
+src/backend/entrypoints/api/generator/legacy_aliases.py	entrypoints	src.backend.dsl.commands.action_registry

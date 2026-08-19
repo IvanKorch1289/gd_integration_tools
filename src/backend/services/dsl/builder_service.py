@@ -1,3 +1,4 @@
+# ruff: noqa: F821 — `__getattr__` proxy uses lazy module-level imports (Sprint 226)
 """W25.2 — DSLBuilderService: фасад для просмотра/сохранения DSL-маршрутов.
 
 Используется Streamlit-страницей ``32_DSL_Builder`` и dev-CLI
@@ -87,7 +88,7 @@ class DSLBuilderService:
     """
 
     def __init__(
-        self, store_dir: str | Path | None = None, *, environment: str | None = None,
+        self, store_dir: str | Path | None = None, *, environment: str | None = None
     ) -> None:
         self._dir = Path(store_dir) if store_dir else Path(app_settings.dsl.routes_dir)
         self._env = environment or app_settings.app.environment

@@ -112,6 +112,14 @@ class AIFlags(BaseSettings):
             "is canonical per S172 P1)."
         ),
     )
+    # P0-NEW-2 (cycle 242): routes/* feature flags declared.
+    # Routes use these via TenantFeatureFlagResolver; missing declarations
+    # fall back to YAML default and ignore env override (DSL-3 fix).
+    ai_chat_enabled: bool = Field(
+        default=False,
+        title="AI Chat: routes/hello_route uses this for LLM-gated endpoint",
+        description="P0-NEW-2 cycle 242. DSL-3 fix.",
+    )
     ai_workspace_ttl_cleanup: bool = Field(
         default=True,
         title="AI: TTL cleanup для ${AI_WORKSPACE}/<tenant>/<session>/",

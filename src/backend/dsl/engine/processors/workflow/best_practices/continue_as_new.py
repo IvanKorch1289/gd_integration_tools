@@ -12,6 +12,7 @@ Refs:
 
 Pattern (Ponytail, D169): тонкий wrapper, без абстракций.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -73,9 +74,7 @@ class WorkflowContinueAsNewProcessor(BaseProcessor):
         self.same_input = same_input
         self.search_attributes = search_attributes or {}
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="request"):
             return
@@ -87,7 +86,6 @@ class WorkflowContinueAsNewProcessor(BaseProcessor):
             "body_snapshot": exchange.in_message.body,
         }
         _logger.info(
-            "workflow_continue_as_new requested same_wf_id=%s",
-            self.same_workflow_id,
+            "workflow_continue_as_new requested same_wf_id=%s", self.same_workflow_id
         )
         self.set_result(exchange, "continue_as_new_requested", marker)

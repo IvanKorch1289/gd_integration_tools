@@ -167,9 +167,9 @@ CircuitBreaker, ExceptionHandler.
 
 | Backend | Файл | Status | Use-case |
 |---|---|---|---|
-| Polling | `poll_backend.py` | **production-ready** | Кросс-БД (PG/Oracle/MSSQL/MySQL/DB2) через `updated_at`; самый универсальный путь. |
-| Listen/Notify | `listen_notify_backend.py` | **production-ready** | PG-only, small payload через `LISTEN/NOTIFY`. |
-| Debezium | `debezium_events_backend.py` | **production-ready** | Kafka topics через `aiokafka.AIOKafkaConsumer` + `parse_debezium_event`; offset commit через `consumer.commit()`. Round 7 fix: docs ранее говорили "scaffold" — actual implementation (S62 W2) реальна, требует только running Kafka cluster для runtime-теста. |
+| Polling | `poll_backend.py` | **scaffold** | Кросс-БД (PG/Oracle/MSSQL/MySQL/DB2) через `updated_at`; самый универсальный путь. Реальный SQL — через `sql_executor` callable (Sprint 12 P1-4). |
+| Listen/Notify | `listen_notify_backend.py` | **scaffold** | PG-only, small payload через `LISTEN/NOTIFY` (live-stream only; `replay()` intentionally empty — см. `cdc/listen_notify_backend.py:81`). |
+| Debezium | `debezium_events_backend.py` | **implemented** (`debezium_events_backend.py:104`) | Kafka topics через `aiokafka.AIOKafkaConsumer` + `parse_debezium_event`; offset commit через `consumer.commit()`. Round 7 fix: docs ранее говорили "scaffold" — actual implementation (S62 W2) реальна, требует только running Kafka cluster для runtime-теста. |
 
 Включение CDC в runtime — через feature-flag `feature_flags.cdc_enabled`
 (default-OFF). Per-route активация — через `route.toml::sources.cdc`

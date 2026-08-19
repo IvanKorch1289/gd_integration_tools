@@ -558,6 +558,10 @@ dev = [
     "ruamel-yaml>=0.18.0,<1.0.0",
     # P0-S6 (audit 2026-08-19): B314 fix — defusedxml для XXE protection.
     "defusedxml>=0.7.1,<1.0.0",
+    # Sprint 7 P0-5: simpleeval для DSL ChoiceProcessor + RuleEngine (lazy-import
+    # в dsl/engine/processors/eip/collection/collect.py:105 и rule_engine.py:114).
+    # Без explicit dep — runtime ImportError при попытке использовать choice/rule.
+    "simpleeval>=1.0.0,<2.0.0",
     "questionary>=2.0.0,<3.0.0",
     "testcontainers[postgres,redis,kafka]>=4.7.2,<5.0.0",
     "respx>=0.22,<1",
@@ -1108,6 +1112,31 @@ ignore_names = [
     "toxicity",
     # DSL templates — параметр используется через kwarg call в default registry
     "target_table",
+    # P1-3 (cycle 241): Pydantic BaseModel.model_config — class attr, не instance.
+    # Vulture не различает pydantic config от обычного class attr → false positive.
+    "model_config",
+    # P2-7 (cycle 241): Alembic migration pattern — required fields в revision файлах.
+    "depends_on",
+    "upgrade",
+    "revision",
+    "down_revision",
+    "downgrade",
+    "branch_labels",
+    # Protobuf-generated serial numbers (Cycle 38 W2: autogen exclude не покрывает все).
+    "_serialized_start",
+    "_serialized_end",
+    # Python inspect magic — добавляется декораторами автоматически.
+    "__signature__",
+    # Pydantic V2 field-setter aliases (Protocol-сигнатуры / runtime вычисления).
+    "tool_handler",
+    "mime_type",
+    "get_extension",
+    "format_name",
+    "_configured",
+    "supports_format",
+    "channel_name",
+    "update_context",
+    "write_strategy",
 ]
 
 # -----------------------------------------------------------------------------

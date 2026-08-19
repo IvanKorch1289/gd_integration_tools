@@ -18,6 +18,15 @@ from src.backend.entrypoints.grpc.grpc_server._safe_error import (
 from src.backend.entrypoints.grpc.grpc_server.base import (
     BaseGRPCServicer,  # S65 W3: re-export
 )
+
+# D-AUDIT-20823 (cycle 234): импортируем FileStreamGRPCServicer для того
+# чтобы patch loop в _patch_rpc_methods (line 183) нашёл класс через
+# globals()["FileStreamGRPCServicer"]. Без этого импорта loop делает
+# KeyError → continue → никогда не patchит subclass methods →
+# 3 pre-existing test failures.
+from src.backend.entrypoints.grpc.grpc_server.file_stream import (
+    FileStreamGRPCServicer,  # S128 W3: re-export  # noqa: F401
+)
 from src.backend.entrypoints.grpc.grpc_server.interceptor import (
     AuthInterceptor,  # S65 W3: re-export
 )
@@ -26,14 +35,6 @@ from src.backend.entrypoints.grpc.grpc_server.invoker import (
 )
 from src.backend.entrypoints.grpc.grpc_server.order import (
     OrderGRPCServicer,  # S65 W3: re-export
-)
-# D-AUDIT-20823 (cycle 234): импортируем FileStreamGRPCServicer для того
-# чтобы patch loop в _patch_rpc_methods (line 183) нашёл класс через
-# globals()["FileStreamGRPCServicer"]. Без этого импорта loop делает
-# KeyError → continue → никогда не patchит subclass methods →
-# 3 pre-existing test failures.
-from src.backend.entrypoints.grpc.grpc_server.file_stream import (
-    FileStreamGRPCServicer,  # S128 W3: re-export
 )
 from src.backend.entrypoints.grpc.grpc_server.server import (
     _load_tls_credentials,  # S65 W3: top-level func re-export
@@ -64,6 +65,7 @@ def _patch_rpc_methods() -> None:
         invoker_pb2_grpc,
         orders_pb2_grpc,
     )
+
     _parent_class_method_map = {
         invoker_pb2_grpc.InvokerServiceServicer: ("Invoke",),
         invoker_pb2_grpc.InvokerServiceStub: ("Invoke",),
@@ -74,12 +76,22 @@ def _patch_rpc_methods() -> None:
         # ``AttributeError: 'function' object has no attribute
         # 'request_streaming'`` при gRPC вызове.
         files_pb2_grpc.FileServiceServicer: (
-            "DeleteFile", "DownloadFile", "GetFile", "ListFiles",
-            "OpenFile", "Read", "UploadFile",
+            "DeleteFile",
+            "DownloadFile",
+            "GetFile",
+            "ListFiles",
+            "OpenFile",
+            "Read",
+            "UploadFile",
         ),
         files_pb2_grpc.FileServiceStub: (
-            "DeleteFile", "DownloadFile", "GetFile", "ListFiles",
-            "OpenFile", "Read", "UploadFile",
+            "DeleteFile",
+            "DownloadFile",
+            "GetFile",
+            "ListFiles",
+            "OpenFile",
+            "Read",
+            "UploadFile",
         ),
         # D-AUDIT-20201 fix (cycle 202): OrderService 7 RPC methods
         # (CreateOrder, GetOrderResult, GetOrder, DeleteOrder, CreateSKBOrder,
@@ -88,12 +100,22 @@ def _patch_rpc_methods() -> None:
         # _parent_class_method_map → gRPC server падал с 'OrderService'
         # has no method 'HelperMethods' / AttributeError при Invoke.
         orders_pb2_grpc.OrderServiceServicer: (
-            "CreateOrder", "GetOrderResult", "GetOrder", "DeleteOrder",
-            "CreateSKBOrder", "GetFileAndJson", "SendOrderData",
+            "CreateOrder",
+            "GetOrderResult",
+            "GetOrder",
+            "DeleteOrder",
+            "CreateSKBOrder",
+            "GetFileAndJson",
+            "SendOrderData",
         ),
         orders_pb2_grpc.OrderServiceStub: (
-            "CreateOrder", "GetOrderResult", "GetOrder", "DeleteOrder",
-            "CreateSKBOrder", "GetFileAndJson", "SendOrderData",
+            "CreateOrder",
+            "GetOrderResult",
+            "GetOrder",
+            "DeleteOrder",
+            "CreateSKBOrder",
+            "GetFileAndJson",
+            "SendOrderData",
         ),
     }
     for _parent_cls, _method_names in _parent_class_method_map.items():
@@ -117,7 +139,9 @@ def _patch_rpc_methods() -> None:
 
     import grpc as _grpc_pkg  # local import to avoid top-level circular
 
-    for _mod_info in pkgutil.walk_packages(_grpc_pkg.__path__, _grpc_pkg.__name__ + "."):
+    for _mod_info in pkgutil.walk_packages(
+        _grpc_pkg.__path__, _grpc_pkg.__name__ + "."
+    ):
         _modname = _mod_info[1]
         try:
             _mod = importlib.import_module(_modname)
@@ -135,12 +159,12 @@ def _patch_rpc_methods() -> None:
             if not hasattr(_obj, "request_streaming"):
                 try:
                     _obj.request_streaming = False  # type: ignore[attr-defined]
-                except (AttributeError, TypeError):  # noqa: violation-check — stub attribute injection best-effort
+                except AttributeError, TypeError:  # noqa: F401 — stub attribute injection best-effort
                     pass
             if not hasattr(_obj, "response_streaming"):
                 try:
                     _obj.response_streaming = False  # type: ignore[attr-defined]
-                except (AttributeError, TypeError):  # noqa: violation-check — stub attribute injection best-effort
+                except AttributeError, TypeError:  # noqa: F401 — stub attribute injection best-effort
                     pass
 
     # D-AUDIT-18801 fix (cycle 188): wrap Stub.__init__ methods to
@@ -153,14 +177,20 @@ def _patch_rpc_methods() -> None:
         invoker_pb2_grpc,
         orders_pb2_grpc,
     )
+
     _stub_method_map = {
         invoker_pb2_grpc.InvokerServiceStub: ("Invoke",),
         files_pb2_grpc.FileServiceStub: ("Read", "Write", "Open"),
         # D-AUDIT-20201 fix (cycle 202): OrderServiceStub 7 RPC methods
         # (mirror of parent_class_method_map for OrderService).
         orders_pb2_grpc.OrderServiceStub: (
-            "CreateOrder", "GetOrderResult", "GetOrder", "DeleteOrder",
-            "CreateSKBOrder", "GetFileAndJson", "SendOrderData",
+            "CreateOrder",
+            "GetOrderResult",
+            "GetOrder",
+            "DeleteOrder",
+            "CreateSKBOrder",
+            "GetFileAndJson",
+            "SendOrderData",
         ),
     }
 
@@ -188,7 +218,11 @@ def _patch_rpc_methods() -> None:
     # which override parent methods. Раньше hardcoded список не покрывал
     # streaming methods (DownloadFile, UploadFile) → Cython
     # ``'function' object has no attribute 'request_streaming'``.
-    for _cls_name in ("InvokerGRPCServicer", "OrderGRPCServicer", "FileStreamGRPCServicer"):
+    for _cls_name in (
+        "InvokerGRPCServicer",
+        "OrderGRPCServicer",
+        "FileStreamGRPCServicer",
+    ):
         try:
             _cls = globals()[_cls_name]
         except KeyError:
@@ -221,6 +255,7 @@ def _patch_rpc_methods() -> None:
             raise AttributeError(
                 f"{type(self).__name__!r} object has no attribute {name!r}"
             )
+
         return __getattr__
 
     for _cls_name, _module_name in (
@@ -230,7 +265,10 @@ def _patch_rpc_methods() -> None:
         # в отдельном submodule (``grpc_server/file_stream.py``), не в
         # ``grpc_server/__init__.py`` → ``globals()[_cls_name]`` returns
         # KeyError → ``continue`` skips it. Импортируем явно.
-        ("FileStreamGRPCServicer", "src.backend.entrypoints.grpc.grpc_server.file_stream"),
+        (
+            "FileStreamGRPCServicer",
+            "src.backend.entrypoints.grpc.grpc_server.file_stream",
+        ),
     ):
         if _module_name is not None:
             try:
@@ -238,7 +276,7 @@ def _patch_rpc_methods() -> None:
 
                 _mod = importlib.import_module(_module_name)
                 _cls = getattr(_mod, _cls_name)
-            except (ImportError, AttributeError):
+            except ImportError, AttributeError:
                 continue
         else:
             try:
@@ -262,12 +300,12 @@ def _patch_rpc_methods() -> None:
         """
         try:
             method.__dict__[attr_name] = attr_value
-        except (AttributeError, TypeError):
+        except AttributeError, TypeError:
             # Some functions don't allow __dict__ assignment.
             # Try setattr on the function instead.
             try:
                 setattr(method, attr_name, attr_value)
-            except (AttributeError, TypeError):  # noqa: violation-check — setattr best-effort for grpc methods
+            except AttributeError, TypeError:  # noqa: F401 — setattr best-effort for grpc methods
                 pass
 
     for _cls_name in (
@@ -280,10 +318,20 @@ def _patch_rpc_methods() -> None:
         except KeyError:
             continue
         for _method_name in (
-            "Invoke", "Execute", "Stream", "Read", "Write", "Open",
+            "Invoke",
+            "Execute",
+            "Stream",
+            "Read",
+            "Write",
+            "Open",
             # D-AUDIT-20201 fix (cycle 202): OrderService 7 RPC methods.
-            "CreateOrder", "GetOrderResult", "GetOrder", "DeleteOrder",
-            "CreateSKBOrder", "GetFileAndJson", "SendOrderData",
+            "CreateOrder",
+            "GetOrderResult",
+            "GetOrder",
+            "DeleteOrder",
+            "CreateSKBOrder",
+            "GetFileAndJson",
+            "SendOrderData",
         ):
             if hasattr(_cls, _method_name):
                 _m = getattr(_cls, _method_name)

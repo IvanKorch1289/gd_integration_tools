@@ -1,14 +1,10 @@
-"""S175 M2.1 (ARC-009): AIGateway orchestrator subpackage.
+"""Sprint 13 P1-15: dedup — orchestrator subpackage был дубликатом gateway_orchestrator_mixin.
 
-Split AIGateway logic into dedicated subpackage для maintainability.
-Originally single file ``gateway_orchestrator_mixin.py`` (380 LOC).
+Per Ponytail: один implementation → не нужен wrapper. Удалён enforced_invoke.py
+(482 LOC), использовался только в этом __init__. Канонический EnforcedInvokeMixin —
+в ``src.backend.core.ai.gateway_orchestrator_mixin`` (используется в
+``src.backend.core.ai.gateway.gateway`` + 7+ tests).
 
-Modules:
-- :mod:`enforced_invoke` — :class:`EnforcedInvokeMixin` (9-step pipeline)
+Module оставлен как маркер для будущих subpackage extensions (если
+потребуется выделить более специфичные orchestrators).
 """
-
-from __future__ import annotations as annotations
-
-from src.backend.core.ai.gateway.orchestrator.enforced_invoke import EnforcedInvokeMixin
-
-__all__ = ("EnforcedInvokeMixin",)

@@ -1,3 +1,4 @@
+# ruff: noqa: F821 — `action_handler_registry` resolved via module-level __getattr__ proxy (Sprint 226)
 """Message Replay Service — запись и воспроизведение inbound сообщений.
 
 Снижает MTTR: все inbound сообщения (webhook/MQTT/email/gRPC)
@@ -11,7 +12,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from uuid import uuid4
 
 from src.backend.core.di.app_state import app_state_singleton
@@ -67,7 +68,7 @@ class MessageReplayService:
     ) -> str:
         """Записывает inbound сообщение. Возвращает message_id."""
         msg = ReplayMessage(
-            source=source, action=action, payload=payload, headers=headers or {},
+            source=source, action=action, payload=payload, headers=headers or {}
         )
         self._messages[msg.id] = msg
         self._trim()
@@ -97,7 +98,7 @@ class MessageReplayService:
         }
 
     async def replay_one(
-        self, message_id: str, dry_run: bool = False,
+        self, message_id: str, dry_run: bool = False
     ) -> dict[str, Any]:
         """Воспроизводит одно сообщение."""
         msg = self._messages.get(message_id)
@@ -131,7 +132,7 @@ class MessageReplayService:
             return {"status": "error", "id": msg.id, "message": str(exc)}
 
     async def replay_bulk(
-        self, message_ids: list[str] | None = None, status_filter: str = "stored",
+        self, message_ids: list[str] | None = None, status_filter: str = "stored"
     ) -> dict[str, Any]:
         """Массовый replay сообщений."""
         if message_ids:
@@ -191,7 +192,7 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "action_handler_registry": (
         "src.backend.dsl.commands.registry",
         "action_handler_registry",
-    ),
+    )
 }
 
 

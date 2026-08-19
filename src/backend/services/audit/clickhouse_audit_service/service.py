@@ -11,6 +11,7 @@ Backward-compat: legacy ``dlq_path`` (JSONL) сохранён с WARNING.
 from __future__ import annotations
 
 import asyncio
+import threading
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.audit import AuditBackend, AuditRecord
@@ -83,7 +84,7 @@ class ClickHouseAuditService:
         self._dlq_writer: DLQWriter | None = dlq_writer
         self._dlq_path = dlq_path
         self._dlq_backend: AuditBackend | None = None
-        self._dlq_lock = threading.Lock()  # noqa: violation-check — sync _get_dlq_backend
+        self._dlq_lock = threading.Lock()  # noqa: F841 — sync _get_dlq_backend
 
     def set_dlq_writer(self, writer: DLQWriter | None) -> None:
         """Установить/сбросить canonical DLQWriter (composition root wiring).
@@ -134,7 +135,7 @@ class ClickHouseAuditService:
             )
 
             self._client = await get_async_client(
-                host=host, port=port, database=database,
+                host=host, port=port, database=database
             )
         return self._client
 
@@ -187,7 +188,9 @@ class ClickHouseAuditService:
             action: high-level действие (legacy JSONL только).
 
         """
-        targets = events if events is not None else ([event] if event is not None else [])
+        targets = (
+            events if events is not None else ([event] if event is not None else [])
+        )
         if not targets:
             return
 
@@ -250,7 +253,7 @@ class ClickHouseAuditService:
                 extra=loss_payload,
             )
             audit_silent_loss_total.labels(
-                transport="clickhouse_audit", reason="no_dlq_configured",
+                transport="clickhouse_audit", reason="no_dlq_configured"
             ).inc()
             return
         try:
@@ -265,14 +268,12 @@ class ClickHouseAuditService:
                             "dlq_reason": reason,
                             "clickhouse_error": repr(error),
                         },
-                    },
+                    }
                 )
                 await backend.append(record)
         except Exception as dlq_exc:
             _logger.error(
-                "DLQ fallback failed: count=%d error=%s",
-                len(targets),
-                dlq_exc,
+                "DLQ fallback failed: count=%d error=%s", len(targets), dlq_exc
             )
 
     async def emit(self, event: AuditEvent) -> None:
@@ -348,7 +349,7 @@ class ClickHouseAuditService:
 
         if not feature_flags.audit_clickhouse_enabled:
             _logger.debug(
-                "audit_clickhouse_enabled=False, skip emit_batch count=%d", len(events),
+                "audit_clickhouse_enabled=False, skip emit_batch count=%d", len(events)
             )
             return
 
@@ -364,9 +365,7 @@ class ClickHouseAuditService:
             data = [list(row.values()) for row in rows]
 
             async def _do_insert_batch() -> None:
-                await client.insert(
-                    self._TABLE, data=data, column_names=column_names,
-                )
+                await client.insert(self._TABLE, data=data, column_names=column_names)
 
             await retry_async(
                 _do_insert_batch,

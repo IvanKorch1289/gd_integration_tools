@@ -59,11 +59,12 @@ def _make_action_tool(action_name: str) -> Any:
     """
     from langchain_core.tools import StructuredTool
 
+    from src.backend.dsl.commands.registry import action_handler_registry
     from src.backend.schemas.invocation import ActionCommandSchema
 
     async def _run_action(**kwargs: Any) -> str:
         command = ActionCommandSchema(
-            action=action_name, payload=kwargs, meta={"source": "ai_agent"},
+            action=action_name, payload=kwargs, meta={"source": "ai_agent"}
         )
         result = await action_handler_registry.dispatch(command)
         if hasattr(result, "model_dump"):
@@ -133,7 +134,7 @@ def build_chat_model(
         except ImportError as exc:
             raise ImportError(
                 "ChatLiteLLM недоступен: установите 'langchain-litellm' "
-                "или 'langchain-community' (extra '[ai-2026]').",
+                "или 'langchain-community' (extra '[ai-2026]')."
             ) from exc
 
     return ChatLiteLLM(**chat_kwargs)
@@ -193,7 +194,7 @@ async def build_and_run_agent(
 
             raise AIGatewayEnforcementRequiredError(
                 "ai_graph.build_and_run_agent requires ai_gateway_enforce=True "
-                "(S85 W2: bypass via LiteLLMGateway is no longer supported)",
+                "(S85 W2: bypass via LiteLLMGateway is no longer supported)"
             )
         ai_gateway = (  # noqa: F841  # enforce instance для downstream hooks
             get_ai_gateway()
@@ -215,14 +216,14 @@ async def build_and_run_agent(
             else:
                 logger.debug(
                     "LangGraph Checkpointer: PostgresSaver unavailable, "
-                    "using MemorySaver",
+                    "using MemorySaver"
                 )
                 from langgraph.checkpoint.memory import MemorySaver
 
                 checkpointer = MemorySaver()
 
         agent = create_react_agent(
-            llm, tools, checkpointer=checkpointer, max_iterations=10,
+            llm, tools, checkpointer=checkpointer, max_iterations=10
         )
 
         thread_id = session_id or ""
@@ -257,7 +258,7 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "action_handler_registry": (
         "src.backend.dsl.commands.registry",
         "action_handler_registry",
-    ),
+    )
 }
 
 

@@ -13,6 +13,7 @@ YandexGPT, GigaChat, SaluteSpeech — все три российских про�
 + chat + embeddings). Регистрация в AIGateway — через
 ``ai_providers/helpers.register_extended_providers()``.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -25,11 +26,7 @@ from src.backend.core.config.ai import (
 )
 from src.backend.core.logging import get_logger
 
-__all__ = (
-    "GigaChatProvider",
-    "SaluteSpeechProvider",
-    "YandexGPTProvider",
-)
+__all__ = ("GigaChatProvider", "SaluteSpeechProvider", "YandexGPTProvider")
 
 logger = get_logger("ai.providers.russian")
 
@@ -55,9 +52,7 @@ class _BaseRussianProvider:
     ) -> None:
         self.api_key = api_key or self._default_api_key() or ""
         self.model = model or self._default_model()
-        self.base_url = (
-            base_url or self._default_base_url()
-        ).rstrip("/")
+        self.base_url = (base_url or self._default_base_url()).rstrip("/")
 
     # Subclass hooks
     def _default_api_key(self) -> str:
@@ -79,7 +74,7 @@ class _BaseRussianProvider:
             if choices:
                 msg = choices[0].get("message", {})
                 return msg.get("content", "") or ""
-        except (AttributeError, IndexError, TypeError):  # noqa: violation-check — narrow API-shape fallback
+        except AttributeError, IndexError, TypeError:  # noqa: F401 — narrow API-shape fallback
             pass
         return ""
 
@@ -106,18 +101,14 @@ class _BaseRussianProvider:
         )
 
     async def embeddings(
-        self,
-        texts: list[str],
-        *,
-        model: str | None = None,
+        self, texts: list[str], *, model: str | None = None
     ) -> list[list[float]]:
         if not self.api_key:
             raise RuntimeError(f"{self.name}: API key not set")
         import litellm
 
         prefixed_model = _litellm_model(
-            self._provider_prefix(),
-            model or "text-embedding-3-small",
+            self._provider_prefix(), model or "text-embedding-3-small"
         )
         response = await litellm.aembedding(
             model=prefixed_model,
@@ -203,8 +194,8 @@ async def _smoke_test_providers() -> None:
     for cls in (YandexGPTProvider, GigaChatProvider, SaluteSpeechProvider):
         try:
             p = cls()  # без API key — smoke
-            assert p.name == cls.name
-            assert p.model, f"{cls.name}: empty model"
+            assert p.name == cls.name  # nosec
+            assert p.model, f"{cls.name}: empty model"  # nosec
             logger.info("russian_provider_smoke_ok", extra={"provider": p.name})
         except Exception as exc:
             logger.warning(

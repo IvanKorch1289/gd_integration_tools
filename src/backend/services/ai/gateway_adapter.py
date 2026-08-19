@@ -68,26 +68,9 @@ __all__ = (
 )
 
 
-
-def adapt_capability_gate(gate: Any) -> Any:
-    """Адаптирует :class:`CapabilityGate` к 3-arg signature для AIGateway.
-
-    Round 39: Sprint 1.5 L5 Security Chain — ``AIGateway._check_capability``
-    вызывает ``gate.check(plugin, capability, requested_scope)``
-    (canonical signature из :class:`CheckMixin.check`).
-
-    Args:
-        gate: :class:`CapabilityGate` instance с ``.check`` методом.
-
-    Returns:
-        Adapter object с тем же ``.check(plugin, capability, scope)`` interface
-        (1-в-1 pass-through — canonical signal уже matches).
-
-    Raises:
-        CapabilityDeniedError: пробрасывается из gate без модификации.
-
-    """
-    return _CapabilityGateAdapter(gate)
+# NOTE: Sprint 7 audit — удалена shadowed duplicate ``adapt_capability_gate`` (line 72)
+# которая была мертвым кодом (Python "last wins" — 2nd определение at line 214 always used).
+# Класс ``_CapabilityGateAdapter`` оставлен для testability (используется в unit tests).
 
 
 class _CapabilityGateAdapter:
@@ -108,80 +91,17 @@ class _CapabilityGateAdapter:
         self._gate.check(plugin, capability, requested_scope)
 
 
-def get_ai_gateway() -> AIGateway:
-    """Получить singleton :class:`AIGateway` из composition root.
+# NOTE: Sprint 7 audit — удалена shadowed duplicate ``get_ai_gateway``.
+# Python "last wins" — actual behavior всегда uses 2nd определение (ниже, dev-fallback).
+# Если нужен полный DI chain — используй ``src.backend.core.di.providers.ai.get_ai_gateway_provider``
+# или ``src.backend.core.di.app_state.get_app_ref().state.ai_gateway``.
 
-    Sprint 1 (Sprint 1.3 fix): проброс singleton-экземпляра AIGateway
-    с обязательными DI (``policy_resolver``, ``capability_gate``,
-    ``token_budget``) в кодопути ``services/ai/ai_graph.py``,
-    ``dsl/workflow/compiler/activity_bridge.py`` и другие
-    (4 callsites заменяют ``AIGateway()`` на ``get_ai_gateway()``).
 
-    Composition-root приоритет: ``app.state.ai_gateway`` →
-    :func:`src.backend.core.di.providers.ai.get_ai_gateway_provider`
-    → fallback ``AIGateway()`` (dev only; production-wiring guard в
-    :class:`AIGateway` бросает :class:`AIGatewayProductionWiringError`).
+# NOTE: Sprint 7 audit — удалена shadowed duplicate ``get_ai_gateway`` (1st at line 94).
+# Python "last wins" — actual behavior всегда uses 2nd определение (line ~209, dev-fallback).
+# Если нужен полный DI chain — используй ``src.backend.core.di.providers.ai.get_ai_gateway_provider``
+# или ``src.backend.core.di.app_state.get_app_ref().state.ai_gateway``.
 
-    Returns:
-        :class:`AIGateway` с заполненными DI.
-
-    """
-    try:
-        from src.backend.core.di.app_state import get_app_ref
-
-        app = get_app_ref()
-        if app is not None:
-            gateway = getattr(app.state, "ai_gateway", None)
-            if gateway is not None:
-                return gateway
-    except (ImportError, AttributeError, RuntimeError) as app_state_exc:
-        # D-A1-04 fix (cycle 39): narrow exceptions + observability.
-        # Bare `except Exception` маскировал broken app_state (early-init,
-        # не инициализированный app.state). Fallback: provider chain.
-        from src.backend.core.logging import get_logger
-        get_logger(__name__).debug(
-            "gateway_adapter.app_state_resolve_failed",
-            extra={"error": str(app_state_exc)},
-        )
-
-    try:
-        from src.backend.core.di.providers.ai import get_ai_gateway_provider
-
-        return get_ai_gateway_provider()
-    except (KeyError, RuntimeError) as exc:
-        # cycle-1/B-05 fix: composition-root DI fail-closed. На production
-        # отсутствие обязательных DI-параметров (policy_resolver /
-        # capability_gate / token_budget) поднимает
-        # AIGatewayProductionWiringError вместо silent bare AIGateway().
-        try:
-            from src.backend.core.ai.gateway import AIGatewayProductionWiringError
-            from src.backend.core.logging import get_logger
-
-            get_logger(__name__).error(
-                "AIGateway: composition-root DI lookup failed",
-                extra={
-                    "component": "gateway_adapter",
-                    "lookup": "get_ai_gateway_provider",
-                },
-            )
-            raise AIGatewayProductionWiringError(
-                missing=("ai_gateway",),
-            ) from exc
-        except ImportError:
-            # Fallback когда production-guard недоступен (например в
-            # unit-тестах без полной composition root): logger.error
-            # остаётся, дальше — bare AIGateway() с явным признаком
-            # failed DI lookup.
-            from src.backend.core.logging import get_logger
-
-            get_logger(__name__).error(
-                "AIGateway: composition-root DI lookup failed; AIGatewayProductionWiringError unavailable",
-                extra={
-                    "component": "gateway_adapter",
-                    "lookup": "get_ai_gateway_provider",
-                },
-            )
-            return AIGateway()  # B-05 fix (cycle 1)
 
 CapabilityChecker = Callable[[str, str, str | None], None]
 
@@ -251,7 +171,7 @@ def get_ai_gateway() -> AIGateway:
         from src.backend.core.di.providers.ai import get_ai_gateway_provider
 
         return get_ai_gateway_provider()
-    except (KeyError, RuntimeError):
+    except KeyError, RuntimeError:
         return AIGateway()
 
 

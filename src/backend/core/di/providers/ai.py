@@ -260,7 +260,7 @@ def set_llm_judge_metrics_provider(recorder: Any) -> None:
 
 
 def _noop_llm_judge_metrics(
-    *, model: str, hallucination: float, relevance: float, toxicity: float,
+    *, model: str, hallucination: float, relevance: float, toxicity: float
 ) -> None:
     """Заглушка, если backend метрик недоступен."""
     return
@@ -339,9 +339,9 @@ def get_skill_registry() -> Any:
         # change, RuntimeError — DI unavailable, KeyError — singleton not
         # registered, TypeError — factory type.
         import logging
+
         logging.getLogger(__name__).debug(
-            "di.providers.skill_registry_fallback",
-            extra={"error": str(di_exc)},
+            "di.providers.skill_registry_fallback", extra={"error": str(di_exc)}
         )
         # Round 12 fix: убрана dead-строка ``_overrides.get("_skill_registry_error")``
         # — функция и так возвращает None, ключа нигде нет, .get() ничего не делает.
@@ -373,8 +373,7 @@ def get_llm_guard_runtime_provider() -> Any:
         import logging
 
         logging.getLogger(__name__).debug(
-            "get_llm_guard_runtime_provider: LlamaGuardRuntime unavailable: %s",
-            exc,
+            "get_llm_guard_runtime_provider: LlamaGuardRuntime unavailable: %s", exc
         )
         return None
 
@@ -420,40 +419,6 @@ def _build_ai_gateway_singleton() -> Any:
         capability_gate=CapabilityGate(),
         token_budget=InMemoryTokenBudgetBackend(),
     )
-
-
-def get_ai_gateway_provider() -> AIGateway:
-    """Возвращает :class:`AIGateway` с обязательными DI (Sprint 1.3).
-
-    Сначала проверяет override из :func:`set_ai_gateway_provider`
-    (test-инжекция); при отсутствии — лениво строит и кеширует через
-    :func:`_build_ai_gateway_singleton` (``@lru_cache(maxsize=1)``).
-    Callers должны вызывать :meth:`_build_ai_gateway_singleton.cache_clear`
-    для сброса lru-cache между тестами.
-
-    Returns:
-        :class:`AIGateway` instance с инжектированными
-        ``policy_resolver``, ``capability_gate``, ``token_budget``.
-
-    """
-    if "ai_gateway" in _overrides:
-        return _overrides["ai_gateway"]
-    return _build_ai_gateway_singleton()
-
-
-def set_ai_gateway_provider(impl: Any) -> None:
-    """Установить / сбросить override для ``ai_gateway`` provider.
-
-    Args:
-        impl: :class:`AIGateway` instance для тестового инжекта;
-            ``None`` сбрасывает override (lru-cache сбрасывается
-            отдельно через :func:`_build_ai_gateway_singleton.cache_clear`).
-
-    """
-    if impl is None:
-        _overrides.pop("ai_gateway", None)
-    else:
-        _overrides["ai_gateway"] = impl
 
 
 __all__ = (

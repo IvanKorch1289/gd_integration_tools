@@ -22,6 +22,7 @@ from src.backend.dsl.workflow.spec.activity_declarations import (
 from src.backend.dsl.workflow.spec.advanced_declarations import (
     AgentInvokeDeclaration,
     CheckpointDeclaration,
+    ContinueAsNewDeclaration,  # Sprint 7 P0-1: wired (P1-W1 fix was incomplete — union missing)
     EscalateDeclaration,
     GuardrailDeclaration,
     ReflectDeclaration,
@@ -41,7 +42,8 @@ WorkflowStep = Annotated[
     | ReflectDeclaration
     | CheckpointDeclaration
     | GuardrailDeclaration
-    | EscalateDeclaration,
+    | EscalateDeclaration
+    | ContinueAsNewDeclaration,  # Sprint 7 P0-1: P1-W1 fix completion
     Field(discriminator="type"),
 ]
 
@@ -66,10 +68,10 @@ class WorkflowDeclaration(BaseModel):
         ),
     )
     description: str | None = Field(
-        default=None, description="Человекочитаемое описание.",
+        default=None, description="Человекочитаемое описание."
     )
     steps: list[WorkflowStep] = Field(
-        min_length=1, description="Цепочка шагов workflow.",
+        min_length=1, description="Цепочка шагов workflow."
     )
     default_timeout_s: float = Field(
         default=300.0,

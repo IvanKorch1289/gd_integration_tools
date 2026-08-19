@@ -7,12 +7,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from src.backend.dsl.engine.middleware import ProcessorMiddleware
+from src.backend.core.interfaces.middleware import (
+    ProcessorMiddleware,  # Sprint 18 P1-14
+)
 from src.backend.infrastructure.observability.correlation import get_correlation_id
 
-# D-AUDIT-8801 fix (cycle 88): type hints (Exchange/ExecutionContext)
-# перенесены в TYPE_CHECKING. Реальный архитектурный fix — перенос
-# TracingMiddleware в dsl/ (out of scope для atomic commit).
+# Sprint 18 P1-14: ProcessorMiddleware импортируется из core/interfaces/
+# (Protocol, не ABC) — устраняет infrastructure → dsl layer violation.
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
     from src.backend.dsl.engine.exchange import Exchange
@@ -44,7 +45,7 @@ class TracingMiddleware(ProcessorMiddleware):
         self._spans: dict[str, Any] = {}
 
     async def before(
-        self, processor_name: str, exchange: Exchange[Any], context: ExecutionContext,
+        self, processor_name: str, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Метод before (см. signature)."""
         tracer = get_tracer()
@@ -62,7 +63,7 @@ class TracingMiddleware(ProcessorMiddleware):
             )
             key = f"{id(exchange)}:{processor_name}"
             self._spans[key] = span
-        except (AttributeError, TypeError):
+        except AttributeError, TypeError:
             pass
 
     async def after(
@@ -85,10 +86,10 @@ class TracingMiddleware(ProcessorMiddleware):
                 span.set_attribute("error.message", str(error)[:500])
                 span.set_status(
                     __import__(
-                        "opentelemetry.trace", fromlist=["StatusCode"],
+                        "opentelemetry.trace", fromlist=["StatusCode"]
                     ).StatusCode.ERROR,
                     str(error)[:200],
                 )
             span.end()
-        except (AttributeError, TypeError):
+        except AttributeError, TypeError:
             pass

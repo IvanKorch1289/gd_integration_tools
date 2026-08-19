@@ -73,9 +73,9 @@ class Sprints1821Flags(BaseSettings):
             # — environment attribute change, RuntimeError — settings
             # unavailable, ValueError — invalid env value.
             import logging
+
             logging.getLogger(__name__).debug(
-                "sprints_18_21.app_env_fallback",
-                extra={"error": str(app_exc)},
+                "sprints_18_21.app_env_fallback", extra={"error": str(app_exc)}
             )
             # AppBaseSettings not yet initialized (e.g. unit tests without env).
             # Default to NOT-prod для safety (rate limit OFF як default).
@@ -169,7 +169,7 @@ class Sprints1821Flags(BaseSettings):
 
     multi_tenant_rate_limit_enabled: bool = Field(
         default_factory=lambda: Sprints1821Flags._env_aware_default(
-            env_var_name="FEATURE_MULTI_TENANT_RATE_LIMIT_ENABLED", prod_value=True,
+            env_var_name="FEATURE_MULTI_TENANT_RATE_LIMIT_ENABLED", prod_value=True
         ),
         title="K5 S18 W1: global rate-limit middleware (fastapi-limiter + per-tenant)",
         description=(

@@ -58,7 +58,11 @@ async def create_workflow_backend(
     resolved = kind
     if resolved == "auto":
         if profile == "dev_light":
-            resolved = "pg_runner"
+            # Sprint 7 P0-3: dev_light → lite_temporal (was pg_runner DEPRECATED since Sprint 217).
+            # CLAUDE.md V22 уже говорит "Lite в dev_light" — это была фактическая фиксация
+            # задокументированной семантики. lite_temporal требует extras "workflow" (temporalio SDK);
+            # при ImportError fallback to pg_runner ниже (см. lite_temporal branch).
+            resolved = "lite_temporal"
         else:
             resolved = "temporal"
 
@@ -79,7 +83,7 @@ async def create_workflow_backend(
             )
         except ImportError as exc:
             _logger.warning(
-                "temporalio SDK unavailable (%s); falling back to pg_runner", exc,
+                "temporalio SDK unavailable (%s); falling back to pg_runner", exc
             )
             from src.backend.infrastructure.workflow.pg_runner_backend import (
                 PgRunnerWorkflowBackend,
@@ -88,8 +92,7 @@ async def create_workflow_backend(
             return PgRunnerWorkflowBackend()
 
         return await LiteTemporalBackend.connect(
-            namespace=temporal_namespace,
-            default_task_queue=temporal_task_queue,
+            namespace=temporal_namespace, default_task_queue=temporal_task_queue
         )
 
     if resolved == "temporal":
@@ -105,7 +108,7 @@ async def create_workflow_backend(
             )
         except RuntimeError as exc:
             _logger.warning(
-                "Temporal SDK unavailable (%s); falling back to pg_runner", exc,
+                "Temporal SDK unavailable (%s); falling back to pg_runner", exc
             )
             from src.backend.infrastructure.workflow.pg_runner_backend import (
                 PgRunnerWorkflowBackend,

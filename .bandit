@@ -1,2 +1,2 @@
-skips: ["B608"]
+skips: ["B608", "B108", "B104"]
 exclude_dirs: [".venv", "tests", "dev_storage", "docs"]

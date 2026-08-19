@@ -160,10 +160,7 @@ def register_app_state(app: FastAPI) -> None:
                         "policy.engine_enabled=True requires at least one of "
                         "policy.opa_url or policy.casbin_model_path to be set"
                     ),
-                    missing=(
-                        "policy.opa_url",
-                        "policy.casbin_model_path",
-                    ),
+                    missing=("policy.opa_url", "policy.casbin_model_path"),
                 )
             from src.backend.core.security.authorization_gateway.policies import (
                 build_casbin_policy_decider,
@@ -183,8 +180,8 @@ def register_app_state(app: FastAPI) -> None:
                 opa_client = OPAClient(base_url=policy_settings.opa_url)
                 auth_policies.append(
                     build_opa_policy_decider(
-                        opa_client, policy_name=policy_settings.opa_policy_name,
-                    ),
+                        opa_client, policy_name=policy_settings.opa_policy_name
+                    )
                 )
             if policy_settings.casbin_model_path:
                 casbin_base = CasbinAdapter(
@@ -193,8 +190,8 @@ def register_app_state(app: FastAPI) -> None:
                 )
                 auth_policies.append(
                     build_casbin_policy_decider(
-                        TenantScopedCasbin(base_adapter=casbin_base),
-                    ),
+                        TenantScopedCasbin(base_adapter=casbin_base)
+                    )
                 )
             from src.backend.core.logging import get_logger as _gl
 
@@ -215,8 +212,7 @@ def register_app_state(app: FastAPI) -> None:
         from src.backend.core.logging import get_logger as _gl
 
         _gl("policy.composition").warning(
-            "policy engines NOT wired (engine_enabled but init failed): %s",
-            _pol_exc,
+            "policy engines NOT wired (engine_enabled but init failed): %s", _pol_exc
         )
 
     app.state.authorization_gateway = AuthorizationGateway(
@@ -234,7 +230,7 @@ def register_app_state(app: FastAPI) -> None:
     from src.backend.infrastructure.watermark.factory import create_watermark_store
 
     app.state.watermark_store = create_watermark_store(
-        _watermark_settings, session_manager=main_session_manager,
+        _watermark_settings, session_manager=main_session_manager
     )
 
     from src.backend.entrypoints.mqtt.mqtt_handler import MqttHandler, MqttSettings
@@ -258,9 +254,7 @@ def register_app_state(app: FastAPI) -> None:
     )
 
     cdc_singleton = get_cdc_client()
-    inbox_dlq_writer = InboxDLQWriter(
-        session_factory=_get_outbox_dlq_session_factory(),
-    )
+    inbox_dlq_writer = InboxDLQWriter(session_factory=_get_outbox_dlq_session_factory())
     cdc_singleton.set_dlq_writer(inbox_dlq_writer)
     # mark_cdc_dlq_writer_wired вызывается автоматически из
     # ``set_dlq_writer`` для не-None writer, но делаем явный mark
@@ -317,9 +311,7 @@ async def get_mqtt_handler(request: Request) -> MqttHandler:
 
 # Round 88: FastAPI Depends wrapper для AuthorizationGateway (Sprint 1 K5).
 # Test requires asyncio.iscoroutinefunction(di.get_authorization_gateway) → True.
-async def get_authorization_gateway(
-    request: Request,
-) -> AuthorizationGateway:
+async def get_authorization_gateway(request: Request) -> AuthorizationGateway:
     """Возвращает AuthorizationGateway из app.state (FastAPI Depends)."""
     return request.app.state.authorization_gateway
 
@@ -334,16 +326,6 @@ async def get_watermark_store(request: Request) -> WatermarkStore:
     return request.app.state.watermark_store
 
 
-async def get_authorization_gateway(request: Request) -> AuthorizationGateway:
-    """Возвращает :class:`AuthorizationGateway` из app.state (FastAPI Depends).
-
-    Используется в эндпоинтах, которым нужен явный доступ к gateway
-    (admin/feature-flag/role-assignment). Для batch-вызовов и policy-mixin
-    используется ``app.state.authorization_gateway`` напрямую через
-    :func:`src.backend.core.di.app_state.get_app_ref`.
-
-    Raises:
-        AttributeError: Если ``register_app_state`` ещё не вызывался
-            (атрибут ``authorization_gateway`` отсутствует).
-    """
-    return request.app.state.authorization_gateway
+# NOTE: Sprint 7 audit — удалена shadowed duplicate ``get_authorization_gateway``.
+# Python "last wins" — actual behavior всегда uses 1st определение (line 320, FastAPI Depends wrapper).
+# Если нужен доступ с более детальным error handling — использовать :func:`src.backend.core.di.app_state.get_app_ref`.

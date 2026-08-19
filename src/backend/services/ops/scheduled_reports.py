@@ -1,3 +1,4 @@
+# ruff: noqa: F821 — `action_handler_registry` resolved via module-level __getattr__ proxy (Sprint 226)
 """Scheduled Reports Service — cron → action → export → deliver.
 
 Планирование отчётов: выполнить action, экспортировать результат
@@ -10,7 +11,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from uuid import uuid4
 
 from src.backend.core.di.app_state import app_state_singleton
@@ -104,7 +105,7 @@ class ScheduledReportsService:
                     "last_status": r.last_status,
                 }
                 for r in self._schedules.values()
-            ],
+            ]
         }
 
     async def run_now(self, report_id: str) -> dict[str, Any]:
@@ -141,7 +142,7 @@ class ScheduledReportsService:
 
                 export_svc = get_export_service()
                 export_method = getattr(
-                    export_svc, f"to_{report.export_format}", export_svc.to_csv,
+                    export_svc, f"to_{report.export_format}", export_svc.to_csv
                 )
                 export_result = await export_method(data=data, title=report.name)
 
@@ -181,7 +182,7 @@ class ScheduledReportsService:
         }
 
     async def history(
-        self, report_id: str | None = None, limit: int = 50,
+        self, report_id: str | None = None, limit: int = 50
     ) -> dict[str, Any]:
         """История выполнения отчётов."""
         runs = self._history
@@ -199,7 +200,7 @@ class ScheduledReportsService:
                     "timestamp": r.timestamp,
                 }
                 for r in runs
-            ],
+            ]
         }
 
 
@@ -214,7 +215,7 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "action_handler_registry": (
         "src.backend.dsl.commands.registry",
         "action_handler_registry",
-    ),
+    )
 }
 
 

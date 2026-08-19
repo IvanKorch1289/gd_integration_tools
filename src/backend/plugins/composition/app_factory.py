@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
@@ -141,7 +139,10 @@ def _mount_mcp_http(app: FastAPI) -> None:
         from src.backend.entrypoints.mcp.http_server import create_mcp_http_app
 
         mcp_asgi, _mcp_inner_lifespan = create_mcp_http_app()
-        print(f"D-AUDIT-20810 create_mcp_http_app() returned: {type(mcp_asgi).__name__}", flush=True)
+        print(
+            f"D-AUDIT-20810 create_mcp_http_app() returned: {type(mcp_asgi).__name__}",
+            flush=True,
+        )
         app.mount(mcp_settings.bind_path, mcp_asgi)
         print(f"D-AUDIT-20810 app.mount done at {mcp_settings.bind_path}", flush=True)
         # D-AUDIT-20804 (cycle 210): disable redirect_slashes (см. main.py history).
@@ -177,7 +178,7 @@ def _configure_business_routers(app: FastAPI) -> None:
     _admin_bridge_router = APIRouter()
 
     @_admin_bridge_router.api_route(
-        "/api/admin/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
+        "/api/admin/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"]
     )
     async def admin_legacy_redirect(path: str):
         """Redirect legacy admin API paths to v1 admin API.
@@ -197,7 +198,7 @@ def _configure_business_routers(app: FastAPI) -> None:
             from fastapi import HTTPException
 
             raise HTTPException(
-                status_code=400, detail="Invalid path: external URLs not allowed",
+                status_code=400, detail="Invalid path: external URLs not allowed"
             )
         return RedirectResponse(url=f"/api/v1/admin/{path}", status_code=303)
 
@@ -223,7 +224,9 @@ def _configure_business_routers(app: FastAPI) -> None:
 
         from src.backend.entrypoints.asyncapi import build_asyncapi_json
 
-        return JSONResponse(content=build_asyncapi_json(), media_type="application/json")
+        return JSONResponse(
+            content=build_asyncapi_json(), media_type="application/json"
+        )
 
     app.include_router(_asyncapi_bridge_router)
 
@@ -260,11 +263,11 @@ def _configure_business_routers(app: FastAPI) -> None:
 
     if stream_client.redis_router is not None:
         app.include_router(
-            stream_client.redis_router, prefix="/stream/redis", tags=["Redis Streams"],
+            stream_client.redis_router, prefix="/stream/redis", tags=["Redis Streams"]
         )
     if stream_client.rabbit_router is not None:
         app.include_router(
-            stream_client.rabbit_router, prefix="/stream/rabbit", tags=["RabbitMQ"],
+            stream_client.rabbit_router, prefix="/stream/rabbit", tags=["RabbitMQ"]
         )
 
     # Протокольные entrypoints
@@ -322,13 +325,30 @@ def _configure_auto_registered_actions(app: FastAPI) -> None:
         added = auto_register_unrouted_actions(app)
     except Exception as exc:
         get_logger("app_factory").warning(
-            "auto_register_unrouted_actions упал: %s — пропускаем", exc,
+            "auto_register_unrouted_actions упал: %s — пропускаем", exc
         )
         return
 
     if added:
         get_logger("app_factory").info(
-            "Wave 1.2: авто-зарегистрировано %d REST-роутов для action-handlers", added,
+            "Wave 1.2: авто-зарегистрировано %d REST-роутов для action-handlers", added
+        )
+
+    # P0-2 (cycle 241) + P0-NEW-1 (cycle 242): legacy URL-алиасы для frontend contract.
+    # Streamlit вызывает /api/v1/orders/all/, /api/v1/orders/create/ и т.д.
+    # Без алиасов → 100% UI страниц получают 404. Подключаем после auto-router.
+    try:
+        from src.backend.entrypoints.api.generator.legacy_aliases import (
+            register_legacy_aliases,
+        )
+
+        legacy_added = register_legacy_aliases(app)
+        get_logger("app_factory").info(
+            "P0-2: legacy URL aliases registered: %d routes", legacy_added
+        )
+    except Exception as exc:
+        get_logger("app_factory").warning(
+            f"register_legacy_aliases упал: {exc} — пропускаем"
         )
 
 
@@ -395,9 +415,32 @@ def _configure_root_endpoint(app: FastAPI) -> None:
 
         report = await get_health_aggregator().check_all()
         ok = report.get("status") == "ok"
+        # Sprint 7 P0-6: missing return — function previously returned None, /ready → null.
+        # Dead return в readiness_alias (below) был mis-placed refactor artifact.
+        return JSONResponse(status_code=200 if ok else 503, content=report)
 
     @app.get("/health/ready", include_in_schema=False)
     async def readiness_alias():
         """Alias for /ready (k8s readinessProbe convention)."""
         return await readiness()
-        return JSONResponse(status_code=200 if ok else 503, content=report)
+
+    # Sprint 7 P0-2: k8s probe aliases (allowlisted в auth_required.py:48-52
+    # с самого начала, но routes не были зарегистрированы — /healthz → 401
+    # из-за catch-all). Теперь следуем k8s probe convention:
+    #   /livez    → /health (liveness)
+    #   /healthz  → /health (liveness, alt alias)
+    #   /readyz   → /ready (readiness)
+    @app.get("/livez", include_in_schema=False)
+    async def livez_alias():
+        """k8s livenessProbe alias for /health."""
+        return await liveness()
+
+    @app.get("/healthz", include_in_schema=False)
+    async def healthz_alias():
+        """k8s livenessProbe alias for /health (alternate name)."""
+        return await liveness()
+
+    @app.get("/readyz", include_in_schema=False)
+    async def readyz_alias():
+        """k8s readinessProbe alias for /ready."""
+        return await readiness()

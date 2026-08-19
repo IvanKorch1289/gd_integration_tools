@@ -1,3 +1,4 @@
+# ruff: noqa: F821 — `ActionHandlerSpec` resolved via module-level __getattr__ proxy (Sprint 226)
 """Jupyter Hub actions для DSL (S170 NEW).
 
 Регистрирует action ``jupyter.hub_run`` в :class:`ActionHandlerRegistry`.
@@ -23,7 +24,7 @@ from __future__ import annotations
 import base64
 import binascii
 from dataclasses import asdict
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from src.backend.core.logging import get_logger
 from src.backend.services.jupyter.hub_run_orchestrator import (
@@ -68,7 +69,7 @@ class _RunHubNotebookService:
                 content = base64.b64decode(notebook_content_b64, validate=True)
             except (ValueError, binascii.Error) as exc:
                 raise HubRunError(
-                    f"notebook_content_b64 is not valid base64: {exc}",
+                    f"notebook_content_b64 is not valid base64: {exc}"
                 ) from exc
 
         # Notebook name: требуется всегда (для logging/audit)
@@ -80,7 +81,7 @@ class _RunHubNotebookService:
                 effective_name = "inline_notebook"
             else:
                 raise HubRunError(
-                    "either notebook_name, notebook_path or notebook_content required",
+                    "either notebook_name, notebook_path or notebook_content required"
                 )
 
         result: HubRunResult = await run_hub_notebook(
@@ -114,7 +115,6 @@ def register_jupyter_hub_actions(registry: Any) -> list[str]:
     """
     # ActionHandlerSpec resolved via module-level __getattr__ proxy (Sprint 226)
 
-
     spec = ActionHandlerSpec(
         action="jupyter.hub_run",
         service_getter=get_jupyter_hub_run_service,
@@ -136,7 +136,7 @@ def register_jupyter_hub_actions(registry: Any) -> list[str]:
         )
     else:
         raise TypeError(
-            f"registry {type(registry).__name__} has no register/registration method",
+            f"registry {type(registry).__name__} has no register/registration method"
         )
 
     _logger.info("Registered jupyter.hub_run action")
@@ -151,7 +151,7 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "ActionHandlerSpec": (
         "src.backend.dsl.commands.action_registry",
         "ActionHandlerSpec",
-    ),
+    )
 }
 
 
