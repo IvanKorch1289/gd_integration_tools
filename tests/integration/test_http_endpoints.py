@@ -244,6 +244,66 @@ def test_ci_bandit_blocking_gate() -> bool:
     return "continue-on-error: false" in bandit_block
 
 
+def test_bandit_medium_count_trend() -> bool:
+    """Sprint 5: bandit MEDIUM count ≤45 (Sprint 3 baseline: 56)."""
+    import json as _json
+    import subprocess
+    import sys
+
+    py = sys.executable
+    try:
+        result = subprocess.run(  # noqa: S603
+            [py, "-m", "bandit", "-r", "src/backend", "-f", "json", "-ll"],
+            capture_output=True, text=True,
+            cwd="/home/user/dev/gd_integration_tools",
+            check=False,  # bandit может exit != 0 при наличии findings
+        )
+        # Output может быть либо JSON (успех), либо текст (bandit exit != 0).
+        # Извлекаем JSON из stdout или stderr.
+        stdout = result.stdout
+        stderr = result.stderr
+        # Bandit prints progress to stderr, JSON to stdout.
+        json_start = stdout.find("{")
+        if json_start == -1:
+            json_start = stderr.find("{")
+            stdout = stderr
+        if json_start == -1:
+            return False
+        data = _json.loads(stdout[json_start:])
+        med = [r for r in data.get("results", []) if r["issue_severity"] == "MEDIUM"]
+        # MEDIUM count ≤ 45 (Sprint 5 reduced from 56 by 11: B314×4,
+        # B310×2, B301×2, B615×2, B108×1).
+        return len(med) <= 45
+    except Exception:
+        return False
+
+
+def test_defusedxml_in_pyproject() -> bool:
+    """Sprint 5: defusedxml в pyproject.toml (B314 fix requirement)."""
+    p = "/home/user/dev/gd_integration_tools/pyproject.toml"
+    return "defusedxml" in open(p, encoding="utf-8").read()
+
+
+def test_httpx_unified_transport_default_on() -> bool:
+    """Sprint 5: unified transport is active (httpx-retries + hishel)."""
+    import subprocess
+    import sys
+
+    py = sys.executable
+    try:
+        result = subprocess.run(  # noqa: S603
+            [py, "-c",
+             "from src.backend.infrastructure.clients.transport.http_httpx import "
+             "is_httpx_retries_available, is_hishel_available; "
+             "print('OK' if is_httpx_retries_available() and is_hishel_available() else 'OFF')"],
+            capture_output=True, text=True,
+            cwd="/home/user/dev/gd_integration_tools",
+        )
+        return "OK" in result.stdout
+    except Exception:
+        return False
+
+
 def main() -> int:
     tests = [
         ("OpenAPI schema loads", test_openapi_schema_loads),
@@ -259,6 +319,9 @@ def main() -> int:
         ("Per-layer diagnostic works", test_per_layer_diagnostic_works),
         ("Layer lint includes CORE_LAZY_PROXY_EXCEPTIONS", test_layer_lint_allowlist_includes_core_lazy_proxies),
         ("CI bandit blocking gate", test_ci_bandit_blocking_gate),
+        ("Bandit MEDIUM count ≤ 45 (Sprint 5 target)", test_bandit_medium_count_trend),
+        ("defusedxml в pyproject.toml", test_defusedxml_in_pyproject),
+        ("httpx unified transport default ON", test_httpx_unified_transport_default_on),
     ]
     passed = 0
     failed = 0

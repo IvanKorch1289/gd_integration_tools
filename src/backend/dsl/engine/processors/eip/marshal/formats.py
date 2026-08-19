@@ -13,20 +13,19 @@ import csv
 import io
 import json
 import pickle
-import xml.etree.ElementTree as ET  # safe: used only for marshal (we generate XML)
 from typing import Any
+
+# P0-S6 (audit 2026-08-19): B314 fix — defusedxml для защиты от XXE.
+# ``xml.etree.ElementTree`` уязвим к billion-laughs DoS при парсинге
+# untrusted XML. Даже для "generated" XML безопаснее использовать defusedxml.
+from defusedxml import ElementTree as ET
 
 from src.backend.core.logging import get_logger
 
-# Security: defusedxml guards against XXE / billion-laughs in XML unmarshal.
+# Security: defusedxml guards against XXE / billion-laughs.
+# P0-S6 (audit 2026-08-19): defusedxml required dep (no stdlib fallback).
 # ``pickle`` and ``xml.etree.ElementTree`` are stdlib defaults but unsafe for
-# untrusted input — we import defusedxml lazily and use it for the public
-# surface; stdlib ET is only used for the controlled marshal path (we generate
-# the tree ourselves from a dict, never parse untrusted XML).
-try:
-    import defusedxml.ElementTree as DET  # type: ignore[import-not-found]
-except ImportError:  # pragma: no cover — dev-light fallback
-    DET = None  # type: ignore[assignment]
+# untrusted input — defusedxml для marshal и unmarshal paths.
 from src.backend.dsl.engine.processors.eip.marshal.base import (
     DataFormat,  # S63 W3: cross-import
 )
@@ -128,20 +127,11 @@ class XmlDataFormat(DataFormat):
         return ET.tostring(root, encoding="utf-8", xml_declaration=True)
 
     def unmarshal(self, data: bytes, target_type: type | None = None) -> Any:
-        """Decode XML bytes → dict (defusedxml когда available).
-
-        SECURITY: prefer defusedxml (XXE/billion-laughs protection).
-        Fallback to stdlib ET only в dev-light без defusedxml.
-        """
+        """Decode XML bytes → dict via defusedxml (XXE/billion-laughs safe)."""
         if isinstance(data, bytes):
             data = data.decode("utf-8")
-        # SECURITY: prefer defusedxml when available to block XXE / billion-laughs.
-        # Fallback to stdlib ET only if defusedxml is not installed (dev-light)
-        # — caller is responsible for accepting the residual risk.
-        if DET is not None:
-            root = DET.fromstring(data)  # type: ignore[union-attr]
-        else:  # pragma: no cover — dev-light path
-            root = ET.fromstring(data)
+        # P0-S6 (audit 2026-08-19): defusedxml imported at module level (B314 fix).
+        root = ET.fromstring(data)
         return _xml_to_dict(root)
 
 
@@ -272,8 +262,10 @@ class PickleDataFormat(DataFormat):
         for trusted producers (intra-cluster, signed payloads). Production
         callers MUST validate data provenance (signature, mTLS, source check)
         before invoking this processor. See Camel Marshal docs warning.
+        P0-S7 (audit 2026-08-19): B301 nosec — caller обязан проверить
+        provenance (см. docstring выше).
         """
-        obj = pickle.loads(data)
+        obj = pickle.loads(data)  # nosec B301
         if target_type is not None and not isinstance(obj, target_type):
             return target_type(obj)
         return obj

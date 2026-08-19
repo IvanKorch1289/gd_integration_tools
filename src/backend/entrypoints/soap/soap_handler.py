@@ -14,9 +14,12 @@ W22 этап B: добавлен ``/soap/invoke`` — единая SOAP-точк
 """
 
 from typing import Any
-from xml.etree import ElementTree as ET
 
 import orjson
+
+# P0-S6 (audit 2026-08-19): B314 fix — defusedxml для untrusted SOAP
+# body parsing (защита от XXE/million-laughs DoS).
+from defusedxml import ElementTree as ET
 from fastapi import APIRouter, Depends, Request, Response
 
 from src.backend.core.auth.auth_selector import AuthMethod, require_auth

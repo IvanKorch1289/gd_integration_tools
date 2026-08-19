@@ -2979,6 +2979,7 @@ db-drivers = [
 ]
 dev-light = [
     { name = "aiosqlite", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "fastmcp", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 ]
 doc-templates = [
     { name = "docxtpl", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
@@ -3173,6 +3174,7 @@ requires-dist = [
     { name = "fastapi-limiter", specifier = ">=0.1.6,<1.0.0" },
     { name = "fastapi-pagination", specifier = ">=0.12.34,<1.0.0" },
     { name = "fastavro", specifier = ">=1.9.0,<2.0.0" },
+    { name = "fastmcp", marker = "extra == 'dev-light'", specifier = ">=3.2.4" },
     { name = "fastmcp", marker = "extra == 'mcp'", specifier = ">=3.2.4" },
     { name = "faststream", extras = ["kafka"], specifier = ">=0.6.7,<1.0.0" },
     { name = "faststream", extras = ["nats"], marker = "extra == 'sources-mq-nats'", specifier = ">=0.6.7,<1.0.0" },

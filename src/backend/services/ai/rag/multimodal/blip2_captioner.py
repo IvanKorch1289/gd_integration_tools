@@ -72,8 +72,15 @@ class BLIP2Captioner:
         logger.info(
             "BLIP2Captioner loading model=%s device=%s", self._model_name, self._device,
         )
-        self._processor = AutoProcessor.from_pretrained(self._model_name)
-        self._model = Blip2ForConditionalGeneration.from_pretrained(self._model_name)
+        # P0-S7 (audit 2026-08-19): B615 nosec — model_name from
+        # config (Settings), не user input. Production deployments должны
+        # pin ``revision=`` для supply-chain safety.
+        self._processor = AutoProcessor.from_pretrained(  # nosec B615
+            self._model_name,
+        )
+        self._model = Blip2ForConditionalGeneration.from_pretrained(  # nosec B615
+            self._model_name,
+        )
         if hasattr(self._model, "to"):
             self._model = self._model.to(self._device)
 

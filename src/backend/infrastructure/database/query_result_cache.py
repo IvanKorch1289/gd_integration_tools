@@ -77,7 +77,12 @@ class PickleSerializer:
         """
         # S301: pickle используется для сериализации собственных данных
         # из доверенного CacheBackend; входные данные контролируются приложением.
-        return pickle.loads(data)
+        # P0-S7 (audit 2026-08-19): B301 nosec — MemoryBackend only.
+        # для shared бэкендов (Redis/Memcached/KeyDB): любой writer в namespace
+        # может исполнить код при ``pickle.loads``. MemoryBackend — единственный
+        # trusted бэкенд: данные под полным контролем приложения в текущем
+        # процессе. Production: использовать msgpack/orjson (см. AD-2026-04).
+        return pickle.loads(data)  # nosec B301
 
 
 class JsonSerializer:

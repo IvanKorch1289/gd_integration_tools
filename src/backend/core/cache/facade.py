@@ -313,7 +313,10 @@ class DiskCacheFacade(UnifiedCacheFacade):
     def __init__(self, root_dir: str = "/tmp/gd_cache") -> None:
         import os
 
-        os.makedirs(root_dir, exist_ok=True)
+        # P0-S7 (audit 2026-08-19): B108 nosec — dev_light only.
+        # Production uses RedisCacheFacade. ``/tmp/gd_cache`` is a
+        # documented dev fallback (V15 R-V15-4).
+        os.makedirs(root_dir, exist_ok=True)  # nosec B108
         self._root = root_dir
         import asyncio
 

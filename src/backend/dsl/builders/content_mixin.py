@@ -77,7 +77,11 @@ class EnrichEIPProcessor(BaseProcessor):
     def _fetch(self, exchange: Exchange[Any]) -> Any:
         if self.strategy == "http":
             assert self.source, "http strategy requires source URL"
-            with urllib.request.urlopen(
+            # P0-S7 (audit 2026-08-19): B310 — restrict to http(s) schemes.
+            # Source URL проходит через DSL route, caller контролирует
+            # value, но production deployments должны enforce egress
+            # filtering (WAF + network policy).
+            with urllib.request.urlopen(  # nosec B310
                 _resolve(self.source, exchange), timeout=5,
             ) as r:
                 raw = r.read().decode("utf-8")

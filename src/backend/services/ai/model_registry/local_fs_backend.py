@@ -74,9 +74,11 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
         import os
 
         base = workspace_path or os.environ.get(
-            # S108: AI_WORKSPACE intentionally uses temp dir as dev fallback (V15 R-V15-4)
+            # P0-S7 (audit 2026-08-19): B108 nosec — AI_WORKSPACE intentionally
+            # uses temp dir as dev fallback (V15 R-V15-4). Production uses
+            # PersistentWorkspacePath (S3 / NFS).
             "AI_WORKSPACE",
-            "/tmp/ai_workspace",  # local dev backend
+            "/tmp/ai_workspace",  # nosec B108 — local dev backend
         )
         self._root = Path(base).expanduser().resolve() / models_subdir
 

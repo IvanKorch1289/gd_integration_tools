@@ -516,10 +516,15 @@ class AuthFacade:
 
         try:
             import base64
-            import xml.etree.ElementTree as ET
+
+            # P0-S6 (audit 2026-08-19): B314 fix — switch to defusedxml
+            # для защиты от XXE/миллиард-смеха DoS. ``xml.etree.ElementTree``
+            # обрабатывает entity-expansion атаки при парсинге untrusted SAML
+            # assertions, что может привести к DoS.
+            from defusedxml import ElementTree as ET
 
             xml_bytes = base64.b64decode(assertion_b64)
-            root = ET.fromstring(xml_bytes)  # dev-mode path; ElementTree has limited XXE risk (entity expansion DoS)
+            root = ET.fromstring(xml_bytes)  # nosec B314 — defusedxml safe
             ns = {"saml": "urn:oasis:names:tc:SAML:2.0:assertion"}
             name_id_el = root.find(".//saml:NameID", ns)
             subject_el = root.find(".//saml:Subject", ns)

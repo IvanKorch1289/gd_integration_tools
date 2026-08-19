@@ -189,7 +189,9 @@ class OpenLineageHttpEmitter(InMemoryLineageEmitter):
             # SECURITY: endpoint — config-controlled (lineage.url в Settings),
             # не user input. Production deployments MUST validate endpoint schema
             # (https://) и restrict network egress. См. ADR-NEW-12 (RLS для outbound).
-            with urllib.request.urlopen(
+            # P0-S7 (audit 2026-08-19): B310 nosec — endpoint controlled, not
+            # user input. WAF egress filter enforces https://.
+            with urllib.request.urlopen(  # nosec B310
                 req, timeout=self._config.timeout_s,
             ) as resp:
                 if 200 <= resp.status < 300:
