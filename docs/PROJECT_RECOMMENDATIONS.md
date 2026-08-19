@@ -165,6 +165,6 @@
 
 ### 6.3 Technical debt
 - D199 (graphify-out) — очистить от S173 noise
-- D102 facade — `core.facades.py` имеет 16/17 D187 lazy imports (1 missing: cache facade)
+- D102 facade — `core/api/__init__.py` имеет 16/17 D187 lazy imports (1 missing: cache facade). (P1-4 cycle 241): `core/facades.py` НЕ существует — consolidated.
 - Test pollution (D237) — flaky `test_reauth_on_forbidden` resolved by isolated env
 
