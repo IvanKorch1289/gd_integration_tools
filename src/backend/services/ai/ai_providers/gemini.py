@@ -12,7 +12,10 @@ from typing import Any
 
 import httpx
 
+from src.backend.core.logging import get_logger
 from src.backend.core.net import OutboundHttpClient
+
+_logger = get_logger(__name__)
 
 
 class GeminiProvider:
@@ -40,8 +43,12 @@ class GeminiProvider:
                 parts = cands[0].get("content", {}).get("parts", [])
                 if parts:
                     return parts[0].get("text", "")
-        except AttributeError, IndexError, TypeError:  # noqa: violation-check — narrow API-shape fallback
-            pass
+        except AttributeError, IndexError, TypeError:
+            _logger.exception(
+                "ai_provider.api_shape_parse_failed",
+                extra={"provider": __name__, "return_value": ""},
+            )
+            # continue with empty response (return value below)
         return ""
 
     async def embeddings(

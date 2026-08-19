@@ -6,6 +6,9 @@ backend'а (OpenAI, vLLM, LocalAI, OpenRouter, MiniMax, и т.д.).
 
 from __future__ import annotations
 
+from src.backend.core.logging import get_logger
+
+_logger = get_logger(__name__)
 from typing import Any
 
 from src.backend.core.config.ai import openai_settings
@@ -43,8 +46,12 @@ class OpenAIProvider:
             if choices:
                 msg = choices[0].get("message", {})
                 return msg.get("content", "") or ""
-        except (AttributeError, IndexError, TypeError):  # noqa: violation-check — narrow API-shape fallback
-            pass
+        except AttributeError, IndexError, TypeError:  # noqa: violation-check — narrow API-shape fallback
+            _logger.exception(
+                "ai_provider.api_shape_parse_failed",
+                extra={"provider": __name__, "return_value": ""},
+            )
+            # continue with empty response (return value below)
         return ""
 
     async def embeddings(

@@ -16,6 +16,9 @@ YandexGPT, GigaChat, SaluteSpeech — все три российских про�
 
 from __future__ import annotations
 
+from src.backend.core.logging import get_logger
+
+_logger = get_logger(__name__)
 import asyncio
 from typing import Any
 
@@ -74,8 +77,12 @@ class _BaseRussianProvider:
             if choices:
                 msg = choices[0].get("message", {})
                 return msg.get("content", "") or ""
-        except (AttributeError, IndexError, TypeError):  # noqa: F401 — narrow API-shape fallback
-            pass
+        except AttributeError, IndexError, TypeError:  # noqa: F401 — narrow API-shape fallback
+            _logger.exception(
+                "ai_provider.api_shape_parse_failed",
+                extra={"provider": __name__, "return_value": ""},
+            )
+            # continue with empty response (return value below)
         return ""
 
     async def chat(
