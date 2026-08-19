@@ -156,6 +156,60 @@ def test_admin_endpoints_count() -> bool:
     return admin_count >= 100 and auto_count >= 100 and dsl_routes_count >= 5
 
 
+def test_layer_violations_zero_new() -> bool:
+    """Sprint 3 (audit 2026-08-19): ``tools/check_layers.py`` exits 0."""
+    import shutil
+    import subprocess
+
+    py = shutil.which("python") or shutil.which("python3")
+    if not py:
+        return False
+    try:
+        result = subprocess.run(  # noqa: S603
+            [py, "tools/check_layers.py"],
+            capture_output=True, text=True, cwd="/home/user/dev/gd_integration_tools",
+        )
+        return result.returncode == 0 and "Нарушений: 0 новых" in result.stdout
+    except Exception:
+        return False
+
+
+def test_bandit_strict_no_high() -> bool:
+    """Sprint 3: bandit-strict HIGH = 0 (audit 2026-08-19)."""
+    import subprocess
+    import sys
+
+    py = sys.executable  # use venv Python (bandit installed)
+    try:
+        result = subprocess.run(  # noqa: S603
+            [py, "-m", "bandit", "-r", "src/backend", "-lll",
+             "-c", "pyproject.toml"],
+            capture_output=True, text=True,
+            cwd="/home/user/dev/gd_integration_tools",
+        )
+        combined = (result.stdout or "") + (result.stderr or "")
+        return "High: 0" in combined
+    except Exception:
+        return False
+
+
+def test_adr_index_current() -> bool:
+    """Sprint 3: ADR INDEX актуальный (212 files, header отражает count)."""
+    import os
+
+    p = "/home/user/dev/gd_integration_tools/docs/adr/INDEX.md"
+    if not os.path.exists(p):
+        return False
+    content = open(p, encoding="utf-8").read()
+    # Header line содержит актуальное число ADR-файлов (>=210)
+    import re
+
+    match = re.search(r"ADR-файлов:\s*\*\*(\d+)\*\*", content)
+    if not match:
+        return False
+    return int(match.group(1)) >= 210
+
+
 def main() -> int:
     tests = [
         ("OpenAPI schema loads", test_openapi_schema_loads),
@@ -165,6 +219,9 @@ def main() -> int:
         ("DSL routes registered", test_dsl_routes_registered),
         ("feature_flag step в 4+ routes", test_routes_feature_flag_present),
         ("Admin endpoint count", test_admin_endpoints_count),
+        ("Layer violations 0 new", test_layer_violations_zero_new),
+        ("Bandit-strict HIGH = 0", test_bandit_strict_no_high),
+        ("ADR INDEX актуальный", test_adr_index_current),
     ]
     passed = 0
     failed = 0

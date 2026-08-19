@@ -7,6 +7,10 @@ name: security
 # exit code 1 при любой уязвимости (pip-audit 2.10.0 не имеет --fail-on).
 # --ignore-vuln CVE-2025-69872: diskcache pickle RCE, no fix version.
 # При появлении фиксов для diskcache — убрать --ignore-vuln.
+#
+# Sprint 3 audit (2026-08-18): bandit-strict сделан blocking для HIGH
+# (continue-on-error: false на job level). MEDIUM остаётся SARIF advisory.
+# Текущее состояние (2026-08-18): 0 HIGH, 56 MEDIUM, 94 LOW findings.
 
 on:
   push:
@@ -30,7 +34,10 @@ jobs:
     name: Bandit (Python SAST)
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    continue-on-error: true
+    # Sprint 3 audit (2026-08-18): HIGH — blocking gate.
+    # Текущее состояние: 0 HIGH (verified by `make bandit-strict`).
+    # MEDIUM остаётся advisory (SARIF upload) — backlog для Sprint 4+.
+    continue-on-error: false
 
     steps:
       - name: Checkout

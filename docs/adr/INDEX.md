@@ -1,8 +1,8 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR-файлов: **205**; уникальных слотов: **194**.
+Всего ADR-файлов: **212**; уникальных слотов: **200**.
 
-⚠️ Collision-слоты (11): ADR-0109, ADR-0226, ADR-0227, ADR-0228, ADR-0229, ADR-0230, ADR-0232, ADR-0233, ADR-0234, ADR-0235, ADR-0237. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
+⚠️ Collision-слоты (12): ADR-0109, ADR-0226, ADR-0227, ADR-0228, ADR-0229, ADR-0230, ADR-0232, ADR-0233, ADR-0234, ADR-0235, ADR-0237, ADR-0249. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
 
 | № | Заголовок | Статус | Файл |
 |---|-----------|--------|------|
@@ -211,5 +211,12 @@
 | 0245 | ADR-0245: S168 Delta Closure — Tool Import Fix + Allowlist Regen (2 atomic, score 9.85, 0 NEW violations) | — | [0245-s168-delta-closure.md](0245-s168-delta-closure.md) |
 | 0246 | ADR-0246: Sprint 30 Security Patch — 7 Dependabot Vulnerabilities Fixed | — | [0246-s30-security-patch.md](0246-s30-security-patch.md) |
 | 0247 | ADR-0247: S169 W2 Feature Pack — RLM, DI Scope, Per-Invoke Tool Policy, Linter Cleanup | — | [0247-s30-rlm-di-scope-tool-policy.md](0247-s30-rlm-di-scope-tool-policy.md) |
+| 0248 | ADR-0248 — Sprint 43: Deep-Audit Quick Wins (Layer linter P0 + P7 logger + schemas shims) | ✅ ACCEPTED (3 atomic commits merged) | [0248-s43-deep-audit-quick-wins.md](0248-s43-deep-audit-quick-wins.md) |
+| 0249 *(collision)* | ADR-0249: DSL → upper-layer imports consolidation (legacy tech debt) | — | [0249-dsl-upper-layer-imports-debt.md](0249-dsl-upper-layer-imports-debt.md) |
+| 0249 *(collision)* | ADR-0249 — Sprint 44: Audit Follow-up — Facades + Migrations | ✅ ACCEPTED (5 atomic commits merged) | [0249-s44-audit-followup-facades.md](0249-s44-audit-followup-facades.md) |
+| 0250 | ADR-0250 — Sprint 45: Audit Backlog QW10 + S1 Closure | ✅ ACCEPTED (2 atomic commits merged) | [0250-s45-audit-backlog-closure.md](0250-s45-audit-backlog-closure.md) |
+| 0251 | ADR-0251 — S13: Circuit Breaker Middleware → Shared State | 🔴 DECLINED — K8s multi-pod safety requires Redis, but wiring | [0251-s13-circuit-breaker-shared-state.md](0251-s13-circuit-breaker-shared-state.md) |
+| 0252 | ADR-0252: S-L7-5 W3C TraceContext MQ wiring — deferred (Sprint 4 L10) | — | [0252-s4-l7-5-mq-trace-propagator-wiring-deferral.md](0252-s4-l7-5-mq-trace-propagator-wiring-deferral.md) |
+| 0253 | ADR-0253: AsyncElasticsearch transport — aiohttp → httpxasync (Sprint 36 L1) | — | [0253-httpx-async-elasticsearch-transport.md](0253-httpx-async-elasticsearch-transport.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._

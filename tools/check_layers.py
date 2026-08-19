@@ -108,6 +108,21 @@ EXTENSIONS_FRAMEWORK_EXCEPTIONS: set[str] = {
     "src.backend.dsl.helpers.banking",
 }
 
+# Sprint 3 audit (2026-08-19): core → services lazy proxy exceptions.
+# Sprint 224-226 добавил 7 файлов с ``__getattr__``-based lazy proxies
+# чтобы избежать циклических imports между core/* и services/*. Layer
+# checker их флагует (lazy импорт — это всё равно import). Ponytail
+# decision: легитимный архитектурный pattern (services не должны
+# импортироваться напрямую в core init из-за circular deps).
+# Полная миграция в canonical ``core/services/*`` home — REWRITE-AS-NEW
+# (Sprint 4+ при feature-flag cleanup).
+CORE_LAZY_PROXY_EXCEPTIONS: set[str] = {
+    "src.backend.services.auth",  # core/auth/ad_directory.py → services.auth.ad_directory_client
+    "src.backend.services.integrations",  # core/integrations/skb.py → services.integrations.skb
+    "src.backend.services.io",  # core/io/__init__.py + core/io/indexers.py
+    "src.backend.services.core",  # core/services/__init__.py + base.py + base_service.py
+}
+
 # R3.10d: одностороннее правило frontend → узкий публичный фасад backend.
 # Любой импорт из frontend, не попадающий под эти префиксы (кроме самого
 # ``src.frontend``/``app.frontend``), считается нарушением.
@@ -324,6 +339,14 @@ def _check_file(path: Path, root: Path) -> list[tuple[str, str, str]]:
             if (
                 layer == EXTENSIONS_LAYER
                 and module in EXTENSIONS_FRAMEWORK_EXCEPTIONS
+            ):
+                continue
+            # Sprint 3 (audit 2026-08-19): core → services lazy proxy
+            # exception. Sprint 224-226 добавил __getattr__-based lazy
+            # proxies (avoid circular imports). Полная миграция — Sprint 4+.
+            if (
+                layer == "core"
+                and module in CORE_LAZY_PROXY_EXCEPTIONS
             ):
                 continue
             violations.append((rel, layer, module))

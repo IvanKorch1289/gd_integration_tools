@@ -132,7 +132,9 @@
     infrastructure реализует контракты из core (Protocols)
     core не импортирует код из src/ (только stdlib + Protocols)
     dsl импортирует core (контракты) + infrastructure через registries
-    extensions/<name>/ импортирует только gd_integration_tools.core.* + gd_integration_tools.testkit.* + capability-checked фасады. Прямой импорт из infrastructure//services/ запрещён.
+    extensions/<name>/ импортирует только `gd_integration_tools.core.*` + `gd_integration_tools.testkit.*` + capability-checked фасады. Прямой импорт из infrastructure//services/ запрещён.
+
+    **Exception** (P1-L1, audit 2026-08-18): extensions с durable workflows могут также импортировать `gd_integration_tools.dsl.workflow.builder` + `gd_integration_tools.dsl.workflow.spec` + `gd_integration_tools.dsl.helpers.banking` для декларации ``WorkflowDeclaration``. Production use: `extensions/core_entities/orders/workflows/orders_dsl.py` (saga-based migration, S213). Future migrations: ADR-0244 plan.
     src/frontend/streamlit_app/ импортирует только публичный API + REST через api_client.py.
 
 Капитальные структурные элементы V15
