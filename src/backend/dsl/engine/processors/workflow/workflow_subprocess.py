@@ -116,7 +116,43 @@ async def run_workflow_by_id(
                 execution_timeout=timedelta(seconds=timeout),
             )
         else:
-            # Standalone: стартуем без parent linkage.
+            # Sprint 4 (audit 2026-08-19): standalone без parent linkage
+            # может приводить к orphan workflows (Cancel/ContinueAsNew не
+            # пропагируются в child). Fail-closed в production через
+            # feature flag ``workflow_subprocess_require_parent`` (default
+            # True). Standalone path emit warning + metric, но не блокирует
+            # dev_light / unit-тесты.
+            try:
+                from src.backend.core.config.features import feature_flags
+
+                require_parent = bool(
+                    feature_flags.workflow_subprocess_require_parent,
+                )
+            except Exception:  # pragma: no cover
+                require_parent = True
+
+            if require_parent:
+                # Production: raise — caller обязан передать parent context.
+                return {
+                    "workflow_id": workflow_id,
+                    "resolved_version": resolved,
+                    "input": input_data,
+                    "status": "failed",
+                    "error": (
+                        "subworkflow standalone not allowed: "
+                        "parent_handle is None. "
+                        "Set workflow_subprocess_require_parent=False "
+                        "for dev/test, or wire parent context via "
+                        "CompositionRoot (see Sprint 4 backlog)."
+                    ),
+                }
+            # Dev/test: логируем warning и стартуем без parent linkage.
+            _logger.warning(
+                "subworkflow started STANDALONE (no parent_handle) "
+                "child_id=%s — Cancel/ContinueAsNew НЕ пропагируются. "
+                "Production: workflow_subprocess_require_parent=True.",
+                child_wf_id,
+            )
             handle = await backend.start_workflow(
                 workflow_name=workflow_id,
                 workflow_id=child_wf_id,

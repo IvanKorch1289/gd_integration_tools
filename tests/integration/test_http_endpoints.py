@@ -210,6 +210,40 @@ def test_adr_index_current() -> bool:
     return int(match.group(1)) >= 210
 
 
+def test_per_layer_diagnostic_works() -> bool:
+    """Sprint 4: per-layer diagnostic запускается (exit 0 без --fail-under-layer)."""
+    import subprocess
+    import sys
+
+    try:
+        result = subprocess.run(  # noqa: S603
+            [sys.executable, "tools/coverage/per_layer_diagnostic.py"],
+            capture_output=True, text=True,
+            cwd="/home/user/dev/gd_integration_tools",
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
+
+
+def test_layer_lint_allowlist_includes_core_lazy_proxies() -> bool:
+    """Sprint 3: tools/check_layers.py содержит CORE_LAZY_PROXY_EXCEPTIONS."""
+
+    p = "/home/user/dev/gd_integration_tools/tools/check_layers.py"
+    content = open(p, encoding="utf-8").read()
+    return "CORE_LAZY_PROXY_EXCEPTIONS" in content and "src.backend.services.auth" in content
+
+
+def test_ci_bandit_blocking_gate() -> bool:
+    """Sprint 3: bandit job в .github/workflows/security.yml теперь blocking."""
+    p = "/home/user/dev/gd_integration_tools/.github/workflows/security.yml"
+    content = open(p, encoding="utf-8").read()
+    # bandit job block: должно быть `continue-on-error: false` (или отсутствие)
+    # между "name: Bandit" и следующим "name:" или концом секции.
+    bandit_block = content.split("name: Bandit")[1].split("name:")[0]
+    return "continue-on-error: false" in bandit_block
+
+
 def main() -> int:
     tests = [
         ("OpenAPI schema loads", test_openapi_schema_loads),
@@ -222,6 +256,9 @@ def main() -> int:
         ("Layer violations 0 new", test_layer_violations_zero_new),
         ("Bandit-strict HIGH = 0", test_bandit_strict_no_high),
         ("ADR INDEX актуальный", test_adr_index_current),
+        ("Per-layer diagnostic works", test_per_layer_diagnostic_works),
+        ("Layer lint includes CORE_LAZY_PROXY_EXCEPTIONS", test_layer_lint_allowlist_includes_core_lazy_proxies),
+        ("CI bandit blocking gate", test_ci_bandit_blocking_gate),
     ]
     passed = 0
     failed = 0

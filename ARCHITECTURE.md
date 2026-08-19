@@ -1,5 +1,8 @@
 # ARCHITECTURE.md
 
+> Последняя синхронизация: 2026-08-19 (Sprint 3 audit cleanup).
+> См. `CLAUDE.md:612` для версии и `docs/audit/SYNTHESIS_2026-08-13.md` для истории.
+
 ## Назначение проекта
 
 **gd_integration_tools** — гибридная интеграционная шина на Python 3.14+

@@ -1,6 +1,6 @@
 # CLAUDE.md — gd_integration_tools
 
-> **Версия документа**: V22 (синхронизирована с `ARCHITECTURE.md` от 2026-05-21).
+> **Версия документа**: V22 (синхронизирована с `ARCHITECTURE.md` от 2026-08-19). Sprint 3 audit cleanup: bandit HIGH blocking, lazy `__getattr__` proxies fix, ADR regen.
 > Любая работа выполняется в соответствии с этим документом и `ARCHITECTURE.md`.
 > GAP-анализ: `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md`.
 
@@ -609,4 +609,4 @@ python tools/checks/check_layers.py
 - M7: 19/19 pass
 - Total: 3058 passed (+11)
 
-Версия CLAUDE.md: V22 (2026-06-05). При обновлении архитектурных решений синхронизировать с ARCHITECTURE.md.
+Версия CLAUDE.md: V22 (2026-08-19). При обновлении архитектурных решений синхронизировать с ARCHITECTURE.md.

@@ -27,6 +27,95 @@ def _bypass_auth() -> None:
     )
 
 
+class TestRunWorkflowByIdStandaloneGuard:
+    """Sprint 4 (audit 2026-08-19): standalone guard — production fail-closed."""
+
+    @pytest.mark.asyncio
+    async def test_standalone_production_fail_closed(self) -> None:
+        """Без parent_handle + require_parent=True (default) → status='failed'."""
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        mock_app = MagicMock()
+        mock_app.state.workflow_backend = None
+        mock_app.state.profile = None
+        # current_workflow_handle=None → triggers standalone path (else branch).
+        mock_app.state.current_workflow_handle = None
+
+        backend = MagicMock()
+        backend.start_workflow = AsyncMock()
+        backend.start_child_workflow = AsyncMock()
+
+        with (
+            patch(
+                "src.backend.infrastructure.workflow.factory.create_workflow_backend",
+                new=AsyncMock(return_value=backend),
+            ),
+            patch(
+                "src.backend.core.di.app_state.get_app_ref",
+                return_value=mock_app,
+            ),
+            patch(
+                "src.backend.core.config.features.feature_flags",
+                new=MagicMock(workflow_subprocess_require_parent=True),
+            ),
+        ):
+            from src.backend.dsl.engine.processors.workflow.workflow_subprocess import (
+                run_workflow_by_id,
+            )
+            result = await run_workflow_by_id(
+                "child_wf", input_data={"x": 1}, timeout=10.0,
+            )
+
+        # Standalone заблокирован.
+        assert result["status"] == "failed"
+        assert "standalone not allowed" in result["error"]
+        # Backend НЕ вызван.
+        backend.start_workflow.assert_not_called()
+        backend.start_child_workflow.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_standalone_dev_allowed_with_warning(self) -> None:
+        """Без parent_handle + require_parent=False → start_workflow + warning."""
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        mock_app = MagicMock()
+        mock_app.state.workflow_backend = None
+        mock_app.state.profile = None
+        # current_workflow_handle=None → triggers standalone path (else branch).
+        mock_app.state.current_workflow_handle = None
+
+        fake_handle = MagicMock()
+        fake_handle.workflow_id = "child_wf-sub-standalone"
+        backend = MagicMock()
+        backend.start_workflow = AsyncMock(return_value=fake_handle)
+
+        with (
+            patch(
+                "src.backend.infrastructure.workflow.factory.create_workflow_backend",
+                new=AsyncMock(return_value=backend),
+            ),
+            patch(
+                "src.backend.core.di.app_state.get_app_ref",
+                return_value=mock_app,
+            ),
+            patch(
+                "src.backend.core.config.features.feature_flags",
+                new=MagicMock(workflow_subprocess_require_parent=False),
+            ),
+        ):
+            from src.backend.dsl.engine.processors.workflow.workflow_subprocess import (
+                run_workflow_by_id,
+            )
+            result = await run_workflow_by_id(
+                "child_wf", input_data={"x": 1}, timeout=10.0,
+            )
+
+        # Standalone прошёл, backend вызван.
+        assert result["status"] == "started"
+        backend.start_workflow.assert_called_once()
+        backend.start_child_workflow.assert_not_called()
+
+
 class TestRunWorkflowByIdReal:
     """P1-W2 (audit 2026-08-18): ``run_workflow_by_id`` реально стартует child workflow."""
 
@@ -37,9 +126,15 @@ class TestRunWorkflowByIdReal:
 
         backend = FakeWorkflowBackend()
 
-        with patch(
-            "src.backend.infrastructure.workflow.factory.create_workflow_backend",
-            new=AsyncMock(return_value=backend),
+        with (
+            patch(
+                "src.backend.infrastructure.workflow.factory.create_workflow_backend",
+                new=AsyncMock(return_value=backend),
+            ),
+            patch(
+                "src.backend.core.config.features.feature_flags",
+                new=MagicMock(workflow_subprocess_require_parent=False),
+            ),
         ):
             from src.backend.dsl.engine.processors.workflow.workflow_subprocess import (
                 run_workflow_by_id,
@@ -61,9 +156,15 @@ class TestRunWorkflowByIdReal:
     @pytest.mark.asyncio
     async def test_returns_failed_on_backend_error(self) -> None:
         """При ошибке backend → status='failed' с error message (не raise)."""
-        with patch(
-            "src.backend.infrastructure.workflow.factory.create_workflow_backend",
-            new=AsyncMock(side_effect=RuntimeError("backend down")),
+        with (
+            patch(
+                "src.backend.infrastructure.workflow.factory.create_workflow_backend",
+                new=AsyncMock(side_effect=RuntimeError("backend down")),
+            ),
+            patch(
+                "src.backend.core.config.features.feature_flags",
+                new=MagicMock(workflow_subprocess_require_parent=False),
+            ),
         ):
             from src.backend.dsl.engine.processors.workflow.workflow_subprocess import (
                 run_workflow_by_id,
