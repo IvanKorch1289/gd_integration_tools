@@ -4,6 +4,12 @@ source:
     method: POST
     path: /api/v1/CHANGEME
 steps:
+- # P2-D8 (audit 2026-08-18): feature flag gate на LLM-вызов.
+- # Если ``ai_chat_enabled`` выключен — pipeline stop со статусом ``skipped``.
+- feature_flag:
+    flag: ai_chat_enabled
+    default: false
+    stop_on_disabled: true
 - # D-AUDIT-B-102 fix (cycle 1): broken call_function step удалён (модуль
   # не существует — route — pure YAML demo).
 - policy:

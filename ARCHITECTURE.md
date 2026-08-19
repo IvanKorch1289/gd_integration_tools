@@ -57,7 +57,7 @@ AI-агентами и developer portal на Streamlit.
 - `infrastructure` реализует контракты из `core/interfaces` и `core/protocols`
 - `core` не импортирует код из остального `src/`
 - Линтер слоёв: `make layers`, `tools/check_layers.py`
-  (201 legacy-нарушение в allowlist: 82 baseline + 119 dsl/workflows S65 W4)
+  (136 legacy-нарушение в allowlist — canonical `tools/check_layers_allowlist.txt`, P1-L1 fix 2026-08-18)
 
 ## Основные подсистемы
 
@@ -338,7 +338,7 @@ Rate Limiter построен по canonical 4-layer pattern:
 
 - ruff/mypy ошибки в `src/backend/` — pre-existing baseline
 - 42 ruff-S101 в `tests/` — pre-existing baseline
-- 201 legacy layer-нарушений в allowlist
+- 136 legacy layer-нарушений в allowlist (canonical, `tools/check_layers_allowlist.txt`)
   (S65 W2: 35 new lazy imports, S65 W4: 119 dsl/workflows; baseline 47)
 - `make type-check` / `make actions` / `make deps-check` — pre-existing failed
 - ClamAV не поднят в `docker-compose.yml`
@@ -346,7 +346,7 @@ Rate Limiter построен по canonical 4-layer pattern:
 - CertStore vault backend требует `vault_url` / `vault_token`
 - `psycopg2` отсутствует в venv (используется asyncpg)
 - 42 ruff-S101 в `tests/` — pre-existing baseline
-- 201 legacy layer-нарушений в allowlist
+- 136 legacy layer-нарушений в allowlist (canonical, `tools/check_layers_allowlist.txt`)
   (S65 W2: 35 new lazy imports, S65 W4: 119 dsl/workflows; baseline 47)
 - `make type-check` / `make actions` / `make deps-check` — pre-existing failed
 - ClamAV не поднят в `docker-compose.yml`

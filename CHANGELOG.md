@@ -5179,7 +5179,7 @@ Production с несколькими worker'ами раньше использо
 - `HitlPendingSignal.from_dict()` classmethod — reconstruct из Redis/JSON.
 - 8 unit-тестов (`test_hitl_signal_store_redis.py`) с in-memory mock redis: roundtrip, missing keys, tenant filter, idempotency check.
 
-**Production wiring**: требует opt-in selection в `services/workflows/__init__.py` или composition root. Default остаётся InMemory (backward-compat для dev_light + unit-тестов).
+**Production wiring**: ⚠️ требует opt-in selection в `services/workflows/__init__.py` или composition root. **Default остаётся InMemoryHitlSignalStore** (backward-compat для dev_light + unit-тестов). Production с несколькими worker'ами **должен явно** выбрать Redis store — иначе HITL approval не виден между instance'ами.
 
 ### Оставшиеся gaps (deferred — bounded scope mismatch)
 
@@ -5199,7 +5199,7 @@ Production с несколькими worker'ами раньше использо
 |-----|--------|
 | 1. Two WorkflowBuilder classes | ⚠️ **DEFERRED** — legacy `.step()/.compensate_with()` API используется в `extensions/core_entities/orders/workflows/orders_dsl.py` (PRODUCTION). Удаление legacy = breaking change. Требует полной миграции extension. |
 | 2. HITL Redis signal store | ⚠️ **DEFERRED** — medium (~250 LOC), builds on existing pub/sub. Требует отдельного sprint. |
-| 3. DSL → services module-level imports | ✅ **CLOSED** — 0 violations остаются (все 8 были исправлены в S202). Lazy imports — architecturally tolerated. |
+| 3. DSL → services module-level imports | ✅ **CLOSED** — 0 module-level violations (все 8 были исправлены в S202). ⚠️ Lazy `__getattr__` proxies остаются (Sprint 224-226): `core/auth/ad_directory.py`, `core/integrations/skb.py`, `core/io/*`, `core/services/*` — 7 NEW entries в allowlist. Allowlist baseline: **136 entries** (`tools/check_layers_allowlist.txt`). |
 | 4. langmem deprecation cleanup | ⚠️ **DEFERRED** — canonical (`memory/langmem_service.py`) НЕ имеет `consolidate()`/`stats()`/`LangMemDisabled`. Миграция требует расширения canonical API (200+ LOC). |
 | 5. admin_plugins/endpoints.py auth | ✅ **FIXED** — router-level `require_admin(OPERATOR, SUPER_ADMIN)` восстановлен. |
 

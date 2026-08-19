@@ -99,6 +99,13 @@ EXTENSIONS_FRAMEWORK_EXCEPTIONS: set[str] = {
     "src.backend.schemas.route_schemas.users",
     "src.backend.schemas.route_schemas.orderkinds",
     "src.backend.schemas.route_schemas.files",
+    # P1-L1 fix (audit 2026-08-18): extensions с durable workflows
+    # (orders, osint_agent) декларируют workflows через canonical DSL.
+    # WorkflowBuilder + spec + helpers — public framework surface, не
+    # internal coupling. ADR-0249 Ponytail-YAGNI: не мигрируем DSL в core.
+    "src.backend.dsl.workflow.builder",
+    "src.backend.dsl.workflow.spec",
+    "src.backend.dsl.helpers.banking",
 }
 
 # R3.10d: одностороннее правило frontend → узкий публичный фасад backend.

@@ -229,36 +229,41 @@ def make_async_retry(
     max_backoff: float = 30.0,
     on: tuple[type[BaseException], ...] = (Exception,),
 ) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
-    """Create an async tenacity retry decorator for legacy call sites."""
+    """Создать async tenacity retry decorator.
+
+    P2-R1 fix (audit 2026-08-18): thin wrapper над :func:`with_retry` —
+    единственная реализация retry в этом модуле.
+    Раньше был отдельный AsyncRetrying + свой before_sleep callback;
+    теперь делегирует to ``with_retry`` с переводом kwargs.
+
+    Кейс: legacy call sites (``services/rpa``, ``services/llm``, ...).
+    Сохраняем старый signature для backward compatibility.
+
+    Ponytail: не добавлять новых kwargs — все новые call sites должны
+    использовать :func:`with_retry` с :class:`RetryPolicy`.
+    """
+    policy = RetryPolicy(
+        max_attempts=max_attempts,
+        initial_backoff=initial_backoff,
+        max_backoff=max_backoff,
+        backoff_multiplier=multiplier,
+        retry_on=on,
+    )
 
     def decorator(fn: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
-        @functools.wraps(fn)
-        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-            retrying = AsyncRetrying(
-                stop=stop_after_attempt(max_attempts),
-                wait=wait_exponential(
-                    multiplier=initial_backoff,
-                    exp_base=multiplier,
-                    max=max_backoff,
-                ),
-                retry=retry_if_exception_type(on),
-                reraise=True,
-                before_sleep=_log_before_sleep(fn.__name__),
-            )
-            async for attempt in retrying:
-                with attempt:
-                    return await fn(*args, **kwargs)
-            raise RuntimeError(
-                f"make_async_retry: {fn.__name__} exited without result",
-            )
-
-        return wrapper
+        # ``with_retry`` возвращает decorator — применяем его к fn.
+        return with_retry(policy)(fn)
 
     return decorator
 
 
 def _log_before_sleep(fn_name: str) -> Callable[[RetryCallState], None]:
-    """Build the debug callback used by :func:`make_async_retry`."""
+    """Legacy no-op callback для backward compat (был раньше в make_async_retry).
+
+    P2-R1 fix: ``make_async_retry`` теперь делегирует to ``with_retry``,
+    этот callback больше не используется внутри, но оставлен как
+    export для backward compat (на случай если кто-то импортирует).
+    """
 
     def callback(retry_state: RetryCallState) -> None:
         exc = retry_state.outcome.exception() if retry_state.outcome else None

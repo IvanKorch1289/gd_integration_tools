@@ -150,10 +150,10 @@ AIWorkspaceManager + AIFsFacade	core/ai/	AI Safety: workspace isolation
 OutboundHttpClient + WAF-фасад	core/net/	Все :external через WAF
 TaskRegistry + Watchdog	infrastructure/observability/	Leak prevention, deadline-эскалация
 LiteTemporalBackend	infrastructure/workflow/	In-process Temporal для dev_light
-MCP server (FastMCP)	entrypoints/mcp/fastmcp_server.py	Auto-export Tier 1+2 actions как MCP tools
+MCP server (FastMCP)	entrypoints/mcp/mcp_server/	Auto-export Tier 1+2 actions как MCP tools (package: http_server.py + workflow_tools.py + namespaces/)
 BaseExternalAPIClient (расширенный)	services/core/	Per-service timeouts/pool/retry-policy
 ConnectionReuseManager	infrastructure/clients/	Idle ping + reuse-on-demand
-ResponseValidatorProcessor	dsl/engine/processors/validation/	Pydantic-validation response_body + DLQ
+ResponseValidatorProcessor	dsl/engine/processors/validate_response.py	Pydantic-validation response_body + DLQ (S171 cycle 37 fix: single file, не split в validation/ subdir)
 Обязательный режим работы
 
 Любое изменение файлов выполняется только после точного плана.

@@ -5,6 +5,13 @@ source:
     method: POST
     path: /api/v1/osint/report
 steps:
+  # P2-D8 (audit 2026-08-18): feature flag gate для OSINT.
+  # Kill-switch при инцидентах (data leak / rate limit) — disable без deploy.
+  - feature_flag:
+      flag: osint_agent_enabled
+      default: false
+      stop_on_disabled: true
+      output_field: osint_active
   - call_function:
       ref: extensions.osint_agent.functions.osint_workflow:run_osint
       result_property: osint_report

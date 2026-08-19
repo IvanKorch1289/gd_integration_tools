@@ -55,7 +55,8 @@
 - **WorkflowSubprocess** + **WorkflowConvert** (M8) — sub-workflow invoke + format conversion
 
 ### Security
-- **EnvelopeEncryptionService** (D174) — at-rest encryption с per-tenant DEK + Vault transit KEK
+- **PIITokenizer** (D174 area) — PII-токенизация через Presidio для banking/SOX compliance.
+  ⚠️ `EnvelopeEncryptionService` удалён в Sprint 226 (false claim в предыдущих версиях README).
 - **WafCheckProcessor** (D171) — DSL обёртка над core/net/waf (19 OWASP CRS patterns)
 
 ### Observability
@@ -64,7 +65,10 @@
 
 ### DSL
 - **Schema-registry R1** (D175) — in-memory JSON-Schema catalog для LSP/AsyncAPI export
-- **Middleware facades** (D160/D187) — `core.facades.py` — 16 primitives (9 eager + 7 lazy)
+- **Middleware facades** (D160) — `core/api/__init__.py` (canonical public facade) +
+  per-domain facades в `core/{auth,cache,storage,...}/facade.py`. 16+ primitives
+  (lazy `__getattr__` pattern). ⚠️ `core.facades.py` не существует (false claim в
+  предыдущих README); consolidated в `core.api` (S170 cycle 36).
 - **FilteredDirectoryScanProcessor** — OWASP-safe file operations (max_results + timeout)
 
 ### Infra
@@ -604,50 +608,65 @@ route = (
 
 ## Production Readiness (Sprint 203 + Cycles 25-30)
 
-**Overall: READY WITH CAVEATS (82%)**
+**Overall: PARTIAL READINESS — 7 critical P0 fixes applied in audit cycle (2026-08-18)**
 
-### Сессия 2026-07-23/24 — cycles 25-30 (40+ commits)
+### Сессия 2026-08-18 — auditor swarm re-audit (commit 30958c3e)
 
-Закрыты все 24 пункта Master Prompt (P0-P4):
+После полного аудита (8 параллельных агентов) зафиксировано:
+**7 FALSE_CLAIMs detected в предыдущих версиях README** — части исправлены в этом цикле.
 
-| Priority | Items | Что сделано |
-|---|---|---|
-| **P0 (security)** | 6/6 | symlink escape, tool policy fail-closed, sandbox default, guard failures, admin auth, yaml.safe_load |
-| **P1 (architecture)** | 4/4 | core/api facade, core→services DI provider, frontend boundary, metrics_registry dedup |
-| **P2 (performance)** | 4/4 | batch limits, file_watch asyncio.to_thread, workflow spec caching, pg_runner replay |
-| **P3 (DSL gaps)** | 6/6 | SSH DSL, Browser RPA full builder, EIP Aggregator/Enrich, CDCPostgresLogical, unified DML |
-| **P4 (hygiene)** | 4/4 | DSL db/ subdir, vulture CI gate, RouteBuilder Protocol definitions, _validate_module_whitelist (already deduped) |
+| Priority | Items | Статус | Доказательство |
+|---|---|---|---|
+| **P0 (security)** | 5 fixes | VERIFIED | IP regex (matches nested paths), Lakak fail-closed (no silent no-op), nemo guards fail-closed, capability gate fail-closed, PII sanitizers fail-closed |
+| **P1 (workflow)** | 2 fixes | VERIFIED | ContinueAsNew handler wired (был dead code), WorkflowSubprocess реально стартует child workflow (был stub) |
+| **P2 (cleanup)** | 1 fix | DONE | Empty `_legacy.py` stubs удалены (3e/flow_control, patterns) |
+| **P0-D2 (facade)** | 1 fix | VERIFIED | `feature_flags` добавлен в `core.api.__getattr__` (для 6+ frontend pages) |
+
+### Текущие OPEN items / циклы Sprint 203
+
+| Sprint 203 original claim | Реальный статус (2026-08-18) |
+|---|---|
+| `core/api facade` — extensions используют | **PARTIALLY VERIFIED** — extensions **0** uses, 18 frontend files используют |
+| `pg_runner replay()` | **DEPRECATED** (raises `NotImplementedError` since Sprint 217) |
+| `EnvelopeEncryptionService` | **REMOVED** (PII-токенизация через Presidio) |
+| `core.facades.py` | **DOES NOT EXIST** (consolidated в `core/api/__init__.py`) |
+| `212 legacy layer violations` | **STALE** — actual: 136 active (`tools/check_layers_allowlist.txt`) |
+| `94/100 final review` | **OVERCONFIDENT** — bandit-strict FAILING (4 HIGH), coverage 51% < 75% |
+| `_validate_module_whitelist deduped` | **MISLEADING** — 2 разных реализации (plugin-runtime + skill registry) |
 
 ### Архитектурные ADR (новые в сессии)
 
-- **ADR-0249**: DSL → upper-layer import debt (214 entries documented, Ponytail-YAGNI defer)
+- **ADR-0249**: DSL → upper-layer import debt (136 active entries в `tools/check_layers_allowlist.txt`,
+  старые claim о 214 stale)
 - **core/api facade**: canonical extensions public API (re-exports from SDK + 4 lazy categories)
 - **Saga compensate_map**: explicit forward→compensate name mapping (Phase 6, cycle 28)
 
-### Метрики
+### Метрики (на 2026-08-18)
 
 | Metric | Value |
 |---|---|
-| Atomic commits (session) | 40+ |
-| Files changed | 80+ |
-| Net LOC delta | +2000/-800 |
-| New tests added | 54 (all PASS) |
-| P0 sites closed | 30+ |
-| D-rules minted | D417-D433+ |
-| FALSE_CLAIMs detected | 5 |
-| Domain readiness | 82% (12 domains audited) |
-| **Final codebase review** | **94/100** (general-32) |
+| Atomic commits (2026-08-18 audit fixes) | 1 (30958c3e) |
+| Files changed | 22 (+1299/-140 LOC) |
+| New tests added | 67 (58 unit + 9 functional integration) |
+| P0 sites closed (audit-verified) | 5 (security), 1 (facade) |
+| D-rules minted | D-AUDIT-17601, D-AUDIT-20601 |
+| FALSE_CLAIMs detected | 5 (legacy) + 7 (audit 2026-08-18, части исправлены) |
+| Domain readiness | ~75% (security проверено, workflow проверено, docs drift остаётся) |
+| **Final codebase review** | **OVERCONFIDENT** — реальная оценка ~70% (bandit-strict FAILING, layer drift) |
 
-### Финальное ревью (cycle 30, general-32)
+### Финальное ревью (audit 2026-08-18, post-fix)
 
-| Check | Result |
-|---|---|
-| `compileall src/backend/` | exit 0 (2286 files) |
-| Layer violations | 0 new (212 legacy baseline) |
-| Tests collected | 7045 (0 SyntaxError, 470 env-blocked ImportError) |
-| Docstring coverage | 100% module, 100% class, 84% func |
-| Architecture (P1-#1, P1-#4, frontend) | 3/3 PASS |
-| Security (yaml.load, shell=True, secrets) | 3/3 PASS |
+| Check | Result | Notes |
+|---|---|---|
+| `compileall src/backend/` | exit 0 | |
+| Layer violations | 7 NEW + 136 baseline | После P0/P1 фиксов net debt может быть больше из-за lazy proxies |
+| Tests (P0/P1 fix scope) | 67/67 PASS | ip_restriction_store, input_guard, sanitize_mixin, capability_gate, compile_continue_as_new, workflow_subprocess |
+| Architecture (P1-#1 facade) | PARTIAL | Extensions не мигрированы на `core.api` (P1-L1 OPEN) |
+| Security (5 P0 semantic fixes) | 5/5 PASS | IP bypass, Lakera, nemo, capability, PII — все fail-closed |
+| Workflow (ContinueAsNew, WorkflowSubprocess) | 2/2 VERIFIED | handlers wired, реальный child workflow execution |
+| Functional smoke | 8/8 PASS | `tests/integration/test_p0_fixes_functional.py` |
+| bandit-strict | FAILING (4 HIGH, 56 MED) | **NOT в CI** — требует S182 cleanup |
+| coverage | 51.04% / 75% target | gap 24% — требует S182 cycle |
 | DSL processors | 276 modules, 12 step types (all documented) |
 | TODO/FIXME/HACK in critical paths | 1 (non-critical, triggers.py:301 Phase 4 TODO) |
 

@@ -11,6 +11,12 @@ source: http:POST /api/v1/composition/demo
 description: Composition demo — extends base + includes shared steps
 
 steps:
+  # P2-D8 (audit 2026-08-18): feature flag gate для composition demo.
+  - feature_flag:
+      flag: demo_routes_enabled
+      default: true
+      stop_on_disabled: false
+      output_field: demo_active
   - audit:
       action: "route.composition_demo.start"
   - audit:
@@ -25,3 +31,4 @@ to:
       processed_by: ${body.processed_by}
       has_base: ${body.base_route}
       has_included_meta: ${body._meta.composition}
+      demo_active: ${properties.demo_active}
