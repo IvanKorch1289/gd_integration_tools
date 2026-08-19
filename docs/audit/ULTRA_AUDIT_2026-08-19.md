@@ -1,9 +1,14 @@
 # Ultra Deep-Dive Audit Report — 2026-08-19
 
-**Date**: 2026-08-19
-**Auditor**: Kimi Code (6-agent swarm + 1 main thread) — auto permission mode
+**Date**: 2026-08-19 (initial) → 2026-08-19 (final, Sprint 19)
+**Auditor**: Kimi Code (multi-swarm + 1 main thread) — auto permission mode
 **Scope**: Re-audit of gd_integration_tools at HEAD = `6731bb3b` (Sprint 6)
 **Method**: 6 parallel explore-agents (Claim, Layer, Security, Workflow, Dead-code, Runtime/Docs) + main-thread runtime probes + static toolchain
+
+**Document structure**:
+* §0-§10 — AUDIT SNAPSHOT @ 6731bb3b (pre-fix state). All findings here are past-tense.
+* Appendices A-F — REMEDIATION LOG (Sprint 7-19). Each appendix documents specific fixes with file:line evidence.
+* Current status (post-Sprint 19) — see Appendix F.
 
 ---
 
@@ -812,7 +817,7 @@ Operators should review and explicitly enable needed features via `FEATURE_*=tru
 **STATUS: DONE — backward-compat shim created**
 
 - **Audit finding**: 7+ docs reference `core.facades.py`, but the file was renamed to `core/api/__init__.py` (cycle 29).
-- **Fix**: Created `src/backend/core/facades.py` as a thin shim (4 LOC):
+- **Fix**: Created `src/backend/core/facades.py` as a thin shim (36 LOC — 4 LOC core + 32 LOC docstring/example):
   ```python
   from src.backend.core.api import *  # noqa
   from src.backend.core.api import __all__, __dir__, __getattr__
@@ -1048,7 +1053,7 @@ contract tests.
 | P1-13 | ✅ CLOSED (NOT BUG) | 5 already lazy imports |
 | P1-14 | ✅ CLOSED (DEBT DOCUMENTED) | 2 known observability middleware imports |
 | P1-15 | ✅ CLOSED | -482 LOC dedup (enforced_invoke.py deleted) |
-| P1-18 | ✅ CLOSED | `core/facades.py` shim (4 LOC) |
+| P1-18 | ✅ CLOSED | `core/facades.py` shim (36 LOC) |
 
 ### OPEN (3 items, blocked by external scope)
 
