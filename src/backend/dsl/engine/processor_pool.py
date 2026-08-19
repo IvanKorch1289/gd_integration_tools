@@ -34,9 +34,14 @@ class PooledProcessor:
 
 @dataclass
 class PoolMetrics:
-    """Метрики пула процессоров (thread-safe)."""
+    """Метрики пула процессоров (atomic под GIL, eventually consistent).
 
-    _lock: threading.Lock = field(default_factory=threading.Lock)
+    Sprint 19 (analyst swarm iteration 3) CRIT-2: удалён ``threading.Lock`` — он блокирует
+    asyncio event loop при contention. CPython GIL гарантирует атомарность int/float
+    assignments, поэтому ``+=`` безопасен без lock. ``snapshot()`` может вернуть слегка
+    inconsistent view (между inc и snapshot), но для metrics endpoint это acceptable.
+    """
+
     total_submitted: int = 0
     total_completed: int = 0
     total_failed: int = 0
@@ -45,38 +50,38 @@ class PoolMetrics:
     @property
     def avg_duration_ms(self) -> float:
         """Вернуть среднее duration последних N completed (ms)."""
-        with self._lock:
-            if self.total_completed == 0:
-                return 0.0
-            return self.total_durations_ms / self.total_completed
+        if self.total_completed == 0:
+            return 0.0
+        return self.total_durations_ms / self.total_completed
 
     def inc_submitted(self, n: int = 1) -> None:
         """Инкрементировать counter submitted на ``n`` (default 1)."""
-        with self._lock:
-            self.total_submitted += n
+        self.total_submitted += n
 
     def inc_completed(self, failed: bool = False, duration_ms: float = 0.0) -> None:
         """Зарегистрировать completed execution (success или failed) с duration."""
-        with self._lock:
-            self.total_completed += 1
-            if failed:
-                self.total_failed += 1
-            self.total_durations_ms += duration_ms
+        self.total_completed += 1
+        if failed:
+            self.total_failed += 1
+        self.total_durations_ms += duration_ms
 
     def snapshot(self) -> dict[str, float | int]:
-        """Вернуть dict snapshot всех metric values (для /metrics endpoint)."""
-        with self._lock:
-            return {
-                "total_submitted": self.total_submitted,
-                "total_completed": self.total_completed,
-                "total_failed": self.total_failed,
-                "total_durations_ms": self.total_durations_ms,
-                "avg_duration_ms": (
-                    self.total_durations_ms / self.total_completed
-                    if self.total_completed
-                    else 0.0
-                ),
-            }
+        """Вернуть dict snapshot всех metric values (для /metrics endpoint).
+
+        Eventually consistent: concurrent inc() may see partial state, but
+        GIL гарантирует что каждое чтение возвращает валидное значение.
+        """
+        return {
+            "total_submitted": self.total_submitted,
+            "total_completed": self.total_completed,
+            "total_failed": self.total_failed,
+            "total_durations_ms": self.total_durations_ms,
+            "avg_duration_ms": (
+                self.total_durations_ms / self.total_completed
+                if self.total_completed
+                else 0.0
+            ),
+        }
 
 
 class ProcessorPool:

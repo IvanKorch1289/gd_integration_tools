@@ -6,6 +6,7 @@ Ponytail YAGNI: AST-based regex, no sphinx dependency.
 
 from __future__ import annotations
 
+import os
 import re
 from pathlib import Path
 from typing import Any
@@ -59,8 +60,25 @@ class DocPathValidator:
 
 
 def validate_doc_paths(repo_root: Path | None = None) -> dict[str, Any]:
-    """Validate all doc references in docs/."""
+    """Validate all doc references in docs/.
+
+    Sprint 19 (analyst swarm iteration 3) CRIT-1: default repo_root was hardcoded
+    to /home/user/dev/gd_integration_tools (developer-specific path). Replaced with
+    REPO_ROOT env var → cwd → Path(__file__) chain.
+    """
     if repo_root is None:
-        repo_root = Path("/home/user/dev/gd_integration_tools")
+        env_root = os.environ.get("REPO_ROOT")
+        if env_root:
+            repo_root = Path(env_root)
+        else:
+            cwd_root = Path.cwd()
+            # Walk up from cwd until we find `src/` or `pyproject.toml`
+            for parent in [cwd_root, *cwd_root.parents]:
+                if (parent / "pyproject.toml").exists() and (parent / "src").exists():
+                    repo_root = parent
+                    break
+            else:
+                # Last-resort fallback to file-relative path
+                repo_root = Path(__file__).resolve().parents[3]
     validator = DocPathValidator(repo_root)
     return validator.find_missing()
