@@ -24,6 +24,7 @@ from pydantic import BaseModel, ConfigDict, field_validator
 
 from src.backend.core.logging import get_logger
 
+_logger = get_logger(__name__)
 __all__ = ("JudgeVerdict", "LLMJudge", "get_llm_judge")
 
 logger = get_logger("services.llm_judge")
@@ -199,8 +200,8 @@ class LLMJudge:
                 relevance=verdict.relevance_score,
                 toxicity=verdict.toxicity_score,
             )
-        except (ImportError, AttributeError):  # noqa: violation-check — orjson optional, JSON fallback below
-            pass
+        except (ImportError, AttributeError):  # orjson optional, JSON fallback below
+            _logger.exception("llm_judge.orjson_unavailable_using_fallback")
 
         try:
             import orjson as _orjson
@@ -219,8 +220,8 @@ class LLMJudge:
                     "metadata": _orjson.dumps(verdict.metadata).decode(),
                 },
             )
-        except (ImportError, AttributeError, ConnectionError):  # noqa: violation-check — Langfuse optional, no-op fallback
-            pass
+        except (ImportError, AttributeError, ConnectionError):  # Langfuse optional, no-op fallback
+            _logger.exception("llm_judge.stream_unavailable_skipped")
 
     async def evaluate_recent(self, *, limit: int = 50) -> list[JudgeVerdict]:
         """Оценивает последние LLM вызовы из audit stream.

@@ -2,6 +2,7 @@ import time
 from typing import Any
 
 from src.backend.core.errors import RouteDisabledError, TenantContextRequiredError
+from src.backend.core.logging import get_logger
 from src.backend.core.state.runtime import disabled_feature_flags
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
@@ -17,6 +18,7 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.engine.validation import pipeline_validator
 from src.backend.infrastructure.observability.tracing import TracingMiddleware
 
+_logger = get_logger(__name__)
 __all__ = ("ExecutionEngine",)
 
 
@@ -230,7 +232,13 @@ class ExecutionEngine:
                 is_error=exchange.status == ExchangeStatus.failed,
             )
         except (ImportError, AttributeError):
-            pass
+            # Sprint 19 (analyst swarm iteration 4) Q-2: log instead of silent pass.
+            # SLO tracking dropped on registry unload → p99/latency/error metrics
+            # disappear silently. Log warning so missing SLO data is observable.
+            _logger.warning(
+                "slo_tracker_unavailable_skipping_metric",
+                extra={"route_id": pipeline.route_id},
+            )
 
     async def execute(
         self,
