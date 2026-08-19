@@ -626,7 +626,7 @@ route = (
 
 | Sprint 203 original claim | Реальный статус (2026-08-18) |
 |---|---|
-| `core/api facade` — extensions используют | **PARTIALLY VERIFIED** — extensions **0** uses, 18 frontend files используют |
+| `core/api facade` — extensions используют | **PARTIALLY VERIFIED** — extensions **42** uses, 0 frontend files используют (Sprint 19 audit) |
 | `pg_runner replay()` | **DEPRECATED** (raises `NotImplementedError` since Sprint 217) |
 | `EnvelopeEncryptionService` | **REMOVED** (PII-токенизация через Presidio) |
 | `core.facades.py` | **DOES NOT EXIST** (consolidated в `core/api/__init__.py`) |
@@ -667,8 +667,8 @@ route = (
 | Functional smoke | 8/8 PASS | `tests/integration/test_p0_fixes_functional.py` |
 | bandit-strict | FAILING (4 HIGH, 56 MED) | **NOT в CI** — требует S182 cleanup |
 | coverage | 51.04% / 75% target | gap 24% — требует S182 cycle |
-| DSL processors | 276 modules, 12 step types (all documented) |
-| TODO/FIXME/HACK in critical paths | 1 (non-critical, triggers.py:301 Phase 4 TODO) |
+| DSL processors | 317 modules, 13 step types (all documented; Sprint 19 audit) |
+| TODO/FIXME/HACK in critical paths | 0 in d8af74e8-tracked files (Sprint 19 audit; pre-existing uncommitted may differ) |
 
 ### Канонические точки входа
 
