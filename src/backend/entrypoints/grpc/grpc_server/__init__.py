@@ -27,6 +27,14 @@ from src.backend.entrypoints.grpc.grpc_server.invoker import (
 from src.backend.entrypoints.grpc.grpc_server.order import (
     OrderGRPCServicer,  # S65 W3: re-export
 )
+# D-AUDIT-20823 (cycle 234): импортируем FileStreamGRPCServicer для того
+# чтобы patch loop в _patch_rpc_methods (line 183) нашёл класс через
+# globals()["FileStreamGRPCServicer"]. Без этого импорта loop делает
+# KeyError → continue → никогда не patchит subclass methods →
+# 3 pre-existing test failures.
+from src.backend.entrypoints.grpc.grpc_server.file_stream import (
+    FileStreamGRPCServicer,  # S128 W3: re-export
+)
 from src.backend.entrypoints.grpc.grpc_server.server import (
     _load_tls_credentials,  # S65 W3: top-level func re-export
     serve,  # S65 W3: top-level func re-export
