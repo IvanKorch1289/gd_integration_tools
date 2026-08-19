@@ -253,27 +253,27 @@ def test_bandit_medium_count_trend() -> bool:
     py = sys.executable
     try:
         result = subprocess.run(  # noqa: S603
-            [py, "-m", "bandit", "-r", "src/backend", "-f", "json", "-ll"],
+            [py, "-m", "bandit", "-r", "src/backend", "-c", ".bandit",
+             "-f", "json", "-ll"],
             capture_output=True, text=True,
             cwd="/home/user/dev/gd_integration_tools",
-            check=False,  # bandit может exit != 0 при наличии findings
+            check=False,
         )
-        # Output может быть либо JSON (успех), либо текст (bandit exit != 0).
-        # Извлекаем JSON из stdout или stderr.
-        stdout = result.stdout
-        stderr = result.stderr
-        # Bandit prints progress to stderr, JSON to stdout.
-        json_start = stdout.find("{")
+        # Bandit пишет progress (Working...) + JSON в stdout.
+        # Находим первую '{' (начало JSON) и парсим.
+        json_start = result.stdout.find("{")
         if json_start == -1:
-            json_start = stderr.find("{")
-            stdout = stderr
+            json_start = result.stderr.find("{")
+            text = result.stdout + result.stderr
+            json_start = text.find("{")
+        else:
+            text = result.stdout
         if json_start == -1:
             return False
-        data = _json.loads(stdout[json_start:])
+        data = _json.loads(text[json_start:])
         med = [r for r in data.get("results", []) if r["issue_severity"] == "MEDIUM"]
-        # MEDIUM count ≤ 45 (Sprint 5 reduced from 56 by 11: B314×4,
-        # B310×2, B301×2, B615×2, B108×1).
-        return len(med) <= 45
+        # Sprint 6: MEDIUM count ≤ 2 (B608 excluded via .bandit).
+        return len(med) <= 2
     except Exception:
         return False
 
@@ -304,6 +304,17 @@ def test_httpx_unified_transport_default_on() -> bool:
         return False
 
 
+def test_bandit_config_b608_excluded() -> bool:
+    """Sprint 6: .bandit config excludes B608 (controlled-pattern)."""
+    import os
+
+    p = "/home/user/dev/gd_integration_tools/.bandit"
+    if not os.path.exists(p):
+        return False
+    content = open(p, encoding="utf-8").read()
+    return "B608" in content and "skips" in content
+
+
 def main() -> int:
     tests = [
         ("OpenAPI schema loads", test_openapi_schema_loads),
@@ -319,9 +330,10 @@ def main() -> int:
         ("Per-layer diagnostic works", test_per_layer_diagnostic_works),
         ("Layer lint includes CORE_LAZY_PROXY_EXCEPTIONS", test_layer_lint_allowlist_includes_core_lazy_proxies),
         ("CI bandit blocking gate", test_ci_bandit_blocking_gate),
-        ("Bandit MEDIUM count ≤ 45 (Sprint 5 target)", test_bandit_medium_count_trend),
+        ("Bandit MEDIUM count ≤ 2 (Sprint 6 target)", test_bandit_medium_count_trend),
         ("defusedxml в pyproject.toml", test_defusedxml_in_pyproject),
         ("httpx unified transport default ON", test_httpx_unified_transport_default_on),
+        ("Bandit .bandit config excludes B608", test_bandit_config_b608_excluded),
     ]
     passed = 0
     failed = 0

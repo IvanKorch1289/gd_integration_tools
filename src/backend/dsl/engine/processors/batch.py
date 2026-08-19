@@ -1,4 +1,6 @@
 # ruff: noqa: S608 — false positive (controlled pattern)
+# bandit: noqa: B608 — false positive (controlled pattern: table name
+#   from __init__ (not user input), values bound via :param placeholders)
 """Batch DB processors — INSERT / UPDATE / DELETE через SQLAlchemy core."""
 
 from __future__ import annotations

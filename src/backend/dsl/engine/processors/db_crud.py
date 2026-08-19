@@ -1,4 +1,6 @@
 # ruff: noqa: S608 — false positive (controlled pattern)
+# bandit: noqa: B608 — false positive (controlled pattern: identifiers quoted via
+#   _quote_identifier() whitelist [A-Za-z0-9_], values bound via :param placeholders)
 """S95 W1 — DSL CRUD-процессоры: db_insert, db_update, db_upsert, db_delete.
 
 Safe SQL-builder поверх существующего ``DatabaseQueryProcessor``. Генерирует

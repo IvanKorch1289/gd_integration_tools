@@ -1,4 +1,5 @@
 # ruff: noqa: S608 — false positive (controlled pattern)
+# bandit: noqa: B608 — false positive (controlled pattern: identifiers validated, values via ? placeholders)
 
 """``SqliteFTS5Search`` — fallback ``SearchClient`` на SQLite FTS5 (Wave 21.3c).
 

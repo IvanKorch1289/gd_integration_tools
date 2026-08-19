@@ -1,4 +1,5 @@
 # ruff: noqa: S608 — false positive (controlled pattern)
+# bandit: noqa: B608 — false positive (controlled pattern: identifiers validated, values via ? placeholders)
 
 """Immutable append-only audit log с HMAC-chain (IL-SEC2).
 
