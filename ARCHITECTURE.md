@@ -432,7 +432,7 @@ Caller может явно вызвать `reset_degradation()` для форс�
                               └────────────────────┬────────────────────────┘
                                                    │
 ┌──────────────────────────────────────────────────▼──────────────────────────────┐
-│  L1 Gateway / Middleware  (26 ASGI middleware, централизация ~80%)              │
+│  L1 Gateway / Middleware  (40 ASGI middleware files, 30 classes, централизация ~80%)              │
 │  ┌─────────────────────────────────────────────────────────────────────────┐    │
 │  │ AuthN/Z │ Idempot │ WAF │ RL │ Audit │ Tenant │ Correlation │ Timeout │  │   │
 │  │ JWT/API │ Redis NX│Out │P0  │CH+DLQ │ ctxvar │ asgi-corrid │ global  │  │   │
@@ -496,7 +496,7 @@ Caller может явно вызвать `reset_degradation()` для форс�
 
 | ID | Слой | Модули | Оценка | Главные точки расширения |
 |----|------|--------|--------|--------------------------|
-| **L1** | Gateway / Middleware | `entrypoints/middlewares/` (26 ASGI MW), `core/auth/`, `core/net/` | **6.0** | `AuthRequiredMiddleware`, `IdempotencyHeaderMiddleware`, `OutboundHttpClient` (WAF), Plugin-registry MW (Sprint 17 NEW) |
+| **L1** | Gateway / Middleware | `entrypoints/middlewares/` (40 ASGI MW files / 30 classes), `core/auth/`, `core/net/` | **6.0** | `AuthRequiredMiddleware`, `IdempotencyHeaderMiddleware`, `OutboundHttpClient` (WAF), Plugin-registry MW (Sprint 17 NEW) |
 | **L2** | Core Kernel | `core/{actions,di,plugin_runtime,interfaces}/`, `main.py`, `dsl/engine/` | **6.5** | 8 Protocol-ов в `core/protocols.py`; `ActionGatewayDispatcher`; Exchange/Pipeline (Camel-style); ErrorExplainer registry |
 | **L3** | Routes Architecture | `routes/`, `extensions/`, `core/plugin_runtime/`, `dsl/route/builder/` | **6.5** | RouteBuilder (150+ методов) + миксины; V11 `plugin.toml`; Hot-Swap; `@processor` декоратор |
 | **L4** | AI Pipelines | `services/ai/`, `core/ai/`, `entrypoints/mcp/`, `infrastructure/cache/rag/` | **6.5** | `AIWorkspaceManager` + `AIFsFacade`; FastMCP auto-export; RAG 3-tier cache; LangMem; PydanticAI agents |

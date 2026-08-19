@@ -115,7 +115,7 @@ Legend: ✅ VERIFIED · ⚠️ PARTIALLY · ❌ FALSE CLAIM · ❓ UNVERIFIED
 | Layer | Cohesion | Boundary | Readability | Testability | Notes |
 |-------|----------|----------|-------------|-------------|-------|
 | core | 7 | 6 | 7 | 8 | 1 P0 inversion (extensions), 7 lazy-proxy allowlist entries |
-| services | 6 | 5 | 5 | 6 | God class `core/auth/facade.py` (635 LOC) |
+| services | 6 | 5 | 5 | 6 | God class `core/auth/facade.py` (615 LOC) |
 | infrastructure | 7 | 6 | 6 | 5 | 5 eager service imports (P1 debt), 1 dead `pg_runner_backend.replay()` |
 | entrypoints | 8 | 5 | 7 | 6 | 72 dsl imports (largest coupling), 40 middlewares |
 | dsl | 7 | 8 | 5 | 7 | `step_compilers.py` 884 LOC (god module), `run_startup` 371 LOC |
@@ -174,8 +174,8 @@ Legend: ✅ VERIFIED · ⚠️ PARTIALLY · ❌ FALSE CLAIM · ❓ UNVERIFIED
 | 15 | **CLAUDE.md "Lite в dev_light" wrong** | P2 (config drift) | CLAUDE.md M-series + PROJECT_PLAN V22 | Already covered by bug #3 |
 | 16 | **`step_compilers.py` 884 LOC god module** | P2 (maintainability) | `src/backend/dsl/workflow/compiler/step_compilers/ (subpackage)` | 13 step types in 1 file; should be split per type |
 | 17 | **`run_startup()` 371 LOC function** | P2 (maintainability) | `src/backend/plugins/composition/lifecycle/startup.py:228-598` | 10+ startup phases in 1 function; should be list-of-callables |
-| 18 | **`core/auth/facade.py` 635 LOC** | P2 (maintainability) | `src/backend/core/auth/facade.py` | 4+ backends (OIDC, SAML, API key, AD) in 1 file |
-| 19 | **`graphql/schema.py` 824 LOC / 50 symbols** | P2 (maintainability) | `src/backend/entrypoints/graphql/schema.py` (per Agent #2) | Should split per domain |
+| 18 | **`core/auth/facade.py` 615 LOC** | P2 (maintainability) | `src/backend/core/auth/facade.py` | 4+ backends (OIDC, SAML, API key, AD) in 1 file |
+| 19 | **`graphql/schema.py` 825 LOC / 50 symbols** | P2 (maintainability) | `src/backend/entrypoints/graphql/schema.py` (per Agent #2) | Should split per domain |
 | 20 | **`gateway_orchestrator_mixin.py` near-duplicate of `enforced_invoke.py`** | P2 (dedup) | `src/backend/core/ai/gateway_orchestrator_mixin.py` + `src/backend/core/ai/gateway/orchestrator/enforced_invoke.py` | Code duplication; refactor needed |
 
 ---
@@ -417,8 +417,8 @@ Mostly intentional (abstract methods, future extensions). Notable:
 | P2-1 | Delete 5 unused dataclass fields in `agent_spec.py` | 5 LOC |
 | P2-2 | Delete or wire up 25 dead methods in `core/ai/policy/` | 100 LOC |
 | P2-3 | Delete 11 dead classes | 200 LOC |
-| P2-4 | Split `core/auth/facade.py` (635 LOC) per backend | 200 LOC |
-| P2-5 | Split `graphql/schema.py` (824 LOC) per domain | 300 LOC |
+| P2-4 | Split `core/auth/facade.py` (615 LOC) per backend | 200 LOC |
+| P2-5 | Split `graphql/schema.py` (825 LOC) per domain | 300 LOC |
 | P2-6 | Standardize `_send_403` to English in `admin_ip.py` | 5 LOC |
 | P2-7 | Slim CHANGELOG.md (288KB) to only current cycle | doc |
 | P2-8 | Gitignore `docs/_build/test/` (Sphinx build artifact) | 1 LOC |

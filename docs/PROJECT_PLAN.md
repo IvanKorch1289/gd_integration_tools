@@ -22,7 +22,7 @@
 | V22-1 | 4-layer архитектура `frontend → entrypoints → services → core ← infrastructure` | `ARCHITECTURE.md` §Layers, `CLAUDE.md` §Architecture | ✅ D271 + ADR-0249 |
 | V22-2 | Capability-checked facades (D102, D187): extensions не импортируют infrastructure напрямую | `core/facades.py`, `core/frontend_facade.py` | ✅ 16/17 primitives |
 | V22-3 | Plugin runtime через `BasePlugin + PluginLoader` + `plugin.toml` capabilities (D78) | `core/plugin_runtime/` | ✅ 8/8 tests |
-| V22-4 | DSL декларативен: 80% YAML/TOML, 20% Python через `call_function("module:fn")` | `dsl/route/`, `dsl/workflow/`, `dsl/engine/processors/` | ✅ 415 routes |
+| V22-4 | DSL декларативен: 80% YAML/TOML, 20% Python через `call_function("module:fn")` | `dsl/route/`, `dsl/workflow/`, `dsl/engine/processors/` | ✅ 144 FastAPI paths (7 DSL routes) |
 | V22-5 | Multi-backend Tier-A/B explicit (ADR-NEW-11) | `docs/backends.md`, `pyproject.toml` extras | ✅ PG/Oracle/Kafka/RabbitMQ/S3/MinIO |
 | V22-6 | Multi-protocol: 14+ протоколов (REST/SOAP/gRPC/GraphQL/WS/SSE/MQ/MQTT/MCP/CDC) | `entrypoints/`, `docs/integration/INTEGRATION_GUIDE.md` | ⚠️ **PARTIAL** — только REST auto-генерируется; остальные подключаются вручную через `include_router()` в `app_factory.py` (D-AUDIT-101, Sprint 182) |
 | V22-7 | Multi-tenancy (TenantContext + per-tenant SLO/quotas) | `core/tenancy/`, `core/auth/quotas.py` | ✅ |

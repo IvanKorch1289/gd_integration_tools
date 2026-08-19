@@ -142,7 +142,7 @@
 | **Atomic commits** | 67+ (1 commit = 1 task) |
 | **D-rules** | 29+ new (all BINDING) |
 | **Production readiness** | 97%+ (was 92%) |
-| **App launches** | ✅ 415 routes |
+| **App launches** | ✅ 144 FastAPI paths (7 DSL routes) |
 | **Push ready** | ✅ 49+ commits, BLOCKED per AGENTS.md |
 
 **SPRINT 171 + M24 + M25 + M26+ COMPLETE.** Все 12 deferred gaps closed. 0 remaining.

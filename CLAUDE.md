@@ -69,7 +69,7 @@
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────┐
-│  src/frontend/streamlit_app/  (36+ pages)                            │
+│  src/frontend/streamlit_app/  (89 pages with subdirs, 74 root)                            │
 │                          │                                          │
 │                          ▼  REST/gRPC/WS                            │
 ├─────────────────────────────────────────────────────────────────────┤

@@ -24,7 +24,7 @@
 └───────────────────────┬─────────────────────────────────────┘
                         │
 ┌───────────────────────▼─────────────────────────────────────┐
-│              ActionHandlerRegistry (35+ actions)             │
+│              ActionHandlerRegistry (112 actions)             │
 │  orders.* │ users.* │ files.* │ orderkinds.* │ skb.*        │
 │  dadata.* │ tech.* │ admin.* │ ai.*                         │
 └───────────────────────┬─────────────────────────────────────┘
@@ -390,7 +390,7 @@ gd_integration_tools/
 │   │   ├── mcp/             # FastMCP server
 │   │   ├── cdc/             # Change Data Capture
 │   │   ├── filewatcher/     # FS monitoring → DSL trigger
-│   │   └── middlewares/     # 33 ASGI middleware
+│   │   └── middlewares/     # 40 ASGI middleware (30 classes)
 │   ├── services/              # Бизнес-логика
 │   │   ├── ai/              # AIAgentService, RAGService, HybridRAGSearch
 │   │   ├── core/            # OrderService, UserService, FileService
@@ -421,7 +421,7 @@ gd_integration_tools/
 │   └── <route>/route.toml + *.dsl.yaml
 │
 ├── src/frontend/
-│   └── streamlit_app/        # Streamlit developer portal (36+ pages)
+│   └── streamlit_app/        # Streamlit developer portal (89 pages with subdirs, 74 root)
 │
 ├── ops/                      # Operations: backup, compose, prometheus
 │   ├── backup/              # Backup scripts
