@@ -292,7 +292,7 @@ http3 = [
 dsl-extras = [
     "jsonpath-ng>=1.6.0,<2.0.0",
     "pint>=0.24.0,<1.0.0",
-    "icalendar>=5.0.0,<7.0.0",
+    "icalendar>=5.0.0,<8.0.0",
 ]
 # S169: analytics pipeline libs. Moved from [project.dependencies] to
 # optional-dependencies — install with `pip install -e ".[analytics]"`.
