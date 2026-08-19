@@ -77,7 +77,7 @@ def _extract_json_schema(model: type[Any] | None) -> dict[str, Any]:
         return schema_fn()
     except Exception as _:
         logger.warning(
-            "Не удалось сгенерировать JSON-Schema для %r", model, exc_info=True,
+            "Не удалось сгенерировать JSON-Schema для %r", model, exc_info=True
         )
         return {}
 
@@ -127,7 +127,7 @@ def resolve_input_schema(action_spec: Any) -> ResolvedToolSchema:
 
     # output_model: response_model > output_model
     output_model = getattr(action_spec, "response_model", None) or getattr(
-        action_spec, "output_model", None,
+        action_spec, "output_model", None
     )
 
     input_schema = _extract_json_schema(input_model)
@@ -142,7 +142,7 @@ def resolve_input_schema(action_spec: Any) -> ResolvedToolSchema:
 
 
 def validate_input_schema(
-    schema: dict[str, Any], payload: dict[str, Any], *, strict: bool | None = None,
+    schema: dict[str, Any], payload: dict[str, Any], *, strict: bool | None = None
 ) -> tuple[bool, str | None]:
     """Валидировать payload против JSON-Schema.
 
@@ -188,7 +188,7 @@ def validate_input_schema(
         from jsonschema import ValidationError as JsonSchemaValidationError
     except ImportError as exc:
         logger.error(
-            "jsonschema не установлен — валидация MCP input_schema недоступна: %s", exc,
+            "jsonschema не установлен — валидация MCP input_schema недоступна: %s", exc
         )
         raise
 

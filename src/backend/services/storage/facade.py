@@ -62,7 +62,7 @@ class StorageFacade:
             self._check(self._plugin, "storage.write", key)
 
     async def upload(
-        self, key: str, data: bytes, content_type: str | None = None,
+        self, key: str, data: bytes, content_type: str | None = None
     ) -> str:
         """Загрузить объект.
 
@@ -79,11 +79,7 @@ class StorageFacade:
             raise ServiceError(f"storage upload failed: {exc}") from exc
 
     async def upload_stream(
-        self,
-        key: str,
-        data: Any,
-        *,
-        content_type: str | None = None,
+        self, key: str, data: Any, *, content_type: str | None = None
     ) -> str:
         """Загрузить объект из async-stream или bytes (S176 fix).
 
@@ -105,7 +101,7 @@ class StorageFacade:
             # Если есть async-stream API — используем напрямую
             if hasattr(self._storage, "upload_stream"):
                 return await self._storage.upload_stream(
-                    key, data, content_type=content_type,
+                    key, data, content_type=content_type
                 )
             # Fallback — bytes path (для backends без upload_stream)
             if isinstance(data, str):
@@ -116,7 +112,9 @@ class StorageFacade:
                 async for chunk in data:
                     chunks.append(chunk if isinstance(chunk, bytes) else chunk.encode())
                 data = b"".join(chunks)
-            return await self._storage.upload(key, bytes(data), content_type=content_type)
+            return await self._storage.upload(
+                key, bytes(data), content_type=content_type
+            )
         except Exception as exc:
             _logger.warning("StorageFacade upload_stream failed key=%s: %s", key, exc)
             raise ServiceError(f"storage upload_stream failed: {exc}") from exc
@@ -165,4 +163,3 @@ class StorageFacade:
         except Exception as exc:
             _logger.warning("StorageFacade presigned_url failed key=%s: %s", key, exc)
             raise ServiceError(f"storage presigned_url failed: {exc}") from exc
-

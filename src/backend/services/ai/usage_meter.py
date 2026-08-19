@@ -21,6 +21,7 @@ __all__ = ("UsageStats", "estimate_tokens", "extract_usage")
 def _get_tiktoken():  # type: ignore[no-untyped-def]
     """Lazy import — defer optional dep until first call."""
     import tiktoken
+
     return tiktoken
 
 
@@ -73,10 +74,7 @@ def extract_usage(response: Any) -> UsageStats:
 
 
 def estimate_tokens(
-    messages: list[dict[str, Any]],
-    *,
-    model: str = "gpt-4",
-    factor: float = 1.3,
+    messages: list[dict[str, Any]], *, model: str = "gpt-4", factor: float = 1.3
 ) -> int:
     """Оценка токенов запроса (для pre-call reserve).
 

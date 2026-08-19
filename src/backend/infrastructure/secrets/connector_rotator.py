@@ -28,7 +28,9 @@ class ConnectorRotator:
     """Subscribe-based rotation: vault path → connector reload function."""
 
     def __init__(self) -> None:
-        self._subscriptions: dict[str, list[tuple[str, Callable[..., Awaitable[None]]]]] = {}
+        self._subscriptions: dict[
+            str, list[tuple[str, Callable[..., Awaitable[None]]]]
+        ] = {}
         self._lock = asyncio.Lock()
         self._logger = get_logger("security.rotator")
 
@@ -42,7 +44,7 @@ class ConnectorRotator:
         """Метод subscribe (см. signature)."""
         async with self._lock:
             self._subscriptions.setdefault(vault_path, []).append(
-                (connector_name, reload_fn),
+                (connector_name, reload_fn)
             )
             self._logger.info(
                 "Connector subscribed to vault rotation",

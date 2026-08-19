@@ -62,12 +62,12 @@ class ConfigMixin(_RouteBuilderProtocol):
         if self._set_first_attr(last, ("_timeout", "timeout"), float(seconds)) is None:
             raise ValueError(
                 f"with_timeout: processor {type(last).__name__} "
-                f"не поддерживает атрибут timeout",
+                f"не поддерживает атрибут timeout"
             )
         return self
 
     def with_retries(
-        self, max_attempts: int, *, backoff: str | float | None = None,
+        self, max_attempts: int, *, backoff: str | float | None = None
     ) -> Self:
         """Переопределяет количество попыток retry для предыдущего step.
 
@@ -93,16 +93,16 @@ class ConfigMixin(_RouteBuilderProtocol):
         if applied is None:
             raise ValueError(
                 f"with_retries: processor {type(last).__name__} "
-                f"не поддерживает атрибут retries",
+                f"не поддерживает атрибут retries"
             )
         if backoff is not None:
             self._set_first_attr(
-                last, ("_backoff", "_retry_backoff", "backoff"), backoff,
+                last, ("_backoff", "_retry_backoff", "backoff"), backoff
             )
         return self
 
     def with_circuit_breaker(
-        self, name: str, *, failure_threshold: int = 5, recovery_timeout: float = 30.0,
+        self, name: str, *, failure_threshold: int = 5, recovery_timeout: float = 30.0
     ) -> Self:
         """Переопределяет Circuit Breaker для предыдущего step (S168 W10 P1-4).
 
@@ -140,12 +140,12 @@ class ConfigMixin(_RouteBuilderProtocol):
             recovery_timeout=recovery_timeout,
         )
         applied = self._set_first_attr(
-            last, ("_circuit_breaker", "breaker_name", "circuit_breaker_name"), spec,
+            last, ("_circuit_breaker", "breaker_name", "circuit_breaker_name"), spec
         )
         if applied is None:
             raise ValueError(
                 f"with_circuit_breaker: processor {type(last).__name__} "
-                f"не поддерживает атрибут circuit_breaker",
+                f"не поддерживает атрибут circuit_breaker"
             )
         return self
 
@@ -165,7 +165,7 @@ class ConfigMixin(_RouteBuilderProtocol):
         if mode not in ("merge", "replace"):
             raise ValueError(
                 f"with_headers: mode должен быть 'merge' или 'replace', "
-                f"получено {mode!r}",
+                f"получено {mode!r}"
             )
         last = self._last_processor_or_raise()
         for attr in ("_headers", "headers"):
@@ -180,7 +180,7 @@ class ConfigMixin(_RouteBuilderProtocol):
                 return self
         raise ValueError(
             f"with_headers: processor {type(last).__name__} "
-            f"не поддерживает атрибут headers",
+            f"не поддерживает атрибут headers"
         )
 
     def with_auth(
@@ -205,7 +205,7 @@ class ConfigMixin(_RouteBuilderProtocol):
         provided = [v for v in (token, api_key, mtls_cert) if v is not None]
         if len(provided) != 1:
             raise ValueError(
-                "with_auth: должен быть указан ровно один из token/api_key/mtls_cert",
+                "with_auth: должен быть указан ровно один из token/api_key/mtls_cert"
             )
         if api_key is not None:
             return self.with_headers({"X-API-Key": api_key}, mode="merge")
@@ -214,7 +214,7 @@ class ConfigMixin(_RouteBuilderProtocol):
             if self._set_first_attr(last, ("_auth_token", "auth_token"), token) is None:
                 raise ValueError(
                     f"with_auth(token=...): processor {type(last).__name__} "
-                    f"не поддерживает атрибут auth_token",
+                    f"не поддерживает атрибут auth_token"
                 )
             return self
         if mtls_cert is not None:
@@ -224,7 +224,7 @@ class ConfigMixin(_RouteBuilderProtocol):
             ):
                 raise ValueError(
                     f"with_auth(mtls_cert=...): processor {type(last).__name__} "
-                    f"не поддерживает атрибут mtls_cert",
+                    f"не поддерживает атрибут mtls_cert"
                 )
             return self
         return self
@@ -281,7 +281,7 @@ class ConfigMixin(_RouteBuilderProtocol):
         """
         if not isinstance(bytes_, int) or bytes_ < 1:
             raise ValueError(
-                f"with_max_message_size: bytes_ должен быть int ≥ 1, получено {bytes_!r}",
+                f"with_max_message_size: bytes_ должен быть int ≥ 1, получено {bytes_!r}"
             )
         self._route_overrides["max_message_size"] = bytes_
         return self
@@ -300,7 +300,7 @@ class ConfigMixin(_RouteBuilderProtocol):
         """
         if not isinstance(seconds, (int, float)) or seconds <= 0:
             raise ValueError(
-                f"with_message_timeout: seconds должен быть > 0, получено {seconds!r}",
+                f"with_message_timeout: seconds должен быть > 0, получено {seconds!r}"
             )
         self._route_overrides["message_timeout_s"] = float(seconds)
         return self
@@ -319,7 +319,7 @@ class ConfigMixin(_RouteBuilderProtocol):
         return self._route_overrides.get(key, default)
 
     def with_connection_pool(
-        self, min_size: int = 2, max_size: int = 20, timeout: float = 5.0,
+        self, min_size: int = 2, max_size: int = 20, timeout: float = 5.0
     ) -> Self:
         """Route-level override: connection pool settings для всех транспортов.
 
@@ -342,15 +342,15 @@ class ConfigMixin(_RouteBuilderProtocol):
         """
         if not isinstance(min_size, int) or min_size < 0:
             raise ValueError(
-                f"with_connection_pool: min_size должен быть int ≥ 0, получено {min_size!r}",
+                f"with_connection_pool: min_size должен быть int ≥ 0, получено {min_size!r}"
             )
         if not isinstance(max_size, int) or max_size < 1:
             raise ValueError(
-                f"with_connection_pool: max_size должен быть int ≥ 1, получено {max_size!r}",
+                f"with_connection_pool: max_size должен быть int ≥ 1, получено {max_size!r}"
             )
         if not isinstance(timeout, (int, float)) or timeout <= 0:
             raise ValueError(
-                f"with_connection_pool: timeout должен быть > 0, получено {timeout!r}",
+                f"with_connection_pool: timeout должен быть > 0, получено {timeout!r}"
             )
         self._route_overrides["connection_pool"] = {
             "min_size": min_size,
@@ -360,7 +360,7 @@ class ConfigMixin(_RouteBuilderProtocol):
         return self
 
     def with_reconnection(
-        self, max_attempts: int = 3, delay: float = 1.0, backoff: float = 2.0,
+        self, max_attempts: int = 3, delay: float = 1.0, backoff: float = 2.0
     ) -> Self:
         """Route-level override: reconnection policy для всех транспортов.
 
@@ -384,15 +384,15 @@ class ConfigMixin(_RouteBuilderProtocol):
         """
         if not isinstance(max_attempts, int) or max_attempts < 1:
             raise ValueError(
-                f"with_reconnection: max_attempts должен быть int ≥ 1, получено {max_attempts!r}",
+                f"with_reconnection: max_attempts должен быть int ≥ 1, получено {max_attempts!r}"
             )
         if not isinstance(delay, (int, float)) or delay <= 0:
             raise ValueError(
-                f"with_reconnection: delay должен быть > 0, получено {delay!r}",
+                f"with_reconnection: delay должен быть > 0, получено {delay!r}"
             )
         if not isinstance(backoff, (int, float)) or backoff < 1.0:
             raise ValueError(
-                f"with_reconnection: backoff должен быть ≥ 1.0, получено {backoff!r}",
+                f"with_reconnection: backoff должен быть ≥ 1.0, получено {backoff!r}"
             )
         self._route_overrides["reconnection"] = {
             "max_attempts": max_attempts,

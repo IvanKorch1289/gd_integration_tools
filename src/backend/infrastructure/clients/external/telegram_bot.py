@@ -167,7 +167,7 @@ class TelegramMessage:
             payload["reply_markup"] = {
                 "inline_keyboard": [
                     [btn.to_dict() for btn in row] for row in self.inline_keyboard
-                ],
+                ]
             }
         elif self.reply_keyboard:
             payload["reply_markup"] = {
@@ -314,7 +314,7 @@ class TelegramBotClient:
                 payload["reply_markup"] = {
                     "inline_keyboard": [
                         [btn.to_dict() for btn in row] for row in inline_keyboard
-                    ],
+                    ]
                 }
             await self._call("editMessageText", payload)
         elif inline_keyboard is not None:
@@ -326,7 +326,7 @@ class TelegramBotClient:
                     "reply_markup": {
                         "inline_keyboard": [
                             [btn.to_dict() for btn in row] for row in inline_keyboard
-                        ],
+                        ]
                     },
                 },
             )
@@ -334,11 +334,11 @@ class TelegramBotClient:
     async def delete_message(self, chat_id: str, message_id: int) -> None:
         """Удаляет сообщение из чата."""
         await self._call(
-            "deleteMessage", {"chat_id": chat_id, "message_id": message_id},
+            "deleteMessage", {"chat_id": chat_id, "message_id": message_id}
         )
 
     async def send_chat_action(
-        self, chat_id: str, action: ChatAction = "typing",
+        self, chat_id: str, action: ChatAction = "typing"
     ) -> None:
         """Отправляет статус действия (печатает / загружает фото / …)."""
         await self._call("sendChatAction", {"chat_id": chat_id, "action": action})
@@ -387,7 +387,7 @@ class TelegramBotClient:
         return int(body.get("result", {}).get("message_id", 0))
 
     async def set_my_commands(
-        self, commands: list[dict[str, str]], *, language_code: str | None = None,
+        self, commands: list[dict[str, str]], *, language_code: str | None = None
     ) -> None:
         """Устанавливает список команд бота (для меню в клиенте).
 

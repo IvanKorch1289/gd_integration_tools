@@ -43,7 +43,7 @@ def _register_convert_tools(mcp: Any) -> None:
         if not strategy:
             available = list(_STRATEGIES.keys())
             return encode_json(
-                {"error": f"No converter for {key}", "available": available},
+                {"error": f"No converter for {key}", "available": available}
             ).decode("utf-8")
 
         try:
@@ -51,7 +51,7 @@ def _register_convert_tools(mcp: Any) -> None:
             if from_format in ("json", "dict"):
                 try:
                     input_data = orjson.loads(data)
-                except (orjson.JSONDecodeError, TypeError):  # noqa: violation-check — bad JSON falls through to strategy
+                except orjson.JSONDecodeError, TypeError:  # noqa: violation-check — bad JSON falls through to strategy
                     pass
 
             result = strategy.convert(input_data)
@@ -64,7 +64,7 @@ def _register_convert_tools(mcp: Any) -> None:
                         "format": to_format,
                         "encoding": "base64",
                         "data": base64.b64encode(result).decode("utf-8"),
-                    },
+                    }
                 ).decode("utf-8")
 
             if isinstance(result, str):

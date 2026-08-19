@@ -46,7 +46,7 @@ _SENSITIVE_KEYS = frozenset(
         "access_token",
         "refresh_token",
         "authorization",
-    },
+    }
 )
 
 
@@ -93,16 +93,13 @@ class DataMaskingMiddleware:
                 for k, v in message.get("headers", []):
                     original_headers.append((k, v))
                     if k.lower() == b"content-type":
-                        content_type["value"] = v.decode(
-                            "latin-1", errors="replace",
-                        )
+                        content_type["value"] = v.decode("latin-1", errors="replace")
                 # D-AUDIT-17201 fix (cycle 172, retry): for non-JSON
                 # responses, pass through original start immediately
                 # (BEFORE body) instead of suppressing. Suppressing
                 # without re-sending caused ASGI protocol error →
                 # 500 'Internal server error' на /docs, /redoc, etc.
                 if "application/json" not in content_type["value"]:
-                    should_mask = False
                     await send(message)
                 # else: Suppress original (JSON, will re-send with masked body)
             elif message["type"] == "http.response.body":
@@ -158,7 +155,7 @@ class DataMaskingMiddleware:
                 "type": "http.response.start",
                 "status": response_status["status"],
                 "headers": new_headers,
-            },
+            }
         )
         await send({"type": "http.response.body", "body": masked})
 

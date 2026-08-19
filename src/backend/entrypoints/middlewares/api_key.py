@@ -87,9 +87,7 @@ class APIKeyMiddleware:
         # Извлекаем X-API-Key header (case-insensitive).
         api_key = _get_header_value(scope, b"x-api-key")
         if api_key is None:
-            await self._send_401(
-                send, detail="Требуется API-ключ",
-            )
+            await self._send_401(send, detail="Требуется API-ключ")
             return
 
         # Валидируем API-ключ через constant-time compare.
@@ -118,6 +116,7 @@ class APIKeyMiddleware:
         scope.setdefault("state", {})["auth"] = auth_ctx
         # S124 W3: debug log для trace auth flow (временно).
         import logging
+
         _auth_log = logging.getLogger("auth.debug")
         _auth_log.warning(
             "API_KEY auth set: principal=%s admin_roles=%s scope_state_keys=%s",
@@ -141,7 +140,7 @@ class APIKeyMiddleware:
                     (b"content-type", b"application/json"),
                     (b"content-length", str(len(body)).encode("latin-1")),
                 ],
-            },
+            }
         )
         await send({"type": "http.response.body", "body": body})
 

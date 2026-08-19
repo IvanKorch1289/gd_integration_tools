@@ -83,7 +83,7 @@ __all__ = (
 
 
 class IDPPipelineProcessor(
-    PipelineMixin, RoutingMixin, SerializationMixin, HelpersMixin,
+    PipelineMixin, RoutingMixin, SerializationMixin, HelpersMixin
 ):
     """IDP pipeline processor (4 mixins = 6 methods + 1 core)."""
 
@@ -102,11 +102,11 @@ class IDPPipelineProcessor(
     ) -> None:
         if not 0.0 <= confidence_threshold <= 1.0:
             raise ValueError(
-                f"confidence_threshold ∈ [0, 1], получено {confidence_threshold}",
+                f"confidence_threshold ∈ [0, 1], получено {confidence_threshold}"
             )
         if doc_type != "auto" and doc_type not in _VALID_TYPES:
             raise ValueError(
-                f"doc_type ∈ auto|{sorted(_VALID_TYPES)}, получено {doc_type!r}",
+                f"doc_type ∈ auto|{sorted(_VALID_TYPES)}, получено {doc_type!r}"
             )
         super().__init__(name=name or "idp_pipeline")
         self._doc_type = doc_type

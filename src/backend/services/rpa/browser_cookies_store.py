@@ -47,9 +47,11 @@ class RedisLike(Protocol):
     async def set(self, key: str, value: str, ex: int | None = None) -> Any:
         """Сохранить cookie ``key=value`` (опц. ``ex`` seconds TTL)."""
         ...
+
     async def get(self, key: str) -> Any:
         """Получить cookie value по ``key``; None если отсутствует."""
         ...
+
     async def delete(self, *keys: str) -> Any:
         """Удалить один или несколько cookie keys."""
         ...
@@ -77,7 +79,7 @@ def _load_or_create_fernet_key() -> bytes:
         except Exception as exc:
             raise RuntimeError(
                 f"BROWSER_COOKIES_FERNET_KEY invalid: {exc}. "
-                "Generate a new key: Fernet.generate_key().decode()",
+                "Generate a new key: Fernet.generate_key().decode()"
             ) from exc
 
     if get_active_profile() == AppProfileChoices.dev_light:
@@ -94,7 +96,7 @@ def _load_or_create_fernet_key() -> bytes:
         "BROWSER_COOKIES_FERNET_KEY required in non-dev_light profile. "
         'Generate via: python -c "from cryptography.fernet import Fernet; '
         'print(Fernet.generate_key().decode())". Store in Vault or k8s '
-        "secret and inject as env var.",
+        "secret and inject as env var."
     )
 
 
@@ -174,8 +176,7 @@ class BrowserCookieStore:
             # Bare `except Exception` маскировал Redis backend failures
             # (Redis down, timeout). Fallback: write fresh cookies.
             _logger.warning(
-                "BrowserCookieStore.redis_get_failed",
-                extra={"error": str(read_exc)},
+                "BrowserCookieStore.redis_get_failed", extra={"error": str(read_exc)}
             )
             existing_raw = None  # proceed with write if read fails
         if existing_raw is not None:
@@ -199,7 +200,7 @@ class BrowserCookieStore:
             _logger.warning("BrowserCookieStore.save_cookies failed: %s", exc)
 
     async def restore_cookies(
-        self, *, tenant_id: str, user_id: str, domain: str,
+        self, *, tenant_id: str, user_id: str, domain: str
     ) -> list[dict[str, Any]]:
         """Возвращает cookies (пустой список если ключ не найден или decrypt fails)."""
         key = self._make_key(tenant_id, user_id, domain)
@@ -218,9 +219,7 @@ class BrowserCookieStore:
             return json.loads(plaintext)
         except Exception as exc:
             _logger.warning(
-                "BrowserCookieStore.restore: decrypt failed (key=%s): %s",
-                key,
-                exc,
+                "BrowserCookieStore.restore: decrypt failed (key=%s): %s", key, exc
             )
             return []
 

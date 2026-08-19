@@ -33,7 +33,7 @@ class BankingScriptsMixin:
         from src.backend.dsl.engine.processors.ai_banking import KycAmlVerifyProcessor
 
         return self._add(  # type: ignore[attr-defined]
-            KycAmlVerifyProcessor(jurisdiction=jurisdiction),
+            KycAmlVerifyProcessor(jurisdiction=jurisdiction)
         )
 
     def antifraud_score(self, model: str = "default") -> RouteBuilder:
@@ -41,7 +41,7 @@ class BankingScriptsMixin:
         from src.backend.dsl.engine.processors.ai_banking import AntiFraudScoreProcessor
 
         return self._add(  # type: ignore[attr-defined]
-            AntiFraudScoreProcessor(model=model),
+            AntiFraudScoreProcessor(model=model)
         )
 
     def credit_scoring_rag(self, product: str = "retail") -> RouteBuilder:
@@ -51,7 +51,7 @@ class BankingScriptsMixin:
         )
 
         return self._add(  # type: ignore[attr-defined]
-            CreditScoringRagProcessor(product=product),
+            CreditScoringRagProcessor(product=product)
         )
 
     def customer_chatbot(self, channel: str = "web") -> RouteBuilder:
@@ -61,7 +61,7 @@ class BankingScriptsMixin:
         )
 
         return self._add(  # type: ignore[attr-defined]
-            CustomerChatbotProcessor(channel=channel),
+            CustomerChatbotProcessor(channel=channel)
         )
 
     def appeal_ai(self) -> RouteBuilder:
@@ -77,7 +77,7 @@ class BankingScriptsMixin:
         )
 
         return self._add(  # type: ignore[attr-defined]
-            TransactionCategorizerProcessor(taxonomy=taxonomy),
+            TransactionCategorizerProcessor(taxonomy=taxonomy)
         )
 
     def findoc_ocr_llm(self, doc_type: str = "invoice") -> RouteBuilder:
@@ -85,7 +85,7 @@ class BankingScriptsMixin:
         from src.backend.dsl.engine.processors.ai_banking import FinDocOcrLlmProcessor
 
         return self._add(  # type: ignore[attr-defined]
-            FinDocOcrLlmProcessor(doc_type=doc_type),
+            FinDocOcrLlmProcessor(doc_type=doc_type)
         )
 
     def script_python(
@@ -112,7 +112,7 @@ class BankingScriptsMixin:
                 timeout_seconds=timeout_seconds,
                 env=env,
                 allowed_languages=allowed_languages,
-            ),
+            )
         )
 
     def script_node(
@@ -135,7 +135,7 @@ class BankingScriptsMixin:
                 timeout_seconds=timeout_seconds,
                 env=env,
                 allowed_languages=allowed_languages,
-            ),
+            )
         )
 
     def script_ruby(
@@ -158,7 +158,7 @@ class BankingScriptsMixin:
                 timeout_seconds=timeout_seconds,
                 env=env,
                 allowed_languages=allowed_languages,
-            ),
+            )
         )
 
     def script_shell(
@@ -181,5 +181,5 @@ class BankingScriptsMixin:
                 timeout_seconds=timeout_seconds,
                 env=env,
                 allowed_languages=allowed_languages,
-            ),
+            )
         )

@@ -70,7 +70,7 @@ class TelegramAdapter:
         self._default_parse_mode = parse_mode
 
     async def send(
-        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any],
+        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any]
     ) -> None:
         """Отправляет уведомление в Telegram чат.
 
@@ -109,7 +109,7 @@ class TelegramAdapter:
             reply_keyboard=reply,
             disable_notification=bool(metadata.get("silent", False)),
             disable_web_page_preview=bool(
-                metadata.get("disable_web_page_preview", False),
+                metadata.get("disable_web_page_preview", False)
             ),
         )
 
@@ -136,7 +136,9 @@ class TelegramAdapter:
             else:
                 from src.backend.core.config.telegram import telegram_bot_settings
 
-                ok = bool(telegram_bot_settings.enabled and telegram_bot_settings.bot_id)
+                ok = bool(
+                    telegram_bot_settings.enabled and telegram_bot_settings.bot_id
+                )
                 source = "telegram_bot_settings"
             latency_ms = (time.perf_counter() - start) * 1000.0
             if ok:
@@ -149,7 +151,7 @@ class TelegramAdapter:
         except Exception as exc:
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
             )
 
     def _build_config(self) -> Any:
@@ -169,7 +171,7 @@ class TelegramAdapter:
 
         if not telegram_bot_settings.enabled:
             raise RuntimeError(
-                "Telegram интеграция отключена (telegram_bot_settings.enabled=False)",
+                "Telegram интеграция отключена (telegram_bot_settings.enabled=False)"
             )
         return TelegramBotConfig(
             bot_id=telegram_bot_settings.bot_id,
@@ -206,4 +208,4 @@ def _html_escape(text: str) -> str:
 
 
 # Compile-time проверка соответствия протоколу.
-assert isinstance(TelegramAdapter(bot_token_provider=lambda: ""), NotificationChannel)
+assert isinstance(TelegramAdapter(bot_token_provider=lambda: ""), NotificationChannel)  # nosec

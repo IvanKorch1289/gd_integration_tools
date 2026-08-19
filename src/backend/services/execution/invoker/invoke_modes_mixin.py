@@ -67,12 +67,12 @@ class InvokeModesMixin:
     async def _invoke_sync(self, request: InvocationRequest) -> InvocationResponse:
         try:
             command = ActionCommandSchema(
-                action=request.action, payload=request.payload,
+                action=request.action, payload=request.payload
             )
             context = self._build_context(request)
             if request.timeout is not None:
                 result: Any = await asyncio.wait_for(
-                    self._dispatch(command, context), timeout=request.timeout,
+                    self._dispatch(command, context), timeout=request.timeout
                 )
             else:
                 result = await self._dispatch(command, context)
@@ -122,7 +122,7 @@ class InvokeModesMixin:
     def _invoke_async_api(self, request: InvocationRequest) -> InvocationResponse:
         """Запускает action в фоновом task'е и публикует результат в polling-канал."""
         channel = self._resolve_channel(
-            request.reply_channel or ReplyChannelKind.API.value,
+            request.reply_channel or ReplyChannelKind.API.value
         )
         task = get_task_registry().create_task(
             self._run_and_publish(request, channel),

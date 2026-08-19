@@ -48,7 +48,7 @@ class ResolveMixin(_LLMStructuredProcessorProtocol):
         if not isinstance(ref, str):
             raise ValueError(
                 f"llm_structured: output_schema должен быть Pydantic-классом "
-                f"или строкой 'module:Class', получено {type(ref).__name__}",
+                f"или строкой 'module:Class', получено {type(ref).__name__}"
             )
 
         # 1) Полный путь module:Class — динамический import.
@@ -62,7 +62,7 @@ class ResolveMixin(_LLMStructuredProcessorProtocol):
                 isinstance(cls, type) and issubclass(cls, BaseModel)
             ):
                 raise ValueError(
-                    f"llm_structured: {ref!r} не указывает на Pydantic-класс",
+                    f"llm_structured: {ref!r} не указывает на Pydantic-класс"
                 )
             return cls
 
@@ -74,7 +74,7 @@ class ResolveMixin(_LLMStructuredProcessorProtocol):
             )
 
             entry = get_schema_registry().get(SchemaKind.PROCESSOR, ref)
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             entry = None
 
         if entry is not None:
@@ -94,7 +94,7 @@ class ResolveMixin(_LLMStructuredProcessorProtocol):
         raise ValueError(
             f"llm_structured: не удалось резолвить output_schema={ref!r}; "
             "используйте 'module:ClassName' или зарегистрируйте схему в "
-            "ServiceSchemaRegistry с meta['module']",
+            "ServiceSchemaRegistry с meta['module']"
         )
 
     def _resolve_prompt(self, exchange: Exchange[Any]) -> str:

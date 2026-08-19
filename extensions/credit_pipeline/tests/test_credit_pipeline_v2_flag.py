@@ -9,7 +9,7 @@ DoD: feature_flag.credit_pipeline_v2 default-OFF; миграция legacy→V11
 
 from __future__ import annotations
 
-from src.backend.core.feature_flags import get_feature_flag_service
+from src.backend.core.api import get_feature_flag_service
 
 
 def test_credit_pipeline_v2_flag_exists_and_default_off() -> None:

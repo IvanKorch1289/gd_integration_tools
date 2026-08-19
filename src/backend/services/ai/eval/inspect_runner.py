@@ -115,7 +115,7 @@ class SuiteSummary:
             else:
                 key_metric, key_value = "-", "-"
             lines.append(
-                f"| {suite.name} | {suite.sample_count} | {key_metric} | {key_value} | {status} |",
+                f"| {suite.name} | {suite.sample_count} | {key_metric} | {key_value} | {status} |"
             )
         return "\n".join(lines) + "\n"
 
@@ -219,7 +219,7 @@ class InspectRunner:
 
         if not self.is_enabled():
             logger.info(
-                "InspectRunner: feature_flag inspect_ai_eval_enabled=False — skip",
+                "InspectRunner: feature_flag inspect_ai_eval_enabled=False — skip"
             )
             summary.finished_at = datetime.now(UTC).isoformat()
             summary.skipped = len(self._suites)

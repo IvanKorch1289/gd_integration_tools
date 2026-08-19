@@ -359,7 +359,7 @@ _PROVIDERS_REGISTRY: dict[str, tuple[str, str]] = {
 # S224: Generate get_X() functions for all registry entries.
 for _prov_name, (_prov_module, _prov_attr) in _PROVIDERS_REGISTRY.items():
     globals()[f"get_{_prov_name}"] = _make_provider_getter(
-        f"get_{_prov_name}", _prov_module, _prov_attr,
+        f"get_{_prov_name}", _prov_module, _prov_attr
     )
 del _prov_name, _prov_module, _prov_attr
 

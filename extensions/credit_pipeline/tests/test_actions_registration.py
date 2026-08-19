@@ -17,7 +17,7 @@ from typing import Any
 import pytest
 
 from extensions.credit_pipeline.plugin import CreditPipelinePlugin
-from src.backend.core.interfaces.plugin import ActionRegistryProtocol
+from src.backend.core.api import ActionRegistryProtocol
 
 
 class _RecordingRegistry:

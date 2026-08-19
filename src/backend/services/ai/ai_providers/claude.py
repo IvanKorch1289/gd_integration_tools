@@ -27,7 +27,7 @@ class ClaudeProvider:
     name = "claude"
 
     def __init__(
-        self, *, api_key: str | None = None, model: str = "claude-3-5-sonnet-20241022",
+        self, *, api_key: str | None = None, model: str = "claude-3-5-sonnet-20241022"
     ) -> None:
         self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY", "")
         self.model = model
@@ -39,12 +39,12 @@ class ClaudeProvider:
             blocks = response.get("content", [])
             if blocks and isinstance(blocks, list):
                 return blocks[0].get("text", "")
-        except (AttributeError, IndexError, TypeError):  # noqa: violation-check — narrow API-shape fallback
+        except AttributeError, IndexError, TypeError:  # noqa: violation-check — narrow API-shape fallback
             pass
         return ""
 
     async def embeddings(
-        self, texts: list[str], *, model: str | None = None,
+        self, texts: list[str], *, model: str | None = None
     ) -> list[list[float]]:
         """Anthropic не предоставляет embeddings API — используйте Voyage/OpenAI."""
         raise NotImplementedError("Claude API не поддерживает embeddings")
@@ -93,7 +93,7 @@ class ClaudeProvider:
 
         async with OutboundHttpClient(timeout=httpx.Timeout(60)) as client:
             resp = await client.post(
-                f"{self.base_url}/messages", headers=headers, json=payload,
+                f"{self.base_url}/messages", headers=headers, json=payload
             )
             resp.raise_for_status()
             return resp.json()

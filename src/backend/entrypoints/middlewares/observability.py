@@ -25,6 +25,7 @@ Usage::
 остаются работать независимо) — facade добавляет объединённый
 ``observability.event`` для unified-логирования.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -92,8 +93,7 @@ def _emit_prometheus(event: dict[str, Any]) -> None:
     """Emit Prometheus metric (если starlette_exporter установлен)."""
     try:
         metrics = cast(
-            _PrometheusMetrics,
-            importlib.import_module("starlette_exporter.metrics"),
+            _PrometheusMetrics, importlib.import_module("starlette_exporter.metrics")
         )
 
         # starlette_exporter экспортирует только через PrometheusMiddleware.
@@ -122,19 +122,27 @@ def _emit_audit(event: dict[str, Any]) -> None:
             return
         ch.insert(
             "audit_events",
-            [[
-                event.get("request_id", ""),
-                event.get("correlation_id", ""),
-                event["method"],
-                event["path"],
-                event["status_code"],
-                event["duration_ms"],
-                event.get("service", ""),
-                int(time.time() * 1000),  # ts_ms
-            ]],
+            [
+                [
+                    event.get("request_id", ""),
+                    event.get("correlation_id", ""),
+                    event["method"],
+                    event["path"],
+                    event["status_code"],
+                    event["duration_ms"],
+                    event.get("service", ""),
+                    int(time.time() * 1000),  # ts_ms
+                ]
+            ],
             column_names=[
-                "request_id", "correlation_id", "method", "path",
-                "status_code", "duration_ms", "service", "ts_ms",
+                "request_id",
+                "correlation_id",
+                "method",
+                "path",
+                "status_code",
+                "duration_ms",
+                "service",
+                "ts_ms",
             ],
         )
     except (ImportError, AttributeError, RuntimeError, OSError) as ch_exc:
@@ -143,6 +151,7 @@ def _emit_audit(event: dict[str, Any]) -> None:
         # change, RuntimeError — ClickHouse unavailable, OSError — network.
         # Audit failures не блокируют request — gracefully no-op.
         import logging
+
         logging.getLogger(__name__).debug(
             "observability_middleware.clickhouse_insert_failed",
             extra={"error": str(ch_exc)},
@@ -171,9 +180,7 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
         self.config = config or ObservabilityConfig()
 
     async def dispatch(
-        self,
-        request: Request,
-        call_next: Callable[[Request], Awaitable[Response]],
+        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
         """Оборачивает request observability-событием (duration, status, IDs).
 

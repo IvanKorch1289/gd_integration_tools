@@ -25,9 +25,7 @@ __all__ = ("watcher_router",)
 _admin_dep = require_admin((AdminRole.SUPER_ADMIN,))
 
 watcher_router = APIRouter(
-    prefix="/watchers",
-    tags=["File Watchers"],
-    dependencies=[Depends(_admin_dep)],
+    prefix="/watchers", tags=["File Watchers"], dependencies=[Depends(_admin_dep)]
 )
 
 
@@ -38,7 +36,7 @@ class CreateWatcherRequest(BaseModel):
     pattern: str = Field(default="*", description="Glob-паттерн файлов.")
     route_id: str = Field(description="DSL-маршрут для обработки.")
     poll_interval: float = Field(
-        default=5.0, ge=1.0, description="Интервал опроса (сек).",
+        default=5.0, ge=1.0, description="Интервал опроса (сек)."
     )
 
 

@@ -31,7 +31,6 @@ __all__ = ("MemoryStoreProcessor",)
 _logger = get_logger(__name__)
 
 
-
 from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
 
 
@@ -41,10 +40,7 @@ from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
     capabilities=("memory.store",),
     spec_schema={
         "type": "object",
-        "properties": {
-        "key": {"type": "string"},
-        "value": {"type": "object"},
-        },
+        "properties": {"key": {"type": "string"}, "value": {"type": "object"}},
         "required": ["key"],
     },
     meta={"tier": 1, "category": "agent"},
@@ -129,11 +125,15 @@ class MemoryStoreProcessor(BaseAIProcessor):
         # just a visibility log so operators can spot accidental PII
         # storage to long-term memory. Cheap regex check, no deps.
         import re
+
         value_str = str(value)
-        if re.search(r"\b\d{16}\b|\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b|"
-                     r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b|"
-                     r"\b\d{3}-\d{2}-\d{4}\b|"
-                     r"\b\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\b", value_str):
+        if re.search(
+            r"\b\d{16}\b|\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b|"
+            r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b|"
+            r"\b\d{3}-\d{2}-\d{4}\b|"
+            r"\b\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\b",
+            value_str,
+        ):
             _logger.warning(
                 "%s: value may contain PII (card/email/SSN/INN) — "
                 "consider routing via pii_mask processor first (S227 cycle 4)",
@@ -146,11 +146,7 @@ class MemoryStoreProcessor(BaseAIProcessor):
             # recall-side filters can scope to it. Content = value (gateway
             # generates its own fact_<uuid> identifier internally).
             tags = ("user_key", resolved_key)
-            await backend.save_fact(
-                tenant_id=namespace,
-                content=str(value),
-                tags=tags,
-            )
+            await backend.save_fact(tenant_id=namespace, content=str(value), tags=tags)
         except Exception as exc:
             _logger.warning("%s: store failed (%s) — drop", self.name, exc)
 
@@ -237,8 +233,7 @@ class MemoryStoreProcessor(BaseAIProcessor):
             return get_memory_gateway()
         except Exception as exc:
             _logger.debug(
-                "memory_store._resolve_backend: gateway not registered: %s",
-                exc,
+                "memory_store._resolve_backend: gateway not registered: %s", exc
             )
             return None
 

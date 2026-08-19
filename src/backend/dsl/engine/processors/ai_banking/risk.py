@@ -19,7 +19,7 @@ class RiskAssessmentResult(BaseModel):
     risk_score: float = Field(ge=0.0, le=1.0, description="Численный score риска")
     risk_factors: list[str] = Field(default_factory=list, description="Факторы риска")
     mitigation_suggestions: list[str] = Field(
-        default_factory=list, description="Рекомендации по снижению",
+        default_factory=list, description="Рекомендации по снижению"
     )
 
 
@@ -77,7 +77,7 @@ class RiskAssessmentProcessor(_BankingAIProcessor):
                 "risk_score": result.risk_score,
                 "risk_factors": result.risk_factors,
                 "mitigation_suggestions": result.mitigation_suggestions,
-            },
+            }
         )
         exchange.set_property("risk_level", result.risk_level)
         exchange.set_property("risk_score", result.risk_score)
@@ -107,7 +107,7 @@ class RiskAssessmentProcessor(_BankingAIProcessor):
         )
 
     async def _check_capability(
-        self, exchange: Exchange[Any], context: ExecutionContext,
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> bool:
         """Verify capability (S190 — unified facade pattern).
 

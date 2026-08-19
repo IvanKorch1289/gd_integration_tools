@@ -49,11 +49,11 @@ class S3Service:
                     str(meta_key): str(meta_value)
                     for meta_key, meta_value in extra_metadata.items()
                     if meta_value is not None
-                },
+                }
             )
         encoded_metadata = encode_base64(metadata)
         result = await self.client.put_object(
-            key=key, body=content, metadata=encoded_metadata,
+            key=key, body=content, metadata=encoded_metadata
         )
         await self._invalidate_key_cache(key)
         return result

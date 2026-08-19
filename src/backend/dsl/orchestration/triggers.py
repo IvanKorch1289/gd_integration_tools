@@ -54,7 +54,7 @@ class FileSensorTaskWrapper:
     ) -> None:
         if task is None and task_factory is None:
             raise ValueError(
-                "FileSensorTaskWrapper: either `task` or `task_factory` required",
+                "FileSensorTaskWrapper: either `task` or `task_factory` required"
             )
         self.name = name or f"sensor_task_{id(task) if task else id(object())}"
         self._task = task
@@ -83,7 +83,7 @@ class FileSensorTaskWrapper:
             self._task.cancel()
             try:
                 await self._task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError, Exception:
                 pass
 
 
@@ -182,7 +182,7 @@ class IntervalTrigger:
             self._task.cancel()
             try:
                 await self._task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError, Exception:
                 pass
             self._task = None
         _log.info("IntervalTrigger: %s stopped", self.name)
@@ -193,17 +193,21 @@ class IntervalTrigger:
         body = self._payload() if callable(self._payload) else self._payload
         try:
             await get_dsl_service().dispatch(
-                route_id=self.route_id, body=body, headers={"x-trigger": self.name},
+                route_id=self.route_id, body=body, headers={"x-trigger": self.name}
             )
-        except (ImportError, AttributeError, RuntimeError, ConnectionError, OSError) as dispatch_exc:
+        except (
+            ImportError,
+            AttributeError,
+            RuntimeError,
+            ConnectionError,
+            OSError,
+        ) as dispatch_exc:
             # cycle-9/D-AUDIT-968: narrow exceptions + observability.
             # ImportError — DSL service missing, AttributeError — service
             # API change, RuntimeError — dispatch failure, ConnectionError/
             # OSError — backend unavailable.
             _log.exception(
-                "IntervalTrigger %s: dispatch failed: %s",
-                self.name,
-                dispatch_exc,
+                "IntervalTrigger %s: dispatch failed: %s", self.name, dispatch_exc
             )
 
     async def tick(self) -> bool:
@@ -261,8 +265,7 @@ class CronTrigger:
         """
         if self._task and not self._task.done():
             _log.debug(
-                "CronTrigger: %s already running, skipping duplicate start",
-                self.name,
+                "CronTrigger: %s already running, skipping duplicate start", self.name
             )
             return
 
@@ -299,7 +302,7 @@ class CronTrigger:
             self._task.cancel()
             try:
                 await self._task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError, Exception:
                 pass
             self._task = None
         _log.info("CronTrigger: %s stopped", self.name)
@@ -310,15 +313,19 @@ class CronTrigger:
         body = self._payload() if callable(self._payload) else self._payload
         try:
             await get_dsl_service().dispatch(
-                route_id=self.route_id, body=body, headers={"x-trigger": self.name},
+                route_id=self.route_id, body=body, headers={"x-trigger": self.name}
             )
-        except (ImportError, AttributeError, RuntimeError, ConnectionError, OSError) as dispatch_exc:
+        except (
+            ImportError,
+            AttributeError,
+            RuntimeError,
+            ConnectionError,
+            OSError,
+        ) as dispatch_exc:
             # cycle-9/D-AUDIT-969: narrow exceptions + observability (mirror
             # D-AUDIT-968 для IntervalTrigger).
             _log.exception(
-                "CronTrigger %s: dispatch failed: %s",
-                self.name,
-                dispatch_exc,
+                "CronTrigger %s: dispatch failed: %s", self.name, dispatch_exc
             )
 
 
@@ -395,15 +402,25 @@ class WebhookTrigger:
                     headers={"x-webhook": self.name, "x-webhook-path": self.path},
                 )
                 return {"status": "dispatched", "route_id": self.route_id}
-            except (ImportError, AttributeError, RuntimeError, ConnectionError, OSError, TypeError, ValueError) as dispatch_exc:
+            except (
+                ImportError,
+                AttributeError,
+                RuntimeError,
+                ConnectionError,
+                OSError,
+                TypeError,
+                ValueError,
+            ) as dispatch_exc:
                 # cycle-9/D-AUDIT-970: narrow exceptions + observability (mirror
                 # D-AUDIT-968/969 для WebhookTrigger). TypeError/ValueError
                 # включены т.к. body может быть malformed.
-                _log.exception("WebhookTrigger %s: dispatch failed: %s", self.name, dispatch_exc)
+                _log.exception(
+                    "WebhookTrigger %s: dispatch failed: %s", self.name, dispatch_exc
+                )
                 return {"status": "error", "error": str(dispatch_exc)}
 
         app.add_api_route(
-            self.path, _handler, methods=[self.method], name=f"webhook_{self.name}",
+            self.path, _handler, methods=[self.method], name=f"webhook_{self.name}"
         )
         self._route_added = True
         _log.info(
@@ -428,6 +445,7 @@ class WebhookTrigger:
                 # AttributeError — router API change, TypeError — wrong
                 # routes type, RuntimeError — router mutated concurrently.
                 import logging
+
                 logging.getLogger(__name__).debug(
                     "WebhookTrigger.router_unmount_failed",
                     extra={"name": self.name, "error": str(router_exc)},
@@ -479,7 +497,13 @@ class TriggerRegistry:
         for t in triggers:
             try:
                 await t.start()
-            except (ImportError, AttributeError, RuntimeError, ConnectionError, OSError) as start_exc:
+            except (
+                ImportError,
+                AttributeError,
+                RuntimeError,
+                ConnectionError,
+                OSError,
+            ) as start_exc:
                 # cycle-9/D-AUDIT-972: narrow exceptions + observability.
                 # ImportError — trigger dep missing, AttributeError — API
                 # change, RuntimeError — start failure, ConnectionError/
@@ -493,7 +517,13 @@ class TriggerRegistry:
         for t in triggers:
             try:
                 await t.stop()
-            except (ImportError, AttributeError, RuntimeError, ConnectionError, OSError) as stop_exc:
+            except (
+                ImportError,
+                AttributeError,
+                RuntimeError,
+                ConnectionError,
+                OSError,
+            ) as stop_exc:
                 # cycle-9/D-AUDIT-1018: narrow exceptions + observability (mirror
                 # D-AUDIT-972 для start_all).
                 # ImportError — trigger dep missing, AttributeError —

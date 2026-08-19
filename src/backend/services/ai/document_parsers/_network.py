@@ -20,14 +20,13 @@ from collections.abc import Iterator
 __all__ = ("markitdown_network_disabled",)
 
 
-
 class _NetworkDeniedError(RuntimeError):
     """markitdown попытался сделать outbound-запрос с network_mode='off'."""
 
 
 def _denied_urlopen(*args, **kwargs):
     raise _NetworkDeniedError(
-        "markitdown network access is disabled (settings.MARKITDOWN_NETWORK_MODE='off')",
+        "markitdown network access is disabled (settings.MARKITDOWN_NETWORK_MODE='off')"
     )
 
 

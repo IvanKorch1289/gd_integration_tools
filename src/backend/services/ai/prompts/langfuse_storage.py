@@ -93,7 +93,7 @@ class LangfusePromptStorage:
             if not feature_flags.prompt_registry_langfuse:
                 logger.debug(
                     "feature_flags.prompt_registry_langfuse=False, "
-                    "LangfusePromptStorage работает в режиме in-memory fallback",
+                    "LangfusePromptStorage работает в режиме in-memory fallback"
                 )
                 return
 
@@ -107,7 +107,7 @@ class LangfusePromptStorage:
             logger.debug("Langfuse SDK не установлен — используется in-memory fallback")
         except Exception as exc:
             logger.warning(
-                "Langfuse инициализация провалилась: %s — fallback на in-memory", exc,
+                "Langfuse инициализация провалилась: %s — fallback на in-memory", exc
             )
 
     async def get_prompt(self, name: str, version: str | None = None) -> dict[str, Any]:
@@ -135,7 +135,7 @@ class LangfusePromptStorage:
                     lf_prompt.prompt if hasattr(lf_prompt, "prompt") else str(lf_prompt)
                 )
                 resolved_version = str(
-                    getattr(lf_prompt, "version", version or "latest"),
+                    getattr(lf_prompt, "version", version or "latest")
                 )
                 # Зеркалируем в in-memory для list_prompts
                 entry = PromptEntry(
@@ -196,7 +196,7 @@ class LangfusePromptStorage:
         }
 
     async def save_prompt(
-        self, name: str, content: str, metadata: dict[str, Any],
+        self, name: str, content: str, metadata: dict[str, Any]
     ) -> None:
         """Upsert промпта в хранилище.
 
@@ -211,13 +211,13 @@ class LangfusePromptStorage:
         """
         version = str(metadata.get("version", "1"))
         entry = PromptEntry(
-            name=name, version=version, content=content, metadata=metadata,
+            name=name, version=version, content=content, metadata=metadata
         )
 
         if self._langfuse_available and self._langfuse is not None:
             try:
                 self._langfuse.create_prompt(
-                    name=name, prompt=content, labels=metadata.get("labels", []),
+                    name=name, prompt=content, labels=metadata.get("labels", [])
                 )
                 logger.debug("Langfuse: промпт '%s' сохранён", name)
             except Exception as exc:

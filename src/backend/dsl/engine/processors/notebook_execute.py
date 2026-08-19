@@ -89,6 +89,7 @@ class NotebookExecuteProcessor(BaseProcessor):
                 # type, ValueError — invalid body. Bare `except Exception`
                 # маскировал unrelated runtime errors.
                 import logging
+
                 logging.getLogger(__name__).debug(
                     "notebook_execute.body_fallback_empty",
                     extra={"error": str(body_exc)},

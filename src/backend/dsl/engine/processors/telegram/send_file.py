@@ -65,11 +65,11 @@ class TelegramSendFileProcessor(BaseProcessor):
         super().__init__(name=name or f"telegram_send_file({bot})")
         if not s3_key_from and not file_data_property:
             raise ValueError(
-                "TelegramSendFileProcessor: укажите s3_key_from или file_data_property",
+                "TelegramSendFileProcessor: укажите s3_key_from или file_data_property"
             )
         if not file_name and not file_name_from:
             raise ValueError(
-                "TelegramSendFileProcessor: укажите file_name или file_name_from",
+                "TelegramSendFileProcessor: укажите file_name или file_name_from"
             )
         self._bot = bot
         self._chat_id_from = chat_id_from
@@ -88,7 +88,7 @@ class TelegramSendFileProcessor(BaseProcessor):
         chat_id = resolve_value(exchange, self._chat_id_from)
         if not chat_id:
             exchange.fail(
-                f"TelegramSendFileProcessor: chat_id отсутствует ({self._chat_id_from!r})",
+                f"TelegramSendFileProcessor: chat_id отсутствует ({self._chat_id_from!r})"
             )
             return
 
@@ -98,7 +98,7 @@ class TelegramSendFileProcessor(BaseProcessor):
             return
 
         file_name = self._file_name or str(
-            resolve_value(exchange, self._file_name_from or "") or "",
+            resolve_value(exchange, self._file_name_from or "") or ""
         )
         if not file_name:
             exchange.fail("TelegramSendFileProcessor: пустое имя файла")
@@ -143,7 +143,7 @@ class TelegramSendFileProcessor(BaseProcessor):
                 if data is not None:
                     return data
                 _logger.warning(
-                    "TelegramSendFile: S3-ключ %r не найден, fallback на property", key,
+                    "TelegramSendFile: S3-ключ %r не найден, fallback на property", key
                 )
 
         if self._file_data_property:

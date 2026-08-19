@@ -28,9 +28,9 @@ def _summarize_body(body: Any, *, max_len: int = 256) -> str:
         # TypeError для unrepresentable type, ValueError для invalid repr
         # value.
         import logging
+
         logging.getLogger(__name__).debug(
-            "stream_dlq_helper.summarize_body_fallback",
-            extra={"error": str(repr_exc)},
+            "stream_dlq_helper.summarize_body_fallback", extra={"error": str(repr_exc)}
         )
         rendered = "<unrepresentable body>"
     if len(rendered) > max_len:

@@ -24,7 +24,7 @@ class CollectionMixin:
     __slots__ = ()
 
     def collect(
-        self, *, field: str | None = None, key_fn: Callable[[Any], Any] | None = None,
+        self, *, field: str | None = None, key_fn: Callable[[Any], Any] | None = None
     ) -> RouteBuilder:
         """Извлекает поле из каждого объекта коллекции в body.
 
@@ -66,7 +66,7 @@ class CollectionMixin:
         )
 
     def group_by(
-        self, *, field: str | None = None, key_fn: Callable[[Any], Any] | None = None,
+        self, *, field: str | None = None, key_fn: Callable[[Any], Any] | None = None
     ) -> RouteBuilder:
         """Группирует коллекцию в body по полю.
 
@@ -128,7 +128,7 @@ class CollectionMixin:
         )
 
     def unique(
-        self, *, field: str | None = None, key_fn: Callable[[Any], Any] | None = None,
+        self, *, field: str | None = None, key_fn: Callable[[Any], Any] | None = None
     ) -> RouteBuilder:
         """Уникальные элементы коллекции.
 

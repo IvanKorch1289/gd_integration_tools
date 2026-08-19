@@ -142,7 +142,7 @@ class EventBusFacade:
                 handler=handler,
                 topic_pattern=topic_pattern,
                 ack_mode=ack_mode,
-            ),
+            )
         )
 
     async def unsubscribe_all(self) -> None:
@@ -183,18 +183,10 @@ class EventBusFacade:
         """
         self._assert_publish(channel)
         return await self._bus.request(
-            channel,
-            payload,
-            timeout=timeout,
-            correlation_id=correlation_id,
+            channel, payload, timeout=timeout, correlation_id=correlation_id
         )
 
-    async def publish_generic(
-        self,
-        event: Any,
-        *,
-        channel: str | None = None,
-    ) -> None:
+    async def publish_generic(self, event: Any, *, channel: str | None = None) -> None:
         """Опубликовать pre-built event (ChannelEnvelope-like объект).
 
         Args:

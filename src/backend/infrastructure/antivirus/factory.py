@@ -44,7 +44,7 @@ class ChainedAntivirusBackend(AntivirusBackend):
             except ConnectionError as exc:
                 last_error = exc
                 logger.warning(
-                    "AV backend %s unavailable, trying next: %s", backend.name, exc,
+                    "AV backend %s unavailable, trying next: %s", backend.name, exc
                 )
                 continue
         if last_error is not None:

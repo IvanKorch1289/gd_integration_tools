@@ -25,7 +25,7 @@ __all__ = ("InvokerSettings", "invoker_settings")
 # Перечислим режимы как Literal — при изменении :class:`InvocationMode`
 # нужно синхронизировать (тест-контракт обеспечит проверка).
 _InvocationModeName = Literal[
-    "sync", "async-api", "async-queue", "deferred", "background", "streaming",
+    "sync", "async-api", "async-queue", "deferred", "background", "streaming"
 ]
 
 
@@ -36,7 +36,7 @@ class InvokerSettings(BaseSettingsWithLoader):
     model_config = SettingsConfigDict(env_prefix="INVOKER_", extra="forbid")
 
     default_mode: _InvocationModeName = Field(
-        default="sync", description="Режим по умолчанию для вызовов без явного mode.",
+        default="sync", description="Режим по умолчанию для вызовов без явного mode."
     )
     default_timeout_seconds: float | None = Field(
         default=None,

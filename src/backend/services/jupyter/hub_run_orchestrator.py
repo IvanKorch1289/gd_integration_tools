@@ -61,7 +61,7 @@ class NotebookParameterError(HubRunError):
 
     def __init__(self, name: str, errors: list[str]) -> None:
         super().__init__(
-            f"parameter validation failed for {name!r}: {'; '.join(errors)}",
+            f"parameter validation failed for {name!r}: {'; '.join(errors)}"
         )
         self.name = name
         self.errors = errors
@@ -74,7 +74,7 @@ class JupyterHubNotEnabledError(HubRunError):
         super().__init__(
             message
             or "JupyterHub integration disabled "
-            "(feature_flags.jupyter_hub_enabled=False)",
+            "(feature_flags.jupyter_hub_enabled=False)"
         )
 
 
@@ -186,7 +186,7 @@ async def run_hub_notebook(
             )
             raise JupyterHubNotEnabledError(
                 "Inline notebook content disabled (secure.jupyter_inline_content_enabled=False). "
-                "Use registry-based notebook or ask admin to enable.",
+                "Use registry-based notebook or ask admin to enable."
             )
 
         # Audit-event: inline notebook use (даже при enabled — для traceability).
@@ -203,7 +203,13 @@ async def run_hub_notebook(
                     "content_size": len(notebook_content),
                 },
             )
-        except (ImportError, RuntimeError, AttributeError, OSError, TypeError) as audit_exc:
+        except (
+            ImportError,
+            RuntimeError,
+            AttributeError,
+            OSError,
+            TypeError,
+        ) as audit_exc:
             # cycle-9/D-AUDIT-905: narrow exceptions + observability.
             # Bare `except Exception` маскировал unrelated runtime errors
             # (KeyError, TypeError, ValueError). Audit emission — best-effort,
@@ -307,13 +313,13 @@ def _collect_errors(outputs: list[dict[str, Any]]) -> list[str]:
             if isinstance(out, dict) and out.get("output_type") == "error":
                 errors.append(
                     f"cell {cell_result.get('cell_index', '?')}: "
-                    f"{out.get('ename', '?')}: {out.get('evalue', '')}",
+                    f"{out.get('ename', '?')}: {out.get('evalue', '')}"
                 )
     return errors
 
 
 async def _save_inline_notebook(
-    notebook_name: str, content: bytes | str, output_path: str | None = None,
+    notebook_name: str, content: bytes | str, output_path: str | None = None
 ) -> str:
     """Сохранить inline notebook (.ipynb) во временный файл и вернуть путь.
 
@@ -338,7 +344,7 @@ async def _save_inline_notebook(
             json.loads(content)  # validate JSON
         except json.JSONDecodeError as exc:
             raise HubRunError(
-                f"notebook_content (str) is not valid JSON: {exc}",
+                f"notebook_content (str) is not valid JSON: {exc}"
             ) from exc
         content_bytes = content.encode("utf-8")
     else:
@@ -347,7 +353,7 @@ async def _save_inline_notebook(
             json.loads(content.decode("utf-8"))
         except (json.JSONDecodeError, UnicodeDecodeError) as exc:
             raise HubRunError(
-                f"notebook_content (bytes) is not valid JSON .ipynb: {exc}",
+                f"notebook_content (bytes) is not valid JSON .ipynb: {exc}"
             ) from exc
         content_bytes = content
 
@@ -386,7 +392,7 @@ def _build_execution_service() -> NotebookExecutionService:
         return get_notebook_execution_service_provider()
     except ImportError as exc:
         raise HubRunError(
-            f"NotebookExecutionService provider not available: {exc}",
+            f"NotebookExecutionService provider not available: {exc}"
         ) from exc
 
 

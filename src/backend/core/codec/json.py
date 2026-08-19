@@ -180,7 +180,7 @@ def canonical_json_bytes(value: Any) -> bytes:
 
     """
     return _stdjson.dumps(
-        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, default=str,
+        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, default=str
     ).encode("utf-8")
 
 

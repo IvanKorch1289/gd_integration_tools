@@ -27,7 +27,6 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 __all__ = ("DegradationMiddleware",)
 
 
-
 _WRITE_METHODS: Final[frozenset[str]] = frozenset({"POST", "PUT", "PATCH", "DELETE"})
 
 #: Path-prefix'ы, не блокирующиеся в fallback-режиме (health, metrics, audit и т.п.).
@@ -60,18 +59,14 @@ _MAINTENANCE_PATH_PREFIXES: Final[tuple[str, ...]] = (
 
 
 def _build_503_json(
-    reason: str, retry_after: int, header: str,
+    reason: str, retry_after: int, header: str
 ) -> tuple[bytes, list[tuple[bytes, bytes]]]:
     """Создаёт 503 JSON body + headers (cycle 42 helper).
 
     Pure ASGI: возвращает bytes + headers для отправки через send.
     """
     body = json.dumps(
-        {
-            "status": "degraded",
-            "reason": reason,
-            "retry_after_seconds": retry_after,
-        },
+        {"status": "degraded", "reason": reason, "retry_after_seconds": retry_after}
     ).encode("utf-8")
     headers: list[tuple[bytes, bytes]] = [
         (b"content-type", b"application/json"),
@@ -130,9 +125,7 @@ class DegradationMiddleware:
         if mode_at_least(mode, DegradationMode.MAINTENANCE):
             if not any(path.startswith(p) for p in _MAINTENANCE_PATH_PREFIXES):
                 await self._send_503(
-                    send,
-                    reason=f"system in {mode.value} mode",
-                    header="maintenance",
+                    send, reason=f"system in {mode.value} mode", header="maintenance"
                 )
                 return
 
@@ -206,6 +199,7 @@ class DegradationMiddleware:
             # ImportError — providers missing, AttributeError — provider
             # API change, RuntimeError — coordinator unavailable.
             import logging
+
             logging.getLogger(__name__).debug(
                 "degradation.resilience_coordinator_fallback",
                 extra={"error": str(di_exc)},
@@ -221,22 +215,14 @@ class DegradationMiddleware:
             blocked.append("db_main")
         return blocked
 
-    async def _send_503(
-        self, send: Send, *, reason: str, header: str,
-    ) -> None:
+    async def _send_503(self, send: Send, *, reason: str, header: str) -> None:
         """503 sender (instance method, использует self._retry_after).
 
         Cycle 42: instance method (не static) — нужен self._retry_after.
         Pure ASGI: 503 отправляется через send явно (no-raise, cycle 39).
         """
         body, headers = _build_503_json(reason, self._retry_after, header)
-        await send(
-            {
-                "type": "http.response.start",
-                "status": 503,
-                "headers": headers,
-            },
-        )
+        await send({"type": "http.response.start", "status": 503, "headers": headers})
         await send({"type": "http.response.body", "body": body})
 
     @staticmethod
@@ -251,12 +237,9 @@ class DegradationMiddleware:
             if message["type"] == "http.response.start":
                 existing: list[tuple[bytes, bytes]] = list(message.get("headers", []))
                 existing = [
-                    (k, v) for k, v in existing
-                    if k.lower() != b"x-degradation-mode"
+                    (k, v) for k, v in existing if k.lower() != b"x-degradation-mode"
                 ]
-                existing.append(
-                    (b"x-degradation-mode", mode_value.encode("latin-1")),
-                )
+                existing.append((b"x-degradation-mode", mode_value.encode("latin-1")))
                 message["headers"] = existing
             await send(message)
 

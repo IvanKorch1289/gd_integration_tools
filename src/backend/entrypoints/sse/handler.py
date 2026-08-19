@@ -175,13 +175,11 @@ class _InvokeRequest(BaseModel):
 
     action: str = Field(description="Имя action или DSL-маршрута.")
     payload: dict[str, Any] = Field(
-        default_factory=dict, description="Полезная нагрузка вызова.",
+        default_factory=dict, description="Полезная нагрузка вызова."
     )
 
 
-def _extract_auth_from_request(
-    request: Request,
-) -> tuple[str, tuple[str, ...]]:
+def _extract_auth_from_request(request: Request) -> tuple[str, tuple[str, ...]]:
     """Извлекает principal/permissions из ``request.state.auth``.
 
     Cycle-6/D-AUDIT-609: parity с GraphQL/SOAP/REST entrypoints — проброс
@@ -239,7 +237,7 @@ async def sse_invoke(request: Request, body: _InvokeRequest) -> StreamingRespons
     GraphQL/SOAP/REST) для route-wide permission enforcement.
     """
     correlation_id = request.headers.get("x-correlation-id") or request.headers.get(
-        "x-request-id",
+        "x-request-id"
     )
     idempotency_key = request.headers.get("idempotency-key")
     principal, permissions = _extract_auth_from_request(request)

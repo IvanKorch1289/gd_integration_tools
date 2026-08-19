@@ -44,7 +44,7 @@ class SemanticCache:
         self._namespace = namespace
 
     async def lookup(
-        self, query: str, *, provider: str | None = None, model: str | None = None,
+        self, query: str, *, provider: str | None = None, model: str | None = None
     ) -> dict[str, Any] | None:
         """Ищет кешированный response по semantic similarity.
 
@@ -75,7 +75,7 @@ class SemanticCache:
         return hashlib.sha256(raw.encode()).hexdigest()
 
     async def _exact_lookup(
-        self, query: str, provider: str | None, model: str | None,
+        self, query: str, provider: str | None, model: str | None
     ) -> dict[str, Any] | None:
         """Redis-backed exact lookup (fast path)."""
         # Wave 6.3: Redis-клиент — через core/di.providers.
@@ -99,7 +99,7 @@ class SemanticCache:
             return None
 
     async def _exact_store(
-        self, query: str, response: Any, provider: str | None, model: str | None,
+        self, query: str, response: Any, provider: str | None, model: str | None
     ) -> None:
         # Wave 6.3: Redis-клиент — через core/di.providers.
         try:
@@ -119,7 +119,7 @@ class SemanticCache:
                 "provider": provider,
                 "model": model,
                 "cached_at": time.time(),
-            },
+            }
         )
         try:
             raw = getattr(redis_client, "_raw_client", None) or redis_client
@@ -128,7 +128,7 @@ class SemanticCache:
             logger.debug("Semantic cache exact store failed: %s", exc)
 
     async def _semantic_lookup(
-        self, query: str, provider: str | None, model: str | None,
+        self, query: str, provider: str | None, model: str | None
     ) -> dict[str, Any] | None:
         """Vector similarity поиск через RAG service."""
         try:
@@ -161,7 +161,7 @@ class SemanticCache:
         }
 
     async def _semantic_store(
-        self, query: str, response: Any, provider: str | None, model: str | None,
+        self, query: str, response: Any, provider: str | None, model: str | None
     ) -> None:
         """Сохраняет query + response в vector store для semantic search."""
         try:
@@ -194,6 +194,7 @@ class SemanticCache:
                     # недоступен), RuntimeError/ValueError (sanitizer failure).
                     # Fallback: ingest raw query (raw + pii_masked=False flag).
                     from src.backend.core.logging import get_logger
+
                     get_logger(__name__).warning(
                         "semantic_cache.pii_mask_failed",
                         extra={"error": str(pii_mask_exc)},

@@ -58,14 +58,14 @@ class HealthResult:
 
     @classmethod
     def failed(
-        cls, *, error: str, mode: HealthMode, latency_ms: float = 0.0,
+        cls, *, error: str, mode: HealthMode, latency_ms: float = 0.0
     ) -> HealthResult:
         """Метод failed (см. signature)."""
         return cls(status="failed", latency_ms=latency_ms, mode=mode, error=error)
 
     @classmethod
     def degraded(
-        cls, *, error: str, mode: HealthMode, latency_ms: float, **details: Any,
+        cls, *, error: str, mode: HealthMode, latency_ms: float, **details: Any
     ) -> HealthResult:
         """Метод degraded (см. signature)."""
         return cls(
@@ -141,7 +141,7 @@ class InfrastructureClient(ConnectorHealthMixin, ABC):
         result = await self.health(mode="fast")
         if result.status == "failed":
             raise ConnectorValidationError(
-                f"Validation failed for connector '{self.name}': {result.error}",
+                f"Validation failed for connector '{self.name}': {result.error}"
             )
 
     async def reload(self) -> None:

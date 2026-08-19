@@ -9,10 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.services.auth.ad_directory_client import (
-        AdAuthError,
-        AdSearchEntry,
-    )
+    from src.backend.services.auth.ad_directory_client import AdAuthError, AdSearchEntry
 
 __all__ = ("AdAuthError", "AdSearchEntry")
 

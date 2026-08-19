@@ -56,7 +56,7 @@ def _register_system_tool(mcp: FastMCP, action_name: str) -> None:
                 tool_kwargs["input_schema"] = schema
             elif "inputSchema" in tool_sig.parameters:
                 tool_kwargs["inputSchema"] = schema
-        except (TypeError, ValueError):  # noqa: violation-check — MCP tool kwargs injection best-effort
+        except TypeError, ValueError:  # noqa: violation-check — MCP tool kwargs injection best-effort
             pass
 
     @mcp.tool(**tool_kwargs)
@@ -69,12 +69,12 @@ def _register_system_tool(mcp: FastMCP, action_name: str) -> None:
         deny_reason = _check_mcp_tool_authz(_action)
         if deny_reason is not None:
             return orjson.dumps(
-                {"error": "mcp.tool.denied", "action": _action, "reason": deny_reason},
+                {"error": "mcp.tool.denied", "action": _action, "reason": deny_reason}
             ).decode()
 
         try:
             parsed_payload = orjson.loads(payload) if payload else {}
-        except (orjson.JSONDecodeError, TypeError):
+        except orjson.JSONDecodeError, TypeError:
             parsed_payload = {"raw": payload}
 
         command = ActionCommandSchema(

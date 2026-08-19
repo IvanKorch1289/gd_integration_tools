@@ -11,6 +11,7 @@
 Принцип: best-effort startup (hard errors propagate, optional subsystems log+continue).
 Каждая фаза оборачивает свой critical path в try/except с понятным warning.
 """
+
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable

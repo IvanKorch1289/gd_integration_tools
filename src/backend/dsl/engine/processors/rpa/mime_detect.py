@@ -3,6 +3,7 @@
 MIME-type detection по magic bytes (Ponytail YAGNI: stdlib only).
 Pattern (D276): thin wrapper.
 """
+
 from __future__ import annotations
 
 __all__ = ("MimeDetectProcessor",)
@@ -58,6 +59,6 @@ class MimeDetectProcessor:
             return "application/octet-stream"
         head = data[:16]
         for sig, offset, mime in _MAGIC_SIGNATURES:
-            if head[offset:offset + len(sig)] == sig:
+            if head[offset : offset + len(sig)] == sig:
                 return mime
         return "application/octet-stream"

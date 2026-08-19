@@ -21,8 +21,4 @@ from src.backend.dsl.engine.processors.sub_workflow import (
     SubWorkflowProcessor as SubWorkflowProcessor,
 )
 
-__all__ = (
-    "CancelWorkflowProcessor",
-    "InvokeWorkflowProcessor",
-    "SubWorkflowProcessor",
-)
+__all__ = ("CancelWorkflowProcessor", "InvokeWorkflowProcessor", "SubWorkflowProcessor")

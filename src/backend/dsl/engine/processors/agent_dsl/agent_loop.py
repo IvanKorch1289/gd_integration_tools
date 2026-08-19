@@ -100,7 +100,7 @@ class AgentLoopProcessor(BaseAIProcessor):
         if max_iterations < 1:
             raise ValueError(
                 f"AgentLoopProcessor: max_iterations должен быть >=1, "
-                f"получено {max_iterations}",
+                f"получено {max_iterations}"
             )
         super().__init__(name=name or "agent_loop")
         self.processors = list(processors)

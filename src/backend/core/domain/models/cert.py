@@ -35,10 +35,10 @@ class CertRecord(Base):
     pem: Mapped[str] = mapped_column(Text, nullable=False)
     fingerprint: Mapped[str] = mapped_column(Text, nullable=False)
     expires_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False,
+        DateTime(timezone=True), nullable=False
     )
     uploaded_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now(),
+        DateTime(timezone=True), nullable=False, server_default=func.now()
     )
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
@@ -55,6 +55,6 @@ class CertHistory(Base):
     version: Mapped[int] = mapped_column(Integer, nullable=False)
     pem: Mapped[str] = mapped_column(Text, nullable=False)
     uploaded_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now(),
+        DateTime(timezone=True), nullable=False, server_default=func.now()
     )
     uploaded_by: Mapped[str | None] = mapped_column(Text, nullable=True)

@@ -15,9 +15,7 @@ from src.backend.core.logging import get_logger
 db_logger = get_logger("database")
 
 
-type DatabaseSettings = (
-    DatabaseConnectionSettings | ExternalDatabaseConnectionSettings
-)
+type DatabaseSettings = DatabaseConnectionSettings | ExternalDatabaseConnectionSettings
 
 
 @dataclass

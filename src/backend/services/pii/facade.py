@@ -73,7 +73,7 @@ class PIIFacade:
             from src.backend.core.policy.pii_fail_closed import raise_pii_fail_closed
 
             raise_pii_fail_closed(
-                source="pii.facade.mask", payload_size=len(text), exc=exc,
+                source="pii.facade.mask", payload_size=len(text), exc=exc
             )
 
     def mask_struct(self, obj: Any) -> Any:
@@ -111,7 +111,7 @@ class PIIFacade:
             from src.backend.core.policy.pii_fail_closed import raise_pii_fail_closed
 
             raise_pii_fail_closed(
-                source="pii.facade.tokenize", payload_size=len(text), exc=exc,
+                source="pii.facade.tokenize", payload_size=len(text), exc=exc
             )
 
     def detokenize(self, text: str) -> str:
@@ -120,7 +120,9 @@ class PIIFacade:
         Detokenization requires the original TokenMap from mask_reversible.
         Use ``PIITokenizer.unmask(masked_text, token_map)`` directly.
         """
-        _logger.debug("PII detokenize: requires TokenMap, use PIITokenizer.unmask directly")
+        _logger.debug(
+            "PII detokenize: requires TokenMap, use PIITokenizer.unmask directly"
+        )
         return text
 
     def _emit_audit(self, event: str, payload: str) -> None:
@@ -131,19 +133,13 @@ class PIIFacade:
             )
 
             log_audit_event_lite(
-                _logger,
-                severity="warning",
-                event=event,
-                payload_size=len(payload),
+                _logger, severity="warning", event=event, payload_size=len(payload)
             )
         except Exception as exc:
             _logger.debug("PII audit emit failed: %s", exc)
 
     def add_custom_pattern(
-        self,
-        name: str,
-        pattern: str,
-        replacement: str = "[REDACTED]",
+        self, name: str, pattern: str, replacement: str = "[REDACTED]"
     ) -> None:
         """Добавить custom PII pattern.
 
@@ -174,6 +170,7 @@ class PIIFacade:
             # Раньше bare `except Exception: pass` маскировал любые ошибки
             # в masker._patterns (e.g. corrupted sanitizer state).
             from src.backend.core.logging import get_logger
+
             get_logger(__name__).debug(
                 "pii_facade.list_pattern_names.introspection_failed",
                 extra={"error": str(introspect_exc)},

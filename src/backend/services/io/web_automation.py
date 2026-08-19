@@ -14,7 +14,6 @@ from src.backend.core.interfaces.integrations import BrowserClientProtocol
 __all__ = ("WebAutomationService", "get_web_automation_service")
 
 
-
 class WebAutomationService:
     """Web automation — parsing, form filling, monitoring, scenarios."""
 
@@ -47,7 +46,7 @@ class WebAutomationService:
         return await self._client.click(url, selector)
 
     async def fill_form(
-        self, url: str, fields: dict[str, str], submit: str | None = None,
+        self, url: str, fields: dict[str, str], submit: str | None = None
     ) -> dict[str, Any]:
         """Fill form fields and optionally submit.
 
@@ -97,7 +96,7 @@ class WebAutomationService:
         return await self._client.run_scenario(steps)
 
     async def parse_page(
-        self, url: str, selectors: dict[str, str],
+        self, url: str, selectors: dict[str, str]
     ) -> dict[str, list[str]]:
         """Парсит страницу по набору CSS-селекторов."""
         result: dict[str, list[str]] = {}
@@ -106,7 +105,7 @@ class WebAutomationService:
         return result
 
     async def monitor_changes(
-        self, url: str, selector: str, interval_seconds: int = 60, max_checks: int = 10,
+        self, url: str, selector: str, interval_seconds: int = 60, max_checks: int = 10
     ) -> list[dict[str, Any]]:
         """Мониторинг изменений элемента на странице."""
         import asyncio
@@ -118,7 +117,7 @@ class WebAutomationService:
             current = await self._client.extract_text(url, selector)
             if current != prev_content and prev_content:
                 changes.append(
-                    {"check": i, "previous": prev_content, "current": current},
+                    {"check": i, "previous": prev_content, "current": current}
                 )
             prev_content = current
             if i < max_checks - 1:

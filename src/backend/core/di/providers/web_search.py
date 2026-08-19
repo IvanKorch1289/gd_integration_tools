@@ -23,7 +23,9 @@ def get_web_search_provider() -> Any:
     """Вернуть singleton WebSearch provider."""
     if "web_search" in _overrides:
         return _overrides["web_search"]
-    return resolve_module("infrastructure.clients.external.search_providers").get_default()
+    return resolve_module(
+        "infrastructure.clients.external.search_providers"
+    ).get_default()
 
 
 def set_web_search_provider(search: Any) -> None:

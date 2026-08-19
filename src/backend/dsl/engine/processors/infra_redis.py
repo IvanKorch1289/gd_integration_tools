@@ -6,6 +6,7 @@ Redis operations через facade_get_redis_client::
         key: cache:user:42
         to: body.value
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -23,10 +24,7 @@ if TYPE_CHECKING:
     namespace="infra",
     spec_schema={
         "type": "object",
-        "properties": {
-            "key": {"type": "string"},
-            "to": {"type": "string"},
-        },
+        "properties": {"key": {"type": "string"}, "to": {"type": "string"}},
         "required": ["key"],
     },
     capabilities=("cache.read",),
@@ -45,6 +43,7 @@ class InfraRedisGetProcessor(BaseProcessor):
         from src.backend.core.di.providers.infrastructure_locator import (
             get_redis_client_class,
         )
+
         client = get_redis_client_class()(context)
         value = await client.get(self.key)
         self.set_result(exchange, self.target, value)

@@ -87,7 +87,7 @@ def _is_vault_enabled() -> bool:
         return raw.strip().lower() not in {"0", "false", "no"}
     base = _read_yaml(_REPO_ROOT / "config_profiles" / "base.yml")
     overlay = _read_yaml(
-        _REPO_ROOT / "config_profiles" / f"{get_active_profile().value}.yml",
+        _REPO_ROOT / "config_profiles" / f"{get_active_profile().value}.yml"
     )
     vault_cfg = _deep_merge(base, overlay).get("vault") or {}
     return bool(vault_cfg.get("enabled", True))
@@ -102,7 +102,7 @@ class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
         self.model_fields = settings_cls.model_fields.keys()
 
     def get_field_value(
-        self, field: FieldInfo, field_name: str,
+        self, field: FieldInfo, field_name: str
     ) -> tuple[Any, str, bool]:
         """Return default empty value for a field (placeholder for subclasses)."""
         return (None, field_name, False)
@@ -151,7 +151,7 @@ class YamlConfigSettingsLoader(FilteredSettingsSource):
     """
 
     def __init__(
-        self, settings_cls: type[BaseSettings], profiles_dir: Path | None = None,
+        self, settings_cls: type[BaseSettings], profiles_dir: Path | None = None
     ):
         super().__init__(settings_cls)
         self.profiles_dir = profiles_dir or _REPO_ROOT / "config_profiles"
@@ -172,7 +172,7 @@ class YamlConfigSettingsLoader(FilteredSettingsSource):
             if not path.is_file():
                 raise RuntimeError(
                     f"Config not found: {path}. "
-                    "Ожидается base.yml + {profile}.yml в config_profiles/.",
+                    "Ожидается base.yml + {profile}.yml в config_profiles/."
                 )
         return _deep_merge(_read_yaml(base_path), _read_yaml(overlay_path))
 

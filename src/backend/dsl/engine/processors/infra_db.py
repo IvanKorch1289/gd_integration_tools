@@ -6,6 +6,7 @@ SQL query через facade session manager::
         sql: "SELECT * FROM users WHERE id = :id"
         to: body.result
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -23,10 +24,7 @@ if TYPE_CHECKING:
     namespace="infra",
     spec_schema={
         "type": "object",
-        "properties": {
-            "sql": {"type": "string"},
-            "to": {"type": "string"},
-        },
+        "properties": {"sql": {"type": "string"}, "to": {"type": "string"}},
         "required": ["sql"],
     },
     capabilities=("db.read",),
@@ -45,6 +43,7 @@ class InfraDbQueryProcessor(BaseProcessor):
         from src.backend.core.di.providers.infrastructure_locator import (
             get_main_session_manager_getter,
         )
+
         sm = get_main_session_manager_getter()()
         async with sm.session() as session:
             result = await session.execute(self.sql)

@@ -12,9 +12,7 @@ from src.backend.infrastructure.database.database.initializer import DatabaseIni
 db_logger = get_logger("database")
 
 
-type DatabaseSettings = (
-    DatabaseConnectionSettings | ExternalDatabaseConnectionSettings
-)
+type DatabaseSettings = DatabaseConnectionSettings | ExternalDatabaseConnectionSettings
 
 
 class ExternalDatabaseRegistry:
@@ -30,7 +28,7 @@ class ExternalDatabaseRegistry:
 
         for profile_name, config in configs.items():
             self._initializers[profile_name] = DatabaseInitializer(
-                settings=config, name=profile_name,
+                settings=config, name=profile_name
             )
 
     def get_initializer(self, profile_name: str) -> DatabaseInitializer:
@@ -39,7 +37,7 @@ class ExternalDatabaseRegistry:
 
         if initializer is None:
             raise DatabaseError(
-                message=f"Внешняя БД '{profile_name}' не зарегистрирована",
+                message=f"Внешняя БД '{profile_name}' не зарегистрирована"
             )
 
         return initializer

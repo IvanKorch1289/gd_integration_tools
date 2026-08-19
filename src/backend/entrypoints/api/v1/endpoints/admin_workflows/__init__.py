@@ -91,12 +91,8 @@ __all__ = (
 
 
 # S202 audit fix: workflow lifecycle (retry/cancel/resume/trigger) — admin role required.
-_WORKFLOWS_GUARD = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)),
-)
-router = APIRouter(
-    tags=["Admin · Workflows"], dependencies=[_WORKFLOWS_GUARD],
-)
+_WORKFLOWS_GUARD = Depends(require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)))
+router = APIRouter(tags=["Admin · Workflows"], dependencies=[_WORKFLOWS_GUARD])
 builder = ActionRouterBuilder(router)
 
 common_tags = ("Admin · Workflows",)
@@ -198,5 +194,5 @@ builder.add_actions(
             query_model=SagaHistoryQuery,
             tags=common_tags,
         ),
-    ],
+    ]
 )

@@ -78,9 +78,9 @@ class TenantFacade:
             # Bare `except Exception` маскировал security-critical
             # SYSTEM_TENANT_ID import failure → silent permission grant.
             from src.backend.core.logging import get_logger
+
             get_logger(__name__).warning(
-                "tenancy.system_tenant_check.failed",
-                extra={"error": str(tenant_exc)},
+                "tenancy.system_tenant_check.failed", extra={"error": str(tenant_exc)}
             )
             return False
 
@@ -132,8 +132,7 @@ class TenantFacade:
 
         prev_ctx = self.current()
         new_ctx = CapabilityTenant(
-            id=tenant_id,
-            principal=principal_id or SYSTEM_TENANT_ID,
+            id=tenant_id, principal=principal_id or SYSTEM_TENANT_ID
         )
         set_tenant(new_ctx)
         try:

@@ -29,7 +29,7 @@ class TokenChunker:
     """
 
     def __init__(
-        self, *, chunk_size: int, chunk_overlap: int, encoding_name: str = "cl100k_base",
+        self, *, chunk_size: int, chunk_overlap: int, encoding_name: str = "cl100k_base"
     ) -> None:
         self._size = chunk_size
         self._overlap = chunk_overlap
@@ -44,7 +44,7 @@ class TokenChunker:
         except ImportError:
             logger.info(
                 "tiktoken не установлен — TokenChunker работает в "
-                "character-based fallback режиме",
+                "character-based fallback режиме"
             )
             return None
         try:
@@ -67,7 +67,7 @@ class TokenChunker:
 
     def _token_split(self, text: str) -> list[str]:
         encoding = self._encoding
-        assert encoding is not None
+        assert encoding is not None  # nosec
 
         tokens = encoding.encode(text)
         if not tokens:

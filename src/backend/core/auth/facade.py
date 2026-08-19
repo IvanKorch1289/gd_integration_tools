@@ -136,8 +136,7 @@ class AuthFacade:
                 jti = claims.get("jti")
                 if jti and await self._is_blacklisted(jti):
                     return AuthResult(
-                        is_authenticated=False,
-                        metadata={"error": "token_revoked"},
+                        is_authenticated=False, metadata={"error": "token_revoked"}
                     )
                 return AuthResult(
                     is_authenticated=True,
@@ -269,9 +268,7 @@ class AuthFacade:
             from cryptography import x509
             from cryptography.hazmat.backends import default_backend
 
-            cert = x509.load_pem_x509_certificate(
-                cert_pem.encode(), default_backend(),
-            )
+            cert = x509.load_pem_x509_certificate(cert_pem.encode(), default_backend())
             cn = None
             for attr in cert.subject:
                 if attr.oid == x509.NameOID.COMMON_NAME:
@@ -308,8 +305,7 @@ class AuthFacade:
             return await facade.is_token_blacklisted(jti)
         except Exception as exc:
             logger.debug(
-                "jwt blacklist check failed: %s — fail-closed (treat as revoked)",
-                exc,
+                "jwt blacklist check failed: %s — fail-closed (treat as revoked)", exc
             )
             return True  # S193 fix: fail-closed — security > availability
 
@@ -355,9 +351,9 @@ class AuthFacade:
             # auth fields. Fallback: если AdminRole import failed — НЕ
             # bypass (fail-closed).
             import logging
+
             logging.getLogger(__name__).debug(
-                "auth_facade.super_admin_check_failed",
-                extra={"error": str(auth_exc)},
+                "auth_facade.super_admin_check_failed", extra={"error": str(auth_exc)}
             )
 
         if required_capability in auth.capabilities:
@@ -421,9 +417,7 @@ class AuthFacade:
 
         try:
             token, expires = self.jwt.encode(
-                subject=subject,
-                claims=claims,
-                expires_in=expires_in,
+                subject=subject, claims=claims, expires_in=expires_in
             )
             return token, expires
         except Exception as exc:
@@ -494,24 +488,22 @@ class AuthFacade:
             # config not initialized, RuntimeError — feature_flags
             # unavailable.
             import logging
+
             logging.getLogger(__name__).debug(
-                "auth_facade.saml_dev_mode_fallback",
-                extra={"error": str(ff_exc)},
+                "auth_facade.saml_dev_mode_fallback", extra={"error": str(ff_exc)}
             )
 
         if not dev_mode:
             logger.debug("SAML: dev_mode disabled, fail-closed")
             return AuthResult(
-                is_authenticated=False,
-                metadata={"error": "saml_requires_acs_flow"},
+                is_authenticated=False, metadata={"error": "saml_requires_acs_flow"}
             )
 
         # Dev-mode path: accept the assertion if it's non-empty and has
         # expected fields (no real crypto verification, for dev/test only).
         if not assertion_b64:
             return AuthResult(
-                is_authenticated=False,
-                metadata={"error": "saml_empty_assertion"},
+                is_authenticated=False, metadata={"error": "saml_empty_assertion"}
             )
 
         try:
@@ -530,26 +522,23 @@ class AuthFacade:
             subject_el = root.find(".//saml:Subject", ns)
             issuer_el = root.find(".//saml:Issuer", ns)
             audience_el = root.find(".//saml:AudienceRestriction/saml:Audience", ns)
-            name_id = (
-                name_id_el.text if name_id_el is not None else None
-            ) or (subject_el.text if subject_el is not None else None)
+            name_id = (name_id_el.text if name_id_el is not None else None) or (
+                subject_el.text if subject_el is not None else None
+            )
             issuer = issuer_el.text if issuer_el is not None else None
             audience = audience_el.text if audience_el is not None else None
 
             if expected_issuer and issuer != expected_issuer:
                 return AuthResult(
-                    is_authenticated=False,
-                    metadata={"error": "saml_issuer_mismatch"},
+                    is_authenticated=False, metadata={"error": "saml_issuer_mismatch"}
                 )
             if expected_audience and audience != expected_audience:
                 return AuthResult(
-                    is_authenticated=False,
-                    metadata={"error": "saml_audience_mismatch"},
+                    is_authenticated=False, metadata={"error": "saml_audience_mismatch"}
                 )
             if not name_id:
                 return AuthResult(
-                    is_authenticated=False,
-                    metadata={"error": "saml_no_nameid"},
+                    is_authenticated=False, metadata={"error": "saml_no_nameid"}
                 )
             return AuthResult(
                 is_authenticated=True,
@@ -565,11 +554,7 @@ class AuthFacade:
             )
 
     async def verify_ldap_credentials(
-        self,
-        username: str,
-        password: str,
-        *,
-        tenant_id: str | None = None,
+        self, username: str, password: str, *, tenant_id: str | None = None
     ) -> AuthResult:
         """S31 Task 4: LDAP bind verification.
 
@@ -589,8 +574,7 @@ class AuthFacade:
         """
         if not username or not password:
             return AuthResult(
-                is_authenticated=False,
-                metadata={"error": "ldap_empty_credentials"},
+                is_authenticated=False, metadata={"error": "ldap_empty_credentials"}
             )
 
         try:
@@ -600,8 +584,7 @@ class AuthFacade:
             success = await client.bind(username, password)
             if not success:
                 return AuthResult(
-                    is_authenticated=False,
-                    metadata={"error": "ldap_bind_failed"},
+                    is_authenticated=False, metadata={"error": "ldap_bind_failed"}
                 )
             return AuthResult(
                 is_authenticated=True,
@@ -612,10 +595,7 @@ class AuthFacade:
             )
         except Exception as exc:
             logger.warning("LDAP bind failed: %s", exc)
-            return AuthResult(
-                is_authenticated=False,
-                metadata={"error": "ldap_failed"},
-            )
+            return AuthResult(is_authenticated=False, metadata={"error": "ldap_failed"})
 
 
 # Singleton per pattern (NotificationFacade, StorageFacade, etc.).

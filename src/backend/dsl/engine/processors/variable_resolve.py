@@ -130,7 +130,7 @@ class VariableResolveProcessor(BaseProcessor):
                         # do simple substitution here.
                         replaced = await self._resolve_in_string(node, resolver, scope)
                         resolved_count += node.count("${var(") - replaced.count(
-                            "${var(",
+                            "${var("
                         )
                         return replaced
                     except ExpressionResolutionError as exc:
@@ -164,7 +164,7 @@ class VariableResolveProcessor(BaseProcessor):
         return VariableScope.parse(self._scope)
 
     async def _resolve_in_string(
-        self, value: str, resolver: ExpressionResolver, scope: VariableScope,
+        self, value: str, resolver: ExpressionResolver, scope: VariableScope
     ) -> str:
         """Resolve ``${var('key', ...)}`` tokens in a string, with scope override."""
         from src.backend.core.dsl.expression_resolver import _VAR_PATTERN, _async_sub
@@ -181,7 +181,7 @@ class VariableResolveProcessor(BaseProcessor):
                         return default_quoted[1:-1]
                     return default_quoted
                 raise ExpressionResolutionError(
-                    f"Variable {key!r} not found in scope {scope_str!r}",
+                    f"Variable {key!r} not found in scope {scope_str!r}"
                 )
             return str(resolved)
 

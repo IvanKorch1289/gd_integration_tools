@@ -40,7 +40,7 @@ class AgentToolPolicy(BaseModel):
 
     agent_id: str = Field(..., description="Уникальный ID агента")
     allowed_tools: list[str] = Field(
-        default_factory=list, description="Разрешённые tool names",
+        default_factory=list, description="Разрешённые tool names"
     )
     denied_tools: list[str] = Field(
         default_factory=list,
@@ -51,7 +51,7 @@ class AgentToolPolicy(BaseModel):
         description="Разрешённые инструменты возвращают AUDIT (для логирования)",
     )
     max_tool_calls_per_run: int = Field(
-        default=50, ge=1, description="Максимум tool calls за один run",
+        default=50, ge=1, description="Максимум tool calls за один run"
     )
 
     # Transient counter — not serialized, reset per run.

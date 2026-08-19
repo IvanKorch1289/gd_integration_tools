@@ -127,7 +127,7 @@ class MultimodalRAGService(_LegacyMultimodalRAGService):
         return result.caption
 
     async def transcribe_audio(
-        self, audio_bytes: bytes, *, suffix: str = ".wav",
+        self, audio_bytes: bytes, *, suffix: str = ".wav"
     ) -> str:
         """STT для audio (Sprint 11 K4 W1).
 
@@ -188,7 +188,7 @@ class MultimodalRAGService(_LegacyMultimodalRAGService):
             case other:
                 raise ValueError(
                     f"MultimodalRAGService.ingest_document: MIME {other!r} "
-                    "не поддерживается (PDF/image).",
+                    "не поддерживается (PDF/image)."
                 )
 
         # Embed + store, только если feature-flag активен
@@ -289,7 +289,7 @@ class MultimodalRAGService(_LegacyMultimodalRAGService):
             return await self._embedder.embed(content)
         except Exception as exc:
             logger.warning(
-                "MultimodalRAGService: embedder упал (%s) — fallback на dummy", exc,
+                "MultimodalRAGService: embedder упал (%s) — fallback на dummy", exc
             )
             return _dummy_embedding(content)
 
@@ -323,10 +323,10 @@ class MultimodalRAGService(_LegacyMultimodalRAGService):
             if head.startswith(b"\xff\xd8\xff"):
                 return "image/jpeg"
             raise ValueError(
-                f"MultimodalRAGService: не удалось определить MIME для {source!r}",
+                f"MultimodalRAGService: не удалось определить MIME для {source!r}"
             )
         raise ValueError(
-            "MultimodalRAGService: для bytes-source требуется явный аргумент mime.",
+            "MultimodalRAGService: для bytes-source требуется явный аргумент mime."
         )
 
 

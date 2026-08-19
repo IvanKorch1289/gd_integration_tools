@@ -148,7 +148,7 @@ class RunScenarioProcessor(BaseProcessor):
     """Выполняет multi-step сценарий из body или параметра."""
 
     def __init__(
-        self, steps: list[dict[str, Any]] | None = None, name: str | None = None,
+        self, steps: list[dict[str, Any]] | None = None, name: str | None = None
     ) -> None:
         super().__init__(name)
         self._steps = steps

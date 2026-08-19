@@ -86,7 +86,7 @@ class HttpUpstreamClient(ClientMetricsMixin, InfrastructureClient):
         self._health_path = health_path
         self._client: httpx.AsyncClient | None = None
         self._breaker = ClientCircuitBreaker.from_profile(
-            name=self.name, profile=self.pooling, host=profile.base_url,
+            name=self.name, profile=self.pooling, host=profile.base_url
         )
 
     # -- lifecycle -----------------------------------------------------
@@ -173,7 +173,7 @@ class HttpUpstreamClient(ClientMetricsMixin, InfrastructureClient):
             # Fast probe — только факт наличия открытого клиента + pool state.
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.ok(
-                latency_ms=latency_ms, mode=mode, base_url=self._profile.base_url,
+                latency_ms=latency_ms, mode=mode, base_url=self._profile.base_url
             )
         except Exception as exc:
             return HealthResult.failed(
@@ -189,7 +189,7 @@ class HttpUpstreamClient(ClientMetricsMixin, InfrastructureClient):
         """Получить httpx-клиент. Требует, чтобы start() уже вызывался."""
         if self._client is None:
             raise RuntimeError(
-                f"Upstream '{self._profile.name}' not started — call start_all() first",
+                f"Upstream '{self._profile.name}' not started — call start_all() first"
             )
         return self._client
 

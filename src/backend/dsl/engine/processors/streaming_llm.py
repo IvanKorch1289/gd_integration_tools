@@ -45,7 +45,7 @@ class TokenStreamLLMProcessor(BaseProcessor):
         super().__init__(name)
         if output_mode not in {"sse", "ws", "webhook"}:
             raise ValueError(
-                f"output_mode должен быть sse|ws|webhook, получен {output_mode!r}",
+                f"output_mode должен быть sse|ws|webhook, получен {output_mode!r}"
             )
         self._prompt_property = prompt_property
         self._output_mode = output_mode
@@ -151,7 +151,7 @@ class TokenStreamLLMProcessor(BaseProcessor):
         accumulated: list[str] = []
         try:
             astream = service.astream(
-                [{"role": "user", "content": prompt}], model=self._model,
+                [{"role": "user", "content": prompt}], model=self._model
             )
             async for chunk in astream:
                 norm = {"delta": chunk.delta, "finish_reason": chunk.finish_reason}
@@ -160,7 +160,7 @@ class TokenStreamLLMProcessor(BaseProcessor):
                     await publisher.publish_chunk(exchange=exchange, chunk=norm)
                 if norm["finish_reason"]:
                     await publisher.publish_done(
-                        exchange=exchange, finish_reason=norm["finish_reason"],
+                        exchange=exchange, finish_reason=norm["finish_reason"]
                     )
                     break
         except asyncio.CancelledError:

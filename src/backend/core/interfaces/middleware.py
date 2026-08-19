@@ -14,6 +14,7 @@ Ponytail: Protocol + dependency injection, не требует переписы�
 ABC-based код. ABC-класс в dsl/engine/middleware.py — теперь thin wrapper
 вокруг Protocol.
 """
+
 from __future__ import annotations
 
 from typing import Any, Protocol, runtime_checkable
@@ -33,9 +34,7 @@ class ProcessorMiddleware(Protocol):
     interface без layer violation (infrastructure → dsl запрещён).
     """
 
-    async def before(
-        self, processor_name: str, exchange: Any, context: Any
-    ) -> None:
+    async def before(self, processor_name: str, exchange: Any, context: Any) -> None:
         """Выполнить операцию before процессора (метрики, трейсы, timeout)."""
         ...
 

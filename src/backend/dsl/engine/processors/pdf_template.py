@@ -90,7 +90,7 @@ class PdfTemplateProcessor(BaseProcessor):
         if page_size not in _ALLOWED_PAGE_SIZES:
             raise ValueError(
                 f"pdf_template: page_size must be one of {sorted(_ALLOWED_PAGE_SIZES)}, "
-                f"got {page_size!r}",
+                f"got {page_size!r}"
             )
         if context_from not in {"body", "properties", "merged"}:
             raise ValueError(f"pdf_template: context_from invalid: {context_from!r}")
@@ -156,9 +156,9 @@ class PdfTemplateProcessor(BaseProcessor):
             # cycle-9/D-AUDIT-1716: narrow exceptions + observability (mirror
             # D-AUDIT-1706..1715).
             import logging
+
             logging.getLogger(__name__).debug(
-                "pdf_template.feature_flag_fallback",
-                extra={"error": str(ff_exc)},
+                "pdf_template.feature_flag_fallback", extra={"error": str(ff_exc)}
             )
 
         # Lazy-import reportlab + jinja2
@@ -178,7 +178,7 @@ class PdfTemplateProcessor(BaseProcessor):
         env = SandboxedEnvironment(autoescape=False)
         try:
             text = env.from_string(self._template_source).render(
-                **self._collect_context(exchange),
+                **self._collect_context(exchange)
             )
         except Exception as exc:
             exchange.fail(f"pdf_template render error: {exc}")

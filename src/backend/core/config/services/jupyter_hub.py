@@ -49,8 +49,7 @@ class JupyterHubSettings(BaseSettingsWithLoader):
 
     # ── Обязательные параметры (при enabled=True) ──
 
-    enabled: bool = Field(
-        default=False     )
+    enabled: bool = Field(default=False)
 
     base_url: str = Field(
         default=_DEFAULT_BASE_URL,
@@ -102,7 +101,7 @@ class JupyterHubSettings(BaseSettingsWithLoader):
     )
 
     ssl_verify: bool = Field(
-        default=True, description="Проверять TLS-сертификат сервера.",
+        default=True, description="Проверять TLS-сертификат сервера."
     )
 
     # ── Jupyter-специфичные параметры ──

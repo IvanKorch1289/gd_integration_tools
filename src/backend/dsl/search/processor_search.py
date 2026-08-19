@@ -94,7 +94,7 @@ class ProcessorSearch:
                     description,
                     getattr(spec, "namespace", "core"),
                     getattr(spec, "name", "unknown"),
-                ),
+                )
             )
         return cls(documents=docs)
 
@@ -138,7 +138,7 @@ class ProcessorSearch:
                     namespace=ns,
                     score=round(score, 4),
                     description=desc,
-                ),
+                )
             )
 
         scores.sort(key=lambda r: r.score, reverse=True)

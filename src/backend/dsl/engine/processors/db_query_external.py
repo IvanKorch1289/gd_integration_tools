@@ -75,11 +75,11 @@ class ExternalDbQueryProcessor(BaseProcessor):
         if params_from not in _ALLOWED_PARAM_SOURCES:
             raise ValueError(
                 f"params_from must be one of {sorted(_ALLOWED_PARAM_SOURCES)}, "
-                f"got: {params_from!r}",
+                f"got: {params_from!r}"
             )
         if fetch not in {"all", "one", "scalar"}:
             raise ValueError(
-                f"fetch must be one of 'all'|'one'|'scalar', got: {fetch!r}",
+                f"fetch must be one of 'all'|'one'|'scalar', got: {fetch!r}"
             )
         self._profile = profile
         self._sql = sql

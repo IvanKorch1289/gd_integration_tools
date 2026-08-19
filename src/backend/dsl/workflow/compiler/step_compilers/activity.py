@@ -2,6 +2,7 @@
 
 Phases: activity, signal_wait, sleep, pause, resume, sensor, agent_invoke.
 """
+
 from __future__ import annotations
 
 # ruff: noqa: F821 — shared symbols (exceptions, _build_retry_policy) defined in __init__.py
@@ -349,5 +350,3 @@ async def compile_agent_invoke_step(
 # TypeError при попытке скомпилировать эти шаги — они были declared
 # в advanced_declarations.py и accepted by WorkflowDeclaration (через
 # Annotated union), но не имели компиляторов.
-
-

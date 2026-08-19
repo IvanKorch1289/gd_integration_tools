@@ -72,12 +72,12 @@ def register_secrets_backend() -> None:
             case "vault":
                 raise NotImplementedError(
                     "VaultSecretsBackend будет реализован в Wave K. "
-                    "До этого момента используйте SECRETS_BACKEND=env.",
+                    "До этого момента используйте SECRETS_BACKEND=env."
                 )
             case _:
                 raise ValueError(
                     f"Неизвестный SECRETS_BACKEND={backend_kind!r}; "
-                    "поддерживаются: env, vault.",
+                    "поддерживаются: env, vault."
                 )
 
     register_factory(SecretsBackend, _factory)
@@ -103,7 +103,7 @@ def _register_storage_facade() -> None:
             gate = get_service(CapabilityGate)
             capability_check = getattr(gate, "check", None)
         return StorageFacade(
-            storage=storage, capability_check=capability_check, plugin="system",
+            storage=storage, capability_check=capability_check, plugin="system"
         )
 
     register_factory(StorageFacade, _factory)
@@ -130,7 +130,7 @@ def _register_cache_facade() -> None:
         primary = create_cache_backend(cache_settings)
         memory = MemoryBackend(maxsize=cache_settings.l1_maxsize)
         disk_path = getattr(cache_settings, "disk_fallback_path", None) or Path(
-            "var/cache/disk_fallback",
+            "var/cache/disk_fallback"
         )
         disk = DiskCacheBackend(disk_path)
 

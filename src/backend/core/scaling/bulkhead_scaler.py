@@ -24,6 +24,7 @@ if TYPE_CHECKING:
         BulkheadRegistry,
     )
 
+
 def __getattr__(name: str) -> Any:
     if not TYPE_CHECKING:
         if name in ("Bulkhead", "BulkheadRegistry"):

@@ -6,6 +6,7 @@ S171 M9 final: добавляет WAF в DSL workflow layer.
 
 Pattern (Ponytail, D171): тонкий wrapper.
 """
+
 from __future__ import annotations
 
 import re
@@ -78,19 +79,15 @@ class WafCheckProcessor(BaseProcessor):
         if action not in self.ACTIONS:
             raise ValueError(
                 f"WafCheckProcessor: action {action!r} не поддерживается. "
-                f"Доступно: {self.ACTIONS}",
+                f"Доступно: {self.ACTIONS}"
             )
         super().__init__(name=name or f"waf_check:{action}")
         self.source_property = source_property
         self.action = action
         self.target = to
-        self._patterns = [
-            (re.compile(pat), name) for pat, name in _DEFAULT_PATTERNS
-        ]
+        self._patterns = [(re.compile(pat), name) for pat, name in _DEFAULT_PATTERNS]
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Проверяет payload на WAF-паттерны и применяет действие (log/block/warn)."""
         if not await self.auth_check(exchange, action="check"):
             return
@@ -105,8 +102,7 @@ class WafCheckProcessor(BaseProcessor):
 
         text = str(payload) if payload is not None else ""
         findings = [
-            rule_name for regex, rule_name in self._patterns
-            if regex.search(text)
+            rule_name for regex, rule_name in self._patterns if regex.search(text)
         ]
 
         decision = {
@@ -117,7 +113,9 @@ class WafCheckProcessor(BaseProcessor):
 
         _logger.info(
             "waf_check action=%s matched=%d safe=%s",
-            self.action, len(findings), decision["safe"],
+            self.action,
+            len(findings),
+            decision["safe"],
         )
 
         self.set_result(exchange, self.target, decision)

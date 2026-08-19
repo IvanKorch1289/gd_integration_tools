@@ -75,7 +75,7 @@ class RequestBodyCacheMiddleware:
     """
 
     def __init__(
-        self, app: ASGIApp, *, max_body_size: int = _DEFAULT_MAX_BODY_SIZE,
+        self, app: ASGIApp, *, max_body_size: int = _DEFAULT_MAX_BODY_SIZE
     ) -> None:
         """Инициализирует middleware.
 
@@ -179,13 +179,13 @@ class RequestBodyCacheMiddleware:
             if header_name == b"content-length":
                 try:
                     return int(header_value.decode("latin-1"))
-                except (TypeError, ValueError):
+                except TypeError, ValueError:
                     return None
         return None
 
     @staticmethod
     def _install_replay_receive(
-        scope: Scope, original_receive: Receive, body: bytes,
+        scope: Scope, original_receive: Receive, body: bytes
     ) -> Receive:
         """Устанавливает replay receive в scope для downstream (cycle 52).
 
@@ -206,16 +206,14 @@ class RequestBodyCacheMiddleware:
         async def replay_receive() -> Message:
             if not delivered["done"]:
                 delivered["done"] = True
-                return {
-                    "type": "http.request",
-                    "body": body,
-                    "more_body": False,
-                }
+                return {"type": "http.request", "body": body, "more_body": False}
             return {"type": "http.disconnect"}
 
         # Pre-fix bug: ``scope["receive"] = original_receive`` —
         # downstream FastAPI body-parser получал consumed channel и
         # hangs. Теперь downstream получает replay_receive.
         scope["receive"] = replay_receive
-        scope["original_receive"] = original_receive  # для downstream, нужен raw channel
+        scope["original_receive"] = (
+            original_receive  # для downstream, нужен raw channel
+        )
         return replay_receive

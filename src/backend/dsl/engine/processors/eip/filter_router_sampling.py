@@ -88,7 +88,7 @@ class ContentBasedRouter(BaseProcessor):
             try:
                 if predicate(exchange):
                     _log.debug(
-                        "ContentBasedRouter: matched route %d → %s", idx, endpoint,
+                        "ContentBasedRouter: matched route %d → %s", idx, endpoint
                     )
                     exchange.set_property("routing.choice.endpoint", endpoint)
                     exchange.set_property("routing.choice.index", idx)

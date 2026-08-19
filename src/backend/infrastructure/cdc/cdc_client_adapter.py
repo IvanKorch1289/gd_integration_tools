@@ -106,7 +106,7 @@ class CDCClientAdapter(CDCSource):
         self._dlq_writer = dlq_writer
 
     async def subscribe(
-        self, *, tables: list[str], start_cursor: CDCCursor | None = None,
+        self, *, tables: list[str], start_cursor: CDCCursor | None = None
     ) -> AsyncIterator[CDCEvent]:
         """Подписаться на CDC-события через CDCClient.
 
@@ -126,12 +126,10 @@ class CDCClientAdapter(CDCSource):
                     # ERROR (not warning) so DLQ/Dashboard sees the loss.
                     logger.error(
                         "CDC adapter queue FULL: applying backpressure "
-                        "(event may be dropped after 5s)",
+                        "(event may be dropped after 5s)"
                     )
                     try:
-                        await asyncio.wait_for(
-                            self._queue.put(event), timeout=5.0,
-                        )
+                        await asyncio.wait_for(self._queue.put(event), timeout=5.0)
                     except TimeoutError:
                         await self._on_overflow(event)
 
@@ -172,7 +170,7 @@ class CDCClientAdapter(CDCSource):
         logger.debug("CDCClientAdapter ack: %s", cursor.value)
 
     async def replay(
-        self, *, start_cursor: CDCCursor, end_cursor: CDCCursor | None = None,
+        self, *, start_cursor: CDCCursor, end_cursor: CDCCursor | None = None
     ) -> AsyncIterator[CDCEvent]:
         """Replay не поддерживается CDCClient напрямую.
 
@@ -208,7 +206,7 @@ class CDCClientAdapter(CDCSource):
             logger.error(
                 "CDC adapter queue OVERFLOW after backpressure: "
                 "EVENT DROPPED (no DLQ writer configured; "
-                "consider increasing queue size or adding DLQ)",
+                "consider increasing queue size or adding DLQ)"
             )
             return
         envelope = _to_dlq_envelope(event, profile=self._profile)

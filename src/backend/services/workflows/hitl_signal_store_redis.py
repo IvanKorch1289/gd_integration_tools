@@ -118,7 +118,7 @@ class RedisHitlSignalStore:
 
         get_redis_client = get_redis_client_factory()
         self._client = cast(
-            _HitlRedisClient, await get_redis_client().get_client("queue"),
+            _HitlRedisClient, await get_redis_client().get_client("queue")
         )
         return self._client
 
@@ -153,12 +153,12 @@ class RedisHitlSignalStore:
             return HitlPendingSignal.from_dict(data)
         except (json.JSONDecodeError, KeyError, TypeError) as exc:
             _logger.warning(
-                "RedisHitlSignalStore.get failed for signal_id=%s: %s", signal_id, exc,
+                "RedisHitlSignalStore.get failed for signal_id=%s: %s", signal_id, exc
             )
             return None
 
     async def list_pending(
-        self, *, tenant_id: str | None = None,
+        self, *, tenant_id: str | None = None
     ) -> list[HitlPendingSignal]:
         """List pending (unresolved) signals.
 
@@ -178,7 +178,7 @@ class RedisHitlSignalStore:
             try:
                 data = json.loads(raw)
                 sig = HitlPendingSignal.from_dict(data)
-            except (json.JSONDecodeError, KeyError, TypeError):
+            except json.JSONDecodeError, KeyError, TypeError:
                 continue
             if sig.is_resolved:
                 continue
@@ -189,7 +189,7 @@ class RedisHitlSignalStore:
         return items
 
     async def mark_resolved(
-        self, signal_id: str, *, action: str, resolved_by: str,
+        self, signal_id: str, *, action: str, resolved_by: str
     ) -> HitlPendingSignal:
         """Mark signal as resolved (атомарно через Lua).
 
@@ -212,11 +212,11 @@ class RedisHitlSignalStore:
         pipeline_factory = getattr(client, "pipeline", None)
         if pipeline_factory is None:
             data = await self._mark_resolved_without_pipeline(
-                client, signal_id, action=action, resolved_by=resolved_by,
+                client, signal_id, action=action, resolved_by=resolved_by
             )
         else:
             data = await self._mark_resolved_transactional(
-                client, signal_id, action=action, resolved_by=resolved_by,
+                client, signal_id, action=action, resolved_by=resolved_by
             )
         # Cross-instance notify через существующий pub/sub.
         try:
@@ -229,7 +229,7 @@ class RedisHitlSignalStore:
         return HitlPendingSignal.from_dict(data)
 
     async def _mark_resolved_without_pipeline(
-        self, client: _HitlRedisClient, signal_id: str, *, action: str, resolved_by: str,
+        self, client: _HitlRedisClient, signal_id: str, *, action: str, resolved_by: str
     ) -> dict[str, Any]:
         """Fallback for lightweight Redis test doubles without transactions."""
         raw = await client.hget(_HASH_KEY, signal_id)
@@ -241,7 +241,7 @@ class RedisHitlSignalStore:
         if data.get("resolved_at"):
             raise ValueError(
                 f"HITL signal {signal_id!r} already resolved by "
-                f"{data.get('resolved_by')!r} as {data.get('resolved_action')!r}",
+                f"{data.get('resolved_by')!r} as {data.get('resolved_action')!r}"
             )
         data["resolved_at"] = datetime.now(UTC).isoformat()
         data["resolved_action"] = action
@@ -251,7 +251,7 @@ class RedisHitlSignalStore:
         return data
 
     async def _mark_resolved_transactional(
-        self, client: _HitlRedisClient, signal_id: str, *, action: str, resolved_by: str,
+        self, client: _HitlRedisClient, signal_id: str, *, action: str, resolved_by: str
     ) -> dict[str, Any]:
         """Atomic WATCH/MULTI update for the production Redis client.
 
@@ -272,7 +272,7 @@ class RedisHitlSignalStore:
                         raise HITLWatchContentionError(
                             f"HITL signal {signal_id!r} WATCH conflict exceeded "
                             f"{self._max_watch_retries} retries — persistent contention. "
-                            f"Caller must retry или escalate.",
+                            f"Caller must retry или escalate."
                         )
                     await pipe.watch(_HASH_KEY)
                     raw = await pipe.hget(_HASH_KEY, signal_id)
@@ -288,7 +288,7 @@ class RedisHitlSignalStore:
                         await pipe.unwatch()
                         raise ValueError(
                             f"HITL signal {signal_id!r} already resolved by "
-                            f"{data.get('resolved_by')!r} as {data.get('resolved_action')!r}",
+                            f"{data.get('resolved_by')!r} as {data.get('resolved_action')!r}"
                         )
                     data["resolved_at"] = datetime.now(UTC).isoformat()
                     data["resolved_action"] = action
@@ -300,7 +300,7 @@ class RedisHitlSignalStore:
                     return data
                 except asyncio.CancelledError:
                     raise
-                except (KeyError, TypeError, ValueError):
+                except KeyError, TypeError, ValueError:
                     raise
                 except WatchError:
                     # WATCH conflict → retry the compare-and-set transaction.
@@ -333,16 +333,14 @@ class RedisHitlSignalStore:
             deadline = time.monotonic() + timeout if timeout else None
             while True:
                 remaining = (
-                    deadline - time.monotonic()
-                    if deadline is not None
-                    else None
+                    deadline - time.monotonic() if deadline is not None else None
                 )
                 if remaining is not None and remaining <= 0:
                     return False
                 try:
                     msg = await asyncio.wait_for(
                         pubsub.get_message(
-                            ignore_subscribe_messages=True, timeout=remaining or 30,
+                            ignore_subscribe_messages=True, timeout=remaining or 30
                         ),
                         timeout=remaining,
                     )
@@ -352,7 +350,7 @@ class RedisHitlSignalStore:
                     continue
                 try:
                     payload = json.loads(msg.get("data") or "{}")
-                except (TypeError, json.JSONDecodeError):
+                except TypeError, json.JSONDecodeError:
                     continue
                 if payload.get("signal_id") == signal_id:
                     return True
@@ -360,13 +358,19 @@ class RedisHitlSignalStore:
             try:
                 await pubsub.punsubscribe("hitl:resolved:*")
                 await pubsub.aclose()
-            except (OSError, ConnectionError, RuntimeError, AttributeError) as pubsub_exc:
+            except (
+                OSError,
+                ConnectionError,
+                RuntimeError,
+                AttributeError,
+            ) as pubsub_exc:
                 # cycle-9/D-AUDIT-911: narrow exceptions + observability.
                 # OSError/ConnectionError — network при punsubscribe/aclose,
                 # RuntimeError — pubsub не subscribed, AttributeError —
                 # API changed. Bare `except Exception` маскировал unrelated
                 # runtime errors (KeyError, TypeError).
                 import logging
+
                 logging.getLogger(__name__).debug(
                     "hitl_signal_store_redis.pubsub_cleanup_failed",
                     extra={"error": str(pubsub_exc)},

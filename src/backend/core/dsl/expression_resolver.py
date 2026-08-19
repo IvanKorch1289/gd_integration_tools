@@ -32,7 +32,7 @@ _VAR_PATTERN = re.compile(
     r"'([^']+)'"  # key (single-quoted)
     r"(?:\s*,\s*scope\s*=\s*'([^']+)')?"  # optional scope
     r"(?:\s*,\s*default\s*=\s*('[^']*'|\"([^\"]*)\"))?"  # optional default
-    r"\s*\)\}",
+    r"\s*\)\}"
 )
 
 
@@ -83,7 +83,7 @@ class ExpressionResolver:
                     return default_quoted
                 raise ExpressionResolutionError(
                     f"Variable {key!r} not found in scope {scope_str!r} "
-                    f"(no default provided)",
+                    f"(no default provided)"
                 )
             return str(resolved)
 
@@ -96,7 +96,6 @@ class ExpressionResolver:
         return _resolve_env(value)
         # 5. ${secret:vault/path} — passthrough (resolved by SecretsResolver
         # at runtime; only tokenize the path).
-
 
 
 async def resolve_expression(value: str, store: DSLVariableStore | None = None) -> str:

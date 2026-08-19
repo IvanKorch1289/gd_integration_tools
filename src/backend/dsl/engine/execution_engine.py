@@ -58,7 +58,7 @@ def _default_middleware_factory() -> MiddlewareChain:
             ErrorNormalizerMiddleware(),
             TracingMiddleware(),
             MetricsMiddleware(),
-        ],
+        ]
     )
 
 
@@ -151,7 +151,7 @@ class ExecutionEngine:
             and pipeline.feature_flag in disabled_feature_flags
         ):
             raise RouteDisabledError(
-                route_id=pipeline.route_id, feature_flag=pipeline.feature_flag,
+                route_id=pipeline.route_id, feature_flag=pipeline.feature_flag
             )
 
     @staticmethod
@@ -190,14 +190,14 @@ class ExecutionEngine:
 
         if context.logger is not None:
             context.logger.debug(
-                "Executing '%s' for route '%s'", processor.name, route_id,
+                "Executing '%s' for route '%s'", processor.name, route_id
             )
 
         timeout = timeout_mw.get_timeout(processor.name) if timeout_mw else None
 
         async with tracer.trace(route_id, processor.name, type(processor).__name__):
             await middleware_chain.execute(
-                processor, exchange, context, timeout=timeout,
+                processor, exchange, context, timeout=timeout
             )
 
         return {
@@ -229,7 +229,7 @@ class ExecutionEngine:
                 latency_ms=total_ms,
                 is_error=exchange.status == ExchangeStatus.failed,
             )
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             pass
 
     async def execute(
@@ -268,14 +268,14 @@ class ExecutionEngine:
             if not result.valid:
                 errors = "; ".join(i.message for i in result.errors)
                 raise ValueError(
-                    f"Pipeline '{pipeline.route_id}' validation failed: {errors}",
+                    f"Pipeline '{pipeline.route_id}' validation failed: {errors}"
                 )
 
         runtime_context = context or ExecutionContext()
         runtime_context.route_id = pipeline.route_id
 
         current_exchange = exchange or Exchange(
-            in_message=Message(body=body, headers=headers or {}),
+            in_message=Message(body=body, headers=headers or {})
         )
         current_exchange.meta.route_id = pipeline.route_id
         current_exchange.meta.source = pipeline.source
@@ -326,14 +326,14 @@ class ExecutionEngine:
                         "duration_ms": duration_ms,
                         "status": "error",
                         "error": str(exc),
-                    },
+                    }
                 )
                 current_exchange.fail(str(exc))
                 break
 
         current_exchange.set_property("_trace", trace_log)
         self._finalize(
-            current_exchange, pipeline, (time.monotonic() - pipeline_start) * 1000,
+            current_exchange, pipeline, (time.monotonic() - pipeline_start) * 1000
         )
         return current_exchange
 
@@ -369,12 +369,12 @@ class ExecutionEngine:
             self._check_tenant_aware(pipeline)
 
         current_exchange = exchange or Exchange(
-            in_message=Message(body=body, headers=headers or {}),
+            in_message=Message(body=body, headers=headers or {})
         )
         runtime_context = context or ExecutionContext()
 
         trace_log = await self._pool.execute_parallel(
-            processors, current_exchange, runtime_context, timeout=timeout,
+            processors, current_exchange, runtime_context, timeout=timeout
         )
 
         current_exchange.set_property("_trace", trace_log)

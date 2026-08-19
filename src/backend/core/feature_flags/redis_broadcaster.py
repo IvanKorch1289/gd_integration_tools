@@ -164,7 +164,7 @@ class RedisFeatureFlagBroadcaster:
             return False
 
     async def start(
-        self, *, task_factory: Callable[..., asyncio.Task[Any]] | None = None,
+        self, *, task_factory: Callable[..., asyncio.Task[Any]] | None = None
     ) -> None:
         """Запустить subscriber loop через TaskRegistry.
 
@@ -183,7 +183,7 @@ class RedisFeatureFlagBroadcaster:
 
             task_factory = get_task_registry().create_task
         self._task = task_factory(
-            self._listen(), name="feature-flag-broadcaster-subscriber",
+            self._listen(), name="feature-flag-broadcaster-subscriber"
         )
         _logger.info(
             "feature_flag.broadcast.subscriber.started",
@@ -255,7 +255,7 @@ class RedisFeatureFlagBroadcaster:
             self._overrides.clear(flag, tenant_id=tenant_id)
         else:
             self._overrides.set(
-                flag, new_value, tenant_id=tenant_id, actor=f"broadcast:{actor}",
+                flag, new_value, tenant_id=tenant_id, actor=f"broadcast:{actor}"
             )
         self._state.applied_total += 1
         _logger.debug(
@@ -265,7 +265,7 @@ class RedisFeatureFlagBroadcaster:
 
 
 async def maybe_start_broadcaster(
-    *, redis_client: AsyncRedis | None, overrides: RuntimeFeatureFlagOverrides,
+    *, redis_client: AsyncRedis | None, overrides: RuntimeFeatureFlagOverrides
 ) -> RedisFeatureFlagBroadcaster | None:
     """Запустить broadcaster, если feature-flag ``tenant_feature_flag_ui=True``.
 
@@ -289,11 +289,11 @@ async def maybe_start_broadcaster(
         return None
     if redis_client is None:
         _logger.warning(
-            "feature_flag.broadcast.skipped", extra={"reason": "redis_client is None"},
+            "feature_flag.broadcast.skipped", extra={"reason": "redis_client is None"}
         )
         return None
     broadcaster = RedisFeatureFlagBroadcaster(
-        redis_client=redis_client, overrides=overrides,
+        redis_client=redis_client, overrides=overrides
     )
     try:
         await broadcaster.start()

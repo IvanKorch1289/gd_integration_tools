@@ -46,8 +46,9 @@ class RequestReplyTransport(Protocol):
     async def publish(self, channel: str, envelope: dict[str, Any]) -> None:
         """Метод publish (см. signature)."""
         ...
+
     async def subscribe(
-        self, channel: str, handler: Callable[[dict[str, Any]], Awaitable[None]],
+        self, channel: str, handler: Callable[[dict[str, Any]], Awaitable[None]]
     ) -> None:
         """Метод subscribe (см. signature)."""
         ...
@@ -81,7 +82,7 @@ class InMemoryTransport:
             await sub(envelope)
 
     async def subscribe(
-        self, channel: str, handler: Callable[[dict[str, Any]], Awaitable[None]],
+        self, channel: str, handler: Callable[[dict[str, Any]], Awaitable[None]]
     ) -> None:
         """Подписаться на ``channel``, вызывая ``handler(envelope)`` per request."""
         self._log.append(("subscribe", channel))
@@ -149,7 +150,7 @@ class RequestReplyBackend:
             return await asyncio.wait_for(fut, timeout=timeout)
         except TimeoutError as exc:
             raise RequestReplyTimeoutError(
-                f"request timeout after {timeout}s (cid={cid})",
+                f"request timeout after {timeout}s (cid={cid})"
             ) from exc
         finally:
             async with self._lock:
@@ -163,7 +164,7 @@ class RequestReplyBackend:
         )
 
     async def wait_for_reply(
-        self, correlation_id: str, *, timeout: float = DEFAULT_TIMEOUT_S,
+        self, correlation_id: str, *, timeout: float = DEFAULT_TIMEOUT_S
     ) -> Any:
         """Блокирующее ожидание reply для существующего ``correlation_id``."""
         reply_ch = self.reply_channel(correlation_id)
@@ -178,7 +179,7 @@ class RequestReplyBackend:
             return await asyncio.wait_for(fut, timeout=timeout)
         except TimeoutError as exc:
             raise RequestReplyTimeoutError(
-                f"wait_for_reply timeout after {timeout}s (cid={correlation_id})",
+                f"wait_for_reply timeout after {timeout}s (cid={correlation_id})"
             ) from exc
         finally:
             async with self._lock:
@@ -239,7 +240,7 @@ class RequestReplyMixin:
     ) -> Any:
         """Send request, wait for reply, return reply."""
         return await self._request_reply_backend().request(
-            endpoint, payload, timeout=timeout, correlation_id=correlation_id,
+            endpoint, payload, timeout=timeout, correlation_id=correlation_id
         )
 
     async def reply(self, correlation_id: str, payload: Any) -> None:
@@ -247,9 +248,9 @@ class RequestReplyMixin:
         await self._request_reply_backend().reply(correlation_id, payload)
 
     async def wait_for_reply(
-        self, correlation_id: str, *, timeout: float = DEFAULT_TIMEOUT_S,
+        self, correlation_id: str, *, timeout: float = DEFAULT_TIMEOUT_S
     ) -> Any:
         """Блокирующее ожидание reply для ``correlation_id``."""
         return await self._request_reply_backend().wait_for_reply(
-            correlation_id, timeout=timeout,
+            correlation_id, timeout=timeout
         )

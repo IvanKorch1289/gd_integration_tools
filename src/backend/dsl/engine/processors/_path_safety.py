@@ -63,11 +63,11 @@ def validate_path(path: str) -> str:
     for prefix in allowed:
         prefix_resolved = str(Path(prefix).resolve())
         if resolved_str == prefix_resolved or resolved_str.startswith(
-            prefix_resolved + os.sep,
+            prefix_resolved + os.sep
         ):
             return resolved_str
 
     raise PathTraversalError(
         f"Path '{path}' is outside allowed directories. "
-        f"Allowed prefixes: {', '.join(allowed)}",
+        f"Allowed prefixes: {', '.join(allowed)}"
     )

@@ -45,7 +45,7 @@ class LocalProcessScaler:
     ) -> None:
         if min_workers < 1 or max_workers < min_workers:
             raise ValueError(
-                "min_workers >= 1 и max_workers >= min_workers обязательны",
+                "min_workers >= 1 и max_workers >= min_workers обязательны"
             )
         self.min_workers = min_workers
         self.max_workers = max_workers
@@ -62,7 +62,7 @@ class LocalProcessScaler:
             return None
         try:
             return int(self.master_pid_file.read_text().strip())
-        except (OSError, ValueError):
+        except OSError, ValueError:
             return None
 
     def scale_up(self, by: int = 1) -> bool:

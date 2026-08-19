@@ -3,6 +3,7 @@
 Phases: reflect (procedural memory update), guardrail (PII/quality checks),
 escalate (raise severity + audit event).
 """
+
 from __future__ import annotations
 
 # ruff: noqa: F821 — shared symbols (exceptions, _build_retry_policy) defined in __init__.py
@@ -179,5 +180,3 @@ async def compile_escalate_step(decl: EscalateDeclaration, ctx: dict[str, Any]) 
     if decl.output_key:
         ctx.setdefault("_outputs", {})[decl.output_key] = result
     return result
-
-

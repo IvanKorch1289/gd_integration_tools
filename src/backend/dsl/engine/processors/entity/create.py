@@ -44,7 +44,7 @@ class EntityCreateProcessor(_BaseEntityProcessor):
         if not isinstance(payload, dict):
             exchange.fail(
                 f"{type(self).__name__}: payload_from={self._payload_from!r} "
-                f"вернул не-dict ({type(payload).__name__})",
+                f"вернул не-dict ({type(payload).__name__})"
             )
             return
         await self._dispatch(payload, context, exchange)
@@ -56,5 +56,5 @@ class EntityCreateProcessor(_BaseEntityProcessor):
                 "entity": self._entity,
                 "payload_from": self._payload_from,
                 "result_property": self._result_property,
-            },
+            }
         }

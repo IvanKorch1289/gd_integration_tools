@@ -71,11 +71,7 @@ class RagIngestProcessor(BaseProcessor):
         rag = get_rag_service()
         doc_id = await rag.ingest(
             content=masked_text,
-            metadata={
-                "modal": self._modal,
-                "collection": self._collection,
-                **pii_meta,
-            },
+            metadata={"modal": self._modal, "collection": self._collection, **pii_meta},
             namespace=self._collection,
         )
         exchange.set_property(self._output_property, doc_id)

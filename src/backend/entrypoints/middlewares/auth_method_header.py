@@ -43,10 +43,7 @@ class AuthMethodHeaderMiddleware:
     """
 
     def __init__(
-        self,
-        app: ASGIApp,
-        header_name: str = "X-Auth-Method",
-        enabled: bool = False,
+        self, app: ASGIApp, header_name: str = "X-Auth-Method", enabled: bool = False
     ) -> None:
         """Инициализирует middleware.
 

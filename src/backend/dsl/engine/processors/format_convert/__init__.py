@@ -38,7 +38,7 @@ __all__ = ("FormatConvertProcessor",)
 
 
 class FormatConvertProcessor(
-    DataFormatsMixin, EncodingsMixin, SpecializedFormatsMixin, BaseProcessor,
+    DataFormatsMixin, EncodingsMixin, SpecializedFormatsMixin, BaseProcessor
 ):
     """Format conversion (JSON/CSV/XML/Avro/etc.) processor.
 
@@ -100,9 +100,7 @@ class FormatConvertProcessor(
         self.claims = claims
         self.schema = schema
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         # 1. resolve input
         if self.source_value is not None:

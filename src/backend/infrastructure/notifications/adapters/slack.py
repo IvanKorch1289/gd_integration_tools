@@ -36,7 +36,7 @@ class SlackAdapter:
         self._upstream_name = upstream_name
 
     async def send(
-        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any],
+        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any]
     ) -> None:
         """Отправить message в Slack.
 
@@ -73,7 +73,7 @@ class SlackAdapter:
         response = await client.request("POST", url, json=payload)
         if response.status_code >= 400:
             raise RuntimeError(
-                f"Slack webhook failed: {response.status_code} {response.text[:200]}",
+                f"Slack webhook failed: {response.status_code} {response.text[:200]}"
             )
 
     async def health(self, mode: str = "fast") -> HealthResult:
@@ -86,21 +86,19 @@ class SlackAdapter:
             if not url:
                 latency_ms = (time.perf_counter() - start) * 1000.0
                 return HealthResult.failed(
-                    error="Slack webhook URL missing",
-                    mode=mode,
-                    latency_ms=latency_ms,
+                    error="Slack webhook URL missing", mode=mode, latency_ms=latency_ms
                 )
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.ok(latency_ms=latency_ms, mode=mode)
         except Exception as exc:
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
             )
 
 
-assert isinstance(
-    SlackAdapter(webhook_url_provider=lambda: ""), NotificationChannel,
+assert isinstance(  # nosec
+    SlackAdapter(webhook_url_provider=lambda: ""), NotificationChannel
 )  # Protocol-conformance check на import
 
 

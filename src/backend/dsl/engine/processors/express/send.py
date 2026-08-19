@@ -77,7 +77,7 @@ class ExpressSendProcessor(BaseProcessor):
         chat_id = resolve_value(exchange, self._chat_id_from)
         if not chat_id:
             exchange.fail(
-                f"ExpressSendProcessor: не удалось извлечь chat_id из {self._chat_id_from!r}",
+                f"ExpressSendProcessor: не удалось извлечь chat_id из {self._chat_id_from!r}"
             )
             return
 
@@ -129,9 +129,9 @@ class ExpressSendProcessor(BaseProcessor):
                 # change, RuntimeError — metrics unavailable, OSError —
                 # backend failure.
                 import logging
+
                 logging.getLogger(__name__).debug(
-                    "express_send.metrics_ok_failed",
-                    extra={"error": str(metrics_exc)},
+                    "express_send.metrics_ok_failed", extra={"error": str(metrics_exc)}
                 )
         except Exception as exc:
             _logger.warning("ExpressSend: ошибка отправки: %s", exc)
@@ -142,9 +142,15 @@ class ExpressSendProcessor(BaseProcessor):
                 )
 
                 record_express_message_sent(self._bot, status="error")
-            except (ImportError, AttributeError, RuntimeError, OSError) as err_metrics_exc:
+            except (
+                ImportError,
+                AttributeError,
+                RuntimeError,
+                OSError,
+            ) as err_metrics_exc:
                 # cycle-9/D-AUDIT-974: см. выше — тот же narrow для error path.
                 import logging
+
                 logging.getLogger(__name__).debug(
                     "express_send.metrics_error_failed",
                     extra={"error": str(err_metrics_exc)},

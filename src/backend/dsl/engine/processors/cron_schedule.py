@@ -51,7 +51,7 @@ class CronScheduleProcessor:
         if not self.cron_expr or len(self.cron_expr.split()) != 5:
             raise ValueError(
                 f"cron_expr должен быть 5-field выражением, "
-                f"получено: {self.cron_expr!r}",
+                f"получено: {self.cron_expr!r}"
             )
         if not self.workflow_name:
             raise ValueError("workflow_name обязателен")

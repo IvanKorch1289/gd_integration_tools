@@ -85,7 +85,7 @@ class GeoProcessor(BaseProcessor):
         super().__init__(name=name or f"geo:{mode}")
         if mode not in _ALLOWED_MODES:
             raise ValueError(
-                f"geo: mode must be one of {sorted(_ALLOWED_MODES)}, got {mode!r}",
+                f"geo: mode must be one of {sorted(_ALLOWED_MODES)}, got {mode!r}"
             )
         self._mode = mode
         self._address = address
@@ -154,9 +154,9 @@ class GeoProcessor(BaseProcessor):
             # cycle-9/D-AUDIT-1713: narrow exceptions + observability (mirror
             # D-AUDIT-1706..1712).
             import logging
+
             logging.getLogger(__name__).debug(
-                "geo.feature_flag_fallback",
-                extra={"error": str(ff_exc)},
+                "geo.feature_flag_fallback", extra={"error": str(ff_exc)}
             )
 
         try:

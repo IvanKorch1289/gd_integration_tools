@@ -156,7 +156,7 @@ class RedisClusterAdapter:
             import asyncio
 
             results = await asyncio.gather(
-                *(self._cluster.get(k) for k in keys), return_exceptions=False,
+                *(self._cluster.get(k) for k in keys), return_exceptions=False
             )
             return list(results)
 
@@ -177,7 +177,7 @@ class RedisClusterAdapter:
             await asyncio.gather(*(self._cluster.set(k, v) for k, v in mapping.items()))
 
     async def keys_scan_batch(
-        self, pattern: str, *, batch_size: int = 1000,
+        self, pattern: str, *, batch_size: int = 1000
     ) -> AsyncIterator[list[bytes]]:
         """SCAN keys батчами по shard'ам (S13 K2 W6).
 
@@ -195,7 +195,7 @@ class RedisClusterAdapter:
             yield [key]
 
     async def eval_script(
-        self, script: str, keys: Sequence[str], args: Sequence[Any],
+        self, script: str, keys: Sequence[str], args: Sequence[Any]
     ) -> Any:
         """Lua scripting (atomic multi-key operations) (S13 K2 W6).
 

@@ -65,7 +65,7 @@ class L3RetrievalGraphCache:
             from src.backend.core.config.features import feature_flags
 
             return bool(
-                getattr(feature_flags, "rag_cache_l3_retrieval_invalidation", False),
+                getattr(feature_flags, "rag_cache_l3_retrieval_invalidation", False)
             )
         except Exception as _:
             return False
@@ -80,7 +80,7 @@ class L3RetrievalGraphCache:
     # ─── core API ─────────────────────────────────────────────────────────
 
     async def lookup(
-        self, query: str, *, namespace: str | None = None,
+        self, query: str, *, namespace: str | None = None
     ) -> list[dict[str, Any]] | None:
         """Возвращает кешированный retrieval-result или None.
 
@@ -105,7 +105,7 @@ class L3RetrievalGraphCache:
         return list(record["result"])
 
     async def store(
-        self, query: str, *, namespace: str | None, result: list[dict[str, Any]],
+        self, query: str, *, namespace: str | None, result: list[dict[str, Any]]
     ) -> None:
         """Сохраняет retrieval-result для (query, namespace).
 
@@ -151,7 +151,7 @@ class L3RetrievalGraphCache:
         return len(keys)
 
     async def publish_invalidate(
-        self, namespace: str, *, doc_id: str | None = None,
+        self, namespace: str, *, doc_id: str | None = None
     ) -> bool:
         """Публикует invalidation-сообщение в Redis pub/sub.
 
@@ -195,7 +195,7 @@ class L3RetrievalGraphCache:
         from src.backend.core.utils.task_registry import get_task_registry
 
         self._invalidation_task = get_task_registry().create_task(
-            self._listen_loop(), name="l3-rag-cache-invalidate",
+            self._listen_loop(), name="l3-rag-cache-invalidate"
         )
 
     async def stop_invalidation_listener(self) -> None:

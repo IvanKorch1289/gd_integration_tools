@@ -61,7 +61,7 @@ class ComplianceMixin(_RouteBuilderProtocol):
         )
 
     def mask(
-        self, *, patterns: list[str] | None = None, replacement: str = "***",
+        self, *, patterns: list[str] | None = None, replacement: str = "***"
     ) -> Self:
         """Маскирование PII/PCI в body (ИНН/СНИЛС/карта/email/телефон)."""
         return self._add_lazy(

@@ -130,14 +130,14 @@ class GraphQLQueryProcessor(BaseProcessor):
 
         try:
             response = await client.request(
-                method="POST", url=self._endpoint, headers=req_headers, json=payload,
+                method="POST", url=self._endpoint, headers=req_headers, json=payload
             )
 
             # Parse response
             if response.status_code >= 400:
                 error_body = response.text
                 exchange.fail(
-                    f"GraphQL request failed with status {response.status_code}: {error_body}",
+                    f"GraphQL request failed with status {response.status_code}: {error_body}"
                 )
                 return
 
@@ -145,7 +145,7 @@ class GraphQLQueryProcessor(BaseProcessor):
                 result = orjson.loads(response.text)
             except orjson.JSONDecodeError as exc:
                 exchange.fail(
-                    f"GraphQL response is not valid JSON: {exc}\nResponse: {response.text[:500]}",
+                    f"GraphQL response is not valid JSON: {exc}\nResponse: {response.text[:500]}"
                 )
                 return
 

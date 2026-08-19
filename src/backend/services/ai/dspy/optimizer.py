@@ -130,7 +130,7 @@ class DSPyOptimizer:
         *,
         baseline: BaselineDataset,
         bootstrap_strategy: Callable[
-            [DSPyPipeline, Sequence[dict[str, Any]]], Callable[[dict[str, Any]], str],
+            [DSPyPipeline, Sequence[dict[str, Any]]], Callable[[dict[str, Any]], str]
         ]
         | None = None,
     ) -> None:
@@ -224,7 +224,7 @@ def _avg_metric(
 
 
 def _default_bootstrap(
-    pipeline: DSPyPipeline, train: Sequence[dict[str, Any]],
+    pipeline: DSPyPipeline, train: Sequence[dict[str, Any]]
 ) -> Callable[[dict[str, Any]], str]:
     """Default bootstrap — использует DSPy BootstrapFewShot если SDK доступен.
 
@@ -346,7 +346,7 @@ def _dspy_output_to_str(result: dspy.Prediction) -> str:
 
 
 def _token_overlap_bootstrap(
-    pipeline: DSPyPipeline, train: Sequence[dict[str, Any]],
+    pipeline: DSPyPipeline, train: Sequence[dict[str, Any]]
 ) -> Callable[[dict[str, Any]], str]:
     """Fallback-stub: best-match-by-input via token overlap.
 

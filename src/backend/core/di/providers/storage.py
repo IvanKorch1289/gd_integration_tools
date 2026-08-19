@@ -45,7 +45,7 @@ def set_object_storage_provider(storage: Any) -> None:
 
 
 def get_storage_facade_provider(
-    *, plugin: str = "extension", capability_check: Any = None,
+    *, plugin: str = "extension", capability_check: Any = None
 ) -> Any:
     """Возвращает :class:`StorageFacade` — capability-checked фасад для extensions.
 
@@ -69,7 +69,7 @@ def get_storage_facade_provider(
     from src.backend.services.storage.facade import StorageFacade
 
     return StorageFacade(
-        storage=storage_backend, capability_check=capability_check, plugin=plugin,
+        storage=storage_backend, capability_check=capability_check, plugin=plugin
     )
 
 

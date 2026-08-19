@@ -162,13 +162,13 @@ class AICostDashboard:
 
         # by_model — group_by=provider, фильтрация по model_filter.
         by_model_rows = await self._safe_fetch(
-            group_by="provider", window=window, top_n=top_n,
+            group_by="provider", window=window, top_n=top_n
         )
         snapshot.by_model = _to_model_rows(by_model_rows, model_filter=model_filter)
 
         # by_tenant — group_by=tenant.
         by_tenant_rows = await self._safe_fetch(
-            group_by="tenant", window=window, top_n=top_n,
+            group_by="tenant", window=window, top_n=top_n
         )
         snapshot.by_tenant = _to_tenant_rows(by_tenant_rows, tenant_id=tenant_id)
 
@@ -186,11 +186,11 @@ class AICostDashboard:
         return snapshot
 
     async def _safe_fetch(
-        self, *, group_by: str, window: timedelta, top_n: int,
+        self, *, group_by: str, window: timedelta, top_n: int
     ) -> list[CostRow]:
         try:
             return await self._reader.fetch_costs(
-                group_by=group_by, window=window, top_n=top_n,
+                group_by=group_by, window=window, top_n=top_n
             )
         except Exception as exc:
             logger.warning("AICostDashboard fetch %s failed: %s", group_by, exc)
@@ -198,7 +198,7 @@ class AICostDashboard:
 
 
 def _to_model_rows(
-    rows: Iterable[CostRow], *, model_filter: str | None,
+    rows: Iterable[CostRow], *, model_filter: str | None
 ) -> list[UsageByModel]:
     f = (model_filter or "").lower().strip()
     result: list[UsageByModel] = []
@@ -213,13 +213,13 @@ def _to_model_rows(
                 prompt_tokens=row.prompt_tokens,
                 completion_tokens=row.completion_tokens,
                 total_cost_usd=row.total_cost_usd,
-            ),
+            )
         )
     return result
 
 
 def _to_tenant_rows(
-    rows: Iterable[CostRow], *, tenant_id: str | None,
+    rows: Iterable[CostRow], *, tenant_id: str | None
 ) -> list[CostByTenant]:
     materialised = [
         CostByTenant(
@@ -239,7 +239,7 @@ def _to_tenant_rows(
 
 
 def _build_token_trends(
-    rows: Iterable[CostRow], *, window: timedelta,
+    rows: Iterable[CostRow], *, window: timedelta
 ) -> list[TokenRateTrend]:
     """Простой rolling trend: разбивает на 12 равных bucket.
 
@@ -269,6 +269,6 @@ def _build_token_trends(
                 prompt_tokens=per_bucket_prompt,
                 completion_tokens=per_bucket_completion,
                 requests=per_bucket_requests,
-            ),
+            )
         )
     return trends

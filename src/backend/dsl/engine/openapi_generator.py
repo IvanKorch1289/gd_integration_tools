@@ -86,7 +86,7 @@ def _build_paths(pipeline: Pipeline, base_url: str) -> dict[str, Any]:
 
 
 def _infer_path_and_method(
-    pipeline: Pipeline, protocol: ProtocolType,
+    pipeline: Pipeline, protocol: ProtocolType
 ) -> tuple[str, str]:
     """Infer the API path and HTTP method from pipeline configuration."""
     # Default to /{route_id} with POST for REST
@@ -136,8 +136,8 @@ def _build_responses(pipeline: Pipeline) -> dict[str, Any]:
                     "schema": {
                         "type": "object",
                         "properties": {"error": {"type": "string"}},
-                    },
-                },
+                    }
+                }
             },
         },
     }
@@ -158,8 +158,8 @@ def _build_request_body(pipeline: Pipeline) -> dict[str, Any]:
                             "description": "Pipeline input body",
                         },
                     },
-                },
-            },
+                }
+            }
         },
     }
 
@@ -176,7 +176,7 @@ def _build_components_schemas(pipeline: Pipeline) -> dict[str, Any]:
                 "protocol": {"type": "string"},
                 "processors": {"type": "array", "items": {"type": "object"}},
             },
-        },
+        }
     }
 
     # Add processor-specific schemas
@@ -206,7 +206,7 @@ def _build_tags(pipeline: Pipeline) -> list[dict[str, str]]:
             {
                 "name": pipeline.protocol.value.upper(),
                 "description": f"Operations via {pipeline.protocol.value} protocol",
-            },
+            }
         )
 
     if pipeline.tenant_aware:

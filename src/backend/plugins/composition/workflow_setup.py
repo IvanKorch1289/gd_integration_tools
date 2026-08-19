@@ -59,8 +59,8 @@ def _register_workflow_declarations_from_filesystem() -> int:
     Returns:
         Кол-во успешно зарегистрированных workflow-деклараций.
     """
-    from src.backend.services.workflow import workflow_registry
     from src.backend.services.dsl_portal import load_workflow_from_yaml
+    from src.backend.services.workflow import workflow_registry
 
     extensions_dir = Path(os.environ.get("EXTENSIONS_DIR", "/app/extensions"))
     if not extensions_dir.exists():
@@ -77,14 +77,21 @@ def _register_workflow_declarations_from_filesystem() -> int:
             parts = rel.parts  # ('plugin', 'workflows', 'name.workflow.yaml')
             route_id = f"routes/{parts[0]}/{workflow_yaml.stem}"
             workflow_registry.register(wf, route_id=route_id)
+            # P0-NEW-3 (cycle 242): test_workflow_setup_calls_register_spec
+            # regression — register_spec required after register per
+            # workflow/registry.py:103 docstring.
+            try:
+                workflow_registry.register_spec(route_id, wf)
+            except (AttributeError, NotImplementedError) as exc:
+                _logger.debug("workflow.register_spec not available: %s", exc)
             registered += 1
-            _logger.info(
-                "workflow.auto_register OK: %s -> %s", wf.name, route_id,
-            )
+            _logger.info("workflow.auto_register OK: %s -> %s", wf.name, route_id)
         except Exception as exc:
             _logger.warning(
                 "workflow.auto_register FAIL: %s (%s: %s)",
-                workflow_yaml, type(exc).__name__, str(exc)[:200],
+                workflow_yaml,
+                type(exc).__name__,
+                str(exc)[:200],
             )
     return registered
 
@@ -128,8 +135,7 @@ async def start_workflow_runtime(app: Any) -> None:
     # workflow_compiler_registry + workflow_registry (для admin trigger).
     auto_loaded = _register_workflow_declarations_from_filesystem()
     _logger.info(
-        "workflow.auto_load: %d declarations loaded from EXTENSIONS_DIR",
-        auto_loaded,
+        "workflow.auto_load: %d declarations loaded from EXTENSIONS_DIR", auto_loaded
     )
 
     state = getattr(app, "state", None)

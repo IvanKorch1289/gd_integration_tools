@@ -47,7 +47,7 @@ class InvokerGRPCServicer(InvokerServiceServicer):
         self.logger.info("InvokerGRPCServicer инициализирован")
 
     async def Invoke(  # type: ignore[no-untyped-def]
-        self, request, context,
+        self, request, context
     ):
         """Обрабатывает gRPC ``Invoke`` rpc — пробрасывает в единый :class:`Invoker`.
 
@@ -138,7 +138,7 @@ class InvokerGRPCServicer(InvokerServiceServicer):
             try:
                 if hasattr(response.result, "model_dump"):
                     result_json = encode_json(
-                        response.result.model_dump(mode="json"),
+                        response.result.model_dump(mode="json")
                     ).decode("utf-8")
                 else:
                     result_json = encode_json(response.result).decode("utf-8")
@@ -147,6 +147,7 @@ class InvokerGRPCServicer(InvokerServiceServicer):
                 # AttributeError — model_dump API change, TypeError —
                 # wrong result type, ValueError — invalid JSON value.
                 import logging
+
                 logging.getLogger(__name__).debug(
                     "grpc_invoker.result_encode_fallback",
                     extra={"error": str(json_exc)},

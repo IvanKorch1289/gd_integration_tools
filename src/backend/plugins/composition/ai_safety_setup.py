@@ -93,7 +93,7 @@ def register_e2b_sandbox() -> None:
         if not api_key:
             _logger.warning(
                 "E2B_API_KEY не задан — регистрируется NoOpSandbox; "
-                "AI code-execution будет отказываться.",
+                "AI code-execution будет отказываться."
             )
             return NoOpSandbox()
         try:
@@ -101,7 +101,7 @@ def register_e2b_sandbox() -> None:
         except ImportError:
             _logger.warning(
                 "e2b-code-interpreter не установлен (опц. extra [ai]); "
-                "регистрируется NoOpSandbox.",
+                "регистрируется NoOpSandbox."
             )
             return NoOpSandbox()
         from src.backend.infrastructure.ai.e2b_sandbox import E2BSandbox
@@ -118,7 +118,7 @@ def register_e2b_sandbox() -> None:
 
         fs_facade = get_service(AIFsFacade) if has_service(AIFsFacade) else None
         return E2BSandbox(
-            api_key=api_key, capability_check=capability_check, fs_facade=fs_facade,
+            api_key=api_key, capability_check=capability_check, fs_facade=fs_facade
         )
 
     register_factory(CodeSandbox, _factory)

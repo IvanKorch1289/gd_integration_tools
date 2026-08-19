@@ -61,7 +61,7 @@ class PolicyMixin:
             logger.warning("ai_policy_gate_config_unavailable: %s", exc)
             return self._policy_gate_deny(
                 principal=str(
-                    tenant_id or (metadata or {}).get("tenant_id") or "anonymous",
+                    tenant_id or (metadata or {}).get("tenant_id") or "anonymous"
                 ),
                 reason="ai.llm.policy.gate.unavailable",
                 detail=f"ai_agent_settings import failed: {type(exc).__name__}: {exc}",
@@ -155,7 +155,7 @@ class PolicyMixin:
 
     @staticmethod
     def _policy_gate_deny(
-        *, principal: str, reason: str, detail: str,
+        *, principal: str, reason: str, detail: str
     ) -> dict[str, Any]:
         """Возвращает унифицированный deny-envelope для policy-gate."""
         return {

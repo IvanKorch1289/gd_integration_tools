@@ -100,9 +100,7 @@ def _make_send_wrapper(send: Send) -> Send:
         if message["type"] == "http.response.start":
             existing: Iterable[tuple[bytes, bytes]] = message.get("headers", [])
             # Сохраняем downstream-заголовки, кроме тех, что мы переопределяем.
-            filtered = [
-                (k, v) for k, v in existing if k not in names_to_override
-            ]
+            filtered = [(k, v) for k, v in existing if k not in names_to_override]
             filtered.extend(headers_to_inject)
             message["headers"] = filtered
         await send(message)

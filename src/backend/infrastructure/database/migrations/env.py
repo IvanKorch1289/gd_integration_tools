@@ -34,10 +34,7 @@ try:
     for _mwp in load_plugin_manifests_for_migrations(_EXTENSIONS_DIR):
         for _module_path in _mwp.manifest.models_module:
             try:
-                importlib_import = __import__(
-                    _module_path,
-                    fromlist=["__name__"],
-                )
+                importlib_import = __import__(_module_path, fromlist=["__name__"])
             except ImportError as _imp_exc:
                 _logger.warning(
                     "models_module %s для плагина %s недоступен: %s",
@@ -50,8 +47,7 @@ except Exception as _disc_exc:  # pragma: no cover — discovery best-effort
     # уже покрывают базовые модели. Migration может работать без
     # auto-discovery (migrations будут incomplete для плагинов).
     _logger.debug(
-        "plugin models auto-discovery failed (env.py partial fallback): %s",
-        _disc_exc,
+        "plugin models auto-discovery failed (env.py partial fallback): %s", _disc_exc
     )
 
 # this is the Alembic Config object, which provides
@@ -146,7 +142,7 @@ async def run_async_migrations() -> None:
         )
 
         lock_ctx: Any = distributed_lock(
-            "alembic:migrations", ttl_seconds=300, blocking_timeout=60.0,
+            "alembic:migrations", ttl_seconds=300, blocking_timeout=60.0
         )
     except ImportError:
         import contextlib
@@ -160,7 +156,7 @@ async def run_async_migrations() -> None:
     async with lock_ctx as acquired:
         if not acquired:
             get_logger("alembic").warning(
-                "Could not acquire migration lock — another instance is running migrations",
+                "Could not acquire migration lock — another instance is running migrations"
             )
             return
 

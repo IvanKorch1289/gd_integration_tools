@@ -67,7 +67,7 @@ def redact_for_observability(value: Any) -> Any:
 
 
 def mask_pii(
-    _logger: Any, _method_name: str, event_dict: dict[str, Any],
+    _logger: Any, _method_name: str, event_dict: dict[str, Any]
 ) -> dict[str, Any]:
     """structlog-processor: маскирует PII во всём event_dict.
 

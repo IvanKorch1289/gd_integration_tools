@@ -82,17 +82,17 @@ class InvokeAsyncProcessor(BaseProcessor):
         )
 
         task = get_task_registry().create_task(
-            self._dispatch_and_log(payload, ctx), name=f"invoke_async:{self._action}",
+            self._dispatch_and_log(payload, ctx), name=f"invoke_async:{self._action}"
         )
         # Уберечь loop от warning'а про unawaited exceptions.
         task.add_done_callback(_safe_swallow_exception)
         # Сохраняем task-ref в properties для дебага (опционально).
         exchange.properties.setdefault("invoke_async_tasks", []).append(
-            f"invoke_async:{self._action}:{id(task)}",
+            f"invoke_async:{self._action}:{id(task)}"
         )
 
     async def _dispatch_and_log(
-        self, payload: dict[str, Any], ctx: DispatchContext,
+        self, payload: dict[str, Any], ctx: DispatchContext
     ) -> None:
         """Корутина внутри background task: dispatch + лог при ошибке."""
         try:
@@ -105,7 +105,7 @@ class InvokeAsyncProcessor(BaseProcessor):
                 )
         except Exception as exc:
             _logger.warning(
-                "invoke_async exception: action=%s, exc=%s", self._action, exc,
+                "invoke_async exception: action=%s, exc=%s", self._action, exc
             )
 
     def _extract_payload(self, exchange: Exchange[Any]) -> dict[str, Any]:

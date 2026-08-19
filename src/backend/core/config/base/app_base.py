@@ -26,7 +26,7 @@ class AppBaseSettings(BaseSettingsWithLoader):
 
     yaml_group: ClassVar[str] = "app"
     model_config = SettingsConfigDict(
-        env_prefix="APP_", extra="forbid", validate_default=True,
+        env_prefix="APP_", extra="forbid", validate_default=True
     )
 
     # Режимы работы системы
@@ -166,7 +166,8 @@ class AppBaseSettings(BaseSettingsWithLoader):
     # Сервер запускается отдельно от Granian: ``python manage.py http3-serve``.
     # Требует extra ``http3`` (uv sync --extra http3) и валидные TLS-сертификаты.
     http3_enabled: bool = Field(
-        default=False,         title="HTTP/3 server включён",
+        default=False,
+        title="HTTP/3 server включён",
         description=(
             "Опциональный HTTP/3 + WebTransport endpoint поверх QUIC (aioquic). "
             "Запускается параллельно с granian/uvicorn на отдельном UDP-порту. "
@@ -268,12 +269,13 @@ class AppBaseSettings(BaseSettingsWithLoader):
         examples=[500, 1000],
     )
     gzip_compresslevel: int = Field(
-        ..., title="Уровень сжатия GZIP", ge=1, le=9, description="Уровень сжатия GZIP",
+        ..., title="Уровень сжатия GZIP", ge=1, le=9, description="Уровень сжатия GZIP"
     )
 
     # Параметры Brotli (Sprint 10 K2 W2)
     compression_brotli: bool = Field(
-        default=False,         title="Включить Brotli compression",
+        default=False,
+        title="Включить Brotli compression",
         description=(
             "Включает BrotliCompressionMiddleware (PERF-6.6, -60% JSON traffic). "
             "Требует extra `compression`. Действует совместно с GZIP fallback."

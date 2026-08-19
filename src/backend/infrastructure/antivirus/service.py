@@ -60,7 +60,7 @@ class AntivirusService:
         self.logger = get_logger("request")
 
     async def scan_s3_file(
-        self, key: str, multipart_field_name: str | None = None,
+        self, key: str, multipart_field_name: str | None = None
     ) -> dict[str, Any]:
         """Метод scan_s3_file (см. signature)."""
         file_bytes = await self.s3_service.get_file_bytes(key)
@@ -135,7 +135,7 @@ class AntivirusService:
 
         """
         resolved_content_type = self._resolve_content_type(
-            filename=filename, content_type=content_type,
+            filename=filename, content_type=content_type
         )
         resolved_field_name = (
             multipart_field_name or settings.antivirus.multipart_field_name or filename
@@ -150,7 +150,7 @@ class AntivirusService:
                     "content": file_bytes,
                     "filename": filename,
                     "content_type": resolved_content_type,
-                },
+                }
             },
             response_type=settings.antivirus.response_type,
             raise_for_status=settings.antivirus.raise_for_status,
@@ -233,7 +233,7 @@ class AntivirusService:
         raise UnknownAntivirusVerdictError(
             "Не удалось определить вердикт антивируса. "
             "Нужно адаптировать _extract_clean_flag() "
-            "под фактический ответ внешнего API.",
+            "под фактический ответ внешнего API."
         )
 
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
@@ -277,7 +277,7 @@ class AntivirusService:
 async def get_antivirus_service() -> AsyncGenerator[AntivirusService]:
     """Фабрика: AntivirusService singleton."""
     service = AntivirusService(
-        http_client=get_http_client_dependency(), s3_service=get_s3_service_dependency(),
+        http_client=get_http_client_dependency(), s3_service=get_s3_service_dependency()
     )
     try:
         yield service

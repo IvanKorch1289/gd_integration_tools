@@ -77,6 +77,7 @@ class MaxByProcessor(BaseProcessor):
             # _resolve_field API change. Bare `except Exception` маскировал
             # unrelated runtime errors.
             import logging
+
             logging.getLogger(__name__).debug(
                 "max_by.processor_fallback",
                 extra={"error": str(max_exc), "field": self._field},
@@ -114,6 +115,7 @@ class MinByProcessor(BaseProcessor):
             # cycle-9/D-AUDIT-954: narrow exceptions + observability (mirror
             # D-AUDIT-953 для max_by).
             import logging
+
             logging.getLogger(__name__).debug(
                 "min_by.processor_fallback",
                 extra={"error": str(min_exc), "field": self._field},
@@ -135,7 +137,7 @@ class SortByProcessor(BaseProcessor):
     """
 
     def __init__(
-        self, *, field: str, reverse: bool = False, name: str | None = None,
+        self, *, field: str, reverse: bool = False, name: str | None = None
     ) -> None:
         super().__init__(name=name or f"sort_by({field}, reverse={reverse})")
         self._field = field
@@ -158,6 +160,7 @@ class SortByProcessor(BaseProcessor):
             # cycle-9/D-AUDIT-955: narrow exceptions + observability (mirror
             # D-AUDIT-953/954).
             import logging
+
             logging.getLogger(__name__).debug(
                 "sort_by.processor_fallback",
                 extra={"error": str(sort_exc), "field": self._field},

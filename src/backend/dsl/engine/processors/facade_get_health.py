@@ -7,6 +7,7 @@ Generic health probe через facade. Вызывает health_check любог
         name: redis
         to: body.health
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -24,10 +25,7 @@ if TYPE_CHECKING:
     namespace="infra",
     spec_schema={
         "type": "object",
-        "properties": {
-            "name": {"type": "string"},
-            "to": {"type": "string"},
-        },
+        "properties": {"name": {"type": "string"}, "to": {"type": "string"}},
         "required": ["name"],
     },
     capabilities=("health.read",),
@@ -46,6 +44,7 @@ class FacadeGetHealthProcessor(BaseProcessor):
         from src.backend.core.di.providers.infrastructure_locator import (
             get_health_check_factory,
         )
+
         health_fn = get_health_check_factory()(self.component_name)
         result = await health_fn()
         self.set_result(exchange, self.target, result)

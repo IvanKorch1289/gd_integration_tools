@@ -98,7 +98,7 @@ class MissingBaggageError(RuntimeError):
         self.missing = missing
         super().__init__(
             f"Обязательные поля OTel baggage отсутствуют: {missing}. "
-            "Убедитесь, что middleware propagation установлен в entrypoint.",
+            "Убедитесь, что middleware propagation установлен в entrypoint."
         )
 
 

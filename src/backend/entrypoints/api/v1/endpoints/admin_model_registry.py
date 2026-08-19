@@ -19,10 +19,14 @@ from src.backend.core.config.features import feature_flags
 
 # S202 audit fix: require admin role
 _ADMIN_GUARD_READ = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN)),
+    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN))
 )
 
-router = APIRouter(dependencies=[_ADMIN_GUARD_READ], prefix="/admin/model-registry", tags=["admin", "model_registry"])
+router = APIRouter(
+    dependencies=[_ADMIN_GUARD_READ],
+    prefix="/admin/model-registry",
+    tags=["admin", "model_registry"],
+)
 
 
 def _guard_enabled() -> None:
@@ -49,6 +53,7 @@ async def _composite() -> Any:
         # ImportError — mlflow_backend missing, AttributeError — API
         # change, RuntimeError — MLflow unavailable.
         import logging
+
         logging.getLogger(__name__).debug(
             "admin_model_registry.mlflow_backend_unavailable",
             extra={"error": str(mlflow_exc)},
@@ -62,6 +67,7 @@ async def _composite() -> Any:
     except (ImportError, AttributeError, RuntimeError) as hf_exc:
         # cycle-9/D-AUDIT-1731: см. D-AUDIT-1730 — narrow для HF Hub.
         import logging
+
         logging.getLogger(__name__).debug(
             "admin_model_registry.hf_hub_backend_unavailable",
             extra={"error": str(hf_exc)},
@@ -126,7 +132,7 @@ async def get_model(name: str, version: str | None = None) -> dict[str, Any]:
     model = await registry.get_model(name, version=version)
     if model is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"model {name} not found",
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"model {name} not found"
         )
     return model.model_dump()
 
@@ -154,7 +160,7 @@ async def use_in_route(name: str, version: str | None = None) -> dict[str, Any]:
     model = await registry.get_model(name, version=version)
     if model is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"model {name} not found",
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"model {name} not found"
         )
     provider = model.extra.get("backend", "huggingface")
     model_ref = f"{model.name}@{model.version}"

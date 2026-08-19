@@ -65,7 +65,7 @@ class AiOpsMixin:
                 cost_budget_usd=cost_budget_usd,
                 to=to,
                 name=name,
-            ),
+            )
         )
 
     def ml_predict(
@@ -103,5 +103,5 @@ class AiOpsMixin:
                 output_property=output_property,
                 model_type=model_type,
                 name=name,
-            ),
+            )
         )

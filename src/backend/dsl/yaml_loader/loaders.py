@@ -95,7 +95,7 @@ def load_all_from_directory(directory: str | Path) -> list[Pipeline]:
             pipeline = load_pipeline_from_file(yaml_file)
             pipelines.append(pipeline)
             logger.info(
-                "Loaded pipeline '%s' from %s", pipeline.route_id, yaml_file.name,
+                "Loaded pipeline '%s' from %s", pipeline.route_id, yaml_file.name
             )
         except Exception as exc:
             logger.error("Failed to load %s: %s", yaml_file, exc)

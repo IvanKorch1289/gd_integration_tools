@@ -54,12 +54,12 @@ SUPPORTED_MIME_TYPES: frozenset[str] = frozenset(
         "text/markdown",
         "text/x-markdown",
         "application/octet-stream",
-    },
+    }
 )
 
 
 _TEXTUAL_MIMES: frozenset[str] = frozenset(
-    {"text/plain", "text/markdown", "text/x-markdown", "application/octet-stream"},
+    {"text/plain", "text/markdown", "text/x-markdown", "application/octet-stream"}
 )
 
 # MIME, для которых markitdown — единственный путь (legacy не покрывает).
@@ -69,7 +69,7 @@ _MARKITDOWN_ONLY: frozenset[str] = frozenset(
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "text/csv",
         "application/json",
-    },
+    }
 )
 
 # MIME, у которых есть legacy-fallback.
@@ -81,7 +81,7 @@ _LEGACY_FALLBACK: dict[str, str] = {
 
 
 async def parse_document(
-    content: bytes, mime: str, filename: str | None = None,
+    content: bytes, mime: str, filename: str | None = None
 ) -> tuple[str, dict[str, Any]]:
     """Извлекает текст + meta из загруженного документа.
 
@@ -120,7 +120,7 @@ async def parse_document(
     if effective_mime not in SUPPORTED_MIME_TYPES:
         raise ValueError(
             f"MIME {effective_mime!r} не поддерживается. "
-            f"Допустимы: {sorted(SUPPORTED_MIME_TYPES)}",
+            f"Допустимы: {sorted(SUPPORTED_MIME_TYPES)}"
         )
 
     if markitdown_settings.engine_enabled:
@@ -128,7 +128,7 @@ async def parse_document(
             text, w = await _try_markitdown(content, effective_mime, filename)
             warnings.extend(w)
             return text, _meta(
-                effective_mime, content, warnings, filename, "markitdown", True,
+                effective_mime, content, warnings, filename, "markitdown", True
             )
         except Exception as exc:
             warnings.append(f"markitdown failed: {exc}; fallback to legacy")
@@ -142,7 +142,7 @@ async def parse_document(
 
 
 async def _try_markitdown(
-    content: bytes, mime: str, filename: str | None,
+    content: bytes, mime: str, filename: str | None
 ) -> tuple[str, list[str]]:
     """Делегирует в MarkitdownEngine; пробрасывает все исключения."""
     from src.backend.services.ai.document_parsers._markitdown import MarkitdownEngine
@@ -152,7 +152,7 @@ async def _try_markitdown(
 
 
 async def _fallback_legacy(
-    content: bytes, mime: str, warnings: list[str], filename: str | None,
+    content: bytes, mime: str, warnings: list[str], filename: str | None
 ) -> tuple[str, dict[str, Any]]:
     """Legacy-парсинг (pypdf/docx/bs4); для markitdown-only форматов ValueError."""
     kind = _LEGACY_FALLBACK.get(mime)
@@ -167,7 +167,7 @@ async def _fallback_legacy(
         warnings.extend(w)
     elif mime in _MARKITDOWN_ONLY:
         raise ValueError(
-            f"MIME {mime!r} требует markitdown-engine, и legacy-fallback недоступен.",
+            f"MIME {mime!r} требует markitdown-engine, и legacy-fallback недоступен."
         )
     else:
         text, w = _parse_text(content)

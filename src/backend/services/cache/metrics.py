@@ -36,10 +36,10 @@ def __getattr__(name: str) -> Any:
         from src.backend.infrastructure.cache.metrics_collector import (
             get_cache_metrics_snapshot,
         )
+
         return get_cache_metrics_snapshot
     if name == "get_metrics_snapshot":
-        from src.backend.infrastructure.cache.rag.metrics import (
-            get_metrics_snapshot,
-        )
+        from src.backend.infrastructure.cache.rag.metrics import get_metrics_snapshot
+
         return get_metrics_snapshot
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

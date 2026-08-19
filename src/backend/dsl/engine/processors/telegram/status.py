@@ -64,5 +64,5 @@ class TelegramStatusProcessor(BaseProcessor):
             "telegram_status": {
                 "bot": self._bot,
                 "result_property": self._result_property,
-            },
+            }
         }

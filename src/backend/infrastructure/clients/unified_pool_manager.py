@@ -102,7 +102,7 @@ class UnifiedPoolManager:
         Регистрация безопасна до ``start_monitors()``.
         """
         self._pools[name] = PoolRegistration(
-            name=name, pool=pool, ping_fn=ping_fn, kind=kind, max_size=max_size,
+            name=name, pool=pool, ping_fn=ping_fn, kind=kind, max_size=max_size
         )
         logger.debug("UnifiedPoolManager: зарегистрирован '%s' (%s)", name, kind)
 
@@ -140,9 +140,9 @@ class UnifiedPoolManager:
                             "checked_out": pool.checkedout(),
                             "overflow": pool.overflow(),
                             "utilization_pct": round(
-                                (pool.checkedout() / max(pool.size(), 1)) * 100, 1,
+                                (pool.checkedout() / max(pool.size(), 1)) * 100, 1
                             ),
-                        },
+                        }
                     )
                 except Exception as exc:
                     metrics["error"] = str(exc)[:100]
@@ -155,7 +155,7 @@ class UnifiedPoolManager:
                         {
                             "available": getattr(cp, "available_connections", 0),
                             "in_use": getattr(cp, "in_use_connections", 0),
-                        },
+                        }
                     )
                 except Exception as exc:
                     metrics["error"] = str(exc)[:100]
@@ -168,7 +168,7 @@ class UnifiedPoolManager:
                         {
                             "max_connections": limits.max_connections,
                             "max_keepalive": limits.max_keepalive_connections,
-                        },
+                        }
                     )
                 except Exception as exc:
                     metrics["error"] = str(exc)[:100]
@@ -186,9 +186,14 @@ class UnifiedPoolManager:
                             # для invalid value. Bare `except Exception`
                             # маскировал unrelated runtime errors.
                             import logging
+
                             logging.getLogger(__name__).debug(
                                 "unified_pool_manager.attr_probe_failed",
-                                extra={"name": name, "attr": attr, "error": str(attr_exc)},
+                                extra={
+                                    "name": name,
+                                    "attr": attr,
+                                    "error": str(attr_exc),
+                                },
                             )
 
             result[name] = metrics
@@ -199,7 +204,7 @@ class UnifiedPoolManager:
     # ------------------------------------------------------------------
 
     async def health_check_all(
-        self, *, mode: str = "fast", timeout: float = 2.5,
+        self, *, mode: str = "fast", timeout: float = 2.5
     ) -> dict[str, Any]:
         """Параллельный health-check всех зарегистрированных пулов.
 
@@ -346,7 +351,7 @@ class UnifiedPoolManager:
             logger.warning("UnifiedPoolManager: PoolMonitor не запущен: %s", exc)
 
         logger.info(
-            "UnifiedPoolManager: мониторы запущены (pools=%d)", len(self._pools),
+            "UnifiedPoolManager: мониторы запущены (pools=%d)", len(self._pools)
         )
 
     async def stop_monitors(self) -> None:

@@ -143,7 +143,7 @@ class EmailSource:
             raise RuntimeError(f"EmailSource(id={self.source_id!r}) уже запущен")
         self._stopped.clear()
         self._task = get_task_registry().create_task(
-            self._run(on_event), name=f"source-email:{self.source_id}",
+            self._run(on_event), name=f"source-email:{self.source_id}"
         )
         logger.info(
             "EmailSource started: id=%s host=%s folder=%s idle=%s",
@@ -193,7 +193,7 @@ class EmailSource:
     def matches(self, message: dict[str, Any]) -> bool:
         """Применяет subject + from фильтры к распарсенному письму."""
         return self._match_subject(
-            str(message.get("subject", "")),
+            str(message.get("subject", ""))
         ) and self._match_from(str(message.get("from", "")))
 
     # ──────────────── credentials & ssl ────────────────────────────────
@@ -256,7 +256,7 @@ class EmailSource:
 
         if self._cfg.use_ssl:
             client = IMAP4_SSL(
-                host=self._cfg.host, port=self._cfg.port, ssl_context=ssl_ctx,
+                host=self._cfg.host, port=self._cfg.port, ssl_context=ssl_ctx
             )
         else:
             client = IMAP4(host=self._cfg.host, port=self._cfg.port)
@@ -313,7 +313,7 @@ class EmailSource:
                     await client.logout()
                 except Exception as _:
                     logger.debug(
-                        "EmailSource(%s): logout failed", self.source_id, exc_info=True,
+                        "EmailSource(%s): logout failed", self.source_id, exc_info=True
                     )
 
     async def _poll_loop(self, on_event: EventCallback) -> None:
@@ -334,11 +334,11 @@ class EmailSource:
                         )
             except Exception as _:
                 logger.exception(
-                    "EmailSource(%s): poll iteration failed", self.source_id,
+                    "EmailSource(%s): poll iteration failed", self.source_id
                 )
             try:
                 await asyncio.wait_for(
-                    self._stopped.wait(), timeout=self._cfg.poll_interval,
+                    self._stopped.wait(), timeout=self._cfg.poll_interval
                 )
             except TimeoutError:
                 continue
@@ -367,7 +367,7 @@ class EmailSource:
                 fetch_resp = await client.fetch(msg_id, "(RFC822)")
             except Exception as exc:
                 logger.warning(
-                    "EmailSource(%s): fetch %s failed: %s", self.source_id, msg_id, exc,
+                    "EmailSource(%s): fetch %s failed: %s", self.source_id, msg_id, exc
                 )
                 continue
 

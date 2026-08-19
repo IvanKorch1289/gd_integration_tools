@@ -34,7 +34,7 @@ class CrudMixin(_BaseServiceProtocol):
         """
         async with self._service_error_boundary():
             result: Any | None = await self.helper._process_and_transfer(
-                "add", self.response_schema, data=data,
+                "add", self.response_schema, data=data
             )
             entity_id = getattr(result, "id", None)
             await self._invalidate_entity_cache(entity_id=entity_id)
@@ -66,7 +66,7 @@ class CrudMixin(_BaseServiceProtocol):
                 result.append(response)
             except Exception as exc:
                 _logger.exception(
-                    "Ошибка при добавлении объекта #%d в add_many: %s", idx, data,
+                    "Ошибка при добавлении объекта #%d в add_many: %s", idx, data
                 )
                 result.append(None)
                 errors.append({"index": idx, "data": data, "error": str(exc)})
@@ -78,7 +78,7 @@ class CrudMixin(_BaseServiceProtocol):
                 detail=(
                     f"add_many: {len(errors)}/{len(data_list)} элементов не создано. "
                     f"Ошибки: {errors}"
-                ),
+                )
             )
 
         return result
@@ -97,7 +97,7 @@ class CrudMixin(_BaseServiceProtocol):
         """
         async with self._service_error_boundary():
             result = await self.helper._process_and_transfer(
-                "update", self.response_schema, key=key, value=value, data=data,
+                "update", self.response_schema, key=key, value=value, data=data
             )
             await self._invalidate_entity_cache(entity_id=value)
             return result
@@ -140,7 +140,7 @@ class CrudMixin(_BaseServiceProtocol):
 
             if pagination:
                 return Page.create(
-                    items=result.items, total=result.total, params=pagination,
+                    items=result.items, total=result.total, params=pagination
                 )
             return result
 
@@ -165,22 +165,22 @@ class CrudMixin(_BaseServiceProtocol):
             instance = None
             if key and value:
                 instance = await self.helper._process_and_transfer(
-                    "get", self.response_schema, key=key, value=value,
+                    "get", self.response_schema, key=key, value=value
                 )
             if not instance and data:
                 instance = await self.helper._process_and_transfer(
-                    "add", self.response_schema, data=data,
+                    "add", self.response_schema, data=data
                 )
             return instance
 
     @response_cache
     async def get_first_or_last_with_limit(
-        self, limit: int = 1, by: str = "id", order: str = "asc",
+        self, limit: int = 1, by: str = "id", order: str = "asc"
     ) -> Any | list[Any] | None:
         """Возвращает первые/последние записи с лимитом."""
         async with self._service_error_boundary():
             return await self.helper._process_and_transfer(
-                "first_or_last", self.response_schema, limit=limit, by=by, order=order,
+                "first_or_last", self.response_schema, limit=limit, by=by, order=order
             )
 
     async def delete(self, key: str, value: int) -> None:

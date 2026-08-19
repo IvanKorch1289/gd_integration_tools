@@ -34,7 +34,7 @@ from src.backend.plugins.composition.setup_infra.workflow_audit import (
 app_logger = get_logger("application")
 
 OperationItem = tuple[
-    str, Callable[[], Any] | Callable[[], Awaitable[Any]], Callable[[], bool] | None,
+    str, Callable[[], Any] | Callable[[], Awaitable[Any]], Callable[[], bool] | None
 ]
 
 
@@ -77,7 +77,7 @@ def _register_default_degradation_features() -> None:
                 name=name,
                 full_handler=_unsupported_full,
                 degraded_handler=_unsupported_degraded,
-            ),
+            )
         )
     app_logger.info(
         "GracefulDegradationRegistry: %d default features зарегистрированы",
@@ -111,7 +111,7 @@ async def perform_infrastructure_operation(components: list[OperationItem]) -> N
                 await result
 
             app_logger.info(
-                "Операция инфраструктуры выполнена успешно", extra={"operation": name},
+                "Операция инфраструктуры выполнена успешно", extra={"operation": name}
             )
         except Exception as exc:
             app_logger.critical(
@@ -149,9 +149,7 @@ async def _register_agent_security_workflow_hooks() -> None:
         app_logger.info("AgentSecurityFramework workflow hooks registered")
     except Exception as exc:
         # Non-fatal: framework optional в некоторых профилях
-        app_logger.debug(
-            "AgentSecurityFramework hooks registration skipped: %s", exc,
-        )
+        app_logger.debug("AgentSecurityFramework hooks registration skipped: %s", exc)
 
 
 async def _start_pool_monitors() -> None:
@@ -219,8 +217,7 @@ async def _build_temporal_activities() -> list[Any]:
 
     activities = list(bridge._cache.values())
     app_logger.info(
-        "Temporal activities wired: %d (incl. langgraph checkpoint)",
-        len(activities),
+        "Temporal activities wired: %d (incl. langgraph checkpoint)", len(activities)
     )
     return activities
 
@@ -271,7 +268,13 @@ async def _start_config_hot_reload() -> None:
         reloader.watch(profiles_dir)
     else:
         # Fallback: watch отдельные canonical files
-        for profile_file in ("base.yml", "dev.yml", "dev_light.yml", "staging.yml", "prod.yml"):
+        for profile_file in (
+            "base.yml",
+            "dev.yml",
+            "dev_light.yml",
+            "staging.yml",
+            "prod.yml",
+        ):
             p = profiles_dir / profile_file
             if p.exists():
                 reloader.watch(p)
@@ -325,11 +328,7 @@ starting_operations: list[OperationItem] = [
         None,
     ),
     # D-AUDIT-A12-06 fix (cycle 1): wire ConfigHotReloader в production lifespan
-    (
-        "start_config_hot_reload",
-        _start_config_hot_reload,
-        None,
-    ),
+    ("start_config_hot_reload", _start_config_hot_reload, None),
     ("init_workflow_audit_sink", _init_workflow_audit_sink, _clickhouse_enabled),
     # D-A8-04 fix (cycle 1): wire TemporalWorkerRuntime в production lifespan.
     # D-AUDIT-704 fix (cycle 7): обёртка с activity-list (ActivityBridge +

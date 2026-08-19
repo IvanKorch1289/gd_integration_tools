@@ -66,7 +66,7 @@ class TemporalMixin:
     __slots__ = ()
 
     async def _invoke_async_queue(
-        self, request: InvocationRequest,
+        self, request: InvocationRequest
     ) -> InvocationResponse:
         """Публикует invocation в очередь через Temporal-activity-adapter.
 
@@ -78,7 +78,7 @@ class TemporalMixin:
         return await self._invoke_via_temporal_adapter(request)
 
     async def _invoke_via_temporal_adapter(
-        self, request: InvocationRequest,
+        self, request: InvocationRequest
     ) -> InvocationResponse:
         """K2 W1: Temporal-activity-adapter путь для ASYNC_QUEUE.
 
@@ -91,14 +91,14 @@ class TemporalMixin:
         )
 
         channel = self._resolve_channel(
-            request.reply_channel or ReplyChannelKind.API.value,
+            request.reply_channel or ReplyChannelKind.API.value
         )
 
         async def _execute() -> InvocationResponse:
             return await self._invoke_sync(request)
 
         activity = wrap_as_temporal_activity(
-            _execute, name=f"invoker.async_queue:{request.action}",
+            _execute, name=f"invoker.async_queue:{request.action}"
         )
         task = get_task_registry().create_task(
             self._run_temporal_activity(activity, request, channel),

@@ -81,5 +81,5 @@ builder.add_actions(
             path_model=ToolIdPath,
             tags=common_tags,
         ),
-    ],
+    ]
 )

@@ -14,6 +14,7 @@
 
 Ponytail: 1 type per file, явный dispatch table, zero side effects при import.
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable

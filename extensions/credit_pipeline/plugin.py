@@ -23,7 +23,7 @@ from extensions.credit_pipeline.agents import (
     document_parser_agent,
     scoring_agent,
 )
-from src.backend.core.interfaces.plugin import BasePlugin
+from src.backend.core.api import BasePlugin
 
 if TYPE_CHECKING:
     from src.backend.core.interfaces.plugin import (

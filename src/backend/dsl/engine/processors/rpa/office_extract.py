@@ -3,6 +3,7 @@
 Извлечение текста из .docx/.xlsx (Ponytail YAGNI: lazy imports).
 Pattern (D278): thin wrapper, skip if not installed.
 """
+
 from __future__ import annotations
 
 import zipfile

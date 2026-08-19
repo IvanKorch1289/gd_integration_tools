@@ -134,7 +134,7 @@ class AgentMetricsService:
         if self._histogram is None or self._calls is None:
             return
         self._histogram.labels(
-            agent_id=agent_id, provider=provider, status=status,
+            agent_id=agent_id, provider=provider, status=status
         ).observe(max(duration_seconds, 0.0))
         self._calls.labels(agent_id=agent_id, provider=provider, status=status).inc()
 
@@ -159,11 +159,11 @@ class AgentMetricsService:
             return
         if input_tokens:
             self._tokens.labels(provider=provider, model=model, direction="input").inc(
-                input_tokens,
+                input_tokens
             )
         if output_tokens:
             self._tokens.labels(provider=provider, model=model, direction="output").inc(
-                output_tokens,
+                output_tokens
             )
 
     def record_tool_call(self, *, agent_id: str, tool: str) -> None:
@@ -205,7 +205,7 @@ class AgentMetricsService:
 
     @contextmanager
     def track_execution(
-        self, *, agent_id: str, provider: str,
+        self, *, agent_id: str, provider: str
     ) -> Iterator[dict[str, Any]]:
         """Контекст-менеджер для измерения latency агента.
 

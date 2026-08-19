@@ -52,7 +52,7 @@ class SamlSpHandler:
     """
 
     def __init__(
-        self, *, backend: SamlBackend, default_post_login_url: str = "/",
+        self, *, backend: SamlBackend, default_post_login_url: str = "/"
     ) -> None:
         self._backend = backend
         self._default_post_login = default_post_login_url
@@ -70,14 +70,14 @@ class SamlSpHandler:
         """
         relay_state = return_to or self._default_post_login
         url, request_id = self._backend.build_login_redirect_url(
-            relay_state=relay_state,
+            relay_state=relay_state
         )
         return SpInitiatedLoginResult(
-            redirect_url=url, request_id=request_id, relay_state=relay_state,
+            redirect_url=url, request_id=request_id, relay_state=relay_state
         )
 
     def consume_acs(
-        self, *, request_id: str, validator_factory: Callable[..., SamlAuthResult],
+        self, *, request_id: str, validator_factory: Callable[..., SamlAuthResult]
     ) -> SamlAuthResult:
         """Обработать SAMLResponse в ACS-endpoint.
 
@@ -94,7 +94,7 @@ class SamlSpHandler:
 
         """
         return self._backend.process_saml_response(
-            request_id=request_id, validator=validator_factory,
+            request_id=request_id, validator=validator_factory
         )
 
     def is_available(self) -> bool:

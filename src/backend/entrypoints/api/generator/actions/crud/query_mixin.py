@@ -64,7 +64,7 @@ class QueryMixin:
             request_parameter(),
             query_parameter("page", int | None, None, "Номер страницы."),
             query_parameter(
-                "size", int | None, None, "Количество элементов на странице.",
+                "size", int | None, None, "Количество элементов на странице."
             ),
             Parameter(
                 name="filter",

@@ -44,7 +44,7 @@ class LlmInvocationMixin(_PipelineStepsProtocol):
     __slots__ = ()
 
     async def _render_prompt(
-        self, request: AIRequest, policy: AIPolicySpec | None, sanitized: str,
+        self, request: AIRequest, policy: AIPolicySpec | None, sanitized: str
     ) -> str:
         """Шаг 5: PromptRenderer (Langfuse + tiktoken trim) + context strategy.
 
@@ -84,7 +84,7 @@ class LlmInvocationMixin(_PipelineStepsProtocol):
                 prompt = compiled
             except Exception as exc:
                 logger.debug(
-                    "PromptRegistry lookup failed for %s: %s", request.prompt_ref, exc,
+                    "PromptRegistry lookup failed for %s: %s", request.prompt_ref, exc
                 )
 
         budget_spec = policy.budget if policy else None
@@ -114,17 +114,24 @@ class LlmInvocationMixin(_PipelineStepsProtocol):
         # String-level truncation: keep start + end (best for most prompts)
         # This is the fallback; full strategy requires request.messages
         logger.debug(
-            "Prompt %d tokens exceeds budget %d, truncating", total_tokens, limit,
+            "Prompt %d tokens exceeds budget %d, truncating", total_tokens, limit
         )
 
         try:
             get_context_strategy(strategy_type)
-        except (ImportError, AttributeError, KeyError, TypeError, ValueError) as strategy_exc:
+        except (
+            ImportError,
+            AttributeError,
+            KeyError,
+            TypeError,
+            ValueError,
+        ) as strategy_exc:
             # cycle-9/D-AUDIT-1726: narrow exceptions + observability.
             # ImportError — strategy module missing, AttributeError —
             # API change, KeyError — strategy name not registered,
             # TypeError — wrong arg type, ValueError — invalid config.
             import logging
+
             logging.getLogger(__name__).debug(
                 "llm_mixin.context_strategy_resolve_failed",
                 extra={"strategy_type": strategy_type, "error": str(strategy_exc)},
@@ -139,12 +146,18 @@ class LlmInvocationMixin(_PipelineStepsProtocol):
                 encoded_full = enc.encode(prompt)
                 truncated_enc = encoded_full[:half] + encoded_full[-(limit - half) :]
                 return enc.decode(truncated_enc)
-            except (AttributeError, TypeError, ValueError, UnicodeDecodeError) as tk_exc:
+            except (
+                AttributeError,
+                TypeError,
+                ValueError,
+                UnicodeDecodeError,
+            ) as tk_exc:
                 # cycle-9/D-AUDIT-987: narrow exceptions + observability.
                 # AttributeError — encoder API change, TypeError — wrong
                 # prompt type, ValueError — invalid limit, UnicodeDecodeError
                 # — decode failed.
                 import logging
+
                 logging.getLogger(__name__).debug(
                     "llm_mixin.tiktoken_truncate_failed",
                     extra={"error": str(tk_exc), "limit": limit},
@@ -155,7 +168,7 @@ class LlmInvocationMixin(_PipelineStepsProtocol):
         return prompt[:half_chars] + "\n... [truncated] ...\n" + prompt[-half_chars:]
 
     async def _invoke_llm(
-        self, rendered: str, policy: AIPolicySpec | None, stream: bool,
+        self, rendered: str, policy: AIPolicySpec | None, stream: bool
     ) -> AIResponse:
         """Шаг 6: PydanticAI unified client (S32 W1) или LiteLLMGateway fallback.
 
@@ -193,10 +206,10 @@ class LlmInvocationMixin(_PipelineStepsProtocol):
             )
 
             deps = LLMDependencies(
-                tenant_id=getattr(self, "_tenant_id", "default"), correlation_id="",
+                tenant_id=getattr(self, "_tenant_id", "default"), correlation_id=""
             )
             result = await client.run(
-                prompt=rendered, deps=deps, stream=stream, _internal_gateway_call=True,
+                prompt=rendered, deps=deps, stream=stream, _internal_gateway_call=True
             )
 
             return AIResponse(
@@ -227,6 +240,7 @@ class LlmInvocationMixin(_PipelineStepsProtocol):
         from src.backend.core.di.providers.infrastructure_locator import (
             get_inject_prompt_cache as _get_ipc,
         )
+
         inject_openai_prompt_cache = _get_iopc()
         inject_prompt_cache = _get_ipc()
 
@@ -251,7 +265,7 @@ class LlmInvocationMixin(_PipelineStepsProtocol):
 
     @staticmethod
     def _extract_completion(
-        response: Any, *, fallback_model: str | None,
+        response: Any, *, fallback_model: str | None
     ) -> tuple[str, int, int, str]:
         """Layer 8 Cycle 1: единый helper (см. core/ai/_llm_response.py).
 

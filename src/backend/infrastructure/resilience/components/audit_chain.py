@@ -64,7 +64,7 @@ async def _pg_audit_append(record: AuditRecord) -> None:
         await session.execute(
             text(
                 "INSERT INTO app_audit (record_json, created_at) "
-                "VALUES (:record, NOW())",
+                "VALUES (:record, NOW())"
             ),
             {"record": dict(record)},
         )
@@ -89,7 +89,7 @@ def build_audit_primary() -> AuditCallable:
 
 
 def build_audit_fallbacks(
-    *, jsonl_path: str | Path = "logs/audit.jsonl",
+    *, jsonl_path: str | Path = "logs/audit.jsonl"
 ) -> dict[str, AuditCallable]:
     """Возвращает {chain_id: callable} для fallback-цепочки.
 
@@ -106,5 +106,5 @@ def coerce_record(record: Any) -> AuditRecord:
     if isinstance(record, dict):
         return AuditRecord(record)
     raise TypeError(
-        f"audit append: ожидался dict или AuditRecord, получен {type(record).__name__}",
+        f"audit append: ожидался dict или AuditRecord, получен {type(record).__name__}"
     )

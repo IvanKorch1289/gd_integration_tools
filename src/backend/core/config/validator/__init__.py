@@ -49,14 +49,14 @@ __all__ = (
 
 
 class ConfigValidator(
-    SecurityChecksMixin, APIDocsChecksMixin, InfrastructureChecksMixin,
+    SecurityChecksMixin, APIDocsChecksMixin, InfrastructureChecksMixin
 ):
     """Production config validation (3 mixins = 14 _check_* methods + validate/_is_prod)."""
 
     __slots__ = ()
 
     def validate(
-        self, settings: Settings, waf_settings: WafSettings,
+        self, settings: Settings, waf_settings: WafSettings
     ) -> tuple[ConfigViolation, ...]:
         """Возвращает кортеж обнаруженных нарушений (может быть пустым).
 
@@ -138,7 +138,7 @@ def validate_startup_config(
                 if v.severity == ConfigSeverity.WARNING
                 else 2
             ),
-        ),
+        )
     )
 
     if raise_on_critical_in_prod and settings.app.environment == PRODUCTION_ENV:

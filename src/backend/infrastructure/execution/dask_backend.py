@@ -63,7 +63,7 @@ class DaskBackend:
         if self._client is None:
             return None
         return getattr(self._client, "scheduler", None) and str(
-            self._client.scheduler.address,
+            self._client.scheduler.address
         )
 
     def ensure_started(self) -> Any:

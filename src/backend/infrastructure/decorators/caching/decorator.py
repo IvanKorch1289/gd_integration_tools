@@ -67,7 +67,7 @@ class CachingDecorator:
 
         self.memory_cache: MemoryBackend | None = (
             MemoryBackend(
-                maxsize=memory_max_size, default_ttl=_MEMORY_BACKEND_GLOBAL_TTL,
+                maxsize=memory_max_size, default_ttl=_MEMORY_BACKEND_GLOBAL_TTL
             )
             if use_memory_fallback
             else None
@@ -115,7 +115,7 @@ class CachingDecorator:
         kwargs: dict[str, Any],
     ) -> str:
         return build_cache_key(
-            func, args, kwargs, prefix=self.key_prefix, exclude_self=self.exclude_self,
+            func, args, kwargs, prefix=self.key_prefix, exclude_self=self.exclude_self
         )
 
     def _pattern(self, pattern: str | None = None) -> str:
@@ -136,7 +136,7 @@ class CachingDecorator:
             await redis_client().cache_delete(*cache_keys)  # type: ignore[attr-defined]
         except Exception as exc:
             self.logger.error(
-                "Ошибка инвалидации Redis cache: %s", str(exc), exc_info=True,
+                "Ошибка инвалидации Redis cache: %s", str(exc), exc_info=True
             )
 
         if self.memory_cache:
@@ -152,7 +152,7 @@ class CachingDecorator:
             await redis_client().cache_delete_pattern(match_pattern)  # type: ignore[attr-defined]
         except Exception as exc:
             self.logger.error(
-                "Ошибка pattern invalidation Redis cache: %s", str(exc), exc_info=True,
+                "Ошибка pattern invalidation Redis cache: %s", str(exc), exc_info=True
             )
 
         if self.memory_cache:
@@ -161,7 +161,7 @@ class CachingDecorator:
             await self.disk_cache.delete_pattern(match_pattern)
 
     async def _memory_get_envelope(
-        self, key: str, renew_ttl: bool = False,
+        self, key: str, renew_ttl: bool = False
     ) -> CacheEnvelope | None:
         if not self.memory_cache:
             return None
@@ -203,7 +203,7 @@ class CachingDecorator:
         await self._memory_store_envelope(key, envelope)
 
     def __call__(
-        self, func: Callable[..., Awaitable[Any]],
+        self, func: Callable[..., Awaitable[Any]]
     ) -> Callable[..., Awaitable[Any]]:
         if not inspect.iscoroutinefunction(func):
             raise TypeError("CachingDecorator поддерживает только async")
@@ -230,11 +230,11 @@ class CachingDecorator:
 
             try:
                 await asyncio.wait_for(
-                    lock.acquire(), timeout=self._lock_manager.acquire_timeout,
+                    lock.acquire(), timeout=self._lock_manager.acquire_timeout
                 )
             except TimeoutError:
                 self.logger.warning(
-                    "Таймаут захвата lock для key=%s, выполняю функцию напрямую", key,
+                    "Таймаут захвата lock для key=%s, выполняю функцию напрямую", key
                 )
                 return await func(*args, **kwargs)
 
@@ -280,11 +280,11 @@ class CachingDecorator:
         try:
             await redis_client().cache_set(key, json_dumps(value), self.expire)  # type: ignore[attr-defined]
             self._mark_redis_success()
-        except (RedisConnectionError, RedisTimeoutError, RedisError, OSError):
+        except RedisConnectionError, RedisTimeoutError, RedisError, OSError:
             self._mark_redis_failure()
         except Exception as exc:
             redis_client().logger.warning(  # type: ignore[attr-defined]
-                "Неизвестная ошибка при фоновом обновлении Redis кэша: %s", exc,
+                "Неизвестная ошибка при фоновом обновлении Redis кэша: %s", exc
             )
 
     async def _get_cached_value(self, key: str) -> Any | None:
@@ -322,17 +322,17 @@ class CachingDecorator:
             ) as exc:
                 self._mark_redis_failure()
                 self.logger.warning(
-                    "Redis cache недоступен, fallback chain activated: %s", str(exc),
+                    "Redis cache недоступен, fallback chain activated: %s", str(exc)
                 )
             except Exception as exc:
                 self.logger.error(
-                    "Ошибка чтения Redis cache: %s", str(exc), exc_info=True,
+                    "Ошибка чтения Redis cache: %s", str(exc), exc_info=True
                 )
 
         # 2. Memory
         if self.memory_cache:
             memory_entry = await self._memory_get_envelope(
-                key, renew_ttl=self.renew_ttl,
+                key, renew_ttl=self.renew_ttl
             )
             if memory_entry is not None and memory_entry.is_fresh():
                 return memory_entry.value
@@ -353,7 +353,7 @@ class CachingDecorator:
                     return disk_entry.value
             except Exception as exc:
                 self.logger.error(
-                    "Ошибка чтения disk cache: %s", str(exc), exc_info=True,
+                    "Ошибка чтения disk cache: %s", str(exc), exc_info=True
                 )
 
         return None
@@ -378,7 +378,7 @@ class CachingDecorator:
                     return disk_entry.value
             except Exception as exc:
                 self.logger.error(
-                    "Ошибка чтения stale из disk cache: %s", str(exc), exc_info=True,
+                    "Ошибка чтения stale из disk cache: %s", str(exc), exc_info=True
                 )
 
         return None
@@ -405,7 +405,7 @@ class CachingDecorator:
                 )
             except Exception as exc:
                 self.logger.error(
-                    "Ошибка записи disk cache: %s", str(exc), exc_info=True,
+                    "Ошибка записи disk cache: %s", str(exc), exc_info=True
                 )
 
         if not self._redis_is_available():

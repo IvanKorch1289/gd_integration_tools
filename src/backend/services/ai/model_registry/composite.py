@@ -62,7 +62,7 @@ class CompositeModelRegistry:
                     out.append(m.model_copy(update={"extra": m_extra}))
             except Exception as exc:
                 logger.warning(
-                    "Composite list_models: backend=%s failed: %s", backend_id, exc,
+                    "Composite list_models: backend=%s failed: %s", backend_id, exc
                 )
         return out
 
@@ -91,7 +91,7 @@ class CompositeModelRegistry:
         return None
 
     async def register_model(
-        self, record: ModelRecord, *, backend: str | None = None,
+        self, record: ModelRecord, *, backend: str | None = None
     ) -> ModelRecord:
         """Запись в указанный (или primary) backend."""
         backend_id = backend or self._primary
@@ -104,7 +104,7 @@ class CompositeModelRegistry:
         return result.model_copy(update={"extra": result_extra})
 
     async def transition_stage(
-        self, name: str, version: str, new_stage: str, *, backend: str | None = None,
+        self, name: str, version: str, new_stage: str, *, backend: str | None = None
     ) -> ModelRecord:
         """Перевод в новый stage в указанном backend (default primary)."""
         backend_id = backend or self._primary

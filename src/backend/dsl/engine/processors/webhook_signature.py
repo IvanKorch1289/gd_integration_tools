@@ -91,7 +91,7 @@ class WebhookSignatureProcessor(BaseProcessor):
         if on_error not in _ALLOWED_ON_ERROR:
             allowed = ", ".join(sorted(_ALLOWED_ON_ERROR))
             raise ValueError(
-                f"webhook_signature: on_error must be one of {allowed}, got {on_error!r}",
+                f"webhook_signature: on_error must be one of {allowed}, got {on_error!r}"
             )
         self._secret = secret
         self._header = header
@@ -109,7 +109,7 @@ class WebhookSignatureProcessor(BaseProcessor):
         return orjson.dumps(body)
 
     def _verify_manual(
-        self, body_bytes: bytes, signature_header: str, msg_id: str, timestamp: str,
+        self, body_bytes: bytes, signature_header: str, msg_id: str, timestamp: str
     ) -> bool:
         """Ручная HMAC-SHA256 проверка (fallback без standardwebhooks)."""
         # standardwebhooks-формат: v1,<base64>
@@ -127,7 +127,8 @@ class WebhookSignatureProcessor(BaseProcessor):
                 logger.debug(
                     "webhook_signature: base64 decode failed (exc_type=%s "
                     "exc_msg=%s) — falling back to raw bytes",
-                    type(exc).__name__, exc,
+                    type(exc).__name__,
+                    exc,
                 )
                 secret_bytes_raw = secret_bytes.encode()
         else:
@@ -169,9 +170,9 @@ class WebhookSignatureProcessor(BaseProcessor):
             # ImportError — features module missing, AttributeError —
             # config not initialized, RuntimeError — feature_flags unavailable.
             import logging
+
             logging.getLogger(__name__).debug(
-                "webhook_signature.feature_flag_fallback",
-                extra={"error": str(ff_exc)},
+                "webhook_signature.feature_flag_fallback", extra={"error": str(ff_exc)}
             )
 
         headers = exchange.in_message.headers
@@ -209,12 +210,13 @@ class WebhookSignatureProcessor(BaseProcessor):
                 logger.debug(
                     "webhook_signature: wh.verify failed (exc_type=%s "
                     "exc_msg=%s) — verified=False, falling back to manual",
-                    type(exc).__name__, exc,
+                    type(exc).__name__,
+                    exc,
                 )
                 verified = False
         except ImportError:
             verified = self._verify_manual(
-                body_bytes, signature_header, msg_id, timestamp,
+                body_bytes, signature_header, msg_id, timestamp
             )
 
         if not verified:

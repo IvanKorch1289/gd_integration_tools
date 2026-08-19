@@ -60,7 +60,7 @@ class ExpressDialogStore(Protocol):
         ...
 
     async def list_by_chat(
-        self, group_chat_id: str, limit: int = 100,
+        self, group_chat_id: str, limit: int = 100
     ) -> list[ExpressDialog]:
         """List dialogs by group chat.
 
@@ -75,7 +75,7 @@ class ExpressDialogStore(Protocol):
         ...
 
     async def update_context(
-        self, session_id: str, context_delta: dict[str, Any],
+        self, session_id: str, context_delta: dict[str, Any]
     ) -> None:
         """Update dialog context.
 

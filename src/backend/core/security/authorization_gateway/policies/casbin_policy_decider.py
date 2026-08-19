@@ -22,9 +22,7 @@ from src.backend.core.security.authorization_gateway.state import PolicyDecider
 __all__ = ("CasbinPolicyDecider", "build_casbin_policy_decider")
 
 
-def build_casbin_policy_decider(
-    casbin_enforcer: Any,
-) -> PolicyDecider:
+def build_casbin_policy_decider(casbin_enforcer: Any) -> PolicyDecider:
     """Создать :data:`PolicyDecider` из Casbin-enforcer-а (B-12 fix, cycle 37).
 
     Args:

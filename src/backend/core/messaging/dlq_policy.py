@@ -24,6 +24,7 @@ class _DLQEnvelope(Protocol):
 
     dlq_class: str
 
+
 __all__ = ("DLQPolicy", "DLQPolicyRegistry", "default_policy_registry")
 
 
@@ -89,7 +90,7 @@ def _build_default_registry() -> DLQPolicyRegistry:
             retention_days=2555,  # 7 лет (compliance/legal)
             max_replays=-1,  # unlimited — операторский discretion
             auto_archive_after_days=365,
-        ),
+        )
     )
     registry.register(
         DLQPolicy(
@@ -97,7 +98,7 @@ def _build_default_registry() -> DLQPolicyRegistry:
             retention_days=30,
             max_replays=3,
             auto_archive_after_days=7,
-        ),
+        )
     )
     registry.register(
         DLQPolicy(
@@ -105,7 +106,7 @@ def _build_default_registry() -> DLQPolicyRegistry:
             retention_days=90,
             max_replays=10,
             auto_archive_after_days=30,
-        ),
+        )
     )
     return registry
 

@@ -7,6 +7,7 @@ Per Perplexity API docs:
 
 Ponytail (D250, D251): thin wrapper над capability-checked facade.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -52,13 +53,10 @@ class PerplexitySearchProcessor(BaseProcessor):
     ) -> None:
         if model not in self.VALID_MODELS:
             raise ValueError(
-                f"model должен быть одним из {self.VALID_MODELS}, "
-                f"получено {model!r}",
+                f"model должен быть одним из {self.VALID_MODELS}, получено {model!r}"
             )
         if not 0.0 <= temperature <= 1.0:
-            raise ValueError(
-                f"temperature должен быть 0.0-1.0, получено {temperature}",
-            )
+            raise ValueError(f"temperature должен быть 0.0-1.0, получено {temperature}")
         super().__init__(name=name or "perplexity_search")
         self.query = query
         self.model = model
@@ -66,9 +64,7 @@ class PerplexitySearchProcessor(BaseProcessor):
         self.temperature = temperature
         self.target = to
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет web-поиск через Perplexity и записывает ответ в exchange."""
         if not await self.auth_check(exchange, action="invoke"):
             return
@@ -94,6 +90,8 @@ class PerplexitySearchProcessor(BaseProcessor):
         )
         _logger.info(
             "perplexity.search query=%s model=%s tokens=%d",
-            resolved_query, self.model, self.max_tokens,
+            resolved_query,
+            self.model,
+            self.max_tokens,
         )
         self.set_result(exchange, self.target, response)

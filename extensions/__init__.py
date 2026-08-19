@@ -5,12 +5,12 @@ V11 plugin layout: extensions/<name>/{plugin.py, plugin.toml, services/, reposit
 Этот файл — canonical точка входа для common imports при разработке
 extension'а. Вместо:
 
-    from src.backend.core.interfaces.plugin import BasePlugin
-    from src.backend.core.services.base_service import BaseService
+    from src.backend.core.api import BasePlugin
+    from src.backend.core.api import BaseService
     # SQLAlchemyRepository loaded lazily via __getattr__ (ponytail D111)
-    from src.backend.core.errors import ServiceError, NotFoundError
-    from src.backend.core.database.session import main_session_manager
-    from src.backend.core.domain.models.base import BaseModel
+    from src.backend.core.api import ServiceError, NotFoundError
+    from src.backend.core.api import main_session_manager
+    from src.backend.core.api import BaseModel
 
 можно писать:
 
@@ -35,17 +35,17 @@ Out of scope: Pydantic schemas (route_schemas/*) — extension-specific,
 
 # Plugin lifecycle (canonical from core.interfaces.plugin)
 # Session manager (canonical from core.database.session)
-from src.backend.core.database.session import main_session_manager
+from src.backend.core.api import main_session_manager
 
 # Base ORM model (canonical from core.domain.models.base)
-from src.backend.core.domain.models.base import BaseModel
+from src.backend.core.api import BaseModel
 
 # Repository base (canonical from core.repositories.base)
 # Common errors (canonical from core.errors)
-from src.backend.core.errors import NotFoundError, ServiceError
+from src.backend.core.api import NotFoundError, ServiceError
+from src.backend.core.api import BasePlugin
 from src.backend.core.interfaces.plugin import (
     ActionRegistryProtocol,
-    BasePlugin,
     PluginContext,
     PluginInfo,
     ProcessorRegistryProtocol,
@@ -61,7 +61,7 @@ from src.backend.core.interfaces.repositories import (
 )
 
 # Service base (canonical from core.services.base_service)
-from src.backend.core.services.base_service import BaseService
+from src.backend.core.api import BaseService
 
 __all__ = [
     # Plugin lifecycle
@@ -91,6 +91,6 @@ __all__ = [
 def __getattr__(name: str):  # type: ignore[no-untyped-def]
     """PEP 562 lazy attribute access (Sprint 36 — ponytail D111)."""
     if name == "SQLAlchemyRepository":
-        from src.backend.core.repositories.base import SQLAlchemyRepository
+        from src.backend.core.api import SQLAlchemyRepository
         return SQLAlchemyRepository
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

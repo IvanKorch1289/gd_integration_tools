@@ -66,7 +66,7 @@ class EntityListProcessor(_BaseEntityProcessor):
                 size = int(value)
 
         payload: dict[str, Any] = {
-            "filters": filters if isinstance(filters, dict) else {},
+            "filters": filters if isinstance(filters, dict) else {}
         }
         if page is not None:
             payload["page"] = page

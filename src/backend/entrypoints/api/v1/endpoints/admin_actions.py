@@ -29,10 +29,12 @@ __all__ = ("router",)
 
 # S202 audit fix: require admin role
 _ADMIN_GUARD_OPERATOR = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)),
+    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN))
 )
 
-router = APIRouter(dependencies=[_ADMIN_GUARD_OPERATOR], prefix="/admin/actions", tags=["admin"])
+router = APIRouter(
+    dependencies=[_ADMIN_GUARD_OPERATOR], prefix="/admin/actions", tags=["admin"]
+)
 
 
 # ─── Pydantic-схемы запроса/ответа ────────────────────────────────────────────
@@ -52,10 +54,10 @@ class ActionInvokeRequest(BaseModel):
 
     name: str = Field(..., description="Имя action из реестра")
     payload: dict[str, Any] = Field(
-        default_factory=dict, description="Параметры вызова",
+        default_factory=dict, description="Параметры вызова"
     )
     mode: str = Field(
-        default="sync", description="Режим вызова: sync / async / background",
+        default="sync", description="Режим вызова: sync / async / background"
     )
 
 
@@ -112,7 +114,7 @@ def _get_registry() -> Any:
         from src.backend.dsl.commands.action_registry import ActionHandlerRegistry
 
         return ActionHandlerRegistry.get_instance()
-    except (ImportError, AttributeError, RuntimeError):
+    except ImportError, AttributeError, RuntimeError:
         logger.warning("ActionHandlerRegistry недоступен — используется mock")
         return None
 
@@ -231,17 +233,19 @@ async def invoke_action(body: ActionInvokeRequest) -> ActionInvokeResponse:
 
     registry = _get_registry()
     if registry is None:
-        # Mock-ответ при недоступном реестре
-        return ActionInvokeResponse(
-            name=body.name,
-            mode=body.mode,
-            result={"status": "mock", "payload_received": body.payload},
-            invocation_id="mock-00000000",
+        # S202 re-audit fix (cycle 241, P0-FIX-MOCK):
+        # Fail-closed — ActionHandlerRegistry недоступен → 503, не silent 200 + mock.
+        logger.warning(
+            "action_invoke_registry_unavailable action=%s mode=%s", body.name, body.mode
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="ActionHandlerRegistry недоступен — invoke отключён",
         )
 
     try:
         result = await registry.invoke(
-            name=body.name, payload=body.payload, mode=body.mode,
+            name=body.name, payload=body.payload, mode=body.mode
         )
         return ActionInvokeResponse(
             name=body.name,

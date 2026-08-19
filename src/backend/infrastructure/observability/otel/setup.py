@@ -84,7 +84,7 @@ def configure_otel(
         return current
 
     resource = Resource.create(
-        {"service.name": service_name, "deployment.environment": environment},
+        {"service.name": service_name, "deployment.environment": environment}
     )
     provider = TracerProvider(resource=resource)
 
@@ -92,7 +92,7 @@ def configure_otel(
     if exporter == "otlp":
         if not endpoint:
             logger.warning(
-                "OTel exporter=otlp без endpoint — fallback на ConsoleSpanExporter",
+                "OTel exporter=otlp без endpoint — fallback на ConsoleSpanExporter"
             )
             span_exporter = ConsoleSpanExporter()
         else:
@@ -132,7 +132,7 @@ def configure_otel(
         propagators.append(B3MultiFormat())
     except ImportError:
         logger.debug(
-            "opentelemetry-propagator-b3 не установлен — propagator-стек без B3",
+            "opentelemetry-propagator-b3 не установлен — propagator-стек без B3"
         )
 
     if len(propagators) > 1:
@@ -197,7 +197,7 @@ def setup_otel_metrics(
         from opentelemetry.sdk.resources import Resource
     except ImportError as exc:
         logger.warning(
-            "OTel metrics SDK не установлен — metrics-конфигурация пропущена: %s", exc,
+            "OTel metrics SDK не установлен — metrics-конфигурация пропущена: %s", exc
         )
         return None
 
@@ -207,7 +207,7 @@ def setup_otel_metrics(
         return current
 
     resource = Resource.create(
-        {"service.name": service_name, "deployment.environment": environment},
+        {"service.name": service_name, "deployment.environment": environment}
     )
 
     metric_exporter: MetricExporter
@@ -227,12 +227,12 @@ def setup_otel_metrics(
             metric_exporter = ConsoleMetricExporter()
     else:
         logger.info(
-            "OTLP metrics endpoint не задан — fallback на ConsoleMetricExporter",
+            "OTLP metrics endpoint не задан — fallback на ConsoleMetricExporter"
         )
         metric_exporter = ConsoleMetricExporter()
 
     reader = PeriodicExportingMetricReader(
-        metric_exporter, export_interval_millis=export_interval_seconds * 1000,
+        metric_exporter, export_interval_millis=export_interval_seconds * 1000
     )
     meter_provider = MeterProvider(resource=resource, metric_readers=[reader])
     metrics.set_meter_provider(meter_provider)
@@ -298,7 +298,7 @@ def _register_base_meters(meter_provider: Any) -> None:
     logger.debug(
         "OTel base meters зарегистрированы: workflow.execution.duration / "
         "workflow.execution.count / workflow.activity.duration / "
-        "business.event.count",
+        "business.event.count"
     )
 
 

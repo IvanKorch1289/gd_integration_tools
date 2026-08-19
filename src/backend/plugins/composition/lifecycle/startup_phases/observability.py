@@ -8,6 +8,7 @@ Phases:
 - :func:`phase_logsink_router` — LogSink router (Wave 2.5)
 - :func:`phase_audit_hmac_verify` — periodic Audit HMAC-chain verify (B-series FIX-H5)
 """
+
 from __future__ import annotations
 
 import os

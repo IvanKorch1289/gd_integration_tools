@@ -86,11 +86,7 @@ def banking_transaction_hook(subject: str, context: dict[str, Any]) -> SecurityD
     if not workflow.startswith("banking."):
         return SecurityDecision(allowed=True)
 
-    _logger.debug(
-        "banking_transaction_hook: subject=%s workflow=%s",
-        subject,
-        workflow,
-    )
+    _logger.debug("banking_transaction_hook: subject=%s workflow=%s", subject, workflow)
 
     # ─── Check 1: SQL mutations ────────────────────────────────────
     # Banking workflows should only mutate via audited stored procs,
@@ -101,9 +97,7 @@ def banking_transaction_hook(subject: str, context: dict[str, Any]) -> SecurityD
         # Raw SQL mutation detected in banking workflow.
         # Allow non-mutating SELECT/PRAGMA/SHOW.
         normalized = sql_query.strip().upper().lstrip("(")
-        if not normalized.startswith(
-            ("SELECT", "PRAGMA", "SHOW", "EXPLAIN", "WITH"),
-        ):
+        if not normalized.startswith(("SELECT", "PRAGMA", "SHOW", "EXPLAIN", "WITH")):
             return SecurityDecision(
                 allowed=False,
                 threat_level=ThreatLevel.CRITICAL,
@@ -128,7 +122,7 @@ def banking_transaction_hook(subject: str, context: dict[str, Any]) -> SecurityD
         )
         try:
             resolved = Path(file_path).resolve()
-        except (OSError, ValueError):
+        except OSError, ValueError:
             resolved = None
         if resolved is not None and any(
             str(resolved).startswith(p) for p in dangerous_paths
@@ -193,7 +187,7 @@ def rpa_browser_hook(subject: str, context: dict[str, Any]) -> SecurityDecision:
     if file_path:
         try:
             resolved = Path(file_path).resolve()
-        except (OSError, ValueError):
+        except OSError, ValueError:
             resolved = None
         if resolved is not None and any(
             resolved.is_relative_to(root) for root in _TEMP_ROOTS
@@ -204,10 +198,7 @@ def rpa_browser_hook(subject: str, context: dict[str, Any]) -> SecurityDecision:
                 reason=f"rpa file_path_not_allowed: {file_path}",
             )
 
-    return SecurityDecision(
-        allowed=True,
-        threat_level=ThreatLevel.NONE,
-    )
+    return SecurityDecision(allowed=True, threat_level=ThreatLevel.NONE)
 
 
 def code_generation_hook(subject: str, context: dict[str, Any]) -> SecurityDecision:
@@ -239,10 +230,7 @@ def code_generation_hook(subject: str, context: dict[str, Any]) -> SecurityDecis
             reason=f"code_generation system_path: {file_path}",
         )
 
-    return SecurityDecision(
-        allowed=True,
-        threat_level=ThreatLevel.NONE,
-    )
+    return SecurityDecision(allowed=True, threat_level=ThreatLevel.NONE)
 
 
 def data_export_hook(subject: str, context: dict[str, Any]) -> SecurityDecision:
@@ -273,10 +261,7 @@ def data_export_hook(subject: str, context: dict[str, Any]) -> SecurityDecision:
             reason=f"data_export too_many_rows: {row_count}",
         )
 
-    return SecurityDecision(
-        allowed=True,
-        threat_level=ThreatLevel.NONE,
-    )
+    return SecurityDecision(allowed=True, threat_level=ThreatLevel.NONE)
 
 
 def register_banking_transaction_hook(framework: Any) -> None:
@@ -286,7 +271,7 @@ def register_banking_transaction_hook(framework: Any) -> None:
             name="banking_transaction",
             trigger="pre_tool",
             check_fn=banking_transaction_hook,
-        ),
+        )
     )
     _logger.info("registered: banking_transaction_hook")
 
@@ -294,11 +279,7 @@ def register_banking_transaction_hook(framework: Any) -> None:
 def register_rpa_browser_hook(framework: Any) -> None:
     """Register rpa_browser_hook в framework."""
     framework.register_hook(
-        SecurityHook(
-            name="rpa_browser",
-            trigger="pre_tool",
-            check_fn=rpa_browser_hook,
-        ),
+        SecurityHook(name="rpa_browser", trigger="pre_tool", check_fn=rpa_browser_hook)
     )
     _logger.info("registered: rpa_browser_hook")
 
@@ -307,10 +288,8 @@ def register_code_generation_hook(framework: Any) -> None:
     """Register code_generation_hook в framework."""
     framework.register_hook(
         SecurityHook(
-            name="code_generation",
-            trigger="pre_tool",
-            check_fn=code_generation_hook,
-        ),
+            name="code_generation", trigger="pre_tool", check_fn=code_generation_hook
+        )
     )
     _logger.info("registered: code_generation_hook")
 
@@ -318,11 +297,7 @@ def register_code_generation_hook(framework: Any) -> None:
 def register_data_export_hook(framework: Any) -> None:
     """Register data_export_hook в framework."""
     framework.register_hook(
-        SecurityHook(
-            name="data_export",
-            trigger="pre_tool",
-            check_fn=data_export_hook,
-        ),
+        SecurityHook(name="data_export", trigger="pre_tool", check_fn=data_export_hook)
     )
     _logger.info("registered: data_export_hook")
 

@@ -111,7 +111,7 @@ def _parse_yaml_or_400(yaml_str: str) -> Pipeline:
         return load_pipeline_from_yaml(yaml_str)
     except (ValueError, ImportError) as exc:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=f"Невалидный YAML: {exc}",
+            status_code=status.HTTP_400_BAD_REQUEST, detail=f"Невалидный YAML: {exc}"
         ) from exc
 
 
@@ -224,7 +224,7 @@ class _DSLRoutesFacade:
         return RouteDiffOut(route_id=route_id, diff=store.diff(current, proposed))
 
     async def get_route_traces(
-        self, *, route_id: str, limit: int = 100,
+        self, *, route_id: str, limit: int = 100
     ) -> list[dict[str, object]]:
         """S44 W1: возвращает последние N trace events из in-memory ring buffer.
 
@@ -255,7 +255,7 @@ def _get_facade() -> _DSLRoutesFacade:
 
 # S202 audit fix: require admin role
 _ADMIN_GUARD_OPERATOR = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)),
+    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN))
 )
 
 # S204 retro-audit C-NEW-6: раньше ``_ADMIN_GUARD_OPERATOR`` определялся,
@@ -412,5 +412,5 @@ builder.add_actions(
             path_model=RouteIdPath,
             tags=common_tags,
         ),
-    ],
+    ]
 )

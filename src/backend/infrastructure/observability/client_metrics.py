@@ -131,7 +131,8 @@ def _current_tenant() -> str:
         logger.debug(
             "client_metrics._resolve_tenant_id: tenant resolution failed "
             "(exc_type=%s exc_msg=%s) — fallback to '_system'",
-            type(exc).__name__, exc,
+            type(exc).__name__,
+            exc,
         )
         return "_system"
 
@@ -156,7 +157,7 @@ def record_request(
 
 
 def record_pool_state(
-    *, client: str, active: int, idle: int, waiting: int, max_size: int,
+    *, client: str, active: int, idle: int, waiting: int, max_size: int
 ) -> None:
     """Записать текущее состояние pool-а. Обычно вызывается из validate()."""
     pool_size.labels(client=client, state="active").set(active)
@@ -182,7 +183,7 @@ def record_degradation_mode(*, component: str, label: DegradationLabel) -> None:
 
 @asynccontextmanager
 async def track_operation(
-    *, client: str, operation: str, tenant: str | None = None,
+    *, client: str, operation: str, tenant: str | None = None
 ) -> AsyncIterator[None]:
     """Async context-manager для инструментации одной client-операции.
 
@@ -236,7 +237,7 @@ async def track_operation(
 
 # Поздняя резолюция типов исключений: purgatory.OpenedState, asyncio.TimeoutError.
 def _resolve_exception_types() -> tuple[
-    tuple[type[BaseException], ...], tuple[type[BaseException], ...],
+    tuple[type[BaseException], ...], tuple[type[BaseException], ...]
 ]:
     import asyncio
 
@@ -278,7 +279,7 @@ class ClientMetricsMixin:
     name: str
 
     def track(
-        self, operation: str, *, tenant: str | None = None,
+        self, operation: str, *, tenant: str | None = None
     ) -> AsyncContextManager[None]:
         """Shortcut для `track_operation(client=self.name, ...)`."""
         return track_operation(client=self.name, operation=operation, tenant=tenant)

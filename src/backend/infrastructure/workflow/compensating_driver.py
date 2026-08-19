@@ -31,7 +31,6 @@ from typing import TYPE_CHECKING, Any
 from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
-
     pass
 
 _logger = get_logger("workflow.compensating_driver")
@@ -73,11 +72,9 @@ class CompensatingDriverWorker:
         if self._task is not None and not self._task.done():
             return
         self._stopping.clear()
-        self._task = asyncio.create_task(
-            self._run(), name="compensating-driver-worker",
-        )
+        self._task = asyncio.create_task(self._run(), name="compensating-driver-worker")
         _logger.info(
-            "CompensatingDriverWorker started (interval=%.1fs)", self._interval,
+            "CompensatingDriverWorker started (interval=%.1fs)", self._interval
         )
 
     async def stop(self) -> None:
@@ -99,13 +96,11 @@ class CompensatingDriverWorker:
                 try:
                     await self._scan_once()
                 except Exception as exc:  # narrow: per task boundary
-                    _logger.exception(
-                        "compensating-driver scan failed: %s", exc,
-                    )
+                    _logger.exception("compensating-driver scan failed: %s", exc)
                 # Wait with cancellation support
                 try:
                     await asyncio.wait_for(
-                        self._stopping.wait(), timeout=self._interval,
+                        self._stopping.wait(), timeout=self._interval
                     )
                 except TimeoutError:
                     pass  # normal: tick
@@ -124,15 +119,11 @@ class CompensatingDriverWorker:
             stuck = await repo.list_compensating(limit=100)
             if not stuck:
                 return
-            _logger.info(
-                "compensating-driver: found %d stuck saga(s)", len(stuck),
-            )
+            _logger.info("compensating-driver: found %d stuck saga(s)", len(stuck))
             for saga in stuck:
                 try:
                     rolled = await repo.signal_event(
-                        saga.workflow_id,
-                        saga.run_id,
-                        event="rolled_back",
+                        saga.workflow_id, saga.run_id, event="rolled_back"
                     )
                     if rolled is not None:
                         _logger.info(

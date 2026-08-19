@@ -33,7 +33,7 @@ class VersioningMixin:
             """Выполнить операцию endpoint."""
             service = spec.service_getter()
             return await service.get_latest_object_version(
-                object_id=kwargs[spec.id_param_name],
+                object_id=kwargs[spec.id_param_name]
             )
 
         endpoint.__name__ = f"{spec.name}_latest_version"
@@ -41,7 +41,7 @@ class VersioningMixin:
         endpoint.__signature__ = make_signature(  # type: ignore[attr-defined]
             request_parameter(),
             path_parameter(
-                spec.id_param_name, spec.id_param_type, "Идентификатор объекта.",
+                spec.id_param_name, spec.id_param_type, "Идентификатор объекта."
             ),
         )
         self._register_route(
@@ -74,10 +74,10 @@ class VersioningMixin:
         endpoint.__signature__ = make_signature(  # type: ignore[attr-defined]
             request_parameter(),
             path_parameter(
-                spec.id_param_name, spec.id_param_type, "Идентификатор объекта.",
+                spec.id_param_name, spec.id_param_type, "Идентификатор объекта."
             ),
             required_query_parameter(
-                "transaction_id", int, "Идентификатор транзакции версии.",
+                "transaction_id", int, "Идентификатор транзакции версии."
             ),
         )
         self._register_route(
@@ -101,7 +101,7 @@ class VersioningMixin:
             """Выполнить операцию endpoint."""
             service = spec.service_getter()
             return await service.get_object_changes(
-                object_id=kwargs[spec.id_param_name],
+                object_id=kwargs[spec.id_param_name]
             )
 
         endpoint.__name__ = f"{spec.name}_changes"
@@ -109,7 +109,7 @@ class VersioningMixin:
         endpoint.__signature__ = make_signature(  # type: ignore[attr-defined]
             request_parameter(),
             path_parameter(
-                spec.id_param_name, spec.id_param_type, "Идентификатор объекта.",
+                spec.id_param_name, spec.id_param_type, "Идентификатор объекта."
             ),
         )
         self._register_route(

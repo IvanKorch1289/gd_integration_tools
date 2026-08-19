@@ -22,6 +22,7 @@ Example::
         op="http.fetch", slow_threshold=2.0,
     )
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -71,13 +72,17 @@ async def with_timeout[T](
             result = await coro
     except TimeoutError:
         elapsed = time.monotonic() - start
-        _logger.warning("timeout op=%s elapsed=%.3fs limit=%.3fs", op or "?", elapsed, timeout)
+        _logger.warning(
+            "timeout op=%s elapsed=%.3fs limit=%.3fs", op or "?", elapsed, timeout
+        )
         raise
     if slow_threshold and op:
         elapsed = time.monotonic() - start
         if elapsed >= slow_threshold:
             _logger.warning(
                 "slow_call op=%s elapsed=%.3fs threshold=%.3fs",
-                op, elapsed, slow_threshold,
+                op,
+                elapsed,
+                slow_threshold,
             )
     return result

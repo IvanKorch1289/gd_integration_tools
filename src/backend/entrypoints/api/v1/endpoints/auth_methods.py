@@ -48,7 +48,7 @@ class AuthMethodsResponse(BaseModel):
     """Response для GET /auth/methods (S58 W6e)."""
 
     methods: list[str] = Field(
-        ..., description="Список enabled auth methods ('password', 'ldap').",
+        ..., description="Список enabled auth methods ('password', 'ldap')."
     )
     ldap_enabled: bool = Field(
         ...,
@@ -100,7 +100,7 @@ async def get_auth_methods() -> AuthMethodsResponse:
     # Sanity: settings.is_configured() — flag may be on but env vars empty
     if ldap_enabled and not ldap_settings.is_configured():
         _logger.warning(
-            "auth.methods: feature flag on but ldap_settings not configured",
+            "auth.methods: feature flag on but ldap_settings not configured"
         )
         ldap_enabled = False
 

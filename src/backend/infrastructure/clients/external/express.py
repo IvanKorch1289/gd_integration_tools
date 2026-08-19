@@ -36,7 +36,7 @@ class ExpressClient:
     """
 
     def __init__(
-        self, bot_id: str, secret_key: str, botx_url: str, enabled: bool = True,
+        self, bot_id: str, secret_key: str, botx_url: str, enabled: bool = True
     ) -> None:
         self._bot_id = bot_id
         self._secret_key = secret_key
@@ -52,11 +52,11 @@ class ExpressClient:
             from pybotx import Bot, BotAccountWithSecret
         except ImportError as exc:
             raise RuntimeError(
-                "pybotx не установлен. Установите: pip install pybotx",
+                "pybotx не установлен. Установите: pip install pybotx"
             ) from exc
 
         account = BotAccountWithSecret(
-            id=UUID(self._bot_id), cts_url=self._botx_url, secret_key=self._secret_key,
+            id=UUID(self._bot_id), cts_url=self._botx_url, secret_key=self._secret_key
         )
         self._bot = Bot(collectors=[], bot_accounts=[account])
         await self._bot.startup()
@@ -70,7 +70,7 @@ class ExpressClient:
             self._bot = None
 
     async def send_message(
-        self, chat_id: str, text: str, mentions: list[str] | None = None,
+        self, chat_id: str, text: str, mentions: list[str] | None = None
     ) -> dict[str, Any]:
         """Отправляет сообщение в чат eXpress.
 
@@ -91,7 +91,7 @@ class ExpressClient:
 
             bot = await self._get_bot()
             message = OutgoingMessage(
-                bot_id=UUID(self._bot_id), chat_id=UUID(chat_id), body=text,
+                bot_id=UUID(self._bot_id), chat_id=UUID(chat_id), body=text
             )
             sync_id = await bot.send_message(message=message)
             return {"status": "sent", "sync_id": str(sync_id), "chat_id": chat_id}
@@ -155,7 +155,7 @@ class ExpressClient:
             return {"status": "error", "message": str(exc)}
 
     async def add_users_to_chat(
-        self, chat_id: str, user_huids: list[str],
+        self, chat_id: str, user_huids: list[str]
     ) -> dict[str, Any]:
         """Добавляет пользователей в чат."""
         if not self._enabled:
@@ -174,7 +174,7 @@ class ExpressClient:
             return {"status": "error", "message": str(exc)}
 
     async def send_notification(
-        self, group_chat_ids: list[str], text: str,
+        self, group_chat_ids: list[str], text: str
     ) -> dict[str, Any]:
         """Broadcast уведомление в несколько чатов одновременно."""
         if not self._enabled:
@@ -195,7 +195,7 @@ class ExpressClient:
         try:
             bot = await self._get_bot()
             user = await bot.search_user_by_email(
-                bot_id=UUID(self._bot_id), email=email,
+                bot_id=UUID(self._bot_id), email=email
             )
             return {
                 "huid": str(user.user_huid),
@@ -213,7 +213,7 @@ class ExpressClient:
         try:
             bot = await self._get_bot()
             await bot.edit_message(
-                bot_id=UUID(self._bot_id), sync_id=UUID(sync_id), body=new_text,
+                bot_id=UUID(self._bot_id), sync_id=UUID(sync_id), body=new_text
             )
             return {"status": "edited", "sync_id": sync_id}
         except Exception as exc:

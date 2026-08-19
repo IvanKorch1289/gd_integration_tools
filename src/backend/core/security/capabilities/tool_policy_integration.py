@@ -119,7 +119,7 @@ def check_tool_with_policy(
         gate.check(plugin, tool_name, scope)
     except CapabilityDeniedError as exc:
         _logger.warning(
-            "CapabilityGate denied tool=%s for plugin=%s: %s", tool_name, plugin, exc,
+            "CapabilityGate denied tool=%s for plugin=%s: %s", tool_name, plugin, exc
         )
         raise
 
@@ -204,7 +204,7 @@ def filter_tools_with_gate(
         # Layer 2: AIPolicySpec.tools
         if not check_tool_allowed(tool_name, policy):
             _logger.debug(
-                "AIPolicySpec.tools dropped tool=%s for plugin=%s", tool_name, plugin,
+                "AIPolicySpec.tools dropped tool=%s for plugin=%s", tool_name, plugin
             )
             continue
         allowed.append(tool_name)

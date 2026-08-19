@@ -81,7 +81,7 @@ class GrpcSource:
             raise RuntimeError(f"GrpcSource(id={self.source_id!r}) уже запущен")
         self._stop_event.clear()
         self._task = get_task_registry().create_task(
-            self._run(on_event), name=f"source-grpc:{self.source_id}",
+            self._run(on_event), name=f"source-grpc:{self.source_id}"
         )
         logger.info(
             "GrpcSource started: id=%s target=%s method=%s",
@@ -115,7 +115,7 @@ class GrpcSource:
             try:
                 channel = (
                     grpc.aio.secure_channel(
-                        self._target, grpc.ssl_channel_credentials(),
+                        self._target, grpc.ssl_channel_credentials()
                     )
                     if self._secure
                     else grpc.aio.insecure_channel(self._target)
@@ -147,7 +147,7 @@ class GrpcSource:
                 )
                 try:
                     await asyncio.wait_for(
-                        self._stop_event.wait(), timeout=self._reconnect,
+                        self._stop_event.wait(), timeout=self._reconnect
                     )
                 except TimeoutError:
                     continue

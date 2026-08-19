@@ -86,7 +86,7 @@ class SlaAlertDispatcher(Protocol):
     """Channel для отправки SLA-нотификаций."""
 
     async def dispatch(
-        self, *, breach: SlaBreachRecord, email: str | None, slack: str | None,
+        self, *, breach: SlaBreachRecord, email: str | None, slack: str | None
     ) -> None:
         """Метод dispatch (см. signature)."""
         ...
@@ -99,7 +99,7 @@ class InMemorySlaAlertDispatcher:
         self.sent: list[dict[str, Any]] = []
 
     async def dispatch(
-        self, *, breach: SlaBreachRecord, email: str | None, slack: str | None,
+        self, *, breach: SlaBreachRecord, email: str | None, slack: str | None
     ) -> None:
         """Фиксирует факт отправки SLA-alert'а (in-memory test double).
 
@@ -151,7 +151,7 @@ _sla_counter: Any | None = None
 
 
 def _emit_sla_metric(
-    *, workflow_id: str, tenant_id: str | None, level: SlaBreachLevel,
+    *, workflow_id: str, tenant_id: str | None, level: SlaBreachLevel
 ) -> None:
     """Increment ``workflow_sla_compliance_total{...,level=...}`` counter.
 
@@ -168,13 +168,13 @@ def _emit_sla_metric(
                 "SLA evaluations per workflow (level=none/soft/hard)",
                 labels=("workflow_id", "tenant_id", "level"),
             )
-        except (ImportError, ValueError):
+        except ImportError, ValueError:
             _sla_counter = False  # sentinel: do not retry
 
     if _sla_counter and _sla_counter is not False:
         try:
             _sla_counter.labels(
-                workflow_id=workflow_id, tenant_id=tenant_id or "", level=level.value,
+                workflow_id=workflow_id, tenant_id=tenant_id or "", level=level.value
             ).inc()
         except Exception as exc:
             _logger.debug(

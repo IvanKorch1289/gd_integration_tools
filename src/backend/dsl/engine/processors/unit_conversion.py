@@ -100,7 +100,7 @@ class UnitConversionProcessor(BaseProcessor):
             )
         if self._from_value_source.startswith("properties."):
             return exchange.properties.get(
-                self._from_value_source[len("properties.") :],
+                self._from_value_source[len("properties.") :]
             )
         return None
 
@@ -131,9 +131,9 @@ class UnitConversionProcessor(BaseProcessor):
             # cycle-9/D-AUDIT-1720: narrow exceptions + observability (mirror
             # D-AUDIT-1706..1719).
             import logging
+
             logging.getLogger(__name__).debug(
-                "unit_conversion.feature_flag_fallback",
-                extra={"error": str(ff_exc)},
+                "unit_conversion.feature_flag_fallback", extra={"error": str(ff_exc)}
             )
 
         try:

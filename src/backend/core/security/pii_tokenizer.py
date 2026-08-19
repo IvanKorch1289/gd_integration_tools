@@ -300,7 +300,7 @@ class PIITokenizer:
         if self._presidio is None:
             raise RuntimeError(
                 "PIITokenizer.mask_reversible requires presidio_analyzer "
-                "(install gd_integration_tools[ai-safety])",
+                "(install gd_integration_tools[ai-safety])"
             )
 
         result = await self._presidio.sanitize_async(text, language=policy.language)
@@ -312,7 +312,7 @@ class PIITokenizer:
             match = _PRESIDIO_PLACEHOLDER_RE.fullmatch(presidio_placeholder)
             if not match:
                 _logger.debug(
-                    "skipping unrecognized placeholder format: %r", presidio_placeholder,
+                    "skipping unrecognized placeholder format: %r", presidio_placeholder
                 )
                 continue
             entity_type = match.group(1)
@@ -377,12 +377,12 @@ class PIITokenizer:
         if self._presidio is None:
             raise RuntimeError(
                 "PIITokenizer.mask_irreversible requires presidio_analyzer "
-                "(install gd_integration_tools[ai-safety])",
+                "(install gd_integration_tools[ai-safety])"
             )
 
         result = await self._presidio.sanitize_async(text, language=policy.language)
         masked_text = _PRESIDIO_PLACEHOLDER_RE.sub(
-            lambda m: f"<{m.group(1)}>", result.sanitized_text,
+            lambda m: f"<{m.group(1)}>", result.sanitized_text
         )
         await self._audit_safe_emit(
             event="ai.pii.tokenize.mask",
@@ -504,8 +504,7 @@ class PIITokenizer:
         token_map = await self._token_registry.retrieve(redis_key)
         if token_map is None:
             _logger.warning(
-                "unmask_by_key: TokenMap missing for %s (expired or evicted)",
-                redis_key,
+                "unmask_by_key: TokenMap missing for %s (expired or evicted)", redis_key
             )
             await self._audit_safe_emit(
                 event="ai.pii.tokenize.unmask",
@@ -552,7 +551,7 @@ class PIITokenizer:
         return self._token_registry.decrypt_value(value)
 
     async def _audit_safe_emit(
-        self, *, event: str, action: str, outcome: str, details: dict[str, Any],
+        self, *, event: str, action: str, outcome: str, details: dict[str, Any]
     ) -> None:
         """Безопасный emit — никогда не ломает основной flow."""
         if self._audit is None:

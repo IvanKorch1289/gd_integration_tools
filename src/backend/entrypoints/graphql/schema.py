@@ -216,9 +216,7 @@ async def _dispatch_dsl(
     try:
         dsl = get_dsl_service()
         context = ExecutionContext(
-            route_id=route_id,
-            principal=principal,
-            permissions=permissions,
+            route_id=route_id, principal=principal, permissions=permissions
         )
         exchange = await dsl.dispatch(
             route_id=route_id,
@@ -244,9 +242,7 @@ async def _dispatch_dsl(
         return DslResult(route_id=route_id, status="failed", error=str(exc))
 
 
-def _make_auth_from_principal(
-    principal: str, permissions: tuple[str, ...],
-) -> Any:
+def _make_auth_from_principal(principal: str, permissions: tuple[str, ...]) -> Any:
     """Построить AuthContext-подобный объект из principal/permissions.
 
     Round 5 Sprint 1.1: GraphQL resolver получает principal/permissions
@@ -265,8 +261,7 @@ def _make_auth_from_principal(
 
     """
     return SimpleNamespace(
-        principal=principal,
-        metadata={"permissions": list(permissions)},
+        principal=principal, metadata={"permissions": list(permissions)}
     )
 
 
@@ -293,7 +288,11 @@ def _principal_from_info(info: Any) -> str:
     context = _context_getter(info)
     if context is None:
         return ""
-    auth = context.get("auth") if isinstance(context, dict) else getattr(context, "auth", None)
+    auth = (
+        context.get("auth")
+        if isinstance(context, dict)
+        else getattr(context, "auth", None)
+    )
     if auth is None:
         return ""
     return getattr(auth, "principal", "") or ""
@@ -309,7 +308,11 @@ def _permissions_from_info(info: Any) -> tuple[str, ...]:
     context = _context_getter(info)
     if context is None:
         return ()
-    auth = context.get("auth") if isinstance(context, dict) else getattr(context, "auth", None)
+    auth = (
+        context.get("auth")
+        if isinstance(context, dict)
+        else getattr(context, "auth", None)
+    )
     if auth is None:
         return ()
     from src.backend.core.auth.auth_context_helpers import extract_user_permissions
@@ -342,9 +345,7 @@ async def _graphql_context_getter(request: Any) -> dict[str, Any]:
     return {"request": request, "auth": auth}
 
 
-def _extract_auth_from_info(
-    info: Any,
-) -> tuple[str, tuple[str, ...]]:
+def _extract_auth_from_info(info: Any) -> tuple[str, tuple[str, ...]]:
     """Извлечь principal/permissions из Strawberry ``info.context``.
 
     Round 5 Sprint 1.1: parity с REST/SOAP entrypoints. AuthMiddleware
@@ -404,7 +405,7 @@ class Query:
     async def order_kind(self, order_kind_id: int) -> OrderKindType | None:
         """Выполнить операцию order kind."""
         result = await _dispatch_action(
-            "orderkinds.get", {"key": "id", "value": order_kind_id},
+            "orderkinds.get", {"key": "id", "value": order_kind_id}
         )
         if result.success and result.data:
             return _schema_to_order_kind(result.data)
@@ -428,7 +429,7 @@ class Query:
                     k: result.data.get(k)
                     for k in ("id", "name", "object_uuid", "created_at", "updated_at")
                     if k in result.data
-                },
+                }
             )
         return None
 
@@ -480,7 +481,7 @@ class Mutation:
     async def update_order(self, order_id: int, input: JSON) -> ActionResult:
         """Выполнить операцию update order."""
         return await _dispatch_action(
-            "orders.update", {"key": "id", "value": order_id, "data": input},
+            "orders.update", {"key": "id", "value": order_id, "data": input}
         )
 
     @strawberry.mutation(description="Удалить заказ.")
@@ -507,7 +508,7 @@ class Mutation:
     async def login(self, username: str, password: str) -> ActionResult:
         """Выполнить операцию login."""
         return await _dispatch_action(
-            "users.login", {"username": username, "password": password},
+            "users.login", {"username": username, "password": password}
         )
 
     @strawberry.mutation(description="Синхронизировать виды запросов из СКБ.")
@@ -517,7 +518,7 @@ class Mutation:
 
     @strawberry.mutation(description="Отправить email.")
     async def send_email(
-        self, to_emails: list[str], subject: str, message: str,
+        self, to_emails: list[str], subject: str, message: str
     ) -> ActionResult:
         """Выполнить операцию send email."""
         return await _dispatch_action(
@@ -532,7 +533,7 @@ class Mutation:
 
     @strawberry.mutation(description="Выполнить произвольный action.")
     async def execute_action(
-        self, action: str, payload: JSON | None = None,
+        self, action: str, payload: JSON | None = None
     ) -> ActionResult:
         """Выполнить операцию execute action."""
         return await _dispatch_action(action, payload)
@@ -584,10 +585,10 @@ class Subscription:
     """GraphQL Subscriptions — real-time события."""
 
     @strawberry.subscription(
-        description="Трассировка выполнения маршрута в реальном времени.",
+        description="Трассировка выполнения маршрута в реальном времени."
     )
     async def route_trace(
-        self, route_id: str, info: Info,
+        self, route_id: str, info: Info
     ) -> AsyncGenerator[TraceEventType]:
         """Выполнить операцию route trace."""
         tracer = get_tracer()
@@ -618,7 +619,7 @@ class Subscription:
             )
 
     @strawberry.subscription(
-        description="Системные события (health check каждые 30 сек).",
+        description="Системные события (health check каждые 30 сек)."
     )
     async def system_health(self, info: Info) -> AsyncGenerator[SystemEventType]:
         """Выполнить операцию system health."""
@@ -689,7 +690,7 @@ def _check_query_depth(query: str | None, max_depth: int) -> None:
             depth -= 1
     if max_seen > max_depth:
         raise ValueError(
-            f"GraphQL query depth ({max_seen}) exceeds limit ({max_depth})",
+            f"GraphQL query depth ({max_seen}) exceeds limit ({max_depth})"
         )
 
 
@@ -716,7 +717,7 @@ def _check_query_complexity(query: str | None, max_complexity: int) -> None:
     if estimated_complexity > max_complexity:
         raise ValueError(
             f"GraphQL query complexity ({estimated_complexity}) "
-            f"exceeds limit ({max_complexity})",
+            f"exceeds limit ({max_complexity})"
         )
 
 
@@ -751,7 +752,7 @@ async def _execute_with_timeout(*args: object, **kwargs: object) -> object:
         if overrides.get("enable_introspection", False) is False:
             query_str = kwargs.get("query") or (args[0] if args else None)
             if _is_introspection_query(
-                query_str if isinstance(query_str, str) else None,
+                query_str if isinstance(query_str, str) else None
             ):
                 raise ValueError("GraphQL introspection is disabled by configuration")
 
@@ -763,7 +764,7 @@ async def _execute_with_timeout(*args: object, **kwargs: object) -> object:
 
     # ── Per-request complexity limit (W23).
     max_complexity = overrides.get(
-        "max_query_complexity", graphql_settings.max_query_complexity,
+        "max_query_complexity", graphql_settings.max_query_complexity
     )
     if isinstance(query_str, str):
         _check_query_complexity(query_str, int(max_complexity))
@@ -771,7 +772,7 @@ async def _execute_with_timeout(*args: object, **kwargs: object) -> object:
     # ── Execute с timeout.
     try:
         return await asyncio.wait_for(
-            _original_execute(*args, **kwargs), timeout=timeout_s,
+            _original_execute(*args, **kwargs), timeout=timeout_s
         )
     except TimeoutError as exc:
         raise TimeoutError(f"GraphQL query timeout ({timeout_s}s)") from exc
@@ -819,6 +820,6 @@ graphql_router = GraphQLRouter(
     path="/graphql",
     context_getter=_graphql_context_getter,
     dependencies=[
-        Depends(require_auth([AuthMethod.API_KEY, AuthMethod.JWT, AuthMethod.MTLS])),
+        Depends(require_auth([AuthMethod.API_KEY, AuthMethod.JWT, AuthMethod.MTLS]))
     ],
 )

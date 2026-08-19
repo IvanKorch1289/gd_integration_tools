@@ -27,7 +27,7 @@ class OllamaProvider:
 
     def __init__(self, *, base_url: str | None = None, model: str = "llama3.2") -> None:
         self.base_url = base_url or os.environ.get(
-            "OLLAMA_URL", "http://localhost:11434",
+            "OLLAMA_URL", "http://localhost:11434"
         )
         self.model = model
 
@@ -35,13 +35,13 @@ class OllamaProvider:
         """Извлекает текст из Ollama (``message.content``)."""
         try:
             return response.get("message", {}).get("content", "") or response.get(
-                "response", "",
+                "response", ""
             )
-        except (AttributeError, TypeError):
+        except AttributeError, TypeError:
             return ""
 
     async def embeddings(
-        self, texts: list[str], *, model: str | None = None,
+        self, texts: list[str], *, model: str | None = None
     ) -> list[list[float]]:
         """Embeddings через Ollama /api/embeddings (по одному запросу на текст)."""
         out: list[list[float]] = []

@@ -12,10 +12,10 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from extensions.core_entities.files.domain.models import File, OrderFile
-from src.backend.core.database.session import main_session_manager
-from src.backend.core.domain.models.base import BaseModel
-from src.backend.core.errors import NotFoundError
-from src.backend.core.repositories.base import SQLAlchemyRepository
+from src.backend.core.api import main_session_manager
+from src.backend.core.api import BaseModel
+from src.backend.core.api import NotFoundError
+from src.backend.core.api import SQLAlchemyRepository
 
 __all__ = ("FileRepository", "get_file_repo")
 

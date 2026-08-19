@@ -129,7 +129,7 @@ class ReplyChannel:
             return await asyncio.wait_for(fut, timeout=timeout)
         except TimeoutError as exc:
             raise ReplyTimeoutError(
-                f"reply timeout after {timeout}s (correlation_id={cid})",
+                f"reply timeout after {timeout}s (correlation_id={cid})"
             ) from exc
         finally:
             async with self._lock:
@@ -162,7 +162,7 @@ class ReplyChannel:
         if broker is None:
             logger.warning(
                 "EventBus broker is None — ReplyChannel будет работать "
-                "в in-process режиме до start()",
+                "в in-process режиме до start()"
             )
             self._subscribed = True
             return
@@ -172,7 +172,7 @@ class ReplyChannel:
             self._subscribed = True
         except Exception as exc:
             logger.warning(
-                "ReplyChannel subscribe failed (fallback in-process): %s", exc,
+                "ReplyChannel subscribe failed (fallback in-process): %s", exc
             )
             self._subscribed = True
 
@@ -183,7 +183,7 @@ class ReplyChannel:
         broker = getattr(self._bus, "_broker", None)
         if broker is None:
             logger.warning(
-                "EventBus broker is None — публикация пропущена (channel=%s)", channel,
+                "EventBus broker is None — публикация пропущена (channel=%s)", channel
             )
             return
         await broker.publish(message, channel=channel)

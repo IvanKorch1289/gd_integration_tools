@@ -136,30 +136,30 @@ class AgentGraphProcessor(BaseAIProcessor):
         if graph_type not in GRAPH_TYPES:
             raise ValueError(
                 f"AgentGraphProcessor: graph_type must be one of {sorted(GRAPH_TYPES)}, "
-                f"got {graph_type!r}",
+                f"got {graph_type!r}"
             )
         if graph_type == "supervisor":
             if not agents:
                 raise ValueError(
-                    "AgentGraphProcessor: graph_type='supervisor' requires agents list",
+                    "AgentGraphProcessor: graph_type='supervisor' requires agents list"
                 )
             for idx, agent in enumerate(agents):
                 if "key" not in agent:
                     raise ValueError(
-                        f"AgentGraphProcessor: agents[{idx}] missing 'key'",
+                        f"AgentGraphProcessor: agents[{idx}] missing 'key'"
                     )
                 if "workflow_id" not in agent:
                     raise ValueError(
-                        f"AgentGraphProcessor: agents[{idx}] missing 'workflow_id'",
+                        f"AgentGraphProcessor: agents[{idx}] missing 'workflow_id'"
                     )
         if graph_type == "react":
             if not prompt_inline:
                 raise ValueError(
-                    "AgentGraphProcessor: graph_type='react' requires prompt_inline",
+                    "AgentGraphProcessor: graph_type='react' requires prompt_inline"
                 )
             if not tool_actions:
                 raise ValueError(
-                    "AgentGraphProcessor: graph_type='react' requires tool_actions",
+                    "AgentGraphProcessor: graph_type='react' requires tool_actions"
                 )
 
         super().__init__(name=name or f"agent_graph:{graph_type}")
@@ -205,7 +205,7 @@ class AgentGraphProcessor(BaseAIProcessor):
         exchange.set_property(self.result_property, result)
 
     async def _run_supervisor(
-        self, exchange: Exchange[Any], context: ExecutionContext,
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> dict[str, Any]:
         """Execute multi-agent supervisor via existing MultiAgentSupervisor."""
         try:
@@ -262,7 +262,7 @@ class AgentGraphProcessor(BaseAIProcessor):
                     description=spec.get("description", ""),
                     invoke=invoke_fn,
                     max_iterations=max_iterations,
-                ),
+                )
             )
 
         supervisor = MultiAgentSupervisor(
@@ -275,11 +275,11 @@ class AgentGraphProcessor(BaseAIProcessor):
 
         prompt = self._extract_prompt(exchange)
         return await supervisor.run(
-            prompt=prompt, payload=self._build_payload(exchange),
+            prompt=prompt, payload=self._build_payload(exchange)
         )
 
     async def _run_react(
-        self, exchange: Exchange[Any], context: ExecutionContext,
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> dict[str, Any]:
         """Execute ReAct agent via configured sandbox."""
         # Pre-flight AgentToolPolicy gate (M2.1): если все tools зафильтрованы
@@ -303,9 +303,7 @@ class AgentGraphProcessor(BaseAIProcessor):
             return result.data
         return {"error": result.data.get("error", "unknown"), "graph_type": "react"}
 
-    def _filter_tools_by_policy(
-        self, tool_actions: list[str],
-    ) -> list[str]:
+    def _filter_tools_by_policy(self, tool_actions: list[str]) -> list[str]:
         """Filter tool_actions через AgentToolPolicy (S170 P0-7, M2.1).
 
         Fail-closed: если policy недоступна/не зарегистрирована/падает —
@@ -321,8 +319,11 @@ class AgentGraphProcessor(BaseAIProcessor):
 
         """
         import os
+
         fail_open_env = os.environ.get("AGENT_TOOL_POLICY_FAIL_OPEN", "").lower() in (
-            "1", "true", "yes",
+            "1",
+            "true",
+            "yes",
         )
 
         try:
@@ -331,7 +332,7 @@ class AgentGraphProcessor(BaseAIProcessor):
         except ImportError:
             _logger.warning(
                 "agent_graph tool_policy: AgentToolPolicy import failed; "
-                "blocking all tools (fail-closed)",
+                "blocking all tools (fail-closed)"
             )
             return [] if not fail_open_env else list(tool_actions)
 
@@ -339,7 +340,7 @@ class AgentGraphProcessor(BaseAIProcessor):
             if not has_service(AgentToolPolicy):
                 _logger.warning(
                     "agent_graph tool_policy: AgentToolPolicy not registered in DI; "
-                    "blocking all tools (fail-closed)",
+                    "blocking all tools (fail-closed)"
                 )
                 return [] if not fail_open_env else list(tool_actions)
             policy = get_service(AgentToolPolicy)
@@ -400,7 +401,9 @@ class AgentGraphProcessor(BaseAIProcessor):
             # Cycle 77 L3: use module-level canonical logger.
             _logger.warning(
                 "%s: prompt truncated from %d to %d chars (S227 cycle 4 hardening)",
-                self.name, len(prompt), self._MAX_PROMPT_LEN,
+                self.name,
+                len(prompt),
+                self._MAX_PROMPT_LEN,
             )
             prompt = prompt[: self._MAX_PROMPT_LEN]
         return prompt
@@ -422,7 +425,9 @@ class AgentGraphProcessor(BaseAIProcessor):
             # Cycle 77 L3: use module-level canonical logger.
             _logger.warning(
                 "%s: composed prompt truncated from %d to %d chars (S227 cycle 4 hardening)",
-                self.name, len(prompt), self._MAX_PROMPT_LEN,
+                self.name,
+                len(prompt),
+                self._MAX_PROMPT_LEN,
             )
             prompt = prompt[: self._MAX_PROMPT_LEN]
         return prompt

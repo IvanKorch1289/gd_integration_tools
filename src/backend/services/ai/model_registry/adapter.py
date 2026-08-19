@@ -93,7 +93,7 @@ class ModelRegistryAdapter(Protocol):
         ...
 
     async def get_model(
-        self, name: str, *, version: str | None = None, stage: str | None = None,
+        self, name: str, *, version: str | None = None, stage: str | None = None
     ) -> ModelRecord | None:
         """Конкретная версия / stage модели.
 
@@ -107,7 +107,7 @@ class ModelRegistryAdapter(Protocol):
         ...
 
     async def transition_stage(
-        self, name: str, version: str, new_stage: str,
+        self, name: str, version: str, new_stage: str
     ) -> ModelRecord:
         """Переводит версию в новый stage (``Staging`` → ``Production``)."""
         ...

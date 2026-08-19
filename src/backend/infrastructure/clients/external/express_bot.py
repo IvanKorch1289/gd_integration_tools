@@ -285,7 +285,7 @@ class ExpressBotClient:
             return {"raw": resp.text}
 
     async def _get(
-        self, path: str, *, params: dict[str, Any] | None = None,
+        self, path: str, *, params: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         resp = await self.http.get(path, params=params, headers=self._auth_headers())
         resp.raise_for_status()
@@ -363,7 +363,7 @@ class ExpressBotClient:
     async def stop_typing(self, group_chat_id: str) -> None:
         """Останавливает индикатор набора текста."""
         await self._post(
-            "/api/v3/botx/events/stop_typing", {"group_chat_id": group_chat_id},
+            "/api/v3/botx/events/stop_typing", {"group_chat_id": group_chat_id}
         )
 
     async def get_event_status(self, sync_id: str) -> dict[str, Any]:
@@ -375,7 +375,7 @@ class ExpressBotClient:
 
         """
         return await self._get(
-            "/api/v3/botx/events/event_status", params={"sync_id": sync_id},
+            "/api/v3/botx/events/event_status", params={"sync_id": sync_id}
         )
 
     async def send_internal_notification(
@@ -404,7 +404,7 @@ class ExpressBotClient:
         return str(result.get("result", {}).get("sync_id") or result.get("sync_id", ""))
 
     async def upload_file(
-        self, file_data: bytes, file_name: str, group_chat_id: str,
+        self, file_data: bytes, file_name: str, group_chat_id: str
     ) -> dict[str, Any]:
         """Загружает файл в BotX (multipart).
 
@@ -428,19 +428,19 @@ class ExpressBotClient:
     async def get_chat_info(self, group_chat_id: str) -> dict[str, Any]:
         """Возвращает информацию о чате."""
         return await self._get(
-            "/api/v3/botx/chats/info", params={"group_chat_id": group_chat_id},
+            "/api/v3/botx/chats/info", params={"group_chat_id": group_chat_id}
         )
 
     async def get_members(self, group_chat_id: str) -> list[dict[str, Any]]:
         """Возвращает список участников чата."""
         result = await self._get(
-            "/api/v3/botx/chats/members", params={"group_chat_id": group_chat_id},
+            "/api/v3/botx/chats/members", params={"group_chat_id": group_chat_id}
         )
         members = result.get("result", result)
         return list(members) if isinstance(members, list) else []
 
     async def search_user(
-        self, *, email: str | None = None, huid: str | None = None,
+        self, *, email: str | None = None, huid: str | None = None
     ) -> dict[str, Any] | None:
         """Ищет пользователя по email или HUID.
 

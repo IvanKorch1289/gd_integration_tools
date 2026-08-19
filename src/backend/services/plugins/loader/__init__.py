@@ -50,7 +50,7 @@ from src.backend.services.plugins.loader.validation import (
 )
 
 _logger = get_logger(
-    "services.plugins.loader",
+    "services.plugins.loader"
 )  # S52 W3: re-defined for backward compat
 
 __all__ = (
@@ -169,7 +169,7 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
         violations: tuple[CompatViolation, ...] = ()
         if parsed_manifests:
             violations = check_compatibility(
-                parsed_manifests, core_version=self._core_version,
+                parsed_manifests, core_version=self._core_version
             )
             for violation in violations:
                 compat_blocked.add(violation.plugin)
@@ -182,7 +182,7 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
         cycle_blocked: set[str] = set()
         cycle_reason: str | None = None
         sorted_names = self._topo_sort_non_blocked(
-            parsed_manifests, compat_blocked, cycle_blocked,
+            parsed_manifests, compat_blocked, cycle_blocked
         )
         if cycle_blocked:
             cycle_reason = (
@@ -190,7 +190,7 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
             )
 
         ordered_paths = self._reorder_manifest_paths(
-            manifest_paths=manifest_paths, sorted_names=sorted_names,
+            manifest_paths=manifest_paths, sorted_names=sorted_names
         )
 
         parse_failures_map = dict(parse_failures)
@@ -252,7 +252,13 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
         if entry.status == "loaded" and entry.instance is not None:
             try:
                 await entry.instance.on_shutdown()
-            except (ImportError, AttributeError, RuntimeError, OSError, TypeError) as shutdown_exc:
+            except (
+                ImportError,
+                AttributeError,
+                RuntimeError,
+                OSError,
+                TypeError,
+            ) as shutdown_exc:
                 # cycle-9/D-AUDIT-958: narrow exceptions + observability.
                 # ImportError — plugin dep missing, AttributeError — plugin
                 # API change, RuntimeError — plugin shutdown failure,
@@ -269,7 +275,8 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
             # но запись из реестра всё равно убираем.
             _logger.debug(
                 "shutdown_one: plugin %r status=%s, no instance to shutdown",
-                plugin_name, entry.status,
+                plugin_name,
+                entry.status,
             )
 
         # Удаляем из реестра (no-op если уже отсутствует).
@@ -300,12 +307,17 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
                     "old_version": entry.version,
                 },
             )
-        except (ImportError, AttributeError, RuntimeError) as audit_exc:  # pragma: no cover — audit must never block
+        except (
+            ImportError,
+            AttributeError,
+            RuntimeError,
+        ) as audit_exc:  # pragma: no cover — audit must never block
             # cycle-9/D-AUDIT-937: narrow exceptions + observability.
             # ImportError — audit facade missing, AttributeError — schema
             # change, RuntimeError — backend unavailable. Bare `except
             # Exception` маскировал unrelated runtime errors.
             import logging
+
             logging.getLogger(__name__).debug(
                 "plugin_loader.unload_audit_failed",
                 extra={"plugin_name": plugin_name, "error": str(audit_exc)},
@@ -331,7 +343,7 @@ def _empty_plugin_loader_factory() -> PluginLoader:
         "PluginLoader требует explicit DI. Use PluginLoader("
         "extensions_dir=..., capability_gate=..., action_registry=..., "
         "repository_registry=..., processor_registry=..., core_version=..."
-        ") constructor или set app.state.plugin_loader в startup.",
+        ") constructor или set app.state.plugin_loader в startup."
     )
 
 

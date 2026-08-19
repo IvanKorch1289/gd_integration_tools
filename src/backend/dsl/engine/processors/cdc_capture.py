@@ -83,7 +83,7 @@ class CDCCaptureProcessor(BaseProcessor):
         if strategy not in _ALLOWED_STRATEGIES:
             raise ValueError(
                 f"strategy must be one of {sorted(_ALLOWED_STRATEGIES)}, "
-                f"got: {strategy!r}",
+                f"got: {strategy!r}"
             )
         if not tables:
             raise ValueError("tables cannot be empty")

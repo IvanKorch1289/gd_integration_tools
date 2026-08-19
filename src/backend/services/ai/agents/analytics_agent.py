@@ -81,7 +81,7 @@ class AnalyticsAgent:
 
         if tool:
             target = next(
-                (t for t in tools if t.name == tool or t.id.endswith(tool)), None,
+                (t for t in tools if t.name == tool or t.id.endswith(tool)), None
             )
             if target is None:
                 return {

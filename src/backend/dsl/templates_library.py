@@ -83,13 +83,13 @@ def _web_scrape_scheduled(
 ) -> Pipeline:
     """Парсинг сайта по расписанию: scrape → paginate → normalize → save."""
     builder = RouteBuilder.from_(
-        route_id, source=f"cron:{cron}", description="Scheduled scraping",
+        route_id, source=f"cron:{cron}", description="Scheduled scraping"
     )
     builder = builder.scrape_url(url, selectors={"items": selector})
 
     if max_pages > 1:
         builder = builder.paginate(
-            next_selector="a.next", max_pages=max_pages, start_url=url,
+            next_selector="a.next", max_pages=max_pages, start_url=url
         )
 
     return (
@@ -101,12 +101,12 @@ def _web_scrape_scheduled(
 
 
 def _notify_on_event(
-    event_source: str, email: str, subject_template: str, route_id: str = "notify.event",
+    event_source: str, email: str, subject_template: str, route_id: str = "notify.event"
 ) -> Pipeline:
     """Отправка email при событии."""
     return (
         RouteBuilder.from_(
-            route_id, source=event_source, description="Email notification",
+            route_id, source=event_source, description="Email notification"
         )
         .set_header("to", email)
         .set_header("subject", subject_template)
@@ -125,7 +125,7 @@ def _ai_qa_with_rag(
     """AI Q&A с RAG — поиск → prompt → LLM → parse."""
     return (
         RouteBuilder.from_(
-            route_id, source="internal:ai", description="AI Q&A with RAG",
+            route_id, source="internal:ai", description="AI Q&A with RAG"
         )
         .rag_search(query_field=question_field, top_k=top_k)
         .compose_prompt(
@@ -141,7 +141,7 @@ def _ai_qa_with_rag(
 
 
 def _safe_external_call(
-    action: str, max_retries: int = 3, dlq: bool = True, route_id: str | None = None,
+    action: str, max_retries: int = 3, dlq: bool = True, route_id: str | None = None
 ) -> Pipeline:
     """Безопасный вызов external API с retry + DLQ."""
     rid = route_id or f"safe.{action}"
@@ -156,7 +156,7 @@ def _safe_external_call(
 
 
 def _crud_with_audit(
-    entity: str, create_action: str, update_action: str, delete_action: str,
+    entity: str, create_action: str, update_action: str, delete_action: str
 ) -> list[Pipeline]:
     """CRUD + audit + event publishing."""
     from src.backend.dsl.macros import crud_with_audit
@@ -180,7 +180,7 @@ def _scheduled_export(
     """Еженедельный экспорт отчёта + отправка email."""
     builder = (
         RouteBuilder.from_(
-            route_id, source=f"cron:{cron}", description="Scheduled export",
+            route_id, source=f"cron:{cron}", description="Scheduled export"
         )
         .dispatch_action(source_action)
         .export(format=format, title="Weekly Report")  # type: ignore[attr-defined]
@@ -200,7 +200,7 @@ def _http_api_bridge(
 ) -> Pipeline:
     """HTTP API bridge: fetch → convert → store."""
     builder = RouteBuilder.from_(
-        route_id, source=f"http:{source_url}", description=f"HTTP bridge: {source_url}",
+        route_id, source=f"http:{source_url}", description=f"HTTP bridge: {source_url}"
     )
     builder = builder.http_call(source_url, method=method, timeout=30.0)
     if convert_from != convert_to:
@@ -246,7 +246,7 @@ def _data_quality_pipeline(
     """Data Quality pipeline: poll → DQ check → report/alert."""
     return (
         RouteBuilder.from_(
-            route_id, source="internal:dq", description="Data Quality pipeline",
+            route_id, source="internal:dq", description="Data Quality pipeline"
         )
         .poll(source_action)
         .dq_check(rules=dq_rules, fail_on_violation=False)  # type: ignore[attr-defined]

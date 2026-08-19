@@ -72,7 +72,7 @@ def get_reply_registry_singleton() -> ReplyChannelRegistryProtocol:
     отсутствие реестра как опциональное.
     """
     raise RuntimeError(
-        "reply_registry должен быть зарегистрирован через register_app_state()",
+        "reply_registry должен быть зарегистрирован через register_app_state()"
     )
 
 
@@ -98,7 +98,7 @@ def get_watermark_store_singleton() -> WatermarkStore:
     готовый store в app.state.
     """
     raise RuntimeError(
-        "watermark_store должен быть зарегистрирован через register_app_state()",
+        "watermark_store должен быть зарегистрирован через register_app_state()"
     )
 
 
@@ -123,6 +123,7 @@ def get_resilience_profile_store() -> Any:
         from src.backend.core.di.providers.infrastructure_locator import (
             get_in_memory_resilience_profile_store_class as _get_imrps_cls,
         )
+
         InMemoryResilienceProfileStore = _get_imrps_cls()
 
         store = InMemoryResilienceProfileStore()

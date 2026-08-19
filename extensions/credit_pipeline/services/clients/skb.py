@@ -18,8 +18,8 @@ from typing import Any
 from uuid import UUID
 
 from src.backend.core.config.settings import SKBAPISettings, settings
-from src.backend.core.errors import ServiceError
-from src.backend.core.services.base import BaseExternalAPIClient
+from src.backend.core.api import ServiceError
+from src.backend.core.api import BaseExternalAPIClient
 
 __all__ = ("CreditSKBClient", "get_credit_skb_client", "fetch_result")
 

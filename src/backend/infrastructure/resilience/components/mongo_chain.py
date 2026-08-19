@@ -26,7 +26,7 @@ MongoFindCallable = Callable[[str, dict[str, Any]], Awaitable[dict[str, Any] | N
 
 
 async def _mongo_find_one(
-    collection: str, query: dict[str, Any],
+    collection: str, query: dict[str, Any]
 ) -> dict[str, Any] | None:
     from src.backend.infrastructure.clients.storage.mongodb import get_mongo_client
 
@@ -37,7 +37,7 @@ async def _mongo_find_one(
 
 
 async def _pg_jsonb_find_one(
-    collection: str, query: dict[str, Any],
+    collection: str, query: dict[str, Any]
 ) -> dict[str, Any] | None:
     from sqlalchemy import text
 
@@ -47,7 +47,7 @@ async def _pg_jsonb_find_one(
         result = await session.execute(
             text(
                 "SELECT data FROM app_doc_store WHERE collection = :coll "
-                "AND data @> :q ::jsonb LIMIT 1",
+                "AND data @> :q ::jsonb LIMIT 1"
             ),
             {"coll": collection, "q": orjson.dumps(query).decode()},
         )

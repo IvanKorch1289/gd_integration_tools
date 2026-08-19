@@ -76,7 +76,7 @@ class ResultUnwrapProcessor(BaseProcessor):
         if on_err not in _ALLOWED_ON_ERR:
             raise ValueError(
                 f"result_unwrap: on_err must be one of {sorted(_ALLOWED_ON_ERR)}, "
-                f"got {on_err!r}",
+                f"got {on_err!r}"
             )
         self._source = source
         self._target = to
@@ -122,9 +122,9 @@ class ResultUnwrapProcessor(BaseProcessor):
             # cycle-9/D-AUDIT-1718: narrow exceptions + observability (mirror
             # D-AUDIT-1706..1717).
             import logging
+
             logging.getLogger(__name__).debug(
-                "result_unwrap.feature_flag_fallback",
-                extra={"error": str(ff_exc)},
+                "result_unwrap.feature_flag_fallback", extra={"error": str(ff_exc)}
             )
 
         # Lazy-import result library (extra)

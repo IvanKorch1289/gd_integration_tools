@@ -74,7 +74,7 @@ class MessageExpirationProcessor(BaseProcessor):
     ) -> None:
         if ttl_seconds is None and expiration_resolver is None:
             raise ValueError(
-                "MessageExpirationProcessor: either ttl_seconds or expiration_resolver required",
+                "MessageExpirationProcessor: either ttl_seconds or expiration_resolver required"
             )
         if ttl_seconds is not None and ttl_seconds < 0:
             raise ValueError("ttl_seconds must be >= 0")
@@ -101,7 +101,7 @@ class MessageExpirationProcessor(BaseProcessor):
             if isinstance(resolved, datetime):
                 exp = resolved
         else:
-            assert self._ttl_seconds is not None
+            assert self._ttl_seconds is not None  # nosec
             exp = self._time_source() + timedelta(seconds=self._ttl_seconds)
 
         # Store expiration header (JMS-style: epoch millis)

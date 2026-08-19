@@ -40,7 +40,7 @@ class BatchInferenceClient(Protocol):
         ...
 
     async def batch_embeddings(
-        self, texts: list[str], *, model: str,
+        self, texts: list[str], *, model: str
     ) -> list[list[float]]:
         """Вычислить embeddings для N текстов.
 

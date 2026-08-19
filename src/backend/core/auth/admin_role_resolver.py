@@ -43,7 +43,7 @@ class AdminRoleMapping:
 
 
 def resolve_jwt_admin_roles(
-    *, claims: dict[str, object], mapping: AdminRoleMapping,
+    *, claims: dict[str, object], mapping: AdminRoleMapping
 ) -> frozenset[AdminRole]:
     """Извлекает admin-роли из JWT claims."""
     raw = claims.get(mapping.jwt_claim_name)
@@ -63,7 +63,7 @@ def resolve_jwt_admin_roles(
 
 
 def resolve_saml_admin_roles(
-    *, groups: Iterable[str], mapping: AdminRoleMapping,
+    *, groups: Iterable[str], mapping: AdminRoleMapping
 ) -> frozenset[AdminRole]:
     """SAML groups → AdminRole через конфигурируемый mapping."""
     roles: set[AdminRole] = set()
@@ -75,7 +75,7 @@ def resolve_saml_admin_roles(
 
 
 def resolve_mtls_admin_roles(
-    *, cn: str, mapping: AdminRoleMapping,
+    *, cn: str, mapping: AdminRoleMapping
 ) -> frozenset[AdminRole]:
     """MTLS x509 CN → AdminRole через whitelist."""
     role = mapping.mtls_cn_to_role.get(cn)

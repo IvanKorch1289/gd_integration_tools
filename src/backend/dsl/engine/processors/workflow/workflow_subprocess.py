@@ -125,9 +125,7 @@ async def run_workflow_by_id(
             try:
                 from src.backend.core.config.features import feature_flags
 
-                require_parent = bool(
-                    feature_flags.workflow_subprocess_require_parent,
-                )
+                require_parent = bool(feature_flags.workflow_subprocess_require_parent)
             except Exception:  # pragma: no cover
                 require_parent = True
 

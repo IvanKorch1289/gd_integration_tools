@@ -29,7 +29,6 @@ from src.backend.core.di.providers import (
 __all__ = ("SystemService", "get_system_service")
 
 
-
 class SystemService:
     """Unified система + admin operations — фасад над Tech + Admin.
 

@@ -74,10 +74,10 @@ class CostAlertService:
 
         """
         current = await self._reader.fetch_costs(
-            window=window, group_by=group_by, top_n=top_n,
+            window=window, group_by=group_by, top_n=top_n
         )
         previous = await self._reader.fetch_costs(
-            window=window * 2, group_by=group_by, top_n=top_n,
+            window=window * 2, group_by=group_by, top_n=top_n
         )
 
         prev_index = {r.key: r for r in previous}
@@ -107,7 +107,7 @@ class CostAlertService:
                         previous_mean_usd=mean,
                         previous_std_usd=std,
                         samples=prev_total_requests,
-                    ),
+                    )
                 )
         return alerts
 

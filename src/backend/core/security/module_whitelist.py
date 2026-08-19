@@ -58,5 +58,5 @@ def validate_module_whitelist(
             return
 
     raise PermissionError(
-        f"{context}: module {module_name!r} not in whitelist{denied_suffix}",
+        f"{context}: module {module_name!r} not in whitelist{denied_suffix}"
     )

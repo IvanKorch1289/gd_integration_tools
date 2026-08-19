@@ -40,7 +40,7 @@ class ImageOcrProcessor(BaseProcessor):
             from PIL import Image
         except ImportError:
             exchange.fail(
-                "pytesseract/Pillow not installed: pip install pytesseract Pillow",
+                "pytesseract/Pillow not installed: pip install pytesseract Pillow"
             )
             return
         body = exchange.in_message.body
@@ -53,7 +53,7 @@ class ImageOcrProcessor(BaseProcessor):
         # это приводит к file-descriptor leak (Sprint 83 W3).
         with Image.open(io.BytesIO(body)) as img:
             text = await asyncio.to_thread(
-                pytesseract.image_to_string, img, lang=self._lang,
+                pytesseract.image_to_string, img, lang=self._lang
             )
         exchange.set_out(
             body={"text": text.strip(), "lang": self._lang},

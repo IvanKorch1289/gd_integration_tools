@@ -82,7 +82,7 @@ class IPRestrictionMiddleware:
     async def _send_403(send: Send) -> None:
         """Отправляет 403 JSON response через send (cycle 39/40 lesson)."""
         body_bytes = json.dumps(
-            {"detail": "Доступ запрещен для вашего IP-адреса"},
+            {"detail": "Доступ запрещен для вашего IP-адреса"}
         ).encode("utf-8")
         await send(
             {
@@ -92,14 +92,9 @@ class IPRestrictionMiddleware:
                     (b"content-type", b"application/json"),
                     (b"content-length", str(len(body_bytes)).encode("latin-1")),
                 ],
-            },
+            }
         )
-        await send(
-            {
-                "type": "http.response.body",
-                "body": body_bytes,
-            },
-        )
+        await send({"type": "http.response.body", "body": body_bytes})
 
     def _is_admin_route(self, path: str) -> bool:
         """Проверяет, относится ли путь к административным маршрутам."""

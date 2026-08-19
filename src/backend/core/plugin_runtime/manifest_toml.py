@@ -97,7 +97,9 @@ class PluginEndpoint(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    protocol: str = Field(min_length=1, pattern=r"^(rest|graphql|grpc|mcp|sse|websocket|soap|mqtt)$")
+    protocol: str = Field(
+        min_length=1, pattern=r"^(rest|graphql|grpc|mcp|sse|websocket|soap|mqtt)$"
+    )
     name: str = Field(min_length=1, pattern=r"^[a-z][a-z0-9_.]*$")
     path: str = Field(min_length=1)
     method: str = Field(default="", pattern=r"^(GET|POST|PUT|DELETE|PATCH|)$")
@@ -142,7 +144,7 @@ class PluginCompatibility(BaseModel):
                 SpecifierSet(spec)
             except InvalidSpecifier as exc:
                 raise ValueError(
-                    f"Invalid PEP-440 specifier for plugin {plugin_name!r}: {spec!r}",
+                    f"Invalid PEP-440 specifier for plugin {plugin_name!r}: {spec!r}"
                 ) from exc
         return dict(value)
 
@@ -156,7 +158,7 @@ class PluginCompatibility(BaseModel):
             SpecifierSet(value)
         except InvalidSpecifier as exc:
             raise ValueError(
-                f"Invalid incompatible_core_versions specifier: {value!r}",
+                f"Invalid incompatible_core_versions specifier: {value!r}"
             ) from exc
         return value
 
@@ -344,7 +346,7 @@ class PluginManifest(BaseModel):
                     raise ValueError(
                         f"Plugin {self.name!r}: tenant {tenant_decl.name!r} "
                         f"declares unknown capability {cap_name!r}; "
-                        f"allowed: {sorted(DEFAULT_CAPABILITY_CATALOG)}",
+                        f"allowed: {sorted(DEFAULT_CAPABILITY_CATALOG)}"
                     )
         return self
 
@@ -376,11 +378,11 @@ def load_plugin_manifest(path: Path | str) -> PluginManifest:
         raise PluginManifestError(f"Invalid TOML in {file_path}: {exc}") from exc
     if not isinstance(raw, dict):
         raise PluginManifestError(
-            f"Manifest must be a TOML table, got {type(raw).__name__}: {file_path}",
+            f"Manifest must be a TOML table, got {type(raw).__name__}: {file_path}"
         )
     try:
         return PluginManifest.model_validate(raw)
     except Exception as exc:  # pydantic ValidationError → wrap
         raise PluginManifestError(
-            f"Manifest validation failed for {file_path}: {exc}",
+            f"Manifest validation failed for {file_path}: {exc}"
         ) from exc

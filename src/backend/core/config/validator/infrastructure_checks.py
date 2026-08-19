@@ -53,11 +53,11 @@ class InfrastructureChecksMixin:
                     "обходной путь."
                 ),
                 context={"debug_mode": True, "environment": app.environment},
-            ),
+            )
         ]
 
     def _check_database_host_in_prod(
-        self, app: AppBaseSettings, database: DatabaseConnectionSettings,
+        self, app: AppBaseSettings, database: DatabaseConnectionSettings
     ) -> list[ConfigViolation]:
         """R-CFG-1: ``database.host`` пустой в production для non-sqlite.
 
@@ -90,11 +90,11 @@ class InfrastructureChecksMixin:
                     "host": database.host,
                     "environment": app.environment,
                 },
-            ),
+            )
         ]
 
     def _check_redis_host_required_in_prod(
-        self, app: AppBaseSettings, redis: RedisSettings,
+        self, app: AppBaseSettings, redis: RedisSettings
     ) -> list[ConfigViolation]:
         """R-CFG-2a: ``redis.host`` пустой в production при Redis enabled.
 
@@ -122,11 +122,11 @@ class InfrastructureChecksMixin:
                     "или выключить REDIS_ENABLED=false."
                 ),
                 context={"environment": app.environment, "enabled": True},
-            ),
+            )
         ]
 
     def _check_redis_host_localhost_in_prod(
-        self, app: AppBaseSettings, redis: RedisSettings,
+        self, app: AppBaseSettings, redis: RedisSettings
     ) -> list[ConfigViolation]:
         """R-CFG-2b: ``redis.host`` = localhost/127.0.0.1 в production.
 
@@ -158,12 +158,12 @@ class InfrastructureChecksMixin:
                         "'redis.internal' или service-DNS k8s)."
                     ),
                     context={"environment": app.environment, "host": redis.host},
-                ),
+                )
             ]
         return []
 
     def _check_feature_flag_dependency_unmet(
-        self, settings: Settings,
+        self, settings: Settings
     ) -> list[ConfigViolation]:
         """D14: зависимый feature-flag включён, а требуемый — нет.
 
@@ -209,7 +209,7 @@ class InfrastructureChecksMixin:
                         f"'{dependent}'."
                     ),
                     context={"dependent": dependent, "unmet_requirements": list(unmet)},
-                ),
+                )
             )
 
         # WARNING-зависимости
@@ -233,6 +233,6 @@ class InfrastructureChecksMixin:
                         f"'{dependent}'."
                     ),
                     context={"dependent": dependent, "unmet_requirements": list(unmet)},
-                ),
+                )
             )
         return violations

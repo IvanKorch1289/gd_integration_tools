@@ -71,7 +71,7 @@ class RagIngestService:
         rag = getattr(app.state, "rag_service", None) if app is not None else None
         if rag is None:
             raise RuntimeError(
-                "RagIngestService: app.state.rag_service не зарегистрирован.",
+                "RagIngestService: app.state.rag_service не зарегистрирован."
             )
         self._rag_service = rag
         return rag
@@ -123,7 +123,7 @@ class RagIngestService:
         )
 
     async def ingest(
-        self, files: list[tuple[str, bytes]], *, collection: str = "default",
+        self, files: list[tuple[str, bytes]], *, collection: str = "default"
     ) -> dict[str, Any]:
         """Запускает ingest. Возвращает task_id + start-метку."""
         task_id = str(uuid.uuid4())
@@ -172,7 +172,7 @@ class RagIngestService:
                     **pii_meta,
                 }
                 doc_id = await rag.ingest(
-                    content_text, metadata=metadata, namespace=collection,
+                    content_text, metadata=metadata, namespace=collection
                 )
                 state["doc_ids"].append(doc_id)
             except Exception as exc:
@@ -189,7 +189,7 @@ class RagIngestService:
         )
         state["finished_at"] = datetime.now(UTC).isoformat()
         await self._store.update(
-            task_id, status=state["status"], finished_at=state["finished_at"],
+            task_id, status=state["status"], finished_at=state["finished_at"]
         )
 
     async def status(self, task_id: str) -> dict[str, Any] | None:
@@ -225,7 +225,7 @@ def _resolve_embedding_provenance() -> dict[str, Any]:
         "embedding_provider": getattr(rag_settings, "embedding_provider", "unknown"),
         "embedding_model": getattr(rag_settings, "embedding_model", "unknown"),
         "chunker_fingerprint_version": int(
-            getattr(rag_ingest_settings, "chunker_fingerprint_version", 1),
+            getattr(rag_ingest_settings, "chunker_fingerprint_version", 1)
         ),
     }
 
@@ -275,9 +275,7 @@ def _maybe_mask_pii(content_text: str) -> tuple[str, dict[str, Any]]:
         from src.backend.core.policy.pii_fail_closed import raise_pii_fail_closed
 
         raise_pii_fail_closed(
-            source="rag_ingest._maybe_mask_pii",
-            payload_size=len(content_text),
-            exc=exc,
+            source="rag_ingest._maybe_mask_pii", payload_size=len(content_text), exc=exc
         )
 
 
@@ -300,7 +298,7 @@ def get_rag_ingest_service() -> RagIngestService:
 
             store = build_ingest_state_store(rag_ingest_settings.state_backend)
             _singleton = RagIngestService(
-                deferred=rag_ingest_settings.deferred, store=store,
+                deferred=rag_ingest_settings.deferred, store=store
             )
         except Exception as _:
             _singleton = RagIngestService()

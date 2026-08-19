@@ -55,7 +55,7 @@ class BrotliCompressionMiddleware:
         except ImportError:
             logger.info(
                 "brotli не установлен — BrotliCompressionMiddleware no-op fallback "
-                "(установите pip install brotli или extra=compression)",
+                "(установите pip install brotli или extra=compression)"
             )
             return None
 
@@ -114,7 +114,7 @@ class BrotliCompressionMiddleware:
                 # final chunk — решаем, сжимать или нет
                 full_body = b"".join(buffer)
                 if len(full_body) >= self.minimum_size and self._is_json(
-                    captured_headers[0],
+                    captured_headers[0]
                 ):
                     compressed = self._brotli.compress(full_body, quality=self.quality)
                     headers = [
@@ -124,7 +124,7 @@ class BrotliCompressionMiddleware:
                     ]
                     headers.append((b"content-encoding", b"br"))
                     headers.append(
-                        (b"content-length", str(len(compressed)).encode("latin-1")),
+                        (b"content-length", str(len(compressed)).encode("latin-1"))
                     )
                     # Добавим Vary
                     has_vary = any(n.lower() == b"vary" for n, _ in headers)
@@ -135,14 +135,14 @@ class BrotliCompressionMiddleware:
                             "type": "http.response.start",
                             "status": captured_status[0],
                             "headers": headers,
-                        },
+                        }
                     )
                     await send(
                         {
                             "type": "http.response.body",
                             "body": compressed,
                             "more_body": False,
-                        },
+                        }
                     )
                     return
 
@@ -152,14 +152,14 @@ class BrotliCompressionMiddleware:
                         "type": "http.response.start",
                         "status": captured_status[0],
                         "headers": captured_headers[0],
-                    },
+                    }
                 )
                 await send(
                     {
                         "type": "http.response.body",
                         "body": full_body,
                         "more_body": False,
-                    },
+                    }
                 )
                 return
 

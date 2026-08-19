@@ -60,7 +60,7 @@ class ShellExecProcessor(BaseProcessor):
 
         if self._allowed and self._command not in self._allowed:
             exchange.fail(
-                f"Command '{self._command}' not in whitelist: {self._allowed}",
+                f"Command '{self._command}' not in whitelist: {self._allowed}"
             )
             return
         try:
@@ -71,7 +71,7 @@ class ShellExecProcessor(BaseProcessor):
                 stderr=asyncio.subprocess.PIPE,
             )
             stdout, stderr = await asyncio.wait_for(
-                proc.communicate(), timeout=self._timeout,
+                proc.communicate(), timeout=self._timeout
             )
             exchange.set_out(
                 body={
@@ -112,7 +112,7 @@ class EmailComposeProcessor(BaseProcessor):
     audit_event: str | None = "rpa.email.send"
 
     def __init__(
-        self, to: str, subject: str, body_template: str, *, name: str | None = None,
+        self, to: str, subject: str, body_template: str, *, name: str | None = None
     ) -> None:
         super().__init__(name=name or f"email:{to[:20]}")
         self._to = to
@@ -127,13 +127,13 @@ class EmailComposeProcessor(BaseProcessor):
         variables = body if isinstance(body, dict) else {"body": body}
         try:
             email_body = self._body_template.format(**variables)
-        except (KeyError, IndexError):
+        except KeyError, IndexError:
             email_body = self._body_template
         try:
             from src.backend.infrastructure.clients.transport.smtp import smtp_client
 
             await smtp_client.send_email(
-                to=self._to, subject=self._subject, body=email_body,
+                to=self._to, subject=self._subject, body=email_body
             )
             exchange.set_property("email_sent", True)
             exchange.set_property("email_to", self._to)
@@ -147,7 +147,7 @@ class EmailComposeProcessor(BaseProcessor):
                 "to": self._to,
                 "subject": self._subject,
                 "body_template": self._body_template,
-            },
+            }
         }
 
 
@@ -183,9 +183,7 @@ class TerminalExecProcessor(BaseProcessor):
         self.target = to
         self.shell = shell
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="execute"):
             return
@@ -207,13 +205,11 @@ class TerminalExecProcessor(BaseProcessor):
                 exchange.fail("terminal_exec: empty command")
                 return
             proc = await asyncio.create_subprocess_exec(
-                *argv,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
+                *argv, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
             )
         try:
             stdout, stderr = await asyncio.wait_for(
-                proc.communicate(), timeout=self.timeout,
+                proc.communicate(), timeout=self.timeout
             )
         except TimeoutError:
             proc.kill()
@@ -226,7 +222,9 @@ class TerminalExecProcessor(BaseProcessor):
 
         _rpa_logger.info(
             "terminal_exec cmd=%s timeout=%.1fs exit=%d",
-            self.command, self.timeout, proc.returncode,
+            self.command,
+            self.timeout,
+            proc.returncode,
         )
         self.set_result(exchange, self.target, output)
         exchange.set_property("exit_code", proc.returncode)
@@ -267,9 +265,7 @@ class EmailReadProcessor(BaseProcessor):
         self.folder = folder
         self.target = to
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Подключается к IMAP-серверу, читает все письма из папки и пишет их в target."""
         if not await self.auth_check(exchange, action="read"):
             return
@@ -287,21 +283,31 @@ class EmailReadProcessor(BaseProcessor):
                     _, data = conn.fetch(msg_id, "(RFC822)")
                     for part in data:
                         if isinstance(part, tuple) and len(part) >= 2:
-                            emails.append({"raw": part[1].decode("utf-8", errors="replace")})
+                            emails.append(
+                                {"raw": part[1].decode("utf-8", errors="replace")}
+                            )
                 return emails
             finally:
                 try:
                     conn.logout()
-                except (OSError, ConnectionError, RuntimeError, AttributeError) as logout_exc:
+                except (
+                    OSError,
+                    ConnectionError,
+                    RuntimeError,
+                    AttributeError,
+                ) as logout_exc:
                     # cycle-9/D-AUDIT-948: narrow exceptions + observability.
                     # OSError/ConnectionError для IMAP network, RuntimeError
                     # — server error, AttributeError — IMAP API change.
                     import logging
+
                     logging.getLogger(__name__).debug(
                         "email_read.imap_logout_failed",
                         extra={"error": str(logout_exc)},
                     )
 
         emails = await asyncio.to_thread(_fetch)
-        _rpa_logger.info("email_read host=%s folder=%s count=%d", self.host, self.folder, len(emails))
+        _rpa_logger.info(
+            "email_read host=%s folder=%s count=%d", self.host, self.folder, len(emails)
+        )
         self.set_result(exchange, self.target, emails)

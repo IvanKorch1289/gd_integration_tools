@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 __all__ = ("HttpAntivirusBackend",)
 
 
-
 class HttpAntivirusBackend(AntivirusBackend):
     """Адаптер :class:`AntivirusService` под :class:`AntivirusBackend`."""
 
@@ -46,7 +45,8 @@ class HttpAntivirusBackend(AntivirusBackend):
             logger.debug(
                 "antivirus.http.is_available: ping failed (exc_type=%s "
                 "exc_msg=%s) — AV unavailable",
-                type(exc).__name__, exc,
+                type(exc).__name__,
+                exc,
             )
             return False
 
@@ -54,11 +54,11 @@ class HttpAntivirusBackend(AntivirusBackend):
         """Метод scan_bytes (см. signature)."""
         start = time.monotonic()
         scan_fn = getattr(self._service, "scan_bytes", None) or getattr(
-            self._service, "scan_payload", None,
+            self._service, "scan_payload", None
         )
         if scan_fn is None:
             raise RuntimeError(
-                "HTTP AntivirusService не имеет метода scan_bytes/scan_payload",
+                "HTTP AntivirusService не имеет метода scan_bytes/scan_payload"
             )
         try:
             verdict = await scan_fn(payload)
@@ -68,5 +68,5 @@ class HttpAntivirusBackend(AntivirusBackend):
         clean = bool(verdict.get("clean", False))
         signature = verdict.get("signature") or verdict.get("threat")
         return AntivirusScanResult(
-            clean=clean, signature=signature, backend=self.name, latency_ms=latency_ms,
+            clean=clean, signature=signature, backend=self.name, latency_ms=latency_ms
         )

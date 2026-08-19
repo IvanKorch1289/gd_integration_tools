@@ -37,9 +37,9 @@ def _get_rate_limit_settings() -> Any:
         # Bare `except Exception` маскировал ImportError (settings module
         # не инициализирован) или AttributeError (неправильный settings).
         from src.backend.core.logging import get_logger
+
         get_logger(__name__).debug(
-            "resilience.settings_resolve_failed",
-            extra={"error": str(settings_exc)},
+            "resilience.settings_resolve_failed", extra={"error": str(settings_exc)}
         )
         return None
 
@@ -54,7 +54,7 @@ class ResilienceFacade:
     """
 
     def __init__(
-        self, *, capability_check: Any | None = None, plugin: str = "extension",
+        self, *, capability_check: Any | None = None, plugin: str = "extension"
     ) -> None:
         self._check = capability_check
         self._plugin = plugin
@@ -64,7 +64,7 @@ class ResilienceFacade:
             self._check(self._plugin, action, resource)
 
     async def check_rate_limit(
-        self, identifier: str, limit: int, window_seconds: float,
+        self, identifier: str, limit: int, window_seconds: float
     ) -> bool:
         """Проверить rate limit для идентификатора.
 

@@ -9,6 +9,7 @@ worker должен прочитать marker из exchange и вызвать
 
 Pattern (Ponytail, D169): handler — тонкая обёртка, lazy temporalio import.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -49,10 +50,7 @@ class ContinueAsNewHandler:
         return self.extract_marker(exchange) is not None
 
     def build_continue_args(
-        self,
-        marker: dict[str, Any],
-        *,
-        current_input: dict[str, Any] | None = None,
+        self, marker: dict[str, Any], *, current_input: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """Сформировать kwargs для ``workflow.continue_as_new()``.
 
@@ -75,10 +73,7 @@ class ContinueAsNewHandler:
         }
 
     def perform_continue(
-        self,
-        marker: dict[str, Any],
-        *,
-        current_input: dict[str, Any] | None = None,
+        self, marker: dict[str, Any], *, current_input: dict[str, Any] | None = None
     ) -> None:
         """Вызвать ``temporalio.workflow.continue_as_new()``.
 
@@ -93,7 +88,7 @@ class ContinueAsNewHandler:
                 extra={"hint": "pip install temporalio"},
             )
             raise ImportError(
-                "temporalio не установлен — ContinueAsNew недоступен",
+                "temporalio не установлен — ContinueAsNew недоступен"
             ) from exc
 
         args = self.build_continue_args(marker, current_input=current_input)

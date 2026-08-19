@@ -138,7 +138,7 @@ class WorkflowState(BaseModel, TenantMixin):
     __versioned__ = {"versioning": False}
     __table_args__ = (
         UniqueConstraint(
-            "workflow_id", "run_id", name="uq_workflow_state_workflow_run",
+            "workflow_id", "run_id", name="uq_workflow_state_workflow_run"
         ),
         Index("ix_workflow_state_state_tenant", "state", "tenant_id"),
         {"comment": "Sprint 21 W8 — saga state persistence (B-05)"},
@@ -146,22 +146,22 @@ class WorkflowState(BaseModel, TenantMixin):
 
     # Переопределяем int-id BaseModel на UUID для consistent saga key
     id: Mapped[uuid.UUID] = mapped_column(
-        uuid_t(), primary_key=True, default=uuid.uuid4,
+        uuid_t(), primary_key=True, default=uuid.uuid4
     )
 
     workflow_id: Mapped[uuid.UUID] = mapped_column(uuid_t(), index=True, nullable=False)
     run_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
     step_index: Mapped[int] = mapped_column(
-        BigInteger, nullable=False, default=0, server_default="0",
+        BigInteger, nullable=False, default=0, server_default="0"
     )
     compensating_actions: Mapped[list[Any]] = mapped_column(
-        json_b(), nullable=False, default=list, server_default="[]",
+        json_b(), nullable=False, default=list, server_default="[]"
     )
     state: Mapped[str] = mapped_column(
-        String(32), nullable=False, default="running", server_default="running",
+        String(32), nullable=False, default="running", server_default="running"
     )
     result_payload: Mapped[dict[str, Any] | None] = mapped_column(
-        json_b(), nullable=True,
+        json_b(), nullable=True
     )
     error_message: Mapped[str | None] = mapped_column(String(2048), nullable=True)
 
@@ -243,7 +243,7 @@ class WorkflowStateRepository:
         return await self._fetch_one(workflow_id, run_id)
 
     async def list_compensating(
-        self, *, tenant_id: str | None = None, limit: int = 100,
+        self, *, tenant_id: str | None = None, limit: int = 100
     ) -> list[WorkflowState]:
         """Возвращает saga'и в состоянии compensating (для compensation worker).
 
@@ -260,7 +260,7 @@ class WorkflowStateRepository:
         return list(result.scalars().all())
 
     async def signal_event(
-        self, workflow_id: uuid.UUID, run_id: str, *, event: WorkflowStateValue,
+        self, workflow_id: uuid.UUID, run_id: str, *, event: WorkflowStateValue
     ) -> WorkflowState | None:
         """Атомарный переход state через signal-event.
 
@@ -275,10 +275,10 @@ class WorkflowStateRepository:
         return record
 
     async def _fetch_one(
-        self, workflow_id: uuid.UUID, run_id: str,
+        self, workflow_id: uuid.UUID, run_id: str
     ) -> WorkflowState | None:
         stmt = select(WorkflowState).where(
-            WorkflowState.workflow_id == workflow_id, WorkflowState.run_id == run_id,
+            WorkflowState.workflow_id == workflow_id, WorkflowState.run_id == run_id
         )
         result = await self._session.execute(stmt)
         return result.scalar_one_or_none()

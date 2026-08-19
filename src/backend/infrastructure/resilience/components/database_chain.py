@@ -23,12 +23,12 @@ __all__ = ("DBQueryCallable", "build_database_fallbacks", "build_database_primar
 logger = get_logger(__name__)
 
 DBQueryCallable = Callable[
-    [str, dict[str, Any] | None], Awaitable[list[dict[str, Any]]],
+    [str, dict[str, Any] | None], Awaitable[list[dict[str, Any]]]
 ]
 
 
 async def _pg_query(
-    sql: str, params: dict[str, Any] | None = None,
+    sql: str, params: dict[str, Any] | None = None
 ) -> list[dict[str, Any]]:
     from sqlalchemy import text
 
@@ -113,7 +113,7 @@ def _check_snapshot_freshness() -> None:
 
 
 async def _sqlite_ro_query(
-    sql: str, params: dict[str, Any] | None = None,
+    sql: str, params: dict[str, Any] | None = None
 ) -> list[dict[str, Any]]:
     from sqlalchemy import text
 

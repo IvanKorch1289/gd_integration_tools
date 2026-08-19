@@ -10,6 +10,7 @@ Pattern (D260, Ponytail): thin wrapper — auto-rotation logic OPTIONAL
 
 Production: config flag ``cert_auto_rotate: bool = False``.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -81,33 +82,29 @@ class CertRotationWatcher:
             sid = getattr(entry, "service_id", "unknown")
             logger.warning(
                 "cert.rotation.expiring cert=%s days=%.1f threshold=%d",
-                sid, days_remaining, self._rotation_threshold_days,
+                sid,
+                days_remaining,
+                self._rotation_threshold_days,
             )
             if self._auto_rotate and days_remaining <= 0:
                 # Auto-rotate: вызов renewal callback (D274, opt-in)
                 if self._renewal_callback is not None:
                     try:
                         await self._renewal_callback(sid)
-                        logger.info(
-                            "cert.rotation.auto_rotate_success cert=%s", sid,
-                        )
+                        logger.info("cert.rotation.auto_rotate_success cert=%s", sid)
                         self._record_rotation(success=True)
                     except Exception as exc:
                         logger.error(
-                            "cert.rotation.auto_rotate_failed cert=%s: %s",
-                            sid, exc,
+                            "cert.rotation.auto_rotate_failed cert=%s: %s", sid, exc
                         )
                         self._record_rotation(success=False)
                 else:
                     # Без callback — log only
-                    logger.info(
-                        "cert.rotation.auto_rotate_triggered cert=%s", sid,
-                    )
+                    logger.info("cert.rotation.auto_rotate_triggered cert=%s", sid)
                     self._record_rotation(success=True)
             elif self._auto_rotate:
                 logger.info(
-                    "cert.rotation.scheduled cert=%s days=%.1f",
-                    sid, days_remaining,
+                    "cert.rotation.scheduled cert=%s days=%.1f", sid, days_remaining
                 )
 
         self._record_rotation(success=True)
@@ -122,7 +119,8 @@ class CertRotationWatcher:
         """Основной цикл watcher."""
         logger.info(
             "cert.rotation.started interval=%.0fs threshold=%dd",
-            self._check_interval_seconds, self._rotation_threshold_days,
+            self._check_interval_seconds,
+            self._rotation_threshold_days,
         )
         try:
             while not self._stop_event.is_set():
@@ -130,8 +128,7 @@ class CertRotationWatcher:
                 # Cancel-safe sleep
                 try:
                     await asyncio.wait_for(
-                        self._stop_event.wait(),
-                        timeout=self._check_interval_seconds,
+                        self._stop_event.wait(), timeout=self._check_interval_seconds
                     )
                 except TimeoutError:
                     pass  # interval elapsed, continue
@@ -148,9 +145,7 @@ class CertRotationWatcher:
             logger.warning("cert.rotation.already_started")
             return
         self._stop_event.clear()
-        self._task = asyncio.create_task(
-            self._loop(), name="cert-rotation-watcher",
-        )
+        self._task = asyncio.create_task(self._loop(), name="cert-rotation-watcher")
         logger.info("cert.rotation.task_started")
 
     async def stop(self) -> None:

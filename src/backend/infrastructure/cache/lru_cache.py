@@ -84,7 +84,7 @@ class LruMemoryCache:
     """
 
     def __init__(
-        self, *, max_size: int = 1024, ttl_seconds: int = 300, scope: str = "l1",
+        self, *, max_size: int = 1024, ttl_seconds: int = 300, scope: str = "l1"
     ) -> None:
         if max_size <= 0:
             raise ValueError("max_size должен быть положительным")

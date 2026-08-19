@@ -28,7 +28,7 @@ class MetricsBackend(ABC):
 
     @abstractmethod
     def inc_counter(
-        self, name: str, value: float = 1.0, labels: Labels | None = None,
+        self, name: str, value: float = 1.0, labels: Labels | None = None
     ) -> None:
         """Увеличивает counter ``name`` на ``value``."""
         ...
@@ -40,7 +40,7 @@ class MetricsBackend(ABC):
 
     @abstractmethod
     def observe_histogram(
-        self, name: str, value: float, labels: Labels | None = None,
+        self, name: str, value: float, labels: Labels | None = None
     ) -> None:
         """Добавляет наблюдение в гистограмму ``name``."""
         ...

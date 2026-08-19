@@ -47,7 +47,7 @@ class ContentMixin:
                 action=action,
                 payload_factory=payload_factory,
                 result_property=result_property,
-            ),
+            )
         )
 
     def wire_tap(self, tap_processors: list[BaseProcessor]) -> RouteBuilder:
@@ -64,8 +64,8 @@ class ContentMixin:
         """Multicast: fan-out на flat list процессор-групп + aggregation."""
         return self._add(  # type: ignore[attr-defined]
             MulticastProcessor(
-                branches=branches, strategy=strategy, stop_on_error=stop_on_error,
-            ),
+                branches=branches, strategy=strategy, stop_on_error=stop_on_error
+            )
         )
 
     def recipient_list(
@@ -77,12 +77,12 @@ class ContentMixin:
         """Recipient List: динамический fan-out на список маршрутов."""
         return self._add(  # type: ignore[attr-defined]
             RecipientListProcessor(
-                recipients_expression=recipients_expression, parallel=parallel,
-            ),
+                recipients_expression=recipients_expression, parallel=parallel
+            )
         )
 
     def content_filter(
-        self, predicate: Callable[[Exchange[Any]], bool],
+        self, predicate: Callable[[Exchange[Any]], bool]
     ) -> RouteBuilder:
         """Alias для :meth:`filter` — фильтрует Exchange, останавливает если False."""
         return self._add(FilterProcessor(predicate=predicate))  # type: ignore[attr-defined]

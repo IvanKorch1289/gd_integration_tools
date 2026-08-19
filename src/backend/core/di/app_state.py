@@ -62,7 +62,7 @@ def set_app_ref(app: FastAPI, *, allow_replace: bool = False) -> None:
         logger.warning(
             "set_app_ref вызван повторно без reset_app_state — "
             "предыдущая ссылка перезаписывается. Это может привести "
-            "к flaky-тестам, если декораторные кэши не очищены.",
+            "к flaky-тестам, если декораторные кэши не очищены."
         )
     _app_ref = app
 
@@ -86,7 +86,7 @@ def require_app_ref() -> FastAPI:
         raise RuntimeError(
             "FastAPI app не зарегистрирован: вызовите set_app_ref() "
             "перед обращением к зависимостям через app.state. Обычно это "
-            "делается автоматически в register_app_state() при старте.",
+            "делается автоматически в register_app_state() при старте."
         )
     return _app_ref
 
@@ -126,9 +126,9 @@ def get_three_tier_rag_cache_from_state() -> Any:
         # ImportError — get_app_ref missing, AttributeError — API change,
         # RuntimeError — app_state unavailable.
         import logging
+
         logging.getLogger(__name__).debug(
-            "app_state.three_tier_rag_cache_fallback",
-            extra={"error": str(app_exc)},
+            "app_state.three_tier_rag_cache_fallback", extra={"error": str(app_exc)}
         )
         return None
     if app is None:
@@ -153,7 +153,7 @@ def _get_from_app_state(attr: str) -> Any | None:
 
 
 def app_state_singleton[T](
-    attr: str, factory: Callable[[], T] | None = None,
+    attr: str, factory: Callable[[], T] | None = None
 ) -> Callable[[Callable[[], T]], Callable[[], T]]:
     """Декоратор-фабрика singleton-доступа к объектам из ``app.state``.
 
@@ -188,7 +188,7 @@ def app_state_singleton[T](
                     raise RuntimeError(
                         f"{attr} not in app.state and no factory provided. "
                         "Ensure register_app_state() was called or provide "
-                        "factory=... к app_state_singleton.",
+                        "factory=... к app_state_singleton."
                     )
             return _cache[attr]
 

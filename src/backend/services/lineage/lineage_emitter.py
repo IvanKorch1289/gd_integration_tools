@@ -39,9 +39,11 @@ class LineageEmitterProtocol(Protocol):
     def list_events(self) -> list[dict[str, Any]]:
         """Список всех tracked lineage events (audit)."""
         ...
+
     def clear(self) -> None:
         """Clear all events (test-helper / dev)."""
         ...
+
     def to_openlineage(self) -> list[dict[str, Any]]:
         """Convert to OpenLineage spec (list of job/run events)."""
         ...
@@ -69,7 +71,7 @@ class InMemoryLineageEmitter:
             data = dict(event)
         else:
             raise TypeError(
-                f"event должен быть LineageEvent или dict, получено {type(event).__name__}",
+                f"event должен быть LineageEvent или dict, получено {type(event).__name__}"
             )
         with self._lock:
             self._events.append(data)
@@ -121,10 +123,10 @@ class InMemoryLineageEmitter:
                                 "description": ", ".join(
                                     f"{k}={v!r}"
                                     for k, v in (node.get("attributes") or {}).items()
-                                ),
-                            },
+                                )
+                            }
                         },
-                    },
+                    }
                 ],
                 "payload": ev.get("payload", {}),
             }
@@ -136,11 +138,7 @@ def _iso_timestamp(unix_ts: float) -> str:
     """Unix timestamp → ISO 8601 string (OpenLineage format)."""
     from datetime import datetime
 
-    return (
-        datetime.fromtimestamp(unix_ts, tz=UTC)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
+    return datetime.fromtimestamp(unix_ts, tz=UTC).isoformat().replace("+00:00", "Z")
 
 
 # ── Module-level singleton (DI-friendly) ──────────────────────────────

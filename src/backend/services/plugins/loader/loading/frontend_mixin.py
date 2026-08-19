@@ -61,7 +61,7 @@ class FrontendMixin(_LoadingProtocol):
                 dst.symlink_to(src.resolve())
             except OSError as exc:
                 _logger.warning(
-                    "Plugin %s: cannot symlink %s → %s: %s", plugin_name, src, dst, exc,
+                    "Plugin %s: cannot symlink %s → %s: %s", plugin_name, src, dst, exc
                 )
                 continue
             mounted += 1
@@ -85,6 +85,6 @@ class FrontendMixin(_LoadingProtocol):
                     removed += 1
             except OSError as exc:
                 _logger.warning(
-                    "Plugin %s: cannot remove %s: %s", plugin_name, entry, exc,
+                    "Plugin %s: cannot remove %s: %s", plugin_name, entry, exc
                 )
         return removed

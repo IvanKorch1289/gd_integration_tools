@@ -65,7 +65,7 @@ class PluginGraphResolver:
     """
 
     def resolve(
-        self, manifests: Mapping[str, PluginManifest],
+        self, manifests: Mapping[str, PluginManifest]
     ) -> tuple[PluginManifest, ...]:
         """Сортирует плагины по dependency-графу.
 
@@ -93,7 +93,7 @@ class PluginGraphResolver:
                 if dep not in manifests:
                     raise KeyError(
                         f"Plugin {name!r} requires {dep!r}, but it is not "
-                        f"present in the resolver input",
+                        f"present in the resolver input"
                     )
             sorter.add(name, *deps)
 

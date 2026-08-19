@@ -69,7 +69,7 @@ class ScanFileProcessor(BaseProcessor):
         if on_threat not in _VALID_ON_THREAT:
             raise ValueError(
                 f"ScanFileProcessor: on_threat={on_threat!r} не из "
-                f"{sorted(_VALID_ON_THREAT)}",
+                f"{sorted(_VALID_ON_THREAT)}"
             )
         self._s3_key_from = s3_key_from
         self._data_property = data_property
@@ -98,13 +98,12 @@ class ScanFileProcessor(BaseProcessor):
             # security grade); ``on_threat`` остаётся для совместимости
             # как логирование severity.
             _logger.error(
-                "ScanFileProcessor: AV-бэкенд недоступен: %s", exc,
+                "ScanFileProcessor: AV-бэкенд недоступен: %s",
+                exc,
                 extra={"on_threat": self._on_threat},
             )
             exchange.set_property(f"{self._result_property}_error", str(exc))
-            exchange.fail(
-                f"ScanFileProcessor: AV-бэкенд недоступен: {exc}",
-            )
+            exchange.fail(f"ScanFileProcessor: AV-бэкенд недоступен: {exc}")
             return
 
         verdict = {
@@ -125,7 +124,7 @@ class ScanFileProcessor(BaseProcessor):
             if self._on_threat == "fail":
                 exchange.fail(
                     f"ScanFileProcessor: обнаружена угроза "
-                    f"signature={result.signature!r}",
+                    f"signature={result.signature!r}"
                 )
             return
         self._record_metric(threat=False)
@@ -174,9 +173,9 @@ class ScanFileProcessor(BaseProcessor):
             # ImportError — metrics missing, AttributeError — schema change,
             # RuntimeError — metrics unavailable, OSError — backend failure.
             import logging
+
             logging.getLogger(__name__).debug(
-                "scan_file.metrics_failed",
-                extra={"error": str(metrics_exc)},
+                "scan_file.metrics_failed", extra={"error": str(metrics_exc)}
             )
 
     def to_spec(self) -> dict[str, Any] | None:

@@ -17,6 +17,7 @@ Refs:
 
 Pattern (Ponytail, D170): тонкий wrapper, без абстракций.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -94,7 +95,7 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
         if storage_backend not in self.SUPPORTED_BACKENDS:
             raise ValueError(
                 f"WorkflowClaimCheckProcessor: backend {storage_backend!r} "
-                f"не поддерживается. Доступно: {self.SUPPORTED_BACKENDS}",
+                f"не поддерживается. Доступно: {self.SUPPORTED_BACKENDS}"
             )
         super().__init__(name=name or f"claim_check:{storage_backend}")
         self.source_property = source_property
@@ -104,9 +105,7 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
         self.target = to
         self.ttl_seconds = ttl_seconds
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Применяет паттерн Claim Check: выгружает большой payload во внешнее хранилище и заменяет его токеном.
 
         Args:
@@ -126,14 +125,13 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
             payload = cursor
 
         serialized = json.dumps(payload, ensure_ascii=False, default=str).encode(
-            "utf-8",
+            "utf-8"
         )
         size = len(serialized)
 
         if size <= self.max_size_bytes:
             _logger.debug(
-                "claim_check skip: payload size %d <= %d",
-                size, self.max_size_bytes,
+                "claim_check skip: payload size %d <= %d", size, self.max_size_bytes
             )
             self.set_result(exchange, self.target, None)
             return
@@ -154,7 +152,9 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
         }
         _logger.info(
             "claim_check stored id=%s size=%d backend=%s",
-            claim_id, size, self.storage_backend,
+            claim_id,
+            size,
+            self.storage_backend,
         )
         self.set_result(exchange, self.target, claim_token)
 
@@ -214,9 +214,7 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
 
         s3 = get_s3_client()
         await s3.put_object(
-            key=claim_id,
-            body=data,
-            metadata={"ttl_seconds": str(self.ttl_seconds)},
+            key=claim_id, body=data, metadata={"ttl_seconds": str(self.ttl_seconds)}
         )
 
     async def load_payload(self, claim_id: str) -> bytes | None:
@@ -239,7 +237,10 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
 
     def _load_local(self, claim_id: str) -> bytes | None:
         """Чтение payload из локальной файловой системы."""
-        base = os.environ.get("CLAIM_CHECK_LOCAL_PATH", os.path.join(tempfile.gettempdir(), "claim_checks"))
+        base = os.environ.get(
+            "CLAIM_CHECK_LOCAL_PATH",
+            os.path.join(tempfile.gettempdir(), "claim_checks"),
+        )
         full_path = os.path.join(base, claim_id.replace("/", "_"))
         if not os.path.exists(full_path):
             return None

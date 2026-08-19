@@ -25,7 +25,7 @@ class AbstractRepository[ConcreteTable: BaseModel](ABC):
 
     @abstractmethod
     async def first_or_last(
-        self, session: AsyncSession, by: str = "id", order: str = "asc",
+        self, session: AsyncSession, by: str = "id", order: str = "asc"
     ) -> ConcreteTable:
         """Получить первый или последний объект в таблице, отсортированный по указанному полю."""
         raise NotImplementedError
@@ -37,7 +37,7 @@ class AbstractRepository[ConcreteTable: BaseModel](ABC):
 
     @abstractmethod
     async def update(
-        self, session: AsyncSession, key: str, value: Any, data: dict[str, Any],
+        self, session: AsyncSession, key: str, value: Any, data: dict[str, Any]
     ) -> ConcreteTable:
         """Обновить объект в таблице."""
         raise NotImplementedError
@@ -49,21 +49,21 @@ class AbstractRepository[ConcreteTable: BaseModel](ABC):
 
     @abstractmethod
     async def get_all_versions(
-        self, session: AsyncSession, object_id: int,
+        self, session: AsyncSession, object_id: int
     ) -> list[ConcreteTable]:
         """Получить все версии объекта по его id."""
         raise NotImplementedError
 
     @abstractmethod
     async def get_latest_version(
-        self, session: AsyncSession, object_id: int,
+        self, session: AsyncSession, object_id: int
     ) -> ConcreteTable | None:
         """Получить последнюю версию объекта."""
         raise NotImplementedError
 
     @abstractmethod
     async def restore_to_version(
-        self, session: AsyncSession, object_id: int, transaction_id: int,
+        self, session: AsyncSession, object_id: int, transaction_id: int
     ) -> ConcreteTable:
         """Восстановить объект до указанной версии."""
         raise NotImplementedError

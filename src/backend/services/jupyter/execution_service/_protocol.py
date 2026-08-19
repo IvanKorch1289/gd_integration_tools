@@ -40,19 +40,19 @@ class _NotebookExecutionProtocol(Protocol):
     def _server_to_ws_url(server_url: str) -> str: ...
 
     async def _wait_for_server(
-        self, user_name: str, *, timeout: float, interval: float = 1.0,
+        self, user_name: str, *, timeout: float, interval: float = 1.0
     ) -> Any: ...
 
     async def _upload_notebook(
-        self, server_url: str, path: str, content: dict[str, Any],
+        self, server_url: str, path: str, content: dict[str, Any]
     ) -> None: ...
 
     async def _create_session(
-        self, server_url: str, notebook_path: str,
+        self, server_url: str, notebook_path: str
     ) -> dict[str, Any]: ...
 
     async def _execute_cell(
-        self, server_url: str, kernel_id: str, source: str, *, timeout: float,
+        self, server_url: str, kernel_id: str, source: str, *, timeout: float
     ) -> list[dict[str, Any]]: ...
 
     @staticmethod

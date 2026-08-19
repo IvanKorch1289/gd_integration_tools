@@ -154,7 +154,7 @@ class MiddlewareRegistry:
             self._specs[spec.name] = marked
 
     def register_from_toml(
-        self, plugin_name: str, toml_section: Iterable[Mapping[str, Any]],
+        self, plugin_name: str, toml_section: Iterable[Mapping[str, Any]]
     ) -> None:
         """Распарсить ``plugin.toml`` секцию ``[[middleware]]`` и зарегистрировать.
 
@@ -177,13 +177,13 @@ class MiddlewareRegistry:
             if not name or not module_ref:
                 raise ValueError(
                     f"plugin '{plugin_name}': [[middleware]] требует "
-                    "name + module (получено: " + str(entry) + ")",
+                    "name + module (получено: " + str(entry) + ")"
                 )
             mod_name, _, cls_name = module_ref.partition(":")
             if not mod_name or not cls_name:
                 raise ValueError(
                     f"plugin '{plugin_name}': module='{module_ref}' "
-                    "должен иметь форму 'package.module:ClassName'",
+                    "должен иметь форму 'package.module:ClassName'"
                 )
             try:
                 mod = import_module(mod_name)
@@ -191,7 +191,7 @@ class MiddlewareRegistry:
             except (ImportError, AttributeError) as exc:
                 raise ValueError(
                     f"plugin '{plugin_name}': не удалось импортировать "
-                    f"{module_ref}: {exc}",
+                    f"{module_ref}: {exc}"
                 ) from exc
             spec = MiddlewareSpec(
                 name=name,
@@ -206,7 +206,7 @@ class MiddlewareRegistry:
                 self._specs[name] = spec
 
     def register_from_entry_points(
-        self, group: str = "gd_integration_tools.middleware_hooks",
+        self, group: str = "gd_integration_tools.middleware_hooks"
     ) -> None:
         """Подобрать middleware через entry-points группу.
 
@@ -223,12 +223,12 @@ class MiddlewareRegistry:
                 target = ep.load()
             except Exception as exc:
                 raise ValueError(
-                    f"entry_point '{group}:{ep.name}' load failed: {exc}",
+                    f"entry_point '{group}:{ep.name}' load failed: {exc}"
                 ) from exc
             if not isinstance(target, type):
                 raise ValueError(
                     f"entry_point '{group}:{ep.name}' должен указывать на класс, "
-                    f"получено: {type(target).__name__}",
+                    f"получено: {type(target).__name__}"
                 )
             dist = getattr(ep, "dist", None)
             dist_name = getattr(dist, "name", "unknown") if dist else "unknown"
@@ -306,7 +306,7 @@ class MiddlewareRegistry:
                 cls = spec.middleware_cls.__name__
                 lines.append(
                     f"  [{spec.order:03d}] {spec.name:<28} "
-                    f"({spec.source}) src={mod}:{cls}",
+                    f"({spec.source}) src={mod}:{cls}"
                 )
         return "\n".join(lines)
 

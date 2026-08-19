@@ -13,7 +13,7 @@ class StreamingSourcesMixin:
 
     @classmethod
     def from_redis_streams(
-        cls, route_id: str, stream: str, consumer_group: str, **kwargs: Any,
+        cls, route_id: str, stream: str, consumer_group: str, **kwargs: Any
     ) -> RouteBuilder:
         """Создаёт маршрут с источником Redis Streams.
 

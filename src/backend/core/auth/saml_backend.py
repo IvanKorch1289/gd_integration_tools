@@ -142,7 +142,7 @@ class SamlBackend:
             return False
 
     def build_login_redirect_url(
-        self, *, relay_state: str | None = None,
+        self, *, relay_state: str | None = None
     ) -> tuple[str, str]:
         """Сгенерировать SSO redirect URL для SP-initiated flow.
 
@@ -171,7 +171,7 @@ class SamlBackend:
         return url, request_id
 
     def process_saml_response(
-        self, *, request_id: str, validator: Callable[[], SamlAuthResult],
+        self, *, request_id: str, validator: Callable[[], SamlAuthResult]
     ) -> SamlAuthResult:
         """Принять SAMLResponse от IdP с replay-protection.
 
@@ -193,7 +193,7 @@ class SamlBackend:
         if age > self._config.replay_window_seconds:
             raise SamlError(
                 f"InResponseTo expired: {age:.0f}s > "
-                f"{self._config.replay_window_seconds:.0f}s",
+                f"{self._config.replay_window_seconds:.0f}s"
             )
 
         try:

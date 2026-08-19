@@ -149,16 +149,16 @@ class _BaseWindow(BaseProcessor):
         event_time_raw = exchange.in_message.headers.get("x-event-time")
         try:
             event_time = float(event_time_raw) if event_time_raw is not None else None
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             event_time = None
         if event_time is None:
             return False
         if not self._watermark.is_late(
-            event_time, allowed_lateness=self._allowed_lateness,
+            event_time, allowed_lateness=self._allowed_lateness
         ):
             return False
         keep = await apply_late_policy(
-            exchange, state=self._watermark, policy=self._late_policy,
+            exchange, state=self._watermark, policy=self._late_policy
         )
         # Late-counter изменился — пробуем персистнуть (тоже под дебаунсом).
         await self._maybe_persist()
@@ -220,7 +220,7 @@ class TumblingWindowProcessor(_BaseWindow):
             self._buffer.append(exchange.in_message.body)
             if self._flush_task is None or self._flush_task.done():
                 self._flush_task = get_task_registry().create_task(
-                    self._timed_flush(), name=f"tumbling-flush:{self.name}",
+                    self._timed_flush(), name=f"tumbling-flush:{self.name}"
                 )
             if len(self._buffer) >= self._size:
                 bucket = list(self._buffer)
@@ -283,7 +283,7 @@ class SlidingWindowProcessor(_BaseWindow):
             self._buffer.append((now, exchange.in_message.body))
             if self._task is None or self._task.done():
                 self._task = get_task_registry().create_task(
-                    self._emit_loop(), name=f"sliding-emit:{self.name}",
+                    self._emit_loop(), name=f"sliding-emit:{self.name}"
                 )
 
     async def _emit_loop(self) -> None:
@@ -347,7 +347,7 @@ class SessionWindowProcessor(_BaseWindow):
             self._buffer.append(exchange.in_message.body)
             if self._task is None or self._task.done():
                 self._task = get_task_registry().create_task(
-                    self._gap_watcher(), name=f"session-gap:{self.name}",
+                    self._gap_watcher(), name=f"session-gap:{self.name}"
                 )
 
     async def _gap_watcher(self) -> None:
@@ -392,14 +392,18 @@ class GroupByKeyProcessor(_BaseWindow):
             import jmespath
 
             key = jmespath.search(self._key_path, exchange.in_message.body)
-        except (jmespath.exceptions.ParseError, jmespath.exceptions.JsonStringError) as exc:
+        except (
+            jmespath.exceptions.ParseError,
+            jmespath.exceptions.JsonStringError,
+        ) as exc:
             # D-AUDIT-12701 fix (cycle 127): narrow от bare
             # 'except Exception: _' (swallow'ил SystemExit, KeyboardInterrupt)
             # до конкретных jmespath exceptions. Fallback key=None —
             # message попадает в default group (None key).
             logger.debug(
                 "StreamingWindow: jmespath search failed for key_path=%r: %s",
-                self._key_path, exc,
+                self._key_path,
+                exc,
             )
             key = None
 
@@ -407,7 +411,7 @@ class GroupByKeyProcessor(_BaseWindow):
             self._groups[key].append(exchange.in_message.body)
             if self._task is None or self._task.done():
                 self._task = get_task_registry().create_task(
-                    self._flush_after_window(), name=f"group-by-flush:{self.name}",
+                    self._flush_after_window(), name=f"group-by-flush:{self.name}"
                 )
 
     async def _flush_after_window(self) -> None:

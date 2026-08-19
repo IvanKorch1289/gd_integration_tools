@@ -13,12 +13,11 @@ from typing import Any
 __all__ = ("VllmBatchClient",)
 
 
-
 class VllmBatchClient:
     """vLLM AsyncEngine wrapper для batch inference."""
 
     def __init__(
-        self, *, engine: Any | None = None, model_name: str | None = None,
+        self, *, engine: Any | None = None, model_name: str | None = None
     ) -> None:
         """Args:
         engine: Готовый ``vllm.AsyncEngine`` (для тестов/DI).
@@ -59,12 +58,12 @@ class VllmBatchClient:
         return results
 
     async def batch_embeddings(
-        self, texts: list[str], *, model: str,
+        self, texts: list[str], *, model: str
     ) -> list[list[float]]:
         """Метод batch_embeddings (см. signature)."""
         # vLLM поддерживает embeddings только в специфичных версиях; в общем
         # случае рекомендуется использовать SentenceTransformers/TGI.
         raise NotImplementedError(
             "vLLM batch_embeddings: используйте TgiBatchClient или "
-            "SentenceTransformers для embedding workload",
+            "SentenceTransformers для embedding workload"
         )

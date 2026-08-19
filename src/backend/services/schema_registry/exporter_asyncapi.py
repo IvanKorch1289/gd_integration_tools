@@ -22,7 +22,7 @@ def _safe_id(value: str) -> str:
 
 
 def export_asyncapi(
-    registry: ServiceSchemaRegistry, *, kind: SchemaKind | None = None,
+    registry: ServiceSchemaRegistry, *, kind: SchemaKind | None = None
 ) -> dict[str, Any]:
     """Экспорт routes/actions/workflows в AsyncAPI 3.0 спецификацию."""
     kinds_to_export: list[SchemaKind]
@@ -45,8 +45,8 @@ def export_asyncapi(
                 "description": entry.meta.get("description", ""),
                 "messages": {
                     "default": {
-                        "payload": {"$ref": f"#/components/schemas/{schema_id}"},
-                    },
+                        "payload": {"$ref": f"#/components/schemas/{schema_id}"}
+                    }
                 },
             }
             operations[f"{channel_id}.invoke"] = {

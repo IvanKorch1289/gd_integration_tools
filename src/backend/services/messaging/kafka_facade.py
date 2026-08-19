@@ -164,10 +164,7 @@ class KafkaFacade:
             producer = self._get_producer()
             payload = self._serialize(value)
             await producer.send(
-                topic=target_topic,
-                value=payload,
-                key=key,
-                headers=headers,
+                topic=target_topic, value=payload, key=key, headers=headers
             )
             return True
         except Exception as exc:
@@ -183,10 +180,7 @@ class KafkaFacade:
             return False
 
     async def publish_batch(
-        self,
-        messages: list[dict[str, Any]],
-        *,
-        topic: str | None = None,
+        self, messages: list[dict[str, Any]], *, topic: str | None = None
     ) -> int:
         """Опубликовать batch сообщений.
 
@@ -220,13 +214,20 @@ class KafkaFacade:
         try:
             self._get_producer()
             return True
-        except (ImportError, RuntimeError, OSError, ConnectionError, AttributeError) as kafka_exc:
+        except (
+            ImportError,
+            RuntimeError,
+            OSError,
+            ConnectionError,
+            AttributeError,
+        ) as kafka_exc:
             # cycle-9/D-AUDIT-907: narrow exceptions + observability.
             # ImportError — kafka backend not installed, RuntimeError/
             # ConnectionError — broker down, OSError — network, AttributeError
             # — malformed config. Bare `except Exception` маскировал
             # unrelated errors (KeyError, TypeError).
             import logging
+
             logging.getLogger(__name__).debug(
                 "kafka_facade.is_available_false",
                 extra={"error": str(kafka_exc), "error_type": type(kafka_exc).__name__},

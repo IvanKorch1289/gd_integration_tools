@@ -3,6 +3,7 @@
 Glob-поиск файлов. async via ``asyncio.to_thread``.
 Капабилити: rpa.file.list (read-only, low risk).
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -46,9 +47,7 @@ class FileListProcessor(BaseProcessor):
         self.recursive = recursive
         self.target = to
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="read"):
             return

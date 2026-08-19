@@ -24,7 +24,6 @@ class AdAuthError(Exception):
     """
 
 
-
 @dataclass
 class AdSearchEntry:
     """Результат AD search.

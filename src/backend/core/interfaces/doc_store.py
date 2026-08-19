@@ -24,7 +24,7 @@ class DocStoreBackend(ABC):
 
     @abstractmethod
     async def insert(
-        self, namespace: str, doc: dict[str, Any], *, doc_id: str | None = None,
+        self, namespace: str, doc: dict[str, Any], *, doc_id: str | None = None
     ) -> str:
         """Вставляет документ в namespace; возвращает ``doc_id``.
 

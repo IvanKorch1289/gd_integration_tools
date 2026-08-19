@@ -22,17 +22,17 @@ class HyDESettings(BaseModel):
     """Параметры HyDE (Hypothetical Document Embedding) стратегии."""
 
     max_tokens: int = Field(
-        256, ge=1, description="Макс. токенов для hypothetical answer.",
+        256, ge=1, description="Макс. токенов для hypothetical answer."
     )
     temperature: float = Field(
-        0.1, ge=0.0, le=2.0, description="Температура генерации HyDE.",
+        0.1, ge=0.0, le=2.0, description="Температура генерации HyDE."
     )
     prompt_template: str = Field(
         "Напиши краткий идеальный ответ на следующий вопрос. Отвечай только по существу, без введения. Вопрос: {query}",
         description="Шаблон промпта для HyDE.",
     )
     include_hypothetical_in_result: bool = Field(
-        False, description="Включать hypothetical answer в итоговый результат.",
+        False, description="Включать hypothetical answer в итоговый результат."
     )
 
 
@@ -40,7 +40,7 @@ class MultiQuerySettings(BaseModel):
     """Параметры Multi-query стратегии."""
 
     num_reformulations: int = Field(
-        5, ge=1, description="Число реформулировок запроса.",
+        5, ge=1, description="Число реформулировок запроса."
     )
     rrf_k: int = Field(60, ge=1, description="RRF параметр k для multi-query.")
     parallel: bool = Field(True, description="Запускать реформулировки параллельно.")
@@ -73,13 +73,13 @@ class AdaptiveRAGSettings(BaseModel):
 
     enabled: bool = Field(True, description="Включить adaptive RAG.")
     default_strategy: str = Field(
-        "dense", description="Стратегия по умолчанию (dense/hybrid/hyde/multi_query).",
+        "dense", description="Стратегия по умолчанию (dense/hybrid/hyde/multi_query)."
     )
     hyde: HyDESettings = Field(default_factory=HyDESettings)
     multi_query: MultiQuerySettings = Field(default_factory=MultiQuerySettings)
     hybrid: HybridSettings = Field(default_factory=HybridSettings)
     strategy_thresholds: StrategyThresholdsSettings = Field(
-        default_factory=StrategyThresholdsSettings,
+        default_factory=StrategyThresholdsSettings
     )
 
 
@@ -98,17 +98,17 @@ class RAGSettings(BaseSettingsWithLoader):
 
     # --- Vector store --------------------------------------------------
     vector_backend: str = Field(
-        "qdrant", description="Vector store backend: qdrant, chroma, faiss.",
+        "qdrant", description="Vector store backend: qdrant, chroma, faiss."
     )
     # Qdrant
     qdrant_url: str = Field(
-        "http://localhost:6333", description="HTTP URL Qdrant-сервера.",
+        "http://localhost:6333", description="HTTP URL Qdrant-сервера."
     )
     qdrant_collection: str = Field(
-        "gd_rag", description="Коллекция Qdrant по умолчанию.",
+        "gd_rag", description="Коллекция Qdrant по умолчанию."
     )
     qdrant_api_key: str | None = Field(
-        None, description="API-ключ Qdrant Cloud (опционально).",
+        None, description="API-ключ Qdrant Cloud (опционально)."
     )
     # Chroma (fallback / legacy)
     chroma_host: str = Field("localhost", description="Хост Chroma DB.")
@@ -136,7 +136,7 @@ class RAGSettings(BaseSettingsWithLoader):
         ),
     )
     embedding_api_key: str | None = Field(
-        None, description="API-ключ для openai-совместимого endpoint.",
+        None, description="API-ключ для openai-совместимого endpoint."
     )
 
     # --- Pipeline ------------------------------------------------------

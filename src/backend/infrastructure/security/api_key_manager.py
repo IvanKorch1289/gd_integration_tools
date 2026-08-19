@@ -59,9 +59,7 @@ class APIKeyManager:
         self._hasher = APIKeyAuth()  # OWASP-2026 baseline parameters
 
     async def _emit_audit_event(
-        self,
-        event_type: str,
-        payload: dict[str, Any] | None = None,
+        self, event_type: str, payload: dict[str, Any] | None = None
     ) -> None:
         """Emit audit-event в Redis-stream ``apikey_audit:events``.
 
@@ -79,21 +77,15 @@ class APIKeyManager:
                 get_redis_client as redis_client,
             )
 
-            data: dict[str, str] = {
-                "event": event_type,
-                "timestamp": str(time.time()),
-            }
+            data: dict[str, str] = {"event": event_type, "timestamp": str(time.time())}
             if payload:
                 for k, v in payload.items():
                     data[k] = str(v) if v is not None else ""
             await redis_client().add_to_stream(  # type: ignore[attr-defined]
-                stream_name=_AUDIT_PREFIX + "events",
-                data=data,
+                stream_name=_AUDIT_PREFIX + "events", data=data
             )
         except Exception as exc:  # never fail caller
-            logger.debug(
-                "Audit-event emit failed (event=%s): %s", event_type, exc,
-            )
+            logger.debug("Audit-event emit failed (event=%s): %s", event_type, exc)
 
     def _init_global_key(self) -> None:
         """Кэширует хеш глобального ключа из настроек."""
@@ -143,9 +135,7 @@ class APIKeyManager:
                         description="Global API key",
                     )
             except Exception as exc:
-                logger.exception(
-                    "Global API key verify unexpected error: %s", exc,
-                )
+                logger.exception("Global API key verify unexpected error: %s", exc)
                 await self._emit_audit_event(
                     event_type="auth.global_verify_error",
                     payload={
@@ -180,7 +170,7 @@ class APIKeyManager:
                             result.append(parsed)
                     except Exception as _:
                         logger.debug(
-                            "API key Redis value parse failed; skipped", exc_info=True,
+                            "API key Redis value parse failed; skipped", exc_info=True
                         )
                         continue
                 return result
@@ -193,8 +183,10 @@ class APIKeyManager:
                 prev_hash = info.get("prev_key_hash", "")
                 is_active = info.get("is_active", True)
 
-                if is_active and stored_hash and self._verify_against_hash(
-                    raw_key, stored_hash,
+                if (
+                    is_active
+                    and stored_hash
+                    and self._verify_against_hash(raw_key, stored_hash)
                 ):
                     return APIKeyInfo(
                         client_id=info.get("client_id", "unknown"),
@@ -220,7 +212,7 @@ class APIKeyManager:
 
         except Exception as exc:
             logger.warning(
-                "Redis key validation error (using global fallback): %s", exc,
+                "Redis key validation error (using global fallback): %s", exc
             )
 
         return None
@@ -260,7 +252,7 @@ class APIKeyManager:
             raise RuntimeError(
                 f"create_client_key: generated key failed strength gate "
                 f"(issues={list(strength.issues)}). This is a critical bug — "
-                f"token_urlsafe must return ≥ 32 random chars.",
+                f"token_urlsafe must return ≥ 32 random chars."
             )
         key_hash = self._hash_key(raw_key)
         now = time.time()
@@ -296,7 +288,7 @@ class APIKeyManager:
 
             # Сохраняем в Redis (без TTL — ключ живёт до ротации/удаления)
             await redis_client()._redis.set(  # type: ignore[attr-defined]
-                f"{_KEY_PREFIX}{client_id}", orjson.dumps(key_data),
+                f"{_KEY_PREFIX}{client_id}", orjson.dumps(key_data)
             )
         except Exception as exc:
             logger.error("Failed to store client key: %s", exc)
@@ -338,9 +330,7 @@ class APIKeyManager:
             # gate as create_client_key).
             from src.backend.core.auth.api_key_backend import APIKeyAuth, StrengthReport
 
-            rot_strength: StrengthReport = APIKeyAuth.validate_strength(
-                new_raw,
-            )
+            rot_strength: StrengthReport = APIKeyAuth.validate_strength(new_raw)
             if not rot_strength.is_acceptable:
                 logger.error(
                     "rotate_client_key: generated key failed strength gate "
@@ -349,7 +339,7 @@ class APIKeyManager:
                 )
                 raise RuntimeError(
                     f"rotate_client_key: generated key failed strength gate "
-                    f"(issues={list(rot_strength.issues)})",
+                    f"(issues={list(rot_strength.issues)})"
                 )
             new_hash = self._hash_key(new_raw)
             now = time.time()
@@ -358,12 +348,10 @@ class APIKeyManager:
             key_data["key_hash"] = new_hash
             key_data["version"] = key_data.get("version", 1) + 1
             key_data["rotated_at"] = now
-            key_data["hash_algo"] = (
-                "argon2id" if is_argon2_hash(new_hash) else "sha256"
-            )
+            key_data["hash_algo"] = "argon2id" if is_argon2_hash(new_hash) else "sha256"
 
             await redis_client()._redis.set(  # type: ignore[attr-defined]
-                f"{_KEY_PREFIX}{client_id}", orjson.dumps(key_data),
+                f"{_KEY_PREFIX}{client_id}", orjson.dumps(key_data)
             )
 
             await redis_client().add_to_stream(  # type: ignore[attr-defined]
@@ -435,16 +423,14 @@ class APIKeyManager:
                             "created_at": data.get("created_at"),
                             "description": data.get("description", ""),
                             "hash_algo": data.get("hash_algo", "sha256"),
-                        },
+                        }
                     )
             return result
         except Exception as exc:
             logger.error("List clients failed: %s", exc)
             return []
 
-    async def upgrade_to_argon2(
-        self, client_id: str, current_raw_key: str,
-    ) -> bool:
+    async def upgrade_to_argon2(self, client_id: str, current_raw_key: str) -> bool:
         """Upgrade stored hash для client_id с SHA-256 на Argon2id.
 
         Требует от caller'а знание current raw key (для re-hash).
@@ -476,7 +462,7 @@ class APIKeyManager:
             # Verify current raw key против stored hash.
             if not self._verify_against_hash(current_raw_key, stored_hash):
                 logger.warning(
-                    "upgrade_to_argon2: verify failed for client '%s'", client_id,
+                    "upgrade_to_argon2: verify failed for client '%s'", client_id
                 )
                 return False
 
@@ -494,7 +480,7 @@ class APIKeyManager:
             now = time.time()
 
             await redis_client()._redis.set(  # type: ignore[attr-defined]
-                f"{_KEY_PREFIX}{client_id}", orjson.dumps(key_data),
+                f"{_KEY_PREFIX}{client_id}", orjson.dumps(key_data)
             )
             await redis_client().add_to_stream(  # type: ignore[attr-defined]
                 stream_name=_AUDIT_PREFIX + "events",

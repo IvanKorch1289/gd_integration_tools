@@ -39,7 +39,7 @@ _logger = get_logger("entrypoints.api.v1.admin.feature_flags")
 
 # S202 audit fix: feature flags runtime override — production-critical.
 _FEATURE_FLAGS_GUARD = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)),
+    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN))
 )
 router = APIRouter(dependencies=[_FEATURE_FLAGS_GUARD])
 
@@ -129,7 +129,7 @@ async def list_overrides() -> dict[str, Any]:
 
 @router.put("/feature-flags/{flag}", tags=["Admin · Feature Flags"])
 async def set_override(
-    flag: str, body: SetOverrideRequest, request: Request,
+    flag: str, body: SetOverrideRequest, request: Request
 ) -> OverrideResponse:
     """Установить runtime override для feature-flag.
 

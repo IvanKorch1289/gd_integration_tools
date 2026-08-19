@@ -54,7 +54,7 @@ class EventStoreProcessor(BaseProcessor):
     ) -> None:
         if isinstance(stream, str) and stream not in [s.value for s in EventStream]:
             raise ValueError(
-                f"stream должен быть EventStream или known value, получено {stream!r}",
+                f"stream должен быть EventStream или known value, получено {stream!r}"
             )
         super().__init__(name=name or f"event_store_{stream}")
         self._stream = EventStream(stream) if isinstance(stream, str) else stream
@@ -80,7 +80,7 @@ class EventStoreProcessor(BaseProcessor):
         if not isinstance(events_raw, list):
             raise TypeError(
                 f"{self._events_field} должен быть list, "
-                f"получено {type(events_raw).__name__}",
+                f"получено {type(events_raw).__name__}"
             )
 
         for ev_raw in events_raw:
@@ -108,12 +108,12 @@ class EventStoreProcessor(BaseProcessor):
                         event_type=event_type,
                         stream=self._stream,
                         payload=payload,
-                    ),
+                    )
                 )
             else:
                 raise TypeError(
                     f"event должен быть Event или dict, "
-                    f"получено {type(ev_raw).__name__}",
+                    f"получено {type(ev_raw).__name__}"
                 )
 
         # Record count в exchange properties

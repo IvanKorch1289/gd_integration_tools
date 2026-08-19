@@ -53,7 +53,7 @@ HEADER_RETURN_ADDRESS = "return_address"  # reply-to endpoint URI
 # Type aliases
 IdFactory = Callable[[], str]
 ExpirationResolver = Callable[
-    [Exchange[Any]], datetime | Awaitable[datetime | None] | None,
+    [Exchange[Any]], datetime | Awaitable[datetime | None] | None
 ]
 RedeliveryAttempt = tuple[int, float]  # (attempt_number, delay_seconds)
 
@@ -85,5 +85,3 @@ def __getattr__(name: str) -> Any:
 
         return ReturnAddressProcessor
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-

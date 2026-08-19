@@ -33,49 +33,49 @@ def _build_base_capabilities(
             name="db.read",
             matcher=exact,
             description="Чтение из БД через DatabaseFacade (read-only-сессия).",
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
             name="db.write",
             matcher=exact,
             description="Запись в БД через DatabaseFacade (rw-сессия).",
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
             name="db.execute_procedure",
             matcher=dot_glob,
             description="Вызов stored procedure во внешней БД через ExternalDatabaseFacade.",
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
             name="secrets.read",
             matcher=uri,
             description="Чтение секрета через SecretsFacade (vault:// / env:// / kms://).",
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
             name="net.outbound",
             matcher=dot_glob,
             description="Исходящие HTTP/gRPC через {HTTP,GRPC}Facade.",
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
             name="net.inbound",
             matcher=dot_glob,
             description="Регистрация webhook/SSE-эндпоинтов через WebhookFacade.",
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
             name="fs.read",
             matcher=path_glob,
             description="Чтение файлов через FSFacade (path-glob по '/').",
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -88,21 +88,21 @@ def _build_base_capabilities(
                 "Scope: fs.write.workspace.<session_id> для AI-workspaces; "
                 "fs.write.tenant.<tenant_id> / fs.write.repo.<area> для системных."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
             name="storage.read",
             matcher=path_glob,
             description="Чтение из объектного хранилища через StorageFacade (key/prefix).",
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
             name="storage.write",
             matcher=path_glob,
             description="Запись/удаление в объектном хранилище через StorageFacade (key).",
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -112,49 +112,49 @@ def _build_base_capabilities(
                 "Запуск пользовательского кода в sandbox (e2b/pyodide) через "
                 "CodeSandbox; прямой subprocess запрещён (V15 R-V15-4)."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
             name="mq.publish",
             matcher=dot_glob,
             description="Публикация сообщений через MQFacade (topic-glob).",
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
             name="mq.consume",
             matcher=dot_glob,
             description="Подписка на сообщения через MQFacade (topic-glob).",
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
             name="cache.read",
             matcher=cache_glob,
             description="Чтение кэша через CacheFacade (namespace по ':').",
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
             name="cache.write",
             matcher=cache_glob,
             description="Запись в кэш через CacheFacade (namespace по ':').",
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
             name="workflow.start",
             matcher=dot_glob,
             description="Запуск workflow через WorkflowFacade (workflow_id-glob).",
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
             name="workflow.signal",
             matcher=dot_glob,
             description="Сигнал workflow через WorkflowFacade.",
-        ),
+        )
     )
     # P3 S172 W2: message-level claim-check capability (EIP ClaimCheckProcessor).
     # Парный с workflow.claim_check.store (single-payload) — message-уровень
@@ -167,7 +167,7 @@ def _build_base_capabilities(
                 "Сохранение claim token в Redis/S3 через EIP ClaimCheckProcessor "
                 "store-режим (message-level payload offload)."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -177,7 +177,7 @@ def _build_base_capabilities(
                 "Восстановление payload по claim token через EIP "
                 "ClaimCheckProcessor retrieve-режим."
             ),
-        ),
+        )
     )
     # P3 S172 W2: Temporal workflow best-practices capabilities (workflow/best_practices).
     # Регистрируем не-зарегистрированные ранее capabilities чтобы
@@ -190,7 +190,7 @@ def _build_base_capabilities(
                 "Сохранение Temporal workflow payload через WorkflowClaimCheckProcessor "
                 "(Temporal best practice для больших event-history)."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -200,14 +200,14 @@ def _build_base_capabilities(
                 "Запрос Continue-As-New в Temporal workflow "
                 "(Temporal best practice для долгоживущих executions)."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
             name="llm.invoke",
             matcher=path_glob,
             description="Вызов LLM-провайдера через LLMFacade (provider/model по '/').",
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -217,7 +217,7 @@ def _build_base_capabilities(
                 "Token-level streaming LLM (SSE/WS) через LLMStreamingService "
                 "(scope = 'model:<prefix>', optional)."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -227,7 +227,7 @@ def _build_base_capabilities(
                 "Вызов MCP-инструмента (FastMCP HTTP transport); "
                 "scope = action-name pattern."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -236,12 +236,12 @@ def _build_base_capabilities(
             description=(
                 "Администрирование LangMem: consolidate(), stats(), RLM reset (D.6)."
             ),
-        ),
+        )
     )
 
 
 def _build_ai_rag_capabilities(
-    vocab: CapabilityVocabulary, exact: ExactAliasMatcher, dot_glob: GlobScopeMatcher,
+    vocab: CapabilityVocabulary, exact: ExactAliasMatcher, dot_glob: GlobScopeMatcher
 ) -> None:
     """Register Sprint 11 AI/RAG Completion capabilities."""
     vocab.register(
@@ -252,7 +252,7 @@ def _build_ai_rag_capabilities(
                 "Применение PII-маскера к augment_result.documents[*].content "
                 "в RAG retrieval pipeline (S11 K1 W1)."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -262,7 +262,7 @@ def _build_ai_rag_capabilities(
                 "Вызов Lakera Guard prompt-injection / PII detector. "
                 "scope = '*' или конкретный provider-id (S11 K1 W2)."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -273,7 +273,7 @@ def _build_ai_rag_capabilities(
                 "scope = '*' или provider-id. "
                 "research/agent-framework/REPORT.md F4.2."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -286,7 +286,7 @@ def _build_ai_rag_capabilities(
                 "Migrate to ai.guardrails.nemo. "
                 "research/agent-framework/REPORT.md F4.2."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -296,7 +296,7 @@ def _build_ai_rag_capabilities(
                 "Чтение из AI Model Registry (MLflow + HF Hub composite); "
                 "scope = backend-id или '*' (S11 K4 W6)."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -306,7 +306,7 @@ def _build_ai_rag_capabilities(
                 "Запись/promote в AI Model Registry. "
                 "scope = backend-id или '*' (S11 K4 W6)."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -316,7 +316,7 @@ def _build_ai_rag_capabilities(
                 "Запуск DSPy training-loop по labeled feedback "
                 "+ публикация prompt-version (S11 K4 W5)."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -326,12 +326,12 @@ def _build_ai_rag_capabilities(
                 "AI-анализ route-метрик + генерация PR markdown "
                 "(S11 K4 W7); scope = route-name или '*'."
             ),
-        ),
+        )
     )
 
 
 def _build_ai_safety_capabilities(
-    vocab: CapabilityVocabulary, dot_glob: GlobScopeMatcher,
+    vocab: CapabilityVocabulary, dot_glob: GlobScopeMatcher
 ) -> None:
     """Register Sprint 24 AI Safety Hardening capabilities."""
     vocab.register(
@@ -343,7 +343,7 @@ def _build_ai_safety_capabilities(
                 "перед маскированием/anonymize; scope = tenant-id или '*' "
                 "(S24 W1, ADR-NEW-16)."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -353,7 +353,7 @@ def _build_ai_safety_capabilities(
                 "Запись маскированных payload-ов в outbound LLM / RAG / DLQ / "
                 "Langfuse traces; scope = tenant-id или '*' (S24 W1, ADR-NEW-16)."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -364,7 +364,7 @@ def _build_ai_safety_capabilities(
                 "+ entity_type + redacted_hash в immutable Postgres audit-sink; "
                 "scope = tenant-id или '*' (S24 W1, ADR-NEW-16)."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -375,7 +375,7 @@ def _build_ai_safety_capabilities(
                 "(NeMo Colang input rails + Llama Guard 3 output classifier); "
                 "scope = tenant-id или '*' (S24 W2, ADR-NEW-17)."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -387,7 +387,7 @@ def _build_ai_safety_capabilities(
                 "scope = tenant-id или '*' (S24 W2, ADR-NEW-17, "
                 "S172: Rebuff заменён на NeMo, F4.2)."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -398,7 +398,7 @@ def _build_ai_safety_capabilities(
                 "namespace = '<tenant_id>:<scope>'; scope = tenant-id или '*' "
                 "(S24 W3, ADR-NEW-18)."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -408,7 +408,7 @@ def _build_ai_safety_capabilities(
                 "Запись в MemoryProtocol; namespace = '<tenant_id>:<scope>'; "
                 "scope = tenant-id или '*' (S24 W3, ADR-NEW-18)."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -418,7 +418,7 @@ def _build_ai_safety_capabilities(
                 "Удаление user-memory из MemoryProtocol (GDPR / 152-ФЗ "
                 "user-erasure); scope = tenant-id или '*' (S24 W3, ADR-NEW-18)."
             ),
-        ),
+        )
     )
 
 
@@ -437,7 +437,7 @@ def _build_ai_platform_capabilities(
                 "Проверяется на каждый AIGateway.invoke(request.workflow_id); "
                 "scope = workflow_id pattern или '*' (S25 W1)."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -448,7 +448,7 @@ def _build_ai_platform_capabilities(
                 "PolicyResolver (ADR-NEW-20); scope = policy-name pattern "
                 "или '*' (S25 W2)."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -460,7 +460,7 @@ def _build_ai_platform_capabilities(
                 "(ADR-NEW-21). scope = domain-id (banking, hr, medical) или '*' "
                 "(S25 W4)."
             ),
-        ),
+        )
     )
     vocab.register(
         CapabilityDef(
@@ -471,7 +471,7 @@ def _build_ai_platform_capabilities(
                 "system) с auth + WAF (ADR-NEW-23); scope = namespace-name "
                 "или '*' (S27 W4)."
             ),
-        ),
+        )
     )
     # Per-namespace capabilities (ADR-0070 §1, S27 W4)
     for _ns_name in ("credit", "analytics", "system"):
@@ -483,7 +483,7 @@ def _build_ai_platform_capabilities(
                     f"Вызов tool в namespace '{_ns_name}' через MCPGateway "
                     f"(ADR-0070, S27 W4); scope = tool-name или '*'."
                 ),
-            ),
+            )
         )
     vocab.register(
         CapabilityDef(
@@ -494,7 +494,7 @@ def _build_ai_platform_capabilities(
                 "scope = skill-id pattern (``credit.score.calculate``, "
                 "``credit.*``) или '*' (S27 W3 DSL .skill_invoke())."
             ),
-        ),
+        )
     )
 
 

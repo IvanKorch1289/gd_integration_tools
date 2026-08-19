@@ -3,6 +3,7 @@
 Поиск подстроки/regex в файлах с фильтром по path glob.
 Pattern (D272, Ponytail): thin wrapper, no abstractions.
 """
+
 from __future__ import annotations
 
 import re
@@ -27,11 +28,7 @@ class FileSearchProcessor:
     """
 
     def __init__(
-        self,
-        *,
-        path_pattern: str = "**/*",
-        pattern: str = "",
-        max_results: int = 1000,
+        self, *, path_pattern: str = "**/*", pattern: str = "", max_results: int = 1000
     ) -> None:
         self.path_pattern = path_pattern
         self.pattern = pattern
@@ -56,12 +53,14 @@ class FileSearchProcessor:
                 continue
             for line_no, line in enumerate(content.splitlines(), start=1):
                 if regex.search(line):
-                    results.append({
-                        "file": str(path.relative_to(root)),
-                        "line_no": line_no,
-                        "line": line,
-                        "match": regex.search(line).group(0),
-                    })
+                    results.append(
+                        {
+                            "file": str(path.relative_to(root)),
+                            "line_no": line_no,
+                            "line": line,
+                            "match": regex.search(line).group(0),
+                        }
+                    )
                     if len(results) >= self.max_results:
                         _logger.info("file_search.truncated max=%d", self.max_results)
                         return results

@@ -54,7 +54,7 @@ class ImageIngester:
     """
 
     def __init__(
-        self, *, extract_exif: bool = True, caption_provider: Any | None = None,
+        self, *, extract_exif: bool = True, caption_provider: Any | None = None
     ) -> None:
         """Инициализирует ImageIngester.
 
@@ -132,7 +132,7 @@ class ImageIngester:
         with Image.open(io.BytesIO(content)) as img:
             meta["format"] = img.format
             meta["mime"] = _PIL_FORMAT_TO_MIME.get(
-                img.format or "", "application/octet-stream",
+                img.format or "", "application/octet-stream"
             )
             meta["width"] = img.width
             meta["height"] = img.height

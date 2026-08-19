@@ -85,7 +85,7 @@ class PluginConflictError(RuntimeError):
         self.violation = violation
         super().__init__(
             f"plugin compatibility conflict: {violation.plugin!r} vs "
-            f"{violation.conflicting_plugin!r} — {violation.kind}: {violation.reason}",
+            f"{violation.conflicting_plugin!r} — {violation.kind}: {violation.reason}"
         )
 
 
@@ -108,7 +108,7 @@ def _try_parse_spec(value: str) -> SpecifierSet | None:
 
 
 def _check_pair(
-    manifest: PluginManifest, other: PluginManifest,
+    manifest: PluginManifest, other: PluginManifest
 ) -> list[CompatViolation]:
     """Проверяет одну пару (manifest, other) на pair-wise конфликты."""
     violations: list[CompatViolation] = []
@@ -124,7 +124,7 @@ def _check_pair(
                     f"{manifest.name!r} declares incompatible_with "
                     f"{other.name!r} (any version)"
                 ),
-            ),
+            )
         )
 
     spec_str = compat.incompatible_plugin_specs.get(other.name)
@@ -141,13 +141,13 @@ def _check_pair(
                         f"{manifest.name!r} marks {other.name}=={other.version} "
                         f"incompatible (spec {spec_str!r})"
                     ),
-                ),
+                )
             )
     return violations
 
 
 def _check_core(
-    manifest: PluginManifest, core_version: str | None,
+    manifest: PluginManifest, core_version: str | None
 ) -> CompatViolation | None:
     """Проверяет дополнительный `incompatible_core_versions` ограничитель."""
     if not core_version:
@@ -170,7 +170,7 @@ def _check_core(
 
 
 def _check_required(
-    manifest: PluginManifest, by_name: dict[str, PluginManifest],
+    manifest: PluginManifest, by_name: dict[str, PluginManifest]
 ) -> list[CompatViolation]:
     """Проверяет обязательные ``requires_plugins`` ссылки."""
     violations: list[CompatViolation] = []
@@ -186,7 +186,7 @@ def _check_required(
                         f"{manifest.name!r} requires {required_name!r} "
                         f"(spec {required_spec!r}) but it is not installed"
                     ),
-                ),
+                )
             )
             continue
         spec = _try_parse_spec(required_spec)
@@ -201,7 +201,7 @@ def _check_required(
                         f"{manifest.name!r} requires {required_name} {required_spec!r} "
                         f"but installed version is {target.version!r}"
                     ),
-                ),
+                )
             )
     return violations
 

@@ -65,9 +65,7 @@ _SSN = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
 
 # S191 fix: дополнительные patterns для критичных PII в банковской шине.
 # Russian surnames (с заглавной буквы + окончания): Иванов, Петрова, Сидоров.
-_RU_SURNAMES = re.compile(
-    r"\b[А-ЯЁ][а-яё]+(ов|ова|ев|ева|ин|ина|ский|ская)\b",
-)
+_RU_SURNAMES = re.compile(r"\b[А-ЯЁ][а-яё]+(ов|ова|ев|ева|ин|ина|ский|ская)\b")
 # Russian given names (отчество): Иванович, Петровна.
 _RU_PATRONYMICS = re.compile(r"\b[А-ЯЁ][а-яё]+вич|вна\b")
 # БИК (Банковский идентификационный код) — 9 цифр, начинается с 04 (РФ) или 03 (Беларусь).
@@ -204,7 +202,7 @@ class PIIMasker:
         return result
 
     def mask_dict(
-        self, data: dict[str, Any], fields: list[str] | None = None,
+        self, data: dict[str, Any], fields: list[str] | None = None
     ) -> dict[str, Any]:
         """Рекурсивно маскирует строковые значения в dict.
 

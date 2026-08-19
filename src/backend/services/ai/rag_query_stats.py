@@ -82,7 +82,7 @@ class RagQueryStatsCollector:
                 key = f"{self._prefix}:{tenant_id}"
                 items = await self._redis.zrevrange(key, 0, n - 1, withscores=True)
                 queries_map = await self._redis.hgetall(
-                    f"{self._prefix}:query:{tenant_id}",
+                    f"{self._prefix}:query:{tenant_id}"
                 )
                 # Распаковка bytes/str.
                 normalized: list[tuple[str, int]] = []
@@ -91,9 +91,10 @@ class RagQueryStatsCollector:
                     raw_q = queries_map.get(
                         h.encode()
                         if isinstance(
-                            next(iter(queries_map.keys())) if queries_map else b"", bytes,
+                            next(iter(queries_map.keys())) if queries_map else b"",
+                            bytes,
                         )
-                        else h,
+                        else h
                     )
                     if isinstance(raw_q, bytes):
                         raw_q = raw_q.decode()

@@ -39,7 +39,7 @@ class EmbeddingProviderRegistry:
             available = ", ".join(sorted(self._factories.keys())) or "<empty>"
             raise KeyError(
                 f"EmbeddingProviderRegistry: provider {name!r} не зарегистрирован. "
-                f"Доступные: {available}",
+                f"Доступные: {available}"
             )
         instance = self._factories[name]()
         self._instances[name] = instance

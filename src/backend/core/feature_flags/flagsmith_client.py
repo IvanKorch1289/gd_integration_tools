@@ -115,7 +115,7 @@ class FlagsmithClient:
         return [_parse_flag(item) for item in resp.json()]
 
     async def get_identity_flags(
-        self, tenant_id: str, traits: dict[str, Any] | None = None,
+        self, tenant_id: str, traits: dict[str, Any] | None = None
     ) -> list[FlagsmithFlag]:
         """Возвращает flags конкретной identity (tenant) с overrides.
 
@@ -157,7 +157,7 @@ class FlagsmithClient:
             return
         try:
             await self._client.aclose()
-        except (OSError, RuntimeError, AttributeError):
+        except OSError, RuntimeError, AttributeError:
             _logger.exception("FlagsmithClient close failed")
         self._client = None
 

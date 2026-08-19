@@ -166,14 +166,14 @@ class StaticAESGCMKeyProvider:
     """
 
     def __init__(
-        self, *, keys: dict[int, bytes], current_version: int | None = None,
+        self, *, keys: dict[int, bytes], current_version: int | None = None
     ) -> None:
         if not keys:
             raise ValueError("StaticAESGCMKeyProvider требует хотя бы один ключ")
         for version, raw in keys.items():
             if len(raw) != 32:
                 raise ValueError(
-                    f"Key version {version} must be 32 raw bytes, got {len(raw)}",
+                    f"Key version {version} must be 32 raw bytes, got {len(raw)}"
                 )
         self._keys = dict(keys)
         self.current_version = current_version or max(keys)
@@ -192,7 +192,7 @@ class EnvAESGCMKeyProvider:
     """
 
     def __init__(
-        self, *, env_prefix: str = "PII_AES_KEY_V", current_version: int = 1,
+        self, *, env_prefix: str = "PII_AES_KEY_V", current_version: int = 1
     ) -> None:
         self._env_prefix = env_prefix
         self.current_version = current_version
@@ -205,9 +205,9 @@ class EnvAESGCMKeyProvider:
             return None
         try:
             decoded = base64.b64decode(raw)
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             _logger.warning(
-                "EnvAESGCMKeyProvider: %s — invalid base64 payload", env_name,
+                "EnvAESGCMKeyProvider: %s — invalid base64 payload", env_name
             )
             return None
         if len(decoded) != 32:
@@ -270,7 +270,7 @@ class RedisTokenRegistry:
         key = self._key_provider.get_key(version)
         if key is None:
             raise RuntimeError(
-                f"AES-GCM key version {version} unavailable from key_provider",
+                f"AES-GCM key version {version} unavailable from key_provider"
             )
         aesgcm = AESGCM(key)
         nonce = os.urandom(12)
@@ -299,7 +299,7 @@ class RedisTokenRegistry:
         key = self._key_provider.get_key(value.key_version)
         if key is None:
             _logger.warning(
-                "decrypt_value: key version %d unavailable", value.key_version,
+                "decrypt_value: key version %d unavailable", value.key_version
             )
             return None
         aesgcm = AESGCM(key)
@@ -350,7 +350,7 @@ class RedisTokenRegistry:
             token_map = self._deserialize(raw)
         except (ValueError, TypeError, KeyError, AttributeError) as exc:
             _logger.warning(
-                "TokenMap deserialization failed for %s: %r", redis_key, exc,
+                "TokenMap deserialization failed for %s: %r", redis_key, exc
             )
             await self._audit_emit(
                 event="ai.pii.tokenize.decrypt_failed",
@@ -438,7 +438,7 @@ class RedisTokenRegistry:
         return f"{self._prefix}:{key}"
 
     async def _scan_iter(
-        self, *, match: str, count: int = 200,
+        self, *, match: str, count: int = 200
     ) -> AsyncIterator[bytes | str]:
         """Адаптер SCAN — работает с ``redis.asyncio.Redis`` и ``fakeredis``."""
         scan = getattr(self._redis, "scan_iter", None)
@@ -453,7 +453,7 @@ class RedisTokenRegistry:
                 yield k
 
     async def _audit_emit(
-        self, *, event: str, action: str, outcome: str, details: dict[str, Any],
+        self, *, event: str, action: str, outcome: str, details: dict[str, Any]
     ) -> None:
         """Безопасный emit — никогда не ломает основной flow."""
         if self._audit is None:

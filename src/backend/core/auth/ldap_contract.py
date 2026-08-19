@@ -51,16 +51,9 @@ class AdDirectoryClientFactory(Protocol):
     """Фабрика конкретного LDAP-клиента из composition-слоя."""
 
     def __call__(
-        self,
-        *,
-        config: AdServerConfig,
-        connection_factory: Any | None = None,
+        self, *, config: AdServerConfig, connection_factory: Any | None = None
     ) -> AdDirectoryClientProtocol:
         """Создать LDAP-клиент с заданной конфигурацией."""
 
 
-__all__ = (
-    "AdDirectoryClientFactory",
-    "AdDirectoryClientProtocol",
-    "AdServerConfig",
-)
+__all__ = ("AdDirectoryClientFactory", "AdDirectoryClientProtocol", "AdServerConfig")

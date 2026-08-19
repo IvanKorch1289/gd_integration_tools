@@ -119,11 +119,11 @@ class WebhookSource:
                 timestamp = int(timestamp_raw)
             except ValueError as exc:
                 raise WebhookVerificationError(
-                    f"Invalid timestamp value: {timestamp_raw!r}",
+                    f"Invalid timestamp value: {timestamp_raw!r}"
                 ) from exc
             window = int(self._ts_window)
             if not verify_signature(
-                raw_body, signature, timestamp, self._hmac_secret, window_seconds=window,
+                raw_body, signature, timestamp, self._hmac_secret, window_seconds=window
             ):
                 raise WebhookVerificationError("HMAC signature mismatch")
             return
@@ -134,7 +134,7 @@ class WebhookSource:
         import hmac as _hmac
 
         expected = _hmac.new(
-            self._hmac_secret.encode(), raw_body, _h.sha256,
+            self._hmac_secret.encode(), raw_body, _h.sha256
         ).hexdigest()
         if not _hmac.compare_digest(signature, expected):
             raise WebhookVerificationError("HMAC signature mismatch")
@@ -145,7 +145,7 @@ class WebhookSource:
         raw = headers.get(self._ts_header)
         if raw is None:
             raise WebhookVerificationError(
-                f"Required timestamp header {self._ts_header!r} missing",
+                f"Required timestamp header {self._ts_header!r} missing"
             )
         try:
             ts = float(raw)
@@ -153,13 +153,13 @@ class WebhookSource:
             raise WebhookVerificationError(f"Invalid timestamp value: {raw!r}") from exc
         if abs(time.time() - ts) > self._ts_window:
             raise WebhookVerificationError(
-                f"Timestamp drift exceeds window of {self._ts_window}s",
+                f"Timestamp drift exceeds window of {self._ts_window}s"
             )
         return ts
 
     @require_capability("webhook.read", action="read")
     async def verify_and_dispatch(
-        self, raw_body: bytes, headers: Mapping[str, str], *, payload: Any = None,
+        self, raw_body: bytes, headers: Mapping[str, str], *, payload: Any = None
     ) -> None:
         """Проверить HMAC/timestamp и эмитить ``SourceEvent``.
 
@@ -171,7 +171,7 @@ class WebhookSource:
         """
         if self._on_event is None:
             raise RuntimeError(
-                f"WebhookSource(id={self.source_id!r}) не запущен (start не был вызван)",
+                f"WebhookSource(id={self.source_id!r}) не запущен (start не был вызван)"
             )
         self._verify_hmac(raw_body, headers)
         ts = self._verify_timestamp(headers)
@@ -182,7 +182,8 @@ class WebhookSource:
         if delivery_id and self._is_duplicate(delivery_id):
             logger.info(
                 "Webhook dedup: dropping duplicate delivery_id=%s source=%s",
-                delivery_id, self.source_id,
+                delivery_id,
+                self.source_id,
             )
             return
         event_time = (

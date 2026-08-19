@@ -74,7 +74,11 @@ class MongoDBClient:
         self._client = AsyncMongoClient(self._url, **client_kwargs)
         self._db = self._client[self._database_name]
         await self._client.admin.command("ping")
-        logger.info("MongoDB connected (pymongo.AsyncMongoClient): %s/%s", self._url, self._database_name)
+        logger.info(
+            "MongoDB connected (pymongo.AsyncMongoClient): %s/%s",
+            self._url,
+            self._database_name,
+        )
 
     async def stop(self) -> None:
         """Stop the MongoDB client and close connections."""
@@ -146,7 +150,7 @@ class MongoDBClient:
 
     @resilient(name="mongodb_find_one", max_attempts=3)
     async def find_one(
-        self, collection: str, query: dict[str, Any],
+        self, collection: str, query: dict[str, Any]
     ) -> dict[str, Any] | None:
         """Find single document in collection.
 
@@ -207,26 +211,19 @@ class MongoDBClient:
 
         all_ids: list[str] = []
         if batch_size <= 0 or len(documents) <= batch_size:
-            result = await self.db[collection].insert_many(
-                documents, ordered=ordered,
-            )
+            result = await self.db[collection].insert_many(documents, ordered=ordered)
             return [str(id_) for id_ in result.inserted_ids]
 
         # Chunked insert
         for i in range(0, len(documents), batch_size):
             chunk = documents[i : i + batch_size]
-            result = await self.db[collection].insert_many(
-                chunk, ordered=ordered,
-            )
+            result = await self.db[collection].insert_many(chunk, ordered=ordered)
             all_ids.extend(str(id_) for id_ in result.inserted_ids)
         return all_ids
 
     @resilient(name="mongodb_update_many", max_attempts=3)
     async def update_many(
-        self,
-        collection: str,
-        query: dict[str, Any],
-        update: dict[str, Any],
+        self, collection: str, query: dict[str, Any], update: dict[str, Any]
     ) -> int:
         """Update multiple documents matching query.
 
@@ -246,11 +243,7 @@ class MongoDBClient:
         return result.modified_count
 
     @resilient(name="mongodb_delete_many", max_attempts=3)
-    async def delete_many(
-        self,
-        collection: str,
-        query: dict[str, Any],
-    ) -> int:
+    async def delete_many(self, collection: str, query: dict[str, Any]) -> int:
         """Delete multiple documents matching query.
 
         Args:
@@ -284,7 +277,7 @@ class MongoDBClient:
 
         """
         result = await self.db[collection].update_one(
-            query, {"$set": update}, upsert=upsert,
+            query, {"$set": update}, upsert=upsert
         )
         return result.modified_count
 
@@ -303,7 +296,7 @@ class MongoDBClient:
         return result.deleted_count
 
     async def aggregate(
-        self, collection: str, pipeline: list[dict[str, Any]],
+        self, collection: str, pipeline: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
         """Run aggregation pipeline.
 
@@ -343,15 +336,14 @@ class MongoDBClient:
                 return False
             await self._client.admin.command("ping")
             return True
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             return False
-
-
 
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
             import time
+
             start = time.monotonic()
             ping = getattr(self, "ping", None)
             if ping is None:
@@ -364,11 +356,13 @@ class MongoDBClient:
             }
         except Exception as exc:
             return {"status": "down", "error": str(exc)}
+
+
 def _create_mongo_client() -> MongoDBClient:
     from src.backend.core.config.settings import settings
 
     return MongoDBClient(
-        connection_url=settings.mongo.connection_string, database=settings.mongo.name,
+        connection_url=settings.mongo.connection_string, database=settings.mongo.name
     )
 
 

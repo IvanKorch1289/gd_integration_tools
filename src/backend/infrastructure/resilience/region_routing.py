@@ -75,7 +75,7 @@ def register_region(region: Region) -> None:
     _REGION_REGISTRY[region.code] = region
     _REGION_HEALTH[region.code] = region.status
     logger.info(
-        "Region registered", extra={"region": region.code, "url": region.primary_url},
+        "Region registered", extra={"region": region.code, "url": region.primary_url}
     )
 
 

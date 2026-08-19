@@ -42,7 +42,7 @@ class _WorkflowsServiceUnavailable:
         """Заглушка — workflow handlers мигрированы на DSL."""
         raise NotImplementedError(
             "send_notification_workflow: workflows service удалён в S168 W13. "
-            "Используйте DSL workflow вместо legacy action handler.",
+            "Используйте DSL workflow вместо legacy action handler."
         )
 
     @staticmethod
@@ -50,7 +50,7 @@ class _WorkflowsServiceUnavailable:
         """Заглушка — workflow handlers мигрированы на DSL."""
         raise NotImplementedError(
             "order_processing_workflow: workflows service удалён в S168 W13. "
-            "Используйте DSL workflow вместо legacy action handler.",
+            "Используйте DSL workflow вместо legacy action handler."
         )
 
 
@@ -112,7 +112,7 @@ def register_action_handlers() -> None:
                 service_getter=_get_workflows_service_stub,
                 service_method="order_processing_workflow",
             ),
-        ],
+        ]
     )
 
     _is_registered = True

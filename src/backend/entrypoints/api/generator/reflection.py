@@ -22,7 +22,7 @@ __all__ = (
 
 
 def build_model_parameters(
-    model_cls: type[BaseModel] | None, source: Literal["path", "query"],
+    model_cls: type[BaseModel] | None, source: Literal["path", "query"]
 ) -> list[Parameter]:
     """Build FastAPI parameters from Pydantic model.
 
@@ -57,7 +57,7 @@ def build_model_parameters(
                 kind=Parameter.KEYWORD_ONLY,
                 annotation=annotation,
                 default=default,
-            ),
+            )
         )
 
     return parameters
@@ -83,9 +83,9 @@ def build_invocation_parameters(spec: InvocationSpec) -> list[Parameter]:
                 kind=Parameter.KEYWORD_ONLY,
                 annotation=InvokeMode,
                 default=Query(
-                    InvokeMode.direct, description="Режим выполнения: direct или event.",
+                    InvokeMode.direct, description="Режим выполнения: direct или event."
                 ),
-            ),
+            )
         )
 
     if "delay_seconds" in fields:
@@ -95,9 +95,9 @@ def build_invocation_parameters(spec: InvocationSpec) -> list[Parameter]:
                 kind=Parameter.KEYWORD_ONLY,
                 annotation=int | None,
                 default=Query(
-                    None, ge=1, description="Отложенное выполнение в секундах.",
+                    None, ge=1, description="Отложенное выполнение в секундах."
                 ),
-            ),
+            )
         )
 
     if "cron" in fields:
@@ -107,9 +107,9 @@ def build_invocation_parameters(spec: InvocationSpec) -> list[Parameter]:
                 kind=Parameter.KEYWORD_ONLY,
                 annotation=str | None,
                 default=Query(
-                    None, description="Cron-выражение для планового запуска.",
+                    None, description="Cron-выражение для планового запуска."
                 ),
-            ),
+            )
         )
 
     return parameters
@@ -125,7 +125,7 @@ def request_parameter() -> Parameter:
     from fastapi import Request
 
     return Parameter(
-        name="request", kind=Parameter.POSITIONAL_OR_KEYWORD, annotation=Request,
+        name="request", kind=Parameter.POSITIONAL_OR_KEYWORD, annotation=Request
     )
 
 
@@ -150,7 +150,7 @@ def path_parameter(name: str, annotation: Any, description: str) -> Parameter:
 
 
 def query_parameter(
-    name: str, annotation: Any, default_value: Any, description: str,
+    name: str, annotation: Any, default_value: Any, description: str
 ) -> Parameter:
     """Build query parameter.
 

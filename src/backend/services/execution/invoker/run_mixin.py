@@ -77,7 +77,7 @@ class RunMixin:
         task.add_done_callback(self._tasks.discard)
 
     async def _run_and_publish(
-        self, request: InvocationRequest, channel: InvocationReplyChannel | None,
+        self, request: InvocationRequest, channel: InvocationReplyChannel | None
     ) -> None:
         response = await self._invoke_sync(request)
         # SYNC уже корректно ловит исключения; нам остаётся только
@@ -92,7 +92,7 @@ class RunMixin:
         )
         if channel is None:
             logger.warning(
-                "ASYNC_API: reply_channel не найден (id=%s)", request.invocation_id,
+                "ASYNC_API: reply_channel не найден (id=%s)", request.invocation_id
             )
             return
         try:
@@ -103,7 +103,7 @@ class RunMixin:
     async def _run_silent(self, request: InvocationRequest) -> None:
         try:
             command = ActionCommandSchema(
-                action=request.action, payload=request.payload,
+                action=request.action, payload=request.payload
             )
             await self._dispatch(command, self._build_context(request))
         except Exception as _:
@@ -114,7 +114,7 @@ class RunMixin:
             )
 
     async def _run_and_stream(
-        self, request: InvocationRequest, channel: InvocationReplyChannel,
+        self, request: InvocationRequest, channel: InvocationReplyChannel
     ) -> None:
         """Стримит yield'ы action'а в reply-канал по одному InvocationResponse (W22 F.2 A3).
 
@@ -124,7 +124,7 @@ class RunMixin:
         meta = dict(request.metadata)
         try:
             command = ActionCommandSchema(
-                action=request.action, payload=request.payload,
+                action=request.action, payload=request.payload
             )
             result = await self._dispatch(command, self._build_context(request))
         except KeyError as exc:
@@ -135,7 +135,7 @@ class RunMixin:
                     error=f"Action not registered: {exc}",
                     mode=request.mode,
                     metadata=meta,
-                ),
+                )
             )
             return
         except Exception as exc:
@@ -151,7 +151,7 @@ class RunMixin:
                     error=str(exc)[:500],
                     mode=request.mode,
                     metadata=meta,
-                ),
+                )
             )
             return
 
@@ -165,7 +165,7 @@ class RunMixin:
                     result=result,
                     mode=request.mode,
                     metadata=meta,
-                ),
+                )
             )
             return
 
@@ -177,5 +177,5 @@ class RunMixin:
                     result=chunk,
                     mode=request.mode,
                     metadata=meta,
-                ),
+                )
             )

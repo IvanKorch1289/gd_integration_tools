@@ -44,7 +44,6 @@ class WSAuthError(Exception):
     """WebSocket authentication failure."""
 
 
-
 @dataclass(slots=True)
 class WSCredential:
     """Извлечённый credential из WS handshake.
@@ -139,19 +138,11 @@ def extract_credential(
             # Если выглядит как JWT (три base64-сегмента через точки) — JWT,
             # иначе API key.
             method = "jwt" if raw.count(".") == 2 else "api_key"
-            return WSCredential(
-                token=raw,
-                method=method,
-                source="cookie",
-            )
+            return WSCredential(token=raw, method=method, source="cookie")
 
     # Приоритет 3: query (по умолчанию выключен).
     if allow_query and query_token:
-        return WSCredential(
-            token=query_token.strip(),
-            method="api_key",
-            source="query",
-        )
+        return WSCredential(token=query_token.strip(), method="api_key", source="query")
 
     return None
 
@@ -267,10 +258,7 @@ class WSAuthenticator:
             auth_source="jwt",
         )
 
-    async def authenticate_via_facade(
-        self,
-        credential: WSCredential,
-    ) -> WSSession:
+    async def authenticate_via_facade(self, credential: WSCredential) -> WSSession:
         """Маршрутизация :class:`WSCredential` → соответствующий auth-path.
 
         Args:
@@ -320,7 +308,7 @@ class WSAuthenticator:
             return {
                 m.decode() if isinstance(m, bytes) else str(m) for m in (members or [])
             }
-        except (ImportError, AttributeError, ConnectionError):
+        except ImportError, AttributeError, ConnectionError:
             return set()
 
     def can_access_group(self, session: WSSession, group: str) -> bool:

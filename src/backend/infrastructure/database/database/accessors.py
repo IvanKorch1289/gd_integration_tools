@@ -19,9 +19,7 @@ from src.backend.infrastructure.database.database.registry import (
 db_logger = get_logger("database")
 
 
-type DatabaseSettings = (
-    DatabaseConnectionSettings | ExternalDatabaseConnectionSettings
-)
+type DatabaseSettings = DatabaseConnectionSettings | ExternalDatabaseConnectionSettings
 
 
 @lru_cache(maxsize=1)

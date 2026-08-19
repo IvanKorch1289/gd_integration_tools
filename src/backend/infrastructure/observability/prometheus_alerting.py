@@ -5,6 +5,7 @@
 
 Pattern (D285, Ponytail): thin wrapper над yaml.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -14,6 +15,7 @@ from src.backend.core.logging import get_logger
 _logger = get_logger("infrastructure.observability.prometheus_alerting")
 
 __all__ = ("PrometheusAlertManager",)
+
 
 class PrometheusAlertManager:
     """Реестр Prometheus alert rules.

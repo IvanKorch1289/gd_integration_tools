@@ -29,11 +29,7 @@ __all__ = (
 
 
 def build_error_envelope(
-    code: str,
-    detail: str,
-    *,
-    scope: Scope | None = None,
-    error_id: str | None = None,
+    code: str, detail: str, *, scope: Scope | None = None, error_id: str | None = None
 ) -> dict[str, Any]:
     """Собирает унифицированный error envelope для HTTP/middleware ответов.
 
@@ -65,6 +61,7 @@ def build_error_envelope(
         "correlation_id": correlation_id,
         "request_id": request_id,
     }
+
 
 # Маппинг HTTP → gRPC статусов для multi-protocol ошибок.
 _HTTP_TO_GRPC_STATUS: dict[int, int] = {
@@ -163,7 +160,7 @@ class DatabaseError(BaseError):
 
     def __init__(self, *_: Any, message: str = "Database error") -> None:
         super().__init__(
-            message=message, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            message=message, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
 
@@ -191,8 +188,7 @@ class ProductionWiringError(BaseError):
         if missing:
             message = f"{message} (missing: {list(missing)})"
         super().__init__(
-            message=message,
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            message=message, status_code=status.HTTP_503_SERVICE_UNAVAILABLE
         )
 
 
@@ -220,7 +216,7 @@ class ServiceError(BaseError):
     def __init__(self, detail: str = "Ошибка обработки запроса") -> None:
         self.detail = detail
         super().__init__(
-            message=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            message=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
 

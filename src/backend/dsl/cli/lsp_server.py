@@ -49,7 +49,7 @@ def _try_import_pygls() -> Any | None:
     except ImportError:
         _logger.warning(
             "pygls не установлен — LSP server недоступен. "
-            "Установите [lsp] extra: pip install gd-integration-tools[lsp]",
+            "Установите [lsp] extra: pip install gd-integration-tools[lsp]"
         )
         return None
 
@@ -75,8 +75,8 @@ def _build_completion_list(
         for key, detail in route_completions:
             items.append(
                 lsp_types.CompletionItem(
-                    label=key, kind=lsp_types.CompletionItemKind.Property, detail=detail,
-                ),
+                    label=key, kind=lsp_types.CompletionItemKind.Property, detail=detail
+                )
             )
     if is_dsl_yaml or not is_route_toml:
         for key, detail, snippet in step_completions:
@@ -87,7 +87,7 @@ def _build_completion_list(
                     detail=detail,
                     insert_text=snippet,
                     insert_text_format=lsp_types.InsertTextFormat.Snippet,
-                ),
+                )
             )
     return lsp_types.CompletionList(is_incomplete=False, items=items)
 
@@ -115,7 +115,7 @@ def create_server() -> Any:
 
     @server.feature(lsp_types.TEXT_DOCUMENT_DID_CHANGE)
     async def did_change(
-        ls: LanguageServer, params: lsp_types.DidChangeTextDocumentParams,
+        ls: LanguageServer, params: lsp_types.DidChangeTextDocumentParams
     ):
         """Run linter после каждого change в буфере."""
         await _publish_diagnostics(ls, params.text_document.uri)
@@ -130,7 +130,7 @@ def create_server() -> Any:
         lsp_types.CompletionOptions(trigger_characters=[".", ":", " "]),
     )
     def completion(
-        ls: LanguageServer, params: lsp_types.CompletionParams,
+        ls: LanguageServer, params: lsp_types.CompletionParams
     ) -> lsp_types.CompletionList:
         """Автокомплит для route.toml + *.dsl.yaml ключей.
 
@@ -150,17 +150,17 @@ def create_server() -> Any:
         except ImportError:
             _logger.warning(
                 "tools.dsl_lsp.schema_completion unavailable — completion will be empty. "
-                "Ensure tools/ is in PYTHONPATH or install the package.",
+                "Ensure tools/ is in PYTHONPATH or install the package."
             )
             return lsp_types.CompletionList(is_incomplete=False, items=[])
 
         return _build_completion_list(
-            params.text_document.uri, lsp_types, ROUTE_COMPLETIONS, STEP_COMPLETIONS,
+            params.text_document.uri, lsp_types, ROUTE_COMPLETIONS, STEP_COMPLETIONS
         )
 
     @server.feature(lsp_types.TEXT_DOCUMENT_HOVER)
     def hover(
-        ls: LanguageServer, params: lsp_types.HoverParams,
+        ls: LanguageServer, params: lsp_types.HoverParams
     ) -> lsp_types.Hover | None:
         """Hover-описание поля под курсором (Tier 1 — статический lookup)."""
         # Lazy import schema_completion.
@@ -185,8 +185,8 @@ def create_server() -> Any:
             return None
         return lsp_types.Hover(
             contents=lsp_types.MarkupContent(
-                kind=lsp_types.MarkupKind.Markdown, value=f"**{token}** — {detail}",
-            ),
+                kind=lsp_types.MarkupKind.Markdown, value=f"**{token}** — {detail}"
+            )
         )
 
     return server
@@ -239,7 +239,7 @@ async def _publish_diagnostics(ls: Any, uri: str) -> None:
     # pygls 2.x: метод называется text_document_publish_diagnostics;
     # для тестового _FakeLS оставлен fallback на старое publish_diagnostics.
     publisher = getattr(ls, "text_document_publish_diagnostics", None) or getattr(
-        ls, "publish_diagnostics", None,
+        ls, "publish_diagnostics", None
     )
     if publisher is None:
         _logger.warning("LS has no publish_diagnostics method — skipping")

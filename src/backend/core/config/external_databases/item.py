@@ -263,7 +263,7 @@ class ExternalDatabaseItemSettings(BaseModel):
                 raise ValueError("Для Oracle необходимо указать sid или service_name")
             if self.sid and self.service_name:
                 raise ValueError(
-                    "Для Oracle можно указать только одно из полей: sid или service_name",
+                    "Для Oracle можно указать только одно из полей: sid или service_name"
                 )
             if self.db_name is not None:
                 raise ValueError("Поле db_name не используется для Oracle-подключения")
@@ -273,7 +273,7 @@ class ExternalDatabaseItemSettings(BaseModel):
                 raise ValueError("Для PostgreSQL необходимо указать db_name")
             if self.sid is not None or self.service_name is not None:
                 raise ValueError(
-                    "Поля sid и service_name не используются для PostgreSQL",
+                    "Поля sid и service_name не используются для PostgreSQL"
                 )
 
         if self.ssl_mode and self.type != DatabaseTypeChoices.postgresql:

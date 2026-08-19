@@ -105,7 +105,7 @@ class NotifyCascadeProcessor(BaseProcessor):
         )
         task.add_done_callback(_swallow_exc)
         exchange.properties.setdefault("notify_cascade_tasks", []).append(
-            f"notify_cascade:{id(task)}",
+            f"notify_cascade:{id(task)}"
         )
 
     async def _cascade_send(self, message: NotificationMessage) -> None:
@@ -116,7 +116,7 @@ class NotifyCascadeProcessor(BaseProcessor):
                 try:
                     if not await adapter.is_available():
                         _logger.debug(
-                            "notify_cascade: %s unavailable, skip", adapter.channel,
+                            "notify_cascade: %s unavailable, skip", adapter.channel
                         )
                         break
                     track_id = await adapter.send(message)
@@ -140,7 +140,7 @@ class NotifyCascadeProcessor(BaseProcessor):
                 except Exception as exc:
                     last_exc = exc
                     _logger.warning(
-                        "notify_cascade %s unexpected exc: %s", adapter.channel, exc,
+                        "notify_cascade %s unexpected exc: %s", adapter.channel, exc
                     )
                     break  # не retry на не-ConnectionError'ах
         _logger.error(

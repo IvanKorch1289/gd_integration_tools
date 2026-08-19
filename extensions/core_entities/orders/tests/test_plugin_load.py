@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.backend.core.plugin_runtime.manifest import load_plugin_manifest
+from src.backend.core.api import load_plugin_manifest
 
 _MANIFEST_PATH = (
     Path(__file__).resolve().parents[4]

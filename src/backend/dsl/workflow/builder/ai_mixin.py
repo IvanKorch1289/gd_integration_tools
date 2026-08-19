@@ -75,6 +75,6 @@ class AiAgentMixin(_WorkflowBuilderProtocol):
                 namespace_template=namespace_template,
                 inject_memory=inject_memory,
                 recall_on=recall_on,
-            ),
+            )
         )
         return self

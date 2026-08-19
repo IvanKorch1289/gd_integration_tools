@@ -61,7 +61,7 @@ class AuditService:
     __slots__ = ("_backend",)
 
     def __init__(
-        self, clickhouse_service: ClickHouseAuditService | None = None,
+        self, clickhouse_service: ClickHouseAuditService | None = None
     ) -> None:
         self._backend = clickhouse_service
 
@@ -163,6 +163,7 @@ def _get_correlation_id_safe() -> str | None:
         from src.backend.core.di.providers.infrastructure_locator import (
             get_correlation_id as _get_cid,
         )
+
         get_correlation_id = _get_cid
 
         value = get_correlation_id()

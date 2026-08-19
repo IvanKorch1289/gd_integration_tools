@@ -69,7 +69,12 @@ class OtelMiddleware:
         except ImportError:
             logger.debug("OpenTelemetry SDK not available — OtelMiddleware is no-op")
             return None
-        except (AttributeError, RuntimeError, ValueError, TypeError) as exc:  # pragma: no cover — defensive
+        except (
+            AttributeError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as exc:  # pragma: no cover — defensive
             # cycle-9/D-AUDIT-1019: narrow exceptions + observability.
             # AttributeError — tracer_provider API change, RuntimeError —
             # tracer unavailable, ValueError — invalid config, TypeError —
@@ -120,7 +125,7 @@ class OtelMiddleware:
             return
 
         span_cm = self._tracer.start_as_current_span(
-            span_name, context=ctx, kind=SpanKind.SERVER, attributes=attributes,
+            span_name, context=ctx, kind=SpanKind.SERVER, attributes=attributes
         )
 
         # D-AUDIT-A2-03 fix (cycle 1): scope["state"] для per-request state
@@ -142,7 +147,7 @@ class OtelMiddleware:
                         "type": "http.response.start",
                         "status": scope["state"]["otel_response_status"],
                         "headers": new_headers,
-                    },
+                    }
                 )
             elif message["type"] == "http.response.body":
                 # Body пропускаем unchanged (не suppress, т.к. body не
@@ -160,7 +165,7 @@ class OtelMiddleware:
             raise
 
     async def _process(
-        self, scope: Scope, receive: Receive, send: Send, span: Any,
+        self, scope: Scope, receive: Receive, send: Send, span: Any
     ) -> None:
         """Выполняет call_next, помечая span при ошибке (cycle 56 helper)."""
         try:
@@ -173,12 +178,12 @@ class OtelMiddleware:
             # stored on scope['state'] — per-request, не instance attribute).
             try:
                 response_status = scope.get("state", {}).get(
-                    "otel_response_status", 200,
+                    "otel_response_status", 200
                 )
                 span.set_attribute("http.status_code", response_status)
                 if response_status >= 500:
                     self._mark_error(span, RuntimeError(f"HTTP {response_status}"))
-            except (AttributeError, TypeError):  # noqa: violation-check — OTel API surface best-effort
+            except AttributeError, TypeError:  # noqa: violation-check — OTel API surface best-effort
                 pass
 
             # Post-response context: route_id может быть выставлен downstream.
@@ -187,7 +192,7 @@ class OtelMiddleware:
             if route_id:
                 try:
                     span.set_attribute("app.route_id", str(route_id))
-                except (AttributeError, TypeError):
+                except AttributeError, TypeError:
                     pass
 
     def _extract_context(self, scope: Scope) -> Any:
@@ -201,7 +206,13 @@ class OtelMiddleware:
                 for h in scope.get("headers", [])
             }
             return self._propagator.extract(carrier=carrier)
-        except (AttributeError, KeyError, UnicodeDecodeError, RuntimeError, TypeError):  # pragma: no cover
+        except (
+            AttributeError,
+            KeyError,
+            UnicodeDecodeError,
+            RuntimeError,
+            TypeError,
+        ):  # pragma: no cover
             # cycle-9/D-AUDIT-1021: narrow exceptions + observability.
             # AttributeError — scope.get API change, KeyError — missing
             # header, UnicodeDecodeError — bad header encoding,
@@ -209,7 +220,7 @@ class OtelMiddleware:
             return None
 
     def _inject_traceparent_to_headers(
-        self, headers: list[tuple[bytes, bytes]],
+        self, headers: list[tuple[bytes, bytes]]
     ) -> None:
         """Cycle 56: injects traceparent в список headers (in-place)."""
         if self._propagator is None:
@@ -217,7 +228,7 @@ class OtelMiddleware:
         carrier: dict[str, str] = {}
         try:
             self._propagator.inject(carrier)
-        except (AttributeError, RuntimeError, TypeError, ValueError):  # pragma: no cover
+        except AttributeError, RuntimeError, TypeError, ValueError:  # pragma: no cover
             # cycle-9/D-AUDIT-1021: см. выше — narrow для inject path.
             return
         for key, value in carrier.items():
@@ -238,9 +249,12 @@ class OtelMiddleware:
 
         method = scope.get("method", "")
         path = scope.get("path", "")
-        full_url = scope.get("scheme", "http") + "://" + str(
-            scope.get("server", ("", "")),
-        ) + path
+        full_url = (
+            scope.get("scheme", "http")
+            + "://"
+            + str(scope.get("server", ("", "")))
+            + path
+        )
         # Reconstruct full URL from scheme + server + path + query.
         scheme = scope.get("scheme", "http")
         server = scope.get("server", ("", ""))
@@ -271,6 +285,7 @@ class OtelMiddleware:
                 # ImportError — tenancy missing, AttributeError — API
                 # change, RuntimeError — context unavailable.
                 import logging
+
                 logging.getLogger(__name__).debug(
                     "otel_middleware.current_tenant_fallback",
                     extra={"error": str(ten_exc)},
@@ -280,15 +295,9 @@ class OtelMiddleware:
         # Correlation/request id из state (cycle 52 pattern).
         state = scope.get("state", {}) if "state" in scope else {}
         correlation_id = (
-            state.get("correlation_id", "")
-            if isinstance(state, dict)
-            else ""
+            state.get("correlation_id", "") if isinstance(state, dict) else ""
         )
-        request_id = (
-            state.get("request_id", "")
-            if isinstance(state, dict)
-            else ""
-        )
+        request_id = state.get("request_id", "") if isinstance(state, dict) else ""
 
         attrs: dict[str, Any] = {
             "http.method": method,
@@ -311,13 +320,23 @@ class OtelMiddleware:
             span.set_status(Status(StatusCode.ERROR, str(exc)))
         except ImportError:  # noqa: violation-check — opentelemetry optional
             pass
-        except (AttributeError, RuntimeError, ValueError, TypeError):  # pragma: no cover  # noqa: violation-check — OTel API surface best-effort
+        except (
+            AttributeError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ):  # pragma: no cover  # noqa: violation-check — OTel API surface best-effort
             # cycle-9/D-AUDIT-1020: narrow exceptions + observability.
             # AttributeError — Status/StatusCode API change, RuntimeError
             # — set_status unavailable, ValueError/TypeError — invalid args.
             pass
         try:
             span.record_exception(exc)
-        except (AttributeError, RuntimeError, ValueError, TypeError):  # pragma: no cover  # noqa: violation-check — OTel API surface best-effort
+        except (
+            AttributeError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ):  # pragma: no cover  # noqa: violation-check — OTel API surface best-effort
             # cycle-9/D-AUDIT-1020: см. выше — тот же narrow для record_exception.
             pass

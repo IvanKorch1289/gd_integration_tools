@@ -96,7 +96,7 @@ class WorkerProbesServer:
                 Route("/healthz", self._handle_healthz),
                 Route("/readyz", self._handle_readyz),
                 Route("/metrics", self._handle_metrics),
-            ],
+            ]
         )
         config = uvicorn.Config(
             app=app,
@@ -108,7 +108,7 @@ class WorkerProbesServer:
         )
         self._server = uvicorn.Server(config)
         self._serve_task = get_task_registry().create_task(
-            self._server.serve(), name="worker-probes-uvicorn",
+            self._server.serve(), name="worker-probes-uvicorn"
         )
         WORKER_UP.labels(worker_id=self._worker_id).set(1)
         _logger.info(
@@ -145,11 +145,11 @@ class WorkerProbesServer:
     async def _handle_readyz(self, _req: Request) -> Response:
         if self._draining:
             return JSONResponse(
-                {"status": "not_ready", "reason": "draining"}, status_code=503,
+                {"status": "not_ready", "reason": "draining"}, status_code=503
             )
         if not bool(getattr(self._runner, "_running", False)):
             return JSONResponse(
-                {"status": "not_ready", "reason": "runner_not_started"}, status_code=503,
+                {"status": "not_ready", "reason": "runner_not_started"}, status_code=503
             )
         if self._readiness_check is not None:
             try:

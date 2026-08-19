@@ -55,7 +55,7 @@ SUPPORTED_BACKENDS: frozenset[str] = frozenset(
         "debezium",  # R2.1 DebeziumEventsCDCBackend (aiokafka, 322 LOC)
         "adapter",  # legacy CDCClient adapter (multi-DB через CDCClient)
         "fake",  # in-memory FakeCDCSource (test/dev)
-    },
+    }
 )
 
 
@@ -85,13 +85,14 @@ def get_cdc_source(backend: str, /, **kwargs: Any) -> CDCSource:
     """
     if backend not in SUPPORTED_BACKENDS:
         raise ValueError(
-            f"Unknown CDC backend: {backend!r}. Supported: {sorted(SUPPORTED_BACKENDS)}",
+            f"Unknown CDC backend: {backend!r}. Supported: {sorted(SUPPORTED_BACKENDS)}"
         )
 
     if backend == "poll":
         from src.backend.core.di.providers.infrastructure_locator import (
             get_poll_cdc_backend_class as _get_pcb_cls,
         )
+
         PollCDCBackend = _get_pcb_cls()
 
         return PollCDCBackend(
@@ -105,6 +106,7 @@ def get_cdc_source(backend: str, /, **kwargs: Any) -> CDCSource:
         from src.backend.core.di.providers.infrastructure_locator import (
             get_listen_notify_cdc_backend_class as _get_lncb_cls,
         )
+
         ListenNotifyCDCBackend = _get_lncb_cls()
 
         return ListenNotifyCDCBackend(
@@ -115,6 +117,7 @@ def get_cdc_source(backend: str, /, **kwargs: Any) -> CDCSource:
         from src.backend.core.di.providers.infrastructure_locator import (
             get_debezium_events_cdc_backend_class as _get_decb_cls,
         )
+
         DebeziumEventsCDCBackend = _get_decb_cls()
 
         return DebeziumEventsCDCBackend(
@@ -128,6 +131,7 @@ def get_cdc_source(backend: str, /, **kwargs: Any) -> CDCSource:
         from src.backend.core.di.providers.infrastructure_locator import (
             get_cdc_client_adapter_class as _get_cdc_ca_cls,
         )
+
         CDCClientAdapter = _get_cdc_ca_cls()
 
         return CDCClientAdapter(

@@ -98,7 +98,7 @@ def build_augment_result(
         ttl_hours = float(meta.get("ttl_hours") or 168.0)
 
         label = compute_freshness(
-            ingested_at=ingested_dt, soft_hours=72.0, hard_hours=ttl_hours,
+            ingested_at=ingested_dt, soft_hours=72.0, hard_hours=ttl_hours
         )
         distribution[label.value] += 1
 
@@ -120,7 +120,7 @@ def build_augment_result(
                 namespace=meta.get("namespace") or namespace,
                 freshness=label.value,
                 ingested_at=ingested_dt.isoformat() if ingested_dt else None,
-            ),
+            )
         )
 
     return AugmentResult(

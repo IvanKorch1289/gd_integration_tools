@@ -63,10 +63,7 @@ class RedisLimiterAdapter:
         self._window_seconds = window_seconds
 
     async def try_acquire_async(
-        self,
-        name: str = "pyrate",
-        weight: int = 1,
-        timeout: int | float = -1,
+        self, name: str = "pyrate", weight: int = 1, timeout: int | float = -1
     ) -> bool:
         """Acquire `weight` permits from bucket `name`. Multi-instance via Redis.
 

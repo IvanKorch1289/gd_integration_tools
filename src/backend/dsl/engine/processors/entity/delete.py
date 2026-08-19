@@ -53,5 +53,5 @@ class EntityDeleteProcessor(_BaseEntityProcessor):
                 "entity": self._entity,
                 "id_from": self._id_from,
                 "result_property": self._result_property,
-            },
+            }
         }

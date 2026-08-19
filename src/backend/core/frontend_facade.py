@@ -5,6 +5,7 @@ Ponytail YAGNI: thin wrapper re-export core symbols.
 G1_FRONTEND: единая точка импорта для Streamlit — re-export из core/ и
 services.dsl_portal, чтобы frontend не зависел напрямую от backend-слоёв.
 """
+
 from __future__ import annotations
 
 from src.backend.core.audit.facade import emit_audit_safe

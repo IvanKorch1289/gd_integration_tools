@@ -91,13 +91,13 @@ class TenantAwareCapabilityGatewayProtocol(CapabilityGatewayProtocol, Protocol):
     """
 
     def check_tenant(
-        self, capability: str, tenant: str, principal: str, scope: str | None = None,
+        self, capability: str, tenant: str, principal: str, scope: str | None = None
     ) -> bool:
         """Tenant-aware check; возвращает ``bool`` (не raise)."""
         ...
 
     def declare_tenant(
-        self, capability: CapabilityRef, tenant: str, principal: str,
+        self, capability: CapabilityRef, tenant: str, principal: str
     ) -> None:
         """Декларировать capability для пары (tenant, principal)."""
         ...

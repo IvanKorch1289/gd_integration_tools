@@ -106,7 +106,7 @@ def _resolve_protobuf_class(message_class: str) -> Any:
         module_name, _, class_name = message_class.rpartition(".")
         if not module_name:
             raise ValueError(
-                f"protobuf message_class must be 'module:Class' or 'module.Class', got: {message_class!r}",
+                f"protobuf message_class must be 'module:Class' or 'module.Class', got: {message_class!r}"
             )
     module = importlib.import_module(module_name)
     return getattr(module, class_name)

@@ -49,7 +49,7 @@ class GenericSinkPublishProcessor(BaseProcessor):
         if kind not in _GENERIC_SINK_KINDS:
             allowed = ", ".join(sorted(_GENERIC_SINK_KINDS))
             raise ValueError(
-                f"sink_publish: kind must be one of {allowed}, got {kind!r}",
+                f"sink_publish: kind must be one of {allowed}, got {kind!r}"
             )
         super().__init__(name=name or f"sink_publish:{kind}")
         self._kind = kind

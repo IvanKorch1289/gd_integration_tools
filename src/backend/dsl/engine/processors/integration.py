@@ -59,7 +59,7 @@ class MemoryLoadProcessor(BaseProcessor):
     """Загружает conversation + facts из AgentMemoryService."""
 
     def __init__(
-        self, session_id_header: str = "X-Session-Id", name: str | None = None,
+        self, session_id_header: str = "X-Session-Id", name: str | None = None
     ) -> None:
         super().__init__(name)
         self._session_header = session_id_header

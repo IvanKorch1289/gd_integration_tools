@@ -28,11 +28,7 @@ from src.backend.core.logging import get_logger
 from src.backend.dsl.workflow.gateways import BranchSpec, GatewaySpec
 from src.backend.dsl.workflow.spec import ActivityDeclaration
 
-__all__ = (
-    "compile_and",
-    "compile_or",
-    "compile_xor",
-)
+__all__ = ("compile_and", "compile_or", "compile_xor")
 
 _logger = get_logger("workflow.compiler.gateways")
 
@@ -60,7 +56,7 @@ def _resolve_gateway_spec(decl: ActivityDeclaration) -> GatewaySpec:
         )
     raise TypeError(
         f"Unsupported gateway payload type: {type(gw_raw)!r}; "
-        "expected GatewaySpec or dict",
+        "expected GatewaySpec or dict"
     )
 
 
@@ -91,9 +87,7 @@ def _eval_condition(condition: str | None, ctx: dict[str, Any]) -> bool:
         return False
 
 
-async def _run_branch_steps(
-    branch: BranchSpec, ctx: dict[str, Any],
-) -> Any:
+async def _run_branch_steps(branch: BranchSpec, ctx: dict[str, Any]) -> Any:
     """Выполнить шаги одной ветки последовательно.
 
     Поддерживает ``ActivityDeclaration`` instance напрямую; dict'ы
@@ -201,13 +195,10 @@ async def compile_or(decl: ActivityDeclaration, ctx: dict[str, Any]) -> Any:
         return None
 
     tasks: list[asyncio.Task[Any]] = [
-        asyncio.create_task(_run_branch_steps(branch, ctx))
-        for branch in spec.branches
+        asyncio.create_task(_run_branch_steps(branch, ctx)) for branch in spec.branches
     ]
 
-    done, pending = await asyncio.wait(
-        tasks, return_when=asyncio.FIRST_COMPLETED,
-    )
+    done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
 
     for task in pending:
         task.cancel()

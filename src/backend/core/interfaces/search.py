@@ -17,13 +17,13 @@ class SearchClient(Protocol):
     """Контракт search-бэкенда (Elasticsearch / OpenSearch / SQLite-FTS5)."""
 
     async def index_document(
-        self, index: str, document: dict[str, Any], doc_id: str | None = None,
+        self, index: str, document: dict[str, Any], doc_id: str | None = None
     ) -> dict[str, Any]:
         """Индексировать один document в ``index`` (``doc_id`` auto-generate если None)."""
         ...
 
     async def bulk_index(
-        self, index: str, documents: list[dict[str, Any]], id_field: str | None = None,
+        self, index: str, documents: list[dict[str, Any]], id_field: str | None = None
     ) -> dict[str, Any]:
         """Bulk index documents в ``index`` (id из ``id_field``)."""
         ...
@@ -40,7 +40,7 @@ class SearchClient(Protocol):
         ...
 
     async def aggregate(
-        self, index: str, aggs: dict[str, Any], query: dict[str, Any] | None = None,
+        self, index: str, aggs: dict[str, Any], query: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """Aggregation query (group_by, metrics) в ``index``."""
         ...
@@ -61,7 +61,7 @@ class SearchClient(Protocol):
         ...
 
     async def create_index(
-        self, index: str, mappings: dict[str, Any] | None = None,
+        self, index: str, mappings: dict[str, Any] | None = None
     ) -> None:
         """Создаёт индекс ``index`` с опциональным маппингом полей."""
         ...

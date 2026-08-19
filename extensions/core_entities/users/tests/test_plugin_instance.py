@@ -6,7 +6,7 @@ from __future__ import annotations
 import pytest
 
 from extensions.core_entities.users.plugin import UsersPlugin
-from src.backend.core.interfaces.plugin import BasePlugin
+from src.backend.core.api import BasePlugin
 
 
 def test_users_plugin_is_baseplugin_subclass() -> None:

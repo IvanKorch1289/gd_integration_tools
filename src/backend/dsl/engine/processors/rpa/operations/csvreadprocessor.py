@@ -3,6 +3,7 @@
 Async CSV read via :mod:`csv` + :func:`asyncio.to_thread`.
 Capability: rpa.file.csv.read (low risk, read-only).
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -49,9 +50,7 @@ class CsvReadProcessor(BaseProcessor):
         self.delimiter = delimiter
         self.target = to
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="read"):
             return

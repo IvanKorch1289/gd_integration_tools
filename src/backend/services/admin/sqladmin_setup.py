@@ -38,7 +38,7 @@ _logger = get_logger("services.admin.sqladmin_setup")
 
 
 def register_admin(
-    app: FastAPI, *, extra_views: list[Any] | None = None,
+    app: FastAPI, *, extra_views: list[Any] | None = None
 ) -> object | None:
     """Регистрирует sqladmin на маршруте ``/admin``.
 
@@ -63,7 +63,7 @@ def register_admin(
         from src.backend.utilities.admin_panel.setup_admin import setup_admin
     except Exception as exc:
         _logger.warning(
-            "Не удалось подключить sqladmin (utilities.admin_panel): %s", exc,
+            "Не удалось подключить sqladmin (utilities.admin_panel): %s", exc
         )
         return None
 
@@ -89,7 +89,7 @@ def register_admin(
             admin_instance.add_view(view_cls)  # type: ignore[attr-defined]
         except Exception as exc:
             _logger.warning(
-                "Не удалось зарегистрировать ModelView %r: %s", view_cls, exc,
+                "Не удалось зарегистрировать ModelView %r: %s", view_cls, exc
             )
     return admin_instance
 

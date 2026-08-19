@@ -109,7 +109,7 @@ class CreditScoringRagProcessor(_BankingAIProcessor):
                 "rate": result.rate,
                 "citations": result.citations,
                 "reasons": result.reasons,
-            },
+            }
         )
         exchange.set_property("credit_approved", result.approved)
 
@@ -118,17 +118,13 @@ class CreditScoringRagProcessor(_BankingAIProcessor):
             return "No RAG context available."
         if isinstance(rag_context, list):
             return "\n---\n".join(
-
-                    item.get("document", str(item))
-                    if isinstance(item, dict)
-                    else str(item)
-                    for item in rag_context
-
+                item.get("document", str(item)) if isinstance(item, dict) else str(item)
+                for item in rag_context
             )
         return str(rag_context)
 
     def _build_prompt(
-        self, customer: dict[str, Any], amount: float, product: str, rag_context: str,
+        self, customer: dict[str, Any], amount: float, product: str, rag_context: str
     ) -> str:
         # S227 cycle 14 (D432): bound customer JSON dump to 8000 chars to
         # prevent prompt-injection via oversized customer blobs. Matches
@@ -144,7 +140,7 @@ class CreditScoringRagProcessor(_BankingAIProcessor):
         return f'Analyze this credit application using the policy documents for context.\n\nCustomer: {customer_json}\nRequested Amount: {amount}\nProduct: {product}\n\nPolicy Documents (RAG context):\n{rag_context}\n\nRespond with JSON:\n{{\n  "approved": true|false,\n  "limit": number or null,\n  "rate": number or null,\n  "citations": ["doc_ref1", "doc_ref2"],\n  "reasons": ["reason1", "reason2"]\n}}'
 
     async def _check_capability(
-        self, exchange: Exchange[Any], context: ExecutionContext,
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> bool:
         """Verify capability (S190 — unified facade pattern).
 

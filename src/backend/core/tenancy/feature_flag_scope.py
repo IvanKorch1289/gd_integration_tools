@@ -119,9 +119,9 @@ class TenantFeatureFlagResolver:
             try:
                 ctx = self._build_eval_context()
                 return await self.provider.resolve_boolean_value(flag_key, default, ctx)
-            except (RuntimeError, OSError, ValueError, KeyError):
+            except RuntimeError, OSError, ValueError, KeyError:
                 _logger.exception(
-                    "External provider failed для %s, fallback на local", flag_key,
+                    "External provider failed для %s, fallback на local", flag_key
                 )
         # Local fallback.
         return self._local_lookup(flag_key, default)
@@ -141,9 +141,9 @@ class TenantFeatureFlagResolver:
             try:
                 ctx = self._build_eval_context()
                 return await self.provider.resolve_string_value(flag_key, default, ctx)
-            except (RuntimeError, OSError, ValueError, KeyError):
+            except RuntimeError, OSError, ValueError, KeyError:
                 _logger.exception(
-                    "External provider failed для %s, fallback default", flag_key,
+                    "External provider failed для %s, fallback default", flag_key
                 )
         # Local flag-реестр поддерживает только bool, для string нет fallback.
         return default
@@ -163,7 +163,7 @@ class TenantFeatureFlagResolver:
             )
 
             return is_external_provider_enabled()
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             return False
 
     def _build_eval_context(self) -> EvaluationContext:
@@ -174,7 +174,7 @@ class TenantFeatureFlagResolver:
         if ctx is None:
             return EvaluationContext()
         return EvaluationContext(
-            tenant_id=ctx.tenant_id, traits={"plan": ctx.plan, "region": ctx.region},
+            tenant_id=ctx.tenant_id, traits={"plan": ctx.plan, "region": ctx.region}
         )
 
     def _local_lookup(self, flag_key: str, default: bool) -> bool:

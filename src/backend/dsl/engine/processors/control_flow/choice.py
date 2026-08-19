@@ -128,7 +128,7 @@ def _normalize_choice_branches(
         elif isinstance(item, tuple) and len(item) == 2:
             predicate, processors = item
             branches.append(
-                ChoiceBranch(processors=list(processors), predicate=predicate),
+                ChoiceBranch(processors=list(processors), predicate=predicate)
             )
         else:
             raise ValueError(f"Invalid choice-branch spec: {item!r}")

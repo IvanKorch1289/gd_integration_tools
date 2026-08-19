@@ -106,7 +106,7 @@ class QueryClassifier:
     """
 
     def __init__(
-        self, *, llm_classify: LLMClassifyFn | None = None, cache_size: int = 512,
+        self, *, llm_classify: LLMClassifyFn | None = None, cache_size: int = 512
     ) -> None:
         """Создать classifier.
 
@@ -117,7 +117,7 @@ class QueryClassifier:
 
         """
         self._selector = AdaptiveStrategySelector(
-            cache_size=cache_size, llm_classify=llm_classify,
+            cache_size=cache_size, llm_classify=llm_classify
         )
         self._llm_enabled = llm_classify is not None
 
@@ -166,7 +166,7 @@ class QueryClassifier:
 
 
 async def benchmark_accuracy(
-    dataset: Sequence[tuple[str, str]], *, llm_classify: LLMClassifyFn,
+    dataset: Sequence[tuple[str, str]], *, llm_classify: LLMClassifyFn
 ) -> AccuracyBenchmarkResult:
     """Сравнить accuracy heuristic-only vs LLM-classifier на датасете.
 
@@ -184,7 +184,7 @@ async def benchmark_accuracy(
     """
     if not dataset:
         return AccuracyBenchmarkResult(
-            total=0, heuristic_correct=0, llm_correct=0, accuracy_uplift_pct=0.0,
+            total=0, heuristic_correct=0, llm_correct=0, accuracy_uplift_pct=0.0
         )
 
     heuristic_correct = 0

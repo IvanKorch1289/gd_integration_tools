@@ -19,7 +19,7 @@ class NbClientExecutionBackend:
         self._timeout = timeout
 
     async def execute(
-        self, cells: list[dict[str, Any]], *, notebook_path: str = "local.ipynb",
+        self, cells: list[dict[str, Any]], *, notebook_path: str = "local.ipynb"
     ) -> list[dict[str, Any]]:
         """Execute cells locally via nbclient.NotebookClient.
 
@@ -32,7 +32,7 @@ class NbClientExecutionBackend:
         except ImportError as exc:
             raise JupyterExecutionError(
                 "nbclient required for local execution. "
-                "Install: uv sync --extra jupyter",
+                "Install: uv sync --extra jupyter"
             ) from exc
 
         from src.backend.services.jupyter.execution_service import (
@@ -65,7 +65,7 @@ class NbClientExecutionBackend:
                                     "output_type": "stream",
                                     "name": output.name,
                                     "text": output.text,
-                                },
+                                }
                             )
                         elif out_type == "execute_result":
                             outputs.append(
@@ -73,7 +73,7 @@ class NbClientExecutionBackend:
                                     "output_type": "execute_result",
                                     "execution_count": output.execution_count,
                                     "data": output.data,
-                                },
+                                }
                             )
                         elif out_type == "error":
                             outputs.append(
@@ -82,12 +82,12 @@ class NbClientExecutionBackend:
                                     "ename": output.ename,
                                     "evalue": output.evalue,
                                     "traceback": output.traceback,
-                                },
+                                }
                             )
                     results.append({"cell_index": idx, "outputs": outputs})
         except Exception as exc:
             raise JupyterExecutionError(
-                f"Local nbclient execution failed: {exc}",
+                f"Local nbclient execution failed: {exc}"
             ) from exc
 
         return results

@@ -3,6 +3,7 @@
 Безопасное удаление файла/директории.
 Капабилити: rpa.file.delete (RCE-shaped).
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -45,9 +46,7 @@ class FileDeleteProcessor(BaseProcessor):
         self.missing_ok = missing_ok
         self.target = to
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="write"):
             return

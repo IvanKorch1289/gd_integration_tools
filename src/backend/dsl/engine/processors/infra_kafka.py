@@ -7,6 +7,7 @@ Kafka message production через facade::
         value:
           order_id: 1
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -48,5 +49,6 @@ class InfraKafkaProduceProcessor(BaseProcessor):
         from src.backend.core.di.providers.infrastructure_locator import (
             get_kafka_producer_class,
         )
+
         producer = get_kafka_producer_class()(context)
         await producer.send_and_wait(self.topic, value=self.value, key=self.key)

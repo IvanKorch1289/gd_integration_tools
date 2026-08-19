@@ -111,7 +111,7 @@ class ActionHandlerRegistry:
         )
         if action not in self._metadata:
             self._metadata[action] = ActionMetadata(
-                action=action, input_model=payload_model,
+                action=action, input_model=payload_model
             )
 
     def register_many(self, specs: list[ActionHandlerSpec]) -> None:
@@ -128,7 +128,7 @@ class ActionHandlerRegistry:
             self._handlers[spec.action] = spec
             if spec.action not in self._metadata:
                 self._metadata[spec.action] = ActionMetadata(
-                    action=spec.action, input_model=spec.payload_model,
+                    action=spec.action, input_model=spec.payload_model
                 )
 
     def register_with_metadata(
@@ -167,7 +167,7 @@ class ActionHandlerRegistry:
         """
         if metadata.action != action:
             raise ValueError(
-                f"metadata.action={metadata.action!r} != action={action!r}",
+                f"metadata.action={metadata.action!r} != action={action!r}"
             )
 
         # Cycle 133: atomic re-registration conflict check (BEFORE any
@@ -195,7 +195,7 @@ class ActionHandlerRegistry:
                     "Atomic re-registration conflict: "
                     f"new handler.payload_model={new_handler_payload_model!r} "
                     f"!= new metadata.input_model={metadata.input_model!r} "
-                    f"for action={action!r}",
+                    f"for action={action!r}"
                 )
             existing_handler = self._handlers.get(action)
             if (
@@ -207,7 +207,7 @@ class ActionHandlerRegistry:
                     "Atomic re-registration conflict: "
                     f"existing handler.payload_model={existing_handler.payload_model!r} "
                     f"!= metadata.input_model={metadata.input_model!r} "
-                    f"for action={action!r}",
+                    f"for action={action!r}"
                 )
             existing_metadata = self._metadata.get(action)
             if (
@@ -219,7 +219,7 @@ class ActionHandlerRegistry:
                     "Atomic re-registration conflict: "
                     f"existing metadata.input_model={existing_metadata.input_model!r} "
                     f"!= new metadata.input_model={metadata.input_model!r} "
-                    f"for action={action!r}",
+                    f"for action={action!r}"
                 )
 
         if isinstance(handler, ActionHandlerSpec):
@@ -232,7 +232,7 @@ class ActionHandlerRegistry:
             # сценариев — не пытаемся синтезировать сервис «на лету».
             raise TypeError(
                 "handler must be ActionHandlerSpec or None; "
-                f"got {type(handler).__name__}",
+                f"got {type(handler).__name__}"
             )
 
         self._metadata[action] = metadata

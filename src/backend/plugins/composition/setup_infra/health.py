@@ -129,7 +129,7 @@ async def _register_health_checks() -> None:
         port = queue_settings.port
         try:
             _reader, writer = await asyncio.wait_for(
-                asyncio.open_connection(host, port), timeout=2.0,
+                asyncio.open_connection(host, port), timeout=2.0
             )
             writer.close()
             await writer.wait_closed()
@@ -148,7 +148,7 @@ async def _register_health_checks() -> None:
         start = time.monotonic()
         try:
             _reader, writer = await asyncio.wait_for(
-                asyncio.open_connection("localhost", 4222), timeout=2.0,
+                asyncio.open_connection("localhost", 4222), timeout=2.0
             )
             writer.close()
             await writer.wait_closed()
@@ -177,14 +177,11 @@ async def _register_health_checks() -> None:
 
     app_logger.info(
         "Health checks registered: redis, database, s3, clickhouse, kafka, nats, "
-        "+ sink/source per-kind checks",
+        "+ sink/source per-kind checks"
     )
 
 
-def _make_kind_health(
-    kind_value: str,
-    registry_attr: str,
-) -> Callable[..., Any]:
+def _make_kind_health(kind_value: str, registry_attr: str) -> Callable[..., Any]:
     """Создать health-check для одного SinkKind/SourceKind.
 
     Args:
@@ -208,9 +205,7 @@ def _make_kind_health(
                 instances = [s for s in reg.all() if s.kind.value == kind_value]
             else:
                 reg = get_source_registry()
-                instances = [
-                    s for s in reg.all() if s.kind.value == kind_value
-                ]
+                instances = [s for s in reg.all() if s.kind.value == kind_value]
 
             if not instances:
                 return {
@@ -236,11 +231,7 @@ def _make_kind_health(
                 status = "ok"
                 error = None
 
-            return {
-                "status": status,
-                "latency_ms": latency_ms,
-                "error": error,
-            }
+            return {"status": status, "latency_ms": latency_ms, "error": error}
         except Exception as exc:
             return {
                 "status": "error",

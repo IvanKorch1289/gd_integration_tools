@@ -137,7 +137,7 @@ class LoggerManager:
             "[%(environment)s@%(hostname)s] User:%(user_id)s Action:%(action)s"
         )
         self.formatter = self.SafeFormatter(
-            fmt=log_format, required_fields=self.log_config.required_fields,
+            fmt=log_format, required_fields=self.log_config.required_fields
         )
 
     def _setup_handlers(self) -> None:
@@ -147,7 +147,7 @@ class LoggerManager:
             gl_handler = self.graylog.connect()
             if gl_handler:
                 gl_handler.addFilter(
-                    self.ContextFilter(self.environment, self.hostname),
+                    self.ContextFilter(self.environment, self.hostname)
                 )
                 self.handlers.append(gl_handler)
 
@@ -187,7 +187,7 @@ class LoggerManager:
     def _setup_queue_listener(self) -> None:
         """Инициализирует асинхронную обработку логов."""
         self.queue_listener = QueueListener(
-            self.log_queue, *self.handlers, respect_handler_level=True,
+            self.log_queue, *self.handlers, respect_handler_level=True
         )
         self.queue_listener.start()
 

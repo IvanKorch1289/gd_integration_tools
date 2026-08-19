@@ -99,11 +99,11 @@ class DbCallProcedureProcessor(BaseProcessor):
             raise ValueError("db_call_procedure: name must be non-empty")
         if params_from not in _ALLOWED_PARAM_SOURCES:
             raise ValueError(
-                f"db_call_procedure: params_from must be one of {sorted(_ALLOWED_PARAM_SOURCES)}",
+                f"db_call_procedure: params_from must be one of {sorted(_ALLOWED_PARAM_SOURCES)}"
             )
         if dialect not in {"postgres", "mssql", "oracle"}:
             raise ValueError(
-                "db_call_procedure: dialect must be 'postgres'|'mssql'|'oracle'",
+                "db_call_procedure: dialect must be 'postgres'|'mssql'|'oracle'"
             )
         self._profile = profile
         self._sp_name = name
@@ -153,9 +153,9 @@ class DbCallProcedureProcessor(BaseProcessor):
             # cycle-9/D-AUDIT-1721: narrow exceptions + observability (mirror
             # D-AUDIT-1706..1720).
             import logging
+
             logging.getLogger(__name__).debug(
-                "db_call_procedure.feature_flag_fallback",
-                extra={"error": str(ff_exc)},
+                "db_call_procedure.feature_flag_fallback", extra={"error": str(ff_exc)}
             )
 
         from sqlalchemy import text
@@ -180,7 +180,8 @@ class DbCallProcedureProcessor(BaseProcessor):
                 logger.debug(
                     "DBCallProcedure: result mappings conversion failed "
                     "(exc_type=%s exc_msg=%s) — payload=None",
-                    type(exc).__name__, exc,
+                    type(exc).__name__,
+                    exc,
                 )
                 payload = None
             await session.commit()

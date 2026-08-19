@@ -21,7 +21,7 @@ class QuotasService:
         """Бросает ``NotImplementedError`` — реальный backend не готов."""
         raise NotImplementedError(
             "QuotasService not yet implemented; use NoOpBillingFacade via "
-            "src.backend.core.di.providers.billing.get_quotas_backend_provider().",
+            "src.backend.core.di.providers.billing.get_quotas_backend_provider()."
         )
 
     async def consume_request(self, tenant_id: str):  # pragma: no cover

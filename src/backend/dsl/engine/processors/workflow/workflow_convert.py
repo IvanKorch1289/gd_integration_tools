@@ -5,6 +5,7 @@
 
 Pattern (Ponytail, D168): thin wrapper, no abstractions.
 """
+
 from __future__ import annotations
 
 import json
@@ -69,7 +70,7 @@ class WorkflowConvertProcessor(BaseProcessor):
             raise ValueError(
                 f"WorkflowConvertProcessor: unsupported format "
                 f"({from_format!r}→{to_format!r}). "
-                f"Supported: {self.SUPPORTED}",
+                f"Supported: {self.SUPPORTED}"
             )
         super().__init__(name=name or f"convert:{from_format}_to_{to_format}")
         self.from_format = from_format
@@ -77,9 +78,7 @@ class WorkflowConvertProcessor(BaseProcessor):
         self.source_property = source_property
         self.target = to
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Конвертирует данные между форматами (JSON/YAML/string/dict).
 
         Источник берётся из ``source_property`` (dotted path, e.g. ``body.data``
@@ -112,6 +111,7 @@ class WorkflowConvertProcessor(BaseProcessor):
                     intermediate = data  # assume already dict
             elif self.from_format == "yaml":
                 import yaml  # PyYAML (already in deps)
+
                 intermediate = yaml.safe_load(data) if isinstance(data, str) else data
             elif self.from_format == "string":
                 intermediate = json.loads(data) if data else {}
@@ -123,6 +123,7 @@ class WorkflowConvertProcessor(BaseProcessor):
                 return json.dumps(intermediate, ensure_ascii=False)
             if self.to_format == "yaml":
                 import yaml
+
                 return yaml.safe_dump(intermediate, allow_unicode=True)
             if self.to_format == "string":
                 return json.dumps(intermediate)
@@ -130,10 +131,12 @@ class WorkflowConvertProcessor(BaseProcessor):
 
         # Conversion is sync; run in thread for large payloads
         import asyncio
+
         converted = await asyncio.to_thread(_convert)
         _logger.info(
             "workflow_convert %s→%s keys=%s",
-            self.from_format, self.to_format,
+            self.from_format,
+            self.to_format,
             len(converted) if isinstance(converted, (str, list, dict)) else "?",
         )
         self.set_result(exchange, self.target, converted)

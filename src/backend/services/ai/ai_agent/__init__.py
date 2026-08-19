@@ -49,7 +49,7 @@ __all__ = ("AIAgentService", "get_ai_agent_service")
 
 
 class AIAgentService(
-    HttpProvidersMixin, WebMethodsMixin, AgentOrchestrationMixin, RagMixin, PolicyMixin,
+    HttpProvidersMixin, WebMethodsMixin, AgentOrchestrationMixin, RagMixin, PolicyMixin
 ):
     """AI Agent Service (5 mixins = 16 methods + 3 core)."""
 
@@ -139,7 +139,7 @@ def get_ai_agent_service() -> AIAgentService:
             instance = getattr(app.state, "ai_agent_service", None)
             if instance is not None:
                 return instance
-    except (ImportError, AttributeError):  # noqa: violation-check — DI-lookup narrow failure modes
+    except ImportError, AttributeError:  # noqa: violation-check — DI-lookup narrow failure modes
         # cycle-5/D-AUDIT-501 fix: narrowed from broad `except Exception: pass`
         # to concrete DI-lookup failure modes; bare Exception was silent
         # fail-OPEN (per critic cycle-5).
@@ -150,6 +150,4 @@ def get_ai_agent_service() -> AIAgentService:
     except Exception as exc:
         from src.backend.core.ai.errors import AIGatewayProductionWiringError
 
-        raise AIGatewayProductionWiringError(
-            missing=("ai_agent_service",),
-        ) from exc
+        raise AIGatewayProductionWiringError(missing=("ai_agent_service",)) from exc

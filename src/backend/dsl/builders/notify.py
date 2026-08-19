@@ -55,7 +55,7 @@ class NotifyMixin:
                 locale=locale,
                 context_property=context_property,
                 result_property=result_property,
-            ),
+            )
         )
 
     def notify_apprise(
@@ -95,7 +95,7 @@ class NotifyMixin:
                 body=body,
                 body_format=body_format,
                 result_property=result_property,
-            ),
+            )
         )
 
     def notify_multi(
@@ -130,12 +130,12 @@ class NotifyMixin:
 
             svc = get_notification_service()
             results = await svc.notify_multi(
-                channels=channels, title=title, body=body, body_format=body_format,
+                channels=channels, title=title, body=body, body_format=body_format
             )
             exch.set_property(result_property, results)
 
         return self._add(  # type: ignore[attr-defined]
-            CallableProcessor(_send_multi, name=f"notify_multi:{','.join(channels)}"),
+            CallableProcessor(_send_multi, name=f"notify_multi:{','.join(channels)}")
         )
 
     def shell(
@@ -233,8 +233,8 @@ class NotifyMixin:
         )
         builder._add(  # type: ignore[attr-defined]
             EmailTriggerProcessor(
-                subject_pattern=subject_filter, from_filter=from_filter,
-            ),
+                subject_pattern=subject_filter, from_filter=from_filter
+            )
         )
         return builder  # type: ignore[return-value]
 
@@ -299,7 +299,7 @@ class NotifyMixin:
                 timeout=timeout,
                 result_property=result_property,
                 continue_on_error=continue_on_error,
-            ),
+            )
         )
 
     def notify_cascade(

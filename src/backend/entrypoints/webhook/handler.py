@@ -41,7 +41,7 @@ def _require_auth_dep():
 
 
 async def _check_rate_limit(
-    identifier: str, *, limit: int = 100, window: int = 60,
+    identifier: str, *, limit: int = 100, window: int = 60
 ) -> None:
     """Применяет rate limit через RedisRateLimiter."""
     try:
@@ -59,7 +59,7 @@ async def _check_rate_limit(
         await limiter.check(
             identifier=f"webhook:{identifier}",
             policy=RateLimit(
-                limit=limit, window_seconds=window, key_prefix="webhook_rl",
+                limit=limit, window_seconds=window, key_prefix="webhook_rl"
             ),
         )
     except RateLimitExceeded as exc:
@@ -83,7 +83,7 @@ class CreateSubscriptionRequest(BaseModel):
 
 @webhook_router.post("/subscriptions", summary="Создать подписку (auth required)")
 async def create_subscription(
-    body: CreateSubscriptionRequest, auth: Any = Depends(_require_auth_dep),
+    body: CreateSubscriptionRequest, auth: Any = Depends(_require_auth_dep)
 ) -> dict[str, Any]:
     """Создаёт webhook-подписку. Требует authentication."""
     # SSRF protection — валидация target_url
@@ -95,7 +95,7 @@ async def create_subscription(
         raise HTTPException(status_code=400, detail=f"Invalid target_url: {exc}")
 
     sub = WebhookSubscription(
-        event_type=body.event_type, target_url=body.target_url, secret=body.secret,
+        event_type=body.event_type, target_url=body.target_url, secret=body.secret
     )
     created = webhook_registry.add(sub)
     return {
@@ -106,10 +106,10 @@ async def create_subscription(
 
 
 @webhook_router.delete(
-    "/subscriptions/{sub_id}", summary="Удалить подписку (auth required)",
+    "/subscriptions/{sub_id}", summary="Удалить подписку (auth required)"
 )
 async def delete_subscription(
-    sub_id: str, auth: Any = Depends(_require_auth_dep),
+    sub_id: str, auth: Any = Depends(_require_auth_dep)
 ) -> dict[str, str]:
     """Удаляет webhook-подписку. Требует authentication."""
     try:
@@ -195,7 +195,7 @@ async def receive_webhook(event_type: str, request: Request) -> dict[str, Any]:
     )
     if bridge.error_code == "action_not_found":
         raise HTTPException(
-            status_code=404, detail=f"Маршрут 'webhook.{event_type}' не найден",
+            status_code=404, detail=f"Маршрут 'webhook.{event_type}' не найден"
         )
     status_value = "success" if bridge.success else "error"
     return {"status": status_value, "error": bridge.error}
@@ -205,7 +205,7 @@ async def receive_webhook(event_type: str, request: Request) -> dict[str, Any]:
 
 
 async def send_webhook_event(
-    event_type: str, payload: dict[str, Any],
+    event_type: str, payload: dict[str, Any]
 ) -> list[dict[str, Any]]:
     """Отправляет событие на все подписанные URL.
 
@@ -241,7 +241,7 @@ async def send_webhook_event(
 
         try:
             async with OutboundHttpClient(
-                http2=True, timeout=httpx.Timeout(10.0),
+                http2=True, timeout=httpx.Timeout(10.0)
             ) as session:
                 resp = await session.post(sub.target_url, json=payload, headers=headers)
                 results.append(
@@ -249,11 +249,11 @@ async def send_webhook_event(
                         "subscription_id": sub.id,
                         "status": resp.status_code,
                         "success": 200 <= resp.status_code < 300,
-                    },
+                    }
                 )
         except Exception as exc:
             logger.exception(
-                "Webhook outbound failed: sub=%s, url=%s", sub.id, sub.target_url,
+                "Webhook outbound failed: sub=%s, url=%s", sub.id, sub.target_url
             )
             results.append(
                 {
@@ -261,7 +261,7 @@ async def send_webhook_event(
                     "status": None,
                     "success": False,
                     "error": str(exc),
-                },
+                }
             )
 
     return results

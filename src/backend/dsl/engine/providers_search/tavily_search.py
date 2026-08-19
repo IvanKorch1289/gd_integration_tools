@@ -8,6 +8,7 @@ Per Tavily API docs:
 
 Ponytail (D250, D251): thin wrapper над capability-checked facade.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -56,12 +57,10 @@ class TavilySearchProcessor(BaseProcessor):
         if search_depth not in self.VALID_DEPTHS:
             raise ValueError(
                 f"search_depth должен быть одним из {self.VALID_DEPTHS}, "
-                f"получено {search_depth!r}",
+                f"получено {search_depth!r}"
             )
         if not 1 <= max_results <= 20:
-            raise ValueError(
-                f"max_results должен быть 1-20, получено {max_results}",
-            )
+            raise ValueError(f"max_results должен быть 1-20, получено {max_results}")
         super().__init__(name=name or "tavily_search")
         self.query = query
         self.search_depth = search_depth
@@ -70,9 +69,7 @@ class TavilySearchProcessor(BaseProcessor):
         self.include_raw_content = include_raw_content
         self.target = to
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет web-поиск через Tavily API и пишет результаты в target."""
         if not await self.auth_check(exchange, action="invoke"):
             return
@@ -99,7 +96,8 @@ class TavilySearchProcessor(BaseProcessor):
         )
         _logger.info(
             "tavily.search query=%s depth=%s results=%d",
-            resolved_query, self.search_depth,
+            resolved_query,
+            self.search_depth,
             len(response.get("results", [])),
         )
         self.set_result(exchange, self.target, response)

@@ -30,7 +30,7 @@ import logging
 from typing import TYPE_CHECKING, Any, Awaitable, Callable
 
 from extensions.osint_agent.functions.osint_workflow import run_osint
-from src.backend.core.interfaces.plugin import BasePlugin
+from src.backend.core.api import BasePlugin
 
 if TYPE_CHECKING:
     from src.backend.core.interfaces.plugin import (

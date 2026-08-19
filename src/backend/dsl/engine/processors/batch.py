@@ -15,7 +15,7 @@ from src.backend.dsl.engine.processors.base import BaseProcessor, handle_process
 
 #: Разрешённые символы в имени таблицы (schema.table или table).
 _TABLE_NAME_RE: re.Pattern[str] = re.compile(
-    r"^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)?$",
+    r"^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)?$"
 )
 
 #: Разрешённые символы в SQL-идентификаторе (колонка, alias и т.д.).
@@ -114,7 +114,7 @@ class BatchInsertProcessor(BaseProcessor):
                 "table": self._table,
                 "items": self._items,
                 "profile": self._profile,
-            },
+            }
         }
 
 
@@ -228,7 +228,7 @@ class BatchUpdateProcessor(BaseProcessor):
                 "items": self._items,
                 "key_field": self._key_field,
                 "profile": self._profile,
-            },
+            }
         }
 
 
@@ -292,5 +292,5 @@ class BatchDeleteProcessor(BaseProcessor):
                 "ids": self._ids,
                 "key_field": self._key_field,
                 "profile": self._profile,
-            },
+            }
         }

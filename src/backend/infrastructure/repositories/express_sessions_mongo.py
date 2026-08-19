@@ -62,7 +62,7 @@ class MongoExpressSessionStore:
             logger.warning("MongoExpressSessionStore: ensure_indexes failed: %s", exc)
 
     async def create(
-        self, bot_id: str, *, initial_context: dict[str, Any] | None = None,
+        self, bot_id: str, *, initial_context: dict[str, Any] | None = None
     ) -> str:
         """Метод create (см. signature)."""
         session_id = uuid4().hex
@@ -87,7 +87,7 @@ class MongoExpressSessionStore:
         return _doc_to_session(doc) if doc else None
 
     async def update_context(
-        self, session_id: str, context_delta: dict[str, Any],
+        self, session_id: str, context_delta: dict[str, Any]
     ) -> None:
         """Метод update_context (см. signature)."""
         if not context_delta:
@@ -95,7 +95,7 @@ class MongoExpressSessionStore:
         update = {f"context.{k}": v for k, v in context_delta.items()}
         update["last_activity_at"] = _utc_now()
         await self._client().update_one(
-            _COLLECTION, query={"_id": session_id}, update=update, upsert=True,
+            _COLLECTION, query={"_id": session_id}, update=update, upsert=True
         )
 
     async def ping(self, session_id: str) -> None:

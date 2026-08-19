@@ -71,7 +71,7 @@ class RLMFeedbackProcessor:
         return self._langmem
 
     async def on_feedback_received(
-        self, *, doc_id: str, label: Literal["good", "bad", "unclear"],
+        self, *, doc_id: str, label: Literal["good", "bad", "unclear"]
     ) -> RLMSignal:
         """Обновляет ``rlm_boost``/``rlm_penalty`` для ``doc_id``.
 
@@ -158,7 +158,7 @@ async def _fetch_payload(client: Any, collection: str, doc_id: str) -> dict[str,
 
 
 async def _set_payload(
-    client: Any, collection: str, doc_id: str, payload: dict[str, Any],
+    client: Any, collection: str, doc_id: str, payload: dict[str, Any]
 ) -> None:
     set_payload = getattr(client, "set_payload", None)
     if set_payload is None:
@@ -204,7 +204,7 @@ class RLMConsolidator:
             scroll_page = await self.qdrant.scroll(
                 collection="langmem_semantic",
                 scroll_filter={
-                    "must": [{"key": "rlm_penalty", "range": {"gt": penalty_threshold}}],
+                    "must": [{"key": "rlm_penalty", "range": {"gt": penalty_threshold}}]
                 },
                 limit=batch_size,
                 offset=offset_token,

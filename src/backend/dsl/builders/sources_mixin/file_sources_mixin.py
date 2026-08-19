@@ -91,7 +91,7 @@ class FileSourcesMixin:
         )
         source_label = ";".join(str(p) for p in normalized)
         builder: RouteBuilder = cls(
-            route_id=route_id, source=f"filewatcher:{source_label}",
+            route_id=route_id, source=f"filewatcher:{source_label}"
         )
         object.__setattr__(builder, "_source_instance", source_instance)
         return builder

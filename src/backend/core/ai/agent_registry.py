@@ -146,10 +146,10 @@ class AgentRegistry:
                     retry_policy = RetryPolicy(
                         max_attempts=int(raw.get("retry_max_attempts", 3)),
                         initial_interval_s=float(
-                            raw.get("retry_initial_interval_s", 1.0),
+                            raw.get("retry_initial_interval_s", 1.0)
                         ),
                         backoff_coefficient=float(
-                            raw.get("retry_backoff_coefficient", 2.0),
+                            raw.get("retry_backoff_coefficient", 2.0)
                         ),
                     )
 
@@ -172,7 +172,7 @@ class AgentRegistry:
                 )
             except KeyError as exc:
                 raise ValueError(
-                    f"from_toml_manifest: agent[{idx}] missing required field: {exc}",
+                    f"from_toml_manifest: agent[{idx}] missing required field: {exc}"
                 ) from exc
 
             self._agents[spec.id] = spec

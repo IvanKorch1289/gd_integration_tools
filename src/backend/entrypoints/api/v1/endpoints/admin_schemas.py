@@ -31,7 +31,7 @@ __all__ = ("router",)
 
 # S202 audit fix: require admin role
 _ADMIN_GUARD_READ = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN)),
+    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN))
 )
 
 router = APIRouter(dependencies=[_ADMIN_GUARD_READ])
@@ -86,7 +86,7 @@ async def list_schemas_summary() -> dict:
 async def list_schemas_by_kind(
     kind: str,
     format: Annotated[
-        FormatLiteral, Query(description="Формат экспорта"),
+        FormatLiteral, Query(description="Формат экспорта")
     ] = "jsonschema",
 ) -> dict:
     """Возвращает все схемы указанного kind в выбранном формате."""
@@ -113,7 +113,7 @@ async def get_schema(
     kind: str,
     name: str,
     format: Annotated[
-        FormatLiteral, Query(description="Формат экспорта"),
+        FormatLiteral, Query(description="Формат экспорта")
     ] = "jsonschema",
 ) -> dict:
     """Возвращает одну запись каталога в выбранном формате."""

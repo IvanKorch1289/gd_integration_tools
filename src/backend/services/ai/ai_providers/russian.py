@@ -74,7 +74,7 @@ class _BaseRussianProvider:
             if choices:
                 msg = choices[0].get("message", {})
                 return msg.get("content", "") or ""
-        except AttributeError, IndexError, TypeError:  # noqa: F401 — narrow API-shape fallback
+        except (AttributeError, IndexError, TypeError):  # noqa: F401 — narrow API-shape fallback
             pass
         return ""
 

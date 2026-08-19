@@ -3,6 +3,7 @@
 Thin wrapper над :class:`src.backend.services.ai.hybrid_rag.HybridRAGSearch.search`.
 Ponytail: facade-isolated, BM25+vector+reranker hybrid.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -14,6 +15,7 @@ if TYPE_CHECKING:
     from src.backend.dsl.engine.exchange import Exchange
 
 __all__ = ("RAGSearchProcessor",)
+
 
 class RAGSearchProcessor(BaseProcessor):
     """DSL-процессор ``rag_search``.
@@ -50,8 +52,9 @@ class RAGSearchProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         from src.backend.services.ai.hybrid_rag import HybridRAGSearch
+
         search = HybridRAGSearch()
         docs = await search.search(
-            self.query, top_k=self.top_k, namespace=self.namespace,
+            self.query, top_k=self.top_k, namespace=self.namespace
         )
         self.set_result(exchange, self.target, docs)

@@ -65,7 +65,7 @@ class RotationScheduler:
                 current = self._fetch_version(name)
             except Exception as exc:
                 _logger.warning(
-                    "rotation.fetch_version_failed name=%s err=%s", name, exc,
+                    "rotation.fetch_version_failed name=%s err=%s", name, exc
                 )
                 continue
 
@@ -94,7 +94,7 @@ class RotationScheduler:
         return rotated
 
     async def start(
-        self, *, task_factory: Callable[..., asyncio.Task[None]] | None = None,
+        self, *, task_factory: Callable[..., asyncio.Task[None]] | None = None
     ) -> None:
         """Запустить фоновый цикл (TaskRegistry-aware)."""
         if self._task is not None and not self._task.done():
@@ -114,7 +114,7 @@ class RotationScheduler:
             from src.backend.core.utils.task_registry import get_task_registry
 
             self._task = get_task_registry().create_task(
-                _loop(), name="secret-rotation", deadline_seconds=None,
+                _loop(), name="secret-rotation", deadline_seconds=None
             )
         else:
             self._task = task_factory(_loop(), name="secret-rotation")
@@ -127,7 +127,7 @@ class RotationScheduler:
             task.cancel()
             try:
                 await task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError, Exception:
                 pass
 
     def add_watch(self, name: str, *, current_version: int | None = None) -> None:

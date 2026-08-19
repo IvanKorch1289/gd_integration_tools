@@ -37,12 +37,12 @@ def webhook_relay(
 
     """
     builder = RouteBuilder.from_(
-        route_id, source=source, description=description or f"Relay: {route_id}",
+        route_id, source=source, description=description or f"Relay: {route_id}"
     )
 
     if with_dead_letter:
         builder = builder.dead_letter(
-            processors=[DispatchActionProcessor(action="notify.send")],
+            processors=[DispatchActionProcessor(action="notify.send")]
         )
 
     builder = (

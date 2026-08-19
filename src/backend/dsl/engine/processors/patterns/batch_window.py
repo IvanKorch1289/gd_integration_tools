@@ -39,7 +39,7 @@ class BatchWindowProcessor(BaseProcessor):
     ) -> None:
         super().__init__(
             name=name
-            or f"batch_window({window_seconds}s, {max_size}, group_by={group_by})",
+            or f"batch_window({window_seconds}s, {max_size}, group_by={group_by})"
         )
         self._window = window_seconds
         self._max_size = max_size

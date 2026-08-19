@@ -3,6 +3,7 @@
 File system watcher через ``watchdog``.
 Async wrapper: запускает Observer в thread, ждёт timeout.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -73,9 +74,7 @@ class FileWatchProcessor(BaseProcessor):
         self.timeout = timeout
         self.target = to
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="read"):
             return
@@ -84,9 +83,7 @@ class FileWatchProcessor(BaseProcessor):
             from watchdog.events import FileSystemEventHandler
             from watchdog.observers import Observer
         except ImportError as exc:
-            raise RuntimeError(
-                "watchdog required: uv add watchdog",
-            ) from exc
+            raise RuntimeError("watchdog required: uv add watchdog") from exc
 
         collector = _ChangeCollector(self.pattern)
 
@@ -114,8 +111,8 @@ class FileWatchProcessor(BaseProcessor):
 
         _rpa_logger.info(
             "file_watch dir=%s pattern=%s changes=%d",
-            self.directory, self.pattern, len(collector.changes),
+            self.directory,
+            self.pattern,
+            len(collector.changes),
         )
         self.set_result(exchange, self.target, collector.changes)
-
-

@@ -75,7 +75,7 @@ class DesktopRpaProcessor(BaseProcessor):
         if action not in _VALID_ACTIONS:
             raise ValueError(
                 f"desktop_rpa: action должен быть одним из {sorted(_VALID_ACTIONS)}, "
-                f"получено {action!r}",
+                f"получено {action!r}"
             )
         self._app = app
         self._action = action
@@ -97,7 +97,7 @@ class DesktopRpaProcessor(BaseProcessor):
         if client is None:
             exchange.fail(
                 "desktop_rpa: DesktopRpaClient не зарегистрирован "
-                "(проверь lifespan / DI services/rpa/desktop_rpa_client.py)",
+                "(проверь lifespan / DI services/rpa/desktop_rpa_client.py)"
             )
             return
 

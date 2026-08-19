@@ -67,7 +67,7 @@ class MessagingSourcesMixin:
 
     @classmethod
     def from_rabbit(
-        cls, route_id: str, queue: str, url: str, **kwargs: Any,
+        cls, route_id: str, queue: str, url: str, **kwargs: Any
     ) -> RouteBuilder:
         """Создаёт маршрут с источником RabbitMQ.
 
@@ -113,7 +113,7 @@ class MessagingSourcesMixin:
 
     @classmethod
     def from_mqtt(
-        cls, route_id: str, topic: str, broker_url: str, **kwargs: Any,
+        cls, route_id: str, topic: str, broker_url: str, **kwargs: Any
     ) -> RouteBuilder:
         """Создаёт маршрут с источником MQTT.
 

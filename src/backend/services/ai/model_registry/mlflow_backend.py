@@ -50,10 +50,10 @@ class MlflowModelRegistry(ModelRegistryAdapter):
         except ImportError as exc:
             raise RuntimeError(
                 "mlflow не установлен; добавьте extra ai-model-registry "
-                "(uv sync --extra ai-model-registry)",
+                "(uv sync --extra ai-model-registry)"
             ) from exc
         self._client = MlflowClient(
-            tracking_uri=self._tracking_uri, registry_uri=self._registry_uri,
+            tracking_uri=self._tracking_uri, registry_uri=self._registry_uri
         )
         return self._client
 
@@ -79,7 +79,7 @@ class MlflowModelRegistry(ModelRegistryAdapter):
         client = self._ensure_client()
         loop = asyncio.get_running_loop()
         models = await loop.run_in_executor(
-            None, lambda: client.search_registered_models(),
+            None, lambda: client.search_registered_models()
         )
         records: list[ModelRecord] = []
         for m in models:
@@ -89,7 +89,7 @@ class MlflowModelRegistry(ModelRegistryAdapter):
         return records
 
     async def get_model(
-        self, name: str, *, version: str | None = None, stage: str | None = None,
+        self, name: str, *, version: str | None = None, stage: str | None = None
     ) -> ModelRecord | None:
         """Получить model по ``name`` (+ optional version/stage)."""
         client = self._ensure_client()
@@ -97,14 +97,14 @@ class MlflowModelRegistry(ModelRegistryAdapter):
 
         if version is not None:
             mv = await loop.run_in_executor(
-                None, lambda: client.get_model_version(name, version),
+                None, lambda: client.get_model_version(name, version)
             )
             return self._mlflow_to_record(mv) if mv is not None else None
 
         # latest-by-stage (default "Production").
         stage_filter = stage or "Production"
         versions = await loop.run_in_executor(
-            None, lambda: client.get_latest_versions(name, stages=[stage_filter]),
+            None, lambda: client.get_latest_versions(name, stages=[stage_filter])
         )
         return self._mlflow_to_record(versions[0]) if versions else None
 
@@ -116,7 +116,7 @@ class MlflowModelRegistry(ModelRegistryAdapter):
         # Ensure registered name exists.
         try:
             await loop.run_in_executor(
-                None, lambda: client.create_registered_model(record.name),
+                None, lambda: client.create_registered_model(record.name)
             )
         except (ConnectionError, TimeoutError, RuntimeError) as _mlflow_exc:
             # D-A1-04 fix (cycle 30): narrow exceptions + debug logging.
@@ -131,7 +131,7 @@ class MlflowModelRegistry(ModelRegistryAdapter):
         mv = await loop.run_in_executor(
             None,
             lambda: client.create_model_version(
-                name=record.name, source=artifact_uri, description=record.description,
+                name=record.name, source=artifact_uri, description=record.description
             ),
         )
         # Применяем tags пакетно.
@@ -141,14 +141,14 @@ class MlflowModelRegistry(ModelRegistryAdapter):
                 cast(
                     "Callable[[], Any]",
                     lambda key=k, val=v, mv_=mv: client.set_model_version_tag(
-                        record.name, mv_.version, key, val,
+                        record.name, mv_.version, key, val
                     ),
                 ),
             )
         return self._mlflow_to_record(mv)
 
     async def transition_stage(
-        self, name: str, version: str, new_stage: str,
+        self, name: str, version: str, new_stage: str
     ) -> ModelRecord:
         """Перевести model в новый stage (Staging/Production/Archived)."""
         client = self._ensure_client()
@@ -156,7 +156,7 @@ class MlflowModelRegistry(ModelRegistryAdapter):
         mv = await loop.run_in_executor(
             None,
             lambda: client.transition_model_version_stage(
-                name=name, version=version, stage=new_stage,
+                name=name, version=version, stage=new_stage
             ),
         )
         return self._mlflow_to_record(mv)

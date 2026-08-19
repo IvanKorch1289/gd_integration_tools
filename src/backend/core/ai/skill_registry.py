@@ -104,7 +104,7 @@ class SkillSpec(BaseModel):
     capabilities: list[str] = Field(default_factory=list)
     policy_ref: str | None = None
     protocols: list[Literal["mcp", "langgraph", "openai_tools", "all"]] = Field(
-        default_factory=lambda: ["all"],
+        default_factory=lambda: ["all"]
     )
     timeout_s: float = Field(default=30.0, ge=0.1)
     tenant_aware: bool = False
@@ -186,7 +186,7 @@ class SkillRegistry:
                 )
             except KeyError as exc:
                 raise ValueError(
-                    f"from_toml_manifest: skill[{idx}] missing required field: {exc}",
+                    f"from_toml_manifest: skill[{idx}] missing required field: {exc}"
                 ) from exc
 
             self._skills[spec.id] = spec
@@ -214,7 +214,7 @@ class SkillRegistry:
 
     @staticmethod
     def _validate_module_whitelist(
-        module_name: str, whitelist: Iterable[str], skill_id: str,
+        module_name: str, whitelist: Iterable[str], skill_id: str
     ) -> None:
         """S2 fix (V21 + K-ARCH-5): validate module against whitelist.
 
@@ -292,7 +292,7 @@ class SkillRegistry:
         if ":" not in skill.handler:
             raise ValueError(
                 f"SkillRegistry.invoke: handler must be 'module:fn', "
-                f"got {skill.handler!r}",
+                f"got {skill.handler!r}"
             )
         module_name, fn_name = skill.handler.rsplit(":", 1)
 
@@ -312,7 +312,7 @@ class SkillRegistry:
                 from src.backend.core.config.features import feature_flags
 
                 strict = bool(
-                    getattr(feature_flags, "call_function_whitelist_strict", True),
+                    getattr(feature_flags, "call_function_whitelist_strict", True)
                 )
             except (ImportError, AttributeError, RuntimeError) as ff_exc:
                 # cycle-9/D-AUDIT-988: narrow exceptions + observability.
@@ -320,20 +320,20 @@ class SkillRegistry:
                 # config not initialized, RuntimeError — feature_flags
                 # unavailable.
                 import logging
+
                 logging.getLogger(__name__).debug(
-                    "skill_registry.feature_flag_fallback",
-                    extra={"error": str(ff_exc)},
+                    "skill_registry.feature_flag_fallback", extra={"error": str(ff_exc)}
                 )
                 strict = True  # fail-closed
             if strict:
                 raise PermissionError(
                     f"SkillRegistry.invoke: whitelist required for skill_id="
                     f"{skill_id!r} in strict mode (call_function_whitelist_strict=True). "
-                    f"Pass whitelist parameter or disable strict flag for legacy compat.",
+                    f"Pass whitelist parameter or disable strict flag for legacy compat."
                 )
         else:
             self._validate_module_whitelist(
-                module_name=module_name, whitelist=whitelist, skill_id=skill_id,
+                module_name=module_name, whitelist=whitelist, skill_id=skill_id
             )
 
         # Capability check — best-effort if CapabilityGate.check is available.
@@ -346,7 +346,7 @@ class SkillRegistry:
             import src.backend.core.plugin_runtime.sandbox as sandbox_module
 
             _capability_check = getattr(
-                sandbox_module, "_global_capability_check", None,
+                sandbox_module, "_global_capability_check", None
             )
         except ImportError:  # noqa: violation-check — sandbox module optional
             pass  # sandbox module not available — skip check
@@ -358,7 +358,7 @@ class SkillRegistry:
                 except Exception as exc:
                     raise PermissionError(
                         f"SkillRegistry.invoke: capability denied: {cap!r} "
-                        f"(skill={skill_id!r}): {exc}",
+                        f"(skill={skill_id!r}): {exc}"
                     ) from exc
 
         # Import and call handler
@@ -367,14 +367,14 @@ class SkillRegistry:
         except ImportError as exc:
             raise ImportError(
                 f"SkillRegistry.invoke: cannot import module {module_name!r} "
-                f"(handler={skill.handler!r}): {exc}",
+                f"(handler={skill.handler!r}): {exc}"
             ) from exc
 
         fn = getattr(module, fn_name, None)
         if fn is None:
             raise AttributeError(
                 f"SkillRegistry.invoke: {module_name!r} has no attribute {fn_name!r} "
-                f"(handler={skill.handler!r})",
+                f"(handler={skill.handler!r})"
             )
 
         # Call — sync or async handler
@@ -440,7 +440,7 @@ class SkillRegistry:
             sibling = repo_root / "extensions"
             if sibling.exists():
                 return sibling.resolve()
-        except (OSError, ValueError):  # noqa: violation-check — filesystem walk failure → return None
+        except OSError, ValueError:  # noqa: violation-check — filesystem walk failure → return None
             pass
 
         return None
@@ -478,15 +478,24 @@ class SkillRegistry:
                         with open(schema_path) as f:
                             input_schema = json.load(f)
                         tool_def["inputSchema"] = input_schema
-                except (OSError, ValueError, UnicodeDecodeError, AttributeError) as schema_exc:
+                except (
+                    OSError,
+                    ValueError,
+                    UnicodeDecodeError,
+                    AttributeError,
+                ) as schema_exc:
                     # cycle-9/D-AUDIT-996: narrow exceptions + observability.
                     # OSError — schema read failure, ValueError/JSONDecodeError
                     # — invalid JSON, UnicodeDecodeError — bad encoding,
                     # AttributeError — schema_path API change.
                     import logging
+
                     logging.getLogger(__name__).debug(
                         "skill_registry.schema_load_failed",
-                        extra={"skill_id": tool_def.get("name"), "error": str(schema_exc)},
+                        extra={
+                            "skill_id": tool_def.get("name"),
+                            "error": str(schema_exc),
+                        },
                     )
 
             tools.append(tool_def)
@@ -573,6 +582,7 @@ class SkillRegistry:
                     # schema, KeyError — missing required key, AttributeError
                     # — schema API change.
                     import logging
+
                     logging.getLogger(__name__).debug(
                         "skill_registry.input_model_build_failed",
                         extra={"error": str(schema_exc)},
@@ -619,10 +629,16 @@ class SkillRegistry:
                         with open(schema_path) as f:
                             input_schema = json.load(f)
                         tool_def["function"]["parameters"] = input_schema
-                except (OSError, ValueError, UnicodeDecodeError, AttributeError) as schema_exc:
+                except (
+                    OSError,
+                    ValueError,
+                    UnicodeDecodeError,
+                    AttributeError,
+                ) as schema_exc:
                     # cycle-9/D-AUDIT-998: narrow exceptions + observability
                     # (mirror D-AUDIT-996 для openai_tools path).
                     import logging
+
                     logging.getLogger(__name__).debug(
                         "skill_registry.openai_schema_load_failed",
                         extra={"skill_id": skill.id, "error": str(schema_exc)},

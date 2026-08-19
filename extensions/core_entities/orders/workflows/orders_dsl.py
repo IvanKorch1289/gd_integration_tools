@@ -28,7 +28,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.backend.core.ai.retry_policy import RetryPolicy
+from src.backend.core.api import RetryPolicy
 from src.backend.core.config.constants import consts
 from src.backend.core.config.settings import settings
 from src.backend.dsl.workflow.builder import WorkflowBuilder

@@ -10,6 +10,7 @@
 Pattern (D259, Ponytail): thin wrapper над prometheus_client.
 Production: /metrics endpoint exposes cert_* metrics.
 """
+
 from __future__ import annotations
 
 import time
@@ -47,7 +48,7 @@ class CertPrometheusExporter:
             )
         except ImportError as exc:
             raise ImportError(
-                "prometheus_client не установлен. pip install prometheus-client",
+                "prometheus_client не установлен. pip install prometheus-client"
             ) from exc
 
         # Изолированный registry — не загрязняет global
@@ -103,7 +104,7 @@ class CertPrometheusExporter:
                 continue
             if exp.tzinfo is None:
                 exp = exp.replace(tzinfo=UTC)
-            seconds_remaining = (exp.timestamp() - now.timestamp())
+            seconds_remaining = exp.timestamp() - now.timestamp()
             days_remaining = seconds_remaining / 86400
             sid = getattr(entry, "service_id", "unknown")
             if days_remaining <= 0:
@@ -113,7 +114,9 @@ class CertPrometheusExporter:
         self.cert_expired_total.inc(expired_count)
         logger.info(
             "cert.prometheus.update days=%d expired=%d total=%d",
-            days, expired_count, len(entries),
+            days,
+            expired_count,
+            len(entries),
         )
 
     def record_rotation(self, *, success: bool) -> None:

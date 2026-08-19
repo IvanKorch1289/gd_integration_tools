@@ -47,7 +47,7 @@ logger = get_logger(__name__)
 
 
 async def _ws_heartbeat_loop(
-    websocket: WebSocket, *, client_id: str, interval_s: float,
+    websocket: WebSocket, *, client_id: str, interval_s: float
 ) -> None:
     """S163 W16: периодический ping для keepalive WS connection.
 
@@ -65,7 +65,7 @@ async def _ws_heartbeat_loop(
                 await websocket.send_json({"action": "ping"})
             except Exception as exc:  # connection closed
                 logger.debug(
-                    "WS heartbeat stopped client_id=%s reason=%s", client_id, exc,
+                    "WS heartbeat stopped client_id=%s reason=%s", client_id, exc
                 )
                 return
     except asyncio.CancelledError:
@@ -111,9 +111,9 @@ async def _authenticate_handshake(websocket: WebSocket) -> bool:
         # AttributeError — websocket missing headers, TypeError — wrong
         # header type, ValueError — invalid header value.
         import logging
+
         logging.getLogger(__name__).debug(
-            "ws_handler.subprotocol_failed",
-            extra={"error": str(ws_exc)},
+            "ws_handler.subprotocol_failed", extra={"error": str(ws_exc)}
         )
         subprotocol = None
     try:
@@ -121,9 +121,9 @@ async def _authenticate_handshake(websocket: WebSocket) -> bool:
     except (AttributeError, TypeError, ValueError) as cookie_exc:
         # cycle-9/D-AUDIT-993: см. выше — тот же narrow для cookies.
         import logging
+
         logging.getLogger(__name__).debug(
-            "ws_handler.cookies_failed",
-            extra={"error": str(cookie_exc)},
+            "ws_handler.cookies_failed", extra={"error": str(cookie_exc)}
         )
         cookies = None
     try:
@@ -131,9 +131,9 @@ async def _authenticate_handshake(websocket: WebSocket) -> bool:
     except (AttributeError, TypeError, ValueError) as qp_exc:
         # cycle-9/D-AUDIT-993: см. выше — тот же narrow для query_params.
         import logging
+
         logging.getLogger(__name__).debug(
-            "ws_handler.query_token_failed",
-            extra={"error": str(qp_exc)},
+            "ws_handler.query_token_failed", extra={"error": str(qp_exc)}
         )
         query_token = None
 
@@ -244,7 +244,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
         current = ws_manager.action_count(bound_action)
         if current >= pool_limit:
             await websocket.close(
-                code=1008, reason=f"route pool full ({pool_limit} concurrent)",
+                code=1008, reason=f"route pool full ({pool_limit} concurrent)"
             )
             logger.warning(
                 "WS rejected: route pool full action_id=%s limit=%d",
@@ -279,7 +279,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
 
             try:
                 data = await asyncio.wait_for(
-                    websocket.receive_json(), timeout=ws_settings.message_timeout_s,
+                    websocket.receive_json(), timeout=ws_settings.message_timeout_s
                 )
             except TimeoutError:
                 logger.warning(
@@ -322,13 +322,10 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                 ws_session = getattr(websocket.state, "ws_session", None)
                 ws_principal = ""
                 ws_permissions: tuple[str, ...] = ()
-                if ws_session is not None and isinstance(
-                    ws_session, WSSession
-                ):
+                if ws_session is not None and isinstance(ws_session, WSSession):
                     ws_principal = ws_session.principal or ws_session.client_id
                     ws_permissions = tuple(
-                        f"group:{group}"
-                        for group in sorted(ws_session.allowed_groups)
+                        f"group:{group}" for group in sorted(ws_session.allowed_groups)
                     )
 
                 bridge = await dispatch_action_or_dsl(
@@ -358,7 +355,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             except Exception as exc:
                 logger.exception("WS ошибка обработки action=%s: %s", action, exc)
                 await ws_manager.send_json(
-                    client_id, {"action": action, "result": None, "error": str(exc)},
+                    client_id, {"action": action, "result": None, "error": str(exc)}
                 )
 
     except WebSocketDisconnect:

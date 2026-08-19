@@ -42,7 +42,7 @@ class CapabilityRef(BaseModel):
         if not _CAPABILITY_NAME_RE.match(value):
             raise ValueError(
                 f"Invalid capability name {value!r}: expected "
-                f"'<resource>.<verb>' matching {CAPABILITY_NAME_PATTERN}",
+                f"'<resource>.<verb>' matching {CAPABILITY_NAME_PATTERN}"
             )
         return value
 

@@ -25,7 +25,7 @@ class SecurityChecksMixin:
     # --- security_checks methods ---
 
     def _check_waf_strict_prod(
-        self, app: AppBaseSettings, waf: WafSettings,
+        self, app: AppBaseSettings, waf: WafSettings
     ) -> list[ConfigViolation]:
         """B-2: в production обязателен ``WAF_STRICT=true``."""
         if not self._is_prod(app):
@@ -46,11 +46,11 @@ class SecurityChecksMixin:
                     "Установить WAF_STRICT=true и явный WAF_ALLOW_HOSTS=<список>."
                 ),
                 context={"strict": waf.strict, "environment": app.environment},
-            ),
+            )
         ]
 
     def _check_waf_strict_allow_empty(
-        self, app: AppBaseSettings, waf: WafSettings,
+        self, app: AppBaseSettings, waf: WafSettings
     ) -> list[ConfigViolation]:
         """В production ``strict=True`` без allow_hosts блокирует ВСЕ исходящие.
 
@@ -75,11 +75,11 @@ class SecurityChecksMixin:
                     "(host1.example.com,host2.example.com,...)."
                 ),
                 context={"strict": waf.strict, "allow_hosts": list(waf.allow_hosts)},
-            ),
+            )
         ]
 
     def _check_clamav_fail_open_in_prod(
-        self, app: AppBaseSettings, waf: WafSettings,
+        self, app: AppBaseSettings, waf: WafSettings
     ) -> list[ConfigViolation]:
         """Sprint 16 Wave 7 (B-3 finale): ClamAV enabled+fail_open в prod = WARNING.
 
@@ -107,11 +107,11 @@ class SecurityChecksMixin:
                 field="waf.clamav_fail_open",
                 recommendation="WAF_CLAMAV_FAIL_OPEN=false для production-strict.",
                 context={"clamav_enabled": True, "clamav_fail_open": True},
-            ),
+            )
         ]
 
     def _check_vault_disabled_in_prod(
-        self, app: AppBaseSettings, vault: VaultSettings,
+        self, app: AppBaseSettings, vault: VaultSettings
     ) -> list[ConfigViolation]:
         """В production отключение Vault приводит к чтению секретов из env."""
         if not self._is_prod(app):
@@ -131,11 +131,11 @@ class SecurityChecksMixin:
                     "VAULT_ENABLED=true и настроить VAULT_ADDR/VAULT_TOKEN."
                 ),
                 context={"vault_enabled": vault.enabled},
-            ),
+            )
         ]
 
     def _check_cors_credentials_with_wildcard(
-        self, secure: SecureSettings,
+        self, secure: SecureSettings
     ) -> list[ConfigViolation]:
         """CORS ``allow_credentials=true`` с wildcard origin запрещён по RFC.
 
@@ -166,11 +166,11 @@ class SecurityChecksMixin:
                     "cors_origins": list(secure.cors_origins),
                     "cors_allow_credentials": secure.cors_allow_credentials,
                 },
-            ),
+            )
         ]
 
     def _check_jwt_secret_too_short(
-        self, app: AppBaseSettings, secure: SecureSettings,
+        self, app: AppBaseSettings, secure: SecureSettings
     ) -> list[ConfigViolation]:
         """D14: ``secret_key`` короче ``JWT_SECRET_MIN_LENGTH`` символов.
 
@@ -214,5 +214,5 @@ class SecurityChecksMixin:
                     "minimum": JWT_SECRET_MIN_LENGTH,
                     "fields_offended": [name for name, _ in offenders],
                 },
-            ),
+            )
         ]

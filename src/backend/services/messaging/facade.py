@@ -90,10 +90,10 @@ class MessagingFacade:
         if adapter is None:
             raise ValueError(
                 f"No adapter registered for channel '{channel}'. "
-                f"Available: {list(self._adapters.keys())}",
+                f"Available: {list(self._adapters.keys())}"
             )
         message = NotificationMessage(
-            recipient=recipient, subject=subject, body=body, metadata=metadata or {},
+            recipient=recipient, subject=subject, body=body, metadata=metadata or {}
         )
         try:
             return await adapter.send(message)
@@ -107,12 +107,12 @@ class MessagingFacade:
             raise ServiceError(f"messaging send failed: {exc}") from exc
 
     async def send_email(
-        self, to: str, subject: str, body: str, *, html: bool = False,
+        self, to: str, subject: str, body: str, *, html: bool = False
     ) -> str:
         """Convenience method for email notifications."""
         metadata = {"html": html} if html else {}
         return await self.send(
-            "email", to, subject=subject, body=body, metadata=metadata,
+            "email", to, subject=subject, body=body, metadata=metadata
         )
 
     async def send_telegram(self, chat_id: str, text: str) -> str:
@@ -130,11 +130,18 @@ class MessagingFacade:
             return False
         try:
             return await adapter.is_available()
-        except (ImportError, RuntimeError, OSError, ConnectionError, AttributeError) as ch_exc:
+        except (
+            ImportError,
+            RuntimeError,
+            OSError,
+            ConnectionError,
+            AttributeError,
+        ) as ch_exc:
             # cycle-9/D-AUDIT-908: narrow exceptions + observability.
             # Bare `except Exception` маскировал unrelated runtime errors
             # (KeyError, TypeError, ValueError) — ложные 'channel down'.
             import logging
+
             logging.getLogger(__name__).debug(
                 "messaging_facade.channel_unavailable",
                 extra={

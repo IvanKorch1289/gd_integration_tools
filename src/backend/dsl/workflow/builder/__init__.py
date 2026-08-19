@@ -173,7 +173,7 @@ class SagaBuilder:
                 timeout_s=timeout_s,
                 retry_policy=retry_policy,
                 output_key=output_key,
-            ),
+            )
         )
         return self
 
@@ -192,7 +192,7 @@ class SagaBuilder:
                 args=args or {},
                 timeout_s=timeout_s,
                 retry_policy=retry_policy,
-            ),
+            )
         )
         return self
 
@@ -203,6 +203,6 @@ class SagaBuilder:
         :class:`SagaDeclaration` (минимум 1 forward-шаг обязателен).
         """
         self._parent._steps.append(
-            SagaDeclaration(forward=self._forward, compensate=self._compensate),
+            SagaDeclaration(forward=self._forward, compensate=self._compensate)
         )
         return self._parent

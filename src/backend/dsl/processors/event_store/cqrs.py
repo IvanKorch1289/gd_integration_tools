@@ -76,7 +76,7 @@ class CommandBus:
         if command_type in self._handlers:
             raise ValueError(
                 f"command {command_type!r} already registered "
-                f"(handlers: {list(self._handlers.keys())})",
+                f"(handlers: {list(self._handlers.keys())})"
             )
         self._handlers[command_type] = handler
 
@@ -86,7 +86,7 @@ class CommandBus:
         if handler is None:
             raise KeyError(
                 f"no handler for command {command_type!r} "
-                f"(registered: {list(self._handlers.keys())})",
+                f"(registered: {list(self._handlers.keys())})"
             )
         events = await handler(payload)
         for ev in events:
@@ -109,7 +109,7 @@ class QueryBus:
         if query_type in self._handlers:
             raise ValueError(
                 f"query {query_type!r} already registered "
-                f"(handlers: {list(self._handlers.keys())})",
+                f"(handlers: {list(self._handlers.keys())})"
             )
         self._handlers[query_type] = handler
 
@@ -119,7 +119,7 @@ class QueryBus:
         if handler is None:
             raise KeyError(
                 f"no handler for query {query_type!r} "
-                f"(registered: {list(self._handlers.keys())})",
+                f"(registered: {list(self._handlers.keys())})"
             )
         return await handler(params)
 
@@ -155,5 +155,5 @@ class CQRSMixin:
                 event_store=event_store,
                 aggregate_id_field=aggregate_id_field,
                 events_field=events_field,
-            ),
+            )
         )

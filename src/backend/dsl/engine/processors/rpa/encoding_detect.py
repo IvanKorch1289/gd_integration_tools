@@ -3,6 +3,7 @@
 Encoding detection по BOM + UTF-8 validation (Ponytail YAGNI: stdlib only).
 Pattern (D277): thin wrapper.
 """
+
 from __future__ import annotations
 
 __all__ = ("EncodingDetectProcessor",)

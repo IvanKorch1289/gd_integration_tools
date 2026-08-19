@@ -115,7 +115,7 @@ class TemporalClientFactory:
             # Recycle или fresh connect
             client = await self._build_client(namespace)
             self._cache[namespace] = _ClientCacheEntry(
-                client=client, created_at=now, last_used_at=now,
+                client=client, created_at=now, last_used_at=now
             )
             return client
 
@@ -154,7 +154,7 @@ class TemporalClientFactory:
             _logger.warning(
                 "temporal.otel.interceptor.unavailable",
                 extra={
-                    "hint": "pip install 'temporalio[opentelemetry]' для OTel-трейсов Temporal",
+                    "hint": "pip install 'temporalio[opentelemetry]' для OTel-трейсов Temporal"
                 },
             )
 
@@ -207,7 +207,7 @@ class TemporalClientFactory:
             }
         except (RuntimeError, OSError, AttributeError, KeyError) as exc:
             _logger.warning(
-                "Vault PKI cert issue failed (%s); fallback to file backend", exc,
+                "Vault PKI cert issue failed (%s); fallback to file backend", exc
             )
             return self._tls
 
@@ -246,7 +246,7 @@ class TemporalWorkerPool:
         self._lock = asyncio.Lock()
 
     async def register_worker(
-        self, *, task_queue: str, workflows: list[Any], activities: list[Any],
+        self, *, task_queue: str, workflows: list[Any], activities: list[Any]
     ) -> None:
         """Создать и запустить worker для конкретного task_queue."""
         from temporalio.worker import Worker
@@ -280,9 +280,10 @@ class TemporalWorkerPool:
             from src.backend.infrastructure.workflow.versioning.worker_versioning import (
                 WorkerVersioningHelper,
             )
+
             versioning_helper = WorkerVersioningHelper(
                 deployment_name=getattr(
-                    self._factory, "deployment_name", "gd-integration-tools",
+                    self._factory, "deployment_name", "gd-integration-tools"
                 ),
                 build_id=getattr(self._factory, "build_id", "0.0.0"),
                 use_versioning=getattr(self._factory, "use_versioning", False),
@@ -301,7 +302,7 @@ class TemporalWorkerPool:
             from src.backend.core.utils.task_registry import get_task_registry
 
             self._tasks[task_queue] = get_task_registry().create_task(
-                worker.run(), name=f"temporal-worker-{task_queue}",
+                worker.run(), name=f"temporal-worker-{task_queue}"
             )
 
     async def shutdown(self) -> None:
@@ -310,9 +311,9 @@ class TemporalWorkerPool:
             for tq, worker in list(self._workers.items()):
                 try:
                     await worker.shutdown()
-                except (RuntimeError, OSError, AttributeError):
+                except RuntimeError, OSError, AttributeError:
                     _logger.exception(
-                        "temporal.worker.shutdown_failed", extra={"task_queue": tq},
+                        "temporal.worker.shutdown_failed", extra={"task_queue": tq}
                     )
             self._workers.clear()
             for task in self._tasks.values():
@@ -387,7 +388,7 @@ class ActivityHeartbeatMonitor:
         from src.backend.core.utils.task_registry import get_task_registry
 
         self._task = get_task_registry().create_task(
-            self._run(), name="temporal-heartbeat-monitor",
+            self._run(), name="temporal-heartbeat-monitor"
         )
 
     async def stop(self) -> None:

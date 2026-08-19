@@ -213,7 +213,7 @@ async def handle_soap_request(request: Request) -> Response:
     except BaseError as exc:
         xml = _build_soap_fault(exc.soap_fault_code, exc.message)
         return Response(
-            content=xml, media_type=content_type, status_code=exc.status_code,
+            content=xml, media_type=content_type, status_code=exc.status_code
         )
     except Exception as exc:
         logger.exception("SOAP ошибка: %s", exc)
@@ -247,20 +247,20 @@ async def get_wsdl() -> Response:
             f"      <xsd:complexType><xsd:sequence>"
             f'        <xsd:element name="result" type="xsd:string" minOccurs="0"/>'
             f"      </xsd:sequence></xsd:complexType>"
-            f"    </xsd:element>",
+            f"    </xsd:element>"
         )
         port_operations.append(
             f'    <wsdl:operation name="{safe_name}">'
             f'      <wsdl:input message="tns:{safe_name}Request"/>'
             f'      <wsdl:output message="tns:{safe_name}Response"/>'
-            f"    </wsdl:operation>",
+            f"    </wsdl:operation>"
         )
         binding_operations.append(
             f'    <wsdl:operation name="{safe_name}">'
             f'      <soap:operation soapAction="{action}"/>'
             f'      <wsdl:input><soap:body use="literal"/></wsdl:input>'
             f'      <wsdl:output><soap:body use="literal"/></wsdl:output>'
-            f"    </wsdl:operation>",
+            f"    </wsdl:operation>"
         )
 
     messages = []
@@ -272,7 +272,7 @@ async def get_wsdl() -> Response:
             f"  </wsdl:message>"
             f'  <wsdl:message name="{safe_name}Response">'
             f'    <wsdl:part name="parameters" element="tns:{safe_name}Response"/>'
-            f"  </wsdl:message>",
+            f"  </wsdl:message>"
         )
 
     wsdl = (
@@ -391,7 +391,7 @@ def _build_invoke_response_envelope(
     if result is not None:
         try:
             result_json = orjson.dumps(result, default=str).decode()
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             result_json = str(result)
         parts.append(f"<result>{_xml_escape(result_json)}</result>")
     if error:
@@ -418,7 +418,7 @@ def _build_invoke_response_envelope(
     dependencies=[Depends(require_auth([AuthMethod.API_KEY, AuthMethod.JWT]))],
 )
 async def soap_invoke(
-    request: Request, invoker: Invoker = Depends(get_invoker_dep),
+    request: Request, invoker: Invoker = Depends(get_invoker_dep)
 ) -> Response:
     """Единая SOAP-точка входа для всех :class:`InvocationMode` через Invoker."""
     content_type = "text/xml; charset=utf-8"

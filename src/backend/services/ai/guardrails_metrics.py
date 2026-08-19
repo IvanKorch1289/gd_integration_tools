@@ -162,7 +162,7 @@ class GuardrailsMetricsService:
         """
         async with self._lock:
             metrics = self._by_tenant.setdefault(
-                tenant_id, GuardrailMetrics(tenant_id=tenant_id),
+                tenant_id, GuardrailMetrics(tenant_id=tenant_id)
             )
             metrics.total += 1
             if verdict == GuardrailVerdict.ALLOW:
@@ -187,7 +187,7 @@ class GuardrailsMetricsService:
                         "model_used": model_used,
                         "cost_usd": cost_usd,
                         "latency_ms": latency_ms,
-                    },
+                    }
                 )
             except Exception as exc:
                 logger.debug("GuardrailsMetrics CH write failed: %s", exc)
@@ -202,7 +202,7 @@ class GuardrailsMetricsService:
         """
         async with self._lock:
             metrics = self._by_tenant.setdefault(
-                tenant_id, GuardrailMetrics(tenant_id=tenant_id),
+                tenant_id, GuardrailMetrics(tenant_id=tenant_id)
             )
             metrics.false_positives += count
 

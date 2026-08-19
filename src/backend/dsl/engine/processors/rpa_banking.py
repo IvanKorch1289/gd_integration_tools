@@ -140,7 +140,7 @@ class AppiumMobileProcessor(BaseProcessor):
                 "platform": self.platform,
                 "app_package": self.app_package,
                 "operation": self.operation,
-            },
+            }
         }
 
 

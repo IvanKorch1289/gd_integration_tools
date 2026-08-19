@@ -51,7 +51,7 @@ def _require_tenant_id() -> str:
 
     Источник — ``X-Tenant-ID`` header, который
     :class:`RequestContextMiddleware` кладёт в ``RequestContext.tenant_id``,
-    либо ContextVar :func:`current_tenant` (fallback). При отсутствии — 
+    либо ContextVar :func:`current_tenant` (fallback). При отсутствии —
     ``HTTPException(403)``, чтобы не сделать silent fallback в "no tenant"
     (multi-tenant data breach, cycle-8/D-AUDIT-807).
 
@@ -66,8 +66,7 @@ def _require_tenant_id() -> str:
     if tenant_ctx is not None and tenant_ctx.tenant_id:
         return tenant_ctx.tenant_id
     raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail="Tenant context required",
+        status_code=status.HTTP_403_FORBIDDEN, detail="Tenant context required"
     )
 
 
@@ -75,7 +74,7 @@ class _AgentMemoryFacade:
     """Адаптер над ``AgentMemoryService`` для action-маршрутов."""
 
     async def list_messages(
-        self, *, session_id: str, last_n: int = 20,
+        self, *, session_id: str, last_n: int = 20
     ) -> MessagesResponse:
         """Получить список messages текущего tenant."""
         items = await get_agent_memory_service().get_conversation(
@@ -84,7 +83,7 @@ class _AgentMemoryFacade:
         return MessagesResponse(items=items)
 
     async def add_message(
-        self, *, session_id: str, role: str, content: str, metadata: Any = None,
+        self, *, session_id: str, role: str, content: str, metadata: Any = None
     ) -> dict[str, str]:
         """Добавить message в сессию текущего tenant."""
         await get_agent_memory_service().add_message(
@@ -111,7 +110,7 @@ class _AgentMemoryFacade:
         return ScratchpadResponse(session_id=session_id, content=content)
 
     async def set_scratchpad(
-        self, *, session_id: str, content: str = "",
+        self, *, session_id: str, content: str = ""
     ) -> ScratchpadResponse:
         """Установить scratchpad текущего tenant."""
         await get_agent_memory_service().set_scratchpad(
@@ -279,5 +278,5 @@ builder.add_actions(
             path_model=FactKeyPath,
             tags=common_tags,
         ),
-    ],
+    ]
 )

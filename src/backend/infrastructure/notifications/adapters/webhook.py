@@ -44,7 +44,7 @@ class WebhookAdapter:
         self._signature_header = signature_header
 
     async def send(
-        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any],
+        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any]
     ) -> None:
         """Отправить POST на `recipient` (URL).
 
@@ -66,7 +66,7 @@ class WebhookAdapter:
             secret = self._secret_provider()
             body_bytes = _json_encode(payload)
             signature = hmac.new(
-                secret.encode("utf-8"), body_bytes, hashlib.sha256,
+                secret.encode("utf-8"), body_bytes, hashlib.sha256
             ).hexdigest()
             headers[self._signature_header] = f"sha256={signature}"
 
@@ -75,11 +75,11 @@ class WebhookAdapter:
 
         client = upstream(self._upstream_name)
         response = await client.request(
-            "POST", recipient, json=payload, headers=headers,
+            "POST", recipient, json=payload, headers=headers
         )
         if response.status_code >= 400:
             raise RuntimeError(
-                f"webhook POST failed: {response.status_code} {response.text[:200]}",
+                f"webhook POST failed: {response.status_code} {response.text[:200]}"
             )
 
     async def health(self, mode: str = "fast") -> HealthResult:
@@ -98,7 +98,7 @@ class WebhookAdapter:
         except Exception as exc:
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
             )
 
 
@@ -144,8 +144,8 @@ def _json_encode(payload: dict[str, Any]) -> bytes:
 
 
 # Явный Protocol check (опционально).
-assert isinstance(
-    WebhookAdapter(), NotificationChannel,
+assert isinstance(  # nosec
+    WebhookAdapter(), NotificationChannel
 )  # Protocol-conformance check на import
 
 

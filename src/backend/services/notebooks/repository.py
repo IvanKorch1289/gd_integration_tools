@@ -69,7 +69,7 @@ class NotebookRepository(Protocol):
         ...
 
     async def restore_version(
-        self, notebook_id: str, version: int, changed_by: str,
+        self, notebook_id: str, version: int, changed_by: str
     ) -> Notebook | None:
         """Restore notebook to a specific version.
 
@@ -192,14 +192,14 @@ class InMemoryNotebookRepository:
                     content=content,
                     changed_by=changed_by,
                     summary=summary,
-                ),
+                )
             )
             doc.latest_version = new_version
             doc.updated_at = _utc_now()
             return doc.model_copy(deep=True)
 
     async def restore_version(
-        self, notebook_id: str, version: int, changed_by: str,
+        self, notebook_id: str, version: int, changed_by: str
     ) -> Notebook | None:
         """Восстановить notebook к ``version`` (audit ``changed_by``)."""
         async with self._lock:
@@ -216,7 +216,7 @@ class InMemoryNotebookRepository:
                     content=target.content,
                     changed_by=changed_by,
                     summary=f"restore from v{version}",
-                ),
+                )
             )
             doc.latest_version = new_version
             doc.updated_at = _utc_now()

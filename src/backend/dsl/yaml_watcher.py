@@ -110,7 +110,7 @@ class DSLYamlWatcher:
 
         self._stop_event = asyncio.Event()
         self._task = get_task_registry().create_task(
-            self._consume_loop(), name="dsl-yaml-watcher",
+            self._consume_loop(), name="dsl-yaml-watcher"
         )
         logger.info(
             "DSLYamlWatcher started: dir=%s, debounce=%dms, initial_routes=%d",
@@ -182,7 +182,7 @@ class DSLYamlWatcher:
                 cache[path] = pipeline
             except Exception as exc:
                 logger.error(
-                    "DSLYamlWatcher: initial load failed for %s: %s", path, exc,
+                    "DSLYamlWatcher: initial load failed for %s: %s", path, exc
                 )
         self._yaml_route_ids = loaded
         self._file_hashes = hashes
@@ -258,9 +258,7 @@ class DSLYamlWatcher:
             self._pipeline_cache = old_cache
             logger.error("DSLYamlWatcher incremental reload failed: %s", exc)
 
-    def _collect_and_apply(
-        self,
-    ) -> tuple[dict[Path, str], dict[Path, str]]:
+    def _collect_and_apply(self) -> tuple[dict[Path, str], dict[Path, str]]:
         """Полный rescan + atomic apply.
 
         - грузит все валидные YAML-файлы;

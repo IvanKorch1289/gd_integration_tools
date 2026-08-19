@@ -41,5 +41,5 @@ class SagaLRAMixin:
 
         """
         return self._add(  # type: ignore[attr-defined]
-            SagaLRAProcessor(steps=steps, workflow_id=workflow_id, run_id=run_id),
+            SagaLRAProcessor(steps=steps, workflow_id=workflow_id, run_id=run_id)
         )

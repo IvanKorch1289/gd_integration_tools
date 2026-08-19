@@ -69,7 +69,7 @@ class WorkflowOpsMixin:
                 invocation_id_property=invocation_id_property,
                 reply_timeout_seconds=reply_timeout_seconds,
                 version=version,
-            ),
+            )
         )
 
     def cancel_workflow(
@@ -101,7 +101,7 @@ class WorkflowOpsMixin:
                 reason=reason,
                 namespace=namespace,
                 result_property=result_property,
-            ),
+            )
         )
 
     def audit(
@@ -135,7 +135,7 @@ class WorkflowOpsMixin:
                 tenant_id_from=tenant_id_from,
                 correlation_id_from=correlation_id_from,
                 result_property=result_property,
-            ),
+            )
         )
 
     def sub_workflow(
@@ -211,7 +211,7 @@ class WorkflowOpsMixin:
                 result_property=result_property,
                 parent_workflow_id_property=parent_workflow_id_property,
                 parent_correlation_id_property=parent_correlation_id_property,
-            ),
+            )
         )
 
     def cron_schedule(
@@ -277,5 +277,5 @@ class WorkflowOpsMixin:
                 task_queue=task_queue,
                 result_property=result_property,
                 timezone=timezone,
-            ),
+            )
         )

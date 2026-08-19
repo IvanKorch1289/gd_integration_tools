@@ -125,11 +125,11 @@ class HvacVaultClient:
             import hvac  # type: ignore[import-not-found]
         except ImportError as exc:
             raise SsoRegistryVaultError(
-                "hvac not installed; установите 'hvac' для production Vault",
+                "hvac not installed; установите 'hvac' для production Vault"
             ) from exc
         if not (self._url and self._token):
             raise SsoRegistryVaultError(
-                "VAULT_ADDR и VAULT_TOKEN обязательны для HvacVaultClient",
+                "VAULT_ADDR и VAULT_TOKEN обязательны для HvacVaultClient"
             )
         self._client = hvac.Client(url=self._url, token=self._token)
         return self._client
@@ -141,7 +141,7 @@ class HvacVaultClient:
             resp = client.secrets.kv.v2.read_secret_version(path=path)
         except Exception as exc:
             raise SsoRegistryVaultError(
-                f"Vault read failed for {path!r}: {exc}",
+                f"Vault read failed for {path!r}: {exc}"
             ) from exc
         # KV v2 формат: {"data": {"data": {...}, "metadata": {...}}}.
         return resp.get("data", {}).get("data", {}) or {}
@@ -223,7 +223,7 @@ class SsoRegistry:
             return _parse_idp_config(raw)
         except (ValidationError, KeyError) as exc:
             raise SsoRegistrySchemaError(
-                f"Invalid IdP config schema at {path!r}: {exc}",
+                f"Invalid IdP config schema at {path!r}: {exc}"
             ) from exc
 
     async def get(self, tenant: str) -> IdpConfig | None:

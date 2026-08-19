@@ -66,7 +66,7 @@ class RPACallExhausted(RuntimeError):
         self.last_error = last_error
         super().__init__(
             f"RPA call '{transport}' exhausted: "
-            f"{type(last_error).__name__}: {last_error}",
+            f"{type(last_error).__name__}: {last_error}"
         )
 
 
@@ -158,7 +158,9 @@ class RPACallPolicy:
         """Exponential backoff с jitter (attempt — 0-indexed)."""
         base = min(self.backoff_initial * (2**attempt), self.backoff_max)
         if self.jitter > 0:
-            base *= 1 + random.uniform(-self.jitter, self.jitter)  # non-cryptographic use
+            base *= 1 + random.uniform(
+                -self.jitter, self.jitter
+            )  # non-cryptographic use
         return max(0.0, base)
 
     async def call(
@@ -201,11 +203,11 @@ class RPACallPolicy:
                 transport,
             )
             raise RPACallExhausted(
-                transport, last_error=RuntimeError("circuit breaker open"),
+                transport, last_error=RuntimeError("circuit breaker open")
             )
 
         ctx = RPACallContext(
-            transport=transport, tenant_id=tenant_id, route_id=route_id, payload=payload,
+            transport=transport, tenant_id=tenant_id, route_id=route_id, payload=payload
         )
         _ = time.monotonic()
 
@@ -254,7 +256,7 @@ class RPACallPolicy:
 
         # unreachable (всегда return или raise внутри loop), но mypy doesn't know
         raise RPACallExhausted(
-            transport, ctx.last_error or RuntimeError("RPACallPolicy unreachable"),
+            transport, ctx.last_error or RuntimeError("RPACallPolicy unreachable")
         )
 
     async def _send_to_dlq(self, ctx: RPACallContext, reason: DLQReason) -> None:

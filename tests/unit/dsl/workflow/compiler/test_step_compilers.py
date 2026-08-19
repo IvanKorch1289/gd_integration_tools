@@ -280,7 +280,11 @@ async def test_sensor_step_returns_truthy_first_iteration(
     monkeypatch.setitem(sys.modules, "temporalio.workflow", fake_wf)
     monkeypatch.setitem(sys.modules, "temporalio.common", _make_fake_common())
 
-    decl = SensorDeclaration(predicate="src.x:check", poll_interval_s=10.0)
+    decl = SensorDeclaration(
+        predicate="src.x:check",
+        poll_interval_s=10.0,
+        timeout_s=30.0,  # P0-NEW-3 (cycle 242): D-A8-10 required
+    )
     ctx = {"_default_timeout_s": 30.0}
     result = await compile_sensor_step(decl, ctx)
     assert result is True

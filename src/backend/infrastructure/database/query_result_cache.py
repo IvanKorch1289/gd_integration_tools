@@ -226,10 +226,10 @@ class QueryResultCache:
                 params,
                 option=orjson.OPT_SORT_KEYS | orjson.OPT_NON_STR_KEYS,
                 default=str,
-            ),
+            )
         ).hexdigest()[:16]
         digest = hashlib.sha256(
-            f"{profile}:{normalized}:{param_hash}".encode(),
+            f"{profile}:{normalized}:{param_hash}".encode()
         ).hexdigest()[:32]
         return f"{self._prefix}:{profile}:{digest}"
 
@@ -320,7 +320,7 @@ class QueryResultCache:
             await self._backend.delete(*keys)
         await self._backend.delete(idx_key)
         logger.info(
-            "qrc_invalidate_table", profile=profile, table=table, count=len(keys),
+            "qrc_invalidate_table", profile=profile, table=table, count=len(keys)
         )
         return len(keys)
 
@@ -352,6 +352,7 @@ class QueryResultCache:
                 # ValueError для malformed JSON, TypeError для wrong
                 # data type, pickle.UnpicklingError для corrupted cache.
                 import logging
+
                 logging.getLogger(__name__).debug(
                     "query_result_cache.index_load_failed",
                     extra={"error": str(decode_exc), "key": idx_key},
@@ -359,6 +360,4 @@ class QueryResultCache:
                 keys = []
             if key not in keys:
                 keys.append(key)
-                await self._backend.set(
-                    idx_key, dumps_bytes(keys), ttl=None,
-                )
+                await self._backend.set(idx_key, dumps_bytes(keys), ttl=None)

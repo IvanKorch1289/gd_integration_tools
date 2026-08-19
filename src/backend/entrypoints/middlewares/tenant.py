@@ -111,9 +111,7 @@ def _get_header(scope: Scope, name: bytes) -> str | None:
     return None
 
 
-def _make_send_wrapper(
-    send: Send, scope: Scope, default_tenant: str,
-) -> Send:
+def _make_send_wrapper(send: Send, scope: Scope, default_tenant: str) -> Send:
     """Создаёт обёртку вокруг ``send``, добавляющую X-Tenant-ID в start.
 
     Header добавляется только в ``http.response.start`` сообщение.
@@ -128,6 +126,7 @@ def _make_send_wrapper(
     structlog propagation — здесь это безопасно (после __call__ —
     не блокирует request path, только logging payload).
     """
+
     async def send_wrapper(message: Message) -> None:
         if message["type"] == "http.response.start":
             tenant_id = TenantMiddleware._resolve_tenant_id(scope, default_tenant)
@@ -146,12 +145,19 @@ def _make_send_wrapper(
             # значит все middlewares отработали).
             try:
                 get_correlation_context_setter_provider()(tenant_id=tenant_id)
-            except (ImportError, AttributeError, RuntimeError, TypeError, ValueError) as corr_exc:
+            except (
+                ImportError,
+                AttributeError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as corr_exc:
                 # cycle-9/D-AUDIT-1001: narrow exceptions + observability.
                 # ImportError — provider missing, AttributeError — API
                 # change, RuntimeError — DI unavailable, TypeError —
                 # wrong tenant_id, ValueError — invalid tenant_id.
                 import logging
+
                 logging.getLogger(__name__).debug(
                     "tenant_middleware.correlation_setter_failed",
                     extra={"tenant_id": tenant_id, "error": str(corr_exc)},

@@ -11,8 +11,9 @@ Backward-compat re-export остаётся в src/backend/core/domain/models/fil
 from sqlalchemy import UUID, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.backend.core.domain.models.base import Base, BaseModel
-from src.backend.core.tenancy.sqlalchemy_filter import TenantMixin
+from src.backend.core.domain.models.base import Base
+from src.backend.core.api import BaseModel
+from src.backend.core.api import TenantMixin
 
 __all__ = ("File", "OrderFile")
 

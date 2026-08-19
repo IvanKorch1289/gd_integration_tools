@@ -38,7 +38,6 @@ from src.backend.dsl.workflow.spec import (
 __all__ = ("CompiledWorkflow", "compile_workflow", "compile_workflows")
 
 
-
 @dataclass(frozen=True, slots=True)
 class CompiledWorkflow:
     """Скомпилированный workflow.
@@ -95,7 +94,7 @@ def compile_workflow(decl: WorkflowDeclaration) -> CompiledWorkflow:
         from temporalio import workflow as temporal_workflow
     except ImportError as exc:  # pragma: no cover
         raise RuntimeError(
-            "temporalio SDK not installed. Install via `uv sync --extra workflow`.",
+            "temporalio SDK not installed. Install via `uv sync --extra workflow`."
         ) from exc
 
     signal_names = _collect_signal_names(decl)
@@ -147,7 +146,7 @@ def compile_workflow(decl: WorkflowDeclaration) -> CompiledWorkflow:
     # Регистрируем signal-handler для каждого SignalWaitDeclaration.signal_name.
     for signal_name in signal_names:
         class_namespace[_signal_attr_name(signal_name)] = _make_signal_handler(
-            signal_name, temporal_workflow, owner_class_name=workflow_class_name,
+            signal_name, temporal_workflow, owner_class_name=workflow_class_name
         )
 
     # Динамически создаём класс (Python 3.x type metaclass).
@@ -169,12 +168,11 @@ def compile_workflow(decl: WorkflowDeclaration) -> CompiledWorkflow:
         from src.backend.core.logging import get_logger as _gl
 
         _gl("dsl.workflow.compiler.emitter").debug(
-            "Workflow '%s' уже зарегистрирован в WorkflowRegistry — skip",
-            decl.name,
+            "Workflow '%s' уже зарегистрирован в WorkflowRegistry — skip", decl.name
         )
 
     return CompiledWorkflow(
-        name=decl.name, cls=cls, declaration=decl, signal_names=signal_names,
+        name=decl.name, cls=cls, declaration=decl, signal_names=signal_names
     )
 
 
@@ -204,13 +202,13 @@ def compile_workflows(
             raise RuntimeError(
                 f"Workflow {compiled.name} compiled but NOT registered в "
                 "WorkflowRegistry — replay() будет сломан. Проверьте, что "
-                "compile_workflow() корректно вызывает workflow_registry.register().",
+                "compile_workflow() корректно вызывает workflow_registry.register()."
             )
     return out
 
 
 def _make_signal_handler(
-    signal_name: str, temporal_workflow: Any, *, owner_class_name: str,
+    signal_name: str, temporal_workflow: Any, *, owner_class_name: str
 ) -> Any:
     """Создать signal-handler для конкретного signal_name.
 

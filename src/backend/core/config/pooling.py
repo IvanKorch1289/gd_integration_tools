@@ -94,7 +94,7 @@ class PoolingProfile(BaseModel):
 
     # Проверять соединение перед выдачей из пула (стоит I/O).
     pre_ping: bool = Field(
-        default=True, description="Выполнять PING/SELECT 1 перед выдачей соединения.",
+        default=True, description="Выполнять PING/SELECT 1 перед выдачей соединения."
     )
 
     # Количество подряд идущих failures для перехода CB в OPEN.
@@ -145,11 +145,11 @@ class PoolingProfile(BaseModel):
     def _validate_sizes(self) -> PoolingProfile:
         if self.min_size > self.max_size:
             raise ValueError(
-                f"PoolingProfile: min_size ({self.min_size}) > max_size ({self.max_size})",
+                f"PoolingProfile: min_size ({self.min_size}) > max_size ({self.max_size})"
             )
         if self.max_lifetime_s < self.idle_timeout_s:
             raise ValueError(
-                "PoolingProfile: max_lifetime_s должен быть ≥ idle_timeout_s",
+                "PoolingProfile: max_lifetime_s должен быть ≥ idle_timeout_s"
             )
         return self
 
@@ -164,12 +164,12 @@ class PoolingProfile(BaseModel):
         if preset is None:
             available = ", ".join(sorted(cls._NAMED_PROFILES))
             raise KeyError(
-                f"Unknown pooling profile '{profile_name}'. Available: {available}",
+                f"Unknown pooling profile '{profile_name}'. Available: {available}"
             )
         return cls.model_validate(preset)
 
     def merged_with(
-        self, override: PoolingProfile | dict[str, object],
+        self, override: PoolingProfile | dict[str, object]
     ) -> PoolingProfile:
         """Создать новый профиль, переопределяя только явно заданные поля."""
         if isinstance(override, PoolingProfile):

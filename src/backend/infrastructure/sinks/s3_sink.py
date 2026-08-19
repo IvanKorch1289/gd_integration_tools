@@ -58,8 +58,7 @@ class S3Sink(Sink):
     kind: SinkKind = field(default=SinkKind.S3, init=False)
 
     @with_breaker("s3_sink", recovery_seconds=60)
-    @with_retry(max_attempts=5,
-        retry_on=(ConnectionError, TimeoutError, OSError))
+    @with_retry(max_attempts=5, retry_on=(ConnectionError, TimeoutError, OSError))
     @require_capability("s3.write", action="write")
     async def send(self, payload: Any) -> SinkResult:
         """Сериализует ``payload`` и выгружает в S3 через ``storage_client``."""
@@ -74,18 +73,18 @@ class S3Sink(Sink):
             )
         except ImportError as exc:
             return SinkResult(
-                ok=False, details={"error": f"storage_client not available: {exc}"},
+                ok=False, details={"error": f"storage_client not available: {exc}"}
             )
 
         data = _coerce_payload(payload)
 
         try:
             await storage_client.upload_file(
-                data, self.key, content_type=self.content_type,
+                data, self.key, content_type=self.content_type
             )
         except Exception as exc:
             return SinkResult(
-                ok=False, details={"error": str(exc) or exc.__class__.__name__},
+                ok=False, details={"error": str(exc) or exc.__class__.__name__}
             )
 
         return SinkResult(

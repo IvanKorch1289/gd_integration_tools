@@ -168,7 +168,7 @@ async def _dispatch_via_gateway(
         return await fallback()
     payload = _build_dispatcher_payload(direct_kwargs)
     correlation_id = request.headers.get("x-correlation-id") or request.headers.get(
-        "x-request-id",
+        "x-request-id"
     )
     idempotency_key = request.headers.get("idempotency-key")
     context = make_dispatch_context(
@@ -213,7 +213,7 @@ class ActionRouterBuilder(CrudMixin):
         )
         metadata = action_spec_to_metadata(spec)
         action_handler_registry.register_with_metadata(
-            action=metadata.action, handler=None, metadata=metadata,
+            action=metadata.action, handler=None, metadata=metadata
         )
 
     def add_actions(self, specs: Sequence[ActionSpec]) -> APIRouter:
@@ -264,7 +264,7 @@ class ActionRouterBuilder(CrudMixin):
             service_method = getattr(service, spec.service_method)
             call_kwargs = prepare_call_kwargs(spec=spec, request=request, kwargs=kwargs)
             invoke_options, direct_kwargs = extract_invocation_kwargs(
-                spec=spec, call_kwargs=call_kwargs,
+                spec=spec, call_kwargs=call_kwargs
             )
 
             async def direct_call() -> Any:
@@ -295,7 +295,7 @@ class ActionRouterBuilder(CrudMixin):
                 )
                 if (wants_event or is_scheduled) and spec.invocation.event is None:
                     raise ValueError(
-                        f"Action '{spec.name}' does not support event invocation.",
+                        f"Action '{spec.name}' does not support event invocation."
                     )
                 if spec.invocation.event is not None and (wants_event or is_scheduled):
                     bus_result = await _resolve_action_bus_service().invoke(
@@ -358,6 +358,6 @@ class ActionRouterBuilder(CrudMixin):
                     "payload",
                     spec.body_model,
                     spec.body_model.__doc__ or "Тело запроса.",
-                ),
+                )
             )
         return make_signature(*parameters, return_annotation=Any)

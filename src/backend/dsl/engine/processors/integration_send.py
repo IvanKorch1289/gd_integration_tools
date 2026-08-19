@@ -66,7 +66,7 @@ class IntegrationSendProcessor(BaseProcessor):
         facade = get_integration_facade()
         try:
             result = await facade.send_to_sink(
-                self._sink_id, payload, tenant_id=tenant_id,
+                self._sink_id, payload, tenant_id=tenant_id
             )
             exchange.set_property(
                 self._result_property,
@@ -84,12 +84,12 @@ class IntegrationSendProcessor(BaseProcessor):
         if src == "body":
             return exchange.in_message.body
         if src.startswith("body."):
-            field = src[len("body."):]
+            field = src[len("body.") :]
             body = exchange.in_message.body
             if isinstance(body, dict):
                 return body.get(field)
             return getattr(body, field, None)
         if src.startswith("properties."):
-            name = src[len("properties."):]
+            name = src[len("properties.") :]
             return exchange.properties.get(name) if exchange.properties else None
         return exchange.in_message.body

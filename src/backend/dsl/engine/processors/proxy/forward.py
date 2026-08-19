@@ -119,7 +119,7 @@ class ForwardToProcessor(BaseProcessor):
         method = str(exchange.in_message.headers.get("X-Proxy-Method", "POST")).upper()
         target_url = self._rewrite(exchange, context)
         async with OutboundHttpClient(
-            timeout=httpx.Timeout(self._spec.timeout_s),
+            timeout=httpx.Timeout(self._spec.timeout_s)
         ) as client:
             resp = await client.request(
                 method=method,
@@ -148,7 +148,7 @@ class ForwardToProcessor(BaseProcessor):
     # -- SOAP ---------------------------------------------------------
 
     async def _forward_soap(
-        self, body: Any, headers: dict[str, str], exchange: Exchange[Any],
+        self, body: Any, headers: dict[str, str], exchange: Exchange[Any]
     ) -> None:
         import httpx
 
@@ -157,7 +157,7 @@ class ForwardToProcessor(BaseProcessor):
         headers.setdefault("Content-Type", "text/xml; charset=utf-8")
         url = f"http://{self._spec.target}"
         async with OutboundHttpClient(
-            timeout=httpx.Timeout(self._spec.timeout_s),
+            timeout=httpx.Timeout(self._spec.timeout_s)
         ) as client:
             resp = await client.post(
                 url,
@@ -172,7 +172,7 @@ class ForwardToProcessor(BaseProcessor):
     # -- gRPC ---------------------------------------------------------
 
     async def _forward_grpc(
-        self, body: Any, headers: dict[str, str], exchange: Exchange[Any],
+        self, body: Any, headers: dict[str, str], exchange: Exchange[Any]
     ) -> None:
         try:
             import grpc
@@ -183,7 +183,7 @@ class ForwardToProcessor(BaseProcessor):
         host, _, method = self._spec.target.partition("/")
         if not method:
             raise ValueError(
-                "grpc target должен быть 'host:port/package.Service/Method'",
+                "grpc target должен быть 'host:port/package.Service/Method'"
             )
         metadata = tuple(headers.items())
         async with grpc_aio.insecure_channel(host) as channel:
@@ -203,7 +203,7 @@ class ForwardToProcessor(BaseProcessor):
     # -- Queue-to-queue ----------------------------------------------
 
     async def _forward_queue(
-        self, protocol: str, body: Any, headers: dict[str, str], exchange: Exchange[Any],
+        self, protocol: str, body: Any, headers: dict[str, str], exchange: Exchange[Any]
     ) -> None:
         from src.backend.infrastructure.clients.messaging.stream import (
             get_stream_client,
@@ -213,13 +213,13 @@ class ForwardToProcessor(BaseProcessor):
         payload = body if isinstance(body, dict) else {"body": body}
         if protocol == "kafka":
             await client.publish_to_kafka(
-                topic=self._spec.target, message=payload, headers=headers,
+                topic=self._spec.target, message=payload, headers=headers
             )
         elif protocol == "rabbit":
             await client.publish_to_rabbit(queue=self._spec.target, message=payload)
         elif protocol == "redis":
             await client.publish_to_redis(
-                stream=self._spec.target, message=payload, headers=headers,
+                stream=self._spec.target, message=payload, headers=headers
             )
 
 
@@ -233,5 +233,5 @@ def _split_target(raw: str) -> tuple[str, str]:
             return proto.lower(), target
     raise ValueError(
         f"ForwardToProcessor.dst должен быть '<protocol>://<target>' или "
-        f"'<queue>:<dest>', получено {raw!r}",
+        f"'<queue>:<dest>', получено {raw!r}"
     )

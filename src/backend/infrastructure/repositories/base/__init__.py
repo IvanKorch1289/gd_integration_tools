@@ -27,15 +27,18 @@ __all__ = ("AbstractRepository", "SQLAlchemyRepository", "get_repository_for_mod
 def __getattr__(name: str) -> Any:
     if name == "AbstractRepository":
         from src.backend.infrastructure.repositories.base.base import AbstractRepository
+
         return AbstractRepository
     if name == "SQLAlchemyRepository":
         from src.backend.infrastructure.repositories.base.sqlalchemy import (
             SQLAlchemyRepository,
         )
+
         return SQLAlchemyRepository
     if name == "get_repository_for_model":
         from src.backend.infrastructure.repositories.base.factory import (
             get_repository_for_model,
         )
+
         return get_repository_for_model
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

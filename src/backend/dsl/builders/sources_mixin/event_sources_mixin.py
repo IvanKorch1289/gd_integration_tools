@@ -14,6 +14,7 @@ Post-FW2: ``from_event_subscribe(channel=..., consumer_group=...)``
 и yields события как Exchange messages в pipeline. Опциональный
 ``filter`` (callable) для selective consumption.
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -86,7 +87,7 @@ class EventSourcesMixin:
             raise ValueError("from_event_subscribe: channel is required")
 
         builder: RouteBuilder = cls(
-            route_id=route_id, source=f"event_subscribe:{channel}",
+            route_id=route_id, source=f"event_subscribe:{channel}"
         )
         # Сохраняем конфиг для последующей регистрации в
         # ``infrastructure.clients.messaging.event_bus.subscribe()``

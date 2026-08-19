@@ -70,7 +70,7 @@ class WSBroadcast:
                 logger.error("WS broadcast listener crashed: %s", exc)
 
         self._listener_task = get_task_registry().create_task(
-            _loop(), name="ws-broadcast-listener",
+            _loop(), name="ws-broadcast-listener"
         )
         logger.info("WS broadcast listener started")
 

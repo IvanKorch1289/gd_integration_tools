@@ -40,7 +40,7 @@ class EmailNotifier(Protocol):
     """
 
     async def send(
-        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any],
+        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any]
     ) -> None:
         """Отправить email (recipient, subject, body, metadata)."""
         ...
@@ -160,5 +160,5 @@ def _format_body(response: InvocationResponse) -> str:
         head = f"Status: {response.status.value.upper()}\n\n"
     try:
         return head + json.dumps(payload, ensure_ascii=False, indent=2, default=str)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return head + repr(response)

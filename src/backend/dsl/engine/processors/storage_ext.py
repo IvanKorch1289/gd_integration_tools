@@ -20,7 +20,6 @@ __all__ = (
 )
 
 
-
 class Neo4jQueryProcessor(BaseProcessor):
     """Neo4j Cypher query processor.
 
@@ -52,7 +51,7 @@ class Neo4jQueryProcessor(BaseProcessor):
         for kw in forbidden:
             if kw in stripped and "MATCH" not in stripped[: stripped.find(kw)]:
                 raise ValueError(
-                    f"Destructive Cypher without MATCH guard rejected: {kw}",
+                    f"Destructive Cypher without MATCH guard rejected: {kw}"
                 )
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:

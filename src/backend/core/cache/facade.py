@@ -38,7 +38,7 @@ class CacheInvalidationPolicy(BaseModel):
     default_ttl_seconds: int = Field(default=3600, ge=1, description="TTL по умолчанию")
     max_entries: int = Field(default=10000, ge=1, description="Макс. entries")
     enable_tag_invalidation: bool = Field(
-        default=True, description="Tag-based invalidation",
+        default=True, description="Tag-based invalidation"
     )
     namespace_separator: str = Field(default=":", description="Разделитель namespace")
 
@@ -95,7 +95,7 @@ class MemoryCacheFacade(UnifiedCacheFacade):
     """
 
     def __init__(
-        self, maxsize: int | None = None, default_ttl: int | None = None,
+        self, maxsize: int | None = None, default_ttl: int | None = None
     ) -> None:
         from cachetools import TTLCache
 
@@ -172,7 +172,7 @@ class FallbackCacheFacade(UnifiedCacheFacade):
     """
 
     def __init__(
-        self, primary: UnifiedCacheFacade, fallback: UnifiedCacheFacade,
+        self, primary: UnifiedCacheFacade, fallback: UnifiedCacheFacade
     ) -> None:
         self.primary = primary
         self.fallback = fallback
@@ -364,7 +364,9 @@ class DiskCacheFacade(UnifiedCacheFacade):
                 if ttl_seconds is not None:
                     import time
 
-                    os.utime(path, (time.time() + ttl_seconds, time.time() + ttl_seconds))
+                    os.utime(
+                        path, (time.time() + ttl_seconds, time.time() + ttl_seconds)
+                    )
         except OSError as exc:
             raise CacheError(f"disk write failed: {exc}") from exc
 

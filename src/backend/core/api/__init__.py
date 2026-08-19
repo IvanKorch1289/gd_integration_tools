@@ -90,6 +90,22 @@ __all__ = [
     # === Jupyter (re-exported) ===
     "run_hub_notebook",
     "unregister_infra_module",
+    # === P1-6 (cycle 241): Promoted base classes for extension use ===
+    # Centralised entry point for 38+ extension imports.
+    "BasePlugin",  # from core.interfaces.plugin (22 imports)
+    "BaseModel",  # from core.domain.models.base (8 imports)
+    "nullable_str",  # from core.domain.models.base (P2-1 fix for same import line)
+    "BaseSchema",  # from schemas.base
+    "BaseService",  # from core.services.base_service (lazy proxy, 8 imports)
+    "SQLAlchemyRepository",  # from core.repositories.base (9 imports)
+    "TenantMixin",  # from core.tenancy.sqlalchemy_filter (4 imports)
+    "main_session_manager",  # from core.database.session (5 imports)
+    "load_plugin_manifest",  # from core.plugin_runtime.manifest (5 imports)
+    "RetryPolicy",  # from core.ai.retry_policy
+    "validate_inn",  # from dsl.helpers.banking
+    "get_feature_flag_service",  # from core.feature_flags
+    "ServiceError",  # from core.errors (P2-13 cycle 241)
+    "NotFoundError",  # from core.errors (P2-13 cycle 241)
     # NOTE: SchedulerManager and WorkflowBuilder are upper-layer symbols.
     # They live in src.backend.sdk (the permitted composition boundary),
     # NOT in core.api — importing dsl/infrastructure from core violates
@@ -185,6 +201,66 @@ def __getattr__(name: str) -> Any:
         from src.backend.core.config.features import feature_flags
 
         return feature_flags
+    # === P1-6 (cycle 241): Promoted base classes ===
+    if name == "BasePlugin":
+        from src.backend.core.interfaces.plugin import BasePlugin
+
+        return BasePlugin
+    if name == "BaseModel":
+        from src.backend.core.domain.models.base import BaseModel
+
+        return BaseModel
+    if name == "nullable_str":
+        from src.backend.core.domain.models.base import nullable_str
+
+        return nullable_str
+    if name == "BaseSchema":
+        from src.backend.schemas.base import BaseSchema
+
+        return BaseSchema
+    if name == "BaseService":
+        from src.backend.core.services.base_service import BaseService
+
+        return BaseService
+    if name == "SQLAlchemyRepository":
+        from src.backend.core.repositories.base import SQLAlchemyRepository
+
+        return SQLAlchemyRepository
+    if name == "TenantMixin":
+        from src.backend.core.tenancy.sqlalchemy_filter import TenantMixin
+
+        return TenantMixin
+    if name == "main_session_manager":
+        from src.backend.core.database.session import main_session_manager
+
+        return main_session_manager
+    if name == "load_plugin_manifest":
+        from src.backend.core.plugin_runtime.manifest import load_plugin_manifest
+
+        return load_plugin_manifest
+    if name == "RetryPolicy":
+        from src.backend.core.ai.retry_policy import RetryPolicy
+
+        return RetryPolicy
+    if name == "validate_inn":
+        from src.backend.dsl.helpers.banking import validate_inn
+
+        return validate_inn
+    if name == "get_feature_flag_service":
+        from src.backend.core.feature_flags import get_feature_flag_service
+
+        return get_feature_flag_service
+    if name == "ServiceError":
+        # P2-13 (cycle 241): добавлен в facade после migration extensions
+        # сломалась (orderkinds/services/orderkinds.py использовал ServiceError
+        # с core.errors, но мигрировано на facade).
+        from src.backend.core.errors import ServiceError
+
+        return ServiceError
+    if name == "NotFoundError":
+        from src.backend.core.errors import NotFoundError
+
+        return NotFoundError
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
@@ -205,5 +281,20 @@ def __dir__() -> list[str]:
             "get_cache_facade",
             "emit_audit_safe",
             "feature_flags",
+            # P1-6 (cycle 241): promoted base classes
+            "BasePlugin",
+            "BaseModel",
+            "nullable_str",
+            "BaseSchema",
+            "BaseService",
+            "SQLAlchemyRepository",
+            "TenantMixin",
+            "main_session_manager",
+            "load_plugin_manifest",
+            "RetryPolicy",
+            "validate_inn",
+            "get_feature_flag_service",
+            "ServiceError",
+            "NotFoundError",
         ]
     )

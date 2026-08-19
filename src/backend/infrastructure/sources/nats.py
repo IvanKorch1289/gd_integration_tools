@@ -129,7 +129,7 @@ class NatsSource:
         except ImportError as exc:
             raise ImportError(
                 "nats-py not installed. Add 'nats-py>=2.7' to dependencies "
-                "(S3 Wave 3 cutover). For now: pip install nats-py.",
+                "(S3 Wave 3 cutover). For now: pip install nats-py."
             ) from exc
 
         # S172 (Wave S2): capability check на старте stream-сессии.
@@ -137,14 +137,9 @@ class NatsSource:
             "nats.read",
             action="read",
             principal="anonymous",
-            extra_ctx={
-                "subject": self._subject,
-                "source_id": self.source_id,
-            },
+            extra_ctx={"subject": self._subject, "source_id": self.source_id},
         ):
-            raise PermissionError(
-                f"nats.read denied for subject={self._subject!r}",
-            )
+            raise PermissionError(f"nats.read denied for subject={self._subject!r}")
 
         async with self._lock:
             if self._running or self._nc is not None:
@@ -157,7 +152,7 @@ class NatsSource:
             while self._running:
                 try:
                     nc = await nats.connect(  # type: ignore[attr-defined]
-                        self._nats_url,
+                        self._nats_url
                     )
                     async with self._lock:
                         self._nc = nc
@@ -208,7 +203,7 @@ class NatsSource:
                     ):
                         raise RuntimeError(
                             f"NatsSource: max reconnect attempts "
-                            f"({self._max_reconnect_attempts}) exhausted",
+                            f"({self._max_reconnect_attempts}) exhausted"
                         ) from conn_exc
                     reconnect_attempts += 1
                     await asyncio.sleep(self._reconnect_delay_seconds)
@@ -241,7 +236,7 @@ class NatsSource:
                 await on_event(event)
             except Exception as exc:
                 logger.error(
-                    "NatsSource on_event failed (subject=%s): %s", self._subject, exc,
+                    "NatsSource on_event failed (subject=%s): %s", self._subject, exc
                 )
 
     async def stop(self) -> None:

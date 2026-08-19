@@ -31,7 +31,7 @@ class RedisLock:
     """
 
     def __init__(
-        self, key: str, *, ttl_seconds: int = 60, key_prefix: str = "lock",
+        self, key: str, *, ttl_seconds: int = 60, key_prefix: str = "lock"
     ) -> None:
         self._key = f"{key_prefix}:{key}"
         self._ttl = ttl_seconds
@@ -85,7 +85,7 @@ class RedisLock:
         # (timeout 2s, connection error). Fail-open — запускаем без lock.
         if raw is None:
             logger.debug(
-                "Redis lock unavailable, proceeding without lock: %s", self._key,
+                "Redis lock unavailable, proceeding without lock: %s", self._key
             )
             return True
         lock = raw.lock(self._key, timeout=self._ttl, blocking_timeout=blocking_timeout)
@@ -122,7 +122,7 @@ class RedisLock:
 
 
 async def acquire_lock(
-    key: str, *, ttl_seconds: int = 60, blocking_timeout: float | None = None,
+    key: str, *, ttl_seconds: int = 60, blocking_timeout: float | None = None
 ) -> RedisLock | None:
     """Пытается захватить Redis-лок; возвращает :class:`RedisLock` или ``None``.
 
@@ -137,7 +137,7 @@ async def acquire_lock(
 
 @asynccontextmanager
 async def distributed_lock(
-    key: str, *, ttl_seconds: int = 60, blocking_timeout: float | None = None,
+    key: str, *, ttl_seconds: int = 60, blocking_timeout: float | None = None
 ) -> AsyncIterator[bool]:
     """Async context manager: захватывает Redis-лок, по выходу — отпускает.
 

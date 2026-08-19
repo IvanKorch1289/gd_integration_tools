@@ -74,7 +74,7 @@ class CDCSource:
             raise RuntimeError(f"CDCSource(id={self.source_id!r}) уже запущен")
         self._stop_event.clear()
         self._task = get_task_registry().create_task(
-            self._run(on_event), name=f"source-cdc:{self.source_id}",
+            self._run(on_event), name=f"source-cdc:{self.source_id}"
         )
         logger.info(
             "CDCSource started: id=%s slot=%s plugin=%s",
@@ -104,7 +104,7 @@ class CDCSource:
         except ImportError as exc:
             raise RuntimeError(
                 "psycopg[binary]>=3.1 не установлен; добавь optional extra "
-                "`sources-cdc` в pyproject.toml для использования CDCSource.",
+                "`sources-cdc` в pyproject.toml для использования CDCSource."
             ) from exc
 
         # Опции для pgoutput (требует список publication-names).
@@ -114,7 +114,7 @@ class CDCSource:
             options.setdefault("publication_names", ",".join(self._publications))
 
         async with await AsyncConnection.connect(
-            self._dsn, autocommit=True, connection_class=LogicalReplicationConnection,
+            self._dsn, autocommit=True, connection_class=LogicalReplicationConnection
         ) as conn:
             try:
                 await conn.execute(
@@ -126,7 +126,7 @@ class CDCSource:
                 logger.debug("CDCSource %s: slot create skipped: %s", self._slot, exc)
             cursor = conn.cursor()
             await cursor.start_replication(
-                slot_name=self._slot, options=options, decode=False,
+                slot_name=self._slot, options=options, decode=False
             )
             try:
                 async for msg in cursor:
@@ -143,7 +143,7 @@ class CDCSource:
                     await cursor.close()
                 except Exception as exc:
                     logger.debug(
-                        "CDCSource %s: cursor close warning: %s", self._slot, exc,
+                        "CDCSource %s: cursor close warning: %s", self._slot, exc
                     )
 
     @with_breaker("cdc_reader")

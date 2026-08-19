@@ -139,7 +139,7 @@ class BasePydanticAgent[ResultT: BaseModel]:
         if not hasattr(self, "result_type"):
             raise TypeError(
                 "BasePydanticAgent: укажите result_type=PydanticModel либо "
-                "переопределите атрибут класса.",
+                "переопределите атрибут класса."
             )
         self._system_prompt = system_prompt
         self._model_name = model_name
@@ -166,7 +166,7 @@ class BasePydanticAgent[ResultT: BaseModel]:
         if not feature_flags.ai_gateway_enforce:
             raise AIGatewayEnforcementRequiredError(
                 "agents_pydantic.BasePydanticAgent requires ai_gateway_enforce=True "
-                "(S85 W2: bypass via LiteLLMGateway is no longer supported)",
+                "(S85 W2: bypass via LiteLLMGateway is no longer supported)"
             )
         from src.backend.services.ai.gateway.client import get_litellm_gateway
 
@@ -179,7 +179,7 @@ class BasePydanticAgent[ResultT: BaseModel]:
             from pydantic_ai import Agent
         except ImportError as exc:
             raise PydanticAIUnavailable(
-                "pydantic-ai не установлен — добавьте extra '[ai-2026]'.",
+                "pydantic-ai не установлен — добавьте extra '[ai-2026]'."
             ) from exc
 
         from src.backend.services.ai.agents_pydantic.adapter import LiteLLMModel
@@ -254,7 +254,7 @@ class BasePydanticAgent[ResultT: BaseModel]:
                     return await agent.run(user_input, deps=deps)
         except RetryError as exc:
             raise exc.last_attempt.exception() or RuntimeError(
-                "Retry exhausted",
+                "Retry exhausted"
             ) from exc
         # Не должно быть достигнуто — AsyncRetrying либо возвращает,
         # либо бросает.

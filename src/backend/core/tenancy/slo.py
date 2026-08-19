@@ -99,7 +99,9 @@ class TenantSLO:
             error_rate_ok = error_rate <= self.error_rate_target
 
         # Aggregate: только если все available True.
-        checks = [c for c in (latency_ok, availability_ok, error_rate_ok) if c is not None]
+        checks = [
+            c for c in (latency_ok, availability_ok, error_rate_ok) if c is not None
+        ]
         within_slo = all(checks) if checks else True
 
         return SLOEvaluation(

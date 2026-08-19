@@ -101,7 +101,7 @@ class ConsolidationEngine:
         return self._gateway
 
     async def run(
-        self, *, since: datetime | None = None, batch_size: int = 50,
+        self, *, since: datetime | None = None, batch_size: int = 50
     ) -> ConsolidationReport:
         """Главный entrypoint. Возвращает :class:`ConsolidationReport`."""
         from src.backend.core.config.ai_stack import langmem_settings
@@ -146,7 +146,7 @@ class ConsolidationEngine:
         return report
 
     async def _fetch_episodes(
-        self, langmem: Any, *, since: datetime | None, limit: int,
+        self, langmem: Any, *, since: datetime | None, limit: int
     ) -> list[dict[str, Any]]:
         recall = getattr(langmem, "recall", None)
         if recall is None:
@@ -162,7 +162,7 @@ class ConsolidationEngine:
         return [ep for ep in episodes if (ep.get("occurred_at") or "") >= cutoff]
 
     async def _extract_facts(
-        self, episodes: list[dict[str, Any]], *, gateway: Any,
+        self, episodes: list[dict[str, Any]], *, gateway: Any
     ) -> list[ExtractedFact]:
         dialog = "\n".join(
             f"{e.get('role', 'user')}: {e.get('content', '')}" for e in episodes
@@ -170,7 +170,7 @@ class ConsolidationEngine:
         prompt = self._template.format(dialog=dialog)
         try:
             response = await gateway.acompletion(
-                messages=[{"role": "user", "content": prompt}],
+                messages=[{"role": "user", "content": prompt}]
             )
         except Exception as exc:
             logger.debug("LLM consolidate call failed: %s", exc)
@@ -222,7 +222,8 @@ def _parse_facts(text: str) -> list[ExtractedFact]:
         logger.debug(
             "_parse_facts: orjson decode failed (exc_type=%s exc_msg=%s) — "
             "returning empty facts list",
-            type(exc).__name__, exc,
+            type(exc).__name__,
+            exc,
         )
         return []
     facts: list[ExtractedFact] = []

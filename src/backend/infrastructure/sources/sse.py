@@ -131,12 +131,12 @@ class SSESource:
         # Делается один раз — auth на каждое событие было бы слишком
         # дорого (HTTP keep-alive stream может жить часами).
         if not await check_source_capability(
-            "sse.read", action="read", principal="anonymous",
+            "sse.read",
+            action="read",
+            principal="anonymous",
             extra_ctx={"url": self._url, "subscription_id": self._subscription_id},
         ):
-            raise PermissionError(
-                f"sse.read denied for stream url={self._url!r}",
-            )
+            raise PermissionError(f"sse.read denied for stream url={self._url!r}")
         # S1: per-connector rate limit (per subscription).
         limiter = get_connector_rate_limiter()
         limiter.register(f"sse_{self._subscription_id[:8]}", "50/s", 50)
@@ -154,7 +154,13 @@ class SSESource:
                 # Server closed stream cleanly — reconnect.
             except asyncio.CancelledError:
                 raise
-            except (OSError, ConnectionError, TimeoutError, RuntimeError, ValueError) as sse_exc:
+            except (
+                OSError,
+                ConnectionError,
+                TimeoutError,
+                RuntimeError,
+                ValueError,
+            ) as sse_exc:
                 # cycle-9/D-AUDIT-1025: narrow exceptions + observability.
                 # OSError/ConnectionError/TimeoutError — network/SSE transport,
                 # RuntimeError — server error, ValueError — malformed event.
@@ -170,6 +176,7 @@ class SSESource:
                 backoff = min(backoff * 2, 30.0)  # cap at 30s
                 # Re-raise after max retries (на следующей итерации)
                 import logging
+
                 logging.getLogger(__name__).debug(
                     "sse.connection_failed",
                     extra={"retries": retries, "error": str(sse_exc)},
@@ -195,7 +202,7 @@ class SSESource:
             request_headers["Last-Event-ID"] = self._last_event_id
 
         timeout = httpx.Timeout(
-            connect=10.0, read=self._heartbeat_timeout_s, write=10.0, pool=10.0,
+            connect=10.0, read=self._heartbeat_timeout_s, write=10.0, pool=10.0
         )
 
         # S36-W7 (R-V15-5): SSE consumer обязан идти через
@@ -208,13 +215,13 @@ class SSESource:
             from src.backend.core.net.migration_helper import make_http_client
 
             outbound_client = make_http_client(
-                plugin=f"sse:{self._subscription_id[:8]}",
+                plugin=f"sse:{self._subscription_id[:8]}"
             )
 
         # OutboundHttpClient.stream() возвращает async context manager
         # (httpx API). WAF-check уже выполнен до открытия stream.
         async with outbound_client.stream(
-            "GET", self._url, headers=request_headers, timeout=timeout,
+            "GET", self._url, headers=request_headers, timeout=timeout
         ) as resp:
             resp.raise_for_status()
             # SSE parsers — manual (httpx не парсит SSE)
@@ -252,7 +259,7 @@ class SSESource:
                 yield self._make_event(data_lines, event_type, event_id)
 
     def _make_event(
-        self, data_lines: list[str], event_type: str, event_id: str | None,
+        self, data_lines: list[str], event_type: str, event_id: str | None
     ) -> SSEEvent:
         raw = "\n".join(data_lines)
         parsed: str | dict = raw
@@ -261,7 +268,7 @@ class SSESource:
 
             try:
                 parsed = json.loads(raw)
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 pass  # keep as raw string
         # Apply event_type filter (если задан)
         if self._event_type is not None and event_type != self._event_type:

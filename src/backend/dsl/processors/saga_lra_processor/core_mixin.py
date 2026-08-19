@@ -43,7 +43,7 @@ _VALID_STATES = frozenset(
         STATE_COMPENSATING,
         STATE_COMPENSATED,
         STATE_FAILED,
-    },
+    }
 )
 
 
@@ -76,12 +76,12 @@ class CoreMixin(_SagaLRAProcessorProtocol):
     ) -> None:
         if timeout_seconds <= 0:
             raise ValueError(
-                f"timeout_seconds должен быть > 0, получено {timeout_seconds!r}",
+                f"timeout_seconds должен быть > 0, получено {timeout_seconds!r}"
             )
         if per_step_timeout_seconds is not None and per_step_timeout_seconds <= 0:
             raise ValueError(
                 "per_step_timeout_seconds должен быть > 0 или None, "
-                f"получено {per_step_timeout_seconds!r}",
+                f"получено {per_step_timeout_seconds!r}"
             )
         normalized = self._normalize_steps(steps)
         # S159 W4: BaseProcessor is NOT in MRO (Protocol chain),
@@ -109,7 +109,13 @@ class CoreMixin(_SagaLRAProcessorProtocol):
         if old_state != new_state and self._on_state_change is not None:
             try:
                 self._on_state_change(old_state or "", new_state, exchange)
-            except (ImportError, AttributeError, RuntimeError, TypeError, ValueError) as cb_exc:
+            except (
+                ImportError,
+                AttributeError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as cb_exc:
                 # cycle-9/D-AUDIT-960: narrow exceptions + observability.
                 # ImportError — callback dep missing, AttributeError — API
                 # change, RuntimeError — callback raised, TypeError/ValueError

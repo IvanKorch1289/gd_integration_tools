@@ -147,7 +147,7 @@ def check_capabilities_subset(
 
 
 def _is_covered(
-    ref: CapabilityRef, available: list[CapabilityRef], vocabulary: CapabilityVocabulary,
+    ref: CapabilityRef, available: list[CapabilityRef], vocabulary: CapabilityVocabulary
 ) -> bool:
     """Покрывается ли ``ref`` хотя бы одной capability из ``available``."""
     try:

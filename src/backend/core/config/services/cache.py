@@ -125,7 +125,7 @@ class RedisSettings(BaseSettingsWithLoader):
             "example": [
                 "redis.exceptions.ConnectionError",
                 "redis.exceptions.TimeoutError",
-            ],
+            ]
         },
     )
 
@@ -190,7 +190,7 @@ class RedisSettings(BaseSettingsWithLoader):
             "example": [
                 {"name": "stream1", "value": "creating-stream"},
                 {"name": "stream2", "value": "updating-stream"},
-            ],
+            ]
         },
     )
 
@@ -255,7 +255,7 @@ class RedisSettings(BaseSettingsWithLoader):
         for node in v:
             if ":" not in node:
                 raise ValueError(
-                    f"cluster_nodes: ожидается формат 'host:port', получено {node!r}",
+                    f"cluster_nodes: ожидается формат 'host:port', получено {node!r}"
                 )
             host, _, port = node.rpartition(":")
             if not host or not port.isdigit():
@@ -274,16 +274,17 @@ class RedisSettings(BaseSettingsWithLoader):
             raise ValueError(
                 "RedisSettings: cluster_mode=True требует непустого "
                 "cluster_nodes (хотя бы одна нода 'host:port'). "
-                "Production runtime не сможет подключиться к Redis cluster.",
+                "Production runtime не сможет подключиться к Redis cluster."
             )
         if not self.cluster_mode and self.cluster_nodes:
             # Warning (НЕ error) — cluster_nodes заполнены но cluster_mode=False
             # → cluster_nodes игнорируются. Это валидная конфигурация
             # (например, в тестах), но operator должен знать.
             import logging as _logging
+
             _logging.getLogger("core.config.services.cache").info(
                 "RedisSettings: cluster_nodes заполнены, но cluster_mode=False — "
-                "cluster_nodes игнорируются, используется single Redis instance.",
+                "cluster_nodes игнорируются, используется single Redis instance."
             )
         return self
 

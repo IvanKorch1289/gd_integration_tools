@@ -60,7 +60,7 @@ def get_action_dispatcher_provider() -> Any:
         return _overrides["action_dispatcher"]
     # Импорт через services-слой (не infrastructure) — не нарушает layer policy.
     module = _importlib_import_module(
-        "src.backend.services.execution.action_dispatcher",
+        "src.backend.services.execution.action_dispatcher"
     )
     return module.get_action_dispatcher()
 

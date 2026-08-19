@@ -50,7 +50,7 @@ class LLMActivityInput(BaseModel):
     prompt: str = Field(min_length=1, description="Promt-текст для модели.")
     model: str = Field(default="gpt-4", description="Имя LLM-модели.")
     temperature: float = Field(
-        default=0.7, ge=0.0, le=2.0, description="Sampling temperature.",
+        default=0.7, ge=0.0, le=2.0, description="Sampling temperature."
     )
     max_tokens: int | None = Field(
         default=None,
@@ -81,7 +81,7 @@ class LLMActivityOutput(BaseModel):
     cost_usd: float = Field(ge=0.0, description="Стоимость вызова в USD.")
     model_used: str = Field(description="Имя фактически использованной модели.")
     structured: dict[str, Any] | None = Field(
-        default=None, description="Структурированный output (если запрашивался schema).",
+        default=None, description="Структурированный output (если запрашивался schema)."
     )
 
 
@@ -102,12 +102,12 @@ def _resolve_gateway() -> Any:
     except Exception as exc:
         raise RuntimeError(
             "LiteLLMGateway недоступен (lifespan не поднят либо модуль "
-            "отсутствует). Sprint 4 Wave C: lazy-resolve provoked.",
+            "отсутствует). Sprint 4 Wave C: lazy-resolve provoked."
         ) from exc
 
 
 async def _execute_llm_call(
-    input_: LLMActivityInput, *, heartbeat: Any = None,
+    input_: LLMActivityInput, *, heartbeat: Any = None
 ) -> LLMActivityOutput:
     """Внутренний исполнитель LLM-вызова (без temporalio dependencies).
 
@@ -135,7 +135,7 @@ async def _execute_llm_call(
         # Cycle 74 L4: use module-level _logger (canonical facade) instead
         # of local stdlib bypass.
         _logger.debug(
-            "workflow_activities: max_tokens not set, defaulting to 4096 (S227 cycle 4)",
+            "workflow_activities: max_tokens not set, defaulting to 4096 (S227 cycle 4)"
         )
 
     # acompletion API: prompt → response
@@ -176,21 +176,21 @@ async def _execute_llm_call(
             structured = json.loads(content_str)
         except json.JSONDecodeError:
             _logger.warning(
-                "structured_output_schema задан, но content не валидный JSON",
+                "structured_output_schema задан, но content не валидный JSON"
             )
 
     return LLMActivityOutput(
         content=content_str,
         prompt_tokens=int(
-            getattr(usage, "prompt_tokens", None) or usage.get("prompt_tokens", 0),
+            getattr(usage, "prompt_tokens", None) or usage.get("prompt_tokens", 0)
         ),
         completion_tokens=int(
             getattr(usage, "completion_tokens", None)
-            or usage.get("completion_tokens", 0),
+            or usage.get("completion_tokens", 0)
         ),
         cost_usd=cost_usd,
         model_used=str(
-            getattr(response, "model", None) or response.get("model", input_.model),
+            getattr(response, "model", None) or response.get("model", input_.model)
         ),
         structured=structured,
     )
@@ -257,7 +257,7 @@ def register_llm_activity(worker: Any) -> bool:
 
     if not enabled:
         _logger.debug(
-            "register_llm_activity NoOp: ai_workflow_activity_enabled выключен",
+            "register_llm_activity NoOp: ai_workflow_activity_enabled выключен"
         )
         return False
 

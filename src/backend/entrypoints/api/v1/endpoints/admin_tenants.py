@@ -30,7 +30,7 @@ logger = get_logger("entrypoints.admin_tenants")
 
 # S202 audit fix: require admin role
 _ADMIN_GUARD_READ = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN)),
+    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN))
 )
 
 router = APIRouter(dependencies=[_ADMIN_GUARD_READ])
@@ -86,7 +86,7 @@ def _aggregate_tenants(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             str(r.get("action", "")) for r in items if r.get("action")
         )
         last_seen = max(
-            (str(r.get("when", "")) for r in items if r.get("when")), default=None,
+            (str(r.get("when", "")) for r in items if r.get("when")), default=None
         )
         aggregated.append(
             {
@@ -97,7 +97,7 @@ def _aggregate_tenants(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
                     {"action": a, "count": c} for a, c in actions.most_common(5)
                 ],
                 "last_seen": last_seen,
-            },
+            }
         )
 
     aggregated.sort(key=lambda t: t["event_count"], reverse=True)
@@ -163,7 +163,7 @@ async def list_tenants(limit: int = _DEFAULT_AUDIT_LIMIT) -> dict[str, Any]:
     tags=["Admin · Tenants"],
 )
 async def get_tenant_detail(
-    tenant_id: str, limit: int = _DEFAULT_DETAIL_LIMIT,
+    tenant_id: str, limit: int = _DEFAULT_DETAIL_LIMIT
 ) -> dict[str, Any]:
     """Детали одного tenant'а (Stream E.9)."""
     safe_limit = max(1, min(int(limit), 1000))

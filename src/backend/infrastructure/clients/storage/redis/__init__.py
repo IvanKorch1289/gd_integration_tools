@@ -1,4 +1,4 @@
-"""RedisClient package (S59 W3 decomp from redis.py 647 LOC).
+r"""RedisClient package (S59 W3 decomp from redis.py 647 LOC).
 
 32 methods decomposed в 4 mixin files:
 - ``connection_mixin.py`` (6): _build_client, get_client, reset_client, close, ensure_connected, check_connection
@@ -90,7 +90,7 @@ class RedisClient(ConnectionMixin, CacheMixin, HelpersMixin, StreamMixin):
 
         Returns:
             True если Redis alive, False иначе.
-        """
+        r"""
         try:
             client = await self.get_client("cache")
             await client.ping()
@@ -102,7 +102,7 @@ class RedisClient(ConnectionMixin, CacheMixin, HelpersMixin, StreamMixin):
         """Public health-check (returns dict like ManagedAsyncClient).
 
         Returns:
-            \`{\"status\": \"ok\"|\"down\", \"error\": str|None}\`.
+            \\`{\"status\": \"ok\"|\"down\", \"error\": str|None}\\`.
         """
         try:
             client = await self.get_client("cache")
@@ -118,13 +118,13 @@ class RedisClient(ConnectionMixin, CacheMixin, HelpersMixin, StreamMixin):
     # xadd/xread, НЕ pubsub). Per Ponytail: тонкая wrapper → get_client
     # + native pubsub().
     async def pubsub(self, kind: RedisKind = "queue") -> Any:
-        """Public Pub/Sub handle (delegates to underlying \`redis.asyncio.Redis.pubsub\`).
+        r"""Public Pub/Sub handle (delegates to underlying \\`redis.asyncio.Redis.pubsub\\`).
 
         Args:
             kind: Redis kind (default: \"queue\" — most appropriate for events).
 
         Returns:
-            \`redis.asyncio.client.PubSub\` instance для subscribe().
+            \\`redis.asyncio.client.PubSub\\` instance для subscribe().
         """
         client = await self.get_client(kind)
         return client.pubsub()

@@ -41,7 +41,7 @@ _IDENT_PART_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 def _validate_oracle_identifier(name: str) -> str:
     if not _IDENT_PART_RE.fullmatch(name):
         raise ValueError(
-            f"cdc.oracle: invalid identifier {name!r} (only [A-Za-z0-9_] allowed)",
+            f"cdc.oracle: invalid identifier {name!r} (only [A-Za-z0-9_] allowed)"
         )
     return name
 
@@ -51,7 +51,7 @@ def _validate_oracle_table(name: str) -> str:
     if len(parts) != 2 or not all(_IDENT_PART_RE.match(p) for p in parts):
         raise ValueError(
             f"cdc.oracle: invalid table ref {name!r} "
-            "(expected 'schema.table', [A-Za-z0-9_] only)",
+            "(expected 'schema.table', [A-Za-z0-9_] only)"
         )
     return name
 
@@ -85,7 +85,7 @@ class OracleCDCSource:
         self.watermark_column = _validate_oracle_identifier(watermark_column)
 
     async def _fetch_changes_since(
-        self, table: str, *, watermark: int | float,
+        self, table: str, *, watermark: int | float
     ) -> list[dict[str, Any]]:
         """Получить изменения с момента watermark.
 
@@ -101,7 +101,7 @@ class OracleCDCSource:
             import oracledb  # type: ignore[import-not-found]  # lazy, optional
         except ImportError as exc:
             raise ImportError(
-                "oracledb не установлен. Установите: pip install oracledb>=2.0",
+                "oracledb не установлен. Установите: pip install oracledb>=2.0"
             ) from exc
 
         rows = await asyncio.to_thread(self._sync_fetch, oracledb, table, watermark)
@@ -114,7 +114,7 @@ class OracleCDCSource:
         return rows
 
     def _sync_fetch(
-        self, oracledb: Any, table: str, watermark: int | float,
+        self, oracledb: Any, table: str, watermark: int | float
     ) -> list[dict[str, Any]]:
         """Sync часть: oracledb.connect + execute."""
         # S608 mitigation: validate identifiers BEFORE opening any DB
@@ -150,7 +150,7 @@ class OracleCDCSource:
         for table in self.tables:
             full_table = f"{self.schema}.{table}"
             changes = await self._fetch_changes_since(
-                full_table, watermark=last_watermark,
+                full_table, watermark=last_watermark
             )
             for ch in changes:
                 ch["_table"] = full_table

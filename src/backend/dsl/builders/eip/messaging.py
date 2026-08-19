@@ -31,13 +31,13 @@ class MessagingEIPsMixin(EIPMixinBase):
     """Schema-registry / streaming messaging EIPs."""
 
     def validate_schema(
-        self, subject: str, *, schema_loader: Any = None,
+        self, subject: str, *, schema_loader: Any = None
     ) -> RouteBuilder:
         """Валидация по схеме из реестра (JSON Schema / Avro / Protobuf)."""
         return cast(
             "RouteBuilder",
             self._add(  # type: ignore[attr-defined]
-                SchemaRegistryValidator(subject=subject, schema_loader=schema_loader),
+                SchemaRegistryValidator(subject=subject, schema_loader=schema_loader)
             ),
         )
 
@@ -56,7 +56,7 @@ class MessagingEIPsMixin(EIPMixinBase):
                     broker=broker,
                     reply_to_header=reply_to_header,
                     correlation_header=correlation_header,
-                ),
+                )
             ),
         )
 
@@ -77,7 +77,7 @@ class MessagingEIPsMixin(EIPMixinBase):
                     id_header=id_header,
                     ttl_seconds=ttl_seconds,
                     namespace=namespace,
-                ),
+                )
             ),
         )
 
@@ -86,18 +86,18 @@ class MessagingEIPsMixin(EIPMixinBase):
         return cast(
             "RouteBuilder",
             self._add(  # type: ignore[attr-defined]
-                DurableSubscriberProcessor(broker=broker, subscribers=subscribers),
+                DurableSubscriberProcessor(broker=broker, subscribers=subscribers)
             ),
         )
 
     def purge_channel(
-        self, broker: Any, channel: str, *, dry_run: bool = True,
+        self, broker: Any, channel: str, *, dry_run: bool = True
     ) -> RouteBuilder:
         """Очистка очереди/стрима (admin-операция)."""
         return cast(
             "RouteBuilder",
             self._add(  # type: ignore[attr-defined]
-                ChannelPurgerProcessor(broker=broker, channel=channel, dry_run=dry_run),
+                ChannelPurgerProcessor(broker=broker, channel=channel, dry_run=dry_run)
             ),
         )
 

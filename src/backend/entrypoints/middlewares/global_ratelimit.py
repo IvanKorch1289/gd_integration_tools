@@ -64,7 +64,7 @@ class FakeRateLimitChecker:
     """
 
     def __init__(
-        self, *, max_per_window: int = 100, window_seconds: float = 60.0,
+        self, *, max_per_window: int = 100, window_seconds: float = 60.0
     ) -> None:
         """Инициализация bucket'а.
 
@@ -178,7 +178,7 @@ class RedisRateLimitChecker:
                 await self._redis.expire(key, int(self._window) + 1)
         except Exception as exc:
             _logger.warning(
-                "RedisRateLimitChecker failed for identifier=%s: %s", identifier, exc,
+                "RedisRateLimitChecker failed for identifier=%s: %s", identifier, exc
             )
             return True, self._max, 0
 
@@ -241,7 +241,7 @@ class RedisRateLimitChecker:
                 return None
 
             return RateLimitConfig(
-                max_per_window=max_per_window, window_seconds=window_seconds,
+                max_per_window=max_per_window, window_seconds=window_seconds
             )
         except Exception as exc:
             _logger.warning(
@@ -284,7 +284,7 @@ class _LazyRedisProxy:
 
 
 def build_rate_limit_checker(
-    *, max_per_window: int = 100, window_seconds: float = 60.0,
+    *, max_per_window: int = 100, window_seconds: float = 60.0
 ) -> RateLimitChecker:
     """Фабрика rate-limit checker'а на основе профиля приложения.
 
@@ -298,7 +298,7 @@ def build_rate_limit_checker(
     except Exception as exc:  # pragma: no cover
         _logger.warning("RateLimit: DI redis-provider недоступен: %s", exc)
         return FakeRateLimitChecker(
-            max_per_window=max_per_window, window_seconds=window_seconds,
+            max_per_window=max_per_window, window_seconds=window_seconds
         )
 
     return RedisRateLimitChecker(
@@ -356,7 +356,7 @@ class GlobalRateLimitMiddleware:
         # longest-prefix-match (тот же паттерн что в TimeoutMiddleware S18 W6).
         items = tuple((p, c) for p, c in (route_checkers or {}).items())
         self._route_checkers: tuple[tuple[str, RateLimitChecker], ...] = tuple(
-            sorted(items, key=lambda kv: len(kv[0]), reverse=True),
+            sorted(items, key=lambda kv: len(kv[0]), reverse=True)
         )
 
     @staticmethod
@@ -366,7 +366,7 @@ class GlobalRateLimitMiddleware:
             from src.backend.core.config.features import feature_flags
 
             return bool(
-                getattr(feature_flags, "multi_tenant_rate_limit_enabled", False),
+                getattr(feature_flags, "multi_tenant_rate_limit_enabled", False)
             )
         except Exception as _:
             return False
@@ -422,11 +422,7 @@ class GlobalRateLimitMiddleware:
                     (b"x-ratelimit-remaining", b"0"),
                 ]
                 await send(
-                    {
-                        "type": "http.response.start",
-                        "status": 429,
-                        "headers": headers,
-                    },
+                    {"type": "http.response.start", "status": 429, "headers": headers}
                 )
                 body = b'{"detail":"Too Many Requests","retry_after":60}'
                 await send({"type": "http.response.body", "body": body})

@@ -65,11 +65,11 @@ class ExpressSendFileProcessor(BaseProcessor):
         super().__init__(name=name or f"express_send_file({bot})")
         if not s3_key_from and not file_data_property:
             raise ValueError(
-                "ExpressSendFileProcessor: укажите s3_key_from или file_data_property",
+                "ExpressSendFileProcessor: укажите s3_key_from или file_data_property"
             )
         if not file_name and not file_name_from:
             raise ValueError(
-                "ExpressSendFileProcessor: укажите file_name или file_name_from",
+                "ExpressSendFileProcessor: укажите file_name или file_name_from"
             )
         self._bot = bot
         self._chat_id_from = chat_id_from
@@ -88,7 +88,7 @@ class ExpressSendFileProcessor(BaseProcessor):
         chat_id = resolve_value(exchange, self._chat_id_from)
         if not chat_id:
             exchange.fail(
-                f"ExpressSendFileProcessor: chat_id отсутствует ({self._chat_id_from!r})",
+                f"ExpressSendFileProcessor: chat_id отсутствует ({self._chat_id_from!r})"
             )
             return
 
@@ -98,7 +98,7 @@ class ExpressSendFileProcessor(BaseProcessor):
             return
 
         file_name = self._file_name or str(
-            resolve_value(exchange, self._file_name_from or "") or "",
+            resolve_value(exchange, self._file_name_from or "") or ""
         )
         if not file_name:
             exchange.fail("ExpressSendFileProcessor: пустое имя файла")
@@ -152,7 +152,7 @@ class ExpressSendFileProcessor(BaseProcessor):
                 if data is not None:
                     return data
                 _logger.warning(
-                    "ExpressSendFile: S3-ключ %r не найден, fallback на property", key,
+                    "ExpressSendFile: S3-ключ %r не найден, fallback на property", key
                 )
 
         if self._file_data_property:

@@ -73,7 +73,9 @@ class LoopProcessor(BaseProcessor):
                         "LoopProcessor: _until callback raised "
                         "(exc_type=%s exc_msg=%s) — breaking loop at "
                         "iteration=%d",
-                        type(exc).__name__, exc, iteration,
+                        type(exc).__name__,
+                        exc,
+                        iteration,
                     )
                     break
 

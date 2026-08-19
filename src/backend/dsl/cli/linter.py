@@ -109,7 +109,7 @@ class DSLLinter:
                     severity="error",
                     message=f"route.toml не найден в {route_dir}",
                     file=route_dir,
-                ),
+                )
             )
             return issues
 
@@ -124,7 +124,7 @@ class DSLLinter:
                     severity="error",
                     message=f"*.dsl.yaml файлы отсутствуют в {route_dir}",
                     file=route_dir,
-                ),
+                )
             )
             return issues
 
@@ -154,7 +154,7 @@ class DSLLinter:
                     severity="error",
                     message=f"Файл не найден: {yaml_path}",
                     file=yaml_path,
-                ),
+                )
             ]
 
         # Plugin-aware: ищем родительский plugin.toml через extensions/<name>/.
@@ -183,7 +183,7 @@ class DSLLinter:
                     severity="error",
                     message=f"Не удалось распарсить TOML: {exc}",
                     file=toml_path,
-                ),
+                )
             )
             return set(), issues
 
@@ -195,7 +195,7 @@ class DSLLinter:
                     severity="error",
                     message="Раздел [route] должен быть таблицей",
                     file=toml_path,
-                ),
+                )
             )
             return set(), issues
 
@@ -208,7 +208,7 @@ class DSLLinter:
                         message=f"Отсутствует [route].{required}",
                         file=toml_path,
                         suggestion=f'Добавьте {required} = "..." в [route]',
-                    ),
+                    )
                 )
 
         # Capabilities — list[dict[name, scope]].
@@ -217,7 +217,7 @@ class DSLLinter:
 
     @staticmethod
     def _declared_from_toml(
-        toml_path: Path, *, data: dict[str, Any] | None = None,
+        toml_path: Path, *, data: dict[str, Any] | None = None
     ) -> set[str]:
         """Извлекает declared capabilities из route.toml / plugin.toml."""
         if data is None:
@@ -225,7 +225,7 @@ class DSLLinter:
                 import tomllib
 
                 data = tomllib.loads(toml_path.read_text(encoding="utf-8"))
-            except (OSError, ValueError):
+            except OSError, ValueError:
                 return set()
 
         # route.toml: [[capabilities]] OR [route]::capabilities = [...]
@@ -262,7 +262,7 @@ class DSLLinter:
         return set()
 
     def _lint_dsl_yaml(
-        self, yaml_path: Path, declared_caps: set[str],
+        self, yaml_path: Path, declared_caps: set[str]
     ) -> list[LintIssue]:
         """Проверяет один *.dsl.yaml."""
         issues: list[LintIssue] = []
@@ -275,7 +275,7 @@ class DSLLinter:
                     severity="error",
                     message="PyYAML не установлен",
                     file=yaml_path,
-                ),
+                )
             ]
 
         try:
@@ -287,7 +287,7 @@ class DSLLinter:
                     severity="error",
                     message=f"YAML parse error: {exc}",
                     file=yaml_path,
-                ),
+                )
             )
             return issues
 
@@ -298,7 +298,7 @@ class DSLLinter:
                     severity="error",
                     message="Root должен быть mapping",
                     file=yaml_path,
-                ),
+                )
             )
             return issues
 
@@ -313,7 +313,7 @@ class DSLLinter:
                     message="Отсутствуют from+steps (или route_id+processors)",
                     file=yaml_path,
                     suggestion="Добавьте секции from: и steps: или route_id + processors",
-                ),
+                )
             )
             return issues
 
@@ -325,7 +325,7 @@ class DSLLinter:
                     severity="error",
                     message="'steps'/'processors' должен быть список",
                     file=yaml_path,
-                ),
+                )
             )
             return issues
 
@@ -336,7 +336,7 @@ class DSLLinter:
         return issues
 
     def _lint_step(
-        self, yaml_path: Path, step: Any, index: int, declared_caps: set[str],
+        self, yaml_path: Path, step: Any, index: int, declared_caps: set[str]
     ) -> list[LintIssue]:
         """Проверяет один шаг pipeline."""
         issues: list[LintIssue] = []
@@ -355,7 +355,7 @@ class DSLLinter:
                             f"got keys {list(step.keys())}"
                         ),
                         file=yaml_path,
-                    ),
+                    )
                 )
                 return issues
             proc_name = next(iter(step))
@@ -368,7 +368,7 @@ class DSLLinter:
                         f"step[{index}]: must be str or dict, got {type(step).__name__}"
                     ),
                     file=yaml_path,
-                ),
+                )
             )
             return issues
 
@@ -391,7 +391,7 @@ class DSLLinter:
                             f'Добавьте [[capabilities]] name = "{cap}" '
                             f"в route.toml или plugin.toml"
                         ),
-                    ),
+                    )
                 )
 
         return issues
@@ -427,7 +427,7 @@ def main(argv: list[str] | None = None) -> int:
     def lint_cmd(
         path: Path = typer.Argument(..., help="Каталог или *.dsl.yaml файл"),
         strict: bool = typer.Option(
-            False, "--strict", help="Strict-mode: warnings → errors (для CI).",
+            False, "--strict", help="Strict-mode: warnings → errors (для CI)."
         ),
         as_json: bool = typer.Option(False, "--json", help="Вывод в JSON формате."),
     ) -> None:
@@ -469,12 +469,12 @@ def main(argv: list[str] | None = None) -> int:
         else:
             for iss in issues:
                 style = {"error": "red", "warning": "yellow", "info": "blue"}.get(
-                    iss.severity, "white",
+                    iss.severity, "white"
                 )
                 line_suffix = f":{iss.line}" if iss.line else ""
                 console.print(
                     f"[{style}][{iss.severity.upper()}][/] "
-                    f"{iss.code}: {iss.message} ({iss.file}{line_suffix})",
+                    f"{iss.code}: {iss.message} ({iss.file}{line_suffix})"
                 )
                 if iss.suggestion:
                     console.print(f"  → {iss.suggestion}")
@@ -500,12 +500,12 @@ def main(argv: list[str] | None = None) -> int:
         else:
             for iss in issues:
                 style = {"error": "red", "warning": "yellow", "info": "blue"}.get(
-                    iss.severity, "white",
+                    iss.severity, "white"
                 )
                 line_suffix = f":{iss.line}" if iss.line else ""
                 console.print(
                     f"[{style}][{iss.severity.upper()}][/] {iss.code}: {iss.message} "
-                    f"({iss.file}{line_suffix})",
+                    f"({iss.file}{line_suffix})"
                 )
                 if iss.suggestion:
                     console.print(f"  → {iss.suggestion}")

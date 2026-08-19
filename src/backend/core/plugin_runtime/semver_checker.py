@@ -194,7 +194,7 @@ def _check_strict_mode(version: str, requires_core: str, errors: list[str]) -> N
     if not has_upper_bound:
         errors.append(
             f"strict-режим: requires_core '{requires_core}' "
-            "не содержит явного верхнего ограничения (<X.Y или ~=X.Y)",
+            "не содержит явного верхнего ограничения (<X.Y или ~=X.Y)"
         )
 
 
@@ -222,7 +222,7 @@ def is_compatible(plugin_requires: str, core_version: str) -> bool:
     try:
         spec = SpecifierSet(plugin_requires)
         version = Version(core_version)
-    except (InvalidSpecifier, Exception):
+    except InvalidSpecifier, Exception:
         return False
 
     return version in spec

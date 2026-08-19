@@ -82,7 +82,7 @@ class ExecutionTracer:
 
     @asynccontextmanager
     async def trace(
-        self, route_id: str, processor_name: str, processor_type: str,
+        self, route_id: str, processor_name: str, processor_type: str
     ) -> AsyncGenerator[dict[str, Any]]:
         """Context manager: emit start/end events с timing."""
         ts = datetime.now(UTC).isoformat()
@@ -148,7 +148,7 @@ class ExecutionTracer:
                     try:
                         q.get_nowait()
                         q.put_nowait(event)
-                    except (asyncio.QueueEmpty, asyncio.QueueFull):
+                    except asyncio.QueueEmpty, asyncio.QueueFull:
                         pass
 
     async def subscribe(self, route_id: str) -> AsyncGenerator[TraceEvent]:
@@ -182,7 +182,7 @@ class ExecutionTracer:
                 subs.remove(queue)
 
     async def get_recent_traces(
-        self, route_id: str, limit: int = 100,
+        self, route_id: str, limit: int = 100
     ) -> list[TraceEvent]:
         """S44 W1 + S47 W1 (TD-026): возвращает последние N events.
 

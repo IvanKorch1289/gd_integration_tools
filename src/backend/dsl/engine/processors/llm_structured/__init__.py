@@ -69,7 +69,7 @@ __all__ = ("LLMStructuredProcessor",)
     tags=("ai", "llm", "structured-output"),
 )
 class LLMStructuredProcessor(
-    ResolveMixin, ProcessMixin, MetricsMixin, SerializationMixin, BaseProcessor,
+    ResolveMixin, ProcessMixin, MetricsMixin, SerializationMixin, BaseProcessor
 ):
     """LLM structured output processor (4 mixins + BaseProcessor = 9 methods + 1 core).
 
@@ -118,16 +118,16 @@ class LLMStructuredProcessor(
         if not model or "/" not in model:
             raise ValueError(
                 f"llm_structured: model должен быть в формате "
-                f"'<provider>/<name>', получено {model!r}",
+                f"'<provider>/<name>', получено {model!r}"
             )
         if retry < 0:
             raise ValueError(
-                f"llm_structured: retry должен быть >= 0, получено {retry!r}",
+                f"llm_structured: retry должен быть >= 0, получено {retry!r}"
             )
         if cost_budget_usd is not None and cost_budget_usd < 0:
             raise ValueError(
                 "llm_structured: cost_budget_usd должен быть >= 0, "
-                f"получено {cost_budget_usd!r}",
+                f"получено {cost_budget_usd!r}"
             )
         self._model = model
         self._output_schema_ref = output_schema

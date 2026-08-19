@@ -91,13 +91,13 @@ async def start_outbox_dispatcher(
     ]
     if missing:
         _logger.warning(
-            "outbox.lifecycle.missing_dependencies", extra={"missing": missing},
+            "outbox.lifecycle.missing_dependencies", extra={"missing": missing}
         )
         return
-    assert backend is not None
-    assert pending_source is not None
-    assert ack is not None
-    assert deliverer is not None
+    assert backend is not None  # nosec
+    assert pending_source is not None  # nosec
+    assert ack is not None  # nosec
+    assert deliverer is not None  # nosec
     # FW1: если DLQ-handler не передан явно, пробуем построить
     # InboxDLQWriter из ``state.outbox_dlq_session_factory`` (DI).
     # Fallback — default _BackendDLQHandler (пишет в ту же outbox-таблицу).

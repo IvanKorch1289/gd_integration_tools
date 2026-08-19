@@ -74,12 +74,12 @@ class AdaptiveStreamReader:
         if utilization >= self._adjust_high:
             # Backpressure — уменьшить batch
             new_count = max(
-                self._min_count, int(self._current_count / self._adjust_factor),
+                self._min_count, int(self._current_count / self._adjust_factor)
             )
         elif utilization <= self._adjust_low:
             # Низкая нагрузка — увеличить batch
             new_count = min(
-                self._max_count, int(self._current_count * self._adjust_factor),
+                self._max_count, int(self._current_count * self._adjust_factor)
             )
         else:
             # В норме — без изменений

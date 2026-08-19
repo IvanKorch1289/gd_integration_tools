@@ -91,9 +91,7 @@ class JsonToXml(ConversionStrategy):
         if not isinstance(data, dict):
             data = {"root": data}
         return xmltodict.unparse(
-            data
-            if any(isinstance(v, dict) for v in data.values())
-            else {"root": data},
+            data if any(isinstance(v, dict) for v in data.values()) else {"root": data},
             pretty=True,
         )
 
@@ -284,7 +282,7 @@ _STRATEGIES: dict[str, ConversionStrategy] = {
 
 
 def register_conversion(
-    from_fmt: str, to_fmt: str, strategy: ConversionStrategy,
+    from_fmt: str, to_fmt: str, strategy: ConversionStrategy
 ) -> None:
     """Зарегистрировать conversion."""
     _STRATEGIES[f"{from_fmt}→{to_fmt}"] = strategy
@@ -297,7 +295,7 @@ class ConvertProcessor(BaseProcessor):
     """
 
     def __init__(
-        self, from_format: str, to_format: str, *, name: str | None = None,
+        self, from_format: str, to_format: str, *, name: str | None = None
     ) -> None:
         """Выполнить операцию   init  ."""
         super().__init__(name=name or f"convert:{from_format}→{to_format}")

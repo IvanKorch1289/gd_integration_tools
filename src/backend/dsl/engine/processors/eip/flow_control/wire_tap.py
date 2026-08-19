@@ -30,7 +30,7 @@ class WireTapProcessor(BaseProcessor):
     """
 
     def __init__(
-        self, tap_processors: list[BaseProcessor], *, name: str | None = None,
+        self, tap_processors: list[BaseProcessor], *, name: str | None = None
     ) -> None:
         super().__init__(name=name or "wire_tap")
         self._tap_processors = tap_processors
@@ -39,8 +39,8 @@ class WireTapProcessor(BaseProcessor):
         """Создаёт tap-копию exchange и прогоняет через tap_processors (fire-and-forget)."""
         tap_exchange = Exchange(
             in_message=Message(
-                body=exchange.in_message.body, headers=dict(exchange.in_message.headers),
-            ),
+                body=exchange.in_message.body, headers=dict(exchange.in_message.headers)
+            )
         )
         tap_exchange.meta.route_id = exchange.meta.route_id
         tap_exchange.meta.correlation_id = exchange.meta.correlation_id

@@ -35,7 +35,7 @@ class ThreeTierRagCache:
         self._l3_enabled = l3_enabled
 
     async def lookup_answer(
-        self, query: str, *, tenant: str | None = None,
+        self, query: str, *, tenant: str | None = None
     ) -> tuple[Any | None, str | None]:
         """Ищет готовый ответ в L1 → L2. Возвращает (value, tier|None)."""
         if self._l1_enabled:
@@ -49,11 +49,7 @@ class ThreeTierRagCache:
         return None, None
 
     async def lookup_chunks(
-        self,
-        query: str,
-        *,
-        tenant: str | None = None,
-        namespace: str | None = None,
+        self, query: str, *, tenant: str | None = None, namespace: str | None = None
     ) -> tuple[list[dict[str, Any]] | None, str | None]:
         """Ищет сырые retrieval-чанки в L3 с tenant-isolation (Sprint 2.1).
 
@@ -75,7 +71,7 @@ class ThreeTierRagCache:
         return None, None
 
     async def store_answer(
-        self, query: str, value: Any, *, tenant: str | None = None,
+        self, query: str, value: Any, *, tenant: str | None = None
     ) -> None:
         """Сохраняет ответ в активные tier'ы (L1 + L2 при включении)."""
         if self._l1_enabled:

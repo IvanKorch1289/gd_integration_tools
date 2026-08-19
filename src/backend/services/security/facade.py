@@ -112,7 +112,7 @@ class SecurityFacade:
     # ──────────────────── Capabilities ────────────────────
 
     async def check_capability(
-        self, tenant_id: str, action: str, resource: str,
+        self, tenant_id: str, action: str, resource: str
     ) -> bool:
         """Проверить capability для tenant.
 
@@ -162,7 +162,7 @@ class SecurityFacade:
         )
 
         return _verify(
-            payload, signature, timestamp, secret, window_seconds=window_seconds,
+            payload, signature, timestamp, secret, window_seconds=window_seconds
         )
 
     # ──────────────────── PII ────────────────────
@@ -198,7 +198,7 @@ class SecurityFacade:
         """
         self._assert("security.pii.detokenize", "text")
         _logger.debug(
-            "detokenize_pii: use PIITokenizer.unmask(masked_text, token_map) directly",
+            "detokenize_pii: use PIITokenizer.unmask(masked_text, token_map) directly"
         )
         return text
 
@@ -339,7 +339,7 @@ class SecurityFacade:
                 cursor = 0
                 while True:
                     cursor, keys = await self._jwt_blacklist._redis.scan(
-                        cursor, match=pattern, count=100,
+                        cursor, match=pattern, count=100
                     )
                     if keys:
                         await self._jwt_blacklist._redis.delete(*keys)

@@ -62,7 +62,7 @@ class FeedbackTrainer:
 
         started = time.monotonic()
         records = await self._dataset_builder.build(
-            tenant_id=tenant_id, limit=limit, only_positive=True,
+            tenant_id=tenant_id, limit=limit, only_positive=True
         )
         try:
             import dspy
@@ -107,16 +107,12 @@ class DSPyFeedbackTrainer:
     """
 
     def __init__(
-        self,
-        *,
-        dataset_builder: Any = None,
-        prompt_storage: Any = None,
+        self, *, dataset_builder: Any = None, prompt_storage: Any = None
     ) -> None:
         self._inner: FeedbackTrainer | None = None
         if dataset_builder is not None and prompt_storage is not None:
             self._inner = FeedbackTrainer(
-                dataset_builder=dataset_builder,
-                prompt_storage=prompt_storage,
+                dataset_builder=dataset_builder, prompt_storage=prompt_storage
             )
 
     def collect_feedback(self, items: list[dict[str, Any]]) -> dict[str, Any]:
@@ -152,7 +148,7 @@ class DSPyFeedbackTrainer:
             return {"status": "noop", "reason": "no inner trainer configured"}
 
         result = await self._inner.train(
-            prompt_name=prompt_name, tenant_id=tenant_id, limit=limit,
+            prompt_name=prompt_name, tenant_id=tenant_id, limit=limit
         )
         return {
             "status": "completed",

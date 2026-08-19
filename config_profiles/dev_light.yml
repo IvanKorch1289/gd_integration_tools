@@ -210,3 +210,10 @@ invoker:
 features:
   lsp_server_strict: false
   ai_prompt_sweep_strict: false
+
+
+# P2-2 (cycle 241): route-loader fix. Default `routes_dir=dsl_routes/` (empty)
+# → /admin/dsl-routes returns []. Реальные routes в `routes/` (7 directories
+# with route.toml + *.dsl.yaml). Override для dev_light.
+dsl:
+  routes_dir: "./routes"

@@ -43,7 +43,7 @@ class DatabaseSessionManager:
     """
 
     def __init__(
-        self, session_maker: async_sessionmaker[AsyncSession], db_name: str = "main",
+        self, session_maker: async_sessionmaker[AsyncSession], db_name: str = "main"
     ):
         self.session_maker = session_maker
         self.db_name = db_name
@@ -75,7 +75,7 @@ class DatabaseSessionManager:
                     exc_info=True,
                 )
                 raise DatabaseError(
-                    message=f"Failed to create database session for '{self.db_name}'",
+                    message=f"Failed to create database session for '{self.db_name}'"
                 ) from exc
 
     @asynccontextmanager
@@ -87,10 +87,10 @@ class DatabaseSessionManager:
         except Exception as exc:
             await session.rollback()
             self.logger.error(
-                "Ошибка транзакции в БД '%s': %s", self.db_name, str(exc), exc_info=True,
+                "Ошибка транзакции в БД '%s': %s", self.db_name, str(exc), exc_info=True
             )
             raise DatabaseError(
-                message=f"Transaction failed for '{self.db_name}'",
+                message=f"Transaction failed for '{self.db_name}'"
             ) from exc
 
     async def get_session(self) -> AsyncGenerator[AsyncSession]:
@@ -104,7 +104,7 @@ class DatabaseSessionManager:
             yield session
 
     def connection(
-        self, isolation_level: str | None = None, commit: bool = True,
+        self, isolation_level: str | None = None, commit: bool = True
     ) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
         """Декоратор сервисного метода.
 
@@ -123,7 +123,7 @@ class DatabaseSessionManager:
                     try:
                         if isolation_level:
                             await session.connection(
-                                execution_options={"isolation_level": isolation_level},
+                                execution_options={"isolation_level": isolation_level}
                             )
 
                         result = await method(*args, session=session, **kwargs)
@@ -149,7 +149,7 @@ class DatabaseSessionManager:
                             message=(
                                 f"Ошибка при выполнении транзакции "
                                 f"в БД '{self.db_name}' - {exc!s}"
-                            ),
+                            )
                         ) from exc
 
             return wrapper
@@ -161,7 +161,7 @@ class DatabaseSessionManager:
 def get_main_session_manager() -> DatabaseSessionManager:
     """Lazy singleton ``DatabaseSessionManager`` для main-БД (Wave 6.1)."""
     return DatabaseSessionManager(
-        session_maker=get_db_initializer().async_session_maker, db_name="main",
+        session_maker=get_db_initializer().async_session_maker, db_name="main"
     )
 
 
@@ -170,7 +170,7 @@ def get_external_session_manager(profile_name: str) -> DatabaseSessionManager:
     initializer = get_external_db_registry().get_initializer(profile_name)
 
     return DatabaseSessionManager(
-        session_maker=initializer.async_session_maker, db_name=profile_name,
+        session_maker=initializer.async_session_maker, db_name=profile_name
     )
 
 

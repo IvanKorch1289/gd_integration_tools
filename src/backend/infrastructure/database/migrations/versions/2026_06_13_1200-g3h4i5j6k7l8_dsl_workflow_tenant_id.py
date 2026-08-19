@@ -65,18 +65,18 @@ def upgrade() -> None:
             """
             ALTER TABLE dsl_snapshots
             ADD COLUMN tenant_id VARCHAR(64) NOT NULL DEFAULT 'default'
-            """,
+            """
         )
     op.execute(
         """
         CREATE INDEX IF NOT EXISTS ix_dsl_snapshots_tenant_id
         ON dsl_snapshots (tenant_id)
-        """,
+        """
     )
     op.execute(
         """
         UPDATE dsl_snapshots SET tenant_id = 'default' WHERE tenant_id IS NULL
-        """,
+        """
     )
 
     # 2. workflow_events.tenant_id
@@ -85,18 +85,18 @@ def upgrade() -> None:
             """
             ALTER TABLE workflow_events
             ADD COLUMN tenant_id VARCHAR(64) NOT NULL DEFAULT 'default'
-            """,
+            """
         )
     op.execute(
         """
         CREATE INDEX IF NOT EXISTS ix_workflow_events_tenant_id
         ON workflow_events (tenant_id)
-        """,
+        """
     )
     op.execute(
         """
         UPDATE workflow_events SET tenant_id = 'default' WHERE tenant_id IS NULL
-        """,
+        """
     )
 
 

@@ -74,7 +74,7 @@ class BrowserClient:
             launch_kwargs["proxy"] = {"server": self._proxy}
         self._browser = await self._playwright.chromium.launch(**launch_kwargs)
         logger.info(
-            "Browser started (headless=%s, stealth=%s)", self._headless, self._stealth,
+            "Browser started (headless=%s, stealth=%s)", self._headless, self._stealth
         )
 
     async def stop(self) -> None:
@@ -97,14 +97,14 @@ class BrowserClient:
         ctx_kwargs: dict[str, Any] = {
             "viewport": {
                 "width": random.randint(  # non-cryptographic use
-                    1280, 1920,
+                    1280, 1920
                 ),  # stealth fingerprint randomization, не криптография
                 "height": random.randint(  # non-cryptographic use
-                    720, 1080,
+                    720, 1080
                 ),  # stealth fingerprint randomization, не криптография
             },
             "user_agent": random.choice(  # non-cryptographic use
-                _USER_AGENTS,
+                _USER_AGENTS
             ),  # stealth UA rotation, не криптография
         }
         if self._stealth:
@@ -123,11 +123,11 @@ class BrowserClient:
         """
         if self._human_delays:
             await asyncio.sleep(
-                random.randint(min_ms, max_ms) / 1000,  # non-cryptographic use
+                random.randint(min_ms, max_ms) / 1000  # non-cryptographic use
             )  # human-like delay jitter, не криптография
 
     async def navigate(
-        self, url: str, wait_until: str = "domcontentloaded",
+        self, url: str, wait_until: str = "domcontentloaded"
     ) -> dict[str, Any]:
         """Navigate to URL.
 
@@ -144,7 +144,7 @@ class BrowserClient:
             page = await ctx.new_page()
             try:
                 response = await page.goto(
-                    url, wait_until=wait_until, timeout=self._timeout,
+                    url, wait_until=wait_until, timeout=self._timeout
                 )
                 await self._human_delay()
                 return {
@@ -171,7 +171,7 @@ class BrowserClient:
             page = await ctx.new_page()
             try:
                 await page.goto(
-                    url, wait_until="domcontentloaded", timeout=self._timeout,
+                    url, wait_until="domcontentloaded", timeout=self._timeout
                 )
                 await self._human_delay()
                 elements = await page.query_selector_all(selector)
@@ -195,7 +195,7 @@ class BrowserClient:
             page = await ctx.new_page()
             try:
                 await page.goto(
-                    url, wait_until="domcontentloaded", timeout=self._timeout,
+                    url, wait_until="domcontentloaded", timeout=self._timeout
                 )
                 await self._human_delay()
                 return await page.evaluate(f"""
@@ -213,7 +213,7 @@ class BrowserClient:
                 await ctx.close()
 
     async def fill_form(
-        self, url: str, fields: dict[str, str], submit_selector: str | None = None,
+        self, url: str, fields: dict[str, str], submit_selector: str | None = None
     ) -> dict[str, Any]:
         """Fill form fields and optionally submit.
 
@@ -231,7 +231,7 @@ class BrowserClient:
             page = await ctx.new_page()
             try:
                 await page.goto(
-                    url, wait_until="domcontentloaded", timeout=self._timeout,
+                    url, wait_until="domcontentloaded", timeout=self._timeout
                 )
                 for selector, value in fields.items():
                     await self._human_delay(50, 200)
@@ -260,7 +260,7 @@ class BrowserClient:
             page = await ctx.new_page()
             try:
                 await page.goto(
-                    url, wait_until="domcontentloaded", timeout=self._timeout,
+                    url, wait_until="domcontentloaded", timeout=self._timeout
                 )
                 await self._human_delay()
                 await page.click(selector)
@@ -285,7 +285,7 @@ class BrowserClient:
             page = await ctx.new_page()
             try:
                 await page.goto(
-                    url, wait_until="domcontentloaded", timeout=self._timeout,
+                    url, wait_until="domcontentloaded", timeout=self._timeout
                 )
                 await self._human_delay()
                 return await page.screenshot(full_page=full_page)
@@ -315,13 +315,13 @@ class BrowserClient:
                                 "action": "navigate",
                                 "url": page.url,
                                 "status": resp.status if resp else 0,
-                            },
+                            }
                         )
 
                     elif action == "click":
                         await page.click(step["selector"])
                         results.append(
-                            {"action": "click", "selector": step["selector"]},
+                            {"action": "click", "selector": step["selector"]}
                         )
 
                     elif action == "fill":
@@ -330,7 +330,7 @@ class BrowserClient:
 
                     elif action == "wait":
                         await page.wait_for_selector(
-                            step["selector"], timeout=step.get("timeout", self._timeout),
+                            step["selector"], timeout=step.get("timeout", self._timeout)
                         )
                         results.append({"action": "wait", "selector": step["selector"]})
 
@@ -341,7 +341,7 @@ class BrowserClient:
 
                     elif action == "screenshot":
                         data = await page.screenshot(
-                            full_page=step.get("full_page", True),
+                            full_page=step.get("full_page", True)
                         )
                         results.append({"action": "screenshot", "size": len(data)})
 

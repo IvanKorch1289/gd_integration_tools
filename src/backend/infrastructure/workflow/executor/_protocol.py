@@ -22,23 +22,23 @@ class _DSLStepExecutorProtocol(Protocol):
     def _eval_expression(self, expr: Any, state: WorkflowState) -> Any: ...
 
     async def _exec_sequential(
-        self, step: WorkflowStep, state: WorkflowState, instance: WorkflowInstanceRow,
+        self, step: WorkflowStep, state: WorkflowState, instance: WorkflowInstanceRow
     ) -> StepResult: ...
 
     async def _exec_branch(
-        self, step: WorkflowStep, state: WorkflowState, instance: WorkflowInstanceRow,
+        self, step: WorkflowStep, state: WorkflowState, instance: WorkflowInstanceRow
     ) -> StepResult: ...
 
     async def _exec_loop(
-        self, step: WorkflowStep, state: WorkflowState, instance: WorkflowInstanceRow,
+        self, step: WorkflowStep, state: WorkflowState, instance: WorkflowInstanceRow
     ) -> StepResult: ...
 
     async def _exec_for_each(
-        self, step: WorkflowStep, state: WorkflowState, instance: WorkflowInstanceRow,
+        self, step: WorkflowStep, state: WorkflowState, instance: WorkflowInstanceRow
     ) -> StepResult: ...
 
     async def _exec_sub_flow(
-        self, step: WorkflowStep, state: WorkflowState, instance: WorkflowInstanceRow,
+        self, step: WorkflowStep, state: WorkflowState, instance: WorkflowInstanceRow
     ) -> StepResult: ...
 
     def _exec_wait(self, step: WorkflowStep, state: WorkflowState) -> StepResult: ...

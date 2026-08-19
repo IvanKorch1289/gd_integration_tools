@@ -108,7 +108,7 @@ def _resolve_include_extends(
         if resolved_str in _visited:
             raise RuntimeError(
                 f"Cycle detected in extends: chain: {resolved_str} is already "
-                f"being processed. Chain: {_visited}",
+                f"being processed. Chain: {_visited}"
             )
         _visited.add(resolved_str)
 
@@ -118,7 +118,7 @@ def _resolve_include_extends(
         base_data = yaml.safe_load(ext_yaml_str)
         if not isinstance(base_data, dict):
             raise ValueError(
-                f"Extended YAML must be a mapping, got: {type(base_data).__name__}",
+                f"Extended YAML must be a mapping, got: {type(base_data).__name__}"
             )
 
         # Recursively resolve the base (in case it also has include/extends)
@@ -154,7 +154,7 @@ def _resolve_include_extends(
         if not isinstance(include_paths, list):
             raise ValueError(
                 f"include: must be a string or list of strings, got: "
-                f"{type(include_paths).__name__}",
+                f"{type(include_paths).__name__}"
             )
 
         # Collect steps from all included files
@@ -172,7 +172,7 @@ def _resolve_include_extends(
             if resolved_inc_str in _visited:
                 raise RuntimeError(
                     f"Cycle detected in include: chain: {resolved_inc_str} is "
-                    f"already being processed. Chain: {_visited}",
+                    f"already being processed. Chain: {_visited}"
                 )
             _visited.add(resolved_inc_str)
 
@@ -182,7 +182,7 @@ def _resolve_include_extends(
             inc_data = yaml.safe_load(inc_yaml_str)
             if not isinstance(inc_data, dict):
                 raise ValueError(
-                    f"Included YAML must be a mapping, got: {type(inc_data).__name__}",
+                    f"Included YAML must be a mapping, got: {type(inc_data).__name__}"
                 )
 
             # Get steps from included file (recursive resolution for nested includes)
@@ -197,7 +197,7 @@ def _resolve_include_extends(
             if not isinstance(inc_steps, list):
                 raise ValueError(
                     f"steps: in included file must be a list, got: "
-                    f"{type(inc_steps).__name__}",
+                    f"{type(inc_steps).__name__}"
                 )
             all_steps.extend(inc_steps)
 
@@ -205,7 +205,7 @@ def _resolve_include_extends(
         existing_steps = spec.get("steps", [])
         if not isinstance(existing_steps, list):
             raise ValueError(
-                f"steps: must be a list, got: {type(existing_steps).__name__}",
+                f"steps: must be a list, got: {type(existing_steps).__name__}"
             )
         spec["steps"] = existing_steps + all_steps
 

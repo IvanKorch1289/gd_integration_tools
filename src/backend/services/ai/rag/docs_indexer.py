@@ -57,7 +57,9 @@ def _embed_offline(text: str, dim: int = _EMBED_DIM) -> list[float]:
     for tok in re.findall(r"\w+", (text or "").lower()):
         # ponytail: bag-of-words hash binning, not a security primitive.
         # usedforsecurity=False silences bandit B324 without weakening crypto.
-        vec[int(hashlib.md5(tok.encode(), usedforsecurity=False).hexdigest(), 16) % dim] += 1.0
+        vec[
+            int(hashlib.md5(tok.encode(), usedforsecurity=False).hexdigest(), 16) % dim
+        ] += 1.0
     n = sum(v * v for v in vec) ** 0.5
     return [v / n for v in vec] if n > 0 else vec
 
@@ -208,6 +210,7 @@ class DocsIndexer:
             # Bare `except Exception` маскировал Qdrant backend failures
             # (connection refused, timeout, malformed response).
             from src.backend.core.logging import get_logger
+
             get_logger(__name__).debug(
                 "rag.docs_indexer.qdrant_get_collection_failed",
                 extra={"error": str(qdrant_exc), "collection": self._collection_name},
@@ -227,6 +230,7 @@ class DocsIndexer:
                 # Bare `except Exception` маскировал unrelated runtime errors
                 # (KeyError, ValueError).
                 import logging
+
                 logging.getLogger(__name__).debug(
                     "docs_indexer._ensure_collection_legacy_fallback",
                     extra={
@@ -275,7 +279,7 @@ class DocsIndexer:
                             "chunk_index": idx,
                             "hash": _h(piece),
                         },
-                    },
+                    }
                 )
                 idx += 1
             offset += step
@@ -290,7 +294,7 @@ class DocsIndexer:
         return list(r)
 
     def _build_points(
-        self, chunks: list[dict[str, Any]], vecs: list[list[float]],
+        self, chunks: list[dict[str, Any]], vecs: list[list[float]]
     ) -> list[Any]:
         """PointStruct → Qdrant, dict fallback → in-memory substitute."""
         try:
@@ -311,6 +315,7 @@ class DocsIndexer:
             # `except Exception` маскировал unrelated runtime errors
             # (ValueError, RuntimeError).
             import logging
+
             logging.getLogger(__name__).debug(
                 "docs_indexer._build_points_fallback",
                 extra={"error": str(point_exc), "chunks_count": len(chunks)},
@@ -345,7 +350,7 @@ class DocsIndexer:
                         "file": path.name,
                         "file_hash": _h(raw),
                     },
-                ),
+                )
             )
         if not all_chunks:
             return 0
@@ -389,6 +394,6 @@ class DocsIndexer:
                     "metadata": {
                         k: v for k, v in (payload or {}).items() if k != "document"
                     },
-                },
+                }
             )
         return out

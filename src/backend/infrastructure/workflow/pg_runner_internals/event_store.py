@@ -93,12 +93,12 @@ class WorkflowEventStore:
         await session.execute(
             update(WorkflowInstance)
             .where(WorkflowInstance.id == workflow_id)
-            .values(last_event_seq=seq, updated_at=datetime.now(UTC)),
+            .values(last_event_seq=seq, updated_at=datetime.now(UTC))
         )
         return seq
 
     async def read_events(
-        self, workflow_id: UUID, after_seq: int = 0, limit: int = 1000,
+        self, workflow_id: UUID, after_seq: int = 0, limit: int = 1000
     ) -> list[WorkflowEventRow]:
         """Читает события ``seq > after_seq`` в порядке возрастания."""
         async with self._sm.create_session() as session:
@@ -117,14 +117,14 @@ class WorkflowEventStore:
         """Возвращает ``max(seq)`` для workflow. ``0`` если событий нет."""
         async with self._sm.create_session() as session:
             stmt = select(func.max(WorkflowEvent.id)).where(
-                WorkflowEvent.workflow_id == workflow_id,
+                WorkflowEvent.workflow_id == workflow_id
             )
             result = await session.execute(stmt)
             value = result.scalar_one_or_none()
             return int(value) if value is not None else 0
 
     async def snapshot(
-        self, workflow_id: UUID, state: dict[str, Any], at_seq: int,
+        self, workflow_id: UUID, state: dict[str, Any], at_seq: int
     ) -> None:
         """Фиксирует snapshot state + event ``snapshotted`` атомарно."""
         async with self._sm.create_session() as session:
@@ -132,7 +132,7 @@ class WorkflowEventStore:
                 await session.execute(
                     update(WorkflowInstance)
                     .where(WorkflowInstance.id == workflow_id)
-                    .values(snapshot_state=dict(state)),
+                    .values(snapshot_state=dict(state))
                 )
                 await self._append_within_session(
                     session,

@@ -3,6 +3,7 @@
 Phases: saga (forward + on-error compensate), checkpoint (state snapshot),
 continue_as_new (Temporal Event History reset).
 """
+
 from __future__ import annotations
 
 # ruff: noqa: F821 — shared symbols (exceptions, _build_retry_policy) defined in __init__.py
@@ -337,4 +338,3 @@ async def compile_continue_as_new_step(
         "same_workflow_id": decl.same_workflow_id,
         "same_input": decl.same_input,
     }
-

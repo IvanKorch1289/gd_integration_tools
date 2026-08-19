@@ -164,7 +164,7 @@ class CheckMixin(_CapabilityGateProtocol):
 
         # Mypy: declared.scope is not None потому что validate_ref
         # отвергает scope=None при scope_required=True.
-        assert declared.scope is not None
+        assert declared.scope is not None  # nosec
         if not definition.matcher.match(requested_scope, declared.scope):
             self._emit_audit(
                 plugin=plugin,
@@ -190,7 +190,7 @@ class CheckMixin(_CapabilityGateProtocol):
         )
 
     def check_tenant(
-        self, capability: str, tenant: str, principal: str, scope: str | None = None,
+        self, capability: str, tenant: str, principal: str, scope: str | None = None
     ) -> bool:
         """Tenant-aware check: возвращает ``bool`` (не raise).
 
@@ -237,7 +237,7 @@ class CheckMixin(_CapabilityGateProtocol):
         # 1. Policy consultation.
         if self._policy is not None:
             decision = self._policy.evaluate(
-                tenant=tenant, principal=principal, capability=capability, scope=scope,
+                tenant=tenant, principal=principal, capability=capability, scope=scope
             )
             if decision.effect == "deny":
                 with self._lock:  # D-AUDIT-98 fix (S183 W1.1)
@@ -310,7 +310,7 @@ class CheckMixin(_CapabilityGateProtocol):
             )
             return False
 
-        assert declared.scope is not None
+        assert declared.scope is not None  # nosec
         if not definition.matcher.match(scope, declared.scope):
             with self._lock:  # D-AUDIT-98 fix (S183 W1.1)
                 self._tenant_cache[cache_key] = False

@@ -86,7 +86,7 @@ class GetFeedbackExamplesProcessor(BaseProcessor):
         positive = await self._search(query, "positive", self._positive_k)
         negative = await self._search(query, "negative", self._negative_k)
         exchange.set_property(
-            self._inject_as, {"positive": positive, "negative": negative},
+            self._inject_as, {"positive": positive, "negative": negative}
         )
 
     def _extract_query(self, exchange: Exchange[Any]) -> str:
@@ -133,9 +133,16 @@ class GetFeedbackExamplesProcessor(BaseProcessor):
 
             rag = get_rag_service()
             results = await rag.search(
-                query=query, top_k=top_k * 2, namespace=self._NAMESPACE,
+                query=query, top_k=top_k * 2, namespace=self._NAMESPACE
             )
-        except (ImportError, AttributeError, ConnectionError, TimeoutError, OSError, RuntimeError) as exc:
+        except (
+            ImportError,
+            AttributeError,
+            ConnectionError,
+            TimeoutError,
+            OSError,
+            RuntimeError,
+        ) as exc:
             # D-AUDIT-13001 fix (cycle 130): narrow от bare
             # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt
             # + любые unexpected exceptions) до конкретных типов:
@@ -147,7 +154,8 @@ class GetFeedbackExamplesProcessor(BaseProcessor):
             logger.warning(
                 "GetFeedbackExamples: RAG search failed (exc_type=%s "
                 "exc_msg=%s) — returning empty examples list",
-                type(exc).__name__, exc,
+                type(exc).__name__,
+                exc,
             )
             return []
 

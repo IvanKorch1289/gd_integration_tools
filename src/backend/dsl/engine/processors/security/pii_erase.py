@@ -65,7 +65,7 @@ def _validate_entity_type(entity_type: str) -> str:
     if not _ENTITY_TYPE_RE.fullmatch(entity_type):
         raise ValueError(
             f"pii_erase: invalid entity_type {entity_type!r} "
-            "(only [A-Za-z0-9_] allowed)",
+            "(only [A-Za-z0-9_] allowed)"
         )
     return entity_type
 
@@ -142,9 +142,7 @@ class PiiEraseProcessor(BaseProcessor):
         self._hard_delete = hard_delete
 
     @handle_processor_error
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполнить erasure для scope.
 
         Side effects:
@@ -171,9 +169,7 @@ class PiiEraseProcessor(BaseProcessor):
             if cap_facade.check("dsl", "ai.memory.delete", scope=self._scope):
                 vectors_deleted = await self._delete_vectors(erasure_id)
             else:
-                _logger.debug(
-                    "vector deletion skipped: capability denied",
-                )
+                _logger.debug("vector deletion skipped: capability denied")
         except Exception as exc:
             # cycle-8/D-AUDIT-804: PII erasure fail-CLOSED.
             # Bare `except Exception` ранее молча логировал warning и
@@ -188,7 +184,7 @@ class PiiEraseProcessor(BaseProcessor):
                 exc,
             )
             await self._enqueue_failure_to_dlq(
-                erasure_id=erasure_id, step="vectors", exc=exc,
+                erasure_id=erasure_id, step="vectors", exc=exc
             )
             raise
 
@@ -210,7 +206,7 @@ class PiiEraseProcessor(BaseProcessor):
                 exc,
             )
             await self._enqueue_failure_to_dlq(
-                erasure_id=erasure_id, step="db_anonymize", exc=exc,
+                erasure_id=erasure_id, step="db_anonymize", exc=exc
             )
             raise
 
@@ -282,13 +278,12 @@ class PiiEraseProcessor(BaseProcessor):
             # Если scope не парсится — soft skip с warning (input error, не backend).
             if ":" not in self._scope:
                 _logger.warning(
-                    "vector deletion: scope=%r не парсится (нет ':'), skip",
-                    self._scope,
+                    "vector deletion: scope=%r не парсится (нет ':'), skip", self._scope
                 )
                 return 0
             entity_type, entity_id = self._scope.split(":", 1)
             return await store.delete_where(
-                {"entity_type": entity_type, "entity_id": entity_id},
+                {"entity_type": entity_type, "entity_id": entity_id}
             )
         except Exception as exc:
             # cycle-8/D-AUDIT-804: PII erasure fail-CLOSED.
@@ -336,24 +331,19 @@ class PiiEraseProcessor(BaseProcessor):
                     # SQL injection surface; values still bind via
                     # ``:entity_id``.
                     sql = text(
-                        f"DELETE FROM {entity_type}_pii "
-                        f"WHERE entity_id = :entity_id",
+                        f"DELETE FROM {entity_type}_pii WHERE entity_id = :entity_id"
                         # ``entity_type`` validated by regex whitelist; values bound.
                     )
-                    result = await session.execute(
-                        sql, {"entity_id": entity_id},
-                    )
+                    result = await session.execute(sql, {"entity_id": entity_id})
                 else:
                     sql = text(
                         f"UPDATE {entity_type}_pii "
                         f"SET name = NULL, email = NULL, phone = NULL, "
                         f"anonymized_at = NOW() "
-                        f"WHERE entity_id = :entity_id",
+                        f"WHERE entity_id = :entity_id"
                         # Same whitelist as DELETE branch above.
                     )
-                    result = await session.execute(
-                        sql, {"entity_id": entity_id},
-                    )
+                    result = await session.execute(sql, {"entity_id": entity_id})
                 await session.commit()
                 return int(result.rowcount or 0)
         except Exception as exc:
@@ -411,11 +401,7 @@ class PiiEraseProcessor(BaseProcessor):
         }
 
     async def _enqueue_failure_to_dlq(
-        self,
-        *,
-        erasure_id: str,
-        step: str,
-        exc: BaseException,
+        self, *, erasure_id: str, step: str, exc: BaseException
     ) -> None:
         """Persist PII erasure failure в DLQ для durable observability (cycle-8/D-AUDIT-804).
 

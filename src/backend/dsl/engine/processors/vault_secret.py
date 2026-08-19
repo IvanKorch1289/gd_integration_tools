@@ -90,7 +90,7 @@ class VaultSecretProcessor(BaseProcessor):
             from src.backend.infrastructure.secrets.vault_client import VaultConfig
         except ImportError as exc:
             exchange.fail(
-                f"vault dependencies not installed: {exc}. Install [secrets] extra.",
+                f"vault dependencies not installed: {exc}. Install [secrets] extra."
             )
             return
 
@@ -105,7 +105,7 @@ class VaultSecretProcessor(BaseProcessor):
                 secret = await asyncio.to_thread(backend.get, self._path)
         except Exception as exc:
             _logger.warning(
-                "vault_read failed", extra={"path": self._path, "error": str(exc)},
+                "vault_read failed", extra={"path": self._path, "error": str(exc)}
             )
             exchange.fail(f"Vault read failed for {self._path!r}: {exc}")
             return

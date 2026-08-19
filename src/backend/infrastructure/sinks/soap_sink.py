@@ -51,12 +51,11 @@ class SoapSink(Sink):
     kind: SinkKind = field(default=SinkKind.SOAP, init=False)
     _client: Any = field(default=None, init=False, repr=False)
     _lock: threading.Lock = field(
-        default_factory=threading.Lock, init=False, repr=False,
+        default_factory=threading.Lock, init=False, repr=False
     )
 
     @with_breaker("soap_sink")
-    @with_retry(max_attempts=3,
-        retry_on=(ConnectionError, TimeoutError, OSError))
+    @with_retry(max_attempts=3, retry_on=(ConnectionError, TimeoutError, OSError))
     @require_capability("soap.invoke", action="write")
     async def send(self, payload: Any) -> SinkResult:
         """Вызывает SOAP-операцию через ``asyncio.to_thread`` (zeep — sync)."""
@@ -64,7 +63,7 @@ class SoapSink(Sink):
             client = await asyncio.to_thread(self._get_client)
         except Exception as exc:
             return SinkResult(
-                ok=False, details={"error": str(exc) or exc.__class__.__name__},
+                ok=False, details={"error": str(exc) or exc.__class__.__name__}
             )
         if client is None:
             return SinkResult(ok=False, details={"error": "zeep not installed"})
@@ -102,12 +101,14 @@ class SoapSink(Sink):
             # file:// and other schemes are denied to prevent reading
             # local files or reaching internal-network endpoints.
             from urllib.parse import urlparse
+
             parsed = urlparse(self.wsdl_url)
             if parsed.scheme not in ("http", "https"):
                 _logger.error(
                     "SOAP sink WSDL denied: scheme %r not in (http, https); "
                     "wsdl_url=%s",
-                    parsed.scheme, self.wsdl_url,
+                    parsed.scheme,
+                    self.wsdl_url,
                 )
                 return None
             self._client = Client(self.wsdl_url, transport=transport)
@@ -130,13 +131,13 @@ class SoapSink(Sink):
         except Exception as exc:
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
             )
         latency_ms = (time.perf_counter() - start) * 1000.0
         if client is not None:
             return HealthResult.ok(latency_ms=latency_ms, mode=mode)
         return HealthResult.failed(
-            error="zeep not installed", mode=mode, latency_ms=latency_ms,
+            error="zeep not installed", mode=mode, latency_ms=latency_ms
         )
 
 

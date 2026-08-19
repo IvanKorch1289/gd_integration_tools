@@ -27,7 +27,7 @@ class _ClickHouseClient(Protocol):
 
 # S202 audit fix: workflow cost data (ClickHouse query bypass) — require admin role.
 _WORKFLOW_COST_GUARD = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN)),
+    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN))
 )
 router = APIRouter(
     prefix="/admin/workflow-cost",
@@ -142,7 +142,7 @@ async def estimate_workflow_cost(request: CostEstimateRequest) -> CostEstimateRe
     },
 )
 async def get_workflow_cost_history(
-    workflow_id: str, period_days: int = Query(7, ge=1, le=90),
+    workflow_id: str, period_days: int = Query(7, ge=1, le=90)
 ) -> dict[str, Any]:
     """Историческая стоимость workflow за период (для page 15 trend)."""
     from datetime import datetime, timedelta
@@ -191,6 +191,6 @@ async def get_workflow_cost_history(
     series: list[dict[str, Any]] = []
     for row in getattr(result, "result_rows", []):
         series.append(
-            {"day": str(row[0]), "runs": int(row[1]), "p95_ms": float(row[2] or 0.0)},
+            {"day": str(row[0]), "runs": int(row[1]), "p95_ms": float(row[2] or 0.0)}
         )
     return {"workflow_id": workflow_id, "period_days": period_days, "series": series}

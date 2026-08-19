@@ -129,7 +129,7 @@ class RouteRegistry:
                 for rid, pipeline in self._routes.items()
                 if pipeline.feature_flag is None
                 or pipeline.feature_flag not in disabled_feature_flags
-            ),
+            )
         )
 
     def list_disabled_routes(self) -> tuple[str, ...]:
@@ -145,7 +145,7 @@ class RouteRegistry:
                 for rid, pipeline in self._routes.items()
                 if pipeline.feature_flag is not None
                 and pipeline.feature_flag in disabled_feature_flags
-            ),
+            )
         )
 
     def get_route_feature_flags(self) -> dict[str, str]:

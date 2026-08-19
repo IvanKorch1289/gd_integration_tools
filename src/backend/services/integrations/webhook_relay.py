@@ -182,7 +182,7 @@ class WebhookRelay:
             return {"error": str(exc)}
 
     def _transform(
-        self, payload: dict[str, Any], rule: RelayRule,
+        self, payload: dict[str, Any], rule: RelayRule
     ) -> dict[str, Any] | None:
         if rule.condition:
             try:
@@ -190,7 +190,7 @@ class WebhookRelay:
 
                 if not jmespath.search(rule.condition, payload):
                     return None
-            except (jmespath.exceptions.ParseError, ValueError, TypeError):
+            except jmespath.exceptions.ParseError, ValueError, TypeError:
                 logger.debug(
                     "jmespath condition raised; rule applied as match-all",
                     exc_info=True,
@@ -215,7 +215,7 @@ class WebhookRelay:
         return payload
 
     async def _send_with_retry(
-        self, rule: RelayRule, payload: dict[str, Any],
+        self, rule: RelayRule, payload: dict[str, Any]
     ) -> dict[str, Any]:
         import httpx
 
@@ -301,13 +301,13 @@ class WebhookRelay:
             try:
                 data = orjson.loads(item)
                 entries.append(DLQEntry(**data))
-            except (orjson.JSONDecodeError, TypeError, ValueError):
+            except orjson.JSONDecodeError, TypeError, ValueError:
                 logger.debug("DLQ entry parse failed; skipped", exc_info=True)
                 continue
         return entries
 
     async def _dlq_remove(
-        self, entry_id: str, _entry_raw: bytes | str | None = None,
+        self, entry_id: str, _entry_raw: bytes | str | None = None
     ) -> None:
         """Удаляет одну запись DLQ по id (находит raw через полный обход).
 
@@ -318,8 +318,7 @@ class WebhookRelay:
         raw = await _redis_raw()
         if raw is None:
             self._memory_dlq = deque(
-                (e for e in self._memory_dlq if e.id != entry_id),
-                maxlen=_DLQ_MAX_LEN,
+                (e for e in self._memory_dlq if e.id != entry_id), maxlen=_DLQ_MAX_LEN
             )
             return
         try:
@@ -330,9 +329,9 @@ class WebhookRelay:
                     if data.get("id") == entry_id:
                         await raw.lrem(_DLQ_KEY, 1, item)
                         return
-                except (orjson.JSONDecodeError, TypeError, ValueError):
+                except orjson.JSONDecodeError, TypeError, ValueError:
                     logger.debug(
-                        "DLQ entry parse failed during remove; skipped", exc_info=True,
+                        "DLQ entry parse failed during remove; skipped", exc_info=True
                     )
                     continue
         except Exception as exc:
@@ -412,7 +411,7 @@ class WebhookRelay:
                         "id": entry.id,
                         "status": "rule_not_found",
                         "moved_to_dead_rule_queue": True,
-                    },
+                    }
                 )
                 continue
             r = await self._send_with_retry(rule, entry.payload)

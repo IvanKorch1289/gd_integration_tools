@@ -51,8 +51,7 @@ class WebhookSink(Sink):
     kind: SinkKind = field(default=SinkKind.WEBHOOK, init=False)
 
     @with_breaker("webhook_sink")
-    @with_retry(max_attempts=3,
-        retry_on=(ConnectionError, TimeoutError, OSError))
+    @with_retry(max_attempts=3, retry_on=(ConnectionError, TimeoutError, OSError))
     @require_capability("webhook.write", action="write")
     async def send(self, payload: Any) -> SinkResult:
         """Подписывает и отправляет ``payload`` на ``url``.
@@ -77,13 +76,13 @@ class WebhookSink(Sink):
         }
         if self.secret:
             sig = hmac.new(
-                self.secret.encode("utf-8"), body_bytes, hashlib.sha256,
+                self.secret.encode("utf-8"), body_bytes, hashlib.sha256
             ).hexdigest()
             headers["X-Webhook-Signature"] = sig
 
         async def _do_post() -> Any:
             async with OutboundHttpClient(
-                timeout=httpx.Timeout(self.timeout),
+                timeout=httpx.Timeout(self.timeout)
             ) as client:
                 resp = await client.post(self.url, content=body_bytes, headers=headers)
             # 5xx — поднимаем для retry policy
@@ -147,23 +146,19 @@ class WebhookSink(Sink):
         start = time.perf_counter()
         try:
             async with OutboundHttpClient(
-                timeout=httpx.Timeout(self.timeout),
+                timeout=httpx.Timeout(self.timeout)
             ) as client:
                 response = await client.request("HEAD", self.url)
             latency_ms = (time.perf_counter() - start) * 1000.0
             if response.status_code < 500:
                 return HealthResult.ok(
-                    latency_ms=latency_ms,
-                    mode=mode,
-                    status_code=response.status_code,
+                    latency_ms=latency_ms, mode=mode, status_code=response.status_code
                 )
             return HealthResult.failed(
-                error=f"HTTP {response.status_code}",
-                mode=mode,
-                latency_ms=latency_ms,
+                error=f"HTTP {response.status_code}", mode=mode, latency_ms=latency_ms
             )
         except Exception as exc:
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
             )

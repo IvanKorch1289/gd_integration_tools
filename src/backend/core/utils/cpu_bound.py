@@ -9,6 +9,7 @@ Example::
     result = await run_cpu_bound(_merge_pdfs, pdf_bytes_list)
     result = await run_cpu_bound(_ocr_image, image, use_process_pool=True)
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -69,13 +70,15 @@ async def run_cpu_bound[T](
         # ProcessPoolExecutor requires picklable top-level functions.
         # Lambda/closure/local fn → fallback to thread pool + warning.
         import pickle
+
         try:
             pickle.dumps(fn)
             picklable = True
-        except (pickle.PicklingError, TypeError, AttributeError):
+        except pickle.PicklingError, TypeError, AttributeError:
             picklable = False
         if not picklable:
             from src.backend.core.logging import get_logger
+
             get_logger(__name__).warning(
                 "cpu_bound: use_process_pool=True requires picklable fn, "
                 "got %s — falling back to asyncio.to_thread",

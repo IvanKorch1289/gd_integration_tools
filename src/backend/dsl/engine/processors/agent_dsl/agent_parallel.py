@@ -105,7 +105,7 @@ class AgentParallelProcessor(BaseAIProcessor):
                 raise ValueError(f"AgentParallelProcessor: agents[{idx}] без 'key'")
             if "workflow_id" not in agent:
                 raise ValueError(
-                    f"AgentParallelProcessor: agents[{idx}] без 'workflow_id'",
+                    f"AgentParallelProcessor: agents[{idx}] без 'workflow_id'"
                 )
         super().__init__(name=name or "agent_parallel")
         self.agents = [dict(a) for a in agents]
@@ -139,7 +139,7 @@ class AgentParallelProcessor(BaseAIProcessor):
         async def _gather() -> None:
             coros = [_invoke_one(spec) for spec in self.agents]
             collected = await asyncio.gather(
-                *coros, return_exceptions=self.continue_on_error,
+                *coros, return_exceptions=self.continue_on_error
             )
             for item in collected:
                 if isinstance(item, BaseException):

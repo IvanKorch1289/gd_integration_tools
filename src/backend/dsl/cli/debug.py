@@ -48,7 +48,7 @@ def validate_route(route_file: str, format: str) -> None:
 
         if format == "json":
             click.echo(
-                json.dumps({"valid": True, "route_id": route.get("id")}, indent=2),
+                json.dumps({"valid": True, "route_id": route.get("id")}, indent=2)
             )
         else:
             click.echo(f"✓ Route '{route.get('id')}' is valid")
@@ -69,7 +69,7 @@ def validate_route(route_file: str, format: str) -> None:
 @click.option("--headers", "-h", default=None, help="Request headers (JSON string)")
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
 def dry_run(
-    route_file: str, body: str | None, headers: str | None, verbose: bool,
+    route_file: str, body: str | None, headers: str | None, verbose: bool
 ) -> None:
     """Perform a dry run of a route.
 
@@ -140,7 +140,7 @@ def inspect_exchange(exchange_json: str, verbose: bool) -> None:
                         "property_count": len(exchange.properties),
                     },
                     indent=2,
-                ),
+                )
             )
 
     except Exception as exc:
@@ -151,7 +151,7 @@ def inspect_exchange(exchange_json: str, verbose: bool) -> None:
 @cli.command("trace-pipeline")
 @click.argument("pipeline_file", type=click.Path(exists=True))
 @click.option(
-    "--output", "-o", type=click.Path(), default=None, help="Output file for trace",
+    "--output", "-o", type=click.Path(), default=None, help="Output file for trace"
 )
 def trace_pipeline(pipeline_file: str, output: str | None) -> None:
     """Trace pipeline execution steps.
@@ -267,7 +267,7 @@ def _trace_pipeline_steps(route: dict[str, Any]) -> dict[str, Any]:
                 "name": step.get("name", f"step_{i}"),
                 "type": step.get("type", "unknown"),
                 "params": step.get("params", {}),
-            },
+            }
         )
 
     return {
@@ -305,7 +305,7 @@ def _get_processor_info(processor_class: str) -> dict[str, Any]:
                     "docstring": cls.__doc__ or "No docstring",
                     "params": _extract_params(cls),
                 }
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             continue
 
     raise ValueError(f"Processor '{processor_class}' not found")
@@ -326,7 +326,7 @@ def _extract_params(cls: type[BaseProcessor]) -> dict[str, str]:
                 if param.annotation != inspect.Parameter.empty
                 else "Any"
             )
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         pass
     return params
 

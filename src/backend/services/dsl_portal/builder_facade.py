@@ -25,7 +25,6 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.services.workflows.saga_history import SagaHistoryRecord
     from src.backend.dsl.engine.dry_run import dry_run_route, waterfall_lines
     from src.backend.dsl.engine.execution_engine import ExecutionEngine
     from src.backend.dsl.engine.pipeline import Pipeline
@@ -44,6 +43,7 @@ if TYPE_CHECKING:
         load_workflow_from_yaml,
     )
     from src.backend.dsl.yaml_loader.loaders import load_pipeline_from_yaml
+    from src.backend.services.workflows.saga_history import SagaHistoryRecord
     from src.backend.services.workflows.template_registry import get_template_registry
 
 logger = logging.getLogger(__name__)
@@ -66,7 +66,10 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "get_tracer": ("src.backend.dsl.engine.tracer", "get_tracer"),
     "route_registry": ("src.backend.dsl.registry", "route_registry"),
     "WorkflowDeclaration": ("src.backend.dsl.workflow.spec", "WorkflowDeclaration"),
-    "get_global_registry": ("src.backend.dsl.workflow.versioning", "get_global_registry"),
+    "get_global_registry": (
+        "src.backend.dsl.workflow.versioning",
+        "get_global_registry",
+    ),
     "compute_step_diff": ("src.backend.dsl.workflow.visualize", "compute_step_diff"),
     "to_graphviz": ("src.backend.dsl.workflow.visualize", "to_graphviz"),
     "to_mermaid": ("src.backend.dsl.workflow.visualize", "to_mermaid"),
@@ -152,7 +155,7 @@ def get_ai_cost_snapshot(
             model_filter=model_filter,
             pipeline_filter=pipeline_filter,
             top_n=top_n,
-        ),
+        )
     )
     return snapshot.to_dict()
 
@@ -171,9 +174,7 @@ def get_whoosh_index() -> Any:
     return WhooshIndex
 
 
-def get_saga_history(
-    workflow_id: str, *, limit: int = 50,
-) -> list[SagaHistoryRecord]:
+def get_saga_history(workflow_id: str, *, limit: int = 50) -> list[SagaHistoryRecord]:
     """S6 fix: facade для saga history service."""
     import asyncio as _asyncio
 
@@ -183,7 +184,7 @@ def get_saga_history(
 
 
 def get_saga_stats(
-    tenant_id: str | None = None, *, from_dt: Any = None, to_dt: Any = None,
+    tenant_id: str | None = None, *, from_dt: Any = None, to_dt: Any = None
 ) -> dict[str, Any]:
     """S6 fix: aggregate saga statistics."""
     import asyncio as _asyncio
@@ -191,7 +192,7 @@ def get_saga_stats(
     from src.backend.services.workflows.saga_history import aggregate_saga_stats
 
     return _asyncio.run(
-        aggregate_saga_stats(tenant_id=tenant_id, from_dt=from_dt, to_dt=to_dt),
+        aggregate_saga_stats(tenant_id=tenant_id, from_dt=from_dt, to_dt=to_dt)
     )
 
 
@@ -233,7 +234,9 @@ def get_route_pipeline(route_id: str) -> Pipeline | None:
         logger.debug(
             "get_route_pipeline: route_registry.get failed "
             "(route_id=%s, exc_type=%s exc_msg=%s) — returning None",
-            route_id, type(exc).__name__, exc,
+            route_id,
+            type(exc).__name__,
+            exc,
         )
         return None
 

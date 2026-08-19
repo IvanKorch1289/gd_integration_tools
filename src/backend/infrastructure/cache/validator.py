@@ -57,7 +57,7 @@ class CacheDuplicationError(Exception):
         super().__init__(
             "Обнаружен двойной кэш (ADR-004). Сущности с кэшем на нескольких "
             f"слоях одновременно: {', '.join(sorted(entities))}. "
-            "Оставьте кэш только на одном уровне — в Service либо в Repository.",
+            "Оставьте кэш только на одном уровне — в Service либо в Repository."
         )
 
 
@@ -100,7 +100,7 @@ class CacheConfigRegistry:
 
         """
         self.entries.append(
-            CacheConfigEntry(entity=entity, layer=layer, enabled=enabled),
+            CacheConfigEntry(entity=entity, layer=layer, enabled=enabled)
         )
 
     def clear(self) -> None:

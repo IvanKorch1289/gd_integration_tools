@@ -71,7 +71,7 @@ class FeatureMixin(_RouteBuilderProtocol):
                 variant_b=variant_b,
                 split_percent=split_percent,
                 key_fn=key_fn,
-            ),
+            )
         )
 
     def feature_flag_branch(
@@ -90,6 +90,6 @@ class FeatureMixin(_RouteBuilderProtocol):
 
         return self._add(
             FeatureFlagGuardProcessor(
-                flag=flag, processors=processors, resolver=resolver,
-            ),
+                flag=flag, processors=processors, resolver=resolver
+            )
         )

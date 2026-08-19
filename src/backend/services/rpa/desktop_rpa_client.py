@@ -43,7 +43,7 @@ def _get_desktop_rpa_breaker():
     return get_breaker_registry().get_or_create(
         "desktop_rpa_client",
         BreakerSpec(
-            name="desktop_rpa_client", failure_threshold=5, recovery_timeout=30.0,
+            name="desktop_rpa_client", failure_threshold=5, recovery_timeout=30.0
         ),
     )
 
@@ -101,7 +101,7 @@ class DesktopRpaClient:
     """
 
     def __init__(
-        self, base_url: str, *, api_key: str | None = None, timeout: float = 30.0,
+        self, base_url: str, *, api_key: str | None = None, timeout: float = 30.0
     ) -> None:
         self._base_url = base_url.rstrip("/")
         self._api_key = api_key
@@ -124,7 +124,7 @@ class DesktopRpaClient:
         if action not in SUPPORTED_ACTIONS:
             raise DesktopRpaError(
                 f"Unsupported action {action!r}; "
-                f"поддерживаются: {sorted(SUPPORTED_ACTIONS)}",
+                f"поддерживаются: {sorted(SUPPORTED_ACTIONS)}"
             )
 
         url = f"{self._base_url}{SUPPORTED_ACTIONS[action]}"
@@ -174,10 +174,10 @@ class DesktopRpaClient:
         if response.status_code == 503:
             raise DesktopRpaError(
                 "windows-worker недоступен (503): pywinauto не установлен "
-                "или sidecar не на Windows.",
+                "или sidecar не на Windows."
             )
         if response.status_code >= 400:
             raise DesktopRpaError(
-                f"{action} failed ({response.status_code}): {response.text[:200]}",
+                f"{action} failed ({response.status_code}): {response.text[:200]}"
             )
         return response.json()

@@ -32,7 +32,7 @@ class EntityMixin:
                 entity=entity,
                 payload_from=payload_from,
                 result_property=result_property,
-            ),
+            )
         )
 
     def entity_get(
@@ -47,8 +47,8 @@ class EntityMixin:
 
         return self._add(  # type: ignore[attr-defined]
             EntityGetProcessor(
-                entity=entity, id_from=id_from, result_property=result_property,
-            ),
+                entity=entity, id_from=id_from, result_property=result_property
+            )
         )
 
     def entity_update(
@@ -68,7 +68,7 @@ class EntityMixin:
                 id_from=id_from,
                 payload_from=payload_from,
                 result_property=result_property,
-            ),
+            )
         )
 
     def entity_delete(
@@ -83,8 +83,8 @@ class EntityMixin:
 
         return self._add(  # type: ignore[attr-defined]
             EntityDeleteProcessor(
-                entity=entity, id_from=id_from, result_property=result_property,
-            ),
+                entity=entity, id_from=id_from, result_property=result_property
+            )
         )
 
     def entity_list(
@@ -110,7 +110,7 @@ class EntityMixin:
                 page_from=page_from,
                 size_from=size_from,
                 result_property=result_property,
-            ),
+            )
         )
 
     def crud_create(
@@ -122,7 +122,7 @@ class EntityMixin:
     ) -> RouteBuilder:
         """Алиас к :meth:`entity_create` (R-V15-12 / 80/20 YAML)."""
         return self.entity_create(
-            entity=entity, payload_from=payload_from, result_property=result_property,
+            entity=entity, payload_from=payload_from, result_property=result_property
         )
 
     def crud_read(
@@ -134,7 +134,7 @@ class EntityMixin:
     ) -> RouteBuilder:
         """Алиас к :meth:`entity_get` (R-V15-12)."""
         return self.entity_get(
-            entity=entity, id_from=id_from, result_property=result_property,
+            entity=entity, id_from=id_from, result_property=result_property
         )
 
     def crud_update(
@@ -162,7 +162,7 @@ class EntityMixin:
     ) -> RouteBuilder:
         """Алиас к :meth:`entity_delete` (R-V15-12)."""
         return self.entity_delete(
-            entity=entity, id_from=id_from, result_property=result_property,
+            entity=entity, id_from=id_from, result_property=result_property
         )
 
     def crud_list(

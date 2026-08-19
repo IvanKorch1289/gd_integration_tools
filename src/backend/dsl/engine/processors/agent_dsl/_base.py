@@ -87,7 +87,7 @@ class BaseAIProcessor(BaseProcessor):
         """
         del exchange, context
         raise NotImplementedError(
-            f"{type(self).__name__} must override _run(exchange, context)",
+            f"{type(self).__name__} must override _run(exchange, context)"
         )
 
     # ── Template-method: feature_flag + capability + audit + _run ──
@@ -126,7 +126,7 @@ class BaseAIProcessor(BaseProcessor):
             exchange.set_error(f"{self.name} error: {exc}")
             exchange.stop()
             await self._audit_safe_emit(
-                exchange, outcome="failure", severity="error", extra={"error": str(exc)},
+                exchange, outcome="failure", severity="error", extra={"error": str(exc)}
             )
             return
 
@@ -161,7 +161,7 @@ class BaseAIProcessor(BaseProcessor):
             return bool(value)
         except Exception as exc:
             _logger.debug(
-                "%s: feature_flag resolve failed (%s) — default OFF", self.name, exc,
+                "%s: feature_flag resolve failed (%s) — default OFF", self.name, exc
             )
             return False
 
@@ -216,7 +216,8 @@ class BaseAIProcessor(BaseProcessor):
             _logger.debug(
                 "agent_dsl._base: capability_gate import failed "
                 "(exc_type=%s exc_msg=%s) — gate=None",
-                type(exc).__name__, exc,
+                type(exc).__name__,
+                exc,
             )
             return None
 
@@ -269,6 +270,7 @@ class BaseAIProcessor(BaseProcessor):
             _logger.debug(
                 "agent_dsl._base: unified_audit_service import failed "
                 "(exc_type=%s exc_msg=%s) — service=None",
-                type(exc).__name__, exc,
+                type(exc).__name__,
+                exc,
             )
             return None

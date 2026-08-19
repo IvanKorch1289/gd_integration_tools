@@ -86,7 +86,7 @@ class GraphQLSubscriptionSource:
     """
 
     def __init__(
-        self, endpoint_url: str, subscription_query: str, headers: dict | None = None,
+        self, endpoint_url: str, subscription_query: str, headers: dict | None = None
     ) -> None:
         self._endpoint_url = endpoint_url
         self._subscription_query = subscription_query
@@ -119,7 +119,7 @@ class GraphQLSubscriptionSource:
             from gql.transport.websockets import WebsocketsTransport
         except ImportError as exc:
             raise RuntimeError(
-                "gql не установлен; добавь 'gql[websockets]' в pyproject.toml.",
+                "gql не установлен; добавь 'gql[websockets]' в pyproject.toml."
             ) from exc
 
         # S172 (Wave S2): capability check на старте stream-сессии.
@@ -133,7 +133,7 @@ class GraphQLSubscriptionSource:
             },
         ):
             raise PermissionError(
-                f"graphql.read denied for endpoint={self._endpoint_url!r}",
+                f"graphql.read denied for endpoint={self._endpoint_url!r}"
             )
 
         transport = WebsocketsTransport(url=self._endpoint_url, headers=self._headers)

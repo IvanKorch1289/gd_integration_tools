@@ -74,12 +74,12 @@ class WorkflowVersion:
         if self.major < 0 or self.minor < 0 or self.patch < 0:
             raise ValueError(
                 f"semver-компоненты должны быть >= 0, получено: "
-                f"{self.major}.{self.minor}.{self.patch}",
+                f"{self.major}.{self.minor}.{self.patch}"
             )
 
     @classmethod
     def parse(
-        cls, workflow_id: str, version: str, *, default_version: bool = True,
+        cls, workflow_id: str, version: str, *, default_version: bool = True
     ) -> WorkflowVersion:
         """Создать ``WorkflowVersion`` из строки ``MAJOR.MINOR.PATCH``.
 
@@ -98,7 +98,7 @@ class WorkflowVersion:
         m = _SEMVER_RE.match(version)
         if m is None:
             raise ValueError(
-                f"некорректная semver-строка {version!r}; ожидается MAJOR.MINOR.PATCH",
+                f"некорректная semver-строка {version!r}; ожидается MAJOR.MINOR.PATCH"
             )
         return cls(
             workflow_id=workflow_id,
@@ -151,7 +151,7 @@ class WorkflowVersionRegistry:
                 from src.backend.core.config.features import feature_flags
 
                 strict = bool(
-                    getattr(feature_flags, "workflow_versioning_strict", False),
+                    getattr(feature_flags, "workflow_versioning_strict", False)
                 )
             except ImportError as exc:
                 # D-AUDIT-14601 fix (cycle 146): narrow от bare
@@ -161,7 +161,8 @@ class WorkflowVersionRegistry:
                 logger.debug(
                     "workflow_versioning: feature_flags import failed "
                     "(exc_type=%s exc_msg=%s) — strict=False",
-                    type(exc).__name__, exc,
+                    type(exc).__name__,
+                    exc,
                 )
                 strict = False
 
@@ -182,7 +183,7 @@ class WorkflowVersionRegistry:
                         f"{version.workflow_id!r}: уже зарегистрирована "
                         f"v{existing_default.semver} (major={existing_default.major}), "
                         f"новая v{version.semver} (major={version.major}) "
-                        f"несовместима",
+                        f"несовместима"
                     )
 
             # Снимаем флаг default с предыдущей default-версии того же major.
@@ -247,7 +248,7 @@ class WorkflowVersionRegistry:
         if target is None:
             raise ValueError(
                 f"Workflow {workflow_id!r}: версия {semver!r} не найдена. "
-                f"Доступно: {[v.semver for v in history]}",
+                f"Доступно: {[v.semver for v in history]}"
             )
 
         updated_target = WorkflowVersion(
@@ -280,7 +281,7 @@ class WorkflowVersionRegistry:
                         minor=v.minor,
                         patch=v.patch,
                         default_version=False,
-                    ),
+                    )
                 )
 
         self.versions = new_versions
@@ -319,7 +320,7 @@ def get_global_registry() -> WorkflowVersionRegistry:
 
 
 def workflow_versioned(
-    version: str, *, default_version: bool = True,
+    version: str, *, default_version: bool = True
 ) -> Callable[[F], F]:
     """Декоратор для пометки workflow-функции semver-версией.
 
@@ -344,7 +345,7 @@ def workflow_versioned(
     def decorator(func: F) -> F:
         workflow_id = func.__name__
         wv = WorkflowVersion.parse(
-            workflow_id, version, default_version=default_version,
+            workflow_id, version, default_version=default_version
         )
         _REGISTRY.register(wv)
         # Метаданные для интроспекции (manage.py / dashboards).

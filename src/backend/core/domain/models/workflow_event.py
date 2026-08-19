@@ -130,7 +130,7 @@ class WorkflowEvent(BaseModel, TenantMixin):
     )
 
     payload: Mapped[dict[str, Any]] = mapped_column(
-        json_b(), nullable=False, default=dict, server_default="{}",
+        json_b(), nullable=False, default=dict, server_default="{}"
     )
 
     step_name: Mapped[str | None] = mapped_column(String(256), nullable=True)

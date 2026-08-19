@@ -15,7 +15,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from src.backend.core.interfaces.plugin import BasePlugin
+from src.backend.core.api import BasePlugin
 
 if TYPE_CHECKING:
     from src.backend.core.interfaces.plugin import PluginContext

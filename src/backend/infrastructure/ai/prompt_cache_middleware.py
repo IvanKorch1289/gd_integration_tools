@@ -118,7 +118,7 @@ def is_openai_cacheable(model: str) -> bool:
 
 
 def inject_prompt_cache(
-    messages: list[dict[str, Any]], model: str, config: PromptCacheConfig | None = None,
+    messages: list[dict[str, Any]], model: str, config: PromptCacheConfig | None = None
 ) -> list[dict[str, Any]]:
     """Инжектировать ``cache_control: {"type": "ephemeral"}`` в messages.
 
@@ -152,7 +152,7 @@ def inject_prompt_cache(
             and isinstance(content, str)
         ) or (msg.get("role") == "system" and isinstance(content, str)):
             new_msg["content"] = [
-                {"type": "text", "text": content, "cache_control": cache_control},
+                {"type": "text", "text": content, "cache_control": cache_control}
             ]
         # Если content уже list (multi-block) — добавляем cache_control
         # к последнему блоку.
@@ -194,7 +194,7 @@ def _derive_openai_cache_key(messages: list[dict[str, Any]]) -> str:
 
 
 def inject_openai_prompt_cache(
-    messages: list[dict[str, Any]], model: str, config: PromptCacheConfig | None = None,
+    messages: list[dict[str, Any]], model: str, config: PromptCacheConfig | None = None
 ) -> dict[str, Any]:
     """Инжектировать ``prompt_cache_key`` для OpenAI prompt caching.
 

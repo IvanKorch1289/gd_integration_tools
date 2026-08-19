@@ -19,7 +19,6 @@ from src.backend.core.di.providers import (
 __all__ = ("RedisWebhookRegistry", "WebhookSubscription", "redis_webhook_registry")
 
 
-
 @dataclass
 class WebhookSubscription:
     """Webhook subscription (совместимо с in-memory registry)."""

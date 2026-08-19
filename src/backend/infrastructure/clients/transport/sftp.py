@@ -80,7 +80,7 @@ def _resolve_known_hosts() -> tuple[()] | str:
     raise ValueError(
         "TRANSPORT_SFTP_KNOWN_HOSTS_PATH обязателен в профиле "
         f"'{get_active_profile().value}' (V1: запрещено отключать проверку "
-        "серверного ключа SFTP без явной декларации).",
+        "серверного ключа SFTP без явной декларации)."
     )
 
 
@@ -114,7 +114,7 @@ class SftpClient(BaseSftpClient):
     """
 
     def __init__(
-        self, host: str, port: int = 22, username: str = "", password: str = "",
+        self, host: str, port: int = 22, username: str = "", password: str = ""
     ) -> None:
         self.host = host
         self.port = port
@@ -122,7 +122,7 @@ class SftpClient(BaseSftpClient):
         self.password = password
         # S163 W6: per-instance Circuit Breaker (canonical pattern из smtp.py).
         self._breaker = get_breaker_registry().get_or_create(
-            "sftp", BreakerSpec(name="sftp", failure_threshold=5, recovery_timeout=60.0),
+            "sftp", BreakerSpec(name="sftp", failure_threshold=5, recovery_timeout=60.0)
         )
 
     @_sftp_retry
@@ -196,7 +196,8 @@ class SftpClient(BaseSftpClient):
         import asyncssh
 
         async with (
-            self._breaker.guard(), asyncssh.connect(
+            self._breaker.guard(),
+            asyncssh.connect(
                 self.host,
                 port=self.port,
                 username=self.username,
@@ -251,7 +252,7 @@ class SftpClient(BaseSftpClient):
 
 
 def get_sftp_client(
-    host: str, port: int = 22, username: str = "", password: str = "",
+    host: str, port: int = 22, username: str = "", password: str = ""
 ) -> SftpClient:
     """Создаёт SFTP-клиент.
 

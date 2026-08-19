@@ -128,7 +128,7 @@ class DistributedRedisRateLimiter:
             sha = await self._ensure_script()
             client = getattr(self._adapter, "client", self._adapter)
             raw = await client.evalsha(  # type: ignore[attr-defined]
-                sha, 1, key, self._capacity, self._refill, tokens, now_ms,
+                sha, 1, key, self._capacity, self._refill, tokens, now_ms
             )
         except Exception as exc:
             logger.warning(
@@ -143,7 +143,7 @@ class DistributedRedisRateLimiter:
         remaining = float(raw[1])
         retry_after = int(raw[2])
         return TokenBucketResult(
-            allowed=allowed, remaining=remaining, retry_after_ms=retry_after,
+            allowed=allowed, remaining=remaining, retry_after_ms=retry_after
         )
 
     async def reset(self, tenant_id: str) -> None:

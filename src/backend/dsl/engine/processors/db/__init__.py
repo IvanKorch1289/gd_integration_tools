@@ -18,8 +18,4 @@ from src.backend.dsl.engine.processors.db_query_external import (
     ExternalDbQueryProcessor as DbQueryExternalProcessor,
 )
 
-__all__ = (
-    "DbCallProcedureProcessor",
-    "DbCrudProcessor",
-    "DbQueryExternalProcessor",
-)
+__all__ = ("DbCallProcedureProcessor", "DbCrudProcessor", "DbQueryExternalProcessor")

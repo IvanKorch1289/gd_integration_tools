@@ -160,7 +160,7 @@ class TransformCdcEventProcessor(BaseProcessor):
                     result[field] = table
                 elif field in ("timestamp", "ts", "time"):
                     result[field] = _normalize_timestamp(
-                        ev.get(self._timestamp_field) or ev.get(field),
+                        ev.get(self._timestamp_field) or ev.get(field)
                     )
                 else:
                     # Top-level → fallback в new/old payloads
@@ -179,7 +179,7 @@ class TransformCdcEventProcessor(BaseProcessor):
             "operation": op,
             "table": table,
             self._timestamp_field: _normalize_timestamp(
-                ev.get(self._timestamp_field) or ev.get("timestamp") or ev.get("ts"),
+                ev.get(self._timestamp_field) or ev.get("timestamp") or ev.get("ts")
             ),
         }
         if self._include_old and "old" in ev:

@@ -84,6 +84,7 @@ class RegionHealthChecker:
             # AttributeError для protocol mismatch. Bare `except Exception`
             # маскировал unrelated runtime errors (KeyError, TypeError).
             import logging
+
             logging.getLogger(__name__).debug(
                 "region_health.probe_failed",
                 extra={"error": str(probe_exc), "error_type": type(probe_exc).__name__},

@@ -40,7 +40,7 @@ class StreamMixin(_RedisClientProtocol):
             return bool(await self.execute("queue", op))
         except Exception as exc:
             self.logger.error(
-                "Ошибка проверки стрима %s: %s", stream_name, str(exc), exc_info=True,
+                "Ошибка проверки стрима %s: %s", stream_name, str(exc), exc_info=True
             )
             return False
 
@@ -75,7 +75,7 @@ class StreamMixin(_RedisClientProtocol):
                 xadd_args["approximate"] = self.settings.approximate_trimming_stream
 
             init_id = await conn.xadd(
-                name=stream_name, fields={"__init__": "initial"}, **xadd_args,
+                name=stream_name, fields={"__init__": "initial"}, **xadd_args
             )
             await conn.xdel(stream_name, init_id)
 
@@ -187,7 +187,7 @@ class StreamMixin(_RedisClientProtocol):
                 )
             else:
                 events = await conn.xread(
-                    streams={stream: last_id}, count=count, block=block_ms,
+                    streams={stream: last_id}, count=count, block=block_ms
                 )
 
             result: list[dict[str, Any]] = []
@@ -201,7 +201,7 @@ class StreamMixin(_RedisClientProtocol):
                             "id": decoded_event_id,
                             "stream": self.decode(stream_name),
                             "data": self.decode(event_data),
-                        },
+                        }
                     )
                     if ack and consumer_group:
                         ack_ids.append(decoded_event_id)
@@ -214,7 +214,7 @@ class StreamMixin(_RedisClientProtocol):
         return await self.execute("queue", op)
 
     async def stream_get_stats(
-        self, stream: str, num_last_events: int = 5,
+        self, stream: str, num_last_events: int = 5
     ) -> dict[str, Any]:
         """Возвращает статистику стрима.
 
@@ -231,7 +231,7 @@ class StreamMixin(_RedisClientProtocol):
             return {
                 "length": await conn.xlen(stream),
                 "last_events": self.decode(
-                    await conn.xrevrange(stream, count=num_last_events),
+                    await conn.xrevrange(stream, count=num_last_events)
                 ),
                 "first_event": self.decode(await conn.xrange(stream, count=1)),
                 "groups": self.decode(await conn.xinfo_groups(stream)),

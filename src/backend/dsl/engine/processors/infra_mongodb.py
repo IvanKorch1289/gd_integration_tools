@@ -8,6 +8,7 @@ MongoDB document queries через facade::
           active: true
         to: body.users
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -38,7 +39,13 @@ if TYPE_CHECKING:
 class InfraMongoDBFindProcessor(BaseProcessor):
     """Метод InfraMongoDBFindProcessor (см. signature)."""
 
-    def __init__(self, collection: str, query: dict[str, Any] | None = None, *, to: str = "body.result") -> None:
+    def __init__(
+        self,
+        collection: str,
+        query: dict[str, Any] | None = None,
+        *,
+        to: str = "body.result",
+    ) -> None:
         super().__init__(name=f"infra_mongodb_find:{collection}")
         self.collection = collection
         self.query = query or {}
@@ -49,6 +56,7 @@ class InfraMongoDBFindProcessor(BaseProcessor):
         from src.backend.core.di.providers.infrastructure_locator import (
             get_mongodb_client_class,
         )
+
         client = get_mongodb_client_class()(context)
         coll = client[self.collection]
         docs = await coll.find(self.query)

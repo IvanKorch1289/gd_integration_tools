@@ -53,7 +53,8 @@ class BaseIntegrationSettings(BaseSettingsWithLoader):
     model_config = SettingsConfigDict(env_prefix="", extra="forbid")
 
     enabled: bool = Field(
-        default=False,         title="Включена",
+        default=False,
+        title="Включена",
         description="Включена ли интеграция",
         examples=[False, True],
     )

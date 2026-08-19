@@ -14,10 +14,12 @@ from src.backend.core.auth.admin_roles import AdminRole, require_admin
 
 # S202 audit fix: require admin role
 _ADMIN_GUARD_READ = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN)),
+    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN))
 )
 
-router = APIRouter(dependencies=[_ADMIN_GUARD_READ], prefix="/admin/rag", tags=["admin", "rag"])
+router = APIRouter(
+    dependencies=[_ADMIN_GUARD_READ], prefix="/admin/rag", tags=["admin", "rag"]
+)
 
 # Lazy singleton — создаётся при первом обращении.
 _selector_instance: Any = None

@@ -74,7 +74,7 @@ class NotebookSpec(BaseModel):
             if expected and not _type_matches(value, expected):
                 errors.append(
                     f"parameter {key!r}: expected type {expected!r}, "
-                    f"got {type(value).__name__}",
+                    f"got {type(value).__name__}"
                 )
         return errors
 
@@ -124,10 +124,7 @@ class NotebookRegistry:
             _logger.debug("Registered notebook: name=%s path=%s", spec.name, spec.path)
 
     def register_from_directory(
-        self,
-        notebooks_dir: Path | str,
-        *,
-        notebook_dir_prefix: str = "",
+        self, notebooks_dir: Path | str, *, notebook_dir_prefix: str = ""
     ) -> int:
         """Scan ``notebooks_dir`` for ``<name>.ipynb`` and register.
 

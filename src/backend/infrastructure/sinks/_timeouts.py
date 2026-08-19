@@ -6,6 +6,7 @@ file is the single source of truth for default network timeouts in
 sinks. Adopting sinks import from here; per-sink field still allows
 explicit override (preserves existing public API).
 """
+
 from __future__ import annotations
 
 # Per-sink defaults. Documented here so changes propagate uniformly.
@@ -19,8 +20,4 @@ SOAP_SINK_TIMEOUT_S: float = 30.0
 SMS_SINK_TIMEOUT_S: float = 10.0
 """SMS provider HTTP health-probe timeout (separate from send timeout)."""
 
-__all__ = (
-    "DEFAULT_SINK_TIMEOUT_S",
-    "SMS_SINK_TIMEOUT_S",
-    "SOAP_SINK_TIMEOUT_S",
-)
+__all__ = ("DEFAULT_SINK_TIMEOUT_S", "SMS_SINK_TIMEOUT_S", "SOAP_SINK_TIMEOUT_S")

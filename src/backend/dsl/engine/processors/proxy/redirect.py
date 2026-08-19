@@ -83,30 +83,30 @@ class RedirectProcessor(BaseProcessor):
         super().__init__(name)
         if mode not in {"static", "proxy"}:
             raise ValueError(
-                f"RedirectProcessor: неверный mode={mode!r}. Ожидается 'static' или 'proxy'.",
+                f"RedirectProcessor: неверный mode={mode!r}. Ожидается 'static' или 'proxy'."
             )
         if status_code not in _ALLOWED_STATUS_CODES:
             raise ValueError(
                 f"RedirectProcessor: недопустимый status_code={status_code}. "
-                f"Допустимые: {sorted(_ALLOWED_STATUS_CODES)}.",
+                f"Допустимые: {sorted(_ALLOWED_STATUS_CODES)}."
             )
         if mode == "static" and not target_url:
             raise ValueError(
-                "RedirectProcessor: target_url обязателен при mode='static'.",
+                "RedirectProcessor: target_url обязателен при mode='static'."
             )
         if mode == "proxy":
             if not url_source:
                 raise ValueError(
-                    "RedirectProcessor: url_source обязателен при mode='proxy'.",
+                    "RedirectProcessor: url_source обязателен при mode='proxy'."
                 )
             if url_source not in _URL_SOURCES:
                 raise ValueError(
                     f"RedirectProcessor: неверный url_source={url_source!r}. "
-                    f"Допустимые: {sorted(_URL_SOURCES)}.",
+                    f"Допустимые: {sorted(_URL_SOURCES)}."
                 )
             if not source_key:
                 raise ValueError(
-                    "RedirectProcessor: source_key обязателен при mode='proxy'.",
+                    "RedirectProcessor: source_key обязателен при mode='proxy'."
                 )
 
         self._mode = mode
@@ -131,7 +131,7 @@ class RedirectProcessor(BaseProcessor):
                 url,
             )
             exchange.fail(
-                f"Redirect заблокирован: хост {urlparse(url).hostname!r} не в белом списке.",
+                f"Redirect заблокирован: хост {urlparse(url).hostname!r} не в белом списке."
             )
             return
 
@@ -152,7 +152,7 @@ class RedirectProcessor(BaseProcessor):
                 url = exchange.in_message.headers.get(self._source_key)
             case "body_field":
                 url = self._extract_body_field(
-                    exchange.in_message.body, self._source_key,
+                    exchange.in_message.body, self._source_key
                 )
             case "exchange_var":
                 url = self._extract_exchange_var(exchange, self._source_key)
@@ -163,7 +163,7 @@ class RedirectProcessor(BaseProcessor):
 
         if not url:
             raise ValueError(
-                f"RedirectProcessor: не удалось получить URL из {self._url_source!r} / {self._source_key!r}.",
+                f"RedirectProcessor: не удалось получить URL из {self._url_source!r} / {self._source_key!r}."
             )
         return str(url)
 

@@ -16,10 +16,10 @@ from extensions.core_entities.orderkinds.schemas.route import (  # S168 W15-17 P
     OrderKindSchemaOut,
     OrderKindVersionSchemaOut,
 )
-from src.backend.core.errors import ServiceError
+from src.backend.core.api import ServiceError
 from src.backend.core.integrations.skb import APISKBService, get_skb_service
 from src.backend.core.interfaces.repositories import OrderKindRepositoryProtocol
-from src.backend.core.services.base_service import BaseService
+from src.backend.core.api import BaseService
 
 __all__ = ("OrderKindService", "get_order_kind_service")
 

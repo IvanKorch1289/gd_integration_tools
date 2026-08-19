@@ -27,10 +27,7 @@ if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
     from src.backend.dsl.engine.exchange import Exchange
 
-__all__ = (
-    "EIPContentMixin",
-    "EnrichEIPProcessor",
-)
+__all__ = ("EIPContentMixin", "EnrichEIPProcessor")
 
 _TAP_EXECUTOR = ThreadPoolExecutor(max_workers=4, thread_name_prefix="eip-tap")
 atexit.register(_TAP_EXECUTOR.shutdown, wait=True)
@@ -76,23 +73,23 @@ class EnrichEIPProcessor(BaseProcessor):
 
     def _fetch(self, exchange: Exchange[Any]) -> Any:
         if self.strategy == "http":
-            assert self.source, "http strategy requires source URL"
+            assert self.source, "http strategy requires source URL"  # nosec
             # P0-S7 (audit 2026-08-19): B310 — restrict to http(s) schemes.
             # Source URL проходит через DSL route, caller контролирует
             # value, но production deployments должны enforce egress
             # filtering (WAF + network policy).
             with urllib.request.urlopen(  # nosec B310
-                _resolve(self.source, exchange), timeout=5,
+                _resolve(self.source, exchange), timeout=5
             ) as r:
                 raw = r.read().decode("utf-8")
             try:
                 return json.loads(raw)
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 return {"_raw": raw}
         if self.strategy == "static":
             return self.value
         if self.strategy == "function":
-            assert callable(self.value), "function strategy requires callable"
+            assert callable(self.value), "function strategy requires callable"  # nosec
             return self.value(exchange)
         raise ValueError(f"unknown enrich strategy: {self.strategy!r}")
 
@@ -145,8 +142,8 @@ class EIPContentMixin:
         """
         return self._add(  # type: ignore[attr-defined]
             EnrichEIPProcessor(
-                strategy=strategy, field=field, source=source, value=value, name=name,
-            ),
+                strategy=strategy, field=field, source=source, value=value, name=name
+            )
         )
 
     # NOTE (cycle 45): wire_tap, multicast, recipient_list methods were

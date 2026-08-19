@@ -63,7 +63,7 @@ class SpecializedFormatsMixin(_FormatConvertProtocol):
             from joserfc.jwk import OctKey
         except ImportError as exc:
             raise ImportError(
-                "to_jwt requires 'joserfc' (pip install joserfc)",
+                "to_jwt requires 'joserfc' (pip install joserfc)"
             ) from exc
         if not self.secret:
             raise ValueError("to_jwt requires 'secret' kwarg (>= 16 chars recommended)")
@@ -101,7 +101,7 @@ class SpecializedFormatsMixin(_FormatConvertProtocol):
             from joserfc.jwk import OctKey
         except ImportError as exc:
             raise ImportError(
-                "from_jwt requires 'joserfc' (pip install joserfc)",
+                "from_jwt requires 'joserfc' (pip install joserfc)"
             ) from exc
         if not self.secret:
             raise ValueError("from_jwt requires 'secret' kwarg (HS* algorithms)")

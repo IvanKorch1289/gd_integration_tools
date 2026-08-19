@@ -61,7 +61,7 @@ class AntivirusHashCache:
         )
 
     async def put(
-        self, payload: bytes, result: AntivirusScanResult, ttl: int | None = None,
+        self, payload: bytes, result: AntivirusScanResult, ttl: int | None = None
     ) -> None:
         """Метод put (см. signature)."""
         try:

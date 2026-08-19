@@ -69,7 +69,7 @@ def _get_storage_facade(context: ExecutionContext) -> Any:
                     plugin=plugin,
                 )
             return facade
-    except (ImportError, AttributeError, KeyError):
+    except ImportError, AttributeError, KeyError:
         pass
 
     from src.backend.infrastructure.storage.factory import get_object_storage
@@ -129,11 +129,11 @@ class ToS3Processor(BaseProcessor):
             if isinstance(data, (bytes, bytearray)) and len(data) > 5 * 1024 * 1024:
                 # Large file — delegate to upload_stream (multipart upload)
                 full_key = await storage.upload_stream(
-                    key, iter([bytes(data)]), content_type=content_type,
+                    key, iter([bytes(data)]), content_type=content_type
                 )
             elif self._is_async_stream(data):
                 full_key = await storage.upload_stream(
-                    key, data, content_type=content_type,
+                    key, data, content_type=content_type
                 )
             else:
                 if isinstance(data, str):
@@ -141,11 +141,11 @@ class ToS3Processor(BaseProcessor):
                 if not isinstance(data, (bytes, bytearray)):
                     exchange.fail(
                         f"to_s3: data must be bytes/str or async iterable, "
-                        f"got {type(data).__name__}",
+                        f"got {type(data).__name__}"
                     )
                     return
                 full_key = await storage.upload(
-                    key, bytes(data), content_type=content_type,
+                    key, bytes(data), content_type=content_type
                 )
         except (ValueError, OSError) as exc:
             exchange.fail(f"to_s3: {exc}")
@@ -226,7 +226,7 @@ class FromS3Processor(BaseProcessor):
             "from_s3": {
                 "key_from": self._key_from,
                 "result_property": self._result_property,
-            },
+            }
         }
 
 
@@ -257,7 +257,7 @@ class S3PresignProcessor(BaseProcessor):
         super().__init__(name=name or "s3_presign")
         if expires_in <= 0:
             raise ValueError(
-                f"s3_presign: expires_in должен быть > 0, получено {expires_in}",
+                f"s3_presign: expires_in должен быть > 0, получено {expires_in}"
             )
         self._key_from = key_from
         self._expires_in = expires_in
@@ -291,7 +291,7 @@ class S3PresignProcessor(BaseProcessor):
                 "key_from": self._key_from,
                 "expires_in": self._expires_in,
                 "result_property": self._result_property,
-            },
+            }
         }
 
 
@@ -370,7 +370,7 @@ class S3ListProcessor(BaseProcessor):
             resolved = _resolve(exchange, self._prefix_from)
             if resolved is not None and not isinstance(resolved, str):
                 exchange.fail(
-                    f"s3_list: prefix must be str, got {type(resolved).__name__}",
+                    f"s3_list: prefix must be str, got {type(resolved).__name__}"
                 )
                 return
             prefix = resolved or ""

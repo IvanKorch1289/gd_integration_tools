@@ -63,7 +63,7 @@ class DeclarationMixin(_CapabilityGateProtocol):
             self._vocabulary.validate_ref(ref)
             if ref.name in bucket:
                 raise ValueError(
-                    f"Capability {ref.name!r} already declared for {plugin!r}",
+                    f"Capability {ref.name!r} already declared for {plugin!r}"
                 )
             bucket[ref.name] = ref
         # Любая новая декларация инвалидирует кэш для этого плагина.
@@ -75,7 +75,7 @@ class DeclarationMixin(_CapabilityGateProtocol):
         self._invalidate_plugin(plugin)
 
     def declare_tenant(
-        self, capability: CapabilityRef, tenant: str, principal: str,
+        self, capability: CapabilityRef, tenant: str, principal: str
     ) -> None:
         """Декларировать capability для пары (tenant, principal).
 
@@ -97,7 +97,7 @@ class DeclarationMixin(_CapabilityGateProtocol):
         if capability.name in principal_bucket:
             raise ValueError(
                 f"Capability {capability.name!r} already declared for "
-                f"tenant={tenant!r}, principal={principal!r}",
+                f"tenant={tenant!r}, principal={principal!r}"
             )
         principal_bucket[capability.name] = capability
         # Invalidate per-tenant cache for this (tenant, principal).

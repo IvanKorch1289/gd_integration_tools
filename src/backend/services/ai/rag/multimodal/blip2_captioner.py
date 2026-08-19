@@ -47,7 +47,7 @@ class BLIP2Captioner:
     """
 
     def __init__(
-        self, model_name: str = "Salesforce/blip2-opt-2.7b", device: str = "cpu",
+        self, model_name: str = "Salesforce/blip2-opt-2.7b", device: str = "cpu"
     ) -> None:
         self._model_name = model_name
         self._device = device
@@ -66,26 +66,26 @@ class BLIP2Captioner:
         except ImportError as exc:
             raise RuntimeError(
                 "BLIP2 requires `pip install gd_advanced_tools[multimodal-rag]`"
-                f" (transformers): {exc}",
+                f" (transformers): {exc}"
             ) from exc
 
         logger.info(
-            "BLIP2Captioner loading model=%s device=%s", self._model_name, self._device,
+            "BLIP2Captioner loading model=%s device=%s", self._model_name, self._device
         )
         # P0-S7 (audit 2026-08-19): B615 nosec — model_name from
         # config (Settings), не user input. Production deployments должны
         # pin ``revision=`` для supply-chain safety.
         self._processor = AutoProcessor.from_pretrained(  # nosec B615
-            self._model_name,
+            self._model_name
         )
         self._model = Blip2ForConditionalGeneration.from_pretrained(  # nosec B615
-            self._model_name,
+            self._model_name
         )
         if hasattr(self._model, "to"):
             self._model = self._model.to(self._device)
 
     async def caption(
-        self, image_bytes: bytes, *, max_new_tokens: int = 50,
+        self, image_bytes: bytes, *, max_new_tokens: int = 50
     ) -> CaptionResult:
         """Сгенерировать caption для изображения.
 
@@ -110,7 +110,7 @@ class BLIP2Captioner:
             from PIL import Image
         except ImportError as exc:
             raise RuntimeError(
-                "BLIP2 requires Pillow — install [multimodal-rag] extra",
+                "BLIP2 requires Pillow — install [multimodal-rag] extra"
             ) from exc
 
         with Image.open(BytesIO(image_bytes)) as img:
@@ -119,11 +119,11 @@ class BLIP2Captioner:
         if self._device != "cpu":
             inputs = {k: v.to(self._device) for k, v in inputs.items()}
         generated = await asyncio.to_thread(
-            self._model.generate, **inputs, max_new_tokens=max_new_tokens,
+            self._model.generate, **inputs, max_new_tokens=max_new_tokens
         )
         caption = self._processor.batch_decode(generated, skip_special_tokens=True)[
             0
         ].strip()
         return CaptionResult(
-            caption=caption, model=self._model_name, device=self._device,
+            caption=caption, model=self._model_name, device=self._device
         )

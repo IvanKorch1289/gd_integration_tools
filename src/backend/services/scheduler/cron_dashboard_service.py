@@ -103,7 +103,7 @@ class CronDashboardService:
                     last_run_at=None,
                     success_rate_7d=success_rate,
                     status=status,
-                ),
+                )
             )
         return results
 

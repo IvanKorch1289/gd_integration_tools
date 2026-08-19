@@ -61,7 +61,7 @@ class WebMethodsMixin:
 
         try:
             result = await client.make_request(
-                method="GET", url=self._waf_url, headers=headers,
+                method="GET", url=self._waf_url, headers=headers
             )
             html_content = result if isinstance(result, str) else str(result)
 
@@ -72,7 +72,7 @@ class WebMethodsMixin:
             links = []
             for a_tag in soup.find_all("a", href=True)[:50]:
                 links.append(
-                    {"text": a_tag.get_text(strip=True), "href": a_tag["href"]},
+                    {"text": a_tag.get_text(strip=True), "href": a_tag["href"]}
                 )
 
             return {

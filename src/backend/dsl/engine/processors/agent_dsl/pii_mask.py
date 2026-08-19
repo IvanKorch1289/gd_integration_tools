@@ -44,7 +44,6 @@ __all__ = ("PIIMaskProcessor",)
 _logger = get_logger(__name__)
 
 
-
 from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
 
 
@@ -55,8 +54,8 @@ from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
     spec_schema={
         "type": "object",
         "properties": {
-        "text": {"type": "string"},
-        "patterns": {"type": "array", "items": {"type": "string"}},
+            "text": {"type": "string"},
+            "patterns": {"type": "array", "items": {"type": "string"}},
         },
         "required": ["text"],
     },
@@ -116,7 +115,7 @@ class PIIMaskProcessor(BaseAIProcessor):
         tokenizer = self._resolve_tokenizer()
         if tokenizer is None:
             _logger.warning(
-                "%s: PIITokenizer недоступен — pass-through (без mask)", self.name,
+                "%s: PIITokenizer недоступен — pass-through (без mask)", self.name
             )
             exchange.set_property("pii_detected", False)
             return
@@ -125,7 +124,7 @@ class PIIMaskProcessor(BaseAIProcessor):
             result = await tokenizer.mask_reversible(text, language=self.language)
         except Exception as exc:
             _logger.warning(
-                "%s: mask_reversible failed (%s) — pass-through", self.name, exc,
+                "%s: mask_reversible failed (%s) — pass-through", self.name, exc
             )
             exchange.set_property("pii_detected", False)
             return
@@ -236,13 +235,11 @@ class PIIMaskProcessor(BaseAIProcessor):
         """Lazy-резолв :class:`PIITokenizer` через DI provider."""
         try:
             from src.backend.core.di.providers.ai import get_pii_tokenizer_provider
+
             provider = get_pii_tokenizer_provider()
             return provider() if provider else None
         except Exception as exc:
-            _logger.warning(
-                "PIIMaskProcessor: PIITokenizer resolution failed: %s",
-                exc,
-            )
+            _logger.warning("PIIMaskProcessor: PIITokenizer resolution failed: %s", exc)
             return None
 
     def to_spec(self) -> dict[str, Any]:

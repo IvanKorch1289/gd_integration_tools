@@ -50,7 +50,7 @@ def lint_file(path: str | Path) -> list[str]:
         if isinstance(proc, dict) and len(proc) == 1:
             continue
         errors.append(
-            f"processor[{i}]: invalid spec (string or single-key dict expected)",
+            f"processor[{i}]: invalid spec (string or single-key dict expected)"
         )
     return errors
 

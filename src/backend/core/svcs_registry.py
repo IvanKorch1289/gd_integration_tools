@@ -78,8 +78,7 @@ def list_services() -> list[str]:
     """Возвращает имена зарегистрированных сервисов (для admin-API)."""
     with _lock:
         return sorted(
-            str(k) if not isinstance(k, type) else k.__name__
-            for k in _factories
+            str(k) if not isinstance(k, type) else k.__name__ for k in _factories
         )
 
 
@@ -105,9 +104,7 @@ def get_service[T](key: Hashable | type[T]) -> T | Any:
                 str(k) if not isinstance(k, type) else k.__name__
                 for k in sorted(_factories, key=lambda x: str(x))
             )
-            raise KeyError(
-                f"Сервис '{key}' не зарегистрирован. Доступные: {available}",
-            )
+            raise KeyError(f"Сервис '{key}' не зарегистрирован. Доступные: {available}")
         instance = factory()
         _singletons[cast(Hashable, key)] = instance
         return instance

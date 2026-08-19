@@ -164,7 +164,7 @@ class MQSource:
         from faststream.redis import StreamSub
 
         return StreamSub(
-            stream=self._topic, group=self._group, consumer=str(self.source_id),
+            stream=self._topic, group=self._group, consumer=str(self.source_id)
         )
 
     # ─────────────────── on_message ───────────────────

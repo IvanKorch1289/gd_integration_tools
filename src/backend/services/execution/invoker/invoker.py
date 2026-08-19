@@ -60,7 +60,7 @@ class Invoker(InvokeModesMixin, DeferredMixin, TemporalMixin, RunMixin):
             return None
 
     async def _dispatch(
-        self, command: ActionCommandSchema, context: DispatchContext,
+        self, command: ActionCommandSchema, context: DispatchContext
     ) -> Any:
         """Прокси к dispatcher.dispatch с проброшенным DispatchContext.
 
@@ -94,7 +94,7 @@ class Invoker(InvokeModesMixin, DeferredMixin, TemporalMixin, RunMixin):
         if request.metadata:
             attrs["request_metadata"] = dict(request.metadata)
         return DispatchContext(
-            correlation_id=request.correlation_id, source="invoker", attributes=attrs,
+            correlation_id=request.correlation_id, source="invoker", attributes=attrs
         )
 
     async def invoke(self, request: InvocationRequest) -> InvocationResponse:

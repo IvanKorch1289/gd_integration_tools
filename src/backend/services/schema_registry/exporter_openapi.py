@@ -35,7 +35,7 @@ def _entry_schema(entry: SchemaEntry) -> dict[str, Any]:
 
 
 def export_openapi(
-    registry: ServiceSchemaRegistry, *, kind: SchemaKind | None = None,
+    registry: ServiceSchemaRegistry, *, kind: SchemaKind | None = None
 ) -> dict[str, Any]:
     """Экспорт каталога в OpenAPI 3.1 fragment.
 

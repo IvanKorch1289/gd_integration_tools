@@ -34,7 +34,7 @@ R = TypeVar("R")
 
 
 def repository_hook(
-    repo_name: str, *, event: str,
+    repo_name: str, *, event: str
 ) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
     """Помечает async-функцию как repository hook.
 
@@ -60,7 +60,7 @@ def repository_hook(
 
 
 def override_method(
-    repo_name: str, method: str,
+    repo_name: str, method: str
 ) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
     """Помечает async-функцию как override метода репозитория.
 

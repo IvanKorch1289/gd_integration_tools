@@ -73,8 +73,7 @@ def load_plugin_manifests_for_migrations(
     """
     if not extensions_dir.is_dir():
         _logger.info(
-            "Extensions dir %s not found — no plugin models discovered",
-            extensions_dir,
+            "Extensions dir %s not found — no plugin models discovered", extensions_dir
         )
         return []
 
@@ -87,9 +86,7 @@ def load_plugin_manifests_for_migrations(
             manifest = load_plugin_manifest(manifest_path)
         except PluginManifestError as exc:
             _logger.warning(
-                "Skipping plugin manifest at %s for migrations: %s",
-                manifest_path,
-                exc,
+                "Skipping plugin manifest at %s for migrations: %s", manifest_path, exc
             )
             continue
         results.append(ManifestWithPath(manifest=manifest, manifest_path=manifest_path))

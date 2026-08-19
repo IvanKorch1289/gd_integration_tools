@@ -37,7 +37,7 @@ class VectorSearchProcessor(BaseProcessor):
 
         rag = get_rag_service()
         results = await rag.search(
-            query=query, top_k=self._top_k, namespace=self._namespace,
+            query=query, top_k=self._top_k, namespace=self._namespace
         )
         exchange.set_property(self._output_property, results)
 

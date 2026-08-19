@@ -3,6 +3,7 @@
 Async CSV write via :mod:`csv` + :func:`asyncio.to_thread`.
 Capability: rpa.file.csv.write (medium risk — file creation).
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -45,14 +46,14 @@ class CsvWriteProcessor(BaseProcessor):
         self.rows = rows
         self.delimiter = delimiter
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="write"):
             return
         if not self.rows:
-            await asyncio.to_thread(lambda: open(self.dst, "w", encoding="utf-8").close())
+            await asyncio.to_thread(
+                lambda: open(self.dst, "w", encoding="utf-8").close()
+            )
             return
 
         def _write() -> None:

@@ -46,7 +46,7 @@ _INTROSPECT_FIELDS = (
 async def introspect(
     token: str = Form(..., description="JWT для проверки"),
     token_type_hint: str | None = Form(
-        None, description="Игнорируется (only access_token)",
+        None, description="Игнорируется (only access_token)"
     ),
 ) -> dict[str, Any]:
     """RFC 7662 token introspection (S165 W2: AuthFacade-backed)."""
@@ -78,8 +78,8 @@ async def introspect(
             # type, ValueError — invalid claims value, KeyError — missing
             # required key.
             import logging
+
             logging.getLogger(__name__).debug(
-                "auth_introspect.claims_fallback",
-                extra={"error": str(claims_exc)},
+                "auth_introspect.claims_fallback", extra={"error": str(claims_exc)}
             )
     return response

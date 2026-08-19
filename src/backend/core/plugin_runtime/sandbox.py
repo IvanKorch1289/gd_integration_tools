@@ -102,7 +102,7 @@ def _get_process() -> Any | None:
 
 
 def _read_resource_snapshot(
-    *, with_cpu: bool = True, with_memory: bool = True,
+    *, with_cpu: bool = True, with_memory: bool = True
 ) -> _ResourceSnapshot | None:
     """Снять текущие метрики процесса через закэшированный psutil.Process.
 
@@ -131,7 +131,7 @@ def _read_resource_snapshot(
 
 @contextmanager
 def _with_resource_limits(
-    plugin: str, max_memory_mb: int, max_cpu_seconds: int,
+    plugin: str, max_memory_mb: int, max_cpu_seconds: int
 ) -> Iterator[None]:
     """Контекстный менеджер: фиксирует snapshot до/после, проверяет дельты.
 
@@ -159,13 +159,13 @@ def _with_resource_limits(
         cpu_delta = after.cpu_seconds - before.cpu_seconds
         if cpu_delta > max_cpu_seconds:
             raise ResourceLimitsExceeded(
-                plugin, "cpu_seconds", max_cpu_seconds, int(cpu_delta),
+                plugin, "cpu_seconds", max_cpu_seconds, int(cpu_delta)
             )
     if enforce_memory:
         rss_delta_mb = max(0, (after.rss_bytes - before.rss_bytes) // (1024 * 1024))
         if rss_delta_mb > max_memory_mb:
             raise ResourceLimitsExceeded(
-                plugin, "memory_mb", max_memory_mb, rss_delta_mb,
+                plugin, "memory_mb", max_memory_mb, rss_delta_mb
             )
 
 
@@ -223,7 +223,7 @@ class PluginSandboxAdapter:
         profile = self._manifest.sandbox
         if profile is None or not profile.enabled:
             raise PluginSandboxError(
-                self._manifest.name, "sandbox not declared in plugin.toml",
+                self._manifest.name, "sandbox not declared in plugin.toml"
             )
         if profile.mode != "e2b":
             raise PluginSandboxError(

@@ -10,16 +10,6 @@ from typing import Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
-
-# Security: defusedxml guards against XXE / billion-laughs in XML unmarshal.
-# ``pickle`` and ``xml.etree.ElementTree`` are stdlib defaults but unsafe for
-# untrusted input — we import defusedxml lazily and use it for the public
-# surface; stdlib ET is only used for the controlled marshal path (we generate
-# the tree ourselves from a dict, never parse untrusted XML).
-try:
-    import defusedxml.ElementTree as DET  # type: ignore[import-not-found]
-except ImportError:  # pragma: no cover — dev-light fallback
-    DET = None  # type: ignore[assignment]
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
@@ -72,14 +62,14 @@ class MarshalProcessor(BaseProcessor):
         encoded = self._data_format.marshal(exchange.in_message.body)
         exchange.in_message.body = encoded
         exchange.in_message.set_header(
-            self._content_type_header, self._data_format.content_type,
+            self._content_type_header, self._data_format.content_type
         )
         if isinstance(encoded, bytes):
             exchange.in_message.set_header(self._encoding_header, "utf-8")
         with self._lock:
             self._count += 1
         _log.debug(
-            "Marshal[%s]: encoded %d bytes", self._data_format.name, len(encoded),
+            "Marshal[%s]: encoded %d bytes", self._data_format.name, len(encoded)
         )
 
     def stats(self) -> dict[str, int]:

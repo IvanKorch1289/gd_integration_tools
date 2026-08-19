@@ -59,5 +59,5 @@ async def consolidate_idle_sessions():
         scheduler_logger.info("LangMem consolidation finished: %s", report)
     except Exception as exc:
         scheduler_logger.error(
-            "LangMem consolidation failed: %s", str(exc), exc_info=True,
+            "LangMem consolidation failed: %s", str(exc), exc_info=True
         )

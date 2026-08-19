@@ -26,7 +26,7 @@ class IngestMixin(_RAGServiceProtocol):
 
     @staticmethod
     def _cache_key(
-        *, system_prompt: str, query: str, top_k: int, namespace: str | None,
+        *, system_prompt: str, query: str, top_k: int, namespace: str | None
     ) -> str:
         """Стабильный SHA-256 ключ для L1/L2 lookup на уровне augment."""
         material = f"{system_prompt}\0{query}\0{int(top_k)}\0{namespace or ''}"
@@ -76,7 +76,7 @@ class IngestMixin(_RAGServiceProtocol):
         ]
 
         await self._store.upsert(
-            embeddings=embeddings, documents=chunks, ids=ids, metadatas=metadatas,
+            embeddings=embeddings, documents=chunks, ids=ids, metadatas=metadatas
         )
 
         logger.info("Ingested document %s: %d chunks", doc_id, len(chunks))

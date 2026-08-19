@@ -70,7 +70,7 @@ class AggregatorProcessor(BaseProcessor):
                 self._timestamps.pop(key, None)
                 exchange.set_property("aggregated", True)
                 exchange.set_out(
-                    body=aggregated, headers=dict(exchange.in_message.headers),
+                    body=aggregated, headers=dict(exchange.in_message.headers)
                 )
             else:
                 exchange.set_property("aggregated", False)

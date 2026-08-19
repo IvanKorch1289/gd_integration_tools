@@ -16,14 +16,7 @@ from __future__ import annotations
 
 import re
 
-__all__ = (
-    "CARD",
-    "EMAIL",
-    "INN",
-    "PHONE",
-    "RU_PASSPORT",
-    "SNILS",
-)
+__all__ = ("CARD", "EMAIL", "INN", "PHONE", "RU_PASSPORT", "SNILS")
 
 
 # RU SNILS — ``XXX-XXX-XXX YY`` (с пробелом или без перед последними двумя).

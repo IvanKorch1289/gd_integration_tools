@@ -47,7 +47,7 @@ def _mask_string(text: str, masker: PIIMasker | None) -> str:
 
 
 def mask_retrieval_documents(
-    documents: list[dict[str, Any]], *, masker: PIIMasker | None = None,
+    documents: list[dict[str, Any]], *, masker: PIIMasker | None = None
 ) -> list[dict[str, Any]]:
     """Применить PII-маскер к каждому ``document.content`` retrieval result.
 
@@ -74,7 +74,7 @@ def mask_retrieval_documents(
 
 
 def mask_augment_result(
-    payload: dict[str, Any], *, masker: PIIMasker | None = None,
+    payload: dict[str, Any], *, masker: PIIMasker | None = None
 ) -> dict[str, Any]:
     """Применить маскер к augment-результату in-place-копией.
 

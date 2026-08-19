@@ -58,7 +58,7 @@ class WebSocketSource:
             raise RuntimeError(f"WebSocketSource(id={self.source_id!r}) уже запущен")
         self._stop_event.clear()
         self._task = get_task_registry().create_task(
-            self._run(on_event), name=f"source-websocket:{self.source_id}",
+            self._run(on_event), name=f"source-websocket:{self.source_id}"
         )
         logger.info("WebSocketSource started: id=%s url=%s", self.source_id, self._url)
 
@@ -91,7 +91,7 @@ class WebSocketSource:
             import websockets
         except ImportError as exc:
             raise RuntimeError(
-                "websockets не установлен; добавь его в pyproject.toml.",
+                "websockets не установлен; добавь его в pyproject.toml."
             ) from exc
 
         # S172 (Wave S2): capability check на старте WS-сессии.
@@ -101,10 +101,7 @@ class WebSocketSource:
             "ws.read",
             action="read",
             principal="anonymous",
-            extra_ctx={
-                "url": self._url,
-                "source_id": self.source_id,
-            },
+            extra_ctx={"url": self._url, "source_id": self.source_id},
         ):
             logger.warning(
                 "ws_source_capability_denied: url=%s source_id=%s",
@@ -132,11 +129,11 @@ class WebSocketSource:
                             logger.error("WebSocketSource on_event failed: %s", exc)
             except Exception as exc:
                 logger.warning(
-                    "WebSocketSource %s: connection error: %s", self._url, exc,
+                    "WebSocketSource %s: connection error: %s", self._url, exc
                 )
                 try:
                     await asyncio.wait_for(
-                        self._stop_event.wait(), timeout=self._reconnect,
+                        self._stop_event.wait(), timeout=self._reconnect
                     )
                 except TimeoutError:
                     continue

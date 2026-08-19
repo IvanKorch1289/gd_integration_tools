@@ -97,7 +97,7 @@ def _ensure_metrics() -> None:
             "Duration of last PG → SQLite snapshot sync",
         )
         _errors_counter = metrics_registry.counter(
-            "snapshot_sync_errors_total", "Total failed PG → SQLite snapshot syncs",
+            "snapshot_sync_errors_total", "Total failed PG → SQLite snapshot syncs"
         )
         _metrics_initialized = True
     except ImportError:
@@ -155,7 +155,7 @@ def _select_tables(metadata_tables: dict[str, Table], wanted: list[str]) -> list
         table = metadata_tables.get(name)
         if table is None:
             logger.warning(
-                "Snapshot: таблица '%s' не найдена в metadata — пропускаю", name,
+                "Snapshot: таблица '%s' не найдена в metadata — пропускаю", name
             )
             continue
         result.append(table)
@@ -180,7 +180,7 @@ def _replicate_table(pg_conn: Connection, sqlite_conn: Connection, table: Table)
 
 
 def sync_pg_to_sqlite(
-    pg_engine: Engine, sqlite_engine: Engine, tables: list[str],
+    pg_engine: Engine, sqlite_engine: Engine, tables: list[str]
 ) -> dict[str, int]:
     """Реплицирует список таблиц из PG в SQLite-snapshot.
 
@@ -271,7 +271,7 @@ def run_snapshot_now() -> dict[str, int]:
         if _errors_counter is not None:
             _errors_counter.inc()
         logger.error(
-            "Snapshot: sync упал (%s: %s)", type(exc).__name__, exc, exc_info=True,
+            "Snapshot: sync упал (%s: %s)", type(exc).__name__, exc, exc_info=True
         )
         raise
     finally:

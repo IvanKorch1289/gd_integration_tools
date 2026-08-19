@@ -41,7 +41,7 @@ class SecureSettings(BaseSettingsWithLoader):
         examples=["supersecretkeywithatleast32characters123"],
     )
     algorithm: Literal["HS256", "HS384", "HS512", "RS256"] = Field(
-        ..., description="Алгоритм подписи токенов", examples=["HS256", "RS256"],
+        ..., description="Алгоритм подписи токенов", examples=["HS256", "RS256"]
     )
 
     # Wave [s2/k1-2-jwt-jwks]: JWKS-кеш для асимметричных алгоритмов (RS256/ES256).
@@ -76,7 +76,7 @@ class SecureSettings(BaseSettingsWithLoader):
 
     # API-безопасность
     api_key: str = Field(
-        ..., description="Основной API-ключ приложения", examples=["your_api_key_123"],
+        ..., description="Основной API-ключ приложения", examples=["your_api_key_123"]
     )
     allowed_hosts: list[str] = Field(
         ...,
@@ -137,7 +137,7 @@ class SecureSettings(BaseSettingsWithLoader):
                 env = "dev"
         if env.lower() in {"prod", "production"} and "*" in value:
             raise ValueError(
-                "CORS wildcard '*' запрещён в prod. Укажите явный список origin.",
+                "CORS wildcard '*' запрещён в prod. Укажите явный список origin."
             )
         return value
 
@@ -152,7 +152,7 @@ class SecureSettings(BaseSettingsWithLoader):
             raise ValueError(
                 "CORS misconfiguration: wildcard origin '*' combined with "
                 "credentials=True is forbidden. Specify explicit origins or "
-                "disable credentials.",
+                "disable credentials."
             )
         return self
 
@@ -179,7 +179,7 @@ class SecureSettings(BaseSettingsWithLoader):
         examples=[5.0, 10.0],
     )
     rate_limit: int = Field(
-        ..., description="Лимит запросов в минуту для приложения", examples=[100, 500],
+        ..., description="Лимит запросов в минуту для приложения", examples=[100, 500]
     )
     rate_time_measure_seconds: int = Field(
         ...,

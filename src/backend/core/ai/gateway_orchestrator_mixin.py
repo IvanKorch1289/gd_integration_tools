@@ -59,7 +59,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
     """
 
     def _enforce_tool_policy_once(
-        self, request: AIRequest, policy: object | None,
+        self, request: AIRequest, policy: object | None
     ) -> None:
         """Единая точка enforce tool whitelist/blacklist (S172 M1.3, ARC-003, S209 fix).
 
@@ -108,7 +108,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 raise ToolPolicyViolationError(
                     f"Tool policy for workflow_id={request.workflow_id!r} has empty "
                     f"whitelist AND empty blacklist — deny-all by default (S209). "
-                    f"Set tools.allow_all_tools=True to opt into allow-all behavior.",
+                    f"Set tools.allow_all_tools=True to opt into allow-all behavior."
                 )
             return
         from src.backend.core.ai.policy.enforcer.tools_policy import (
@@ -124,15 +124,12 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 f"AIRequest.tool_name is required when tool policy has "
                 f"non-empty whitelist/blacklist (workflow_id="
                 f"{request.workflow_id!r}). "
-                f"Set request.tool_name to the actual tool being invoked.",
+                f"Set request.tool_name to the actual tool being invoked."
             )
         enforce_tool_policy(request.tool_name, tools)
 
     async def _enforce_token_budget_pre_call(
-        self,
-        request: AIRequest,
-        *,
-        estimated_tokens: int,
+        self, request: AIRequest, *, estimated_tokens: int
     ) -> Any | None:
         """Резервирует estimated tokens (S172 M4 ARC-007, pre-LLM step).
 
@@ -182,9 +179,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
             logger.info(
                 "ai.budget.tenant_less_invocation",
                 extra={
-                    "correlation_id": getattr(
-                        request, "correlation_id", "",
-                    ),
+                    "correlation_id": getattr(request, "correlation_id", ""),
                     "workflow_id": getattr(request, "workflow_id", ""),
                 },
             )
@@ -194,20 +189,21 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 emit_audit_safe(
                     event="ai.budget.tenant_less_invocation",
                     details={
-                        "workflow_id": getattr(
-                            request, "workflow_id", "",
-                        ),
-                        "correlation_id": getattr(
-                            request, "correlation_id", "",
-                        ),
+                        "workflow_id": getattr(request, "workflow_id", ""),
+                        "correlation_id": getattr(request, "correlation_id", ""),
                         "timestamp": str(time.time()),
                     },
                     severity="info",
                 )
-            except (ImportError, AttributeError, RuntimeError) as audit_exc:  # never fail caller
+            except (
+                ImportError,
+                AttributeError,
+                RuntimeError,
+            ) as audit_exc:  # never fail caller
                 # cycle-9/D-AUDIT-985: narrow exceptions + observability
                 # (mirror D-AUDIT-984 для enforced_invoke).
                 import logging
+
                 logging.getLogger(__name__).debug(
                     "gateway_orchestrator_mixin.audit_emit_failed",
                     extra={"error": str(audit_exc)},
@@ -226,18 +222,14 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
             )
 
             return await enforce_pre_call(
-                budget=budget,
-                tenant_id=tenant_id,
-                estimated_tokens=estimated_tokens,
+                budget=budget, tenant_id=tenant_id, estimated_tokens=estimated_tokens
             )
         except BudgetExceeded as exc:
             logger.warning(
                 "ai.budget.exceeded.pre",
                 extra={
                     "tenant_id": tenant_id,
-                    "correlation_id": getattr(
-                        request, "correlation_id", "",
-                    ),
+                    "correlation_id": getattr(request, "correlation_id", ""),
                     "workflow_id": getattr(request, "workflow_id", ""),
                     "used": exc.used,
                     "hard_limit": exc.hard_limit,
@@ -254,9 +246,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 "ai.budget.backend_unavailable.pre",
                 extra={
                     "tenant_id": tenant_id,
-                    "correlation_id": getattr(
-                        request, "correlation_id", ""
-                    ),
+                    "correlation_id": getattr(request, "correlation_id", ""),
                     "workflow_id": getattr(request, "workflow_id", ""),
                     "backend": exc.backend,
                 },
@@ -264,11 +254,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
             raise BudgetEnforcementError(body=render_503(exc)) from exc
 
     async def _enforce_token_budget_post_call(
-        self,
-        request: AIRequest,
-        completion: Any,
-        *,
-        estimated_tokens: int,
+        self, request: AIRequest, completion: Any, *, estimated_tokens: int
     ) -> Any | None:
         """Корректирует фактическим usage'ом (S172 M4 ARC-007, post-LLM step).
 
@@ -313,7 +299,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
         try:
             actual_tokens = int(
                 getattr(completion, "tokens_prompt", 0)
-                + getattr(completion, "tokens_completion", 0),
+                + getattr(completion, "tokens_completion", 0)
             )
             if actual_tokens <= 0:
                 return None
@@ -339,9 +325,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 "ai.budget.exceeded.post",
                 extra={
                     "tenant_id": tenant_id,
-                    "correlation_id": getattr(
-                        request, "correlation_id", "",
-                    ),
+                    "correlation_id": getattr(request, "correlation_id", ""),
                     "workflow_id": getattr(request, "workflow_id", ""),
                     "actual_tokens": actual_tokens,
                     "hard_limit": exc.hard_limit,
@@ -356,9 +340,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 "ai.budget.backend_unavailable.post",
                 extra={
                     "tenant_id": tenant_id,
-                    "correlation_id": getattr(
-                        request, "correlation_id", ""
-                    ),
+                    "correlation_id": getattr(request, "correlation_id", ""),
                     "workflow_id": getattr(request, "workflow_id", ""),
                     "backend": exc.backend,
                     "actual_tokens": actual_tokens,
@@ -393,7 +375,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
         ctx.policy = policy
         ctx.policy_name = policy.name if policy else "default"
         await ctx._emit(
-            "policy_resolved", latency_ms=int(time.monotonic() * 1000) - start_ms,
+            "policy_resolved", latency_ms=int(time.monotonic() * 1000) - start_ms
         )
 
         # Шаг 2: capability check (throws CapabilityDeniedError на fail)
@@ -422,7 +404,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 await ctx._emit_guard("guarded.input", gr)
         else:
             await ctx._emit(
-                "guarded.input", latency_ms=int(time.monotonic() * 1000) - start_ms,
+                "guarded.input", latency_ms=int(time.monotonic() * 1000) - start_ms
             )
 
         # Шаг 5: render prompt
@@ -439,13 +421,10 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
             else ""
         )
         if not rendered_str:
-            rendered_str = (
-                (request.prompt_inline or "")
-                + str(request.context or {})
-            )
+            rendered_str = (request.prompt_inline or "") + str(request.context or {})
         estimated_tokens = max(1, len(rendered_str) // 4 + 200)
         await self._enforce_token_budget_pre_call(
-            request, estimated_tokens=estimated_tokens,
+            request, estimated_tokens=estimated_tokens
         )
 
         # Шаг 6: invoke LLM
@@ -457,9 +436,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
 
         # Шаг 6.5 (S172 M4 ARC-007): post-call budget correction.
         await self._enforce_token_budget_post_call(
-            request,
-            completion,
-            estimated_tokens=estimated_tokens,
+            request, completion, estimated_tokens=estimated_tokens
         )
 
         # Шаг 7: output guards
@@ -470,7 +447,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 await ctx._emit_guard("guarded.output", gr)
         else:
             await ctx._emit(
-                "guarded.output", latency_ms=int(time.monotonic() * 1000) - start_ms,
+                "guarded.output", latency_ms=int(time.monotonic() * 1000) - start_ms
             )
 
         # Шаг 8: output sanitizers

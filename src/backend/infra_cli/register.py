@@ -1,4 +1,5 @@
 """Connector registry CLI — регистрирует legacy sources/sinks в ConnectorRegistry через HealthAdapter."""
+
 from __future__ import annotations
 
 from src.backend.infrastructure.application.health_aggregator import (

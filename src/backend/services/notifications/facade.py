@@ -231,6 +231,7 @@ class NotificationsFacade:
             # Bare `except Exception` маскировал любые ошибки пробы messaging
             # backend (e.g. RabbitMQ/Redis временно недоступны).
             from src.backend.core.logging import get_logger
+
             get_logger(__name__).debug(
                 "notifications.messaging_probe_failed",
                 extra={"error": str(probe_exc), "channel": channel},

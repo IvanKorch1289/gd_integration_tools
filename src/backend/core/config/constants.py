@@ -62,7 +62,7 @@ class Constants:
     MOSCOW_TZ: timezone = timezone(timedelta(hours=3))
     RETRY_EXCEPTIONS: tuple[Any, ...] = (httpx.HTTPError, TimeoutError)
     CHECK_SERVICES_JOB: dict[str, Any] = field(
-        default_factory=lambda: {"name": "check_all_services_job", "minutes": 60},
+        default_factory=lambda: {"name": "check_all_services_job", "minutes": 60}
     )
     INITIAL_DELAY: int = 3600  # 60 минут
     RETRY_DELAY: int = 1800  # 30 минут
@@ -106,7 +106,7 @@ class Constants:
             "57P03",
             # Прочие ошибки
             "58000",
-        },
+        }
     )
 
 

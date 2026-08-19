@@ -109,7 +109,7 @@ class OutboxListener:
         self._conn = await asyncpg.connect(self._dsn)
         await self._conn.add_listener(self._channel, self._on_notify)
         self._backup_task = get_task_registry().create_task(
-            self._backup_loop(), name="outbox-backup-poll",
+            self._backup_loop(), name="outbox-backup-poll"
         )
         self._started = True
         logger.info(
@@ -127,14 +127,14 @@ class OutboxListener:
             self._backup_task.cancel()
             try:
                 await self._backup_task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError, Exception:
                 logger.debug("backup task cancellation raised", exc_info=True)
             self._backup_task = None
         if self._debounce_task is not None:
             self._debounce_task.cancel()
             try:
                 await self._debounce_task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError, Exception:
                 logger.debug("debounce task cancellation raised", exc_info=True)
             self._debounce_task = None
         if self._conn is not None:
@@ -148,7 +148,7 @@ class OutboxListener:
     # -- Private handlers ----------------------------------------------
 
     def _on_notify(
-        self, connection: asyncpg.Connection, _pid: int, channel: str, payload: str,
+        self, connection: asyncpg.Connection, _pid: int, channel: str, payload: str
     ) -> None:
         """asyncpg-callback. Вызывается sync, поэтому только enqueue."""
         if payload:
@@ -157,7 +157,7 @@ class OutboxListener:
             self._pending_ids.add(payload)
             if self._debounce_task is None or self._debounce_task.done():
                 self._debounce_task = get_task_registry().create_task(
-                    self._debounce_flush(), name="outbox-debounce-flush",
+                    self._debounce_flush(), name="outbox-debounce-flush"
                 )
 
     async def _debounce_flush(self) -> None:

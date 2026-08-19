@@ -127,7 +127,7 @@ class FeedbackProcessor(BaseProcessor):
             # Если rating — known label, сразу применим feedback.
             if isinstance(rating, str) and rating.lower() in _VALID_LABELS:
                 await service.set_feedback(
-                    doc_id=doc_id, label=rating.lower(), comment=comment,
+                    doc_id=doc_id, label=rating.lower(), comment=comment
                 )
             exchange.set_property(self._result_property, doc_id)
             _logger.info(
@@ -149,7 +149,7 @@ class FeedbackProcessor(BaseProcessor):
         if isinstance(body, (bytes, bytearray)):
             try:
                 return body.decode("utf-8", errors="replace")
-            except (UnicodeDecodeError, AttributeError):
+            except UnicodeDecodeError, AttributeError:
                 return repr(body)
         return "" if body is None else str(body)
 

@@ -15,9 +15,4 @@ from src.backend.services.ai.guardrails.tenant_config import (
     GuardrailsThresholds,
 )
 
-__all__ = (
-    "GuardrailsConfig",
-    "GuardrailsThresholds",
-    "LakeraClient",
-    "LakeraResult",
-)
+__all__ = ("GuardrailsConfig", "GuardrailsThresholds", "LakeraClient", "LakeraResult")

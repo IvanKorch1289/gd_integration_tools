@@ -43,7 +43,7 @@ def _register_yaml_tools(mcp: Any) -> None:
         pipeline = route_registry.get_optional(route_id)
         if not pipeline:
             return encode_json({"error": f"Route '{route_id}' not found"}).decode(
-                "utf-8",
+                "utf-8"
             )
 
         spec = {
@@ -55,7 +55,7 @@ def _register_yaml_tools(mcp: Any) -> None:
             ],
         }
         return yaml.dump(
-            spec, default_flow_style=False, allow_unicode=True, sort_keys=False,
+            spec, default_flow_style=False, allow_unicode=True, sort_keys=False
         )
 
     @_authz_manual_tool(
@@ -80,7 +80,7 @@ def _register_yaml_tools(mcp: Any) -> None:
                     "status": "registered",
                     "route_id": pipeline.route_id,
                     "processors": len(pipeline.processors),
-                },
+                }
             ).decode("utf-8")
         except Exception as exc:
             return encode_json({"error": str(exc)}).decode("utf-8")

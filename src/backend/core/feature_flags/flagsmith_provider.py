@@ -214,7 +214,7 @@ class FlagsmithProvider:
         if self._client is None:
             return
         close = getattr(self._client, "aclose", None) or getattr(
-            self._client, "close", None,
+            self._client, "close", None
         )
         if close is not None:
             try:

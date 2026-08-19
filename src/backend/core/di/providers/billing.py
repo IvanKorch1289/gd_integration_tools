@@ -42,11 +42,12 @@ def get_quotas_backend_provider() -> Any:
         return _overrides["quotas_backend"]
     # Lazy import: prevents core→services layer-violation (FAIL-1 cycle 33).
     from src.backend.services.billing import no_op_billing
+
     if no_op_billing.BILLING_ENABLED:
         raise NotImplementedError(
             "billing_enabled=True but real billing backend not yet integrated. "
             "Use set_quotas_backend_provider(...) for test override or set "
-            "BILLING_ENABLED=False (default) until QuotasService ships.",
+            "BILLING_ENABLED=False (default) until QuotasService ships."
         )
     return no_op_billing.NoOpBillingFacade()
 
@@ -63,7 +64,4 @@ def set_quotas_backend_provider(impl: Any) -> None:
         _overrides["quotas_backend"] = impl
 
 
-__all__ = (
-    "get_quotas_backend_provider",
-    "set_quotas_backend_provider",
-)
+__all__ = ("get_quotas_backend_provider", "set_quotas_backend_provider")

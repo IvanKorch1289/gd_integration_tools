@@ -91,7 +91,7 @@ class FallbackPolicy(BaseModel):
         description="Упорядоченный список backend-идентификаторов fallback'а.",
     )
     mode: FallbackMode = Field(
-        default="auto", description="Режим срабатывания: auto / forced / off.",
+        default="auto", description="Режим срабатывания: auto / forced / off."
     )
 
 

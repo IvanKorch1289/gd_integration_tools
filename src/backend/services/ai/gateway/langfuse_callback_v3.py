@@ -175,7 +175,7 @@ def _maybe_anonymize_v3(
         else input_messages
     )
     sanitized_output = anonymize_trace_payload(
-        {"_text": output_text} if output_text is not None else None, tenant_id=tenant_id,
+        {"_text": output_text} if output_text is not None else None, tenant_id=tenant_id
     )
     new_output = (
         sanitized_output.get("_text")

@@ -9,6 +9,7 @@ Cert store backend, читающий PEM из ENV vars ``CERT_INLINE_<cert_id>``
 
 NOT to be confused with .env файлами (запрещены per AGENTS.md).
 """
+
 from __future__ import annotations
 
 import os
@@ -59,8 +60,9 @@ class EnvInlineCertBackend(CertBackend):
         _logger.warning("cert.env.delete_noop id=%s", service_id)
         return False
 
-
-    async def save(self, service_id: str, pem: str, expires_at: datetime | None = None) -> None:
+    async def save(
+        self, service_id: str, pem: str, expires_at: datetime | None = None
+    ) -> None:
         """ENV — read-only, delegate to set (which is noop)."""
         await self.set(service_id, pem)
 
@@ -72,7 +74,6 @@ class EnvInlineCertBackend(CertBackend):
     async def list_expiring(self, before: datetime) -> list[CertEntry]:
         """Список сертификатов с expiration < ``before`` (renewal planning)."""
         return []
-
 
     def list_all(self) -> list[str]:
         """Список всех service_id в backend (для admin)."""

@@ -11,10 +11,4 @@ from src.backend.infrastructure.eventing.cloudevents import (
 from src.backend.infrastructure.eventing.inbox import Inbox
 from src.backend.infrastructure.eventing.schema_registry import SchemaRegistry
 
-__all__ = (
-    "CloudEvent",
-    "Inbox",
-    "SchemaRegistry",
-    "envelope",
-    "parse_envelope",
-)
+__all__ = ("CloudEvent", "Inbox", "SchemaRegistry", "envelope", "parse_envelope")

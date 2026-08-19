@@ -203,7 +203,7 @@ class OutboxDispatcher:
         """
         if not self._enabled:
             _logger.info(
-                "outbox.dispatcher.disabled", extra={"reason": "feature_flag_off"},
+                "outbox.dispatcher.disabled", extra={"reason": "feature_flag_off"}
             )
             return
         if self.is_running:
@@ -211,7 +211,7 @@ class OutboxDispatcher:
         self._stopping.clear()
         self._running = True
         self._task = self._task_registry.create_task(
-            self._run(), name="outbox-dispatcher-poll",
+            self._run(), name="outbox-dispatcher-poll"
         )
         _logger.info(
             "outbox.dispatcher.started",
@@ -242,7 +242,7 @@ class OutboxDispatcher:
             await asyncio.wait_for(task, timeout=timeout)
         except TimeoutError:
             _logger.warning(
-                "outbox.dispatcher.stop_timeout", extra={"timeout": timeout},
+                "outbox.dispatcher.stop_timeout", extra={"timeout": timeout}
             )
             task.cancel()
         except asyncio.CancelledError:
@@ -258,12 +258,12 @@ class OutboxDispatcher:
                 raise
             except Exception as exc:
                 _logger.error(
-                    "outbox.dispatcher.iteration_failed", extra={"error": repr(exc)},
+                    "outbox.dispatcher.iteration_failed", extra={"error": repr(exc)}
                 )
             # Пауза с возможностью пробуждения через ``stop``.
             try:
                 await asyncio.wait_for(
-                    self._stopping.wait(), timeout=self._poll_interval,
+                    self._stopping.wait(), timeout=self._poll_interval
                 )
             except TimeoutError:
                 continue

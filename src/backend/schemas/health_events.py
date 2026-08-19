@@ -16,5 +16,5 @@ class HealthTransitionEvent(BaseModel):
     previous_status: str = Field(..., description="Предыдущий overall-статус")
     current_status: str = Field(..., description="Текущий overall-статус")
     components: dict[str, dict[str, Any]] = Field(
-        default_factory=dict, description="Снимок компонентных проверок",
+        default_factory=dict, description="Снимок компонентных проверок"
     )

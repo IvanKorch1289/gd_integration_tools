@@ -28,7 +28,7 @@ def _get_inbox_dlq_breaker() -> Any:
     return get_breaker_registry().get_or_create(
         "inbox_dlq_writer",
         BreakerSpec(
-            name="inbox_dlq_writer", failure_threshold=5, recovery_timeout=30.0,
+            name="inbox_dlq_writer", failure_threshold=5, recovery_timeout=30.0
         ),
     )
 
@@ -63,7 +63,7 @@ class InboxDLQWriter:
                 :retry_count, :first_failed_at, :last_failed_at, :metadata
             )
             ON CONFLICT (dlq_id) DO NOTHING
-            """,  # internal query with controlled parameters
+            """  # internal query with controlled parameters
         )
         params = envelope.model_dump()
         # SQLAlchemy JSON-сериализация поля metadata + original_payload

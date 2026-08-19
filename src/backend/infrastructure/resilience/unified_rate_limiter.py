@@ -34,7 +34,7 @@ class RateLimitExceeded(Exception):
 
     def __init__(self, *, limit: int, window: int, retry_after: int):
         super().__init__(
-            f"Rate limit exceeded: {limit}/{window}s, retry after {retry_after}s",
+            f"Rate limit exceeded: {limit}/{window}s, retry after {retry_after}s"
         )
         self.limit = limit
         self.window = window
@@ -208,7 +208,7 @@ class ResourceRateLimiter:
         "kafka": RateLimiterPolicy(resource="kafka", limit=500, window_seconds=60),
         "mqtt": RateLimiterPolicy(resource="mqtt", limit=200, window_seconds=60),
         "websocket": RateLimiterPolicy(
-            resource="websocket", limit=100, window_seconds=60,
+            resource="websocket", limit=100, window_seconds=60
         ),
     }
 
@@ -243,5 +243,5 @@ class ResourceRateLimiter:
         if policy is None:
             raise KeyError(f"Unknown RL resource: {resource}")
         return await get_rate_limiter().check(
-            identifier=identifier, policy=policy.as_rate_limit(identifier),
+            identifier=identifier, policy=policy.as_rate_limit(identifier)
         )

@@ -19,9 +19,10 @@ logic — invoked from AIGateway before tool dispatch.
 **Integration** (S76 W3): AIGateway / PydanticAI agent tool dispatch
 calls ``enforce_tool_policy(tool_name, current_policy)`` before invoke.
 
-**Backward compat**: если ``spec.tools.whitelist`` и
-``spec.tools.blacklist`` оба empty — все tools allowed (no restriction).
-Pre-S76 YAML не имел ``tools`` секции → default ToolsSpec → all allowed.
+**Backward compat** (P0-NEW-5 cycle 242): если ``spec.tools.whitelist`` и
+``spec.tools.blacklist`` оба empty → **deny-all** per ``spec.allow_all_tools``
+(default ``False``). S209 + S76 backward compat: pre-S209 policies должны
+явно установить ``allow_all_tools=True`` для opt-in allow-all.
 """
 
 from __future__ import annotations
@@ -72,7 +73,9 @@ def check_tool_allowed(tool_name: str, spec: ToolsSpec) -> bool:
         True
         >>> check_tool_allowed("fs.write", ToolsSpec(blacklist=["fs.*"]))
         False
-        >>> check_tool_allowed("any", ToolsSpec())  # default empty = allow
+        >>> check_tool_allowed("any", ToolsSpec())  # default empty = deny
+        False
+        >>> check_tool_allowed("any", ToolsSpec(allow_all_tools=True))
         True
 
     """
@@ -88,8 +91,12 @@ def check_tool_allowed(tool_name: str, spec: ToolsSpec) -> bool:
             fnmatch.fnmatchcase(tool_name, pattern) for pattern in spec.whitelist
         )
 
-    # No whitelist, no blacklist → allow all
-    return True
+    # P0-NEW-5 (cycle 242): No whitelist, no blacklist → fail-closed per
+    # spec.allow_all_tools. S209 docstring says "при пустых whitelist+blacklist
+    # — дефолт deny-all (security). Для backward-compat с pre-S209 policies
+    # (allow-all при пустых списках) установите ``allow_all_tools=True`` явно."
+    # Fix: honor spec.allow_all_tools instead of always-allow.
+    return spec.allow_all_tools
 
 
 def enforce_tool_policy(tool_name: str, spec: ToolsSpec) -> None:
@@ -116,7 +123,7 @@ def enforce_tool_policy(tool_name: str, spec: ToolsSpec) -> None:
     if spec.on_violation == "fail":
         raise ToolPolicyViolationError(
             f"Tool {tool_name!r} violates AIPolicySpec.tools policy. "
-            f"Whitelist={spec.whitelist}, Blacklist={spec.blacklist}.",
+            f"Whitelist={spec.whitelist}, Blacklist={spec.blacklist}."
         )
     if spec.on_violation == "warn":
         _logger.warning(
@@ -136,12 +143,12 @@ def enforce_tool_policy(tool_name: str, spec: ToolsSpec) -> None:
         )
         # Raise anyway — caller must handle (block = drop = no invoke)
         raise ToolPolicyViolationError(
-            f"Tool {tool_name!r} blocked per policy (on_violation=block)",
+            f"Tool {tool_name!r} blocked per policy (on_violation=block)"
         )
     # Defensive: unknown on_violation → fail (safe default)
     _logger.error("Unknown on_violation=%r — defaulting to fail", spec.on_violation)
     raise ToolPolicyViolationError(
-        f"Tool {tool_name!r} blocked per policy (unknown on_violation)",
+        f"Tool {tool_name!r} blocked per policy (unknown on_violation)"
     )
 
 

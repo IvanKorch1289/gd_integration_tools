@@ -136,7 +136,7 @@ def _build_rpc_method(action_id: str) -> Callable[..., Any]:
         from src.backend.entrypoints.base import dispatch_action
 
         payload = MessageToDict(
-            request, preserving_proto_field_name=True, use_integers_for_enums=True,
+            request, preserving_proto_field_name=True, use_integers_for_enums=True
         )
         result = await dispatch_action(action=action_id, payload=payload, source="grpc")
 
@@ -193,7 +193,7 @@ def build_auto_servicers() -> tuple[AutoServicerBundle, ...]:
         add_fn = _find_add_to_server(pb2_grpc, service)
         if base_cls is None or add_fn is None:
             logger.warning(
-                "В %s_pb2_grpc.py не найден ожидаемый Servicer/add_*; пропуск", service,
+                "В %s_pb2_grpc.py не найден ожидаемый Servicer/add_*; пропуск", service
             )
             continue
 
@@ -205,7 +205,7 @@ def build_auto_servicers() -> tuple[AutoServicerBundle, ...]:
                 pb2_grpc=pb2_grpc,
                 servicer_cls=servicer_cls,
                 add_to_server=add_fn,
-            ),
+            )
         )
     return tuple(bundles)
 
@@ -237,7 +237,7 @@ def _build_servicer_class(service: str, base_cls: type, pb2: Any) -> type:
     for meta in grpc_actions:
         if meta.output_model is not None:
             response_cls_by_action[meta.action] = getattr(
-                pb2, meta.output_model.__name__, None,
+                pb2, meta.output_model.__name__, None
             )
         else:
             response_cls_by_action[meta.action] = getattr(pb2, "EmptyResponse", None)
@@ -245,7 +245,7 @@ def _build_servicer_class(service: str, base_cls: type, pb2: Any) -> type:
     # Динамический класс.
     namespace: dict[str, Any] = {
         "_response_cls_for": lambda self, action_id: response_cls_by_action.get(
-            action_id,
+            action_id
         ),
         "__doc__": (
             f"Авто-сгенерированный Servicer для домена '{service}' (Wave 1.3)."

@@ -96,11 +96,11 @@ class ChaosEngineering:
     # ------------------------------------------------------------------
 
     def register(
-        self, name: str, probability: float = 0.0, **params: Any,
+        self, name: str, probability: float = 0.0, **params: Any
     ) -> ChaosConfig:
         """Регистрирует или обновляет chaos-эксперимент."""
         cfg = ChaosConfig(
-            name=name, enabled=True, probability=probability, parameters=params,
+            name=name, enabled=True, probability=probability, parameters=params
         )
         self._experiments[name] = cfg
         logger.info("Chaos experiment registered: %s (p=%.2f)", name, probability)
@@ -225,6 +225,7 @@ class ChaosEngineering:
                         # TypeError — property raised on access. Bare
                         # `except Exception` маскировал unrelated runtime errors.
                         import logging
+
                         logging.getLogger(__name__).debug(
                             "chaos_probes.attr_probe_failed",
                             extra={
@@ -256,7 +257,7 @@ class ChaosEngineering:
             if original_max is not None:
                 setattr(pool_target, attr_name, original_max)
                 logger.info(
-                    "Chaos pool restored: %s (%s=%s)", name, attr_name, original_max,
+                    "Chaos pool restored: %s (%s=%s)", name, attr_name, original_max
                 )
 
     @asynccontextmanager
@@ -293,7 +294,7 @@ class ChaosEngineering:
         try:
             reg.ping_fn = _broken_ping
             logger.warning(
-                "Chaos partition started: %s (duration=%.1fs)", name, duration_seconds,
+                "Chaos partition started: %s (duration=%.1fs)", name, duration_seconds
             )
             await asyncio.sleep(duration_seconds)
             yield
@@ -320,9 +321,9 @@ def is_chaos_enabled() -> bool:
         # service not initialized, RuntimeError — backend unavailable.
         # Bare `except Exception` маскировал unrelated runtime errors.
         import logging
+
         logging.getLogger(__name__).debug(
-            "chaos_probes.is_chaos_enabled_fallback_false",
-            extra={"error": str(ff_exc)},
+            "chaos_probes.is_chaos_enabled_fallback_false", extra={"error": str(ff_exc)}
         )
         return False
 

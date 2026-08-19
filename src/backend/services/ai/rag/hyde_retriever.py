@@ -108,7 +108,7 @@ class HyDERetriever:
         self,
         embed_fn: Callable[[Sequence[str]], Awaitable[list[list[float]]]],
         search_vectors: Callable[
-            [list[list[float]], int], Awaitable[list[dict[str, Any]]],
+            [list[list[float]], int], Awaitable[list[dict[str, Any]]]
         ],
         generate_hypothetical: GenerateTextFn,
         *,
@@ -188,6 +188,6 @@ class HyDERetriever:
                         if self._config.include_hypothetical_in_result
                         else ""
                     ),
-                ),
+                )
             )
         return dense_results

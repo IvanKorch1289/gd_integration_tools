@@ -180,6 +180,7 @@ def _emit_audit(context: CapabilityContext | None, event: dict[str, object]) -> 
         # change, RuntimeError — backend unavailable. never raise from
         # audit emission (best-effort).
         import logging
+
         logging.getLogger(__name__).debug(
             "activity_capability_guard.audit_emit_failed",
             extra={"error": str(audit_exc)},

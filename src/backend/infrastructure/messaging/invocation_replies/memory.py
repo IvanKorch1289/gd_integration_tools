@@ -63,7 +63,7 @@ class MemoryReplyChannel(InvocationReplyChannel):
         async with self._lock:
             self._evict_expired()
             self._store[response.invocation_id] = _Entry(
-                response=response, expires_at=monotonic() + self._ttl,
+                response=response, expires_at=monotonic() + self._ttl
             )
             self._store.move_to_end(response.invocation_id)
             if len(self._store) > self._max_entries:

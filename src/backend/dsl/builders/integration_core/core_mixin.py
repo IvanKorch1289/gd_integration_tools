@@ -40,7 +40,7 @@ class CoreDispatchMixin:
                 action=action,
                 payload_factory=payload_factory,
                 result_property=result_property,
-            ),
+            )
         )
 
     def invoke(
@@ -75,13 +75,13 @@ class CoreDispatchMixin:
                 invocation_id_property=invocation_id_property,
                 timeout=timeout,
                 correlation_id=correlation_id,
-            ),
+            )
         )
 
     def to_route(
-        self, route_id: str, *, result_property: str = "sub_result",
+        self, route_id: str, *, result_property: str = "sub_result"
     ) -> RouteBuilder:
         """Вызов другого зарегистрированного DSL-маршрута."""
         return self._add(  # type: ignore[attr-defined]
-            PipelineRefProcessor(route_id=route_id, result_property=result_property),
+            PipelineRefProcessor(route_id=route_id, result_property=result_property)
         )

@@ -29,7 +29,7 @@ class ConnectorHealthMixin:
     """Предоставляет ``_timed_health()`` для реализации health() в sinks/sources."""
 
     async def _timed_health(
-        self, probe: Callable[[], Any], mode: HealthMode,
+        self, probe: Callable[[], Any], mode: HealthMode
     ) -> HealthResult:
         """Оборачивает probe-колбек в timing + exception handling.
 
@@ -52,5 +52,5 @@ class ConnectorHealthMixin:
         except Exception as exc:
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
             )

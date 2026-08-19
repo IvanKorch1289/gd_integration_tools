@@ -54,11 +54,11 @@ class ExternalDatabasesSettings(BaseSettingsWithLoader):
     )
 
     pool_recycle: int = Field(
-        ..., description="Интервал обновления подключения по умолчанию", examples=[1800],
+        ..., description="Интервал обновления подключения по умолчанию", examples=[1800]
     )
 
     pool_timeout: int = Field(
-        ..., description="Таймаут ожидания пула подключений по умолчанию", examples=[30],
+        ..., description="Таймаут ожидания пула подключений по умолчанию", examples=[30]
     )
 
     pool_pre_ping: bool = Field(
@@ -121,7 +121,7 @@ class ExternalDatabasesSettings(BaseSettingsWithLoader):
     )
 
     slow_query_threshold: float = Field(
-        ..., ge=0, description="Порог медленного запроса по умолчанию", examples=[1.0],
+        ..., ge=0, description="Порог медленного запроса по умолчанию", examples=[1.0]
     )
 
     connections: list[ExternalDatabaseItemSettings] = Field(
@@ -138,7 +138,7 @@ class ExternalDatabasesSettings(BaseSettingsWithLoader):
 
         if duplicates:
             raise ValueError(
-                f"Найдены повторяющиеся profile_name: {sorted(duplicates)}",
+                f"Найдены повторяющиеся profile_name: {sorted(duplicates)}"
             )
 
         return self
@@ -170,7 +170,7 @@ class ExternalDatabasesSettings(BaseSettingsWithLoader):
         return value
 
     def _resolve_connection(
-        self, connection: ExternalDatabaseItemSettings,
+        self, connection: ExternalDatabaseItemSettings
     ) -> ExternalDatabaseConnectionSettings:
         """Собирает итоговую конфигурацию подключения:
         - берёт top-level defaults;
@@ -201,7 +201,7 @@ class ExternalDatabasesSettings(BaseSettingsWithLoader):
                 payload[field_name] = getattr(self, field_name)
 
         username = connection.username or self._get_secret_from_env(
-            connection.profile_name, "username",
+            connection.profile_name, "username"
         )
         password_raw = (
             connection.password.get_secret_value()
@@ -211,12 +211,12 @@ class ExternalDatabasesSettings(BaseSettingsWithLoader):
 
         if connection.enabled and not username:
             raise ValueError(
-                f"Не найден username для внешней БД '{connection.profile_name}'",
+                f"Не найден username для внешней БД '{connection.profile_name}'"
             )
 
         if connection.enabled and not password_raw:
             raise ValueError(
-                f"Не найден password для внешней БД '{connection.profile_name}'",
+                f"Не найден password для внешней БД '{connection.profile_name}'"
             )
 
         payload["username"] = username

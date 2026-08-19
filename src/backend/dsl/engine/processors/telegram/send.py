@@ -77,7 +77,7 @@ class TelegramSendProcessor(BaseProcessor):
         chat_id = resolve_value(exchange, self._chat_id_from)
         if not chat_id:
             exchange.fail(
-                f"TelegramSendProcessor: не удалось извлечь chat_id из {self._chat_id_from!r}",
+                f"TelegramSendProcessor: не удалось извлечь chat_id из {self._chat_id_from!r}"
             )
             return
 

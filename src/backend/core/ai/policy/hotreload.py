@@ -112,7 +112,7 @@ async def watch_policy_files(
     except ImportError as exc:
         raise ImportError(
             "watchfiles required для hot-reload. "
-            "Install: uv add watchfiles (уже в dev-group).",
+            "Install: uv add watchfiles (уже в dev-group)."
         ) from exc
 
     if paths is None:
@@ -158,7 +158,7 @@ async def watch_policy_files(
                 resolver.reload()
             except Exception as exc:
                 _logger.warning(
-                    "resolver.reload() failed after %s %s: %s", action, path, exc,
+                    "resolver.reload() failed after %s %s: %s", action, path, exc
                 )
                 # Continue (не raise — другие файлы могут быть valid)
 

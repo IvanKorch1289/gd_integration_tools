@@ -87,7 +87,7 @@ async def scoring_agent(payload: dict[str, Any]) -> dict[str, Any]:
         # Audit event emission через canonical facade (fail-safe wrapper,
         # designed to absorb missing ClickHouse без падения).
         try:
-            from src.backend.core.audit.facade import emit_audit_safe
+            from src.backend.core.api import emit_audit_safe
 
             await emit_audit_safe(
                 event="credit_rejected",

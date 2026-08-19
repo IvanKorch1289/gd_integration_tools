@@ -68,7 +68,7 @@ class VariableScope:
     def __post_init__(self) -> None:
         if self.kind not in {"global", "tenant", "route"}:
             raise ValueError(
-                f"Invalid scope kind: {self.kind!r} (expected global|tenant|route)",
+                f"Invalid scope kind: {self.kind!r} (expected global|tenant|route)"
             )
         if self.kind != "global" and not self.identifier:
             raise ValueError(f"Scope {self.kind!r} requires non-empty identifier")
@@ -109,11 +109,11 @@ class VariableScope:
             kind, ident = raw.split(":", 1)
             if not kind or not ident:
                 raise ValueError(
-                    f"Invalid VariableScope: {raw!r} (both kind and identifier required)",
+                    f"Invalid VariableScope: {raw!r} (both kind and identifier required)"
                 )
             return cls(kind=kind, identifier=ident)
         raise ValueError(
-            f"Invalid VariableScope: {raw!r} (expected 'global' or 'kind:identifier')",
+            f"Invalid VariableScope: {raw!r} (expected 'global' or 'kind:identifier')"
         )
 
 
@@ -150,7 +150,7 @@ class VariableBackend(Protocol):
         ...
 
     async def set(
-        self, key: str, value: Any, scope: VariableScope, *, ttl: float | None = None,
+        self, key: str, value: Any, scope: VariableScope, *, ttl: float | None = None
     ) -> None:
         """Установить ``value`` по ``key`` в ``scope``; ``ttl`` — опциональный TTL."""
         ...
@@ -195,7 +195,7 @@ class InMemoryVariableBackend:
         return value
 
     async def set(
-        self, key: str, value: Any, scope: VariableScope, *, ttl: float | None = None,
+        self, key: str, value: Any, scope: VariableScope, *, ttl: float | None = None
     ) -> None:
         """Установить ``value`` по ``key`` в ``scope``; ``ttl`` — опциональный TTL."""
         expires_at = (_now() + ttl) if ttl else 0.0
@@ -271,7 +271,7 @@ class ConsulVariableBackend:
         return raw
 
     async def set(
-        self, key: str, value: Any, scope: VariableScope, *, ttl: float | None = None,
+        self, key: str, value: Any, scope: VariableScope, *, ttl: float | None = None
     ) -> None:
         """Установить ``value`` по ``key`` в ``scope`` через Consul KV."""
         path = self._key_path(key, scope)
@@ -365,6 +365,7 @@ class PostgresVariableBackend:
         from src.backend.core.di.providers.infrastructure_locator import (
             get_dsl_variables_attr as _get_dsl_var_attr,
         )
+
         dsl_variables = _get_dsl_var_attr("dsl_variables")
 
         stmt = select(
@@ -386,7 +387,7 @@ class PostgresVariableBackend:
         return value
 
     async def set(
-        self, key: str, value: Any, scope: VariableScope, *, ttl: float | None = None,
+        self, key: str, value: Any, scope: VariableScope, *, ttl: float | None = None
     ) -> None:
         """Установить ``value`` по ``key`` в ``scope`` через Postgres-таблицу."""
         if self.session is None:
@@ -396,6 +397,7 @@ class PostgresVariableBackend:
         from src.backend.core.di.providers.infrastructure_locator import (
             get_dsl_variables_attr as _get_dsl_var_attr,
         )
+
         dsl_variables = _get_dsl_var_attr("dsl_variables")
 
         stmt = pg_insert(dsl_variables).values(
@@ -425,10 +427,11 @@ class PostgresVariableBackend:
         from src.backend.core.di.providers.infrastructure_locator import (
             get_dsl_variables_attr as _get_dsl_var_attr,
         )
+
         dsl_variables = _get_dsl_var_attr("dsl_variables")
 
         stmt = delete(dsl_variables).where(
-            dsl_variables.c.scope == str(scope), dsl_variables.c.key == key,
+            dsl_variables.c.scope == str(scope), dsl_variables.c.key == key
         )
         result = await self.session.execute(stmt)
         await self.session.commit()
@@ -443,6 +446,7 @@ class PostgresVariableBackend:
         from src.backend.core.di.providers.infrastructure_locator import (
             get_dsl_variables_attr as _get_dsl_var_attr,
         )
+
         dsl_variables = _get_dsl_var_attr("dsl_variables")
 
         stmt = select(dsl_variables.c.key).where(dsl_variables.c.scope == str(scope))

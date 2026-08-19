@@ -78,9 +78,9 @@ async def list_failed_jobs(
     dependencies=[
         Depends(
             require_admin(
-                (AdminRole.OPERATOR, AdminRole.SUPER_ADMIN, AdminRole.READ_ONLY),
-            ),
-        ),
+                (AdminRole.OPERATOR, AdminRole.SUPER_ADMIN, AdminRole.READ_ONLY)
+            )
+        )
     ],
     summary="Получить DLQ-запись по id",
     description=(
@@ -100,7 +100,7 @@ async def get_failed_job(entry_id: str) -> dict[str, Any]:
     entry = store.get(entry_id)
     if entry is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="DLQ entry not found",
+            status_code=status.HTTP_404_NOT_FOUND, detail="DLQ entry not found"
         )
     return entry.to_dict()
 
@@ -131,7 +131,7 @@ async def retry_failed_job(entry_id: str) -> dict[str, Any]:
     entry = store.get(entry_id)
     if entry is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="DLQ entry not found",
+            status_code=status.HTTP_404_NOT_FOUND, detail="DLQ entry not found"
         )
     entry.mark_retried()
 
@@ -172,5 +172,5 @@ async def delete_failed_job(entry_id: str) -> None:
     store = _require_store()
     if not store.delete(entry_id):
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="DLQ entry not found",
+            status_code=status.HTTP_404_NOT_FOUND, detail="DLQ entry not found"
         )

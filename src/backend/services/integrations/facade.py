@@ -70,7 +70,7 @@ class IntegrationFacade:
         return self._sources
 
     async def _check_capability(
-        self, capability: str, *, context: dict[str, Any] | None = None,
+        self, capability: str, *, context: dict[str, Any] | None = None
     ) -> bool:
         """S203 W4: проверка capability через AuthorizationFacade.
 
@@ -88,14 +88,13 @@ class IntegrationFacade:
             )
 
             decision = await get_authorization_facade().authorize(
-                required_capability=capability,
-                context=context or {},
+                required_capability=capability, context=context or {}
             )
             return bool(decision.allowed)
         except Exception as exc:
             # Fail-closed: если authz слой недоступен, запрещаем доступ.
             _logger.warning(
-                "authz unavailable for capability=%s, denying: %s", capability, exc,
+                "authz unavailable for capability=%s, denying: %s", capability, exc
             )
             return False
 
@@ -127,8 +126,7 @@ class IntegrationFacade:
         capability = f"sink.send.{sink.kind.value}"
 
         if not await self._check_capability(
-            capability,
-            context={"tenant_id": tenant_id, "principal": principal},
+            capability, context={"tenant_id": tenant_id, "principal": principal}
         ):
             # Cycle 104 L8: CapabilityDeniedError signature is
             # (plugin, capability, requested_scope, declared_scope,
@@ -150,9 +148,7 @@ class IntegrationFacade:
         )
         return await sink.send(payload)
 
-    async def check_sink_health(
-        self, sink_id: str,
-    ) -> dict[str, Any]:
+    async def check_sink_health(self, sink_id: str) -> dict[str, Any]:
         """Ping одного Sink. Не требует capability (read-only).
 
         Args:
@@ -177,9 +173,7 @@ class IntegrationFacade:
             return result
         return {"status": "ok"}
 
-    async def check_source_health(
-        self, source_id: str,
-    ) -> dict[str, Any]:
+    async def check_source_health(self, source_id: str) -> dict[str, Any]:
         """Ping одного Source. Не требует capability (read-only).
 
         Args:

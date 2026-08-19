@@ -62,8 +62,11 @@ class EmailSink(Sink):
     kind: SinkKind = field(default=SinkKind.MAIL, init=False)
 
     @with_breaker("email_sink")
-    @with_retry(max_attempts=3, initial_backoff=2.0,
-        retry_on=(ConnectionError, TimeoutError, OSError))
+    @with_retry(
+        max_attempts=3,
+        initial_backoff=2.0,
+        retry_on=(ConnectionError, TimeoutError, OSError),
+    )
     @require_capability("email.send", action="write")
     async def send(self, payload: Any) -> SinkResult:
         """Формирует :class:`email.message.EmailMessage` и отправляет через aiosmtplib."""
@@ -93,7 +96,7 @@ class EmailSink(Sink):
             )
         except Exception as exc:
             return SinkResult(
-                ok=False, details={"error": str(exc) or exc.__class__.__name__},
+                ok=False, details={"error": str(exc) or exc.__class__.__name__}
             )
 
         return SinkResult(
@@ -158,7 +161,7 @@ class EmailSink(Sink):
         except Exception as exc:
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
             )
         latency_ms = (time.perf_counter() - start) * 1000.0
         return HealthResult.ok(latency_ms=latency_ms, mode=mode)

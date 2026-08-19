@@ -59,7 +59,7 @@ def get_chunker(
         raise ValueError(f"chunk_size must be > 0, got {chunk_size}")
     if chunk_overlap < 0 or chunk_overlap >= chunk_size:
         raise ValueError(
-            f"chunk_overlap must be in [0, chunk_size), got {chunk_overlap}",
+            f"chunk_overlap must be in [0, chunk_size), got {chunk_overlap}"
         )
 
     match strategy:
@@ -77,5 +77,5 @@ def get_chunker(
             return RecursiveChunker(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
         case _:
             raise ValueError(
-                f"Unknown chunk strategy: {strategy!r}. Valid: 'token', 'recursive'",
+                f"Unknown chunk strategy: {strategy!r}. Valid: 'token', 'recursive'"
             )

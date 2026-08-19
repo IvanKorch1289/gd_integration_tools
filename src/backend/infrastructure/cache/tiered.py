@@ -36,7 +36,7 @@ class TieredCacheBackend(CacheBackend):
     """
 
     def __init__(
-        self, l1: CacheBackend, l2: CacheBackend, promote_ttl: int = 60,
+        self, l1: CacheBackend, l2: CacheBackend, promote_ttl: int = 60
     ) -> None:
         self._l1 = l1
         self._l2 = l2

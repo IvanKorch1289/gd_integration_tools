@@ -25,7 +25,7 @@ SearchCallable = Callable[..., Awaitable[list[dict[str, Any]]]]
 
 
 async def _es_search(
-    index: str, query: str, *, limit: int = 20,
+    index: str, query: str, *, limit: int = 20
 ) -> list[dict[str, Any]]:
     from src.backend.infrastructure.clients.storage.elasticsearch import (
         get_elasticsearch_client,
@@ -33,13 +33,13 @@ async def _es_search(
 
     client = get_elasticsearch_client()
     response = await client.search(
-        index=index, query={"match": {"_all": query}}, size=limit,
+        index=index, query={"match": {"_all": query}}, size=limit
     )
     return [hit["_source"] for hit in response["hits"]["hits"]]
 
 
 async def _sqlite_fts5_search(
-    index: str, query: str, *, limit: int = 20,
+    index: str, query: str, *, limit: int = 20
 ) -> list[dict[str, Any]]:
     """SQLite FTS5 fallback. Использует один файл per-index."""
     db_path = Path("var/db/search") / f"{index}.sqlite"
@@ -51,7 +51,7 @@ async def _sqlite_fts5_search(
         try:
             conn.execute(
                 f"CREATE VIRTUAL TABLE IF NOT EXISTS {index}_fts "
-                "USING fts5(doc_id, content)",
+                "USING fts5(doc_id, content)"
             )
             cursor = conn.execute(
                 f"SELECT doc_id, content, rank FROM {index}_fts "  # internal query with controlled parameters

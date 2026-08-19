@@ -61,7 +61,7 @@ builder.add_crud_resource(
         id_param_name="object_id",
         id_field_name="id",
         default_order_by="id",
-    ),
+    )
 )
 
 
@@ -89,7 +89,7 @@ builder.add_actions(
                     destination=internal_actions_stream,
                     payload_factory=default_payload_factory,
                     meta_factory=build_http_command_meta,
-                ),
+                )
             ),
         ),
         ActionSpec(
@@ -114,7 +114,7 @@ builder.add_actions(
                     destination=internal_actions_stream,
                     payload_factory=default_payload_factory,
                     meta_factory=build_http_command_meta,
-                ),
+                )
             ),
         ),
         ActionSpec(
@@ -139,7 +139,7 @@ builder.add_actions(
                     destination=internal_actions_stream,
                     payload_factory=default_payload_factory,
                     meta_factory=build_http_command_meta,
-                ),
+                )
             ),
         ),
         ActionSpec(
@@ -202,5 +202,5 @@ builder.add_actions(
             dependencies=common_dependencies,
             tags=common_tags,
         ),
-    ],
+    ]
 )

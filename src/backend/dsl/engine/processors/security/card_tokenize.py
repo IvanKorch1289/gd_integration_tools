@@ -118,9 +118,7 @@ class CardTokenizeProcessor(BaseProcessor):
         self._bin_preserve = bin_preserve
 
     @handle_processor_error
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Tokenize PAN из source_property.
 
         Side effects:
@@ -129,12 +127,16 @@ class CardTokenizeProcessor(BaseProcessor):
         # Step 1: extract PAN
         pan = self._extract_pan(exchange)
         if not pan:
-            _logger.warning("card_tokenize: no PAN extracted from %s", self._source_property)
+            _logger.warning(
+                "card_tokenize: no PAN extracted from %s", self._source_property
+            )
             return
 
         # Step 2: Luhn validate
         if not self._luhn_check(pan):
-            exchange.fail(f"card_tokenize: invalid PAN (Luhn failed): {pan[-4:].rjust(4, '*')}")
+            exchange.fail(
+                f"card_tokenize: invalid PAN (Luhn failed): {pan[-4:].rjust(4, '*')}"
+            )
             return
 
         # Step 3: Generate token
@@ -244,9 +246,7 @@ class CardTokenizeProcessor(BaseProcessor):
         """
         return self._format_preserving_token(pan, "")
 
-    async def _store_mapping(
-        self, token_id: str, pan: str, token: str,
-    ) -> None:
+    async def _store_mapping(self, token_id: str, pan: str, token: str) -> None:
         """Store token→PAN mapping (S202 audit fix).
 
         Раньше был stub ``pass`` — token возвращался без backing mapping,
@@ -280,12 +280,7 @@ class CardTokenizeProcessor(BaseProcessor):
         await registry.store(f"card:{token_id}", token_map, ttl_s=86400)
 
     async def _emit_audit(
-        self,
-        *,
-        token_id: str,
-        bin_prefix: str,
-        last_four: str,
-        method: str,
+        self, *, token_id: str, bin_prefix: str, last_four: str, method: str
     ) -> None:
         """Emit audit event для tokenization."""
         try:
@@ -316,7 +311,7 @@ class CardTokenizeProcessor(BaseProcessor):
         return value
 
     def _set_result_property(
-        self, exchange: Exchange[Any], result: CardTokenResult,
+        self, exchange: Exchange[Any], result: CardTokenResult
     ) -> None:
         """Set result в result_property."""
         parts = self._result_property.split(".")

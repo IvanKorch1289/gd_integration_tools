@@ -100,9 +100,7 @@ class DLQCleanupScheduler:
         if self._running:
             return
         self._running = True
-        self._task = get_task_registry().create_task(
-            self._loop(), name="dlq-cleanup",
-        )
+        self._task = get_task_registry().create_task(self._loop(), name="dlq-cleanup")
         _logger.info(
             "DLQCleanupScheduler started (interval=%.1fh, table=%s)",
             self._interval_seconds / 3600.0,
@@ -147,10 +145,7 @@ default_scheduler: DLQCleanupScheduler | None = None
 
 
 async def start_dlq_cleanup(
-    *,
-    ch_client: Any,
-    interval_hours: float = 24.0,
-    table_name: str = "dlq_events",
+    *, ch_client: Any, interval_hours: float = 24.0, table_name: str = "dlq_events"
 ) -> None:
     """Запустить default DLQ cleanup scheduler (idempotent).
 
@@ -165,9 +160,7 @@ async def start_dlq_cleanup(
         # Already running — ничего не делаем (idempotent).
         return
     default_scheduler = DLQCleanupScheduler(
-        ch_client=ch_client,
-        interval_hours=interval_hours,
-        table_name=table_name,
+        ch_client=ch_client, interval_hours=interval_hours, table_name=table_name
     )
     await default_scheduler.start()
 

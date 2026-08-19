@@ -39,7 +39,7 @@ def _canonical_body(payload: dict[str, Any] | bytes | str) -> bytes:
 
 
 def sign_payload(
-    payload: dict[str, Any] | bytes | str, secret: str, timestamp: int | None = None,
+    payload: dict[str, Any] | bytes | str, secret: str, timestamp: int | None = None
 ) -> tuple[str, int]:
     """Подписывает payload HMAC-SHA256.
 
@@ -88,7 +88,7 @@ def verify_signature(
 
 
 def build_signature_headers(
-    payload: dict[str, Any] | bytes | str, secret: str,
+    payload: dict[str, Any] | bytes | str, secret: str
 ) -> dict[str, str]:
     """Возвращает headers для исходящего webhook.
 

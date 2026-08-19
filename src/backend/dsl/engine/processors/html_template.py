@@ -83,7 +83,7 @@ class HtmlTemplateProcessor(BaseProcessor):
         if context_from not in {"body", "properties", "merged"}:
             raise ValueError(
                 f"html_template: context_from must be 'body'|'properties'|'merged', "
-                f"got {context_from!r}",
+                f"got {context_from!r}"
             )
         self._template_source = template
         self._target = to
@@ -135,9 +135,9 @@ class HtmlTemplateProcessor(BaseProcessor):
             # config not initialized, RuntimeError — feature_flags
             # unavailable. feature flags недоступны — продолжаем работу (для unit-тестов).
             import logging
+
             logging.getLogger(__name__).debug(
-                "html_template.feature_flag_fallback",
-                extra={"error": str(ff_exc)},
+                "html_template.feature_flag_fallback", extra={"error": str(ff_exc)}
             )
 
         try:

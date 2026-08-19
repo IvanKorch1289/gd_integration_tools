@@ -98,7 +98,7 @@ class FallbackObjectStorage(ObjectStorage):
         return isinstance(exc, self._fallback_exceptions)
 
     async def _with_fallback(
-        self, op: str, primary_call: Any, secondary_call: Any,
+        self, op: str, primary_call: Any, secondary_call: Any
     ) -> Any:
         """Execute primary_call; при matched exception — secondary_call.
 
@@ -132,7 +132,7 @@ class FallbackObjectStorage(ObjectStorage):
         return await self._with_fallback("download", _primary, _secondary)
 
     async def upload(
-        self, key: str, data: bytes, content_type: str | None = None,
+        self, key: str, data: bytes, content_type: str | None = None
     ) -> str:
         """``upload``: primary → secondary fallback (write-through).
 
@@ -252,7 +252,7 @@ class FallbackObjectStorage(ObjectStorage):
 
         try:
             return await self._primary.upload_stream(
-                key, _tee(), content_type=content_type, metadata=metadata,
+                key, _tee(), content_type=content_type, metadata=metadata
             )
         except BaseException as primary_exc:
             if not self._should_fallback(primary_exc):
@@ -275,12 +275,13 @@ class FallbackObjectStorage(ObjectStorage):
                 # backend failure. Bare `except Exception` маскировал
                 # unrelated runtime errors (KeyError, TypeError).
                 import logging
+
                 logging.getLogger(__name__).debug(
                     "storage_fallback.stream_drain_failed",
                     extra={"key": key, "error": str(stream_exc)},
                 )
             return await self._secondary.upload(
-                key, bytes(buffer), content_type=content_type,
+                key, bytes(buffer), content_type=content_type
             )
 
     def supports_presigned(self) -> bool:

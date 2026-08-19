@@ -65,7 +65,7 @@ class _PollingStrategy(_CDCStrategy):
             cursor = RedisCursor(f"cdc:cursor:{key}")
             stored = await cursor.get_or_init(default.isoformat())
             return datetime.fromisoformat(stored)
-        except (ImportError, ValueError, Exception):
+        except ImportError, ValueError, Exception:
             return self._last_check_local.get(key, default)
 
     async def _advance_cursor(self, key: str, new_value: datetime) -> None:
@@ -77,7 +77,7 @@ class _PollingStrategy(_CDCStrategy):
 
             cursor = RedisCursor(f"cdc:cursor:{key}")
             await cursor.try_advance(new_value.isoformat())
-        except (ImportError, Exception):
+        except ImportError, Exception:
             logger.debug("CDC cursor advance via Redis failed", exc_info=True)
         self._last_check_local[key] = new_value
 
@@ -127,10 +127,10 @@ class _PollingStrategy(_CDCStrategy):
                             f"SELECT * FROM {table} "  # table/timestamp_column — DSL/config параметры подписки, не runtime user input  # internal query with controlled parameters
                             f"WHERE {sub.timestamp_column} > :last "
                             f"ORDER BY {sub.timestamp_column} "
-                            f"LIMIT :limit",
+                            f"LIMIT :limit"
                         )
                         result = await conn.execute(
-                            query, {"last": last, "limit": sub.batch_size},
+                            query, {"last": last, "limit": sub.batch_size}
                         )
                         rows = [dict(row._mapping) for row in result.fetchall()]
 
@@ -158,7 +158,7 @@ class _PollingStrategy(_CDCStrategy):
 
                 except Exception as exc:
                     logger.warning(
-                        "CDC polling error [%s/%s]: %s", sub.profile, table, exc,
+                        "CDC polling error [%s/%s]: %s", sub.profile, table, exc
                     )
 
             await asyncio.sleep(sub.interval)
@@ -263,7 +263,7 @@ class _ListenNotifyStrategy(_CDCStrategy):
                     await dispatch(sub, event)
                 except (orjson.JSONDecodeError, ValueError, TypeError) as exc:
                     logger.warning(
-                        "CDC notify parse error: %s | payload=%s", exc, payload[:200],
+                        "CDC notify parse error: %s | payload=%s", exc, payload[:200]
                     )
         finally:
             try:
@@ -337,7 +337,7 @@ class _LogMinerStrategy(_CDCStrategy):
                         FETCH FIRST :limit ROWS ONLY
                     """)  # table_list собран из sub.tables (DSL config), upper-cased  # internal query with controlled parameters
                     result = await conn.execute(
-                        query, {"last_scn": last_scn, "limit": sub.batch_size},
+                        query, {"last_scn": last_scn, "limit": sub.batch_size}
                     )
                     rows = result.fetchall()
 

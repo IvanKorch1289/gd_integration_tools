@@ -108,7 +108,7 @@ class LLMJudge:
         self._model = model
 
     async def evaluate(
-        self, *, query: str, response: str, metadata: dict[str, Any] | None = None,
+        self, *, query: str, response: str, metadata: dict[str, Any] | None = None
     ) -> JudgeVerdict:
         """Оценивает один (query, response) pair."""
         try:
@@ -116,11 +116,11 @@ class LLMJudge:
 
             agent = get_ai_agent_service()
             judge_prompt = _JUDGE_PROMPT.format(
-                query=query[:500], response=response[:2000],
+                query=query[:500], response=response[:2000]
             )
 
             result = await agent.chat(
-                messages=[{"role": "user", "content": judge_prompt}], model=self._model,
+                messages=[{"role": "user", "content": judge_prompt}], model=self._model
             )
 
             content = ""
@@ -234,7 +234,7 @@ class LLMJudge:
         try:
             redis_client = get_redis_stream_client_provider()
             records = await redis_client.read_stream(
-                stream_name="llm_calls", count=limit,
+                stream_name="llm_calls", count=limit
             )
         except (ImportError, AttributeError, ConnectionError):
             return verdicts

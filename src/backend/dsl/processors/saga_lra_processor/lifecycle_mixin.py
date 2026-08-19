@@ -41,7 +41,7 @@ _VALID_STATES = frozenset(
         STATE_COMPENSATING,
         STATE_COMPENSATED,
         STATE_FAILED,
-    },
+    }
 )
 
 
@@ -84,11 +84,11 @@ class LifecycleMixin(_SagaLRAProcessorProtocol):
                     timeout=step_timeout,
                 )
             return await self._invoke(
-                step["action"], exchange, context, step_name=step["name"], kind="action",
+                step["action"], exchange, context, step_name=step["name"], kind="action"
             )
         except TimeoutError as exc:
             raise SagaLRAError(
-                f"step {step['name']!r} action timed out after {step_timeout}s",
+                f"step {step['name']!r} action timed out after {step_timeout}s"
             ) from exc
 
     async def _run_compensation(
@@ -111,12 +111,12 @@ class LifecycleMixin(_SagaLRAProcessorProtocol):
             return None
         if step["name"] in ran_compensations:
             _lra_logger.debug(
-                "SagaLRA compensation %s already run (idempotent skip)", step["name"],
+                "SagaLRA compensation %s already run (idempotent skip)", step["name"]
             )
             return None
         try:
             await self._invoke(
-                comp, exchange, context, step_name=step["name"], kind="compensation",
+                comp, exchange, context, step_name=step["name"], kind="compensation"
             )
             ran_compensations.add(step["name"])
             return None

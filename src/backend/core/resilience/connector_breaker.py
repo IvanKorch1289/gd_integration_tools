@@ -35,14 +35,8 @@ _R = TypeVar("_R")
 
 
 def with_breaker(
-    name: str,
-    *,
-    failure_threshold: int = 5,
-    recovery_seconds: float = 30.0,
-) -> Callable[
-    [Callable[_P, Awaitable[_R]]],
-    Callable[_P, Awaitable[_R]],
-]:
+    name: str, *, failure_threshold: int = 5, recovery_seconds: float = 30.0
+) -> Callable[[Callable[_P, Awaitable[_R]]], Callable[_P, Awaitable[_R]]]:
     """Per-connector circuit breaker decorator.
 
     Args:
@@ -59,9 +53,7 @@ def with_breaker(
     registry = get_breaker_registry()
     breaker = registry.get_or_create(name, spec)
 
-    def decorator(
-        func: Callable[_P, Awaitable[_R]],
-    ) -> Callable[_P, Awaitable[_R]]:
+    def decorator(func: Callable[_P, Awaitable[_R]]) -> Callable[_P, Awaitable[_R]]:
         @wraps(func)
         async def wrapper(*args: _P.args, **kwargs: _P.kwargs) -> _R:
             async with breaker.guard():

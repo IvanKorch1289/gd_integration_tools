@@ -55,9 +55,9 @@ class DslSnapshot(BaseModel, TenantMixin):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     api_version: Mapped[str] = mapped_column(
-        String(8), nullable=False, server_default="v2",
+        String(8), nullable=False, server_default="v2"
     )
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now(),
+        DateTime(timezone=True), nullable=False, server_default=func.now()
     )

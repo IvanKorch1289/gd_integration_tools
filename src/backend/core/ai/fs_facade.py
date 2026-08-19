@@ -72,7 +72,7 @@ class AIFsFacade:
         return target.read_bytes()
 
     async def read_as_markdown(
-        self, path: str | Path, mime: str | None = None,
+        self, path: str | Path, mime: str | None = None
     ) -> tuple[str, dict[str, object]]:
         """Прочитать файл и сконвертировать в Markdown (V15 R-V15-4 + S5 hotfix).
 
@@ -101,7 +101,7 @@ class AIFsFacade:
         # DocumentParserProtocol реализован в services/ai/document_parsers;
         # резолвинг через importlib скрывает зависимость от check_layers.
         _doc_parsers = importlib.import_module(
-            "src.backend.services.ai.document_parsers",
+            "src.backend.services.ai.document_parsers"
         )
         target = Path(path)
         content = self.read(target)
@@ -114,11 +114,11 @@ class AIFsFacade:
             )
             self._check(self._plugin, "documents.parse", scope)
         return await _doc_parsers.parse_document(
-            content, effective_mime, filename=target.name,
+            content, effective_mime, filename=target.name
         )
 
     def create_new(
-        self, handle: WorkspaceHandle, relative_path: str | Path, content: bytes,
+        self, handle: WorkspaceHandle, relative_path: str | Path, content: bytes
     ) -> Path:
         """Создать НОВЫЙ файл внутри ``handle.path``.
 
@@ -137,7 +137,7 @@ class AIFsFacade:
         rel = Path(relative_path)
         if rel.is_absolute() or ".." in rel.parts:
             raise FsForbiddenWriteError(
-                path=str(rel), reason="absolute path or '..' traversal not allowed",
+                path=str(rel), reason="absolute path or '..' traversal not allowed"
             )
 
         # DEEP_AUDIT P0-#9 fix (cycle 29): resolve handle.path FIRST, then
@@ -151,7 +151,7 @@ class AIFsFacade:
             target.relative_to(handle_root)
         except ValueError as exc:
             raise FsForbiddenWriteError(
-                path=str(target), reason="resolved path escapes workspace",
+                path=str(target), reason="resolved path escapes workspace"
             ) from exc
 
         if target.exists():

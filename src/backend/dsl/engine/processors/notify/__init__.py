@@ -22,7 +22,6 @@ if TYPE_CHECKING:  # pragma: no cover
 __all__ = ("AppriseNotifyProcessor", "NotifyProcessor")
 
 
-
 class NotifyProcessor(BaseProcessor):
     """Отправляет уведомление через ``NotificationGateway``.
 
@@ -105,7 +104,7 @@ class NotifyProcessor(BaseProcessor):
                 "locale": self.locale,
                 "context_property": self.context_property,
                 "result_property": self.result_property,
-            },
+            }
         }
 
 

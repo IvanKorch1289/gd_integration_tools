@@ -143,7 +143,7 @@ class ServiceSchemaRegistry:
         return view
 
     def __init__(
-        self, *, strict_validation: bool = False, metrics: MetricsRegistry | None = None,
+        self, *, strict_validation: bool = False, metrics: MetricsRegistry | None = None
     ) -> None:
         self._by_kind: dict[SchemaKind, dict[str, SchemaEntry]] = {
             kind: {} for kind in SchemaKind
@@ -176,11 +176,16 @@ class ServiceSchemaRegistry:
                     "Total schema registrations",
                     labels=("kind",),
                 ).labels(kind=entry.kind.value).inc()
-            except (AttributeError, TypeError, ValueError) as counter_exc:  # pragma: no cover - metrics best-effort
+            except (
+                AttributeError,
+                TypeError,
+                ValueError,
+            ) as counter_exc:  # pragma: no cover - metrics best-effort
                 # cycle-9/D-AUDIT-938: narrow exceptions + observability.
                 # AttributeError — counter API change, TypeError — invalid
                 # arg type, ValueError — invalid label value.
                 import logging
+
                 logging.getLogger(__name__).debug(
                     "schema_registry.register_counter_failed",
                     extra={"error": str(counter_exc)},
@@ -199,11 +204,16 @@ class ServiceSchemaRegistry:
                     "Total schema lookups",
                     labels=("kind", "hit"),
                 ).labels(
-                    kind=kind.value, hit="true" if result is not None else "false",
+                    kind=kind.value, hit="true" if result is not None else "false"
                 ).inc()
-            except (AttributeError, TypeError, ValueError) as counter_exc:  # pragma: no cover - metrics best-effort
+            except (
+                AttributeError,
+                TypeError,
+                ValueError,
+            ) as counter_exc:  # pragma: no cover - metrics best-effort
                 # cycle-9/D-AUDIT-938: см. выше — тот же narrow для get path.
                 import logging
+
                 logging.getLogger(__name__).debug(
                     "schema_registry.get_counter_failed",
                     extra={"error": str(counter_exc)},
@@ -228,9 +238,14 @@ class ServiceSchemaRegistry:
                     "Total schema list queries",
                     labels=("kind",),
                 ).labels(kind=kind.value).inc()
-            except (AttributeError, TypeError, ValueError) as counter_exc:  # pragma: no cover - metrics best-effort
+            except (
+                AttributeError,
+                TypeError,
+                ValueError,
+            ) as counter_exc:  # pragma: no cover - metrics best-effort
                 # cycle-9/D-AUDIT-939: см. D-AUDIT-938 — тот же narrow.
                 import logging
+
                 logging.getLogger(__name__).debug(
                     "schema_registry.list_counter_failed",
                     extra={"error": str(counter_exc)},
@@ -261,9 +276,14 @@ class ServiceSchemaRegistry:
                     "Total schema registry clears",
                     labels=("scope",),
                 ).labels(scope="all" if kind is None else kind.value).inc()
-            except (AttributeError, TypeError, ValueError) as counter_exc:  # pragma: no cover - metrics best-effort
+            except (
+                AttributeError,
+                TypeError,
+                ValueError,
+            ) as counter_exc:  # pragma: no cover - metrics best-effort
                 # cycle-9/D-AUDIT-940: см. D-AUDIT-938 — тот же narrow для clear.
                 import logging
+
                 logging.getLogger(__name__).debug(
                     "schema_registry.clear_counter_failed",
                     extra={"error": str(counter_exc)},
@@ -291,7 +311,7 @@ class ServiceSchemaRegistry:
                         "spec_schema": entry.spec_schema,
                         "output_schema": entry.output_schema,
                         "meta": dict(entry.meta),
-                    },
+                    }
                 )
         return {"version": CURRENT_SNAPSHOT_VERSION, "entries": entries}
 

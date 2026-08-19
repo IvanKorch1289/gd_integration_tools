@@ -42,11 +42,7 @@ class ConnectionMixin(BaseModel):
     )
 
     port: int = Field(
-        default=0,
-        ge=0,
-        lt=65536,
-        description="Порт для подключения.",
-        examples=[5432],
+        default=0, ge=0, lt=65536, description="Порт для подключения.", examples=[5432]
     )
 
     base_url: str = Field(
@@ -76,13 +72,11 @@ class ConnectionMixin(BaseModel):
     )
 
     password: SecretStr = Field(
-        default=SecretStr(""),
-        description="Пароль (хранится как SecretStr).",
+        default=SecretStr(""), description="Пароль (хранится как SecretStr)."
     )
 
     api_key: SecretStr = Field(
-        default=SecretStr(""),
-        description="API-ключ сервиса (хранится как SecretStr).",
+        default=SecretStr(""), description="API-ключ сервиса (хранится как SecretStr)."
     )
 
     ca_bundle: str | None = Field(
@@ -200,10 +194,7 @@ class DBPoolMixin(BaseModel):
     """
 
     pool_size: int = Field(
-        default=10,
-        ge=1,
-        description="Размер пула соединений.",
-        examples=[20],
+        default=10, ge=1, description="Размер пула соединений.", examples=[20]
     )
 
     pool_timeout_s: float = Field(

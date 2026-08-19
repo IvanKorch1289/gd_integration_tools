@@ -31,7 +31,7 @@ _ORDERS_MAPPINGS: dict[str, Any] = {
         "created_at": {"type": "date"},
         "updated_at": {"type": "date"},
         "metadata": {"type": "object", "enabled": True},
-    },
+    }
 }
 
 
@@ -39,7 +39,7 @@ class OrderIndexer:
     """Индексирует Order-записи в ES."""
 
     def __init__(
-        self, search_service: SearchService, *, index: str = _ORDERS_INDEX,
+        self, search_service: SearchService, *, index: str = _ORDERS_INDEX
     ) -> None:
         self._search = search_service
         self._index = index

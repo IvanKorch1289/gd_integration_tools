@@ -70,11 +70,11 @@ class DiskRotatingLogSink(LogSink):
         """Записать ``record`` в файл; ошибки I/O ловятся внутри."""
         try:
             payload = orjson.dumps(
-                record, default=_default_serializer, option=_ORJSON_OPTS,
+                record, default=_default_serializer, option=_ORJSON_OPTS
             ).decode("utf-8")
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             payload = orjson.dumps(
-                {k: _coerce(v) for k, v in record.items()}, option=_ORJSON_OPTS,
+                {k: _coerce(v) for k, v in record.items()}, option=_ORJSON_OPTS
             ).decode("utf-8")
 
         await asyncio.to_thread(self._emit, payload)

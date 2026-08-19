@@ -60,7 +60,7 @@ class SmtpClient(BaseSmtpClient):
         self.logger = get_logger("smtp")
         self._pool_size = self.settings.connection_pool_size
         self._connection_pool: asyncio.Queue[SMTP] = asyncio.Queue(
-            maxsize=self._pool_size,
+            maxsize=self._pool_size
         )
         self._breaker = get_breaker_registry().get_or_create(
             "smtp",
@@ -102,11 +102,11 @@ class SmtpClient(BaseSmtpClient):
                 self._connection_pool.put_nowait(connection)
 
             self.logger.info(
-                "Инициализирован пул SMTP с %s соединениями", self._pool_size,
+                "Инициализирован пул SMTP с %s соединениями", self._pool_size
             )
         except Exception as exc:
             self.logger.critical(
-                "Ошибка инициализации пула SMTP: %s", str(exc), exc_info=True,
+                "Ошибка инициализации пула SMTP: %s", str(exc), exc_info=True
             )
             await self.close_pool()
             raise RuntimeError("Не удалось инициализировать пул соединений") from exc
@@ -119,7 +119,7 @@ class SmtpClient(BaseSmtpClient):
                 await connection.quit()
             except SMTPException as exc:
                 self.logger.warning(
-                    f"Ошибка при закрытии соединения: {exc!s}", exc_info=True,
+                    f"Ошибка при закрытии соединения: {exc!s}", exc_info=True
                 )
         self.logger.info("Пул SMTP-соединений закрыт")
 
@@ -152,7 +152,7 @@ class SmtpClient(BaseSmtpClient):
                 return smtp
         except builtins.TimeoutError as exc:
             self.logger.error(
-                f"Превышено время ожидания соединения: {exc!s}", exc_info=True,
+                f"Превышено время ожидания соединения: {exc!s}", exc_info=True
             )
             raise builtins.TimeoutError("Тайм-аут SMTP-соединения") from exc
         except SMTPAuthenticationError as exc:
@@ -195,7 +195,7 @@ class SmtpClient(BaseSmtpClient):
             # Breaker open — re-raise as ConnectionError (back-compat)
             self.logger.error("SMTP-сервис недоступен (активирован Circuit Breaker)")
             raise ConnectionError(
-                "SMTP-сервис недоступен (активирован Circuit Breaker)",
+                "SMTP-сервис недоступен (активирован Circuit Breaker)"
             ) from None
         except Exception as exc:
             # Failure уже auto-recorded в guard()
@@ -209,7 +209,7 @@ class SmtpClient(BaseSmtpClient):
         finally:
             if connection is not None:
                 await self._release_connection(
-                    connection=connection, temporary=temporary,
+                    connection=connection, temporary=temporary
                 )
 
     async def _acquire_connection(self) -> SMTP:
@@ -238,7 +238,7 @@ class SmtpClient(BaseSmtpClient):
         async def _try_get() -> SMTP:
             """Одна попытка получить соединение из пула или создать новое."""
             self.logger.info(
-                "Размер пула соединений: %d", self._connection_pool.qsize(),
+                "Размер пула соединений: %d", self._connection_pool.qsize()
             )
             if self._connection_pool:
                 return self._connection_pool.get_nowait()
@@ -251,7 +251,7 @@ class SmtpClient(BaseSmtpClient):
             raise ConnectionError("Не удалось получить SMTP-соединение") from exc
 
     async def _release_connection(
-        self, connection: SMTP, temporary: bool = False,
+        self, connection: SMTP, temporary: bool = False
     ) -> None:
         """Возвращает соединение в пул или закрывает его."""
         try:
@@ -261,14 +261,14 @@ class SmtpClient(BaseSmtpClient):
                 if not temporary and self._connection_pool.qsize() < self._pool_size:
                     self._connection_pool.put_nowait(connection)
                     return
-        except (SMTPException, OSError):
+        except SMTPException, OSError:
             self.logger.warning(
-                "Ошибка проверки SMTP-соединения при возврате в пул", exc_info=True,
+                "Ошибка проверки SMTP-соединения при возврате в пул", exc_info=True
             )
 
         try:
             await connection.quit()
-        except (SMTPException, OSError):
+        except SMTPException, OSError:
             self.logger.warning("Ошибка закрытия SMTP-соединения", exc_info=True)
 
     def metrics(self) -> dict[str, Any]:

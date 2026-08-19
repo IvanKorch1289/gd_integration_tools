@@ -61,7 +61,9 @@ class Pipeline:
     tenant_aware: bool = False
     middlewares: list[Any] = field(default_factory=list)
     route_overrides: dict[str, Any] = field(default_factory=dict)  # S163 W15
-    security: tuple[str, ...] | None = None  # K3 S19 W3: requires_permission enforcement
+    security: tuple[str, ...] | None = (
+        None  # K3 S19 W3: requires_permission enforcement
+    )
 
     def add_processor(self, processor: BaseProcessor) -> Pipeline:
         """Добавляет процессор в конец маршрута.

@@ -81,7 +81,7 @@ class MigrationRegistry:
             raise ValueError(f"Migration {key[0]} → {key[1]} уже зарегистрирована.")
         self._edges[key] = migration
         self._adjacency.setdefault(migration.from_version, []).append(
-            migration.to_version,
+            migration.to_version
         )
 
     def find_path(self, src: str, dst: str) -> list[DSLMigration]:

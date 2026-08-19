@@ -27,11 +27,7 @@ from typing import Protocol, runtime_checkable
 
 from src.backend.core.logging import get_logger
 
-__all__ = (
-    "NoOpOCRProcessor",
-    "OCRProcessor",
-    "PytesseractOCRProcessor",
-)
+__all__ = ("NoOpOCRProcessor", "OCRProcessor", "PytesseractOCRProcessor")
 
 _logger = get_logger("services.rpa.ocr_processor")
 
@@ -111,8 +107,8 @@ class PytesseractOCRProcessor:
         try:
             return str(
                 await asyncio.to_thread(
-                    pytesseract.image_to_string, str(image_path), lang=lang,
-                ),
+                    pytesseract.image_to_string, str(image_path), lang=lang
+                )
             )
         except Exception as exc:  # tesseract error, env error, etc.
             _logger.warning("pytesseract recognize failed: %s", exc)
@@ -172,9 +168,9 @@ def from_environment() -> OCRProcessor:
         # missing rpa_ocr_enabled attribute). Fallback NoOpOCRProcessor
         # корректен — caller проверяет availability отдельно.
         from src.backend.core.logging import get_logger
+
         get_logger(__name__).debug(
-            "rpa.ocr.feature_flags_resolve_failed",
-            extra={"error": str(feature_exc)},
+            "rpa.ocr.feature_flags_resolve_failed", extra={"error": str(feature_exc)}
         )
         return NoOpOCRProcessor()
 

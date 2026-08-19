@@ -45,7 +45,7 @@ class WatermarkStore(Protocol):
         ...
 
     async def save(
-        self, route_id: str, processor_name: str, state: WatermarkState,
+        self, route_id: str, processor_name: str, state: WatermarkState
     ) -> None:
         """Сохранить (upsert) текущее состояние.
 

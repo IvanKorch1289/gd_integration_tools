@@ -27,14 +27,14 @@ class PRGenerator:
             lines.append("## Метрики per step (top-5 по p95)")
             lines.append("")
             lines.append(
-                "| Шаг | Requests | Errors | p50 ms | p95 ms | p99 ms | retries |",
+                "| Шаг | Requests | Errors | p50 ms | p95 ms | p99 ms | retries |"
             )
             lines.append("|---|---:|---:|---:|---:|---:|---:|")
             for m in metrics[:5]:
                 lines.append(
                     f"| `{m.step_name}` | {m.request_count} | {m.error_count} | "
                     f"{m.p50_latency_ms:.0f} | {m.p95_latency_ms:.0f} | "
-                    f"{m.p99_latency_ms:.0f} | {m.avg_retry_count:.1f} |",
+                    f"{m.p99_latency_ms:.0f} | {m.avg_retry_count:.1f} |"
                 )
             lines.append("")
         if recommendations:
@@ -42,14 +42,14 @@ class PRGenerator:
             lines.append("")
             for r in recommendations:
                 lines.append(
-                    f"### `{r.step_name}` — {r.kind} (priority **{r.priority}**)",
+                    f"### `{r.step_name}` — {r.kind} (priority **{r.priority}**)"
                 )
                 lines.append("")
                 lines.append(r.rationale)
                 lines.append("")
                 if r.estimated_gain_ms:
                     lines.append(
-                        f"_Ожидаемая экономия: ~{r.estimated_gain_ms:.0f}ms p95._",
+                        f"_Ожидаемая экономия: ~{r.estimated_gain_ms:.0f}ms p95._"
                     )
                     lines.append("")
         return "\n".join(lines).rstrip() + "\n"

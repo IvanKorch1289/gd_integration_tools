@@ -21,6 +21,7 @@ Backends (Redis / Memcached / KeyDB / Disk) live in
 ``src.backend.infrastructure.cache`` and are wired by the DI provider
 via the ``UnifiedCacheFacade`` Protocol (Rule 1).
 """
+
 from __future__ import annotations as annotations
 
 from src.backend.core.cache.facade import (

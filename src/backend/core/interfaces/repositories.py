@@ -36,24 +36,31 @@ class RepositoryProtocol(Protocol):
     async def add(self, *args: Any, **kwargs: Any) -> Any:
         """Добавить новую сущность в repository (INSERT)."""
         ...
+
     async def update(self, *args: Any, **kwargs: Any) -> Any:
         """Обновить существующую сущность (UPDATE)."""
         ...
+
     async def get(self, *args: Any, **kwargs: Any) -> Any:
         """Получить одну сущность по primary key; None если не найдено."""
         ...
+
     async def delete(self, *args: Any, **kwargs: Any) -> Any:
         """Удалить сущность по primary key."""
         ...
+
     async def first_or_last(self, *args: Any, **kwargs: Any) -> Any:
         """Получить первую/последнюю запись (сортировка по PK)."""
         ...
+
     async def get_all_versions(self, *args: Any, **kwargs: Any) -> Any:
         """Получить все версии сущности (versioning pattern)."""
         ...
+
     async def get_latest_version(self, *args: Any, **kwargs: Any) -> Any:
         """Получить последнюю версию сущности."""
         ...
+
     async def restore_to_version(self, *args: Any, **kwargs: Any) -> Any:
         """Восстановить сущность к указанной версии."""
         ...

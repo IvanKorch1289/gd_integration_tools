@@ -20,7 +20,7 @@ class LoanEligibilityResult(BaseModel):
     interest_rate: float = Field(ge=0.0, description="Процентная ставка (годовая)")
     term_months: int = Field(ge=1, description="Срок в месяцах")
     decision_reasons: list[str] = Field(
-        default_factory=list, description="Основные причины решения",
+        default_factory=list, description="Основные причины решения"
     )
     conditions: list[str] = Field(default_factory=list, description="Условия кредита")
 
@@ -91,7 +91,7 @@ class LoanEligibilityProcessor(_BankingAIProcessor):
                 "term_months": result.term_months,
                 "decision_reasons": result.decision_reasons,
                 "conditions": result.conditions,
-            },
+            }
         )
         exchange.set_property("loan_eligible", result.eligible)
         exchange.set_property("loan_max_amount", result.max_amount)
@@ -125,7 +125,7 @@ class LoanEligibilityProcessor(_BankingAIProcessor):
         )
 
     async def _check_capability(
-        self, exchange: Exchange[Any], context: ExecutionContext,
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> bool:
         """Verify capability (S190 — unified facade pattern).
 

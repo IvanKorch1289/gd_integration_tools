@@ -25,7 +25,6 @@ if TYPE_CHECKING:
 __all__ = ("build_source",)
 
 
-
 def build_source(spec: SourceSpec) -> Source:
     """Создать ``Source``-инстанс по описанию из YAML.
 

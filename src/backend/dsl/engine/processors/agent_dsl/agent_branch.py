@@ -107,7 +107,7 @@ class AgentBranchProcessor(BaseAIProcessor):
         if target is None:
             target = self.default
             exchange.set_property(
-                "agent_branch_taken", "default" if target is not None else "skip",
+                "agent_branch_taken", "default" if target is not None else "skip"
             )
             if target is None:
                 _logger.warning(

@@ -18,7 +18,7 @@ JWT_SECRET_MIN_LENGTH: Final[int] = 32
 
 _FEATURE_FLAG_DEPENDENCIES: Final[Mapping[str, tuple[str, ...]]] = {
     # supply_chain_strict_mode без supply_chain_finale_strict — WARNING (не блокирует startup)
-    "supply_chain_strict_mode": ("supply_chain_finale_strict",),
+    "supply_chain_strict_mode": ("supply_chain_finale_strict",)
 }
 
 _FEATURE_FLAG_DEPENDENCIES_CRITICAL: Final[Mapping[str, tuple[str, ...]]] = {
@@ -52,7 +52,7 @@ _FEATURE_FLAG_DEPENDENCIES_STRICT_AUTOMAP: Final[frozenset[str]] = frozenset(
         "call_function_whitelist_strict",
         "mcp_tools_input_schema_strict",
         "ai_cost_dashboard_strict",  # S45 W3 — добавлен после fix
-    },
+    }
 )
 
 
@@ -98,5 +98,5 @@ class ProductionConfigError(RuntimeError):
         self.violations = violations
         super().__init__(
             "Конфигурация production-окружения содержит критические нарушения: "
-            + "; ".join(f"[{v.code}] {v.message}" for v in violations),
+            + "; ".join(f"[{v.code}] {v.message}" for v in violations)
         )

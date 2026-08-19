@@ -186,7 +186,7 @@ class MultiAgentSupervisor:
             return False
 
     async def run(
-        self, *, prompt: str, payload: dict[str, Any] | None = None,
+        self, *, prompt: str, payload: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """Запускает supervisor-цикл с заданным prompt'ом.
 
@@ -235,7 +235,7 @@ class MultiAgentSupervisor:
             return fallback.to_dict()
 
     async def _run_fallback(
-        self, *, prompt: str, payload: dict[str, Any],
+        self, *, prompt: str, payload: dict[str, Any]
     ) -> SupervisorResult:
         """Детерминированный роутер: каждый агент вызывается один раз.
 
@@ -263,7 +263,7 @@ class MultiAgentSupervisor:
         return result
 
     async def _run_langgraph(
-        self, *, prompt: str, payload: dict[str, Any],
+        self, *, prompt: str, payload: dict[str, Any]
     ) -> SupervisorResult:
         """LangGraph-based supervisor с handoff-tools.
 
@@ -272,13 +272,13 @@ class MultiAgentSupervisor:
         (нет API-key), поднимает :class:`MultiAgentSupervisorUnavailable`.
         """
         result = SupervisorResult(
-            supervisor=self._name, prompt=prompt, used_langgraph=True,
+            supervisor=self._name, prompt=prompt, used_langgraph=True
         )
         try:
             graph = self._compile_graph()
         except Exception as exc:
             raise MultiAgentSupervisorUnavailable(
-                f"Не удалось скомпилировать LangGraph: {exc}",
+                f"Не удалось скомпилировать LangGraph: {exc}"
             ) from exc
 
         invoke_payload = {
@@ -291,7 +291,7 @@ class MultiAgentSupervisor:
             response = await graph.ainvoke(invoke_payload)
         except Exception as exc:
             raise MultiAgentSupervisorUnavailable(
-                f"LangGraph ainvoke failed: {exc}",
+                f"LangGraph ainvoke failed: {exc}"
             ) from exc
 
         result.agents_invoked = list(response.get("agents_invoked") or [])
@@ -320,7 +320,7 @@ class MultiAgentSupervisor:
             from langgraph.graph import END, START, StateGraph
         except ImportError as exc:
             raise MultiAgentSupervisorUnavailable(
-                "langgraph не установлен — добавьте extra 'ai'",
+                "langgraph не установлен — добавьте extra 'ai'"
             ) from exc
 
         graph: Any = StateGraph(dict)
@@ -346,14 +346,14 @@ class MultiAgentSupervisor:
             return str(nxt)
 
         graph.add_conditional_edges(
-            "supervisor", _route, {**{name: name for name in self._agents}, END: END},
+            "supervisor", _route, {**{name: name for name in self._agents}, END: END}
         )
 
         self._compiled = graph.compile()
         return self._compiled
 
     def _make_agent_node(
-        self, spec: AgentSpec,
+        self, spec: AgentSpec
     ) -> Callable[[dict[str, Any]], Awaitable[dict[str, Any]]]:
         """Создаёт async-node для агента."""
 
@@ -434,7 +434,7 @@ def _build_credit_pipeline_agents() -> list[AgentSpec]:
 
 
 def get_credit_pipeline_supervisor(
-    *, enabled: bool | None = None,
+    *, enabled: bool | None = None
 ) -> MultiAgentSupervisor:
     """Reference supervisor для credit-pipeline.
 

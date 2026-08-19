@@ -113,7 +113,7 @@ class DeadLetterProcessor(BaseProcessor):
             )
 
             await _redis_client.add_to_stream(
-                stream_name=self._dlq_stream, data=dlq_entry,
+                stream_name=self._dlq_stream, data=dlq_entry
             )
             _eip_logger.info(
                 "Exchange %s sent to DLQ stream '%s' (stage=redis)",
@@ -144,7 +144,7 @@ class DeadLetterProcessor(BaseProcessor):
                             "dlq_reason": "redis_unavailable",
                             "stage1_error": repr(stage1_error),
                         },
-                    },
+                    }
                 )
                 await _backend.append(_record)
                 _eip_logger.warning(
@@ -175,7 +175,7 @@ class DeadLetterProcessor(BaseProcessor):
         raise RuntimeError(
             f"DLQ send failed for exchange {exchange.meta.exchange_id}: "
             f"redis={stage1_error!r}, jsonl="
-            f"{(stage2_error or 'not_configured')!r}",
+            f"{(stage2_error or 'not_configured')!r}"
         ) from stage1_error
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
@@ -218,7 +218,7 @@ class FallbackChainProcessor(BaseProcessor):
     """
 
     def __init__(
-        self, processors: list[BaseProcessor], *, name: str | None = None,
+        self, processors: list[BaseProcessor], *, name: str | None = None
     ) -> None:
         super().__init__(name=name or f"fallback_chain({len(processors)})")
         self._processors = processors

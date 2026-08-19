@@ -120,11 +120,11 @@ class TemplateRegistry:
             if "subject" not in spec or "body" not in spec:
                 raise ValueError(
                     f"Template '{key}' locale '{locale}': "
-                    f"'subject' and 'body' are required",
+                    f"'subject' and 'body' are required"
                 )
             locales[locale] = TemplateSpec(subject=spec["subject"], body=spec["body"])
         self._entries[key] = TemplateEntry(
-            key=key, locales=locales, allowed_channels=allowed_channels,
+            key=key, locales=locales, allowed_channels=allowed_channels
         )
         _logger.debug(
             "template registered",
@@ -161,13 +161,13 @@ class TemplateRegistry:
         ):
             raise ValueError(
                 f"Template '{key}' not allowed for channel '{channel_kind}'. "
-                f"Allowed: {', '.join(entry.allowed_channels)}",
+                f"Allowed: {', '.join(entry.allowed_channels)}"
             )
 
         spec = entry.locales.get(locale) or entry.locales.get(DEFAULT_LOCALE)
         if spec is None:
             raise TemplateNotFoundError(
-                f"Template '{key}' has no locale '{locale}' or default '{DEFAULT_LOCALE}'",
+                f"Template '{key}' has no locale '{locale}' or default '{DEFAULT_LOCALE}'"
             )
 
         ctx = context or {}
@@ -176,7 +176,7 @@ class TemplateRegistry:
             body = self._env.from_string(spec.body).render(**ctx)
         except Exception as exc:
             raise ValueError(
-                f"Template '{key}' rendering failed: {type(exc).__name__}: {exc}",
+                f"Template '{key}' rendering failed: {type(exc).__name__}: {exc}"
             ) from exc
         return TemplateSpec(subject=subject, body=body)
 

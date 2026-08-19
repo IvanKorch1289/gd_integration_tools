@@ -98,11 +98,7 @@ def resilient(
             except Exception as exc:
                 # ponytail: excluded_exceptions removed in S202 (was silently ignored).
                 # If re-added: restore excluded param + retry_if_not_exception_type.
-                _logger.debug(
-                    "resilient.%s failed: %s",
-                    name,
-                    exc,
-                )
+                _logger.debug("resilient.%s failed: %s", name, exc)
                 raise
 
         return wrapper

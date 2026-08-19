@@ -95,7 +95,7 @@ class RegexExtractorProcessor(BaseProcessor):
         if mode not in _ALLOWED_MODES:
             raise ValueError(
                 f"regex_extractor: mode must be one of {sorted(_ALLOWED_MODES)}, "
-                f"got {mode!r}",
+                f"got {mode!r}"
             )
         self._pattern_source = pattern
         try:
@@ -148,9 +148,9 @@ class RegexExtractorProcessor(BaseProcessor):
             # cycle-9/D-AUDIT-1717: narrow exceptions + observability (mirror
             # D-AUDIT-1706..1716).
             import logging
+
             logging.getLogger(__name__).debug(
-                "regex_extractor.feature_flag_fallback",
-                extra={"error": str(ff_exc)},
+                "regex_extractor.feature_flag_fallback", extra={"error": str(ff_exc)}
             )
 
         text = self._resolve_source(exchange)

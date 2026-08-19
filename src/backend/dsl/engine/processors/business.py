@@ -68,7 +68,10 @@ class TenantScopeProcessor(BaseProcessor):
                 import jmespath
 
                 tenant_id = jmespath.search(self._body_path, exchange.in_message.body)
-            except (jmespath.exceptions.ParseError, jmespath.exceptions.JsonStringError) as exc:
+            except (
+                jmespath.exceptions.ParseError,
+                jmespath.exceptions.JsonStringError,
+            ) as exc:
                 # D-AUDIT-12301 fix (cycle 123): narrow от broad
                 # 'except Exception: _' (которое swallow'ило ANY exception
                 # включая SystemExit, KeyboardInterrupt) до конкретных
@@ -76,7 +79,8 @@ class TenantScopeProcessor(BaseProcessor):
                 # default (caller uses header instead).
                 logger.debug(
                     "ExtractTenantIdFromBody: jmespath search failed for body_path=%r: %s",
-                    self._body_path, exc,
+                    self._body_path,
+                    exc,
                 )
                 tenant_id = None
         if tenant_id is None:
@@ -205,7 +209,7 @@ class OutboxProcessor(BaseProcessor):
     """
 
     def __init__(
-        self, *, topic: str, outbox_writer: Any = None, name: str | None = None,
+        self, *, topic: str, outbox_writer: Any = None, name: str | None = None
     ) -> None:
         super().__init__(name=name or f"outbox:{topic}")
         self._topic = topic
@@ -245,7 +249,7 @@ _DEFAULT_PATTERNS = {
     "passport_ru": re.compile("\\b\\d{4} \\d{6}\\b"),
     "email": re.compile("\\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\\b"),
     "phone": re.compile(
-        "\\b(?:\\+?7|8)[\\s-]?\\(?\\d{3}\\)?[\\s-]?\\d{3}[\\s-]?\\d{2}[\\s-]?\\d{2}\\b",
+        "\\b(?:\\+?7|8)[\\s-]?\\(?\\d{3}\\)?[\\s-]?\\d{3}[\\s-]?\\d{2}[\\s-]?\\d{2}\\b"
     ),
 }
 

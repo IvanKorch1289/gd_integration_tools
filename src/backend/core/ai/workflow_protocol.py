@@ -37,10 +37,7 @@ from __future__ import annotations
 
 from typing import Any, Protocol
 
-__all__ = (
-    "WorkflowDescriptorProtocol",
-    "WorkflowRegistryProtocol",
-)
+__all__ = ("WorkflowDescriptorProtocol", "WorkflowRegistryProtocol")
 
 
 class WorkflowDescriptorProtocol(Protocol):

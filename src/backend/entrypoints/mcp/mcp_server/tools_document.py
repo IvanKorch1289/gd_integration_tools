@@ -57,7 +57,7 @@ def _register_document_tools(mcp: Any) -> None:
 
             wm = AIWorkspaceManager(root=ai_workspace_settings.workspace_root)
             facade = AIFsFacade(
-                workspace_manager=wm, capability_check=None, plugin="mcp",
+                workspace_manager=wm, capability_check=None, plugin="mcp"
             )
             text, meta = await facade.read_as_markdown(target, mime=mime)
             return encode_json(
@@ -68,7 +68,7 @@ def _register_document_tools(mcp: Any) -> None:
                     "size_bytes": meta.get("size_bytes"),
                     "warnings": list(meta.get("warnings") or []),
                     "filename": meta.get("filename"),
-                },
+                }
             ).decode("utf-8")
         except Exception as exc:
             return encode_json({"error": str(exc)}).decode("utf-8")

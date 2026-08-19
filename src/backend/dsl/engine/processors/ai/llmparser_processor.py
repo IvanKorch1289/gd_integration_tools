@@ -15,7 +15,7 @@ class LLMParserProcessor(BaseProcessor):
     """Парсит ответ LLM в структурированный формат."""
 
     def __init__(
-        self, schema: type | None = None, format: str = "json", name: str | None = None,
+        self, schema: type | None = None, format: str = "json", name: str | None = None
     ) -> None:
         super().__init__(name)
         self._schema = schema
@@ -34,7 +34,7 @@ class LLMParserProcessor(BaseProcessor):
                 text = text[start:end]
             try:
                 parsed = orjson.loads(text)
-            except (orjson.JSONDecodeError, ValueError):
+            except orjson.JSONDecodeError, ValueError:
                 exchange.fail(f"LLM output is not valid JSON: {text[:100]}")
                 return
         else:

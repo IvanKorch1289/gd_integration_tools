@@ -77,7 +77,7 @@ class TemporalActivityWrapper:
             else:
                 loop = asyncio.get_running_loop()
                 result = await loop.run_in_executor(
-                    None, functools.partial(self._callable, *args, **kwargs),
+                    None, functools.partial(self._callable, *args, **kwargs)
                 )
             return result
         except Exception as exc:
@@ -90,7 +90,7 @@ _wrapper_cache: dict[int, TemporalActivityWrapper] = {}
 
 
 def wrap_as_temporal_activity(
-    fn: Callable[..., Any] | TemporalActivityWrapper, *, name: str | None = None,
+    fn: Callable[..., Any] | TemporalActivityWrapper, *, name: str | None = None
 ) -> TemporalActivityWrapper:
     """Оборачивает callable в Temporal-совместимую activity.
 

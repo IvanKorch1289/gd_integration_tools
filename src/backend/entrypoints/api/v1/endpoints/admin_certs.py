@@ -6,6 +6,7 @@
 Pattern (D256, Ponytail): thin wrapper над CertStore.list_expiring.
 Production: integration с Prometheus alert (DEFER M21+).
 """
+
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
@@ -19,19 +20,16 @@ from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-__all__ = (
-    "EXPIRING_DEFAULT_DAYS",
-    "EXPIRING_MAX_DAYS",
-    "CertExpiringItem",
-    "router",
-)
+__all__ = ("EXPIRING_DEFAULT_DAYS", "EXPIRING_MAX_DAYS", "CertExpiringItem", "router")
 
 # S202 audit fix: require admin role
 _ADMIN_GUARD_READ = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN)),
+    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN))
 )
 
-router = APIRouter(dependencies=[_ADMIN_GUARD_READ], prefix="/admin/certs", tags=["admin", "certs"])
+router = APIRouter(
+    dependencies=[_ADMIN_GUARD_READ], prefix="/admin/certs", tags=["admin", "certs"]
+)
 
 EXPIRING_DEFAULT_DAYS = 30
 EXPIRING_MAX_DAYS = 365
@@ -93,17 +91,10 @@ async def list_expiring_certs(
                 cert_id=sid if sid is not None else "",
                 expires_at=exp,
                 days_remaining=days_remaining,
-            ),
+            )
         )
 
     items.sort(key=lambda x: x.days_remaining)
 
-    logger.info(
-        "admin.certs.list_expiring days=%d total=%d",
-        days, len(items),
-    )
-    return CertExpiringListResponse(
-        days_window=days,
-        total=len(items),
-        items=items,
-    )
+    logger.info("admin.certs.list_expiring days=%d total=%d", days, len(items))
+    return CertExpiringListResponse(days_window=days, total=len(items), items=items)

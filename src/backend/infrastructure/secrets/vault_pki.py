@@ -89,7 +89,7 @@ class VaultPkiClient:
             return self._client
 
     def issue_cert(
-        self, *, role: str, common_name: str, ttl: str = "24h",
+        self, *, role: str, common_name: str, ttl: str = "24h"
     ) -> CertificateBundle:
         """Issue TLS cert через PKI engine.
 
@@ -107,7 +107,7 @@ class VaultPkiClient:
         client = self._get_client()
         path = f"{self._mount}/issue/{role}"
         response = client.write_data(
-            path=path, data={"common_name": common_name, "ttl": ttl},
+            path=path, data={"common_name": common_name, "ttl": ttl}
         )
         if not response:
             raise RuntimeError(f"Vault PKI issue empty response для {path}")

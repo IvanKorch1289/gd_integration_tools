@@ -93,7 +93,7 @@ class AIFeedbackService:
         )
         saved = await self._repo.save(doc)
         logger.info(
-            "ai_feedback_saved", extra={"doc_id": saved.id, "agent_id": agent_id},
+            "ai_feedback_saved", extra={"doc_id": saved.id, "agent_id": agent_id}
         )
         return saved.id
 
@@ -153,7 +153,7 @@ class AIFeedbackService:
             from src.backend.services.ai.memory.langmem.rlm import RLMFeedbackProcessor
 
             await RLMFeedbackProcessor().on_feedback_received(
-                doc_id=str(doc_id), label=rlm_label,
+                doc_id=str(doc_id), label=rlm_label
             )
         except Exception as exc:
             logger.debug("RLM feedback hook skipped: %s", exc)
@@ -178,7 +178,7 @@ class AIFeedbackService:
             logger.debug("ai_feedback_metric_skipped: %s", exc)
 
     async def list_pending(
-        self, *, agent_id: str | None = None, limit: int = 50, offset: int = 0,
+        self, *, agent_id: str | None = None, limit: int = 50, offset: int = 0
     ) -> list[AIFeedbackDoc]:
         """Возвращает ответы, ожидающие разметки.
 
@@ -192,7 +192,7 @@ class AIFeedbackService:
 
         """
         return await self._repo.list_pending(
-            agent_id=agent_id, limit=min(limit, 200), offset=max(offset, 0),
+            agent_id=agent_id, limit=min(limit, 200), offset=max(offset, 0)
         )
 
     async def list_labeled(

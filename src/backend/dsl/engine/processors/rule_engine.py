@@ -133,7 +133,9 @@ class EvaluateRulesProcessor(BaseProcessor):
                 logger.debug(
                     "RuleEngineProcessor: rule %r eval failed "
                     "(exc_type=%s exc_msg=%s) — skipping",
-                    rule.name, type(exc).__name__, exc,
+                    rule.name,
+                    type(exc).__name__,
+                    exc,
                 )
                 continue
 
@@ -152,5 +154,5 @@ class EvaluateRulesProcessor(BaseProcessor):
                 "context_from": self.params.context_from,
                 "decision_to": self.params.decision_to,
                 "default_decision": self.params.default_decision,
-            },
+            }
         }

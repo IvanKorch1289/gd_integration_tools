@@ -164,7 +164,7 @@ class JsonFileTraceStorage:
                         duration_ms=d.get("duration_ms", 0.0),
                         timestamp=d.get("timestamp", ""),
                         error=d.get("error"),
-                    ),
+                    )
                 )
             except Exception as exc:
                 if not isinstance(exc, (json.JSONDecodeError, KeyError)):
@@ -197,8 +197,8 @@ if __name__ == "__main__":
             duration_ms=10.5,
         )
         await mem.append(e1)
-        assert len(await mem.read_recent("r1", 10)) == 1
-        assert mem.list_routes() == ["r1"]
+        assert len(await mem.read_recent("r1", 10)) == 1  # nosec
+        assert mem.list_routes() == ["r1"]  # nosec
 
         # Test 2: JsonFile.
         with tempfile.TemporaryDirectory() as td:
@@ -211,12 +211,12 @@ if __name__ == "__main__":
                     processor_type="log",
                     phase="end",
                     duration_ms=2.0,
-                ),
+                )
             )
             recent = await js.read_recent("r1", 10)
-            assert len(recent) == 2
-            assert recent[0].processor_name == "p1"
-            assert recent[1].processor_name == "p2"
-            assert js.list_routes() == ["r1"]
+            assert len(recent) == 2  # nosec
+            assert recent[0].processor_name == "p1"  # nosec
+            assert recent[1].processor_name == "p2"  # nosec
+            assert js.list_routes() == ["r1"]  # nosec
 
     asyncio.run(_self_test())

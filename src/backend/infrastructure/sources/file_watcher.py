@@ -101,7 +101,7 @@ class FileWatcherSource:
 
     @staticmethod
     def _normalize_paths(
-        path: Path | str | None, paths: Sequence[Path | str] | None,
+        path: Path | str | None, paths: Sequence[Path | str] | None
     ) -> list[Path]:
         """Приводит ``path``/``paths`` к списку абсолютных ``Path``."""
         raw: list[Path | str] = []
@@ -171,7 +171,7 @@ class FileWatcherSource:
                                     ],
                                     "count": len(batch),
                                 },
-                            ),
+                            )
                         )
             else:
                 async for event in self.stream():
@@ -184,7 +184,7 @@ class FileWatcherSource:
                                     "path": str(event.path),
                                     "change_type": event.change_type,
                                 },
-                            ),
+                            )
                         )
         except asyncio.CancelledError:
             pass
@@ -207,7 +207,7 @@ class FileWatcherSource:
                 if batch and self._batch_window is not None:
                     try:
                         event = await asyncio.wait_for(
-                            queue.get(), timeout=self._batch_window,
+                            queue.get(), timeout=self._batch_window
                         )
                     except TimeoutError:
                         yield batch

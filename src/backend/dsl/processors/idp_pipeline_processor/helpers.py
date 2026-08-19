@@ -36,10 +36,10 @@ def _invoice_extractors() -> list[_FieldPattern]:
         _FieldPattern("invoice_number", r"invoice\s*#?\s*[:\-]?\s*(\w+[\w\-]*)"),
         _FieldPattern("total", r"total\s*[:\-]?\s*\$?([\d,]+\.?\d*)"),
         _FieldPattern(
-            "date", r"date\s*[:\-]?\s*([0-9]{1,4}[/\-\.][0-9]{1,2}[/\-\.][0-9]{1,4})",
+            "date", r"date\s*[:\-]?\s*([0-9]{1,4}[/\-\.][0-9]{1,2}[/\-\.][0-9]{1,4})"
         ),
         _FieldPattern(
-            "vendor", r"(?:from|vendor|seller)\s*[:\-]?\s*([A-Za-z0-9 ,.&'\-]{2,40})",
+            "vendor", r"(?:from|vendor|seller)\s*[:\-]?\s*([A-Za-z0-9 ,.&'\-]{2,40})"
         ),
     ]
 
@@ -113,7 +113,7 @@ def classify_document(text: str) -> str:
 
 
 def extract_fields(
-    text: str, doc_type: str, *, extractors: dict[str, list[str]] | None = None,
+    text: str, doc_type: str, *, extractors: dict[str, list[str]] | None = None
 ) -> dict[str, str]:
     """Apply regex extractors for a given doc_type and return fields.
 
@@ -173,7 +173,7 @@ def _rule_total_positive(result: IDPResult, _text: str) -> str | None:
     raw = result.fields["total"].replace(",", "")
     try:
         value = float(raw)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return f"total is not numeric: {result.fields['total']!r}"
     if value <= 0:
         return f"total must be > 0, got {value}"
@@ -187,7 +187,7 @@ _VALIDATORS: dict[str, Callable[[IDPResult, str], str | None]] = {
 
 
 def validate_result(
-    result: IDPResult, text: str, *, validators: list[str] | None = None,
+    result: IDPResult, text: str, *, validators: list[str] | None = None
 ) -> list[str]:
     """Run business rules against a populated ``IDPResult``.
 

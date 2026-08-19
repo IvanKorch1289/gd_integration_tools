@@ -62,8 +62,8 @@ class CapabilityAuditEvent:
     correlation_id: str | None = None
     timestamp: str = field(
         default_factory=lambda: _dt.datetime.now(tz=_dt.UTC).isoformat(
-            timespec="microseconds",
-        ),
+            timespec="microseconds"
+        )
     )
     extra: dict[str, Any] = field(default_factory=dict)
 

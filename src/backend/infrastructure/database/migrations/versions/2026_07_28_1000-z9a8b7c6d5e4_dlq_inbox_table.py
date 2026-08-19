@@ -24,6 +24,7 @@ Post-FW1: создаёт ``dlq_inbox`` таблицу, совместимую с
 писать DLQ-события в отдельную таблицу (а не в outbox_messages
 со status=DLQ), что устраняет смешивание pending и DLQ-данных.
 """
+
 from __future__ import annotations
 
 from typing import Sequence, Union
@@ -63,10 +64,7 @@ def upgrade() -> None:
             server_default=sa.text("'unexpected'"),
         ),
         sa.Column(
-            "retry_count",
-            sa.Integer(),
-            nullable=False,
-            server_default=sa.text("0"),
+            "retry_count", sa.Integer(), nullable=False, server_default=sa.text("0")
         ),
         sa.Column(
             "first_failed_at",
@@ -90,16 +88,10 @@ def upgrade() -> None:
         unique=False,
     )
     op.create_index(
-        op.f("ix_dlq_inbox_tenant_id"),
-        "dlq_inbox",
-        ["tenant_id"],
-        unique=False,
+        op.f("ix_dlq_inbox_tenant_id"), "dlq_inbox", ["tenant_id"], unique=False
     )
     op.create_index(
-        op.f("ix_dlq_inbox_route_id"),
-        "dlq_inbox",
-        ["route_id"],
-        unique=False,
+        op.f("ix_dlq_inbox_route_id"), "dlq_inbox", ["route_id"], unique=False
     )
 
 
@@ -107,7 +99,5 @@ def downgrade() -> None:
     """Удаляет dlq_inbox (только эта миграция — данные будут потеряны)."""
     op.drop_index(op.f("ix_dlq_inbox_route_id"), table_name="dlq_inbox")
     op.drop_index(op.f("ix_dlq_inbox_tenant_id"), table_name="dlq_inbox")
-    op.drop_index(
-        op.f("ix_dlq_inbox_transport_last_failed"), table_name="dlq_inbox"
-    )
+    op.drop_index(op.f("ix_dlq_inbox_transport_last_failed"), table_name="dlq_inbox")
     op.drop_table("dlq_inbox")

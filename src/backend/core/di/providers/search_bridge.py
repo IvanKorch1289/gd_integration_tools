@@ -30,6 +30,7 @@ __all__ = (
 def get_search_providers_module() -> Any:
     """Возвращает ``clients.external.search_providers`` module."""
     from src.backend.infrastructure.clients.external import search_providers
+
     return search_providers
 
 
@@ -83,4 +84,5 @@ def get_web_search_service_factory() -> Any:
     from src.backend.infrastructure.clients.external.search_providers import (
         get_web_search_service,
     )
+
     return get_web_search_service

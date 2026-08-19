@@ -16,7 +16,7 @@ class RagAnswer(BaseModel):
 
     answer: str = Field(description="Финальный ответ модели")
     citations: list[str] = Field(
-        default_factory=list, description="Список chunk_id из RAG-индекса",
+        default_factory=list, description="Список chunk_id из RAG-индекса"
     )
 
 
@@ -26,7 +26,7 @@ class RagAnsweringAgent(BasePydanticAgent[RagAnswer]):
     result_type = RagAnswer
 
     def __init__(
-        self, rag_service: Any | None = None, top_k: int = 5, **kwargs: object,
+        self, rag_service: Any | None = None, top_k: int = 5, **kwargs: object
     ) -> None:
         super().__init__(
             system_prompt=(
@@ -51,7 +51,7 @@ class RagAnsweringAgent(BasePydanticAgent[RagAnswer]):
         return rag
 
     async def retrieve(
-        self, query: str, namespace: str | None = None,
+        self, query: str, namespace: str | None = None
     ) -> list[dict[str, Any]]:
         """Tool-функция: возвращает top_k chunks из RAG."""
         rag = self._ensure_rag()

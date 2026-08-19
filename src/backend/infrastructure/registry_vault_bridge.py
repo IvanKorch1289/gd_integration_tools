@@ -38,7 +38,7 @@ _logger = get_logger(__name__)
 
 
 def wire_vault_rotations(
-    *, registry: ConnectorRegistry, refresher: VaultSecretRefresher,
+    *, registry: ConnectorRegistry, refresher: VaultSecretRefresher
 ) -> int:
     """Подписать `registry.reload(name)` на ротацию vault_path каждого клиента.
 

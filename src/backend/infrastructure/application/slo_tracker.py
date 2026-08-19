@@ -163,9 +163,9 @@ class SLOTracker:
             )
 
             record_pipeline_execution(
-                route_id=route_id, status="error" if is_error else "success",
+                route_id=route_id, status="error" if is_error else "success"
             )
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             pass
 
     def get_report(self) -> dict[str, Any]:
@@ -214,7 +214,7 @@ class SLOBudgetExceeded(Exception):
     def __init__(self, route_id: str, error_rate: float, max_error_rate: float) -> None:
         super().__init__(
             f"SLO budget exceeded for route {route_id}: "
-            f"error_rate={error_rate:.2f}% > max={max_error_rate:.2f}%",
+            f"error_rate={error_rate:.2f}% > max={max_error_rate:.2f}%"
         )
         self.route_id = route_id
         self.error_rate = error_rate

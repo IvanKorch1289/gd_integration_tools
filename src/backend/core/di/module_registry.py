@@ -202,7 +202,7 @@ def get_module_scope(key: str) -> Scope:
         raise ModuleRegistryError(
             f"Неизвестный ключ infrastructure-модуля: {key!r}. "
             f"Известные ключи (первые 5): {known}, ... "
-            f"всего {len(INFRA_MODULES)}.",
+            f"всего {len(INFRA_MODULES)}."
         )
     return MODULE_SCOPES.get(key, Scope.SINGLETON)
 
@@ -250,28 +250,24 @@ def resolve_module(key: str) -> ModuleType:
             dotted_path = INFRA_MODULES[key]
             spec = importlib.util.find_spec(dotted_path)
             if spec is None:
-                raise ModuleNotFoundError(
-                    f"Cannot find spec for {dotted_path}",
-                )
+                raise ModuleNotFoundError(f"Cannot find spec for {dotted_path}")
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)  # type: ignore[union-attr]
             return module
         return _resolve_singleton(key)
     else:
-        known = ", ".join(
-            sorted(INFRA_MODULES)[:5] + sorted(ext_modules)[:5],
-        )
+        known = ", ".join(sorted(INFRA_MODULES)[:5] + sorted(ext_modules)[:5])
         raise ModuleRegistryError(
             f"Неизвестный ключ infrastructure-модуля: {key!r}. "
             f"Известные ключи (первые 5 core + 5 extensions): {known}, ... "
-            f"всего {len(INFRA_MODULES) + len(ext_modules)}.",
+            f"всего {len(INFRA_MODULES) + len(ext_modules)}."
         )
     # Extension registered → standard import (SINGLETON semantic).
     try:
         return importlib.import_module(dotted_path)
     except ImportError as exc:
         raise ModuleRegistryError(
-            f"extension module {key!r} → {dotted_path!r} import failed: {exc}",
+            f"extension module {key!r} → {dotted_path!r} import failed: {exc}"
         ) from exc
 
 
@@ -284,7 +280,7 @@ def _resolve_singleton(key: str) -> ModuleType:
         raise ModuleRegistryError(
             f"Неизвестный ключ infrastructure-модуля: {key!r}. "
             f"Известные ключи (первые 5): {known}, ... "
-            f"всего {len(INFRA_MODULES)}.",
+            f"всего {len(INFRA_MODULES)}."
         ) from exc
     return importlib.import_module(dotted_path)
 
@@ -306,7 +302,7 @@ def validate_modules() -> dict[str, str]:
     for key, dotted_path in INFRA_MODULES.items():
         try:
             spec = importlib.util.find_spec(dotted_path)
-        except (ImportError, ModuleNotFoundError, ValueError):
+        except ImportError, ModuleNotFoundError, ValueError:
             # Родительский пакет может бросать ImportError из-за
             # отсутствующих в окружении тяжёлых зависимостей
             # (psycopg2, faststream и т.п.). Считаем такой случай

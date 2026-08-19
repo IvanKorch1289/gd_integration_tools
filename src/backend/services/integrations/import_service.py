@@ -38,7 +38,7 @@ class ImportService:
     """Orchestration: ImportGateway → idempotency → persist → register."""
 
     def __init__(
-        self, connector_store: Any | None = None, action_registry: Any | None = None,
+        self, connector_store: Any | None = None, action_registry: Any | None = None
     ) -> None:
         """Args:
         connector_store: ``ConnectorConfigStore`` (из DI). Если ``None`` —
@@ -69,7 +69,7 @@ class ImportService:
             content = payload["content"]
         except (KeyError, ValueError) as exc:
             raise ValueError(
-                f"import_action: payload требует 'kind' и 'content': {exc}",
+                f"import_action: payload требует 'kind' и 'content': {exc}"
             ) from exc
         source = ImportSource(
             kind=kind,
@@ -139,7 +139,7 @@ class ImportService:
 
         if previous_hash == spec.source_hash and not force:
             logger.info(
-                "ImportService: idempotent skip для %s (hash совпадает)", spec.name,
+                "ImportService: idempotent skip для %s (hash совпадает)", spec.name
             )
             return {
                 "status": "skipped",
@@ -157,7 +157,7 @@ class ImportService:
         if store is not None:
             try:
                 saved = await store.save(
-                    spec.name, config_dict, enabled=True, user=None,
+                    spec.name, config_dict, enabled=True, user=None
                 )
             except Exception as exc:
                 logger.warning(
@@ -222,7 +222,7 @@ class ImportService:
 
     @staticmethod
     def _compute_removed_endpoints(
-        previous: Any | None, current: ConnectorSpec,
+        previous: Any | None, current: ConnectorSpec
     ) -> list[str]:
         """Возвращает operation_id, которые были раньше, но исчезли в новом spec."""
         if previous is None:
@@ -267,7 +267,7 @@ class ImportService:
                 registered.append(action_name)
             except Exception as exc:
                 logger.warning(
-                    "ImportService: failed to register action %s: %s", action_name, exc,
+                    "ImportService: failed to register action %s: %s", action_name, exc
                 )
         return registered
 

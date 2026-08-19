@@ -39,12 +39,12 @@ class RecipientListProcessor(BaseProcessor):
         self._parallel = parallel
 
     async def _send_to(
-        self, route_id: str, body: Any, headers: dict, context: ExecutionContext,
+        self, route_id: str, body: Any, headers: dict, context: ExecutionContext
     ) -> tuple[str, Any, str | None]:
         from src.backend.dsl.engine.processors.base import SubPipelineExecutor
 
         return await SubPipelineExecutor.execute_route_safe(
-            route_id, body, headers, context,
+            route_id, body, headers, context
         )
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:

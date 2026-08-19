@@ -61,6 +61,6 @@ class SlaMixin(_WorkflowBuilderProtocol):
                 timeout_s=timeout_s,
                 retry_policy=retry_policy,
                 output_key=output_key,
-            ),
+            )
         )
         return self

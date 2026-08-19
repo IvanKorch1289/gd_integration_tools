@@ -34,7 +34,7 @@ class MemoryMetricsBackend(MetricsBackend):
         self._lock = Lock()
 
     def inc_counter(
-        self, name: str, value: float = 1.0, labels: Labels | None = None,
+        self, name: str, value: float = 1.0, labels: Labels | None = None
     ) -> None:
         """Инкрементировать counter ``name`` на ``value`` (по умолчанию 1)."""
         k = _key(name, labels)
@@ -48,7 +48,7 @@ class MemoryMetricsBackend(MetricsBackend):
             self._gauges[k] = value
 
     def observe_histogram(
-        self, name: str, value: float, labels: Labels | None = None,
+        self, name: str, value: float, labels: Labels | None = None
     ) -> None:
         """Записать ``value`` в histogram ``name`` (distribution)."""
         k = _key(name, labels)

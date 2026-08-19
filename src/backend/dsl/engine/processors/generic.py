@@ -146,7 +146,7 @@ class LineageTrackerProcessor(BaseProcessor):
                 if exchange.meta
                 else None,
                 "tag": self.tag,
-            },
+            }
         )
         exchange.set_property("_lineage", lineage)
 
@@ -277,7 +277,9 @@ class FeatureFlagGuardProcessor(BaseProcessor):
                 # callback, может fail с любым exception.
                 logger.warning(
                     "feature flag resolver failed for %s (exc_type=%s exc_msg=%s)",
-                    self.flag, type(exc).__name__, exc,
+                    self.flag,
+                    type(exc).__name__,
+                    exc,
                 )
         else:
             flags = exchange.get_property("_feature_flags") or {}

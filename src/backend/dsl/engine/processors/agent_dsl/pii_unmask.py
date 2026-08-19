@@ -31,7 +31,6 @@ __all__ = ("PIIUnmaskProcessor",)
 _logger = get_logger(__name__)
 
 
-
 from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
 
 
@@ -42,8 +41,8 @@ from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
     spec_schema={
         "type": "object",
         "properties": {
-        "token": {"type": "string"},
-        "scope": {"enum": ["admin", "system"]},
+            "token": {"type": "string"},
+            "scope": {"enum": ["admin", "system"]},
         },
         "required": ["token"],
     },
@@ -95,7 +94,7 @@ class PIIUnmaskProcessor(BaseAIProcessor):
             if self.strict:
                 exchange.set_error(
                     f"{self.name}: "
-                    f"token_map отсутствует в exchange.properties[{self.token_map_property!r}]",
+                    f"token_map отсутствует в exchange.properties[{self.token_map_property!r}]"
                 )
                 exchange.stop()
                 return
@@ -201,8 +200,7 @@ class PIIUnmaskProcessor(BaseAIProcessor):
             return provider() if provider else None
         except Exception as exc:
             _logger.warning(
-                "PIIUnmaskProcessor: PIITokenizer resolution failed: %s",
-                exc,
+                "PIIUnmaskProcessor: PIITokenizer resolution failed: %s", exc
             )
             return None
 

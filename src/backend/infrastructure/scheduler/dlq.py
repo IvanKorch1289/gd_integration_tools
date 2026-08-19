@@ -271,7 +271,7 @@ def attach_scheduler_dlq(
                     asyncio.get_running_loop()
                 except RuntimeError:
                     _logger.warning(
-                        "DLQWriter.write skipped — no running loop in listener",
+                        "DLQWriter.write skipped — no running loop in listener"
                     )
                 else:
                     from src.backend.core.utils.task_registry import get_task_registry

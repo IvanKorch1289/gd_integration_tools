@@ -112,7 +112,7 @@ class MaskPiiProcessor(BaseProcessor):
         if unknown:
             allowed = ", ".join(sorted(ALLOWED_TARGETS))
             raise ValueError(
-                f"mask_pii: unknown targets {sorted(unknown)!r}, allowed: {allowed}",
+                f"mask_pii: unknown targets {sorted(unknown)!r}, allowed: {allowed}"
             )
         self._targets = tuple(targets)
         self._fields = list(fields) if fields else None
@@ -130,7 +130,7 @@ class MaskPiiProcessor(BaseProcessor):
                 compiled[f"custom_{idx}"] = re.compile(raw)
             except re.error as exc:
                 raise ValueError(
-                    f"mask_pii: invalid regex at index {idx}: {raw!r} ({exc})",
+                    f"mask_pii: invalid regex at index {idx}: {raw!r} ({exc})"
                 ) from exc
         return PIIMasker(patterns=compiled, replacement=self._replacement)
 
@@ -185,7 +185,7 @@ class MaskPiiProcessor(BaseProcessor):
         отсутствует — silent no-op (route мог быть запущен по таймеру).
         """
         request = exchange.get_property("request") or exchange.in_message.headers.get(
-            "request",
+            "request"
         )
         if request is None:
             return
@@ -199,7 +199,7 @@ class MaskPiiProcessor(BaseProcessor):
             # пишем в properties для downstream-консумеров.
             try:
                 setattr(request, attr, masked)
-            except (AttributeError, TypeError):
+            except AttributeError, TypeError:
                 exchange.set_property(f"masked_{attr}", masked)
 
     # ── Serialization ──

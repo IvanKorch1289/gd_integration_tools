@@ -124,7 +124,7 @@ class DurableSubscriberProcessor(BaseProcessor):
     """
 
     def __init__(
-        self, *, broker: Any, subscribers: list[str], name: str | None = None,
+        self, *, broker: Any, subscribers: list[str], name: str | None = None
     ) -> None:
         super().__init__(name=name or f"durable-fanout:{len(subscribers)}")
         self._broker = broker

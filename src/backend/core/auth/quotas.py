@@ -153,6 +153,6 @@ class QuotaCheckMiddleware:
                     (b"content-type", b"application/json"),
                     (b"retry-after", str(60).encode("ascii")),
                 ],
-            },
+            }
         )
         await send({"type": "http.response.body", "body": body})

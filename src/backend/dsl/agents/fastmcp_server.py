@@ -51,7 +51,7 @@ def _build_workflow_prompt_fn(wf: WorkflowDescriptorProtocol) -> Any:
     """Build an async prompt function that returns workflow catalogue information."""
 
     async def prompt_fn(
-        payload: str = "{}", wait: bool = False, timeout_s: int = 300,
+        payload: str = "{}", wait: bool = False, timeout_s: int = 300
     ) -> str:
         """Return workflow catalogue information (read-only)."""
         return json.dumps(
@@ -131,7 +131,7 @@ class FastMCPserver:
             app.mount("/mcp", fastmcp_server.asgi_app)
         """
         self._ensure_mcp()
-        assert self._mcp is not None
+        assert self._mcp is not None  # nosec
         return self._mcp.streamable_http_app()
 
     # ── Lifecycle (no-ops — managed by caller) ────────────────────────────────
@@ -139,13 +139,13 @@ class FastMCPserver:
     async def start(self) -> None:
         """No-op. Server is managed by the ASGI host (uvicorn/FastAPI)."""
         logger.debug(
-            "FastMCPserver.start() called — ASGI app lifecycle managed by caller",
+            "FastMCPserver.start() called — ASGI app lifecycle managed by caller"
         )
 
     async def stop(self) -> None:
         """No-op. Server is managed by the ASGI host (uvicorn/FastAPI)."""
         logger.debug(
-            "FastMCPserver.stop() called — ASGI app lifecycle managed by caller",
+            "FastMCPserver.stop() called — ASGI app lifecycle managed by caller"
         )
 
     # ── Internal ─────────────────────────────────────────────────────────────
@@ -169,7 +169,7 @@ class FastMCPserver:
     def _register_tools(self) -> None:
         """Register all SkillRegistry skills with ``"mcp"`` in protocols as MCP tools."""
         self._ensure_mcp()
-        assert self._mcp is not None
+        assert self._mcp is not None  # nosec
 
         for skill in self._skill_registry.list_skills():
             if "mcp" not in skill.protocols and "all" not in skill.protocols:
@@ -177,7 +177,7 @@ class FastMCPserver:
             tool_name = skill.id.replace(".", "_").replace("-", "_")
             self._mcp.add_tool(
                 _build_tool_callback(
-                    skill, self._skill_registry, self._module_whitelist,
+                    skill, self._skill_registry, self._module_whitelist
                 ),
                 name=tool_name,
                 description=skill.description or f"Skill: {skill.id}",
@@ -191,7 +191,7 @@ class FastMCPserver:
     def _register_prompts(self) -> None:
         """Register workflow definitions as MCP prompts (read-only catalogue)."""
         self._ensure_mcp()
-        assert self._mcp is not None
+        assert self._mcp is not None  # nosec
 
         # cycle-5/D-AUDIT-501: lazy import — DSL-слой не должен держать
         # прямой module-level import infrastructure.workflow.registry.
@@ -227,17 +227,14 @@ class FastMCPserver:
             )
             self._mcp.add_prompt(prompt_obj)
 
-        logger.info(
-            "FastMCPserver registered %d workflow prompts",
-            len(descriptors),
-        )
+        logger.info("FastMCPserver registered %d workflow prompts", len(descriptors))
 
 
 # ── Tool callback factory ──────────────────────────────────────────────────────
 
 
 def _build_tool_callback(
-    skill: SkillSpec, registry: SkillRegistry, module_whitelist: list[str] | None = None,
+    skill: SkillSpec, registry: SkillRegistry, module_whitelist: list[str] | None = None
 ) -> Any:
     """Build an async tool callback for a given SkillSpec."""
 

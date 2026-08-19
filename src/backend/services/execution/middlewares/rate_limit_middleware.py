@@ -93,7 +93,7 @@ class RateLimitMiddleware:
             context.tenant_id or context.user_id or context.correlation_id or "global"
         )
         policy = RateLimit(
-            limit=metadata.rate_limit, window_seconds=1, key_prefix=f"action:{action}",
+            limit=metadata.rate_limit, window_seconds=1, key_prefix=f"action:{action}"
         )
         try:
             await limiter.check(identifier, policy)
@@ -129,7 +129,8 @@ class RateLimitMiddleware:
                 logger.debug(
                     "rate_limit_middleware._resolve_limiter: provider "
                     "call failed (exc_type=%s exc_msg=%s) — fallback None",
-                    type(exc).__name__, exc,
+                    type(exc).__name__,
+                    exc,
                 )
                 return None
         try:
@@ -146,7 +147,8 @@ class RateLimitMiddleware:
             logger.debug(
                 "rate_limit_middleware._resolve_limiter: DI provider "
                 "lookup failed (exc_type=%s exc_msg=%s) — fallback None",
-                type(exc).__name__, exc,
+                type(exc).__name__,
+                exc,
             )
             return None
 

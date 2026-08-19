@@ -85,7 +85,7 @@ class GatewayCompiler:
 
     @staticmethod
     def compile_xor(
-        spec: GatewaySpec, ctx: dict[str, Any] | None = None,
+        spec: GatewaySpec, ctx: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """Скомпилировать XOR (exclusive) gateway.
 
@@ -117,7 +117,7 @@ class GatewayCompiler:
 
     @staticmethod
     def compile_and(
-        spec: GatewaySpec, ctx: dict[str, Any] | None = None,
+        spec: GatewaySpec, ctx: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """Скомпилировать AND (parallel) gateway.
 
@@ -150,7 +150,7 @@ class GatewayCompiler:
 
     @staticmethod
     def compile_or(
-        spec: GatewaySpec, ctx: dict[str, Any] | None = None,
+        spec: GatewaySpec, ctx: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """Скомпилировать OR (inclusive) gateway.
 
@@ -183,7 +183,7 @@ class GatewayCompiler:
 
 
 def process_gateway(
-    spec: GatewaySpec, ctx: dict[str, Any] | None = None,
+    spec: GatewaySpec, ctx: dict[str, Any] | None = None
 ) -> dict[str, Any]:
     """Диспетчер компиляции gateway по типу (``kind``).
 

@@ -12,6 +12,7 @@ YAML:
         size: 10
         to: body.results
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -62,8 +63,11 @@ class InfraElasticsearchSearchProcessor(BaseProcessor):
         from src.backend.core.di.providers.infrastructure_locator import (
             get_elasticsearch_client_class,
         )
+
         client = get_elasticsearch_client_class()(context)
-        results = await client.search(index=self.index, query=self.query, size=self.size)
+        results = await client.search(
+            index=self.index, query=self.query, size=self.size
+        )
         self.set_result(exchange, self.target, results)
 
 
@@ -105,10 +109,9 @@ class InfraElasticsearchIndexProcessor(BaseProcessor):
         from src.backend.core.di.providers.infrastructure_locator import (
             get_elasticsearch_client_class,
         )
+
         client = get_elasticsearch_client_class()(context)
         doc_id = await client.index_document(
-            index=self.index,
-            document=self.document,
-            doc_id=self.doc_id,
+            index=self.index, document=self.document, doc_id=self.doc_id
         )
         self.set_result(exchange, self.target, doc_id)

@@ -63,7 +63,7 @@ class RagQueryProcessor(BaseProcessor):
         super().__init__(name)
         if strategy not in _RAG_STRATEGIES:
             raise ValueError(
-                f"unknown rag strategy '{strategy}'; expected one of {_RAG_STRATEGIES}",
+                f"unknown rag strategy '{strategy}'; expected one of {_RAG_STRATEGIES}"
             )
         self._query_field = query_field
         self._system_prompt = system_prompt

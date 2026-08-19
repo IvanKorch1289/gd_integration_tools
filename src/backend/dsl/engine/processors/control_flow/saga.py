@@ -174,7 +174,7 @@ def _serialize_sub(procs: list[BaseProcessor]) -> list[dict[str, Any]] | None:
 
 
 async def _emit_saga_audit(
-    *, event_type: str, workflow_id: str, payload: dict[str, Any],
+    *, event_type: str, workflow_id: str, payload: dict[str, Any]
 ) -> None:
     """Sprint 12 K3 W6 — best-effort emit saga compensation events.
 
@@ -195,12 +195,19 @@ async def _emit_saga_audit(
             tenant_id=None,
             payload={"caller": "dsl.saga", **payload},
         )
-    except (OSError, ConnectionError, RuntimeError, AttributeError, TypeError) as emit_exc:
+    except (
+        OSError,
+        ConnectionError,
+        RuntimeError,
+        AttributeError,
+        TypeError,
+    ) as emit_exc:
         # cycle-9/D-AUDIT-1722: narrow exceptions + observability.
         # OSError/ConnectionError — sink transport failure, RuntimeError
         # — backend unavailable, AttributeError — sink API change,
         # TypeError — wrong payload type.
         import logging
+
         logging.getLogger(__name__).debug(
             "saga.sink_emit_failed",
             extra={"event_type": event_type, "error": str(emit_exc)},

@@ -27,20 +27,20 @@ class ActivityDeclaration(BaseModel):
     type: Literal["activity"] = "activity"
     name: str = Field(min_length=1, description="Имя activity-функции в registry.")
     args: dict[str, Any] = Field(
-        default_factory=dict, description="Аргументы для передачи в activity (kwargs).",
+        default_factory=dict, description="Аргументы для передачи в activity (kwargs)."
     )
     timeout_s: float | None = Field(
-        default=None, gt=0.0, description="Per-activity timeout.",
+        default=None, gt=0.0, description="Per-activity timeout."
     )
     retry_policy: RetryPolicy | None = Field(
         default=None,
         description="Retry-политика; None — наследуется из workflow-defaults.",
     )
     output_key: str | None = Field(
-        default=None, description="Имя property для сохранения результата activity.",
+        default=None, description="Имя property для сохранения результата activity."
     )
     required_capabilities: tuple[str, ...] = Field(
-        default=(), description="Capability'и, требуемые для активности (V15 R-V15-1).",
+        default=(), description="Capability'и, требуемые для активности (V15 R-V15-1)."
     )
 
 
@@ -64,7 +64,7 @@ class SagaDeclaration(BaseModel):
 
     type: Literal["saga"] = "saga"
     forward: list[ActivityDeclaration] = Field(
-        min_length=1, description="Forward-цепочка activity-шагов.",
+        min_length=1, description="Forward-цепочка activity-шагов."
     )
     compensate: list[ActivityDeclaration] = Field(
         default_factory=list,
@@ -99,12 +99,12 @@ class SagaDeclaration(BaseModel):
             if fwd_name not in forward_names:
                 raise ValueError(
                     f"compensate_map: forward step {fwd_name!r} not found in "
-                    f"forward[] (available: {sorted(forward_names)})",
+                    f"forward[] (available: {sorted(forward_names)})"
                 )
             if comp_name not in compensate_names:
                 raise ValueError(
                     f"compensate_map: compensate step {comp_name!r} not "
-                    f"found in compensate[] (available: {sorted(compensate_names)})",
+                    f"found in compensate[] (available: {sorted(compensate_names)})"
                 )
         return self
 
@@ -130,7 +130,7 @@ class PauseDeclaration(BaseModel):
 
     type: Literal["pause"] = "pause"
     output_key: str | None = Field(
-        default=None, description="Имя property для сохранения timestamp паузы.",
+        default=None, description="Имя property для сохранения timestamp паузы."
     )
 
 
@@ -177,7 +177,7 @@ class SignalWaitDeclaration(BaseModel):
     type: Literal["wait_signal"] = "wait_signal"
     signal_name: str = Field(min_length=1, description="Имя сигнала Temporal.")
     timeout_s: float | None = Field(
-        default=None, gt=0.0, description="Timeout ожидания; None — бесконечно.",
+        default=None, gt=0.0, description="Timeout ожидания; None — бесконечно."
     )
     on_timeout: Literal["raise", "continue"] = Field(
         default="raise",
@@ -187,7 +187,7 @@ class SignalWaitDeclaration(BaseModel):
         ),
     )
     output_key: str | None = Field(
-        default=None, description="Имя property для сохранения payload сигнала.",
+        default=None, description="Имя property для сохранения payload сигнала."
     )
 
 

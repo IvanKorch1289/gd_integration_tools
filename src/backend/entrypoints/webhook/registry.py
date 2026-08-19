@@ -53,7 +53,7 @@ class WebhookRegistry:
         """
         self._subscriptions[sub.id] = sub
         logger.info(
-            "Webhook подписка %s: event=%s → %s", sub.id, sub.event_type, sub.target_url,
+            "Webhook подписка %s: event=%s → %s", sub.id, sub.event_type, sub.target_url
         )
         return sub
 

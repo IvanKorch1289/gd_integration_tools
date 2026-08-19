@@ -118,11 +118,7 @@ class AuthRequiredMiddleware:
         self._accepted_methods = (
             tuple(accepted_methods)
             if accepted_methods is not None
-            else (
-                AuthMethod.API_KEY,
-                AuthMethod.JWT,
-                AuthMethod.EXPRESS_JWT,
-            )
+            else (AuthMethod.API_KEY, AuthMethod.JWT, AuthMethod.EXPRESS_JWT)
         )
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
@@ -152,7 +148,11 @@ class AuthRequiredMiddleware:
         # S124 W2: если предыдущий middleware (api_key, jwt, etc.) уже
         # установил scope['state']['auth'], не переписываем — это
         # ломало admin_roles и группы от API-ключа.
-        existing_auth = scope.get("state", {}).get("auth") if isinstance(scope.get("state"), dict) else None
+        existing_auth = (
+            scope.get("state", {}).get("auth")
+            if isinstance(scope.get("state"), dict)
+            else None
+        )
         if existing_auth is not None:
             await self.app(scope, receive, send)
             return
@@ -200,6 +200,6 @@ class AuthRequiredMiddleware:
                     (b"content-length", str(len(body)).encode("latin-1")),
                     (b"www-authenticate", b"Bearer"),
                 ],
-            },
+            }
         )
         await send({"type": "http.response.body", "body": body})

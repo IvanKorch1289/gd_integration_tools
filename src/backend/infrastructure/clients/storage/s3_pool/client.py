@@ -126,7 +126,7 @@ class S3Client(BaseS3Client):
                         aws_secret_access_key=self._settings.secret_key,
                         config=self._config,
                         use_ssl=self._settings.use_ssl,
-                    ),
+                    )
                 )
 
                 self._client = client
@@ -137,7 +137,7 @@ class S3Client(BaseS3Client):
             except Exception as exc:
                 await self.close()
                 self.logger.error(
-                    "Ошибка подключения к S3: %s", str(exc), exc_info=True,
+                    "Ошибка подключения к S3: %s", str(exc), exc_info=True
                 )
                 raise
 
@@ -149,7 +149,7 @@ class S3Client(BaseS3Client):
                 self.logger.info("Соединение с S3 закрыто")
             except Exception as exc:
                 self.logger.error(
-                    "Ошибка при закрытии соединения S3: %s", str(exc), exc_info=True,
+                    "Ошибка при закрытии соединения S3: %s", str(exc), exc_info=True
                 )
             finally:
                 self._exit_stack = None
@@ -189,7 +189,7 @@ class S3Client(BaseS3Client):
                     operation_name="checking connection",
                 )
             return True
-        except (BotoClientError, OSError, TimeoutError):
+        except BotoClientError, OSError, TimeoutError:
             return False
 
     async def check_bucket_exists(self) -> bool:
@@ -254,23 +254,20 @@ class S3Client(BaseS3Client):
 
     @ensure_connected
     async def put_object(
-        self, key: str, body: Any, metadata: dict[str, Any],
+        self, key: str, body: Any, metadata: dict[str, Any]
     ) -> dict[str, Any]:
         """Загружает объект в S3 (S165 W3: with CB)."""
         breaker = _get_s3_breaker()
         async with breaker.guard(), self.client_context() as client:
             try:
                 await client.put_object(
-                    Bucket=self._settings.bucket,
-                    Key=key,
-                    Body=body,
-                    Metadata=metadata,
+                    Bucket=self._settings.bucket, Key=key, Body=body, Metadata=metadata
                 )
                 self.logger.info(f"Файл {key} успешно загружен")
                 return {"status": "success"}
             except BotoClientError as exc:
                 self.logger.error(
-                    f"Ошибка при загрузке объекта: {exc!s}", exc_info=True,
+                    f"Ошибка при загрузке объекта: {exc!s}", exc_info=True
                 )
                 return {"status": "error", "message": str(exc)}
 
@@ -282,7 +279,7 @@ class S3Client(BaseS3Client):
             async with self.client_context() as client:
                 try:
                     response = await client.get_object(
-                        Bucket=self._settings.bucket, Key=key,
+                        Bucket=self._settings.bucket, Key=key
                     )
                     return response["Body"], response.get("Metadata", {})
                 except BotoClientError as exc:
@@ -352,7 +349,7 @@ class S3Client(BaseS3Client):
                             Body=part_bytes,
                         )
                         parts.append(
-                            {"PartNumber": part_number, "ETag": part_resp["ETag"]},
+                            {"PartNumber": part_number, "ETag": part_resp["ETag"]}
                         )
                         part_number += 1
 
@@ -369,7 +366,7 @@ class S3Client(BaseS3Client):
                 if not parts:
                     # Нет данных — S3 не позволит complete; abort и возвращаем "".
                     await client.abort_multipart_upload(
-                        Bucket=bucket, Key=key, UploadId=upload_id,
+                        Bucket=bucket, Key=key, UploadId=upload_id
                     )
                     return ""
 
@@ -384,7 +381,7 @@ class S3Client(BaseS3Client):
                 if upload_id is not None:
                     try:
                         await client.abort_multipart_upload(
-                            Bucket=bucket, Key=key, UploadId=upload_id,
+                            Bucket=bucket, Key=key, UploadId=upload_id
                         )
                     except Exception as _:
                         self.logger.exception(
@@ -401,12 +398,12 @@ class S3Client(BaseS3Client):
         async with self.client_context() as client:
             try:
                 await client.copy_object(
-                    Bucket=self._settings.bucket, Key=dest_key, CopySource=copy_source,
+                    Bucket=self._settings.bucket, Key=dest_key, CopySource=copy_source
                 )
                 return {"status": "success"}
             except BotoClientError as exc:
                 self.logger.error(
-                    f"Ошибка при копировании объекта: {exc!s}", exc_info=True,
+                    f"Ошибка при копировании объекта: {exc!s}", exc_info=True
                 )
                 return {"status": "error", "message": str(exc)}
 
@@ -428,8 +425,8 @@ class S3Client(BaseS3Client):
                 raise BotoClientError(
                     error_response={
                         "Error": {
-                            "Message": "Ошибка генерации предварительно подписанного URL",
-                        },
+                            "Message": "Ошибка генерации предварительно подписанного URL"
+                        }
                     },
                     operation_name="generating presigned url",
                 ) from exc
@@ -449,7 +446,7 @@ class S3Client(BaseS3Client):
                 }
             except BotoClientError as exc:
                 self.logger.error(
-                    f"Ошибка при массовом удалении: {exc!s}", exc_info=True,
+                    f"Ошибка при массовом удалении: {exc!s}", exc_info=True
                 )
                 return {"status": "error", "message": str(exc)}
 
@@ -459,13 +456,13 @@ class S3Client(BaseS3Client):
         async with self.client_context() as client:
             try:
                 response = await client.delete_object(
-                    Bucket=self._settings.bucket, Key=key,
+                    Bucket=self._settings.bucket, Key=key
                 )
                 self.logger.info(f"Файл {key} успешно удалён")
                 return {"status": "success", "response": response}
             except BotoClientError as exc:
                 self.logger.error(
-                    f"Ошибка при удалении объекта: {exc!s}", exc_info=True,
+                    f"Ошибка при удалении объекта: {exc!s}", exc_info=True
                 )
                 return {"status": "error", "message": str(exc)}
 
@@ -475,7 +472,7 @@ class S3Client(BaseS3Client):
         async with self.client_context() as client:
             try:
                 response = await client.head_object(
-                    Bucket=self._settings.bucket, Key=key,
+                    Bucket=self._settings.bucket, Key=key
                 )
                 return response.get("Metadata", {})
             except BotoClientError as exc:
@@ -484,7 +481,7 @@ class S3Client(BaseS3Client):
                     return None
 
                 self.logger.error(
-                    "Ошибка head_object для %s: %s", key, str(exc), exc_info=True,
+                    "Ошибка head_object для %s: %s", key, str(exc), exc_info=True
                 )
                 raise ServiceError(f"Ошибка получения метаданных {key}") from exc
 
@@ -496,14 +493,14 @@ class S3Client(BaseS3Client):
             try:
                 paginator = client.get_paginator("list_objects_v2")
                 async for result in paginator.paginate(
-                    Bucket=self._settings.bucket, Prefix=prefix or "",
+                    Bucket=self._settings.bucket, Prefix=prefix or ""
                 ):
                     for content in result.get("Contents", []):
                         objects.append(content["Key"])
                 return objects
             except BotoClientError as exc:
                 self.logger.error(
-                    f"Ошибка при получении списка объектов: {exc!s}", exc_info=True,
+                    f"Ошибка при получении списка объектов: {exc!s}", exc_info=True
                 )
                 return []
 
@@ -513,7 +510,7 @@ class S3Client(BaseS3Client):
         async with self.client_context() as client:
             try:
                 response = await client.get_object(
-                    Bucket=self._settings.bucket, Key=key,
+                    Bucket=self._settings.bucket, Key=key
                 )
                 return await response["Body"].read()
             except BotoClientError as exc:
@@ -521,7 +518,6 @@ class S3Client(BaseS3Client):
                 if exc.response["Error"]["Code"] == "NoSuchKey":
                     return None
                 raise ServiceError(f"Файл {key} не найден") from exc
-
 
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""

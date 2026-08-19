@@ -91,7 +91,7 @@ class YAMLStore:
         path = self._dir / filename
         if not path.exists():
             raise FileNotFoundError(
-                f"YAMLStore: маршрут {route_id!r} не найден в {self._dir}",
+                f"YAMLStore: маршрут {route_id!r} не найден в {self._dir}"
             )
         yaml_str = path.read_text(encoding="utf-8")
         return load_pipeline_from_yaml(yaml_str)
@@ -145,7 +145,7 @@ class YAMLStore:
                 yaml_b,
                 fromfile=f"{pipeline_a.route_id}.yaml",
                 tofile=f"{pipeline_b.route_id}.yaml",
-            ),
+            )
         )
 
     def load_all(self) -> builtins.list[Pipeline]:
@@ -164,6 +164,6 @@ class YAMLStore:
                 pipelines.append(pipeline)
             except Exception as exc:
                 _logger.warning(
-                    "YAMLStore: не удалось загрузить %s: %s", path.name, exc,
+                    "YAMLStore: не удалось загрузить %s: %s", path.name, exc
                 )
         return pipelines

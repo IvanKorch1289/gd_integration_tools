@@ -20,7 +20,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.backend.core.interfaces.plugin import (
+from src.backend.core.api import (
     ActionRegistryProtocol,
     BasePlugin,
     PluginContext,

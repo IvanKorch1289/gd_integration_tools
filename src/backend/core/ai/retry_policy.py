@@ -36,10 +36,7 @@ class RetryPolicy(BaseModel):
     # initial_delay_s, backoff_coefficient → multiplier, maximum_interval_s →
     # max_delay_s). Populated via validation_alias for backward compat
     # with resilience_profile.py and retry.py callers.
-    model_config = ConfigDict(
-        extra="forbid",
-        populate_by_name=True,
-    )
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     max_attempts: int = Field(
         default=3,
@@ -51,22 +48,28 @@ class RetryPolicy(BaseModel):
         default=1.0,
         gt=0.0,
         description="Начальный интервал retry в секундах.",
-        validation_alias=AliasChoices("initial_interval_s", "initial_delay_s", "delay_s"),
+        validation_alias=AliasChoices(
+            "initial_interval_s", "initial_delay_s", "delay_s"
+        ),
     )
     backoff_coefficient: float = Field(
         default=2.0,
         ge=1.0,
         description="Коэффициент экспоненциального backoff.",
-        validation_alias=AliasChoices("backoff_coefficient", "multiplier", "backoff_multiplier"),
+        validation_alias=AliasChoices(
+            "backoff_coefficient", "multiplier", "backoff_multiplier"
+        ),
     )
     maximum_interval_s: float | None = Field(
         default=None,
         gt=0.0,
         description="Верхняя граница интервала retry; None — без ограничения.",
-        validation_alias=AliasChoices("maximum_interval_s", "max_delay_s", "max_interval"),
+        validation_alias=AliasChoices(
+            "maximum_interval_s", "max_delay_s", "max_interval"
+        ),
     )
     non_retryable_errors: tuple[str, ...] = Field(
-        default=(), description="Имена ошибок, при которых retry НЕ выполняется.",
+        default=(), description="Имена ошибок, при которых retry НЕ выполняется."
     )
     jitter: float | None = Field(
         default=None,

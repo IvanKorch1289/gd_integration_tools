@@ -143,7 +143,7 @@ class CsvDataFormat(DataFormat):
     """
 
     def __init__(
-        self, *, headers: list[str] | None = None, delimiter: str = ",",
+        self, *, headers: list[str] | None = None, delimiter: str = ","
     ) -> None:
         """Init CSV format options.
 
@@ -169,14 +169,14 @@ class CsvDataFormat(DataFormat):
         """Encode list[dict] → CSV bytes (UTF-8)."""
         if not isinstance(body, list):
             raise TypeError(
-                f"CsvDataFormat.marshal expects list[dict], got {type(body).__name__}",
+                f"CsvDataFormat.marshal expects list[dict], got {type(body).__name__}"
             )
         if not body:
             return b""
         headers = self._headers or list(body[0].keys())  # type: ignore[union-attr]
         buf = io.StringIO()
         writer = csv.DictWriter(
-            buf, fieldnames=headers, delimiter=self._delimiter, extrasaction="ignore",
+            buf, fieldnames=headers, delimiter=self._delimiter, extrasaction="ignore"
         )
         writer.writeheader()
         for row in body:
@@ -204,7 +204,7 @@ class MessagePackDataFormat(DataFormat):
             import msgpack  # type: ignore[import-not-found]
         except ImportError as exc:
             raise ImportError(
-                "MessagePackDataFormat requires 'msgpack' package: uv add msgpack",
+                "MessagePackDataFormat requires 'msgpack' package: uv add msgpack"
             ) from exc
         import msgpack  # type: ignore[import-not-found]
 

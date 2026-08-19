@@ -73,7 +73,7 @@ class SmsSink(Sink):
     def __post_init__(self) -> None:
         if self.provider not in self.PROVIDERS:
             raise ValueError(
-                f"sms_sink: provider must be one of {self.PROVIDERS}, got {self.provider!r}",
+                f"sms_sink: provider must be one of {self.PROVIDERS}, got {self.provider!r}"
             )
 
     def _endpoint(self) -> str:
@@ -85,8 +85,11 @@ class SmsSink(Sink):
         }[self.provider]
 
     @with_breaker("sms_sink")
-    @with_retry(max_attempts=3, initial_backoff=2.0,
-        retry_on=(ConnectionError, TimeoutError, OSError))
+    @with_retry(
+        max_attempts=3,
+        initial_backoff=2.0,
+        retry_on=(ConnectionError, TimeoutError, OSError),
+    )
     @require_capability("sms.send", action="write")
     async def send(self, payload: Any) -> SinkResult:
         """S203 W5: отправить SMS через httpx POST.
@@ -141,17 +144,19 @@ class SmsSink(Sink):
                     # response type. Bare `except Exception` маскировал
                     # unrelated runtime errors (KeyError).
                     import logging
+
                     logging.getLogger(__name__).debug(
-                        "sms_sink.json_parse_failed",
-                        extra={"error": str(json_exc)},
+                        "sms_sink.json_parse_failed", extra={"error": str(json_exc)}
                     )
                 return SinkResult(ok=ok, details=details)
         except Exception as exc:
             return SinkResult(
-                ok=False, details={"error": str(exc) or exc.__class__.__name__},
+                ok=False, details={"error": str(exc) or exc.__class__.__name__}
             )
 
-    def _extract_payload(self, payload: Any) -> tuple[str | None, str | None, str | None]:
+    def _extract_payload(
+        self, payload: Any
+    ) -> tuple[str | None, str | None, str | None]:
         """Нормализация payload → (to, body, from)."""
         if isinstance(payload, dict):
             return (
@@ -174,8 +179,7 @@ class SmsSink(Sink):
 
             start = time.perf_counter()
             async with OutboundHttpClient(
-                timeout=httpx.Timeout(2.0),
-                plugin=f"sms_sink.{self.provider}",
+                timeout=httpx.Timeout(2.0), plugin=f"sms_sink.{self.provider}"
             ) as client:
                 resp = await client.request("HEAD", self._endpoint())
                 latency_ms = (time.perf_counter() - start) * 1000.0
@@ -192,6 +196,4 @@ class SmsSink(Sink):
                     latency_ms=latency_ms,
                 )
         except Exception as exc:
-            return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode,
-            )
+            return HealthResult.failed(error=f"{type(exc).__name__}: {exc}", mode=mode)

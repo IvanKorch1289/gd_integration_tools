@@ -57,7 +57,7 @@ async def receive_source_webhook(source_id: str, request: Request) -> dict[str, 
         source = registry.get(source_id)
     except KeyError as exc:
         raise HTTPException(
-            status_code=404, detail=f"WebhookSource {source_id!r} не зарегистрирован",
+            status_code=404, detail=f"WebhookSource {source_id!r} не зарегистрирован"
         ) from exc
 
     if source.kind is not SourceKind.WEBHOOK:
@@ -73,7 +73,7 @@ async def receive_source_webhook(source_id: str, request: Request) -> dict[str, 
             payload = orjson.loads(raw_body)
         except orjson.JSONDecodeError as exc:
             raise HTTPException(
-                status_code=400, detail=f"Invalid JSON body: {exc}",
+                status_code=400, detail=f"Invalid JSON body: {exc}"
             ) from exc
 
     # Starlette ``Headers`` сами case-insensitive — отдаём как Mapping напрямую,
@@ -84,7 +84,7 @@ async def receive_source_webhook(source_id: str, request: Request) -> dict[str, 
         # WebhookSource (infra) экспортирует verify_and_dispatch, но это
         # не часть Protocol Source; kind-проверка выше гарантирует семантику.
         await source.verify_and_dispatch(  # type: ignore[attr-defined]
-            raw_body, headers, payload=payload,
+            raw_body, headers, payload=payload
         )
     except AttributeError as exc:
         raise HTTPException(
@@ -98,7 +98,7 @@ async def receive_source_webhook(source_id: str, request: Request) -> dict[str, 
         message = str(exc) or exc.__class__.__name__
         if exc.__class__.__name__ == "WebhookVerificationError":
             logger.warning(
-                "Webhook verification failed: source=%s reason=%s", source_id, message,
+                "Webhook verification failed: source=%s reason=%s", source_id, message
             )
             raise HTTPException(status_code=401, detail=message) from exc
         if isinstance(exc, RuntimeError):

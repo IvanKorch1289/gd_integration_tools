@@ -53,7 +53,7 @@ class GranianTuning(BaseSettingsWithLoader):
 
     yaml_group: ClassVar[str] = "granian"
     model_config = SettingsConfigDict(
-        env_prefix="GRANIAN_", extra="ignore", validate_default=True,
+        env_prefix="GRANIAN_", extra="ignore", validate_default=True
     )
 
     workers: int | Literal["auto"] = Field(

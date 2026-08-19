@@ -138,7 +138,7 @@ async def stream_filter(
 
 
 async def _safe_sanitize(
-    sanitizer: PresidioSanitizer, text: str, entities: tuple[str, ...] | None,
+    sanitizer: PresidioSanitizer, text: str, entities: tuple[str, ...] | None
 ) -> str:
     """Вызывает sanitizer и проглатывает исключения (best-effort).
 
@@ -166,7 +166,7 @@ async def _safe_sanitize(
     """
     try:
         result = await sanitizer.sanitize(
-            text, entities=list(entities) if entities else None,
+            text, entities=list(entities) if entities else None
         )
     except Exception as exc:
         # narrow: bare Exception _ намеренно оставлен для backward-compat

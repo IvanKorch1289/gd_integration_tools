@@ -35,7 +35,7 @@ _VALID_STATES = frozenset(
         STATE_COMPENSATING,
         STATE_COMPENSATED,
         STATE_FAILED,
-    },
+    }
 )
 
 
@@ -62,30 +62,30 @@ class SerializationMixin(_SagaLRAProcessorProtocol):
         for i, raw in enumerate(steps):
             if not isinstance(raw, dict):
                 raise TypeError(
-                    f"step #{i} должен быть dict, получено {type(raw).__name__}",
+                    f"step #{i} должен быть dict, получено {type(raw).__name__}"
                 )
             action = raw.get("action")
             if not callable(action):
                 raise ValueError(
                     f"step #{i}: 'action' должен быть callable, "
-                    f"получено {type(action).__name__}",
+                    f"получено {type(action).__name__}"
                 )
             compensation = raw.get("compensation")
             if compensation is not None and not callable(compensation):
                 raise ValueError(
                     f"step #{i}: 'compensation' должен быть callable или None, "
-                    f"получено {type(compensation).__name__}",
+                    f"получено {type(compensation).__name__}"
                 )
             name = raw.get("name") or f"step_{i}"
             if not isinstance(name, str):
                 raise ValueError(
-                    f"step #{i}: 'name' должен быть str, получено {type(name).__name__}",
+                    f"step #{i}: 'name' должен быть str, получено {type(name).__name__}"
                 )
             if name in seen:
                 raise ValueError(f"step #{i}: дубликат name {name!r}")
             seen.add(name)
             normalized.append(
-                {"name": name, "action": action, "compensation": compensation},
+                {"name": name, "action": action, "compensation": compensation}
             )
         return normalized
 

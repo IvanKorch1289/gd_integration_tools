@@ -106,10 +106,10 @@ class OPAClient:
             resp = await client.post(path, json={"input": input_doc})
             if resp.status_code != 200:
                 logger.warning(
-                    "OPA non-200 [%s]: %s", resp.status_code, resp.text[:200],
+                    "OPA non-200 [%s]: %s", resp.status_code, resp.text[:200]
                 )
                 return PolicyDecision(
-                    allow=False, reasons=[f"opa_status_{resp.status_code}"],
+                    allow=False, reasons=[f"opa_status_{resp.status_code}"]
                 )
             result = resp.json().get("result", {})
             allow = bool(result.get("allow", False))

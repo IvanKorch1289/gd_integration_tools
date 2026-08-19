@@ -73,7 +73,7 @@ class DeprecationMiddleware(BaseHTTPMiddleware):
     """
 
     def __init__(
-        self, app: ASGIApp, versions: dict[str, APIVersion] | None = None,
+        self, app: ASGIApp, versions: dict[str, APIVersion] | None = None
     ) -> None:
         """Инициализирует middleware.
 
@@ -88,7 +88,7 @@ class DeprecationMiddleware(BaseHTTPMiddleware):
         self._versions[version.version] = version
 
     async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint,
+        self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
         """Метод dispatch (см. signature)."""
         response = await call_next(request)

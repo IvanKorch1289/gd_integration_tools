@@ -30,5 +30,6 @@ def __getattr__(name: str) -> Any:
         from src.backend.infrastructure.clients.storage import (
             clickhouse_admin_client as _m,
         )
+
         return getattr(_m, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

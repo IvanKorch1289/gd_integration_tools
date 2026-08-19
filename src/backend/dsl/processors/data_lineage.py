@@ -190,7 +190,7 @@ class DataLineageProcessor(BaseProcessor):
         if event_type not in ("input", "output", "transform"):
             raise ValueError(
                 f"event_type должен быть input/output/transform, "
-                f"получено {event_type!r}",
+                f"получено {event_type!r}"
             )
         super().__init__(name=name or f"data_lineage_{dataset}")
         self._dataset = dataset
@@ -311,5 +311,5 @@ class DataLineageMixin:
                 node_type=node_type,
                 lineage_emitter=lineage_emitter,
                 event_type=event_type,
-            ),
+            )
         )

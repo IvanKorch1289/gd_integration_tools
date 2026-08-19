@@ -89,7 +89,7 @@ class MetricsRegistry:
         return self._default_labels
 
     def counter(
-        self, name: str, description: str, *, labels: Iterable[str] = (),
+        self, name: str, description: str, *, labels: Iterable[str] = ()
     ) -> Counter:
         """Регистрирует :class:`Counter`; повторный вызов → существующий."""
         with self._lock:
@@ -97,7 +97,7 @@ class MetricsRegistry:
                 return self._counters[name]
             all_labels = self._build_labels(labels)
             counter = Counter(
-                name, description, labelnames=all_labels, registry=self._registry,
+                name, description, labelnames=all_labels, registry=self._registry
             )
             self._counters[name] = counter
             return counter
@@ -126,7 +126,7 @@ class MetricsRegistry:
             return histogram
 
     def gauge(
-        self, name: str, description: str, *, labels: Iterable[str] = (),
+        self, name: str, description: str, *, labels: Iterable[str] = ()
     ) -> Gauge:
         """Регистрирует :class:`Gauge`; повторный вызов → существующий."""
         with self._lock:
@@ -134,7 +134,7 @@ class MetricsRegistry:
                 return self._gauges[name]
             all_labels = self._build_labels(labels)
             gauge = Gauge(
-                name, description, labelnames=all_labels, registry=self._registry,
+                name, description, labelnames=all_labels, registry=self._registry
             )
             self._gauges[name] = gauge
             return gauge
@@ -178,7 +178,7 @@ class MetricsRegistry:
             if self._is_strict():
                 raise KeyError(
                     f"MetricsRegistry strict: {kind} {name!r} not registered "
-                    "— call .counter/.histogram/.gauge first",
+                    "— call .counter/.histogram/.gauge first"
                 ) from None
             raise
 

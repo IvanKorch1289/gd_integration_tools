@@ -54,11 +54,11 @@ class LiteTemporalBackend(TemporalWorkflowBackend):
             from temporalio.testing import WorkflowEnvironment
         except ImportError as exc:  # pragma: no cover
             raise RuntimeError(
-                "temporalio SDK not installed. Install via `uv sync --extra workflow`.",
+                "temporalio SDK not installed. Install via `uv sync --extra workflow`."
             ) from exc
         del target, api_key
         env = await WorkflowEnvironment.start_local(
-            namespace=namespace, data_converter=build_temporal_data_converter(),
+            namespace=namespace, data_converter=build_temporal_data_converter()
         )
         _logger.info("LiteTemporalBackend started (namespace=%s)", namespace)
         return cls(client=env.client, env=env, default_task_queue=default_task_queue)

@@ -26,15 +26,29 @@ __all__ = ("RoutingEIPsMixin",)
 class RoutingEIPsMixin(EIPMixinBase):
     """EIP routing patterns: dynamic / scatter-gather / routing slip / CBR / sampling / load balance / multicast."""
 
-    def translate(self, from_format: str, to_format: str) -> RouteBuilder:
-        """DEPRECATED: используйте .convert(). translate() — alias для обратной совместимости."""
-        return cast(
-            "RouteBuilder",
-            self.convert(from_format=from_format, to_format=to_format),  # type: ignore[attr-defined]
+    def convert(self, from_format: str, to_format: str) -> RouteBuilder:
+        """Format conversion: JSON↔XML↔CSV↔Protobuf via MarshalProcessor (DSL-4 fix).
+
+        Реализация была объявлена DEPRECATED alias'ом ``translate()`` без самой функции
+        (DSL-4 audit cycle 242). Теперь convert() — полноценная реализация.
+        """
+        from src.backend.dsl.engine.processors.eip.marshal.processors import (
+            MarshalProcessor,
         )
 
+        return cast(
+            "RouteBuilder",
+            self._add(  # type: ignore[attr-defined]
+                MarshalProcessor(from_format=from_format, to_format=to_format)
+            ),
+        )
+
+    def translate(self, from_format: str, to_format: str) -> RouteBuilder:
+        """DEPRECATED: используйте .convert(). translate() — alias для обратной совместимости."""
+        return self.convert(from_format=from_format, to_format=to_format)
+
     def dynamic_route(
-        self, route_expression: Callable[[Exchange[Any]], str],
+        self, route_expression: Callable[[Exchange[Any]], str]
     ) -> RouteBuilder:
         """Dynamic Router: runtime-вычисление route_id."""
         return cast(
@@ -57,7 +71,7 @@ class RoutingEIPsMixin(EIPMixinBase):
                     route_ids=route_ids,
                     aggregation=aggregation,
                     timeout_seconds=timeout_seconds,
-                ),
+                )
             ),
         )
 
@@ -142,7 +156,7 @@ class RoutingEIPsMixin(EIPMixinBase):
                     registry=registry,
                     strict=strict,
                     max_steps=max_steps,
-                ),
+                )
             ),
         )
 
@@ -173,7 +187,7 @@ class RoutingEIPsMixin(EIPMixinBase):
         return cast(
             "RouteBuilder",
             self._add(  # type: ignore[attr-defined]
-                _CBR(routes=routes, default_endpoint=default_endpoint),
+                _CBR(routes=routes, default_endpoint=default_endpoint)
             ),
         )
 
@@ -214,7 +228,7 @@ class RoutingEIPsMixin(EIPMixinBase):
                     time_window_ms=time_window_ms,
                     max_in_window=max_in_window,
                     seed=seed,
-                ),
+                )
             ),
         )
 
@@ -235,7 +249,7 @@ class RoutingEIPsMixin(EIPMixinBase):
                     strategy=strategy,
                     weights=weights,
                     sticky_header=sticky_header,
-                ),
+                )
             ),
         )
 
@@ -268,6 +282,6 @@ class RoutingEIPsMixin(EIPMixinBase):
                     strategy=strategy,
                     on_error=on_error,
                     timeout=timeout,
-                ),
+                )
             ),
         )

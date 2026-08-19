@@ -14,6 +14,7 @@ Inspired by D102 (facade) + D187 (facade single-import):
 5 built-in backends (vault/postgres/mongo/memory/consul)
 регистрируются автоматически при первом импорте модуля.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -63,8 +64,7 @@ class CertBackendRegistry:
             )
         self._backends[backend_id] = backend_class
         logger.info(
-            "cert.registry.register id=%s class=%s",
-            backend_id, backend_class.__name__,
+            "cert.registry.register id=%s class=%s", backend_id, backend_class.__name__
         )
 
     def unregister(self, backend_id: str) -> None:
@@ -78,7 +78,7 @@ class CertBackendRegistry:
         if backend_id not in self._backends:
             raise KeyError(
                 f"CertBackend {backend_id!r} не зарегистрирован. "
-                f"Доступные: {sorted(self._backends.keys())}",
+                f"Доступные: {sorted(self._backends.keys())}"
             )
         return self._backends[backend_id]
 
@@ -126,6 +126,7 @@ def _register_builtin_backends(reg: CertBackendRegistry) -> None:
     from src.backend.infrastructure.security.cert_store.backend_vault import (
         VaultCertBackend,
     )
+
     reg.register("vault", VaultCertBackend)
     reg.register("postgres", PostgresCertBackend)
     reg.register("mongo", MongoCertBackend)

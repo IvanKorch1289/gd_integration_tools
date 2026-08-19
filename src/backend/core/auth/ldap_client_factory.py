@@ -58,7 +58,7 @@ def reset_ad_client() -> None:
 
 
 def get_ad_client(
-    *, feature_flag_enabled: bool | None = None, connection_factory: Any | None = None,
+    *, feature_flag_enabled: bool | None = None, connection_factory: Any | None = None
 ) -> AdDirectoryClient | None:
     """Возвращает singleton :class:`AdDirectoryClient` или ``None``.
 
@@ -121,15 +121,14 @@ def get_ad_client(
             group_attribute=settings.group_attribute,
         )
         client = get_ad_directory_client_provider()(
-            config=config,
-            connection_factory=connection_factory,
+            config=config, connection_factory=connection_factory
         )
-    except (ImportError, RuntimeError, KeyError):
+    except ImportError, RuntimeError, KeyError:
         # dev_light: DI module not registered → no LDAP client.
         _logger.debug("get_ad_client: DI provider unavailable, skipping")
         return None
     _ad_client_instance = client
     _logger.info(
-        "get_ad_client: instantiated AdDirectoryClient for %s", settings.server_uri,
+        "get_ad_client: instantiated AdDirectoryClient for %s", settings.server_uri
     )
     return client

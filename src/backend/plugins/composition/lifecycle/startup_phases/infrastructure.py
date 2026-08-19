@@ -5,6 +5,7 @@ Phases:
 - :func:`phase_setup_infra` — Starting infrastructure (DB/cache/etc.)
 - :func:`phase_eventbus_startup` — EventBus (S133 W4)
 """
+
 from __future__ import annotations
 
 import os
@@ -26,7 +27,7 @@ async def phase_redis_cluster(app: FastAPI) -> None:  # noqa: ARG001
         nodes_env = os.environ.get("REDIS_CLUSTER_NODES", "").strip()
         if not nodes_env:
             _logger.warning(
-                "REDIS_CLUSTER_ENABLED=true, но REDIS_CLUSTER_NODES пуст — пропуск",
+                "REDIS_CLUSTER_ENABLED=true, но REDIS_CLUSTER_NODES пуст — пропуск"
             )
         else:
             from src.backend.infrastructure.clients.storage.redis import (
@@ -66,8 +67,4 @@ async def phase_eventbus_startup(app: FastAPI) -> None:
     await _start_event_bus(app)
 
 
-__all__ = (
-    "phase_redis_cluster",
-    "phase_setup_infra",
-    "phase_eventbus_startup",
-)
+__all__ = ("phase_redis_cluster", "phase_setup_infra", "phase_eventbus_startup")

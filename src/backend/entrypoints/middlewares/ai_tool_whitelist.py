@@ -20,7 +20,6 @@ Cycle 46: переписано с ``BaseHTTPMiddleware`` на pure ASGI для
 Spec: см. Master Prompt §3.3 / Plan S-3 (S174 → S183).
 """
 
-
 import json
 from typing import TYPE_CHECKING
 
@@ -48,11 +47,7 @@ class AIToolWhitelistMiddleware:
     AGENT_PATH_PREFIX = "/api/v1/agent/tools/invoke"
 
     def __init__(
-        self,
-        app: ASGIApp,
-        *,
-        enabled: bool = True,
-        on_tool_check=None,
+        self, app: ASGIApp, *, enabled: bool = True, on_tool_check=None
     ) -> None:
         """Инициализирует middleware.
 
@@ -105,11 +100,7 @@ class AIToolWhitelistMiddleware:
             nonlocal body_sent
             if not body_sent:
                 body_sent = True
-                return {
-                    "type": "http.request",
-                    "body": body,
-                    "more_body": False,
-                }
+                return {"type": "http.request", "body": body, "more_body": False}
             return {"type": "http.disconnect"}
 
         try:
@@ -138,25 +129,29 @@ class AIToolWhitelistMiddleware:
                     detail="tenant_id required via auth context or X-Tenant-ID header",
                 )
                 return
-        except (ValueError, TypeError, json.JSONDecodeError, KeyError, AttributeError) as parse_exc:
+        except (
+            ValueError,
+            TypeError,
+            json.JSONDecodeError,
+            KeyError,
+            AttributeError,
+        ) as parse_exc:
             # cycle-9/D-AUDIT-1006: narrow exceptions + observability.
             # ValueError/JSONDecodeError — malformed JSON, TypeError —
             # wrong body type, KeyError — missing required key, AttributeError
             # — body API change.
             # Malformed body — пропускаем (другие middleware обработают).
             import logging
+
             logging.getLogger(__name__).debug(
-                "ai_tool_whitelist.body_parse_failed",
-                extra={"error": str(parse_exc)},
+                "ai_tool_whitelist.body_parse_failed", extra={"error": str(parse_exc)}
             )
             await self.app(scope, replay_receive, send)
             return
 
         if not tool_name:
             await self._send_400(
-                send,
-                error="missing_tool_name",
-                detail="tool_name required",
+                send, error="missing_tool_name", detail="tool_name required"
             )
             return
 
@@ -187,7 +182,7 @@ class AIToolWhitelistMiddleware:
                     (b"content-type", b"application/json"),
                     (b"content-length", str(len(body_bytes)).encode("latin-1")),
                 ],
-            },
+            }
         )
         await send({"type": "http.response.body", "body": body_bytes})
 
@@ -203,7 +198,7 @@ class AIToolWhitelistMiddleware:
                     (b"content-type", b"application/json"),
                     (b"content-length", str(len(body_bytes)).encode("latin-1")),
                 ],
-            },
+            }
         )
         await send({"type": "http.response.body", "body": body_bytes})
 
@@ -239,18 +234,21 @@ def _default_whitelist_check(tenant_id: str, tool_name: str) -> bool:
 
         # ``check`` signals allow by returning normally and deny by raising.
         gate = CapabilityGate()
-        gate.check(
-            tenant_id,
-            f"agent.tools.invoke.{tool_name}",
-            f"tool:{tool_name}",
-        )
+        gate.check(tenant_id, f"agent.tools.invoke.{tool_name}", f"tool:{tool_name}")
         return True
-    except (ImportError, AttributeError, RuntimeError, ValueError, TypeError) as gate_exc:
+    except (
+        ImportError,
+        AttributeError,
+        RuntimeError,
+        ValueError,
+        TypeError,
+    ) as gate_exc:
         # cycle-9/D-AUDIT-1016: narrow exceptions + observability.
         # ImportError — gate missing, AttributeError — gate API change,
         # RuntimeError — gate unavailable, ValueError/TypeError — invalid
         # args. Deny-by-default при ошибке (fail-closed).
         import logging
+
         logging.getLogger(__name__).debug(
             "ai_tool_whitelist.gate_check_failed",
             extra={"tool_name": tool_name, "error": str(gate_exc)},

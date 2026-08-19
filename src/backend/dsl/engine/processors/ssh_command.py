@@ -195,7 +195,7 @@ class SshCommandProcessor(BaseProcessor):
 
                 if exit_code != 0 and not self._continue_on_error:
                     exchange.fail(
-                        f"ssh_exec: command exited with code {exit_code}: {stderr or stdout}",
+                        f"ssh_exec: command exited with code {exit_code}: {stderr or stdout}"
                     )
         except asyncssh.ProcessError as exc:
             if self._continue_on_error:

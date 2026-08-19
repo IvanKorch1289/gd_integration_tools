@@ -40,7 +40,7 @@ class CacheWriteProcessor(BaseProcessor):
             return
 
         key = exchange.properties.get(
-            "_cache_key", f"dsl:cache:{self._key_fn(exchange)}",
+            "_cache_key", f"dsl:cache:{self._key_fn(exchange)}"
         )
         body = (
             exchange.out_message.body
@@ -53,5 +53,5 @@ class CacheWriteProcessor(BaseProcessor):
 
             data = orjson.dumps(body, default=str).decode()
             await redis_client.set_if_not_exists(key=key, value=data, ttl=self._ttl)
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             pass

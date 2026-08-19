@@ -35,7 +35,7 @@ class SubFlowMixin:
     __slots__ = ()
 
     def _exec_sub_flow(
-        self, step: WorkflowStep, state: WorkflowState, instance: WorkflowInstanceRow,
+        self, step: WorkflowStep, state: WorkflowState, instance: WorkflowInstanceRow
     ) -> StepResult:
         """Spawn child workflow.
 
@@ -63,7 +63,7 @@ class SubFlowMixin:
                     "input_map": dict(step.input_map),
                 },
                 step.name,
-            ),
+            )
         ]
         if step.wait:
             return StepResult(outcome=StepOutcome.SUB_SPAWNED, events=events)
@@ -89,6 +89,6 @@ class SubFlowMixin:
                     WorkflowEventType.paused,
                     {"next_attempt_at": next_at.isoformat(), "wait_step": step.name},
                     step.name,
-                ),
+                )
             ],
         )

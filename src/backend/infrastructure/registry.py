@@ -113,7 +113,7 @@ class ConnectorRegistry:
     # -- Регистрация ---------------------------------------------------
 
     def register(
-        self, client: InfrastructureClient, *, vault_path: str | None = None,
+        self, client: InfrastructureClient, *, vault_path: str | None = None
     ) -> None:
         """Зарегистрировать клиент в Registry.
 
@@ -122,11 +122,11 @@ class ConnectorRegistry:
         """
         if client.name in self._connectors:
             raise ConnectorAlreadyRegisteredError(
-                f"Connector '{client.name}' already registered",
+                f"Connector '{client.name}' already registered"
             )
         self._order_counter += 1
         self._connectors[client.name] = ConnectorSpec(
-            client=client, vault_path=vault_path, register_order=self._order_counter,
+            client=client, vault_path=vault_path, register_order=self._order_counter
         )
 
     def unregister(self, name: str) -> None:
@@ -149,7 +149,7 @@ class ConnectorRegistry:
         return [
             name
             for name, _ in sorted(
-                self._connectors.items(), key=lambda kv: kv[1].register_order,
+                self._connectors.items(), key=lambda kv: kv[1].register_order
             )
         ]
 
@@ -227,7 +227,7 @@ class ConnectorRegistry:
                 )
 
                 out[name] = _HR.failed(
-                    error=f"{type(result).__name__}: {result}", mode=mode,
+                    error=f"{type(result).__name__}: {result}", mode=mode
                 )
             else:
                 out[name] = result

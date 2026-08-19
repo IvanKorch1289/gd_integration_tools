@@ -21,10 +21,10 @@ stream_logger = get_stream_logger_provider()
 
 
 @stream_client.redis_router.subscriber(
-    stream=settings.redis.get_stream_name("dsl-events"),
+    stream=settings.redis.get_stream_name("dsl-events")
 )
 async def handle_universal_redis_action(
-    body: dict, msg: RedisChannelMessage, redis: Redis,
+    body: dict, msg: RedisChannelMessage, redis: Redis
 ) -> None:
     """Универсальный обработчик DSL-команд из Redis.
 
@@ -107,6 +107,7 @@ def _summarize_poison(body: Any, *, max_len: int = 256) -> str:
         # TypeError для unrepresentable type, ValueError для invalid
         # repr value.
         import logging
+
         logging.getLogger(__name__).debug(
             "stream_subscribers.summarize_poison_fallback",
             extra={"error": str(repr_exc)},

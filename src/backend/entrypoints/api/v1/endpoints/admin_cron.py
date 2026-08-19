@@ -25,13 +25,9 @@ __all__ = ("router",)
 
 
 # S202 audit fix: cron scheduler CRUD — require admin role.
-_CRON_GUARD = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)),
-)
+_CRON_GUARD = Depends(require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)))
 router = APIRouter(
-    prefix="/admin/cron",
-    tags=["admin", "scheduler"],
-    dependencies=[_CRON_GUARD],
+    prefix="/admin/cron", tags=["admin", "scheduler"], dependencies=[_CRON_GUARD]
 )
 
 
@@ -87,9 +83,7 @@ class CronDashboardSummary(BaseModel):
 #: cron-callable. Без него ``_resolve_callable`` импортировал произвольный
 #: модуль (``os:system``, ``builtins:exec``) → RCE от лица OPERATOR-админа.
 ALLOWED_CALLABLE_MODULES = frozenset(
-    {
-        "src.backend.infrastructure.scheduler.scheduled_tasks",
-    },
+    {"src.backend.infrastructure.scheduler.scheduled_tasks"}
 )
 
 
@@ -108,7 +102,7 @@ def _resolve_callable(ref: str) -> Any:
     if module_path not in ALLOWED_CALLABLE_MODULES:
         raise ValueError(
             f"Модуль {module_path!r} не входит в cron-whitelist "
-            f"(разрешено: {sorted(ALLOWED_CALLABLE_MODULES)}).",
+            f"(разрешено: {sorted(ALLOWED_CALLABLE_MODULES)})."
         )
     module = importlib.import_module(module_path)
     resolved = getattr(module, attr)
@@ -127,7 +121,7 @@ async def list_cron_jobs() -> list[CronJobSummary]:
 
 
 @router.post(
-    "/schedule", response_model=CronJobSummary, status_code=status.HTTP_201_CREATED,
+    "/schedule", response_model=CronJobSummary, status_code=status.HTTP_201_CREATED
 )
 async def schedule_cron_job(request: CronScheduleRequest) -> CronJobSummary:
     """Регистрирует новый cron-job. ``callable_ref`` резолвится importlib."""
@@ -151,7 +145,7 @@ async def schedule_cron_job(request: CronScheduleRequest) -> CronJobSummary:
         )
     except Exception as exc:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=f"Ошибка регистрации: {exc}",
+            status_code=status.HTTP_400_BAD_REQUEST, detail=f"Ошибка регистрации: {exc}"
         ) from exc
 
     jobs = manager.list_jobs()
@@ -187,7 +181,7 @@ async def pause_cron_job(job_id: str) -> dict[str, Any]:
     ok = get_scheduler_manager().pause_job(job_id)
     if not ok:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id!r} not found",
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id!r} not found"
         )
     return {"id": job_id, "paused": True}
 
@@ -200,7 +194,7 @@ async def resume_cron_job(job_id: str) -> dict[str, Any]:
     ok = get_scheduler_manager().resume_job(job_id)
     if not ok:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id!r} not found",
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id!r} not found"
         )
     return {"id": job_id, "paused": False}
 
@@ -213,7 +207,7 @@ async def run_cron_job_now(job_id: str) -> dict[str, Any]:
     ok = get_scheduler_manager().run_job_now(job_id)
     if not ok:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id!r} not found",
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id!r} not found"
         )
     return {"id": job_id, "scheduled": "now"}
 

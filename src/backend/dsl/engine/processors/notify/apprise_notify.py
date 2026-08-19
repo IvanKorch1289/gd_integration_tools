@@ -47,10 +47,10 @@ class AppriseNotifyParams(BaseModel):
     title: str = Field(..., description="Заголовок уведомления")
     body: str = Field(..., description="Тело уведомления")
     body_format: str = Field(
-        default="text", description="Формат тела: text|html|markdown",
+        default="text", description="Формат тела: text|html|markdown"
     )
     result_property: str = Field(
-        default="notify_apprise_result", description="Имя property для результата",
+        default="notify_apprise_result", description="Имя property для результата"
     )
 
 
@@ -144,5 +144,5 @@ class AppriseNotifyProcessor(BaseProcessor):
                 "body": self.body,
                 "body_format": self.body_format,
                 "result_property": self.result_property,
-            },
+            }
         }

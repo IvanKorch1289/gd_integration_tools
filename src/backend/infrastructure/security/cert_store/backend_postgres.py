@@ -60,7 +60,7 @@ class PostgresCertBackend(CertBackend):
         async with get_main_session_manager().create_session() as session:
             row = (
                 await session.execute(
-                    select(CertRecord).where(CertRecord.service_id == service_id),
+                    select(CertRecord).where(CertRecord.service_id == service_id)
                 )
             ).scalar_one_or_none()
         return self._to_entry(row) if row else None
@@ -80,7 +80,7 @@ class PostgresCertBackend(CertBackend):
             async with get_main_session_manager().transaction(session):
                 existing = (
                     await session.execute(
-                        select(CertRecord).where(CertRecord.service_id == service_id),
+                        select(CertRecord).where(CertRecord.service_id == service_id)
                     )
                 ).scalar_one_or_none()
                 version = (existing.version + 1) if existing else 1
@@ -100,7 +100,7 @@ class PostgresCertBackend(CertBackend):
                             expires_at=expires_at,
                             description=description,
                             version=version,
-                        ),
+                        )
                     )
 
                 session.add(
@@ -109,7 +109,7 @@ class PostgresCertBackend(CertBackend):
                         version=version,
                         pem=pem,
                         uploaded_by=uploaded_by,
-                    ),
+                    )
                 )
         return CertEntry(
             service_id=service_id,
@@ -128,7 +128,7 @@ class PostgresCertBackend(CertBackend):
                     await session.execute(
                         select(CertHistory)
                         .where(CertHistory.service_id == service_id)
-                        .order_by(CertHistory.version.asc()),
+                        .order_by(CertHistory.version.asc())
                     )
                 )
                 .scalars()
@@ -152,7 +152,7 @@ class PostgresCertBackend(CertBackend):
             rows = (
                 (
                     await session.execute(
-                        select(CertRecord).where(CertRecord.expires_at <= before),
+                        select(CertRecord).where(CertRecord.expires_at <= before)
                     )
                 )
                 .scalars()
@@ -196,13 +196,13 @@ class PostgresCertBackend(CertBackend):
                     CursorResult[Any],
                     await session.execute(
                         sql_delete(CertRecord).where(
-                            CertRecord.service_id == service_id,
-                        ),
+                            CertRecord.service_id == service_id
+                        )
                     ),
                 )
                 # Чистим историю тоже (cascade semantics).
                 await session.execute(
-                    sql_delete(CertHistory).where(CertHistory.service_id == service_id),
+                    sql_delete(CertHistory).where(CertHistory.service_id == service_id)
                 )
         rowcount = getattr(result, "rowcount", 0)
         return isinstance(rowcount, int) and rowcount > 0

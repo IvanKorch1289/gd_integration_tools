@@ -148,7 +148,10 @@ _FORBIDDEN_FILE_PATTERNS = [
 
 # Prompt injection patterns
 _PROMPT_INJECTION_PATTERNS = [
-    (r"ignore\s+(previous|all|above)\s+(instructions?|prompts?)", "ignore previous instructions"),
+    (
+        r"ignore\s+(previous|all|above)\s+(instructions?|prompts?)",
+        "ignore previous instructions",
+    ),
     (r"forget\s+(everything|all)\s+(you|about)", "forget everything"),
     (r"disregard\s+(your|all)\s+(rules?|instructions?)", "disregard rules"),
     (r"pretend\s+(to\s+be|you\s+are)", "pretend to be"),
@@ -181,16 +184,16 @@ class DangerousCommandDetector:
     ) -> None:
         """Инициализация detector."""
         self._shell_patterns = self._compile_patterns(
-            shell_patterns or _DANGEROUS_SHELL_PATTERNS,
+            shell_patterns or _DANGEROUS_SHELL_PATTERNS
         )
         self._sql_patterns = self._compile_patterns(
-            sql_patterns or _DANGEROUS_SQL_PATTERNS,
+            sql_patterns or _DANGEROUS_SQL_PATTERNS
         )
         self._forbidden_file_patterns = self._compile_patterns(
-            forbidden_file_patterns or _FORBIDDEN_FILE_PATTERNS,
+            forbidden_file_patterns or _FORBIDDEN_FILE_PATTERNS
         )
         self._prompt_injection_patterns = self._compile_patterns(
-            prompt_injection_patterns or _PROMPT_INJECTION_PATTERNS,
+            prompt_injection_patterns or _PROMPT_INJECTION_PATTERNS
         )
 
     @staticmethod
@@ -219,20 +222,14 @@ class DangerousCommandDetector:
                 return ThreatLevel.HIGH, desc
         return ThreatLevel.NONE, ""
 
-    def detect_file_modification(
-        self,
-        file_path: str,
-    ) -> tuple[ThreatLevel, str]:
+    def detect_file_modification(self, file_path: str) -> tuple[ThreatLevel, str]:
         """Detect forbidden file modification."""
         for pattern, desc in self._forbidden_file_patterns:
             if pattern.search(file_path):
                 return ThreatLevel.CRITICAL, desc
         return ThreatLevel.NONE, ""
 
-    def detect_prompt_injection(
-        self,
-        prompt: str,
-    ) -> tuple[ThreatLevel, str]:
+    def detect_prompt_injection(self, prompt: str) -> tuple[ThreatLevel, str]:
         """Detect prompt injection attempt."""
         for pattern, desc in self._prompt_injection_patterns:
             if pattern.search(prompt):
@@ -281,9 +278,7 @@ class FileModificationPolicy:
 
         # Если есть whitelist — проверяем
         if self.allowed_paths:
-            return any(
-                re.search(pattern, file_path) for pattern in self.allowed_paths
-            )
+            return any(re.search(pattern, file_path) for pattern in self.allowed_paths)
 
         # Default — allow
         return True
@@ -310,9 +305,7 @@ class AgentSecurityPolicy:
     enable_output_masking: bool = True
     enable_workflow_hooks: bool = True
     strict_mode: bool = True
-    file_policy: FileModificationPolicy = field(
-        default_factory=FileModificationPolicy,
-    )
+    file_policy: FileModificationPolicy = field(default_factory=FileModificationPolicy)
 
     @classmethod
     def strict(cls) -> AgentSecurityPolicy:
@@ -425,18 +418,13 @@ class AgentSecurityFramework:
         """
         self._hooks.append(hook)
         _logger.info(
-            "agent security hook registered: %s (trigger=%s)",
-            hook.name,
-            hook.trigger,
+            "agent security hook registered: %s (trigger=%s)", hook.name, hook.trigger
         )
 
     # ──────────────────── Validation API (DSL-friendly) ────────────────────
 
     def validate_prompt(
-        self,
-        prompt: str,
-        *,
-        context: dict[str, Any] | None = None,
+        self, prompt: str, *, context: dict[str, Any] | None = None
     ) -> SecurityDecision:
         """Validate LLM prompt на injection (S187).
 
@@ -465,15 +453,11 @@ class AgentSecurityFramework:
         # Mask sensitive data в prompt
         masked = self._mask_sensitive(prompt)
         return SecurityDecision(
-            allowed=True,
-            masked_input=masked if masked != prompt else "",
+            allowed=True, masked_input=masked if masked != prompt else ""
         )
 
     def validate_command(
-        self,
-        command: str,
-        *,
-        context: dict[str, Any] | None = None,
+        self, command: str, *, context: dict[str, Any] | None = None
     ) -> SecurityDecision:
         """Validate shell command на dangerous patterns (S187).
 
@@ -500,7 +484,7 @@ class AgentSecurityFramework:
                 matched_pattern=desc,
             )
             hook_decision = self._run_hooks(
-                "pre_tool", {"command": command, "decision": decision},
+                "pre_tool", {"command": command, "decision": decision}
             )
             if hook_decision is not None and not hook_decision.allowed:
                 return hook_decision
@@ -539,8 +523,7 @@ class AgentSecurityFramework:
                 matched_pattern=desc,
             )
             hook_decision = self._run_hooks(
-                "pre_tool",
-                {"file_path": file_path, "decision": decision},
+                "pre_tool", {"file_path": file_path, "decision": decision}
             )
             if hook_decision is not None and not hook_decision.allowed:
                 return hook_decision
@@ -554,8 +537,7 @@ class AgentSecurityFramework:
                 reason=f"path_not_allowed: {file_path}",
             )
             hook_decision = self._run_hooks(
-                "pre_tool",
-                {"file_path": file_path, "decision": decision},
+                "pre_tool", {"file_path": file_path, "decision": decision}
             )
             if hook_decision is not None and not hook_decision.allowed:
                 return hook_decision
@@ -572,8 +554,7 @@ class AgentSecurityFramework:
                 reason=f"file_too_large: {file_size_bytes} bytes",
             )
             hook_decision = self._run_hooks(
-                "pre_tool",
-                {"file_path": file_path, "decision": decision},
+                "pre_tool", {"file_path": file_path, "decision": decision}
             )
             if hook_decision is not None and not hook_decision.allowed:
                 return hook_decision
@@ -598,10 +579,7 @@ class AgentSecurityFramework:
         return SecurityDecision(allowed=True)
 
     def mask_output(
-        self,
-        output: str,
-        *,
-        context: dict[str, Any] | None = None,
+        self, output: str, *, context: dict[str, Any] | None = None
     ) -> SecurityDecision:
         """Mask sensitive data в tool output (S187).
 
@@ -615,13 +593,9 @@ class AgentSecurityFramework:
         masked = self._mask_sensitive(output)
 
         decision = SecurityDecision(
-            allowed=True,
-            masked_input=masked if masked != output else "",
+            allowed=True, masked_input=masked if masked != output else ""
         )
-        self._run_hooks(
-            "post_tool",
-            {"output": output, "decision": decision},
-        )
+        self._run_hooks("post_tool", {"output": output, "decision": decision})
         return decision
 
     # ──────────────────── Internal helpers ────────────────────
@@ -640,9 +614,7 @@ class AgentSecurityFramework:
             return text
 
     def _run_hooks(
-        self,
-        trigger: str,
-        context: dict[str, Any],
+        self, trigger: str, context: dict[str, Any]
     ) -> SecurityDecision | None:
         """Run all hooks matching trigger.
 
@@ -668,9 +640,7 @@ class AgentSecurityFramework:
                 continue
             if not decision.allowed:
                 _logger.warning(
-                    "hook denied: hook=%s reason=%s",
-                    hook.name,
-                    decision.reason,
+                    "hook denied: hook=%s reason=%s", hook.name, decision.reason
                 )
                 return decision
         return None

@@ -73,9 +73,10 @@ class QuotaTracker:
         from src.backend.core.di.providers.infrastructure_locator import (
             get_redis_client_factory as _get_redis_factory_fn,
         )
+
         try:
             redis_client = _get_redis_factory_fn()()
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             return {"remaining": limit, "limit": limit, "reset_at": 0}
 
         now = int(time.time())

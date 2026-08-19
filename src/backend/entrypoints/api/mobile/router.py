@@ -95,7 +95,7 @@ async def _verify_mobile_token(authorization: str | None) -> str:
         from src.backend.core.config.features import feature_flags
 
         demo_auth_enabled = bool(
-            getattr(feature_flags, "mobile_demo_auth_enabled", False),
+            getattr(feature_flags, "mobile_demo_auth_enabled", False)
         )
     except Exception as _:
         # Если feature_flags недоступен — fail-CLOSED (production safety).
@@ -123,7 +123,7 @@ async def _verify_mobile_token(authorization: str | None) -> str:
     parts = token.split(":", 2)
     if len(parts) < 3:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Malformed mobile token",
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Malformed mobile token"
         )
     return parts[1]
 
@@ -201,7 +201,7 @@ async def get_notifications(
 
 @mobile_router.post("/push-token", response_model=CompressedResponse)
 async def register_push_token(
-    request: PushTokenRequest, authorization: str | None = Header(default=None),
+    request: PushTokenRequest, authorization: str | None = Header(default=None)
 ) -> CompressedResponse:
     """Register FCM/APNs push token для device."""
     user_id = await _verify_mobile_token(authorization)

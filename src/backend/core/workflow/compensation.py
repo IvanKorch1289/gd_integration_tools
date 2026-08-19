@@ -12,6 +12,7 @@ Temporal не имеет native compensation (в отличие от Cadence/Cam
 
 Pattern (Ponytail, D173): Pydantic model + signal name const.
 """
+
 from __future__ import annotations
 
 from pydantic import BaseModel, Field

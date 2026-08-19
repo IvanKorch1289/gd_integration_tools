@@ -141,7 +141,7 @@ class PoolHealthMonitor:
 
         """
         self._pools[name] = PoolEntry(
-            name=name, pool=pool, ping_callable=ping_callable, idle_timeout=idle_timeout,
+            name=name, pool=pool, ping_callable=ping_callable, idle_timeout=idle_timeout
         )
         logger.debug("Pool зарегистрирован в PoolHealthMonitor: %s", name)
 
@@ -159,7 +159,7 @@ class PoolHealthMonitor:
         if not _is_flag_enabled():
             logger.debug(
                 "PoolHealthMonitor: feature_flag pool_health_monitor=OFF — "
-                "background-task не создаётся",
+                "background-task не создаётся"
             )
             return
 
@@ -167,7 +167,7 @@ class PoolHealthMonitor:
         from src.backend.core.utils.task_registry import get_task_registry
 
         self._task = get_task_registry().create_task(
-            self._monitor_loop(), name="pool-health-monitor",
+            self._monitor_loop(), name="pool-health-monitor"
         )
         logger.info(
             "PoolHealthMonitor запущен (tick_interval=%.1fs, pools=%d)",

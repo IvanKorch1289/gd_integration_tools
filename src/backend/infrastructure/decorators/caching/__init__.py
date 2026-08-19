@@ -37,7 +37,7 @@ def _stable_hash(payload: dict[str, Any]) -> str:
 
 
 def response_cache_key(
-    func: Callable[..., Awaitable[Any]], args: tuple[Any, ...], kwargs: dict[str, Any],
+    func: Callable[..., Awaitable[Any]], args: tuple[Any, ...], kwargs: dict[str, Any]
 ) -> str:
     """Строит ключ response-cache: ``cache:{owner}:{func}:{sha256(args|kwargs)}``."""
     owner = (
@@ -50,7 +50,7 @@ def response_cache_key(
 
 
 def metadata_cache_key(
-    func: Callable[..., Awaitable[Any]], args: tuple[Any, ...], kwargs: dict[str, Any],
+    func: Callable[..., Awaitable[Any]], args: tuple[Any, ...], kwargs: dict[str, Any]
 ) -> str:
     """Строит ключ S3 metadata-cache на основе ``key`` из kwargs/args."""
     key = kwargs.get("key")
@@ -60,7 +60,7 @@ def metadata_cache_key(
 
 
 def existence_cache_key(
-    func: Callable[..., Awaitable[Any]], args: tuple[Any, ...], kwargs: dict[str, Any],
+    func: Callable[..., Awaitable[Any]], args: tuple[Any, ...], kwargs: dict[str, Any]
 ) -> str:
     """Строит ключ S3 existence-cache на основе ``key`` из kwargs/args."""
     key = kwargs.get("key")

@@ -38,7 +38,6 @@ __all__ = ("MemoryRecallProcessor",)
 _logger = get_logger(__name__)
 
 
-
 from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
 
 
@@ -49,8 +48,8 @@ from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
     spec_schema={
         "type": "object",
         "properties": {
-        "query": {"type": "string"},
-        "top_k": {"type": "integer", "minimum": 1, "maximum": 100},
+            "query": {"type": "string"},
+            "top_k": {"type": "integer", "minimum": 1, "maximum": 100},
         },
         "required": ["query"],
     },
@@ -125,7 +124,7 @@ class MemoryRecallProcessor(BaseAIProcessor):
         # S202 audit fix: UnifiedMemoryGateway.recall_semantic uses keyword args.
         try:
             facts = await backend.recall_semantic(
-                tenant_id=namespace, query=query, top_k=self.k,
+                tenant_id=namespace, query=query, top_k=self.k
             )
             records = [
                 {"content": f.content, "confidence": f.confidence}
@@ -189,8 +188,7 @@ class MemoryRecallProcessor(BaseAIProcessor):
             return get_memory_gateway()
         except Exception as exc:
             _logger.debug(
-                "memory_recall._resolve_backend: gateway not registered: %s",
-                exc,
+                "memory_recall._resolve_backend: gateway not registered: %s", exc
             )
             return None
 

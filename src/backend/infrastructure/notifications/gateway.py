@@ -44,7 +44,7 @@ _logger = get_logger(__name__)
 
 
 ChannelKind = Literal[
-    "email", "sms", "slack", "teams", "telegram", "webhook", "express",
+    "email", "sms", "slack", "teams", "telegram", "webhook", "express"
 ]
 
 
@@ -193,7 +193,7 @@ class NotificationGateway:
         # 1. Template rendering.
         try:
             rendered = self._templates.render(
-                key=template_key, locale=locale, context=context, channel_kind=channel,
+                key=template_key, locale=locale, context=context, channel_kind=channel
             )
         except Exception as exc:
             return SendResult(

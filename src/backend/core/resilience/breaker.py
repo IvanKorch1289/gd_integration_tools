@@ -57,11 +57,9 @@ CircuitOpen = OpenedState
 # (Final не делает dict immutable) + zero-cost wrapper над dict-storage.
 # type alias на ``Mapping`` (read-only view) вместо ``dict`` для type-checker clarity.
 type StateMap = Mapping[str, str]
-_STATE_MAP: Final[StateMap] = MappingProxyType({
-    "closed": "closed",
-    "opened": "open",
-    "half-opened": "half_open",
-})
+_STATE_MAP: Final[StateMap] = MappingProxyType(
+    {"closed": "closed", "opened": "open", "half-opened": "half_open"}
+)
 
 
 @dataclass(slots=True, frozen=True)
@@ -165,7 +163,7 @@ class BreakerRegistry:
         self._factory.add_listener(self._on_event)
 
     def get_or_create(
-        self, name: str, spec: BreakerSpec | None = None, *, host: str = "default",
+        self, name: str, spec: BreakerSpec | None = None, *, host: str = "default"
     ) -> Breaker:
         """Get existing breaker or create new one.
 
@@ -257,10 +255,11 @@ class BreakerRegistry:
                     from src.backend.core.di.providers.infrastructure_locator import (
                         get_client_metrics_module as _get_cm_mod_fn,
                     )
+
                     client_metrics = _get_cm_mod_fn()
 
                     client_metrics.record_circuit_state(
-                        client=client, host=host, state=state,
+                        client=client, host=host, state=state
                     )
                 except (ImportError, AttributeError, RuntimeError, TypeError) as cm_exc:
                     # cycle-9/D-AUDIT-978: narrow exceptions + observability.
@@ -268,6 +267,7 @@ class BreakerRegistry:
                     # AttributeError — API change, RuntimeError — recorder
                     # unavailable, TypeError — wrong arg type.
                     import logging
+
                     logging.getLogger(__name__).debug(
                         "breaker.record_circuit_state_failed",
                         extra={"client": client, "error": str(cm_exc)},
@@ -278,6 +278,7 @@ class BreakerRegistry:
         except (ImportError, AttributeError, RuntimeError, TypeError) as recorder_exc:
             # cycle-9/D-AUDIT-978: см. выше — outer recorder fail-soft.
             import logging
+
             logging.getLogger(__name__).debug(
                 "breaker.recorder_failed",
                 extra={"name": name, "error": str(recorder_exc)},

@@ -6,6 +6,7 @@ S3/MinIO operations через facade_get_object_storage::
         key: reports/2026.pdf
         to: body.content
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -23,10 +24,7 @@ if TYPE_CHECKING:
     namespace="infra",
     spec_schema={
         "type": "object",
-        "properties": {
-            "key": {"type": "string"},
-            "to": {"type": "string"},
-        },
+        "properties": {"key": {"type": "string"}, "to": {"type": "string"}},
         "required": ["key"],
     },
     capabilities=("storage.read",),
@@ -45,6 +43,7 @@ class InfraS3GetProcessor(BaseProcessor):
         from src.backend.core.di.providers.infrastructure_locator import (
             get_object_storage_class,
         )
+
         storage = get_object_storage_class()(context)
         content = await storage.download(self.key)
         self.set_result(exchange, self.target, content)

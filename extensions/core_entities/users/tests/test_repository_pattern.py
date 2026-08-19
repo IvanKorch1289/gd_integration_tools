@@ -6,7 +6,7 @@ from __future__ import annotations
 def test_repository_inherits_sqlalchemy_base() -> None:
     """Test: repository inherits sqlalchemy base."""
     from extensions.core_entities.users.repositories.users import UserRepository
-    from src.backend.core.repositories.base import SQLAlchemyRepository
+    from src.backend.core.api import SQLAlchemyRepository
     assert issubclass(UserRepository, SQLAlchemyRepository)
 
 

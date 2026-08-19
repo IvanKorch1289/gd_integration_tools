@@ -77,7 +77,7 @@ class RequestMixin(_HttpClientProtocol):
         last_exception: Exception | None = None
 
         request_kwargs = await self._prepare_request_kwargs(
-            data=data, json_data=json, files=files,
+            data=data, json_data=json, files=files
         )
 
         headers = await self._build_headers(
@@ -130,11 +130,11 @@ class RequestMixin(_HttpClientProtocol):
                     response.raise_for_status()
 
                 content = await self._process_response(
-                    response=response, response_type=response_type,
+                    response=response, response_type=response_type
                 )
                 await self._log_response(response, content)
                 return await self._build_response_object(
-                    response=response, content=content, start_time=start_time,
+                    response=response, content=content, start_time=start_time
                 )
             finally:
                 async with self._metrics_lock:
@@ -151,7 +151,7 @@ class RequestMixin(_HttpClientProtocol):
             return await self._handle_final_error(exc, start_time)
         finally:
             await self._update_metrics(
-                start_time=start_time, success=last_exception is None,
+                start_time=start_time, success=last_exception is None
             )
             self.last_activity = monotonic()
 
@@ -163,7 +163,7 @@ class RequestMixin(_HttpClientProtocol):
         return isinstance(exc, consts.RETRY_EXCEPTIONS)
 
     async def _handle_final_error(
-        self, exception: Exception | None, start_time: float,
+        self, exception: Exception | None, start_time: float
     ) -> dict[str, Any]:
         status_code: int | None = None
         headers: dict[str, str] = {}

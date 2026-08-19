@@ -58,7 +58,7 @@ class JdbcQueryProcessor(BaseProcessor):
     compensatable: ClassVar[bool] = True
 
     _FORBIDDEN_SQL: ClassVar[frozenset[str]] = frozenset(
-        {"DROP", "ALTER", "TRUNCATE", "CREATE", "GRANT", "REVOKE"},
+        {"DROP", "ALTER", "TRUNCATE", "CREATE", "GRANT", "REVOKE"}
     )
 
     def __init__(

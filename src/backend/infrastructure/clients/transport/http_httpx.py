@@ -131,7 +131,9 @@ def build_unified_transport(
                 status_forcelist=list(retry_status_codes),
             )
             base = RetryTransport(transport=base, retry=retry_obj)
-            logger.debug("httpx_retries RetryTransport активирован (transport-level only)")
+            logger.debug(
+                "httpx_retries RetryTransport активирован (transport-level only)"
+            )
         except Exception as exc:
             logger.warning("httpx_retries init failed: %s", exc)
 
@@ -192,7 +194,7 @@ class HttpxClient:
                         )
                     except Exception as exc:
                         logger.warning(
-                            "unified transport build failed, fallback: %s", exc,
+                            "unified transport build failed, fallback: %s", exc
                         )
 
                 self._client = httpx.AsyncClient(**kwargs)
@@ -219,7 +221,8 @@ class HttpxClient:
             logger.debug(
                 "http_httpx: feature_flags import failed "
                 "(exc_type=%s exc_msg=%s) — using default transport",
-                type(exc).__name__, exc,
+                type(exc).__name__,
+                exc,
             )
             return False
 
@@ -272,6 +275,7 @@ class HttpxClient:
                 # TypeError — wrong callback signature, AttributeError —
                 # cert_store API change, RuntimeError — callback raised.
                 import logging
+
                 logging.getLogger(__name__).debug(
                     "http_httpx.cert_rotation_callback_failed",
                     extra={"error": str(rotation_exc)},
@@ -285,6 +289,7 @@ class HttpxClient:
                 # cycle-17/D-AUDIT-1704: см. D-AUDIT-1703 — тот же narrow для
                 # register_listener path.
                 import logging
+
                 logging.getLogger(__name__).debug(
                     "http_httpx.cert_register_listener_failed",
                     extra={"error": str(listener_exc)},
@@ -304,7 +309,7 @@ class HttpxClient:
         from src.backend.core.utils.task_registry import get_task_registry
 
         get_task_registry().create_task(
-            client.aclose(), name="httpx-rotate-close", deadline_seconds=30.0,
+            client.aclose(), name="httpx-rotate-close", deadline_seconds=30.0
         )
 
     def _breaker_for(self, host: str) -> Breaker:
@@ -382,7 +387,7 @@ class HttpxClient:
             wait=wait_exponential(multiplier=self._http_settings.retry_backoff_factor)
             + wait_random(0, 0.5),
             retry=retry_if_exception_type(
-                (httpx.TransportError, httpx.TimeoutException),
+                (httpx.TransportError, httpx.TimeoutException)
             ),
             before_sleep=before_sleep_log(logger, logging.DEBUG),
             reraise=True,
@@ -395,7 +400,7 @@ class HttpxClient:
         try:
             async with bulkhead.guard():
                 return await self._time_limiter.run(_do_with_cb())
-        except (RetryError, CircuitOpen, httpx.HTTPError):
+        except RetryError, CircuitOpen, httpx.HTTPError:
             raise
 
 

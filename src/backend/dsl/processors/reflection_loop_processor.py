@@ -80,11 +80,11 @@ class ReflectionLoopProcessor(BaseProcessor):
             raise TypeError("critic должен быть callable")
         if max_refinements < 0:
             raise ValueError(
-                f"max_refinements должен быть >= 0, получено {max_refinements}",
+                f"max_refinements должен быть >= 0, получено {max_refinements}"
             )
         if not 0.0 <= score_threshold <= 1.0:
             raise ValueError(
-                f"score_threshold должен быть в [0.0, 1.0], получено {score_threshold}",
+                f"score_threshold должен быть в [0.0, 1.0], получено {score_threshold}"
             )
         super().__init__(name=name or "reflection_loop")
         self._generator = generator
@@ -93,9 +93,7 @@ class ReflectionLoopProcessor(BaseProcessor):
         self._score_threshold = score_threshold
 
     @handle_processor_error
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Generate → critique → refine (max_refinements раз)."""
         prompt = self._build_prompt(exchange)
         started = time.perf_counter()
@@ -117,7 +115,7 @@ class ReflectionLoopProcessor(BaseProcessor):
                 last_critique, last_score = await self._critic(current_output)
             except Exception as exc:
                 _log.warning(
-                    "Critic raised on iteration %d: %s — keeping prior output", i, exc,
+                    "Critic raised on iteration %d: %s — keeping prior output", i, exc
                 )
                 refinements.append(
                     {
@@ -125,7 +123,7 @@ class ReflectionLoopProcessor(BaseProcessor):
                         "output": current_output,
                         "critique": f"[critic error: {exc}]",
                         "score": 0.0,
-                    },
+                    }
                 )
                 break
 
@@ -135,7 +133,7 @@ class ReflectionLoopProcessor(BaseProcessor):
                     "output": current_output,
                     "critique": last_critique,
                     "score": last_score,
-                },
+                }
             )
 
             if last_score >= self._score_threshold:
@@ -176,7 +174,7 @@ class ReflectionLoopProcessor(BaseProcessor):
         exchange.set_property("reflection_iterations", result.iterations)
         exchange.set_property("reflection_final_score", result.score)
         exchange.set_out(
-            body=result.final_output, headers=dict(exchange.in_message.headers),
+            body=result.final_output, headers=dict(exchange.in_message.headers)
         )
 
     @staticmethod
@@ -192,7 +190,7 @@ class ReflectionLoopProcessor(BaseProcessor):
             "reflection_loop": {
                 "max_refinements": self._max_refinements,
                 "score_threshold": self._score_threshold,
-            },
+            }
         }
 
 
@@ -231,5 +229,5 @@ class ReflectionLoopMixin:
                 critic=critic,
                 max_refinements=max_refinements,
                 score_threshold=score_threshold,
-            ),
+            )
         )

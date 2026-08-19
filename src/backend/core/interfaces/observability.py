@@ -82,24 +82,31 @@ class HealthCheckSessionProtocol(Protocol):
     async def check_database(self) -> bool:
         """Проверить connectivity к database (SELECT 1)."""
         ...
+
     async def check_redis(self) -> bool:
         """Проверить connectivity к Redis (PING)."""
         ...
+
     async def check_s3(self) -> bool:
         """Проверить connectivity к S3 (ListBuckets)."""
         ...
+
     async def check_s3_bucket(self) -> bool:
         """Проверить доступ к конкретному S3 bucket (HeadBucket)."""
         ...
+
     async def check_graylog(self) -> bool:
         """Проверить connectivity к Graylog (system /health)."""
         ...
+
     async def check_smtp(self) -> bool:
         """Проверить SMTP connection (EHLO)."""
         ...
+
     async def check_rabbitmq(self) -> bool:
         """Проверить RabbitMQ connection (heartbeat)."""
         ...
+
     async def check_all_services(self) -> dict[str, Any]:
         """Запустить все check_*; вернуть dict[service_name, status]."""
         ...

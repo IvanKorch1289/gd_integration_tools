@@ -35,7 +35,7 @@ _AUDIT_MAPPINGS: dict[str, Any] = {
         "correlation_id": {"type": "keyword"},
         "tenant_id": {"type": "keyword"},
         "metadata": {"type": "object", "enabled": True},
-    },
+    }
 }
 
 
@@ -43,7 +43,7 @@ class LogIndexer:
     """Bulk-индексирует ``AuditEvent``ы в ES индекс ``gd_audit_logs``."""
 
     def __init__(
-        self, search_service: SearchService, *, index: str = _AUDIT_INDEX,
+        self, search_service: SearchService, *, index: str = _AUDIT_INDEX
     ) -> None:
         self._search = search_service
         self._index = index

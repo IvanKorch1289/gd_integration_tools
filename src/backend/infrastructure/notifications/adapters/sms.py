@@ -59,7 +59,7 @@ class SMSAdapter:
         if provider not in PROVIDER_ENDPOINTS:
             raise ValueError(
                 f"Unknown SMS provider '{provider}'. "
-                f"Available: {', '.join(PROVIDER_ENDPOINTS)}",
+                f"Available: {', '.join(PROVIDER_ENDPOINTS)}"
             )
         self._provider = provider
         self._credentials_provider = credentials_provider
@@ -67,7 +67,7 @@ class SMSAdapter:
         self._sender_id = sender_id
 
     async def send(
-        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any],
+        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any]
     ) -> None:
         """Отправить SMS.
 
@@ -99,7 +99,7 @@ class SMSAdapter:
                 "from": self._sender_id,
             }
             response = await client.request(
-                "POST", PROVIDER_ENDPOINTS["smsru"], params=params,
+                "POST", PROVIDER_ENDPOINTS["smsru"], params=params
             )
             if response.status_code >= 400:
                 raise RuntimeError(f"SMS.ru send failed: {response.status_code}")
@@ -122,12 +122,12 @@ class SMSAdapter:
                 "from": self._sender_id,
             }
             response = await client.request(
-                "POST", PROVIDER_ENDPOINTS[self._provider], params=params,
+                "POST", PROVIDER_ENDPOINTS[self._provider], params=params
             )
             if response.status_code >= 400:
                 raise RuntimeError(
                     f"{self._provider} SMS send failed: HTTP {response.status_code}: "
-                    f"{response.text[:200]}",
+                    f"{response.text[:200]}"
                 )
             # Best-effort: парсим JSON-ответ, проверяем status/success поле.
             try:
@@ -144,10 +144,15 @@ class SMSAdapter:
                     json_exc,
                 )
                 return
-            if isinstance(data, dict) and data.get("status") not in (None, "OK", "ok", "success", 200, "200"):
-                raise RuntimeError(
-                    f"{self._provider} SMS API error: {data}",
-                )
+            if isinstance(data, dict) and data.get("status") not in (
+                None,
+                "OK",
+                "ok",
+                "success",
+                200,
+                "200",
+            ):
+                raise RuntimeError(f"{self._provider} SMS API error: {data}")
             return
 
         raise AssertionError(f"Unreachable: provider={self._provider}")
@@ -162,21 +167,19 @@ class SMSAdapter:
             if not creds:
                 latency_ms = (time.perf_counter() - start) * 1000.0
                 return HealthResult.failed(
-                    error="SMS credentials missing",
-                    mode=mode,
-                    latency_ms=latency_ms,
+                    error="SMS credentials missing", mode=mode, latency_ms=latency_ms
                 )
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.ok(latency_ms=latency_ms, mode=mode)
         except Exception as exc:
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
             )
 
 
-assert isinstance(
-    SMSAdapter(credentials_provider=lambda: ""), NotificationChannel,
+assert isinstance(  # nosec
+    SMSAdapter(credentials_provider=lambda: ""), NotificationChannel
 )  # Protocol-conformance check на import
 
 

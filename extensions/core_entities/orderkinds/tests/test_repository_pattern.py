@@ -8,7 +8,7 @@ def test_repository_inherits_sqlalchemy_base() -> None:
     from extensions.core_entities.orderkinds.repositories.orderkinds import (
         OrderKindRepository,
     )
-    from src.backend.core.repositories.base import SQLAlchemyRepository
+    from src.backend.core.api import SQLAlchemyRepository
     assert issubclass(OrderKindRepository, SQLAlchemyRepository)
 
 

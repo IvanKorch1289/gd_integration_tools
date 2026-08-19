@@ -45,13 +45,13 @@ def scrape_and_store(
 
     """
     builder = RouteBuilder.from_(
-        route_id, source=f"scrape:{url}", description=description or f"Scrape: {url}",
+        route_id, source=f"scrape:{url}", description=description or f"Scrape: {url}"
     )
     builder = builder.scrape_url(url, selectors=selectors)
 
     if paginate:
         builder = builder.paginate(
-            next_selector=next_selector, max_pages=max_pages, start_url=url,
+            next_selector=next_selector, max_pages=max_pages, start_url=url
         )
 
     if sort_field:

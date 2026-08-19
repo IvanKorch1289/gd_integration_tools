@@ -12,6 +12,7 @@ Phases:
 - :func:`phase_schema_registry` — ServiceSchemaRegistry populate
 - :func:`phase_feature_flag_broadcaster` — Multi-replica feature flag broadcast
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -114,14 +115,13 @@ async def phase_outbox_dispatcher(app: FastAPI) -> None:
 
         if getattr(feature_flags, "stuck_monitor_enabled", False):
             threshold = int(
-                getattr(feature_flags, "stuck_monitor_threshold_seconds", 300),
+                getattr(feature_flags, "stuck_monitor_threshold_seconds", 300)
             )
             sample_interval = int(
-                getattr(feature_flags, "stuck_monitor_sample_interval_seconds", 60),
+                getattr(feature_flags, "stuck_monitor_sample_interval_seconds", 60)
             )
             await start_outbox_stuck_monitor(
-                threshold_seconds=threshold,
-                sample_interval_seconds=sample_interval,
+                threshold_seconds=threshold, sample_interval_seconds=sample_interval
             )
             _logger.info(
                 "OutboxStuckMonitor started (threshold=%ds, sample=%ds)",
@@ -161,9 +161,7 @@ async def phase_schema_registry(app: FastAPI) -> None:  # noqa: ARG001
         populate_from_actions(schema_registry)
         populate_from_manifests(schema_registry)
         app.state.schema_registry = schema_registry
-        _logger.info(
-            "ServiceSchemaRegistry заполнен: %s", schema_registry.summary(),
-        )
+        _logger.info("ServiceSchemaRegistry заполнен: %s", schema_registry.summary())
     except Exception as sr_exc:
         _logger.warning("ServiceSchemaRegistry bootstrap skipped: %s", sr_exc)
 
@@ -181,7 +179,7 @@ async def phase_feature_flag_broadcaster(app: FastAPI) -> None:  # noqa: ARG001
 
         redis_kv = getattr(get_redis_client(), "client", None)
         broadcaster = await maybe_start_broadcaster(
-            redis_client=redis_kv, overrides=get_runtime_overrides(),
+            redis_client=redis_kv, overrides=get_runtime_overrides()
         )
         if broadcaster is not None:
             app.state.feature_flag_broadcaster = broadcaster

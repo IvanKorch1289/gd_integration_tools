@@ -67,7 +67,7 @@ class ValidationMixin(_RouteBuilderProtocol):
             from src.backend.dsl.commands.registry import action_handler_registry
 
             available = set(action_handler_registry.list_actions())
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             return
 
         if not available:
@@ -97,7 +97,7 @@ class ValidationMixin(_RouteBuilderProtocol):
             suggestion = suggestions.get(name)
             if suggestion:
                 msg_parts.append(
-                    f"  - '{name}' — did you mean: {', '.join(suggestion)}?",
+                    f"  - '{name}' — did you mean: {', '.join(suggestion)}?"
                 )
             else:
                 msg_parts.append(f"  - '{name}'")

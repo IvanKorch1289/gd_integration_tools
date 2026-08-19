@@ -246,9 +246,7 @@ def get_protocol_for_category(category_name: str) -> type | None:
     return None
 
 
-def is_runtime_protocol_conformant(
-    instance: RouteBuilder, category_name: str,
-) -> bool:
+def is_runtime_protocol_conformant(instance: RouteBuilder, category_name: str) -> bool:
     """Проверяет, что в MRO ``instance`` присутствуют ВСЕ mixin'ы данной категории.
 
     Использует identity (``is``), а не name-сравнение: ``TransportSourcesMixin``
@@ -268,14 +266,13 @@ def is_runtime_protocol_conformant(
     proto = get_protocol_for_category(category_name)
     if proto is None:
         return False
-    expected_mixin_names = {
-        name for name, cat in _CATEGORY_MAP.items() if cat is proto
-    }
+    expected_mixin_names = {name for name, cat in _CATEGORY_MAP.items() if cat is proto}
     # Resolve expected name → actual class object (handles aliases like
     # TransportSourcesMixin ↔ SourcesMixin).
     expected_classes: set[type] = set()
     for name in expected_mixin_names:
         from src.backend.dsl.builders import base as _base
+
         cls = getattr(_base, name, None)
         if cls is not None:
             expected_classes.add(cls)
@@ -301,11 +298,11 @@ __all__ = (
 # Sanity-check: ровно 36 top-level mixin'ов должно быть в map.
 # ``SourcesMixin`` — это re-export alias ``TransportSourcesMixin`` (см.
 # ``base/__init__.py:77-79``), не отдельный mixin, поэтому НЕ в map.
-assert len(_CATEGORY_MAP) == 36, (
+assert len(_CATEGORY_MAP) == 36, (  # nosec
     f"Expected 36 entries in _CATEGORY_MAP (one per top-level mixin), "
     f"got {len(_CATEGORY_MAP)} — update map"
 )
 # All 8 categories must be present.
-assert len({cat for cat in _CATEGORY_MAP.values()}) == 8, (
+assert len({cat for cat in _CATEGORY_MAP.values()}) == 8, (  # nosec
     f"Expected 8 distinct categories, got {len(set(_CATEGORY_MAP.values()))}"
 )

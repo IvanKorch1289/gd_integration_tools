@@ -41,7 +41,7 @@ class GuardrailsConfig:
     """
 
     enabled_providers: frozenset[str] = field(
-        default_factory=lambda: frozenset(("lakera", "nemo")),
+        default_factory=lambda: frozenset(("lakera", "nemo"))
     )
     thresholds: GuardrailsThresholds = field(default_factory=GuardrailsThresholds)
     block_on_failure: bool = False

@@ -88,19 +88,19 @@ class AgentMemoryService:
         try:
             client = self._client()
             await client.collection(_MESSAGES).create_index(
-                "ts", expireAfterSeconds=self._short_ttl, name="ttl_ts",
+                "ts", expireAfterSeconds=self._short_ttl, name="ttl_ts"
             )
             await client.collection(_MESSAGES).create_index(
-                [("session_id", 1), ("ts", 1)], name="session_ts",
+                [("session_id", 1), ("ts", 1)], name="session_ts"
             )
             await client.collection(_SCRATCHPAD).create_index(
-                "updated_at", expireAfterSeconds=self._long_ttl, name="ttl_updated_at",
+                "updated_at", expireAfterSeconds=self._long_ttl, name="ttl_updated_at"
             )
             await client.collection(_SCRATCHPAD).create_index(
-                "session_id", unique=True, name="session_id_unique",
+                "session_id", unique=True, name="session_id_unique"
             )
             await client.collection(_FACTS).create_index(
-                "updated_at", expireAfterSeconds=self._long_ttl, name="ttl_updated_at",
+                "updated_at", expireAfterSeconds=self._long_ttl, name="ttl_updated_at"
             )
             await client.collection(_FACTS).create_index(
                 [("session_id", 1), ("fact_key", 1)],
@@ -166,10 +166,7 @@ class AgentMemoryService:
             if keep_doc:
                 cutoff = keep_doc[0]["ts"]
                 await client.collection(_MESSAGES).delete_many(
-                    {
-                        "session_id": session_id,
-                        "ts": {"$lt": cutoff},
-                    },
+                    {"session_id": session_id, "ts": {"$lt": cutoff}}
                 )
 
     async def clear_conversation(

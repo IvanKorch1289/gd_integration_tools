@@ -50,18 +50,20 @@ class PluginLoaderSettings(BaseSettingsWithLoader):
 
     yaml_group: ClassVar[str] = "v11"
     model_config = SettingsConfigDict(
-        env_prefix="V11_", extra="forbid", validate_default=True,
+        env_prefix="V11_", extra="forbid", validate_default=True
     )
 
     plugin_loader_enabled: bool = Field(
-        default=False,         title="Включить PluginLoader",
+        default=False,
+        title="Включить PluginLoader",
         description=(
             "Если True — на startup сканируется extensions/<name>/plugin.toml. "
             "По умолчанию выключено (продолжает работать Wave 4.4 PluginLoader)."
         ),
     )
     route_loader_enabled: bool = Field(
-        default=False,         title="Включить RouteLoader (V11 routes/<name>/)",
+        default=False,
+        title="Включить RouteLoader (V11 routes/<name>/)",
         description=(
             "Если True — на startup сканируется routes/<name>/route.toml. "
             "По умолчанию выключено (продолжает работать legacy-формат "
@@ -69,16 +71,15 @@ class PluginLoaderSettings(BaseSettingsWithLoader):
         ),
     )
     extensions_dir: Path = Field(
-        default=Path("extensions"), title="Каталог in-tree V11-плагинов",
+        default=Path("extensions"), title="Каталог in-tree V11-плагинов"
     )
     routes_dir: Path = Field(default=Path("routes"), title="Каталог V11-маршрутов")
     core_version: str = Field(
-        default="0.2.0", title="Текущая версия ядра (для requires_core)",
+        default="0.2.0", title="Текущая версия ядра (для requires_core)"
     )
-    hot_reload_enabled: bool = Field(
-        default=False     )
+    hot_reload_enabled: bool = Field(default=False)
     hot_reload_debounce_ms: int = Field(
-        default=500, ge=0, le=10_000, title="Окно дебаунса (ms)",
+        default=500, ge=0, le=10_000, title="Окно дебаунса (ms)"
     )
 
 

@@ -47,9 +47,8 @@ class GatewayMixin(_WorkflowBuilderProtocol):
         spec = GatewaySpec(kind="xor", branches=list(branches))
         self._steps.append(
             ActivityDeclaration(
-                name=f"__gateway__xor_{len(self._steps)}",
-                args={"gateway": spec},
-            ),
+                name=f"__gateway__xor_{len(self._steps)}", args={"gateway": spec}
+            )
         )
         return self
 
@@ -73,9 +72,8 @@ class GatewayMixin(_WorkflowBuilderProtocol):
         spec = GatewaySpec(kind="and", branches=list(branches))
         self._steps.append(
             ActivityDeclaration(
-                name=f"__gateway__and_{len(self._steps)}",
-                args={"gateway": spec},
-            ),
+                name=f"__gateway__and_{len(self._steps)}", args={"gateway": spec}
+            )
         )
         return self
 
@@ -98,8 +96,7 @@ class GatewayMixin(_WorkflowBuilderProtocol):
         spec = GatewaySpec(kind="or", branches=list(branches))
         self._steps.append(
             ActivityDeclaration(
-                name=f"__gateway__or_{len(self._steps)}",
-                args={"gateway": spec},
-            ),
+                name=f"__gateway__or_{len(self._steps)}", args={"gateway": spec}
+            )
         )
         return self

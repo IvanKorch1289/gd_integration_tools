@@ -3,6 +3,7 @@
 Windowed aggregation Apache Flink-style: tumbling/sliding/session.
 Pattern (D275, Ponytail): thin wrapper, stdlib only.
 """
+
 from __future__ import annotations
 
 from collections import defaultdict
@@ -34,7 +35,7 @@ class BatchAggregatorProcessor:
         if window_type not in VALID_WINDOWS:
             raise ValueError(
                 f"window_type должен быть одним из {VALID_WINDOWS}, "
-                f"получено {window_type!r}",
+                f"получено {window_type!r}"
             )
         self._window_type = window_type
         self._window_size = window_size_seconds
@@ -75,16 +76,18 @@ class BatchAggregatorProcessor:
             start_sec = sec * self._window_size
             end_sec = start_sec + self._window_size
             agg = self._aggregate_values(values)
-            results.append({
-                "key": k,
-                "window_start": datetime.fromtimestamp(start_sec, tz=ts.tzinfo),
-                "window_end": datetime.fromtimestamp(end_sec, tz=ts.tzinfo),
-                "sum": agg["sum"],
-                "count": agg["count"],
-                "min": agg["min"],
-                "max": agg["max"],
-                "avg": agg["avg"],
-            })
+            results.append(
+                {
+                    "key": k,
+                    "window_start": datetime.fromtimestamp(start_sec, tz=ts.tzinfo),
+                    "window_end": datetime.fromtimestamp(end_sec, tz=ts.tzinfo),
+                    "sum": agg["sum"],
+                    "count": agg["count"],
+                    "min": agg["min"],
+                    "max": agg["max"],
+                    "avg": agg["avg"],
+                }
+            )
         results.sort(key=lambda r: r["window_start"])
         return results
 
@@ -92,7 +95,25 @@ class BatchAggregatorProcessor:
         if not values:
             return {"sum": 0, "count": 0, "min": 0, "max": 0, "avg": 0}
         if self._agg_type == "sum":
-            return {"sum": sum(values), "count": len(values), "min": min(values), "max": max(values), "avg": sum(values) / len(values)}
+            return {
+                "sum": sum(values),
+                "count": len(values),
+                "min": min(values),
+                "max": max(values),
+                "avg": sum(values) / len(values),
+            }
         if self._agg_type == "count":
-            return {"sum": len(values), "count": len(values), "min": min(values), "max": max(values), "avg": sum(values) / len(values)}
-        return {"sum": sum(values), "count": len(values), "min": min(values), "max": max(values), "avg": sum(values) / len(values)}
+            return {
+                "sum": len(values),
+                "count": len(values),
+                "min": min(values),
+                "max": max(values),
+                "avg": sum(values) / len(values),
+            }
+        return {
+            "sum": sum(values),
+            "count": len(values),
+            "min": min(values),
+            "max": max(values),
+            "avg": sum(values) / len(values),
+        }

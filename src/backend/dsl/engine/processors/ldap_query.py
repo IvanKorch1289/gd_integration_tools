@@ -128,7 +128,7 @@ class LdapQueryProcessor(BaseProcessor):
 
         srv = Server(self._server, use_ssl=self._use_ssl)
         conn = Connection(
-            srv, user=self._bind_dn, password=self._password, auto_bind=True,
+            srv, user=self._bind_dn, password=self._password, auto_bind=True
         )
         try:
             attrs = self._attributes or ALL_ATTRIBUTES
@@ -140,9 +140,7 @@ class LdapQueryProcessor(BaseProcessor):
             entries = []
             for e in conn.entries:
                 entry: dict[str, Any] = {"dn": e.entry_dn}
-                for attr in (
-                    self._attributes or e.entry_attributes
-                ):
+                for attr in self._attributes or e.entry_attributes:
                     val = getattr(e, attr, None)
                     if val is not None:
                         entry[attr] = (
@@ -165,9 +163,9 @@ class LdapQueryProcessor(BaseProcessor):
             # cycle-9/D-AUDIT-1707: narrow exceptions + observability (mirror
             # D-AUDIT-1705/1706 pattern).
             import logging
+
             logging.getLogger(__name__).debug(
-                "ldap_query.feature_flag_fallback",
-                extra={"error": str(ff_exc)},
+                "ldap_query.feature_flag_fallback", extra={"error": str(ff_exc)}
             )
 
         # Primary path: ldap3 + asyncio.to_thread (стабильный wheel py3.14).

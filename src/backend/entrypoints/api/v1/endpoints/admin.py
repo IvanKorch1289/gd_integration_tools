@@ -23,7 +23,7 @@ __all__ = ("router",)
 # S202 audit fix: require admin role для всех admin-endpoints.
 # Минимум OPERATOR (для non-destructive ops); SUPER_ADMIN неявно разрешён.
 _ADMIN_GUARD = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.TENANT_ADMIN)),
+    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.TENANT_ADMIN))
 )
 
 router = APIRouter(dependencies=[_ADMIN_GUARD])
@@ -177,7 +177,7 @@ ActionRouterBuilder(router).add_actions(
             service_getter=get_admin_service,
             service_method="slo_report",
         ),
-    ],
+    ]
 )
 
 

@@ -27,7 +27,7 @@ _LOAD_SQL = text(
     SELECT current_watermark, advanced_at, late_events_total
     FROM streaming_watermarks
     WHERE route_id = :route_id AND processor_name = :processor_name
-    """,
+    """
 )
 
 _UPSERT_SQL = text(
@@ -42,7 +42,7 @@ _UPSERT_SQL = text(
         advanced_at       = EXCLUDED.advanced_at,
         late_events_total = EXCLUDED.late_events_total,
         updated_at        = NOW()
-    """,
+    """
 )
 
 
@@ -71,7 +71,7 @@ class PostgresWatermarkStore:
         )
 
     async def save(
-        self, route_id: str, processor_name: str, state: WatermarkState,
+        self, route_id: str, processor_name: str, state: WatermarkState
     ) -> None:
         """Метод save (см. signature)."""
         # ``-inf`` не сериализуется в double precision у части драйверов; в
@@ -93,10 +93,10 @@ class PostgresWatermarkStore:
 
     @staticmethod
     async def _fetch_row(
-        session: AsyncSession, route_id: str, processor_name: str,
+        session: AsyncSession, route_id: str, processor_name: str
     ) -> tuple[float, float, int] | None:
         result = await session.execute(
-            _LOAD_SQL, {"route_id": route_id, "processor_name": processor_name},
+            _LOAD_SQL, {"route_id": route_id, "processor_name": processor_name}
         )
         row = result.first()
         if row is None:

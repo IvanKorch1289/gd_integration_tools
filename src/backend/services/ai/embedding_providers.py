@@ -79,7 +79,7 @@ class SentenceTransformerEmbeddingProvider:
         except ImportError as exc:
             raise RuntimeError(
                 "sentence-transformers не установлен — добавьте extras [rag]: "
-                "pip install '.[rag]'",
+                "pip install '.[rag]'"
             ) from exc
         self._model = SentenceTransformer(self._model_name)
         logger.info("SentenceTransformer model %r loaded", self._model_name)
@@ -87,6 +87,7 @@ class SentenceTransformerEmbeddingProvider:
 
     async def embed(self, texts: list[str]) -> list[list[float]]:
         """Метод embed (см. signature)."""
+
         def _encode() -> list[list[float]]:
             """Метод _encode (см. signature)."""
             model = self._ensure_model()
@@ -121,7 +122,7 @@ class FastembedEmbeddingProvider:
             "fastembed несовместим с Python 3.14+ "
             f"(текущий: {sys.version_info.major}.{sys.version_info.minor}). "
             "Используйте embedding_provider=sentence-transformers / ollama / "
-            "openai. См. Wave F.4 / Roadmap V10 #11.",
+            "openai. См. Wave F.4 / Roadmap V10 #11."
         )
 
     def _ensure_model(self) -> Any:
@@ -135,13 +136,14 @@ class FastembedEmbeddingProvider:
                 "fastembed не установлен — это legacy-extra. Установите "
                 "'.[embeddings-fastembed-legacy]' (только Python ≤ 3.13) или "
                 "выберите embedding_provider=sentence-transformers / ollama / "
-                "openai в rag_settings.",
+                "openai в rag_settings."
             ) from exc
         self._model = TextEmbedding(model_name=self._model_name)
         return self._model
 
     async def embed(self, texts: list[str]) -> list[list[float]]:
         """Метод embed (см. signature)."""
+
         def _encode() -> list[list[float]]:
             """Метод _encode (см. signature)."""
             model = self._ensure_model()
@@ -154,7 +156,7 @@ class OllamaEmbeddingProvider:
     """Эмбеддинги через Ollama HTTP API."""
 
     def __init__(
-        self, model_name: str = "nomic-embed-text", base_url: str | None = None,
+        self, model_name: str = "nomic-embed-text", base_url: str | None = None
     ) -> None:
         """Метод __init__ (см. signature)."""
         self._model_name = model_name
@@ -198,7 +200,7 @@ class OpenAIEmbeddingProvider:
         from src.backend.services.ai.ai_providers import OpenAIProvider
 
         self._provider = OpenAIProvider(
-            api_key=self._api_key, model=self._model_name, base_url=self._base_url,
+            api_key=self._api_key, model=self._model_name, base_url=self._base_url
         )
         return self._provider
 
@@ -222,7 +224,7 @@ def get_embedding_provider() -> EmbeddingProvider:
             return FastembedEmbeddingProvider(model_name=model)
         case "ollama":
             return OllamaEmbeddingProvider(
-                model_name=model, base_url=rag_settings.embedding_endpoint,
+                model_name=model, base_url=rag_settings.embedding_endpoint
             )
         case "openai":
             return OpenAIEmbeddingProvider(
@@ -233,5 +235,5 @@ def get_embedding_provider() -> EmbeddingProvider:
         case _:
             raise ValueError(
                 f"Неизвестный embedding_provider: {provider_name!r}. "
-                "Поддерживается: sentence-transformers, ollama, openai, fastembed.",
+                "Поддерживается: sentence-transformers, ollama, openai, fastembed."
             )

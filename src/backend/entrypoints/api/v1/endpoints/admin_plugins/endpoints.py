@@ -32,13 +32,11 @@ from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import (
 # Оригинал был в admin_plugins.py:37-41 — _ADMIN_GUARD_OPERATOR.
 # Plugin admin endpoints: OPERATOR + SUPER_ADMIN (destructive: toggle/rollback/scaffold).
 _ADMIN_GUARD_OPERATOR = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)),
+    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN))
 )
 
 router = APIRouter(
-    prefix="/admin/plugins",
-    tags=["admin"],
-    dependencies=[_ADMIN_GUARD_OPERATOR],
+    prefix="/admin/plugins", tags=["admin"], dependencies=[_ADMIN_GUARD_OPERATOR]
 )
 
 _check_flag_enabled = helpers._check_flag_enabled
@@ -195,7 +193,7 @@ async def list_plugin_versions(name: str) -> PluginVersionsResponse:
 
 @router.get("/{name}/diff", response_model=PluginDiffResponse)
 async def diff_plugin_versions(
-    name: str, from_version: str, to_version: str,
+    name: str, from_version: str, to_version: str
 ) -> PluginDiffResponse:
     """Diff manifest'ов между ``from_version`` и ``to_version``."""
     _check_flag_enabled()
@@ -214,7 +212,7 @@ async def diff_plugin_versions(
 
 @router.post("/{name}/rollback", response_model=PluginRollbackResponse)
 async def rollback_plugin(
-    name: str, body: PluginRollbackRequest,
+    name: str, body: PluginRollbackRequest
 ) -> PluginRollbackResponse:
     """Переключить активную версию плагина и выполнить hot-swap."""
     _check_flag_enabled()
@@ -256,7 +254,7 @@ async def get_dependency_graph() -> PluginDependencyGraph:
                 "id": manifest.name,
                 "version": manifest.version,
                 "tenant_aware": manifest.tenant_aware,
-            },
+            }
         )
         for required, spec in manifest.compatibility.requires_plugins.items():
             edges.append({"source": manifest.name, "target": required, "spec": spec})

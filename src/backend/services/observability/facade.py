@@ -50,7 +50,7 @@ class ObservabilityFacade:
         self._plugin = plugin
 
     async def record_metric(
-        self, name: str, value: float = 1.0, *, tags: dict[str, str] | None = None,
+        self, name: str, value: float = 1.0, *, tags: dict[str, str] | None = None
     ) -> None:
         """Записать metric value.
 
@@ -127,6 +127,7 @@ class ObservabilityFacade:
             # Bare `except Exception` маскировал correlation_id failures
             # (отсутствующий correlation context, broken tracing backend).
             from src.backend.core.logging import get_logger
+
             get_logger(__name__).debug(
                 "observability.correlation_id_resolve_failed",
                 extra={"error": str(cid_exc)},
@@ -135,7 +136,7 @@ class ObservabilityFacade:
 
     @contextmanager
     def log_event(
-        self, event: str, *, severity: str = "info", **fields: Any,
+        self, event: str, *, severity: str = "info", **fields: Any
     ) -> Iterator[None]:
         """Structured logging context manager.
 

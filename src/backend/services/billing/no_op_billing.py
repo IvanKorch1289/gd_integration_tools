@@ -114,9 +114,7 @@ class NoOpBillingFacade:
 
         """
         _ensure_disabled_or_raise()
-        await _emit_quota_check_skipped(
-            tenant_id, method="check_tokens", tokens=tokens,
-        )
+        await _emit_quota_check_skipped(tenant_id, method="check_tokens", tokens=tokens)
         return _NoOpResult(
             allowed=True,
             reason="billing_not_configured",
@@ -129,12 +127,12 @@ def _ensure_disabled_or_raise() -> None:
     if BILLING_ENABLED:
         raise NotImplementedError(
             "billing_enabled=True but real billing backend not yet integrated. "
-            "Set BILLING_ENABLED=False (default) until QuotasService ships.",
+            "Set BILLING_ENABLED=False (default) until QuotasService ships."
         )
 
 
 async def _emit_quota_check_skipped(
-    tenant_id: str, *, method: str, tokens: int | None = None,
+    tenant_id: str, *, method: str, tokens: int | None = None
 ) -> None:
     """Эмитит audit-event ``quota_check_skipped`` через :class:`AuditService`.
 

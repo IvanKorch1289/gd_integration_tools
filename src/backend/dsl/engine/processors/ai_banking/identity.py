@@ -106,13 +106,13 @@ class KycAmlVerifyProcessor(_BankingAIProcessor):
                 "decision": result.decision,
                 "score": result.score,
                 "reasons": result.reasons,
-            },
+            }
         )
         exchange.set_property("kyc_decision", result.decision)
         exchange.set_property("kyc_score", result.score)
 
     def _build_prompt(
-        self, customer: dict[str, Any], documents: list[dict[str, Any]],
+        self, customer: dict[str, Any], documents: list[dict[str, Any]]
     ) -> str:
         # S227 cycle 14 (D432): bound customer JSON + documents list to
         # 8000 chars each to prevent prompt-injection via oversized KYC
@@ -133,7 +133,7 @@ class KycAmlVerifyProcessor(_BankingAIProcessor):
         return f'Analyze the following customer and documents for KYC/AML verification.\n\nCustomer: {customer_info}\n\nDocuments: {docs_info}\n\nJurisdiction: {self.jurisdiction}\n\nRespond with JSON:\n{{\n  "decision": "approve|review|reject",\n  "score": 0.0-1.0,\n  "reasons": ["reason1", "reason2"],\n  "kyc_jurisdiction": "{self.jurisdiction}"\n}}'
 
     async def _check_capability(
-        self, exchange: Exchange[Any], context: ExecutionContext,
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> bool:
         """Verify ai.banking.kyc_aml capability (S190 — unified facade pattern).
 
@@ -218,7 +218,7 @@ class AntiFraudScoreProcessor(_BankingAIProcessor):
                 "risk_level": result.risk_level,
                 "explanation": result.explanation,
                 "triggered_rules": result.triggered_rules,
-            },
+            }
         )
         exchange.set_property("fraud_risk_score", result.risk_score)
         exchange.set_property("fraud_risk_level", result.risk_level)
@@ -247,7 +247,7 @@ class AntiFraudScoreProcessor(_BankingAIProcessor):
         return f'Analyze this transaction for fraud risk.\n\nTransaction: {tx_json}\nHistory: {hist_json}\nTriggered Rules: {rules_json}\n\nRespond with JSON:\n{{\n  "risk_score": 0.0-1.0,\n  "risk_level": "low|medium|high|critical",\n  "explanation": "human-readable explanation",\n  "triggered_rules": ["additional_rules_if_any"]\n}}'
 
     async def _check_capability(
-        self, exchange: Exchange[Any], context: ExecutionContext,
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> bool:
         """Verify capability (S190 — unified facade pattern).
 

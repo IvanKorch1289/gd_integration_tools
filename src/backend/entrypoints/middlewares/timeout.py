@@ -54,7 +54,7 @@ class TimeoutMiddleware:
     """
 
     def __init__(
-        self, app: ASGIApp, *, route_timeouts: Mapping[str, float] | None = None,
+        self, app: ASGIApp, *, route_timeouts: Mapping[str, float] | None = None
     ) -> None:
         """Инициализирует middleware.
 
@@ -68,7 +68,7 @@ class TimeoutMiddleware:
         # Frozen tuple избегает мутаций после lifespan-bootstrap.
         items = tuple((p, float(t)) for p, t in (route_timeouts or {}).items())
         self._route_timeouts: tuple[tuple[str, float], ...] = tuple(
-            sorted(items, key=lambda kv: len(kv[0]), reverse=True),
+            sorted(items, key=lambda kv: len(kv[0]), reverse=True)
         )
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
@@ -90,9 +90,7 @@ class TimeoutMiddleware:
         try:
             # Cycle 50 critical: wait_for обёрнут вокруг downstream.
             # Если downstream не отвечает в timeout — asyncio.TimeoutError.
-            await wait_for(
-                self.app(scope, receive, send), timeout=timeout_seconds,
-            )
+            await wait_for(self.app(scope, receive, send), timeout=timeout_seconds)
         except TimeoutError:
             get_app_logger_provider().warning(
                 "Превышено время обработки запроса: %s (timeout=%.2fs)",
@@ -125,18 +123,18 @@ class TimeoutMiddleware:
             # ImportError — features module missing, AttributeError —
             # config not initialized, RuntimeError — feature_flags unavailable.
             import logging
+
             logging.getLogger(__name__).debug(
-                "timeout_middleware.feature_flag_fallback",
-                extra={"error": str(ff_exc)},
+                "timeout_middleware.feature_flag_fallback", extra={"error": str(ff_exc)}
             )
             return False
 
     @staticmethod
     async def _send_408(send: Send) -> None:
         """Отправляет 408 JSON response через send (cycle 39 no-raise pattern)."""
-        body = json.dumps(
-            {"detail": "Превышено время обработки запроса"},
-        ).encode("utf-8")
+        body = json.dumps({"detail": "Превышено время обработки запроса"}).encode(
+            "utf-8"
+        )
         await send(
             {
                 "type": "http.response.start",
@@ -145,6 +143,6 @@ class TimeoutMiddleware:
                     (b"content-type", b"application/json"),
                     (b"content-length", str(len(body)).encode("latin-1")),
                 ],
-            },
+            }
         )
         await send({"type": "http.response.body", "body": body})

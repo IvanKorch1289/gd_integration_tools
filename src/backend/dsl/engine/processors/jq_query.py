@@ -103,9 +103,9 @@ class JqProcessor(BaseProcessor):
             # cycle-9/D-AUDIT-1709: narrow exceptions + observability (mirror
             # D-AUDIT-1705/1706/1707/1708).
             import logging
+
             logging.getLogger(__name__).debug(
-                "jq_query.feature_flag_fallback",
-                extra={"error": str(ff_exc)},
+                "jq_query.feature_flag_fallback", extra={"error": str(ff_exc)}
             )
 
         try:

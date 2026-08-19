@@ -2,6 +2,7 @@
 
 ADR planned (M25 cleanup deleted original).
 """
+
 from __future__ import annotations
 
 __all__ = ()

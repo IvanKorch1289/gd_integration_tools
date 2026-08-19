@@ -37,7 +37,9 @@ class _BaseEntityProcessor(BaseProcessor):
         name: str | None = None,
     ) -> None:
         if not entity or "." in entity:
-            raise ValueError(f"entity name must be non-empty and contain no dots: {entity!r}")
+            raise ValueError(
+                f"entity name must be non-empty and contain no dots: {entity!r}"
+            )
         super().__init__(name=name or f"entity_{self._verb}:{entity}")
         self._entity = entity
         self._payload_from = payload_from
@@ -49,13 +51,21 @@ class _BaseEntityProcessor(BaseProcessor):
             return exchange.in_message.body
         try:
             import jmespath
+
             return jmespath.search(self._payload_from, exchange.in_message.body)
-        except (ImportError, AttributeError, TypeError, ValueError, jmespath.exceptions.ParseError) as jmespath_exc:
+        except (
+            ImportError,
+            AttributeError,
+            TypeError,
+            ValueError,
+            jmespath.exceptions.ParseError,
+        ) as jmespath_exc:
             # cycle-9/D-AUDIT-975: narrow exceptions + observability.
             # ImportError — jmespath missing, AttributeError — jmespath
             # API change, TypeError — wrong body type, ValueError — invalid
             # search syntax, jmespath.exceptions.ParseError — bad query.
             import logging
+
             logging.getLogger(__name__).debug(
                 "entity_legacy.jmespath_search_fallback",
                 extra={"error": str(jmespath_exc)},
@@ -74,7 +84,9 @@ class _BaseEntityProcessor(BaseProcessor):
         exchange: Exchange[Any],
     ) -> Any:
         """Формирует action command, диспетчеризирует, пишет результат в exchange."""
-        command = ActionCommandSchema(action=f"{self._entity}.{self._verb}", payload=payload)
+        command = ActionCommandSchema(
+            action=f"{self._entity}.{self._verb}", payload=payload
+        )
         result = await context.action_registry.dispatch(command)
         exchange.set_property(self._result_property, result)
         if result is not None:

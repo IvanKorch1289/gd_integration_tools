@@ -54,7 +54,7 @@ DEFAULT_FALLBACK_SPECS: dict[str, dict[str, Any]] = {
         "display_name": "Python 3 (fallback)",
         "language": "python",
         "argv": ["python3", "-m", "ipykernel_launcher", "-f", "{connection_file}"],
-    },
+    }
 }
 
 
@@ -94,7 +94,7 @@ class KernelSpecDiscovery:
         except ImportError:
             _logger.warning(
                 "jupyter_client не установлен, fallback to python3 only. "
-                "Install: uv sync --extra jupyter",
+                "Install: uv sync --extra jupyter"
             )
             self._cache = dict(DEFAULT_FALLBACK_SPECS)
             return self._cache
@@ -155,7 +155,7 @@ class KernelSpecDiscovery:
         missing = set(whitelist) - set(filtered.keys())
         if missing:
             _logger.warning(
-                "Kernel whitelist contains kernels not installed locally: %s", missing,
+                "Kernel whitelist contains kernels not installed locally: %s", missing
             )
         return filtered
 

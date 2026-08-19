@@ -6,6 +6,7 @@ Log write через facade logger::
         level: info
         message: "Processing order ${properties.order_id}"
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -72,6 +73,7 @@ class InfraLogWriteProcessor(BaseProcessor):
         from src.backend.core.di.providers.infrastructure_locator import (
             get_logger_factory as _get_logger_factory_fn,
         )
+
         logger = _get_logger_factory_fn()("dsl.infra_log")
         log_fn = getattr(logger, self.level)
         log_fn(self.message)

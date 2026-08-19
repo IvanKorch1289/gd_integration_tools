@@ -64,7 +64,7 @@ class AsyncSoapClient:
     timeout: float = 30.0
 
     async def _do_call(
-        self, envelope_xml: str, headers: dict[str, str] | None = None,
+        self, envelope_xml: str, headers: dict[str, str] | None = None
     ) -> str:
         """Внутренняя SOAP call с retry-обёрткой.
 
@@ -93,14 +93,14 @@ class AsyncSoapClient:
             limits=httpx.Limits(max_connections=50, max_keepalive_connections=20),
         ) as client:
             resp = await client.post(
-                self.endpoint, content=envelope_xml.encode("utf-8"), headers=hdr,
+                self.endpoint, content=envelope_xml.encode("utf-8"), headers=hdr
             )
             resp.raise_for_status()
             return resp.text
 
     @_soap_retry
     async def call(
-        self, envelope_xml: str, headers: dict[str, str] | None = None,
+        self, envelope_xml: str, headers: dict[str, str] | None = None
     ) -> str:
         """Отправляет SOAP-envelope, возвращает raw XML-ответ."""
         async with _SOAP_BREAKER.guard():

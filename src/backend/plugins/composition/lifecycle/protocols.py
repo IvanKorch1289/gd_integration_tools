@@ -138,7 +138,7 @@ async def register_protocol_providers() -> None:
         )
 
         await get_elasticsearch_client().ensure_indices(
-            ["audit_logs", "orders", "documents", "rag_chunks"],
+            ["audit_logs", "orders", "documents", "rag_chunks"]
         )
     except Exception as exc:
         app_logger.debug("ES ensure_indices (4 facets) skipped: %s", exc)

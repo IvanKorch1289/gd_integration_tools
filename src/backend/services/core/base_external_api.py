@@ -108,7 +108,7 @@ class BaseExternalAPIClient:
         return urljoin(self.base_url, endpoint)
 
     def _headers(
-        self, *, extra: dict[str, str] | None = None, use_waf: bool | None = None,
+        self, *, extra: dict[str, str] | None = None, use_waf: bool | None = None
     ) -> dict[str, str]:
         """Формирует headers с учётом WAF routing и auth.
 
@@ -129,7 +129,7 @@ class BaseExternalAPIClient:
 
         if waf_active:
             waf_headers = getattr(
-                app_settings.http_base_settings, "waf_route_header", {},
+                app_settings.http_base_settings, "waf_route_header", {}
             )
             if isinstance(waf_headers, dict):
                 headers.update(waf_headers)
@@ -145,7 +145,7 @@ class BaseExternalAPIClient:
         return headers
 
     def _timeouts(
-        self, *, host: str | None = None, endpoint: str | None = None,
+        self, *, host: str | None = None, endpoint: str | None = None
     ) -> dict[str, float]:
         """Возвращает connect/read/total таймауты из settings.
 
@@ -165,7 +165,7 @@ class BaseExternalAPIClient:
                 )
 
                 total = get_adaptive_timeout_policy().get_timeout(
-                    host, endpoint, default_seconds=total,
+                    host, endpoint, default_seconds=total
                 )
             except Exception as exc:
                 logger.debug(
@@ -179,7 +179,7 @@ class BaseExternalAPIClient:
         }
 
     def _record_endpoint_latency(
-        self, host: str, endpoint: str, latency_ms: float,
+        self, host: str, endpoint: str, latency_ms: float
     ) -> None:
         """Best-effort вызов :meth:`AdaptiveTimeoutPolicy.record_latency`.
 
@@ -235,7 +235,7 @@ class BaseExternalAPIClient:
             if facade is not None:
                 try:
                     response = await facade.request(
-                        method, url, params=params, json=json, headers=full_headers,
+                        method, url, params=params, json=json, headers=full_headers
                     )
                 except Exception as exc:
                     self._logger.error(
@@ -266,7 +266,7 @@ class BaseExternalAPIClient:
                 )
             except Exception as exc:
                 self._logger.error(
-                    "%s request failed: %s %s — %s", self._name, method, url, exc,
+                    "%s request failed: %s %s — %s", self._name, method, url, exc
                 )
                 raise
         finally:

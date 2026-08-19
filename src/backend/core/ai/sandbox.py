@@ -36,8 +36,9 @@ class BudgetExceededError(Exception):
         self.limit = limit
         self.consumed = consumed
         super().__init__(
-            f"{budget_type} budget exceeded: consumed {consumed} > limit {limit}",
+            f"{budget_type} budget exceeded: consumed {consumed} > limit {limit}"
         )
+
 
 __all__ = ("BudgetExceededError", "CodeSandbox", "NoOpSandbox", "SandboxResult")
 
@@ -140,5 +141,5 @@ class NoOpSandbox:
         """
         raise RuntimeError(
             "CodeSandbox не сконфигурирован: установите e2b-code-interpreter "
-            "и задайте E2B_API_KEY (или подключите альтернативный sandbox-провайдер).",
+            "и задайте E2B_API_KEY (или подключите альтернативный sandbox-провайдер)."
         )

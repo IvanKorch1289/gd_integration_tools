@@ -92,17 +92,17 @@ def _compensate_handler(
 # Mapping: step.kind → handler(self, step, state, instance) -> StepResult | Awaitable[StepResult]
 _STEP_KIND_DISPATCH: dict[str, Callable[..., Any]] = {
     "sequential": lambda self, step, state, instance: self._exec_sequential(
-        step, state, instance,
+        step, state, instance
     ),
     "branch": lambda self, step, state, instance: self._exec_branch(
-        step, state, instance,
+        step, state, instance
     ),
     "loop": lambda self, step, state, instance: self._exec_loop(step, state, instance),
     "for_each": lambda self, step, state, instance: self._exec_for_each(
-        step, state, instance,
+        step, state, instance
     ),
     "sub_flow": lambda self, step, state, instance: self._exec_sub_flow(
-        step, state, instance,
+        step, state, instance
     ),
     "wait": lambda self, step, state, instance: self._exec_wait(step, state),
     "compensate": _compensate_handler,
@@ -116,13 +116,13 @@ class DSLStepExecutor(SequentialMixin, ControlFlowMixin, SubFlowMixin, EvalMixin
     # блокировал их. Убрано __slots__ как в других post-decomp фиксах.
 
     def __init__(
-        self, spec_loader: SpecLoader, *, timeout_per_step_s: float = 300.0,
+        self, spec_loader: SpecLoader, *, timeout_per_step_s: float = 300.0
     ) -> None:
         self._spec_loader = spec_loader
         self._timeout_per_step_s = timeout_per_step_s
 
     async def execute_next(
-        self, *, instance: WorkflowInstanceRow, state: WorkflowState,
+        self, *, instance: WorkflowInstanceRow, state: WorkflowState
     ) -> StepResult:
         """Execute the next step in a workflow instance.
 
@@ -142,7 +142,7 @@ class DSLStepExecutor(SequentialMixin, ControlFlowMixin, SubFlowMixin, EvalMixin
                 outcome=StepOutcome.FAILED,
                 error_message=f"spec not found: {instance.route_id}",
                 events=[
-                    (WorkflowEventType.step_failed, {"reason": "spec_not_found"}, None),
+                    (WorkflowEventType.step_failed, {"reason": "spec_not_found"}, None)
                 ],
             )
 
@@ -156,7 +156,7 @@ class DSLStepExecutor(SequentialMixin, ControlFlowMixin, SubFlowMixin, EvalMixin
                         WorkflowEventType.step_finished,
                         {"workflow_completed": True},
                         None,
-                    ),
+                    )
                 ],
             )
 
@@ -189,7 +189,7 @@ class DSLStepExecutor(SequentialMixin, ControlFlowMixin, SubFlowMixin, EvalMixin
                         WorkflowEventType.step_failed,
                         {"reason": "unknown_step_kind", "kind": step.kind},
                         step.name,
-                    ),
+                    )
                 ],
             )
         except Exception as exc:
@@ -202,6 +202,6 @@ class DSLStepExecutor(SequentialMixin, ControlFlowMixin, SubFlowMixin, EvalMixin
                         WorkflowEventType.step_failed,
                         {"error": f"{type(exc).__name__}: {exc}"},
                         step.name,
-                    ),
+                    )
                 ],
             )

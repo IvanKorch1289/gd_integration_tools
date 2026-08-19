@@ -103,7 +103,7 @@ async def receive_command(request: Request) -> JSONResponse:
         payload = await request.json()
     except ValueError:
         return JSONResponse(
-            {"status": "error", "reason": "invalid JSON"}, status_code=400,
+            {"status": "error", "reason": "invalid JSON"}, status_code=400
         )
 
     command = (payload.get("command") or {}).get("body", "")
@@ -131,9 +131,9 @@ async def receive_command(request: Request) -> JSONResponse:
         # ImportError — recorder missing, AttributeError — API change,
         # RuntimeError — metrics unavailable, TypeError — wrong arg type.
         import logging
+
         logging.getLogger(__name__).debug(
-            "express_router.metrics_recorder_failed",
-            extra={"error": str(rec_exc)},
+            "express_router.metrics_recorder_failed", extra={"error": str(rec_exc)}
         )
 
     # Wave 9.2.4: лог входящего сообщения в ExpressDialogStore.
@@ -157,7 +157,7 @@ async def receive_callback(request: Request) -> JSONResponse:
         payload = await request.json()
     except ValueError:
         return JSONResponse(
-            {"status": "error", "reason": "invalid JSON"}, status_code=400,
+            {"status": "error", "reason": "invalid JSON"}, status_code=400
         )
 
     sync_id = payload.get("sync_id", "")
@@ -177,7 +177,7 @@ async def receive_callback(request: Request) -> JSONResponse:
 
 
 async def _dispatch_to_route(
-    route_id: str, fallback_id: str | None, payload: dict[str, Any], sync_id: str,
+    route_id: str, fallback_id: str | None, payload: dict[str, Any], sync_id: str
 ) -> dict[str, Any]:
     """Маршрутизирует payload в action или DSL-pipeline (Wave 1.5).
 

@@ -106,6 +106,7 @@ def __getattr__(name: str) -> Any:
         return value
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
+
 __all__ = (
     "AntivirusBackend",
     "AntivirusScanResult",
@@ -196,7 +197,7 @@ class MessageBroker(ABC):
 
     @abstractmethod
     async def publish(
-        self, topic: str, message: bytes, headers: dict[str, str] | None = None,
+        self, topic: str, message: bytes, headers: dict[str, str] | None = None
     ) -> None:
         """Опубликовать ``message`` в ``topic`` с опциональными headers."""
         ...
@@ -241,7 +242,6 @@ class AsyncLifecycle(ABC):
 
 class ManagedResource(AsyncLifecycle, Healthcheck):
     """Компонент с lifecycle + health check."""
-
 
 
 # ────────────────── Connection Pool Metrics ──────────────────
@@ -326,7 +326,7 @@ class AsyncBatcher:
     """Generic async batcher — накапливает items, flush по batch_size или interval."""
 
     def __init__(
-        self, flush_fn: Any, batch_size: int = 100, flush_interval_seconds: float = 5.0,
+        self, flush_fn: Any, batch_size: int = 100, flush_interval_seconds: float = 5.0
     ) -> None:
         import asyncio
 
@@ -363,7 +363,7 @@ class AsyncBatcher:
 
         self._running = True
         self._task = get_task_registry().create_task(
-            self._periodic_flush(), name="async-batcher-flush",
+            self._periodic_flush(), name="async-batcher-flush"
         )
 
     async def stop(self) -> None:

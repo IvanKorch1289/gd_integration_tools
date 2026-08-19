@@ -64,7 +64,7 @@ class HttpStreamHandler:
                     raise RuntimeError("HTTP/3: повторный response.start запрещён")
                 status = int(message["status"])
                 headers: list[tuple[bytes, bytes]] = [
-                    (b":status", str(status).encode("ascii")),
+                    (b":status", str(status).encode("ascii"))
                 ]
                 for name, value in message.get("headers", []):
                     headers.append((name.lower(), value))
@@ -82,7 +82,7 @@ class HttpStreamHandler:
     async def push_request(self, body: bytes, more_body: bool) -> None:
         """Положить очередной фрагмент тела запроса в receive-очередь."""
         await self._receive_queue.put(
-            {"type": "http.request", "body": body, "more_body": more_body},
+            {"type": "http.request", "body": body, "more_body": more_body}
         )
 
     async def push_disconnect(self) -> None:

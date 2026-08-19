@@ -37,13 +37,13 @@ class AugmentMixin(_RAGServiceProtocol):
         для each cited fact — критично для трассировки в банковском домене.
         """
         tenant_key = self._cache_key(
-            system_prompt=system_prompt, query=query, top_k=top_k, namespace=namespace,
+            system_prompt=system_prompt, query=query, top_k=top_k, namespace=namespace
         )
         if self._cache is not None:
             cached, tier = await self._cache.lookup_answer(tenant_key, tenant=namespace)
             if isinstance(cached, str):
                 logger.debug(
-                    "RAG augment hit on tier %s (namespace=%s)", tier, namespace,
+                    "RAG augment hit on tier %s (namespace=%s)", tier, namespace
                 )
                 return cached
 
@@ -82,7 +82,7 @@ class AugmentMixin(_RAGServiceProtocol):
         """
         results = await self.search(query, top_k=top_k, namespace=namespace)
         prompt = await self.augment_prompt(
-            query, system_prompt=system_prompt, top_k=top_k, namespace=namespace,
+            query, system_prompt=system_prompt, top_k=top_k, namespace=namespace
         )
         citations: list[RAGCitation] = []
         for r in results:
@@ -110,7 +110,7 @@ class AugmentMixin(_RAGServiceProtocol):
                     chunk_idx=meta.get("chunk_idx"),
                     score=score,
                     namespace=meta.get("namespace") or namespace,
-                ),
+                )
             )
         return AugmentResult(
             prompt=prompt,
@@ -136,7 +136,7 @@ class AugmentMixin(_RAGServiceProtocol):
         """
         results = await self.search(query, top_k=top_k, namespace=namespace)
         prompt = await self.augment_prompt(
-            query, system_prompt=system_prompt, top_k=top_k, namespace=namespace,
+            query, system_prompt=system_prompt, top_k=top_k, namespace=namespace
         )
         return build_augment_result(
             prompt=prompt,

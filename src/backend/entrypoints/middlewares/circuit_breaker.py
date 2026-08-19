@@ -48,10 +48,7 @@ from src.backend.core.logging import get_logger
 
 _logger = get_logger("entrypoints.middlewares.circuit_breaker")
 
-__all__ = (
-    "BreakerPolicy",
-    "CircuitBreakerMiddleware",
-)
+__all__ = ("BreakerPolicy", "CircuitBreakerMiddleware")
 
 
 @dataclass(frozen=True)
@@ -148,7 +145,7 @@ class CircuitBreakerMiddleware:
                 window_seconds=policy.window_seconds,
             )
             self._sliding_breakers[route] = SlidingWindowBreaker(
-                name=f"route:{route}", spec=spec,
+                name=f"route:{route}", spec=spec
             )
         return self._sliding_breakers[route]
 
@@ -170,7 +167,7 @@ class CircuitBreakerMiddleware:
         breaker = self._get_sliding_breaker(path, policy)
         if breaker.is_open:
             _logger.info(
-                "Circuit OPEN (sliding_breaker) — rejecting request for %s", path,
+                "Circuit OPEN (sliding_breaker) — rejecting request for %s", path
             )
             response = JSONResponse(
                 status_code=503,

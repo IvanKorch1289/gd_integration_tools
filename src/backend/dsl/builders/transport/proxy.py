@@ -45,7 +45,7 @@ class ProxyMixin:
                 src=src,
                 methods=methods,
                 header_policy=HeaderMapPolicy.from_dict(header_map),
-            ),
+            )
         )
 
     def forward_to(
@@ -70,7 +70,7 @@ class ProxyMixin:
                 header_policy=HeaderMapPolicy.from_dict(header_map),
                 rewrite_path=rewrite_path,
                 timeout=timeout,
-            ),
+            )
         )
 
     def proxy(
@@ -86,7 +86,7 @@ class ProxyMixin:
     ) -> RouteBuilder:
         """Сокращение: ``expose_proxy(src) → forward_to(dst)``."""
         return self.expose_proxy(
-            src=src, methods=methods, header_map=header_map,
+            src=src, methods=methods, header_map=header_map
         ).forward_to(
             dst=dst,
             pass_headers=pass_headers,
@@ -121,8 +121,8 @@ class ProxyMixin:
         if target_url is not None:
             return self._add(  # type: ignore[attr-defined]
                 RedirectProcessor(
-                    mode="static", status_code=status_code, target_url=target_url,
-                ),
+                    mode="static", status_code=status_code, target_url=target_url
+                )
             )
         return self._add(  # type: ignore[attr-defined]
             RedirectProcessor(
@@ -131,5 +131,5 @@ class ProxyMixin:
                 url_source=url_source,
                 source_key=source_key,
                 allowed_hosts=allowed_hosts,
-            ),
+            )
         )

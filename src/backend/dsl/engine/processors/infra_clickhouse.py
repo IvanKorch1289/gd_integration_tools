@@ -6,6 +6,7 @@ ClickHouse analytical queries через facade::
         sql: "SELECT count() FROM events WHERE ts > now() - 3600"
         to: body.result
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -23,10 +24,7 @@ if TYPE_CHECKING:
     namespace="infra",
     spec_schema={
         "type": "object",
-        "properties": {
-            "sql": {"type": "string"},
-            "to": {"type": "string"},
-        },
+        "properties": {"sql": {"type": "string"}, "to": {"type": "string"}},
         "required": ["sql"],
     },
     capabilities=("analytics.read",),
@@ -45,6 +43,7 @@ class InfraClickHouseQueryProcessor(BaseProcessor):
         from src.backend.core.di.providers.infrastructure_locator import (
             get_clickhouse_client_class,
         )
+
         client = get_clickhouse_client_class()(context)
         result = await client.query(self.sql)
         self.set_result(exchange, self.target, result)

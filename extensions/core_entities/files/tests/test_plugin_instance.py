@@ -11,7 +11,7 @@ from __future__ import annotations
 import pytest
 
 from extensions.core_entities.files.plugin import FilesPlugin
-from src.backend.core.interfaces.plugin import BasePlugin
+from src.backend.core.api import BasePlugin
 
 
 def test_files_plugin_is_base_plugin_subclass() -> None:

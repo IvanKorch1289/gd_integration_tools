@@ -48,19 +48,19 @@ class MCPClientSpec(BaseModel):
     name: str = Field(..., description="Уникальный identifier клиента")
     url: str = Field(..., description="HTTP endpoint MCP-сервера")
     auth_provider: str = Field(
-        default="none", description="Тип auth: jwt | api_key | oauth | none",
+        default="none", description="Тип auth: jwt | api_key | oauth | none"
     )
     capability_required: str = Field(
-        default="", description="Capability для outbound access к этому endpoint",
+        default="", description="Capability для outbound access к этому endpoint"
     )
     waf_policy: str = Field(
-        default="strict", description="WAF policy: strict | permissive",
+        default="strict", description="WAF policy: strict | permissive"
     )
     timeout_s: float = Field(
-        default=10.0, ge=0.1, le=120.0, description="Таймаут запроса (секунды)",
+        default=10.0, ge=0.1, le=120.0, description="Таймаут запроса (секунды)"
     )
     headers: dict[str, str] = Field(
-        default_factory=dict, description="Дополнительные HTTP headers",
+        default_factory=dict, description="Дополнительные HTTP headers"
     )
 
 
@@ -196,7 +196,7 @@ class MCPClientRegistry:
 
         try:
             response = await http_client.post(
-                spec.url, json=payload, headers=headers, timeout=spec.timeout_s,
+                spec.url, json=payload, headers=headers, timeout=spec.timeout_s
             )
             response.raise_for_status()
             result = response.json()
@@ -238,7 +238,7 @@ class MCPClientRegistry:
         except ImportError as exc:
             raise RuntimeError(
                 "OutboundHttpClient is required for MCP registry WAF compliance. "
-                "Ensure src.backend.core.net.outbound_http is importable.",
+                "Ensure src.backend.core.net.outbound_http is importable."
             ) from exc
 
     async def _resolve_api_key(self, client_name: str) -> str | None:
@@ -306,7 +306,7 @@ def _check_capability(capability: str, client_name: str) -> None:
                 client_name,
             )
             raise PermissionError(
-                f"Capability '{capability}' denied for MCP client '{client_name}'",
+                f"Capability '{capability}' denied for MCP client '{client_name}'"
             )
     except ImportError:
         logger.debug("CapabilityGate not available, skipping capability check")

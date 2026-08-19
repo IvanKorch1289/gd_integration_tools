@@ -89,7 +89,7 @@ class AsgiHttp3Protocol(QuicConnectionProtocol):
                 logger.debug("Unhandled H3 event: %s", type(event).__name__)
 
     def _on_headers(
-        self, stream_id: int, headers: list[tuple[bytes, bytes]], stream_ended: bool,
+        self, stream_id: int, headers: list[tuple[bytes, bytes]], stream_ended: bool
     ) -> None:
         method = b""
         path = b"/"
@@ -111,7 +111,7 @@ class AsgiHttp3Protocol(QuicConnectionProtocol):
         )
 
         def _send_headers(
-            status: int, hdrs: list[tuple[bytes, bytes]], sid: int = stream_id,
+            status: int, hdrs: list[tuple[bytes, bytes]], sid: int = stream_id
         ) -> None:
             self._send_headers(sid, hdrs)
 
@@ -159,7 +159,7 @@ class AsgiHttp3Protocol(QuicConnectionProtocol):
         push_task.add_done_callback(self._tasks.discard)
         if stream_ended:
             disc_task = registry.create_task(
-                handler.push_disconnect(), name=f"http3-push-disconnect-{stream_id}",
+                handler.push_disconnect(), name=f"http3-push-disconnect-{stream_id}"
             )
             self._tasks.add(disc_task)
             disc_task.add_done_callback(self._tasks.discard)

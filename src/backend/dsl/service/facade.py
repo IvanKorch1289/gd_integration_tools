@@ -58,9 +58,11 @@ class DslService:
         # сигнал для вызова AuthorizationGateway через check_route_permission.
         # Если security=None/empty — поведение backward-compat (no check).
         if pipeline.security:
-            await self._enforce_route_permission(pipeline.route_id, pipeline.security, context)
+            await self._enforce_route_permission(
+                pipeline.route_id, pipeline.security, context
+            )
         return await self._engine.execute(
-            pipeline, body=body, headers=headers, context=context,
+            pipeline, body=body, headers=headers, context=context
         )
 
     @staticmethod

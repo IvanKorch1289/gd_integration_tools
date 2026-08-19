@@ -56,7 +56,7 @@ class _SagaLRAProcessorProtocol(Protocol):
     ) -> None: ...
 
     async def _run_action(
-        self, step: SagaStepSpec, exchange: Any, context: Any, *, deadline: float,
+        self, step: SagaStepSpec, exchange: Any, context: Any, *, deadline: float
     ) -> Any: ...
 
     async def _run_compensation(

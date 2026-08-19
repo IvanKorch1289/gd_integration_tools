@@ -11,6 +11,7 @@ only allowed when ``allow_insecure_ftp=True`` AND the process is run
 with an explicit dev/test profile (enforced via ``require_insecure_flag``).
 Default = strict TLS with cert verification.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -71,9 +72,7 @@ class FtpUploadProcessor(BaseProcessor):
         # flag AND the env var (default-off). The env var is what
         # ops/production can revoke centrally via deployment manifests.
         env_insecure = os.environ.get(_INSECURE_ENV) == "1"
-        production = os.environ.get("APP_ENV", "").lower() in {
-            "prod", "production",
-        }
+        production = os.environ.get("APP_ENV", "").lower() in {"prod", "production"}
         self._allow_insecure = allow_insecure_ftp and env_insecure and not production
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
@@ -114,9 +113,9 @@ class FtpUploadProcessor(BaseProcessor):
                         # для server error. Bare `except Exception` маскировал
                         # unrelated runtime errors.
                         import logging
+
                         logging.getLogger(__name__).debug(
-                            "ftpupload.ftp_quit_failed",
-                            extra={"error": str(quit_exc)},
+                            "ftpupload.ftp_quit_failed", extra={"error": str(quit_exc)}
                         )
                         ftp.close()
                 return
@@ -129,9 +128,7 @@ class FtpUploadProcessor(BaseProcessor):
             tls_context.check_hostname = True
             tls_context.verify_mode = ssl.CERT_REQUIRED
 
-            ftp = FTP_TLS(
-                context=tls_context, timeout=30,
-            )
+            ftp = FTP_TLS(context=tls_context, timeout=30)
             # Rationale: TLS-only transport (RFC 4217); CERT_REQUIRED +
             # ``prot_p()`` below. Default path; not a plaintext FTP call.
             ftp.connect(self.host, self.port)
@@ -149,6 +146,7 @@ class FtpUploadProcessor(BaseProcessor):
                     # cycle-9/D-AUDIT-950: см. D-AUDIT-949 — тот же narrow для
                     # TLS path.
                     import logging
+
                     logging.getLogger(__name__).debug(
                         "ftpupload.ftp_tls_quit_failed",
                         extra={"error": str(tls_quit_exc)},
@@ -158,7 +156,9 @@ class FtpUploadProcessor(BaseProcessor):
         await asyncio.to_thread(_upload)
         _rpa_logger.info(
             "ftp_upload host=%s local=%s remote=%s tls=%s",
-            self.host, self.local_path, self.remote_path,
+            self.host,
+            self.local_path,
+            self.remote_path,
             not self._allow_insecure,
         )
         self.set_result(exchange, "body.uploaded", True)

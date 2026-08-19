@@ -14,7 +14,7 @@ from __future__ import annotations
 def test_repository_inherits_sqlalchemy_base() -> None:
     """OrderRepository наследует SQLAlchemyRepository из core."""
     from extensions.core_entities.orders.repositories.orders import OrderRepository
-    from src.backend.core.repositories.base import SQLAlchemyRepository
+    from src.backend.core.api import SQLAlchemyRepository
     assert issubclass(OrderRepository, SQLAlchemyRepository)
 
 

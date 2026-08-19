@@ -85,7 +85,7 @@ def _validate_cron_expression(expression: str) -> str:
     fields = expr.split()
     if len(fields) not in _CRON_FIELDS:
         raise ValueError(
-            f"Cron expression must have 5 or 6 fields, got {len(fields)}: {expr!r}",
+            f"Cron expression must have 5 or 6 fields, got {len(fields)}: {expr!r}"
         )
 
     # Lazy import — croniter project dep, но держим import границу узкой.
@@ -142,7 +142,7 @@ def _coerce_timestamp(value: TimestampLike) -> float:
             dt = datetime.fromisoformat(s)
         except ValueError as exc:
             raise ValueError(
-                f"defer_until: cannot parse ISO-8601 string {value!r}: {exc}",
+                f"defer_until: cannot parse ISO-8601 string {value!r}: {exc}"
             ) from exc
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=UTC)
@@ -152,7 +152,7 @@ def _coerce_timestamp(value: TimestampLike) -> float:
 
     raise TypeError(
         f"defer_until: unsupported type {type(value).__name__!r}; "
-        "expected datetime, ISO-8601 string, int, or float",
+        "expected datetime, ISO-8601 string, int, or float"
     )
 
 
@@ -179,13 +179,13 @@ class DeferredExecutionMixin:
         """
         if not isinstance(seconds, int) or isinstance(seconds, bool):
             raise TypeError(
-                f"defer_for: seconds must be int, got {type(seconds).__name__}",
+                f"defer_for: seconds must be int, got {type(seconds).__name__}"
             )
         if seconds < 0:
             raise ValueError(f"defer_for: seconds must be >= 0, got {seconds}")
 
         self._set_deferred(
-            {"type": "delay", "seconds": seconds, "scheduled_at": time.time()},
+            {"type": "delay", "seconds": seconds, "scheduled_at": time.time()}
         )
         return self  # type: ignore
 
@@ -215,7 +215,7 @@ class DeferredExecutionMixin:
                 "expression": expression,
                 "timezone": timezone_name,
                 "scheduled_at": time.time(),
-            },
+            }
         )
         return self  # type: ignore
 
@@ -238,7 +238,7 @@ class DeferredExecutionMixin:
         """
         ts = _coerce_timestamp(timestamp)
         self._set_deferred(
-            {"type": "until", "timestamp": ts, "scheduled_at": time.time()},
+            {"type": "until", "timestamp": ts, "scheduled_at": time.time()}
         )
         return self  # type: ignore
 
@@ -258,10 +258,10 @@ class DeferredExecutionMixin:
         """
         if not callable(condition):
             raise TypeError(
-                f"defer_if: condition must be callable, got {type(condition).__name__}",
+                f"defer_if: condition must be callable, got {type(condition).__name__}"
             )
         self._set_deferred(
-            {"type": "conditional", "condition": condition, "scheduled_at": time.time()},
+            {"type": "conditional", "condition": condition, "scheduled_at": time.time()}
         )
         return self  # type: ignore
 

@@ -25,7 +25,7 @@ class InMemoryResilienceProfileStore:
         self._lock = asyncio.Lock()
 
     async def get(
-        self, name: str, *, tenant_id: str | None = None,
+        self, name: str, *, tenant_id: str | None = None
     ) -> ResilienceProfile | None:
         """Get resilience profile by name.
 
@@ -67,7 +67,7 @@ class InMemoryResilienceProfileStore:
             return list(effective.values())
 
     async def upsert(
-        self, profile: ResilienceProfile, *, tenant_id: str | None = None,
+        self, profile: ResilienceProfile, *, tenant_id: str | None = None
     ) -> ResilienceProfile:
         """Create or update a resilience profile.
 

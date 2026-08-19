@@ -241,6 +241,7 @@ class SmartSessionManager:
             # not initialized, RuntimeError — flags unavailable. Bare `except
             # Exception` маскировал unrelated runtime errors.
             import logging
+
             logging.getLogger(__name__).debug(
                 "smart_session_manager.feature_flags_fallback",
                 extra={"error": str(ff_exc)},
@@ -266,8 +267,8 @@ class SmartSessionManager:
                             0
                         )::bigint AS replay_lag_bytes
                         FROM pg_stat_replication
-                        """,
-                    ),
+                        """
+                    )
                 )
                 row = result.fetchone()
                 if row is not None:

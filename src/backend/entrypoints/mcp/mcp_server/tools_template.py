@@ -52,12 +52,12 @@ def _register_template_tools(mcp: Any) -> None:
         tmpl = templates.get(template_id)
         if not tmpl:
             return encode_json({"error": f"Template '{template_id}' not found"}).decode(
-                "utf-8",
+                "utf-8"
             )
 
         try:
             parsed_params = orjson.loads(params) if params else {}
-        except (orjson.JSONDecodeError, TypeError):
+        except orjson.JSONDecodeError, TypeError:
             return encode_json({"error": "Invalid JSON params"}).decode("utf-8")
 
         try:
@@ -70,7 +70,7 @@ def _register_template_tools(mcp: Any) -> None:
                             {"route_id": p.route_id, "processors": len(p.processors)}
                             for p in result
                         ],
-                    },
+                    }
                 ).decode("utf-8")
             return encode_json(
                 {
@@ -78,7 +78,7 @@ def _register_template_tools(mcp: Any) -> None:
                     "route_id": result.route_id,
                     "processors": len(result.processors),
                     "processor_names": [p.name for p in result.processors],
-                },
+                }
             ).decode("utf-8")
         except Exception as exc:
             return encode_json({"error": str(exc)}).decode("utf-8")
@@ -112,6 +112,6 @@ def _register_template_tools(mcp: Any) -> None:
                             }
                             for p in sig.parameters.values()
                         ],
-                    },
+                    }
                 )
         return encode_json(result).decode("utf-8")

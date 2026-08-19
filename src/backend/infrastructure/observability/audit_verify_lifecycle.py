@@ -103,7 +103,7 @@ class AuditVerifyScheduler:
             return
         self._running = True
         self._task = get_task_registry().create_task(
-            self._loop(), name="audit-hmac-verify",
+            self._loop(), name="audit-hmac-verify"
         )
         _logger.info(
             "AuditVerifyScheduler started (interval=%.1fh)",

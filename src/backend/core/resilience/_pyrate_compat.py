@@ -54,7 +54,7 @@ async def shutdown_pyrate_leaker(limiter: Limiter) -> None:
 
     """
     leaker = getattr(limiter, "_leaker", None) or getattr(
-        getattr(limiter, "bucket_factory", None), "_leaker", None,
+        getattr(limiter, "bucket_factory", None), "_leaker", None
     )
     if leaker is None:
         return

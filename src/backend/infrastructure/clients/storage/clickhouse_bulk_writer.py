@@ -94,7 +94,7 @@ class ClickHouseBulkWriter:
         self._max_buffer_size = max_buffer_size
         self._flush_interval = flush_interval_seconds
         self._queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue(
-            maxsize=queue_max_size,
+            maxsize=queue_max_size
         )
         self._stop = asyncio.Event()
         self._task: asyncio.Task[None] | None = None
@@ -109,7 +109,7 @@ class ClickHouseBulkWriter:
         from src.backend.core.utils.task_registry import get_task_registry
 
         self._task = get_task_registry().create_task(
-            self._run(), name=f"chbulk-{self._table}",
+            self._run(), name=f"chbulk-{self._table}"
         )
 
     async def add(self, row: dict[str, Any]) -> None:
@@ -196,7 +196,10 @@ class ClickHouseBulkWriter:
                             "clickhouse_bulk.REQUEUE_FAILED: %d rows "
                             "PERMANENTLY LOST (callback=%s, requeue=%s, "
                             "table=%s)",
-                            len(batch), cb_exc, requeue_exc, self._table,
+                            len(batch),
+                            cb_exc,
+                            requeue_exc,
+                            self._table,
                         )
             return 0
 

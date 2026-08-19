@@ -93,9 +93,9 @@ def get_authorization_gateway() -> AuthorizationGateway | None:
         # ImportError — get_app_ref missing, AttributeError — API
         # change, RuntimeError — app_state unavailable.
         import logging
+
         logging.getLogger(__name__).debug(
-            "authorization_gateway.app_state_fallback",
-            extra={"error": str(app_exc)},
+            "authorization_gateway.app_state_fallback", extra={"error": str(app_exc)}
         )
         return None
     if app is None:
@@ -170,7 +170,7 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
         try:
             self._capability_gateway.check(principal, resource, ctx.get("scope"))
             reasons.append(
-                AuthorizationReason(source="capability_gateway", outcome="allow"),
+                AuthorizationReason(source="capability_gateway", outcome="allow")
             )
         except Exception as exc:
             reason = AuthorizationReason(
@@ -300,10 +300,7 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
                 return casbin_result
         except Exception as exc:
             authz_check_engine_failed_total.labels(engine="casbin").inc()
-            _logger.warning(
-                "authz.check() engine=casbin failed: %s",
-                exc,
-            )
+            _logger.warning("authz.check() engine=casbin failed: %s", exc)
 
         # 3. Try OPA step if registered
         # B-03 fix (cycle 33): см. выше — same observability gap, та же
@@ -314,20 +311,13 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
                 return opa_result
         except Exception as exc:
             authz_check_engine_failed_total.labels(engine="opa").inc()
-            _logger.warning(
-                "authz.check() engine=opa failed: %s",
-                exc,
-            )
+            _logger.warning("authz.check() engine=opa failed: %s", exc)
 
         # 4. Default deny (fail-closed)
         return False
 
     def add_policy(
-        self,
-        subject: str,
-        action: str,
-        resource: str,
-        effect: str = "allow",
+        self, subject: str, action: str, resource: str, effect: str = "allow"
     ) -> bool:
         """Add policy rule (S193 fix).
 
@@ -351,18 +341,14 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
             # AttributeError — effect missing, TypeError — wrong type,
             # ValueError — invalid effect value.
             import logging
+
             logging.getLogger(__name__).debug(
                 "authorization_gateway.add_policy_failed",
                 extra={"error": str(policy_exc)},
             )
             return False
 
-    def remove_policy(
-        self,
-        subject: str,
-        action: str,
-        resource: str,
-    ) -> bool:
+    def remove_policy(self, subject: str, action: str, resource: str) -> bool:
         """Remove policy rule (S193 fix).
 
         Returns:
@@ -381,15 +367,14 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
             # KeyError — key not in dict (rare race), AttributeError —
             # _in_memory_policies API change, TypeError — wrong key type.
             import logging
+
             logging.getLogger(__name__).debug(
                 "authorization_gateway.remove_policy_failed",
                 extra={"error": str(rm_exc)},
             )
             return False
 
-    def _casbin_check(
-        self, subject: str, action: str, resource: str,
-    ) -> bool | None:
+    def _casbin_check(self, subject: str, action: str, resource: str) -> bool | None:
         """Internal: try Casbin step if available."""
         from src.backend.core.security.authorization_gateway.casbin_mixin import (
             CasbinMixin,
@@ -400,19 +385,13 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
         return None
 
     def _opa_check(
-        self,
-        subject: str,
-        action: str,
-        resource: str,
-        context: dict[str, Any] | None,
+        self, subject: str, action: str, resource: str, context: dict[str, Any] | None
     ) -> bool | None:
         """Internal: try OPA step if available."""
         from src.backend.core.security.authorization_gateway.opa_mixin import OpaMixin
 
         if hasattr(OpaMixin, "_opa_check"):
-            return OpaMixin._opa_check(
-                self, subject, action, resource, context,
-            )
+            return OpaMixin._opa_check(self, subject, action, resource, context)
         return None
 
     def _is_enabled(self) -> bool:

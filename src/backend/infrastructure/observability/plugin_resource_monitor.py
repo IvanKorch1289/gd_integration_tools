@@ -97,7 +97,7 @@ class PluginResourceMonitor:
     """
 
     def __init__(
-        self, plugins: Iterable[str] = (), *, interval_seconds: float = 30.0,
+        self, plugins: Iterable[str] = (), *, interval_seconds: float = 30.0
     ) -> None:
         self._plugins = tuple(plugins)
         self._interval = interval_seconds
@@ -181,7 +181,8 @@ class PluginResourceMonitor:
             _logger.debug(
                 "plugin_resource_monitor._process_cpu_percent: psutil "
                 "query failed (exc_type=%s exc_msg=%s) — returning 0.0",
-                type(exc).__name__, exc,
+                type(exc).__name__,
+                exc,
             )
             return 0.0
 

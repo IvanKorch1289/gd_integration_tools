@@ -37,7 +37,7 @@ _scheduler: Any = None
 
 
 async def _publish(
-    topic: str, payload: dict[str, Any], headers: dict[str, Any],
+    topic: str, payload: dict[str, Any], headers: dict[str, Any]
 ) -> None:
     """Публикует payload в брокер по префиксу topic.
 
@@ -58,7 +58,7 @@ async def _publish(
             )
 
             await get_stream_client().publish_to_kafka(
-                topic=dest, message=payload, headers=headers,
+                topic=dest, message=payload, headers=headers
             )
         case "rabbit":
             from src.backend.infrastructure.clients.messaging.stream import (
@@ -72,7 +72,7 @@ async def _publish(
             )
 
             await get_stream_client().publish_to_redis(
-                stream=dest, message=payload, headers=headers,
+                stream=dest, message=payload, headers=headers
             )
         case _:
             raise ValueError(f"Неизвестный protocol '{protocol}' в topic '{topic}'")
@@ -182,7 +182,7 @@ async def sweep_stuck_once(*, threshold_seconds: int = 300, limit: int = 1000) -
     from src.backend.infrastructure.repositories import outbox as outbox_repo
 
     reset_count = await outbox_repo.reset_stuck_processing(
-        threshold_seconds=threshold_seconds, limit=limit,
+        threshold_seconds=threshold_seconds, limit=limit
     )
     if reset_count > 0:
         logger.info(

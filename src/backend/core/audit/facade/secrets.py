@@ -112,7 +112,7 @@ async def emit_secret_access(
         # ImportError — audit facade missing, AttributeError — API
         # change, RuntimeError — backend unavailable.
         import logging
+
         logging.getLogger(__name__).debug(
-            "secrets_audit.emit_failed",
-            extra={"error": str(audit_exc)},
+            "secrets_audit.emit_failed", extra={"error": str(audit_exc)}
         )

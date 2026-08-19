@@ -192,7 +192,7 @@ class RouteBuilder:
         """LLM-скоринг антифрода (поверх детерминистических правил)."""
 
     def api_proxy(
-        self, base_url: str, *, method: str = ..., path: str = ..., timeout: float = ...,
+        self, base_url: str, *, method: str = ..., path: str = ..., timeout: float = ...
     ) -> RouteBuilder:
         """Прозрачный API proxy с request/response трансформацией."""
 
@@ -200,7 +200,7 @@ class RouteBuilder:
         """Автоматическая обработка клиентских обращений."""
 
     def appium_mobile(
-        self, platform: str, app_package: str, operation: str,
+        self, platform: str, app_package: str, operation: str
     ) -> RouteBuilder:
         """Appium автоматизация мобильных приложений (android/ios)."""
 
@@ -234,11 +234,7 @@ class RouteBuilder:
         """Проверяет авторизацию запроса (Wave 8.1)."""
 
     def batch(
-        self,
-        *,
-        size: int = ...,
-        timeout_ms: int = ...,
-        group_by: str | None = ...,
+        self, *, size: int = ..., timeout_ms: int = ..., group_by: str | None = ...
     ) -> RouteBuilder:
         """Накопление сообщений в окно с flush по N ИЛИ по таймауту."""
 
@@ -286,12 +282,12 @@ class RouteBuilder:
         """Ограничивает concurrency на ветку — защита провайдера от перегрузки."""
 
     def cache(
-        self, key_fn: Callable[[Exchange[Any]], str], *, ttl: int = ...,
+        self, key_fn: Callable[[Exchange[Any]], str], *, ttl: int = ...
     ) -> RouteBuilder:
         """Redis-кеш: проверяет наличие по ключу, пропускает если есть."""
 
     def cache_write(
-        self, key_fn: Callable[[Exchange[Any]], str], *, ttl: int = ...,
+        self, key_fn: Callable[[Exchange[Any]], str], *, ttl: int = ...
     ) -> RouteBuilder:
         """Redis-кеш: записывает результат после обработки."""
 
@@ -306,12 +302,12 @@ class RouteBuilder:
         """Вызов Python-функции ``module:fn`` (R-V15-6, V21 security)."""
 
     def call_llm(
-        self, provider: str | None = ..., model: str | None = ...,
+        self, provider: str | None = ..., model: str | None = ...
     ) -> RouteBuilder:
         """LLM chat-completion через ai_agent сервис (с PII-маскировкой)."""
 
     def call_llm_with_fallback(
-        self, providers: list[str], *, model: str = ...,
+        self, providers: list[str], *, model: str = ...
     ) -> RouteBuilder:
         """LLM с fallback-цепочкой провайдеров."""
 
@@ -377,7 +373,7 @@ class RouteBuilder:
         """Citrix/RDP-сессия (launch/click/type/screenshot/close)."""
 
     def claim_check_in(
-        self, *, store: str = ..., ttl_seconds: int = ..., threshold_bytes: int = ...,
+        self, *, store: str = ..., ttl_seconds: int = ..., threshold_bytes: int = ...
     ) -> RouteBuilder:
         """Claim Check (store): сохраняет body в Redis/S3, body → {_claim_token: ...}."""
 
@@ -388,11 +384,7 @@ class RouteBuilder:
         """Клик по CSS-селектору."""
 
     def clickhouse_insert(
-        self,
-        table: str,
-        *,
-        batch_size: int = ...,
-        rows_from: str = ...,
+        self, table: str, *, batch_size: int = ..., rows_from: str = ...
     ) -> RouteBuilder:
         """Batch INSERT в ClickHouse ``table`` из exchange body.
 
@@ -405,10 +397,7 @@ class RouteBuilder:
         """SELECT в ClickHouse; результат в ``exchange.properties[to_property]``."""
 
     def collect(
-        self,
-        *,
-        field: str | None = ...,
-        key_fn: Callable[[Any], Any] | None = ...,
+        self, *, field: str | None = ..., key_fn: Callable[[Any], Any] | None = ...
     ) -> RouteBuilder:
         """Извлекает поле из каждого объекта коллекции в body."""
 
@@ -416,7 +405,7 @@ class RouteBuilder:
         """Compliance-метки на Exchange (PII/PCI/FIN/GDPR)."""
 
     def compose_prompt(
-        self, template: str, context_property: str = ...,
+        self, template: str, context_property: str = ...
     ) -> RouteBuilder:
         """Построение промпта из шаблона + контекста из properties."""
 
@@ -451,7 +440,7 @@ class RouteBuilder:
         """Content Enricher EIP — http/static/function strategies."""
 
     def content_filter(
-        self, predicate: Callable[[Exchange[Any]], bool],
+        self, predicate: Callable[[Exchange[Any]], bool]
     ) -> RouteBuilder:
         """Alias для :meth:`filter` — фильтрует Exchange, останавливает если False."""
 
@@ -482,12 +471,12 @@ class RouteBuilder:
         """S103 W2 — DSL-шаг ``cron_schedule``: запуск workflow по cron-расписанию."""
 
     def crud_create(
-        self, entity: str, *, payload_from: str = ..., result_property: str = ...,
+        self, entity: str, *, payload_from: str = ..., result_property: str = ...
     ) -> RouteBuilder:
         """Алиас к :meth:`entity_create` (R-V15-12 / 80/20 YAML)."""
 
     def crud_delete(
-        self, entity: str, *, id_from: str = ..., result_property: str = ...,
+        self, entity: str, *, id_from: str = ..., result_property: str = ...
     ) -> RouteBuilder:
         """Алиас к :meth:`entity_delete` (R-V15-12)."""
 
@@ -503,7 +492,7 @@ class RouteBuilder:
         """Алиас к :meth:`entity_list` (R-V15-12)."""
 
     def crud_read(
-        self, entity: str, *, id_from: str = ..., result_property: str = ...,
+        self, entity: str, *, id_from: str = ..., result_property: str = ...
     ) -> RouteBuilder:
         """Алиас к :meth:`entity_get` (R-V15-12)."""
 
@@ -527,7 +516,7 @@ class RouteBuilder:
         """Удаляет ключ из in-memory store Exchange."""
 
     def data_store_get(
-        self, key: str, *, default: Any = ..., result_property: str = ...,
+        self, key: str, *, default: Any = ..., result_property: str = ...
     ) -> RouteBuilder:
         """Читает значение из in-memory store Exchange."""
 
@@ -547,12 +536,12 @@ class RouteBuilder:
         """K3 S5 W8 — вызвать stored procedure через ExternalDatabaseRegistry."""
 
     def db_delete(
-        self, table: str, where: dict[str, Any], *, result_property: str = ...,
+        self, table: str, where: dict[str, Any], *, result_property: str = ...
     ) -> RouteBuilder:
         """Safe DELETE с explicit WHERE (S95 W1)."""
 
     def db_insert(
-        self, table: str, data: dict[str, Any], *, result_property: str = ...,
+        self, table: str, data: dict[str, Any], *, result_property: str = ...
     ) -> RouteBuilder:
         """Safe INSERT через parameterized SQL (S95 W1)."""
 
@@ -582,12 +571,12 @@ class RouteBuilder:
         """Safe UPSERT (INSERT ... ON CONFLICT DO UPDATE, PostgreSQL)."""
 
     def dead_letter(
-        self, processors: list[BaseProcessor], *, dlq_stream: str = ...,
+        self, processors: list[BaseProcessor], *, dlq_stream: str = ...
     ) -> RouteBuilder:
         """Dead Letter Channel: при ошибке — отправка в Redis stream."""
 
     def deadline(
-        self, *, timeout_seconds: float = ..., fail_on_exceed: bool = ...,
+        self, *, timeout_seconds: float = ..., fail_on_exceed: bool = ...
     ) -> RouteBuilder:
         """Установка дedline pipeline; downstream проверяет _deadline_at."""
 
@@ -662,7 +651,7 @@ class RouteBuilder:
         """Durable Subscriber: fan-out к persistent-подписчикам."""
 
     def dynamic_route(
-        self, route_expression: Callable[[Exchange[Any]], str],
+        self, route_expression: Callable[[Exchange[Any]], str]
     ) -> RouteBuilder:
         """Dynamic Router: runtime-вычисление route_id."""
 
@@ -670,10 +659,7 @@ class RouteBuilder:
         """Compose + отправка email через SMTP."""
 
     def email_driven(
-        self,
-        mailbox: str = ...,
-        subject_filter: str | None = ...,
-        extract: str = ...,
+        self, mailbox: str = ..., subject_filter: str | None = ..., extract: str = ...
     ) -> RouteBuilder:
         """IMAP → structured data pipeline."""
 
@@ -690,17 +676,17 @@ class RouteBuilder:
         """Enrich: вызывает action и сохраняет результат в property."""
 
     def entity_create(
-        self, *, entity: str, payload_from: str = ..., result_property: str = ...,
+        self, *, entity: str, payload_from: str = ..., result_property: str = ...
     ) -> RouteBuilder:
         """Создать сущность через action ``<entity>.create``."""
 
     def entity_delete(
-        self, *, entity: str, id_from: str = ..., result_property: str = ...,
+        self, *, entity: str, id_from: str = ..., result_property: str = ...
     ) -> RouteBuilder:
         """Удалить сущность через action ``<entity>.delete``."""
 
     def entity_get(
-        self, *, entity: str, id_from: str = ..., result_property: str = ...,
+        self, *, entity: str, id_from: str = ..., result_property: str = ...
     ) -> RouteBuilder:
         """Прочитать сущность через action ``<entity>.get``."""
 
@@ -727,9 +713,7 @@ class RouteBuilder:
     ) -> RouteBuilder:
         """Обновить сущность через action ``<entity>.update``."""
 
-    def es_index(
-        self, index: str, *, doc_id_from: str | None = ...,
-    ) -> RouteBuilder:
+    def es_index(self, index: str, *, doc_id_from: str | None = ...) -> RouteBuilder:
         """Индексирует документ из body в ES ``index``."""
 
     def es_search(self, index: str, query: dict, *, size: int = ...) -> RouteBuilder:
@@ -759,7 +743,7 @@ class RouteBuilder:
         """Читать Excel файл в list[dict]."""
 
     def expire(
-        self, ttl_seconds: float, *, header_name: str = ..., drop_action: str = ...,
+        self, ttl_seconds: float, *, header_name: str = ..., drop_action: str = ...
     ) -> RouteBuilder:
         """Message Expiration: отбрасывает сообщения старше ``ttl_seconds``."""
 
@@ -840,17 +824,17 @@ class RouteBuilder:
         """Отправить файл (S3/LocalFS или exchange-property) в Express чат."""
 
     def express_status(
-        self, *, bot: str = ..., sync_id_from: str = ..., result_property: str = ...,
+        self, *, bot: str = ..., sync_id_from: str = ..., result_property: str = ...
     ) -> RouteBuilder:
         """Запросить статус доставки сообщения по sync_id."""
 
     def express_typing(
-        self, action: str = ..., *, bot: str = ..., chat_id_from: str = ...,
+        self, action: str = ..., *, bot: str = ..., chat_id_from: str = ...
     ) -> RouteBuilder:
         """Отправить/остановить индикатор набора в Express чате."""
 
     def extract(
-        self, selector: str, url: str | None = ..., output_property: str = ...,
+        self, selector: str, url: str | None = ..., output_property: str = ...
     ) -> RouteBuilder:
         """Извлечение текста по CSS-селектору."""
 
@@ -870,16 +854,12 @@ class RouteBuilder:
         """Выполняет ветку процессоров только при включённом feature flag."""
 
     def file_move(
-        self,
-        src: str | None = ...,
-        dst: str | None = ...,
-        *,
-        mode: str = ...,
+        self, src: str | None = ..., dst: str | None = ..., *, mode: str = ...
     ) -> RouteBuilder:
         """Копировать или переместить файл."""
 
     def fill_form(
-        self, url: str, fields: dict | None = ..., submit: str | None = ...,
+        self, url: str, fields: dict | None = ..., submit: str | None = ...
     ) -> RouteBuilder:
         """Заполнение формы по полям + опциональный submit."""
 
@@ -931,7 +911,7 @@ class RouteBuilder:
         """Переслать текущее сообщение в backend без трансформаций."""
 
     def from_(
-        cls: Any, route_id: str, source: str, *, description: str | None = ...,
+        cls: Any, route_id: str, source: str, *, description: str | None = ...
     ) -> RouteBuilder:
         """Точка входа: создаёт новый RouteBuilder."""
 
@@ -984,7 +964,7 @@ class RouteBuilder:
         """K3 S5 W5 — расширенный CDC через :class:`CdcPostgresLogicalSource`."""
 
     def from_cdc_registry(
-        cls: Any, route_id: str, backend: str, **kwargs: Any,
+        cls: Any, route_id: str, backend: str, **kwargs: Any
     ) -> RouteBuilder:
         """S101 W1 — создать маршрут с CDC-source через :func:`get_cdc_source`."""
 
@@ -992,7 +972,7 @@ class RouteBuilder:
         """Parse CSV → ``list[dict]``."""
 
     def from_eventbus(
-        self, topic_pattern: str, *, ack_mode: str = ..., name: str | None = ...,
+        self, topic_pattern: str, *, ack_mode: str = ..., name: str | None = ...
     ) -> RouteBuilder:
         """Subscribe маршрут на EventBus topic_pattern (V22 NEW)."""
 
@@ -1083,7 +1063,7 @@ class RouteBuilder:
         """Parse JSON string → ``dict``/``list`` в ``out_message.body``."""
 
     def from_jwt(
-        self, jwt_string: str | None = ..., *, secret: str, algorithm: str = ...,
+        self, jwt_string: str | None = ..., *, secret: str, algorithm: str = ...
     ) -> RouteBuilder:
         """Decode JWT ``str`` → claims ``dict`` (verify HS* signature via joserfc)."""
 
@@ -1114,7 +1094,7 @@ class RouteBuilder:
         """Точка входа: маршрут из MongoDB change-streams — S106 W4."""
 
     def from_mqtt(
-        cls: Any, route_id: str, topic: str, broker_url: str, **kwargs: Any,
+        cls: Any, route_id: str, topic: str, broker_url: str, **kwargs: Any
     ) -> RouteBuilder:
         """Создаёт маршрут с источником MQTT."""
 
@@ -1150,17 +1130,17 @@ class RouteBuilder:
         """Decode base64-encoded JSON ``bytes`` → ``dict`` (inverse of to_protobuf_like)."""
 
     def from_rabbit(
-        cls: Any, route_id: str, queue: str, url: str, **kwargs: Any,
+        cls: Any, route_id: str, queue: str, url: str, **kwargs: Any
     ) -> RouteBuilder:
         """Создаёт маршрут с источником RabbitMQ."""
 
     def from_redis_streams(
-        cls: Any, route_id: str, stream: str, consumer_group: str, **kwargs: Any,
+        cls: Any, route_id: str, stream: str, consumer_group: str, **kwargs: Any
     ) -> RouteBuilder:
         """Создаёт маршрут с источником Redis Streams."""
 
     def from_registered_source(
-        cls: Any, route_id: str, source_id: str, *, description: str | None = ...,
+        cls: Any, route_id: str, source_id: str, *, description: str | None = ...
     ) -> RouteBuilder:
         """Точка входа W23: маршрут запитывается от зарегистрированного Source."""
 
@@ -1176,7 +1156,7 @@ class RouteBuilder:
         """Camel-style ``from("aws-s3:bucket/key")`` — S3 sensor trigger."""
 
     def from_schedule(
-        cls: Any, route_id: str, cron_expr: str, **kwargs: Any,
+        cls: Any, route_id: str, cron_expr: str, **kwargs: Any
     ) -> RouteBuilder:
         """Создаёт маршрут с источником cron-расписания."""
 
@@ -1287,7 +1267,7 @@ class RouteBuilder:
         """Читает route-level override (используется processors/handlers)."""
 
     def get_setting(
-        self, path: str, *, to: str = ..., default: Any = ...,
+        self, path: str, *, to: str = ..., default: Any = ...
     ) -> RouteBuilder:
         """Чтение настройки из application config (R-V15-17)."""
 
@@ -1307,10 +1287,7 @@ class RouteBuilder:
         """GraphQL query/mutation executor."""
 
     def group_by(
-        self,
-        *,
-        field: str | None = ...,
-        key_fn: Callable[[Any], Any] | None = ...,
+        self, *, field: str | None = ..., key_fn: Callable[[Any], Any] | None = ...
     ) -> RouteBuilder:
         """Группирует коллекцию в body по полю."""
 
@@ -1381,12 +1358,12 @@ class RouteBuilder:
         """HTTP client: GET/POST/PUT/DELETE с таймаутом и headers."""
 
     def ics_calendar(
-        self, mode: str, *, source: str = ..., to: str = ...,
+        self, mode: str, *, source: str = ..., to: str = ...
     ) -> RouteBuilder:
         """Parse/render iCalendar (RFC 5545) data."""
 
     def idempotent(
-        self, key_expression: Callable[[Exchange[Any]], str], *, ttl_seconds: int = ...,
+        self, key_expression: Callable[[Exchange[Any]], str], *, ttl_seconds: int = ...
     ) -> RouteBuilder:
         """Идемпотентный consumer: дедупликация через Redis SET NX EX."""
 
@@ -1473,7 +1450,7 @@ class RouteBuilder:
         """Рендерит Jinja2-шаблон из строки."""
 
     def jinja_template_file(
-        self, path: str, *, context_from: str = ..., result_property: str = ...,
+        self, path: str, *, context_from: str = ..., result_property: str = ...
     ) -> RouteBuilder:
         """Рендерит Jinja2-шаблон из файла."""
 
@@ -1481,7 +1458,7 @@ class RouteBuilder:
         """JMESPath query via jq processor."""
 
     def jsonpath(
-        self, expr: str, *, to: str = ..., mode: str = ..., default: Any = ...,
+        self, expr: str, *, to: str = ..., mode: str = ..., default: Any = ...
     ) -> RouteBuilder:
         """Extract values via JSONPath expression."""
 
@@ -1579,9 +1556,7 @@ class RouteBuilder:
     ) -> RouteBuilder:
         """Loop — execute sub-processors N times or until condition."""
 
-    def mask(
-        self, *, patterns: list[str] | None = ..., replacement: str = ...,
-    ) -> Self:
+    def mask(self, *, patterns: list[str] | None = ..., replacement: str = ...) -> Self:
         """Маскирование PII/PCI в body (ИНН/СНИЛС/карта/email/телефон)."""
 
     def mask_pii(
@@ -1598,12 +1573,12 @@ class RouteBuilder:
         """Максимум по полю элементов коллекции."""
 
     def mcp_tool(
-        self, uri: str, tool: str, *, result_property: str = ...,
+        self, uri: str, tool: str, *, result_property: str = ...
     ) -> RouteBuilder:
         """Вызов внешнего MCP tool."""
 
     def middleware(
-        self, middleware: str | ProcessorMiddleware | dict[str, Any], **kwargs: Any,
+        self, middleware: str | ProcessorMiddleware | dict[str, Any], **kwargs: Any
     ) -> Self:
         """Добавляет middleware в pipeline (per-route override)."""
 
@@ -1622,17 +1597,17 @@ class RouteBuilder:
         """Выполняет ML-инференс через локальный filesystem model registry."""
 
     def mongo_find(
-        self, collection: str, query: dict, *, to_property: str = ...,
+        self, collection: str, query: dict, *, to_property: str = ...
     ) -> RouteBuilder:
         """FIND документов в Mongo; результат в ``exchange.properties[to_property]``."""
 
     def mongo_insert(
-        self, collection: str, *, document_from: str = ...,
+        self, collection: str, *, document_from: str = ...
     ) -> RouteBuilder:
         """INSERT документа в Mongo ``collection``."""
 
     def multicast(
-        self, sinks: list[str], *, parallel: bool = ..., name: str | None = ...,
+        self, sinks: list[str], *, parallel: bool = ..., name: str | None = ...
     ) -> RouteBuilder:
         """Multicast EIP — fan-out to multiple sinks (parallel by default)."""
 
@@ -1736,7 +1711,7 @@ class RouteBuilder:
         """Multi-page crawling с защитой от циклов и лимитом страниц."""
 
     def parallel(
-        self, branches: dict[str, list[BaseProcessor]], *, strategy: str = ...,
+        self, branches: dict[str, list[BaseProcessor]], *, strategy: str = ...
     ) -> RouteBuilder:
         """Параллельное выполнение именованных веток. strategy: all|first."""
 
@@ -1744,10 +1719,7 @@ class RouteBuilder:
         """Парсинг LLM-ответа в Pydantic-модель (с попыткой извлечь JSON)."""
 
     def partition(
-        self,
-        *,
-        field: str | None = ...,
-        predicate: Callable[[Any], bool] | None = ...,
+        self, *, field: str | None = ..., predicate: Callable[[Any], bool] | None = ...
     ) -> RouteBuilder:
         """Разбивает коллекцию на два списка: подходящие и нет."""
 
@@ -1824,9 +1796,7 @@ class RouteBuilder:
     def process(self, processor: BaseProcessor) -> RouteBuilder:
         """Добавляет произвольный процессор в pipeline."""
 
-    def process_fn(
-        self, func: ProcessorCallable, *, name: str | None = ...,
-    ) -> Self:
+    def process_fn(self, func: ProcessorCallable, *, name: str | None = ...) -> Self:
         """Добавляет обычную функцию или coroutine как процессор."""
 
     def protocol(self, proto: ProtocolType) -> RouteBuilder:
@@ -1849,7 +1819,7 @@ class RouteBuilder:
         """Публикация события через EventBus."""
 
     def purge_channel(
-        self, broker: Any, channel: str, *, dry_run: bool = ...,
+        self, broker: Any, channel: str, *, dry_run: bool = ...
     ) -> RouteBuilder:
         """Очистка очереди/стрима (admin-операция)."""
 
@@ -1877,21 +1847,14 @@ class RouteBuilder:
         """RAG query с выбором стратегии retrieval (S11 K3 W3)."""
 
     def rag_search(
-        self,
-        query_field: str = ...,
-        top_k: int = ...,
-        namespace: str | None = ...,
+        self, query_field: str = ..., top_k: int = ..., namespace: str | None = ...
     ) -> RouteBuilder:
         """RAG vector search: top-K ближайших документов по семантике."""
 
-    def read_file(
-        self, path: str | None = ..., *, binary: bool = ...,
-    ) -> RouteBuilder:
+    def read_file(self, path: str | None = ..., *, binary: bool = ...) -> RouteBuilder:
         """Чтение локального файла в body (text или bytes)."""
 
-    def read_s3(
-        self, bucket: str | None = ..., key: str | None = ...,
-    ) -> RouteBuilder:
+    def read_s3(self, bucket: str | None = ..., key: str | None = ...) -> RouteBuilder:
         """Загрузка объекта из S3."""
 
     def recipient_list(
@@ -1921,7 +1884,7 @@ class RouteBuilder:
         """``GET key`` в Redis; ``default`` при отсутствии ключа."""
 
     def redis_set(
-        self, key: str, value: str, *, ttl_seconds: int | None = ...,
+        self, key: str, value: str, *, ttl_seconds: int | None = ...
     ) -> RouteBuilder:
         """``SET key value [EX ttl]`` в Redis. ``ttl_seconds=None`` = бессрочно."""
 
@@ -1950,7 +1913,7 @@ class RouteBuilder:
         """Generate → Reflect → Refine agentic pattern via workflows (S39 W3)."""
 
     def regex(
-        self, pattern: str, *, action: str = ..., replacement: str = ...,
+        self, pattern: str, *, action: str = ..., replacement: str = ...
     ) -> RouteBuilder:
         """Извлечь или заменить текст по регулярному выражению."""
 
@@ -1977,21 +1940,17 @@ class RouteBuilder:
         """Render template file → output file. Returns bytes written."""
 
     def render_docx(
-        self,
-        *,
-        template: str,
-        context_from: str | None = ...,
-        output_to: str = ...,
+        self, *, template: str, context_from: str | None = ..., output_to: str = ...
     ) -> RouteBuilder:
         """Рендерит шаблон ``.docx`` со встроенными плейсхолдерами ``{{key}}``."""
 
     def render_email(
-        self, subject_template: str, body_template: str, context: Context | None = ...,
+        self, subject_template: str, body_template: str, context: Context | None = ...
     ) -> tuple[str, str]:
         """Render email subject + body. Returns ``(subject, body)`` tuple."""
 
     def render_file(
-        self, template_path: PathLike, context: Context | None = ...,
+        self, template_path: PathLike, context: Context | None = ...
     ) -> str:
         """Render Jinja2 template из файла (str | Path)."""
 
@@ -2018,7 +1977,7 @@ class RouteBuilder:
         """Публикует reply в ``reply_channel`` (reply_to)."""
 
     def reply_to(
-        self, broker: Any, *, reply_to_header: str = ..., correlation_header: str = ...,
+        self, broker: Any, *, reply_to_header: str = ..., correlation_header: str = ...
     ) -> RouteBuilder:
         """Return Address: публикует ответ в очередь из reply-to заголовка."""
 
@@ -2069,7 +2028,7 @@ class RouteBuilder:
         """Восстановление PII в ответе после LLM."""
 
     def result_unwrap(
-        self, *, source: str = ..., to: str = ..., to_err: str = ..., on_err: str = ...,
+        self, *, source: str = ..., to: str = ..., to_err: str = ..., on_err: str = ...
     ) -> RouteBuilder:
         """Unwrap Rust-style Result monad (Ok/Err)."""
 
@@ -2113,7 +2072,7 @@ class RouteBuilder:
         """GET объекта из S3 по ``key``."""
 
     def s3_list(
-        self, *, prefix_from: str | None = ..., result_property: str = ...,
+        self, *, prefix_from: str | None = ..., result_property: str = ...
     ) -> RouteBuilder:
         """LIST ключей в S3 bucket с пагинацией по ``prefix_from``."""
 
@@ -2460,9 +2419,7 @@ class RouteBuilder:
     def sql_exec(self, query: str, *, params: dict | None = ...) -> RouteBuilder:
         """INSERT/UPDATE/DELETE с bind-параметрами ``:name``."""
 
-    def sse_source(
-        self, url: str, event_types: list[str] | None = ...,
-    ) -> RouteBuilder:
+    def sse_source(self, url: str, event_types: list[str] | None = ...) -> RouteBuilder:
         """Source-процессор для Server-Sent Events."""
 
     def ssh_command(
@@ -2590,31 +2547,27 @@ class RouteBuilder:
         """Отправить файл (документ) в Telegram чат."""
 
     def telegram_status(
-        self, *, bot: str = ..., result_property: str = ...,
+        self, *, bot: str = ..., result_property: str = ...
     ) -> RouteBuilder:
         """Запросить профиль бота (getMe) — health-check Telegram."""
 
     def telegram_typing(
-        self, action: str = ..., *, bot: str = ..., chat_id_from: str = ...,
+        self, action: str = ..., *, bot: str = ..., chat_id_from: str = ...
     ) -> RouteBuilder:
         """Отправить chat-action (typing / upload_photo / …) в Telegram."""
 
     def template_render_str(
-        self, template_str: str, context: Context | None = ...,
+        self, template_str: str, context: Context | None = ...
     ) -> str:
         """Render Jinja2 template из строки. Returns rendered string."""
 
     def tenant_scope(
-        self,
-        *,
-        header: str = ...,
-        body_path: str | None = ...,
-        required: bool = ...,
+        self, *, header: str = ..., body_path: str | None = ..., required: bool = ...
     ) -> Self:
         """Multi-tenancy scope: tenant_id из заголовка/body в Exchange."""
 
     def terminal_3270(
-        self, host: str, port: int = ..., action: str = ...,
+        self, host: str, port: int = ..., action: str = ...
     ) -> RouteBuilder:
         """IBM 3270 терминал-эмулятор (мейнфрейм)."""
 
@@ -2658,7 +2611,7 @@ class RouteBuilder:
         """Convert ``list[dict]`` → CSV string."""
 
     def to_eventbus(
-        self, topic: str, *, payload_ref: str = ..., name: str | None = ...,
+        self, topic: str, *, payload_ref: str = ..., name: str | None = ...
     ) -> RouteBuilder:
         """Publish текущий exchange в EventBus topic (V22 NEW)."""
 
@@ -2675,11 +2628,7 @@ class RouteBuilder:
         """Serialize ``exchange.body`` → JSON string в ``out_message.body``."""
 
     def to_jwt(
-        self,
-        *,
-        secret: str,
-        algorithm: str = ...,
-        claims: dict[str, Any] | None = ...,
+        self, *, secret: str, algorithm: str = ..., claims: dict[str, Any] | None = ...
     ) -> RouteBuilder:
         """Encode ``exchange.body`` (dict) → JWT string (HS256 default)."""
 
@@ -2750,10 +2699,7 @@ class RouteBuilder:
         """Категоризация транзакций (MCC + merchant normalization)."""
 
     def unique(
-        self,
-        *,
-        field: str | None = ...,
-        key_fn: Callable[[Any], Any] | None = ...,
+        self, *, field: str | None = ..., key_fn: Callable[[Any], Any] | None = ...
     ) -> RouteBuilder:
         """Уникальные элементы коллекции."""
 
@@ -2761,16 +2707,12 @@ class RouteBuilder:
         """Pydantic-валидация body; при ошибке Exchange останавливается."""
 
     def validate_response(
-        self,
-        *,
-        schema: type | str | None = ...,
-        on_error: str = ...,
-        source: str = ...,
+        self, *, schema: type | str | None = ..., on_error: str = ..., source: str = ...
     ) -> RouteBuilder:
         """Pydantic-валидация response_body (R-V15-18)."""
 
     def validate_schema(
-        self, subject: str, *, schema_loader: Any = ...,
+        self, subject: str, *, schema_loader: Any = ...
     ) -> RouteBuilder:
         """Валидация по схеме из реестра (JSON Schema / Avro / Protobuf)."""
 
@@ -2810,7 +2752,7 @@ class RouteBuilder:
         """WebDAV upload/download/list/delete via webdav4."""
 
     def webhook_sign(
-        self, *, secret: str, header: str = ..., algorithm: str = ...,
+        self, *, secret: str, header: str = ..., algorithm: str = ...
     ) -> RouteBuilder:
         """HMAC-подпись outgoing webhook'а."""
 
@@ -2847,7 +2789,7 @@ class RouteBuilder:
         """Дедупликация в скользящем окне с Redis-персистентностью."""
 
     def wire_tap(
-        self, sink: str, *, async_: bool = ..., name: str | None = ...,
+        self, sink: str, *, async_: bool = ..., name: str | None = ...
     ) -> RouteBuilder:
         """Wire Tap EIP — copy exchange to ``sink`` (async by default)."""
 
@@ -2861,7 +2803,7 @@ class RouteBuilder:
         """Переопределяет auth для предыдущего step."""
 
     def with_connection_pool(
-        self, min_size: int = ..., max_size: int = ..., timeout: float = ...,
+        self, min_size: int = ..., max_size: int = ..., timeout: float = ...
     ) -> Self:
         """Route-level override: connection pool settings для всех транспортов."""
 
@@ -2878,12 +2820,12 @@ class RouteBuilder:
         """Route-level override: pool size для всех транспортов в route."""
 
     def with_reconnection(
-        self, max_attempts: int = ..., delay: float = ..., backoff: float = ...,
+        self, max_attempts: int = ..., delay: float = ..., backoff: float = ...
     ) -> Self:
         """Route-level override: reconnection policy для всех транспортов."""
 
     def with_retries(
-        self, max_attempts: int, *, backoff: str | float | None = ...,
+        self, max_attempts: int, *, backoff: str | float | None = ...
     ) -> Self:
         """Переопределяет количество попыток retry для предыдущего step."""
 
@@ -2896,9 +2838,7 @@ class RouteBuilder:
     def word_write(self) -> RouteBuilder:
         """Генерировать .docx документ из текста."""
 
-    def write_file(
-        self, path: str | None = ..., *, format: str = ...,
-    ) -> RouteBuilder:
+    def write_file(self, path: str | None = ..., *, format: str = ...) -> RouteBuilder:
         """Запись body в файл. format: auto|json|csv|text."""
 
     def write_s3(

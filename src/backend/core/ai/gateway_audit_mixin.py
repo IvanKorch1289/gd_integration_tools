@@ -64,7 +64,7 @@ class _AuditContext:
     audit_service: Any = None
 
     async def _emit(
-        self, step: str, *, pii_detected: bool = False, latency_ms: int = 0,
+        self, step: str, *, pii_detected: bool = False, latency_ms: int = 0
     ) -> None:
         """Emit одно событие ``ai.invocation.{step}``."""
         from src.backend.core.audit.schema.ai_invocation import (

@@ -52,7 +52,7 @@ class EntityUpdateProcessor(_BaseEntityProcessor):
         if not isinstance(payload, dict):
             exchange.fail(
                 f"{type(self).__name__}: payload_from={self._payload_from!r} "
-                f"вернул не-dict",
+                f"вернул не-dict"
             )
             return
         await self._dispatch({"id": entity_id, "data": payload}, context, exchange)
@@ -65,5 +65,5 @@ class EntityUpdateProcessor(_BaseEntityProcessor):
                 "id_from": self._id_from,
                 "payload_from": self._payload_from,
                 "result_property": self._result_property,
-            },
+            }
         }

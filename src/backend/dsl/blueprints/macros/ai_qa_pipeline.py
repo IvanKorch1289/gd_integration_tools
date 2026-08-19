@@ -54,10 +54,10 @@ def ai_qa_pipeline(
     """
     builder = (
         RouteBuilder.from_(
-            route_id, source=source, description=description or f"AI Q&A: {route_id}",
+            route_id, source=source, description=description or f"AI Q&A: {route_id}"
         )
         .timeout(
-            processors=[DispatchActionProcessor(action="rag.search")], seconds=15.0,
+            processors=[DispatchActionProcessor(action="rag.search")], seconds=15.0
         )
         .rag_search(query_field=query_field, top_k=top_k)
         .compose_prompt(

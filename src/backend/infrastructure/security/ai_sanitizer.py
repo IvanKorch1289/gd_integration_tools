@@ -40,7 +40,7 @@ _SSN_RE = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
 _PASSPORT_RE = re.compile(r"\b\d{2}\s?\d{2}\s?\d{6}\b")
 _CARD_RE = re.compile(r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b")
 _API_KEY_RE = re.compile(
-    r"(?:Bearer|Token|sk-|hf_|api[_-]?key[=:]\s*)[a-zA-Z0-9_\-./]{10,}", re.IGNORECASE,
+    r"(?:Bearer|Token|sk-|hf_|api[_-]?key[=:]\s*)[a-zA-Z0-9_\-./]{10,}", re.IGNORECASE
 )
 
 _SENSITIVE_DICT_KEYS = frozenset(
@@ -56,7 +56,7 @@ _SENSITIVE_DICT_KEYS = frozenset(
         "private_key",
         "secret_key",
         "credentials",
-    },
+    }
 )
 
 _DEFAULT_FIELD_MASKING_RULES: dict[str, str] = {
@@ -158,7 +158,7 @@ class AIDataSanitizer:
         ]
 
         return SanitizationResult(
-            sanitized_text=result, replacements=mapping, audit_events=audit_events,
+            sanitized_text=result, replacements=mapping, audit_events=audit_events
         )
 
     async def sanitize(self, text: str) -> SanitizationResult:
@@ -166,7 +166,7 @@ class AIDataSanitizer:
         return self.sanitize_text(text)
 
     async def sanitize_with_audit(
-        self, text: str,
+        self, text: str
     ) -> tuple[SanitizationResult, list[MaskingEvent]]:
         """Маскирует + возвращает audit events для записи в Redis stream."""
         result = self.sanitize_text(text)
@@ -193,7 +193,7 @@ class AIDataSanitizer:
         return result, result.audit_events
 
     def sanitize_dict(
-        self, data: dict[str, Any],
+        self, data: dict[str, Any]
     ) -> tuple[dict[str, Any], dict[str, str]]:
         """Маскирует PII в словаре (рекурсивно).
 
@@ -232,7 +232,7 @@ class AIDataSanitizer:
         return value
 
     def sanitize_messages(
-        self, messages: list[dict[str, str]],
+        self, messages: list[dict[str, str]]
     ) -> tuple[list[dict[str, str]], dict[str, str]]:
         """Маскирует PII в списке сообщений для LLM.
 

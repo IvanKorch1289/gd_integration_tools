@@ -7,6 +7,7 @@ admin_audit, response_cache, data_masking) без буферизации все�
 Pattern (Ponytail, D141): thin wrapper над :class:`hashlib.sha256`,
 no abstractions. Использует incremental ``.update()``.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -55,9 +56,7 @@ class StreamingBodyHasher:
 
 
 async def hash_stream(
-    chunks: AsyncIterator[bytes],
-    *,
-    prefix_len: int | None = None,
+    chunks: AsyncIterator[bytes], *, prefix_len: int | None = None
 ) -> str:
     """Хешировать async iterator of bytes без буферизации.
 

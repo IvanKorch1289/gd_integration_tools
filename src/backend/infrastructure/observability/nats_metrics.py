@@ -50,9 +50,9 @@ except (ImportError, AttributeError, RuntimeError, ValueError) as metrics_init_e
     # — invalid label tuple. Bare `except Exception` маскировал unrelated
     # runtime errors.
     import logging
+
     logging.getLogger(__name__).debug(
-        "nats_metrics.registry_init_fallback",
-        extra={"error": str(metrics_init_exc)},
+        "nats_metrics.registry_init_fallback", extra={"error": str(metrics_init_exc)}
     )
     consumer_pending = None  # type: ignore[assignment,unused-ignore]
     consumer_delivered = None  # type: ignore[assignment,unused-ignore]
@@ -75,9 +75,9 @@ def record_consumer_info(info: dict[str, Any]) -> None:
                 # arg type, ValueError — invalid label value. Bare `except
                 # Exception` маскировал unrelated runtime errors (KeyError).
                 import logging
+
                 logging.getLogger(__name__).debug(
-                    "nats_metrics.counter_inc_failed",
-                    extra={"error": str(counter_exc)},
+                    "nats_metrics.counter_inc_failed", extra={"error": str(counter_exc)}
                 )
         return
     pending = info.get("pending_messages", 0)
@@ -87,7 +87,7 @@ def record_consumer_info(info: dict[str, Any]) -> None:
         except (AttributeError, TypeError, ValueError) as gauge_exc:
             # cycle-9/D-AUDIT-922: см. выше — тот же narrow для gauge set.
             import logging
+
             logging.getLogger(__name__).debug(
-                "nats_metrics.gauge_set_failed",
-                extra={"error": str(gauge_exc)},
+                "nats_metrics.gauge_set_failed", extra={"error": str(gauge_exc)}
             )

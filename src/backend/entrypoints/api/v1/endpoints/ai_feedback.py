@@ -41,11 +41,11 @@ class LabelRequest(BaseModel):
     """Запрос на разметку одного ответа AI-агента."""
 
     label: Literal["positive", "negative", "skip"] = Field(
-        description="Метка оператора.",
+        description="Метка оператора."
     )
     comment: str | None = Field(default=None, description="Комментарий.")
     operator_id: str | None = Field(
-        default=None, description="Идентификатор оператора для аудита.",
+        default=None, description="Идентификатор оператора для аудита."
     )
 
 
@@ -53,10 +53,10 @@ class IndexRequest(BaseModel):
     """Запрос на перевод размеченных ответов в RAG-индекс."""
 
     agent_id: str | None = Field(
-        default=None, description="Фильтр по агенту; null — все.",
+        default=None, description="Фильтр по агенту; null — все."
     )
     limit: int = Field(
-        default=100, ge=1, le=1000, description="Максимум документов за один запуск.",
+        default=100, ge=1, le=1000, description="Максимум документов за один запуск."
     )
 
 
@@ -81,11 +81,11 @@ class LabeledQuery(BaseModel):
     """Query для list_labeled."""
 
     label: Literal["positive", "negative", "skip"] | None = Field(
-        default=None, description="Фильтр по метке.",
+        default=None, description="Фильтр по метке."
     )
     agent_id: str | None = Field(default=None, description="Фильтр по агенту.")
     indexed_in_rag: bool | None = Field(
-        default=None, description="Фильтр по статусу индексации.",
+        default=None, description="Фильтр по статусу индексации."
     )
     limit: int = Field(default=100, ge=1, le=500, description="Размер страницы.")
     offset: int = Field(default=0, ge=0, description="Смещение пагинации.")
@@ -134,11 +134,11 @@ class _AIFeedbackFacade:
     """
 
     async def list_pending(
-        self, *, agent_id: str | None, limit: int, offset: int,
+        self, *, agent_id: str | None, limit: int, offset: int
     ) -> list[Any]:
         """Список pending feedback-записей (без label) для review."""
         return await get_ai_feedback_service().list_pending(
-            agent_id=agent_id, limit=limit, offset=offset,
+            agent_id=agent_id, limit=limit, offset=offset
         )
 
     async def list_labeled(
@@ -178,13 +178,13 @@ class _AIFeedbackFacade:
         """Установить/изменить label feedback (positive/negative/skip)."""
         try:
             return await get_ai_feedback_service().set_feedback(
-                doc_id=doc_id, label=label, comment=comment, operator_id=operator_id,
+                doc_id=doc_id, label=label, comment=comment, operator_id=operator_id
             )
         except KeyError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
 
     async def index_batch(
-        self, *, agent_id: str | None = None, limit: int = 100,
+        self, *, agent_id: str | None = None, limit: int = 100
     ) -> Any:
         """Batch-index positive feedback в RAG для few-shot retrieval."""
         return await get_feedback_indexer().index_batch(agent_id=agent_id, limit=limit)
@@ -273,5 +273,5 @@ builder.add_actions(
             response_handler=_index_result_handler,
             tags=common_tags,
         ),
-    ],
+    ]
 )

@@ -25,7 +25,7 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
     __slots__ = ()
 
     async def _wait_for_server(
-        self, user_name: str, *, timeout: float, interval: float = 1.0,
+        self, user_name: str, *, timeout: float, interval: float = 1.0
     ) -> Any:
         """Poll server readiness until timeout."""
         deadline = time.monotonic() + timeout
@@ -35,11 +35,11 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
                 return server
             await asyncio.sleep(interval)
         raise JupyterExecutionError(
-            f"Server for user={user_name} did not become ready within {timeout}s",
+            f"Server for user={user_name} did not become ready within {timeout}s"
         )
 
     async def _upload_notebook(
-        self, server_url: str, path: str, content: dict[str, Any],
+        self, server_url: str, path: str, content: dict[str, Any]
     ) -> None:
         """Upload notebook via ``PUT /api/contents/{path}``."""
         client = self._hub.http
@@ -55,7 +55,7 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
             ) from exc
 
     async def _create_session(
-        self, server_url: str, notebook_path: str,
+        self, server_url: str, notebook_path: str
     ) -> dict[str, Any]:
         """Create session (kernel) via ``POST /api/sessions``."""
         client = self._hub.http
@@ -77,7 +77,7 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
             ) from exc
 
     async def _execute_cell(
-        self, server_url: str, kernel_id: str, source: str, *, timeout: float,
+        self, server_url: str, kernel_id: str, source: str, *, timeout: float
     ) -> list[dict[str, Any]]:
         """Execute single cell via WebSocket kernel channel.
 
@@ -97,7 +97,7 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
         except ImportError as exc:
             raise JupyterExecutionError(
                 "websockets package required for notebook execution. "
-                "Install: uv sync --extra jupyter",
+                "Install: uv sync --extra jupyter"
             ) from exc
 
         ws_url = self._server_to_ws_url(server_url)
@@ -183,8 +183,7 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
                 from src.backend.core.utils.task_registry import get_task_registry
 
                 heartbeat_task = get_task_registry().create_task(
-                    _heartbeat_loop(),
-                    name=f"jupyter.heartbeat.{kernel_id}",
+                    _heartbeat_loop(), name=f"jupyter.heartbeat.{kernel_id}"
                 )
 
                 await ws.send(json.dumps(execute_msg))
@@ -196,7 +195,7 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
                         raise JupyterExecutionError(
                             f"WebSocket connection dead "
                             f"(no heartbeat response for "
-                            f"{HEARTBEAT_TIMEOUT_S}s)",
+                            f"{HEARTBEAT_TIMEOUT_S}s)"
                         )
                     raw = await asyncio.wait_for(ws.recv(), timeout=5.0)
                     # Update last_pong_time на любом message
@@ -215,17 +214,17 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
                                 "output_type": "stream",
                                 "name": msg["content"].get("name", "stdout"),
                                 "text": msg["content"].get("text", ""),
-                            },
+                            }
                         )
                     elif msg_type == "execute_result":
                         outputs.append(
                             {
                                 "output_type": "execute_result",
                                 "execution_count": msg["content"].get(
-                                    "execution_count",
+                                    "execution_count"
                                 ),
                                 "data": msg["content"].get("data", {}),
-                            },
+                            }
                         )
                     elif msg_type == "error":
                         outputs.append(
@@ -234,7 +233,7 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
                                 "ename": msg["content"].get("ename", ""),
                                 "evalue": msg["content"].get("evalue", ""),
                                 "traceback": msg["content"].get("traceback", []),
-                            },
+                            }
                         )
                     elif msg_type == "execute_reply":
                         status = msg["content"].get("status", "ok")
@@ -243,11 +242,11 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
                         break
                 else:
                     raise JupyterExecutionError(
-                        f"Cell execution timed out after {timeout}s",
+                        f"Cell execution timed out after {timeout}s"
                     )
         except TimeoutError as exc:
             raise JupyterExecutionError(
-                f"Cell execution timed out after {timeout}s",
+                f"Cell execution timed out after {timeout}s"
             ) from exc
         except Exception as exc:
             raise JupyterExecutionError(f"WebSocket error: {exc}") from exc

@@ -57,7 +57,7 @@ async def post_invocation(
             payload=request_body.payload,
             mode=InvocationMode(request_body.mode),
             reply_channel=request_body.reply_channel,
-        ),
+        )
     )
     if invocation.status is InvocationStatus.ACCEPTED:
         response.status_code = status.HTTP_202_ACCEPTED

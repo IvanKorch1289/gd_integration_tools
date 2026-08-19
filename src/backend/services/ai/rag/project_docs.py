@@ -80,7 +80,7 @@ class _SentenceTransformerEmbedder:
         if model is None:
             return [_embed_hashbased(t) for t in texts]
         embeddings = model.encode(
-            texts, convert_to_tensor=False, batch_size=32, show_progress_bar=False,
+            texts, convert_to_tensor=False, batch_size=32, show_progress_bar=False
         )
         return [emb.tolist() for emb in embeddings]
 
@@ -217,7 +217,7 @@ class DocsIndexer:
             return
         try:
             self._qdrant.get_collection(self._collection_name)
-        except (AttributeError, RuntimeError, ValueError, ConnectionError):
+        except AttributeError, RuntimeError, ValueError, ConnectionError:
             # cycle-9/D-AUDIT-906: narrow exceptions + observability.
             # Qdrant raises RuntimeError/ValueError для invalid collections,
             # ConnectionError для network issues. Bare `except Exception`
@@ -228,10 +228,10 @@ class DocsIndexer:
                 self._qdrant.create_collection(
                     collection_name=self._collection_name,
                     vectors_config=VectorParams(
-                        size=_EMBED_DIM, distance=Distance.COSINE,
+                        size=_EMBED_DIM, distance=Distance.COSINE
                     ),
                 )
-            except (ImportError, AttributeError):
+            except ImportError, AttributeError:
                 # cycle-9/D-AUDIT-906: см. выше — narrow для fallback API
                 # (legacy qdrant без VectorParams — old signature).
                 self._qdrant.create_collection(self._collection_name)
@@ -296,7 +296,7 @@ class DocsIndexer:
                                 "chunk_index": idx,
                                 "hash": _h(piece),
                             },
-                        },
+                        }
                     )
                     idx += 1
             start += step
@@ -315,7 +315,7 @@ class DocsIndexer:
         return [_embed_hashbased(t) for t in texts]
 
     def _build_points(
-        self, chunks: list[dict[str, Any]], vecs: list[list[float]],
+        self, chunks: list[dict[str, Any]], vecs: list[list[float]]
     ) -> list[Any]:
         """PointStruct (Qdrant) → dict (fallback) — automatic dispatch."""
         try:
@@ -336,6 +336,7 @@ class DocsIndexer:
             # missing required field. Bare `except Exception` маскировал
             # unrelated runtime errors (ValueError, RuntimeError).
             import logging
+
             logging.getLogger(__name__).debug(
                 "project_docs._build_points_fallback",
                 extra={"error": str(point_exc), "chunks_count": len(chunks)},
@@ -370,7 +371,7 @@ class DocsIndexer:
                         "file": path.name,
                         "file_hash": _h(raw),
                     },
-                ),
+                )
             )
         if not all_chunks:
             return 0

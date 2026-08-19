@@ -117,7 +117,7 @@ class MockLLMProvider:
                     "id": f"toolu_mock_{digest[:8]}",
                     "name": tool_name,
                     "input": dict(self.tool_arguments),
-                },
+                }
             ]
         else:
             text = self.canned_response or f"[mock-llm] echo for digest={digest}"
@@ -134,7 +134,7 @@ class MockLLMProvider:
         }
 
     async def embeddings(
-        self, texts: list[str], *, model: str | None = None,
+        self, texts: list[str], *, model: str | None = None
     ) -> list[list[float]]:
         """Возвращает ноль-векторы согласованной размерности (mock-only)."""
         return [[0.0] * self.embedding_dim for _ in texts]

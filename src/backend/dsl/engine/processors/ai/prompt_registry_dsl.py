@@ -3,6 +3,7 @@
 Thin wrapper над :func:`src.backend.services.ai.prompt_registry.get_prompt_registry`.
 Ponytail: возвращает template text по имени.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -14,6 +15,7 @@ if TYPE_CHECKING:
     from src.backend.dsl.engine.exchange import Exchange
 
 __all__ = ("PromptGetProcessor",)
+
 
 class PromptGetProcessor(BaseProcessor):
     """DSL-процессор ``prompt_get``.
@@ -48,19 +50,18 @@ class PromptGetProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         from src.backend.services.ai.prompt_registry import get_prompt_registry
+
         registry = get_prompt_registry()
         # Ponytail: 1-2 LOC over registry interface
         # P0 fix (S170 review): get() is async — must await
         # get_version() does NOT exist — version is kwarg to get()
         version_obj = await registry.get(
-            self.prompt_name,
-            version=self.version,
-            label="production",
+            self.prompt_name, version=self.version, label="production"
         )
         # version_obj is PromptVersion dataclass — extract .compiled
         template = (
-            getattr(version_obj, "compiled", None) or
-            getattr(version_obj, "text", None) or
-            str(version_obj)
+            getattr(version_obj, "compiled", None)
+            or getattr(version_obj, "text", None)
+            or str(version_obj)
         )
         self.set_result(exchange, self.target, template)

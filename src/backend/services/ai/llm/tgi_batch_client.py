@@ -20,14 +20,13 @@ from src.backend.core.resilience.retry import make_async_retry
 __all__ = ("TgiBatchClient",)
 
 
-
 # S164 W1: shared Circuit Breaker (lazy-init, module-level).
 def _get_tgi_breaker():
     """Module-level CB singleton per purge pattern (smtp.py)."""
     return get_breaker_registry().get_or_create(
         "tgi_batch_client",
         BreakerSpec(
-            name="tgi_batch_client", failure_threshold=5, recovery_timeout=30.0,
+            name="tgi_batch_client", failure_threshold=5, recovery_timeout=30.0
         ),
     )
 
@@ -49,7 +48,7 @@ class TgiBatchClient:
         self._timeout = timeout_seconds
 
     async def _single_completion(
-        self, prompt: str, *, max_tokens: int, temperature: float,
+        self, prompt: str, *, max_tokens: int, temperature: float
     ) -> str:
         # S164 W1 (AI-R1): CB guard + retry для TGI HTTP POST.
         breaker = _get_tgi_breaker()
@@ -66,7 +65,7 @@ class TgiBatchClient:
             @make_async_retry(max_attempts=3)
             async def _do_post() -> str:
                 response = await self._client.post(
-                    f"{self._url}/generate", json=payload, timeout=self._timeout,
+                    f"{self._url}/generate", json=payload, timeout=self._timeout
                 )
                 if hasattr(response, "raise_for_status"):
                     response.raise_for_status()
@@ -101,8 +100,8 @@ class TgiBatchClient:
             tg_tasks = [
                 tg.create_task(
                     self._single_completion(
-                        p, max_tokens=max_tokens, temperature=temperature,
-                    ),
+                        p, max_tokens=max_tokens, temperature=temperature
+                    )
                 )
                 for p in prompts
             ]
@@ -112,7 +111,7 @@ class TgiBatchClient:
         async with self._semaphore:
             payload = {"inputs": text}
             response = await self._client.post(
-                f"{self._url}/embeddings", json=payload, timeout=self._timeout,
+                f"{self._url}/embeddings", json=payload, timeout=self._timeout
             )
             data = response.json() if hasattr(response, "json") else response
             if isinstance(data, list) and data and isinstance(data[0], list):
@@ -122,7 +121,7 @@ class TgiBatchClient:
             return []
 
     async def batch_embeddings(
-        self, texts: list[str], *, model: str,
+        self, texts: list[str], *, model: str
     ) -> list[list[float]]:
         """Метод batch_embeddings (см. signature)."""
         if not texts:

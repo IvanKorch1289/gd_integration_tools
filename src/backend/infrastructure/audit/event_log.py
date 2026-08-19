@@ -175,7 +175,7 @@ class AuditEventLog:
                         "correlation_id": e.correlation_id,
                         "tenant_id": e.tenant_id,
                         "metadata": dumps_str(e.metadata),
-                    },
+                    }
                 )
             await client.insert(self._table, rows)
             logger.debug("Flushed %d audit events to ClickHouse", len(rows))
@@ -199,11 +199,7 @@ class AuditEventLog:
         except Exception as es_exc:
             logger.warning("LogIndexer.index_batch failed: %s", es_exc)
 
-    async def _send_to_dlq(
-        self,
-        events: list[AuditEvent],
-        exc: BaseException,
-    ) -> None:
+    async def _send_to_dlq(self, events: list[AuditEvent], exc: BaseException) -> None:
         """Отправить failed-events в DLQ (B-25 fix (cycle 1)).
 
         Зеркалит :meth:`CDCClient._send_to_dlq` (S176 cycle 33 B-02 +
@@ -275,9 +271,7 @@ class AuditEventLog:
         )
 
     def _build_dlq_envelopes(
-        self,
-        events: list[AuditEvent],
-        exc: BaseException,
+        self, events: list[AuditEvent], exc: BaseException
     ) -> list[Any]:
         """Строит :class:`DLQEnvelope` список для batch'а.
 
@@ -325,19 +319,15 @@ class AuditEventLog:
                         error_class=error_class,
                         error_message=error_message,
                         reason=DLQReason.UNEXPECTED,
-                        metadata={
-                            "table": self._table,
-                            "batch_size": len(events),
-                        },
+                        metadata={"table": self._table, "batch_size": len(events)},
                         dlq_class="operational",
-                    ),
+                    )
                 )
             except Exception as build_exc:
                 # Envelope build failed (should not happen, defensive):
                 # log + drop, never propagate.
                 logger.exception(
-                    "Audit DLQ envelope build failed "
-                    "[who=%s, entity_id=%s]: %s",
+                    "Audit DLQ envelope build failed [who=%s, entity_id=%s]: %s",
                     e.who,
                     e.entity_id,
                     build_exc,
@@ -381,7 +371,7 @@ class AuditEventLog:
         # Валидация limit (int, bounded)
         try:
             safe_limit = max(1, min(int(limit), 10000))
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             safe_limit = 100
 
         # Build query с bound parameters через {name} syntax

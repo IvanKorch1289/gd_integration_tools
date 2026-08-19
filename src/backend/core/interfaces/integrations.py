@@ -65,26 +65,30 @@ class BrowserClientProtocol(Protocol):
     async def navigate(self, url: str) -> dict[str, Any]:
         """Открыть ``url`` в headless-браузере; вернуть page state."""
         ...
+
     async def click(self, url: str, selector: str) -> dict[str, Any]:
         """Кликнуть по ``selector`` (CSS/XPath) на ``url``."""
         ...
+
     async def fill_form(
-        self, url: str, fields: dict[str, str], submit: str | None = None,
+        self, url: str, fields: dict[str, str], submit: str | None = None
     ) -> dict[str, Any]:
         """Заполнить ``fields`` и (опц.) submit на ``url``."""
         ...
+
     async def extract_text(self, url: str, selector: str) -> list[str]:
         """Извлечь visible text по ``selector`` (список строк)."""
         ...
+
     async def extract_table(self, url: str, selector: str) -> list[dict[str, str]]:
         """Извлечь HTML-таблицу по ``selector`` (list[dict])."""
         ...
+
     async def screenshot(self, url: str) -> bytes:
         """PNG-скриншот страницы (bytes)."""
         ...
-    async def run_scenario(
-        self, steps: list[dict[str, Any]],
-    ) -> list[dict[str, Any]]:
+
+    async def run_scenario(self, steps: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Выполнить сценарий из ``steps`` (list[BrowserStep])."""
         ...
 
@@ -105,19 +109,17 @@ class ClickHouseClientProtocol(Protocol):
     """
 
     async def query(
-        self, sql: str, params: dict[str, Any] | None = None,
+        self, sql: str, params: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
         """SELECT-запрос с bound params; вернуть list[dict]."""
         ...
+
     async def insert(
-        self,
-        table: str,
-        rows: list[dict[str, Any]],
-        *,
-        batch_size: int | None = None,
+        self, table: str, rows: list[dict[str, Any]], *, batch_size: int | None = None
     ) -> int:
         """Batch INSERT в ``table``; вернуть count вставленных строк."""
         ...
+
     async def aggregate(
         self,
         table: str,
@@ -128,6 +130,7 @@ class ClickHouseClientProtocol(Protocol):
     ) -> list[dict[str, Any]]:
         """AGGREGATE-запрос (group_by, where, agg_func, column)."""
         ...
+
     async def ping(self) -> bool:
         """Health check: вернуть True если backend reachable."""
         ...
@@ -153,6 +156,7 @@ class SmtpClientProtocol(Protocol):
     ) -> Any:
         """Отправить email; content_type='text/plain'|'text/html'."""
         ...
+
     async def test_connection(self) -> bool:
         """Проверить SMTP/IMAP connection state."""
         ...
@@ -171,14 +175,17 @@ class ExpressClientProtocol(Protocol):
     async def send_message(self, chat_id: str, text: str) -> dict[str, Any]:
         """Отправить message в chat (chat_id)."""
         ...
+
     async def send_direct(self, user_huid: str, text: str) -> dict[str, Any]:
         """Отправить direct message пользователю (user_huid)."""
         ...
+
     async def send_notification(
-        self, group_chat_ids: list[str], text: str,
+        self, group_chat_ids: list[str], text: str
     ) -> dict[str, Any]:
         """Broadcast в group_chat_ids."""
         ...
+
     async def create_chat(
         self,
         name: str,
@@ -202,16 +209,19 @@ class RedisKeyValueClientProtocol(Protocol):
     """
 
     async def set(
-        self, key: str, value: Any, ex: int | None = None, **kwargs: Any,
+        self, key: str, value: Any, ex: int | None = None, **kwargs: Any
     ) -> Any:
         """Установить ``key=value`` в KV-store (ex=TTL)."""
         ...
+
     async def get(self, key: str) -> Any:
         """Получить значение по ``key`` из KV-store."""
         ...
+
     async def delete(self, *keys: str) -> int:
         """Удалить один или несколько ключей; вернуть count."""
         ...
+
     def scan_iter(self, match: str | None = None, **kwargs: Any) -> Any:
         """Итератор по ключам matching pattern (Redis SCAN)."""
         ...
@@ -262,7 +272,7 @@ class SignatureBuilderProtocol(Protocol):
     """
 
     def __call__(
-        self, payload: dict[str, Any] | bytes | str, secret: str,
+        self, payload: dict[str, Any] | bytes | str, secret: str
     ) -> dict[str, str]:
         """Возвращает заголовки с HMAC-подписью."""
         ...
@@ -296,6 +306,7 @@ class ConnectorConfigStoreProtocol(Protocol):
     async def get(self, name: str) -> Any:
         """Получить значение по ``key`` из KV-store."""
         ...
+
     async def save(
         self,
         name: str,
@@ -305,9 +316,11 @@ class ConnectorConfigStoreProtocol(Protocol):
     ) -> Any:
         """Сохранить ``config`` (enabled/user для audit)."""
         ...
+
     async def list_all(self) -> list[Any]:
         """Вернуть список всех config-ов."""
         ...
+
     async def delete(self, name: str) -> bool:
         """Удалить один или несколько ключей; вернуть count."""
         ...

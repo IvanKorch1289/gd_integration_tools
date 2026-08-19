@@ -99,12 +99,12 @@ class InvokeProcessor(BaseProcessor):
         except ValueError as exc:
             allowed = ", ".join(m.value for m in InvocationMode)
             raise ValueError(
-                f"invoke[{action}]: невалидный mode={value!r}. Допустимые: {allowed}.",
+                f"invoke[{action}]: невалидный mode={value!r}. Допустимые: {allowed}."
             ) from exc
 
     @staticmethod
     def _coerce_timeout(
-        value: float | int | str | None, *, action: str,
+        value: float | int | str | None, *, action: str
     ) -> float | None:
         """Валидация timeout: положительное число или ``None``."""
         if value is None:
@@ -113,11 +113,11 @@ class InvokeProcessor(BaseProcessor):
             timeout = float(value)
         except (TypeError, ValueError) as exc:
             raise ValueError(
-                f"invoke[{action}]: timeout={value!r} не является числом.",
+                f"invoke[{action}]: timeout={value!r} не является числом."
             ) from exc
         if timeout <= 0:
             raise ValueError(
-                f"invoke[{action}]: timeout должен быть > 0, получено {timeout}.",
+                f"invoke[{action}]: timeout должен быть > 0, получено {timeout}."
             )
         return timeout
 
@@ -152,7 +152,7 @@ class InvokeProcessor(BaseProcessor):
             case InvocationStatus.OK:
                 exchange.set_property(self.result_property, response.result)
                 exchange.set_out(
-                    body=response.result, headers=dict(exchange.in_message.headers),
+                    body=response.result, headers=dict(exchange.in_message.headers)
                 )
             case InvocationStatus.ACCEPTED:
                 exchange.set_property(

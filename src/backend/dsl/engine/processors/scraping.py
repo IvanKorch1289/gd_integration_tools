@@ -96,11 +96,11 @@ def _stealth_headers(referer: str | None = None) -> dict[str, str]:
 
     headers = {
         "User-Agent": random.choice(  # non-cryptographic use
-            _USER_AGENTS,
+            _USER_AGENTS
         ),  # stealth header rotation, не криптография
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": random.choice(  # non-cryptographic use
-            _ACCEPT_LANGUAGES,
+            _ACCEPT_LANGUAGES
         ),  # stealth header rotation, не криптография
         "Accept-Encoding": "gzip, deflate, br",
         "Connection": "keep-alive",
@@ -117,7 +117,7 @@ async def _random_delay(min_s: float = 1.0, max_s: float = 3.0) -> None:
     import random
 
     await asyncio.sleep(
-        min_s + random.random() * (max_s - min_s),  # non-cryptographic use
+        min_s + random.random() * (max_s - min_s)  # non-cryptographic use
     )  # rate-limit jitter, не криптография
 
 
@@ -188,7 +188,7 @@ class ScrapeProcessor(BaseProcessor):
 
             client = get_http_client_dependency()
             response = await client.make_request(
-                method="GET", url=url, response_type="text", headers=_stealth_headers(),
+                method="GET", url=url, response_type="text", headers=_stealth_headers()
             )
             html = (
                 response.get("data", "")
@@ -205,7 +205,7 @@ class ScrapeProcessor(BaseProcessor):
             tree = HTMLParser(html)
         except ImportError:
             exchange.fail(
-                "selectolax not installed, scraping requires: pip install selectolax",
+                "selectolax not installed, scraping requires: pip install selectolax"
             )
             return
 
@@ -335,7 +335,7 @@ class PaginateProcessor(BaseProcessor):
                 )
             except Exception as exc:
                 _scrape_logger.warning(
-                    "Pagination fetch failed on page %d: %s", page_num, exc,
+                    "Pagination fetch failed on page %d: %s", page_num, exc
                 )
                 break
 
@@ -348,7 +348,7 @@ class PaginateProcessor(BaseProcessor):
                 all_items.extend(items)
             else:
                 all_items.append(
-                    {"page": page_num, "url": url, "html_length": len(html)},
+                    {"page": page_num, "url": url, "html_length": len(html)}
                 )
 
             next_link = tree.css_first(self._next_selector)

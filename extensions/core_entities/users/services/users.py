@@ -29,9 +29,9 @@ from extensions.core_entities.users.schemas.route import (  # S168 W15-17 P2-10
     UserVersionSchemaOut,
 )
 from src.backend.core.auth.ad_directory import AdAuthError, AdSearchEntry
-from src.backend.core.errors import ServiceError
+from src.backend.core.api import ServiceError
 from src.backend.core.interfaces.repositories import UserRepositoryProtocol
-from src.backend.core.services.base_service import BaseService
+from src.backend.core.api import BaseService
 
 __all__ = ("UserService", "get_user_service", "AuthMethod")
 

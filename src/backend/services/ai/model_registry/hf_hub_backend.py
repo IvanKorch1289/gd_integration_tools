@@ -36,7 +36,7 @@ class HuggingFaceModelRegistry(ModelRegistryAdapter):
     """
 
     def __init__(
-        self, *, token: str | None = None, organization: str | None = None,
+        self, *, token: str | None = None, organization: str | None = None
     ) -> None:
         self._token = token
         self._organization = organization
@@ -50,7 +50,7 @@ class HuggingFaceModelRegistry(ModelRegistryAdapter):
         except ImportError as exc:
             raise RuntimeError(
                 "huggingface_hub не установлен; добавьте extra "
-                "ai-model-registry (uv sync --extra ai-model-registry)",
+                "ai-model-registry (uv sync --extra ai-model-registry)"
             ) from exc
         self._api = HfApi(token=self._token)
         return self._api
@@ -86,19 +86,19 @@ class HuggingFaceModelRegistry(ModelRegistryAdapter):
         if self._organization:
             kwargs["author"] = self._organization
         models = await loop.run_in_executor(
-            None, lambda: list(api.list_models(**kwargs)),
+            None, lambda: list(api.list_models(**kwargs))
         )
         return [self._hf_to_record(m) for m in models]
 
     async def get_model(
-        self, name: str, *, version: str | None = None, stage: str | None = None,
+        self, name: str, *, version: str | None = None, stage: str | None = None
     ) -> ModelRecord | None:
         """Метод get_model (см. signature)."""
         api = self._ensure_api()
         loop = asyncio.get_running_loop()
         try:
             info = await loop.run_in_executor(
-                None, lambda: api.model_info(repo_id=name, revision=version or "main"),
+                None, lambda: api.model_info(repo_id=name, revision=version or "main")
             )
         except Exception as exc:
             _logger.info("HF Hub model_info(%s) → not found: %s", name, exc)
@@ -117,13 +117,13 @@ class HuggingFaceModelRegistry(ModelRegistryAdapter):
         await loop.run_in_executor(
             None,
             lambda: api.create_repo(
-                repo_id=repo_id, repo_type="model", exist_ok=True, private=False,
+                repo_id=repo_id, repo_type="model", exist_ok=True, private=False
             ),
         )
         return await self.get_model(repo_id) or record
 
     async def transition_stage(
-        self, name: str, version: str, new_stage: str,
+        self, name: str, version: str, new_stage: str
     ) -> ModelRecord:
         """Эмулирует stage через tag ``stage:<new_stage>`` на model card.
 

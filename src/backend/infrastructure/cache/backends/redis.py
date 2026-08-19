@@ -168,7 +168,7 @@ class RedisBackend(CacheBackend):
         if len(keys) > self._MAX_PIPELINE_BATCH:
             raise ValueError(
                 f"mget_pipelined: {len(keys)} keys exceeds batch limit "
-                f"{self._MAX_PIPELINE_BATCH}. Split into smaller chunks.",
+                f"{self._MAX_PIPELINE_BATCH}. Split into smaller chunks."
             )
         async with self._client.pipeline(transaction=False) as pipe:
             for key in keys:
@@ -176,7 +176,7 @@ class RedisBackend(CacheBackend):
             return await pipe.execute()
 
     async def mset_pipelined(
-        self, items: dict[str, bytes], ttl: int | None = None,
+        self, items: dict[str, bytes], ttl: int | None = None
     ) -> None:
         """Batch-запись через non-transactional pipeline.
 
@@ -199,7 +199,7 @@ class RedisBackend(CacheBackend):
         if len(items) > self._MAX_PIPELINE_BATCH:
             raise ValueError(
                 f"mset_pipelined: {len(items)} items exceeds batch limit "
-                f"{self._MAX_PIPELINE_BATCH}. Split into smaller chunks.",
+                f"{self._MAX_PIPELINE_BATCH}. Split into smaller chunks."
             )
         async with self._client.pipeline(transaction=False) as pipe:
             for key, value in items.items():

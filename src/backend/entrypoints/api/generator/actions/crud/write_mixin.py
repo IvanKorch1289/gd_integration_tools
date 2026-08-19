@@ -41,7 +41,7 @@ class WriteMixin:
         endpoint.__signature__ = make_signature(  # type: ignore[attr-defined]
             request_parameter(),
             body_parameter(
-                "payload", spec.schema_in, spec.schema_in.__doc__ or "Тело запроса.",
+                "payload", spec.schema_in, spec.schema_in.__doc__ or "Тело запроса."
             ),
         )
         self._register_route(
@@ -127,10 +127,10 @@ class WriteMixin:
         endpoint.__signature__ = make_signature(  # type: ignore[attr-defined]
             request_parameter(),
             path_parameter(
-                spec.id_param_name, spec.id_param_type, "Идентификатор объекта.",
+                spec.id_param_name, spec.id_param_type, "Идентификатор объекта."
             ),
             body_parameter(
-                "payload", spec.schema_in, spec.schema_in.__doc__ or "Тело запроса.",
+                "payload", spec.schema_in, spec.schema_in.__doc__ or "Тело запроса."
             ),
         )
         self._register_route(
@@ -163,7 +163,7 @@ class WriteMixin:
             """Выполнить операцию endpoint."""
             service = spec.service_getter()
             await service.delete(
-                key=spec.id_field_name, value=kwargs[spec.id_param_name],
+                key=spec.id_field_name, value=kwargs[spec.id_param_name]
             )
             return
 
@@ -172,7 +172,7 @@ class WriteMixin:
         endpoint.__signature__ = make_signature(  # type: ignore[attr-defined]
             request_parameter(),
             path_parameter(
-                spec.id_param_name, spec.id_param_type, "Идентификатор объекта.",
+                spec.id_param_name, spec.id_param_type, "Идентификатор объекта."
             ),
         )
         self._register_route(
@@ -214,7 +214,7 @@ class WriteMixin:
         endpoint.__signature__ = make_signature(  # type: ignore[attr-defined]
             request_parameter(),
             path_parameter(
-                spec.id_param_name, spec.id_param_type, "Идентификатор объекта.",
+                spec.id_param_name, spec.id_param_type, "Идентификатор объекта."
             ),
         )
         self._register_route(

@@ -60,17 +60,17 @@ class ResilienceMixin(_RouteBuilderProtocol):
                 processors=processors,
                 wait=wait,
                 timeout=timeout,
-            ),
+            )
         )
 
     def cost_tracker(self) -> Self:
         """Инициализация cost-словаря в properties (LLM-токены, HTTP, DB, USD)."""
         return self._add_lazy(
-            "src.backend.dsl.engine.processors.business", "CostTrackerProcessor",
+            "src.backend.dsl.engine.processors.business", "CostTrackerProcessor"
         )
 
     def outbox(self, *, topic: str) -> Self:
         """Transactional Outbox: запись события в outbox-таблицу."""
         return self._add_lazy(
-            "src.backend.dsl.engine.processors.business", "OutboxProcessor", topic=topic,
+            "src.backend.dsl.engine.processors.business", "OutboxProcessor", topic=topic
         )

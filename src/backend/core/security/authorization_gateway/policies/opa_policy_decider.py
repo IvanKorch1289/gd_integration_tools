@@ -22,9 +22,7 @@ __all__ = ("OPAPolicyDecider", "build_opa_policy_decider")
 
 
 def build_opa_policy_decider(
-    opa_client: Any,
-    *,
-    policy_name: str = "authz/default",
+    opa_client: Any, *, policy_name: str = "authz/default"
 ) -> PolicyDecider:
     """Создать :data:`PolicyDecider` из OPA-клиента (B-12 fix, cycle 37).
 

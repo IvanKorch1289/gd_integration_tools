@@ -112,7 +112,7 @@ def attach_scheduler_metrics(scheduler: AsyncIOScheduler) -> None:
     counter, _ = _ensure_metrics()
     if counter is None:
         _logger.info(
-            "attach_scheduler_metrics: prometheus_client не установлен — no-op",
+            "attach_scheduler_metrics: prometheus_client не установлен — no-op"
         )
         return
 

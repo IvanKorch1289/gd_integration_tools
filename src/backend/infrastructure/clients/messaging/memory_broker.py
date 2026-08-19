@@ -50,7 +50,7 @@ class InMemoryMessageBroker(MessageBroker):
         self._consumers.clear()
 
     async def publish(
-        self, topic: str, message: bytes, headers: dict[str, str] | None = None,
+        self, topic: str, message: bytes, headers: dict[str, str] | None = None
     ) -> None:
         """Опубликовать ``message`` в ``topic`` с опц. ``headers``."""
         del headers  # in-memory broker не использует headers
@@ -62,7 +62,7 @@ class InMemoryMessageBroker(MessageBroker):
                 pass
 
     async def subscribe(
-        self, topic: str, group: str | None = None,
+        self, topic: str, group: str | None = None
     ) -> AsyncIterator[bytes]:
         """Подписаться на ``topic``; ``group`` = consumer group (None = broadcast)."""
         del group
@@ -76,7 +76,7 @@ class InMemoryMessageBroker(MessageBroker):
 
 
 async def _drain(
-    q: asyncio.Queue[bytes], registry: set[asyncio.Queue[bytes]],
+    q: asyncio.Queue[bytes], registry: set[asyncio.Queue[bytes]]
 ) -> AsyncIterator[bytes]:
     """Читает из ``q`` до EOF-маркера; снимает себя из ``registry`` по выходу."""
     try:

@@ -9,10 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.services.integrations.skb import (
-        APISKBService,
-        get_skb_service,
-    )
+    from src.backend.services.integrations.skb import APISKBService, get_skb_service
 
 __all__ = ("APISKBService", "get_skb_service")
 

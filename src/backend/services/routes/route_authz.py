@@ -64,7 +64,7 @@ async def check_route_permission(
     except Exception as exc:
         _logger.error("route_authz_gateway_unavailable: %s", exc)
         raise RuntimeError(
-            f"AuthorizationGateway unavailable for route {route_id}: {exc}",
+            f"AuthorizationGateway unavailable for route {route_id}: {exc}"
         ) from exc
 
     if gateway is None:
@@ -135,9 +135,7 @@ def _resolve_authz_gateway() -> AuthorizationGateway | None:
         # service not initialized). Bare 'except Exception' маскировал
         # unrelated errors (например, KeyError из config).
         _logger.debug(
-            "route_authz_gateway_resolve_failed: %s",
-            gw_resolve_exc,
-            exc_info=True,
+            "route_authz_gateway_resolve_failed: %s", gw_resolve_exc, exc_info=True
         )
         # Graceful degradation — caller handles None via fail-closed
         return None

@@ -18,7 +18,7 @@ class ObjectStorage(ABC):
 
     @abstractmethod
     async def upload(
-        self, key: str, data: bytes, content_type: str | None = None,
+        self, key: str, data: bytes, content_type: str | None = None
     ) -> str:
         """Upload ``data`` (bytes) под ``key``; вернуть URL/etag."""
         ...

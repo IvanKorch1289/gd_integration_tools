@@ -80,7 +80,7 @@ def needs_argon2_upgrade(stored_hash: str) -> bool:
     try:
         ph = PasswordHasher()
         return ph.check_needs_rehash(stored_hash)
-    except (InvalidHashError, ValueError):
+    except InvalidHashError, ValueError:
         return True
 
 
@@ -228,26 +228,23 @@ class APIKeyAuth:
         if is_argon2_hash(expected_hash):
             try:
                 self._hasher.verify(expected_hash, raw)
-            except (VerifyMismatchError, VerificationError):
+            except VerifyMismatchError, VerificationError:
                 return False
             except InvalidHashError as exc:
                 logger.warning(
-                    "API key verify: corrupt Argon2 hash in storage (%s)",
-                    exc,
+                    "API key verify: corrupt Argon2 hash in storage (%s)", exc
                 )
                 return False
             except Exception as exc:
                 # M2.3 review S-1 fix: любой неожиданный Exception
                 # (HashingError, ParameterError) логируется как ERROR
                 # (не swallowed) → distributed tracing видит.
-                logger.exception(
-                    "API key verify: Argon2 unexpected error (%s)", exc,
-                )
+                logger.exception("API key verify: Argon2 unexpected error (%s)", exc)
                 return False
             # Authentication OK — emit upgrade hint (без blocking).
             if needs_argon2_upgrade(expected_hash):
                 logger.info(
-                    "api_keys.argon2_rehash_pending (next rotation recommended)",
+                    "api_keys.argon2_rehash_pending (next rotation recommended)"
                 )
             return True
 
@@ -265,7 +262,7 @@ class APIKeyAuth:
             logger.warning(
                 "API key verify matched against legacy SHA-256 hash. "
                 "Run 'tools/migrations/migrate_api_keys_to_argon2.py' to "
-                "upgrade stored hashes to Argon2id. (S172 M2 ARC-004)",
+                "upgrade stored hashes to Argon2id. (S172 M2 ARC-004)"
             )
         return match
 
@@ -295,7 +292,7 @@ _WEAK_SECRETS: frozenset[str] = frozenset(
         "12345678",
         "qwerty",
         "letmein",
-    },
+    }
 )
 
 
@@ -319,9 +316,7 @@ def _evaluate_strength(raw: str) -> StrengthReport:
     if not raw:
         issues.append("empty")
     if len(raw) < _MIN_API_KEY_LENGTH:
-        issues.append(
-            f"too_short (length={len(raw)} < {_MIN_API_KEY_LENGTH})",
-        )
+        issues.append(f"too_short (length={len(raw)} < {_MIN_API_KEY_LENGTH})")
     if raw in _WEAK_SECRETS:
         issues.append("blacklisted_common_secret")
     # Sequential chars detection.
@@ -331,12 +326,10 @@ def _evaluate_strength(raw: str) -> StrengthReport:
     if raw and len(raw) >= 4:
         # Check ascending/descending sequence in ASCII chars
         is_sequential = all(
-            ord(raw[i + 1]) - ord(raw[i]) == 1
-            for i in range(min(4, len(raw) - 1))
+            ord(raw[i + 1]) - ord(raw[i]) == 1 for i in range(min(4, len(raw) - 1))
         )
         is_reverse_seq = all(
-            ord(raw[i]) - ord(raw[i + 1]) == 1
-            for i in range(min(4, len(raw) - 1))
+            ord(raw[i]) - ord(raw[i + 1]) == 1 for i in range(min(4, len(raw) - 1))
         )
         if is_sequential or is_reverse_seq:
             issues.append("sequential_chars")
@@ -345,8 +338,7 @@ def _evaluate_strength(raw: str) -> StrengthReport:
     entropy_bits = (unique.bit_length() if unique else 0) * len(raw) if raw else 0.0
     if entropy_bits < _MIN_ENTROPY_BITS:
         issues.append(
-            f"low_entropy (estimate={entropy_bits:.1f} bits < "
-            f"{_MIN_ENTROPY_BITS:.0f})",
+            f"low_entropy (estimate={entropy_bits:.1f} bits < {_MIN_ENTROPY_BITS:.0f})"
         )
 
     is_acceptable = not issues

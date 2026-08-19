@@ -20,9 +20,7 @@ from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.core.config.features import feature_flags
 
 # S202 audit fix: LangGraph checkpoint restore — security-critical, admin only.
-_LANGGRAPH_GUARD = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)),
-)
+_LANGGRAPH_GUARD = Depends(require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)))
 router = APIRouter(
     prefix="/admin/langgraph",
     tags=["admin", "langgraph"],
@@ -99,7 +97,7 @@ async def get_session_state(session_id: str) -> dict[str, Any]:
     snapshot = await inspector.get_state(session_id)
     if snapshot is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="session not found",
+            status_code=status.HTTP_404_NOT_FOUND, detail="session not found"
         )
     return {
         "session_id": snapshot.session_id,

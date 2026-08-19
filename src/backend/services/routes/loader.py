@@ -173,7 +173,7 @@ class RouteLoader:
         """Сканировать ``routes/`` и активировать совместимые маршруты."""
         if not self._routes_dir.is_dir():
             _logger.info(
-                "Routes dir %s not found — no V11 routes discovered", self._routes_dir,
+                "Routes dir %s not found — no V11 routes discovered", self._routes_dir
             )
             return ()
 
@@ -247,7 +247,7 @@ class RouteLoader:
                         "route": manifest.name,
                         "version": manifest.version,
                         "missing_workflows": missing_wf,
-                    },
+                    }
                 )
                 self._loaded[manifest.name] = LoadedRoute(
                     name=manifest.name,
@@ -262,7 +262,7 @@ class RouteLoader:
         # ── Pre-condition: requires_permission format validation (K3 S19 W3)
         if manifest.security and manifest.security.requires_permission:
             invalid = self._validate_permission_strings(
-                manifest.security.requires_permission,
+                manifest.security.requires_permission
             )
             if invalid:
                 self._loaded[manifest.name] = LoadedRoute(
@@ -364,7 +364,7 @@ class RouteLoader:
                     {"name": ref.name, "scope": ref.scope}
                     for ref in manifest.capabilities
                 ],
-            },
+            }
         )
 
         # ── Регистрация pipelines через registrar
@@ -456,7 +456,8 @@ class RouteLoader:
             _logger.debug(
                 "_resolve_strict_capabilities: feature_flags import failed "
                 "(exc_type=%s exc_msg=%s) — strict=False",
-                type(exc).__name__, exc,
+                type(exc).__name__,
+                exc,
             )
             return False
 

@@ -61,7 +61,7 @@ class AvroDecodeProcessor(BaseProcessor):
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
 
     def __init__(
-        self, schema: dict[str, Any] | None = None, *, name: str | None = None,
+        self, schema: dict[str, Any] | None = None, *, name: str | None = None
     ) -> None:
         super().__init__(name=name or "avro_decode")
         self._schema = schema

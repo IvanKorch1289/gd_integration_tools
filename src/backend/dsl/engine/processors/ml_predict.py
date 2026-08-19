@@ -198,7 +198,7 @@ class MLPredictProcessor(BaseProcessor):
                     prediction = prediction.tolist()
             else:
                 raise RuntimeError(
-                    f"Loaded model type not supported for inference: {type(model)}",
+                    f"Loaded model type not supported for inference: {type(model)}"
                 )
 
             exchange.set_property(self._output_property, prediction)

@@ -28,11 +28,7 @@ from typing import Any, ParamSpec, TypeVar
 
 from src.backend.core.logging import get_logger
 
-__all__ = (
-    "ConnectorAuthError",
-    "check_source_capability",
-    "require_capability",
-)
+__all__ = ("ConnectorAuthError", "check_source_capability", "require_capability")
 
 
 class ConnectorAuthError(PermissionError):
@@ -46,10 +42,7 @@ _logger = get_logger("core.security.connector_auth")
 
 
 def require_capability(
-    capability: str,
-    *,
-    action: str = "execute",
-    scope: str = "tenant",
+    capability: str, *, action: str = "execute", scope: str = "tenant"
 ) -> Any:
     """Decorator factory: auth-check перед вызовом метода connector'а.
 
@@ -80,11 +73,10 @@ def require_capability(
                 )
             except Exception as exc:  # pragma: no cover — facade недоступен в test
                 _logger.debug(
-                    "authorization_facade_unavailable: %s; failing closed",
-                    exc,
+                    "authorization_facade_unavailable: %s; failing closed", exc
                 )
                 raise ConnectorAuthError(
-                    f"Capability '{capability}' denied: facade unavailable",
+                    f"Capability '{capability}' denied: facade unavailable"
                 ) from exc
 
             principal = kwargs.pop("_principal", "anonymous")
@@ -99,11 +91,16 @@ def require_capability(
                     ctx = current_tenant()
                     if ctx is not None:
                         tenant_id = ctx.tenant_id
-                except (ImportError, AttributeError, RuntimeError) as ten_exc:  # pragma: no cover
+                except (
+                    ImportError,
+                    AttributeError,
+                    RuntimeError,
+                ) as ten_exc:  # pragma: no cover
                     # cycle-9/D-AUDIT-1037: narrow exceptions + observability.
                     # ImportError — tenancy missing, AttributeError — context
                     # API change, RuntimeError — context unavailable.
                     import logging
+
                     logging.getLogger(__name__).debug(
                         "connector_auth.current_tenant_fallback",
                         extra={"error": str(ten_exc)},
@@ -129,7 +126,7 @@ def require_capability(
                     exc,
                 )
                 raise ConnectorAuthError(
-                    f"Capability '{capability}' denied: facade error: {exc}",
+                    f"Capability '{capability}' denied: facade error: {exc}"
                 ) from exc
 
             if not decision.allowed:
@@ -144,7 +141,7 @@ def require_capability(
                 )
                 raise ConnectorAuthError(
                     f"Capability '{capability}' denied for {principal}: "
-                    f"{decision.reason or 'policy denied'}",
+                    f"{decision.reason or 'policy denied'}"
                 )
 
             return await func(*args, **kwargs)
@@ -184,9 +181,7 @@ async def check_source_capability(
     try:
         from src.backend.services.authorization.facade import get_authorization_facade
     except Exception as exc:  # pragma: no cover
-        _logger.debug(
-            "authorization_facade_unavailable: %s; failing closed", exc,
-        )
+        _logger.debug("authorization_facade_unavailable: %s; failing closed", exc)
         return False
 
     tenant_id: str | None = None
@@ -201,9 +196,9 @@ async def check_source_capability(
         # ImportError — tenancy missing, AttributeError — context API
         # change, RuntimeError — context unavailable.
         import logging
+
         logging.getLogger(__name__).debug(
-            "connector_auth.tenant_id_fallback",
-            extra={"error": str(ten_exc)},
+            "connector_auth.tenant_id_fallback", extra={"error": str(ten_exc)}
         )
         tenant_id = None
 

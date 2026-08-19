@@ -52,6 +52,7 @@ def _is_exchange_wrapping_enabled() -> bool:
         # not initialized, RuntimeError — feature_flags unavailable. Bare
         # `except Exception` маскировал unrelated runtime errors.
         import logging
+
         logging.getLogger(__name__).debug(
             "sequential_mixin.workflow_exchange_wrapping_fallback",
             extra={"error": str(ff_exc)},
@@ -60,7 +61,9 @@ def _is_exchange_wrapping_enabled() -> bool:
         return True
 
 
-async def _run_processor(proc: Any, body: dict[str, Any], timeout: float) -> dict[str, Any]:
+async def _run_processor(
+    proc: Any, body: dict[str, Any], timeout: float
+) -> dict[str, Any]:
     """Вызвать processor с dict или Exchange (зависит от feature-flag).
 
     При ``workflow_exchange_wrapping=True`` оборачивает dict в Exchange,
@@ -76,10 +79,7 @@ async def _run_processor(proc: Any, body: dict[str, Any], timeout: float) -> dic
     # Exchange wrapping path
     from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
 
-    exchange = Exchange(
-        in_message=Message(body=body),
-        status=ExchangeStatus.pending,
-    )
+    exchange = Exchange(in_message=Message(body=body), status=ExchangeStatus.pending)
     result = await asyncio.wait_for(proc(exchange), timeout=timeout)
     if isinstance(result, Exchange):
         return (
@@ -129,7 +129,7 @@ class SequentialMixin:
                                 "timeout_s": self._timeout_per_step_s,
                             },
                             step.name,
-                        ),
+                        )
                     ],
                 )
 

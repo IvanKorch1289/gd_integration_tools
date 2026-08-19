@@ -183,7 +183,7 @@ class HitlSignalStore(Protocol):
         ...
 
     async def list_pending(
-        self, *, tenant_id: str | None = None,
+        self, *, tenant_id: str | None = None
     ) -> list[HitlPendingSignal]:
         """List pending signals.
 
@@ -197,7 +197,7 @@ class HitlSignalStore(Protocol):
         ...
 
     async def mark_resolved(
-        self, signal_id: str, *, action: str, resolved_by: str,
+        self, signal_id: str, *, action: str, resolved_by: str
     ) -> HitlPendingSignal:
         """Mark signal as resolved.
 
@@ -259,7 +259,7 @@ class InMemoryHitlSignalStore:
             return self._store.get(signal_id)
 
     async def list_pending(
-        self, *, tenant_id: str | None = None,
+        self, *, tenant_id: str | None = None
     ) -> list[HitlPendingSignal]:
         """List pending signals.
 
@@ -277,7 +277,7 @@ class InMemoryHitlSignalStore:
         return sorted(items, key=lambda s: s.created_at)
 
     async def mark_resolved(
-        self, signal_id: str, *, action: str, resolved_by: str,
+        self, signal_id: str, *, action: str, resolved_by: str
     ) -> HitlPendingSignal:
         """Mark signal as resolved.
 
@@ -301,7 +301,7 @@ class InMemoryHitlSignalStore:
             if signal.is_resolved:
                 raise ValueError(
                     f"HITL signal {signal_id!r} already resolved by "
-                    f"{signal.resolved_by!r} as {signal.resolved_action!r}",
+                    f"{signal.resolved_by!r} as {signal.resolved_action!r}"
                 )
             signal.resolved_at = datetime.now(UTC)
             signal.resolved_action = action
@@ -361,7 +361,7 @@ class HitlService:
         await self._store.put(signal)
 
     async def list_pending(
-        self, *, tenant_id: str | None = None,
+        self, *, tenant_id: str | None = None
     ) -> list[HitlPendingSignal]:
         """List pending signals.
 
@@ -425,7 +425,7 @@ class HitlService:
         if action not in HitlAction.all():
             raise ValueError(f"Invalid action {action!r}; allowed: {HitlAction.all()}")
         resolved = await self._store.mark_resolved(
-            signal_id, action=action, resolved_by=resolved_by,
+            signal_id, action=action, resolved_by=resolved_by
         )
         # S178 HITL-1 closeout: cross-instance notification via Redis pub/sub.
         # Best-effort: failure → log + continue (in-memory already updated).
@@ -501,7 +501,7 @@ class HitlService:
             # Audit-sink best-effort: не должен ломать HITL-resolve.
             # Раньше было except Exception: pass — скрывало баги (V22 K-OP-1).
             _logger.warning(
-                "audit sink emit failed for signal_id=%s: %s", signal_id, exc,
+                "audit sink emit failed for signal_id=%s: %s", signal_id, exc
             )
 
         return resolved

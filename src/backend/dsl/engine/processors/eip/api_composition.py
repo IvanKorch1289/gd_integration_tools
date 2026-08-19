@@ -85,7 +85,7 @@ def _default_http_fetcher() -> HTTPFetcher:
     """Lazy HTTP fetcher provider — imports только на actual call, не at __init__."""
 
     async def fetcher(
-        url: str, method: str, headers: dict[str, str], body: Any, timeout: float,
+        url: str, method: str, headers: dict[str, str], body: Any, timeout: float
     ) -> Any:
         # D-AUDIT-11901 fix (cycle 119): canonical path
         # src.backend.infrastructure.clients.transport.http.factory
@@ -99,7 +99,7 @@ def _default_http_fetcher() -> HTTPFetcher:
 
         client = get_http_client_typed()
         return await client.request(
-            method=method, url=url, headers=headers, json_body=body, timeout=timeout,
+            method=method, url=url, headers=headers, json_body=body, timeout=timeout
         )
 
     return fetcher
@@ -301,7 +301,7 @@ class APICompositionProcessor(BaseProcessor):
         if failed_sources:
             exchange.fail(
                 f"API composition failed for sources: {failed_sources}, "
-                f"errors: {errors}",
+                f"errors: {errors}"
             )
 
         # Merge per strategy
@@ -316,7 +316,7 @@ class APICompositionProcessor(BaseProcessor):
         elif self._merge_strategy == MergeStrategy.LIST:
             final = list(results.values())
         elif self._merge_strategy == MergeStrategy.CUSTOM:
-            assert self._custom_merger is not None
+            assert self._custom_merger is not None  # nosec
             final = self._custom_merger(results)
         else:
             final = results
@@ -345,7 +345,7 @@ class APICompositionProcessor(BaseProcessor):
             url = f"{url}{sep}{query}"
 
         response = await self._fetcher(
-            url, source.method, source.headers, source.body, per_source_timeout,
+            url, source.method, source.headers, source.body, per_source_timeout
         )
 
         # Transform
@@ -387,5 +387,5 @@ class APICompositionMixin:
                 merge_strategy=merge_strategy,
                 custom_merger=custom_merger,
                 timeout_seconds=timeout_seconds,
-            ),
+            )
         )

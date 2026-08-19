@@ -20,12 +20,12 @@ from typing import Any
 import pytest
 
 from extensions.credit_pipeline.plugin import CreditPipelinePlugin
-from src.backend.core.interfaces.plugin import (
+from src.backend.core.api import (
     ActionRegistryProtocol,
     BasePlugin,
     PluginContext,
 )
-from src.backend.core.plugin_runtime.manifest import load_plugin_manifest
+from src.backend.core.api import load_plugin_manifest
 
 _MANIFEST_PATH = (
     Path(__file__).resolve().parents[3]

@@ -23,7 +23,7 @@ __all__ = ("record_invalidation_event", "router")
 
 # S202 audit fix: require admin role
 _ADMIN_GUARD_OPERATOR = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)),
+    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN))
 )
 
 router = APIRouter(dependencies=[_ADMIN_GUARD_OPERATOR])
@@ -65,7 +65,7 @@ async def flush_rag_cache_tier(
     cache = _get_three_tier_cache()
     if cache is None:
         raise HTTPException(
-            status_code=503, detail="ThreeTierRagCache не зарегистрирован в app.state",
+            status_code=503, detail="ThreeTierRagCache не зарегистрирован в app.state"
         )
     return {"flushed": await cache.flush(tier=tier)}
 

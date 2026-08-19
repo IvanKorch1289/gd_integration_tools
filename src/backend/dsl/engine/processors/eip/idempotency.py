@@ -37,7 +37,7 @@ class IdempotentConsumerProcessor(BaseProcessor):
 
             dedup_key = f"idempotent:{self._key_expr(exchange)}"
             is_new = await redis_client.set_if_not_exists(
-                key=dedup_key, value="1", ttl=self._ttl,
+                key=dedup_key, value="1", ttl=self._ttl
             )
             if not is_new:
                 _eip_logger.debug("Duplicate message filtered: key=%s", dedup_key)

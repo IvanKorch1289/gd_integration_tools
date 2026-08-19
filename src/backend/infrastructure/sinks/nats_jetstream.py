@@ -55,11 +55,10 @@ class NATSJetStreamSink(Sink):
     kind: SinkKind = field(default=SinkKind.NATS_JS, init=False)
 
     @with_breaker("nats_js_sink")
-    @with_retry(max_attempts=5,
-        retry_on=(ConnectionError, TimeoutError, OSError))
+    @with_retry(max_attempts=5, retry_on=(ConnectionError, TimeoutError, OSError))
     @require_capability("nats.write", action="write")
     async def publish(
-        self, subject: str, data: bytes, headers: dict[str, str] | None = None,
+        self, subject: str, data: bytes, headers: dict[str, str] | None = None
     ) -> SinkResult:
         """Публикует ``data`` в JetStream subject с опциональными headers.
 
@@ -89,7 +88,7 @@ class NATSJetStreamSink(Sink):
             ack = await js.publish(subject, data, headers=headers or None)
         except Exception as exc:
             return SinkResult(
-                ok=False, details={"error": str(exc) or exc.__class__.__name__},
+                ok=False, details={"error": str(exc) or exc.__class__.__name__}
             )
         finally:
             if nc is not None:
@@ -153,7 +152,7 @@ class NATSJetStreamSink(Sink):
         except Exception as exc:
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
             )
         finally:
             if nc is not None:

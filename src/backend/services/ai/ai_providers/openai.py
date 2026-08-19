@@ -34,9 +34,7 @@ class OpenAIProvider:
     ) -> None:
         self.api_key = api_key or openai_settings.api_key
         self.model = model
-        self.base_url = (
-            base_url or openai_settings.base_url
-        ).rstrip("/")
+        self.base_url = (base_url or openai_settings.base_url).rstrip("/")
 
     def extract_text(self, response: dict[str, Any]) -> str:
         """Litellm нормализует все ответы к OpenAI-формату."""
@@ -50,7 +48,7 @@ class OpenAIProvider:
         return ""
 
     async def embeddings(
-        self, texts: list[str], *, model: str | None = None,
+        self, texts: list[str], *, model: str | None = None
     ) -> list[list[float]]:
         """Embeddings через ``litellm.aembedding``."""
         if not self.api_key:
@@ -96,4 +94,6 @@ class OpenAIProvider:
         if tools:
             kwargs["tools"] = tools
         response = await litellm.acompletion(**kwargs)
-        return response.model_dump() if hasattr(response, "model_dump") else dict(response)
+        return (
+            response.model_dump() if hasattr(response, "model_dump") else dict(response)
+        )

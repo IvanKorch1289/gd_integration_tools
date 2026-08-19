@@ -48,6 +48,7 @@ def _is_safe_tenant_segment(tenant_id: str) -> bool:
 
     return bool(_re.match(r"^[a-zA-Z0-9_-]{1,64}$", tenant_id))
 
+
 __all__ = ("LocalFSStorage",)
 
 
@@ -65,10 +66,7 @@ class LocalFSStorage(ObjectStorage):
     """
 
     def __init__(
-        self,
-        base_path: str | os.PathLike[str],
-        *,
-        tenant_root_prefix: str = "tenants",
+        self, base_path: str | os.PathLike[str], *, tenant_root_prefix: str = "tenants"
     ) -> None:
         """Инициализирует backend и создаёт ``base_path``."""
         self._base = Path(base_path).expanduser().resolve()
@@ -90,7 +88,9 @@ class LocalFSStorage(ObjectStorage):
         """
         # Cycle-16 (D-AUDIT-1601): slug validation через shared helper.
         if tenant_id is not None and not _is_safe_tenant_segment(tenant_id):
-            raise ValueError(f"Небезопасный tenant_id для LocalFSStorage: {tenant_id!r}")
+            raise ValueError(
+                f"Небезопасный tenant_id для LocalFSStorage: {tenant_id!r}"
+            )
         slug = tenant_id if tenant_id is not None else "_system"
         return self._base / self._tenant_root_prefix / slug
 
@@ -104,7 +104,7 @@ class LocalFSStorage(ObjectStorage):
         return path
 
     async def upload(
-        self, key: str, data: bytes, content_type: str | None = None,
+        self, key: str, data: bytes, content_type: str | None = None
     ) -> str:
         """Upload data to local filesystem.
 
@@ -237,7 +237,7 @@ class LocalFSStorage(ObjectStorage):
             if not self._base.exists():
                 latency_ms = (time.perf_counter() - start) * 1000.0
                 return HealthResult.failed(
-                    error="base_path does not exist", mode=mode, latency_ms=latency_ms,
+                    error="base_path does not exist", mode=mode, latency_ms=latency_ms
                 )
             if not os.access(str(self._base), os.R_OK | os.W_OK):
                 latency_ms = (time.perf_counter() - start) * 1000.0
@@ -251,5 +251,5 @@ class LocalFSStorage(ObjectStorage):
         except Exception as exc:
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
             )

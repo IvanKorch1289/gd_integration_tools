@@ -57,7 +57,7 @@ class BatchingSinkRouter:
         self._batch_size = max(1, batch_size)
         self._flush_interval = max(0.001, flush_interval_ms / 1000.0)
         self._queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue(
-            maxsize=queue_maxsize,
+            maxsize=queue_maxsize
         )
         self._worker_task: asyncio.Task[None] | None = None
         self._closed = False
@@ -82,7 +82,7 @@ class BatchingSinkRouter:
         """Запускает worker-task на первом dispatch (lazy)."""
         if self._worker_task is None or self._worker_task.done():
             self._worker_task = get_task_registry().create_task(
-                self._run(), name="log-batching-worker",
+                self._run(), name="log-batching-worker"
             )
 
     async def dispatch(self, record: dict[str, Any]) -> None:
@@ -124,7 +124,7 @@ class BatchingSinkRouter:
         """Собирает следующий батч: ждёт первого record, добивает остаток."""
         try:
             first = await asyncio.wait_for(
-                self._queue.get(), timeout=self._flush_interval,
+                self._queue.get(), timeout=self._flush_interval
             )
         except TimeoutError:
             return []

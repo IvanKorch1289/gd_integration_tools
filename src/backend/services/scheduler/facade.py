@@ -25,7 +25,7 @@ class SchedulerFacade:
     """
 
     def __init__(
-        self, *, capability_check: Any | None = None, plugin: str = "extension",
+        self, *, capability_check: Any | None = None, plugin: str = "extension"
     ) -> None:
         self._check = capability_check
         self._plugin = plugin
@@ -35,7 +35,7 @@ class SchedulerFacade:
             self._check(self._plugin, action, resource)
 
     def add_job(
-        self, job_id: str, func: Any, trigger: str = "cron", **trigger_kwargs: Any,
+        self, job_id: str, func: Any, trigger: str = "cron", **trigger_kwargs: Any
     ) -> None:
         """Добавить задачу в планировщик.
 

@@ -120,7 +120,7 @@ class PluginVersionService:
                     version=active_version,
                     path=active_path,
                     is_active=True,
-                ),
+                )
             )
 
         prefix = f"{plugin}."
@@ -130,8 +130,8 @@ class PluginVersionService:
             version = child.name[len(prefix) :]
             installed.append(
                 InstalledVersion(
-                    plugin=plugin, version=version, path=child, is_active=False,
-                ),
+                    plugin=plugin, version=version, path=child, is_active=False
+                )
             )
         return installed
 
@@ -248,7 +248,7 @@ class PluginVersionService:
             return None
 
     def _archive_current(
-        self, plugin: str, active_path: Path, current_version: str,
+        self, plugin: str, active_path: Path, current_version: str
     ) -> None:
         """Если active-каталог не symlink — копируем его в archive."""
         if not active_path.is_dir() or current_version == "?":
@@ -262,11 +262,11 @@ class PluginVersionService:
         try:
             active_path.rename(archive_path)
             _logger.info(
-                "Archived current %s@%s → %s", plugin, current_version, archive_path,
+                "Archived current %s@%s → %s", plugin, current_version, archive_path
             )
         except OSError as exc:
             _logger.warning(
-                "Failed to archive current %s@%s: %s", plugin, current_version, exc,
+                "Failed to archive current %s@%s: %s", plugin, current_version, exc
             )
 
     @staticmethod

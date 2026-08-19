@@ -93,9 +93,7 @@ def _get_header(scope: Scope, name: bytes) -> str | None:
     return None
 
 
-def _make_send_wrapper(
-    send: Send, request_id: str, correlation_id: str,
-) -> Send:
+def _make_send_wrapper(send: Send, request_id: str, correlation_id: str) -> Send:
     """Создаёт обёртку вокруг ``send``, инжектирующую tracing headers.
 
     Headers добавляются только в ``http.response.start`` сообщение
@@ -103,7 +101,10 @@ def _make_send_wrapper(
     пробрасываются без изменений.
     """
     # Pre-compute header tuples для скорости.
-    request_id_header: tuple[bytes, bytes] = (b"x-request-id", request_id.encode("latin-1"))
+    request_id_header: tuple[bytes, bytes] = (
+        b"x-request-id",
+        request_id.encode("latin-1"),
+    )
     correlation_id_header: tuple[bytes, bytes] = (
         b"x-correlation-id",
         correlation_id.encode("latin-1"),
@@ -115,7 +116,8 @@ def _make_send_wrapper(
             # Удаляем potential existing headers (defensive: client may have
             # sent через downstream middleware, но upstream клиент не мог).
             existing = [
-                (k, v) for k, v in existing
+                (k, v)
+                for k, v in existing
                 if k not in (b"x-request-id", b"x-correlation-id")
             ]
             existing.append(request_id_header)

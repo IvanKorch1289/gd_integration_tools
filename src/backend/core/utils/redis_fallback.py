@@ -105,7 +105,7 @@ class FallbackCache:
         """
         self._primary = primary
         self._fallback: TTLCache[str, Any] = TTLCache(
-            maxsize=fallback_maxsize, ttl=fallback_ttl,
+            maxsize=fallback_maxsize, ttl=fallback_ttl
         )
         self._degraded = False
         self._consecutive_failures = 0
@@ -164,7 +164,7 @@ class FallbackCache:
         self._consecutive_failures += 1
         redis_fallback_operations_total.labels(op=op, outcome="degraded").inc()
         redis_fallback_consecutive_failures.labels(op=op).set(
-            self._consecutive_failures,
+            self._consecutive_failures
         )
         _logger.warning(
             "redis fallback engaged op=%s failures=%d error=%s",
@@ -176,11 +176,9 @@ class FallbackCache:
     def _mark_recovered(self) -> None:
         """Обозначить, что Redis снова отвечает (lazy recovery)."""
         if self._degraded:
-            redis_fallback_operations_total.labels(
-                op="any", outcome="success",
-            ).inc()
+            redis_fallback_operations_total.labels(op="any", outcome="success").inc()
             _logger.info(
-                "redis recovered after %d failures", self._consecutive_failures,
+                "redis recovered after %d failures", self._consecutive_failures
             )
         self._degraded = False
         self._consecutive_failures = 0

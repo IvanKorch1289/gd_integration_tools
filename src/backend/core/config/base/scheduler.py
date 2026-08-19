@@ -24,7 +24,7 @@ class SchedulerSettings(BaseSettingsWithLoader):
 
     yaml_group: ClassVar[str] = "scheduler"
     model_config = SettingsConfigDict(
-        env_prefix="SCHEDULER_", extra="forbid", validate_default=True,
+        env_prefix="SCHEDULER_", extra="forbid", validate_default=True
     )
 
     # Хранилища задач
@@ -51,7 +51,7 @@ class SchedulerSettings(BaseSettingsWithLoader):
             {
                 "fast": {"type": "processpool", "max_workers": 4},
                 "slow": {"type": "threadpool", "max_workers": 10},
-            },
+            }
         ],
     )
 

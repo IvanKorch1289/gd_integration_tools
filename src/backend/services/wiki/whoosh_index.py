@@ -48,7 +48,7 @@ class WhooshIndex:
     """In-process Whoosh-индекс над markdown-каталогом."""
 
     def __init__(
-        self, docs_dir: Path | None = None, index_dir: Path | None = None,
+        self, docs_dir: Path | None = None, index_dir: Path | None = None
     ) -> None:
         self._docs_dir = (docs_dir or _DEFAULT_DOCS_DIR).resolve()
         self._index_dir = (index_dir or _DEFAULT_INDEX_DIR).resolve()
@@ -199,7 +199,7 @@ class WhooshIndex:
         return count
 
     def search(
-        self, query: str, top: int = 20, *, category: str | None = None,
+        self, query: str, top: int = 20, *, category: str | None = None
     ) -> list[Hit]:
         """Полнотекстовый поиск по ``title`` и ``content``.
 
@@ -217,7 +217,7 @@ class WhooshIndex:
             self._ix = self._open_or_create()
         with self._ix.searcher() as searcher:
             parser = qparser.MultifieldParser(
-                ["title", "content"], schema=self._ix.schema,
+                ["title", "content"], schema=self._ix.schema
             )
             full_query = f"({query}) AND category:{category}" if category else query
             parsed = parser.parse(full_query)
@@ -232,7 +232,7 @@ class WhooshIndex:
                         title=str(hit.get("title") or hit["path"]),
                         score=float(hit.score),
                         snippet=snippet,
-                    ),
+                    )
                 )
             return hits
 

@@ -10,6 +10,7 @@ Differences from FileListProcessor (M6):
 - DirectoryScan: recursive (**), min_size filter, mtime filter,
   returns sorted list with metadata
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -66,9 +67,7 @@ class FilteredDirectoryScanProcessor(BaseProcessor):
         self.max_results = max_results
         self.timeout_seconds = timeout_seconds
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="read"):
             return
@@ -83,6 +82,7 @@ class FilteredDirectoryScanProcessor(BaseProcessor):
             exchange: Текущий exchange; результат — в target (default: ``body.files``).
             context: Контекст выполнения маршрута.
         """
+
         def _scan() -> list[str]:
             root = Path(self.directory)
             if not root.exists():
@@ -92,8 +92,7 @@ class FilteredDirectoryScanProcessor(BaseProcessor):
             for path in root.glob(self.pattern):
                 if len(results) >= self.max_results:
                     _rpa_logger.warning(
-                        "directory_scan cap reached: max_results=%d",
-                        self.max_results,
+                        "directory_scan cap reached: max_results=%d", self.max_results
                     )
                     break
                 if not path.is_file():
@@ -116,16 +115,20 @@ class FilteredDirectoryScanProcessor(BaseProcessor):
         # Timeout protection (P0-1 fix)
         try:
             files = await asyncio.wait_for(
-                asyncio.to_thread(_scan), timeout=self.timeout_seconds,
+                asyncio.to_thread(_scan), timeout=self.timeout_seconds
             )
         except TimeoutError:
             _rpa_logger.warning(
                 "directory_scan timeout dir=%s pattern=%s timeout=%.1fs",
-                self.directory, self.pattern, self.timeout_seconds,
+                self.directory,
+                self.pattern,
+                self.timeout_seconds,
             )
             files = []
         _rpa_logger.info(
             "directory_scan dir=%s pattern=%s count=%d",
-            self.directory, self.pattern, len(files),
+            self.directory,
+            self.pattern,
+            len(files),
         )
         self.set_result(exchange, self.target, files)

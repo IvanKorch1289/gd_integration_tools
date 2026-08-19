@@ -109,14 +109,14 @@ class SchemaTypedAdapter:
         validated: dict[str, Any] = _DICT_ADAPTER.validate_python(data)
         if validated.get("version") != CURRENT_SNAPSHOT_VERSION:
             raise ValueError(
-                f"Unsupported snapshot version: {validated.get('version')!r}",
+                f"Unsupported snapshot version: {validated.get('version')!r}"
             )
         entries_raw: Any = validated.get("entries", [])
         if not isinstance(entries_raw, list):
             raise ValueError("snapshot 'entries' must be a list")
         # Strict-validate каждую запись (TypeAdapter list-of-dict).
         validated_entries: list[dict[str, Any]] = _LIST_ADAPTER.validate_python(
-            entries_raw,
+            entries_raw
         )
         return {"version": validated["version"], "entries": validated_entries}
 
@@ -227,6 +227,6 @@ class SnapshotView:
         if not isinstance(entries_raw, list):
             raise ValueError("snapshot 'entries' must be a list")
         validated_entries: list[dict[str, Any]] = _LIST_ADAPTER.validate_python(
-            entries_raw,
+            entries_raw
         )
         return cls({"version": version_raw, "entries": validated_entries})

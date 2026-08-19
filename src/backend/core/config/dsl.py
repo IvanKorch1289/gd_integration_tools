@@ -39,7 +39,7 @@ class DSLSettings(BaseSettingsWithLoader):
 
     yaml_group: ClassVar[str] = "dsl"
     model_config = SettingsConfigDict(
-        env_prefix="DSL_", extra="forbid", validate_default=True,
+        env_prefix="DSL_", extra="forbid", validate_default=True
     )
 
     routes_dir: Path = Field(
@@ -48,7 +48,8 @@ class DSLSettings(BaseSettingsWithLoader):
         description="Путь к директории с *.yaml/*.dsl.yaml DSL-файлами.",
     )
     hot_reload_enabled: bool = Field(
-        default=False,         title="Hot-reload DSL-маршрутов",
+        default=False,
+        title="Hot-reload DSL-маршрутов",
         description="Если True — startup поднимает watchfiles awatch для routes_dir.",
     )
     hot_reload_debounce_ms: int = Field(

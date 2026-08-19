@@ -186,13 +186,13 @@ class HybridRetriever:
             if chunk is None:
                 continue
             results.append(
-                _to_hybrid_result(chunk, rrf_score=rrf_score, sources=sources),
+                _to_hybrid_result(chunk, rrf_score=rrf_score, sources=sources)
             )
         return results
 
 
 def rrf_merge(
-    *, ranked_lists: list[tuple[str, list[str]]], k: int = 60,
+    *, ranked_lists: list[tuple[str, list[str]]], k: int = 60
 ) -> list[tuple[str, float, tuple[str, ...]]]:
     """Reciprocal Rank Fusion: merge ranked lists в единый список.
 
@@ -237,7 +237,7 @@ def _chunk_id(chunk: dict[str, Any]) -> str:
 
 
 def _to_hybrid_result(
-    chunk: dict[str, Any], *, rrf_score: float, sources: tuple[str, ...],
+    chunk: dict[str, Any], *, rrf_score: float, sources: tuple[str, ...]
 ) -> HybridResult:
     """Преобразует chunk dict → :class:`HybridResult`."""
     return HybridResult(

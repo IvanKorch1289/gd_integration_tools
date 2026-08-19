@@ -217,18 +217,14 @@ async def run_shutdown(app: FastAPI, task_registry: Any) -> None:
         from src.backend.core.config.settings import get_app_settings
 
         settings = get_app_settings()
-        if settings is not None and hasattr(
-            settings, "graceful_shutdown_timeout",
-        ):
+        if settings is not None and hasattr(settings, "graceful_shutdown_timeout"):
             # k8s termination_grace_period - preStop sleep = реальное окно
             shutdown_timeout = max(
-                1.0,
-                float(settings.graceful_shutdown_timeout) - 15.0,
+                1.0, float(settings.graceful_shutdown_timeout) - 15.0
             )
     except Exception as settings_exc:
         _logger.debug(
-            "settings unavailable, using default %s: %s",
-            shutdown_timeout, settings_exc,
+            "settings unavailable, using default %s: %s", shutdown_timeout, settings_exc
         )
 
     try:

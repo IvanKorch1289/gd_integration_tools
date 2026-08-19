@@ -53,8 +53,7 @@ class BulkObjectsResponse(BaseModel):
     succeeded: int = Field(description="Успешно зарегистрировано.")
     failed: int = Field(description="С ошибками.")
     failures: list[BulkObjectsFailureItem] = Field(
-        default_factory=list,
-        description="Первые 20 failures (truncated).",
+        default_factory=list, description="Первые 20 failures (truncated)."
     )
 
 
@@ -75,8 +74,7 @@ class ProcessSchemaDryRunResponse(BaseModel):
 
     parsed: int = Field(description="Количество распарсенных строк.")
     sample: list[dict[str, Any]] = Field(
-        default_factory=list,
-        description="Первые 3 строки для preview.",
+        default_factory=list, description="Первые 3 строки для preview."
     )
     dry_run: bool = Field(description="Всегда True для этого response.")
 
@@ -111,7 +109,7 @@ async def _import_openapi(
                 content = resp.content
         except Exception as exc:
             raise HTTPException(
-                400, f"Не удалось загрузить spec по URL: {exc}",
+                400, f"Не удалось загрузить spec по URL: {exc}"
             ) from exc
     else:
         raise HTTPException(400, "Требуется file или spec_url")
@@ -124,7 +122,7 @@ async def _import_openapi(
     )
     try:
         return await get_import_service().import_and_register(
-            source, register_actions=not dry_run,
+            source, register_actions=not dry_run
         )
     except (ImportError, ValueError) as exc:
         raise HTTPException(400, f"OpenAPI import failed: {exc}") from exc
@@ -184,7 +182,7 @@ async def _import_postman(
     )
     try:
         return await get_import_service().import_and_register(
-            source, register_actions=not dry_run,
+            source, register_actions=not dry_run
         )
     except (ImportError, ValueError) as exc:
         raise HTTPException(400, f"Postman import failed: {exc}") from exc
@@ -268,7 +266,7 @@ def _apply_steps(builder: Any, steps: list[dict[str, Any]]) -> Any:
                 builder = builder.log(step.get("message", ""))
             case "http_call":
                 builder = builder.http_call(
-                    step["url"], method=step.get("method", "GET"),
+                    step["url"], method=step.get("method", "GET")
                 )
             case "dispatch_action":
                 builder = builder.dispatch_action(step["action"])

@@ -5,6 +5,7 @@ Async HTTP request через :mod:`httpx` (modern async HTTP client,
 
 Capability: rpa.http.request (medium risk — network egress).
 """
+
 from __future__ import annotations
 
 import json
@@ -55,9 +56,7 @@ class HttpRequestProcessor(BaseProcessor):
         self.timeout = timeout
         self.target = to
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет HTTP-запрос через httpx и пишет JSON/text-ответ в target."""
         if not await self.auth_check(exchange, action="execute"):
             return
@@ -76,24 +75,27 @@ class HttpRequestProcessor(BaseProcessor):
         from src.backend.core.net.migration_helper import make_http_client
 
         async with make_http_client(
-            timeout=self.timeout,
-            plugin="rpa.httprequestprocessor",
+            timeout=self.timeout, plugin="rpa.httprequestprocessor"
         ) as client:
-            response = await client.request(
-                self.method, self.url, **request_kwargs,
-            )
+            response = await client.request(self.method, self.url, **request_kwargs)
 
         try:
             data = response.json()
-        except (json.JSONDecodeError, ValueError):
+        except json.JSONDecodeError, ValueError:
             data = response.text
 
         _rpa_logger.info(
             "http_request method=%s url=%s status=%d",
-            self.method, self.url, response.status_code,
+            self.method,
+            self.url,
+            response.status_code,
         )
-        self.set_result(exchange, self.target, {
-            "status": response.status_code,
-            "headers": dict(response.headers),
-            "data": data,
-        })
+        self.set_result(
+            exchange,
+            self.target,
+            {
+                "status": response.status_code,
+                "headers": dict(response.headers),
+                "data": data,
+            },
+        )

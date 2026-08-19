@@ -83,7 +83,7 @@ class PrepMixin:
         return {}
 
     async def _build_response_object(
-        self, response: httpx.Response, content: Any, start_time: float,
+        self, response: httpx.Response, content: Any, start_time: float
     ) -> dict[str, Any]:
         content_type = (
             response.headers.get("Content-Type", "").lower().split(";")[0].strip()

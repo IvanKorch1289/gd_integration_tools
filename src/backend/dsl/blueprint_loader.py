@@ -144,7 +144,7 @@ def load_blueprint(path: Path) -> BlueprintSpec:
 
 
 def discover_blueprints(
-    directory: Path | None = None, *, glob: str = "*.yaml",
+    directory: Path | None = None, *, glob: str = "*.yaml"
 ) -> list[BlueprintSpec]:
     """Найти все *.yaml blueprint в каталоге.
 

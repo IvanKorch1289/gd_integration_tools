@@ -50,7 +50,7 @@ class ObservabilityMixin(_PipelineStepsProtocol):
     __slots__ = ()
 
     async def _audit_emit(
-        self, request: AIRequest, policy: AIPolicySpec | None, response: AIResponse,
+        self, request: AIRequest, policy: AIPolicySpec | None, response: AIResponse
     ) -> None:
         """Шаг 9a: Audit emit через Unified :class:`AuditService`.
 
@@ -108,7 +108,7 @@ class ObservabilityMixin(_PipelineStepsProtocol):
             logger.warning("AIGateway: audit emit failed: %s", exc)
 
     async def _cost_track(
-        self, request: AIRequest, policy: AIPolicySpec | None, response: AIResponse,
+        self, request: AIRequest, policy: AIPolicySpec | None, response: AIResponse
     ) -> None:
         """Шаг 9b: Cost-tracker (Langfuse v3 OTel + Prometheus).
 

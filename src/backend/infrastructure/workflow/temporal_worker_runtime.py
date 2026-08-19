@@ -110,9 +110,7 @@ class TemporalWorkerRuntime:
         """
         async with self._lock:
             if self.is_running:
-                raise RuntimeError(
-                    "TemporalWorkerRuntime уже запущен — сначала stop()",
-                )
+                raise RuntimeError("TemporalWorkerRuntime уже запущен — сначала stop()")
 
             if workflow_classes is None:
                 workflow_classes = workflow_registry.all()
@@ -147,8 +145,7 @@ class TemporalWorkerRuntime:
 
                 worker_run = _wrap_run()
             self._task = get_task_registry().create_task(
-                worker_run,
-                name=f"temporal-worker-runtime-{task_queue}",
+                worker_run, name=f"temporal-worker-runtime-{task_queue}"
             )
             _logger.info(
                 "temporal.worker_runtime.started",
@@ -188,15 +185,14 @@ class TemporalWorkerRuntime:
                 )
             except Exception as exc:
                 _logger.warning(
-                    "temporal.worker_runtime.shutdown_error",
-                    extra={"error": str(exc)},
+                    "temporal.worker_runtime.shutdown_error", extra={"error": str(exc)}
                 )
 
         if task is not None and not task.done():
             task.cancel()
             try:
                 await asyncio.wait_for(task, timeout=timeout)
-            except (TimeoutError, asyncio.CancelledError):
+            except TimeoutError, asyncio.CancelledError:
                 pass
 
         _logger.info("temporal.worker_runtime.stopped")
@@ -219,9 +215,7 @@ def reset_temporal_worker_runtime() -> None:
     _runtime = None
 
 
-async def start_temporal_worker_runtime(
-    *, activities: list[Any] | None = None,
-) -> None:
+async def start_temporal_worker_runtime(*, activities: list[Any] | None = None) -> None:
     """Lifespan-entrypoint: подключить Temporal client + запустить Worker.
 
     D-A8-03 fix (cycle 28): kw-only ``activities`` — список activity-callables,
@@ -254,8 +248,7 @@ async def start_temporal_worker_runtime(
         )
     except ImportError as exc:
         _logger.warning(
-            "temporal.worker_runtime.import_failed",
-            extra={"error": str(exc)},
+            "temporal.worker_runtime.import_failed", extra={"error": str(exc)}
         )
         return
 
@@ -276,7 +269,10 @@ async def start_temporal_worker_runtime(
     except (ImportError, Exception) as exc:
         _logger.warning(
             "temporal.worker_runtime.client_unavailable",
-            extra={"error": str(exc), "hint": "temporalio SDK install или cluster недоступен"},
+            extra={
+                "error": str(exc),
+                "hint": "temporalio SDK install или cluster недоступен",
+            },
         )
         return
 
@@ -302,15 +298,14 @@ async def start_temporal_worker_runtime(
         )
     except ImportError as exc:
         _logger.warning(
-            "temporal.worker_runtime.pool_import_failed",
-            extra={"error": str(exc)},
+            "temporal.worker_runtime.pool_import_failed", extra={"error": str(exc)}
         )
         return
 
     import time as _time
 
     factory._cache[namespace] = _ClientCacheEntry(
-        client=client, created_at=_time.monotonic(), last_used_at=_time.monotonic(),
+        client=client, created_at=_time.monotonic(), last_used_at=_time.monotonic()
     )
     pool = TemporalWorkerPool(factory=factory, namespace=namespace)
     try:
@@ -353,8 +348,7 @@ async def stop_temporal_worker_runtime() -> None:
             await pool.shutdown()
         except (RuntimeError, OSError, AttributeError) as exc:
             _logger.warning(
-                "temporal.worker_runtime.pool_shutdown_error",
-                extra={"error": str(exc)},
+                "temporal.worker_runtime.pool_shutdown_error", extra={"error": str(exc)}
             )
         runtime._pool = None
         # После pool.shutdown() — обнуляем runtime refs чтобы is_running=False.

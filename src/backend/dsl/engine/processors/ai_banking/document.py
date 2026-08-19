@@ -36,11 +36,11 @@ class DocumentClassifierResult(BaseModel):
     """Результат классификации документа."""
 
     document_type: str = Field(
-        description="passport| driver's_license|invoice|contract|statement|other",
+        description="passport| driver's_license|invoice|contract|statement|other"
     )
     confidence: float = Field(ge=0.0, le=1.0, description="Classification confidence")
     subtypes: list[str] = Field(
-        default_factory=list, description="Additional type info",
+        default_factory=list, description="Additional type info"
     )
     extracted_fields: dict[str, str] = Field(default_factory=dict)
 
@@ -105,7 +105,7 @@ class DocumentClassifierProcessor(_BankingAIProcessor):
                 "confidence": result.confidence,
                 "subtypes": result.subtypes,
                 "extracted_fields": result.extracted_fields,
-            },
+            }
         )
         exchange.set_property("doc_type", result.document_type)
         exchange.set_property("doc_classify_confidence", result.confidence)
@@ -116,7 +116,7 @@ class DocumentClassifierProcessor(_BankingAIProcessor):
         return f"""Classify this document and extract key fields.\n\nDocument:\n{truncated}\n{hint_section}\n\nRespond with JSON:\n{{\n  "document_type": "passport| driver's_license|invoice|contract|statement|receipt|report|other",\n  "confidence": 0.0-1.0,\n  "subtypes": ["subtype1", "subtype2"],\n  "extracted_fields": {{"field_name": "value", ...}}\n}}"""
 
     async def _check_capability(
-        self, exchange: Exchange[Any], context: ExecutionContext,
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> bool:
         """Verify capability (S190 — unified facade pattern).
 
@@ -124,6 +124,8 @@ class DocumentClassifierProcessor(_BankingAIProcessor):
         для unified capability semantics + plugin attribution.
         """
         return await self._check_capability_via_facade(exchange)
+
+
 class FrancotypingResult(BaseModel):
     """Результат франкотипирования текста."""
 
@@ -195,7 +197,7 @@ class FrancotypingProcessor(_BankingAIProcessor):
                 "script": result.script,
                 "classification": result.classification,
                 "confidence": result.confidence,
-            },
+            }
         )
         exchange.set_property("francotype_lang", result.language)
         exchange.set_property("francotype_script", result.script)
@@ -205,7 +207,7 @@ class FrancotypingProcessor(_BankingAIProcessor):
         return f'Analyze this text for language, region, and script classification.\n\nText:\n{truncated}\n\nRespond with JSON:\n{{\n  "language": "ISO 639-1 code (e.g., ru, en, fr, de)",\n  "region": "region code or null (e.g., RU, US, GB)",\n  "script": "Latin|Cyrillic|Arabic|Han|Hebrew|Greek|Armenian|Japanese|Korean|Thai",\n  "classification": "top-level category",\n  "confidence": 0.0-1.0\n}}'
 
     async def _check_capability(
-        self, exchange: Exchange[Any], context: ExecutionContext,
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> bool:
         """Verify capability (S190 — unified facade pattern).
 
@@ -213,6 +215,8 @@ class FrancotypingProcessor(_BankingAIProcessor):
         для unified capability semantics + plugin attribution.
         """
         return await self._check_capability_via_facade(exchange)
+
+
 class TransactionCategorizerProcessor(BaseProcessor):
     """Категоризация транзакций (MCC + subcategory + merchant normalization)."""
 

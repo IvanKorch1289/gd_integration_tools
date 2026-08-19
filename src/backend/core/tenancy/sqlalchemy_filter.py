@@ -37,7 +37,7 @@ class TenantMixin:
     """
 
     tenant_id: Mapped[str] = mapped_column(
-        String(64), index=True, nullable=False, default="default",
+        String(64), index=True, nullable=False, default="default"
     )
 
 
@@ -87,7 +87,7 @@ def apply_tenant_filter(_target: Any = None) -> None:
 
     @event.listens_for(Session, "before_flush")
     def _set_tenant_on_new(
-        session: Session, _flush_context: Any, _instances: Any,
+        session: Session, _flush_context: Any, _instances: Any
     ) -> None:
         tenant_id = get_tenant_id()
         if not tenant_id:

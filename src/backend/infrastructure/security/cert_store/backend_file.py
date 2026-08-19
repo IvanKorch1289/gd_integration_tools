@@ -6,6 +6,7 @@ Cert store backend, читающий .pem/.crt файлы из директор�
 
 Pattern (D248, D247): lazy file I/O, no caching (CertStore имеет hot cache).
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -74,8 +75,9 @@ class FileCertBackend(CertBackend):
         path.unlink()
         return True
 
-
-    async def save(self, service_id: str, pem: str, expires_at: datetime | None = None) -> None:
+    async def save(
+        self, service_id: str, pem: str, expires_at: datetime | None = None
+    ) -> None:
         """Alias для set (CertBackend ABC signature)."""
         await self.set(service_id, pem)
 
@@ -87,7 +89,6 @@ class FileCertBackend(CertBackend):
     async def list_expiring(self, before: datetime) -> list[CertEntry]:
         """File backend не хранит expires_at — возвращает пусто."""
         return []
-
 
     def list_all(self) -> list[str]:
         """Список cert_id в директории (для admin/debug)."""

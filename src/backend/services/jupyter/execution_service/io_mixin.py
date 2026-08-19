@@ -118,7 +118,7 @@ class IOMixin(_NotebookExecutionProtocol):
             ]
         except Exception as exc:
             raise JupyterExecutionError(
-                f"Failed to read notebook {notebook_path}: {exc}",
+                f"Failed to read notebook {notebook_path}: {exc}"
             ) from exc
 
         # 2. Inject parameters cell at the top
@@ -189,7 +189,7 @@ class IOMixin(_NotebookExecutionProtocol):
                         "display_name": "Python 3",
                         "language": "python",
                         "name": "python3",
-                    },
+                    }
                 },
                 "cells": [
                     {

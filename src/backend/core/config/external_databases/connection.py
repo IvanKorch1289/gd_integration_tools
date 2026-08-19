@@ -18,7 +18,7 @@ class ExternalDatabaseConnectionSettings(ExternalDatabaseItemSettings):
     """
 
     echo: bool = Field(
-        ..., description="Включить логирование SQL-запросов", examples=[False],
+        ..., description="Включить логирование SQL-запросов", examples=[False]
     )
 
     username: str = Field(
@@ -56,11 +56,11 @@ class ExternalDatabaseConnectionSettings(ExternalDatabaseItemSettings):
     )
 
     pool_recycle: int = Field(
-        ..., description="Интервал обновления подключения", examples=[1800],
+        ..., description="Интервал обновления подключения", examples=[1800]
     )
 
     pool_timeout: int = Field(
-        ..., description="Таймаут ожидания пула подключений", examples=[30],
+        ..., description="Таймаут ожидания пула подключений", examples=[30]
     )
 
     pool_pre_ping: bool = Field(
@@ -96,11 +96,11 @@ class ExternalDatabaseConnectionSettings(ExternalDatabaseItemSettings):
     )
 
     ca_bundle: str | None = Field(
-        default=None, description="Путь к сертификату", examples=["/path/to/ca.crt"],
+        default=None, description="Путь к сертификату", examples=["/path/to/ca.crt"]
     )
 
     max_retries: int = Field(
-        ..., ge=0, description="Максимальное число повторных попыток", examples=[0],
+        ..., ge=0, description="Максимальное число повторных попыток", examples=[0]
     )
 
     circuit_breaker_max_failures: int = Field(
@@ -111,7 +111,7 @@ class ExternalDatabaseConnectionSettings(ExternalDatabaseItemSettings):
     )
 
     circuit_breaker_reset_timeout: int = Field(
-        ..., ge=0, description="Таймаут сброса неудачных попыток", examples=[30],
+        ..., ge=0, description="Таймаут сброса неудачных попыток", examples=[30]
     )
 
     slow_query_threshold: float = Field(
@@ -128,7 +128,8 @@ class ExternalDatabaseConnectionSettings(ExternalDatabaseItemSettings):
     )
 
     pool_use_lifo: bool = Field(
-        default=False,         description="SQLAlchemy pool_use_lifo: True — LIFO, False — FIFO (default).",
+        default=False,
+        description="SQLAlchemy pool_use_lifo: True — LIFO, False — FIFO (default).",
         examples=[False],
     )
 

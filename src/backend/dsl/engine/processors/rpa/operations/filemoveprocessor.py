@@ -63,7 +63,7 @@ class FileMoveProcessor(BaseProcessor):
             else:
                 await asyncio.to_thread(shutil.copy2, src, dst)
             exchange.set_property(
-                "file_operation", {"mode": self._mode, "src": src, "dst": dst},
+                "file_operation", {"mode": self._mode, "src": src, "dst": dst}
             )
         except (FileNotFoundError, PermissionError, OSError) as exc:
             exchange.fail(f"File {self._mode} failed: {exc}")

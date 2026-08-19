@@ -50,7 +50,7 @@ class StructlogLogger(LoggerProtocol):
 
     @staticmethod
     def _format(
-        msg: str, args: tuple[Any, ...], kwargs: dict[str, Any],
+        msg: str, args: tuple[Any, ...], kwargs: dict[str, Any]
     ) -> tuple[str, dict[str, Any]]:
         """Compat shim: stdlib-style ``%`` formatting → structlog kwargs.
 
@@ -63,7 +63,7 @@ class StructlogLogger(LoggerProtocol):
         try:
             formatted = msg % args
             return formatted, kwargs
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             # msg не содержит %-placeholders ИЛИ args не подходят — отдаём как есть
             # (structlog не упадёт; при рендере JSON просто увидит str)
             return msg, {**kwargs, "args": list(args)}
@@ -203,7 +203,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
             import structlog
         except ImportError as exc:
             raise ImportError(
-                "structlog не установлен. Добавьте: pip install structlog",
+                "structlog не установлен. Добавьте: pip install structlog"
             ) from exc
 
         from socket import gethostname
@@ -253,7 +253,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         # Configure stdlib root logger
         log_level = getattr(logging, level.upper(), logging.INFO)
         logging.basicConfig(
-            format="%(message)s", level=log_level, handlers=handlers, force=True,
+            format="%(message)s", level=log_level, handlers=handlers, force=True
         )
 
         # Configure per-name loggers
@@ -269,7 +269,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
 
         # Correlation context injector
         def _inject_correlation(
-            logger: Any, method_name: str, event_dict: dict,
+            logger: Any, method_name: str, event_dict: dict
         ) -> dict:
             """Автоматически добавляет correlation_id/request_id/tenant_id в каждый лог."""
             try:
@@ -285,7 +285,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
                     event_dict.setdefault("request_id", rid)
                 if tid := get_tenant_id():
                     event_dict.setdefault("tenant_id", tid)
-            except (ImportError, AttributeError):
+            except ImportError, AttributeError:
                 pass
             return event_dict
 
@@ -335,7 +335,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         # Bind default context
         structlog.contextvars.clear_contextvars()
         structlog.contextvars.bind_contextvars(
-            environment=environment, hostname=hostname,
+            environment=environment, hostname=hostname
         )
 
         # Formatter for stdlib handlers
@@ -343,7 +343,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
             processors=[
                 structlog.stdlib.ProcessorFormatter.remove_processors_meta,
                 renderer,
-            ],
+            ]
         )
         for h in handlers:
             h.setFormatter(formatter)
@@ -396,6 +396,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
                             # OSError — sink close failure, RuntimeError —
                             # sink unavailable, AttributeError — API change.
                             import logging as _stdlogging
+
                             _stdlogging.getLogger(__name__).debug(
                                 "structlog_backend.sink_close_sync_failed",
                                 extra={"error": str(sink_exc)},
@@ -406,6 +407,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
             # API change, RuntimeError — router unavailable.
             # router может быть ещё не инициализирован — no-op
             import logging as _stdlogging
+
             _stdlogging.getLogger(__name__).debug(
                 "structlog_backend.router_access_failed",
                 extra={"error": str(router_exc)},
@@ -422,6 +424,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
                 # handler unavailable, AttributeError — handler API
                 # change, TypeError — wrong arg type.
                 import logging as _stdlogging
+
                 _stdlogging.getLogger(__name__).debug(
                     "structlog_backend.handler_flush_close_failed",
                     extra={"error": str(handler_exc)},

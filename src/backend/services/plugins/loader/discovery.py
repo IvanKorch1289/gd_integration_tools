@@ -38,7 +38,7 @@ class PluginInventoryConflictError(RuntimeError):
         self.owner = owner
         super().__init__(
             f"Plugin {plugin!r} cannot register {kind} {name!r} — "
-            f"already provided by {owner!r}",
+            f"already provided by {owner!r}"
         )
 
 
@@ -128,7 +128,7 @@ class DiscoveryMixin:
         except PluginDependencyCycleError as exc:
             cycle_blocked.update(exc.cycle or {m.name for m in non_blocked})
             _logger.error(
-                "Plugin dependency cycle detected: %s — affected plugins will fail", exc,
+                "Plugin dependency cycle detected: %s — affected plugins will fail", exc
             )
             return ()
         except KeyError as exc:
@@ -141,7 +141,7 @@ class DiscoveryMixin:
         return tuple(m.name for m in ordered)
 
     def _reorder_manifest_paths(
-        self, *, manifest_paths: list[Path], sorted_names: tuple[str, ...],
+        self, *, manifest_paths: list[Path], sorted_names: tuple[str, ...]
     ) -> list[Path]:
         """Возвращает ``manifest_paths`` в bootstrap-порядке.
 

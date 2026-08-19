@@ -64,7 +64,7 @@ class AutoScaler:
             return
         self._stop_event.clear()
         self._task = get_task_registry().create_task(
-            self._run_loop(), name="auto_scaler.loop",
+            self._run_loop(), name="auto_scaler.loop"
         )
         _logger.info("AutoScaler started (interval=%.1fs)", self._tick_interval_s)
 
@@ -86,9 +86,9 @@ class AutoScaler:
             # RuntimeError — task raised, AttributeError — task API change,
             # TypeError — wrong task type.
             import logging
+
             logging.getLogger(__name__).debug(
-                "auto_scaler.task_cleanup_failed",
-                extra={"error": str(task_exc)},
+                "auto_scaler.task_cleanup_failed", extra={"error": str(task_exc)}
             )
         finally:
             self._task = None
@@ -129,7 +129,7 @@ class AutoScaler:
                     _logger.exception("AutoScaler tick_once raised; продолжаем")
                 try:
                     await asyncio.wait_for(
-                        self._stop_event.wait(), timeout=self._tick_interval_s,
+                        self._stop_event.wait(), timeout=self._tick_interval_s
                     )
                 except TimeoutError:
                     pass
@@ -193,6 +193,7 @@ class TemporalWorkerScaler:
             from src.backend.core.di.providers.infrastructure_locator import (
                 get_set_workers_active as _get_swa,
             )
+
             _record = _get_rse()
             _set_depth = _get_stqd()
             _set_active = _get_swa()
@@ -232,7 +233,7 @@ class TemporalWorkerScaler:
 
         current = self._pool_current_workers()
         desired = max(
-            self._min, min(self._max, -(-depth // self._target) if depth else self._min),
+            self._min, min(self._max, -(-depth // self._target) if depth else self._min)
         )
 
         if desired == current:

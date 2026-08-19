@@ -66,7 +66,7 @@ class TelegramSourcesMixin:
         import importlib
 
         mod = importlib.import_module(
-            "src.backend.infrastructure.sources.telegram_webhook",
+            "src.backend.infrastructure.sources.telegram_webhook"
         )
         source = mod.TelegramWebhookSource(
             bot_token=bot_token,

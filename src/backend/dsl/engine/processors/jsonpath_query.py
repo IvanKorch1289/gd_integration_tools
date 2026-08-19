@@ -76,7 +76,7 @@ class JsonPathProcessor(BaseProcessor):
             raise ValueError("jsonpath: expr must be non-empty")
         if mode not in {"all", "first", "scalar"}:
             raise ValueError(
-                f"jsonpath: mode must be 'all'|'first'|'scalar', got {mode!r}",
+                f"jsonpath: mode must be 'all'|'first'|'scalar', got {mode!r}"
             )
         self._expr_source = expr
         self._target = to
@@ -110,9 +110,9 @@ class JsonPathProcessor(BaseProcessor):
             # cycle-9/D-AUDIT-1714: narrow exceptions + observability (mirror
             # D-AUDIT-1706..1713).
             import logging
+
             logging.getLogger(__name__).debug(
-                "jsonpath_query.feature_flag_fallback",
-                extra={"error": str(ff_exc)},
+                "jsonpath_query.feature_flag_fallback", extra={"error": str(ff_exc)}
             )
 
         try:

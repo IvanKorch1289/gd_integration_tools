@@ -120,7 +120,7 @@ class MqttHandler:
 
                     async for message in client.messages:
                         await self._handle_message(
-                            topic=str(message.topic), payload=message.payload,
+                            topic=str(message.topic), payload=message.payload
                         )
 
             except asyncio.CancelledError:
@@ -149,7 +149,7 @@ class MqttHandler:
             from src.backend.schemas.invocation import ActionCommandSchema
 
             command = ActionCommandSchema(
-                action=action, payload=data, meta={"source": "mqtt", "topic": topic},
+                action=action, payload=data, meta={"source": "mqtt", "topic": topic}
             )
             await action_handler_registry.dispatch(command)
         except KeyError:
@@ -187,7 +187,7 @@ class MqttHandler:
                 tls_context=self._build_tls_context(),
             ) as client:
                 await client.publish(
-                    topic, payload=orjson.dumps(data), qos=self._settings.qos,
+                    topic, payload=orjson.dumps(data), qos=self._settings.qos
                 )
         except ImportError:
             logger.warning("aiomqtt не установлен — публикация невозможна")
@@ -200,7 +200,7 @@ def _create_mqtt_handler() -> MqttHandler:
         settings = MqttSettings()
     except Exception as _:
         settings = MqttSettings(
-            broker_host="localhost", broker_port=1883, enabled=False,
+            broker_host="localhost", broker_port=1883, enabled=False
         )
     return MqttHandler(settings)
 

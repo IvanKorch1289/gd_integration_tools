@@ -63,7 +63,7 @@ def _resolve_http_app(mcp: Any) -> Any:
             return asgi
     raise RuntimeError(
         "FastMCP не предоставляет ASGI HTTP API; ожидался один из методов: "
-        "http_app / streamable_http_app / sse_app / asgi_app.",
+        "http_app / streamable_http_app / sse_app / asgi_app."
     )
 
 
@@ -87,7 +87,6 @@ def create_mcp_http_app() -> tuple[Any, Any]:
         RuntimeError: если HTTP transport недоступен в текущей версии.
 
     """
-    from src.backend.entrypoints.mcp.auth_middleware import McpAuthMiddleware
 
     if _is_namespaces_enabled():
         from src.backend.entrypoints.mcp.gateway import create_mcp_gateway

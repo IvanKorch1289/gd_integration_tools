@@ -26,7 +26,7 @@ class _CreditScoringPipeline:
         else:
             decision = "reject"
         return json.dumps(
-            {"decision": decision, "score": score_input}, ensure_ascii=False,
+            {"decision": decision, "score": score_input}, ensure_ascii=False
         )
 
     def metric(self, example: dict[str, Any], output: str) -> float:

@@ -23,11 +23,7 @@ from src.backend.core.logging import get_logger
 if TYPE_CHECKING:
     from src.backend.infrastructure.messaging.dlq_base import DLQWriter
 
-__all__ = (
-    "DLQWriterGuard",
-    "cdc_dlq_writer_guard",
-    "mark_cdc_dlq_writer_wired",
-)
+__all__ = ("DLQWriterGuard", "cdc_dlq_writer_guard", "mark_cdc_dlq_writer_wired")
 
 logger = get_logger(__name__)
 

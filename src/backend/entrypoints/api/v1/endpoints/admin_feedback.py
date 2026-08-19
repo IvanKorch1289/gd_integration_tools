@@ -19,10 +19,14 @@ logger = logging.getLogger(__name__)
 
 # S202 audit fix: require admin role
 _ADMIN_GUARD_READ = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN)),
+    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN))
 )
 
-router = APIRouter(dependencies=[_ADMIN_GUARD_READ], prefix="/admin/feedback", tags=["admin", "feedback"])
+router = APIRouter(
+    dependencies=[_ADMIN_GUARD_READ],
+    prefix="/admin/feedback",
+    tags=["admin", "feedback"],
+)
 
 
 @router.get(

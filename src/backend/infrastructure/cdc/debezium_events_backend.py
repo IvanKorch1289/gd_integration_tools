@@ -86,9 +86,7 @@ def parse_debezium_event(
         table=table,
         timestamp=ts,
         cursor=CDCCursor(
-            value=f"{kafka_partition}:{kafka_offset}",
-            backend="debezium",
-            topic=topic,
+            value=f"{kafka_partition}:{kafka_offset}", backend="debezium", topic=topic
         ),
         new=raw.get("after"),
         old=raw.get("before"),
@@ -165,7 +163,7 @@ class DebeziumEventsCDCBackend(CDCSource):
         except ImportError as exc:
             raise RuntimeError(
                 "aiokafka is required for DebeziumEventsCDCBackend; "
-                "install aiokafka>=0.10",
+                "install aiokafka>=0.10"
             ) from exc
         self._consumer = AIOKafkaConsumer(
             *topics,
@@ -180,7 +178,7 @@ class DebeziumEventsCDCBackend(CDCSource):
         return self._consumer
 
     async def subscribe(
-        self, *, tables: list[str], start_cursor: CDCCursor | None = None,
+        self, *, tables: list[str], start_cursor: CDCCursor | None = None
     ) -> AsyncIterator[CDCEvent]:
         """Подписаться на Kafka topics ``<prefix>.<table>``.
 
@@ -262,13 +260,13 @@ class DebeziumEventsCDCBackend(CDCSource):
             tp = TopicPartition(topic, int(partition_str))
             # commit offset+1 (next message to read)
             await self._consumer.commit(
-                {tp: OffsetAndMetadata(int(offset_str) + 1, "")},
+                {tp: OffsetAndMetadata(int(offset_str) + 1, "")}
             )
         except (ValueError, KeyError) as exc:
             _logger.warning("Invalid cursor for commit %r: %s", cursor.value, exc)
 
     async def replay(
-        self, *, start_cursor: CDCCursor, end_cursor: CDCCursor | None = None,
+        self, *, start_cursor: CDCCursor, end_cursor: CDCCursor | None = None
     ) -> AsyncIterator[CDCEvent]:
         """Replay через ``consumer.seek()`` — rewind и re-read.
 
@@ -296,7 +294,7 @@ class DebeziumEventsCDCBackend(CDCSource):
             self._consumer.seek(tp, int(offset_str))
         except (ValueError, KeyError) as exc:
             _logger.error(
-                "Invalid start_cursor for replay %r: %s", start_cursor.value, exc,
+                "Invalid start_cursor for replay %r: %s", start_cursor.value, exc
             )
             return
 
@@ -305,7 +303,7 @@ class DebeziumEventsCDCBackend(CDCSource):
             try:
                 _, end_offset_str = end_cursor.value.split(":")
                 end_offset = int(end_offset_str)
-            except (ValueError, KeyError):
+            except ValueError, KeyError:
                 _logger.warning("Invalid end_cursor for replay: %s", end_cursor.value)
 
         _logger.info(
@@ -323,7 +321,7 @@ class DebeziumEventsCDCBackend(CDCSource):
                     if end_offset is not None and msg.offset >= end_offset:
                         return
                     event = parse_debezium_event(
-                        msg.value, kafka_offset=msg.offset, kafka_partition=tp.partition,
+                        msg.value, kafka_offset=msg.offset, kafka_partition=tp.partition
                     )
                     if event is not None:
                         yield event
@@ -345,11 +343,11 @@ class DebeziumEventsCDCBackend(CDCSource):
                 _logger.warning("Consumer stop error: %s", exc)
         _logger.info("DebeziumEventsCDCBackend closed")
 
-
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
             import time
+
             start = time.monotonic()
             # Real probe: check is_running / is_open properties
             running = getattr(self, "_running", None)

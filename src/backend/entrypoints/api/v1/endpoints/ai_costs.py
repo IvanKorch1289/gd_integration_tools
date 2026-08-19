@@ -41,7 +41,7 @@ async def get_ai_costs(
 
     reader = LangFuseReader()
     rows = await reader.fetch_costs(
-        window=timedelta(hours=window_hours), group_by=group_by, top_n=top_n,
+        window=timedelta(hours=window_hours), group_by=group_by, top_n=top_n
     )
     return {
         "backend": "langfuse",
@@ -70,7 +70,7 @@ async def get_ai_cost_alerts(
 
     service = CostAlertService()
     alerts = await service.detect_anomalies(
-        window=timedelta(minutes=window_minutes), group_by=group_by,
+        window=timedelta(minutes=window_minutes), group_by=group_by
     )
     return {
         "backend": "langfuse",
@@ -89,7 +89,7 @@ async def get_langfuse_deeplink() -> dict[str, Any]:
     from src.backend.core.config.ai_stack import langfuse_settings
 
     base = (langfuse_settings.deep_link_base or langfuse_settings.host or "").rstrip(
-        "/",
+        "/"
     )
     if not base:
         return {"url": None, "enabled": False}

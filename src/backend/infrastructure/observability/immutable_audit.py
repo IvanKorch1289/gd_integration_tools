@@ -128,7 +128,7 @@ class ImmutableAuditStore:
             if fallback:
                 logger.warning(
                     "AUDIT_SECRET_KEY не задан — использую secure.secret_key "
-                    "как fallback. Рекомендуется выделить отдельный ключ.",
+                    "как fallback. Рекомендуется выделить отдельный ключ."
                 )
                 return (
                     fallback.encode("utf-8") if isinstance(fallback, str) else fallback
@@ -140,13 +140,13 @@ class ImmutableAuditStore:
         if os.environ.get("ALLOW_INSECURE_AUDIT_KEY"):
             logger.warning(
                 "AUDIT_SECRET_KEY отсутствует — ALLOW_INSECURE_AUDIT_KEY=1, "
-                "использую пустой ключ (ТОЛЬКО для dev/test!).",
+                "использую пустой ключ (ТОЛЬКО для dev/test!)."
             )
             return b""
         raise RuntimeError(
             "AUDIT_SECRET_KEY не задан — невозможно инициализировать "
             "tamper-evident audit chain. Установите AUDIT_SECRET_KEY или "
-            "ALLOW_INSECURE_AUDIT_KEY=1 для dev/test.",
+            "ALLOW_INSECURE_AUDIT_KEY=1 для dev/test."
         )
 
     @staticmethod
@@ -222,14 +222,14 @@ class ImmutableAuditStore:
         async with self._session_scope() as session:
             # pg_advisory_xact_lock — отпускается на commit/rollback.
             await session.execute(
-                text("SELECT pg_advisory_xact_lock(:k)"), {"k": _ADVISORY_LOCK_KEY},
+                text("SELECT pg_advisory_xact_lock(:k)"), {"k": _ADVISORY_LOCK_KEY}
             )
             prev_row = (
                 await session.execute(
                     text(
                         f"SELECT event_hash FROM {self._table} "  # self._table — ctor-parameter, не user input  # internal query with controlled parameters
-                        f"ORDER BY seq DESC LIMIT 1",
-                    ),
+                        f"ORDER BY seq DESC LIMIT 1"
+                    )
                 )
             ).first()
             prev_hash = prev_row[0] if prev_row else _GENESIS_HASH
@@ -244,7 +244,7 @@ class ImmutableAuditStore:
                     f"VALUES (:actor, :action, :resource, :outcome, "
                     f" CAST(:metadata AS JSONB), :tenant_id, "
                     f" :correlation_id, :prev_hash, :event_hash, "
-                    f" :occurred_at)",
+                    f" :occurred_at)"
                 ),
                 {
                     "actor": actor,
@@ -266,7 +266,7 @@ class ImmutableAuditStore:
     # ----------------------------------------------------------------- verify
 
     async def verify(
-        self, from_seq: int = 0, to_seq: int | None = None,
+        self, from_seq: int = 0, to_seq: int | None = None
     ) -> VerifyResult:
         """Проверяет HMAC-цепочку от ``from_seq`` до ``to_seq`` (включительно).
 
@@ -309,7 +309,7 @@ class ImmutableAuditStore:
                 anchor_row = (
                     await session.execute(
                         text(
-                            f"SELECT event_hash FROM {self._table} WHERE seq = :s",  # internal query with controlled parameters
+                            f"SELECT event_hash FROM {self._table} WHERE seq = :s"  # internal query with controlled parameters
                         ),  # self._table — ctor-parameter, не user input
                         {"s": int(first[0]) - 1},
                     )
@@ -419,7 +419,7 @@ class _SessionScope:
             return session
         raise TypeError(
             f"session_factory вернул объект неподдерживаемого типа: "
-            f"{type(self._src).__name__}",
+            f"{type(self._src).__name__}"
         )
 
     async def __aexit__(self, exc_type, exc, tb) -> None:

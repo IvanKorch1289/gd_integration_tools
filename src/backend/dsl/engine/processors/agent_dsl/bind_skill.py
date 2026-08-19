@@ -40,7 +40,6 @@ __all__ = ("BindSkillProcessor",)
 _logger = get_logger("workflow.processors.bind_skill")
 
 
-
 from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
 
 
@@ -50,10 +49,7 @@ from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
     capabilities=("skill.bind",),
     spec_schema={
         "type": "object",
-        "properties": {
-        "skill_name": {"type": "string"},
-        "version": {"type": "string"},
-        },
+        "properties": {"skill_name": {"type": "string"}, "version": {"type": "string"}},
         "required": ["skill_name"],
     },
     meta={"tier": 1, "category": "agent"},

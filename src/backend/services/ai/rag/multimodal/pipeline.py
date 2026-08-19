@@ -82,7 +82,7 @@ class MultimodalPipeline:
     """
 
     def __init__(
-        self, service: Any, *, captioner: Any | None = None, whisper: Any | None = None,
+        self, service: Any, *, captioner: Any | None = None, whisper: Any | None = None
     ) -> None:
         self._service = service
         self._captioner = captioner
@@ -140,7 +140,7 @@ class MultimodalPipeline:
         return chunk_id
 
     async def _ingest_text(
-        self, text: str, collection: str, metadata: dict[str, Any],
+        self, text: str, collection: str, metadata: dict[str, Any]
     ) -> str:
         """Текст → chunk в service._collections (in-memory)."""
         from uuid import uuid4
@@ -149,7 +149,7 @@ class MultimodalPipeline:
         store = getattr(self._service, "_collections", None)
         if store is None:
             raise RuntimeError(
-                "Pipeline requires MultimodalRAGService с in-memory store",
+                "Pipeline requires MultimodalRAGService с in-memory store"
             )
         store.setdefault(collection, {})
         store[collection][chunk_id] = {"content": text, "metadata": metadata}
@@ -196,7 +196,7 @@ class MultimodalPipeline:
                     modal=modal,
                     score=score,
                     metadata=meta,
-                ),
+                )
             )
 
         results.sort(key=lambda r: r.score, reverse=True)

@@ -8,6 +8,7 @@
 
 Единый источник правды для ``payload_hash`` / ETag.
 """
+
 from __future__ import annotations
 
 import hashlib

@@ -55,7 +55,7 @@ class MailService:
                 await smtp.send_message(msg)
 
             self.logger.info(
-                "Письмо отправлено: recipients=%s subject=%s", len(to_emails), subject,
+                "Письмо отправлено: recipients=%s subject=%s", len(to_emails), subject
             )
         except SMTPException as exc:
             self.logger.error("Ошибка при отправке письма: %s", str(exc), exc_info=True)
@@ -98,7 +98,7 @@ class MailService:
                     else "unknown"
                 ),
                 self.client.settings.sender,
-            ),
+            )
         )
         msg["To"] = ", ".join(to_emails)
 

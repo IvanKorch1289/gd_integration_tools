@@ -166,7 +166,7 @@ class MtlsBackend:
                 and parsed.issuer_cn not in self._config.allowed_issuer_cns
             ):
                 raise MtlsVerificationError(
-                    reason=f"issuer CN {parsed.issuer_cn!r} not in allow-list",
+                    reason=f"issuer CN {parsed.issuer_cn!r} not in allow-list"
                 )
 
         if self._config.require_pem_body and parsed is None:
@@ -203,7 +203,7 @@ def default_cryptography_parser() -> CertParser:
         from cryptography.hazmat.primitives import hashes
     except ImportError as exc:  # pragma: no cover — opt-in
         raise RuntimeError(
-            "cryptography package not installed; mTLS PEM-validation disabled",
+            "cryptography package not installed; mTLS PEM-validation disabled"
         ) from exc
 
     def _parse(pem: bytes) -> ParsedClientCert:

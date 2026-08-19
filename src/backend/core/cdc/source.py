@@ -82,7 +82,7 @@ class CDCSource(Protocol):
     """Generic CDC-источник."""
 
     async def subscribe(
-        self, *, tables: list[str], start_cursor: CDCCursor | None = None,
+        self, *, tables: list[str], start_cursor: CDCCursor | None = None
     ) -> AsyncIterator[CDCEvent]:
         """Подписаться на изменения; вернуть async-итератор событий.
 
@@ -97,7 +97,7 @@ class CDCSource(Protocol):
         ...
 
     async def replay(
-        self, *, start_cursor: CDCCursor, end_cursor: CDCCursor | None = None,
+        self, *, start_cursor: CDCCursor, end_cursor: CDCCursor | None = None
     ) -> AsyncIterator[CDCEvent]:
         """Повторное чтение событий в диапазоне (для recovery / audit)."""
         ...
@@ -124,7 +124,7 @@ class FakeCDCSource(CDCSource):
         self.closed = False
 
     async def subscribe(
-        self, *, tables: list[str], start_cursor: CDCCursor | None = None,
+        self, *, tables: list[str], start_cursor: CDCCursor | None = None
     ) -> AsyncIterator[CDCEvent]:
         """Эмитит подготовленные события в порядке списка.
 
@@ -147,7 +147,7 @@ class FakeCDCSource(CDCSource):
         self.acked.append(cursor)
 
     async def replay(
-        self, *, start_cursor: CDCCursor, end_cursor: CDCCursor | None = None,
+        self, *, start_cursor: CDCCursor, end_cursor: CDCCursor | None = None
     ) -> AsyncIterator[CDCEvent]:
         """Эмитит события из заготовленного журнала в диапазоне курсоров."""
         in_range = False

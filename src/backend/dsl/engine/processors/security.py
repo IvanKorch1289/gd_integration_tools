@@ -61,20 +61,16 @@ def _load_verifiers() -> dict[AuthMethod, Any]:
         verifiers = getattr(module, "_VERIFIERS", None)
         if verifiers is None:
             _logger.error(
-                "auth_provider_unavailable: missing _VERIFIERS in %s",
-                _VERIFIERS_MODULE,
+                "auth_provider_unavailable: missing _VERIFIERS in %s", _VERIFIERS_MODULE
             )
             raise AuthenticationProviderUnavailableError(
-                f"verifier-реестр не сконфигурирован в {_VERIFIERS_MODULE}",
+                f"verifier-реестр не сконфигурирован в {_VERIFIERS_MODULE}"
             )
         return verifiers
     except (ImportError, AttributeError) as exc:
-        _logger.error(
-            "auth_provider_unavailable: import failed: %s",
-            exc,
-        )
+        _logger.error("auth_provider_unavailable: import failed: %s", exc)
         raise AuthenticationProviderUnavailableError(
-            f"verifier-реестр недоступен: {exc}",
+            f"verifier-реестр недоступен: {exc}"
         ) from exc
 
 
@@ -136,7 +132,7 @@ class AuthValidateProcessor(BaseProcessor):
 
         if AuthMethod.NONE in methods or request is None:
             exchange.set_property(
-                self._result_property, AuthContext(AuthMethod.NONE, "anonymous"),
+                self._result_property, AuthContext(AuthMethod.NONE, "anonymous")
             )
             return
 
@@ -146,9 +142,7 @@ class AuthValidateProcessor(BaseProcessor):
         try:
             verifiers = _load_verifiers()
         except AuthenticationProviderUnavailableError as exc:
-            exchange.set_error(
-                f"auth: provider_unavailable: {exc}",
-            )
+            exchange.set_error(f"auth: provider_unavailable: {exc}")
             exchange.stop()
             return
 
@@ -164,7 +158,7 @@ class AuthValidateProcessor(BaseProcessor):
         if self._required:
             exchange.set_error(
                 "auth: ни один из методов "
-                f"{[m.value for m in methods]} не подтвердил запрос",
+                f"{[m.value for m in methods]} не подтвердил запрос"
             )
             exchange.stop()
 
@@ -175,5 +169,5 @@ class AuthValidateProcessor(BaseProcessor):
                 "methods": list(self._methods_raw),
                 "result_property": self._result_property,
                 "required": self._required,
-            },
+            }
         }

@@ -45,7 +45,7 @@ class SoapAdapter(BaseProtocolAdapter):
                     "soap-operation": operation,
                     **headers,
                 },
-            ),
+            )
         )
 
         self.enrich_meta(

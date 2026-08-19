@@ -13,6 +13,7 @@ Two specialized scenarios (both delegate to same recursive mask helper):
 
 Ponytail: один класс с classmethods для разных scope-семантик.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -29,9 +30,7 @@ _logger = get_logger(__name__)
 
 
 async def _mask_dict_values(
-    d: dict[str, Any],
-    tokenizer: Any,
-    language: str,
+    d: dict[str, Any], tokenizer: Any, language: str
 ) -> tuple[dict[str, Any], dict[str, str], bool]:
     """Mask all string values in dict recursively.
 
@@ -94,7 +93,6 @@ def _write_dict_at_path(exchange: Any, path: str, value: Any) -> None:
             parent[parts[-1]] = value
 
 
-
 from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
 
 
@@ -104,9 +102,7 @@ from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
     capabilities=("agent.pii.mask",),
     spec_schema={
         "type": "object",
-        "properties": {
-        "mode": {"enum": ["strict", "warn", "log"]},
-        },
+        "properties": {"mode": {"enum": ["strict", "warn", "log"]}},
         "required": ["mode"],
     },
     meta={"tier": 1, "category": "agent"},
@@ -228,10 +224,8 @@ class AgentDictPIIMaskProcessor(BaseAIProcessor):
             return
 
         masked, token_map, detected = await _mask_dict_values(
-            cursor, tokenizer, self.language,
+            cursor, tokenizer, self.language
         )
         _write_dict_at_path(exchange, self.target_property, masked)
         exchange.set_property("pii_token_map", token_map)
         exchange.set_property("pii_detected", detected)
-
-

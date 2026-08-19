@@ -25,8 +25,8 @@ class WaitMixin(_WorkflowBuilderProtocol):
         """Добавить durable-ожидание внешнего сигнала (HITL)."""
         self._steps.append(
             SignalWaitDeclaration(
-                signal_name=signal_name, timeout_s=timeout_s, output_key=output_key,
-            ),
+                signal_name=signal_name, timeout_s=timeout_s, output_key=output_key
+            )
         )
         return self
 
@@ -64,7 +64,7 @@ class WaitMixin(_WorkflowBuilderProtocol):
                 signal_name=f"approval.{approvers_group}.decided",
                 timeout_s=timeout_s,
                 output_key=output_key or f"hitl_{name}_decision",
-            ),
+            )
         )
         return self
 
@@ -81,6 +81,6 @@ class WaitMixin(_WorkflowBuilderProtocol):
                 predicate=predicate,
                 poll_interval_s=poll_interval_s,
                 timeout_s=timeout_s,
-            ),
+            )
         )
         return self

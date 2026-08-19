@@ -36,7 +36,7 @@ class WorkflowInstanceStore:
     """CRUD для header-таблицы ``workflow_instances``."""
 
     def __init__(
-        self, session_manager: Any = None, event_store: WorkflowEventStore | None = None,
+        self, session_manager: Any = None, event_store: WorkflowEventStore | None = None
     ) -> None:
         self._sm = session_manager or main_session_manager
         self._events = event_store or WorkflowEventStore(session_manager=self._sm)
@@ -90,7 +90,7 @@ class WorkflowInstanceStore:
             return WorkflowInstanceRow.from_orm(obj) if obj is not None else None
 
     async def list_pending(
-        self, limit: int = 100, tenant_id: str | None = None,
+        self, limit: int = 100, tenant_id: str | None = None
     ) -> list[WorkflowInstanceRow]:
         """Инстансы, готовые к обработке worker'ом."""
         now = datetime.now(UTC)
@@ -108,13 +108,13 @@ class WorkflowInstanceStore:
                     or_(
                         WorkflowInstance.next_attempt_at.is_(None),
                         WorkflowInstance.next_attempt_at <= now,
-                    ),
+                    )
                 )
                 .where(
                     or_(
                         WorkflowInstance.locked_until.is_(None),
                         WorkflowInstance.locked_until < now,
-                    ),
+                    )
                 )
                 .order_by(WorkflowInstance.created_at.asc())
                 .limit(limit)
@@ -134,7 +134,7 @@ class WorkflowInstanceStore:
         async with self._sm.create_session() as session:
             async with self._sm.transaction(session):
                 lock_result = await session.execute(
-                    text("SELECT pg_try_advisory_xact_lock(:k)"), {"k": lock_key},
+                    text("SELECT pg_try_advisory_xact_lock(:k)"), {"k": lock_key}
                 )
                 acquired = bool(lock_result.scalar())
                 if not acquired:
@@ -147,9 +147,9 @@ class WorkflowInstanceStore:
                         or_(
                             WorkflowInstance.locked_until.is_(None),
                             WorkflowInstance.locked_until < datetime.now(UTC),
-                        ),
+                        )
                     )
-                    .values(locked_by=worker_id, locked_until=locked_until),
+                    .values(locked_by=worker_id, locked_until=locked_until)
                 )
         return True
 
@@ -163,9 +163,9 @@ class WorkflowInstanceStore:
                         and_(
                             WorkflowInstance.id == workflow_id,
                             WorkflowInstance.locked_by == worker_id,
-                        ),
+                        )
                     )
-                    .values(locked_by=None, locked_until=None),
+                    .values(locked_by=None, locked_until=None)
                 )
 
     async def update_status(
@@ -192,21 +192,21 @@ class WorkflowInstanceStore:
             async with self._sm.transaction(session):
                 if error is not None:
                     await self._merge_error_into_snapshot(
-                        session, workflow_id=workflow_id, error=error,
+                        session, workflow_id=workflow_id, error=error
                     )
                 await session.execute(
                     update(WorkflowInstance)
                     .where(WorkflowInstance.id == workflow_id)
-                    .values(**values),
+                    .values(**values)
                 )
 
     @staticmethod
     async def _merge_error_into_snapshot(
-        session: AsyncSession, *, workflow_id: UUID, error: str,
+        session: AsyncSession, *, workflow_id: UUID, error: str
     ) -> None:
         """Подмешать ``last_error`` в ``snapshot_state`` без затирания ключей."""
         stmt = select(WorkflowInstance.snapshot_state).where(
-            WorkflowInstance.id == workflow_id,
+            WorkflowInstance.id == workflow_id
         )
         result = await session.execute(stmt)
         snapshot = result.scalar_one_or_none() or {}
@@ -215,5 +215,5 @@ class WorkflowInstanceStore:
         await session.execute(
             update(WorkflowInstance)
             .where(WorkflowInstance.id == workflow_id)
-            .values(snapshot_state=merged),
+            .values(snapshot_state=merged)
         )

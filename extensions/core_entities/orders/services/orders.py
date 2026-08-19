@@ -26,14 +26,14 @@ from src.backend.core.decorators.caching import response_cache
 from src.backend.core.di.providers import (  # D-AUDIT-9601 fix (cycle 96)
     get_s3_service_provider,
 )
-from src.backend.core.errors import NotFoundError
+from src.backend.core.api import NotFoundError
 from src.backend.core.integrations.skb import APISKBService, get_skb_service
 from src.backend.core.interfaces.order_storage import OrderStorageProtocol
 from src.backend.core.interfaces.repositories import (
     FileRepositoryProtocol,
     OrderRepositoryProtocol,
 )
-from src.backend.core.services.base_service import BaseService
+from src.backend.core.api import BaseService
 from src.backend.schemas.base import BaseSchema
 
 if TYPE_CHECKING:

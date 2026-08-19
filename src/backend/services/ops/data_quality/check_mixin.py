@@ -46,7 +46,7 @@ class CheckMixin(_DataQualityProtocol):
                     severity=rule.severity,
                     message=f"Field {rule.field!r} is null/empty (value={value!r})",
                     value=value,
-                ),
+                )
             )
         # range
         elif (
@@ -64,7 +64,7 @@ class CheckMixin(_DataQualityProtocol):
                         severity=rule.severity,
                         message=f"Value {value!r} out of range [{lo}, {hi}]",
                         value=value,
-                    ),
+                    )
                 )
         # regex
         elif rule.check == "regex" and isinstance(value, str):
@@ -79,7 +79,7 @@ class CheckMixin(_DataQualityProtocol):
                         severity=rule.severity,
                         message=f"Value {value!r} does not match pattern {pattern!r}",
                         value=value,
-                    ),
+                    )
                 )
         # enum
         elif rule.check == "enum":
@@ -92,7 +92,7 @@ class CheckMixin(_DataQualityProtocol):
                         severity=rule.severity,
                         message=f"Value {value!r} not in allowed {allowed!r}",
                         value=value,
-                    ),
+                    )
                 )
         # type
         elif rule.check == "type" and value is not None:
@@ -109,12 +109,12 @@ class CheckMixin(_DataQualityProtocol):
                             severity=rule.severity,
                             message=f"Value {value!r} is not {expected}",
                             value=value,
-                        ),
+                        )
                     )
         return violations
 
     async def check(
-        self, data: dict[str, Any] | list[dict[str, Any]], dataset: str = "default",
+        self, data: dict[str, Any] | list[dict[str, Any]], dataset: str = "default"
     ) -> dict[str, Any]:
         """Проверяет данные по правилам."""
         records = data if isinstance(data, list) else [data]

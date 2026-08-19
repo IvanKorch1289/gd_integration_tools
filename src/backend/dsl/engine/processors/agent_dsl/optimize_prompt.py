@@ -73,9 +73,9 @@ class OptimizePromptProcessor(BaseProcessor):
             # ImportError — features module missing, AttributeError — config
             # not initialized, RuntimeError — feature_flags unavailable.
             import logging
+
             logging.getLogger(__name__).debug(
-                "optimize_prompt.feature_flag_fallback",
-                extra={"error": str(ff_exc)},
+                "optimize_prompt.feature_flag_fallback", extra={"error": str(ff_exc)}
             )
 
         # Lazy-resolve trainer from DI
@@ -121,7 +121,10 @@ class OptimizePromptProcessor(BaseProcessor):
                     "backend": result.backend,
                 }
             else:
-                result = {"status": "error", "reason": "trainer has no optimize/train method"}
+                result = {
+                    "status": "error",
+                    "reason": "trainer has no optimize/train method",
+                }
         except Exception as exc:
             _logger.error("optimize_prompt failed: %s", exc)
             result = {"status": "error", "reason": str(exc)}
@@ -141,5 +144,5 @@ class OptimizePromptProcessor(BaseProcessor):
                 "tenant_id": self._tenant_id,
                 "limit": self._limit,
                 "result_property": self._result_property,
-            },
+            }
         }

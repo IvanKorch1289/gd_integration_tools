@@ -93,7 +93,7 @@ class WebSearchProcessor(BaseProcessor):
         if engine not in _ALLOWED_ENGINES:
             raise ValueError(
                 f"web_search: engine must be one of {sorted(_ALLOWED_ENGINES)}, "
-                f"got {engine!r}",
+                f"got {engine!r}"
             )
         if max_results < 1:
             raise ValueError("web_search: max_results must be >= 1")
@@ -150,9 +150,9 @@ class WebSearchProcessor(BaseProcessor):
             # cycle-9/D-AUDIT-1708: narrow exceptions + observability (mirror
             # D-AUDIT-1705/1706/1707).
             import logging
+
             logging.getLogger(__name__).debug(
-                "web_search.feature_flag_fallback",
-                extra={"error": str(ff_exc)},
+                "web_search.feature_flag_fallback", extra={"error": str(ff_exc)}
             )
 
         query = self._resolve_query(exchange)
@@ -171,7 +171,7 @@ class WebSearchProcessor(BaseProcessor):
                 result: Any = await service.deep_research(query, provider=provider)
             else:
                 result = await service.query(
-                    query, max_results=self._max_results, provider=provider,
+                    query, max_results=self._max_results, provider=provider
                 )
         except Exception as exc:
             exchange.fail(f"web_search error: {exc}")

@@ -126,15 +126,13 @@ class CSRFMiddleware:
 
         # CSRF check.
         cookie_token = self._get_cookie(scope, self._cookie_name)
-        header_token = _get_header_value(scope, self._header_name_lower.encode("latin-1"))
+        header_token = _get_header_value(
+            scope, self._header_name_lower.encode("latin-1")
+        )
 
         # Header token required + must match cookie.
         if not cookie_token or not header_token:
-            _logger.warning(
-                "csrf_token_missing path=%s method=%s",
-                path,
-                method,
-            )
+            _logger.warning("csrf_token_missing path=%s method=%s", path, method)
             await self._send_403(
                 send,
                 error="csrf_token_missing",
@@ -144,11 +142,7 @@ class CSRFMiddleware:
             return
 
         if not hmac.compare_digest(cookie_token, header_token):
-            _logger.warning(
-                "csrf_token_mismatch path=%s method=%s",
-                path,
-                method,
-            )
+            _logger.warning("csrf_token_mismatch path=%s method=%s", path, method)
             await self._send_403(
                 send,
                 error="csrf_token_mismatch",
@@ -160,9 +154,7 @@ class CSRFMiddleware:
         # CSRF check passed → пробрасываем downstream.
         await self.app(scope, receive, send)
 
-    async def _process_safe(
-        self, scope: Scope, receive: Receive, send: Send,
-    ) -> None:
+    async def _process_safe(self, scope: Scope, receive: Receive, send: Send) -> None:
         """Обработка safe method (cycle 57 helper)."""
         # Cycle 57 critical: collect body chunks через send-wrapper
         # (для правильного downstream body). При auto-issue CSRF cookie
@@ -196,7 +188,7 @@ class CSRFMiddleware:
                                 f"HttpOnly; SameSite=strict"
                                 + ("; Secure" if is_production else "")
                             ).encode("latin-1"),
-                        ),
+                        )
                     )
                 response_headers.clear()
                 response_headers.extend(headers)
@@ -207,7 +199,7 @@ class CSRFMiddleware:
                         "type": "http.response.start",
                         "status": response_status["status"],
                         "headers": headers,
-                    },
+                    }
                 )
             elif message["type"] == "http.response.body":
                 # Пропускаем body (cycle 57: только headers модифицируются).
@@ -269,11 +261,7 @@ class CSRFMiddleware:
 
     @staticmethod
     async def _send_403(
-        send: Send,
-        *,
-        error: str,
-        detail: str,
-        scope: Scope | None = None,
+        send: Send, *, error: str, detail: str, scope: Scope | None = None
     ) -> None:
         """Отправляет 403 JSON response через send (no-raise, cycle 39).
 
@@ -293,7 +281,7 @@ class CSRFMiddleware:
                     (b"content-type", b"application/json"),
                     (b"content-length", str(len(body_bytes)).encode("latin-1")),
                 ],
-            },
+            }
         )
         await send({"type": "http.response.body", "body": body_bytes})
 

@@ -140,7 +140,7 @@ class GracefulDegradationRegistry:
 
         """
         self._features[feature.name] = _FeatureRuntime(
-            feature=feature, outcomes=deque(maxlen=feature.window_size),
+            feature=feature, outcomes=deque(maxlen=feature.window_size)
         )
         _logger.debug(
             "graceful_degradation.register",

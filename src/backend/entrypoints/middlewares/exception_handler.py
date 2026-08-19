@@ -76,9 +76,7 @@ class ExceptionHandlerMiddleware:
             correlation_id = (
                 state.get("correlation_id") if isinstance(state, dict) else None
             )
-            request_id = (
-                state.get("request_id") if isinstance(state, dict) else None
-            )
+            request_id = state.get("request_id") if isinstance(state, dict) else None
 
             if isinstance(exc, BaseError):
                 error_data = dict(exc.to_dict())
@@ -87,7 +85,7 @@ class ExceptionHandlerMiddleware:
                     f"{type(exc).__name__} ({exc.__class__.__module__}): {exc}"
                 )
                 traceback_str = "".join(
-                    traceback.format_exception(type(exc), exc, exc.__traceback__),
+                    traceback.format_exception(type(exc), exc, exc.__traceback__)
                 )
                 # B-12 fix (cycle 34): exception envelope error_id + correlation_id + Sentry capture
                 error_id = str(uuid.uuid4())
@@ -114,9 +112,7 @@ class ExceptionHandlerMiddleware:
                 if request_id:
                     error_data["request_id"] = request_id
 
-            status_code = (
-                exc.status_code if isinstance(exc, BaseError) else 500
-            )
+            status_code = exc.status_code if isinstance(exc, BaseError) else 500
 
             if isinstance(exc, BaseError):
                 # BaseError keeps legacy shape; still propagate ids if present.
@@ -155,6 +151,6 @@ class ExceptionHandlerMiddleware:
                     (b"content-type", b"application/json"),
                     (b"content-length", str(len(body_bytes)).encode("latin-1")),
                 ],
-            },
+            }
         )
         await send({"type": "http.response.body", "body": body_bytes})

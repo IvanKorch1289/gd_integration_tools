@@ -155,14 +155,14 @@ class AuthorizationFacade:
 
         if required_capability:
             cap_decision = await self._check_capability(
-                subject, required_capability, tenant_id,
+                subject, required_capability, tenant_id
             )
             if not cap_decision.allowed:
                 return cap_decision
 
         if required_action and required_resource:
             policy_decision = self.check(
-                subject, required_action, required_resource, context,
+                subject, required_action, required_resource, context
             )
             if not policy_decision:
                 return AuthDecision(
@@ -174,18 +174,11 @@ class AuthorizationFacade:
                 )
 
         return AuthDecision(
-            allowed=True,
-            method=method,
-            subject=subject,
-            tenant_id=tenant_id,
+            allowed=True, method=method, subject=subject, tenant_id=tenant_id
         )
 
     async def check_token(
-        self,
-        token: str,
-        *,
-        method: str = "jwt",
-        required_capability: str | None = None,
+        self, token: str, *, method: str = "jwt", required_capability: str | None = None
     ) -> AuthDecision:
         """S186: Token-based authorization (JWT or API key).
 
@@ -203,10 +196,7 @@ class AuthorizationFacade:
         return await self._check_jwt(token, required_capability)
 
     async def check_session(
-        self,
-        session_id: str,
-        *,
-        required_capability: str | None = None,
+        self, session_id: str, *, required_capability: str | None = None
     ) -> AuthDecision:
         """S186: Cookie session-based authorization.
 
@@ -221,10 +211,7 @@ class AuthorizationFacade:
         return await self._check_cookie_session(session_id, required_capability)
 
     async def check_api_key(
-        self,
-        api_key: str,
-        *,
-        required_scope: str | None = None,
+        self, api_key: str, *, required_scope: str | None = None
     ) -> AuthDecision:
         """S186: API key authorization with optional scope check.
 
@@ -239,10 +226,7 @@ class AuthorizationFacade:
         return await self._check_api_key(api_key, required_scope)
 
     async def check_jwt(
-        self,
-        jwt_token: str,
-        *,
-        required_capability: str | None = None,
+        self, jwt_token: str, *, required_capability: str | None = None
     ) -> AuthDecision:
         """S186: JWT authorization with optional capability check.
 
@@ -287,25 +271,19 @@ class AuthorizationFacade:
     # ──────────────────── Implementation helpers ────────────────────
 
     async def _check_api_key(
-        self,
-        api_key: str,
-        required_capability: str | None = None,
+        self, api_key: str, required_capability: str | None = None
     ) -> AuthDecision:
         try:
-            result = await self.auth_facade.verify_request(
-                api_key, method="api_key",
-            )
+            result = await self.auth_facade.verify_request(api_key, method="api_key")
 
             if not result.is_authenticated:
                 return AuthDecision(
-                    allowed=False,
-                    method="api_key",
-                    reason="invalid api key",
+                    allowed=False, method="api_key", reason="invalid api key"
                 )
 
             if required_capability:
                 cap_decision = await self._check_capability(
-                    result.subject, required_capability, result.tenant_id,
+                    result.subject, required_capability, result.tenant_id
                 )
                 if not cap_decision.allowed:
                     return cap_decision
@@ -319,32 +297,20 @@ class AuthorizationFacade:
             )
         except Exception as exc:
             _logger.debug("api_key check failed: %s", exc)
-            return AuthDecision(
-                allowed=False,
-                method="api_key",
-                reason=str(exc),
-            )
+            return AuthDecision(allowed=False, method="api_key", reason=str(exc))
 
     async def _check_jwt(
-        self,
-        jwt_token: str,
-        required_capability: str | None = None,
+        self, jwt_token: str, required_capability: str | None = None
     ) -> AuthDecision:
         try:
-            result = await self.auth_facade.verify_request(
-                jwt_token, method="jwt",
-            )
+            result = await self.auth_facade.verify_request(jwt_token, method="jwt")
 
             if not result.is_authenticated:
-                return AuthDecision(
-                    allowed=False,
-                    method="jwt",
-                    reason="invalid jwt",
-                )
+                return AuthDecision(allowed=False, method="jwt", reason="invalid jwt")
 
             if required_capability:
                 cap_decision = await self._check_capability(
-                    result.subject, required_capability, result.tenant_id,
+                    result.subject, required_capability, result.tenant_id
                 )
                 if not cap_decision.allowed:
                     return cap_decision
@@ -358,16 +324,10 @@ class AuthorizationFacade:
             )
         except Exception as exc:
             _logger.debug("jwt check failed: %s", exc)
-            return AuthDecision(
-                allowed=False,
-                method="jwt",
-                reason=str(exc),
-            )
+            return AuthDecision(allowed=False, method="jwt", reason=str(exc))
 
     async def _check_cookie_session(
-        self,
-        session_id: str,
-        required_capability: str | None = None,
+        self, session_id: str, required_capability: str | None = None
     ) -> AuthDecision:
         """Cookie session verification (S202 audit fix).
 
@@ -416,16 +376,11 @@ class AuthorizationFacade:
         except Exception as exc:
             _logger.debug("cookie session check failed: %s", exc)
             return AuthDecision(
-                allowed=False,
-                method="cookie",
-                reason="session lookup failed",
+                allowed=False, method="cookie", reason="session lookup failed"
             )
 
     async def _check_capability(
-        self,
-        subject: str,
-        capability: str,
-        tenant_id: str | None = None,
+        self, subject: str, capability: str, tenant_id: str | None = None
     ) -> AuthDecision:
         """Capability check через CapabilityFacade."""
         try:
@@ -438,7 +393,7 @@ class AuthorizationFacade:
 
             if tenant_id:
                 allowed = cap_facade.check_tenant(
-                    capability, tenant_id, principal_id=subject,
+                    capability, tenant_id, principal_id=subject
                 )
             else:
                 allowed = cap_facade.check(subject, capability)
@@ -482,42 +437,22 @@ class AuthorizationFacade:
             return False
 
     def add_policy(
-        self,
-        subject: str,
-        action: str,
-        resource: str,
-        effect: str = "allow",
+        self, subject: str, action: str, resource: str, effect: str = "allow"
     ) -> bool:
         """Добавить policy rule."""
         try:
             self.gateway.add_policy(subject, action, resource, effect=effect)
-            _logger.info(
-                "policy added: %s/%s/%s/%s",
-                subject,
-                action,
-                resource,
-                effect,
-            )
+            _logger.info("policy added: %s/%s/%s/%s", subject, action, resource, effect)
             return True
         except Exception as exc:
             _logger.warning("add_policy failed: %s", exc)
             return False
 
-    def remove_policy(
-        self,
-        subject: str,
-        action: str,
-        resource: str,
-    ) -> bool:
+    def remove_policy(self, subject: str, action: str, resource: str) -> bool:
         """Удалить policy rule."""
         try:
             self.gateway.remove_policy(subject, action, resource)
-            _logger.info(
-                "policy removed: %s/%s/%s",
-                subject,
-                action,
-                resource,
-            )
+            _logger.info("policy removed: %s/%s/%s", subject, action, resource)
             return True
         except Exception as exc:
             _logger.warning("remove_policy failed: %s", exc)

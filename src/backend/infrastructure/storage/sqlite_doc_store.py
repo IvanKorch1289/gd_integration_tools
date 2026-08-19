@@ -42,7 +42,7 @@ class SqliteDocStore(DocStoreBackend):
     # ─────────────────────── Public API ───────────────────────
 
     async def insert(
-        self, namespace: str, doc: dict[str, Any], *, doc_id: str | None = None,
+        self, namespace: str, doc: dict[str, Any], *, doc_id: str | None = None
     ) -> str:
         """Insert or replace a document.
 
@@ -184,7 +184,9 @@ class SqliteDocStore(DocStoreBackend):
         if filters is None:
             table = await self._ensure_namespace(namespace)
             async with aiosqlite.connect(self._path) as db:
-                cursor = await db.execute(f"SELECT COUNT(*) FROM {table}")  # internal query with controlled parameters
+                cursor = await db.execute(
+                    f"SELECT COUNT(*) FROM {table}"
+                )  # internal query with controlled parameters
                 row = await cursor.fetchone()
             return int(row[0]) if row else 0
         # С фильтрами — линейный подсчёт через find().
@@ -196,7 +198,7 @@ class SqliteDocStore(DocStoreBackend):
         # Защита от SQL-injection через имя namespace: жёсткий whitelist.
         if not _NAMESPACE_RE.match(namespace):
             raise ValueError(
-                f"Некорректный namespace '{namespace}': допустимы [A-Za-z_][A-Za-z0-9_]*",
+                f"Некорректный namespace '{namespace}': допустимы [A-Za-z_][A-Za-z0-9_]*"
             )
         table = f"doc_{namespace}"
         if table in self._known_namespaces:
@@ -204,7 +206,7 @@ class SqliteDocStore(DocStoreBackend):
         async with aiosqlite.connect(self._path) as db:
             await db.execute(
                 f"CREATE TABLE IF NOT EXISTS {table} ("
-                "doc_id TEXT PRIMARY KEY, body TEXT NOT NULL)",
+                "doc_id TEXT PRIMARY KEY, body TEXT NOT NULL)"
             )
             await db.commit()
         self._known_namespaces.add(table)

@@ -45,7 +45,6 @@ _StageLiteral = Literal["input", "output"]
 _OnBlockLiteral = Literal["dlq", "fail", "warn"]
 
 
-
 from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
 
 
@@ -56,8 +55,8 @@ from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
     spec_schema={
         "type": "object",
         "properties": {
-        "ruleset": {"type": "string"},
-        "on_violation": {"enum": ["block", "warn"]},
+            "ruleset": {"type": "string"},
+            "on_violation": {"enum": ["block", "warn"]},
         },
         "required": ["ruleset"],
     },
@@ -99,12 +98,12 @@ class GuardrailsApplyProcessor(BaseAIProcessor):
         if stage not in ("input", "output"):
             raise ValueError(
                 f"GuardrailsApplyProcessor: stage must be 'input'|'output', "
-                f"got {stage!r}",
+                f"got {stage!r}"
             )
         if on_block not in ("dlq", "fail", "warn"):
             raise ValueError(
                 f"GuardrailsApplyProcessor: on_block must be "
-                f"'dlq'|'fail'|'warn', got {on_block!r}",
+                f"'dlq'|'fail'|'warn', got {on_block!r}"
             )
         super().__init__(name=name or f"guardrails_apply:{stage}")
         self.stage = stage
@@ -122,9 +121,7 @@ class GuardrailsApplyProcessor(BaseAIProcessor):
 
         runtime = self._resolve_runtime()
         if runtime is None:
-            _logger.warning(
-                "%s: LLMGuardClient недоступен — pass-through", self.name,
-            )
+            _logger.warning("%s: LLMGuardClient недоступен — pass-through", self.name)
             return
 
         try:
@@ -154,7 +151,7 @@ class GuardrailsApplyProcessor(BaseAIProcessor):
             exchange.set_error(
                 f"{self.name}: blocked by Llama Guard "
                 f"(stage={self.stage}, "
-                f"categories={verdict['flagged_categories']})",
+                f"categories={verdict['flagged_categories']})"
             )
             exchange.stop()
             return
@@ -218,9 +215,7 @@ class GuardrailsApplyProcessor(BaseAIProcessor):
             return get_llm_guard_runtime_provider()
         except Exception as exc:
             _logger.warning(
-                "GuardrailsApplyProcessor: LLMGuardClient resolution "
-                "failed: %s",
-                exc,
+                "GuardrailsApplyProcessor: LLMGuardClient resolution failed: %s", exc
             )
             return None
 

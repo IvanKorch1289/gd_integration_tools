@@ -41,7 +41,7 @@ class CollectionMixin:
     # --- 1. collect ---
     @staticmethod
     def collect(
-        items: Iterable[dict[str, Any]] | Iterable[Any], field: str | None = None,
+        items: Iterable[dict[str, Any]] | Iterable[Any], field: str | None = None
     ) -> list[Any]:
         """Groovy: ``.collect { it.field }`` — извлечь field из каждого dict.
 
@@ -127,7 +127,7 @@ class CollectionMixin:
     # --- 4. group_by ---
     @staticmethod
     def group_by(
-        items: Iterable[dict[str, Any]] | Iterable[Any], field: str,
+        items: Iterable[dict[str, Any]] | Iterable[Any], field: str
     ) -> dict[Any, list[Any]]:
         """Groovy: ``.groupBy { it.field }`` — группировка по field.
 

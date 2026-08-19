@@ -70,9 +70,9 @@ def _emit_deprecation_once() -> None:
         # Bootstrap-окружение без settings — молча игнорируем.
         # Deprecation-warning не критичен, чтобы из-за него падал импорт.
         import logging
+
         logging.getLogger(__name__).debug(
-            "macros._emit_deprecation_skipped",
-            extra={"error": str(dep_exc)},
+            "macros._emit_deprecation_skipped", extra={"error": str(dep_exc)}
         )
 
 

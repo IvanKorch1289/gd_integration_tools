@@ -249,7 +249,7 @@ class EventMessageProcessor(BaseProcessor):
         # Publish to external channel.
         try:
             result = self._producer(
-                self._topic, exchange.in_message.body, envelope.to_headers(),
+                self._topic, exchange.in_message.body, envelope.to_headers()
             )
             if _isawaitable(result):
                 await result

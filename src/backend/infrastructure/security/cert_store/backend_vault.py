@@ -98,7 +98,7 @@ class VaultCertBackend(CertBackend):
         from src.backend.core.config.settings import settings
 
         return getattr(settings, "vault_url", None) or getattr(
-            settings.app, "vault_url", None,
+            settings.app, "vault_url", None
         )
 
     def _authenticate(self, client: Any) -> None:

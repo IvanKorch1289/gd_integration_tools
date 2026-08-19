@@ -63,5 +63,5 @@ class RegionRoutingProcessor(BaseProcessor):
                 "primary": self._primary,
                 "fallback": self._fallback,
                 "health_check_interval": self._health_check_interval,
-            },
+            }
         }

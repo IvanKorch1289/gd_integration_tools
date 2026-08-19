@@ -83,7 +83,7 @@ class RenderTemplateProcessor(BaseProcessor):
         result = tmpl.render(ctx)
         exchange.set_property(self._result_property, result)
         exchange.set_out(
-            body=exchange.in_message.body, headers=dict(exchange.in_message.headers),
+            body=exchange.in_message.body, headers=dict(exchange.in_message.headers)
         )
 
     def to_spec(self) -> dict[str, Any] | None:
@@ -93,7 +93,7 @@ class RenderTemplateProcessor(BaseProcessor):
                 "template_string": self._template_string,
                 "context_from": self._context_from,
                 "result_property": self._result_property,
-            },
+            }
         }
 
 
@@ -154,7 +154,7 @@ class RenderTemplateFileProcessor(BaseProcessor):
         result = tmpl.render(ctx)
         exchange.set_property(self._result_property, result)
         exchange.set_out(
-            body=exchange.in_message.body, headers=dict(exchange.in_message.headers),
+            body=exchange.in_message.body, headers=dict(exchange.in_message.headers)
         )
 
     def to_spec(self) -> dict[str, Any] | None:
@@ -164,5 +164,5 @@ class RenderTemplateFileProcessor(BaseProcessor):
                 "path": self._path,
                 "context_from": self._context_from,
                 "result_property": self._result_property,
-            },
+            }
         }

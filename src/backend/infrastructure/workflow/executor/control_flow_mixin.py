@@ -44,7 +44,7 @@ class ControlFlowMixin:
                 WorkflowEventType.branch_taken,
                 {"chosen": chosen, "branch_name": step.name},
                 step.name,
-            ),
+            )
         ]
 
         if not sub_steps:
@@ -59,12 +59,21 @@ class ControlFlowMixin:
             if sub_step.kind == "sequential":
                 for proc in sub_step.processors:
                     try:
-                        body = await _run_processor(proc, body, self._timeout_per_step_s)
+                        body = await _run_processor(
+                            proc, body, self._timeout_per_step_s
+                        )
                     except TimeoutError:
                         return StepResult(
                             outcome=StepOutcome.FAILED,
                             error_message="branch sub-step processor timeout",
-                            events=[*events, (WorkflowEventType.step_failed, {"reason": "timeout"}, sub_step.name)],
+                            events=[
+                                *events,
+                                (
+                                    WorkflowEventType.step_failed,
+                                    {"reason": "timeout"},
+                                    sub_step.name,
+                                ),
+                            ],
                         )
             else:
                 _logger.warning(
@@ -102,7 +111,7 @@ class ControlFlowMixin:
                         WorkflowEventType.step_finished,
                         {"reason": "max_iter_exhausted", "iter": iter_count},
                         step.name,
-                    ),
+                    )
                 ],
             )
         should_continue = self._eval_predicate(step.predicate, state)
@@ -114,7 +123,7 @@ class ControlFlowMixin:
                         WorkflowEventType.step_finished,
                         {"reason": "condition_false", "iter": iter_count},
                         step.name,
-                    ),
+                    )
                 ],
             )
 
@@ -123,7 +132,7 @@ class ControlFlowMixin:
                 WorkflowEventType.loop_iter,
                 {"iter": iter_count + 1, "loop_name": step.name},
                 step.name,
-            ),
+            )
         ]
 
         body = dict(state.exchange_snapshot)
@@ -131,12 +140,21 @@ class ControlFlowMixin:
             if body_step.kind == "sequential":
                 for proc in body_step.processors:
                     try:
-                        body = await _run_processor(proc, body, self._timeout_per_step_s)
+                        body = await _run_processor(
+                            proc, body, self._timeout_per_step_s
+                        )
                     except TimeoutError:
                         return StepResult(
                             outcome=StepOutcome.FAILED,
                             error_message=f"loop body processor timeout at iter {iter_count}",
-                            events=[*events, (WorkflowEventType.step_failed, {"reason": "timeout", "iter": iter_count}, body_step.name)],
+                            events=[
+                                *events,
+                                (
+                                    WorkflowEventType.step_failed,
+                                    {"reason": "timeout", "iter": iter_count},
+                                    body_step.name,
+                                ),
+                            ],
                         )
             else:
                 _logger.warning(
@@ -177,7 +195,7 @@ class ControlFlowMixin:
                         WorkflowEventType.step_failed,
                         {"reason": "invalid_collection"},
                         step.name,
-                    ),
+                    )
                 ],
             )
         total = len(collection)
@@ -187,7 +205,7 @@ class ControlFlowMixin:
                 WorkflowEventType.step_started,
                 {"items": total, "parallel": step.parallel, "for_each": step.name},
                 step.name,
-            ),
+            )
         ]
 
         if step.parallel:
@@ -202,7 +220,9 @@ class ControlFlowMixin:
                         if body_step.kind == "sequential":
                             for proc in body_step.processors:
                                 try:
-                                    body = await _run_processor(proc, body, self._timeout_per_step_s)
+                                    body = await _run_processor(
+                                        proc, body, self._timeout_per_step_s
+                                    )
                                 except TimeoutError:
                                     raise
                     return body
@@ -220,7 +240,7 @@ class ControlFlowMixin:
             for idx, r in enumerate(results):
                 if isinstance(r, Exception):
                     _logger.warning(
-                        "for_each item %d raised %s: %s", idx, type(r).__name__, r,
+                        "for_each item %d raised %s: %s", idx, type(r).__name__, r
                     )
                     errors.append(r)
 
@@ -228,7 +248,14 @@ class ControlFlowMixin:
                 return StepResult(
                     outcome=StepOutcome.FAILED,
                     error_message=f"for_each: {len(errors)} items failed",
-                    events=[*events, (WorkflowEventType.step_failed, {"reason": "item_error", "count": len(errors)}, step.name)],
+                    events=[
+                        *events,
+                        (
+                            WorkflowEventType.step_failed,
+                            {"reason": "item_error", "count": len(errors)},
+                            step.name,
+                        ),
+                    ],
                 )
 
             final_body = dict(state.exchange_snapshot)
@@ -244,15 +271,31 @@ class ControlFlowMixin:
                     if body_step.kind == "sequential":
                         for proc in body_step.processors:
                             try:
-                                final_body = await _run_processor(proc, final_body, self._timeout_per_step_s)
+                                final_body = await _run_processor(
+                                    proc, final_body, self._timeout_per_step_s
+                                )
                             except TimeoutError:
                                 return StepResult(
                                     outcome=StepOutcome.FAILED,
                                     error_message=f"for_each sequential timeout at item {idx}",
-                                    events=[*events, (WorkflowEventType.step_failed, {"reason": "timeout", "index": idx}, step.name)],
+                                    events=[
+                                        *events,
+                                        (
+                                            WorkflowEventType.step_failed,
+                                            {"reason": "timeout", "index": idx},
+                                            step.name,
+                                        ),
+                                    ],
                                 )
         return StepResult(
             outcome=StepOutcome.CONTINUE,
-            events=[*events, (WorkflowEventType.step_finished, {"items": total, "completed": True}, step.name)],
+            events=[
+                *events,
+                (
+                    WorkflowEventType.step_finished,
+                    {"items": total, "completed": True},
+                    step.name,
+                ),
+            ],
             output_state={"for_each_count": total, "exchange_snapshot": final_body},
         )

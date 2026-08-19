@@ -74,7 +74,7 @@ class JwksCache:
     """
 
     def __init__(
-        self, url: str, *, ttl: int = 300, fetcher: _HttpFetcher | None = None,
+        self, url: str, *, ttl: int = 300, fetcher: _HttpFetcher | None = None
     ) -> None:
         self.url = url
         self._ttl = ttl
@@ -94,7 +94,7 @@ class JwksCache:
                 _logger.warning("JWKS refresh failed (%s); используем stale cache", exc)
                 return
             raise JwksFetchError(
-                f"Не удалось получить JWKS из {self.url}: {exc}",
+                f"Не удалось получить JWKS из {self.url}: {exc}"
             ) from exc
         self._cache = payload
         self._expires_at = time.monotonic() + self._ttl
@@ -102,12 +102,12 @@ class JwksCache:
     async def get_keys(self) -> dict[str, Any]:
         """Возвращает свежий JWKS-документ (с автоматическим refresh)."""
         if self._is_fresh():
-            assert self._cache is not None
+            assert self._cache is not None  # nosec
             return self._cache
         async with self._lock:
             if not self._is_fresh():
                 await self._refresh()
-            assert self._cache is not None
+            assert self._cache is not None  # nosec
             return self._cache
 
     async def get_key(self, kid: str) -> dict[str, Any] | None:

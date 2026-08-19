@@ -61,10 +61,7 @@ class CDCClient:
     }
 
     def __init__(
-        self,
-        *,
-        dlq_writer: DLQWriter | None = None,
-        dlq_required: bool = True,
+        self, *, dlq_writer: DLQWriter | None = None, dlq_required: bool = True
     ) -> None:
         self._subscriptions: dict[str, CDCSubscription] = {}
         self._tasks: dict[str, asyncio.Task] = {}
@@ -136,7 +133,7 @@ class CDCClient:
         """
         if strategy not in self._STRATEGIES:
             raise ValueError(
-                f"Unknown CDC strategy '{strategy}'. Available: {list(self._STRATEGIES)}",
+                f"Unknown CDC strategy '{strategy}'. Available: {list(self._STRATEGIES)}"
             )
 
         sub = CDCSubscription(
@@ -154,7 +151,7 @@ class CDCClient:
 
         strategy_impl = self._STRATEGIES[strategy]()
         task = get_task_registry().create_task(
-            self._run_strategy(strategy_impl, sub), name=f"cdc-{sub.id}",
+            self._run_strategy(strategy_impl, sub), name=f"cdc-{sub.id}"
         )
         self._tasks[sub.id] = task
 
@@ -188,7 +185,7 @@ class CDCClient:
             task.cancel()
             try:
                 await task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError, Exception:
                 logger.debug("CDC subscription task cancellation raised", exc_info=True)
 
         logger.info("CDC подписка удалена: %s", subscription_id)
@@ -226,9 +223,7 @@ class CDCClient:
                 await sub.callback(event_dict)
             except Exception as exc:
                 logger.error("CDC callback error [%s]: %s", sub.id, exc)
-                await self._send_to_dlq(
-                    sub, event_dict, exc, stage="callback",
-                )
+                await self._send_to_dlq(sub, event_dict, exc, stage="callback")
 
         if sub.target_action:
             from src.backend.dsl.commands.registry import action_handler_registry
@@ -243,11 +238,9 @@ class CDCClient:
                 await action_handler_registry.dispatch(command)
             except Exception as exc:
                 logger.error(
-                    "CDC dispatch error [%s -> %s]: %s", sub.id, sub.target_action, exc,
+                    "CDC dispatch error [%s -> %s]: %s", sub.id, sub.target_action, exc
                 )
-                await self._send_to_dlq(
-                    sub, event_dict, exc, stage="dispatch",
-                )
+                await self._send_to_dlq(sub, event_dict, exc, stage="dispatch")
 
     async def _send_to_dlq(
         self,
@@ -286,7 +279,8 @@ class CDCClient:
             logger.warning(
                 "CDC no DLQ writer configured; dropping event silently "
                 "(dev only) [stage=%s, subscription=%s]",
-                stage, sub.id,
+                stage,
+                sub.id,
             )
             return
 
@@ -317,7 +311,9 @@ class CDCClient:
             # log + drop, never propagate.
             logger.exception(
                 "CDC DLQ envelope build failed [%s stage=%s]: %s",
-                sub.id, stage, build_exc,
+                sub.id,
+                stage,
+                build_exc,
             )
             return
 
@@ -326,12 +322,16 @@ class CDCClient:
             logger.warning(
                 "CDC event forwarded to DLQ after %s failure "
                 "[subscription=%s table=%s]",
-                stage, sub.id, event_dict.get("table"),
+                stage,
+                sub.id,
+                event_dict.get("table"),
             )
         except Exception as dlq_exc:
             logger.exception(
                 "CDC DLQ handoff failed [%s stage=%s]: %s — EVENT WILL BE LOST",
-                sub.id, stage, dlq_exc,
+                sub.id,
+                stage,
+                dlq_exc,
             )
 
     async def shutdown(self) -> None:

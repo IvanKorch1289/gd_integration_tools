@@ -35,13 +35,13 @@ class _BankingAIProcessor(BaseProcessor):
     compensatable: ClassVar[bool] = False
 
     def __init__(
-        self, model: str = "anthropic/claude-sonnet-4-6", *, name: str | None = None,
+        self, model: str = "anthropic/claude-sonnet-4-6", *, name: str | None = None
     ) -> None:
         super().__init__(name=name or self.__class__.__name__)
         if not model or "/" not in model:
             raise ValueError(
                 f"{self.__class__.__name__}: model должен быть в формате "
-                f"'<provider>/<name>', получено {model!r}",
+                f"'<provider>/<name>', получено {model!r}"
             )
         self._model = model
         self._provider = model.split("/", 1)[0]
@@ -79,9 +79,7 @@ class _BankingAIProcessor(BaseProcessor):
         exchange.in_message.body = body
 
     @handle_processor_error
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет AI-обработку: строит prompt, вызывает LLM через instructor+litellm и пишет результат."""
         # Feature gate
         try:
@@ -96,9 +94,9 @@ class _BankingAIProcessor(BaseProcessor):
             # config not initialized, RuntimeError — feature_flags
             # unavailable.
             import logging
+
             logging.getLogger(__name__).debug(
-                "banking_processors.feature_flag_fallback",
-                extra={"error": str(ff_exc)},
+                "banking_processors.feature_flag_fallback", extra={"error": str(ff_exc)}
             )
 
         prompt = self._build_prompt(exchange)
@@ -112,7 +110,8 @@ class _BankingAIProcessor(BaseProcessor):
             # of local stdlib bypass.
             _logger.warning(
                 "%s: prompt truncated from %d to 8000 chars (S227 cycle 4)",
-                self.name, len(prompt),
+                self.name,
+                len(prompt),
             )
             prompt = prompt[:8000]
 
@@ -122,7 +121,7 @@ class _BankingAIProcessor(BaseProcessor):
         except ImportError as exc:
             exchange.fail(
                 f"{self.name}: instructor/litellm не установлены; "
-                f"добавьте extras 'ai-2026' (uv sync --extra ai-2026): {exc}",
+                f"добавьте extras 'ai-2026' (uv sync --extra ai-2026): {exc}"
             )
             return
 
@@ -162,7 +161,7 @@ class _BankingAIProcessor(BaseProcessor):
         exchange.set_property("llm.provider", self._provider)
         exchange.set_property("llm.model", self._model)
         exchange.set_property(
-            "banking_action", f"ai.banking.{self.name.lower().replace('processor', '')}",
+            "banking_action", f"ai.banking.{self.name.lower().replace('processor', '')}"
         )
 
         self._write_result(exchange, result)
@@ -170,6 +169,6 @@ class _BankingAIProcessor(BaseProcessor):
     def to_spec(self) -> dict[str, Any] | None:
         return {
             self.__class__.__name__.lower().replace("processor", "_ai"): {
-                "model": self._model,
-            },
+                "model": self._model
+            }
         }

@@ -22,7 +22,7 @@ class CompressProcessor(BaseProcessor):
     """
 
     def __init__(
-        self, *, algorithm: str = "gzip", level: int = 6, name: str | None = None,
+        self, *, algorithm: str = "gzip", level: int = 6, name: str | None = None
     ) -> None:
         super().__init__(name=name or f"compress:{algorithm}")
         self._algo = algorithm
@@ -58,7 +58,7 @@ class CompressProcessor(BaseProcessor):
                 return
             exchange.set_property("compress_original_size", len(data))
             exchange.set_property(
-                "compress_ratio", round(len(compressed) / max(len(data), 1), 3),
+                "compress_ratio", round(len(compressed) / max(len(data), 1), 3)
             )
             exchange.set_out(body=compressed, headers=dict(exchange.in_message.headers))
         except ImportError as exc:

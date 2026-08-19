@@ -38,13 +38,20 @@ def _try_litellm_cost(
             model=model, prompt="x" * prompt_tokens, completion="x" * completion_tokens
         )
         return float(cost) if cost is not None else None
-    except (ImportError, AttributeError, ValueError, TypeError, RuntimeError) as cost_exc:
+    except (
+        ImportError,
+        AttributeError,
+        ValueError,
+        TypeError,
+        RuntimeError,
+    ) as cost_exc:
         # cycle-9/D-AUDIT-963: narrow exceptions + observability.
         # ImportError — litellm missing, AttributeError — completion_cost
         # API change, ValueError — invalid cost value, TypeError — wrong
         # arg type, RuntimeError — model unknown. Bare `except Exception`
         # маскировал unrelated runtime errors (KeyError).
         import logging
+
         logging.getLogger(__name__).debug(
             "llmcall_processor.litellm_cost_fallback",
             extra={"model": model, "error": str(cost_exc)},
@@ -84,7 +91,7 @@ class LLMCallProcessor(BaseProcessor):
         self._retry_delay = retry_delay
 
     def _compute_cost(
-        self, model: str | None, prompt_tokens: int, completion_tokens: int,
+        self, model: str | None, prompt_tokens: int, completion_tokens: int
     ) -> float:
         """Оценка стоимости: litellm pricing first, local fallback second.
 
@@ -177,7 +184,7 @@ class LLMCallProcessor(BaseProcessor):
                 except Exception as exc:
                     if attempt == self._max_retries:
                         exchange.fail(
-                            f"LLM gateway call failed after {self._max_retries + 1} attempts: {exc}",
+                            f"LLM gateway call failed after {self._max_retries + 1} attempts: {exc}"
                         )
                         return
                     await asyncio.sleep(self._retry_delay * (2**attempt))
@@ -242,7 +249,7 @@ class LLMCallProcessor(BaseProcessor):
         _llm_breaker = get_breaker_registry().get_or_create(
             "llm_call_processor",
             BreakerSpec(
-                name="llm_call_processor", failure_threshold=5, recovery_timeout=30.0,
+                name="llm_call_processor", failure_threshold=5, recovery_timeout=30.0
             ),
         )
 
@@ -268,7 +275,7 @@ class LLMCallProcessor(BaseProcessor):
                         provider=self._provider,
                         model=self._model or "default",
                     )
-                except (GatewayRateLimited, ValueError):
+                except GatewayRateLimited, ValueError:
                     # Non-retryable + non-CB-failing — propagate.
                     raise
                 except RuntimeError as exc:
@@ -290,7 +297,7 @@ class LLMCallProcessor(BaseProcessor):
                 exchange.fail(f"LLM rate limit: {msg}")
             else:
                 exchange.fail(
-                    f"LLM call failed after {self._max_retries + 1} attempts: {exc}",
+                    f"LLM call failed after {self._max_retries + 1} attempts: {exc}"
                 )
             return
 
@@ -304,7 +311,7 @@ class LLMCallProcessor(BaseProcessor):
                 exchange.set_property(
                     "llm.cost_usd",
                     self._compute_cost(
-                        result.get("model"), prompt_tokens, completion_tokens,
+                        result.get("model"), prompt_tokens, completion_tokens
                     ),
                 )
             if "model" in result:

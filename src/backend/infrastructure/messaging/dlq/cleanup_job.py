@@ -32,6 +32,7 @@ def _iso_to_yyyymm(iso_str: str) -> str:
     # iso_str is e.g. "2026-08-05T14:30:00+00:00"; take first 7 chars "YYYY-MM"
     return iso_str[:7].replace("-", "")
 
+
 __all__ = ("DLQCleanupJob", "DLQCleanupStats")
 
 logger = get_logger(__name__)
@@ -101,10 +102,7 @@ class DLQCleanupJob:
             cutoff_partition = _iso_to_yyyymm(cutoff.isoformat())
             # table_name контролируется конструктором (не user input);
             # partition suffix вычисляется из cutoff (controlled).
-            sql = (
-                f"ALTER TABLE {self._table} "
-                f"DROP PARTITION ID '{cutoff_partition}'"
-            )
+            sql = f"ALTER TABLE {self._table} DROP PARTITION ID '{cutoff_partition}'"
             try:
                 await self._client.execute(sql)
                 # ClickHouse не возвращает row count из DROP PARTITION;
@@ -114,16 +112,20 @@ class DLQCleanupJob:
                 if _CLEANUP_COUNTER is not None:
                     try:
                         _CLEANUP_COUNTER.labels(dlq_class=policy.class_name).inc(
-                            deleted,
+                            deleted
                         )
                     except (AttributeError, TypeError, ValueError) as counter_exc:
                         # cycle-9/D-AUDIT-931: narrow exceptions + observability.
                         # AttributeError — counter API change, TypeError —
                         # invalid arg, ValueError — invalid label value.
                         import logging
+
                         logging.getLogger(__name__).debug(
                             "dlq_cleanup.counter_inc_failed",
-                            extra={"dlq_class": policy.class_name, "error": str(counter_exc)},
+                            extra={
+                                "dlq_class": policy.class_name,
+                                "error": str(counter_exc),
+                            },
                         )
             except Exception as exc:
                 msg = f"cleanup_failed class={policy.class_name}: {exc!r}"
@@ -141,7 +143,7 @@ class DLQCleanupJob:
         sql = f"SELECT count() FROM {self._table} WHERE dlq_class = %s AND created_at < %s"  # internal query with controlled parameters
         try:
             rows = await self._client.execute(
-                sql, params=[class_name, cutoff.isoformat()],
+                sql, params=[class_name, cutoff.isoformat()]
             )
             if rows and isinstance(rows[0], dict):
                 return int(rows[0].get("count()", 0))
@@ -154,6 +156,7 @@ class DLQCleanupJob:
             # change. Bare `except Exception` маскировал unrelated runtime
             # errors (KeyError, TypeError).
             import logging
+
             logging.getLogger(__name__).debug(
                 "dlq_cleanup.count_deleted_failed",
                 extra={"class_name": class_name, "error": str(count_exc)},

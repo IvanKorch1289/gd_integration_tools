@@ -60,7 +60,7 @@ class WafBypassError(RuntimeError):
     def __init__(self, decision: WafDecision) -> None:
         self.decision = decision
         super().__init__(
-            f"WAF blocked outbound request to {decision.host!r}: {decision.reason}",
+            f"WAF blocked outbound request to {decision.host!r}: {decision.reason}"
         )
 
 
@@ -131,7 +131,7 @@ class WafPolicy:
         if pre is not None and not pre.allowed:
             return pre
         # pre is None в edge-case'е (нет хоста); обработали выше
-        assert pre is not None
+        assert pre is not None  # nosec
         host = pre.host
 
         if self.payload_scanner is not None and payload is not None:
@@ -142,7 +142,7 @@ class WafPolicy:
         return WafDecision(True, "allowed", host=host)
 
     async def evaluate_async(
-        self, url: str, payload: bytes | None = None,
+        self, url: str, payload: bytes | None = None
     ) -> WafDecision:
         """Async-версия :meth:`evaluate` с поддержкой async payload-scanner.
 
@@ -155,7 +155,7 @@ class WafPolicy:
         pre = self._evaluate_pre_payload(url, payload)
         if pre is not None and not pre.allowed:
             return pre
-        assert pre is not None
+        assert pre is not None  # nosec
         host = pre.host
 
         if self.payload_scanner is not None and payload is not None:
@@ -171,7 +171,7 @@ class WafPolicy:
         return WafDecision(True, "allowed", host=host)
 
     def _evaluate_pre_payload(
-        self, url: str, payload: bytes | None,
+        self, url: str, payload: bytes | None
     ) -> WafDecision | None:
         """Общая часть sync/async-проверок до payload-scanner'а.
 

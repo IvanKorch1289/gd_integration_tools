@@ -80,7 +80,7 @@ class PipelineMixin(_IDPPipelineProtocol):
 
         # Stage 3 — Extract
         result.fields = extract_fields(
-            text, result.doc_type, extractors=self._extractors,
+            text, result.doc_type, extractors=self._extractors
         )
         result.stage_reached = "extract"
 

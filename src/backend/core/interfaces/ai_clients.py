@@ -73,7 +73,7 @@ class AISanitizerProtocol(Protocol):
         ...
 
     def sanitize_messages(
-        self, messages: list[dict[str, str]],
+        self, messages: list[dict[str, str]]
     ) -> tuple[list[dict[str, str]], dict[str, str]]:
         """Маскирует PII в списке chat-сообщений."""
         ...
@@ -102,7 +102,7 @@ class AsyncPIISanitizerProtocol(Protocol):
         ...
 
     async def sanitize_messages_async(
-        self, messages: list[dict[str, str]],
+        self, messages: list[dict[str, str]]
     ) -> tuple[list[dict[str, str]], dict[str, str]]:
         """Async-версия sanitize_messages для chat-payload в async-контексте."""
         ...
@@ -132,7 +132,7 @@ class MongoClientProtocol(Protocol):
         ...
 
     async def find_one(
-        self, collection: str, query: dict[str, Any],
+        self, collection: str, query: dict[str, Any]
     ) -> dict[str, Any] | None:
         """Найти один документ matching ``query``; None если не найдено."""
         ...
@@ -155,9 +155,7 @@ class MongoClientProtocol(Protocol):
         """Удалить один документ matching ``query``; вернуть count удалённых."""
         ...
 
-    async def count(
-        self, collection: str, query: dict[str, Any] | None = None,
-    ) -> int:
+    async def count(self, collection: str, query: dict[str, Any] | None = None) -> int:
         """Подсчитать документы matching ``query``."""
         ...
 
@@ -175,7 +173,7 @@ class RedisStreamClientProtocol(Protocol):
         ...
 
     async def read_stream(
-        self, stream_name: str, count: int = 50,
+        self, stream_name: str, count: int = 50
     ) -> list[dict[str, Any]]:
         """Прочитать до ``count`` событий из Redis Stream."""
         ...
@@ -189,5 +187,5 @@ class LLMJudgeMetricsProtocol(Protocol):
     """
 
     def __call__(
-        self, *, model: str, hallucination: float, relevance: float, toxicity: float,
+        self, *, model: str, hallucination: float, relevance: float, toxicity: float
     ) -> None: ...

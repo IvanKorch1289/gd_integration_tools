@@ -117,7 +117,7 @@ class ClickHouseQueryBuilder:
         return self
 
     def with_cte(
-        self, name: str, query: ClickHouseQueryBuilder | str,
+        self, name: str, query: ClickHouseQueryBuilder | str
     ) -> ClickHouseQueryBuilder:
         """WITH clause: добавить CTE ``name AS <query>``."""
         self._ctes.append((name, query))

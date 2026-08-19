@@ -77,7 +77,7 @@ class RedisHash:
             value = value.decode()
         try:
             return orjson.loads(value)
-        except (orjson.JSONDecodeError, ValueError):
+        except orjson.JSONDecodeError, ValueError:
             return value
 
     async def delete(self, field: str) -> bool:
@@ -109,7 +109,7 @@ class RedisHash:
             val_str = v.decode() if isinstance(v, bytes) else v
             try:
                 result[key_str] = orjson.loads(val_str)
-            except (orjson.JSONDecodeError, ValueError):
+            except orjson.JSONDecodeError, ValueError:
                 result[key_str] = val_str
         return result
 
@@ -126,12 +126,11 @@ class RedisHash:
         raw = _get_raw_redis()
         return bool(await raw.hexists(self._key, field))
 
-
-
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
             import time
+
             start = time.monotonic()
             ping = getattr(self, "ping", None)
             if ping is None:
@@ -144,6 +143,8 @@ class RedisHash:
             }
         except Exception as exc:
             return {"status": "down", "error": str(exc)}
+
+
 class RedisSet:
     """Shared set (Redis SET) — для group membership."""
 
@@ -212,12 +213,11 @@ class RedisSet:
         raw = _get_raw_redis()
         return int(await raw.scard(self._key) or 0)
 
-
-
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
             import time
+
             start = time.monotonic()
             ping = getattr(self, "ping", None)
             if ping is None:
@@ -230,6 +230,8 @@ class RedisSet:
             }
         except Exception as exc:
             return {"status": "down", "error": str(exc)}
+
+
 class RedisCursor:
     """Monotonic cursor (Redis string) с CAS-semantics.
 
@@ -297,12 +299,11 @@ class RedisCursor:
             logger.warning("Cursor advance failed: %s — %s", self._key, exc)
             return False
 
-
-
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
             import time
+
             start = time.monotonic()
             ping = getattr(self, "ping", None)
             if ping is None:
@@ -315,6 +316,8 @@ class RedisCursor:
             }
         except Exception as exc:
             return {"status": "down", "error": str(exc)}
+
+
 class RedisPubSub:
     """Pub/sub channel для broadcast между инстансами.
 
@@ -360,7 +363,7 @@ class RedisPubSub:
                     data = data.decode()
                 try:
                     yield orjson.loads(data)
-                except (orjson.JSONDecodeError, ValueError, TypeError):
+                except orjson.JSONDecodeError, ValueError, TypeError:
                     yield data
         finally:
             await pubsub.unsubscribe(self._channel)

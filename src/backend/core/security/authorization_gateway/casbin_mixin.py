@@ -46,12 +46,12 @@ class CasbinMixin:
         """
 
         async def _step(
-            principal: str, resource: str, action: str, ctx: dict[str, Any],
+            principal: str, resource: str, action: str, ctx: dict[str, Any]
         ) -> AuthorizationReason:
             tenant_id = ctx.get("tenant_id")
             try:
                 allowed = casbin_enforcer.enforce(
-                    principal, resource, action, tenant_id=tenant_id,
+                    principal, resource, action, tenant_id=tenant_id
                 )
             except Exception as exc:
                 return AuthorizationReason(

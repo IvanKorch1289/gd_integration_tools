@@ -251,14 +251,15 @@ class MapReduceStrategy(ContextStrategy):
 
         if older:
             # Condense older messages: LLM summarization если available, иначе truncation
-            older_text = "\n".join(
-                f"[{m.role}]: {m.content}" for m in older
-            )
+            older_text = "\n".join(f"[{m.role}]: {m.content}" for m in older)
             if summarizer is not None:
                 try:
                     summary = summarizer(older_text)
                 except Exception as exc:
-                    logger.warning("MapReduce summarizer failed, falling back to truncation: %s", exc)
+                    logger.warning(
+                        "MapReduce summarizer failed, falling back to truncation: %s",
+                        exc,
+                    )
                     summary = older_text[:1000]
             else:
                 # ponytail: truncation fallback — ceiling: loses semantic context
@@ -344,8 +345,7 @@ class HierarchicalStrategy(ContextStrategy):
             group_size = max(1, self._base_group_size // (2**level))
             # Summarize this group: LLM если available, иначе truncation
             group_text = "\n".join(
-                f"[{m.role}]: {m.content}"
-                for m in current_group[-group_size:]
+                f"[{m.role}]: {m.content}" for m in current_group[-group_size:]
             )
             if summarizer is not None:
                 try:

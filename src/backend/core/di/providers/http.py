@@ -106,7 +106,7 @@ def get_express_metrics_recorder_provider() -> Any:
         return _overrides["express_metrics_recorder"]
     module = resolve_module("observability.metrics")
     return getattr(
-        module, "record_express_command_received", _noop_express_metrics_recorder,
+        module, "record_express_command_received", _noop_express_metrics_recorder
     )
 
 

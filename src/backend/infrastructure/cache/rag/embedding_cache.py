@@ -29,7 +29,7 @@ class EmbeddingVectorCache:
         self._ttl = ttl_seconds
         self._maxsize = maxsize
         self._store: TTLCache[str, list[float]] = TTLCache(
-            maxsize=maxsize, ttl=ttl_seconds,
+            maxsize=maxsize, ttl=ttl_seconds
         )
         self._lock = asyncio.Lock()
 

@@ -74,7 +74,7 @@ class OpenLineageHttpConfig:
             raise ValueError(f"batch_size должен быть >= 1, получено {batch_size}")
         if max_queue < batch_size:
             raise ValueError(
-                f"max_queue ({max_queue}) должен быть >= batch_size ({batch_size})",
+                f"max_queue ({max_queue}) должен быть >= batch_size ({batch_size})"
             )
         self.url = url.rstrip("/")
         self.namespace = namespace
@@ -125,7 +125,7 @@ class OpenLineageHttpEmitter(InMemoryLineageEmitter):
                 del self._pending[:drop]
                 self._dropped_count += drop
                 _log.warning(
-                    "OpenLineage emitter queue overflow: dropped %d oldest events", drop,
+                    "OpenLineage emitter queue overflow: dropped %d oldest events", drop
                 )
             self._pending.append(ol_event)
             should_flush = len(self._pending) >= self._config.batch_size
@@ -154,7 +154,7 @@ class OpenLineageHttpEmitter(InMemoryLineageEmitter):
             return batch_size
         self._failed_count += batch_size
         _log.warning(
-            "OpenLineage emitter: failed to send %d events (will retry)", batch_size,
+            "OpenLineage emitter: failed to send %d events (will retry)", batch_size
         )
         return 0
 
@@ -192,12 +192,12 @@ class OpenLineageHttpEmitter(InMemoryLineageEmitter):
             # P0-S7 (audit 2026-08-19): B310 nosec — endpoint controlled, not
             # user input. WAF egress filter enforces https://.
             with urllib.request.urlopen(  # nosec B310
-                req, timeout=self._config.timeout_s,
+                req, timeout=self._config.timeout_s
             ) as resp:
                 if 200 <= resp.status < 300:
                     return True
                 _log.warning(
-                    "OpenLineage HTTP %d for %d events", resp.status, len(batch),
+                    "OpenLineage HTTP %d for %d events", resp.status, len(batch)
                 )
                 return False
         except (
@@ -217,7 +217,7 @@ class OpenLineageHttpEmitter(InMemoryLineageEmitter):
             data = dict(event)
         else:
             raise TypeError(
-                f"event должен быть LineageEvent или dict, получено {type(event).__name__}",
+                f"event должен быть LineageEvent или dict, получено {type(event).__name__}"
             )
         node = data.get("node", {})
         return {
@@ -241,10 +241,10 @@ class OpenLineageHttpEmitter(InMemoryLineageEmitter):
                             "description": ", ".join(
                                 f"{k}={v!r}"
                                 for k, v in (node.get("attributes") or {}).items()
-                            ),
-                        },
+                            )
+                        }
                     },
-                },
+                }
             ],
             "payload": data.get("payload", {}),
         }

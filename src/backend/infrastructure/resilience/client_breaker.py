@@ -29,7 +29,6 @@ if TYPE_CHECKING:
     from src.backend.core.config.pooling import PoolingProfile
 
 
-
 class ClientCircuitBreaker:
     """Адаптер фасадного ``Breaker`` для infrastructure-клиентов.
 
@@ -50,14 +49,14 @@ class ClientCircuitBreaker:
         self._breaker = get_breaker_registry().get_or_create(
             f"{name}@{host}",
             BreakerSpec(
-                failure_threshold=failure_threshold, recovery_timeout=recovery_timeout,
+                failure_threshold=failure_threshold, recovery_timeout=recovery_timeout
             ),
             host=host,
         )
 
     @classmethod
     def from_profile(
-        cls, *, name: str, profile: PoolingProfile, host: str = "default",
+        cls, *, name: str, profile: PoolingProfile, host: str = "default"
     ) -> ClientCircuitBreaker:
         """Создать CB из ``PoolingProfile`` (circuit_threshold + circuit_recovery_s)."""
         return cls(

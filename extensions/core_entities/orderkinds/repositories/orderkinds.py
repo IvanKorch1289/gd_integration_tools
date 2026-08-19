@@ -8,7 +8,7 @@ Shim ``src.backend.infrastructure.repositories.orderkinds`` удалён
 from __future__ import annotations
 
 from extensions.core_entities.orderkinds.domain.models import OrderKind
-from src.backend.core.repositories.base import SQLAlchemyRepository
+from src.backend.core.api import SQLAlchemyRepository
 
 __all__ = ("OrderKindRepository", "get_order_kind_repo")
 

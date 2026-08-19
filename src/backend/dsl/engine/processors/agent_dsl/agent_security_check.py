@@ -119,9 +119,7 @@ class AgentSecurityCheckProcessor(BaseProcessor):
         self._file_size_bytes = file_size_bytes
 
     @handle_processor_error
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполнить security check.
 
         Side effects:
@@ -137,7 +135,8 @@ class AgentSecurityCheckProcessor(BaseProcessor):
             # Cycle 77 L3: use module-level canonical logger.
             _logger.warning(
                 "%s: value truncated from %d to 100000 chars (S227 cycle 4 hardening)",
-                self.name, len(self._value),
+                self.name,
+                len(self._value),
             )
             self._value = self._value[:100_000]
 
@@ -157,12 +156,11 @@ class AgentSecurityCheckProcessor(BaseProcessor):
                 decision = facade.validate_sql(self._value)
             elif self._check == "file":
                 decision = facade.validate_file_modification(
-                    self._value, file_size_bytes=self._file_size_bytes,
+                    self._value, file_size_bytes=self._file_size_bytes
                 )
             else:
                 decision = SecurityDecision(
-                    allowed=True,
-                    reason=f"unknown_check_type: {self._check}",
+                    allowed=True, reason=f"unknown_check_type: {self._check}"
                 )
 
             # Store decision в exchange
@@ -179,22 +177,16 @@ class AgentSecurityCheckProcessor(BaseProcessor):
 
                 if self._on_violation == "block":
                     exchange.fail(
-                        f"agent_security.{self._check}_blocked: {decision.reason}",
+                        f"agent_security.{self._check}_blocked: {decision.reason}"
                     )
                 elif self._on_violation == "warn":
                     _logger.warning(
-                        "agent_security.%s_warn: %s",
-                        self._check,
-                        decision.reason,
+                        "agent_security.%s_warn: %s", self._check, decision.reason
                     )
                 # "allow" → continue regardless
 
         except Exception as exc:
-            _logger.warning(
-                "agent_security_check failed for %s: %s",
-                self._check,
-                exc,
-            )
+            _logger.warning("agent_security_check failed for %s: %s", self._check, exc)
             if self._on_violation == "block":
                 exchange.fail(f"agent_security_check_error: {exc}")
 

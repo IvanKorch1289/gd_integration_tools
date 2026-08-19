@@ -210,7 +210,7 @@ class PydanticToProtoConverter:
     # ------------------------------------------------------------------ #
 
     def _convert_annotation(
-        self, name: str, annotation: Any, number: int,
+        self, name: str, annotation: Any, number: int
     ) -> ProtoField:
         """Сконвертировать одну аннотацию поля Pydantic в :class:`ProtoField`."""
         if annotation is None:
@@ -255,7 +255,7 @@ class PydanticToProtoConverter:
         # Scalar
         if isinstance(annotation, type) and annotation in _SCALAR_MAP:
             return ProtoField(
-                name=name, type_name=_SCALAR_MAP[annotation], number=number,
+                name=name, type_name=_SCALAR_MAP[annotation], number=number
             )
 
         # Nested BaseModel — рекурсия
@@ -359,7 +359,7 @@ def render_proto_file(proto: ProtoFile) -> str:
             comment_suffix = f"  // {field_obj.comment}" if field_obj.comment else ""
             lines.append(
                 f"  {modifier}{field_obj.type_name} {field_obj.name} = "
-                f"{field_obj.number};{comment_suffix}",
+                f"{field_obj.number};{comment_suffix}"
             )
         lines.append("}")
         lines.append("")
@@ -373,7 +373,7 @@ def render_proto_file(proto: ProtoFile) -> str:
             comment = f"  // {rpc.comment}\n" if rpc.comment else ""
             lines.append(
                 f"{comment}  rpc {rpc.name}({rpc.request_message}) "
-                f"returns ({rpc.response_message});",
+                f"returns ({rpc.response_message});"
             )
         lines.append("}")
         lines.append("")

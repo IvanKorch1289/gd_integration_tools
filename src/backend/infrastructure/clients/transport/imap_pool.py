@@ -75,7 +75,7 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
         self._use_ssl = use_ssl
         self._timeout_s = timeout_s
         self._pool: asyncio.Queue[IMAP4_SSL] = asyncio.Queue(
-            maxsize=self.pooling.max_size,
+            maxsize=self.pooling.max_size
         )
         self._created: int = 0  # сколько соединений фактически открыто
         self._lock = asyncio.Lock()  # guard _created в multi-acquire
@@ -176,7 +176,7 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
                     else:
                         # Дожидаемся freed connection.
                         conn = await asyncio.wait_for(
-                            self._pool.get(), timeout=self.pooling.acquire_timeout_s,
+                            self._pool.get(), timeout=self.pooling.acquire_timeout_s
                         )
             # Verify livenessо: если connection упал — replace.
             if not await self._is_alive(conn):
@@ -208,11 +208,11 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
 
         if self._use_ssl:
             conn = aioimaplib.IMAP4_SSL(
-                host=self._host, port=self._port, timeout=self._timeout_s,
+                host=self._host, port=self._port, timeout=self._timeout_s
             )
         else:
             conn = aioimaplib.IMAP4(
-                host=self._host, port=self._port, timeout=self._timeout_s,
+                host=self._host, port=self._port, timeout=self._timeout_s
             )
         await conn.wait_hello_from_server()
         password = await _maybe_async(self._password_provider)
@@ -237,7 +237,8 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
             _logger.debug(
                 "imap_pool._is_alive: NOOP probe failed (exc_type=%s "
                 "exc_msg=%s) — connection dead",
-                type(exc).__name__, exc,
+                type(exc).__name__,
+                exc,
             )
             return False
 

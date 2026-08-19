@@ -41,6 +41,7 @@ def _auto_register_workflows_fallback() -> None:
         from src.backend.plugins.composition.workflow_setup import (
             _register_workflow_declarations_from_filesystem,
         )
+
         count = _register_workflow_declarations_from_filesystem()
         _logger.info(
             "workflow.fallback_auto_load: %d declarations registered from EXTENSIONS_DIR",
@@ -147,9 +148,7 @@ def _run_granian() -> None:
     # timeout). Если 0 — НЕ передаём (default Granian behavior, без
     # explicit override; matches escape hatch в build_cli_command).
     if settings.app.graceful_shutdown_timeout > 0:
-        kwargs["workers_kill_timeout"] = int(
-            settings.app.graceful_shutdown_timeout,
-        )
+        kwargs["workers_kill_timeout"] = int(settings.app.graceful_shutdown_timeout)
 
     Granian(**kwargs).serve()
 

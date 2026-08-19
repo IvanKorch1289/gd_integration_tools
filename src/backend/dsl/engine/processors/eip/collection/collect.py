@@ -66,7 +66,7 @@ class CollectProcessor(BaseProcessor):
             "collect": {
                 "field": self._field,
                 "key_fn": self._key_fn.__name__ if self._key_fn else None,
-            },
+            }
         }
 
 
@@ -110,16 +110,22 @@ class FindAllProcessor(BaseProcessor):
                 try:
                     if bool(SimpleEval(names=ctx).eval(self._condition)):
                         result.append(item)
-                except (NameError, SyntaxError, TypeError, ValueError, KeyError) as eval_exc:
+                except (
+                    NameError,
+                    SyntaxError,
+                    TypeError,
+                    ValueError,
+                    KeyError,
+                ) as eval_exc:
                     # cycle-9/D-AUDIT-952: narrow exceptions + observability.
                     # NameError/SyntaxError для invalid condition,
                     # TypeError/ValueError для wrong arg, KeyError для
                     # missing key. Bare `except Exception` маскировал
                     # unrelated runtime errors.
                     import logging
+
                     logging.getLogger(__name__).debug(
-                        "collect.filter_eval_failed",
-                        extra={"error": str(eval_exc)},
+                        "collect.filter_eval_failed", extra={"error": str(eval_exc)}
                     )
                     continue
         else:
@@ -133,7 +139,7 @@ class FindAllProcessor(BaseProcessor):
             "find_all": {
                 "predicate": self._predicate.__name__ if self._predicate else None,
                 "condition": self._condition,
-            },
+            }
         }
 
 
@@ -188,7 +194,7 @@ class GroupByProcessor(BaseProcessor):
             "group_by": {
                 "field": self._field,
                 "key_fn": self._key_fn.__name__ if self._key_fn else None,
-            },
+            }
         }
 
 

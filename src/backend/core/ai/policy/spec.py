@@ -351,7 +351,7 @@ class AIPolicySpec(BaseModel):
             raise ValueError(
                 f"tools.conflict: {sorted(conflict)!r} присутствуют "
                 f"одновременно в whitelist и blacklist — выберите одну "
-                f"стратегию (allowlist OR denylist, не обе).",
+                f"стратегию (allowlist OR denylist, не обе)."
             )
 
         if self.budget.max_tokens_prompt < self.budget.max_tokens_completion:
@@ -359,14 +359,14 @@ class AIPolicySpec(BaseModel):
                 f"budget.inconsistent_tokens: max_tokens_prompt="
                 f"{self.budget.max_tokens_prompt} < max_tokens_completion="
                 f"{self.budget.max_tokens_completion}; prompt budget должен "
-                f"быть ≥ completion budget.",
+                f"быть ≥ completion budget."
             )
 
         if not self.model_router.primary.strip():
             raise ValueError(
                 "model_router.primary must be non-empty string "
                 "(LiteLLM-формат: 'openai/gpt-4o-mini', "
-                "'openrouter/anthropic/claude-3.5-sonnet', etc.)",
+                "'openrouter/anthropic/claude-3.5-sonnet', etc.)"
             )
 
         return self

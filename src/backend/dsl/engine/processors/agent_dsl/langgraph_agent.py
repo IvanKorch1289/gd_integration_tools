@@ -5,6 +5,7 @@ Thin wrapper над :func:`src.backend.services.ai.ai_graph.build_and_run_agent`
 
 Ponytail: 1-line DSL поверх существующей core-функции, без абстракций.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -20,7 +21,6 @@ __all__ = ("LangGraphAgentProcessor",)
 _logger = get_logger(__name__)
 
 
-
 from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
 
 
@@ -30,10 +30,7 @@ from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
     capabilities=("ai.langgraph.invoke",),
     spec_schema={
         "type": "object",
-        "properties": {
-        "graph_id": {"type": "string"},
-        "state": {"type": "object"},
-        },
+        "properties": {"graph_id": {"type": "string"}, "state": {"type": "object"}},
         "required": ["graph_id"],
     },
     meta={"tier": 1, "category": "agent"},
@@ -85,11 +82,13 @@ class LangGraphAgentProcessor(BaseAIProcessor):
             # Cycle 75: use module-level canonical logger.
             _logger.warning(
                 "%s: query truncated from %d to 4000 chars (S227 cycle 4)",
-                self.name, len(self.query),
+                self.name,
+                len(self.query),
             )
             self.query = self.query[:4000]
 
         from src.backend.services.ai.ai_graph import build_and_run_agent
+
         result = await build_and_run_agent(
             query=self.query,
             thread_id=self.thread_id,

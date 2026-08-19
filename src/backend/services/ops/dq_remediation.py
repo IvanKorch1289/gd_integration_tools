@@ -254,7 +254,7 @@ class TypeCoerceRemediator(Remediator):
         if isinstance(
             value,
             {"int": int, "float": float, "str": str, "bool": bool}.get(
-                target, type(value),
+                target, type(value)
             ),
         ):
             return value

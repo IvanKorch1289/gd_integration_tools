@@ -55,7 +55,6 @@ class CertEntry:
     version: int = 1
 
 
-
 def make_cert_entry(service_id: str, pem: str) -> CertEntry:
     """Factory для CertEntry с дефолтным fingerprint + expires_at.
 
@@ -65,6 +64,7 @@ def make_cert_entry(service_id: str, pem: str) -> CertEntry:
     from datetime import datetime
 
     from src.backend.infrastructure.security.cert_store.models import _fingerprint
+
     return CertEntry(
         service_id=service_id,
         pem=pem,

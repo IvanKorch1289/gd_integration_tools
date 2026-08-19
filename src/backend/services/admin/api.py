@@ -25,7 +25,6 @@ class AdminAuthorizationError(RuntimeError):
     """Raised when AuthorizationGateway denies an admin action (fail-closed)."""
 
 
-
 class AdminService:
     """Admin API с AuthorizationGateway RBAC + audit trail.
 
@@ -71,7 +70,7 @@ class AdminService:
 
             capability_facade = get_capability_facade()
             return AuthorizationGateway(
-                capability_gateway=FacadeCapabilityAdapter(capability_facade),
+                capability_gateway=FacadeCapabilityAdapter(capability_facade)
             )
         except Exception as exc:
             logger.warning("AuthorizationGateway unavailable: %s", exc)
@@ -109,17 +108,23 @@ class AdminService:
             import os
 
             fail_open = os.getenv("ADMIN_AUTHZ_FAIL_OPEN", "").lower() in {
-                "1", "true", "yes",
+                "1",
+                "true",
+                "yes",
             }
             if fail_open:
                 logger.warning(
                     "AuthZ unavailable for %s@%s/%s — allowing (ADMIN_AUTHZ_FAIL_OPEN=true, dev_light mode)",
-                    actor, resource, action,
+                    actor,
+                    resource,
+                    action,
                 )
                 return
             logger.critical(
                 "AuthZ unavailable for %s@%s/%s — DENYING (fail-CLOSED, ADMIN_AUTHZ_FAIL_OPEN not set)",
-                actor, resource, action,
+                actor,
+                resource,
+                action,
             )
             emit_admin_action(
                 actor=actor,
@@ -130,12 +135,12 @@ class AdminService:
             )
             raise AdminAuthorizationError(
                 f"AuthorizationGateway unavailable for {actor} on {resource}/{action} "
-                "(fail-CLOSED; set ADMIN_AUTHZ_FAIL_OPEN=true for dev_light)",
+                "(fail-CLOSED; set ADMIN_AUTHZ_FAIL_OPEN=true for dev_light)"
             )
 
         try:
             decision = await authz.authorize(
-                principal=actor, resource=resource, action=action, context=context,
+                principal=actor, resource=resource, action=action, context=context
             )
         except Exception as exc:
             emit_admin_action(
@@ -156,13 +161,13 @@ class AdminService:
                 details={"reasons": [str(r) for r in decision.reasons]},
             )
             raise AdminAuthorizationError(
-                f"Authorization denied for {actor} on {resource}/{action}",
+                f"Authorization denied for {actor} on {resource}/{action}"
             )
 
     # ── feature flags ────────────────────────────────────────────────────────
 
     async def toggle_feature_flag(
-        self, *, flag_name: str, enabled: bool, actor: str = "system",
+        self, *, flag_name: str, enabled: bool, actor: str = "system"
     ) -> dict[str, Any]:
         """Toggle a feature flag by name (S19 K5 W5b).
 
@@ -227,7 +232,7 @@ class AdminService:
     # ── audit log ────────────────────────────────────────────────────────────
 
     async def get_audit_log(
-        self, *, actor: str = "system", limit: int = 100, event_type: str | None = None,
+        self, *, actor: str = "system", limit: int = 100, event_type: str | None = None
     ) -> list[dict[str, Any]]:
         """Retrieve audit log entries (S19 K5 W5b).
 
@@ -252,7 +257,7 @@ class AdminService:
     # ── sessions ────────────────────────────────────────────────────────────
 
     async def list_active_sessions(
-        self, *, actor: str = "system",
+        self, *, actor: str = "system"
     ) -> list[dict[str, Any]]:
         """List active sessions (placeholder, S19 K5 W5b).
 

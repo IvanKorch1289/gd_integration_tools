@@ -48,7 +48,7 @@ class ForkJoinProcessor(BaseProcessor):
         if aggregation not in self._VALID_AGGREGATIONS:
             raise ValueError(
                 f"aggregation must be one of {sorted(self._VALID_AGGREGATIONS)}, "
-                f"got {aggregation!r}",
+                f"got {aggregation!r}"
             )
         if not branches:
             raise ValueError("ForkJoinProcessor: branches cannot be empty")
@@ -84,7 +84,7 @@ class ForkJoinProcessor(BaseProcessor):
                 in_message=Message(
                     body=exchange.in_message.body,
                     headers=dict(exchange.in_message.headers),
-                ),
+                )
             )
             branch_ex.status = ExchangeStatus.processing
             for proc in procs:

@@ -36,19 +36,21 @@ from src.backend.infrastructure.resilience.unified_rate_limiter import (
     get_rate_limiter,
 )
 
-__all__ = (
-    "ConnectorRateLimiter",
-    "RateLimitExceeded",
-    "get_connector_rate_limiter",
-)
+__all__ = ("ConnectorRateLimiter", "RateLimitExceeded", "get_connector_rate_limiter")
 
 logger = get_logger("security.connector_rl")
 
 
 _RATE_RE = re.compile(r"^\s*(\d+)\s*/\s*(\w+)\s*$")
 _RATE_UNITS_S = {
-    "s": 1, "sec": 1, "second": 1, "seconds": 1,
-    "m": 60, "min": 60, "minute": 60, "minutes": 60,
+    "s": 1,
+    "sec": 1,
+    "second": 1,
+    "seconds": 1,
+    "m": 60,
+    "min": 60,
+    "minute": 60,
+    "minutes": 60,
 }
 
 
@@ -93,7 +95,9 @@ class ConnectorRateLimiter:
     DEFAULT_BURST = 100
 
     def __init__(self) -> None:
-        self._policies: dict[str, tuple[str, int, int]] = {}  # name → (rate, burst, window_seconds)
+        self._policies: dict[
+            str, tuple[str, int, int]
+        ] = {}  # name → (rate, burst, window_seconds)
         self._lock = asyncio.Lock()
 
     def register(self, connector_name: str, rate: str, burst: int) -> None:
@@ -113,7 +117,10 @@ class ConnectorRateLimiter:
         self._policies[connector_name] = (rate, burst, window)
         logger.debug(
             "Connector RL registered: %s rate=%s burst=%d window=%ds",
-            connector_name, rate, burst, window,
+            connector_name,
+            rate,
+            burst,
+            window,
         )
 
     def _resolve(self, connector_name: str) -> tuple[str, int, int]:
@@ -122,12 +129,7 @@ class ConnectorRateLimiter:
             return self._policies[connector_name]
         return (self.DEFAULT_RATE, self.DEFAULT_BURST, 1)
 
-    async def check(
-        self,
-        connector_name: str,
-        *,
-        scope: str | None = None,
-    ) -> None:
+    async def check(self, connector_name: str, *, scope: str | None = None) -> None:
         """Проверяет rate-limit для коннектора.
 
         Args:
@@ -143,17 +145,17 @@ class ConnectorRateLimiter:
         limit, _ = _parse_rate(rate_str)
         key = f"{connector_name}:{scope}" if scope else connector_name
         policy = RateLimit(
-            limit=limit,
-            window_seconds=window,
-            key_prefix="connrl",
-            tenant_aware=False,
+            limit=limit, window_seconds=window, key_prefix="connrl", tenant_aware=False
         )
         try:
             await get_rate_limiter().check(identifier=key, policy=policy)
         except RateLimitExceeded:
             logger.warning(
                 "Connector RL exceeded: %s (scope=%s, limit=%d/%ds)",
-                connector_name, scope or "-", limit, window,
+                connector_name,
+                scope or "-",
+                limit,
+                window,
             )
             raise
 

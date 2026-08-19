@@ -58,17 +58,17 @@ class PerplexitySettings(BaseSettingsWithLoader):
     )
 
     base_url: str = Field(
-        default="https://api.perplexity.ai", description="Базовый URL API",
+        default="https://api.perplexity.ai", description="Базовый URL API"
     )
 
     use_waf: bool = Field(default=True, description="Проксировать запросы через WAF")
 
     max_tokens: int = Field(
-        default=4096, ge=1, le=32768, description="Максимальное число токенов в ответе",
+        default=4096, ge=1, le=32768, description="Максимальное число токенов в ответе"
     )
 
     temperature: float = Field(
-        default=0.7, ge=0.0, le=2.0, description="Температура генерации",
+        default=0.7, ge=0.0, le=2.0, description="Температура генерации"
     )
 
 
@@ -96,11 +96,11 @@ class HuggingFaceSettings(BaseSettingsWithLoader):
     )
 
     max_tokens: int = Field(
-        default=2048, ge=1, le=16384, description="Максимальное число токенов",
+        default=2048, ge=1, le=16384, description="Максимальное число токенов"
     )
 
     temperature: float = Field(
-        default=0.7, ge=0.0, le=2.0, description="Температура генерации",
+        default=0.7, ge=0.0, le=2.0, description="Температура генерации"
     )
 
 
@@ -119,7 +119,7 @@ class OpenWebUISettings(BaseSettingsWithLoader):
     )
 
     base_url: str = Field(
-        default="http://localhost:3000", description="URL внутреннего OpenWebUI сервера",
+        default="http://localhost:3000", description="URL внутреннего OpenWebUI сервера"
     )
 
     use_waf: bool = Field(
@@ -131,11 +131,11 @@ class OpenWebUISettings(BaseSettingsWithLoader):
     )
 
     max_tokens: int = Field(
-        default=4096, ge=1, le=32768, description="Максимальное число токенов",
+        default=4096, ge=1, le=32768, description="Максимальное число токенов"
     )
 
     temperature: float = Field(
-        default=0.7, ge=0.0, le=2.0, description="Температура генерации",
+        default=0.7, ge=0.0, le=2.0, description="Температура генерации"
     )
 
 
@@ -167,7 +167,7 @@ class NimSettings(BaseSettingsWithLoader):
 
     api_key: str = Field(default="", description="API-ключ build.nvidia.com")
     model: str = Field(
-        default="meta/llama-3.1-70b-instruct", description="Слаг модели в каталоге NIM.",
+        default="meta/llama-3.1-70b-instruct", description="Слаг модели в каталоге NIM."
     )
     base_url: str = Field(
         default="https://integrate.api.nvidia.com/v1",
@@ -189,7 +189,7 @@ class OpenAISettings(BaseSettingsWithLoader):
 
     api_key: str = Field(default="", description="API-ключ провайдера.")
     model: str = Field(
-        default="gpt-4o-mini", description="Имя/slug модели у выбранного провайдера.",
+        default="gpt-4o-mini", description="Имя/slug модели у выбранного провайдера."
     )
     base_url: str = Field(
         default="https://api.openai.com/v1",
@@ -204,7 +204,9 @@ class OpenAISettings(BaseSettingsWithLoader):
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
 
 
-class MiniMaxSettings(LLMModelMixin, ConnectionMixin, RetryMixin, BaseSettingsWithLoader):
+class MiniMaxSettings(
+    LLMModelMixin, ConnectionMixin, RetryMixin, BaseSettingsWithLoader
+):
     """MiniMax M-series — китайская LLM-платформа с M2/M2.5 моделями.
 
     OpenAI-совместимый API. Endpoint: https://api.minimax.chat/v1
@@ -226,9 +228,8 @@ class MiniMaxSettings(LLMModelMixin, ConnectionMixin, RetryMixin, BaseSettingsWi
     )
     # не покрыто mixin
     timeout: float = Field(
-        default=30.0, ge=1.0, description="Таймаут запроса к MiniMax API (сек)",
+        default=30.0, ge=1.0, description="Таймаут запроса к MiniMax API (сек)"
     )
-
 
 
 class AIProvidersSettings(ConnectionMixin, BaseSettingsWithLoader):
@@ -263,7 +264,7 @@ class AIProvidersSettings(ConnectionMixin, BaseSettingsWithLoader):
     )
 
     enable_data_sanitization: bool = Field(
-        default=True, description="Маскировать PII перед отправкой в LLM",
+        default=True, description="Маскировать PII перед отправкой в LLM"
     )
 
     sanitize_emails: bool = Field(default=True)
@@ -275,15 +276,15 @@ class AIProvidersSettings(ConnectionMixin, BaseSettingsWithLoader):
     sanitize_api_keys: bool = Field(default=True)
 
     custom_sensitive_fields: list[str] = Field(
-        default_factory=list, description="Дополнительные поля для маскировки",
+        default_factory=list, description="Дополнительные поля для маскировки"
     )
 
     search_timeout: float = Field(
-        default=30.0, ge=1.0, description="Таймаут поискового запроса (сек)",
+        default=30.0, ge=1.0, description="Таймаут поискового запроса (сек)"
     )
 
     search_deep_timeout: float = Field(
-        default=60.0, ge=1.0, description="Таймаут deep-research запроса (сек)",
+        default=60.0, ge=1.0, description="Таймаут deep-research запроса (сек)"
     )
 
 
@@ -321,7 +322,6 @@ class AIWorkspaceSettings(BaseSettingsWithLoader):
         description="Период cleanup-loop удаления TTL-expired sessions.",
     )
 
-
     default_agent_sandbox: Literal["in_process", "process_pool", "e2b"] = Field(
         default="process_pool",
         description=(
@@ -331,6 +331,7 @@ class AIWorkspaceSettings(BaseSettingsWithLoader):
         ),
         examples=["process_pool", "in_process", "e2b"],
     )
+
 
 class MarkitdownSettings(BaseSettingsWithLoader):
     """Настройки markitdown-engine для document_parsers (Sprint S5 hotfix).
@@ -354,7 +355,7 @@ class MarkitdownSettings(BaseSettingsWithLoader):
     )
 
     timeout_s: int = Field(
-        default=30, ge=1, le=600, description="Таймаут одной конвертации (R-V15-13).",
+        default=30, ge=1, le=600, description="Таймаут одной конвертации (R-V15-13)."
     )
 
     max_bytes: int = Field(
@@ -370,7 +371,6 @@ class MarkitdownSettings(BaseSettingsWithLoader):
             "'waf' — через OutboundHttpClient + capability net.outbound."
         ),
     )
-
 
 
 ai_providers_settings = AIProvidersSettings()
@@ -395,15 +395,19 @@ class YandexGPTSettings(BaseSettingsWithLoader, LLMModelMixin):
     yaml_group: ClassVar[str] = "yandexgpt"
     model_config = SettingsConfigDict(env_prefix="YANDEXGPT_", extra="forbid")
 
-    api_key: str = Field(default="", description="Yandex Cloud API-key (или IAM-token).")
+    api_key: str = Field(
+        default="", description="Yandex Cloud API-key (или IAM-token)."
+    )
     folder_id: str = Field(
-        default="", description="Yandex Cloud folder_id (required для YandexGPT API).",
+        default="", description="Yandex Cloud folder_id (required для YandexGPT API)."
     )
     base_url: str = Field(
         default="https://llm.api.cloud.yandex.net/v1",
         description="YandexGPT API base URL.",
     )
-    model: str = Field(default="yandexgpt/latest", description="Модель (latest, lite, pro).")
+    model: str = Field(
+        default="yandexgpt/latest", description="Модель (latest, lite, pro)."
+    )
     use_waf: bool = Field(default=False)
     max_tokens: int = Field(default=2000, ge=1, le=8000)
     temperature: float = Field(default=0.6, ge=0.0, le=2.0)
@@ -425,15 +429,15 @@ class GigaChatSettings(BaseSettingsWithLoader, LLMModelMixin):
         description="GigaChat API credentials (OAuth2 client_id:client_secret или API-key).",
     )
     scope: Literal["GIGACHAT_API_PERS", "GIGACHAT_API_CORP"] = Field(
-        default="GIGACHAT_API_PERS",
-        description="OAuth2 scope.",
+        default="GIGACHAT_API_PERS", description="OAuth2 scope."
     )
     base_url: str = Field(
         default="https://gigachat.devices.sberbank.ru/api/v1",
         description="GigaChat API base URL.",
     )
     model: str = Field(
-        default="GigaChat:latest", description="Модель (GigaChat:latest, GigaChat-Pro, ...).",
+        default="GigaChat:latest",
+        description="Модель (GigaChat:latest, GigaChat-Pro, ...).",
     )
     use_waf: bool = Field(default=False)
     max_tokens: int = Field(default=2000, ge=1, le=8000)
@@ -451,16 +455,18 @@ class SaluteSpeechSettings(BaseSettingsWithLoader, LLMModelMixin):
     model_config = SettingsConfigDict(env_prefix="SALUTE_SPEECH_", extra="forbid")
 
     credentials: str = Field(
-        default="", description="SaluteSpeech API credentials (OAuth2).",
+        default="", description="SaluteSpeech API credentials (OAuth2)."
     )
     scope: Literal["SALUTE_SPEECH_PERS", "SALUTE_SPEECH_CORP"] = Field(
-        default="SALUTE_SPEECH_PERS", description="OAuth2 scope.",
+        default="SALUTE_SPEECH_PERS", description="OAuth2 scope."
     )
     base_url: str = Field(
         default="https://salute.online.sberbank.ru:8000/v1",
         description="SaluteSpeech API base URL.",
     )
-    model: str = Field(default="salute-speech/latest", description="Модель (latest, plus).")
+    model: str = Field(
+        default="salute-speech/latest", description="Модель (latest, plus)."
+    )
     use_waf: bool = Field(default=False)
     max_tokens: int = Field(default=2000, ge=1, le=8000)
     temperature: float = Field(default=0.6, ge=0.0, le=2.0)

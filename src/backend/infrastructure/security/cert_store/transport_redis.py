@@ -3,6 +3,7 @@
 Pub/Sub-based multi-instance cert invalidation.
 Pattern (D257, Ponytail): thin wrapper над redis.asyncio.
 """
+
 from __future__ import annotations
 
 import json
@@ -21,12 +22,7 @@ DEFAULT_CHANNEL = "cert:updated"
 class RedisCertTransport:
     """Redis Pub/Sub transport для cert store events (D257)."""
 
-    def __init__(
-        self,
-        *,
-        redis_url: str,
-        channel: str = DEFAULT_CHANNEL,
-    ) -> None:
+    def __init__(self, *, redis_url: str, channel: str = DEFAULT_CHANNEL) -> None:
         """Метод __init__ (см. signature)."""
         self._redis_url = redis_url
         self._channel = channel
@@ -39,12 +35,8 @@ class RedisCertTransport:
         try:
             import redis.asyncio as redis_asyncio
         except ImportError as exc:
-            raise ImportError(
-                "redis не установлен. pip install redis>=5.0",
-            ) from exc
-        self._redis = redis_asyncio.from_url(
-            self._redis_url, decode_responses=True,
-        )
+            raise ImportError("redis не установлен. pip install redis>=5.0") from exc
+        self._redis = redis_asyncio.from_url(self._redis_url, decode_responses=True)
         return self._redis
 
     def _format_message(self, cert_id: str, action: str = "set") -> dict[str, Any]:
@@ -60,10 +52,7 @@ class RedisCertTransport:
         redis = self._ensure_redis()
         msg = self._format_message(cert_id, action=action)
         redis.publish(self._channel, json.dumps(msg))
-        logger.info(
-            "cert.transport.redis.publish cert=%s action=%s",
-            cert_id, action,
-        )
+        logger.info("cert.transport.redis.publish cert=%s action=%s", cert_id, action)
 
     def subscribe(self) -> Any:
         """Метод subscribe (см. signature)."""
@@ -89,9 +78,7 @@ class RedisCertTransport:
         from src.backend.infrastructure.security.cert_store.store import CertStore
 
         if not isinstance(store, CertStore):
-            raise TypeError(
-                f"store должен быть CertStore, получен {type(store)}",
-            )
+            raise TypeError(f"store должен быть CertStore, получен {type(store)}")
 
         async def on_update(cert_id: str) -> None:
             """Метод on_update (см. signature)."""

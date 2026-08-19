@@ -48,6 +48,7 @@ def _build_underlying(*, ttl: int, key_prefix: str, backend: Backend) -> Any:
     from src.backend.core.di.providers.infrastructure_locator import (
         get_caching_decorator_class as _get_cd_cls,
     )
+
     CachingDecorator = _get_cd_cls()
 
     if backend == "redis":
@@ -83,7 +84,7 @@ def _format_key(template: str, args: tuple, kwargs: dict) -> str:
 
 
 def cached(
-    *, ttl: int, key: str | Callable[..., str], backend: Backend = "multi",
+    *, ttl: int, key: str | Callable[..., str], backend: Backend = "multi"
 ) -> Callable[[Callable[..., Awaitable[Any]]], Callable[..., Awaitable[Any]]]:
     """Декоратор: кеширует результат async-функции на ``ttl`` секунд.
 
@@ -119,13 +120,14 @@ def cached(
 
         # Подготавливаем underlying CachingDecorator с custom key_builder.
         def _underlying_key(
-            _func: Any, args: tuple[Any, ...], kwargs: dict[str, Any],
+            _func: Any, args: tuple[Any, ...], kwargs: dict[str, Any]
         ) -> str:
             return key_builder(*args, **kwargs)
 
         from src.backend.core.di.providers.infrastructure_locator import (
             get_caching_decorator_class as _get_cd_cls2,
         )
+
         CachingDecorator = _get_cd_cls2()
 
         decorator_instance = CachingDecorator(
@@ -174,6 +176,7 @@ def invalidate(
                 from src.backend.core.di.providers.infrastructure_locator import (
                     get_redis_client_factory as _get_redis_client_fn,
                 )
+
                 get_redis_client = _get_redis_client_fn()
 
                 redis_client = get_redis_client()
@@ -193,7 +196,7 @@ def invalidate(
 
 
 def multi_cached(
-    *, ttls: Mapping[str, int],
+    *, ttls: Mapping[str, int]
 ) -> Callable[[Callable[..., Awaitable[Any]]], Callable[..., Awaitable[Any]]]:
     """Декоратор: несколько slots кеша с разными TTL.
 

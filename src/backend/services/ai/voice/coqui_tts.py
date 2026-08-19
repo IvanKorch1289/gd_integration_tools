@@ -148,13 +148,13 @@ class CoquiTTSService:
             return self._engine
         if not self.enabled:
             raise VoiceServiceUnavailable(
-                "CoquiTTSService отключён (voice_stt_tts_enabled=false).",
+                "CoquiTTSService отключён (voice_stt_tts_enabled=false)."
             )
         try:
             from TTS.api import TTS
         except ImportError as exc:
             raise VoiceServiceUnavailable(
-                "Пакет 'TTS' не установлен — добавьте extra '[ai-voice]'.",
+                "Пакет 'TTS' не установлен — добавьте extra '[ai-voice]'."
             ) from exc
 
         try:
@@ -165,7 +165,7 @@ class CoquiTTSService:
             )
         except Exception as exc:
             raise VoiceServiceUnavailable(
-                f"Не удалось загрузить Coqui-модель '{self._model_name}': {exc}",
+                f"Не удалось загрузить Coqui-модель '{self._model_name}': {exc}"
             ) from exc
         return self._engine
 

@@ -152,12 +152,19 @@ def _build_jwt_blacklist_or_none() -> Any:
 
         redis = get_redis_kv_client_provider()
         return RedisJwtBlacklist(redis)
-    except (ImportError, AttributeError, RuntimeError, ConnectionError, OSError) as redis_exc:  # pragma: no cover — Redis может быть недоступен в test/dev_light
+    except (
+        ImportError,
+        AttributeError,
+        RuntimeError,
+        ConnectionError,
+        OSError,
+    ) as redis_exc:  # pragma: no cover — Redis может быть недоступен в test/dev_light
         # cycle-9/D-AUDIT-1079: narrow exceptions + observability.
         # ImportError — module missing, AttributeError — API change,
         # RuntimeError — DI unavailable, ConnectionError/OSError — Redis
         # network failure.
         import logging
+
         logging.getLogger(__name__).debug(
             "auth_provider.redis_jwt_blacklist_unavailable",
             extra={"error": str(redis_exc)},
@@ -195,7 +202,7 @@ def get_ad_directory_client_provider() -> Any:
         return _overrides["ad_directory_client_factory"]
     raise RuntimeError(
         "LDAP client factory is not registered by the composition layer. "
-        "Call set_ad_directory_client_provider(factory) at startup.",
+        "Call set_ad_directory_client_provider(factory) at startup."
     )
 
 

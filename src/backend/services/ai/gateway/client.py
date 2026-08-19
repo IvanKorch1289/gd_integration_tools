@@ -92,7 +92,7 @@ class LiteLLMGateway:
                     latency_tier=latency_tier,
                 ):
                     if preferred_provider is None or preferred_provider in rec.tags.get(
-                        "provider", "",
+                        "provider", ""
                     ):
                         return f"{rec.tags.get('provider', 'openai')}/{rec.name}"
             return self._default_model
@@ -101,6 +101,7 @@ class LiteLLMGateway:
             # Bare `except Exception` маскировал malformed model registry
             # (corrupted metadata, missing tags). Fallback: default model.
             from src.backend.core.logging import get_logger
+
             get_logger(__name__).debug(
                 "ai_gateway.model_resolve_failed",
                 extra={"error": str(model_resolve_exc)},
@@ -117,7 +118,7 @@ class LiteLLMGateway:
             import litellm  # type: ignore[import-not-found]
         except ImportError as exc:
             raise GatewayUnavailable(
-                "Пакет 'litellm' не установлен — добавьте extra '[ai-2026]'.",
+                "Пакет 'litellm' не установлен — добавьте extra '[ai-2026]'."
             ) from exc
 
         self._litellm = litellm
@@ -182,17 +183,27 @@ class LiteLLMGateway:
             self._cb = get_breaker_registry().get_or_create(
                 "litellm_gateway",
                 BreakerSpec(
-                    name="litellm_gateway", failure_threshold=5, recovery_timeout=30.0,
+                    name="litellm_gateway", failure_threshold=5, recovery_timeout=30.0
                 ),
             )
         async with self._cb.guard():
             try:
                 return await litellm.acompletion(**params)
-            except (TimeoutError, litellm_exc.RateLimitError, litellm_exc.ServiceUnavailableError, litellm_exc.Timeout, litellm_exc.APIError, litellm_exc.BadRequestError, litellm_exc.AuthenticationError, GatewayRateLimited, GatewayUnavailable) as exc:
+            except (
+                TimeoutError,
+                litellm_exc.RateLimitError,
+                litellm_exc.ServiceUnavailableError,
+                litellm_exc.Timeout,
+                litellm_exc.APIError,
+                litellm_exc.BadRequestError,
+                litellm_exc.AuthenticationError,
+                GatewayRateLimited,
+                GatewayUnavailable,
+            ) as exc:
                 self._raise_normalized(exc)
 
     async def astream_completion(
-        self, messages: list[dict[str, Any]], *, model: str | None = None, **kwargs: Any,
+        self, messages: list[dict[str, Any]], *, model: str | None = None, **kwargs: Any
     ) -> AsyncIterator[Any]:
         """Удобный wrapper над :meth:`acompletion` с ``stream=True``."""
         result = await self.acompletion(messages, model=model, stream=True, **kwargs)
@@ -200,7 +211,7 @@ class LiteLLMGateway:
             yield chunk
 
     async def aembedding(
-        self, input_: list[str], *, model: str = "text-embedding-3-small", **kwargs: Any,
+        self, input_: list[str], *, model: str = "text-embedding-3-small", **kwargs: Any
     ) -> list[list[float]]:
         """Эмбеддинги для RAG-pipeline. Возвращает list[list[float]]."""
         litellm = self._ensure_litellm()
@@ -214,7 +225,17 @@ class LiteLLMGateway:
         }
         try:
             response = await litellm.aembedding(**params)
-        except (TimeoutError, litellm_exc.RateLimitError, litellm_exc.ServiceUnavailableError, litellm_exc.Timeout, litellm_exc.APIError, litellm_exc.BadRequestError, litellm_exc.AuthenticationError, GatewayRateLimited, GatewayUnavailable) as exc:
+        except (
+            TimeoutError,
+            litellm_exc.RateLimitError,
+            litellm_exc.ServiceUnavailableError,
+            litellm_exc.Timeout,
+            litellm_exc.APIError,
+            litellm_exc.BadRequestError,
+            litellm_exc.AuthenticationError,
+            GatewayRateLimited,
+            GatewayUnavailable,
+        ) as exc:
             self._raise_normalized(exc)
 
         data = getattr(response, "data", None)
@@ -246,7 +267,7 @@ class LiteLLMGateway:
                     model=model or self._default_model,
                     prompt_tokens=prompt_tokens,
                     completion_tokens=completion_tokens,
-                ),
+                )
             )
         except Exception as exc:
             logger.debug("acost_estimate failed: %s", exc)

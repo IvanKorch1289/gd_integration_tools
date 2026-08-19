@@ -48,7 +48,7 @@ def instrument_asyncpg_if_enabled() -> bool:
     global _ASYNCPG_INSTRUMENTED
     if _ASYNCPG_INSTRUMENTED:
         logger.debug(
-            "OTel asyncpg instrumentor уже активирован, пропуск повторного вызова",
+            "OTel asyncpg instrumentor уже активирован, пропуск повторного вызова"
         )
         return False
 
@@ -115,7 +115,7 @@ def init_otel(*, app: Any = None, service_name: str | None = None) -> bool:
         return False
 
     resource = Resource.create(
-        {"service.name": service_name, "deployment.environment": environment},
+        {"service.name": service_name, "deployment.environment": environment}
     )
     provider = TracerProvider(resource=resource)
     provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint)))
@@ -135,7 +135,7 @@ def init_otel(*, app: Any = None, service_name: str | None = None) -> bool:
     _instrument_asyncpg()
 
     logger.info(
-        "OpenTelemetry initialized: service=%s, env=%s", service_name, environment,
+        "OpenTelemetry initialized: service=%s, env=%s", service_name, environment
     )
     return True
 

@@ -48,7 +48,7 @@ class SqliteFTS5Search:
     # ─────────────────────── SearchClient API ───────────────────────
 
     async def index_document(
-        self, index: str, document: dict[str, Any], doc_id: str | None = None,
+        self, index: str, document: dict[str, Any], doc_id: str | None = None
     ) -> dict[str, Any]:
         """Index a document in FTS5.
 
@@ -68,7 +68,9 @@ class SqliteFTS5Search:
         body = json.dumps(document, ensure_ascii=False, default=str)
         # Имя таблицы валидируется в _ensure_index регуляркой — S608 false positive.
         async with aiosqlite.connect(self._path) as db:
-            await db.execute(f"DELETE FROM {table} WHERE doc_id = ?", (doc_id,))  # internal query with controlled parameters
+            await db.execute(
+                f"DELETE FROM {table} WHERE doc_id = ?", (doc_id,)
+            )  # internal query with controlled parameters
             await db.execute(
                 f"INSERT INTO {table} (doc_id, body) VALUES (?, ?)",  # internal query with controlled parameters
                 (doc_id, body),
@@ -77,7 +79,7 @@ class SqliteFTS5Search:
         return {"_id": doc_id, "result": "indexed"}
 
     async def bulk_index(
-        self, index: str, documents: list[dict[str, Any]], id_field: str | None = None,
+        self, index: str, documents: list[dict[str, Any]], id_field: str | None = None
     ) -> dict[str, Any]:
         """Bulk index documents.
 
@@ -136,7 +138,7 @@ class SqliteFTS5Search:
         return results
 
     async def aggregate(
-        self, index: str, aggs: dict[str, Any], query: dict[str, Any] | None = None,
+        self, index: str, aggs: dict[str, Any], query: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """Run aggregation query.
 
@@ -151,7 +153,9 @@ class SqliteFTS5Search:
         """
         table = await self._ensure_index(index)
         match = self._build_match(query) if query else ""
-        sql = f"SELECT COUNT(*) FROM {table}"  # internal query with controlled parameters
+        sql = (
+            f"SELECT COUNT(*) FROM {table}"  # internal query with controlled parameters
+        )
         params: list[Any] = []
         if match:
             sql += f" WHERE {table} MATCH ?"
@@ -162,7 +166,7 @@ class SqliteFTS5Search:
         return {
             "aggregations": {
                 name: {"value": int(row[0]) if row else 0} for name in aggs
-            },
+            }
         }
 
     async def aggregate_terms(
@@ -191,7 +195,7 @@ class SqliteFTS5Search:
             return cursor.rowcount > 0
 
     async def create_index(
-        self, index: str, mappings: dict[str, Any] | None = None,
+        self, index: str, mappings: dict[str, Any] | None = None
     ) -> None:
         """Метод create_index (см. signature)."""
         del mappings  # FTS5 без маппингов — всё индексируется как текст
@@ -211,7 +215,7 @@ class SqliteFTS5Search:
     async def _ensure_index(self, index: str) -> str:
         if not _INDEX_RE.match(index):
             raise ValueError(
-                f"Некорректное имя индекса '{index}': допустимы [A-Za-z_][A-Za-z0-9_]*",
+                f"Некорректное имя индекса '{index}': допустимы [A-Za-z_][A-Za-z0-9_]*"
             )
         table = f"idx_{index}"
         if table in self._known:
@@ -219,7 +223,7 @@ class SqliteFTS5Search:
         async with aiosqlite.connect(self._path) as db:
             await db.execute(
                 f"CREATE VIRTUAL TABLE IF NOT EXISTS {table} "
-                "USING fts5(doc_id UNINDEXED, body)",
+                "USING fts5(doc_id UNINDEXED, body)"
             )
             await db.commit()
         self._known.add(table)
@@ -267,5 +271,5 @@ def _hash_doc(doc: dict[str, Any]) -> str:
     # sha256 используется не для security, а для стабильного doc_id
     # (sha1 триггерил ruff S324 при том же назначении).
     return hashlib.sha256(
-        json.dumps(doc, sort_keys=True, default=str).encode("utf-8"),
+        json.dumps(doc, sort_keys=True, default=str).encode("utf-8")
     ).hexdigest()[:16]

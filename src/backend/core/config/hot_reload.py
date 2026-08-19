@@ -75,7 +75,7 @@ class ConfigHotReloader:
                 ok += 1
             except Exception as exc:
                 failed.append(
-                    {"callback": getattr(cb, "__name__", repr(cb)), "error": str(exc)},
+                    {"callback": getattr(cb, "__name__", repr(cb)), "error": str(exc)}
                 )
                 logger.error("Hot-reload callback failed: %s", exc)
         logger.info("Config reloaded (%s): %d OK, %d failed", reason, ok, len(failed))
@@ -95,13 +95,13 @@ class ConfigHotReloader:
             and feature_flags.prod_hot_reload_disable
         ):
             logger.info(
-                "Config hot-reload disabled (APP_PROFILE=prod, prod_hot_reload_disable=True)",
+                "Config hot-reload disabled (APP_PROFILE=prod, prod_hot_reload_disable=True)"
             )
             return
 
         self._stop_event.clear()
         self._task = get_task_registry().create_task(
-            self._watch_loop(), name="config-hot-reload",
+            self._watch_loop(), name="config-hot-reload"
         )
         logger.info("Config hot-reload started, watching %d paths", len(self._paths))
 
@@ -132,7 +132,7 @@ class ConfigHotReloader:
         # множественных срабатываний при сохранении редактором (который
         # обычно создаёт tmp-файл и затем переименовывает).
         async for _changes in awatch(
-            *paths, step=self._debounce_ms, stop_event=self._stop_event,
+            *paths, step=self._debounce_ms, stop_event=self._stop_event
         ):
             await self.trigger_reload(reason="file-change")
 

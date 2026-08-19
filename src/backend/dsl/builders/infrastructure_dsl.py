@@ -120,7 +120,9 @@ class _InfraOp(BaseProcessor):
             )
             exchange.set_property(f"{self.op_name}_pending", dict(self.params))
 
-    async def _execute(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+    async def _execute(
+        self, exchange: Exchange[Any], context: ExecutionContext
+    ) -> None:
         """Subclass hook — реализация через DI facade."""
         # Default: запись intent в properties (backward-compat)
         exchange.set_property(f"{self.op_name}_pending", dict(self.params))
@@ -135,7 +137,9 @@ class RedisSetProcessor(_InfraOp):
     op_name: ClassVar[str] = "redis_set"
     compensatable: ClassVar[bool] = True
 
-    async def _execute(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+    async def _execute(
+        self, exchange: Exchange[Any], context: ExecutionContext
+    ) -> None:
         """S182: реальный Redis backend через DI facade."""
         from src.backend.infrastructure.clients.storage.redis import get_redis_client
 
@@ -151,14 +155,15 @@ class RedisSetProcessor(_InfraOp):
         exchange.set_property(f"{self.op_name}_result", key)
 
 
-
 class RedisDeleteProcessor(_InfraOp):
     """Redis DEL (идемпотентно: missing key → no-op)."""
 
     op_name: ClassVar[str] = "redis_delete"
     compensatable: ClassVar[bool] = True
 
-    async def _execute(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+    async def _execute(
+        self, exchange: Exchange[Any], context: ExecutionContext
+    ) -> None:
         """S182: реальный Redis DELETE через DI facade."""
         from src.backend.infrastructure.clients.storage.redis import get_redis_client
 
@@ -167,7 +172,6 @@ class RedisDeleteProcessor(_InfraOp):
         key = self.params.get("key", "")
         await cache_client.delete(key)
         exchange.set_property(f"{self.op_name}_result", key)
-
 
 
 # ── ClickHouse (2) ─────────────────────────────────────────────────────
@@ -190,7 +194,9 @@ class ClickHouseInsertProcessor(_InfraOp):
     op_name: ClassVar[str] = "clickhouse_insert"
     compensatable: ClassVar[bool] = False  # INSERT без компенсации
 
-    async def _execute(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+    async def _execute(
+        self, exchange: Exchange[Any], context: ExecutionContext
+    ) -> None:
         """S182: реальный ClickHouse INSERT через DI facade."""
         from src.backend.infrastructure.clients.storage.clickhouse import (
             MAX_INSERT_ROWS,
@@ -208,7 +214,7 @@ class ClickHouseInsertProcessor(_InfraOp):
         if rows is None:
             exchange.fail(
                 f"clickhouse_insert: rows_from={rows_from!r} "
-                "missing or not a list of dicts",
+                "missing or not a list of dicts"
             )
             return
 
@@ -217,7 +223,7 @@ class ClickHouseInsertProcessor(_InfraOp):
             exchange.fail(
                 f"clickhouse_insert: refusing oversized batch "
                 f"({len(rows)} > MAX_INSERT_ROWS={MAX_INSERT_ROWS}); "
-                "split caller-side before insert()",
+                "split caller-side before insert()"
             )
             return
 
@@ -259,7 +265,6 @@ class ClickHouseInsertProcessor(_InfraOp):
         return cur
 
 
-
 # ── Elasticsearch (2) ──────────────────────────────────────────────────
 
 
@@ -269,7 +274,9 @@ class ElasticsearchIndexProcessor(_InfraOp):
     op_name: ClassVar[str] = "es_index"
     compensatable: ClassVar[bool] = False  # индекс необратим
 
-    async def _execute(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+    async def _execute(
+        self, exchange: Exchange[Any], context: ExecutionContext
+    ) -> None:
         """S182: реальный Elasticsearch INDEX через DI facade."""
         from src.backend.infrastructure.clients.storage.elasticsearch import (
             get_elasticsearch_client,
@@ -282,14 +289,15 @@ class ElasticsearchIndexProcessor(_InfraOp):
         exchange.set_property(f"{self.op_name}_result", "indexed")
 
 
-
 class ElasticsearchSearchProcessor(_InfraOp):
     """Elasticsearch SEARCH (read-only)."""
 
     op_name: ClassVar[str] = "es_search"
     compensatable: ClassVar[bool] = True
 
-    async def _execute(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+    async def _execute(
+        self, exchange: Exchange[Any], context: ExecutionContext
+    ) -> None:
         """S182: реальный Elasticsearch SEARCH через DI facade."""
         from src.backend.infrastructure.clients.storage.elasticsearch import (
             get_elasticsearch_client,
@@ -300,7 +308,6 @@ class ElasticsearchSearchProcessor(_InfraOp):
         query = self.params.get("query", {})
         results = await client.search(index, query)
         exchange.set_property(f"{self.op_name}_result", results)
-
 
 
 # ── MongoDB (2) ────────────────────────────────────────────────────────
@@ -402,11 +409,11 @@ class InfrastructureDSL:
     # ── Redis (3) ──
 
     def redis_set(
-        self, key: str, value: str, *, ttl_seconds: int | None = None,
+        self, key: str, value: str, *, ttl_seconds: int | None = None
     ) -> RouteBuilder:
         """``SET key value [EX ttl]`` в Redis. ``ttl_seconds=None`` = бессрочно."""
         return self._add(  # type: ignore[attr-defined]
-            RedisSetProcessor(key=key, value=value, ttl_seconds=ttl_seconds),
+            RedisSetProcessor(key=key, value=value, ttl_seconds=ttl_seconds)
         )
 
     # NOTE: redis_get DELETED (S175 #5) — use InfraRedisGetProcessor.
@@ -414,17 +421,13 @@ class InfrastructureDSL:
     def redis_delete(self, key: str) -> RouteBuilder:
         """``DEL key`` в Redis."""
         return self._add(  # type: ignore[attr-defined]
-            RedisDeleteProcessor(key=key),
+            RedisDeleteProcessor(key=key)
         )
 
     # ── ClickHouse (2) ──
 
     def clickhouse_insert(
-        self,
-        table: str,
-        *,
-        batch_size: int = 1000,
-        rows_from: str = "body",
+        self, table: str, *, batch_size: int = 1000, rows_from: str = "body"
     ) -> RouteBuilder:
         """Batch INSERT в ClickHouse ``table`` из exchange body.
 
@@ -437,8 +440,8 @@ class InfrastructureDSL:
         """
         return self._add(  # type: ignore[attr-defined]
             ClickHouseInsertProcessor(
-                table=table, batch_size=batch_size, rows_from=rows_from,
-            ),
+                table=table, batch_size=batch_size, rows_from=rows_from
+            )
         )
 
     # NOTE: clickhouse_query DELETED (S175 #5) — use InfraClickHouseQueryProcessor.
@@ -451,38 +454,37 @@ class InfrastructureDSL:
         ``doc_id_from=None`` → ES auto-generates ``_id``.
         """
         return self._add(  # type: ignore[attr-defined]
-            ElasticsearchIndexProcessor(index=index, doc_id_from=doc_id_from),
+            ElasticsearchIndexProcessor(index=index, doc_id_from=doc_id_from)
         )
 
     def es_search(self, index: str, query: dict, *, size: int = 10) -> RouteBuilder:
         """Поиск в ES; hits в ``exchange.properties["_es_hits"]``."""
         return self._add(  # type: ignore[attr-defined]
-            ElasticsearchSearchProcessor(index=index, query=query, size=size),
+            ElasticsearchSearchProcessor(index=index, query=query, size=size)
         )
 
     # ── MongoDB (2) ──
 
     def mongo_insert(
-        self, collection: str, *, document_from: str = "body",
+        self, collection: str, *, document_from: str = "body"
     ) -> RouteBuilder:
         """INSERT документа в Mongo ``collection``."""
         return self._add(  # type: ignore[attr-defined]
-            MongoInsertProcessor(collection=collection, document_from=document_from),
+            MongoInsertProcessor(collection=collection, document_from=document_from)
         )
 
     def mongo_find(
-        self, collection: str, query: dict, *, to_property: str = "docs",
+        self, collection: str, query: dict, *, to_property: str = "docs"
     ) -> RouteBuilder:
         """FIND документов в Mongo; результат в ``exchange.properties[to_property]``."""
         return self._add(  # type: ignore[attr-defined]
             MongoFindProcessor(
-                collection=collection, query=query, to_property=to_property,
-            ),
+                collection=collection, query=query, to_property=to_property
+            )
         )
 
     # ── S3 DELETED (S175 #5) — use ToS3Processor/FromS3Processor/S3PresignProcessor/ ──
     # ── S3DeleteProcessor/S3ListProcessor из ``storage/s3.py``. ──
-
 
     # ── SFTP (2) — S104 W1 ──
 
@@ -521,7 +523,7 @@ class InfrastructureDSL:
                 key_file=key_file,
                 timeout=timeout,
                 result_property=result_property,
-            ),
+            )
         )
 
     def sftp_put(
@@ -562,7 +564,7 @@ class InfrastructureDSL:
                 key_file=key_file,
                 timeout=timeout,
                 result_property=result_property,
-            ),
+            )
         )
 
     # ── SQL (1) ──

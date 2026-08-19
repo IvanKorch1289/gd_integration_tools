@@ -28,7 +28,7 @@ _REGISTERED_ACTION_SPECS: list[ActionSpec] = []
 HttpMethod = Literal["GET", "POST", "PUT", "PATCH", "DELETE"]
 ServiceFactory = Callable[[], Any]
 RouteDecorator = Callable[
-    [Callable[..., Awaitable[Any]]], Callable[..., Awaitable[Any]],
+    [Callable[..., Awaitable[Any]]], Callable[..., Awaitable[Any]]
 ]
 ResponseHandler = Callable[[Any, dict[str, Any]], Any | Awaitable[Any]]
 

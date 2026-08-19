@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import gzip
 import io
-from typing import Awaitable, Callable
 
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
@@ -23,11 +22,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 # cause: GZipMiddleware BaseHTTPMiddleware incompatibility with
 # data_masking, response_cache, etc.). For these, compression is
 # skipped — downstream handlers pass through unchanged.
-EXCLUDED_PATH_PREFIXES: tuple[str, ...] = (
-    "/docs",
-    "/redoc",
-    "/metrics",
-)
+EXCLUDED_PATH_PREFIXES: tuple[str, ...] = ("/docs", "/redoc", "/metrics")
 
 
 class GZipCompressionExcludingMiddleware:
@@ -78,9 +73,7 @@ class GZipCompressionExcludingMiddleware:
         # Compress response.
         await self._compress(scope, receive, send)
 
-    async def _compress(
-        self, scope: Scope, receive: Receive, send: Send,
-    ) -> None:
+    async def _compress(self, scope: Scope, receive: Receive, send: Send) -> None:
         """Compress the response body и re-send with Content-Encoding header."""
         started = False
         body_buffer = io.BytesIO()
@@ -99,11 +92,14 @@ class GZipCompressionExcludingMiddleware:
                         body_data = body_buffer.getvalue()
                         if len(body_data) >= self.minimum_size:
                             compressed = gzip.compress(
-                                body_data, compresslevel=self.compresslevel,
+                                body_data, compresslevel=self.compresslevel
                             )
                             # Update headers: Content-Encoding, Content-Length.
                             from starlette.datastructures import MutableHeaders
-                            headers = MutableHeaders(raw=original_start.get("headers", []))
+
+                            headers = MutableHeaders(
+                                raw=original_start.get("headers", [])
+                            )
                             headers["Content-Encoding"] = "gzip"
                             headers["Content-Length"] = str(len(compressed))
                             headers.add_vary_header("Accept-Encoding")
@@ -115,7 +111,7 @@ class GZipCompressionExcludingMiddleware:
                                     "type": "http.response.body",
                                     "body": compressed,
                                     "more_body": False,
-                                },
+                                }
                             )
                         else:
                             # Body too small — send uncompressed.

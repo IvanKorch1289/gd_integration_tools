@@ -13,9 +13,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from extensions.core_entities.users.domain.models import User
-from src.backend.core.database.session import main_session_manager
-from src.backend.core.errors import DatabaseError
-from src.backend.core.repositories.base import SQLAlchemyRepository
+from src.backend.core.api import main_session_manager
+from src.backend.core.api import DatabaseError
+from src.backend.core.api import SQLAlchemyRepository
 
 __all__ = ("UserRepository", "get_user_repo")
 

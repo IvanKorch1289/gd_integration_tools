@@ -34,17 +34,17 @@ class _HttpClientProtocol(Protocol):
     async def _log_response(self, response: Any, content: Any) -> None: ...
 
     async def _process_response(
-        self, response: Any, response_type: str,
+        self, response: Any, response_type: str
     ) -> dict[str, Any]: ...
 
     async def _build_response_object(
-        self, *, response: Any, content: Any, start_time: float,
+        self, *, response: Any, content: Any, start_time: float
     ) -> dict[str, Any]: ...
 
     async def _update_metrics(self, *, start_time: float, success: bool) -> None: ...
 
     async def _handle_final_error(
-        self, exc: Exception, start_time: float,
+        self, exc: Exception, start_time: float
     ) -> dict[str, Any]: ...
 
     def _is_retryable_exception(self, exc: BaseException) -> bool: ...

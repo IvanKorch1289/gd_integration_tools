@@ -103,11 +103,11 @@ class TransactionalClientProcessor(BaseProcessor):
             raise ValueError(f"action must be callable, got {type(action).__name__}")
         if not callable(outbox_backend):
             raise ValueError(
-                f"outbox_backend must be callable, got {type(outbox_backend).__name__}",
+                f"outbox_backend must be callable, got {type(outbox_backend).__name__}"
             )
         if not callable(event_factory):
             raise ValueError(
-                f"event_factory must be callable, got {type(event_factory).__name__}",
+                f"event_factory must be callable, got {type(event_factory).__name__}"
             )
         super().__init__(name=name or "transactional_client")
         self._action = action
@@ -115,9 +115,7 @@ class TransactionalClientProcessor(BaseProcessor):
         self._event_factory = event_factory
 
     @handle_processor_error
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         # 1. Run user action. Если падает — НЕ enqueue.
         try:
@@ -181,7 +179,7 @@ class ProcessManagerProcessor(SagaProcessor):
         if persist_state and saga_state_store is None:
             raise ValueError(
                 "saga_state_store обязателен при persist_state=True "
-                "(фабрика, возвращающая SagaStateStore-compatible instance)",
+                "(фабрика, возвращающая SagaStateStore-compatible instance)"
             )
         super().__init__(steps, name=name or f"process_manager({len(steps)} steps)")
         self._persist_state = persist_state

@@ -45,7 +45,7 @@ def _bencode(data: Any) -> bytes:
                 kb = bytes(k)
             else:
                 raise TypeError(
-                    f"bencode dict key must be str/bytes, got {type(k).__name__}",
+                    f"bencode dict key must be str/bytes, got {type(k).__name__}"
                 )
             items.append((kb, v))
         items.sort(key=lambda kv: kv[0])

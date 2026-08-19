@@ -38,14 +38,14 @@ stream_logger = get_stream_logger_provider()
 
 
 @stream_client.redis_router.subscriber(
-    stream=settings.redis.get_stream_name("invocations-in"),
+    stream=settings.redis.get_stream_name("invocations-in")
 )
 async def handle_redis_invocation(
-    body: dict[str, Any], msg: RedisChannelMessage, redis: Redis,
+    body: dict[str, Any], msg: RedisChannelMessage, redis: Redis
 ) -> None:
     """Подписчик Redis Streams: принимает InvocationRequest и вызывает Invoker."""
     await _dispatch_invocation_message(
-        body, correlation_id=getattr(msg, "correlation_id", None), source="redis",
+        body, correlation_id=getattr(msg, "correlation_id", None), source="redis"
     )
 
 
@@ -53,12 +53,12 @@ async def handle_redis_invocation(
 async def handle_rabbit_invocation(body: dict[str, Any], msg: RabbitMessage) -> None:
     """Подписчик RabbitMQ: принимает InvocationRequest и вызывает Invoker."""
     await _dispatch_invocation_message(
-        body, correlation_id=getattr(msg, "correlation_id", None), source="rabbit",
+        body, correlation_id=getattr(msg, "correlation_id", None), source="rabbit"
     )
 
 
 async def _dispatch_invocation_message(
-    body: dict[str, Any], *, correlation_id: str | None, source: str,
+    body: dict[str, Any], *, correlation_id: str | None, source: str
 ) -> None:
     """Десериализует body и пробрасывает в Invoker.
 
@@ -142,6 +142,7 @@ def _summarize_poison(body: Any, *, max_len: int = 256) -> str:
         # TypeError для unrepresentable type, ValueError для invalid
         # repr value.
         import logging
+
         logging.getLogger(__name__).debug(
             "stream_invoker_subscribers.summarize_poison_fallback",
             extra={"error": str(repr_exc)},

@@ -44,7 +44,7 @@ class CLIPEmbedder:
     embedding_kind = "clip"
 
     def __init__(
-        self, *, model_name: str = "clip-ViT-B-32", device: str = "cpu",
+        self, *, model_name: str = "clip-ViT-B-32", device: str = "cpu"
     ) -> None:
         """Инициализирует CLIPEmbedder (без загрузки модели).
 
@@ -84,11 +84,11 @@ class CLIPEmbedder:
         except ImportError as exc:
             raise LazyImportError(
                 "sentence-transformers не установлен. "
-                "Установите extras: pip install gd_advanced_tools[multimodal-rag]",
+                "Установите extras: pip install gd_advanced_tools[multimodal-rag]"
             ) from exc
 
         self._model = await asyncio.to_thread(
-            SentenceTransformer, self.model_name, device=self.device,
+            SentenceTransformer, self.model_name, device=self.device
         )
         return self._model
 
@@ -113,7 +113,7 @@ class CLIPEmbedder:
                 from PIL import Image
             except ImportError as exc:
                 raise LazyImportError(
-                    "Pillow не установлен — обработка изображений недоступна.",
+                    "Pillow не установлен — обработка изображений недоступна."
                 ) from exc
 
             try:
@@ -124,7 +124,7 @@ class CLIPEmbedder:
                 raise ValueError(f"не удалось распарсить изображение: {exc}") from exc
         else:
             raise ValueError(
-                f"CLIPEmbedder: неподдерживаемый тип content={type(content)!r}",
+                f"CLIPEmbedder: неподдерживаемый тип content={type(content)!r}"
             )
 
         return [float(x) for x in vec.flatten().tolist()]
@@ -176,7 +176,7 @@ class ColpaliEmbedder:
             raise LazyImportError(
                 "colpali_engine не установлен. "
                 "Это опциональная зависимость; включите её отдельно "
-                "(colpali-engine>=0.3, требует torch>=2.4).",
+                "(colpali-engine>=0.3, требует torch>=2.4)."
             ) from exc
 
         # NOTE: реальная реализация будет добавлена в Sprint 9 (K4 W5).
@@ -184,5 +184,5 @@ class ColpaliEmbedder:
         # чтобы тесты могли проверить интеграцию.
         raise LazyImportError(
             "ColpaliEmbedder: production-реализация запланирована на Sprint 9. "
-            "Используйте CLIPEmbedder как production-default.",
+            "Используйте CLIPEmbedder как production-default."
         )

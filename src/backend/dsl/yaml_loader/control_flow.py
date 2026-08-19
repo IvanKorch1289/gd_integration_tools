@@ -16,7 +16,7 @@ _MISSING = object()
 
 
 def _materialize_control_flow_params(
-    builder: RouteBuilder, proc_name: str, params: dict[str, Any],
+    builder: RouteBuilder, proc_name: str, params: dict[str, Any]
 ) -> dict[str, Any]:
     """Рекурсивно превращает nested-spec'и в готовые объекты для builder.
 
@@ -42,10 +42,10 @@ def _materialize_control_flow_params(
                     materialized[key] = _build_sub(builder, materialized[key])
         case "retry":
             if "processors" in materialized and isinstance(
-                materialized["processors"], list,
+                materialized["processors"], list
             ):
                 materialized["processors"] = _build_sub(
-                    builder, materialized["processors"],
+                    builder, materialized["processors"]
                 )
         case "parallel":
             branches = materialized.get("branches")
@@ -77,14 +77,14 @@ def _materialize_control_flow_params(
                 for entry in when:
                     if not isinstance(entry, dict) or "expr" not in entry:
                         raise ValueError(
-                            "Choice branch must be a mapping with 'expr' (JMESPath)",
+                            "Choice branch must be a mapping with 'expr' (JMESPath)"
                         )
                     sub_specs = entry.get("processors", []) or []
                     branches_obj.append(
                         ChoiceBranch(
                             expr=entry["expr"],
                             processors=_build_sub(builder, sub_specs),
-                        ),
+                        )
                     )
                 materialized["when"] = branches_obj
             otherwise = materialized.get("otherwise")

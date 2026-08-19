@@ -101,11 +101,7 @@ class AdminAuditMiddleware:
             nonlocal body_sent
             if not body_sent:
                 body_sent = True
-                return {
-                    "type": "http.request",
-                    "body": body_bytes,
-                    "more_body": False,
-                }
+                return {"type": "http.request", "body": body_bytes, "more_body": False}
             return {"type": "http.disconnect"}
 
         # Capture response status через send_wrapper.
@@ -128,9 +124,7 @@ class AdminAuditMiddleware:
         )
         method_kind = getattr(auth_ctx, "method", None) if auth_ctx else None
         admin_roles = (
-            sorted(r.value for r in extract_admin_roles(auth_ctx))
-            if auth_ctx
-            else []
+            sorted(r.value for r in extract_admin_roles(auth_ctx)) if auth_ctx else []
         )
         from src.backend.entrypoints.middlewares._body_hash import payload_hash as _ph
 
@@ -145,7 +139,7 @@ class AdminAuditMiddleware:
                 "audit_admin": True,
                 "actor_principal": principal,
                 "actor_auth_method": getattr(
-                    method_kind, "value", str(method_kind) if method_kind else "none",
+                    method_kind, "value", str(method_kind) if method_kind else "none"
                 ),
                 "actor_admin_roles": admin_roles,
                 "endpoint": path,

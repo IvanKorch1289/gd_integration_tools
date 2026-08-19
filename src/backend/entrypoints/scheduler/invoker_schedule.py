@@ -88,7 +88,7 @@ class ScheduleSpec:
             raise ValueError("ScheduleSpec.action обязателен")
         if bool(self.cron) == bool(self.interval_seconds):
             raise ValueError(
-                "ScheduleSpec требует ровно одно из: cron | interval_seconds",
+                "ScheduleSpec требует ровно одно из: cron | interval_seconds"
             )
         if self.interval_seconds is not None and self.interval_seconds <= 0:
             raise ValueError("interval_seconds должен быть > 0")
@@ -157,7 +157,7 @@ async def _run_scheduled_invocation(spec: ScheduleSpec) -> None:
         mode = InvocationMode(spec.mode)
     except ValueError:
         logger.warning(
-            "Schedule tick: unknown mode=%r — fallback на background", spec.mode,
+            "Schedule tick: unknown mode=%r — fallback на background", spec.mode
         )
         mode = InvocationMode.BACKGROUND
 
@@ -176,11 +176,11 @@ async def _run_scheduled_invocation(spec: ScheduleSpec) -> None:
         )
         try:
             envelope = await dispatcher.dispatch(
-                spec.action, dict(spec.payload), context,
+                spec.action, dict(spec.payload), context
             )
         except Exception as _:
             logger.exception(
-                "Scheduled invocation failed: action=%s job_id=%s", spec.action, job_id,
+                "Scheduled invocation failed: action=%s job_id=%s", spec.action, job_id
             )
             return
         if not envelope.success:
@@ -208,5 +208,5 @@ async def _run_scheduled_invocation(spec: ScheduleSpec) -> None:
         await invoker.invoke(request)
     except Exception as _:
         logger.exception(
-            "Scheduled invocation failed: action=%s job_id=%s", spec.action, job_id,
+            "Scheduled invocation failed: action=%s job_id=%s", spec.action, job_id
         )

@@ -60,7 +60,7 @@ class MongoNotebookRepository:
             await collection.create_index("tags", name="tags_idx")
             await collection.create_index([("updated_at", -1)], name="updated_at_desc")
             await collection.create_index(
-                [("is_deleted", 1), ("updated_at", -1)], name="is_deleted_updated_at",
+                [("is_deleted", 1), ("updated_at", -1)], name="is_deleted_updated_at"
             )
             await collection.create_index("title", name="title_idx")
         except Exception as exc:
@@ -113,13 +113,13 @@ class MongoNotebookRepository:
         """
         client = self._client()
         existing = await client.find_one(
-            _COLLECTION, {"_id": notebook_id, "is_deleted": {"$ne": True}},
+            _COLLECTION, {"_id": notebook_id, "is_deleted": {"$ne": True}}
         )
         if existing is None:
             return None
         new_version = int(existing.get("latest_version", 0)) + 1
         version_payload = NotebookVersion(
-            version=new_version, content=content, changed_by=changed_by, summary=summary,
+            version=new_version, content=content, changed_by=changed_by, summary=summary
         ).model_dump(mode="json")
         await client.collection(_COLLECTION).update_one(
             {"_id": notebook_id},
@@ -134,7 +134,7 @@ class MongoNotebookRepository:
         return await self.get(notebook_id)
 
     async def restore_version(
-        self, notebook_id: str, version: int, changed_by: str,
+        self, notebook_id: str, version: int, changed_by: str
     ) -> Notebook | None:
         """Метод restore_version (см. signature)."""
         existing = await self.get(notebook_id)
@@ -144,7 +144,7 @@ class MongoNotebookRepository:
         if target is None:
             return None
         return await self.append_version(
-            notebook_id, target.content, changed_by, summary=f"restore from v{version}",
+            notebook_id, target.content, changed_by, summary=f"restore from v{version}"
         )
 
     async def list_all(

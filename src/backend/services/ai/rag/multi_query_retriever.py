@@ -109,7 +109,7 @@ class MultiQueryRetriever:
         self,
         embed_fn: Callable[[Sequence[str]], Awaitable[list[list[float]]]],
         search_vectors: Callable[
-            [list[list[float]], int], Awaitable[list[dict[str, Any]]],
+            [list[list[float]], int], Awaitable[list[dict[str, Any]]]
         ],
         generate_reformulations: GenerateReformulationsFn,
         *,
@@ -143,7 +143,7 @@ class MultiQueryRetriever:
         # Шаг 1: генерация альтернативных запросов.
         try:
             reformulations = await self._generate_reformulations(
-                query, self._config.num_reformulations,
+                query, self._config.num_reformulations
             )
         except Exception as exc:
             logger.warning("multi_query.generate_reformulations_failed: %s", exc)
@@ -174,7 +174,7 @@ class MultiQueryRetriever:
             import asyncio
 
             async def search_single(
-                emb: list[float], label: str,
+                emb: list[float], label: str
             ) -> tuple[str, list[str]]:
                 try:
                     results = await self._search_vectors([emb], top_k * 2)
@@ -192,7 +192,7 @@ class MultiQueryRetriever:
                 *(
                     search_single(emb, label)
                     for emb, label in zip(all_embeddings, source_labels)
-                ),
+                )
             )
             ranked_lists = list(search_results)
         else:
@@ -224,12 +224,12 @@ class MultiQueryRetriever:
                 MultiQueryResult(
                     chunk_id=chunk_id,
                     document=str(
-                        chunk_doc.get("document") or chunk_doc.get("text") or "",
+                        chunk_doc.get("document") or chunk_doc.get("text") or ""
                     ),
                     metadata=dict(chunk_doc.get("metadata") or {}),
                     score=rrf_score,
                     sources=list(sources),
-                ),
+                )
             )
         return final_results
 

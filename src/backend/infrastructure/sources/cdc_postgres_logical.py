@@ -79,7 +79,7 @@ class CdcCursorStore:
         """Получить последний processed LSN для slot (checkpoint)."""
         async with self._open() as session:
             row = await session.fetchrow(
-                "SELECT last_lsn FROM cdc_cursors WHERE slot_name = $1", slot_name,
+                "SELECT last_lsn FROM cdc_cursors WHERE slot_name = $1", slot_name
             )
             return row["last_lsn"] if row else None
 
@@ -136,7 +136,7 @@ class CdcPostgresLogicalSource:
     ) -> None:
         if mode not in _ALLOWED_MODES:
             raise ValueError(
-                f"CdcPostgresLogicalSource: mode must be 'full'|'delta', got {mode!r}",
+                f"CdcPostgresLogicalSource: mode must be 'full'|'delta', got {mode!r}"
             )
         if not source_id:
             raise ValueError("source_id must be non-empty")
@@ -165,8 +165,8 @@ class CdcPostgresLogicalSource:
         try:
             await conn_executor(
                 PG_CDC_PUBLICATION_TPL.format(
-                    publication=self.publication, table=self.table,
-                ),
+                    publication=self.publication, table=self.table
+                )
             )
         except Exception as exc:
             _logger.debug("publication create skipped: %s", exc)
@@ -193,6 +193,7 @@ class CdcPostgresLogicalSource:
             # ImportError — features module missing, AttributeError —
             # config not initialized, RuntimeError — feature_flags unavailable.
             import logging
+
             logging.getLogger(__name__).debug(
                 "cdc_postgres_logical.feature_flag_fallback",
                 extra={"source_id": self.source_id, "error": str(ff_exc)},
@@ -218,7 +219,7 @@ class CdcPostgresLogicalSource:
                         await self.cursor_store.set_last_lsn(self.slot_name, lsn)
                     except Exception as exc:
                         _logger.warning(
-                            "CdcPostgresLogicalSource cursor write failed: %s", exc,
+                            "CdcPostgresLogicalSource cursor write failed: %s", exc
                         )
 
         if self.mode == "full":
@@ -246,5 +247,5 @@ class CdcPostgresLogicalSource:
                 payload={"event": "snapshot_started", "table": self.table},
                 event_time=datetime.now(UTC),
                 metadata={"slot": self.slot_name, "mode": "full"},
-            ),
+            )
         )

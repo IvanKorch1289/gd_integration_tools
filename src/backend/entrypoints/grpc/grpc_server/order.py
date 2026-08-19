@@ -41,12 +41,12 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
         self.logger.info("OrderGRPCServicer инициализирован")
 
     async def CreateOrder(  # type: ignore[no-untyped-def]
-        self, request, context,
+        self, request, context
     ):
         """Метод CreateOrder (см. signature)."""
         try:
             result = await self._dispatch(
-                "orders.create_skb_order", {"order_id": request.order_id},
+                "orders.create_skb_order", {"order_id": request.order_id}
             )
             if not result:
                 return OrderResponse(error="Не удалось создать заказ")
@@ -62,17 +62,17 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
         except Exception as exc:
             cid = uuid.uuid4().hex[:12]
             self.logger.error(
-                "CreateOrder ошибка [ref=%s]: %s", cid, exc, exc_info=True,
+                "CreateOrder ошибка [ref=%s]: %s", cid, exc, exc_info=True
             )
             return OrderResponse(error=_safe_error(exc, cid))
 
     async def GetOrderResult(  # type: ignore[no-untyped-def]
-        self, request, context,
+        self, request, context
     ):
         """Метод GetOrderResult (см. signature)."""
         try:
             result = await self._dispatch(
-                "orders.get_file_and_json", {"order_id": request.order_id},
+                "orders.get_file_and_json", {"order_id": request.order_id}
             )
             if not result:
                 return OrderResponse(error="Результат не найден")
@@ -88,17 +88,17 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
         except Exception as exc:
             cid = uuid.uuid4().hex[:12]
             self.logger.error(
-                "GetOrderResult ошибка [ref=%s]: %s", cid, exc, exc_info=True,
+                "GetOrderResult ошибка [ref=%s]: %s", cid, exc, exc_info=True
             )
             return OrderResponse(error=_safe_error(exc, cid))
 
     async def GetOrder(  # type: ignore[no-untyped-def]
-        self, request, context,
+        self, request, context
     ):
         """Метод GetOrder (см. signature)."""
         try:
             result = await self._dispatch(
-                "orders.get", {"key": "id", "value": request.order_id},
+                "orders.get", {"key": "id", "value": request.order_id}
             )
             if not result:
                 return OrderDetailResponse(error="Заказ не найден")
@@ -117,40 +117,40 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
             return OrderDetailResponse(error=_safe_error(exc, cid))
 
     async def DeleteOrder(  # type: ignore[no-untyped-def]
-        self, request, context,
+        self, request, context
     ):
         """Метод DeleteOrder (см. signature)."""
         try:
             await self._dispatch(
-                "orders.delete", {"key": "id", "value": request.order_id},
+                "orders.delete", {"key": "id", "value": request.order_id}
             )
             return OrderDeleteResponse(success=True)
         except Exception as exc:
             cid = uuid.uuid4().hex[:12]
             self.logger.error(
-                "DeleteOrder ошибка [ref=%s]: %s", cid, exc, exc_info=True,
+                "DeleteOrder ошибка [ref=%s]: %s", cid, exc, exc_info=True
             )
             return OrderDeleteResponse(success=False, error=_safe_error(exc, cid))
 
     async def CreateSKBOrder(  # type: ignore[no-untyped-def]
-        self, request, context,
+        self, request, context
     ):
         """Метод CreateSKBOrder (см. signature)."""
         return await self.CreateOrder(request, context)
 
     async def GetFileAndJson(  # type: ignore[no-untyped-def]
-        self, request, context,
+        self, request, context
     ):
         """Метод GetFileAndJson (см. signature)."""
         return await self.GetOrderResult(request, context)
 
     async def SendOrderData(  # type: ignore[no-untyped-def]
-        self, request, context,
+        self, request, context
     ):
         """Метод SendOrderData (см. signature)."""
         try:
             result = await self._dispatch(
-                "orders.send_order_data", {"order_id": request.order_id},
+                "orders.send_order_data", {"order_id": request.order_id}
             )
             if not result:
                 return OrderResponse(error="Не удалось отправить данные")
@@ -162,6 +162,6 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
         except Exception as exc:
             cid = uuid.uuid4().hex[:12]
             self.logger.error(
-                "SendOrderData ошибка [ref=%s]: %s", cid, exc, exc_info=True,
+                "SendOrderData ошибка [ref=%s]: %s", cid, exc, exc_info=True
             )
             return OrderResponse(error=_safe_error(exc, cid))

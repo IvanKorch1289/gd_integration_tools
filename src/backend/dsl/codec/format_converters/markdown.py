@@ -96,7 +96,7 @@ def _simple_html_to_markdown(html: str) -> str:
             self._href: str | None = None
 
         def handle_starttag(
-            self, tag: str, attrs: list[tuple[str, str | None]],
+            self, tag: str, attrs: list[tuple[str, str | None]]
         ) -> None:
             self._stack.append(tag)
             mapping = {

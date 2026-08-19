@@ -22,7 +22,7 @@ class VersioningMixin(_BaseServiceProtocol):
 
     @response_cache
     async def get_all_object_versions(
-        self, object_id: int, order: str = "asc",
+        self, object_id: int, order: str = "asc"
     ) -> list[BaseSchema | None]:
         """Получает все версии объекта.
 
@@ -36,7 +36,7 @@ class VersioningMixin(_BaseServiceProtocol):
         """
         async with self._service_error_boundary():
             versions = await self.repo.get_all_versions(
-                object_id=object_id, order=order,
+                object_id=object_id, order=order
             )
 
             result: list[BaseSchema | None] = []
@@ -46,7 +46,7 @@ class VersioningMixin(_BaseServiceProtocol):
                     result.append(response)
                 except Exception as _:
                     logger.exception(
-                        "Ошибка преобразования версии object_id=%s", object_id,
+                        "Ошибка преобразования версии object_id=%s", object_id
                     )
 
             return result
@@ -67,7 +67,7 @@ class VersioningMixin(_BaseServiceProtocol):
             return await self.helper._transfer(version, self.version_schema)
 
     async def restore_object_to_version(
-        self, object_id: int, transaction_id: int,
+        self, object_id: int, transaction_id: int
     ) -> BaseSchema | None:
         """Восстанавливает объект до указанной версии.
 
@@ -81,7 +81,7 @@ class VersioningMixin(_BaseServiceProtocol):
         """
         async with self._service_error_boundary():
             restored_object = await self.repo.restore_to_version(
-                object_id=object_id, transaction_id=transaction_id,
+                object_id=object_id, transaction_id=transaction_id
             )
             return await self.helper._transfer(restored_object, self.response_schema)
 
@@ -128,7 +128,7 @@ class VersioningMixin(_BaseServiceProtocol):
                             "transaction_id": current_version.get("transaction_id"),
                             "operation_type": current_version.get("operation_type"),
                             "changes": diff,
-                        },
+                        }
                     )
 
             return changes

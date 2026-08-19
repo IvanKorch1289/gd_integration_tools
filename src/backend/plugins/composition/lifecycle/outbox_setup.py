@@ -42,6 +42,7 @@ def _get_outbox_dlq_session_factory() -> Any:
     from src.backend.infrastructure.database.session_manager import (
         get_main_session_manager,
     )
+
     mgr = get_main_session_manager()
 
     @asynccontextmanager
@@ -99,9 +100,7 @@ async def register_outbox_dispatcher(app: FastAPI) -> None:
             # Without this, OutboxDispatcher falls back to
             # ``_BackendDLQHandler`` which writes DLQ events into
             # ``outbox_messages`` with status=DLQ (mixing pending + DLQ).
-            app.state.outbox_dlq_session_factory = (
-                _get_outbox_dlq_session_factory()
-            )
+            app.state.outbox_dlq_session_factory = _get_outbox_dlq_session_factory()
 
             def _topic_to_transport(topic: str) -> str:
                 """``kafka:orders.created`` → ``kafka`` для OutboxEvent.transport."""
@@ -120,7 +119,7 @@ async def register_outbox_dispatcher(app: FastAPI) -> None:
                 для последующего ack (OutboxEvent не имеет ``id``/``headers``).
                 """
                 msgs = await outbox_repo.claim_pending(
-                    limit=limit, worker_id=_worker_id,
+                    limit=limit, worker_id=_worker_id
                 )
                 result: list[OutboxEvent] = []
                 for m in msgs:
@@ -135,7 +134,7 @@ async def register_outbox_dispatcher(app: FastAPI) -> None:
                             action=m.topic,
                             payload=m.payload,
                             correlation_id=cid,
-                        ),
+                        )
                     )
                 return result
 
@@ -151,7 +150,7 @@ async def register_outbox_dispatcher(app: FastAPI) -> None:
                     raw_id = cid.removeprefix("outbox_msg_id:")
                     try:
                         await outbox_repo.mark_sent(int(raw_id))
-                    except (ValueError, TypeError):
+                    except ValueError, TypeError:
                         return
 
             async def _deliverer(event: OutboxEvent) -> None:
@@ -183,7 +182,7 @@ async def register_outbox_dispatcher(app: FastAPI) -> None:
             start_outbox_worker(interval_seconds=5, batch_size=100)
             _logger.info(
                 "Legacy outbox worker registered "
-                "(outbox_settings.enabled=False, S64 W3 cutover not active).",
+                "(outbox_settings.enabled=False, S64 W3 cutover not active)."
             )
     except Exception as exc:
         # Outbox-worker не критичен для базовой работоспособности

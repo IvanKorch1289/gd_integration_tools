@@ -71,7 +71,7 @@ async def _register_pools_in_unified_manager() -> None:
                 await redis_client.ping()
 
             manager.register(
-                "redis_cache", redis_client, ping_fn=_ping_redis, kind="redis",
+                "redis_cache", redis_client, ping_fn=_ping_redis, kind="redis"
             )
         except Exception as exc:
             app_logger.debug("UnifiedPoolManager redis skipped: %s", exc)
@@ -97,7 +97,7 @@ async def _register_pools_in_unified_manager() -> None:
                 await ch_client.ping()
 
             manager.register(
-                "clickhouse_main", ch_client, ping_fn=_ping_ch, kind="clickhouse",
+                "clickhouse_main", ch_client, ping_fn=_ping_ch, kind="clickhouse"
             )
         except Exception as exc:
             app_logger.debug("UnifiedPoolManager clickhouse skipped: %s", exc)
@@ -111,7 +111,7 @@ async def _register_pools_in_unified_manager() -> None:
                 await mongo_client.ping()
 
             manager.register(
-                "mongodb_main", mongo_client, ping_fn=_ping_mongo, kind="mongodb",
+                "mongodb_main", mongo_client, ping_fn=_ping_mongo, kind="mongodb"
             )
         except Exception as exc:
             app_logger.debug("UnifiedPoolManager mongodb skipped: %s", exc)
@@ -125,7 +125,7 @@ async def _register_pools_in_unified_manager() -> None:
                 await es_client.ping()
 
             manager.register(
-                "elasticsearch_main", es_client, ping_fn=_ping_es, kind="elasticsearch",
+                "elasticsearch_main", es_client, ping_fn=_ping_es, kind="elasticsearch"
             )
         except Exception as exc:
             app_logger.debug("UnifiedPoolManager elasticsearch skipped: %s", exc)
@@ -142,9 +142,7 @@ async def _register_pools_in_unified_manager() -> None:
             # spam при каждом health-check tick (обычно 10s interval).
             return None
 
-        manager.register(
-            "smtp_main", smtp_client, ping_fn=_ping_smtp, kind="smtp",
-        )
+        manager.register("smtp_main", smtp_client, ping_fn=_ping_smtp, kind="smtp")
     except Exception as exc:
         app_logger.debug("UnifiedPoolManager smtp skipped: %s", exc)
 
@@ -159,9 +157,7 @@ async def _register_pools_in_unified_manager() -> None:
         async def _ping_imap() -> None:
             await imap_pool.health()
 
-        manager.register(
-            "imap_main", imap_pool, ping_fn=_ping_imap, kind="imap",
-        )
+        manager.register("imap_main", imap_pool, ping_fn=_ping_imap, kind="imap")
     except Exception as exc:
         app_logger.debug("UnifiedPoolManager imap skipped: %s", exc)
 
@@ -178,9 +174,7 @@ async def _register_pools_in_unified_manager() -> None:
             if result.status == "failed":
                 raise RuntimeError(result.error or "NATS health failed")
 
-        manager.register(
-            "nats_main", nats_pool, ping_fn=_ping_nats, kind="nats",
-        )
+        manager.register("nats_main", nats_pool, ping_fn=_ping_nats, kind="nats")
     except Exception as exc:
         app_logger.debug("UnifiedPoolManager nats_main skipped: %s", exc)
 
@@ -194,7 +188,7 @@ async def _register_pools_in_unified_manager() -> None:
             await event_bus.health_check()
 
         manager.register(
-            "eventbus_main", event_bus, ping_fn=_ping_eventbus, kind="eventbus",
+            "eventbus_main", event_bus, ping_fn=_ping_eventbus, kind="eventbus"
         )
     except Exception as exc:
         app_logger.debug("UnifiedPoolManager eventbus skipped: %s", exc)
@@ -257,10 +251,7 @@ async def _register_pools_in_unified_manager() -> None:
             return
 
         manager.register(
-            "browser_main",
-            BrowserClient,
-            ping_fn=_ping_browser,
-            kind="browser",
+            "browser_main", BrowserClient, ping_fn=_ping_browser, kind="browser"
         )
     except Exception as exc:
         app_logger.debug("UnifiedPoolManager browser skipped: %s", exc)
@@ -312,10 +303,7 @@ async def _register_pools_in_unified_manager() -> None:
             VaultSecretsBackend()
 
         manager.register(
-            "vault_main",
-            VaultSecretsBackend,
-            ping_fn=_ping_vault,
-            kind="vault",
+            "vault_main", VaultSecretsBackend, ping_fn=_ping_vault, kind="vault"
         )
     except Exception as exc:
         app_logger.debug("UnifiedPoolManager vault skipped: %s", exc)
@@ -331,10 +319,7 @@ async def _register_pools_in_unified_manager() -> None:
             WebSearchService()
 
         manager.register(
-            "search_main",
-            WebSearchService,
-            ping_fn=_ping_search,
-            kind="search",
+            "search_main", WebSearchService, ping_fn=_ping_search, kind="search"
         )
     except Exception as exc:
         app_logger.debug("UnifiedPoolManager search skipped: %s", exc)
@@ -365,7 +350,7 @@ async def _warmup_connection_pools() -> None:
     if _redis_enabled():
         try:
             redis_cache_client = await asyncio.wait_for(
-                get_redis_client().get_client("cache"), timeout=5.0,
+                get_redis_client().get_client("cache"), timeout=5.0
             )
         except TimeoutError:
             redis_cache_client = None

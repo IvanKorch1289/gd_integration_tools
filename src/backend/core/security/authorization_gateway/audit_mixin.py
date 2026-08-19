@@ -33,7 +33,7 @@ class AuditMixin(_AuthorizationGatewayProtocol):
                         {"source": r.source, "outcome": r.outcome, "detail": r.detail}
                         for r in decision.reasons
                     ],
-                },
+                }
             )
         except Exception as _:
             _logger.exception("AuthorizationGateway audit_callback failed")

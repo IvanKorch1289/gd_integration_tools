@@ -44,10 +44,10 @@ class IngestRequest(BaseModel):
 
     content: str = Field(..., min_length=1, description="Текст документа.")
     namespace: str = Field(
-        default="default", description="Логическая партиция в коллекции.",
+        default="default", description="Логическая партиция в коллекции."
     )
     metadata: dict[str, Any] | None = Field(
-        default=None, description="Произвольные мета-поля для фильтрации.",
+        default=None, description="Произвольные мета-поля для фильтрации."
     )
 
 
@@ -122,7 +122,7 @@ class StatsResponse(BaseModel):
     embedding_provider: str
     count: int
     collection: str | None = Field(
-        default=None, description="Если задан — count в рамках namespace.",
+        default=None, description="Если задан — count в рамках namespace."
     )
 
 
@@ -130,7 +130,7 @@ class StatsQuery(BaseModel):
     """Query-параметры /stats."""
 
     collection: str | None = Field(
-        default=None, description="Опциональный namespace для статистики.",
+        default=None, description="Опциональный namespace для статистики."
     )
 
 
@@ -175,7 +175,7 @@ class UploadResponse(BaseModel):
     mime: str
     size_bytes: int
     engine: str = Field(
-        default="legacy", description="Использованный парсер: 'markitdown' | 'legacy'.",
+        default="legacy", description="Использованный парсер: 'markitdown' | 'legacy'."
     )
     markdown: bool = Field(
         default=False,
@@ -256,23 +256,21 @@ class _RAGFacade:
                 # Production: fail-CLOSED. Surface as 503.
                 logger.error("rag.ingest: PII redaction failed: %s", exc)
                 raise_pii_fail_closed(
-                    source="rag.ingest",
-                    payload_size=len(content),
-                    exc=exc,
+                    source="rag.ingest", payload_size=len(content), exc=exc
                 )
 
         doc_id = await get_rag_service().ingest(
-            content=masked_content, metadata=metadata_with_pii, namespace=namespace,
+            content=masked_content, metadata=metadata_with_pii, namespace=namespace
         )
         return IngestResponse(doc_id=doc_id)
 
     async def search(
-        self, *, query: str, top_k: int = 5, namespace: str | None = None,
+        self, *, query: str, top_k: int = 5, namespace: str | None = None
     ) -> SearchResponse:
         """Поиск релевантных chunks по запросу в указанном namespace."""
         _check_enabled()
         hits = await get_rag_service().search(
-            query=query, top_k=top_k, namespace=namespace,
+            query=query, top_k=top_k, namespace=namespace
         )
         return SearchResponse(items=[SearchHit(**hit) for hit in hits])
 
@@ -287,7 +285,7 @@ class _RAGFacade:
         """Augment prompt контекстом из RAG с citations для LLM."""
         _check_enabled()
         result = await get_rag_service().augment_prompt_with_citations(
-            query=query, system_prompt=system_prompt, top_k=top_k, namespace=namespace,
+            query=query, system_prompt=system_prompt, top_k=top_k, namespace=namespace
         )
         return AugmentResponse(
             prompt=result.prompt,
@@ -356,14 +354,14 @@ class _RAGFacade:
         raw = await file.read()
         if not raw:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Файл пустой.",
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Файл пустой."
             )
         mime = sniff_mime(file.filename, file.content_type)
         try:
             text, parse_meta = await parse_document(raw, mime, filename=file.filename)
         except ValueError as exc:
             raise HTTPException(
-                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail=str(exc),
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail=str(exc)
             ) from exc
 
         if not text.strip():
@@ -497,7 +495,7 @@ builder.add_actions(
             response_model=DeleteCollectionResponse,
             tags=common_tags,
         ),
-    ],
+    ]
 )
 
 
@@ -511,7 +509,7 @@ builder.add_actions(
 )
 async def rag_upload(
     file: Annotated[
-        UploadFile, File(description="PDF/DOCX/PPTX/XLSX/HTML/CSV/JSON/MD/TXT."),
+        UploadFile, File(description="PDF/DOCX/PPTX/XLSX/HTML/CSV/JSON/MD/TXT.")
     ],
     namespace: Annotated[str, Form()] = "default",
     metadata_json: Annotated[str | None, Form()] = None,
@@ -519,5 +517,5 @@ async def rag_upload(
 ) -> UploadResponse:
     """Принимает multipart-файл, парсит, шардирует и грузит в RAG."""
     return await _FACADE.upload(
-        file=file, namespace=namespace, metadata_json=metadata_json,
+        file=file, namespace=namespace, metadata_json=metadata_json
     )

@@ -53,7 +53,7 @@ class MessageLoggingMiddleware(BaseMiddleware):
     """Осторожное логирование сообщений без избыточного payload leakage."""
 
     async def consume_scope(
-        self, call_next: Callable[[Any], Awaitable[Any]], msg: StreamMessage[Any],
+        self, call_next: Callable[[Any], Awaitable[Any]], msg: StreamMessage[Any]
     ) -> Any:
         """FastStream consumer scope (RabbitMQ)."""
         stream_logger.info(
@@ -64,7 +64,7 @@ class MessageLoggingMiddleware(BaseMiddleware):
         return await call_next(msg)
 
     async def publish_scope(
-        self, call_next: Callable[..., Awaitable[Any]], msg: Any, **options: Any,
+        self, call_next: Callable[..., Awaitable[Any]], msg: Any, **options: Any
     ) -> Any:
         """FastStream publisher scope (RabbitMQ)."""
         stream_logger.info(
@@ -176,14 +176,14 @@ class StreamClient:
         if self.kafka_settings is None:
             stream_logger.debug(
                 "kafka settings not found — Kafka router skipped "
-                "(IL2.1 miграция не ломает стенды без Kafka)",
+                "(IL2.1 miграция не ломает стенды без Kafka)"
             )
             return
         try:
             from faststream.kafka.fastapi import KafkaRouter
         except ImportError as exc:
             stream_logger.warning(
-                "faststream[kafka] not installed — Kafka router skipped: %s", exc,
+                "faststream[kafka] not installed — Kafka router skipped: %s", exc
             )
             return
 
@@ -207,7 +207,7 @@ class StreamClient:
             raise ValueError("Нельзя одновременно использовать delay и cron")
 
     def _build_trigger(
-        self, delay: timedelta | None, cron: str | None,
+        self, delay: timedelta | None, cron: str | None
     ) -> DateTrigger | CronTrigger:
         if delay:
             return DateTrigger(run_date=datetime.now(consts.MOSCOW_TZ) + delay)
@@ -278,7 +278,7 @@ class StreamClient:
 
         if not delay and not cron:
             await self._publish_redis_immediately(
-                stream=stream, message=message, headers=headers or {},
+                stream=stream, message=message, headers=headers or {}
             )
             return None
 
@@ -294,7 +294,7 @@ class StreamClient:
         )
 
     async def _publish_rabbit_immediately(
-        self, queue: str, message: dict[str, Any],
+        self, queue: str, message: dict[str, Any]
     ) -> None:
         """Synchronous publish в RabbitMQ через FastStream router.
 
@@ -312,7 +312,7 @@ class StreamClient:
             )
 
     async def _publish_redis_immediately(
-        self, stream: str, message: dict[str, Any], headers: dict[str, Any],
+        self, stream: str, message: dict[str, Any], headers: dict[str, Any]
     ) -> None:
         """Publish в Redis Streams через FastStream router.
 
@@ -321,16 +321,16 @@ class StreamClient:
         """
         merged_headers = _inject_correlation_id_headers(headers)
         await self.redis_router.broker.publish(  # type: ignore
-            message=message, stream=stream, headers=merged_headers,
+            message=message, stream=stream, headers=merged_headers
         )
 
     async def _execute_redis_publish(
-        self, stream: str, message: dict[str, Any], headers: dict[str, Any],
+        self, stream: str, message: dict[str, Any], headers: dict[str, Any]
     ) -> None:
         await self._publish_redis_immediately(stream, message, headers)
 
     async def _execute_rabbit_publish(
-        self, queue: str, message: dict[str, Any],
+        self, queue: str, message: dict[str, Any]
     ) -> None:
         await self._publish_rabbit_immediately(queue, message)
 
@@ -353,12 +353,12 @@ class StreamClient:
         if self.kafka_router is None:
             raise RuntimeError(
                 "Kafka router не инициализирован (settings.kafka отсутствует или "
-                "faststream[kafka] не установлен)",
+                "faststream[kafka] не установлен)"
             )
         self._validate_schedule_args(delay, cron)
         if not delay and not cron:
             await self._publish_kafka_immediately(
-                topic=topic, message=message, key=key, headers=headers or {},
+                topic=topic, message=message, key=key, headers=headers or {}
             )
             return None
         return self._schedule_publish(
@@ -389,7 +389,7 @@ class StreamClient:
             raise RuntimeError("Kafka router не инициализирован")
         merged_headers = _inject_correlation_id_headers(headers)
         await self.kafka_router.broker.publish(
-            message=message, topic=topic, key=key, headers=merged_headers,
+            message=message, topic=topic, key=key, headers=merged_headers
         )
 
     async def _execute_kafka_publish(
@@ -401,12 +401,11 @@ class StreamClient:
     ) -> None:
         await self._publish_kafka_immediately(topic, message, key, headers)
 
-
-
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
             import time
+
             start = time.monotonic()
             ping = getattr(self, "ping", None)
             if ping is None:
@@ -419,6 +418,8 @@ class StreamClient:
             }
         except Exception as exc:
             return {"status": "down", "error": str(exc)}
+
+
 _stream_client: StreamClient | None = None
 
 

@@ -69,7 +69,7 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
     """
 
     def __init__(
-        self, *, workspace_path: str | None = None, models_subdir: str = "models",
+        self, *, workspace_path: str | None = None, models_subdir: str = "models"
     ) -> None:
         import os
 
@@ -109,7 +109,7 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
         try:
             loop = asyncio.get_running_loop()
             content = await loop.run_in_executor(
-                None, lambda: path.read_text(encoding="utf-8"),
+                None, lambda: path.read_text(encoding="utf-8")
             )
             return json.loads(content)
         except Exception as exc:
@@ -173,7 +173,7 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
         return records
 
     async def get_model(
-        self, name: str, *, version: str | None = None, stage: str | None = None,
+        self, name: str, *, version: str | None = None, stage: str | None = None
     ) -> ModelRecord | None:
         """Находит модель по имени + version или stage."""
         candidates = await self.list_models()
@@ -193,7 +193,7 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
         loop = asyncio.get_running_loop()
 
         await loop.run_in_executor(
-            None, lambda: model_dir.mkdir(parents=True, exist_ok=True),
+            None, lambda: model_dir.mkdir(parents=True, exist_ok=True)
         )
 
         manifest: dict[str, Any] = {
@@ -208,20 +208,20 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
         manifest_path = self._manifest_path(model_dir)
         content = json.dumps(manifest, ensure_ascii=False, indent=2)
         await loop.run_in_executor(
-            None, lambda: manifest_path.write_text(content, encoding="utf-8"),
+            None, lambda: manifest_path.write_text(content, encoding="utf-8")
         )
         _logger.info(
-            "Registered model %s/%s in %s", record.name, record.version, model_dir,
+            "Registered model %s/%s in %s", record.name, record.version, model_dir
         )
         return record.model_copy(
             update={
                 "artifact_uri": str(model_dir),
                 "extra": dict(record.extra) | {"backend": "local_fs"},
-            },
+            }
         )
 
     async def transition_stage(
-        self, name: str, version: str, new_stage: str,
+        self, name: str, version: str, new_stage: str
     ) -> ModelRecord:
         """Обновляет stage в manifest.json модели."""
         model_dir = self._model_dir(name)
@@ -239,5 +239,5 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
         await loop.run_in_executor(None, _write_text, manifest_path, content)
         # Re-read to get full record
         return await self.get_model(name, version=version) or ModelRecord(
-            name=name, version=version, stage=new_stage,
+            name=name, version=version, stage=new_stage
         )

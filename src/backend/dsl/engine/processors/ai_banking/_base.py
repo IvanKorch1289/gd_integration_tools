@@ -34,10 +34,7 @@ class _BankingAIProcessor(BaseProcessor):
     audit_event_prefix: str = "banking"
     COST_PER_1K_TOKENS: float = 0.02
 
-    async def _check_capability_via_facade(
-        self,
-        exchange: Exchange[Any],
-    ) -> bool:
+    async def _check_capability_via_facade(self, exchange: Exchange[Any]) -> bool:
         """S190: unified capability check через CapabilityFacade.
 
         Заменяет inline ``gate.check(self.capability, scope=None)`` pattern
@@ -72,9 +69,7 @@ class _BankingAIProcessor(BaseProcessor):
             # Other exception — log + fail
             exchange.fail(f"capability_check_error: {self.capability} - {exc}")
             _logger.warning(
-                "banking capability check failed: %s - %s",
-                self.capability,
-                exc,
+                "banking capability check failed: %s - %s", self.capability, exc
             )
             return False
 
@@ -103,7 +98,7 @@ class _BankingAIProcessor(BaseProcessor):
         _retryable = (TimeoutError, ConnectionError)
 
         @make_async_retry(
-            max_attempts=3, initial_backoff=1.0, multiplier=2.0, on=_retryable,
+            max_attempts=3, initial_backoff=1.0, multiplier=2.0, on=_retryable
         )
         async def _chat_with_retry() -> Any:
             return await agent.chat(
@@ -156,6 +151,7 @@ class _BankingAIProcessor(BaseProcessor):
                 # type, orjson.JSONDecodeError (subclass of ValueError)
                 # — explicitly captured for clarity.
                 import logging
+
                 logging.getLogger(__name__).debug(
                     "ai_banking._base.json_parse_failed",
                     extra={"error": str(parse_exc)},

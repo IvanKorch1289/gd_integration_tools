@@ -155,7 +155,7 @@ class MCPGateway:
         self._register_system_tools(mcp)
 
         logger.info(
-            "MCPGateway created with namespaces: %s", self._namespaces_registered,
+            "MCPGateway created with namespaces: %s", self._namespaces_registered
         )
         return mcp
 

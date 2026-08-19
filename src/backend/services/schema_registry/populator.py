@@ -58,7 +58,7 @@ def populate_from_processor_registry(
                     "replaces": spec.replaces,
                     **spec.meta,
                 },
-            ),
+            )
         )
         count += 1
     return count
@@ -105,7 +105,7 @@ def populate_from_routes(
                     "protocol": getattr(pipeline, "protocol", None),
                     "processors_count": len(pipeline.processors),
                 },
-            ),
+            )
         )
         count += 1
     return count
@@ -116,7 +116,7 @@ def populate_from_actions(registry: ServiceSchemaRegistry | None = None) -> int:
     reg = registry or get_schema_registry()
     try:
         from src.backend.dsl.commands.registry import action_handler_registry
-    except (ImportError, AttributeError):
+    except ImportError, AttributeError:
         return 0
 
     count = 0
@@ -146,7 +146,7 @@ def populate_from_actions(registry: ServiceSchemaRegistry | None = None) -> int:
                 spec_schema=spec_schema,
                 output_schema=output_schema,
                 meta=meta,
-            ),
+            )
         )
         count += 1
     return count
@@ -168,12 +168,17 @@ def populate_from_manifests(registry: ServiceSchemaRegistry | None = None) -> in
 
     try:
         plugin_registry = get_plugin_registry()
-    except (ImportError, AttributeError, RuntimeError) as plugin_reg_exc:  # pragma: no cover - runtime может быть не готов
+    except (
+        ImportError,
+        AttributeError,
+        RuntimeError,
+    ) as plugin_reg_exc:  # pragma: no cover - runtime может быть не готов
         # cycle-9/D-AUDIT-916: narrow exceptions + observability.
         # ImportError — plugin_runtime missing, AttributeError — malformed
         # registry, RuntimeError — not initialized. Bare `except Exception`
         # маскировал unrelated runtime errors (KeyError, TypeError).
         import logging
+
         logging.getLogger(__name__).debug(
             "schema_registry.populator_plugin_registry_unavailable",
             extra={"error": str(plugin_reg_exc)},
@@ -209,7 +214,7 @@ def populate_from_manifests(registry: ServiceSchemaRegistry | None = None) -> in
                     "requires_core": requires_core,
                     "capabilities": capabilities,
                 },
-            ),
+            )
         )
         count += 1
     return count

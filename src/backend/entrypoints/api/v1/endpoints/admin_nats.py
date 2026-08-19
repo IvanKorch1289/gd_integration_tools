@@ -71,7 +71,7 @@ async def list_consumers() -> dict[str, Any]:
     import importlib
 
     metrics_mod = importlib.import_module(
-        "src.backend.infrastructure.observability.nats_metrics",
+        "src.backend.infrastructure.observability.nats_metrics"
     )
 
     items: list[dict[str, Any]] = []
