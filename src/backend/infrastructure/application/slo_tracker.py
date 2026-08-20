@@ -165,8 +165,12 @@ class SLOTracker:
             record_pipeline_execution(
                 route_id=route_id, status="error" if is_error else "success"
             )
-        except (ImportError, AttributeError):
-            pass
+        except (ImportError, AttributeError) as exc:
+            # Sprint 19 (analyst swarm iteration 5) F-1: log instead of silent pass.
+            _logger.debug(
+                "slo_tracker.record_pipeline_slo.skipped: %s",
+                exc,
+            )
 
     def get_report(self) -> dict[str, Any]:
         """Get SLO report for all routes.
@@ -250,7 +254,9 @@ def enforce_slo(route_id: str, *, max_error_rate: float = 5.0):
 
 
 from src.backend.core.di import app_state_singleton
+from src.backend.core.logging import get_logger
 
+_logger = get_logger(__name__)
 
 @app_state_singleton("slo_tracker", SLOTracker)
 def get_slo_tracker() -> SLOTracker:  # type: ignore[empty-body]
