@@ -6,7 +6,7 @@
 """
 
 from collections.abc import Awaitable, Callable
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import uuid4
 
@@ -91,7 +91,11 @@ class JobQueue:
             )
             logger.info("Задача %s поставлена по cron: %s", final_job_id, cron)
         elif delay is not None:
-            run_date = datetime.now() + timedelta(seconds=delay)
+            # ITER 9 (Sprint 19): use UTC-aware datetime. APScheduler timezone
+            # config is settings.scheduler.timezone (default "UTC" per base.yml).
+            # Mixing naive datetime with configured-tz scheduler causes off-by-hours
+            # when local tz != scheduler tz. Use datetime.now(UTC) to match.
+            run_date = datetime.now(UTC) + timedelta(seconds=delay)
             scheduler.add_job(
                 func,
                 trigger="date",
