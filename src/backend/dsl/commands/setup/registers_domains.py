@@ -223,3 +223,21 @@ def _register_servicedsl_auto_register() -> None:
             "src.backend.services.integrations",
         ]
     )
+
+
+def _register_users() -> None:
+    """ITER 15 (Sprint 19) DSL-2 fix: register users CRUD actions.
+
+    Previously missing — legacy_aliases calls users.get/users.add/etc.
+    which returned 404 because no _register_users() existed in orchestrator.
+    """
+    from extensions.core_entities.users.services.users import get_user_service
+
+    _register_crud_actions("users", get_user_service)
+
+
+def _register_orderkinds() -> None:
+    """ITER 15 (Sprint 19) DSL-2 fix: register orderkinds CRUD actions."""
+    from extensions.core_entities.orderkinds.services.orderkinds import get_order_kind_service
+
+    _register_crud_actions("orderkinds", get_order_kind_service)

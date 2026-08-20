@@ -75,8 +75,11 @@ async def _dispatch_with(
 _ALIASES: list[tuple[str, dict[str, str], list[str]]] = [
     # (path, handler_args, action_name, http_methods)
     # path : /api/v1/{resource}/{verb}[/{item_id}]
-    ("/orders/all/", {"action": "orders.list"}, ["GET"]),
-    ("/orders/create/", {"action": "orders.create"}, ["POST"]),
+    # ITER 15 (Sprint 19): action names aligned with actual CRUD registration
+    # (src/backend/dsl/service_dsl.py _CRUD_METHODS = ("add", "get", "update", "delete")).
+    # Was: orders.list / orders.create (404 — not registered). Now: orders.get / orders.add.
+    ("/orders/all/", {"action": "orders.get"}, ["GET"]),
+    ("/orders/create/", {"action": "orders.add"}, ["POST"]),
     (
         "/orders/update/{item_id}",
         {"action": "orders.update", "item_id": "path"},
@@ -87,24 +90,24 @@ _ALIASES: list[tuple[str, dict[str, str], list[str]]] = [
         {"action": "orders.delete", "item_id": "path"},
         ["DELETE"],
     ),
-    ("/users/all/", {"action": "users.list"}, ["GET"]),
-    ("/users/create/", {"action": "users.create"}, ["POST"]),
+    ("/users/all/", {"action": "users.get"}, ["GET"]),
+    ("/users/create/", {"action": "users.add"}, ["POST"]),
     ("/users/update/{item_id}", {"action": "users.update", "item_id": "path"}, ["PUT"]),
     (
         "/users/delete/{item_id}",
         {"action": "users.delete", "item_id": "path"},
         ["DELETE"],
     ),
-    ("/files/all/", {"action": "files.list"}, ["GET"]),
-    ("/files/create/", {"action": "files.create"}, ["POST"]),
+    ("/files/all/", {"action": "files.get"}, ["GET"]),
+    ("/files/create/", {"action": "files.add"}, ["POST"]),
     ("/files/update/{item_id}", {"action": "files.update", "item_id": "path"}, ["PUT"]),
     (
         "/files/delete/{item_id}",
         {"action": "files.delete", "item_id": "path"},
         ["DELETE"],
     ),
-    ("/orderkinds/all/", {"action": "orderkinds.list"}, ["GET"]),
-    ("/orderkinds/create/", {"action": "orderkinds.create"}, ["POST"]),
+    ("/orderkinds/all/", {"action": "orderkinds.get"}, ["GET"]),
+    ("/orderkinds/create/", {"action": "orderkinds.add"}, ["POST"]),
     (
         "/orderkinds/update/{item_id}",
         {"action": "orderkinds.update", "item_id": "path"},

@@ -23,6 +23,8 @@ from src.backend.dsl.commands.setup.registers_domains import (
     _register_dadata,  # S66 W2: re-export
     _register_files,  # S66 W2: re-export
     _register_orders,  # S66 W2: re-export
+    _register_users,  # ITER 15: DSL-2 fix
+    _register_orderkinds,  # ITER 15: DSL-2 fix
     _register_servicedsl_auto_register,  # S66 W2: re-export
     _register_skb_api,  # S66 W2: re-export
     _register_tech,  # S66 W2: re-export
