@@ -82,13 +82,12 @@ async def test_all_phases_accept_app_argument() -> None:
         params = list(sig.parameters.keys())
         # First param должен быть app
         assert params[0] == "app", f"Phase {i} ({phase.__name__}) first param should be 'app', got '{params[0]}'"
-        # Return type annotation: None (void) — but with PEP 563 string annotations,
+        # Return type annotation: None (void) — но with PEP 563 string annotations,
         # sig.return_annotation is the string 'None', not the type None itself.
-        if sig.return_annotation not in (None, "None"):
-            assert sig.return_annotation in (None, "None"), (
-                f"Phase {i} ({phase.__name__}) should return None, "
-                f"got {sig.return_annotation!r}"
-            )
+        assert sig.return_annotation in (None, "None"), (
+            f"Phase {i} ({phase.__name__}) should return None, "
+            f"got {sig.return_annotation!r}"
+        )
 
 
 @pytest.mark.unit

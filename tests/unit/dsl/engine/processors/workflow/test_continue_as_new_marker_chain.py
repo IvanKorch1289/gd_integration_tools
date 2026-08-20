@@ -13,8 +13,13 @@ import pytest
 
 
 @pytest.mark.unit
-def test_processor_marker_readable_by_handler() -> None:
-    """Sprint 11 P1-3: marker chain end-to-end (processor → handler)."""
+@pytest.mark.asyncio
+async def test_processor_marker_readable_by_handler() -> None:
+    """Sprint 11 P1-3: marker chain end-to-end (processor → handler).
+
+    Sprint 19 iter 12: AGENTS.md compliance — теперь async test
+    вместо asyncio.run() в sync test (P0 architectural smell).
+    """
     from src.backend.dsl.engine.processors.workflow.best_practices.continue_as_new import (
         WorkflowContinueAsNewProcessor,
     )
@@ -46,10 +51,10 @@ def test_processor_marker_readable_by_handler() -> None:
     # Mock auth_check чтобы обойти capability gate (test фокус на marker chain, не auth)
     processor.auth_check = AsyncMock(return_value=True)  # type: ignore[method-assign]
 
-    # Process (synchronous call, process is async but we can run via asyncio)
-    import asyncio
+    # Process (Sprint 19 iter 12: AGENTS.md compliance — use async test
+    # instead of asyncio.run() in sync test).
     context = MagicMock()
-    asyncio.run(processor.process(exchange, context))
+    await processor.process(exchange, context)
 
     # Verify marker was set via set_result
     assert len(set_result_calls) >= 1, (
