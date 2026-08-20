@@ -1,61 +1,24 @@
-# Envelope Encryption (S171 M10 P1, D174)
+# Envelope Encryption — REMOVED (Sprint 226)
 
-**EnvelopeEncryptionService** — at-rest encryption с per-tenant DEK
-(Data Encryption Key) для banking-домена.
+**P1-4 (cycle 241/242) — STALE DOC FIX**:
 
-## Pattern
+`EnvelopeEncryptionService` (D174) был **REMOVED** в Sprint 226
+(аудит 2026-08-18). Текущая PII-токенизация делается через
+**Presidio** (`src/backend/core/security/pii_tokenizer.py`,
+650 LOC) — см. `pii.md`.
 
-```
-┌────────────────────┐
-│   KEK (master)     │  ← Vault transit engine (prod) / local (dev)
-│   Key Encryption   │
-└────────┬───────────┘
-         │ encrypts DEK
-         ▼
-┌────────────────────┐    ┌────────────────────┐
-│  DEK (per-tenant)  │ →  │   AES-256-GCM      │
-│  Data Encryption   │    │   ciphertext       │
-└────────────────────┘    └────────────────────┘
-```
+**Причина замены**: EnvelopeEncryptionService был over-engineering
+для текущей threat model. Presidio покрывает:
+- Email, phone, passport, INN detection
+- PII replacement/masking
+- Compliance logging
 
-## Использование
+**Migration**:
+- Старый код: `EnvelopeEncryptionService.encrypt(plaintext, tenant_id)`
+- Новый код: `PIITokenizer.mask(text)` / `GatewayPipeline._apply_input_sanitizers()`
 
-```python
-from src.backend.core.security.encryption.envelope import (
-    EnvelopeEncryptionService,
-)
-
-# Production
-svc = EnvelopeEncryptionService(
-    kek_source="vault_transit",
-    kek_id="banking-prod-kek-2024",
-)
-
-# Dev (local)
-svc = EnvelopeEncryptionService(
-    kek_source="local",
-    kek_id="dev-kek-1",
-)
-
-# Encrypt
-plaintext = b"customer_ssn=123-45-6789"
-envelope = svc.encrypt(plaintext, tenant_id="tenant-bank-1")
-# → {"ciphertext": "...", "encrypted_dek": "...", "tenant_id": "tenant-bank-1", ...}
-
-# Decrypt
-recovered = svc.decrypt(envelope)
-assert recovered == plaintext
-```
-
-## Properties
-
-- **Tenant isolation**: каждый tenant имеет свой DEK
-- **Key rotation**: KEK можно ротировать без расшифровки данных
-- **Per-tenant revocation**: удалить DEK = забыть данные
-- **AAD (Additional Authenticated Data)**: `tenant_id` используется как AAD
-  — ciphertext нельзя переиспользовать между tenants
-
-## Refs
-
-- D174 EnvelopeEncryption pattern
-- https://en.wikipedia.org/wiki/Key_encapsulation
+**Дополнительные ресурсы**:
+- `docs/security/pii.md` — PII detection (current)
+- `src/backend/core/security/pii_tokenizer.py` — implementation
+- `src/backend/core/ai/gateway_pipeline_mixin/sanitize_mixin.py` — sanitization gateway
+- `docs/audit/ULTRA_RE_AUDIT_2026-08-19.md` — re-audit report

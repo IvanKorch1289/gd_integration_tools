@@ -67,8 +67,8 @@
 - **Schema-registry R1** (D175) — in-memory JSON-Schema catalog для LSP/AsyncAPI export
 - **Middleware facades** (D160) — `core/api/__init__.py` (canonical public facade) +
   per-domain facades в `core/{auth,cache,storage,...}/facade.py`. 16+ primitives
-  (lazy `__getattr__` pattern). ⚠️ `core.facades.py` не существует (false claim в
-  предыдущих README); consolidated в `core.api` (S170 cycle 36).
+  (lazy `__getattr__` pattern). `core/facades.py` — backward-compat shim (Sprint 18)
+  re-exporting from `core.api`; новый код должен импортировать `core.api` напрямую.
 - **FilteredDirectoryScanProcessor** — OWASP-safe file operations (max_results + timeout)
 
 ### Infra

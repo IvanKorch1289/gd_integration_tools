@@ -11,7 +11,7 @@
 - ✅ Worker Versioning (D172) — Temporal best practice
 - ✅ ContinueAsNew runtime handler (D169) — long workflow lifecycle
 - ✅ CompensateWorkflow API (D173) — saga compensation
-- ✅ EnvelopeEncryptionService (D174) — per-tenant DEK
+- ❌ EnvelopeEncryptionService (D174) — REMOVED в Sprint 226; PII-токенизация через Presidio
 - ✅ Schema-registry R1 (D175) — DSL schema catalog
 
 ### ✅ M11 pre-existing failures (user: "R1-R7")
