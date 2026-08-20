@@ -180,68 +180,6 @@ def get_ai_gateway() -> AIGateway:
 CapabilityChecker = Callable[[str, str, str | None], None]
 
 
-class AdaptedCapabilityGate:
-    """Wrapper ``CapabilityGatewayProtocol`` для AIGateway (Sprint 1.5).
-
-    AIGateway внутри читает ``self._capability_gate.check(...)`` через
-    :func:`getattr`. Возвращаем объект с методом ``check``, который
-    пробрасывает canonical 3-arg signature. Поведение fail-closed
-    сохраняется: ``CapabilityDeniedError`` от gate пробрасывается дальше
-    (см. :mod:`core.ai.gateway_pipeline_mixin.policy_mixin._check_capability`).
-    """
-
-    __slots__ = ("_gate",)
-
-    def __init__(self, gate: CapabilityGatewayProtocol) -> None:
-        """Инициализация.
-
-        Args:
-            gate: Capability gateway с трёхаргументным ``check``.
-        """
-        self._gate = gate
-
-    def check(self, plugin: str, capability: str, scope: str | None) -> None:
-        """Пробросить проверку без изменения fail-closed семантики gate."""
-        self._gate.check(plugin, capability, scope)
-
-
-def adapt_capability_gate(gate: CapabilityGatewayProtocol) -> CapabilityGatewayProtocol:
-    """Адаптировать canonical ``CapabilityGate.check`` к AI-пайплайну.
-
-    Args:
-        gate: Capability gateway с трёхаргументным ``check``.
-
-    Returns:
-        Объект с методом ``.check(plugin, capability, scope)``,
-        совместимый с :attr:`AIGateway._capability_gate`.
-    """
-    return AdaptedCapabilityGate(gate)
-
-
-def get_ai_gateway() -> AIGateway:
-    """Вернуть singleton AIGateway из composition root или dev-fallback.
-
-    В production отсутствие регистрации не превращается в allow-all: созданный
-    fallback остановится встроенным production-wiring guard при ``invoke``.
-    """
-    try:
-        from src.backend.core.di.app_state import get_app_ref
-
-        app = get_app_ref()
-        if app is not None:
-            gateway = getattr(app.state, "ai_gateway", None)
-            if gateway is not None:
-                return gateway
-    except Exception as exc:
-        logger.debug("AIGateway app.state lookup skipped: %s", exc)
-
-    try:
-        from src.backend.core.di.providers.ai import get_ai_gateway_provider
-
-        return get_ai_gateway_provider()
-    except (KeyError, RuntimeError):
-        return AIGateway()
-
 
 async def invoke_via_gateway(
     *,

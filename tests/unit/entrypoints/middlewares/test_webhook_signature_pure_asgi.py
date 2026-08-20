@@ -206,7 +206,6 @@ class TestWebhookSignatureMiddlewarePureASGI:
         assert start["status"] == 401
 
     @pytest.mark.asyncio
-<<<<<<< Updated upstream
     async def test_protected_prefix_without_secret_returns_503(
         self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
@@ -225,14 +224,12 @@ class TestWebhookSignatureMiddlewarePureASGI:
             raise AssertionError(
                 "downstream НЕ должен быть вызван при missing secret",
             )
-
-=======
     async def test_protected_prefix_without_secret_passes(self) -> None:
         """Path protected, но secret не сконфигурирован → fail-closed (503) по default.
 
         Используется явный ``fail_closed=False`` (dev/test opt-out).
         """
->>>>>>> Stashed changes
+
         app = AsyncMock()
         app.side_effect = downstream
         mw = WebhookSignatureMiddleware(
@@ -268,31 +265,6 @@ class TestWebhookSignatureMiddlewarePureASGI:
 
         send = AsyncMock()
         await mw(_make_scope("POST", "/webhooks/stripe"), _make_receive(b"{}"), send)
-<<<<<<< Updated upstream
-
-        start = _start_message(send)
-        assert start is not None
-        assert start["status"] == 503
-        app.assert_not_called()
-
-    @pytest.mark.asyncio
-    async def test_protected_prefix_without_secret_passes(self) -> None:
-        """fail_closed=False: protected prefix без secret passes through."""
-        app = AsyncMock()
-
-        async def downstream(scope, receive, send):
-            await send({"type": "http.response.start", "status": 200, "headers": []})
-            await send({"type": "http.response.body", "body": b""})
-
-        app.side_effect = downstream
-        mw = WebhookSignatureMiddleware(
-            app=app,
-            path_prefixes=("/webhooks/",),
-            secrets_by_prefix={},  # No secret для protected path.
-            fail_closed=False,
-        )
-=======
->>>>>>> Stashed changes
 
         send = AsyncMock()
         await mw(_make_scope("POST", "/webhooks/stripe"), _make_receive(b"{}"), send)

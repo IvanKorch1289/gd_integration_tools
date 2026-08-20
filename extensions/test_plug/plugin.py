@@ -4,11 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-<<<<<<< Updated upstream
 from src.backend.core.api import BasePlugin
-=======
 from gd_integration_tools.core.interfaces.plugin import BasePlugin
->>>>>>> Stashed changes
+
 
 
 @dataclass

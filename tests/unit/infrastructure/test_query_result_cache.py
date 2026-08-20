@@ -2,10 +2,6 @@
 
 from __future__ import annotations
 
-<<<<<<< Updated upstream
-from datetime import UTC
-=======
->>>>>>> Stashed changes
 from typing import Any
 
 import pytest

@@ -46,11 +46,9 @@ class TestObservabilityFlagsClass:
         assert "tracing_baggage_strict" in obs_names
         assert "audit_clickhouse_enabled" in obs_names
         assert "audit_hmac_verify_enabled" in obs_names
-<<<<<<< Updated upstream
         assert len(obs_names) == 3  # +1 Sprint 4.6 (audit_hmac_verify_enabled)
-=======
         assert len(obs_names) == 3
->>>>>>> Stashed changes
+
 
 
 class TestObservabilityFlagsComposition:

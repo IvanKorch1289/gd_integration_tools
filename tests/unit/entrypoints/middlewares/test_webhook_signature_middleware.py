@@ -125,16 +125,14 @@ def test_unprotected_path_is_not_verified(app: FastAPI) -> None:
 
 
 def test_protected_prefix_without_secret_fail_closed_returns_503() -> None:
-<<<<<<< Updated upstream
     """Default fail_closed=True: protected prefix без secret → 503.
 
     cycle-9/D-AUDIT-914 fix: production теперь fail-closed (раньше
     pass-through был security-hole: unconfigured webhook без secret
     принимал любой unsigned payload). Тест обновлён.
     """
-=======
     """Default fail_closed=True: protected prefix без secret → 503."""
->>>>>>> Stashed changes
+
     app = FastAPI()
 
     @app.post("/webhooks/unconfigured")

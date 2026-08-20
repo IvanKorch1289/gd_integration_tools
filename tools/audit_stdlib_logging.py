@@ -36,11 +36,6 @@ LEGITIMATE_STDLIB_FILES: frozenset[str] = frozenset(
         "src/backend/infrastructure/clients/transport/http_httpx.py",  # logging.DEBUG tenacity
         "src/backend/infrastructure/execution/dask_backend.py",  # logging.WARNING (silence)
         "src/backend/infrastructure/external_apis/logging_service.py",  # DEPRECATED
-<<<<<<< Updated upstream
-        "src/backend/infrastructure/workflow/worker.py",  # logging.basicConfig typer CLI (S172 M2)
-        "src/backend/core/observability/logging_helpers.py",  # logging.Logger type + INFO/WARNING/ERROR/DEBUG constants (S173 M8.2)
-=======
->>>>>>> Stashed changes
         "src/backend/workflows/worker.py",  # logging.basicConfig typer CLI
     }
 )
