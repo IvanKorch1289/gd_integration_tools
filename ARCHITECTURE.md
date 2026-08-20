@@ -60,7 +60,7 @@ AI-агентами и developer portal на Streamlit.
 - `infrastructure` реализует контракты из `core/interfaces` и `core/protocols`
 - `core` не импортирует код из остального `src/`
 - Линтер слоёв: `make layers`, `tools/check_layers.py`
-  (136 legacy-нарушение в allowlist — canonical `tools/check_layers_allowlist.txt`, P1-L1 fix 2026-08-18)
+  (138 legacy-нарушений в allowlist — canonical `tools/check_layers_allowlist.txt`, P1-L1 fix 2026-08-18; ре-аудит 2026-08-20: 138 vs ранее заявленных 136, +2 с прошлого отчёта)
 
 ## Основные подсистемы
 
@@ -340,22 +340,27 @@ Rate Limiter построен по canonical 4-layer pattern:
 ## Известные ограничения
 
 - ruff/mypy ошибки в `src/backend/` — pre-existing baseline
-- 42 ruff-S101 в `tests/` — pre-existing baseline
-- 136 legacy layer-нарушений в allowlist (canonical, `tools/check_layers_allowlist.txt`)
-  (S65 W2: 35 new lazy imports, S65 W4: 119 dsl/workflows; baseline 47)
+- 0 ruff-S101 в `tests/` остаётся (Sprint 30 S B: cycle 241 baseline; pyproject.toml `extend-ignore` явно разрешает S101 для tests/)
+- 138 legacy layer-нарушений в allowlist (canonical, `tools/check_layers_allowlist.txt`)
+  (S65 W2: 35 new lazy imports, S65 W4: 119 dsl/workflows; baseline 47; **ре-аудит 2026-08-20: 138** vs заявленных ранее 136)
 - `make type-check` / `make actions` / `make deps-check` — pre-existing failed
-- ClamAV не поднят в `docker-compose.yml`
-- Memcached cache backend = stub
-- CertStore vault backend требует `vault_url` / `vault_token`
+- **MCP HTTP transport отключён в dev_light** (`mcp_settings.http_enabled=False` default);
+  для smoke-теста /mcp нужен production profile или `MCP__HTTP_ENABLED=true` env override.
+  D-AUDIT-20810 print() в `_mount_mcp_http` — документированный workaround для granian
+  logger filter (см. `app_factory.py:120-124`), НЕ dead code.
+- **Memcached** — РЕАЛЬНЫЙ backend (`infrastructure/cache/backends/memcached.py`, aiomcache).
+  Документация ранее ошибочно помечала как stub.
+- **ClamAV** — РЕАЛЬНЫЙ сервис в `ops/compose/docker-compose.yml:166-191` (`clamav/clamav:stable`)
+  + `core/interfaces/antivirus.py::AntivirusBackend`. Документация ранее ошибочно
+  помечала как "не поднят".
+- **CertStore** — РЕАЛЬНЫЙ (`core/config/cert_store.py::CertStoreSettings`,
+  `entrypoints/api/v1/endpoints/admin_certs.py::CertStore.from_settings`).
+  Требует `CERT_STORE_*` env vars — НЕ stub, а config-driven.
 - `psycopg2` отсутствует в venv (используется asyncpg)
-- 42 ruff-S101 в `tests/` — pre-existing baseline
-- 136 legacy layer-нарушений в allowlist (canonical, `tools/check_layers_allowlist.txt`)
-  (S65 W2: 35 new lazy imports, S65 W4: 119 dsl/workflows; baseline 47)
-- `make type-check` / `make actions` / `make deps-check` — pre-existing failed
-- ClamAV не поднят в `docker-compose.yml`
-- Memcached cache backend = stub
-- CertStore vault backend требует `vault_url` / `vault_token`
-- `psycopg2` отсутствует в venv (используется asyncpg)
+
+**Уточнение от ре-аудита 2026-08-20** (docs/audit/RE_AUDIT_2026-08-20.md):
+три пункта выше (Memcached, ClamAV, CertStore) были **FALSE CLAIM в предыдущем
+ULTRA_RE_AUDIT_2026-08-19.md** — все три реализованы и не являются stub'ами.
 
 Архитектурная правда — в коде, Graphify и `PLAN.md`.
 Если обзор расходится с кодом — доверять коду и Graphify.

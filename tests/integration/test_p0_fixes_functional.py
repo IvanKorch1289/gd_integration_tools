@@ -43,15 +43,19 @@ def test_p0_s1_ip_restriction_matches_nested_api_path() -> bool:
 
 
 def test_p0_s2_lakera_fail_closed_without_api_key() -> bool:
-    """P0-S2: без LAKERA_API_KEY → raise LakeraGuardrailUnavailableError."""
+    """P0-S2: без LAKERA_API_KEY → raise LakeraGuardrailUnavailableError.
+
+    Sprint 30: actual raise now happens at __init__ (not at screen), so
+    both calls (LakeraClient + screen) are wrapped in try.
+    """
     os.environ.pop("LAKERA_API_KEY", None)
     from src.backend.services.ai.guardrails.lakera_client import (
         LakeraClient,
         LakeraGuardrailUnavailableError,
     )
 
-    client = LakeraClient()
     try:
+        client = LakeraClient()
         import asyncio
 
         asyncio.run(client.screen("malicious"))
