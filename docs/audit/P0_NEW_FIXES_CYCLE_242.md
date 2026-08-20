@@ -11,7 +11,7 @@
 | ID | Severity | Status | Tests |
 |---|---|---|---|
 | **DSL-1** | CRITICAL | FIXED | wires 16 legacy URL aliases in production |
-| **DSL-2** | CRITICAL | DOCUMENTED | CRUD actions in `legacy_aliases.py` reference but not registered — separate fix |
+| **DSL-2** | CRITICAL | FIXED (Sprint 19 ITER 15) | legacy_aliases action names aligned + _register_users/orderkinds wired |
 | **DSL-3** | HIGH | FIXED | 6 missing feature flags added to config |
 | **DSL-4** | MEDIUM | FIXED | `convert()` implemented (was missing, called by `translate()`) |
 | **WF-4** | MEDIUM | DOCUMENTED | feature flag → 404 (intentional, route doesn't exist semantics) |
@@ -189,7 +189,7 @@ $ uv run pytest tests/unit/core/test_api_facade_promotion.py \
 - S-2/S-3: B104/B108 verified ✓
 
 ### Remaining (out of scope for cycle 242)
-- **DSL-2 (CRITICAL)**: simple CRUD actions (orders.list, users.list, ...) need to be registered in `action_handler_registry` if DSL-1 fix is to be end-to-end working. Currently, DSL-1 wires the routes, but they return 404 because actions not in registry. **Next cycle 243**: register 16 simple CRUD actions via `@service_dsl(crud=True)`.
+- ~~**DSL-2 (CRITICAL)**: simple CRUD actions ... Next cycle 243~~ — CLOSED in Sprint 19 ITER 15 (commit 39a01012). 16 legacy aliases now correctly registered. Regression tests in commit 93dae1f0.
 - **S-4 (mTLS header-only trust)**: NEEDS-DOCUMENTATION (architectural gap).
 - **P2-7 (extensions still using core.X for non-facade symbols)**: 36 imports remain (MultiAgentSupervisor, AdAuthError, etc.). Not facadable without semantic analysis of each.
 
