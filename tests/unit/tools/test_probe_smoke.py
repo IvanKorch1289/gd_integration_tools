@@ -9,15 +9,8 @@ Verifies:
 from __future__ import annotations
 
 import pytest
-from tools.probe_smoke import (
-    ProbeResult,
-    ProbeReport,
-    probe_get,
-    probe_post,
-    run_probes,
-    main,
-    DEFAULT_BASE,
-)
+
+from tools.probe_smoke import DEFAULT_BASE, ProbeReport, ProbeResult, main, run_probes
 
 
 class TestProbeResultEvaluate:

@@ -113,7 +113,7 @@ def run_probes(base_url: str) -> ProbeReport:
     for path, name in k8s_probes:
         result = probe_get(base_url, path, name, expected=200)
         # Mark expected for old-code scenario
-        result.detail = f"P0-2 fix: route должен быть 200 (was 401/404 before fix)"
+        result.detail = "P0-2 fix: route должен быть 200 (was 401/404 before fix)"
         report.results.append(result)
 
     # 3. Auth-required GET endpoints — должны fail-closed (401)

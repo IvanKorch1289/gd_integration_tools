@@ -15,10 +15,7 @@ import pytest
 _TOOLS = Path(__file__).resolve().parents[3] / "tools"
 sys.path.insert(0, str(_TOOLS))
 
-from checks.check_python3_syntax import (
-    RULE_EXCEPT_TUPLE_NO_PAREN,
-    check_file,
-)
+from checks.check_python3_syntax import RULE_EXCEPT_TUPLE_NO_PAREN, check_file
 
 
 def _write(tmp: Path, name: str, body: str) -> Path:

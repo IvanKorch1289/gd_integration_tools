@@ -14,9 +14,7 @@ sys.path.insert(0, str(_TOOLS))
 
 import migrate_plugin_manifest as mod
 
-from src.backend.core.plugin_runtime.manifest_toml import (
-    load_plugin_manifest,
-)
+from src.backend.core.plugin_runtime.manifest_toml import load_plugin_manifest
 
 
 def _legacy_yaml(content: str) -> str:

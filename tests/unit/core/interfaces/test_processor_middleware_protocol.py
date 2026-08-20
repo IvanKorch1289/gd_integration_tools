@@ -57,7 +57,9 @@ def test_dsl_middleware_implements_protocol() -> None:
     После P1-14: ABC в dsl.engine.middleware — thin wrapper
     с расширенными DSL-типами (Exchange, ExecutionContext).
     """
-    from src.backend.dsl.engine.middleware import ProcessorMiddleware as DslProcessorMiddleware
+    from src.backend.dsl.engine.middleware import (
+        ProcessorMiddleware as DslProcessorMiddleware,
+    )
 
     # DSL class может быть ABC, но должен implement Protocol
     # (по duck typing — все required methods должны быть)
@@ -75,9 +77,7 @@ def test_observability_middlewares_implement_protocol() -> None:
     from src.backend.infrastructure.observability.metrics import (
         PrometheusMetricsMiddleware,
     )
-    from src.backend.infrastructure.observability.tracing import (
-        TracingMiddleware,
-    )
+    from src.backend.infrastructure.observability.tracing import TracingMiddleware
 
     # Runtime check (Protocol должен быть runtime_checkable)
     assert isinstance(PrometheusMetricsMiddleware, ProcessorMiddleware), (
