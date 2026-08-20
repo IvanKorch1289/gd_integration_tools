@@ -10,7 +10,7 @@ extensions/<name>/, ядро domain-agnostic.
 from sqladmin import ModelView
 
 from extensions.core_entities.orderkinds.domain.models import OrderKind
-from src.backend.utilities.admin_panel.base import BaseAdmin
+from src.backend.sdk import BaseAdmin
 
 __all__ = ("OrderKindAdmin",)
 

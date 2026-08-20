@@ -47,6 +47,9 @@ __all__ = [
     "SensorDeclaration",
     "SleepDeclaration",
     "WorkflowDeclaration",
+    # Admin panel base class (S240) — extensions register admin views
+    # via ``from src.backend.sdk import BaseAdmin``.
+    "BaseAdmin",
     # App State decorator
     "app_state_singleton",
     # Composition-bound extension API (S172 P1).
@@ -110,6 +113,13 @@ def __getattr__(name: str):
         from src.backend.dsl.workflow.builder import WorkflowBuilder
 
         return WorkflowBuilder
+    # S240 re-audit: BaseAdmin — admin panel base class for extensions.
+    # 15-LOC, no deps, used by 4 extension admin.py files
+    # (extensions/core_entities/{orders,users,files,orderkinds}/admin.py).
+    if name == "BaseAdmin":
+        from src.backend.utilities.admin_panel.base import BaseAdmin
+
+        return BaseAdmin
     # S240 re-audit: WorkflowDeclaration types (ActivityDeclaration, SensorDeclaration,
     # SleepDeclaration, WorkflowDeclaration) — публичные для extensions,
     # расширение композиционного API (как WorkflowBuilder + SchedulerManager).

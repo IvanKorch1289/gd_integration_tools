@@ -7,7 +7,7 @@ to extensions/core_entities/orders/admin.py per master prompt v8 P2-10.
 from sqladmin import ModelView
 
 from extensions.core_entities.orders.domain.models import Order
-from src.backend.utilities.admin_panel.base import BaseAdmin
+from src.backend.sdk import BaseAdmin
 
 __all__ = ("OrderAdmin",)
 

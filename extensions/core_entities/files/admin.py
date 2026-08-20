@@ -9,7 +9,7 @@ S168 delta-2026-06-19: OrderFileAdmin re-added (was missing after migration).
 from sqladmin import ModelView
 
 from extensions.core_entities.files.domain.models import File, OrderFile
-from src.backend.utilities.admin_panel.base import BaseAdmin
+from src.backend.sdk import BaseAdmin
 
 __all__ = ("FileAdmin", "OrderFileAdmin")
 
