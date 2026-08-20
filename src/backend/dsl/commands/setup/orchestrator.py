@@ -11,12 +11,12 @@ from src.backend.dsl.commands.setup.registers_domains import (
     _register_admin,  # S66 W2: orchestrator cross-import
     _register_dadata,  # S66 W2: orchestrator cross-import
     _register_files,  # S66 W2: orchestrator cross-import
-    _register_orders,  # S66 W2: orchestrator cross-import
     _register_orderkinds,  # ITER 15: DSL-2 fix
-    _register_users,  # ITER 15: DSL-2 fix
+    _register_orders,  # S66 W2: orchestrator cross-import
     _register_servicedsl_auto_register,  # S66 W2: orchestrator cross-import
     _register_skb_api,  # S66 W2: orchestrator cross-import
     _register_tech,  # S66 W2: orchestrator cross-import
+    _register_users,  # ITER 15: DSL-2 fix
 )
 from src.backend.dsl.commands.setup.registers_integrations import (
     _register_agent_memory,  # S66 W2: orchestrator cross-import

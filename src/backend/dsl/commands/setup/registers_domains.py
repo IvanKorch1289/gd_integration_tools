@@ -238,6 +238,8 @@ def _register_users() -> None:
 
 def _register_orderkinds() -> None:
     """ITER 15 (Sprint 19) DSL-2 fix: register orderkinds CRUD actions."""
-    from extensions.core_entities.orderkinds.services.orderkinds import get_order_kind_service
+    from extensions.core_entities.orderkinds.services.orderkinds import (
+        get_order_kind_service,
+    )
 
     _register_crud_actions("orderkinds", get_order_kind_service)
