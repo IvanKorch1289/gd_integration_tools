@@ -356,7 +356,7 @@ def build_all_order_workflows() -> dict[str, WorkflowDeclaration]:
         from extensions.core_entities.orders.workflows.orders_dsl import (
             build_all_order_workflows,
         )
-        from src.backend.workflows.registry import workflow_registry
+        from src.backend.infrastructure.workflow.registry import workflow_registry
 
         for name, declaration in build_all_order_workflows().items():
             workflow_registry.register(declaration, route_id=name)

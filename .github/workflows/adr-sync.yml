@@ -30,7 +30,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install uv
-        uses: astral/setup-uv@v3
+        uses: astral-sh/setup-uv@v3
 
       - name: Generate ADR index
         run: uv run python tools/generate_adr_index.py
