@@ -212,7 +212,7 @@ ai-safety = [
     # presidio-analyzer + presidio-anonymizer already pinned in [project]
     # deps — only spacy is unique to this extra.
     # (Cycle 31 P0.3: de-duplicate pins.)
-    "spacy>=3.8.13",
+    "spacy>=3.8.13,<4.0.0",
 ]
 # S172: deepteam — OWASP Top 10 for LLMs 2025 + OWASP Top 10 for Agents 2026.
 # Red-team CI. Lazy-import в services/ai/redteam/.
