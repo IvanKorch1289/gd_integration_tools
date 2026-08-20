@@ -1021,6 +1021,10 @@ minversion = "9.0"
 testpaths = ["tests"]
 pythonpath = ["."]
 asyncio_mode = "auto"
+filterwarnings = [
+    # ITER 19: silence Pydantic UserWarning on `schema` field shadow (canonical domain term per ADR-2026-01, kept as field with alias).
+    'ignore:Field name "schema" in.*shadows an attribute in parent:UserWarning',
+]
 # S11 carryover [wave:s10-carryover/test-collection-errors]:
 # `--import-mode=importlib` избегает namespace-collisions между
 # одноимёнными каталогами (tests/cache vs tests/unit/cache,

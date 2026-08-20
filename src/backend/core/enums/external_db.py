@@ -119,12 +119,12 @@ class ExternalDBObjectMeta(BaseModel):
     model_config = ConfigDict(
         frozen=True,
         arbitrary_types_allowed=True,
-        # ITER 19 (Sprint 19): suppress Pydantic UserWarning "Field name 'schema'
-        # shadows attribute in parent 'BaseModel'". `schema` is intentional domain
-        # term (database schema = namespace for tables) and matches contract
-        # used by dispatch_mixin.py meta.schema access pattern. Not renaming
-        # because it's documented in ADR-2026-01 as canonical.
-        protected_namespaces=(),
+        # ITER 19 (Sprint 19): model_config для ExternalDBObjectMeta. `schema` field
+        # is canonical domain term (DB namespace) per ADR-2026-01. Using
+        # `populate_by_name=True` + `validate_by_name=True` to allow access by
+        # either the alias or the field name. The Pydantic UserWarning on
+        # `schema` shadow is silenced by filterwarnings in pyproject.toml
+        # (specific to this domain field).
     )
 
     profile_name: str = Field(
@@ -135,8 +135,9 @@ class ExternalDBObjectMeta(BaseModel):
         examples=["oracle_1", "pg_1"],
     )
 
-    schema: str | None = Field(
+    schema_: str | None = Field(
         default=None,
+        alias="schema",
         title="Схема",
         min_length=1,
         description="Схема БД, в которой расположен объект",
