@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import pytest
 
-
 EXPECTED_ACTIVITY_EXPORTS = [
     "compile_activity_step",
     "compile_signal_wait_step",
@@ -117,15 +116,12 @@ def test_no_duplicate_compile_functions_across_subpackages() -> None:
 @pytest.mark.unit
 def test_subpackage_init_registers_all_compile_functions() -> None:
     """__init__.py must register all 13 compile functions в _STEP_DISPATCH."""
-    from src.backend.dsl.workflow.compiler.step_compilers import (
-        _STEP_DISPATCH,
-    )
-
     # Count compile functions from subpackages, EXCLUDING gateway helpers
     # (compile_and, compile_or, compile_xor) which are lazy-imported in
     # activity.py from `gateways.py` but never registered as workflow
     # step compilers (they're used inside compile_activity_step).
     from src.backend.dsl.workflow.compiler.step_compilers import (
+        _STEP_DISPATCH,
         activity,
         flow,
         governance,

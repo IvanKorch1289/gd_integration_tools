@@ -38,9 +38,7 @@ def test_startup_phases_order_observability_first() -> None:
     Причина: OTel/Sentry/ConfigValidator нужен до service registration.
     Phase counts are computed dynamically — adding a 7th phase won't break this.
     """
-    from src.backend.plugins.composition.lifecycle.startup_phases import (
-        observability,
-    )
+    from src.backend.plugins.composition.lifecycle.startup_phases import observability
 
     obs_count = sum(
         1 for p in STARTUP_PHASES

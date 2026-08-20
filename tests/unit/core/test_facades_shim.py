@@ -77,8 +77,7 @@ def test_facades_lazy_attribute_access() -> None:
     # Note: specific symbol depends on what's available in core.api.
     # Use a likely-present symbol: AIGateway is in core.ai.
     try:
-        from src.backend.core import api
-        from src.backend.core import facades
+        from src.backend.core import api, facades
         # If both have attribute, they should be the same
         for sym in dir(api):
             if not sym.startswith("_") and sym[0].isupper():  # public class

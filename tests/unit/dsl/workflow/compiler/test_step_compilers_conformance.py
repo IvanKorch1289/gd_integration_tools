@@ -74,9 +74,7 @@ def test_all_compilers_are_async() -> None:
 def test_dispatch_lookup_by_class() -> None:
     """dispatch_step_compile uses type(step) lookup, не isinstance."""
     # Create a mock that matches the step type exactly
-    from src.backend.dsl.workflow.spec.activity_declarations import (
-        ActivityDeclaration,
-    )
+    from src.backend.dsl.workflow.spec.activity_declarations import ActivityDeclaration
     fake_step = ActivityDeclaration(name="test")
     compiler = _STEP_DISPATCH[type(fake_step)]
     assert compiler is not None
