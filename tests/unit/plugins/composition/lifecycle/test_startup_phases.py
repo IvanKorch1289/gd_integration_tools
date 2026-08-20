@@ -33,41 +33,86 @@ def test_startup_phases_count() -> None:
 
 @pytest.mark.unit
 def test_startup_phases_order_observability_first() -> None:
-    """Observability фазы (5) должны идти ПЕРВЫМИ.
+    """Observability фазы идут ПЕРВЫМИ.
 
     Причина: OTel/Sentry/ConfigValidator нужен до service registration.
+    Phase counts are computed dynamically — adding a 7th phase won't break this.
     """
-    obs_phases = [
-        p for p in STARTUP_PHASES
-        if p.__module__ == "src.backend.plugins.composition.lifecycle.startup_phases.observability"
-    ]
-    assert len(obs_phases) == 6, (
-        f"Expected 6 observability phases, got {len(obs_phases)}"
+    from src.backend.plugins.composition.lifecycle.startup_phases import (
+        observability,
     )
-    # First 6 should all be observability
-    for i in range(6):
-        assert STARTUP_PHASES[i].__module__ == (
-            "src.backend.plugins.composition.lifecycle.startup_phases.observability"
-        ), f"Phase {i} should be observability, got {STARTUP_PHASES[i].__module__}"
+
+    obs_count = sum(
+        1 for p in STARTUP_PHASES
+        if p.__module__ == observability.__name__
+    )
+    # First `obs_count` should all be observability
+    for i in range(obs_count):
+        assert STARTUP_PHASES[i].__module__ == observability.__name__, (
+            f"Phase {i} should be observability, got {STARTUP_PHASES[i].__module__}"
+        )
+    # After observability, should be different module
+    if obs_count < len(STARTUP_PHASES):
+        assert STARTUP_PHASES[obs_count].__module__ != observability.__name__, (
+            f"Phase {obs_count} should NOT be observability (end of obs block)"
+        )
 
 
 @pytest.mark.unit
 def test_startup_phases_order_infrastructure_second() -> None:
-    """Infrastructure фазы (3) должны идти ПОСЛЕ observability, ДО services."""
-    # Index 6-8 should be infrastructure
-    for i in [6, 7, 8]:
-        assert STARTUP_PHASES[i].__module__ == (
-            "src.backend.plugins.composition.lifecycle.startup_phases.infrastructure"
-        ), f"Phase {i} should be infrastructure"
+    """Infrastructure фазы идут ПОСЛЕ observability, ДО services."""
+    from src.backend.plugins.composition.lifecycle.startup_phases import (
+        infrastructure,
+        observability,
+        services,
+    )
+
+    # Find boundaries dynamically
+    obs_count = sum(
+        1 for p in STARTUP_PHASES if p.__module__ == observability.__name__
+    )
+    infra_count = sum(
+        1 for p in STARTUP_PHASES if p.__module__ == infrastructure.__name__
+    )
+    # Infrastructure should immediately follow observability
+    for i in range(obs_count, obs_count + infra_count):
+        assert STARTUP_PHASES[i].__module__ == infrastructure.__name__, (
+            f"Phase {i} should be infrastructure, got {STARTUP_PHASES[i].__module__}"
+        )
+    # After infrastructure, should be different module (services)
+    if obs_count + infra_count < len(STARTUP_PHASES):
+        assert STARTUP_PHASES[obs_count + infra_count].__module__ == services.__name__, (
+            f"Phase {obs_count + infra_count} should be services"
+        )
 
 
 @pytest.mark.unit
 def test_startup_phases_order_services_last() -> None:
-    """Services фазы (10) должны идти последними (9-18)."""
-    for i in range(9, 19):
-        assert STARTUP_PHASES[i].__module__ == (
-            "src.backend.plugins.composition.lifecycle.startup_phases.services"
-        ), f"Phase {i} should be services"
+    """Services фазы идут последними (after observability + infrastructure)."""
+    from src.backend.plugins.composition.lifecycle.startup_phases import (
+        infrastructure,
+        observability,
+        services,
+    )
+
+    # Compute boundaries
+    obs_count = sum(
+        1 for p in STARTUP_PHASES if p.__module__ == observability.__name__
+    )
+    infra_count = sum(
+        1 for p in STARTUP_PHASES if p.__module__ == infrastructure.__name__
+    )
+    services_count = sum(
+        1 for p in STARTUP_PHASES if p.__module__ == services.__name__
+    )
+
+    # All services should be at the end
+    for i in range(obs_count + infra_count, len(STARTUP_PHASES)):
+        assert STARTUP_PHASES[i].__module__ == services.__name__, (
+            f"Phase {i} should be services"
+        )
+    # Total must match
+    assert obs_count + infra_count + services_count == len(STARTUP_PHASES)
 
 
 @pytest.mark.unit
