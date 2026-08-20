@@ -93,6 +93,12 @@ jobs:
         # tools/check_layers.py лежит плоско в tools/, без подкаталога checks/.
         run: uv run python tools/check_layers.py
 
+      - name: ADR slot collision check
+        # Sprint 23 P2 fix (fresh-angle agent): блокирующий CI шаг.
+        # До этого был только в `make checks`, не в CI. Теперь в lint.yml.
+        # Ловит: ADR INDEX.md collisions (11 пар в docs/adr/).
+        run: uv run python tools/check_adr_collisions.py
+
       - name: Docstring policy gate (check_docstrings)
         # Cycle 30: убран continue-on-error — gate теперь REAL (fresh snapshot
         # в tools/check_docstrings_allowlist.txt покрывает все legacy-entries,
