@@ -9,9 +9,6 @@ Test quality audit found 14 issues — fixed in this commit:
 """
 from __future__ import annotations
 
-import socket
-from typing import Any
-
 import httpx
 import pytest
 
@@ -24,7 +21,6 @@ from tools.probe_smoke import (
     probe_post,
     run_probes,
 )
-
 
 # ----------------------------------------------------------------------------
 # TestProbeResultEvaluate
