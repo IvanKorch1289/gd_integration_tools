@@ -41,14 +41,44 @@ P2-R2 fix (audit 2026-08-18): удалён legacy deque-based state-machine.
 from __future__ import annotations
 
 import warnings
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any
 
 from src.backend.core.logging import get_logger
 
 _logger = get_logger("entrypoints.middlewares.circuit_breaker")
 
-__all__ = ("BreakerPolicy", "CircuitBreakerMiddleware")
+__all__ = ("BreakerPolicy", "BreakerState", "CircuitBreakerMiddleware", "RouteBreakerState")
+
+
+class BreakerState(str, Enum):
+    """Circuit breaker state (S81 W1).
+
+    str-mixin для easy JSON-serialization + comparison с string literals.
+    """
+
+    CLOSED = "closed"
+    OPEN = "open"
+    HALF_OPEN = "half_open"
+
+
+@dataclass
+class RouteBreakerState:
+    """Per-route circuit breaker state (S81 W1).
+
+    Attributes:
+        state: Текущее состояние (:class:`BreakerState`).
+        failures: Sliding window failures timestamps.
+        last_state_change: Epoch seconds последнего state transition
+            (для reset_timeout logic).
+        opened_at: Когда state перешёл в OPEN (None в других states).
+    """
+
+    state: BreakerState = BreakerState.CLOSED
+    failures: list[float] = field(default_factory=list)
+    last_state_change: float = 0.0
+    opened_at: float | None = None
 
 
 @dataclass(frozen=True)
