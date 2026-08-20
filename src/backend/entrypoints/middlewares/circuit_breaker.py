@@ -143,11 +143,18 @@ class CircuitBreakerMiddleware:
                 DeprecationWarning,
                 stacklevel=2,
             )
+        # Sprint 29: legacy deque path restored for unit-test compatibility
+        # (tests/unit/entrypoints/middlewares/test_circuit_breaker.py uses
+        # _get_state/_record_failure/_record_success/_should_allow directly).
+        self._use_legacy = not use_sliding_window_breaker
         self.app = app
         self._default_policy = default_policy or BreakerPolicy()
         self._route_policies = route_policies or {}
         # Per-route SlidingWindowBreaker (lazy)
         self._sliding_breakers: dict[str, Any] = {}
+        # Per-route legacy deque state (when use_sliding_window_breaker=False)
+        # Sprint 29: restored for unit-test compatibility
+        self._legacy_states: dict[str, RouteBreakerState] = {}
 
     def _get_policy(self, route: str) -> BreakerPolicy:
         """Get policy для конкретного route (longest-prefix match)."""
@@ -159,6 +166,99 @@ class CircuitBreakerMiddleware:
             if route.startswith(pattern):
                 return policy
         return self._default_policy
+
+    def _get_state(self, route: str) -> RouteBreakerState:
+        """Sprint 29: get or create per-route state (test API).
+
+        Returns a :class:`RouteBreakerState` for the given route. If
+        the route has a SlidingWindowBreaker, returns the underlying
+        state adapter; otherwise creates a new one.
+        """
+        # Legacy deque path (when use_sliding_window_breaker=False)
+        if self._use_legacy:
+            if route not in self._legacy_states:
+                self._legacy_states[route] = RouteBreakerState()
+            return self._legacy_states[route]
+        if route in self._sliding_breakers:
+            sb = self._sliding_breakers[route]
+            return RouteBreakerState(
+                state=BreakerState(sb.state.name)
+                if hasattr(sb, "state") and hasattr(sb.state, "name")
+                else BreakerState(sb.state)
+                if isinstance(sb.state, str)
+                else BreakerState.CLOSED,
+                failures=list(getattr(sb, "failures", []) or []),
+                last_state_change=float(getattr(sb, "last_state_change", 0.0) or 0.0),
+                opened_at=getattr(sb, "opened_at", None),
+            )
+        # No breaker yet — create one lazily
+        policy = self._get_policy(route)
+        self._sliding_breakers[route] = self._get_sliding_breaker(route, policy)
+        return self._get_state(route)
+
+    def _record_failure(
+        self, state: RouteBreakerState, policy: BreakerPolicy
+    ) -> None:
+        """Sprint 29: record a failure in :class:`RouteBreakerState`.
+
+        Slides the failure window (drops entries outside
+        ``policy.window_seconds``). If failures within window reach
+        ``policy.failure_threshold``, transitions state to OPEN.
+        """
+        import time as _time
+        now = _time.time()
+        # Trim old failures outside window
+        cutoff = now - policy.window_seconds
+        state.failures = [f for f in state.failures if f > cutoff]
+        state.failures.append(now)
+        if len(state.failures) >= policy.failure_threshold:
+            if state.state != BreakerState.OPEN:
+                state.state = BreakerState.OPEN
+                state.last_state_change = now
+                state.opened_at = now
+
+    def _record_success(self, state: RouteBreakerState) -> None:
+        """Sprint 29: record a success — closes HALF_OPEN or resets failures.
+
+        From CLOSED: clears failures (sliding window reset).
+        From HALF_OPEN: transitions to CLOSED.
+        From OPEN: no-op (shouldn't be called).
+        """
+        if state.state == BreakerState.HALF_OPEN:
+            state.state = BreakerState.CLOSED
+            state.failures = []
+            state.opened_at = None
+            import time as _time
+            state.last_state_change = _time.time()
+        elif state.state == BreakerState.CLOSED:
+            # Clear sliding window (recovery)
+            state.failures = []
+        # OPEN: no-op
+
+    def _should_allow(
+        self, state: RouteBreakerState, policy: BreakerPolicy
+    ) -> bool:
+        """Sprint 29: should a request be allowed?
+
+        CLOSED → True
+        OPEN + reset_timeout elapsed → True (transition to HALF_OPEN)
+        OPEN + reset_timeout NOT elapsed → False
+        HALF_OPEN → True (probe)
+        """
+        import time as _time
+        now = _time.time()
+        if state.state == BreakerState.CLOSED:
+            return True
+        if state.state == BreakerState.OPEN:
+            elapsed = now - state.last_state_change
+            if elapsed >= policy.reset_timeout:
+                # Transition to HALF_OPEN
+                state.state = BreakerState.HALF_OPEN
+                state.last_state_change = now
+                return True
+            return False
+        # HALF_OPEN
+        return True
 
     def _get_sliding_breaker(self, route: str, policy: BreakerPolicy) -> Any:
         """S173: get or create SlidingWindowBreaker per-route."""
@@ -193,6 +293,33 @@ class CircuitBreakerMiddleware:
 
         path: str = scope.get("path", "/")
         policy = self._get_policy(path)
+
+        # Legacy deque path (Sprint 29: restored for unit tests)
+        if self._use_legacy:
+            state = self._get_state(path)
+            if not self._should_allow(state, policy):
+                _logger.info(
+                    "Circuit OPEN (legacy deque) — rejecting request for %s", path
+                )
+                response = JSONResponse(
+                    status_code=503,
+                    content={
+                        "error": "circuit_breaker_open",
+                        "path": path,
+                        "state": state.state.value
+                        if hasattr(state.state, "value")
+                        else str(state.state),
+                    },
+                )
+                await response(scope, receive, send)
+                return
+            # Allow — call upstream, record outcome
+            try:
+                await self.app(scope, receive, send)
+                self._record_success(state)
+            except Exception:
+                self._record_failure(state, policy)
+            return
 
         breaker = self._get_sliding_breaker(path, policy)
         if breaker.is_open:
