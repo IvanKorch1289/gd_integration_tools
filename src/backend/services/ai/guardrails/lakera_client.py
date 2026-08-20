@@ -69,7 +69,15 @@ class LakeraClient:
         base_url: str = _DEFAULT_BASE,
         timeout: float = 5.0,
     ) -> None:
-        self._api_key = api_key or os.environ.get("LAKERA_API_KEY")
+        # Sprint 29 P0 fix: actually raise on missing key (Sprint 7 P0-S2
+        # fix was incomplete — docstring claimed fail-closed but init
+        # just stored None silently).
+        resolved_key = api_key or os.environ.get("LAKERA_API_KEY")
+        if not resolved_key:
+            raise LakeraGuardrailUnavailableError(
+                "Lakera API key required: pass api_key= or set LAKERA_API_KEY env"
+            )
+        self._api_key = resolved_key
         self._base_url = base_url.rstrip("/")
         self._timeout = timeout
 

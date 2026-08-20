@@ -31,11 +31,11 @@ from typing import Any
 from src.backend.core.api import RetryPolicy
 from src.backend.core.config.constants import consts
 from src.backend.core.config.settings import settings
-from src.backend.dsl.workflow.builder import WorkflowBuilder
-from src.backend.dsl.workflow.spec import (
+from src.backend.sdk import (
     ActivityDeclaration,
     SensorDeclaration,
     SleepDeclaration,
+    WorkflowBuilder,
     WorkflowDeclaration,
 )
 

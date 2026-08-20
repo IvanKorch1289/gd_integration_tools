@@ -41,6 +41,12 @@ __all__ = [
     "Pipeline",
     "SchedulerManager",
     "WorkflowBuilder",
+    # Workflow spec types (S240) — extensions build DSL workflows
+    # via ``from src.backend.sdk import ActivityDeclaration, ...``.
+    "ActivityDeclaration",
+    "SensorDeclaration",
+    "SleepDeclaration",
+    "WorkflowDeclaration",
     # App State decorator
     "app_state_singleton",
     # Composition-bound extension API (S172 P1).
@@ -104,6 +110,18 @@ def __getattr__(name: str):
         from src.backend.dsl.workflow.builder import WorkflowBuilder
 
         return WorkflowBuilder
+    # S240 re-audit: WorkflowDeclaration types (ActivityDeclaration, SensorDeclaration,
+    # SleepDeclaration, WorkflowDeclaration) — публичные для extensions,
+    # расширение композиционного API (как WorkflowBuilder + SchedulerManager).
+    if name in {
+        "ActivityDeclaration",
+        "SensorDeclaration",
+        "SleepDeclaration",
+        "WorkflowDeclaration",
+    }:
+        from src.backend.dsl.workflow import spec as _workflow_spec
+
+        return getattr(_workflow_spec, name)
     # S172 M3 ARC-006 — Extension DI infrastructure-module registry.
     if name == "register_infra_module":
         from src.backend.core.di.module_registry import register_extension_module
