@@ -22,12 +22,12 @@ from src.backend.dsl.commands.setup.registers_domains import (
     _register_admin,  # S66 W2: re-export
     _register_dadata,  # S66 W2: re-export
     _register_files,  # S66 W2: re-export
-    _register_orders,  # S66 W2: re-export
-    _register_users,  # ITER 15: DSL-2 fix
     _register_orderkinds,  # ITER 15: DSL-2 fix
+    _register_orders,  # S66 W2: re-export
     _register_servicedsl_auto_register,  # S66 W2: re-export
     _register_skb_api,  # S66 W2: re-export
     _register_tech,  # S66 W2: re-export
+    _register_users,  # ITER 15: DSL-2 fix
 )
 from src.backend.dsl.commands.setup.registers_integrations import (
     _register_agent_memory,  # S66 W2: re-export
@@ -66,6 +66,7 @@ __all__ = (
     "_register_message_replay",
     "_register_notebooks_wave_9_1",
     "_register_notifications_email_express_webhook_telegram",
+    "_register_orderkinds",  # ITER 15: DSL-2 fix
     "_register_orders",
     "_register_rag_vector_db_llm",
     "_register_scheduled_reports",
@@ -73,6 +74,7 @@ __all__ = (
     "_register_servicedsl_auto_register",
     "_register_skb_api",
     "_register_tech",
+    "_register_users",  # ITER 15: DSL-2 fix
     "_register_web_automation_multi_protocol",
     "_register_web_search_perplexity_tavily",
     "_register_webhook_relay",

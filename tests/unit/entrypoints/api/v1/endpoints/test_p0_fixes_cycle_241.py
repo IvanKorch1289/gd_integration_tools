@@ -49,7 +49,7 @@ async def test_p0_1_invoke_action_registry_none_raises_503(
 ) -> None:
     """При registry=None — HTTP 503, не silent 200 + mock."""
     _stub_admin_marketplace_enabled(monkeypatch)
-    body = ActionInvokeRequest(name="orders.list", payload={"limit": 1})
+    body = ActionInvokeRequest(name="orders.get", payload={"limit": 1})
 
     with patch(
         "src.backend.entrypoints.api.v1.endpoints.admin_actions._get_registry",
@@ -68,7 +68,7 @@ async def test_p0_1_invoke_action_registry_none_logs_warning(
 ) -> None:
     """При registry=None — emit warning log для observability."""
     _stub_admin_marketplace_enabled(monkeypatch)
-    body = ActionInvokeRequest(name="orders.list", payload={"limit": 1})
+    body = ActionInvokeRequest(name="orders.get", payload={"limit": 1})
 
     with patch(
         "src.backend.entrypoints.api.v1.endpoints.admin_actions._get_registry",
@@ -124,7 +124,7 @@ def test_p0_2_legacy_aliases_registered_count() -> None:
 
 
 def test_p0_2_orders_all_returns_dispatch_call() -> None:
-    """GET /api/v1/orders/all/ → orders.list dispatch call."""
+    """GET /api/v1/orders/all/ → orders.get dispatch call."""
     app = _build_test_app_with_aliases()
     client = TestClient(app)
 
@@ -139,14 +139,14 @@ def test_p0_2_orders_all_returns_dispatch_call() -> None:
         r = client.get("/api/v1/orders/all/")
 
     assert r.status_code == 200
-    assert r.json()["action"] == "orders.list"
+    assert r.json()["action"] == "orders.get"
     mock_reg.dispatch.assert_awaited_once()
     call_args = mock_reg.dispatch.call_args[0][0]
-    assert call_args.action == "orders.list"
+    assert call_args.action == "orders.get"
 
 
 def test_p0_2_orders_create_passes_body_as_payload() -> None:
-    """POST /api/v1/orders/create/ → orders.create dispatch с body как payload."""
+    """POST /api/v1/orders/create/ → orders.add dispatch с body как payload."""
     app = _build_test_app_with_aliases()
     client = TestClient(app)
 
@@ -164,7 +164,7 @@ def test_p0_2_orders_create_passes_body_as_payload() -> None:
 
     assert r.status_code == 200
     call_args = mock_reg.dispatch.call_args[0][0]
-    assert call_args.action == "orders.create"
+    assert call_args.action == "orders.add"
     assert call_args.payload.get("pledge_cadastral_number") == "77:01:0001:123"
 
 
@@ -222,7 +222,7 @@ def test_p0_2_action_not_in_registry_returns_404() -> None:
     client = TestClient(app)
 
     mock_reg = MagicMock()
-    mock_reg.dispatch = AsyncMock(side_effect=KeyError("orders.list"))
+    mock_reg.dispatch = AsyncMock(side_effect=KeyError("orders.get"))
 
     with patch(
         "src.backend.dsl.commands.action_registry.action_handler_registry",
