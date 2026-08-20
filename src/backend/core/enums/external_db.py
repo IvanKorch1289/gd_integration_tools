@@ -116,7 +116,16 @@ class ExternalDBObjectMeta(BaseModel):
     Используется как value для enum-элемента в ExternalDBObjectChoices.
     """
 
-    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+    model_config = ConfigDict(
+        frozen=True,
+        arbitrary_types_allowed=True,
+        # ITER 19 (Sprint 19): suppress Pydantic UserWarning "Field name 'schema'
+        # shadows attribute in parent 'BaseModel'". `schema` is intentional domain
+        # term (database schema = namespace for tables) and matches contract
+        # used by dispatch_mixin.py meta.schema access pattern. Not renaming
+        # because it's documented in ADR-2026-01 as canonical.
+        protected_namespaces=(),
+    )
 
     profile_name: str = Field(
         ...,
