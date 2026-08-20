@@ -32,12 +32,19 @@ async def test_get_missing_returns_none() -> None:
 
 @pytest.mark.asyncio
 async def test_ttl_expiry_evicts_value() -> None:
-    """После истечения TTL значение более не возвращается."""
-    cache = LruMemoryCache(max_size=10, ttl_seconds=1, scope="test-ttl")
+    """После истечения TTL значение более не возвращается.
+
+    ITER 11 (Sprint 19): ttl=0.1s + sleep=0.2s для устранения flakiness
+    на slow CI runners (1.1s sleep добавлял 1.1s к test suite + ceiling
+    от GC pauses). TTLCache использует time.monotonic() с микросекундной
+    resolution, 0.1s + 0.2s margin достаточно для детерминированной
+    экспайрации без wall-clock flakiness.
+    """
+    cache = LruMemoryCache(max_size=10, ttl_seconds=0.1, scope="test-ttl")
     await cache.set("ephemeral", "soon-gone")
     assert await cache.get("ephemeral") == "soon-gone"
     # TTLCache использует монотонный таймер; ждём чуть дольше ttl.
-    await asyncio.sleep(1.1)
+    await asyncio.sleep(0.2)
     assert await cache.get("ephemeral") is None
 
 
