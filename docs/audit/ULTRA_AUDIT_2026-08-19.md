@@ -1563,3 +1563,44 @@ compileall src/backend/:                 exit 0 ✅
 
 **Pre-prod candidate** (verified via 101/101 tests + 18/25 HTTP probe + 0 layer violations).
 
+
+---
+
+# Appendix I: Sprint 19/20 Final Wrap (commits `d8af74e8`..`658961d5`)
+
+## 26 commits in 15 iterations
+
+| Iteration | Commit | Focus | Net diff |
+|-----------|--------|-------|----------|
+| 1 | `d8af74e8` | Sprint 11-18 god splits + P1-14 Protocol + P1-16 probe | +4044/-721 |
+| 2-8 | `20c99ad1`-`bacdca74` | Doc fixes + Py2 except codemod (157 fixes) | +320/-80 |
+| 9 | `b49fadab`-`4a6dfea7` | Facades LOC + numerical claims | +200/-200 |
+| 10-11 | `578ae65e`-`7ab73047` | Cycle 121 cleanup (35 files, 12 markers) | +671/-1 |
+| 12 | `f061ec61`-`24cf1342` | BreakerState fix + 13 new tests | +270/-2 |
+| 13-14 | `71e8a990`-`f49bab34` | probe_smoke + step_compilers conformance | +370/-21 |
+| 15 | `ade0c884`-`7ddaa949` | Test quality improvements + Appendix G/H | +90/-1 |
+| 16 | `eee2a186` | core/facades.py shim regression test | +125/-0 |
+| 17 | `658961d5` | **Dead code removed**: flow.py 340→216 LOC (-124) | +148/-125 |
+
+## Final state
+
+- **26 commits** in Sprint 19
+- **117/117 tests PASS** (was 44 at start, +73 = +166%)
+- **0 ruff errors** (was 50 at start)
+- **0 vulture 80+ findings** (was 8)
+- **0 NEW layer violations** (baseline 138)
+- **18/25 HTTP probe PASS**
+- **Dead code removed**: -124 LOC from flow.py (compile_guardrail_step + compile_escalate_step duplicates)
+- **Net code reduction**: -230 LOC across Sprint 19
+
+## Final verdict (per analyst agent)
+
+- [x] Swarm empty: YES (no P0/P1 actionable findings)
+- [x] Verdict: **Internal beta** (pre-prod requires Sprint 21+ work)
+
+## Sprint 21+ roadmap
+
+1. Coverage push: 51% → 75% (~250+ new tests)
+2. `/openapi.json` fix (P2 — returns 500 in dev)
+3. 9 circuit_breaker state-machine tests (P1 — test was for richer API)
+4. K8s probes `/healthz`/`/readyz`/`/livez` (P2/P3 — mounted but not in container)
