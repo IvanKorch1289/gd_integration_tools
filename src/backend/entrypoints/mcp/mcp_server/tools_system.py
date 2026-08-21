@@ -32,7 +32,7 @@ def _register_system_tools(mcp: Any) -> None:
         description="Проверка здоровья всех компонентов системы (DB, Redis, S3, ES, etc.).",
     )
     async def system_health() -> str:
-        from src.backend.dsl.commands.registry import action_handler_registry
+        from src.backend.core.api.extensions import action_handler_registry
         from src.backend.schemas.invocation import ActionCommandSchema
 
         try:
@@ -52,7 +52,7 @@ def _register_system_tools(mcp: Any) -> None:
         "Полезно для обнаружения возможностей системы.",
     )
     async def system_actions() -> str:
-        from src.backend.dsl.commands.registry import action_handler_registry
+        from src.backend.core.api.extensions import action_handler_registry
 
         actions = action_handler_registry.list_actions()
         domains: dict[str, list[str]] = {}

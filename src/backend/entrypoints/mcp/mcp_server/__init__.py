@@ -116,7 +116,7 @@ def register_mcp_tools(mcp: Any) -> None:
         mcp: Экземпляр FastMCP.
 
     """
-    from src.backend.dsl.commands.registry import action_handler_registry
+    from src.backend.core.api.extensions import action_handler_registry
 
     for action_name in action_handler_registry.list_actions():
         _register_single_tool(mcp, action_name)

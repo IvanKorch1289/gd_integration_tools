@@ -145,7 +145,7 @@ class MqttHandler:
         logger.debug("MQTT message: topic=%s, action=%s", topic, action)
 
         try:
-            from src.backend.dsl.commands.registry import action_handler_registry
+            from src.backend.core.api.extensions import action_handler_registry
             from src.backend.schemas.invocation import ActionCommandSchema
 
             command = ActionCommandSchema(

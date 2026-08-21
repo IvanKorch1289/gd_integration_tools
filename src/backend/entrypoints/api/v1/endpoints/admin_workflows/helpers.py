@@ -147,7 +147,7 @@ async def _trigger_via_action_or_store(
            :func:`dispatch_action`.
         2. Fallback — прямой вызов ``store.create()``.
     """
-    from src.backend.dsl.commands.registry import action_handler_registry
+    from src.backend.core.api.extensions import action_handler_registry
 
     if action_handler_registry.is_registered("workflows.trigger"):
         result = await dispatch_action(

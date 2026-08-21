@@ -32,7 +32,7 @@ from src.backend.core.interfaces.invoker import (
     Invoker,
 )
 from src.backend.core.logging import get_logger
-from src.backend.dsl.commands.registry import action_handler_registry
+from src.backend.core.api.extensions import action_handler_registry
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.service import get_dsl_service
 

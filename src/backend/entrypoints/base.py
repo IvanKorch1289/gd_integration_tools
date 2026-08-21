@@ -29,7 +29,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from src.backend.core.logging import get_logger
-from src.backend.dsl.commands.registry import action_handler_registry
+from src.backend.core.api.extensions import action_handler_registry
 from src.backend.schemas.invocation import ActionCommandSchema
 
 __all__ = ("BaseEntrypoint", "dispatch_action")

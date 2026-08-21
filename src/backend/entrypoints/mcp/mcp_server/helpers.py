@@ -34,7 +34,7 @@ def _action_input_schema_json(action_name: str) -> dict[str, Any] | None:
     Используется для обогащения MCP tool description (Stream E.2) —
     клиент видит ожидаемую структуру payload.
     """
-    from src.backend.dsl.commands.registry import action_handler_registry
+    from src.backend.core.api.extensions import action_handler_registry
 
     metadata = action_handler_registry.get_metadata(action_name)
     if metadata is None or metadata.input_model is None:
@@ -56,7 +56,7 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
     """
     import inspect
 
-    from src.backend.dsl.commands.registry import action_handler_registry
+    from src.backend.core.api.extensions import action_handler_registry
     from src.backend.schemas.invocation import ActionCommandSchema
 
     schema = _action_input_schema_json(action_name)
