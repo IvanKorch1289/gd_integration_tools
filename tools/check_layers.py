@@ -121,6 +121,10 @@ CORE_LAZY_PROXY_EXCEPTIONS: set[str] = {
     "src.backend.services.integrations",  # core/integrations/skb.py → services.integrations.skb
     "src.backend.services.io",  # core/io/__init__.py + core/io/indexers.py
     "src.backend.services.core",  # core/services/__init__.py + base.py + base_service.py
+    # Sprint 33: core/api/extensions.py facade — re-exports dsl.* symbols
+    # для entrypoints. Это INTENTIONAL (facade pattern, not lazy proxy).
+    # Entry points должны импортировать отсюда, не из dsl.* напрямую.
+    "src.backend.core.api.extensions",
 }
 
 # R3.10d: одностороннее правило frontend → узкий публичный фасад backend.

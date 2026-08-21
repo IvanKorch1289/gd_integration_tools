@@ -440,7 +440,7 @@ class SkillRegistry:
             sibling = repo_root / "extensions"
             if sibling.exists():
                 return sibling.resolve()
-        except OSError, ValueError:  # noqa: violation-check — filesystem walk failure → return None
+        except (OSError, ValueError):  # noqa: violation-check — filesystem walk failure → return None
             pass
 
         return None

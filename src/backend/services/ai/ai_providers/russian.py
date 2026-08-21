@@ -77,7 +77,7 @@ class _BaseRussianProvider:
             if choices:
                 msg = choices[0].get("message", {})
                 return msg.get("content", "") or ""
-        except AttributeError, IndexError, TypeError:  # noqa: F401 — narrow API-shape fallback
+        except (AttributeError, IndexError, TypeError):  # noqa: F401 — narrow API-shape fallback
             _logger.exception(
                 "ai_provider.api_shape_parse_failed",
                 extra={"provider": __name__, "return_value": ""},

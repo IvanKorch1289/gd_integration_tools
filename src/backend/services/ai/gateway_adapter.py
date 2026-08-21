@@ -171,7 +171,7 @@ def get_ai_gateway() -> AIGateway:
         from src.backend.core.di.providers.ai import get_ai_gateway_provider
 
         return get_ai_gateway_provider()
-    except KeyError, RuntimeError:  # noqa: PIE801 — Python 3 tuple form (was X, Y syntax)
+    except (KeyError, RuntimeError):  # noqa: PIE801 — Python 3 tuple form (was X, Y syntax)
         return AIGateway()
 
 CapabilityChecker = Callable[[str, str, str | None], None]

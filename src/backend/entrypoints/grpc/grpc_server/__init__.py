@@ -159,12 +159,12 @@ def _patch_rpc_methods() -> None:
             if not hasattr(_obj, "request_streaming"):
                 try:
                     _obj.request_streaming = False  # type: ignore[attr-defined]
-                except AttributeError, TypeError:  # noqa: F401 — stub attribute injection best-effort
+                except (AttributeError, TypeError):  # noqa: F401 — stub attribute injection best-effort
                     pass
             if not hasattr(_obj, "response_streaming"):
                 try:
                     _obj.response_streaming = False  # type: ignore[attr-defined]
-                except AttributeError, TypeError:  # noqa: F401 — stub attribute injection best-effort
+                except (AttributeError, TypeError):  # noqa: F401 — stub attribute injection best-effort
                     pass
 
     # D-AUDIT-18801 fix (cycle 188): wrap Stub.__init__ methods to
@@ -305,7 +305,7 @@ def _patch_rpc_methods() -> None:
             # Try setattr on the function instead.
             try:
                 setattr(method, attr_name, attr_value)
-            except AttributeError, TypeError:  # noqa: F401 — setattr best-effort for grpc methods
+            except (AttributeError, TypeError):  # noqa: F401 — setattr best-effort for grpc methods
                 pass
 
     for _cls_name in (

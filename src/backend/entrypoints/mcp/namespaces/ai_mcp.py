@@ -23,7 +23,7 @@ def register_ai_tools(mcp: FastMCP) -> None:
         mcp: Экземпляр FastMCP.
 
     """
-    from src.backend.dsl.commands.registry import action_handler_registry
+    from src.backend.core.api.extensions import action_handler_registry
 
     ai_actions = [
         name
@@ -55,14 +55,14 @@ def _register_ai_tool(mcp: FastMCP, action_name: str) -> None:
                 tool_kwargs["input_schema"] = schema
             elif "inputSchema" in tool_sig.parameters:
                 tool_kwargs["inputSchema"] = schema
-        except TypeError, ValueError:  # noqa: violation-check — MCP tool kwargs injection best-effort
+        except (TypeError, ValueError):  # noqa: violation-check — MCP tool kwargs injection best-effort
             pass
 
     @mcp.tool(**tool_kwargs)
     async def tool_handler(payload: str = "{}", _action: str = action_name) -> str:
         import orjson
 
-        from src.backend.dsl.commands.registry import action_handler_registry
+        from src.backend.core.api.extensions import action_handler_registry
         from src.backend.entrypoints.mcp.mcp_server import _check_mcp_tool_authz
 
         # AI namespace authz gate
