@@ -233,7 +233,29 @@ async def invoke_via_gateway(
     from src.backend.core.config.features import feature_flags
 
     if not feature_flags.ai_gateway_enforce:
-        return await legacy_callable(*legacy_args, **(legacy_kwargs or {}))
+        # Sprint 36 P0 fix: legacy_callable bypass previously allowed agents
+        # to skip AIGateway (tool whitelist, capability gate, AI safety).
+        # Now: throw on production, allow only in dev with explicit warning.
+        import os
+        is_dev = os.environ.get("APP_ENVIRONMENT", "development").lower() in (
+            "development", "dev", "test", "ci",
+        )
+        if is_dev:
+            import warnings as _w
+            _w.warn(
+                "ai_gateway_enforce=False: skipping AIGateway pipeline (DEV ONLY). "
+                "Tool whitelist, capability gate, and AI safety are DISABLED.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            return await legacy_callable(*legacy_args, **(legacy_kwargs or {}))
+        else:
+            from src.backend.core.ai.errors import (
+                AIGatewayEnforcementRequiredError,
+            )
+            raise AIGatewayEnforcementRequiredError(
+                missing=("ai_gateway_enforce",),
+            )
 
     gw = gateway if gateway is not None else get_ai_gateway()
     request = AIRequest(
