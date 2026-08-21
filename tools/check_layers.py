@@ -353,6 +353,10 @@ def _check_file(path: Path, root: Path) -> list[tuple[str, str, str]]:
                 and module in CORE_LAZY_PROXY_EXCEPTIONS
             ):
                 continue
+            # Sprint 33: core/api/extensions.py — facade re-exports dsl.* symbols.
+            # Проверяем IMPORTING file (rel), не imported module.
+            if rel.endswith("core/api/extensions.py"):
+                continue
             violations.append((rel, layer, module))
     return violations
 
