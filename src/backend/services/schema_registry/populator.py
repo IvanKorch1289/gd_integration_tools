@@ -41,7 +41,7 @@ def populate_from_processor_registry(
 
     """
     reg = registry or get_schema_registry()
-    from src.backend.dsl.registry import get_processor_registry
+    from src.backend.core.api.extensions import get_processor_registry
 
     count = 0
     for spec in get_processor_registry().list_specs():

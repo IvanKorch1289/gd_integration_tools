@@ -187,11 +187,11 @@ class _DSLConsoleFacade:
                     ),
                 )
 
-            from src.backend.dsl.yaml_loader import load_pipeline_from_yaml
+            from src.backend.core.api.extensions import load_pipeline_from_yaml
 
             pipeline = load_pipeline_from_yaml(route_yaml)
 
-            from src.backend.dsl.engine.execution_engine import ExecutionEngine
+            from src.backend.core.api.extensions import ExecutionEngine
 
             engine = ExecutionEngine()
             exchange = await engine.execute(pipeline, body=payload, headers=headers)
@@ -229,7 +229,7 @@ class _DSLConsoleFacade:
         """Выполняет зарегистрированный route по route_id."""
         body = body or {}
         try:
-            from src.backend.dsl.engine.execution_engine import ExecutionEngine
+            from src.backend.core.api.extensions import ExecutionEngine
             from src.backend.services.dsl_portal.builder_facade import (
                 get_route_pipeline,
             )
@@ -272,7 +272,7 @@ class _DSLConsoleFacade:
     ) -> DryRunResponse:
         """Выполняет route в dry-run режиме (эмуляция, без side-effects)."""
         try:
-            from src.backend.dsl.engine.dry_run import dry_run_route, waterfall_lines
+            from src.backend.core.api.extensions import dry_run_route, waterfall_lines
 
             result = dry_run_route(route, sample_payload=sample_payload, seed=seed)
             return DryRunResponse(

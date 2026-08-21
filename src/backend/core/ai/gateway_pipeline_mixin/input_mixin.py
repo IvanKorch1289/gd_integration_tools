@@ -148,9 +148,7 @@ class InputMixin(_PipelineStepsProtocol):
         if sanitizer is not None:
             return sanitizer
         try:
-            from src.backend.core.api.extensions import (
-                get_presidio_sanitizer_adapter,
-            )
+            from src.backend.core.api.extensions import get_presidio_sanitizer_adapter
 
             sanitizer = get_presidio_sanitizer_adapter()
         except Exception as exc:

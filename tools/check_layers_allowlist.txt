@@ -45,14 +45,6 @@ src/backend/core/observability/log_indexer.py	core	src.backend.services.io.index
 src/backend/core/scheduler/__init__.py	core	src.backend.infrastructure.scheduler.cron_validator
 src/backend/core/security/connector_auth.py	core	src.backend.services.authorization.facade
 src/backend/core/workflow/__init__.py	core	src.backend.infrastructure.workflow.factory
-src/backend/entrypoints/api/v1/endpoints/admin_workflow_versioning.py	entrypoints	src.backend.dsl.workflow.versioning
-src/backend/entrypoints/api/v1/endpoints/dsl_console.py	entrypoints	src.backend.dsl.engine.dry_run
-src/backend/entrypoints/api/v1/endpoints/dsl_console.py	entrypoints	src.backend.dsl.engine.execution_engine
-src/backend/entrypoints/api/v1/endpoints/dsl_console.py	entrypoints	src.backend.dsl.yaml_loader
-src/backend/entrypoints/api/v1/endpoints/dsl_routes.py	entrypoints	src.backend.dsl.engine.pipeline
-src/backend/entrypoints/api/v1/endpoints/dsl_routes.py	entrypoints	src.backend.dsl.engine.tracer
-src/backend/entrypoints/api/v1/endpoints/dsl_routes.py	entrypoints	src.backend.dsl.yaml_loader
-src/backend/entrypoints/api/v1/endpoints/dsl_routes.py	entrypoints	src.backend.dsl.yaml_store
 src/backend/entrypoints/api/v1/endpoints/processors_catalog.py	entrypoints	src.backend.dsl.builder
 src/backend/entrypoints/api/v1/endpoints/processors_catalog.py	entrypoints	src.backend.dsl.engine.processors
 src/backend/entrypoints/mcp/mcp_server/tools_convert.py	entrypoints	src.backend.dsl.engine.processors.converters
@@ -70,6 +62,4 @@ src/backend/infrastructure/workflow/executor/sequential_mixin.py	workflows	src.b
 src/backend/services/ops/webhook_scheduler.py	services	src.backend.dsl.engine.processors.scraping
 src/backend/services/plugins/registries.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.processors
-src/backend/services/schema_registry/populator.py	services	src.backend.dsl.commands.registry
-src/backend/services/schema_registry/populator.py	services	src.backend.dsl.registry
-src/backend/services/workflows/cost_estimator.py	services	src.backend.dsl.workflow.versioning
+src/backend/core/di/providers/ai.py	core	src.backend.services.ai.gateway_adapter

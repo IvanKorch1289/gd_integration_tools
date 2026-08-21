@@ -155,8 +155,8 @@ async def _bootstrap() -> None:
     Аналогично ``manage.py._bootstrap``, но дополнительно стартует
     ``ConnectorRegistry`` — worker-у нужны живые БД-подключения.
     """
-    from src.backend.dsl.commands.setup import register_action_handlers
-    from src.backend.dsl.routes import register_dsl_routes
+    from src.backend.core.api.extensions import register_action_handlers
+    from src.backend.core.api.extensions import register_dsl_routes
     from src.backend.plugins.composition.service_setup import register_all_services
 
     register_all_services()

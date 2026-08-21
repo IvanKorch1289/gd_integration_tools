@@ -22,7 +22,7 @@ from src.backend.core.logging import get_logger
 if TYPE_CHECKING:
     from src.backend.dsl.commands.registry import route_registry
     from src.backend.dsl.engine.pipeline import Pipeline
-    from src.backend.dsl.yaml_store import YAMLStore
+    from src.backend.core.api.extensions import YAMLStore
 
 # Sprint 225: 2 services → dsl imports converted to lazy __getattr__ proxy.
 # route_registry и YAMLStore — глобальные singleton-like objects

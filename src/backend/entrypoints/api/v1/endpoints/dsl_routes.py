@@ -35,7 +35,7 @@ from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.tracer import TraceEvent, get_tracer  # Sprint 44 W1
 from src.backend.dsl.yaml_loader import load_pipeline_from_yaml
-from src.backend.dsl.yaml_store import YAMLStore
+from src.backend.core.api.extensions import YAMLStore
 from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
