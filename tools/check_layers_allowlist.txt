@@ -63,3 +63,9 @@ src/backend/services/ops/webhook_scheduler.py	services	src.backend.dsl.engine.pr
 src/backend/services/plugins/registries.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.processors
 src/backend/core/di/providers/ai.py	core	src.backend.services.ai.gateway_adapter
+src/backend/infrastructure/clients/metrics/di.py	infrastructure	src.backend.services.schema_registry.registry
+src/backend/plugins/composition/di.py	infrastructure	src.backend.services.plugins.loader
+src/backend/services/ai/memory/ingest.py	infrastructure	src.backend.services.ai.memory.langmem_service
+src/backend/services/ai/embeddings.py	infrastructure	src.backend.services.ai.embedding_providers
+src/backend/dsl/engine/processors/express/fastapi_actions.py	infrastructure	src.backend.dsl.engine.processors.express._common
+src/backend/infrastructure/registry/worker.py	infrastructure	src.backend.dsl.commands.registry

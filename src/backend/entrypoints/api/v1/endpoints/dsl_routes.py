@@ -30,12 +30,15 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel, Field
 
+from src.backend.core.api.extensions import (  # Sprint 44 W1
+    Pipeline,
+    TraceEvent,
+    YAMLStore,
+    get_tracer,
+    load_pipeline_from_yaml,
+)
 from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.core.logging import get_logger
-from src.backend.dsl.engine.pipeline import Pipeline
-from src.backend.dsl.engine.tracer import TraceEvent, get_tracer  # Sprint 44 W1
-from src.backend.dsl.yaml_loader import load_pipeline_from_yaml
-from src.backend.core.api.extensions import YAMLStore
 from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,

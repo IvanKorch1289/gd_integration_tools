@@ -7,6 +7,9 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-blue?logo=postgresql&logoColor=white)](https://postgresql.org)
 [![RabbitMQ](https://img.shields.io/badge/RabbitMQ-orange?logo=rabbitmq&logoColor=white)](https://rabbitmq.com)
 [![Docker](https://img.shields.io/badge/Docker-blue?logo=docker&logoColor=white)](https://docker.com)
+[![Audit R9](https://img.shields.io/badge/audit--r9-93%25-brightgreen)](docs/audit/RE_AUDIT_2026-08-28.md)
+[![God-objects](https://img.shields.io/badge/god--objects-4%2F5-blue)](docs/audit/RE_AUDIT_2026-08-28.md)
+[![Static gates](https://img.shields.io/badge/ruff%2Bbandit%2Bvulture-0%2F0%2F0-brightgreen)](docs/audit/RE_AUDIT_2026-08-28.md)
 
 ## Архитектура
 
