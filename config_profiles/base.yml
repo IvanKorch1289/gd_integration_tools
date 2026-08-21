@@ -603,3 +603,26 @@ resilience:
     clamav:         {chain: ["http_av", "skip_warn"],       mode: auto}
     smtp:           {chain: ["file_mailer"],                mode: auto}
     express:        {chain: ["smtp", "slack"],              mode: auto}
+
+# Sprint 35 P1 #8: explicit MCP defaults (was missing from base, Python pydantic
+# defaults used instead). Per multi-sprint plan: align config with Python defaults.
+mcp:
+  http_enabled: false                # Was default-on in code; off in dev per D-AUDIT-20810
+  http_path: /mcp                   # default
+  sse_enabled: false               # default
+  stdio_enabled: false              # default (clients opt-in)
+  bind_host: 127.0.0.1             # Sprint 34 P0: bind to localhost (not 0.0.0.0)
+  bind_port: 8765                  # default
+  tool_allowlist: []               # Sprint 34: ALREADY fail-closed (empty = deny-all)
+
+# Sprint 35 P1 #6: MQTT defaults (was missing from base, Python defaults used).
+mqtt:
+  require_client_auth: true         # Sprint 35 P1 #6: auth required by default
+  bind_host: 127.0.0.1
+  bind_port: 1883
+
+# Sprint 35 P1 #6: HTTP3 defaults (was missing from base, Python defaults used).
+http3:
+  require_client_auth: true         # Sprint 35 P1 #6: auth required by default
+  bind_host: 127.0.0.1
+  bind_port: 8443
