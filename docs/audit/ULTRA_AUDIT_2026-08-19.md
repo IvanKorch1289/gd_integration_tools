@@ -2059,3 +2059,63 @@ Tests: 149/149 PASS
 Total commits: 75
 ```
 
+
+---
+
+# Appendix Q: Sprint 36 P0 Security — close ai_gateway_enforce bypass (commit `cf8b6197`)
+
+## P0 SECURITY BUG (closed)
+
+**Location**: `src/backend/services/ai/gateway_adapter.py:235`
+
+**Bug**: `if not feature_flags.ai_gateway_enforce: return await legacy_callable(...)`
+
+If `ai_gateway_enforce` was disabled (e.g., misconfiguration, dev override in prod),
+the function bypassed AIGateway entirely. This means:
+- Tool whitelist checks were SKIPPED
+- Capability gate was SKIPPED
+- AI safety pipeline was SKIPPED
+
+Agents could call arbitrary tools without authorization.
+
+**Fix**: Throw `AIGatewayEnforcementRequiredError` on production environments;
+allow bypass only in dev (with `RuntimeWarning`).
+
+```python
+# After fix:
+if not feature_flags.ai_gateway_enforce:
+    is_dev = os.environ.get("APP_ENVIRONMENT", "development").lower() in (
+        "development", "dev", "test", "ci",
+    )
+    if is_dev:
+        _w.warn("ai_gateway_enforce=False: skipping AIGateway pipeline (DEV ONLY).")
+        return await legacy_callable(*legacy_args, **(legacy_kwargs or {}))
+    else:
+        raise AIGatewayEnforcementRequiredError(missing=("ai_gateway_enforce",))
+```
+
+## P2 #9 Drift Fix
+
+| Claim | Actual | Fix |
+|-------|--------|-----|
+| `ActionHandlerRegistry (112 actions)` | `114 actions, 12 files` | README.md:27 updated |
+
+Verified via AST walk: 114 `ActionHandlerSpec(...)` calls across 12 files.
+
+## Final State (Sprint 36)
+
+```
+Tests:                       149/149 PASS ✅
+P0 security bugs fixed:      1 (AIGateway enforcement bypass) ✅
+P2 drift fixed:              1 (action count 112→114) ✅
+Total commits:                79 (Sprint 19-36)
+```
+
+## Remaining (Sprint 37+)
+
+- **#6**: MQTT/HTTP3 per-message JWT auth (~35 LOC, multi-file)
+- **#7**: step_type claim verification (1 line, needs grep — already verified ✅)
+- **#10**: Email DKIM/SPF trust (~80 LOC, optional deps)
+- **Layer violations**: 112→0 (multi-sprint, ~25 remaining services→infrastructure)
+
+Per AGENTS.md: 79 commits left uncommitted для human review.
