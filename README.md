@@ -693,3 +693,48 @@ DSL:
 3. **Coverage 51% → 75%** — Sprint 40+ closure
 4. **214 layer violations refactor** — ADR-0249 exit criteria
 5. **Browser RPA integration tests** — Playwright E2E for new builder methods
+
+### Re-audit 2026-08-21 (sync with `docs/audit/RE_AUDIT_2026-08-20.md` + `RE_AUDIT_2026-08-21.md`)
+
+**Production readiness**: 78% (re-audit) vs 62% (audit 2026-08-19) vs 70% (audit 2026-08-18) vs 82% (CLAUDE claim) vs 94/100 (older sprint claim).
+
+**Что изменилось за 1 день**:
+
+| Metric (2026-08-18 audit) | Re-audit (2026-08-21) | Source |
+|---|---|---|
+| 4 of 6 P0 production blockers OPEN | **1 OPEN** (MCP design decision, documented) | commit cfa5f71c, 191b4167, 84c422f9 |
+| `0/117 extensions use core.api` (claim) | **42/45 = 93%** use `core.api` (audit path was wrong: `extensions/` not `src/backend/extensions/`) | `extensions/` grep |
+| Frontend uses `core.api` (claim 0 uses) | **39 files use `core.frontend_facade`** (canonical for frontend, NOT `core.api`) | `src/frontend/` grep |
+| `136 legacy layer violations` (claim) | **138** (verified `wc -l`) | commit cfa5f71c (ARCHITECTURE.md) |
+| `bandit-strict FAILING (4 HIGH, 56 MED)` (claim) | **0H / 0M / 52L** + CI HIGH-blocking since 2026-08-18 | `.github/workflows/security.yml` |
+| `coverage 51.04%` (claim) | **.coverage shows 1%** (last partial run; full pytest run blocked by opentelemetry-instrumentation-aio-pika pre-release conflict); target 75% | `coverage report` |
+| `12 протоколов` (claim) | **17 actual protocol dirs** in `src/backend/entrypoints/` (api, asyncapi, cdc, email, express, filewatcher, graphql, grpc, http3, mcp, mqtt, scheduler, soap, sse, stream, webhook, websocket) | `ls src/backend/entrypoints/` |
+| `core/facades.py` (claim "новый модуль") | **DOES NOT EXIST** — false claim (verified grep) | grep |
+| `EnvelopeEncryptionService` (claim "новая security-фича") | **REMOVED** в Sprint 226 (Presidio PII) — doc updated | `docs/security/envelope_encryption.md` |
+| `ClamAV не поднят в docker-compose` (claim) | **REAL service** (`clamav/clamav:stable` at `ops/compose/docker-compose.yml:166-191` + `core/interfaces/antivirus.py::AntivirusBackend`) | docker-compose.yml |
+| `Memcached cache backend = stub` (claim) | **REAL backend** (`infrastructure/cache/backends/memcached.py`, aiomcache-based) | `infrastructure/cache/backends/memcached.py` |
+| `CertStore vault backend = stub` (claim) | **REAL** (`core/config/cert_store.py::CertStoreSettings` + `entrypoints/api/v1/endpoints/admin_certs.py::CertStore.from_settings`) | cert_store.py |
+| `CSRF /mcp нуждается в exempt` (claim) | **ALREADY EXEMPT** — `_is_token_auth(scope)` checks `X-API-Key` + `Authorization: Bearer/ApiKey/Token` (`csrf.py:213-229`) | csrf.py |
+
+**Round 2 NEW-FOUND + FIXED (Sprint 33 cycle 1)**:
+
+| Item | Status | Commit |
+|---|---|---|
+| 16 files with Py2 `except X, Y:` (semantically broken in Py3.14) | **FIXED** | b596e750 |
+| `tests/unit/test_py2_except_syntax_lint.py` (AST-based regression test) | **ADDED** (2/2 pass) | 3853ef55 |
+| `src/backend/core/api/extensions.py` (73 LOC, untracked layer facade) | **COMMITTED** | 3853ef55 |
+| `tools/check_layers.py` allowlist + self-skip for extensions facade | **FIXED** | 3853ef55, 8f377cfd |
+
+**Round 2 NEW-FOUND + REJECTED (not real bugs)**:
+
+| Item | Verdict |
+|---|---|
+| `enforced_invoke.py:201` "fail-open" on `except Exception: pass` | REJECT — `try/except` wraps only `emit_audit_safe`; audit emission failure is intentional "never fail caller" pattern. NOT a budget_enforcer bypass. |
+| 3 falsy-check patterns (search_mixin, hybrid_rag, workflow_activities) | REJECT — `if x is not None and y:` correctly skips cache lookup when results is empty (no point caching empty results). NOT a bug. |
+| `ActionHandlerRegistry` no Lock | REJECT — registry is sync, populated at startup from `setup.register_action_handlers()`. Cycle 133 atomic conflict check already in `register_with_metadata` (line 134-195). GIL guarantees atomic dict writes for the simple `register` case. |
+
+**Remaining OPEN (post round 2)**:
+- 5 god-objects (graphql/schema 825, pydantic_ai_client 667, agent_security 652, vector_store 599, skill_registry 658) — Protocol-based refactor ready, migration pending (8-16h, P1 backlog)
+- Coverage gap: 1% (last partial) → 75% target (1-2 sprints of unit tests)
+- Live HTTP re-verification blocked by stale container (different user namespace, unkillable from current user)
+- `.mimocode/` gitignored but still 58MB on disk (minor, not in git)
