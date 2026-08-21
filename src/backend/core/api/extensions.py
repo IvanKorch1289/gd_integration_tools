@@ -21,12 +21,15 @@ from src.backend.dsl.commands.action_registry import (
 )
 
 # Commands registry — RouteRegistry canonical (14 violations → 0)
-from src.backend.dsl.commands.registry import RouteRegistry
+from src.backend.dsl.commands.registry import RouteRegistry, route_registry
 
 # Engine primitives (6 violations → 0)
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.execution_engine import ExecutionEngine
+
+# Processor registry (Sprint 43 W1: 1 violation in services/schema_registry/populator.py)
+from src.backend.dsl.registry.processor import ProcessorRegistry, get_processor_registry
 
 # Service facade (entrypoints → dsl.service: 6 violations)
 from src.backend.dsl.service.facade import DslService, get_dsl_service
@@ -55,6 +58,10 @@ __all__ = [
     "ActionCommandSchema",
     # Route registry
     "RouteRegistry",
+    "route_registry",
+    # Processor registry
+    "ProcessorRegistry",
+    "get_processor_registry",
     # Service
     "DslService",
     "get_dsl_service",

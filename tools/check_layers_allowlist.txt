@@ -14,6 +14,7 @@ src/backend/core/audit/__init__.py	core	src.backend.infrastructure.audit.event_l
 src/backend/core/audit/facade/__init__.py	core	src.backend.infrastructure.audit.jsonl_audit
 src/backend/core/audit/facade/audit_service.py	core	src.backend.services.audit.clickhouse_audit_service
 src/backend/core/auth/facade.py	core	src.backend.services.security.facade
+src/backend/core/di/providers/ai.py	core	src.backend.services.ai.gateway_adapter
 src/backend/core/di/providers/billing.py	core	src.backend.services.billing
 src/backend/core/di/providers/cdc_bridge.py	core	src.backend.infrastructure.cdc.cdc_client_adapter
 src/backend/core/di/providers/cdc_bridge.py	core	src.backend.infrastructure.cdc.debezium_events_backend
@@ -62,10 +63,3 @@ src/backend/infrastructure/workflow/executor/sequential_mixin.py	workflows	src.b
 src/backend/services/ops/webhook_scheduler.py	services	src.backend.dsl.engine.processors.scraping
 src/backend/services/plugins/registries.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.processors
-src/backend/core/di/providers/ai.py	core	src.backend.services.ai.gateway_adapter
-src/backend/infrastructure/clients/metrics/di.py	infrastructure	src.backend.services.schema_registry.registry
-src/backend/plugins/composition/di.py	infrastructure	src.backend.services.plugins.loader
-src/backend/services/ai/memory/ingest.py	infrastructure	src.backend.services.ai.memory.langmem_service
-src/backend/services/ai/embeddings.py	infrastructure	src.backend.services.ai.embedding_providers
-src/backend/dsl/engine/processors/express/fastapi_actions.py	infrastructure	src.backend.dsl.engine.processors.express._common
-src/backend/infrastructure/registry/worker.py	infrastructure	src.backend.dsl.commands.registry

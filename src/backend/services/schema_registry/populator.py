@@ -21,7 +21,7 @@ from src.backend.services.schema_registry.registry import (
 )
 
 if TYPE_CHECKING:
-    from src.backend.dsl.commands.registry import RouteRegistry
+    from src.backend.core.api.extensions import RouteRegistry
 
 __all__ = (
     "populate_from_actions",
@@ -75,7 +75,7 @@ def populate_from_routes(
     """
     reg = registry or get_schema_registry()
     if route_registry is None:
-        from src.backend.dsl.commands.registry import route_registry as default_registry
+        from src.backend.core.api.extensions import route_registry as default_registry
 
         route_registry = default_registry
 
@@ -115,7 +115,7 @@ def populate_from_actions(registry: ServiceSchemaRegistry | None = None) -> int:
     """Импортирует action handlers в schema_registry."""
     reg = registry or get_schema_registry()
     try:
-        from src.backend.dsl.commands.registry import action_handler_registry
+        from src.backend.core.api.extensions import action_handler_registry
     except (ImportError, AttributeError):
         return 0
 
