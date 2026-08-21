@@ -22,10 +22,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.cache.metrics_collector import (
+    from src.backend.core.api.cache import (
         get_cache_metrics_snapshot,
     )
-    from src.backend.infrastructure.cache.rag.metrics import get_metrics_snapshot
+    from src.backend.core.api.cache import get_metrics_snapshot
 
 __all__ = ("get_cache_metrics_snapshot", "get_metrics_snapshot")
 
@@ -33,13 +33,13 @@ __all__ = ("get_cache_metrics_snapshot", "get_metrics_snapshot")
 def __getattr__(name: str) -> Any:
     """Lazy proxy: import infrastructure только при lookup атрибута."""
     if name == "get_cache_metrics_snapshot":
-        from src.backend.infrastructure.cache.metrics_collector import (
+        from src.backend.core.api.cache import (
             get_cache_metrics_snapshot,
         )
 
         return get_cache_metrics_snapshot
     if name == "get_metrics_snapshot":
-        from src.backend.infrastructure.cache.rag.metrics import get_metrics_snapshot
+        from src.backend.core.api.cache import get_metrics_snapshot
 
         return get_metrics_snapshot
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

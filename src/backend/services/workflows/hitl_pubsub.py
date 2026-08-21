@@ -83,7 +83,7 @@ async def publish_hitl_resolved(
     )
 
     try:
-        from src.backend.infrastructure.clients.storage.redis import (
+        from src.backend.core.api.storage import (
             get_redis_client as redis_client,
         )
 

@@ -20,7 +20,7 @@ from src.backend.core.observability.metrics import audit_silent_loss_total
 from src.backend.services.audit.clickhouse_audit_service.state import AuditEvent
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.messaging.dlq_base import DLQWriter
+    from src.backend.core.api.messaging import DLQWriter
 
 _logger = get_logger("services.audit.clickhouse")
 
@@ -198,7 +198,7 @@ class ClickHouseAuditService:
         if self._dlq_writer is not None:
             try:
                 # Lazy import для layer-clean (services → infrastructure).
-                from src.backend.infrastructure.messaging.dlq_base import (
+                from src.backend.core.api.messaging import (
                     DLQEnvelope,
                     DLQReason,
                 )

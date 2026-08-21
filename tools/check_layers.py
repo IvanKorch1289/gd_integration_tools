@@ -360,6 +360,20 @@ def _check_file(path: Path, root: Path) -> list[tuple[str, str, str]]:
             # Sprint 37: core/api/security.py — facade re-exports infrastructure.security.
             if rel.endswith("core/api/security.py"):
                 continue
+            # Sprint 38: 4 new facades (messaging, storage, scheduler, resilience)
+            if rel.endswith("core/api/messaging.py"):
+                continue
+            if rel.endswith("core/api/storage.py"):
+                continue
+            if rel.endswith("core/api/scheduler.py"):
+                continue
+            if rel.endswith("core/api/resilience.py"):
+                continue
+
+            if rel.endswith("core/api/cache.py"):
+                continue
+            if rel.endswith("core/api/workflow.py"):
+                continue
             violations.append((rel, layer, module))
     return violations
 

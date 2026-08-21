@@ -87,7 +87,7 @@ class SecurityFacade:
         """
         try:
             from src.backend.core.auth.jwt_blacklist import RedisJwtBlacklist
-            from src.backend.infrastructure.clients.storage.redis import (
+            from src.backend.core.api.storage import (
                 get_redis_client,
             )
 

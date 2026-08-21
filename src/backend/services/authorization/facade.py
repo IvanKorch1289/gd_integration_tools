@@ -340,7 +340,7 @@ class AuthorizationFacade:
         try:
             import json as _json
 
-            from src.backend.infrastructure.clients.storage.redis import (
+            from src.backend.core.api.storage import (
                 get_redis_client,
             )
 
