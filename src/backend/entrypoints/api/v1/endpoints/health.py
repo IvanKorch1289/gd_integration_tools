@@ -167,10 +167,7 @@ async def startup_probe(request: Request) -> JSONResponse:
             status_code=503, content={"status": "starting"}, headers=_no_store_headers()
         )
 
-    from src.backend.core.api.extensions import (
-        action_handler_registry,
-        route_registry,
-    )
+    from src.backend.core.api.extensions import action_handler_registry, route_registry
 
     return JSONResponse(
         content={

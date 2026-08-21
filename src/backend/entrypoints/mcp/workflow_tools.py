@@ -183,11 +183,11 @@ async def _trigger_and_maybe_wait(
     import asyncio
     from datetime import datetime
 
+    from src.backend.core.api.extensions import action_handler_registry
     from src.backend.core.di.providers import (
         get_workflow_state_store_provider,
         get_workflow_status_enum_provider,
     )
-    from src.backend.core.api.extensions import action_handler_registry
     from src.backend.entrypoints.base import dispatch_action
 
     WorkflowStatus = get_workflow_status_enum_provider()

@@ -29,33 +29,13 @@ S168 W11 P2-4 DECISION (per master prompt v8):
     5. Verify all 11+ existing tests pass
 """
 
-from collections.abc import AsyncGenerator
-from datetime import datetime
-from types import SimpleNamespace
-from typing import Any
 
-import strawberry
-from fastapi import Depends
-from strawberry.fastapi import GraphQLRouter
-from strawberry.scalars import JSON  # re-exported below
-from strawberry.types import Info
 
-from src.backend.core.auth import AuthMethod
-from src.backend.core.auth.auth_selector import require_auth
 from src.backend.core.logging import get_logger
-from src.backend.core.api.extensions import action_handler_registry
-from src.backend.dsl.engine.context import ExecutionContext
-from src.backend.dsl.engine.tracer import get_tracer
-from src.backend.dsl.registry import route_registry
-from src.backend.dsl.service import get_dsl_service
 
 # S168 W12 P2-4: DslResult + ActionResult + dispatch_action extracted
 # to dsl_result.py. Re-exported here для backward-compat (existing
 # callers: tests/unit/entrypoints/graphql/test_schema.py).
-from src.backend.entrypoints.graphql.dsl_result import ActionResult, DslResult
-from src.backend.entrypoints.graphql.dsl_result import (
-    dispatch_action as _dispatch_action,
-)
 
 __all__ = ("graphql_router",)
 logger = get_logger(__name__)
@@ -67,9 +47,7 @@ logger = get_logger(__name__)
 # to types.py for single responsibility. Re-exports сохранены для
 # backward compat (existing callers: tests/unit/entrypoints/graphql/test_schema.py,
 # dsl_result.py, plugins/composition/app_factory.py).
-from src.backend.entrypoints.graphql.types import (
-    FileType as FileType,
-    OrderKindType as OrderKindType,
-    OrderType as OrderType,
-    UserType as UserType,
-)
+from src.backend.entrypoints.graphql.types import FileType as FileType
+from src.backend.entrypoints.graphql.types import OrderKindType as OrderKindType
+from src.backend.entrypoints.graphql.types import OrderType as OrderType
+from src.backend.entrypoints.graphql.types import UserType as UserType

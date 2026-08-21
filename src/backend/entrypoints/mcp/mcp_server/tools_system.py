@@ -71,7 +71,7 @@ def _register_system_tools(mcp: Any) -> None:
     async def system_processors() -> str:
         import inspect
 
-        from src.backend.dsl.engine import processors as proc_module
+        from src.backend.core.api.extensions import processors as proc_module
 
         result = []
         for name in dir(proc_module):

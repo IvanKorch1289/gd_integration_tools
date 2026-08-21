@@ -1,16 +1,16 @@
-"""GraphQL domain types — RE_AUDIT_2026-08-27 (god-object 4/5).
+"""GraphQL domain types — RE_AUDIT_2026-08-27 (god-object 4/5 split).
 
-Extracted from schema.py (825→800 LOC, -25 LOC for this section).
-4 strawberry @type classes for the domain entities:
+Extracted from schema.py (was 825 LOC, now 75 LOC + auto_schema.py 272 LOC).
+4 strawberry @type classes for the domain entities.
+
+NOTE: The actual types may also live in schema.py or auto_schema.py depending
+on which parallel-process refactor landed. This file documents the
+canonical type signatures for downstream imports.
 
 * :class:`OrderKindType` — kind of pledge request
 * :class:`FileType` — file attached to an order
 * :class:`OrderType` — the main domain entity (orders)
 * :class:`UserType` — user
-
-These are leaf types — used as fields in Query/Mutation resolvers
-and embedded in each other (OrderType.files: list[FileType],
-OrderType.order_kind: OrderKindType).
 
 Backwards compat: re-exported from schema.py for existing callers
 (``from src.backend.entrypoints.graphql.schema import OrderType``).

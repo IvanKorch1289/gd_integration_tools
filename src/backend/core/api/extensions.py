@@ -71,6 +71,7 @@ __all__ = [
     "ExecutionContext",
     "Exchange",
     "ExecutionEngine",
+    # ExecutionTracer/TraceEvent/get_tracer exposed via __getattr__ (Sprint 39 W3)
     # DSL analysis
     "ParallelismAnalyzer",
     # YAML

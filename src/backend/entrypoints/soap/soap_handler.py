@@ -22,6 +22,11 @@ import orjson
 from defusedxml import ElementTree as ET
 from fastapi import APIRouter, Depends, Request, Response
 
+from src.backend.core.api.extensions import (
+    ExecutionContext,
+    action_handler_registry,
+    get_dsl_service,
+)
 from src.backend.core.auth.auth_selector import AuthMethod, require_auth
 from src.backend.core.di.dependencies import get_invoker_dep
 from src.backend.core.errors import BaseError
@@ -32,9 +37,6 @@ from src.backend.core.interfaces.invoker import (
     Invoker,
 )
 from src.backend.core.logging import get_logger
-from src.backend.core.api.extensions import action_handler_registry
-from src.backend.dsl.engine.context import ExecutionContext
-from src.backend.dsl.service import get_dsl_service
 
 __all__ = ("soap_router",)
 
