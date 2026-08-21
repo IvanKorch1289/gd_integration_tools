@@ -64,8 +64,7 @@ def _register_route_tools(mcp: Any) -> None:
     )
     async def route_execute(route_id: str, payload: str = "{}") -> str:
         """Выполняет DSL-маршрут по route_id с переданным payload, возвращает результат Exchange."""
-        from src.backend.core.api.extensions import ExecutionEngine
-        from src.backend.core.api.extensions import route_registry
+        from src.backend.core.api.extensions import ExecutionEngine, route_registry
 
         try:
             pipeline = route_registry.get(route_id)

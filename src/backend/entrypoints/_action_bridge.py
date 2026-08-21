@@ -291,8 +291,7 @@ async def _dispatch_dsl(
     Returns:
         :class:`BridgeResult` с результатом маршрута.
     """
-    from src.backend.core.api.extensions import ExecutionContext
-    from src.backend.core.api.extensions import get_dsl_service
+    from src.backend.core.api.extensions import ExecutionContext, get_dsl_service
 
     dsl = get_dsl_service()
     # Sprint 1.1 (L5 Security Chain): проброс principal/permissions

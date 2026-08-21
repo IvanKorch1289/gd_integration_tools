@@ -29,9 +29,9 @@ from uuid import uuid4
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from src.backend.core.api.extensions import get_dsl_service
 from src.backend.core.config.services.websocket import ws_settings
 from src.backend.core.logging import get_logger
-from src.backend.core.api.extensions import get_dsl_service
 from src.backend.entrypoints._action_bridge import dispatch_action_or_dsl
 from src.backend.entrypoints.websocket.ws_auth import (
     WSAuthError,

@@ -19,9 +19,9 @@ from uuid import uuid4
 
 from watchfiles import Change, awatch
 
+from src.backend.core.api.extensions import get_dsl_service
 from src.backend.core.logging import get_logger
 from src.backend.core.utils.task_registry import get_task_registry
-from src.backend.core.api.extensions import get_dsl_service
 
 __all__ = ("WatcherManager", "WatcherSpec", "watcher_manager")
 

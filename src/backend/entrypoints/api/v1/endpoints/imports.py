@@ -313,8 +313,7 @@ async def _import_bulk_objects(
     # (НЕ src.backend.dsl.engine.pipeline_registry, которого не
     # существует). get_pipeline_registry() → route_registry singleton
     # с .get(route_id) для lookup pipeline.
-    from src.backend.core.api.extensions import ExecutionEngine
-    from src.backend.core.api.extensions import route_registry
+    from src.backend.core.api.extensions import ExecutionEngine, route_registry
 
     pipeline = route_registry.get(route_id)
     if pipeline is None:

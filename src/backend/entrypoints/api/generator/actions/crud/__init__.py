@@ -19,11 +19,11 @@ if TYPE_CHECKING:
     pass
 from pydantic import BaseModel as BaseModel
 
-from src.backend.core.interfaces.action_dispatcher import (
-    ActionMetadata as ActionMetadata,
-)
 from src.backend.core.api.extensions import (
     action_handler_registry as action_handler_registry,
+)
+from src.backend.core.interfaces.action_dispatcher import (
+    ActionMetadata as ActionMetadata,
 )
 from src.backend.entrypoints.api.generator.actions.crud.query_mixin import (
     QueryMixin,  # S58 W1: MRO
