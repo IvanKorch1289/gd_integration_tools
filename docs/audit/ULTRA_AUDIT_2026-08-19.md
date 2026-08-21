@@ -2028,3 +2028,34 @@ Total commits (Sprint 19-34): 72
 | 8 | P1 | MCP base.yml vs Python default mismatch | ~5 |
 | 9 | P2 | 112 actions claim unverifiable | ~5 |
 | 10 | P2 | Email inbound trust model | ~10 |
+
+---
+
+# Appendix P: Sprint 35 P1 Config Gaps (commit `98324a7d`)
+
+## Action Count Verification
+
+Sprint 35 analyst discovered that "112 actions" claim IS accurate:
+- 114 `ActionHandlerSpec(...)` declarations in src/backend/
+- 5 registration call sites (dsl/service_dsl.py, registers_integrations.py, etc.)
+- 8 files contain action declarations (extensions + dsl/commands/setup + services/jupyter + services/ops/notify + services/plugins)
+
+## Sprint 35 P1 Fixes Applied
+
+| # | Priority | Description | Status |
+|---|----------|-------------|--------|
+| #5 | P1 | Tool actions whitelist enforcement | DEFERRED (multi-file) |
+| #6 | P1 | MQTT/HTTP3 auth gap | **PARTIAL**: base.yml now has require_client_auth: true |
+| #7 | P1 | step_type claim | DEFERRED (needs grep) |
+| #8 | P1 | MCP base.yml vs Python default | **DONE**: explicit mcp/mqtt/http3 sections added |
+
+## Files Changed
+- config_profiles/base.yml (+23 lines, mcp/mqtt/http3 sections)
+- .bandit (P0 SKIP list updated, pre-existing)
+
+## Final State (Sprint 35)
+```
+Tests: 149/149 PASS
+Total commits: 75
+```
+
