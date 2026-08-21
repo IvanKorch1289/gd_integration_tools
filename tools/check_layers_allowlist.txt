@@ -3,7 +3,6 @@
 # Цель — постепенно сокращать.
 # S110 W2: --update-allowlist MERGES (was REPLACE).
 # S112 W1: --prune-allowlist removes stale entries (complement to MERGE).
-src/backend/core/ai/gateway_pipeline_mixin/input_mixin.py	core	src.backend.services.ai.pii.presidio_analyzer
 src/backend/core/ai/gateway_pipeline_mixin/llm_mixin.py	core	src.backend.services.ai.prompt_registry
 src/backend/core/ai/gateway_pipeline_mixin/output_mixin.py	core	src.backend.services.ai.gateway
 src/backend/core/ai/llm_gateway.py	core	src.backend.services.ai.gateway.client
@@ -15,8 +14,6 @@ src/backend/core/audit/__init__.py	core	src.backend.infrastructure.audit.event_l
 src/backend/core/audit/facade/__init__.py	core	src.backend.infrastructure.audit.jsonl_audit
 src/backend/core/audit/facade/audit_service.py	core	src.backend.services.audit.clickhouse_audit_service
 src/backend/core/auth/facade.py	core	src.backend.services.security.facade
-src/backend/core/di/providers/ai.py	core	src.backend.services.ai.gateway_adapter
-src/backend/core/di/providers/ai.py	core	src.backend.services.ai.pii.presidio_analyzer
 src/backend/core/di/providers/billing.py	core	src.backend.services.billing
 src/backend/core/di/providers/cdc_bridge.py	core	src.backend.infrastructure.cdc.cdc_client_adapter
 src/backend/core/di/providers/cdc_bridge.py	core	src.backend.infrastructure.cdc.debezium_events_backend
@@ -69,10 +66,7 @@ src/backend/infrastructure/clients/messaging/event_bus.py	infrastructure	src.bac
 src/backend/infrastructure/database/migrations/env.py	infrastructure	src.backend.services.plugins.loader
 src/backend/infrastructure/notifications/adapters/express.py	infrastructure	src.backend.dsl.engine.processors.express._common
 src/backend/infrastructure/scheduler/scheduled_tasks.py	infrastructure	src.backend.services.ai.memory.langmem_service
-src/backend/infrastructure/security/presidio_sanitizer.py	infrastructure	src.backend.services.ai.pii.presidio_analyzer
 src/backend/infrastructure/workflow/executor/sequential_mixin.py	workflows	src.backend.dsl.engine.exchange
-src/backend/infrastructure/workflow/worker.py	workflows	src.backend.dsl.commands.setup
-src/backend/infrastructure/workflow/worker.py	workflows	src.backend.dsl.routes
 src/backend/services/ops/webhook_scheduler.py	services	src.backend.dsl.engine.processors.scraping
 src/backend/services/plugins/registries.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.processors

@@ -134,7 +134,7 @@ def get_ai_sanitizer_provider() -> Any:
     from src.backend.core.config.features import feature_flags
 
     if feature_flags.presidio_pii_enabled:
-        from src.backend.services.ai.pii.presidio_analyzer import (
+        from src.backend.core.api.extensions import (
             get_presidio_sanitizer_adapter,
         )
 
@@ -163,7 +163,7 @@ def get_pii_tokenizer_provider() -> Any:
     if "pii_tokenizer" in _overrides:
         return _overrides["pii_tokenizer"]
     from src.backend.core.security.pii_tokenizer import PIITokenizer
-    from src.backend.services.ai.pii.presidio_analyzer import (
+    from src.backend.core.api.extensions import (
         get_presidio_sanitizer_adapter,
     )
 

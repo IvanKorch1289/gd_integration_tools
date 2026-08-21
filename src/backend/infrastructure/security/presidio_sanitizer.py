@@ -29,7 +29,7 @@ from typing import TYPE_CHECKING
 # импорта инстанцирование на module-load бы создало layer-violation
 # `infrastructure → services` (проверяется `make layers`).
 if TYPE_CHECKING:
-    from src.backend.services.ai.pii.presidio_analyzer import PresidioSanitizerAdapter
+    from src.backend.core.api.extensions import PresidioSanitizerAdapter
 
 __all__ = ("PresidioSanitizer", "SanitizeResult", "get_presidio_sanitizer")
 
@@ -42,7 +42,7 @@ def _resolve_adapter(*, language: str) -> PresidioSanitizerAdapter:
     deprecated API, фактически — единственный путь до удаления shim
     в `[wave:s24/closure]`).
     """
-    from src.backend.services.ai.pii.presidio_analyzer import PresidioSanitizerAdapter
+    from src.backend.core.api.extensions import PresidioSanitizerAdapter
 
     return PresidioSanitizerAdapter(default_language=language)
 
