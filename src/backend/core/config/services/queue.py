@@ -272,7 +272,15 @@ class GRPCSettings(BaseSettingsWithLoader):
     ca_cert_path: str = Field(
         default="", description="Путь к CA-сертификату для mTLS (опционально)"
     )
-    require_client_auth: bool = Field(default=False)
+    require_client_auth: bool = Field(
+        default=True,  # Sprint 34 P0 fix: changed from False
+        description=(
+            "Sprint 34 P0 fix (per multi-sprint plan): gRPC AuthInterceptor was "
+            "OPT-IN (default=False), meaning gRPC server in production could "
+            "be reached WITHOUT auth tokens. Now default=True — production-safe. "
+            "For trusted dev networks, set GD_INTEGRATION__GRPC__REQUIRE_CLIENT_AUTH=false."
+        ),
+    )
 
     @computed_field(description="Сформировать URI для подключения к сокету")
     def socket_uri(self) -> str:

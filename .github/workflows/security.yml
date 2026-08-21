@@ -58,9 +58,16 @@ jobs:
         run: uv sync
 
       - name: Run bandit
-        # bandit[toml] уже в pyproject.toml. -r src — рекурсивно.
-        # --severity-level medium — не падать на low.
-        run: uv run bandit -r src -f sarif -o bandit.sarif --severity-level medium || true
+        # RE_AUDIT_2026-08-23: ACTUALLY blocking on HIGH (was `|| true` = advisory only).
+        # .bandit config: skips B608/B108/B104 (false positives) + B105/B107 (FP in dict keys).
+        # Two-step: first run for SARIF (any severity for upload), then
+        # second run that BLOCKS on HIGH findings.
+        # -r src — рекурсивно по всему src/
+        # -c .bandit — skip false positives (см. .bandit comments)
+        # --severity-level medium — SARIF includes medium (для отчёта)
+        run: |
+          uv run bandit -r src -c .bandit -f sarif -o bandit.sarif --severity-level medium
+          uv run bandit -r src -c .bandit --severity-level high  # blocking gate on HIGH
 
       - name: Upload SARIF
         if: always()

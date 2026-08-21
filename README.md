@@ -626,7 +626,7 @@ route = (
 
 | Sprint 203 original claim | Реальный статус (2026-08-18) |
 |---|---|
-| `core/api facade` — extensions используют | **PARTIALLY VERIFIED** — extensions **42** uses, 0 frontend files используют (Sprint 19 audit) |
+| `core/api facade` — extensions используют | **PARTIALLY VERIFIED** — extensions 0..42 uses (Sprint 19 audit), 0 frontend files используют (use `core.frontend_facade` legacy wrapper, 98 files) |
 | `pg_runner replay()` | **DEPRECATED** (raises `NotImplementedError` since Sprint 217) |
 | `EnvelopeEncryptionService` | **REMOVED** (PII-токенизация через Presidio) |
 | `core.facades.py` | **DOES NOT EXIST** (consolidated в `core/api/__init__.py`) |
