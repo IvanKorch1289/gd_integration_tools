@@ -250,9 +250,7 @@ async def invoke_via_gateway(
             )
             return await legacy_callable(*legacy_args, **(legacy_kwargs or {}))
         else:
-            from src.backend.core.ai.errors import (
-                AIGatewayEnforcementRequiredError,
-            )
+            from src.backend.core.ai.errors import AIGatewayEnforcementRequiredError
             raise AIGatewayEnforcementRequiredError(
                 missing=("ai_gateway_enforce",),
             )
