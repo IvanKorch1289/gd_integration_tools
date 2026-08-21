@@ -705,16 +705,16 @@ DSL:
 | 4 of 6 P0 production blockers OPEN | **1 OPEN** (MCP design decision, documented) | commit cfa5f71c, 191b4167, 84c422f9 |
 | `0/117 extensions use core.api` (claim) | **42/45 = 93%** use `core.api` (audit path was wrong: `extensions/` not `src/backend/extensions/`) | `extensions/` grep |
 | Frontend uses `core.api` (claim 0 uses) | **39 files use `core.frontend_facade`** (canonical for frontend, NOT `core.api`) | `src/frontend/` grep |
-| `136 legacy layer violations` (claim) | **138** (verified `wc -l`) | commit cfa5f71c (ARCHITECTURE.md) |
+| `136 legacy layer violations` (claim) | **138** (round 1) → **141** (round 2 after +3 facade entries) → **112** (now, after Sprint D.3-D.4 refactor removed 22 + 7 more migrations) | `grep -c -v "^#" tools/check_layers_allowlist.txt` |
 | `bandit-strict FAILING (4 HIGH, 56 MED)` (claim) | **0H / 0M / 52L** + CI HIGH-blocking since 2026-08-18 | `.github/workflows/security.yml` |
-| `coverage 51.04%` (claim) | **.coverage shows 1%** (last partial run; full pytest run blocked by opentelemetry-instrumentation-aio-pika pre-release conflict); target 75% | `coverage report` |
-| `12 протоколов` (claim) | **17 actual protocol dirs** in `src/backend/entrypoints/` (api, asyncapi, cdc, email, express, filewatcher, graphql, grpc, http3, mcp, mqtt, scheduler, soap, sse, stream, webhook, websocket) | `ls src/backend/entrypoints/` |
+| `coverage 51.04% / 75% target` (claim) | **.coverage is CORRUPT** (mixed branch+statement data); fail_under = **60%** per S34 W4 (was 75% в S19 K2 W4); full pytest run blocked by opentelemetry-instrumentation-aio-pika pre-release conflict | `pyproject.toml:1080` |
+| `12 протоколов` (claim) | **17 actual protocol dirs** in `src/backend/entrypoints/` | `ls src/backend/entrypoints/` |
 | `core/facades.py` (claim "новый модуль") | **DOES NOT EXIST** — false claim (verified grep) | grep |
 | `EnvelopeEncryptionService` (claim "новая security-фича") | **REMOVED** в Sprint 226 (Presidio PII) — doc updated | `docs/security/envelope_encryption.md` |
-| `ClamAV не поднят в docker-compose` (claim) | **REAL service** (`clamav/clamav:stable` at `ops/compose/docker-compose.yml:166-191` + `core/interfaces/antivirus.py::AntivirusBackend`) | docker-compose.yml |
-| `Memcached cache backend = stub` (claim) | **REAL backend** (`infrastructure/cache/backends/memcached.py`, aiomcache-based) | `infrastructure/cache/backends/memcached.py` |
-| `CertStore vault backend = stub` (claim) | **REAL** (`core/config/cert_store.py::CertStoreSettings` + `entrypoints/api/v1/endpoints/admin_certs.py::CertStore.from_settings`) | cert_store.py |
-| `CSRF /mcp нуждается в exempt` (claim) | **ALREADY EXEMPT** — `_is_token_auth(scope)` checks `X-API-Key` + `Authorization: Bearer/ApiKey/Token` (`csrf.py:213-229`) | csrf.py |
+| `ClamAV не поднят в docker-compose` (claim) | **REAL service** (`clamav/clamav:stable`) | docker-compose.yml |
+| `Memcached cache backend = stub` (claim) | **REAL backend** (aiomcache-based) | `infrastructure/cache/backends/memcached.py` |
+| `CertStore vault backend = stub` (claim) | **REAL** (`CertStoreSettings` + `from_settings`) | cert_store.py |
+| `CSRF /mcp нуждается в exempt` (claim) | **ALREADY EXEMPT** — `_is_token_auth(scope)` checks `X-API-Key` + `Authorization: Bearer/ApiKey/Token` | csrf.py |
 
 **Round 2 NEW-FOUND + FIXED (Sprint 33 cycle 1)**:
 
@@ -729,12 +729,47 @@ DSL:
 
 | Item | Verdict |
 |---|---|
-| `enforced_invoke.py:201` "fail-open" on `except Exception: pass` | REJECT — `try/except` wraps only `emit_audit_safe`; audit emission failure is intentional "never fail caller" pattern. NOT a budget_enforcer bypass. |
-| 3 falsy-check patterns (search_mixin, hybrid_rag, workflow_activities) | REJECT — `if x is not None and y:` correctly skips cache lookup when results is empty (no point caching empty results). NOT a bug. |
-| `ActionHandlerRegistry` no Lock | REJECT — registry is sync, populated at startup from `setup.register_action_handlers()`. Cycle 133 atomic conflict check already in `register_with_metadata` (line 134-195). GIL guarantees atomic dict writes for the simple `register` case. |
+| `enforced_invoke.py:201` "fail-open" on `except Exception: pass` | REJECT — wraps only `emit_audit_safe`, not budget_enforcer. |
+| 3 falsy-check patterns (search_mixin, hybrid_rag, workflow_activities) | REJECT — correct `and` short-circuit. |
+| `ActionHandlerRegistry` no Lock | REJECT — sync startup, cycle 133 atomic check sufficient. |
 
-**Remaining OPEN (post round 2)**:
-- 5 god-objects (graphql/schema 825, pydantic_ai_client 667, agent_security 652, vector_store 599, skill_registry 658) — Protocol-based refactor ready, migration pending (8-16h, P1 backlog)
-- Coverage gap: 1% (last partial) → 75% target (1-2 sprints of unit tests)
+**Round 3 NEW-FOUND + FIXED (2026-08-22)**:
+
+| Item | Status | Commit |
+|---|---|---|
+| 4 sites MOCK-fallback pattern systemic (admin_actions:286 _mock_spec, admin_plugins:190/207/233 _mock_plugins/_mock_manifest) | **FIXED** (4/4 → 503) | 54765f71 |
+| 2 datetime deprecations: `datetime.utcnow()` (cert_store/backend_consul.py:175) + naive `datetime.now()` (model_registry/local_fs_backend.py:206) | **FIXED** | 54765f71 |
+
+**Round 3 NEW-FOUND + VERIFIED-EXTENDED**:
+
+| Item | Verdict |
+|---|---|
+| Pydantic V1 patterns (0) — V2 migration COMPLETE | 288 ConfigDict, 117 model_dump, 43 model_validate, 19 @field_validator |
+| `typing.List/Dict/Optional` legacy | 0 (only TypedDict/Any/NamedTuple) |
+| `subprocess shell=True` | 0 (only in security docstrings) |
+| Saga compensation tests | 5 files (test_saga_history, test_saga_lra, test_saga_lra_mixin, test_saga_step, test_saga_lra_processor) |
+| HITL tests | 5 files (test_hitl_service, test_hitl_signal_store_redis, test_hitl_watch_cap, test_hitl_history, test_hitl_approval) |
+| Watchfiles atomic snapshot/restore | wired in `yaml_watcher.py:148,158,225,255` (snapshot_state before + restore_state in except) |
+| RouteBuilder Protocol migration | 2/41 mixins (~5%) — claim "ready, not done" honest |
+| `.pyi` stub drift | 153 methods missing from base.pyi vs runtime (P2 backlog) |
+| 3 high-risk `__init__.py` hubs | dsl/engine/processors (46 imports), dsl/builders/base (43 imports + 41-mixin MRO), core/config/features (29 imports) |
+| 2 pickle deserialization sites | documented + `# nosec B301` (acceptable, but rely on comment-level containment) |
+
+**Round 3 NEW-FOUND FALSE CLAIMs (in pre-audits)**:
+
+| Claim (pre-audit) | Reality | Source |
+|---|---|---|
+| `Exchange god-node (1071 edges)` | **FALSE CLAIM** — `dsl/engine/exchange.py` is 246 LOC, 14 defs, 4 classes. "1071 edges" is fan-in from callers, NOT file complexity. | `wc -l` + `grep -c "^def "` |
+| `pydantic_ai_client.py 68 funcs` | **FALSE CLAIM** — actual 34 funcs | `grep -c "^def \|^    def "` |
+| `MOCK fix complete (round 1)` | **PARTIAL** — only `list_actions` fixed. `get_action_spec` + 3 admin_plugins sites still served fabricated data on registry=None. | round 1 audit scope too narrow |
+| `138 / 141 layer violations` | **STALE** — actual 112 (Sprint D.3-D.4 refactor removed 22 entrypoints→dsl.* + 7 more migrations) | `grep -c -v "^#"` after refactor |
+| `75% coverage target` | **STALE** — pyproject fail_under = 60% (S34 W4) | `pyproject.toml:1080` |
+| `.coverage 1%` | **MEASUREMENT ERROR** — file is CORRUPT (mixed branch+statement), can't read 1%. Real state unmeasurable in this session. | `coverage report` errors |
+
+**Remaining OPEN (post round 3)**:
+- 5 god-objects (graphql/schema 825/41, pydantic_ai_client 667/34, skill_registry 658/13, agent_security 652/21, vector_store 599/29) — Protocol refactor готов, миграция 2/41 = 5% (P1, 8-16h)
+- RouteBuilder `.pyi` stub drift (153 methods) — IDE/mypy see incomplete surface (P2, 1h)
+- Coverage: corrupt `.coverage` file → unmeasurable; full pytest blocked by opentelemetry-instrumentation-aio-pika pre-release conflict
 - Live HTTP re-verification blocked by stale container (different user namespace, unkillable from current user)
-- `.mimocode/` gitignored but still 58MB on disk (minor, not in git)
+- MCP HTTP mount default=False in dev_light: design decision (documented)
+- `.mimocode/` gitignored but 58MB on disk (minor, not in git)
