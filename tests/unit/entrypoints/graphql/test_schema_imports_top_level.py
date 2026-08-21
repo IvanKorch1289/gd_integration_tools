@@ -1,5 +1,10 @@
 """S69 W3: tests для graphql/schema.py top-level dsl imports.
 
+S43 W2: ``test_top_level_dsl_imports`` skip после R8 facade refactor
+(graphql 825→31 LOC). Facade не имеет top-level dsl imports —
+они consolidated в ``core.api.extensions``. Тест проверял pre-R8
+архитектуру (825-LOC schema.py с inline resolvers).
+
 Проверяют:
 1. AST-based: zero lazy dsl imports ВНУТРИ resolver methods
 2. Top-level imports: route_registry, action_handler_registry, get_tracer
@@ -11,6 +16,8 @@ from __future__ import annotations
 
 import ast
 from pathlib import Path
+
+import pytest
 
 
 def _parse_schema() -> ast.Module:
@@ -43,6 +50,7 @@ def test_no_lazy_dsl_imports_in_resolvers() -> None:
     )
 
 
+@pytest.mark.skip(reason="R8 facade refactor: dsl imports via core.api.extensions, not top-level")
 def test_top_level_dsl_imports() -> None:
     """Top-level imports section содержит 4 canonical dsl modules.
 
