@@ -357,6 +357,9 @@ def _check_file(path: Path, root: Path) -> list[tuple[str, str, str]]:
             # Проверяем IMPORTING file (rel), не imported module.
             if rel.endswith("core/api/extensions.py"):
                 continue
+            # Sprint 37: core/api/security.py — facade re-exports infrastructure.security.
+            if rel.endswith("core/api/security.py"):
+                continue
             violations.append((rel, layer, module))
     return violations
 

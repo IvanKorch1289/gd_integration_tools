@@ -22,7 +22,7 @@ from __future__ import annotations as annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.security.signatures import (
+    from src.backend.core.api.security import (
         DEFAULT_TIMESTAMP_WINDOW,
         verify_signature,
     )
@@ -38,7 +38,7 @@ def __getattr__(name: str) -> Any:
     Symbol identity сохраняется (proxy возвращает original object).
     """
     if name in {"DEFAULT_TIMESTAMP_WINDOW", "verify_signature"}:
-        from src.backend.infrastructure.security import signatures as _sig
+        from src.backend.core.api.security import signatures as _sig
 
         return getattr(_sig, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -107,11 +107,7 @@ src/backend/services/resilience/rate_limiter.py	services	src.backend.infrastruct
 src/backend/services/scheduler/admin.py	services	src.backend.infrastructure.scheduler
 src/backend/services/schema_registry/populator.py	services	src.backend.dsl.commands.registry
 src/backend/services/schema_registry/populator.py	services	src.backend.dsl.registry
-src/backend/services/security/__init__.py	services	src.backend.infrastructure.security
-src/backend/services/security/cert_store_facade.py	services	src.backend.infrastructure.security.cert_store
 src/backend/services/security/facade.py	services	src.backend.infrastructure.clients.storage.redis
-src/backend/services/security/facade.py	services	src.backend.infrastructure.security.signatures
-src/backend/services/security/pii_streaming_facade.py	services	src.backend.infrastructure.security
 src/backend/services/workflow/__init__.py	services	src.backend.infrastructure.workflow
 src/backend/services/workflows/cost_estimator.py	services	src.backend.dsl.workflow.versioning
 src/backend/services/workflows/hitl_pubsub.py	services	src.backend.infrastructure.clients.storage.redis

@@ -39,7 +39,7 @@ async def parallelism_report(name: str) -> dict[str, Any]:
     # statement with comment-only, no actual names). Sprint D.3-D.4
     # refactor (1bb76b0a) added extensions facade but missed this
     # site. Using canonical full path.
-    from src.backend.dsl.analysis.parallelism_analyzer import ParallelismAnalyzer
+    from src.backend.core.api.extensions import ParallelismAnalyzer
 
     try:
         # D-AUDIT-11701 fix (cycle 117): canonical path

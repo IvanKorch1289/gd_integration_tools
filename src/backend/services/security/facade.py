@@ -157,7 +157,7 @@ class SecurityFacade:
             True если signature валидна.
 
         """
-        from src.backend.infrastructure.security.signatures import (
+        from src.backend.core.api.security import (
             verify_signature as _verify,
         )
 

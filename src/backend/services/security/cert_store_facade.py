@@ -14,7 +14,7 @@ __all__ = ("CertStore",)  # noqa: F822 — lazy __getattr__ export
 
 def __getattr__(name: str) -> Any:
     if name == "CertStore":
-        from src.backend.infrastructure.security.cert_store import CertStore
+        from src.backend.core.api.security import CertStore
 
         return CertStore
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

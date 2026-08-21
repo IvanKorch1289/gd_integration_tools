@@ -14,7 +14,7 @@ __all__ = ("PiiStreamPolicy", "stream_filter")  # noqa: F822 — lazy __getattr_
 
 def __getattr__(name: str) -> Any:
     if name in ("PiiStreamPolicy", "stream_filter"):
-        from src.backend.infrastructure.security import pii_streaming as _m
+        from src.backend.core.api.security import pii_streaming as _m
 
         return getattr(_m, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

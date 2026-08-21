@@ -25,6 +25,11 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.execution_engine import ExecutionEngine
 
+# DSL analysis (entrypoints → dsl.analysis: 1 violation)
+from src.backend.dsl.analysis.parallelism_analyzer import (
+    ParallelismAnalyzer,
+)
+
 # Service facade (entrypoints → dsl.service: 6 violations)
 from src.backend.dsl.service.facade import DslService, get_dsl_service
 
@@ -68,6 +73,8 @@ __all__ = [
     "ExecutionContext",
     "Exchange",
     "ExecutionEngine",
+    # DSL analysis
+    "ParallelismAnalyzer",
     # YAML
     "to_yaml",
     "from_yaml",
