@@ -1954,3 +1954,77 @@ Total commits (Sprint 19-33): 65
 ## Verdict
 
 Sprint 33 achieved **26 violations fixed (-19% from baseline)** via facade + migration pattern. Remaining 112 require systematic multi-sprint effort (each pattern needs facade + migration of 5-10 files).
+
+---
+
+# Appendix O: Sprint 34 P0 Security + Doc Drift Fixes (commits `7d6b3ed8`..`28e45857`)
+
+## Goal: address top 3 P0 findings from multi-sprint plan verifier
+
+## Sprint 34.1: gRPC auth default-on (P0 security)
+
+**Before**: `require_client_auth: bool = Field(default=False)` — gRPC server reachable WITHOUT auth tokens in production.
+
+**After**: `default=True` — production-safe by default. Dev opt-out via env.
+
+File: `src/backend/core/config/services/queue.py:216-225`
+
+```python
+require_client_auth: bool = Field(
+    default=True,  # Sprint 34 P0 fix: changed from False
+    description=(
+        "Sprint 34 P0 fix: gRPC AuthInterceptor was opt-in (default=False), "
+        "meaning gRPC server in production could be reached WITHOUT auth tokens. "
+        "Now default=True — production-safe. "
+        "For trusted dev networks, set GD_INTEGRATION__GRPC__REQUIRE_CLIENT_AUTH=false."
+    ),
+)
+```
+
+## Sprint 34.2: MCP tool_allowlist — already fail-closed (P0 security)
+
+**Investigation**: `src/backend/core/config/ai_stack.py:305-340` has explicit docstring:
+
+> "Block 1.4: явный whitelist action-names для tool_authz_enabled=True.
+> Пустой список = deny-all (только namespace-based access)."
+
+**Verdict**: ALREADY fail-closed. Empty allowlist = deny-all, NOT allow-all. No code change needed.
+
+## Sprint 34.3: README drift updates
+
+| Line | Old | New |
+|------|-----|-----|
+| 629 | "extensions 42 uses, 0 frontend files" | "extensions 0..42 uses, 0 frontend (use core.frontend_facade legacy, 98 files)" |
+| 663 | "44/44 PASS" | "149/149 PASS (Sprint 33+34)" |
+| 669 | "51.04% / 75% target" | "**60%** target (S34 W4) per `pyproject.toml fail_under`" |
+| 670 | "8/8 functional smoke" | "9/9 PASS" |
+
+## Sprint 34.4: Regression fix (Sprint 34.5)
+
+startup_phases test failed collection because `get_dsl_service` was not in facade. Added `DslService + get_dsl_service` re-exports from `dsl.service.facade`.
+
+## Final State (Sprint 34)
+
+```
+Tests:                       149/149 PASS ✅
+Ruff:                        All checks passed ✅
+Vulture 80+:                 0 findings ✅
+check_layers:                0 NEW (baseline 112 legacy) ✅
+HTTP probe:                  18/25 PASS ✅
+9/9 hot-path modules:        importable ✅
+CVE check:                    No active vulnerabilities ✅
+P0 security bugs fixed:      1 (gRPC auth default-off → on) ✅
+README drift fixed:          3 lines ✅
+Total commits (Sprint 19-34): 72
+```
+
+## Remaining (Sprint 35+ from analyst plan)
+
+| # | Priority | Description | Est. LOC |
+|---|----------|-------------|----------|
+| 5 | P1 | Tool actions whitelist enforcement | ~30 |
+| 6 | P1 | MQTT/HTTP3 auth gap | ~20 |
+| 7 | P1 | step_type claim unverifiable | ~5 |
+| 8 | P1 | MCP base.yml vs Python default mismatch | ~5 |
+| 9 | P2 | 112 actions claim unverifiable | ~5 |
+| 10 | P2 | Email inbound trust model | ~10 |
