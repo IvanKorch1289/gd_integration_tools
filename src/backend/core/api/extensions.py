@@ -20,13 +20,13 @@ from src.backend.dsl.commands.action_registry import (
 # Commands registry — RouteRegistry canonical (14 violations → 0)
 from src.backend.dsl.commands.registry import RouteRegistry
 
-# Service facade (entrypoints → dsl.service: 6 violations)
-from src.backend.dsl.service.facade import DslService, get_dsl_service
-
 # Engine primitives (6 violations → 0)
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.execution_engine import ExecutionEngine
+
+# Service facade (entrypoints → dsl.service: 6 violations)
+from src.backend.dsl.service.facade import DslService, get_dsl_service
 
 # Workflow builder (3+ violations → 0)
 from src.backend.dsl.workflow.builder import (
