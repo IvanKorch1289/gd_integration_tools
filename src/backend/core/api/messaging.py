@@ -7,10 +7,7 @@ services → infrastructure.messaging violations.
 from __future__ import annotations
 
 # Re-exports infrastructure.messaging (3+ services → infrastructure.messaging violations)
-from src.backend.infrastructure.messaging import (
-    dlq_base,
-    outbox,
-)
+from src.backend.infrastructure.messaging import dlq_base, outbox
 from src.backend.infrastructure.messaging.outbox.stuck_monitor import (
     OutboxStuckMonitor as OutboxMonitor,
 )
@@ -34,8 +31,8 @@ def __getattr__(name: str) -> object:
 __all__ = [
     "dlq_base",
     "outbox",
-    "KafkaProducer",
     "OutboxMonitor",
     "DLQBase",
     "Outbox",
+    # KafkaProducer is exposed via __getattr__ (lazy, requires aiokafka)
 ]

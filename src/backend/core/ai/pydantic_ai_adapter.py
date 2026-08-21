@@ -48,7 +48,6 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
     from pydantic_ai.models import ModelSettings as _ModelSettings
     from pydantic_ai.models import StreamedResponse as _StreamedResponse
     from pydantic_ai.usage import RequestUsage as _RequestUsage
-    from pydantic_ai.usage import Usage as _Usage
 
     try:
         from pydantic_ai.tools import (
