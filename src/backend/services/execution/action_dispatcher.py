@@ -35,7 +35,7 @@ from src.backend.core.interfaces.action_dispatcher import (
 )
 
 if TYPE_CHECKING:
-    from src.backend.dsl.commands.action_registry import ActionHandlerRegistry
+    from src.backend.core.api.extensions import ActionHandlerRegistry
 
 # Sprint 226: action_handler_registry + ActionHandlerRegistry converted
 # to lazy __getattr__ proxy.

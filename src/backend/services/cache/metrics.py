@@ -24,8 +24,8 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from src.backend.core.api.cache import (
         get_cache_metrics_snapshot,
+        get_metrics_snapshot,
     )
-    from src.backend.core.api.cache import get_metrics_snapshot
 
 __all__ = ("get_cache_metrics_snapshot", "get_metrics_snapshot")
 
@@ -33,9 +33,7 @@ __all__ = ("get_cache_metrics_snapshot", "get_metrics_snapshot")
 def __getattr__(name: str) -> Any:
     """Lazy proxy: import infrastructure только при lookup атрибута."""
     if name == "get_cache_metrics_snapshot":
-        from src.backend.core.api.cache import (
-            get_cache_metrics_snapshot,
-        )
+        from src.backend.core.api.cache import get_cache_metrics_snapshot
 
         return get_cache_metrics_snapshot
     if name == "get_metrics_snapshot":

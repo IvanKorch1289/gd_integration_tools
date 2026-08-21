@@ -31,7 +31,7 @@ from src.backend.core.interfaces.action_dispatcher import (
 )
 
 logger = logging.getLogger(__name__)
-from src.backend.dsl.commands.action_registry import (
+from src.backend.core.api.extensions import (
     ActionHandlerRegistry,
     action_handler_registry,
 )

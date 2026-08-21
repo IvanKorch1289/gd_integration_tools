@@ -83,9 +83,7 @@ async def publish_hitl_resolved(
     )
 
     try:
-        from src.backend.core.api.storage import (
-            get_redis_client as redis_client,
-        )
+        from src.backend.core.api.storage import get_redis_client as redis_client
 
         # Lazy import + non-blocking publish: 1 second timeout чтобы
         # не задерживать caller. Если Redis недоступен — silently

@@ -6,9 +6,7 @@ Ponytail fix: services/* импортируют через core.api.storage
 from __future__ import annotations
 
 # Re-exports infrastructure.clients.storage (3+ violations)
-from src.backend.infrastructure.clients.storage import (
-    clickhouse,
-)
+from src.backend.infrastructure.clients.storage import clickhouse
 from src.backend.infrastructure.clients.storage import redis as _redis
 
 Clickhouse = clickhouse

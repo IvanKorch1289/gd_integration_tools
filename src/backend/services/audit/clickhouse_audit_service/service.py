@@ -198,10 +198,7 @@ class ClickHouseAuditService:
         if self._dlq_writer is not None:
             try:
                 # Lazy import для layer-clean (services → infrastructure).
-                from src.backend.core.api.messaging import (
-                    DLQEnvelope,
-                    DLQReason,
-                )
+                from src.backend.core.api.messaging import DLQEnvelope, DLQReason
 
                 for ev in targets:
                     envelope = DLQEnvelope(

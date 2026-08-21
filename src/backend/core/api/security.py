@@ -6,10 +6,10 @@ services → infrastructure violations.
 """
 from __future__ import annotations
 
+from src.backend.infrastructure.security import pii_streaming, signatures
+
 # Re-exports infrastructure.security (4 services → infrastructure.security violations)
 from src.backend.infrastructure.security.cert_store import CertStore
-from src.backend.infrastructure.security import pii_streaming
-from src.backend.infrastructure.security import signatures
 
 # Backward-compat aliases
 PiiStreaming = pii_streaming

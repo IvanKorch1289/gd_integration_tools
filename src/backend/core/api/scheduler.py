@@ -1,10 +1,7 @@
 """Sprint 38: scheduler facade — re-exports infrastructure.scheduler."""
 from __future__ import annotations
 
-from src.backend.infrastructure.scheduler import (
-    scheduler_registry,
-    SchedulerRunner,
-)
+from src.backend.infrastructure.scheduler import SchedulerRunner, scheduler_registry
 
 __all__ = [
     "scheduler_registry",

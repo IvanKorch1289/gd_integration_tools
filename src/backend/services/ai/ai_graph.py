@@ -59,7 +59,7 @@ def _make_action_tool(action_name: str) -> Any:
     """
     from langchain_core.tools import StructuredTool
 
-    from src.backend.dsl.commands.registry import action_handler_registry
+    from src.backend.core.api.extensions import action_handler_registry
     from src.backend.schemas.invocation import ActionCommandSchema
 
     async def _run_action(**kwargs: Any) -> str:

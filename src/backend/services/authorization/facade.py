@@ -340,9 +340,7 @@ class AuthorizationFacade:
         try:
             import json as _json
 
-            from src.backend.core.api.storage import (
-                get_redis_client,
-            )
+            from src.backend.core.api.storage import get_redis_client
 
             redis_client = await get_redis_client().get_client("cache")
             raw = await redis_client.get(f"session:{session_id}")

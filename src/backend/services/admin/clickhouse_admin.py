@@ -27,9 +27,7 @@ __all__ = ("AdminClickHouseClient", "get_admin_clickhouse_client")
 def __getattr__(name: str) -> Any:
     """Lazy proxy: import infrastructure только при lookup атрибута."""
     if name in {"AdminClickHouseClient", "get_admin_clickhouse_client"}:
-        from src.backend.core.api.storage import (
-            clickhouse_admin_client as _m,
-        )
+        from src.backend.core.api.storage import clickhouse_admin_client as _m
 
         return getattr(_m, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 from src.backend.infrastructure.resilience import (
-    rate_limiter,
-    RateLimiter,
-    CircuitBreaker,
     Bulkhead,
+    CircuitBreaker,
+    RateLimiter,
+    rate_limiter,
 )
 
 __all__ = [

@@ -9,7 +9,7 @@
 Использование:
 
 ```python
-from src.backend.dsl.commands.action_registry import action_handler_registry
+from src.backend.core.api.extensions import action_handler_registry
 from src.backend.services.ops.notify_actions import register_notify_actions
 
 register_notify_actions(action_handler_registry, prefix="notifyv2")
@@ -25,7 +25,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:  # pragma: no cover
-    from src.backend.dsl.commands.action_registry import ActionHandlerRegistry
+    from src.backend.core.api.extensions import ActionHandlerRegistry
 
 __all__ = (
     "NotifyGatewayActions",
@@ -173,7 +173,7 @@ def register_notify_actions(
         Список зарегистрированных имён action'ов.
 
     """
-    from src.backend.dsl.commands.action_registry import ActionHandlerSpec
+    from src.backend.core.api.extensions import ActionHandlerSpec
 
     channels = ("email", "telegram", "slack", "teams", "sms", "webhook", "express")
     base_prefix = "notify" if override else prefix

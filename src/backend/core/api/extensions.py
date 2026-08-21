@@ -9,6 +9,9 @@ Ponytail fix: re-exports dsl.* symbols через core.api.extensions,
 """
 from __future__ import annotations
 
+# DSL analysis (entrypoints → dsl.analysis: 1 violation)
+from src.backend.dsl.analysis.parallelism_analyzer import ParallelismAnalyzer
+
 # Action registry (8 violations → 0)
 from src.backend.dsl.commands.action_registry import (
     ActionCommandSchema,
@@ -24,11 +27,6 @@ from src.backend.dsl.commands.registry import RouteRegistry
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.execution_engine import ExecutionEngine
-
-# DSL analysis (entrypoints → dsl.analysis: 1 violation)
-from src.backend.dsl.analysis.parallelism_analyzer import (
-    ParallelismAnalyzer,
-)
 
 # Service facade (entrypoints → dsl.service: 6 violations)
 from src.backend.dsl.service.facade import DslService, get_dsl_service

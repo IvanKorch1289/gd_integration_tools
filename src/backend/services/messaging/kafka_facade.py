@@ -74,9 +74,7 @@ class KafkaFacade:
         if self._producer is None:
             try:
                 # Lazy import infrastructure layer через facade
-                from src.backend.core.api.messaging import (
-                    KafkaProducer,
-                )
+                from src.backend.core.api.messaging import KafkaProducer
 
                 self._producer = KafkaProducer(bootstrap_servers=self._bootstrap)
             except Exception as exc:

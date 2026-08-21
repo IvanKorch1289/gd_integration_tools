@@ -22,10 +22,7 @@ from __future__ import annotations as annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.core.api.security import (
-        DEFAULT_TIMESTAMP_WINDOW,
-        verify_signature,
-    )
+    from src.backend.core.api.security import DEFAULT_TIMESTAMP_WINDOW, verify_signature
 
 __all__ = ("DEFAULT_TIMESTAMP_WINDOW", "verify_signature")
 

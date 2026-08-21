@@ -86,10 +86,8 @@ class SecurityFacade:
 
         """
         try:
+            from src.backend.core.api.storage import get_redis_client
             from src.backend.core.auth.jwt_blacklist import RedisJwtBlacklist
-            from src.backend.core.api.storage import (
-                get_redis_client,
-            )
 
             redis_client = await get_redis_client().get_client("cache")
             blacklist = RedisJwtBlacklist(redis_client)
@@ -157,9 +155,7 @@ class SecurityFacade:
             True если signature валидна.
 
         """
-        from src.backend.core.api.security import (
-            verify_signature as _verify,
-        )
+        from src.backend.core.api.security import verify_signature as _verify
 
         return _verify(
             payload, signature, timestamp, secret, window_seconds=window_seconds
