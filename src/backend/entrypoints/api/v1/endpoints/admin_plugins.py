@@ -187,7 +187,16 @@ async def list_plugins() -> list[PluginSummary]:
 
     registry = _get_plugin_registry()
     if registry is None:
-        return _mock_plugins()
+        # RE_AUDIT_2026-08-22 round 3 fix: silent mock → 503.
+        # Тот же fail-CLOSED pattern что у admin_actions.list_actions
+        # (D-AUDIT-9701) и admin_actions.get_action_spec.
+        # Раньше: registry=None ИЛИ registry.list_all() exception →
+        # silent return _mock_plugins() → admin UI показывал fabricated
+        # plugin list (decisions на fabricated data).
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="PluginLoader недоступен — список плагинов не может быть получен",
+        )
 
     try:
         plugins = registry.list_all()
@@ -203,8 +212,19 @@ async def list_plugins() -> list[PluginSummary]:
             for p in plugins
         ]
     except Exception as exc:
-        logger.warning("Ошибка чтения реестра плагинов: %s — возврат mock", exc)
-        return _mock_plugins()
+        # RE_AUDIT_2026-08-22: silent mock-fallback → 503.
+        # PluginLoader.list_all() может кинуть AttributeError (API
+        # mismatch), RuntimeError (corrupted state), OSError (storage).
+        # ВСЕ → 503 (fail-LOUD).
+        logger.error(
+            "Ошибка чтения реестра плагинов (exc_type=%s exc_msg=%s) — 503",
+            type(exc).__name__,
+            exc,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Не удалось прочитать реестр плагинов: {exc}",
+        ) from exc
 
 
 @router.get(
@@ -230,7 +250,12 @@ async def get_plugin_manifest(name: str) -> PluginManifest:
 
     registry = _get_plugin_registry()
     if registry is None:
-        return _mock_manifest(name)
+        # RE_AUDIT_2026-08-22 round 3 fix: silent mock → 503.
+        # Тот же pattern что list_plugins и admin_actions.get_action_spec.
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"PluginLoader недоступен — манифест {name} не может быть получен",
+        )
 
     try:
         plugin = registry.get(name)

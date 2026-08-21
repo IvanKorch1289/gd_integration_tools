@@ -172,7 +172,7 @@ class ConsulCertBackend(CertBackend):
             "description": description or "",
             "version": version,
             "uploaded_by": uploaded_by or "",
-            "updated_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.now(UTC).isoformat(),
         }
         encoded = json.dumps(payload).encode("utf-8")
 

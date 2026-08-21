@@ -283,7 +283,15 @@ async def get_action_spec(name: str) -> ActionSpec:
 
     registry = _get_registry()
     if registry is None:
-        return _mock_spec(name)
+        # RE_AUDIT_2026-08-22 round 3 fix: silent mock → 503.
+        # Тот же fail-CLOSED pattern что у list_actions (D-AUDIT-9701).
+        # Раньше: GET /api/v1/admin/actions/{name} возвращал fabricated
+        # _mock_spec(name) при registry=None — admin UI показывал
+        # недостоверную спецификацию (decisions на fabricated data).
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"ActionHandlerRegistry недоступен — спецификация {name} не может быть получена",
+        )
 
     try:
         spec = registry.get(name)

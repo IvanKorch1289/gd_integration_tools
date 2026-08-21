@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -203,7 +203,7 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
             "description": record.description or "",
             "tags": record.tags,
             "stage": record.stage,
-            "created_at": datetime.now().isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
         }
         manifest_path = self._manifest_path(model_dir)
         content = json.dumps(manifest, ensure_ascii=False, indent=2)
