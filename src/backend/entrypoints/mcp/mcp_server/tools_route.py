@@ -37,7 +37,7 @@ def _register_route_tools(mcp: Any) -> None:
         description="Список всех зарегистрированных DSL-маршрутов с описаниями и процессорами",
     )
     async def route_list() -> str:
-        from src.backend.dsl.registry import route_registry
+        from src.backend.core.api.extensions import route_registry
 
         routes = []
         for rid in route_registry.list_routes():
@@ -64,8 +64,8 @@ def _register_route_tools(mcp: Any) -> None:
     )
     async def route_execute(route_id: str, payload: str = "{}") -> str:
         """Выполняет DSL-маршрут по route_id с переданным payload, возвращает результат Exchange."""
-        from src.backend.dsl.engine.execution_engine import ExecutionEngine
-        from src.backend.dsl.registry import route_registry
+        from src.backend.core.api.extensions import ExecutionEngine
+        from src.backend.core.api.extensions import route_registry
 
         try:
             pipeline = route_registry.get(route_id)
@@ -106,7 +106,7 @@ def _register_route_tools(mcp: Any) -> None:
         description="Детальная информация о DSL-маршруте: процессоры, pipeline metadata, feature flags.",
     )
     async def route_inspect(route_id: str) -> str:
-        from src.backend.dsl.registry import route_registry
+        from src.backend.core.api.extensions import route_registry
 
         pipeline = route_registry.get_optional(route_id)
         if not pipeline:

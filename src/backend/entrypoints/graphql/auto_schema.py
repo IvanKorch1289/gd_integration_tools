@@ -140,7 +140,7 @@ def build_auto_strawberry_schema(metadatas: Any | None = None) -> AutoSchemaResu
     import strawberry
 
     if metadatas is None:
-        from src.backend.dsl.commands.action_registry import action_handler_registry
+        from src.backend.core.api.extensions import action_handler_registry
 
         metadatas = action_handler_registry.list_metadata("graphql")
 

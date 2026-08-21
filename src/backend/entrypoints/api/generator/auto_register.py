@@ -44,7 +44,7 @@ from typing import Any
 
 from fastapi import FastAPI, Request
 
-from src.backend.dsl.commands.action_registry import (
+from src.backend.core.api.extensions import (
     ActionHandlerRegistry,
     action_handler_registry,
 )

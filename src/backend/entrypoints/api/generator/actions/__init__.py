@@ -16,7 +16,7 @@ from fastapi.responses import JSONResponse as JSONResponse
 from src.backend.core.actions.spec_to_metadata import (
     action_spec_to_metadata as action_spec_to_metadata,
 )
-from src.backend.dsl.commands.action_registry import (
+from src.backend.core.api.extensions import (
     action_handler_registry as action_handler_registry,
 )
 from src.backend.entrypoints.api.generator.actions.crud import (

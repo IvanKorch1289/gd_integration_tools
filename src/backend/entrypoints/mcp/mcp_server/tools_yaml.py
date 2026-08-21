@@ -33,7 +33,7 @@ def _register_yaml_tools(mcp: Any) -> None:
         "Полезно для backup, версионирования, передачи конфигураций.",
     )
     async def pipeline_export(route_id: str) -> str:
-        from src.backend.dsl.registry import route_registry
+        from src.backend.core.api.extensions import route_registry
 
         try:
             import yaml
@@ -65,10 +65,10 @@ def _register_yaml_tools(mcp: Any) -> None:
         "YAML должен содержать: route_id, source, processors (list).",
     )
     async def pipeline_from_yaml(yaml_str: str) -> str:
-        from src.backend.dsl.registry import route_registry
+        from src.backend.core.api.extensions import route_registry
 
         try:
-            from src.backend.dsl.yaml_loader import load_pipeline_from_yaml
+            from src.backend.core.api.extensions import load_pipeline_from_yaml
         except ImportError:
             return encode_json({"error": "yaml_loader not available"}).decode("utf-8")
 

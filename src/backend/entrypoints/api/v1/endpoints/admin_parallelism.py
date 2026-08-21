@@ -34,7 +34,7 @@ router = APIRouter(prefix="/admin/routes", tags=["Admin / DSL Parallelism"])
 )
 async def parallelism_report(name: str) -> dict[str, Any]:
     """Возвращает :class:`ParallelismReport` для указанного маршрута."""
-    from src.backend.dsl.analysis.parallelism_analyzer import ParallelismAnalyzer
+    from src.backend.core.api.extensions import # NOTE: facade doesn't re-export ParallelismAnalyzer; using full path import ParallelismAnalyzer
 
     try:
         # D-AUDIT-11701 fix (cycle 117): canonical path
@@ -44,7 +44,7 @@ async def parallelism_report(name: str) -> dict[str, Any]:
         # steps=[]. Реальный route_registry singleton: canonical
         # path src.backend.dsl.registry (re-export from
         # src.backend.dsl.commands.registry).
-        from src.backend.dsl.registry import route_registry
+        from src.backend.core.api.extensions import route_registry
     except ImportError:
         route_registry = None
 

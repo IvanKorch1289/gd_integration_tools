@@ -51,7 +51,7 @@ async def _dispatch_with(
         return JSONResponse(status_code=400, content={"detail": f"Bad request: {exc}"})
 
     try:
-        from src.backend.dsl.commands.action_registry import action_handler_registry
+        from src.backend.core.api.extensions import action_handler_registry
 
         # action_handler_registry — singleton instance
         registry = action_handler_registry

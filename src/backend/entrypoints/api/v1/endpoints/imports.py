@@ -221,7 +221,7 @@ async def _import_process_schema(payload: dict[str, Any]) -> dict[str, Any]:
     ``choice``, ``http_call``, ``dispatch_action``. Расширяется в
     ``_apply_steps`` ниже.
     """
-    from src.backend.dsl.builder import RouteBuilder
+    from src.backend.core.api.extensions import RouteBuilder
 
     try:
         route_id = payload["route_id"]
@@ -313,8 +313,8 @@ async def _import_bulk_objects(
     # (НЕ src.backend.dsl.engine.pipeline_registry, которого не
     # существует). get_pipeline_registry() → route_registry singleton
     # с .get(route_id) для lookup pipeline.
-    from src.backend.dsl.engine.execution_engine import ExecutionEngine
-    from src.backend.dsl.registry import route_registry
+    from src.backend.core.api.extensions import ExecutionEngine
+    from src.backend.core.api.extensions import route_registry
 
     pipeline = route_registry.get(route_id)
     if pipeline is None:

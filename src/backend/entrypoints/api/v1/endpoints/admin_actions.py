@@ -111,7 +111,7 @@ def _get_registry() -> Any:
         # type: ignore suppress'ил lint но runtime всегда падал
         # в except → mock-fallback). Реальный класс:
         # src/backend/dsl/commands/action_registry.py
-        from src.backend.dsl.commands.action_registry import ActionHandlerRegistry
+        from src.backend.core.api.extensions import ActionHandlerRegistry
 
         return ActionHandlerRegistry.get_instance()
     except (ImportError, AttributeError, RuntimeError):

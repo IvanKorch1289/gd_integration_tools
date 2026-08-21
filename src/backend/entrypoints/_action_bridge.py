@@ -136,7 +136,7 @@ async def dispatch_action_or_dsl(
     # в WS привязан к message, не к connection).
     # Используем asyncio.Semaphore: try-acquire без блокировки.
 
-    from src.backend.dsl.service import get_dsl_service
+    from src.backend.core.api.extensions import get_dsl_service
 
     overrides = get_dsl_service().get_route_overrides(dsl_route_id)
     action_timeout_s = overrides.get("message_timeout_s")
@@ -291,8 +291,8 @@ async def _dispatch_dsl(
     Returns:
         :class:`BridgeResult` с результатом маршрута.
     """
-    from src.backend.dsl.engine.context import ExecutionContext
-    from src.backend.dsl.service import get_dsl_service
+    from src.backend.core.api.extensions import ExecutionContext
+    from src.backend.core.api.extensions import get_dsl_service
 
     dsl = get_dsl_service()
     # Sprint 1.1 (L5 Security Chain): проброс principal/permissions

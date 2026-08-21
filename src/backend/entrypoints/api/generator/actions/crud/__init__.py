@@ -22,7 +22,7 @@ from pydantic import BaseModel as BaseModel
 from src.backend.core.interfaces.action_dispatcher import (
     ActionMetadata as ActionMetadata,
 )
-from src.backend.dsl.commands.action_registry import (
+from src.backend.core.api.extensions import (
     action_handler_registry as action_handler_registry,
 )
 from src.backend.entrypoints.api.generator.actions.crud.query_mixin import (

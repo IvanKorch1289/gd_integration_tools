@@ -217,7 +217,7 @@ def _build_servicer_class(service: str, base_cls: type, pb2: Any) -> type:
     ``<Service>AutoServiceServicer``) ищем соответствующий
     ``action_id`` через реестр и подключаем :func:`_build_rpc_method`.
     """
-    from src.backend.dsl.commands.action_registry import action_handler_registry
+    from src.backend.core.api.extensions import action_handler_registry
 
     grpc_actions = [
         m
