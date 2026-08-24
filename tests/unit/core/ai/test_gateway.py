@@ -143,8 +143,20 @@ async def test_input_sanitizers_passthrough_when_sanitizer_absent(
 
 
 @pytest.mark.asyncio
-async def test_input_sanitizers_handles_runtime_error_gracefully() -> None:
-    """Если Presidio raise RuntimeError — возвращается исходный prompt."""
+async def test_input_sanitizers_handles_runtime_error_gracefully(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Если Presidio raise RuntimeError — возвращается исходный prompt.
+
+    S44 W25 (agent audit P0-S5 follow-up): production code now raises
+    RuntimeError when ``ai_policy_enforce=True`` (fail-closed, PII safety).
+    Test the legacy "graceful return original prompt" path with the flag
+    explicitly disabled (dev/staging contract).
+    """
+    import src.backend.core.config.features as _features_mod
+    flags = _features_mod.feature_flags
+    monkeypatch.setattr(flags, "ai_policy_enforce", False)
+
     sanitizer = _FakeSanitizer(raise_runtime=True)
     gateway = AIGateway(sanitizer=sanitizer)
     request = AIRequest(
@@ -160,8 +172,17 @@ async def test_input_sanitizers_handles_runtime_error_gracefully() -> None:
 
 
 @pytest.mark.asyncio
-async def test_input_sanitizers_handles_unexpected_exception_gracefully() -> None:
-    """Любая иная ошибка sanitizer'а не ломает шаг (логируется, возврат исходного)."""
+async def test_input_sanitizers_handles_unexpected_exception_gracefully(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Любая иная ошибка sanitizer'а не ломает шаг (логируется, возврат исходного).
+
+    S44 W25: same P0-S5 follow-up. Disable ai_policy_enforce to test legacy path.
+    """
+    import src.backend.core.config.features as _features_mod
+    flags = _features_mod.feature_flags
+    monkeypatch.setattr(flags, "ai_policy_enforce", False)
+
     sanitizer = _FakeSanitizer(raise_unexpected=True)
     gateway = AIGateway(sanitizer=sanitizer)
     request = AIRequest(
