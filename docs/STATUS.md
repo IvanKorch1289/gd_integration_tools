@@ -616,8 +616,9 @@ root = ET.fromstring(data)  # defusedxml for safe parsing
 | 2 | test_gzip_compression_excluding.py | starlette 1.3.1 + httpx 0.28+ incompatibility | 3 marked as skip |
 | 3 | test_multicast_routes.py | `_engine_factory` fixture expects removed `route_registry` kwarg (cycle-1 D-AUDIT-14) | 6/6 PASS |
 | 4 | governance.py (production) | `GuardrailValueTypeError` raised but never imported (cycle-1/A8-07 bug); `timedelta` missing | 4 tests + 2 ruff fixed |
+| 5 | activity.py (production) | `SensorTimeoutRequiredError`/`SensorPollIntervalError`/`_SENSOR_MAX_ITERATIONS_DEFAULT`/`timedelta` all missing (cycle-1/D-A8-10) | 4 tests + 1 ruff fixed |
 
-**Cumulative Sprint 44** (final): +194 tests, 0 regressions, 9 deprecated skip.
+**Cumulative Sprint 44** (final): +198 tests, 0 regressions, 9 deprecated skip.
 
 **Production readiness**: ~96% (стабильно).
 
