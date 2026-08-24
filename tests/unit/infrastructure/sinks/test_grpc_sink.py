@@ -85,6 +85,12 @@ async def test_send_returns_false_when_grpc_missing(
 
 @pytest.mark.asyncio
 async def test_send_handles_channel_exception(fake_grpc: tuple[Any, MagicMock]) -> None:
+    """RuntimeError в gRPC channel propagate (cycle 22 P1-6 re-raise design).
+
+    S44 W28 (agent audit cycle 22 P1-6 follow-up): production code re-raises
+    transport exceptions so @with_retry / @with_breaker can see them.
+    Update test to expect the RuntimeError to propagate.
+    """
     _fake_mod, fake_channel = fake_grpc
     fake_channel.unary_unary = MagicMock(
         return_value=AsyncMock(side_effect=RuntimeError("boom")),
@@ -93,9 +99,8 @@ async def test_send_handles_channel_exception(fake_grpc: tuple[Any, MagicMock]) 
         sink_id="g4", target="localhost:50051", full_method="/svc/m", secure=False,
     )
     with patched_auth_allow():
-        result = await sink.send(b"x")
-    assert result.ok is False
-    assert "boom" in result.details["error"]
+        with pytest.raises(RuntimeError, match="boom"):
+            await sink.send(b"x")
 
 
 @pytest.mark.asyncio

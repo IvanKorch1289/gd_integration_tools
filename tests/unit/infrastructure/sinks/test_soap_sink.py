@@ -99,6 +99,13 @@ async def test_send_returns_false_when_zeep_missing(
 
 @pytest.mark.asyncio
 async def test_send_handles_invoke_exception(fake_zeep: types.ModuleType) -> None:
+    """RuntimeError в zeep client propagate (cycle 22 P1-6 re-raise design).
+
+    S44 W28 (agent audit cycle 22 P1-6 follow-up): production code re-raises
+    transport exceptions so @with_retry / @with_breaker can see them.
+    The pre-existing test expected ``result.ok=False`` (legacy contract).
+    Update to expect the RuntimeError to propagate.
+    """
     fake_service = MagicMock()
     fake_service.op = MagicMock(side_effect=RuntimeError("soap fault"))
     fake_client = MagicMock()
@@ -107,9 +114,8 @@ async def test_send_handles_invoke_exception(fake_zeep: types.ModuleType) -> Non
 
     sink = SoapSink(sink_id="s5", wsdl_url="http://test/wsdl", operation="op")
     with patched_auth_allow():
-        result = await sink.send({})
-    assert result.ok is False
-    assert "soap fault" in result.details["error"]
+        with pytest.raises(RuntimeError, match="soap fault"):
+            await sink.send({})
 
 
 @pytest.mark.asyncio
