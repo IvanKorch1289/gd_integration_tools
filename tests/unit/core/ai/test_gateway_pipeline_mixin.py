@@ -212,12 +212,24 @@ async def test_resolve_policy_none_in_strict_mode_raises(
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_resolve_policy_none_in_soft_mode_returns_none() -> None:
-    """При ``ai_policy_enforce=False`` (default) — ``None`` без ошибки."""
+async def test_resolve_policy_none_in_soft_mode_returns_none(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """При ``ai_policy_enforce=False`` — ``None`` без ошибки.
+
+    S44 W19 (agent audit S143 W2 follow-up): feature flag default
+    flipped False→True via commit 9164a5918. This test now explicitly
+    patches the flag to False to test the soft-mode contract.
+    """
 
     class _Resolver:
         async def resolve(self, **kwargs: Any) -> None:
             return None
+
+    import src.backend.core.config.features as _features_mod
+
+    flags = _features_mod.feature_flags
+    monkeypatch.setattr(flags, "ai_policy_enforce", False)
 
     mixin = _make_mixin(_policy_resolver=_Resolver())
     req = AIRequest(
@@ -577,14 +589,22 @@ async def test_render_prompt_under_limit_unchanged() -> None:
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_render_prompt_over_limit_truncates_with_tiktoken() -> None:
-    """При превышении budget и доступном tiktoken — token-level truncation."""
+    """При превышении budget и доступном tiktoken — token-level truncation.
+
+    S44 W19 (agent audit S172 M7.1 follow-up): BudgetSpec has new
+    cross-field invariant ``max_tokens_prompt >= max_tokens_completion``.
+    To get a TINY prompt budget that still satisfies the invariant,
+    set completion=2 (then prompt must be >= 2; using prompt=2 keeps
+    the budget small enough to force truncation of 500-word input).
+    """
     mixin = _make_mixin()
     policy = AIPolicySpec(
         name="x",
         workflow_pattern="*",
         tenant_pattern="*",
         model_router=ModelRouterSpec(primary="m"),
-        budget=BudgetSpec(max_tokens_prompt=10),
+        # completion tiny → prompt can also be tiny (invariant: prompt>=completion)
+        budget=BudgetSpec(max_tokens_prompt=2, max_tokens_completion=2),
     )
     long_text = " ".join(f"word{i}" for i in range(500))
     result = await mixin._render_prompt(
@@ -602,14 +622,18 @@ async def test_render_prompt_over_limit_truncates_with_tiktoken() -> None:
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_render_prompt_over_limit_fallback_no_tiktoken() -> None:
-    """При недоступности tiktoken — char-level fallback (truncated marker)."""
+    """При недоступности tiktoken — char-level fallback (truncated marker).
+
+    S44 W19: max_tokens_prompt=2 satisfies new invariant (prompt>=completion)
+    only when completion is also tiny. Use completion=2, prompt=2.
+    """
     mixin = _make_mixin()
     policy = AIPolicySpec(
         name="x",
         workflow_pattern="*",
         tenant_pattern="*",
         model_router=ModelRouterSpec(primary="m"),
-        budget=BudgetSpec(max_tokens_prompt=2),  # очень маленький budget
+        budget=BudgetSpec(max_tokens_prompt=2, max_tokens_completion=2),
     )
     long_text = "x" * 1000
     with patch.dict("sys.modules", {"tiktoken": None}):

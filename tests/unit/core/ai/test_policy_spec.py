@@ -175,6 +175,11 @@ class TestAIPolicySpec:
         assert spec.model == "openai/gpt-4o"
 
     def test_full(self) -> None:
+        # S44 W19 (agent audit S172 M7.1 follow-up): MemorySpec uses
+        # nested BackendSpec (``short_term=BackendSpec(backend=..., namespace=...)``)
+        # since fcfb1e89. Direct ``backend=``/``namespace=`` kwargs are rejected
+        # by ``extra="forbid"`` Pydantic config.
+        st_memory = BackendSpec(backend="redis", namespace="ns")
         spec = AIPolicySpec(
             name="credit",
             version=2,
@@ -186,7 +191,7 @@ class TestAIPolicySpec:
             input_guards=[GuardRef(name="nemo:colang")],
             output_guards=[GuardRef(name="llama_guard:safe_v3")],
             budget=BudgetSpec(max_tokens_prompt=2048),
-            memory=MemorySpec(backend="redis", namespace="ns"),
+            memory=MemorySpec(short_term=st_memory),
             audit=AuditSpec(extra_attrs={"compliance": "152-FZ"}),
             required=False,
         )

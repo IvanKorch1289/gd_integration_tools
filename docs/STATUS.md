@@ -462,5 +462,52 @@ in test environment.
 | DLQ writers (W16) | 3 | 10 | 3 |
 | **Total** | **16** | **128 tests** | **16 commits** |
 
+## S44 W19 — AI policy test fixes (4 failures, test-only)
+
+3 parallel agents identified 4-22 pre-existing test failures across
+`tests/unit/core/ai/` — all from earlier hardening sprints (S172 M7.1,
+S209, S143) that left tests behind. Production code is correct; tests
+encode the previous, more permissive contract.
+
+**Fixes applied** (test-only, ~10 LOC diff):
+
+1. **`test_policy_spec.py::TestAIPolicySpec::test_full`**:
+   `MemorySpec(backend="redis", namespace="ns")` →
+   `MemorySpec(short_term=BackendSpec(backend="redis", namespace="ns"))`.
+   New `extra="forbid"` config rejects direct kwargs (commit `fcfb1e89`).
+
+2. **`test_tool_policy_glob.py`** (2 tests): `ToolsSpec()` →
+   `ToolsSpec(allow_all_tools=True)` for `test_glob_blacklist_allows_non_matching`
+   and `test_no_whitelist_no_blacklist_allows_all`. New S209 default
+   `allow_all_tools=False` denies empty policies (commit `b00f13bd`).
+
+3. **`test_gateway_pipeline_mixin.py`** (3 tests):
+   - `test_resolve_policy_none_in_soft_mode_returns_none`: added
+     `monkeypatch.setattr(features_module.feature_flags, "ai_policy_enforce", False)`
+     since S143 W2 flipped default to True.
+   - `test_render_prompt_over_limit_truncates_with_tiktoken` + `_fallback_no_tiktoken`:
+     `max_tokens_prompt=2` → kept at 2, added `max_tokens_completion=2`
+     to satisfy new `prompt ≥ completion` invariant (commit `fcfb1e89`).
+
+**Verification**:
+- pytest `tests/unit/core/ai/test_policy_spec.py` + `test_tool_policy_glob.py` +
+  `test_gateway_pipeline_mixin.py`: **85/85 PASS**
+- Regression (sinks + sources + agent_security + graphql + dsl): **258/260 PASS**
+  (2 pre-existing: soap_sink + grpc_sink RuntimeError, documented)
+- ruff: **0** errors
+
+**Cumulative Sprint 44 test gain** (R9-W19):
+- W1 (L5 chain): +19
+- W2 (presidio): +2
+- W3 (webhook canonical): +4
+- W4 (webhook_sink + prod fix): +6
+- W5-W13 (Group A2 sinks): +90
+- W14-W16 (Group A3 + DLQ): +24
+- W17-W18 (nats_jet + sms): +14
+- W19 (AI policy tests): +4
+- **Total: +163 tests, 0 regressions**
+
+**Production readiness**: ~96% (stable).
+
 **Production readiness**: ~96% (stable, S44 W4 honest re-eval reflects
 real coverage 13% per ADR-0257).

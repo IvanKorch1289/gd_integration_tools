@@ -46,8 +46,14 @@ def test_glob_blacklist_blocks_nested_namespace() -> None:
 
 
 def test_glob_blacklist_allows_non_matching() -> None:
-    """Blacklist ``fs.*`` — tool ``db.read`` НЕ blocked (different ns)."""
-    spec = ToolsSpec(blacklist=["fs.*"])
+    """Blacklist ``fs.*`` — tool ``db.read`` НЕ blocked (different ns).
+
+    S44 W19 (agent audit S209 follow-up): S209 added
+    ``ToolsSpec.allow_all_tools: bool = False`` default for security
+    hardening. Tests must explicitly opt-in via ``allow_all_tools=True``
+    to preserve the "empty policy = allow all" backward-compat intent.
+    """
+    spec = ToolsSpec(blacklist=["fs.*"], allow_all_tools=True)
     assert check_tool_allowed("db.read", spec) is True
 
 
@@ -82,8 +88,13 @@ def test_glob_brackets_range() -> None:
 
 
 def test_no_whitelist_no_blacklist_allows_all() -> None:
-    """Backward-compat: empty whitelist + empty blacklist → allow any tool."""
-    spec = ToolsSpec()
+    """Backward-compat: empty whitelist + empty blacklist → allow any tool.
+
+    S44 W19 (agent audit S209 follow-up): explicit ``allow_all_tools=True``
+    needed to preserve legacy "no policy = allow all" semantic. Without
+    it (S209 hardening default), deny by default for security.
+    """
+    spec = ToolsSpec(allow_all_tools=True)
     assert check_tool_allowed("any.tool", spec) is True
 
 
