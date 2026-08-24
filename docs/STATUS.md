@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-08-30 (Sprint 43 W2)
+> **Last verified**: 2026-08-30 (post-Sprint 43 W3 + R12 + R13 analytics/retro/review/testing)
 > **Method**: Direct command execution, no inherited claims.
 > **Refresh**: Manual after every `make ci` or `make audit` run.
 
@@ -9,18 +9,21 @@
 | Metric | Value | Verification |
 |---|---|---|
 | **Production readiness** | **~96%** (R12, +3% from god-object 5/5) | R12 discovery + R11 fact-check |
-| **P0 open** | **1** (graphql_router + L5 Security Chain) | grep + tests |
-| **P1 open** | **1** (RouteBuilder Protocol only) | wc -l + manual analysis |
+| **P0 open** | **1** (L5 Security Chain — 3 helpers, 4-6h) | grep + tests |
+| **P1 open** | **0** (RouteBuilder Protocol was FALSE CLAIM — DONE) | R12 §1 |
 | **P2 open** | **2** (RestrictedUnpickler, dependabot) | gh pr list |
 | **Ruff errors** | **0** | `ruff check src/` |
 | **Bandit HIGH** | **0** | CI workflow |
 | **Vulture @>=90%** | **0** | `vulture src/` |
 | **Layer allowlist** | **60** (was 138 → 70 → 60) | `tools/check_layers.py` |
 | **God-objects** | **5/5 DONE** (R12) | agent_security 652→71 LOC |
+| **Sprint 43 commits** | **11** (W1+W2+W3+R12) | `git log --since=yesterday` |
 | **P0 tests** | **9/9 PASS** | `pytest tests/integration/test_p0_fixes_functional.py` |
 | **Security tests** | **45/45 PASS** | `pytest test_agent_security* test_facade_validate*` |
+| **R12 affected subset** | **54 passed, 20 skipped** | `pytest test_p0_* + security + graphql` |
 | **GraphQL tests** | **11 passed, 20 skipped** | R8 fallout, L5 P0 documented |
 | **Unit core tests** | **663/664 PASS, 3 skip, 1 pre-existing fail** | `pytest tests/unit/core/` |
+| **Sprint 43 velocity** | **+~900% vs Sprint 42** | 9 atomic commits, 0 regressions |
 
 ## Sprint 43 W2 Results (3 commits, 2026-08-30)
 
