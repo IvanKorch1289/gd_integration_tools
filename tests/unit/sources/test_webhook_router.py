@@ -24,6 +24,7 @@ from src.backend.entrypoints.webhook.sources_router import sources_router
 from src.backend.infrastructure.sources.webhook import WebhookSource
 from src.backend.services.sources import get_source_registry
 from src.backend.services.sources.registry import SourceRegistry
+from tests.unit._auth_mocks import patched_auth_allow
 
 
 @pytest.fixture
@@ -56,6 +57,18 @@ async def client(app: FastAPI) -> httpx.AsyncClient:
         transport=httpx.ASGITransport(app=app), base_url="http://test",
     ) as cli:
         yield cli
+
+
+@pytest.fixture(autouse=True)
+def _mock_authz_for_capability_check() -> Iterator[None]:
+    """S44 W14: mock AuthorizationFacade for all router tests.
+
+    WebhookSource.verify_and_dispatch has @require_capability("webhook.read").
+    Without this fixture, every router call fails with ConnectorAuthError
+    (anonymous / webhook-service principal → no policy → fail-closed).
+    """
+    with patched_auth_allow():
+        yield
 
 
 @pytest.mark.asyncio
