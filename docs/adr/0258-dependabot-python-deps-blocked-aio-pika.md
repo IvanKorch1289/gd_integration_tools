@@ -1,15 +1,23 @@
 # ADR-0258: dependabot Python bumps BLOCKED by aio-pika pre-release constraint
 
-> **Status**: BLOCKER DOCUMENTATION (2026-08-30, S44 W12)
-> **Method**: Direct `uv lock --upgrade-package <X>` attempts; conflict traceback analysis.
-> **Outcome**: 8 of 13 dependabot PRs blocked by single architectural decision.
+> **Status**: SUPERSEDED by S44 W12c (commit `129ef228`) — 8 Python deps
+> upgraded after widening `<0.52b0` → `<1.0` constraint matching runtime state.
+> Originally written as blocker documentation; updated here to record the
+> resolution path.
+> **Method**: Direct `uv lock --upgrade-package <X>` + conflict traceback analysis.
 
 ## 0. TL;DR
 
 | Layer | Status |
 |---|---|
 | 5 GH Actions bumps | ✅ DONE (S44 W12, commit `faf404e9`) |
-| 8 Python lib/risky bumps | ❌ BLOCKED by `pyproject.toml:49` opentelemetry constraint |
+| 8 Python lib/risky bumps | ✅ DONE (S44 W12c, commit `129ef228`) via Option C-realized |
+
+**Resolution**: per user "safe and reliable" directive, chose Option C realization
+in minimal-scope form: widen ONLY the 6 otel-instrumentation constraints from
+`<0.52b0` → `<1.0` (matching actual runtime state per ADR-0256 W2 finding that
+`aio-pika 0.60b1` is already installed). Then uv lock succeeded for all 8
+remaining Python dependabot PRs.
 
 **Single-line constraint blocks 8 of 8 remaining dependabot Python PRs.**
 
