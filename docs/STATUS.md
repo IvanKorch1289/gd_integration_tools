@@ -109,8 +109,9 @@ Only mentioned in:
 | Blocker | Reason | Workaround |
 |---|---|---|
 | Live HTTP smoke | Port 8000 stale container (user 10001, unkillable) | Code review only |
-| Full pytest | `opentelemetry-instrumentation-aio-pika` pre-release conflict | Subset runs |
+| ~~Full pytest blocked by aio_pika~~ | ~~pre-release conflict~~ | **RETRACTED (ADR-0256 W2)** — aio_pika 0.60b1 installed, integration/ RUNS |
 | Coverage | `.coverage` valid SQLite 3 but only 2 files measured (90.35% on those) | Single source: `pyproject.toml:1080 fail_under=60%` |
+| **S44 W2 verified** (2026-08-30) | `tests/integration/ai/`: 15P/2F/4S in 15.92s. `integration/` non-ai: 47P/1F/4S in 24.44s | ADR-0256 |
 
 ## RESOLVED (this sprint)
 
