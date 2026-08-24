@@ -659,3 +659,17 @@ root = ET.fromstring(data)  # defusedxml for safe parsing
 
 **Production readiness**: ~96% (stable, S44 W4 honest re-eval reflects
 real coverage 13% per ADR-0257).
+
+## S44 W32 — coverage FULL re-measurement (cycle 247)
+
+Re-measured coverage on BROADER subset than W29:
+- Method: `pytest --cov=gd_integration_tools tests/unit/core/ai/ tests/unit/services/agent_security/ tests/unit/dsl/`
+- Result: **TOTAL 1%** (23554 covered / 107349 statements)
+- fail_under=60%: FAIL by 59pp (was previously reported as 12% in W29 — that was narrow subset only)
+
+**Honest assessment**: W29's 12% reflected only `core/ai/` + `agent_security/` test paths.
+Full project measurement is 1%. Sprint 45 coverage ratchet must address this honestly.
+
+Test result from same run: 4744 passed, 34 failed, 50 skipped (full pytest in subset).
+
+**No commit** — verification only.
