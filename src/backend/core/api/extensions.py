@@ -27,6 +27,8 @@ from src.backend.dsl.commands.registry import RouteRegistry, route_registry
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.execution_engine import ExecutionEngine
+from src.backend.dsl.engine.pipeline import Pipeline
+from src.backend.dsl.engine.tracer import TraceEvent, get_tracer
 
 # Processor registry (Sprint 43 W1: 1 violation in services/schema_registry/populator.py)
 from src.backend.dsl.registry.processor import ProcessorRegistry, get_processor_registry
@@ -48,6 +50,7 @@ from src.backend.dsl.workflow.spec.workflow import WorkflowDeclaration, Workflow
 
 # YAML I/O (3 violations → 0)
 from src.backend.dsl.workflow.yaml_io import from_yaml, to_yaml
+from src.backend.dsl.yaml_loader.loaders import load_pipeline_from_yaml
 from src.backend.dsl.yaml_store import YAMLStore
 
 __all__ = [
@@ -78,11 +81,15 @@ __all__ = [
     "ExecutionContext",
     "Exchange",
     "ExecutionEngine",
-    # ExecutionTracer/TraceEvent/get_tracer exposed via __getattr__ (Sprint 39 W3)
+    "Pipeline",
+    # Tracing
+    "TraceEvent",
+    "get_tracer",
     # DSL analysis
     "ParallelismAnalyzer",
     # YAML
     "to_yaml",
     "from_yaml",
+    "load_pipeline_from_yaml",
     "YAMLStore",
 ]

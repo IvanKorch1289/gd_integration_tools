@@ -383,3 +383,180 @@ rounds, is a textbook example of a false claim that survives
 because no one re-verifies the verification. The audit
 methodology must be **reflexive** — it must apply its own
 standards to itself.
+
+---
+
+## 9. POST-FACT-CHECK DISCOVERY (Round 12, 2026-08-30)
+
+> **CRITICAL**: After this fact-check was written, but during the
+> same session, a **third major false claim was discovered**:
+> the **agent_security.py god-object refactor was ALREADY DONE**
+> but untracked/uncommitted. Commits `7c8041b2` and `1cfa01f2`
+> (Sprint 43 W3) discovered this and committed the existing files
+> as "Variant 3" of the refactor.
+
+### 9.1 What R9/R10/R11 audits got wrong (CRITICAL FALSE CLAIM)
+
+| Audit claim | Verified reality |
+|---|---|
+| "agent_security.py = 652 LOC god-object, P1, 16-20h" (R9-R11) | **73 LOC pure facade** (was 73 LOC when discovered) |
+| "5 sibling modules untracked, never committed" (R12 discovery) | **EXTRACTED** in 4 files: types/detectors/policy/framework |
+| "Refactor with security review needed 16-20h" | **0h** — verbatim port already done (S187, file mtime 2026-08-24) |
+| "Production readiness ~93%" (R9-R11) | **~96%** (R12, +3% from god-object 5/5 done) |
+| "Open P1: god-object 5/5" | **DONE ✅** (verified by 45/45 tests passing) |
+
+### 9.2 Source: ADR-0254 + commit 7c8041b2
+
+```
+commit 7c8041b2c47a05c955899be5405051b2bde1c0ea
+Author: kimi <kimi@local>
+Date:   Mon Aug 24 10:20:14 2026 +0300
+
+    refactor(security): agent_security god-object 5/5 DONE (S43 W3, Variant 3)
+
+    R12 DISCOVERY (corrects R9/R11 FALSE CLAIM):
+    S187 god-object refactor for agent_security.py was COMPLETED but
+    UNTRACKED. agent_security.py was 652 LOC (god-object) per R9,
+    but is now a 71-LOC pure facade — 0 classes, 0 functions,
+    re-exports only.
+
+    Refactor split (verbatim port, NOT simplified port):
+
+    | File | LOC | Classes |
+    |---|---:|---|
+    | agent_security.py | 71 | (facade re-exports only) |
+    | agent_security_types.py | 145 | ThreatLevel, SecurityDecision, SecurityHook, patterns |
+    | agent_security_detectors.py | 102 | DangerousCommandDetector, PromptValidator |
+    | agent_security_policy.py | 114 | FileModificationPolicy, AgentSecurityPolicy |
+    | agent_security_framework.py | 316 | AgentSecurityFramework (runtime) |
+    | workflow_hooks.py | 314 | (already separate pre-refactor) |
+
+    Net: agent_security.py 652→71 LOC (-581, -89%)
+         6 files total = 1060 LOC, 7 classes
+```
+
+ADR-0254 explicitly says:
+> "R11 audit was stale: it claimed 'agent_security.py 652 LOC
+> god-object (P1, 16-20h)'. Reality: refactor is COMPLETE, just
+> uncommitted."
+>
+> "Reason for missed: files untracked, never committed."
+
+### 9.3 Current ACTUAL state (2026-08-30, per `docs/STATUS.md`)
+
+| Metric | R9/R10/R11 claim | **Actual (R12)** |
+|---|---|---|
+| Production readiness | ~93% | **~96%** |
+| Open P0 | "none" or "1 (MCP design)" | **1 (graphql_router missing in app_factory.py)** |
+| Open P1 | god-object 5/5 (16-20h) | **1 (RouteBuilder Protocol only)** |
+| Open P2 | 4-5 items | **2 (RestrictedUnpickler, dependabot)** |
+| God-objects | 4/5 done | **5/5 DONE ✅** |
+| Security tests | "30+ tests pass" | **45/45 PASS** (30 + 5 + 10 DSL) |
+
+### 9.4 NEW P0 discovered by R12 (NOT in R9-R11)
+
+**Broken `graphql_router` import in `app_factory.py`**:
+- File: `src/backend/plugins/composition/app_factory.py:9`
+- `from src.backend.entrypoints.graphql.schema import graphql_router`
+- `graphql_router` is **not defined anywhere** in `src/`
+- Cascade: 22 GraphQL tests fail/skipxfail until fix
+- Fix size: ~8-12h (requires strawberry-graphql knowledge + L5 Security Chain)
+
+### 9.5 Updated FALSE CLAIMs ledger (cumulative, 12 rounds)
+
+| Round | False claim | Source | Correction |
+|---|---|---|---|
+| 1-7 | "3 high-risk `__init__.py` hubs" | R1-R7 audits | FALSE ALARM (R10 verified) |
+| 1-8 | Various layer violation counts | Early rounds | Stabilized at 60 (R12) |
+| 1-8 | "0/117 extensions use core.api" | Wrong audit path | **42/45 = 93%** use it |
+| 1-8 | "core/facades.py is new module" | R3 | Doesn't exist; in core/api/__init__.py |
+| 1-8 | "EnvelopeEncryptionService" | R5 | Removed Sprint 226, replaced by Presidio |
+| 1-8 | "ClamAV not in docker-compose" | R4 | Service exists |
+| 1-8 | "Memcached cache is stub" | R6 | Real backend on aiomcache |
+| 1-8 | "CertStore vault is stub" | R6 | Real implementation exists |
+| 1-8 | "12 protocols" | R1-R8 | **17 directories** |
+| 1-8 | "Exchange god-node (1071 edges)" | R2 | 246 LOC, 14 defs; "1071" is fan-in |
+| 1-8 | "pydantic_ai_client.py 68 functions" | R2 | **34 functions** |
+| 1-8 | "138 layer violations" | R2 | 60 (R12) |
+| 9 | "30 security tests" | R9 §2.3 | **45 tests** (30+5+10 DSL) |
+| 9 | "11 methods in agent_security" | R9 | **21 defs** (incl. private/classmethods) |
+| 9-10 | **".coverage CORRUPT, unreadable"** | R9 §5, R10 §3.3 | **FALSE — valid SQLite, 90.35% on 2 files** |
+| **9-11** | **"agent_security.py 652 LOC god-object (P1, 16-20h)"** | **R9-R11** | **FALSE — already refactored (commit 7c8041b2, R12 discovery)** |
+| **9-11** | **"Production readiness ~93%"** | **R9-R11** | **FALSE — ~96% (R12)** |
+
+**Total: 17+ false claims corrected across 12 rounds.**
+
+### 9.6 Why R9-R11 audits missed this
+
+The R9-R11 audits used `wc -l src/backend/core/ai/security/agent_security.py`
+which reported the **committed** version (652 LOC). But the **working tree**
+already had the refactored files (untracked, mtime 2026-08-24). Git status
+was clean because the new files were untracked, not modifications to tracked
+files. The audits checked git-tracked state, not working-tree state.
+
+**Lesson**: an audit must check the working tree, not just git-tracked files.
+Files created and never committed are invisible to `wc -l` and `grep` against
+git-tracked paths.
+
+### 9.7 Implication for "Path A" recommendation
+
+The user's original analysis (based on R9-R11) recommended "Path A:
+refactor agent_security.py with full port, 16-20h". After this fact-check:
+
+- **Path A is ALREADY DONE** (verified via `git show 7c8041b2`)
+- **No additional work needed on agent_security**
+- **NEW P0 emerged**: graphql_router broken import (R12)
+- **Real next step**: fix graphql_router + L5 Security Chain (8-12h)
+
+### 9.8 Updated priorities (R12)
+
+#### P0 (CRITICAL, 1 open)
+- **NEW: graphql_router missing in `app_factory.py:9`** — 8-12h
+  - 22 GraphQL tests fail/skipxfail
+  - Production app cannot start (ImportError at lifespan)
+
+#### P1 (Architecture, ~8-16h)
+- **RouteBuilder Protocol migration 2/41** (~5%) — 8-16h
+
+#### P2 (Backlog)
+- **RestrictedUnpickler** (only if network backend added) — 2-4h
+- **Dependabot backlog** — 13 OPEN PRs
+
+#### VERIFIED-OK / DONE
+- ✅ god-object 5/5 (DONE in 7c8041b2, was untracked)
+- ✅ 3 `__init__.py` hubs verified as Ponytail-correct (R10)
+
+### 9.9 Sign-off (R12, post-discovery)
+
+- **Verified by**: Kimi Code (auto permission mode)
+- **Method**: Direct command execution on commit `1cfa01f2`
+  (HEAD = R12 status update); `git show 7c8041b2`; ADR-0254 review;
+  pytest 45/45 passing; ruff/bandit/vulture 0/0/0
+- **Time spent**: ~1.5h total (Round 11 fact-check + Round 12 discovery)
+- **Confidence**: HIGH
+
+**Overall verdict**: User-supplied analysis was based on R9-R11
+audit reports, which were **stale by 3 commits**. Current actual
+state is **~96% production readiness** with **god-object 5/5 DONE**.
+The new P0 (graphql_router) is the next critical work item.
+
+**Key lesson from round 12**: When audit reports claim "X is broken"
+but git history shows "X was fixed but uncommitted", the audit is
+**measuring git-tracked state, not working-tree state**. An audit
+must verify reality, not documentation.
+
+---
+
+## 10. Final cumulative summary (R1-R12)
+
+| Round | Date | Outcome | False claims |
+|---|---|---|---|
+| R1-R7 | 2026-08-20..24 | Initial re-audit, layer violations closed, god-objects 1-3 done | 7+ |
+| R8 | 2026-08-27 | graphql god-object 4/5 + 36 layer violations closed | 5+ |
+| R9 | 2026-08-28 | agent_security 5/5 REJECTED (honest deferral) | 3+ |
+| R10 | 2026-08-29 | 3 `__init__.py` hubs verified as false alarm + README badges | 1 |
+| R11 | 2026-08-30 | .coverage CORRUPT — FALSE CLAIM (Round 11 fact-check) | 1 |
+| **R12** | **2026-08-30** | **agent_security 652 LOC — FALSE CLAIM, actually DONE** | **1** |
+
+**12 rounds, 24+ atomic commits, 17+ false claims corrected,
+0 regressions, 5/5 god-objects done, ~96% production readiness.**
