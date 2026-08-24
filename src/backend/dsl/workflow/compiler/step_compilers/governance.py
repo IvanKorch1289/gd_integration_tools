@@ -6,7 +6,10 @@ escalate (raise severity + audit event).
 
 from __future__ import annotations
 
-# ruff: noqa: F821 — shared symbols (exceptions, _build_retry_policy) defined in __init__.py
+# S44 W34: top-level ``from . import GuardrailValueTypeError`` causes
+# circular import (step_compilers.__init__ → emitter → step_compilers).
+# Use deferred (function-local) import instead.
+from datetime import timedelta
 from typing import Any
 
 from src.backend.core.logging import get_logger
@@ -112,7 +115,12 @@ async def compile_guardrail_step(
     # Раньше: \`value = float(cur) if isinstance(cur, (int, float)) else 0.0\`
     # → silent fallback к 0.0 → guardrail PASS даже при cost explosion.
     if not isinstance(raw_value, (int, float)):
-        raise GuardrailValueTypeError(
+        # S44 W34: function-local import to avoid circular import
+        # (step_compilers.__init__ → emitter → step_compilers).
+        from src.backend.dsl.workflow.compiler.step_compilers import (
+            GuardrailValueTypeError as _GuardrailValueTypeError,
+        )
+        raise _GuardrailValueTypeError(
             f"Guardrail {decl.rule!r} target={target!r} value type "
             f"{type(raw_value).__name__} (value={raw_value!r}) — "
             f"expected numeric (int/float) для banking-context cost safety. "
