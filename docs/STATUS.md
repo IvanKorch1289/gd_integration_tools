@@ -31,6 +31,7 @@
 | **Sprint 44 W5 (multi-agent)** | **3 Agent dispatches: refactor + regex fix** | 2 commits (20181e30, bae42953) |
 | **Sprint 44 W6 (coverage+1)** | **admin/audit.py: 0% → 100%** | 7 new tests +140 LOC, 17 admin tests PASSED |
 | **Sprint 44 W7 (coverage+2)** | **_capability_adapter.py: 0% → 100%** | 7 new tests +105 LOC, 24 admin tests PASSED |
+| **Sprint 44 W8 (bug+coverage)** | **clickhouse_admin: broken lazy proxy FIX + 0% → 100%** | 6 new tests + facade re-export added |
 
 ## Sprint 43 W2 Results (3 commits, 2026-08-30)
 
