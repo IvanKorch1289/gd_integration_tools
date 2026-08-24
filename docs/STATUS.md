@@ -32,6 +32,7 @@
 | **Sprint 44 W6 (coverage+1)** | **admin/audit.py: 0% → 100%** | 7 new tests +140 LOC, 17 admin tests PASSED |
 | **Sprint 44 W7 (coverage+2)** | **_capability_adapter.py: 0% → 100%** | 7 new tests +105 LOC, 24 admin tests PASSED |
 | **Sprint 44 W8 (bug+coverage)** | **clickhouse_admin: broken lazy proxy FIX + 0% → 100%** | 6 new tests + facade re-export added |
+| **Sprint 44 W9 (wrap-up)** | **W5-W8 retrospective + final cycle close** | Commit `896d511a` (148 lines retro) |
 
 ## Sprint 43 W2 Results (3 commits, 2026-08-30)
 
