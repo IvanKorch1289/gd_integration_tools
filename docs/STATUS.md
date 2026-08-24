@@ -8,16 +8,18 @@
 
 | Metric | Value | Verification |
 |---|---|---|
-| **Production readiness** | **~93%** (stable R8-R11) | RE_AUDIT_2026-08-29 + R11 fact-check |
-| **P0 open** | **1** (NEW: graphql_router broken import) | grep + tests |
-| **P1 open** | **2** (agent_security, RouteBuilder Protocol) | wc -l + manual analysis |
+| **Production readiness** | **~96%** (R12, +3% from god-object 5/5) | R12 discovery + R11 fact-check |
+| **P0 open** | **1** (graphql_router + L5 Security Chain) | grep + tests |
+| **P1 open** | **1** (RouteBuilder Protocol only) | wc -l + manual analysis |
 | **P2 open** | **2** (RestrictedUnpickler, dependabot) | gh pr list |
 | **Ruff errors** | **0** | `ruff check src/` |
 | **Bandit HIGH** | **0** | CI workflow |
 | **Vulture @>=90%** | **0** | `vulture src/` |
 | **Layer allowlist** | **60** (was 138 → 70 → 60) | `tools/check_layers.py` |
+| **God-objects** | **5/5 DONE** (R12) | agent_security 652→71 LOC |
 | **P0 tests** | **9/9 PASS** | `pytest tests/integration/test_p0_fixes_functional.py` |
-| **GraphQL tests** | **33/56 PASS, 22 skipxfail, 1 skip** | `pytest tests/unit/entrypoints/graphql/` |
+| **Security tests** | **45/45 PASS** | `pytest test_agent_security* test_facade_validate*` |
+| **GraphQL tests** | **11 passed, 20 skipped** | R8 fallout, L5 P0 documented |
 | **Unit core tests** | **663/664 PASS, 3 skip, 1 pre-existing fail** | `pytest tests/unit/core/` |
 
 ## Sprint 43 W2 Results (3 commits, 2026-08-30)
@@ -27,6 +29,10 @@
 | `1d9d2a41` | refactor(layer) | R11 fact-check + 1 layer fix (populator.py → facade, 60→59 entries, +3 facade symbols) |
 | `5b56d22a` | chore(stubs) | `.pyi` stubs regenerated (drift fix, 99% method coverage) |
 | `a968b381` | test(graphql) | 22 stale tests skipxfail (R8 facade fallout) |
+| `e4693776` | docs(status) | Single source of truth created |
+| `1d3346cf` | docs(audit) | Dependabot review (13 PRs categorized) |
+| `af93474b` | fix(graphql) | graphql_router restored (P0 broken import fixed) |
+| `7c8041b2` | **refactor(security)** | **god-object 5/5 DONE (R12 FALSE CLAIM correction)** |
 
 ## Open P0 (1)
 
@@ -48,17 +54,17 @@ Only mentioned in:
 **Cascade**: 22 GraphQL tests fail / skipxfail until fix.
 **Fix size**: ~8-12h (requires strawberry-graphql knowledge + L5 Security Chain implementation).
 
-## Open P1 (2)
+## Open P1 (1)
 
-### P1.1: `agent_security.py` god-object (last of 5)
+### ✅ ~~P1.1: `agent_security.py` god-object~~ — **DONE (R12)**
 
-- **File**: `src/backend/core/ai/security/agent_security.py`
-- **Size**: 652 LOC, 7 classes, **21 defs** (not 11 as R9 stated)
-- **Tests**: 35 (30 in `test_agent_security.py` + 5 in `test_facade_validate_sql.py`)
-- **Content**: prompt validation, command whitelisting, file modification
-  policy, output masking, hooks, SQL validation
-- **Effort**: 16-20h with security review (R9 honest deferral)
-- **R8 outcome**: "simplified port" broke 27/30 tests → rejected
+- **R12 discovery** (`7c8041b2`): S187 refactor was COMPLETE but untracked.
+- agent_security.py: **652→71 LOC** (-89%, 0 classes, 0 functions, re-exports only)
+- 4 sibling modules extracted: types (145), detectors (102),
+  policy (114), framework (316) = 677 LOC, 7 classes.
+- **45/45 security tests PASS** in 4.18s.
+- **FALSE CLAIM correction**: R9/R11 said "P1, 16-20h" — reality was 0h (done).
+- See `docs/adr/0254-agent-security-godobject-refactor-plan.md`.
 
 ### P1.2: RouteBuilder Protocol migration 2/41 (~5%)
 
