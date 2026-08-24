@@ -614,8 +614,9 @@ root = ET.fromstring(data)  # defusedxml for safe parsing
 |---|---|---|---|
 | 1 | test_webhook_signature_pure_asgi.py | `downstream` leaked scope (NameError); made it send 200 OK; removed F811 duplicate | 1/1 PASS |
 | 2 | test_gzip_compression_excluding.py | starlette 1.3.1 + httpx 0.28+ incompatibility | 3 marked as skip |
+| 3 | test_multicast_routes.py | `_engine_factory` fixture expects removed `route_registry` kwarg (cycle-1 D-AUDIT-14) | 6/6 PASS |
 
-**Cumulative Sprint 44** (final): +184 tests, 0 regressions, 9 deprecated skip.
+**Cumulative Sprint 44** (final): +190 tests, 0 regressions, 9 deprecated skip.
 
 **Production readiness**: ~96% (стабильно).
 
