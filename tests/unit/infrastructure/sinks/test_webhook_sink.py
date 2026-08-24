@@ -6,7 +6,6 @@ from __future__ import annotations
 import hashlib
 import hmac
 import sys
-import types
 from datetime import timedelta
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -16,6 +15,7 @@ import pytest
 
 from src.backend.core.interfaces.sink import SinkKind
 from src.backend.infrastructure.sinks.webhook_sink import WebhookSink
+from tests.unit._auth_mocks import patched_auth_allow
 
 
 class _FakeResponse:
@@ -53,7 +53,8 @@ async def test_send_post_success() -> None:
     resp = _FakeResponse(200, {"x-request-id": "req-99"})
     client = _fake_client(resp)
 
-    with patch("src.backend.core.net.OutboundHttpClient", return_value=client):
+    with patch("src.backend.core.net.OutboundHttpClient", return_value=client), \
+         patched_auth_allow():
         sink = WebhookSink(sink_id="w1", url="http://hook.test", event="user.created")
         result = await sink.send({"id": 1})
 
@@ -68,7 +69,8 @@ async def test_send_with_secret_signature() -> None:
     resp = _FakeResponse(204)
     client = _fake_client(resp)
 
-    with patch("src.backend.core.net.OutboundHttpClient", return_value=client):
+    with patch("src.backend.core.net.OutboundHttpClient", return_value=client), \
+         patched_auth_allow():
         sink = WebhookSink(
             sink_id="w2", url="http://hook.test", event="pay", secret="shh",
         )
@@ -90,7 +92,8 @@ async def test_send_5xx_raises_and_returns_error() -> None:
     resp = _FakeResponse(503)
     client = _fake_client(resp)
 
-    with patch("src.backend.core.net.OutboundHttpClient", return_value=client):
+    with patch("src.backend.core.net.OutboundHttpClient", return_value=client), \
+         patched_auth_allow():
         sink = WebhookSink(sink_id="w3", url="http://hook.test", event="evt")
         result = await sink.send({})
 
@@ -102,7 +105,8 @@ async def test_send_5xx_raises_and_returns_error() -> None:
 async def test_send_network_exception() -> None:
     client = _fake_client(side_effect=httpx.ConnectError("down"))
 
-    with patch("src.backend.core.net.OutboundHttpClient", return_value=client):
+    with patch("src.backend.core.net.OutboundHttpClient", return_value=client), \
+         patched_auth_allow():
         sink = WebhookSink(sink_id="w4", url="http://hook.test", event="evt")
         result = await sink.send({})
 
@@ -115,8 +119,9 @@ async def test_send_returns_false_when_httpx_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setitem(sys.modules, "httpx", None)  # type: ignore[arg-type]
-    sink = WebhookSink(sink_id="w5", url="http://hook.test", event="evt")
-    result = await sink.send({})
+    with patched_auth_allow():
+        sink = WebhookSink(sink_id="w5", url="http://hook.test", event="evt")
+        result = await sink.send({})
     assert result.ok is False
     assert "httpx" in result.details["error"]
 
@@ -158,32 +163,26 @@ async def test_send_with_rpa_policy_enabled(monkeypatch: pytest.MonkeyPatch) -> 
     async def _fake_do_post() -> Any:
         return resp
 
-    # Patch feature_flags
+    # S44 W4 fix: import real modules first (before sys.modules swap), then
+    # setattr on them. Original code did setitem with a fresh ModuleType
+    # which broke feature_flags attribute lookup at runtime.
+    import src.backend.core.config.features as _features_mod
+    import src.backend.core.resilience.rpa_policy as _rpa_mod
+
     fake_flags = MagicMock()
     fake_flags.webhook_resilience_policy_enabled = True
-    monkeypatch.setitem(
-        sys.modules, "src.backend.core.config.features", types.ModuleType("features"),
-    )
-    import src.backend.core.config.features as _features_mod
-
     monkeypatch.setattr(_features_mod, "feature_flags", fake_flags)
 
     fake_policy = MagicMock()
     fake_policy.call = AsyncMock(return_value=resp)
-    monkeypatch.setitem(
-        sys.modules,
-        "src.backend.core.resilience.rpa_policy",
-        types.ModuleType("rpa_policy"),
-    )
-    import src.backend.core.resilience.rpa_policy as _rpa_mod
-
-    _rpa_mod.get_rpa_policy = lambda: fake_policy  # type: ignore[attr-defined]
-    _rpa_mod.RPACallExhausted = Exception  # type: ignore[attr-defined]
+    monkeypatch.setattr(_rpa_mod, "get_rpa_policy", lambda: fake_policy)
+    monkeypatch.setattr(_rpa_mod, "RPACallExhausted", Exception)
 
     sink = WebhookSink(sink_id="w9", url="http://hook.test", event="evt")
     client = _fake_client(resp)
 
-    with patch("src.backend.core.net.OutboundHttpClient", return_value=client):
+    with patch("src.backend.core.net.OutboundHttpClient", return_value=client), \
+         patched_auth_allow():
         result = await sink.send({})
 
     # Since we injected the modules, the policy path may or may not be taken

@@ -304,3 +304,58 @@ service-level API access. В будущем имеет смысл вынести
 check на уровень роутера (где уже есть `require_auth` middleware)
 и оставить в `verify_and_dispatch` только HMAC-валидацию. Но это
 большая архитектурная правка — out of scope для atomic slice.
+
+## S44 W4 — webhook_sink tests + router exception translation (atomic, 2026-08-30)
+
+**Issue** (sub-agent audit revealed 60+ failing tests across 13 files with
+identical root cause to b1018f96 — `@require_capability` decorator on
+connector methods fails closed when AuthorizationFacade has no policy for
+the principal in test environment).
+
+**Slice** (atomic, this commit): Group A1 (6 webhook_sink failures) +
+1 production bug fix.
+
+**Changes**:
+- `tests/unit/_auth_mocks.py` (NEW, 64 LOC): Shared helper module exporting
+  `patched_auth_allow()` context manager + `allow_capability_mock()` factory.
+  Wraps `get_authorization_facade` patch in contextlib for ergonomic use.
+- `tests/unit/infrastructure/sinks/test_webhook_sink.py` (5 tests + 1 fix):
+  - Added `patched_auth_allow()` to 6 failing tests
+  - Fixed `test_send_with_rpa_policy_enabled` module-replacement defect
+    (per agent audit §2.3): import real modules first, then `setattr`,
+    instead of `sys.modules` swap with fresh `ModuleType`.
+- `src/backend/entrypoints/webhook/sources_router.py`: Added
+  `ConnectorAuthError` → HTTP 401 translation in exception handler.
+  Previously the error propagated as HTTP 500 (secondary production bug
+  identified by agent audit §7.2).
+
+**Verification**:
+- pytest `tests/unit/infrastructure/sinks/test_webhook_sink.py`: **10/10 PASS**
+  (6 FIXED + 4 pre-existing)
+- Regression suite (10 webhook_sink + 5 canonical + 5 presidio + 5 L5 chain):
+  **25/25 PASS**
+- ruff: **0** errors
+- bandit HIGH: **0**
+
+**Out of scope for this slice** (next session work):
+- Group A2 (~45 failing tests in 10 other sinks: ws/soap/mq/grpc/s3/mqtt/
+  http/file/email/nats_jetstream): apply same `patched_auth_allow()` pattern.
+- Group A3 (~10 failing tests in `tests/unit/sources/test_webhook.py` +
+  `test_webhook_router.py`): webhook source tests, same root cause.
+
+**Cumulative agent audit summary** (saved at /tmp/agent1_test_audit_report.md
+during this session, available for next session):
+- ≥60 failing tests across 13 files with single root cause
+- `@require_capability` on connector methods confirmed as defense-in-depth
+  at wrong architectural layer (HMAC IS the auth for webhooks)
+- Long-term fix: move capability check to router layer (out of scope)
+
+**Cumulative test gain so far this sprint**:
+- S44 W1 (L5 chain): +19 tests
+- S44 W2 (presidio): +2 tests
+- S44 W3 (webhook canonical): +4 tests
+- S44 W4 (webhook_sink): +6 tests
+- Total: **+31 tests, 0 regressions**
+
+**Production readiness**: ~96% (stable, S44 W4 honest re-eval reflects
+real coverage 13% per ADR-0257).

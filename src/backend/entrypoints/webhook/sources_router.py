@@ -107,6 +107,16 @@ async def receive_source_webhook(source_id: str, request: Request) -> dict[str, 
             raise HTTPException(status_code=401, detail=message) from exc
         if isinstance(exc, RuntimeError):
             raise HTTPException(status_code=503, detail=message) from exc
+        # S44 W4 fix: ConnectorAuthError (PermissionError subclass) from
+        # ``@require_capability("webhook.read")`` must NOT propagate as 500.
+        # Translate to 401 with generic message (don't leak policy details).
+        from src.backend.core.security.connector_auth import ConnectorAuthError
+
+        if isinstance(exc, ConnectorAuthError):
+            logger.warning(
+                "Webhook capability denied: source=%s reason=%s", source_id, message,
+            )
+            raise HTTPException(status_code=401, detail="unauthorized") from exc
         raise
 
     return {"status": "accepted", "source_id": source_id}
