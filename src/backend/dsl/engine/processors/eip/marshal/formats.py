@@ -13,6 +13,7 @@ import csv
 import io
 import json
 import pickle
+import xml.etree.ElementTree as _ET_Builder  # S44 W30: defusedxml has no Element/SubElement/indent/tostring (only safe-parsing helpers). Use stdlib for XML construction.
 from typing import Any
 
 # P0-S6 (audit 2026-08-19): B314 fix — defusedxml для защиты от XXE.
@@ -119,12 +120,19 @@ class XmlDataFormat(DataFormat):
         return "xml"
 
     def marshal(self, body: Any) -> bytes:
-        """Encode dict → XML bytes с XML declaration."""
-        root = ET.Element(self._root_tag)
+        """Encode dict → XML bytes с XML declaration.
+
+        S44 W30: defusedxml.ElementTree doesn't expose Element/SubElement/
+        indent/tostring (only safe-parsing helpers). Use stdlib's
+        ``xml.etree.ElementTree`` for XML construction (safe — no XXE
+        risk when BUILDING XML, only when parsing untrusted input).
+        defusedxml is still used for ``unmarshal`` (parsing) below.
+        """
+        root = _ET_Builder.Element(self._root_tag)
         _dict_to_xml(body, root, self._root_tag)
         if self._pretty:
-            ET.indent(root, space="  ")
-        return ET.tostring(root, encoding="utf-8", xml_declaration=True)
+            _ET_Builder.indent(root, space="  ")
+        return _ET_Builder.tostring(root, encoding="utf-8", xml_declaration=True)
 
     def unmarshal(self, data: bytes, target_type: type | None = None) -> Any:
         """Decode XML bytes → dict via defusedxml (XXE/billion-laughs safe)."""
@@ -301,20 +309,22 @@ def _json_default(obj: Any) -> Any:
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
 
-def _dict_to_xml(obj: Any, parent: ET.Element, key: str) -> None:
+def _dict_to_xml(obj: Any, parent: _ET_Builder.Element, key: str) -> None:  # type: ignore[name-defined]  # noqa: F821
+    """S44 W30: type annotation updated to stdlib Element (defusedxml has no Element)."""
     if isinstance(obj, dict):
         for k, v in obj.items():
-            child = ET.SubElement(parent, str(k))
+            child = _ET_Builder.SubElement(parent, str(k))
             _dict_to_xml(v, child, str(k))
     elif isinstance(obj, list):
         for item in obj:
-            child = ET.SubElement(parent, key)
+            child = _ET_Builder.SubElement(parent, key)
             _dict_to_xml(item, child, key)
     else:
         parent.text = str(obj) if obj is not None else ""
 
 
-def _xml_to_dict(elem: ET.Element) -> Any:
+def _xml_to_dict(elem: _ET_Builder.Element) -> Any:  # type: ignore[name-defined]  # noqa: F821
+    """S44 W30: type annotation updated to stdlib Element (defusedxml has no Element)."""
     children = list(elem)
     if not children:
         return elem.text
