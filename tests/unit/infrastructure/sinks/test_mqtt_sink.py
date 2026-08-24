@@ -12,6 +12,7 @@ import pytest
 from src.backend.core.interfaces.sink import SinkKind
 from src.backend.infrastructure.sinks.factory import build_sink
 from src.backend.infrastructure.sinks.mqtt_sink import MqttSink
+from tests.unit._auth_mocks import patched_auth_allow
 
 
 class _FakeMqttClient:
@@ -58,7 +59,8 @@ async def test_send_dict_serializes_via_orjson(fake_aiomqtt: types.ModuleType) -
         topic="gd/orders/created",
         qos=1,
     )
-    result = await sink.send({"order_id": 42})
+    with patched_auth_allow():
+        result = await sink.send({"order_id": 42})
     assert result.ok is True
     assert result.details["topic"] == "gd/orders/created"
     assert result.details["qos"] == 1
@@ -75,7 +77,8 @@ async def test_send_bytes_passthrough(fake_aiomqtt: types.ModuleType) -> None:
     sink = MqttSink(
         sink_id="m2", broker_host="broker.local", topic="gd/raw", retain=True,
     )
-    await sink.send(b"raw-bytes")
+    with patched_auth_allow():
+        await sink.send(b"raw-bytes")
     _, payload, _, retain = _FakeMqttClient.last_publish  # type: ignore[misc]
     assert payload == b"raw-bytes"
     assert retain is True
@@ -84,7 +87,8 @@ async def test_send_bytes_passthrough(fake_aiomqtt: types.ModuleType) -> None:
 @pytest.mark.asyncio
 async def test_send_str_passthrough(fake_aiomqtt: types.ModuleType) -> None:
     sink = MqttSink(sink_id="m3", broker_host="h", topic="t/x")
-    await sink.send("hello-text")
+    with patched_auth_allow():
+        await sink.send("hello-text")
     _, payload, _, _ = _FakeMqttClient.last_publish  # type: ignore[misc]
     assert payload == "hello-text"
 
@@ -94,8 +98,9 @@ async def test_send_returns_ok_false_when_aiomqtt_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setitem(sys.modules, "aiomqtt", None)  # type: ignore[arg-type]
-    sink = MqttSink(sink_id="m4", broker_host="h", topic="t/x")
-    result = await sink.send({"k": 1})
+    with patched_auth_allow():
+        sink = MqttSink(sink_id="m4", broker_host="h", topic="t/x")
+        result = await sink.send({"k": 1})
     assert result.ok is False
     assert "aiomqtt" in result.details["error"]
 
@@ -119,7 +124,8 @@ async def test_send_handles_publish_exception(monkeypatch: pytest.MonkeyPatch) -
     monkeypatch.setitem(sys.modules, "aiomqtt", fake_module)
 
     sink = MqttSink(sink_id="m5", broker_host="h", topic="t/x")
-    result = await sink.send({"k": 1})
+    with patched_auth_allow():
+        result = await sink.send({"k": 1})
     assert result.ok is False
     assert result.details["error"] == "publish failed"
 
@@ -129,7 +135,8 @@ async def test_health_returns_true_when_connect_ok(
     fake_aiomqtt: types.ModuleType,
 ) -> None:
     sink = MqttSink(sink_id="m6", broker_host="h", topic="t/x")
-    result = await sink.health()
+    with patched_auth_allow():
+        result = await sink.health()
     assert result.status == "ok"
 
 
@@ -138,12 +145,14 @@ async def test_health_returns_false_when_aiomqtt_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setitem(sys.modules, "aiomqtt", None)  # type: ignore[arg-type]
-    sink = MqttSink(sink_id="m7", broker_host="h", topic="t/x")
-    result = await sink.health()
+    with patched_auth_allow():
+        sink = MqttSink(sink_id="m7", broker_host="h", topic="t/x")
+        result = await sink.health()
     assert result.status == "failed"
 
 
 def test_factory_builds_mqtt_sink() -> None:
+    # NOTE: build_sink is sync factory, no @require_capability trigger.
     sink = build_sink(
         {
             "sink_id": "alerts.mqtt",
@@ -189,7 +198,8 @@ async def test_health_returns_false_on_connect_exception(
     fake_module.Client = _BoomClient  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "aiomqtt", fake_module)
     sink = MqttSink(sink_id="m10", broker_host="h", topic="t/x")
-    result = await sink.health()
+    with patched_auth_allow():
+        result = await sink.health()
     assert result.status == "failed"
 
 
