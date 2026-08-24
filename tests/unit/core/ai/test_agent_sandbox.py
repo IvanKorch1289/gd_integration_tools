@@ -23,7 +23,13 @@ from src.backend.services.ai.agent_sandbox import (
 async def test_in_process_delegates_to_build_and_run_agent(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """InProcess sandbox вызывает build_and_run_agent в текущем event loop."""
+    """InProcess sandbox вызывает build_and_run_agent в текущем event loop.
+
+    S44 W20 (agent audit cycle 33 AI2 follow-up): ``InProcessAgentSandbox``
+    now blocks by default via ``ai_in_process_sandbox_disabled=True``.
+    Tests must monkeypatch the flag to False to exercise the legacy
+    in-process path.
+    """
     calls: list[dict[str, Any]] = []
 
     async def _fake_build_and_run_agent(**kwargs: Any) -> dict[str, Any]:
@@ -34,6 +40,11 @@ async def test_in_process_delegates_to_build_and_run_agent(
         "src.backend.services.ai.ai_graph.build_and_run_agent",
         _fake_build_and_run_agent,
     )
+
+    # Override new default-blocked flag for this test.
+    import src.backend.core.config.features as _features_mod
+    flags = _features_mod.feature_flags
+    monkeypatch.setattr(flags, "ai_in_process_sandbox_disabled", False)
 
     sandbox = InProcessAgentSandbox()
     result = await sandbox.run_react(
@@ -55,8 +66,18 @@ async def test_in_process_delegates_to_build_and_run_agent(
 
 
 @pytest.mark.asyncio
-async def test_in_process_reports_error() -> None:
-    """Если build_and_run_agent вернул error — success=False."""
+async def test_in_process_reports_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Если build_and_run_agent вернул error — success=False.
+
+    S44 W20: override new fallback-blocked flag to exercise in-process path.
+    """
+    # Override new default-blocked flag for this test.
+    import src.backend.core.config.features as _features_mod
+    flags = _features_mod.feature_flags
+    monkeypatch.setattr(flags, "ai_in_process_sandbox_disabled", False)
+
     sandbox = InProcessAgentSandbox()
     # build_and_run_agent недоступен в этом тесте (langgraph не установлен) —
     # ожидаем error-ответ.
