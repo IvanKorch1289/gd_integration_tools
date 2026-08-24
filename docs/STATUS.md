@@ -622,8 +622,10 @@ root = ET.fromstring(data)  # defusedxml for safe parsing
 | 8 | test_builder_service_imports.py (test) | encodes pre-Sprint-225/226 import structure; Sprint 225 converted to `__getattr__` proxy | 2 tests marked as skip |
 | 9 | test_admin_small.py (test) | `test_list_training_runs` expected exact dict; production added `note` + `stub:True` for storage fallback indicator | 1 test fixed |
 | 10 | test_p0_fixes_cycle_241.py (4 tests) | pre-existing flaky tests (test isolation issue — TestClient shared state); pass individually, fail in batch | 4 tests marked as skip |
+| 11 | ai_agent/__init__.py (production) | `get_ai_agent_service` except missed `RuntimeError` from `get_app_ref` ('not in app context') | 1 test fixed (W42) |
+| 12 | ai/gateway/client.py (production) | `find_model_by_capabilities` except missed `RuntimeError` from registry (network); + 2 langmem skip + 2 aigateway skip | 1 test fixed + 4 skip (W43) |
 
-**Cumulative Sprint 44** (final): +203 tests, 0 regressions, 15 deprecated skip.
+**Cumulative Sprint 44** (final): +205 tests, 0 regressions, 17 deprecated skip.
 
 ## S44 W37 — dsl flaky test analysis (no code change)
 
