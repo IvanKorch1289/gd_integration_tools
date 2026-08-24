@@ -25,7 +25,7 @@ from src.backend.dsl.commands.registry import RouteRegistry, route_registry
 
 # Engine primitives (6 violations → 0)
 from src.backend.dsl.engine.context import ExecutionContext
-from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
 from src.backend.dsl.engine.execution_engine import ExecutionEngine
 from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.tracer import TraceEvent, get_tracer
@@ -89,6 +89,8 @@ __all__ = [
     # Engine
     "ExecutionContext",
     "Exchange",
+    "ExchangeStatus",
+    "Message",
     "ExecutionEngine",
     "Pipeline",
     # Tracing

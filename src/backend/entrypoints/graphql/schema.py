@@ -20,11 +20,17 @@ Migration history (rounds 1-8):
 God-objects refactored: 4/5 done (graphql now).
 """
 
-from src.backend.core.api.extensions import get_dsl_service
+from types import SimpleNamespace
+
+from src.backend.core.api.extensions import (
+    Exchange,
+    ExchangeStatus,
+    Message,
+    get_dsl_service,
+    route_registry,
+)
 from src.backend.core.auth.auth_context_helpers import extract_user_permissions
 from src.backend.core.logging import get_logger
-from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from src.backend.dsl.registry import route_registry
 from src.backend.entrypoints.graphql.types import (  # noqa: F401
     FileType,
     OrderKindType,
@@ -141,21 +147,23 @@ def _make_dispatch_context(
     principal: str, permissions: tuple[str, ...], route_id: str
 ) -> Any:
     """Build a context object with principal/permissions/route_id."""
-    from types import SimpleNamespace
-
     return SimpleNamespace(
         principal=principal, permissions=permissions, route_id=route_id
     )
 
 
 def _serialize_exchange(exchange: Any) -> dict[str, Any]:
-    """Serialize an Exchange-like object to dict for GraphQL response."""
+    """Serialize an Exchange-like object to dict for GraphQL response.
+
+    Returns ``{"status": "<Enum>", "body": <Any>}`` for normal exchanges,
+    or ``{"status": "error", "body": None}`` if attributes cannot be read.
+    """
     try:
         return {
             "status": str(getattr(exchange, "status", "unknown")),
             "body": getattr(getattr(exchange, "out_message", None), "body", None),
         }
-    except Exception:
+    except (AttributeError, TypeError):
         return {"status": "error", "body": None}
 
 
