@@ -286,17 +286,19 @@ async def test_audit_failure_does_not_break_pipeline(
     audit.emit.assert_awaited()
 
 
+@pytest.mark.skip(
+    reason="S44 W26 (agent audit S85 follow-up): ai_gateway_enforce=False "
+    "no longer supported (AIGatewayEnforcementRequiredError raised in S85). "
+    "Pre-existing test for deprecated pass-through-scaffold mode — skip "
+    "until proper capability-gate test exists.",
+)
 @pytest.mark.asyncio
-async def test_pass_through_default(monkeypatch: pytest.MonkeyPatch) -> None:
-    """При ``ai_gateway_enforce=False`` (default) — scaffold response."""
-    from src.backend.core.config import features as features_module
+async def test_pass_through_default(monkeypatch: pytest.MonkeyPatch) -> None:  # noqa: D401, ARG001
+    """DEPRECATED (S44 W26): pass-through-scaffold mode removed in S85.
 
-    monkeypatch.setattr(features_module.feature_flags, "ai_gateway_enforce", False)
-    gateway = AIGateway()
-    response = await gateway.invoke(
-        AIRequest(workflow_id="x", tenant_id="t", correlation_id="c"),
-    )
-    assert response.model_used == "pass-through-scaffold"
+    Kept for reference but skipped. Use new enforced-gateway tests instead.
+    """
+    pass
 
 
 @pytest.mark.asyncio

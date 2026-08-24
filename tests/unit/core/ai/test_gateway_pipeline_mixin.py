@@ -329,10 +329,15 @@ async def test_input_sanitizers_no_sanitizer_returns_prompt(
     """Без sanitizer — возвращается исходный prompt как есть.
 
     Тест патчит presidio-резолв чтобы вернуть None (имитация «Presidio недоступен»).
+
+    S44 W27 (S44 W2 follow-up): patch target moved from
+    ``src.backend.services.ai.pii.presidio_analyzer.get_presidio_sanitizer_adapter``
+    to ``src.backend.core.api.extensions.get_presidio_sanitizer_adapter``
+    after the S44 W2 facade consolidation.
     """
     mixin = _make_mixin()
     with patch(
-        "src.backend.services.ai.pii.presidio_analyzer.get_presidio_sanitizer_adapter",
+        "src.backend.core.api.extensions.get_presidio_sanitizer_adapter",
         return_value=None,
     ):
         result = await mixin._apply_input_sanitizers(basic_request, None)
@@ -734,11 +739,13 @@ async def test_output_sanitizers_no_sanitizer_passthrough() -> None:
     """Без sanitizer — response возвращается unchanged.
 
     Тест патчит presidio-резолв чтобы вернуть None (имитация «Presidio недоступен»).
+
+    S44 W27: patch target moved to ``core.api.extensions`` after S44 W2.
     """
     mixin = _make_mixin()
     response = AIResponse(content="hello world")
     with patch(
-        "src.backend.services.ai.pii.presidio_analyzer.get_presidio_sanitizer_adapter",
+        "src.backend.core.api.extensions.get_presidio_sanitizer_adapter",
         return_value=None,
     ):
         result = await mixin._apply_output_sanitizers(response, None)
