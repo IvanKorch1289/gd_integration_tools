@@ -115,7 +115,12 @@ def patched_routing(monkeypatch: pytest.MonkeyPatch):
 
     fake_engine_mod = types.ModuleType("src.backend.dsl.engine.execution_engine")
 
-    def _engine_factory(*, route_registry: Any):
+    def _engine_factory(*args: Any, **kwargs: Any):
+        """S44 W33: D-AUDIT-14 fix (cycle 1) removed `route_registry` kwarg.
+
+        Accept any args/kwargs to match current ExecutionEngine() signature
+        (no required args). Return fake engine.
+        """
         return fake_engine_holder["engine"]
 
     fake_engine_mod.ExecutionEngine = _engine_factory  # type: ignore[attr-defined]
