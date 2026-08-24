@@ -8,7 +8,7 @@
 
 | Metric | Value | Verification |
 |---|---|---|
-| **Production readiness** | **~98%** (S44 W1, L5 closed last P0) | R12 + ADR-0255 |
+| **Production readiness** | **~96%** (S44 W4 honest re-eval, coverage gate = 13%/60%) | R12 + ADR-0255 + ADR-0257 |
 | **P0 open** | **0** (L5 Security Chain ✅ DONE S44 W1 — commit 94960cf4) | 19/19 L5 tests pass |
 | **P1 open** | **0** (RouteBuilder Protocol was FALSE CLAIM — DONE) | R12 §1 |
 | **P2 open** | **2** (RestrictedUnpickler, dependabot) | gh pr list |
@@ -27,6 +27,7 @@
 | **Sprint 44 W1** | **P0 closed (L5)** | 19 tests pass, schema.py +250 LOC |
 | **Sprint 44 W2** | **otel block FALSE CLAIM retracted + aio_pika 0.60b1 installed** | 22 integration tests run |
 | **Sprint 44 W3 (live smoke)** | **12-round audit gap closed** | 411 OpenAPI paths + 131 routes + 11 GraphQL fields + 10 components |
+| **Sprint 44 W4 (coverage)** | **REAL measurement 13%** (was fake 90.35%) | 105924 stmts, 23110 covered, gate FAIL |
 
 ## Sprint 43 W2 Results (3 commits, 2026-08-30)
 
