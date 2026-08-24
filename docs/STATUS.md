@@ -618,8 +618,9 @@ root = ET.fromstring(data)  # defusedxml for safe parsing
 | 4 | governance.py (production) | `GuardrailValueTypeError` raised but never imported (cycle-1/A8-07 bug); `timedelta` missing | 4 tests + 2 ruff fixed |
 | 5 | activity.py (production) | `SensorTimeoutRequiredError`/`SensorPollIntervalError`/`_SENSOR_MAX_ITERATIONS_DEFAULT`/`timedelta` all missing (cycle-1/D-A8-10) | 4 tests + 1 ruff fixed |
 | 6 | activity.py (production) | `LANGGRAPH_CHECKPOINT_*_ACTIVITY`/`_TIMEOUT_S` constants missing (S100 W1) | 3 tests fixed |
+| 7 | action_dispatcher.py (production) | `__getattr__` proxy doesn't fire for free-variable refs in method bodies (pytest importlib mode) | 1 test fixed |
 
-**Cumulative Sprint 44** (final): +201 tests, 0 regressions, 9 deprecated skip.
+**Cumulative Sprint 44** (final): +202 tests, 0 regressions, 9 deprecated skip.
 
 ## S44 W37 — dsl flaky test analysis (no code change)
 
