@@ -102,11 +102,17 @@ def test_enforce_size_quota_evicts_oldest(tmp_path: Path) -> None:
 
 @pytest.mark.asyncio
 async def test_stop_before_start_is_safe(tmp_path: Path) -> None:
-    """``stop`` безопасно вызывается до ``start``."""
+    """``stop`` безопасно вызывается до ``start``.
+
+    S44 W11 fix: original assertion ``assert cleaner._task is not None``
+    contradicted the test's stated intent ("stop безопасно вызывается до
+    start"). Per S171 M11 R2 design, ``_task`` is ``None`` until ``start``
+    is called, and ``stop`` is idempotent on that state. Removed
+    meaningless assertion; kept no-throw guarantee.
+    """
     cleaner = AIWorkspaceCleaner(workspace_root=tmp_path)
-    # Не должно бросить исключение.
+    # Не должно бросить исключение — если дошли сюда, OK.
     await cleaner.stop()
-    assert cleaner._task is not None  # default=True per code (S171 M11 R2 sync)
 
 
 # ─── _dir_mtime / _dir_size edge cases ──────────────────────────────────────
