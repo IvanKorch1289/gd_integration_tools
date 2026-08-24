@@ -11,6 +11,7 @@ import pytest
 
 from src.backend.core.interfaces.sink import SinkKind
 from src.backend.infrastructure.sinks.soap_sink import SoapSink, _summarize
+from tests.unit._auth_mocks import patched_auth_allow
 
 
 @pytest.fixture
@@ -41,7 +42,8 @@ async def test_send_dict_payload(fake_zeep: types.ModuleType) -> None:
     fake_zeep.Client = lambda *a, **k: fake_client  # type: ignore[misc]
 
     sink = SoapSink(sink_id="s1", wsdl_url="http://test/wsdl", operation="op")
-    result = await sink.send({"a": 1})
+    with patched_auth_allow():
+        result = await sink.send({"a": 1})
     assert result.ok is True
     assert result.details["operation"] == "op"
     fake_service.op.assert_called_once_with(a=1)
@@ -56,7 +58,8 @@ async def test_send_non_dict_payload(fake_zeep: types.ModuleType) -> None:
     fake_zeep.Client = lambda *a, **k: fake_client  # type: ignore[misc]
 
     sink = SoapSink(sink_id="s2", wsdl_url="http://test/wsdl", operation="op")
-    result = await sink.send("raw")
+    with patched_auth_allow():
+        result = await sink.send("raw")
     assert result.ok is True
     fake_service.op.assert_called_once_with(body="raw")
 
@@ -76,7 +79,8 @@ async def test_send_with_service_and_port(fake_zeep: types.ModuleType) -> None:
         service_name="Svc",
         port_name="Port",
     )
-    result = await sink.send({})
+    with patched_auth_allow():
+        result = await sink.send({})
     assert result.ok is True
     fake_client.bind.assert_called_once_with("Svc", "Port")
 
@@ -86,8 +90,9 @@ async def test_send_returns_false_when_zeep_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setitem(sys.modules, "zeep", None)  # type: ignore[arg-type]
-    sink = SoapSink(sink_id="s4", wsdl_url="http://test/wsdl", operation="op")
-    result = await sink.send({})
+    with patched_auth_allow():
+        sink = SoapSink(sink_id="s4", wsdl_url="http://test/wsdl", operation="op")
+        result = await sink.send({})
     assert result.ok is False
     assert "zeep" in result.details["error"]
 
@@ -101,7 +106,8 @@ async def test_send_handles_invoke_exception(fake_zeep: types.ModuleType) -> Non
     fake_zeep.Client = lambda *a, **k: fake_client  # type: ignore[misc]
 
     sink = SoapSink(sink_id="s5", wsdl_url="http://test/wsdl", operation="op")
-    result = await sink.send({})
+    with patched_auth_allow():
+        result = await sink.send({})
     assert result.ok is False
     assert "soap fault" in result.details["error"]
 
@@ -110,7 +116,8 @@ async def test_send_handles_invoke_exception(fake_zeep: types.ModuleType) -> Non
 async def test_send_handles_client_init_exception(fake_zeep: types.ModuleType) -> None:
     fake_zeep.Client = MagicMock(side_effect=OSError("wsdl fail"))  # type: ignore[misc]
     sink = SoapSink(sink_id="s6", wsdl_url="http://test/wsdl", operation="op")
-    result = await sink.send({})
+    with patched_auth_allow():
+        result = await sink.send({})
     assert result.ok is False
     assert "wsdl fail" in result.details["error"]
 
@@ -120,27 +127,35 @@ async def test_health_true(fake_zeep: types.ModuleType) -> None:
     fake_client = MagicMock()
     fake_zeep.Client = lambda *a, **k: fake_client  # type: ignore[misc]
     sink = SoapSink(sink_id="s7", wsdl_url="http://test/wsdl", operation="op")
-    h = await sink.health(); assert h.status == "ok"
+    with patched_auth_allow():
+        h = await sink.health()
+    assert h.status == "ok"
 
 
 @pytest.mark.asyncio
 async def test_health_false_when_zeep_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "zeep", None)  # type: ignore[arg-type]
-    sink = SoapSink(sink_id="s8", wsdl_url="http://test/wsdl", operation="op")
-    h = await sink.health(); assert h.status == "failed"
+    with patched_auth_allow():
+        sink = SoapSink(sink_id="s8", wsdl_url="http://test/wsdl", operation="op")
+        h = await sink.health()
+    assert h.status == "failed"
 
 
 @pytest.mark.asyncio
 async def test_health_false_on_exception(fake_zeep: types.ModuleType) -> None:
     fake_zeep.Client = MagicMock(side_effect=RuntimeError("boom"))  # type: ignore[misc]
-    sink = SoapSink(sink_id="s9", wsdl_url="http://test/wsdl", operation="op")
-    h = await sink.health(); assert h.status == "failed"
+    with patched_auth_allow():
+        sink = SoapSink(sink_id="s9", wsdl_url="http://test/wsdl", operation="op")
+        h = await sink.health()
+    assert h.status == "failed"
 
 
 def test_get_client_caches_instance(fake_zeep: types.ModuleType) -> None:
     fake_client = MagicMock()
     fake_zeep.Client = MagicMock(return_value=fake_client)  # type: ignore[misc]
     sink = SoapSink(sink_id="s10", wsdl_url="http://test/wsdl", operation="op")
+    # NOTE: _get_client() does NOT trigger @require_capability (decorator
+    # is only on .send()), so no patched_auth_allow needed here.
     c1 = sink._get_client()
     c2 = sink._get_client()
     assert c1 is c2
