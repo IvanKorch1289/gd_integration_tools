@@ -530,5 +530,20 @@ encode the previous, more permissive contract.
 - `test_soap_sink.py::test_send_handles_invoke_exception` + `test_grpc_sink.py::test_send_handles_channel_exception`
   (cycle 22 P1-6 re-raise design — runtime errors propagate instead of being caught)
 
+## S44 W23 — test_tools_whitelist: 6 tests (S209 backward-compat)
+
+`14f7177c fix(ai-policy): preserve pre-S209 backward-compat in test_tools_whitelist`
+
+Same S209 pattern from W19/W22: 6 tests used `ToolsSpec()` or
+`ToolsSpec(blacklist=...)` without explicit `allow_all_tools=True`.
+Added opt-in to preserve pre-S209 contract encoded in test docstrings.
+
+**Test delta**: +6 (cumulative Sprint 44: +173 tests, 0 regressions).
+
+**Remaining failures** (after W23):
+- `test_gateway.py` (2 tests) — Group T pre-existing fail-closed design
+- `test_soap_sink.py` + `test_grpc_sink.py` (2 tests) — cycle 22 P1-6 re-raise
+- `test_enforcer.py::test_guard_input_nemo_skipped` — Group T same root cause
+
 **Production readiness**: ~96% (stable, S44 W4 honest re-eval reflects
 real coverage 13% per ADR-0257).
