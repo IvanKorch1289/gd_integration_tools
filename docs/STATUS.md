@@ -237,3 +237,28 @@ independently reproduced the same fixes, demonstrating perfect idempotency.
 - 61 previously-broken endpoint tests still PASS (no regression)
 
 **Production readiness**: 96% → **98%** (L5 chain closed; only P2s remain)
+
+## S44 W2 Step 2 — presidio facade fix (atomic, 2026-08-30)
+
+**Issue** (ADR-0256 R12/R13 chain identified 2 failing presidio tests):
+- `tests/integration/ai/test_presidio_active.py::test_di_provider_returns_presidio_adapter_when_flag_on` — FAILED
+- `tests/integration/ai/test_presidio_active.py::test_ai_agent_uses_presidio_when_flag_on` — FAILED
+- Root cause: `get_presidio_sanitizer_adapter` не экспортирован через `core.api.extensions` фасад
+- Каскад: `core.di.providers.ai.get_ai_sanitizer_provider` + `AIAgentService.__init__` ломались на import
+
+**Fix** (2 symbols added):
+- `core/api/extensions.py` line 56-61: импорт `PresidioSanitizerAdapter` + `get_presidio_sanitizer_adapter`
+- `core/api/extensions.py` `__all__`: +2 символа
+
+**Verification**:
+- pytest `tests/integration/ai/test_presidio_active.py`: **5/5 PASS** (3 pre-existing + 2 fixed)
+- pytest regression suite (L5 + endpoints + graphql): **80/80 PASS** (no regression)
+- ruff: **0** errors
+- bandit HIGH: **0**
+- vulture @>=90%: **0**
+
+**Real failures remaining** (per ADR-0256):
+- 4 webhook canonical mode tests (test_canonical_mode_*)
+- 1 webhook integration test (webhook canonical mode)
+
+These are pre-existing test infrastructure issues, NOT facade gaps. Out of scope for this atomic slice.

@@ -53,6 +53,15 @@ from src.backend.dsl.workflow.yaml_io import from_yaml, to_yaml
 from src.backend.dsl.yaml_loader.loaders import load_pipeline_from_yaml
 from src.backend.dsl.yaml_store import YAMLStore
 
+# AI sanitization (S44 W2: re-export Presidio sanitizer для core.di.providers.ai).
+# Делает ``get_presidio_sanitizer_adapter`` доступным для импорта из
+# ``src.backend.core.api.extensions`` (требуется для feature-flag
+# PRESIDIO_PII_ENABLED + AIAgentService integration).
+from src.backend.services.ai.pii.presidio_analyzer import (  # noqa: F401
+    PresidioSanitizerAdapter,
+    get_presidio_sanitizer_adapter,
+)
+
 __all__ = [
     # Action registry
     "ActionHandlerRegistry",
@@ -92,4 +101,7 @@ __all__ = [
     "from_yaml",
     "load_pipeline_from_yaml",
     "YAMLStore",
+    # AI sanitization (S44 W2)
+    "PresidioSanitizerAdapter",
+    "get_presidio_sanitizer_adapter",
 ]
