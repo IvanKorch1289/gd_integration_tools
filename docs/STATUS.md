@@ -33,6 +33,8 @@
 | **Sprint 44 W7 (coverage+2)** | **_capability_adapter.py: 0% → 100%** | 7 new tests +105 LOC, 24 admin tests PASSED |
 | **Sprint 44 W8 (bug+coverage)** | **clickhouse_admin: broken lazy proxy FIX + 0% → 100%** | 6 new tests + facade re-export added |
 | **Sprint 44 W9 (wrap-up)** | **W5-W8 retrospective + final cycle close** | Commit `896d511a` (148 lines retro) |
+| **Sprint 44 W11 (test fix)** | **test_stop_before_start_is_safe: removed contradictory assert** | 16/16 PASS (was 15P+1F) |
+| **Sprint 44 W12 (CI bumps)** | **5 GH Actions packages bumped (Phase 1/13)** | 17 workflows, 38 string edits, yaml.safe_load=OK |
 
 ## Sprint 43 W2 Results (3 commits, 2026-08-30)
 
