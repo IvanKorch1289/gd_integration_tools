@@ -402,5 +402,35 @@ in test environment.
   methods to router layer (where `require_auth` middleware already runs).
   Documented in S44 W4 STATUS section.
 
+## S44 W14-W16 — Group A3 + DLQ writers complete
+
+**Group A3** (webhook sources):
+| Commit | File | Tests |
+|---|---|---|
+| `58f82ef3` | `tests/unit/sources/test_webhook.py` | 7/7 |
+| `da73d3bc` | `tests/unit/sources/test_webhook_router.py` | 7/7 (autouse fixture) |
+
+**DLQ writers** (Group A follow-up):
+| Commit | Files | Tests |
+|---|---|---|
+| `52ae6d88` | `tests/unit/infrastructure/messaging/dlq/test_{kafka,nats,rabbit}_writer.py` | 10/10 |
+
+**Total this batch**: 24 tests fixed (7 + 7 + 4 + 3 + 3).
+
+**Cumulative Sprint 44 test gain** (R9-W16):
+- W1 (L5 chain): +19
+- W2 (presidio): +2
+- W3 (webhook canonical): +4
+- W4 (webhook_sink + prod fix): +6
+- W5-W13 (Group A2 sinks): +90
+- W14-W16 (Group A3 + DLQ): +24
+- **Total: +145 tests, 0 regressions**
+
+**Out of scope** (future work):
+- Architectural fix: move `@require_capability` from connector methods to router layer
+- 2 pre-existing test defects (soap_sink + grpc_sink RuntimeError not caught by sink)
+
+**Production readiness**: ~96% (stable).
+
 **Production readiness**: ~96% (stable, S44 W4 honest re-eval reflects
 real coverage 13% per ADR-0257).
