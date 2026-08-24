@@ -29,6 +29,7 @@
 | **Sprint 44 W3 (live smoke)** | **12-round audit gap closed** | 411 OpenAPI paths + 131 routes + 11 GraphQL fields + 10 components |
 | **Sprint 44 W4 (coverage)** | **REAL measurement 13%** (was fake 90.35%) | 105924 stmts, 23110 covered, gate FAIL |
 | **Sprint 44 W5 (multi-agent)** | **3 Agent dispatches: refactor + regex fix** | 2 commits (20181e30, bae42953) |
+| **Sprint 44 W6 (coverage+1)** | **admin/audit.py: 0% → 100%** | 7 new tests +140 LOC, 17 admin tests PASSED |
 
 ## Sprint 43 W2 Results (3 commits, 2026-08-30)
 
