@@ -1,222 +1,107 @@
-# Architecture Decision Records (ADR) — индекс
+# ADR Index
 
-Всего ADR-файлов: **212**; уникальных слотов: **200**.
+> Автоматически сгенерирован из ``docs/adr/*.md``.
+> Последнее обновление: see git log.
 
-⚠️ Collision-слоты (12): ADR-0109, ADR-0226, ADR-0227, ADR-0228, ADR-0229, ADR-0230, ADR-0232, ADR-0233, ADR-0234, ADR-0235, ADR-0237, ADR-0249. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
+| ADR | Title | Status |
+|-----|-------|--------|
+| [ADR-0050](0050-net-waf-strict-single-entry.md) | WAF strict + Single Entry для исходящего HTTP | Accepted |
+| [ADR-0051](0051-cache-decorators-facade.md) | Cache-декораторы как фасад поверх CachingDecorator | Accepted |
+| [ADR-0052](0052-policy-decorator-order.md) | Каноничный порядок композиции в `@policy` | Accepted |
+| [ADR-0053](0053-waf-phase2-migration.md) | WAF Phase-2: flip `outbound_via_facade=True` по умолчанию | Accepted |
+| [ADR-0054](0054-sso-federation.md) | SSO Federation (SAML 2.0 + per-tenant IdP) | Accepted |
+| [ADR-0055](0055-chaos-engineering.md) | Chaos Engineering + Performance Gate | Accepted |
+| [ADR-0056](0056-routes-v11.md) | Routes V11.1a (DSL-routes как лёгкие плагины) | Accepted |
+| [ADR-0057](0057-asgi-pure-chain.md) | Pure ASGI Middleware Chain | Accepted |
+| [ADR-0058](0058-jsonschema-export.md) | JSON-Schema Export для DSL Processors | Accepted |
+| [ADR-0059](0059-granian-rsgi-production.md) | Granian RSGI production tuning | Accepted |
+| [ADR-0060](0060-blue-green-deploy.md) | Blue/Green deployment topology | Accepted |
+| [ADR-0061](0061-waf-allowlist-tightening.md) | WAF allowlist tightening для Sprint 9 | Accepted |
+| [ADR-0062](0062-middleware-layers-distinction.md) | Distinction между ASGI и Action-dispatch middleware | Accepted |
+| [ADR-0063](0063-presidio-ru-ner-pii.md) | Presidio + ru NER как обязательный AI Safety layer (PII) | **Accepted** |
+| [ADR-0064](0064-nemo-guardrails-llama-guard.md) | NeMo Guardrails + Llama Guard 3 defense-in-depth | **Accepted** |
+| [ADR-0065](0065-langgraph-checkpointer-mem0.md) | LangGraph PostgresCheckpointer + Mem0 как единый long-term memory layer | **Accepted** |
+| [ADR-0066](0066-ai-gateway-facade.md) | AIGateway — единая точка входа в AI | **Accepted** |
+| [ADR-0067](0067-ai-policy-spec-dsl.md) | AIPolicySpec — декларативная политика AI per-workflow | **Draft** |
+| [ADR-0068](0068-pii-tokenizer-reversible.md) | PIITokenizer — reversible PII tokenization layer | **Accepted** |
+| [ADR-0069](0069-skill-registry-v11-2-toml.md) | SkillRegistry V11.2 — TOML-манифест для AI-tools | **Draft** |
+| [ADR-0070](0070-mcp-gateway-namespaces.md) | MCP Gateway — domain namespaces + trusted external registry | **Draft** |
+| [ADR-0071](0071-ai-audit-unified-schema.md) | AI Audit Unified Schema — `ai.invocation.*` события | **Draft** |
+| [ADR-0072](0072-pii-production-enforcement.md) | PII production enforcement (Presidio + Langfuse + RAG ingest + MCP authz + Policy gate) | **Accepted** |
+| [ADR-0073](0073-ragas-evaluation-gate.md) | RAGAS evaluation gate | **Accepted** |
+| [ADR-0074](0074-rag-hybrid-retrieval-and-eval-gate.md) | RAG hybrid retrieval, embedding provenance, source attribution & eval gate | **Accepted** |
+| [ADR-0075](0075-unified-agent-memory-gateway.md) | UnifiedAgentMemoryGateway (Protocol + dispatch) | **Accepted** |
+| [ADR-0078](0078-plugin-toml-capability-syntax.md) | plugin.toml Capability Syntax: Array Format (`[[capabilities]]`) | Unknown |
+| [ADR-0079](0079-slo-format-route-toml-slo.md) | SLO Format: Inline `route.toml::slo` (not separate sloth YAML) | Unknown |
+| [ADR-0080](0080-single-entry-policy-naming.md) | Single Entry Policy Naming Convention | Unknown |
+| [ADR-0081](0081-eventbus-production-backend-faststream-redis.md) | Event Bus Production Backend: FastStream + Redis | Unknown |
+| [ADR-0082](0082-markitdown-network-isolation.md) | Network isolation для markitdown через monkey-patch urllib.request | Accepted |
+| [ADR-0083](0083-versioning-dsl-continuum-wrapper.md) | Row-Level Versioning: thin DSL wrapper над `sqlalchemy-continuum` | Unknown |
+| [ADR-0084](0084-library-adoption-migration-plan.md) | Library Adoption Migration Plan (structlog, typer, rich, aiocache) | Unknown |
+| [ADR-0085](0085-user-auth-ldap-integration.md) | User Auth: LDAP as Primary, Password Deprecated | Unknown |
+| [ADR-0086](0086-aiocache-migration-plan.md) | aiocache Migration Plan (S60+) | Unknown |
+| [ADR-0087](0087-claimcheck-dedup.md) | ClaimCheckProcessor Dedup (S63 W2.1) | Unknown |
+| [ADR-0088](0088-eip-10of10-coverage.md) | EIP 10/10 Coverage: TransactionalClient + ProcessManager (S63 W3.0) | Unknown |
+| [ADR-0108](0108-di-dsl-for-routes.md) | DI DSL для RouteBuilder / call_function / process_fn | Accepted |
+| [ADR-0109](0109-feature-flag-dependency-check-fix.md) | Feature Flag Dependency Check: package-aware + Sprint 41 audit | Accepted |
+| [ADR-0110](0110-waf-coverage-100pct-formalize.md) | WAF Coverage 100% (formalize Sprint 41 #4 met) | Accepted |
+| [ADR-0111](0111-chaos-multitenant-formalize.md) | Chaos Tests + Multi-Tenant Isolation status (Sprint 41 #1, #6) | Accepted |
+| [ADR-0112](0112-security-audit-status.md) | Security Audit status (Sprint 41 #3) | Accepted |
+| [ADR-0113](0113-perf-bg-dr-formalize.md) | Perf + Blue/Green + Disaster Recovery status (S41 #2, #7, #10) | Accepted |
+| [ADR-0114](0114-dsl-lsp-server-formalize.md) | DSL LSP server status + Makefile integration (Sprint 42 #1) | Accepted |
+| [ADR-0115](0115-sprint-42-dx-closure.md) | Sprint 42 closure: Developer Experience Polish (5/5 DoD) | Accepted |
+| [ADR-0116](0116-sprint-43-closure.md) | Sprint 43 closure: Streamlit Filters + Vite Cleanup (2/5 DoD) | Accepted |
+| [ADR-0117](0117-sprint-44-closure.md) | Sprint 44 closure: Backend Wiring + Admin Build Fix (4/5 DoD) | Accepted |
+| [ADR-0118](0118-sprint-45-closure.md) | Sprint 45 closure: TD-006 + TD-018 + filter migration + docstrings (5/5 DoD) | Accepted |
+| [ADR-0119](0119-sprint-46-closure.md) | Sprint 46 closure: TraceStorage abstraction + docstring tool + toxiproxy runbook (5/5 DoD) | Accepted |
+| [ADR-0120](0120-sprint-47-closure.md) | Sprint 47 closure: ExecutionTracer storage wiring (1/5 substantive) | Accepted |
+| [ADR-0121](0121-sprint-48-partial-closure.md) | Sprint 48 partial closure: TD-015 ruff F401 + mypy clean + stub regen verified | Accepted |
+| [ADR-0122](0122-sprint-48-closure.md) | Sprint 48 closure: audit + re-scope + 5/5 waves (W1-W4 substantive, W5 closure) | Accepted |
+| [ADR-0123](0123-sprint-49-closure.md) | Sprint 49 closure: TD-009 + actions.py decomp + trunk hygiene (4 commits, 5/5 substantive) | Accepted |
+| [ADR-0124](0124-sprint-50-closure.md) | Sprint 50 closure: TD backlog + transport.py B3-B5 + ai_banking/rpa god-file decomp (5 commits, 5/5 substantive) | Accepted |
+| [ADR-0125](0125-sprint-51-closure.md) | Sprint 51 closure: ai_rpa.py (2-wave) + agent_dsl.py + TD-003 (5 working + 1 fixup commits, 5/5 substantive) | Accepted |
+| [ADR-0126](0126-sprint-52-closure.md) | Sprint 52 closure: ai_rpa.py W3 + validator.py + loader_v11.py god-file decomp + TD-010 closure (5+1 commits, 5/5 substantive) | Accepted |
+| [ADR-0127](0127-sprint-53-closure.md) | Sprint 53 closure: format_convert + streaming + setup god-file decomp + TD-002 closure (5 commits, 5/5 substantive) | Accepted |
+| [ADR-0128](0128-sprint-54-closure.md) | Sprint 54 closure: 4 god-file decomps (mcp_server, ai_agent, invoker, capability_gate) (4+1 commits, 5/5 substantive) | Accepted |
+| [ADR-0129](0129-sprint-55-closure.md) | Sprint 55 closure: 4 god-file decomp (cert_store, control_flow, pg_runner_internals, data_quality) (4+1 commits, 5/5 substantive) | Accepted |
+| [ADR-0130](0130-sprint-56-closure.md) | Sprint 56 closure: 4 god-file decomp (spec, gateway_pipeline_mixin, s3_pool, admin_workflows) (5+1 commits, 5/5 substantive) | Accepted |
+| [ADR-0131](0131-sprint-57-closure.md) | Sprint 57 closure: 4 god-file decomp (base RouteBuilder, sources_mixin, collection EIP, sink_publish) (4+1 commits, 5/5 substantive) | Accepted |
+| [ADR-0132](0132-sprint-58-closure.md) | Sprint 58 closure: 4 god-file decomp (crud, saga_lra_processor, format_converters, workflow_builder) (4+1 commits, 5/5 substantive) | Accepted |
+| [ADR-0133](0133-sprint-59-closure.md) | Sprint 59 closure: 4 god-file decomp (banking_processors, lifecycle [sibling W82], redis, 31_DSL_Visual_Editor) (3+1 commits, 5/5 substantive) | Accepted |
+| [ADR-0134](0134-sprint-60-closure.md) | Sprint 60 closure: 4 god-file decomp (jupyter, cdc, setup_infra, authorization_gateway) (4+1 commits, 5/5 substantive) | Accepted |
+| [ADR-0135](0135-sprint-61-closure.md) | Sprint 61 closure: 4 god-file decomp (base_service, enrichment, executor, http) (4+1 commits, 5/5 substantive) | Accepted |
+| [ADR-0136](0136-sprint-62-closure.md) | Sprint 62 closure: 4 god-file decomp (admin_plugins, vocabulary, integration_core, yaml_loader) (4+1 commits, 5/5 substantive) | Accepted |
+| [ADR-0137](0137-sprint-63-closure.md) | Sprint 63 closure: 4 god-file decomp (loading, routing, marshal, external_database) (4+1 commits, 5/5 substantive) | Accepted |
+| [ADR-0138](0138-sprint-64-closure.md) | Sprint 64 closure: 4 god-file decomp (graphql, repositories, database, rag_service) (4+1 commits, 5/5 substantive) | Accepted |
+| [ADR-0139](0139-sprint-65-closure.md) | Sprint 65 closure: 4 god-file decomp (components, rpa_operations, grpc_server, idp_pipeline) + 2 W3 sibling WIP fixups (4+1+2 commits, 7/7 substantive) | Accepted |
+| [ADR-0140](0140-sprint-66-closure.md) | Sprint 66 closure: 3 god-file decomp (event_store, setup, lifecycle) + 1 sibling WIP fixup (4+1 commits, 5/5 substantive) | Accepted |
+| [ADR-0141](0141-sprint-67-closure.md) | Sprint 67 closure: 4 god-file decomp (backpressure, ai_enforcer, semantic_cache, ad_directory_client) (4+1 commits, 5/5 substantive) | Accepted |
+| [ADR-0142](0142-sprint-68-closure.md) | Sprint 68 closure: 4 god-file decomp (macros, clickhouse_audit, invoker, ai_providers) (4+1 commits, 5/5 substantive) | Accepted |
+| [ADR-0143](0143-sprint-83-w3-closure.md) | Sprint 83 W3: Vault DSL wrapper + PIL leak fix | Accepted |
+| [ADR-0144](0144-multi-instance-safety.md) | Multi-instance safety: outbox claim_pending + scheduler leader election + RedisDedupeStore (4 commits, 3/5 substantive) | Accepted |
+| [ADR-0145](0145-sprint-65-p0-cleanup-closure.md) | Sprint 65 closure: P0 cleanup (lazy imports, dead enforcement, dsl/workflows LAYERS) (3 commits, 3/3 substantive) | Accepted |
+| [ADR-0146](0146-sprint-66-quick-wins-closure.md) | Sprint 66 closure: fact-checked quick wins (4 commits, 4/4 substantive) | Accepted |
+| [ADR-0147](0147-sprint-67-torch-namespace-jwt-fix-closure.md) | Sprint 67 closure: torch CVE, namespace markers, JWT consolidation, pre-existing fix (4 commits, 4/4 substantive) | Accepted |
+| [ADR-0148](0148-sprint-68-swarm-closure.md) | Sprint 68 closure: 3 parallel teams (swarm), 4 violations closed, 2 ADR docs (3 commits, 3/3 substantive) | Accepted |
+| [ADR-0149](0149-core-violations-audit.md) | TD-S65-W2 audit: 34 core→other violations classified + 1 sample refactor (RetryPolicy) | Accepted |
+| [ADR-0150](0150-dsl-violations-audit.md) | TD-S65-W4 audit: 124 dsl/workflows violations classified + 1 sample refactor (audit JSON codec) | Accepted |
+| [ADR-0151](0151-sprint-69-swarm-2nd-closure.md) | Sprint 69 closure: 2nd SWARM (3 teams) — 1 violation closed + 2 style cleanups (3 commits, 3/3 substantive, scope discipline) | Accepted |
+| [ADR-0152](0152-sprint-70-swarm-3rd-closure.md) | Sprint 70 closure: 3rd SWARM (3 teams) — 3 style cleanups (3 commits, 3/3 substantive, 2/3 subagent clean) | Accepted |
+| [ADR-0153](0153-sprint-71-pre-existing-bugs-and-multi-instance-safety-closure.md) | Sprint 71 closure: 4 pre-existing import bugs + 3 file+dir merges + 2 P1 multi-instance safety fixes (4 commits, 7+3 NEW tests) | Accepted |
+| [ADR-0154](0154-sprint-72-outbox-per-row-claim-closure.md) | Sprint 72 closure: TD-S64-W1 per-row outbox claim (3 files, 5+1 NEW tests, per-row lease + sweeper) | Accepted |
+| [ADR-0155](0155-sprint-73-p0-a-except-bug-batch-fix-closure.md) | Sprint 73 closure: P0-A batch fix (106 files, 136 except-A-B fixes, 2 NEW regression tests, pre-push CI gate) (5 commits) | Accepted |
+| [ADR-0156](0156-sprint-74-jupyter-execution-ecosystem-closure.md) | Sprint 74 closure: Jupiter Hub + Notebook Execution ecosystem (Papermill + Factory + WebSocket heartbeat, 13 NEW tests) (5 commits) | Accepted |
+| [ADR-0157](0157-sprint-75-jupyter-execution-final-closure.md) | Sprint 75 closure: направление #1 final closure (e2b ExecutionBackend + KernelSpecDiscovery, 15 NEW tests) (5 commits) | Accepted |
+| [ADR-0158](0158-sprint-76-tools-whitelist-closure.md) | Sprint 76 closure: P0-B tools whitelist в AIPolicySpec (ToolsSpec + enforcement + 21 NEW tests) (5 commits) | Accepted |
+| [ADR-0159](0159-sprint-77-ai-policy-dsl-closure.md) | Sprint 77 closure: P0-C AI Policy Spec DSL (hot-reload + JSON-Schema + specificity, 20 NEW tests) (5 commits) | Accepted |
+| [ADR-0160](0160-sprint-78-streamlit-cors-xsrf-closure.md) | Sprint 78 closure: P0-D CORS/XSRF в Streamlit (config security + nginx + validator + 17 NEW tests) (5 commits) | Accepted |
+| [ADR-0161](0161-sprint-79-capability-gate-tools-integration-closure.md) | Sprint 79 closure: CapabilityGate ↔ AIPolicySpec.tools two-layer integration (FINAL_REPORT_V2 направление #4 closure, 16 NEW tests) (6 commits) | Accepted |
+| [ADR-0162](0162-sprint-80-litellm-pool-registration-closure.md) | Sprint 80 closure: P1 #6 LiteLLM Gateway pool registration (PoolHealthMonitor integration, 8 NEW tests) (6 commits) | Accepted |
+| [ADR-0163](0163-sprint-81-circuit-breaker-middleware-closure.md) | Sprint 81 closure: P1 #8 CircuitBreakerMiddleware restoration (per-route state, sliding window, 13 NEW tests) (4 commits) | Accepted |
+| [ADR-0248](0248-s43-deep-audit-quick-wins.md) | Sprint 43: Deep-Audit Quick Wins (Layer linter P0 + P7 logger + schemas shims) | Unknown |
+| [ADR-0249](0249-s44-audit-followup-facades.md) | Sprint 44: Audit Follow-up — Facades + Migrations | Unknown |
+| [ADR-0250](0250-s45-audit-backlog-closure.md) | Sprint 45: Audit Backlog QW10 + S1 Closure | Unknown |
+| [ADR-0251](0251-s13-circuit-breaker-shared-state.md) | S13: Circuit Breaker Middleware → Shared State | Unknown |
 
-| № | Заголовок | Статус | Файл |
-|---|-----------|--------|------|
-| 0050 | ADR-0050 — WAF strict + Single Entry для исходящего HTTP | Accepted (Wave 1, S1+S2+S3, 2026-05-08) | [0050-net-waf-strict-single-entry.md](0050-net-waf-strict-single-entry.md) |
-| 0051 | ADR-0051 — Cache-декораторы как фасад поверх CachingDecorator | Accepted (Wave [s1/k2-1-cache-decorator], 2026-05-12) | [0051-cache-decorators-facade.md](0051-cache-decorators-facade.md) |
-| 0052 | ADR-0052 — Каноничный порядок композиции в `@policy` | Accepted (Wave [s1/k2-2-policy-decorator], 2026-05-12) | [0052-policy-decorator-order.md](0052-policy-decorator-order.md) |
-| 0053 | ADR-0053 — WAF Phase-2: flip `outbound_via_facade=True` по умолчанию | Accepted (Wave [s1/k1-waf-phase2], 2026-05-12) | [0053-waf-phase2-migration.md](0053-waf-phase2-migration.md) |
-| 0054 | ADR-0054 — SSO Federation (SAML 2.0 + per-tenant IdP) | Accepted (Sprint 3, К1 W3, 2026-05-13) | [0054-sso-federation.md](0054-sso-federation.md) |
-| 0055 | ADR-0055 — Chaos Engineering + Performance Gate | Accepted (Sprint 3, К2 W3, 2026-05-13) | [0055-chaos-engineering.md](0055-chaos-engineering.md) |
-| 0056 | ADR-0056 — Routes V11.1a (DSL-routes как лёгкие плагины) | Accepted (Sprint 3, К3 W3, 2026-05-13) | [0056-routes-v11.md](0056-routes-v11.md) |
-| 0057 | ADR-0057 — Pure ASGI Middleware Chain | Accepted (Sprint 3, К5 W3, 2026-05-13) | [0057-asgi-pure-chain.md](0057-asgi-pure-chain.md) |
-| 0058 | ADR-0058 — JSON-Schema Export для DSL Processors | Accepted (Sprint 3, К3 W3, 2026-05-13) | [0058-jsonschema-export.md](0058-jsonschema-export.md) |
-| 0059 | ADR-0059 — Granian RSGI production tuning | Accepted (Sprint 6 K2, 2026-05-14) | [0059-granian-rsgi-production.md](0059-granian-rsgi-production.md) |
-| 0060 | ADR-0060 — Blue/Green deployment topology | Accepted (Sprint 7 K2, 2026-05-14) | [0060-blue-green-deploy.md](0060-blue-green-deploy.md) |
-| 0061 | ADR-0061 — WAF allowlist tightening для Sprint 9 | Accepted (Wave [s9/k1-w3-waf-allowlist-tightening], 2026-05- | [0061-waf-allowlist-tightening.md](0061-waf-allowlist-tightening.md) |
-| 0062 | ADR-0062 — Distinction между ASGI и Action-dispatch middleware | Accepted (Wave [s9/k5-w7-execution-middleware-dedup], 2026-0 | [0062-middleware-layers-distinction.md](0062-middleware-layers-distinction.md) |
-| 0063 | ADR-0063 — Presidio + ru NER как обязательный AI Safety layer (PII) | Accepted (2026-05-22, после S24 W1 closure — landed коммитам | [0063-presidio-ru-ner-pii.md](0063-presidio-ru-ner-pii.md) |
-| 0064 | ADR-0064 — NeMo Guardrails + Llama Guard 3 defense-in-depth | Accepted (S29 T11, 2026-05-26 — GPU-check scaffolding + nemo | [0064-nemo-guardrails-llama-guard.md](0064-nemo-guardrails-llama-guard.md) |
-| 0065 | ADR-0065 — LangGraph PostgresCheckpointer + Mem0 как единый long-term memory layer | Accepted (S29 T12, 2026-05-26 — durable flag + PostgresCheck | [0065-langgraph-checkpointer-mem0.md](0065-langgraph-checkpointer-mem0.md) |
-| 0066 | ADR-0066 — AIGateway — единая точка входа в AI | Accepted (S29 T9, 2026-05-26 — ModelRouter LiteLLM fallback  | [0066-ai-gateway-facade.md](0066-ai-gateway-facade.md) |
-| 0067 | ADR-0067 — AIPolicySpec — декларативная политика AI per-workflow | Draft (Sprint 25 candidate, [wave:s25/w2-policy-resolver]) | [0067-ai-policy-spec-dsl.md](0067-ai-policy-spec-dsl.md) |
-| 0068 | ADR-0068 — PIITokenizer — reversible PII tokenization layer | Accepted (Sprint 25 W4, 2026-05-25) | [0068-pii-tokenizer-reversible.md](0068-pii-tokenizer-reversible.md) |
-| 0069 | ADR-0069 — SkillRegistry V11.2 — TOML-манифест для AI-tools | Draft (Sprint 26 candidate, [wave:s26/w5-skill-registry]) | [0069-skill-registry-v11-2-toml.md](0069-skill-registry-v11-2-toml.md) |
-| 0070 | ADR-0070 — MCP Gateway — domain namespaces + trusted external registry | Draft (Sprint 27 candidate, [wave:s27/w4-mcp-gateway]) | [0070-mcp-gateway-namespaces.md](0070-mcp-gateway-namespaces.md) |
-| 0071 | ADR-0071 — AI Audit Unified Schema — `ai.invocation.*` события | Draft (Sprint 27 candidate, [wave:s27/w5-audit-unified]) | [0071-ai-audit-unified-schema.md](0071-ai-audit-unified-schema.md) |
-| 0072 | ADR-0072 — PII production enforcement (Presidio + Langfuse + RAG ingest + MCP authz + Policy gate) | Accepted (2026-05-22, Phase A Block 1 closure). | [0072-pii-production-enforcement.md](0072-pii-production-enforcement.md) |
-| 0073 | ADR-0073 — RAGAS evaluation gate | Accepted (S29 W3, 2026-05-26, gap-ai-6 closure). | [0073-ragas-evaluation-gate.md](0073-ragas-evaluation-gate.md) |
-| 0074 | ADR-0074 — RAG hybrid retrieval, embedding provenance, source attribution & eval gate | Accepted (2026-05-25, Phase B Block 3 closure). | [0074-rag-hybrid-retrieval-and-eval-gate.md](0074-rag-hybrid-retrieval-and-eval-gate.md) |
-| 0075 | ADR-0075 — UnifiedAgentMemoryGateway (Protocol + dispatch) | Accepted (2026-05-25, Phase B Block 4.1 closure). | [0075-unified-agent-memory-gateway.md](0075-unified-agent-memory-gateway.md) |
-| 0076 | ADR-NEW-25: LangGraph Integration Decision | — | [0076-langgraph-integration-decision.md](0076-langgraph-integration-decision.md) |
-| 0077 | ADR-0077: Sandbox Decision — E2B for Production, NoOp for Dev | — | [0077-sandbox-decision-e2b-vs-pyodide.md](0077-sandbox-decision-e2b-vs-pyodide.md) |
-| 0078 | ADR-0078 — plugin.toml Capability Syntax: Array Format (`[[capabilities]]`) | — | [0078-plugin-toml-capability-syntax.md](0078-plugin-toml-capability-syntax.md) |
-| 0079 | ADR-0079 — SLO Format: Inline `route.toml::slo` (not separate sloth YAML) | — | [0079-slo-format-route-toml-slo.md](0079-slo-format-route-toml-slo.md) |
-| 0080 | ADR-0080 — Single Entry Policy Naming Convention | — | [0080-single-entry-policy-naming.md](0080-single-entry-policy-naming.md) |
-| 0081 | ADR-0081 — Event Bus Production Backend: FastStream + Redis | — | [0081-eventbus-production-backend-faststream-redis.md](0081-eventbus-production-backend-faststream-redis.md) |
-| 0082 | ADR-0082 — Network isolation для markitdown через monkey-patch urllib.request | Accepted (Sprint 57 W5, 2026-06-07) | [0082-markitdown-network-isolation.md](0082-markitdown-network-isolation.md) |
-| 0083 | ADR-0083 — Row-Level Versioning: thin DSL wrapper над `sqlalchemy-continuum` | — | [0083-versioning-dsl-continuum-wrapper.md](0083-versioning-dsl-continuum-wrapper.md) |
-| 0084 | ADR-0084 — Library Adoption Migration Plan (structlog, typer, rich, aiocache) | — | [0084-library-adoption-migration-plan.md](0084-library-adoption-migration-plan.md) |
-| 0085 | ADR-0085 — User Auth: LDAP as Primary, Password Deprecated | — | [0085-user-auth-ldap-integration.md](0085-user-auth-ldap-integration.md) |
-| 0086 | ADR-0086 — aiocache Migration Plan (S60+) | CLOSED — DEFERRED to per-feature ad-hoc (no global migration | [0086-aiocache-migration-plan.md](0086-aiocache-migration-plan.md) |
-| 0087 | ADR-0087 — ClaimCheckProcessor Dedup (S63 W2.1) | — | [0087-claimcheck-dedup.md](0087-claimcheck-dedup.md) |
-| 0088 | ADR-0088 — EIP 10/10 Coverage: TransactionalClient + ProcessManager (S63 W3.0) | — | [0088-eip-10of10-coverage.md](0088-eip-10of10-coverage.md) |
-| 0089 | ADR-0089: Multi-agent supervisor — LangGraph-based architecture | — | [0089-multi-agent-supervisor-architecture.md](0089-multi-agent-supervisor-architecture.md) |
-| 0090 | ADR-0090: aiocache hot-path strategy (audit + defer) | — | [0090-aiocache-hotpath-strategy.md](0090-aiocache-hotpath-strategy.md) |
-| 0091 | ADR-0091: DLQ retention strategy (formalize existing unified implementation) | — | [0091-dlq-retention-strategy.md](0091-dlq-retention-strategy.md) |
-| 0092 | ADR-0092: Vault zero-downtime rotation (formalize K1 S19 W1) | — | [0092-vault-zero-downtime-rotation.md](0092-vault-zero-downtime-rotation.md) |
-| 0093 | ADR-0093: Global rate-limit (formalize existing production-ready implementation) | — | [0093-global-rate-limit.md](0093-global-rate-limit.md) |
-| 0094 | ADR-0094: Global PII response middleware (formalize S18 W3 + S-L8-4) | — | [0094-global-pii-response-middleware.md](0094-global-pii-response-middleware.md) |
-| 0096 | ADR-0096: Correlation→OTel trace_id binding (formalize S18 W7 + S-L7-2/6) | — | [0096-correlation-otel-traceid-binding.md](0096-correlation-otel-traceid-binding.md) |
-| 0097 | ADR-0097: Fallback logging sink (formalize existing production-ready implementation) | — | [0097-fallback-logging-sink.md](0097-fallback-logging-sink.md) |
-| 0098 | ADR-0098: Outbox per-transport stuck breakdown (defer implementation) | — | [0098-outbox-per-transport-stuck-breakdown.md](0098-outbox-per-transport-stuck-breakdown.md) |
-| 0099 | ADR-0099: v28 ro-analysis reconciliation — fabricated claims + Sprint 0 closeout | — | [0099-v28-reconciliation-fabricated-claims.md](0099-v28-reconciliation-fabricated-claims.md) |
-| 0100 | ADR-0100: Remove dead `dsl/builders/eip.py` (1354 LOC) — S60 W4 split superseded | — | [0100-remove-dead-eip-py.md](0100-remove-dead-eip-py.md) |
-| 0101 | ADR-0101: Lazy-import pattern для streamlit-dependent helpers (testability boundary) | — | [0101-lazy-streamlit-import-pattern.md](0101-lazy-streamlit-import-pattern.md) |
-| 0102 | ADR-0102: ai_processors.py god-object decomposition (1164 LOC → 6 modules) | design + plan, NOT impl (deferred to S81 W1). | [0102-ai-processors-decomposition.md](0102-ai-processors-decomposition.md) |
-| 0103 | ADR-0103: Per-transport cardinality protection (ND-001 step 8) | — | [0103-per-transport-cardinality-protection.md](0103-per-transport-cardinality-protection.md) |
-| 0105 | ADR-0105: lifecycle.py god-object decomposition (1142→5 files, ~200 LOC avg) | — | [0105-lifecycle-py-decomposition.md](0105-lifecycle-py-decomposition.md) |
-| 0106 | ADR-0106: S27 closure — AIGateway enforce + WorkflowBuilder.invoke_agent() as Temporal activity | — | [0106-s27-closure.md](0106-s27-closure.md) |
-| 0107 | ADR-0107: transport.py god-object decomposition (990 LOC → 6 modules) | — | [0107-transport-py-decomposition.md](0107-transport-py-decomposition.md) |
-| 0108 | ADR-0108 — DI DSL для RouteBuilder / call_function / process_fn | Accepted (Sprint 40 W1–W5, 2026-06-09) | [0108-di-dsl-for-routes.md](0108-di-dsl-for-routes.md) |
-| 0109 *(collision)* | ADR-0109 — Feature Flag Dependency Check: package-aware + Sprint 41 audit | Accepted (Sprint 41 W2, 2026-06-09) | [0109-feature-flag-dependency-check-fix.md](0109-feature-flag-dependency-check-fix.md) |
-| 0109 *(collision)* | ADR-0109: Script Runner DSL для inline Python/Node/Ruby/Shell | — | [0109-script-runner-dsl.md](0109-script-runner-dsl.md) |
-| 0110 | ADR-0110 — WAF Coverage 100% (formalize Sprint 41 #4 met) | Accepted (Sprint 41 W4, 2026-06-09) | [0110-waf-coverage-100pct-formalize.md](0110-waf-coverage-100pct-formalize.md) |
-| 0111 | ADR-0111 — Chaos Tests + Multi-Tenant Isolation status (Sprint 41 #1, #6) | Accepted (Sprint 41 W6, 2026-06-09) | [0111-chaos-multitenant-formalize.md](0111-chaos-multitenant-formalize.md) |
-| 0112 | ADR-0112 — Security Audit status (Sprint 41 #3) | Accepted (Sprint 41 W7, 2026-06-09) | [0112-security-audit-status.md](0112-security-audit-status.md) |
-| 0113 | ADR-0113 — Perf + Blue/Green + Disaster Recovery status (S41 #2, #7, #10) | Accepted (Sprint 41 W8, 2026-06-09) | [0113-perf-bg-dr-formalize.md](0113-perf-bg-dr-formalize.md) |
-| 0114 | ADR-0114 — DSL LSP server status + Makefile integration (Sprint 42 #1) | Accepted (Sprint 42 W1, 2026-06-09) | [0114-dsl-lsp-server-formalize.md](0114-dsl-lsp-server-formalize.md) |
-| 0115 | ADR-0115 — Sprint 42 closure: Developer Experience Polish (5/5 DoD) | Accepted (Sprint 42 W5, 2026-06-09) | [0115-sprint-42-dx-closure.md](0115-sprint-42-dx-closure.md) |
-| 0116 | ADR-0116 — Sprint 43 closure: Streamlit Filters + Vite Cleanup (2/5 DoD) | Accepted (Sprint 43 W5, 2026-06-09) | [0116-sprint-43-closure.md](0116-sprint-43-closure.md) |
-| 0117 | ADR-0117 — Sprint 44 closure: Backend Wiring + Admin Build Fix (4/5 DoD) | Accepted (Sprint 44 W5, 2026-06-09) | [0117-sprint-44-closure.md](0117-sprint-44-closure.md) |
-| 0118 | ADR-0118 — Sprint 45 closure: TD-006 + TD-018 + filter migration + docstrings (5/5 DoD) | Accepted (Sprint 45 W5, 2026-06-09) | [0118-sprint-45-closure.md](0118-sprint-45-closure.md) |
-| 0119 | ADR-0119 — Sprint 46 closure: TraceStorage abstraction + docstring tool + toxiproxy runbook (5/5 DoD) | Accepted (Sprint 46 W5, 2026-06-09) | [0119-sprint-46-closure.md](0119-sprint-46-closure.md) |
-| 0120 | ADR-0120 — Sprint 47 closure: ExecutionTracer storage wiring (1/5 substantive) | Accepted (Sprint 47 W5, 2026-06-09) | [0120-sprint-47-closure.md](0120-sprint-47-closure.md) |
-| 0121 | ADR-0121 — Sprint 48 partial closure: TD-015 ruff F401 + mypy clean + stub regen verified | Accepted (Sprint 48 W2, 2026-06-10) | [0121-sprint-48-partial-closure.md](0121-sprint-48-partial-closure.md) |
-| 0122 | ADR-0122 — Sprint 48 closure: audit + re-scope + 5/5 waves (W1-W4 substantive, W5 closure) | Accepted (Sprint 48 W5, 2026-06-10) | [0122-sprint-48-closure.md](0122-sprint-48-closure.md) |
-| 0123 | ADR-0123 — Sprint 49 closure: TD-009 + actions.py decomp + trunk hygiene (4 commits, 5/5 substantive) | Accepted (Sprint 49 W5, 2026-06-10) | [0123-sprint-49-closure.md](0123-sprint-49-closure.md) |
-| 0124 | ADR-0124 — Sprint 50 closure: TD backlog + transport.py B3-B5 + ai_banking/rpa god-file decomp (5 commits, 5/5 substantive) | Accepted (Sprint 50 W5, 2026-06-10) | [0124-sprint-50-closure.md](0124-sprint-50-closure.md) |
-| 0125 | ADR-0125 — Sprint 51 closure: ai_rpa.py (2-wave) + agent_dsl.py + TD-003 (5 working + 1 fixup commits, 5/5 substantive) | Accepted (Sprint 51 W5, 2026-06-10) | [0125-sprint-51-closure.md](0125-sprint-51-closure.md) |
-| 0126 | ADR-0126 — Sprint 52 closure: ai_rpa.py W3 + validator.py + loader_v11.py god-file decomp + TD-010 closure (5+1 commits, 5/5 substantive) | Accepted (Sprint 52 W5, 2026-06-10) | [0126-sprint-52-closure.md](0126-sprint-52-closure.md) |
-| 0127 | ADR-0127 — Sprint 53 closure: format_convert + streaming + setup god-file decomp + TD-002 closure (5 commits, 5/5 substantive) | Accepted (Sprint 53 W5, 2026-06-10) | [0127-sprint-53-closure.md](0127-sprint-53-closure.md) |
-| 0128 | ADR-0128 — Sprint 54 closure: 4 god-file decomps (mcp_server, ai_agent, invoker, capability_gate) (4+1 commits, 5/5 substantive) | Accepted (Sprint 54 W5, 2026-06-10) | [0128-sprint-54-closure.md](0128-sprint-54-closure.md) |
-| 0129 | ADR-0129 — Sprint 55 closure: 4 god-file decomp (cert_store, control_flow, pg_runner_internals, data_quality) (4+1 commits, 5/5 substantive) | Accepted (Sprint 55 W5, 2026-06-10) | [0129-sprint-55-closure.md](0129-sprint-55-closure.md) |
-| 0130 | ADR-0130 — Sprint 56 closure: 4 god-file decomp (spec, gateway_pipeline_mixin, s3_pool, admin_workflows) (5+1 commits, 5/5 substantive) | Accepted (Sprint 56 W5, 2026-06-10) | [0130-sprint-56-closure.md](0130-sprint-56-closure.md) |
-| 0131 | ADR-0131 — Sprint 57 closure: 4 god-file decomp (base RouteBuilder, sources_mixin, collection EIP, sink_publish) (4+1 commits, 5/5 substantive) | Accepted (Sprint 57 W5, 2026-06-10) | [0131-sprint-57-closure.md](0131-sprint-57-closure.md) |
-| 0132 | ADR-0132 — Sprint 58 closure: 4 god-file decomp (crud, saga_lra_processor, format_converters, workflow_builder) (4+1 commits, 5/5 substantive) | Accepted (Sprint 58 W5, 2026-06-10) | [0132-sprint-58-closure.md](0132-sprint-58-closure.md) |
-| 0133 | ADR-0133 — Sprint 59 closure: 4 god-file decomp (banking_processors, lifecycle [sibling W82], redis, 31_DSL_Visual_Editor) (3+1 commits, 5/5 substantive) | Accepted (Sprint 59 W5, 2026-06-10) | [0133-sprint-59-closure.md](0133-sprint-59-closure.md) |
-| 0134 | ADR-0134 — Sprint 60 closure: 4 god-file decomp (jupyter, cdc, setup_infra, authorization_gateway) (4+1 commits, 5/5 substantive) | Accepted (Sprint 60 W5, 2026-06-10) | [0134-sprint-60-closure.md](0134-sprint-60-closure.md) |
-| 0135 | ADR-0135 — Sprint 61 closure: 4 god-file decomp (base_service, enrichment, executor, http) (4+1 commits, 5/5 substantive) | Accepted (Sprint 61 W5, 2026-06-10) | [0135-sprint-61-closure.md](0135-sprint-61-closure.md) |
-| 0136 | ADR-0136 — Sprint 62 closure: 4 god-file decomp (admin_plugins, vocabulary, integration_core, yaml_loader) (4+1 commits, 5/5 substantive) | Accepted (Sprint 62 W5, 2026-06-10) | [0136-sprint-62-closure.md](0136-sprint-62-closure.md) |
-| 0137 | ADR-0137 — Sprint 63 closure: 4 god-file decomp (loading, routing, marshal, external_database) (4+1 commits, 5/5 substantive) | Accepted (Sprint 63 W5, 2026-06-10) | [0137-sprint-63-closure.md](0137-sprint-63-closure.md) |
-| 0138 | ADR-0138 — Sprint 64 closure: 4 god-file decomp (graphql, repositories, database, rag_service) (4+1 commits, 5/5 substantive) | Accepted (Sprint 64 W5, 2026-06-10) | [0138-sprint-64-closure.md](0138-sprint-64-closure.md) |
-| 0139 | ADR-0139 — Sprint 65 closure: 4 god-file decomp (components, rpa_operations, grpc_server, idp_pipeline) + 2 W3 sibling WIP fixups (4+1+2 commits, 7/7 substantive) | Accepted (Sprint 65 W5, 2026-06-10) | [0139-sprint-65-closure.md](0139-sprint-65-closure.md) |
-| 0140 | ADR-0140 — Sprint 66 closure: 3 god-file decomp (event_store, setup, lifecycle) + 1 sibling WIP fixup (4+1 commits, 5/5 substantive) | Accepted (Sprint 66 W5, 2026-06-10) | [0140-sprint-66-closure.md](0140-sprint-66-closure.md) |
-| 0141 | ADR-0141 — Sprint 67 closure: 4 god-file decomp (backpressure, ai_enforcer, semantic_cache, ad_directory_client) (4+1 commits, 5/5 substantive) | Accepted (Sprint 67 W5, 2026-06-10) | [0141-sprint-67-closure.md](0141-sprint-67-closure.md) |
-| 0142 | ADR-0142 — Sprint 68 closure: 4 god-file decomp (macros, clickhouse_audit, invoker, ai_providers) (4+1 commits, 5/5 substantive) | Accepted (Sprint 68 W5, 2026-06-10) | [0142-sprint-68-closure.md](0142-sprint-68-closure.md) |
-| 0143 | ADR-0143 — Sprint 83 W3: Vault DSL wrapper + PIL leak fix | Accepted (Sprint 83 W3, 2026-08-31) | [0143-sprint-83-w3-closure.md](0143-sprint-83-w3-closure.md) |
-| 0144 | ADR-0144 — Multi-instance safety: outbox claim_pending + scheduler leader election + RedisDedupeStore (4 commits, 3/5 substantive) | Accepted (Autonomous work cycle, 2026-06-12) | [0144-multi-instance-safety.md](0144-multi-instance-safety.md) |
-| 0145 | ADR-0145 — Sprint 65 closure: P0 cleanup (lazy imports, dead enforcement, dsl/workflows LAYERS) (3 commits, 3/3 substantive) | Accepted (Autonomous work cycle S65, 2026-06-12) | [0145-sprint-65-p0-cleanup-closure.md](0145-sprint-65-p0-cleanup-closure.md) |
-| 0146 | ADR-0146 — Sprint 66 closure: fact-checked quick wins (4 commits, 4/4 substantive) | Accepted (Autonomous work cycle S66, 2026-06-12) | [0146-sprint-66-quick-wins-closure.md](0146-sprint-66-quick-wins-closure.md) |
-| 0147 | ADR-0147 — Sprint 67 closure: torch CVE, namespace markers, JWT consolidation, pre-existing fix (4 commits, 4/4 substantive) | Accepted (Autonomous work cycle S67, 2026-06-12) | [0147-sprint-67-torch-namespace-jwt-fix-closure.md](0147-sprint-67-torch-namespace-jwt-fix-closure.md) |
-| 0148 | ADR-0148 — Sprint 68 closure: 3 parallel teams (swarm), 4 violations closed, 2 ADR docs (3 commits, 3/3 substantive) | Accepted (Autonomous work cycle S68, 2026-06-12) | [0148-sprint-68-swarm-closure.md](0148-sprint-68-swarm-closure.md) |
-| 0149 | ADR-0149 — TD-S65-W2 audit: 34 core→other violations classified + 1 sample refactor (RetryPolicy) | Accepted (Autonomous work cycle S68 W2, 2026-06-12) | [0149-core-violations-audit.md](0149-core-violations-audit.md) |
-| 0150 | ADR-0150 — TD-S65-W4 audit: 124 dsl/workflows violations classified + 1 sample refactor (audit JSON codec) | Accepted (Autonomous work cycle S68 W3, 2026-06-12) | [0150-dsl-violations-audit.md](0150-dsl-violations-audit.md) |
-| 0151 | ADR-0151 — Sprint 69 closure: 2nd SWARM (3 teams) — 1 violation closed + 2 style cleanups (3 commits, 3/3 substantive, scope discipline) | Accepted (Autonomous work cycle S69, 2026-06-12) | [0151-sprint-69-swarm-2nd-closure.md](0151-sprint-69-swarm-2nd-closure.md) |
-| 0152 | ADR-0152 — Sprint 70 closure: 3rd SWARM (3 teams) — 3 style cleanups (3 commits, 3/3 substantive, 2/3 subagent clean) | Accepted (Autonomous work cycle S70, 2026-06-12) | [0152-sprint-70-swarm-3rd-closure.md](0152-sprint-70-swarm-3rd-closure.md) |
-| 0153 | ADR-0153 — Sprint 71 closure: 4 pre-existing import bugs + 3 file+dir merges + 2 P1 multi-instance safety fixes (4 commits, 7+3 NEW tests) | Accepted (Autonomous work cycle S71, 2026-06-12) | [0153-sprint-71-pre-existing-bugs-and-multi-instance-safety-closure.md](0153-sprint-71-pre-existing-bugs-and-multi-instance-safety-closure.md) |
-| 0154 | ADR-0154 — Sprint 72 closure: TD-S64-W1 per-row outbox claim (3 files, 5+1 NEW tests, per-row lease + sweeper) | Accepted (Autonomous work cycle S72, 2026-06-12) | [0154-sprint-72-outbox-per-row-claim-closure.md](0154-sprint-72-outbox-per-row-claim-closure.md) |
-| 0155 | ADR-0155 — Sprint 73 closure: P0-A batch fix (106 files, 136 except-A-B fixes, 2 NEW regression tests, pre-push CI gate) (5 commits) | Accepted (Autonomous work cycle S73, 2026-06-12) | [0155-sprint-73-p0-a-except-bug-batch-fix-closure.md](0155-sprint-73-p0-a-except-bug-batch-fix-closure.md) |
-| 0156 | ADR-0156 — Sprint 74 closure: Jupiter Hub + Notebook Execution ecosystem (Papermill + Factory + WebSocket heartbeat, 13 NEW tests) (5 commits) | Accepted (Autonomous work cycle S74, 2026-06-12) | [0156-sprint-74-jupyter-execution-ecosystem-closure.md](0156-sprint-74-jupyter-execution-ecosystem-closure.md) |
-| 0157 | ADR-0157 — Sprint 75 closure: направление #1 final closure (e2b ExecutionBackend + KernelSpecDiscovery, 15 NEW tests) (5 commits) | Accepted (Autonomous work cycle S75, 2026-06-12) | [0157-sprint-75-jupyter-execution-final-closure.md](0157-sprint-75-jupyter-execution-final-closure.md) |
-| 0158 | ADR-0158 — Sprint 76 closure: P0-B tools whitelist в AIPolicySpec (ToolsSpec + enforcement + 21 NEW tests) (5 commits) | Accepted (Autonomous work cycle S76, 2026-06-12) | [0158-sprint-76-tools-whitelist-closure.md](0158-sprint-76-tools-whitelist-closure.md) |
-| 0159 | ADR-0159 — Sprint 77 closure: P0-C AI Policy Spec DSL (hot-reload + JSON-Schema + specificity, 20 NEW tests) (5 commits) | Accepted (Autonomous work cycle S77, 2026-06-12) | [0159-sprint-77-ai-policy-dsl-closure.md](0159-sprint-77-ai-policy-dsl-closure.md) |
-| 0160 | ADR-0160 — Sprint 78 closure: P0-D CORS/XSRF в Streamlit (config security + nginx + validator + 17 NEW tests) (5 commits) | Accepted (Autonomous work cycle S78, 2026-06-12) | [0160-sprint-78-streamlit-cors-xsrf-closure.md](0160-sprint-78-streamlit-cors-xsrf-closure.md) |
-| 0161 | ADR-0161 — Sprint 79 closure: CapabilityGate ↔ AIPolicySpec.tools two-layer integration (FINAL_REPORT_V2 направление #4 closure, 16 NEW tests) (6 commits) | Accepted (Autonomous work cycle S79, 2026-06-12) | [0161-sprint-79-capability-gate-tools-integration-closure.md](0161-sprint-79-capability-gate-tools-integration-closure.md) |
-| 0162 | ADR-0162 — Sprint 80 closure: P1 #6 LiteLLM Gateway pool registration (PoolHealthMonitor integration, 8 NEW tests) (6 commits) | Accepted (Autonomous work cycle S80, 2026-06-12) | [0162-sprint-80-litellm-pool-registration-closure.md](0162-sprint-80-litellm-pool-registration-closure.md) |
-| 0163 | ADR-0163 — Sprint 81 closure: P1 #8 CircuitBreakerMiddleware restoration (per-route state, sliding window, 13 NEW tests) (4 commits) | Accepted (Autonomous work cycle S81, 2026-06-12) | [0163-sprint-81-circuit-breaker-middleware-closure.md](0163-sprint-81-circuit-breaker-middleware-closure.md) |
-| 0164 | ADR-0164: Sprint 82 — Documentation Cookbooks Closure | Accepted | [0164-sprint-82-cookbooks-closure.md](0164-sprint-82-cookbooks-closure.md) |
-| 0165 | ADR-0165: Sprint 83 — DetachedInstanceError Closure (V2 P0 N1) | Accepted | [0165-sprint-83-detached-instance-error-closure.md](0165-sprint-83-detached-instance-error-closure.md) |
-| 0166 | ADR-0166: Sprint 84 — logging.factory Layer Violations Closure (V2 P0 #3) | Accepted | [0166-sprint-84-logging-facade-closure.md](0166-sprint-84-logging-facade-closure.md) |
-| 0167 | ADR-0167: Sprint 85 — AIGateway Pass-Through Closure (V2 P0 #1) | Accepted | [0167-sprint-85-ai-gateway-enforcement-closure.md](0167-sprint-85-ai-gateway-enforcement-closure.md) |
-| 0168 | ADR-0168: Sprint 86 — Temporal Sandbox Closure + Defense-in-Depth (V2 P0 #2) | Accepted | [0168-sprint-86-temporal-sandbox-closure.md](0168-sprint-86-temporal-sandbox-closure.md) |
-| 0169 | ADR-0169: Sprint 87 — V2 P0 Re-Verification (Fact-Check, NO Code Changes) | Accepted (investigation-only) | [0169-sprint-87-v2-p0-reverification.md](0169-sprint-87-v2-p0-reverification.md) |
-| 0170 | ADR-0170: Sprint 88 — V2 P0 #5 + #6 Closure (HIGH severity) | Accepted | [0170-sprint-88-rate-limit-and-tenant-isolation.md](0170-sprint-88-rate-limit-and-tenant-isolation.md) |
-| 0171 | ADR-0171: Sprint 89 — V2 P0 #6 Pilot Migration (Order → TenantMixin) | Accepted | [0171-sprint-89-order-tenant-mixin-pilot.md](0171-sprint-89-order-tenant-mixin-pilot.md) |
-| 0172 | ADR-0172: Sprint 90 — Pool Registration Completion (V3 #5) | — | [0172-sprint-90-pool-registration-completion.md](0172-sprint-90-pool-registration-completion.md) |
-| 0173 | ADR-0173: Sprint 91 — V2 P0 #6 continue (User) + V2 P0 #7 fix (processors) | — | [0173-sprint-91-v2-p0-6-continue-and-v2-p0-7-fix.md](0173-sprint-91-v2-p0-6-continue-and-v2-p0-7-fix.md) |
-| 0174 | ADR-0174: Sprint 92 — V2 P0 #6 continue (File + OrderKind) | — | [0174-sprint-92-v2-p0-6-file-orderkind.md](0174-sprint-92-v2-p0-6-file-orderkind.md) |
-| 0175 | ADR-0175: Sprint 93 Wave 1 — Cleanup + Critical Fixes | — | [0175-sprint-93-w1-cleanup-and-critical-fixes.md](0175-sprint-93-w1-cleanup-and-critical-fixes.md) |
-| 0176 | ADR-0176: Sprint 93 Wave 2 — Frontend PATH + Docstring Ratchet + Resilience Fact-Check | — | [0176-sprint-93-w2-frontend-and-resilience-factcheck.md](0176-sprint-93-w2-frontend-and-resilience-factcheck.md) |
-| 0177 | ADR-0177: S93 closure — auth, CDC, logging, DSL | — | [0177-sprint-93-w5-closure-auth-cdc-logging-dsl.md](0177-sprint-93-w5-closure-auth-cdc-logging-dsl.md) |
-| 0178 | ADR-0178: S94 closure — stdlib logging codemod + docstring ratchet + DSL SSE | — | [0178-sprint-94-w5-closure-logging-ratchet-sse.md](0178-sprint-94-w5-closure-logging-ratchet-sse.md) |
-| 0179 | ADR-0179: S95 closure — DSL CRUD + docstring ratchet + stdlib audit + AuthGateway | — | [0179-sprint-95-w5-closure-dsl-crud-ratchet-authgateway.md](0179-sprint-95-w5-closure-dsl-crud-ratchet-authgateway.md) |
-| 0180 | ADR-0180: S96 Closure | — | [0180-sprint-96-closure.md](0180-sprint-96-closure.md) |
-| 0181 | ADR-0181: S97 Closure | — | [0181-sprint-97-closure.md](0181-sprint-97-closure.md) |
-| 0182 | ADR-0182: S98 Closure | — | [0182-sprint-98-closure.md](0182-sprint-98-closure.md) |
-| 0183 | ADR-0183: S99 Closure — Final Score 9.0/10 | — | [0183-sprint-99-closure.md](0183-sprint-99-closure.md) |
-| 0184 | ADR-0184: S100 Closure — TODO backlog = 0 | — | [0184-sprint-100-closure.md](0184-sprint-100-closure.md) |
-| 0185 | 0185-sprint-101-deep-research-followup | — | [0185-sprint-101-deep-research-followup.md](0185-sprint-101-deep-research-followup.md) |
-| 0186 | 0186-sprint-102-backlog-closure | — | [0186-sprint-102-backlog-closure.md](0186-sprint-102-backlog-closure.md) |
-| 0187 | 0187-sprint-103-cross-cutting | — | [0187-sprint-103-cross-cutting.md](0187-sprint-103-cross-cutting.md) |
-| 0188 | ADR-0188: D5 model move plan (analysis-only, multi-sprint execution) | — | [0188-d5-models-move-plan.md](0188-d5-models-move-plan.md) |
-| 0189 | ADR-0189: Sprint 104 closure — DSN tests + RPA DSL + Rate limit + MSSQL/MySQL/DB2 | — | [0189-sprint-104-closure.md](0189-sprint-104-closure.md) |
-| 0190 | ADR-0190: Sprint 105 Closure | — | [0190-sprint-105-closure.md](0190-sprint-105-closure.md) |
-| 0191 | ADR-0191: Sprint 106 Closure — D5 split-brain B1+B2+B3 complete | — | [0191-sprint-106-closure.md](0191-sprint-106-closure.md) |
-| 0192 | ADR-0192: Sprint 106 Sprint B closure — sub_workflow + ai_tool_dispatch + from_nats/from_mongo + test baseline | — | [0192-sprint-106-sprint-b-closure.md](0192-sprint-106-sprint-b-closure.md) |
-| 0193 | ADR-0193: Sprint 107 closure — TD-residual cleanup + real LLM-wiring + real runtime for nats/mongo | — | [0193-sprint-107-closure.md](0193-sprint-107-closure.md) |
-| 0194 | ADR-0194: Sprint 108 closure — Dependabot security audit + TD-008 verify + TD-004 AI migration + AI tool registry e2e tests | — | [0194-sprint-108-closure.md](0194-sprint-108-closure.md) |
-| 0195 | ADR-0195: Sprint 109 closure — TD-004 audit migration wave 2 (4 domains) | — | [0195-sprint-109-closure.md](0195-sprint-109-closure.md) |
-| 0196 | ADR-0196: Sprint 110 closure — Layer policy enforcement + linter tooling hardening | — | [0196-sprint-110-closure.md](0196-sprint-110-closure.md) |
-| 0197 | ADR-0197: Sprint 111 closure — DSL Completion + DX (TD-017 / TD-004 / TD-012 closure + lifespan.py god-file decomposition) | — | [0197-sprint-111-closure.md](0197-sprint-111-closure.md) |
-| 0198 | ADR-0198: Sprint 112 closure — Layer linter stale cleanup + NEW violation triage + 3-entry allowlist closure | — | [0198-sprint-112-closure.md](0198-sprint-112-closure.md) |
-| 0199 | ADR-0199: Sprint 113 closure — AuditService canonical home + 10 extensions allowlist + Bucket A classification + prune CI hook | — | [0199-sprint-113-closure.md](0199-sprint-113-closure.md) |
-| 0200 | ADR-0200: Sprint 114 closure — 191 → 0 layer violations + 10 audit tests fixed + P0-1/P0-2 closed | — | [0200-sprint-114-closure.md](0200-sprint-114-closure.md) |
-| 0201 | ADR-0201: Sprint 115 closure — DSL Protocol inversion (W1) + dsl.* architectural exceptions (W2-W4) + verification | — | [0201-sprint-115-closure.md](0201-sprint-115-closure.md) |
-| 0202 | ADR-0202: Sprint 116 Closure — DSL bulk final + typer+rich migration + orphan tests + NO-OP fact-check | — | [0202-sprint-116-closure.md](0202-sprint-116-closure.md) |
-| 0203 | ADR-0203: Sprint 117 Closure — Tenant Models Fact-Check (NO-OP) | — | [0203-sprint-117-closure.md](0203-sprint-117-closure.md) |
-| 0204 | ADR-0204: Sprint 118 — Docstring Ratchet Plan (multi-sprint, -200/wave) | — | [0204-sprint-118-docstring-ratchet-plan.md](0204-sprint-118-docstring-ratchet-plan.md) |
-| 0205 | ADR-0205: Sprint 118 Closure — Docstring Ratchet S118 Complete (1625 → 1524, -101 violations, -6.2%) | — | [0205-sprint-118-closure.md](0205-sprint-118-closure.md) |
-| 0206 | ADR-0206: Sprint 119 Closure — Docstring Ratchet Complete + Protocol Bulk Amnisty (1625 → 0, -100%) | — | [0206-sprint-119-closure.md](0206-sprint-119-closure.md) |
-| 0207 | ADR-0207: Sprint 120 Closure — Architectural Boundary Hardening (43 → 9 violations, -79%) | — | [0207-sprint-120-closure.md](0207-sprint-120-closure.md) |
-| 0208 | ADR-0208: Sprint 121 Plan — Orphan Tests Root Cause Analysis (17 of 18 deferred from S116 W4) | — | [0208-sprint-121-orphan-tests-plan.md](0208-sprint-121-orphan-tests-plan.md) |
-| 0209 | ADR-0209: Sprint 123 Closure — Boundary Hardening Complete (43 → 1, -98%) | — | [0209-sprint-123-closure.md](0209-sprint-123-closure.md) |
-| 0210 | ADR-0210: Sprint 124 W1 Closure — Boundary Hardening 100% Complete (43 → 0) | — | [0210-sprint-124-w1-closure.md](0210-sprint-124-w1-closure.md) |
-| 0211 | ADR-0211: Sprint 124 Closure — Orphan Tests, Collection Pollution, Composition Mock Hardening (5 waves, 100% scope) | — | [0211-sprint-124-closure.md](0211-sprint-124-closure.md) |
-| 0212 | ADR-0212: Sprint 125 W1 — SSO Registry Design (Re-affirm ADR-0054 + Fill Research Gap) | — | [0212-sprint-125-w1-sso-registry-design.md](0212-sprint-125-w1-sso-registry-design.md) |
-| 0213 | ADR-0213: Sprint 125 Closure — SSO/IdP Layer Built: SsoRegistry + require_sso_auth + Backward-Compat Shim (5 waves, 100% scope, +S126 W0 regressions fix) | — | [0213-sprint-125-closure.md](0213-sprint-125-closure.md) |
-| 0214 | ADR-0214: Sprint 127 Closure — DSL Variable Store + ExternalDB Facade + Anthropic Prompt Cache (5 waves, 100% scope, score 9.6) | — | [0214-sprint-127-closure.md](0214-sprint-127-closure.md) |
-| 0215 | ADR-0215: Sprint 128 Closure — Consul CertStore + CDC Transform + DaskMixin + gRPC File Streaming + OpenAI Cache (5 waves, 100% scope, score 9.8) | — | [0215-sprint-128-closure.md](0215-sprint-128-closure.md) |
-| 0216 | ADR-0216: Sprint 129 Closure — 8 Stale OPEN TDs Closed + Rule #124 TLS Test Fix (4 waves, 100% scope, score 9.8 MAINTAINED) | — | [0216-sprint-129-closure.md](0216-sprint-129-closure.md) |
-| 0217 | ADR-0217: Sprint 130 Closure — TD-030 Finish + FB-1 (S3 Fallback) + gRPC Codegen Path Fix (4 commits, score 9.8 → 9.85) | — | [0217-sprint-130-closure.md](0217-sprint-130-closure.md) |
-| 0218 | ADR-0218: Sprint 131 Closure — FB-1 Factory + TD-026 Full Wire-Up + TD-016 + TD-015 Partial (4 commits, score 9.85 → 9.9) | — | [0218-sprint-131-closure.md](0218-sprint-131-closure.md) |
-| 0219 | ADR-0219: Sprint 132 Closure — TD-006 LLM+Airflow Fixes + TD-011 Partial (from_grpc_stream) (5 commits, score 9.9 → 9.9) | — | [0219-sprint-132-closure.md](0219-sprint-132-closure.md) |
-| 0220 | ADR-0220: Sprint 133 Closure — FormatConvertProcessor MRO Fix (W1+W2, score 9.9 → 9.9, +145 tests, 0 NEW layer violations) | — | [0220-sprint-133-closure.md](0220-sprint-133-closure.md) |
-| 0221 | ADR-0221: Sprint 136 Closure — Pydantic v2 Migration + Regression Fixes (4 atomic commits, score 9.9 → 9.9, 0 NEW layer violations, -81 Pydantic warnings) | — | [0221-sprint-136-closure.md](0221-sprint-136-closure.md) |
-| 0222 | ADR-0222: Sprint 138 Closure — Layer Violations + Pydantic Online Verify + Test Failures (6 atomic commits, score 9.9 → 9.9, 0 NEW layer violations from my work, 1 violation fixed, 2 NEW sibling violations flagged) | — | [0222-sprint-138-closure.md](0222-sprint-138-closure.md) |
-| 0223 | ADR-0223: Sprint 140 Closure — 15-Bug Pattern Fix in services/ (6 atomic commits, score 9.9 → 9.9, services 86→29 fails -66%, 0 NEW layer violations) | — | [0223-sprint-140-closure.md](0223-sprint-140-closure.md) |
-| 0224 | ADR-0224: Sprint 141 Closure — core/ Pattern Fixes (3 atomic commits, score 9.9 → 9.9, core 126→73 fails -42%, services 86→29 cumulative -66% from S139) | — | [0224-sprint-141-closure.md](0224-sprint-141-closure.md) |
-| 0225 | ADR-0225: Sprint 142 Closure — Subagent Orchestration + A+B Manual Fallback (4 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 1 TD-013 PoC page regrouped) | — | [0225-sprint-142-closure.md](0225-sprint-142-closure.md) |
-| 0226 *(collision)* | ADR-0226: Sprint 143 Closure — Feature Flags Field() Backfill (4 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, test_features 23→14 fails -39%) | — | [0226-sprint-143-closure.md](0226-sprint-143-closure.md) |
-| 0226 *(collision)* | ADR-0226: Sprint 155 Closure — Pattern-Based `@dataclass` Fixes (4 atomic commits, score 9.9 → 9.9, dsl/ 77→34 fails -56%, 0 NEW layer violations) | — | [0226-sprint-155-closure.md](0226-sprint-155-closure.md) |
-| 0227 *(collision)* | ADR-0227: Sprint 144 Closure — 5 Features Backfill + 2 TD-013 Page Regroups (4 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, test_features 14→6 fails -57%, TD-013 1→3 pages) | — | [0227-sprint-144-closure.md](0227-sprint-144-closure.md) |
-| 0227 *(collision)* | ADR-0227: Sprint 156 Closure — Pattern Exhaustion + Honest Scope (2 atomic commits attempted, score 9.9 → 9.9, 0 NEW layer violations, scope-limited) | — | [0227-sprint-156-closure.md](0227-sprint-156-closure.md) |
-| 0228 *(collision)* | ADR-0228: Sprint 145 Closure — Sprint5DSLFlags Reorder + SmartSessionManager Lookup Fix (3 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, test_features 6→3 fails -50%, +1 pre-existing fix) | — | [0228-sprint-145-closure.md](0228-sprint-145-closure.md) |
-| 0228 *(collision)* | ADR-0228: Sprint 156 Final Closure — 6 Atomic Commits, 30 Tests Restored, Pattern Catalogue Truly Exhausted (S156 W5-W11, score 9.9, dsl 39→9 fails -77%) | — | [0228-sprint-156-final-closure.md](0228-sprint-156-final-closure.md) |
-| 0229 *(collision)* | ADR-0229: Sprint 146 Closure — Pre-existing Triage Burst (3 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 18 fails closed: 14 collection errors + 4 test_main fails) | — | [0229-sprint-146-closure.md](0229-sprint-146-closure.md) |
-| 0229 *(collision)* | ADR-0229: Sprint 157 Closure — 1 Atomic Commit, 6 Tests Restored (yaml_loader module-attr fix, score 9.9, dsl 23→16 fails -30%) | — | [0229-sprint-157-closure.md](0229-sprint-157-closure.md) |
-| 0230 *(collision)* | ADR-0230: Sprint 147 Closure — Regression Fix (S146 W1 broken commit, 1 atomic commit + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 14 collection errors fixed + 164 tests unblocked) | — | [0230-sprint-147-closure.md](0230-sprint-147-closure.md) |
-| 0230 *(collision)* | ADR-0230: Sprint 157 Closure — yaml_loader Module-Attr Lookup Fix (1 atomic + 1 closure, score 9.9, dsl 23→16 fails -30%, 6 tests) | — | [0230-sprint-157-closure.md](0230-sprint-157-closure.md) |
-| 0231 | ADR-0231: Sprint 148 Closure — Pre-existing Triage Burst (2 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 4 fails closed: 2 outbox + 2 validator) | — | [0231-sprint-148-closure.md](0231-sprint-148-closure.md) |
-| 0232 *(collision)* | ADR-0232: Sprint 149 Closure — Pre-existing Triage Burst (2 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 4 fails closed: 2 dedupe_store + 2 streaming) | — | [0232-sprint-149-closure.md](0232-sprint-149-closure.md) |
-| 0232 *(collision)* | ADR-0232: Sprint 157 Closure — yaml_loader Module-Attr Lookup Fix (1 atomic + 1 closure, score 9.9, dsl 23→16 fails -30%, 6 tests) | — | [0232-sprint-157-closure.md](0232-sprint-157-closure.md) |
-| 0233 *(collision)* | ADR-0233: Sprint 150 Closure — Cache Decorator Critical Fix + 2 Pre-existing Triage (3 atomic commits, score 9.9 → 9.9, 0 NEW layer violations, 2 fails closed: 1 dq_monitor + 1 e2b test drift) | — | [0233-sprint-150-closure.md](0233-sprint-150-closure.md) |
-| 0233 *(collision)* | ADR-0233: Sprint 158 Closure — Pre-flight Protocol Verification, No More Quick Wins (0 atomic, score 9.9, dsl 15 fails pre-existing) | — | [0233-sprint-158-closure.md](0233-sprint-158-closure.md) |
-| 0234 *(collision)* | ADR-0234: Sprint 151 Closure — Cron Dashboard Parser + Patch Source (1 atomic commit, score 9.9 → 9.9, 0 NEW layer violations, 3 fails closed) | — | [0234-sprint-151-closure.md](0234-sprint-151-closure.md) |
-| 0234 *(collision)* | ADR-0234: Sprint 159 Closure — 5 Atomic Commits, 8 Collection Errors → 0, dsl 23→13 (-43%) (score 9.9, 0 NEW layer violations) | — | [0234-sprint-159-closure.md](0234-sprint-159-closure.md) |
-| 0235 *(collision)* | ADR-0235: Sprint 152 Closure — RAG Filter + Source Attribution + Langfuse Test (3 atomic commits, score 9.9 → 9.9, 0 NEW layer violations, 13 fails closed) | — | [0235-sprint-152-closure.md](0235-sprint-152-closure.md) |
-| 0235 *(collision)* | ADR-0235: Sprint 160 Closure — Pre-flight Verified, No More 1-Line Wins (0 atomic, score 9.9, 14 dsl + 22 core + 5 services pre-existing) | — | [0235-sprint-160-closure.md](0235-sprint-160-closure.md) |
-| 0236 | ADR-0236: Sprint 161 Closure — Pre-flight Verified + Stale Claims Corrected (0 atomic, score 9.9, 14 dsl + 22 core = 36 pre-existing) | — | [0236-sprint-161-closure.md](0236-sprint-161-closure.md) |
-| 0237 *(collision)* | ADR-0237: Sprint 163 Closure — Per-Route Protocol Overrides & Settings Wiring | — | [0237-sprint-163-closure.md](0237-sprint-163-closure.md) |
-| 0237 *(collision)* | ADR-0237: Sprint 165 Closure — Facades + CB + Hot-reload (7 atomic, score 9.9, 0 NEW violations) | — | [0237-sprint-165-closure.md](0237-sprint-165-closure.md) |
-| 0239 | ADR-0239: Sprint 165 Closure — Facades + CB + Hot-reload (7 atomic, score 9.9, 0 NEW violations) | — | [0239-sprint-165-closure.md](0239-sprint-165-closure.md) |
-| 0241 | ADR-0241: Sprint 166 Final Closure — Kafka CDC + Sandbox + Docs (3 atomic, score 9.9, 0 NEW violations) | — | [0241-sprint-166-final-closure.md](0241-sprint-166-final-closure.md) |
-| 0242 | S168 W11 P2-11: Decision: mkdocs-material (primary) + Sphinx (deprecated) | — | [0242-s168-w11-mkdocs-vs-sphinx-decision.md](0242-s168-w11-mkdocs-vs-sphinx-decision.md) |
-| 0243 | S168 W11 P2-3: ADR dedup plan (11 collision-slots) | — | [0243-s168-w11-adr-dedup-plan.md](0243-s168-w11-adr-dedup-plan.md) |
-| 0244 | S168 W11 P2-10: Domain leakage to extensions — migration plan | — | [0244-s168-w11-domain-leakage-migration-plan.md](0244-s168-w11-domain-leakage-migration-plan.md) |
-| 0245 | ADR-0245: S168 Delta Closure — Tool Import Fix + Allowlist Regen (2 atomic, score 9.85, 0 NEW violations) | — | [0245-s168-delta-closure.md](0245-s168-delta-closure.md) |
-| 0246 | ADR-0246: Sprint 30 Security Patch — 7 Dependabot Vulnerabilities Fixed | — | [0246-s30-security-patch.md](0246-s30-security-patch.md) |
-| 0247 | ADR-0247: S169 W2 Feature Pack — RLM, DI Scope, Per-Invoke Tool Policy, Linter Cleanup | — | [0247-s30-rlm-di-scope-tool-policy.md](0247-s30-rlm-di-scope-tool-policy.md) |
-| 0248 | ADR-0248 — Sprint 43: Deep-Audit Quick Wins (Layer linter P0 + P7 logger + schemas shims) | ✅ ACCEPTED (3 atomic commits merged) | [0248-s43-deep-audit-quick-wins.md](0248-s43-deep-audit-quick-wins.md) |
-| 0249 *(collision)* | ADR-0249: DSL → upper-layer imports consolidation (legacy tech debt) | — | [0249-dsl-upper-layer-imports-debt.md](0249-dsl-upper-layer-imports-debt.md) |
-| 0249 *(collision)* | ADR-0249 — Sprint 44: Audit Follow-up — Facades + Migrations | ✅ ACCEPTED (5 atomic commits merged) | [0249-s44-audit-followup-facades.md](0249-s44-audit-followup-facades.md) |
-| 0250 | ADR-0250 — Sprint 45: Audit Backlog QW10 + S1 Closure | ✅ ACCEPTED (2 atomic commits merged) | [0250-s45-audit-backlog-closure.md](0250-s45-audit-backlog-closure.md) |
-| 0251 | ADR-0251 — S13: Circuit Breaker Middleware → Shared State | 🔴 DECLINED — K8s multi-pod safety requires Redis, but wiring | [0251-s13-circuit-breaker-shared-state.md](0251-s13-circuit-breaker-shared-state.md) |
-| 0252 | ADR-0252: S-L7-5 W3C TraceContext MQ wiring — deferred (Sprint 4 L10) | — | [0252-s4-l7-5-mq-trace-propagator-wiring-deferral.md](0252-s4-l7-5-mq-trace-propagator-wiring-deferral.md) |
-| 0253 | ADR-0253: AsyncElasticsearch transport — aiohttp → httpxasync (Sprint 36 L1) | — | [0253-httpx-async-elasticsearch-transport.md](0253-httpx-async-elasticsearch-transport.md) |
+**Total:** 97 ADRs.
 
-_Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
