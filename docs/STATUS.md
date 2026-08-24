@@ -37,6 +37,7 @@
 | **Sprint 44 W12 (CI bumps)** | **5 GH Actions packages bumped (Phase 1/13)** | 17 workflows, 38 string edits, yaml.safe_load=OK |
 | **Sprint 44 W12b (blocker)** | **8 Python deps blocked by aio-pika conflict (ADR-0258)** | Requires architectural decision (lift <0.52b0 OR isolate ai-2026) |
 | **Sprint 44 W12c (UNBLOCK)** | **13/13 dependabot PRs closed (5 GH Actions + 8 Python)** | Commit `129ef228`: otel <0.52b0 + mkdocstrings 1.0 + icalendar 7 + aioimaplib 2 + 5 safe bumps |
+| **Sprint 44 W12d (post-bump verify)** | **uv sync OK + 59 pytest tests PASSED** | ADR-0258 marked SUPERSEDED; no regressions from bumps |
 
 ## Sprint 43 W2 Results (3 commits, 2026-08-30)
 
