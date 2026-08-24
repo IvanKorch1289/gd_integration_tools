@@ -139,7 +139,9 @@ def get_ai_agent_service() -> AIAgentService:
             instance = getattr(app.state, "ai_agent_service", None)
             if instance is not None:
                 return instance
-    except (ImportError, AttributeError):  # noqa: violation-check — DI-lookup narrow failure modes
+    except (ImportError, AttributeError, RuntimeError):  # noqa: violation-check — DI-lookup narrow failure modes
+        # S44 W42: added RuntimeError (cycle-5/D-AUDIT-501 was too narrow —
+        # missed get_app_ref's "not in app context" RuntimeError).
         # cycle-5/D-AUDIT-501 fix: narrowed from broad `except Exception: pass`
         # to concrete DI-lookup failure modes; bare Exception was silent
         # fail-OPEN (per critic cycle-5).
