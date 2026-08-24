@@ -407,12 +407,20 @@ async def test_guard_input_lakera_flagged_blocks_even_with_fail_open(
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_input_nemo_skipped() -> None:
-    """NeMo guard пропускается (Python 3.14 incompat)."""
+    """NeMo guard пропускается (Python 3.14 incompat) с on_block='warn'.
+
+    S44 W24 (agent audit S172/P0-S3 follow-up): nemo guards now fail-CLOSED
+    when ``on_block="fail"`` (see input_guard_mixin.py:47-65). To preserve
+    the original test intent ('NeMo guard is skipped, just log warning'),
+    use ``on_block="warn"`` — the warning is still logged, but no raise.
+    """
     enforcer = AIPolicyEnforcer()
 
     prompt = "any prompt"
     policy = MagicMock()
-    policy.input_guards = [make_guard_ref("nemo:colang:topics")]
+    policy.input_guards = [
+        make_guard_ref("nemo:colang:topics", on_block="warn"),
+    ]
 
     with patch(
         "src.backend.core.ai.policy.enforcer.input_guard_mixin.logger",
