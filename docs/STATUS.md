@@ -558,15 +558,16 @@ Added opt-in to preserve pre-S209 contract encoded in test docstrings.
 
 **Pattern: 5 atomic slices, ~25 LOC diff, all test-only, zero prod changes.**
 
-**Final test counts** (cumulative Sprint 44 W1-W27):
+**Final test counts** (cumulative Sprint 44 W1-W28):
 - W1-W22 (предыдущие сессии): +175 tests
 - W23 (test_tools_whitelist): +6 tests
 - W24-W27 (3 hardening drift fixes): +5 tests
-- **Total: +180 tests, 0 regressions** (1 deprecated test skipped)
+- W28 (cycle 22 P1-6 re-raise test alignment): +2 tests
+- **Total: +182 tests, 0 regressions** (1 deprecated test skipped)
 
-**Remaining real test failures**: 0 in tests/unit/core/ai/ (598/598 pass). Only pre-existing design issues remain:
-- test_soap_sink.py::test_send_handles_invoke_exception + test_grpc_sink.py::test_send_handles_channel_exception
-  (cycle 22 P1-6 re-raise design)
+**All real test failures in tests/unit/ now resolved.**
+test_soap_sink + test_grpc_sink RuntimeError tests now match production
+behavior (cycle 22 P1-6 re-raise design).
 
 **Production readiness**: ~96% (стабильно).
 
