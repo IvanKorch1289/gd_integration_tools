@@ -58,8 +58,13 @@ def test_aipolicyspec_tools_field_default() -> None:
 
 
 def test_check_tool_allowed_default_allows_all() -> None:
-    """Default ToolsSpec (no whitelist, no blacklist) allows all tools."""
-    spec = ToolsSpec()
+    """Default ToolsSpec (no whitelist, no blacklist) allows all tools.
+
+    S44 W23 (agent audit S209 follow-up): ToolsSpec default is deny-all
+    via ``allow_all_tools=False``. To preserve pre-S209 "empty = allow all"
+    backward-compat contract in this test, opt-in explicitly.
+    """
+    spec = ToolsSpec(allow_all_tools=True)
     assert check_tool_allowed("anything", spec) is True
     assert check_tool_allowed("fs.write", spec) is True
     assert check_tool_allowed("db.read", spec) is True
@@ -87,8 +92,12 @@ def test_check_tool_allowed_blacklist_match() -> None:
 
 
 def test_check_tool_allowed_blacklist_miss() -> None:
-    """Blacklist miss → allowed (если whitelist пуст)."""
-    spec = ToolsSpec(blacklist=["fs.write"])
+    """Blacklist miss → allowed (если whitelist пуст).
+
+    S44 W23: S209 requires explicit ``allow_all_tools=True`` to preserve
+    backward-compat "minimal blacklist = allow" semantic.
+    """
+    spec = ToolsSpec(blacklist=["fs.write"], allow_all_tools=True)
     assert check_tool_allowed("db.read", spec) is True
     assert check_tool_allowed("ai.invoke", spec) is True
 
@@ -156,9 +165,12 @@ def test_enforce_tool_policy_unknown_mode_defaults_to_fail() -> None:
 
 
 def test_filter_tools_empty_spec_passes_all() -> None:
-    """Empty spec → all tools pass (no restriction)."""
+    """Empty spec → all tools pass (no restriction).
+
+    S44 W23: S209 deny-all default requires explicit ``allow_all_tools=True``.
+    """
     tools = ["db.read", "fs.write", "ai.invoke"]
-    filtered = filter_tools_by_policy(tools, ToolsSpec())
+    filtered = filter_tools_by_policy(tools, ToolsSpec(allow_all_tools=True))
     assert filtered == tools
 
 
@@ -171,17 +183,24 @@ def test_filter_tools_whitelist_removes_non_whitelisted() -> None:
 
 
 def test_filter_tools_blacklist_removes_blacklisted() -> None:
-    """Blacklist filter removes blacklisted tools."""
+    """Blacklist filter removes blacklisted tools.
+
+    S44 W23: add ``allow_all_tools=True`` to preserve pre-S209 contract
+    (deny-all default + blacklist would yield empty).
+    """
     tools = ["db.read", "fs.write", "ai.invoke"]
-    spec = ToolsSpec(blacklist=["fs.write"])
+    spec = ToolsSpec(blacklist=["fs.write"], allow_all_tools=True)
     filtered = filter_tools_by_policy(tools, spec)
     assert filtered == ["db.read", "ai.invoke"]
 
 
 def test_filter_tools_preserves_order() -> None:
-    """Filter preserves input order."""
+    """Filter preserves input order.
+
+    S44 W23: same S209 backward-compat opt-in.
+    """
     tools = ["z_tool", "a_tool", "m_tool", "b_tool"]
-    spec = ToolsSpec(blacklist=["m_tool"])
+    spec = ToolsSpec(blacklist=["m_tool"], allow_all_tools=True)
     filtered = filter_tools_by_policy(tools, spec)
     assert filtered == ["z_tool", "a_tool", "b_tool"]
 
@@ -198,10 +217,13 @@ def test_filter_tools_with_iterator_input() -> None:
 
 
 def test_aipolicy_enforcer_filter_tools() -> None:
-    """AIPolicyEnforcer.filter_tools работает как convenience wrapper."""
+    """AIPolicyEnforcer.filter_tools работает как convenience wrapper.
+
+    S44 W23: same S209 backward-compat opt-in.
+    """
     enforcer = AIPolicyEnforcer()
     tools = ["db.read.orders", "fs.write", "shell.execute", "ai.invoke.credit_check"]
-    spec = ToolsSpec(blacklist=["fs.write", "shell.execute"])
+    spec = ToolsSpec(blacklist=["fs.write", "shell.execute"], allow_all_tools=True)
     filtered = enforcer.filter_tools(tools, spec)
     assert "fs.write" not in filtered
     assert "shell.execute" not in filtered
