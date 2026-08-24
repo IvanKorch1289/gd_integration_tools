@@ -276,7 +276,7 @@ async def test_stream_raises_not_implemented() -> None:
     fake_gateway = _FakeLLMGateway()
     client = PydanticAIClient(gateway=fake_gateway)
 
-    with pytest.raises(NotImplementedError, match="Streaming support planned"):
+    with pytest.raises(NotImplementedError, match="пока не реализован"):
         await client.run(prompt="test", stream=True)
 
 
