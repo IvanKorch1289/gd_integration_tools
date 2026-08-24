@@ -1,0 +1,47 @@
+name: stubs-drift
+
+# Cycle 246 K-series: CI gate для .pyi stub drift в DSL builders.
+# gen_dsl_stubs.py уже имеет --check режим; этот workflow просто
+# дёргает его на каждом push/PR и блокирует merge при drift.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.14
+        uses: actions/setup-python@v6
+        with:
+          # TODO: при недоступности 3.14 в setup-python на GitHub-runners
+          # временно использовать '3.14-dev' или fallback на '3.13'.
+          python-version: "3.14"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Sync deps
+        run: uv sync
+
+      - name: Verify .pyi stubs match generated output
+        # --check генерирует stub в памяти и сравнивает с committed
+        # .pyi; exit 1 при drift (см. tools/gen_dsl_stubs.py).
+        run: uv run python tools/gen_dsl_stubs.py --check
