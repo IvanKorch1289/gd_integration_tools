@@ -571,5 +571,43 @@ behavior (cycle 22 P1-6 re-raise design).
 
 **Production readiness**: ~96% (стабильно).
 
+## S44 W29 — coverage re-measurement (verification, no code change)
+
+**Slice**: re-run coverage measurement to verify S44 W4 honest re-eval claim
+(13% real coverage). This is verification only — no code change.
+
+**Method** (per ADR-0257, S44 W4):
+```bash
+.venv/bin/python -m coverage run --source=src/backend -m pytest \
+    tests/unit/core/ai/ tests/unit/services/agent_security/
+.venv/bin/python -m coverage report
+```
+
+**Result** (603 tests run, AI + agent_security subset):
+- **TOTAL: 107,484 statements, 92,739 covered, 23,612 missing = 12% coverage**
+- vs S44 W4 baseline: 13% (slight decrease from added code paths)
+- vs `pyproject.toml:1080 fail_under = 60`: **48 percentage points below gate**
+- Gate failure: `Coverage failure: total of 12 is less than fail-under=60`
+
+**Interpretation**:
+- Coverage gap is **systemic**, not addressable in single session
+- Requires writing ~50k+ statements worth of tests (or reducing fail_under)
+- Was documented as a Sprint 45+ project, not a single-session task
+
+**Why this slice matters** (independent of fixing the gap):
+1. Refutes any "Sprint 44 closed all gaps" overclaim — coverage is the
+   biggest remaining P0/P1-equivalent gap
+2. The 12% reflects what tests actually cover; rest is untested infrastructure
+3. Sets baseline for Sprint 45 (likely "coverage ratchet" — add 1-2% per sprint)
+
+**Files with most uncovered** (top 5 by missing lines):
+- `src/backend/core/workflow_registry.py` (47/47 missing, 0%)
+- `src/backend/core/workflow/compensation.py` (9/9, 0%)
+- `src/backend/core/workflow/fake_backend.py` (39/71, 40%)
+- `src/backend/core/workflow/backend.py` (8/35, 77%)
+- `src/backend/core/workflow/__init__.py` (4/10, 50%)
+
+**No commit** — verification only. Sprint 45 should plan coverage ratchet.
+
 **Production readiness**: ~96% (stable, S44 W4 honest re-eval reflects
 real coverage 13% per ADR-0257).
