@@ -9,6 +9,7 @@ import pytest
 
 from src.backend.infrastructure.messaging.dlq.rabbit_writer import RabbitDLQWriter
 from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope, DLQReason
+from tests.unit._auth_mocks import patched_auth_allow
 
 
 @pytest.fixture
@@ -39,7 +40,8 @@ class TestRabbitDLQWriter:
         self, channel: MagicMock, envelope: DLQEnvelope,
     ) -> None:
         writer = RabbitDLQWriter(channel=channel)
-        await writer.write(envelope)
+        with patched_auth_allow():
+            await writer.write(envelope)
 
         channel.default_exchange.publish.assert_awaited_once()
         args = channel.default_exchange.publish.call_args
@@ -55,7 +57,8 @@ class TestRabbitDLQWriter:
         self, channel: MagicMock, envelope: DLQEnvelope,
     ) -> None:
         writer = RabbitDLQWriter(channel=channel, exchange_name="dlx")
-        await writer.write(envelope)
+        with patched_auth_allow():
+            await writer.write(envelope)
 
         channel.get_exchange.assert_awaited_once_with("dlx")
 
@@ -66,6 +69,6 @@ class TestRabbitDLQWriter:
     ) -> None:
         channel.default_exchange.publish.side_effect = RuntimeError("rabbit down")
         writer = RabbitDLQWriter(channel=channel)
-
-        with pytest.raises(RuntimeError, match="rabbit down"):
-            await writer.write(envelope)
+        with patched_auth_allow():
+            with pytest.raises(RuntimeError, match="rabbit down"):
+                await writer.write(envelope)

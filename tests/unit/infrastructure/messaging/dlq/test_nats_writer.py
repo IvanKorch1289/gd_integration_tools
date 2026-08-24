@@ -9,6 +9,7 @@ import pytest
 
 from src.backend.infrastructure.messaging.dlq.nats_writer import NATSDLQWriter
 from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope, DLQReason
+from tests.unit._auth_mocks import patched_auth_allow
 
 
 @pytest.fixture
@@ -36,7 +37,8 @@ class TestNATSDLQWriter:
         self, jetstream: AsyncMock, envelope: DLQEnvelope,
     ) -> None:
         writer = NATSDLQWriter(jetstream=jetstream)
-        await writer.write(envelope)
+        with patched_auth_allow():
+            await writer.write(envelope)
 
         jetstream.publish.assert_awaited_once()
         args = jetstream.publish.call_args
@@ -52,7 +54,8 @@ class TestNATSDLQWriter:
     ) -> None:
         writer = NATSDLQWriter(jetstream=jetstream, subject_prefix="dead.")
         envelope.transport = "grpc"
-        await writer.write(envelope)
+        with patched_auth_allow():
+            await writer.write(envelope)
 
         assert jetstream.publish.call_args.args[0] == "dead.grpc"
 
@@ -63,6 +66,6 @@ class TestNATSDLQWriter:
     ) -> None:
         jetstream.publish.side_effect = RuntimeError("nats down")
         writer = NATSDLQWriter(jetstream=jetstream)
-
-        with pytest.raises(RuntimeError, match="nats down"):
-            await writer.write(envelope)
+        with patched_auth_allow():
+            with pytest.raises(RuntimeError, match="nats down"):
+                await writer.write(envelope)

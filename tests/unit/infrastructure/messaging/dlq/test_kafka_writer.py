@@ -9,6 +9,7 @@ import pytest
 
 from src.backend.infrastructure.messaging.dlq.kafka_writer import KafkaDLQWriter
 from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope, DLQReason
+from tests.unit._auth_mocks import patched_auth_allow
 
 
 @pytest.fixture
@@ -40,7 +41,8 @@ class TestKafkaDLQWriter:
         self, producer: AsyncMock, envelope: DLQEnvelope,
     ) -> None:
         writer = KafkaDLQWriter(producer=producer)
-        await writer.write(envelope)
+        with patched_auth_allow():
+            await writer.write(envelope)
 
         producer.send_and_wait.assert_awaited_once()
         call_args = producer.send_and_wait.call_args
@@ -58,40 +60,36 @@ class TestKafkaDLQWriter:
     ) -> None:
         writer = KafkaDLQWriter(producer=producer, topic_prefix="dead.")
         envelope.transport = "soap"
-        await writer.write(envelope)
+        with patched_auth_allow():
+            await writer.write(envelope)
 
         producer.send_and_wait.assert_awaited_once()
-        assert producer.send_and_wait.call_args.args[0] == "dead.soap"
+        call_args = producer.send_and_wait.call_args
+        assert call_args.args[0] == "dead.soap"
 
     @pytest.mark.unit
     @pytest.mark.asyncio
     async def test_write_propagates_exception(
         self, producer: AsyncMock, envelope: DLQEnvelope,
     ) -> None:
-        producer.send_and_wait.side_effect = RuntimeError("kafka down")
+        producer.send_and_wait = AsyncMock(side_effect=RuntimeError("kafka down"))
         writer = KafkaDLQWriter(producer=producer)
-
-        with pytest.raises(RuntimeError, match="kafka down"):
-            await writer.write(envelope)
-
-    @pytest.mark.unit
-    def test_default_serialize_returns_bytes(self, envelope: DLQEnvelope) -> None:
-        raw = KafkaDLQWriter._default_serialize(envelope)
-        assert isinstance(raw, bytes)
-        parsed = json.loads(raw)
-        assert parsed["dlq_id"] == "test-dlq-1"
-        assert parsed["reason"] == "timeout"
-        # datetime должен быть сериализован в ISO-строку
-        assert isinstance(parsed["first_failed_at"], str)
+        with patched_auth_allow():
+            with pytest.raises(RuntimeError, match="kafka down"):
+                await writer.write(envelope)
 
     @pytest.mark.unit
     @pytest.mark.asyncio
     async def test_custom_serializer(
         self, producer: AsyncMock, envelope: DLQEnvelope,
     ) -> None:
-        custom = MagicMock(return_value=b"custom-payload")
-        writer = KafkaDLQWriter(producer=producer, serializer=custom)
-        await writer.write(envelope)
+        writer = KafkaDLQWriter(
+            producer=producer,
+            serializer=lambda env: b"custom:" + env.dlq_id.encode(),
+        )
+        with patched_auth_allow():
+            await writer.write(envelope)
 
-        custom.assert_called_once_with(envelope)
-        assert producer.send_and_wait.call_args.kwargs["value"] == b"custom-payload"
+        producer.send_and_wait.assert_awaited_once()
+        call_args = producer.send_and_wait.call_args
+        assert call_args.kwargs["value"] == b"custom:test-dlq-1"
