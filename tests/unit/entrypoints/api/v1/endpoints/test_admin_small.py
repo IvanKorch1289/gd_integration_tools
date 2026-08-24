@@ -16,8 +16,17 @@ from src.backend.entrypoints.api.v1.endpoints import asyncapi as asyncapi_mod
 
 @pytest.mark.asyncio
 async def test_list_training_runs() -> None:
+    """Stub response (Langfuse not connected) returns core fields + note/stub.
+
+    S44 W40: production code adds ``note`` and ``stub: True`` fields to indicate
+    storage fallback. Test was written before this indicator was added.
+    Assert on the required core fields, allow extra fields.
+    """
     result = await feedback_mod.list_training_runs(limit=5)
-    assert result == {"runs": [], "count": 0, "limit": 5}
+    assert result["runs"] == []
+    assert result["count"] == 0
+    assert result["limit"] == 5
+    assert result.get("stub") is True  # indicates storage fallback
 
 
 @pytest.mark.asyncio
