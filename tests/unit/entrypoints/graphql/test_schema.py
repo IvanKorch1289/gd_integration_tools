@@ -1,22 +1,18 @@
 """Smoke tests for GraphQL schema (entrypoints/graphql/schema.py).
 
 S43 W2: ``test_module_imports`` и ``test_graphql_router_is_router``
-skip-xfail после R8 refactor (graphql 825→31 LOC facade, см.
-RE_AUDIT_2026-08-27). Facade больше не экспортирует ``graphql_router``
-(он не был реализован при facade-рефакторе). Production import
-в ``app_factory.py:9`` остаётся broken (P0 backlog).
+восстановлены после R8 refactor (Sprint 43 W2 partial fix —
+graphql_router теперь создаётся в schema.py через auto_schema).
+Production import в ``app_factory.py:9`` тоже restored.
 """
 
 from __future__ import annotations
 
 from datetime import datetime
 
-import pytest
-
 # ── Module import + public exports ──────────────────────────────────
 
 
-@pytest.mark.skip(reason="R8 facade refactor: graphql_router not in facade (P0)")
 def test_module_imports() -> None:
     from src.backend.entrypoints.graphql import schema
 
@@ -109,9 +105,10 @@ def test_order_type_with_dates() -> None:
 # ── graphql_router: existence check only ────────────────────────────
 
 
-@pytest.mark.skip(reason="R8 facade refactor: graphql_router not in facade (P0)")
 def test_graphql_router_is_router() -> None:
     from src.backend.entrypoints.graphql.schema import graphql_router
 
-    # Strawberry GraphQLRouter — just verify it's not None
+    # GraphQLRouter OR APIRouter — just verify it's not None.
+    # Router is empty when no actions have graphql transport
+    # (see auto_schema.build_auto_strawberry_schema for details).
     assert graphql_router is not None
