@@ -620,8 +620,9 @@ root = ET.fromstring(data)  # defusedxml for safe parsing
 | 6 | activity.py (production) | `LANGGRAPH_CHECKPOINT_*_ACTIVITY`/`_TIMEOUT_S` constants missing (S100 W1) | 3 tests fixed |
 | 7 | action_dispatcher.py (production) | `__getattr__` proxy doesn't fire for free-variable refs in method bodies (pytest importlib mode) | 1 test fixed |
 | 8 | test_builder_service_imports.py (test) | encodes pre-Sprint-225/226 import structure; Sprint 225 converted to `__getattr__` proxy | 2 tests marked as skip |
+| 9 | test_admin_small.py (test) | `test_list_training_runs` expected exact dict; production added `note` + `stub:True` for storage fallback indicator | 1 test fixed |
 
-**Cumulative Sprint 44** (final): +202 tests, 0 regressions, 11 deprecated skip.
+**Cumulative Sprint 44** (final): +203 tests, 0 regressions, 11 deprecated skip.
 
 ## S44 W37 — dsl flaky test analysis (no code change)
 
