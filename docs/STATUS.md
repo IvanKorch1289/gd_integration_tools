@@ -28,6 +28,7 @@
 | **Sprint 44 W2** | **otel block FALSE CLAIM retracted + aio_pika 0.60b1 installed** | 22 integration tests run |
 | **Sprint 44 W3 (live smoke)** | **12-round audit gap closed** | 411 OpenAPI paths + 131 routes + 11 GraphQL fields + 10 components |
 | **Sprint 44 W4 (coverage)** | **REAL measurement 13%** (was fake 90.35%) | 105924 stmts, 23110 covered, gate FAIL |
+| **Sprint 44 W5 (multi-agent)** | **3 Agent dispatches: refactor + regex fix** | 2 commits (20181e30, bae42953) |
 
 ## Sprint 43 W2 Results (3 commits, 2026-08-30)
 
