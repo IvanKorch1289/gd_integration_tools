@@ -12,6 +12,7 @@ import pytest
 
 from src.backend.core.interfaces.sink import SinkKind
 from src.backend.infrastructure.sinks.email_sink import EmailSink
+from tests.unit._auth_mocks import patched_auth_allow
 
 
 @pytest.fixture
@@ -39,7 +40,8 @@ async def test_send_dict_payload_success(fake_aiosmtplib: types.ModuleType) -> N
         default_to="default@test",
         default_subject="Hello",
     )
-    result = await sink.send({"to": "alice@test", "subject": "Subj", "body": "body"})
+    with patched_auth_allow():
+        result = await sink.send({"to": "alice@test", "subject": "Subj", "body": "body"})
     assert result.ok is True
     assert result.details["to"] == "alice@test"
     assert result.details["subject"] == "Subj"
@@ -58,7 +60,8 @@ async def test_send_str_payload_success(fake_aiosmtplib: types.ModuleType) -> No
         from_addr="sender@test",
         default_to="default@test",
     )
-    result = await sink.send("plain text")
+    with patched_auth_allow():
+        result = await sink.send("plain text")
     assert result.ok is True
     fake_aiosmtplib.send.assert_awaited_once()
 
@@ -68,7 +71,8 @@ async def test_send_html_payload(fake_aiosmtplib: types.ModuleType) -> None:
     sink = EmailSink(
         sink_id="e3", host="smtp.test", from_addr="f@test", default_to="t@test",
     )
-    result = await sink.send({"body": "<b>hi</b>", "html": True})
+    with patched_auth_allow():
+        result = await sink.send({"body": "<b>hi</b>", "html": True})
     assert result.ok is True
     msg = fake_aiosmtplib.send.call_args[0][0]
     assert msg.is_multipart()
@@ -82,7 +86,8 @@ async def test_send_cc_and_bcc(fake_aiosmtplib: types.ModuleType) -> None:
     sink = EmailSink(
         sink_id="e4", host="smtp.test", from_addr="f@test", default_to="t@test",
     )
-    result = await sink.send({"cc": ["c1@test", "c2@test"], "bcc": "bc@test"})
+    with patched_auth_allow():
+        result = await sink.send({"cc": ["c1@test", "c2@test"], "bcc": "bc@test"})
     assert result.ok is True
     msg = fake_aiosmtplib.send.call_args[0][0]
     assert msg["Cc"] == "c1@test, c2@test"
@@ -92,7 +97,8 @@ async def test_send_cc_and_bcc(fake_aiosmtplib: types.ModuleType) -> None:
 @pytest.mark.asyncio
 async def test_send_missing_to_and_default_to_returns_error() -> None:
     sink = EmailSink(sink_id="e5", host="smtp.test", from_addr="f@test")
-    result = await sink.send({"body": "x"})
+    with patched_auth_allow():
+        result = await sink.send({"body": "x"})
     assert result.ok is False
     assert "invalid" in result.details["error"]
 
@@ -100,7 +106,8 @@ async def test_send_missing_to_and_default_to_returns_error() -> None:
 @pytest.mark.asyncio
 async def test_send_missing_from_addr_returns_error() -> None:
     sink = EmailSink(sink_id="e6", host="smtp.test", default_to="t@test")
-    result = await sink.send("body")
+    with patched_auth_allow():
+        result = await sink.send("body")
     assert result.ok is False
     assert "invalid" in result.details["error"]
 
@@ -110,7 +117,8 @@ async def test_send_invalid_payload_type_returns_error() -> None:
     sink = EmailSink(
         sink_id="e7", host="smtp.test", from_addr="f@test", default_to="t@test",
     )
-    result = await sink.send(12345)
+    with patched_auth_allow():
+        result = await sink.send(12345)
     assert result.ok is False
     assert "invalid" in result.details["error"]
 
@@ -120,10 +128,11 @@ async def test_send_returns_false_when_aiosmtplib_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setitem(sys.modules, "aiosmtplib", None)  # type: ignore[arg-type]
-    sink = EmailSink(
-        sink_id="e8", host="smtp.test", from_addr="f@test", default_to="t@test",
-    )
-    result = await sink.send("body")
+    with patched_auth_allow():
+        sink = EmailSink(
+            sink_id="e8", host="smtp.test", from_addr="f@test", default_to="t@test",
+        )
+        result = await sink.send("body")
     assert result.ok is False
     assert "aiosmtplib" in result.details["error"]
 
@@ -134,7 +143,8 @@ async def test_send_handles_smtp_exception(fake_aiosmtplib: types.ModuleType) ->
     sink = EmailSink(
         sink_id="e9", host="smtp.test", from_addr="f@test", default_to="t@test",
     )
-    result = await sink.send("body")
+    with patched_auth_allow():
+        result = await sink.send("body")
     assert result.ok is False
     assert "refused" in result.details["error"]
 
@@ -148,7 +158,8 @@ async def test_health_true_when_connect_ok(monkeypatch: pytest.MonkeyPatch) -> N
     fake_mod.SMTP = lambda **_: fake_client
     monkeypatch.setitem(sys.modules, "aiosmtplib", fake_mod)
     sink = EmailSink(sink_id="e10", host="smtp.test", from_addr="f@test")
-    result = await sink.health()
+    with patched_auth_allow():
+        result = await sink.health()
     assert result.status == "ok"
 
 
@@ -160,7 +171,8 @@ async def test_health_false_when_connect_fails(monkeypatch: pytest.MonkeyPatch) 
     fake_mod.SMTP = lambda **_: fake_client
     monkeypatch.setitem(sys.modules, "aiosmtplib", fake_mod)
     sink = EmailSink(sink_id="e11", host="smtp.test", from_addr="f@test")
-    result = await sink.health()
+    with patched_auth_allow():
+        result = await sink.health()
     assert result.status == "failed"
 
 
@@ -170,5 +182,6 @@ async def test_health_false_when_aiosmtplib_missing(
 ) -> None:
     monkeypatch.setitem(sys.modules, "aiosmtplib", None)  # type: ignore[arg-type]
     sink = EmailSink(sink_id="e12", host="smtp.test", from_addr="f@test")
-    result = await sink.health()
+    with patched_auth_allow():
+        result = await sink.health()
     assert result.status == "failed"
