@@ -34,6 +34,7 @@ import httpx
 
 from src.backend.core.config.services.sms import sms_settings
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.backend.core.net.outbound_http import OutboundHttpClient
 from src.backend.core.resilience.connector_breaker import with_breaker
 from src.backend.core.resilience.retry import with_retry
 from src.backend.core.security.connector_auth import require_capability
@@ -110,7 +111,10 @@ class SmsSink(Sink):
             # D-AUDIT-A2-01 fix (cycle 1): использовать OutboundHttpClient с WAF pre-hook
             # вместо прямого httpx.AsyncClient. Ранее sms_sink обходил WAF-coverage,
             # tools/check_waf_coverage.py exit 1 с этими violations.
-            from src.backend.core.net.outbound_http import OutboundHttpClient
+            # S44 W18: OutboundHttpClient теперь импортируется на module level
+            # (см. выше) — это позволяет test patch делать
+            # ``patch("src.backend.infrastructure.sinks.sms_sink.OutboundHttpClient")``
+            # без AttributeError.
 
             async with OutboundHttpClient(
                 timeout=httpx.Timeout(self.timeout_s),
@@ -174,9 +178,9 @@ class SmsSink(Sink):
         D-AUDIT-A2-01 fix (cycle 1): использует OutboundHttpClient для HEAD probe.
         """
         try:
-            # D-AUDIT-A2-01 fix (cycle 1): OutboundHttpClient вместо прямого httpx
-            from src.backend.core.net.outbound_http import OutboundHttpClient
-
+            # D-AUDIT-A2-01 fix (cycle 1): OutboundHttpClient вместо прямого httpx.
+            # S44 W18: OutboundHttpClient импортируется на module level
+            # (см. выше), убираем lazy import.
             start = time.perf_counter()
             async with OutboundHttpClient(
                 timeout=httpx.Timeout(2.0), plugin=f"sms_sink.{self.provider}"
