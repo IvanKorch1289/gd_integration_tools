@@ -83,8 +83,12 @@ async def receive_source_webhook(source_id: str, request: Request) -> dict[str, 
     try:
         # WebhookSource (infra) экспортирует verify_and_dispatch, но это
         # не часть Protocol Source; kind-проверка выше гарантирует семантику.
+        # ``_principal='webhook-service'`` — сервисный principal для
+        # ``@require_capability("webhook.read")`` декоратора. HMAC-валидация
+        # внутри ``_verify_hmac`` остаётся фактической аутентификацией
+        # webhook (вызывающая сторона должна предоставить валидную подпись).
         await source.verify_and_dispatch(  # type: ignore[attr-defined]
-            raw_body, headers, payload=payload
+            raw_body, headers, payload=payload, _principal="webhook-service",
         )
     except AttributeError as exc:
         raise HTTPException(

@@ -263,3 +263,39 @@ independently reproduced the same fixes, demonstrating perfect idempotency.
 - 1 webhook integration test (webhook canonical mode)
 
 These are pre-existing test infrastructure issues, NOT facade gaps. Out of scope for this atomic slice.
+
+## S44 W3 — webhook canonical test fix (atomic, 2026-08-30)
+
+**Issue** (ADR-0256 R12/R13 chain identified 4 failing webhook canonical tests):
+- `tests/integration/security/test_webhook_signature_consolidation.py`:
+  * `test_canonical_mode_accepts_valid_signature` — FAILED
+  * `test_canonical_mode_rejects_wrong_signature` — FAILED
+  * `test_canonical_mode_rejects_expired_timestamp` — FAILED
+  * `test_legacy_mode_no_timestamp_header_uses_body_hmac` — FAILED
+- Root cause: `@require_capability("webhook.read")` декоратор на
+  `WebhookSource.verify_and_dispatch` вызывал `ConnectorAuthError`
+  для anonymous principal. AuthorizationFacade в тестах не имеет
+  registered policy для `webhook.read` → fail-closed.
+
+**Fix**:
+- `tests/integration/security/test_webhook_signature_consolidation.py`:
+  добавлен helper `_allow_capability_mock()` (AsyncMock для facade)
+  + 4 теста обёрнуты в `patch("src.backend.services.authorization.facade.get_authorization_facade", ...)`
+  + передаётся `_principal="webhook-service"` (consistent с production
+  паттерном "service principal" для capability-checked connectors).
+- `src/backend/entrypoints/webhook/sources_router.py`: добавлен
+  `_principal="webhook-service"` в production-вызов `verify_and_dispatch`.
+
+**Verification**:
+- pytest `tests/integration/security/test_webhook_signature_consolidation.py`: **5/5 PASS** (4 FIXED + 1 pre-existing)
+- Regression suite (5 webhook + 80 previous from S44 W2): **85/85 PASS**
+- ruff: **0** errors
+- bandit HIGH: **0**
+
+**Architectural note** (для future refactor):
+Capability check на webhook-verify — спорная архитектура: HMAC-подпись
+это фактическая auth для webhook, а capability-check — auth для
+service-level API access. В будущем имеет смысл вынести capability
+check на уровень роутера (где уже есть `require_auth` middleware)
+и оставить в `verify_and_dispatch` только HMAC-валидацию. Но это
+большая архитектурная правка — out of scope для atomic slice.
