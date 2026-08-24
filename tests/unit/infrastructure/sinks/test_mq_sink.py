@@ -11,6 +11,7 @@ import pytest
 
 from src.backend.core.interfaces.sink import SinkKind
 from src.backend.infrastructure.sinks.mq_sink import MqSink
+from tests.unit._auth_mocks import patched_auth_allow
 
 
 def _install_fake_broker(
@@ -41,7 +42,8 @@ async def test_kind_is_mq() -> None:
 async def test_send_kafka_success(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_broker = _install_fake_broker(monkeypatch, "kafka")
     sink = MqSink(sink_id="q1", broker="kafka", url="localhost:9092", topic="events")
-    result = await sink.send({"evt": 1})
+    with patched_auth_allow():
+        result = await sink.send({"evt": 1})
     assert result.ok is True
     assert result.details["broker"] == "kafka"
     assert result.details["topic"] == "events"
@@ -56,7 +58,8 @@ async def test_send_rabbit_success(monkeypatch: pytest.MonkeyPatch) -> None:
     sink = MqSink(
         sink_id="q2", broker="rabbit", url="amqp://guest@localhost", topic="q",
     )
-    result = await sink.send("hello")
+    with patched_auth_allow():
+        result = await sink.send("hello")
     assert result.ok is True
     fake_broker.publish.assert_awaited_once()
 
@@ -65,7 +68,8 @@ async def test_send_rabbit_success(monkeypatch: pytest.MonkeyPatch) -> None:
 async def test_send_redis_success(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_broker = _install_fake_broker(monkeypatch, "redis")
     sink = MqSink(sink_id="q3", broker="redis", url="redis://localhost", topic="s")
-    result = await sink.send(b"raw")
+    with patched_auth_allow():
+        result = await sink.send(b"raw")
     assert result.ok is True
     call_args = fake_broker.publish.call_args
     assert call_args[0][0] == b"raw"
@@ -75,7 +79,8 @@ async def test_send_redis_success(monkeypatch: pytest.MonkeyPatch) -> None:
 async def test_send_nats_success(monkeypatch: pytest.MonkeyPatch) -> None:
     _install_fake_broker(monkeypatch, "nats")
     sink = MqSink(sink_id="q4", broker="nats", url="nats://localhost", topic="subj")
-    result = await sink.send({"x": 1})
+    with patched_auth_allow():
+        result = await sink.send({"x": 1})
     assert result.ok is True
 
 
@@ -84,8 +89,9 @@ async def test_send_returns_false_when_broker_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setitem(sys.modules, "faststream.kafka", None)  # type: ignore[arg-type]
-    sink = MqSink(sink_id="q5", broker="kafka", url="k", topic="t")
-    result = await sink.send({})
+    with patched_auth_allow():
+        sink = MqSink(sink_id="q5", broker="kafka", url="k", topic="t")
+        result = await sink.send({})
     assert result.ok is False
     assert "faststream" in result.details["error"]
 
@@ -96,7 +102,8 @@ async def test_send_handles_publish_exception(monkeypatch: pytest.MonkeyPatch) -
         monkeypatch, "kafka", raise_on_publish=RuntimeError("broker down"),
     )
     sink = MqSink(sink_id="q6", broker="kafka", url="k", topic="t")
-    result = await sink.send({})
+    with patched_auth_allow():
+        result = await sink.send({})
     assert result.ok is False
     assert "broker down" in result.details["error"]
 
@@ -105,7 +112,9 @@ async def test_send_handles_publish_exception(monkeypatch: pytest.MonkeyPatch) -
 async def test_health_true(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_broker = _install_fake_broker(monkeypatch, "rabbit")
     sink = MqSink(sink_id="q7", broker="rabbit", url="amqp://x", topic="t")
-    h = await sink.health(); assert h.status == "ok"
+    with patched_auth_allow():
+        h = await sink.health()
+    assert h.status == "ok"
     fake_broker.connect.assert_awaited_once()
     fake_broker.close.assert_awaited_once()
 
@@ -115,8 +124,10 @@ async def test_health_false_when_broker_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setitem(sys.modules, "faststream.kafka", None)  # type: ignore[arg-type]
-    sink = MqSink(sink_id="q8", broker="kafka", url="k", topic="t")
-    h = await sink.health(); assert h.status == "failed"
+    with patched_auth_allow():
+        sink = MqSink(sink_id="q8", broker="kafka", url="k", topic="t")
+        h = await sink.health()
+    assert h.status == "failed"
 
 
 @pytest.mark.asyncio
@@ -124,4 +135,6 @@ async def test_health_false_on_exception(monkeypatch: pytest.MonkeyPatch) -> Non
     fake_broker = _install_fake_broker(monkeypatch, "redis")
     fake_broker.connect = AsyncMock(side_effect=OSError("fail"))
     sink = MqSink(sink_id="q9", broker="redis", url="r", topic="t")
-    h = await sink.health(); assert h.status == "failed"
+    with patched_auth_allow():
+        h = await sink.health()
+    assert h.status == "failed"
