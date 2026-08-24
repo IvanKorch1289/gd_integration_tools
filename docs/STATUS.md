@@ -510,5 +510,24 @@ encode the previous, more permissive contract.
 
 **Production readiness**: ~96% (stable).
 
+## S44 W20-W22 — additional AI hardening drift fixes
+
+3 more atomic commits, addressing remaining agent-audit findings:
+
+| Commit | File | Fix |
+|---|---|---|
+| `fede4afe` | test_agent_sandbox.py | `monkeypatch.setattr(features.ai_in_process_sandbox_disabled, False)` — override new S209 default (cycle 33 AI2). 2 tests pass. |
+| `d75a11e6` | test_aigateway_budget_integration.py | Update `EnforcedInvokeMixin` import path (`src.backend.core.ai.gateway_orchestrator_mixin` instead of `src.backend.core.ai.gateway.orchestrator` — cycle 121 cleanup). 1 test passes. |
+| `b81d6327` | test_gateway_pipeline.py | Add `tools=ToolsSpec(allow_all_tools=True)` to preserve pre-S209 fallback test intent. 1 test passes. |
+
+**Test delta**: +4 tests fixed (cumulative Sprint 44: +167 tests).
+
+**Remaining failures** (all pre-existing, out of scope):
+- `test_gateway.py::test_input_sanitizers_handles_runtime_error_gracefully` + `_unexpected_exception_gracefully`
+  (Group T per agent audit: production code hardened to fail-closed; tests
+  encode pre-hardening graceful-handling contract)
+- `test_soap_sink.py::test_send_handles_invoke_exception` + `test_grpc_sink.py::test_send_handles_channel_exception`
+  (cycle 22 P1-6 re-raise design — runtime errors propagate instead of being caught)
+
 **Production readiness**: ~96% (stable, S44 W4 honest re-eval reflects
 real coverage 13% per ADR-0257).
