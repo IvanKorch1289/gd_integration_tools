@@ -43,13 +43,13 @@ dependencies = [
     "joserfc>=1.6.8,<2.0.0",  # Round 65: 1.6.8 fixes 3 PYSEC CVEs (2528, 2529, 2530)
     "opentelemetry-api>=1.30.0,<2.0.0",
     "opentelemetry-sdk>=1.30.0,<2.0.0",
-    "opentelemetry-instrumentation-fastapi>=0.51b0,<0.52b0",
+    "opentelemetry-instrumentation-fastapi>=0.51b0,<1.0",
     "opentelemetry-exporter-otlp-proto-grpc>=1.30.0,<2.0.0",
-    "opentelemetry-instrumentation-aiokafka>=0.51b0,<0.52b0",
-    "opentelemetry-instrumentation-aio-pika>=0.51b0,<0.52b0",
-    "opentelemetry-instrumentation-pymongo>=0.51b0,<0.52b0",
-    "opentelemetry-instrumentation-grpc>=0.51b0,<0.52b0",
-    "opentelemetry-instrumentation-asyncpg>=0.51b0,<0.52b0",
+    "opentelemetry-instrumentation-aiokafka>=0.51b0,<1.0",
+    "opentelemetry-instrumentation-aio-pika>=0.51b0,<1.0",  # S44 W12b: widened <0.52b0 -> <1.0; runtime already on 0.60b1 (ADR-0256); unblocks uv lock for streamlit/patchright/mlflow
+    "opentelemetry-instrumentation-pymongo>=0.51b0,<1.0",
+    "opentelemetry-instrumentation-grpc>=0.51b0,<1.0",
+    "opentelemetry-instrumentation-asyncpg>=0.51b0,<1.0",
     "purgatory>=3.0.0,<4.0.0",
     # S57 W1: pendulum — drop-in datetime replacement with IANA tz, humanize,
     # period arithmetic. Adopting incrementally in S57+ new code; stdlib datetime
@@ -84,7 +84,7 @@ dependencies = [
     "redis>=5.0.0,<6.0.0",
     "aiomqtt>=2.0.0,<3.0.0",
     "nats-py>=2.9.0,<3.0.0",  # NATS source/sink (infrastructure/sources/nats.py)
-    "aioimaplib>=1.0.0,<2.0.0",
+    "aioimaplib>=1.0.0,<3.0.0",  # S44 W12b: widened <2.0.0 -> <3.0.0 to allow aioimaplib 2.0.x (dependabot #121)
     "pyyaml>=6.0.2,<7.0.0",
     "grpc-interceptor>=0.15.4,<1.0.0",
     "httpx[http2]>=0.28.0,<1.0.0",
@@ -292,7 +292,7 @@ http3 = [
 dsl-extras = [
     "jsonpath-ng>=1.6.0,<2.0.0",
     "pint>=0.24.0,<1.0.0",
-    "icalendar>=5.0.0,<7.0.0",
+    "icalendar>=5.0.0,<8.0.0",  # S44 W12b: widened <7.0.0 -> <8.0.0 to allow icalendar 7.2.x (dependabot #126)
 ]
 # S169: analytics pipeline libs. Moved from [project.dependencies] to
 # optional-dependencies — install with `pip install -e ".[analytics]"`.
@@ -422,7 +422,7 @@ testkit = [
 docs = [
     "mkdocs>=1.6.0,<2.0.0",
     "mkdocs-material>=9.5.0,<10.0.0",
-    "mkdocstrings>=0.25.0,<1.0.0",
+    "mkdocstrings>=0.25.0,<2.0.0",  # S44 W12b: widened <1.0.0 -> <2.0.0 to allow mkdocstrings 1.0.x (dependabot #125)
     "mkdocstrings-python>=1.10.0,<2.0.0",
     "mike>=2.0.0,<3.0.0",
     "pymdown-extensions>=10.7.0,<11.0.0",

@@ -160,11 +160,11 @@ wheels = [
 
 [[package]]
 name = "aioimaplib"
-version = "1.2.0"
+version = "2.0.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b7/d1/807d2afbf35198efa76b6d97fba97dc8bc0d088092bfb90f0d864b9634d2/aioimaplib-1.2.0.tar.gz", hash = "sha256:7efb4b0c375057ff777bb6f01fa60ccfb74e62374331e778573d5d45e8e6802b", size = 362857, upload-time = "2025-01-10T10:59:57.972Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ee/da/a454c47fb8522e607425e15bf1f49ccfdb3d75f4071f40b63ebd49573495/aioimaplib-2.0.1.tar.gz", hash = "sha256:5a494c3b75f220977048f5eb2c7ba9c0570a3148aaf38bee844e37e4d7af8648", size = 35555, upload-time = "2025-01-16T10:38:23.14Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9a/c7/30fcf47c6a85df1af812fbbbec206d90c0044bda42ff81d9ca6487611998/aioimaplib-1.2.0-py3-none-any.whl", hash = "sha256:f206b73541f42a792e25a233e5b46550ba612ed4ea536aac6f9f79b462f1e2d2", size = 367993, upload-time = "2025-01-10T10:59:54.686Z" },
+    { url = "https://files.pythonhosted.org/packages/13/52/48aaa287fb3c4c995edcb602370b10d182dc5c48371df7cb3a404356733f/aioimaplib-2.0.1-py3-none-any.whl", hash = "sha256:727e00c35cf25106bd34611dddd6e2ddf91a5f1a7e72d9269f3ce62486b31e14", size = 34729, upload-time = "2025-01-16T10:38:20.427Z" },
 ]
 
 [[package]]
@@ -3135,7 +3135,7 @@ dev = [
 requires-dist = [
     { name = "aio-pika", specifier = ">=9.5.5,<10.0.0" },
     { name = "aiofiles", specifier = ">=24.1.0,<25.0.0" },
-    { name = "aioimaplib", specifier = ">=1.0.0,<2.0.0" },
+    { name = "aioimaplib", specifier = ">=1.0.0,<3.0.0" },
     { name = "aiokafka", specifier = ">=0.12.0,<1.0.0" },
     { name = "aiomqtt", specifier = ">=2.0.0,<3.0.0" },
     { name = "aiomysql", marker = "extra == 'db-drivers'", specifier = ">=0.2.0,<1.0.0" },
@@ -3194,7 +3194,7 @@ requires-dist = [
     { name = "httpx-retries", specifier = ">=0.4,<1.0" },
     { name = "huggingface-hub", marker = "extra == 'ai-model-registry'", specifier = ">=0.27,<2" },
     { name = "hvac", specifier = ">=2.3.0,<3.0.0" },
-    { name = "icalendar", marker = "extra == 'dsl-extras'", specifier = ">=5.0.0,<7.0.0" },
+    { name = "icalendar", marker = "extra == 'dsl-extras'", specifier = ">=5.0.0,<8.0.0" },
     { name = "inspect-ai", marker = "extra == 'ai'", specifier = ">=0.3" },
     { name = "instructor", marker = "extra == 'ai-2026'", specifier = ">=1.7.0,<2.0.0" },
     { name = "jmespath", specifier = ">=1.0.1,<2.0.0" },
@@ -3216,7 +3216,7 @@ requires-dist = [
     { name = "mistune", specifier = ">=3.3.0,<4.0.0" },
     { name = "mkdocs", marker = "extra == 'docs'", specifier = ">=1.6.0,<2.0.0" },
     { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.5.0,<10.0.0" },
-    { name = "mkdocstrings", marker = "extra == 'docs'", specifier = ">=0.25.0,<1.0.0" },
+    { name = "mkdocstrings", marker = "extra == 'docs'", specifier = ">=0.25.0,<2.0.0" },
     { name = "mkdocstrings-python", marker = "extra == 'docs'", specifier = ">=1.10.0,<2.0.0" },
     { name = "mlflow", marker = "extra == 'ai-model-registry'", specifier = ">=3.11.0,<4" },
     { name = "msgpack", specifier = ">=1.2.1,<2.0.0" },
@@ -3229,12 +3229,12 @@ requires-dist = [
     { name = "openpyxl", specifier = ">=3.1.5,<4.0.0" },
     { name = "opentelemetry-api", specifier = ">=1.30.0,<2.0.0" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = ">=1.30.0,<2.0.0" },
-    { name = "opentelemetry-instrumentation-aio-pika", specifier = ">=0.51b0" },
-    { name = "opentelemetry-instrumentation-aiokafka", specifier = ">=0.51b0" },
-    { name = "opentelemetry-instrumentation-asyncpg", specifier = ">=0.51b0" },
-    { name = "opentelemetry-instrumentation-fastapi", specifier = ">=0.51b0" },
-    { name = "opentelemetry-instrumentation-grpc", specifier = ">=0.51b0" },
-    { name = "opentelemetry-instrumentation-pymongo", specifier = ">=0.51b0" },
+    { name = "opentelemetry-instrumentation-aio-pika", specifier = ">=0.51b0,<1.0" },
+    { name = "opentelemetry-instrumentation-aiokafka", specifier = ">=0.51b0,<1.0" },
+    { name = "opentelemetry-instrumentation-asyncpg", specifier = ">=0.51b0,<1.0" },
+    { name = "opentelemetry-instrumentation-fastapi", specifier = ">=0.51b0,<1.0" },
+    { name = "opentelemetry-instrumentation-grpc", specifier = ">=0.51b0,<1.0" },
+    { name = "opentelemetry-instrumentation-pymongo", specifier = ">=0.51b0,<1.0" },
     { name = "opentelemetry-sdk", specifier = ">=1.30.0,<2.0.0" },
     { name = "oracledb", marker = "extra == 'db-drivers'", specifier = ">=2.5.0,<3.0.0" },
     { name = "orjson", specifier = ">=3.11.8,<4.0.0" },
@@ -3250,8 +3250,8 @@ requires-dist = [
     { name = "playwright", marker = "extra == 'rpa'", specifier = ">=1.48.0" },
     { name = "plotly", marker = "extra == 'frontend'", specifier = ">=5.18.0,<6.0.0" },
     { name = "polars", marker = "extra == 'analytics'", specifier = ">=1.20.0,<2.0.0" },
-    { name = "presidio-analyzer", specifier = ">=2.2.362" },
-    { name = "presidio-anonymizer", specifier = ">=2.2.0" },
+    { name = "presidio-analyzer", specifier = ">=2.2.362,<3.0.0" },
+    { name = "presidio-anonymizer", specifier = ">=2.2.0,<3.0.0" },
     { name = "presidio-ru-recognizers", marker = "extra == 'ai'", specifier = ">=0.1.0,<1.0.0" },
     { name = "protobuf", specifier = ">=5.29.3,<6.0.0" },
     { name = "psycopg", extras = ["binary"], marker = "extra == 'sources-cdc'", specifier = ">=3.1,<4.0.0" },
@@ -3286,7 +3286,7 @@ requires-dist = [
     { name = "rich", marker = "extra == 'security'", specifier = ">=14.0.0,<15.0.0" },
     { name = "sentence-transformers", marker = "extra == 'rag'", specifier = ">=3.0.0,<6.0.0" },
     { name = "sentry-sdk", extras = ["fastapi"], specifier = ">=2.20.0,<3.0.0" },
-    { name = "spacy", marker = "extra == 'ai-safety'", specifier = ">=3.8.13" },
+    { name = "spacy", marker = "extra == 'ai-safety'", specifier = ">=3.8.13,<4.0.0" },
     { name = "sqladmin", specifier = ">=0.25.1,<1.0.0" },
     { name = "sqlalchemy", specifier = ">=2.0.41,<3.0.0" },
     { name = "sqlalchemy-continuum", specifier = ">=1.5.2,<2.0.0" },
@@ -3294,7 +3294,7 @@ requires-dist = [
     { name = "standardwebhooks", marker = "extra == 'dsl-extras-2'", specifier = ">=1.0.0,<2.0.0" },
     { name = "starlette", specifier = ">=1.3.1,<2.0.0" },
     { name = "starlette-exporter", specifier = ">=0.23.0,<1.0.0" },
-    { name = "strawberry-graphql", extras = ["fastapi"], specifier = ">=0.262.0" },
+    { name = "strawberry-graphql", extras = ["fastapi"], specifier = ">=0.262.0,<1.0.0" },
     { name = "streamlit", specifier = ">=1.58.0,<2.0.0" },
     { name = "streamlit", marker = "extra == 'frontend'", specifier = ">=1.30.0,<2.0.0" },
     { name = "streamlit-autorefresh", marker = "extra == 'frontend'", specifier = ">=1.0.0,<2.0.0" },
@@ -4064,15 +4064,15 @@ wheels = [
 
 [[package]]
 name = "icalendar"
-version = "6.3.2"
+version = "7.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "python-dateutil", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "tzdata", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5d/70/458092b3e7c15783423fe64d07e63ea3311a597e723be6a1060513e3db93/icalendar-6.3.2.tar.gz", hash = "sha256:e0c10ecbfcebe958d33af7d491f6e6b7580d11d475f2eeb29532d0424f9110a1", size = 178422, upload-time = "2025-11-05T12:49:32.286Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/47/2b/1bbf82d316df18c3331d9a06228819c8a5814ceda545a3e9980e52ffce1b/icalendar-7.3.0.tar.gz", hash = "sha256:7bd001c8e648205e1bde5c6a5b77096598e8d0893dcf57755c6c597635620132", size = 525811, upload-time = "2026-08-19T15:10:21.05Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/06/ee/2ff96bb5bd88fe03ab90aedf5180f96dc0f3ae4648ca264b473055bcaaff/icalendar-6.3.2-py3-none-any.whl", hash = "sha256:d400e9c9bb8c025e5a3c77c236941bb690494be52528a0b43cc7e8b7c9505064", size = 242403, upload-time = "2025-11-05T12:49:30.691Z" },
+    { url = "https://files.pythonhosted.org/packages/bb/82/50bff78b0bb0c7d7c0cb39e0ee189b92f611fff6bd7cf57f25e92d5a7551/icalendar-7.3.0-py3-none-any.whl", hash = "sha256:8355acfe17be81b368f0b1e3740817cea9b56ea889931f8f1a87c62f2d28db0b", size = 542540, upload-time = "2026-08-19T15:10:19.525Z" },
 ]
 
 [[package]]
@@ -5472,7 +5472,7 @@ wheels = [
 
 [[package]]
 name = "mkdocstrings"
-version = "0.30.1"
+version = "1.0.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jinja2", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
@@ -5482,9 +5482,9 @@ dependencies = [
     { name = "mkdocs-autorefs", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "pymdown-extensions", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c5/33/2fa3243439f794e685d3e694590d28469a9b8ea733af4b48c250a3ffc9a0/mkdocstrings-0.30.1.tar.gz", hash = "sha256:84a007aae9b707fb0aebfc9da23db4b26fc9ab562eb56e335e9ec480cb19744f", size = 106350, upload-time = "2025-09-19T10:49:26.446Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/53/71/f85bdf13355073ae15a7375f09879375a830553552e58c1c4b7e0bbc5c8b/mkdocstrings-1.0.6.tar.gz", hash = "sha256:a0b8c2bdd29a6416c80d717aa369bbf7831946bd9f23c2a66db1b1dbe7693dbd", size = 100649, upload-time = "2026-07-11T19:38:05.732Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7b/2c/f0dc4e1ee7f618f5bff7e05898d20bf8b6e7fa612038f768bfa295f136a4/mkdocstrings-0.30.1-py3-none-any.whl", hash = "sha256:41bd71f284ca4d44a668816193e4025c950b002252081e387433656ae9a70a82", size = 36704, upload-time = "2025-09-19T10:49:24.805Z" },
+    { url = "https://files.pythonhosted.org/packages/5d/5b/4c1902e8bdd5c4db63284e9d101dece4038d4025d6d88850ffe0a1578980/mkdocstrings-1.0.6-py3-none-any.whl", hash = "sha256:2703708697487d1b6d6d7b412e176fa436edf120c1bf81dc9e126b12d00893c7", size = 35787, upload-time = "2026-07-11T19:38:04.417Z" },
 ]
 
 [[package]]
@@ -5885,7 +5885,7 @@ wheels = [
 
 [[package]]
 name = "nbformat"
-version = "5.10.4"
+version = "5.11.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "fastjsonschema", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
@@ -5893,9 +5893,9 @@ dependencies = [
     { name = "jupyter-core", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "traitlets", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6d/fd/91545e604bc3dad7dca9ed03284086039b294c6b3d75c0d2fa45f9e9caf3/nbformat-5.10.4.tar.gz", hash = "sha256:322168b14f937a5d11362988ecac2a4952d3d8e3a2cbeb2319584631226d5b3a", size = 142749, upload-time = "2024-04-04T11:20:37.371Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/31/72/b3446efab8756e7df4b8ec587f8e611cb5a7249e4323db480802f1d3be04/nbformat-5.11.1.tar.gz", hash = "sha256:32d4521c68c6e7d5b29c76defaeed9f42ea733142b9b19f88277ce10390b9c4d", size = 147775, upload-time = "2026-08-17T08:10:51.942Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a9/82/0340caa499416c78e5d8f5f05947ae4bc3cba53c9f038ab6e9ed964e22f1/nbformat-5.10.4-py3-none-any.whl", hash = "sha256:3b48d6c8fbca4b299bf3982ea7db1af21580e4fec269ad087b9e81588891200b", size = 78454, upload-time = "2024-04-04T11:20:34.895Z" },
+    { url = "https://files.pythonhosted.org/packages/1a/69/ee613f74085ca7103f79cd08d579c4f3177d1d26e5d3d9528d2d6536a707/nbformat-5.11.1-py3-none-any.whl", hash = "sha256:cc6698fa75f4fab8755ead786317815f13a6fee3b53311c0abb1a8b51d52f7ec", size = 79849, upload-time = "2026-08-17T08:10:50.18Z" },
 ]
 
 [[package]]
@@ -6719,18 +6719,18 @@ wheels = [
 
 [[package]]
 name = "patchright"
-version = "1.61.2"
+version = "1.62.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "greenlet", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "pyee", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/79/42/a76e2ea17dd4feccbf5ef6df017fb2e67f4b72a6f559f59d9aad1197f83a/patchright-1.61.2-py3-none-macosx_10_13_x86_64.whl", hash = "sha256:43ae10cd2a3e46b222179a120ab39ba88f801f3a42aa41cab45fac9928f2103d", size = 43727572, upload-time = "2026-07-05T21:17:52.382Z" },
-    { url = "https://files.pythonhosted.org/packages/57/e7/1ff89853c9aeaf26cd20559f401375ec71a40e4041cf7ace03d41a741f06/patchright-1.61.2-py3-none-macosx_11_0_arm64.whl", hash = "sha256:a3da24d7890631255c7bef467b94ffe7f7bfa36f96fc72c10d5787d3cb396873", size = 42512921, upload-time = "2026-07-05T21:17:55.657Z" },
-    { url = "https://files.pythonhosted.org/packages/e4/d0/d730536a7fc43c3aaf2781518595ca71ffa1fc2f24e580c0d0cf04e00eca/patchright-1.61.2-py3-none-macosx_11_0_universal2.whl", hash = "sha256:edef852aa7d28791fa2d3f7ce135edfea2ce07a2bc5e0a74fb2dfe269af62223", size = 43727573, upload-time = "2026-07-05T21:17:59.121Z" },
-    { url = "https://files.pythonhosted.org/packages/a2/b5/c76dcda275cb0d9651321e343f3268609ae24cef196bff56751754ffba16/patchright-1.61.2-py3-none-manylinux1_x86_64.whl", hash = "sha256:545bdf2c0bb5f9ad78ab315e91c8c2990cc6a702e7f18650b71fe1071049b5c1", size = 47729338, upload-time = "2026-07-05T21:18:02.608Z" },
-    { url = "https://files.pythonhosted.org/packages/19/ef/5de6feaedf47a6ba8efb9e8c4f8a42bad29cc59c35bbd088b1729a36b271/patchright-1.61.2-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1824da30cf6560749bc1bb4a7f002fec325d5b709090dd7c8c1b643899331cee", size = 47426969, upload-time = "2026-07-05T21:18:06.88Z" },
+    { url = "https://files.pythonhosted.org/packages/29/8b/459c7bdafd2e9e6e87db9f2fad69c98ec46a26e5ecc5f7e86ea597478fde/patchright-1.62.1-py3-none-macosx_10_13_x86_64.whl", hash = "sha256:b57fe7074bcd501f269bc80c57980b6895a26d3a765a1852df682f68d6ff4068", size = 43724271, upload-time = "2026-08-17T19:09:29.217Z" },
+    { url = "https://files.pythonhosted.org/packages/50/38/57c1bb35858238295c6c78cd7460ea16dd9f9215e57860a1cc37980cca5d/patchright-1.62.1-py3-none-macosx_11_0_arm64.whl", hash = "sha256:c826cadbca1298cdcf6641a51c5e9d74fe5a11139f3569a2bed37471ac36cbbf", size = 42503020, upload-time = "2026-08-17T19:09:33.453Z" },
+    { url = "https://files.pythonhosted.org/packages/b6/e4/82cd1d55045ca56d105dcfa6a44aed84974d84978396cb4c5f2b9cd5ff6c/patchright-1.62.1-py3-none-macosx_11_0_universal2.whl", hash = "sha256:699b5c7d8c671ca6d807817fc3debdecfe518dab504e595dc203e65723a0899f", size = 43724271, upload-time = "2026-08-17T19:09:37.439Z" },
+    { url = "https://files.pythonhosted.org/packages/f9/94/7b367bd063fe665461758402b7bb1560ce686d116536ca0e5d8445e9bea4/patchright-1.62.1-py3-none-manylinux1_x86_64.whl", hash = "sha256:ae908d0a69885f344bc36404a02bbfd772fc64c281f9bb77957dbc51be395592", size = 47741107, upload-time = "2026-08-17T19:09:41.769Z" },
+    { url = "https://files.pythonhosted.org/packages/9d/b9/d27d47400b9b77bf8600fd71f68049d4f1f838e297595f1af0111d22f9e0/patchright-1.62.1-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8f1e63d5099f586ddd4b6af56d624c72b0b561c6cf85e8a473d8d7bb962b0f54", size = 47433602, upload-time = "2026-08-17T19:09:46.089Z" },
 ]
 
 [[package]]
@@ -9006,21 +9006,22 @@ wheels = [
 
 [[package]]
 name = "sentence-transformers"
-version = "5.6.1"
+version = "5.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "huggingface-hub", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "numpy", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "scikit-learn", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "scipy", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "tokenizers", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "torch", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "tqdm", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "transformers", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "typing-extensions", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/75/80/573ab31b77bdfa8f18051188adff3405e928386287cd6f756eff5777dd82/sentence_transformers-5.6.1.tar.gz", hash = "sha256:16af5d682ef66672b076d58599a23905800e850ec2bfb1865938306bf684ad72", size = 452185, upload-time = "2026-07-23T14:40:41.589Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9d/59/867381b1414a975da6c9953f48a07c05cb0629305e2d37c9bcc9764367b2/sentence_transformers-5.7.0.tar.gz", hash = "sha256:fd8c8fc35e6323631dff9f3760969ebf7980dc3cfda0ab1354bc6a774cc0e5d8", size = 466382, upload-time = "2026-08-06T12:12:33.371Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c1/ad/8f73f512dc7ad4031d2b64cbb67f70bdfb355756afbe0db610a5146415c1/sentence_transformers-5.6.1-py3-none-any.whl", hash = "sha256:cefbb17b6325a982a4732c8c49fb013375392687049d1de3d435c4b04060680b", size = 596677, upload-time = "2026-07-23T14:40:40.312Z" },
+    { url = "https://files.pythonhosted.org/packages/e8/c8/f63d99e354532f5b83e735dd1e001bda92495fbfde934f65d924abf2b071/sentence_transformers-5.7.0-py3-none-any.whl", hash = "sha256:b78141da3d8137e70d965866e2ca43190b9266f3d4d8752e250ded75e7136730", size = 611333, upload-time = "2026-08-06T12:12:31.881Z" },
 ]
 
 [[package]]
@@ -9595,7 +9596,7 @@ fastapi = [
 
 [[package]]
 name = "streamlit"
-version = "1.61.0"
+version = "1.62.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "altair", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
@@ -9614,16 +9615,15 @@ dependencies = [
     { name = "python-multipart", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "requests", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "starlette", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
-    { name = "tenacity", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "toml", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "typing-extensions", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "uvicorn", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "watchdog", marker = "sys_platform == 'linux'" },
     { name = "websockets", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/aa/9d/93b4c6c0269e3ee7d71594562fefe94aad53864ca3c1479254285ec1c972/streamlit-1.61.0.tar.gz", hash = "sha256:1329482ff226db6ed85154584c32ad73a5f8019ade3e055536045c4ebe7e1b37", size = 9907089, upload-time = "2026-08-04T20:41:39.756Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/50/94/928c44a8b7bcd602fc4a16025e9868bcdb88b92bcdb2e53dec188d034fc4/streamlit-1.62.0.tar.gz", hash = "sha256:9d2571da6e6799cbaf0f59548f5773926260a87a69807cf3e2f0f68f9f5e4d45", size = 9883501, upload-time = "2026-08-19T18:31:22.864Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0d/ce/bd7760b041053a39beb77297b15606790182ccb6e0889e5ed6febfac9b8b/streamlit-1.61.0-py3-none-any.whl", hash = "sha256:4d468f771be18340c05421295a03ee32b9c61383fb65d27f640df69d56e512ed", size = 10512864, upload-time = "2026-08-04T20:41:37.366Z" },
+    { url = "https://files.pythonhosted.org/packages/2b/57/78864764c53885db8a378cc1c47329b4b6e095f7ebd89cd1ffcca4027c89/streamlit-1.62.0-py3-none-any.whl", hash = "sha256:294dbcfe0d6531b0d8593a095e6872dcc6ec4b731723fbb318a0f8102e69162e", size = 10490146, upload-time = "2026-08-19T18:31:19.957Z" },
 ]
 
 [[package]]
