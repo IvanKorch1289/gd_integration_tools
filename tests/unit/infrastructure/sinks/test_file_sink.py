@@ -9,6 +9,7 @@ import pytest
 
 from src.backend.core.interfaces.sink import SinkKind
 from src.backend.infrastructure.sinks.file_sink import FileSink
+from tests.unit._auth_mocks import patched_auth_allow
 
 
 @pytest.fixture
@@ -25,7 +26,8 @@ async def test_kind_is_file() -> None:
 @pytest.mark.asyncio
 async def test_append_dict_payload(tmp_sink_file: Path) -> None:
     sink = FileSink(sink_id="f1", path=str(tmp_sink_file), mode="append")
-    result = await sink.send({"id": 1})
+    with patched_auth_allow():
+        result = await sink.send({"id": 1})
     assert result.ok is True
     assert result.details["mode"] == "append"
     text = tmp_sink_file.read_text(encoding="utf-8")
@@ -35,7 +37,8 @@ async def test_append_dict_payload(tmp_sink_file: Path) -> None:
 @pytest.mark.asyncio
 async def test_append_str_payload_adds_newline(tmp_sink_file: Path) -> None:
     sink = FileSink(sink_id="f2", path=str(tmp_sink_file), mode="append")
-    result = await sink.send("hello")
+    with patched_auth_allow():
+        result = await sink.send("hello")
     assert result.ok is True
     text = tmp_sink_file.read_text(encoding="utf-8")
     assert text.endswith("\n")
@@ -45,19 +48,21 @@ async def test_append_str_payload_adds_newline(tmp_sink_file: Path) -> None:
 @pytest.mark.asyncio
 async def test_write_mode_atomic_replace(tmp_sink_file: Path) -> None:
     sink = FileSink(sink_id="f3", path=str(tmp_sink_file), mode="write")
-    result = await sink.send("first")
-    assert result.ok is True
-    assert tmp_sink_file.read_text(encoding="utf-8") == "first"
-    result2 = await sink.send("second")
-    assert result2.ok is True
-    assert tmp_sink_file.read_text(encoding="utf-8") == "second"
+    with patched_auth_allow():
+        result = await sink.send("first")
+        assert result.ok is True
+        assert tmp_sink_file.read_text(encoding="utf-8") == "first"
+        result2 = await sink.send("second")
+        assert result2.ok is True
+        assert tmp_sink_file.read_text(encoding="utf-8") == "second"
 
 
 @pytest.mark.asyncio
 async def test_ensure_dir_creates_parent(tmp_path: Path) -> None:
     target = tmp_path / "sub" / "dir" / "out.txt"
     sink = FileSink(sink_id="f4", path=str(target), ensure_dir=True)
-    result = await sink.send("x")
+    with patched_auth_allow():
+        result = await sink.send("x")
     assert result.ok is True
     assert target.exists()
 
@@ -66,7 +71,8 @@ async def test_ensure_dir_creates_parent(tmp_path: Path) -> None:
 async def test_ensure_dir_false_does_not_create_parent(tmp_path: Path) -> None:
     target = tmp_path / "missing" / "out.txt"
     sink = FileSink(sink_id="f5", path=str(target), ensure_dir=False)
-    result = await sink.send("x")
+    with patched_auth_allow():
+        result = await sink.send("x")
     assert result.ok is False
     assert (
         "No such file" in result.details["error"]
@@ -85,7 +91,8 @@ async def test_send_handles_write_exception(
         raise PermissionError("denied")
 
     monkeypatch.setattr(sink, "_write_sync", _boom)
-    result = await sink.send("x")
+    with patched_auth_allow():
+        result = await sink.send("x")
     assert result.ok is False
     assert "denied" in result.details["error"]
 
@@ -93,7 +100,9 @@ async def test_send_handles_write_exception(
 @pytest.mark.asyncio
 async def test_health_true_when_writable(tmp_path: Path) -> None:
     sink = FileSink(sink_id="f7", path=str(tmp_path / "out.txt"), ensure_dir=True)
-    h = await sink.health(); assert h.status == "ok"
+    with patched_auth_allow():
+        h = await sink.health()
+    assert h.status == "ok"
 
 
 @pytest.mark.asyncio
@@ -102,4 +111,6 @@ async def test_health_false_when_not_writable(
 ) -> None:
     sink = FileSink(sink_id="f8", path=str(tmp_path / "out.txt"), ensure_dir=False)
     monkeypatch.setattr(Path, "is_dir", lambda self: False)
-    h = await sink.health(); assert h.status == "failed"
+    with patched_auth_allow():
+        h = await sink.health()
+    assert h.status == "failed"
