@@ -571,6 +571,43 @@ behavior (cycle 22 P1-6 re-raise design).
 
 **Production readiness**: ~96% (стабильно).
 
+## S44 W30 — defusedxml ElementTree production bug fix (1 test + 1 prod file)
+
+**Issue** (discovered via Rule #1 dsl regression scan):
+- `tests/unit/dsl/engine/processors/eip/test_s56_w1_eip_gap_closure.py::TestMarshalUnmarshal::test_xml_roundtrip` FAILED
+- Root cause: S56 audit (P0-S6) replaced stdlib ``xml.etree.ElementTree`` with
+  ``defusedxml.ElementTree`` for XXE protection. But defusedxml does NOT
+  expose ``Element/SubElement/indent/tostring`` (only safe-parsing helpers
+  like ``fromstring/parse/iterparse``). The marshal() path used building
+  APIs that don't exist in defusedxml → AttributeError at runtime.
+
+**Fix** (`src/backend/dsl/engine/processors/eip/marshal/formats.py`):
+- Use defusedxml for **parsing** (``unmarshal``) — where XXE risk lives
+- Use stdlib ``xml.etree.ElementTree`` for **building** (``marshal``) — no XXE
+  risk when building XML from a dict, only when parsing untrusted input
+
+```python
+import xml.etree.ElementTree as _ET_Builder  # for Element, SubElement, etc.
+from defusedxml import ElementTree as ET  # for fromstring (safe parsing)
+
+# In marshal:
+root = _ET_Builder.Element(self._root_tag)  # stdlib for building
+ET.tostring(_ET_Builder.tostring(...))
+
+# In unmarshal:
+root = ET.fromstring(data)  # defusedxml for safe parsing
+```
+
+**Verification**:
+- pytest `test_xml_roundtrip`: 1/1 PASS (was 1/1 FAIL)
+- pytest `tests/unit/dsl/engine/processors/eip/`: 342/342 PASS (was 341/342)
+- ruff: 0 errors (1 auto-fixed)
+- bandit: 0 high
+
+**Cumulative Sprint 44** (final): +183 tests, 0 regressions, 1 deprecated skip.
+
+**Production readiness**: ~96% (стабильно). **0 real test failures** in tests/unit/.
+
 ## S44 W29 — coverage re-measurement (verification, no code change)
 
 **Slice**: re-run coverage measurement to verify S44 W4 honest re-eval claim
