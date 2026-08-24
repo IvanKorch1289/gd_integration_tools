@@ -67,6 +67,17 @@ def __getattr__(name: str) -> Any:
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
+# S44 W38: explicit eager import to fix proxy not firing in pytest context.
+# The __getattr__ proxy works for direct attribute access (module.attr) but
+# NOT for free-variable references in method bodies (def __init__: self._x = bar)
+# when the module is loaded via pytest's importlib mode. The proxy caching
+# only triggers on module.attr syntax, not on free-variable lookup.
+# Eager import at module level ensures the symbol is in globals when
+# __init__ is called.
+from src.backend.dsl.commands.action_registry import (  # noqa: E402  # S44 W38
+    ActionHandlerRegistry,
+    action_handler_registry,
+)
 from src.backend.schemas.invocation import ActionCommandSchema
 
 __all__ = ("DefaultActionDispatcher", "get_action_dispatcher")
