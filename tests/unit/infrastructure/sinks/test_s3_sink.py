@@ -12,6 +12,7 @@ import pytest
 
 from src.backend.core.interfaces.sink import SinkKind
 from src.backend.infrastructure.sinks.s3_sink import S3Sink, _coerce_payload
+from tests.unit._auth_mocks import patched_auth_allow
 
 
 @pytest.fixture
@@ -36,7 +37,8 @@ async def test_kind_is_s3() -> None:
 @pytest.mark.asyncio
 async def test_send_bytes_payload(fake_storage_client: MagicMock) -> None:
     sink = S3Sink(sink_id="s1", bucket="b", key="obj.bin")
-    result = await sink.send(b"\x00\x01")
+    with patched_auth_allow():
+        result = await sink.send(b"\x00\x01")
     assert result.ok is True
     assert result.external_id == "obj.bin"
     assert result.details["bytes"] == 2
@@ -48,7 +50,8 @@ async def test_send_bytes_payload(fake_storage_client: MagicMock) -> None:
 @pytest.mark.asyncio
 async def test_send_str_payload(fake_storage_client: MagicMock) -> None:
     sink = S3Sink(sink_id="s2", bucket="b", key="obj.txt", content_type="text/plain")
-    result = await sink.send("hello")
+    with patched_auth_allow():
+        result = await sink.send("hello")
     assert result.ok is True
     assert result.details["content_type"] == "text/plain"
     fake_storage_client.upload_file.assert_awaited_once()
@@ -66,7 +69,8 @@ async def test_send_dict_payload(
     sink = S3Sink(
         sink_id="s3", bucket="b", key="obj.json", content_type="application/json",
     )
-    result = await sink.send({"a": 1})
+    with patched_auth_allow():
+        result = await sink.send({"a": 1})
     assert result.ok is True
     fake_storage_client.upload_file.assert_awaited_once()
 
@@ -74,7 +78,8 @@ async def test_send_dict_payload(
 @pytest.mark.asyncio
 async def test_send_other_payload_coerces(fake_storage_client: MagicMock) -> None:
     sink = S3Sink(sink_id="s4", bucket="b", key="obj.txt")
-    result = await sink.send(12345)
+    with patched_auth_allow():
+        result = await sink.send(12345)
     assert result.ok is True
     fake_storage_client.upload_file.assert_awaited_once()
     args = fake_storage_client.upload_file.call_args
@@ -90,8 +95,9 @@ async def test_send_returns_false_when_import_fails(
         "src.backend.infrastructure.clients.storage.s3_pool",
         None,  # type: ignore[arg-type]
     )
-    sink = S3Sink(sink_id="s5", bucket="b", key="k")
-    result = await sink.send(b"x")
+    with patched_auth_allow():
+        sink = S3Sink(sink_id="s5", bucket="b", key="k")
+        result = await sink.send(b"x")
     assert result.ok is False
     assert "storage_client" in result.details["error"]
 
@@ -102,7 +108,8 @@ async def test_send_returns_false_on_upload_exception(
 ) -> None:
     fake_storage_client.upload_file = AsyncMock(side_effect=RuntimeError("upload fail"))
     sink = S3Sink(sink_id="s6", bucket="b", key="k")
-    result = await sink.send(b"x")
+    with patched_auth_allow():
+        result = await sink.send(b"x")
     assert result.ok is False
     assert "upload fail" in result.details["error"]
 
@@ -110,7 +117,9 @@ async def test_send_returns_false_on_upload_exception(
 @pytest.mark.asyncio
 async def test_health_true(fake_storage_client: MagicMock) -> None:
     sink = S3Sink(sink_id="s7", bucket="b", key="k")
-    h = await sink.health(); assert h.status == "ok"
+    with patched_auth_allow():
+        h = await sink.health()
+    assert h.status == "ok"
 
 
 @pytest.mark.asyncio
@@ -120,11 +129,14 @@ async def test_health_false_when_import_fails(monkeypatch: pytest.MonkeyPatch) -
         "src.backend.infrastructure.clients.storage.s3_pool",
         None,  # type: ignore[arg-type]
     )
-    sink = S3Sink(sink_id="s8", bucket="b", key="k")
-    h = await sink.health(); assert h.status == "failed"
+    with patched_auth_allow():
+        sink = S3Sink(sink_id="s8", bucket="b", key="k")
+        h = await sink.health()
+    assert h.status == "failed"
 
 
 def test_coerce_payload_bytes() -> None:
+    # NOTE: _coerce_payload does NOT trigger @require_capability — direct call.
     assert _coerce_payload(b"abc") == b"abc"
 
 
