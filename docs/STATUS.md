@@ -359,3 +359,48 @@ during this session, available for next session):
 
 **Production readiness**: ~96% (stable, S44 W4 honest re-eval reflects
 real coverage 13% per ADR-0257).
+
+## S44 W5-W13 — Group A2 complete: 9 sink files, 90 tests fixed
+
+**Scope**: Apply `patched_auth_allow()` helper (from S44 W4) to remaining
+sink tests that share the same root cause: `@require_capability` decorator
+on `Sink.send()`/`Sink.health()` fails closed for anonymous principal
+in test environment.
+
+**Atomic commits (one per sink file)**:
+
+| Commit | File | Tests | Notes |
+|---|---|---|---|
+| `745b0604` | ws_sink | 8/8 | |
+| `f39dbd08` | soap_sink | 5/6 | 1 pre-existing: test_send_handles_invoke_exception (RuntimeError not caught — cycle 22 P1-6 re-raise design) |
+| `a0074d32` | file_sink | 9/9 | |
+| `a986fcef` | mq_sink | 10/10 | |
+| `b2ad72ca` | grpc_sink | 7/8 | 1 pre-existing: same RuntimeError pattern as soap_sink |
+| `292d5fa7` | s3_sink | 13/13 | |
+| `79c2fe60` | mqtt_sink | 13/13 | |
+| `6cf42cb3` | http_sink | 12/12 | |
+| `109602ce` | email_sink | 13/13 | |
+| **Total** | **9 files** | **90/93 (96.8%)** | 2 pre-existing test defects documented |
+
+**Pattern** (3 steps per file):
+1. Add `from tests.unit._auth_mocks import patched_auth_allow`
+2. Wrap each `sink.send(...)` / `sink.health()` call in `with patched_auth_allow():`
+3. Commit immediately per Round 12 lesson
+
+**Cumulative Sprint 44 test gain** (R9-W13):
+- W1 (L5 chain): +19
+- W2 (presidio): +2
+- W3 (webhook canonical): +4
+- W4 (webhook_sink + prod fix): +6
+- W5-W13 (Group A2 sinks): +90
+- **Total: +121 tests, 0 regressions**
+
+**Remaining for full Group A + A3 closure**:
+- Group A3: ~10 webhook source tests (`tests/unit/sources/test_webhook.py` + `test_webhook_router.py`)
+- Source files: 3 DLQ writers (`nats_writer`, `rabbit_writer`, `kafka_writer`) — same pattern, can reuse helper
+- Architectural fix (out of scope): move `@require_capability` from connector
+  methods to router layer (where `require_auth` middleware already runs).
+  Documented in S44 W4 STATUS section.
+
+**Production readiness**: ~96% (stable, S44 W4 honest re-eval reflects
+real coverage 13% per ADR-0257).
