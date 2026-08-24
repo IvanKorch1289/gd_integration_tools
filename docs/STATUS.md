@@ -25,6 +25,8 @@
 | **Unit core tests** | **663/664 PASS, 3 skip, 1 pre-existing fail** | `pytest tests/unit/core/` |
 | **Sprint 43 velocity** | **+~900% vs Sprint 42** | 9 atomic commits, 0 regressions |
 | **Sprint 44 W1** | **P0 closed (L5)** | 19 tests pass, schema.py +250 LOC |
+| **Sprint 44 W2** | **otel block FALSE CLAIM retracted + aio_pika 0.60b1 installed** | 22 integration tests run |
+| **Sprint 44 W3 (live smoke)** | **12-round audit gap closed** | 411 OpenAPI paths + 131 routes + 11 GraphQL fields + 10 components |
 
 ## Sprint 43 W2 Results (3 commits, 2026-08-30)
 
@@ -108,7 +110,7 @@ Only mentioned in:
 
 | Blocker | Reason | Workaround |
 |---|---|---|
-| Live HTTP smoke | Port 8000 stale container (user 10001, unkillable) | Code review only |
+| Live HTTP smoke | Port 8000 stale container (user 10001, unkillable) | **RETRACTED (FUNCTIONAL_LIVE_2026-08-30)**: app runs in current user namespace, 131 routes + GraphQL 11 QueryType fields WORK |
 | ~~Full pytest blocked by aio_pika~~ | ~~pre-release conflict~~ | **RETRACTED (ADR-0256 W2)** — aio_pika 0.60b1 installed, integration/ RUNS |
 | Coverage | `.coverage` valid SQLite 3 but only 2 files measured (90.35% on those) | Single source: `pyproject.toml:1080 fail_under=60%` |
 | **S44 W2 verified** (2026-08-30) | `tests/integration/ai/`: 15P/2F/4S in 15.92s. `integration/` non-ai: 47P/1F/4S in 24.44s | ADR-0256 |
