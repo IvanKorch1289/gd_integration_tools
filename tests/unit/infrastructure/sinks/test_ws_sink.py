@@ -11,6 +11,7 @@ import pytest
 
 from src.backend.core.interfaces.sink import SinkKind
 from src.backend.infrastructure.sinks.ws_sink import WsSink
+from tests.unit._auth_mocks import patched_auth_allow
 
 
 @pytest.fixture
@@ -38,7 +39,8 @@ async def test_kind_is_ws() -> None:
 @pytest.mark.asyncio
 async def test_send_dict_payload(fake_websockets: types.ModuleType) -> None:
     sink = WsSink(sink_id="w1", url="ws://test")
-    result = await sink.send({"msg": "hello"})
+    with patched_auth_allow():
+        result = await sink.send({"msg": "hello"})
     assert result.ok is True
     assert result.details["bytes"] == 15
     assert result.details["url"] == "ws://test"
@@ -48,7 +50,8 @@ async def test_send_dict_payload(fake_websockets: types.ModuleType) -> None:
 @pytest.mark.asyncio
 async def test_send_str_payload(fake_websockets: types.ModuleType) -> None:
     sink = WsSink(sink_id="w2", url="ws://test")
-    result = await sink.send("hello")
+    with patched_auth_allow():
+        result = await sink.send("hello")
     assert result.ok is True
     assert result.details["bytes"] == 5
 
@@ -58,8 +61,9 @@ async def test_send_returns_false_when_websockets_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setitem(sys.modules, "websockets", None)  # type: ignore[arg-type]
-    sink = WsSink(sink_id="w3", url="ws://test")
-    result = await sink.send({})
+    with patched_auth_allow():
+        sink = WsSink(sink_id="w3", url="ws://test")
+        result = await sink.send({})
     assert result.ok is False
     assert "websockets" in result.details["error"]
 
@@ -71,7 +75,8 @@ async def test_send_handles_exception(fake_websockets: types.ModuleType) -> None
     fake_ctx.__aexit__ = AsyncMock(return_value=None)
     fake_websockets.connect = MagicMock(return_value=fake_ctx)
     sink = WsSink(sink_id="w4", url="ws://test")
-    result = await sink.send({})
+    with patched_auth_allow():
+        result = await sink.send({})
     assert result.ok is False
     assert "refused" in result.details["error"]
 
@@ -79,7 +84,9 @@ async def test_send_handles_exception(fake_websockets: types.ModuleType) -> None
 @pytest.mark.asyncio
 async def test_health_true(fake_websockets: types.ModuleType) -> None:
     sink = WsSink(sink_id="w5", url="ws://test")
-    h = await sink.health(); assert h.status == "ok"
+    with patched_auth_allow():
+        h = await sink.health()
+    assert h.status == "ok"
 
 
 @pytest.mark.asyncio
@@ -87,8 +94,10 @@ async def test_health_false_when_websockets_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setitem(sys.modules, "websockets", None)  # type: ignore[arg-type]
-    sink = WsSink(sink_id="w6", url="ws://test")
-    h = await sink.health(); assert h.status == "failed"
+    with patched_auth_allow():
+        sink = WsSink(sink_id="w6", url="ws://test")
+        h = await sink.health()
+    assert h.status == "failed"
 
 
 @pytest.mark.asyncio
@@ -98,4 +107,7 @@ async def test_health_false_on_exception(fake_websockets: types.ModuleType) -> N
     fake_ctx.__aexit__ = AsyncMock(return_value=None)
     fake_websockets.connect = MagicMock(return_value=fake_ctx)
     sink = WsSink(sink_id="w7", url="ws://test")
+    with patched_auth_allow():
+        h = await sink.health()
+    assert h.status == "failed"
     h = await sink.health(); assert h.status == "failed"
