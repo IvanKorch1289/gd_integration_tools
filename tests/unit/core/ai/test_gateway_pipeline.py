@@ -152,8 +152,19 @@ async def test_pipeline_runs_end_to_end_with_mocked_deps(
 async def test_pipeline_passes_fallbacks_from_policy(
     enforced: None, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Policy.model_router.fallback передаётся в LiteLLMGateway."""
-    from src.backend.core.ai.policy.spec import AIPolicySpec, ModelRouterSpec
+    """Policy.model_router.fallback передаётся в LiteLLMGateway.
+
+    S44 W22 (agent audit S209 follow-up): S209 deny-all default requires
+    explicit ``allow_all_tools=True`` on empty tool policies. This test
+    uses a policy without explicit tools field, so we override the
+    resolver to return one with ``allow_all_tools=True`` to preserve the
+    pre-S209 "fallbacks from policy" test intent.
+    """
+    from src.backend.core.ai.policy.spec import (
+        AIPolicySpec,
+        ModelRouterSpec,
+        ToolsSpec,
+    )
 
     policy = AIPolicySpec(
         name="credit_check",
@@ -162,6 +173,7 @@ async def test_pipeline_passes_fallbacks_from_policy(
         model_router=ModelRouterSpec(
             primary="openai/gpt-4o-mini", fallback=["anthropic/claude-sonnet-4-6"],
         ),
+        tools=ToolsSpec(allow_all_tools=True),  # S209 hardening opt-in
         required=False,
     )
 
