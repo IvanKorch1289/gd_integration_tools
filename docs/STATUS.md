@@ -8,8 +8,8 @@
 
 | Metric | Value | Verification |
 |---|---|---|
-| **Production readiness** | **~96%** (R12, +3% from god-object 5/5) | R12 discovery + R11 fact-check |
-| **P0 open** | **1** (L5 Security Chain — 3 helpers, 4-6h) | grep + tests |
+| **Production readiness** | **~98%** (S44 W1, L5 closed last P0) | R12 + ADR-0255 |
+| **P0 open** | **0** (L5 Security Chain ✅ DONE S44 W1 — commit 94960cf4) | 19/19 L5 tests pass |
 | **P1 open** | **0** (RouteBuilder Protocol was FALSE CLAIM — DONE) | R12 §1 |
 | **P2 open** | **2** (RestrictedUnpickler, dependabot) | gh pr list |
 | **Ruff errors** | **0** | `ruff check src/` |
@@ -24,6 +24,7 @@
 | **GraphQL tests** | **11 passed, 20 skipped** | R8 fallout, L5 P0 documented |
 | **Unit core tests** | **663/664 PASS, 3 skip, 1 pre-existing fail** | `pytest tests/unit/core/` |
 | **Sprint 43 velocity** | **+~900% vs Sprint 42** | 9 atomic commits, 0 regressions |
+| **Sprint 44 W1** | **P0 closed (L5)** | 19 tests pass, schema.py +250 LOC |
 
 ## Sprint 43 W2 Results (3 commits, 2026-08-30)
 
