@@ -432,5 +432,32 @@ in test environment.
 
 **Production readiness**: ~96% (stable).
 
+## S44 W17-W18 — nats_jetstream + sms_sink fixes (final Group A pieces)
+
+**Slice 1: nats_jetstream_sink** (`49fdc2aa`):
+- 12/12 tests pass (was failing with @require_capability("nats.write") denial)
+- Pattern: same `patched_auth_allow()` shared helper
+- `NATSJetStreamSink.publish/send` methods decorated with `require_capability("nats.write")`
+
+**Slice 2: sms_sink Group B fix** (`7dac1367`):
+- 11/11 tests pass (was 9/11)
+- Agent audit identified missing module-level import: `OutboundHttpClient` was
+  imported lazily INSIDE `send()` and `health()` methods
+- Fix: hoisted `from src.backend.core.net.outbound_http import OutboundHttpClient`
+  to module-level imports
+- 2 previously failing tests now pass: `test_send_uses_waf_outbound_client`,
+  `test_send_returns_error_when_waf_blocks`
+
+**Final test count across all groups (S44 W5-W18)**:
+
+| Group | Files | Tests fixed | Commits |
+|---|---|---|---|
+| Group A2 sinks (W5-W13) | 9 | 90 | 9 |
+| Group A2 sinks nats_jet (W17) | 1 | 12 | 1 |
+| Group A2 sinks sms_sink (W18) | 1 | 2 (Group B fix) | 1 |
+| Group A3 sources (W14-W15) | 2 | 14 | 2 |
+| DLQ writers (W16) | 3 | 10 | 3 |
+| **Total** | **16** | **128 tests** | **16 commits** |
+
 **Production readiness**: ~96% (stable, S44 W4 honest re-eval reflects
 real coverage 13% per ADR-0257).
