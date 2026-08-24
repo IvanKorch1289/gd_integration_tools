@@ -61,8 +61,12 @@ def test_aigateway_enforced_invoke_has_budget_methods() -> None:
 
     Cycle 60 invariant: budget enforcement methods are defined
     (we can call them from invoke() pipeline).
+
+    S44 W21 (agent audit cycle 121 cleanup follow-up): EnforcedInvokeMixin
+    was relocated from ``src.backend.core.ai.gateway.orchestrator`` to
+    ``src.backend.core.ai.gateway_orchestrator_mixin`` in commit 7ab73047.
     """
-    from src.backend.core.ai.gateway.orchestrator import EnforcedInvokeMixin
+    from src.backend.core.ai.gateway_orchestrator_mixin import EnforcedInvokeMixin
 
     # Class has the budget enforcement methods.
     assert hasattr(EnforcedInvokeMixin, "_enforce_token_budget_pre_call"), (
