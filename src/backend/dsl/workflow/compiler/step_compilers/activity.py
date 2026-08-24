@@ -316,11 +316,23 @@ async def compile_agent_invoke_step(
         correlation_id = ctx.get("_correlation_id", "n/a")
         thread_id = f"{decl.agent_id}:{correlation_id}"
 
+        # S44 W36: function-local imports to avoid circular import
+        # (same pattern as W34 governance.py, W35 sensor polling).
+        from src.backend.dsl.workflow.compiler.step_compilers import (
+            LANGGRAPH_CHECKPOINT_GET_ACTIVITY as _GET_ACT,
+        )
+        from src.backend.dsl.workflow.compiler.step_compilers import (
+            LANGGRAPH_CHECKPOINT_PUT_ACTIVITY as _PUT_ACT,
+        )
+        from src.backend.dsl.workflow.compiler.step_compilers import (
+            LANGGRAPH_CHECKPOINT_TIMEOUT_S as _TIMEOUT_S,
+        )
+
         # Best-effort: load prior state. None = saver unavailable OR first run.
         prior = await workflow.execute_activity(
-            LANGGRAPH_CHECKPOINT_GET_ACTIVITY,
+            _GET_ACT,
             thread_id,
-            start_to_close_timeout=timedelta(seconds=LANGGRAPH_CHECKPOINT_TIMEOUT_S),
+            start_to_close_timeout=timedelta(seconds=_TIMEOUT_S),
         )
         if prior is not None:
             _logger.debug(
@@ -345,9 +357,9 @@ async def compile_agent_invoke_step(
             "ts": correlation_id,
         }
         await workflow.execute_activity(
-            LANGGRAPH_CHECKPOINT_PUT_ACTIVITY,
+            _PUT_ACT,
             state_to_persist,
-            start_to_close_timeout=timedelta(seconds=LANGGRAPH_CHECKPOINT_TIMEOUT_S),
+            start_to_close_timeout=timedelta(seconds=_TIMEOUT_S),
         )
     else:
         result = await workflow.execute_activity(
