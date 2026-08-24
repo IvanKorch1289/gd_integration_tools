@@ -6,6 +6,8 @@ Phases: activity, signal_wait, sleep, pause, resume, sensor, agent_invoke.
 from __future__ import annotations
 
 # ruff: noqa: F821 — shared symbols (exceptions, _build_retry_policy) defined in __init__.py
+# S44 W35: timedelta was missing — added top-level import.
+from datetime import timedelta
 from typing import Any
 
 from src.backend.core.logging import get_logger
@@ -197,16 +199,31 @@ async def compile_sensor_step(decl: SensorDeclaration, ctx: dict[str, Any]) -> A
 
     # D-A8-10 fix (cycle 1): validation guards.
     if decl.timeout_s is None:
-        raise SensorTimeoutRequiredError(
+        # S44 W35: function-local import to avoid circular import
+        # (same pattern as W34 governance.py fix).
+        from src.backend.dsl.workflow.compiler.step_compilers import (
+            SensorTimeoutRequiredError as _SensorTimeoutRequiredError,
+        )
+        raise _SensorTimeoutRequiredError(
             f"sensor {decl.predicate!r} requires explicit timeout_s "
             f"(D-A8-10 cycle 1 — default-OFF, иначе infinite polling)."
         )
     if decl.poll_interval_s <= 0:
-        raise SensorPollIntervalError(
+        from src.backend.dsl.workflow.compiler.step_compilers import (
+            SensorPollIntervalError as _SensorPollIntervalError,
+        )
+        raise _SensorPollIntervalError(
             f"sensor {decl.predicate!r} poll_interval_s={decl.poll_interval_s} "
             f"must be > 0 (D-A8-10 cycle 1 — иначе tight loop DoS)."
         )
-    max_iterations = _SENSOR_MAX_ITERATIONS_DEFAULT
+    # S44 W35: function-local imports to avoid circular import
+    from src.backend.dsl.workflow.compiler.step_compilers import (
+        _SENSOR_MAX_ITERATIONS_DEFAULT as _MAX_ITER,
+    )
+    from src.backend.dsl.workflow.compiler.step_compilers import (
+        SensorMaxIterationsError as _SensorMaxIterationsError,
+    )
+    max_iterations = _MAX_ITER
     elapsed = 0.0
     iterations = 0
     while True:
@@ -214,7 +231,7 @@ async def compile_sensor_step(decl: SensorDeclaration, ctx: dict[str, Any]) -> A
         if iterations > max_iterations:
             # D-A8-10 fix (cycle 1): iteration cap защищает от unbounded
             # event history growth в Temporal даже при выставленном timeout.
-            raise SensorMaxIterationsError(
+            raise _SensorMaxIterationsError(
                 f"sensor {decl.predicate!r} exceeded max_iterations={max_iterations} "
                 f"(elapsed={elapsed}s, timeout_s={decl.timeout_s}s) "
                 f"(D-A8-10 cycle 1)."
