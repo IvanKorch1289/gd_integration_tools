@@ -12,6 +12,7 @@ import pytest
 
 from src.backend.core.interfaces.sink import SinkKind
 from src.backend.infrastructure.sinks.grpc_sink import GrpcSink
+from tests.unit._auth_mocks import patched_auth_allow
 
 
 @pytest.fixture
@@ -46,7 +47,8 @@ async def test_send_bytes_payload(fake_grpc: tuple[Any, MagicMock]) -> None:
     sink = GrpcSink(
         sink_id="g1", target="localhost:50051", full_method="/svc/m", secure=False,
     )
-    result = await sink.send(b"raw")
+    with patched_auth_allow():
+        result = await sink.send(b"raw")
     assert result.ok is True
     assert result.details["method"] == "/svc/m"
     assert result.details["response_bytes"] == 8
@@ -59,7 +61,8 @@ async def test_send_dict_payload_serializes(fake_grpc: tuple[Any, MagicMock]) ->
     sink = GrpcSink(
         sink_id="g2", target="localhost:50051", full_method="/svc/m", secure=True,
     )
-    result = await sink.send({"k": "v"})
+    with patched_auth_allow():
+        result = await sink.send({"k": "v"})
     assert result.ok is True
     unary = fake_channel.unary_unary.return_value
     unary.assert_awaited_once()
@@ -73,8 +76,9 @@ async def test_send_returns_false_when_grpc_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setitem(sys.modules, "grpc", None)  # type: ignore[arg-type]
-    sink = GrpcSink(sink_id="g3", target="localhost:50051", full_method="/svc/m")
-    result = await sink.send(b"x")
+    with patched_auth_allow():
+        sink = GrpcSink(sink_id="g3", target="localhost:50051", full_method="/svc/m")
+        result = await sink.send(b"x")
     assert result.ok is False
     assert "grpcio" in result.details["error"]
 
@@ -88,7 +92,8 @@ async def test_send_handles_channel_exception(fake_grpc: tuple[Any, MagicMock]) 
     sink = GrpcSink(
         sink_id="g4", target="localhost:50051", full_method="/svc/m", secure=False,
     )
-    result = await sink.send(b"x")
+    with patched_auth_allow():
+        result = await sink.send(b"x")
     assert result.ok is False
     assert "boom" in result.details["error"]
 
@@ -97,7 +102,9 @@ async def test_send_handles_channel_exception(fake_grpc: tuple[Any, MagicMock]) 
 async def test_health_true(fake_grpc: tuple[Any, MagicMock]) -> None:
     _fake_mod, fake_channel = fake_grpc
     sink = GrpcSink(sink_id="g5", target="localhost:50051", full_method="/svc/m")
-    h = await sink.health(); assert h.status == "ok"
+    with patched_auth_allow():
+        h = await sink.health()
+    assert h.status == "ok"
     fake_channel.channel_ready.assert_awaited_once()
     fake_channel.close.assert_awaited_once()
 
@@ -105,8 +112,10 @@ async def test_health_true(fake_grpc: tuple[Any, MagicMock]) -> None:
 @pytest.mark.asyncio
 async def test_health_false_when_grpc_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "grpc", None)  # type: ignore[arg-type]
-    sink = GrpcSink(sink_id="g6", target="localhost:50051", full_method="/svc/m")
-    h = await sink.health(); assert h.status == "failed"
+    with patched_auth_allow():
+        sink = GrpcSink(sink_id="g6", target="localhost:50051", full_method="/svc/m")
+        h = await sink.health()
+    assert h.status == "failed"
 
 
 @pytest.mark.asyncio
@@ -114,4 +123,6 @@ async def test_health_false_on_exception(fake_grpc: tuple[Any, MagicMock]) -> No
     _fake_mod, fake_channel = fake_grpc
     fake_channel.channel_ready = AsyncMock(side_effect=OSError("fail"))
     sink = GrpcSink(sink_id="g7", target="localhost:50051", full_method="/svc/m")
-    h = await sink.health(); assert h.status == "failed"
+    with patched_auth_allow():
+        h = await sink.health()
+    assert h.status == "failed"
