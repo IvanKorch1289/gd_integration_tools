@@ -96,7 +96,10 @@ class LiteLLMGateway:
                     ):
                         return f"{rec.tags.get('provider', 'openai')}/{rec.name}"
             return self._default_model
-        except (AttributeError, KeyError, TypeError) as model_resolve_exc:
+        except (AttributeError, KeyError, TypeError, RuntimeError) as model_resolve_exc:  # noqa: F821
+            # S44 W43: added RuntimeError (test_find_model_by_capabilities_registry_error_returns_default
+            # mocks list_models to raise RuntimeError("network") — production must fall back
+            # to default model in that case too, not propagate).
             # D-A1-04 fix (cycle 41): narrow exceptions + observability.
             # Bare `except Exception` маскировал malformed model registry
             # (corrupted metadata, missing tags). Fallback: default model.
