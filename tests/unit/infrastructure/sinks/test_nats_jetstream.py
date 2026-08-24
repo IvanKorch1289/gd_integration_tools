@@ -24,6 +24,7 @@ import pytest
 
 # Прямой импорт без triggering sinks/__init__.py
 from src.backend.core.interfaces.sink import SinkKind
+from tests.unit._auth_mocks import patched_auth_allow
 
 _sink_path = (
     _pl.Path(__file__).parent.parent.parent.parent.parent
@@ -95,7 +96,8 @@ async def test_sink_publishes_to_subject(monkeypatch: pytest.MonkeyPatch) -> Non
         default_subject="orders.created",
     )
 
-    result = await sink.publish("orders.created", b'{"order_id": 99}')
+    with patched_auth_allow():
+        result = await sink.publish("orders.created", b'{"order_id": 99}')
 
     assert result.ok is True
     assert result.external_id == "42"
@@ -121,9 +123,10 @@ async def test_sink_passes_headers(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     headers = {"X-Tenant": "bank1", "X-Source": "payment-api"}
 
-    result = await sink.publish(
-        "payments.processed", b'{"amount": 500}', headers=headers,
-    )
+    with patched_auth_allow():
+        result = await sink.publish(
+            "payments.processed", b'{"amount": 500}', headers=headers,
+        )
 
     assert result.ok is True
     # Проверяем что headers были переданы в js.publish()
@@ -142,7 +145,8 @@ async def test_sink_returns_error_when_nats_missing(
     monkeypatch.setitem(sys.modules, "nats", None)  # type: ignore[arg-type]
 
     sink = NATSJetStreamSink(sink_id="test.nats_js")
-    result = await sink.publish("test.subject", b"data")
+    with patched_auth_allow():
+        result = await sink.publish("test.subject", b"data")
 
     assert result.ok is False
     assert "nats-py" in result.details["error"]
@@ -157,7 +161,8 @@ async def test_sink_send_serializes_dict(monkeypatch: pytest.MonkeyPatch) -> Non
         sink_id="events.nats_js", default_subject="events.dispatched",
     )
 
-    result = await sink.send({"event": "order_created", "id": 7})
+    with patched_auth_allow():
+        result = await sink.send({"event": "order_created", "id": 7})
 
     assert result.ok is True
 
@@ -182,7 +187,8 @@ async def test_sink_send_bytes_passthrough(monkeypatch: pytest.MonkeyPatch) -> N
     """send() с bytes не сериализует."""
     nc = _install_fake_nats(monkeypatch)
     sink = NATSJetStreamSink(sink_id="s3", default_subject="subj")
-    result = await sink.send(b"\x01\x02")
+    with patched_auth_allow():
+        result = await sink.send(b"\x01\x02")
     assert result.ok is True
     js = nc.jetstream()
     call_args = js.publish.call_args
@@ -194,7 +200,8 @@ async def test_sink_send_str_encodes_utf8(monkeypatch: pytest.MonkeyPatch) -> No
     """send() со строкой кодирует UTF-8."""
     nc = _install_fake_nats(monkeypatch)
     sink = NATSJetStreamSink(sink_id="s4", default_subject="subj")
-    result = await sink.send("hello")
+    with patched_auth_allow():
+        result = await sink.send("hello")
     assert result.ok is True
     js = nc.jetstream()
     call_args = js.publish.call_args
@@ -208,7 +215,8 @@ async def test_sink_publish_exception_returns_error(
     """publish() при исключении возвращает SinkResult(ok=False)."""
     _install_fake_nats(monkeypatch, raise_on_publish=RuntimeError("jetstream down"))
     sink = NATSJetStreamSink(sink_id="s5", default_subject="subj")
-    result = await sink.send({"x": 1})
+    with patched_auth_allow():
+        result = await sink.send({"x": 1})
     assert result.ok is False
     assert "jetstream down" in result.details["error"]
 
@@ -244,5 +252,6 @@ async def test_sink_drain_exception_handled(monkeypatch: pytest.MonkeyPatch) -> 
     nc.drain = AsyncMock(side_effect=RuntimeError("drain fail"))
     nc.close = AsyncMock(side_effect=RuntimeError("close fail"))
     sink = NATSJetStreamSink(sink_id="s8", default_subject="subj")
-    result = await sink.publish("subj", b"data")
+    with patched_auth_allow():
+        result = await sink.publish("subj", b"data")
     assert result.ok is True
