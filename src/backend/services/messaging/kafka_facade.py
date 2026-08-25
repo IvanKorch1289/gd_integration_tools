@@ -161,6 +161,21 @@ class KafkaFacade:
         try:
             producer = self._get_producer()
             payload = self._serialize(value)
+            # S-L7-5 (cycle 260): inject W3C TraceContext into headers for
+            # end-to-end distributed tracing through Kafka. Lazy import to
+            # avoid circular dependency with observability package.
+            if headers is None:
+                headers = {}
+            try:
+                from src.backend.infrastructure.observability.mq_trace_propagator import (
+                    inject_into_headers,
+                )
+
+                inject_into_headers(headers)
+            except ImportError:
+                # OTel not installed or propagator missing — graceful no-op.
+                # See ADR-0252 + ADR-0263.
+                pass
             await producer.send(
                 topic=target_topic, value=payload, key=key, headers=headers
             )
