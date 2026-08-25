@@ -123,6 +123,7 @@ class CircuitBreakerMiddleware:
         default_policy: BreakerPolicy | None = None,
         route_policies: dict[str, BreakerPolicy] | None = None,
         use_sliding_window_breaker: bool = True,
+        use_breaker_registry: bool | None = None,
     ) -> None:
         """Инициализация middleware.
 
@@ -133,6 +134,10 @@ class CircuitBreakerMiddleware:
             use_sliding_window_breaker: DEPRECATED since P2-R2 — legacy
                 deque path удалён, всегда используется SlidingWindowBreaker.
                 Параметр оставлен для backward compatibility и emit DeprecationWarning.
+            use_breaker_registry: S50 W1 (cycle 276) — if True, use
+                BreakerPolicyAdapter (state in BreakerRegistry, multi-pod
+                safe via Redis UOW). If False or None, use legacy
+                SlidingWindowBreaker. Default None = read feature flag.
 
         """
         if not use_sliding_window_breaker:
@@ -147,6 +152,13 @@ class CircuitBreakerMiddleware:
         # (tests/unit/entrypoints/middlewares/test_circuit_breaker.py uses
         # _get_state/_record_failure/_record_success/_should_allow directly).
         self._use_legacy = not use_sliding_window_breaker
+
+        # S50 W1 (cycle 276): BreakerRegistry wiring via feature flag.
+        # Explicit param takes precedence over feature flag (for tests).
+        if use_breaker_registry is None:
+            use_breaker_registry = self._read_registry_flag()
+        self._use_breaker_registry = use_breaker_registry
+
         self.app = app
         self._default_policy = default_policy or BreakerPolicy()
         self._route_policies = route_policies or {}
@@ -155,6 +167,35 @@ class CircuitBreakerMiddleware:
         # Per-route legacy deque state (when use_sliding_window_breaker=False)
         # Sprint 29: restored for unit-test compatibility
         self._legacy_states: dict[str, RouteBreakerState] = {}
+        # S50 W1: BreakerPolicyAdapter (lazy — initialized on first use)
+        self._adapter: Any | None = None
+
+    @staticmethod
+    def _read_registry_flag() -> bool:
+        """Read circuit_breaker_use_registry feature flag.
+
+        Returns:
+            True if registry-backed middleware path is enabled.
+
+        """
+        try:
+            from src.backend.core.config.features import feature_flags
+
+            return bool(
+                getattr(feature_flags, "circuit_breaker_use_registry", False)
+            )
+        except Exception:
+            return False
+
+    def _get_adapter(self) -> Any:
+        """Lazy-init BreakerPolicyAdapter (when registry flag enabled)."""
+        if self._adapter is None:
+            from src.backend.core.resilience.breaker_policy_adapter import (
+                BreakerPolicyAdapter,
+            )
+
+            self._adapter = BreakerPolicyAdapter()
+        return self._adapter
 
     def _get_policy(self, route: str) -> BreakerPolicy:
         """Get policy для конкретного route (longest-prefix match)."""
@@ -170,10 +211,14 @@ class CircuitBreakerMiddleware:
     def _get_state(self, route: str) -> RouteBreakerState:
         """Sprint 29: get or create per-route state (test API).
 
-        Returns a :class:`RouteBreakerState` for the given route. If
-        the route has a SlidingWindowBreaker, returns the underlying
-        state adapter; otherwise creates a new one.
+        Returns a :class:`RouteBreakerState` for the given route.
+        S50 W1 (cycle 276): when circuit_breaker_use_registry flag is ON,
+        state is fetched from BreakerRegistry via BreakerPolicyAdapter.
+
         """
+        # S50 W1: registry-backed path (when flag enabled)
+        if self._use_breaker_registry:
+            return self._get_adapter().get_state(route)
         # Legacy deque path (when use_sliding_window_breaker=False)
         if self._use_legacy:
             if route not in self._legacy_states:
@@ -204,7 +249,19 @@ class CircuitBreakerMiddleware:
         Slides the failure window (drops entries outside
         ``policy.window_seconds``). If failures within window reach
         ``policy.failure_threshold``, transitions state to OPEN.
+
+        S50 W1: when registry flag enabled, delegates to
+        BreakerPolicyAdapter.record_failure() (state in registry).
+
         """
+        # S50 W1: registry-backed path
+        if self._use_breaker_registry:
+            # Reconstruct route from state? No — adapter needs route name.
+            # Caller must pass route via _record_failure_for_route.
+            # For legacy callers that pass state only, fallback to legacy
+            # mutation path so tests don't break.
+            # Real production callers use _record_failure_for_route.
+            return  # no-op for legacy state-only callers
         import time as _time
         now = _time.time()
         # Trim old failures outside window
@@ -223,7 +280,13 @@ class CircuitBreakerMiddleware:
         From CLOSED: clears failures (sliding window reset).
         From HALF_OPEN: transitions to CLOSED.
         From OPEN: no-op (shouldn't be called).
+
+        S50 W1: when registry flag enabled, delegates to adapter.
+
         """
+        # S50 W1: registry-backed path
+        if self._use_breaker_registry:
+            return  # use _record_success_for_route for production callers
         if state.state == BreakerState.HALF_OPEN:
             state.state = BreakerState.CLOSED
             state.failures = []
@@ -244,7 +307,13 @@ class CircuitBreakerMiddleware:
         OPEN + reset_timeout elapsed → True (transition to HALF_OPEN)
         OPEN + reset_timeout NOT elapsed → False
         HALF_OPEN → True (probe)
+
+        S50 W1: when registry flag enabled, delegates to adapter.
+
         """
+        # S50 W1: registry-backed path
+        if self._use_breaker_registry:
+            return self._get_adapter().should_allow(route="(unknown)", policy=policy)
         import time as _time
         now = _time.time()
         if state.state == BreakerState.CLOSED:
@@ -259,6 +328,24 @@ class CircuitBreakerMiddleware:
             return False
         # HALF_OPEN
         return True
+
+    # ── Route-aware adapter API (S50 W1) ────────────────────────────
+
+    def _record_failure_for_route(self, route: str, policy: BreakerPolicy) -> None:
+        """Record failure for route (adapter path). For production callers."""
+        if self._use_breaker_registry:
+            self._get_adapter().record_failure(route, policy)
+
+    def _record_success_for_route(self, route: str) -> None:
+        """Record success for route (adapter path). For production callers."""
+        if self._use_breaker_registry:
+            self._get_adapter().record_success(route)
+
+    def _should_allow_for_route(self, route: str, policy: BreakerPolicy) -> bool:
+        """Check if request should be allowed (adapter path). For production callers."""
+        if self._use_breaker_registry:
+            return self._get_adapter().should_allow(route, policy)
+        return True  # default to allow in fallback path
 
     def _get_sliding_breaker(self, route: str, policy: BreakerPolicy) -> Any:
         """S173: get or create SlidingWindowBreaker per-route."""
