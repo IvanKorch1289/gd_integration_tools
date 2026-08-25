@@ -98,17 +98,41 @@ class BreakerPolicyAdapter:
             opened_at=time.time() if state_str == BreakerState.OPEN else None,
         )
 
-    def record_failure(self, route: str, policy: BreakerPolicy) -> None:
+    def record_failure(
+        self,
+        route: str,
+        policy: BreakerPolicy,
+        *,
+        exception: BaseException | None = None,
+    ) -> None:
         """Record a failure for the given route.
 
-        S52 W1: manual sliding window on top of Breaker WRAPPER.
-        When failures reach threshold, transition to OPEN via _set_state.
+        S52 W2 (cycle 286): added optional ``exception`` parameter.
+        Production callers should pass the actual exception from upstream
+        (used for future filter logic). Adapter currently uses wrapper
+        interface (manual sliding window), exception is logged for
+        observability but doesn't affect state directly.
+
+        Args:
+            route: Route identifier.
+            policy: Breaker policy (threshold, window).
+            exception: Optional actual exception from upstream call.
+                Logged for observability. In future, may be used for
+                exclusion list logic (e.g., don't count 4xx errors).
+
         """
         breaker = self._registry.get_or_create(route)
         try:
             current_state = self._get_breaker_state(breaker)
             if current_state == BreakerState.OPEN:
                 # Already open — no-op (recovery via TTL or half-open)
+                if exception is not None:
+                    _logger.debug(
+                        "breaker already OPEN, exception ignored: "
+                        "route=%s exc=%s",
+                        route,
+                        type(exception).__name__,
+                    )
                 return
 
             # Increment failure count (stored on wrapper instance)
@@ -118,9 +142,10 @@ class BreakerPolicyAdapter:
             if failures_count >= policy.failure_threshold:
                 breaker._set_state(BreakerState.OPEN)
                 _logger.info(
-                    "breaker OPENED: route=%s after %d failures",
+                    "breaker OPENED: route=%s after %d failures exc=%s",
                     route,
                     failures_count,
+                    type(exception).__name__ if exception else "synthetic",
                 )
         except AttributeError as e:
             _logger.warning(

@@ -332,11 +332,12 @@ class CircuitBreakerMiddleware:
                 await response(scope, receive, send)
                 return
             # Allow — call upstream, record outcome
+            # S52 W2: pass actual exception to adapter for observability
             try:
                 await self.app(scope, receive, send)
                 adapter.record_success(path)
-            except Exception:
-                adapter.record_failure(path, policy)
+            except Exception as exc:
+                adapter.record_failure(path, policy, exception=exc)
             return
 
         breaker = self._get_sliding_breaker(path, policy)
