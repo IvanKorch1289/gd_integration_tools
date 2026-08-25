@@ -199,33 +199,92 @@ async def login(
 async def refresh_token(
     refresh_token: str = Query(..., description="Refresh token from /auth/login"),
     device_id: str = Query(..., description="Device UUID (must match token)"),
+    authorization: str | None = Header(default=None),
 ) -> MobileTokenResponse:
     """Exchange refresh token for new access + refresh token pair.
 
     S48 W2 (cycle 271, ADR-0267): refresh token endpoint.
+    S49 W3 (cycle 275): JWT path integration.
+
     Implements OAuth2.0-compatible refresh flow.
 
-    Production requirements:
-    - Validate refresh_token signature + expiration
-    - Verify device_id matches the one bound to the refresh token
-    - Optionally rotate refresh tokens (return new refresh + revoke old)
-    - Audit log on every refresh attempt
+    Production JWT path (when mobile_jwt_enabled is ON):
+    - Authorization header MUST contain valid JWT access_token
+    - Verified via MobileJwtVerifier (same auth as other endpoints)
+    - Refresh proceeds only if JWT verification passes
 
-    Demo mode: deterministic re-issue (matches login behavior).
+    Demo mode (mobile_jwt_enabled OFF):
+    - refresh_token + device_id in query params
+    - No Authorization header required
+    - Deterministic re-issue (matches login behavior)
 
     Args:
         refresh_token: Refresh token issued by /auth/login.
         device_id: Device UUID (for binding verification).
+        authorization: Bearer JWT for production path (when enabled).
 
     Returns:
         MobileTokenResponse with new access + refresh tokens.
 
     Raises:
-        HTTPException 401 if refresh token invalid or expired.
-        HTTPException 400 if device_id doesn't match token binding.
+        HTTPException 401 if JWT invalid (production) or refresh token
+            malformed (demo).
+        HTTPException 400 if device_id doesn't match refresh token binding.
 
     """
-    # Demo mode: parse user_id from existing refresh token format
+    # S49 W3 (cycle 275): if JWT path enabled, verify Authorization header first
+    try:
+        from src.backend.core.config.features import feature_flags
+        mobile_jwt_on = bool(
+            getattr(feature_flags, "mobile_jwt_enabled", False)
+        )
+    except Exception:
+        mobile_jwt_on = False
+
+    if mobile_jwt_on:
+        # Production JWT path: verify access_token via MobileJwtVerifier
+        if not authorization or not authorization.startswith("Bearer "):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Missing Authorization header (Bearer JWT required)",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        jwt_token = authorization[7:]
+        try:
+            from src.backend.core.auth.jwt_backend import JwtBackend
+            from src.backend.core.auth.mobile_jwt import (
+                MobileJwtVerifier,
+                JwtVerificationError,
+            )
+
+            verifier = MobileJwtVerifier(
+                backend=JwtBackend(),
+                issuer_whitelist=["gd-mobile-prod", "gd-mobile-staging"],
+                audience="gd-mobile-api",
+            )
+            ctx = await verifier.verify(jwt_token)
+            # Use verified user_id from JWT (overrides refresh_token user_id)
+            user_id = ctx.user_id
+            # Verify device_id matches JWT claim
+            if ctx.device_id != device_id:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Device ID does not match JWT binding",
+                )
+            _log.info("mobile refresh via JWT: user_id=%s", user_id)
+            return MobileTokenResponse(
+                access_token=f"mobile:{user_id}:{uuid.uuid4().hex[:16]}",
+                refresh_token=f"mobile-refresh:{user_id}:{uuid.uuid4().hex[:16]}",
+                expires_in=900,
+            )
+        except JwtVerificationError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"JWT verification failed: {exc}",
+                headers={"WWW-Authenticate": "Bearer"},
+            ) from exc
+
+    # Demo mode: parse user_id from refresh token format
     if not refresh_token.startswith("mobile-refresh:"):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
