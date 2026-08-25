@@ -78,22 +78,30 @@ def test_get_state_returns_route_breaker_state() -> None:
 
 
 def test_record_failure_delegates_to_breaker() -> None:
-    """record_failure calls breaker.record_failure()."""
+    """record_failure calls breaker.context.handle_exception().
+
+    S51 W3 (cycle 283): purgatory uses ContextManager protocol —
+    breaker.context.handle_exception(exc) triggers state transitions.
+    """
     adapter, mock_breaker = _make_adapter_with_mock_breaker()
     policy = _make_policy()
 
     adapter.record_failure("test_route", policy)
 
-    mock_breaker.record_failure.assert_called_once()
+    mock_breaker.context.handle_exception.assert_called_once()
 
 
 def test_record_success_delegates_to_breaker() -> None:
-    """record_success calls breaker.record_success()."""
+    """record_success calls breaker.context.handle_end_request().
+
+    S51 W3: purgatory ContextManager protocol — handle_end_request()
+    records successful outcome.
+    """
     adapter, mock_breaker = _make_adapter_with_mock_breaker()
 
     adapter.record_success("test_route")
 
-    mock_breaker.record_success.assert_called_once()
+    mock_breaker.context.handle_end_request.assert_called_once()
 
 
 def test_should_allow_returns_true_for_closed_breaker() -> None:

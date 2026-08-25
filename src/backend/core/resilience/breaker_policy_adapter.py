@@ -109,29 +109,37 @@ class BreakerPolicyAdapter:
 
         """
         breaker = self._registry.get_or_create(route)
-        # purgatory API: breaker.record_failure() handles threshold logic
+        # S51 W3 (cycle 283): purgatory uses ContextManager protocol —
+        # breaker.context.handle_exception(exc) triggers state transitions.
         try:
-            breaker.record_failure()
+            breaker.context.handle_exception(RuntimeError("recorded failure"))
             _logger.debug(
                 "breaker failure recorded: route=%s state=%s",
                 route,
                 self._get_breaker_state(breaker),
             )
         except AttributeError:
-            # Breaker class doesn't expose record_failure() — log + skip
+            # Fallback if purgatory API changes
             _logger.warning(
-                "breaker.record_failure not available: route=%s (purgatory API mismatch)",
+                "breaker.context.handle_exception not available: route=%s "
+                "(purgatory API mismatch)",
                 route,
             )
 
     def record_success(self, route: str) -> None:
-        """Record a success for the given route."""
+        """Record a success for the given route.
+
+        S51 W3 (cycle 283): uses purgatory ContextManager protocol —
+        breaker.context.handle_end_request() records successful outcome.
+        """
         breaker = self._registry.get_or_create(route)
         try:
-            breaker.record_success()
+            # purgatory uses Context.handle_end_request() to record success
+            breaker.context.handle_end_request()
         except AttributeError:
             _logger.warning(
-                "breaker.record_success not available: route=%s", route
+                "breaker.context.handle_end_request not available: route=%s",
+                route,
             )
 
     def should_allow(self, route: str, policy: BreakerPolicy) -> bool:
