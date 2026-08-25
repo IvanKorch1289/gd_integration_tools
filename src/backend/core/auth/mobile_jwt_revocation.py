@@ -35,7 +35,6 @@ from typing import Any, Protocol
 
 from src.backend.core.logging import get_logger
 
-
 _logger = get_logger(__name__)
 
 
