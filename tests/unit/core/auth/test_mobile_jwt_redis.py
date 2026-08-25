@@ -30,7 +30,7 @@ def _make_mock_client() -> AsyncMock:
 def mock_redis(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
     client = _make_mock_client()
 
-    async def _get_client() -> AsyncMock:
+    def _get_client() -> AsyncMock:
         return client
 
     monkeypatch.setattr(
@@ -126,7 +126,7 @@ async def test_rate_limiter_redis_error_fails_open(
 ) -> None:
     """Redis errors → fail-open (allow request, log warning)."""
 
-    async def _broken_get() -> None:
+    def _broken_get() -> None:
         raise ConnectionError("Redis down")
 
     monkeypatch.setattr(
@@ -173,7 +173,7 @@ async def test_revocation_fails_open_when_redis_unavailable(
 ) -> None:
     """is_revoked() returns False when Redis unavailable (fail-open)."""
 
-    async def _unavailable() -> None:
+    def _unavailable() -> None:
         return None  # get_redis_client returns None
 
     monkeypatch.setattr(
@@ -190,7 +190,7 @@ async def test_revocation_revoke_silent_when_redis_unavailable(
 ) -> None:
     """revoke() does not raise when Redis unavailable (just logs warning)."""
 
-    async def _unavailable() -> None:
+    def _unavailable() -> None:
         return None
 
     monkeypatch.setattr(

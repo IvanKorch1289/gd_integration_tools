@@ -23,7 +23,6 @@ from typing import Any
 
 from src.backend.core.logging import get_logger
 
-
 _logger = get_logger(__name__)
 
 
@@ -46,11 +45,16 @@ class RedisRevocationStore:
         return f"{self._prefix}{jti}"
 
     async def _get_client(self) -> Any:
-        """Lazy-fetch Redis client. Returns None if Redis unavailable."""
+        """Lazy-fetch Redis client. Returns None if Redis unavailable.
+
+        ``get_redis_client()`` is a SYNC factory returning RedisClient directly
+        (no await). We keep this method async for API symmetry with other
+        stores; the await is intentionally absent.
+        """
         try:
             from src.backend.core.storage.redis import get_redis_client
 
-            return await get_redis_client()
+            return get_redis_client()
         except Exception as exc:
             _logger.warning(
                 "redis revocation store: client unavailable: %s", exc
@@ -157,7 +161,8 @@ class RedisRateLimiter:
         try:
             from src.backend.core.storage.redis import get_redis_client
 
-            return await get_redis_client()
+            # get_redis_client() is sync (returns RedisClient directly).
+            return get_redis_client()
         except Exception as exc:
             _logger.warning("redis rate limiter: client unavailable: %s", exc)
             return None
