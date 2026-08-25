@@ -185,8 +185,10 @@ branch+statement data" не подтверждается. Реальное со�
   2026-08-24, до расширения test suite).
 - 13/13 tests в `tests/unit/core/ai/test_fs_facade.py` +
   `test_fs_facade_read_as_markdown.py` проходят сейчас; полная
-  regeneration coverage требует `pytest --cov=src` (медленно,
-  вне slice).
+  regeneration coverage требует `pytest --cov=src --cov-report=xml`
+  (медленно, вне slice — рекомендуемая baseline-команда из
+  `pyproject.toml` секции `addopts` comment).
+
 
 ## 2. Что НЕ верифицировано
 
