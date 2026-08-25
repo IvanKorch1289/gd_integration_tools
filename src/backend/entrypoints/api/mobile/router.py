@@ -117,8 +117,8 @@ async def _verify_mobile_token(authorization: str | None) -> str:
             try:
                 from src.backend.core.auth.jwt_backend import JwtBackend
                 from src.backend.core.auth.mobile_jwt import (
-                    MobileJwtVerifier,
                     JwtVerificationError,
+                    MobileJwtVerifier,
                 )
 
                 # Lazy-init verifier from factory; in production this

@@ -31,10 +31,7 @@ import uuid
 from dataclasses import dataclass
 from typing import Any
 
-from src.backend.core.auth.jwt_backend import (
-    JwtBackend,
-    JwtVerificationError,
-)
+from src.backend.core.auth.jwt_backend import JwtBackend, JwtVerificationError
 
 
 @dataclass(frozen=True)
