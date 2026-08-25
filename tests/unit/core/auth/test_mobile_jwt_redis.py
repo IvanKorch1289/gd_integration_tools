@@ -13,7 +13,6 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-
 pytestmark = pytest.mark.asyncio
 
 
