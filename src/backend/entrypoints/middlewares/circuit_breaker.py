@@ -371,6 +371,11 @@ class CircuitBreakerMiddleware:
 
         Checks circuit state, rejects if OPEN, processes request,
         records outcome.
+
+        S51 W1 (cycle 280): added registry-backed dispatch path.
+        When ``_use_breaker_registry`` is True, __call__ uses the
+        adapter (BreakerRegistry) instead of SlidingWindowBreaker.
+        Legacy deque path preserved when ``_use_legacy`` is True.
         """
         if scope["type"] != "http":
             await self.app(scope, receive, send)
@@ -380,6 +385,34 @@ class CircuitBreakerMiddleware:
 
         path: str = scope.get("path", "/")
         policy = self._get_policy(path)
+
+        # S51 W1 (cycle 280): registry-backed dispatch path
+        # (when circuit_breaker_use_registry flag is ON, default behavior)
+        if self._use_breaker_registry:
+            adapter = self._get_adapter()
+            if not adapter.should_allow(path, policy):
+                _logger.info(
+                    "Circuit OPEN (registry adapter) — rejecting request for %s",
+                    path,
+                )
+                response = JSONResponse(
+                    status_code=503,
+                    content={
+                        "error": "circuit_breaker_open",
+                        "path": path,
+                        "state": "open",
+                        "source": "registry",
+                    },
+                )
+                await response(scope, receive, send)
+                return
+            # Allow — call upstream, record outcome
+            try:
+                await self.app(scope, receive, send)
+                adapter.record_success(path)
+            except Exception:
+                adapter.record_failure(path, policy)
+            return
 
         # Legacy deque path (Sprint 29: restored for unit tests)
         if self._use_legacy:
