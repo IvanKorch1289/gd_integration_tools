@@ -129,14 +129,52 @@ class _KafkaDebeziumStrategy(_CDCStrategy):
                     last_successful_offset: int | None = None
                     for msg in messages:
                         try:
-                            # Debezium ChangeEvent JSON → CDCEvent
-                            event = self._parse_debezium_event(
-                                msg.value,
-                                table=tp.topic.split(".", 1)[-1],
-                                profile=sub.profile,
-                            )
-                            if event is not None:
-                                await dispatch(sub, event)
+                            # S-L7-5 (cycle 264): extract W3C TraceContext
+                            # from message headers for end-to-end distributed
+                            # tracing (producer → broker → consumer).
+                            # Set as current OTel context if available;
+                            # graceful no-op if OTel/propagator not installed.
+                            _trace_ctx = None
+                            try:
+                                from src.backend.infrastructure.observability.mq_trace_propagator import (
+                                    extract_from_headers,
+                                )
+
+                                _trace_ctx = extract_from_headers(dict(msg.headers or {}))
+                            except ImportError:
+                                pass
+
+                            _span_cm = None
+                            if _trace_ctx is not None:
+                                try:
+                                    from opentelemetry import trace
+
+                                    _span_cm = trace.get_tracer("gd.cdc.kafka.consumer").start_as_current_span(
+                                        "cdc.kafka.dispatch", context=_trace_ctx
+                                    )
+                                except ImportError:
+                                    pass
+
+                            try:
+                                if _span_cm is not None:
+                                    with _span_cm:
+                                        event = self._parse_debezium_event(
+                                            msg.value,
+                                            table=tp.topic.split(".", 1)[-1],
+                                            profile=sub.profile,
+                                        )
+                                        if event is not None:
+                                            await dispatch(sub, event)
+                                else:
+                                    event = self._parse_debezium_event(
+                                        msg.value,
+                                        table=tp.topic.split(".", 1)[-1],
+                                        profile=sub.profile,
+                                    )
+                                    if event is not None:
+                                        await dispatch(sub, event)
+                            except Exception:
+                                raise
                             last_successful_offset = msg.offset
                         except Exception as exc:
                             logger.exception(
