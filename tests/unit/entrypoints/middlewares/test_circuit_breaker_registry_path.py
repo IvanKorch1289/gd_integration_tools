@@ -39,7 +39,6 @@ def _make_middleware(
     return CircuitBreakerMiddleware(
         app=MagicMock(),
         default_policy=BreakerPolicy(failure_threshold=3, window_seconds=60.0),
-        use_sliding_window_breaker=use_sliding_window_breaker,
         use_breaker_registry=use_breaker_registry,
     )
 

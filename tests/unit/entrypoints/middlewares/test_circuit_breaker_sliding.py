@@ -138,18 +138,21 @@ def test_get_policy_longest_prefix() -> None:
     assert m._get_policy("/other").failure_threshold == 5
 
 
-def test_use_sliding_window_breaker_false_emits_deprecation_warning() -> None:
-    """P2-R2: ``use_sliding_window_breaker=False`` emit DeprecationWarning."""
-    import warnings as _warnings
+def test_use_sliding_window_breaker_parameter_removed() -> None:
+    """S51 W2: ``use_sliding_window_breaker`` parameter removed per ADR-0271.
 
-    m = None
-    with _warnings.catch_warnings(record=True) as w:
-        _warnings.simplefilter("always")
-        m = _make_middleware()
-        CircuitBreakerMiddleware(
-            MagicMock(), use_sliding_window_breaker=False,
-        )
-    deprecation = [x for x in w if issubclass(x.category, DeprecationWarning)]
-    assert len(deprecation) >= 1
-    assert "use_sliding_window_breaker=False deprecated" in str(deprecation[0].message)
-    assert m is not None
+    Parameter was deprecated in P2-R2, fully removed in S51 W2 after
+    Phase 2c legacy deque path deprecation. CircuitBreakerMiddleware now
+    only accepts: app, default_policy, route_policies, use_breaker_registry.
+    """
+    import inspect as _inspect
+    sig = _inspect.signature(CircuitBreakerMiddleware.__init__)
+    assert "use_sliding_window_breaker" not in sig.parameters, (
+        "use_sliding_window_breaker should be removed (S13 Phase 2c complete)"
+    )
+    # Expected parameters
+    expected = {"app", "default_policy", "route_policies", "use_breaker_registry"}
+    actual = set(sig.parameters.keys())
+    assert expected.issubset(actual), (
+        f"Missing expected parameters: {expected - actual}"
+    )

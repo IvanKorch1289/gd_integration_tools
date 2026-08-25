@@ -40,7 +40,6 @@ P2-R2 fix (audit 2026-08-18): удалён legacy deque-based state-machine.
 
 from __future__ import annotations
 
-import warnings
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -122,37 +121,24 @@ class CircuitBreakerMiddleware:
         *,
         default_policy: BreakerPolicy | None = None,
         route_policies: dict[str, BreakerPolicy] | None = None,
-        use_sliding_window_breaker: bool = True,
         use_breaker_registry: bool | None = None,
     ) -> None:
         """Инициализация middleware.
+
+        S51 W2 (cycle 282): removed ``use_sliding_window_breaker`` parameter
+        and legacy deque path per ADR-0271 (S13 Phase 2c deprecation).
+        Migration is complete.
 
         Args:
             app: ASGI-приложение.
             default_policy: Политика по умолчанию для всех routes.
             route_policies: Словарь prefix → BreakerPolicy для per-route конфигурации.
-            use_sliding_window_breaker: DEPRECATED since P2-R2 — legacy
-                deque path удалён, всегда используется SlidingWindowBreaker.
-                Параметр оставлен для backward compatibility и emit DeprecationWarning.
             use_breaker_registry: S50 W1 (cycle 276) — if True, use
                 BreakerPolicyAdapter (state in BreakerRegistry, multi-pod
-                safe via Redis UOW). If False or None, use legacy
-                SlidingWindowBreaker. Default None = read feature flag.
+                safe via Redis UOW). If False or None, use SlidingWindowBreaker.
+                Default None = read feature flag.
 
         """
-        if not use_sliding_window_breaker:
-            warnings.warn(
-                "use_sliding_window_breaker=False deprecated since P2-R2 "
-                "(audit 2026-08-18): legacy deque path removed, CB always uses "
-                "SlidingWindowBreaker. Параметр будет удалён в S182.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-        # Sprint 29: legacy deque path restored for unit-test compatibility
-        # (tests/unit/entrypoints/middlewares/test_circuit_breaker.py uses
-        # _get_state/_record_failure/_record_success/_should_allow directly).
-        self._use_legacy = not use_sliding_window_breaker
-
         # S50 W1 (cycle 276): BreakerRegistry wiring via feature flag.
         # Explicit param takes precedence over feature flag (for tests).
         if use_breaker_registry is None:
@@ -164,9 +150,6 @@ class CircuitBreakerMiddleware:
         self._route_policies = route_policies or {}
         # Per-route SlidingWindowBreaker (lazy)
         self._sliding_breakers: dict[str, Any] = {}
-        # Per-route legacy deque state (when use_sliding_window_breaker=False)
-        # Sprint 29: restored for unit-test compatibility
-        self._legacy_states: dict[str, RouteBreakerState] = {}
         # S50 W1: BreakerPolicyAdapter (lazy — initialized on first use)
         self._adapter: Any | None = None
 
@@ -214,16 +197,12 @@ class CircuitBreakerMiddleware:
         Returns a :class:`RouteBreakerState` for the given route.
         S50 W1 (cycle 276): when circuit_breaker_use_registry flag is ON,
         state is fetched from BreakerRegistry via BreakerPolicyAdapter.
+        S51 W2: legacy deque path removed (S13 Phase 2c).
 
         """
         # S50 W1: registry-backed path (when flag enabled)
         if self._use_breaker_registry:
             return self._get_adapter().get_state(route)
-        # Legacy deque path (when use_sliding_window_breaker=False)
-        if self._use_legacy:
-            if route not in self._legacy_states:
-                self._legacy_states[route] = RouteBreakerState()
-            return self._legacy_states[route]
         if route in self._sliding_breakers:
             sb = self._sliding_breakers[route]
             return RouteBreakerState(
@@ -246,88 +225,34 @@ class CircuitBreakerMiddleware:
     ) -> None:
         """Sprint 29: record a failure in :class:`RouteBreakerState`.
 
-        Slides the failure window (drops entries outside
-        ``policy.window_seconds``). If failures within window reach
-        ``policy.failure_threshold``, transitions state to OPEN.
-
-        S50 W1: when registry flag enabled, delegates to
-        BreakerPolicyAdapter.record_failure() (state in registry).
+        S51 W2: legacy path removed. State-only method kept as no-op for
+        API compatibility. Use route-aware ``_record_failure_for_route``
+        for actual failure recording.
 
         """
-        # S50 W1: registry-backed path
-        if self._use_breaker_registry:
-            # Reconstruct route from state? No — adapter needs route name.
-            # Caller must pass route via _record_failure_for_route.
-            # For legacy callers that pass state only, fallback to legacy
-            # mutation path so tests don't break.
-            # Real production callers use _record_failure_for_route.
-            return  # no-op for legacy state-only callers
-        import time as _time
-        now = _time.time()
-        # Trim old failures outside window
-        cutoff = now - policy.window_seconds
-        state.failures = [f for f in state.failures if f > cutoff]
-        state.failures.append(now)
-        if len(state.failures) >= policy.failure_threshold:
-            if state.state != BreakerState.OPEN:
-                state.state = BreakerState.OPEN
-                state.last_state_change = now
-                state.opened_at = now
+        # State-only API is no-op now. Production uses route-aware methods.
+        # Kept for backward compat with existing test API surface.
 
     def _record_success(self, state: RouteBreakerState) -> None:
-        """Sprint 29: record a success — closes HALF_OPEN or resets failures.
+        """Sprint 29: record a success.
 
-        From CLOSED: clears failures (sliding window reset).
-        From HALF_OPEN: transitions to CLOSED.
-        From OPEN: no-op (shouldn't be called).
-
-        S50 W1: when registry flag enabled, delegates to adapter.
+        S51 W2: legacy path removed. State-only method kept as no-op for
+        API compatibility. Use route-aware ``_record_success_for_route``.
 
         """
-        # S50 W1: registry-backed path
-        if self._use_breaker_registry:
-            return  # use _record_success_for_route for production callers
-        if state.state == BreakerState.HALF_OPEN:
-            state.state = BreakerState.CLOSED
-            state.failures = []
-            state.opened_at = None
-            import time as _time
-            state.last_state_change = _time.time()
-        elif state.state == BreakerState.CLOSED:
-            # Clear sliding window (recovery)
-            state.failures = []
-        # OPEN: no-op
+        # State-only API is no-op now. Production uses route-aware methods.
 
     def _should_allow(
         self, state: RouteBreakerState, policy: BreakerPolicy
     ) -> bool:
         """Sprint 29: should a request be allowed?
 
-        CLOSED → True
-        OPEN + reset_timeout elapsed → True (transition to HALF_OPEN)
-        OPEN + reset_timeout NOT elapsed → False
-        HALF_OPEN → True (probe)
-
-        S50 W1: when registry flag enabled, delegates to adapter.
+        S51 W2: legacy deque path removed. State-only method kept for
+        backward compat. Use route-aware ``_should_allow_for_route`` for
+        actual check.
 
         """
-        # S50 W1: registry-backed path
-        if self._use_breaker_registry:
-            return self._get_adapter().should_allow(route="(unknown)", policy=policy)
-        import time as _time
-        now = _time.time()
-        if state.state == BreakerState.CLOSED:
-            return True
-        if state.state == BreakerState.OPEN:
-            elapsed = now - state.last_state_change
-            if elapsed >= policy.reset_timeout:
-                # Transition to HALF_OPEN
-                state.state = BreakerState.HALF_OPEN
-                state.last_state_change = now
-                return True
-            return False
-        # HALF_OPEN
-        return True
+        return True  # state-only API is no-op (use route-aware methods)
 
     # ── Route-aware adapter API (S50 W1) ────────────────────────────
 
@@ -412,33 +337,6 @@ class CircuitBreakerMiddleware:
                 adapter.record_success(path)
             except Exception:
                 adapter.record_failure(path, policy)
-            return
-
-        # Legacy deque path (Sprint 29: restored for unit tests)
-        if self._use_legacy:
-            state = self._get_state(path)
-            if not self._should_allow(state, policy):
-                _logger.info(
-                    "Circuit OPEN (legacy deque) — rejecting request for %s", path
-                )
-                response = JSONResponse(
-                    status_code=503,
-                    content={
-                        "error": "circuit_breaker_open",
-                        "path": path,
-                        "state": state.state.value
-                        if hasattr(state.state, "value")
-                        else str(state.state),
-                    },
-                )
-                await response(scope, receive, send)
-                return
-            # Allow — call upstream, record outcome
-            try:
-                await self.app(scope, receive, send)
-                self._record_success(state)
-            except Exception:
-                self._record_failure(state, policy)
             return
 
         breaker = self._get_sliding_breaker(path, policy)
