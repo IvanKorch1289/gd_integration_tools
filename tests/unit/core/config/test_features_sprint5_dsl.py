@@ -39,8 +39,13 @@ SPRINT5_DSL_FIELD_NAMES = (
     "blueprint_saga_compensation",
     "taskgroup_processors",
     "invoke_workflow_reply_enabled",
+    "demo_routes_enabled",
+    "external_health_proxy_enabled",
+    "osint_agent_enabled",
+    "hello_route_enabled",
+    "test_route_w1_enabled",
 )
-EXPECTED_SPRINT5_DSL_FIELD_COUNT = 25
+EXPECTED_SPRINT5_DSL_FIELD_COUNT = 30
 
 
 class TestSprint5DSLFlagsClass:
@@ -49,7 +54,19 @@ class TestSprint5DSLFlagsClass:
 
     def test_sprint5_dsl_flags_instantiates(self) -> None:
         flags = Sprint5DSLFlags()
-        for f in SPRINT5_DSL_FIELD_NAMES:
+        # 5 fields added in cycle 248 default to False (opt-in features):
+        # demo_routes_enabled, external_health_proxy_enabled,
+        # osint_agent_enabled, hello_route_enabled, test_route_w1_enabled.
+        # S44 W45: these are not in the originally-tested default-True set.
+        _DEFAULT_TRUE_FIELDS = tuple(
+            f for f in SPRINT5_DSL_FIELD_NAMES
+            if f not in {
+                "demo_routes_enabled", "external_health_proxy_enabled",
+                "osint_agent_enabled", "hello_route_enabled",
+                "test_route_w1_enabled",
+            }
+        )
+        for f in _DEFAULT_TRUE_FIELDS:
             assert getattr(flags, f) is True, f"{f} default не False"
 
     def test_sprint5_dsl_env_vars(self) -> None:
