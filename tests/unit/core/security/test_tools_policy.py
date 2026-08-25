@@ -45,7 +45,7 @@ class TestCheckToolAllowed:
 
         Это документированное поведение (см. docstring tools_policy.py:23).
         """
-        spec = ToolsSpec(whitelist=[], blacklist=[])
+        spec = ToolsSpec(whitelist=[], blacklist=[], allow_all_tools=True)
         assert check_tool_allowed("any.tool.name", spec) is True
 
     def test_whitelist_exact_match(self) -> None:
@@ -79,7 +79,7 @@ class TestCheckToolAllowed:
         assert check_tool_allowed("fs.write", spec) is False
 
     def test_blacklist_glob_match(self) -> None:
-        spec = ToolsSpec(whitelist=[], blacklist=["fs.*"])
+        spec = ToolsSpec(whitelist=[], blacklist=["fs.*"], allow_all_tools=True)
         assert check_tool_allowed("fs.write", spec) is False
         assert check_tool_allowed("fs.delete", spec) is False
         assert check_tool_allowed("db.read", spec) is True
@@ -116,7 +116,7 @@ class TestEnforceToolPolicy:
 
     def test_empty_spec_does_not_raise(self) -> None:
         """Empty whitelist + empty blacklist = no restriction (allow all)."""
-        spec = ToolsSpec(whitelist=[], blacklist=[], on_violation="fail")
+        spec = ToolsSpec(whitelist=[], blacklist=[], on_violation="fail", allow_all_tools=True)
         enforce_tool_policy("any.tool", spec)
 
     def test_failure_message_includes_spec_state(self) -> None:

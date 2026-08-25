@@ -42,7 +42,7 @@ class TestWorkflowFlagsClass:
         assert "workflow_bpmn_import" in names
         assert "workflow_gateways_enabled" in names
         assert "workflow_orchestrator_enabled" in names
-        assert len(names) == 5
+        assert len(names) == 6
 
 
 class TestWorkflowFlagsComposition:
