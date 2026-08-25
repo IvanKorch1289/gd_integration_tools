@@ -253,8 +253,8 @@ async def refresh_token(
         try:
             from src.backend.core.auth.jwt_backend import JwtBackend
             from src.backend.core.auth.mobile_jwt import (
-                MobileJwtVerifier,
                 JwtVerificationError,
+                MobileJwtVerifier,
             )
 
             verifier = MobileJwtVerifier(
