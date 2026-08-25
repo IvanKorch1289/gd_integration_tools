@@ -155,12 +155,38 @@ CircuitBreaker = Breaker
 
 
 class BreakerRegistry:
-    """Глобальный реестр именованных breaker-ов поверх purgatory factory."""
+    """Глобальный реестр именованных breaker-ов поверх purgatory factory.
 
-    def __init__(self) -> None:
-        self._factory = AsyncCircuitBreakerFactory()
+    S48 W1 (cycle 270, ADR-0267): supports optional Redis-backed UOW
+    for multi-pod state consistency. Default behavior (in-memory) is
+    unchanged when ``redis_url`` is not provided.
+
+    Args:
+        redis_url: Optional Redis URL for shared breaker state across
+            pods. When provided, factory uses AsyncRedisUnitOfWork.
+            When None (default), uses AsyncInMemoryUnitOfWork.
+
+    """
+
+    def __init__(self, *, redis_url: str | None = None) -> None:
+        if redis_url:
+            try:
+                from purgatory import AsyncRedisUnitOfWork
+
+                uow = AsyncRedisUnitOfWork(redis_url)
+                self._factory = AsyncCircuitBreakerFactory(uow=uow)
+            except ImportError:
+                # purgatory not installed or Redis support missing
+                # — fall back to in-memory to keep service alive
+                logger.warning(
+                    "Redis UOW unavailable, falling back to in-memory breakers"
+                )
+                self._factory = AsyncCircuitBreakerFactory()
+        else:
+            self._factory = AsyncCircuitBreakerFactory()
         self._breakers: dict[str, Breaker] = {}
         self._factory.add_listener(self._on_event)
+        self._redis_url = redis_url
 
     def get_or_create(
         self, name: str, spec: BreakerSpec | None = None, *, host: str = "default"
@@ -286,9 +312,23 @@ class BreakerRegistry:
 
 
 @lru_cache(maxsize=1)
-def get_breaker_registry() -> BreakerRegistry:
-    """Lazy singleton глобального ``BreakerRegistry``."""
-    return BreakerRegistry()
+def get_breaker_registry(
+    *, redis_url: str | None = None
+) -> BreakerRegistry:
+    """Lazy singleton глобального ``BreakerRegistry``.
+
+    S48 W1 (cycle 270, ADR-0267): accepts optional ``redis_url`` for
+    multi-pod state. Different ``redis_url`` values produce separate
+    singletons (via ``lru_cache`` key).
+
+    Args:
+        redis_url: Redis URL for shared state, or None for in-memory.
+
+    Returns:
+        BreakerRegistry singleton (per redis_url).
+
+    """
+    return BreakerRegistry(redis_url=redis_url)
 
 
 def __getattr__(name: str) -> Any:
