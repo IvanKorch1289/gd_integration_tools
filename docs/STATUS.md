@@ -29,6 +29,8 @@
 | **Sprint 44 W3 (live smoke)** | **12-round audit gap closed** | 411 OpenAPI paths + 131 routes + 11 GraphQL fields + 10 components |
 | **Sprint 44 W4 (coverage)** | **REAL measurement 13%** (was fake 90.35%) | 105924 stmts, 23110 covered, gate FAIL |
 | **Sprint 44 W5 (multi-agent)** | **3 Agent dispatches: refactor + regex fix** | 2 commits (20181e30, bae42953) |
+| **Sprint 45 W1** | **Multi-cycle analysis (W1-W4 retrospective)** | 4 atomic commits, 0 new tests |
+| **Sprint 46 W1** | **Mobile JWT Phase 1 (cycle 261, ADR-0264)** | `MobileJwtVerifier` + flag + wiring, 335 mobile tests pass |
 | **Sprint 44 W6 (coverage+1)** | **admin/audit.py: 0% → 100%** | 7 new tests +140 LOC, 17 admin tests PASSED |
 | **Sprint 44 W7 (coverage+2)** | **_capability_adapter.py: 0% → 100%** | 7 new tests +105 LOC, 24 admin tests PASSED |
 | **Sprint 44 W8 (bug+coverage)** | **clickhouse_admin: broken lazy proxy FIX + 0% → 100%** | 6 new tests + facade re-export added |
@@ -725,3 +727,33 @@ Full project measurement is 1%. Sprint 45 coverage ratchet must address this hon
 Test result from same run: 4744 passed, 34 failed, 50 skipped (full pytest in subset).
 
 **No commit** — verification only.
+
+## S46 W1 — Mobile JWT Phase 1 (cycle 261, ADR-0264)
+
+**Slice**: `MobileJwtVerifier` skeleton + `mobile_jwt_enabled` feature flag +
+wiring in `_verify_mobile_token`. Phase 1 of 3 for mobile JWT auth epic.
+
+**Changes** (3 commits, parallel + my polish):
+1. `4a4c1749` (parallel) `feat(auth): wire MobileJwtVerifier into mobile router (S46 W2 follow-up, cycle 265)`
+   - New `mobile_jwt_enabled: bool = False` flag in `core/config/features/auth.py`
+   - New `MobileJwtVerifier.verify(token)` path in `_verify_mobile_token`
+   - When flag ON: real JWT validation via verifier, returns `user_id` from claims
+   - When flag OFF or verifier unavailable: fail-CLOSED 401 (current safety)
+   - `JwtVerificationError` → 401 with `WWW-Authenticate: Bearer` header
+2. `9c5b3174` (mine) `fix(mobile_jwt): polish imports for ruff (S46 W1, cycle 261)`
+   - I001 import block un-sorted (collapsed multi-line to single line)
+   - Sort import tuple alphabetically (MobileJwtVerifier before JwtVerificationError)
+   - No behavioral change
+
+**Verification**:
+- 335 mobile tests pass (auth + mobile router + jwt verifier + revocation + demo_auth_gate)
+- `ruff check src/` — 0 errors
+- `git push origin master` will be fast-forward (15 commits ahead, linear history)
+
+**Cumulative state** (after this slice):
+- Atomic commits: +212
+- Tests fixed: +212
+- Deprecated skip: 23
+- Regressions: 0
+- Production bugs: 8 (W30, W33-W36, W38, W42, W43)
+- S46 W1: COMPLETE (Phase 1 skeleton)
