@@ -195,6 +195,67 @@ async def login(
     )
 
 
+@mobile_router.post("/auth/refresh", response_model=MobileTokenResponse)
+async def refresh_token(
+    refresh_token: str = Query(..., description="Refresh token from /auth/login"),
+    device_id: str = Query(..., description="Device UUID (must match token)"),
+) -> MobileTokenResponse:
+    """Exchange refresh token for new access + refresh token pair.
+
+    S48 W2 (cycle 271, ADR-0267): refresh token endpoint.
+    Implements OAuth2.0-compatible refresh flow.
+
+    Production requirements:
+    - Validate refresh_token signature + expiration
+    - Verify device_id matches the one bound to the refresh token
+    - Optionally rotate refresh tokens (return new refresh + revoke old)
+    - Audit log on every refresh attempt
+
+    Demo mode: deterministic re-issue (matches login behavior).
+
+    Args:
+        refresh_token: Refresh token issued by /auth/login.
+        device_id: Device UUID (for binding verification).
+
+    Returns:
+        MobileTokenResponse with new access + refresh tokens.
+
+    Raises:
+        HTTPException 401 if refresh token invalid or expired.
+        HTTPException 400 if device_id doesn't match token binding.
+
+    """
+    # Demo mode: parse user_id from existing refresh token format
+    if not refresh_token.startswith("mobile-refresh:"):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token format",
+        )
+    parts = refresh_token.split(":", 2)
+    if len(parts) < 3:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Malformed refresh token"
+        )
+    user_id = parts[1]
+    # Verify device_id matches user_id binding (user_<device_id[:8]>)
+    expected_prefix = f"user_{device_id[:8]}"
+    if user_id != expected_prefix:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Device ID does not match refresh token binding",
+        )
+
+    # Issue new pair
+    new_access = f"mobile:{user_id}:{uuid.uuid4().hex[:16]}"
+    new_refresh = f"mobile-refresh:{user_id}:{uuid.uuid4().hex[:16]}"
+    _log.info("mobile refresh: user_id=%s", user_id)
+    return MobileTokenResponse(
+        access_token=new_access,
+        refresh_token=new_refresh,
+        expires_in=900,  # 15 min
+    )
+
+
 @mobile_router.get("/profile", response_model=CompressedResponse)
 async def get_profile(
     authorization: str | None = Header(default=None),
