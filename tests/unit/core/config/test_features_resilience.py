@@ -38,8 +38,9 @@ class TestResilienceFlagsClass:
     def test_resilience_field_count(self) -> None:
         fields = ResilienceFlags.model_fields
         names = list(fields.keys())
-        # 6 K3 Resilience + K8 Storage fields
-        assert len(names) == 6
+        # 6 K3 Resilience + K8 Storage fields + 1 S49 W2 flag = 7
+        # S49 W2 (cycle 274): added circuit_breaker_use_registry flag
+        assert len(names) == 7
 
 
 class TestResilienceFlagsComposition:

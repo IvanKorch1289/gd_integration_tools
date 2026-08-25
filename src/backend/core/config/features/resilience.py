@@ -98,5 +98,24 @@ class ResilienceFlags(BaseSettings):
         ),
     )
 
+    # S49 W2 (cycle 274, ADR-0268 Phase 2b): feature flag for middleware
+    # migration to BreakerRegistry. When ON, CircuitBreakerMiddleware uses
+    # BreakerPolicyAdapter (which delegates to BreakerRegistry, optionally
+    # Redis-backed per Phase 1). When OFF, middleware keeps its own
+    # _legacy_states dict (current behavior, safe for production).
+    # Default OFF — gradual rollout per ADR-0268 §1 Phase 2b.
+    circuit_breaker_use_registry: bool = Field(
+        default=False,
+        title="S13 Phase 2b: middleware → BreakerRegistry via adapter",
+        description=(
+            "When ON, CircuitBreakerMiddleware records failures via "
+            "BreakerPolicyAdapter → BreakerRegistry (multi-pod safe when "
+            "registry uses Redis UOW per cycle 270). When OFF, middleware "
+            "keeps its own _legacy_states dict (single-process, current "
+            "behavior). Default OFF — gradual rollout via env flag. "
+            "Plan: S50 W1 dev → S50 W2 staging → S50 W3 prod."
+        ),
+    )
+
 
 __all__ = ("ResilienceFlags",)
