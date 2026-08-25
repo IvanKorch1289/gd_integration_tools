@@ -1908,3 +1908,59 @@ README явно или неявно подразумевает PASS:
 
 Подробный отчёт: `docs/audit/VERIFICATION_2026-08-17.md` (Phase 0).
 Выполнение фиксов: `docs/audit/EXECUTION_2026-08-17.md` (Phase 1.A+).
+
+---
+
+## Audit Verification Cycle 292 — 2026 (P0-P3 fact-check)
+
+**Source**: Внешний аналитический обзор пользователя (20 пунктов плана
+доработки со ссылками на DEEP_AUDIT середины августа). Полная запись
+verification memo: `docs/adr/0277-p0-p3-audit-verification-cycle-292.md`.
+
+### ✅ Stale DEEP_AUDIT references — closed в текущем коде
+
+8 из 20 пунктов проверены против master HEAD и подтверждены
+already-fixed. Цикл фикса указан для traceability:
+
+| Пункт | Что было | Цикл фикса | Evidence |
+|---|---|---|---|
+| Layer P1-9 | 2 new violations | baselined | `tools/check_layers_allowlist.txt` (67 entries), commit `6b74c323` |
+| P0-5 yaml.load | RCE-вектор (alleged) | 0 violations | `tools/checks/check_grep_violations.py:21-23` (ruamel.yaml whitelist) |
+| P0-6 symlink race | TOCTOU window | cycle 29 | `src/backend/core/ai/fs_facade.py:143-155` (resolve-handle-first order) |
+| P0-2 tool whitelist | на workflow_id | S183 cycle 46 | `src/backend/entrypoints/middlewares/ai_tool_whitelist.py:108,237` (real tool_name + fail-closed) |
+| P0-3 admin auth | только feature flag | S202 | `entrypoints/api/v1/endpoints/admin.py:25-29` + 22/22 endpoints |
+| P0-1 sandbox default | InProcess | S172 M5/ARC-008 | `core/config/ai.py:325-326` + 3 fallback точки |
+| P0-4 non-REST auth | разнобой | design-by-protocol | `auth_required.py:130-132` + `entrypoints/websocket/ws_auth.py:1-60` |
+| P1-7 frontend facade | 39 нарушителей | cycles 207-209 | `docs/audit/FRONTEND_FACADE_MIGRATION_FINAL.md` (10 done + 4 documented intentional) |
+| P3-15 .coverage | файл повреждён | file valid | `sqlite3 PRAGMA integrity_check` → ok; gate fires correctly |
+
+### Сравнение с FALSE_CLAIM-паттерном
+
+В отличие от `pg_runner_backend.replay()` (Cycle 215+: метод
+выбрасывает `NotImplementedError`, но заявлен как реализованный),
+здесь audit-фиксы реально landed:
+- `cyc29`-фикс в `fs_facade.py` имеет regression-тест
+  `test_create_new_symlink_escape` (L114-127).
+- `AuthRequiredMiddleware` enforce имеет enforcement-тесты в
+  `tests/unit/frontend/test_no_frontend_facade_regression.py`.
+- Allowlist entries обновляются через `tools/check_layers.py
+  --update-allowlist` (S110 W2: MERGE not REPLACE).
+
+### Что НЕ верифицировано (вне scope cycle 292)
+
+- **P1-8**: RouteBuilder 41-mixin MRO → Protocol composition (architect
+  survey, не code fix)
+- **P2-11-14**: performance (hot-reload cache, blocking I/O, busy-wait)
+  — требуют benchmarks
+- **P3-17**: mutation-testing расширение (нужен CI history)
+- **P4-18-20**: недостающий Camel/Airflow functionality (sprint-level)
+
+### Action / Owner
+
+Этот раздел — verification record, не action item. Future аудиты,
+ссылающиеся на исходный DEEP_AUDIT-список, могут пропускать уже
+закрытые пункты (см. evidence выше). Удалять пункты из исходного
+списка не рекомендуется — ссылка на цикл фикса нужна для
+falsifiable reference.
+
+Подробный memo: `docs/adr/0277-p0-p3-audit-verification-cycle-292.md`.
