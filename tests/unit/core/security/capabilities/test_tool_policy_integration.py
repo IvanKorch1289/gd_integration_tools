@@ -117,7 +117,7 @@ def test_filter_passes_all() -> None:
 def test_filter_drops_undeclared_capability() -> None:
     """Tools not declared in gate → dropped."""
     gate = MockGate(allowed=["db.read"])  # Only db.read allowed
-    policy = ToolsSpec()  # No whitelist restriction
+    policy = ToolsSpec(allow_all_tools=True)  # No whitelist restriction
     filtered = filter_tools_with_gate(
         gate=gate,
         plugin="test",
@@ -145,7 +145,7 @@ def test_filter_drops_white_list_violation() -> None:
 def test_filter_drops_blacklist() -> None:
     """Tools in blacklist → dropped (blacklist precedence)."""
     gate = MockGate(allowed=["db.read", "ai.invoke"])
-    policy = ToolsSpec(blacklist=["ai.invoke"])
+    policy = ToolsSpec(blacklist=["ai.invoke"], allow_all_tools=True)
     filtered = filter_tools_with_gate(
         gate=gate,
         plugin="test",
@@ -178,7 +178,7 @@ def test_filter_drops_both_layers() -> None:
 def test_filter_preserves_order() -> None:
     """Filter preserves input order."""
     gate = MockGate(allowed=["z", "a", "m", "b"])
-    policy = ToolsSpec()  # No restriction
+    policy = ToolsSpec(allow_all_tools=True)  # No restriction
     filtered = filter_tools_with_gate(
         gate=gate,
         plugin="test",
@@ -202,7 +202,7 @@ def test_filter_empty_input() -> None:
 def test_filter_with_iterator_input() -> None:
     """Accepts iterable (not just list) per signature."""
     gate = MockGate(allowed=["db.read"])
-    policy = ToolsSpec()
+    policy = ToolsSpec(allow_all_tools=True)
     filtered = filter_tools_with_gate(
         gate=gate,
         plugin="test",
