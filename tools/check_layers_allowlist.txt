@@ -60,6 +60,8 @@ src/backend/infrastructure/database/migrations/env.py	infrastructure	src.backend
 src/backend/infrastructure/notifications/adapters/express.py	infrastructure	src.backend.dsl.engine.processors.express._common
 src/backend/infrastructure/scheduler/scheduled_tasks.py	infrastructure	src.backend.services.ai.memory.langmem_service
 src/backend/infrastructure/workflow/executor/sequential_mixin.py	workflows	src.backend.dsl.engine.exchange
+src/backend/services/execution/action_dispatcher.py	services	src.backend.dsl.commands.action_registry
+src/backend/services/messaging/kafka_facade.py	services	src.backend.infrastructure.observability.mq_trace_propagator
 src/backend/services/ops/webhook_scheduler.py	services	src.backend.dsl.engine.processors.scraping
 src/backend/services/plugins/registries.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.processors
