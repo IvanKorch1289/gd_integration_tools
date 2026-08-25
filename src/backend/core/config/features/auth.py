@@ -38,5 +38,10 @@ class AuthFlags(BaseSettings):
     # restore, чтобы не ломать 2 pre-existing tests.
     auth_mtls_client: bool = False
 
+    # S46 W1 (cycle 261): mobile_jwt_enabled (ADR-0262/ADR-0264). Phase 1
+    # skeleton. Default OFF keeps current demo-fail-closed production path.
+    # Phase 2: revocation + per-device rate limit. Phase 3: OWASP review.
+    mobile_jwt_enabled: bool = False
+
 
 __all__ = ("AuthFlags",)

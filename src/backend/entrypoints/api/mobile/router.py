@@ -102,10 +102,50 @@ async def _verify_mobile_token(authorization: str | None) -> str:
         demo_auth_enabled = False
 
     if not demo_auth_enabled:
-        # Real JWT validation ещё не реализован (TODO epic), поэтому
-        # единственный fail-closed вариант — 401 на любой mobile:* токен.
-        # Production mobile clients должны использовать JWT (когда
-        # будет реализован) или этот endpoint не доступен.
+        # S46 W1 (cycle 261, ADR-0262/0264): real JWT validation path.
+        # When mobile_jwt_enabled is ON, validate token via MobileJwtVerifier
+        # before falling through to demo path. Default OFF keeps current
+        # fail-closed 401 behavior for production safety.
+        try:
+            mobile_jwt_on = bool(
+                getattr(feature_flags, "mobile_jwt_enabled", False)
+            )
+        except Exception as _:
+            mobile_jwt_on = False
+
+        if mobile_jwt_on:
+            try:
+                from src.backend.core.auth.jwt_backend import JwtBackend
+                from src.backend.core.auth.mobile_jwt import (
+                    MobileJwtVerifier,
+                    JwtVerificationError,
+                )
+
+                # Lazy-init verifier from factory; in production this
+                # should read JWT public key from secrets/Vault.
+                verifier = MobileJwtVerifier(
+                    backend=JwtBackend(),
+                    issuer_whitelist=["gd-mobile-prod", "gd-mobile-staging"],
+                    audience="gd-mobile-api",
+                )
+                ctx = await verifier.verify(token)
+                return ctx.user_id
+            except JwtVerificationError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail=f"JWT verification failed: {exc}",
+                    headers={"WWW-Authenticate": "Bearer"},
+                ) from exc
+            except Exception:
+                # If JWT verifier itself is not configured (missing keys etc.),
+                # fail-CLOSED — do not silently fall through to demo path.
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Mobile JWT verifier unavailable",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+
+        # JWT off or unavailable → fail-closed demo path (production safety).
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=(
