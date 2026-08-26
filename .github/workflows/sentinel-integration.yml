@@ -1,0 +1,118 @@
+name: redis-sentinel-integration
+
+# S61 W1: CI integration для local Redis Sentinel stack.
+# Validates Sentinel failover behavior against REAL Redis stack
+# (docker-compose.redis-sentinel.yml), catching Sentinel config bugs
+# BEFORE production deployment by infra team.
+
+# Trigger:
+# - Manual dispatch (workflow_dispatch) — for on-demand validation
+# - PR that modifies Sentinel-related code:
+#   - src/backend/core/config/services/cache.py (RedisSettings)
+#   - src/backend/infrastructure/clients/storage/redis/ (connection_mixin.py)
+#   - ops/compose/docker-compose.redis-sentinel.yml
+#   - ops/compose/redis/sentinel/ (configs)
+#   - tests/integration/redis_sentinel/
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "src/backend/core/config/services/cache.py"
+      - "src/backend/infrastructure/clients/storage/redis/**"
+      - "ops/compose/docker-compose.redis-sentinel.yml"
+      - "ops/compose/redis/sentinel/**"
+      - "tests/integration/redis_sentinel/**"
+      - ".github/workflows/sentinel-integration.yml"
+  pull_request:
+    paths:
+      - "src/backend/core/config/services/cache.py"
+      - "src/backend/infrastructure/clients/storage/redis/**"
+      - "ops/compose/docker-compose.redis-sentinel.yml"
+      - "ops/compose/redis/sentinel/**"
+      - "tests/integration/redis_sentinel/**"
+      - ".github/workflows/sentinel-integration.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sentinel-integration:
+    name: Redis Sentinel integration tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # Docker Compose available on ubuntu-latest runners
+    services:
+      docker:
+        image: docker:dind
+        options: --privileged
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Sync deps
+        run: uv sync
+
+      - name: Start local Redis Sentinel stack
+        # S61 W1: spin up the stack defined in docker-compose.redis-sentinel.yml
+        # (1 master + 1 replica + 3 sentinels, quorum 2/3).
+        run: |
+          docker compose -f ops/compose/docker-compose.redis-sentinel.yml up -d
+          echo "Waiting for Sentinel stack to become healthy..."
+          sleep 30  # master + replica boot + sentinels elect master (~20-30s)
+
+      - name: Verify Sentinel stack health
+        run: |
+          # Confirm 3 sentinels are reachable
+          for port in 26379 26380 26381; do
+            echo "Checking sentinel on port $port..."
+            docker compose -f ops/compose/docker-compose.redis-sentinel.yml \
+              exec sentinel-0 redis-cli -p 26379 ping || \
+              docker compose -f ops/compose/docker-compose.redis-sentinel.yml \
+              exec sentinel-1 redis-cli -p 26380 ping || \
+              docker compose -f ops/compose/docker-compose.redis-sentinel.yml \
+              exec sentinel-2 redis-cli -p 26381 ping
+          done
+
+      - name: Run Sentinel integration tests
+        env:
+          REDIS_SENTINEL_MODE: "true"
+          REDIS_SENTINEL_NODES: "localhost:26379,localhost:26380,localhost:26381"
+          REDIS_SENTINEL_SERVICE_NAME: "gd-mobile-redis"
+          REDIS_PASSWORD: "redis-dev-password"
+          REDIS_HOST: "localhost"
+          REDIS_PORT: "6379"
+        run: |
+          uv run pytest tests/integration/redis_sentinel/ \
+            -v \
+            --tb=short \
+            --maxfail=5
+
+      - name: Stop Sentinel stack (always)
+        if: always()
+        run: |
+          docker compose -f ops/compose/docker-compose.redis-sentinel.yml down -v
+
+      - name: Upload Sentinel logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sentinel-logs-${{ github.run_id }}
+          path: |
+            docker compose -f ops/compose/docker-compose.redis-sentinel.yml logs --no-color
+          retention-days: 7
+          if-no-files-found: ignore

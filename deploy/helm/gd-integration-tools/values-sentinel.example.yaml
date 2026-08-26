@@ -1,0 +1,86 @@
+# Example Helm values для production Redis Sentinel deployment (S61 W2).
+#
+# This is an EXAMPLE/TEMPLATE for infra team. Merge with existing
+# values.yaml + replace REDIS_HOST/REDIS_PORT as appropriate.
+#
+# Production deployment per docs/security/REDIS_HA_INFRASTRUCTURE_REQUIREMENTS.md
+# and docs/security/MOBILE_JWT_PRODUCTION_FLIP_RUNBOOK.md
+
+# Sentinel-mode Redis (master-replica failover)
+redis:
+  enabled: true
+  # Initial master (Sentinel auto-discovers actual master via +switch-master)
+  host: redis-master.gd-integration.svc.cluster.local
+  port: 6379
+  password: "<vault:redis-password>"  # Vault-stored, never in plain text
+
+  # TLS
+  use_ssl: true
+  ca_bundle: /etc/ssl/ca-bundle.crt
+
+  # Sentinel-specific (S59 W2)
+  sentinelMode: true
+  sentinelNodes:
+    - sentinel-0.gd-integration.svc.cluster.local:26379
+    - sentinel-1.gd-integration.svc.cluster.local:26379
+    - sentinel-2.gd-integration.svc.cluster.local:26379
+  sentinelServiceName: gd-mobile-redis
+  sentinelPassword: "<vault:sentinel-password>"  # If Sentinel ACL enabled
+
+  # Connection pool (production sizing)
+  maxConnections: 50
+  socketTimeout: 10
+  socketConnectTimeout: 5
+  healthCheckInterval: 30
+
+# Pod spec для app — должно быть минимум 2 replicas для HA
+deployment:
+  replicas: 2
+  resources:
+    requests:
+      cpu: "1"
+      memory: "2Gi"
+    limits:
+      cpu: "2"
+      memory: "4Gi"
+
+# Network policies — app pods должны иметь доступ к Sentinel (26379) и master (6379)
+networkPolicy:
+  enabled: true
+  egress:
+    # Sentinel monitoring
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis-sentinel
+      ports:
+        - protocol: TCP
+          port: 26379
+    # Redis master/replica
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    # TLS (для SSL к Redis)
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+
+# ServiceAccount для Vault credentials
+serviceAccount:
+  annotations:
+    vault.hashicorp.com/agent-inject-template-redis-password: |
+      {{- with secret "redis/data/gd-integration" -}}
+      {{ .Data.data.password }}
+      {{- end }}
+    vault.hashicorp.com/role: gd-integration-tools
+
+# Pod disruption budget — rolling updates не должны одновременно убить все replicas
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1  # минимум 1 pod running при voluntary disruption
