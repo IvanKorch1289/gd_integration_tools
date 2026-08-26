@@ -301,3 +301,25 @@ class TestErrorAndMarkerBranches:
 
         # The wrapper should preserve the marker (L274 attr-defined)
         assert getattr(decorated, "__activity_name__", None) == "preserved_marker"
+
+    def test_emit_audit_facade_raises_import_error_suppressed(
+        self, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """L177-187: outer except catches ImportError from emit_audit → log + suppress.
+
+        When the audit facade itself raises ImportError (module missing,
+        attribute gone), the outer narrow-except at L177 catches it, logs,
+        and suppresses — the policy decider flow continues without
+        raising audit failure to the caller (best-effort emit semantics).
+        """
+        def _raising(**kwargs: object) -> Any:
+            raise ImportError("audit facade missing")
+
+        monkeypatch.setattr(
+            "src.backend.core.audit.facade.emit_audit", _raising,
+        )
+
+        from src.backend.core.security.activity_capability_guard import _emit_audit
+        context = _build_context()
+        # Should not raise — L177-187 narrow except swallows the import error
+        _emit_audit(context, {"event": "facade-missing-test"})
