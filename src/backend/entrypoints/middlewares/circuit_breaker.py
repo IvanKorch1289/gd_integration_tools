@@ -62,6 +62,38 @@ class BreakerState(str, Enum):
     HALF_OPEN = "half_open"
 
 
+# S58 W2: Prometheus gauge mapping (per metrics.py:71-75 definition).
+# States are encoded as integers: 0=closed, 1=half_open, 2=open.
+# Matches Grafana dashboard queries (resilience_snapshot.json).
+_BREAKER_STATE_TO_METRIC_VALUE: dict[str, int] = {
+    BreakerState.CLOSED: 0,
+    BreakerState.OPEN: 1,  # Open takes precedence — most actionable for alerts
+    BreakerState.HALF_OPEN: 2,
+}
+
+
+def _record_breaker_metric(route: str, state: str) -> None:
+    """S58 W2: emit circuit_breaker_state gauge metric for Grafana.
+
+    Best-effort: if observability module unavailable, silently skip
+    (logging-only is acceptable for circuit breaker observability).
+
+    Args:
+        route: Route identifier (used as metric label `name`).
+        state: Breaker state string (``"closed"`` / ``"open"`` / ``"half_open"``).
+
+    """
+    try:
+        from src.backend.infrastructure.observability.metrics import (
+            record_circuit_breaker_state,
+        )
+
+        record_circuit_breaker_state(route, _BREAKER_STATE_TO_METRIC_VALUE.get(state, 0))
+    except Exception:
+        # Never fail caller on metrics error (observability is best-effort)
+        pass
+
+
 @dataclass
 class RouteBreakerState:
     """Per-route circuit breaker state (S81 W1).
@@ -320,6 +352,8 @@ class CircuitBreakerMiddleware:
                     "Circuit OPEN (registry adapter) — rejecting request for %s",
                     path,
                 )
+                # S58 W2: emit Prometheus gauge for circuit OPEN state
+                _record_breaker_metric(path, BreakerState.OPEN)
                 response = JSONResponse(
                     status_code=503,
                     content={
@@ -336,8 +370,17 @@ class CircuitBreakerMiddleware:
             try:
                 await self.app(scope, receive, send)
                 adapter.record_success(path)
+                # S58 W2: success → state may transition HALF_OPEN → CLOSED
+                _record_breaker_metric(path, BreakerState.CLOSED)
             except Exception as exc:
                 adapter.record_failure(path, policy, exception=exc)
+                # S58 W2: failure recorded by adapter (may transition to OPEN)
+                # Re-fetch state for accurate metric
+                try:
+                    new_state = adapter.get_state(path).state
+                    _record_breaker_metric(path, new_state)
+                except Exception:
+                    pass
             return
 
         breaker = self._get_sliding_breaker(path, policy)
@@ -345,6 +388,8 @@ class CircuitBreakerMiddleware:
             _logger.info(
                 "Circuit OPEN (sliding_breaker) — rejecting request for %s", path
             )
+            # S58 W2: emit Prometheus gauge for circuit OPEN state
+            _record_breaker_metric(path, BreakerState.OPEN)
             response = JSONResponse(
                 status_code=503,
                 content={
@@ -371,5 +416,10 @@ class CircuitBreakerMiddleware:
         # Record outcome
         if status_code >= 500 and status_code not in policy.excluded_statuses:
             self._get_sliding_breaker(path, policy)._record_failure()
+            # S58 W2: emit metric (may transition to OPEN)
+            if self._get_sliding_breaker(path, policy).is_open:
+                _record_breaker_metric(path, BreakerState.OPEN)
         else:
             self._get_sliding_breaker(path, policy)._record_success()
+            # S58 W2: success → state should be CLOSED
+            _record_breaker_metric(path, BreakerState.CLOSED)
