@@ -219,6 +219,55 @@ class RedisSettings(BaseSettingsWithLoader):
         json_schema_extra={"example": ["redis-0:6379", "redis-1:6379", "redis-2:6379"]},
     )
 
+    # Параметры Sentinel режима (S59 W2 — Redis HA failover).
+    # Sentinel обеспечивает master-replica failover (vs Cluster sharding).
+    # Использует ``redis.asyncio.sentinel.Sentinel`` для automatic master discovery.
+    # Приоритет: cluster_mode > sentinel_mode > single instance.
+    sentinel_mode: bool = Field(
+        default=False,
+        description=(
+            "S59 W2: включить Sentinel режим для HA failover. При ``true`` "
+            "Sentinel-ноды берутся из ``sentinel_nodes`` (НЕПУСТОГО списка), "
+            "клиенты получаются через ``Sentinel.master_for(sentinel_service_name)``. "
+            "Параметры ``db_*`` сохраняются (Sentinel проксирует на master). "
+            "Взаимоисключающе с ``cluster_mode`` — enforced через model_validator."
+        ),
+        json_schema_extra={"example": False},
+    )
+    sentinel_nodes: list[str] = Field(
+        default_factory=list,
+        description=(
+            "S59 W2: список Sentinel-нод в формате ``host:port``. "
+            "Рекомендуется минимум 3 Sentinel-ноды для quorum "
+            "(принятие решения о failover). Используется только при "
+            "``sentinel_mode=true``."
+        ),
+        json_schema_extra={
+            "example": [
+                "sentinel-0:26379",
+                "sentinel-1:26379",
+                "sentinel-2:26379",
+            ]
+        },
+    )
+    sentinel_service_name: str = Field(
+        default="mymaster",
+        description=(
+            "S59 W2: имя master-группы в Sentinel. "
+            "Sentinel отслеживает master/replicas под этим именем. "
+            "При failover клиент автоматически переключается на новый master."
+        ),
+        json_schema_extra={"example": "gd-mobile-redis"},
+    )
+    sentinel_password: str | None = Field(
+        default=None,
+        description=(
+            "S59 W2: пароль для аутентификации в Sentinel (если требуется). "
+            "Часто совпадает с основным Redis-паролем, но может отличаться."
+        ),
+        json_schema_extra={"example": "sentinel-secure-password"},
+    )
+
     def resolve_retry_on_error(self) -> list[type[BaseException]]:
         """Резолвит ``retry_on_error`` (FQN) в реальные классы исключений.
 
@@ -262,9 +311,28 @@ class RedisSettings(BaseSettingsWithLoader):
                 raise ValueError(f"cluster_nodes: некорректный host:port — {node!r}")
         return v
 
+    @field_validator("sentinel_nodes")
+    @classmethod
+    def _validate_sentinel_nodes(cls, v: list[str]) -> list[str]:
+        """S59 W2: проверяет формат ``host:port`` для каждой Sentinel-ноды."""
+        for node in v:
+            if ":" not in node:
+                raise ValueError(
+                    f"sentinel_nodes: ожидается формат 'host:port', получено {node!r}"
+                )
+            host, _, port = node.rpartition(":")
+            if not host or not port.isdigit():
+                raise ValueError(
+                    f"sentinel_nodes: некорректный host:port — {node!r}"
+                )
+        return v
+
     @model_validator(mode="after")
     def _check_cluster_consistency(self) -> RedisSettings:
         """D-A12-04 fix (cycle 25): cluster_mode=True требует непустого cluster_nodes.
+
+        S59 W2: добавлена проверка Sentinel consistency + взаимоисключение
+        cluster_mode vs sentinel_mode.
 
         Раньше был только field_validator на формат — но cross-field check
         отсутствовал. cluster_mode=True + cluster_nodes=[] → production
@@ -276,6 +344,20 @@ class RedisSettings(BaseSettingsWithLoader):
                 "cluster_nodes (хотя бы одна нода 'host:port'). "
                 "Production runtime не сможет подключиться к Redis cluster."
             )
+        if self.sentinel_mode and not self.sentinel_nodes:
+            raise ValueError(
+                "RedisSettings: sentinel_mode=True требует непустого "
+                "sentinel_nodes (минимум 3 ноды для quorum failover). "
+                "Production runtime не сможет подключиться к Redis Sentinel."
+            )
+        # S59 W2: cluster_mode и sentinel_mode — взаимоисключающие
+        if self.cluster_mode and self.sentinel_mode:
+            raise ValueError(
+                "RedisSettings: cluster_mode и sentinel_mode — взаимоисключающие. "
+                "Cluster использует RedisCluster (sharding), "
+                "Sentinel использует Sentinel (master-replica failover). "
+                "Выберите один вариант HA."
+            )
         if not self.cluster_mode and self.cluster_nodes:
             # Warning (НЕ error) — cluster_nodes заполнены но cluster_mode=False
             # → cluster_nodes игнорируются. Это валидная конфигурация
@@ -285,6 +367,13 @@ class RedisSettings(BaseSettingsWithLoader):
             _logging.getLogger("core.config.services.cache").info(
                 "RedisSettings: cluster_nodes заполнены, но cluster_mode=False — "
                 "cluster_nodes игнорируются, используется single Redis instance."
+            )
+        if not self.sentinel_mode and self.sentinel_nodes:
+            import logging as _logging
+
+            _logging.getLogger("core.config.services.cache").info(
+                "RedisSettings: sentinel_nodes заполнены, но sentinel_mode=False — "
+                "sentinel_nodes игнорируются, используется single Redis instance."
             )
         return self
 

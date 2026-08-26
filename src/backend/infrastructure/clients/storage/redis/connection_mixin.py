@@ -55,6 +55,48 @@ class ConnectionMixin(_RedisClientProtocol):
                 ssl_ca_certs=self.settings.ca_bundle,
             )
 
+        # Sentinel-режим (S59 W2): master-replica failover. Sentinel
+        # автоматически обнаруживает текущий master и переключает клиент
+        # при failover. ``master_for`` возвращает клиент с прозрачным
+        # failover (redis-py обрабатывает обновление IP master).
+        if self.settings.sentinel_mode:
+            from redis.asyncio.sentinel import Sentinel
+
+            sentinel_endpoints: list[tuple[str, int]] = []
+            for raw in self.settings.sentinel_nodes:
+                host, _, port = raw.rpartition(":")
+                sentinel_endpoints.append((host, int(port)))
+
+            self.logger.info(
+                "Инициализация Redis Sentinel kind=%s endpoints=%s service=%s",
+                kind,
+                sentinel_endpoints,
+                self.settings.sentinel_service_name,
+            )
+            sentinel = Sentinel(
+                sentinel_endpoints,
+                password=self.settings.sentinel_password or None,
+                ssl=self.settings.use_ssl,
+                ssl_ca_certs=self.settings.ca_bundle,
+                socket_timeout=self.settings.socket_timeout,
+            )
+            # master_for возвращает Redis-клиент с автоматическим
+            # failover при изменении master (Sentinel SUBSCRIBE к +switch-master)
+            return sentinel.master_for(
+                service_name=self.settings.sentinel_service_name,
+                db=self._db_for_kind(kind),
+                password=self.settings.password or None,
+                encoding=self.settings.encoding,
+                socket_timeout=self.settings.socket_timeout,
+                socket_connect_timeout=self.settings.socket_connect_timeout,
+                socket_keepalive=self.settings.socket_keepalive,
+                retry_on_timeout=self.settings.retry_on_timeout,
+                retry_on_error=retry_on_error or None,
+                max_connections=self.settings.max_connections,
+                decode_responses=False,
+                health_check_interval=self.settings.health_check_interval,
+            )
+
         return Redis.from_url(
             self._base_url(),
             db=self._db_for_kind(kind),
