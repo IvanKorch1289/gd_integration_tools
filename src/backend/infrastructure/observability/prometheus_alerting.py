@@ -42,6 +42,15 @@ class PrometheusAlertManager:
             "summary": "Certificate rotation failures (S171 M24 D274)",
             "description": "Auto-rotation of expired certificates is failing. Check CertRotationWatcher logs.",
         },
+        # S60 W1 (D-XXX-6): alert when any circuit breaker is in OPEN state
+        # (state=2). Wired by S58 W2 cycle (record_circuit_breaker_state).
+        # Without this alert, the new metric had no consumer endpoint.
+        "circuit_breaker_open": {
+            "condition": "circuit_breaker_state == 2",
+            "severity": "critical",
+            "summary": "Circuit breaker OPEN (D-XXX-6, after S58 W2 metrics wiring)",
+            "description": "One or more circuit breakers have transitioned to OPEN state (state=2). Check route breaker state via /admin/feature-flags. The breaker auto-recovers via HALF_OPEN → CLOSED transitions; sustained OPEN requires manual investigation.",
+        },
     }
 
     def __init__(self) -> None:

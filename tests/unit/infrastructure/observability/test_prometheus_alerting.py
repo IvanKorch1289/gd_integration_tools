@@ -78,3 +78,26 @@ class TestPrometheusAlertManager:
         )
         yaml_str = mgr.render_rules_yaml()
         assert "test_alert" in yaml_str
+
+    def test_circuit_breaker_open_alert_registered_s60_w1(self) -> None:
+        """S60 W1 D-XXX-6: alert rule for circuit_breaker_state == 2 (OPEN).
+
+        After S58 W2 wired record_circuit_breaker_state, the metric had
+        no consumer. D-XXX-6 closes the loop: PrometheusAlertManager
+        registers a critical-severity alert for sustained OPEN state.
+        """
+        from src.backend.infrastructure.observability.prometheus_alerting import (
+            PrometheusAlertManager,
+        )
+
+        mgr = PrometheusAlertManager()
+        assert "circuit_breaker_open" in mgr.list_alerts()
+        alert = mgr._alerts["circuit_breaker_open"]
+        assert alert["severity"] == "critical"
+        assert alert["condition"] == "circuit_breaker_state == 2"
+
+        # Rendered in YAML for Alertmanager deployment
+        yaml_str = mgr.render_rules_yaml()
+        assert "circuit_breaker_open" in yaml_str
+        assert "circuit_breaker_state == 2" in yaml_str
+        assert "severity: critical" in yaml_str
