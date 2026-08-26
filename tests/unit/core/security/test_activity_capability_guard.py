@@ -221,3 +221,83 @@ def test_dual_emit_calls_both_callback_and_facade(
     assert facade_calls[0]["actor"] == "test_plugin"
     assert facade_calls[0]["outcome"] == "denied"
     assert facade_calls[0]["resource"] == "my_activity"
+
+
+# ── S57 W4 coverage ratchet: error-path + marker-preservation branches ──
+
+
+class TestErrorAndMarkerBranches:
+    """S57 W4: cover error fallbacks + activity marker preservation.
+
+    Previously uncovered (8 lines + 1 BrPart):
+    - L134-136: feature_flags read exception → False
+    - L150-151: legacy audit callback raises → suppress + log
+    - L175-176: async audit with no running loop → drop coroutine
+    - L274: preserve ``__activity_name__`` Temporal marker on wrapper
+    """
+
+    def test_is_gate_enabled_returns_false_on_exception(
+        self, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """L134-136: feature_flags read fails → _is_gate_enabled returns False."""
+        from src.backend.core.security import activity_capability_guard as acg
+
+        # Patch the SOURCE feature_flags (the function does local import)
+        raising_flags = type(
+            "RaisingFlags",
+            (),
+            {"activity_capability_gate_enabled": property(lambda _self: (_ for _ in ()).throw(RuntimeError("down")))},
+        )()
+        monkeypatch.setattr(
+            "src.backend.core.config.features.feature_flags", raising_flags,
+        )
+
+        assert acg._is_gate_enabled() is False
+
+    def test_legacy_audit_callback_exception_suppressed(self) -> None:
+        """L150-151: legacy audit callback raises → log + suppress (no re-raise)."""
+        def failing_audit(event: dict[str, object]) -> None:
+            raise RuntimeError("audit backend down")
+
+        context = _build_context()
+        context.audit = failing_audit
+        # Should not raise — exception is swallowed at L150-151
+        from src.backend.core.security.activity_capability_guard import _emit_audit
+        _emit_audit(context, {"event": "test"})
+
+    def test_async_audit_emission_without_event_loop(
+        self, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """L175-176: async audit with no running loop → drop coroutine, no raise."""
+        # When called from sync test (no running loop), asyncio.get_running_loop()
+        # raises RuntimeError which is caught at L175-176. Mock audit facade to
+        # return a real coroutine so the asyncio.iscoroutine(coro) branch (L171) fires.
+        async def _coro() -> None:
+            return None
+
+        def fake_emit_audit(**kwargs: object) -> Any:
+            return _coro()
+
+        monkeypatch.setattr(
+            "src.backend.core.audit.facade.emit_audit", fake_emit_audit,
+        )
+
+        from src.backend.core.security.activity_capability_guard import _emit_audit
+        context = _build_context()
+        # Should not raise — L175-176 catches RuntimeError from no running loop
+        _emit_audit(context, {"event": "noop-loop-test"})
+
+    def test_decorator_preserves_activity_name_marker(self) -> None:
+        """L274: ``__activity_name__`` marker set BEFORE decoration is preserved."""
+
+        async def my_activity() -> str:
+            return "ok"
+
+        # Set Temporal marker BEFORE decoration so L273 hasattr sees it
+        my_activity.__activity_name__ = "preserved_marker"  # type: ignore[attr-defined]
+
+        # Decorate → L273-274 should copy the marker onto the wrapper
+        decorated = capability_guarded_activity(("db.read",))(my_activity)
+
+        # The wrapper should preserve the marker (L274 attr-defined)
+        assert getattr(decorated, "__activity_name__", None) == "preserved_marker"
