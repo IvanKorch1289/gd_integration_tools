@@ -209,3 +209,66 @@ async def test_get_emits_failure_audit_on_missing_env(
     assert len(secret_events) == 1
     assert secret_events[0]["outcome"] == "failure"
     assert secret_events[0]["details"]["error_class"] == "KeyError"
+
+
+# ── S57 W2 coverage ratchet: edge cases on empty vault/env paths + singleton ──
+
+
+@pytest.mark.unit
+async def test_resolve_vault_empty_path_raises_value_error() -> None:
+    """vault: prefix with no path → ValueError (credential_provider.py:157-160)."""
+    provider = CredentialProvider()
+    provider.register_spec(CredentialSpec(name="empty-vault", secret_ref="vault:"))
+    with pytest.raises(ValueError, match="empty vault path"):
+        await provider.get("empty-vault")
+
+
+@pytest.mark.unit
+async def test_resolve_vault_returns_none_raises_keyerror(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Vault returns None → KeyError (credential_provider.py:163-166)."""
+    backend = AsyncMock(spec=SecretsBackend)
+    backend.get_secret.return_value = None
+    monkeypatch.setattr(
+        "src.backend.core.svcs_registry.get_service",
+        lambda _contract: backend,
+    )
+    provider = CredentialProvider()
+    provider.register_spec(
+        CredentialSpec(name="none-vault", secret_ref="vault:secret/missing"),
+    )
+    with pytest.raises(KeyError, match="Vault returned None"):
+        await provider.get("none-vault")
+
+
+@pytest.mark.unit
+async def test_resolve_env_empty_var_name_raises_value_error() -> None:
+    """env: prefix with no var name → ValueError (credential_provider.py:173-176)."""
+    provider = CredentialProvider()
+    provider.register_spec(CredentialSpec(name="empty-env", secret_ref="env:"))
+    with pytest.raises(ValueError, match="empty env var name"):
+        await provider.get("empty-env")
+
+
+@pytest.mark.unit
+def test_get_credential_provider_lazy_init_creates_when_none(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """get_credential_provider: creates new instance when _instance is None (L201-203).
+
+    Tests the lazy-init fallback branch: when module-level ``_instance`` is
+    None on first call, a fresh CredentialProvider is created and cached.
+    Subsequent calls return the cached instance (cached branch).
+    """
+    from src.backend.core.security import credential_provider as cp_mod
+
+    # Save + restore to avoid leaking singleton state across tests
+    monkeypatch.setattr(cp_mod, "_instance", None)
+
+    instance1 = cp_mod.get_credential_provider()
+    assert isinstance(instance1, cp_mod.CredentialProvider)
+
+    # Second call returns the SAME instance (cached, no re-init)
+    instance2 = cp_mod.get_credential_provider()
+    assert instance1 is instance2
