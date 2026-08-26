@@ -20,6 +20,9 @@ from typing import Any
 from fastapi import APIRouter, Header, HTTPException, Query, status
 
 from src.backend.core.logging import get_logger
+from src.backend.entrypoints.api.mobile.refresh_token_store import (
+    get_refresh_token_store,
+)
 from src.backend.entrypoints.api.mobile.schemas import (
     CompressedResponse,
     CursorPage,
@@ -171,6 +174,32 @@ async def _verify_mobile_token(authorization: str | None) -> str:
 # ── Endpoints ────────────────────────────────────────────────────────
 
 
+# S54 W2 (cycle 290): refresh token TTL — controls how long issued
+# refresh tokens remain valid for rotation. Per OWASP, refresh tokens
+# should outlive access tokens (15 min) by enough margin to allow
+# legitimate re-auth but short enough to limit attack window.
+_REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 3600  # 30 days
+
+
+def _extract_refresh_jti(refresh_token: str) -> str:
+    """Extract jti-подобный segment из ``mobile-refresh:<user_id>:<jti>`` формата.
+
+    Args:
+        refresh_token: Refresh token issued by /auth/login.
+
+    Returns:
+        The third colon-separated segment (the jti-like identifier).
+
+    Raises:
+        ValueError: if token format is invalid or jti segment is empty.
+
+    """
+    parts = refresh_token.split(":", 2)
+    if len(parts) < 3 or not parts[2]:
+        raise ValueError("malformed refresh token")
+    return parts[2]
+
+
 @mobile_router.post("/auth/login", response_model=MobileTokenResponse)
 async def login(
     device_id: str = Query(..., description="Mobile device UUID"),
@@ -183,10 +212,21 @@ async def login(
 
     Token format: ``mobile:<user_id>:<token>`` (colon-separated, no
     underscore ambiguity in user_id).
+
+    S54 W2 (cycle 290): refresh token tracked в ``InMemoryRefreshTokenStore``
+    для rotation. Login → ``store.issue(user_id, device_id, jti, ttl)``.
+    Refresh endpoint rotates: revoke old + issue new (reuse detection).
     """
     user_id = f"user_{device_id[:8]}"
     access = f"mobile:{user_id}:{uuid.uuid4().hex[:16]}"
     refresh = f"mobile-refresh:{user_id}:{uuid.uuid4().hex[:16]}"
+    refresh_jti = _extract_refresh_jti(refresh)
+    await get_refresh_token_store().issue(
+        user_id=user_id,
+        device_id=device_id,
+        refresh_jti=refresh_jti,
+        ttl_seconds=_REFRESH_TOKEN_TTL_SECONDS,
+    )
     _log.info("mobile login: user_id=%s tenant=%s", user_id, tenant_id)
     return MobileTokenResponse(
         access_token=access,
@@ -271,7 +311,39 @@ async def refresh_token(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Device ID does not match JWT binding",
                 )
-            _log.info("mobile refresh via JWT: user_id=%s", user_id)
+            # S55 W1 (cycle 291): JWT refresh token rotation via store.
+            # JWT jti is FOREIGN (issued by external auth provider), not by us.
+            # Use ``issue_if_new()`` for atomic first-use detection — if same
+            # JWT jti is presented twice (replay attack), the second call
+            # returns False and we reject with 401. This narrows the attack
+            # window from "JWT TTL" (~15 min) to "single-use rotation".
+            #
+            # S56 W1 (cycle 293): OWASP family revocation. On reuse detected,
+            # call ``revoke_family`` to invalidate ALL current-generation
+            # tokens for this (user, device) pair. User must obtain a new
+            # JWT from auth provider to refresh again.
+            store = get_refresh_token_store()
+            if not await store.issue_if_new(
+                user_id=user_id,
+                device_id=device_id,
+                refresh_jti=ctx.jti,
+                ttl_seconds=_REFRESH_TOKEN_TTL_SECONDS,
+            ):
+                invalidated = await store.revoke_family(user_id, device_id)
+                _log.warning(
+                    "JWT refresh reuse detected (family revoked): user=%s "
+                    "device=%s jti=%s tokens_invalidated=%d",
+                    user_id, device_id, ctx.jti[:8], invalidated,
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail=(
+                        "JWT already used for refresh. Family revoked. "
+                        "Re-authentication required (obtain new JWT)."
+                    ),
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            _log.info("mobile refresh via JWT: user_id=%s jti=%s", user_id, ctx.jti[:8])
             return MobileTokenResponse(
                 access_token=f"mobile:{user_id}:{uuid.uuid4().hex[:16]}",
                 refresh_token=f"mobile-refresh:{user_id}:{uuid.uuid4().hex[:16]}",
@@ -304,10 +376,42 @@ async def refresh_token(
             detail="Device ID does not match refresh token binding",
         )
 
-    # Issue new pair
+    # S54 W2 (cycle 290): refresh token rotation via store.
+    # Reuse detection: if old refresh token was already revoked (rotated),
+    # attacker reusing stolen token → 401. This narrows the attack window
+    # from "token lifetime" (30 days) to "rotation interval" (~15 min).
+    #
+    # S56 W1 (cycle 293): OWASP family revocation. On reuse detected,
+    # call ``revoke_family`` to invalidate ALL current-generation tokens
+    # for this (user, device) pair. User must re-login completely.
+    old_jti = _extract_refresh_jti(refresh_token)
+    store = get_refresh_token_store()
+    if not await store.is_valid(user_id, device_id, old_jti):
+        invalidated = await store.revoke_family(user_id, device_id)
+        _log.warning(
+            "mobile refresh reuse detected (family revoked): user=%s "
+            "device=%s jti=%s tokens_invalidated=%d",
+            user_id, device_id, old_jti[:8], invalidated,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=(
+                "Refresh token invalid (revoked or expired). "
+                "Family revoked — re-login required."
+            ),
+        )
+    # Rotate: revoke old, issue new
+    await store.revoke(user_id, device_id, old_jti)
     new_access = f"mobile:{user_id}:{uuid.uuid4().hex[:16]}"
     new_refresh = f"mobile-refresh:{user_id}:{uuid.uuid4().hex[:16]}"
-    _log.info("mobile refresh: user_id=%s", user_id)
+    new_jti = _extract_refresh_jti(new_refresh)
+    await store.issue(
+        user_id=user_id,
+        device_id=device_id,
+        refresh_jti=new_jti,
+        ttl_seconds=_REFRESH_TOKEN_TTL_SECONDS,
+    )
+    _log.info("mobile refresh: user_id=%s rotated jti=%s", user_id, new_jti[:8])
     return MobileTokenResponse(
         access_token=new_access,
         refresh_token=new_refresh,
@@ -406,6 +510,14 @@ def reset_mobile_state() -> None:
     _notifications.clear()
     _push_tokens.clear()
     _sync_states.clear()
+    # S54 W2 (cycle 290): also reset refresh token rotation store
+    # to avoid test cross-contamination (issue/revoke state).
+    from src.backend.entrypoints.api.mobile import refresh_token_store
+
+    store = refresh_token_store.get_refresh_token_store()
+    # Clear all tokens by creating fresh instance via singleton reset.
+    refresh_token_store._default_store = None
+    _ = store  # keep ref to avoid unused-var lint; module-level reset suffices
 
 
 def add_test_notification(user_id: str, notification: MobileNotification) -> None:

@@ -5,12 +5,8 @@ Pattern follows test_mobile_router_jwt_integration.py (proven working).
 
 from __future__ import annotations
 
-import sys
 from typing import Any
-
 from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
 
 
 def _build_client_with_flags(
@@ -18,11 +14,23 @@ def _build_client_with_flags(
     mobile_jwt_enabled: bool = False,
     mobile_demo_auth_enabled: bool = True,
 ) -> Any:
-    """Build TestClient with given feature flag configuration."""
+    """Build TestClient with given feature flag configuration.
+
+    S55 W1: also call ``reset_mobile_state()`` before yielding the
+    client to ensure clean rotation store state. Without this, JWT
+    tests using hardcoded ``VALID_JWT_CLAIMS["jti"]`` would leak
+    state across tests and trigger false reuse-detection 401s.
+    """
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
-    from src.backend.entrypoints.api.mobile.router import mobile_router
+    from src.backend.entrypoints.api.mobile.router import (
+        mobile_router,
+        reset_mobile_state,
+    )
+
+    # Hygiene: clear all in-memory state including rotation store.
+    reset_mobile_state()
 
     app = FastAPI()
     app.include_router(mobile_router)
