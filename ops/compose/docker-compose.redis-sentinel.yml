@@ -1,0 +1,156 @@
+# Redis Sentinel local development stack (S60 W1).
+#
+# Provides local Redis HA environment for development + CI testing.
+# Enables verification of Sentinel failover WITHOUT depending on infra team
+# provisioning actual production Sentinel.
+#
+# Architecture (per docs/security/REDIS_HA_INFRASTRUCTURE_REQUIREMENTS.md):
+#
+#   ┌──────────────────┐
+#   │ redis-master     │ ← master (read/write)
+#   │ :6379            │    Sentinel monitors
+#   └──────────────────┘
+#           │ async replication
+#           ↓
+#   ┌──────────────────┐
+#   │ redis-replica    │ ← replica (read-only)
+#   │ :6379            │
+#   └──────────────────┘
+#
+#   3× Sentinel processes (quorum 2/3) — separate containers:
+#   ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+#   │ sentinel-0       │  │ sentinel-1       │  │ sentinel-2       │
+#   │ :26379           │  │ :26379           │  │ :26379           │
+#   └──────────────────┘  └──────────────────┘  └──────────────────┘
+#
+# Usage:
+#   docker compose -f ops/compose/docker-compose.redis-sentinel.yml up -d
+#
+# Then configure app:
+#   REDIS_SENTINEL_MODE=true
+#   REDIS_SENTINEL_NODES=sentinel-0:26379,sentinel-1:26379,sentinel-2:26379
+#   REDIS_SENTINEL_SERVICE_NAME=gd-mobile-redis
+#
+# Verify failover:
+#   docker compose -f ops/compose/docker-compose.redis-sentinel.yml exec sentinel-0 \
+#     redis-cli -p 26379 SENTINEL FAILOVER gd-mobile-redis
+#
+# Production deployment: see docs/security/REDIS_HA_INFRASTRUCTURE_REQUIREMENTS.md
+
+services:
+  redis-master:
+    image: redis:7-alpine
+    container_name: redis-master
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-master-data:/data
+      - ./redis/sentinel/master.conf:/usr/local/etc/redis/redis.conf:ro
+    command: >
+      redis-server /usr/local/etc/redis/redis.conf
+        --requirepass redis-dev-password
+        --masterauth redis-dev-password
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis-dev-password", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - redis-ha
+
+  redis-replica:
+    image: redis:7-alpine
+    container_name: redis-replica
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis-replica-data:/data
+      - ./redis/sentinel/replica.conf:/usr/local/etc/redis/redis.conf:ro
+    command: >
+      redis-server /usr/local/etc/redis/redis.conf
+        --requirepass redis-dev-password
+        --masterauth redis-dev-password
+        --replicaof redis-master 6379
+    depends_on:
+      redis-master:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis-dev-password", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - redis-ha
+
+  sentinel-0:
+    image: redis:7-alpine
+    container_name: redis-sentinel-0
+    ports:
+      - "26379:26379"
+    volumes:
+      - ./redis/sentinel/sentinel.conf:/usr/local/etc/redis/sentinel.conf:ro
+    command: >
+      redis-sentinel /usr/local/etc/redis/sentinel.conf
+        --sentinel monitor gd-mobile-redis redis-master 6379 2
+        --sentinel auth-pass gd-mobile-redis redis-dev-password
+        --sentinel down-after-milliseconds gd-mobile-redis 5000
+        --sentinel failover-timeout gd-mobile-redis 10000
+        --sentinel parallel-syncs gd-mobile-redis 1
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "26379", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    depends_on:
+      redis-master:
+        condition: service_healthy
+    networks:
+      - redis-ha
+
+  sentinel-1:
+    image: redis:7-alpine
+    container_name: redis-sentinel-1
+    ports:
+      - "26380:26379"
+    volumes:
+      - ./redis/sentinel/sentinel.conf:/usr/local/etc/redis/sentinel.conf:ro
+    command: >
+      redis-sentinel /usr/local/etc/redis/sentinel.conf
+        --sentinel monitor gd-mobile-redis redis-master 6379 2
+        --sentinel auth-pass gd-mobile-redis redis-dev-password
+        --sentinel down-after-milliseconds gd-mobile-redis 5000
+        --sentinel failover-timeout gd-mobile-redis 10000
+        --sentinel parallel-syncs gd-mobile-redis 1
+    depends_on:
+      redis-master:
+        condition: service_healthy
+    networks:
+      - redis-ha
+
+  sentinel-2:
+    image: redis:7-alpine
+    container_name: redis-sentinel-2
+    ports:
+      - "26381:26379"
+    volumes:
+      - ./redis/sentinel/sentinel.conf:/usr/local/etc/redis/sentinel.conf:ro
+    command: >
+      redis-sentinel /usr/local/etc/redis/sentinel.conf
+        --sentinel monitor gd-mobile-redis redis-master 6379 2
+        --sentinel auth-pass gd-mobile-redis redis-dev-password
+        --sentinel down-after-milliseconds gd-mobile-redis 5000
+        --sentinel failover-timeout gd-mobile-redis 10000
+        --sentinel parallel-syncs gd-mobile-redis 1
+    depends_on:
+      redis-master:
+        condition: service_healthy
+    networks:
+      - redis-ha
+
+volumes:
+  redis-master-data:
+  redis-replica-data:
+
+networks:
+  redis-ha:
+    driver: bridge
