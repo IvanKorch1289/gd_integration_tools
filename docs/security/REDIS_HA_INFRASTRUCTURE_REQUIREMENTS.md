@@ -230,6 +230,10 @@ redis:
 - `src/backend/infrastructure/clients/storage/redis/connection_mixin.py` — _build_client with all 3 paths
 - `docs/security/MOBILE_JWT_PRODUCTION_FLIP_RUNBOOK.md` — uses this for Redis HA
 - `docs/security/S13_PHASE4_STAGING_ROLLOUT_RUNBOOK.md` — uses this for Redis HA
+- `ops/compose/docker-compose.redis-sentinel.yml` — local Sentinel stack for dev/CI (S60 W2)
+- `tests/integration/redis_sentinel/` — Docker-gated integration tests (S60 W3)
+- `.github/workflows/sentinel-integration.yml` — CI integration workflow (S61 W1)
+- `deploy/helm/gd-integration-tools/values-sentinel.example.yaml` — production Helm values template (S61 W2)
 - redis-py docs: https://redis-py.readthedocs.io/en/stable/connections.html
 - Redis Sentinel docs: https://redis.io/docs/management/sentinel/
 - Redis Cluster docs: https://redis.io/docs/management/scaling/
@@ -247,5 +251,7 @@ redis:
 | Date | Change | Author |
 |---|---|---|
 | 2026-08-25 | Initial infra requirements doc + Sentinel code support | Kimi Code (S59 W2) |
+| 2026-08-25 | Local Sentinel Docker stack + integration tests | Kimi Code (S60) |
+| 2026-08-25 | GitHub Actions workflow + Helm values template | Kimi Code (S61) |
 | TBD | Sentinel provisioning | Infra team |
 | TBD | Production deployment | DevOps |
