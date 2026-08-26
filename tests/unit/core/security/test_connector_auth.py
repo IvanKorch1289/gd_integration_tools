@@ -217,3 +217,90 @@ class TestCheckSourceCapability:
                 principal="user-1",
             )
             assert result is False
+
+
+# ── S57 W3 coverage ratchet: tenant_id resolution from TenantContext ──
+
+
+class TestTenantScopeResolvesTenantId:
+    """S57 W3 ratchet: cover L93 + L193 (`tenant_id = ctx.tenant_id` branch).
+
+    Previously uncovered: ``if ctx is not None`` true branch in both
+    ``require_capability`` (L87-93) and ``check_source_capability``
+    (L191-193). Tests mock ``current_tenant()`` to return a non-None
+    TenantContext to exercise tenant_id propagation.
+    """
+
+    @pytest.mark.asyncio
+    async def test_require_capability_resolves_tenant_id_from_context(
+        self,
+    ) -> None:
+        """require_capability: tenant_id pulled from TenantContext (L93)."""
+        from src.backend.core.tenancy import TenantContext
+
+        mock_ctx = TenantContext(
+            tenant_id="acme-corp", plan="enterprise", region="ru",
+        )
+        mock_decision = MagicMock()
+        mock_decision.allowed = True
+        mock_decision.reason = None
+        mock_facade = MagicMock()
+        mock_facade.check_principal = AsyncMock(return_value=mock_decision)
+
+        with (
+            patch(
+                "src.backend.services.authorization.facade.get_authorization_facade",
+                return_value=mock_facade,
+            ),
+            patch(
+                "src.backend.core.tenancy.current_tenant",
+                return_value=mock_ctx,
+            ),
+        ):
+            @require_capability("kafka.write", action="write", scope="tenant")
+            async def my_func() -> str:
+                return "ok"
+
+            result = await my_func(_principal="user-1")
+            assert result == "ok"
+
+        # tenant_id is propagated via context dict (L116: context={...tenant_id...})
+        call_kwargs = mock_facade.check_principal.call_args.kwargs
+        assert call_kwargs["context"]["tenant_id"] == "acme-corp"
+
+    @pytest.mark.asyncio
+    async def test_check_source_capability_resolves_tenant_id(
+        self,
+    ) -> None:
+        """check_source_capability: tenant_id pulled from TenantContext (L193)."""
+        from src.backend.core.tenancy import TenantContext
+
+        mock_ctx = TenantContext(
+            tenant_id="globex-inc", plan="pro", region="us",
+        )
+        mock_decision = MagicMock()
+        mock_decision.allowed = True
+        mock_decision.reason = None
+        mock_facade = MagicMock()
+        mock_facade.check_principal = AsyncMock(return_value=mock_decision)
+
+        with (
+            patch(
+                "src.backend.services.authorization.facade.get_authorization_facade",
+                return_value=mock_facade,
+            ),
+            patch(
+                "src.backend.core.tenancy.current_tenant",
+                return_value=mock_ctx,
+            ),
+        ):
+            result = await check_source_capability(
+                "kafka.read",
+                action="read",
+                principal="user-1",
+            )
+            assert result is True
+
+        # tenant_id is propagated via context dict (matches require_capability L116)
+        call_kwargs = mock_facade.check_principal.call_args.kwargs
+        assert call_kwargs["context"]["tenant_id"] == "globex-inc"
