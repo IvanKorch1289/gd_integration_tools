@@ -226,13 +226,22 @@ class CDCClient:
                 await self._send_to_dlq(sub, event_dict, exc, stage="callback")
 
         if sub.target_action:
+            from src.backend.core.types.invocation_command import (
+                ActionCommandMetaSchema,
+            )
             from src.backend.dsl.commands.registry import action_handler_registry
             from src.backend.schemas.invocation import ActionCommandSchema
 
             command = ActionCommandSchema(
                 action=sub.target_action,
                 payload=event_dict,
-                meta={"source": f"cdc:{sub.profile}:{sub.strategy}"},
+                # P0 (cycle 39, production-grade plan): explicit system
+                # principal для CDC-driven actions (no user context — CDC
+                # callback runs in background subscription).
+                meta=ActionCommandMetaSchema(
+                    principal=f"cdc:{sub.profile}:{sub.strategy}",
+                    permissions=[],
+                ),
             )
             try:
                 await action_handler_registry.dispatch(command)
