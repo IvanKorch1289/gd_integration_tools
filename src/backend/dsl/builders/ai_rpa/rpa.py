@@ -115,6 +115,64 @@ class RPAMixin:
             format=format,
         )
 
+    # P4 (cycle 15, production-grade plan): 5 missing builder methods для
+    # rpa_browser.py processors (NavigateProcessor, ClickProcessor,
+    # FillProcessor, ExtractProcessor, ScreenshotProcessor). Старые
+    # ``navigate()`` / ``click()`` / etc. ссылаются на legacy web.py —
+    # эти ``rpa_*()`` builder methods используют правильный rpa_browser.py
+    # path (Playwright pool, capability-gated).
+    def rpa_navigate(self, *, url: str) -> RouteBuilder:
+        """Browser navigate через Playwright (Cycle 15 / P4-A)."""
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa_browser",
+            "NavigateProcessor",
+            url=url,
+        )
+
+    def rpa_click(self, *, selector: str, timeout: float = 30.0) -> RouteBuilder:
+        """Browser click по CSS/XPath селектору (Cycle 15 / P4-A)."""
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa_browser",
+            "ClickProcessor",
+            selector=selector,
+            timeout=timeout,
+        )
+
+    def rpa_fill(self, *, selector: str, value: str) -> RouteBuilder:
+        """Browser fill input (Cycle 15 / P4-A)."""
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa_browser",
+            "FillProcessor",
+            selector=selector,
+            value=value,
+        )
+
+    def rpa_extract(
+        self, *, selector: str, attribute: str | None = None
+    ) -> RouteBuilder:
+        """Browser extract text/attribute (Cycle 15 / P4-A)."""
+        kwargs: dict[str, Any] = {"selector": selector}
+        if attribute is not None:
+            kwargs["attribute"] = attribute
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa_browser",
+            "ExtractProcessor",
+            **kwargs,
+        )
+
+    def rpa_screenshot(
+        self, *, full_page: bool = False, path: str | None = None
+    ) -> RouteBuilder:
+        """Browser screenshot (Cycle 15 / P4-A)."""
+        kwargs: dict[str, Any] = {"full_page": full_page}
+        if path is not None:
+            kwargs["path"] = path
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa_browser",
+            "ScreenshotProcessor",
+            **kwargs,
+        )
+
     def run_scenario(self, steps: list[dict] | None = None) -> RouteBuilder:
         """Multi-step web сценарий (navigate/click/fill/extract)."""
         return self._add_lazy(  # type: ignore[attr-defined]

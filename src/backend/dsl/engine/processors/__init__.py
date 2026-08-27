@@ -190,6 +190,18 @@ from src.backend.dsl.engine.processors.rpa_banking import (
     KeystrokeReplayProcessor,
     TerminalEmulator3270Processor,
 )
+
+# P4 (cycle 15, production-grade plan): импорт из rpa_browser.py
+# вместо legacy web.py. rpa_browser.py — canonical Playwright-based
+# implementation с capability-gate + audit events; web.py — dead duplicate.
+from src.backend.dsl.engine.processors.rpa_browser import (
+    ClickProcessor,
+    ExtractProcessor,
+    FillProcessor,
+    NavigateProcessor,
+    ScreenshotProcessor,
+    WaitForProcessor,
+)
 from src.backend.dsl.engine.processors.rule_engine import (
     EvaluateRulesParams,
     EvaluateRulesProcessor,
@@ -227,14 +239,9 @@ from src.backend.dsl.engine.processors.vault_secret import (
     VaultReadResult,
     VaultSecretProcessor,
 )
-from src.backend.dsl.engine.processors.web import (
-    ClickProcessor,
-    ExtractProcessor,
-    FillFormProcessor,
-    NavigateProcessor,
-    RunScenarioProcessor,
-    ScreenshotProcessor,
-)
+
+# FillFormProcessor + RunScenarioProcessor остаются в web.py для
+# backward-compat (мигрируют отдельно в Sprint 180+).
 
 __all__ = (
     "AIRpaProcessor",
@@ -312,6 +319,7 @@ __all__ = (
     "FileReadProcessor",
     "FileWriteProcessor",
     "FillFormProcessor",
+    "FillProcessor",
     "FilterProcessor",
     "FinDocOcrLlmProcessor",
     "ForEachProcessor",
@@ -420,6 +428,7 @@ __all__ = (
     "VaultReadResult",
     "VaultSecretProcessor",
     "VectorSearchProcessor",
+    "WaitForProcessor",
     "WireTapProcessor",
     "WordReadProcessor",
     "WordWriteProcessor",
