@@ -26,6 +26,12 @@ from src.backend.core.logging import get_logger
 
 __all__ = ("RedisClusterAdapter",)
 
+# P2 (cycle 9, production-grade plan): batch limit для mget_batch/mset_batch
+# (anti-OOM protection). 5000 keys — параллельный паттерн с cache_mixin.py
+# (1000) и backends/redis.py (10 000). Cluster fan-out дороже per-shard
+# round-trip, поэтому меньший лимит достаточен.
+_MAX_MGET_BATCH: int = 5000
+
 if TYPE_CHECKING:  # pragma: no cover — только для типов
     from redis.asyncio.cluster import ClusterNode, RedisCluster
 
@@ -139,14 +145,21 @@ class RedisClusterAdapter:
         этот метод группирует keys по shard и параллельно выполняет.
 
         Args:
-            keys: Список ключей.
+            keys: Список ключей (max ``_MAX_MGET_BATCH``).
 
         Returns:
             Значения в исходном порядке (``None`` для отсутствующих).
 
+        Raises:
+            ValueError: ``len(keys) > _MAX_MGET_BATCH`` (P2 cycle 9).
+
         """
         if not keys:
             return []
+        if len(keys) > _MAX_MGET_BATCH:
+            raise ValueError(
+                f"oversized mget_batch: {len(keys)} keys exceeds {_MAX_MGET_BATCH}"
+            )
         # redis-py 5.x: RedisCluster.mget работает для разных slot'ов через
         # внутреннюю группировку по shard'у.
         try:
@@ -164,11 +177,18 @@ class RedisClusterAdapter:
         """Batch SET с распределением по shard'ам (S13 K2 W6).
 
         Args:
-            mapping: ``{key: value}`` для записи.
+            mapping: ``{key: value}`` (max ``_MAX_MGET_BATCH`` items).
+
+        Raises:
+            ValueError: ``len(mapping) > _MAX_MGET_BATCH`` (P2 cycle 9).
 
         """
         if not mapping:
             return
+        if len(mapping) > _MAX_MGET_BATCH:
+            raise ValueError(
+                f"oversized mset_batch: {len(mapping)} items exceeds {_MAX_MGET_BATCH}"
+            )
         try:
             await self._cluster.mset(mapping)
         except Exception as _:
