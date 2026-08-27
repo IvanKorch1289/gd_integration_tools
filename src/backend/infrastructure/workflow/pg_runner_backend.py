@@ -30,6 +30,7 @@ Wave D.1 / ADR-045 §«PgRunnerWorkflowBackend (legacy fallback)».
 from __future__ import annotations
 
 import asyncio
+import warnings
 from datetime import timedelta
 from typing import Any
 from uuid import UUID
@@ -196,7 +197,18 @@ class PgRunnerWorkflowBackend(WorkflowBackend):
         Backoff: ``poll_interval_s`` → удваивается до
         ``poll_max_interval_s``. При истечении timeout возвращается
         ``status="timed_out"`` с failure-payload и текущим snapshot.
+
+        .. deprecated:: S171 / P2-D cycle 10
+            pg_runner backend deprecated в Sprint 217; production callers
+            должны мигрировать на ``TemporalWorkflowBackend``. Этот метод
+            эмитит ``DeprecationWarning`` на каждом вызове (cycle 10 fix).
         """
+        warnings.warn(
+            "PgRunnerBackend.await_completion deprecated since Sprint 217; "
+            "мигрируйте на TemporalWorkflowBackend для production use.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         instance_id = self._uuid_from_handle(handle)
         deadline: float | None = None
         if timeout is not None:
@@ -269,6 +281,11 @@ class PgRunnerWorkflowBackend(WorkflowBackend):
         При таймауте возвращаем ``{"timed_out": True}`` (semantics совпадает
         с :class:`FakeWorkflowBackend.await_external_signal`).
 
+        .. deprecated:: S171 / P2-D cycle 10
+            pg_runner backend deprecated в Sprint 217; production callers
+            должны мигрировать на ``TemporalWorkflowBackend``. Этот метод
+            эмитит ``DeprecationWarning`` на каждом вызове (cycle 10 fix).
+
         Args:
             handle: Дескриптор ожидающего workflow.
             signal_name: Имя сигнала, которого ждём.
@@ -278,6 +295,12 @@ class PgRunnerWorkflowBackend(WorkflowBackend):
             Payload сигнала (dict). При таймауте: ``{"timed_out": True}``.
 
         """
+        warnings.warn(
+            "PgRunnerBackend.await_external_signal deprecated since Sprint 217; "
+            "мигрируйте на TemporalWorkflowBackend для production use.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         instance_id = self._uuid_from_handle(handle)
         deadline: float | None = None
         if timeout is not None:
