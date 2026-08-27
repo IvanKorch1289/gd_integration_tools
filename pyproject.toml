@@ -1171,6 +1171,14 @@ source_paths = [
     # (cycle 22 P0-2: ``extract_tenant_id`` через ``auth.metadata``).
     # Actual path: ``core/tenancy/__init__.py`` (не отдельный context.py).
     "src/backend/core/tenancy/__init__.py",
+    # P3 (cycle 30, production-grade plan, NS-2): +2 security-critical модуля.
+    # gateway_orchestrator_mixin: P0.2 tool whitelist (cycle 30 fail-closed fix);
+    # mutation score покрывает enforce_tool_policy_once(), input guard fail-closed,
+    # 9-step pipeline orchestrator.
+    # rpa_policy: M6 (cycle 40) deny-by-default security middleware для /api/v1/rpa/*;
+    # mutation score покрывает role check, audit emission, fallback paths.
+    "src/backend/core/ai/gateway_orchestrator_mixin.py",
+    "src/backend/entrypoints/middlewares/rpa_policy.py",
 ]
 backup = false
 runner = "pytest"
