@@ -1,6 +1,15 @@
 {
-  "_comment": "Reconciled 2026-06-05 (Sprint 39). S38 baseline was optimistic (62.57% stored vs comment '~75%+'); actual project-wide lines coverage 51.04% (41 360 / 76 806 statements). Sprint 39 added tests for 4 critical 0%-coverage files (llamaguard 0%→70%+, dlq 0%→75%+, contexts 0%→80%+, outbox 0%→70%+) but Sprint 39 was queued for S40 closure. Pre-Sprint-39 baseline restored at actual 51.04%; threshold 50% passed, target 75% not met. Next: Sprint 40 coverage push + property-based tests.",
+  "_comment": "Reconciled 2026-08-27 (Cycle 3, production-grade plan). Previous S39 baseline 51.04% stored 41 360 / 76 806 statements — STALE: repo grew substantially since Sprint 39 (2152 measured files vs 76806 stmts at that time, now 108076 stmts after growth). Honest subset re-measurement 2026-08-27: tests/unit/core+infrastructure+dsl = 9.56% (10335 / 108076). Full unit suite too large for single-process run (OOM killed at tests/unit/ — needs pytest-xdist split). Per-layer diagnostic tools/coverage/per_layer_diagnostic.py: core=5.4%, infrastructure=0.8%, services=0.3%, dsl=0%, entrypoints=0%. Stored 51.04% retained as historical reference; current ground truth is 9.56% subset (full measurement deferred to dedicated Sprint 171+ ratchet). Threshold 50% — NOT met by current 9.56% subset; gate lowered to fail_under=60 in pyproject.toml but actual measurement is ~10%. Coverage ratchet plan: see docs/audit/COVERAGE_RATCHET_PLAN.md (Cycle 12).",
   "coverage_percent": 51.04,
+  "current_subset_measurement": {
+    "date": "2026-08-27",
+    "scope": "tests/unit/{core,infrastructure,dsl}",
+    "files_measured": 2152,
+    "statements_covered": 10335,
+    "statements_total": 108076,
+    "coverage_percent": 9.56,
+    "method": "coverage.Coverage Python API after pytest --cov=src --cov-branch"
+  },
   "threshold": 50.0,
   "target_threshold": 75.0,
   "achieved_threshold": false,
