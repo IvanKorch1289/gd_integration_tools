@@ -35,6 +35,7 @@ docs-coverage: ## Wave 10.8 — docstring + HTML coverage gate
 
 coverage-gate: ## К3 S6 [wave:s6/k3-coverage-gate-70] — pytest coverage gate (blocking, baseline-aware)
 	@$(INFO) "Running pytest with --cov + coverage gate (parallel via pytest-xdist, TD-002 fix S53 W4)..."
+	@rm -f .coverage .coverage.* coverage.xml  # P3.15 NS-1 (cycle 28, 2026-08-27): stale artifact hygiene
 	$(UV_RUN) pytest tests --cov=src/backend --cov-report=xml --cov-report=term --maxfail=20 -n auto
 	$(UV_RUN) python -m coverage combine  # S53 W4: merge per-worker .coverage.<id> files
 	$(UV_RUN) python -m coverage report  # S53 W4: regenerate report from combined
@@ -43,6 +44,7 @@ coverage-gate: ## К3 S6 [wave:s6/k3-coverage-gate-70] — pytest coverage gate 
 
 coverage-gate-strict: ## [wave:s19/k2-w4-coverage-ratchet-75] — coverage gate strict 70→75%
 	@$(INFO) "Running pytest with --cov + coverage gate (strict, 75%, parallel via xdist, TD-002 fix S53 W4)..."
+	@rm -f .coverage .coverage.* coverage.xml  # P3.15 NS-1: stale artifact hygiene
 	$(UV_RUN) pytest tests --cov=src/backend --cov-report=xml --cov-report=term --maxfail=20 -n auto
 	$(UV_RUN) python -m coverage combine  # S53 W4: merge per-worker
 	$(UV_RUN) python -m coverage report  # S53 W4: regenerate report
