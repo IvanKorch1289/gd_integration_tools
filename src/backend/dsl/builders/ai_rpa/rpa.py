@@ -35,24 +35,49 @@ class RPAMixin:
     # --- RPA / automation / documents methods (S51 W2 extraction) ---
 
     def navigate(self, url: str) -> RouteBuilder:
-        """Открыть URL в браузере (Playwright)."""
+        """Открыть URL в браузере (Playwright).
+
+        Cycle 29 (production-grade plan): мигрирован с deprecated web.py
+        (services.io.web_automation) на rpa_browser (Playwright + capability-gate).
+        Поведение улучшено: capability-gate, audit events, cookies persistence.
+        """
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors.web", "NavigateProcessor", url=url
+            "src.backend.dsl.engine.processors.rpa_browser",
+            "NavigateProcessor",
+            url=url,
         )
 
     def click(self, url: str, selector: str) -> RouteBuilder:
-        """Клик по CSS-селектору."""
+        """Клик по CSS-селектору.
+
+        Cycle 29: Playwright-based (rpa_browser) вместо deprecated web.py.
+        Page берётся из предыдущей browser сессии (``rpa.browser.launch``
+        + ``rpa_navigate``); ``url`` arg игнорируется (Playwright session).
+        """
+        if url is not None:
+            import warnings as _w
+
+            _w.warn(
+                f"rpa.click(url='{url}') — url игнорируется в Playwright mode. "
+                f"Используйте rpa_navigate(url) для установки page.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors.web",
+            "src.backend.dsl.engine.processors.rpa_browser",
             "ClickProcessor",
-            url=url,
             selector=selector,
         )
 
     def fill_form(
         self, url: str, fields: dict | None = None, submit: str | None = None
     ) -> RouteBuilder:
-        """Заполнение формы по полям + опциональный submit."""
+        """Заполнение формы по полям + опциональный submit.
+
+        Cycle 29: остаётся на web.py (FillFormProcessor — единственный
+        multi-field form processor в legacy module). Playwright-based
+        multi-field эквивалент — Sprint 180+ migration.
+        """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.web",
             "FillFormProcessor",
@@ -64,19 +89,50 @@ class RPAMixin:
     def extract(
         self, selector: str, url: str | None = None, output_property: str = "extracted"
     ) -> RouteBuilder:
-        """Извлечение текста по CSS-селектору."""
+        """Извлечение текста по CSS-селектору.
+
+        Cycle 29: Playwright-based (rpa_browser) вместо deprecated web.py.
+        Page берётся из предыдущей browser сессии (``rpa.browser.launch``
+        + ``rpa_navigate``); ``url`` arg игнорируется (Playwright session).
+
+        ``output_property`` → ``to='property:<name>'``.
+        """
+        kwargs: dict[str, Any] = {"selector": selector, "to": f"property:{output_property}"}
+        if url is not None:
+            # Backward-compat: warn if explicit url passed (Playwright uses session page)
+            import warnings as _w
+
+            _w.warn(
+                f"rpa.extract(url='{url}') — url игнорируется в Playwright mode. "
+                f"Используйте rpa_navigate(url) для установки page.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors.web",
+            "src.backend.dsl.engine.processors.rpa_browser",
             "ExtractProcessor",
-            url=url,
-            selector=selector,
-            output_property=output_property,
+            **kwargs,
         )
 
     def screenshot(self, url: str | None = None) -> RouteBuilder:
-        """Скриншот страницы как bytes."""
+        """Скриншот страницы как bytes.
+
+        Cycle 29: Playwright-based (rpa_browser) вместо deprecated web.py.
+        Page берётся из предыдущей browser сессии (``rpa.browser.launch``
+        + ``rpa_navigate``); ``url`` arg игнорируется (Playwright session).
+        """
+        if url is not None:
+            import warnings as _w
+
+            _w.warn(
+                f"rpa.screenshot(url='{url}') — url игнорируется в Playwright mode. "
+                f"Используйте rpa_navigate(url) для установки page.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors.web", "ScreenshotProcessor", url=url
+            "src.backend.dsl.engine.processors.rpa_browser",
+            "ScreenshotProcessor",
         )
 
     def browser_launch(self, *, headless: bool = True) -> RouteBuilder:
