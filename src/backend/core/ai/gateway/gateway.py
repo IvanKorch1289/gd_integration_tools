@@ -7,8 +7,6 @@
 - :mod:`src.backend.core.ai.gateway.gateway` — :class:`AIGateway` facade
   (этот файл). Объединяет mixins + ``__init__`` + delegation в
   :meth:`AIGateway.invoke` → :meth:`AIGateway._enforced_invoke`.
-- :mod:`src.backend.core.ai.gateway.orchestrator.enforced_invoke` —
-  9-step pipeline orchestrator (ADR-0071).
 - Внешние mixins (shared с другими AI-компонентами):
   - :mod:`src.backend.core.ai.gateway_orchestrator_mixin` (EnforcedInvokeMixin)
   - :mod:`src.backend.core.ai.gateway_pipeline_mixin` (PipelineStepsMixin)

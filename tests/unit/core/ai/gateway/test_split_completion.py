@@ -102,12 +102,17 @@ class TestAIGatewaySplit:
         )
 
     def test_orchestrator_module_loadable(self) -> None:
-        """Orchestrator subpackage (enforced_invoke.py) загружается."""
-        enforced_invoke_mod = importlib.import_module(
-            "src.backend.core.ai.gateway.orchestrator.enforced_invoke",
+        """Canonical EnforcedInvokeMixin в ``gateway_orchestrator_mixin`` (cycle 11).
+
+        Раньше этот тест проверял ``gateway/orchestrator/enforced_invoke.py``
+        (dead duplicate, 482 LOC, 0 importers), но он удалён в Cycle 11
+        (production-grade plan): canonical location всегда был
+        ``gateway_orchestrator_mixin.py``.
+        """
+        canonical_mod = importlib.import_module(
+            "src.backend.core.ai.gateway_orchestrator_mixin",
         )
-        # EnforcedInvokeMixin находится в этом модуле (re-exported).
-        assert hasattr(enforced_invoke_mod, "EnforcedInvokeMixin")
+        assert hasattr(canonical_mod, "EnforcedInvokeMixin")
 
 
 class TestAIGatewayInstantiation:

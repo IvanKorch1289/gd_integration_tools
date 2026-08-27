@@ -3,8 +3,6 @@
 Архитектура subpackage ``gateway/`` (S175 #8 split completion):
 - :mod:`src.backend.core.ai.gateway.gateway` — :class:`AIGateway` facade
   (275 LOC, перенесён из бывшего ``gateway.py`` god-file в Sprint 175).
-- :mod:`src.backend.core.ai.gateway.orchestrator.enforced_invoke` —
-  9-step pipeline orchestrator (ADR-0071).
 - Shared mixins (external, shared с другими AI-компонентами):
   - :mod:`src.backend.core.ai.gateway_orchestrator_mixin` (EnforcedInvokeMixin)
   - :mod:`src.backend.core.ai.gateway_pipeline_mixin` (PipelineStepsMixin)
