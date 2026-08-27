@@ -26,7 +26,11 @@ router = APIRouter(
     dependencies=[
         Depends(
             require_admin(
-                (AdminRole.READ_ONLY, AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)
+                # REVIEW_2026-08-27 W-3 (cycle 26): cost telemetry — sensitive
+                # financial data. READ_ONLY выдаётся dashboards / monitoring
+                # tools, которые НЕ должны видеть billing-level data.
+                # Restrict до OPERATOR+SUPER_ADMIN (write-capable roles).
+                (AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)
             )
         )
     ]
