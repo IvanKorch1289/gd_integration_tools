@@ -15,6 +15,9 @@ from src.backend.dsl.engine.processors.eip.collection import (
     SumByProcessor,
     UniqueProcessor,
 )
+from src.backend.dsl.engine.processors.eip.content_enricher import (
+    EnrichProcessor as EnrichProcessor,
+)
 from src.backend.dsl.engine.processors.eip.dict_ops import (
     PydashGetProcessor,
     PydashMergeProcessor,
@@ -115,6 +118,7 @@ __all__ = (
     "DeadLetterProcessor",
     "DelayProcessor",
     "DiffProcessor",
+    "EnrichProcessor",
     "DynamicRouterProcessor",
     "EventMessageEnvelope",
     "EventMessageProcessor",
