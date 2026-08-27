@@ -118,12 +118,22 @@ class ScheduledReportsService:
         start = time.monotonic()
 
         try:
+            from src.backend.core.types.invocation_command import (
+                ActionCommandMetaSchema,
+            )
             from src.backend.schemas.invocation import ActionCommandSchema
 
             command = ActionCommandSchema(
                 action=report.action,
                 payload=report.payload,
-                meta={"source": f"report:{report.name}"},
+                # P0 (cycle 40, parity с cycle 39): explicit system principal
+                # для scheduler-driven actions (no user context — background
+                # scheduler triggered). Tier-1/2 actions теперь видят
+                # непустой principal для audit-trail.
+                meta=ActionCommandMetaSchema(
+                    principal=f"report:{report.name}",
+                    permissions=[],
+                ),
             )
             result = await action_handler_registry.dispatch(command)
 
