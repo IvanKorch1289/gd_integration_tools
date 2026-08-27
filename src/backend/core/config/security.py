@@ -1,5 +1,5 @@
 import os
-from typing import ClassVar, Literal
+from typing import Any, ClassVar, Literal
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
@@ -171,6 +171,33 @@ class SecureSettings(BaseSettingsWithLoader):
         description="Эндпоинты, доступные только для администраторов",
         examples=["/admin/users", "/admin/logs"],
     )
+    # P0 (cycle 7, production-grade plan): admin роли для API key holder.
+    # Раньше был hardcoded в api_key.py:107-115. Сейчас configurable per-deployment
+    # (default сохранён для backward-compat). Позволяет тонко настраивать
+    # security model (например, в production только super_admin, в dev — все).
+    api_key_admin_roles: list[str] = Field(
+        default_factory=lambda: ["operator", "super_admin"],
+        description=(
+            "Admin роли, автоматически grant'имые любому валидному API key "
+            "holder. Default ['operator', 'super_admin'] сохраняет pre-fix "
+            "поведение. Production может сузить до ['super_admin'] для "
+            "hardening. Env: comma-separated (SEC_API_KEY_ADMIN_ROLES=super_admin,admin)."
+        ),
+        examples=[["super_admin"], ["operator", "super_admin", "tenant_admin"]],
+    )
+
+    @field_validator("api_key_admin_roles", mode="before")
+    @classmethod
+    def _parse_api_key_admin_roles(cls, value: Any) -> list[str]:
+        """Парсинг comma-separated string из env (P0 cycle 7).
+
+        Pydantic-settings v2 не парсит list из comma-separated автоматически;
+        принимает только JSON (например ``'["operator"]'``). Этот validator
+        позволяет удобный ``SEC_API_KEY_ADMIN_ROLES=super_admin,admin``.
+        """
+        if isinstance(value, str):
+            return [s.strip() for s in value.split(",") if s.strip()]
+        return value
 
     # Защита от атак и лимиты
     request_timeout: float = Field(

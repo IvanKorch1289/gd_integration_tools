@@ -110,7 +110,10 @@ class APIKeyMiddleware:
             metadata={
                 "tenant_id": "default",
                 "groups": ("api_key_consumer",),
-                "admin_roles": ["operator", "super_admin"],
+                # P0 (cycle 7): configurable через settings.secure.api_key_admin_roles
+                # вместо hardcoded ["operator", "super_admin"]. Default сохранён
+                # для backward-compat.
+                "admin_roles": list(settings.secure.api_key_admin_roles),
             },
         )
         scope.setdefault("state", {})["auth"] = auth_ctx
