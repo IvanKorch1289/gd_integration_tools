@@ -139,15 +139,34 @@ def _xml_escape(value: Any) -> str:
     )
 
 
-async def _dispatch_via_action(operation: str, payload: dict[str, Any]) -> Any:
+async def _dispatch_via_action(
+    operation: str, payload: dict[str, Any], *, auth: Any | None = None
+) -> Any:
     """Пытается диспетчеризовать через общий `dispatch_action()`.
 
     IL-CRIT1.5: inline ActionCommandSchema-сборка → `dispatch_action`
-    с `source="soap"`. Унифицирует с REST/gRPC/GraphQL.
+    с `source="soap"``. Унифицирует с REST/gRPC/GraphQL.
+
+    P0 (cycle 5, production-grade plan): проброс ``principal`` /
+    ``permissions`` из ``auth`` (``request.state.auth``) в ``meta`` —
+    иначе Tier-1/2 actions с permission checks теряли auth context
+    на SOAP path (fail-open для routes без strict security).
     """
+    from src.backend.core.auth.auth_context_helpers import extract_user_permissions
     from src.backend.entrypoints.base import dispatch_action
 
-    return await dispatch_action(action=operation, payload=payload, source="soap")
+    principal = getattr(auth, "principal", "") if auth is not None else ""
+    permissions = (
+        tuple(extract_user_permissions(auth)) if auth is not None else ()
+    )
+
+    return await dispatch_action(
+        action=operation,
+        payload=payload,
+        source="soap",
+        principal=principal,
+        permissions=permissions,
+    )
 
 
 @soap_router.post(
@@ -174,7 +193,9 @@ async def handle_soap_request(request: Request) -> Response:
 
         # Стратегия 1: прямой dispatch через ActionHandlerRegistry
         if action_handler_registry.is_registered(operation):
-            result = await _dispatch_via_action(operation, payload)
+            # P0 (cycle 5): пробрасываем auth context для principal/permissions
+            soap_auth = getattr(request.state, "auth", None)
+            result = await _dispatch_via_action(operation, payload, auth=soap_auth)
             xml = _build_soap_response(operation, result)
             return Response(content=xml, media_type=content_type, status_code=200)
 

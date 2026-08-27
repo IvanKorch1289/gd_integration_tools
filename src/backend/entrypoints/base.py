@@ -45,6 +45,8 @@ async def dispatch_action(
     correlation_id: str | None = None,
     tenant_id: str | None = None,
     extra_meta: dict[str, Any] | None = None,
+    principal: str = "",
+    permissions: tuple[str, ...] = (),
 ) -> Any:
     """Единый фасад-диспатчер для любого entrypoint / consumer / workflow.
 
@@ -53,6 +55,9 @@ async def dispatch_action(
       * генерации correlation_id (если не передан сверху),
       * добавления `source` (rest/grpc/graphql/soap/rabbit/kafka/workflow),
       * propagation `tenant_id` в Exchange → OTEL baggage,
+      * propagation `principal` / `permissions` для Tier-1/2 actions с
+        permission checks (P0 cycle 5, production-grade plan: SOAP path
+        ранее терял auth context при ActionHandler dispatch),
       * latency-logging для observability.
 
     Raises ту же ошибку, что и registry (включая KeyError,
@@ -63,6 +68,13 @@ async def dispatch_action(
     meta: dict[str, Any] = {"source": source, "correlation_id": cid}
     if tenant_id is not None:
         meta["tenant_id"] = tenant_id
+    # P0 (cycle 5): проброс principal/permissions в meta для Tier-1/2
+    # actions, проверяющих ``permissions`` внутри handler'а. Backward-compat:
+    # default пустые значения сохраняют pre-fix семантику.
+    if principal:
+        meta["principal"] = principal
+    if permissions:
+        meta["permissions"] = list(permissions)
     if extra_meta:
         meta.update(extra_meta)
 

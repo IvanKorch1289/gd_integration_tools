@@ -102,6 +102,18 @@ class ActionCommandMetaSchema(_CoreBaseModel):
         default_factory=lambda: datetime.now(UTC),
         description="Время формирования команды.",
     )
+    # P0 (cycle 5, production-grade plan): principal/permissions для
+    # Tier-1/2 actions с permission checks. Раньше терялись на SOAP
+    # ActionHandler path — Tier-1/2 handlers проверяли ``cmd.meta.principal``
+    # и получали пустые значения. Adding explicit fields (model_config
+    # extra="ignore" отбрасывает любые extra-поля из ``meta.update()``).
+    principal: str = Field(
+        default="", description="Principal текущего вызова (default anonymous)."
+    )
+    permissions: list[str] = Field(
+        default_factory=list,
+        description="Permissions текущего principal'а (для Tier-1/2 checks).",
+    )
 
 
 class ActionCommandSchema(_CoreBaseModel):
