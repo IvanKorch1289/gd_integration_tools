@@ -14,6 +14,7 @@
 6. [RLM toolkit — когда и как использовать](#6-rlm-toolkit)
 7. [Выбор правильного паттерна](#7-выбор-паттерна)
 8. [Тестирование агентов](#8-тестирование-агентов)
+9. [Workspace isolation (AIWorkspaceManager)](#9-workspace-isolation)
 
 ---
 
@@ -510,7 +511,7 @@ ${AI_WORKSPACE}/<tenant>/<session>/<artifact>
 | Property | Default | Override |
 |----------|---------|----------|
 | TTL | 7 дней (604 800 s) | `AIWorkspaceManager(..., ttl_seconds=...)` |
-| Per-tenant quota | 500 MB | `AIWorkspaceManager(..., quota_bytes=...)` |
+| Per-tenant quota | 500 MB | `AIWorkspaceManager(..., per_tenant_quota_bytes=...)` |
 | Cleanup interval | 6 часов | `AIWorkspaceManager(..., cleanup_interval_seconds=...)` |
 | Audit | `emit_ai_workspace` (canonical, S108 W3 TD-004 migration) | n/a |
 
@@ -520,16 +521,20 @@ ${AI_WORKSPACE}/<tenant>/<session>/<artifact>
 ### 9.3 Регистрация (DI)
 
 `AIWorkspaceManager` регистрируется через svcs-container
-в `src/backend/plugins/composition/ai_safety_setup.py:39-40`:
+в `src/backend/plugins/composition/ai_safety_setup.py:39-49`:
 
 ```python
 def _build_workspace_manager() -> AIWorkspaceManager:
     """Сконструировать AIWorkspaceManager из settings."""
+    from src.backend.core.config.ai import ai_workspace_settings
+
+    workspace_root = ai_workspace_settings.workspace_root
+    workspace_root.mkdir(parents=True, exist_ok=True)
     return AIWorkspaceManager(
-        root=ai_workspace_settings.root,
-        ttl_seconds=ai_workspace_settings.ttl_seconds,
-        quota_bytes=ai_workspace_settings.quota_bytes,
-        cleanup_interval_seconds=ai_workspace_settings.cleanup_interval,
+        root=workspace_root,
+        ttl_seconds=ai_workspace_settings.workspace_ttl_seconds,
+        per_tenant_quota_bytes=ai_workspace_settings.workspace_quota_bytes,
+        cleanup_interval_seconds=ai_workspace_settings.workspace_cleanup_interval_s,
     )
 ```
 
@@ -565,8 +570,8 @@ async def execute_report_tool(ctx: ToolContext) -> Path:
 
 ### 9.5 Production usage (3 места)
 
-- `src/backend/plugins/composition/ai_safety_setup.py:22` — DI registration
-- `src/backend/infrastructure/ai/e2b_sandbox.py:22` — `WorkspaceHandle` для E2B cloud sandbox
+- `src/backend/plugins/composition/ai_safety_setup.py:39-49` — DI registration
+- `src/backend/infrastructure/ai/e2b_sandbox.py:60-65` — `WorkspaceHandle` для E2B cloud sandbox
 - `src/backend/core/config/features/sprint19_ai.py:103` — feature flag
 
 ### 9.6 Audit
