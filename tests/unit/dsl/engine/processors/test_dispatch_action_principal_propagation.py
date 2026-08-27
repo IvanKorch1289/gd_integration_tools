@@ -63,9 +63,7 @@ class TestDispatchActionPrincipalPropagation:
         exchange = _make_exchange({"key": "value"})
 
         context = ExecutionContext(
-            route_id="test_route",
-            principal="alice",
-            permissions=("read:orders",),
+            route_id="test_route", principal="alice", permissions=("read:orders",)
         )
 
         await proc.process(exchange, context)

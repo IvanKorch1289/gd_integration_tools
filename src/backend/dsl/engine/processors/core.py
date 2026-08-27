@@ -8,10 +8,7 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry import processor
-from src.backend.schemas.invocation import (
-    ActionCommandMetaSchema,
-    ActionCommandSchema,
-)
+from src.backend.schemas.invocation import ActionCommandMetaSchema, ActionCommandSchema
 
 __all__ = (
     "DispatchActionProcessor",
@@ -123,8 +120,7 @@ class DispatchActionProcessor(BaseProcessor):
             action=self.action,
             payload=payload,
             meta=ActionCommandMetaSchema(
-                principal=context.principal,
-                permissions=list(context.permissions),
+                principal=context.principal, permissions=list(context.permissions)
             ),
         )
         result = await context.action_registry.dispatch(command)
