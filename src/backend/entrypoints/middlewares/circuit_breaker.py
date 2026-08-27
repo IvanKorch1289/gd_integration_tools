@@ -93,9 +93,15 @@ def _record_breaker_metric(route: str, state: str) -> None:
         from src.backend.core.observability.metrics import record_circuit_breaker_state
 
         record_circuit_breaker_state(route, _BREAKER_STATE_TO_METRIC_VALUE.get(state, 0))
-    except Exception:
-        # Never fail caller on metrics error (observability is best-effort)
-        pass
+    except Exception as exc:
+        # REVIEW_2026-08-27 N-1: log на debug уровне (observability — best-effort,
+        # но production blind spot без логов). На caller не влияет.
+        _logger.debug(
+            "circuit_breaker metrics emit failed for route=%s state=%s: %s",
+            route,
+            state,
+            exc,
+        )
 
 
 @dataclass
