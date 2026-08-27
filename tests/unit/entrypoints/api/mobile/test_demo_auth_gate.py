@@ -32,7 +32,7 @@ async def test_demo_auth_disabled_returns_401(monkeypatch: pytest.MonkeyPatch) -
     with pytest.raises(HTTPException) as exc_info:
         await mobile_router._verify_mobile_token("Bearer mobile:user_xyz:abc123")
     assert exc_info.value.status_code == 401
-    assert "Mobile demo auth disabled" in str(exc_info.value.detail)
+    assert "Mobile auth disabled" in str(exc_info.value.detail)
 
 
 @pytest.mark.asyncio

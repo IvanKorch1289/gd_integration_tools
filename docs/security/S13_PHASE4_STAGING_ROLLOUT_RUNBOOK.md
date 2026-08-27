@@ -59,6 +59,32 @@ Per ADR-0251, ADR-0268, ADR-0276:
 - [ ] Multi-pod tests pass
 - [ ] Redis HA configured
 - [ ] Feature flag exposed
+
+### Automated pre-flight check (S64 W1)
+
+**Use the pre-flight script before enabling the flag in any environment**:
+
+```bash
+# Phase 1 Dev rollout
+./scripts/verify_s13_phase4_readiness.sh dev
+
+# Phase 2 Staging rollout
+REDIS_ENABLED=true ./scripts/verify_s13_phase4_readiness.sh staging
+
+# Phase 3 Production rollout
+REDIS_ENABLED=true ./scripts/verify_s13_phase4_readiness.sh prod
+```
+
+**What the script verifies**:
+1. `circuit_breaker_use_registry` flag in `RedisSettings` ✓
+2. Middleware reads the flag ✓
+3. `BreakerPolicyAdapter` exists + wired ✓
+4. Prometheus metrics for circuit breaker ✓
+5. Sentinel support enabled (S59 W2) ✓
+6. Circuit breaker test suite passes ✓
+7. Environment-specific prerequisites (Redis HA for staging/prod)
+
+**Exit codes**: 0 = ready for rollout, 1 = check failed, 2 = env error.
 - [ ] Monitoring dashboards include CB metrics
 - [ ] Runbook documented (this document)
 
@@ -347,6 +373,10 @@ uv run pytest tests/integration/core/resilience/ -v
 | Date | Change | Author |
 |---|---|---|
 | 2026-08-25 | Initial runbook created (S58 W1) | Kimi Code |
+| 2026-08-25 | Pre-flight script added (S64 W1) | Kimi Code |
+| 2026-08-25 | Phase 4 readiness: 6/6 checks pass | Kimi Code (S64) |
+| 2026-08-25 | Post-rollout monitoring script (S66 W1) | Kimi Code |
+| 2026-08-25 | 1 audit candidate fixed (skill_registry.py) | Kimi Code (S66 W2) |
 | TBD | Dev rollout date | TBD |
 | TBD | Staging rollout date | TBD |
 | TBD | Production rollout date | TBD |

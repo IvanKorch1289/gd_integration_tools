@@ -77,8 +77,12 @@ async def _verify_mobile_token(authorization: str | None) -> str:
     / dev / staging (flag ON) — старое поведение сохранено для
     удобства разработки.
 
-    Production: JWT validation с mobile-specific claims (device_id, tenant_id) — TODO.
-    For demo (flag ON only): simple bearer format ``mobile:<user_id>:<token>``.
+    Production JWT validation (when ``mobile_jwt_enabled`` flag is ON):
+    uses ``MobileJwtVerifier`` (src/backend/core/auth/mobile_jwt.py) with
+    mobile-specific claim validation (device_id UUID v4, tenant_id,
+    jti, iss in whitelist, aud matches). Implemented in S46 W1.
+
+    Demo mode (flag ON only): simple bearer format ``mobile:<user_id>:<token>``.
 
     Raises:
         HTTPException 401 if invalid/missing or demo auth disabled.
@@ -149,12 +153,15 @@ async def _verify_mobile_token(authorization: str | None) -> str:
                 )
 
         # JWT off or unavailable → fail-closed demo path (production safety).
+        # S46 W1 + S55 W1: JWT validation IS implemented for mobile_jwt_enabled=True
+        # path. This 401 only fires if BOTH demo_auth AND mobile_jwt are disabled.
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=(
-                "Mobile demo auth disabled (FEATURE_MOBILE_DEMO_AUTH_ENABLED=false). "
-                "JWT-based mobile auth not yet implemented — production access requires "
-                "explicit feature flag enable or proper JWT validation."
+                "Mobile auth disabled "
+                "(FEATURE_MOBILE_DEMO_AUTH_ENABLED=false AND "
+                "FEATURE_MOBILE_JWT_ENABLED=false). "
+                "Enable FEATURE_MOBILE_JWT_ENABLED=true for JWT-based mobile auth."
             ),
         )
 

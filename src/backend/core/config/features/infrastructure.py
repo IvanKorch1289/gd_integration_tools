@@ -163,8 +163,10 @@ class InfrastructureFlags(BaseSettings):
             "может залогиниться от имени user_<device_id[:8]>. "
             "Default OFF: production → 401 на любой mobile:* токен. "
             "dev_light / dev / staging могут включить через "
-            "FEATURE_MOBILE_DEMO_AUTH_ENABLED=true. Реальный JWT-validation "
-            "с mobile-specific claims — TODO (отдельный epic)."
+            "FEATURE_MOBILE_DEMO_AUTH_ENABLED=true. JWT-validation "
+            "with mobile-specific claims (device_id, tenant_id) "
+            "implemented in S46 W1 (MobileJwtVerifier) — enable "
+            "with FEATURE_MOBILE_JWT_ENABLED=true."
         ),
     )
 

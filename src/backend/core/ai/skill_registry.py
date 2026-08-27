@@ -336,9 +336,13 @@ class SkillRegistry:
                 module_name=module_name, whitelist=whitelist, skill_id=skill_id
             )
 
-        # Capability check — best-effort if CapabilityGate.check is available.
-        # Skips silently if CapabilityGate not yet implemented (MVP phase).
-        # In production, every declared capability must pass before handler runs.
+        # Capability check — best-effort graceful degradation.
+        # CapabilityGate.check() IS implemented (core/security/capabilities/gate/
+        # check_mixin.py:48), but skill_registry gracefully handles the case where
+        # the gate is unavailable (ImportError or runtime error). This avoids
+        # blocking skill execution on capability subsystem failures.
+        # S66 W2 audit: comment previously said "not yet implemented (MVP phase)"
+        # which was misleading — Gate is implemented, this is best-effort fallback.
         _capability_check: Any = None
         try:
             # CapabilityChecker is a type alias, not an instance.
