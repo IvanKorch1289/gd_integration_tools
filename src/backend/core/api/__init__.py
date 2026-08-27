@@ -201,6 +201,24 @@ def __getattr__(name: str) -> Any:
         from src.backend.core.config.features import feature_flags
 
         return feature_flags
+    if name == "express_settings":
+        # NS-3 (cycle 32, production-grade plan): один frontend файл
+        # (``pages/36_Экспресс_боты.py``) использует ``express_settings``.
+        # До этого fix он оборачивал import в try/except и silent swallowed.
+        from src.backend.core.config.express import express_settings
+
+        return express_settings
+    if name in (
+        "get_express_bot_client_factory_provider",
+        "get_express_botx_message_class_provider",
+    ):
+        # NS-3 (cycle 32): Express bot providers — DI helpers из core/di.
+        from src.backend.core.di.providers.http import (
+            get_express_bot_client_factory_provider,
+            get_express_botx_message_class_provider,
+        )
+
+        return locals()[name]
     # === P1-6 (cycle 241): Promoted base classes ===
     if name == "BasePlugin":
         from src.backend.core.interfaces.plugin import BasePlugin
