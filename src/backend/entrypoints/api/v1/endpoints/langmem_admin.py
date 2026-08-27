@@ -2,6 +2,13 @@
 
 * ``POST /admin/langmem/consolidate`` — manual trigger consolidate().
 * ``GET /admin/langmem/stats`` — counts по типам памяти.
+
+P0 (cycle 6, production-grade plan): ранее endpoint использовал только
+``require_auth`` (любой authenticated principal). После добавления
+``require_admin(OPERATOR, SUPER_ADMIN)`` LangMem consolidation требует
+admin role. API key holder по-прежнему получает admin role через
+``APIKeyMiddleware`` (configurable в Cycle 7), но теперь доступ явно
+требуется на endpoint level.
 """
 
 from __future__ import annotations
@@ -11,17 +18,18 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from src.backend.core.auth.auth_selector import AuthMethod, require_auth
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 
 __all__ = ("router",)
 
-router = APIRouter()
+router = APIRouter(
+    dependencies=[Depends(require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)))]
+)
 
 
 @router.post(
     "/langmem/consolidate",
     summary="Запустить consolidate() episodic → semantic (D.6)",
-    dependencies=[Depends(require_auth([AuthMethod.API_KEY, AuthMethod.JWT]))],
 )
 async def langmem_consolidate(
     since: str | None = Query(default=None, description="ISO-метка cutoff"),
@@ -50,7 +58,6 @@ async def langmem_consolidate(
 @router.get(
     "/langmem/stats",
     summary="Статистика памяти LangMem (D.6)",
-    dependencies=[Depends(require_auth([AuthMethod.API_KEY, AuthMethod.JWT]))],
 )
 async def langmem_stats() -> dict[str, Any]:
     """Возвращает counts по episodic / procedural."""

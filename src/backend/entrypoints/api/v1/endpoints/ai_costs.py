@@ -15,17 +15,27 @@ from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, Query
 
-from src.backend.core.auth.auth_selector import AuthMethod, require_auth
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 
 __all__ = ("router",)
 
-router = APIRouter()
+# P0 (cycle 6, production-grade plan): read-only cost telemetry теперь
+# требует admin role (READ_ONLY — минимум). Ранее любой authenticated
+# principal мог читать cost-данные (sensitive financial).
+router = APIRouter(
+    dependencies=[
+        Depends(
+            require_admin(
+                (AdminRole.READ_ONLY, AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)
+            )
+        )
+    ]
+)
 
 
 @router.get(
     "/ai-costs",
     summary="Cost-аналитика (LangFuse primary, ClickHouse fallback deprecated)",
-    dependencies=[Depends(require_auth([AuthMethod.API_KEY, AuthMethod.JWT]))],
 )
 async def get_ai_costs(
     top_n: int = Query(default=10, ge=1, le=200),
@@ -55,7 +65,6 @@ async def get_ai_costs(
 @router.get(
     "/ai-costs/alerts",
     summary="Cost-аномалии (mean+2σ)",
-    dependencies=[Depends(require_auth([AuthMethod.API_KEY, AuthMethod.JWT]))],
 )
 async def get_ai_cost_alerts(
     window_minutes: int = Query(default=60, ge=5, le=60 * 24),
@@ -82,7 +91,6 @@ async def get_ai_cost_alerts(
 @router.get(
     "/ai-costs/link",
     summary="Deep-link в LangFuse UI",
-    dependencies=[Depends(require_auth([AuthMethod.API_KEY, AuthMethod.JWT]))],
 )
 async def get_langfuse_deeplink() -> dict[str, Any]:
     """Возвращает deep-link на LangFuse Web UI (для embed/sidebar)."""

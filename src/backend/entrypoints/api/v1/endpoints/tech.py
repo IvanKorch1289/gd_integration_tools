@@ -8,9 +8,10 @@ W26.5: маршруты регистрируются декларативно �
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Header, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Query, UploadFile, status
 from fastapi.responses import HTMLResponse, JSONResponse
 
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.core.config.settings import settings
 from src.backend.core.di.providers import get_model_enum_provider
 from src.backend.core.enums.invocation import BrokerKind
@@ -87,12 +88,13 @@ async def _upload_excel(
     file: UploadFile = File(...),
     table_name: str = Query(..., description="Название таблицы для загрузки данных."),
     model_enum: Any = Depends(get_model_enum),
-    x_api_key: str = Header(...),
 ) -> Any:
     """Массовое создание объектов по Excel-файлу.
 
     UploadFile + Depends несовместимы с ActionSpec-генерацией сигнатуры,
     поэтому endpoint регистрируется через ``add_api_route``.
+    P0 (cycle 6): x_api_key Header removed — admin role check через
+    ``Depends(require_admin(...))`` достаточно (см. router.add_api_route).
     """
     service = get_tech_service()
     content = await file.read()
@@ -111,6 +113,10 @@ router.add_api_route(
     status_code=status.HTTP_200_OK,
     summary="Загрузить Excel-файл для массового создания объектов",
     name="upload_excel_for_mass_create",
+    # P0 (cycle 6): mass-create state-changing endpoint → admin role required.
+    dependencies=[
+        Depends(require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)))
+    ],
 )
 
 
@@ -205,6 +211,14 @@ builder.add_actions(
             service_method="get_degradation_snapshot",
             action_id="tech.degradation_snapshot",
             use_dispatcher=True,
+            # P0 (cycle 6): требует admin role (sensitive state info).
+            dependencies=[
+                Depends(
+                    require_admin(
+                        (AdminRole.READ_ONLY, AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)
+                    )
+                )
+            ],
         ),
         ActionSpec(
             name="get_all_custom_tables",
@@ -213,7 +227,15 @@ builder.add_actions(
             summary="Получить названия всех таблиц",
             service_getter=get_tech_service,
             service_method="get_all_custom_tables",
-            dependencies=[Depends(get_model_enum)],
+            dependencies=[
+                Depends(get_model_enum),
+                # P0 (cycle 6): DB schema introspection — admin role required.
+                Depends(
+                    require_admin(
+                        (AdminRole.READ_ONLY, AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)
+                    )
+                ),
+            ],
         ),
         ActionSpec(
             name="send_email",
@@ -227,6 +249,12 @@ builder.add_actions(
             # через invocation.event.
             service_method="get_log_storage_link",
             body_model=EmailSchema,
+            # P0 (cycle 6): state-changing endpoint (publishes to Redis
+            # stream), требует admin role (без admin — любой API key holder
+            # мог отправить email).
+            dependencies=[
+                Depends(require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)))
+            ],
             invocation=InvocationSpec(
                 event=EventPublishSpec(
                     action="tech.send_email",
