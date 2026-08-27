@@ -200,26 +200,53 @@ dump НЕ реализован** (marker-only).
 | RouteBuilder MRO gate unenforced | HIGH | 8 | FIXED (budget=100) |
 | redis_cluster batch limits | MEDIUM | 9 | FIXED |
 | pg_runner runtime deprecation | LOW | 10 | FIXED |
-| Mutation testing broken path | HIGH | 2+13 | FIXED |
+| Mutation testing broken path | HIGH | 2+13+31 | FIXED (scope 3→6) |
 | Coverage baseline stale | HIGH | 3 | FIXED (9.56% subset) |
-| Browser RPA builders 5/8 missing | MEDIUM | 15 | FIXED |
+| Browser RPA builders 5/8 missing | MEDIUM | 15+29 | FIXED |
 | SSH RPA capability parity | MEDIUM | 16 | FIXED |
 | CDC snapshot marker-only | LOW | 17 | FIXED (doc-only) |
+| PollingConsumerProcessor principal propagation | MEDIUM | 34 | FIXED (parity cycle 24/35) |
+| InvocationRequest principal/permissions | MEDIUM | 35 | FIXED (background/deferred paths) |
 
 ---
 
-## Success Criteria (Cycle 19 closeout)
+## Cycle 34-35 additions (post-cycle 19)
 
-- ✅ Все 19 cycles completed (commit history)
+Cycle 34-35 нашли дополнительные gaps с тем же паттерном, что cycle 24
+(DispatchActionProcessor principal propagation). Этот же паттерн
+был применён в:
+
+- **Cycle 34**: ``PollingConsumerProcessor.process`` (polling source
+  processor) — ранее создавал ``ActionCommandSchema`` без
+  principal/permissions. Теперь конструктор ``meta=ActionCommandMetaSchema(
+  principal=context.principal, permissions=list(context.permissions))``.
+
+- **Cycle 35**: ``InvocationRequest`` теперь имеет ``principal: str = ""``
+  и ``permissions: tuple[str, ...] = ()`` поля. ``run_mixin._run_silent``,
+  ``run_mixin._run_and_stream`` и ``invoke_modes_mixin._invoke_sync``
+  конструкторы ``ActionCommandSchema`` пробрасывают их в ``meta``.
+  Это закрывает background / deferred / streaming paths, которые
+  ранее теряли auth context.
+
+Total: 12 cycles (4, 5, 6, 7, 24, 26, 29, 34, 35 + tests) закрыли
+auth propagation gaps в 8 разных code paths.
+
+---
+
+## Success Criteria (Cycle 35 closeout)
+
+- ✅ Все 35 cycles completed (commit history)
 - ✅ Phase 1 live verification: GraphQL/SOAP/admin tests с explicit
   principal/permissions propagation
-- ✅ Все regression tests pass (12 SSH tests, 9 browser RPA tests,
-  6 redis_cluster tests, 12 admin coverage tests, 7 GraphQL tests,
-  6 SOAP tests, 8 mutation tests, etc.)
+- ✅ Все regression tests pass (62 execution tests + 25 rpa + 12 SSH +
+  6 redis_cluster + 12 admin coverage + 7 GraphQL + 6 SOAP + 8 mutation
+  + 5 eip_enrich + 6 cdc e2e + 5 dispatch_action principal + 2 polling
+  principal + 3 invocation_principal + 1 ai_costs_role)
 - ✅ CI green: ``make layers``, ``make check-mro``, ``make lint``,
   ``make type-check`` — все gates pass
 - ✅ Coverage baseline.json honest subset (9.56%)
-- ✅ Mutation gate = 4 модуля (3 baseline + tenancy)
+- ✅ Mutation gate = 6 модулей (3 baseline + tenancy + gateway_orchestrator
+  + rpa_policy)
 
 ---
 
