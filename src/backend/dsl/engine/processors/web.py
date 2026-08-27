@@ -1,6 +1,44 @@
-"""Web Automation DSL процессоры — navigate, click, fill, extract, screenshot."""
+"""Web Automation DSL процессоры — navigate, click, fill, extract, screenshot.
+
+.. deprecated:: P4-A cycle 21 (production-grade plan)
+    Этот модуль deprecated. Playwright-based canonical implementation —
+    ``src.backend.dsl.engine.processors.rpa_browser`` (импортируется
+    из ``processors.__init__`` под именами NavigateProcessor,
+    ClickProcessor, ExtractProcessor, ScreenshotProcessor, FillProcessor,
+    WaitForProcessor — см. cycle 15 fix).
+
+    **Remaining live classes**: ``FillFormProcessor`` + ``RunScenarioProcessor``
+    (legacy ``services.io.web_automation``-based, не Playwright). Builders
+    ``rpa.fill_form()`` + ``rpa.run_scenario()`` ссылаются на них.
+
+    Полное удаление — Sprint 180+ после миграции FillFormProcessor →
+    rpa_browser.FillProcessor (multi-field form) и RunScenarioProcessor →
+    custom user DSL.
+
+    ``FillFormProcessor`` + ``RunScenarioProcessor`` остаются в __all__
+    для backward-compat; новый код должен использовать ``rpa_browser``.
+"""
+import warnings
 
 from typing import Any
+
+from src.backend.core.logging import get_logger
+
+_warn_logger = get_logger("dsl.legacy.web")
+
+# P4-A (cycle 21): module-level deprecation warning при первом импорте.
+_warn_logger.warning(
+    "dsl.engine.processors.web is DEPRECATED since 2026-08-27 (P4-A cycle 21). "
+    "Используйте rpa_browser (Playwright) для navigate/click/extract/screenshot. "
+    "FillFormProcessor/RunScenarioProcessor остаются — миграция в Sprint 180+."
+)
+warnings.warn(
+    "dsl.engine.processors.web module is deprecated; "
+    "use dsl.engine.processors.rpa_browser for Playwright-based web automation. "
+    "FillFormProcessor/RunScenarioProcessor remain until Sprint 180+ migration.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
