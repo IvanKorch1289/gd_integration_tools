@@ -4,7 +4,6 @@ Loop, ForEach, OnCompletion.
 Паттерн: async tests, _ex fixture, моки для task_registry / redis / time.
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -67,7 +66,7 @@ async def test_wire_tap_runs_async() -> None:
 
     mock_task = MagicMock()
     with patch(
-        "src.backend.dsl.engine.processors.eip.flow_control.wire_tap.get_task_registry",
+        "src.backend.dsl.engine.processors.eip.flow_control.wire_tap.get_task_registry"
     ) as mock_reg:
         mock_registry = MagicMock()
         mock_registry.create_task.return_value = mock_task
@@ -89,7 +88,7 @@ async def test_wire_tap_ignores_tap_failure() -> None:
 
     mock_task = MagicMock()
     with patch(
-        "src.backend.dsl.engine.processors.eip.flow_control.wire_tap.get_task_registry",
+        "src.backend.dsl.engine.processors.eip.flow_control.wire_tap.get_task_registry"
     ) as mock_reg:
         mock_registry = MagicMock()
         mock_registry.create_task.return_value = mock_task
@@ -112,7 +111,7 @@ async def test_throttler_allows_under_rate() -> None:
     e = _ex(body=1)
 
     with patch(
-        "src.backend.dsl.engine.processors.eip.flow_control.throttler.asyncio.sleep",
+        "src.backend.dsl.engine.processors.eip.flow_control.throttler.asyncio.sleep"
     ) as mock_sleep:
         await proc.process(e, ctx)
 
@@ -130,7 +129,7 @@ async def test_throttler_sleeps_when_over_rate() -> None:
     await proc.process(e, ctx)
 
     with patch(
-        "src.backend.dsl.engine.processors.eip.flow_control.throttler.asyncio.sleep",
+        "src.backend.dsl.engine.processors.eip.flow_control.throttler.asyncio.sleep"
     ) as mock_sleep:
         await proc.process(e, ctx)
         mock_sleep.assert_called_once()
@@ -156,7 +155,7 @@ async def test_delay_by_ms() -> None:
     e = _ex(body=1)
 
     with patch(
-        "src.backend.dsl.engine.processors.eip.flow_control.throttler.asyncio.sleep",
+        "src.backend.dsl.engine.processors.eip.flow_control.throttler.asyncio.sleep"
     ) as mock_sleep:
         await proc.process(e, ctx)
         mock_sleep.assert_called_once_with(0.1)
@@ -169,12 +168,15 @@ async def test_delay_by_scheduled_time() -> None:
     ctx = AsyncMock()
     e = _ex(body=1)
 
-    with patch(
-        "src.backend.dsl.engine.processors.eip.flow_control.delay.time.time",
-        return_value=500.0,
-    ), patch(
-        "src.backend.dsl.engine.processors.eip.flow_control.throttler.asyncio.sleep",
-    ) as mock_sleep:
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.eip.flow_control.delay.time.time",
+            return_value=500.0,
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.eip.flow_control.throttler.asyncio.sleep"
+        ) as mock_sleep,
+    ):
         await proc.process(e, ctx)
         mock_sleep.assert_called_once_with(500.0)
 
@@ -186,12 +188,15 @@ async def test_delay_no_sleep_when_past() -> None:
     ctx = AsyncMock()
     e = _ex(body=1)
 
-    with patch(
-        "src.backend.dsl.engine.processors.eip.flow_control.delay.time.time",
-        return_value=500.0,
-    ), patch(
-        "src.backend.dsl.engine.processors.eip.flow_control.throttler.asyncio.sleep",
-    ) as mock_sleep:
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.eip.flow_control.delay.time.time",
+            return_value=500.0,
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.eip.flow_control.throttler.asyncio.sleep"
+        ) as mock_sleep,
+    ):
         await proc.process(e, ctx)
         mock_sleep.assert_not_called()
 
@@ -236,15 +241,21 @@ async def test_aggregator_waits_for_batch() -> None:
 
 
 @pytest.mark.asyncio
-async def test_aggregator_flush_expired() -> None:
-    """Просроченные буферы очищаются."""
+async def test_aggregator_evicts_expired() -> None:
+    """Просроченные буферы evict'ятся (НЕ emit).
+
+    WAVE 2 / 2026-08-27: timeout — eviction, не flush. После истечения
+    timeout буфер молча удаляется, инкрементируется ``evicted_batches``,
+    новый буфер стартует с текущего сообщения.
+    """
     proc = AggregatorProcessor(
-        correlation_key=lambda ex: "k1", batch_size=10, timeout_seconds=0.001,
+        correlation_key=lambda ex: "k1", batch_size=10, timeout_seconds=0.001
     )
     ctx = AsyncMock()
     e = _ex(body="a")
     await proc.process(e, ctx)
     assert e.properties.get("aggregated") is False
+    assert proc.evicted_batches == 0  # ещё не evicted
 
     import asyncio
 
@@ -252,15 +263,18 @@ async def test_aggregator_flush_expired() -> None:
 
     e2 = _ex(body="b")
     await proc.process(e2, ctx)
-    # Previous buffer expired, new buffer starts
+    # Previous buffer expired (evicted), new buffer starts
     assert e2.properties.get("aggregated") is False
+    assert proc.evicted_batches == 1  # 1 eviction произошёл
+    # Eviction НЕ emit'ит partial-батч — "b" в новом буфере, "a" потерян
+    assert proc._buffers.get("k1") == ["b"]
 
 
 @pytest.mark.asyncio
 async def test_aggregator_max_keys_eviction() -> None:
     """При превышении _MAX_CORRELATION_KEYS удаляется старый буфер."""
     proc = AggregatorProcessor(
-        correlation_key=lambda ex: ex.meta.exchange_id, batch_size=10,
+        correlation_key=lambda ex: ex.meta.exchange_id, batch_size=10
     )
     ctx = AsyncMock()
     proc._MAX_CORRELATION_KEYS = 2
@@ -386,7 +400,7 @@ async def test_for_each_max_iterations() -> None:
     """Не более max_iterations элементов."""
     dummy = DummyProcessor("res")
     proc = ForEachProcessor(
-        items_path="data.items", processors=[dummy], max_iterations=2,
+        items_path="data.items", processors=[dummy], max_iterations=2
     )
     ctx = AsyncMock()
     e = _ex(body={"data": {"items": [1, 2, 3, 4]}})
