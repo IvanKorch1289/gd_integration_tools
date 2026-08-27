@@ -1166,6 +1166,11 @@ source_paths = [
     "src/backend/core/config/features/__init__.py",
     "src/backend/dsl/builders/base/__init__.py",
     "src/backend/core/resilience/breaker.py",
+    # P3 (cycle 13, production-grade plan): expand mutation testing scope
+    # с 3 → 4 модулей. TenantContext — критичный для multi-tenancy security
+    # (cycle 22 P0-2: ``extract_tenant_id`` через ``auth.metadata``).
+    # Actual path: ``core/tenancy/__init__.py`` (не отдельный context.py).
+    "src/backend/core/tenancy/__init__.py",
 ]
 backup = false
 runner = "pytest"
@@ -1175,6 +1180,7 @@ pytest_add_cli_args_test_selection = [
     "tests/unit/core/config",
     "tests/unit/dsl/builders",
     "tests/unit/core/resilience",
+    "tests/unit/core/tenancy",
 ]
 # Отключаем testkit pytest-плагины: при запуске из mutants/ директория
 # mutants/src/ перекрывает editable-install src через sys.path, и импорт
