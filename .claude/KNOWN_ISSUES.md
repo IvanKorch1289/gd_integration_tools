@@ -1964,3 +1964,29 @@ already-fixed. Цикл фикса указан для traceability:
 falsifiable reference.
 
 Подробный memo: `docs/adr/0277-p0-p3-audit-verification-cycle-292.md`.
+
+---
+
+## Cycle 19 — False Claims Archive (2026-08-27, production-grade plan)
+
+> Создано: Cycle 19 production-grade plan. 12 false claims из
+> предыдущих аудит-отчётов подтверждены как уже-FIXED в master.
+> Не повторять verification для этих пунктов.
+
+| # | Item | Original claim | Verified reality (2026-08-27) |
+|---|---|---|---|
+| 1 | yaml.load без safe_load | HIGH severity (`codegen_settings.py:656`) | ruamel rt-mode safe; AST linter enforces |
+| 2 | fs_facade symlink race | path.resolve() AFTER concat | resolve-first pattern at L147-155 |
+| 3 | InProcessAgentSandbox default | zero isolation | process_pool default + multi-layer gates |
+| 4 | Tool whitelist на workflow_id | wrong target | real tool_name enforcement at L119-129 |
+| 5 | dsl/executor/ blocking I/O | blocking os.walk | directory НЕ СУЩЕСТВУЕТ |
+| 6 | WorkflowBuilder deprecated | marked for removal | canonical API, 4 production callers |
+| 7 | frontend_facade deprecated | legacy wrapper | canonical boundary, 31 importers |
+| 8 | coverage.xml повреждён | corrupt file | valid SQLite+XML; reflects partial run |
+| 9 | dsl/workflow/builder.py deprecated | file exists | refactored to package; canonical at __init__.py:64 |
+| 10 | DSL Spec hot-reload per-step reparse | no caching | SHA-256 hash cache in yaml_watcher.py |
+| 11 | HITL busy-wait polling | asyncio.sleep loop | pure asyncio.Event + Redis pub/sub |
+| 12 | Duplicate MetricsRegistry | infrastructure vs core | legacy removed cycle 29 |
+
+См. полный verified-state отчёт: ``docs/audit/PRINCIPAL_RE_AUDIT_2026-08-27.md``.
+
