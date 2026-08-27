@@ -488,6 +488,115 @@ async def test_real_mask_reversible():
 
 ---
 
+## 9. Workspace isolation (AIWorkspaceManager)
+
+V15 R-V15-4. `AIWorkspaceManager` выдаёт изолированные writable-каталоги
+для AI-агентов с per-tenant quota + TTL cleanup.
+
+### 9.1 Layout
+
+```
+${AI_WORKSPACE}/<tenant>/<session>/<artifact>
+```
+
+Где:
+- `${AI_WORKSPACE}` — корень workspace'ов (configurable через
+  `AIWorkspaceManager(..., root=...)`)
+- `<tenant>` — tenant id
+- `<session>` — UUID4 session_id (per `create_new` call)
+
+### 9.2 Свойства
+
+| Property | Default | Override |
+|----------|---------|----------|
+| TTL | 7 дней (604 800 s) | `AIWorkspaceManager(..., ttl_seconds=...)` |
+| Per-tenant quota | 500 MB | `AIWorkspaceManager(..., quota_bytes=...)` |
+| Cleanup interval | 6 часов | `AIWorkspaceManager(..., cleanup_interval_seconds=...)` |
+| Audit | `emit_ai_workspace` (canonical, S108 W3 TD-004 migration) | n/a |
+
+При превышении quota → `WorkspaceQuotaExceededError`.
+При обращении к expired handle → `WorkspaceTTLExpiredError`.
+
+### 9.3 Регистрация (DI)
+
+`AIWorkspaceManager` регистрируется через svcs-container
+в `src/backend/plugins/composition/ai_safety_setup.py:39-40`:
+
+```python
+def _build_workspace_manager() -> AIWorkspaceManager:
+    """Сконструировать AIWorkspaceManager из settings."""
+    return AIWorkspaceManager(
+        root=ai_workspace_settings.root,
+        ttl_seconds=ai_workspace_settings.ttl_seconds,
+        quota_bytes=ai_workspace_settings.quota_bytes,
+        cleanup_interval_seconds=ai_workspace_settings.cleanup_interval,
+    )
+```
+
+`get_service(AIWorkspaceManager)` из любой точки кода через svcs DI.
+
+### 9.4 Использование в агенте
+
+```python
+from src.backend.core.ai.workspace_manager import (
+    AIWorkspaceManager,
+    WorkspaceHandle,
+)
+
+async def execute_report_tool(ctx: ToolContext) -> Path:
+    wm = get_service(AIWorkspaceManager)
+
+    # 1. Выдать изолированный workspace (per-tenant quota check)
+    handle: WorkspaceHandle = await wm.create_new(
+        tenant=ctx.tenant_id,
+        artifact_hint="daily_report",  # только для логов
+    )
+
+    # 2. Записать артефакт
+    report_path = handle.path / "report.pdf"
+    report_path.write_bytes(pdf_data)
+    wm.add_used_bytes(ctx.tenant_id, len(pdf_data))
+
+    # 3. Cleanup: при выходе из session workspace авто-удаляется
+    #    через cleanup_expired() (TTL=7d по умолчанию)
+
+    return report_path
+```
+
+### 9.5 Production usage (3 места)
+
+- `src/backend/plugins/composition/ai_safety_setup.py:22` — DI registration
+- `src/backend/infrastructure/ai/e2b_sandbox.py:22` — `WorkspaceHandle` для E2B cloud sandbox
+- `src/backend/core/config/features/sprint19_ai.py:103` — feature flag
+
+### 9.6 Audit
+
+Каждое `create_new()` эмитит `ai_workspace.create_new` event через
+canonical `emit_ai_workspace` (S108 W3 — TD-004 migration домена AI).
+Audit-domain: `ai`. Audit-facade import:
+
+```python
+from src.backend.core.audit.facade import emit_ai_workspace
+```
+
+### 9.7 Cleanup-loop
+
+`start_cleanup_loop()` запускает background task, который каждые
+`cleanup_interval_seconds` вызывает `cleanup_expired()` — удаляет
+workspace'ы старше `ttl_seconds`. `shutdown()` останавливает loop.
+
+### 9.8 Capacity planning
+
+| Metric | Per workspace | Per tenant (max) |
+|--------|---------------|------------------|
+| Path depth | 3 levels | 3 levels |
+| Cleanup overhead | O(n) sessions | O(n) × cleanup_interval |
+| Memory (in-process) | ~1KB (WorkspaceHandle dataclass) | quota_bytes (500MB) на disk |
+
+Quota check синхронный в `create_new` (lock-protected) — O(1).
+
+---
+
 ## D-rules (Agent Layer)
 
 - **D156**: `agent_dsl/` directory has 17+ processors (per S170 M3)
