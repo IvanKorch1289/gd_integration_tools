@@ -1164,7 +1164,7 @@ ignore_names = [
 [tool.mutmut]
 source_paths = [
     "src/backend/core/config/features/__init__.py",
-    "src/backend/dsl/builders/base.py",
+    "src/backend/dsl/builders/base/__init__.py",
     "src/backend/core/resilience/breaker.py",
 ]
 backup = false
