@@ -69,6 +69,11 @@ class InvocationRequest:
     ``correlation_id`` — клиентский идентификатор, прокидывается сквозь
     middleware/трейсинг и сохраняется в reply-канале. Не путать с
     ``invocation_id`` (внутренний uuid).
+
+    P0 (cycle 35, production-grade plan): ``principal``/``permissions``
+    прокидываются из auth middleware в ActionCommandSchema.meta.
+    Раньше — anonymous (empty) → Tier-1/2 action handlers теряли auth
+    context. Defaults — backward-compat (пустые значения = anonymous).
     """
 
     action: str
@@ -80,6 +85,8 @@ class InvocationRequest:
     metadata: dict[str, Any] = field(default_factory=dict)
     timeout: float | None = None
     correlation_id: str | None = None
+    principal: str = ""
+    permissions: tuple[str, ...] = ()
 
 
 @dataclass(slots=True)

@@ -35,7 +35,10 @@ from src.backend.core.interfaces.invoker import (
     InvocationStatus,
 )
 from src.backend.core.logging import get_logger
-from src.backend.core.types.invocation_command import ActionCommandSchema
+from src.backend.core.types.invocation_command import (
+    ActionCommandMetaSchema,
+    ActionCommandSchema,
+)
 from src.backend.services.execution.invoker.helpers import _is_async_iterator
 
 logger = get_logger("services.execution.invoker")
@@ -103,7 +106,14 @@ class RunMixin:
     async def _run_silent(self, request: InvocationRequest) -> None:
         try:
             command = ActionCommandSchema(
-                action=request.action, payload=request.payload
+                action=request.action,
+                payload=request.payload,
+                # P0 (cycle 35): пробрасываем principal/permissions из
+                # InvocationRequest (parity с cycle 24 SOAP/DSL fix).
+                meta=ActionCommandMetaSchema(
+                    principal=request.principal,
+                    permissions=list(request.permissions),
+                ),
             )
             await self._dispatch(command, self._build_context(request))
         except Exception as _:
@@ -124,7 +134,13 @@ class RunMixin:
         meta = dict(request.metadata)
         try:
             command = ActionCommandSchema(
-                action=request.action, payload=request.payload
+                action=request.action,
+                payload=request.payload,
+                # P0 (cycle 35): пробрасываем principal/permissions.
+                meta=ActionCommandMetaSchema(
+                    principal=request.principal,
+                    permissions=list(request.permissions),
+                ),
             )
             result = await self._dispatch(command, self._build_context(request))
         except KeyError as exc:

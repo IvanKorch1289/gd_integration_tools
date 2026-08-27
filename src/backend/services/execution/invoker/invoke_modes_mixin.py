@@ -35,7 +35,10 @@ from src.backend.core.interfaces.invoker import (
     InvocationStatus,
 )
 from src.backend.core.logging import get_logger
-from src.backend.core.types.invocation_command import ActionCommandSchema
+from src.backend.core.types.invocation_command import (
+    ActionCommandMetaSchema,
+    ActionCommandSchema,
+)
 from src.backend.core.utils.task_registry import get_task_registry
 
 logger = get_logger("services.execution.invoker")
@@ -67,7 +70,14 @@ class InvokeModesMixin:
     async def _invoke_sync(self, request: InvocationRequest) -> InvocationResponse:
         try:
             command = ActionCommandSchema(
-                action=request.action, payload=request.payload
+                action=request.action,
+                payload=request.payload,
+                # P0 (cycle 35): пробрасываем principal/permissions из
+                # InvocationRequest (parity с cycle 24/34 fix).
+                meta=ActionCommandMetaSchema(
+                    principal=request.principal,
+                    permissions=list(request.permissions),
+                ),
             )
             context = self._build_context(request)
             if request.timeout is not None:
