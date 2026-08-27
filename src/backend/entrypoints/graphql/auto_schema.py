@@ -242,18 +242,28 @@ def auto_register_strawberry_schema(
         return result
 
     try:
+        # S204 retro-audit C-NEW-5: см. schema.py — обе GraphQL-точки
+        # должны требовать auth, иначе executeAction/dsl_execute доступны
+        # любому клиенту.
+        # P0 security (cycle 4, production-grade plan): wire context_getter
+        # so resolvers получают info.context["auth"]. Lazy import — top-level
+        # был бы circular (schema.py импортирует build_auto_strawberry_schema).
+        from importlib import import_module
+
         from fastapi import Depends
         from strawberry.fastapi import GraphQLRouter
 
         from src.backend.core.auth import AuthMethod
         from src.backend.core.auth.auth_selector import require_auth
 
-        # S204 retro-audit C-NEW-5: см. schema.py — обе GraphQL-точки
-        # должны требовать auth, иначе executeAction/dsl_execute доступны
-        # любому клиенту.
+        _graphql_context_getter = import_module(
+            "src.backend.entrypoints.graphql.schema"
+        )._graphql_context_getter
+
         router = GraphQLRouter(
             result.schema,
             path=path,
+            context_getter=_graphql_context_getter,
             dependencies=[
                 Depends(
                     require_auth([AuthMethod.API_KEY, AuthMethod.JWT, AuthMethod.MTLS])

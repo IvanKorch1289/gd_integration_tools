@@ -21,6 +21,7 @@ God-objects refactored: 4/5 done (graphql now).
 """
 
 from types import SimpleNamespace
+from typing import Any
 
 from src.backend.core.api.extensions import (
     Exchange,
@@ -39,6 +40,27 @@ from src.backend.entrypoints.graphql.types import (  # noqa: F401
 )
 
 logger = get_logger(__name__)
+
+
+# P0 security (cycle 4, production-grade plan): move _graphql_context_getter
+# выше ``try``-блока который использует его в GraphQLRouter(...). Это
+# решает ruff F821 (Undefined name) и сохраняет forward-reference в
+# пределах одного модуля (function body resolves at call time).
+async def _graphql_context_getter(request: Any) -> dict[str, Any]:
+    """Strawberry ASGI context getter (Round 87 verbatim).
+
+    Build context dict из FastAPI/Starlette ``request``:
+    ``{"request": request, "auth": request.state.auth}``. Используется
+    Strawberry как ``context_getter`` hook.
+
+    Middleware (AuthRequiredMiddleware) кладёт :class:`AuthContext` в
+    ``request.state.auth``. При отсутствии (anonymous / не-auth route)
+    возвращает ``{"auth": None}`` — fail-closed.
+    """
+    if request is None:
+        return {"request": None, "auth": None}
+    auth = getattr(request.state, "auth", None)
+    return {"request": request, "auth": auth}
 
 
 # S43 W2: graphql_router for app_factory.py:9 broken import (P0).
@@ -60,6 +82,11 @@ try:
         graphql_router = GraphQLRouter(
             _auto.schema,
             path="/graphql",
+            # P0 security (cycle 4, production-grade plan): wire context_getter
+            # so resolvers получают info.context["auth"] (AuthContext из
+            # require_auth middleware). Без этого _principal_from_info возвращает
+            # "" → fail-closed на protected routes для authorized users.
+            context_getter=_graphql_context_getter,
             dependencies=[
                 Depends(
                     require_auth(
@@ -194,7 +221,6 @@ class Mutation:
 # to live inside the 825-LOC god-object schema.py before R8 facade
 # refactor (RE_AUDIT_2026-08-27). Tests in test_schema_auth_propagation.py
 # (19 cases) were skipxfail'd in R12; this commit un-blocks them.
-from typing import Any
 
 
 def _context_getter(info: Any) -> Any:
@@ -244,23 +270,6 @@ def _permissions_from_info(info: Any) -> tuple[str, ...]:
     if auth is None:
         return ()
     return tuple(extract_user_permissions(auth))
-
-
-async def _graphql_context_getter(request: Any) -> dict[str, Any]:
-    """Strawberry ASGI context getter (Round 87 verbatim).
-
-    Build context dict из FastAPI/Starlette ``request``:
-    ``{"request": request, "auth": request.state.auth}``. Используется
-    Strawberry как ``context_getter`` hook.
-
-    Middleware (AuthRequiredMiddleware) кладёт :class:`AuthContext` в
-    ``request.state.auth``. При отсутствии (anonymous / не-auth route)
-    возвращает ``{"auth": None}`` — fail-closed.
-    """
-    if request is None:
-        return {"request": None, "auth": None}
-    auth = getattr(request.state, "auth", None)
-    return {"request": request, "auth": auth}
 
 
 async def _dispatch_dsl(
