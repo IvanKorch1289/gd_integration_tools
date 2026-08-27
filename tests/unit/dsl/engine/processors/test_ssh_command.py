@@ -5,6 +5,11 @@
 - захват stdout, stderr, exit_code
 - поднятие исключения при ненулевом exit_code
 - аутентификацию по ключу
+
+Cycle 16 (P4-B): SshCommandProcessor теперь имеет capability-gate
+``required_capability = "rpa.shell.exec"`` и вызывает ``self.auth_check``
+в ``process()``. Существующие тесты auto-mock auth_check = True через
+``_auth_check_patcher`` fixture (ниже).
 """
 
 from __future__ import annotations
@@ -27,6 +32,19 @@ def _mock_asyncssh() -> MagicMock:
     mock = MagicMock()
     mock.connect.return_value.__aenter__.return_value = AsyncMock()
     return mock
+
+
+@pytest.fixture(autouse=True)
+def _auth_check_patcher(monkeypatch: pytest.MonkeyPatch) -> None:
+    """P4-B (cycle 16): SshCommandProcessor теперь требует capability-gate.
+    Существующие unit tests bypass auth_check (mock возвращает True).
+    Реальные capability-тесты — test_ssh_command_capability.py.
+    """
+    async def fake_auth_check(*args: Any, **kwargs: Any) -> bool:
+        return True
+    monkeypatch.setattr(
+        SshCommandProcessor, "auth_check", fake_auth_check, raising=False
+    )
 
 
 class TestSshCommandProcessor:

@@ -16,7 +16,7 @@ Usage::
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
@@ -48,6 +48,12 @@ __all__ = ("SshCommandProcessor",)
 class SshCommandProcessor(BaseProcessor):
     """Выполняет remote-команду через SSH (asyncssh).
 
+    .. note::
+        P4-B (cycle 16, production-grade plan): добавлены ``required_capability``
+        и ``audit_event`` ClassVar для capability-gate parity с
+        ``TerminalExecProcessor`` (``rpa.system.TerminalExecProcessor``).
+        Defense-in-depth: 3-layer — HTTP role + DSL capability + audit event.
+
     Args:
         host: Адрес SSH-сервера.
         command: Команда для выполнения.
@@ -65,6 +71,10 @@ class SshCommandProcessor(BaseProcessor):
         name: Имя процессора для трейсов/метрик.
 
     """
+
+    # P4-B (cycle 16): capability + audit parity с TerminalExecProcessor.
+    required_capability: ClassVar[str | None] = "rpa.shell.exec"
+    audit_event: ClassVar[str | None] = "rpa.shell.exec"
 
     def __init__(
         self,
@@ -149,11 +159,16 @@ class SshCommandProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет команду на удалённом хосте через SSH и записывает результат в свойства exchange.
 
+        P4-B (cycle 16): ``auth_check`` теперь вызывается (parity с
+        TerminalExecProcessor.process:188) для capability-gate.
+
         Args:
             exchange: Текущий обмен с параметрами подключения.
             context: Контекст выполнения процессора.
 
         """
+        if not await self.auth_check(exchange, action="execute"):
+            return
         import asyncssh
 
         password = self._resolve_password(exchange)
