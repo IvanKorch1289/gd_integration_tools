@@ -35,10 +35,27 @@ class PollingConsumerProcessor(BaseProcessor):
         self._result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Метод process (см. signature)."""
-        from src.backend.schemas.invocation import ActionCommandSchema
+        """Метод process (см. signature).
 
-        command = ActionCommandSchema(action=self._action, payload=self._payload)
+        P0 (cycle 34, production-grade plan): пробрасываем principal/permissions
+        из ExecutionContext в ActionCommandSchema.meta. Раньше DSL-routed
+        actions через ``PollingConsumerProcessor`` получали anonymous
+        principal/permissions → Tier-1/2 actions с permission checks теряли
+        auth context (parity с cycle 24 fix для DispatchActionProcessor).
+        """
+        from src.backend.schemas.invocation import (
+            ActionCommandMetaSchema,
+            ActionCommandSchema,
+        )
+
+        command = ActionCommandSchema(
+            action=self._action,
+            payload=self._payload,
+            meta=ActionCommandMetaSchema(
+                principal=context.principal,
+                permissions=list(context.permissions),
+            ),
+        )
         try:
             result = await context.action_registry.dispatch(command)
         except (KeyError, Exception) as exc:
