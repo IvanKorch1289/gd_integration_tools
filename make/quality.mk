@@ -73,6 +73,23 @@ vulture-gate: check-env ## Run strict dead code gate (CI-blocking)
 	@$(UV_RUN) vulture $(SOURCE_DIR) --min-confidence 80 --config pyproject.toml
 	@$(SUCCESS) "Vulture gate passed!"
 
+# P3 (cycle 13+22, production-grade plan): mutation testing wrapper.
+# Wrapper scripts: tools/run_mutation_tests.sh (high-level) +
+# tools/checks/run_mutmut.py (mutmut 3.x patcher for src. imports) +
+# tools/checks/check_mutmut.py (CI gate, default threshold 55%).
+# Scope: 4 modules (3 baseline + tenancy), см. pyproject.toml [tool.mutmut].
+mutation: check-env ## Run mutation testing suite (S39 W4 baseline)
+	@$(INFO) "Running mutation testing (scope = pyproject.toml [tool.mutmut].source_paths)..."
+	@bash tools/run_mutation_tests.sh
+
+mutation-quick: check-env ## Run mutation testing with --quick mode (single mutant per file)
+	@$(INFO) "Running mutation testing in quick mode..."
+	@bash tools/run_mutation_tests.sh --quick
+
+mutation-gate: check-env ## CI gate: minimum mutation score 55% (configurable via THRESHOLD)
+	@$(INFO) "Running mutation gate..."
+	@THRESHOLD=$${THRESHOLD:-55} python tools/checks/check_mutmut.py --threshold $${THRESHOLD}
+
 check-docstrings: ##@ Quality Check for missing docstrings in public API
 	@$(INFO) "Checking docstring coverage..."
 	@python3 tools/check_docstrings.py $(SOURCE_DIR) $(if $(SUMMARY),--summary,) $(if $(JSON),--json,) $(if $(MAX_ALLOWED),--max-allowed $(MAX_ALLOWED),)

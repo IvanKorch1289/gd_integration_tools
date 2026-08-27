@@ -65,6 +65,7 @@ ERROR := printf '\033[31m%s\033[0m\n'
 	profile-memray profile-memray-flamegraph profile-memray-stats profile-mprof profile-pyspy \
 	deps-check deps-check-strict \
 	secrets-check audit api-fuzz \
+	mutation mutation-quick mutation-gate \
 	pre-commit commit push git-sync \
 	current-version next-version bump \
 	code-lint code-check check-strict check-strict-full \
