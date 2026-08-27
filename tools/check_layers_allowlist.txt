@@ -48,9 +48,9 @@ src/backend/core/security/connector_auth.py	core	src.backend.services.authorizat
 src/backend/core/workflow/__init__.py	core	src.backend.infrastructure.workflow.factory
 src/backend/entrypoints/api/v1/endpoints/processors_catalog.py	entrypoints	src.backend.dsl.builder
 src/backend/entrypoints/api/v1/endpoints/processors_catalog.py	entrypoints	src.backend.dsl.engine.processors
-src/backend/entrypoints/mcp/mcp_server/tools_convert.py	entrypoints	src.backend.dsl.engine.processors.converters
 src/backend/entrypoints/mcp/mcp_server/tools_template.py	entrypoints	src.backend.dsl
 src/backend/entrypoints/mcp/mcp_server/tools_template.py	entrypoints	src.backend.dsl.templates_library
+src/backend/entrypoints/mcp/mcp_server/tools_convert.py	entrypoints	src.backend.dsl.engine.processors.converters
 src/backend/entrypoints/webhook/handler.py	entrypoints	src.backend.dsl.codec.json
 src/backend/entrypoints/webhook/handler.py	entrypoints	src.backend.dsl.engine.processors.scraping
 src/backend/infrastructure/cache/rag/semantic.py	infrastructure	src.backend.services.ai.embedding_providers
@@ -62,7 +62,6 @@ src/backend/infrastructure/scheduler/scheduled_tasks.py	infrastructure	src.backe
 src/backend/infrastructure/workflow/executor/sequential_mixin.py	workflows	src.backend.dsl.engine.exchange
 src/backend/services/execution/action_dispatcher.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/messaging/kafka_facade.py	services	src.backend.infrastructure.observability.mq_trace_propagator
-src/backend/entrypoints/middlewares/circuit_breaker.py	entrypoints	src.backend.infrastructure.observability.metrics
 src/backend/services/ops/webhook_scheduler.py	services	src.backend.dsl.engine.processors.scraping
 src/backend/services/plugins/registries.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.processors

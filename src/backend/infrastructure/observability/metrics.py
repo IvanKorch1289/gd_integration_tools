@@ -10,12 +10,19 @@ D11 (S17 K2-W2 sweep):
 
 Расширенный набор метрик:
     - DSL: processor latency, pipeline executions.
-    - Infrastructure: circuit breakers, connection pools.
+    - Infrastructure: connection pools.
     - Cache: hit ratio, memory usage.
     - Queue: consumer lag, DLQ depth.
     - Express: messages sent/received, delivery latency.
     - AI: token usage, semantic cache hit ratio.
     - Antivirus: scan latency, hash cache hit ratio.
+
+ADR-0279: ``record_circuit_breaker_state`` перенесён в
+:mod:`core.observability.metrics` чтобы ``entrypoints/*`` middleware
+мог эмитить state-метрики без cross-layer violation.
+Регистрация ``_breaker_gauge`` idempotentна — ``metrics_registry``
+singleton shared между core и infrastructure, так что Prometheus видит
+одну ``circuit_breaker_state`` метрику независимо от import order.
 """
 
 from __future__ import annotations
@@ -45,7 +52,6 @@ __all__ = (
     "record_antivirus_scan",
     "record_cache_hit",
     "record_cache_miss",
-    "record_circuit_breaker_state",
     "record_express_command_received",
     "record_express_delivery_latency",
     "record_express_message_sent",
@@ -178,11 +184,6 @@ class PrometheusMetricsMiddleware(ProcessorMiddleware):
 def record_pipeline_execution(route_id: str, status: str) -> None:
     """Инкрементирует счётчик выполнений pipeline по route_id+status."""
     _pipeline_counter.labels(route_id=route_id, status=status).inc()
-
-
-def record_circuit_breaker_state(name: str, state_value: int) -> None:
-    """Устанавливает gauge состояния circuit breaker'а по имени."""
-    _breaker_gauge.labels(name=name).set(state_value)
 
 
 def record_pool_metric(pool_name: str, metric: str, value: float) -> None:

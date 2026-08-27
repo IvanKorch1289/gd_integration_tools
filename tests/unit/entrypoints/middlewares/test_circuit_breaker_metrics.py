@@ -11,6 +11,9 @@ Tests verify:
 - Sliding window path: success emits gauge value=0
 - Metrics function never fails caller (best-effort)
 - Metric labels include route name
+
+ADR-0279: ``record_circuit_breaker_state`` живёт в ``core.observability.metrics``
+(не в infrastructure/observability/metrics) — патчи направлены на новый путь.
 """
 
 from __future__ import annotations
@@ -68,7 +71,7 @@ async def test_registry_path_circuit_open_emits_metric() -> None:
     with patch.object(middleware, "_get_adapter") as mock_adapter:
         mock_adapter.return_value.should_allow.return_value = False
         with patch(
-            "src.backend.infrastructure.observability.metrics.record_circuit_breaker_state",
+            "src.backend.core.observability.metrics.record_circuit_breaker_state",
             recorder,
         ):
             scope = {"type": "http", "path": "/api/v1/test", "method": "GET"}
@@ -104,7 +107,7 @@ async def test_registry_path_success_emits_metric() -> None:
         )
 
         with patch(
-            "src.backend.infrastructure.observability.metrics.record_circuit_breaker_state",
+            "src.backend.core.observability.metrics.record_circuit_breaker_state",
             recorder,
         ):
             scope = {"type": "http", "path": "/api/v1/success", "method": "GET"}
@@ -142,7 +145,7 @@ async def test_sliding_window_circuit_open_emits_metric() -> None:
 
     with patch.object(middleware, "_get_sliding_breaker", return_value=mock_breaker):
         with patch(
-            "src.backend.infrastructure.observability.metrics.record_circuit_breaker_state",
+            "src.backend.core.observability.metrics.record_circuit_breaker_state",
             recorder,
         ):
             scope = {"type": "http", "path": "/api/v1/slow", "method": "GET"}
@@ -178,7 +181,7 @@ async def test_sliding_window_success_emits_metric() -> None:
 
     with patch.object(middleware, "_get_sliding_breaker", return_value=mock_breaker):
         with patch(
-            "src.backend.infrastructure.observability.metrics.record_circuit_breaker_state",
+            "src.backend.core.observability.metrics.record_circuit_breaker_state",
             recorder,
         ):
             scope = {"type": "http", "path": "/api/v1/ok", "method": "GET"}
@@ -206,7 +209,7 @@ async def test_metrics_failure_does_not_break_middleware() -> None:
     with patch.object(middleware, "_get_adapter") as mock_adapter:
         mock_adapter.return_value.should_allow.return_value = False
         with patch(
-            "src.backend.infrastructure.observability.metrics.record_circuit_breaker_state",
+            "src.backend.core.observability.metrics.record_circuit_breaker_state",
             _raise_metric,
         ):
             scope = {"type": "http", "path": "/api/v1/test", "method": "GET"}
@@ -263,7 +266,7 @@ async def test_metric_label_uses_route_path() -> None:
     with patch.object(middleware, "_get_adapter") as mock_adapter:
         mock_adapter.return_value.should_allow.return_value = False
         with patch(
-            "src.backend.infrastructure.observability.metrics.record_circuit_breaker_state",
+            "src.backend.core.observability.metrics.record_circuit_breaker_state",
             recorder,
         ):
             scope = {

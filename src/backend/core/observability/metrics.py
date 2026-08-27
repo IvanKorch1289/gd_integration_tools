@@ -7,6 +7,15 @@ ADR-0207: services/* observability (metrics.py, sla_alerting.py) импорти�
 Migration path:
 - ``from src.backend.core.utils.metrics_registry import ...``
   → ``from src.backend.core.observability.metrics import ...``
+
+ADR-0279: ``record_circuit_breaker_state`` moved here from
+``infrastructure/observability/metrics.py`` so that ``entrypoints/*``
+middleware can emit Prometheus-метрики без cross-layer violation
+(entrypoints → infrastructure запрещён).
+The underlying gauge registration is idempotent: ``MetricsRegistry``
+singleton shared with infrastructure module, so both ``.gauge()`` calls
+with identical name+labels resolve to the same ``prometheus_client``
+instance — нет дубликатов в ``CollectorRegistry``.
 """
 
 from __future__ import annotations
@@ -65,11 +74,42 @@ audit_silent_loss_total = metrics_registry.counter(
     labels=("transport", "reason"),
 )
 
+# ADR-0279: Circuit-breaker gauge, доступный из entrypoints/* слоя.
+# Регистрация идемпотентна: ``metrics_registry`` — singleton, используемый
+# также и в ``infrastructure/observability/metrics.py``, так что оба
+# ``.gauge()``-call'а с одинаковыми name+labels резолвятся в один и тот же
+# ``prometheus_client.Gauge`` — нет ``DuplicatedTimeSeries``.
+# Используется в ``entrypoints.middlewares.circuit_breaker`` для эмиссии
+# state-переходов в Grafana (см. resilience_snapshot.json).
+_breaker_gauge = metrics_registry.gauge(
+    "circuit_breaker_state",
+    "Circuit breaker state (0=closed, 1=half_open, 2=open)",
+    labels=("name",),
+)
+
+
+def record_circuit_breaker_state(name: str, state_value: int) -> None:
+    """Устанавливает gauge состояния circuit breaker'а по имени.
+
+    Доступен из любого слоя (включая ``entrypoints/*``) — ADR-0279.
+    Эквивалентно ``infrastructure/observability/metrics.py::record_circuit_breaker_state``,
+    но не нарушает layering.
+
+    Args:
+        name: Имя breaker'а (route path для per-route CB).
+        state_value: ``0``=closed, ``1``=open, ``2``=half_open
+            (см. ``BreakerState`` enum в ``circuit_breaker`` middleware).
+
+    """
+    _breaker_gauge.labels(name=name).set(state_value)
+
+
 __all__ = (
     "DEFAULT_LABELS",
     "MetricsRegistry",
     "audit_silent_loss_total",
     "dlq_send_failed_total",
     "metrics_registry",
+    "record_circuit_breaker_state",
     "webhook_signature_missing_secret_total",
 )

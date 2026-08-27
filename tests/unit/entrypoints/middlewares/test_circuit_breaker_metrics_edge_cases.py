@@ -10,6 +10,9 @@ additional edge cases not covered in test_circuit_breaker_metrics.py:
 
 Phase 4 staging observability requirement: metrics must work correctly under
 production load patterns (rapid state changes, concurrent requests).
+
+ADR-0279: патчи направлены на ``src.backend.core.observability.metrics``
+(новый путь) вместо infrastructure.
 """
 
 from __future__ import annotations
@@ -61,7 +64,7 @@ async def test_initial_state_emits_closed_metric() -> None:
         mock_adapter.return_value.get_state.return_value = MagicMock(state="closed")
 
         with patch(
-            "src.backend.infrastructure.observability.metrics.record_circuit_breaker_state",
+            "src.backend.core.observability.metrics.record_circuit_breaker_state",
             recorder,
         ):
             scope = {"type": "http", "path": "/api/v1/initial", "method": "GET"}
@@ -97,7 +100,7 @@ async def test_metrics_isolated_per_route_name() -> None:
         mock_adapter.return_value.get_state.return_value = MagicMock(state="open")
 
         with patch(
-            "src.backend.infrastructure.observability.metrics.record_circuit_breaker_state",
+            "src.backend.core.observability.metrics.record_circuit_breaker_state",
             recorder,
         ):
             for route in routes:
@@ -132,7 +135,7 @@ async def test_rapid_state_transitions_emit_metrics() -> None:
         )
 
         with patch(
-            "src.backend.infrastructure.observability.metrics.record_circuit_breaker_state",
+            "src.backend.core.observability.metrics.record_circuit_breaker_state",
             recorder,
         ):
             for state in state_sequence:

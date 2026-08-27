@@ -78,15 +78,19 @@ def _record_breaker_metric(route: str, state: str) -> None:
     Best-effort: if observability module unavailable, silently skip
     (logging-only is acceptable for circuit breaker observability).
 
+    ADR-0279: импортирует из ``core.observability.metrics`` (не из
+    ``infrastructure.observability.metrics``) чтобы избежать cross-layer
+    violation ``entrypoints → infrastructure``. ``metrics_registry`` —
+    singleton, так что gauge регистрируется idempotently и shared с
+    infrastructure-стороной (Prometheus видит одну метрику).
+
     Args:
         route: Route identifier (used as metric label `name`).
         state: Breaker state string (``"closed"`` / ``"open"`` / ``"half_open"``).
 
     """
     try:
-        from src.backend.infrastructure.observability.metrics import (
-            record_circuit_breaker_state,
-        )
+        from src.backend.core.observability.metrics import record_circuit_breaker_state
 
         record_circuit_breaker_state(route, _BREAKER_STATE_TO_METRIC_VALUE.get(state, 0))
     except Exception:
