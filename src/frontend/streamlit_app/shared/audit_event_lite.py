@@ -85,7 +85,7 @@ def emit_streamlit_page_event(
 
     """
     try:
-        from src.backend.core.frontend_facade import emit_audit_safe
+        from src.backend.core.api import emit_audit_safe
 
         details: dict[str, Any] = {"page_key": page_key}
         if target is not None:
