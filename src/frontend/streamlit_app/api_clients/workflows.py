@@ -33,12 +33,19 @@ class WorkflowsClient(BaseAPIClient):
         try:
             result = self._request("GET", "/api/v1/admin/workflows", params=params)
             return result if isinstance(result, list) else []
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as wf_list_exc:
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as wf_list_exc:
             # cycle-9/D-AUDIT-1074: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
             # wrong type.
             import logging
+
             logging.getLogger(__name__).debug(
                 "streamlit_workflows_client.list_failed",
                 extra={"error": str(wf_list_exc)},
@@ -49,9 +56,16 @@ class WorkflowsClient(BaseAPIClient):
         """GET /api/v1/admin/workflows/{id} — header + event log."""
         try:
             return self._request("GET", f"/api/v1/admin/workflows/{instance_id}")
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as wf_get_exc:
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as wf_get_exc:
             # cycle-9/D-AUDIT-1074: см. выше — mirror для get_workflow.
             import logging
+
             logging.getLogger(__name__).debug(
                 "streamlit_workflows_client.get_failed",
                 extra={"instance_id": instance_id, "error": str(wf_get_exc)},
@@ -69,9 +83,16 @@ class WorkflowsClient(BaseAPIClient):
                 params={"after_seq": after_seq, "limit": limit},
             )
             return result if isinstance(result, list) else []
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as wf_events_exc:
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as wf_events_exc:
             # cycle-9/D-AUDIT-1074: см. выше — mirror для events.
             import logging
+
             logging.getLogger(__name__).debug(
                 "streamlit_workflows_client.events_failed",
                 extra={"instance_id": instance_id, "error": str(wf_events_exc)},
@@ -83,9 +104,16 @@ class WorkflowsClient(BaseAPIClient):
         try:
             self._request("POST", f"/api/v1/admin/workflows/{instance_id}/retry")
             return True
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as wf_retry_exc:
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as wf_retry_exc:
             # cycle-9/D-AUDIT-1074: см. выше — mirror для retry.
             import logging
+
             logging.getLogger(__name__).debug(
                 "streamlit_workflows_client.retry_failed",
                 extra={"instance_id": instance_id, "error": str(wf_retry_exc)},
@@ -101,9 +129,16 @@ class WorkflowsClient(BaseAPIClient):
                 json={"reason": reason} if reason else {},
             )
             return True
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as wf_cancel_exc:
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as wf_cancel_exc:
             # cycle-9/D-AUDIT-1074: см. выше — mirror для cancel.
             import logging
+
             logging.getLogger(__name__).debug(
                 "streamlit_workflows_client.cancel_failed",
                 extra={"instance_id": instance_id, "error": str(wf_cancel_exc)},
@@ -115,9 +150,16 @@ class WorkflowsClient(BaseAPIClient):
         try:
             self._request("POST", f"/api/v1/admin/workflows/{instance_id}/resume")
             return True
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as wf_resume_exc:
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as wf_resume_exc:
             # cycle-9/D-AUDIT-1074: см. выше — mirror для resume.
             import logging
+
             logging.getLogger(__name__).debug(
                 "streamlit_workflows_client.resume_failed",
                 extra={"instance_id": instance_id, "error": str(wf_resume_exc)},
@@ -140,12 +182,19 @@ class WorkflowsClient(BaseAPIClient):
                 json=payload,
                 params={"wait": str(wait).lower(), "timeout_s": timeout_s},
             )
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as wf_trigger_exc:
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as wf_trigger_exc:
             # cycle-9/D-AUDIT-1075: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
             # wrong type.
             import logging
+
             logging.getLogger(__name__).debug(
                 "streamlit_workflows_client.trigger_failed",
                 extra={"workflow_name": workflow_name, "error": str(wf_trigger_exc)},
@@ -167,11 +216,44 @@ class WorkflowsClient(BaseAPIClient):
                 params={"limit": limit},
             )
             return result if isinstance(result, list) else []
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as wf_saga_exc:
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as wf_saga_exc:
             # cycle-9/D-AUDIT-1075: см. выше — mirror для saga_history.
             import logging
+
             logging.getLogger(__name__).debug(
                 "streamlit_workflows_client.saga_history_failed",
                 extra={"workflow_id": workflow_id, "error": str(wf_saga_exc)},
+            )
+            return []
+
+    def list_workflow_versioning_ids(self) -> list[str]:
+        """GET /api/v1/admin/workflow-versioning — список всех workflow_id.
+
+        Sprint 33 (S33 W1 HTTP-migration close-out): заменяет
+        ``get_global_registry().all_workflow_ids()`` direct import.
+        Используется для UI-pickers (Saga compensation viewer, workflow
+        versioning viewer, cost estimator).
+        """
+        try:
+            result = self._request("GET", "/api/v1/admin/workflow-versioning")
+            return result if isinstance(result, list) else []
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as wf_ver_exc:
+            import logging
+
+            logging.getLogger(__name__).debug(
+                "streamlit_workflows_client.workflow_versioning_ids_failed",
+                extra={"error": str(wf_ver_exc)},
             )
             return []

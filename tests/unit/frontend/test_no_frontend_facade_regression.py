@@ -82,15 +82,17 @@ _FACADE_IMPORT_RE = re.compile(
 )
 
 # Symbols which have HTTP equivalents (cycle 207-208) — MUST NOT be imported via facade
+# Sprint 33 W1: 2 symbols removed (no actual HTTP endpoint exists):
+#   - list_audit_records (no /audit/capability endpoint registered)
+#   - list_recent_trace_events (no /workflow-audit/events endpoint registered)
+# These stay on facade — Phase C deferred (audit/trace HTTP endpoints not in scope).
 _SYMBOLS_WITH_HTTP_EQUIVALENT = frozenset(
     {
         "get_saga_history",  # /admin/workflows/{id}/saga-history
         "list_workflow_templates",  # /admin/workflow-templates/
         "get_ai_cost_snapshot",  # /admin/ai-costs
-        "get_global_registry",  # /admin/workflow-versioning/{id}/history
-        "list_route_ids",  # /dsl-routes
-        "list_audit_records",  # /audit/capability
-        "list_recent_trace_events",  # /workflow-audit/events
+        "get_global_registry",  # /admin/workflow-versioning/{id}/history (S33 W1)
+        "list_route_ids",  # /dsl-routes (cycle 207-208)
     }
 )
 

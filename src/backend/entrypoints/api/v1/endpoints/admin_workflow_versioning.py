@@ -2,6 +2,7 @@
 
 Endpoints (mount /api/v1/admin/workflow-versioning):
 
+* ``GET /`` — список всех зарегистрированных workflow ids;
 * ``GET /{workflow_id}/history`` — все версии workflow;
 * ``POST /{workflow_id}/pin?semver=X.Y.Z`` — pin указанную как default;
 * ``POST /{workflow_id}/rollback`` — откат на предыдущую default-версию;
@@ -31,6 +32,26 @@ router = APIRouter(
     prefix="/admin/workflow-versioning",
     tags=["admin", "workflow", "versioning"],
 )
+
+
+@router.get(
+    "",
+    response_model=list[str],
+    summary="Список всех зарегистрированных workflow ids",
+    description=(
+        "Возвращает список всех workflow_id, зарегистрированных в "
+        ":class:`WorkflowVersionRegistry`. Используется для UI-pickers "
+        "(Saga compensation viewer, workflow versioning viewer, "
+        "cost estimator). Read-only endpoint."
+    ),
+    tags=["Admin / Workflow Versioning"],
+    responses={200: {"description": "Список workflow_id (может быть пустым)."}},
+)
+async def list_workflow_ids() -> list[str]:
+    """Возвращает все зарегистрированные workflow_id."""
+    from src.backend.core.api.extensions import get_global_registry
+
+    return list(get_global_registry().all_workflow_ids())
 
 
 _SEMVER_RE = re.compile(r"^\d+\.\d+(\.\d+)?$")

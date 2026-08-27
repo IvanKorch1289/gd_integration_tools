@@ -19,7 +19,6 @@
 Все строки UI — на русском языке (CLAUDE.md правило).
 """
 
-
 from __future__ import annotations
 
 from datetime import datetime
@@ -192,10 +191,11 @@ _wf_id_compens = st.text_input("Workflow ID для saga timeline", key="saga_wf_
 
 if _wf_id_compens:
     try:
-        # S6 fix: facade через dsl_portal (R3.10d / S36).
-        from src.backend.core.frontend_facade import get_saga_history
-
-        records = get_saga_history(_wf_id_compens, limit=50)
+        # Sprint 33 W1 (HTTP-migration close-out): use WorkflowsClient
+        # instead of ``get_saga_history`` facade direct import.
+        # HTTP endpoint already exists from cycle 207-208.
+        _client = get_api_client()
+        records = _client.workflows.get_saga_history(_wf_id_compens, limit=50)
     except Exception as exc:
         records = []
         st.warning(f"Saga history недоступна: {exc}")

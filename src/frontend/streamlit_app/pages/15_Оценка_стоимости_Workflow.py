@@ -33,17 +33,17 @@ st.caption(
 client = get_api_client()
 
 try:
-    from src.backend.core.frontend_facade import get_global_registry
-
-    all_ids = sorted(get_global_registry().all_workflow_ids())
-except (ImportError, AttributeError, RuntimeError) as reg_exc:
+    # Sprint 33 W1 (HTTP-migration close-out): use HTTP client instead
+    # of ``get_global_registry().all_workflow_ids()`` direct import.
+    all_ids = sorted(client.workflows.list_workflow_versioning_ids())
+except (ConnectionError, TimeoutError, RuntimeError) as reg_exc:
     # cycle-9/D-AUDIT-1061: narrow exceptions + observability.
-    # ImportError — frontend_facade missing, AttributeError — API
-    # change, RuntimeError — registry unavailable.
+    # ConnectionError/TimeoutError — server unreachable, RuntimeError —
+    # API failure.
     import logging
+
     logging.getLogger(__name__).debug(
-        "streamlit_15_Оценка.registry_load_failed",
-        extra={"error": str(reg_exc)},
+        "streamlit_15_Оценка.registry_load_failed", extra={"error": str(reg_exc)}
     )
     all_ids = []
 
@@ -57,7 +57,10 @@ if workflow_id == "(введите вручную)":
 
 version = st.text_input("Версия (опц.)", value="")
 input_size = st.number_input(
-    "Размер входного payload (байт)", min_value=0, value=config.SEARCH_DEFAULT_LIMIT * 51, step=1024
+    "Размер входного payload (байт)",
+    min_value=0,
+    value=config.SEARCH_DEFAULT_LIMIT * 51,
+    step=1024,
 )
 sample_period_days = st.slider(
     "Исторический период (дни)", min_value=1, max_value=90, value=30
@@ -76,7 +79,9 @@ if st.button("Оценить", type="primary", disabled=not workflow_id):
         if version:
             payload["version"] = version
         resp = requests.post(
-            f"{base_url}/api/v1/admin/workflow-cost/estimate", json=payload, timeout=config.HTTP_TIMEOUT_SEC
+            f"{base_url}/api/v1/admin/workflow-cost/estimate",
+            json=payload,
+            timeout=config.HTTP_TIMEOUT_SEC,
         )
         if resp.status_code != 200:
             st.error(f"HTTP {resp.status_code}: {resp.text}")

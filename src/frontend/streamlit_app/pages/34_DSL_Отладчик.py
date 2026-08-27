@@ -34,9 +34,9 @@ if mode == "Пошаговый Debugger":
     """)
 
     try:
-        from src.backend.core.frontend_facade import list_route_ids
-
-        available_routes = list_route_ids()
+        # Sprint 33 W1 (HTTP-migration close-out): DSLRoutesClient already
+        # has list_dsl_routes() from cycle 207-208 (HTTP-equivalent).
+        available_routes = DSLRoutesClient().list_dsl_routes()
     except Exception as exc:
         st.error(f"Маршруты недоступны: {exc}")
         available_routes = []
@@ -76,10 +76,8 @@ if mode == "Пошаговый Debugger":
                     if trace:
                         for idx, entry in enumerate(trace):
                             with st.expander(
-
-                                    f"{idx + 1}. {entry.get('processor', 'unknown')} — "
-                                    f"{entry.get('duration_ms', 0):.1f}мс"
-
+                                f"{idx + 1}. {entry.get('processor', 'unknown')} — "
+                                f"{entry.get('duration_ms', 0):.1f}мс"
                             ):
                                 st.json(entry)
                     else:
@@ -96,6 +94,8 @@ elif mode == "Аудит Replay":
     limit = st.slider("Записей", 10, 500, 50)
     if st.button("🔄 Обновить"):
         try:
+            # Sprint 33 W1: list_audit_records still uses facade
+            # (НЕ HTTP-equivalent — no audit HTTP endpoint yet, Phase C deferred).
             from src.backend.core.frontend_facade import list_audit_records
 
             records = list_audit_records(count=limit)
@@ -122,6 +122,8 @@ elif mode == "Аудит Replay":
 else:  # Route Trace
     st.markdown("Live-исполнения маршрутов через DSL tracer.")
     try:
+        # Sprint 33 W1: list_recent_trace_events still uses facade
+        # (НЕ HTTP-equivalent — no tracer HTTP endpoint yet, Phase C deferred).
         from src.backend.core.frontend_facade import list_recent_trace_events
 
         events = list_recent_trace_events(limit=100)

@@ -3,8 +3,9 @@
 Глубокий анализ saga compensation: timeline view + per-saga drill-down +
 aggregated stats.
 
-Источник: workflow_audit ClickHouse через
-``get_saga_history`` / ``aggregate_saga_stats``.
+Источник: ``/api/v1/admin/workflows/{id}/saga-history`` (HTTP client,
+Sprint 33 W1 close-out) для drill-down + ClickHouse ``workflow_audit``
+для aggregated stats (``aggregate_saga_stats``).
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ from datetime import UTC, datetime, timedelta
 
 import streamlit as st
 
+from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import (
     metric_row,
     related_pages_footer,
@@ -34,8 +36,14 @@ days_back = col2.slider("Период (дни)", 1, 90, 7)
 workflow_id = col3.text_input("ID Workflow (drill-down)", value="")
 
 
+_client = get_api_client()
+
+
 @st.cache_data(ttl=60)
 def _fetch_stats(tenant: str, days: int) -> dict:
+    # Sprint 33 W1 (HTTP-migration close-out): aggregate_saga_stats
+    # still uses facade (НЕ HTTP-equivalent — ClickHouse aggregate,
+    # no HTTP endpoint yet). Kept on facade intentionally.
     from src.backend.core.frontend_facade import get_saga_stats as aggregate_saga_stats
 
     to_dt = datetime.now(UTC)
@@ -47,32 +55,25 @@ def _fetch_stats(tenant: str, days: int) -> dict:
 
 @st.cache_data(ttl=60)
 def _fetch_history(wf_id: str) -> list:
-    from src.backend.core.frontend_facade import get_saga_history
-
+    # Sprint 33 W1 (HTTP-migration close-out): use WorkflowsClient
+    # instead of ``get_saga_history`` facade direct import. HTTP
+    # endpoint already exists from cycle 207-208.
     if not wf_id:
         return []
-    records = asyncio.run(get_saga_history(wf_id, limit=100))
-    return [
-        {
-            "event_type": r.event_type,
-            "created_at": r.created_at.isoformat(),
-            "tenant_id": r.tenant_id,
-            "payload": r.payload,
-            "duration_ms": r.duration_ms,
-        }
-        for r in records
-    ]
+    return _client.workflows.get_saga_history(wf_id, limit=100)
 
 
 st.subheader("Сводная статистика")
 try:
     stats = _fetch_stats(tenant_id, days_back)
-    metric_row([
-        ("Всего saga (рассчитано)", stats["total_sagas"]),
-        ("Успешно", stats["succeeded"]),
-        ("С ошибкой", stats["failed"]),
-        ("Средняя длительность (мс)", f"{stats['avg_duration_ms']:.0f}"),
-    ])
+    metric_row(
+        [
+            ("Всего saga (рассчитано)", stats["total_sagas"]),
+            ("Успешно", stats["succeeded"]),
+            ("С ошибкой", stats["failed"]),
+            ("Средняя длительность (мс)", f"{stats['avg_duration_ms']:.0f}"),
+        ]
+    )
 except Exception as exc:
     st.warning(f"Не удалось загрузить stats: {exc}")
 

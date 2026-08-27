@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import streamlit as st
 
+from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.config import get_api_base_url
 from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
@@ -26,21 +27,25 @@ st.caption(
 )
 
 
-try:
-    from src.backend.core.frontend_facade import get_global_registry
+client = get_api_client()
 
-    registry = get_global_registry()
-    all_ids = sorted(registry.all_workflow_ids())
-except Exception as exc:
+try:
+    # Sprint 33 W1 (HTTP-migration close-out): use HTTP client instead
+    # of ``get_global_registry()`` direct import.
+    all_ids = sorted(client.workflows.list_workflow_versioning_ids())
+except (ConnectionError, TimeoutError, RuntimeError) as reg_exc:
     all_ids = []
-    st.warning(f"Registry недоступен: {exc}")
+    st.warning(f"Registry недоступен: {reg_exc}")
 
 
 if not all_ids:
     st.info("Реестр пуст. Зарегистрируйте workflow через @workflow_versioned('X.Y.Z').")
 else:
     selected = st.selectbox("ID Воркфлоу", all_ids)
-    history = registry.history(selected)
+    history = (
+        client._request("GET", f"/api/v1/admin/workflow-versioning/{selected}/history")
+        or []
+    )
 
     st.subheader(f"История {selected!r}")
     if not history:
