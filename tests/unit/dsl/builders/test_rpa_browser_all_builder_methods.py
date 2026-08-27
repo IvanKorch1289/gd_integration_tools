@@ -71,6 +71,33 @@ class TestRpaBrowserBuilderMethods:
         result = builder.rpa_screenshot(full_page=True, path="/tmp/x.png")
         assert result is builder
 
+    def test_rpa_screenshot_default_property_namespace(
+        self, builder: RouteBuilder
+    ) -> None:
+        """Cycle 29: default property namespace = ``rpa.screenshot`` (NOT ``screenshot``).
+
+        Regression: cycle 29 migrated rpa.screenshot() от web.ScreenshotProcessor
+        (default ``output_property='screenshot'``) к rpa_browser.ScreenshotProcessor
+        (default ``to='property:rpa.screenshot'``). Downstream routes,
+        читающие ``exchange.properties.get("screenshot")``, должны использовать
+        новый ключ ``"rpa.screenshot"`` или передавать ``to="property:screenshot"`` явно.
+        """
+        # Verify the default property namespace is rpa.screenshot (NOT screenshot)
+        from src.backend.dsl.engine.processors.rpa_browser import (
+            ScreenshotProcessor as _SP,
+        )
+
+        proc = _SP()  # default constructor
+        assert proc._to == "property:rpa.screenshot", (
+            f"Default 'to' should be 'property:rpa.screenshot' (cycle 29), "
+            f"got {proc._to!r}. "
+            f"Downstream code reading exchange.properties.get('screenshot') will break."
+        )
+
+        # Verify explicit override works (backward-compat path)
+        proc_legacy = _SP(to="property:screenshot")
+        assert proc_legacy._to == "property:screenshot"
+
     def test_chaining_rpa_methods(self, builder: RouteBuilder) -> None:
         """5 методов chainable друг за другом."""
         result = (
