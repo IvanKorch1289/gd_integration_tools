@@ -8,7 +8,10 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry import processor
-from src.backend.schemas.invocation import ActionCommandSchema
+from src.backend.schemas.invocation import (
+    ActionCommandMetaSchema,
+    ActionCommandSchema,
+)
 
 __all__ = (
     "DispatchActionProcessor",
@@ -100,13 +103,30 @@ class DispatchActionProcessor(BaseProcessor):
         self.result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, raises exceptions для error handling pipeline."""
+        """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, raises exceptions для error handling pipeline.
+
+        P0 (cycle 24, production-grade plan): пробрасываем principal/permissions
+        из ExecutionContext в ActionCommandSchema.meta. Раньше DSL-routed actions
+        получали anonymous principal/permissions → Tier-1/2 actions с permission
+        checks теряли auth context.
+
+        ``principal``/``permissions`` — fields на ``ActionCommandMetaSchema``
+        (см. core/types/invocation_command.py:105-115). Конструируем meta
+        явно чтобы избежать ``extra='ignore'`` silent-drop.
+        """
         if self.payload_factory is not None:
             payload = self.payload_factory(exchange)
         else:
             body = exchange.in_message.body
             payload = body if isinstance(body, dict) else {}
-        command = ActionCommandSchema(action=self.action, payload=payload)
+        command = ActionCommandSchema(
+            action=self.action,
+            payload=payload,
+            meta=ActionCommandMetaSchema(
+                principal=context.principal,
+                permissions=list(context.permissions),
+            ),
+        )
         result = await context.action_registry.dispatch(command)
         exchange.set_property(self.result_property, result)
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
