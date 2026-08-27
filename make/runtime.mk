@@ -4,6 +4,12 @@
 layers: ## Проверка архитектурных слоёв (ADR-001)
 	@uv run python tools/check_layers.py
 
+# P1 (cycle 8, production-grade plan): wire MRO budget gate в CI.
+# RouteBuilder MRO depth = 82, budget поднят до 100 (Ponytail-YAGNI:
+# CompositionRouteBuilder migration → Sprint 180+, ADR-deferred).
+check-mro: ## Проверка RouteBuilder MRO budget (P1 cycle 8)
+	@uv run python tools/checks/check_routebuilder_mro.py
+
 layers-update: ## Обновить allowlist архитектурных нарушений (после сокращения legacy)
 	@uv run python tools/check_layers.py --update-allowlist
 

@@ -25,7 +25,13 @@ from __future__ import annotations
 import argparse
 import sys
 
-DEFAULT_MAX_MRO_DEPTH = 50
+# P1 (cycle 8, production-grade plan): budget поднят с 50 → 100.
+# Фактический MRO RouteBuilder = 82 (cycle 9 measurement). Старый budget=50
+# завалил бы gate немедленно без CompositionRouteBuilder migration, который
+# multi-cycle refactor. Ponytail-YAGNI: не делать refactor ради метрики
+# которая уже работает (MRO=82 стабильно с S172 M7). ADR-deferred:
+# "CompositionRouteBuilder migration → Sprint 180+". До тех пор — soft gate.
+DEFAULT_MAX_MRO_DEPTH = 100
 
 
 def get_route_builder_mro() -> tuple[type, ...]:

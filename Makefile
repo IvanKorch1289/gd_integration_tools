@@ -72,7 +72,7 @@ ERROR := printf '\033[31m%s\033[0m\n'
 	docker-build docker-run docker-stop \
 	tag all \
 	docs-clean docs-rebuild docs \
-	layers layers-update config-audit \
+	layers layers-update config-audit check-mro \
 	config-new config-apply config-extract \
 	new-service new-repository codegen-extract \
 	import-swagger import-postman import-wsdl \
