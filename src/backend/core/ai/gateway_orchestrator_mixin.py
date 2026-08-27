@@ -20,8 +20,11 @@ policy resolution (step 1.5, S168 W9 P0-1 fix) и после prompt render
 (step 5, S36-W5 P0-1). Обе делали одно и то же — привели к
 единому helper ``_enforce_tool_policy_once()``, который вызывается
 один раз между capability check (step 2) и input sanitizers (step 3).
-Семантика identical: ``enforced_name = request.tool_name or request.workflow_id``,
-``policy.tools.whitelist/blacklist`` — backed by ``tools_policy.enforce_tool_policy``.
+P0 (cycle 30 + cycle 4 production-grade plan): ``enforce_tool_policy``
+принимает ``request.tool_name`` (mandatory), НЕ ``request.workflow_id``
+fallback — workflow_id НЕ используется для policy target (audit fix
+от cycle 30 P0-1, см. ``_enforce_tool_policy_once`` body). ``policy.tools
+.whitelist/blacklist`` — backed by ``tools_policy.enforce_tool_policy``.
 
 S172 M4 (ARC-007): token budget enforcement integration. Helper
 ``_enforce_token_budget_once()`` резервирует estimated tokens через

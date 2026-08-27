@@ -93,7 +93,8 @@ async def publish_hitl_resolved(
     except Exception as exc:
         logger.warning(
             "hitl.pubsub.publish_failed: channel=%s error=%s "
-            "(polling waiter continues to work, this is additive only)",
+            "(push waiter — event-driven wakeup — continues to work, "
+            "this is additive only; см. Cycle 2 P2-D audit)",
             channel,
             exc,
         )
