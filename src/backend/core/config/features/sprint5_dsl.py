@@ -222,9 +222,11 @@ class Sprint5DSLFlags(BaseSettings):
         default=True,
         title="K3 S5 W5: CDC Postgres logical replication (psycopg3+pgoutput)",
         description=(
-            "K3 Sprint 5 Wave 5. Owner: K3 DSL. ETA: S5-W5. "
+            "K3 Sprint 5 Wave 5. Owner: K3 DSL. "
             "Активирует CdcPostgresLogicalSource + RouteBuilder .from_cdc(). "
-            "default-OFF до создания replication-slot и smoke-теста."
+            "default=ON (P4-D cycle 17 reconciliation). Требует pre-provisioned "
+            "replication slot + publication в postgres (иначе runtime error "
+            "от CDCSource). mode='full' = marker-only (см. P4-D doc fix)."
         ),
     )
 

@@ -239,13 +239,26 @@ class CdcPostgresLogicalSource:
         return await self._inner.health(mode=mode)
 
     async def _emit_snapshot_marker(self, on_event: EventCallback) -> None:
-        """В режиме ``full`` эмитим первое событие-маркер начала snapshot."""
+        """В режиме ``full`` эмитим первое событие-маркер начала snapshot.
+
+        P4-D (cycle 17, production-grade plan): **mode='full' = marker-only**.
+        Реальный row dump (``SELECT * FROM table`` + emit per row + e2e test)
+        НЕ реализован — потребитель должен сам прочитать pre-existing rows
+        через standalone query до запуска CDC tail.
+
+        Реальный dump deferred в Sprint 180+ (требует SELECT + emit logic
+        + integration test против live postgres, см. Cycle 14 scaffold).
+        """
         await on_event(
             SourceEvent(
                 source_id=self.source_id,
                 kind=self.kind,
                 payload={"event": "snapshot_started", "table": self.table},
                 event_time=datetime.now(UTC),
-                metadata={"slot": self.slot_name, "mode": "full"},
+                metadata={
+                    "slot": self.slot_name,
+                    "mode": "full",
+                    "snapshot_dump": False,  # marker-only (см. docstring)
+                },
             )
         )
