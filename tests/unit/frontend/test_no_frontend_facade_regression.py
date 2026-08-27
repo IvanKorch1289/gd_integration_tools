@@ -54,6 +54,24 @@ _FORBIDDEN_FACADE_FILES = (
     "src/frontend/streamlit_app/pages/34_DSL_Отладчик.py",
     # HTTP migration в admin.py (добавлен list_workflow_templates в cycle 208)
     "src/frontend/streamlit_app/api_clients/admin.py",
+    # NS-3 (cycle 32, production-grade plan): core-only symbols migrated
+    # to ``src.backend.core.api``. Remaining 17 dsl_portal-файлов stay on
+    # facade (YAGNI/ponytail — layer boundary frontend → services).
+    "src/frontend/streamlit_app/app.py",
+    "src/frontend/streamlit_app/pages/00_Вход.py",
+    "src/frontend/streamlit_app/pages/10_Заказы.py",
+    "src/frontend/streamlit_app/pages/_groups/schema/registry_tab.py",
+    "src/frontend/streamlit_app/pages/52_Устойчивость.py",
+    "src/frontend/streamlit_app/pages/54_Replay_DLQ.py",
+    "src/frontend/streamlit_app/pages/55_Монитор_пула.py",
+    "src/frontend/streamlit_app/pages/58_Шина_действий.py",
+    "src/frontend/streamlit_app/pages/66_Логи_Воркфлоу.py",
+    "src/frontend/streamlit_app/api_clients/k4.py",
+    "src/frontend/streamlit_app/pages/43_Логи_в_реальном_времени.py",
+    "src/frontend/streamlit_app/pages/36_Экспресс_боты.py",
+    "src/frontend/streamlit_app/pages/_groups/replay/helpers.py",
+    # NOT included: ``_groups/schema/import_tab.py`` uses dsl_portal
+    # ImportSource/ImportSourceKind/get_import_service — stays on facade.
 )
 
 # Pattern: ``from src.backend.core.frontend_facade import ...``
@@ -64,15 +82,17 @@ _FACADE_IMPORT_RE = re.compile(
 )
 
 # Symbols which have HTTP equivalents (cycle 207-208) — MUST NOT be imported via facade
-_SYMBOLS_WITH_HTTP_EQUIVALENT = frozenset({
-    "get_saga_history",  # /admin/workflows/{id}/saga-history
-    "list_workflow_templates",  # /admin/workflow-templates/
-    "get_ai_cost_snapshot",  # /admin/ai-costs
-    "get_global_registry",  # /admin/workflow-versioning/{id}/history
-    "list_route_ids",  # /dsl-routes
-    "list_audit_records",  # /audit/capability
-    "list_recent_trace_events",  # /workflow-audit/events
-})
+_SYMBOLS_WITH_HTTP_EQUIVALENT = frozenset(
+    {
+        "get_saga_history",  # /admin/workflows/{id}/saga-history
+        "list_workflow_templates",  # /admin/workflow-templates/
+        "get_ai_cost_snapshot",  # /admin/ai-costs
+        "get_global_registry",  # /admin/workflow-versioning/{id}/history
+        "list_route_ids",  # /dsl-routes
+        "list_audit_records",  # /audit/capability
+        "list_recent_trace_events",  # /workflow-audit/events
+    }
+)
 
 
 def _check_file_no_facade_import(rel_path: str) -> str | None:
@@ -102,9 +122,7 @@ def _check_file_no_facade_import(rel_path: str) -> str | None:
     for match in _FACADE_IMPORT_RE.finditer(clean_content):
         imported_names_str = match.group(2)
         # Парсим импортируемые имена (comma-separated)
-        imported_names = [
-            n.strip() for n in imported_names_str.split(",") if n.strip()
-        ]
+        imported_names = [n.strip() for n in imported_names_str.split(",") if n.strip()]
         # Проверяем только символы с HTTP equivalents
         forbidden_imports = [
             n for n in imported_names if n in _SYMBOLS_WITH_HTTP_EQUIVALENT
@@ -139,20 +157,22 @@ def test_no_frontend_facade_imports_in_migrated_files() -> None:
 
     assert not violations, (
         "Frontend facade re-imports HTTP-equivalent symbols "
-        "(regression of cycle 207-208 migration):\n\n"
-        + "\n\n".join(violations)
+        "(regression of cycle 207-208 migration):\n\n" + "\n\n".join(violations)
     )
 
 
 def test_total_migrated_files_count() -> None:
-    """Sanity: 10 файлов в forbidden list (HTTP migration only).
+    """Sanity: forbidden list покрывает HTTP + core-only migrations.
 
-    NOTE: 3 inlined files исключены — cycle 209 inline был re-вёртнут
-    commit'ом 5df08e40. Текущий state: 10 HTTP + 3 facade (reverted) + 4 intentional.
+    NS-3 (cycle 32): +13 core-only файлов мигрированы на ``core.api``
+    (1 dsl_portal file — ``import_tab.py`` — excluded: stays on facade
+    with documented-intentional comment).
+    Итого: 10 HTTP (cycle 207-208) + 13 core-only (cycle 32) = 23 файла.
     """
-    # 10 HTTP migration (cycle 207-208)
-    assert len(_FORBIDDEN_FACADE_FILES) == 10, (
-        f"Expected 10 forbidden files, got {len(_FORBIDDEN_FACADE_FILES)}. "
+    # 10 HTTP (cycle 207-208) + 13 core-only (cycle 32 NS-3) = 23
+    assert len(_FORBIDDEN_FACADE_FILES) == 23, (
+        f"Expected 23 forbidden files (10 HTTP + 13 core-only), "
+        f"got {len(_FORBIDDEN_FACADE_FILES)}. "
         f"Update if migration count changed."
     )
 
@@ -178,9 +198,7 @@ def test_documented_intentional_files_have_facade_docstring() -> None:
             continue
         content = path.read_text(encoding="utf-8")
         # Ищем комментарий-обоснование (intentional / DEEP_AUDIT / R3.10d / M7)
-        if not re.search(
-            r"(intentional|DEEP_AUDIT|R3\.10d|M7)", content,
-        ):
+        if not re.search(r"(intentional|DEEP_AUDIT|R3\.10d|M7)", content):
             raise AssertionError(
                 f"{rel_path} uses frontend_facade but lacks "
                 f"documented-intentional comment. "

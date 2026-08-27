@@ -106,7 +106,7 @@ def _render_schema_tab(
 def render_registry_tab() -> None:
     """Render Schema Registry tab content (6 sub-tabs for schema types)."""
     try:
-        from src.backend.core.frontend_facade import feature_flags as _ff
+        from src.backend.core.api import feature_flags as _ff
 
         _FLAG_ENABLED = _ff.frontend_schema_registry_ui
     except (ImportError, AttributeError, RuntimeError):

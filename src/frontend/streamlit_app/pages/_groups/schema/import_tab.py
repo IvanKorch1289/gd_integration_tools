@@ -1,6 +1,12 @@
 """Import Schema tab — extracted from pages/62_Админ_схем.py (S173).
 
 Загружает OpenAPI / Postman / WSDL через ImportGateway → ConnectorSpec.
+
+NS-3 (cycle 32, production-grade plan): DEEP_AUDIT_R3.10d — frontend ≠
+extension, facade allowed. Этот файл использует ``dsl_portal``
+``ImportSource``/``ImportSourceKind``/``get_import_service`` — фронтенд-фасад
+для services.dsl_portal остаётся (YAGNI/ponytail решение: 17 dsl_portal-файлов
+не мигрируем на core.api чтобы не ломать layer boundary).
 """
 
 from __future__ import annotations

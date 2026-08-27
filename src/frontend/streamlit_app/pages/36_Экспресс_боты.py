@@ -26,7 +26,7 @@ setup_page()
 st.header(":speech_balloon: Экспресс-боты")
 
 try:
-    from src.backend.core.frontend_facade import express_settings
+    from src.backend.core.api import express_settings
 except Exception as exc:
     st.error(f"Не удалось загрузить настройки Express: {exc}")
     st.stop()
@@ -93,7 +93,7 @@ with tab_send:
                 st.error("Заполните chat_id и текст сообщения.")
             else:
                 try:
-                    from src.backend.core.frontend_facade import (
+                    from src.backend.core.api import (
                         get_express_bot_client_factory_provider,
                         get_express_botx_message_class_provider,
                     )

@@ -237,7 +237,7 @@ def _emit_login_submit_event(*, outcome: str, method: str) -> None:
 
     """
     try:
-        from src.backend.core.frontend_facade import emit_audit_safe
+        from src.backend.core.api import emit_audit_safe
 
         emit_audit_safe(
             event="frontend.auth.login_submit",

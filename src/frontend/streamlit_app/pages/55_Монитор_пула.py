@@ -37,7 +37,7 @@ st.header("Монитор пулов")
 # Feature-flag guard
 # ---------------------------------------------------------------------------
 try:
-    from src.backend.core.frontend_facade import feature_flags as _ff
+    from src.backend.core.api import feature_flags as _ff
 
     _flag_enabled: bool = bool(getattr(_ff, "pool_monitor_enabled", False))
 except (ImportError, AttributeError, RuntimeError):
