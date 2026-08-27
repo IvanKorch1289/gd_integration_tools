@@ -143,6 +143,11 @@ class DispatchContext:
     source: TransportName = "internal"
     trace_parent: str | None = None
     attributes: Mapping[str, Any] = field(default_factory=dict)
+    # P0 (cycle 38, production-grade plan, parity с cycle 24/34/35):
+    # principal/permissions для Tier-1/2 actions с permission checks.
+    # Defaults — backward-compat (пустые = anonymous).
+    principal: str = ""
+    permissions: tuple[str, ...] = ()
 
 
 # ---------------------------------------------------------------------- #

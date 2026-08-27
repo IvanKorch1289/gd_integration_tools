@@ -78,7 +78,7 @@ from src.backend.dsl.commands.action_registry import (  # noqa: E402  # S44 W38
     ActionHandlerRegistry,
     action_handler_registry,
 )
-from src.backend.schemas.invocation import ActionCommandSchema
+from src.backend.schemas.invocation import ActionCommandMetaSchema, ActionCommandSchema
 
 __all__ = ("DefaultActionDispatcher", "get_action_dispatcher")
 
@@ -242,7 +242,16 @@ class DefaultActionDispatcher(ActionDispatcher, ActionGatewayDispatcher):
         self, action: str, payload: Mapping[str, Any], context: DispatchContext
     ) -> ActionResult:
         """Терминальный обработчик: вызов реестра + маппинг в ActionResult."""
-        command = ActionCommandSchema(action=action, payload=dict(payload))
+        command = ActionCommandSchema(
+            action=action,
+            payload=dict(payload),
+            # P0 (cycle 38): пробрасываем principal/permissions из DispatchContext
+            # в ActionCommandSchema.meta (parity с cycle 24/34/35).
+            meta=ActionCommandMetaSchema(
+                principal=context.principal,
+                permissions=list(context.permissions),
+            ),
+        )
         try:
             data = await self._registry.dispatch(command)
         except KeyError:
