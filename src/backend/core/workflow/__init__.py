@@ -7,9 +7,9 @@ Wave C поставляет только Protocol + Pydantic-модели + in-m
 Конкретные impl'ы (`TemporalWorkflowBackend`, `PgRunnerWorkflowBackend`)
 — Wave D, в `infrastructure/workflow/`.
 
-Sprint 35 W1 (ADR-0282 Phase B): removed \`create_workflow_backend\` lazy
-re-export (single caller \`admin_workflow_versioning.py:208\` migrated
-to direct \`infrastructure.workflow.factory\` import).
+Sprint 35 W1 (ADR-0282 Phase B): removed ``create_workflow_backend`` lazy
+re-export (single caller ``admin_workflow_versioning.py:208`` migrated
+to direct ``infrastructure.workflow.factory`` import).
 """
 
 from __future__ import annotations as annotations
