@@ -11,6 +11,7 @@ import json
 
 import streamlit as st
 
+from src.frontend.streamlit_app.api_clients.audit import AuditClient
 from src.frontend.streamlit_app.api_clients.dsl_routes import DSLRoutesClient
 from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
@@ -94,11 +95,10 @@ elif mode == "Аудит Replay":
     limit = st.slider("Записей", 10, 500, 50)
     if st.button("🔄 Обновить"):
         try:
-            # Sprint 33 W1: list_audit_records still uses facade
-            # (НЕ HTTP-equivalent — no audit HTTP endpoint yet, Phase C deferred).
-            from src.backend.core.frontend_facade import list_audit_records
-
-            records = list_audit_records(count=limit)
+            # Sprint 34 W1: AuditClient.list_records() — S34 Phase C close-out.
+            # Replaces ``list_audit_records`` facade direct import.
+            # HTTP endpoint: ``GET /api/v1/admin/audit/capability``.
+            records = AuditClient().list_records(count=limit)
             if not records:
                 st.info("Нет записей аудита")
             else:

@@ -69,6 +69,9 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.admin_tenants import (
         router as admin_tenants_router,
     )
+    from src.backend.entrypoints.api.v1.endpoints.admin_audit_replay import (
+        router as admin_audit_replay_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.admin_workflow_audit import (
         router as admin_workflow_audit_router,
     )
@@ -211,6 +214,10 @@ def get_v1_routers() -> APIRouter:
     # S12 K1 W1: workflow_audit inventory + events query.
     api_router_v1.include_router(
         admin_workflow_audit_router, tags=["Admin · Workflow Audit"]
+    )
+    # S34 W1: audit-replay records (Phase C HTTP-migration close-out).
+    api_router_v1.include_router(
+        admin_audit_replay_router, tags=["Admin · Audit Replay"]
     )
     # S12 K3 W2 + K5 W3: cron management (validate / schedule / dashboard).
     api_router_v1.include_router(admin_cron_router, tags=["Admin · Scheduler"])

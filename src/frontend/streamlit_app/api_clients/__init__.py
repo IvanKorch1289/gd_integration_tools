@@ -14,6 +14,7 @@ Re-exports ниже для удобства (`from .api_clients import MetricsCl
 from __future__ import annotations
 
 from src.frontend.streamlit_app.api_clients.admin import AdminClient
+from src.frontend.streamlit_app.api_clients.audit import AuditClient
 from src.frontend.streamlit_app.api_clients.base import BaseAPIClient, get_base_client
 from src.frontend.streamlit_app.api_clients.cached import (
     cached_get_health,
@@ -44,6 +45,7 @@ __all__ = (
     "get_api_client",
     "K4APIClient",
     "AdminClient",
+    "AuditClient",
     "RAGClient",
     "MetricsClient",
     "TenantsClient",
