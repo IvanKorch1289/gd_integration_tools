@@ -27,6 +27,8 @@ class TestWorkflowPublicApi:
             "WorkflowHandle",
             "WorkflowResult",
             "WorkflowStatus",
-            # S171 C1: lazy __getattr__ для create_workflow_backend (layer fix)
-            "create_workflow_backend",
+            # S35 W1 (ADR-0282 Phase B): removed ``create_workflow_backend``
+            # lazy re-export (single caller migrated to direct
+            # ``infrastructure.workflow.factory`` import). See:
+            # src/backend/core/workflow/__init__.py:11
         }

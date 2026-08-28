@@ -22,31 +22,34 @@ from __future__ import annotations
 
 
 def test_repos_files_mapping_points_to_extension() -> None:
-    """``repos.files`` → ``extensions.core_entities.files.repositories.files``.
+    """``repos.files`` → ``src.backend.infrastructure.repositories.files``.
 
-    Pre-NEW-1b указывало на несуществующий ``src.backend.infrastructure.repositories.files``
-    (ModuleNotFoundError при resolve_module).
+    Sprint 37 W1 (ADR-0282 Phase B Item 5): extensions/ → infrastructure/
+    migration завершена. ``repos.files`` указывает на canonical
+    ``src.backend.infrastructure.repositories.files``.
     """
     from src.backend.core.di import module_registry
 
     target = module_registry.INFRA_MODULES.get("repos.files")
-    assert target == "extensions.core_entities.files.repositories.files", (
-        f"NEW-1b fix regressed: repos.files → {target!r}, "
-        f"expected 'extensions.core_entities.files.repositories.files'"
+    assert target == "src.backend.infrastructure.repositories.files", (
+        f"repos.files → {target!r}, "
+        f"expected 'src.backend.infrastructure.repositories.files'"
     )
 
 
 def test_repos_orders_mapping_points_to_extension() -> None:
-    """``repos.orders`` → ``extensions.core_entities.orders.repositories.orders``.
+    """``repos.orders`` → ``src.backend.infrastructure.repositories.orders``.
 
-    Pre-NEW-1b указывало на несуществующий ``src.backend.infrastructure.repositories.orders``.
+    Sprint 37 W1 (ADR-0282 Phase B Item 5): extensions/ → infrastructure/
+    migration завершена. ``repos.orders`` указывает на canonical
+    ``src.backend.infrastructure.repositories.orders``.
     """
     from src.backend.core.di import module_registry
 
     target = module_registry.INFRA_MODULES.get("repos.orders")
-    assert target == "extensions.core_entities.orders.repositories.orders", (
-        f"NEW-1b fix regressed: repos.orders → {target!r}, "
-        f"expected 'extensions.core_entities.orders.repositories.orders'"
+    assert target == "src.backend.infrastructure.repositories.orders", (
+        f"repos.orders → {target!r}, "
+        f"expected 'src.backend.infrastructure.repositories.orders'"
     )
 
 
