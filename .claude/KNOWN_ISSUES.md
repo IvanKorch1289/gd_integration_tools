@@ -1990,3 +1990,37 @@ falsifiable reference.
 
 См. полный verified-state отчёт: ``docs/audit/PRINCIPAL_RE_AUDIT_2026-08-27.md``.
 
+
+---
+
+## Cycle 42 — Principal/Permissions Propagation Coverage (2026-08-27, production-grade plan)
+
+> Создано: Cycle 43 (Phase 5 Docsync). 14 cycles production-grade plan
+> (cycles 4, 5, 6, 7, 24, 26, 29, 34, 35, 38, 39, 40, 41, 42) закрыли
+> `principal/permissions` propagation gaps в **11+ code paths**:
+
+**User-context paths (5)**:
+- cycle 4: GraphQL `context_getter` (false-closure fix)
+- cycle 24: DispatchActionProcessor (DSL-routed actions)
+- cycle 34: PollingConsumerProcessor (polling source)
+- cycle 35: InvocationRequest + run_mixin + invoke_modes_mixin (background/deferred paths)
+- cycle 38: action_dispatcher._terminal_handler (middleware-chain paths)
+
+**System-context paths (4)**:
+- cycle 26: ai_costs restricted roles
+- cycle 29: rpa.py legacy → rpa_browser (Playwright)
+- cycle 39: CDC callback explicit system principal
+- cycle 40: scheduled_reports explicit system principal
+- cycle 41: message_replay explicit system principal
+- cycle 42: ai_graph LangGraph tool wrapper principal
+
+**Admin auth paths (3)**:
+- cycle 6: admin router coverage (langmem_admin, ai_costs, tech)
+- cycle 7: api_key_admin_roles configurable
+
+Все ActionCommandSchema конструкторы в production-grade plan теперь
+корректно пробрасывают principal/permissions → Tier-1/2 action handlers
+получают auth context для всех production paths.
+
+См. полный verified-state отчёт:
+``docs/audit/PRINCIPAL_RE_AUDIT_2026-08-27.md``.
