@@ -110,6 +110,114 @@ def _check_drop(current: float, baseline: float) -> bool:
     return baseline - current > _BASELINE_DROP_TOLERANCE
 
 
+def _parse_thresholds_file(path: Path) -> dict[str, int]:
+    """Парсит ``.baselines/coverage_thresholds.txt`` → dict.
+
+    Формат файла (per ADR-0285 §1.2): одна строка на layer — ``layer: N``,
+    где N — минимальный coverage в процентах (0-100).
+    Строки с ``#`` (комментарии) и пустые строки игнорируются.
+
+    Args:
+        path: Путь к thresholds-файлу.
+
+    Returns:
+        Dict {layer_name: threshold_percent}. Если файл не существует —
+        возвращает пустой dict.
+    """
+    if not path.exists():
+        return {}
+    thresholds: dict[str, int] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if ":" not in line:
+            continue
+        k, v = line.split(":", 1)
+        thresholds[k.strip()] = int(v.strip())
+    return thresholds
+
+
+def _compute_layer_coverage(coverage_xml: Path, layer: str) -> float:
+    """Вычисляет coverage для конкретного layer из coverage.xml.
+
+    Суммирует \`line-rate\` атрибуты для всех \`<class>\` элементов,
+    чей \`filename\` начинается с \`src/backend/<layer>/\`.
+
+    Args:
+        coverage_xml: Путь к coverage.xml (cobertura формат).
+        layer: Имя layer (e.g., \"core\", \"infrastructure\", \"dsl\").
+
+    Returns:
+        Покрытие layer в процентах (0-100). Если нет данных — 0.0.
+    """
+    if not coverage_xml.exists():
+        return 0.0
+    tree = ET.parse(coverage_xml)  # noqa: S314 (наш собственный coverage.xml)
+    root = tree.getroot()
+    total_lines = 0
+    covered_lines = 0
+    prefix = f"src/backend/{layer}/"
+    for cls in root.iter("class"):
+        filename = cls.get("filename", "")
+        if not filename.startswith(prefix):
+            continue
+        for line in cls.iter("line"):
+            hits = int(line.get("hits", "0"))
+            total_lines += 1
+            if hits > 0:
+                covered_lines += 1
+    if total_lines == 0:
+        return 0.0
+    return (covered_lines / total_lines) * 100.0
+
+
+def check_per_layer_thresholds(
+    coverage_xml: Path,
+    thresholds_file: Path,
+) -> int:
+    """Проверяет coverage каждого layer против threshold из файла.
+
+    Per ADR-0285 §1.3 (Sprint 40 W1 implementation). Per-layer breakdown
+    выводится через rich console. NOT wired to CI (ADR-0285 §2: gradual rollout).
+
+    Args:
+        coverage_xml: Путь к coverage.xml (cobertura формат).
+        thresholds_file: Путь к ``.baselines/coverage_thresholds.txt``
+            (формат: ``layer: N``).
+
+    Returns:
+        EXIT_OK (0) если все layers meet threshold, EXIT_THRESHOLD_FAIL (1)
+        если хотя бы один layer ниже.
+    """
+    thresholds = _parse_thresholds_file(thresholds_file)
+    if not thresholds:
+        console_err.print(f"[red]ERROR: thresholds file not found: {thresholds_file}[/red]")
+        return EXIT_ERROR
+
+    console.print(f"Per-layer coverage (ADR-0285 §1.3):")
+    failures: list[str] = []
+    for layer, threshold in sorted(thresholds.items()):
+        current = _compute_layer_coverage(coverage_xml, layer)
+        if current >= threshold:
+            console.print(f"  [green]✓[/green] {layer}: {current:.1f}% (threshold: {threshold}%)")
+        else:
+            gap = threshold - current
+            console.print(
+                f"  [red]✗[/red] {layer}: {current:.1f}% "
+                f"(threshold: {threshold}%, below by {gap:.1f}%)"
+            )
+            failures.append(layer)
+    if failures:
+        console_err.print(
+            f"[bold red]FAIL:[/bold red] {len(failures)} layer(s) below threshold: "
+            f"{', '.join(failures)}"
+        )
+        return EXIT_THRESHOLD_FAIL
+    console.print("[bold green]OK[/bold green]: all layers meet threshold")
+    return EXIT_OK
+
+
 @app.command()
 def main(
     coverage_xml: str = typer.Option(
@@ -185,6 +293,26 @@ def main(
         f"({current:.2f}% >= {threshold:.2f}%)"
     )
     raise typer.Exit(EXIT_OK)
+
+
+@app.command("per-layer")
+def per_layer(
+    coverage_xml: str = typer.Option(
+        "coverage.xml", "--coverage-xml", help="Путь к coverage.xml (cobertura формат)."
+    ),
+    thresholds: str = typer.Option(
+        ".baselines/coverage_thresholds.txt",
+        "--thresholds",
+        help="Путь к thresholds-файлу (ADR-0285 §1.2).",
+    ),
+) -> None:
+    """Per-layer coverage threshold check (ADR-0285 §1.3).
+
+    NOT wired to CI (ADR-0285 §2: gradual rollout). Используйте локально:
+    `python tools/check_coverage_gate.py per-layer`.
+    """
+    rc = check_per_layer_thresholds(Path(coverage_xml), Path(thresholds))
+    raise typer.Exit(rc)
 
 
 if __name__ == "__main__":
