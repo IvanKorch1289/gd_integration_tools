@@ -60,11 +60,21 @@ def _make_action_tool(action_name: str) -> Any:
     from langchain_core.tools import StructuredTool
 
     from src.backend.core.api.extensions import action_handler_registry
+    from src.backend.core.types.invocation_command import ActionCommandMetaSchema
     from src.backend.schemas.invocation import ActionCommandSchema
 
     async def _run_action(**kwargs: Any) -> str:
         command = ActionCommandSchema(
-            action=action_name, payload=kwargs, meta={"source": "ai_agent"}
+            action=action_name,
+            payload=kwargs,
+            # P0 (cycle 42, parity с cycle 39/40/41): explicit system
+            # principal для AI agent-driven actions. Agent caller
+            # не имеет user-context напрямую — system маркирует source
+            # для audit-trail.
+            meta=ActionCommandMetaSchema(
+                principal=f"ai_agent:{action_name}",
+                permissions=[],
+            ),
         )
         result = await action_handler_registry.dispatch(command)
         if hasattr(result, "model_dump"):
