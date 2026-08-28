@@ -205,7 +205,10 @@ async def get_running_count(workflow_id: str) -> RunningCountResponse:
     """
     counts: dict[str, int] = {}
     try:
-        from src.backend.core.workflow import create_workflow_backend
+        # Sprint 35 W1 (ADR-0282 Phase B): inline-import от infrastructure.
+        # Раньше шло через core.workflow facade, который был deleted в
+        # рамках layer prune (1 entry off allowlist).
+        from src.backend.infrastructure.workflow.factory import create_workflow_backend
 
         backend = await create_workflow_backend(kind="auto")
         if hasattr(backend, "count_running_per_version"):

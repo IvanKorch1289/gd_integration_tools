@@ -50,7 +50,12 @@ src/backend/core/scheduler/__init__.py	core	src.backend.infrastructure.scheduler
 # фиксирует явный cross-layer.
 src/backend/services/ops/notification_hub.py	services	src.backend.infrastructure.notifications
 src/backend/core/security/connector_auth.py	core	src.backend.services.authorization.facade
-src/backend/core/workflow/__init__.py	core	src.backend.infrastructure.workflow.factory
+# Sprint 35 W1 (Phase B, ADR-0282): entrypoints/api/v1/endpoints/admin_workflow_versioning.py
+# needs create_workflow_backend напрямую (no core.workflow facade anymore).
+# entrypoints → infrastructure is a known architectural debt — same pattern
+# as services → infrastructure (Item 1). ADR follow-up needed: либо
+# (a) move DI registration в core, либо (b) entrypoints ALLOWED matrix update.
+src/backend/entrypoints/api/v1/endpoints/admin_workflow_versioning.py	entrypoints	src.backend.infrastructure.workflow.factory
 src/backend/entrypoints/api/v1/endpoints/processors_catalog.py	entrypoints	src.backend.dsl.builder
 src/backend/entrypoints/api/v1/endpoints/processors_catalog.py	entrypoints	src.backend.dsl.engine.processors
 src/backend/entrypoints/mcp/mcp_server/tools_template.py	entrypoints	src.backend.dsl
