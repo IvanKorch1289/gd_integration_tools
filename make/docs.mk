@@ -56,6 +56,15 @@ coverage-gate-fast: ## Fast coverage gate (skip pytest, reuse existing coverage.
 	$(UV_RUN) python tools/check_coverage_gate.py --coverage-xml coverage.xml --baseline .baselines/coverage.json --threshold 50 --strict
 	@$(SUCCESS) "Coverage gate (fast) passed"
 
+# Sprint 36 W1: Coverage Phase 0 (per-layer split). OOM mitigation для
+# full-suite coverage (>3500 tests). Implementation deferred to S37+ actual
+# run (need CI runner + memory profiling baseline). Documentation only.
+coverage-per-layer: ## Sprint 36 W1: per-layer coverage split (Phase 0, doc-only)
+	@$(INFO) "Sprint 36 W1 Coverage Phase 0: per-layer documentation..."
+	@echo "Phase 0 target: 6 layer coverage XML files + combined report."
+	@echo "Implementation deferred to S37+ (need CI runner + memory baseline)."
+	@$(SUCCESS) "Coverage Phase 0 documented"
+
 pre-prod-check: ## S36 w4: 30+ gate pre-prod-check (BLOCKING, ratchet-aware)
 	@$(INFO) "Running pre-prod-check (30+ gates)..."
 	$(UV_RUN) python tools/checks/pre_prod_check.py
