@@ -22,7 +22,11 @@ async def test_endpoint_returns_disabled_when_langfuse_off() -> None:
             transport=ASGITransport(app=app), base_url="http://test",
         ) as ac:
             resp = await ac.get("/api/v1/admin/ai-costs?top_n=5")
-        assert resp.status_code in (200, 401)
+        # P0 (cycle 26, production-grade plan): require_admin добавлен на
+        # ai_costs router — 401/403 acceptable (anonymous без admin role).
+        assert resp.status_code in (200, 401, 403), (
+            f"Unexpected status {resp.status_code}: {resp.text}"
+        )
         if resp.status_code == 200:
             data = resp.json()
             assert data["backend"] == "disabled"
