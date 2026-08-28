@@ -215,7 +215,12 @@ async def run_cron_job_now(job_id: str) -> dict[str, Any]:
 @router.post("/validate", response_model=CronValidationResponse)
 async def validate_cron(request: CronValidationRequest) -> CronValidationResponse:
     """Dry-run preview — валидация выражения + Next N executions."""
-    from src.backend.core.scheduler import validate_cron_expression
+    # Sprint 39 W1 (Phase B Item 7, ADR-0282 §3): inline-import от infrastructure
+    # (после core/scheduler __getattr__ block removal). ALLOWED matrix
+    # (ADR-0284) делает entrypoints→infrastructure legitimate cross-layer.
+    from src.backend.infrastructure.scheduler.cron_validator import (
+        validate_cron_expression,
+    )
 
     result = validate_cron_expression(
         request.expression,
