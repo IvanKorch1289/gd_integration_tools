@@ -207,46 +207,47 @@ dump НЕ реализован** (marker-only).
 | CDC snapshot marker-only | LOW | 17 | FIXED (doc-only) |
 | PollingConsumerProcessor principal propagation | MEDIUM | 34 | FIXED (parity cycle 24/35) |
 | InvocationRequest principal/permissions | MEDIUM | 35 | FIXED (background/deferred paths) |
+| action_dispatcher middleware-chain principal | MEDIUM | 38 | FIXED (parity cycle 24/34/35) |
+| CDC callback explicit system principal | MEDIUM | 39 | FIXED (background callback) |
+| scheduled_reports explicit system principal | MEDIUM | 40 | FIXED (scheduler trigger) |
+| message_replay explicit system principal | MEDIUM | 41 | FIXED (replay trigger) |
+| ai_graph LangGraph tool principal | LOW | 42 | FIXED (dead code, consistency) |
 
 ---
 
-## Cycle 34-35 additions (post-cycle 19)
+## Cycle 34-42 additions (post-cycle 19)
 
-Cycle 34-35 нашли дополнительные gaps с тем же паттерном, что cycle 24
-(DispatchActionProcessor principal propagation). Этот же паттерн
-был применён в:
+Total: 14 cycles (4, 5, 6, 7, 24, 26, 29, 34, 35, 38, 39, 40, 41, 42 + tests)
+закрыли auth propagation gaps в **11 разных code paths**:
 
-- **Cycle 34**: ``PollingConsumerProcessor.process`` (polling source
-  processor) — ранее создавал ``ActionCommandSchema`` без
-  principal/permissions. Теперь конструктор ``meta=ActionCommandMetaSchema(
-  principal=context.principal, permissions=list(context.permissions))``.
+- User-context paths (cycles 24, 34, 35, 38): DispatchActionProcessor,
+  PollingConsumerProcessor, InvocationRequest + run_mixin +
+  invoke_modes_mixin, action_dispatcher._terminal_handler.
+- System-context paths (cycles 39, 40, 41, 42): CDC callback, scheduled_reports,
+  message_replay, ai_graph tool wrapper.
 
-- **Cycle 35**: ``InvocationRequest`` теперь имеет ``principal: str = ""``
-  и ``permissions: tuple[str, ...] = ()`` поля. ``run_mixin._run_silent``,
-  ``run_mixin._run_and_stream`` и ``invoke_modes_mixin._invoke_sync``
-  конструкторы ``ActionCommandSchema`` пробрасывают их в ``meta``.
-  Это закрывает background / deferred / streaming paths, которые
-  ранее теряли auth context.
-
-Total: 12 cycles (4, 5, 6, 7, 24, 26, 29, 34, 35 + tests) закрыли
-auth propagation gaps в 8 разных code paths.
+Все ActionCommandSchema конструкторы теперь корректно пробрасывают
+principal/permissions → Tier-1/2 action handlers получают auth context
+для всех production paths.
 
 ---
 
-## Success Criteria (Cycle 35 closeout)
+## Success Criteria (Cycle 42 closeout)
 
-- ✅ Все 35 cycles completed (commit history)
+- ✅ Все 42 cycles completed (commit history)
 - ✅ Phase 1 live verification: GraphQL/SOAP/admin tests с explicit
   principal/permissions propagation
-- ✅ Все regression tests pass (62 execution tests + 25 rpa + 12 SSH +
+- ✅ Все regression tests pass (62 execution + 25 rpa + 12 SSH +
   6 redis_cluster + 12 admin coverage + 7 GraphQL + 6 SOAP + 8 mutation
   + 5 eip_enrich + 6 cdc e2e + 5 dispatch_action principal + 2 polling
-  principal + 3 invocation_principal + 1 ai_costs_role)
+  principal + 3 invocation_principal + 1 ai_costs_role + 3 dispatch_principal)
 - ✅ CI green: ``make layers``, ``make check-mro``, ``make lint``,
   ``make type-check`` — все gates pass
 - ✅ Coverage baseline.json honest subset (9.56%)
 - ✅ Mutation gate = 6 модулей (3 baseline + tenancy + gateway_orchestrator
   + rpa_policy)
+- ✅ **11+ principal/permissions code paths** закрыты (cycles 4, 5, 6, 7,
+  24, 26, 29, 34, 35, 38, 39, 40, 41, 42)
 
 ---
 
