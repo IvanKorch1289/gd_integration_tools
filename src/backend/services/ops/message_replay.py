@@ -114,12 +114,22 @@ class MessageReplayService:
             }
 
         try:
+            from src.backend.core.types.invocation_command import (
+                ActionCommandMetaSchema,
+            )
             from src.backend.schemas.invocation import ActionCommandSchema
 
             command = ActionCommandSchema(
                 action=msg.action,
                 payload=msg.payload,
-                meta={"source": f"replay:{msg.source}", "replay_of": msg.id},
+                # P0 (cycle 41, parity с cycle 39/40): explicit system
+                # principal для replay-driven actions (no user context —
+                # background replay triggered). Tier-1/2 actions теперь
+                # видят непустой principal для audit (replay source + id).
+                meta=ActionCommandMetaSchema(
+                    principal=f"replay:{msg.source}:{msg.id}",
+                    permissions=[],
+                ),
             )
             result = await action_handler_registry.dispatch(command)
             msg.status = ReplayStatus.REPLAYED
