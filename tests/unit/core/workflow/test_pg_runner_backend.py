@@ -438,8 +438,12 @@ class TestReplay:
     async def test_replay_raises_not_implemented(
         self, backend: PgRunnerWorkflowBackend,
     ) -> None:
-        """Regression (Cycle 29 P2): silent no-op больше не допустим."""
-        with pytest.raises(NotImplementedError, match="pg-runner does not implement"):
+        """Regression (Cycle 29 P2): silent no-op больше не допустим.
+
+        Cycle 10 (P2-D): message обновлён — DEPRECATED + 'does not implement
+        Temporal-compatible replay' (parity с cycle 10 runtime DeprecationWarning).
+        """
+        with pytest.raises(NotImplementedError, match="does not implement"):
             await backend.replay(workflow_name="wf", history=b"any-bytes")
 
     async def test_replay_raises_for_empty_history(
