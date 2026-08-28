@@ -192,7 +192,10 @@ class AuditEventLog:
         # B-25 fix (cycle 1) scope: только ClickHouse-failure path; ES —
         # secondary best-effort, оставляем log+drop (известное поведение).
         try:
-            from src.backend.core.observability.log_indexer import get_log_indexer
+            # Sprint 38 W2 (Phase B Item 6, ADR-0282 §3 + ADR-0286):
+            # inline-import from canonical home. Narrow allowance
+            # infrastructure→services.io per ADR-0286 §1.
+            from src.backend.services.io.indexers.log_indexer import get_log_indexer
 
             indexer = get_log_indexer()
             await indexer.index_batch(events)
@@ -371,7 +374,7 @@ class AuditEventLog:
         # Валидация limit (int, bounded)
         try:
             safe_limit = max(1, min(int(limit), 10000))
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             safe_limit = 100
 
         # Build query с bound parameters через {name} syntax

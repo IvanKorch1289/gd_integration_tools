@@ -59,7 +59,13 @@ EXTENSIONS_LAYER = "extensions"  # S103 W1: extensions scanned by linter
 
 ALLOWED: dict[str, set[str]] = {
     "core": set(),
-    "infrastructure": {"core", "schemas"},
+    # ADR-0286 (S38 W2): infrastructure → services allowance для
+    # Phase B Item 6 prune (`core/observability/log_indexer.py`).
+    # NOTE: layer check extracts top-level layer name (`services`), not
+    # sub-path (`services.io`). So `services` target covers all
+    # `services.*` submodules. Future drift prevention: any new
+    # infrastructure→services.X imports require per-ADR (per ADR-0284 §1.1).
+    "infrastructure": {"core", "schemas", "services"},
     # ADR-0284 (S36 W1): services и entrypoints legitimate consumers of
     # infrastructure. Закрывает Sprint 35 architectural debt (3 entries).
     # Governance: future ALLOWED matrix changes require per-ADR approval.

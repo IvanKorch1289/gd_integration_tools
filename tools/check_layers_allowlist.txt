@@ -38,23 +38,16 @@ src/backend/core/di/providers/search_bridge.py	core	src.backend.infrastructure.c
 src/backend/core/di/providers/storage.py	core	src.backend.services.storage.facade
 src/backend/core/frontend_facade.py	core	src.backend.services.dsl_portal
 src/backend/core/messaging/eventbus/facade.py	core	src.backend.infrastructure.clients.messaging.event_bus
-src/backend/core/observability/log_indexer.py	core	src.backend.services.io.indexers.log_indexer
 src/backend/core/scheduler/__init__.py	core	src.backend.infrastructure.scheduler.cron_validator
-# ADR-0284 (S36 W1): services + entrypoints ALLOWED matrix updated —
-# 3 entries below removed (resolved via matrix update, NOT facade pattern).
 src/backend/core/security/connector_auth.py	core	src.backend.services.authorization.facade
 src/backend/entrypoints/api/v1/endpoints/processors_catalog.py	entrypoints	src.backend.dsl.builder
 src/backend/entrypoints/api/v1/endpoints/processors_catalog.py	entrypoints	src.backend.dsl.engine.processors
+src/backend/entrypoints/mcp/mcp_server/tools_convert.py	entrypoints	src.backend.dsl.engine.processors.converters
 src/backend/entrypoints/mcp/mcp_server/tools_template.py	entrypoints	src.backend.dsl
 src/backend/entrypoints/mcp/mcp_server/tools_template.py	entrypoints	src.backend.dsl.templates_library
-src/backend/entrypoints/mcp/mcp_server/tools_convert.py	entrypoints	src.backend.dsl.engine.processors.converters
 src/backend/entrypoints/webhook/handler.py	entrypoints	src.backend.dsl.codec.json
 src/backend/entrypoints/webhook/handler.py	entrypoints	src.backend.dsl.engine.processors.scraping
-src/backend/infrastructure/cache/rag/semantic.py	infrastructure	src.backend.services.ai.embedding_providers
 src/backend/infrastructure/clients/external/cdc/client.py	infrastructure	src.backend.dsl.commands.registry
-src/backend/infrastructure/clients/messaging/event_bus.py	infrastructure	src.backend.services.schema_registry.registry
-src/backend/infrastructure/database/migrations/env.py	infrastructure	src.backend.services.plugins.loader
-src/backend/infrastructure/scheduler/scheduled_tasks.py	infrastructure	src.backend.services.ai.memory.langmem_service
 src/backend/infrastructure/workflow/executor/sequential_mixin.py	workflows	src.backend.dsl.engine.exchange
 src/backend/services/execution/action_dispatcher.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/ops/webhook_scheduler.py	services	src.backend.dsl.engine.processors.scraping
