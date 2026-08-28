@@ -117,6 +117,10 @@ def test_no_new_circuit_breaker_files_since_s93() -> None:
         "src/backend/core/utils/circuit_breaker.py",  # deprecated shim
         "src/backend/entrypoints/middlewares/circuit_breaker.py",  # per-route middleware
         "src/backend/core/resilience/circuit_breaker.py",  # alternative impls (SlidingWindowBreaker, ReplicaFailoverBreaker, BreakerLike Protocol)
+        # S52 W1 (cycle 285): BreakerPolicyAdapter bridges middleware-style
+        # API и BreakerRegistry. NOT a duplicate — это adapter layer для
+        # gradual migration к BreakerRegistry (ADR-0269).
+        "src/backend/core/resilience/breaker_policy_adapter.py",
     }
     found: list[Path] = []
     for pattern in (
@@ -126,7 +130,15 @@ def test_no_new_circuit_breaker_files_since_s93() -> None:
     ):
         for path in PROJECT_ROOT.glob(pattern):
             if not any(
-                skip in str(path) for skip in ("__pycache__", ".venv", "node_modules")
+                skip in str(path)
+                for skip in (
+                    "__pycache__",
+                    ".venv",
+                    "node_modules",
+                    ".cache",  # retro-gates.* snapshots
+                    "mutants/",  # mutmut worktree
+                    "graphify-out/",  # graphify cache
+                )
             ):
                 rel = str(path.relative_to(PROJECT_ROOT))
                 if rel not in known_locations:
