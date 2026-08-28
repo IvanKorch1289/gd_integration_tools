@@ -24,15 +24,12 @@ src/backend/core/di/providers/dlq_bridge.py	core	src.backend.infrastructure.mess
 src/backend/core/di/providers/health_bridge.py	core	src.backend.infrastructure.application.health_aggregator
 src/backend/core/di/providers/health_bridge.py	core	src.backend.infrastructure.clients.base_connector
 src/backend/core/di/providers/health_bridge.py	core	src.backend.infrastructure.clients.pool_health
+src/backend/core/di/providers/infrastructure_locator.py	core	src.backend.infrastructure.di_bridge.resilience
 src/backend/core/di/providers/jupyter.py	core	src.backend.services.jupyter.execution_service
 src/backend/core/di/providers/observability_bridge.py	core	src.backend.infrastructure.logging.base
 src/backend/core/di/providers/observability_bridge.py	core	src.backend.infrastructure.observability
 src/backend/core/di/providers/observability_bridge.py	core	src.backend.infrastructure.observability.correlation
 src/backend/core/di/providers/observability_bridge.py	core	src.backend.infrastructure.observability.prometheus_temporal_exporter
-src/backend/core/di/providers/resilience_bridge.py	core	src.backend.infrastructure.resilience
-src/backend/core/di/providers/resilience_bridge.py	core	src.backend.infrastructure.resilience.bulkhead
-src/backend/core/di/providers/resilience_bridge.py	core	src.backend.infrastructure.resilience.profile_store_memory
-src/backend/core/di/providers/resilience_bridge.py	core	src.backend.infrastructure.resilience.unified_rate_limiter
 src/backend/core/di/providers/search_bridge.py	core	src.backend.infrastructure.clients.external
 src/backend/core/di/providers/search_bridge.py	core	src.backend.infrastructure.clients.external.search_providers
 src/backend/core/di/providers/storage.py	core	src.backend.services.storage.facade

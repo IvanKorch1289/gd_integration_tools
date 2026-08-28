@@ -172,7 +172,7 @@ from src.backend.core.di.providers.observability_bridge import (
     get_set_task_queue_depth,
     get_set_workers_active,
 )
-from src.backend.core.di.providers.resilience_bridge import (
+from src.backend.infrastructure.di_bridge.resilience import (
     get_bulkhead_attr,
     get_bulkhead_class,
     get_bulkhead_registry_class,
