@@ -1,16 +1,23 @@
 # Sprint 37 W1 Coverage Phase 1 — per-layer first run (2026-08-27)
 # Per `PHASE_0_PLAN_2026-08-27.md` §2.2 (per-layer split pattern).
 
-## Verified baseline (vs .baselines/coverage.json STALE 51.04%)
+## Verified baseline (vs Sprint 33 STALE 21% subset + S38 reconciled 51.04%)
 
-| Layer | Statements | Covered | % | Peak mem (MB) | Wall time |
-|-------|-----------:|--------:|---:|--------------:|----------:|
+Sprint 33 `.coverage.xml` was a partial run (1 file subset, N=1032 statements,
+21.03% line-rate — corrupted/stale artifact).
+Sprint 36 reconciled `.baselines/coverage.json:51.04%` was a per-subset baseline
+(mix of stale and honest measurements).
+
+Per-layer Phase 1 first run gives the FIRST accurate per-layer measurement:
+
+| Layer | Statements | Covered | % | Peak mem | Wall time |
+|-------|-----------:|--------:|---:|---------:|----------:|
 | core | 18 493 | 3 950 | **77%** | ~3.1 GB | ~70s |
 | infrastructure | 25 713 | 12 849 | **47%** | ~3.8 GB | ~120s |
-| services | (pending S37 W2) | | | | |
-| entrypoints | (pending S37 W2) | | | | |
-| dsl | (pending S37 W2) | | | | |
-| workflows | (pending S37 W2) | | | | |
+| services | (pending S38 W1) | | | | |
+| entrypoints | (pending S38 W1) | | | | |
+| dsl | (pending S38 W1) | | | | |
+| workflows | (pending S38 W1) | | | | |
 
 ## Memory baseline verification
 
