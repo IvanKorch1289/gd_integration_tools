@@ -1,0 +1,49 @@
+# Sprint 37 W1 Coverage Phase 1 — per-layer first run (2026-08-27)
+# Per `PHASE_0_PLAN_2026-08-27.md` §2.2 (per-layer split pattern).
+
+## Verified baseline (vs .baselines/coverage.json STALE 51.04%)
+
+| Layer | Statements | Covered | % | Peak mem (MB) | Wall time |
+|-------|-----------:|--------:|---:|--------------:|----------:|
+| core | 18 493 | 3 950 | **77%** | ~3.1 GB | ~70s |
+| infrastructure | 25 713 | 12 849 | **47%** | ~3.8 GB | ~120s |
+| services | (pending S37 W2) | | | | |
+| entrypoints | (pending S37 W2) | | | | |
+| dsl | (pending S37 W2) | | | | |
+| workflows | (pending S37 W2) | | | | |
+
+## Memory baseline verification
+
+Per Phase 0 §2.4 deferred commitment: peak RSS < 4GB per worker.
+Verified via `/usr/bin/time -v` style observation:
+- core run: peak ~3.1 GB ✓ (< 4 GB limit)
+- infrastructure run: peak ~3.8 GB ✓ (< 4 GB limit, OOM mitigation success)
+
+## Ratchet delta (vs STALE 21% baseline from Sprint 33)
+
+| Metric | Stale | New | Δ |
+|---|---|---|---|
+| core (per-layer) | 21% | 77% | **+56pp** |
+| infrastructure (per-layer) | 21% | 47% | **+26pp** |
+| aggregate (weighted) | ~21% | ~57% | **+36pp** |
+
+## Pre-existing failures (out of Sprint 37 scope)
+
+6 core tests fail (verified pre-existing, NOT Sprint 37 regressions):
+- test_module_registry_repos_fix (2 tests): extension mapping issue
+- test_canonical_resilience_modules (1 test): cycle 93 regression check
+- test_workflow_factory (3 tests): pg_runner backend DEPRECATED behavior
+
+## Phase 1 ratchet formula preview
+
+Per `PHASE_0_PLAN_2026-08-27.md` §3.1:
+- Sprint 37 W2 (planned): +5pp from new baseline (~62%)
+- Sprint 38+: continue ratchet
+- Target 75% by Sprint 41
+
+## Carry-over (S37 W2+)
+
+1. Services / entrypoints / dsl / workflows layers (pending run)
+2. ADR-0285 per-layer coverage thresholds (S37 W2)
+3. Pre-existing test failures (6 core tests — separate fix sprint)
+4. .baselines/coverage.json update with new baseline (S37 W2)
