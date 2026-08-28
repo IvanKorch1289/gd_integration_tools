@@ -39,7 +39,6 @@ src/backend/core/di/providers/search_bridge.py	core	src.backend.infrastructure.c
 src/backend/core/di/providers/storage.py	core	src.backend.services.storage.facade
 src/backend/core/frontend_facade.py	core	src.backend.services.dsl_portal
 src/backend/core/messaging/eventbus/facade.py	core	src.backend.infrastructure.clients.messaging.event_bus
-src/backend/core/messaging/stream_facade.py	core	src.backend.infrastructure.clients.messaging.stream
 src/backend/core/observability/log_indexer.py	core	src.backend.services.io.indexers.log_indexer
 src/backend/core/scheduler/__init__.py	core	src.backend.infrastructure.scheduler.cron_validator
 # ADR-0284 (S36 W1): services + entrypoints ALLOWED matrix updated —
