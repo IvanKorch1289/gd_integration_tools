@@ -257,3 +257,30 @@ class WorkflowsClient(BaseAPIClient):
                 extra={"error": str(wf_ver_exc)},
             )
             return []
+
+    def get_workflow_versioning_history(self, workflow_id: str) -> list[dict[str, Any]]:
+        """GET /api/v1/admin/workflow-versioning/{id}/history — все версии.
+
+        Sprint 34 W1: public method (replaces ``client._request(...)`` pattern
+        from Sprint 33 W1 commit `6dc77c87` — review-agent S-34.1 warning).
+        Парный к ``list_workflow_versioning_ids`` для symmetry.
+        """
+        try:
+            result = self._request(
+                "GET", f"/api/v1/admin/workflow-versioning/{workflow_id}/history"
+            )
+            return result if isinstance(result, list) else []
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as wf_hist_exc:
+            import logging
+
+            logging.getLogger(__name__).debug(
+                "streamlit_workflows_client.workflow_versioning_history_failed",
+                extra={"workflow_id": workflow_id, "error": str(wf_hist_exc)},
+            )
+            return []

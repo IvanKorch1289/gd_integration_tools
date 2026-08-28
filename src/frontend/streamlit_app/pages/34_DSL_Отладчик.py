@@ -122,16 +122,22 @@ elif mode == "Аудит Replay":
 else:  # Route Trace
     st.markdown("Live-исполнения маршрутов через DSL tracer.")
     try:
-        # Sprint 33 W1: list_recent_trace_events still uses facade
-        # (НЕ HTTP-equivalent — no tracer HTTP endpoint yet, Phase C deferred).
-        from src.backend.core.frontend_facade import list_recent_trace_events
-
-        events = list_recent_trace_events(limit=100)
-        if events:
-            for ev in events:
-                st.json(ev)
+        # Sprint 34 W1: list_recent_trace_events была DEAD CODE (всегда
+        # возвращала [] после S44 W1 + S47 W1 рефакторинга). Заменяем
+        # на DSLRoutesClient.get_dsl_route_traces() (real HTTP endpoint,
+        # persistent storage per TD-026).
+        trace_route_id = st.text_input(
+            "ID маршрута для trace", value="", key="trace_route_id"
+        )
+        if trace_route_id:
+            events = DSLRoutesClient().get_dsl_route_traces(trace_route_id, limit=100)
+            if events:
+                for ev in events:
+                    st.json(ev)
+            else:
+                st.info(f"Нет trace-событий для {trace_route_id!r}")
         else:
-            st.info("Нет недавних событий")
+            st.info("Введите route_id для просмотра trace events")
     except Exception as exc:
         st.warning(f"Tracer недоступен: {exc}")
 

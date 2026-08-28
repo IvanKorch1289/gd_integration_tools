@@ -274,10 +274,3 @@ def list_audit_records(*, count: int = 50) -> list[dict[str, Any]]:
     from src.backend.services.audit.replay_query import list_audit_records as _list
 
     return asyncio.run(_list(count=count))
-
-
-def list_recent_trace_events(*, limit: int = 100) -> list[dict[str, Any]]:
-    """Возвращает последние N trace-событий из ExecutionTracer."""
-    tracer = get_tracer()
-    events = list(getattr(tracer, "_recent_events", []) or [])
-    return events[-limit:]

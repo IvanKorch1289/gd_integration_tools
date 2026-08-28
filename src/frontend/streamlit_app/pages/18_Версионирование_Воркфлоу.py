@@ -42,10 +42,7 @@ if not all_ids:
     st.info("Реестр пуст. Зарегистрируйте workflow через @workflow_versioned('X.Y.Z').")
 else:
     selected = st.selectbox("ID Воркфлоу", all_ids)
-    history = (
-        client._request("GET", f"/api/v1/admin/workflow-versioning/{selected}/history")
-        or []
-    )
+    history = client.workflows.get_workflow_versioning_history(selected)
 
     st.subheader(f"История {selected!r}")
     if not history:

@@ -17,7 +17,7 @@ backend-services-only, см. ``tools/check_layers.py`` R3.10d).
     from src.backend.services.dsl_portal import (
         Pipeline, load_pipeline_from_yaml,
         list_route_ids, get_route_pipeline,
-        execute_route, list_audit_records, list_recent_trace_events,
+        execute_route, list_audit_records,
     )
 
 Импорт DSL/entrypoints напрямую из frontend остаётся запрещённым
@@ -42,7 +42,6 @@ from src.backend.services.dsl_portal.builder_facade import (
     get_saga_stats,
     get_whoosh_index,
     list_audit_records,
-    list_recent_trace_events,
     list_route_ids,
     list_workflow_templates,
     load_all_workflows_from_directory,
@@ -71,7 +70,6 @@ __all__ = (
     "get_saga_stats",
     "get_whoosh_index",
     "list_audit_records",
-    "list_recent_trace_events",
     "list_route_ids",
     "list_workflow_templates",
     "load_all_workflows_from_directory",
