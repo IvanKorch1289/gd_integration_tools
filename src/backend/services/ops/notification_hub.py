@@ -58,7 +58,7 @@ logger = get_logger(__name__)
 # S223: DeprecationWarning на import — напоминает мигрировать на Gateway.
 warnings.warn(
     "`app.services.ops.notification_hub` deprecated in IL2.2 (ADR-023). "
-    "Use `app.core.notifications.get_gateway()` instead. "
+    "Use `app.infrastructure.notifications.get_gateway()` instead. "
     "This shim will be removed in H3_PLUS (2026-07-01+).",
     DeprecationWarning,
     stacklevel=2,

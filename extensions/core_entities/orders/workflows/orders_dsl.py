@@ -57,8 +57,11 @@ async def _call_notification_send(body: dict[str, Any]) -> dict[str, Any]:
 
     Использует новый gateway из src/infrastructure/notifications/; старый
     notification_hub — deprecated (DeprecationWarning шлёт при import).
+
+    Sprint 35 W1 (ADR-0282 Phase B): inline-import от infrastructure.
+    `core.notifications` facade removed (см. SPRINT_35_RETRO §1.2).
     """
-    from src.backend.core.notifications import get_gateway
+    from src.backend.infrastructure.notifications import get_gateway
 
     gw = get_gateway()
     payload = body.get("payload") or body
@@ -171,8 +174,7 @@ def send_notification_workflow_spec() -> WorkflowDeclaration:
         .default_retry(RetryPolicy(max_attempts=settings.tasks.flow_max_attempts))
         .saga()
         .forward(
-            name="send_email",
-            args={"processor": _proc_ref(_call_notification_send)},
+            name="send_email", args={"processor": _proc_ref(_call_notification_send)}
         )
         .end_saga()
         .build()
@@ -191,8 +193,7 @@ def create_skb_order_workflow_spec() -> WorkflowDeclaration:
         .default_retry(RetryPolicy(max_attempts=settings.tasks.flow_max_attempts))
         .saga()
         .forward(
-            name="create_in_skb",
-            args={"processor": _proc_ref(_call_create_skb_order)},
+            name="create_in_skb", args={"processor": _proc_ref(_call_create_skb_order)}
         )
         .forward(
             name="notify_created",
@@ -262,8 +263,7 @@ def send_skb_result_workflow_spec() -> WorkflowDeclaration:
         .default_retry(RetryPolicy(max_attempts=settings.tasks.flow_max_attempts))
         .saga()
         .forward(
-            name="send_final",
-            args={"processor": _proc_ref(_call_send_skb_result)},
+            name="send_final", args={"processor": _proc_ref(_call_send_skb_result)}
         )
         .compensate(
             name="notify_send_failed",
