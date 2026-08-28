@@ -82,7 +82,10 @@ async def get_capability_audit_events(limit: int = 100) -> dict[str, Any]:
     """
     safe_limit = max(1, min(int(limit), 1000))
     try:
-        from src.backend.core.audit import get_audit_log
+        # Sprint 37 W1 (Phase B Item 4, ADR-0282 §3): inline-import from
+        # infrastructure (после core/audit proxy removal). ALLOWED matrix
+        # (ADR-0284) делает entrypoints→infra legitimate cross-layer.
+        from src.backend.infrastructure.audit.event_log import get_audit_log
     except ImportError as exc:
         logger.warning(
             "get_audit_log import failed (audit module unavailable): "

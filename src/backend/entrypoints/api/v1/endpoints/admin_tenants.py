@@ -52,7 +52,10 @@ async def _query_audit_safe(
     модуля — вызывающий должен fallback'нуть на stub-структуру.
     """
     try:
-        from src.backend.core.audit import get_audit_log
+        # Sprint 37 W1 (Phase B Item 4, ADR-0282 §3): inline-import from
+        # infrastructure (после core/audit proxy removal). ALLOWED matrix
+        # (ADR-0284) делает entrypoints→infra legitimate cross-layer.
+        from src.backend.infrastructure.audit.event_log import get_audit_log
     except ImportError:
         return None
 

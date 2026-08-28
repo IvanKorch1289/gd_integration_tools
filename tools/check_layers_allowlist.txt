@@ -10,7 +10,6 @@ src/backend/core/ai/multi_agent.py	core	src.backend.services.ai.multi_agent.supe
 src/backend/core/ai/policy/enforcer/input_guard_mixin.py	core	src.backend.services.ai.guardrails.lakera_client
 src/backend/core/api/__init__.py	core	src.backend.dsl.helpers.banking
 src/backend/core/api/__init__.py	core	src.backend.schemas.base
-src/backend/core/audit/__init__.py	core	src.backend.infrastructure.audit.event_log
 src/backend/core/audit/facade/__init__.py	core	src.backend.infrastructure.audit.jsonl_audit
 src/backend/core/audit/facade/audit_service.py	core	src.backend.services.audit.clickhouse_audit_service
 src/backend/core/auth/facade.py	core	src.backend.services.security.facade
