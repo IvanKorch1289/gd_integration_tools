@@ -42,20 +42,9 @@ src/backend/core/messaging/eventbus/facade.py	core	src.backend.infrastructure.cl
 src/backend/core/messaging/stream_facade.py	core	src.backend.infrastructure.clients.messaging.stream
 src/backend/core/observability/log_indexer.py	core	src.backend.services.io.indexers.log_indexer
 src/backend/core/scheduler/__init__.py	core	src.backend.infrastructure.scheduler.cron_validator
-# Sprint 35 W1 (Phase B, ADR-0282): services/ops/notification_hub.py
-# legitimately needs notifications gateway (real consumer). services →
-# infrastructure IS a known architectural debt. ADR follow-up needed:
-# либо (a) move gateway DI registration в core layer, либо (b) добавить
-# infrastructure в services ALLOWED matrix. Until ADR, allowlist entry
-# фиксирует явный cross-layer.
-src/backend/services/ops/notification_hub.py	services	src.backend.infrastructure.notifications
+# ADR-0284 (S36 W1): services + entrypoints ALLOWED matrix updated —
+# 3 entries below removed (resolved via matrix update, NOT facade pattern).
 src/backend/core/security/connector_auth.py	core	src.backend.services.authorization.facade
-# Sprint 35 W1 (Phase B, ADR-0282): entrypoints/api/v1/endpoints/admin_workflow_versioning.py
-# needs create_workflow_backend напрямую (no core.workflow facade anymore).
-# entrypoints → infrastructure is a known architectural debt — same pattern
-# as services → infrastructure (Item 1). ADR follow-up needed: либо
-# (a) move DI registration в core, либо (b) entrypoints ALLOWED matrix update.
-src/backend/entrypoints/api/v1/endpoints/admin_workflow_versioning.py	entrypoints	src.backend.infrastructure.workflow.factory
 src/backend/entrypoints/api/v1/endpoints/processors_catalog.py	entrypoints	src.backend.dsl.builder
 src/backend/entrypoints/api/v1/endpoints/processors_catalog.py	entrypoints	src.backend.dsl.engine.processors
 src/backend/entrypoints/mcp/mcp_server/tools_template.py	entrypoints	src.backend.dsl
@@ -71,7 +60,6 @@ src/backend/infrastructure/notifications/adapters/express.py	infrastructure	src.
 src/backend/infrastructure/scheduler/scheduled_tasks.py	infrastructure	src.backend.services.ai.memory.langmem_service
 src/backend/infrastructure/workflow/executor/sequential_mixin.py	workflows	src.backend.dsl.engine.exchange
 src/backend/services/execution/action_dispatcher.py	services	src.backend.dsl.commands.action_registry
-src/backend/services/messaging/kafka_facade.py	services	src.backend.infrastructure.observability.mq_trace_propagator
 src/backend/services/ops/webhook_scheduler.py	services	src.backend.dsl.engine.processors.scraping
 src/backend/services/plugins/registries.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.processors

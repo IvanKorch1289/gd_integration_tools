@@ -60,8 +60,11 @@ EXTENSIONS_LAYER = "extensions"  # S103 W1: extensions scanned by linter
 ALLOWED: dict[str, set[str]] = {
     "core": set(),
     "infrastructure": {"core", "schemas"},
-    "services": {"core", "schemas"},
-    "entrypoints": {"services", "schemas", "core"},
+    # ADR-0284 (S36 W1): services и entrypoints legitimate consumers of
+    # infrastructure. Закрывает Sprint 35 architectural debt (3 entries).
+    # Governance: future ALLOWED matrix changes require per-ADR approval.
+    "services": {"core", "schemas", "infrastructure"},
+    "entrypoints": {"services", "schemas", "core", "infrastructure"},
     "schemas": {"core"},
     # S65 W4: DSL/workflows — meta-layers, оркестрирующие все backend слои.
     # Фактически могут импортировать любой слой (DSL строится поверх всего).
@@ -284,10 +287,7 @@ def _is_in_type_checking_block(tree: ast.AST, target_lineno: int) -> bool:
             continue
         for child in ast.walk(node):
             if isinstance(child, (ast.Import, ast.ImportFrom)):
-                if (
-                    hasattr(child, "lineno")
-                    and child.lineno == target_lineno
-                ):
+                if hasattr(child, "lineno") and child.lineno == target_lineno:
                     return True
     return False
 
@@ -340,18 +340,12 @@ def _check_file(path: Path, root: Path) -> list[tuple[str, str, str]]:
             # S110 W4: framework base classes — легитимное исключение
             # для extensions (SQLAlchemyRepository, main_session_manager,
             # BaseService). См. EXTENSIONS_FRAMEWORK_EXCEPTIONS ниже.
-            if (
-                layer == EXTENSIONS_LAYER
-                and module in EXTENSIONS_FRAMEWORK_EXCEPTIONS
-            ):
+            if layer == EXTENSIONS_LAYER and module in EXTENSIONS_FRAMEWORK_EXCEPTIONS:
                 continue
             # Sprint 3 (audit 2026-08-19): core → services lazy proxy
             # exception. Sprint 224-226 добавил __getattr__-based lazy
             # proxies (avoid circular imports). Полная миграция — Sprint 4+.
-            if (
-                layer == "core"
-                and module in CORE_LAZY_PROXY_EXCEPTIONS
-            ):
+            if layer == "core" and module in CORE_LAZY_PROXY_EXCEPTIONS:
                 continue
             # Sprint 33: core/api/extensions.py — facade re-exports dsl.* symbols.
             # Проверяем IMPORTING file (rel), не imported module.
@@ -504,9 +498,7 @@ def main(argv: list[str] | None = None) -> int:
         # pruning, т.к. allowlist содержит mixed entries из обоих roots.
         all_keys = _collect_all_violations()
         removed = _prune_allowlist(all_keys)
-        print(
-            f"Allowlist pruned: removed {removed} stale entries → {ALLOWLIST_PATH}"
-        )
+        print(f"Allowlist pruned: removed {removed} stale entries → {ALLOWLIST_PATH}")
         return 0
 
     # R3.10d: --strict игнорирует allowlist (CI/release-gate).
