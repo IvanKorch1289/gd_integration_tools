@@ -65,6 +65,28 @@ coverage-per-layer: ## Sprint 36 W1: per-layer coverage split (Phase 0, doc-only
 	@echo "Implementation deferred to S37+ (need CI runner + memory baseline)."
 	@$(SUCCESS) "Coverage Phase 0 documented"
 
+# Sprint 39 W1: ADR-0285 per-layer coverage thresholds gate.
+# Per-layer threshold check (informational — NOT wired to CI per ADR-0285 §2).
+coverage-gate-per-layer: ## Sprint 39 W1: per-layer coverage threshold check (ADR-0285)
+	@$(INFO) "Running per-layer coverage threshold check (ADR-0285, informational)..."
+	@.venv/bin/coverage erase 2>/dev/null || true
+	@pass=0; fail=0; for layer in core infrastructure services entrypoints dsl workflows; do \
+		threshold=$$(.greplayer=$$layer; grep "^$$greplayer:" .baselines/coverage_thresholds.txt | cut -d: -f2 | tr -d ' '); \
+		current=$$(.venv/bin/python -m pytest tests/unit/$$layer --cov=src/backend/$$layer --cov-report=term --tb=no -q --ignore=tests/integration 2>/dev/null | grep TOTAL | awk '{print $$NF}' | tr -d '%'); \
+		if [ -z "$$current" ]; then current=0; fi; \
+		if [ "$$(echo "$$current >= $$threshold" | bc -l)" = "1" ]; then \
+			echo "✓ $$layer: $$current% (threshold: $$threshold%)"; \
+			pass=$$((pass + 1)); \
+		else \
+			echo "✗ $$layer: $$current% (threshold: $$threshold%, below by $$((threshold - current))%)"; \
+			fail=$$((fail + 1)); \
+		fi; \
+	done
+	@echo "---"
+	@echo "Summary: $$pass layers meet threshold, $$fail below threshold"
+	@echo "Per ADR-0285 §2: NOT retroactively enforced (gradual rollout)"
+	@$(SUCCESS) "Per-layer coverage gate complete (informational)"
+
 pre-prod-check: ## S36 w4: 30+ gate pre-prod-check (BLOCKING, ratchet-aware)
 	@$(INFO) "Running pre-prod-check (30+ gates)..."
 	$(UV_RUN) python tools/checks/pre_prod_check.py

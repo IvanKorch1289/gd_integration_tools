@@ -1,0 +1,7 @@
+core: 75
+infrastructure: 70
+services: 60
+entrypoints: 50
+dsl: 80
+workflows: 60
+aggregate: 60
