@@ -10,6 +10,9 @@ auth context.
 Post-fix: context.principal/context.permissions → cmd.meta.principal /
 cmd.meta.permissions (parity с SOAP ActionHandler path, cycle 5 fix).
 
+Cycle 57: refactored to use shared ``captured_action_command`` fixture
+(cycle 45) вместо inline monkeypatch — убрано ~10 LOC boilerplate.
+
 Запуск::
 
     .venv/bin/python -m pytest \\
@@ -28,21 +31,6 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.processors.core import DispatchActionProcessor
 
 
-@pytest.fixture
-def mock_action_registry(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
-    """Patch ActionHandlerRegistry.dispatch на уровне класса (все instances)."""
-    from src.backend.dsl.commands.action_registry import ActionHandlerRegistry
-
-    captured: dict[str, Any] = {}
-
-    async def fake_dispatch(self: Any, command: ActionCommandSchema) -> dict:
-        captured["command"] = command
-        return {"result": "ok"}
-
-    monkeypatch.setattr(ActionHandlerRegistry, "dispatch", fake_dispatch)
-    return captured  # type: ignore[return-value]
-
-
 def _make_exchange(body: dict[str, Any] | None = None) -> MagicMock:
     """Helper: build mock Exchange с body + headers."""
     exchange = MagicMock()
@@ -56,7 +44,7 @@ class TestDispatchActionPrincipalPropagation:
 
     @pytest.mark.asyncio
     async def test_propagates_principal_from_context(
-        self, mock_action_registry: dict[str, Any]
+        self, captured_action_command: dict[str, Any]
     ) -> None:
         """``context.principal='alice'`` → ``cmd.meta.principal='alice'``."""
         proc = DispatchActionProcessor(action="test.action")
@@ -68,7 +56,7 @@ class TestDispatchActionPrincipalPropagation:
 
         await proc.process(exchange, context)
 
-        cmd: ActionCommandSchema = mock_action_registry["command"]
+        cmd: ActionCommandSchema = captured_action_command["command"]
         assert cmd.meta.principal == "alice", (
             f"Expected meta.principal='alice', got {cmd.meta.principal!r}"
         )
@@ -78,7 +66,7 @@ class TestDispatchActionPrincipalPropagation:
 
     @pytest.mark.asyncio
     async def test_anonymous_context_fails_closed(
-        self, mock_action_registry: dict[str, Any]
+        self, captured_action_command: dict[str, Any]
     ) -> None:
         """``context.principal=''`` → ``cmd.meta.principal=''`` (anonymous, fail-closed)."""
         proc = DispatchActionProcessor(action="test.action")
@@ -88,7 +76,7 @@ class TestDispatchActionPrincipalPropagation:
 
         await proc.process(exchange, context)
 
-        cmd: ActionCommandSchema = mock_action_registry["command"]
+        cmd: ActionCommandSchema = captured_action_command["command"]
         assert cmd.meta.principal == "", (
             "Empty context.principal → empty cmd.meta.principal (fail-closed)"
         )
@@ -102,7 +90,7 @@ class TestDispatchActionBackwardsCompat:
 
     @pytest.mark.asyncio
     async def test_default_principal_empty(
-        self, mock_action_registry: dict[str, Any]
+        self, captured_action_command: dict[str, Any]
     ) -> None:
         """No kwargs to DispatchActionProcessor → principal='' по default."""
         proc = DispatchActionProcessor(action="test.action")
@@ -112,6 +100,6 @@ class TestDispatchActionBackwardsCompat:
 
         await proc.process(exchange, context)
 
-        cmd: ActionCommandSchema = mock_action_registry["command"]
+        cmd: ActionCommandSchema = captured_action_command["command"]
         assert cmd.meta.principal == ""
         assert cmd.meta.permissions == []

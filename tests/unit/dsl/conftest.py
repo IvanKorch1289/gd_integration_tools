@@ -1,84 +1,56 @@
-"""Conftest для DSL unit-тестов: изоляция глобальных реестров между тестами.
+"""Shared fixtures для тестов в tests/unit/dsl/.
 
-Между тестами расходится :class:`ProcessorRegistry` — модули могут
-регистрировать свои процессоры через побочные ``@processor``-декораторы,
-из-за чего blueprint-тесты валятся в зависимости от порядка запуска.
+Cycle 57: расширил scope conftest из tests/unit/dsl/commands/ до
+tests/unit/dsl/ (parent dir) — позволяет использовать fixtures
+в tests/unit/dsl/engine/processors/ и других subdirs.
 
-Дополнительно для модуля :mod:`tests.unit.dsl.test_blueprints` инжектируются
-фейковые имена действий, отсутствующие в реальном реестре, но необходимые
-валидатору :meth:`RouteBuilder._validate_action_names`.
+Fixtures:
+- captured_action_command: monkeypatch ``ActionHandlerRegistry.dispatch``
+  для захвата ``ActionCommandSchema`` (cycle 45).
 """
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from typing import Any
 
 import pytest
 
-from src.backend.dsl.commands.action_registry import action_handler_registry
-from src.backend.dsl.registry import get_processor_registry
 
+@pytest.fixture
+def captured_action_command(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
+    """Patch ``ActionHandlerRegistry.dispatch`` для захвата ``ActionCommandSchema``.
 
-@pytest.fixture(autouse=True)
-def _reset_processor_registry() -> Iterator[None]:
-    """Снимает snapshot ProcessorRegistry до теста и восстанавливает после."""
+    Returns dict с ключом ``"command"`` для assertion.
+    Default ``fake_dispatch`` возвращает ``{"result": "ok"}`` dict.
 
-    registry = get_processor_registry()
-    snapshot = dict(registry._by_fqn)
-    try:
-        yield
-    finally:
-        registry._by_fqn.clear()
-        registry._by_fqn.update(snapshot)
+    Handles both calling conventions:
+    - Class attribute replacement (``registry.dispatch(command)``) — first arg is ``self``
+    - Direct function call (``dispatch(command)``) — first arg is command
+    Fixture detects which convention and captures the actual ``command``.
 
+    Кастомизация return value через ``captured_action_command["_return"]``::
 
-@pytest.fixture(autouse=True)
-def _stabilize_blueprint_actions(request: pytest.FixtureRequest) -> Iterator[None]:
-    """Стабилизирует blueprint-тесты при непустом ``action_handler_registry``.
-
-    :meth:`RouteBuilder._validate_action_names` пропускает валидацию только
-    при пустом реестре. Когда в сессии раньше выполнялись модули,
-    предзаполняющие реестр (``test_action_metadata_contract.py`` через
-    module-scoped fixture, импортирующий ``get_v1_routers()``), валидатор
-    срабатывает и blueprint-тесты падают на фейковых именах действий
-    (``messaging.publish_event``/``data.ingest``/``documents.process``).
-
-    Фикстура активна только для модуля :mod:`tests.unit.dsl.test_blueprints`
-    — добавляет недостающие имена на время теста и удаляет их после.
-    Остальные тесты не затрагиваются.
+        captured_action_command["_return"] = ["item1", "item2"]
     """
+    captured: dict[str, Any] = {}
 
-    test_module = request.node.module.__name__ if request.node.module else ""
-    if not test_module.endswith("test_blueprints"):
-        yield
-        return
+    async def fake_dispatch(*args: Any, **kwargs: Any) -> Any:
+        # ``registry.dispatch(command)`` → args=(self, command).
+        # ``dispatch(command)`` → args=(command,).
+        # Detect via type: ActionHandlerRegistry is the class instance.
+        from src.backend.dsl.commands.action_registry import ActionHandlerRegistry
 
-    from src.backend.core.interfaces.action_dispatcher import ActionMetadata
-    from src.backend.dsl.commands.action_registry import ActionHandlerSpec
+        actual_command = None
+        for arg in args:
+            if not isinstance(arg, ActionHandlerRegistry):
+                actual_command = arg
+                break
+        if actual_command is None:
+            actual_command = kwargs.get("command")
+        captured["command"] = actual_command
+        return captured.get("_return", {"result": "ok"})
 
-    injected: list[str] = []
-    for action_name in (
-        "messaging.publish_event",
-        "data.ingest",
-        "documents.process",
-        "orders.create",
-    ):
-        if action_name in action_handler_registry._handlers:
-            continue
-        action_handler_registry._handlers[action_name] = ActionHandlerSpec(
-            action=action_name,
-            service_getter=lambda: None,
-            service_method="noop",
-            payload_model=None,
-        )
-        action_handler_registry._metadata.setdefault(
-            action_name, ActionMetadata(action=action_name),
-        )
-        injected.append(action_name)
+    from src.backend.dsl.commands.action_registry import ActionHandlerRegistry
 
-    try:
-        yield
-    finally:
-        for action_name in injected:
-            action_handler_registry._handlers.pop(action_name, None)
-            action_handler_registry._metadata.pop(action_name, None)
+    monkeypatch.setattr(ActionHandlerRegistry, "dispatch", fake_dispatch)
+    return captured
