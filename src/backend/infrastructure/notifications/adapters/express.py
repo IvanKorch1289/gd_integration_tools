@@ -49,7 +49,6 @@ class ExpressAdapter:
             RuntimeError: Если Express отключён или BotX недоступен.
 
         """
-        from src.backend.dsl.engine.processors.express._common import get_express_client
         from src.backend.infrastructure.clients.external.express_bot import (
             BotxButton,
             BotxMention,
@@ -77,7 +76,50 @@ class ExpressAdapter:
             mentions=mentions,
         )
 
-        client = get_express_client(bot_name)
+        # Sprint 37 W1 (Phase B Item 5, ADR-0282 §3): inline client factory
+        # directly (no DSL bridge — `infrastructure→infrastructure` allowed).
+        # Previously: `from src.backend.dsl.engine.processors.express._common
+        # import get_express_client` (1 cross-layer entry in allowlist).
+        from src.backend.infrastructure.clients.external.express_bot import (
+            BotConfig,
+            ExpressBotClient,
+        )
+
+        from src.backend.core.config.express import express_settings
+
+        if not express_settings.enabled:
+            raise RuntimeError(
+                "Express интеграция отключена (express_settings.enabled=False)"
+            )
+
+        if bot_name == "main_bot":
+            host = express_settings.botx_host or _host_from_url(
+                express_settings.botx_url
+            )
+            config = BotConfig(
+                bot_id=express_settings.bot_id,
+                secret_key=express_settings.secret_key,
+                botx_host=host,
+                base_url=express_settings.botx_url,
+            )
+        else:
+            # Look up extra_bots
+            config = None
+            for bot in express_settings.extra_bots:
+                if bot.get("name") == bot_name:
+                    config = BotConfig(
+                        bot_id=str(bot["bot_id"]),
+                        secret_key=str(bot["secret_key"]),
+                        botx_host=str(
+                            bot.get("botx_host") or _host_from_url(str(bot["base_url"]))
+                        ),
+                        base_url=str(bot["base_url"]),
+                    )
+                    break
+            if config is None:
+                raise RuntimeError(f"Express бот {bot_name!r} не найден в настройках")
+
+        client = ExpressBotClient(config)
         async with client:
             sync_id = await client.send_message(msg)
         _logger.debug(
@@ -109,6 +151,12 @@ class ExpressAdapter:
             return HealthResult.failed(
                 error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
             )
+
+
+def _host_from_url(url: str) -> str:
+    from urllib.parse import urlparse
+
+    return urlparse(url).hostname or ""
 
 
 # Compile-time проверка соответствия протоколу.
