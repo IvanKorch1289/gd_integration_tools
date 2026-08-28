@@ -40,10 +40,15 @@ src/backend/core/di/providers/storage.py	core	src.backend.services.storage.facad
 src/backend/core/frontend_facade.py	core	src.backend.services.dsl_portal
 src/backend/core/messaging/eventbus/facade.py	core	src.backend.infrastructure.clients.messaging.event_bus
 src/backend/core/messaging/stream_facade.py	core	src.backend.infrastructure.clients.messaging.stream
-src/backend/core/notifications/__init__.py	core	src.backend.infrastructure.notifications
-src/backend/core/notifications/__init__.py	core	src.backend.infrastructure.notifications.gateway
 src/backend/core/observability/log_indexer.py	core	src.backend.services.io.indexers.log_indexer
 src/backend/core/scheduler/__init__.py	core	src.backend.infrastructure.scheduler.cron_validator
+# Sprint 35 W1 (Phase B, ADR-0282): services/ops/notification_hub.py
+# legitimately needs notifications gateway (real consumer). services →
+# infrastructure IS a known architectural debt. ADR follow-up needed:
+# либо (a) move gateway DI registration в core layer, либо (b) добавить
+# infrastructure в services ALLOWED matrix. Until ADR, allowlist entry
+# фиксирует явный cross-layer.
+src/backend/services/ops/notification_hub.py	services	src.backend.infrastructure.notifications
 src/backend/core/security/connector_auth.py	core	src.backend.services.authorization.facade
 src/backend/core/workflow/__init__.py	core	src.backend.infrastructure.workflow.factory
 src/backend/entrypoints/api/v1/endpoints/processors_catalog.py	entrypoints	src.backend.dsl.builder

@@ -13,7 +13,7 @@ IL2.2 (ADR-023): **DEPRECATED as direct usage** — call
 
 При добавлении нового кода — используйте напрямую :func:`get_gateway`:
 
-    from src.backend.core.notifications import get_gateway
+    from src.backend.infrastructure.notifications import get_gateway
     gateway = get_gateway()
     await gateway.send(
         channel="email",
@@ -96,7 +96,7 @@ class NotificationHub:
     @staticmethod
     def _gateway():
         """Lazy import Gateway — избегаем circular dependency."""
-        from src.backend.core.notifications import get_gateway
+        from src.backend.infrastructure.notifications import get_gateway
 
         return get_gateway()
 
