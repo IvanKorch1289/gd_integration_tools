@@ -2,12 +2,14 @@
 
 Цель: поднять coverage двух <30%-файлов до ≥60%:
 
-* :mod:`core.observability.log_indexer` — re-export ``LogIndexer`` /
-  :func:`get_log_indexer` из ``services.io.indexers.log_indexer``.
-  Pre: 0% (3 stmts). Post: ≥60%.
 * :mod:`core.observability.metrics` — DI-provider facade с
   ``DEFAULT_LABELS`` / :class:`MetricsRegistry` / singleton.
   Pre: 0% (8 stmts). Post: ≥60%.
+
+Note (Sprint 40 W1 Item 6b): ``core.observability.log_indexer`` proxy REMOVED
+(Sprint 38 W2 commit ``3f21b2fc`` per ADR-0282 Phase B Item 6). Single caller
+``infrastructure/audit/event_log.py:195`` migrated to direct infra import.
+``log_indexer`` regression tests REMOVED from this file (proxy НЕ существует).
 
 Использует only public API — никаких internal mocks.
 """
@@ -16,34 +18,9 @@ from __future__ import annotations
 
 import pytest
 
-from src.backend.core.observability.log_indexer import LogIndexer as LI_LogIndexer
-from src.backend.core.observability.log_indexer import get_log_indexer as li_get
 from src.backend.core.observability.metrics import DEFAULT_LABELS
 from src.backend.core.observability.metrics import MetricsRegistry as MR_Class
 from src.backend.core.observability.metrics import metrics_registry as mr_singleton
-
-
-class TestLogIndexerFacade:
-    """``core.observability.log_indexer`` — re-export facade."""
-
-    def test_log_indexer_class_is_canonical(self) -> None:
-        """``LogIndexer`` — тот же класс, что в ``services.io.indexers``."""
-        from src.backend.services.io.indexers.log_indexer import LogIndexer
-
-        assert LI_LogIndexer is LogIndexer
-
-    def test_get_log_indexer_is_callable(self) -> None:
-        """``get_log_indexer`` — callable factory (lazy-DI)."""
-        assert callable(li_get)
-
-    def test_get_log_indexer_requires_app_state(self) -> None:
-        """``get_log_indexer()`` бросает ``RuntimeError`` без app.state.
-
-        Factory требует ``search_service`` в ``app.state`` — гарантия
-        вызова через FastAPI app lifecycle.
-        """
-        with pytest.raises(RuntimeError, match="search_service"):
-            li_get()
 
 
 class TestMetricsFacade:
