@@ -24,12 +24,9 @@ src/backend/core/di/providers/dlq_bridge.py	core	src.backend.infrastructure.mess
 src/backend/core/di/providers/health_bridge.py	core	src.backend.infrastructure.application.health_aggregator
 src/backend/core/di/providers/health_bridge.py	core	src.backend.infrastructure.clients.base_connector
 src/backend/core/di/providers/health_bridge.py	core	src.backend.infrastructure.clients.pool_health
+src/backend/core/di/providers/infrastructure_locator.py	core	src.backend.infrastructure.di_bridge.observability
 src/backend/core/di/providers/infrastructure_locator.py	core	src.backend.infrastructure.di_bridge.resilience
 src/backend/core/di/providers/jupyter.py	core	src.backend.services.jupyter.execution_service
-src/backend/core/di/providers/observability_bridge.py	core	src.backend.infrastructure.logging.base
-src/backend/core/di/providers/observability_bridge.py	core	src.backend.infrastructure.observability
-src/backend/core/di/providers/observability_bridge.py	core	src.backend.infrastructure.observability.correlation
-src/backend/core/di/providers/observability_bridge.py	core	src.backend.infrastructure.observability.prometheus_temporal_exporter
 src/backend/core/di/providers/search_bridge.py	core	src.backend.infrastructure.clients.external
 src/backend/core/di/providers/search_bridge.py	core	src.backend.infrastructure.clients.external.search_providers
 src/backend/core/di/providers/storage.py	core	src.backend.services.storage.facade
@@ -45,6 +42,8 @@ src/backend/entrypoints/webhook/handler.py	entrypoints	src.backend.dsl.codec.jso
 src/backend/entrypoints/webhook/handler.py	entrypoints	src.backend.dsl.engine.processors.scraping
 src/backend/infrastructure/clients/external/cdc/client.py	infrastructure	src.backend.dsl.commands.registry
 src/backend/infrastructure/workflow/executor/sequential_mixin.py	workflows	src.backend.dsl.engine.exchange
+src/backend/infrastructure/workflow/worker.py	workflows	src.backend.dsl.commands.setup.orchestrator
+src/backend/infrastructure/workflow/worker.py	workflows	src.backend.dsl.routes
 src/backend/services/execution/action_dispatcher.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/ops/webhook_scheduler.py	services	src.backend.dsl.engine.processors.scraping
 src/backend/services/plugins/registries.py	services	src.backend.dsl.commands.action_registry

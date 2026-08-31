@@ -153,7 +153,7 @@ from src.backend.core.di.providers.health_bridge import (
     get_pool_health_monitor_class,
     get_pool_monitor_factory,
 )
-from src.backend.core.di.providers.observability_bridge import (
+from src.backend.infrastructure.di_bridge.observability import (
     get_client_metrics,
     get_client_metrics_module,
     get_correlation_id,
