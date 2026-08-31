@@ -173,34 +173,41 @@ def _compute_layer_coverage(coverage_xml: Path, layer: str) -> float:
 
 
 def check_per_layer_thresholds(
-    coverage_xml: Path,
-    thresholds_file: Path,
+    coverage_xml: Path, thresholds_file: Path, strict: bool = False
 ) -> int:
     """Проверяет coverage каждого layer против threshold из файла.
 
     Per ADR-0285 §1.3 (Sprint 40 W1 implementation). Per-layer breakdown
-    выводится через rich console. NOT wired to CI (ADR-0285 §2: gradual rollout).
+    выводится через rich console. NOT wired to CI by default (ADR-0285 §2:
+    gradual rollout). Sprint 41 W1 (Item 5): добавлен \`strict\` param для
+    Phase 2 CI enforcement.
 
     Args:
         coverage_xml: Путь к coverage.xml (cobertura формат).
         thresholds_file: Путь к ``.baselines/coverage_thresholds.txt``
             (формат: ``layer: N``).
+        strict: True = fail при any layer below threshold (CI mode).
+            False = informational only (Phase 1 default).
 
     Returns:
-        EXIT_OK (0) если все layers meet threshold, EXIT_THRESHOLD_FAIL (1)
-        если хотя бы один layer ниже.
+        EXIT_OK (0) если все layers meet threshold или strict=False,
+        EXIT_THRESHOLD_FAIL (1) если strict=True и хотя бы один layer ниже.
     """
     thresholds = _parse_thresholds_file(thresholds_file)
     if not thresholds:
-        console_err.print(f"[red]ERROR: thresholds file not found: {thresholds_file}[/red]")
+        console_err.print(
+            f"[red]ERROR: thresholds file not found: {thresholds_file}[/red]"
+        )
         return EXIT_ERROR
 
-    console.print(f"Per-layer coverage (ADR-0285 §1.3):")
+    console.print(f"Per-layer coverage (ADR-0285 §1.3, strict={strict}):")
     failures: list[str] = []
     for layer, threshold in sorted(thresholds.items()):
         current = _compute_layer_coverage(coverage_xml, layer)
         if current >= threshold:
-            console.print(f"  [green]✓[/green] {layer}: {current:.1f}% (threshold: {threshold}%)")
+            console.print(
+                f"  [green]✓[/green] {layer}: {current:.1f}% (threshold: {threshold}%)"
+            )
         else:
             gap = threshold - current
             console.print(
@@ -213,7 +220,13 @@ def check_per_layer_thresholds(
             f"[bold red]FAIL:[/bold red] {len(failures)} layer(s) below threshold: "
             f"{', '.join(failures)}"
         )
-        return EXIT_THRESHOLD_FAIL
+        if strict:
+            return EXIT_THRESHOLD_FAIL
+        console.print(
+            "[yellow]NOT CI-gated (Phase 1 informational only, "
+            "use strict=True to enable).[/yellow]"
+        )
+        return EXIT_OK
     console.print("[bold green]OK[/bold green]: all layers meet threshold")
     return EXIT_OK
 
@@ -236,6 +249,17 @@ def main(
         "--update-baseline",
         help="Обновить baseline текущим значением (только при первой настройке).",
     ),
+    update_ratchet: bool = typer.Option(
+        False,
+        "--update-ratchet",
+        help="Sprint 41 W1 (Item 5): bump coverage_percent + append к "
+        "ratchet_history (Phase 0 §3.1 formula, gradual rollout).",
+    ),
+    sprint_label: str = typer.Option(
+        "S41",
+        "--sprint-label",
+        help="Sprint label для ratchet_history entry (Sprint 41 W1 default).",
+    ),
     strict: bool = typer.Option(
         False,
         "--strict",
@@ -250,7 +274,7 @@ def main(
     try:
         current = _parse_coverage_xml(coverage_path)
     except (FileNotFoundError, ValueError) as exc:
-        console_err.print(f"[red]ERROR: {exc}[/red]")
+        console_err.print(f"[red]ERROR: {exc}[red]")
         raise typer.Exit(EXIT_ERROR) from exc
 
     console.print(f"Coverage: [bold]{current:.2f}%[/bold]")
@@ -271,6 +295,28 @@ def main(
                 baseline_data.setdefault("next_wave_todo", []).append(todo)
         _save_baseline(baseline_path, baseline_data)
         console.print(f"[green]baseline обновлён: {baseline_path}[/green]")
+        raise typer.Exit(EXIT_OK)
+
+    # Sprint 41 W1 (Item 5): --update-ratchet bumps coverage_percent + appends
+    # ratchet_history entry (per Phase 0 §3.1 formula, gradual rollout).
+    if update_ratchet:
+        baseline_data["coverage_percent"] = current
+        ratchet_entry = {
+            "date": _iso_today(),
+            "percent": current,
+            "sprint": sprint_label,
+        }
+        history = baseline_data.setdefault("ratchet_history", [])
+        # Avoid duplicate entries per sprint
+        if not any(
+            e.get("sprint") == sprint_label and e.get("date") == ratchet_entry["date"]
+            for e in history
+        ):
+            history.append(ratchet_entry)
+        _save_baseline(baseline_path, baseline_data)
+        console.print(
+            f"[green]ratchet updated: {current:.2f}% (sprint={sprint_label})[/green]"
+        )
         raise typer.Exit(EXIT_OK)
 
     # Гейт: текущий coverage ниже порога — fail.
@@ -295,6 +341,49 @@ def main(
     raise typer.Exit(EXIT_OK)
 
 
+def _iso_today() -> str:
+    """ISO date для ratchet_history entry."""
+    from datetime import datetime, timezone
+
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+
+@app.command("per-layer")
+def per_layer(
+    coverage_xml: str = typer.Option(
+        "coverage.xml", "--coverage-xml", help="Путь к coverage.xml (cobertura формат)."
+    ),
+    thresholds: str = typer.Option(
+        ".baselines/coverage_thresholds.txt",
+        "--thresholds",
+        help="Путь к thresholds-файлу (ADR-0285 §1.2).",
+    ),
+    strict: bool = typer.Option(
+        False,
+        "--strict",
+        help="Sprint 41 W1 (Item 5): Phase 2 strict gate — enable CI enforcement "
+        "(default OFF per ADR-0285 §2 gradual rollout).",
+    ),
+) -> None:
+    """Per-layer coverage threshold check (ADR-0285 §1.3).
+
+    NOT wired to CI by default (ADR-0285 §2: gradual rollout).
+    Используйте \`--strict\` для CI enforcement (Phase 2 rollout).
+
+    Локально:
+    \`\`\`bash
+    python tools/check_coverage_gate.py per-layer              # informational (Phase 1)
+    python tools/check_coverage_gate.py per-layer --strict     # CI gate (Phase 2)
+    \`\`\`
+    """
+    rc = check_per_layer_thresholds(Path(coverage_xml), Path(thresholds), strict=strict)
+    raise typer.Exit(rc)
+
+
+if __name__ == "__main__":
+    app()
+
+
 @app.command("per-layer")
 def per_layer(
     coverage_xml: str = typer.Option(
@@ -311,7 +400,7 @@ def per_layer(
     NOT wired to CI (ADR-0285 §2: gradual rollout). Используйте локально:
     `python tools/check_coverage_gate.py per-layer`.
     """
-    rc = check_per_layer_thresholds(Path(coverage_xml), Path(thresholds))
+    rc = check_per_layer_thresholds(Path(coverage_xml), Path(thresholds), strict=strict)
     raise typer.Exit(rc)
 
 
