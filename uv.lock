@@ -1107,14 +1107,15 @@ wheels = [
 
 [[package]]
 name = "cloudevents"
-version = "1.13.0"
+version = "2.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "deprecation" },
+    { name = "python-dateutil" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/db/36/ef51bd2cbd44a0978e518ef4af2d884cfee2919e612b4f76c2fac826d4de/cloudevents-1.13.0.tar.gz", hash = "sha256:ba01fb257b472c6222fea78ed8bea0fd7a3b0b0fb994cfd677d33a2d53388ccb", size = 34618, upload-time = "2026-07-11T18:52:19.871Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/45/fe/3bae2187abea2682a1079c5618e45baf4c9df7e35017e1b9b7940955db59/cloudevents-2.2.0.tar.gz", hash = "sha256:fc52440a1fecde882b3b745361e1c7dd4e044e71a6b719cfec2e2c0aa1a19fa3", size = 48380, upload-time = "2026-06-11T14:10:02.339Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d4/b7/3bc30b00bfdc69f55ff06a2385f379901e5e86116dac7e27cd5e6cbae375/cloudevents-1.13.0-py3-none-any.whl", hash = "sha256:c4b9ea89f1bb6e2090c8de740870d3c96809181ef691843cb672632afcae039b", size = 55772, upload-time = "2026-07-11T18:52:18.742Z" },
+    { url = "https://files.pythonhosted.org/packages/d0/d4/901b17ea39f4f1125fc92529cb842896309075406a78e13a7c544f0c5600/cloudevents-2.2.0-py3-none-any.whl", hash = "sha256:9ff8adff01b997d251d0fb54076557daa9906330e16afc1712a6447122f8f7a4", size = 98239, upload-time = "2026-06-11T14:10:01.059Z" },
 ]
 
 [[package]]
@@ -3156,7 +3157,7 @@ requires-dist = [
     { name = "casbin", specifier = ">=1.36.0,<2.0.0" },
     { name = "chromadb", marker = "extra == 'rag'", specifier = ">=0.5.0,<2.0.0" },
     { name = "click", specifier = ">=8.3.3,<9.0.0" },
-    { name = "cloudevents", specifier = ">=1.10.0,<2.0.0" },
+    { name = "cloudevents", specifier = ">=1.10.0,<3.0.0" },
     { name = "croniter", specifier = ">=6.2.0,<7.0.0" },
     { name = "cryptography", specifier = ">=42.0.0,<50.0.0" },
     { name = "cyclonedx-bom", marker = "extra == 'security'", specifier = ">=5.0.0" },
