@@ -438,7 +438,7 @@ docs-ru = [
 # Lazy-import внутри процессоров; extra нужен только при реальном использовании.
 dsl-extras-2 = [
     "standardwebhooks>=1.0.0,<2.0.0",
-    "reportlab>=4.0.0,<5.0.0",
+    "reportlab>=4.0.0,<6.0.0",
     # jmespath already in core deps (pyjq has no py3.14 wheels)
 ]
 # Sprint 5 — DSL расширения batch 3: LDAP / WebDAV / geo conversions.
