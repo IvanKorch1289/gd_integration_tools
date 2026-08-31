@@ -305,7 +305,7 @@ analytics = [
     "dask[distributed]>=2026.3.0",
 ]
 rag = [
-    "sentence-transformers>=3.0.0,<6.0.0",
+    "sentence-transformers>=3.0.0,<7.0.0",
     # S172: rank-bm25 promoted to [project].dependencies (core) — см. строку
     # выше с whoosh-reloaded. Дубль здесь оставлен намеренно: гарантирует тот
     # же upper-bound <1.0.0 для пользователей `uv sync --extra rag` даже
