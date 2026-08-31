@@ -133,4 +133,6 @@ jobs:
 
       - name: Test collection gate (circular imports / missing modules)
         # Sanity: pytest --co -q собирает все тесты без ImportError.
-        run: uv run pytest --co -q tests/ 2>&1 | tail -3
+        # Без pipefail exit code берётся от `tail` = 0, gate не срабатывает.
+        shell: bash
+        run: set -o pipefail; uv run pytest --co -q tests/ 2>&1 | tail -3
