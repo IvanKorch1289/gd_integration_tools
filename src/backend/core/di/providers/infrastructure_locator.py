@@ -131,7 +131,7 @@ if TYPE_CHECKING:
     get_workflow_spec_class: Callable[[], Any]
     get_workflow_step_class: Callable[[], Any]
 
-from src.backend.core.di.providers.cdc_bridge import (
+from src.backend.infrastructure.di_bridge.cdc import (
     get_cdc_client_adapter_class,
     get_debezium_cdc_backend_class,
     get_debezium_events_cdc_backend_class,

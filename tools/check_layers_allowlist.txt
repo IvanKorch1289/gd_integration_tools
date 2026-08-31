@@ -15,12 +15,9 @@ src/backend/core/audit/facade/audit_service.py	core	src.backend.services.audit.c
 src/backend/core/auth/facade.py	core	src.backend.services.security.facade
 src/backend/core/di/providers/ai.py	core	src.backend.services.ai.gateway_adapter
 src/backend/core/di/providers/billing.py	core	src.backend.services.billing
-src/backend/core/di/providers/cdc_bridge.py	core	src.backend.infrastructure.cdc.cdc_client_adapter
-src/backend/core/di/providers/cdc_bridge.py	core	src.backend.infrastructure.cdc.debezium_events_backend
-src/backend/core/di/providers/cdc_bridge.py	core	src.backend.infrastructure.cdc.listen_notify_backend
-src/backend/core/di/providers/cdc_bridge.py	core	src.backend.infrastructure.cdc.poll_backend
 src/backend/core/di/providers/dlq_bridge.py	core	src.backend.infrastructure.messaging
 src/backend/core/di/providers/dlq_bridge.py	core	src.backend.infrastructure.messaging.dlq_base
+src/backend/core/di/providers/infrastructure_locator.py	core	src.backend.infrastructure.di_bridge.cdc
 src/backend/core/di/providers/infrastructure_locator.py	core	src.backend.infrastructure.di_bridge.health
 src/backend/core/di/providers/infrastructure_locator.py	core	src.backend.infrastructure.di_bridge.observability
 src/backend/core/di/providers/infrastructure_locator.py	core	src.backend.infrastructure.di_bridge.resilience
