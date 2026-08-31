@@ -37,6 +37,7 @@
 | **Sprint 47 W4 (cov+1)** | **workflow_registry.py: 0% → 100% (47 stmts + 8 branches)** | 21 new tests, ruff 0 / vulture 0; S44 W32 top-5 worst-covered file closed |
 | **Sprint 47 W5 (cov+2)** | **audit_service.py: 35% → 100% (50 stmts + 10 branches)** | 15 new tests via ``sys.modules`` stub-injection (для обхода prometheus_client chain); ruff 0 / vulture 0; 59/59 audit tests PASS |
 | **Sprint 47 W6 (cov+3)** | **audit/facade/secrets.py: 46% → 100% (20 stmts + 6 branches)** | 8 new tests covering narrow-exception handling (D-AUDIT-1033); ruff 0 / vulture 0; 67/67 audit tests PASS |
+| **Sprint 47 W7 (P0+P1)** | **DSL: from __future__ import annotations в exchange.py/context.py; __all__ missing imports в processors/__init__.py** | Роевая аналитика (5 агентов): A4 DSL нашёл 2 P0 + 1 P1 — PEP 695 generic self-ref NameError блокировал 249 collection errors (~60% dsl suite). После фикса: 932 → 1705 tests collected (+773), 270 → 197 errors (-73). 197 оставшихся = environmental (prometheus_client chain + watchfiles/typer/argon2/sqlalchemy_continuum missing optional deps), не код-баги |
 | **Sprint 44 W6 (coverage+1)** | **admin/audit.py: 0% → 100%** | 7 new tests +140 LOC, 17 admin tests PASSED |
 | **Sprint 44 W7 (coverage+2)** | **_capability_adapter.py: 0% → 100%** | 7 new tests +105 LOC, 24 admin tests PASSED |
 | **Sprint 44 W8 (bug+coverage)** | **clickhouse_admin: broken lazy proxy FIX + 0% → 100%** | 6 new tests + facade re-export added |
