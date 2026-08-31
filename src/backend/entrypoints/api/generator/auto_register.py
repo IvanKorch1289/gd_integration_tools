@@ -48,6 +48,7 @@ from src.backend.core.api.extensions import (
     ActionHandlerRegistry,
     action_handler_registry,
 )
+from src.backend.core.types.invocation_command import ActionCommandMetaSchema
 from src.backend.schemas.invocation import ActionCommandSchema
 
 __all__ = ("auto_register_unrouted_actions",)
@@ -133,7 +134,27 @@ def _build_auto_endpoint(
                 # ``{"data": ...}``; это приемлемый default для RPC-обёртки.
                 payload = {"data": body}
 
-        command = ActionCommandSchema(action=action, payload=payload)
+        # P0 (cycle 59, parity с cycle 4/5/24): пробрасываем
+        # principal/permissions из auth middleware (request.state.auth)
+        # в ActionCommandSchema.meta. Auto-endpoints наследуют тот же
+        # auth context что и явные routes (auth middleware ставит
+        # ``request.state.auth`` перед handler).
+        from src.backend.core.auth.auth_context_helpers import extract_user_permissions
+
+        _auth = getattr(request.state, "auth", None)
+        _principal = getattr(_auth, "principal", "")
+        _permissions = (
+            tuple(extract_user_permissions(_auth)) if _auth is not None else ()
+        )
+
+        command = ActionCommandSchema(
+            action=action,
+            payload=payload,
+            meta=ActionCommandMetaSchema(
+                principal=_principal,
+                permissions=list(_permissions),
+            ),
+        )
         result = registry.dispatch(command)
         if inspect.isawaitable(result):
             result = await result

@@ -204,9 +204,20 @@ class EnrichProcessor(BaseProcessor):
         self.result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, raises exceptions для error handling pipeline."""
+        """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, raises exceptions для error handling pipeline.
+
+        P0 (cycle 59, parity с cycle 24/34/35/38): пробрасываем
+        principal/permissions из ExecutionContext в ActionCommandSchema.meta.
+        """
         payload = self.payload_factory(exchange) if self.payload_factory else {}
-        command = ActionCommandSchema(action=self.action, payload=payload)
+        command = ActionCommandSchema(
+            action=self.action,
+            payload=payload,
+            meta=ActionCommandMetaSchema(
+                principal=context.principal,
+                permissions=list(context.permissions),
+            ),
+        )
         result = await context.action_registry.dispatch(command)
         exchange.set_property(self.result_property, result)
 

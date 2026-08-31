@@ -33,11 +33,22 @@ def _register_system_tools(mcp: Any) -> None:
     )
     async def system_health() -> str:
         from src.backend.core.api.extensions import action_handler_registry
+        from src.backend.core.types.invocation_command import ActionCommandMetaSchema
         from src.backend.schemas.invocation import ActionCommandSchema
 
         try:
             result = await action_handler_registry.dispatch(
-                ActionCommandSchema(action="tech.check_all_services", payload={})
+                ActionCommandSchema(
+                    action="tech.check_all_services",
+                    payload={},
+                    # P0 (cycle 59, parity с cycle 39/40/41/42): explicit
+                    # system principal для MCP tool wrapper (no user
+                    # context — MCP protocol uses different auth).
+                    meta=ActionCommandMetaSchema(
+                        principal="mcp:system_health",
+                        permissions=[],
+                    ),
+                )
             )
             if hasattr(result, "model_dump"):
                 return encode_json(result.model_dump(mode="json")).decode("utf-8")

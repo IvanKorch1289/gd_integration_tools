@@ -37,7 +37,7 @@ from src.backend.dsl.workflow.spec import (
     WorkflowDeclaration,
     WorkflowStep,
 )
-from src.backend.schemas.invocation import ActionCommandSchema
+from src.backend.schemas.invocation import ActionCommandMetaSchema, ActionCommandSchema
 
 __all__ = (
     "LANGGRAPH_CHECKPOINT_GET_ACTIVITY",
@@ -199,7 +199,16 @@ def bridge_action_handler(
     """
 
     async def _activity_impl(payload: dict[str, Any]) -> Any:
-        command = ActionCommandSchema(action=action_id, payload=payload or {})
+        # P0 (cycle 59, parity с cycle 39/40/41/42): explicit system
+        # principal для Temporal activity (background worker, no user context).
+        command = ActionCommandSchema(
+            action=action_id,
+            payload=payload or {},
+            meta=ActionCommandMetaSchema(
+                principal=f"temporal_activity:{action_id}",
+                permissions=[],
+            ),
+        )
         return await action_handler_registry.dispatch(command)
 
     _activity_impl.__name__ = action_id.replace(".", "_")
