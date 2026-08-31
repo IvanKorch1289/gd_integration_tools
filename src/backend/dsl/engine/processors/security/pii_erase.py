@@ -412,7 +412,7 @@ class PiiEraseProcessor(BaseProcessor):
         fail-CLOSED caller path).
         """
         try:
-            from src.backend.core.di.providers.dlq_bridge import (
+            from src.backend.infrastructure.di_bridge.dlq import (
                 get_dlq_envelope_class,
                 get_dlq_reason_class,
             )

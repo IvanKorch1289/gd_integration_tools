@@ -138,7 +138,7 @@ from src.backend.infrastructure.di_bridge.cdc import (
     get_listen_notify_cdc_backend_class,
     get_poll_cdc_backend_class,
 )
-from src.backend.core.di.providers.dlq_bridge import (
+from src.backend.infrastructure.di_bridge.dlq import (
     get_dlq_base_module,
     get_dlq_envelope_class,
     get_dlq_reason_class,
