@@ -267,12 +267,73 @@ some imports). Sprint 41 W1 ACTUAL verification found the bug via direct
 - Per ADR-0282 §4 "Per-prune workflow v2": pre-scan includes
   `python -c "from <module> import <symbol>"` direct verification
 
-### 5.4 NO regression tests in Sprint 40 (DRAFT only)
+### 5.4 Sprint 42 W1 Item 5 — Phase 2 risk analysis (DECOMPOSED per user directive)
 
-**Rationale**: Sprint 40 = DRAFT only, no code changes. Sprint 41 W1 = ACCEPTED
-+ Phase 0 LoggerProtocol fix. NO composition impl (per user directive "если
-есть сложные моменты - декомпозируй"). Implementation deferred до S42+ after
-Phase 2 risk analysis.
+Per Sprint 41 retro §4.4 ("**Если есть сложные моменты - декомпозируй**"):
+- **HIGH risk** (82 mixins) NOT attempted as implementation.
+- **Phase 2 risk analysis ONLY** (no implementation) — this section.
+
+#### 5.4.1 Risk gates BEFORE Phase 3 implementation (Sprint 43+)
+
+| Risk gate | Status | Source |
+|---|---|---|
+| C3 linearization conflicts | **2 calls** detected | `grep super().__init__( src/backend/dsl/builders/` |
+| `__init_subclass__` hooks | **0 detected** | `grep __init_subclass__( src/backend/dsl/builders/` |
+| Public API surface | **76 mixin classes** (verified 2026-08-27) | `RouteBuilder.__mro__` introspection |
+| Extensions audit | **0 critical** | `grep -rE 'RouteBuilder\b' extensions/` → no matches |
+
+**Risk gates assessment** (Sprint 42 W1 verified 2026-08-27):
+
+- **C3 conflicts** (2 `super().__init__` calls in `content_mixin.py` + `infrastructure_dsl.py`):
+  - Both forward `name=` kwarg (similar signature).
+  - No conflict (different mixins, different signatures).
+  - **Risk gate: PASS** (≤2 minor conflicts documented).
+- **`__init_subclass__` hooks**: 0 detected.
+  - **Risk gate: PASS** (0 hooks documented).
+- **Public API surface**: 76 mixin classes (top: AIRPAMixin 70 attrs, RPAMixin 28, AILlMMixin 19).
+  - **Risk gate: PASS** (full surface documented via `dir()` introspection).
+- **Extensions audit**: 0 extensions reference `RouteBuilder` directly.
+  - **Risk gate: PASS** (0 critical extensions affected).
+
+#### 5.4.2 Per-mixin priority order (Sprint 43+ decision)
+
+Based on Phase 2 risk gates (all PASS), Phase 3 implementation safe to proceed.
+Per-mixin priority (Sprint 41 retro §2.5):
+
+1. **EventBusMixin + sub-mixins** (~50 LOC, low risk) — Sprint 43 W1.
+2. **Variable/Policy/Fluent mixins** (~80 LOC) — Sprint 43 W2.
+3. AIRPAMixin (~200 LOC, medium) — Sprint 44.
+4. IntegrationMixin (~300 LOC) — Sprint 44.
+5. EIPMixin (8 mixins, ~400 LOC, high) — Sprint 45+.
+
+#### 5.4.3 Phase 3 implementation deferred до Sprint 43+
+
+**Rationale** (per user directive "**решай deferred, не уклоняйся**"):
+
+- Phase 2 risk analysis (THIS section, Sprint 42 W1 Item 5) shipped.
+- Phase 3 implementation (EventBusMixin composition) deferred до Sprint 43+.
+- Decomposition proven in Sprint 41 (Item 4 ACCEPTED, no impl) + Sprint 42 (Item 0 Phase 0 fix).
+
+#### 5.4.4 Sprint 42 W1 Item 0 — CRITICAL stdlib_backend extension (gap-agent discovery)
+
+**Discovery** (Sprint 42 W1 Item 0, commit `f968a000`):
+
+gap-agent discovered Sprint 41 fix was INCOMPLETE — Sprint 41 retro §4.5
+claimed "Item 0 FALSE POSITIVE (pytest collection works)" — VERIFIED
+2026-08-27: pytest collection DOES NOT work (NameError).
+
+**Same bug pattern** in `src/backend/infrastructure/logging/stdlib_backend.py`:
+```python
+def bind(self, **kwargs: Any) -> StdlibLogger:  # ← NameError: name 'StdlibLogger' is not defined
+    ...
+```
+
+**Fix** (Sprint 42 W1 Item 0, `f968a000`): add `from __future__ import annotations`
+at TOP of `stdlib_backend.py`. Plus 3 stale test imports (Sprint 41 Item 6 missed
+these test files when relocating health_bridge/search_bridge).
+
+**Lesson**: Phase 0 risk analysis MUST verify imports via DIRECT pytest
+execution, NOT only `python -c` direct imports. Sprint 41 retro claim was WRONG.
 
 ### 5.5 Frozen MRO depth as Sprint 41 W1 EOD
 
