@@ -8,7 +8,7 @@
                               default-OFF под feature_flag.notification_dsl_enabled.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import TYPE_CHECKING as TYPE_CHECKING
 from typing import Any as Any

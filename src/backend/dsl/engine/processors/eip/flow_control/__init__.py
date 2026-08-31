@@ -13,7 +13,7 @@ Modules:
 - :mod:`_legacy` — backward-compat stub (S175 Phase 1)
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from src.backend.dsl.engine.processors.eip.flow_control.aggregator import (
     AggregatorProcessor,

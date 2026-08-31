@@ -26,7 +26,7 @@
 ``SinkResult(ok=False, details={"error": "<lib> not installed"})``).
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from src.backend.infrastructure.sinks.email_sink import EmailSink
 from src.backend.infrastructure.sinks.file_sink import FileSink

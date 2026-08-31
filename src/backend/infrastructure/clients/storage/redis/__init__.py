@@ -11,7 +11,7 @@ Core (4) остается в __init__.py: __init__, _base_url, _db_for_kind, _re
 Backward-compat: ``from src.backend.infrastructure.clients.storage.redis import RedisClient`` works.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import TYPE_CHECKING as TYPE_CHECKING
 from typing import Any as Any

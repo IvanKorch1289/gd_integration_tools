@@ -17,7 +17,7 @@ Extension points:
     - Clock — монотонные часы для метрик и timeouts
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from src.backend.core.clock import Clock
 from src.backend.core.di.app_state import app_state_singleton

@@ -17,7 +17,7 @@ proxy (ponytail: thin proxy). Устраняет layer-violation
 Layer policy: entrypoints -> services (allowed per V22).
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 

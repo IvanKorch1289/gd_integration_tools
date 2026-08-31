@@ -18,7 +18,7 @@ SagaBuilder (4 methods) preserved as separate class.
 Backward-compat: ``from src.backend.dsl.workflow.builder import WorkflowBuilder`` works.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import TYPE_CHECKING as TYPE_CHECKING
 from typing import Any as Any

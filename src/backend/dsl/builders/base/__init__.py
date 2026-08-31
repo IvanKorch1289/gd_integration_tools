@@ -12,7 +12,7 @@ sub-mixin'а от composite-mixin'ов: ``IntegrationMixin``, ``AgentDSLMixin``,
 Backward-compat: ``from src.backend.dsl.builders.base import RouteBuilder`` works.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import TYPE_CHECKING as TYPE_CHECKING
 from typing import Any as Any

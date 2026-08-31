@@ -10,7 +10,7 @@
 Backward-compat: ``from src.backend.dsl.processors.saga_lra_processor import SagaLRAProcessor`` works.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import TYPE_CHECKING as TYPE_CHECKING
 

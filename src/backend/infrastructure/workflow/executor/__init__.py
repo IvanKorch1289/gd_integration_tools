@@ -12,7 +12,7 @@ Core (2) остается в __init__.py: __init__, execute_next (82 LOC, BIG).
 Backward-compat: ``from src.backend.infrastructure.workflow.executor import DSLStepExecutor`` works.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from collections.abc import Callable as Callable
 from typing import TYPE_CHECKING as TYPE_CHECKING

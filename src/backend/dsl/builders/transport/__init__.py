@@ -8,7 +8,7 @@ Backward-compat: ``from src.backend.dsl.builders.transport import TransportMixin
 работает как раньше (MRO композитный).
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import Self as Self
 

@@ -24,7 +24,7 @@ References:
 - ``docs/_build/.../PROJECT_FINAL_SUMMARY.md`` "D102/D187 (capability-checked facades)"
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from src.backend.core.api import *  # noqa: F401,F403 — backward-compat re-export
 from src.backend.core.api import (  # noqa: F401 — lazy attrs

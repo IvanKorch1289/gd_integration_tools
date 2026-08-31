@@ -11,7 +11,7 @@ r"""RAG chunkers — стратегии разбиения текста на emb
 :func:`get_chunker` возвращает реализацию по имени стратегии.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import Literal as Literal
 from typing import Protocol as Protocol

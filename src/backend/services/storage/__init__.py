@@ -3,7 +3,7 @@
 Canonical entry point for extensions: :class:`StorageFacade`.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from src.backend.services.storage.facade import StorageFacade
 

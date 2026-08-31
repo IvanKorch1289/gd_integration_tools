@@ -11,7 +11,7 @@ Core (__init__ + vocabulary + policy) остается в __init__.py.
 Backward-compat: ``from src.backend.core.security.capabilities.gate import CapabilityGate`` works.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from collections.abc import Callable as Callable
 from collections.abc import Iterable as Iterable

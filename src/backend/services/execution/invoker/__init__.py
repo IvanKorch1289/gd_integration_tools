@@ -8,7 +8,7 @@
 Backward-compat: ``from src.backend.services.execution.invoker import Invoker`` works.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from src.backend.services.execution.invoker.helpers import (
     _deserialize_request,  # S68 W3: helper re-export

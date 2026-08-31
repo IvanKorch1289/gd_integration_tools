@@ -17,7 +17,7 @@ Migration roadmap (post-S175 #8):
 - S176 #?: Sandbox integration → :mod:`src.backend.core.ai.gateway.sandbox`
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 # AIGateway class — перенесён в subpackage (S175 #8 split completion).
 from src.backend.core.ai.gateway.gateway import AIGateway

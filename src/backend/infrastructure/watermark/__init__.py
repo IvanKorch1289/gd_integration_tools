@@ -5,7 +5,7 @@ PG-реализация импортируется лениво (через ``__
 psycopg/SQLAlchemy-стека (dev_light/unit-тесты).
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import TYPE_CHECKING as TYPE_CHECKING
 from typing import Any as Any

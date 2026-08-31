@@ -11,7 +11,7 @@ Core (4) остается в __init__.py: __init__, _service_error_boundary, _en
 Backward-compat: ``from src.backend.services.core.base import BaseService`` works.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import TYPE_CHECKING as TYPE_CHECKING
 from typing import Any as Any

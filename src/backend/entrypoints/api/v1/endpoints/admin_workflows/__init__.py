@@ -9,7 +9,7 @@
 Backward-compat: ``from src.backend.entrypoints.api.v1.endpoints.admin_workflows import _AdminWorkflowsFacade`` works.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from fastapi import APIRouter as APIRouter
 from fastapi import Depends as Depends

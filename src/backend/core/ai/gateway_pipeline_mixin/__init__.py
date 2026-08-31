@@ -10,7 +10,7 @@
 Backward-compat: ``from src.backend.core.ai.gateway_pipeline_mixin import PipelineStepsMixin`` works.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import TYPE_CHECKING as TYPE_CHECKING
 

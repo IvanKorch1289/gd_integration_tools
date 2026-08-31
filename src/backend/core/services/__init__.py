@@ -8,7 +8,7 @@ proxy. Устраняет layer-violation ``core → services`` — services
 импортируются только при lookup атрибута.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 

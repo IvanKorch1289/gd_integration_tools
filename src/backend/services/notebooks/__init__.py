@@ -3,7 +3,7 @@
 Append-only история версий с restore, REST API и Streamlit-страницей.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from src.backend.services.notebooks.models import Notebook, NotebookVersion
 from src.backend.services.notebooks.repository import (

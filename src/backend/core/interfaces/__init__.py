@@ -25,7 +25,7 @@ Sprint 173 M2.4: backward-compat re-exports для
 ``core.interfaces.log_sink`` → ``core.interfaces.__init__``.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from abc import ABC as ABC
 from abc import abstractmethod as abstractmethod

@@ -24,7 +24,7 @@ References:
 
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from pathlib import Path as Path
 from typing import TYPE_CHECKING as TYPE_CHECKING

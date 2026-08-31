@@ -1,4 +1,4 @@
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 import inspect
 import os

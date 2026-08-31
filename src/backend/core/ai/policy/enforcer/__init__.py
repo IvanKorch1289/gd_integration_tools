@@ -14,7 +14,7 @@ research/agent-framework/REPORT.md F4.1, F4.2.
 Backward-compat: ``from src.backend.core.ai.policy.enforcer import AIPolicyEnforcer`` works.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import TYPE_CHECKING as TYPE_CHECKING
 from typing import Any as Any

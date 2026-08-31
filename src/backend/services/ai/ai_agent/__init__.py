@@ -12,7 +12,7 @@ Core (__init__ + _get_http_client + _extract_agent_response) остается в
 Backward-compat: ``from src.backend.services.ai.ai_agent import AIAgentService, get_ai_agent_service`` works.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import TYPE_CHECKING as TYPE_CHECKING
 from typing import Any as Any

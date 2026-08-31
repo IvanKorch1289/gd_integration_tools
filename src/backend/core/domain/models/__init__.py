@@ -22,7 +22,7 @@ References:
 
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 # S4 fix (S36-W10): 4 shim-модуля удалены (files/orders/orderkinds/users).
 # Импорт напрямую из extensions/core_entities/ (S168 W14 P2-10 closure).

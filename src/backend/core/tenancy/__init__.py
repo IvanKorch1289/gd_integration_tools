@@ -5,7 +5,7 @@ Tenant resolver читает header ``X-Tenant-ID`` или subdomain, устан
 metrics) используют контекст для изоляции.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from contextvars import ContextVar as ContextVar
 from dataclasses import dataclass as dataclass

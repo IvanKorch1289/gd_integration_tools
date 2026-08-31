@@ -15,7 +15,7 @@ Public API:
     * Экспортеры (export_jsonschema / export_openapi / export_asyncapi).
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from src.backend.services.schema_registry.exporter_asyncapi import export_asyncapi
 from src.backend.services.schema_registry.exporter_jsonschema import export_jsonschema

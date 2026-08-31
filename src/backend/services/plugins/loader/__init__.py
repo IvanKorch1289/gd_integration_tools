@@ -10,7 +10,7 @@ Public surface (__init__ + loaded + successful + discover_and_load + shutdown_al
 Backward-compat: ``from src.backend.services.plugins.loader import PluginLoader`` works.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from pathlib import Path as Path
 from typing import TYPE_CHECKING as TYPE_CHECKING

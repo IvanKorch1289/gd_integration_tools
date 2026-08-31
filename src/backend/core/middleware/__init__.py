@@ -16,6 +16,6 @@ design — the entrypoint layer owns the HTTP request lifecycle. Future
 ADR-driven re-import (per D293) may move selected middlewares here.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 __all__: tuple[str, ...] = ()

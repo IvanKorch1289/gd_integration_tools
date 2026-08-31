@@ -13,7 +13,7 @@ Public API:
 * CLI ``tools/checks/ragas_runner.py`` — entry point для ``make ai-rag-eval``.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from src.backend.services.ai.eval.ragas_evaluator import RAGASRecord as RAGASRecord
 

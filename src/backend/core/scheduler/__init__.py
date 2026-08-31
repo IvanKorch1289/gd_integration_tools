@@ -9,7 +9,7 @@ lazy re-export (single cross-layer caller migrated to direct infrastructure
 import via ADR-0284 ALLOWED matrix). 3 DI symbols preserved.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from src.backend.core.di.providers.infrastructure_locator import (
     get_scheduler_manager_class as _get_sm_cls,

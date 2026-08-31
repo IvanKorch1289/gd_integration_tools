@@ -9,7 +9,7 @@ Scaffold для операционных примитивов оркестрац
 * `HumanApproval` — пауза pipeline до явного approve через API/Streamlit.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 import asyncio
 from collections.abc import Awaitable as Awaitable

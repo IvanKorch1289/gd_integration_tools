@@ -11,7 +11,7 @@ Namespace-группировка позволяет:
 - Per-namespace rate-limit и audit
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 __all__ = (
     "AI_NAMESPACE",

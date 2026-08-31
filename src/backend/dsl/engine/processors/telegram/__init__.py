@@ -13,7 +13,7 @@
     )
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from src.backend.dsl.engine.processors.telegram.edit import TelegramEditProcessor
 from src.backend.dsl.engine.processors.telegram.mention import TelegramMentionProcessor

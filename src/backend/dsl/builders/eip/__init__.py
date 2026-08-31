@@ -23,7 +23,7 @@ Apache Camel Content-Based Router: https://camel.apache.org/components/latest/ei
 Apache Airflow Sensor: https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/sensors.html
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from src.backend.dsl.builders.eip.core import CoreEIPsMixin as CoreEIPsMixin
 from src.backend.dsl.builders.eip.messaging import (

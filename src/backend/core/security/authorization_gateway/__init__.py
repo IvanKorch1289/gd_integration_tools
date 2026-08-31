@@ -12,7 +12,7 @@ Core (5) остается в __init__.py: __init__, authorize (91 LOC, BIG), _fi
 Backward-compat: ``from src.backend.core.security.authorization_gateway import AuthorizationGateway`` works.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import TYPE_CHECKING as TYPE_CHECKING
 from typing import Any as Any

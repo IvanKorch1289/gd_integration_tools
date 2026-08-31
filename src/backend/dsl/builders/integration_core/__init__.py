@@ -11,7 +11,7 @@ No core methods (all 15 are public).
 Backward-compat: ``from src.backend.dsl.builders.integration_core import IntegrationCoreMixin`` works.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import TYPE_CHECKING as TYPE_CHECKING
 

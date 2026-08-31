@@ -13,7 +13,7 @@ Core (2) остается в __init__.py: __init__, close.
 Backward-compat: ``from src.backend.infrastructure.clients.transport.http import HttpClient`` works.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import TYPE_CHECKING as TYPE_CHECKING
 from typing import Any as Any

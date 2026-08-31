@@ -9,7 +9,7 @@ All 61 methods now distributed across 5 mixin files.
 Stateless: использует ``self._add`` / ``self._add_lazy`` через MRO.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import TYPE_CHECKING as TYPE_CHECKING
 

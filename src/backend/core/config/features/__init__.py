@@ -52,7 +52,7 @@ subclass; ``__init__.py`` собирает их в единый :class:`FeatureF
 multi-inheritance composition) с сохранением public API.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import ClassVar as ClassVar
 from typing import Literal as Literal

@@ -17,7 +17,7 @@ backwards-compat для S8 importers.
 * :class:`FanoutDLQWriter` — публикует в несколько writers (для replay).
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from src.backend.infrastructure.messaging.dlq.fanout_writer import FanoutDLQWriter
 from src.backend.infrastructure.messaging.dlq.inbox_writer import InboxDLQWriter

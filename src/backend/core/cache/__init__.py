@@ -22,7 +22,7 @@ Backends (Redis / Memcached / KeyDB / Disk) live in
 via the ``UnifiedCacheFacade`` Protocol (Rule 1).
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from src.backend.core.cache.facade import (
     CacheError,

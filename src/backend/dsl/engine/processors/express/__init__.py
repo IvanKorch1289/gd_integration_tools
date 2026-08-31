@@ -13,7 +13,7 @@
     )
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from src.backend.dsl.engine.processors.express.edit import ExpressEditProcessor
 from src.backend.dsl.engine.processors.express.mention import ExpressMentionProcessor

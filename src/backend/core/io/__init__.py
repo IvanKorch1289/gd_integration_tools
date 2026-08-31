@@ -4,7 +4,7 @@ Sprint 225 refactor: convert direct re-export to ``__getattr__``-based lazy
 proxy. Устраняет layer-violation ``core → services``.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 

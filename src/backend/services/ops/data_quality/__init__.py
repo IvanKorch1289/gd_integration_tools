@@ -16,7 +16,7 @@ Mixin files (apply/check/rule_mgmt/schema) больше НЕ определяю�
 class identity consistent через post-load injection (см. ниже).
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from collections import defaultdict as defaultdict
 from dataclasses import dataclass as dataclass

@@ -12,7 +12,7 @@ Core (2) остается в __init__.py: __init__, _server_to_ws_url.
 Backward-compat: ``from src.backend.services.jupyter.execution_service import NotebookExecutionService`` works.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import TYPE_CHECKING as TYPE_CHECKING
 

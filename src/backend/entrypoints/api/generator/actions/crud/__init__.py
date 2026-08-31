@@ -11,7 +11,7 @@ Core (1) остается в __init__.py: _register_crud_action_metadata.
 Backward-compat: ``from src.backend.entrypoints.api.generator.actions.crud import CrudMixin`` works.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import TYPE_CHECKING as TYPE_CHECKING
 

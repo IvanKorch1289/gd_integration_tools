@@ -7,6 +7,7 @@ Ponytail fix: re-exports dsl.* symbols через core.api.extensions,
 До Sprint 33: 42 entrypoints → dsl.* violations.
 После: 0 (после migration в Sprint D.2).
 """
+
 from __future__ import annotations
 
 # DSL analysis (entrypoints → dsl.analysis: 1 violation)
@@ -19,6 +20,8 @@ from src.backend.dsl.commands.action_registry import (
     ActionHandlerSpec,
     action_handler_registry,
 )
+
+# Routes (entrypoints → dsl.routes: 1 violation → 0, Sprint 33 D.2)
 
 # Commands registry — RouteRegistry canonical (14 violations → 0)
 from src.backend.dsl.commands.registry import RouteRegistry, route_registry

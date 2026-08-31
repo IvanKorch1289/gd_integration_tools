@@ -10,7 +10,7 @@ Core (__init__ + process + _convert + _to_json + _from_json) остается в
 Backward-compat: ``from src.backend.dsl.engine.processors.format_convert import FormatConvertProcessor`` works.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 import json
 from typing import TYPE_CHECKING as TYPE_CHECKING

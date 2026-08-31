@@ -11,7 +11,7 @@ Re-export для backwards-compat: импорт ``from src.backend.core.auth.sam
 SamlBackend`` работает наравне с историческим ``saml_backend`` модулем.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from src.backend.core.auth.saml.sp_handler import SamlSpHandler, SpInitiatedLoginResult
 from src.backend.core.auth.saml_backend import (

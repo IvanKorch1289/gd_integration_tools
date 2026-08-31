@@ -10,7 +10,7 @@ No core methods.
 Backward-compat: ``from src.backend.services.plugins.loader.loading import LoadingMixin`` works.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import TYPE_CHECKING as TYPE_CHECKING
 

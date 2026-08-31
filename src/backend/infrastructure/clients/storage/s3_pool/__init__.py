@@ -7,7 +7,7 @@
 Backward-compat: ``from src.backend.infrastructure.clients.storage.s3_pool import S3Client`` works.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import Any as Any
 

@@ -19,7 +19,7 @@ Backward-compat:
     продолжает работать через этот ``__init__.py``.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 # Phase 1: re-export из legacy godfile (S175 — этот sprint)
 from src.backend.dsl.engine.processors.entity._legacy import (

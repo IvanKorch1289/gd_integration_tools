@@ -5,7 +5,7 @@ LLM-цепочек проекта: knowledge_qa, instruction_following, hallucin
 safety, context_recall, tool_use, multi_turn_coherence.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from src.backend.services.ai.eval.suites.context_recall import (
     context_recall_suite as context_recall_suite,

@@ -1,6 +1,6 @@
 """DSPy critical pipelines registry (K4 S6 W2)."""
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from src.backend.services.ai.dspy.pipelines.credit_scoring import (
     credit_scoring_pipeline,

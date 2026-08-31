@@ -12,7 +12,7 @@ re-export (single caller ``admin_workflow_versioning.py:208`` migrated
 to direct ``infrastructure.workflow.factory`` import).
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from src.backend.core.workflow.backend import (
     WorkflowBackend,

@@ -6,6 +6,6 @@
 с типизированным ``DispatchContext`` после парсинга в action invocation.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 __all__ = ()

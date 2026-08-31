@@ -12,7 +12,7 @@
 Backward-compat: ``from src.backend.infrastructure.security.cert_store import CertStore, MemoryCertBackend`` works.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from src.backend.core.config.cert_store import (
     cert_store_settings as cert_store_settings,

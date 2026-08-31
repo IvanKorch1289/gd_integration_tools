@@ -7,7 +7,7 @@
 эти типы при работе.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from enum import StrEnum as StrEnum
 from typing import Any as Any

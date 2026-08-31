@@ -33,7 +33,7 @@ Feature-flag
 * docs/adr/0070-agent-dsl-processors.md.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from src.backend.dsl.engine.processors.agent_dsl.agent_branch import (
     AgentBranchProcessor,

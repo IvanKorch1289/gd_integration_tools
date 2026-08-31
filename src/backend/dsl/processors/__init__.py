@@ -18,7 +18,7 @@ Sprint 36+:
     variant удалён в S63 W2 (dedup).
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from src.backend.dsl.processors.batch_processor import BatchProcessor
 from src.backend.dsl.processors.plan_execute_processor import (

@@ -13,7 +13,7 @@ Core (1) остается в __init__.py: __init__.
 Backward-compat: ``from src.backend.services.io.external_database import ExternalDatabaseService`` works.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from typing import TYPE_CHECKING as TYPE_CHECKING
 from typing import Any as Any

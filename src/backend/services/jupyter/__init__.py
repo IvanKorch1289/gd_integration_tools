@@ -4,7 +4,7 @@ Notebook execution через JupyterHub REST API + WebSocket kernel channels.
 MVP: upload .ipynb → create session → execute cells → collect output.
 """
 
-from __future__ import annotations as annotations
+from __future__ import annotations
 
 from src.backend.core.config.services.jupyter_hub import (
     jupyter_hub_settings as jupyter_hub_settings,
