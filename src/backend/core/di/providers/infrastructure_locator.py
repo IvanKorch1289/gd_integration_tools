@@ -144,7 +144,7 @@ from src.backend.core.di.providers.dlq_bridge import (
     get_dlq_reason_class,
     get_dlq_writer_class,
 )
-from src.backend.core.di.providers.health_bridge import (
+from src.backend.infrastructure.di_bridge.health import (
     get_health_check_factory,
     get_health_mode_class,
     get_health_result_class,
@@ -184,7 +184,7 @@ from src.backend.infrastructure.di_bridge.resilience import (
     get_redis_rate_limiter_class,
     get_unified_rate_limiter_attr,
 )
-from src.backend.core.di.providers.search_bridge import (
+from src.backend.infrastructure.di_bridge.search import (
     get_base_search_provider_class,
     get_perplexity_provider_class,
     get_search_providers_module,

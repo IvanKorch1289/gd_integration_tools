@@ -21,14 +21,11 @@ src/backend/core/di/providers/cdc_bridge.py	core	src.backend.infrastructure.cdc.
 src/backend/core/di/providers/cdc_bridge.py	core	src.backend.infrastructure.cdc.poll_backend
 src/backend/core/di/providers/dlq_bridge.py	core	src.backend.infrastructure.messaging
 src/backend/core/di/providers/dlq_bridge.py	core	src.backend.infrastructure.messaging.dlq_base
-src/backend/core/di/providers/health_bridge.py	core	src.backend.infrastructure.application.health_aggregator
-src/backend/core/di/providers/health_bridge.py	core	src.backend.infrastructure.clients.base_connector
-src/backend/core/di/providers/health_bridge.py	core	src.backend.infrastructure.clients.pool_health
+src/backend/core/di/providers/infrastructure_locator.py	core	src.backend.infrastructure.di_bridge.health
 src/backend/core/di/providers/infrastructure_locator.py	core	src.backend.infrastructure.di_bridge.observability
 src/backend/core/di/providers/infrastructure_locator.py	core	src.backend.infrastructure.di_bridge.resilience
+src/backend/core/di/providers/infrastructure_locator.py	core	src.backend.infrastructure.di_bridge.search
 src/backend/core/di/providers/jupyter.py	core	src.backend.services.jupyter.execution_service
-src/backend/core/di/providers/search_bridge.py	core	src.backend.infrastructure.clients.external
-src/backend/core/di/providers/search_bridge.py	core	src.backend.infrastructure.clients.external.search_providers
 src/backend/core/di/providers/storage.py	core	src.backend.services.storage.facade
 src/backend/core/frontend_facade.py	core	src.backend.services.dsl_portal
 src/backend/core/messaging/eventbus/facade.py	core	src.backend.infrastructure.clients.messaging.event_bus
