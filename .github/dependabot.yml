@@ -27,50 +27,6 @@ updates:
     # которые могут сломать API.
     # При security-fix: maintainer review обязателен.
 
-  # ── npm admin-react (main) ──────────────────────────────────
-  - package-ecosystem: "npm"
-    directory: "/src/frontend/admin-react"
-    schedule:
-      interval: "weekly"
-      day: "tuesday"
-      time: "04:00"
-      timezone: "UTC"
-    commit-message:
-      prefix: "deps(npm)"
-      include: "scope"
-    labels:
-      - "dependencies"
-      - "javascript"
-      - "admin-react"
-    open-pull-requests-limit: 10
-    rebase-strategy: "auto"
-    # Ignore majors: react-router 7.x breaking changes, vite 7.x breaking
-    ignore:
-      - dependency-name: "react-router-dom"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "vite"
-        update-types: ["version-update:semver-major"]
-
-  # ── npm admin-react (legacy copy) ───────────────────────────
-  - package-ecosystem: "npm"
-    directory: "/frontend/admin-react"
-    schedule:
-      interval: "weekly"
-      day: "tuesday"
-      time: "04:00"
-      timezone: "UTC"
-    commit-message:
-      prefix: "deps(npm)"
-      include: "scope"
-    labels:
-      - "dependencies"
-      - "javascript"
-      - "admin-react-legacy"
-    open-pull-requests-limit: 5
-    rebase-strategy: "auto"
-    # Эта копия — старый duplicate. PRs могут быть auto-closed
-    # если maintainer решит удалить frontend/admin-react (см. SECURITY_VULNS_2026-06-05.md).
-
   # ── GitHub Actions ──────────────────────────────────────────
   - package-ecosystem: "github-actions"
     directory: "/"
