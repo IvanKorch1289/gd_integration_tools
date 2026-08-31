@@ -239,6 +239,11 @@ from src.backend.dsl.engine.processors.vault_secret import (
     VaultReadResult,
     VaultSecretProcessor,
 )
+from src.backend.dsl.engine.processors.external import CDCProcessor
+from src.backend.dsl.engine.processors.web import (
+    FillFormProcessor,
+    RunScenarioProcessor,
+)
 
 # FillFormProcessor + RunScenarioProcessor остаются в web.py для
 # backward-compat (мигрируют отдельно в Sprint 180+).
