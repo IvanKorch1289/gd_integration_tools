@@ -155,10 +155,13 @@ async def _bootstrap() -> None:
     Аналогично ``manage.py._bootstrap``, но дополнительно стартует
     ``ConnectorRegistry`` — worker-у нужны живые БД-подключения.
     """
-    from src.backend.core.api.extensions import (
-        register_action_handlers,
-        register_dsl_routes,
-    )
+    # Sprint 41 W1 (Item 1 fix): импортируем из canonical dsl paths
+    # (НЕ из core.api.extensions facade), чтобы test patches
+    # (`patch("src.backend.dsl.commands.setup.register_action_handlers")`)
+    # корректно перехватывали вызовы. core.api.extensions — facade для
+    # entrypoints, а не для infrastructure workflow worker.
+    from src.backend.dsl.commands.setup.orchestrator import register_action_handlers
+    from src.backend.dsl.routes import register_dsl_routes
     from src.backend.plugins.composition.service_setup import register_all_services
 
     register_all_services()
