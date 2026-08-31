@@ -136,6 +136,7 @@ from src.backend.dsl.engine.processors.entity import (
     EntityUpdateProcessor,
 )
 from src.backend.dsl.engine.processors.export import ExportProcessor
+from src.backend.dsl.engine.processors.external import CDCProcessor
 from src.backend.dsl.engine.processors.generic import (
     AbTestRouterProcessor,
     BulkheadProcessor,
@@ -239,7 +240,6 @@ from src.backend.dsl.engine.processors.vault_secret import (
     VaultReadResult,
     VaultSecretProcessor,
 )
-from src.backend.dsl.engine.processors.external import CDCProcessor
 from src.backend.dsl.engine.processors.web import (
     FillFormProcessor,
     RunScenarioProcessor,
