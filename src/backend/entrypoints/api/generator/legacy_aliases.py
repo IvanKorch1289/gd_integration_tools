@@ -18,7 +18,9 @@ from typing import Any
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from src.backend.core.auth.auth_context_helpers import extract_user_permissions
 from src.backend.core.logging import get_logger
+from src.backend.core.types.invocation_command import ActionCommandMetaSchema
 from src.backend.schemas.invocation import ActionCommandSchema
 
 __all__ = ("register_legacy_aliases",)
@@ -55,7 +57,26 @@ async def _dispatch_with(
 
         # action_handler_registry — singleton instance
         registry = action_handler_registry
-        command = ActionCommandSchema(action=action, payload=payload, mode="sync")
+
+        # P0 (cycle 61, parity с cycle 4/5/59): пробрасываем
+        # principal/permissions из auth middleware (request.state.auth)
+        # в ActionCommandSchema.meta. Legacy aliases — auto-generated
+        # CRUD endpoints; наследуют тот же auth context что и явные routes.
+        _auth = getattr(request.state, "auth", None)
+        _principal = getattr(_auth, "principal", "")
+        _permissions = (
+            tuple(extract_user_permissions(_auth)) if _auth is not None else ()
+        )
+
+        command = ActionCommandSchema(
+            action=action,
+            payload=payload,
+            mode="sync",
+            meta=ActionCommandMetaSchema(
+                principal=_principal,
+                permissions=list(_permissions),
+            ),
+        )
         result = await registry.dispatch(command)
     except KeyError:
         return JSONResponse(
