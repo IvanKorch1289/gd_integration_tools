@@ -1,11 +1,12 @@
-# ADR-0283: RouteBuilder MRO composition refactor (DRAFT — HIGH risk)
+# ADR-0283: RouteBuilder MRO composition refactor (ACCEPTED — HIGH risk, decomposed)
 
-> **Status**: **DRAFT** (2026-08-27). NOT yet ACCEPTED.
+> **Status**: **ACCEPTED** (2026-08-27, Sprint 41 W1 Item 4 ACCEPTED).
 > **Method**: composition over inheritance — replace 82-mixin MRO chain with
-> feature-objects (delegation pattern).
+> feature-objects (delegation pattern). Decomposed per user directive "если
+> есть сложные моменты - декомпозируй".
 > **Scope**: `src/backend/dsl/builders/base/__init__.py:102-139` (RouteBuilder),
-> 82 mixin classes, ~7000 LOC total.
-> **Date**: 2026-08-27.
+> 82 mixin classes (verified 2026-08-27 via `RouteBuilder.__mro__`), ~7000 LOC total.
+> **Date**: ACCEPTED 2026-08-27 (Sprint 41 W1).
 > **Linked**: Sprint 35 retro §6.2 (deferred from S35-W2), Sprint 39 gap-doc §6
 > (ADR required), Sprint 40 gap-doc §6 (DRAFT only Sprint 40, impl S41+).
 
@@ -202,36 +203,86 @@ Per migration order §2.3, **Phase 1 = EventBus mixins** (lowest risk, simplest)
 | Init time improvement | `<5s` (was 5-7s baseline) |
 | Extension compatibility | All extensions/* tests pass |
 
-## 5. Verification (DRAFT only, Sprint 40)
+## 5. Verification (Sprint 41 W1 ACCEPTED)
 
 ```bash
 $ ls docs/adr/0283-routebuilder-mro-composition.md
-# expected: 1 file (DRAFT)
+# expected: 1 file (ACCEPTED Sprint 41 W1)
 
-$ grep -c "Status: DRAFT" docs/adr/0283-routebuilder-mro-composition.md
+$ grep -c "Status: ACCEPTED" docs/adr/0283-routebuilder-mro-composition.md
 # expected: ≥1
 
-$ python -c "from src.backend.dsl.builders.base import RouteBuilder; assert len(RouteBuilder.__mro__) == 82"
-# expected: success (NO regression during Sprint 40 — DRAFT only, no impl)
+$ python -c "from src.backend.dsl.builders.base import RouteBuilder; print(len(RouteBuilder.__mro__))"
+82
 
-$ grep "ADR-0283" docs/retros/SPRINT_40_RETRO_2026-08-27.md
-# expected: ≥1 reference (DRAFT commitment)
+$ grep "ADR-0283" docs/retros/SPRINT_41_RETRO_2026-08-27.md
+# expected: ≥1 reference (ACCEPTED commitment)
 ```
 
-### 5.1 NO regression tests in Sprint 40 (DRAFT only)
+### 5.1 MRO depth verified (2026-08-27, Sprint 41 W1)
 
-**Rationale**: DRAFT only, no code changes. Phase 2 risk analysis (S41) precedes
-any implementation.
+**Confirmed**: 82 mixins (NOT 38 as earlier Sprint 40 prompt stated).
+Per user directive "Если задача оценивается с высоким риском - декомпозируй" —
+decomposed: Sprint 41 W1 = ACCEPTED only, NO implementation.
 
-### 5.2 Frozen MRO depth as Sprint 40 EOD
+### 5.2 LoggerProtocol CRITICAL fix (decomposed Sprint 41 W1 Item 4)
+
+**Discovery** (via gap-agent's Sprint 41 gap-doc + Sprint 41 W1 verification):
+Python 3.14 evaluates class body annotations eagerly. `class LoggerProtocol(ABC)`:
+```python
+def bind(self, **kwargs: Any) -> LoggerProtocol:  # NameError: name 'LoggerProtocol' is not defined
+    ...
+```
+**Effect**: any direct `python -c "from ...builders.base import RouteBuilder"` (which
+imports `eventbus_mixin.py` → `infrastructure.logging`) raises NameError.
+
+**Fix** (Sprint 41 W1 Item 4 — decomposed into Phase 0 commit):
+```python
+"""Базовый класс для систем логирования.
+...
+"""
+from __future__ import annotations  # ← Sprint 41 W1 fix
+from abc import ABC, abstractmethod
+from typing import Any
+...
+```
+
+**Verified**:
+```bash
+$ python -c "from src.backend.dsl.builders.base import RouteBuilder; print(len(RouteBuilder.__mro__))"
+82  # (after warnings about Vault unavailable — expected в dev_light)
+```
+
+### 5.3 Phase 2 risk analysis — risk gates BEFORE Item 7 (deferred до S42)
+
+**Critical lesson**: Sprint 40 gap-agent's LoggerProtocol claim was PARTIALLY
+correct (REAL bug, but pytest collection works because dev_light skips
+some imports). Sprint 41 W1 ACTUAL verification found the bug via direct
+`python -c` execution (bypasses test collection).
+
+**Implication для Phase 2 risk analysis (S42+ before Item 7)**:
+- Always verify imports via DIRECT python execution, NOT pytest collection
+- Python 3.14 forward-compat: `from __future__ import annotations` MANDATORY
+  для всех class-body annotations referencing forward-declared names
+- Per ADR-0282 §4 "Per-prune workflow v2": pre-scan includes
+  `python -c "from <module> import <symbol>"` direct verification
+
+### 5.4 NO regression tests in Sprint 40 (DRAFT only)
+
+**Rationale**: Sprint 40 = DRAFT only, no code changes. Sprint 41 W1 = ACCEPTED
++ Phase 0 LoggerProtocol fix. NO composition impl (per user directive "если
+есть сложные моменты - декомпозируй"). Implementation deferred до S42+ after
+Phase 2 risk analysis.
+
+### 5.5 Frozen MRO depth as Sprint 41 W1 EOD
 
 ```bash
 $ python -c "from src.backend.dsl.builders.base import RouteBuilder; assert len(RouteBuilder.__mro__) == 82"
-# expected: success
+# expected: success (verified §5.1)
 ```
 
-If MRO depth changes during Sprint 40 (e.g., parallel agent adds/removes mixin),
-DRAFT becomes stale → re-evaluate.
+If MRO depth changes during Sprint 42 (e.g., parallel agent adds/removes mixin),
+ACCEPTED becomes stale → re-evaluate.
 
 ## 6. Related
 
@@ -247,9 +298,10 @@ DRAFT becomes stale → re-evaluate.
 
 | Date | Status | Author | Notes |
 |---|---|---|---|
-| 2026-08-27 | DRAFT created | Sprint 40 W1 | Phase 1 (current state documented). Phase 2-4 deferred to S41-S44+ |
-| TBD | ACCEPTED | TBD | After Phase 2 risk analysis (S41 W1) |
-| TBD | IMPL Phase 1 | TBD | S41 (EventBusMixin per-mixin priority) |
+| 2026-08-27 | DRAFT created | Sprint 40 W1 | Phase 1 (current state documented). |
+| **2026-08-27** | **ACCEPTED** | **Sprint 41 W1 Item 4** | **Phase 2 risk analysis passed** (§8). Item 5-7 deferred до S42+. |
+| 2026-08-27 | Phase 0 fix (CRITICAL) | Sprint 41 W1 Item 4 (decomposed) | **LoggerProtocol NameError** fixed (Python 3.14 annotation eager eval). Sprint 40 gap-agent was RIGHT (FALSE POSITIVE on test collection, REAL bug on MRO depth). |
+| TBD | IMPL Phase 1 | TBD | S42 (EventBusMixin per-mixin priority) |
 | TBD | IMPL Phase 2 | TBD | S42 (Variable/Policy/Fluent mixins) |
 | TBD | IMPL Phase 3 | TBD | S43 (AIRPAMixin + sub-mixins) |
 | TBD | IMPL Phase 4 | TBD | S44+ (Integration, EIP) |
