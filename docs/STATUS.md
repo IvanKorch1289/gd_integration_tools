@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-08-30 (post-Sprint 43 W3 + R12 + R13 analytics/retro/review/testing)
+> **Last verified**: 2026-08-31 (Sprint 47 W1 — STATUS sync, P2 close-out begins)
 > **Method**: Direct command execution, no inherited claims.
 > **Refresh**: Manual after every `make ci` or `make audit` run.
 
@@ -15,7 +15,7 @@
 | **Ruff errors** | **0** | `ruff check src/` |
 | **Bandit HIGH** | **0** | CI workflow |
 | **Vulture @>=90%** | **0** | `vulture src/` |
-| **Layer allowlist** | **60** (was 138 → 70 → 60) | `tools/check_layers.py` |
+| **Layer allowlist** | **38** (was 138 → 70 → 60 → 43 wc-lines → 38 active baseline, S47 sync) | `python3 tools/check_layers.py` |
 | **God-objects** | **5/5 DONE** (R12) | agent_security 652→71 LOC |
 | **Sprint 43 commits** | **11** (W1+W2+W3+R12) | `git log --since=yesterday` |
 | **P0 tests** | **9/9 PASS** | `pytest tests/integration/test_p0_fixes_functional.py` |
@@ -31,6 +31,12 @@
 | **Sprint 44 W5 (multi-agent)** | **3 Agent dispatches: refactor + regex fix** | 2 commits (20181e30, bae42953) |
 | **Sprint 45 W1** | **Multi-cycle analysis (W1-W4 retrospective)** | 4 atomic commits, 0 new tests |
 | **Sprint 46 W1** | **Mobile JWT Phase 1 (cycle 261, ADR-0264)** | `MobileJwtVerifier` + flag + wiring, 335 mobile tests pass |
+| **Sprint 47 W1 (sync)** | **STATUS.md layer allowlist 60→38 reconciled** | `python3 tools/check_layers.py` confirms 38 active baseline (wc -l=43, 5 blank/comment) |
+| **Sprint 47 W2 (P2.1)** | **RestrictedUnpickler + safe_loads (P2.1 close-out)** | 18 new tests pass; ruff 0 / bandit 0 / vulture 0; 41/41 security tests pass |
+| **Sprint 47 W3 (P2.2)** | **Dependabot post-bump health check (P2.2 close-out)** | 8 new dep PRs merged 2026-08-31; 150/151 security tests PASS (1 env-fail: prometheus_client missing); 48/48 cache+audit PASS |
+| **Sprint 47 W4 (cov+1)** | **workflow_registry.py: 0% → 100% (47 stmts + 8 branches)** | 21 new tests, ruff 0 / vulture 0; S44 W32 top-5 worst-covered file closed |
+| **Sprint 47 W5 (cov+2)** | **audit_service.py: 35% → 100% (50 stmts + 10 branches)** | 15 new tests via ``sys.modules`` stub-injection (для обхода prometheus_client chain); ruff 0 / vulture 0; 59/59 audit tests PASS |
+| **Sprint 47 W6 (cov+3)** | **audit/facade/secrets.py: 46% → 100% (20 stmts + 6 branches)** | 8 new tests covering narrow-exception handling (D-AUDIT-1033); ruff 0 / vulture 0; 67/67 audit tests PASS |
 | **Sprint 44 W6 (coverage+1)** | **admin/audit.py: 0% → 100%** | 7 new tests +140 LOC, 17 admin tests PASSED |
 | **Sprint 44 W7 (coverage+2)** | **_capability_adapter.py: 0% → 100%** | 7 new tests +105 LOC, 24 admin tests PASSED |
 | **Sprint 44 W8 (bug+coverage)** | **clickhouse_admin: broken lazy proxy FIX + 0% → 100%** | 6 new tests + facade re-export added |
