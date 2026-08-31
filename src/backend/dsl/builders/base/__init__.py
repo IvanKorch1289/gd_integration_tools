@@ -96,7 +96,7 @@ from src.backend.dsl.processors.router_specialist_processor import (
     RouterSpecialistMixin as RouterSpecialistMixin,
 )
 
-__all__ = ("RouteBuilder", "get_route_builder")
+__all__ = ("RouteBuilder",)
 
 
 class RouteBuilder(  # type: ignore[misc]
