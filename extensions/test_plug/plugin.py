@@ -5,8 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from src.backend.core.api import BasePlugin
-from gd_integration_tools.core.interfaces.plugin import BasePlugin
-
 
 
 @dataclass
