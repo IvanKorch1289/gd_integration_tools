@@ -7,7 +7,14 @@
 Sprint 38: get_logger больше не делегирует в logging_service — это
 устраняет import-time regression из-за загрузки settings/Vault при
 первом вызове get_logger() в холодном процессе.
+
+Sprint 42 Item 0 (gap-agent critical): Python 3.14 evaluates class-body
+annotations eagerly. Without ``from __future__ import annotations``
+в начале файла, ``def bind(self) -> StdlibLogger:`` raises NameError.
 """
+
+# Sprint 42 Item 0: MUST be первым import (Python requirement)
+from __future__ import annotations
 
 import logging
 from typing import Any

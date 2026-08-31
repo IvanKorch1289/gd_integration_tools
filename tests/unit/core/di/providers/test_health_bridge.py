@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from src.backend.core.di.providers.health_bridge import get_health_check_factory
 from src.backend.infrastructure.application.health_aggregator import (
     get_health_aggregator,
 )
+from src.backend.infrastructure.di_bridge.health import get_health_check_factory
 
 
 @pytest.mark.unit

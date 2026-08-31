@@ -4,7 +4,6 @@ Per Master Prompt P1-#4: удали дублирующий metrics_registry из
 infrastructure/observability, оставь только core/utils/metrics_registry.
 """
 
-
 from __future__ import annotations
 
 import os
@@ -42,16 +41,17 @@ class TestMetricsRegistrySingleSource:
                     content = fp.read()
                 # Strip docstrings/comments
                 lines = [
-                    line for line in content.split("\n")
+                    line
+                    for line in content.split("\n")
                     if not line.strip().startswith(("#", '"', "'", "*", ".."))
-                    and '"""' not in line and "'''" not in line
+                    and '"""' not in line
+                    and "'''" not in line
                 ]
                 code = "\n".join(lines)
                 if removed in code:
                     results.append(p)
         assert not results, (
-            f"Found {len(results)} files still importing removed path: "
-            f"{results[:5]}"
+            f"Found {len(results)} files still importing removed path: {results[:5]}"
         )
 
 
@@ -99,11 +99,21 @@ class TestMigrationCompleteness:
             with open(p) as f:
                 content = f.read()
             # Either uses core/utils path or doesn't import metrics_registry at all
-            if "observability.metrics_registry" in content and "core" not in content.split("observability.metrics_registry")[0][-30:]:
+            if (
+                "observability.metrics_registry" in content
+                and "core"
+                not in content.split("observability.metrics_registry")[0][-30:]
+            ):
                 # Check if it's a docstring reference (acceptable)
-                if not_migrated and "infrastructure.observability.metrics_registry" in content:
+                if (
+                    not_migrated
+                    and "infrastructure.observability.metrics_registry" in content
+                ):
                     # Has infrastructure.observability.metrics_registry import
-                    if "from src.backend.infrastructure.observability.metrics_registry" in content:
+                    if (
+                        "from src.backend.infrastructure.observability.metrics_registry"
+                        in content
+                    ):
                         not_migrated.append(p)
         assert not not_migrated, f"Files still importing removed path: {not_migrated}"
 
@@ -124,16 +134,16 @@ class TestMigrationCompleteness:
         so a runtime ImportError would silently break DI for all
         observability consumers.
         """
-        path = "src/backend/core/di/providers/observability_bridge.py"
+        path = "src/backend/infrastructure/di_bridge/observability.py"
         with open(path) as f:
             content = f.read()
         # All references to metrics_registry in this file must use
         # the core source, not the removed infrastructure path.
         import re
+
         # Find all import statements
         for match in re.finditer(
-            r"from\s+([\w\.]*metrics_registry[\w\.]*)\s+import",
-            content,
+            r"from\s+([\w\.]*metrics_registry[\w\.]*)\s+import", content
         ):
             target = match.group(1)
             assert "core.utils" in target, (

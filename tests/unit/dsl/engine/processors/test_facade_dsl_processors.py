@@ -2,6 +2,7 @@
 
 Pattern: DSL processor lazy-imports facade provider, calls it, returns result to Exchange.
 """
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -15,6 +16,7 @@ class TestFacadeGetHealthProcessor:
         from src.backend.dsl.engine.processors.facade_get_health import (
             FacadeGetHealthProcessor,
         )
+
         p = FacadeGetHealthProcessor(name="redis", to="body.health")
         assert p.component_name == "redis"
         assert p.target == "body.health"
@@ -24,6 +26,7 @@ class TestFacadeGetHealthProcessor:
         from src.backend.dsl.engine.processors.facade_get_health import (
             FacadeGetHealthProcessor,
         )
+
         p = FacadeGetHealthProcessor(name="redis", to="body.health")
         ex = MagicMock()
         body = {}
@@ -31,7 +34,9 @@ class TestFacadeGetHealthProcessor:
         ex.set_property = MagicMock()
         ctx = MagicMock()
         # Mock the facade provider
-        health_fn = AsyncMock(return_value={"status": "ok", "latency_ms": 1.0, "error": None})
+        health_fn = AsyncMock(
+            return_value={"status": "ok", "latency_ms": 1.0, "error": None}
+        )
         with patch(
             "src.backend.core.di.providers.infrastructure_locator.get_health_check_factory",
             return_value=MagicMock(return_value=health_fn),
@@ -41,10 +46,10 @@ class TestFacadeGetHealthProcessor:
 
     @pytest.mark.asyncio
     async def test_health_bridge_uses_canonical_aggregator(self) -> None:
-        from src.backend.core.di.providers.health_bridge import get_health_check_factory
         from src.backend.infrastructure.application.health_aggregator import (
             get_health_aggregator,
         )
+        from src.backend.infrastructure.di_bridge.health import get_health_check_factory
 
         aggregator = get_health_aggregator()
 
@@ -64,12 +69,14 @@ class TestInfraS3GetProcessor:
     @pytest.mark.asyncio
     async def test_processor_exists(self) -> None:
         from src.backend.dsl.engine.processors.infra_s3 import InfraS3GetProcessor
+
         p = InfraS3GetProcessor(key="test/file.json", to="body.content")
         assert p.key == "test/file.json"
 
     @pytest.mark.asyncio
     async def test_reads_s3_object(self) -> None:
         from src.backend.dsl.engine.processors.infra_s3 import InfraS3GetProcessor
+
         p = InfraS3GetProcessor(key="test/file.json", to="body.content")
         ex = MagicMock()
         body = {}
@@ -92,12 +99,14 @@ class TestInfraRedisGetProcessor:
     @pytest.mark.asyncio
     async def test_processor_exists(self) -> None:
         from src.backend.dsl.engine.processors.infra_redis import InfraRedisGetProcessor
+
         p = InfraRedisGetProcessor(key="cache:counter", to="body.value")
         assert p.key == "cache:counter"
 
     @pytest.mark.asyncio
     async def test_reads_redis_value(self) -> None:
         from src.backend.dsl.engine.processors.infra_redis import InfraRedisGetProcessor
+
         p = InfraRedisGetProcessor(key="cache:counter", to="body.value")
         ex = MagicMock()
         body = {}
@@ -121,12 +130,14 @@ class TestInfraLogWriteProcessor:
     @pytest.mark.asyncio
     async def test_processor_validates_level(self) -> None:
         from src.backend.dsl.engine.processors.infra_log import InfraLogWriteProcessor
+
         with pytest.raises(ValueError):
             InfraLogWriteProcessor(level="invalid", message="test")
 
     @pytest.mark.asyncio
     async def test_processor_accepts_valid_level(self) -> None:
         from src.backend.dsl.engine.processors.infra_log import InfraLogWriteProcessor
+
         p = InfraLogWriteProcessor(level="info", message="hello world")
         assert p.level == "info"
         assert p.message == "hello world"
@@ -134,6 +145,7 @@ class TestInfraLogWriteProcessor:
     @pytest.mark.asyncio
     async def test_writes_log_message(self) -> None:
         from src.backend.dsl.engine.processors.infra_log import InfraLogWriteProcessor
+
         p = InfraLogWriteProcessor(level="info", message="hello world")
         ex = MagicMock()
         ctx = MagicMock()
@@ -149,12 +161,14 @@ class TestInfraDbQueryProcessor:
     @pytest.mark.asyncio
     async def test_processor_exists(self) -> None:
         from src.backend.dsl.engine.processors.infra_db import InfraDbQueryProcessor
+
         p = InfraDbQueryProcessor(sql="SELECT 1", to="body.result")
         assert p.sql == "SELECT 1"
 
     @pytest.mark.asyncio
     async def test_executes_sql_query(self) -> None:
         from src.backend.dsl.engine.processors.infra_db import InfraDbQueryProcessor
+
         p = InfraDbQueryProcessor(sql="SELECT 1", to="body.result")
         ex = MagicMock()
         body = {}
@@ -177,13 +191,13 @@ class TestInfraDbQueryProcessor:
         assert body.get("result") == [{"?column?": 1}]
 
 
-
 class TestDSLProcessorErrorPropagation:
     """Verify DSL processors propagate errors from underlying infra."""
 
     @pytest.mark.asyncio
     async def test_infra_s3_propagates_storage_error(self) -> None:
         from src.backend.dsl.engine.processors.infra_s3 import InfraS3GetProcessor
+
         p = InfraS3GetProcessor(key="missing.json", to="body.content")
         ex = MagicMock()
         ex.in_message.body = {}
@@ -201,6 +215,7 @@ class TestDSLProcessorErrorPropagation:
     @pytest.mark.asyncio
     async def test_infra_redis_propagates_client_error(self) -> None:
         from src.backend.dsl.engine.processors.infra_redis import InfraRedisGetProcessor
+
         p = InfraRedisGetProcessor(key="missing", to="body.value")
         ex = MagicMock()
         ex.in_message.body = {}
