@@ -242,7 +242,7 @@ class TestDqWriteEnqueue:
 
         # Force DLQEnvelope construction to fail.
         with patch(
-            "src.backend.core.di.providers.dlq_bridge.get_dlq_envelope_class",
+            "src.backend.infrastructure.di_bridge.dlq.get_dlq_envelope_class",
             side_effect=RuntimeError("dlq bridge unavailable"),
         ):
             # Should NOT raise — DLQ self-failure is logged + swallowed.
