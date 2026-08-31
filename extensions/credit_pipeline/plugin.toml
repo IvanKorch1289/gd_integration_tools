@@ -14,6 +14,7 @@ version = "0.1.0"
 requires_core = ">=0.2,<0.3"
 entry_class = "extensions.credit_pipeline.plugin.CreditPipelinePlugin"
 tenant_aware = true
+trust_tier = "A"
 description = "Credit pipeline plugin (S76 — real agents: score/parse/decide)"
 
 # Cycle-17 (D-AUDIT-1701): declare SQLAlchemy ORM models для Alembic
