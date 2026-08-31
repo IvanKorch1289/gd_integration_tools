@@ -46,5 +46,19 @@ class SecurityFlags(BaseSettings):
         ),
     )
 
+    restricted_unpickler_enabled: bool = Field(
+        default=False,
+        title="P2.1 — RestrictedUnpickler для pickle-десериализации (S47 W1)",
+        description=(
+            "S47 W1 (P2.1 close-out). Когда True — новые pickle-вызовы "
+            "должны использовать ``safe_loads`` из core.security.restricted_unpickler. "
+            "Legacy ``pickle.loads`` остаётся в trusted-only местах "
+            "(MemoryBackend, EIP marshal c explicit provenance check). "
+            "default-OFF: активация отложена до добавления network cache backend "
+            "(Sprint 45+ roadmap). Fail-closed по дизайну: неизвестные модули "
+            "→ ``pickle.UnpicklingError``."
+        ),
+    )
+
 
 __all__ = ("SecurityFlags",)

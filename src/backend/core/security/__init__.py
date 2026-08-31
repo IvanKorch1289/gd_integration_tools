@@ -8,5 +8,16 @@ from src.backend.core.security.module_whitelist import (
     EmptyWhitelistMode,
     validate_module_whitelist,
 )
+from src.backend.core.security.restricted_unpickler import (
+    DEFAULT_ALLOWLIST,
+    RestrictedUnpickler,
+    safe_loads,
+)
 
-__all__ = ("EmptyWhitelistMode", "validate_module_whitelist")
+__all__ = (
+    "DEFAULT_ALLOWLIST",
+    "EmptyWhitelistMode",
+    "RestrictedUnpickler",
+    "safe_loads",
+    "validate_module_whitelist",
+)
