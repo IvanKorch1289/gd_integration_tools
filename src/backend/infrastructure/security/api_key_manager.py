@@ -291,7 +291,14 @@ class APIKeyManager:
                 f"{_KEY_PREFIX}{client_id}", orjson.dumps(key_data)
             )
         except Exception as exc:
-            logger.error("Failed to store client key: %s", exc)
+            # S48 W4 swarm audit (A2 Infra #1): раньше return raw_key был ВНЕ try,
+            # что означало data-loss при ошибке Redis store — клиент получал ключ,
+            # но ключ не был сохранён. Теперь raise: caller увидит ошибку и
+            # сгенерирует заново.
+            logger.error(
+                "Failed to store client key (raising, NOT returning raw_key): %s", exc,
+            )
+            raise
 
         logger.info(
             "API key created for client '%s' (v1, hash_algo=%s)",
