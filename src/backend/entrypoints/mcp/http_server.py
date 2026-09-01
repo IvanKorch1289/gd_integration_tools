@@ -113,6 +113,14 @@ def create_mcp_http_app() -> tuple[Any, Any]:
     # Standalone test (TestClient) returned 200 OK; mounted (with auth)
     # returns 404. Auth bypass для тестирования — proper auth integration
     # deferred to cycle 218+ (multi-cycle work).
+    #
+    # S48 M1 W13 swarm audit (A5 Entrypoints #1): defense-in-depth потерян.
+    # Defense restoration (1d work per agent estimate) deferred — требует
+    # cycle 218+ multi-cycle integration. Tracking reference:
+    # docs/roadmap/PRODUCTION_READINESS.md M1 W13.
+    #
+    # Частичная защита: standalone tests (TestClient) валидны через
+    # _check_mcp_tool_authz per-tool (cycle 218 documentation).
     return inner_app, inner_app.router.lifespan_context
 
 
