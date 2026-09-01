@@ -26,6 +26,41 @@ from src.backend.core.logging import get_logger
 _logger = get_logger(__name__)
 
 
+def _emit_revocation_fail_open_audit(reason: str) -> None:
+    """Helper: audit-event для mobile_jwt revocation fail-OPEN (W11).
+
+    S48 W11 swarm audit (A9 Security #2): revocation check возвращает
+    False при недоступности Redis → отозванный JWT считается валидным.
+    Production deployment теряет revocation guarantee без observability.
+
+    Lazy import (избегаем circular с core.audit).
+    """
+    try:
+        from src.backend.core.audit.facade._base import emit_audit_safe
+
+        emit_audit_safe(
+            event="security.auth.revocation_fail_open",
+            action="redis_revocation_check",
+            outcome="failure",
+            severity="error",
+            extra={
+                "reason": reason,
+                "warning": (
+                    "Mobile JWT revocation check returned False due to "
+                    "Redis unavailability. Revoked JWT may be accepted. "
+                    "Configure mobile_jwt_revoc_fail_closed=true for "
+                    "fail-CLOSED behavior."
+                ),
+            },
+        )
+    except Exception as exc:
+        _logger.warning(
+            "Failed to emit revocation_fail_open audit (reason=%s): %s",
+            reason,
+            exc,
+        )
+
+
 class RedisRevocationStore:
     """Redis-backed implementation of RevocationStore.
 
@@ -66,9 +101,19 @@ class RedisRevocationStore:
 
         Returns False on Redis errors (fail-open). Caller should treat
         this as best-effort and may override with fail-closed policy.
+
+        S48 W11 swarm audit (A9 Security #2 / A1 Core #1): fail-OPEN
+        silent без observability → отозванный JWT считается валидным
+        при недоступности Redis. Production deployment теряет revocation
+        гарантию.
+
+        Теперь emit audit-event для каждого fail-open случая (lazy import
+        чтобы не сломать circular). Caller всё ещё получает False (не
+        ломаем backward-compat), но security team видит alert в audit.
         """
         client = await self._get_client()
         if client is None:
+            _emit_revocation_fail_open_audit("redis_unavailable")
             return False  # fail-open
         try:
             value = await client.cache_get(self._key(jti))
@@ -77,6 +122,7 @@ class RedisRevocationStore:
             _logger.warning(
                 "redis revocation is_revoked error: jti=%s err=%s", jti, exc
             )
+            _emit_revocation_fail_open_audit(f"redis_error:{type(exc).__name__}")
             return False  # fail-open
 
     async def revoke(self, jti: str, *, expires_at: float) -> None:
