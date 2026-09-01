@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-08-31 (Sprint 48 M2-#9 — P1 cleanup start: web.py DeprecationWarning per-instance; см. `docs/roadmap/PRODUCTION_READINESS.md`)
+> **Last verified**: 2026-08-31 (Sprint 48 M2-#5 — P1 cleanup: worker.py reverse layer violation tracking; см. `docs/roadmap/PRODUCTION_READINESS.md`)
 > **Method**: Direct command execution, no inherited claims.
 > **Refresh**: Manual after every `make ci` or `make audit` run.
 
