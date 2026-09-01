@@ -17,25 +17,28 @@ import pytest
 
 from src.backend.core.config import services as config_services
 from src.backend.core.config.services import (
+    # Resilience primitives
+    BreakerProfile,
     # Settings classes
     CacheSettings,
+    FallbackPolicy,
     FileStorageSettings,
-    GRPCSettings,
     GraphQLSettings,
+    GRPCSettings,
     InvokerSettings,
     JupyterHubSettings,
     LLMSettings,
     LogStorageSettings,
     MailSettings,
     QueueSettings,
-    RPASettings,
     RedisSettings,
     ResilienceSettings,
+    RPASettings,
     SMSSettings,
     SnapshotSettings,
     TasksSettings,
-    WSSettings,
     WatermarkSettings,
+    WSSettings,
     # Singleton instances
     cache_settings,
     fs_settings,
@@ -55,9 +58,6 @@ from src.backend.core.config.services import (
     tasks_settings,
     watermark_settings,
     ws_settings,
-    # Resilience primitives
-    BreakerProfile,
-    FallbackPolicy,
 )
 
 
