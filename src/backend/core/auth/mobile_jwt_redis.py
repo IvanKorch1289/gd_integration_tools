@@ -23,7 +23,30 @@ from typing import Any
 
 from src.backend.core.logging import get_logger
 
+from src.backend.core.auth.jwt_backend import JwtVerificationError
+
 _logger = get_logger(__name__)
+
+
+def _is_fail_closed() -> bool:
+    """Read ``mobile_jwt_revoc_fail_closed`` from feature_flags (lazy).
+
+    S49 M1-#2: production default True → fail-CLOSED на Redis outage.
+    Override через env FEATURE_MOBILE_JWT_REVOC_FAIL_CLOSED=false для
+    dev/test без Redis (legacy fail-OPEN behavior).
+    """
+    try:
+        from src.backend.core.config.features import feature_flags
+
+        return bool(getattr(feature_flags, "mobile_jwt_revoc_fail_closed", True))
+    except Exception as exc:
+        # Settings недоступны (early boot / test) → fail-CLOSED default.
+        _logger.warning(
+            "feature_flags.mobile_jwt_revoc_fail_closed unavailable err=%s — "
+            "fail-CLOSED default applied",
+            exc,
+        )
+        return True
 
 
 def _emit_revocation_fail_open_audit(reason: str) -> None:
@@ -48,14 +71,47 @@ def _emit_revocation_fail_open_audit(reason: str) -> None:
                 "warning": (
                     "Mobile JWT revocation check returned False due to "
                     "Redis unavailability. Revoked JWT may be accepted. "
-                    "Configure mobile_jwt_revoc_fail_closed=true for "
-                    "fail-CLOSED behavior."
+                    "Set FEATURE_MOBILE_JWT_REVOC_FAIL_CLOSED=true for "
+                    "fail-CLOSED behavior (Sprint 49 default)."
                 ),
             },
         )
     except Exception as exc:
         _logger.warning(
             "Failed to emit revocation_fail_open audit (reason=%s): %s",
+            reason,
+            exc,
+        )
+
+
+def _emit_revocation_fail_closed_audit(reason: str) -> None:
+    """Helper: audit-event для mobile_jwt revocation fail-CLOSED (S49 M1-#2).
+
+    Production deployment с mobile_jwt_revoc_fail_closed=True теперь
+    reject'ит token при Redis outage. Caller (MobileJwtVerifier) получает
+    JwtVerificationError → reject. Security team видит alert в audit.
+    """
+    try:
+        from src.backend.core.audit.facade._base import emit_audit_safe
+
+        emit_audit_safe(
+            event="security.auth.revocation_fail_closed",
+            action="redis_revocation_check",
+            outcome="denied",
+            severity="warning",
+            extra={
+                "reason": reason,
+                "behavior": "fail_closed_enforced",
+                "info": (
+                    "Mobile JWT revocation check raised JwtVerificationError "
+                    "due to Redis unavailability. Revoked JWT rejected "
+                    "(production-safe behavior)."
+                ),
+            },
+        )
+    except Exception as exc:
+        _logger.warning(
+            "Failed to emit revocation_fail_closed audit (reason=%s): %s",
             reason,
             exc,
         )
@@ -107,12 +163,19 @@ class RedisRevocationStore:
         при недоступности Redis. Production deployment теряет revocation
         гарантию.
 
-        Теперь emit audit-event для каждого fail-open случая (lazy import
-        чтобы не сломать circular). Caller всё ещё получает False (не
-        ломаем backward-compat), но security team видит alert в audit.
+        S49 M1-#2: добавлен fail-CLOSED через feature flag
+        ``mobile_jwt_revoc_fail_closed`` (default=True). При Redis outage
+        + flag=True → raise JwtVerificationError вместо False.
+        Caller (MobileJwtVerifier) получает исключение и reject'ит token.
+        Fail-OPEN остаётся только при explicit flag=False (legacy dev/test).
         """
         client = await self._get_client()
         if client is None:
+            if _is_fail_closed():
+                _emit_revocation_fail_closed_audit("redis_unavailable")
+                raise JwtVerificationError(
+                    "JWT revocation store unavailable (fail-CLOSED enforced)"
+                )
             _emit_revocation_fail_open_audit("redis_unavailable")
             return False  # fail-open
         try:
@@ -122,6 +185,13 @@ class RedisRevocationStore:
             _logger.warning(
                 "redis revocation is_revoked error: jti=%s err=%s", jti, exc
             )
+            if _is_fail_closed():
+                _emit_revocation_fail_closed_audit(
+                    f"redis_error:{type(exc).__name__}"
+                )
+                raise JwtVerificationError(
+                    "JWT revocation check failed (fail-CLOSED enforced)"
+                ) from exc
             _emit_revocation_fail_open_audit(f"redis_error:{type(exc).__name__}")
             return False  # fail-open
 

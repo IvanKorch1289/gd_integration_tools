@@ -184,6 +184,21 @@ class InfrastructureFlags(BaseSettings):
         ),
     )
 
+    # ─── Sprint 49 — Mobile JWT revocation fail-closed (M1-#2) ──────────
+    mobile_jwt_revoc_fail_closed: bool = Field(
+        default=True,
+        title="S49 M1-#2: Mobile JWT revocation fail-CLOSED on Redis outage",
+        description=(
+            "S49 M1-#2 swarm audit (A9 Security #2 / A1 Core #1): default "
+            "fail-CLOSED для mobile_jwt revocation check при недоступности "
+            "Redis. True (production) — JwtVerificationError raised, "
+            "отозванный JWT остаётся невалидным. False (explicit dev/test "
+            "override) — fail-OPEN с audit-event (legacy behavior, "
+            "deprecated для production). "
+            "Env: FEATURE_MOBILE_JWT_REVOC_FAIL_CLOSED=false."
+        ),
+    )
+
     # ─── Sprint 5 — К5 Frontend ───────────────────────────────────────────
     frontend_workflow_logs_page: bool = Field(
         default=True,
