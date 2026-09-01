@@ -42,6 +42,31 @@ def _mask_string(text: str, masker: PIIMasker | None) -> str:
 
         sanitizer = get_ai_sanitizer_provider()
         return sanitizer.sanitize_text(text).sanitized_text
+    # S48 W8 swarm audit (A3 Services #2): раньше silent fallback на
+    # legacy regex-маскер (только 8 patterns: CC/SSN/email/phone/IP/passport/
+    # IBAN/SNILS). Если presidio_pii_enabled=False — retrieval возвращал
+    # masked text через regex без audit. Production deployment со
+    # выключенным флагом имел silent PII gap.
+    # Теперь emit audit-warning при fallback на legacy regex.
+    try:
+        from src.backend.core.audit.facade._base import emit_audit_safe
+
+        emit_audit_safe(
+            event="security.ai.retrieval_pii_fallback",
+            action="mask_retrieval_text",
+            outcome="failure",
+            severity="warning",
+            extra={
+                "fallback": "legacy_regex_masker",
+                "patterns": 8,
+                "warning": (
+                    "PII masked via legacy regex (8 patterns), not Presidio NER. "
+                    "Set FEATURE_PRESIDIO_PII_ENABLED=true for full coverage."
+                ),
+            },
+        )
+    except Exception as exc:
+        logger.warning("Failed to emit retrieval_pii_fallback audit: %s", exc)
     instance = masker if masker is not None else default_masker()
     return instance.mask_text(text)
 
