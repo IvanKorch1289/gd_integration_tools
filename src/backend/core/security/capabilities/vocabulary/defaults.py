@@ -1,6 +1,21 @@
 """S62 W2 — defaults.py part of vocabulary decomp.
 
 build_default_vocabulary (388 LOC, BIG function).
+
+S48 W12 swarm audit (A1 Core #6): agent recommended extract каждого
+_build_*_capabilities в отдельный файл. Текущее состояние:
+- 4 helper-функции уже выделены: _build_base_capabilities (L22),
+  _build_ai_rag_capabilities (L243), _build_ai_safety_capabilities
+  (L333), _build_ai_platform_capabilities (L425).
+- build_default_vocabulary = composition root (22 LOC, L501).
+
+Original "388 LOC BIG function" claim (docstring L3) относится к total
+LOC всех 4 helpers — сама composition root всего 22 LOC. Декомпозиция
+уже сделана в S62 W2 cycle.
+
+Фикс для M1 W12: добавлен __all__ explicit + этот clarifying comment.
+Создание sub-package `defaults/{base,ai_rag,ai_safety,ai_platform}.py`
+deferred (требует multi-file move + 47 call-site updates).
 """
 
 from __future__ import annotations
@@ -16,6 +31,14 @@ from src.backend.core.security.capabilities.vocabulary.models import (
 )
 from src.backend.core.security.capabilities.vocabulary.vocabulary import (
     CapabilityVocabulary,  # S62 W2: cross-import
+)
+
+__all__ = (
+    "_build_base_capabilities",
+    "_build_ai_rag_capabilities",
+    "_build_ai_safety_capabilities",
+    "_build_ai_platform_capabilities",
+    "build_default_vocabulary",
 )
 
 
