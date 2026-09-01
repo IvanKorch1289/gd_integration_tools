@@ -104,6 +104,44 @@ async def _authenticate_handshake(websocket: WebSocket) -> bool:
 
     """
     # Accept уже вызван снаружи? Не вызываем здесь — caller решает accept/reject.
+    # S48 M1 W14 swarm audit (A5 Entrypoints #2): CSWSH mitigation.
+    # WebSocket handshake НЕ валидировал Origin header → атакующий сайт
+    # мог инициировать WS к /ws от пользователя (RFC 6455 §1.6).
+    # Добавлен Origin check против ws_settings.allowed_origins.
+    try:
+        origin = websocket.headers.get("origin")
+    except (AttributeError, TypeError, ValueError):
+        origin = None
+    allowed_origins = getattr(ws_settings, "allowed_origins", [])
+    if allowed_origins and origin is not None and origin not in allowed_origins:
+        await websocket.close(code=1008, reason="origin_not_allowed")
+        logger.warning(
+            "WS rejected: origin=%s not in allowlist (allowed=%s)",
+            origin,
+            allowed_origins,
+        )
+        # Audit-event для security observability (CSWSH attempt).
+        try:
+            from src.backend.core.audit.facade._base import emit_audit_safe
+
+            emit_audit_safe(
+                event="security.ws.csws_attempt",
+                action="ws_handshake_origin_check",
+                outcome="denied",
+                severity="warning",
+                extra={
+                    "origin": origin,
+                    "allowed_origins": allowed_origins,
+                    "warning": (
+                        "Cross-Site WebSocket Hijacking attempt — Origin "
+                        "header not in allowlist."
+                    ),
+                },
+            )
+        except Exception as audit_exc:
+            logger.warning("Failed to emit csws audit: %s", audit_exc)
+        return False
+
     try:
         subprotocol = websocket.headers.get("sec-websocket-protocol")
     except (AttributeError, TypeError, ValueError) as ws_exc:

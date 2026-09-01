@@ -111,6 +111,20 @@ class WSSettings(BaseSettingsWithLoader):
         ),
     )
 
+    # ── Origin check (S48 M1 W14, CSWSH mitigation, RFC 6455 §1.6) ──────
+    allowed_origins: list[str] = Field(
+        default_factory=lambda: ["https://localhost", "https://127.0.0.1"],
+        description=(
+            "Origin allowlist для WS handshake (защита от Cross-Site WebSocket "
+            "Hijacking, RFC 6455 §1.6). Если Origin header запроса НЕ "
+            "соответствует ни одному из patterns → handshake rejected с "
+            "close code 1008. Default — localhost/127.0.0.1 (dev). Production "
+            "MUST настроить через WS_ALLOWED_ORIGINS env или yaml_group "
+            "'websocket::allowed_origins'. "
+            "Env: comma-separated (WS_ALLOWED_ORIGINS=https://app.example.com)."
+        ),
+    )
+
 
 ws_settings = WSSettings()
 """Глобальный экземпляр WSSettings (lazy-resolved через BaseSettingsWithLoader)."""
