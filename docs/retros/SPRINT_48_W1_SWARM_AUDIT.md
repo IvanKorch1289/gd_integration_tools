@@ -405,3 +405,18 @@ Pattern consistent с W7/W8/W9 audit-fallback chain.
 **Commit**: `f12cc781e`. A2 Infra #8 — `from src.backend.plugins.composition.service_setup` в infrastructure/workflow/worker.py. Reverse layer violation (infrastructure → plugins). Honest deferral: proper fix = `core/lifecycle/worker_bootstrap.py` multi-file refactor (3h). Tracking reference добавлен.
 
 **S48 total**: 36 atomic commits. **M2 subset**: 2/10 done.
+
+## Sprint 49 (M1 P0 zero-out)
+
+### Sprint 49 BASELINE + P0 fixes
+
+**Commits**:
+- `61ae72093` docs(roadmap): BASELINE_2026-08-31.md
+- `58b293a18` fix(auth): mobile_jwt fail-CLOSED (M1-#2)
+- `850068653` fix(auth): wire revocation_store + rate_limiter (M1-#22)
+
+**M1-#1** (auth_selector API_KEY fail-CLOSED) — done внешним S49 W2 agent (`_default_auth = None + RuntimeError`).
+
+**S48+Sprint 49 total**: 39 atomic commits. **M1**: 3/22 новых + 16 done в S48 = 19/22 P0 closed.
+
+**Backlog после Sprint 49**: 12 P0 + 58 P1 + 50 P2.
