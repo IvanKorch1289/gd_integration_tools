@@ -181,19 +181,23 @@ class SsoRegistry:
         self._cache: dict[str, IdpConfig] = {}
         self._expires_at: dict[str, float] = {}
         self._locks: dict[str, asyncio.Lock] = {}
-        self._global_lock = asyncio.Lock()
 
     def _path_for(self, tenant: str) -> str:
         """Vault path для tenant'а: ``<prefix>/<tenant>/idp``."""
         return f"{self.vault_path_prefix}/{tenant}/{_TENANT_PATH_SUFFIX}"
 
     def _lock_for(self, tenant: str) -> asyncio.Lock:
-        """Per-tenant asyncio.Lock (lazy-create под global lock'ом)."""
+        """Per-tenant asyncio.Lock (lazy-create).
+
+        Создание нового lock вне атомарной операции безопасно
+        (asyncio.Lock creation не имеет side effects) — см. обсуждение
+        S48 W2 (P0 swarm-48 backlog #3): ранее использовался
+        ``self._global_lock``, но он был dead code (нигде не awaited).
+        Удалён для устранения race-condition risk без реальной защиты.
+        """
         lock = self._locks.get(tenant)
         if lock is not None:
             return lock
-        # Создание нового lock вне global lock'а безопасно (asyncio.Lock
-        # creation не имеет side effects).
         new_lock = asyncio.Lock()
         self._locks[tenant] = new_lock
         return new_lock
