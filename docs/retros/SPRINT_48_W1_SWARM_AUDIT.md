@@ -331,3 +331,13 @@ Cross-domain finding (A7 Extensions #4+#5 + A2 Infrastructure #7).
 
 **S48 total**: W1 (11) + W2 (3) + W3 (2 ext) + W4 (1) + W5 (4) + W6 (2) + W7 (2) = 25 atomic commits.
 **Backlog после W7**: 22 P0 + 60 P1 + 50 P2.
+
+### W8 #22: retrieval_masker fallback audit-event
+
+**Commit**: `541f05a82`.
+
+A3 Services #2: silent fallback на legacy regex (8 patterns) при
+`presidio_pii_enabled=False` теперь emit'ит `security.ai.retrieval_pii_fallback`
+audit с severity=warning. Pattern: same as W7 langfuse fix.
+
+**S48 total**: 26 atomic commits. **Backlog**: 21 P0 + 60 P1 + 50 P2.
