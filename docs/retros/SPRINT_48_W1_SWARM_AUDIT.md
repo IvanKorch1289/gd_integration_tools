@@ -314,3 +314,20 @@ Cross-domain finding (A7 Extensions #4+#5 + A2 Infrastructure #7).
 
 **S48 total**: W1 (11) + W2 (3) + W3 (2 ext) + W4 (1) + W5 (4) + W6 (2) = 23 atomic commits.
 **Backlog после W6**: 24 P0 + 60 P1 + 50 P2.
+
+### W7 #20-21: S3 health_check реальный probe + langfuse presidio_disabled audit
+
+**Commits**: `d36ed4bec`, `cb6bad88d`.
+
+1. **S3 health_check probe** (`d36ed4bec`) — `s3_pool/client.py:532` теперь
+   реализует реальный probe: head_bucket (fast mode default), list_buckets
+   (deep mode / bucket-not-configured fallback). latency_ms через
+   perf_counter(). K8s liveness probe теперь видит реальное состояние.
+
+2. **Langfuse presidio_disabled audit** (`cb6bad88d`) — при
+   `feature_flags.presidio_pii_enabled=False` callback emit'ит
+   `security.ai.presidio_disabled` audit-event с severity=error.
+   Production deployment со случайно выключенным флагом теперь fail-loud.
+
+**S48 total**: W1 (11) + W2 (3) + W3 (2 ext) + W4 (1) + W5 (4) + W6 (2) + W7 (2) = 25 atomic commits.
+**Backlog после W7**: 22 P0 + 60 P1 + 50 P2.
