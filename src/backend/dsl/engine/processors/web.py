@@ -32,12 +32,16 @@ _warn_logger.warning(
     "Используйте rpa_browser (Playwright) для navigate/click/extract/screenshot. "
     "FillFormProcessor/RunScenarioProcessor остаются — миграция в Sprint 180+."
 )
-warnings.warn(
+# S48 M2-#9 swarm audit (A4 DSL #6): module-level DeprecationWarning spammил
+# при каждом import — даже если web.py фактически не использовался
+# (например через transitive import chain). Перенесён в __init__
+# классов NavigateProcessor/ClickProcessor/ExtractProcessor/ScreenshotProcessor
+# — emit только при реальной инстанциировании. FillFormProcessor и
+# RunScenarioProcessor остаются до Sprint 180+ (см. модульный docstring).
+_DEPRECATION_MSG = (
     "dsl.engine.processors.web module is deprecated; "
     "use dsl.engine.processors.rpa_browser for Playwright-based web automation. "
-    "FillFormProcessor/RunScenarioProcessor remain until Sprint 180+ migration.",
-    DeprecationWarning,
-    stacklevel=2,
+    "FillFormProcessor/RunScenarioProcessor remain until Sprint 180+ migration."
 )
 
 from src.backend.dsl.engine.context import ExecutionContext
@@ -64,6 +68,7 @@ class NavigateProcessor(BaseProcessor):
         name: str | None = None,
     ) -> None:
         super().__init__(name)
+        warnings.warn(_DEPRECATION_MSG, DeprecationWarning, stacklevel=2)
         self._url = url
         self._url_property = url_property
 
@@ -87,6 +92,7 @@ class ClickProcessor(BaseProcessor):
 
     def __init__(self, url: str, selector: str, name: str | None = None) -> None:
         super().__init__(name)
+        warnings.warn(_DEPRECATION_MSG, DeprecationWarning, stacklevel=2)
         self._url = url
         self._selector = selector
 
@@ -138,6 +144,7 @@ class ExtractProcessor(BaseProcessor):
         name: str | None = None,
     ) -> None:
         super().__init__(name)
+        warnings.warn(_DEPRECATION_MSG, DeprecationWarning, stacklevel=2)
         self._url = url
         self._selector = selector
         self._output = output_property
@@ -165,6 +172,7 @@ class ScreenshotProcessor(BaseProcessor):
         name: str | None = None,
     ) -> None:
         super().__init__(name)
+        warnings.warn(_DEPRECATION_MSG, DeprecationWarning, stacklevel=2)
         self._url = url
         self._output = output_property
 
