@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-08-31 (Sprint 48 M1 — Production Readiness: W14 WS CSWSH Origin + W15 imports.py inline auth DONE; см. `docs/roadmap/PRODUCTION_READINESS.md`)
+> **Last verified**: 2026-08-31 (Sprint 48 M1 — Production Readiness: W17 notification_hub tracking deferred; см. `docs/roadmap/PRODUCTION_READINESS.md`)
 > **Method**: Direct command execution, no inherited claims.
 > **Refresh**: Manual after every `make ci` or `make audit` run.
 
