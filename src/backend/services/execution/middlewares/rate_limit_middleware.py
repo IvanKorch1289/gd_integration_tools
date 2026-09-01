@@ -45,6 +45,29 @@ __all__ = ("RateLimitMiddleware",)
 _LIMITER_MODULE_NAME = "src.backend.infrastructure.resilience.unified_rate_limiter"
 
 
+def _get_fail_mode() -> str:
+    """Читает ``rate_limit_fail_mode`` из resilience_settings (lazy).
+
+    S48 W5+ swarm audit (A3 Services #14): helper extracted для fail-closed
+    enforcement. Импорт ленивый — middleware не должен тянуть
+    resilience_settings при module-level импорте (избегаем circular
+    import с core.config.services.resilience).
+    """
+    try:
+        from src.backend.core.config.services.resilience import (
+            resilience_settings,
+        )
+
+        return str(resilience_settings.rate_limit_fail_mode)
+    except Exception as exc:
+        # Если settings недоступны (early boot / test) — fail-CLOSED by default.
+        logger.warning(
+            "rate_limit.fail_mode_settings_unavailable err=%s — fail-CLOSED",
+            exc,
+        )
+        return "closed"
+
+
 class RateLimitMiddleware:
     """Middleware-ограничитель частоты вызовов.
 
@@ -80,7 +103,32 @@ class RateLimitMiddleware:
 
         limiter = self._resolve_limiter()
         if limiter is None:
-            # Инфраструктура недоступна — fail-open, как и сам limiter.
+            # S48 W5+ swarm audit (A3 Services #14): раньше fail-open при
+            # недоступности limiter'а (Redis-outage → все запросы пропускались
+            # без rate-limit → brute-force protection выключена).
+            # Теперь читаем rate_limit_fail_mode (default 'closed' per
+            # resilience.py:151). При 'closed' — возвращаем rate_limited error.
+            fail_mode = _get_fail_mode()
+            if fail_mode == "closed":
+                logger.error(
+                    "rate_limit.limiter_unavailable action=%s — fail-CLOSED "
+                    "(rate_limit_fail_mode=closed, default per resilience.py)",
+                    action,
+                )
+                return ActionResult(
+                    success=False,
+                    error=ActionError(
+                        code="rate_limited",
+                        message="rate limiter unavailable (fail-closed)",
+                        details={"fail_mode": "closed", "action": action},
+                        recoverable=True,
+                    ),
+                )
+            logger.warning(
+                    "rate_limit.limiter_unavailable action=%s — fail-OPEN "
+                    "(rate_limit_fail_mode=open, explicit override)",
+                    action,
+                )
             return await next_handler(action, payload, context)
 
         module = self._resolve_limiter_module()
