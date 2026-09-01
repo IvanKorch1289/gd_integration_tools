@@ -400,3 +400,8 @@ Pattern consistent с W7/W8/W9 audit-fallback chain.
 **Commit**: `38468d270`. A4 DSL #6 — module-level warning emit'ил при каждом import (transitive chains → spam). Перенесён в `__init__` 4 deprecated processors (Navigate/Click/Extract/Screenshot). FillForm/RunScenario остаются до Sprint 180+.
 
 **S48 total**: 35 atomic commits. **M2 subset**: 1/N done.
+
+### M2-#5 #32: worker.py reverse layer violation tracking
+**Commit**: `f12cc781e`. A2 Infra #8 — `from src.backend.plugins.composition.service_setup` в infrastructure/workflow/worker.py. Reverse layer violation (infrastructure → plugins). Honest deferral: proper fix = `core/lifecycle/worker_bootstrap.py` multi-file refactor (3h). Tracking reference добавлен.
+
+**S48 total**: 36 atomic commits. **M2 subset**: 2/10 done.
