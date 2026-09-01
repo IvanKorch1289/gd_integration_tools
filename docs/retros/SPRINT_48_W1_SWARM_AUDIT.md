@@ -361,3 +361,16 @@ DI provider (новый `get_security_facade_provider()` в core/di/providers/au
 Lazy resolve через resolve_module — consistent с другими auth providers.
 
 **S48 total**: 28 atomic commits. **Backlog**: 19 P0 + 60 P1 + 50 P2.
+
+### W11 #25: mobile_jwt revocation fail-OPEN audit
+
+**Commit**: `e7823cd50`.
+
+A9 Security #2 / A1 Core #1: RedisRevocationStore.is_revoked() теперь
+emit'ит `security.auth.revocation_fail_open` audit при fail-OPEN (Redis
+unavailable или cache_get error). Caller всё ещё получает False
+(backward-compat), но security team видит alert.
+
+Pattern consistent с W7/W8/W9 audit-fallback chain.
+
+**S48 total**: 29 atomic commits. **Backlog**: 18 P0 + 60 P1 + 50 P2.
