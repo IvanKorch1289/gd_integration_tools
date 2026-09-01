@@ -255,3 +255,20 @@ Cross-domain finding (A7 Extensions #4+#5 + A2 Infrastructure #7).
 **Команда проверки**: `grep -n 'from src.backend.infrastructure' extensions/core_entities/orders/workflows/orders_dsl.py` → 0 hits.
 
 **W2 итог**: 3 atomic commits (`7fdf3751c`, `1783fe8a5`, `152e7aba3`), 1 false claim retracted (A9 #4), 1 deferred (A3 #3 documented risk).
+
+### W4 #13: api_key_manager fail-open data-loss fix
+
+**Commit**: `b2e28d481` — `fix(security)`.
+
+В `src/backend/infrastructure/security/api_key_manager.py:272-301` (create_client_key):
+- `return raw_key` был ВНЕ try блока → при ошибке Redis store клиент всё равно
+  получал raw_key (но в Redis его не было → невозможно аутентифицироваться).
+- Это fail-open data-loss: единственный экземпляр raw_key теряется.
+
+Фикс: переместил raise в except-блок. Теперь `return raw_key` ВНУТРИ try,
+только после успешного `redis_client()._redis.set(...)`.
+
+**Команда проверки**: `grep -n 'return raw_key\|except Exception as exc' src/backend/infrastructure/security/api_key_manager.py` → return после успешного set; raise на ошибке.
+
+**S48 total**: W1 (11) + W2 (3) + W3 (2 external) + W4 (1) = 17 atomic commits.
+**Backlog**: 29 P0 + 60 P1 + 50 P2.
