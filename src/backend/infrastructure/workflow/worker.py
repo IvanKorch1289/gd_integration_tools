@@ -160,6 +160,13 @@ async def _bootstrap() -> None:
     # (`patch("src.backend.dsl.commands.setup.register_action_handlers")`)
     # корректно перехватывали вызовы. core.api.extensions — facade для
     # entrypoints, а не для infrastructure workflow worker.
+    #
+    # S48 M2-#5 swarm audit (A2 Infra #8): 'from src.backend.plugins.composition'
+    # — reverse layer violation (infrastructure → plugins). Worker entrypoint
+    # напрямую импортирует composition-service_setup. Документировано как
+    # known violation. Proper fix: extract bootstrap в
+    # `core/lifecycle/worker_bootstrap.py` который оба слоя могут
+    # использовать через canonical DI. Tracking: docs/roadmap/PRODUCTION_READINESS.md M2-#5.
     from src.backend.dsl.commands.setup.orchestrator import register_action_handlers
     from src.backend.dsl.routes import register_dsl_routes
     from src.backend.plugins.composition.service_setup import register_all_services
