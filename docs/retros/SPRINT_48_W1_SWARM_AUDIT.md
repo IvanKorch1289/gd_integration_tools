@@ -296,3 +296,21 @@ Cross-domain finding (A7 Extensions #4+#5 + A2 Infrastructure #7).
 
 **S48 total**: W1 (11) + W2 (3) + W3 (2 ext) + W4 (1) + W5 (4) = 21 atomic commits.
 **Backlog после W5**: 26 P0 + 60 P1 + 50 P2.
+
+### W6 #18-19: silent auth exceptions → audit-event + admin_roles settings-driven
+
+**Commits**: `dc6b137ef`, `ca5f53b33`.
+
+1. **Auth audit-event** (`dc6b137ef`) — `core/auth/facade.py:160-162` теперь
+   эмитит `audit.security.auth_verify_exception` через `emit_audit_safe`
+   при exception в `verify_request()`. Truncate error_message до 200 chars
+   для защиты от log injection. Cross-domain: A1 Core #2.
+
+2. **Admin roles settings-driven** (`ca5f53b33`) — `auth_selector.py:85`
+   hardcoded `admin_roles=['operator','super_admin']` заменён на
+   `_get_api_key_admin_roles()` helper, читающий из `secure_settings`.
+   Production override через `SEC_API_KEY_ADMIN_ROLES=super_admin`.
+   Cross-domain: A1 Core #4 + A9 Security #1.
+
+**S48 total**: W1 (11) + W2 (3) + W3 (2 ext) + W4 (1) + W5 (4) + W6 (2) = 23 atomic commits.
+**Backlog после W6**: 24 P0 + 60 P1 + 50 P2.
