@@ -59,6 +59,7 @@
 | **Sprint 48 W21 (cov+14)** | **core/api/messaging.py: 0% → 100% (11 stmts)** | 11 тестов — __all__ audit + module identity (dlq_base, outbox, OutboxMonitor) + 2 backward-compat aliases + __getattr__ AttributeError на unknown. ruff 0 |
 | **Sprint 48 W22 (cov+15)** | **core/state/__init__.py: 0% → 100% (3 stmts)** | 7 тестов — __all__ audit + set type identity (blocked_routes, disabled_feature_flags) + mutability check. ruff 0 |
 | **Sprint 48 W23 (cov+16)** | **core/cdc/__init__.py: 0% → 100% (10 stmts)** | 20 тестов — __all__ audit (9 symbols) + Protocol/class identity (CDCCursor/CDCEvent/Literal CDCOperation/frozenset SUPPORTED_BACKENDS). Тех-деталь: SUPPORTED_BACKENDS = frozenset (не dict), CDCOperation = Literal alias, FakeCDCSource = runtime_checkable Protocol. ruff 0 |
+| **Sprint 48 W24 (cov+17)** | **core/services/__init__.py: 0% → 100% (Sprint 225 lazy proxy)** | 5 тестов — __all__ audit + __getattr__ lazy resolution (BaseExternalAPIClient → canonical) + AttributeError на unknown. ruff 0 |
 | **Sprint 44 W6 (coverage+1)** | **admin/audit.py: 0% → 100%** | 7 new tests +140 LOC, 17 admin tests PASSED |
 | **Sprint 44 W7 (coverage+2)** | **_capability_adapter.py: 0% → 100%** | 7 new tests +105 LOC, 24 admin tests PASSED |
 | **Sprint 44 W8 (bug+coverage)** | **clickhouse_admin: broken lazy proxy FIX + 0% → 100%** | 6 new tests + facade re-export added |
