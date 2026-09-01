@@ -55,15 +55,17 @@ __all__ = (
 async def _call_notification_send(body: dict[str, Any]) -> dict[str, Any]:
     """Processor: send email через NotificationGateway (IL2.2).
 
-    Использует новый gateway из src/infrastructure/notifications/; старый
-    notification_hub — deprecated (DeprecationWarning шлёт при import).
+    Использует canonical DI provider из core/di/providers/notifications
+    (S48 W2 swarm audit backlog #28: layer violation fix — extensions → infrastructure
+    inline-import заменён на core.di.provider, который сам делает resolve
+    через capability-checked facade).
 
     Sprint 35 W1 (ADR-0282 Phase B): inline-import от infrastructure.
     `core.notifications` facade removed (см. SPRINT_35_RETRO §1.2).
     """
-    from src.backend.infrastructure.notifications import get_gateway
+    from src.backend.core.di.providers.notifications import get_notification_gateway
 
-    gw = get_gateway()
+    gw = get_notification_gateway()
     payload = body.get("payload") or body
     # В IL-WF2 мы используем gateway.send с дефолтным каналом email для
     # максимальной совместимости с существующим кодом.
@@ -356,10 +358,11 @@ def build_all_order_workflows() -> dict[str, WorkflowDeclaration]:
         from extensions.core_entities.orders.workflows.orders_dsl import (
             build_all_order_workflows,
         )
-        from src.backend.infrastructure.workflow.registry import workflow_registry
+        from src.backend.core.di.providers.workflow import get_workflow_registry
 
+        registry = get_workflow_registry()
         for name, declaration in build_all_order_workflows().items():
-            workflow_registry.register(declaration, route_id=name)
+            registry.register(declaration, route_id=name)
     """
     return {
         "notifications.send_email": send_notification_workflow_spec(),
