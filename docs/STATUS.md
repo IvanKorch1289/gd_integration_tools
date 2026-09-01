@@ -66,6 +66,7 @@
 | **Sprint 48 W28 (cov+21)** | **core/cache/__init__.py: 0% → 100% (9 stmts)** | 14 тестов — __all__ audit (6 symbols) + identity checks (UnifiedCacheFacade ABC + MemoryCacheFacade/FallbackCacheFacade subclasses + ThreeTierRagCache + CacheInvalidationPolicy + CacheError Exception). ruff 0 |
 | **Sprint 48 W29 (cov+22)** | **core/repositories/__init__.py (3 stmts) + core/storage/__init__.py (5 stmts) → 0% → 100%** | 18 тестов: repos __all__ audit + FeedbackRepository class identity (4); storage __all__ audit (4 symbols через parametrize) + 4 callable identity (DI providers) + docstring reference (14). ruff 0 |
 | **Sprint 48 W30 (cov+23)** | **core/resilience/backpressure/__init__.py: 0% → 100% (12 stmts)** | 14 тестов — S67 W1 decomp facade (5 classes + 1 helper): __all__ audit (6 symbols) + class identity (4 classes + Protocol has __subclasshook__) + callable identity (get_streaming_controller helper). ruff 0 |
+| **Sprint 48 W31 (cov+24)** | **core/auth/saml/__init__.py: 0% → 100% (11 stmts)** | 16 тестов — Sprint 9 K1 W1 SAML facade (7 re-exports): __all__ audit (7 symbols через parametrize) + class identity (6 classes) + Exception check (SamlError). ruff 0 |
 | **Sprint 44 W6 (coverage+1)** | **admin/audit.py: 0% → 100%** | 7 new tests +140 LOC, 17 admin tests PASSED |
 | **Sprint 44 W7 (coverage+2)** | **_capability_adapter.py: 0% → 100%** | 7 new tests +105 LOC, 24 admin tests PASSED |
 | **Sprint 44 W8 (bug+coverage)** | **clickhouse_admin: broken lazy proxy FIX + 0% → 100%** | 6 new tests + facade re-export added |
