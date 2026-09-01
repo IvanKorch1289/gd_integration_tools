@@ -161,7 +161,7 @@ class WebhookRelay:
             # отправлялось clear-text → клиент не мог проверить подлинность.
             # Теперь reject с явным статусом 'signature_required'.
             if not rule.secret:
-                self._logger.warning(
+                logger.warning(
                     "webhook.deny_unsigned rule_id=%s target=%s — outbound webhook "
                     "без HMAC secret заблокирован (deny-by-default, см. A3 #6)",
                     rule.id,
