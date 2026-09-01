@@ -81,6 +81,7 @@
 | **Sprint 49 W4 (cov+33)** | **core/actions/__init__.py: 0% → 100% (7 stmts)** | 5 тестов — Wave 14.1.B action adapters facade (action_spec_to_metadata re-export): __all__ audit + callable identity + smoke test на semantic contract. ruff 0 |
 | **Sprint 49 W5 (cov+34)** | **core/messaging/__init__.py: 0% → 100% (12 stmts)** | 11 тестов — messaging contracts facade (OutboxBackend Protocol + Pydantic events + FakeOutbox stub): __all__ audit (4 symbols) + class identity + FakeOutbox instantiation. ruff 0 |
 | **Sprint 49 W6 (cov+35)** | **services/integrations/rule_engine/__init__.py: 0% → 100% (10 stmts)** | 7 тестов — rule-engine ruleset registry facade (RuleEngineRegistry + RulesetCacheEntry): __all__ audit (2 symbols) + class identity + instantiation. ruff 0 |
+| **Sprint 49 W7 (cov+36)** | **services/admin/__init__.py: 0% → 100% (8 stmts)** | 8 тестов — Sprint 19 K5 W5b admin API facade (AdminService + emit_admin_action + register_admin): __all__ audit (3 symbols) + class/function identity. ruff 0 |
 | **Sprint 44 W6 (coverage+1)** | **admin/audit.py: 0% → 100%** | 7 new tests +140 LOC, 17 admin tests PASSED |
 | **Sprint 44 W7 (coverage+2)** | **_capability_adapter.py: 0% → 100%** | 7 new tests +105 LOC, 24 admin tests PASSED |
 | **Sprint 44 W8 (bug+coverage)** | **clickhouse_admin: broken lazy proxy FIX + 0% → 100%** | 6 new tests + facade re-export added |
