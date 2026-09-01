@@ -69,9 +69,7 @@ class TestAiGatewayFacadeIdentity:
 
     def test_aigateway_resolves_from_subpackage(self) -> None:
         """``gateway.AIGateway`` — canonical AIGateway (subpackage wins over legacy module)."""
-        from src.backend.core.ai.gateway.gateway import (
-            AIGateway as SubpackageAIGateway,
-        )
+        from src.backend.core.ai.gateway.gateway import AIGateway as SubpackageAIGateway
 
         assert AIGateway is SubpackageAIGateway
 
