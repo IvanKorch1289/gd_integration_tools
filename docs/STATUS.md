@@ -64,6 +64,7 @@
 | **Sprint 48 W26 (cov+19)** | **core/serialization/__init__.py: 0% → 100% (9 stmts)** | 15 тестов — __all__ audit (6 symbols) + identity (MSGSPEC_AVAILABLE bool, 5 callables) + functional smoke (hash_cache_key returns int|str). ruff 0 |
 | **Sprint 48 W27 (cov+20)** | **core/domain/feedback/__init__.py: 0% → 100% (3 stmts)** | 4 теста — __all__ audit + class identity (FeedbackDomainService). ruff 0 |
 | **Sprint 48 W28 (cov+21)** | **core/cache/__init__.py: 0% → 100% (9 stmts)** | 14 тестов — __all__ audit (6 symbols) + identity checks (UnifiedCacheFacade ABC + MemoryCacheFacade/FallbackCacheFacade subclasses + ThreeTierRagCache + CacheInvalidationPolicy + CacheError Exception). ruff 0 |
+| **Sprint 48 W29 (cov+22)** | **core/repositories/__init__.py (3 stmts) + core/storage/__init__.py (5 stmts) → 0% → 100%** | 18 тестов: repos __all__ audit + FeedbackRepository class identity (4); storage __all__ audit (4 symbols через parametrize) + 4 callable identity (DI providers) + docstring reference (14). ruff 0 |
 | **Sprint 44 W6 (coverage+1)** | **admin/audit.py: 0% → 100%** | 7 new tests +140 LOC, 17 admin tests PASSED |
 | **Sprint 44 W7 (coverage+2)** | **_capability_adapter.py: 0% → 100%** | 7 new tests +105 LOC, 24 admin tests PASSED |
 | **Sprint 44 W8 (bug+coverage)** | **clickhouse_admin: broken lazy proxy FIX + 0% → 100%** | 6 new tests + facade re-export added |
