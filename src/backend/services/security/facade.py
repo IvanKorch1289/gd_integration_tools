@@ -38,6 +38,38 @@ __all__ = ("SecurityFacade", "get_security_facade")
 
 _logger = get_logger("services.security.facade")
 
+
+def _emit_pii_fail_audit(operation: str, exc: BaseException) -> None:
+    """Helper: emit audit-event для fail-open PII operations (W9).
+
+    S48 W9 swarm audit (A3 Services #5): tokenize_pii/mask_pii раньше возвращали
+    raw text при exception без observability. Caller получал unmasked PII
+    без следа в audit. Теперь audit-event с severity=error + failed_operation.
+    Lazy import (избегаем circular с core.audit).
+    """
+    try:
+        from src.backend.core.audit.facade._base import emit_audit_safe
+
+        emit_audit_safe(
+            event="security.pii.fail_open",
+            action=operation,
+            outcome="failure",
+            severity="error",
+            extra={
+                "failed_operation": operation,
+                "error_type": type(exc).__name__,
+                "error_message": str(exc)[:200],
+                "warning": (
+                    f"{operation} returned raw text — PII NOT masked. "
+                    "Caller should treat as unsafe."
+                ),
+            },
+        )
+    except Exception as audit_exc:
+        _logger.warning(
+            "Failed to emit pii.fail_open audit for %s: %s", operation, audit_exc,
+        )
+
 CapabilityChecker = Callable[[str, str, str | None], None]
 
 
@@ -183,6 +215,10 @@ class SecurityFacade:
             return masked_text
         except Exception as exc:
             _logger.warning("tokenize_pii failed: %s", exc)
+            # S48 W9 swarm audit (A3 Services #5): fail-open — caller получает
+            # raw text без маскирования при ошибке tokenizer. PII leak risk.
+            # Теперь emit audit-warning с severity=error.
+            _emit_pii_fail_audit("tokenize_pii", exc)
             return text
 
     async def detokenize_pii(self, text: str) -> str:
@@ -216,6 +252,9 @@ class SecurityFacade:
             return masker.mask_text(text)
         except Exception as exc:
             _logger.warning("mask_pii failed: %s", exc)
+            # S48 W9 swarm audit (A3 Services #5): fail-open — caller получает
+            # raw text. Audit-event (consistent с tokenize_pii fix).
+            _emit_pii_fail_audit("mask_pii", exc)
             return text
 
     # ──────────────────── Secrets ────────────────────
