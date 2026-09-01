@@ -72,6 +72,7 @@
 | **Sprint 48 W34 (cov+27)** | **core/config/external_apis/__init__.py: 0% → 100% (9 stmts)** | 12 тестов — facade для external API configs (Antivirus, Dadata, SKB): __all__ audit (6 symbols) + class identity (3 Settings classes) + singleton identity (3 *_settings instances). ruff 0 |
 | **Sprint 48 W35 (cov+28)** | **core/ai/policy/__init__.py: 0% → 100% (22 stmts)** | 20 тестов — AI Policy DSL facade (ADR-NEW-20, S25 W2): __all__ audit (12 symbols) + class identity (AIPolicySpec + PolicyResolver + AIPolicyEnforcer + 7 supporting Pydantic models) + Exception check (PolicyLoadError + PolicyNotResolvedError). ruff 0 |
 | **Sprint 48 W36 (cov+29)** | **core/config/base/__init__.py: 0% → 100% (8 stmts)** | 8 тестов — S65 W3 decomp facade: __all__ audit (2 symbols) + class identity (AppBaseSettings + SchedulerSettings) + singleton identity (app_base_settings + scheduler_settings). ruff 0 |
+| **Sprint 48 W37 (cov+30)** | **core/config/external_databases/__init__.py: 0% → 100% (5 stmts)** | 9 тестов — external DB configs facade: __all__ audit (4 symbols) + class identity (3 Settings classes) + singleton identity (external_databases_settings). ruff 0 |
 | **Sprint 44 W6 (coverage+1)** | **admin/audit.py: 0% → 100%** | 7 new tests +140 LOC, 17 admin tests PASSED |
 | **Sprint 44 W7 (coverage+2)** | **_capability_adapter.py: 0% → 100%** | 7 new tests +105 LOC, 24 admin tests PASSED |
 | **Sprint 44 W8 (bug+coverage)** | **clickhouse_admin: broken lazy proxy FIX + 0% → 100%** | 6 new tests + facade re-export added |
