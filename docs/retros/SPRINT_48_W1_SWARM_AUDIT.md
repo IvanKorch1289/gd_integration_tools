@@ -392,3 +392,6 @@ Pattern consistent с W7/W8/W9 audit-fallback chain.
 **Commit**: `37b4322da`. 4 add_api_route endpoints (`/openapi`, `/postman`, `/process-schema`, `/bulk-objects`) получили inline `Depends(require_auth([API_KEY, JWT]))`. Defense-in-depth: per-route auth + Layer-3 global gate. Pattern consistent с `ai_stream.py:95`.
 
 **S48 total**: 33 atomic commits (W1-W15, M1 W12-W15 все P0 закрыты кроме #19 deferral).
+
+### M1 W17 #30: notification_hub tracking + consumer list
+**Commit**: `e98ff751e`. A3 Services #7 — hard sunset passed, 5 consumers не мигрировали. Explicit tracking + 5-consumer list добавлен. Полная миграция deferred (4h multi-file task).
