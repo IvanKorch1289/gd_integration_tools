@@ -215,3 +215,26 @@ def set_ad_directory_client_provider(factory: Any) -> None:
         _overrides.pop("ad_directory_client_factory", None)
     else:
         _overrides["ad_directory_client_factory"] = factory
+
+
+# ─────────────── S48 W10: core → services.security layer bridge ──────────────
+
+
+def get_security_facade_provider() -> Any:
+    """DI-provider для ``services.security.SecurityFacade``.
+
+    S48 W10 swarm audit (A1 Core #5): раньше ``core/auth/facade.py:318,463``
+    делали inline import из ``src.backend.services.security.facade`` —
+    нарушение layer rule (core → services). Теперь core вызывает через
+    canonical DI provider. Resolve через ``resolve_module`` — late import,
+    чтобы избежать module-level circular dependency.
+    """
+    if "security_facade" in _overrides:
+        return _overrides["security_facade"]
+    module = resolve_module("security.facade")
+    return module.get_security_facade()
+
+
+def set_security_facade_provider(facade: Any) -> None:
+    """Override для ``security_facade`` provider (test/mock injection)."""
+    _overrides["security_facade"] = facade

@@ -315,9 +315,11 @@ class AuthFacade:
 
         """
         try:
-            from src.backend.services.security.facade import get_security_facade
+            # S48 W10 swarm audit (A1 Core #5): inline import от services →
+            # layer violation. Теперь canonical DI provider из core.
+            from src.backend.core.di.providers.auth import get_security_facade_provider
 
-            facade = get_security_facade()
+            facade = get_security_facade_provider()
             return await facade.is_token_blacklisted(jti)
         except Exception as exc:
             logger.debug(
@@ -460,9 +462,10 @@ class AuthFacade:
         if not jti:
             raise ValueError("revoke_token: jti must be non-empty")
         try:
-            from src.backend.services.security.facade import get_security_facade
+            # S48 W10: см. _is_blacklisted — DI provider вместо inline services import.
+            from src.backend.core.di.providers.auth import get_security_facade_provider
 
-            facade = get_security_facade()
+            facade = get_security_facade_provider()
             await facade.blacklist_token(jti)
             return True
         except Exception as exc:
