@@ -384,3 +384,11 @@ Pattern consistent с W7/W8/W9 audit-fallback chain.
 **Commit**: `70336fbae`. A5 Entrypoints #1 — defense-in-depth потерян в cycle 217. Full restoration = 1d, deferred. Tracking reference добавлен к roadmap.
 
 **S48 total**: 31 atomic commits. **M1 W12-W15 in progress** (4 tasks).
+
+### M1 W14 #28: WebSocket CSWSH Origin check
+**Commit**: `7b852d239`. WS handshake теперь валидирует Origin header против `ws_settings.allowed_origins` (CSWSH mitigation per RFC 6455 §1.6). Rejection → close 1008 + audit-event `security.ws.csws_attempt`. Production override через `WS_ALLOWED_ORIGINS` env.
+
+### M1 W15 #29: imports.py inline auth (4 endpoints)
+**Commit**: `37b4322da`. 4 add_api_route endpoints (`/openapi`, `/postman`, `/process-schema`, `/bulk-objects`) получили inline `Depends(require_auth([API_KEY, JWT]))`. Defense-in-depth: per-route auth + Layer-3 global gate. Pattern consistent с `ai_stream.py:95`.
+
+**S48 total**: 33 atomic commits (W1-W15, M1 W12-W15 все P0 закрыты кроме #19 deferral).
