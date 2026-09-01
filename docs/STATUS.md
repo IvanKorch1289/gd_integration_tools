@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-08-31 (Sprint 48 W6 — Swarm Audit continuation: +2 P0 fixes (auth audit-event, admin_roles settings); см. `docs/retros/SPRINT_48_W1_SWARM_AUDIT.md`)
+> **Last verified**: 2026-08-31 (Sprint 48 W7 — Swarm Audit continuation: +2 P0 fixes (S3 health_check probe, langfuse presidio audit); см. `docs/retros/SPRINT_48_W1_SWARM_AUDIT.md`)
 > **Method**: Direct command execution, no inherited claims.
 > **Refresh**: Manual after every `make ci` or `make audit` run.
 
