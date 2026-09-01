@@ -21,15 +21,17 @@ class TestCreateWorkflowBackend:
         # достаточно проверки runtime-checkable Protocol.
         assert isinstance(backend, WorkflowBackend)
 
-    async def test_auto_dev_light_picks_pg_runner(self) -> None:
+    async def test_auto_dev_light_picks_lite_temporal(self) -> None:
+        """``dev_light`` profile → ``LiteTemporalBackend`` (Sprint 7 P0-3 / S217)."""
         backend = await create_workflow_backend(kind="auto", profile="dev_light")
         assert isinstance(backend, WorkflowBackend)
-        # pg_runner adapter — конкретный класс из infrastructure/.
-        from src.backend.infrastructure.workflow.pg_runner_backend import (
-            PgRunnerWorkflowBackend,
+        # dev_light resolves to lite_temporal (Sprint 7 P0-3); pg_runner deprecated
+        # since Sprint 217 (CLAUDE.md V22 — "Lite в dev_light").
+        from src.backend.infrastructure.workflow.lite_temporal_backend import (
+            LiteTemporalBackend,
         )
 
-        assert isinstance(backend, PgRunnerWorkflowBackend)
+        assert isinstance(backend, LiteTemporalBackend)
 
     async def test_auto_prod_falls_back_when_temporal_missing(
         self, monkeypatch: pytest.MonkeyPatch,
