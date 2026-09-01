@@ -53,6 +53,7 @@
 | **Sprint 48 W15 (cov+8)** | **core/api/cache.py: 0% → 100% (5 stmts)** | 4 smoke-теста на R13 FIX facade — callable identity + module-level re-exports. ruff 0 |
 | **Sprint 48 W16 (cov+9)** | **core/api/extensions.py: 0% → 100% (18 stmts)** | 20 тестов — __all__ audit через parametrize (15 символов) + size assertion + singleton/identity checks. ruff 0 |
 | **Sprint 48 W17 (cov+10)** | **core/api/resilience.py: 0% → 100% (6 stmts)** | 11 тестов — __all__ audit + type identity (CircuitBreaker/RateLimiter/Bulkhead) + rate_limiter backward-compat alias check. ruff 0 |
+| **Sprint 48 W18 (cov+11)** | **core/api/scheduler.py: 0% → 100% (3 stmts)** | 6 тестов — __all__ audit + module identity (dlq.SchedulerDLQStore, scheduler_manager.SchedulerManager). ruff 0 |
 | **Sprint 44 W6 (coverage+1)** | **admin/audit.py: 0% → 100%** | 7 new tests +140 LOC, 17 admin tests PASSED |
 | **Sprint 44 W7 (coverage+2)** | **_capability_adapter.py: 0% → 100%** | 7 new tests +105 LOC, 24 admin tests PASSED |
 | **Sprint 44 W8 (bug+coverage)** | **clickhouse_admin: broken lazy proxy FIX + 0% → 100%** | 6 new tests + facade re-export added |
