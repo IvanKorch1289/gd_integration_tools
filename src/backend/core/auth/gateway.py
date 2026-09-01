@@ -92,5 +92,11 @@ class AuthGateway:
 
             @router.get("/protected", dependencies=[Depends(gateway.require())])
             async def protected(): ...
+
+        S49 W2 fix (P0 swarm-48 #4): если ``methods=None`` — pass
+        ``self._default_method`` явно (раньше передавал None → fallback на
+        ``_default_auth`` global state, что позволяло silent misconfig).
+        Теперь AuthGateway использует свой configured default.
         """
-        return require_auth(methods=methods)
+        effective_methods = methods if methods is not None else self._default_method
+        return require_auth(methods=effective_methods)

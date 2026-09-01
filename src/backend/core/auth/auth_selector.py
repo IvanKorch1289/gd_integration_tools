@@ -73,11 +73,24 @@ def _get_api_key_admin_roles() -> list[str]:
         return ["operator", "super_admin"]
 
 
-_default_auth: AuthMethod | list[AuthMethod] = AuthMethod.API_KEY
+_default_auth: AuthMethod | list[AuthMethod] | None = None
+# S49 W2 fix (P0 swarm-48 backlog #4): default был ``AuthMethod.API_KEY`` —
+# silent global fallback для require_auth(methods=None). Если production
+# не вызывает ``set_default_auth()`` явно → fallback на API_KEY без логов.
+# Риск: misconfigured prod (нет api keys) → silently anonymous allowed
+# (через AuthMethod.NONE в require_auth) или silent API_KEY usage.
+#
+# Fix: default = None + RuntimeError в require_auth если не configured.
+# Fail-CLOSED: production MUST call set_default_auth() в startup.
 
 
 def set_default_auth(method: AuthMethod | list[AuthMethod]) -> None:
-    """Устанавливает авторизацию по умолчанию для всех роутов."""
+    """Устанавливает авторизацию по умолчанию для всех роутов.
+
+    S49 W2: MUST быть вызван в production startup (см. ``app_factory.lifespan``
+    или ``create_app``) до первого request. Если не вызван — ``require_auth()``
+        без methods → ``RuntimeError`` (fail-CLOSED).
+    """
     global _default_auth
     _default_auth = method
 
@@ -303,6 +316,17 @@ def require_auth(
 
     """
     effective = methods if methods is not None else _default_auth
+
+    # S49 W2 fix (P0 swarm-48 #4): fail-CLOSED если default не configured.
+    # Production MUST call set_default_auth() в startup. Тесты могут
+    # переопределить через monkeypatch или явный set_default_auth() в fixture.
+    if effective is None:
+        raise RuntimeError(
+            "auth_selector: require_auth() вызван без explicit methods, "
+            "но _default_auth не configured (set_default_auth() не вызывался). "
+            "S49 W2 fail-CLOSED: production startup MUST вызвать "
+            "set_default_auth(AuthMethod.JWT) (или list) до первого request."
+        )
 
     if isinstance(effective, AuthMethod):
         methods_list = [effective]
