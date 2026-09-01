@@ -1,24 +1,35 @@
 # Production Readiness Roadmap — gd_integration_tools
 
-> **Generated**: 2026-08-31 (Sprint 48 W11)
-> **Source**: S48 swarm audit (10 доменных агентов, 29 atomic commits W1-W11)
+> **Generated**: 2026-08-31 (Sprint 48 W11), updated 2026-09-01 (Sprint 50 A — verified baseline)
+> **Source**: S48 swarm audit (10 доменных агентов, 29 atomic commits W1-W11) + S49 W1-W11 + Sprint 50 A reverification
 > **Owner**: координатор роя
+> **Baseline**: `docs/roadmap/BASELINE_2026-09-01.md` (verified raw output)
 
-## Текущее состояние (baseline)
+## Текущее состояние (baseline S50 W1, reverified 2026-09-01)
 
 | Метрика | Значение | Verification |
 |---|---|---|
 | Production readiness (claimed) | ~96% | STATUS.md (R12) |
-| P0 open (per STATUS) | 0 | stale claim |
-| **P0 фактический (S48 audit)** | **18** | SPRINT_48_W1_SWARM_AUDIT.md backlog |
-| P1 backlog | 60 | S48 W1 retro |
-| P2 backlog | 50 | S48 W1 retro |
-| Layer allowlist | 38 | `python3 tools/check_layers.py` |
-| Coverage gate | 60% (target 75%) | `pyproject.toml:1080` |
+| **P0 open (per STATUS)** | **0** | **FALSE CLAIM retracted (Sprint A)** |
+| **P0 фактический (S48 audit + S49 close-outs)** | **4-7 OPEN** | `git log --grep="swarm-48"` + manual diff |
+| **Ruff errors** | **10** (7 auto-fixable) | `ruff check src/` |
+| **Bandit HIGH (severity / confidence)** | **0 / 43** | `bandit -r src/ -lll` |
+| **Vulture @≥90%** | **1 finding** | `vulture src/` |
+| **Layer allowlist** | **37 legacy** | `python3 tools/check_layers.py` |
+| **Tests collected** | **15862** | `pytest tests/unit/ --collect-only -q` |
+| Coverage gate | 60% (target 70%) | `pyproject.toml:1080` |
 | Pre-prod-check gates | 38 | `tools/checks/pre_prod_check.py` |
-| Atomic commits S48 | 29 | `git log --oneline \| grep S48` |
+| **Outdated deps** | **138** | `pip list --outdated` |
+| Atomic commits S48-S49 | ~160 | `git log --oneline` |
 
-**FALSE CLAIM detected**: STATUS.md заявляет "P0 open = 0", реальный swarm audit нашёл 18 P0 в backlog. Это старая проблема (13+ раундов аудита: previous claim'ы systematically false).
+**FALSE CLAIMs retracted (Sprint A)**:
+- `STATUS.md P0 open = 0` — реально 4-7 OPEN (см. S48 W1 audit backlog)
+- `STATUS.md Ruff = 0` — реально 10 (7 auto-fixable)
+- `STATUS.md Vulture @≥90% = 0` — реально 1 finding (`mobile_jwt_revocation.py:202`)
+- `STATUS.md Layer allowlist = 38` — реально 37 (S49 W3 removed 1 stale)
+- `STATUS.md Bandit HIGH = 0` — partial: severity=0 OK, confidence=43 NE disclosed
+
+Detailed raw output — `docs/roadmap/BASELINE_2026-09-01.md`.
 
 ## Milestones (M1 → M4 = production-ready)
 

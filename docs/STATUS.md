@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-08-31 (Sprint 49 — M1 P0 zero-out started: BASELINE + 3 P0 fixes (mobile_jwt fail-CLOSED, auth_selector, revocation wire); см. `docs/roadmap/PRODUCTION_READINESS.md` + `docs/roadmap/BASELINE_2026-08-31.md`)
+> **Last verified**: 2026-09-01 (Sprint 50 — Plan A Sprint A: BASELINE captured; see `docs/roadmap/PRODUCTION_READINESS.md` + `docs/roadmap/BASELINE_2026-09-01.md`)
 > **Method**: Direct command execution, no inherited claims.
 > **Refresh**: Manual after every `make ci` or `make audit` run.
 
@@ -9,20 +9,26 @@
 | Metric | Value | Verification |
 |---|---|---|
 | **Production readiness** | **~96%** (S44 W4 honest re-eval, coverage gate = 13%/60%) | R12 + ADR-0255 + ADR-0257 |
-| **P0 open** | **0** (L5 Security Chain ✅ DONE S44 W1 — commit 94960cf4) | 19/19 L5 tests pass |
+| **P0 open (per audit)** | **4-7 OPEN** (после S49 W1+W2+W3 closed #4, #5, #19; см. S48 W1 backlog) | `git log --grep="swarm-48"` |
+| **P0 open (заявлено в STATUS)** | **0** | — | **FALSE CLAIM retracted (S50 Sprint A)** |
 | **P1 open** | **0** (RouteBuilder Protocol was FALSE CLAIM — DONE) | R12 §1 |
 | **P2 open** | **0** (RestrictedUnpickler ✅ S47 W2 + Dependabot ✅ S47 W3; S48 W3 sync) | `docs/STATUS.md` S47 W2/W3 rows |
-| **Ruff errors** | **0** | `ruff check src/` |
-| **Bandit HIGH** | **0** | CI workflow |
-| **Vulture @>=90%** | **0** | `vulture src/` |
-| **Layer allowlist** | **38** (was 138 → 70 → 60 → 43 wc-lines → 38 active baseline, S47 sync) | `python3 tools/check_layers.py` |
+| **Ruff errors** | **10** (7 auto-fixable) — ЗАЯВЛЕНО 0 | `ruff check src/` | **FALSE CLAIM retracted (S50)** |
+| **Bandit HIGH (severity)** | **0** | `bandit -r src/ -lll` | OK |
+| **Bandit HIGH (confidence)** | **43** — НЕ заявлено | `bandit -r src/ -lll` | **partial disclosure** |
+| **Vulture @>=90%** | **1 finding** (`mobile_jwt_revocation.py:202 unused 'revocation_store'`) — ЗАЯВЛЕНО 0 | `vulture src/` | **FALSE CLAIM retracted (S50)** |
+| **Layer allowlist** | **37 legacy** (S49 W3: -1 stale cleanup) | `python3 tools/check_layers.py` |
 | **God-objects** | **5/5 DONE** (R12) | agent_security 652→71 LOC |
-| **Sprint 43 commits** | **11** (W1+W2+W3+R12) | `git log --since=yesterday` |
+| **Tests collected** | **15862** | `pytest tests/unit/ --collect-only -q` |
 | **P0 tests** | **9/9 PASS** | `pytest tests/integration/test_p0_fixes_functional.py` |
 | **Security tests** | **45/45 PASS** | `pytest test_agent_security* test_facade_validate*` |
-| **R12 affected subset** | **54 passed, 20 skipped** | `pytest test_p0_* + security + graphql` |
-| **GraphQL tests** | **11 passed, 20 skipped** | R8 fallout, L5 P0 documented |
-| **Unit core tests** | **663/664 PASS, 3 skip, 1 pre-existing fail** | `pytest tests/unit/core/` |
+| **Outdated deps** | **138 пакетов** | `pip list --outdated` |
+
+**FALSE CLAIM corrections (S50 Sprint A)**:
+1. `P0 open = 0` — **STALE**. S48 W1 swarm audit нашёл 18 P0; S49 закрыл #4, #5, #19, остаётся ~4-7 (см. S48 W1 retro backlog: #9, #17, #22-27, #31).
+2. `Ruff errors = 0` — **STALE**. Реально 10 (7 auto-fixable). См. `ruff check src/`.
+3. `Vulture @≥90% = 0` — **STALE**. Реально 1 finding. См. `vulture src/`.
+4. `Bandit HIGH = 0` — **PARTIAL**. По **severity** = 0 (OK). По **confidence** = 43 (NE disclosed). См. `bandit -r src/ -lll`.
 | **Sprint 43 velocity** | **+~900% vs Sprint 42** | 9 atomic commits, 0 regressions |
 | **Sprint 44 W1** | **P0 closed (L5)** | 19 tests pass, schema.py +250 LOC |
 | **Sprint 44 W2** | **otel block FALSE CLAIM retracted + aio_pika 0.60b1 installed** | 22 integration tests run |
