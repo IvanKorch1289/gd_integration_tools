@@ -65,7 +65,6 @@ class TestResilienceFacadeIdentity:
 
     def test_rate_limiter_protocol(self) -> None:
         """``RateLimiter`` — Protocol class."""
-        from typing import Protocol
 
         # Может быть Protocol или ABC. Проверяем только что callable type.
         assert isinstance(RateLimiter, type)
