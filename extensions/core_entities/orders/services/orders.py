@@ -43,7 +43,6 @@ __all__ = ("OrderService", "get_order_service")
 
 _REPO_ORDERS_MOD = "extensions.core_entities.orders.repositories.orders"
 _REPO_FILES_MOD = "extensions.core_entities.files.repositories.files"
-_S3_MOD = "src.backend.infrastructure.external_apis.s3"
 
 
 class OrderService(
@@ -414,7 +413,7 @@ def get_order_service() -> OrderService:
         file_repo = importlib.import_module(_REPO_FILES_MOD).get_file_repo()
         # D-AUDIT-9601 fix (cycle 96): заменён dynamic import S3 на
         # canonical DI provider. Раньше:
-        #   s3_service = importlib.import_module(_S3_MOD).get_s3_service_dependency()
+        #   s3_service = importlib.import_module("src.backend.infrastructure.external_apis.s3").get_s3_service_dependency()
         # Это обходило AST layer check (extensions → infrastructure напрямую).
         # Теперь: capability-checked facade через core/di/providers.
         s3_service = get_s3_service_provider()

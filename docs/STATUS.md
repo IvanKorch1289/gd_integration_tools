@@ -11,7 +11,7 @@
 | **Production readiness** | **~96%** (S44 W4 honest re-eval, coverage gate = 13%/60%) | R12 + ADR-0255 + ADR-0257 |
 | **P0 open** | **0** (L5 Security Chain ✅ DONE S44 W1 — commit 94960cf4) | 19/19 L5 tests pass |
 | **P1 open** | **0** (RouteBuilder Protocol was FALSE CLAIM — DONE) | R12 §1 |
-| **P2 open** | **2** (RestrictedUnpickler, dependabot) | gh pr list |
+| **P2 open** | **0** (RestrictedUnpickler ✅ S47 W2 + Dependabot ✅ S47 W3; S48 W3 sync) | `docs/STATUS.md` S47 W2/W3 rows |
 | **Ruff errors** | **0** | `ruff check src/` |
 | **Bandit HIGH** | **0** | CI workflow |
 | **Vulture @>=90%** | **0** | `vulture src/` |
