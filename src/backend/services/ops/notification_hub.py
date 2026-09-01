@@ -56,10 +56,17 @@ __all__ = ("Channel", "NotificationHub", "NotificationRequest", "get_notificatio
 logger = get_logger(__name__)
 
 # S223: DeprecationWarning на import — напоминает мигрировать на Gateway.
+# S48 M1 W17 swarm audit (A3 Services #7): hard sunset date passed
+# (2026-07-01+). Tracking: docs/roadmap/PRODUCTION_READINESS.md M1 W17.
+# 5 consumers (anomaly_detector, scheduled_reports, notify_actions,
+# plugins/composition/lifecycle/protocols, dsl/commands/setup/
+# registers_workflow) ещё не мигрировали → multi-file 4h task.
+# Migration target: src.backend.infrastructure.notifications.gateway.
 warnings.warn(
     "`app.services.ops.notification_hub` deprecated in IL2.2 (ADR-023). "
-    "Use `app.infrastructure.notifications.get_gateway()` instead. "
-    "This shim will be removed in H3_PLUS (2026-07-01+).",
+    "Migration target: src.backend.infrastructure.notifications.gateway."
+    ".get_gateway() — 5 consumers listed in M1 W17 roadmap."
+    "Hard removal: после M1 W17 (4h estimate).",
     DeprecationWarning,
     stacklevel=2,
 )
