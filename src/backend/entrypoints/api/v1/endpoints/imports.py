@@ -21,9 +21,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
+from src.backend.core.auth.auth_selector import AuthMethod, require_auth
 from src.backend.core.logging import get_logger
 
 __all__ = ("router",)
@@ -138,6 +139,10 @@ router.add_api_route(
     ),
     name="import_openapi",
     response_model=ImportSummaryResponse,
+    # S48 M1 W15 swarm audit (A5 Entrypoints #3): inline auth для Tier-0
+    # endpoints. Без Depends — только Layer-3 global gate (зависит от
+    # middleware order). При custom-config / fallback — потенциальный bypass.
+    dependencies=[Depends(require_auth([AuthMethod.API_KEY, AuthMethod.JWT]))],
 )
 
 
@@ -196,6 +201,7 @@ router.add_api_route(
     description=("Загружает Postman Collection v2.1 (JSON) и генерирует DSL-роуты."),
     name="import_postman",
     response_model=ImportSummaryResponse,
+    dependencies=[Depends(require_auth([AuthMethod.API_KEY, AuthMethod.JWT]))],
 )
 
 
@@ -252,6 +258,7 @@ router.add_api_route(
     description="JSON-схема бизнес-процесса (шаги + связи) → DSL-pipeline.",
     name="import_process_schema",
     response_model=ImportSummaryResponse,
+    dependencies=[Depends(require_auth([AuthMethod.API_KEY, AuthMethod.JWT]))],
 )
 
 
@@ -351,4 +358,5 @@ router.add_api_route(
     ),
     name="import_bulk_objects",
     response_model=BulkObjectsResponse,
+    dependencies=[Depends(require_auth([AuthMethod.API_KEY, AuthMethod.JWT]))],
 )
