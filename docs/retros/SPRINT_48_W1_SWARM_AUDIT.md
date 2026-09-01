@@ -210,3 +210,30 @@ CI-gate bypass, dead public API, missing plugin metadata. Не решила ар
    для baseline assertion
 2. Каждый агент должен проверять `git log -1` после фикса (verify commit landed)
 3. Запускать `make dev-light` для cURL-валидации (не externalize на следующую сессию)
+---
+
+# S48 W2 — продолжение (2026-08-31)
+
+## Дополнительные фиксы из backlog
+
+| # | Домен | Находка | Файл:строка | Фикс | Команда-подтверждение | Коммит |
+|---|---|---|---|---|---|---|
+| 10 | Core | Dead `_global_lock` в SsoRegistry | `src/backend/core/auth/sso_registry.py:184` | Удалён field, обновлён docstring | `grep -n '_global_lock' src/backend/core/auth/sso_registry.py` → 0 hits в коде | `7fdf3751c` |
+| 11 | Deps & CI | GitLab CI bandit `\|\| true` drift | `.gitlab/ci/.gitlab-ci.yml:139-140` | Добавлен blocking gate `--severity-level high`; advisory отчёты остались | `python3 -c "yaml.safe_load(...)['bandit']['script'][0][:80]"` → blocking line | `1783fe8a5` |
+
+## False claims retracted в W2
+
+- **A9 Security #4 (saml_sp_initiated flag misnamed)** — false positive. Флаг
+  `saml_sp_initiated_enabled` определён в `core/config/features/infrastructure.py:361`,
+  getattr с default=False — корректный pattern. Не правили.
+
+- **A3 Services #3 (action_dispatcher eager layer violation)** — false positive.
+  Eager import документирован как S44 W38 fix для pytest context (free-variable
+  references в `__init__` методах не триггерят `__getattr__` proxy). Удаление
+  регрессировало бы tests. **Не правили** — задокументированный trade-off.
+
+## S48 W2 метрики
+
+- Атомарных коммитов: +2 (всего S48 W1+W2: 13)
+- Verified: `python3 -m ast.parse` для sso_registry.py → OK; `yaml.safe_load` для .gitlab-ci.yml → OK
+- Backlog после W2: 31 P0 + 60 P1 + 50 P2
