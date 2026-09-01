@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-08-31 (Sprint 48 W1 — Swarm Audit: 9 atomic P0 quick-wins; см. `docs/retros/SPRINT_48_W1_SWARM_AUDIT.md`)
+> **Last verified**: 2026-08-31 (Sprint 48 W2 — Swarm Audit continuation: +2 P0 fixes из backlog; см. `docs/retros/SPRINT_48_W1_SWARM_AUDIT.md`)
 > **Method**: Direct command execution, no inherited claims.
 > **Refresh**: Manual after every `make ci` or `make audit` run.
 
