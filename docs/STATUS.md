@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-08-31 (Sprint 48 W8 — Swarm Audit continuation: +1 P0 fix (retrieval_masker fallback audit); см. `docs/retros/SPRINT_48_W1_SWARM_AUDIT.md`)
+> **Last verified**: 2026-08-31 (Sprint 48 W9 — Swarm Audit continuation: +1 P0 fix (pii facade fail-open audit); см. `docs/retros/SPRINT_48_W1_SWARM_AUDIT.md`)
 > **Method**: Direct command execution, no inherited claims.
 > **Refresh**: Manual after every `make ci` or `make audit` run.
 
