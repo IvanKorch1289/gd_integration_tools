@@ -84,6 +84,7 @@
 | **Sprint 49 W7 (cov+36)** | **services/admin/__init__.py: 0% → 100% (8 stmts)** | 8 тестов — Sprint 19 K5 W5b admin API facade (AdminService + emit_admin_action + register_admin): __all__ audit (3 symbols) + class/function identity. ruff 0 |
 | **Sprint 49 W8 (cov+37)** | **infrastructure/sources/__init__.py: 0% → 100% (13 stmts)** | 8 тестов — W23 source backends facade (build_source + FileWatcherSource + FileEvent): __all__ audit (3 symbols) + class/callable identity. ruff 0 |
 | **Sprint 49 W9 (cov+38)** | **infrastructure/policy/__init__.py: 0% → 100% (11 stmts)** | 8 тестов — ADR-012 OPA + Casbin two-layer auth facade (CasbinAdapter + OPAClient + PolicyDecision): __all__ audit (3 symbols) + class identity. ruff 0 |
+| **Sprint 49 W10 (cov+39)** | **infrastructure/import_gateway/__init__.py: 0% → 100% (10 stmts)** | 4 теста — W24 import backends facade (build_import_gateway factory): __all__ audit (1 symbol) + callable identity. ruff 0 |
 | **Sprint 44 W6 (coverage+1)** | **admin/audit.py: 0% → 100%** | 7 new tests +140 LOC, 17 admin tests PASSED |
 | **Sprint 44 W7 (coverage+2)** | **_capability_adapter.py: 0% → 100%** | 7 new tests +105 LOC, 24 admin tests PASSED |
 | **Sprint 44 W8 (bug+coverage)** | **clickhouse_admin: broken lazy proxy FIX + 0% → 100%** | 6 new tests + facade re-export added |
