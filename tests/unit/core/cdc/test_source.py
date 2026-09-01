@@ -15,12 +15,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from src.backend.core.cdc.source import (
-    CDCCursor,
-    CDCEvent,
-    CDCSource,
-    FakeCDCSource,
-)
+from src.backend.core.cdc.source import CDCCursor, CDCEvent, CDCSource, FakeCDCSource
 
 
 @pytest.mark.unit
