@@ -13,12 +13,11 @@ import pytest
 
 from src.backend.core import cdc
 from src.backend.core.cdc import (
+    SUPPORTED_BACKENDS,
     CDCCursor,
     CDCEvent,
-    CDCOperation,
     CDCSource,
     FakeCDCSource,
-    SUPPORTED_BACKENDS,
     get_cdc_source,
     is_backend_available,
     list_backends,
