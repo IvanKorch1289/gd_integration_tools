@@ -62,6 +62,7 @@
 | **Sprint 48 W24 (cov+17)** | **core/services/__init__.py: 0% → 100% (Sprint 225 lazy proxy)** | 5 тестов — __all__ audit + __getattr__ lazy resolution (BaseExternalAPIClient → canonical) + AttributeError на unknown. ruff 0 |
 | **Sprint 48 W25 (cov+18)** | **core/types/__init__.py: 0% → 100% (6 stmts)** | 10 тестов — __all__ audit (4 Pydantic schemas) + class identity. ruff 0 |
 | **Sprint 48 W26 (cov+19)** | **core/serialization/__init__.py: 0% → 100% (9 stmts)** | 15 тестов — __all__ audit (6 symbols) + identity (MSGSPEC_AVAILABLE bool, 5 callables) + functional smoke (hash_cache_key returns int|str). ruff 0 |
+| **Sprint 48 W27 (cov+20)** | **core/domain/feedback/__init__.py: 0% → 100% (3 stmts)** | 4 теста — __all__ audit + class identity (FeedbackDomainService). ruff 0 |
 | **Sprint 44 W6 (coverage+1)** | **admin/audit.py: 0% → 100%** | 7 new tests +140 LOC, 17 admin tests PASSED |
 | **Sprint 44 W7 (coverage+2)** | **_capability_adapter.py: 0% → 100%** | 7 new tests +105 LOC, 24 admin tests PASSED |
 | **Sprint 44 W8 (bug+coverage)** | **clickhouse_admin: broken lazy proxy FIX + 0% → 100%** | 6 new tests + facade re-export added |
