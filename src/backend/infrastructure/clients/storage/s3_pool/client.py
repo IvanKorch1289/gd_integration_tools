@@ -377,7 +377,17 @@ class S3Client(BaseS3Client):
                     MultipartUpload={"Parts": parts},
                 )
                 return str(complete_resp.get("ETag", ""))
-            except Exception as _:
+            except Exception as exc:
+                # S48 W5+ swarm audit (A2 Infra #4): раньше outer except
+                # имел bare 'as _' без логирования → silent loss при multipart
+                # upload failure. Теперь logger.exception на top level перед
+                # attempt abort_multipart_upload.
+                self.logger.exception(
+                    "s3.multipart_upload_failed key=%s upload_id=%s err=%s",
+                    key,
+                    upload_id,
+                    exc,
+                )
                 if upload_id is not None:
                     try:
                         await client.abort_multipart_upload(
