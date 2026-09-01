@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-08-31 (Sprint 48 M2-#5 — P1 cleanup: worker.py reverse layer violation tracking; см. `docs/roadmap/PRODUCTION_READINESS.md`)
+> **Last verified**: 2026-08-31 (Sprint 49 — M1 P0 zero-out started: BASELINE + 3 P0 fixes (mobile_jwt fail-CLOSED, auth_selector, revocation wire); см. `docs/roadmap/PRODUCTION_READINESS.md` + `docs/roadmap/BASELINE_2026-08-31.md`)
 > **Method**: Direct command execution, no inherited claims.
 > **Refresh**: Manual after every `make ci` or `make audit` run.
 
