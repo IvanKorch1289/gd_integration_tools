@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """JupyterHub connection settings (TD-024).
 
 Pydantic-settings для JupyterHub REST API client.
@@ -15,8 +17,6 @@ Env-префикс: ``JUPYTER_HUB_`` (env vars → ``JUPYTER_HUB_BASE_URL=...``)
     * Feature-flag ``jupyter_hub_enabled`` (default OFF) — caller обязан
       проверять ПЕРЕД инстанцированием client.
 """
-
-from __future__ import annotations
 
 from typing import ClassVar
 

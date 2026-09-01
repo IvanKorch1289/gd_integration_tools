@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Единая модель pool-параметров для всех infrastructure-клиентов.
 
 `PoolingProfile` нормализует параметры, которые раньше были разбросаны по
@@ -11,8 +13,6 @@ Pool `GenericObjectPoolConfig`.
 
 См. ADR-022 и план IL1 в ``/root/.claude/plans/tidy-jingling-map.md``.
 """
-
-from __future__ import annotations
 
 from typing import ClassVar, Final
 

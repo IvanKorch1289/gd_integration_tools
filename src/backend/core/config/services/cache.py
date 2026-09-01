@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import ClassVar, Literal
 
 from pydantic import Field, computed_field, field_validator, model_validator

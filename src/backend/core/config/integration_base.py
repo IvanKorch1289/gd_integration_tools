@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Базовая иерархия настроек интеграций (W15.2).
 
 Назначение
@@ -13,8 +15,6 @@
 Конкретные классы (``ExpressSettings``, ``TelegramBotSettings``) задают
 свой ``yaml_group`` и ``env_prefix`` через ``model_config``.
 """
-
-from __future__ import annotations
 
 from typing import ClassVar, Literal
 
