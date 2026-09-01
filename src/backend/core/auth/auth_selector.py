@@ -49,6 +49,30 @@ __all__ = (
 logger = get_logger(__name__)
 
 
+def _get_api_key_admin_roles() -> list[str]:
+    """Читает ``api_key_admin_roles`` из secure_settings (lazy).
+
+    S48 W6 swarm audit (A9 Security #1): раньше hardcoded. Теперь читается
+    из settings — production может override через
+    ``SEC_API_KEY_ADMIN_ROLES=super_admin`` для hardening.
+    Lazy import: не тянем secure_settings при module-level импорте
+    (избегаем circular import с core.config.security).
+    Fallback на legacy default — backward-compat при boot/test.
+    """
+    try:
+        from src.backend.core.config.security import secure_settings
+
+        roles = list(secure_settings.api_key_admin_roles)
+        return roles if roles else ["operator", "super_admin"]
+    except Exception as exc:
+        logger.warning(
+            "auth_selector.api_key_admin_roles_settings_unavailable err=%s — "
+            "fallback на legacy default ['operator','super_admin']",
+            exc,
+        )
+        return ["operator", "super_admin"]
+
+
 _default_auth: AuthMethod | list[AuthMethod] = AuthMethod.API_KEY
 
 
@@ -82,7 +106,14 @@ async def _verify_api_key(request: Request) -> AuthContext | None:
             {
                 "key_id": info.client_id,
                 "key_hash": info.key_hash,
-                "admin_roles": ["operator", "super_admin"],
+                # S48 W6 swarm audit (A9 Security #1 / A1 Core #4): раньше
+                # hardcoded admin_roles=['operator', 'super_admin'] для ВСЕХ
+                # API-key holders. Production риск: если deployment забыл
+                # переопределить → весь сервис принимает API-key auth с full admin.
+                # Теперь читаем из secure_settings.api_key_admin_roles
+                # (default: ['operator','super_admin'], env override:
+                # SEC_API_KEY_ADMIN_ROLES=super_admin для prod hardening).
+                "admin_roles": _get_api_key_admin_roles(),
             },
         )
     except Exception as exc:
