@@ -237,3 +237,21 @@ CI-gate bypass, dead public API, missing plugin metadata. Не решила ар
 - Атомарных коммитов: +2 (всего S48 W1+W2: 13)
 - Verified: `python3 -m ast.parse` для sso_registry.py → OK; `yaml.safe_load` для .gitlab-ci.yml → OK
 - Backlog после W2: 31 P0 + 60 P1 + 50 P2
+
+### W2 #12: orders_dsl layer violations (extensions → infrastructure)
+
+**Commit**: `152e7aba3` — `fix(extensions)`.
+
+2 layer violations в `extensions/core_entities/orders/workflows/orders_dsl.py`:
+- Line 64: runtime inline-import `from src.backend.infrastructure.notifications`
+- Line 359: docstring example показывал тот же pattern
+
+Оба заменены на canonical DI providers:
+- `core.di.providers.notifications.get_notification_gateway`
+- `core.di.providers.workflow.get_workflow_registry`
+
+Cross-domain finding (A7 Extensions #4+#5 + A2 Infrastructure #7).
+
+**Команда проверки**: `grep -n 'from src.backend.infrastructure' extensions/core_entities/orders/workflows/orders_dsl.py` → 0 hits.
+
+**W2 итог**: 3 atomic commits (`7fdf3751c`, `1783fe8a5`, `152e7aba3`), 1 false claim retracted (A9 #4), 1 deferred (A3 #3 documented risk).
