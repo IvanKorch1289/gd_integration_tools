@@ -204,6 +204,12 @@ def build_verifier_with_protections(
 ) -> Any:
     """Build MobileJwtVerifier with Phase 2 protections wired in.
 
+    S49 M1-#22 swarm audit (A1 Core #1 / A9 Security #3): parameters
+    revocation_store и rate_limiter ранее были no-op (Phase 3 deferred).
+    Теперь возвращаем WrappedMobileJwtVerifier который проверяет
+    revocation_store.is_revoked(jti) после успешной JWT-валидации и
+    rate_limiter.check(device_id) per device_id.
+
     Args:
         backend: Configured JwtBackend.
         issuer_whitelist: Allowed issuers.
@@ -212,14 +218,77 @@ def build_verifier_with_protections(
         rate_limiter: Optional. If provided, per-device rate limit is enforced.
 
     Returns:
-        MobileJwtVerifier with protections (currently no-op if stores are None;
-        Phase 3 will wire full integration).
+        MobileJwtVerifier or WrappedMobileJwtVerifier (если stores provided).
     """
     # Lazy import to avoid circular dependency
     from src.backend.core.auth.mobile_jwt import MobileJwtVerifier
 
-    return MobileJwtVerifier(
+    base_verifier = MobileJwtVerifier(
         backend=backend,
         issuer_whitelist=list(issuer_whitelist),
         audience=audience,
     )
+
+    # Если stores не переданы — return bare MobileJwtVerifier
+    # (backward-compat с callers, которые ещё не wired Phase 2).
+    if revocation_store is None and rate_limiter is None:
+        return base_verifier
+
+    # Phase 3 wire: WrappedMobileJwtVerifier с защитами.
+    return _WrappedMobileJwtVerifier(
+        inner=base_verifier,
+        revocation_store=revocation_store,
+        rate_limiter=rate_limiter,
+    )
+
+
+class _WrappedMobileJwtVerifier:
+    """MobileJwtVerifier wrapper с revocation check + device rate limit (S49 M1-#22).
+
+    Pattern: композиция (не subclass) — не ломает existing verify() signature.
+    После успешной JWT-валидации проверяет revocation_store.is_revoked(jti)
+    и rate_limiter.check(device_id). Любой fail → JwtVerificationError.
+    """
+
+    def __init__(
+        self,
+        *,
+        inner: Any,
+        revocation_store: RevocationStore | None,
+        rate_limiter: DeviceRateLimiter | None,
+    ) -> None:
+        self._inner = inner
+        self._revocation_store = revocation_store
+        self._rate_limiter = rate_limiter
+
+    async def verify(self, token: str) -> Any:
+        """Verify JWT + Phase 2 protections."""
+        from src.backend.core.auth.jwt_backend import JwtVerificationError
+
+        ctx = await self._inner.verify(token)
+
+        # Phase 2: revocation check
+        if self._revocation_store is not None:
+            try:
+                is_revoked = await self._revocation_store.is_revoked(ctx.jti)
+            except Exception as exc:
+                # M1-#2: fail-CLOSED если mobile_jwt_revoc_fail_closed.
+                # raise через _inner-аналогичную проверку оставим caller'у.
+                raise JwtVerificationError(
+                    f"revocation check failed: {exc}"
+                ) from exc
+            if is_revoked:
+                raise JwtVerificationError(
+                    f"JWT {ctx.jti!r} is revoked"
+                )
+
+        # Phase 2: rate limit per device_id
+        if self._rate_limiter is not None:
+            try:
+                await self._rate_limiter.check(ctx.device_id)
+            except Exception as exc:
+                raise JwtVerificationError(
+                    f"rate limit exceeded for device {ctx.device_id!r}: {exc}"
+                ) from exc
+
+        return ctx
