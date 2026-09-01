@@ -47,6 +47,31 @@ def anonymize_trace_payload(
 
     """
     if payload is None or not feature_flags.presidio_pii_enabled:
+        # S48 W7 swarm audit (A3 Services #1): раньше при выключенном
+        # presidio_pii_enabled callback просто возвращал raw payload →
+        # PII уходил в Langfuse observability backend без anonymization.
+        # Теперь emit audit-warning (только если payload не None, чтобы не
+        # spam'ить для None-callers). Production deployments должны
+        # fail-loud если флаг случайно выключен в prod (audit-event).
+        if payload is not None:
+            try:
+                from src.backend.core.audit.facade._base import emit_audit_safe
+
+                emit_audit_safe(
+                    event="security.ai.presidio_disabled",
+                    action="langfuse_pii_callback",
+                    outcome="failure",
+                    severity="error",
+                    extra={
+                        "tenant_id": tenant_id,
+                        "warning": (
+                            "PII NOT masked — payload sent to Langfuse raw. "
+                            "Set FEATURE_PRESIDIO_PII_ENABLED=true for production."
+                        ),
+                    },
+                )
+            except Exception as exc:
+                logger.warning("Failed to emit presidio_disabled audit: %s", exc)
         return payload
 
     from src.backend.core.di.providers import get_ai_sanitizer_provider
