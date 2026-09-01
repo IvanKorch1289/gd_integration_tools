@@ -351,3 +351,13 @@ audit-event при exception через helper `_emit_pii_fail_audit()`. Pattern
 consistent с W7/W8.
 
 **S48 total**: 27 atomic commits. **Backlog**: 20 P0 + 60 P1 + 50 P2.
+
+### W10 #24: core/auth/facade layer violation → DI provider
+
+**Commit**: `aed3cfb0a`.
+
+A1 Core #5: 2 inline imports из services.security.facade заменены на canonical
+DI provider (новый `get_security_facade_provider()` в core/di/providers/auth.py).
+Lazy resolve через resolve_module — consistent с другими auth providers.
+
+**S48 total**: 28 atomic commits. **Backlog**: 19 P0 + 60 P1 + 50 P2.
