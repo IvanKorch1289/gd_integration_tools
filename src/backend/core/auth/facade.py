@@ -40,6 +40,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.core.audit.facade._base import emit_audit_safe
 
 __all__ = ("AuthFacade", "AuthResult", "get_auth_facade")
 
@@ -159,6 +160,21 @@ class AuthFacade:
                 return await self._verify_mtls(token)
         except Exception as exc:
             logger.warning("verify_request failed: %s", exc)
+            # S48 W6 swarm audit (A1 Core #2): раньше silent 401 без следа
+            # в audit. Атакующий получает silent 401 без observability.
+            # Теперь эмитим audit.security.auth_verify_exception через
+            # emit_audit_safe (Path A pattern — never raises).
+            emit_audit_safe(
+                event="security.auth.verify_exception",
+                action="verify_request",
+                outcome="failure",
+                severity="warning",
+                extra={
+                    "method": method,
+                    "error_type": type(exc).__name__,
+                    "error_message": str(exc)[:200],  # truncate to avoid log injection
+                },
+            )
             return AuthResult(is_authenticated=False, metadata={"error": "auth_failed"})
         return AuthResult(is_authenticated=False)
 
