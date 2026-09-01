@@ -156,6 +156,19 @@ class WebhookRelay:
 
         results = []
         for rule in matching:
+            # S48 W5+ swarm audit (A3 Services #6): deny-by-default для
+            # outbound webhook без HMAC secret. Раньше правило без secret
+            # отправлялось clear-text → клиент не мог проверить подлинность.
+            # Теперь reject с явным статусом 'signature_required'.
+            if not rule.secret:
+                self._logger.warning(
+                    "webhook.deny_unsigned rule_id=%s target=%s — outbound webhook "
+                    "без HMAC secret заблокирован (deny-by-default, см. A3 #6)",
+                    rule.id,
+                    rule.target_url,
+                )
+                results.append({"rule_id": rule.id, "status": "signature_required"})
+                continue
             transformed = self._transform(payload, rule)
             if transformed is None:
                 results.append({"rule_id": rule.id, "status": "filtered_out"})
