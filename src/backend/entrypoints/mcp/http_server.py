@@ -108,20 +108,18 @@ def create_mcp_http_app() -> tuple[Any, Any]:
     # a Starlette `method` object on Router (descriptor, requires router
     # instance binding), `lifespan_context` is the actual context-manager
     # function with signature `(app: Starlette) -> AsyncGenerator[None, None]`.
-    # D-AUDIT-20811 (cycle 217): REMOVED McpAuthMiddleware wrap — auth
-    # middleware был blocking запросы (cycle 209-210 investigation).
-    # Standalone test (TestClient) returned 200 OK; mounted (with auth)
-    # returns 404. Auth bypass для тестирования — proper auth integration
-    # deferred to cycle 218+ (multi-cycle work).
     #
-    # S48 M1 W13 swarm audit (A5 Entrypoints #1): defense-in-depth потерян.
-    # Defense restoration (1d work per agent estimate) deferred — требует
-    # cycle 218+ multi-cycle integration. Tracking reference:
-    # docs/roadmap/PRODUCTION_READINESS.md M1 W13.
-    #
-    # Частичная защита: standalone tests (TestClient) валидны через
-    # _check_mcp_tool_authz per-tool (cycle 218 documentation).
-    return inner_app, inner_app.router.lifespan_context
+    # S49 W1 fix (P0 swarm-48 backlog #19): RESTORE McpAuthMiddleware wrap.
+    # Ранее (cycle 217) REMOVED — standalone test (TestClient) returned 200 OK
+    # while mounted (with auth) returned 404. Defense-in-depth потерян был
+    # 1 cycle (~9 месяцев). Восстановлено: defense layer теперь снова на месте.
+    # Тесты auth middleware (``tests/unit/entrypoints/mcp/test_mcp_no_dsl_principal_propagation.py``)
+    # тестируют middleware standalone — НЕ через wrapped app, поэтому
+    # удаление wrap'а не требовалось для тестов. Defense-in-depth restored.
+    from src.backend.entrypoints.mcp.auth_middleware import McpAuthMiddleware
+
+    wrapped_app = McpAuthMiddleware(inner_app)
+    return wrapped_app, inner_app.router.lifespan_context
 
 
 def _is_namespaces_enabled() -> bool:
