@@ -341,3 +341,13 @@ A3 Services #2: silent fallback на legacy regex (8 patterns) при
 audit с severity=warning. Pattern: same as W7 langfuse fix.
 
 **S48 total**: 26 atomic commits. **Backlog**: 21 P0 + 60 P1 + 50 P2.
+
+### W9 #23: pii facade tokenize/mask fail-open audit
+
+**Commit**: `e05c55686`.
+
+A3 Services #5: tokenize_pii/mask_pii теперь emit'ят `security.pii.fail_open`
+audit-event при exception через helper `_emit_pii_fail_audit()`. Pattern
+consistent с W7/W8.
+
+**S48 total**: 27 atomic commits. **Backlog**: 20 P0 + 60 P1 + 50 P2.
