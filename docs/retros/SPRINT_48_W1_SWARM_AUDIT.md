@@ -374,3 +374,13 @@ unavailable или cache_get error). Caller всё ещё получает False
 Pattern consistent с W7/W8/W9 audit-fallback chain.
 
 **S48 total**: 29 atomic commits. **Backlog**: 18 P0 + 60 P1 + 50 P2.
+
+## M1 Milestone (Production Readiness)
+
+### W12 #26: build_default_vocabulary structure clarification
+**Commit**: `82fba20fb`. Agent's "388 LOC BIG function" claim устарел — composition root = 22 LOC, 4 helpers уже декомпозированы в S62 W2. Добавлен __all__ + clarifying comment. Full sub-package extraction deferred.
+
+### W13 #27: McpAuthMiddleware wrap tracking
+**Commit**: `70336fbae`. A5 Entrypoints #1 — defense-in-depth потерян в cycle 217. Full restoration = 1d, deferred. Tracking reference добавлен к roadmap.
+
+**S48 total**: 31 atomic commits. **M1 W12-W15 in progress** (4 tasks).
