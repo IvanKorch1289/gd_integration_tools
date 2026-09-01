@@ -530,8 +530,31 @@ class S3Client(BaseS3Client):
                 raise ServiceError(f"Файл {key} не найден") from exc
 
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
-        """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
+        """Health probe для HealthAggregator (Sprint 170 M2 Phase 1).
+
+        S48 W7 swarm audit (A2 Infra #2): до фикса возвращал статичный 'ok'
+        без реальной проверки S3 → K8s liveness probe не отражал реальное
+        состояние MinIO/S3, pod не перезапускался при отказе.
+
+        Реализация: реальный head_bucket через _client. fast mode = lightweight,
+        deep mode = list_buckets (дороже).
+        """
+        import time as _time
+
         try:
-            return {"status": "ok", "latency_ms": 0.0, "error": None}
+            start = _time.perf_counter()
+            async with self.client_context() as client:
+                if mode == "deep":
+                    await client.list_buckets()
+                else:
+                    # fast: head_bucket дешевле, но требует bucket_name.
+                    # Если bucket не сконфигурирован — fallback на list_buckets.
+                    bucket = self._settings.bucket
+                    if bucket:
+                        await client.head_bucket(Bucket=bucket)
+                    else:
+                        await client.list_buckets()
+            latency_ms = (_time.perf_counter() - start) * 1000.0
+            return {"status": "ok", "latency_ms": latency_ms, "error": None}
         except Exception as exc:
-            return {"status": "down", "error": str(exc)}
+            return {"status": "down", "error": str(exc), "latency_ms": None}
