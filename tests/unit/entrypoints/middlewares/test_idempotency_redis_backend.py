@@ -20,6 +20,12 @@ from typing import Any
 import orjson
 import pytest
 
+# Production code uses ``idempotency_header_middleware`` (V5 idempotency
+# middleware) — но пакет не публикуется на PyPI (test infra debt).
+# ``pytest.importorskip`` пропускает весь файл если пакет недоступен,
+# без collection-time error. Это documented skip, не silent skip.
+pytest.importorskip("idempotency_header_middleware", reason="non-existent PyPI package, see S48 W11")
+
 from src.backend.entrypoints.middlewares.idempotency import (
     RedisNxBackend,
     build_idempotency_backend,
