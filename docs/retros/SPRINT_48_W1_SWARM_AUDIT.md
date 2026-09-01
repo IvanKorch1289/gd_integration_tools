@@ -272,3 +272,27 @@ Cross-domain finding (A7 Extensions #4+#5 + A2 Infrastructure #7).
 
 **S48 total**: W1 (11) + W2 (3) + W3 (2 external) + W4 (1) = 17 atomic commits.
 **Backlog**: 29 P0 + 60 P1 + 50 P2.
+
+### W5 #14-17: S3 multipart + webhook deny-default + ratelimit fail-closed
+
+**Commits**: `95be84d3c`, `5726f7e33`, `302a61701` (regression fix), `f8593eadb`.
+
+1. **S3 multipart silent abort** (`95be84d3c`) — outer `except Exception as _:`
+   в `put_object_multipart` теперь имеет `self.logger.exception()` на top
+   level перед attempt abort_multipart_upload.
+
+2. **Webhook deny-by-default** (`5726f7e33`) — `relay()` теперь reject'ит
+   outbound webhook без HMAC secret со статусом `signature_required`.
+
+3. **Webhook regression fix** (`302a61701`) — original commit использовал
+   `self._logger.warning(...)` без assignment в `__init__` → AttributeError.
+   Заменено на module-level `logger` (consistent с другими методами).
+   **Honest regression catch** — verify-after-fix принцип.
+
+4. **Rate-limit fail-CLOSED** (`f8593eadb`) — `RateLimitMiddleware` теперь
+   читает `rate_limit_fail_mode` из `resilience_settings` (lazy helper
+   `_get_fail_mode()`). Default 'closed' → возвращает ActionResult с
+   `error.code='rate_limited'` при недоступности limiter'а.
+
+**S48 total**: W1 (11) + W2 (3) + W3 (2 ext) + W4 (1) + W5 (4) = 21 atomic commits.
+**Backlog после W5**: 26 P0 + 60 P1 + 50 P2.
