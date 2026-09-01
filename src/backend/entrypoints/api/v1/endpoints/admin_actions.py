@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 """Admin REST API для Action-Bus (K5 W4).
 
 Эндпоинты предоставляют Streamlit-странице ``50_Action_Bus.py``
+
 доступ к реестру actions и возможность их вызова.
 
 Endpoints (под /api/v1/admin/actions):
@@ -12,8 +15,6 @@ Endpoints (под /api/v1/admin/actions):
 Флаг-охрана: ``feature_flags.admin_marketplace_endpoints == False``
 → 503 Service Unavailable для всех эндпоинтов.
 """
-
-from __future__ import annotations
 
 from typing import Any
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Structlog бэкенд с поддержкой Graylog (GELF).
 
 Структурированное логирование через structlog с автоматической
