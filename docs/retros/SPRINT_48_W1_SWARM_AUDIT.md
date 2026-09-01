@@ -395,3 +395,8 @@ Pattern consistent с W7/W8/W9 audit-fallback chain.
 
 ### M1 W17 #30: notification_hub tracking + consumer list
 **Commit**: `e98ff751e`. A3 Services #7 — hard sunset passed, 5 consumers не мигрировали. Explicit tracking + 5-consumer list добавлен. Полная миграция deferred (4h multi-file task).
+
+### M2-#9 #31: web.py module-level DeprecationWarning → per-instance
+**Commit**: `38468d270`. A4 DSL #6 — module-level warning emit'ил при каждом import (transitive chains → spam). Перенесён в `__init__` 4 deprecated processors (Navigate/Click/Extract/Screenshot). FillForm/RunScenario остаются до Sprint 180+.
+
+**S48 total**: 35 atomic commits. **M2 subset**: 1/N done.
