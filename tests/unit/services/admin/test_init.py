@@ -12,11 +12,7 @@ from __future__ import annotations
 import pytest
 
 from src.backend.services import admin
-from src.backend.services.admin import (
-    AdminService,
-    emit_admin_action,
-    register_admin,
-)
+from src.backend.services.admin import AdminService, emit_admin_action, register_admin
 
 
 @pytest.mark.unit
