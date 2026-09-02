@@ -439,3 +439,11 @@ Pattern consistent с W7/W8/W9 audit-fallback chain.
 - `<pending>` refactor(core): M2-#5 capabilities/defaults.py split (545 LOC → 4 files)
 
 **M2 status**: 4/16 tasks done (M2-#9 + M2-#14 verification + M2-#11 + M2-#5 split).
+
+### Sprint 50 continuation
+
+**Commits**:
+- `8384bd8dc` fix(dsl): M2-#11 sample 2/10 (audit.py)
+- `4fd0f61b8` fix(ai): M2-#6 orchestrator_mixin tracking (honest deferral)
+
+**M2 status**: 6/16 tasks done (M2-#6 + M2-#9 + M2-#11 + M2-#14 + M2-#5 split).
