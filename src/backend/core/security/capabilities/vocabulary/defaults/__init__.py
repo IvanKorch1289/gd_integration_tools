@@ -11,12 +11,6 @@ build_default_vocabulary остаётся composition root.
 
 from __future__ import annotations
 
-from src.backend.core.security.capabilities.matchers import (
-    ExactAliasMatcher,
-    GlobScopeMatcher,
-    SegmentedGlobMatcher,
-    URISchemeMatcher,
-)
 from src.backend.core.security.capabilities.vocabulary.vocabulary import (
     CapabilityVocabulary,
 )
@@ -32,24 +26,16 @@ from src.backend.core.security.capabilities.vocabulary.defaults import (
 def build_default_vocabulary() -> CapabilityVocabulary:
     """Собирает CapabilityVocabulary с v0-каталогом из ADR-044.
 
-    Matcher'ы выбираются по семантике sep'а ресурса:
-    * ``.`` — host/topic/workflow_id (DNS-стиль);
-    * ``/`` — path / provider-route;
-    * ``:`` — cache-namespace.
-
     S50 M2-#5 swarm audit: composition root. Вызывает 4 sub-module register()
     функции (base, ai_rag, ai_safety, ai_platform).
+
+    S50 Sprint D fix: убраны dead-code matcher variables (dot_glob, path_glob,
+    cache_glob, exact, uri) — они создавались, но НЕ передавались в base.register()
+    (base.py создаёт свои matchers внутри). F841 от ruff.
     """
     vocab = CapabilityVocabulary()
-    dot_glob = GlobScopeMatcher()  # sep="."
-    path_glob = SegmentedGlobMatcher(sep="/")
-    cache_glob = SegmentedGlobMatcher(sep=":")
-    exact = ExactAliasMatcher()
-    uri = URISchemeMatcher()
 
     base.register(vocab)
-    # base.py internally создаёт matchers — передаём через тот же vocab.
-    # Остальные 3 register() ожидают только vocab и пересоздают свои matchers.
     ai_rag.register(vocab)
     ai_safety.register(vocab)
     ai_platform.register(vocab)

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from src.backend.core.security.capabilities.matchers import (
     GlobScopeMatcher,
-    SegmentedGlobMatcher,
 )
 from src.backend.core.security.capabilities.vocabulary.models import (
     CapabilityDef,
@@ -21,7 +20,6 @@ from src.backend.core.security.capabilities.vocabulary.vocabulary import (
 def register(vocab: CapabilityVocabulary) -> None:
     """Register Sprint 25-27 AI Platform Layer capabilities."""
     dot_glob = GlobScopeMatcher()
-    path_glob = SegmentedGlobMatcher(sep="/")
 
     vocab.register(
         CapabilityDef(
