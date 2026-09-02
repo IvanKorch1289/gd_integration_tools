@@ -31,7 +31,6 @@ from src.backend.infrastructure.cache import (
     MemoryBackend,
     RedisBackend,
     TenantCacheBackend,
-    TieredCacheBackend,
     cache_config_registry,
     create_cache_backend,
     get_cache_invalidator,
@@ -105,7 +104,6 @@ class TestCacheFacadeIdentity:
 
     def test_cache_backend_protocol_is_protocol(self) -> None:
         """``CacheBackendProtocol`` — Protocol class (structural subtyping)."""
-        from typing import Protocol
 
         assert isinstance(CacheBackendProtocol, type)
         assert hasattr(CacheBackendProtocol, "__subclasshook__") or hasattr(
