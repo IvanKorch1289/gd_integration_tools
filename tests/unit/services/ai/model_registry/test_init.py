@@ -61,7 +61,6 @@ class TestModelRegistryFacadeIdentity:
 
     def test_model_registry_adapter_is_protocol(self) -> None:
         """``ModelRegistryAdapter`` — Protocol class (structural subtyping)."""
-        from typing import Protocol
 
         assert isinstance(ModelRegistryAdapter, type)
         # Protocol classes have ``__subclasshook__`` или ``__call__``:
