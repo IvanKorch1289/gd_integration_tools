@@ -826,3 +826,25 @@ Decision: Continue M2 closure. Next: M2-#11 (isolated blast radius).
 
 **M2 status**: 16/16 (100% CLOSED ✓).
 
+
+### Sprint 66 — M2-#8 skill_registry SkillSpec extract
+
+**Commit**: `7ecefaf73` — refactor(ai): M2-#8 skill_registry.
+
+### Architecture
+- `core/ai/skill_spec.py` (NEW, 65 LOC) — SkillSpec Pydantic v2 model
+- `core/ai/skill_registry.py` (662 → 616 LOC) — SkillRegistry class (11 methods)
+
+### Design decision
+- M2-#8 roadmap: "complete or deprecated" — chose "complete" via data class extract
+- SkillSpec = data layer (single responsibility: model)
+- SkillRegistry = runtime layer (single responsibility: registry)
+- Full mixin split (SkillLoader + SkillValidator + SkillInvoker + SkillExporter) deferred S67+ — requires ~250 LOC careful refactor
+
+### Verification
+- 17 tests pass (test_audit_fixes_cycle31)
+- `SkillSpec.__module__ = src.backend.core.ai.skill_spec` (single source)
+- Public API сохранён
+
+**M2 status**: 16/16 + M2-#8 done (ещё 1 task — M2-#10 22 raw httpx, 16h epic, deferred S67+).
+
