@@ -502,3 +502,30 @@ Extracted в CheckTenantMixin (174 LOC) — single responsibility
 check() + delegates check_tenant to sibling mixin в MRO.
 
 **M2 status**: 9/16 tasks done (M2-#5, #6, #7, #9, #11, #13, #14, #15 + samples).
+
+## Sprint 55 — M3-#3 uv lock upgrade (test-validated)
+
+**STOP-STOP-RESOLVE cycle**:
+1. Sprint 52 STOP: uv lock --upgrade без test verification (hard rule)
+2. Sprint 53: swarm risk analysis (2 agents: tornado + pypdf)
+3. Sprint 54: 2 ADRs (0288 tornado, 0289 pypdf)
+4. Sprint 55 (current): test baseline + actual uv lock + validation
+
+### Sprint 55 actual
+
+| # | Commit | Описание |
+|---|---|---|
+| 1 | `3a1812f0a` fix(core): broken import в check_tenant_mixin.py (S54 M2-#7 regression) | тест поймал |
+| 2 | `685c8a741` chore(deps): uv lock --upgrade-package tornado 6.5.7→6.5.8 | M3-#3a |
+| 3 | `4da90c8ce` chore(deps): pypdf 6.14.2→6.16.2 (already in tornado commit) | M3-#3b marker |
+
+### Test baseline (before any upgrade)
+- `pytest tests/unit/utilities/test_pdf_reader.py` → ModuleNotFoundError
+  (regression catch!)
+- Fix → 4 passed in 0.62s
+- Tier 1+2 (4 + 7 + 7 + 28) → 46 passed in 5.45s
+- Final `uv run pip-audit` → 2 vulns (cryptography BLOCKED + diskcache ADR-0287)
+
+### M3 status
+- 5/5 tasks done (baseline + ADR-0287/0288/0289 + actual uv lock)
+- Final: tornado 6.5.8 + pypdf 6.16.2 verified
