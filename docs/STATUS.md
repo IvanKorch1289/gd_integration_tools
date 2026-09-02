@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-09-01 (Sprint 50 continuation — M2-#11 sample 2 + M2-#6 tracking; M2 6/16 tasks done; см. `docs/roadmap/PRODUCTION_READINESS.md`)
+> **Last verified**: 2026-09-01 (Sprint 51 — M2 custom→library audit: M2-#13 retry→tenacity + M2-#15 rate limiter deferral; M2 8/16 tasks done; см. `docs/roadmap/PRODUCTION_READINESS.md`)
 > **Method**: Direct command execution, no inherited claims.
 > **Refresh**: Manual after every `make ci` or `make audit` run.
 
