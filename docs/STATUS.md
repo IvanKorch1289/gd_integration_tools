@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-09-01 (Sprint 53 swarm re-plan: ADR-0288 tornado + ADR-0289 pypdf; uv lock upgrades deferred to next session; см. `docs/roadmap/SPRINT_53_PLAN.md`)
+> **Last verified**: 2026-09-01 (Sprint 54 — M2-#7 gate/check_mixin.py split (check+check_tenant → 2 mixins); M2 9/16 tasks; см. `docs/roadmap/PRODUCTION_READINESS.md`)
 > **Method**: Direct command execution, no inherited claims.
 > **Refresh**: Manual after every `make ci` or `make audit` run.
 
