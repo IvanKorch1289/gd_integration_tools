@@ -848,3 +848,21 @@ Decision: Continue M2 closure. Next: M2-#11 (isolated blast radius).
 
 **M2 status**: 16/16 + M2-#8 done (ещё 1 task — M2-#10 22 raw httpx, 16h epic, deferred S67+).
 
+
+### Sprint 67 — M2-#11 batch 2 (samples 4-5/55)
+
+**Commits**:
+- `098688e06` refactor(dsl): external.py cdc_client → DI provider
+- `016061fc4` refactor(dsl): cdc_capture.py cdc_client → DI provider
+
+### Pattern
+- Inline `from src.backend.infrastructure.clients.external.cdc import get_cdc_client`
+  → `from src.backend.core.di.providers.db import get_cdc_client_provider`
+- DI provider уже существовал (`core/di/providers/db.py:113`)
+- Top-level try/except ImportError сохранён (с DI, провайдер сам handles via resolve_module lazy)
+
+### Progress
+- S60: 3/55 dsl files (idempotency, windowed_dedup, eip/resilience — redis_client)
+- S67: 5/55 dsl files (+ external, cdc_capture — cdc_client)
+- Remaining: 50 dsl files (deferred S68+)
+
