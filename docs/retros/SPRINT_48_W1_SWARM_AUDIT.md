@@ -698,3 +698,25 @@ Decision: Continue M2 closure. Next: M2-#11 (isolated blast radius).
 
 **M2 status**: 12/16 tasks done (75% ↑ from 69%).
 
+
+### Sprint 61 — M2-#1 partial (auth_result extraction)
+
+**Commit**: `4b3afddd3` — refactor(core): auth/facade.py — extract AuthResult.
+
+### Что сделано
+- `auth/auth_result.py` (38 LOC, NEW) — AuthResult dataclass
+- `auth/facade.py` (634 → 622 LOC) — slimmed (data class extracted)
+- `auth/jwt_backend.py` — regression fix: re-added _validate_jwt_secret_strength re-export
+
+### Honest regression catch (within session)
+- test_jwt_secret_strength.py collection failure
+- Cause: external agent refactor removed _validate_jwt_secret_strength re-export
+- Fix: re-added к imports + __all__
+
+### Honest deferral
+- Full mixin split (AuthVerifyMixin + AuthTokenMixin) deferred S62+
+- Inter-method state dependencies (self._jwt_backend, self._admin_roles,
+  self.quotas, self._is_blacklisted) require careful refactor (~600 LOC)
+
+**M2 status**: 12/16 (75%, same — M2-#1 partial progress, full split deferred).
+
