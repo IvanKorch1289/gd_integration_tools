@@ -529,3 +529,39 @@ check() + delegates check_tenant to sibling mixin в MRO.
 ### M3 status
 - 5/5 tasks done (baseline + ADR-0287/0288/0289 + actual uv lock)
 - Final: tornado 6.5.8 + pypdf 6.16.2 verified
+
+## Sprint 56 — M2-#4 jwt_backend split
+
+**Commit**: `b2d8a5f7a` (next commit) — refactor(core): jwt_backend.py split (461 LOC → 3 files).
+
+### Architecture
+- `jwt_backend_helpers.py` (160 LOC) — third-party helpers:
+  - JwtVerificationError (moved для устранения circular)
+  - algorithm allowlist (_ASYMMETRIC_ALGS, _SYMMETRIC_ALGS)
+  - _audience_list, _parse_header_unsafe
+  - JwtSecretStrengthReport + _validate_jwt_secret_strength (S174 M9.3)
+- `jwt_backend_class.py` (231 LOC) — high-level:
+  - JwtClaims dataclass
+  - JwtBackend class
+- `jwt_backend.py` (180 LOC, slimmed) — low-level:
+  - JwtVerificationError + JwtSecretStrengthReport re-export (backward-compat)
+  - JwtBackend + JwtClaims re-export (backward-compat public API)
+  - encode() + decode() (low-level joserfc)
+
+### Honest regression catch (within session)
+1. First attempt: `from src.backend.core.auth.jwt_backend_class import JwtVerificationError`
+   → circular import (jwt_backend → jwt_backend_class → jwt_backend).
+2. Fix: move JwtVerificationError to `jwt_backend_helpers.py` (third-party,
+   no JwtBackend dependency).
+3. Re-test: 3 failures (pre-existing, not from M2-#4):
+   - test_auth_facade.py patches `services.security.facade.get_security_facade`
+     (S48 W10 мигрировал на `core.di.providers.auth.get_security_facade_provider`)
+   - test_mobile_jwt_redis.py: test_revocation_fails_open_when_redis_unavailable
+   - test_auth_facade.py: test_revoke_token_success
+4. Stash verification: same 3 failures в stashed state (pre-existing).
+
+### Test baseline
+- 364/367 tests pass (97%)
+- 3 pre-existing failures NOT from M2-#4 (verified via git stash)
+
+**M2 status**: 10/16 tasks done (M2-#4 split closed).
