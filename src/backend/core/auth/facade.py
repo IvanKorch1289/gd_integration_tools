@@ -1,20 +1,20 @@
-# ruff: noqa: S314 — false positive (controlled pattern)
+# ruff: noqa: S314 -- false positive (controlled pattern)
 
-"""AuthFacade — центральный фасад для аутентификации/авторизации (S164 W2).
+"""AuthFacade -- центральный фасад для аутентификации/авторизации (S164 W2).
 
 Проблема (EP-R1): 12+ endpoints напрямую импортируют разные auth helpers:
-- ``core.auth.admin_roles.AdminRole, require_admin`` — RBAC decorator
-- ``core.auth.jwt_backend.encode, decode, JwtVerificationError`` — JWT
-- ``core.auth.ldap_client_factory.get_ad_client`` — LDAP/AD
-- ``core.auth.saml.SamlError, SamlSpHandler`` — SAML/SSO
-- ``core.auth.jwt_blacklist`` — JWT blacklist/revocation
-- ``core.auth.api_key_backend`` — API keys
-- ``core.auth.quotas`` — rate-limit quotas
-- ``core.auth.admin_role_resolver`` — admin role resolution
+- ``core.auth.admin_roles.AdminRole, require_admin`` -- RBAC decorator
+- ``core.auth.jwt_backend.encode, decode, JwtVerificationError`` -- JWT
+- ``core.auth.ldap_client_factory.get_ad_client`` -- LDAP/AD
+- ``core.auth.saml.SamlError, SamlSpHandler`` -- SAML/SSO
+- ``core.auth.jwt_blacklist`` -- JWT blacklist/revocation
+- ``core.auth.api_key_backend`` -- API keys
+- ``core.auth.quotas`` -- rate-limit quotas
+- ``core.auth.admin_role_resolver`` -- admin role resolution
 
-Per master prompt §0 "Single-Entry per Concern" — все auth operations
+Per master prompt §0 "Single-Entry per Concern" -- все auth operations
 должны идти через единый интерфейс-фасад (как ``NotificationFacade`` или
-``StorageFacade``). Этот модуль — MVP-реализация facade.
+``StorageFacade``). Этот модуль -- MVP-реализация facade.
 
 Использование::
 
@@ -27,9 +27,9 @@ Per master prompt §0 "Single-Entry per Concern" — все auth operations
             ...
 
 Note:
-    Не все методы реализованы в MVP — только критичные для рефакторинга
-    endpoints. Полный перевод всех 12+ endpoints — S165+ multi-sprint
-    effort. Текущая версия — building block (per master prompt
+    Не все методы реализованы в MVP -- только критичные для рефакторинга
+    endpoints. Полный перевод всех 12+ endpoints -- S165+ multi-sprint
+    effort. Текущая версия -- building block (per master prompt
     "Single-Entry per Concern").
 
 """
@@ -41,6 +41,7 @@ from typing import Any
 
 from src.backend.core.audit.facade._base import emit_audit_safe
 from src.backend.core.auth.auth_result import AuthResult
+from src.backend.core.auth.facade_token_mixin import AuthTokenMixin
 from src.backend.core.logging import get_logger
 
 __all__ = ("AuthFacade", "AuthResult", "get_auth_facade")
@@ -52,7 +53,7 @@ logger = get_logger(__name__)
 # no methods, no I/O). Re-exported ниже для backward-compat public API.
 
 
-class AuthFacade:
+class AuthFacade(AuthTokenMixin):
     """S164 W2: центральный фасад для auth-операций.
 
     MVP: агрегирует JWT, SAML, API key, admin role, RBAC.
@@ -61,16 +62,20 @@ class AuthFacade:
 
     Создаётся через :func:`get_auth_facade` singleton.
 
-    S61 M2-#1 split: data class (:class:`AuthResult`) extracted в
-    :mod:`auth_result`. Класс остаётся here (615 LOC, 13 methods). Full
-    mixin split (AuthVerifyMixin + AuthTokenMixin) deferred S62+ —
-    требует ~600 LOC careful refactor с inter-method state dependencies
-    (self._jwt_backend, self._admin_roles, self.quotas, self._is_blacklisted).
+    S63 M2-#1 split: composition root + AuthTokenMixin
+    (issue_token + revoke_token в :mod:`facade_token_mixin`).
+    Класс содержит 11 methods (verify_*, check_permission,
+    get_tenant, properties).
     Tracking: docs/roadmap/PRODUCTION_READINESS.md M2-#1.
+
+    S61 (predecessor): data class (:class:`AuthResult`) extracted в
+    :mod:`auth_result`. Full AuthVerifyMixin split deferred S64+,
+    ~280 LOC careful refactor с inter-method state dependencies
+    (self._jwt_backend, self._admin_roles, self.quotas, self._is_blacklisted).
     """
 
     def __init__(self) -> None:
-        # Lazy imports — backend modules не нужны при инициализации facade.
+        # Lazy imports -- backend modules не нужны при инициализации facade.
         self._jwt_backend: Any | None = None
         self._admin_roles: Any | None = None
         self._quotas: Any | None = None
@@ -80,7 +85,7 @@ class AuthFacade:
         """Lazy accessor для JWT backend.
 
         Returns module-level functions (encode, decode, exceptions)
-        вместо instantiating JwtBackend() — конструктор требует jwks_cache
+        вместо instantiating JwtBackend() -- конструктор требует jwks_cache
         для asymmetric алгоритмов. Для facade достаточно module-level API.
         """
         if self._jwt_backend is None:
@@ -151,7 +156,7 @@ class AuthFacade:
             # S48 W6 swarm audit (A1 Core #2): раньше silent 401 без следа
             # в audit. Атакующий получает silent 401 без observability.
             # Теперь эмитим audit.security.auth_verify_exception через
-            # emit_audit_safe (Path A pattern — never raises).
+            # emit_audit_safe (Path A pattern -- never raises).
             emit_audit_safe(
                 event="security.auth.verify_exception",
                 action="verify_request",
@@ -180,7 +185,7 @@ class AuthFacade:
             from src.backend.core.auth.api_key_backend import APIKeyAuth
 
             api_key_auth = APIKeyAuth()
-            # API key format: ``ak_<key_id>_<secret>`` — extract the secret
+            # API key format: ``ak_<key_id>_<secret>`` -- extract the secret
             if not api_key.startswith("ak_"):
                 return AuthResult(is_authenticated=False)
 
@@ -227,7 +232,7 @@ class AuthFacade:
 
         Args:
             assertion: Base64-encoded SAML assertion (raw bytes или token
-                opaque string — content inspectable через metadata).
+                opaque string -- content inspectable через metadata).
 
         Returns:
             AuthResult с NameID/subject.
@@ -311,9 +316,9 @@ class AuthFacade:
             return await facade.is_token_blacklisted(jti)
         except Exception as exc:
             logger.debug(
-                "jwt blacklist check failed: %s — fail-closed (treat as revoked)", exc
+                "jwt blacklist check failed: %s -- fail-closed (treat as revoked)", exc
             )
-            return True  # S193 fix: fail-closed — security > availability
+            return True  # S193 fix: fail-closed -- security > availability
 
     def check_permission(self, auth: AuthResult, required_capability: str) -> bool:
         """S164 W2: check if authenticated subject has required capability.
@@ -329,7 +334,7 @@ class AuthFacade:
         if not auth.is_authenticated:
             return False
         # S189+ fix: используем AdminRole enum вместо membership-only "admin" check.
-        # "admin" в groups membership-only — privilege escalation risk
+        # "admin" в groups membership-only -- privilege escalation risk
         # (любой IdP group с именем "admin" получал bypass).
         try:
             from src.backend.core.auth import AuthContext
@@ -337,7 +342,7 @@ class AuthFacade:
 
             # Cycle 91 fix: extract_admin_roles expects AuthContext (with
             # .metadata attribute), but auth here is AuthResult (also has
-            # .metadata). Wrap to satisfy the contract — previous
+            # .metadata). Wrap to satisfy the contract -- previous
             # ``extract_admin_roles(auth.metadata)`` passed raw dict which
             # raised AttributeError on ``dict.metadata`` → silently fell
             # through to ``return False`` → SUPER_ADMIN bypass NEVER worked.
@@ -352,9 +357,9 @@ class AuthFacade:
                 return True
         except (ImportError, AttributeError, TypeError, ValueError) as auth_exc:
             # cycle-9/D-AUDIT-980: narrow exceptions + observability.
-            # ImportError — AdminRole missing, AttributeError — auth API
-            # change, TypeError — wrong auth ctx, ValueError — invalid
-            # auth fields. Fallback: если AdminRole import failed — НЕ
+            # ImportError -- AdminRole missing, AttributeError -- auth API
+            # change, TypeError -- wrong auth ctx, ValueError -- invalid
+            # auth fields. Fallback: если AdminRole import failed -- НЕ
             # bypass (fail-closed).
             import logging
 
@@ -374,90 +379,6 @@ class AuthFacade:
         from src.backend.core.auth.auth_context_helpers import extract_tenant_id
 
         return extract_tenant_id(auth)
-
-    def issue_token(
-        self,
-        subject: str,
-        *,
-        tenant_id: str | None = None,
-        groups: list[str] | None = None,
-        capabilities: list[str] | None = None,
-        expires_in: int = 3600,
-        method: str = "jwt",
-        extra_claims: dict[str, Any] | None = None,
-    ) -> tuple[str, int]:
-        """S31 Task 4: mint a new JWT for the given subject (token issuance).
-
-        Wraps :func:`jwt_backend.encode` and merges standard claims
-        (``sub``, ``tenant_id``, ``groups``, ``capabilities``, ``auth_method``).
-        Existing jti is left to jwt_backend (random UUID generation).
-
-        Args:
-            subject: User identity (``sub`` claim).
-            tenant_id: Tenant ID (added as custom claim).
-            groups: Group names (added as ``groups`` array claim).
-            capabilities: Capabilities (added as ``capabilities`` array claim).
-            expires_in: TTL in seconds (default 3600).
-            method: Auth method marker (``"jwt"``, ``"api_key"``, ``"saml"``, ``"mtls"``).
-            extra_claims: Additional custom claims merged into the JWT.
-
-        Returns:
-            ``(token_str, expires_in)`` tuple.
-
-        Raises:
-            ValueError: If ``subject`` is empty.
-            RuntimeError: If JWT encode fails (e.g., missing secret).
-
-        """
-        if not subject:
-            raise ValueError("issue_token: subject must be non-empty")
-
-        claims: dict[str, Any] = dict(extra_claims or {})
-        claims["auth_method"] = method
-        if tenant_id is not None:
-            claims["tenant_id"] = tenant_id
-        if groups is not None:
-            claims["groups"] = list(groups)
-        if capabilities is not None:
-            claims["capabilities"] = list(capabilities)
-
-        try:
-            token, expires = self.jwt.encode(
-                subject=subject, claims=claims, expires_in=expires_in
-            )
-            return token, expires
-        except Exception as exc:
-            raise RuntimeError(f"issue_token failed: {exc}") from exc
-
-    async def revoke_token(self, jti: str) -> bool:
-        """S31 Task 4: revoke a JWT by jti (blacklist).
-
-        Adds the jti to the blacklist via :class:`SecurityFacade`. Returns
-        ``True`` on success. Fail-closed: any error in the blacklist layer
-        is propagated as RuntimeError.
-
-        Args:
-            jti: JWT ID (``jti`` claim) to revoke.
-
-        Returns:
-            ``True`` if blacklist write succeeded.
-
-        Raises:
-            ValueError: If ``jti`` is empty.
-            RuntimeError: On blacklist layer failure (fail-closed).
-
-        """
-        if not jti:
-            raise ValueError("revoke_token: jti must be non-empty")
-        try:
-            # S48 W10: см. _is_blacklisted — DI provider вместо inline services import.
-            from src.backend.core.di.providers.auth import get_security_facade_provider
-
-            facade = get_security_facade_provider()
-            await facade.blacklist_token(jti)
-            return True
-        except Exception as exc:
-            raise RuntimeError(f"revoke_token failed: {exc}") from exc
 
     async def verify_saml_assertion(
         self,
@@ -491,8 +412,8 @@ class AuthFacade:
             dev_mode = bool(getattr(feature_flags, "saml_sp_initiated_enabled", False))
         except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-981: narrow exceptions + observability.
-            # ImportError — features module missing, AttributeError —
-            # config not initialized, RuntimeError — feature_flags
+            # ImportError -- features module missing, AttributeError --
+            # config not initialized, RuntimeError -- feature_flags
             # unavailable.
             import logging
 
@@ -516,14 +437,14 @@ class AuthFacade:
         try:
             import base64
 
-            # P0-S6 (audit 2026-08-19): B314 fix — switch to defusedxml
+            # P0-S6 (audit 2026-08-19): B314 fix -- switch to defusedxml
             # для защиты от XXE/миллиард-смеха DoS. ``xml.etree.ElementTree``
             # обрабатывает entity-expansion атаки при парсинге untrusted SAML
             # assertions, что может привести к DoS.
             from defusedxml import ElementTree as ET
 
             xml_bytes = base64.b64decode(assertion_b64)
-            root = ET.fromstring(xml_bytes)  # nosec B314 — defusedxml safe
+            root = ET.fromstring(xml_bytes)  # nosec B314 -- defusedxml safe
             ns = {"saml": "urn:oasis:names:tc:SAML:2.0:assertion"}
             name_id_el = root.find(".//saml:NameID", ns)
             subject_el = root.find(".//saml:Subject", ns)
