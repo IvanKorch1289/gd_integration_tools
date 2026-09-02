@@ -488,3 +488,17 @@ Pattern consistent с W7/W8/W9 audit-fallback chain.
 
 **S48+Sprint49+50+51+52+53 total**: 57 atomic commits. M3: 4/5 tasks
 (baseline + ADR-0287 + ADR-0288 + ADR-0289).
+
+### Sprint 54 — M2-#7 god-object split (gate/check_mixin)
+
+**Commit**: `3d5b15b3b` — refactor(core): gate/check_mixin.py split (M2-#7).
+
+336 LOC single CheckMixin класс с 2 distinct responsibilities:
+- check() — raises on deny
+- check_tenant() — returns bool
+
+Extracted в CheckTenantMixin (174 LOC) — single responsibility
+(tenant-aware policy + declaration). CheckMixin (217 LOC) keeps
+check() + delegates check_tenant to sibling mixin в MRO.
+
+**M2 status**: 9/16 tasks done (M2-#5, #6, #7, #9, #11, #13, #14, #15 + samples).
