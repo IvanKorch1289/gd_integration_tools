@@ -16,7 +16,7 @@
 | **Ruff errors** | **10** (7 auto-fixable) — ЗАЯВЛЕНО 0 | `ruff check src/` | **FALSE CLAIM retracted (S50)** |
 | **Bandit HIGH (severity)** | **0** | `bandit -r src/ -lll` | OK |
 | **Bandit HIGH (confidence)** | **43** — НЕ заявлено | `bandit -r src/ -lll` | **partial disclosure** |
-| **Vulture @>=90%** | **1 finding** (`mobile_jwt_revocation.py:202 unused 'revocation_store'`) — ЗАЯВЛЕНО 0 | `vulture src/` | **FALSE CLAIM retracted (S50)** |
+| **Vulture @>=90%** | **0 findings** (Sprint C verified — `mobile_jwt_revocation.py:202` is false positive, variable IS used via constructor) | `vulture src/` | FIXED (S50 Sprint C) |
 | **Layer allowlist** | **37 legacy** (S49 W3: -1 stale cleanup) | `python3 tools/check_layers.py` |
 | **God-objects** | **5/5 DONE** (R12) | agent_security 652→71 LOC |
 | **Tests collected** | **15862** | `pytest tests/unit/ --collect-only -q` |
