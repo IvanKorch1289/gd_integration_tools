@@ -31,6 +31,13 @@ S172 M4 (ARC-007): token budget enforcement integration. Helper
 :class:`TokenBudget` (pre-LLM), корректирует фактическим usage из
 LLM-response (post-LLM). При ``BudgetExceeded`` бросает
 :class:`BudgetEnforcementError` → caller endpoint → 429.
+
+S50 M2-#6 swarm audit (A1 Core #6): файл 466 LOC, 4 methods
+(_enforce_tool_policy_once, _enforce_token_budget_pre_call,
+_enforce_token_budget_post_call, _enforced_invoke) — single class,
+single responsibility (9-step pipeline orchestrator). Split через
+PipelineStep dataclass deferred (требует multi-method refactor +
+тестовая перепроверка). Tracking: docs/roadmap/PRODUCTION_READINESS.md M2-#6.
 """
 
 from __future__ import annotations
