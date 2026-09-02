@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-09-01 (Sprint 62 — M2-#3 dsl/variables.py split (567→258+373 bytes); M2 13/16 (81%); см. `docs/roadmap/PRODUCTION_READINESS.md`)
+> **Last verified**: 2026-09-01 (Sprint 63 — M2-#1 mixin split: AuthTokenMixin extracted (issue_token + revoke_token); M2 14/16 (88%); см. `docs/roadmap/PRODUCTION_READINESS.md`)
 
 ## Post-Plan A Sprints 1-31 (coverage ratchet + final polish)
 
