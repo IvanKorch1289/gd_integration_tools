@@ -1,6 +1,18 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
 > **Last verified**: 2026-09-01 (Sprint 60 — M2-#11 sample 3/10: redis_client inline imports → DI provider (idempotency/windowed_dedup/eip/resilience); M2 12/16; см. `docs/roadmap/PRODUCTION_READINESS.md`)
+
+## Post-Plan A Sprints 1-31 (coverage ratchet + final polish)
+
+Coverage ratchet по facade-модулям: 30 → 61 файлов at 100% coverage за 31 sprint.
+
+**Sprint 31 = ruff polish (final)**:
+- **F821 REAL BUG fixed**: `check_mixin.py` referenced undefined `CheckTenantMixin` (Sprint 54 M2-#7 decomp missing import) → production crash при любом capability check. Добавлен import из `check_tenant_mixin.py`.
+- Auto-fix: 17 minor issues (F401 unused imports + I001 import block sort + W292 newlines)
+- Net: -14 LOC (cleanup of dead code)
+- 2 F401 INTENDED remain в `core/api/__init__.py:217-218` per NS-3 lazy DI pattern (per AGENTS.md rule, skipped)
+
+Verification: `python3 -m ruff check src/` → 2 errors (INTENDED); `vulture src/ --min-confidence 90` → 0; `bandit -r src/ --severity-level high` → 0; `check_layers.py` → 0 new violations.
 > **Method**: Direct command execution, no inherited claims.
 > **Refresh**: Manual after every `make ci` or `make audit` run.
 
