@@ -9,6 +9,18 @@ from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry import processor
 
+# S50 M2-#11 swarm audit (A4 DSL #1 / A2 Infra #7): inline imports от
+# infrastructure (line 111, 180, 230, etc.) внутри _dlq_push fallback
+# chain — layer rule violation (DSL → infrastructure напрямую).
+#
+# Sample size 1/10 в Sprint 50. Остальные 9 processors:
+# audit.py, scan_file.py, storage_ext.py, business.py, rpa/system.py,
+# external.py, cdc_capture.py, web.py, rpa_browser.py
+# → explicit deferral (roadmap M2-#11, full 73-file migration deferred).
+#
+# Proper fix: provider в core.di.providers.dlq_redis + use через DI.
+# Tracking: docs/roadmap/PRODUCTION_READINESS.md M2-#11.
+
 _eip_logger = get_logger("dsl.eip")
 _camel_logger = get_logger("dsl.camel")
 
