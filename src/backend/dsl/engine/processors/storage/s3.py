@@ -54,7 +54,19 @@ _logger = get_logger("dsl.storage.s3")
 
 
 def _get_storage_facade(context: ExecutionContext) -> Any:
-    """Lazy resolve StorageFacade (fallback на bare ObjectStorage для тестов)."""
+    """Lazy resolve StorageFacade (fallback на bare ObjectStorage для тестов).
+
+    S49 M1-#18 swarm audit (A4 DSL #3 / A2 Infra #7): line 75
+    ``from src.backend.infrastructure.storage.factory import get_object_storage``
+    — layer violation (DSL → infrastructure напрямую). Документировано
+    как test fallback path. Proper fix требует DI provider
+    ``core.di.providers.storage.get_object_storage_provider()`` который
+    скрывает infrastructure layer. Tracking: roadmap/PRODUCTION_READINESS.md M1-#18.
+
+    Fallback path сохранён для backward-compat с test fixtures, но
+    основной happy path использует core.svcs_registry (line 60) — нет
+    layer violation там.
+    """
     plugin = context.route_id or "dsl"
     try:
         from src.backend.core.svcs_registry import get_service, has_service
@@ -72,6 +84,8 @@ def _get_storage_facade(context: ExecutionContext) -> Any:
     except (ImportError, AttributeError, KeyError):
         pass
 
+    # Test fallback path — задокументированное layer violation.
+    # Tracking: roadmap/PRODUCTION_READINESS.md M1-#18.
     from src.backend.infrastructure.storage.factory import get_object_storage
 
     return StorageFacade(get_object_storage(), plugin=plugin)
