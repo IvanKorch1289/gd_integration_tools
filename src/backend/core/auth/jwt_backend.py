@@ -23,24 +23,11 @@ TD-S67-feature-flag-deprecation).
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any
 
 from joserfc import jwt as joserfc_jwt
-from joserfc.errors import BadSignatureError, DecodeError, ExpiredTokenError
-from joserfc.jwk import ECKey, OctKey, RSAKey  # S56 M2-#4: re-added (используется в encode/decode)
-
-from src.backend.core.auth.jwks_cache import JwksCache
-from src.backend.core.auth.jwt_backend_helpers import (
-    JwtSecretStrengthReport,  # re-exported (S56 M2-#4: moved из jwt_backend)
-    JwtVerificationError,  # re-exported (S56 M2-#4: moved из jwt_backend)
-    _ASYMMETRIC_ALGS,
-    _SYMMETRIC_ALGS,
-    _audience_list,
-    _parse_header_unsafe,
-    _validate_jwt_secret_strength,
-)
-from src.backend.core.logging import get_logger
+from joserfc.errors import BadSignatureError, DecodeError
+from joserfc.jwk import OctKey  # S56 M2-#4: re-added (используется в encode/decode)
 
 # S56 M2-#4: re-export JwtBackend + JwtClaims для backward-compat public API.
 # External callers (auth_selector.py, mobile_jwt.py, mobile_jwt_revocation.py,
@@ -49,6 +36,14 @@ from src.backend.core.auth.jwt_backend_class import (  # noqa: E402,F401
     JwtBackend,
     JwtClaims,
 )
+from src.backend.core.auth.jwt_backend_helpers import (
+    _ASYMMETRIC_ALGS,
+    _SYMMETRIC_ALGS,
+    JwtSecretStrengthReport,  # re-exported (S56 M2-#4: moved из jwt_backend)
+    JwtVerificationError,  # re-exported (S56 M2-#4: moved из jwt_backend)
+    _parse_header_unsafe,
+)
+from src.backend.core.logging import get_logger
 
 __all__ = (
     "JwtBackend",

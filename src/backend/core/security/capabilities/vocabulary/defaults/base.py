@@ -11,9 +11,7 @@ from src.backend.core.security.capabilities.matchers import (
     SegmentedGlobMatcher,
     URISchemeMatcher,
 )
-from src.backend.core.security.capabilities.vocabulary.models import (
-    CapabilityDef,
-)
+from src.backend.core.security.capabilities.vocabulary.models import CapabilityDef
 from src.backend.core.security.capabilities.vocabulary.vocabulary import (
     CapabilityVocabulary,
 )

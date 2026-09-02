@@ -35,6 +35,9 @@ from src.backend.core.security.capabilities.errors import CapabilityDeniedError
 from src.backend.core.security.capabilities.gate._protocol import (
     _CapabilityGateProtocol,
 )
+from src.backend.core.security.capabilities.gate.check_tenant_mixin import (
+    CheckTenantMixin,
+)
 from src.backend.core.security.capabilities.tenant import SYSTEM_TENANT_ID
 
 if TYPE_CHECKING:

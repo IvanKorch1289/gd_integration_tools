@@ -9,9 +9,7 @@ from src.backend.core.security.capabilities.matchers import (
     ExactAliasMatcher,
     GlobScopeMatcher,
 )
-from src.backend.core.security.capabilities.vocabulary.models import (
-    CapabilityDef,
-)
+from src.backend.core.security.capabilities.vocabulary.models import CapabilityDef
 from src.backend.core.security.capabilities.vocabulary.vocabulary import (
     CapabilityVocabulary,
 )

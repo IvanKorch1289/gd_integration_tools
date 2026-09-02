@@ -22,7 +22,6 @@ from src.backend.dsl.commands.action_registry import (
 )
 
 # Routes (entrypoints → dsl.routes: 1 violation → 0, Sprint 33 D.2)
-
 # Commands registry — RouteRegistry canonical (14 violations → 0)
 from src.backend.dsl.commands.registry import RouteRegistry, route_registry
 
