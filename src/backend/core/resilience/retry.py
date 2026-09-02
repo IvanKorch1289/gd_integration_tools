@@ -14,6 +14,18 @@ API:
 Под капотом — ``tenacity.AsyncRetrying`` с exponential backoff + jitter
 и опциональным ``RetryBudget`` (token bucket) против retry-storm'ов.
 
+S51 M2-#13 swarm audit (A3 Services #13): кастомный retry → tenacity
+ALREADY DONE. Текущая реализация — thin wrapper поверх
+``tenacity.AsyncRetrying`` (imports в line 30: ``from tenacity import ...``).
+M2-#13 closed via pre-existing migration.
+
+Verified callers (3 files):
+- src/backend/services/rpa/desktop_rpa_client.py:78
+- src/backend/services/ai/llm/tgi_batch_client.py:65 (@make_async_retry decorator)
+- src/backend/services/integrations/webhook_relay.py:236
+
+Tracking: docs/roadmap/PRODUCTION_READINESS.md M2-#13.
+
 Сосуществование с ``core/orchestration/retry.py``: тот модуль определяет
 Pydantic-``RetryPolicy`` для durable workflow-шагов (с ``compensate``).
 Эта семантика отличается и не объединяется автоматически.
