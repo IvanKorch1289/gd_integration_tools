@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-09-01 (Sprint 58 — Dependabot 24 CVE audit: 22 stale removed, cryptography 50.0.1 upgraded via --no-binary build; M3 5/5 CLOSED ✓; см. `docs/adr/0290`, `docs/adr/0291`)
+> **Last verified**: 2026-09-01 (Sprint 59 — M1 22/22 P0 CLOSED (McAuth verified); M4 baseline measured 30.8% (multi-day effort до 70% target); M2 11/16; см. `docs/roadmap/PRODUCTION_READINESS.md`)
 > **Method**: Direct command execution, no inherited claims.
 > **Refresh**: Manual after every `make ci` or `make audit` run.
 
