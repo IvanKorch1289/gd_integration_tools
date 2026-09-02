@@ -63,9 +63,10 @@ class CDCProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         if not self._subscribed:
-            from src.backend.infrastructure.clients.external.cdc import get_cdc_client
+            # S67 M2-#11 batch 2: DI provider вместо inline infrastructure import
+            from src.backend.core.di.providers.db import get_cdc_client_provider
 
-            client = get_cdc_client()
+            client = get_cdc_client_provider()
             sub_id = await client.subscribe(
                 profile=self.profile,
                 tables=self.tables,
