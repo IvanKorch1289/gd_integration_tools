@@ -32,9 +32,11 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
 try:
-    from src.backend.infrastructure.clients.external.cdc import get_cdc_client
+    # S67 M2-#11 batch 2: DI provider вместо inline infrastructure import.
+    # get_cdc_client_provider() сам handle'ит ImportError (resolve_module lazy).
+    from src.backend.core.di.providers.db import get_cdc_client_provider
 except ImportError:
-    get_cdc_client = None
+    get_cdc_client_provider = None
 
 __all__ = ("CDCCaptureProcessor",)
 
@@ -101,10 +103,10 @@ class CDCCaptureProcessor(BaseProcessor):
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Подписывается на CDC и записывает события в result_property."""
-        if get_cdc_client is None:
+        if get_cdc_client_provider is None:
             raise ImportError("cdc client not available")
 
-        client = get_cdc_client()
+        client = get_cdc_client_provider()
         subscription_id = self._subscription_id
 
         if subscription_id is None:
