@@ -797,3 +797,32 @@ Decision: Continue M2 closure. Next: M2-#11 (isolated blast radius).
 
 **M2 status**: 15/16 (94% ↑ from 88%).
 
+
+## Sprint 65 — M2-#1 final mixin split (M2 100% CLOSED)
+
+**Commit**: `995bd809e` — refactor(auth): M2-#1 final mixin split.
+
+### Architecture
+- `core/auth/facade_core_mixin.py` (NEW, 8939 bytes) — 7 core methods
+- `core/auth/facade.py` (399 → 130 LOC) — composition root
+
+### MRO (final)
+`AuthFacade(AuthTokenMixin, AuthVerifyMixin, AuthCoreMixin) → AuthFacade → AuthTokenMixin → AuthVerifyMixin → AuthCoreMixin → object`
+
+### Methods per mixin
+- **AuthTokenMixin** (S63): issue_token, revoke_token
+- **AuthVerifyMixin** (S64): verify_saml_assertion, verify_ldap_credentials
+- **AuthCoreMixin** (S65, this): verify_request, _verify_api_key, _verify_saml, _verify_mtls, _is_blacklisted, check_permission, get_tenant
+
+### Verification
+- 364/367 auth tests pass (3 pre-existing, S56/S61/S63)
+- 14 public methods resolved via mixin chain
+- Public API сохранён
+
+### Honest catches (within session)
+1. First slim script cut wrong → duplicate class definitions
+2. Git revert + clean retry → proper cut lines 116-384
+3. Manual imports update required
+
+**M2 status**: 16/16 (100% CLOSED ✓).
+
