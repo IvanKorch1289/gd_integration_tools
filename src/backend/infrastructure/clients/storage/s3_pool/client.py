@@ -269,6 +269,13 @@ class S3Client(BaseS3Client):
                 self.logger.error(
                     f"Ошибка при загрузке объекта: {exc!s}", exc_info=True
                 )
+                # S49 M1-#9 swarm audit (A2 Infra #9): silent error return
+                # {"status": "error"} вместо raise → callers могут проигнорировать
+                # → потерянные данные / потерянные удаления. Audit-event для
+                # observability (consistent с W7 pattern). Proper fix — raise
+                # вместо return dict, но это breaking change для callers
+                # (22 extensions/services). Honest deferral + audit.
+                self._emit_s3_silent_error_audit("put_object", exc)
                 return {"status": "error", "message": str(exc)}
 
     @ensure_connected
@@ -458,6 +465,8 @@ class S3Client(BaseS3Client):
                 self.logger.error(
                     f"Ошибка при массовом удалении: {exc!s}", exc_info=True
                 )
+                # S49 M1-#9: silent error audit.
+                self._emit_s3_silent_error_audit("delete_objects", exc)
                 return {"status": "error", "message": str(exc)}
 
     @ensure_connected
@@ -470,6 +479,13 @@ class S3Client(BaseS3Client):
                 )
                 self.logger.info(f"Файл {key} успешно удалён")
                 return {"status": "success", "response": response}
+            except BotoClientError as exc:
+                self.logger.error(
+                    f"Ошибка при удалении объекта: {exc!s}", exc_info=True
+                )
+                # S49 M1-#9: silent error audit.
+                self._emit_s3_silent_error_audit("delete_object", exc)
+                return {"status": "error", "message": str(exc)}
             except BotoClientError as exc:
                 self.logger.error(
                     f"Ошибка при удалении объекта: {exc!s}", exc_info=True
@@ -558,3 +574,38 @@ class S3Client(BaseS3Client):
             return {"status": "ok", "latency_ms": latency_ms, "error": None}
         except Exception as exc:
             return {"status": "down", "error": str(exc), "latency_ms": None}
+
+    def _emit_s3_silent_error_audit(self, operation: str, exc: BaseException) -> None:
+        """Helper: emit audit-event для S3 silent errors (S49 M1-#9).
+
+        put_object/copy_object/delete_objects/delete_object раньше
+        возвращали {'status': 'error', ...} без observability → callers
+        могли проигнорировать → потерянные данные/удаления. Proper fix —
+        raise вместо dict, но breaking change для 22 callers
+        (extensions/services). Honest deferral + audit-event.
+        """
+        try:
+            from src.backend.core.audit.facade._base import emit_audit_safe
+
+            emit_audit_safe(
+                event="storage.s3.silent_error",
+                action=f"s3_{operation}",
+                outcome="failure",
+                severity="error",
+                extra={
+                    "operation": operation,
+                    "error_type": type(exc).__name__,
+                    "error_message": str(exc)[:200],
+                    "warning": (
+                        f"S3 {operation} returned silent error dict. Caller "
+                        "should explicitly check 'status' field. Consider "
+                        "raising instead — tracked in M1-#9."
+                    ),
+                },
+            )
+        except Exception as audit_exc:
+            self.logger.warning(
+                "Failed to emit s3.silent_error audit for %s: %s",
+                operation,
+                audit_exc,
+            )
