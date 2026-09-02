@@ -1,10 +1,10 @@
-"""Unit-тесты ``services.admin`` — coverage ratchet (S49 W7).
+"""Unit-тесты ``services.admin`` — coverage ratchet (Post-Plan A Sprint 27).
 
-services/admin/__init__.py — Sprint 19 K5 W5b admin API facade: re-exports
-AdminService + emit_admin_action (audit helper) + register_admin (sqladmin
-setup function). 8 statements, 0% coverage.
+core/admin service package facade (Sprint 19 K5 W5b): re-exports
+3 symbols (AdminService class + emit_admin_action helper + register_admin
+sqladmin setup function). ~5 stmts, 0% coverage.
 
-Цель slice: 0% → 100% через __all__ audit + class/function identity.
+Цель slice: 0% → 100% через __all__ audit + class/callable identity.
 """
 
 from __future__ import annotations
@@ -12,12 +12,16 @@ from __future__ import annotations
 import pytest
 
 from src.backend.services import admin
-from src.backend.services.admin import AdminService, emit_admin_action, register_admin
+from src.backend.services.admin import (
+    AdminService,
+    emit_admin_action,
+    register_admin,
+)
 
 
 @pytest.mark.unit
 class TestAdminFacadeAllExports:
-    """``__all__`` audit + class/function identity."""
+    """``__all__`` audit + class/callable identity."""
 
     @pytest.mark.parametrize(
         "symbol_name",
@@ -37,14 +41,14 @@ class TestAdminFacadeAllExports:
         assert len(admin.__all__) == 3
 
     def test_module_docstring_present(self) -> None:
-        """Module docstring описывает Sprint 19 K5 W5b admin API."""
+        """Module docstring описывает Admin API (Sprint 19 K5 W5b)."""
         assert admin.__doc__ is not None
-        assert "Admin" in admin.__doc__ or "Sprint 19" in admin.__doc__
+        assert "Admin" in admin.__doc__ or "admin" in admin.__doc__.lower()
 
 
 @pytest.mark.unit
 class TestAdminFacadeIdentity:
-    """Identity checks для re-exports."""
+    """Identity checks для 3 re-exports."""
 
     def test_admin_service_is_class(self) -> None:
         """``AdminService`` — class (admin API service)."""
