@@ -720,3 +720,25 @@ Decision: Continue M2 closure. Next: M2-#11 (isolated blast radius).
 
 **M2 status**: 12/16 (75%, same — M2-#1 partial progress, full split deferred).
 
+
+### Sprint 62 — M2-#3 dsl/variables split (567 → 258+373 bytes)
+
+**Commit**: `63fbbf23d` — refactor(dsl): dsl/variables.py split.
+
+### Architecture
+- `dsl/variable_backend.py` (NEW, 13403 bytes) — Protocol + 3 backends (InMemory, Consul, Postgres)
+- `dsl/variables.py` (567 → 258 LOC) — composition root: VariableScope, VariableNotFoundError, DSLVariableStore
+
+### Circular import fix (within session)
+- First attempt: top-level imports → circular import error
+- Fix: convert `VariableScope` annotations to string forward refs + lazy import
+  внутри method bodies (где variable_backend.py импортируется обратно в
+  variables.py).
+
+### Verification
+- 8/8 variable tests pass
+- ast.parse OK
+- Public API (6 classes) сохранён
+
+**M2 status**: 13/16 (81% ↑ from 75%).
+
