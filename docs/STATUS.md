@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-09-01 (Sprint 59 — M1 22/22 P0 CLOSED (McAuth verified); M4 baseline measured 30.8% (multi-day effort до 70% target); M2 11/16; см. `docs/roadmap/PRODUCTION_READINESS.md`)
+> **Last verified**: 2026-09-01 (Sprint 60 — M2-#11 sample 3/10: redis_client inline imports → DI provider (idempotency/windowed_dedup/eip/resilience); M2 12/16; см. `docs/roadmap/PRODUCTION_READINESS.md`)
 > **Method**: Direct command execution, no inherited claims.
 > **Refresh**: Manual after every `make ci` or `make audit` run.
 
