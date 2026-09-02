@@ -15,7 +15,6 @@ import pytest
 
 from src.backend.infrastructure.security import cert_store
 from src.backend.infrastructure.security.cert_store import (
-    CertBackend,
     CertEntry,
     CertStore,
     MemoryCertBackend,
