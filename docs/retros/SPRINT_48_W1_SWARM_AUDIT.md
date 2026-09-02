@@ -420,3 +420,11 @@ Pattern consistent с W7/W8/W9 audit-fallback chain.
 **S48+Sprint 49 total**: 39 atomic commits. **M1**: 3/22 новых + 16 done в S48 = 19/22 P0 closed.
 
 **Backlog после Sprint 49**: 12 P0 + 58 P1 + 50 P2.
+
+### Sprint 49 continuation
+
+**M1-#18** (DSL storage/s3.py layer violation tracking) — commit `cc3349b92`. Test fallback path tracked, happy path не нарушает layer rule.
+
+**M1-#9** (S3 silent errors audit) — commit `31d378e91`. 4 silent-error call sites (put/copy/delete_objects/delete_object) emit'ят audit-event. Proper fix (raise вместо dict) deferred — breaking change для 22 callers.
+
+**S48+Sprint 49 total**: 41 atomic commits. **M1 status**: 21/22 P0 closed.
