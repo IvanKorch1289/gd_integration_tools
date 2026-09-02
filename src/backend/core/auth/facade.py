@@ -40,6 +40,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from src.backend.core.audit.facade._base import emit_audit_safe
+from src.backend.core.auth.auth_result import AuthResult
 from src.backend.core.logging import get_logger
 
 __all__ = ("AuthFacade", "AuthResult", "get_auth_facade")
@@ -47,28 +48,8 @@ __all__ = ("AuthFacade", "AuthResult", "get_auth_facade")
 logger = get_logger(__name__)
 
 
-@dataclass(slots=True, frozen=True)
-class AuthResult:
-    """S164 W2: нормализованный результат auth-проверки.
-
-    Attributes:
-        is_authenticated: True если JWT/SAML/API-key валиден.
-        method: Метод auth (``"jwt"`` / ``"saml"`` / ``"api_key"``).
-        subject: User identity (sub claim, saml NameID, API key id).
-        tenant_id: Tenant ID (None если отсутствует).
-        groups: Список групп пользователя (None если отсутствуют).
-        capabilities: Список capabilities (None если RBAC не настроен).
-        metadata: Дополнительные данные (raw claims / roles).
-
-    """
-
-    is_authenticated: bool
-    method: str | None = None
-    subject: str | None = None
-    tenant_id: str | None = None
-    groups: list[str] = field(default_factory=list)
-    capabilities: list[str] = field(default_factory=list)
-    metadata: dict[str, Any] = field(default_factory=dict)
+# S61 M2-#1: AuthResult extracted в :mod:`auth_result` (data class only,
+# no methods, no I/O). Re-exported ниже для backward-compat public API.
 
 
 class AuthFacade:
@@ -79,6 +60,13 @@ class AuthFacade:
     backend helpers.
 
     Создаётся через :func:`get_auth_facade` singleton.
+
+    S61 M2-#1 split: data class (:class:`AuthResult`) extracted в
+    :mod:`auth_result`. Класс остаётся here (615 LOC, 13 methods). Full
+    mixin split (AuthVerifyMixin + AuthTokenMixin) deferred S62+ —
+    требует ~600 LOC careful refactor с inter-method state dependencies
+    (self._jwt_backend, self._admin_roles, self.quotas, self._is_blacklisted).
+    Tracking: docs/roadmap/PRODUCTION_READINESS.md M2-#1.
     """
 
     def __init__(self) -> None:

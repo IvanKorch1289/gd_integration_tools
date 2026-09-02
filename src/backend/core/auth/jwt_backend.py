@@ -42,6 +42,7 @@ from src.backend.core.auth.jwt_backend_helpers import (
     JwtSecretStrengthReport,  # re-exported (S56 M2-#4: moved из jwt_backend)
     JwtVerificationError,  # re-exported (S56 M2-#4: moved из jwt_backend)
     _parse_header_unsafe,
+    _validate_jwt_secret_strength,
 )
 from src.backend.core.logging import get_logger
 
@@ -50,6 +51,7 @@ __all__ = (
     "JwtClaims",
     "JwtSecretStrengthReport",
     "JwtVerificationError",
+    "_validate_jwt_secret_strength",
     "decode",
     "encode",
 )
