@@ -151,7 +151,15 @@ class AuditProcessor(BaseProcessor):
 
     @staticmethod
     def _build_store() -> Any:
-        """Лениво создаёт ``ImmutableAuditStore`` поверх main_session_manager."""
+        """Лениво создаёт ``ImmutableAuditStore`` поверх main_session_manager.
+
+        S50 M2-#11 swarm audit (A4 DSL #1 / A2 Infra #7): inline imports
+        от infrastructure (line 155, 158) — layer rule violation
+        (DSL → infrastructure напрямую). Sample 2/10 в Sprint 50.
+
+        Proper fix: provider в core.di.providers.audit_store +
+        use через DI. Tracking: docs/roadmap/PRODUCTION_READINESS.md M2-#11.
+        """
         from src.backend.infrastructure.database.session_manager import (
             main_session_manager,
         )
