@@ -678,3 +678,23 @@ Strategic priority:
 
 Decision: Continue M2 closure. Next: M2-#11 (isolated blast radius).
 
+
+### Sprint 60 — M2-#11 sample 3/10 (redis_client DI migration)
+
+**Commit**: `8bad2cdeb` — refactor(dsl): M2-#11 sample 3/10.
+
+### Pattern
+- New `get_redis_client_provider()` в `core/di/providers/cache.py` (lazy resolve_module, test override)
+- 3 DSL processor files migrated:
+  - `eip/idempotency.py` (48 LOC, 1 inline import)
+  - `eip/windowed_dedup.py` (415 LOC, 4 inline imports)
+  - `eip/resilience.py` (476 LOC, 1 inline import)
+- 52 файла остаются (deferred S61+)
+
+### Verification
+- 12 idempotency tests pass
+- 0 regressions
+- Provider import + test override OK
+
+**M2 status**: 12/16 tasks done (75% ↑ from 69%).
+
