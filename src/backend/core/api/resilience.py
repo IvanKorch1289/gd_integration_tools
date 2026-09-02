@@ -20,6 +20,13 @@ Three changes vs the pre-R13 version:
    ``__getattr__`` lazy proxy in services layer still works without
    direct services → infrastructure import (which violates layer policy).
 
+S50 M2-#14 swarm audit (A1 Core #7): кастомный CB → purgatory migration
+ALREADY DONE в S168 W9 (commit 94960cf4 area). Сейчас CircuitBreaker
+re-exported из `core.resilience.breaker` который использует
+``from purgatory import AsyncCircuitBreakerFactory`` (line 30). Net effect:
+M2-#14 closed via existing migration. Tracking + verification comment
+добавлен.
+
 Layer policy: entrypoints → services. services → core.api (facade).
 core.api → infrastructure (allowed via facade).
 """
