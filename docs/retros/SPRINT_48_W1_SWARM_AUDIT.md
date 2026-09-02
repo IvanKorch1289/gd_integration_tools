@@ -586,3 +586,30 @@ check() + delegates check_tenant to sibling mixin в MRO.
 - ast.parse OK для обоих файлов
 
 **M2 status**: 11/16 tasks done.
+
+## Sprint 58 — Dependabot 24 CVE audit + M3-#2 closed
+
+**Commits**: 2 atomic commits (M3-#2 + allowlist cleanup).
+
+### CVE Audit Summary
+| Source | Count | Status |
+|---|---|---|
+| `pip-audit` (active) | 2 (cryptography + diskcache) | 1 fixed (cryptography 50.0.1), 1 ADR-deferred (diskcache) |
+| `.security/pip-audit-allowlist.txt` (stale) | 27 → 5 | 22 removed (already-patched) |
+| **Total** | **24** | **22 fixed, 2 active (1 fixed, 1 deferred)** |
+
+### Verification via OSV.dev API
+- mako 1.4.1: 22 CVEs all "fixed/already-patched" → удалены
+- mistune 3.3.4: 3 CVEs all "fixed/already-patched" → удалены
+- python-multipart 0.0.32: CVE-2026-42561 fixed (0.0.32 > 0.0.27) → удалён
+- diskcache 5.6.3: PYSEC-2026-2447 ACTIVE (no fix) → kept (ADR-0287)
+- cryptography 49.0.0: PYSEC-2026-3552 FIXED в 50.0.1 → upgraded
+
+### M3-#2 cryptography 50.0.1 (closed)
+- ADR-0291: S36-4 BLOCK constraint lifted
+- pyproject.toml: upper bound <50.0.0 → <51.0.0
+- `uv pip install --no-binary cryptography 50.0.1` → SUCCESS (31.5s)
+- 364/367 auth tests pass (3 pre-existing failures unrelated)
+- 0 regressions в core/auth tests
+
+### M3 status: 5/5 CLOSED ✓
