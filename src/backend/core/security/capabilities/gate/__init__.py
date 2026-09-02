@@ -44,6 +44,9 @@ from src.backend.core.security.capabilities.gate.cache_mixin import (
 from src.backend.core.security.capabilities.gate.check_mixin import (
     CheckMixin,  # S54 W4: MRO
 )
+from src.backend.core.security.capabilities.gate.check_tenant_mixin import (
+    CheckTenantMixin,  # S54 M2-#7: MRO
+)
 from src.backend.core.security.capabilities.gate.declaration_mixin import (
     DeclarationMixin,  # S54 W4: MRO
 )

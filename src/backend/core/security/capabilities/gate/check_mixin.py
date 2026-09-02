@@ -7,6 +7,12 @@ Subset-проверка (route ⊆ plugins ∪ core_public) реализован
 в :func:`check_capabilities_subset` и используется RouteLoader'ом до
 активации маршрута.
 
+Sprint 54 (M2-#7): check_tenant extracted в CheckTenantMixin
+(check_tenant_mixin.py) для single-responsibility split. check (raises)
++ check_tenant (returns bool) — две distinct responsibilities, теперь
+в отдельных mixin'ах. check_tenant re-exported в CheckMixin для
+backward-compat MRO.
+
 Sprint 36 (V15 GAP, Subagent A) additions:
 
 * Optional ``policy: CapabilityPolicy`` в ``__init__`` — consult policy
@@ -41,7 +47,12 @@ _DEFAULT_LRU_SIZE: Final[int] = 1024
 
 
 class CheckMixin(_CapabilityGateProtocol):
-    """main capability check (check, check_tenant — the BIG methods) для CapabilityGate. S54 W4 extraction."""
+    """main capability check (S54 W4 extraction).
+
+    Single responsibility: raises on deny. Tenant-aware check (returns bool)
+    extracted в :class:`CheckTenantMixin` (Sprint 54 M2-#7).
+    check_tenant re-exported here для backward-compat MRO.
+    """
 
     __slots__ = ()
 
@@ -192,145 +203,15 @@ class CheckMixin(_CapabilityGateProtocol):
     def check_tenant(
         self, capability: str, tenant: str, principal: str, scope: str | None = None
     ) -> bool:
-        """Tenant-aware check: возвращает ``bool`` (не raise).
+        """Tenant-aware check (Sprint 54 M2-#7 split).
 
-        Args:
-            capability: Имя capability (``db.read``, ``net.outbound``).
-            tenant: Tenant-id (``"tenant_a"`` или :data:`SYSTEM_TENANT_ID`).
-            principal: Principal-id (плагин/route).
-            scope: Запрошенный scope (или ``None``).
+        DELEGATED to :class:`CheckTenantMixin` (extracted в отдельный
+        mixin для single-responsibility). Метод остаётся здесь для
+        backward-compat MRO — re-export в check_mixin.py.
 
-        Returns:
-            ``True`` если granted, ``False`` если denied.
-
-        Notes:
-            Семантика: ``deny`` от policy → ``False`` *до* declaration-check.
-            ``allow`` → ``True`` (skip declaration). ``no_match`` →
-            fallback to per-tenant declaration. Не выбрасывает
-            :class:`CapabilityDeniedError` — caller сам решает.
-
-            D-AUDIT-98 fix (S183 W1.1): cache reads/writes are guarded by
-            ``self._lock``. ``cached_value`` is snapshotted under the lock,
-            then the audit emit runs lock-free. Writes either go through
-            ``_tenant_cache_granted`` (already locked) or are wrapped
-            explicitly to prevent concurrent ``_invalidate_tenant`` from
-            racing with the assignment.
-
+        Реальная реализация: см. ``check_tenant_mixin.py``.
         """
-        cache_key = (tenant, principal, capability, scope)
-        with self._lock:  # D-AUDIT-98 fix (S183 W1.1)
-            if cache_key in self._tenant_cache:
-                cached_value = self._tenant_cache[cache_key]
-            else:
-                cached_value = None
-        if cached_value is not None:
-            self._emit_audit(
-                plugin=principal,
-                capability=capability,
-                requested_scope=scope,
-                declared_scope=None,
-                outcome="granted" if cached_value else "denied",
-                tenant=tenant,
-            )
-            return cached_value
-
-        # 1. Policy consultation.
-        if self._policy is not None:
-            decision = self._policy.evaluate(
-                tenant=tenant, principal=principal, capability=capability, scope=scope
-            )
-            if decision.effect == "deny":
-                with self._lock:  # D-AUDIT-98 fix (S183 W1.1)
-                    self._tenant_cache[cache_key] = False
-                self._emit_audit(
-                    plugin=principal,
-                    capability=capability,
-                    requested_scope=scope,
-                    declared_scope=None,
-                    outcome="denied",
-                    tenant=tenant,
-                    reason="policy",
-                )
-                return False
-            if decision.effect == "allow":
-                with self._lock:  # D-AUDIT-98 fix (S183 W1.1)
-                    self._tenant_cache[cache_key] = True
-                self._emit_audit(
-                    plugin=principal,
-                    capability=capability,
-                    requested_scope=scope,
-                    declared_scope=None,
-                    outcome="granted",
-                    tenant=tenant,
-                    reason="policy",
-                )
-                return True
-            # no_match → fall through.
-
-        # 2. Per-tenant declaration check.
-        declared = (
-            self._tenant_declarations.get(tenant, {}).get(principal, {}).get(capability)
+        # Forward to CheckTenantMixin (sibling mixin в MRO CapabilityGate).
+        return CheckTenantMixin.check_tenant(
+            self, capability=capability, tenant=tenant, principal=principal, scope=scope
         )
-        if declared is None:
-            with self._lock:  # D-AUDIT-98 fix (S183 W1.1)
-                self._tenant_cache[cache_key] = False
-            self._emit_audit(
-                plugin=principal,
-                capability=capability,
-                requested_scope=scope,
-                declared_scope=None,
-                outcome="denied",
-                tenant=tenant,
-            )
-            return False
-
-        definition = self._vocabulary.get(capability)
-        if not definition.scope_required:
-            self._tenant_cache_granted(cache_key)
-            self._emit_audit(
-                plugin=principal,
-                capability=capability,
-                requested_scope=scope,
-                declared_scope=declared.scope,
-                outcome="granted",
-                tenant=tenant,
-            )
-            return True
-
-        if scope is None:
-            with self._lock:  # D-AUDIT-98 fix (S183 W1.1)
-                self._tenant_cache[cache_key] = False
-            self._emit_audit(
-                plugin=principal,
-                capability=capability,
-                requested_scope=scope,
-                declared_scope=declared.scope,
-                outcome="denied",
-                tenant=tenant,
-            )
-            return False
-
-        assert declared.scope is not None  # nosec
-        if not definition.matcher.match(scope, declared.scope):
-            with self._lock:  # D-AUDIT-98 fix (S183 W1.1)
-                self._tenant_cache[cache_key] = False
-            self._emit_audit(
-                plugin=principal,
-                capability=capability,
-                requested_scope=scope,
-                declared_scope=declared.scope,
-                outcome="denied",
-                tenant=tenant,
-            )
-            return False
-
-        self._tenant_cache_granted(cache_key)
-        self._emit_audit(
-            plugin=principal,
-            capability=capability,
-            requested_scope=scope,
-            declared_scope=declared.scope,
-            outcome="granted",
-            tenant=tenant,
-        )
-        return True
