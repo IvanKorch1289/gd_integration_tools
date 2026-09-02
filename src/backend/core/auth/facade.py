@@ -42,6 +42,7 @@ from typing import Any
 from src.backend.core.audit.facade._base import emit_audit_safe
 from src.backend.core.auth.auth_result import AuthResult
 from src.backend.core.auth.facade_token_mixin import AuthTokenMixin
+from src.backend.core.auth.facade_verify_mixin import AuthVerifyMixin
 from src.backend.core.logging import get_logger
 
 __all__ = ("AuthFacade", "AuthResult", "get_auth_facade")
@@ -53,7 +54,7 @@ logger = get_logger(__name__)
 # no methods, no I/O). Re-exported ниже для backward-compat public API.
 
 
-class AuthFacade(AuthTokenMixin):
+class AuthFacade(AuthTokenMixin, AuthVerifyMixin):
     """S164 W2: центральный фасад для auth-операций.
 
     MVP: агрегирует JWT, SAML, API key, admin role, RBAC.
@@ -379,151 +380,6 @@ class AuthFacade(AuthTokenMixin):
         from src.backend.core.auth.auth_context_helpers import extract_tenant_id
 
         return extract_tenant_id(auth)
-
-    async def verify_saml_assertion(
-        self,
-        assertion_b64: str,
-        *,
-        expected_audience: str | None = None,
-        expected_issuer: str | None = None,
-    ) -> AuthResult:
-        """S31 Task 4: SAML assertion verification with config gate.
-
-        SAML requires the canonical ACS flow (configured SamlBackend,
-        InResponseTo tracking, signature validator). For unit-tests and
-        development, we provide a fail-closed path that ONLY succeeds when
-        ``auth.saml.dev_mode`` feature flag is enabled.
-
-        Args:
-            assertion_b64: Base64-encoded SAML assertion.
-            expected_audience: Expected ``AudienceRestriction`` (optional).
-            expected_issuer: Expected ``Issuer`` (optional).
-
-        Returns:
-            :class:`AuthResult` with NameID if verified, else
-            ``is_authenticated=False``.
-
-        """
-        # SAML requires ACS flow; fail-closed unless dev_mode flag is on.
-        dev_mode = False
-        try:
-            from src.backend.core.config.features import feature_flags
-
-            dev_mode = bool(getattr(feature_flags, "saml_sp_initiated_enabled", False))
-        except (ImportError, AttributeError, RuntimeError) as ff_exc:
-            # cycle-9/D-AUDIT-981: narrow exceptions + observability.
-            # ImportError -- features module missing, AttributeError --
-            # config not initialized, RuntimeError -- feature_flags
-            # unavailable.
-            import logging
-
-            logging.getLogger(__name__).debug(
-                "auth_facade.saml_dev_mode_fallback", extra={"error": str(ff_exc)}
-            )
-
-        if not dev_mode:
-            logger.debug("SAML: dev_mode disabled, fail-closed")
-            return AuthResult(
-                is_authenticated=False, metadata={"error": "saml_requires_acs_flow"}
-            )
-
-        # Dev-mode path: accept the assertion if it's non-empty and has
-        # expected fields (no real crypto verification, for dev/test only).
-        if not assertion_b64:
-            return AuthResult(
-                is_authenticated=False, metadata={"error": "saml_empty_assertion"}
-            )
-
-        try:
-            import base64
-
-            # P0-S6 (audit 2026-08-19): B314 fix -- switch to defusedxml
-            # для защиты от XXE/миллиард-смеха DoS. ``xml.etree.ElementTree``
-            # обрабатывает entity-expansion атаки при парсинге untrusted SAML
-            # assertions, что может привести к DoS.
-            from defusedxml import ElementTree as ET
-
-            xml_bytes = base64.b64decode(assertion_b64)
-            root = ET.fromstring(xml_bytes)  # nosec B314 -- defusedxml safe
-            ns = {"saml": "urn:oasis:names:tc:SAML:2.0:assertion"}
-            name_id_el = root.find(".//saml:NameID", ns)
-            subject_el = root.find(".//saml:Subject", ns)
-            issuer_el = root.find(".//saml:Issuer", ns)
-            audience_el = root.find(".//saml:AudienceRestriction/saml:Audience", ns)
-            name_id = (name_id_el.text if name_id_el is not None else None) or (
-                subject_el.text if subject_el is not None else None
-            )
-            issuer = issuer_el.text if issuer_el is not None else None
-            audience = audience_el.text if audience_el is not None else None
-
-            if expected_issuer and issuer != expected_issuer:
-                return AuthResult(
-                    is_authenticated=False, metadata={"error": "saml_issuer_mismatch"}
-                )
-            if expected_audience and audience != expected_audience:
-                return AuthResult(
-                    is_authenticated=False, metadata={"error": "saml_audience_mismatch"}
-                )
-            if not name_id:
-                return AuthResult(
-                    is_authenticated=False, metadata={"error": "saml_no_nameid"}
-                )
-            return AuthResult(
-                is_authenticated=True,
-                method="saml",
-                subject=str(name_id),
-                metadata={"issuer": issuer, "audience": audience, "dev_mode": True},
-            )
-        except Exception as exc:
-            logger.debug("SAML dev-mode verify failed: %s", exc)
-            return AuthResult(
-                is_authenticated=False,
-                metadata={"error": f"saml_dev_verify_failed: {exc}"},
-            )
-
-    async def verify_ldap_credentials(
-        self, username: str, password: str, *, tenant_id: str | None = None
-    ) -> AuthResult:
-        """S31 Task 4: LDAP bind verification.
-
-        Uses :class:`ldap_client_factory` (canonical core-owned
-        :class:`AdDirectoryClientProtocol`) to bind the user. On success,
-        returns ``AuthResult`` with subject=``username`` and optional
-        tenant_id. On failure, returns ``is_authenticated=False``.
-
-        Args:
-            username: LDAP/AD user (sAMAccountName или UPN).
-            password: Plain password (passed to LDAP bind).
-            tenant_id: Optional tenant mapping (added to metadata).
-
-        Returns:
-            :class:`AuthResult` with ``is_authenticated`` status.
-
-        """
-        if not username or not password:
-            return AuthResult(
-                is_authenticated=False, metadata={"error": "ldap_empty_credentials"}
-            )
-
-        try:
-            from src.backend.core.auth.ldap_client_factory import get_ad_client
-
-            client = get_ad_client()
-            success = await client.bind(username, password)
-            if not success:
-                return AuthResult(
-                    is_authenticated=False, metadata={"error": "ldap_bind_failed"}
-                )
-            return AuthResult(
-                is_authenticated=True,
-                method="ldap",
-                subject=str(username),
-                tenant_id=tenant_id,
-                metadata={"directory": "ldap", "tenant_id": tenant_id},
-            )
-        except Exception as exc:
-            logger.warning("LDAP bind failed: %s", exc)
-            return AuthResult(is_authenticated=False, metadata={"error": "ldap_failed"})
 
 
 # Singleton per pattern (NotificationFacade, StorageFacade, etc.).
