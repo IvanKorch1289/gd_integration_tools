@@ -447,3 +447,11 @@ Pattern consistent с W7/W8/W9 audit-fallback chain.
 - `4fd0f61b8` fix(ai): M2-#6 orchestrator_mixin tracking (honest deferral)
 
 **M2 status**: 6/16 tasks done (M2-#6 + M2-#9 + M2-#11 + M2-#14 + M2-#5 split).
+
+### Sprint 51 — M2 custom→library audit (2 verifications + 1 deferral)
+
+**Commits**:
+- `2979bceae` fix(infra): M2-#15 explicit deferral — custom rate limiter (slowapi не подходит)
+- `03c51ed68` fix(core): M2-#13 verification — custom retry → tenacity already done
+
+**M2 status**: 8/16 tasks done (M2-#5 split + #6, #9, #11, #13, #14, #15 + samples).
