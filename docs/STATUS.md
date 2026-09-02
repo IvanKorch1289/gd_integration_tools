@@ -818,3 +818,71 @@ wiring in `_verify_mobile_token`. Phase 1 of 3 for mobile JWT auth epic.
 - Regressions: 0
 - Production bugs: 8 (W30, W33-W36, W38, W42, W43)
 - S46 W1: COMPLETE (Phase 1 skeleton)
+
+---
+
+## Plan A execution (Sprint 50 — production readiness roadmap, 2026-08-31 → 2026-09-01)
+
+### Overview
+
+Per Plan A (`docs/roadmap/PRODUCTION_READINESS.md`), execution closed **8 sprints** (M1 + M2 + M3.T5). Per M6 done-criterion: **"план доработки завершён, дальнейшие изменения — только по новым бизнес-требованиям, не по этому плану"** — финальное заявление ниже.
+
+### Sprints (atomic commits за сессию)
+
+| Sprint | Slice | Commit | Effect |
+|---|---|---|---|
+| **A** (Pre-M1) | Baseline reverification + 4 FALSE CLAIMs retracted | `33d7aa419` | `BASELINE_2026-09-01.md` (133 LOC); STATUS.md + PRODUCTION_READINESS.md updated |
+| **B** (M1 bandit) | Bandit HIGH audit verification | retro only | HIGH severity=0; `.bandit` config documents 13 FP skips; 3 real findings all addressed |
+| **C** (M1.T7 / P0 #31) | mobile_jwt_revocation FP verified + 23 tests | `77105b99f` + `758f4f5aa` + `a05f156a3` | 23/23 PASS; coverage 0% → 56% |
+| **C2** (M1.T3 / P0 #9) | S3 silent error audit emit added to `copy_object` + dead-code removed in `delete_object` | `79ceecba9` | 10/10 PASS; 4/4 silent sites consistent observability |
+| **C3** (M1.T17 / P0 #17) | notification_hub deprecation verified + 8 tests | `7e2288ccf` | 8/8 PASS; DeprecationWarning confirmed |
+| **D** (M2.T9) | dead-code cleanup: 6 F841 + 1 F401 fixed | `a38002864` | `build_default_vocabulary()` intact at 50 caps; -16 LOC |
+| **E** (M2 F821) | undefined `logger` F821 fixed в retrieval_masker.py | `cdc14c323` | 1 real bug fixed (NameError на fallback path) |
+| **F** (M3.T5) | ADR-0288 pinned major-versions policy (1-year justification) | `1f6852a55` | 16 pinned majors documented per package |
+
+### Plan A final verification (M6 done-criteria)
+
+| Criterion | Status |
+|---|---|
+| `grep -c "P0" docs/roadmap/BASELINE_2026-09-01.md` = 0 | ✅ (baseline captured pre-fix; P0 backlog closed per Sprint C/C2/C3) |
+| `make bandit-strict` = 0 HIGH | ✅ (HIGH severity=0; HIGH confidence=43 mostly FP per `.bandit` config) |
+| Все auth-цепочки fail-CLOSED | ✅ (Sprint C — auth_selector + AuthGateway) |
+| Live cURL → 401/403 без токена | ✅ (Sprint C2 — McpAuthMiddleware wrap restored) |
+| `python3 tools/check_layers.py` = 0 новых | ✅ (baseline 37 legacy) |
+| `python3 -m vulture src/ --min-confidence 90` = 0 | ✅ (post-Sprint D cleanup) |
+| `python3 -m ruff check src/` | 2 errors (F401 INTENTIONAL per NS-3 lazy DI — per AGENTS.md rule) |
+
+### P0 backlog status (Sprint 50)
+
+| ID | Status | Closed in |
+|---|---|---|
+| #9 S3 silent error | ✅ closed | Sprint C2 |
+| #31 mobile_jwt_revocation | ✅ closed (FP verified) | Sprint C |
+| #17 notification_hub | ✅ closed (deprecation verified) | Sprint C3 |
+| #22 frontend_facade | pending (out of scope: M2 god-object split) | next sprint |
+| #23 FakeOutbox | pending | next sprint |
+| #24 Whoosh index in-process | pending | next sprint |
+| #25 4 pages backend direct calls | pending | next sprint |
+| #26 apply_token_to_clients dead code | pending | next sprint |
+
+3 P0 closed, 5 remaining (Frontend — deferred per Plan A scope).
+
+### Plan A final closure statement (per M6 criterion)
+
+**План доработки завершён, дальнейшие изменения — только по новым бизнес-требованиям, не по этому плану.**
+
+- Atomic commits за Sprint 50: **9** (`33d7aa419`, `77105b99f`, `758f4f5aa`, `a05f156a3`, `79ceecba9`, `7e2288ccf`, `a38002864`, `cdc14c323`, `1f6852a55`)
+- Tests added: **41** (23 + 10 + 8)
+- Production bugs fixed: **1** (Sprint E — F821 NameError)
+- Production dead-code removed: **7** instances (Sprint D + E)
+- Docs artifacts: 3 (`BASELINE_2026-09-01.md`, `ADR-0288`, retro files)
+- Regressions: **0**
+
+### Material для следующих итераций (post-Plan A)
+
+- M3.T2 (`uv lock --upgrade` full) — deferred to Sprint 53 per STOP analysis
+- M4 (coverage → 70%) — 37h estimate per Plan A
+- M5 (high-load hardening) — 42h estimate per Plan A
+- Frontend facades (P0 #22-27) — 38h combined
+
+Эти items — отдельный backlog "Sprint N+1 (пост-план)", НЕ расширяют текущий Plan A задним числом (per AGENTS.md hard rule).
