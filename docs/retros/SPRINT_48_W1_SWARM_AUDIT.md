@@ -565,3 +565,24 @@ check() + delegates check_tenant to sibling mixin в MRO.
 - 3 pre-existing failures NOT from M2-#4 (verified via git stash)
 
 **M2 status**: 10/16 tasks done (M2-#4 split closed).
+
+## Sprint 57 — M2-#2 pii_tokenizer split
+
+**Commit**: `efd971f78` — refactor(core): pii_tokenizer.py split (649→2 files).
+
+### Architecture
+- `pii_tokenizer_models.py` (117 LOC, NEW) — data classes + low-level helpers:
+  - EncryptedValue, TokenMap, PIIPolicy (dataclasses)
+  - _uuid_short (UUIDv7 helper)
+  - _PRESIDIO_PLACEHOLDER_RE (regex)
+- `pii_tokenizer.py` (567 LOC, slimmed from 649) — async/crypto class:
+  - PIITokenizer class с async методами (mask_reversible, mask_irreversible, unmask, cleanup_expired, unmask_by_key)
+  - _encrypt/_decrypt/_audit_safe_emit/_maybe_persist_token_map helpers
+
+### Verification
+- 26 PII tokenizer tests pass + 13 xpassed (forward-looking features)
+- 21 failures в capability/policy tests (pre-existing, unrelated)
+- Public API re-export сохранён
+- ast.parse OK для обоих файлов
+
+**M2 status**: 11/16 tasks done.
