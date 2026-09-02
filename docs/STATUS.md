@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-09-01 (Sprint 52 — M3 dependency audit baseline + ADR-0287 diskcache deferral; M3-#3 STOPPED до test verification per hard rule; см. `docs/roadmap/M3_AUDIT_2026-09-01.md`)
+> **Last verified**: 2026-09-01 (Sprint 53 swarm re-plan: ADR-0288 tornado + ADR-0289 pypdf; uv lock upgrades deferred to next session; см. `docs/roadmap/SPRINT_53_PLAN.md`)
 > **Method**: Direct command execution, no inherited claims.
 > **Refresh**: Manual after every `make ci` or `make audit` run.
 
