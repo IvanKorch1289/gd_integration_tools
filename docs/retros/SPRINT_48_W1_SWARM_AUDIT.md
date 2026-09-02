@@ -772,3 +772,28 @@ Decision: Continue M2 closure. Next: M2-#11 (isolated blast radius).
 
 **M2 status**: 14/16 (88% ↑ from 81%).
 
+
+### Sprint 64 — M2-#1 AuthVerifyMixin extracted (4/13 methods, M2 94%)
+
+**Commit**: `6ad96d571` — refactor(auth): M2-#1 mixin split.
+
+### Architecture
+- `core/auth/facade_verify_mixin.py` (NEW, 7178 bytes) — `AuthVerifyMixin`:
+  - `verify_saml_assertion` (98 LOC) — ACS-gated SAML SSO flow
+  - `verify_ldap_credentials` (43 LOC) — LDAP bind + group lookup
+- `core/auth/facade.py` (540 → 446 LOC) — 9 remaining methods
+
+### MRO
+`AuthFacade(AuthTokenMixin, AuthVerifyMixin)` → `AuthFacade → AuthTokenMixin → AuthVerifyMixin → object`
+
+### Honest catches
+- Slim script cut verify_ldap_credentials signature (bug)
+- Fixed via second script to remove dangling method body
+
+### M2-#1 status
+- 4/13 public methods extracted (Token mixin: issue_token + revoke_token; Verify mixin: verify_saml + verify_ldap)
+- 9 remaining: verify_request, _verify_api_key, _verify_saml, _verify_mtls, _is_blacklisted, check_permission, get_tenant, jwt, admin_roles
+- Full split requires ~280 LOC careful refactor с _jwt_backend state dependency
+
+**M2 status**: 15/16 (94% ↑ from 88%).
+
