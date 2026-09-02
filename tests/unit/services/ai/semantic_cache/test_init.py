@@ -14,8 +14,8 @@ import pytest
 
 from src.backend.services.ai import semantic_cache
 from src.backend.services.ai.semantic_cache import (
-    L3RetrievalGraphCache,
     RAG_CACHE_INVALIDATE_CHANNEL,
+    L3RetrievalGraphCache,
     SemanticCache,
     get_l3_retrieval_cache,
     get_semantic_cache,
