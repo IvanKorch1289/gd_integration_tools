@@ -22,9 +22,12 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.backend.core.logging import get_logger
 from src.backend.core.security.pii_masker import PIIMasker, default_masker
 
 __all__ = ("mask_augment_result", "mask_retrieval_documents")
+
+_logger = get_logger(__name__)
 
 
 def _mask_string(text: str, masker: PIIMasker | None) -> str:
@@ -66,7 +69,7 @@ def _mask_string(text: str, masker: PIIMasker | None) -> str:
             },
         )
     except Exception as exc:
-        logger.warning("Failed to emit retrieval_pii_fallback audit: %s", exc)
+        _logger.warning("Failed to emit retrieval_pii_fallback audit: %s", exc)
     instance = masker if masker is not None else default_masker()
     return instance.mask_text(text)
 
