@@ -422,6 +422,9 @@ class S3Client(BaseS3Client):
                 self.logger.error(
                     f"Ошибка при копировании объекта: {exc!s}", exc_info=True
                 )
+                # S50 M1-#9 Sprint C2: silent error audit (consistent with
+                # put_object/delete_object/delete_objects — same pattern).
+                self._emit_s3_silent_error_audit("copy_object", exc)
                 return {"status": "error", "message": str(exc)}
 
     @ensure_connected
@@ -485,11 +488,6 @@ class S3Client(BaseS3Client):
                 )
                 # S49 M1-#9: silent error audit.
                 self._emit_s3_silent_error_audit("delete_object", exc)
-                return {"status": "error", "message": str(exc)}
-            except BotoClientError as exc:
-                self.logger.error(
-                    f"Ошибка при удалении объекта: {exc!s}", exc_info=True
-                )
                 return {"status": "error", "message": str(exc)}
 
     @ensure_connected
