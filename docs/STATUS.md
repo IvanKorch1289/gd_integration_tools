@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-09-01 (Sprint 51 — M2 custom→library audit: M2-#13 retry→tenacity + M2-#15 rate limiter deferral; M2 8/16 tasks done; см. `docs/roadmap/PRODUCTION_READINESS.md`)
+> **Last verified**: 2026-09-01 (Sprint 52 — M3 dependency audit baseline + ADR-0287 diskcache deferral; M3-#3 STOPPED до test verification per hard rule; см. `docs/roadmap/M3_AUDIT_2026-09-01.md`)
 > **Method**: Direct command execution, no inherited claims.
 > **Refresh**: Manual after every `make ci` or `make audit` run.
 
