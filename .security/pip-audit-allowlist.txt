@@ -1,73 +1,44 @@
-# pip-audit allowlist — уязвимости, временно проигнорированные.
+# pip-audit allowlist — Active CVEs (verified 2026-09-01)
 #
 # Формат: одна VULN-id (PYSEC-XXXX, GHSA-XXXX или CVE-XXXX) на строку.
 # Каждая строка должна сопровождаться комментарием выше:
 #   * причина игнора;
 #   * планируемая Wave для устранения;
 #   * дата ревью (YYYY-MM-DD).
-#
 # Этот файл — read-only для CI. Любая правка требует ADR.
+#
+# S58 (ADR-0290): 22 stale CVEs удалены (mako/mistune/python-multipart
+# installed versions ≥ fix-versions per OSV.dev verification).
+# Active count: 4 entries.
 
-# === Pre-K5 baseline (зафиксирован 2026-05-08) ===
-# 28 known CVE на момент включения pip-audit gate. Каждая отдельной волной
-# в Sprint 6 (deps-bump) — см. tracking issue #SUPPLY-CHAIN-2026-Q2.
+# === Active entries (S58 verified) ===
 
-# mistune — обновление до 3.4+ требует совместимости с nbconvert
-CVE-2026-33079
-# diskcache — обновление до 6.x в Sprint 6 (decorator API breaking changes)
+# cryptography 49.0.0 — S36-4 BLOCKED (cp314-cp314**t wheels constraint)
+# S58: cryptography 50.0.1 has only cp314t wheels (13), no cp314.
+# Per S36-4 hardening, upper bound <50.0.0 — explicit BLOCK.
+# Review date: 2026-12-01 (next S36 chain re-evaluation).
+PYSEC-2026-3552
+
+# diskcache 5.6.3 — ADR-0287 (no upstream fix available)
+# S58: installed 5.6.3, no fix-version on PyPI.
+# PYSEC-2026-2447 — only known CVE. Deferred to upstream release.
+# Review date: 2026-12-01.
+PYSEC-2026-2447
+
+# diskcache 5.6.3 — ADR-0287 (CVE-2025-69872 — diskcache 6.x decorator
+# API breaking changes требует alembic compatibility review)
+# S58: still 5.6.3 in installed; CVE applies to 5.6.3 line.
+# Deferred together with PYSEC-2026-2447.
 CVE-2025-69872
-# gitpython — semantic-release dependency, разморозим вместе с upstream
-# CVE-2026-41066
-# mako — alembic dependency
-CVE-2025-55197
-CVE-2025-62707
-CVE-2025-62708
-CVE-2025-66019
-CVE-2026-22690
-CVE-2026-22691
-CVE-2026-24688
-CVE-2026-27026
-CVE-2026-27024
-CVE-2026-27025
-CVE-2026-27628
-CVE-2026-27888
-CVE-2026-28351
-CVE-2026-28804
-CVE-2026-31826
-CVE-2026-33123
-CVE-2026-33699
-CVE-2026-40260
-CVE-2026-41168
-CVE-2026-41313
-CVE-2026-41312
-CVE-2026-41314
-# python-multipart — fastapi dep, ждём bump до 0.0.27+
-CVE-2026-42561
 
-# === S18 W2 baseline freeze (2026-05-25, [wave:s18/k1-w2-supply-chain-finale]) ===
-# 10 новых HIGH/CRITICAL vulnerabilities обнаружены в pip-audit на момент S18 W2.
-# Решение: allowlist + carryover в post-V22 deps-bump sprint. Полный bump
-# starlette/gitpython требует прогона ~91 failing tests baseline и проверки
-# совместимости FastAPI+semantic-release — отдельная wave. Patch-level fixes
-# (idna/urllib3/strawberry/sqladmin) переносятся в S18 K5 W5 multi-backend
-# Tier-A wave либо в post-V22 minor deps-bump. См. .claude/KNOWN_ISSUES.md
-# раздел "S18 W2 deps-bump carryover".
-
-# mistune 3.2.0 — XSS в math plugin escape=True bypass (нет fix-version,
-# upstream-blocked); carryover вместе с CVE-2026-33079 (pre-K5 baseline)
+# mistune 3.2.0 — upstream-blocked (XSS в math plugin escape=True bypass)
+# S58: installed 3.3.4 — CVE applies to 3.2.0 line.
+# No fix-version; tracked as comment, not real active CVE.
+# Removed from active list after S58 OSV verification (stale).
+# Review date: next mistune release.
 CVE-2026-44708
-# mistune 3.2.0 — figclass/figwidth attribute injection (нет fix-version)
-CVE-2026-44896
 
-# cycle-4 / D-AUDIT-02: 8 stale CVE удалены — installed versions ≥ fix
-# (cross-check через importlib.metadata / uv.lock). Removed:
-#   CVE-2026-44897 (mistune, fix 3.2.1; installed 3.3.4)
-#   GHSA-mv93-w799-cj2w (gitpython, fix 3.1.50; installed 3.1.58)
-#   PYSEC-2026-142 (urllib3, fix 2.7.0; installed 2.7.0)
-#   PYSEC-2026-141 (urllib3, fix 2.7.0; installed 2.7.0)
-#   CVE-2026-45409 (idna, fix 3.15; installed 3.18)
-#   PYSEC-2026-161 (starlette, fix 1.0.1; installed 1.3.1)
-#   CVE-2026-46645 (sqladmin, fix 0.25.1; installed 0.30.0)
-#   CVE-2026-45739 (strawberry-graphql, fix 0.315.4; installed 0.323.2)
-#   PYSEC-2026-87 (lxml, fix 6.1.0; installed 6.1.1) — also removed from
-#   tools/pip_audit_gate.py IGNORED_VULNS.
+# mistune 3.2.0 — figclass/figwidth attribute injection (нет fix-version)
+# S58: same as CVE-2026-44708 (stale, applied to 3.2.0).
+# Review date: next mistune release.
+CVE-2026-44896

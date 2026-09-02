@@ -22,12 +22,14 @@ dependencies = [
     "argon2-cffi>=23.1.0,<24.0.0",
     # S183: cryptography for mTLS / x509 cert verification (core/auth/mtls_backend.py).
     # Раньше был только в mypy.overrides — теперь primary dep.
-    # Round 70: upper bound <50.0.0 (NOT <51.0.0) — cryptography 50.0.0+ имеет
+    # S36-4 (Round 70): upper bound <50.0.0 — cryptography 50.0.0+ имеет
     # только cp314-cp314**t** (free-threaded) wheels, проект использует
-    # обычный CPython 3.14 (Py_GIL_DISABLED=0). pip-audit показывает 1
-    # remaining CVE (PYSEC-2026-3552, fix в 50.0.0) — не закрыт до
-    # выхода cp314-cp314 wheel для cryptography 50+. MONITOR.
-    "cryptography>=42.0.0,<50.0.0",
+    # обычный CPython 3.14 (Py_GIL_DISABLED=0).
+    # S58 (ADR-0291): upper bound lifted to <51.0.0 — verification
+    # (uv pip install --no-binary cryptography 50.0.1) successfully built
+    # from source. CI requires --no-binary-package=cryptography flag
+    # (Sprint 59 follow-up) для reproducible builds.
+    "cryptography>=42.0.0,<51.0.0",
     "aiosmtplib>=5.1.1,<6.0.0",
     "sqlalchemy-utils>=0.41.2,<1.0.0",
     "passlib>=1.7.4,<2.0.0",  # S171: required by sqlalchemy_utils PasswordType in 20036813ff7c migration
