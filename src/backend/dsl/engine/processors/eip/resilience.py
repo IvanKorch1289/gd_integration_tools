@@ -120,9 +120,10 @@ class DeadLetterProcessor(BaseProcessor):
 
         # ── Stage 1: Redis stream (primary) ──────────────────────────────
         try:
-            from src.backend.infrastructure.clients.storage.redis import (
-                redis_client as _redis_client,
-            )
+            # S60 M2-#11: DI provider вместо inline infrastructure import
+            from src.backend.core.di.providers.cache import get_redis_client_provider
+
+            _redis_client = get_redis_client_provider()
 
             await _redis_client.add_to_stream(
                 stream_name=self._dlq_stream, data=dlq_entry

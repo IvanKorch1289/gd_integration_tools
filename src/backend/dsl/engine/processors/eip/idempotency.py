@@ -33,8 +33,11 @@ class IdempotentConsumerProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Filter duplicate messages using Redis deduplication."""
         try:
-            from src.backend.infrastructure.clients.storage.redis import redis_client
+            # S60 M2-#11: DI provider вместо inline infrastructure import
+            # (layer rule DSL → infrastructure через facade).
+            from src.backend.core.di.providers.cache import get_redis_client_provider
 
+            redis_client = get_redis_client_provider()
             dedup_key = f"idempotent:{self._key_expr(exchange)}"
             is_new = await redis_client.set_if_not_exists(
                 key=dedup_key, value="1", ttl=self._ttl

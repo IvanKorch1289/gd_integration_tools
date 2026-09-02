@@ -114,7 +114,9 @@ class WindowedDedupProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Применяет оконную дедупликацию к входящему exchange."""
         try:
-            from src.backend.infrastructure.clients.storage.redis import redis_client
+            # S60 M2-#11: DI provider вместо inline infrastructure import
+            from src.backend.core.di.providers.cache import get_redis_client_provider
+            redis_client = get_redis_client_provider()
 
             key = str(_extract_path(exchange.in_message.body, self._key_from) or "")
             if not key:
@@ -201,7 +203,9 @@ class WindowedDedupProcessor(BaseProcessor):
 
         """
         try:
-            from src.backend.infrastructure.clients.storage.redis import redis_client
+            # S60 M2-#11: DI provider вместо inline infrastructure import
+            from src.backend.core.di.providers.cache import get_redis_client_provider
+            redis_client = get_redis_client_provider()
 
             redis_key = f"windowed:dedup:last:{self._prefix}:{key}"
             raw = await redis_client.execute("queue", lambda c: c.get(redis_key))
@@ -266,7 +270,9 @@ class WindowedCollectProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Добавляет сообщение в буфер; при смене окна — инжектирует батч."""
         try:
-            from src.backend.infrastructure.clients.storage.redis import redis_client
+            # S60 M2-#11: DI provider вместо inline infrastructure import
+            from src.backend.core.di.providers.cache import get_redis_client_provider
+            redis_client = get_redis_client_provider()
 
             key = str(_extract_path(exchange.in_message.body, self._key_from) or "")
             if not key:
@@ -372,7 +378,9 @@ class WindowedCollectProcessor(BaseProcessor):
 
         """
         try:
-            from src.backend.infrastructure.clients.storage.redis import redis_client
+            # S60 M2-#11: DI provider вместо inline infrastructure import
+            from src.backend.core.di.providers.cache import get_redis_client_provider
+            redis_client = get_redis_client_provider()
 
             buf_key = f"windowed:collect:buf:{key}"
             raw_items: list[bytes] = await redis_client.execute(

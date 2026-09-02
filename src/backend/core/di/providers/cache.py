@@ -166,6 +166,30 @@ def set_redis_kv_client_provider(client: Any) -> None:
     _overrides["redis_kv_client"] = client
 
 
+# ─────────────── S60 M2-#11: high-level redis_client provider ───────────────
+
+
+def get_redis_client_provider() -> Any:
+    """Возвращает high-level :class:`RedisClient` wrapper.
+
+    S60 M2-#11 (Sprint 48 swarm backlog): inline
+    ``from src.backend.infrastructure.clients.storage.redis import redis_client``
+    в DSL processors нарушает layer rule (DSL → infrastructure напрямую).
+    Провайдер скрывает infrastructure layer от DSL.
+
+    Использует lazy resolve_module — НЕ тянет redis при module import.
+    """
+    if "redis_client" in _overrides:
+        return _overrides["redis_client"]
+    module = resolve_module("clients.storage.redis")
+    return module.redis_client
+
+
+def set_redis_client_provider(client: Any) -> None:
+    """Test-override для high-level redis_client wrapper (S60 M2-#11)."""
+    _overrides["redis_client"] = client
+
+
 def get_redis_stream_client_provider() -> Any:
     """Возвращает singleton ``redis_client`` (см. ``RedisStreamClientProtocol``).
 
