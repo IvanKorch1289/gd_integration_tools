@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-09-01 (Sprint 56 — M2-#4 jwt_backend.py split (461→3 files, 364/367 tests pass); M2 10/16; см. `docs/roadmap/PRODUCTION_READINESS.md`)
+> **Last verified**: 2026-09-01 (Sprint 57 — M2-#2 pii_tokenizer.py split (649→2 files, 26 PII tests pass + 13 xpassed); M2 11/16; см. `docs/roadmap/PRODUCTION_READINESS.md`)
 > **Method**: Direct command execution, no inherited claims.
 > **Refresh**: Manual after every `make ci` or `make audit` run.
 
