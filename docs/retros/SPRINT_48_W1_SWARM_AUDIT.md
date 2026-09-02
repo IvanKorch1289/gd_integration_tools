@@ -428,3 +428,14 @@ Pattern consistent с W7/W8/W9 audit-fallback chain.
 **M1-#9** (S3 silent errors audit) — commit `31d378e91`. 4 silent-error call sites (put/copy/delete_objects/delete_object) emit'ят audit-event. Proper fix (raise вместо dict) deferred — breaking change для 22 callers.
 
 **S48+Sprint 49 total**: 41 atomic commits. **M1 status**: 21/22 P0 closed.
+
+## Sprint 50 — M2 god-объекты start
+
+### Sprint 50 фиксы
+
+**Commits**:
+- `4baa15ba7` fix(core): M2-#14 verification — custom CB → purgatory already done (S168 W9)
+- `76c4a10ed` fix(dsl): M2-#11 tracking reference (sample size 1/10)
+- `<pending>` refactor(core): M2-#5 capabilities/defaults.py split (545 LOC → 4 files)
+
+**M2 status**: 4/16 tasks done (M2-#9 + M2-#14 verification + M2-#11 + M2-#5 split).
