@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-08-31 → 2026-09-01 (Sprint 49 final + Sprint 50: BASELINE captured; see `docs/roadmap/PRODUCTION_READINESS.md` + `docs/roadmap/BASELINE_2026-09-01.md`)
+> **Last verified**: 2026-09-01 (Sprint 50 — M2 god-объекты start: M2-#5 split + M2-#11 sample + M2-#14 verification; см. `docs/roadmap/PRODUCTION_READINESS.md`)
 > **Method**: Direct command execution, no inherited claims.
 > **Refresh**: Manual after every `make ci` or `make audit` run.
 
