@@ -8,6 +8,22 @@ Multi-instance safety: все токены в Redis (atomic INCR/EXPIRE).
 - Global fallback rate
 
 Интегрируется в BaseEntrypoint.dispatch() и FastAPI middleware.
+
+S51 M2-#15 swarm audit (A3 Services #14): explicit deferral — кастомный
+rate limiter не заменяется на slowapi. slowapi — Flask/HTTP middleware
+library с in-memory token bucket; не подходит для multi-instance Redis-
+backed per-tenant/per-action policy (нужен atomic Lua INCR для fairness).
+
+Альтернативы рассмотрены:
+1. slowapi (Flask-based) — отклонён (wrong abstraction, in-memory only).
+2. aiohttpLimiter — не существует.
+3. pyrate-limiter — рассматривался (Redis backend); but lacks per-tenant
+   policy DSL, требует дополнительный abstraction layer.
+4. Кастомный unified_rate_limiter — kept (multi-tenant, Redis Lua,
+   per-action policy DSL, S224 lazy proxy).
+
+Tracking: docs/roadmap/PRODUCTION_READINESS.md M2-#15.
+ADR candidate: docs/adr/0XXX-custom-rate-limiter-rationale.md (deferred).
 """
 
 from __future__ import annotations
