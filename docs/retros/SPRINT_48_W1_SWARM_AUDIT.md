@@ -455,3 +455,36 @@ Pattern consistent с W7/W8/W9 audit-fallback chain.
 - `03c51ed68` fix(core): M2-#13 verification — custom retry → tenacity already done
 
 **M2 status**: 8/16 tasks done (M2-#5 split + #6, #9, #11, #13, #14, #15 + samples).
+
+## Sprint 52/53 — M3 STOP + swarm re-plan
+
+### Sprint 52 STOP analysis
+- M3-#3 (uv lock --upgrade) STOPPED: hard rule violation (AGENTS.md "Изменения
+  в lock-файлах без явного согласования") без test verification.
+- M3-#1 baseline + M3-#4 ADR-0287 diskcache deferral DONE.
+
+### Sprint 53 swarm re-plan (2 agents)
+- Agent 12 (tornado): 0 direct imports в src/backend/. CVE applicability
+  theoretical-only. BUMP для compliance.
+- Agent 13 (pypdf): 5 production files, stable public API, 4-layer
+  graceful degradation. CVE RCE-class REAL attack surface. BUMP.
+
+### Sprint 53 docs added
+- `docs/roadmap/SPRINT_53_PLAN.md` — full sprint plan with minimum test
+  subset for each upgrade
+- `docs/adr/0288-tornado-6.5.7-to-6.5.8-rationale.md` — BUMP (LOW risk, ~10 min validation)
+- `docs/adr/0289-pypdf-6.14.2-to-6.16.1-rationale.md` — BUMP (LOW risk, ~50 min validation)
+
+### Sprint 53 actual (this session)
+- Plan + 2 ADRs DONE
+- `uv lock --upgrade-package tornado` + `uv lock --upgrade-package pypdf`
+  DEFERRED to next session (требуют running test verification,
+  не в scope single session)
+
+### Process improvement
+- Swarm agents дали concrete minimum-test-subset (tornado: 10 unit tests
+  + dask smoke; pypdf: tier 1+2 tests). Это улучшает plan
+  vs первый STOP analysis (был abstract "make test" suggestion).
+
+**S48+Sprint49+50+51+52+53 total**: 57 atomic commits. M3: 4/5 tasks
+(baseline + ADR-0287 + ADR-0288 + ADR-0289).
