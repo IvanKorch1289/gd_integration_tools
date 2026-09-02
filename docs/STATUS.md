@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-09-01 (Sprint 54 — M2-#7 gate/check_mixin.py split (check+check_tenant → 2 mixins); M2 9/16 tasks; см. `docs/roadmap/PRODUCTION_READINESS.md`)
+> **Last verified**: 2026-09-01 (Sprint 55 — M3-#3 CLOSED: tornado 6.5.7→6.5.8 + pypdf 6.14.2→6.16.2 verified тестами 46 passed in tier 1+2; см. `docs/roadmap/PRODUCTION_READINESS.md`)
 > **Method**: Direct command execution, no inherited claims.
 > **Refresh**: Manual after every `make ci` or `make audit` run.
 
