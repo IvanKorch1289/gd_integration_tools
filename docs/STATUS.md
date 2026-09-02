@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-09-01 (Sprint 60 — M2-#11 sample 3/10: redis_client inline imports → DI provider (idempotency/windowed_dedup/eip/resilience); M2 12/16; см. `docs/roadmap/PRODUCTION_READINESS.md`)
+> **Last verified**: 2026-09-01 (Sprint 61 — M2-#1 partial: AuthResult extracted to auth_result.py (38 LOC); full mixin split deferred S62+; M2 12/16; см. `docs/roadmap/PRODUCTION_READINESS.md`)
 
 ## Post-Plan A Sprints 1-31 (coverage ratchet + final polish)
 
