@@ -1,47 +1,65 @@
-"""JWT backend — canonical implementation поверх ``joserfc``.
+"""JWT backend — canonical implementation поверх ``joserfc`` (low-level).
 
 Wave [s2/k1-2-jwt-jwks] — V7 Auth-стек R1. Поддержка алгоритмов:
 * HS256 / HS384 / HS512 — симметричная подпись (shared secret);
 * RS256 / RS384 / RS512 — асимметричная (RSA + JWKS lookup);
 * ES256 / ES384 — асимметричная (ECDSA + JWKS lookup).
 
+S56 M2-#4 split: класс :class:`JwtBackend` + :class:`JwtClaims` extracted
+в :mod:`jwt_backend_class` (high-level). Этот модуль хранит только
+низкоуровневые helpers: errors, encode, decode, _audience_list,
+_parse_header_unsafe, _validate_jwt_secret_strength.
+
+Backward-compat: ``JwtBackend``/``JwtClaims`` re-exported из
+``jwt_backend_class`` для external callers (auth_selector, mobile_jwt,
+auth/facade, mobile_jwt_revocation, mobile_jwt_redis, di/providers/auth).
+
 S67 W2: удалён parallel shim ``jwt_backend_joserfc.py``. Текущая
 реализация — единственная. ``feature_flags.auth_joserfc`` flag
 deprecated (no-op).
 S68 W1: ``feature_flags.auth_joserfc`` field удалён (no-op cleanup,
 TD-S67-feature-flag-deprecation).
-
-Критический prod-bug (V7): ранее ``auth_selector.py`` импортировал
-``python-jose``, который отсутствует в pyproject.toml → ``ImportError``
-при первом Bearer-token-запросе на проде. Этот backend заменяет
-данную секцию верификации и поднимается через DI.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from joserfc import jwt as joserfc_jwt
 from joserfc.errors import BadSignatureError, DecodeError, ExpiredTokenError
-from joserfc.jwk import ECKey, OctKey, RSAKey
+from joserfc.jwk import ECKey, OctKey, RSAKey  # S56 M2-#4: re-added (используется в encode/decode)
 
-from src.backend.core.auth import AuthContext, AuthMethod
 from src.backend.core.auth.jwks_cache import JwksCache
+from src.backend.core.auth.jwt_backend_helpers import (
+    JwtSecretStrengthReport,  # re-exported (S56 M2-#4: moved из jwt_backend)
+    JwtVerificationError,  # re-exported (S56 M2-#4: moved из jwt_backend)
+    _ASYMMETRIC_ALGS,
+    _SYMMETRIC_ALGS,
+    _audience_list,
+    _parse_header_unsafe,
+    _validate_jwt_secret_strength,
+)
 from src.backend.core.logging import get_logger
 
-__all__ = ("JwtBackend", "JwtClaims", "JwtVerificationError", "decode", "encode")
+# S56 M2-#4: re-export JwtBackend + JwtClaims для backward-compat public API.
+# External callers (auth_selector.py, mobile_jwt.py, mobile_jwt_revocation.py,
+# auth/facade.py, di/providers/auth.py) импортируют из jwt_backend напрямую.
+from src.backend.core.auth.jwt_backend_class import (  # noqa: E402,F401
+    JwtBackend,
+    JwtClaims,
+)
+
+__all__ = (
+    "JwtBackend",
+    "JwtClaims",
+    "JwtSecretStrengthReport",
+    "JwtVerificationError",
+    "decode",
+    "encode",
+)
 
 _logger = get_logger(__name__)
-
-_ASYMMETRIC_ALGS = frozenset(
-    {"RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "PS256", "PS384", "PS512"}
-)
-_SYMMETRIC_ALGS = frozenset({"HS256", "HS384", "HS512"})
-
-
-class JwtVerificationError(Exception):
-    """Ошибка верификации JWT (expired/bad-sig/wrong-claims/revoked)."""
 
 
 def encode(
@@ -160,302 +178,9 @@ def decode(
         raise JwtVerificationError(f"Ошибка декодирования JWT: {exc}") from exc
 
 
-@dataclass
-class JwtClaims:
-    """Распакованные verified-claims JWT."""
-
-    sub: str
-    iss: str | None
-    aud: str | list[str] | None
-    exp: int | None
-    jti: str | None
-    raw: dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
-class JwtBackend:
-    """JWT-верификатор поверх ``joserfc``.
-
-    Args:
-        algorithms: Список допустимых алгоритмов (whitelist).
-        secret: HS-секрет (для симметричных алгоритмов).
-        jwks: JWKS-кеш (для асимметричных алгоритмов).
-        audience: Ожидаемый ``aud`` (str / list / None для отключения).
-        issuer: Ожидаемый ``iss`` (str / None).
-        leeway: Допустимое отклонение времени в секундах для exp/nbf.
-        blacklist: Опциональный blacklist (jti revocation).
-
-    """
-
-    method: AuthMethod = AuthMethod.JWT
-    algorithms: list[str] = field(default_factory=lambda: ["RS256"])
-    secret: str | None = None
-    jwks: JwksCache | None = None
-    audience: str | list[str] | None = None
-    issuer: str | None = None
-    leeway: int = 60
-    blacklist: Any | None = None
-
-    def __post_init__(self) -> None:
-        if not self.algorithms:
-            raise ValueError("JwtBackend: algorithms не может быть пустым")
-        for alg in self.algorithms:
-            if alg not in _SYMMETRIC_ALGS and alg not in _ASYMMETRIC_ALGS:
-                raise ValueError(f"JwtBackend: неподдерживаемый алгоритм {alg}")
-        if any(a in _ASYMMETRIC_ALGS for a in self.algorithms) and self.jwks is None:
-            raise ValueError(
-                "JwtBackend: для асимметричных алгоритмов требуется jwks-кеш"
-            )
-        if any(a in _SYMMETRIC_ALGS for a in self.algorithms) and not self.secret:
-            raise ValueError("JwtBackend: для симметричных алгоритмов требуется secret")
-        # S174 M9.3: weak-secret gate для HS256/384/512 (per S172 M8.3
-        # pattern extension). 256-bit secret (32 bytes / 256-bit) минимум
-        # для HS256 — RFC 7518. 32+ chars обеспечивают ≥ 256 бит entropy
-        # при random-bytes secret. Reject trivially weak secrets.
-        if any(a in _SYMMETRIC_ALGS for a in self.algorithms) and self.secret:
-            strength = _validate_jwt_secret_strength(self.secret)
-            if not strength.is_acceptable:
-                raise ValueError(
-                    f"JwtBackend: weak HS-secret rejected ({len(strength.issues)} "
-                    f"issue(s)): {', '.join(strength.issues)}. "
-                    f"Use random-bytes secret of ≥ 32 chars (RFC 7518 256-bit)."
-                )
-
-    async def _resolve_key(self, header: dict[str, Any]) -> Any:
-        alg = header.get("alg")
-        if alg in _SYMMETRIC_ALGS:
-            assert self.secret is not None  # nosec
-            return OctKey.import_key(self.secret)
-        if alg in _ASYMMETRIC_ALGS:
-            assert self.jwks is not None  # nosec
-            kid = header.get("kid")
-            if not kid:
-                raise JwtVerificationError("Отсутствует kid в заголовке JWT")
-            jwk = await self.jwks.get_key(kid)
-            if not jwk:
-                raise JwtVerificationError(f"Ключ {kid} не найден в JWKS")
-            kty = jwk.get("kty")
-            if kty == "RSA":
-                return RSAKey.import_key(jwk)
-            if kty == "EC":
-                return ECKey.import_key(jwk)
-            raise JwtVerificationError(f"Неподдерживаемый kty в JWKS: {kty}")
-        raise JwtVerificationError(f"Алгоритм {alg} не в списке разрешённых")
-
-    async def decode(self, token: str) -> JwtClaims:
-        """Верифицирует токен и возвращает извлечённые claims.
-
-        При ``feature_flags.auth_joserfc = True`` (DEPRECATED, S67 W2)
-        ранее делегировал в :mod:`jwt_backend_joserfc`. Shim удалён,
-        feature flag — no-op. Используется canonical реализация.
-        S68 W1: feature flag полностью удалён.
-
-        Raises:
-            JwtVerificationError: При любой ошибке валидации.
-
-        """
-        header = _parse_header_unsafe(token)
-        alg = header.get("alg")
-        if alg not in self.algorithms:
-            raise JwtVerificationError(
-                f"Алгоритм {alg} не разрешён (allow={self.algorithms})"
-            )
-
-        try:
-            key = await self._resolve_key(header)
-        except JwtVerificationError:
-            raise
-
-        try:
-            decoded = joserfc_jwt.decode(token, key=key, algorithms=self.algorithms)
-        except BadSignatureError as exc:
-            raise JwtVerificationError("Неверная подпись JWT") from exc
-        except DecodeError as exc:
-            raise JwtVerificationError(f"Ошибка декодирования JWT: {exc}") from exc
-
-        claims = decoded.claims
-        # Валидация expiry / nbf / iss / aud.
-        try:
-            options: dict[str, Any] = {}
-            if self.issuer:
-                options["iss"] = {"essential": True, "value": self.issuer}
-            if self.audience:
-                options["aud"] = {
-                    "essential": True,
-                    "values": _audience_list(self.audience),
-                }
-            claims_request = joserfc_jwt.JWTClaimsRegistry(
-                leeway=self.leeway, **options
-            )
-            claims_request.validate(claims)
-        except ExpiredTokenError as exc:
-            raise JwtVerificationError("JWT истёк") from exc
-        except Exception as exc:
-            raise JwtVerificationError(f"Неверные claims JWT: {exc}") from exc
-
-        jti = claims.get("jti")
-        if jti and self.blacklist is not None:
-            try:
-                if await self.blacklist.is_revoked(jti):
-                    raise JwtVerificationError("JWT отозван (blacklist)")
-            except JwtVerificationError:
-                raise
-            except Exception as exc:
-                # Fail-closed: если blacklist недоступен, лучше отказать в
-                # валидации, чем принять потенциально revoked токен.
-                _logger.error("JWT blacklist check failed (fail-closed): %s", exc)
-                raise JwtVerificationError("JWT blacklist недоступен") from exc
-
-        # S18 W4 (S-L8-5): batch-revoke barrier по iat. Проверяется
-        # независимо от jti — токен может иметь iat без jti. hasattr-guard
-        # для backward-compat с blacklist-mock'ами без is_iat_revoked.
-        if self.blacklist is not None and hasattr(self.blacklist, "is_iat_revoked"):
-            iat = claims.get("iat")
-            try:
-                if await self.blacklist.is_iat_revoked(iat):
-                    raise JwtVerificationError(
-                        "JWT отозван (rotation: iat < revoke_before)"
-                    )
-            except JwtVerificationError:
-                raise
-            except Exception as exc:
-                # Fail-closed: см. is_revoked.
-                _logger.error("JWT iat-revoke check failed (fail-closed): %s", exc)
-                raise JwtVerificationError("JWT blacklist недоступен") from exc
-
-        return JwtClaims(
-            sub=str(claims.get("sub") or ""),
-            iss=claims.get("iss"),
-            aud=claims.get("aud"),
-            exp=claims.get("exp"),
-            jti=jti,
-            raw=dict(claims),
-        )
-
-    async def verify(self, request: Any) -> AuthContext | None:
-        """Адаптер для FastAPI: извлекает ``Authorization: Bearer *** и верифицирует.
-
-        S68 W1: dead branch (``auth_joserfc`` delegation в удалённый
-        ``jwt_backend_joserfc`` shim) убран. Используется canonical
-        реализация всегда.
-
-        Returns:
-            ``AuthContext`` при успехе; ``None`` если header отсутствует или
-            токен невалиден (детали в логе).
-
-        """
-        auth = request.headers.get("Authorization", "")
-        if not auth.startswith("Bearer "):
-            return None
-        token = auth[7:]
-        try:
-            claims = await self.decode(token)
-        except JwtVerificationError as exc:
-            _logger.info("JWT verify failed: %s", exc)
-            return None
-        return AuthContext(self.method, claims.sub, claims.raw)
-
-
-def _audience_list(audience: str | list[str] | None) -> list[str]:
-    if audience is None:
-        return []
-    if isinstance(audience, str):
-        return [audience]
-    return list(audience)
-
-
-def _parse_header_unsafe(token: str) -> dict[str, Any]:
-    """Извлекает JWT header без проверки подписи (для определения alg/kid).
-
-    Используется чтобы выбрать корректный ключ из JWKS до signature-verify.
-    Сам по себе **не валидирует** токен — это делается ниже через
-    ``joserfc.jwt.decode`` с резолвленным ключом.
-    """
-    import base64
-    import json
-
-    try:
-        header_b64 = token.split(".")[0]
-        header_b64 += "=" * (-len(header_b64) % 4)
-        header_bytes = base64.urlsafe_b64decode(header_b64.encode())
-        header = json.loads(header_bytes)
-    except Exception as exc:
-        raise JwtVerificationError(f"Некорректный JWT header: {exc}") from exc
-    if not isinstance(header, dict):
-        raise JwtVerificationError("JWT header не является объектом")
-    return header
-
-
-# ─── S174 M9.3: weak-HS-secret detector (lightweight) ────────────────────
-
-
-# S174 M9.3: minimum acceptable length для HS256/384/512 secret.
-# Per RFC 7518: 256-bit secret (32 bytes / 256-bit) минимум для HS256.
-# Reject < 32 chars per production hardening convention.
-_MIN_JWT_SECRET_LENGTH: int = 32
-
-# S174 M9.3: blacklist trivially-weak HS secrets.
-_WEAK_JWT_SECRETS: frozenset[str] = frozenset(
-    {
-        "",
-        "secret",
-        "changeme",
-        "default",
-        "test",
-        "admin",
-        "password",
-        "jwt-secret",
-        "my-secret",
-        "supersecret",
-    }
-)
-
-
-@dataclass(frozen=True, slots=True)
-class JwtSecretStrengthReport:
-    """S174 M9.3: result of :func:`_validate_jwt_secret_strength`."""
-
-    is_acceptable: bool
-    issues: tuple[str, ...]
-    length: int
-    entropy_bits: float
-
-
-def _validate_jwt_secret_strength(secret: str) -> JwtSecretStrengthReport:
-    """Heuristic: length + blacklist + entropy.
-
-    Per S174 M9.3 lightweight scope: NOT zxcvbn-level analysis.
-    Production-grade HS256 secret: 32+ chars random bytes
-    (``secrets.token_urlsafe(32)``).
-    """
-    issues: list[str] = []
-    if not secret:
-        issues.append("empty")
-    if len(secret) < _MIN_JWT_SECRET_LENGTH:
-        issues.append(f"too_short (length={len(secret)} < {_MIN_JWT_SECRET_LENGTH})")
-    if secret in _WEAK_JWT_SECRETS:
-        issues.append("blacklisted_common_secret")
-    if secret and len(set(secret)) == 1:
-        issues.append("all_same_character")
-    unique = len(set(secret)) if secret else 0
-    entropy_bits = (
-        (unique.bit_length() if unique else 0) * len(secret) if secret else 0.0
-    )
-    # S174 M9.3: heuristic — не strict RFC 7518 enforcement.
-    # Length ≥ 32 chars — primary gate (RFC 7518). Entropy check —
-    # только warning-level (если unique chars < 8, flag для явных
-    # patterns). RFC 7518 min entropy 256 — теоретически max bound
-    # для brute-force-resistance.
-    if entropy_bits < 128.0 and len(secret) >= 32:
-        issues.append(
-            f"low_entropy (estimate={entropy_bits:.1f} bits; "
-            f"RFC 7518 recommends 256+ for HS256)"
-        )
-
-    is_acceptable = not issues
-    return JwtSecretStrengthReport(
-        is_acceptable=is_acceptable,
-        issues=tuple(issues),
-        length=len(secret),
-        entropy_bits=entropy_bits,
-    )
+# S56 M2-#4: JwtClaims + JwtBackend extracted в :mod:`jwt_backend_class`
+# (re-exported в начале этого модуля для backward-compat public API).
+# Этот файл хранит только low-level: errors, encode, decode.
+# Helpers (_audience_list, _parse_header_unsafe, _validate_jwt_secret_strength,
+# JwtSecretStrengthReport, _ASYMMETRIC_ALGS, _SYMMETRIC_ALGS) extracted
+# в :mod:`jwt_backend_helpers` для устранения circular import.

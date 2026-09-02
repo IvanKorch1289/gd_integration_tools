@@ -39,8 +39,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from src.backend.core.logging import get_logger
 from src.backend.core.audit.facade._base import emit_audit_safe
+from src.backend.core.logging import get_logger
 
 __all__ = ("AuthFacade", "AuthResult", "get_auth_facade")
 
