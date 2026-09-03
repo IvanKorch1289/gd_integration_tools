@@ -988,3 +988,16 @@ Provider returns the class itself, caller does `ReplyChannel.instance()`.
 - **S75: 13/55 (+ batch.py + external_db_registry provider)**
 - Remaining: 42 dsl files
 
+
+### Sprint 76 — M2-#11 batch 11 (sample 14/55)
+
+**Commit**: `2715c9339` — refactor(dsl): M2-#11 batch 11.
+
+### New DI provider
+- `get_redis_lock_class_provider()` в cache.py (lazy resolve RedisLock class)
+
+### Progress
+- S60-S75: 13/55
+- **S76: 14/55 (+ redis_lock_processor.py)**
+- Remaining: 41 dsl files
+
