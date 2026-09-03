@@ -126,9 +126,13 @@ class InvokeWorkflowProcessor(BaseProcessor):
             return self._backend_override
         if self._backend_factory is not None:
             return await self._backend_factory()
-        from src.backend.infrastructure.workflow.factory import create_workflow_backend
+        # S77 M2-#11 batch 12: DI provider (reuses S69's
+        # get_workflow_backend_factory_provider в workflow.py).
+        from src.backend.core.di.providers.workflow import (
+            get_workflow_backend_factory_provider,
+        )
 
-        return await create_workflow_backend(kind="auto")
+        return await get_workflow_backend_factory_provider()(kind="auto")
 
     async def _resolve_workflow_version(self) -> str:
         """Resolve workflow version using WorkflowLauncher if flag enabled.
