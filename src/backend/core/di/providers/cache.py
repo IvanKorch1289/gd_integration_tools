@@ -394,3 +394,22 @@ def get_record_antivirus_scan_provider() -> Any:
 def set_record_antivirus_scan_provider(emitter: Any) -> None:
     """Test-override для record_antivirus_scan (Sprint 78+)."""
     _overrides["record_antivirus_scan"] = emitter
+
+
+# ─── S79 M2-#11 batch 14: observability providers (ImmutableAuditStore) ──
+
+
+def get_immutable_audit_store_class_provider() -> Any:
+    """Возвращает :class:\`ImmutableAuditStore\` (audit store).
+
+    S79 M2-#11 batch 14: lazy resolve для dsl/processors/audit.py.
+    """
+    if "immutable_audit_store_class" in _overrides:
+        return _overrides["immutable_audit_store_class"]
+    module = resolve_module("observability.immutable_audit")
+    return module.ImmutableAuditStore
+
+
+def set_immutable_audit_store_class_provider(aclass: Any) -> None:
+    """Test-override для ImmutableAuditStore (Sprint 79+)."""
+    _overrides["immutable_audit_store_class"] = aclass

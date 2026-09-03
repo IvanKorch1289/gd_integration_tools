@@ -225,3 +225,22 @@ def get_external_db_registry_provider() -> Any:
 def set_external_db_registry_provider(registry: Any) -> None:
     """Test-override для external DB registry (Sprint 75+)."""
     _overrides["external_db_registry"] = registry
+
+
+# ─── S79 M2-#11 batch 14: main_session_manager provider ──────
+
+
+def get_main_session_manager_provider() -> Any:
+    """Возвращает \`main_session_manager\` (DB session manager singleton).
+
+    S79 M2-#11 batch 14: lazy resolve для dsl/processors/audit.py.
+    """
+    if "main_session_manager" in _overrides:
+        return _overrides["main_session_manager"]
+    module = resolve_module("database.session_manager")
+    return module.main_session_manager
+
+
+def set_main_session_manager_provider(manager: Any) -> None:
+    """Test-override для main_session_manager (Sprint 79+)."""
+    _overrides["main_session_manager"] = manager

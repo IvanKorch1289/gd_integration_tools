@@ -160,12 +160,14 @@ class AuditProcessor(BaseProcessor):
         Proper fix: provider в core.di.providers.audit_store +
         use через DI. Tracking: docs/roadmap/PRODUCTION_READINESS.md M2-#11.
         """
-        from src.backend.infrastructure.database.session_manager import (
-            main_session_manager,
+        # S79 M2-#11 batch 14: DI providers вместо inline infrastructure imports.
+        from src.backend.core.di.providers.observability import (
+            get_immutable_audit_store_class_provider,
         )
-        from src.backend.infrastructure.observability.immutable_audit import (
-            ImmutableAuditStore,
-        )
+        from src.backend.core.di.providers.db import get_main_session_manager_provider
+
+        ImmutableAuditStore = get_immutable_audit_store_class_provider()
+        main_session_manager = get_main_session_manager_provider()
 
         return ImmutableAuditStore(session_factory=main_session_manager.create_session)
 
