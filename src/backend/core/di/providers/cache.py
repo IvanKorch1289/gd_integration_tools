@@ -336,3 +336,61 @@ def get_redis_lock_class_provider() -> Any:
 def set_redis_lock_class_provider(lock_class: Any) -> None:
     """Test-override для RedisLock class (Sprint 76+)."""
     _overrides["redis_lock_class"] = lock_class
+
+
+# ─── S78 M2-#11 batch 13: S3 client provider ────────────────────
+
+
+def get_s3_client_provider() -> Any:
+    """Возвращает singleton S3 client (\`s3_client\`).
+
+    S78 M2-#11 batch 13: lazy resolve для dsl/processors/{ingest,scan}_file.py.
+    Был inline: ``from src.backend.infrastructure.clients.storage.s3_pool
+    import s3_client`` (lazy inside method body).
+
+    Использует lazy resolve_module — НЕ тянет s3_pool при module import.
+    """
+    if "s3_client" in _overrides:
+        return _overrides["s3_client"]
+    module = resolve_module("clients.storage.s3_pool")
+    return module.s3_client
+
+
+def set_s3_client_provider(client: Any) -> None:
+    """Test-override для S3 client (Sprint 78+)."""
+    _overrides["s3_client"] = client
+
+
+# ─── S78 M2-#11 batch 13: antivirus + metrics providers ───────────
+
+
+def get_antivirus_backend_factory_provider() -> Any:
+    """Возвращает :func:\`create_antivirus_backend\` factory.
+
+    S78 M2-#11 batch 13: lazy resolve для dsl/processors/scan_file.py.
+    """
+    if "antivirus_backend_factory" in _overrides:
+        return _overrides["antivirus_backend_factory"]
+    module = resolve_module("antivirus.factory")
+    return module.create_antivirus_backend
+
+
+def set_antivirus_backend_factory_provider(factory: Any) -> None:
+    """Test-override для antivirus backend factory (Sprint 78+)."""
+    _overrides["antivirus_backend_factory"] = factory
+
+
+def get_record_antivirus_scan_provider() -> Any:
+    """Возвращает :func:\`record_antivirus_scan\` (metrics emitter).
+
+    S78 M2-#11 batch 13: lazy resolve для dsl/processors/scan_file.py.
+    """
+    if "record_antivirus_scan" in _overrides:
+        return _overrides["record_antivirus_scan"]
+    module = resolve_module("observability.metrics")
+    return module.record_antivirus_scan
+
+
+def set_record_antivirus_scan_provider(emitter: Any) -> None:
+    """Test-override для record_antivirus_scan (Sprint 78+)."""
+    _overrides["record_antivirus_scan"] = emitter

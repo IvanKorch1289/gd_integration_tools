@@ -177,9 +177,10 @@ class IngestFileProcessor(BaseProcessor):
             if key:
                 filename = str(key).rsplit("/", 1)[-1]
                 try:
-                    from src.backend.infrastructure.clients.storage.s3_pool import (
-                        s3_client,
-                    )
+                    # S78 M2-#11 batch 13: DI provider вместо inline infrastructure import.
+                    from src.backend.core.di.providers.cache import get_s3_client_provider
+
+                    s3_client = get_s3_client_provider()
 
                     data = await s3_client.get_object_bytes(str(key))
                     if data is not None:

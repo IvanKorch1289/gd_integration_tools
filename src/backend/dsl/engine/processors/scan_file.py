@@ -84,9 +84,10 @@ class ScanFileProcessor(BaseProcessor):
             return
 
         try:
-            from src.backend.infrastructure.antivirus.factory import (
-                create_antivirus_backend,
-            )
+            # S78 M2-#11 batch 13: DI provider вместо inline infrastructure import.
+            from src.backend.core.di.providers.cache import get_antivirus_backend_factory_provider
+
+            create_antivirus_backend = get_antivirus_backend_factory_provider()
 
             backend = create_antivirus_backend()
             result = await backend.scan_bytes(payload)
@@ -135,9 +136,10 @@ class ScanFileProcessor(BaseProcessor):
             key = _resolve(exchange, self._s3_key_from)
             if key:
                 try:
-                    from src.backend.infrastructure.clients.storage.s3_pool import (
-                        s3_client,
-                    )
+                    # S78 M2-#11 batch 13: DI provider вместо inline infrastructure import.
+                    from src.backend.core.di.providers.cache import get_s3_client_provider
+
+                    s3_client = get_s3_client_provider()
 
                     data = await s3_client.get_object_bytes(str(key))
                     if data is not None:
@@ -163,9 +165,10 @@ class ScanFileProcessor(BaseProcessor):
         может быть недоступен в тестах.
         """
         try:
-            from src.backend.infrastructure.observability.metrics import (
-                record_antivirus_scan,
-            )
+            # S78 M2-#11 batch 13: DI provider вместо inline infrastructure import.
+            from src.backend.core.di.providers.cache import get_record_antivirus_scan_provider
+
+            record_antivirus_scan = get_record_antivirus_scan_provider()
 
             record_antivirus_scan(threat=threat)
         except (ImportError, AttributeError, RuntimeError, OSError) as metrics_exc:
