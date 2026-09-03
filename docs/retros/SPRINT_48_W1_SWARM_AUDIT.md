@@ -866,3 +866,24 @@ Decision: Continue M2 closure. Next: M2-#11 (isolated blast radius).
 - S67: 5/55 dsl files (+ external, cdc_capture — cdc_client)
 - Remaining: 50 dsl files (deferred S68+)
 
+
+### Sprint 68 — M2-#10 verification + M2-#11 batch 3
+
+**M2-#10 verification (closed)**: 0 raw httpx imports в `streamlit_app/pages/` (74 files).
+`api_clients/` package с 20+ specialized clients (admin/audit/auth/capability/
+chat/config/dsl_routes/feedback/flags/generic/inventory/k4/logs/metrics/orders/rag)
+уже мигрирован. BaseAPIClient pattern implemented Sprint 45 W2. M2-#10
+markeD as DONE in roadmap.
+
+**M2-#11 batch 3 sample 6/55**:
+- `dask_compute.py` (159 LOC) — Dask parallel compute processor
+  - Module-level `from src.backend.infrastructure.execution.dask_backend`
+    → lazy `get_dask_backend_provider()` (новый в core/di/providers/db.py)
+  - 0 hits of inline infrastructure import
+
+**Progress**:
+- S60: 3/55 (redis_client via cache.py provider)
+- S67: 5/55 (+ external, cdc_capture via db.py provider)
+- S68: 6/55 (+ dask_compute via db.py provider)
+- Remaining: 49 dsl files (deferred S69+)
+
