@@ -179,3 +179,26 @@ def get_dask_backend_provider() -> Any:
 def set_dask_backend_provider(backend: Any) -> None:
     """Test-override для dask_backend (Sprint 68+)."""
     _overrides["dask_backend"] = backend
+
+
+# ─── S74 M2-#11 batch 9: Outbox writer provider ────────────────────
+
+
+def get_outbox_writer_provider() -> Any:
+    """Возвращает :func:\`write\` (outbox writer).
+
+    S74 M2-#11 batch 9: lazy resolve для dsl/processors/business.py.
+    Был inline: ``from src.backend.infrastructure.repositories.outbox import
+    write as default_writer`` (lazy inside method body).
+
+    Использует lazy resolve_module — НЕ тянет outbox при module import.
+    """
+    if "outbox_writer" in _overrides:
+        return _overrides["outbox_writer"]
+    module = resolve_module("repositories.outbox")
+    return module.write
+
+
+def set_outbox_writer_provider(writer: Any) -> None:
+    """Test-override для outbox writer (Sprint 74+)."""
+    _overrides["outbox_writer"] = writer

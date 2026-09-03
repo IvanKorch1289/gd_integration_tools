@@ -225,11 +225,10 @@ class OutboxProcessor(BaseProcessor):
         headers = dict(exchange.in_message.headers)
         writer = self._writer
         if writer is None:
-            from src.backend.infrastructure.repositories.outbox import (
-                write as default_writer,
-            )
+            # S74 M2-#11 batch 9: DI provider вместо inline infrastructure import.
+            from src.backend.core.di.providers.db import get_outbox_writer_provider
 
-            writer = default_writer
+            writer = get_outbox_writer_provider()
         try:
             await writer(topic=self._topic, payload=payload, headers=headers)
         except Exception as exc:
