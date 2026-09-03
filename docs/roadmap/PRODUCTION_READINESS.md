@@ -69,7 +69,7 @@ Detailed raw output — `docs/roadmap/BASELINE_2026-09-01.md`.
 | M2-#7 | webhook inbound verification missing | 2h |
 | M2-#8 | DSL dead-code _S3_MOD const (DONE S48 W3) | 5m |
 | M2-#9 | deprecation warnings on module import → __init__ | 30m |
-| M2-#10 | 22 raw httpx → BaseAPIClient migration (Frontend) | 16h |
+| M2-#10 | 22 raw httpx → BaseAPIClient migration (Frontend) — **DONE S68** (BaseAPIClient + 20+ specialized clients в `api_clients/`) | 16h → 0h |
 
 ### M3: Coverage 60% → 75%
 
