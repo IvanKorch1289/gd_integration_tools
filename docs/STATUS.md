@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-09-01 (Sprint 75 — M2-#11 batch 10 sample 13/55 (batch.py + external_db_registry provider); см. `docs/roadmap/PRODUCTION_READINESS.md`)
+> **Last verified**: 2026-09-01 (Sprint 76 — M2-#11 batch 11 sample 14/55 (redis_lock_processor.py + RedisLock provider); см. `docs/roadmap/PRODUCTION_READINESS.md`)
 
 ## Post-Plan A Sprints 1-31 (coverage ratchet + final polish)
 
