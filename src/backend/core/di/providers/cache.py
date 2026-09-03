@@ -290,3 +290,26 @@ def get_httpx_client_provider() -> Any:
 def set_httpx_client_provider(client: Any) -> None:
     """Test-override для httpx client (Sprint 72+)."""
     _overrides["httpx_client"] = client
+
+
+# ─── S73 M2-#11 batch 8: ReplyChannel (messaging) provider ───────────
+
+
+def get_reply_channel_class_provider() -> Any:
+    """Возвращает :class:\`ReplyChannel\` class (singleton via \`instance()\`).
+
+    S73 M2-#11 batch 8: lazy resolve для dsl/processors/request_reply.py.
+    ReplyChannel — class с classmethod \`instance()\` (singleton).
+    Caller делает \`ReplyChannel.instance()\` для получения singleton.
+
+    Использует lazy resolve_module — НЕ тянет messaging при module import.
+    """
+    if "reply_channel_class" in _overrides:
+        return _overrides["reply_channel_class"]
+    module = resolve_module("clients.messaging.reply_channel")
+    return module.ReplyChannel
+
+
+def set_reply_channel_class_provider(channel_class: Any) -> None:
+    """Test-override для ReplyChannel class (Sprint 73+)."""
+    _overrides["reply_channel_class"] = channel_class

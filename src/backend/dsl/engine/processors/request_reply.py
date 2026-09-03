@@ -37,9 +37,10 @@ class RequestProcessor(BaseProcessor):
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
-        from src.backend.infrastructure.clients.messaging.reply_channel import (
-            ReplyChannel,
-        )
+        # S73 M2-#11 batch 8: DI provider вместо inline infrastructure import.
+        from src.backend.core.di.providers.cache import get_reply_channel_class_provider
+
+        ReplyChannel = get_reply_channel_class_provider()
 
         payload = (
             self._payload if self._payload is not None else exchange.in_message.body
