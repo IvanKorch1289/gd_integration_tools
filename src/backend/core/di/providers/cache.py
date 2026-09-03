@@ -267,3 +267,26 @@ def get_cache_facade(enable_fallback: bool = True) -> Any:
     if not enable_fallback:
         return memory
     return FallbackCacheFacade(primary=memory, fallback=memory)
+
+
+# ─── S72 M2-#11 batch 7: HTTP transport (httpx) provider ───────────
+
+
+def get_httpx_client_provider() -> Any:
+    """Возвращает singleton :func:\`get_httpx_client\` (HTTP transport).
+
+    S72 M2-#11 batch 7: lazy resolve для dsl/processors/graphql_query.py.
+    Был inline: ``from src.backend.infrastructure.clients.transport.
+    http_httpx import get_httpx_client`` (lazy inside method body).
+
+    Использует lazy resolve_module — НЕ тянет httpx при module import.
+    """
+    if "httpx_client" in _overrides:
+        return _overrides["httpx_client"]
+    module = resolve_module("clients.transport.http_httpx")
+    return module.get_httpx_client
+
+
+def set_httpx_client_provider(client: Any) -> None:
+    """Test-override для httpx client (Sprint 72+)."""
+    _overrides["httpx_client"] = client

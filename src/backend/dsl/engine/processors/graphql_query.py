@@ -108,11 +108,10 @@ class GraphQLQueryProcessor(BaseProcessor):
             context: Контекст выполнения маршрута.
 
         """
-        from src.backend.infrastructure.clients.transport.http_httpx import (
-            get_httpx_client,
-        )
+        # S72 M2-#11 batch 7: DI provider вместо inline infrastructure import.
+        from src.backend.core.di.providers.cache import get_httpx_client_provider
 
-        client = get_httpx_client()
+        client = get_httpx_client_provider()()
 
         # Build GraphQL payload
         payload: dict[str, Any] = {"query": self._query}
