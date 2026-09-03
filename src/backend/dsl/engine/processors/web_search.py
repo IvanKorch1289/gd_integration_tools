@@ -161,11 +161,13 @@ class WebSearchProcessor(BaseProcessor):
             return
 
         try:
-            from src.backend.infrastructure.clients.external.search_providers import (
-                get_web_search_service,
+            # S70 M2-#11 batch 5: DI provider вместо inline infrastructure import.
+            # get_web_search_provider() уже существовал в core/di/providers/web_search.py:22
+            from src.backend.core.di.providers.web_search import (
+                get_web_search_provider,
             )
 
-            service = get_web_search_service()
+            service = get_web_search_provider()()
             provider = None if self._engine == "auto" else self._engine
             if self._deep_research:
                 result: Any = await service.deep_research(query, provider=provider)
