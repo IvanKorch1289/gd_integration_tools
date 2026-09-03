@@ -20,9 +20,9 @@ from __future__ import annotations
 import importlib
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from src.backend.core.di.providers.db import get_dask_backend_provider  # S68 M2-#11
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.processors.base import BaseProcessor
-from src.backend.infrastructure.execution.dask_backend import get_dask_backend
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -92,7 +92,7 @@ class DaskComputeProcessor(BaseProcessor):
                 raise ValueError(f"DaskCompute: step без 'op': {step!r}")
         self._graph = graph
         self._output_to = output_to
-        self._backend = get_dask_backend(
+        self._backend = get_dask_backend_provider()(
             scheduler_address=scheduler_address, n_workers=n_workers
         )
 

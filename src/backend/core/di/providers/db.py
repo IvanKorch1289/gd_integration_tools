@@ -156,3 +156,26 @@ __all__ = (
     "set_mongo_client_provider",
     "set_s3_service_provider",
 )
+
+
+# ─── S68 M2-#11 batch 3: Dask backend provider ───────────────────────
+
+
+def get_dask_backend_provider() -> Any:
+    """Возвращает singleton :func:\`get_dask_backend\` (см. ``DaskBackend``).
+
+    S68 M2-#11 batch 3: lazy resolve для dsl/processors/dask_compute.py.
+    Был inline: ``from src.backend.infrastructure.execution.dask_backend import get_dask_backend``
+    (module-level import → cycle risk с infrastructure layer).
+
+    Использует lazy resolve_module — НЕ тянет dask при module import.
+    """
+    if "dask_backend" in _overrides:
+        return _overrides["dask_backend"]
+    module = resolve_module("execution.dask_backend")
+    return module.get_dask_backend
+
+
+def set_dask_backend_provider(backend: Any) -> None:
+    """Test-override для dask_backend (Sprint 68+)."""
+    _overrides["dask_backend"] = backend
