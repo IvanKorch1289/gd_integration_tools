@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-09-01 (Sprint 69 — M2-#11 batch 4 sample 7/55 (sub_workflow.py workflow_backend); см. `docs/roadmap/PRODUCTION_READINESS.md`)
+> **Last verified**: 2026-09-01 (Sprint 70 — M2-#11 batch 5 sample 8/55 (web_search.py); см. `docs/roadmap/PRODUCTION_READINESS.md`)
 
 ## Post-Plan A Sprints 1-31 (coverage ratchet + final polish)
 
