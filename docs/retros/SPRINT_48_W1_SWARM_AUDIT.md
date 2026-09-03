@@ -1017,3 +1017,22 @@ Provider returns the class itself, caller does `ReplyChannel.instance()`.
 - **S77: 15/55 (+ invoke_workflow.py)**
 - Remaining: 40 dsl files
 
+
+### Sprint 78 — M2-#11 batch 13 (samples 16-17/55)
+
+**Commit**: `cd17e278b` — refactor(dsl): M2-#11 batch 13.
+
+### 3 new DI providers
+- `get_s3_client_provider()` — lazy resolve s3_client
+- `get_antivirus_backend_factory_provider()` — lazy resolve create_antivirus_backend
+- `get_record_antivirus_scan_provider()` — lazy resolve record_antivirus_scan
+
+### Files migrated
+- `ingest_file.py` — s3_client
+- `scan_file.py` — 3 inline imports (s3_client, antivirus, metrics)
+
+### Progress
+- S60-S77: 15/55
+- **S78: 17/55 (+ ingest_file + scan_file)**
+- Remaining: 38 dsl files
+
