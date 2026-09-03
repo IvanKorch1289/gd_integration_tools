@@ -919,3 +919,13 @@ markeD as DONE in roadmap.
 - **S70: 8/55 (+ web_search via web_search.py)**
 - Remaining: 47 dsl files
 
+
+### Sprint 71 — M2-#11 batch 6 (sample 9/55)
+
+**Commit**: `23eefed78` — refactor(dsl): M2-#11 batch 6.
+
+### Progress
+- S60-S70: 8/55
+- **S71: 9/55 (+ cancel_workflow.py workflow_backend)**
+- Remaining: 46 dsl files
+
