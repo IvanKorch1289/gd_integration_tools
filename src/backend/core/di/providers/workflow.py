@@ -348,3 +348,26 @@ __all__ = (
     "set_workflow_main_session_provider",
     "set_workflow_state_store_provider",
 )
+
+
+# ─── S69 M2-#11 batch 4: workflow backend factory provider ──────────
+
+
+def get_workflow_backend_factory_provider() -> Any:
+    """Возвращает :func:\`create_workflow_backend\` factory.
+
+    S69 M2-#11 batch 4: lazy resolve для dsl/processors/sub_workflow.py.
+    Был inline: ``from src.backend.infrastructure.workflow.factory import
+    create_workflow_backend`` (lazy inside method body).
+
+    Использует lazy resolve_module — НЕ тянет workflow factory при import.
+    """
+    if "workflow_backend_factory" in _overrides:
+        return _overrides["workflow_backend_factory"]
+    module = resolve_module("workflow.factory")
+    return module.create_workflow_backend
+
+
+def set_workflow_backend_factory_provider(factory: Any) -> None:
+    """Test-override для workflow backend factory (Sprint 69+)."""
+    _overrides["workflow_backend_factory"] = factory
