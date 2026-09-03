@@ -929,3 +929,17 @@ markeD as DONE in roadmap.
 - **S71: 9/55 (+ cancel_workflow.py workflow_backend)**
 - Remaining: 46 dsl files
 
+
+### Sprint 72 — M2-#11 batch 7 (sample 10/55)
+
+**Commit**: `b02a4c47b` — refactor(dsl): M2-#11 batch 7.
+
+### New DI provider
+- `get_httpx_client_provider()` в cache.py (lazy resolve clients.transport.http_httpx)
+- `set_httpx_client_provider()` — test override
+
+### Progress
+- S60-S71: 9/55
+- **S72: 10/55 (+ graphql_query.py + httpx_client provider)**
+- Remaining: 45 dsl files
+
