@@ -943,3 +943,21 @@ markeD as DONE in roadmap.
 - **S72: 10/55 (+ graphql_query.py + httpx_client provider)**
 - Remaining: 45 dsl files
 
+
+### Sprint 73 — M2-#11 batch 8 (sample 11/55)
+
+**Commit**: `8b758e3a6` — refactor(dsl): M2-#11 batch 8.
+
+### New DI provider
+- `get_reply_channel_class_provider()` в cache.py (lazy resolve ReplyChannel class)
+- `set_reply_channel_class_provider()` — test override
+
+### Pattern note
+ReplyChannel — class с classmethod `instance()` (singleton), not a factory function.
+Provider returns the class itself, caller does `ReplyChannel.instance()`.
+
+### Progress
+- S60-S72: 10/55
+- **S73: 11/55 (+ request_reply.py + ReplyChannel provider)**
+- Remaining: 44 dsl files
+
