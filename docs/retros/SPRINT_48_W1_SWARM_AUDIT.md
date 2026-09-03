@@ -887,3 +887,25 @@ markeD as DONE in roadmap.
 - S68: 6/55 (+ dask_compute via db.py provider)
 - Remaining: 49 dsl files (deferred S69+)
 
+
+### Sprint 69 — M2-#11 batch 4 (sample 7/55)
+
+**Commit**: `65917faca` — refactor(dsl): M2-#11 batch 4 — sub_workflow.py.
+
+### Architecture
+- `core/di/providers/workflow.py` (NEW provider):
+  - `get_workflow_backend_factory_provider()` — lazy resolve workflow.factory
+  - `set_workflow_backend_factory_provider()` — test override
+- `dsl/engine/processors/sub_workflow.py` — inline infrastructure import → DI provider
+
+### Pattern
+- `from src.backend.infrastructure.workflow.factory import create_workflow_backend` → `from src.backend.core.di.providers.workflow import get_workflow_backend_factory_provider`
+- `await create_workflow_backend(kind="auto")` → `await get_workflow_backend_factory_provider()(kind="auto")`
+
+### Progress
+- S60: 3/55 (redis_client via cache.py)
+- S67: 5/55 (+ cdc_client via db.py)
+- S68: 6/55 (+ dask_backend via db.py)
+- **S69: 7/55 (+ workflow_backend via workflow.py)**
+- Remaining: 48 dsl files (deferred S70+)
+
