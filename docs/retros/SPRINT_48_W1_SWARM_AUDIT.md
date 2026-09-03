@@ -975,3 +975,16 @@ Provider returns the class itself, caller does `ReplyChannel.instance()`.
 - **S74: 12/55 (+ business.py + outbox_writer provider)**
 - Remaining: 43 dsl files
 
+
+### Sprint 75 — M2-#11 batch 10 (sample 13/55)
+
+**Commit**: `9d79aebe8` — refactor(dsl): M2-#11 batch 10.
+
+### New DI provider
+- `get_external_db_registry_provider()` в db.py (lazy resolve database.database)
+
+### Progress
+- S60-S74: 12/55
+- **S75: 13/55 (+ batch.py + external_db_registry provider)**
+- Remaining: 42 dsl files
+
