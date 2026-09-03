@@ -1001,3 +1001,19 @@ Provider returns the class itself, caller does `ReplyChannel.instance()`.
 - **S76: 14/55 (+ redis_lock_processor.py)**
 - Remaining: 41 dsl files
 
+
+### Sprint 77 — M2-#11 batch 12 (sample 15/55)
+
+**Commit**: `24a91b218` — refactor(dsl): M2-#11 batch 12.
+
+### Reuse pattern
+- `get_workflow_backend_factory_provider` (S69) reused для 3 файлов:
+  - S69: sub_workflow.py
+  - S71: cancel_workflow.py
+  - S77: invoke_workflow.py
+
+### Progress
+- S60-S76: 14/55
+- **S77: 15/55 (+ invoke_workflow.py)**
+- Remaining: 40 dsl files
+
