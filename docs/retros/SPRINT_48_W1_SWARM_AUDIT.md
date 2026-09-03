@@ -1036,3 +1036,17 @@ Provider returns the class itself, caller does `ReplyChannel.instance()`.
 - **S78: 17/55 (+ ingest_file + scan_file)**
 - Remaining: 38 dsl files
 
+
+### Sprint 79 — M2-#11 batch 14 (sample 18/55)
+
+**Commit**: `3c36ee071` — refactor(dsl): M2-#11 batch 14.
+
+### 2 new DI providers
+- `get_immutable_audit_store_class_provider()` в cache.py
+- `get_main_session_manager_provider()` в db.py
+
+### Progress
+- S60-S78: 17/55
+- **S79: 18/55 (+ audit.py)**
+- Remaining: 37 dsl files
+
