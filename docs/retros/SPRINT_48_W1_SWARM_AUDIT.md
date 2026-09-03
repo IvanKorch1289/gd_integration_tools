@@ -909,3 +909,13 @@ markeD as DONE in roadmap.
 - **S69: 7/55 (+ workflow_backend via workflow.py)**
 - Remaining: 48 dsl files (deferred S70+)
 
+
+### Sprint 70 — M2-#11 batch 5 (sample 8/55)
+
+**Commit**: `5d4a179a8` — refactor(dsl): M2-#11 batch 5 — web_search.py.
+
+### Progress
+- S60-S69: 7/55 (redis_client, cdc_client, dask_backend, workflow_backend)
+- **S70: 8/55 (+ web_search via web_search.py)**
+- Remaining: 47 dsl files
+
