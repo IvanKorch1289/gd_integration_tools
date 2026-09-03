@@ -34,11 +34,10 @@ _get_external_db_registry = None
 def _lazy_get_external_db_registry():
     global _get_external_db_registry
     if _get_external_db_registry is None:
-        from src.backend.infrastructure.database.database import (
-            get_external_db_registry,
-        )
+        # S75 M2-#11 batch 10: DI provider вместо inline infrastructure import.
+        from src.backend.core.di.providers.db import get_external_db_registry_provider
 
-        _get_external_db_registry = get_external_db_registry
+        _get_external_db_registry = get_external_db_registry_provider
     return _get_external_db_registry
 
 

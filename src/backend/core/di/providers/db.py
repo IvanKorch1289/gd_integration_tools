@@ -202,3 +202,26 @@ def get_outbox_writer_provider() -> Any:
 def set_outbox_writer_provider(writer: Any) -> None:
     """Test-override для outbox writer (Sprint 74+)."""
     _overrides["outbox_writer"] = writer
+
+
+# ─── S75 M2-#11 batch 10: External DB registry provider ──────────
+
+
+def get_external_db_registry_provider() -> Any:
+    """Возвращает :func:\`get_external_db_registry\` (DB registry singleton).
+
+    S75 M2-#11 batch 10: lazy resolve для dsl/processors/batch.py.
+    Был inline: ``from src.backend.infrastructure.database.database import
+    get_external_db_registry`` (lazy через module-level _lazy_get_*).
+
+    Использует lazy resolve_module — НЕ тянет database при module import.
+    """
+    if "external_db_registry" in _overrides:
+        return _overrides["external_db_registry"]
+    module = resolve_module("database.database")
+    return module.get_external_db_registry
+
+
+def set_external_db_registry_provider(registry: Any) -> None:
+    """Test-override для external DB registry (Sprint 75+)."""
+    _overrides["external_db_registry"] = registry
