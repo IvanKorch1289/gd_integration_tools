@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-09-01 (Sprint 68 — M2-#10 verified CLOSED (BaseAPIClient + 20+ specialized clients), M2-#11 batch 3 sample 6/55 (dask_compute); см. `docs/roadmap/PRODUCTION_READINESS.md`)
+> **Last verified**: 2026-09-01 (Sprint 69 — M2-#11 batch 4 sample 7/55 (sub_workflow.py workflow_backend); см. `docs/roadmap/PRODUCTION_READINESS.md`)
 
 ## Post-Plan A Sprints 1-31 (coverage ratchet + final polish)
 
