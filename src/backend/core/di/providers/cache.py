@@ -313,3 +313,26 @@ def get_reply_channel_class_provider() -> Any:
 def set_reply_channel_class_provider(channel_class: Any) -> None:
     """Test-override для ReplyChannel class (Sprint 73+)."""
     _overrides["reply_channel_class"] = channel_class
+
+
+# ─── S76 M2-#11 batch 11: RedisLock class provider ──────────────
+
+
+def get_redis_lock_class_provider() -> Any:
+    """Возвращает :class:\`RedisLock\` (distributed lock guard).
+
+    S76 M2-#11 batch 11: lazy resolve для dsl/processors/redis_lock_processor.py.
+    Был inline: ``from src.backend.infrastructure.clients.storage.redis_lock
+    import RedisLock`` (lazy inside method body).
+
+    Использует lazy resolve_module — НЕ тянет redis_lock при module import.
+    """
+    if "redis_lock_class" in _overrides:
+        return _overrides["redis_lock_class"]
+    module = resolve_module("clients.storage.redis_lock")
+    return module.RedisLock
+
+
+def set_redis_lock_class_provider(lock_class: Any) -> None:
+    """Test-override для RedisLock class (Sprint 76+)."""
+    _overrides["redis_lock_class"] = lock_class
