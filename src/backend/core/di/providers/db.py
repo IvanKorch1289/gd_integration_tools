@@ -263,3 +263,22 @@ def get_db_initializer_provider() -> Any:
 def set_db_initializer_provider(initializer: Any) -> None:
     """Test-override для db_initializer (Sprint 80+)."""
     _overrides["db_initializer"] = initializer
+
+
+# ─── S81 M2-#11 batch 16: smart_session_manager provider ──────────
+
+
+def get_smart_session_manager_provider() -> Any:
+    """Возвращает \`get_smart_session_manager\` (DB session factory).
+
+    S81 M2-#11 batch 16: lazy resolve для dsl/processors/saga_lra.py.
+    """
+    if "smart_session_manager" in _overrides:
+        return _overrides["smart_session_manager"]
+    module = resolve_module("database.database")
+    return module.get_smart_session_manager
+
+
+def set_smart_session_manager_provider(manager: Any) -> None:
+    """Test-override для smart_session_manager (Sprint 81+)."""
+    _overrides["smart_session_manager"] = manager

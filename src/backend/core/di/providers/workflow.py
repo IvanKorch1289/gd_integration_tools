@@ -371,3 +371,22 @@ def get_workflow_backend_factory_provider() -> Any:
 def set_workflow_backend_factory_provider(factory: Any) -> None:
     """Test-override для workflow backend factory (Sprint 69+)."""
     _overrides["workflow_backend_factory"] = factory
+
+
+# ─── S81 M2-#11 batch 16: WorkflowStateRepository provider ──────────
+
+
+def get_workflow_state_repository_provider() -> Any:
+    """Возвращает :class:\`WorkflowStateRepository\` (saga state repo).
+
+    S81 M2-#11 batch 16: lazy resolve для dsl/processors/saga_lra.py.
+    """
+    if "workflow_state_repository" in _overrides:
+        return _overrides["workflow_state_repository"]
+    module = resolve_module("workflow.saga_state")
+    return module.WorkflowStateRepository
+
+
+def set_workflow_state_repository_provider(repo: Any) -> None:
+    """Test-override для WorkflowStateRepository (Sprint 81+)."""
+    _overrides["workflow_state_repository"] = repo

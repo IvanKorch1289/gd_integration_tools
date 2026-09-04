@@ -29,11 +29,10 @@ _get_smart_session_manager = None
 def _lazy_get_smart_session_manager():
     global _get_smart_session_manager
     if _get_smart_session_manager is None:
-        from src.backend.infrastructure.database.database import (
-            get_smart_session_manager,
-        )
+        # S81 M2-#11 batch 16: DI provider вместо inline infrastructure import.
+        from src.backend.core.di.providers.db import get_smart_session_manager_provider
 
-        _get_smart_session_manager = get_smart_session_manager
+        _get_smart_session_manager = get_smart_session_manager_provider
     return _get_smart_session_manager
 
 
@@ -280,9 +279,11 @@ class SagaLRAProcessor(BaseProcessor):
         """Lazy-load DB deps and return a ``_RepoProxy`` or ``None``."""
         try:
             sm = _lazy_get_smart_session_manager()()
-            from src.backend.infrastructure.workflow.saga_state import (
-                WorkflowStateRepository,
+            # S81 M2-#11 batch 16: DI provider вместо inline infrastructure import.
+            from src.backend.core.di.providers.workflow import (
+                get_workflow_state_repository_provider,
             )
+            WorkflowStateRepository = get_workflow_state_repository_provider()
         except (ImportError, AttributeError, RuntimeError) as dep_exc:
             # cycle-9/D-AUDIT-977: narrow exceptions + observability.
             # ImportError — deps missing, AttributeError — API change,
