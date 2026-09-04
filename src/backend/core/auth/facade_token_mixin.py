@@ -80,7 +80,8 @@ class AuthTokenMixin:
             claims["capabilities"] = list(capabilities)
 
         try:
-            token, expires = self.jwt.encode(
+            # ponytail: AuthTokenMixin requires self.jwt from AuthFacade MRO
+            token, expires = self.jwt.encode(  # type: ignore[attr-defined]
                 subject=subject, claims=claims, expires_in=expires_in
             )
             return token, expires

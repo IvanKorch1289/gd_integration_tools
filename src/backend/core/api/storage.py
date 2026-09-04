@@ -13,6 +13,17 @@ from src.backend.infrastructure.clients.storage import (
 )
 from src.backend.infrastructure.clients.storage import redis as _redis
 
+# S170 PONYTAIL: добавлен get_redis_client re-export — некоторые callers
+# ходили через core.api.storage.get_redis_client, но facade пустел —
+# фикс под mypy errors в authorization/facade.py, workflows/hitl_pubsub.py.
+get_redis_client = _redis.get_redis_client
+
 Clickhouse = clickhouse
 
-__all__ = ["clickhouse", "clickhouse_admin_client", "_redis", "Clickhouse"]
+__all__ = [
+    "clickhouse",
+    "clickhouse_admin_client",
+    "_redis",
+    "Clickhouse",
+    "get_redis_client",
+]

@@ -59,7 +59,10 @@ class AuthCoreMixin:
 
         try:
             if method == "jwt":
-                claims = self.jwt.decode(token)
+                # ponytail: AuthCoreMixin requires self.jwt from AuthFacade MRO
+                claims = self.jwt.decode(  # type: ignore[attr-defined]
+                    token
+                )
                 jti = claims.get("jti")
                 if jti and await self._is_blacklisted(jti):
                     return AuthResult(
