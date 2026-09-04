@@ -130,7 +130,9 @@ class SecurityFacade(
             True если signature валидна.
 
         """
-        from src.backend.core.api.security import verify_signature as _verify
+        from src.backend.infrastructure.security.signatures import (
+            verify_signature as _verify,
+        )
 
         return _verify(
             payload, signature, timestamp, secret, window_seconds=window_seconds
