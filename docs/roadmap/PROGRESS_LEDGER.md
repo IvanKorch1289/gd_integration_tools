@@ -314,3 +314,18 @@ Re-export `_InMemoryJwtBlacklist` сохранён (тесты импортир�
 `core.api.security.verify_signature`, не-await вызовы в тестах)
 — воспроизводятся идентично на HEAD до и после сплита (9/44 в обоих).
 Домен параллельной сессии (S108 NEW-* серия). Отдельно от сплита.
+
+## Фаза C — ревью S3-1/S3-2: PASS (оба коммита)
+
+Построчная сверка с pre-image: hitl — порядок сайд-эффектов, except-контракты
+и re-exports сохранены; security — MRO чист, поверхность 14/14, singleton
+не задвоен, `_InMemoryJwtBlacklist` — тот же класс. 9 facade-падений
+pre-existing (B-NEW-3), идентичны до/после сплита.
+
+| Находка | Решение |
+|---|---|
+| P2: InMemoryJwtBlacklist.clear() — sync-with на asyncio.Lock → TypeError, глотался clear_blacklist | Исправлено `72e1872ef`: async with; test_clear_blacklist починился (9→1 pre-existing fail в security) |
+| P2: фасад ре-экспортирует только underscore-имя | Совпадает с pre-image — не регрессия |
+
+Итог S3 на этот момент: hitl_service DONE (261 LOC), security/facade DONE
+(190 LOC). Остаток S3: builders/base 1422 (план M2-#21, отдельный спринт).
