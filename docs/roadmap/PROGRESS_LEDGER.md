@@ -245,6 +245,11 @@ check_*; production-grade имплементация — S107+).
 (stale type annotation `HelperMethods` оставлена для backward compat).
 pytest 3/3 passed.
 
+**NEW-1c FIXED S108 `658e4778a`** (2026-09-04): CrudMixin.list() method
+реализован (delegates to repo.get_paginated, returns result['items']).
+`_CRUD_METHODS` обновлён ('list' добавлен). pytest test_crud_mixin_list.py: 4/4 passed
+(было 4 failed).
+
 ## Фаза C — ревью батча 2026-09-05 (C2/T4/S2/DOCS1): PASS, 1 P1 → исправлен
 
 Ревьюер (отдельный агент): вердикты — C2 PASS с P1, T4 PASS, S2 PASS, DOCS1 PASS с P2.
