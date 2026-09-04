@@ -36,12 +36,6 @@ class TestHealthAggregator:
         assert cache.get_health_aggregator_provider() is mock
 
 
-class TestHealthcheckSession:
-    def test_set_overrides(self) -> None:
-        mock = MagicMock(name="custom_session")
-        cache.set_healthcheck_session_provider(mock)
-        assert cache.get_healthcheck_session_provider() is mock
-
 
 class TestAdminCacheStorage:
     def test_set_overrides(self) -> None:

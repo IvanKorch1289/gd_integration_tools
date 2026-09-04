@@ -117,9 +117,7 @@ class TestSessionManagerGetattr:
     def test_getattr_raises_attribute_error_for_unknown(self) -> None:
         """``session_manager.unknown_attr`` → ``AttributeError``."""
         with pytest.raises(AttributeError, match="has no attribute 'unknown_attr'"):
-            from src.backend.infrastructure.database import (
-                session_manager,
-            )
+            from src.backend.infrastructure.database import session_manager
 
             _ = session_manager.unknown_attr
 
@@ -294,11 +292,15 @@ class TestTop10RuntimeBehavior:
 
     @pytest.mark.unit
     def test_observability_bridge_correlation_id_annotation_narrowed(self) -> None:
-        """``observability_bridge.get_correlation_id`` runtime annotation = ``str``."""
-        from src.backend.core.di.providers import observability_bridge
+        """``correlation.get_correlation_id`` runtime annotation = ``str``.
+
+        B-NEW-1 (2026-09-05): observability_bridge из providers удалён;
+        живая реализация — core/observability/correlation.py.
+        """
+        from src.backend.core.observability import correlation
 
         hints = inspect.get_annotations(
-            observability_bridge.get_correlation_id, eval_str=False,
+            correlation.get_correlation_id, eval_str=False,
         )
         assert hints["return"] == "str", (
             f"observability_bridge.get_correlation_id narrowed с Any; "
@@ -361,14 +363,14 @@ class TestTypeAnnotationShape:
     @pytest.mark.unit
     def test_any_not_used_in_narrowed_runtime_annotations(self) -> None:
         """S3.5 narrowed runtime-функции не возвращают ``Any``."""
-        from src.backend.core.di.providers import observability_bridge
+        from src.backend.core.observability import correlation
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
             from src.backend.core.di.providers import infrastructure_locator
 
         targets = [
-            (observability_bridge.get_correlation_id, "str"),
+            (correlation.get_correlation_id, "str"),
             (infrastructure_locator.get_event_bus_facade_provider, "EventBusFacade"),
         ]
         for fn, expected in targets:

@@ -68,19 +68,6 @@ def set_health_aggregator_provider(aggregator: Any) -> None:
 # ─────────────── Health-check session factory ───────────────
 
 
-def get_healthcheck_session_provider() -> Any:
-    """Возвращает фабрику healthcheck-сессий (async context manager)."""
-    if "healthcheck_session" in _overrides:
-        return _overrides["healthcheck_session"]
-    module = resolve_module("monitoring.health_check")
-    return module.get_healthcheck_service
-
-
-def set_healthcheck_session_provider(factory: Any) -> None:
-    """Установить override для ``healthcheck_session`` factory (test-инжекция)."""
-    _overrides["healthcheck_session"] = factory
-
-
 # ─────────────── Admin cache storage (Redis client) ───────────────
 
 
@@ -227,7 +214,6 @@ __all__ = (
     "get_admin_cache_storage_provider",
     "get_cache_invalidator_provider",
     "get_health_aggregator_provider",
-    "get_healthcheck_session_provider",
     "get_rag_cache_provider",
     "get_redis_kv_client_provider",
     "get_redis_stream_client_provider",
@@ -237,7 +223,6 @@ __all__ = (
     "set_admin_cache_storage_provider",
     "set_cache_invalidator_provider",
     "set_health_aggregator_provider",
-    "set_healthcheck_session_provider",
     "set_rag_cache_provider",
     "set_redis_kv_client_provider",
     "set_redis_stream_client_provider",

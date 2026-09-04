@@ -14,7 +14,7 @@ from fastapi.responses import HTMLResponse
 
 from src.backend.core.config.settings import settings
 from src.backend.core.di.app_state import app_state_singleton
-from src.backend.core.di.providers import get_healthcheck_session_provider
+from src.backend.core.di.providers import get_health_aggregator_provider
 from src.backend.core.net.http_utils import generate_link_page
 from src.backend.core.utils.converters import convert_numpy_types
 from src.backend.services.core.base import BaseService, get_service_for_model
@@ -22,8 +22,33 @@ from src.backend.services.core.base import BaseService, get_service_for_model
 __all__ = ("TechService", "get_tech_service")
 
 
+# T7 (Фаза A, 2026-09-05): tech-проверки идут через живой HealthAggregator
+# (ConnectorRegistry/pools: db_main, redis_cache, s3_main, smtp_main, ...).
+# Прежний путь (monitoring.health_check) не существовал — S102 сломал роут,
+# S107 поставил заглушку с hard-coded False (ложный «нездоров» сигнал).
+_COMPONENT_MAP: dict[str, str] = {
+    "database": "db_main",
+    "redis": "redis_cache",
+    "s3": "s3_main",
+    "s3_bucket": "s3_main",
+    "smtp": "smtp_main",
+    "rabbitmq": "eventbus_main",
+    "graylog": "logging_service",
+    # "logging_service" (Graylog-транспорт) не зарегистрирован как
+    # connector/pool — check_single вернёт "Component not registered" →
+    # False (честный «неизвестно/недоступен»).
+}
+
+
 class TechService:
     """Сервис для технических и служебных операций (Healthcheck, ссылки, отправка писем, массовая загрузка)."""
+
+    async def _check_component(self, component: str) -> bool:
+        """Health одной компоненты через HealthAggregator (T7 вариант (a))."""
+        aggregator = get_health_aggregator_provider()
+        name = _COMPONENT_MAP.get(component, component)
+        report = await aggregator.check_single(name, mode="fast")
+        return report.get("status") == "ok"
 
     async def get_log_storage_link(self) -> HTMLResponse:
         """Get link to log storage.
@@ -79,79 +104,82 @@ class TechService:
         )
 
     async def check_database(self) -> bool:
-        """Check database health.
+        """Check database health (HealthAggregator, компонент ``db_main``).
 
         Returns:
             True if healthy.
 
         """
-        async with get_healthcheck_session_provider()() as health_check:
-            return await health_check.check_database()
+        return await self._check_component("database")
 
     async def check_redis(self) -> bool:
-        """Check Redis health.
+        """Check Redis health (HealthAggregator, компонент ``redis_cache``).
 
         Returns:
             True if healthy.
 
         """
-        async with get_healthcheck_session_provider()() as health_check:
-            return await health_check.check_redis()
+        return await self._check_component("redis")
 
     async def check_s3(self) -> bool:
-        """Check S3 health.
+        """Check S3 health (HealthAggregator, компонент ``s3_main``).
 
         Returns:
             True if healthy.
 
         """
-        async with get_healthcheck_session_provider()() as health_check:
-            return await health_check.check_s3()
+        return await self._check_component("s3")
 
     async def check_s3_bucket(self) -> bool:
-        """Check S3 bucket health.
+        """Check S3 bucket health (HealthAggregator, компонент ``s3_main``).
 
         Returns:
             True if healthy.
 
         """
-        async with get_healthcheck_session_provider()() as health_check:
-            return await health_check.check_s3_bucket()
+        return await self._check_component("s3_bucket")
 
     async def check_graylog(self) -> bool:
-        """Check Graylog health.
+        """Check Graylog health (HealthAggregator, компонент ``logging_service``).
 
         Returns:
             True if healthy.
 
         """
-        async with get_healthcheck_session_provider()() as health_check:
-            return await health_check.check_graylog()
+        return await self._check_component("graylog")
 
     async def check_smtp(self) -> bool:
-        """Check SMTP health.
+        """Check SMTP health (HealthAggregator, компонент ``smtp_main``).
 
         Returns:
             True if healthy.
 
         """
-        async with get_healthcheck_session_provider()() as health_check:
-            return await health_check.check_smtp()
+        return await self._check_component("smtp")
 
     async def check_rabbitmq(self) -> bool:
-        """Check RabbitMQ health.
+        """Check RabbitMQ health (HealthAggregator, компонент ``eventbus_main``).
 
         Returns:
             True if healthy.
 
         """
-        async with get_healthcheck_session_provider()() as health_check:
-            return await health_check.check_rabbitmq()
+        return await self._check_component("rabbitmq")
 
-    async def check_all_services(self) -> dict[str, Any]:
-        """Метод check_all_services (см. signature)."""
-        async with get_healthcheck_session_provider()() as health_check:
-            return await health_check.check_all_services()
+    async def check_all_services(self) -> dict[str, bool]:
+        """Health всех зарегистрированных компонент (HealthAggregator.check_all).
+
+        Returns:
+            ``{компонента: healthy}`` — статус "ok" → True.
+        """
+        aggregator = get_health_aggregator_provider()
+        report = await aggregator.check_all(mode="fast")
+        components = report.get("components", report)
+        return {
+            name: isinstance(comp, dict) and comp.get("status") == "ok"
+            for name, comp in components.items()
+            if isinstance(comp, dict)
+        }
 
     async def get_degradation_snapshot(self) -> dict[str, Any]:
         """Снимок зарегистрированных features из GracefulDegradationRegistry.

@@ -103,9 +103,9 @@ INFRA_MODULES: Final[dict[str, str]] = {
     "cache": f"{_INFRA}.cache",
     "decorators.caching": f"{_INFRA}.decorators.caching",
     # ─── Monitoring ─────────────────────────────────────────────────
-    # S107 T7 fix: 'monitoring.health_check' restored — модуль теперь
+    # T7 вариант (a): tech.py перенацелен на app.health_aggregator;
+    # стаб S107 и ключ monitoring.health_check удалены (мёртвый код) —
     # существует (S107 stub для tech-роута /api/v1/tech/*).
-    "monitoring.health_check": f"{_INFRA}.monitoring.health_check",
     # ─── Storage clients ────────────────────────────────────────────
     "clients.storage.redis": f"{_INFRA}.clients.storage.redis",
     "clients.storage.redis_coordinator": f"{_INFRA}.clients.storage.redis_coordinator",

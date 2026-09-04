@@ -22,35 +22,27 @@ from __future__ import annotations
 
 
 def test_repos_files_mapping_points_to_extension() -> None:
-    """``repos.files`` → ``src.backend.infrastructure.repositories.files``.
+    """``repos.files`` НЕ зарегистрирован (инвертированный контракт, S102 P2-11).
 
-    Sprint 37 W1 (ADR-0282 Phase B Item 5): extensions/ → infrastructure/
-    migration завершена. ``repos.files`` указывает на canonical
-    ``src.backend.infrastructure.repositories.files``.
+    Sprint 37 W1 мигрировал extensions → infrastructure, но модуль
+    ``repositories/files`` физически не существует (verified S102, 2026-09-04:
+    repositories/ содержит только *mongo.py/connector/notebooks/outbox).
+    Мёртвый ключ удалён; вернуть только вместе с реальным модулем.
     """
     from src.backend.core.di import module_registry
 
-    target = module_registry.INFRA_MODULES.get("repos.files")
-    assert target == "src.backend.infrastructure.repositories.files", (
-        f"repos.files → {target!r}, "
-        f"expected 'src.backend.infrastructure.repositories.files'"
-    )
+    assert "repos.files" not in module_registry.INFRA_MODULES
 
 
 def test_repos_orders_mapping_points_to_extension() -> None:
-    """``repos.orders`` → ``src.backend.infrastructure.repositories.orders``.
+    """``repos.orders`` НЕ зарегистрирован (инвертированный контракт, S102 P2-11).
 
-    Sprint 37 W1 (ADR-0282 Phase B Item 5): extensions/ → infrastructure/
-    migration завершена. ``repos.orders`` указывает на canonical
-    ``src.backend.infrastructure.repositories.orders``.
+    Модуль ``repositories/orders`` физически не существует (verified S102) —
+    см. test_repos_files_mapping_points_to_extension.
     """
     from src.backend.core.di import module_registry
 
-    target = module_registry.INFRA_MODULES.get("repos.orders")
-    assert target == "src.backend.infrastructure.repositories.orders", (
-        f"repos.orders → {target!r}, "
-        f"expected 'src.backend.infrastructure.repositories.orders'"
-    )
+    assert "repos.orders" not in module_registry.INFRA_MODULES
 
 
 def test_repos_connector_configs_unchanged() -> None:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -78,59 +78,79 @@ async def test_get_langgraph_link(service: TechService) -> None:
             )
 
 
-# ── health checks ───────────────────────────────────────────────
+# ── health checks (T7 вариант (a): HealthAggregator) ────────────
+
+
+@pytest.fixture()
+def aggregator_override():
+    """DI-override: подставляем mock-агрегатор, чистим после теста."""
+    from src.backend.core.di.providers import set_health_aggregator_provider
+    from src.backend.core.di.providers.cache import _overrides
+
+    aggregator = AsyncMock()
+    set_health_aggregator_provider(aggregator)
+    yield aggregator
+    _overrides.pop("health_aggregator", None)
 
 
 @pytest.mark.asyncio
-async def test_check_database(service: TechService) -> None:
-    with patch(
-        "src.backend.services.core.tech.get_healthcheck_session_provider",
-    ) as mock_provider:
-        session = AsyncMock()
-        session.check_database.return_value = True
-        inner = MagicMock(
-            __aenter__=AsyncMock(return_value=session),
-            __aexit__=AsyncMock(return_value=False),
-        )
-        # production does ``get_healthcheck_session_provider()()`` — double call.
-        mock_provider.return_value = MagicMock(return_value=inner)
-        result = await service.check_database()
-        assert result is True
-        session.check_database.assert_awaited_once()
+async def test_check_database_healthy(service: TechService, aggregator_override) -> None:
+    aggregator_override.check_single = AsyncMock(
+        return_value={"name": "db_main", "status": "ok", "latency_ms": 1.0}
+    )
+    assert await service.check_database() is True
+    aggregator_override.check_single.assert_awaited_once_with("db_main", mode="fast")
 
 
 @pytest.mark.asyncio
-async def test_check_redis(service: TechService) -> None:
-    with patch(
-        "src.backend.services.core.tech.get_healthcheck_session_provider",
-    ) as mock_provider:
-        session = AsyncMock()
-        session.check_redis.return_value = False
-        inner = MagicMock(
-            __aenter__=AsyncMock(return_value=session),
-            __aexit__=AsyncMock(return_value=False),
-        )
-        # production does ``get_healthcheck_session_provider()()`` — double call.
-        mock_provider.return_value = MagicMock(return_value=inner)
-        result = await service.check_redis()
-        assert result is False
+async def test_check_redis_unhealthy(service: TechService, aggregator_override) -> None:
+    aggregator_override.check_single = AsyncMock(
+        return_value={"name": "redis_cache", "status": "error", "error": "refused"}
+    )
+    assert await service.check_redis() is False
 
 
 @pytest.mark.asyncio
-async def test_check_all_services(service: TechService) -> None:
-    with patch(
-        "src.backend.services.core.tech.get_healthcheck_session_provider",
-    ) as mock_provider:
-        session = AsyncMock()
-        session.check_all_services.return_value = {"db": True}
-        inner = MagicMock(
-            __aenter__=AsyncMock(return_value=session),
-            __aexit__=AsyncMock(return_value=False),
-        )
-        # production does ``get_healthcheck_session_provider()()`` — double call.
-        mock_provider.return_value = MagicMock(return_value=inner)
-        result = await service.check_all_services()
-        assert result == {"db": True}
+async def test_check_unknown_component_is_false(
+    service: TechService, aggregator_override
+) -> None:
+    """Незарегистрированная компонента (graylog/logging_service) → False."""
+    aggregator_override.check_single = AsyncMock(
+        return_value={
+            "name": "logging_service",
+            "status": "error",
+            "error": "Component not registered",
+        }
+    )
+    assert await service.check_graylog() is False
+
+
+@pytest.mark.asyncio
+async def test_check_s3_maps_to_s3_main(
+    service: TechService, aggregator_override
+) -> None:
+    aggregator_override.check_single = AsyncMock(
+        return_value={"name": "s3_main", "status": "ok"}
+    )
+    assert await service.check_s3() is True
+    aggregator_override.check_single.assert_awaited_once_with("s3_main", mode="fast")
+
+
+@pytest.mark.asyncio
+async def test_check_all_services_maps_statuses(
+    service: TechService, aggregator_override
+) -> None:
+    aggregator_override.check_all = AsyncMock(
+        return_value={
+            "status": "error",
+            "components": {
+                "db_main": {"name": "db_main", "status": "ok"},
+                "smtp_main": {"name": "smtp_main", "status": "error"},
+            },
+        }
+    )
+    result = await service.check_all_services()
+    assert result == {"db_main": True, "smtp_main": False}
 
 
 # ── degradation snapshot ────────────────────────────────────────
