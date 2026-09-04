@@ -38,8 +38,8 @@ async def phase_ai_gateway_singleton(app: FastAPI) -> None:
     Регистрирует canonical AIGateway (app.state.ai_gateway + svcs_registry).
     """
     try:
-        from src.backend.plugins.composition.workflow_setup import (
-            register_ai_gateway_singleton,
+        from src.backend.plugins.composition.workflow_setup import (  # type: ignore[attr-defined]
+            register_ai_gateway_singleton,  # ponytail: deliberate placeholder; see inline comment
         )
 
         await register_ai_gateway_singleton(app)
