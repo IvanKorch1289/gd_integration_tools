@@ -1558,3 +1558,42 @@ Note: correlation.py coverage % slightly dropped due to better stmts accounting 
 - M6-#1..#6 (functional verification, prod env required)
 
 Эти задачи документированы в `docs/roadmap/M6_DEPLOYMENT_RUNBOOK.md` и требуют живой prod-среды с реальным трафиком + инструментами нагрузочного тестирования — не могут быть закрыты автономно в интерактивной сессии.
+
+## Sprint 102 — Backlog closure (P2 quick wins + C2 verification)
+
+**Commits**:
+- fix(registry+gitignore): S102 P2-11+P2-12 close — INFRA_MODULES dead keys + .worktrees ignore
+- test(cleanup): S102 P2-1 close — 11 SyntaxWarnings fix (4 files)
+- fix(dsl): S102 P2-2 close — vulture @80 dsl fixes (3 findings)
+- docs(infra): S102 P2-4 close — clients/base.py docstring anti-pattern fix
+- fix(rpa): S102 P2-5 close — terminal_exec argv masked в logs (PII/credentials)
+- docs(ledger): S102 — P2 backlog closure sync (6 items DONE)
+
+### S102 results
+
+| ID | Домен | Что | Доказательство |
+|---|---|---|---|
+| P2-1 | tests | 12 SyntaxWarnings (`\` invalid escape) → raw string docstrings в 5 файлах | compileall tests/: 0 warnings |
+| P2-2 | dsl | vulture @80 3 findings (trace_storage maxlen REAL micro-bug fixed; transactional OutboxBackend/OutboxEvent — false positive # noqa) | vulture @80 clean |
+| P2-4 | infra | clients/base.py docstring aioredis анти-паттерн → показаны max_connections + timeouts | ruff 0 errors |
+| P2-5 | rpa | terminal_exec argv masked (только argv[0]) в logs; полная команда в audit через set_property | pytest rpa 86/86 pass |
+| P2-11 | di | 4 dangling INFRA_MODULES keys removed (consumers — test-only fixtures с overrides) | validate_modules → 0 missing |
+| P2-12 | git | /.worktrees/ added to .gitignore | git status clean |
+
+### Verified carryover (already closed)
+- **C2** (mobile_jwt_redis wire): already closed параллельной сессией commit `c684d9280` (2026-09-04). S102 ledger sync marked DONE.
+
+### Cumulative S48-S102
+- **203 atomic commits** (was 197 at S101).
+- **6 P2 backlog items closed** в S102.
+- **M2/M3/M4/M5-#2/R1/C2 — fully closed** (C2 closed параллельно).
+
+### Что осталось DEFERRED (за пределами автономной работы)
+- T3 (M4 phase 6+, overall 30.8% → 70%, multi-day effort)
+- T4 (M5-#10 load test, prod env required)
+- M6 (functional verification, prod env required)
+- S2 (webhook_relay retry/idempotency, 4h) — partially DEFERRED, requires deeper design
+- S3 (god-objects outside M2 — hitl_service, security/facade, builders/base)
+- F1 (frontend httpx migration)
+- DOCS1 (full STATUS/ARCHITECTURE sync)
+- P2-3, P2-6, P2-7, P2-8, P2-9, P2-10 (low priority cleanup)
