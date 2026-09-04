@@ -364,6 +364,7 @@ ruff=0, collect=16966/0 errors сохраняются на всём протяж
 | ADR-0289 | DONE | `4d521e0a7` | mypy partial-rationale (38-residual accept) |
 | G-PG-RUNNER | DONE | `1ced37572` | ADR-0291 + 4 ponytail comments; pg-runner deprecated |
 | G-FUNCTIONAL | DONE | `b6e54b011` | FUNCTIONAL_TEST_REPORT.md (130 LOC, verified) |
+| **S169 R-FIX** (cycle carryover) | DONE | `bd8140c80` | extract `_build_retry_policy` → sibling `_retry.py` (CL13 circular import) + restore `core.api.extensions` facade для `get_global_registry` (CL10 layer violation remediation) |
 
 **Итог mypy**: 149→38 (-111 errors, -74.5%) за 20 атомарных коммитов.
 ruff=0, collect=16966/0 errors сохраняются. ADR-0289 фиксирует deferral
