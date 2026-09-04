@@ -112,6 +112,8 @@ class TelegramSendFileProcessor(BaseProcessor):
 
         try:
             client = get_telegram_client(self._bot)
+            if client is None:
+                return
             async with client:
                 message_id = await client.send_document(
                     chat_id=str(chat_id),

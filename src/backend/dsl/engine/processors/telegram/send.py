@@ -105,6 +105,8 @@ class TelegramSendProcessor(BaseProcessor):
 
         try:
             client = get_telegram_client(self._bot)
+            if client is None:
+                return
             async with client:
                 message_id = await client.send_message(msg)
             exchange.set_property(self._result_property, message_id)

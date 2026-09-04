@@ -78,6 +78,8 @@ class ExpressReplyProcessor(BaseProcessor):
 
         try:
             client = get_express_client(self._bot)
+            if client is None:
+                return
             async with client:
                 sync_id = await client.reply(str(source_sync_id), msg)
             exchange.set_property(self._result_property, sync_id)

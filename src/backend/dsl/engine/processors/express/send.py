@@ -108,6 +108,8 @@ class ExpressSendProcessor(BaseProcessor):
 
         try:
             client = get_express_client(self._bot)
+            if client is None:
+                return
             async with client:
                 sync_id = await client.send_message(msg, sync=self._sync)
             exchange.set_property(self._result_property, sync_id)

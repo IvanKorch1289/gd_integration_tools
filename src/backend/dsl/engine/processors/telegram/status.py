@@ -47,6 +47,8 @@ class TelegramStatusProcessor(BaseProcessor):
         """Запрашивает getMe и сохраняет ответ в property."""
         try:
             client = get_telegram_client(self._bot)
+            if client is None:
+                return
             async with client:
                 profile = await client.get_me()
             exchange.set_property(self._result_property, profile)

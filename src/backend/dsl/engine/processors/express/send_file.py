@@ -114,6 +114,8 @@ class ExpressSendFileProcessor(BaseProcessor):
 
         try:
             client = get_express_client(self._bot)
+            if client is None:
+                return
             async with client:
                 upload = await client.upload_file(
                     file_data=file_bytes,

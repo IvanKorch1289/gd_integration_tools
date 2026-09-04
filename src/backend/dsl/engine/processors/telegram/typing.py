@@ -73,6 +73,8 @@ class TelegramTypingProcessor(BaseProcessor):
 
         try:
             client = get_telegram_client(self._bot)
+            if client is None:
+                return
             async with client:
                 await client.send_chat_action(str(chat_id), self._action)
             _logger.debug("TelegramTyping: chat_id=%s action=%s", chat_id, self._action)

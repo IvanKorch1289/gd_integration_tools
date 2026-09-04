@@ -91,6 +91,8 @@ class TelegramEditProcessor(BaseProcessor):
 
         try:
             client = get_telegram_client(self._bot)
+            if client is None:
+                return
             async with client:
                 await client.edit_message(
                     chat_id=str(chat_id),

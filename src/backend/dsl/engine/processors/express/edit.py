@@ -85,6 +85,8 @@ class ExpressEditProcessor(BaseProcessor):
 
         try:
             client = get_express_client(self._bot)
+            if client is None:
+                return
             async with client:
                 await client.edit_message(str(sync_id), **fields)
             _logger.debug("ExpressEdit: sync_id=%s fields=%s", sync_id, list(fields))

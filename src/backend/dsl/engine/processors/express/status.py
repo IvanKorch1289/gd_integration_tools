@@ -58,6 +58,8 @@ class ExpressStatusProcessor(BaseProcessor):
 
         try:
             client = get_express_client(self._bot)
+            if client is None:
+                return
             async with client:
                 status = await client.get_event_status(str(sync_id))
             payload = (

@@ -51,6 +51,8 @@ class ExpressTypingProcessor(BaseProcessor):
 
         try:
             client = get_express_client(self._bot)
+            if client is None:
+                return
             async with client:
                 if self._action == "start":
                     await client.send_typing(str(chat_id))
