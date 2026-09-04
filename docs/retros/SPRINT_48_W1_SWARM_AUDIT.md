@@ -1341,3 +1341,61 @@ Provider returns the class itself, caller does `ReplyChannel.instance()`.
 - **M5 9/10 closed** (was 7/10 in S93)
 - M6 DEFERRED (production env required)
 
+
+## Sprint 96 — R1 P0 REGRESSION closure + Phase A ledger sync
+
+**Commits**:
+- `4b31157d4` fix(di): R1 close — workflow_subprocess import-time DI + missing INFRA_MODULES + s3 client factory contract
+- `97230556d` chore(deps+docs): M3-#4 cryptography 50.0.1 upgrade + WIKI.md regen
+- `61a01c49f` docs(roadmap): Phase A planning artifacts 2026-09-02 (BASELINE/SWARM/FINAL)
+
+### S96 results
+
+**R1 P0 REGRESSION CLOSED** (carryover from Sprint 87 retro claim "100% CLOSED" but
+pytest --collect-only had 1 error per PROGRESS_LEDGER.md).
+
+Root causes (4 связанных дефекта S87 final batch):
+1. `workflow_subprocess.py:26` — module-level `_wf_factory = get_workflow_factory_module_provider()`
+   выполнялась на import, `resolve_module('workflow')` падал с ModuleRegistryError
+   (ключ `workflow` отсутствовал в INFRA_MODULES, было только `workflow.event_store` и др.).
+2. `INFRA_MODULES` не содержал `workflow.factory` — S87 мигрировал файл на DI provider,
+   но не зарегистрировал ключ в module_registry.
+3. `s3_pool/__init__.py` экспортирует `get_s3_client()` (function) + PEP 562 `__getattr__` →
+   `s3_client` (instance). Provider делал `module.s3_client` (instance attribute), который
+   падает на `types.ModuleType` mock-фейках в `test_store_oversized_payload`.
+4. `scan_file`/`ingest_file` consumers использовали provider как instance (`s3_client.method()`),
+   а не как factory (`s3 = get_s3_client_provider(); s3.method()`).
+
+Fixes (ponytail — minimal change):
+1. `workflow_subprocess.py`: `_wf_factory` стал lazy getter-функцией
+   (`def _wf_factory(): return get_workflow_factory_module_provider()`),
+   2 callers обновлены на `_wf_factory()`.
+2. `INFRA_MODULES`: добавлены `workflow.factory` + `clients.storage.s3_pool`.
+3. `get_s3_client_provider` / `get_s3_storage_client_provider`: возвращают factory
+   function (`module.get_s3_client`), не instance — test contract compatibility.
+4. `scan_file.py` / `ingest_file.py`: добавлен `()` после provider вызова
+   для consistency с `transformation.py` / `claim_check.py`.
+
+Verified:
+- `pytest --collect-only`: 16782 collected, 0 errors (was 16777 + 1 error).
+- `tests/unit/dsl/engine/processors/workflow/` — 30/30 pass (was 23 passed + 7 failed).
+- `ruff check src/` — 0 errors.
+
+### Carryover discipline
+Following Pre-Sprint Checklist (PRODUCTION_READINESS_FINAL.md §Pre-Sprint):
+1. Enumerated unclosed: R1 (P0 REGRESSION) — surfaced в PROGRESS_LEDGER.md от 2026-09-04.
+2. Prioritized R1 over M4/M5/M6 (P0 > P1).
+3. Implemented: 1 atomic commit (28+/11- across 5 files).
+4. Verified: collection restored, tests pass, ruff clean.
+5. Documented: this retro entry + PROGRESS_LEDGER R1 row updated to DONE.
+6. Then proceeded: R1 DONE → 1 P0 cleared, M4/M5/M6 remain.
+
+### Cumulative S48-S96
+- 187 atomic commits total (was 184 at S94).
+- Phase A planning artifacts (BASELINE/SWARM/FINAL) now в git.
+- M3-#4 fully closed (cryptography 50.0.1 + WIKI regen).
+
+### Next sprint (S97)
+- M4 coverage ratchet — push from 30.8% toward 70% (multi-sprint effort)
+- M5-#10 load test (production env, DEFERRED to prod)
+- M6 functional verification (production env, DEFERRED to prod)
