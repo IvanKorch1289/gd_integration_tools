@@ -10,17 +10,17 @@
 from __future__ import annotations
 
 from collections import deque
+from dataclasses import asdict
 from unittest.mock import AsyncMock, patch
 
 import orjson
 import pytest
-from dataclasses import asdict
 
 from src.backend.services.integrations.webhook_relay import (
+    _DLQ_KEY,
     DLQEntry,
     RelayRule,
     WebhookRelay,
-    _DLQ_KEY,
 )
 
 
