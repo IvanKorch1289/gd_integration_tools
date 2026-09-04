@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-09-01 (Sprint 87 — M2-#11 FINAL BATCH 55/55 (100% CLOSED ✓); 13 files + 11 new providers; см. `docs/roadmap/PRODUCTION_READINESS.md`)
+> **Last verified**: 2026-09-01 (Sprint 88 — M4 partial: core/auth coverage 79.0% exceeds 70% target; overall 30.8% deferred; см. `docs/roadmap/M4_AUDIT_2026-09-01.md`)
 
 ## Post-Plan A Sprints 1-31 (coverage ratchet + final polish)
 
