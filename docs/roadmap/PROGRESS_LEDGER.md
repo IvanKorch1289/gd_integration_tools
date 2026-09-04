@@ -74,7 +74,7 @@
 | S1 | services | **REJECTED с обоснованием** (2026-09-04): ключ `decorators.caching` статический и валидируется validate_modules() — R1-класса бага нет; lazy-фикс потребовал бы ломать семантику декорирования классом. YAGNI; пересмотреть только при переименовании ключа | 0h |
 | S2 | services | ~~webhook idempotency + DLQ O(N²)~~ **DONE `0edb11598`** (2026-09-04): Idempotency-Key стабилен на попытки + хранится в DLQEntry + переиспользуется при retry; `_dlq_remove_many` — один LRANGE; 5 тестов | 4h |
 | S3 | services/dsl | God-объекты вне M2: hitl_service 507/21, security/facade 453/22, builders/base 1422 (сплит по плану M2-#21) | 16h |
-| F1 | frontend | 12 сайтов httpx в обход BaseAPIClient (нет retry/JWT/центр. конфига) + страница 23 читает os.environ напрямую | 4h |
+| F1 | frontend | ~~12 сайтов httpx в обход BaseAPIClient~~ **PARTIAL DONE S104 `b22b5feba`** (2026-09-04): page 23 inline httpx + os.environ → BaseAPIClient (representative example). Остальные 11+ pages — DEFERRED (mechanical multi-file refactor) | 4h |
 | T3 | tests | M4: overall 30.8% → 70%, `fail_under 60→70` (план M4-#3..#7); pre_prod_check gate #01 сейчас FAIL | 32h |
 | T4 | hardening | Kafka max_poll_records **DONE `12deed6fb`**; MQTT W3 **DONE `37156dbdb`**; M5-claims верифицированы выборочно (см. «Функциональная и нагрузочная верификация»). Остаток: полный SLO-прогон (prod-профиль + perf extras — точка решения) | 1h |
 | T5 | core/dsl | ~~Import-time I/O аудит~~ **DONE `238c83c04`** (2026-09-04): `_TAP_EXECUTOR` — мёртвый код (0 использований), удалён. `retry.py:293` singleton и `pool_health.py:19` — без I/O, детерминированы (статические ключи реестра) — оставлены (YAGNI, отказ documented) | 2h |
