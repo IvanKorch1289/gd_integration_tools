@@ -21,12 +21,9 @@ API::
 
 from __future__ import annotations
 
-import asyncio
 from dataclasses import dataclass, field
 from time import monotonic
 from typing import Any
-
-from src.backend.core.logging import get_logger
 
 # S62 M2-#3: VariableBackend Protocol + 3 implementations
 # (InMemory, Consul, Postgres) extracted в :mod:`variable_backend`.
@@ -37,6 +34,7 @@ from src.backend.core.dsl.variable_backend import (  # noqa: E402,F401
     PostgresVariableBackend,
     VariableBackend,
 )
+from src.backend.core.logging import get_logger
 
 __all__ = (
     "ConsulVariableBackend",

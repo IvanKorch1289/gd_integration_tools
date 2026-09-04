@@ -162,7 +162,7 @@ __all__ = (
 
 
 def get_dask_backend_provider() -> Any:
-    """Возвращает singleton :func:\`get_dask_backend\` (см. ``DaskBackend``).
+    r"""Возвращает singleton :func:\`get_dask_backend\` (см. ``DaskBackend``).
 
     S68 M2-#11 batch 3: lazy resolve для dsl/processors/dask_compute.py.
     Был inline: ``from src.backend.infrastructure.execution.dask_backend import get_dask_backend``
@@ -185,7 +185,7 @@ def set_dask_backend_provider(backend: Any) -> None:
 
 
 def get_outbox_writer_provider() -> Any:
-    """Возвращает :func:\`write\` (outbox writer).
+    r"""Возвращает :func:\`write\` (outbox writer).
 
     S74 M2-#11 batch 9: lazy resolve для dsl/processors/business.py.
     Был inline: ``from src.backend.infrastructure.repositories.outbox import
@@ -208,7 +208,7 @@ def set_outbox_writer_provider(writer: Any) -> None:
 
 
 def get_external_db_registry_provider() -> Any:
-    """Возвращает :func:\`get_external_db_registry\` (DB registry singleton).
+    r"""Возвращает :func:\`get_external_db_registry\` (DB registry singleton).
 
     S75 M2-#11 batch 10: lazy resolve для dsl/processors/batch.py.
     Был inline: ``from src.backend.infrastructure.database.database import
@@ -231,7 +231,7 @@ def set_external_db_registry_provider(registry: Any) -> None:
 
 
 def get_main_session_manager_provider() -> Any:
-    """Возвращает \`main_session_manager\` (DB session manager singleton).
+    r"""Возвращает \`main_session_manager\` (DB session manager singleton).
 
     S79 M2-#11 batch 14: lazy resolve для dsl/processors/audit.py.
     """
@@ -250,7 +250,7 @@ def set_main_session_manager_provider(manager: Any) -> None:
 
 
 def get_db_initializer_provider() -> Any:
-    """Возвращает \`db_initializer\` (DB schema initializer).
+    r"""Возвращает \`db_initializer\` (DB schema initializer).
 
     S80 M2-#11 batch 15: lazy resolve для dsl/processors/ml_inference.py.
     """
@@ -269,7 +269,7 @@ def set_db_initializer_provider(initializer: Any) -> None:
 
 
 def get_smart_session_manager_provider() -> Any:
-    """Возвращает \`get_smart_session_manager\` (DB session factory).
+    r"""Возвращает \`get_smart_session_manager\` (DB session factory).
 
     S81 M2-#11 batch 16: lazy resolve для dsl/processors/saga_lra.py.
     """

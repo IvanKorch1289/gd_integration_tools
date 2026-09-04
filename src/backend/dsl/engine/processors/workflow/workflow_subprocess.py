@@ -10,6 +10,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
+# S87 M2-#11 final batch: DI provider.
+from src.backend.core.di.providers.cache import get_workflow_factory_module_provider
+
 # Module-level imports (callable through module reference) so tests can patch
 # ``src.backend.infrastructure.workflow.factory.create_workflow_backend``
 # and have it propagate to ``run_workflow_by_id``.
@@ -19,8 +22,6 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry import (
     processor,  # B-1 fix (cycle 1): registry integration
 )
-# S87 M2-#11 final batch: DI provider.
-from src.backend.core.di.providers.cache import get_workflow_factory_module_provider
 
 _wf_factory = get_workflow_factory_module_provider()
 

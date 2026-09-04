@@ -85,7 +85,9 @@ class ScanFileProcessor(BaseProcessor):
 
         try:
             # S78 M2-#11 batch 13: DI provider вместо inline infrastructure import.
-            from src.backend.core.di.providers.cache import get_antivirus_backend_factory_provider
+            from src.backend.core.di.providers.cache import (
+                get_antivirus_backend_factory_provider,
+            )
 
             create_antivirus_backend = get_antivirus_backend_factory_provider()
 
@@ -137,7 +139,9 @@ class ScanFileProcessor(BaseProcessor):
             if key:
                 try:
                     # S78 M2-#11 batch 13: DI provider вместо inline infrastructure import.
-                    from src.backend.core.di.providers.cache import get_s3_client_provider
+                    from src.backend.core.di.providers.cache import (
+                        get_s3_client_provider,
+                    )
 
                     s3_client = get_s3_client_provider()
 
@@ -166,7 +170,9 @@ class ScanFileProcessor(BaseProcessor):
         """
         try:
             # S78 M2-#11 batch 13: DI provider вместо inline infrastructure import.
-            from src.backend.core.di.providers.cache import get_record_antivirus_scan_provider
+            from src.backend.core.di.providers.cache import (
+                get_record_antivirus_scan_provider,
+            )
 
             record_antivirus_scan = get_record_antivirus_scan_provider()
 

@@ -57,7 +57,9 @@ class AuthVerifyMixin:
             ``is_authenticated=False``.
 
         """
-        from src.backend.core.auth.facade import logger  # S64: lazy import для circular dep
+        from src.backend.core.auth.facade import (
+            logger,  # S64: lazy import для circular dep
+        )
 
         # SAML requires ACS flow; fail-closed unless dev_mode flag is on.
         dev_mode = False
@@ -149,7 +151,9 @@ class AuthVerifyMixin:
             :class:`AuthResult` with ``is_authenticated`` status.
 
         """
-        from src.backend.core.auth.facade import logger  # S64: lazy import для circular dep
+        from src.backend.core.auth.facade import (
+            logger,  # S64: lazy import для circular dep
+        )
 
         if not username or not password:
             return AuthResult(

@@ -183,7 +183,9 @@ class ScrapeProcessor(BaseProcessor):
 
         try:
             # S83 M2-#11 batch 18: DI provider вместо inline infrastructure import.
-            from src.backend.core.di.providers.cache import get_http_client_dependency_provider
+            from src.backend.core.di.providers.cache import (
+                get_http_client_dependency_provider,
+            )
 
             get_http_client_dependency = get_http_client_dependency_provider()
 
@@ -277,7 +279,9 @@ class PaginateProcessor(BaseProcessor):
         if not await self.auth_check(exchange, action="read"):
             return
         # S83 M2-#11 batch 18: DI provider вместо inline infrastructure import.
-        from src.backend.core.di.providers.cache import get_http_client_dependency_provider
+        from src.backend.core.di.providers.cache import (
+            get_http_client_dependency_provider,
+        )
 
         get_http_client_dependency = get_http_client_dependency_provider()
 
@@ -424,7 +428,9 @@ class ApiProxyProcessor(BaseProcessor):
         if not await self.auth_check(exchange, action="execute"):
             return
         # S83 M2-#11 batch 18: DI provider вместо inline infrastructure import.
-        from src.backend.core.di.providers.cache import get_http_client_dependency_provider
+        from src.backend.core.di.providers.cache import (
+            get_http_client_dependency_provider,
+        )
 
         get_http_client_dependency = get_http_client_dependency_provider()
 

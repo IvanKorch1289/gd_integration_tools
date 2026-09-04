@@ -54,9 +54,7 @@ def _get_fail_mode() -> str:
     import с core.config.services.resilience).
     """
     try:
-        from src.backend.core.config.services.resilience import (
-            resilience_settings,
-        )
+        from src.backend.core.config.services.resilience import resilience_settings
 
         return str(resilience_settings.rate_limit_fail_mode)
     except Exception as exc:

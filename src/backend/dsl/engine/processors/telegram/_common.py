@@ -37,6 +37,7 @@ def get_telegram_client(bot_name: str = "main_bot") -> TelegramBotClient:
 
     """
     from src.backend.core.config.telegram import telegram_bot_settings
+
     # S85 M2-#11 accelerated batch: DI provider вместо inline infrastructure import.
     from src.backend.core.di.providers.cache import get_telegram_bot_provider
 

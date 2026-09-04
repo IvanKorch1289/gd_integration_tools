@@ -178,7 +178,9 @@ class IngestFileProcessor(BaseProcessor):
                 filename = str(key).rsplit("/", 1)[-1]
                 try:
                     # S78 M2-#11 batch 13: DI provider вместо inline infrastructure import.
-                    from src.backend.core.di.providers.cache import get_s3_client_provider
+                    from src.backend.core.di.providers.cache import (
+                        get_s3_client_provider,
+                    )
 
                     s3_client = get_s3_client_provider()
 

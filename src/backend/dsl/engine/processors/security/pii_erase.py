@@ -321,7 +321,9 @@ class PiiEraseProcessor(BaseProcessor):
             entity_type, entity_id = self._scope.split(":", 1)
             _validate_entity_type(entity_type)
             # S87 M2-#11 final batch: DI provider.
-            from src.backend.core.di.providers.db import get_main_session_manager_provider
+            from src.backend.core.di.providers.db import (
+                get_main_session_manager_provider,
+            )
 
             _main_session_module = get_main_session_manager_provider()
             main_session_manager = _main_session_module.main_session_manager
@@ -417,7 +419,9 @@ class PiiEraseProcessor(BaseProcessor):
         """
         try:
             # S87 M2-#11 final batch: DI provider.
-            from src.backend.core.di.providers.cache import get_dlq_envelope_class_provider
+            from src.backend.core.di.providers.cache import (
+                get_dlq_envelope_class_provider,
+            )
 
             _dlq_module = get_dlq_envelope_class_provider()
             get_dlq_envelope_class = _dlq_module.get_dlq_envelope_class
@@ -434,7 +438,9 @@ class PiiEraseProcessor(BaseProcessor):
                 reason=DLQReason.UNEXPECTED,
             )
             # S87 M2-#11 final batch: DI provider.
-            from src.backend.core.di.providers.cache import get_dlq_memory_writer_module_provider
+            from src.backend.core.di.providers.cache import (
+                get_dlq_memory_writer_module_provider,
+            )
 
             _dlq_writer_module = get_dlq_memory_writer_module_provider()
             InMemoryDLQWriter = _dlq_writer_module.InMemoryDLQWriter

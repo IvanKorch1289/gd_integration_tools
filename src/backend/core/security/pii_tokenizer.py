@@ -52,19 +52,17 @@ Audit-event
 
 from __future__ import annotations
 
-import uuid
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
+from src.backend.core.logging import get_logger
 from src.backend.core.security.pii_tokenizer_models import (
+    _PRESIDIO_PLACEHOLDER_RE,
     EncryptedValue,
     PIIPolicy,
     TokenMap,
-    _PRESIDIO_PLACEHOLDER_RE,
     _uuid_short,
 )
-from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

@@ -273,7 +273,7 @@ def get_cache_facade(enable_fallback: bool = True) -> Any:
 
 
 def get_httpx_client_provider() -> Any:
-    """Возвращает singleton :func:\`get_httpx_client\` (HTTP transport).
+    r"""Возвращает singleton :func:\`get_httpx_client\` (HTTP transport).
 
     S72 M2-#11 batch 7: lazy resolve для dsl/processors/graphql_query.py.
     Был inline: ``from src.backend.infrastructure.clients.transport.
@@ -296,7 +296,7 @@ def set_httpx_client_provider(client: Any) -> None:
 
 
 def get_reply_channel_class_provider() -> Any:
-    """Возвращает :class:\`ReplyChannel\` class (singleton via \`instance()\`).
+    r"""Возвращает :class:\`ReplyChannel\` class (singleton via \`instance()\`).
 
     S73 M2-#11 batch 8: lazy resolve для dsl/processors/request_reply.py.
     ReplyChannel — class с classmethod \`instance()\` (singleton).
@@ -319,7 +319,7 @@ def set_reply_channel_class_provider(channel_class: Any) -> None:
 
 
 def get_redis_lock_class_provider() -> Any:
-    """Возвращает :class:\`RedisLock\` (distributed lock guard).
+    r"""Возвращает :class:\`RedisLock\` (distributed lock guard).
 
     S76 M2-#11 batch 11: lazy resolve для dsl/processors/redis_lock_processor.py.
     Был inline: ``from src.backend.infrastructure.clients.storage.redis_lock
@@ -342,7 +342,7 @@ def set_redis_lock_class_provider(lock_class: Any) -> None:
 
 
 def get_s3_client_provider() -> Any:
-    """Возвращает singleton S3 client (\`s3_client\`).
+    r"""Возвращает singleton S3 client (\`s3_client\`).
 
     S78 M2-#11 batch 13: lazy resolve для dsl/processors/{ingest,scan}_file.py.
     Был inline: ``from src.backend.infrastructure.clients.storage.s3_pool
@@ -365,7 +365,7 @@ def set_s3_client_provider(client: Any) -> None:
 
 
 def get_antivirus_backend_factory_provider() -> Any:
-    """Возвращает :func:\`create_antivirus_backend\` factory.
+    r"""Возвращает :func:\`create_antivirus_backend\` factory.
 
     S78 M2-#11 batch 13: lazy resolve для dsl/processors/scan_file.py.
     """
@@ -381,7 +381,7 @@ def set_antivirus_backend_factory_provider(factory: Any) -> None:
 
 
 def get_record_antivirus_scan_provider() -> Any:
-    """Возвращает :func:\`record_antivirus_scan\` (metrics emitter).
+    r"""Возвращает :func:\`record_antivirus_scan\` (metrics emitter).
 
     S78 M2-#11 batch 13: lazy resolve для dsl/processors/scan_file.py.
     """
@@ -400,7 +400,7 @@ def set_record_antivirus_scan_provider(emitter: Any) -> None:
 
 
 def get_immutable_audit_store_class_provider() -> Any:
-    """Возвращает :class:\`ImmutableAuditStore\` (audit store).
+    r"""Возвращает :class:\`ImmutableAuditStore\` (audit store).
 
     S79 M2-#11 batch 14: lazy resolve для dsl/processors/audit.py.
     """
@@ -419,7 +419,7 @@ def set_immutable_audit_store_class_provider(aclass: Any) -> None:
 
 
 def get_vault_backend_class_provider() -> Any:
-    """Возвращает :class:\`VaultBackend\` (secrets).
+    r"""Возвращает :class:\`VaultBackend\` (secrets).
 
     S82 M2-#11 batch 17: lazy resolve для dsl/processors/vault_secret.py.
     """
@@ -435,7 +435,7 @@ def set_vault_backend_class_provider(aclass: Any) -> None:
 
 
 def get_vault_config_class_provider() -> Any:
-    """Возвращает :class:\`VaultConfig\` (secrets config).
+    r"""Возвращает :class:\`VaultConfig\` (secrets config).
 
     S82 M2-#11 batch 17: lazy resolve для dsl/processors/vault_secret.py.
     """
@@ -473,7 +473,7 @@ def set_http_client_dependency_provider(client: Any) -> None:
 
 
 def get_object_storage_provider() -> Any:
-    """Возвращает \`get_object_storage\` (S3/MinIO/LocalFS).
+    r"""Возвращает \`get_object_storage\` (S3/MinIO/LocalFS).
 
     S84 M2-#11 batch 19: lazy resolve для dsl/processors/storage/s3.py.
     """
@@ -511,7 +511,7 @@ def set_telegram_bot_provider(bot: Any) -> None:
 
 
 def get_http_client_typed_provider() -> Any:
-    """Возвращает \`get_http_client_typed\` (typed HTTP client factory).
+    r"""Возвращает \`get_http_client_typed\` (typed HTTP client factory).
 
     S85 accelerated batch: lazy resolve для dsl/processors/eip/api_composition.py.
     """
@@ -530,7 +530,7 @@ def set_http_client_typed_provider(client: Any) -> None:
 
 
 def get_ai_sanitizer_provider() -> Any:
-    """Возвращает \`get_ai_sanitizer\` (PII sanitizer factory).
+    r"""Возвращает \`get_ai_sanitizer\` (PII sanitizer factory).
 
     S86: lazy resolve для dsl/processors/ai/sanitizepii_processor.py.
     """
@@ -546,7 +546,7 @@ def set_ai_sanitizer_provider(sanitizer: Any) -> None:
 
 
 def get_db_manager_provider() -> Any:
-    """Возвращает \`get_db_manager\` (DB session manager factory).
+    r"""Возвращает \`get_db_manager\` (DB session manager factory).
 
     S86: lazy resolve для dsl/processors/components/databasequeryprocessor.py.
     """
@@ -562,7 +562,7 @@ def set_db_manager_provider(manager: Any) -> None:
 
 
 def get_s3_storage_client_provider() -> Any:
-    """Возвращает \`storage_client\` (low-level S3 client).
+    r"""Возвращает \`storage_client\` (low-level S3 client).
 
     S86: lazy resolve для s3read/s3write processors.
     """
@@ -578,7 +578,7 @@ def set_s3_storage_client_provider(client: Any) -> None:
 
 
 def get_smtp_client_provider() -> Any:
-    """Возвращает \`smtp_client\` (SMTP email client).
+    r"""Возвращает \`smtp_client\` (SMTP email client).
 
     S86: lazy resolve для dsl/processors/rpa/system.py.
     """
@@ -594,7 +594,7 @@ def set_smtp_client_provider(client: Any) -> None:
 
 
 def get_stream_provider() -> Any:
-    """Возвращает \`stream\` module (messaging stream).
+    r"""Возвращает \`stream\` module (messaging stream).
 
     S86: lazy resolve для dsl/processors/proxy/forward.py.
     """
@@ -613,7 +613,7 @@ def set_stream_provider(stream: Any) -> None:
 
 
 def get_stream_client_provider() -> Any:
-    """Возвращает \`get_stream_client\` (messaging stream client factory).
+    r"""Возвращает \`get_stream_client\` (messaging stream client factory).
 
     S86: lazy resolve для dsl/processors/proxy/forward.py.
     """
@@ -632,7 +632,7 @@ def set_stream_client_provider(client: Any) -> None:
 
 
 def get_express_bot_module_provider() -> Any:
-    """Возвращает \`express_bot\` module (external).
+    r"""Возвращает \`express_bot\` module (external).
 
     S87: lazy resolve для 4 express/* файлов.
     """
@@ -664,7 +664,7 @@ def set_express_dialogs_mongo_provider(repo: Any) -> None:
 
 
 def get_vector_store_provider() -> Any:
-    """Возвращает \`vector_store\` (PII vector storage).
+    r"""Возвращает \`vector_store\` (PII vector storage).
 
     S87: lazy resolve для security/pii_erase.py.
     """
@@ -680,7 +680,7 @@ def set_vector_store_provider(store: Any) -> None:
 
 
 def get_token_registry_provider() -> Any:
-    """Возвращает \`token_registry\` (card token storage).
+    r"""Возвращает \`token_registry\` (card token storage).
 
     S87: lazy resolve для security/card_tokenize.py.
     """
@@ -696,7 +696,7 @@ def set_token_registry_provider(registry: Any) -> None:
 
 
 def get_sink_factory_provider() -> Any:
-    """Возвращает \`build_sink\` (sink factory).
+    r"""Возвращает \`build_sink\` (sink factory).
 
     S87: lazy resolve для sink_publish/generic.py.
     """
@@ -712,7 +712,7 @@ def set_sink_factory_provider(factory: Any) -> None:
 
 
 def get_mq_sink_class_provider() -> Any:
-    """Возвращает :class:\`MqSink\` (messaging queue sink).
+    r"""Возвращает :class:\`MqSink\` (messaging queue sink).
 
     S87: lazy resolve для sink_publish/messaging.py.
     """
@@ -728,7 +728,7 @@ def set_mq_sink_class_provider(aclass: Any) -> None:
 
 
 def get_ws_sink_class_provider() -> Any:
-    """Возвращает :class:\`WsSink\` (WebSocket sink).
+    r"""Возвращает :class:\`WsSink\` (WebSocket sink).
 
     S87: lazy resolve для sink_publish/messaging.py.
     """
@@ -744,7 +744,7 @@ def set_ws_sink_class_provider(aclass: Any) -> None:
 
 
 def get_grpc_sink_class_provider() -> Any:
-    """Возвращает :class:\`GrpcSink\` (gRPC sink).
+    r"""Возвращает :class:\`GrpcSink\` (gRPC sink).
 
     S87: lazy resolve для sink_publish/protocols.py.
     """
@@ -760,7 +760,7 @@ def set_grpc_sink_class_provider(aclass: Any) -> None:
 
 
 def get_soap_sink_class_provider() -> Any:
-    """Возвращает :class:\`SoapSink\` (SOAP sink).
+    r"""Возвращает :class:\`SoapSink\` (SOAP sink).
 
     S87: lazy resolve для sink_publish/protocols.py.
     """
@@ -776,7 +776,7 @@ def set_soap_sink_class_provider(aclass: Any) -> None:
 
 
 def get_notifications_module_provider() -> Any:
-    """Возвращает \`notifications\` module (notification channels).
+    r"""Возвращает \`notifications\` module (notification channels).
 
     S87: lazy resolve для notify/__init__.py.
     """
@@ -792,7 +792,7 @@ def set_notifications_module_provider(module: Any) -> None:
 
 
 def get_workflow_factory_module_provider() -> Any:
-    """Возвращает \`workflow.factory\` module alias.
+    r"""Возвращает \`workflow.factory\` module alias.
 
     S87: lazy resolve для workflow_subprocess.py.
     """
@@ -811,7 +811,7 @@ def set_workflow_factory_module_provider(module: Any) -> None:
 
 
 def get_di_bridge_dlq_module_provider() -> Any:
-    """Возвращает \`di_bridge.dlq\` module (SAGA DLQ bridge).
+    r"""Возвращает \`di_bridge.dlq\` module (SAGA DLQ bridge).
 
     S87 final batch: lazy resolve для security/pii_erase.py.
     """
@@ -827,7 +827,7 @@ def set_di_bridge_dlq_module_provider(module: Any) -> None:
 
 
 def get_dlq_memory_writer_module_provider() -> Any:
-    """Возвращает \`messaging.dlq.memory_writer\` module (in-memory DLQ).
+    r"""Возвращает \`messaging.dlq.memory_writer\` module (in-memory DLQ).
 
     S87 final batch: lazy resolve для security/pii_erase.py.
     """
@@ -843,7 +843,7 @@ def set_dlq_memory_writer_module_provider(module: Any) -> None:
 
 
 def get_record_express_message_sent_provider() -> Any:
-    """Возвращает \`record_express_message_sent\` (metric emitter).
+    r"""Возвращает \`record_express_message_sent\` (metric emitter).
 
     S87 final batch: lazy resolve для express/send.py.
     """
@@ -859,7 +859,7 @@ def set_record_express_message_sent_provider(emitter: Any) -> None:
 
 
 def get_dlq_envelope_class_provider() -> Any:
-    """Возвращает :class:\`DLQEnvelope\` (DLQ message envelope).
+    r"""Возвращает :class:\`DLQEnvelope\` (DLQ message envelope).
 
     S87 final batch: lazy resolve для security/pii_erase.py.
     """

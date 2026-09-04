@@ -354,7 +354,7 @@ __all__ = (
 
 
 def get_workflow_backend_factory_provider() -> Any:
-    """Возвращает :func:\`create_workflow_backend\` factory.
+    r"""Возвращает :func:\`create_workflow_backend\` factory.
 
     S69 M2-#11 batch 4: lazy resolve для dsl/processors/sub_workflow.py.
     Был inline: ``from src.backend.infrastructure.workflow.factory import
@@ -377,7 +377,7 @@ def set_workflow_backend_factory_provider(factory: Any) -> None:
 
 
 def get_workflow_state_repository_provider() -> Any:
-    """Возвращает :class:\`WorkflowStateRepository\` (saga state repo).
+    r"""Возвращает :class:\`WorkflowStateRepository\` (saga state repo).
 
     S81 M2-#11 batch 16: lazy resolve для dsl/processors/saga_lra.py.
     """

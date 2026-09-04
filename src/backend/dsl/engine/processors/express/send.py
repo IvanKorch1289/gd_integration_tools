@@ -121,7 +121,9 @@ class ExpressSendProcessor(BaseProcessor):
             )
             try:
                 # S87 M2-#11 final batch: DI provider.
-                from src.backend.core.di.providers.cache import get_record_express_message_sent_provider
+                from src.backend.core.di.providers.cache import (
+                    get_record_express_message_sent_provider,
+                )
 
                 record_express_message_sent = get_record_express_message_sent_provider()
 
@@ -141,7 +143,9 @@ class ExpressSendProcessor(BaseProcessor):
             exchange.set_property(f"{self._result_property}_error", str(exc))
             try:
                 # S87 M2-#11 final batch: DI provider.
-                from src.backend.core.di.providers.cache import get_record_express_message_sent_provider
+                from src.backend.core.di.providers.cache import (
+                    get_record_express_message_sent_provider,
+                )
 
                 record_express_message_sent = get_record_express_message_sent_provider()
 

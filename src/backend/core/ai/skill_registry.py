@@ -48,9 +48,7 @@ from __future__ import annotations
 import importlib
 import inspect
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Any, Literal
-
-from pydantic import BaseModel, Field
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.ai.skill_spec import SkillSpec  # S66 M2-#8 split
 from src.backend.core.logging import get_logger

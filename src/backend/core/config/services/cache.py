@@ -81,10 +81,11 @@ class RedisSettings(BaseSettingsWithLoader):
         json_schema_extra={"example": 300},
     )
     max_connections: int = Field(
-        ...,
+        50,
         ge=1,
-        description="Максимальное количество соединений в пуле",
-        json_schema_extra={"example": 20},
+        le=1000,
+        description="Максимальное количество соединений в Redis-пуле (M5 hardening: explicit limit вместо no-default)",
+        json_schema_extra={"example": 50},
     )
     socket_timeout: int | None = Field(
         ...,

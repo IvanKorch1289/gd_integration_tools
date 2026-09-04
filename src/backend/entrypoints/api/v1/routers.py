@@ -21,6 +21,9 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.admin_actions import (
         router as admin_actions_router,
     )
+    from src.backend.entrypoints.api.v1.endpoints.admin_audit_replay import (
+        router as admin_audit_replay_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.admin_capabilities import (
         router as admin_capabilities_router,
     )
@@ -68,9 +71,6 @@ def get_v1_routers() -> APIRouter:
     )
     from src.backend.entrypoints.api.v1.endpoints.admin_tenants import (
         router as admin_tenants_router,
-    )
-    from src.backend.entrypoints.api.v1.endpoints.admin_audit_replay import (
-        router as admin_audit_replay_router,
     )
     from src.backend.entrypoints.api.v1.endpoints.admin_workflow_audit import (
         router as admin_workflow_audit_router,

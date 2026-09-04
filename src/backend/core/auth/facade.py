@@ -36,10 +36,8 @@ Note:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import Any
 
-from src.backend.core.audit.facade._base import emit_audit_safe
 from src.backend.core.auth.auth_result import AuthResult
 from src.backend.core.auth.facade_core_mixin import AuthCoreMixin
 from src.backend.core.auth.facade_token_mixin import AuthTokenMixin

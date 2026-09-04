@@ -13,9 +13,9 @@ from typing import TYPE_CHECKING, Any
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from src.backend.dsl.engine.exchange import Exchange
     # S87 M2-#11 final batch: DI provider.
     from src.backend.core.di.providers.cache import get_express_bot_module_provider
+    from src.backend.dsl.engine.exchange import Exchange
 
     _express_bot_module = get_express_bot_module_provider()
     ExpressBotClient = _express_bot_module.ExpressBotClient
@@ -43,7 +43,9 @@ async def log_outgoing_message(
         return
     try:
         # S87 M2-#11 final batch: DI provider.
-        from src.backend.core.di.providers.cache import get_express_dialogs_mongo_provider
+        from src.backend.core.di.providers.cache import (
+            get_express_dialogs_mongo_provider,
+        )
 
         _express_dialogs_module = get_express_dialogs_mongo_provider()
         get_express_dialog_store = _express_dialogs_module.get_express_dialog_store
@@ -122,6 +124,7 @@ def get_express_client(bot_name: str = "main_bot") -> ExpressBotClient:
 
     """
     from src.backend.core.config.express import express_settings
+
     # S87 M2-#11 final batch: DI provider.
     from src.backend.core.di.providers.cache import get_express_bot_module_provider
 

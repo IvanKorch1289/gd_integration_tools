@@ -259,13 +259,12 @@ class CardTokenizeProcessor(BaseProcessor):
             token: FPE-токен для round-trip lookup.
 
         """
-        from src.backend.core.security.pii_tokenizer import EncryptedValue, TokenMap
         # S87 M2-#11 final batch: DI provider.
         from src.backend.core.di.providers.cache import get_token_registry_provider
+        from src.backend.core.security.pii_tokenizer import EncryptedValue, TokenMap
 
         _token_registry_module = get_token_registry_provider()
-            RedisTokenRegistry,
-        )
+        RedisTokenRegistry = _token_registry_module.RedisTokenRegistry
 
         registry = RedisTokenRegistry()
         # Encrypt PAN via TokenMap contract — production uses AES-GCM.

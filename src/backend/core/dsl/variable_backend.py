@@ -55,7 +55,6 @@ class VariableBackend(Protocol):
     async def get(self, key: str, scope:"VariableScope") -> Any | None:
         """Получить значение по ``key`` в ``scope``; None если отсутствует."""
         # S62 M2-#3: lazy import to break circular dep с variables.py
-        from src.backend.core.dsl.variables import VariableScope
 
         ...
 
@@ -68,14 +67,12 @@ class VariableBackend(Protocol):
     async def delete(self, key: str, scope:"VariableScope") -> bool:
         """Удалить ``key`` из ``scope``; вернуть True если существовал."""
         # S62 M2-#3: lazy import to break circular dep с variables.py
-        from src.backend.core.dsl.variables import VariableScope
 
         ...
 
     async def list_keys(self, scope:"VariableScope") -> list[str]:
         """Вернуть список ключей в ``scope``."""
         # S62 M2-#3: lazy import to break circular dep с variables.py
-        from src.backend.core.dsl.variables import VariableScope
 
         ...
 
@@ -162,7 +159,6 @@ class ConsulVariableBackend:
     async def get(self, key: str, scope:"VariableScope") -> Any | None:
         """Читает переменную из Consul с in-process кэшем и TTL."""
         # S62 M2-#3: lazy import to break circular dep с variables.py
-        from src.backend.core.dsl.variables import VariableScope
 
         path = self._key_path(key, scope)
         # Cache hit + not expired → return cached.

@@ -80,12 +80,11 @@ class ExpressAdapter:
         # directly (no DSL bridge — `infrastructure→infrastructure` allowed).
         # Previously: `from src.backend.dsl.engine.processors.express._common
         # import get_express_client` (1 cross-layer entry in allowlist).
+        from src.backend.core.config.express import express_settings
         from src.backend.infrastructure.clients.external.express_bot import (
             BotConfig,
             ExpressBotClient,
         )
-
-        from src.backend.core.config.express import express_settings
 
         if not express_settings.enabled:
             raise RuntimeError(
