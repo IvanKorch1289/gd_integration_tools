@@ -467,3 +467,22 @@ def get_http_client_dependency_provider() -> Any:
 def set_http_client_dependency_provider(client: Any) -> None:
     """Test-override для HTTP client dependency (Sprint 83+)."""
     _overrides["http_client_dependency"] = client
+
+
+# ─── S84 M2-#11 batch 19: object_storage provider ─────────────
+
+
+def get_object_storage_provider() -> Any:
+    """Возвращает \`get_object_storage\` (S3/MinIO/LocalFS).
+
+    S84 M2-#11 batch 19: lazy resolve для dsl/processors/storage/s3.py.
+    """
+    if "object_storage" in _overrides:
+        return _overrides["object_storage"]
+    module = resolve_module("storage.factory")
+    return module.get_object_storage
+
+
+def set_object_storage_provider(storage: Any) -> None:
+    """Test-override для object_storage (Sprint 84+)."""
+    _overrides["object_storage"] = storage

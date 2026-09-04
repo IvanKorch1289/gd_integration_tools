@@ -85,10 +85,10 @@ def _get_storage_facade(context: ExecutionContext) -> Any:
         pass
 
     # Test fallback path — задокументированное layer violation.
-    # Tracking: roadmap/PRODUCTION_READINESS.md M1-#18.
-    from src.backend.infrastructure.storage.factory import get_object_storage
+    # S84 M2-#11: DI provider вместо inline infrastructure import.
+    from src.backend.core.di.providers.cache import get_object_storage_provider
 
-    return StorageFacade(get_object_storage(), plugin=plugin)
+    return StorageFacade(get_object_storage_provider(), plugin=plugin)
 
 
 # ── to_s3 ─────────────────────────────────────────────────────────────────
