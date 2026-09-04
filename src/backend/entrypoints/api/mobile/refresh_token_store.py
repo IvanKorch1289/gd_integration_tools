@@ -107,6 +107,7 @@ class InMemoryRefreshTokenStore:
         return self._generations.get((user_id, device_id), 0)
 
     async def is_valid(self, user_id: str, device_id: str, refresh_jti: str) -> bool:
+        """Проверить валидность refresh-jti (только текущее поколение)."""
         key = (user_id, device_id, refresh_jti)
         if key not in self._tokens:
             return False
@@ -120,6 +121,7 @@ class InMemoryRefreshTokenStore:
         return gen == current_gen
 
     async def issue(self, user_id: str, device_id: str, refresh_jti: str, ttl_seconds: int) -> None:
+        """Атомарно выдать refresh-jti (replay-protection, S55 W1)."""
         if not refresh_jti or not isinstance(refresh_jti, str):
             raise ValueError("refresh_jti must be non-empty string")
         if ttl_seconds <= 0:
@@ -178,6 +180,7 @@ class InMemoryRefreshTokenStore:
         return True
 
     async def revoke(self, user_id: str, device_id: str, refresh_jti: str) -> None:
+        """Отозвать конкретный refresh-jti для (user, device)."""
         key = (user_id, device_id, refresh_jti)
         self._tokens.pop(key, None)
         _logger.info(

@@ -87,6 +87,15 @@ class InMemoryRevocationStore:
         self._revoked: dict[str, RevocationRecord] = {}
 
     async def is_revoked(self, jti: str) -> bool:
+        """Проверить, отозван ли jti (in-memory; авто-expiry по expires_at).
+
+        Args:
+            jti: JWT ID.
+
+        Returns:
+            True если отозван и не истёк, False иначе.
+
+        """
         record = self._revoked.get(jti)
         if record is None:
             return False
@@ -97,6 +106,16 @@ class InMemoryRevocationStore:
         return True
 
     async def revoke(self, jti: str, *, expires_at: float) -> None:
+        """Отозвать jti до ``expires_at`` (unix seconds).
+
+        Args:
+            jti: JWT ID.
+            expires_at: Timestamp истечения (после него запись чистится).
+
+        Raises:
+            ValueError: Если jti пуст или expires_at в прошлом.
+
+        """
         if not jti or not isinstance(jti, str):
             raise ValueError("jti must be non-empty string")
         if expires_at <= time.time():
@@ -107,6 +126,7 @@ class InMemoryRevocationStore:
         _logger.info("jwt revoked", extra={"jti": jti})
 
     async def cleanup_expired(self) -> int:
+        """Удалить истёкшие revocation-записи. Returns: количество удалённых."""
         now = time.time()
         expired = [jti for jti, r in self._revoked.items() if r.expires_at <= now]
         for jti in expired:

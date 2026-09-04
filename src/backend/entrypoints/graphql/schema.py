@@ -204,6 +204,17 @@ class Mutation:
     async def dsl_execute(
         self, route_id: str, payload: JSON | None = None, info: "Info | None" = None
     ) -> JSON:
+        """Dispatch DSL-маршрута (canonical mutation surface GraphQL).
+
+        Args:
+            route_id: Идентификатор DSL-маршрута.
+            payload: Входные данные (опционально).
+            info: GraphQL resolve info (auth principal/permissions).
+
+        Returns:
+            Результат dispatch (JSON).
+
+        """
         principal = _principal_from_info(info)
         permissions = _permissions_from_info(info)
         dsl = get_dsl_service()
