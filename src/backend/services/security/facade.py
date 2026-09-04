@@ -15,6 +15,11 @@ Sprint S183 (Security domain): закрывает критический gap —
 
 Ponytail: thin wrapper, не дублирует логику. Делегирует через DI.
 
+S3 (ledger, 2026-09-05): сплит god-object (453 LOC / 22 методов) по
+паттерну закрытых M2-сплитов — зоны вынесены в миксины:
+:mod:`facade_pii` (PII-операции) и :mod:`facade_blacklist` (JWT blacklist).
+Обратная совместимость: все публичные имена доступны отсюда.
+
 Использование::
 
     from src.backend.services.security.facade import get_security_facade
@@ -30,50 +35,24 @@ from collections.abc import Callable
 from functools import lru_cache
 from typing import Any
 
-from cachetools import TTLCache
-
 from src.backend.core.logging import get_logger
+from src.backend.services.security.facade_blacklist import JwtBlacklistMixin
+from src.backend.services.security.facade_blacklist import (
+    _InMemoryJwtBlacklist as _InMemoryJwtBlacklist,  # noqa: F401 — back-compat
+)
+from src.backend.services.security.facade_pii import PiiFacadeMixin
 
 __all__ = ("SecurityFacade", "get_security_facade")
 
 _logger = get_logger("services.security.facade")
 
-
-def _emit_pii_fail_audit(operation: str, exc: BaseException) -> None:
-    """Helper: emit audit-event для fail-open PII operations (W9).
-
-    S48 W9 swarm audit (A3 Services #5): tokenize_pii/mask_pii раньше возвращали
-    raw text при exception без observability. Caller получал unmasked PII
-    без следа в audit. Теперь audit-event с severity=error + failed_operation.
-    Lazy import (избегаем circular с core.audit).
-    """
-    try:
-        from src.backend.core.audit.facade._base import emit_audit_safe
-
-        emit_audit_safe(
-            event="security.pii.fail_open",
-            action=operation,
-            outcome="failure",
-            severity="error",
-            extra={
-                "failed_operation": operation,
-                "error_type": type(exc).__name__,
-                "error_message": str(exc)[:200],
-                "warning": (
-                    f"{operation} returned raw text — PII NOT masked. "
-                    "Caller should treat as unsafe."
-                ),
-            },
-        )
-    except Exception as audit_exc:
-        _logger.warning(
-            "Failed to emit pii.fail_open audit for %s: %s", operation, audit_exc,
-        )
-
 CapabilityChecker = Callable[[str, str, str | None], None]
 
 
-class SecurityFacade:
+class SecurityFacade(
+    JwtBlacklistMixin,
+    PiiFacadeMixin,
+):
     """Unified capability-checked facade для security primitives.
 
     Args:
@@ -97,42 +76,6 @@ class SecurityFacade:
         self._plugin = plugin
         self._jwt_blacklist: Any = None
         self._jwt_blacklist_ready = False
-
-    async def init_jwt_blacklist(self) -> None:
-        """S189+ fix: lazy-init Redis-backed JWT blacklist.
-
-        Без этого метода blacklist инициализируется как ``None`` — все
-        blacklist_token/unblacklist/is_blacklisted будут no-op.
-        """
-        if self._jwt_blacklist_ready:
-            return
-        self._jwt_blacklist = await self._create_jwt_blacklist()
-        self._jwt_blacklist_ready = True
-
-    async def _create_jwt_blacklist(self) -> Any:
-        """Create Redis-backed JWT blacklist (S189+).
-
-        Returns:
-            Redis-backed blacklist если Redis доступен, иначе
-            fail-open in-memory fallback (per-pod revocation).
-
-        """
-        try:
-            from src.backend.core.api.storage import get_redis_client
-            from src.backend.core.auth.jwt_blacklist import RedisJwtBlacklist
-
-            redis_client = await get_redis_client().get_client("cache")
-            blacklist = RedisJwtBlacklist(redis_client)
-            _logger.info("JWT blacklist: Redis-backed (multi-worker safe)")
-            return blacklist
-        except Exception as exc:
-            # In-memory fallback (NOT multi-worker safe — для dev_light).
-            _logger.warning(
-                "JWT blacklist: Redis unavailable, using in-memory fallback "
-                "(NOT multi-worker safe): %s",
-                exc,
-            )
-            return _InMemoryJwtBlacklist()
 
     def _assert(self, action: str, resource: str) -> None:
         """Capability check (если установлен)."""
@@ -193,70 +136,6 @@ class SecurityFacade:
             payload, signature, timestamp, secret, window_seconds=window_seconds
         )
 
-    # ──────────────────── PII ────────────────────
-
-    async def tokenize_pii(self, text: str) -> str:
-        """Reversible PII tokenization (PIITokenizer).
-
-        Args:
-            text: Текст с PII (ФИО, email, телефон, etc.).
-
-        Returns:
-            Токенизированный текст с placeholders ``<PII_TYPE_xxx>``.
-
-        """
-        self._assert("security.pii.tokenize", "text")
-        try:
-            from src.backend.core.security.pii_tokenizer import PIIPolicy, PIITokenizer
-
-            tokenizer = PIITokenizer()
-            policy = PIIPolicy(name="ru_strict_reversible")
-            masked_text, _token_map = await tokenizer.mask_reversible(text, policy)
-            return masked_text
-        except Exception as exc:
-            _logger.warning("tokenize_pii failed: %s", exc)
-            # S48 W9 swarm audit (A3 Services #5): fail-open — caller получает
-            # raw text без маскирования при ошибке tokenizer. PII leak risk.
-            # Теперь emit audit-warning с severity=error.
-            _emit_pii_fail_audit("tokenize_pii", exc)
-            return text
-
-    async def detokenize_pii(self, text: str) -> str:
-        """Reversible PII detokenization.
-
-        Note: detokenization requires the original TokenMap. This method
-        returns the text as-is if no token map is available (caller must
-        pass it through PIITokenizer.unmask directly).
-        """
-        self._assert("security.pii.detokenize", "text")
-        _logger.debug(
-            "detokenize_pii: use PIITokenizer.unmask(masked_text, token_map) directly"
-        )
-        return text
-
-    async def mask_pii(self, text: str) -> str:
-        """One-way PII masking (irreversible).
-
-        Args:
-            text: Текст с PII.
-
-        Returns:
-            Masked text: ``"Иван И.О."``, ``"i.***@example.com"``, etc.
-
-        """
-        self._assert("security.pii.mask", "text")
-        try:
-            from src.backend.core.security.pii_masker import PIIMasker
-
-            masker = PIIMasker()
-            return masker.mask_text(text)
-        except Exception as exc:
-            _logger.warning("mask_pii failed: %s", exc)
-            # S48 W9 swarm audit (A3 Services #5): fail-open — caller получает
-            # raw text. Audit-event (consistent с tokenize_pii fix).
-            _emit_pii_fail_audit("mask_pii", exc)
-            return text
-
     # ──────────────────── Secrets ────────────────────
 
     async def get_secret(self, key: str, *, default: str | None = None) -> str | None:
@@ -303,148 +182,6 @@ class SecurityFacade:
         except Exception as exc:
             _logger.debug("get_certificate %s failed: %s", cert_id, exc)
             return None
-
-    # ──────────────────── JWT Blacklist ────────────────────
-
-    async def blacklist_token(self, jti: str, *, expires_at: int | None = None) -> bool:
-        """Добавить JWT ID (jti) в blacklist (logout/invalidation).
-
-        Args:
-            jti: JWT ID из claim ``jti``.
-            expires_at: Unix timestamp истечения токена (TTL для Redis).
-                Если None — используется 24h default.
-
-        Returns:
-            True если успешно, False при ошибке.
-
-        """
-        if self._jwt_blacklist is None:
-            await self.init_jwt_blacklist()
-        import time
-
-        exp = expires_at if expires_at is not None else int(time.time()) + 86400
-        try:
-            await self._jwt_blacklist.revoke(jti, exp)
-            _logger.info("JWT blacklisted: jti=%s", jti)
-            return True
-        except Exception as exc:
-            _logger.error("JWT blacklist revoke failed for jti=%s: %s", jti, exc)
-            return False
-
-    async def unblacklist_token(self, jti: str) -> bool:
-        """Удалить JWT из blacklist (для re-login после expiry).
-
-        Note: Redis blacklist использует TTL — после exp jti автоматически
-        удаляется из Redis. Этот метод доступен только для тестов (Redis DEL).
-        """
-        if self._jwt_blacklist is None:
-            return True
-        try:
-            from src.backend.core.auth.jwt_blacklist import RedisJwtBlacklist
-
-            if isinstance(self._jwt_blacklist, RedisJwtBlacklist):
-                await self._jwt_blacklist._redis.delete(self._jwt_blacklist._key(jti))
-            else:
-                await self._jwt_blacklist.unrevoke(jti)
-            _logger.info("JWT unblacklisted: jti=%s", jti)
-            return True
-        except Exception as exc:
-            _logger.warning("JWT unblacklist failed for jti=%s: %s", jti, exc)
-            return False
-
-    async def is_token_blacklisted(self, jti: str) -> bool:
-        """Проверить — JWT в blacklist?
-
-        Fail-closed: ошибки blacklist пробрасываются (см.
-        :meth:`RedisJwtBlacklist.is_revoked`).
-        """
-        if self._jwt_blacklist is None:
-            await self.init_jwt_blacklist()
-        return await self._jwt_blacklist.is_revoked(jti)
-
-    async def clear_blacklist(self) -> None:
-        """Очистить весь blacklist (для тестов)."""
-        if self._jwt_blacklist is None:
-            return
-        try:
-            from src.backend.core.auth.jwt_blacklist import RedisJwtBlacklist
-
-            if isinstance(self._jwt_blacklist, RedisJwtBlacklist):
-                pattern = f"{self._jwt_blacklist._prefix}*"
-                cursor = 0
-                while True:
-                    cursor, keys = await self._jwt_blacklist._redis.scan(
-                        cursor, match=pattern, count=100
-                    )
-                    if keys:
-                        await self._jwt_blacklist._redis.delete(*keys)
-                    if cursor == 0:
-                        break
-            else:
-                await self._jwt_blacklist.clear()
-        except Exception as exc:
-            _logger.warning("JWT blacklist clear failed: %s", exc)
-
-
-class _InMemoryJwtBlacklist:
-    """In-memory fallback для JWT blacklist (NOT multi-worker safe).
-
-    Реализует тот же async API что и :class:`RedisJwtBlacklist`:
-    ``revoke(jti, expires_at)``, ``unrevoke(jti)``, ``is_revoked(jti)``,
-    ``clear()``, ``is_iat_revoked(iat)`` (no-op), ``revoke_before_time(t)`` (no-op).
-
-    S210 Ponytail fix (Layer 2 Cycle 1): ручной ``dict + threading.Lock +
-    time.time()`` заменён на ``cachetools.TTLCache`` (уже в pyproject.toml).
-    - TTL-expiry встроен → не нужно вручную проверять ``exp < time.time()``.
-    - maxsize=10_000 защита от unbounded growth.
-    - Trade-off: теряется per-entry TTL granularity (caller передаёт
-      expires_at, но хранится фиксированный 24h max). Для JWT OK —
-      реальные TTL < 24h.
-
-    S210 Cycle 1 review fix: ``cachetools.TTLCache`` **не thread-safe** по
-    дизайну (см. cachetools upstream docs). Восстановлен ``threading.Lock``
-    для multi-thread safety внутри single-process. Async-only callers
-    (single event-loop, no ``await`` points внутри методов) и так
-    безопасны, но Lock добавляет defense-in-depth для sync middleware /
-    ThreadPoolExecutor paths.
-
-    S210 Cycle 1 review fix: ``expires_at`` clamped to 24h; для longer-running
-    tokens (e.g. service-to-service > 24h) предпочитать RedisJwtBlacklist
-    (production). In-memory fallback — single-process only.
-    """
-
-    def __init__(self) -> None:
-        import asyncio
-
-        # ttl: 24h default. Per-entry granularity теряется, но экономим
-        # ~40 LOC ручного TTL-check. JWT обычно живут < 24h.
-        self._store: TTLCache[str, bool] = TTLCache(maxsize=10_000, ttl=86400)
-        # cachetools.TTLCache НЕ thread-safe по дизайну → asyncio.Lock обязателен
-        # (методы revoke/unvoke/is_revoked — async; threading.Lock блокирует event loop).
-        self._lock = asyncio.Lock()
-
-    async def revoke(self, jti: str, expires_at: int) -> None:
-        # expires_at учтён через ttl=86400; bool-значение не нужно хранить.
-        async with self._lock:
-            self._store[jti] = True
-
-    async def unrevoke(self, jti: str) -> None:
-        async with self._lock:
-            self._store.pop(jti, None)
-
-    async def is_revoked(self, jti: str) -> bool:
-        async with self._lock:
-            return jti in self._store
-
-    async def is_iat_revoked(self, iat: int | None) -> bool:
-        return False  # in-memory fallback не поддерживает batch revoke
-
-    async def revoke_before_time(self, time_threshold: int) -> None:
-        return None  # no-op in in-memory fallback
-
-    async def clear(self) -> None:
-        with self._lock:
-            self._store.clear()
 
 
 @lru_cache(maxsize=1)
