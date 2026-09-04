@@ -109,40 +109,52 @@ class NotifyCascadeProcessor(BaseProcessor):
         )
 
     async def _cascade_send(self, message: NotificationMessage) -> None:
-        """Перебор adapter'ов с retry до первого успешного."""
+        """Перебор adapter'ов с retry до первого успешного.
+
+        S105 P2-3 fix: ручной retry-loop → tenacity make_async_retry.
+        ConnectionError — retryable; non-ConnectionError → break (no retry).
+        """
+        from src.backend.core.resilience.retry import make_async_retry
+
         last_exc: Exception | None = None
         for adapter in self._adapters:
-            for attempt in range(1, self._retries + 1):
-                try:
-                    if not await adapter.is_available():
-                        _logger.debug(
-                            "notify_cascade: %s unavailable, skip", adapter.channel
-                        )
-                        break
-                    track_id = await adapter.send(message)
-                    _logger.info(
-                        "notify_cascade delivered via %s: track_id=%s",
-                        adapter.channel,
-                        track_id,
-                    )
-                    return
-                except ConnectionError as exc:
-                    last_exc = exc
-                    _logger.warning(
-                        "notify_cascade %s attempt %d/%d failed: %s",
-                        adapter.channel,
-                        attempt,
-                        self._retries,
-                        exc,
-                    )
-                    if attempt < self._retries:
-                        await asyncio.sleep(self._retry_delay)
-                except Exception as exc:
-                    last_exc = exc
-                    _logger.warning(
-                        "notify_cascade %s unexpected exc: %s", adapter.channel, exc
-                    )
-                    break  # не retry на не-ConnectionError'ах
+            if not await adapter.is_available():
+                _logger.debug(
+                    "notify_cascade: %s unavailable, skip", adapter.channel
+                )
+                continue
+
+            @make_async_retry(
+                max_attempts=self._retries,
+                initial_backoff=self._retry_delay,
+                multiplier=1.0,  # fixed delay (не exponential — короткие cascade retries)
+                on=(ConnectionError,),
+            )
+            async def _attempt() -> str:
+                return await adapter.send(message)
+
+            try:
+                track_id = await _attempt()
+                _logger.info(
+                    "notify_cascade delivered via %s: track_id=%s",
+                    adapter.channel,
+                    track_id,
+                )
+                return
+            except ConnectionError as exc:
+                last_exc = exc
+                _logger.warning(
+                    "notify_cascade %s exhausted %d attempts: %s",
+                    adapter.channel,
+                    self._retries,
+                    exc,
+                )
+            except Exception as exc:
+                # Non-ConnectionError → не retry, переходим к следующему adapter.
+                last_exc = exc
+                _logger.warning(
+                    "notify_cascade %s unexpected exc: %s", adapter.channel, exc
+                )
         _logger.error(
             "notify_cascade: all %d adapters failed; last_exc=%s",
             len(self._adapters),
