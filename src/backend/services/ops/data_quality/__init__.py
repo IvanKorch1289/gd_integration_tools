@@ -153,22 +153,24 @@ class DQRule:
 # function's enclosing module globals at call time, so this makes method
 # bodies resolve to the canonical class — guaranteeing ``id()`` consistency
 # across all 5 module surfaces.
-_apply_mixin_module.DQSeverity = DQSeverity
-_apply_mixin_module.DQViolation = DQViolation
-_apply_mixin_module.DQCheckResult = DQCheckResult
-_apply_mixin_module.DQRule = DQRule
-_check_mixin_module.DQSeverity = DQSeverity
-_check_mixin_module.DQViolation = DQViolation
-_check_mixin_module.DQCheckResult = DQCheckResult
-_check_mixin_module.DQRule = DQRule
-_rule_mgmt_mixin_module.DQSeverity = DQSeverity
-_rule_mgmt_mixin_module.DQViolation = DQViolation
-_rule_mgmt_mixin_module.DQCheckResult = DQCheckResult
-_rule_mgmt_mixin_module.DQRule = DQRule
-_schema_mixin_module.DQSeverity = DQSeverity
-_schema_mixin_module.DQViolation = DQViolation
-_schema_mixin_module.DQCheckResult = DQCheckResult
-_schema_mixin_module.DQRule = DQRule
+# ponytail: post-load class injection (cycle-8/D-AUDIT-803 intentional);
+# mypy видит class-name как type при assign к module namespace — задавливаем.
+_apply_mixin_module.DQSeverity = DQSeverity  # type: ignore[attr-defined,misc]
+_apply_mixin_module.DQViolation = DQViolation  # type: ignore[attr-defined,misc]
+_apply_mixin_module.DQCheckResult = DQCheckResult  # type: ignore[attr-defined,misc]
+_apply_mixin_module.DQRule = DQRule  # type: ignore[attr-defined,misc]
+_check_mixin_module.DQSeverity = DQSeverity  # type: ignore[attr-defined,misc]
+_check_mixin_module.DQViolation = DQViolation  # type: ignore[attr-defined,misc]
+_check_mixin_module.DQCheckResult = DQCheckResult  # type: ignore[attr-defined,misc]
+_check_mixin_module.DQRule = DQRule  # type: ignore[attr-defined,misc]
+_rule_mgmt_mixin_module.DQSeverity = DQSeverity  # type: ignore[attr-defined,misc]
+_rule_mgmt_mixin_module.DQViolation = DQViolation  # type: ignore[attr-defined,misc]
+_rule_mgmt_mixin_module.DQCheckResult = DQCheckResult  # type: ignore[attr-defined,misc]
+_rule_mgmt_mixin_module.DQRule = DQRule  # type: ignore[attr-defined,misc]
+_schema_mixin_module.DQSeverity = DQSeverity  # type: ignore[attr-defined,misc]
+_schema_mixin_module.DQViolation = DQViolation  # type: ignore[attr-defined,misc]
+_schema_mixin_module.DQCheckResult = DQCheckResult  # type: ignore[attr-defined,misc]
+_schema_mixin_module.DQRule = DQRule  # type: ignore[attr-defined,misc]
 
 
 class DataQualityMonitor(
