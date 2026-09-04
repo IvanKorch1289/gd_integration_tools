@@ -101,7 +101,11 @@ class BaseService[
         self.request_schema = request_schema
         self.version_schema = version_schema
         self.table_name = table_name
-        self.helper = self.HelperMethods(repo)
+        # NEW-1 fix (2026-08-13): helper проксируется от repo (который создаёт
+        # его в SQLAlchemyRepository.__init__). Старый код
+        # 'self.helper = self.HelperMethods(repo)' падал с AttributeError —
+        # HelperMethods была только type-annotation, не значение.
+        self.helper = repo.helper if repo is not None else None
 
     @asynccontextmanager
     async def _service_error_boundary(self):
