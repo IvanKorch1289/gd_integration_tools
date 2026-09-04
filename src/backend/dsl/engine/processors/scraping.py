@@ -182,9 +182,10 @@ class ScrapeProcessor(BaseProcessor):
             return
 
         try:
-            from src.backend.infrastructure.clients.transport.http import (
-                get_http_client_dependency,
-            )
+            # S83 M2-#11 batch 18: DI provider вместо inline infrastructure import.
+            from src.backend.core.di.providers.cache import get_http_client_dependency_provider
+
+            get_http_client_dependency = get_http_client_dependency_provider()
 
             client = get_http_client_dependency()
             response = await client.make_request(
@@ -275,9 +276,10 @@ class PaginateProcessor(BaseProcessor):
         """Crawl multiple pages and collect items."""
         if not await self.auth_check(exchange, action="read"):
             return
-        from src.backend.infrastructure.clients.transport.http import (
-            get_http_client_dependency,
-        )
+        # S83 M2-#11 batch 18: DI provider вместо inline infrastructure import.
+        from src.backend.core.di.providers.cache import get_http_client_dependency_provider
+
+        get_http_client_dependency = get_http_client_dependency_provider()
 
         url = self._start_url
         if not url:
@@ -421,9 +423,10 @@ class ApiProxyProcessor(BaseProcessor):
         """Forward exchange to external API with optional transformation."""
         if not await self.auth_check(exchange, action="execute"):
             return
-        from src.backend.infrastructure.clients.transport.http import (
-            get_http_client_dependency,
-        )
+        # S83 M2-#11 batch 18: DI provider вместо inline infrastructure import.
+        from src.backend.core.di.providers.cache import get_http_client_dependency_provider
+
+        get_http_client_dependency = get_http_client_dependency_provider()
 
         path = self._path
         if "{" in path and isinstance(exchange.in_message.body, dict):

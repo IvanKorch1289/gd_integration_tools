@@ -448,3 +448,22 @@ def get_vault_config_class_provider() -> Any:
 def set_vault_config_class_provider(aclass: Any) -> None:
     """Test-override для VaultConfig class (Sprint 82+)."""
     _overrides["vault_config_class"] = aclass
+
+
+# ─── S83 M2-#11 batch 18: HTTP client dependency provider ──────────
+
+
+def get_http_client_dependency_provider() -> Any:
+    """Возвращает singleton HTTP client (httpx-based).
+
+    S83 M2-#11 batch 18: lazy resolve для dsl/processors/scraping.py.
+    """
+    if "http_client_dependency" in _overrides:
+        return _overrides["http_client_dependency"]
+    module = resolve_module("clients.transport.http")
+    return module.get_http_client_dependency
+
+
+def set_http_client_dependency_provider(client: Any) -> None:
+    """Test-override для HTTP client dependency (Sprint 83+)."""
+    _overrides["http_client_dependency"] = client
