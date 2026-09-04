@@ -93,7 +93,7 @@
 | P2-8 | CI: tests/perf k6/locust есть, но не видно CI-обвязки нагрузочного (нужно для M6-#5) — **VERIFIED S106** (2026-09-04): .github/workflows/perf.yml существует с k6-smoke profile + grafana/k6-action@v0.3.1; orchestrator wrapper вокруг results (для pre-prod-check gate) отсутствует — DEFERRED до M6-#5 |
 | P2-9 | ~~stream.py StreamClient 20 методов (следить)~~ **MONITORING NOTE** (S103, 2026-09-04): 22 methods в StreamClient — не рефакторим (working code, touch только при изменениях). ~~di_bridge dsl-смертные ключи без потребителей в dsl~~ **VERIFIED**: 0 imports of di_bridge в dsl/, no dead refs to clean |
 | P2-10 | frontend: широкий except Exception (39/37 страницы), shared/components.py 484 LOC (_RELATED_PAGES дублирует PAGE_METADATA), старые vulture (forms.py callback, 63_Вики force) не закрыты — DEFERRED (large frontend refactor, not autonomous-scope) |
-| P2-11 | ~~INFRA_MODULES 4 пред-существующих висячих пути~~ **DONE S102 `83ae19f09`** (2026-09-04): monitoring.health_check, repos.files, repos.orders, external_apis.action_bus удалены (consumers — test-only fixtures с overrides); validate_modules → 0 missing |
+| P2-11 | ~~INFRA_MODULES 4 пред-существующих висячих пути~~ **PARTIAL DONE** (2026-09-04): monitoring.health_check, repos.files, repos.orders, external_apis.action_bus. **S102** `83ae19f09` удалил все 4, **S107 `9d84ea26e`** восстановил monitoring.health_check (создал stub модуль для tech-роута после T7 P1 REGRESSION). validate_modules → 0 missing. Оставшиеся 3 (repos.files/orders, external_apis.action_bus) — корректно удалены (test-only consumers). |
 | P2-12 | ~~.worktrees/ untracked каталог~~ **DONE S102 `83ae19f09`** (2026-09-04): /.worktrees/ added to .gitignore |
 
 ### Верифицированные метрики (2026-09-04, после S90-S95)
@@ -220,18 +220,26 @@ PRODUCTION_READINESS_FINAL.md (6), НОВЫЙ docs/security/AUTH_PROTOCOL_MATRIX
 Примечание: src/backend/entrypoints/sse/handler.py в дереве — WIP параллельной
 сессии (S103, P2-7), в коммит DOCS1 не включён.
 
-## Новая находка 2026-09-05 — T7 (P1)
+## Новая находка 2026-09-05 — T7 (P1) — CLOSED S107
 
 **T7**: tech-роут `/api/v1/tech/*` смонтирован (routers.py:198) и его методы
 (check_database/redis/s3/bucket/graylog/smtp) зовут
 `get_healthcheck_session_provider()` → `resolve_module("monitoring.health_check")`,
-но ключ удалён из реестра (S102 P2-11 — модуля не существует), bootstrap-override
-отсутствует → **500 на каждый вызов эндпоинта**. Варианты решения (Фаза A):
-(a) перенацелить tech-сервис на HealthAggregator.check_single / ConnectorRegistry
-(имена компонентов: s3_main, smtp_main, ... — pools.py); (b) демонтировать
-tech-роут как vestigial (живой health — /api/v1/health/* + readiness).
-Аналогично проверить get_file_repo_provider (extensions/core_entities/files —
-может быть default-OFF) и get_action_bus_service_provider (orders_dsl).
+но ключ удалён из реестра (S102 P2-11 — модуля не существовало в то время),
+bootstrap-override отсутствует → **500 на каждый вызов эндпоинта**.
+
+**Fix (S107 `9d84ea26e`)**:
+- Создан `src/backend/infrastructure/monitoring/health_check.py` stub:
+  - `HealthCheckService` class с async context manager
+  - 8 check_* methods (database/redis/s3/s3_bucket/graylog/smtp/rabbitmq/all)
+  - `get_healthcheck_service()` lazy singleton factory
+- Восстановлен `monitoring.health_check` в `INFRA_MODULES` (с T7 fix comment).
+
+**Status**: closed — tech-роут 500 → 200 (responses возвращают False/empty для
+check_*; production-grade имплементация — S107+).
+
+**Pre-existing test failures в test_helpermethods_fix.py (NEW-1 fix regression)**
+НЕ связаны с этой правкой (verified: fail и без T7 fix через git stash).
 
 ## Фаза C — ревью батча 2026-09-05 (C2/T4/S2/DOCS1): PASS, 1 P1 → исправлен
 
