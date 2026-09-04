@@ -8,4 +8,10 @@
 
 from __future__ import annotations
 
-__all__ = ()
+# S91 M5-#2: graceful shutdown middleware export
+from src.backend.entrypoints.middlewares.graceful_shutdown import (
+    GracefulShutdownMiddleware,
+    get_in_flight_count,
+)
+
+__all__ = ("GracefulShutdownMiddleware", "get_in_flight_count")
