@@ -555,6 +555,7 @@ Verify: collect 16966/0 errors; 1075 passed по ключевым suite'ам;
 | 01 coverage ≥50% | overall ~31-33% | T3 — сессия-2 (S97+ активна), затем gate bump 60→70 |
 | 02 mypy ≤30 | 60 errors > budget | сессия-2 (G-MYPY кластеры: 149→60, идёт) |
 | 15 feature-flags | требует живой Vault | BLOCKED(infra) — как M6-#3 |
+| 19 startup-time | **MARGINAL/FLAKY**: измеренные 1.70-1.99s vs лимит 1.695s (baseline 1.304×1.3, запас 0.05s) — шум shared-box решает; топ-стоимость core.config.features 0.63-0.68s; вероятный вклад — новые импорты S169 R-FIX (bd8140c80) | сессия-2 (профилирование стартового пути) |
 
 Закрыто этим роем за цикл: 03 layers, 04 ruff strict, 11 docstrings, 33 trust-tier.
 
@@ -578,3 +579,20 @@ Vulture на Protocol-заглушках даёт false positives by design.
 Остаток P2-10 (реальные, не взятые): сужение except Exception на страницах
 39/37, дедупликация _RELATED_PAGES в shared/components.py — мелкие frontend
 рефакторы, приоритет низкий.
+
+## P2-10 — CLOSED (2026-09-05, финал)
+
+1. **Сужение except Exception** `28a7c8d4d`: страницы 39/37 — WS-обёртка →
+   (WebSocketException, OSError), JSON-парсы → json.JSONDecodeError
+   (+ValueError где raise), HTTP → httpx.HTTPError. ruff 0, parse OK.
+   Примечание: `except ValueError, TypeError:` на 37:72 — ВАЛИДНЫЙ Python 3.14
+   (PEP 758), не баг.
+2. **_RELATED_PAGES дедупликация — ОТКЛОНЕНА**: это курируемая навигационная
+   карта (семантические группировки), алгоритмическая генерация изменила бы
+   поведение портала. YAGNI.
+3. **vulture-подпункты** — false positives (Protocol-контракты), реклассифицированы.
+
+**Свежая карта pre-prod-check (финал): 19/36 PASSED, FAILED 4** — coverage/mypy
+(сессия-2), Vault (infra), startup-time MARGINAL (см. таблицу выше).
+Все пункты ledger имеют владельца или блокер; незанятой actionable работы
+для этого роя не осталось.
