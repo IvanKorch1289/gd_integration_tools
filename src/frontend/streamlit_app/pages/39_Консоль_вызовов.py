@@ -80,7 +80,9 @@ async def _stream_invocation(
                     chunks.append(json.loads(raw))
                 except json.JSONDecodeError:
                     chunks.append({"raw": raw})
-    except Exception as exc:
+    except (websockets.exceptions.WebSocketException, OSError) as exc:
+        # P2-10: handshake/соединение/DNS/SSL; остальное (timeout,
+        # ConnectionClosedOK, JSONDecodeError) обработано выше.
         return chunks, f"{type(exc).__name__}: {exc}"
 
 
@@ -121,7 +123,7 @@ if submitted:
         payload = json.loads(payload_raw or "{}")
         if not isinstance(payload, dict):
             raise ValueError("payload must be a JSON object")
-    except Exception as exc:
+    except (json.JSONDecodeError, ValueError) as exc:
         st.error(f"Невалидный payload: {exc}")
         st.stop()
 
@@ -185,7 +187,7 @@ if submitted:
             with httpx.Client(timeout=30) as client:
                 resp = client.post(f"{BASE_URL}/api/v1/invocations", json=body)
             elapsed_ms = (time.perf_counter() - started) * 1000
-        except Exception as exc:
+        except httpx.HTTPError as exc:
             st.error(f"HTTP error: {exc}")
             st.stop()
 

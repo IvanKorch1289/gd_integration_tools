@@ -44,7 +44,7 @@ if "api_history" not in st.session_state:
 if st.button("Отправить", type="primary"):
     try:
         headers = json.loads(headers_raw) if headers_raw.strip() else {}
-    except Exception as exc:
+    except json.JSONDecodeError as exc:
         st.error(f"Невалидные headers: {exc}")
         headers = None
 
@@ -52,7 +52,7 @@ if st.button("Отправить", type="primary"):
     if method != "GET" and body_raw.strip():
         try:
             body = json.loads(body_raw)
-        except Exception as exc:
+        except json.JSONDecodeError as exc:
             st.error(f"Невалидный body: {exc}")
             body = None
 
@@ -85,7 +85,9 @@ if st.button("Отправить", type="primary"):
                 },
             )
             st.session_state["api_history"] = st.session_state["api_history"][:20]
-        except Exception as exc:
+        except httpx.HTTPError as exc:
+            # P2-10: network/timeout; ошибки JSON-парса ответа обработаны
+            # вложенным except (ValueError, TypeError) выше.
             st.error(str(exc))
 
 st.divider()
