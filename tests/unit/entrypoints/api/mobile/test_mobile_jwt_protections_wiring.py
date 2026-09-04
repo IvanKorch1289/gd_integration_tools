@@ -11,6 +11,8 @@ from __future__ import annotations
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
+import pytest
+
 from tests.unit.entrypoints.api.mobile.test_mobile_router_jwt_integration import (
     _build_client_with_flags,
 )
@@ -77,3 +79,68 @@ def test_protections_flag_off_keeps_bare_verifier() -> None:
 
         assert response.status_code == 200
         mock_factory.assert_not_called()
+
+
+# ── C2-review P1 fix: limiter decision обязана отклонять ──────────
+
+
+def _jwt_error():
+    from src.backend.core.auth.jwt_backend import JwtVerificationError
+
+    return JwtVerificationError
+
+
+async def _verify_with_limiter(limiter) -> None:
+    """Прогнать wrapped verifier с заданным limiter (ожидаем rejection)."""
+    from src.backend.core.auth.mobile_jwt_revocation import _WrappedMobileJwtVerifier
+
+    inner = AsyncMock()
+    inner.verify = AsyncMock(
+        return_value=SimpleNamespace(
+            user_id="u",
+            device_id="11111111-2222-4333-8444-555555555555",
+            jti="j",
+        )
+    )
+    wrapper = _WrappedMobileJwtVerifier(
+        inner=inner, revocation_store=None, rate_limiter=limiter
+    )
+    with pytest.raises(_jwt_error(), match="rate limit exceeded"):
+        await wrapper.verify("token")
+
+
+@pytest.mark.asyncio
+async def test_rate_limit_decision_object_rejects() -> None:
+    """DeviceRateLimiter-контракт: RateLimitDecision(allowed=False) → reject."""
+    limiter = AsyncMock()
+    limiter.check = AsyncMock(
+        return_value=SimpleNamespace(allowed=False, remaining=0, reset_seconds=1.0)
+    )
+    await _verify_with_limiter(limiter)
+
+
+@pytest.mark.asyncio
+async def test_rate_limit_tuple_contract_rejects() -> None:
+    """RedisRateLimiter-контракт: (False, 0) → reject."""
+    limiter = AsyncMock()
+    limiter.check = AsyncMock(return_value=(False, 0))
+    await _verify_with_limiter(limiter)
+
+
+@pytest.mark.asyncio
+async def test_rate_limit_allowed_passes() -> None:
+    """allowed=True → запрос проходит (rejection не срабатывает)."""
+    from src.backend.core.auth.mobile_jwt_revocation import _WrappedMobileJwtVerifier
+
+    inner = AsyncMock()
+    ctx = SimpleNamespace(
+        user_id="u", device_id="d", jti="j"
+    )
+    inner.verify = AsyncMock(return_value=ctx)
+    limiter = AsyncMock()
+    limiter.check = AsyncMock(return_value=(True, 5))
+    wrapper = _WrappedMobileJwtVerifier(
+        inner=inner, revocation_store=None, rate_limiter=limiter
+    )
+    result = await wrapper.verify("token")
+    assert result is ctx

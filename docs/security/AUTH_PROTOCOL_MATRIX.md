@@ -14,7 +14,7 @@
 | 4 | SOAP | `soap/` | `require_auth([API_KEY, JWT])` на роутере + auth context в meta dispatch | `entrypoints/soap/soap_handler.py:30,143-160,177` | ЗАКРЫТ (401, M6-#3) |
 | 5 | WebSocket | `websocket/` | `ws_auth` facade — 3 механизма: query-token, cookie `auth_session`, header (JWT/API-key) | `entrypoints/websocket/ws_auth.py:1-18,40` | ЗАКРЫТ (401, M6-#3) |
 | 6 | SSE | `sse/` | `require_auth([API_KEY, JWT])` на endpoint + `extract_user_permissions` (fail-closed без auth) | `entrypoints/sse/handler.py:24-25,107,182-191` | ЗАКРЫТ (401, M6-#3) |
-| 7 | Webhook | `webhook/` | Inbound: HMAC + timestamp (`_verify_hmac`); management CRUD: `require_auth` | `entrypoints/webhook/handler.py:10-11,36-40`; `entrypoints/webhook/sources_router.py:87-88` | ЗАКРЫТ (401, M6-#3) |
+| 7 | Webhook | `webhook/` | Inbound: HMAC + timestamp (`verify_and_dispatch`); management CRUD: `require_auth` | `infrastructure/sources/webhook.py:104,176`; `entrypoints/webhook/handler.py:36-40`; `entrypoints/webhook/sources_router.py:87-88` | ЗАКРЫТ (401, M6-#3) |
 | 8 | Stream (MQ) | `stream/` | Брокерные credentials (Redis Streams / RabbitMQ из settings); без HTTP-поверхности | `entrypoints/stream/invoker_subscribers.py:1-9` | ЗАКРЫТ (вне HTTP-auth) |
 | 9 | MQTT | `mqtt/` | Брокерные credentials (`settings.password`); message_timeout/backpressure (W3 `37156dbdb`) | `entrypoints/mqtt/mqtt_handler.py:120,231` | ЗАКРЫТ (вне HTTP-auth) |
 | 10 | MCP | `mcp/` | `McpAuthMiddleware` wrap FastMCP ASGI app (S49 W1, defense-in-depth restored) | `entrypoints/mcp/http_server.py:112-121` | ЗАКРЫТ (401, M6-#3) |

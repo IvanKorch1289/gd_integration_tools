@@ -282,13 +282,24 @@ class _WrappedMobileJwtVerifier:
                     f"JWT {ctx.jti!r} is revoked"
                 )
 
-        # Phase 2: rate limit per device_id
+        # Phase 2: rate limit per device_id.
+        # C2-review fix (2026-09-05): limiter'ы НЕ бросают при превышении —
+        # возвращают решение (DeviceRateLimiter → RateLimitDecision;
+        # RedisRateLimiter → tuple[bool, int]). Раньше возвращаемое значение
+        # игнорировалось и throttle не отклонял запросы.
         if self._rate_limiter is not None:
             try:
-                await self._rate_limiter.check(ctx.device_id)
+                decision = await self._rate_limiter.check(ctx.device_id)
             except Exception as exc:
                 raise JwtVerificationError(
-                    f"rate limit exceeded for device {ctx.device_id!r}: {exc}"
+                    f"rate limit check failed for device {ctx.device_id!r}: {exc}"
                 ) from exc
+            allowed = getattr(decision, "allowed", None)
+            if allowed is None and isinstance(decision, tuple):
+                allowed = bool(decision[0])
+            if not allowed:
+                raise JwtVerificationError(
+                    f"rate limit exceeded for device {ctx.device_id!r}"
+                )
 
         return ctx

@@ -96,7 +96,7 @@ def _build_mobile_jwt_verifier() -> Any:
             getattr(feature_flags, "mobile_jwt_protections_enabled", False)
         )
     except Exception:
-        protections_on = False  # fail-closed: флаг недоступен → без Phase 2
+        protections_on = False  # флаг недоступен → legacy bare-verifier (без Phase 2)
 
     if not protections_on:
         return MobileJwtVerifier(
