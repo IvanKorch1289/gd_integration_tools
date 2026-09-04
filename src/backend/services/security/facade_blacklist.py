@@ -74,7 +74,9 @@ class InMemoryJwtBlacklist:
         return None  # no-op in in-memory fallback
 
     async def clear(self) -> None:
-        with self._lock:
+        # Review-fix (2026-09-05): sync `with` на asyncio.Lock → TypeError;
+        # раньше глотался clear_blacklist except'ом (silent no-op).
+        async with self._lock:
             self._store.clear()
 
 
