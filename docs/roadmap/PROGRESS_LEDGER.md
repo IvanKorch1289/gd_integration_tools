@@ -63,8 +63,8 @@
 ### P1
 | ID | Домен | Задача | Оценка |
 |---|---|---|---|
-| W1 | entrypoints | Зарегистрировать GracefulShutdownMiddleware в middleware-цепочке (учесть: BaseHTTPMiddleware vs pure-ASGI стек — риск для streaming; при wire проверить /events/stream, /metrics) | 3h |
-| W2 | entrypoints | Инкремент `_INFLIGHT_COUNTER` (сейчас телеметрия in-flight всегда 0) | 1h |
+| W1 | entrypoints | ~~GracefulShutdownMiddleware wire~~ **DONE `11684f3ed`** (2026-09-04): pure-ASGI переписан, order=880 outermost, drain() hooked в run_shutdown step 0, drain-баг (0 in-flight → нет флага) исправлен; 7 unit-тестов, middlewares suite 519 passed | 3h |
+| W2 | entrypoints | ~~Инкремент _INFLIGHT_COUNTER~~ **DONE `11684f3ed`** (вместе с W1: инкремент/декремент в __call__, get_in_flight_count живой) | 1h |
 | W3 | entrypoints | MQTT handler: per-message timeout + bounded queue (сейчас медленный action блокирует весь цикл); publish — новое соединение на каждое сообщение (P2) | 3h |
 | SEC1 | security | ~~pip-audit allowlist гигиена~~ **DONE `3d6962ec5`** (2026-09-04): -PYSEC-2026-3552, -2 stale mistune ID, .bak удалён, ADR-0290 addendum; остаток — 2 записи diskcache (ADR-0287) | 1h |
 | T2 | repo-wide | ruff 2 → 0 (остаток после S91 батча 159→0) | 0.5h |
