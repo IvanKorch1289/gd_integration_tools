@@ -123,7 +123,7 @@ __all__ = (
 # S44 W1 step 2: Query class with dsl_query + dsl_execute resolvers
 # (L5 Security Chain — Round 87 verbatim pattern). Strawberry class
 # with auth propagated to DslService.dispatch via ExecutionContext.
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from strawberry.scalars import JSON
 
@@ -152,7 +152,7 @@ class Query:
             headers={},
             context=_make_dispatch_context(principal, permissions, route_id),
         )
-        return _serialize_exchange(exchange)
+        return cast("JSON", _serialize_exchange(exchange))
 
     async def dsl_execute(
         self, route_id: str, payload: JSON | None = None, info: "Info | None" = None
@@ -167,7 +167,7 @@ class Query:
             headers={},
             context=_make_dispatch_context(principal, permissions, route_id),
         )
-        return _serialize_exchange(exchange)
+        return cast("JSON", _serialize_exchange(exchange))
 
 
 def _make_dispatch_context(
@@ -213,7 +213,7 @@ class Mutation:
             headers={},
             context=_make_dispatch_context(principal, permissions, route_id),
         )
-        return _serialize_exchange(exchange)
+        return cast("JSON", _serialize_exchange(exchange))
 
 
 # S44 W1: L5 Security Chain — 4 helpers restored (pre-R8 verbatim port
