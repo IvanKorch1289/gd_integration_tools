@@ -315,6 +315,46 @@ Re-export `_InMemoryJwtBlacklist` сохранён (тесты импортир�
 — воспроизводятся идентично на HEAD до и после сплита (9/44 в обоих).
 Домен параллельной сессии (S108 NEW-* серия). Отдельно от сплита.
 
+---
+
+## Verified baseline 2026-09-05 (plan-mode координатор, прямые команды)
+
+HEAD = `2ca8320ef` (поверх S3-2). План: `batgirl-plastic-man-valkyrie.md`.
+
+| # | Метрика | Значение | Команда-доказательство |
+|---|---|---|---|
+| 1 | ruff check src/ | **0** | `uv run ruff check src/` → "All checks passed!" |
+| 2 | pytest --collect-only | 16966 tests, 0 errors | `uv run python -m pytest --collect-only -q` (~21s) |
+| 3 | bandit -r src/ -lll | 0 HIGH severity, 44 HIGH confidence | `Total issues (High: 0); Total issues (by confidence High: 44); nosec=40` |
+| 4 | vulture @90 / @80 | 0 / 0 | `uv run vulture src/ --min-confidence {90,80}` |
+| 5 | tools/check_layers.py | 0 new, 37 legacy allowlist | прямой вызов скрипта |
+| 6 | layer allowlist size | **37** entries (42 строки всего) | `wc -l tools/check_layers_allowlist.txt` |
+| 7 | mypy src/ | **149 errors in 68 files** | `uv run mypy src/ 2>&1 | tail -1` |
+| 8 | coverage overall | .baselines:60% / ledger:30.8% overall; `pyproject.toml:fail_under=60` | `.baselines/coverage.json: coverage_percent: 60.0` |
+| 9 | frontend `core.frontend_facade` | **13 .py файлов** | `grep -rln 'core.frontend_facade' src/frontend --include='*.py' | wc -l` |
+| 10 | pg_runner busy-wait | подтверждён | `pg_runner_backend.py:238, 240, 336, 338` (`asyncio.sleep(interval)`) |
+| 11 | RouteBuilder Protocol | 9 из 10 миксинов на `_RouteBuilderProtocol` | compliance/middleware/fluent/deps/config/feature/resilience/transport-sources/ip_restriction — все на Protocol |
+| 12 | outdated packages | **115** (raw `uv pip list --outdated | wc -l`) | ledger говорит 106 для S96 — разница в post-S96 churn |
+| 13 | bandit # nosec | 40 nosec + 12 specifically disabled | `Total lines skipped (#nosec): 40; ... skipped due to specifically being disabled: 12` |
+
+### Top-5 mypy-кластеров (для G-MYPY Phase B, 149 ошибок)
+
+1. `services/security/facade.py:133` — `core.api.security` has no `verify_signature` (1 ошибка, real miss → B-NEW-3)
+2. `services/security/facade_blacklist.py:110` — `core.api.storage` has no `get_redis_client` (1 ошибка, **NEW WIP от S3-2 сплита**)
+3. `entrypoints/graphql/schema.py:216` — return `dict[str,Any]` несовместимо с `JSON`
+4. 6+ frontend pages — `"APIClient" has no attribute "workflows"; maybe "_workflows", "list_workflows", or "get_workflow"`
+5. `plugins/composition/lifecycle/startup_phases/services.py:41` — `workflow_setup` has no `register_ai_gateway_singleton`
+6. `entrypoints/api/v1/endpoints/admin_plugins/helpers.py:53` — `type[PluginLoader]` has no `get_instance`
+
+### WIP в дереве (не трогать — координация через ledger)
+
+```
+M docs/adr/WIKI.md                              # WIP параллельной сессии
+M src/backend/services/security/facade_blacklist.py  # partial fix В-NEW-3 (1 mypy err остаётся)
+```
+
+Следующий ledger entry фиксирует старт Phase B (G-CI-GATES).
+
 ## Фаза C — ревью S3-1/S3-2: PASS (оба коммита)
 
 Построчная сверка с pre-image: hitl — порядок сайд-эффектов, except-контракты
