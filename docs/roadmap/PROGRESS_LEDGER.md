@@ -66,6 +66,7 @@
 | W1 | entrypoints | ~~GracefulShutdownMiddleware wire~~ **DONE `11684f3ed`** (2026-09-04): pure-ASGI переписан, order=880 outermost, drain() hooked в run_shutdown step 0, drain-баг (0 in-flight → нет флага) исправлен; 7 unit-тестов, middlewares suite 519 passed | 3h |
 | W2 | entrypoints | ~~Инкремент _INFLIGHT_COUNTER~~ **DONE `11684f3ed`** (вместе с W1: инкремент/декремент в __call__, get_in_flight_count живой) | 1h |
 | W3 | entrypoints | ~~MQTT per-message timeout + bounded queue~~ **DONE `37156dbdb`** (2026-09-04): message_timeout=30s, max_concurrent_messages=10, max_queued_incoming_messages=1000; publish-per-connection остался P2. Попутно B-NEW-2: 4 stale-теста починены (patch-target + enabled default) | 3h |
+| C2 | core/auth | ~~mobile_jwt_redis wire~~ **DONE `c684d9280`** (2026-09-04, параллельная сессия): _build_mobile_jwt_verifier() единая сборка, mobile_jwt_protections_enabled flag → RedisRevocationStore + RedisRateLimiter подключены; 2 wiring теста | 3h |
 | SEC1 | security | ~~pip-audit allowlist гигиена~~ **DONE `3d6962ec5`** (2026-09-04): -PYSEC-2026-3552, -2 stale mistune ID, .bak удалён, ADR-0290 addendum; остаток — 2 записи diskcache (ADR-0287) | 1h |
 | T2 | repo-wide | ~~ruff 2 → 0~~ **DONE** (verified 2026-09-04, вечер: `uv run ruff check src/` → All checks passed — закрыто батчами S90-S97) | 0.5h |
 | C1 | core | ~~session.py import-time Vault-вызов~~ **DONE `ad1ef2f89`** (2026-09-04): PEP 562 lazy `__getattr__`; verify: import-only без сети, резолв при первом доступе; 106 tests passed | 2h |
@@ -82,18 +83,18 @@
 ### P2 (не блокируют)
 | ID | Задача |
 |---|---|
-| P2-1 | 11 SyntaxWarnings в 4 тест-файлах (`\`` invalid escape) → raw strings |
-| P2-2 | 6 unused except-var (infrastructure) — войдут в ruff-батчи; vulture @80: dsl 3 (trace_storage `maxlen` игнорируется — микробаг, eip/transactional dead imports) |
+| P2-1 | ~~11 SyntaxWarnings в 4 тест-файлах (`\`` invalid escape) → raw strings~~ **DONE S102 `3045c82b8`** (2026-09-04): 12 warnings → raw string docstrings (5 файлов); compileall verified 0 warnings |
+| P2-2 | ~~6 unused except-var~~ **DONE S102 `95e63f0c6`** (2026-09-04): trace_storage.maxlen REAL micro-bug fixed (parameter теперь используется в deque init); transactional OutboxBackend/OutboxEvent — false positive (string annotations) |
 | P2-3 | Ручные retry-циклы → tenacity: dsl ai_rpa.py:130, notify_cascade.py:115, llmcall_processor.py:177; infra outbox/dispatcher.py:289 (есть обоснование — опционально) |
-| P2-4 | infra/clients/base.py:14 docstring учит анти-паттерну (aioredis без pool/timeout) |
-| P2-5 | rpa/system.py логирует полную команду shell (`cmd=%s`) — маскировать argv, оставив argv[0] |
+| P2-4 | ~~infra/clients/base.py:14 docstring учит анти-паттерну (aioredis без pool/timeout)~~ **DONE S102 `a020d0634`** (2026-09-04): example теперь показывает max_connections + socket_connect_timeout + socket_timeout |
+| P2-5 | ~~rpa/system.py логирует полную команду shell~~ **DONE S102 `32c7c8cc0`** (2026-09-04): argv парсится через shlex.split, логируется только argv[0] (бинарь); полная команда через exchange.set_property('shell_command') для audit log |
 | P2-6 | pre_prod_check: фактически 36 гейтов, help заявляет 38 (нумерация #14/#29 пропущена) |
 | P2-7 | SSE handler: PII stream_filter fallback молча (добавить warning-лог); MQTT payload без size-guard |
 | P2-8 | CI: tests/perf k6/locust есть, но не видно CI-обвязки нагрузочного (нужно для M6-#5) |
 | P2-9 | stream.py StreamClient 20 методов (следить); di_bridge dsl-смертные ключи без потребителей в dsl |
 | P2-10 | frontend: широкий except Exception (39/37 страницы), shared/components.py 484 LOC (_RELATED_PAGES дублирует PAGE_METADATA), старые vulture (forms.py callback, 63_Вики force) не закрыты |
-| P2-11 | INFRA_MODULES: 4 пред-существующих висячих пути (validate_modules): monitoring.health_check, repos.files, repos.orders, external_apis.action_bus — ModuleNotFoundError вместо RegistryError при resolve; find real paths или удалить ключи |
-| P2-12 | .worktrees/ untracked каталог в корне — инвентаризировать и убрать/игнорировать |
+| P2-11 | ~~INFRA_MODULES 4 пред-существующих висячих пути~~ **DONE S102 `83ae19f09`** (2026-09-04): monitoring.health_check, repos.files, repos.orders, external_apis.action_bus удалены (consumers — test-only fixtures с overrides); validate_modules → 0 missing |
+| P2-12 | ~~.worktrees/ untracked каталог~~ **DONE S102 `83ae19f09`** (2026-09-04): /.worktrees/ added to .gitignore |
 
 ### Верифицированные метрики (2026-09-04, после S90-S95)
 - pytest --collect-only: **16782 collected, 0 errors** (R1 закрыт S95)
@@ -120,8 +121,16 @@
 | M3 (DEP1) | cryptography 50.0.1 + gitpython 3.1.61 в uv.lock | S96 | `97230556d` |
 | M4-#1 (частично) | core/auth coverage 79% ≥ 70% | S88 | `3101e1a45` |
 | M4 phase 1 | low-hanging coverage: core/enums/* (10.9→94.6%), core/types/* (43.2→93.2%), core/repositories/base (0→100%), core/dsl/variable_backend (33.9→73.1%), + REAL BUG fix (qualified_name alias clash) | S97 | `9cb2333c9`, `136357102` |
+| M4 phase 2-5 | core/utils/* + services/audit/* + services/cache/* + observability/correlation + scaling | S98-S101 | `d9b59354f`, `8ee407dee`, `dad9a2275`, `d2a18ab13`, `3be394de7` |
 | M5-#2 (W1+W2) | GracefulShutdownMiddleware wire + INFLIGHT_COUNTER increment + 7 unit tests | S96 | `11684f3ed` |
+| C2 (M1-#22) | mobile_jwt_redis wire (RedisRevocationStore + RedisRateLimiter) | parallel S96 | `c684d9280` |
 | R1 (P0 REGRESSION) | workflow_subprocess.py import-time DI → lazy getter; INFRA_MODULES keys (workflow.factory, clients.storage.s3_pool); s3 client factory contract fix; scan_file/ingest_file consumers updated | S96 | `4b31157d4` |
+| P2-1 | 12 SyntaxWarnings → raw string docstrings (5 файлов) | S102 | `3045c82b8` |
+| P2-2 | vulture @80 dsl 3 findings: trace_storage maxlen micro-bug fixed, transactional OutboxBackend/OutboxEvent false positive | S102 | `95e63f0c6` |
+| P2-4 | infra/clients/base.py docstring aioredis anti-pattern → показаны max_connections + socket_connect_timeout + socket_timeout | S102 | `a020d0634` |
+| P2-5 | rpa/system.py terminal_exec argv masked в logs (только argv[0] бинарь); полная команда через exchange.set_property('shell_command') для audit | S102 | `32c7c8cc0` |
+| P2-11 | 4 dangling INFRA_MODULES keys (monitoring.health_check, repos.files, repos.orders, external_apis.action_bus) удалены; validate_modules → 0 missing | S102 | `83ae19f09` |
+| P2-12 | /.worktrees/ добавлен в .gitignore | S102 | `83ae19f09` |
 
 ---
 
