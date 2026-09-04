@@ -73,7 +73,7 @@
 | C2 | core/auth | ~~mobile JWT protections~~ **DONE `c684d9280`** (2026-09-04): флаг `mobile_jwt_protections_enabled`, `_build_mobile_jwt_verifier()` (единая сборка), factory `build_verifier_with_protections` с Redis store/limiter (fail-CLOSED); 2 wiring-теста; mobile suite 114 passed | 3h |
 | S1 | services | **REJECTED с обоснованием** (2026-09-04): ключ `decorators.caching` статический и валидируется validate_modules() — R1-класса бага нет; lazy-фикс потребовал бы ломать семантику декорирования классом. YAGNI; пересмотреть только при переименовании ключа | 0h |
 | S2 | services | ~~webhook idempotency + DLQ O(N²)~~ **DONE `0edb11598`** (2026-09-04): Idempotency-Key стабилен на попытки + хранится в DLQEntry + переиспользуется при retry; `_dlq_remove_many` — один LRANGE; 5 тестов | 4h |
-| S3 | services/dsl | hitl_service **DONE S3-1 `f846b45d8`** (261 LOC); security/facade **DONE S3-2 `1bac090fd`** (453→190 + миксины facade_pii 110 / facade_blacklist 203). Остаток S3: builders/base 1422 (план M2-#21) | 16h |
+| S3 | services/dsl | **DONE** (3/3): S3-1 hitl_service `f846b45d8` (261 LOC); S3-2 security/facade `1bac090fd` (190 + миксины); S3-3 builders/base `6d68139ae` (1422→376 + _protocols.py 1095 чистой декларации) | 16h |
 | F1 | frontend | ~~12 сайтов httpx в обход BaseAPIClient~~ **PARTIAL DONE S104-S106** (2026-09-04): page 23 internal API call migrated `b22b5feba`. Page 65 external URL ping documented as correct raw-httpx use case `edd96d035` (S106). Остальные 10+ pages — DEFERRED, need per-page review (some may legitimately use raw httpx для arbitrary external endpoints, не только internal API) | 4h |
 | T3 | tests | M4: overall 30.8% → 70%, `fail_under 60→70` (план M4-#3..#7); pre_prod_check gate #01 сейчас FAIL | 32h |
 | T4 | hardening | Kafka max_poll_records **DONE `12deed6fb`**; MQTT W3 **DONE `37156dbdb`**; M5-claims верифицированы выборочно (см. «Функциональная и нагрузочная верификация»). Остаток: полный SLO-прогон (prod-профиль + perf extras — точка решения) | 1h |
@@ -369,3 +369,18 @@ pre-existing (B-NEW-3), идентичны до/после сплита.
 
 Итог S3 на этот момент: hitl_service DONE (261 LOC), security/facade DONE
 (190 LOC). Остаток S3: builders/base 1422 (план M2-#21, отдельный спринт).
+
+## Батч 2026-09-05 (S3-3) — сплит builders/base, S3 CLOSED (3/3)
+
+S3-3 DONE `6d68139ae`: anatomy-открытие — god-module был на 75% протоколами:
+`RouteBuilder` (37 миксинов MRO, ~265 LOC тела) + 23 `_*Protocol`-класса
+(~1080 LOC чистой декларации контрактов M2-#16). Вынос протоколов в
+`_protocols.py`; `__init__` (376 LOC ≤ 400 — done-критерий M2-#21 плана)
+с ре-экспортом 23 имён (cycle_30/31 импортируют из base; `_shares_prefix`
+нужна __getattr__ — импортирована). Контент-ассерты cycle_30/31 обновлены
+на новый модуль (честно: тесты проверяли расположение, оно изменено сплитом).
+
+Verify: builders+cycle 582 passed; collect 16966/0 errors; ruff 0.
+
+**S3 ГОТОВ (3/3 god-объекта)**: hitl_service 261, security/facade 190,
+builders/base __init__ 376 — все ≤ 400 LOC.
