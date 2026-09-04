@@ -265,3 +265,29 @@ pytest 3/3 passed.
 **Коррекция клейма C2**: до фикса `486b51e4e` revocation работал, rate limit —
 нет. Итог после фикса: обе защиты активны при `mobile_jwt_protections_enabled=True`
 (revocation fail-CLOSED, per-device throttle 10/60s с реальным reject).
+
+## T7 — CLOSED (Фаза A переоценка + Фаза B фикс, 2026-09-05)
+
+**Решение (вариант (a))**: стаб S107 (hard-coded False — ложный «нездоров»
+сигнал для мониторинга) заменён ретаргетом tech-сервиса на живой
+HealthAggregator: check_database/redis/s3/bucket/smtp/rabbitmq →
+check_single над ConnectorRegistry-компонентами (db_main, redis_cache,
+s3_main, smtp_main, eventbus_main); graylog/logging_service не зарегистрирован
+→ честный False; check_all_services → check_all + статус-маппинг.
+
+**Попутно закрыто**:
+- B-NEW-1 CLOSED: observability_bridge (удалён в S96) → тесты переписаны на
+  core.observability.correlation (get_correlation_id, аннотация str)
+- P2-11 CLOSED полностью: стаб + ключ monitoring.health_check + провайдер
+  get/set_healthcheck_session_provider удалены; repos.files/orders тесты
+  переписаны на инвертированный контракт (модули не существуют — evidence S102)
+
+**Доказательство**: di+services+interfaces 489 passed (было 5 failed);
+`pytest --collect-only` → 16966/0 errors; ruff `All checks passed`;
+real-path smoke: check_database/graylog=False без инфраструктуры (не 500).
+Коммит `a6d601d85`.
+
+Остаток открытых: T3 (M4 coverage — сессия-2 ведёт S97-S106+), F1 остаток
+(сессия-2, S104/S106), S3 (god-objects 16h), M5-#10 SLO-прогон (prod-профиль
++ perf extras — точка решения), M6 remainder (позитивные JWT + брокерные
+протоколы — docker), P2-10 хвост.
