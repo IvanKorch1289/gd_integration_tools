@@ -232,3 +232,19 @@ PRODUCTION_READINESS_FINAL.md (6), НОВЫЙ docs/security/AUTH_PROTOCOL_MATRIX
 tech-роут как vestigial (живой health — /api/v1/health/* + readiness).
 Аналогично проверить get_file_repo_provider (extensions/core_entities/files —
 может быть default-OFF) и get_action_bus_service_provider (orders_dsl).
+
+## Фаза C — ревью батча 2026-09-05 (C2/T4/S2/DOCS1): PASS, 1 P1 → исправлен
+
+Ревьюер (отдельный агент): вердикты — C2 PASS с P1, T4 PASS, S2 PASS, DOCS1 PASS с P2.
+Регрессия: 263 passed; ruff 0.
+
+| Находка | Решение | Коммит |
+|---|---|---|
+| **P1**: wrapper rate-limit игнорировал решение limiter'а (DeviceRateLimiter → RateLimitDecision, RedisRateLimiter → tuple) — per-device throttle не отклонял | Исправлено: decision-resolve + reject + 3 теста (оба контракта + pass) | `486b51e4e` |
+| P2: комментарий router «fail-closed» неточен (это fallback к bare-verifier) | Исправлен | `486b51e4e` |
+| P2: AUTH_PROTOCOL_MATRIX webhook-citation вела на docstring, не на код | Исправлено: `infrastructure/sources/webhook.py:104,176` | `486b51e4e` |
+| P2-наблюдение: неуспешный dlq_retry пушит новую DLQ-запись при живом оригинале | Задокументировано (ключ один → получатель дедуплицирует; ротация — отдельный backlog) | — |
+
+**Коррекция клейма C2**: до фикса `486b51e4e` revocation работал, rate limit —
+нет. Итог после фикса: обе защиты активны при `mobile_jwt_protections_enabled=True`
+(revocation fail-CLOSED, per-device throttle 10/60s с реальным reject).
