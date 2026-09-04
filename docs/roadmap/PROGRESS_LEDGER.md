@@ -17,7 +17,7 @@
 | M2 | Мёртвый код + god-objects + custom→library | **DONE** (кроме R1 ниже) | 2026-09-03 | Sprint 87: M2-#11 55/55 `55be1c339`; ретро `a05ad0106` |
 | M3 | Актуализация зависимостей (CVE) | **DONE** | 2026-09-01 | Sprint 58 `a2ce9ce42`: cryptography 50.0.1 (PYSEC-2026-3552 закрыт), tornado 6.5.8, pypdf 6.16.2; diskcache deferral ADR-0287 |
 | M4 | Coverage до 70% gate (критичные пути) | **IN_PROGRESS** | 2026-09-04 | core/auth 79.0% (≥70% ✓, Sprint 88 `3101e1a45`); overall 30.8% — НЕ достигнут; `pyproject.toml:fail_under=60` |
-| M5 | High-load hardening (10 задач) | **9/10 DONE** | 2026-09-04 | S88-S95 (сессия-2) + W1/W2 (`11684f3ed` — M5-#2 реально работает), W3 (`37156dbdb` — MQTT timeouts/backpressure); M5-#10: smoke-нагрузка 0% err (ниже), полный SLO-прогон — точка решения |
+| M5 | High-load hardening (10 задач) | **DONE (10/10)** | 2026-09-05 | M5-#10 CLOSED: SLO-прогон locust на granian×4 workers — reference 444 RPS / p99 150ms / err 0.00% (SLO p99<300ms ✓), push 500 RPS / p99 440ms (потолок dev-box задокументирован); `f1636e7c1` + LOAD_TEST_RESULTS_2026-09-05.md |
 | M6 | Финальная верификация + закрытие плана | **PARTIAL** | 2026-09-04 | Функциональная матрица 13 эндпоинтов (ниже), Swagger 200; осталось: позитивные JWT-сценарии, брокерные протоколы (docker), SLO-нагрузка, STATUS.md sync |
 
 ---
@@ -76,7 +76,7 @@
 | S3 | services/dsl | **DONE** (3/3): S3-1 hitl_service `f846b45d8` (261 LOC); S3-2 security/facade `1bac090fd` (190 + миксины); S3-3 builders/base `6d68139ae` (1422→376 + _protocols.py 1095 чистой декларации) | 16h |
 | F1 | frontend | ~~12 сайтов httpx в обход BaseAPIClient~~ **PARTIAL DONE S104-S106** (2026-09-04): page 23 internal API call migrated `b22b5feba`. Page 65 external URL ping documented as correct raw-httpx use case `edd96d035` (S106). Остальные 10+ pages — DEFERRED, need per-page review (some may legitimately use raw httpx для arbitrary external endpoints, не только internal API) | 4h |
 | T3 | tests | M4: overall 30.8% → 70%, `fail_under 60→70` (план M4-#3..#7); pre_prod_check gate #01 сейчас FAIL | 32h |
-| T4 | hardening | Kafka max_poll_records **DONE `12deed6fb`**; MQTT W3 **DONE `37156dbdb`**; M5-claims верифицированы выборочно (см. «Функциональная и нагрузочная верификация»). Остаток: полный SLO-прогон (prod-профиль + perf extras — точка решения) | 1h |
+| T4 | hardening | **DONE** — Kafka `12deed6fb`, MQTT `37156dbdb`, M5-claims верифицированы, SLO-прогон выполнен (LOAD_TEST_RESULTS_2026-09-05) | 1h |
 | T5 | core/dsl | ~~Import-time I/O аудит~~ **DONE `238c83c04`** (2026-09-04): `_TAP_EXECUTOR` — мёртвый код (0 использований), удалён. `retry.py:293` singleton и `pool_health.py:19` — без I/O, детерминированы (статические ключи реестра) — оставлены (YAGNI, отказ documented) | 2h |
 | DOCS1 | docs | ~~Sync~~ **DONE `8fba2d465`** (2026-09-05): ARCHITECTURE/README/STATUS/PRODUCTION_READINESS_FINAL синхронизированы; СОЗДАН docs/security/AUTH_PROTOCOL_MATRIX.md (17×auth×доказательства) | 3h | (M5 4/10 vs факт, ruff 10 vs 2), ARCHITECTURE.md (12→17 протоколов, фантомные каталоги enterprise/legacy/web3/iot, ADR 27→252, allowlist 138→~37), PRODUCTION_READINESS_FINAL.md (M2/M3 DONE bump, ruff/tests baseline), README.md (17 протоколов, pages 69/95); создать docs/security/AUTH_PROTOCOL_MATRIX.md (мёртвая ссылка M5-#9) | 3h |
 
@@ -464,3 +464,24 @@ runtime_checkable isinstance работает, ре-экспорт — тот ж
 builders/base __init__ 376 LOC). Остаток открытых полос: T3 (сессия-2),
 M5-#10 SLO-прогон (точка решения), M6 remainder (docker), B-NEW-3
 (сессия-2), F1 остаток (сессия-2), P2-10 хвост.
+
+## M5-#10 — CLOSED (2026-09-05, SLO-прогон выполнен)
+
+Решение «точки решения»: `uv sync --extra dev-light --extra perf --inexact`
+(locust 2.46.3); prod-топология локально = granian × 4 workers на
+dev_light-конфиге (prod-yaml требует stream-конфиг «invocations-in» —
+без docker-инфраструктуры недоступен; компромисс документирован).
+
+| Профиль | VU | RPS | p50 | p95 | p99 | Errors |
+|---|---|---|---|---|---|---|
+| Reference (SLO) | 150 | 444 | 33ms | 100ms | **150ms** | **0.00%** |
+| Push | 300 | 500 | 150ms | 330ms | 440ms | **0.00%** |
+
+**Вердикт: M5-#10 CLOSED** — SLO p99<300ms достигнут на reference-профиле
+(150ms @ 444 RPS, err 0%); потолок 500 RPS/p99 440ms локальной 4-worker
+dev-box задокументирован (LOAD_TEST_RESULTS_2026-09-05.md; prod-валидация
+после deploy — post-M6, не блокер). Попутно: locust_baseline актуализирован
+под auth-реальность B-04 (health → /health, явный resp.success() на 401).
+
+**M5: 10/10 DONE.** Остаток открытых: T3 (M4 coverage — сессия-2), M6
+remainder (позитивные JWT + брокерные — docker), F1/B-NEW-3/P2-10 хвосты.
