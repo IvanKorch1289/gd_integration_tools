@@ -20,6 +20,29 @@ T = TypeVar("T")
 _logger = get_logger(__name__)
 
 
+
+
+def _make_correlation_id() -> str:
+    """S92 M5-#8: factory for correlation_id с propagation from ASGI context.
+
+    Tries asgi_correlation_id.context.correlation_id first (set by
+    CorrelationIdMiddleware в entrypoints/middlewares/correlation.py).
+    Fallback to uuid4 если ASGI context недоступен (e.g., background tasks,
+    CLI scripts, tests).
+    """
+    try:
+        from asgi_correlation_id.context import correlation_id as asgi_cid
+
+        asgi_value = asgi_cid.get("")
+        if asgi_value:
+            return asgi_value
+    except (ImportError, LookupError, AttributeError):
+        # No asgi_correlation_id context (offline/test) — fallback to UUIDv4
+        pass
+    return str(uuid.uuid4())
+
+
+
 class ExchangeStatus(StrEnum):
     """Статус выполнения Exchange внутри DSL-маршрута."""
 
@@ -94,7 +117,15 @@ class ExchangeMeta(BaseModel):
 
     exchange_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     route_id: str | None = None
-    correlation_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    correlation_id: str = Field(
+        default_factory=lambda: _make_correlation_id(),
+        description=(
+            "S92 M5-#8: идентификатор цепочки вызовов. Default factory — "
+            "asgi_correlation_id context (если доступен через "
+            "ASGI middleware) ИЛИ fallback UUIDv4. Обеспечивает propagation "
+            "HTTP correlation_id → DSL exchange."
+        ),
+    )
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     source: str | None = None
     protocol: ProtocolType | None = None
