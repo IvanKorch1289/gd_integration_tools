@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-09-01 (Sprint 88 — M4 partial: core/auth coverage 79.0% exceeds 70% target; overall 30.8% deferred; см. `docs/roadmap/M4_AUDIT_2026-09-01.md`)
+> **Last verified**: 2026-09-01 (Sprint 89 — M5 audit: 4/10 items CLOSED (pool, CB, rate limit, health-check), 2 PARTIAL, 4 TODO; см. `docs/roadmap/M5_AUDIT_2026-09-01.md`)
 
 ## Post-Plan A Sprints 1-31 (coverage ratchet + final polish)
 
