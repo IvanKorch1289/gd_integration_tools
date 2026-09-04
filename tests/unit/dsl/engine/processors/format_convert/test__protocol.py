@@ -1,4 +1,4 @@
-"""Tests for dsl/engine/processors/format_convert/_protocol.py (cycle 237).
+r"""Tests for dsl/engine/processors/format_convert/_protocol.py (cycle 237).
 
 Per CYCLE-220 analysis, coverage target 77% → 80% (analyst #12).
 `_protocol.py` (10 LOC, 503 bytes) — small Protocol без тестов.
@@ -30,6 +30,6 @@ def test_format_convert_protocol_algorithm_optional() -> None:
 
 
 def test_format_convert_protocol_name() -> None:
-    """Класс называется \`_FormatConvertProtocol\`."""
+    r"""Класс называется \`_FormatConvertProtocol\`."""
     from src.backend.dsl.engine.processors.format_convert._protocol import _FormatConvertProtocol
     assert _FormatConvertProtocol.__name__ == "_FormatConvertProtocol"

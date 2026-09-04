@@ -1,4 +1,4 @@
-"""Regression tests для resilience_bridge relocation (Sprint 40 W1 Item 4).
+r"""Regression tests для resilience_bridge relocation (Sprint 40 W1 Item 4).
 
 Покрывает:
 1. `src/backend/infrastructure/di_bridge/resilience.py` exists (NOT

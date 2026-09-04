@@ -1,4 +1,4 @@
-"""Tests for core/enums/database.py (S97 — coverage push).
+r"""Tests for core/enums/database.py (S97 — coverage push).
 
 \`core/enums/database.py\` (DatabaseTypeChoices, IsolationLevelChoices,
 DatabaseProfileChoices) — pure StrEnum, no business logic, covered via

@@ -1,4 +1,4 @@
-"""Regression tests для coverage-gate flags (Sprint 41 W1 Item 5).
+r"""Regression tests для coverage-gate flags (Sprint 41 W1 Item 5).
 
 Покрывает:
 1. \`--update-ratchet\` flag bumps coverage_percent + appends ratchet_history.
@@ -51,7 +51,7 @@ def fake_coverage_xml(tmp_path: Path) -> Path:
 
 
 class TestUpdateRatchetFlag:
-    """\`--update-ratchet\` flag bumps coverage_percent + appends history."""
+    r"""\`--update-ratchet\` flag bumps coverage_percent + appends history."""
 
     def test_update_ratchet_bumps_coverage_percent(
         self, tmp_baseline: Path, fake_coverage_xml: Path
@@ -141,7 +141,7 @@ class TestUpdateRatchetFlag:
 
 
 class TestPerLayerStrictFlag:
-    """\`per-layer --strict\` enables CI enforcement."""
+    r"""\`per-layer --strict\` enables CI enforcement."""
 
     def test_per_layer_strict_returns_1_on_threshold_fail(
         self, fake_coverage_xml: Path, tmp_path: Path
@@ -202,7 +202,7 @@ class TestUpdateRatchetCliIntegration:
     """CLI integration tests для --update-ratchet."""
 
     def test_cli_help_shows_update_ratchet_flag(self) -> None:
-        """\`--help\` lists \`--update-ratchet\` flag (Sprint 41 W1 Item 5)."""
+        r"""\`--help\` lists \`--update-ratchet\` flag (Sprint 41 W1 Item 5)."""
         result = subprocess.run(
             [sys.executable, "tools/check_coverage_gate.py", "main", "--help"],
             capture_output=True,
