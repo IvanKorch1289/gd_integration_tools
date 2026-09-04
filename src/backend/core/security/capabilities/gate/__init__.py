@@ -51,7 +51,7 @@ from src.backend.core.security.capabilities.gate.declaration_mixin import (
     DeclarationMixin,  # S54 W4: MRO
 )
 
-__all__ = ("CapabilityGate",)
+__all__ = ("CapabilityGate", "CheckMixin", "CheckTenantMixin", "CacheMixin", "DeclarationMixin")
 
 
 # --- Module-level constants (S54 W4 decomp: preserve original constants) ---

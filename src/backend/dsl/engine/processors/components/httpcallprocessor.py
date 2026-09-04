@@ -49,8 +49,7 @@ class HttpCallProcessor(BaseProcessor):
         from src.backend.core.di.providers.cache import get_httpx_client_provider
 
         _http_module = get_httpx_client_provider()
-            get_http_client_dependency,
-        )
+        get_http_client_dependency = _http_module.get_http_client_dependency
 
         client = get_http_client_dependency()
 

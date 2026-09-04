@@ -17,9 +17,14 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass, field
 from time import monotonic
-from typing import Any, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from src.backend.core.logging import get_logger
+
+if TYPE_CHECKING:
+    # S62 M2-#3: circular dep avoidance — VariableScope imported in TYPE_CHECKING
+    # block для forward references в method signatures.
+    from src.backend.core.dsl.variables import VariableScope
 
 __all__ = (
     "ConsulVariableBackend",
@@ -52,25 +57,25 @@ class VariableBackend(Protocol):
 
     name: str
 
-    async def get(self, key: str, scope:"VariableScope") -> Any | None:
+    async def get(self, key: str, scope: VariableScope) -> Any | None:
         """Получить значение по ``key`` в ``scope``; None если отсутствует."""
         # S62 M2-#3: lazy import to break circular dep с variables.py
 
         ...
 
     async def set(
-        self, key: str, value: Any, scope:"VariableScope", *, ttl: float | None = None
+        self, key: str, value: Any, scope: VariableScope, *, ttl: float | None = None
     ) -> None:
         """Установить ``value`` по ``key`` в ``scope``; ``ttl`` — опциональный TTL."""
         ...
 
-    async def delete(self, key: str, scope:"VariableScope") -> bool:
+    async def delete(self, key: str, scope: VariableScope) -> bool:
         """Удалить ``key`` из ``scope``; вернуть True если существовал."""
         # S62 M2-#3: lazy import to break circular dep с variables.py
 
         ...
 
-    async def list_keys(self, scope:"VariableScope") -> list[str]:
+    async def list_keys(self, scope: VariableScope) -> list[str]:
         """Вернуть список ключей в ``scope``."""
         # S62 M2-#3: lazy import to break circular dep с variables.py
 
@@ -94,7 +99,7 @@ class InMemoryVariableBackend:
     name: str = "in_memory"
     _store: dict[tuple[str, str], tuple[Any, float]] = field(default_factory=dict)
 
-    async def get(self, key: str, scope:"VariableScope") -> Any | None:
+    async def get(self, key: str, scope: VariableScope) -> Any | None:
         """Получить значение по ``key`` в ``scope``; None если отсутствует."""
         full_key = (str(scope), key)
         entry = self._store.get(full_key)
@@ -108,17 +113,17 @@ class InMemoryVariableBackend:
         return value
 
     async def set(
-        self, key: str, value: Any, scope:"VariableScope", *, ttl: float | None = None
+        self, key: str, value: Any, scope: VariableScope, *, ttl: float | None = None
     ) -> None:
         """Установить ``value`` по ``key`` в ``scope``; ``ttl`` — опциональный TTL."""
         expires_at = (_now() + ttl) if ttl else 0.0
         self._store[(str(scope), key)] = (value, expires_at)
 
-    async def delete(self, key: str, scope:"VariableScope") -> bool:
+    async def delete(self, key: str, scope: VariableScope) -> bool:
         """Удалить ``key`` из ``scope``; вернуть True если существовал."""
         return self._store.pop((str(scope), key), None) is not None
 
-    async def list_keys(self, scope:"VariableScope") -> list[str]:
+    async def list_keys(self, scope: VariableScope) -> list[str]:
         """Вернуть список ключей в ``scope``."""
         scope_str = str(scope)
         return [
@@ -153,10 +158,10 @@ class ConsulVariableBackend:
     name: str = "consul"
     _cache: dict[str, tuple[Any, float]] = field(default_factory=dict)
 
-    def _key_path(self, key: str, scope:"VariableScope") -> str:
+    def _key_path(self, key: str, scope: VariableScope) -> str:
         return f"dsl/vars/{scope}/{key}"
 
-    async def get(self, key: str, scope:"VariableScope") -> Any | None:
+    async def get(self, key: str, scope: VariableScope) -> Any | None:
         """Читает переменную из Consul с in-process кэшем и TTL."""
         # S62 M2-#3: lazy import to break circular dep с variables.py
 
@@ -186,7 +191,7 @@ class ConsulVariableBackend:
         return raw
 
     async def set(
-        self, key: str, value: Any, scope:"VariableScope", *, ttl: float | None = None
+        self, key: str, value: Any, scope: VariableScope, *, ttl: float | None = None
     ) -> None:
         """Установить ``value`` по ``key`` в ``scope`` через Consul KV."""
         path = self._key_path(key, scope)
@@ -205,7 +210,7 @@ class ConsulVariableBackend:
         # Invalidate cache.
         self._cache.pop(path, None)
 
-    async def delete(self, key: str, scope:"VariableScope") -> bool:
+    async def delete(self, key: str, scope: VariableScope) -> bool:
         """Удалить ``key`` из ``scope``; вернуть True если существовал."""
         path = self._key_path(key, scope)
         from src.backend.core.config.consul_config import ConsulConfigStore
@@ -222,7 +227,7 @@ class ConsulVariableBackend:
             return False
         return self._cache.pop(path, None) is not None
 
-    async def list_keys(self, scope:"VariableScope") -> list[str]:
+    async def list_keys(self, scope: VariableScope) -> list[str]:
         """Вернуть список ключей в ``scope``."""
         from src.backend.core.config.consul_config import ConsulConfigStore
 
@@ -271,7 +276,7 @@ class PostgresVariableBackend:
     session: Any = None  # SQLAlchemy AsyncSession, lazy
     name: str = "postgres"
 
-    async def get(self, key: str, scope:"VariableScope") -> Any | None:
+    async def get(self, key: str, scope: VariableScope) -> Any | None:
         """Читает переменную из PostgreSQL; None если сессия не задана."""
         if self.session is None:
             return None
@@ -302,7 +307,7 @@ class PostgresVariableBackend:
         return value
 
     async def set(
-        self, key: str, value: Any, scope:"VariableScope", *, ttl: float | None = None
+        self, key: str, value: Any, scope: VariableScope, *, ttl: float | None = None
     ) -> None:
         """Установить ``value`` по ``key`` в ``scope`` через Postgres-таблицу."""
         if self.session is None:
@@ -333,7 +338,7 @@ class PostgresVariableBackend:
         await self.session.execute(stmt)
         await self.session.commit()
 
-    async def delete(self, key: str, scope:"VariableScope") -> bool:
+    async def delete(self, key: str, scope: VariableScope) -> bool:
         """Удалить ``key`` из ``scope``; вернуть True если существовал."""
         if self.session is None:
             return False
@@ -352,7 +357,7 @@ class PostgresVariableBackend:
         await self.session.commit()
         return result.rowcount > 0
 
-    async def list_keys(self, scope:"VariableScope") -> list[str]:
+    async def list_keys(self, scope: VariableScope) -> list[str]:
         """Вернуть список ключей в ``scope``."""
         if self.session is None:
             return []
