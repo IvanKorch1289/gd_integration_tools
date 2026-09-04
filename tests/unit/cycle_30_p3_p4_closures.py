@@ -89,7 +89,8 @@ class TestRouteBuilderProtocols:
     """P4-#4: Protocol definitions must exist in RouteBuilder module."""
 
     def test_protocol_imports_present(self):
-        path = "src/backend/dsl/builders/base/__init__.py"
+        # S3-3 (M2-#21): протоколы вынесены в _protocols.py.
+        path = "src/backend/dsl/builders/base/_protocols.py"
         with open(path) as f:
             content = f.read()
         assert "Protocol" in content, (
@@ -98,14 +99,16 @@ class TestRouteBuilderProtocols:
         assert "runtime_checkable" in content
 
     def test_protocol_definitions_exist(self):
-        path = "src/backend/dsl/builders/base/__init__.py"
+        # S3-3: определения в _protocols.py, в __init__ — ре-экспорт.
+        path = "src/backend/dsl/builders/base/_protocols.py"
         with open(path) as f:
             content = f.read()
         assert "_RouteProcessorSteps" in content
         assert "_RouteCore" in content
 
     def test_migration_path_documented(self):
-        path = "src/backend/dsl/builders/base/__init__.py"
+        # S3-3: Migration path задокументирован в _protocols.py.
+        path = "src/backend/dsl/builders/base/_protocols.py"
         with open(path) as f:
             content = f.read()
         assert "Migration path" in content or "CompositionRouteBuilder" in content

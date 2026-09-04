@@ -54,8 +54,12 @@ class TestRouteBuilderProtocols:
         import inspect
 
         from src.backend.dsl.builders.base import RouteBuilder
-        module = inspect.getmodule(RouteBuilder)
-        source = inspect.getsource(module)
+        from src.backend.dsl.builders.base import _protocols
+
+        # S3-3 (M2-#21): миграционный комментарий переехал в _protocols.
+        source = inspect.getsource(_protocols) + inspect.getsource(
+            inspect.getmodule(RouteBuilder)
+        )
         assert "Migration path" in source or "CompositionRouteBuilder" in source, (
             "RouteBuilder module should document migration path"
         )
