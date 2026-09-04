@@ -1129,3 +1129,23 @@ Provider returns the class itself, caller does `ReplyChannel.instance()`.
 - Каждый sprint мигрирует 1 файл, полный finish требует 30+ sprints
 - Стоит ускорить batch (multi-file per sprint) или смена подхода
 
+
+### Sprint 85 — M2-#11 ACCELERATED BATCH (8 files, was 1/sprint → 8/sprint)
+
+**Commit**: `9d6842366` — refactor(dsl): M2-#11 accelerated batch.
+
+### 2 new DI providers
+- `get_telegram_bot_provider()` в cache.py (lazy resolve clients.external.telegram_bot module)
+- `get_http_client_typed_provider()` в cache.py (lazy resolve clients.transport.http.factory)
+
+### 8 files migrated in 1 sprint
+- telegram/ (6 files): _common.py, edit.py, mention.py, reply.py, send.py, send_file.py
+- eip/ (2 files): api_composition.py, transformation.py
+
+### Process improvement
+- 1 file/sprint baseline → 8 files/sprint (8x acceleration)
+- Use batch script (replace_3.py pattern) for repeated patterns
+- Reuse existing providers (s3_client, redis_client) where applicable
+
+### M2-#11: 32/55 (was 24/55)
+
