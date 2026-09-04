@@ -67,6 +67,19 @@ class QueueSettings(BaseSettingsWithLoader):
         description="Максимальное количество экземпляров потребителей",
         json_schema_extra={"example": 10},
     )
+    # S90 M5-#5: backpressure на очередях (RabbitMQ/Kafka prefetch).
+    # Без явного prefetch count потребители могут «высасывать» все сообщения
+    # из очереди в один worker → OOM/backpressure failure. Explicit limit.
+    consumer_max_prefetch: int = Field(
+        10,
+        ge=1,
+        le=10000,
+        description=(
+            "S90 M5-#5: Max prefetch count per consumer (RabbitMQ prefetch_count / "
+            "Kafka max_poll_records). Default 10 для backpressure на high-load."
+        ),
+        json_schema_extra={"example": 10},
+    )
     graceful_timeout: int = Field(
         ...,
         ge=5,

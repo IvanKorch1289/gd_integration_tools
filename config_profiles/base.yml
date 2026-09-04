@@ -626,3 +626,6 @@ http3:
   require_client_auth: true         # Sprint 35 P1 #6: auth required by default
   bind_host: 127.0.0.1
   bind_port: 8443
+
+# S90 M5-#5: backpressure на MQ
+queue_consumer_max_prefetch: 10
