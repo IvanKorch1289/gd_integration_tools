@@ -1207,3 +1207,23 @@ Provider returns the class itself, caller does `ReplyChannel.instance()`.
 - get_dlq_memory_writer_module_provider
 
 ### M2-#11 STATUS: 55/55 (100% CLOSED ✓)
+
+## Sprint 88 — M4 verification + audit
+
+**Commit**: `3101e1a45` — docs(m4): M4 audit.
+
+### M4 measurement
+- **core/auth coverage: 79.0%** (exceeds 70% target)
+- overall coverage: 30.8% (deferred до full test writing)
+- pre-prod-check: TIMEOUT (heavy 38-gate run, killed at 143)
+- ruff check: 159 errors (130 auto-fixable)
+
+### M4 done-критерий
+- pyproject.toml:fail_under = 60 (current), 70 (target)
+- core/auth already passes 70% threshold
+- overall 30.8% → needs multi-day test writing (DSL processors, services, infrastructure)
+- Deferred to Sprint 91+ (per S48 estimate)
+
+### Milestone status (S88)
+- M1 ✓ M2 ✓ M3 ✓ M4 partial (core/auth 79%) M5 0/10 M6 0/N
+
