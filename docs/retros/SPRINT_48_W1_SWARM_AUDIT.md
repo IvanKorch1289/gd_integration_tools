@@ -1323,3 +1323,21 @@ Provider returns the class itself, caller does `ReplyChannel.instance()`.
 - Pipeline class mock: requires full engine.pipeline support (out of scope for single sprint)
 - DSL processor tests: 50+ processors, each needs 3-5 tests = 200+ tests
 - Multi-day effort, deferred to dedicated sprint
+
+## Sprint 95 — M5 final audit + M6 runbook
+
+**Commits**:
+- `5b4092b71` docs(m5): M5-#7 CLOSED + M5 9/10 done (S95 final audit)
+- (next) docs(m6): production deployment runbook
+
+### S95 results
+- **M5-#7 CLOSED** (all httpx calls have explicit timeouts)
+- **M5 STATUS: 9/10 CLOSED (90%)** + 1 DEFERRED (M5-#10 load test, production env)
+- **M6 RUNBOOK** written: 9-step production deployment checklist
+
+### Milestone status
+- M1 ✓ M2 ✓ M3 ✓ (3 fully closed)
+- M4 partial (core/auth 79%, overall 30.8%)
+- **M5 9/10 closed** (was 7/10 in S93)
+- M6 DEFERRED (production env required)
+
