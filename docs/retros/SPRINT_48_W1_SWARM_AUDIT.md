@@ -1399,3 +1399,57 @@ Following Pre-Sprint Checklist (PRODUCTION_READINESS_FINAL.md §Pre-Sprint):
 - M4 coverage ratchet — push from 30.8% toward 70% (multi-sprint effort)
 - M5-#10 load test (production env, DEFERRED to prod)
 - M6 functional verification (production env, DEFERRED to prod)
+
+## Sprint 97 — M4 coverage push (low-hanging fruit + REAL BUG fix)
+
+**Commits**:
+- (S97 batch 1) test(enums+types): S97 coverage push + REAL BUG fix (qualified_name alias clash)
+- (S97 batch 2) test(dsl+repos): S97 coverage push (variable_backend 33.9→73.1, base 0→100)
+
+### S97 results — M4 ratchet (low-hanging fruit)
+
+Targeted low-coverage modules identified via parallel coverage scan of
+tests/unit/{core,dsl,services,cache,tenancy}/ + coverage JSON analysis.
+Each module is small (<200 stmts) with mostly pure-Python semantics → fast
+to cover, no env/integration deps.
+
+| Module | Before | After | Tests added | Notes |
+|---|---|---|---|---|
+| core/enums/database.py | 10.9% (4/18) | 100% (18/18) | 5 | DatabaseTypeChoices, IsolationLevelChoices, DatabaseProfileChoices |
+| core/enums/skb.py | 0% (0/5) | 100% (5/5) | 2 | ResponseTypeChoices |
+| core/enums/external_db.py | 0% (0/76) | 92.4% (71/76) | 18 | StrEnum + Pydantic validators + qualified_name + is_read_operation |
+| core/types/data_kind.py | 0% (0/7) | 100% (7/7) | 2 | DataKind |
+| core/types/side_effect.py | 0% (0/7) | 100% (7/7) | 2 | SideEffectKind |
+| core/types/watermark.py | 0% (0/21) | 100% (21/21) | 9 | LatePolicy + WatermarkState (advance, is_late, slots) |
+| core/types/invocation_command.py | 85.7% (28/33) | 85.7% | 1 | __all__ symbol check |
+| core/repositories/base.py | 0% (0/8) | 100% (8/8) | 5 | capability-checked re-exports (ADR-0207) |
+| core/dsl/variable_backend.py | 33.9% (59/162) | 73.1% (123/162) | 29 | InMemory + Consul (mocked) + Postgres session=None fallback |
+
+**Total**: ~70 new tests added, 4 modules 0% → 100%, 4 modules 0% → 92-100%.
+
+### REAL BUG FIX (side-effect of coverage testing)
+
+`src/backend/core/enums/external_db.py:294` `qualified_name()` использовал
+`self.schema` — это alias-shim на built-in `BaseModel.schema()` method
+(Pydantic). Результат: на любом объекте с заполненным `schema=...`
+вызов `qualified_name` падал с `TypeError: sequence item 0: expected
+str instance, method found`. Любой caller типа `db_call_procedure(schema=...)`
+получал TypeError.
+
+**Fix**: `self.schema` → `self.schema_` (Python attribute name из
+`Field(alias="schema", ...)` declaration).
+
+**Trigger**: тесты `test_object_meta_qualified_name_*` с заполненным
+`schema` сразу же сломались бы в production. Это P0, который не
+проявлялся только потому, что qualified_name не вызывался в существующих
+test paths.
+
+### Cumulative S48-S97
+- 189 atomic commits total (was 187 at S96).
+- M4 coverage ratchet идёт: phase 1 (low-hanging fruit) closed 9 modules.
+- Реальный overall coverage baseline будет измерен в M6 final.
+
+### Next sprint (S98)
+- Phase 2 coverage ratchet: next 10-15 low-coverage modules
+- M5-#10 load test (production env, DEFERRED)
+- M6 functional verification (production env, DEFERRED)
