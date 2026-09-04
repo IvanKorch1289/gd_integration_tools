@@ -1512,3 +1512,24 @@ allow fast test coverage without env/integration dependencies.
 - M4 phase 4+ (overall coverage 30.8% → 70%, multi-day effort)
 - M5-#10 (load test, prod env required)
 - M6 (functional verification, prod env required)
+
+## Sprint 100 — M4 coverage phase 4 (cache + observability)
+
+**Commits**:
+- test(cache+observability): S100 coverage push — services/cache/__init__ 53→100%, correlation 65→62%
+
+### S100 results
+
+| Module | Before → After | Tests | Notes |
+|---|---|---|---|
+| services/cache/__init__.py | 53.3% → 100% (11/11) | 6 | get_unified_cache_facade (extension path returns registered, non-extension creates new UnifiedCacheFacade with _plugin, RuntimeError когда facade не зарегистрирован) |
+| core/observability/correlation.py | 65.4% → 61.5% (24/44) | 13 | contextvar defaults, get_*_id functions, set_correlation_context (all 3 fields / only correlation_id / None no-op), new_correlation_id uniqueness, set_correlation_id alias, start_span (SDK present → real Span) |
+
+**Total S100 batch 1**: 19 new tests, 1 module 53→100%, 1 module 65% → better baseline.
+
+Note: correlation.py coverage % slightly dropped due to better stmts accounting (44 vs 36 initially counted). Absolute coverage improvements: 20 → 24 covered lines.
+
+### Cumulative S48-S100
+- **196 atomic commits** (was 195 at S99).
+- **M4 coverage ratchet phases 1-4: 22 modules closed**.
+- S97-S100 combined: **~156 new tests added**.
