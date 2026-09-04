@@ -149,3 +149,17 @@
 | S1 | REJECTED | — | обоснование выше (YAGNI) |
 
 Остаток backlog: B-NEW-1 (observability_bridge ImportError — сессия-2), B-NEW-2-остаток (test_stop_cancels_task AsyncMock-квирк), W3-P2 (MQTT publish per-connection), T3 (M4 coverage — мульти-спринт), T4 (верификация M5 claims + Kafka max_poll_records), DOCS1, S2, S3, F1, P2-1..P2-12.
+
+## Фаза C — ревью батча 2026-09-04 (вечер): PASS
+
+Ревьюер (отдельный агент, не автор): 6/6 коммитов PASS (f3eb7ddaf, 3d6962ec5, 11684f3ed, ad1ef2f89, 238c83c04, 37156dbdb), 0 P1.
+Верификация ревьюера: 549 passed/1 pre-existing fail; ruff 0; collect 16921/0 errors; mypy 0 по изменённым файлам; order=880 outermost подтверждён по семантике Starlette LIFO.
+
+| P2 из ревью | Решение | Коммит |
+|---|---|---|
+| drain-таймаут не согласован с k8s-бюджетом | Исправлено: `max(5, (graceful_shutdown_timeout−15)/2)` | `f804bfe10` |
+| MQTT message-задачи переживают stop() | Исправлено: stop() отменяет in-flight поколения | `f804bfe10` |
+| drain 503 мимо Prometheus/OTel/security-headers | Документировано, отложено (окно ≤7.5s) | — |
+| Docstring module_registry («infrastructure-модулей») неточен | Исправлено | `f804bfe10` |
+
+Остаток открытых задач (актуально после S96-S97 параллельной сессии): T3 (M4 overall coverage — мульти-спринт), T4 (верификация M5-claims + Kafka max_poll_records; M5-#10 load test и M6 functional verification НЕ могут быть «deferred до prod» — выполняются локально через tests/perf k6/locust + make dev-light), DOCS1 (STATUS/ARCHITECTURE/README sync), S2 (webhook idempotency), S3 (god-объекты), F1 (frontend httpx→BaseAPIClient), B-NEW-1 (observability_bridge — сессия-2), P2-хвост.
