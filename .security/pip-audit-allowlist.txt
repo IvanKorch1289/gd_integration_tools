@@ -1,4 +1,4 @@
-# pip-audit allowlist — Active CVEs (verified 2026-09-01)
+# pip-audit allowlist — Active CVEs (verified 2026-09-04)
 #
 # Формат: одна VULN-id (PYSEC-XXXX, GHSA-XXXX или CVE-XXXX) на строку.
 # Каждая строка должна сопровождаться комментарием выше:
@@ -9,15 +9,15 @@
 #
 # S58 (ADR-0290): 22 stale CVEs удалены (mako/mistune/python-multipart
 # installed versions ≥ fix-versions per OSV.dev verification).
-# Active count: 4 entries.
+# S96 (ADR-0290 addendum): PYSEC-2026-3552 (cryptography) удалена —
+# uv.lock поднят до 50.0.1 (коммит 97230556d; S58 обновлял только venv,
+# lock оставался на 49.0.0 — регрессия M3, закрыта в DEP1). Mistune
+# CVE-2026-44708/44896 ID-строки удалены — их же комментарии S58 помечали
+# их stale («Removed from active list»), ID оставались по ошибке и
+# маскировали потенциальные находки.
+# Active count: 2 entries.
 
-# === Active entries (S58 verified) ===
-
-# cryptography 49.0.0 — S36-4 BLOCKED (cp314-cp314**t wheels constraint)
-# S58: cryptography 50.0.1 has only cp314t wheels (13), no cp314.
-# Per S36-4 hardening, upper bound <50.0.0 — explicit BLOCK.
-# Review date: 2026-12-01 (next S36 chain re-evaluation).
-PYSEC-2026-3552
+# === Active entries (S96 verified) ===
 
 # diskcache 5.6.3 — ADR-0287 (no upstream fix available)
 # S58: installed 5.6.3, no fix-version on PyPI.
@@ -30,15 +30,3 @@ PYSEC-2026-2447
 # S58: still 5.6.3 in installed; CVE applies to 5.6.3 line.
 # Deferred together with PYSEC-2026-2447.
 CVE-2025-69872
-
-# mistune 3.2.0 — upstream-blocked (XSS в math plugin escape=True bypass)
-# S58: installed 3.3.4 — CVE applies to 3.2.0 line.
-# No fix-version; tracked as comment, not real active CVE.
-# Removed from active list after S58 OSV verification (stale).
-# Review date: next mistune release.
-CVE-2026-44708
-
-# mistune 3.2.0 — figclass/figwidth attribute injection (нет fix-version)
-# S58: same as CVE-2026-44708 (stale, applied to 3.2.0).
-# Review date: next mistune release.
-CVE-2026-44896

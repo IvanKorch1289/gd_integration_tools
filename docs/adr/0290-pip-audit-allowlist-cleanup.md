@@ -92,3 +92,23 @@ Sprint 58 (M3-#5 final cleanup).
 - `docs/adr/0287-diskcache-pyssec-2447-deferral.md` — diskcache ADR
 - `docs/adr/0288-tornado-6.5.7-to-6.5.8-rationale.md` — tornado ADR
 - `docs/adr/0289-pypdf-6.14.2-to-6.16.1-rationale.md` — pypdf ADR
+## Addendum (S96, 2026-09-04) — гигиена после DEP1
+
+Контекст: DEP1 вскрыл, что S58 поднял cryptography только в venv
+(`uv pip install`), uv.lock остался на 49.0.0 → PYSEC-2026-3552 вернулась,
+а allowlist-запись продолжала маскировать её в gate (canonical load).
+
+Изменения allowlist (3 ID удалены, 2 остаются):
+1. `PYSEC-2026-3552` — закрыта: uv.lock → cryptography 50.0.1
+   (коммит `97230556d`;specifier `<51.0.0` per ADR-0288, верхняя граница
+   S36-4 `<50.0.0` более не существует). Верификация:
+   `uv export | pip-audit -r --no-deps` → находки только по diskcache.
+2. `CVE-2026-44708`, `CVE-2026-44896` (mistune) — ID-строки удалены;
+   комментарии S58 сами помечали их stale («Removed from active list
+   after S58 OSV verification»), ID остались по ошибке (5 ID при
+   заявленных 4).
+
+Остаток: 2 записи diskcache (PYSEC-2026-2447, CVE-2025-69872) —
+ADR-0287 deferral, без изменений.
+
+Исполнитель: Sprint 47 Agent (координатор роя, ledger SEC1).
