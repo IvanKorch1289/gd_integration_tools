@@ -7,11 +7,19 @@
 - Единый logger + correlation_id propagation
 - Safe idempotent close для multi-instance scenarios
 
-Usage (пример)::
+Usage (пример) — с обязательными pool + timeout::
 
     class RedisClient(ManagedAsyncClient):
         async def _create_connection(self):
-            return await aioredis.from_url(self._url)
+            # S102 P2-4 fix: обязательно указывать pool/timeout.
+            # aioredis без них — анти-паттерн (блокирующий handshake,
+            # unbounded connection growth).
+            return await aioredis.from_url(
+                self._url,
+                max_connections=10,           # bounded pool
+                socket_connect_timeout=5.0,  # connection timeout
+                socket_timeout=10.0,         # operation timeout
+            )
 
         async def _close_connection(self, conn):
             await conn.close()
