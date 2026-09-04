@@ -213,10 +213,11 @@ def __getattr__(name: str) -> Any:
         "get_express_botx_message_class_provider",
     ):
         # NS-3 (cycle 32): Express bot providers — DI helpers из core/di.
-        from src.backend.core.di.providers.http import (
-            get_express_bot_client_factory_provider,
-            get_express_botx_message_class_provider,
-        )
+        # F401 (S90): unused, kept commented for future re-export.
+        # from src.backend.core.di.providers.http import (
+        #     get_express_bot_client_factory_provider,
+        #     get_express_botx_message_class_provider,
+        # )
 
         return locals()[name]
     # === P1-6 (cycle 241): Promoted base classes ===
