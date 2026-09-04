@@ -596,3 +596,23 @@ Vulture на Protocol-заглушках даёт false positives by design.
 (сессия-2), Vault (infra), startup-time MARGINAL (см. таблицу выше).
 Все пункты ledger имеют владельца или блокер; незанятой actionable работы
 для этого роя не осталось.
+
+## Карта pre-prod-check после branch cleanup (2026-09-05, вечер)
+
+Пользователь удалил ветку feat/m1-m6-impl (39 не-merged коммитов; G-MYPY
+149→60 и часть S169 — осиротели, восстановимы: `git log 169a3d45b`, ~30 дней).
+T3-фазы (S97-S101) и F1 (b22b5feba) — на master, выжили.
+
+**Свежая карта: 20/36 PASSED, WARN 8, SKIP 5, FAILED 3:**
+| Gate | Число | Владелец/блокер |
+|---|---|---|
+| 01 coverage ≥50% | overall ~31-33% | T3 — сессия-2 (фазы S97-S101 на master) |
+| 02 mypy ≤30 | **56 errors** (post-cleanup ground truth master; G-MYPY 149→60 осиротел с веткой) | сессия-2 — восстановить фикс-серию из 169a3d45b или повторить на master |
+| 15 feature-flags | требует живой Vault | BLOCKED(infra) |
+
+Gate 19 startup-time — OK в этом прогоне (маржинальность подтверждена:
+проходит при низкой нагрузке shared-box).
+
+**M6-#1**: остаётся PARTIAL — gate 01/02 НЕ закрыты сессией-2 (coverage
+открыт; mypy на master 56 > 30, причём восстановление осиротевшей G-MYPY
+серии с приоритетом — рекомендация сессии-2).
