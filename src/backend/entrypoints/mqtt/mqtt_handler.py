@@ -114,20 +114,58 @@ class MqttHandler:
                     password=self._settings.password or None,
                     identifier=self._settings.client_id,
                     tls_context=tls_context,
+                    # W3 (M5 backpressure): явный bounded-буфер вместо
+                    # бесконечного дефолта — при переполнении давление
+                    # уходит в TCP на брокер, а не в память процесса.
+                    max_queued_incoming_messages=(
+                        self._settings.max_queued_incoming_messages
+                    ),
                 ) as client:
                     for topic in self._settings.topics:
                         await client.subscribe(topic, qos=self._settings.qos)
 
+                    # W3: конкурентная обработка с ограничением — медленный
+                    # action не блокирует цикл подписки (head-of-line blocking).
+                    in_flight: set[asyncio.Task[None]] = set()
                     async for message in client.messages:
-                        await self._handle_message(
-                            topic=str(message.topic), payload=message.payload
+                        if len(in_flight) >= self._settings.max_concurrent_messages:
+                            done, _ = await asyncio.wait(
+                                in_flight, return_when=asyncio.FIRST_COMPLETED
+                            )
+                            in_flight -= done
+                        task: asyncio.Task[None] = asyncio.create_task(
+                            self._process_message(
+                                topic=str(message.topic), payload=message.payload
+                            )
                         )
+                        in_flight.add(task)
+                        task.add_done_callback(in_flight.discard)
 
             except asyncio.CancelledError:
                 break
             except Exception as exc:
                 logger.error("MQTT connection error: %s. Reconnecting in 5s...", exc)
                 await asyncio.sleep(5)
+
+    async def _process_message(
+        self, topic: str, payload: bytes | bytearray
+    ) -> None:
+        """W3 (M5 timeouts): обработка одного сообщения с таймаутом.
+
+        Зависший dispatch не блокирует остальные сообщения — по таймауту
+        сообщение теряется (логируется), цикл продолжается.
+        """
+        try:
+            await asyncio.wait_for(
+                self._handle_message(topic=topic, payload=payload),
+                timeout=self._settings.message_timeout,
+            )
+        except TimeoutError:
+            logger.error(
+                "MQTT: message processing timeout (%.1fs), topic=%s",
+                self._settings.message_timeout,
+                topic,
+            )
 
     async def _handle_message(self, topic: str, payload: bytes | bytearray) -> None:
         """Обрабатывает MQTT-сообщение."""

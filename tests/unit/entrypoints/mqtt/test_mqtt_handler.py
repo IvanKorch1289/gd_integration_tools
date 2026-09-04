@@ -16,7 +16,7 @@ class TestMqttSettings:
         s = MqttSettings(broker_host="localhost", broker_port=1883)
         assert s.broker_host == "localhost"
         assert s.broker_port == 1883
-        assert s.enabled is False
+        assert s.enabled is True  # S171 M9: default=True (project not in prod)
         assert s.qos == 1
         assert s.topics == ["gd/#"]
 
@@ -95,7 +95,7 @@ class TestMqttHandler:
     async def test_handle_message_with_action(self, handler: MqttHandler) -> None:
         mock_registry = AsyncMock()
         with patch(
-            "src.backend.dsl.commands.registry.action_handler_registry", mock_registry,
+            "src.backend.core.api.extensions.action_handler_registry", mock_registry,
         ):
             await handler._handle_message(
                 "gd/orders/create", b'{"action":"orders.create","id":1}',
@@ -110,7 +110,7 @@ class TestMqttHandler:
     ) -> None:
         mock_registry = AsyncMock()
         with patch(
-            "src.backend.dsl.commands.registry.action_handler_registry", mock_registry,
+            "src.backend.core.api.extensions.action_handler_registry", mock_registry,
         ):
             await handler._handle_message("gd/orders/create", b'{"id":1}')
         call = mock_registry.dispatch.await_args[0][0]
@@ -120,7 +120,7 @@ class TestMqttHandler:
     async def test_handle_message_invalid_json(self, handler: MqttHandler) -> None:
         mock_registry = AsyncMock()
         with patch(
-            "src.backend.dsl.commands.registry.action_handler_registry", mock_registry,
+            "src.backend.core.api.extensions.action_handler_registry", mock_registry,
         ):
             await handler._handle_message("gd/orders/create", b"not-json")
         mock_registry.dispatch.assert_awaited_once()
@@ -132,7 +132,7 @@ class TestMqttHandler:
         mock_registry = AsyncMock()
         mock_registry.dispatch.side_effect = KeyError("nope")
         with patch(
-            "src.backend.dsl.commands.registry.action_handler_registry", mock_registry,
+            "src.backend.core.api.extensions.action_handler_registry", mock_registry,
         ):
             await handler._handle_message("gd/orders/create", b'{"action":"nope"}')
 
