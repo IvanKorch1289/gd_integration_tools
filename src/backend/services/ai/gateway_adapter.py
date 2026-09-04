@@ -51,7 +51,7 @@ fail-open. Адаптер делает связь явной, и использ�
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from src.backend.core.ai import AIGateway, AIRequest
 from src.backend.core.interfaces.capability_gateway import CapabilityGatewayProtocol
@@ -141,7 +141,7 @@ def adapt_capability_gate(gate: CapabilityGatewayProtocol) -> CapabilityGatewayP
         Объект с методом ``.check(plugin, capability, scope)``,
         совместимый с :attr:`AIGateway._capability_gate`.
     """
-    return AdaptedCapabilityGate(gate)
+    return cast("CapabilityGatewayProtocol", AdaptedCapabilityGate(gate))
 
 
 def get_ai_gateway() -> AIGateway:
@@ -173,10 +173,6 @@ def get_ai_gateway() -> AIGateway:
         return get_ai_gateway_provider()
     except (KeyError, RuntimeError):  # noqa: PIE801 — Python 3 tuple form (was X, Y syntax)
         return AIGateway()
-
-CapabilityChecker = Callable[[str, str, str | None], None]
-
-
 
 async def invoke_via_gateway(
     *,
