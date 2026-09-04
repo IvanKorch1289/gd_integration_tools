@@ -1485,3 +1485,30 @@ allow fast test coverage without env/integration dependencies.
 - M4 phase 3+ (overall coverage 30.8% → 70%, ~26k statements, multi-day effort)
 - M5-#10 (load test, prod env required)
 - M6 (functional verification, prod env required)
+
+## Sprint 99 — M4 coverage ratchet phase 3 (security/capabilities)
+
+**Commits**:
+- test(security): S99 coverage push — capabilities init/models/protocol + casbin/opa deciders
+
+### S99 results
+
+| Module | Before → After | Tests | Notes |
+|---|---|---|---|
+| core/security/capabilities/__init__.py | 0% → 100% | 7 | __all__ audit (count + 27 specific names), importable CapabilityGate/CapabilityRef/CapabilityDeniedError/TenantContext/build_default_vocabulary |
+| core/security/capabilities/vocabulary/models.py | 0% → 100% | 4 | CapabilityDef dataclass (minimal, full, equality, inequality) |
+| core/security/capabilities/gate/_protocol.py | 0% → 100% | 3 | _CapabilityGateProtocol Protocol attribute annotation (9 attrs verified) |
+| core/security/authorization_gateway/policies/casbin_policy_decider.py | 0% → 100% | 3 | CasbinPolicyDecider alias, build_casbin_policy_decider → AuthorizationGateway.casbin_step |
+| core/security/authorization_gateway/policies/opa_policy_decider.py | 0% → 100% | 4 | OPAPolicyDecider alias, build_opa_policy_decider с default + custom policy_name |
+
+**Total S99 batch 1**: 21 new tests, 5 modules 0% → 100%.
+
+### Cumulative S48-S99
+- **195 atomic commits** (was 194 at S98).
+- **M4 coverage ratchet phase 1+2+3 closed: 20 modules**.
+- S97+S98+S99 combined: **~137 new tests added**.
+
+### Что осталось DEFERRED (невозможно автономно)
+- M4 phase 4+ (overall coverage 30.8% → 70%, multi-day effort)
+- M5-#10 (load test, prod env required)
+- M6 (functional verification, prod env required)
