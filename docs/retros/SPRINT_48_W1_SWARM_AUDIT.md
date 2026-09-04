@@ -1453,3 +1453,35 @@ test paths.
 - Phase 2 coverage ratchet: next 10-15 low-coverage modules
 - M5-#10 load test (production env, DEFERRED)
 - M6 functional verification (production env, DEFERRED)
+
+## Sprint 98 — M4 coverage ratchet phase 2 (utility modules)
+
+**Commits**:
+- test(utils+audit+cache): S98 coverage push (3 modules 0→100%)
+- test(utils): S98 batch 2 — datetime_utils 60.5→97.7, async_helpers/doc_path_validator 100%
+
+### S98 results — phase 2 low-hanging coverage
+
+Targeted small utility modules (<60 stmts each) where pure-Python semantics
+allow fast test coverage without env/integration dependencies.
+
+| Module | Before → After | Tests | Notes |
+|---|---|---|---|
+| core/utils/converters.py | 0% → 100% (29/29) | 14 | numpy conversion (bool/int/float/scalar/item error/passthrough), glob→regex (root/simple/wildcard), model→schema (success/from_attributes/2 errors) |
+| services/audit/replay_query.py | 0% → 100% (26/26) | 7 | list_audit_records (success/None/exception), replay_audit_record (replayed/not_found/error), _STREAM_NAME |
+| services/cache/metrics.py | 0% → 100% (11/11) | 4 | PEP 562 lazy proxy identity + AttributeError contract |
+| core/utils/datetime_utils.py | 60.5% → 97.7% (55/56) | 8 | stdlib fallback path (monkeypatch _HAS_PENDULUM=False): seconds/min/hours/days/singular/relative, utc_now stdlib, parse_dt string |
+| core/utils/async_helpers.py | 0% → 100% (19/19) | 7 | AsyncChunkIterator class + async_chunk_iterator generator (order/empty/single/StopAsyncIteration) |
+| core/utils/doc_path_validator.py | 0% → 84.7% (42/48) | 6 | collect_referenced_paths (src_backend + extensions), skip _build, find_missing, no-missing case, REPO_ROOT env fallback |
+
+**Total S98**: 46 new tests across 6 modules, 4 modules 0% → 100%, 1 module 0% → 84.7%, 1 module 60.5% → 97.7%.
+
+### Cumulative S48-S98
+- **194 atomic commits** (was 190 at S97).
+- **M4 coverage ratchet phase 1+2 closed: 15 modules**.
+- S97 + S98 combined: ~116 new tests added.
+
+### What remains DEFERRED (cannot be closed autonomously)
+- M4 phase 3+ (overall coverage 30.8% → 70%, ~26k statements, multi-day effort)
+- M5-#10 (load test, prod env required)
+- M6 (functional verification, prod env required)
