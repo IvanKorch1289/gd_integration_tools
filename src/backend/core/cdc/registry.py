@@ -125,6 +125,8 @@ def get_cdc_source(backend: str, /, **kwargs: Any) -> CDCSource:
             or kwargs.get("profile", ""),
             topic_prefix=kwargs.get("topic_prefix", "debezium"),
             group_id=kwargs.get("group_id", "gd_cdc_consumer"),
+            # T4/M5 backpressure: явный батч-лимит, конфигурируемый через kwargs.
+            max_poll_records=int(kwargs.get("max_poll_records", 100)),
         )
     if backend == "adapter":
         # Legacy: wraps CDCClient в CDCSource Protocol.

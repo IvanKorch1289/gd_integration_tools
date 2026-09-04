@@ -129,6 +129,7 @@ class DebeziumEventsCDCBackend(CDCSource):
         group_id: str = "gd_cdc_consumer",
         enable_auto_commit: bool = False,
         session_timeout_ms: int = 30000,
+        max_poll_records: int = 100,
     ) -> None:
         """Параметры:
 
@@ -139,12 +140,16 @@ class DebeziumEventsCDCBackend(CDCSource):
         :param enable_auto_commit: ``False`` для at-least-once (manual
             commit через ``ack()``). Default ``False``.
         :param session_timeout_ms: Kafka session timeout (default 30000).
+        :param max_poll_records: явный батч-лимит poll'а (T4/M5 backpressure;
+            aiokafka default 500 — слишком много для caller-paced
+            at-least-once обработки, берём 100).
         """
         self._bootstrap = bootstrap_servers
         self._topic_prefix = topic_prefix
         self._group_id = group_id
         self._enable_auto_commit = enable_auto_commit
         self._session_timeout_ms = session_timeout_ms
+        self._max_poll_records = max_poll_records
         self._stopped = asyncio.Event()
         self._cursor_log: list[CDCCursor] = []
         self._consumer: Any = None  # AIOKafkaConsumer instance (lazy)
@@ -171,6 +176,7 @@ class DebeziumEventsCDCBackend(CDCSource):
             group_id=self._group_id,
             enable_auto_commit=self._enable_auto_commit,
             session_timeout_ms=self._session_timeout_ms,
+            max_poll_records=self._max_poll_records,
             auto_offset_reset="earliest",
             value_deserializer=lambda v: orjson.loads(v) if v else {},
         )
