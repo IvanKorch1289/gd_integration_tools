@@ -1270,3 +1270,21 @@ Provider returns the class itself, caller does `ReplyChannel.instance()`.
 - ⚠ PARTIAL: 2 (M5-#7, #8)
 - ✗ TODO: 3 (M5-#6 idempotency, M5-#9 health-check ALREADY CLOSED, M5-#10 load test)
 
+
+## Sprint 92 — M5-#8 correlation_id CLOSED + tests
+
+**Commits**:
+- `5b231cb9e` feat(dsl): M5-#8 correlation_id propagation from ASGI context
+- `2d5046604` test(dsl): M5-#8 correlation_id propagation tests (6/6 pass)
+
+### S92 results
+- **M5-#8 CLOSED**: correlation_id теперь propagation from ASGI context
+  (с fallback UUID4)
+- 6 new tests (3 fallback, 2 Exchange, 1 asgi context)
+- M5-#7 verified: timeouts already enforced (OPA 1.5s, S3 explicit)
+
+### M5 status updated
+- ✓ CLOSED: 6/10 (M5-#1, #2, #3, #4, #5, #8)
+- ⚠ PARTIAL: 1 (M5-#7 verified, not changed)
+- ✗ TODO: 3 (M5-#6 idempotency, M5-#10 load test, M5-#9 already closed)
+
