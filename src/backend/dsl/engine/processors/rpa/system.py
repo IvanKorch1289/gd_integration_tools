@@ -193,6 +193,13 @@ class TerminalExecProcessor(BaseProcessor):
         # always called create_subprocess_shell. Now respects
         # shell parameter via shlex.split + create_subprocess_exec.
         # See A1 in docs/audit/cycle33_report.md.
+        # S102 P2-5: парсим argv заранее (нужен для masked logging).
+        import shlex
+
+        argv = shlex.split(self.command)
+        if not argv:
+            exchange.fail("terminal_exec: empty command")
+            return
         if self.shell:
             proc = await asyncio.create_subprocess_shell(
                 self.command,
@@ -200,12 +207,6 @@ class TerminalExecProcessor(BaseProcessor):
                 stderr=asyncio.subprocess.PIPE,
             )
         else:
-            import shlex
-
-            argv = shlex.split(self.command)
-            if not argv:
-                exchange.fail("terminal_exec: empty command")
-                return
             proc = await asyncio.create_subprocess_exec(
                 *argv, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
             )
@@ -222,9 +223,13 @@ class TerminalExecProcessor(BaseProcessor):
         if stderr:
             output += "\n[stderr]\n" + stderr.decode("utf-8", errors="replace")
 
+        # S102 P2-5: маскируем argv после первого аргумента — только argv[0]
+        # (бинарь) логируется, остальные аргументы могут содержать PII /
+        # credentials / sensitive paths. Полная команда остаётся в audit log
+        # через exchange.set_property('shell_command').
         _rpa_logger.info(
             "terminal_exec cmd=%s timeout=%.1fs exit=%d",
-            self.command,
+            argv[0],
             self.timeout,
             proc.returncode,
         )
