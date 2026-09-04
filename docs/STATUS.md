@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-09-01 (Sprint 80 — M2-#11 batch 15 sample 19/55 (ml_inference.py + db_initializer provider); см. `docs/roadmap/PRODUCTION_READINESS.md`)
+> **Last verified**: 2026-09-01 (Sprint 81 — M2-#11 batch 16 sample 20/55 (saga_lra.py + 2 providers: smart_session_manager, WorkflowStateRepository); см. `docs/roadmap/PRODUCTION_READINESS.md`)
 
 ## Post-Plan A Sprints 1-31 (coverage ratchet + final polish)
 
