@@ -103,9 +103,9 @@ INFRA_MODULES: Final[dict[str, str]] = {
     "cache": f"{_INFRA}.cache",
     "decorators.caching": f"{_INFRA}.decorators.caching",
     # ─── Monitoring ─────────────────────────────────────────────────
-    # S102 P2-11: 'monitoring.health_check' removed — модуль не существует
-    # (есть только health_profile.py); get_healthcheck_session_provider —
-    # test-only fixture с override, поэтому ключ не нужен.
+    # S107 T7 fix: 'monitoring.health_check' restored — модуль теперь
+    # существует (S107 stub для tech-роута /api/v1/tech/*).
+    "monitoring.health_check": f"{_INFRA}.monitoring.health_check",
     # ─── Storage clients ────────────────────────────────────────────
     "clients.storage.redis": f"{_INFRA}.clients.storage.redis",
     "clients.storage.redis_coordinator": f"{_INFRA}.clients.storage.redis_coordinator",
