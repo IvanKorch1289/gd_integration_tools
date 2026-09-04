@@ -19,16 +19,23 @@ Sprint 178 (HITL-1 ARC-010 closeout): :meth:`HitlService.resolve`
 **additive notification** для cross-instance consumers
 (см. :mod:`hitl_pubsub_consumer`) — in-memory waiter продолжает
 работать. Failure в publish НЕ ломает resolve (best-effort).
+
+S3 (ledger, 2026-09-05): сплит god-object (507 LOC). Модели —
+:mod:`hitl_models`, хранилище — :mod:`hitl_signal_store`; этот модуль —
+тонкий оркестратор. Re-exports сохраняют обратную совместимость всех
+импортов ``from ...hitl_service import ...``.
 """
 
 from __future__ import annotations
 
-import asyncio
-from dataclasses import dataclass, field
-from datetime import UTC, datetime
-from typing import Any, Protocol, runtime_checkable
+from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.services.workflows.hitl_models import HitlAction, HitlPendingSignal
+from src.backend.services.workflows.hitl_signal_store import (
+    HitlSignalStore,
+    InMemoryHitlSignalStore,
+)
 
 __all__ = (
     "HitlAction",
@@ -42,291 +49,6 @@ __all__ = (
 # Cycle 73 L6: module-level canonical logger (was: inline
 # logging.getLogger(...)/get_logger(...) scattered).
 _logger = get_logger("services.workflows.hitl")
-
-
-class HitlAction:
-    """Допустимые операторские действия."""
-
-    APPROVE = "approve"
-    REJECT = "reject"
-    REQUEST_INFO = "request_info"
-
-    @classmethod
-    def all(cls) -> tuple[str, ...]:
-        """Get all HITL action types.
-
-        Returns:
-            Tuple of action type strings.
-
-        """
-        return (cls.APPROVE, cls.REJECT, cls.REQUEST_INFO)
-
-
-@dataclass(slots=True)
-class HitlPendingSignal:
-    """Pending HITL signal.
-
-    Attributes:
-        signal_id: уникальный идентификатор (для дедупликации actions).
-        workflow_id: Temporal workflow ID.
-        tenant_id: для filter по tenant.
-        signal_name: имя сигнала в workflow (``hitl_approve``).
-        initiator: кто запустил workflow.
-        title: краткое описание (отображается в Streamlit таблице).
-        payload: контекст для решения (документы, score, и т.п.).
-        created_at: timestamp создания.
-        resolved_at: timestamp разрешения (None если pending).
-        resolved_action: :class:`HitlAction` или None.
-        resolved_by: имя оператора, который разрешил.
-
-    """
-
-    signal_id: str
-    workflow_id: str
-    tenant_id: str
-    signal_name: str
-    initiator: str
-    title: str
-    payload: dict[str, Any] = field(default_factory=dict)
-    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
-    resolved_at: datetime | None = None
-    resolved_action: str | None = None
-    resolved_by: str | None = None
-
-    @property
-    def is_resolved(self) -> bool:
-        """Check if signal is resolved.
-
-        Returns:
-            True if resolved, False if pending.
-
-        """
-        return self.resolved_at is not None
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert signal to dictionary.
-
-        Returns:
-            Dictionary representation.
-
-        """
-        return {
-            "signal_id": self.signal_id,
-            "workflow_id": self.workflow_id,
-            "tenant_id": self.tenant_id,
-            "signal_name": self.signal_name,
-            "initiator": self.initiator,
-            "title": self.title,
-            "payload": self.payload,
-            "created_at": self.created_at.isoformat(),
-            "resolved_at": (self.resolved_at.isoformat() if self.resolved_at else None),
-            "resolved_action": self.resolved_action,
-            "resolved_by": self.resolved_by,
-            "is_resolved": self.is_resolved,
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> HitlPendingSignal:
-        """S207: reconstruct from :meth:`to_dict` (для Redis/JSON deserialization).
-
-        Args:
-            data: Dict из :meth:`to_dict` (например из Redis hash value).
-
-        Returns:
-            Новый :class:`HitlPendingSignal` инстанс.
-
-        """
-        from datetime import datetime as _dt
-
-        created_raw = data.get("created_at")
-        created = _dt.fromisoformat(created_raw) if created_raw else _dt.now(UTC)
-        resolved_raw = data.get("resolved_at")
-        resolved = _dt.fromisoformat(resolved_raw) if resolved_raw else None
-        return cls(
-            signal_id=data["signal_id"],
-            workflow_id=data["workflow_id"],
-            tenant_id=data["tenant_id"],
-            signal_name=data["signal_name"],
-            initiator=data["initiator"],
-            title=data["title"],
-            payload=data.get("payload") or {},
-            created_at=created,
-            resolved_at=resolved,
-            resolved_action=data.get("resolved_action"),
-            resolved_by=data.get("resolved_by"),
-        )
-
-
-@runtime_checkable
-class HitlSignalStore(Protocol):
-    """Backend-агностичное хранилище pending signals."""
-
-    async def put(self, signal: HitlPendingSignal) -> None:
-        """Store a HITL signal.
-
-        Args:
-            signal: Signal to store.
-
-        """
-        ...
-
-    async def get(self, signal_id: str) -> HitlPendingSignal | None:
-        """Get signal by ID.
-
-        Args:
-            signal_id: Signal identifier.
-
-        Returns:
-            Signal if found, None otherwise.
-
-        """
-        ...
-
-    async def list_pending(
-        self, *, tenant_id: str | None = None
-    ) -> list[HitlPendingSignal]:
-        """List pending signals.
-
-        Args:
-            tenant_id: Optional tenant filter.
-
-        Returns:
-            List of pending signals.
-
-        """
-        ...
-
-    async def mark_resolved(
-        self, signal_id: str, *, action: str, resolved_by: str
-    ) -> HitlPendingSignal:
-        """Mark signal as resolved.
-
-        Args:
-            signal_id: Signal identifier.
-            action: Resolution action.
-            resolved_by: Resolver identity.
-
-        Returns:
-            Updated signal.
-
-        """
-        ...
-
-    async def wait_for(self, signal_id: str, timeout: float | None = None) -> bool:
-        """Wait for signal resolution.
-
-        Args:
-            signal_id: Signal identifier.
-            timeout: Optional timeout in seconds.
-
-        Returns:
-            True if resolved, False if timeout.
-
-        """
-        ...
-
-
-class InMemoryHitlSignalStore:
-    """In-memory store для dev_light и unit-тестов."""
-
-    def __init__(self) -> None:
-        self._store: dict[str, HitlPendingSignal] = {}
-        self._lock = asyncio.Lock()
-        self._events: dict[str, asyncio.Event] = {}
-
-    async def put(self, signal: HitlPendingSignal) -> None:
-        """Store a HITL signal.
-
-        Args:
-            signal: Signal to store.
-
-        """
-        async with self._lock:
-            self._store[signal.signal_id] = signal
-            self._events.setdefault(signal.signal_id, asyncio.Event())
-
-    async def get(self, signal_id: str) -> HitlPendingSignal | None:
-        """Get signal by ID.
-
-        Args:
-            signal_id: Signal identifier.
-
-        Returns:
-            Signal if found, None otherwise.
-
-        """
-        async with self._lock:
-            return self._store.get(signal_id)
-
-    async def list_pending(
-        self, *, tenant_id: str | None = None
-    ) -> list[HitlPendingSignal]:
-        """List pending signals.
-
-        Args:
-            tenant_id: Optional tenant filter.
-
-        Returns:
-            List of pending signals.
-
-        """
-        async with self._lock:
-            items = [s for s in self._store.values() if not s.is_resolved]
-        if tenant_id is not None:
-            items = [s for s in items if s.tenant_id == tenant_id]
-        return sorted(items, key=lambda s: s.created_at)
-
-    async def mark_resolved(
-        self, signal_id: str, *, action: str, resolved_by: str
-    ) -> HitlPendingSignal:
-        """Mark signal as resolved.
-
-        Args:
-            signal_id: Signal identifier.
-            action: Resolution action.
-            resolved_by: Resolver identity.
-
-        Returns:
-            Updated signal.
-
-        Raises:
-            KeyError: If signal not found.
-            ValueError: If signal already resolved.
-
-        """
-        async with self._lock:
-            signal = self._store.get(signal_id)
-            if signal is None:
-                raise KeyError(f"HITL signal {signal_id!r} not found")
-            if signal.is_resolved:
-                raise ValueError(
-                    f"HITL signal {signal_id!r} already resolved by "
-                    f"{signal.resolved_by!r} as {signal.resolved_action!r}"
-                )
-            signal.resolved_at = datetime.now(UTC)
-            signal.resolved_action = action
-            signal.resolved_by = resolved_by
-            event = self._events.get(signal_id)
-        if event is not None:
-            event.set()
-        return signal
-
-    async def wait_for(self, signal_id: str, timeout: float | None = None) -> bool:
-        """Ждёт разрешения signal'а без polling.
-
-        ponytail: event-driven wakeup вместо busy-wait. Для multi-instance
-        production нужен Redis pub/sub — пока in-memory.
-        """
-        async with self._lock:
-            event = self._events.setdefault(signal_id, asyncio.Event())
-            signal = self._store.get(signal_id)
-            if signal is not None and signal.is_resolved:
-                return True
-        try:
-            await asyncio.wait_for(event.wait(), timeout=timeout)
-        except TimeoutError:
-            return False
-        return True
 
 
 class HitlService:
@@ -427,8 +149,19 @@ class HitlService:
         resolved = await self._store.mark_resolved(
             signal_id, action=action, resolved_by=resolved_by
         )
-        # S178 HITL-1 closeout: cross-instance notification via Redis pub/sub.
-        # Best-effort: failure → log + continue (in-memory already updated).
+        await self._publish_resolved(resolved, action, resolved_by, payload)
+        await self._signal_workflow(resolved, action, resolved_by, payload)
+        await self._emit_audit(signal_id, resolved, action, resolved_by, payload)
+        return resolved
+
+    async def _publish_resolved(
+        self,
+        resolved: HitlPendingSignal,
+        action: str,
+        resolved_by: str,
+        payload: dict[str, Any] | None,
+    ) -> None:
+        """S178 HITL-1: cross-instance notification (best-effort)."""
         try:
             from src.backend.services.workflows.hitl_pubsub import publish_hitl_resolved
 
@@ -449,59 +182,77 @@ class HitlService:
                 resolved.signal_id,
                 exc,
             )
-        if self._facade is not None:
-            from src.backend.core.workflow.backend import WorkflowHandle
 
-            handle = WorkflowHandle(
-                workflow_id=resolved.workflow_id,
-                run_id=resolved.signal_id,
-                namespace=resolved.tenant_id,
-            )
-            await self._facade.signal(
-                caller=self._caller,
-                handle=handle,
-                signal_name=resolved.signal_name,
-                payload={
-                    "action": action,
-                    "resolved_by": resolved_by,
-                    "data": payload or {},
-                },
-            )
+    async def _signal_workflow(
+        self,
+        resolved: HitlPendingSignal,
+        action: str,
+        resolved_by: str,
+        payload: dict[str, Any] | None,
+    ) -> None:
+        """Signal в workflow через facade (если configured)."""
+        if self._facade is None:
+            return
+        from src.backend.core.workflow.backend import WorkflowHandle
 
+        handle = WorkflowHandle(
+            workflow_id=resolved.workflow_id,
+            run_id=resolved.signal_id,
+            namespace=resolved.tenant_id,
+        )
+        await self._facade.signal(
+            caller=self._caller,
+            handle=handle,
+            signal_name=resolved.signal_name,
+            payload={
+                "action": action,
+                "resolved_by": resolved_by,
+                "data": payload or {},
+            },
+        )
+
+    async def _emit_audit(
+        self,
+        signal_id: str,
+        resolved: HitlPendingSignal,
+        action: str,
+        resolved_by: str,
+        payload: dict[str, Any] | None,
+    ) -> None:
+        """Audit-sink emit (best-effort, кроме скрытых багов)."""
         try:
             from src.backend.services.audit.workflow_audit_sink import (
                 get_workflow_audit_sink,
             )
 
             sink = get_workflow_audit_sink()
-            if sink is not None:
-                action_map = {
-                    HitlAction.APPROVE: "hitl.approved",
-                    HitlAction.REJECT: "hitl.rejected",
-                    HitlAction.REQUEST_INFO: "hitl.requested_info",
-                }
-                event_type = action_map.get(action, f"hitl.{action}")
-                duration_ms: int | None = None
-                if resolved.resolved_at and resolved.created_at:
-                    delta = resolved.resolved_at - resolved.created_at
-                    duration_ms = int(delta.total_seconds() * 1000)
-                await sink.emit(
-                    event_type=event_type,
-                    workflow_id=resolved.workflow_id,
-                    tenant_id=resolved.tenant_id,
-                    actor=resolved_by,
-                    duration_ms=duration_ms,
-                    payload={
-                        "signal_id": signal_id,
-                        "action": action,
-                        "comment": (payload or {}).get("comment"),
-                    },
-                )
+            if sink is None:
+                return
+            action_map = {
+                HitlAction.APPROVE: "hitl.approved",
+                HitlAction.REJECT: "hitl.rejected",
+                HitlAction.REQUEST_INFO: "hitl.requested_info",
+            }
+            event_type = action_map.get(action, f"hitl.{action}")
+            duration_ms: int | None = None
+            if resolved.resolved_at and resolved.created_at:
+                delta = resolved.resolved_at - resolved.created_at
+                duration_ms = int(delta.total_seconds() * 1000)
+            await sink.emit(
+                event_type=event_type,
+                workflow_id=resolved.workflow_id,
+                tenant_id=resolved.tenant_id,
+                actor=resolved_by,
+                duration_ms=duration_ms,
+                payload={
+                    "signal_id": signal_id,
+                    "action": action,
+                    "comment": (payload or {}).get("comment"),
+                },
+            )
         except (ImportError, AttributeError, RuntimeError) as exc:
             # Audit-sink best-effort: не должен ломать HITL-resolve.
             # Раньше было except Exception: pass — скрывало баги (V22 K-OP-1).
             _logger.warning(
                 "audit sink emit failed for signal_id=%s: %s", signal_id, exc
             )
-
-        return resolved
