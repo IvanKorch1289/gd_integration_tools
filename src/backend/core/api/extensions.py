@@ -10,8 +10,14 @@ Ponytail fix: re-exports dsl.* symbols через core.api.extensions,
 
 from __future__ import annotations
 
+# S170 R-FIX: ``processors`` — MCP tool discovers Processor classes via
+# ``dir(processors)`` (см. tools_system.py:84). Re-export module
+# для layer-bridging facade.
+import src.backend.dsl.engine.processors as processors  # noqa: F401
+
 # DSL analysis (entrypoints → dsl.analysis: 1 violation)
 from src.backend.dsl.analysis.parallelism_analyzer import ParallelismAnalyzer
+from src.backend.dsl.builders.base import RouteBuilder
 
 # Action registry (8 violations → 0)
 from src.backend.dsl.commands.action_registry import (
@@ -27,6 +33,12 @@ from src.backend.dsl.commands.registry import RouteRegistry, route_registry
 
 # Engine primitives (6 violations → 0)
 from src.backend.dsl.engine.context import ExecutionContext
+
+# S170 R-FIX: provide dry_run_route + waterfall_lines + RouteBuilder к
+# entrypoints/services. dsl.engine.dry_run.* exposes dry-run semantics,
+# dsl.builders.base provides RouteBuilder (factory for .crud_* / .proxy /
+# .call_function builders).
+from src.backend.dsl.engine.dry_run import dry_run_route, waterfall_lines
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
 from src.backend.dsl.engine.execution_engine import ExecutionEngine
 from src.backend.dsl.engine.pipeline import Pipeline
@@ -94,6 +106,12 @@ __all__ = [
     "WorkflowStep",
     # Workflow versioning (S169 R-FIX: layer violation remediation)
     "get_global_registry",
+    # Workflow builder / dry-run (S170 R-FIX)
+    "RouteBuilder",
+    "dry_run_route",
+    "waterfall_lines",
+    # Processors module (S170 R-FIX для MCP tools_system)
+    "processors",
     # Engine
     "ExecutionContext",
     "Exchange",

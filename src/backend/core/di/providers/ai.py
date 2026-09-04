@@ -360,7 +360,11 @@ def get_llm_guard_runtime_provider() -> Any:
     if "llm_guard_runtime" in _overrides:
         return _overrides["llm_guard_runtime"]
     try:
-        from src.backend.core.ai.guardrails import LlamaGuardRuntime
+        # ponytail: LlamaGuardRuntime объявлен canonical, но llamaguard.py
+        # submodule не реализован — ImportError ловится ниже (→ None).
+        from src.backend.core.ai.guardrails import (  # type: ignore[attr-defined]
+            LlamaGuardRuntime,
+        )
 
         return LlamaGuardRuntime()
     except Exception as exc:
@@ -387,8 +391,8 @@ def set_llm_guard_runtime_provider(impl: Any) -> None:
 
 # ponytail: name shadowed by mock-annotation L49 выше (TYPE_CHECKING блок
 # narrowed return type def-а). Mypy видит collision, runtime — нет.
-@lru_cache(maxsize=1)
-def _build_ai_gateway_singleton() -> Any:  # type: ignore[no-redef]
+@lru_cache(maxsize=1)  # type: ignore[no-redef]
+def _build_ai_gateway_singleton() -> Any:
     """Строит :class:`AIGateway` со всеми обязательными DI (Sprint 1.3).
 
     Composition-root singleton с тремя обязательными зависимостями
