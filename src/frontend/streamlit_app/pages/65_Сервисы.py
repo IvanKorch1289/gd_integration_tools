@@ -42,7 +42,15 @@ class ServiceInfo:
 
 
 def _ping_url(url: str, timeout: float = 3.0) -> tuple[ServiceStatus, int | None]:
-    """Ping URL, return (status, latency_ms)."""
+    """Ping URL, return (status, latency_ms).
+
+    S106 F1: NOT migrated to BaseAPIClient — этот endpoint пингует
+    arbitrary external services (не наш API). BaseAPIClient designed
+    для internal API calls (с base_url + retry/JWT contract); для
+    health-check произвольных external URLs raw httpx.get — корректный
+    primitive. Ledger note '12 sites httpx bypass BaseAPIClient' — overgeneralization;
+    only sites calling OUR API should migrate.
+    """
     if not url:
         return ServiceStatus.UNKNOWN, None
     try:
