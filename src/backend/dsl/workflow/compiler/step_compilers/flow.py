@@ -7,14 +7,19 @@ continue_as_new (Temporal Event History reset).
 from __future__ import annotations
 
 # ruff: noqa: F821 — shared symbols (exceptions, _build_retry_policy) defined in __init__.py
+from datetime import timedelta
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.dsl.workflow.compiler.step_compilers.activity import (
+    compile_activity_step,
+)
 from src.backend.dsl.workflow.spec import (
     CheckpointDeclaration,
     ContinueAsNewDeclaration,
     SagaDeclaration,
 )
+from src.backend.dsl.workflow.spec.activity_declarations import ActivityDeclaration
 
 _logger = get_logger("dsl.workflow.step_compilers.flow")
 
