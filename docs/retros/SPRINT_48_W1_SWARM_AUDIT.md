@@ -1063,3 +1063,17 @@ Provider returns the class itself, caller does `ReplyChannel.instance()`.
 - **S80: 19/55 (+ ml_inference.py)**
 - Remaining: 36 dsl files
 
+
+### Sprint 81 — M2-#11 batch 16 (sample 20/55)
+
+**Commit**: `9f448d114` — refactor(dsl): M2-#11 batch 16.
+
+### 2 new DI providers
+- `get_smart_session_manager_provider()` в db.py
+- `get_workflow_state_repository_provider()` в workflow.py
+
+### Progress
+- S60-S80: 19/55
+- **S81: 20/55 (+ saga_lra.py)**
+- Remaining: 35 dsl files
+
