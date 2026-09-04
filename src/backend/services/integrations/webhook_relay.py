@@ -58,7 +58,12 @@ class RelayRule:
 
 @dataclass(slots=True)
 class DLQEntry:
-    """Запись в dead-letter queue."""
+    """Запись в dead-letter queue.
+
+    S2 (ledger): ``idempotency_key`` — ключ исходной доставки; при retry
+    из DLQ переиспользуется, чтобы получатель мог дедуплицировать
+    повторную отправку (timeout-after-delivery больше не даёт дубль).
+    """
 
     id: str = field(default_factory=lambda: uuid4().hex[:12])
     rule_id: str = ""
@@ -66,6 +71,7 @@ class DLQEntry:
     error: str = ""
     attempts: int = 0
     timestamp: float = field(default_factory=time.time)
+    idempotency_key: str = ""
 
 
 async def _redis_raw() -> Any:
@@ -228,14 +234,21 @@ class WebhookRelay:
         return payload
 
     async def _send_with_retry(
-        self, rule: RelayRule, payload: dict[str, Any]
+        self,
+        rule: RelayRule,
+        payload: dict[str, Any],
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         import httpx
 
         from src.backend.core.net import OutboundHttpClient
         from src.backend.core.resilience.retry import make_async_retry
 
-        headers = {"Content-Type": "application/json"}
+        # S2 (ledger): один ключ на всю цепочку попыток — при
+        # timeout-after-delivery повторная попытка несёт тот же
+        # Idempotency-Key и получатель может дедуплицировать.
+        key = idempotency_key or uuid4().hex
+        headers = {"Content-Type": "application/json", "Idempotency-Key": key}
         if rule.secret:
             from src.backend.core.di.providers import get_signature_builder_provider
 
@@ -279,6 +292,7 @@ class WebhookRelay:
             payload=payload,
             error=last_error,
             attempts=rule.max_retries,
+            idempotency_key=key,
         )
         await self._dlq_push(entry)
         return {"rule_id": rule.id, "status": "dlq", "error": last_error}
@@ -356,6 +370,36 @@ class WebhookRelay:
                 exc_info=True,
             )
 
+    async def _dlq_remove_many(self, entry_ids: set[str]) -> None:
+        """Удаляет несколько записей DLQ за один LRANGE-проход (S2).
+
+        Раньше dlq_retry(all) звал ``_dlq_remove`` на каждую запись —
+        полный LRANGE на каждое удаление → O(N²) round-trips.
+        """
+        if not entry_ids:
+            return
+        raw = await _redis_raw()
+        if raw is None:
+            self._memory_dlq = deque(
+                (e for e in self._memory_dlq if e.id not in entry_ids),
+                maxlen=_DLQ_MAX_LEN,
+            )
+            return
+        try:
+            items = await raw.lrange(_DLQ_KEY, 0, -1)
+            for item in items:
+                try:
+                    data = orjson.loads(item)
+                    if data.get("id") in entry_ids:
+                        await raw.lrem(_DLQ_KEY, 1, item)
+                except (orjson.JSONDecodeError, TypeError, ValueError):
+                    logger.debug(
+                        "DLQ entry parse failed during batch remove; skipped",
+                        exc_info=True,
+                    )
+        except Exception as exc:
+            logger.error("DLQ Redis batch remove failed: %s", exc, exc_info=True)
+
     async def dlq_list(self, limit: int = 50) -> dict[str, Any]:
         """Список DLQ записей (последние ``limit``).
 
@@ -406,13 +450,14 @@ class WebhookRelay:
 
         results = []
         dead_moved = 0
+        remove_ids: set[str] = set()
         for entry in targets:
             rule = self._rules.get(entry.rule_id)
             if rule is None:
                 # cycle-8/D-AUDIT-802: dead-rule path — переносим в отдельную
                 # bounded очередь, не блокируем основную retry-логику.
                 self._dead_rule_dlq.append(entry)
-                await self._dlq_remove(entry.id)
+                remove_ids.add(entry.id)
                 dead_moved += 1
                 logger.warning(
                     "DLQ entry %s moved to dead-rule queue: rule_id=%s not registered",
@@ -427,10 +472,16 @@ class WebhookRelay:
                     }
                 )
                 continue
-            r = await self._send_with_retry(rule, entry.payload)
+            # S2: ключ исходной доставки — получатель дедуплицирует retry.
+            r = await self._send_with_retry(
+                rule,
+                entry.payload,
+                idempotency_key=entry.idempotency_key or entry.id,
+            )
             if r.get("status") == "sent":
-                await self._dlq_remove(entry.id)
+                remove_ids.add(entry.id)
             results.append({"id": entry.id, **r})
+        await self._dlq_remove_many(remove_ids)
 
         retried = sum(1 for r in results if r.get("status") == "sent")
         return {
