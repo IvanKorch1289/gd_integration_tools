@@ -1,7 +1,9 @@
-"""Единый реестр infrastructure-модулей для DI-провайдеров (Wave 6.1).
+"""Единый реестр модулей для DI-провайдеров (Wave 6.1).
 
-Все dotted-paths инфраструктурных модулей, которые services / core /
-schemas резолвят через ``importlib.import_module`` для обхода
+Все dotted-paths модулей (в основном infrastructure, но допускаются
+санкционированные cross-layer пути — например ``security.facade`` ведёт
+в services, ``dsl.processors.express_common`` в dsl), которые services /
+core / schemas резолвят через ``importlib.import_module`` для обхода
 AST-линтера слоёв (``tools/check_layers.py``), собраны в одном словаре
 :data:`INFRA_MODULES`. Это даёт три преимущества:
 

@@ -294,7 +294,24 @@ def build_default_registry() -> MiddlewareRegistry:
         GracefulShutdownMiddleware,
     )
 
-    registry.register_builtin("graceful_shutdown", GracefulShutdownMiddleware, order=880)
+    # C-P2-1 (review 2026-09-04): drain-таймаут согласован с k8s-бюджетом
+    # (окно приложения = graceful_shutdown_timeout − 15 preStop; drain
+    # получает половину, вторую — TaskRegistry на шаге 14 shutdown).
+    drain_timeout = 7.5
+    try:
+        app_settings = settings.app if hasattr(settings, "app") else settings
+        if hasattr(app_settings, "graceful_shutdown_timeout"):
+            drain_timeout = max(
+                5.0, (float(app_settings.graceful_shutdown_timeout) - 15.0) / 2
+            )
+    except Exception:  # pragma: no cover — settings недоступны (unit-light)
+        pass
+    registry.register_builtin(
+        "graceful_shutdown",
+        GracefulShutdownMiddleware,
+        {"drain_timeout": drain_timeout},
+        order=880,
+    )
 
     return registry
 

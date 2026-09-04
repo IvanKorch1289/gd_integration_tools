@@ -43,6 +43,8 @@ class MqttHandler:
         self._settings = settings
         self._running = False
         self._task: asyncio.Task | None = None
+        # W3/C-P2-2: живёт в рамках одного соединения; stop() отменяет.
+        self._message_tasks: set[asyncio.Task[None]] = set()
 
     async def start(self) -> None:
         """Запускает фоновую подписку на MQTT-топики."""
@@ -65,6 +67,10 @@ class MqttHandler:
     async def stop(self) -> None:
         """Останавливает MQTT-подписку."""
         self._running = False
+        # C-P2-2: отменяем dispatch-задачи текущего поколения, чтобы они
+        # не диспатчили в уже остановленные подсистемы.
+        for message_task in list(self._message_tasks):
+            message_task.cancel()
         if self._task and not self._task.done():
             self._task.cancel()
             try:
@@ -126,7 +132,8 @@ class MqttHandler:
 
                     # W3: конкурентная обработка с ограничением — медленный
                     # action не блокирует цикл подписки (head-of-line blocking).
-                    in_flight: set[asyncio.Task[None]] = set()
+                    self._message_tasks = set()
+                    in_flight = self._message_tasks
                     async for message in client.messages:
                         if len(in_flight) >= self._settings.max_concurrent_messages:
                             done, _ = await asyncio.wait(
