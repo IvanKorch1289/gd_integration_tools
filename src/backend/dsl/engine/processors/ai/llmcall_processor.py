@@ -173,21 +173,36 @@ class LLMCallProcessor(BaseProcessor):
             )
 
             gateway = get_ai_gateway()
-            response = None
-            for attempt in range(self._max_retries + 1):
+
+            # S105 P2-3 fix: ручной retry-loop → tenacity make_async_retry
+            # (consistency с agent-path ниже). GatewayRateLimited —
+            # non-retryable, пробрасывается как есть.
+            from src.backend.core.resilience.retry import make_async_retry
+
+            @make_async_retry(
+                max_attempts=self._max_retries + 1,
+                initial_backoff=self._retry_delay,
+                multiplier=2.0,
+                on=(Exception,),
+            )
+            async def _invoke_with_retry() -> Any:
                 try:
-                    response = await gateway.invoke(request)
-                    break
-                except GatewayRateLimited as exc:
-                    exchange.fail(f"LLM rate limit: {exc}")
-                    return
-                except Exception as exc:
-                    if attempt == self._max_retries:
-                        exchange.fail(
-                            f"LLM gateway call failed after {self._max_retries + 1} attempts: {exc}"
-                        )
-                        return
-                    await asyncio.sleep(self._retry_delay * (2**attempt))
+                    return await gateway.invoke(request)
+                except GatewayRateLimited:
+                    # Non-retryable: tenacity retryable handler пропустит,
+                    # но пробрасываем явно для clarity.
+                    raise
+
+            try:
+                response = await _invoke_with_retry()
+            except GatewayRateLimited as exc:
+                exchange.fail(f"LLM rate limit: {exc}")
+                return
+            except Exception as exc:
+                exchange.fail(
+                    f"LLM gateway call failed after {self._max_retries + 1} attempts: {exc}"
+                )
+                return
 
             if response is None:
                 exchange.fail("LLM gateway call returned no response")
