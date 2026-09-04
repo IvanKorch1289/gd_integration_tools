@@ -53,7 +53,9 @@
 |---|---|---|---|
 | **A1** | di | **32 ключа DI-реестра отсутствуют в `INFRA_MODULES`** (module_registry.py: 45 статических, провайдеры резолвят 73 уникальных). Провайдеры S84-S87 вызывают `resolve_module()` с незарегистрированными ключами → ModuleRegistryError в runtime (S3/telegram/DB/sinks/vault/audit/workflow пути). Коллекция тестов недетерминирована из-за этого же. Фикс: добавить 31 валидированный ключ (find_spec OK); `infrastructure.cdc.registry` — мёртвый (модуля/`get_default_source` не существует) → не регистрировать, dead-code. Провайдер `get_workflow_factory_module_provider` дополнительно сломан (`resolve_module("workflow").factory` — пакет не экспортирует factory) → `resolve_module("workflow.factory")` | 2h |
 
-**Статус A1**: параллельная сессия закрыла R1+часть A1 (коммит `4b31157d4`: 2 ключа — `clients.storage.s3_pool`, `workflow.factory`, lazy-провайдер, s3 factory contract). Остаток A1: **28 ключей** — **IN_PROGRESS** (эта сессия, 2026-09-04).
+**Статус A1**: параллельная сессия закрыла R1+часть A1 (коммит `4b31157d4`: 2 ключа — `clients.storage.s3_pool`, `workflow.factory`, lazy-провайдер, s3 factory contract). Остаток A1 (28 ключей) — **DONE** (эта сессия, коммит `f3eb7ddaf`, 2026-09-04). Доказательство: `pytest --collect-only` → `16782 collected, 0 errors`; workflow processors 30/30; DI unit 222 passed; validate_modules → только 4 ПРЕД-существующих висячих пути (не из A1) → P2-11.
+
+**Новая находка (REOPENED-класс, 2026-09-04)**: `B-NEW-1` P1 — `tests/unit/core/di/providers/test_top10_providers_typing.py` 2 FAIL: `ImportError: cannot import name 'observability_bridge' from src.backend.core.di.providers` — модуль отсутствует после правок провайдеров S96 (`4b31157d4`). Не связан с A1 (воспроизводится на HEAD без diff A1). Домен параллельной сессии — передано через ledger.
 
 **DEP1 — DONE** (закрыт коммитом `97230556d` параллельной сессии, содержимое lock = мой апгрейд; верификация: `uv export | pip-audit -r --no-deps` → только diskcache PYSEC-2026-2447 (ADR-0287); cryptography 50.0.1, gitpython 3.1.61 в lock). M3 повторно CLOSED.
 | **DEP1** | deps | cryptography 49.0.0 → ≥50.0.1 в uv.lock (`uv lock --upgrade-package cryptography`, ADR-0288 уже разрешает <51) + gitpython 3.1.58 → 3.1.61 (4 CVE). Доказательство: `uv run pip-audit` → только diskcache (ADR-0287) | 1h |
@@ -64,7 +66,7 @@
 | W1 | entrypoints | Зарегистрировать GracefulShutdownMiddleware в middleware-цепочке (учесть: BaseHTTPMiddleware vs pure-ASGI стек — риск для streaming; при wire проверить /events/stream, /metrics) | 3h |
 | W2 | entrypoints | Инкремент `_INFLIGHT_COUNTER` (сейчас телеметрия in-flight всегда 0) | 1h |
 | W3 | entrypoints | MQTT handler: per-message timeout + bounded queue (сейчас медленный action блокирует весь цикл); publish — новое соединение на каждое сообщение (P2) | 3h |
-| SEC1 | security | pip-audit allowlist гигиена: PYSEC-2026-3552 убрать из active (закрыт S58), mistune CVE-2026-44708/44896 помечены stale, но остались в списке (5 ID vs заявленных 4); удалить `.bak.2026-09-01` | 1h |
+| SEC1 | security | ~~pip-audit allowlist гигиена~~ **DONE `3d6962ec5`** (2026-09-04): -PYSEC-2026-3552, -2 stale mistune ID, .bak удалён, ADR-0290 addendum; остаток — 2 записи diskcache (ADR-0287) | 1h |
 | T2 | repo-wide | ruff 2 → 0 (остаток после S91 батча 159→0) | 0.5h |
 | C1 | core | `core/database/session.py:28` import-time `_get_main_session_mgr()` → сетевой вызов Vault при каждом импорте модуля (источник флака/задержек). Lazy-фикс | 2h |
 | C2 | core/auth | `mobile_jwt_redis.py` (Redis revocation + rate limiter, M1-#22) не подключён в `entrypoints/api/mobile/router.py` — защиты мертвы в проде; встроенный `DeviceRateLimiter` not multi-pod safe | 3h |
@@ -90,6 +92,8 @@
 | P2-8 | CI: tests/perf k6/locust есть, но не видно CI-обвязки нагрузочного (нужно для M6-#5) |
 | P2-9 | stream.py StreamClient 20 методов (следить); di_bridge dsl-смертные ключи без потребителей в dsl |
 | P2-10 | frontend: широкий except Exception (39/37 страницы), shared/components.py 484 LOC (_RELATED_PAGES дублирует PAGE_METADATA), старые vulture (forms.py callback, 63_Вики force) не закрыты |
+| P2-11 | INFRA_MODULES: 4 пред-существующих висячих пути (validate_modules): monitoring.health_check, repos.files, repos.orders, external_apis.action_bus — ModuleNotFoundError вместо RegistryError при resolve; find real paths или удалить ключи |
+| P2-12 | .worktrees/ untracked каталог в корне — инвентаризировать и убрать/игнорировать |
 
 ### Верифицированные метрики (2026-09-04, после S90-S95)
 - pytest --collect-only: **16782 collected, 0 errors** (R1 закрыт S95)
