@@ -367,7 +367,9 @@ del _prov_name, _prov_module, _prov_attr
 # --- Special cases (kept manual — non-standard signatures or semantics) ---
 
 
-def get_event_bus_facade_provider() -> EventBusFacade:
+# ponytail: name shadowed by TYPE_CHECKING блок annotation L97 (mock-annotation
+# для narrowed return type) — функция-провайдер ниже имеет matching runtime def.
+def get_event_bus_facade_provider() -> EventBusFacade:  # type: ignore[no-redef]
     """S205 fix: возвращает ``EventBusFacade`` instance для DSL EventBus wiring.
 
     Раньше ``dsl/builders/eventbus_mixin.py::_resolve_event_bus_facade``
@@ -385,7 +387,9 @@ def get_event_bus_facade_provider() -> EventBusFacade:
     return get_event_bus_facade()
 
 
-def get_dsl_variables_attr(name: str) -> Any:
+# ponytail: name shadowed by TYPE_CHECKING блок annotation L130 (mock-annotation
+# для narrowed return type ``get_dsl_variables_attr: Callable[[str], Any]``).
+def get_dsl_variables_attr(name: str) -> Any:  # type: ignore[no-redef]
     """Возвращает атрибут ``database.models.<name>`` (DSL variables)."""
     return _load_provider("infrastructure.database.models", name)
 

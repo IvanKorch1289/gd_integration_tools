@@ -385,8 +385,10 @@ def set_llm_guard_runtime_provider(impl: Any) -> None:
 # ─────────────── AIGateway composition root (Sprint 1.3, ADR-NEW-19) ───────────────
 
 
+# ponytail: name shadowed by mock-annotation L49 выше (TYPE_CHECKING блок
+# narrowed return type def-а). Mypy видит collision, runtime — нет.
 @lru_cache(maxsize=1)
-def _build_ai_gateway_singleton() -> Any:
+def _build_ai_gateway_singleton() -> Any:  # type: ignore[no-redef]
     """Строит :class:`AIGateway` со всеми обязательными DI (Sprint 1.3).
 
     Composition-root singleton с тремя обязательными зависимостями

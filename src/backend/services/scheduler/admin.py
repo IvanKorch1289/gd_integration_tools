@@ -35,11 +35,11 @@ __all__ = ("SchedulerDLQStore", "get_scheduler_dlq_store", "get_scheduler_manage
 def __getattr__(name: str) -> Any:
     """Lazy proxy: import infrastructure только при lookup атрибута."""
     if name in {"SchedulerDLQStore", "get_scheduler_dlq_store"}:
-        from src.backend.core.api.scheduler import dlq as _m
+        from src.backend.core.api.scheduler import dlq as _dlq_module
 
-        return getattr(_m, name)
+        return getattr(_dlq_module, name)
     if name == "get_scheduler_manager":
-        from src.backend.core.api.scheduler import scheduler_manager as _m
+        from src.backend.core.api.scheduler import scheduler_manager as _sched_module
 
-        return getattr(_m, name)
+        return getattr(_sched_module, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
