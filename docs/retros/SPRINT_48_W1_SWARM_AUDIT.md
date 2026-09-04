@@ -1253,3 +1253,20 @@ Provider returns the class itself, caller does `ReplyChannel.instance()`.
 - M5-#5 CLOSED: consumer_max_prefetch config field
 - Honest catch: card_tokenize.py had broken syntax from S87 (RedisTokenRegistry class не извлечено) → fixed
 
+
+## Sprint 91 — M4 ruff CLOSED + M5-#2 graceful shutdown
+
+**Commits**:
+- `1dca5d15f` chore(quality): close 14 ruff errors — ruff 159→0 (S91)
+- (S91) feat(middleware): M5-#2 GracefulShutdownMiddleware
+
+### S91 results
+- **ruff 159 → 0** (100% closed, was 14 in S90)
+- **M5-#2 CLOSED** (graceful shutdown middleware)
+- 3 new files: graceful_shutdown.py (118 LOC) + _registry.py (12 LOC) + __init__.py export
+
+### M5 status updated
+- ✓ CLOSED: 5/10 (M5-#1, #2, #3, #4, #5)
+- ⚠ PARTIAL: 2 (M5-#7, #8)
+- ✗ TODO: 3 (M5-#6 idempotency, M5-#9 health-check ALREADY CLOSED, M5-#10 load test)
+
