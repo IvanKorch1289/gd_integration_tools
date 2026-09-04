@@ -1,6 +1,6 @@
-"""pre-prod-check gate — 38/38 BLOCKING (S17 K-OPS-3 / DoD-13, +8 S36 w4).
+"""pre-prod-check gate — 36/36 BLOCKING (S17 K-OPS-3 / DoD-13, +8 S36 w4).
 
-Запускает 38 проверок и репортит итог. Любая failed проверка → exit 1.
+Запускает 36 проверок и репортит итог. Любая failed проверка → exit 1.
 
 Запуск:
 
@@ -12,7 +12,7 @@
     # Dry-run (S17 scaffold, partial WARN не валит):
     python tools/checks/pre_prod_check.py --dry-run
 
-38 проверок:
+36 проверок (нумерация #14/#29 пропущена — historical, см. P2-6 ledger):
 
 1.  coverage ≥75% (ratcheting)
 2.  mypy errors ≤30 (ratcheting)
@@ -680,7 +680,7 @@ def _check_p95_perf_blocking() -> CheckResult:
 
 
 def define_checks() -> list[tuple[str, Callable[[], CheckResult]]]:
-    """Список 38 проверок (20 base + 10 S17 K-OPS-3 + 8 S36 w4)."""
+    """Список 36 проверок (20 base + 10 S17 K-OPS-3 + 6 S36 w4)."""
     return [
         (
             "01 coverage ≥50%",
@@ -809,7 +809,7 @@ def main() -> int:
         "--dry-run",
         action="store_true",
         help=(
-            "S17 K-OPS-3: выводит список 38 gates без полного исполнения. "
+            "S17 K-OPS-3: выводит список 36 gates без полного исполнения. "
             "Новые gates #21-#30 (warn-only) явно помечаются WARN/SKIP."
         ),
     )
