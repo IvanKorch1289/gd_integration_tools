@@ -28,7 +28,7 @@ Usage (when ``mobile_jwt_enabled`` flag is ON)::
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Any
 
 from src.backend.core.auth.jwt_backend import JwtBackend, JwtVerificationError
@@ -91,7 +91,12 @@ class MobileJwtVerifier:
         if not token or not isinstance(token, str):
             raise JwtVerificationError("Token must be non-empty string")
 
-        claims = await self._backend.decode(token)
+        raw_claims = await self._backend.decode(token)
+        # ponytail: JwtClaims dataclass или dict (mock/tests); downstream ждёт dict.
+        if isinstance(raw_claims, dict):
+            claims: dict[str, Any] = raw_claims
+        else:
+            claims = asdict(raw_claims)
 
         self._validate_issuer(claims)
         self._validate_audience(claims)
