@@ -62,15 +62,13 @@ except (ImportError, AttributeError, ModuleNotFoundError):
 
     def api_get(path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         """Метод api_get (см. signature)."""
-        import os
+        # S104 F1 fix: используем BaseAPIClient вместо raw httpx + os.environ —
+        # единый retry/JWT/timeout contract. config.HTTP_TIMEOUT_SEC
+        # автоматически применяется через BaseAPIClient(timeout=...) default.
+        from src.frontend.streamlit_app.api_clients.base import BaseAPIClient
 
-        import httpx
-
-        base_url = os.environ.get("API_BASE_URL", "http://localhost:8000")
-        with httpx.Client(timeout=config.HTTP_TIMEOUT_SEC) as client:
-            resp = client.get(f"{base_url}/api/v1{path}", params=params)
-            resp.raise_for_status()
-            return resp.json()
+        client = BaseAPIClient(timeout=config.HTTP_TIMEOUT_SEC)
+        return client.get(f"/api/v1{path}", params=params)
 
 
 setup_page()
