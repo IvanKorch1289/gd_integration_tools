@@ -342,18 +342,22 @@ def set_redis_lock_class_provider(lock_class: Any) -> None:
 
 
 def get_s3_client_provider() -> Any:
-    r"""Возвращает singleton S3 client (\`s3_client\`).
+    r"""Возвращает singleton S3 client factory (\`get_s3_client\`).
 
     S78 M2-#11 batch 13: lazy resolve для dsl/processors/{ingest,scan}_file.py.
     Был inline: ``from src.backend.infrastructure.clients.storage.s3_pool
     import s3_client`` (lazy inside method body).
 
     Использует lazy resolve_module — НЕ тянет s3_pool при module import.
+    R1 fix (S95 PROGRESS_LEDGER): return the factory function ``get_s3_client``
+    (NOT the instance) — consumers в transformation.py/claim_check.py
+    вызывают ``s3 = get_s3_client()``, scan_file/ingest_file вызывают
+    ``s3_client = get_s3_client()`` (см. R1 batch fix).
     """
     if "s3_client" in _overrides:
         return _overrides["s3_client"]
     module = resolve_module("clients.storage.s3_pool")
-    return module.s3_client
+    return module.get_s3_client  # factory, not instance
 
 
 def set_s3_client_provider(client: Any) -> None:
@@ -562,14 +566,16 @@ def set_db_manager_provider(manager: Any) -> None:
 
 
 def get_s3_storage_client_provider() -> Any:
-    r"""Возвращает \`storage_client\` (low-level S3 client).
+    r"""Возвращает \`storage_client\` (low-level S3 client factory).
 
     S86: lazy resolve для s3read/s3write processors.
+    R1 fix (S95 PROGRESS_LEDGER): return factory function, не instance —
+    consistency с ``get_s3_client_provider``.
     """
     if "s3_storage_client" in _overrides:
         return _overrides["s3_storage_client"]
     module = resolve_module("clients.storage.s3_pool")
-    return module.storage_client
+    return module.get_s3_client  # factory, not instance
 
 
 def set_s3_storage_client_provider(client: Any) -> None:
@@ -795,11 +801,12 @@ def get_workflow_factory_module_provider() -> Any:
     r"""Возвращает \`workflow.factory\` module alias.
 
     S87: lazy resolve для workflow_subprocess.py.
+    R1 fix (S95 PROGRESS_LEDGER): ключ в INFRA_MODULES = ``workflow.factory``,
+    а не ``workflow`` (последний отсутствует — 45 ключей без него).
     """
     if "workflow_factory_module" in _overrides:
         return _overrides["workflow_factory_module"]
-    module = resolve_module("workflow")
-    return module.factory
+    return resolve_module("workflow.factory")  # R1 fix: ключ + нет .factory suffix
 
 
 def set_workflow_factory_module_provider(module: Any) -> None:

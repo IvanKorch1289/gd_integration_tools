@@ -107,6 +107,7 @@ INFRA_MODULES: Final[dict[str, str]] = {
     "clients.storage.redis_coordinator": f"{_INFRA}.clients.storage.redis_coordinator",
     "clients.storage.mongodb": f"{_INFRA}.clients.storage.mongodb",
     "clients.storage.clickhouse": f"{_INFRA}.clients.storage.clickhouse",
+    "clients.storage.s3_pool": f"{_INFRA}.clients.storage.s3_pool",  # R1+ fix (S95): missing key for claim_check tests
     # ─── Transport clients ──────────────────────────────────────────
     "clients.transport.http": f"{_INFRA}.clients.transport.http",
     "clients.transport.browser": f"{_INFRA}.clients.transport.browser",
@@ -150,6 +151,7 @@ INFRA_MODULES: Final[dict[str, str]] = {
     "workflow.event_store": f"{_INFRA}.workflow.pg_runner_internals",
     "workflow.state_store": f"{_INFRA}.workflow.pg_runner_internals",
     "workflow.pg_runner_internals": f"{_INFRA}.workflow.pg_runner_internals",
+    "workflow.factory": f"{_INFRA}.workflow.factory",  # R1 fix (S95): workflow_subprocess DI
     # ─── Resilience ─────────────────────────────────────────────────
     "resilience.coordinator": f"{_INFRA}.resilience.coordinator",
     "resilience.health": f"{_INFRA}.resilience.health",

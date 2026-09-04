@@ -11,6 +11,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, ClassVar
 
 # S87 M2-#11 final batch: DI provider.
+# R1 fix (S95 PROGRESS_LEDGER): import-time call ломал pytest --collect-only
+# (resolve_module("workflow") падает — нет ключа в module_registry).
+# Решение: lazy getter-функция — resolve в точке использования, не при импорте.
 from src.backend.core.di.providers.cache import get_workflow_factory_module_provider
 
 # Module-level imports (callable through module reference) so tests can patch
@@ -23,7 +26,10 @@ from src.backend.dsl.registry import (
     processor,  # B-1 fix (cycle 1): registry integration
 )
 
-_wf_factory = get_workflow_factory_module_provider()
+
+def _wf_factory() -> Any:  # R1 fix: lazy (was module-level `_wf_factory = ...`)
+    """Lazy resolve workflow factory module (avoids import-time DI call)."""
+    return get_workflow_factory_module_provider()
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -77,7 +83,7 @@ async def run_workflow_by_id(
     if backend is None:
         # Lazy-create default backend (dev_light / tests / standalone).
         try:
-            backend = await _wf_factory.create_workflow_backend(
+            backend = await _wf_factory().create_workflow_backend(
                 kind="auto",
                 profile=getattr(app.state, "profile", None) if app else None,
             )
@@ -86,7 +92,7 @@ async def run_workflow_by_id(
                 "subworkflow backend init failed: %s — falling back to fake", exc
             )
             try:
-                backend = await _wf_factory.create_workflow_backend(kind="fake")
+                backend = await _wf_factory().create_workflow_backend(kind="fake")
             except Exception as fb_exc:  # pragma: no cover
                 _logger.error("subworkflow fake backend init also failed: %s", fb_exc)
                 return {

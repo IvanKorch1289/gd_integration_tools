@@ -139,11 +139,12 @@ class ScanFileProcessor(BaseProcessor):
             if key:
                 try:
                     # S78 M2-#11 batch 13: DI provider вместо inline infrastructure import.
+                    # R1 fix (S95): provider returns factory function — call it.
                     from src.backend.core.di.providers.cache import (
                         get_s3_client_provider,
                     )
 
-                    s3_client = get_s3_client_provider()
+                    s3_client = get_s3_client_provider()()
 
                     data = await s3_client.get_object_bytes(str(key))
                     if data is not None:
