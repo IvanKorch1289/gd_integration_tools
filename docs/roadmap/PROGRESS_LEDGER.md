@@ -519,3 +519,18 @@ BLOCKED(infra): выполнить при docker-доступе либо на de
 
 Закрыто в этом проходе: gate 11 docstrings = 0 (edddcd400 + фасад отложен);
 M6-#3 remainder BLOCKED(infra) — docker socket permission denied.
+
+## Gate 33 (plugin trust-tier) — CLOSED (2026-09-05)
+
+Корень: в core_admin/dadata/skb `trust_tier = "A"` лежал ВНУТРИ таблицы
+`[plugin]` → tomllib отдаёт только top-level ключи, чекер #33 видел
+«missing». Фикс `f899c8d1f`: перенос на уровень файла у всех трёх.
+
+Верификация: `_check_plugin_trust_tier()` → OK (11 plugins); полный
+pre-prod-check → `33 plugin trust-tier OK`, счёт 18/36 PASSED (было 16),
+FAILED 7→5 (остаток: 01 coverage + 02 mypy — активная полоса сессии-2;
+15 feature-flags — Vault недоступен локально; 03/04 — WIP-транзиенты
+сессии-2, воспроизводятся только во время её правок).
+
+3 pre-existing падения tests/unit/extensions (credit_pipeline YAML-refs)
+воспроизводятся на HEAD до и после фикса — не регрессия.
