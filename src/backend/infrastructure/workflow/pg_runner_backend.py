@@ -235,9 +235,9 @@ class PgRunnerWorkflowBackend(WorkflowBackend):
                             f"current_status={row.status.value}",
                         },
                     )
-                await asyncio.sleep(min(interval, remaining))
+                await asyncio.sleep(min(interval, remaining))  # ponytail: ADR-0291
             else:
-                await asyncio.sleep(interval)
+                await asyncio.sleep(interval)  # ponytail: ADR-0291
             interval = min(interval * 2, self._poll_max_interval_s)
 
     async def replay(self, *, workflow_name: str, history: bytes) -> None:
@@ -333,9 +333,9 @@ class PgRunnerWorkflowBackend(WorkflowBackend):
                 remaining = deadline - loop.time()
                 if remaining <= 0:
                     return {"timed_out": True}
-                await asyncio.sleep(min(interval, remaining))
+                await asyncio.sleep(min(interval, remaining))  # ponytail: ADR-0291
             else:
-                await asyncio.sleep(interval)
+                await asyncio.sleep(interval)  # ponytail: ADR-0291
             interval = min(interval * 2, self._poll_max_interval_s)
 
     async def start_child_workflow(
