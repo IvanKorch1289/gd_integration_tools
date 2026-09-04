@@ -39,10 +39,13 @@ class BaselineUser(HttpUser):
 
     @task(weight=60)
     def healthcheck(self) -> None:
-        """Smoke /api/v1/health — измеряет накладные расходы middleware-стека."""
-        with self.client.get(
-            "/api/v1/health", name="health", catch_response=True,
-        ) as resp:
+        """Smoke /health — измеряет накладные расходы middleware-стека.
+
+        M5-#10 (2026-09-05): /api/v1/health закрыт AuthRequiredMiddleware
+        (B-04 hardening, 401) → цель переехала на публичный /health (liveness,
+        та же полная middleware-цепочка, 200).
+        """
+        with self.client.get("/health", name="health", catch_response=True,) as resp:
             if resp.status_code != 200:
                 resp.failure(f"unexpected status {resp.status_code}")
 
@@ -55,7 +58,10 @@ class BaselineUser(HttpUser):
             headers={"Authorization": "Bearer dev-smoke-token"},
             catch_response=True,
         ) as resp:
-            if resp.status_code not in (200, 401):
+            if resp.status_code in (200, 401):
+                # M5-#10: 401 = auth-gate путь (нагрузочная цель той же цепочки).
+                resp.success()
+            else:
                 resp.failure(f"unexpected status {resp.status_code}")
 
     @task(weight=10)
@@ -73,7 +79,9 @@ class BaselineUser(HttpUser):
             catch_response=True,
         ) as resp:
             # 202 (async-api accepted), 200, 401 (без auth) — допустимы.
-            if resp.status_code not in (200, 202, 401):
+            if resp.status_code in (200, 202, 401):
+                resp.success()
+            else:
                 resp.failure(f"unexpected status {resp.status_code}")
 
 
@@ -89,14 +97,24 @@ class HealthcheckOnlyUser(HttpUser):
 
     @task(weight=10)
     def healthcheck(self) -> None:
-        """Базовый /api/v1/health для измерения чистого overhead."""
-        with self.client.get("/api/v1/health", catch_response=True) as resp:
+        """Базовый /health для измерения чистого overhead.
+
+        M5-#10 (2026-09-05): /api/v1/health закрыт AuthRequiredMiddleware
+        (B-04) → публичный /health (liveness, та же middleware-цепочка).
+        """
+        with self.client.get("/health", catch_response=True) as resp:
             if resp.status_code != 200:
                 resp.failure(f"unexpected status {resp.status_code}")
 
     @task(weight=1)
     def readiness(self) -> None:
-        """Readiness — проверяет полный ResilienceCoordinator chain."""
+        """Readiness — полный ResilienceCoordinator chain (за auth).
+
+        M5-#10: 401 допустим — readiness за AuthRequiredMiddleware (P2-13);
+        нагрузочная цель — путь middleware + auth-gate.
+        """
         with self.client.get("/api/v1/readiness", catch_response=True) as resp:
-            if resp.status_code not in (200, 503):
+            if resp.status_code in (200, 401, 503):
+                resp.success()
+            else:
                 resp.failure(f"unexpected readiness status {resp.status_code}")
