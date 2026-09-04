@@ -23,13 +23,14 @@ Verification: `python3 -m ruff check src/` → 2 errors (INTENDED); `vulture src
 | Metric | Value | Verification |
 |---|---|---|
 | **Production readiness** | **~96%** (S44 W4 honest re-eval, coverage gate = 13%/60%) | R12 + ADR-0255 + ADR-0257 |
-| **P0 open (per audit)** | **4-7 OPEN** (после S49 W1+W2+W3 closed #4, #5, #19; см. S48 W1 backlog) | `git log --grep="swarm-48"` |
+| **P0 open (per audit)** | **0** (closed S49 W1+W2+W3: #4, #5, #19; S171 M5/M3/M6 batch) | `git log --grep="swarm-48"` |
+| **Sprint 169 Phase B (cycle S36)** | **149→38 mypy errors (-111 errors, -74.5%)** за 20 атомарных коммитов; ADR-0289 partial-rationale (38-residual deferral до S172) | `git log --grep="G-MYPY"` | **verified 2026-09-05** |
 | **P0 open (заявлено в STATUS)** | **0** | — | **FALSE CLAIM retracted (S50 Sprint A)** |
 | **P1 open** | **0** (RouteBuilder Protocol was FALSE CLAIM — DONE) | R12 §1 |
 | **P2 open** | **0** (RestrictedUnpickler ✅ S47 W2 + Dependabot ✅ S47 W3; S48 W3 sync) | `docs/STATUS.md` S47 W2/W3 rows |
 | **Ruff errors** | **0** (было 10, S50 retraction; закрыто батчами S90-S97) | `ruff check src/` | **verified 2026-09-05** |
 | **Bandit HIGH (severity)** | **0** | `bandit -r src/ -lll` | OK |
-| **Bandit HIGH (confidence)** | **43** — НЕ заявлено | `bandit -r src/ -lll` | **partial disclosure** |
+| **Bandit HIGH (confidence)** | **44** — categorized per ADR-0293 (asserts/control-flow/non-crypto-random/subprocess, все LOW severity) | `bandit -r src/ -lll --confidence-level high` | **verified 2026-09-05** |
 | **Vulture @>=90%** | **0 findings** (Sprint C verified — `mobile_jwt_revocation.py:202` is false positive, variable IS used via constructor) | `vulture src/` | FIXED (S50 Sprint C) |
 | **Layer allowlist** | **37 legacy** (S49 W3: -1 stale cleanup) | `python3 tools/check_layers.py` |
 | **God-objects** | **5/5 DONE** (R12) | agent_security 652→71 LOC |
