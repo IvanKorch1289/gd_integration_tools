@@ -317,6 +317,40 @@ Re-export `_InMemoryJwtBlacklist` сохранён (тесты импортир�
 
 ---
 
+## Батч 2026-09-05 — G-MYPY Phase B (14 атомарных коммитов)
+
+| Cluster | Закрыто | Коммит |
+|---|---|---|
+| CL1 | security/facade verify_signature import (149→148) | `f44981a7a` |
+| CL2 | facade_blacklist get_redis_client + has-type → getattr (148→146) | `407809a32` |
+| CL3 | graphql/schema _serialize_exchange cast(JSON) (146→143) | `c3f35449d` |
+| CL4 | APIClient.workflows/etc properties + dict access (143→138) | `c8f38203b` |
+| CL5 | workflow_setup.register_ai_gateway_singleton + shim fallback (138→135) | `dd7fe4032` |
+| CL6 | admin_plugins PluginLoader.get_instance → getattr (135→134) | `e6aec587b` |
+| CL7 | express/telegram __aenter__/__aexit__ cluster (134→96, -38) | `4930372c5` |
+| CL8 | data_quality post-load mixin injection (96→80, -16) | `fac732b49` |
+| CL9 | outbox main_session_manager typed alias (80→66, -14) | `e36912a3c` |
+| CL10 | get_global_registry import fix (66→61, -5) | `a5f37f679` |
+| CL11 | _AIPolicyEnforcerProtocol _is_ai_policy_enforce (61→59, -2) | `83fcfbe32` |
+| CL12 | workflow compiler flow.py imports (59→54, -5) | `44a4d7591` |
+| CL13 | workflow compiler activity.py _build_retry_policy (54→53, -1) | `9eaebb40d` |
+| CL14 | mobile_jwt asdict для декодированных claims (53→49, -4) | `328d5c77e` |
+
+**Итог**: 14 атомарных коммитов, 149→49 (-100 errors, -67%), без регрессий.
+ruff=0, collect=16966/0 errors сохраняются на всём протяжении.
+
+**G-MYPY хвост (49 → закрытие следующим циклом или ADR-deferral)**:
+- Самые крупные файлы: services/audit/clickhouse_audit_service (6),
+  cdc/poll_backend (5), entrypoints/api/generator/legacy_aliases (5),
+  cdc/listen_notify_backend (4), cdc/debezium_events_backend (4),
+  cdc/cdc_client_adapter (4), cdc/source (4), rag_service/search_mixin (3),
+  builder_service (2), gateway_adapter (2)
+- Все ошибки — singletons или 2-of-cluster (get_global_registry кластер
+  уже закрыт CL10). Каждая требует отдельного анализа file-by-file.
+- ADR на остаток: см. `docs/adr/0289-mypy-partial-rationale.md` (запланировано).
+
+---
+
 ## Verified baseline 2026-09-05 (plan-mode координатор, прямые команды)
 
 HEAD = `2ca8320ef` (поверх S3-2). План: `batgirl-plastic-man-valkyrie.md`.
