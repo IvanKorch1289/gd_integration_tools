@@ -557,3 +557,24 @@ Verify: collect 16966/0 errors; 1075 passed по ключевым suite'ам;
 | 15 feature-flags | требует живой Vault | BLOCKED(infra) — как M6-#3 |
 
 Закрыто этим роем за цикл: 03 layers, 04 ruff strict, 11 docstrings, 33 trust-tier.
+
+## Верификация T3 + реклассификация P2-10 vulture (2026-09-05, финал)
+
+**T3 прогресс (verified по данным сессии-2)**: фазы 1-5 реальны — per-module
+ratchets (core/enums 94.6%, types 93.2%, repositories/base 100%, variable_backend
+73.1%, security-модули 0→100%, cache, scaling 78→95% — S97-S102). Но overall
+30.8→70% сессия-2 сама пометила «multi-day test writing effort — нереально в
+интерактивной сессии» (ретро S102). **T3 остаётся открыт как multi-day**:
+либо выделенный мульти-дневной спринт, либо scope-решение пользователя
+(per-module ratchets считать достаточными вместо глобального гейта) —
+не решается роем в интерактивном режиме.
+
+**P2-10 vulture-подпункты — реклассифицированы как не-дефекты**:
+- `63_Вики.py:36/38` force/category — параметры методов `_WhooshIndex(Protocol)`
+  (контракт Whoosh-реализаций, тела `...`); удаление ломает контракт.
+- `forms.py:156` callback — параметр публичного хелпера `on_submit_callback`.
+Vulture на Protocol-заглушках даёт false positives by design.
+
+Остаток P2-10 (реальные, не взятые): сужение except Exception на страницах
+39/37, дедупликация _RELATED_PAGES в shared/components.py — мелкие frontend
+рефакторы, приоритет низкий.
