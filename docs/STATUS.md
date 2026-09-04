@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-09-01 (Sprint 85 — M2-#11 ACCELERATED BATCH 32/55 (8 files: telegram/* 6 + eip/* 2; 2 new providers); см. `docs/roadmap/PRODUCTION_READINESS.md`)
+> **Last verified**: 2026-09-01 (Sprint 86 — M2-#11 ACCELERATED BATCH 2 40/55 (8 files: ai/components/rpa/proxy; 6 new providers); см. `docs/roadmap/PRODUCTION_READINESS.md`)
 
 ## Post-Plan A Sprints 1-31 (coverage ratchet + final polish)
 
