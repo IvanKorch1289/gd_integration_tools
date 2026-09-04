@@ -365,6 +365,7 @@ ruff=0, collect=16966/0 errors сохраняются на всём протяж
 | G-PG-RUNNER | DONE | `1ced37572` | ADR-0291 + 4 ponytail comments; pg-runner deprecated |
 | G-FUNCTIONAL | DONE | `b6e54b011` | FUNCTIONAL_TEST_REPORT.md (130 LOC, verified) |
 | **S169 R-FIX** (cycle carryover) | DONE | `bd8140c80` | extract `_build_retry_policy` → sibling `_retry.py` (CL13 circular import) + restore `core.api.extensions` facade для `get_global_registry` (CL10 layer violation remediation) |
+| **BRANCH-CLEANUP feat/m1-m6-impl** | DONE | (manual `git branch -D` per user instruction 2026-09-05) | Worktree удалён (`git worktree remove --force`), local branch `feat/m1-m6-impl` force-deleted (39 не-merged коммитов). Per user explicit command «удали ветку feat/m1-m6-impl». Recovery: orphaned tip `169a3d45b` reachable by SHA через `git log 169a3d45b` + reflog (~30 days default retention). No push (per project rule) — remote branch `origin/feat/m1-m6-impl` НЕ удалён, удалит пользователь через remote-dashboard при желании. |
 
 **Итог mypy**: 149→38 (-111 errors, -74.5%) за 20 атомарных коммитов.
 ruff=0, collect=16966/0 errors сохраняются. ADR-0289 фиксирует deferral
