@@ -1110,3 +1110,22 @@ Provider returns the class itself, caller does `ReplyChannel.instance()`.
 - **S83: 23/55 (+ scraping.py)**
 - Remaining: 32 dsl files
 
+
+### Sprint 84 — M2-#11 batch 19 (sample 24/55)
+
+**Commit**: `0862b4ae5` — refactor(dsl): M2-#11 batch 19.
+
+### 1 new DI provider
+- `get_object_storage_provider()` в cache.py (lazy resolve storage.factory)
+
+### Progress
+- S60-S83: 23/55
+- **S84: 24/55 (+ storage/s3.py)**
+- Remaining: 32 dsl files
+
+### Honest observation
+- 33 files with inline imports (excluding __pycache__) — фактический счет
+  выше предыдущих оценок (~38)
+- Каждый sprint мигрирует 1 файл, полный finish требует 30+ sprints
+- Стоит ускорить batch (multi-file per sprint) или смена подхода
+
