@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.config.settings import settings as app_settings
 from src.backend.core.logging import get_logger
