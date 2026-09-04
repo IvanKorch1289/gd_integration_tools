@@ -1240,3 +1240,16 @@ Provider returns the class itself, caller does `ReplyChannel.instance()`.
 ### M5 done-критерий
 4/10 closed + 2 partial = 6/10 effective. Production env required for full closure (M5-#10 load test).
 
+
+## Sprint 90 — ruff auto-fix + M5-#5 prefetch
+
+**Commits**:
+- `be11f7e50` chore(quality): ruff auto-fix 133 of 159 errors
+- `2d7071b4a` chore(quality): fix unused imports в __init__.py
+- `04723cc15` feat(config): M5-#5 consumer_max_prefetch field
+
+### Sprint 90 results
+- ruff errors: 159 → 14 (91% reduction)
+- M5-#5 CLOSED: consumer_max_prefetch config field
+- Honest catch: card_tokenize.py had broken syntax from S87 (RedisTokenRegistry class не извлечено) → fixed
+
