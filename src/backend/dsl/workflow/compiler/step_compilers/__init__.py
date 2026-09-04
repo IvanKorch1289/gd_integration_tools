@@ -18,7 +18,6 @@ Ponytail: 1 type per file, явный dispatch table, zero side effects при i
 from __future__ import annotations
 
 from collections.abc import Callable
-from datetime import timedelta
 from typing import Any
 
 from src.backend.core.logging import get_logger
@@ -60,7 +59,6 @@ from src.backend.dsl.workflow.spec import (
     PauseDeclaration,
     ReflectDeclaration,
     ResumeDeclaration,
-    RetryPolicy,
     SagaDeclaration,
     SensorDeclaration,
     SignalWaitDeclaration,
@@ -162,32 +160,11 @@ class GuardrailValueTypeError(RuntimeError):
 StepCompiler = Callable[[Any, dict[str, Any]], Any]
 
 
-def _build_retry_policy(
-    decl_policy: RetryPolicy | None, default_policy: RetryPolicy | None
-) -> Any:
-    """Сконструировать ``temporalio.common.RetryPolicy`` из декларации.
-
-    Если decl_policy и default_policy оба ``None`` — возвращает ``None``
-    (Temporal SDK применит свои дефолты). Lazy-import temporalio.
-    """
-    policy = decl_policy or default_policy
-    if policy is None:
-        return None
-    from temporalio.common import RetryPolicy as TemporalRetryPolicy
-
-    kwargs: dict[str, Any] = {
-        "initial_interval": timedelta(seconds=policy.initial_interval_s),
-        "backoff_coefficient": policy.backoff_coefficient,
-        "maximum_attempts": policy.max_attempts,
-    }
-    if policy.maximum_interval_s is not None:
-        kwargs["maximum_interval"] = timedelta(seconds=policy.maximum_interval_s)
-    if policy.non_retryable_errors:
-        kwargs["non_retryable_error_types"] = list(policy.non_retryable_errors)
-    if policy.jitter is not None:
-        kwargs["jitter"] = policy.jitter
-    return TemporalRetryPolicy(**kwargs)
-
+# Sprint 169 R-fix: _build_retry_policy экстрагирована в ``_retry.py`` для
+# устранения циклической зависимости при импорте activity.py/flow.py.
+from src.backend.dsl.workflow.compiler.step_compilers._retry import (  # noqa: E402,F401
+    _build_retry_policy,
+)
 
 # Sprint 16 P1-11: dispatch registry — single source of truth для step type → compiler.
 # All 13 compile функции импортируются из подмодулей (activity/flow/governance).

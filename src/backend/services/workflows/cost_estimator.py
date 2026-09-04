@@ -166,7 +166,7 @@ class WorkflowCostEstimator:
 
         llm_breakdown: LLMCostBreakdown | None = None
         try:
-            from src.backend.dsl.workflow.versioning import get_global_registry
+            from src.backend.core.api.extensions import get_global_registry
 
             registry = get_global_registry()
             wf_version = registry.get_default(workflow_id)

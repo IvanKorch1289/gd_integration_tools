@@ -50,6 +50,10 @@ from src.backend.dsl.workflow.builder import (
 # Workflow spec (entrypoints → dsl.workflow.spec.workflow)
 from src.backend.dsl.workflow.spec.workflow import WorkflowDeclaration, WorkflowStep
 
+# S169 R-FIX: provide get_global_registry to entrypoints via core.api
+# (Sprint 33 layer policy: entrypoints импортируют facade, не dsl.*).
+from src.backend.dsl.workflow.versioning import get_global_registry  # noqa: F401
+
 # YAML I/O (3 violations → 0)
 from src.backend.dsl.workflow.yaml_io import from_yaml, to_yaml
 from src.backend.dsl.yaml_loader.loaders import load_pipeline_from_yaml
@@ -88,6 +92,8 @@ __all__ = [
     # Workflow spec
     "WorkflowDeclaration",
     "WorkflowStep",
+    # Workflow versioning (S169 R-FIX: layer violation remediation)
+    "get_global_registry",
     # Engine
     "ExecutionContext",
     "Exchange",

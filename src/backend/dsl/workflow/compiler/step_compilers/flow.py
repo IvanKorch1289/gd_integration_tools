@@ -11,6 +11,9 @@ from datetime import timedelta
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.dsl.workflow.compiler.step_compilers._retry import (
+    _build_retry_policy,  # noqa: F401
+)
 from src.backend.dsl.workflow.compiler.step_compilers.activity import (
     compile_activity_step,
 )
