@@ -524,3 +524,105 @@ def get_http_client_typed_provider() -> Any:
 def set_http_client_typed_provider(client: Any) -> None:
     """Test-override для HTTP client typed (Sprint 85+)."""
     _overrides["http_client_typed"] = client
+
+
+# ─── S86 M2-#11 accelerated batch: additional providers ──────────
+
+
+def get_ai_sanitizer_provider() -> Any:
+    """Возвращает \`get_ai_sanitizer\` (PII sanitizer factory).
+
+    S86: lazy resolve для dsl/processors/ai/sanitizepii_processor.py.
+    """
+    if "ai_sanitizer" in _overrides:
+        return _overrides["ai_sanitizer"]
+    module = resolve_module("security.ai_sanitizer")
+    return module.get_ai_sanitizer
+
+
+def set_ai_sanitizer_provider(sanitizer: Any) -> None:
+    """Test-override (S86+)."""
+    _overrides["ai_sanitizer"] = sanitizer
+
+
+def get_db_manager_provider() -> Any:
+    """Возвращает \`get_db_manager\` (DB session manager factory).
+
+    S86: lazy resolve для dsl/processors/components/databasequeryprocessor.py.
+    """
+    if "db_manager" in _overrides:
+        return _overrides["db_manager"]
+    module = resolve_module("database.database")
+    return module.get_db_manager
+
+
+def set_db_manager_provider(manager: Any) -> None:
+    """Test-override (S86+)."""
+    _overrides["db_manager"] = manager
+
+
+def get_s3_storage_client_provider() -> Any:
+    """Возвращает \`storage_client\` (low-level S3 client).
+
+    S86: lazy resolve для s3read/s3write processors.
+    """
+    if "s3_storage_client" in _overrides:
+        return _overrides["s3_storage_client"]
+    module = resolve_module("clients.storage.s3_pool")
+    return module.storage_client
+
+
+def set_s3_storage_client_provider(client: Any) -> None:
+    """Test-override (S86+)."""
+    _overrides["s3_storage_client"] = client
+
+
+def get_smtp_client_provider() -> Any:
+    """Возвращает \`smtp_client\` (SMTP email client).
+
+    S86: lazy resolve для dsl/processors/rpa/system.py.
+    """
+    if "smtp_client" in _overrides:
+        return _overrides["smtp_client"]
+    module = resolve_module("clients.transport.smtp")
+    return module.smtp_client
+
+
+def set_smtp_client_provider(client: Any) -> None:
+    """Test-override (S86+)."""
+    _overrides["smtp_client"] = client
+
+
+def get_stream_provider() -> Any:
+    """Возвращает \`stream\` module (messaging stream).
+
+    S86: lazy resolve для dsl/processors/proxy/forward.py.
+    """
+    if "stream" in _overrides:
+        return _overrides["stream"]
+    module = resolve_module("clients.messaging.stream")
+    return module
+
+
+def set_stream_provider(stream: Any) -> None:
+    """Test-override (S86+)."""
+    _overrides["stream"] = stream
+
+
+# ─── S86: get_stream_client provider (different from get_stream module) ───
+
+
+def get_stream_client_provider() -> Any:
+    """Возвращает \`get_stream_client\` (messaging stream client factory).
+
+    S86: lazy resolve для dsl/processors/proxy/forward.py.
+    """
+    if "stream_client" in _overrides:
+        return _overrides["stream_client"]
+    module = resolve_module("clients.messaging.stream")
+    return module.get_stream_client
+
+
+def set_stream_client_provider(client: Any) -> None:
+    """Test-override (S86+)."""
+    _overrides["stream_client"] = client

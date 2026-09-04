@@ -20,7 +20,9 @@ class SanitizePIIProcessor(BaseProcessor):
         body = exchange.in_message.body
         if not isinstance(body, str):
             body = str(body)
-        from src.backend.infrastructure.security.ai_sanitizer import get_ai_sanitizer
+        # S86 M2-#11 accelerated batch: DI provider.
+        from src.backend.core.di.providers.cache import get_ai_sanitizer_provider
+        get_ai_sanitizer = get_ai_sanitizer_provider()
 
         sanitizer = get_ai_sanitizer()
         result = await sanitizer.sanitize(body)

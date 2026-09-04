@@ -50,7 +50,9 @@ class DatabaseQueryProcessor(BaseProcessor):
         """Выполняет параметризованный SQL-запрос с валидацией и пишет результат в exchange."""
         from sqlalchemy import text
 
-        from src.backend.infrastructure.database.database import get_db_manager
+        # S86 M2-#11 accelerated batch: DI provider.
+        from src.backend.core.di.providers.cache import get_db_manager_provider
+        get_db_manager = get_db_manager_provider()
 
         try:
             self._validate_sql(self._sql)

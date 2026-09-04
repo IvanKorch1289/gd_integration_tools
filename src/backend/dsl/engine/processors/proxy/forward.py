@@ -205,9 +205,9 @@ class ForwardToProcessor(BaseProcessor):
     async def _forward_queue(
         self, protocol: str, body: Any, headers: dict[str, str], exchange: Exchange[Any]
     ) -> None:
-        from src.backend.infrastructure.clients.messaging.stream import (
-            get_stream_client,
-        )
+        # S86 M2-#11 accelerated batch: DI provider.
+        from src.backend.core.di.providers.cache import get_stream_client_provider
+        get_stream_client = get_stream_client_provider()
 
         client = get_stream_client()
         payload = body if isinstance(body, dict) else {"body": body}
