@@ -60,9 +60,11 @@ class TelegramEditProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Редактирует сообщение через Bot API."""
-        from src.backend.infrastructure.clients.external.telegram_bot import (
-            TelegramButton,
-        )
+        # S85 M2-#11 accelerated batch: DI provider вместо inline infrastructure import.
+        from src.backend.core.di.providers.cache import get_telegram_bot_provider
+
+        _telegram_module = get_telegram_bot_provider()
+        TelegramButton = _telegram_module.TelegramButton
 
         chat_id = resolve_value(exchange, self._chat_id_from)
         message_id = resolve_value(exchange, self._message_id_from)

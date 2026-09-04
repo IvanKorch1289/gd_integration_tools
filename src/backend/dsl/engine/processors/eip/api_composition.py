@@ -93,9 +93,10 @@ def _default_http_fetcher() -> HTTPFetcher:
         # модуль НЕ существует). Реальная get_http_client в
         # src/backend/infrastructure/clients/transport/http/factory.py:46
         # (sync) или :27 (FastAPI dependency).
-        from src.backend.infrastructure.clients.transport.http.factory import (
-            get_http_client_typed,
-        )
+        # S85 M2-#11 accelerated batch: DI provider вместо inline infrastructure import.
+        from src.backend.core.di.providers.cache import get_http_client_typed_provider
+
+        get_http_client_typed = get_http_client_typed_provider()
 
         client = get_http_client_typed()
         return await client.request(

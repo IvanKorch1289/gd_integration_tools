@@ -137,8 +137,10 @@ class TelegramSendFileProcessor(BaseProcessor):
         if self._s3_key_from:
             key = resolve_value(exchange, self._s3_key_from)
             if key:
-                from src.backend.infrastructure.clients.storage.s3_pool import s3_client
+                # S85 M2-#11 accelerated batch: DI provider вместо inline infrastructure import.
+                from src.backend.core.di.providers.cache import get_s3_client_provider
 
+                s3_client = get_s3_client_provider()
                 data = await s3_client.get_object_bytes(str(key))
                 if data is not None:
                     return data

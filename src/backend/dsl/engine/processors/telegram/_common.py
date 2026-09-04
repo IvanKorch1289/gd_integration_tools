@@ -14,9 +14,11 @@ from typing import TYPE_CHECKING
 from src.backend.dsl.engine.processors.express._common import resolve_value
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.clients.external.telegram_bot import (
-        TelegramBotClient,
-    )
+    # S85 M2-#11 accelerated batch: DI provider вместо inline infrastructure import.
+    from src.backend.core.di.providers.cache import get_telegram_bot_provider
+
+    _telegram_module = get_telegram_bot_provider()
+    TelegramBotClient = _telegram_module.TelegramBotClient
 
 __all__ = ("get_telegram_client", "resolve_value")
 
@@ -35,10 +37,12 @@ def get_telegram_client(bot_name: str = "main_bot") -> TelegramBotClient:
 
     """
     from src.backend.core.config.telegram import telegram_bot_settings
-    from src.backend.infrastructure.clients.external.telegram_bot import (
-        TelegramBotClient,
-        TelegramBotConfig,
-    )
+    # S85 M2-#11 accelerated batch: DI provider вместо inline infrastructure import.
+    from src.backend.core.di.providers.cache import get_telegram_bot_provider
+
+    _telegram_module = get_telegram_bot_provider()
+    TelegramBotClient = _telegram_module.TelegramBotClient
+    TelegramBotConfig = _telegram_module.TelegramBotConfig
 
     if not telegram_bot_settings.enabled:
         raise RuntimeError(

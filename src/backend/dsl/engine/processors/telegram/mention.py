@@ -63,9 +63,11 @@ class TelegramMentionProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Формирует фрагмент-упоминание и записывает в exchange-property."""
-        from src.backend.infrastructure.clients.external.telegram_bot import (
-            TelegramMention,
-        )
+        # S85 M2-#11 accelerated batch: DI provider вместо inline infrastructure import.
+        from src.backend.core.di.providers.cache import get_telegram_bot_provider
+
+        _telegram_module = get_telegram_bot_provider()
+        TelegramMention = _telegram_module.TelegramMention
 
         user_id = resolve_value(exchange, self._user_id_from)
         if not user_id:

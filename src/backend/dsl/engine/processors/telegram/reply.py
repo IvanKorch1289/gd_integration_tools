@@ -58,9 +58,11 @@ class TelegramReplyProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Отправляет reply на исходное сообщение."""
-        from src.backend.infrastructure.clients.external.telegram_bot import (
-            TelegramMessage,
-        )
+        # S85 M2-#11 accelerated batch: DI provider вместо inline infrastructure import.
+        from src.backend.core.di.providers.cache import get_telegram_bot_provider
+
+        _telegram_module = get_telegram_bot_provider()
+        TelegramMessage = _telegram_module.TelegramMessage
 
         source_id = resolve_value(exchange, self._source_message_id_from)
         if not source_id:

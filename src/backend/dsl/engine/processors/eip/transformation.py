@@ -254,9 +254,10 @@ class ClaimCheckProcessor(BaseProcessor):
             if use_s3:
                 token = f"s3claim:{uuid.uuid4()}"
                 try:
-                    from src.backend.infrastructure.clients.storage.s3_pool import (
-                        get_s3_client,
-                    )
+                    # S85 M2-#11 accelerated batch: DI provider вместо inline infrastructure import.
+                    from src.backend.core.di.providers.cache import get_s3_client_provider
+
+                    get_s3_client = get_s3_client_provider()
 
                     s3 = get_s3_client()
                     await s3.put_object(
@@ -268,9 +269,10 @@ class ClaimCheckProcessor(BaseProcessor):
             else:
                 token = f"claim:{uuid.uuid4()}"
                 try:
-                    from src.backend.infrastructure.clients.storage.redis import (
-                        redis_client,  # S71 W1 fix
-                    )
+                    # S85 M2-#11 accelerated batch: DI provider (S60 added get_redis_client_provider).
+                    from src.backend.core.di.providers.cache import get_redis_client_provider
+
+                    redis_client = get_redis_client_provider()
 
                     await redis_client.set_if_not_exists(
                         key=token, value=body_bytes.decode(), ttl=self._ttl
@@ -297,9 +299,10 @@ class ClaimCheckProcessor(BaseProcessor):
 
             try:
                 if isinstance(token, str) and token.startswith("s3claim:"):
-                    from src.backend.infrastructure.clients.storage.s3_pool import (
-                        get_s3_client,
-                    )
+                    # S85 M2-#11 accelerated batch: DI provider вместо inline infrastructure import.
+                    from src.backend.core.di.providers.cache import get_s3_client_provider
+
+                    get_s3_client = get_s3_client_provider()
 
                     s3 = get_s3_client()
                     raw_bytes = await s3.get_object_bytes(token)
@@ -308,9 +311,10 @@ class ClaimCheckProcessor(BaseProcessor):
                         return
                     restored = orjson.loads(raw_bytes)
                 else:
-                    from src.backend.infrastructure.clients.storage.redis import (
-                        redis_client,  # S71 W1 fix
-                    )
+                    # S85 M2-#11 accelerated batch: DI provider (S60 added get_redis_client_provider).
+                    from src.backend.core.di.providers.cache import get_redis_client_provider
+
+                    redis_client = get_redis_client_provider()
 
                     raw = await redis_client.get(token)
                     if raw is None:

@@ -486,3 +486,41 @@ def get_object_storage_provider() -> Any:
 def set_object_storage_provider(storage: Any) -> None:
     """Test-override для object_storage (Sprint 84+)."""
     _overrides["object_storage"] = storage
+
+
+# ─── S85 M2-#11 accelerated batch: telegram_bot + s3_pool providers ───────
+
+
+def get_telegram_bot_provider() -> Any:
+    """Возвращает telegram_bot singleton (aiogram-based).
+
+    S85 accelerated batch: lazy resolve для 6 telegram/* файлов.
+    """
+    if "telegram_bot" in _overrides:
+        return _overrides["telegram_bot"]
+    module = resolve_module("clients.external.telegram_bot")
+    return module
+
+
+def set_telegram_bot_provider(bot: Any) -> None:
+    """Test-override для telegram_bot module (Sprint 85+)."""
+    _overrides["telegram_bot"] = bot
+
+
+# ─── S85 M2-#11 accelerated batch: get_http_client_typed provider ──────────
+
+
+def get_http_client_typed_provider() -> Any:
+    """Возвращает \`get_http_client_typed\` (typed HTTP client factory).
+
+    S85 accelerated batch: lazy resolve для dsl/processors/eip/api_composition.py.
+    """
+    if "http_client_typed" in _overrides:
+        return _overrides["http_client_typed"]
+    module = resolve_module("clients.transport.http.factory")
+    return module.get_http_client_typed
+
+
+def set_http_client_typed_provider(client: Any) -> None:
+    """Test-override для HTTP client typed (Sprint 85+)."""
+    _overrides["http_client_typed"] = client
