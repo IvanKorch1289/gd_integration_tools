@@ -286,6 +286,15 @@ def build_default_registry() -> MiddlewareRegistry:
         order=840,
     )
     registry.register_builtin("security_headers", SecurityHeadersMiddleware, order=860)
+    # Ledger W1 (M5-#2 wire): graceful shutdown gate — outermost (880,
+    # LIFO: высокий order = первый на request). Pure-ASGI — BaseHTTPMiddleware
+    # несовместим с chain'ом на /docs, /redoc, /metrics (см. gzip выше).
+    # Drain дергается из plugins/composition/lifecycle/shutdown.py (step 0).
+    from src.backend.entrypoints.middlewares.graceful_shutdown import (
+        GracefulShutdownMiddleware,
+    )
+
+    registry.register_builtin("graceful_shutdown", GracefulShutdownMiddleware, order=880)
 
     return registry
 

@@ -56,6 +56,20 @@ async def run_shutdown(app: FastAPI, task_registry: Any) -> None:
 
     app.state.infrastructure_ready = False
 
+    # ── 0. Graceful drain in-flight HTTP (ledger W1: M5-#2 wire) ──
+    # In-flight запросы завершаются ДО остановки подсистем (когда им ещё
+    # доступны DB/Redis), новые получают 503 от GracefulShutdownMiddleware.
+    try:
+        from src.backend.entrypoints.middlewares.graceful_shutdown import (
+            get_graceful_shutdown,
+        )
+
+        drain_mw = get_graceful_shutdown()
+        if drain_mw is not None:
+            await drain_mw.drain()
+    except Exception as drain_exc:
+        _logger.warning("Graceful drain error: %s", drain_exc)
+
     # ── 1. Workflow runtime / outbox worker ──
     # К3: shutdown workflow runtime до stop_dsl_yaml_watcher, чтобы worker'ы
     # успели завершить свои workflow до закрытия DSL.
