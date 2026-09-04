@@ -17,8 +17,8 @@
 | M2 | Мёртвый код + god-objects + custom→library | **DONE** (кроме R1 ниже) | 2026-09-03 | Sprint 87: M2-#11 55/55 `55be1c339`; ретро `a05ad0106` |
 | M3 | Актуализация зависимостей (CVE) | **DONE** | 2026-09-01 | Sprint 58 `a2ce9ce42`: cryptography 50.0.1 (PYSEC-2026-3552 закрыт), tornado 6.5.8, pypdf 6.16.2; diskcache deferral ADR-0287 |
 | M4 | Coverage до 70% gate (критичные пути) | **IN_PROGRESS** | 2026-09-04 | core/auth 79.0% (≥70% ✓, Sprint 88 `3101e1a45`); overall 30.8% — НЕ достигнут; `pyproject.toml:fail_under=60` |
-| M5 | High-load hardening (10 задач) | **TODO** | — | 0/10 (Sprint 88 ретро); план: PRODUCTION_READINESS_FINAL.md §M5 |
-| M6 | Финальная верификация + закрытие плана | **TODO** | — | 0/N; план: PRODUCTION_READINESS_FINAL.md §M6 |
+| M5 | High-load hardening (10 задач) | **9/10 DONE** | 2026-09-04 | S88-S95 (сессия-2) + W1/W2 (`11684f3ed` — M5-#2 реально работает), W3 (`37156dbdb` — MQTT timeouts/backpressure); M5-#10: smoke-нагрузка 0% err (ниже), полный SLO-прогон — точка решения |
+| M6 | Финальная верификация + закрытие плана | **PARTIAL** | 2026-09-04 | Функциональная матрица 13 эндпоинтов (ниже), Swagger 200; осталось: позитивные JWT-сценарии, брокерные протоколы (docker), SLO-нагрузка, STATUS.md sync |
 
 ---
 
@@ -69,13 +69,13 @@
 | SEC1 | security | ~~pip-audit allowlist гигиена~~ **DONE `3d6962ec5`** (2026-09-04): -PYSEC-2026-3552, -2 stale mistune ID, .bak удалён, ADR-0290 addendum; остаток — 2 записи diskcache (ADR-0287) | 1h |
 | T2 | repo-wide | ~~ruff 2 → 0~~ **DONE** (verified 2026-09-04, вечер: `uv run ruff check src/` → All checks passed — закрыто батчами S90-S97) | 0.5h |
 | C1 | core | ~~session.py import-time Vault-вызов~~ **DONE `ad1ef2f89`** (2026-09-04): PEP 562 lazy `__getattr__`; verify: import-only без сети, резолв при первом доступе; 106 tests passed | 2h |
-| C2 | core/auth | `mobile_jwt_redis.py` (Redis revocation + rate limiter, M1-#22) не подключён в `entrypoints/api/mobile/router.py` — защиты мертвы в проде; встроенный `DeviceRateLimiter` not multi-pod safe | 3h |
+| C2 | core/auth | ~~mobile JWT protections~~ **DONE `c684d9280`** (2026-09-04): флаг `mobile_jwt_protections_enabled`, `_build_mobile_jwt_verifier()` (единая сборка), factory `build_verifier_with_protections` с Redis store/limiter (fail-CLOSED); 2 wiring-теста; mobile suite 114 passed | 3h |
 | S1 | services | **REJECTED с обоснованием** (2026-09-04): ключ `decorators.caching` статический и валидируется validate_modules() — R1-класса бага нет; lazy-фикс потребовал бы ломать семантику декорирования классом. YAGNI; пересмотреть только при переименовании ключа | 0h |
-| S2 | services | webhook_relay: outbound retry без Idempotency-Key (дубли доставки); dlq_retry O(N²) LRANGE-обход | 4h |
+| S2 | services | ~~webhook idempotency + DLQ O(N²)~~ **DONE `0edb11598`** (2026-09-04): Idempotency-Key стабилен на попытки + хранится в DLQEntry + переиспользуется при retry; `_dlq_remove_many` — один LRANGE; 5 тестов | 4h |
 | S3 | services/dsl | God-объекты вне M2: hitl_service 507/21, security/facade 453/22, builders/base 1422 (сплит по плану M2-#21) | 16h |
 | F1 | frontend | 12 сайтов httpx в обход BaseAPIClient (нет retry/JWT/центр. конфига) + страница 23 читает os.environ напрямую | 4h |
 | T3 | tests | M4: overall 30.8% → 70%, `fail_under 60→70` (план M4-#3..#7); pre_prod_check gate #01 сейчас FAIL | 32h |
-| T4 | hardening | M5 остаток: 9/10 закрыто параллельной сессией (S90-S95); верифицировать claims + закрыть пробелы (Kafka max_poll_records, MQTT W3) | 4h |
+| T4 | hardening | Kafka max_poll_records **DONE `12deed6fb`**; MQTT W3 **DONE `37156dbdb`**; M5-claims верифицированы выборочно (см. «Функциональная и нагрузочная верификация»). Остаток: полный SLO-прогон (prod-профиль + perf extras — точка решения) | 1h |
 | T5 | core/dsl | ~~Import-time I/O аудит~~ **DONE `238c83c04`** (2026-09-04): `_TAP_EXECUTOR` — мёртвый код (0 использований), удалён. `retry.py:293` singleton и `pool_health.py:19` — без I/O, детерминированы (статические ключи реестра) — оставлены (YAGNI, отказ documented) | 2h |
 | DOCS1 | docs | Sync: STATUS.md (M5 4/10 vs факт, ruff 10 vs 2), ARCHITECTURE.md (12→17 протоколов, фантомные каталоги enterprise/legacy/web3/iot, ADR 27→252, allowlist 138→~37), PRODUCTION_READINESS_FINAL.md (M2/M3 DONE bump, ruff/tests baseline), README.md (17 протоколов, pages 69/95); создать docs/security/AUTH_PROTOCOL_MATRIX.md (мёртвая ссылка M5-#9) | 3h |
 
@@ -190,3 +190,14 @@ MQTT/MQ-broker, email/CDC/scheduler — требуют docker compose инфра
   Решить: публичные readiness-алиасы ИЛИ убрать из allowlist (k8s сделает auth?)
 - **P2-14** (наблюдение): dev_light пишет тело ответа в DEBUG-лог на каждый запрос —
   при prod-прогоне проверить стоимость audit-логирования в p99.
+
+## Батч 2026-09-05 — C2, T4-Kafka, S2
+
+| ID | Статус | Коммит | Доказательство |
+|---|---|---|---|
+| C2 | DONE | `c684d9280` | mobile suite 114 passed (2 wiring-теста); флаг opt-in, fail-CLOSED при Redis outage |
+| T4 (Kafka) | DONE | `12deed6fb` | max_poll_records=100 (конструктор+registry kwargs); CDC unit 107 passed |
+| S2 | DONE | `0edb11598`+`de503e7ca` | relay suite 14 passed (5 новых): ключ стабилен на попытки, DLQ retry reuse, батч-удаление |
+
+Урок C2: MagicMock-флаги в тестах автосоздают truthy-атрибуты — каждый новый
+флаг, читаемый продовым кодом, должен явно декларироваться в тестовых mock_flags.
