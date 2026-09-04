@@ -86,8 +86,14 @@ class VaultSecretProcessor(BaseProcessor):
         if not await self.auth_check(exchange, action="read"):
             return
         try:
-            from src.backend.infrastructure.secrets.vault_backend import VaultBackend
-            from src.backend.infrastructure.secrets.vault_client import VaultConfig
+            # S82 M2-#11 batch 17: DI providers вместо inline infrastructure imports.
+            from src.backend.core.di.providers.cache import (
+                get_vault_backend_class_provider,
+                get_vault_config_class_provider,
+            )
+
+            VaultBackend = get_vault_backend_class_provider()
+            VaultConfig = get_vault_config_class_provider()
         except ImportError as exc:
             exchange.fail(
                 f"vault dependencies not installed: {exc}. Install [secrets] extra."

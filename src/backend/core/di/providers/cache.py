@@ -413,3 +413,38 @@ def get_immutable_audit_store_class_provider() -> Any:
 def set_immutable_audit_store_class_provider(aclass: Any) -> None:
     """Test-override для ImmutableAuditStore (Sprint 79+)."""
     _overrides["immutable_audit_store_class"] = aclass
+
+
+# ─── S82 M2-#11 batch 17: Vault providers ─────────────────────
+
+
+def get_vault_backend_class_provider() -> Any:
+    """Возвращает :class:\`VaultBackend\` (secrets).
+
+    S82 M2-#11 batch 17: lazy resolve для dsl/processors/vault_secret.py.
+    """
+    if "vault_backend_class" in _overrides:
+        return _overrides["vault_backend_class"]
+    module = resolve_module("secrets.vault_backend")
+    return module.VaultBackend
+
+
+def set_vault_backend_class_provider(aclass: Any) -> None:
+    """Test-override для VaultBackend class (Sprint 82+)."""
+    _overrides["vault_backend_class"] = aclass
+
+
+def get_vault_config_class_provider() -> Any:
+    """Возвращает :class:\`VaultConfig\` (secrets config).
+
+    S82 M2-#11 batch 17: lazy resolve для dsl/processors/vault_secret.py.
+    """
+    if "vault_config_class" in _overrides:
+        return _overrides["vault_config_class"]
+    module = resolve_module("secrets.vault_client")
+    return module.VaultConfig
+
+
+def set_vault_config_class_provider(aclass: Any) -> None:
+    """Test-override для VaultConfig class (Sprint 82+)."""
+    _overrides["vault_config_class"] = aclass
