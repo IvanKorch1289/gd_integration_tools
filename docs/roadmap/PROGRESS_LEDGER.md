@@ -239,7 +239,11 @@ bootstrap-override отсутствует → **500 на каждый вызов
 check_*; production-grade имплементация — S107+).
 
 **Pre-existing test failures в test_helpermethods_fix.py (NEW-1 fix regression)**
-НЕ связаны с этой правкой (verified: fail и без T7 fix через git stash).
+НЕ связаны с T7 правкой (verified: fail и без неё через git stash).
+**FIXED S108 `d11b6ec82`** (2026-09-04): helper proxy в BaseService.__init__
+применён — `self.helper = repo.helper if repo is not None else None`
+(stale type annotation `HelperMethods` оставлена для backward compat).
+pytest 3/3 passed.
 
 ## Фаза C — ревью батча 2026-09-05 (C2/T4/S2/DOCS1): PASS, 1 P1 → исправлен
 
