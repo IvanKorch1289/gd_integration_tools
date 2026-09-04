@@ -88,11 +88,11 @@
 | P2-3 | Ручные retry-циклы → tenacity: dsl ai_rpa.py:130, notify_cascade.py:115, llmcall_processor.py:177; infra outbox/dispatcher.py:289 (есть обоснование — опционально) |
 | P2-4 | ~~infra/clients/base.py:14 docstring учит анти-паттерну (aioredis без pool/timeout)~~ **DONE S102 `a020d0634`** (2026-09-04): example теперь показывает max_connections + socket_connect_timeout + socket_timeout |
 | P2-5 | ~~rpa/system.py логирует полную команду shell~~ **DONE S102 `32c7c8cc0`** (2026-09-04): argv парсится через shlex.split, логируется только argv[0] (бинарь); полная команда через exchange.set_property('shell_command') для audit log |
-| P2-6 | pre_prod_check: фактически 36 гейтов, help заявляет 38 (нумерация #14/#29 пропущена) |
-| P2-7 | SSE handler: PII stream_filter fallback молча (добавить warning-лог); MQTT payload без size-guard |
+| P2-6 | ~~pre_prod_check: фактически 36 гейтов, help заявляет 38 (нумерация #14/#29 пропущена)~~ **DONE S103 `ac7a625bd`** (2026-09-04): docstring + help text обновлены 38→36; grep verified 36 gate entries |
+| P2-7 | ~~SSE handler: PII stream_filter fallback молча~~ **DONE S103 `f316a64eb`** (2026-09-04): warning-log + reference на FEATURE_PII_STREAMING_FAIL_CLOSED. ~~MQTT payload без size-guard~~ **DONE S103 `f316a64eb`**: max_payload_bytes guard (1 MiB default) + early drop с warning |
 | P2-8 | CI: tests/perf k6/locust есть, но не видно CI-обвязки нагрузочного (нужно для M6-#5) |
-| P2-9 | stream.py StreamClient 20 методов (следить); di_bridge dsl-смертные ключи без потребителей в dsl |
-| P2-10 | frontend: широкий except Exception (39/37 страницы), shared/components.py 484 LOC (_RELATED_PAGES дублирует PAGE_METADATA), старые vulture (forms.py callback, 63_Вики force) не закрыты |
+| P2-9 | ~~stream.py StreamClient 20 методов (следить)~~ **MONITORING NOTE** (S103, 2026-09-04): 22 methods в StreamClient — не рефакторим (working code, touch только при изменениях). ~~di_bridge dsl-смертные ключи без потребителей в dsl~~ **VERIFIED**: 0 imports of di_bridge в dsl/, no dead refs to clean |
+| P2-10 | frontend: широкий except Exception (39/37 страницы), shared/components.py 484 LOC (_RELATED_PAGES дублирует PAGE_METADATA), старые vulture (forms.py callback, 63_Вики force) не закрыты — DEFERRED (large frontend refactor, not autonomous-scope) |
 | P2-11 | ~~INFRA_MODULES 4 пред-существующих висячих пути~~ **DONE S102 `83ae19f09`** (2026-09-04): monitoring.health_check, repos.files, repos.orders, external_apis.action_bus удалены (consumers — test-only fixtures с overrides); validate_modules → 0 missing |
 | P2-12 | ~~.worktrees/ untracked каталог~~ **DONE S102 `83ae19f09`** (2026-09-04): /.worktrees/ added to .gitignore |
 
