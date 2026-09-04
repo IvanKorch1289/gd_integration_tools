@@ -11,7 +11,7 @@ AI-агентами и developer portal на Streamlit.
 
 Каждый бизнес-метод регистрируется один раз в `ServiceRegistry` /
 `ActionHandlerRegistry` и автоматически становится доступен через
-все 12+ протоколов и DSL-маршруты без дублирования кода.
+все 17 протоколов и DSL-маршруты без дублирования кода.
 
 Цель архитектуры:
 - расширять функциональность без переписывания ядра;
@@ -31,7 +31,7 @@ AI-агентами и developer portal на Streamlit.
 ┌─────────────────────────▼────────────────────────────────────────┐
 │  DSL Engine (dsl/)                                               │
 │  RouteBuilder → Pipeline → Processors → Exchange/Message         │
-│  ExecutionContext · BaseProcessor (~50+ процессоров по семьям)   │
+│  ExecutionContext · BaseProcessor (~318 процессоров по семьям)   │
 │  Choice · TryCatch · Retry · Parallel · Saga · FeatureFlag · EIP │
 └─────────────────────────┬────────────────────────────────────────┘
                           │
@@ -60,7 +60,7 @@ AI-агентами и developer portal на Streamlit.
 - `infrastructure` реализует контракты из `core/interfaces` и `core/protocols`
 - `core` не импортирует код из остального `src/`
 - Линтер слоёв: `make layers`, `tools/check_layers.py`
-  (138 legacy-нарушений в allowlist — canonical `tools/check_layers_allowlist.txt`, P1-L1 fix 2026-08-18; ре-аудит 2026-08-20: 138 vs ранее заявленных 136, +2 с прошлого отчёта)
+  (~37-42 legacy-нарушений в allowlist — canonical `tools/check_layers_allowlist.txt`, 42 строки / 37 активных правил; ре-аудит 2026-09-05)
 
 ## Основные подсистемы
 
@@ -70,7 +70,7 @@ AI-агентами и developer portal на Streamlit.
 - `src/backend/dsl/engine/exchange.py` — `Exchange`, `Message`, `ExchangeStatus`:
   контейнер данных pipeline (god-node, 1071 ребро в Graphify)
 - `src/backend/dsl/engine/pipeline.py` — `Pipeline` + `feature_flag`
-- `src/backend/dsl/engine/processors/` — ~50+ процессоров по семьям:
+- `src/backend/dsl/engine/processors/` — ~318 процессоров по семьям:
   - **base/core/control_flow** — фундамент + Choice/TryCatch/Retry/Parallel/Saga
   - **eip/** — Enterprise Integration Patterns: Multicast/Aggregator/Splitter/
     Resequencer/Filter/WindowedCollect/WindowedDedup/Redirect
@@ -139,7 +139,7 @@ files       │  (debounce=500 ms)     │
 
 ### 3. Коннекторы (entrypoints/)
 
-12 protocol-адаптеров (`src/backend/entrypoints/`):
+17 protocol-адаптеров (`src/backend/entrypoints/`):
 
 | Группа | Каталог | Описание |
 |---|---|---|
@@ -147,13 +147,17 @@ files       │  (debounce=500 ms)     │
 | GraphQL | `graphql/` | Strawberry + DSL fallback |
 | gRPC | `grpc/` | Unix socket, protobuf |
 | SOAP | `soap/` | Zeep + WSDL автогенерация |
+| HTTP/3 | `http3/` | aioquic HTTP/3 → ASGI bridge (+ WebTransport) |
+| AsyncAPI | `asyncapi/` | AsyncAPI 3.0 экспортёр спецификаций FastStream-брокеров |
+| Email | `email/` | IMAP monitor (входящая почта → DSL trigger) |
+| Express | `express/` | BotX-бот: команды + callback (Express dialogs) |
+| Scheduler | `scheduler/` | APScheduler cron/interval-триггеры → Invoker |
 | Streaming | `websocket/` `sse/` `webhook/` | Bidirectional / push / inbound |
 | Messaging | `stream/` `mqtt/` | RabbitMQ, Redis Streams, Kafka, MQTT |
 | LLM-tooling | `mcp/` | FastMCP (Model Context Protocol) |
 | CDC | `cdc/` | Change Data Capture (см. «CDC Status» ниже) |
 | Files | `filewatcher/` | FS monitoring → DSL trigger |
-| Enterprise | `enterprise/` `legacy/` `web3/` `iot/` | AS2/EDI/SAP/Modbus/OPC-UA |
-| UI | `streamlit_app/` | Dashboards / DSL builder / Wiki |
+| UI | `src/frontend/streamlit_app/` | Dashboards / DSL builder / Wiki |
 
 Middleware (`src/backend/entrypoints/middlewares/`): Prometheus, TrustedHost,
 IPRestriction, APIKey, BlockedRoutes, GZip, ResponseCache (ETag),
@@ -201,11 +205,11 @@ CircuitBreaker, ExceptionHandler.
 
 ### 6. Developer portal / UI
 
-- `streamlit_app/` (под `src/backend/entrypoints/streamlit_app/`) — dashboard,
+- `src/frontend/streamlit_app/` — dashboard,
   DSL builder, Wiki, S3 browser, Schema Viewer (Wave 8), Notebooks UI
 - `docs/` — Sphinx (W34 в плане), AI_INTEGRATION, DSL_COOKBOOK,
   PROCESSORS, DEPLOYMENT, RPA_GUIDE, CDC_GUIDE
-- `docs/adr/` — 27 ADR
+- `docs/adr/` — 252 ADR
 
 ## Инфраструктурные зависимости
 
@@ -341,8 +345,9 @@ Rate Limiter построен по canonical 4-layer pattern:
 
 - ruff/mypy ошибки в `src/backend/` — pre-existing baseline
 - 0 ruff-S101 в `tests/` остаётся (Sprint 30 S B: cycle 241 baseline; pyproject.toml `extend-ignore` явно разрешает S101 для tests/)
-- 138 legacy layer-нарушений в allowlist (canonical, `tools/check_layers_allowlist.txt`)
-  (S65 W2: 35 new lazy imports, S65 W4: 119 dsl/workflows; baseline 47; **ре-аудит 2026-08-20: 138** vs заявленных ранее 136)
+- ~37-42 legacy layer-нарушений в allowlist (canonical, `tools/check_layers_allowlist.txt`,
+  42 строки / 37 активных правил; ре-аудит 2026-09-05)
+  (S65 W2: 35 new lazy imports, S65 W4: 119 dsl/workflows; baseline 47; многократные ре-аудиты 2026-08: 136→138→112→текущие 37 после фасадных миграций)
 - `make type-check` / `make actions` / `make deps-check` — pre-existing failed
 - **MCP HTTP transport отключён в dev_light** (`mcp_settings.http_enabled=False` default);
   для smoke-теста /mcp нужен production profile или `MCP__HTTP_ENABLED=true` env override.

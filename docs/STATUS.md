@@ -1,6 +1,8 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-09-01 (Sprint 89 — M5 audit: 4/10 items CLOSED (pool, CB, rate limit, health-check), 2 PARTIAL, 4 TODO; см. `docs/roadmap/M5_AUDIT_2026-09-01.md`)
+> **Last verified**: 2026-09-05 (swarm-сессия: ruff 0, pytest collect 16921+ / 0 errors, M5 9/10 — W1/W2/W3 закрыты, M5-#10 smoke 0% err / полный SLO-прогон отложен до prod-профиля; M6 PARTIAL — матрица 13 эндпоинтов, Swagger 200. Пред. верификация: 2026-09-01, Sprint 89 — M5 audit 4/10, см. `docs/roadmap/M5_AUDIT_2026-09-01.md`)
+>
+> **2026-09-05: verified — ruff 0, collect 0 errors, M5 9/10 (W1/W2/W3), M6 partial (матрица 13 эндпоинтов)** (см. `docs/roadmap/PROGRESS_LEDGER.md`)
 
 ## Post-Plan A Sprints 1-31 (coverage ratchet + final polish)
 
@@ -25,13 +27,13 @@ Verification: `python3 -m ruff check src/` → 2 errors (INTENDED); `vulture src
 | **P0 open (заявлено в STATUS)** | **0** | — | **FALSE CLAIM retracted (S50 Sprint A)** |
 | **P1 open** | **0** (RouteBuilder Protocol was FALSE CLAIM — DONE) | R12 §1 |
 | **P2 open** | **0** (RestrictedUnpickler ✅ S47 W2 + Dependabot ✅ S47 W3; S48 W3 sync) | `docs/STATUS.md` S47 W2/W3 rows |
-| **Ruff errors** | **10** (7 auto-fixable) — ЗАЯВЛЕНО 0 | `ruff check src/` | **FALSE CLAIM retracted (S50)** |
+| **Ruff errors** | **0** (было 10, S50 retraction; закрыто батчами S90-S97) | `ruff check src/` | **verified 2026-09-05** |
 | **Bandit HIGH (severity)** | **0** | `bandit -r src/ -lll` | OK |
 | **Bandit HIGH (confidence)** | **43** — НЕ заявлено | `bandit -r src/ -lll` | **partial disclosure** |
 | **Vulture @>=90%** | **0 findings** (Sprint C verified — `mobile_jwt_revocation.py:202` is false positive, variable IS used via constructor) | `vulture src/` | FIXED (S50 Sprint C) |
 | **Layer allowlist** | **37 legacy** (S49 W3: -1 stale cleanup) | `python3 tools/check_layers.py` |
 | **God-objects** | **5/5 DONE** (R12) | agent_security 652→71 LOC |
-| **Tests collected** | **15862** | `pytest tests/unit/ --collect-only -q` |
+| **Tests collected** | **16921** (0 errors) — было 15862 | `pytest --collect-only -q` |
 | **P0 tests** | **9/9 PASS** | `pytest tests/integration/test_p0_fixes_functional.py` |
 | **Security tests** | **45/45 PASS** | `pytest test_agent_security* test_facade_validate*` |
 | **Outdated deps** | **138 пакетов** | `pip list --outdated` |

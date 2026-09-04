@@ -12,12 +12,12 @@
 
 | Метрика | Значение | Verification |
 |---|---|---|
-| Ruff errors | **6** (3 auto-fixable) | `ruff check src/` |
+| Ruff errors | **0** (was 6; закрыто батчами S90-S97) | `ruff check src/` (verified 2026-09-05) |
 | Bandit HIGH (severity) | **0** | `bandit -r src/ -lll` |
 | Bandit HIGH (confidence) | **43** (NE disclosed) | same |
 | Vulture @≥90% | **0 findings** (S50 Sprint C closed FP) | `vulture src/` |
 | Layer allowlist | **37 legacy, 0 new** | `check_layers.py` |
-| Tests collected | **16243** (was 15862) | `pytest --collect-only` |
+| Tests collected | **16921** (0 errors) (was 16243) | `pytest --collect-only` (verified 2026-09-05) |
 | Coverage gate | 60% (baseline 30.8% — FAIL) | `pyproject.toml:fail_under` |
 | Pre-prod-check gates | 38 | `tools/checks/pre_prod_check.py` |
 | CVE-affected deps | **2 packages** (cryptography, diskcache) | `uv run pip-audit` |
@@ -26,7 +26,7 @@
 | **M2 god-objects** | **15/16 (94%) — CORRECTED 2026-09-02** | Sprint 64 retro `fea658052` (was 13/16 at plan write) |
 | **M3 deps** | **STOPPED at Sprint 53** | `SPRINT_53_PLAN.md` |
 | **M4 coverage** | **baseline 30.8%** | Sprint 59 retro |
-| **M5 high-load hardening** | **NOT STARTED** | (new in this plan) |
+| **M5 high-load hardening** | **9/10 DONE** (W1/W2 `11684f3ed`, W3 `37156dbdb`, S88-S95; M5-#10 smoke-нагрузка 0% err, полный SLO-прогон отложен до prod-профиля) | `PROGRESS_LEDGER.md` §M5 |
 | **M6 final verification** | **NOT STARTED** | (new in this plan) |
 
 ---
@@ -79,7 +79,7 @@
 
 ---
 
-## M2 — God-объекты + custom→library migration (94% → 100%) + swarm findings
+## M2 — God-объекты + custom→library migration — CLOSED S87 (55/55) + R1-fix S96 + swarm findings
 
 **Goal**: M2-#1 (final 9 methods) + M2-#16 (RouteBuilder 39 remaining) + swarm findings (Шаг 1, 2026-09-02).
 **Baseline**: **15/16 (94%) — Sprint 64 retro `fea658052`** (NOT 13/16 as originally cited; corrected post-baseline reverification).
@@ -139,7 +139,7 @@ wc -l src/backend/dsl/builders/base/__init__.py
 
 ---
 
-## M3 — Dependency CVE upgrade (STOPPED → DONE)
+## M3 — Dependency CVE upgrade — DONE S55+S58+S96 (DEP1)
 
 **Goal**: закрыть 2 CVE-affected пакета (cryptography + diskcache) + закрыть unstarted tornado + pypdf из Sprint 53 plan.
 **Estimate**: ~10h (~60 min per Sprint 53 plan + ADR + cryptography bump).
@@ -346,7 +346,7 @@ cat docs/STATUS.md | grep "План доработки"
 
 ## Status
 
-- **status**: designed (in-progress at M2 → M6; closed at M6-#7)
+- **status**: in-progress (M4 phase 2, M5-#10 SLO run, M6 remainder)
 
 ---
 

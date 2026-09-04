@@ -382,7 +382,7 @@ gd_integration_tools/
 │   │   ├── commands/          # ActionHandlerRegistry, RouteRegistry
 │   │   ├── blueprints/       # 19 DSL- blueprints
 │   │   └── contracts/        # DSL data contracts
-│   ├── entrypoints/           # 12 протоколов: REST/gRPC/GraphQL/SOAP/WS/SSE/MQTT/MCP...
+│   ├── entrypoints/           # 17 протоколов: REST/gRPC/GraphQL/SOAP/WS/SSE/MQTT/MCP/CDC/filewatcher/http3/asyncapi/email/express/scheduler/stream/webhook
 │   │   ├── api/              # FastAPI REST
 │   │   ├── graphql/          # Strawberry GraphQL
 │   │   ├── grpc/            # gRPC + protobuf
@@ -424,7 +424,7 @@ gd_integration_tools/
 │   └── <route>/route.toml + *.dsl.yaml
 │
 ├── src/frontend/
-│   └── streamlit_app/        # Streamlit developer portal (89 pages with subdirs, 74 root)
+│   └── streamlit_app/        # Streamlit developer portal (69 root .py pages, 95 with subdirectories)
 │
 ├── ops/                      # Operations: backup, compose, prometheus
 │   ├── backup/              # Backup scripts
