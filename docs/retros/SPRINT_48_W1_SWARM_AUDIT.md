@@ -1097,3 +1097,16 @@ Provider returns the class itself, caller does `ReplyChannel.instance()`.
 - **S82: 22/55 (+ storage_ext + vault_secret)**
 - Remaining: 33 dsl files
 
+
+### Sprint 83 — M2-#11 batch 18 (sample 23/55)
+
+**Commit**: `4653aeac6` — refactor(dsl): M2-#11 batch 18.
+
+### 1 new DI provider
+- `get_http_client_dependency_provider()` в cache.py (lazy resolve clients.transport.http)
+
+### Progress
+- S60-S82: 22/55
+- **S83: 23/55 (+ scraping.py)**
+- Remaining: 32 dsl files
+
