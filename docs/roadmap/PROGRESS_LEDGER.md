@@ -65,18 +65,18 @@
 |---|---|---|---|
 | W1 | entrypoints | ~~GracefulShutdownMiddleware wire~~ **DONE `11684f3ed`** (2026-09-04): pure-ASGI переписан, order=880 outermost, drain() hooked в run_shutdown step 0, drain-баг (0 in-flight → нет флага) исправлен; 7 unit-тестов, middlewares suite 519 passed | 3h |
 | W2 | entrypoints | ~~Инкремент _INFLIGHT_COUNTER~~ **DONE `11684f3ed`** (вместе с W1: инкремент/декремент в __call__, get_in_flight_count живой) | 1h |
-| W3 | entrypoints | MQTT handler: per-message timeout + bounded queue (сейчас медленный action блокирует весь цикл); publish — новое соединение на каждое сообщение (P2) | 3h |
+| W3 | entrypoints | ~~MQTT per-message timeout + bounded queue~~ **DONE `37156dbdb`** (2026-09-04): message_timeout=30s, max_concurrent_messages=10, max_queued_incoming_messages=1000; publish-per-connection остался P2. Попутно B-NEW-2: 4 stale-теста починены (patch-target + enabled default) | 3h |
 | SEC1 | security | ~~pip-audit allowlist гигиена~~ **DONE `3d6962ec5`** (2026-09-04): -PYSEC-2026-3552, -2 stale mistune ID, .bak удалён, ADR-0290 addendum; остаток — 2 записи diskcache (ADR-0287) | 1h |
-| T2 | repo-wide | ruff 2 → 0 (остаток после S91 батча 159→0) | 0.5h |
-| C1 | core | `core/database/session.py:28` import-time `_get_main_session_mgr()` → сетевой вызов Vault при каждом импорте модуля (источник флака/задержек). Lazy-фикс | 2h |
+| T2 | repo-wide | ~~ruff 2 → 0~~ **DONE** (verified 2026-09-04, вечер: `uv run ruff check src/` → All checks passed — закрыто батчами S90-S97) | 0.5h |
+| C1 | core | ~~session.py import-time Vault-вызов~~ **DONE `ad1ef2f89`** (2026-09-04): PEP 562 lazy `__getattr__`; verify: import-only без сети, резолв при первом доступе; 106 tests passed | 2h |
 | C2 | core/auth | `mobile_jwt_redis.py` (Redis revocation + rate limiter, M1-#22) не подключён в `entrypoints/api/mobile/router.py` — защиты мертвы в проде; встроенный `DeviceRateLimiter` not multi-pod safe | 3h |
-| S1 | services | `dadata.py:15` import-time `get_response_cache_provider()` — последний import-time DI в services; lazy-фикс по паттерну R1 | 1h |
+| S1 | services | **REJECTED с обоснованием** (2026-09-04): ключ `decorators.caching` статический и валидируется validate_modules() — R1-класса бага нет; lazy-фикс потребовал бы ломать семантику декорирования классом. YAGNI; пересмотреть только при переименовании ключа | 0h |
 | S2 | services | webhook_relay: outbound retry без Idempotency-Key (дубли доставки); dlq_retry O(N²) LRANGE-обход | 4h |
 | S3 | services/dsl | God-объекты вне M2: hitl_service 507/21, security/facade 453/22, builders/base 1422 (сплит по плану M2-#21) | 16h |
 | F1 | frontend | 12 сайтов httpx в обход BaseAPIClient (нет retry/JWT/центр. конфига) + страница 23 читает os.environ напрямую | 4h |
 | T3 | tests | M4: overall 30.8% → 70%, `fail_under 60→70` (план M4-#3..#7); pre_prod_check gate #01 сейчас FAIL | 32h |
 | T4 | hardening | M5 остаток: 9/10 закрыто параллельной сессией (S90-S95); верифицировать claims + закрыть пробелы (Kafka max_poll_records, MQTT W3) | 4h |
-| T5 | core/dsl | Import-time I/O аудит: `_TAP_EXECUTOR` (content_mixin.py:32), `retry.py:293` singleton, `pool_health.py:19` — module-level ресурсы; tests/ чист (инвентарь пуст) | 2h |
+| T5 | core/dsl | ~~Import-time I/O аудит~~ **DONE `238c83c04`** (2026-09-04): `_TAP_EXECUTOR` — мёртвый код (0 использований), удалён. `retry.py:293` singleton и `pool_health.py:19` — без I/O, детерминированы (статические ключи реестра) — оставлены (YAGNI, отказ documented) | 2h |
 | DOCS1 | docs | Sync: STATUS.md (M5 4/10 vs факт, ruff 10 vs 2), ARCHITECTURE.md (12→17 протоколов, фантомные каталоги enterprise/legacy/web3/iot, ADR 27→252, allowlist 138→~37), PRODUCTION_READINESS_FINAL.md (M2/M3 DONE bump, ruff/tests baseline), README.md (17 протоколов, pages 69/95); создать docs/security/AUTH_PROTOCOL_MATRIX.md (мёртвая ссылка M5-#9) | 3h |
 
 ### P2 (не блокируют)
@@ -131,3 +131,21 @@
 2. **Фаза B**: T1 (P0) → T2 (P1) → T3/T4 по саб-спринтам; атомарные коммиты, `IN_PROGRESS`/`DONE` здесь.
 3. **Фаза C**: ревью + функциональные тесты + ретро после каждого саб-спринта.
 4. **Финиш**: M4+M5+M6 DONE, R1 закрыт, 0 открытых TODO, pre-prod-check и нагрузочный тест пройдены, STATUS.md синхронен.
+
+---
+
+## Батч 2026-09-04 (вечер) — итоги этой сессии
+
+| ID | Статус | Коммит | Доказательство |
+|---|---|---|---|
+| A1 | DONE | `f3eb7ddaf` | 28 ключей; collect 16782/0 errors; workflow 30/30; DI 222 passed |
+| DEP1 | DONE | `97230556d` (сессия-2) | pip-audit по export: только diskcache (ADR-0287) |
+| SEC1 | DONE | `3d6962ec5` | allowlist 2 ID; ADR-0290 addendum; .bak удалён |
+| W1+W2 | DONE | `11684f3ed` | 7 unit; middlewares 519 passed |
+| C1 | DONE | `ad1ef2f89` | import-only без Vault; 106 passed |
+| T5 | DONE | `238c83c04` | builders 565 passed |
+| T2 | DONE | (S90-S97) | ruff: All checks passed |
+| W3 | DONE | `37156dbdb` | mqtt 15/16 (1 pre-existing) |
+| S1 | REJECTED | — | обоснование выше (YAGNI) |
+
+Остаток backlog: B-NEW-1 (observability_bridge ImportError — сессия-2), B-NEW-2-остаток (test_stop_cancels_task AsyncMock-квирк), W3-P2 (MQTT publish per-connection), T3 (M4 coverage — мульти-спринт), T4 (верификация M5 claims + Kafka max_poll_records), DOCS1, S2, S3, F1, P2-1..P2-12.
