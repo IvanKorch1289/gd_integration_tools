@@ -93,10 +93,10 @@ class JwtBlacklistMixin:
         Без этого метода blacklist инициализируется как ``None`` — все
         blacklist_token/unblacklist/is_blacklisted будут no-op.
         """
-        if self._jwt_blacklist_ready:  # type: ignore[attr-defined]
+        if getattr(self, "_jwt_blacklist_ready", False):
             return
-        self._jwt_blacklist = await self._create_jwt_blacklist()  # type: ignore[attr-defined]
-        self._jwt_blacklist_ready = True  # type: ignore[attr-defined]
+        self._jwt_blacklist = await self._create_jwt_blacklist()
+        self._jwt_blacklist_ready = True
 
     async def _create_jwt_blacklist(self) -> Any:
         """Create Redis-backed JWT blacklist (S189+).
@@ -107,10 +107,13 @@ class JwtBlacklistMixin:
 
         """
         try:
-            from src.backend.core.api.storage import get_redis_client
             from src.backend.core.auth.jwt_blacklist import RedisJwtBlacklist
+            from src.backend.infrastructure.clients.storage.redis import (
+                get_redis_client as _get_redis_client,
+            )
 
-            redis_client = await get_redis_client().get_client("cache")
+            redis_client = await _get_redis_client().get_client("cache")
+
             blacklist = RedisJwtBlacklist(redis_client)
             _logger.info("JWT blacklist: Redis-backed (multi-worker safe)")
             return blacklist
