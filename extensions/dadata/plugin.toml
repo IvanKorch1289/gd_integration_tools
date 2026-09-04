@@ -1,12 +1,12 @@
+# trust_tier: top-level (gate 33: tomllib видит только ключи вне [table]).
+# "A" = audited core plugin (pre-prod-check #33 / ADR-NEW-6).
+trust_tier = "A"
 # S168 W17 P2-10: DaData extension manifest.
 [plugin]
 name = "dadata"
 version = "1.0.0"
 description = "DaData.ru geolocation API schemas (S168 W17 P2-10 migration)"
 entry_class = "extensions.dadata.schemas_only:SchemasOnlyEntry"
-# D-AUDIT-FIX-184-5 (S184 W4 #5, 2026-08-05): required by pre-prod-check #33
-# Plugin trust tier per extension security model
-trust_tier = "A"
 
 [dependencies]
 # No hard deps — pure Pydantic schemas
