@@ -143,10 +143,10 @@ class PollCDCBackend(CDCSource):
                     f"LIMIT %s"
                 )
                 try:
-                    rows = (
-                        await self._sql_executor(sql, [last_cursor, self._batch_size])
-                        or []
-                    )
+                    # sql_executor может возвращать None per type signature.
+                    # Narrow перед await для mypy; preserve семантику (None → []).
+                    coro = self._sql_executor(sql, [last_cursor, self._batch_size])
+                    rows = await coro if coro is not None else []
                 except Exception as exc:
                     _logger.error(
                         "PollCDCBackend executor failed: %s (table=%s)",
