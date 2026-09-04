@@ -503,3 +503,19 @@ BLOCKED(infra): выполнить при docker-доступе либо на de
 2. M6-#3 позитивные сценарии — BLOCKED(infra), см. выше.
 3. M6-#1 pre-prod-check exit 0 — прогон после T3 (гейт coverage сейчас FAIL по определению).
 4. F1/B-NEW-3/P2-10 — сессия-2.
+
+## Открытие 2026-09-05 (поздний вечер): мультисессионная ветка + контеншн
+
+- Существует ветка ``feat/m1-m6-impl`` (сессия-2): G-MYPY-CL1/CL2/CL7/CL8/CL10/CL11
+  (mypy 149→59), MERGE_DECISION_2026-09-05 (merge в master прерван — конфликты),
+  FINAL_REPORT Sprint 169. На master эти коммиты ОТСУТСТВУЮТ.
+- Сессия-2 периодически переключает рабочую копию между ветками → flakes
+  в ruff/collect/прогонах другой сессии (зафиксировано: transient «НОВЫЕ
+  нарушения: 2», «Failed to parse src», 117 syntax errors в facade_blacklist).
+- **Правило**: перед прогонами проверять `git branch --show-current`;
+  коммитить только свои файлы; файлы под активной правкой другой сессии
+  не трогать (прим: facade_blacklist docstrings — отложены до стабилизации;
+  gate 11 в текущем дереве = 0 missing).
+
+Закрыто в этом проходе: gate 11 docstrings = 0 (edddcd400 + фасад отложен);
+M6-#3 remainder BLOCKED(infra) — docker socket permission denied.
