@@ -117,7 +117,11 @@
 |---|---|---|---|
 | M2-#1..#17, #19..#26 | God-objects, dead code, DI-миграции (55 сайтов), vulture FP-батчи | S49-S87 | ретро Sprint 64 `fea658052`, S87 `a05ad0106` (55/55) |
 | M3-#1..#6 | pip-audit reverification, tornado, pypdf, cryptography+ADR-0288, diskcache deferral | S55+S58 | `3ce5743ef`, `a2ce9ce42`, `d66286f31` |
+| M3 (DEP1) | cryptography 50.0.1 + gitpython 3.1.61 в uv.lock | S96 | `97230556d` |
 | M4-#1 (частично) | core/auth coverage 79% ≥ 70% | S88 | `3101e1a45` |
+| M4 phase 1 | low-hanging coverage: core/enums/* (10.9→94.6%), core/types/* (43.2→93.2%), core/repositories/base (0→100%), core/dsl/variable_backend (33.9→73.1%), + REAL BUG fix (qualified_name alias clash) | S97 | `9cb2333c9`, `136357102` |
+| M5-#2 (W1+W2) | GracefulShutdownMiddleware wire + INFLIGHT_COUNTER increment + 7 unit tests | S96 | `11684f3ed` |
+| R1 (P0 REGRESSION) | workflow_subprocess.py import-time DI → lazy getter; INFRA_MODULES keys (workflow.factory, clients.storage.s3_pool); s3 client factory contract fix; scan_file/ingest_file consumers updated | S96 | `4b31157d4` |
 
 ---
 
