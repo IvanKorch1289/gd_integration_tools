@@ -269,9 +269,11 @@ class PiiEraseProcessor(BaseProcessor):
 
         """
         try:
-            from src.backend.infrastructure.clients.storage.vector_store import (
-                get_vector_store,
-            )
+            # S87 M2-#11 final batch: DI provider.
+            from src.backend.core.di.providers.cache import get_vector_store_provider
+
+            _vector_store_module = get_vector_store_provider()
+            get_vector_store = _vector_store_module.get_vector_store
 
             store = get_vector_store()
             # Scope формат: "user:42" → filter {"entity_type": "user", "entity_id": "42"}
@@ -318,9 +320,11 @@ class PiiEraseProcessor(BaseProcessor):
                 return 0
             entity_type, entity_id = self._scope.split(":", 1)
             _validate_entity_type(entity_type)
-            from src.backend.infrastructure.database.session_manager import (
-                main_session_manager,
-            )
+            # S87 M2-#11 final batch: DI provider.
+            from src.backend.core.di.providers.db import get_main_session_manager_provider
+
+            _main_session_module = get_main_session_manager_provider()
+            main_session_manager = _main_session_module.main_session_manager
 
             async with main_session_manager.get_session() as session:
                 from sqlalchemy import text
@@ -412,10 +416,12 @@ class PiiEraseProcessor(BaseProcessor):
         fail-CLOSED caller path).
         """
         try:
-            from src.backend.infrastructure.di_bridge.dlq import (
-                get_dlq_envelope_class,
-                get_dlq_reason_class,
-            )
+            # S87 M2-#11 final batch: DI provider.
+            from src.backend.core.di.providers.cache import get_dlq_envelope_class_provider
+
+            _dlq_module = get_dlq_envelope_class_provider()
+            get_dlq_envelope_class = _dlq_module.get_dlq_envelope_class
+            get_dlq_reason_class = _dlq_module.get_dlq_reason_class
 
             DLQEnvelope = get_dlq_envelope_class()
             DLQReason = get_dlq_reason_class()
@@ -427,9 +433,11 @@ class PiiEraseProcessor(BaseProcessor):
                 error_message=str(exc),
                 reason=DLQReason.UNEXPECTED,
             )
-            from src.backend.infrastructure.messaging.dlq.memory_writer import (
-                InMemoryDLQWriter,
-            )
+            # S87 M2-#11 final batch: DI provider.
+            from src.backend.core.di.providers.cache import get_dlq_memory_writer_module_provider
+
+            _dlq_writer_module = get_dlq_memory_writer_module_provider()
+            InMemoryDLQWriter = _dlq_writer_module.InMemoryDLQWriter
 
             writer = InMemoryDLQWriter()
             await writer.write(envelope)

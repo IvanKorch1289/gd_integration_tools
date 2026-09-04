@@ -195,7 +195,10 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
             ConnectionError: при недоступности Redis (propagated to caller).
 
         """
-        from src.backend.infrastructure.clients.storage.redis import redis_client
+        # S87 M2-#11 final batch: DI provider (S60 added).
+        from src.backend.core.di.providers.cache import get_redis_client_provider
+
+        redis_client = get_redis_client_provider()
 
         await redis_client.cache_set(claim_id, data, expire=self.ttl_seconds)
 
@@ -210,7 +213,10 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
             Exception: при ошибке S3 (propagated to caller).
 
         """
-        from src.backend.infrastructure.clients.storage.s3_pool import get_s3_client
+        # S87 M2-#11 final batch: DI provider.
+        from src.backend.core.di.providers.cache import get_s3_client_provider
+
+        get_s3_client = get_s3_client_provider()
 
         s3 = get_s3_client()
         await s3.put_object(
@@ -249,13 +255,19 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
 
     async def _load_redis(self, claim_id: str) -> bytes | None:
         """Чтение payload из Redis."""
-        from src.backend.infrastructure.clients.storage.redis import redis_client
+        # S87 M2-#11 final batch: DI provider (S60 added).
+        from src.backend.core.di.providers.cache import get_redis_client_provider
+
+        redis_client = get_redis_client_provider()
 
         return await redis_client.cache_get(claim_id)
 
     async def _load_s3(self, claim_id: str) -> bytes | None:
         """Чтение payload из S3/MinIO."""
-        from src.backend.infrastructure.clients.storage.s3_pool import get_s3_client
+        # S87 M2-#11 final batch: DI provider.
+        from src.backend.core.di.providers.cache import get_s3_client_provider
+
+        get_s3_client = get_s3_client_provider()
 
         s3 = get_s3_client()
         return await s3.get_object_bytes(claim_id)

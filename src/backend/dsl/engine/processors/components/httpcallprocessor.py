@@ -45,7 +45,10 @@ class HttpCallProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет HTTP-запрос через общий http-клиент и пишет ответ в exchange."""
-        from src.backend.infrastructure.clients.transport.http import (
+        # S87 M2-#11 final batch: DI provider.
+        from src.backend.core.di.providers.cache import get_httpx_client_provider
+
+        _http_module = get_httpx_client_provider()
             get_http_client_dependency,
         )
 

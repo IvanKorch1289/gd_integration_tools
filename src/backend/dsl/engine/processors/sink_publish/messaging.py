@@ -54,7 +54,10 @@ class MqPublishProcessor(BaseProcessor):
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Конструирует :class:`MqSink` и публикует ``payload``."""
-        from src.backend.infrastructure.sinks.mq_sink import MqSink
+        # S87 M2-#11 final batch: DI provider.
+        from src.backend.core.di.providers.cache import get_mq_sink_class_provider
+
+        MqSink = get_mq_sink_class_provider()
 
         sink = MqSink(
             sink_id=self.name or f"mq:{self._broker}",
@@ -106,7 +109,10 @@ class WsPublishProcessor(BaseProcessor):
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Конструирует :class:`WsSink` и публикует payload."""
-        from src.backend.infrastructure.sinks.ws_sink import WsSink
+        # S87 M2-#11 final batch: DI provider.
+        from src.backend.core.di.providers.cache import get_ws_sink_class_provider
+
+        WsSink = get_ws_sink_class_provider()
 
         sink = WsSink(
             sink_id=self.name or "ws_publish",

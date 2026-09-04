@@ -55,7 +55,11 @@ class ExpressReplyProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Отправляет reply на исходное сообщение."""
-        from src.backend.infrastructure.clients.external.express_bot import BotxMessage
+        # S87 M2-#11 final batch: DI provider.
+        from src.backend.core.di.providers.cache import get_express_bot_module_provider
+
+        _express_bot_module = get_express_bot_module_provider()
+        BotxMessage = _express_bot_module.BotxMessage
 
         source_sync_id = resolve_value(exchange, self._source_sync_id_from)
         if not source_sync_id:

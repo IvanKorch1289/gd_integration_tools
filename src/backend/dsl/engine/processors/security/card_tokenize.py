@@ -260,7 +260,10 @@ class CardTokenizeProcessor(BaseProcessor):
 
         """
         from src.backend.core.security.pii_tokenizer import EncryptedValue, TokenMap
-        from src.backend.infrastructure.security.token_registry import (
+        # S87 M2-#11 final batch: DI provider.
+        from src.backend.core.di.providers.cache import get_token_registry_provider
+
+        _token_registry_module = get_token_registry_provider()
             RedisTokenRegistry,
         )
 

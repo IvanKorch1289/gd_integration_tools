@@ -14,7 +14,11 @@ logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.exchange import Exchange
-    from src.backend.infrastructure.clients.external.express_bot import ExpressBotClient
+    # S87 M2-#11 final batch: DI provider.
+    from src.backend.core.di.providers.cache import get_express_bot_module_provider
+
+    _express_bot_module = get_express_bot_module_provider()
+    ExpressBotClient = _express_bot_module.ExpressBotClient
 
 __all__ = ("get_express_client", "log_outgoing_message", "resolve_value")
 
@@ -38,9 +42,11 @@ async def log_outgoing_message(
     if not session_id:
         return
     try:
-        from src.backend.infrastructure.repositories.express_dialogs_mongo import (
-            get_express_dialog_store,
-        )
+        # S87 M2-#11 final batch: DI provider.
+        from src.backend.core.di.providers.cache import get_express_dialogs_mongo_provider
+
+        _express_dialogs_module = get_express_dialogs_mongo_provider()
+        get_express_dialog_store = _express_dialogs_module.get_express_dialog_store
         from src.backend.services.integrations.express.dialog_store import (
             ExpressDialogStore,
         )
@@ -116,10 +122,12 @@ def get_express_client(bot_name: str = "main_bot") -> ExpressBotClient:
 
     """
     from src.backend.core.config.express import express_settings
-    from src.backend.infrastructure.clients.external.express_bot import (
-        BotConfig,
-        ExpressBotClient,
-    )
+    # S87 M2-#11 final batch: DI provider.
+    from src.backend.core.di.providers.cache import get_express_bot_module_provider
+
+    _express_bot_module = get_express_bot_module_provider()
+    BotConfig = _express_bot_module.BotConfig
+    ExpressBotClient = _express_bot_module.ExpressBotClient
 
     if not express_settings.enabled:
         raise RuntimeError(

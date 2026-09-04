@@ -47,7 +47,10 @@ class GrpcCallProcessor(BaseProcessor):
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Конструирует :class:`GrpcSink` и публикует ``payload``."""
-        from src.backend.infrastructure.sinks.grpc_sink import GrpcSink
+        # S87 M2-#11 final batch: DI provider.
+        from src.backend.core.di.providers.cache import get_grpc_sink_class_provider
+
+        GrpcSink = get_grpc_sink_class_provider()
 
         sink = GrpcSink(
             sink_id=self.name or "grpc_call",
@@ -102,7 +105,10 @@ class SoapCallProcessor(BaseProcessor):
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Конструирует :class:`SoapSink` и вызывает SOAP-операцию."""
-        from src.backend.infrastructure.sinks.soap_sink import SoapSink
+        # S87 M2-#11 final batch: DI provider.
+        from src.backend.core.di.providers.cache import get_soap_sink_class_provider
+
+        SoapSink = get_soap_sink_class_provider()
 
         sink = SoapSink(
             sink_id=self.name or "soap_call",

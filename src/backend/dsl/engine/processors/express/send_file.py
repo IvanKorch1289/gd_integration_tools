@@ -83,7 +83,11 @@ class ExpressSendFileProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Загружает файл в BotX и отправляет сообщение со ссылкой."""
-        from src.backend.infrastructure.clients.external.express_bot import BotxMessage
+        # S87 M2-#11 final batch: DI provider.
+        from src.backend.core.di.providers.cache import get_express_bot_module_provider
+
+        _express_bot_module = get_express_bot_module_provider()
+        BotxMessage = _express_bot_module.BotxMessage
 
         chat_id = resolve_value(exchange, self._chat_id_from)
         if not chat_id:
@@ -146,7 +150,10 @@ class ExpressSendFileProcessor(BaseProcessor):
         if self._s3_key_from:
             key = resolve_value(exchange, self._s3_key_from)
             if key:
-                from src.backend.infrastructure.clients.storage.s3_pool import s3_client
+                # S87 M2-#11 final batch: DI provider (S78 added).
+                from src.backend.core.di.providers.cache import get_s3_client_provider
+
+                s3_client = get_s3_client_provider()
 
                 data = await s3_client.get_object_bytes(str(key))
                 if data is not None:

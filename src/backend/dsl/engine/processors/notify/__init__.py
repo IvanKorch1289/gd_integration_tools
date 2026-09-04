@@ -61,7 +61,10 @@ class NotifyProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет отправку уведомления через NotificationGateway."""
-        from src.backend.infrastructure.notifications import (
+        # S87 M2-#11 final batch: DI provider.
+        from src.backend.core.di.providers.cache import get_notifications_module_provider
+
+        _notifications_module = get_notifications_module_provider()
             get_gateway,  # Sprint 35 W1: removed `core.notifications` facade (ADR-0282 Phase B)
         )
 

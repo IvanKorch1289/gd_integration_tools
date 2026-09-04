@@ -626,3 +626,249 @@ def get_stream_client_provider() -> Any:
 def set_stream_client_provider(client: Any) -> None:
     """Test-override (S86+)."""
     _overrides["stream_client"] = client
+
+
+# ─── S87 M2-#11 final batch: remaining providers ─────────────────
+
+
+def get_express_bot_module_provider() -> Any:
+    """Возвращает \`express_bot\` module (external).
+
+    S87: lazy resolve для 4 express/* файлов.
+    """
+    if "express_bot_module" in _overrides:
+        return _overrides["express_bot_module"]
+    module = resolve_module("clients.external.express_bot")
+    return module
+
+
+def set_express_bot_module_provider(module: Any) -> None:
+    """Test-override (S87+)."""
+    _overrides["express_bot_module"] = module
+
+
+def get_express_dialogs_mongo_provider() -> Any:
+    """Возвращает ExpressBotDialogsRepository (Mongo-backed).
+
+    S87: lazy resolve для express/_common.py.
+    """
+    if "express_dialogs_mongo" in _overrides:
+        return _overrides["express_dialogs_mongo"]
+    module = resolve_module("repositories.express_dialogs_mongo")
+    return module
+
+
+def set_express_dialogs_mongo_provider(repo: Any) -> None:
+    """Test-override (S87+)."""
+    _overrides["express_dialogs_mongo"] = repo
+
+
+def get_vector_store_provider() -> Any:
+    """Возвращает \`vector_store\` (PII vector storage).
+
+    S87: lazy resolve для security/pii_erase.py.
+    """
+    if "vector_store" in _overrides:
+        return _overrides["vector_store"]
+    module = resolve_module("clients.storage.vector_store")
+    return module
+
+
+def set_vector_store_provider(store: Any) -> None:
+    """Test-override (S87+)."""
+    _overrides["vector_store"] = store
+
+
+def get_token_registry_provider() -> Any:
+    """Возвращает \`token_registry\` (card token storage).
+
+    S87: lazy resolve для security/card_tokenize.py.
+    """
+    if "token_registry" in _overrides:
+        return _overrides["token_registry"]
+    module = resolve_module("security.token_registry")
+    return module
+
+
+def set_token_registry_provider(registry: Any) -> None:
+    """Test-override (S87+)."""
+    _overrides["token_registry"] = registry
+
+
+def get_sink_factory_provider() -> Any:
+    """Возвращает \`build_sink\` (sink factory).
+
+    S87: lazy resolve для sink_publish/generic.py.
+    """
+    if "sink_factory" in _overrides:
+        return _overrides["sink_factory"]
+    module = resolve_module("sinks.factory")
+    return module.build_sink
+
+
+def set_sink_factory_provider(factory: Any) -> None:
+    """Test-override (S87+)."""
+    _overrides["sink_factory"] = factory
+
+
+def get_mq_sink_class_provider() -> Any:
+    """Возвращает :class:\`MqSink\` (messaging queue sink).
+
+    S87: lazy resolve для sink_publish/messaging.py.
+    """
+    if "mq_sink_class" in _overrides:
+        return _overrides["mq_sink_class"]
+    module = resolve_module("sinks.mq_sink")
+    return module.MqSink
+
+
+def set_mq_sink_class_provider(aclass: Any) -> None:
+    """Test-override (S87+)."""
+    _overrides["mq_sink_class"] = aclass
+
+
+def get_ws_sink_class_provider() -> Any:
+    """Возвращает :class:\`WsSink\` (WebSocket sink).
+
+    S87: lazy resolve для sink_publish/messaging.py.
+    """
+    if "ws_sink_class" in _overrides:
+        return _overrides["ws_sink_class"]
+    module = resolve_module("sinks.ws_sink")
+    return module.WsSink
+
+
+def set_ws_sink_class_provider(aclass: Any) -> None:
+    """Test-override (S87+)."""
+    _overrides["ws_sink_class"] = aclass
+
+
+def get_grpc_sink_class_provider() -> Any:
+    """Возвращает :class:\`GrpcSink\` (gRPC sink).
+
+    S87: lazy resolve для sink_publish/protocols.py.
+    """
+    if "grpc_sink_class" in _overrides:
+        return _overrides["grpc_sink_class"]
+    module = resolve_module("sinks.grpc_sink")
+    return module.GrpcSink
+
+
+def set_grpc_sink_class_provider(aclass: Any) -> None:
+    """Test-override (S87+)."""
+    _overrides["grpc_sink_class"] = aclass
+
+
+def get_soap_sink_class_provider() -> Any:
+    """Возвращает :class:\`SoapSink\` (SOAP sink).
+
+    S87: lazy resolve для sink_publish/protocols.py.
+    """
+    if "soap_sink_class" in _overrides:
+        return _overrides["soap_sink_class"]
+    module = resolve_module("sinks.soap_sink")
+    return module.SoapSink
+
+
+def set_soap_sink_class_provider(aclass: Any) -> None:
+    """Test-override (S87+)."""
+    _overrides["soap_sink_class"] = aclass
+
+
+def get_notifications_module_provider() -> Any:
+    """Возвращает \`notifications\` module (notification channels).
+
+    S87: lazy resolve для notify/__init__.py.
+    """
+    if "notifications_module" in _overrides:
+        return _overrides["notifications_module"]
+    module = resolve_module("notifications")
+    return module
+
+
+def set_notifications_module_provider(module: Any) -> None:
+    """Test-override (S87+)."""
+    _overrides["notifications_module"] = module
+
+
+def get_workflow_factory_module_provider() -> Any:
+    """Возвращает \`workflow.factory\` module alias.
+
+    S87: lazy resolve для workflow_subprocess.py.
+    """
+    if "workflow_factory_module" in _overrides:
+        return _overrides["workflow_factory_module"]
+    module = resolve_module("workflow")
+    return module.factory
+
+
+def set_workflow_factory_module_provider(module: Any) -> None:
+    """Test-override (S87+)."""
+    _overrides["workflow_factory_module"] = module
+
+
+# ─── S87 final: dlq providers ───────────────────────────────
+
+
+def get_di_bridge_dlq_module_provider() -> Any:
+    """Возвращает \`di_bridge.dlq\` module (SAGA DLQ bridge).
+
+    S87 final batch: lazy resolve для security/pii_erase.py.
+    """
+    if "di_bridge_dlq" in _overrides:
+        return _overrides["di_bridge_dlq"]
+    module = resolve_module("di_bridge.dlq")
+    return module
+
+
+def set_di_bridge_dlq_module_provider(module: Any) -> None:
+    """Test-override (S87+)."""
+    _overrides["di_bridge_dlq"] = module
+
+
+def get_dlq_memory_writer_module_provider() -> Any:
+    """Возвращает \`messaging.dlq.memory_writer\` module (in-memory DLQ).
+
+    S87 final batch: lazy resolve для security/pii_erase.py.
+    """
+    if "dlq_memory_writer" in _overrides:
+        return _overrides["dlq_memory_writer"]
+    module = resolve_module("messaging.dlq.memory_writer")
+    return module
+
+
+def set_dlq_memory_writer_module_provider(module: Any) -> None:
+    """Test-override (S87+)."""
+    _overrides["dlq_memory_writer"] = module
+
+
+def get_record_express_message_sent_provider() -> Any:
+    """Возвращает \`record_express_message_sent\` (metric emitter).
+
+    S87 final batch: lazy resolve для express/send.py.
+    """
+    if "record_express_message_sent" in _overrides:
+        return _overrides["record_express_message_sent"]
+    module = resolve_module("observability.metrics")
+    return module.record_express_message_sent
+
+
+def set_record_express_message_sent_provider(emitter: Any) -> None:
+    """Test-override (S87+)."""
+    _overrides["record_express_message_sent"] = emitter
+
+
+def get_dlq_envelope_class_provider() -> Any:
+    """Возвращает :class:\`DLQEnvelope\` (DLQ message envelope).
+
+    S87 final batch: lazy resolve для security/pii_erase.py.
+    """
+    if "dlq_envelope_class" in _overrides:
+        return _overrides["dlq_envelope_class"]
+    module = resolve_module("di_bridge.dlq")
+    return module.DLQEnvelope
+
+
+def set_dlq_envelope_class_provider(aclass: Any) -> None:
+    """Test-override (S87+)."""
+    _overrides["dlq_envelope_class"] = aclass

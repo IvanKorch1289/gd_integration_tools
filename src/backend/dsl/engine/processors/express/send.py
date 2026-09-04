@@ -69,10 +69,12 @@ class ExpressSendProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Отправляет сообщение и сохраняет sync_id в exchange property."""
-        from src.backend.infrastructure.clients.external.express_bot import (
-            BotxButton,
-            BotxMessage,
-        )
+        # S87 M2-#11 final batch: DI provider.
+        from src.backend.core.di.providers.cache import get_express_bot_module_provider
+
+        _express_bot_module = get_express_bot_module_provider()
+        BotxButton = _express_bot_module.BotxButton
+        BotxMessage = _express_bot_module.BotxMessage
 
         chat_id = resolve_value(exchange, self._chat_id_from)
         if not chat_id:
@@ -118,9 +120,10 @@ class ExpressSendProcessor(BaseProcessor):
                 sync_id=str(sync_id) if sync_id else None,
             )
             try:
-                from src.backend.infrastructure.observability.metrics import (
-                    record_express_message_sent,
-                )
+                # S87 M2-#11 final batch: DI provider.
+                from src.backend.core.di.providers.cache import get_record_express_message_sent_provider
+
+                record_express_message_sent = get_record_express_message_sent_provider()
 
                 record_express_message_sent(self._bot, status="ok")
             except (ImportError, AttributeError, RuntimeError, OSError) as metrics_exc:
@@ -137,9 +140,10 @@ class ExpressSendProcessor(BaseProcessor):
             _logger.warning("ExpressSend: ошибка отправки: %s", exc)
             exchange.set_property(f"{self._result_property}_error", str(exc))
             try:
-                from src.backend.infrastructure.observability.metrics import (
-                    record_express_message_sent,
-                )
+                # S87 M2-#11 final batch: DI provider.
+                from src.backend.core.di.providers.cache import get_record_express_message_sent_provider
+
+                record_express_message_sent = get_record_express_message_sent_provider()
 
                 record_express_message_sent(self._bot, status="error")
             except (

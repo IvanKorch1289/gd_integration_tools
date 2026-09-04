@@ -60,7 +60,10 @@ class GenericSinkPublishProcessor(BaseProcessor):
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Конструирует Sink через factory и публикует ``payload``."""
-        from src.backend.infrastructure.sinks.factory import build_sink
+        # S87 M2-#11 final batch: DI provider.
+        from src.backend.core.di.providers.cache import get_sink_factory_provider
+
+        build_sink = get_sink_factory_provider()
 
         spec: dict[str, Any] = {
             "sink_id": self.name or f"sink_publish:{self._kind}",

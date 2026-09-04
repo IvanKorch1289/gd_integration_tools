@@ -72,7 +72,11 @@ class ExpressMentionProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Формирует BotxMention и добавляет в exchange-property списком."""
-        from src.backend.infrastructure.clients.external.express_bot import BotxMention
+        # S87 M2-#11 final batch: DI provider.
+        from src.backend.core.di.providers.cache import get_express_bot_module_provider
+
+        _express_bot_module = get_express_bot_module_provider()
+        BotxMention = _express_bot_module.BotxMention
 
         target = (
             resolve_value(exchange, self._target_from) if self._target_from else None

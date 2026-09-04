@@ -19,7 +19,10 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry import (
     processor,  # B-1 fix (cycle 1): registry integration
 )
-from src.backend.infrastructure.workflow import factory as _wf_factory
+# S87 M2-#11 final batch: DI provider.
+from src.backend.core.di.providers.cache import get_workflow_factory_module_provider
+
+_wf_factory = get_workflow_factory_module_provider()
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
