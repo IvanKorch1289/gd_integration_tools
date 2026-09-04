@@ -24,7 +24,6 @@ YAML::
 
 from __future__ import annotations
 
-import asyncio
 import json
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
@@ -125,32 +124,37 @@ class AIRpaProcessor(BaseProcessor):
             return
 
         prompt = self._build_prompt(exchange)
-        last_error: Exception | None = None
 
-        for attempt in range(1, self._max_retries + 1):
-            try:
-                response = await llm_client.chat(
-                    model=self._model,
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=self._temperature,
-                )
-                action = self._parse_llm_response(response)
-                exchange.set_property(self._action_property, action)
-                self._write(exchange, action)
-                return
-            except Exception as exc:
-                last_error = exc
-                _logger.warning(
-                    "ai_rpa attempt %s/%s failed: %s", attempt, self._max_retries, exc
-                )
-                if attempt < self._max_retries:
-                    await asyncio.sleep(
-                        0.5 * (2 ** (attempt - 1))
-                    )  # exponential backoff
+        # S105 P2-3 fix: ручной retry-loop заменён на tenacity через
+        # make_async_retry (consistency с llmcall_processor / ai_banking).
+        # Exponential backoff + logger.warning при каждой failed attempt.
+        from src.backend.core.resilience.retry import make_async_retry
 
-        exchange.fail(
-            f"ai_rpa: LLM call failed after {self._max_retries} attempts: {last_error}"
+        @make_async_retry(
+            max_attempts=self._max_retries,
+            initial_backoff=0.5,
+            multiplier=2.0,
+            on=(Exception,),
         )
+        async def _attempt() -> None:
+            response = await llm_client.chat(
+                model=self._model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=self._temperature,
+            )
+            action = self._parse_llm_response(response)
+            exchange.set_property(self._action_property, action)
+            self._write(exchange, action)
+
+        try:
+            await _attempt()
+        except Exception as exc:
+            _logger.warning(
+                "ai_rpa failed after %s attempts: %s", self._max_retries, exc
+            )
+            exchange.fail(
+                f"ai_rpa: LLM call failed after {self._max_retries} attempts: {exc}"
+            )
 
     def _get_llm_client(self, context: ExecutionContext):
         """Извлекает LLM client из контекста выполнения."""
