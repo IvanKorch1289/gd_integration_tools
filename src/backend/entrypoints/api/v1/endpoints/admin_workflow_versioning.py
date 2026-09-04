@@ -49,7 +49,7 @@ router = APIRouter(
 )
 async def list_workflow_ids() -> list[str]:
     """Возвращает все зарегистрированные workflow_id."""
-    from src.backend.core.api.extensions import get_global_registry
+    from src.backend.dsl.workflow.versioning import get_global_registry
 
     return list(get_global_registry().all_workflow_ids())
 
@@ -107,7 +107,7 @@ def _to_response(v: Any) -> WorkflowVersionResponse:
 )
 async def get_workflow_history(workflow_id: str) -> list[WorkflowVersionResponse]:
     """Возвращает все зарегистрированные версии workflow."""
-    from src.backend.core.api.extensions import get_global_registry
+    from src.backend.dsl.workflow.versioning import get_global_registry
 
     history = get_global_registry().history(workflow_id)
     return [_to_response(v) for v in history]
@@ -139,7 +139,7 @@ async def pin_workflow_version(
             detail=f"Невалидный semver {semver!r}. Допустимо X.Y или X.Y.Z.",
         )
 
-    from src.backend.core.api.extensions import get_global_registry
+    from src.backend.dsl.workflow.versioning import get_global_registry
 
     try:
         updated = get_global_registry().pin_default(workflow_id, semver=semver)
@@ -167,7 +167,7 @@ async def pin_workflow_version(
 )
 async def rollback_workflow_version(workflow_id: str) -> RollbackResponse:
     """Откатить default на предыдущую версию."""
-    from src.backend.core.api.extensions import get_global_registry
+    from src.backend.dsl.workflow.versioning import get_global_registry
 
     new_default = get_global_registry().rollback(workflow_id)
     if new_default is None:
