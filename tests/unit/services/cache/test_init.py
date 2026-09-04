@@ -1,89 +1,74 @@
-"""Unit-тесты ``services.cache`` — coverage ratchet (Post-Plan A Sprint 2).
+"""Tests for services/cache/__init__.py (S100 — coverage push).
 
-core/cache services package facade: re-exports ``UnifiedCacheFacade`` +
-``CacheResult`` + ``get_unified_cache_facade`` factory. ~10 stmts, 0% coverage.
-
-Цель slice: 0% → 100% через __all__ audit + class/callable identity +
-DI factory registration check.
+get_unified_cache_facade factory + re-exports.
 """
 
 from __future__ import annotations
 
-import pytest
-
-from src.backend.services import cache
-from src.backend.services.cache import (
-    CacheResult,
-    UnifiedCacheFacade,
-    get_unified_cache_facade,
-)
+from unittest.mock import MagicMock, patch
 
 
-@pytest.mark.unit
-class TestCacheFacadeAllExports:
-    """``__all__`` audit + class/function identity."""
+def test_module_dunder_all() -> None:
+    """__all__ = ('CacheResult', 'UnifiedCacheFacade', 'get_unified_cache_facade')."""
+    import src.backend.services.cache as mod
 
-    @pytest.mark.parametrize(
-        "symbol_name",
-        ["CacheResult", "UnifiedCacheFacade", "get_unified_cache_facade"],
+    assert mod.__all__ == (
+        "CacheResult",
+        "UnifiedCacheFacade",
+        "get_unified_cache_facade",
     )
-    def test_all_exports_accessible(self, symbol_name: str) -> None:
-        """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(cache, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
-        assert symbol_name in cache.__all__, (
-            f"{symbol_name} not declared in __all__"
-        )
-
-    def test_all_declared_count(self) -> None:
-        """``__all__`` содержит 3 символа."""
-        assert len(cache.__all__) == 3
-
-    def test_module_docstring_present(self) -> None:
-        """Module docstring описывает cache services package."""
-        assert cache.__doc__ is not None
-        assert "Cache" in cache.__doc__
 
 
-@pytest.mark.unit
-class TestCacheFacadeIdentity:
-    """Identity checks для re-exports."""
+def test_cache_result_importable() -> None:
+    """CacheResult re-exported from facade."""
+    from src.backend.services.cache import CacheResult
 
-    def test_unified_cache_facade_is_class(self) -> None:
-        """``UnifiedCacheFacade`` — class (canonical facade)."""
-        assert isinstance(UnifiedCacheFacade, type)
+    assert CacheResult is not None
 
-    def test_cache_result_is_class(self) -> None:
-        """``CacheResult`` — class (Pydantic/dataclass result type)."""
-        assert isinstance(CacheResult, type)
 
-    def test_get_unified_cache_facade_is_callable(self) -> None:
-        """``get_unified_cache_facade`` — callable (DI factory)."""
-        assert callable(get_unified_cache_facade)
+def test_unified_cache_facade_importable() -> None:
+    """UnifiedCacheFacade re-exported."""
+    from src.backend.services.cache import UnifiedCacheFacade
 
-    def test_get_unified_cache_facade_default_plugin(self) -> None:
-        """``get_unified_cache_facade`` default plugin='extension'."""
-        import inspect
+    assert UnifiedCacheFacade is not None
 
-        sig = inspect.signature(get_unified_cache_facade)
-        assert "plugin" in sig.parameters
-        assert sig.parameters["plugin"].default == "extension"
 
-    def test_get_unified_cache_facade_raises_runtime_error_when_not_registered(self) -> None:
-        """``get_unified_cache_facade`` без registered service → RuntimeError (graceful)."""
-        from src.backend.core.svcs_registry import has_service
+def test_get_unified_cache_facade_extension_path() -> None:
+    """get_unified_cache_facade(plugin='extension') → returns registered facade."""
+    from src.backend.services.cache import get_unified_cache_facade
 
-        original_has_service = has_service
+    fake_facade = MagicMock()
+    with patch("src.backend.core.svcs_registry.has_service", return_value=True), patch(
+        "src.backend.core.svcs_registry.get_service", return_value=fake_facade
+    ):
+        result = get_unified_cache_facade(plugin="extension")
+    assert result is fake_facade
 
-        def fake_has_service(svc_type):  # noqa: ARG001
-            return False
 
-        import src.backend.core.svcs_registry as registry_module
+def test_get_unified_cache_facade_non_extension_returns_new_instance() -> None:
+    """get_unified_cache_facade(plugin=non-default) → new UnifiedCacheFacade instance."""
+    from src.backend.services.cache import UnifiedCacheFacade, get_unified_cache_facade
 
-        try:
-            registry_module.has_service = fake_has_service
-            with pytest.raises(RuntimeError, match="not registered"):
-                get_unified_cache_facade()
-        finally:
-            registry_module.has_service = original_has_service
+    fake_facade = MagicMock()
+    fake_facade._primary = MagicMock()
+    fake_facade._memory = MagicMock()
+    fake_facade._disk = MagicMock()
+    fake_facade._check = MagicMock()
+
+    with patch("src.backend.core.svcs_registry.has_service", return_value=True), patch(
+        "src.backend.core.svcs_registry.get_service", return_value=fake_facade
+    ):
+        result = get_unified_cache_facade(plugin="my_plugin")
+
+    assert isinstance(result, UnifiedCacheFacade)
+    assert result._plugin == "my_plugin"
+
+
+def test_get_unified_cache_facade_raises_when_not_registered() -> None:
+    """get_unified_cache_facade → RuntimeError если facade не зарегистрирован."""
+    import pytest
+    from src.backend.services.cache import get_unified_cache_facade
+
+    with patch("src.backend.core.svcs_registry.has_service", return_value=False):
+        with pytest.raises(RuntimeError, match="not registered"):
+            get_unified_cache_facade()
