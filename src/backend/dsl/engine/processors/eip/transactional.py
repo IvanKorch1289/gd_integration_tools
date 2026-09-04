@@ -43,7 +43,10 @@ from src.backend.dsl.engine.processors.base import BaseProcessor, handle_process
 from src.backend.dsl.engine.processors.control_flow import SagaProcessor, SagaStep
 
 if TYPE_CHECKING:
-    from src.backend.core.messaging.outbox import OutboxBackend, OutboxEvent
+    from src.backend.core.messaging.outbox import (  # noqa: F401
+        OutboxBackend,
+        OutboxEvent,
+    )
     from src.backend.dsl.engine.context import ExecutionContext
     from src.backend.dsl.engine.exchange import Exchange
 

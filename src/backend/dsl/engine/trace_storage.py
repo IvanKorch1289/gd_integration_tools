@@ -70,11 +70,14 @@ class InMemoryTraceStorage:
     """
 
     def __init__(self, *, maxlen: int = 1000) -> None:
+        # S102 P2-2 fix: maxlen parameter теперь используется (был micro-bug,
+        # hardcoded 1000 в deque init игнорировал parameter).
+        self._maxlen = maxlen
         self._buffer: dict[str, deque[TraceEvent]] = {}
 
     async def append(self, event: TraceEvent) -> None:
         """Добавить событие в in-memory buffer маршрута."""
-        buf = self._buffer.setdefault(event.route_id, deque(maxlen=1000))
+        buf = self._buffer.setdefault(event.route_id, deque(maxlen=self._maxlen))
         buf.append(event)
 
     async def read_recent(self, route_id: str, limit: int) -> list[TraceEvent]:
