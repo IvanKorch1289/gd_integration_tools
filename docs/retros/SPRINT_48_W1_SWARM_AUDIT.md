@@ -1288,3 +1288,19 @@ Provider returns the class itself, caller does `ReplyChannel.instance()`.
 - ⚠ PARTIAL: 1 (M5-#7 verified, not changed)
 - ✗ TODO: 3 (M5-#6 idempotency, M5-#10 load test, M5-#9 already closed)
 
+
+## Sprint 93 — M5-#6 idempotency coverage CLOSED
+
+**Commit**: `1f528f4c0` test(saga): M5-#6 idempotency integration test.
+
+### S93 results
+- **M5-#6 CLOSED**: idempotency coverage verified
+- 3 new integration tests (saga paths)
+- 15 existing idempotency tests pass (S60+)
+- M5: 7/10 closed (added #6)
+
+### M5 status updated
+- ✓ CLOSED: 7/10 (M5-#1, #2, #3, #4, #5, #6, #8)
+- ⚠ PARTIAL: 0
+- ✗ TODO: 3 (M5-#7 verified only, M5-#9 already closed, M5-#10 load test)
+
