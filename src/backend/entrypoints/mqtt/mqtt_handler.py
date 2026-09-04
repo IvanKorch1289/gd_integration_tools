@@ -134,7 +134,22 @@ class MqttHandler:
                     # action не блокирует цикл подписки (head-of-line blocking).
                     self._message_tasks = set()
                     in_flight = self._message_tasks
+                    # S103 P2-7 fix: payload size-guard — отбрасываем гигантские
+                    # сообщения ДО создания task (защита от OOM при враждебных
+                    # publisher'ах). max_payload_bytes — настройка MQTTHandlerSettings.
+                    max_payload = getattr(
+                        self._settings, "max_payload_bytes", 1_048_576  # 1 MiB default
+                    )
                     async for message in client.messages:
+                        if len(message.payload) > max_payload:
+                            logger.warning(
+                                "MQTT message dropped: payload=%d bytes > limit=%d "
+                                "(topic=%s). Possible abusive publisher.",
+                                len(message.payload),
+                                max_payload,
+                                str(message.topic),
+                            )
+                            continue
                         if len(in_flight) >= self._settings.max_concurrent_messages:
                             done, _ = await asyncio.wait(
                                 in_flight, return_when=asyncio.FIRST_COMPLETED

@@ -150,7 +150,15 @@ async def sse_stream(request: Request) -> StreamingResponse:
             policy = tenant_policy or PiiStreamPolicy()
             async for chunk in stream_filter(_raw_generator(), policy):
                 yield chunk
-        except Exception as _:
+        except Exception as exc:
+            # S103 P2-7 fix: log warning при fail-OPEN fallback — раньше
+            # проглатывалось silently, что маскировало баги в PII pipeline.
+            logger.warning(
+                "SSE PII stream_filter failed (exc=%s) — passing raw chunks "
+                "without redaction. Set FEATURE_PII_STREAMING_FAIL_CLOSED=true "
+                "for strict mode.",
+                exc,
+            )
             async for chunk in _raw_generator():
                 yield chunk
 
