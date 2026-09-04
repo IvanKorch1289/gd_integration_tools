@@ -524,7 +524,7 @@ multimodal-rag = [
     # openai-whisper не входит в multimodal-rag из-за отсутствия py3.14
     # wheels — установка через `pip install --no-build-isolation
     # openai-whisper` (sdist) при необходимости. См. ai-voice extra.
-    "librosa>=0.10,<1",
+    "librosa>=0.10,<2",
 ]
 # Sprint 7 K1 closure — OpenFeature SDK + external Flagsmith provider.
 # openfeature-sdk — официальный CNCF Provider Interface (Python).
