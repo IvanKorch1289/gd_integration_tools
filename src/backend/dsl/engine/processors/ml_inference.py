@@ -198,7 +198,10 @@ class StreamingLLMProcessor(BaseProcessor):
         self, session_id: str, content: Any, *, is_final: bool
     ) -> None:
         try:
-            from src.backend.infrastructure.clients.storage.redis import redis_client
+            # S80 M2-#11 batch 15: DI provider (redis_client — S60 added).
+            from src.backend.core.di.providers.cache import get_redis_client_provider
+
+            redis_client = get_redis_client_provider()
 
             await redis_client.add_to_stream(
                 stream_name=f"llm_stream:{session_id}",
@@ -347,7 +350,10 @@ class OutboxTransactionProcessor(BaseProcessor):
         from sqlalchemy import text
 
         try:
-            from src.backend.infrastructure.database.database import db_initializer
+            # S80 M2-#11 batch 15: DI provider вместо inline infrastructure import.
+            from src.backend.core.di.providers.db import get_db_initializer_provider
+
+            db_initializer = get_db_initializer_provider()
         except ImportError:
             exchange.fail("Database not configured for outbox")
             return

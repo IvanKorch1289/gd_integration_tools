@@ -244,3 +244,22 @@ def get_main_session_manager_provider() -> Any:
 def set_main_session_manager_provider(manager: Any) -> None:
     """Test-override для main_session_manager (Sprint 79+)."""
     _overrides["main_session_manager"] = manager
+
+
+# ─── S80 M2-#11 batch 15: db_initializer provider ──────────
+
+
+def get_db_initializer_provider() -> Any:
+    """Возвращает \`db_initializer\` (DB schema initializer).
+
+    S80 M2-#11 batch 15: lazy resolve для dsl/processors/ml_inference.py.
+    """
+    if "db_initializer" in _overrides:
+        return _overrides["db_initializer"]
+    module = resolve_module("database.database")
+    return module.db_initializer
+
+
+def set_db_initializer_provider(initializer: Any) -> None:
+    """Test-override для db_initializer (Sprint 80+)."""
+    _overrides["db_initializer"] = initializer
