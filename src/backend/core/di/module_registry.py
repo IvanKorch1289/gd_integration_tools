@@ -158,6 +158,46 @@ INFRA_MODULES: Final[dict[str, str]] = {
     "resilience.unified_rate_limiter": f"{_INFRA}.resilience.unified_rate_limiter",
     # ─── DSL processors (Express common helper) ─────────────────────
     "dsl.processors.express_common": "src.backend.dsl.engine.processors.express._common",
+    # ─── A1 (ledger, S96): остальные ключи DI-провайдеров S84-S87 ──
+    # Ранее отсутствовали в статическом реестре — резолвились только при
+    # удачном порядке импортов через runtime-регистрацию, отсюда
+    # недетерминизм коллекции тестов и ModuleRegistryError в runtime-путях
+    # (S3/telegram/DB/sinks/vault/audit). Все пути проверены find_spec.
+    # NB: ключ "infrastructure.cdc.registry" НЕ регистрируется — целевого
+    # модуля не существует (cdc/registry.py и get_default_source() в кодовой
+    # базе отсутствуют, провайдер get_cdc_provider() — dead code, ledger P2).
+    "antivirus.factory": f"{_INFRA}.antivirus.factory",
+    "clients.external.telegram_bot": f"{_INFRA}.clients.external.telegram_bot",
+    "clients.messaging.reply_channel": f"{_INFRA}.clients.messaging.reply_channel",
+    "clients.storage.redis_lock": f"{_INFRA}.clients.storage.redis_lock",
+    "clients.storage.vector_store": f"{_INFRA}.clients.storage.vector_store",
+    "clients.transport.http.factory": f"{_INFRA}.clients.transport.http.factory",
+    "clients.transport.http_httpx": f"{_INFRA}.clients.transport.http_httpx",
+    "database.database": f"{_INFRA}.database.database",
+    "di_bridge.dlq": f"{_INFRA}.di_bridge.dlq",
+    "execution.dask_backend": f"{_INFRA}.execution.dask_backend",
+    "infrastructure.clients.external.search_providers": (
+        f"{_INFRA}.clients.external.search_providers"
+    ),
+    "infrastructure.notifications.gateway": f"{_INFRA}.notifications.gateway",
+    "messaging.dlq.memory_writer": f"{_INFRA}.messaging.dlq.memory_writer",
+    "notifications": f"{_INFRA}.notifications",
+    "observability.immutable_audit": f"{_INFRA}.observability.immutable_audit",
+    "repositories.express_dialogs_mongo": f"{_INFRA}.repositories.express_dialogs_mongo",
+    "repositories.outbox": f"{_INFRA}.repositories.outbox",
+    "secrets.vault_backend": f"{_INFRA}.secrets.vault_backend",
+    "secrets.vault_client": f"{_INFRA}.secrets.vault_client",
+    # security.facade живёт в services-слое (core → services bypass);
+    # get_security_facade() — services/security/facade.py.
+    "security.facade": "src.backend.services.security.facade",
+    "security.token_registry": f"{_INFRA}.security.token_registry",
+    "sinks.factory": f"{_INFRA}.sinks.factory",
+    "sinks.grpc_sink": f"{_INFRA}.sinks.grpc_sink",
+    "sinks.mq_sink": f"{_INFRA}.sinks.mq_sink",
+    "sinks.soap_sink": f"{_INFRA}.sinks.soap_sink",
+    "sinks.ws_sink": f"{_INFRA}.sinks.ws_sink",
+    "storage.factory": f"{_INFRA}.storage.factory",
+    "workflow.saga_state": f"{_INFRA}.workflow.saga_state",
 }
 
 
