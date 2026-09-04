@@ -50,7 +50,10 @@ def _get_plugin_registry() -> Any:
     try:
         from src.backend.services.plugins.loader import PluginLoader
 
-        return PluginLoader.get_instance()
+        get_instance = getattr(PluginLoader, "get_instance", None)
+        if get_instance is None:  # ponytail: нет singleton-фабрики → mock fallback
+            return None
+        return get_instance()
     except (ImportError, AttributeError, RuntimeError):
         logger.warning("PluginLoader недоступен — используется mock")
         return None
