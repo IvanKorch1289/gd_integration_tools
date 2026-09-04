@@ -1,6 +1,6 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-09-01 (Sprint 82 — M2-#11 batch 17 samples 21-22/55 (storage_ext + vault_secret; 2 new vault providers); см. `docs/roadmap/PRODUCTION_READINESS.md`)
+> **Last verified**: 2026-09-01 (Sprint 83 — M2-#11 batch 18 sample 23/55 (scraping.py + http_client_dependency provider); см. `docs/roadmap/PRODUCTION_READINESS.md`)
 
 ## Post-Plan A Sprints 1-31 (coverage ratchet + final polish)
 
