@@ -16,6 +16,9 @@ from src.backend.dsl.workflow.compiler.gateways import (  # noqa: E402
     compile_or,
     compile_xor,
 )
+from src.backend.dsl.workflow.compiler.step_compilers import (  # noqa: F401
+    _build_retry_policy,
+)
 from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,
     AgentInvokeDeclaration,
