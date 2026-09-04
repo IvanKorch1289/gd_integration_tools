@@ -292,6 +292,7 @@ async def _jwt_client() -> AsyncIterator[Any]:
 
     mock_flags = MagicMock()
     mock_flags.mobile_jwt_enabled = True
+    mock_flags.mobile_jwt_protections_enabled = False  # C2: явная декларация (MagicMock автосоздаёт truthy)
     mock_flags.mobile_demo_auth_enabled = False
 
     with patch.dict(

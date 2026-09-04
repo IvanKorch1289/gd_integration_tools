@@ -21,8 +21,14 @@ def _build_client_with_flags(
     *,
     mobile_jwt_enabled: bool = False,
     mobile_demo_auth_enabled: bool = False,
+    mobile_jwt_protections_enabled: bool = False,
 ) -> Any:
-    """Build TestClient with given feature flag configuration."""
+    """Build TestClient with given feature flag configuration.
+
+    Каждый флаг, который читает router, должен быть задан ЯВНО:
+    MagicMock автосоздаёт атрибуты (truthy) — незадекларированный флаг
+    прочитался бы как True (C2 regression 2026-09-04).
+    """
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
@@ -35,6 +41,7 @@ def _build_client_with_flags(
     mock_flags = MagicMock()
     mock_flags.mobile_jwt_enabled = mobile_jwt_enabled
     mock_flags.mobile_demo_auth_enabled = mobile_demo_auth_enabled
+    mock_flags.mobile_jwt_protections_enabled = mobile_jwt_protections_enabled
 
     import sys
 

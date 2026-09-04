@@ -67,6 +67,61 @@ _sync_states: dict[str, MobileSyncState] = {}
 # ── Auth helper ─────────────────────────────────────────────────────
 
 
+def _build_mobile_jwt_verifier() -> Any:
+    """Собрать MobileJwtVerifier (C2, ledger 2026-09-04).
+
+    Без флага ``mobile_jwt_protections_enabled`` — bare verifier
+    (историческое поведение). С флагом — factory
+    ``build_verifier_with_protections`` с Redis-backed revocation store
+    (fail-CLOSED при Redis outage, ``mobile_jwt_revoc_fail_closed``) и
+    per-device rate limiter (10 req / 60s, fixed window) — M1-#22
+    protections перестают быть мёртвым кодом.
+
+    Raises:
+        Любое исключение конструктора (напр. отсутствие JWT-ключей) —
+        вызывающий код транслирует в 401 (fail-closed).
+
+    """
+    from src.backend.core.auth.jwt_backend import JwtBackend
+    from src.backend.core.auth.mobile_jwt import MobileJwtVerifier
+
+    backend = JwtBackend()
+    issuer_whitelist = ["gd-mobile-prod", "gd-mobile-staging"]
+    audience = "gd-mobile-api"
+
+    try:
+        from src.backend.core.config.features import feature_flags
+
+        protections_on = bool(
+            getattr(feature_flags, "mobile_jwt_protections_enabled", False)
+        )
+    except Exception:
+        protections_on = False  # fail-closed: флаг недоступен → без Phase 2
+
+    if not protections_on:
+        return MobileJwtVerifier(
+            backend=backend,
+            issuer_whitelist=issuer_whitelist,
+            audience=audience,
+        )
+
+    from src.backend.core.auth.mobile_jwt_redis import (
+        RedisRateLimiter,
+        RedisRevocationStore,
+    )
+    from src.backend.core.auth.mobile_jwt_revocation import (
+        build_verifier_with_protections,
+    )
+
+    return build_verifier_with_protections(
+        backend=backend,
+        issuer_whitelist=issuer_whitelist,
+        audience=audience,
+        revocation_store=RedisRevocationStore(),
+        rate_limiter=RedisRateLimiter(max_requests=10, window_seconds=60.0),
+    )
+
+
 async def _verify_mobile_token(authorization: str | None) -> str:
     """Verify mobile bearer token, return user_id.
 
@@ -122,19 +177,12 @@ async def _verify_mobile_token(authorization: str | None) -> str:
 
         if mobile_jwt_on:
             try:
-                from src.backend.core.auth.jwt_backend import JwtBackend
-                from src.backend.core.auth.mobile_jwt import (
-                    JwtVerificationError,
-                    MobileJwtVerifier,
-                )
+                from src.backend.core.auth.mobile_jwt import JwtVerificationError
 
-                # Lazy-init verifier from factory; in production this
-                # should read JWT public key from secrets/Vault.
-                verifier = MobileJwtVerifier(
-                    backend=JwtBackend(),
-                    issuer_whitelist=["gd-mobile-prod", "gd-mobile-staging"],
-                    audience="gd-mobile-api",
-                )
+                # C2: сборка через _build_mobile_jwt_verifier — с флагом
+                # mobile_jwt_protections_enabled добавляет revocation +
+                # per-device rate limit (M1-#22).
+                verifier = _build_mobile_jwt_verifier()
                 ctx = await verifier.verify(token)
                 return ctx.user_id
             except JwtVerificationError as exc:
@@ -298,17 +346,10 @@ async def refresh_token(
             )
         jwt_token = authorization[7:]
         try:
-            from src.backend.core.auth.jwt_backend import JwtBackend
-            from src.backend.core.auth.mobile_jwt import (
-                JwtVerificationError,
-                MobileJwtVerifier,
-            )
+            from src.backend.core.auth.mobile_jwt import JwtVerificationError
 
-            verifier = MobileJwtVerifier(
-                backend=JwtBackend(),
-                issuer_whitelist=["gd-mobile-prod", "gd-mobile-staging"],
-                audience="gd-mobile-api",
-            )
+            # C2: единая сборка verifier'а (см. _build_mobile_jwt_verifier).
+            verifier = _build_mobile_jwt_verifier()
             ctx = await verifier.verify(jwt_token)
             # Use verified user_id from JWT (overrides refresh_token user_id)
             user_id = ctx.user_id

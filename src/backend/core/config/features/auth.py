@@ -43,5 +43,11 @@ class AuthFlags(BaseSettings):
     # Phase 2: revocation + per-device rate limit. Phase 3: OWASP review.
     mobile_jwt_enabled: bool = False
 
+    # C2 (ledger, 2026-09-04): Phase 2 protections (revocation + per-device
+    # rate limit, M1-#22) — opt-in. Включать ВМЕСТЕ с mobile_jwt_enabled в
+    # production: RedisRevocationStore fail-CLOSED при Redis outage
+    # (mobile_jwt_revoc_fail_closed, default True).
+    mobile_jwt_protections_enabled: bool = False
+
 
 __all__ = ("AuthFlags",)
