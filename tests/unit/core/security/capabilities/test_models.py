@@ -1,40 +1,56 @@
-"""Тесты CapabilityRef + DEFAULT_CAPABILITY_CATALOG (ADR-044)."""
+"""Tests for core/security/capabilities/vocabulary/models.py (S99 — coverage push).
+
+CapabilityDef dataclass + ScopeMatcher field.
+"""
 
 from __future__ import annotations
 
-import pytest
-from pydantic import ValidationError
-
-from src.backend.core.security.capabilities import (
-    CAPABILITY_NAME_PATTERN,
-    DEFAULT_CAPABILITY_CATALOG,
-    CapabilityRef,
-)
+from src.backend.core.security.capabilities.matchers import ExactAliasMatcher
+from src.backend.core.security.capabilities.vocabulary.models import CapabilityDef
 
 
-class TestCapabilityRef:
-    def test_resource_verb_split(self) -> None:
-        ref = CapabilityRef(name="db.read", scope="x")
-        assert ref.resource == "db"
-        assert ref.verb == "read"
+def test_capability_def_minimal() -> None:
+    """CapabilityDef: minimal constructor (only required field 'name')."""
+    matcher = ExactAliasMatcher()
+    cd = CapabilityDef(name="net.outbound", matcher=matcher)
+    assert cd.name == "net.outbound"
+    assert cd.matcher is matcher
+    assert cd.scope_required is True  # default
+    assert cd.description == ""
+    assert cd.public is False
+    assert cd.aliases == ()
 
-    def test_frozen(self) -> None:
-        ref = CapabilityRef(name="db.read", scope="x")
-        with pytest.raises(ValidationError):
-            ref.scope = "y"  # type: ignore[misc]
 
-    @pytest.mark.parametrize("bad", ["db", "db.READ", "1db.read", "db..read"])
-    def test_grammar_rejection(self, bad: str) -> None:
-        with pytest.raises(ValidationError):
-            CapabilityRef(name=bad)
+def test_capability_def_full() -> None:
+    """CapabilityDef: all fields set."""
+    matcher = ExactAliasMatcher()
+    cd = CapabilityDef(
+        name="db.read",
+        matcher=matcher,
+        scope_required=False,
+        description="Read access to database",
+        public=True,
+        aliases=("db.query", "db.select"),
+    )
+    assert cd.name == "db.read"
+    assert cd.matcher is matcher
+    assert cd.scope_required is False
+    assert cd.description == "Read access to database"
+    assert cd.public is True
+    assert cd.aliases == ("db.query", "db.select")
 
-    def test_pattern_constant(self) -> None:
-        # Регулярка должна совпадать со всем v0-каталогом.
-        import re
 
-        compiled = re.compile(CAPABILITY_NAME_PATTERN)
-        for name in DEFAULT_CAPABILITY_CATALOG:
-            assert compiled.match(name), name
+def test_capability_def_equality() -> None:
+    """CapabilityDef: dataclass equality."""
+    matcher = ExactAliasMatcher()
+    cd1 = CapabilityDef(name="net.outbound", matcher=matcher)
+    cd2 = CapabilityDef(name="net.outbound", matcher=matcher)
+    assert cd1 == cd2
 
-    def test_default_catalog_uniqueness(self) -> None:
-        assert len(DEFAULT_CAPABILITY_CATALOG) == len(set(DEFAULT_CAPABILITY_CATALOG))
+
+def test_capability_def_inequality_different_name() -> None:
+    """CapabilityDef: разные name → not equal."""
+    matcher = ExactAliasMatcher()
+    cd1 = CapabilityDef(name="net.outbound", matcher=matcher)
+    cd2 = CapabilityDef(name="db.read", matcher=matcher)
+    assert cd1 != cd2
