@@ -1227,3 +1227,16 @@ Provider returns the class itself, caller does `ReplyChannel.instance()`.
 ### Milestone status (S88)
 - M1 ✓ M2 ✓ M3 ✓ M4 partial (core/auth 79%) M5 0/10 M6 0/N
 
+
+## Sprint 89 — M5 audit (10 items)
+
+**Commit**: `892990d02` — docs(m5): M5 audit.
+
+### M5 status
+- ✓ CLOSED (4): M5-#1 pool limits, M5-#3 CB (purgatory), M5-#4 rate limit (tenacity), M5-#9 health-check
+- ⚠ PARTIAL (2): M5-#7 timeouts, M5-#8 correlation_id
+- ✗ TODO (4): M5-#2 graceful shutdown, M5-#5 prefetch, M5-#6 idempotency, M5-#10 load test
+
+### M5 done-критерий
+4/10 closed + 2 partial = 6/10 effective. Production env required for full closure (M5-#10 load test).
+
