@@ -1176,3 +1176,34 @@ Provider returns the class itself, caller does `ReplyChannel.instance()`.
 - proxy/forward.py first script broken → git revert + fix with new provider
 
 ### M2-#11: 40/55 (was 32/55)
+
+## 🎯 Sprint 87 — M2-#11 FINAL BATCH: 55/55 (100% CLOSED ✓)
+
+**Commit**: `55be1c339` — refactor(dsl): M2-#11 final batch.
+
+### 13 files migrated in this batch
+- express/_common.py, mention.py, reply.py, send.py, send_file.py
+- security/pii_erase.py (5 imports), card_tokenize.py
+- notify/__init__.py
+- sink_publish/{generic,messaging,protocols}.py
+- workflow/workflow_subprocess.py, workflow/best_practices/claim_check.py
+- components/httpcallprocessor.py
+
+### 11 new DI providers (S87 final batch)
+- get_express_bot_module_provider
+- get_express_dialogs_mongo_provider
+- get_vector_store_provider
+- get_token_registry_provider
+- get_sink_factory_provider
+- get_mq_sink_class_provider
+- get_ws_sink_class_provider
+- get_grpc_sink_class_provider
+- get_soap_sink_class_provider
+- get_notifications_module_provider
+- get_workflow_factory_module_provider
+- get_record_express_message_sent_provider
+- get_dlq_envelope_class_provider
+- get_di_bridge_dlq_module_provider
+- get_dlq_memory_writer_module_provider
+
+### M2-#11 STATUS: 55/55 (100% CLOSED ✓)
