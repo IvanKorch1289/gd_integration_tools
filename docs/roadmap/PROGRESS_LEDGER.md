@@ -351,6 +351,38 @@ ruff=0, collect=16966/0 errors сохраняются на всём протяж
 
 ---
 
+## Батч 2026-09-05 (продолжение, +S165 цикл) — G-MYPY 19→20, G-PG-RUNNER, G-FUNCTIONAL
+
+| ID | Статус | Коммит | Доказательство |
+|---|---|---|---|
+| CL15 | DONE | `96d7ec664` | search_mixin shadow-dups (49→46, -3) |
+| CL16 | DONE | `d7e657ef9` | gateway_adapter cast+dedup (46→44, -2) |
+| CL17 | DONE | `eeaa7c798` | builder_service Any import (44→43, -1) |
+| CL18 | DONE | `166078b38` | clickhouse_audit DLQWriter canonical (43→40, -3) |
+| CL19 | DONE | `576591494` | legacy_aliases handler sig unif (40→39, -1) |
+| CL20 | DONE | `e11c27863` | cdc/poll_backend await None-narrow (39→38, -1) |
+| ADR-0289 | DONE | `4d521e0a7` | mypy partial-rationale (38-residual accept) |
+| G-PG-RUNNER | DONE | `1ced37572` | ADR-0291 + 4 ponytail comments; pg-runner deprecated |
+| G-FUNCTIONAL | DONE | `b6e54b011` | FUNCTIONAL_TEST_REPORT.md (130 LOC, verified) |
+
+**Итог mypy**: 149→38 (-111 errors, -74.5%) за 20 атомарных коммитов.
+ruff=0, collect=16966/0 errors сохраняются. ADR-0289 фиксирует deferral
+38-residual до S172+ (bulk-stub ``core.api.extensions`` facade).
+
+## G-CI-GATES verification 2026-09-05
+
+| Gate | Status | Замечание |
+|---|---|---|
+| `ruff check src/` | ✅ PASS | 0 errors |
+| `mypy src/` | ⚠️ 38 errors | per ADR-0289 (deferred, не blocker) |
+| `secrets-check` | ✅ PASS | informational: bloated venv (no blocker) |
+| `deps-check` | ✅ PASS | informational: 5 unused deps (gitpython, langsmith, mistune, passlib, psycopg2-binary) |
+| `check-python3-syntax` | ✅ PASS | 0 errors |
+| `check-task-registry` | ❌ **PRE-EXISTING FAIL** | 14+ orphan-create-task violations (R-V15-11 — требует миграции `loop.create_task`/`asyncio.create_task` → `get_task_registry().create_task`). Verified pre-existing via `git stash`. Зафиксировано в финальном отчёте как known non-blocking-dev-gate (legacy debt). |
+| `test-collection-check` | ✅ PASS | 16966 collected, 0 errors |
+
+---
+
 ## Verified baseline 2026-09-05 (plan-mode координатор, прямые команды)
 
 HEAD = `2ca8320ef` (поверх S3-2). План: `batgirl-plastic-man-valkyrie.md`.
