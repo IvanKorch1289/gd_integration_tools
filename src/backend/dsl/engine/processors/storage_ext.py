@@ -157,8 +157,10 @@ class TimeSeriesWriteProcessor(BaseProcessor):
 
         from sqlalchemy import text
 
-        from src.backend.infrastructure.database.database import db_initializer
+        # S82 M2-#11 batch 17: DI provider вместо inline infrastructure import.
+        from src.backend.core.di.providers.db import get_db_initializer_provider
 
+        db_initializer = get_db_initializer_provider()
         engine = db_initializer.get_async_engine()
         columns = ["timestamp", *self._tags, self._field]
         placeholders = ", ".join(f":{c}" for c in columns)
@@ -257,11 +259,10 @@ class PriorityEnqueueProcessor(BaseProcessor):
         ).decode()
 
         try:
-            from src.backend.infrastructure.clients.storage.redis import (
-                get_redis_client,
-            )
+            # S82 M2-#11 batch 17: DI provider (S60 added get_redis_client_provider).
+            from src.backend.core.di.providers.cache import get_redis_client_provider
 
-            redis_client = get_redis_client()
+            redis_client = get_redis_client_provider()()
             raw = getattr(redis_client, "_raw_client", None) or redis_client
 
             # Lower score = higher priority (ZADD).
