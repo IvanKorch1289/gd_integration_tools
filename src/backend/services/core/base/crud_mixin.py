@@ -183,6 +183,29 @@ class CrudMixin(_BaseServiceProtocol):
                 "first_or_last", self.response_schema, limit=limit, by=by, order=order
             )
 
+    async def list(
+        self,
+        *,
+        limit: int = 100,
+        offset: int = 0,
+        by: str = "id",
+        order: str = "asc",
+    ) -> list[Any]:
+        """Возвращает список объектов с пагинацией.
+
+        S108 NEW: метод list() обещан в docstring (S61 W1), но не был реализован
+        → AttributeError при обращении. Fix: delegate to repo.get_paginated
+        и вернуть items (как ожидает test_crud_mixin_list).
+        """
+        async with self._service_error_boundary():
+            result = await self.repo.get_paginated(
+                limit=limit, offset=offset, by=by, order=order,
+            )
+        # Поддержка пустого ответа (tests/unit/.../test_list_returns_empty_when_no_items)
+        if not result:
+            return []
+        return result.get("items", [])
+
     async def delete(self, key: str, value: int) -> None:
         """Удаляет объект и инвалидирует кэш.
 

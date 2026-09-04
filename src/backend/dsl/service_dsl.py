@@ -26,7 +26,7 @@ from src.backend.core.logging import get_logger
 
 # Canonical CRUD method names (used by @service_dsl(crud=True) для auto-binding).
 # Tuple для immutability — single source of truth для service_dsl и commands/setup/helpers.
-_CRUD_METHODS: tuple[str, ...] = ("add", "get", "update", "delete")
+_CRUD_METHODS: tuple[str, ...] = ("add", "get", "update", "delete", "list")  # S108 NEW-1c fix
 
 __all__ = (
     "ServiceDSLRegistry",
