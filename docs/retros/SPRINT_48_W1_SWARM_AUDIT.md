@@ -1149,3 +1149,30 @@ Provider returns the class itself, caller does `ReplyChannel.instance()`.
 
 ### M2-#11: 32/55 (was 24/55)
 
+
+### Sprint 86 — M2-#11 ACCELERATED BATCH 2 (8 files, 40/55)
+
+**Commit**: `f4b11c0cd` — refactor(dsl): M2-#11 accelerated batch 2.
+
+### 6 new DI providers
+- `get_ai_sanitizer_provider()` — security.ai_sanitizer
+- `get_db_manager_provider()` — database.database
+- `get_s3_storage_client_provider()` — clients.storage.s3_pool
+- `get_smtp_client_provider()` — clients.transport.smtp
+- `get_stream_provider()` — clients.messaging.stream module
+- `get_stream_client_provider()` — get_stream_client factory
+
+### Files migrated
+- ai/cache_processor.py — redis_client (reuse)
+- ai/cachewrite_processor.py — redis_client (reuse)
+- ai/sanitizepii_processor.py — get_ai_sanitizer (NEW)
+- components/databasequeryprocessor.py — get_db_manager (NEW)
+- components/s3readprocessor.py — storage_client (NEW)
+- components/s3writeprocessor.py — storage_client (NEW)
+- rpa/system.py — smtp_client (NEW)
+- proxy/forward.py — get_stream_client (NEW)
+
+### Honest catch
+- proxy/forward.py first script broken → git revert + fix with new provider
+
+### M2-#11: 40/55 (was 32/55)
