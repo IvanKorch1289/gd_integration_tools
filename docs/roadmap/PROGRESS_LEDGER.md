@@ -219,3 +219,16 @@ PRODUCTION_READINESS_FINAL.md (6), НОВЫЙ docs/security/AUTH_PROTOCOL_MATRIX
 (17 протоколов × auth × файл:строка — закрыта мёртвая ссылка M5-#9).
 Примечание: src/backend/entrypoints/sse/handler.py в дереве — WIP параллельной
 сессии (S103, P2-7), в коммит DOCS1 не включён.
+
+## Новая находка 2026-09-05 — T7 (P1)
+
+**T7**: tech-роут `/api/v1/tech/*` смонтирован (routers.py:198) и его методы
+(check_database/redis/s3/bucket/graylog/smtp) зовут
+`get_healthcheck_session_provider()` → `resolve_module("monitoring.health_check")`,
+но ключ удалён из реестра (S102 P2-11 — модуля не существует), bootstrap-override
+отсутствует → **500 на каждый вызов эндпоинта**. Варианты решения (Фаза A):
+(a) перенацелить tech-сервис на HealthAggregator.check_single / ConnectorRegistry
+(имена компонентов: s3_main, smtp_main, ... — pools.py); (b) демонтировать
+tech-роут как vestigial (живой health — /api/v1/health/* + readiness).
+Аналогично проверить get_file_repo_provider (extensions/core_entities/files —
+может быть default-OFF) и get_action_bus_service_provider (orders_dsl).
