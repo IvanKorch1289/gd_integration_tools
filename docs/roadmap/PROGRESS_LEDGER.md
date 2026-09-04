@@ -73,7 +73,7 @@
 | C2 | core/auth | ~~mobile JWT protections~~ **DONE `c684d9280`** (2026-09-04): флаг `mobile_jwt_protections_enabled`, `_build_mobile_jwt_verifier()` (единая сборка), factory `build_verifier_with_protections` с Redis store/limiter (fail-CLOSED); 2 wiring-теста; mobile suite 114 passed | 3h |
 | S1 | services | **REJECTED с обоснованием** (2026-09-04): ключ `decorators.caching` статический и валидируется validate_modules() — R1-класса бага нет; lazy-фикс потребовал бы ломать семантику декорирования классом. YAGNI; пересмотреть только при переименовании ключа | 0h |
 | S2 | services | ~~webhook idempotency + DLQ O(N²)~~ **DONE `0edb11598`** (2026-09-04): Idempotency-Key стабилен на попытки + хранится в DLQEntry + переиспользуется при retry; `_dlq_remove_many` — один LRANGE; 5 тестов | 4h |
-| S3 | services/dsl | hitl_service ~~507/21~~ **DONE S3-1 `f846b45d8`** (2026-09-05): сплит на hitl_models (127) + hitl_signal_store (189) + сервис 261 LOC, resolve() декомпозирован на 3 сайд-эффекта; 82 hitl-тестов passed. Остаток: security/facade 453/22, builders/base 1422 | 16h |
+| S3 | services/dsl | hitl_service **DONE S3-1 `f846b45d8`** (261 LOC); security/facade **DONE S3-2 `1bac090fd`** (453→190 + миксины facade_pii 110 / facade_blacklist 203). Остаток S3: builders/base 1422 (план M2-#21) | 16h |
 | F1 | frontend | ~~12 сайтов httpx в обход BaseAPIClient~~ **PARTIAL DONE S104-S106** (2026-09-04): page 23 internal API call migrated `b22b5feba`. Page 65 external URL ping documented as correct raw-httpx use case `edd96d035` (S106). Остальные 10+ pages — DEFERRED, need per-page review (some may legitimately use raw httpx для arbitrary external endpoints, не только internal API) | 4h |
 | T3 | tests | M4: overall 30.8% → 70%, `fail_under 60→70` (план M4-#3..#7); pre_prod_check gate #01 сейчас FAIL | 32h |
 | T4 | hardening | Kafka max_poll_records **DONE `12deed6fb`**; MQTT W3 **DONE `37156dbdb`**; M5-claims верифицированы выборочно (см. «Функциональная и нагрузочная верификация»). Остаток: полный SLO-прогон (prod-профиль + perf extras — точка решения) | 1h |
@@ -301,3 +301,16 @@ S3-1 DONE `f846b45d8`: зоны — модели (hitl_models.py 127 LOC), хр�
 сохранён. Re-exports сохраняют обратную совместимость (все потребители
 импортируют из hitl_service — не тронуты). Verify: 82 passed
 (workflows+hitl_approval+endpoints), collect 16966/0 errors, ruff 0.
+
+## Батч 2026-09-05 (S3-2) — сплит SecurityFacade
+
+S3-2 DONE `1bac090fd`: facade_pii.py (110, PiiFacadeMixin + audit-helper),
+facade_blacklist.py (203, JwtBlacklistMixin + InMemoryJwtBlacklist),
+facade.py (190, ядро: capability/signatures/secrets/certs + singleton).
+Re-export `_InMemoryJwtBlacklist` сохранён (тесты импортируют из facade).
+
+**B-NEW-3 (P2, открыт)**: 9 pre-existing падений в facade-тестах
+(test_security_facade_jwt, test_security_facade — ImportError
+`core.api.security.verify_signature`, не-await вызовы в тестах)
+— воспроизводятся идентично на HEAD до и после сплита (9/44 в обоих).
+Домен параллельной сессии (S108 NEW-* серия). Отдельно от сплита.
