@@ -144,18 +144,15 @@ _ALIASES: list[tuple[str, dict[str, str], list[str]]] = [
 
 def _make_handler(action: str, with_item_id: bool):
     """Создать замыкание-handler для конкретного action."""
-    if with_item_id:
+    async def _handler(
+        request: "Request", item_id: int | None = None
+    ) -> JSONResponse:
+        """Унифицированная сигнатура: ``item_id`` берётся из path при ``with_item_id``."""
+        return await _dispatch_with(
+            request, action=action, item_id=item_id if with_item_id else None
+        )
 
-        async def _handler(request: Request, item_id: int) -> JSONResponse:
-            return await _dispatch_with(request, action=action, item_id=item_id)
-
-        return _handler
-    else:
-
-        async def _handler(request: Request) -> JSONResponse:
-            return await _dispatch_with(request, action=action, item_id=None)
-
-        return _handler
+    return _handler
 
 
 def _build_alias_router() -> APIRouter:
