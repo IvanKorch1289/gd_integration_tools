@@ -20,7 +20,9 @@ from src.backend.core.observability.metrics import audit_silent_loss_total
 from src.backend.services.audit.clickhouse_audit_service.state import AuditEvent
 
 if TYPE_CHECKING:
-    from src.backend.core.api.messaging import DLQWriter
+    # DLQWriter lives в infrastructure.messaging.dlq_base (canonical),
+    # не в core.api.messaging (последний — facade re-export).
+    from src.backend.infrastructure.messaging.dlq_base import DLQWriter
 
 _logger = get_logger("services.audit.clickhouse")
 
