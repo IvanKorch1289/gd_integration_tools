@@ -1077,3 +1077,23 @@ Provider returns the class itself, caller does `ReplyChannel.instance()`.
 - **S81: 20/55 (+ saga_lra.py)**
 - Remaining: 35 dsl files
 
+
+### Sprint 82 — M2-#11 batch 17 (samples 21-22/55)
+
+**Commits**:
+- `176619e8a` refactor(dsl): storage_ext.py
+- `bdadccd50` refactor(dsl): vault_secret.py
+
+### 2 new DI providers
+- `get_vault_backend_class_provider()` в cache.py
+- `get_vault_config_class_provider()` в cache.py
+
+### Files migrated
+- `storage_ext.py` — TSDB storage + Redis zset (2 imports, reuse existing providers)
+- `vault_secret.py` — Vault secret reader (2 imports, 2 new providers)
+
+### Progress
+- S60-S81: 20/55
+- **S82: 22/55 (+ storage_ext + vault_secret)**
+- Remaining: 33 dsl files
+
