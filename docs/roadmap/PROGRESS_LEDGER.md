@@ -163,3 +163,30 @@
 | Docstring module_registry («infrastructure-модулей») неточен | Исправлено | `f804bfe10` |
 
 Остаток открытых задач (актуально после S96-S97 параллельной сессии): T3 (M4 overall coverage — мульти-спринт), T4 (верификация M5-claims + Kafka max_poll_records; M5-#10 load test и M6 functional verification НЕ могут быть «deferred до prod» — выполняются локально через tests/perf k6/locust + make dev-light), DOCS1 (STATUS/ARCHITECTURE/README sync), S2 (webhook idempotency), S3 (god-объекты), F1 (frontend httpx→BaseAPIClient), B-NEW-1 (observability_bridge — сессия-2), P2-хвост.
+
+## T4/M6 функциональная и нагрузочная верификация (2026-09-04, вечер)
+
+### M6-#3 функциональные пробы — PARTIAL (живой инстанс :8000, dev_light)
+Публичные (200): /health, /docs (Swagger UI), /metrics, /asyncapi, /api/v1/auth/methods.
+Защищённые → 401 (негативный auth PASS): /graphql, /ws, /soap, /mcp, /events/stream (SSE),
+/api/v1/webhooks/test, /api/v1/admin/users, /api/v1/health/readiness.
+Осталось для полного M6-#3: позитивные сценарии c JWT (step-up login), gRPC-reflection,
+MQTT/MQ-broker, email/CDC/scheduler — требуют docker compose инфраструктуры.
+
+### M6-#4 — Swagger UI /docs → 200 DONE
+
+### M5-#10 нагрузочный — PARTIAL (smoke, httpx-драйвер 50 conc/30s)
+- 1 worker: 80 RPS, errors 0%, p50 607ms p99 1196ms (очередь)
+- 4 workers: 173 RPS, errors 0%, p50 205ms p99 1248ms
+- solo p50 ≈ 10ms → цепочка лёгкая; латентность под нагрузкой = масштабирование
+  воркеров + dev-профиль (audit + DEBUG body-logging на каждый запрос)
+- **Точка решения (Фаза A)**: валидный SLO-прогон (p99<300ms @500RPS) требует
+  prod-профиль + perf extras (k6/locust отсутствуют в venv; установка —
+  `uv sync --extra perf` если extra существует, иначе отдельное решение)
+
+### Новые находки
+- **P2-13**: auth-allowlist содержит /readyz, /livez — роутов нет (404); фактический
+  readiness (/api/v1/health/readiness) за auth → k8s-probe без токена не пройдёт.
+  Решить: публичные readiness-алиасы ИЛИ убрать из allowlist (k8s сделает auth?)
+- **P2-14** (наблюдение): dev_light пишет тело ответа в DEBUG-лог на каждый запрос —
+  при prod-прогоне проверить стоимость audit-логирования в p99.
