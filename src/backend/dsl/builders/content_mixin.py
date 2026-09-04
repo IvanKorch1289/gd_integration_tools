@@ -13,11 +13,9 @@ substitution for HTTP enrichment URLs.
 from __future__ import annotations
 
 import asyncio
-import atexit
 import json
 import re
 import urllib.request
-from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -29,8 +27,6 @@ if TYPE_CHECKING:
 
 __all__ = ("EIPContentMixin", "EnrichEIPProcessor")
 
-_TAP_EXECUTOR = ThreadPoolExecutor(max_workers=4, thread_name_prefix="eip-tap")
-atexit.register(_TAP_EXECUTOR.shutdown, wait=True)
 _PH_RE = re.compile(r"\$\{exchange\.([a-zA-Z0-9_.]+)\}")
 
 
