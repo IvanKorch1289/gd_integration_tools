@@ -75,6 +75,66 @@ class APIClient(BaseAPIClient):
         self._capability = CapabilityClient(base_url=base_url)
         self._logs = LogsClient(base_url=base_url)
 
+    # ── Public sub-client access (pages use ``client.<domain>.method()``). ──
+    # G-MYPY-CL4: pages call ``client.workflows.X`` и аналоги для 12 доменов.
+    # Без этих properties mypy [attr-defined] на каждом callsite. Доступ
+    # backend-классам (для unit-тестов с direct-APIClient) сохраняется через
+    # приватные ``_metrics/_tenants/...`` (back-compat).
+    @property
+    def metrics(self) -> MetricsClient:
+        """Public access к :class:`MetricsClient`."""
+        return self._metrics
+
+    @property
+    def tenants(self) -> TenantsClient:
+        """Public access к :class:`TenantsClient`."""
+        return self._tenants
+
+    @property
+    def orders(self) -> OrdersClient:
+        """Public access к :class:`OrdersClient`."""
+        return self._orders
+
+    @property
+    def flags(self) -> FlagsClient:
+        """Public access к :class:`FlagsClient`."""
+        return self._flags
+
+    @property
+    def config(self) -> ConfigClient:
+        """Public access к :class:`ConfigClient`."""
+        return self._config
+
+    @property
+    def workflows(self) -> WorkflowsClient:
+        """Public access к :class:`WorkflowsClient`."""
+        return self._workflows
+
+    @property
+    def dsl_routes(self) -> DSLRoutesClient:
+        """Public access к :class:`DSLRoutesClient`."""
+        return self._dsl_routes
+
+    @property
+    def feedback(self) -> FeedbackClient:
+        """Public access к :class:`FeedbackClient`."""
+        return self._feedback
+
+    @property
+    def inventory(self) -> InventoryClient:
+        """Public access к :class:`InventoryClient`."""
+        return self._inventory
+
+    @property
+    def capability(self) -> CapabilityClient:
+        """Public access к :class:`CapabilityClient`."""
+        return self._capability
+
+    @property
+    def logs(self) -> LogsClient:
+        """Public access к :class:`LogsClient`."""
+        return self._logs
+
     # ── Metrics (2) ────────────────────────────────────────────────
     def get_metrics(self) -> dict[str, Any]:
         """``self._metrics.get_metrics(...)`` — passthrough to underlying <metrics>.get_metrics."""

@@ -208,12 +208,12 @@ if _wf_id_compens:
                 "workflow.compensation_start": "🟦",
                 "workflow.compensation_complete": "🟩",
                 "workflow.compensation_fail": "🟥",
-            }.get(rec.event_type, "·")
+            }.get(rec["event_type"], "·")
             with st.expander(
-                f"{color} {rec.event_type} @ {rec.created_at.isoformat()}"
+                f"{color} {rec['event_type']} @ {rec['created_at'].isoformat()}"
             ):
-                st.json(rec.payload)
-                if rec.duration_ms is not None:
-                    st.caption(f"duration_ms = {rec.duration_ms}")
+                st.json(rec["payload"])
+                if rec.get("duration_ms") is not None:
+                    st.caption(f"duration_ms = {rec['duration_ms']}")
 
 related_pages_footer("17_Replay_Воркфлоу")

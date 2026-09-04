@@ -49,11 +49,11 @@ else:
         st.write("(пусто)")
     else:
         for v in history:
-            marker = "🟢 default" if v.default_version else ""
+            marker = "🟢 default" if v.get("default_version") else ""
             cols = st.columns([3, 1, 1])
-            cols[0].write(f"**v{v.semver}** {marker}")
-            if not v.default_version:
-                if cols[1].button("Сделать default", key=f"pin_{v.semver}"):
+            cols[0].write(f"**v{v['semver']}** {marker}")
+            if not v.get("default_version"):
+                if cols[1].button("Сделать default", key=f"pin_{v['semver']}"):
                     try:
                         import httpx as requests
 
@@ -66,11 +66,11 @@ else:
                         resp = requests.post(
                             f"{base_url}/api/v1/admin/workflow-versioning/"
                             f"{selected}/pin",
-                            params={"semver": v.semver},
+                            params={"semver": v["semver"]},
                             timeout=5,
                         )
                         if resp.status_code == 200:
-                            st.success(f"v{v.semver} закреплена как default")
+                            st.success(f"v{v['semver']} закреплена как default")
                             st.rerun()
                         else:
                             st.error(f"HTTP {resp.status_code}: {resp.text}")
@@ -78,7 +78,7 @@ else:
                         st.error(f"Ошибка закрепления: {exc}")
             else:
                 cols[1].write("")
-            cols[2].write(f"major={v.major}")
+            cols[2].write(f"major={v.get('major', '?')}")
 
         if len(history) >= 2:
             st.divider()
