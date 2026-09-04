@@ -52,6 +52,10 @@
 | ID | Домен | Задача | Оценка |
 |---|---|---|---|
 | **A1** | di | **32 ключа DI-реестра отсутствуют в `INFRA_MODULES`** (module_registry.py: 45 статических, провайдеры резолвят 73 уникальных). Провайдеры S84-S87 вызывают `resolve_module()` с незарегистрированными ключами → ModuleRegistryError в runtime (S3/telegram/DB/sinks/vault/audit/workflow пути). Коллекция тестов недетерминирована из-за этого же. Фикс: добавить 31 валидированный ключ (find_spec OK); `infrastructure.cdc.registry` — мёртвый (модуля/`get_default_source` не существует) → не регистрировать, dead-code. Провайдер `get_workflow_factory_module_provider` дополнительно сломан (`resolve_module("workflow").factory` — пакет не экспортирует factory) → `resolve_module("workflow.factory")` | 2h |
+
+**Статус A1**: параллельная сессия закрыла R1+часть A1 (коммит `4b31157d4`: 2 ключа — `clients.storage.s3_pool`, `workflow.factory`, lazy-провайдер, s3 factory contract). Остаток A1: **28 ключей** — **IN_PROGRESS** (эта сессия, 2026-09-04).
+
+**DEP1 — DONE** (закрыт коммитом `97230556d` параллельной сессии, содержимое lock = мой апгрейд; верификация: `uv export | pip-audit -r --no-deps` → только diskcache PYSEC-2026-2447 (ADR-0287); cryptography 50.0.1, gitpython 3.1.61 в lock). M3 повторно CLOSED.
 | **DEP1** | deps | cryptography 49.0.0 → ≥50.0.1 в uv.lock (`uv lock --upgrade-package cryptography`, ADR-0288 уже разрешает <51) + gitpython 3.1.58 → 3.1.61 (4 CVE). Доказательство: `uv run pip-audit` → только diskcache (ADR-0287) | 1h |
 
 ### P1
