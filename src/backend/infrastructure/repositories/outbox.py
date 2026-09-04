@@ -25,7 +25,14 @@ from sqlalchemy import func, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.backend.core.domain.models.outbox import OutboxMessage
-from src.backend.infrastructure.database.session_manager import main_session_manager
+from src.backend.infrastructure.database.session_manager import DatabaseSessionManager
+from src.backend.infrastructure.database.session_manager import (
+    main_session_manager as _main_session_manager_lookup,  # noqa: F401 — lazy accessor
+)
+
+# ponytail: mypy трактует module-level lazy accessor как Optional.
+# На runtime main_session_manager всегда non-None (singleton-через factory).
+main_session_manager: DatabaseSessionManager = _main_session_manager_lookup  # type: ignore[assignment]
 
 __all__ = (
     "ALLOWED_TRANSPORTS",
