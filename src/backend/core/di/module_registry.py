@@ -103,7 +103,9 @@ INFRA_MODULES: Final[dict[str, str]] = {
     "cache": f"{_INFRA}.cache",
     "decorators.caching": f"{_INFRA}.decorators.caching",
     # ─── Monitoring ─────────────────────────────────────────────────
-    "monitoring.health_check": f"{_INFRA}.monitoring.health_check",
+    # S102 P2-11: 'monitoring.health_check' removed — модуль не существует
+    # (есть только health_profile.py); get_healthcheck_session_provider —
+    # test-only fixture с override, поэтому ключ не нужен.
     # ─── Storage clients ────────────────────────────────────────────
     "clients.storage.redis": f"{_INFRA}.clients.storage.redis",
     "clients.storage.redis_coordinator": f"{_INFRA}.clients.storage.redis_coordinator",
@@ -136,14 +138,16 @@ INFRA_MODULES: Final[dict[str, str]] = {
     "database.models.workflow_instance": "src.backend.core.domain.models.workflow_instance",
     # ─── Repositories ───────────────────────────────────────────────
     "repos.connector_configs": f"{_INFRA}.repositories.connector_configs_mongo",
-    "repos.files": f"{_INFRA}.repositories.files",
-    "repos.orders": f"{_INFRA}.repositories.orders",
+    # S102 P2-11: 'repos.files' и 'repos.orders' removed — модули
+    # не существуют (есть только *mongo.py варианты).
+    # get_file_repo_provider — test-only fixture с override.
     "repos.express_dialogs": f"{_INFRA}.repositories.express_dialogs_mongo",
     "repos.express_sessions": f"{_INFRA}.repositories.express_sessions_mongo",
     # ─── Import gateway ─────────────────────────────────────────────
     "import_gateway": f"{_INFRA}.import_gateway",
     # ─── External APIs ──────────────────────────────────────────────
-    "external_apis.action_bus": f"{_INFRA}.external_apis.action_bus",
+    # S102 P2-11: 'external_apis.action_bus' removed — модуль не существует.
+    # get_action_bus_service_provider — test-only fixture с override.
     "external_apis.s3": f"{_INFRA}.external_apis.s3",
     "antivirus.service": f"{_INFRA}.antivirus.service",
     "external_apis.logging_service": f"{_INFRA}.external_apis.logging_service",
