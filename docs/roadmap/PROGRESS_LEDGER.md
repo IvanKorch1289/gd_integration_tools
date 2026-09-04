@@ -536,3 +536,24 @@ FAILED 7→5 (остаток: 01 coverage + 02 mypy — активная пол�
 
 3 pre-existing падения tests/unit/extensions (credit_pipeline YAML-refs)
 воспроизводятся на HEAD до и после фикса — не регрессия.
+
+## Gate 04 (ruff strict) — CLOSED (2026-09-05) + финальная карта pre-prod-check
+
+После приземления WIP сессии-2 (S169 R-FIX `bd8140c80`) транзиентные
+03 layers → OK; gate 04 остался FAIL с реальной причиной: `make lint-strict`
+тянет `format-check` (ruff format --check) — **290 файлов** src никогда
+не прогонялись через `ruff format` (исторически применялся только
+`ruff check --fix`). Форматтер AST-preserving.
+
+Фикс `2eef2b72d`: `ruff format ./src` (290 файлов, один style-коммит).
+Verify: collect 16966/0 errors; 1075 passed по ключевым suite'ам;
+`make lint-strict` → Strict lint passed!
+
+**Финальная карта pre-prod-check: 20/36 PASSED, WARN 8, SKIP 5, FAILED 3:**
+| Gate | Причина | Владелец/путь |
+|---|---|---|
+| 01 coverage ≥50% | overall ~31-33% | T3 — сессия-2 (S97+ активна), затем gate bump 60→70 |
+| 02 mypy ≤30 | 60 errors > budget | сессия-2 (G-MYPY кластеры: 149→60, идёт) |
+| 15 feature-flags | требует живой Vault | BLOCKED(infra) — как M6-#3 |
+
+Закрыто этим роем за цикл: 03 layers, 04 ruff strict, 11 docstrings, 33 trust-tier.
