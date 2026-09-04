@@ -72,8 +72,7 @@ def _make_action_tool(action_name: str) -> Any:
             # не имеет user-context напрямую — system маркирует source
             # для audit-trail.
             meta=ActionCommandMetaSchema(
-                principal=f"ai_agent:{action_name}",
-                permissions=[],
+                principal=f"ai_agent:{action_name}", permissions=[]
             ),
         )
         result = await action_handler_registry.dispatch(command)

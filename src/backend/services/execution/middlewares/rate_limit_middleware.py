@@ -60,8 +60,7 @@ def _get_fail_mode() -> str:
     except Exception as exc:
         # Если settings недоступны (early boot / test) — fail-CLOSED by default.
         logger.warning(
-            "rate_limit.fail_mode_settings_unavailable err=%s — fail-CLOSED",
-            exc,
+            "rate_limit.fail_mode_settings_unavailable err=%s — fail-CLOSED", exc
         )
         return "closed"
 
@@ -123,10 +122,10 @@ class RateLimitMiddleware:
                     ),
                 )
             logger.warning(
-                    "rate_limit.limiter_unavailable action=%s — fail-OPEN "
-                    "(rate_limit_fail_mode=open, explicit override)",
-                    action,
-                )
+                "rate_limit.limiter_unavailable action=%s — fail-OPEN "
+                "(rate_limit_fail_mode=open, explicit override)",
+                action,
+            )
             return await next_handler(action, payload, context)
 
         module = self._resolve_limiter_module()

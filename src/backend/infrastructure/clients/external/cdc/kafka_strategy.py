@@ -140,7 +140,9 @@ class _KafkaDebeziumStrategy(_CDCStrategy):
                                     extract_from_headers,
                                 )
 
-                                _trace_ctx = extract_from_headers(dict(msg.headers or {}))
+                                _trace_ctx = extract_from_headers(
+                                    dict(msg.headers or {})
+                                )
                             except ImportError:
                                 pass
 
@@ -149,7 +151,9 @@ class _KafkaDebeziumStrategy(_CDCStrategy):
                                 try:
                                     from opentelemetry import trace
 
-                                    _span_cm = trace.get_tracer("gd.cdc.kafka.consumer").start_as_current_span(
+                                    _span_cm = trace.get_tracer(
+                                        "gd.cdc.kafka.consumer"
+                                    ).start_as_current_span(
                                         "cdc.kafka.dispatch", context=_trace_ctx
                                     )
                                 except ImportError:

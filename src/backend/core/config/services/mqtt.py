@@ -60,14 +60,10 @@ class MqttSettings(BaseSettingsWithLoader):
     # W3 (ledger, M5 timeouts/backpressure): per-message timeout и ограничение
     # конкурентности — медленный action больше не блокирует цикл подписки.
     message_timeout: float = Field(
-        default=30.0,
-        gt=0,
-        description="Таймаут обработки одного сообщения (сек)",
+        default=30.0, gt=0, description="Таймаут обработки одного сообщения (сек)"
     )
     max_concurrent_messages: int = Field(
-        default=10,
-        ge=1,
-        description="Максимум параллельно обрабатываемых сообщений",
+        default=10, ge=1, description="Максимум параллельно обрабатываемых сообщений"
     )
     max_queued_incoming_messages: int = Field(
         default=1000,

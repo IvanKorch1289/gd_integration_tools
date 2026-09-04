@@ -50,7 +50,9 @@ setup_page()
 st.title("🔎 Поиск")
 st.caption("Единый поиск по audit-логам, заказам и notebooks (Elasticsearch).")
 
-q = st.text_input("Запрос", value=st.session_state.get("search_q", "", key="search_text_1"))
+q = st.text_input(
+    "Запрос", value=st.session_state.get("search_q", "", key="search_text_1")
+)
 st.session_state["search_q"] = q
 
 tab_logs, tab_orders, tab_notebooks, tab_agg = st.tabs(
@@ -64,7 +66,12 @@ with tab_logs:
     with col2:
         tenant_id = st.text_input("tenant_id", value="", key="logs_tenant")
     with col3:
-        limit = st.number_input("limit", value=config.SEARCH_DEFAULT_LIMIT, min_value=config.SEARCH_MIN_LIMIT, max_value=config.SEARCH_MAX_LIMIT)
+        limit = st.number_input(
+            "limit",
+            value=config.SEARCH_DEFAULT_LIMIT,
+            min_value=config.SEARCH_MIN_LIMIT,
+            max_value=config.SEARCH_MAX_LIMIT,
+        )
     rows = _run(
         _get(
             "/logs",
@@ -85,7 +92,11 @@ with tab_orders:
         status = st.text_input("status", value="", key="orders_status")
     with col2:
         limit = st.number_input(
-            "limit", value=config.SEARCH_DEFAULT_LIMIT, min_value=config.SEARCH_MIN_LIMIT, max_value=config.SEARCH_MAX_LIMIT, key="orders_limit"
+            "limit",
+            value=config.SEARCH_DEFAULT_LIMIT,
+            min_value=config.SEARCH_MIN_LIMIT,
+            max_value=config.SEARCH_MAX_LIMIT,
+            key="orders_limit",
         )
     rows = _run(_get("/orders", q=q or None, status=status or None, limit=int(limit)))
     if rows:
@@ -99,7 +110,11 @@ with tab_notebooks:
         tag = st.text_input("tag", value="", key="notebooks_tag")
     with col2:
         limit = st.number_input(
-            "limit", value=config.SEARCH_DEFAULT_LIMIT, min_value=config.SEARCH_MIN_LIMIT, max_value=config.SEARCH_MAX_LIMIT, key="notebooks_limit"
+            "limit",
+            value=config.SEARCH_DEFAULT_LIMIT,
+            min_value=config.SEARCH_MIN_LIMIT,
+            max_value=config.SEARCH_MAX_LIMIT,
+            key="notebooks_limit",
         )
     rows = _run(_get("/notebooks", q=q or None, tag=tag or None, limit=int(limit)))
     if rows:
@@ -112,9 +127,16 @@ with tab_agg:
     with col1:
         index = st.selectbox("Индекс", options=["audit_logs", "orders", "notebooks"])
     with col2:
-        field = st.text_input("Поле для terms", value="entity_type", key="search_terms_2")
+        field = st.text_input(
+            "Поле для terms", value="entity_type", key="search_terms_2"
+        )
     with col3:
-        size = st.number_input("size", value=config.TERMS_DEFAULT_SIZE, min_value=config.TERMS_MIN_SIZE, max_value=config.TERMS_MAX_SIZE)
+        size = st.number_input(
+            "size",
+            value=config.TERMS_DEFAULT_SIZE,
+            min_value=config.TERMS_MIN_SIZE,
+            max_value=config.TERMS_MAX_SIZE,
+        )
     if st.button("Посчитать"):
         result = _run(
             _get("/aggregations", index=index, field=field, q=q or None, size=int(size))

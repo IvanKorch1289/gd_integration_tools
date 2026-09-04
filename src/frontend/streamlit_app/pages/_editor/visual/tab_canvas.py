@@ -56,9 +56,7 @@ def render_canvas_tab(client) -> None:
                     st.caption(f"Параметры: {', '.join(params) if params else 'нет'}")
                 with c2:
                     if st.button(
-                        "➕",
-                        key=f"add_{proc_type}",
-                        help=f"Добавить {proc_type}",
+                        "➕", key=f"add_{proc_type}", help=f"Добавить {proc_type}"
                     ):
                         st.session_state.canvas_steps.append(
                             {"type": proc_type, "params": dict.fromkeys(params, "")}
@@ -74,7 +72,7 @@ def render_canvas_tab(client) -> None:
         routes = []
         try:
             routes = client.list_dsl_routes()
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError):
+        except ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError:
             # cycle-9/D-AUDIT-1045: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
@@ -83,7 +81,7 @@ def render_canvas_tab(client) -> None:
         selected_route = st.selectbox(
             "Открыть существующий", ["—"] + routes, key="route_load_select"
         )
-        if selected_route != "—" and st.button("Загрузить", width='stretch'):
+        if selected_route != "—" and st.button("Загрузить", width="stretch"):
             try:
                 detail = client.get_dsl_route(selected_route)
                 if detail and "yaml" in detail:
@@ -97,7 +95,7 @@ def render_canvas_tab(client) -> None:
             except Exception as exc:
                 st.error(f"Ошибка загрузки: {exc}")
 
-        if st.button("🆕 Новый маршрут", width='stretch'):
+        if st.button("🆕 Новый маршрут", width="stretch"):
             st.session_state.meta_route = {
                 "route_id": "my.route",
                 "source": "internal:my",
@@ -222,7 +220,7 @@ def render_canvas_tab(client) -> None:
                             "⬆️",
                             key=f"up_{i}",
                             help="Переместить вверх",
-                            disabled=i == 0
+                            disabled=i == 0,
                         ):
                             (
                                 st.session_state.canvas_steps[i - 1],
@@ -274,7 +272,7 @@ def render_canvas_tab(client) -> None:
 
         col_val, col_down = st.columns(2)
         with col_val:
-            if st.button("✅ Валидировать", width='stretch'):
+            if st.button("✅ Валидировать", width="stretch"):
                 try:
                     load_pipeline_from_yaml(st.session_state.yaml_output)
                     st.success("✅ YAML валиден!")
@@ -290,7 +288,7 @@ def render_canvas_tab(client) -> None:
                     f"{st.session_state.meta_route.get('route_id', 'route')}.yaml"
                 ),
                 mime="text/yaml",
-                width='stretch',
+                width="stretch",
             )
 
     with col_props:

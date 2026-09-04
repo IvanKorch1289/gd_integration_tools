@@ -18,6 +18,7 @@
     ``FillFormProcessor`` + ``RunScenarioProcessor`` остаются в __all__
     для backward-compat; новый код должен использовать ``rpa_browser``.
 """
+
 import warnings
 from typing import Any
 

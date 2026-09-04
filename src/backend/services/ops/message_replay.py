@@ -127,8 +127,7 @@ class MessageReplayService:
                 # background replay triggered). Tier-1/2 actions теперь
                 # видят непустой principal для audit (replay source + id).
                 meta=ActionCommandMetaSchema(
-                    principal=f"replay:{msg.source}:{msg.id}",
-                    permissions=[],
+                    principal=f"replay:{msg.source}:{msg.id}", permissions=[]
                 ),
             )
             result = await action_handler_registry.dispatch(command)

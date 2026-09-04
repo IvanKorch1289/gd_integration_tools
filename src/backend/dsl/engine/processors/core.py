@@ -214,8 +214,7 @@ class EnrichProcessor(BaseProcessor):
             action=self.action,
             payload=payload,
             meta=ActionCommandMetaSchema(
-                principal=context.principal,
-                permissions=list(context.permissions),
+                principal=context.principal, permissions=list(context.permissions)
             ),
         )
         result = await context.action_registry.dispatch(command)

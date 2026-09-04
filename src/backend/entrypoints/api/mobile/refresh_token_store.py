@@ -46,7 +46,9 @@ class RefreshTokenStore(Protocol):
         """Check if refresh token is valid (not revoked, current generation)."""
         ...
 
-    async def issue(self, user_id: str, device_id: str, refresh_jti: str, ttl_seconds: int) -> None:
+    async def issue(
+        self, user_id: str, device_id: str, refresh_jti: str, ttl_seconds: int
+    ) -> None:
         """Issue new refresh token (add to valid set at current generation)."""
         ...
 
@@ -120,7 +122,9 @@ class InMemoryRefreshTokenStore:
         current_gen = self._current_generation(user_id, device_id)
         return gen == current_gen
 
-    async def issue(self, user_id: str, device_id: str, refresh_jti: str, ttl_seconds: int) -> None:
+    async def issue(
+        self, user_id: str, device_id: str, refresh_jti: str, ttl_seconds: int
+    ) -> None:
         """Атомарно выдать refresh-jti (replay-protection, S55 W1)."""
         if not refresh_jti or not isinstance(refresh_jti, str):
             raise ValueError("refresh_jti must be non-empty string")
@@ -131,7 +135,11 @@ class InMemoryRefreshTokenStore:
         self._tokens[key] = (gen, time.time() + ttl_seconds)
         _logger.info(
             "refresh token issued: user=%s device=%s jti=%s gen=%d ttl=%ds",
-            user_id, device_id, refresh_jti[:8], gen, ttl_seconds,
+            user_id,
+            device_id,
+            refresh_jti[:8],
+            gen,
+            ttl_seconds,
         )
 
     async def issue_if_new(
@@ -175,7 +183,11 @@ class InMemoryRefreshTokenStore:
         self._tokens[key] = (current_gen, time.time() + ttl_seconds)
         _logger.info(
             "refresh token issued (first-use): user=%s device=%s jti=%s gen=%d ttl=%ds",
-            user_id, device_id, refresh_jti[:8], current_gen, ttl_seconds,
+            user_id,
+            device_id,
+            refresh_jti[:8],
+            current_gen,
+            ttl_seconds,
         )
         return True
 
@@ -185,7 +197,9 @@ class InMemoryRefreshTokenStore:
         self._tokens.pop(key, None)
         _logger.info(
             "refresh token revoked: user=%s device=%s jti=%s",
-            user_id, device_id, refresh_jti[:8],
+            user_id,
+            device_id,
+            refresh_jti[:8],
         )
 
     async def revoke_family(self, user_id: str, device_id: str) -> int:
@@ -214,7 +228,11 @@ class InMemoryRefreshTokenStore:
         _logger.warning(
             "refresh token family revoked: user=%s device=%s old_gen=%d new_gen=%d "
             "tokens_invalidated=%d",
-            user_id, device_id, old_gen, new_gen, len(to_remove),
+            user_id,
+            device_id,
+            old_gen,
+            new_gen,
+            len(to_remove),
         )
         return len(to_remove)
 

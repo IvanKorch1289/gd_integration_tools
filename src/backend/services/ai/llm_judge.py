@@ -148,7 +148,7 @@ class LLMJudge:
 
             try:
                 parsed = _JudgeResponse.model_validate_json(content_clean)
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 # Fallback: extract first JSON object from surrounding text
                 start = content_clean.find("{")
                 end = content_clean.rfind("}") + 1
@@ -200,7 +200,7 @@ class LLMJudge:
                 relevance=verdict.relevance_score,
                 toxicity=verdict.toxicity_score,
             )
-        except (ImportError, AttributeError):  # orjson optional, JSON fallback below
+        except ImportError, AttributeError:  # orjson optional, JSON fallback below
             _logger.exception("llm_judge.orjson_unavailable_using_fallback")
 
         try:
@@ -220,7 +220,11 @@ class LLMJudge:
                     "metadata": _orjson.dumps(verdict.metadata).decode(),
                 },
             )
-        except (ImportError, AttributeError, ConnectionError):  # Langfuse optional, no-op fallback
+        except (
+            ImportError,
+            AttributeError,
+            ConnectionError,
+        ):  # Langfuse optional, no-op fallback
             _logger.exception("llm_judge.stream_unavailable_skipped")
 
     async def evaluate_recent(self, *, limit: int = 50) -> list[JudgeVerdict]:
@@ -237,7 +241,7 @@ class LLMJudge:
             records = await redis_client.read_stream(
                 stream_name="llm_calls", count=limit
             )
-        except (ImportError, AttributeError, ConnectionError):
+        except ImportError, AttributeError, ConnectionError:
             return verdicts
 
         for record in records or []:

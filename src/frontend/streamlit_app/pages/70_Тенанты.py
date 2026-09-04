@@ -61,23 +61,25 @@ selected_id = st.selectbox(
 if selected_id and selected_id != "(нет)":
     detail = client.get_tenant_detail(selected_id)
     st.subheader(f"Профиль `{selected_id}`")
-    metric_row([
-        ("Plan", detail.get("plan", "—")),
-        ("Rate limit", detail.get("rate_limit", "—")),
-        ("RLS", "ON" if detail.get("rls_state", {}).get("enabled") else "OFF"),
-    ])
+    metric_row(
+        [
+            ("Plan", detail.get("plan", "—")),
+            ("Rate limit", detail.get("rate_limit", "—")),
+            ("RLS", "ON" if detail.get("rls_state", {}).get("enabled") else "OFF"),
+        ]
+    )
 
     with st.expander("Квоты"):
         quotas = detail.get("quotas") or []
         if quotas:
-            st.dataframe(quotas, width='stretch', hide_index=True)
+            st.dataframe(quotas, width="stretch", hide_index=True)
         else:
             st.write("_(нет данных квот)_")
 
     with st.expander("Последние события аудита"):
         events = detail.get("audit_events_recent") or []
         if events:
-            st.dataframe(events, width='stretch', hide_index=True)
+            st.dataframe(events, width="stretch", hide_index=True)
         else:
             st.write("_(нет audit events)_")
 

@@ -21,9 +21,7 @@ from src.frontend.streamlit_app.shared.components import (
 setup_page()
 st.header(":art: Галерея blueprint'ов")
 st.caption(
-    "Каталог шаблонов маршрутов R2/R2.5 — 3-column "
-
-    "grid, фильтры, preview, copy."
+    "Каталог шаблонов маршрутов R2/R2.5 — 3-column grid, фильтры, preview, copy."
 )
 
 BLUEPRINTS_DIR = Path("src/backend/dsl/blueprints")
@@ -153,9 +151,9 @@ def _yaml_preview(bp: dict[str, Any]) -> str:
         # TypeError для wrong bp type, ValueError для invalid YAML,
         # AttributeError для yaml.safe_dump API change.
         import logging
+
         logging.getLogger(__name__).debug(
-            "streamlit_38_Галерея.yaml_dump_failed",
-            extra={"error": str(yaml_exc)},
+            "streamlit_38_Галерея.yaml_dump_failed", extra={"error": str(yaml_exc)}
         )
         return f"# {bp['name']}\n# Preview недоступен (требуется PyYAML)"
 
@@ -183,10 +181,10 @@ def _card(bp: dict[str, Any]) -> None:
                 file_name=f"{bp['name']}.yaml",
                 mime="text/yaml",
                 key=f"cp_{bp['name']}",
-                width='stretch',
+                width="stretch",
             )
         with c3:
-            if st.button("🚀 Задеплоить", key=f"dp_{bp['name']}", width='stretch'):
+            if st.button("🚀 Задеплоить", key=f"dp_{bp['name']}", width="stretch"):
                 st.toast(
                     f"Mock-деплой '{bp['name']}' v{bp['version']} — "
                     "реальный деплой через backend WIP",
@@ -208,10 +206,9 @@ if not all_blueprints:
     st.stop()
 
 st.caption(
-
-        f"Всего: **{len(all_blueprints)}** "f"(YAML: {len(yaml_bps)}, "
-        f"Python: {len(PYTHON_BP)})"
-
+    f"Всего: **{len(all_blueprints)}** "
+    f"(YAML: {len(yaml_bps)}, "
+    f"Python: {len(PYTHON_BP)})"
 )
 
 # ─────────── Filters ───────────

@@ -113,8 +113,10 @@ with tab_swagger:
 with tab_extract:
     st.subheader("Извлечь: Service → YAML")
     service_path = st.text_input(
-        "Путь к service-файлу", value="src/backend/services/core/admin.py"
-    , key="codegen_service_2")
+        "Путь к service-файлу",
+        value="src/backend/services/core/admin.py",
+        key="codegen_service_2",
+    )
     if st.button("Extract"):
         cmd = ["tools/codegen_extract.py", "--service", service_path]
         rc, out, err = _run(cmd)

@@ -207,6 +207,7 @@ async def compile_sensor_step(decl: SensorDeclaration, ctx: dict[str, Any]) -> A
         from src.backend.dsl.workflow.compiler.step_compilers import (
             SensorTimeoutRequiredError as _SensorTimeoutRequiredError,
         )
+
         raise _SensorTimeoutRequiredError(
             f"sensor {decl.predicate!r} requires explicit timeout_s "
             f"(D-A8-10 cycle 1 — default-OFF, иначе infinite polling)."
@@ -215,6 +216,7 @@ async def compile_sensor_step(decl: SensorDeclaration, ctx: dict[str, Any]) -> A
         from src.backend.dsl.workflow.compiler.step_compilers import (
             SensorPollIntervalError as _SensorPollIntervalError,
         )
+
         raise _SensorPollIntervalError(
             f"sensor {decl.predicate!r} poll_interval_s={decl.poll_interval_s} "
             f"must be > 0 (D-A8-10 cycle 1 — иначе tight loop DoS)."
@@ -226,6 +228,7 @@ async def compile_sensor_step(decl: SensorDeclaration, ctx: dict[str, Any]) -> A
     from src.backend.dsl.workflow.compiler.step_compilers import (
         SensorMaxIterationsError as _SensorMaxIterationsError,
     )
+
     max_iterations = _MAX_ITER
     elapsed = 0.0
     iterations = 0
@@ -333,9 +336,7 @@ async def compile_agent_invoke_step(
 
         # Best-effort: load prior state. None = saver unavailable OR first run.
         prior = await workflow.execute_activity(
-            _GET_ACT,
-            thread_id,
-            start_to_close_timeout=timedelta(seconds=_TIMEOUT_S),
+            _GET_ACT, thread_id, start_to_close_timeout=timedelta(seconds=_TIMEOUT_S)
         )
         if prior is not None:
             _logger.debug(

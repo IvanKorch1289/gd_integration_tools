@@ -45,12 +45,14 @@ def _render_queue_monitor() -> None:
     else:
         for broker_name, stats in summary.items():
             st.subheader(broker_name)
-            metric_row([
-                ("Topics", stats.get("topics", 0)),
-                ("Всего сообщений", stats.get("messages", 0)),
-                ("DLQ", stats.get("dlq", 0)),
-                ("Lag consumer'а", stats.get("lag", 0)),
-            ])
+            metric_row(
+                [
+                    ("Topics", stats.get("topics", 0)),
+                    ("Всего сообщений", stats.get("messages", 0)),
+                    ("DLQ", stats.get("dlq", 0)),
+                    ("Lag consumer'а", stats.get("lag", 0)),
+                ]
+            )
 
             topics = stats.get("topics_detail") or []
             if topics:

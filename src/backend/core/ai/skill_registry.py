@@ -64,6 +64,7 @@ if TYPE_CHECKING:
 # Re-export ниже для backward-compat public API.
 __all__ = ("SkillRegistry", "SkillSpec")
 
+
 class SkillRegistry:
     """Реестр AI skills (TOML manifest + Python decorator sov).
 
@@ -396,7 +397,7 @@ class SkillRegistry:
             sibling = repo_root / "extensions"
             if sibling.exists():
                 return sibling.resolve()
-        except (OSError, ValueError):  # noqa: violation-check — filesystem walk failure → return None
+        except OSError, ValueError:  # noqa: violation-check — filesystem walk failure → return None
             pass
 
         return None

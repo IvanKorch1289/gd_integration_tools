@@ -75,7 +75,7 @@ def _build_services() -> list[ServiceInfo]:
         config = {}
     try:
         client.get_health()  # verify endpoint reachable
-    except (ConnectionError, TimeoutError, RuntimeError, ValueError, KeyError):
+    except ConnectionError, TimeoutError, RuntimeError, ValueError, KeyError:
         # cycle-9/D-AUDIT-1038: narrow exceptions + observability.
         # ConnectionError/TimeoutError — server unreachable, RuntimeError —
         # API failure, ValueError — invalid response, KeyError — missing key.
@@ -127,9 +127,9 @@ cols = st.columns(len(services) if services else 1)
 for i, svc in enumerate(services):
     with cols[i]:
         if svc.url:
-            st.link_button(svc.name, svc.url, width='stretch')
+            st.link_button(svc.name, svc.url, width="stretch")
         else:
-            st.button(svc.name, disabled=True, width='stretch')
+            st.button(svc.name, disabled=True, width="stretch")
 
         if svc.status == ServiceStatus.UP:
             st.markdown(
@@ -138,8 +138,7 @@ for i, svc in enumerate(services):
             )
         elif svc.status == ServiceStatus.DOWN:
             st.markdown(
-                ":red[НЕДОСТУПЕН]"
-                + (" — проверьте подключение" if svc.url else "")
+                ":red[НЕДОСТУПЕН]" + (" — проверьте подключение" if svc.url else "")
             )
         else:
             st.markdown(":gray[URL не настроен]")
@@ -166,6 +165,6 @@ doc_services: dict[str, str] = {
 doc_cols = st.columns(len(doc_services))
 for i, (name, path) in enumerate(doc_services.items()):
     with doc_cols[i]:
-        st.link_button(name, f"{base_url}{path}", width='stretch')
+        st.link_button(name, f"{base_url}{path}", width="stretch")
 
 related_pages_footer("65_Сервисы")

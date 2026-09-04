@@ -209,7 +209,7 @@ class WebhookRelay:
 
                 if not jmespath.search(rule.condition, payload):
                     return None
-            except (jmespath.exceptions.ParseError, ValueError, TypeError):
+            except jmespath.exceptions.ParseError, ValueError, TypeError:
                 logger.debug(
                     "jmespath condition raised; rule applied as match-all",
                     exc_info=True,
@@ -328,7 +328,7 @@ class WebhookRelay:
             try:
                 data = orjson.loads(item)
                 entries.append(DLQEntry(**data))
-            except (orjson.JSONDecodeError, TypeError, ValueError):
+            except orjson.JSONDecodeError, TypeError, ValueError:
                 logger.debug("DLQ entry parse failed; skipped", exc_info=True)
                 continue
         return entries
@@ -356,7 +356,7 @@ class WebhookRelay:
                     if data.get("id") == entry_id:
                         await raw.lrem(_DLQ_KEY, 1, item)
                         return
-                except (orjson.JSONDecodeError, TypeError, ValueError):
+                except orjson.JSONDecodeError, TypeError, ValueError:
                     logger.debug(
                         "DLQ entry parse failed during remove; skipped", exc_info=True
                     )
@@ -392,7 +392,7 @@ class WebhookRelay:
                     data = orjson.loads(item)
                     if data.get("id") in entry_ids:
                         await raw.lrem(_DLQ_KEY, 1, item)
-                except (orjson.JSONDecodeError, TypeError, ValueError):
+                except orjson.JSONDecodeError, TypeError, ValueError:
                     logger.debug(
                         "DLQ entry parse failed during batch remove; skipped",
                         exc_info=True,
@@ -474,9 +474,7 @@ class WebhookRelay:
                 continue
             # S2: ключ исходной доставки — получатель дедуплицирует retry.
             r = await self._send_with_retry(
-                rule,
-                entry.payload,
-                idempotency_key=entry.idempotency_key or entry.id,
+                rule, entry.payload, idempotency_key=entry.idempotency_key or entry.id
             )
             if r.get("status") == "sent":
                 remove_ids.add(entry.id)

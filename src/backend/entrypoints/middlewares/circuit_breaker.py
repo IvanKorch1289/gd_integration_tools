@@ -48,7 +48,12 @@ from src.backend.core.logging import get_logger
 
 _logger = get_logger("entrypoints.middlewares.circuit_breaker")
 
-__all__ = ("BreakerPolicy", "BreakerState", "CircuitBreakerMiddleware", "RouteBreakerState")
+__all__ = (
+    "BreakerPolicy",
+    "BreakerState",
+    "CircuitBreakerMiddleware",
+    "RouteBreakerState",
+)
 
 
 class BreakerState(str, Enum):
@@ -92,7 +97,9 @@ def _record_breaker_metric(route: str, state: str) -> None:
     try:
         from src.backend.core.observability.metrics import record_circuit_breaker_state
 
-        record_circuit_breaker_state(route, _BREAKER_STATE_TO_METRIC_VALUE.get(state, 0))
+        record_circuit_breaker_state(
+            route, _BREAKER_STATE_TO_METRIC_VALUE.get(state, 0)
+        )
     except Exception as exc:
         # REVIEW_2026-08-27 N-1: log на debug уровне (observability — best-effort,
         # но production blind spot без логов). На caller не влияет.
@@ -206,9 +213,7 @@ class CircuitBreakerMiddleware:
         try:
             from src.backend.core.config.features import feature_flags
 
-            return bool(
-                getattr(feature_flags, "circuit_breaker_use_registry", False)
-            )
+            return bool(getattr(feature_flags, "circuit_breaker_use_registry", False))
         except Exception:
             return False
 
@@ -262,9 +267,7 @@ class CircuitBreakerMiddleware:
         self._sliding_breakers[route] = self._get_sliding_breaker(route, policy)
         return self._get_state(route)
 
-    def _record_failure(
-        self, state: RouteBreakerState, policy: BreakerPolicy
-    ) -> None:
+    def _record_failure(self, state: RouteBreakerState, policy: BreakerPolicy) -> None:
         """Sprint 29: record a failure in :class:`RouteBreakerState`.
 
         S51 W2: legacy path removed. State-only method kept as no-op for
@@ -284,9 +287,7 @@ class CircuitBreakerMiddleware:
         """
         # State-only API is no-op now. Production uses route-aware methods.
 
-    def _should_allow(
-        self, state: RouteBreakerState, policy: BreakerPolicy
-    ) -> bool:
+    def _should_allow(self, state: RouteBreakerState, policy: BreakerPolicy) -> bool:
         """Sprint 29: should a request be allowed?
 
         S51 W2: legacy deque path removed. State-only method kept for
@@ -359,8 +360,7 @@ class CircuitBreakerMiddleware:
             adapter = self._get_adapter()
             if not adapter.should_allow(path, policy):
                 _logger.info(
-                    "Circuit OPEN (registry adapter) — rejecting request for %s",
-                    path,
+                    "Circuit OPEN (registry adapter) — rejecting request for %s", path
                 )
                 # S58 W2: emit Prometheus gauge for circuit OPEN state
                 _record_breaker_metric(path, BreakerState.OPEN)

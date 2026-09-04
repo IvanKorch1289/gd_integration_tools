@@ -65,13 +65,7 @@ DEFAULT_ALLOWLIST: Final[frozenset[str]] = frozenset(
 
 # Sub-module allowlist для модулей с подмодулями (например, datetime.time).
 _DEFAULT_SUBMODULE_PREFIXES: Final[frozenset[str]] = frozenset(
-    {
-        "collections",
-        "datetime",
-        "pathlib",
-        "enum",
-        "typing",
-    }
+    {"collections", "datetime", "pathlib", "enum", "typing"}
 )
 
 
@@ -88,7 +82,9 @@ class RestrictedUnpickler(pickle.Unpickler):
 
     """
 
-    def __init__(self, file: Any, *, allowlist: frozenset[str] = DEFAULT_ALLOWLIST) -> None:
+    def __init__(
+        self, file: Any, *, allowlist: frozenset[str] = DEFAULT_ALLOWLIST
+    ) -> None:
         super().__init__(file)
         self._allowlist = allowlist
 
@@ -129,11 +125,7 @@ class RestrictedUnpickler(pickle.Unpickler):
         return super().find_class(module, name)
 
 
-def safe_loads(
-    data: bytes,
-    *,
-    allowlist: frozenset[str] | None = None,
-) -> Any:
+def safe_loads(data: bytes, *, allowlist: frozenset[str] | None = None) -> Any:
     """Безопасная десериализация pickle-байтов через ``RestrictedUnpickler``.
 
     Args:

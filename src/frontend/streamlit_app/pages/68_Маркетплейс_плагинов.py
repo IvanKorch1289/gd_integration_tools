@@ -111,7 +111,7 @@ for plugin in filtered:
     )
 
 with tabs[0]:
-    st.dataframe(rows, width='stretch', hide_index=True)
+    st.dataframe(rows, width="stretch", hide_index=True)
 
 with tabs[1]:
     st.markdown("### Граф зависимостей плагинов")

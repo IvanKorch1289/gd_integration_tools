@@ -30,6 +30,7 @@ M2-#14 closed via existing migration. Tracking + verification comment
 Layer policy: entrypoints → services. services → core.api (facade).
 core.api → infrastructure (allowed via facade).
 """
+
 from __future__ import annotations
 
 from src.backend.core.resilience.breaker import CircuitBreaker

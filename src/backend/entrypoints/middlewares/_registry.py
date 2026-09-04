@@ -11,6 +11,7 @@ from dataclasses import dataclass
 @dataclass
 class _InflightCounter:
     """Thread-safe counter (asyncio.Lock не нужен — GIL защищает int ops)."""
+
     value: int = 0
 
 

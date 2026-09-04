@@ -140,11 +140,13 @@ if submitted:
             )
         elapsed_ms = (time.perf_counter() - started) * 1000
 
-        metric_row([
-            ("Канал", "WebSocket"),
-            ("Время, мс", f"{elapsed_ms:.1f}"),
-            ("Чанков", len(chunks)),
-        ])
+        metric_row(
+            [
+                ("Канал", "WebSocket"),
+                ("Время, мс", f"{elapsed_ms:.1f}"),
+                ("Чанков", len(chunks)),
+            ]
+        )
 
         if err:
             st.error(f"WS error: {err}")
@@ -219,6 +221,7 @@ if submitted:
             # AttributeError — API change, KeyError — missing key.
             st.code(resp.text[:10_000])
             import logging
+
             logging.getLogger(__name__).debug(
                 "streamlit_39_Консоль.invocation_history_update_failed",
                 extra={"error": str(inv_exc)},
@@ -243,7 +246,7 @@ if st.button("Опросить") and poll_id:
             st.metric("HTTP", resp.status_code)
             try:
                 st.json(resp.json())
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 # cycle-9/D-AUDIT-1055: narrow exceptions + observability.
                 # ValueError для malformed JSON, TypeError для wrong type.
                 st.code(resp.text[:10_000])

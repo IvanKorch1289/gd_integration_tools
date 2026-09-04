@@ -131,8 +131,7 @@ class ScheduledReportsService:
                 # scheduler triggered). Tier-1/2 actions теперь видят
                 # непустой principal для audit-trail.
                 meta=ActionCommandMetaSchema(
-                    principal=f"report:{report.name}",
-                    permissions=[],
+                    principal=f"report:{report.name}", permissions=[]
                 ),
             )
             result = await action_handler_registry.dispatch(command)

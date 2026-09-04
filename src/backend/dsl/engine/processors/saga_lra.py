@@ -283,6 +283,7 @@ class SagaLRAProcessor(BaseProcessor):
             from src.backend.core.di.providers.workflow import (
                 get_workflow_state_repository_provider,
             )
+
             WorkflowStateRepository = get_workflow_state_repository_provider()
         except (ImportError, AttributeError, RuntimeError) as dep_exc:
             # cycle-9/D-AUDIT-977: narrow exceptions + observability.

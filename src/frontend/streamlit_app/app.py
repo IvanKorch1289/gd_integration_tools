@@ -52,7 +52,8 @@ def _render_sidebar_search() -> None:
     if search:
         q = search.lower()
         matches = [
-            (name, meta) for name, meta in PAGE_METADATA.items()
+            (name, meta)
+            for name, meta in PAGE_METADATA.items()
             if q in meta["title"].lower() or q in name.lower()
         ]
         if matches:
@@ -67,9 +68,7 @@ def _render_sidebar_search() -> None:
             st.caption(f"Ничего не найдено по запросу «{search}»")
 
 
-def _emit_page_render_event(
-    *, page_key: str, render_start: float
-) -> None:
+def _emit_page_render_event(*, page_key: str, render_start: float) -> None:
     """S173 M8.1: emit ``frontend.page.rendered`` audit-event.
 
     Lightweight observability — non-blocking. Lazy-import
@@ -86,18 +85,18 @@ def _emit_page_render_event(
             event_type="frontend.page.rendered",
             payload={
                 "page_key": page_key,
-                "render_ms": int(
-                    (_time.monotonic() - render_start) * 1000
-                ),
+                "render_ms": int((_time.monotonic() - render_start) * 1000),
                 "session_id": (
                     st.runtime.scriptrunner.get_script_run_ctx().session_id
-                    if hasattr(st, "runtime") else None
+                    if hasattr(st, "runtime")
+                    else None
                 ),
             },
             severity="info",
         )
     except Exception as _exc:  # pragma: no cover — never fail caller
         import logging as _logging
+
         _logging.getLogger("frontend.app").debug(
             "frontend.page.rendered: audit-event emit failed: %s", _exc
         )
@@ -136,10 +135,7 @@ def render_dashboard() -> None:
     _render_dashboard_sidebar()
 
     # S173 M8.1: page-render audit-event.
-    _emit_page_render_event(
-        page_key="00_Вход",
-        render_start=render_start,
-    )
+    _emit_page_render_event(page_key="00_Вход", render_start=render_start)
 
     # Header с логотипом
     col_title, col_logo = st.columns([8, 1])
@@ -166,15 +162,21 @@ def render_dashboard() -> None:
     # KPI Метрики
     try:
         metrics = cached_get_metrics()
-    except (ConnectionError, TimeoutError, RuntimeError, ValueError, KeyError) as metrics_exc:
+    except (
+        ConnectionError,
+        TimeoutError,
+        RuntimeError,
+        ValueError,
+        KeyError,
+    ) as metrics_exc:
         # cycle-9/D-AUDIT-1014: narrow exceptions + observability.
         # ConnectionError/TimeoutError — backend unreachable, RuntimeError
         # — API failure, ValueError — invalid response, KeyError —
         # missing key.
         import logging
+
         logging.getLogger(__name__).debug(
-            "streamlit_app.cached_get_metrics_failed",
-            extra={"error": str(metrics_exc)},
+            "streamlit_app.cached_get_metrics_failed", extra={"error": str(metrics_exc)}
         )
         metrics = {}
 
@@ -193,13 +195,19 @@ def render_dashboard() -> None:
     st.subheader("Здоровье компонентов")
     try:
         health = cached_get_health()
-    except (ConnectionError, TimeoutError, RuntimeError, ValueError, KeyError) as health_exc:
+    except (
+        ConnectionError,
+        TimeoutError,
+        RuntimeError,
+        ValueError,
+        KeyError,
+    ) as health_exc:
         # cycle-9/D-AUDIT-1015: narrow exceptions + observability (mirror
         # D-AUDIT-1014).
         import logging
+
         logging.getLogger(__name__).debug(
-            "streamlit_app.cached_get_health_failed",
-            extra={"error": str(health_exc)},
+            "streamlit_app.cached_get_health_failed", extra={"error": str(health_exc)}
         )
         health = {}
     if health:
@@ -254,43 +262,82 @@ NAV_SECTIONS: dict[str, list[str]] = {
     "🎓 Обучение": ["00_Вход", "04_Обучение"],
     "🔌 Интеграция": ["11_Маршруты", "37_API_Вызовы", "62_Админ_схем"],
     "⚙️ Воркфлоу": [
-        "16_Воркфлоу", "17_Replay_Воркфлоу", "18_Версионирование_Воркфлоу",
-        "19_Saga_Компенсации", "15_Оценка_стоимости_Workflow", "66_Логи_Воркфлоу",
+        "16_Воркфлоу",
+        "17_Replay_Воркфлоу",
+        "18_Версионирование_Воркфлоу",
+        "19_Saga_Компенсации",
+        "15_Оценка_стоимости_Workflow",
+        "66_Логи_Воркфлоу",
     ],
     "📦 Операции": [
-        "10_Заказы", "12_Логи", "13_Конструктор_Cron", "14_Панель_Cron",
+        "10_Заказы",
+        "12_Логи",
+        "13_Конструктор_Cron",
+        "14_Панель_Cron",
         "43_Логи_в_реальном_времени",
     ],
     "🤖 ИИ": [
-        "20_AI_Чат", "21_AI_Обратная_связь", "22_RAG_Консоль", "23_AI_Учёт_затрат",
-        "47_AI_Безопасность", "48_Лаборатория_промптов", "49_Реестр_моделей",
+        "20_AI_Чат",
+        "21_AI_Обратная_связь",
+        "22_RAG_Консоль",
+        "23_AI_Учёт_затрат",
+        "47_AI_Безопасность",
+        "48_Лаборатория_промптов",
+        "49_Реестр_моделей",
         "81_Адаптивная_RAG_панель",
         "75_Мастер_загрузки_RAG",
         "85_Массовая_загрузка_RAG",
     ],
     "🛠 DSL": [
-        "30_DSL_Площадка", "31_DSL_Визуальный_редактор", "32_DSL_Конструктор",
-        "33_DSL_Шаблоны", "34_DSL_Отладчик", "35_Мастер_генерации_кода",
-        "36_Экспресс_боты", "38_Галерея_блюпринтов", "39_Консоль_вызовов",
+        "30_DSL_Площадка",
+        "31_DSL_Визуальный_редактор",
+        "32_DSL_Конструктор",
+        "33_DSL_Шаблоны",
+        "34_DSL_Отладчик",
+        "35_Мастер_генерации_кода",
+        "36_Экспресс_боты",
+        "38_Галерея_блюпринтов",
+        "39_Консоль_вызовов",
         "46_DSL_Пробный_прогон",
     ],
     "🛡 Устойчивость": [
-        "52_Устойчивость", "54_Replay_DLQ", "78_Плавная_деградация",
-        "79_Редактор_профиля_устойчивости", "80_Параллелизм_конвейера",
+        "52_Устойчивость",
+        "54_Replay_DLQ",
+        "78_Плавная_деградация",
+        "79_Редактор_профиля_устойчивости",
+        "80_Параллелизм_конвейера",
     ],
     "🔍 Мониторинг": [
-        "41_Поиск", "51_Проверка_здоровья", "53_Монитор_очереди",
-        "55_Монитор_пула", "56_Процессы", "57_Файлы_S3", "58_Шина_действий",
-        "59_Отладчик_маршрутов", "60_Админ_кеша", "61_Журнал_аудита",
+        "41_Поиск",
+        "51_Проверка_здоровья",
+        "53_Монитор_очереди",
+        "55_Монитор_пула",
+        "56_Процессы",
+        "57_Файлы_S3",
+        "58_Шина_действий",
+        "59_Отладчик_маршрутов",
+        "60_Админ_кеша",
+        "61_Журнал_аудита",
         "96_Монитор_зависших_сообщений",
     ],
     "🏢 Админ": [
-        "45_Админ", "50_Фича_флаги", "68_Маркетплейс_плагинов",
-        "70_Тенанты", "71_Матрица_возможностей", "72_HITL_Панель",
-        "73_Просмотр_конфига", "76_Подключение_плагинов", "77_Каталог_процессоров",
-        "88_Тенантные_фича_флаги", "83_Инспекция_тенанта", "64_SQL_Админ",
-        "65_Сервисы", "67_Задачи", "86_Аудит_использования_DSL",
-        "95_Покрытие_EIP", "63_Вики",
+        "45_Админ",
+        "50_Фича_флаги",
+        "68_Маркетплейс_плагинов",
+        "70_Тенанты",
+        "71_Матрица_возможностей",
+        "72_HITL_Панель",
+        "73_Просмотр_конфига",
+        "76_Подключение_плагинов",
+        "77_Каталог_процессоров",
+        "88_Тенантные_фича_флаги",
+        "83_Инспекция_тенанта",
+        "64_SQL_Админ",
+        "65_Сервисы",
+        "67_Задачи",
+        "86_Аудит_использования_DSL",
+        "95_Покрытие_EIP",
+        "63_Вики",
     ],
 }
 
@@ -310,9 +357,7 @@ def _build_navigation() -> StreamlitPage:
 
     # Dashboard — default
     pages_by_section["🏠 Главная"] = [
-        st.Page(
-            render_dashboard, title="Главная", icon=":material/home:", default=True
-        ),
+        st.Page(render_dashboard, title="Главная", icon=":material/home:", default=True)
     ]
 
     missing: list[str] = []
@@ -324,11 +369,7 @@ def _build_navigation() -> StreamlitPage:
                 missing.append(key)
                 continue
             section_pages.append(
-                st.Page(
-                    f"pages/{key}.py",
-                    title=meta["title"],
-                    icon=meta["icon"],
-                )
+                st.Page(f"pages/{key}.py", title=meta["title"], icon=meta["icon"])
             )
         if section_pages:
             pages_by_section[section_name] = section_pages
@@ -368,9 +409,7 @@ def _build_navigation() -> StreamlitPage:
     try:
         from src.backend.core.api import emit_audit_safe
 
-        total_pages = sum(
-            len(pages) for pages in pages_by_section.values()
-        )
+        total_pages = sum(len(pages) for pages in pages_by_section.values())
         section_count = len(pages_by_section)
         emit_audit_safe(
             event="frontend.navigation.built",
@@ -386,6 +425,7 @@ def _build_navigation() -> StreamlitPage:
         )
     except Exception as _exc:  # pragma: no cover — never fail caller
         import logging as _logging
+
         _logging.getLogger("frontend.app").debug(
             "frontend.navigation.built: audit-event emit failed: %s", _exc
         )

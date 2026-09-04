@@ -58,7 +58,7 @@ with st.sidebar:
 
 try:
     payload = client.get_processor_catalog(
-    query=query, namespace=namespace or None, limit=limit
+        query=query, namespace=namespace or None, limit=limit
     )
 except Exception as exc:
     st.error(f"Ошибка API: {exc}")

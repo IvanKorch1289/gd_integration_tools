@@ -111,8 +111,7 @@ class RunMixin:
                 # P0 (cycle 35): пробрасываем principal/permissions из
                 # InvocationRequest (parity с cycle 24 SOAP/DSL fix).
                 meta=ActionCommandMetaSchema(
-                    principal=request.principal,
-                    permissions=list(request.permissions),
+                    principal=request.principal, permissions=list(request.permissions)
                 ),
             )
             await self._dispatch(command, self._build_context(request))
@@ -138,8 +137,7 @@ class RunMixin:
                 payload=request.payload,
                 # P0 (cycle 35): пробрасываем principal/permissions.
                 meta=ActionCommandMetaSchema(
-                    principal=request.principal,
-                    permissions=list(request.permissions),
+                    principal=request.principal, permissions=list(request.permissions)
                 ),
             )
             result = await self._dispatch(command, self._build_context(request))

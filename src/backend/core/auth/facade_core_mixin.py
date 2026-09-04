@@ -189,9 +189,7 @@ class AuthCoreMixin:
             facade = get_security_facade_provider()
             return await facade.is_token_blacklisted(jti)
         except Exception as exc:
-            logger.debug(
-                "jwt blacklist check failed: %s -- fail-closed", exc
-            )
+            logger.debug("jwt blacklist check failed: %s -- fail-closed", exc)
             return True
 
     def check_permission(self, auth: AuthResult, required_capability: str) -> bool:

@@ -19,6 +19,7 @@ __all__ = ("QdrantVectorStore",)
 
 logger = get_logger(__name__)
 
+
 class QdrantVectorStore(BaseVectorStore):
     """Vector store через Qdrant (default backend)."""
 
@@ -57,7 +58,7 @@ class QdrantVectorStore(BaseVectorStore):
 
         try:
             await client.get_collection(self._collection_name)
-        except (UnexpectedResponse, ValueError):
+        except UnexpectedResponse, ValueError:
             await client.create_collection(
                 collection_name=self._collection_name,
                 vectors_config=VectorParams(
@@ -245,5 +246,3 @@ class QdrantVectorStore(BaseVectorStore):
             }
         except Exception as exc:
             return {"status": "down", "error": str(exc)}
-
-

@@ -64,16 +64,26 @@ def _start_sse_thread() -> None:
                             try:
                                 q.put_nowait(payload)
                             except queue.Full:
-                                st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
+                                st.error(
+                                    "Не удалось выполнить запрос — проверьте подключение к серверу"
+                                )
                                 q.get_nowait()  # вытесняем старое
                                 q.put_nowait(payload)
-        except (OSError, ConnectionError, RuntimeError, AttributeError, ValueError) as sse_exc:
+        except (
+            OSError,
+            ConnectionError,
+            RuntimeError,
+            AttributeError,
+            ValueError,
+        ) as sse_exc:
             # cycle-9/D-AUDIT-1050: narrow exceptions + observability.
             # OSError/ConnectionError — SSE transport failure, RuntimeError
             # — server error, AttributeError — SSE API change, ValueError
             # — invalid event.
             st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
-            logger.debug("SSE logs stream consumer terminated: %s", sse_exc, exc_info=True)
+            logger.debug(
+                "SSE logs stream consumer terminated: %s", sse_exc, exc_info=True
+            )
 
     threading.Thread(target=consume, daemon=True, name="sse-logs").start()
     st.session_state["_sse_started"] = True
@@ -108,7 +118,9 @@ def _render_log_stream() -> None:
             # ValueError), TypeError для wrong payload type.
             st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
             logger.debug(
-                "failed to parse log payload from SSE queue: %s", json_exc, exc_info=True
+                "failed to parse log payload from SSE queue: %s",
+                json_exc,
+                exc_info=True,
             )
             continue
 
@@ -127,10 +139,8 @@ def _render_log_stream() -> None:
     ]
 
     st.caption(
-
-            f"Записей в буфере: {len(st.session_state['log_history'])}, "
-            f"после фильтра: {len(filtered)}"
-
+        f"Записей в буфере: {len(st.session_state['log_history'])}, "
+        f"после фильтра: {len(filtered)}"
     )
     for item in reversed(filtered[-200:]):
         ts = item.get("timestamp", "")

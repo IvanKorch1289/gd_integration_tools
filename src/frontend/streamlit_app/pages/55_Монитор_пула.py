@@ -40,7 +40,7 @@ try:
     from src.backend.core.api import feature_flags as _ff
 
     _flag_enabled: bool = bool(getattr(_ff, "pool_monitor_enabled", False))
-except (ImportError, AttributeError, RuntimeError):
+except ImportError, AttributeError, RuntimeError:
     # cycle-9/D-AUDIT-1056: narrow exceptions + observability.
     # ImportError — features module missing, AttributeError — API change,
     # RuntimeError — feature_flags unavailable.
@@ -141,12 +141,17 @@ def _fetch_snapshot() -> tuple[dict[str, Any], bool]:
         from src.frontend.streamlit_app.api_clients import get_api_client
 
         _client = get_api_client()
-        _data = _client._request(
-            "GET", "/api/v1/admin/pools/snapshot"
-        )
+        _data = _client._request("GET", "/api/v1/admin/pools/snapshot")
         if isinstance(_data, dict) and _data:
             return _data, True
-    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, AttributeError):
+    except (
+        ConnectionError,
+        TimeoutError,
+        RuntimeError,
+        ValueError,
+        TypeError,
+        AttributeError,
+    ):
         # cycle-9/D-AUDIT-1057: narrow exceptions + observability (mirror
         # D-AUDIT-1054 для resilience/snapshot).
         st.error("Не удалось выполнить запрос — проверьте подключение к серверу")

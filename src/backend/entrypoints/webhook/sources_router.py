@@ -88,7 +88,7 @@ async def receive_source_webhook(source_id: str, request: Request) -> dict[str, 
         # внутри ``_verify_hmac`` остаётся фактической аутентификацией
         # webhook (вызывающая сторона должна предоставить валидную подпись).
         await source.verify_and_dispatch(  # type: ignore[attr-defined]
-            raw_body, headers, payload=payload, _principal="webhook-service",
+            raw_body, headers, payload=payload, _principal="webhook-service"
         )
     except AttributeError as exc:
         raise HTTPException(
@@ -114,7 +114,7 @@ async def receive_source_webhook(source_id: str, request: Request) -> dict[str, 
 
         if isinstance(exc, ConnectorAuthError):
             logger.warning(
-                "Webhook capability denied: source=%s reason=%s", source_id, message,
+                "Webhook capability denied: source=%s reason=%s", source_id, message
             )
             raise HTTPException(status_code=401, detail="unauthorized") from exc
         raise

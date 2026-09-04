@@ -60,8 +60,7 @@ def render_pending_table() -> None:
             with col_left:
                 st.json(signal["payload"], expanded=False)
                 st.caption(
-                    f"Создан: {signal['created_at']} | "
-                    f"Инициатор: {signal['initiator']}"
+                    f"Создан: {signal['created_at']} | Инициатор: {signal['initiator']}"
                 )
             with col_right:
                 operator = st.text_input(

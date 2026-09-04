@@ -138,7 +138,9 @@ class MqttHandler:
                     # сообщения ДО создания task (защита от OOM при враждебных
                     # publisher'ах). max_payload_bytes — настройка MQTTHandlerSettings.
                     max_payload = getattr(
-                        self._settings, "max_payload_bytes", 1_048_576  # 1 MiB default
+                        self._settings,
+                        "max_payload_bytes",
+                        1_048_576,  # 1 MiB default
                     )
                     async for message in client.messages:
                         if len(message.payload) > max_payload:
@@ -169,9 +171,7 @@ class MqttHandler:
                 logger.error("MQTT connection error: %s. Reconnecting in 5s...", exc)
                 await asyncio.sleep(5)
 
-    async def _process_message(
-        self, topic: str, payload: bytes | bytearray
-    ) -> None:
+    async def _process_message(self, topic: str, payload: bytes | bytearray) -> None:
         """W3 (M5 timeouts): обработка одного сообщения с таймаутом.
 
         Зависший dispatch не блокирует остальные сообщения — по таймауту

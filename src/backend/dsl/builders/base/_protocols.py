@@ -34,7 +34,6 @@ from typing import runtime_checkable as _runtime_checkable
 # 4. Eventually RouteBuilder becomes a thin wrapper or is removed.
 
 
-
 def _shares_prefix(a: str, b: str, n: int = 3) -> bool:
     """True если ``a`` и ``b`` имеют общий prefix длиной ≥ ``n``.
 

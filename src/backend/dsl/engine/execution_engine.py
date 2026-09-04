@@ -231,7 +231,7 @@ class ExecutionEngine:
                 latency_ms=total_ms,
                 is_error=exchange.status == ExchangeStatus.failed,
             )
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             # Sprint 19 (analyst swarm iteration 4) Q-2: log instead of silent pass.
             # SLO tracking dropped on registry unload → p99/latency/error metrics
             # disappear silently. Log warning so missing SLO data is observable.

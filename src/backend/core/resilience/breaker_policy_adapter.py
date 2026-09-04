@@ -128,8 +128,7 @@ class BreakerPolicyAdapter:
                 # Already open — no-op (recovery via TTL or half-open)
                 if exception is not None:
                     _logger.debug(
-                        "breaker already OPEN, exception ignored: "
-                        "route=%s exc=%s",
+                        "breaker already OPEN, exception ignored: route=%s exc=%s",
                         route,
                         type(exception).__name__,
                     )
@@ -148,9 +147,7 @@ class BreakerPolicyAdapter:
                     type(exception).__name__ if exception else "synthetic",
                 )
         except AttributeError as e:
-            _logger.warning(
-                "breaker state mutation failed: route=%s err=%s", route, e
-            )
+            _logger.warning("breaker state mutation failed: route=%s err=%s", route, e)
 
     def record_success(self, route: str) -> None:
         """Record a success for the given route.
@@ -163,9 +160,7 @@ class BreakerPolicyAdapter:
             if current_state == BreakerState.OPEN:
                 # Half-open probe success → close
                 breaker._set_state(BreakerState.CLOSED)
-                _logger.info(
-                    "breaker CLOSED via half-open probe: route=%s", route
-                )
+                _logger.info("breaker CLOSED via half-open probe: route=%s", route)
             breaker._failures_count = 0
         except AttributeError as e:
             _logger.warning(

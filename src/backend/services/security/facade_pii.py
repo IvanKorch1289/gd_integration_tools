@@ -40,7 +40,7 @@ def _emit_pii_fail_audit(operation: str, exc: BaseException) -> None:
         )
     except Exception as audit_exc:
         _logger.warning(
-            "Failed to emit pii.fail_open audit for %s: %s", operation, audit_exc,
+            "Failed to emit pii.fail_open audit for %s: %s", operation, audit_exc
         )
 
 

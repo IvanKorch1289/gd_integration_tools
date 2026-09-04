@@ -184,12 +184,7 @@ class CrudMixin(_BaseServiceProtocol):
             )
 
     async def list(
-        self,
-        *,
-        limit: int = 100,
-        offset: int = 0,
-        by: str = "id",
-        order: str = "asc",
+        self, *, limit: int = 100, offset: int = 0, by: str = "id", order: str = "asc"
     ) -> list[Any]:
         """Возвращает список объектов с пагинацией.
 
@@ -199,7 +194,7 @@ class CrudMixin(_BaseServiceProtocol):
         """
         async with self._service_error_boundary():
             result = await self.repo.get_paginated(
-                limit=limit, offset=offset, by=by, order=order,
+                limit=limit, offset=offset, by=by, order=order
             )
         # Поддержка пустого ответа (tests/unit/.../test_list_returns_empty_when_no_items)
         if not result:

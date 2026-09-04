@@ -36,6 +36,7 @@ def render_visual_tab() -> None:
             # KeyError — missing step key, yaml.YAMLError — YAML parse
             # failure.
             import logging
+
             logging.getLogger(__name__).debug(
                 "streamlit_tab_visual.reorder_yaml_rebuild_failed",
                 extra={"error": str(reparse_exc)},
@@ -71,7 +72,7 @@ def render_visual_tab() -> None:
                 p, key=f"vis_p_{proc_type}_{p}", placeholder=f"значение для {p}"
             )
 
-        if st.button("+ Добавить процессор", width='stretch'):
+        if st.button("+ Добавить процессор", width="stretch"):
             params_clean = {k: v for k, v in new_params.items() if v != ""}
             steps.append({"type": proc_type, "params": params_clean})
             st.session_state.yaml = build_yaml_from_steps(

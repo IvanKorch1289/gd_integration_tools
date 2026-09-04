@@ -49,10 +49,7 @@ _logger = get_logger("services.security.facade")
 CapabilityChecker = Callable[[str, str, str | None], None]
 
 
-class SecurityFacade(
-    JwtBlacklistMixin,
-    PiiFacadeMixin,
-):
+class SecurityFacade(JwtBlacklistMixin, PiiFacadeMixin):
     """Unified capability-checked facade для security primitives.
 
     Args:

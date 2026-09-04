@@ -198,9 +198,7 @@ class DeviceRateLimiter:
 
         hits.append(now)
         return RateLimitDecision(
-            allowed=True,
-            remaining=self._max - len(hits),
-            reset_seconds=self._window,
+            allowed=True, remaining=self._max - len(hits), reset_seconds=self._window
         )
 
     def reset(self, device_id: str | None = None) -> None:
@@ -244,9 +242,7 @@ def build_verifier_with_protections(
     from src.backend.core.auth.mobile_jwt import MobileJwtVerifier
 
     base_verifier = MobileJwtVerifier(
-        backend=backend,
-        issuer_whitelist=list(issuer_whitelist),
-        audience=audience,
+        backend=backend, issuer_whitelist=list(issuer_whitelist), audience=audience
     )
 
     # Если stores не переданы — return bare MobileJwtVerifier
@@ -294,13 +290,9 @@ class _WrappedMobileJwtVerifier:
             except Exception as exc:
                 # M1-#2: fail-CLOSED если mobile_jwt_revoc_fail_closed.
                 # raise через _inner-аналогичную проверку оставим caller'у.
-                raise JwtVerificationError(
-                    f"revocation check failed: {exc}"
-                ) from exc
+                raise JwtVerificationError(f"revocation check failed: {exc}") from exc
             if is_revoked:
-                raise JwtVerificationError(
-                    f"JWT {ctx.jti!r} is revoked"
-                )
+                raise JwtVerificationError(f"JWT {ctx.jti!r} is revoked")
 
         # Phase 2: rate limit per device_id.
         # C2-review fix (2026-09-05): limiter'ы НЕ бросают при превышении —

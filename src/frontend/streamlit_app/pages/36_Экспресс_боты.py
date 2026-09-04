@@ -88,7 +88,7 @@ with tab_send:
             "Текст сообщения", value="Привет! Это тест Express-интеграции."
         )
 
-        if st.button(":rocket: Отправить", type="primary", width='stretch'):
+        if st.button(":rocket: Отправить", type="primary", width="stretch"):
             if not chat_id or not body:
                 st.error("Заполните chat_id и текст сообщения.")
             else:
@@ -97,6 +97,7 @@ with tab_send:
                         get_express_bot_client_factory_provider,
                         get_express_botx_message_class_provider,
                     )
+
                     get_express_client = get_express_bot_client_factory_provider()
                     BotxMessage = get_express_botx_message_class_provider()
 

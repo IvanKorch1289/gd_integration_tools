@@ -51,9 +51,10 @@ class CacheWriteProcessor(BaseProcessor):
         try:
             # S86 M2-#11 accelerated batch: DI provider (S60 added).
             from src.backend.core.di.providers.cache import get_redis_client_provider
+
             redis_client = get_redis_client_provider()
 
             data = orjson.dumps(body, default=str).decode()
             await redis_client.set_if_not_exists(key=key, value=data, ttl=self._ttl)
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             pass

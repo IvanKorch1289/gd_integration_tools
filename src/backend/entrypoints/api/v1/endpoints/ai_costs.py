@@ -66,10 +66,7 @@ async def get_ai_costs(
     }
 
 
-@router.get(
-    "/ai-costs/alerts",
-    summary="Cost-аномалии (mean+2σ)",
-)
+@router.get("/ai-costs/alerts", summary="Cost-аномалии (mean+2σ)")
 async def get_ai_cost_alerts(
     window_minutes: int = Query(default=60, ge=5, le=60 * 24),
     group_by: Literal["route", "tenant", "provider"] = Query(default="route"),
@@ -92,10 +89,7 @@ async def get_ai_cost_alerts(
     }
 
 
-@router.get(
-    "/ai-costs/link",
-    summary="Deep-link в LangFuse UI",
-)
+@router.get("/ai-costs/link", summary="Deep-link в LangFuse UI")
 async def get_langfuse_deeplink() -> dict[str, Any]:
     """Возвращает deep-link на LangFuse Web UI (для embed/sidebar)."""
     from src.backend.core.config.ai_stack import langfuse_settings

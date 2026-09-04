@@ -3,6 +3,7 @@
 Ponytail fix: services/* импортируют через core.api.storage
 (not infrastructure.clients.storage directly).
 """
+
 from __future__ import annotations
 
 # Re-exports infrastructure.clients.storage (3+ violations)
@@ -14,9 +15,4 @@ from src.backend.infrastructure.clients.storage import redis as _redis
 
 Clickhouse = clickhouse
 
-__all__ = [
-    "clickhouse",
-    "clickhouse_admin_client",
-    "_redis",
-    "Clickhouse",
-]
+__all__ = ["clickhouse", "clickhouse_admin_client", "_redis", "Clickhouse"]

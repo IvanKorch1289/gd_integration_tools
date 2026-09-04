@@ -23,12 +23,7 @@ from datetime import datetime
 import strawberry
 from strawberry.scalars import JSON
 
-__all__ = (
-    "FileType",
-    "OrderKindType",
-    "OrderType",
-    "UserType",
-)
+__all__ = ("FileType", "OrderKindType", "OrderType", "UserType")
 
 
 @strawberry.type

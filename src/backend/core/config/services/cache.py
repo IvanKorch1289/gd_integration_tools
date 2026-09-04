@@ -246,11 +246,7 @@ class RedisSettings(BaseSettingsWithLoader):
             "``sentinel_mode=true``."
         ),
         json_schema_extra={
-            "example": [
-                "sentinel-0:26379",
-                "sentinel-1:26379",
-                "sentinel-2:26379",
-            ]
+            "example": ["sentinel-0:26379", "sentinel-1:26379", "sentinel-2:26379"]
         },
     )
     sentinel_service_name: str = Field(
@@ -325,9 +321,7 @@ class RedisSettings(BaseSettingsWithLoader):
                 )
             host, _, port = node.rpartition(":")
             if not host or not port.isdigit():
-                raise ValueError(
-                    f"sentinel_nodes: некорректный host:port — {node!r}"
-                )
+                raise ValueError(f"sentinel_nodes: некорректный host:port — {node!r}")
         return v
 
     @model_validator(mode="after")

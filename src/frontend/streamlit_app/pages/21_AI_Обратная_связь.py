@@ -31,13 +31,15 @@ def _render_stats() -> None:
     except Exception as exc:
         st.warning(f"Не удалось получить статистику: {exc}")
         return
-    metric_row([
-        ("На проверку", stats.get("pending", 0)),
-        ("Положительные", stats.get("positive", 0)),
-        ("Отрицательные", stats.get("negative", 0)),
-        ("Пропущено", stats.get("skip", 0)),
-        ("Indexed в RAG", stats.get("indexed", 0)),
-    ])
+    metric_row(
+        [
+            ("На проверку", stats.get("pending", 0)),
+            ("Положительные", stats.get("positive", 0)),
+            ("Отрицательные", stats.get("negative", 0)),
+            ("Пропущено", stats.get("skip", 0)),
+            ("Indexed в RAG", stats.get("indexed", 0)),
+        ]
+    )
 
 
 def _render_pending_tab() -> None:
@@ -128,7 +130,7 @@ def _render_labeled_tab() -> None:
             }
             for it in items
         ],
-        width='stretch',
+        width="stretch",
     )
 
 
@@ -139,7 +141,14 @@ def _render_index_tab() -> None:
         "с metadata `source=ai_feedback`."
     )
     agent_filter = st.text_input("agent_id (опционально)", key="idx_agent")
-    limit = st.number_input("Максимум документов", min_value=0, max_value=1, value=1000, step=100, key="idx_limit")
+    limit = st.number_input(
+        "Максимум документов",
+        min_value=0,
+        max_value=1,
+        value=1000,
+        step=100,
+        key="idx_limit",
+    )
     if st.button("Перевести в RAG", type="primary"):
         with st.spinner("Индексирую..."):
             try:
@@ -165,7 +174,6 @@ def _render_dspy_tab() -> None:
     if not runs:
         st.info(
             "Нет завершённых runs. Cron `ai_feedback_dspy_nightly` "
-
             "запускается в 03:00 при включённом feature-flag."
         )
     else:

@@ -70,9 +70,7 @@ class RedisRefreshTokenStore:
 
             return get_redis_client()
         except Exception as exc:
-            _logger.warning(
-                "redis refresh store: client unavailable: %s", exc
-            )
+            _logger.warning("redis refresh store: client unavailable: %s", exc)
             return None
 
     async def _get_generation(self, client: Any, user_id: str, device_id: str) -> int:
@@ -83,9 +81,7 @@ class RedisRefreshTokenStore:
         except Exception:
             return 0
 
-    async def is_valid(
-        self, user_id: str, device_id: str, refresh_jti: str
-    ) -> bool:
+    async def is_valid(self, user_id: str, device_id: str, refresh_jti: str) -> bool:
         """Check if refresh token is valid (key exists AND current generation).
 
         S56 W1: family revocation check — token must be at CURRENT
@@ -109,9 +105,7 @@ class RedisRefreshTokenStore:
             return False  # fail-CLOSED
         try:
             # Check key exists
-            value = await client.cache_get(
-                self._key(user_id, device_id, refresh_jti)
-            )
+            value = await client.cache_get(self._key(user_id, device_id, refresh_jti))
             if value is None:
                 return False
             # Check generation matches (family revocation gate)
@@ -119,7 +113,7 @@ class RedisRefreshTokenStore:
             # Token key value contains generation (set by issue)
             try:
                 token_gen = int(value)
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 return False
             return token_gen == current_gen
         except Exception as exc:
@@ -129,11 +123,7 @@ class RedisRefreshTokenStore:
             return False  # fail-CLOSED
 
     async def issue(
-        self,
-        user_id: str,
-        device_id: str,
-        refresh_jti: str,
-        ttl_seconds: int,
+        self, user_id: str, device_id: str, refresh_jti: str, ttl_seconds: int
     ) -> None:
         """Issue new refresh token at current generation (SET with TTL).
 
@@ -189,11 +179,7 @@ class RedisRefreshTokenStore:
             raise
 
     async def issue_if_new(
-        self,
-        user_id: str,
-        device_id: str,
-        refresh_jti: str,
-        ttl_seconds: int,
+        self, user_id: str, device_id: str, refresh_jti: str, ttl_seconds: int
     ) -> bool:
         """Atomically issue token ONLY if not already present (current gen).
 
@@ -255,9 +241,7 @@ class RedisRefreshTokenStore:
             )
             return False  # fail-CLOSED
 
-    async def revoke(
-        self, user_id: str, device_id: str, refresh_jti: str
-    ) -> None:
+    async def revoke(self, user_id: str, device_id: str, refresh_jti: str) -> None:
         """Revoke a refresh token (delete Redis key).
 
         Args:
@@ -274,9 +258,7 @@ class RedisRefreshTokenStore:
             )
             return
         try:
-            await client.cache_delete(
-                self._key(user_id, device_id, refresh_jti)
-            )
+            await client.cache_delete(self._key(user_id, device_id, refresh_jti))
             _logger.info(
                 "redis refresh revoked: user=%s device=%s jti=%s",
                 user_id,
@@ -328,10 +310,7 @@ class RedisRefreshTokenStore:
 
         try:
             # Atomic INCR for generation counter
-            new_gen = await client.execute(
-                "cache",
-                lambda conn: conn.incr(gen_key),
-            )
+            new_gen = await client.execute("cache", lambda conn: conn.incr(gen_key))
             new_gen = int(new_gen) if new_gen else 1
 
             # SCAN + DEL old generation keys (best-effort cleanup)
@@ -343,9 +322,7 @@ class RedisRefreshTokenStore:
                     await client.cache_delete(key)
                     removed += 1
             except Exception as scan_exc:
-                _logger.warning(
-                    "redis revoke_family scan cleanup error: %s", scan_exc
-                )
+                _logger.warning("redis revoke_family scan cleanup error: %s", scan_exc)
                 # Generation bump succeeded; old tokens will fail is_valid
                 # anyway because of generation mismatch. Cleanup is best-effort.
 
@@ -360,9 +337,7 @@ class RedisRefreshTokenStore:
             return removed
         except Exception as exc:
             _logger.error(
-                "redis refresh revoke_family failed: user=%s err=%s",
-                user_id,
-                exc,
+                "redis refresh revoke_family failed: user=%s err=%s", user_id, exc
             )
             return 0
 
@@ -375,8 +350,7 @@ class RedisRefreshTokenStore:
         """
         try:
             result = await client.execute(
-                "cache",
-                lambda conn: conn.scan_iter(match=f"{prefix}*", count=100),
+                "cache", lambda conn: conn.scan_iter(match=f"{prefix}*", count=100)
             )
             if result is None:
                 return

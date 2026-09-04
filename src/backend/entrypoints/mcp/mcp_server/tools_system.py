@@ -45,8 +45,7 @@ def _register_system_tools(mcp: Any) -> None:
                     # system principal для MCP tool wrapper (no user
                     # context — MCP protocol uses different auth).
                     meta=ActionCommandMetaSchema(
-                        principal="mcp:system_health",
-                        permissions=[],
+                        principal="mcp:system_health", permissions=[]
                     ),
                 )
             )

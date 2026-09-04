@@ -15,13 +15,11 @@ The lazy proxy in services layer needs module-level access to:
 Layer policy: entrypoints → services. services → core.api (facade).
 core.api → infrastructure (allowed via facade).
 """
+
 from __future__ import annotations
 
 from src.backend.infrastructure.scheduler import dlq, scheduler_manager
 
 # Module-level access (for lazy proxy in services.scheduler.admin)
 # Canonical concrete classes live inside these submodules.
-__all__ = [
-    "dlq",
-    "scheduler_manager",
-]
+__all__ = ["dlq", "scheduler_manager"]

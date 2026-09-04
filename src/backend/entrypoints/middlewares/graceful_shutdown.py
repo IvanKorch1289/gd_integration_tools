@@ -26,11 +26,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 from src.backend.entrypoints.middlewares._registry import _INFLIGHT_COUNTER
 
-__all__ = (
-    "GracefulShutdownMiddleware",
-    "get_graceful_shutdown",
-    "get_in_flight_count",
-)
+__all__ = ("GracefulShutdownMiddleware", "get_graceful_shutdown", "get_in_flight_count")
 
 _logger = logging.getLogger(__name__)
 
@@ -51,7 +47,9 @@ class GracefulShutdownMiddleware:
     /health. WS/lifespan проходят без gate (у WS свой TaskRegistry).
     """
 
-    def __init__(self, app: ASGIApp, drain_timeout: float = _DEFAULT_DRAIN_TIMEOUT) -> None:
+    def __init__(
+        self, app: ASGIApp, drain_timeout: float = _DEFAULT_DRAIN_TIMEOUT
+    ) -> None:
         self.app = app
         self.drain_timeout = drain_timeout
         self._shutting_down = False
@@ -67,9 +65,7 @@ class GracefulShutdownMiddleware:
 
         if self._shutting_down:
             response = JSONResponse(
-                status_code=503,
-                content=_DRAIN_503_BODY,
-                headers={"Retry-After": "5"},
+                status_code=503, content=_DRAIN_503_BODY, headers={"Retry-After": "5"}
             )
             await response(scope, receive, send)
             return
@@ -101,10 +97,7 @@ class GracefulShutdownMiddleware:
             self.drain_timeout,
         )
         try:
-            await asyncio.wait_for(
-                self._drain_event.wait(),
-                timeout=self.drain_timeout,
-            )
+            await asyncio.wait_for(self._drain_event.wait(), timeout=self.drain_timeout)
             _logger.info("graceful_drain: complete, all requests finished")
         except TimeoutError:
             _logger.warning(

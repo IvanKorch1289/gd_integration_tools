@@ -3,6 +3,7 @@
 All magic numbers that appear 3+ times across pages belong here.
 Per-page one-off values stay local.
 """
+
 from __future__ import annotations
 
 

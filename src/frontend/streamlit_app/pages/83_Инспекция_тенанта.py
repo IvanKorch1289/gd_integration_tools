@@ -77,7 +77,14 @@ def _safe_metric(name: str, default: str = "—") -> str:
         metrics = client.get_metrics() if hasattr(client, "get_metrics") else {}
         if isinstance(metrics, dict):
             return str(metrics.get(name, default))
-    except (ConnectionError, TimeoutError, RuntimeError, ValueError, AttributeError, TypeError):
+    except (
+        ConnectionError,
+        TimeoutError,
+        RuntimeError,
+        ValueError,
+        AttributeError,
+        TypeError,
+    ):
         # cycle-9/D-AUDIT-1043: narrow exceptions + observability.
         # ConnectionError/TimeoutError — server unreachable, RuntimeError
         # — API failure, ValueError — invalid metrics, AttributeError —
@@ -122,7 +129,7 @@ rls_rows = [
         "policy": "(требует preceding add-tenant-id migration)",
     },
 ]
-st.dataframe(rls_rows, hide_index=True, width='stretch')
+st.dataframe(rls_rows, hide_index=True, width="stretch")
 
 
 # ─────────────────────────────────────────────────────────────────────────
@@ -143,7 +150,7 @@ pool_rows = [
         "value": "desktop_rpa_session_pool_enabled (default-OFF)",
     },
 ]
-st.dataframe(pool_rows, hide_index=True, width='stretch')
+st.dataframe(pool_rows, hide_index=True, width="stretch")
 
 
 # ─────────────────────────────────────────────────────────────────────────
@@ -159,7 +166,7 @@ try:
     raw = client.get("/admin/scheduler/dlq", params={"limit": 10})
     if isinstance(raw, list):
         dlq_entries = raw
-except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError):
+except ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError:
     # cycle-9/D-AUDIT-1044: narrow exceptions + observability.
     # ConnectionError/TimeoutError — server unreachable, RuntimeError —
     # API failure, ValueError — invalid response, TypeError — wrong type.
@@ -170,10 +177,8 @@ except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError):
     )
 
 if dlq_entries:
-    metric_row([
-        ("DLQ size (sample 10)", len(dlq_entries)),
-    ])
-    st.dataframe(dlq_entries, hide_index=True, width='stretch')
+    metric_row([("DLQ size (sample 10)", len(dlq_entries))])
+    st.dataframe(dlq_entries, hide_index=True, width="stretch")
 else:
     st.info("Нет failed scheduler jobs или feature-flag scheduler_dlq_enabled=False.")
 

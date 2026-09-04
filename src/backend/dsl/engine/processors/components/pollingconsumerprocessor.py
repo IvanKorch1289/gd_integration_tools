@@ -52,8 +52,7 @@ class PollingConsumerProcessor(BaseProcessor):
             action=self._action,
             payload=self._payload,
             meta=ActionCommandMetaSchema(
-                principal=context.principal,
-                permissions=list(context.permissions),
+                principal=context.principal, permissions=list(context.permissions)
             ),
         )
         try:

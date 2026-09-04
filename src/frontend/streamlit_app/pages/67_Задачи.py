@@ -31,7 +31,7 @@ with tab1:
         import polars as pl
 
         df = pl.DataFrame(jobs)
-        st.dataframe(df, width='stretch')
+        st.dataframe(df, width="stretch")
         st.caption(f"Всего: {len(jobs)} jobs")
     else:
         st.info("Нет запланированных задач")
@@ -71,9 +71,7 @@ with tab3:
             for c in ["id", "url", "cron", "delay_seconds", "status"]
             if c in df.columns
         ]
-        st.dataframe(
-            df.select(display_cols) if display_cols else df, width='stretch'
-        )
+        st.dataframe(df.select(display_cols) if display_cols else df, width="stretch")
     else:
         st.info("Нет запланированных webhooks")
 
@@ -83,11 +81,11 @@ with tab3:
         payload = st.text_area("Полезная нагрузка (JSON)", value="{}")
         cron = st.text_input("Cron (опционально)", placeholder="*/5 * * * *")
         delay = st.number_input(
-        "Задержка, сек (опционально)",
-        min_value=0,
-        value=0,
-        help="Задержка перед первым запуском задачи",
-    )
+            "Задержка, сек (опционально)",
+            min_value=0,
+            value=0,
+            help="Задержка перед первым запуском задачи",
+        )
         if st.form_submit_button("Запланировать"):
             import json
 

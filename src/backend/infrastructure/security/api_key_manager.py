@@ -296,7 +296,7 @@ class APIKeyManager:
             # но ключ не был сохранён. Теперь raise: caller увидит ошибку и
             # сгенерирует заново.
             logger.error(
-                "Failed to store client key (raising, NOT returning raw_key): %s", exc,
+                "Failed to store client key (raising, NOT returning raw_key): %s", exc
             )
             raise
 

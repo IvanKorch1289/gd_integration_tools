@@ -9,9 +9,7 @@ from src.frontend.streamlit_app.shared.components import (
     setup_page,
 )
 
-setup_page(layout="wide",
-    initial_sidebar_state="expanded",
-)
+setup_page(layout="wide", initial_sidebar_state="expanded")
 st.header("DSL Маршруты")
 
 client = get_api_client()
@@ -58,9 +56,9 @@ if routes:
         if c in df.columns
     ]
     if display_cols:
-        st.dataframe(df.select(display_cols), width='stretch')
+        st.dataframe(df.select(display_cols), width="stretch")
     else:
-        st.dataframe(df, width='stretch')
+        st.dataframe(df, width="stretch")
     st.caption(f"Всего: {len(routes)} маршрутов")
 else:
     st.info("Нет маршрутов, соответствующих фильтру.")

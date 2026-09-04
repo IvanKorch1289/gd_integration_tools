@@ -56,12 +56,14 @@ else:
     total_fp = sum(m["false_positives"] for m in metrics)
     overall_block_rate = total_block / total if total else 0.0
     overall_fp_rate = total_fp / total_block if total_block else 0.0
-    metric_row([
-        ("Всего проверок", total),
-        ("Всего блокировок", total_block),
-        ("Доля блокировок", f"{overall_block_rate:.2%}"),
-        ("Доля FP", f"{overall_fp_rate:.2%}"),
-    ])
+    metric_row(
+        [
+            ("Всего проверок", total),
+            ("Всего блокировок", total_block),
+            ("Доля блокировок", f"{overall_block_rate:.2%}"),
+            ("Доля FP", f"{overall_fp_rate:.2%}"),
+        ]
+    )
 
     st.divider()
     st.subheader(":mag: Детали по тенантам")
@@ -82,7 +84,8 @@ else:
                 st.write(f"- {reason}: {count}")
 
             fp_count = st.number_input(
-                "Отметить как false-positive (количество)", min_value=0,
+                "Отметить как false-positive (количество)",
+                min_value=0,
                 value=0,
                 key=f"fp-{metric['tenant_id']}",
             )

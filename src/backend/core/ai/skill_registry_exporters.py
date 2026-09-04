@@ -20,11 +20,7 @@ from __future__ import annotations
 
 from typing import Any
 
-__all__ = (
-    "to_mcp",
-    "to_langgraph",
-    "to_openai_tools",
-)
+__all__ = ("to_mcp", "to_langgraph", "to_openai_tools")
 
 
 def to_mcp(skills: list[Any]) -> list[Any]:
@@ -42,7 +38,8 @@ def to_mcp(skills: list[Any]) -> list[Any]:
             {
                 "name": skill.id,
                 "description": skill.description or "",
-                "inputSchema": skill.input_schema or {"type": "object", "properties": {}},
+                "inputSchema": skill.input_schema
+                or {"type": "object", "properties": {}},
             }
         )
     return tools
@@ -63,7 +60,8 @@ def to_langgraph(skills: list[Any]) -> list[Any]:
             {
                 "name": skill.id,
                 "description": skill.description or "",
-                "args_schema": skill.input_schema or {"type": "object", "properties": {}},
+                "args_schema": skill.input_schema
+                or {"type": "object", "properties": {}},
                 "func_ref": f"src.backend.skills.{skill.id}",
             }
         )

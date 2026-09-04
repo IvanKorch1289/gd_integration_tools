@@ -119,9 +119,7 @@ class NotifyCascadeProcessor(BaseProcessor):
         last_exc: Exception | None = None
         for adapter in self._adapters:
             if not await adapter.is_available():
-                _logger.debug(
-                    "notify_cascade: %s unavailable, skip", adapter.channel
-                )
+                _logger.debug("notify_cascade: %s unavailable, skip", adapter.channel)
                 continue
 
             @make_async_retry(

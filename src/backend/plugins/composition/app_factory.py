@@ -179,23 +179,33 @@ def _configure_business_routers(app: FastAPI) -> None:
 
     # Sprint 29: 5 separate functions to avoid duplicate Operation ID warning.
     # Был 1 функция с api_route(methods=[...]) — FastAPI создаёт 1 op_id на все methods → conflict.
-    @_admin_bridge_router.get("/api/admin/{path:path}", operation_id="admin_legacy_redirect_get")
+    @_admin_bridge_router.get(
+        "/api/admin/{path:path}", operation_id="admin_legacy_redirect_get"
+    )
     async def _admin_redirect_get(path: str):
         return await _do_admin_redirect(path, "GET")
 
-    @_admin_bridge_router.post("/api/admin/{path:path}", operation_id="admin_legacy_redirect_post")
+    @_admin_bridge_router.post(
+        "/api/admin/{path:path}", operation_id="admin_legacy_redirect_post"
+    )
     async def _admin_redirect_post(path: str):
         return await _do_admin_redirect(path, "POST")
 
-    @_admin_bridge_router.put("/api/admin/{path:path}", operation_id="admin_legacy_redirect_put")
+    @_admin_bridge_router.put(
+        "/api/admin/{path:path}", operation_id="admin_legacy_redirect_put"
+    )
     async def _admin_redirect_put(path: str):
         return await _do_admin_redirect(path, "PUT")
 
-    @_admin_bridge_router.delete("/api/admin/{path:path}", operation_id="admin_legacy_redirect_delete")
+    @_admin_bridge_router.delete(
+        "/api/admin/{path:path}", operation_id="admin_legacy_redirect_delete"
+    )
     async def _admin_redirect_delete(path: str):
         return await _do_admin_redirect(path, "DELETE")
 
-    @_admin_bridge_router.patch("/api/admin/{path:path}", operation_id="admin_legacy_redirect_patch")
+    @_admin_bridge_router.patch(
+        "/api/admin/{path:path}", operation_id="admin_legacy_redirect_patch"
+    )
     async def _admin_redirect_patch(path: str):
         return await _do_admin_redirect(path, "PATCH")
 

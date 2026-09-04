@@ -41,7 +41,6 @@ class _AssertionError(AssertionError):
     """Raised when an assertion helper fails."""
 
 
-
 def assert_audit_event(
     events: list[AuditRecord],
     *,

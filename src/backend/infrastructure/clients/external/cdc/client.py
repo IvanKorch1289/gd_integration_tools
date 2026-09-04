@@ -185,7 +185,7 @@ class CDCClient:
             task.cancel()
             try:
                 await task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError, Exception:
                 logger.debug("CDC subscription task cancellation raised", exc_info=True)
 
         logger.info("CDC подписка удалена: %s", subscription_id)
@@ -239,8 +239,7 @@ class CDCClient:
                 # principal для CDC-driven actions (no user context — CDC
                 # callback runs in background subscription).
                 meta=ActionCommandMetaSchema(
-                    principal=f"cdc:{sub.profile}:{sub.strategy}",
-                    permissions=[],
+                    principal=f"cdc:{sub.profile}:{sub.strategy}", permissions=[]
                 ),
             )
             try:

@@ -67,15 +67,15 @@ def render_properties_panel(client: Any) -> None:
 
         c_del, c_clr = st.columns(2)
         with c_del:
-            if st.button("🗑️ Удалить шаг", width='stretch'):
+            if st.button("🗑️ Удалить шаг", width="stretch"):
                 st.session_state.canvas_steps.pop(idx)
                 st.session_state.selected_step_index = None
                 sync_yaml()
                 st.rerun()
         with c_clr:
-            if st.button("Очистить параметры", width='stretch'):
+            if st.button("Очистить параметры", width="stretch"):
                 st.session_state.canvas_steps[idx]["params"] = dict.fromkeys(
-                    available_params, "",
+                    available_params, ""
                 )
                 sync_yaml()
                 st.rerun()
@@ -85,7 +85,7 @@ def render_properties_panel(client: Any) -> None:
 
     col_save, col_upd = st.columns(2)
     with col_save:
-        if st.button("💾 Создать", width='stretch'):
+        if st.button("💾 Создать", width="stretch"):
             try:
                 result = client.create_dsl_route(st.session_state.yaml_output)
                 st.success(f"Создано: {result.get('route_id', 'OK')}")
@@ -95,7 +95,7 @@ def render_properties_panel(client: Any) -> None:
     with col_upd:
         route_id = st.session_state.meta_route.get("route_id", "")
         if route_id and route_id != "my.route":
-            if st.button("🔄 Обновить", width='stretch'):
+            if st.button("🔄 Обновить", width="stretch"):
                 try:
                     client.update_dsl_route(route_id, st.session_state.yaml_output)
                     st.success(f"Обновлено: {route_id}")

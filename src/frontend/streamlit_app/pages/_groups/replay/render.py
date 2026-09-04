@@ -99,7 +99,7 @@ def render_dlq_replay() -> None:
         for e in events
     ]
 
-    st.dataframe(rows, width='stretch', hide_index=True)
+    st.dataframe(rows, width="stretch", hide_index=True)
 
     # ──────────── Bulk replay ────────────
     st.subheader("Массовый replay")
@@ -119,14 +119,14 @@ def render_dlq_replay() -> None:
     col_bulk_1, col_bulk_2 = st.columns([1, 1])
     with col_bulk_1:
         dry_run_bulk: bool = st.checkbox(
-        "Пробный прогон", value=False, key="bulk_dry_run"
-    )
+            "Пробный прогон", value=False, key="bulk_dry_run"
+        )
     with col_bulk_2:
         bulk_clicked = st.button(
             "Повторить выбранные",
             type="primary",
             disabled=not selected_ids,
-            width='stretch',
+            width="stretch",
         )
 
     if bulk_clicked and selected_ids:
@@ -167,7 +167,7 @@ def render_dlq_replay() -> None:
             )
         with col_manual_2:
             manual_clicked = st.button(
-                "Replay с переопределением", type="primary", width='stretch'
+                "Replay с переопределением", type="primary", width="stretch"
             )
 
         if manual_clicked:

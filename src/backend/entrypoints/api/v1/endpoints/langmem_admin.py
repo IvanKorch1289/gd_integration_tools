@@ -28,8 +28,7 @@ router = APIRouter(
 
 
 @router.post(
-    "/langmem/consolidate",
-    summary="Запустить consolidate() episodic → semantic (D.6)",
+    "/langmem/consolidate", summary="Запустить consolidate() episodic → semantic (D.6)"
 )
 async def langmem_consolidate(
     since: str | None = Query(default=None, description="ISO-метка cutoff"),
@@ -55,10 +54,7 @@ async def langmem_consolidate(
         raise HTTPException(503, detail=str(exc)) from exc
 
 
-@router.get(
-    "/langmem/stats",
-    summary="Статистика памяти LangMem (D.6)",
-)
+@router.get("/langmem/stats", summary="Статистика памяти LangMem (D.6)")
 async def langmem_stats() -> dict[str, Any]:
     """Возвращает counts по episodic / procedural."""
     from src.backend.services.ai.memory.langmem_service import (

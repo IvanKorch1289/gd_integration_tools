@@ -168,11 +168,13 @@ if filtered:
         for e in filtered  # type: ignore[misc]
     )
     error_count: int = sum(1 for e in filtered if e.get("error"))
-    metric_row([
-        ("Всего событий", str(len(filtered))),
-        ("Σ длительность", f"{total_duration:.1f} мс"),
-        ("Ошибок", str(error_count)),
-    ])
+    metric_row(
+        [
+            ("Всего событий", str(len(filtered))),
+            ("Σ длительность", f"{total_duration:.1f} мс"),
+            ("Ошибок", str(error_count)),
+        ]
+    )
 else:
     st.caption("Нет событий для сводки.")
 

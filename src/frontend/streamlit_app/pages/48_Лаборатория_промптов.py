@@ -76,8 +76,7 @@ with tab_list:
                         "p95 латентность, мс", ver["metrics"].get("p95_latency_ms", "—")
                     )
                     st.metric(
-                        "Стоимость USD/1k",
-                        ver["metrics"].get("cost_usd_per_1k", "—"),
+                        "Стоимость USD/1k", ver["metrics"].get("cost_usd_per_1k", "—")
                     )
                     if not ver["is_active"] and st.button(
                         f"Активировать v{ver['version']}", key=f"act-{ver['version']}"

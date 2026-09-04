@@ -52,6 +52,7 @@ class DatabaseQueryProcessor(BaseProcessor):
 
         # S86 M2-#11 accelerated batch: DI provider.
         from src.backend.core.di.providers.cache import get_db_manager_provider
+
         get_db_manager = get_db_manager_provider()
 
         try:

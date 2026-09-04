@@ -10,9 +10,7 @@ from src.frontend.streamlit_app.shared.components import (
     setup_page,
 )
 
-setup_page(layout="wide",
-    initial_sidebar_state="expanded",
-)
+setup_page(layout="wide", initial_sidebar_state="expanded")
 require_auth(label="admin")
 st.header("Feature-флаги")
 

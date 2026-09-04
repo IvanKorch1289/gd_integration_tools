@@ -77,9 +77,7 @@ def _emit_revocation_fail_open_audit(reason: str) -> None:
         )
     except Exception as exc:
         _logger.warning(
-            "Failed to emit revocation_fail_open audit (reason=%s): %s",
-            reason,
-            exc,
+            "Failed to emit revocation_fail_open audit (reason=%s): %s", reason, exc
         )
 
 
@@ -110,9 +108,7 @@ def _emit_revocation_fail_closed_audit(reason: str) -> None:
         )
     except Exception as exc:
         _logger.warning(
-            "Failed to emit revocation_fail_closed audit (reason=%s): %s",
-            reason,
-            exc,
+            "Failed to emit revocation_fail_closed audit (reason=%s): %s", reason, exc
         )
 
 
@@ -146,9 +142,7 @@ class RedisRevocationStore:
 
             return get_redis_client()
         except Exception as exc:
-            _logger.warning(
-                "redis revocation store: client unavailable: %s", exc
-            )
+            _logger.warning("redis revocation store: client unavailable: %s", exc)
             return None
 
     async def is_revoked(self, jti: str) -> bool:
@@ -185,9 +179,7 @@ class RedisRevocationStore:
                 "redis revocation is_revoked error: jti=%s err=%s", jti, exc
             )
             if _is_fail_closed():
-                _emit_revocation_fail_closed_audit(
-                    f"redis_error:{type(exc).__name__}"
-                )
+                _emit_revocation_fail_closed_audit(f"redis_error:{type(exc).__name__}")
                 raise JwtVerificationError(
                     "JWT revocation check failed (fail-CLOSED enforced)"
                 ) from exc
@@ -208,23 +200,16 @@ class RedisRevocationStore:
         client = await self._get_client()
         if client is None:
             _logger.warning(
-                "redis revocation revoke: client unavailable, jti=%s not persisted",
-                jti,
+                "redis revocation revoke: client unavailable, jti=%s not persisted", jti
             )
             return
 
         ttl = max(1, int(expires_at - time.time()))
         try:
-            await client.cache_set(
-                self._key(jti), str(int(time.time())), expire=ttl
-            )
-            _logger.info(
-                "redis revocation revoke: jti=%s ttl=%d", jti, ttl
-            )
+            await client.cache_set(self._key(jti), str(int(time.time())), expire=ttl)
+            _logger.info("redis revocation revoke: jti=%s ttl=%d", jti, ttl)
         except Exception as exc:
-            _logger.error(
-                "redis revocation revoke failed: jti=%s err=%s", jti, exc
-            )
+            _logger.error("redis revocation revoke failed: jti=%s err=%s", jti, exc)
             raise
 
     async def cleanup_expired(self) -> int:

@@ -43,6 +43,7 @@ class CacheProcessor(BaseProcessor):
         try:
             # S86 M2-#11 accelerated batch: DI provider (S60 added).
             from src.backend.core.di.providers.cache import get_redis_client_provider
+
             redis_client = get_redis_client_provider()
 
             cached = await redis_client.get(key)
@@ -52,7 +53,7 @@ class CacheProcessor(BaseProcessor):
                 )
                 exchange.set_property("cached", True)
                 return
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             pass
 
         exchange.set_property("cached", False)

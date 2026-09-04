@@ -312,9 +312,7 @@ class BreakerRegistry:
 
 
 @lru_cache(maxsize=1)
-def get_breaker_registry(
-    *, redis_url: str | None = None
-) -> BreakerRegistry:
+def get_breaker_registry(*, redis_url: str | None = None) -> BreakerRegistry:
     """Lazy singleton глобального ``BreakerRegistry``.
 
     S48 W1 (cycle 270, ADR-0267): accepts optional ``redis_url`` for

@@ -55,11 +55,7 @@ elif step == 3:
     except Exception as exc:
         st.error(f"Ошибка API: {exc}")
         _providers = None
-    providers = _providers or [
-        "sentence-transformers",
-        "bge-m3",
-        "openai",
-    ]
+    providers = _providers or ["sentence-transformers", "bge-m3", "openai"]
     st.session_state["ingest_provider"] = st.selectbox("Провайдер", providers)
     st.session_state["ingest_collection"] = st.text_input("Коллекция", value="default")
     if st.button("Далее →"):

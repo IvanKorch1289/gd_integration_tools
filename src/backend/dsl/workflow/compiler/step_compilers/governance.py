@@ -120,6 +120,7 @@ async def compile_guardrail_step(
         from src.backend.dsl.workflow.compiler.step_compilers import (
             GuardrailValueTypeError as _GuardrailValueTypeError,
         )
+
         raise _GuardrailValueTypeError(
             f"Guardrail {decl.rule!r} target={target!r} value type "
             f"{type(raw_value).__name__} (value={raw_value!r}) — "

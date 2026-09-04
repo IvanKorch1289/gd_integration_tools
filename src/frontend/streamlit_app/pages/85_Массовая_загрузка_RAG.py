@@ -35,12 +35,20 @@ def _check_feature_flag() -> bool:
         if isinstance(flags, dict):
             return bool(flags.get(FEATURE_FLAG_NAME, False))
         return False
-    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, AttributeError) as ff_exc:
+    except (
+        ConnectionError,
+        TimeoutError,
+        RuntimeError,
+        ValueError,
+        TypeError,
+        AttributeError,
+    ) as ff_exc:
         # cycle-9/D-AUDIT-1063: narrow exceptions + observability.
         # ConnectionError/TimeoutError — server unreachable, RuntimeError
         # — API failure, ValueError — invalid response, TypeError —
         # wrong type, AttributeError — _client API change.
         import logging
+
         logging.getLogger(__name__).debug(
             "streamlit_85_Массовая.feature_flag_check_failed",
             extra={"error": str(ff_exc)},
@@ -79,10 +87,8 @@ with tab_file:
         st.write(f"**Выбрано файлов:** {len(uploaded_files)}")
         for f in uploaded_files:
             st.write(
-
-                    f"  • `{getattr(f, 'name', 'unnamed')}` "
-                    f"({getattr(f, 'size', '?')} bytes)"
-
+                f"  • `{getattr(f, 'name', 'unnamed')}` "
+                f"({getattr(f, 'size', '?')} bytes)"
             )
 
         if st.button("Загрузить файлы", type="primary", key="ingest_files"):
@@ -169,9 +175,8 @@ with tab_json:
                         st.write(f"  Document {i}: {doc.get('content', '')[:60]}...")
             else:
                 st.error(
-                "Входные данные должны быть JSON-массивом (list),"
-                " не одним объектом"
-            )
+                    "Входные данные должны быть JSON-массивом (list), не одним объектом"
+                )
         except json.JSONDecodeError as exc:
             st.error(f"Invalid JSON: {exc}")
 
@@ -213,10 +218,8 @@ if st.button("Обновить статус", key="refresh_status"):
         if items:
             for item in items:
                 with st.expander(
-
-                        f"Task: {item.get('task_id', '?')[:8]}... — "
-                        f"{item.get('status', '?')}"
-
+                    f"Task: {item.get('task_id', '?')[:8]}... — "
+                    f"{item.get('status', '?')}"
                 ):
                     st.json(item)
         else:

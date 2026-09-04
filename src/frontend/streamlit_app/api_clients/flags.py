@@ -16,15 +16,21 @@ class FlagsClient(BaseAPIClient):
         """Метод get_flags (см. signature)."""
         try:
             return self._request("GET", "/api/v1/admin/feature-flags")
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as flags_exc:
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as flags_exc:
             # cycle-9/D-AUDIT-1070: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
             # wrong type.
             import logging
+
             logging.getLogger(__name__).debug(
-                "streamlit_flags_client.get_failed",
-                extra={"error": str(flags_exc)},
+                "streamlit_flags_client.get_failed", extra={"error": str(flags_exc)}
             )
             return []
 
@@ -37,9 +43,16 @@ class FlagsClient(BaseAPIClient):
                 json={"enabled": enabled},
             )
             return True
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as toggle_exc:
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as toggle_exc:
             # cycle-9/D-AUDIT-1070: см. выше — mirror для toggle.
             import logging
+
             logging.getLogger(__name__).debug(
                 "streamlit_flags_client.toggle_failed",
                 extra={"name": name, "error": str(toggle_exc)},
@@ -54,9 +67,16 @@ class FlagsClient(BaseAPIClient):
         """
         try:
             return self._request("GET", "/api/v1/admin/feature-flags")
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as list_exc:
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as list_exc:
             # cycle-9/D-AUDIT-1070: см. выше — mirror для list_overrides.
             import logging
+
             logging.getLogger(__name__).debug(
                 "streamlit_flags_client.list_overrides_failed",
                 extra={"error": str(list_exc)},
@@ -73,9 +93,16 @@ class FlagsClient(BaseAPIClient):
                 f"/api/v1/admin/feature-flags/{flag}",
                 json={"value": value, "tenant_id": tenant_id, "actor": actor},
             )
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as set_exc:
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as set_exc:
             # cycle-9/D-AUDIT-1070: см. выше — mirror для set_override.
             import logging
+
             logging.getLogger(__name__).debug(
                 "streamlit_flags_client.set_override_failed",
                 extra={"flag": flag, "error": str(set_exc)},
@@ -93,9 +120,16 @@ class FlagsClient(BaseAPIClient):
             return self._request(
                 "DELETE", f"/api/v1/admin/feature-flags/{flag}", params=params
             )
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as clear_exc:
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as clear_exc:
             # cycle-9/D-AUDIT-1070: см. выше — mirror для clear_override.
             import logging
+
             logging.getLogger(__name__).debug(
                 "streamlit_flags_client.clear_override_failed",
                 extra={"flag": flag, "error": str(clear_exc)},

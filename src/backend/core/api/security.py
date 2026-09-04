@@ -4,6 +4,7 @@ Ponytail fix: services/* должен импортировать через core
 (not infrastructure.security directly). Это eliminates
 services → infrastructure violations.
 """
+
 from __future__ import annotations
 
 from src.backend.infrastructure.security import pii_streaming, signatures
@@ -15,10 +16,4 @@ from src.backend.infrastructure.security.cert_store import CertStore
 PiiStreaming = pii_streaming
 Signatures = signatures
 
-__all__ = [
-    "CertStore",
-    "pii_streaming",
-    "signatures",
-    "PiiStreaming",
-    "Signatures",
-]
+__all__ = ["CertStore", "pii_streaming", "signatures", "PiiStreaming", "Signatures"]

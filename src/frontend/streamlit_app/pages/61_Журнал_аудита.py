@@ -62,7 +62,7 @@ except Exception as exc:
 st.caption(f"Найдено: {len(records)}")
 
 if records:
-    st.dataframe(records, width='stretch', height=500)
+    st.dataframe(records, width="stretch", height=500)
 else:
     st.info("Записей аудита не найдено. Измените фильтры или подождите новых событий.")
 

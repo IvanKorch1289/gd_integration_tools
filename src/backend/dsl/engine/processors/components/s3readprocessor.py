@@ -35,6 +35,7 @@ class S3ReadProcessor(BaseProcessor):
         """Метод process (см. signature)."""
         # S86 M2-#11 accelerated batch: DI provider.
         from src.backend.core.di.providers.cache import get_s3_storage_client_provider
+
         storage_client = get_s3_storage_client_provider()
 
         key = self._key

@@ -17,7 +17,6 @@ Use:
   → Navigate to "Outbox Stuck Monitor" в sidebar.
 """
 
-
 from __future__ import annotations
 
 import os
@@ -34,9 +33,7 @@ setup_page()
 
 st.title("⏱ Монитор зависших сообщений Outbox")
 st.caption(
-    "Live dashboard для outbox_stuck_pending_count "
-
-    "gauge (Pending → Sent → Failed)."
+    "Live dashboard для outbox_stuck_pending_count gauge (Pending → Sent → Failed)."
 )
 
 # Configuration section
@@ -188,7 +185,7 @@ if prometheus_url:
                     )
                 # Sort descending по count
                 transport_data.sort(key=lambda x: x["stuck_count"], reverse=True)
-                st.dataframe(transport_data, width='stretch', hide_index=True)
+                st.dataframe(transport_data, width="stretch", hide_index=True)
                 # Top transport highlight
                 if transport_data:
                     top = transport_data[0]
@@ -232,7 +229,7 @@ alert_rules: list[dict[str, Any]] = [
     },
 ]
 
-st.dataframe(alert_rules, width='stretch', hide_index=True)
+st.dataframe(alert_rules, width="stretch", hide_index=True)
 
 # Runbook
 st.subheader("📋 Runbook")

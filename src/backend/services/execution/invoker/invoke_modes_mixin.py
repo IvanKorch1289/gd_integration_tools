@@ -75,8 +75,7 @@ class InvokeModesMixin:
                 # P0 (cycle 35): пробрасываем principal/permissions из
                 # InvocationRequest (parity с cycle 24/34 fix).
                 meta=ActionCommandMetaSchema(
-                    principal=request.principal,
-                    permissions=list(request.permissions),
+                    principal=request.principal, permissions=list(request.permissions)
                 ),
             )
             context = self._build_context(request)

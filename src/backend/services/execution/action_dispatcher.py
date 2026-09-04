@@ -248,8 +248,7 @@ class DefaultActionDispatcher(ActionDispatcher, ActionGatewayDispatcher):
             # P0 (cycle 38): пробрасываем principal/permissions из DispatchContext
             # в ActionCommandSchema.meta (parity с cycle 24/34/35).
             meta=ActionCommandMetaSchema(
-                principal=context.principal,
-                permissions=list(context.permissions),
+                principal=context.principal, permissions=list(context.permissions)
             ),
         )
         try:

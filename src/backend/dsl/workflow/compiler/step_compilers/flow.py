@@ -171,8 +171,6 @@ async def compile_checkpoint_step(
     return checkpoint_id
 
 
-
-
 async def compile_continue_as_new_step(
     decl: ContinueAsNewDeclaration, ctx: dict[str, Any]
 ) -> Any:

@@ -24,6 +24,7 @@ __all__ = ("ChromaVectorStore",)
 
 logger = get_logger(__name__)
 
+
 class ChromaVectorStore(BaseVectorStore):
     """Vector store через Chroma DB."""
 
@@ -202,5 +203,3 @@ class ChromaVectorStore(BaseVectorStore):
             }
         except Exception as exc:
             return {"status": "down", "error": str(exc)}
-
-

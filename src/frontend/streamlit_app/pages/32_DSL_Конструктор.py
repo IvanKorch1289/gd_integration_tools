@@ -83,13 +83,13 @@ def _render() -> None:
 
     cols = st.columns(2)
     with cols[0]:
-        dry_clicked = st.button("Предпросмотр записи (dry-run)", width='stretch')
+        dry_clicked = st.button("Предпросмотр записи (dry-run)", width="stretch")
     with cols[1]:
         save_clicked = st.button(
             "Сохранить в YAML",
             type="primary",
             disabled=not write_enabled,
-            width='stretch',
+            width="stretch",
         )
 
     if dry_clicked:

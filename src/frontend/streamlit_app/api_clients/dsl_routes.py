@@ -21,15 +21,21 @@ class DSLRoutesClient(BaseAPIClient):
         try:
             result = self._request("GET", "/api/v1/admin/dsl-routes")
             return result if isinstance(result, list) else []
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as list_exc:
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as list_exc:
             # cycle-9/D-AUDIT-1066: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
             # wrong type.
             import logging
+
             logging.getLogger(__name__).debug(
-                "streamlit_dsl_routes.list_failed",
-                extra={"error": str(list_exc)},
+                "streamlit_dsl_routes.list_failed", extra={"error": str(list_exc)}
             )
             return []
 
@@ -37,9 +43,16 @@ class DSLRoutesClient(BaseAPIClient):
         """GET /api/v1/admin/dsl-routes/{id} — yaml + spec + python."""
         try:
             return self._request("GET", f"/api/v1/admin/dsl-routes/{route_id}")
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as get_exc:
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as get_exc:
             # cycle-9/D-AUDIT-1066: см. выше — mirror для get.
             import logging
+
             logging.getLogger(__name__).debug(
                 "streamlit_dsl_routes.get_failed",
                 extra={"route_id": route_id, "error": str(get_exc)},
@@ -63,12 +76,19 @@ class DSLRoutesClient(BaseAPIClient):
         try:
             self._request("DELETE", f"/api/v1/admin/dsl-routes/{route_id}")
             return True
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as del_exc:
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as del_exc:
             # cycle-9/D-AUDIT-1071: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
             # wrong type.
             import logging
+
             logging.getLogger(__name__).debug(
                 "streamlit_dsl_routes.delete_failed",
                 extra={"route_id": route_id, "error": str(del_exc)},
@@ -81,7 +101,13 @@ class DSLRoutesClient(BaseAPIClient):
             return self._request(
                 "POST", "/api/v1/admin/dsl-routes/validate", json={"yaml": yaml_str}
             )
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as exc:
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as exc:
             return {"valid": False, "error": str(exc)}
 
     def diff_dsl_route(self, route_id: str, yaml_str: str) -> dict[str, Any] | None:
@@ -92,9 +118,16 @@ class DSLRoutesClient(BaseAPIClient):
                 f"/api/v1/admin/dsl-routes/{route_id}/diff",
                 json={"yaml": yaml_str},
             )
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as diff_exc:
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as diff_exc:
             # cycle-9/D-AUDIT-1071: см. выше — mirror для diff.
             import logging
+
             logging.getLogger(__name__).debug(
                 "streamlit_dsl_routes.diff_failed",
                 extra={"route_id": route_id, "error": str(diff_exc)},
@@ -116,9 +149,16 @@ class DSLRoutesClient(BaseAPIClient):
                 params={"limit": limit},
             )
             return result if isinstance(result, list) else []
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as traces_exc:
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as traces_exc:
             # cycle-9/D-AUDIT-1071: см. выше — mirror для traces.
             import logging
+
             logging.getLogger(__name__).debug(
                 "streamlit_dsl_routes.traces_failed",
                 extra={"route_id": route_id, "error": str(traces_exc)},

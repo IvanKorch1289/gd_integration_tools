@@ -98,14 +98,18 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
 
             assert isinstance(self._gateway, LiteLLMGateway)
             prompt = "\n".join(
-                str(getattr(m, "content", m)) for m in messages if isinstance(m, _ModelRequest)
+                str(getattr(m, "content", m))
+                for m in messages
+                if isinstance(m, _ModelRequest)
             )
             response = await self._gateway.acompletion(
                 model=self._model_name,
                 messages=[{"role": "user", "content": prompt}],
                 stream=False,
             )
-            text = response.get("choices", [{}])[0].get("message", {}).get("content", "")
+            text = (
+                response.get("choices", [{}])[0].get("message", {}).get("content", "")
+            )
             return _ModelResponse(parts=[_TextPart(text)])  # type: ignore[misc]
 
         async def request_stream(  # type: ignore[override]
@@ -121,7 +125,9 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
 
             assert isinstance(self._gateway, LiteLLMGateway)
             prompt = "\n".join(
-                str(getattr(m, "content", m)) for m in messages if isinstance(m, _ModelRequest)
+                str(getattr(m, "content", m))
+                for m in messages
+                if isinstance(m, _ModelRequest)
             )
             response = await self._gateway.acompletion(
                 model=self._model_name,
@@ -130,7 +136,9 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
             )
             text = ""
             async for chunk in response:
-                text += chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                text += (
+                    chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                )
             return _SimpleStreamedResponse(text)  # type: ignore[return-value]
 
         def prepare_request(  # type: ignore[override]

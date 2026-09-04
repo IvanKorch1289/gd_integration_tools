@@ -16,15 +16,21 @@ class ConfigClient(BaseAPIClient):
         """Метод get_config (см. signature)."""
         try:
             return self._request("GET", "/api/v1/admin/config")
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as cfg_exc:
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as cfg_exc:
             # cycle-9/D-AUDIT-1069: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
             # wrong type.
             import logging
+
             logging.getLogger(__name__).debug(
-                "streamlit_config_client.config_failed",
-                extra={"error": str(cfg_exc)},
+                "streamlit_config_client.config_failed", extra={"error": str(cfg_exc)}
             )
             return {}
 
@@ -34,9 +40,16 @@ class ConfigClient(BaseAPIClient):
             return self._request(
                 "GET", "/api/v1/admin/trace-logs", params={"limit": limit}
             )
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as trace_exc:
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as trace_exc:
             # cycle-9/D-AUDIT-1069: см. выше — mirror для trace-logs.
             import logging
+
             logging.getLogger(__name__).debug(
                 "streamlit_config_client.trace_logs_failed",
                 extra={"error": str(trace_exc)},

@@ -156,9 +156,7 @@ async def _dispatch_via_action(
     from src.backend.entrypoints.base import dispatch_action
 
     principal = getattr(auth, "principal", "") if auth is not None else ""
-    permissions = (
-        tuple(extract_user_permissions(auth)) if auth is not None else ()
-    )
+    permissions = tuple(extract_user_permissions(auth)) if auth is not None else ()
 
     return await dispatch_action(
         action=operation,
@@ -414,7 +412,7 @@ def _build_invoke_response_envelope(
     if result is not None:
         try:
             result_json = orjson.dumps(result, default=str).decode()
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             result_json = str(result)
         parts.append(f"<result>{_xml_escape(result_json)}</result>")
     if error:

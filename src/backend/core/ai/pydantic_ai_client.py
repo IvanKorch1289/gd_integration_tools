@@ -411,8 +411,6 @@ class PydanticAIClient:
             )
 
 
-
-
 # ── Re-exports (RE_AUDIT_2026-08-26 god-object 2/5 split) ────────────────
 # LiteLLMModelAdapter и _SimpleStreamedResponse были вынесены в
 # pydantic_ai_adapter.py для single responsibility. Re-exports

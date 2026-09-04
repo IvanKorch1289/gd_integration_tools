@@ -283,7 +283,9 @@ class ExternalDBObjectMeta(BaseModel):
         """
         parts: list[str] = []
 
-        if self.schema_:  # S97 fix: use Python attr name, не alias (BaseModel.schema = method)
+        if (
+            self.schema_
+        ):  # S97 fix: use Python attr name, не alias (BaseModel.schema = method)
             parts.append(self.schema_)
 
         if self.oracle_package:

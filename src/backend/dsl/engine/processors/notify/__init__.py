@@ -63,7 +63,9 @@ class NotifyProcessor(BaseProcessor):
         """Выполняет отправку уведомления через NotificationGateway."""
         # S87 M2-#11 final batch: DI provider.
         # ruff: noqa: I001 (out-of-order import — local import for lazy init)
-        from src.backend.core.di.providers.cache import get_notifications_module_provider  # noqa: I001
+        from src.backend.core.di.providers.cache import (
+            get_notifications_module_provider,
+        )  # noqa: I001
 
         _notifications_module = get_notifications_module_provider()
         get_gateway = _notifications_module.get_gateway

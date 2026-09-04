@@ -25,7 +25,7 @@ def render_yaml_tab(client) -> None:
         push_history()
 
     cols = st.columns([1, 1, 4])
-    if cols[0].button("Валидировать (сервер)", width='stretch'):
+    if cols[0].button("Валидировать (сервер)", width="stretch"):
         result = client.validate_dsl_route(st.session_state.yaml)
         if result.get("valid"):
             st.success(
@@ -36,7 +36,7 @@ def render_yaml_tab(client) -> None:
             st.error(f"Ошибка: {result.get('error')}")
 
     if (
-        cols[1].button("Сравнить с сохранённой версией", width='stretch')
+        cols[1].button("Сравнить с сохранённой версией", width="stretch")
         and st.session_state.last_load_route
     ):
         diff = client.diff_dsl_route(

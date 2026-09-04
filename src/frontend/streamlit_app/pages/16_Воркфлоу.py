@@ -133,17 +133,26 @@ with tab_list:
         )
     with cols_filter[1]:
         flt_name = st.text_input(
-            "Имя рабочего процесса", value="", placeholder="orders.skb_flow"
-        , key="wf_text_1")
+            "Имя рабочего процесса",
+            value="",
+            placeholder="orders.skb_flow",
+            key="wf_text_1",
+        )
     with cols_filter[2]:
-        flt_tenant = st.text_input("Тенант", value="", placeholder="default", key="wf_text_2")
+        flt_tenant = st.text_input(
+            "Тенант", value="", placeholder="default", key="wf_text_2"
+        )
     with cols_filter[3]:
         flt_limit = st.number_input(
-            "Лимит", min_value=10, max_value=500, value=config.SEARCH_DEFAULT_LIMIT * 5, step=10
+            "Лимит",
+            min_value=10,
+            max_value=500,
+            value=config.SEARCH_DEFAULT_LIMIT * 5,
+            step=10,
         )
     with cols_filter[4]:
         st.write("")  # spacer
-        if st.button("🔄 Обновить", width='stretch'):
+        if st.button("🔄 Обновить", width="stretch"):
             _cached_list.clear()
 
     instances = _cached_list(flt_status, flt_name, flt_tenant, int(flt_limit))
@@ -161,13 +170,18 @@ with tab_list:
                 f"— status={inst.get('status', '?')}"
             )
             with st.expander(header, expanded=False):
-                metric_row([
-                    ("Создан", _fmt_timestamp(inst.get("created_at"))),
-                    ("Следующая попытка", _fmt_timestamp(inst.get("next_attempt_at"))),
-                    ("Попытки", inst.get("attempts", 0)),
-                    ("Тенант", inst.get("tenant_id", "default")),
-                    ("Версия", inst.get("current_version", 0)),
-                ])
+                metric_row(
+                    [
+                        ("Создан", _fmt_timestamp(inst.get("created_at"))),
+                        (
+                            "Следующая попытка",
+                            _fmt_timestamp(inst.get("next_attempt_at")),
+                        ),
+                        ("Попытки", inst.get("attempts", 0)),
+                        ("Тенант", inst.get("tenant_id", "default")),
+                        ("Версия", inst.get("current_version", 0)),
+                    ]
+                )
 
                 # Actions
                 action_cols = st.columns([1, 1, 1, 3])
@@ -212,8 +226,8 @@ with tab_list:
                             target=instance_id,
                         )
                 if action_cols[3].button(
-                        "📈 Показать таймлайн", key=f"tl_{instance_id}"
-                    ):
+                    "📈 Показать таймлайн", key=f"tl_{instance_id}"
+                ):
                     st.session_state["_workflow_focus_id"] = instance_id
 
 
@@ -229,9 +243,7 @@ with tab_timeline:
     )
     if not focus_id:
         st.info(
-            "Введите instance ID или выберите «Показать "
-
-            "таймлайн» из вкладки Instances."
+            "Введите instance ID или выберите «Показать таймлайн» из вкладки Instances."
         )
     else:
         instance = _cached_instance(focus_id)
@@ -279,13 +291,15 @@ with tab_timeline:
 with tab_trigger:
     st.caption(
         "Запуск нового workflow instance через `POST "
-
         "/api/v1/admin/workflows/trigger/{name}`."
     )
 
     trg_name = st.text_input(
-        "Имя рабочего процесса", value="", placeholder="orders.full_processing"
-    , key="wf_text_4")
+        "Имя рабочего процесса",
+        value="",
+        placeholder="orders.full_processing",
+        key="wf_text_4",
+    )
     payload_str = st.text_area(
         "Входной payload (JSON)",
         value="{}",
@@ -320,9 +334,7 @@ with tab_trigger:
                     if result.get("id"):
                         st.session_state["_workflow_focus_id"] = result["id"]
                         st.caption(
-                            "➡ Переключитесь на вкладку **Таймлайн** "
-
-                            "для просмотра."
+                            "➡ Переключитесь на вкладку **Таймлайн** для просмотра."
                         )
 
     st.markdown("---")

@@ -189,7 +189,7 @@ class S3Client(BaseS3Client):
                     operation_name="checking connection",
                 )
             return True
-        except (BotoClientError, OSError, TimeoutError):
+        except BotoClientError, OSError, TimeoutError:
             return False
 
     async def check_bucket_exists(self) -> bool:
@@ -603,7 +603,5 @@ class S3Client(BaseS3Client):
             )
         except Exception as audit_exc:
             self.logger.warning(
-                "Failed to emit s3.silent_error audit for %s: %s",
-                operation,
-                audit_exc,
+                "Failed to emit s3.silent_error audit for %s: %s", operation, audit_exc
             )

@@ -73,8 +73,7 @@ async def _dispatch_with(
             payload=payload,
             mode="sync",
             meta=ActionCommandMetaSchema(
-                principal=_principal,
-                permissions=list(_permissions),
+                principal=_principal, permissions=list(_permissions)
             ),
         )
         result = await registry.dispatch(command)
@@ -144,9 +143,8 @@ _ALIASES: list[tuple[str, dict[str, str], list[str]]] = [
 
 def _make_handler(action: str, with_item_id: bool):
     """Создать замыкание-handler для конкретного action."""
-    async def _handler(
-        request: "Request", item_id: int | None = None
-    ) -> JSONResponse:
+
+    async def _handler(request: "Request", item_id: int | None = None) -> JSONResponse:
         """Унифицированная сигнатура: ``item_id`` берётся из path при ``with_item_id``."""
         return await _dispatch_with(
             request, action=action, item_id=item_id if with_item_id else None

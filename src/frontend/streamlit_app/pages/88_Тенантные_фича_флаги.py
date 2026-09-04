@@ -94,8 +94,11 @@ st.divider()
 st.subheader("Установить override")
 with st.form("установить_override", clear_on_submit=False):
     flag_name = st.text_input(
-        "flag", value="", placeholder="например, metrics_registry_strict"
-    , key="tenant_flags_flag_1")
+        "flag",
+        value="",
+        placeholder="например, metrics_registry_strict",
+        key="tenant_flags_flag_1",
+    )
     tenant_input = st.text_input("tenant_id (пусто = global override)", value="")
     kind = st.selectbox(
         "Тип значения", options=["boolean", "string", "integer", "json"]

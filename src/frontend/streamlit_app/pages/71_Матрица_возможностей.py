@@ -46,11 +46,13 @@ except Exception as exc:
 vocab = catalog.get("vocabulary") or []
 plugins = plugins_inv.get("plugins") or []
 
-metric_row([
-    ("Возможности", len(vocab)),
-    ("Плагины", len(plugins)),
-    ("Публичные", sum(1 for c in vocab if c.get("public"))),
-])
+metric_row(
+    [
+        ("Возможности", len(vocab)),
+        ("Плагины", len(plugins)),
+        ("Публичные", sum(1 for c in vocab if c.get("public"))),
+    ]
+)
 
 st.divider()
 
@@ -70,7 +72,7 @@ with tabs[0]:
             for cap in cap_names:
                 row[cap] = "✅" if cap in plug_caps else "·"
             rows.append(row)
-        st.dataframe(rows, width='stretch', hide_index=True)
+        st.dataframe(rows, width="stretch", hide_index=True)
     else:
         st.info(
             "Heatmap пуст: нет vocabulary или нет загруженных плагинов "
@@ -99,10 +101,8 @@ with tabs[1]:
             elif node["kind"] == "resource":
                 shape_open, shape_close = "{{", "}}"
             diagram.append(
-
-                    f'    {node["id"].replace(":", "_")}'
-                    f'{shape_open}"{node["label"]}"{shape_close}'
-
+                f"    {node['id'].replace(':', '_')}"
+                f'{shape_open}"{node["label"]}"{shape_close}'
             )
         for edge in graph["edges"]:
             label = f"|{edge['label']}|" if edge.get("label") else ""
@@ -117,16 +117,22 @@ with tabs[1]:
 with tabs[2]:
     st.subheader("Журнал аудита возможностей")
     plugin_filter = st.text_input(
-        "Фильтр по плагину", "", help="Substring-фильтр по имени плагина"
-    , key="caps_text_1")
+        "Фильтр по плагину",
+        "",
+        help="Substring-фильтр по имени плагина",
+        key="caps_text_1",
+    )
     tenant_filter = st.text_input(
-        "Фильтр по тенанту", "", help="Substring-фильтр по ID тенанта"
-    , key="caps_text_2")
+        "Фильтр по тенанту",
+        "",
+        help="Substring-фильтр по ID тенанта",
+        key="caps_text_2",
+    )
     events = client.get_audit_events(
         plugin=plugin_filter or None, tenant=tenant_filter or None, limit=200
     )
     if events:
-        st.dataframe(events, width='stretch', hide_index=True)
+        st.dataframe(events, width="stretch", hide_index=True)
     else:
         st.info("Нет событий по выбранным фильтрам.")
 
@@ -134,7 +140,7 @@ with tabs[2]:
 
 with tabs[3]:
     if vocab:
-        st.dataframe(vocab, width='stretch', hide_index=True)
+        st.dataframe(vocab, width="stretch", hide_index=True)
     else:
         st.write("_(словарь недоступен)_")
 

@@ -17,6 +17,7 @@ from src.backend.core.resilience.connector_resilience import resilient
 
 __all__ = ("FAISSVectorStore",)
 
+
 class FAISSVectorStore(BaseVectorStore):
     """In-memory FAISS vector store (для разработки и тестов)."""
 
@@ -139,5 +140,3 @@ class FAISSVectorStore(BaseVectorStore):
             }
         except Exception as exc:
             return {"status": "down", "error": str(exc)}
-
-

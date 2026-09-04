@@ -40,14 +40,16 @@ if st.button("Выполнить", type="primary"):
     try:
         with st.spinner("Выполнение SQL..."):
             result = client._request(
-            "POST", "/api/v1/admin/sql/query", json={"query": sql, "limit": int(limit)}
-        )
+                "POST",
+                "/api/v1/admin/sql/query",
+                json={"query": sql, "limit": int(limit)},
+            )
         if isinstance(result, dict):
             rows = result.get("rows") or []
             columns = result.get("columns") or []
             st.caption(f"Строк: {len(rows)}, колонок: {len(columns)}")
             if rows:
-                st.dataframe(rows, width='stretch', height=500)
+                st.dataframe(rows, width="stretch", height=500)
             else:
                 st.info("Запрос выполнен, но вернул 0 строк.")
             if result.get("error"):

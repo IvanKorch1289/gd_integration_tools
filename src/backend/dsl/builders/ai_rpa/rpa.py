@@ -97,7 +97,10 @@ class RPAMixin:
 
         ``output_property`` → ``to='property:<name>'``.
         """
-        kwargs: dict[str, Any] = {"selector": selector, "to": f"property:{output_property}"}
+        kwargs: dict[str, Any] = {
+            "selector": selector,
+            "to": f"property:{output_property}",
+        }
         if url is not None:
             # Backward-compat: warn if explicit url passed (Playwright uses session page)
             import warnings as _w
@@ -131,8 +134,7 @@ class RPAMixin:
                 stacklevel=2,
             )
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors.rpa_browser",
-            "ScreenshotProcessor",
+            "src.backend.dsl.engine.processors.rpa_browser", "ScreenshotProcessor"
         )
 
     def browser_launch(self, *, headless: bool = True) -> RouteBuilder:

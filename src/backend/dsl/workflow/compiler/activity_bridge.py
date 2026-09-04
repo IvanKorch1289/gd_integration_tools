@@ -205,8 +205,7 @@ def bridge_action_handler(
             action=action_id,
             payload=payload or {},
             meta=ActionCommandMetaSchema(
-                principal=f"temporal_activity:{action_id}",
-                permissions=[],
+                principal=f"temporal_activity:{action_id}", permissions=[]
             ),
         )
         return await action_handler_registry.dispatch(command)

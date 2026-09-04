@@ -16,8 +16,7 @@ from src.frontend.streamlit_app.shared.components import (
     setup_page,
 )
 
-setup_page(layout="wide", initial_sidebar_state="expanded"
-)
+setup_page(layout="wide", initial_sidebar_state="expanded")
 st.header(":arrows_clockwise: Выполняющиеся процессы")
 
 client = get_api_client()
@@ -48,12 +47,14 @@ st.divider()
 st.subheader("Статистика за 60 секунд")
 try:
     stats = client._request("GET", "/api/v1/admin/processes/stats")
-    metric_row([
-        ("Запущено", stats.get("started", 0)),
-        ("Успешно", stats.get("succeeded", 0)),
-        ("Ошибок", stats.get("failed", 0)),
-        ("p95, мс", stats.get("p95_ms", 0)),
-    ])
+    metric_row(
+        [
+            ("Запущено", stats.get("started", 0)),
+            ("Успешно", stats.get("succeeded", 0)),
+            ("Ошибок", stats.get("failed", 0)),
+            ("p95, мс", stats.get("p95_ms", 0)),
+        ]
+    )
 except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
     st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
     st.caption("Статистика недоступна.")

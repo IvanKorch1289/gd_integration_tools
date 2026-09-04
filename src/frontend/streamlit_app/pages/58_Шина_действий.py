@@ -40,9 +40,9 @@ except (ImportError, AttributeError, RuntimeError) as ff_exc:
     # ImportError — features module missing, AttributeError — API
     # change, RuntimeError — feature_flags unavailable.
     import logging
+
     logging.getLogger(__name__).debug(
-        "streamlit_58_Шина.feature_flag_fallback",
-        extra={"error": str(ff_exc)},
+        "streamlit_58_Шина.feature_flag_fallback", extra={"error": str(ff_exc)}
     )
     _flag_enabled = False
 
@@ -138,7 +138,7 @@ with col_invoke:
         ),
     )
 
-    _invoke_clicked = st.button("Вызвать", type="primary", width='stretch')
+    _invoke_clicked = st.button("Вызвать", type="primary", width="stretch")
 
     if _invoke_clicked:
         # Валидация JSON

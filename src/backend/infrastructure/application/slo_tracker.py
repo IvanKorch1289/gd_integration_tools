@@ -167,10 +167,7 @@ class SLOTracker:
             )
         except (ImportError, AttributeError) as exc:
             # Sprint 19 (analyst swarm iteration 5) F-1: log instead of silent pass.
-            _logger.debug(
-                "slo_tracker.record_pipeline_slo.skipped: %s",
-                exc,
-            )
+            _logger.debug("slo_tracker.record_pipeline_slo.skipped: %s", exc)
 
     def get_report(self) -> dict[str, Any]:
         """Get SLO report for all routes.
@@ -257,6 +254,7 @@ from src.backend.core.di import app_state_singleton
 from src.backend.core.logging import get_logger
 
 _logger = get_logger(__name__)
+
 
 @app_state_singleton("slo_tracker", SLOTracker)
 def get_slo_tracker() -> SLOTracker:  # type: ignore[empty-body]

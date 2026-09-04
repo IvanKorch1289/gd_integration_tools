@@ -22,6 +22,7 @@ class SanitizePIIProcessor(BaseProcessor):
             body = str(body)
         # S86 M2-#11 accelerated batch: DI provider.
         from src.backend.core.di.providers.cache import get_ai_sanitizer_provider
+
         get_ai_sanitizer = get_ai_sanitizer_provider()
 
         sanitizer = get_ai_sanitizer()

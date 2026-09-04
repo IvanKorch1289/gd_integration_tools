@@ -20,8 +20,6 @@ T = TypeVar("T")
 _logger = get_logger(__name__)
 
 
-
-
 def _make_correlation_id() -> str:
     """S92 M5-#8: factory for correlation_id с propagation from ASGI context.
 
@@ -36,11 +34,10 @@ def _make_correlation_id() -> str:
         asgi_value = asgi_cid.get("")
         if asgi_value:
             return asgi_value
-    except (ImportError, LookupError, AttributeError):
+    except ImportError, LookupError, AttributeError:
         # No asgi_correlation_id context (offline/test) — fallback to UUIDv4
         pass
     return str(uuid.uuid4())
-
 
 
 class ExchangeStatus(StrEnum):

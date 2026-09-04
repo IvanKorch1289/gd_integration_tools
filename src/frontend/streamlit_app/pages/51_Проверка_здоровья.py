@@ -43,8 +43,7 @@ def _render_health_dashboard() -> None:
     }
 
     st.subheader(
-        f"{colors.get(overall, ':grey_question:')} "
-        f"Overall: **{overall.upper()}**"
+        f"{colors.get(overall, ':grey_question:')} Overall: **{overall.upper()}**"
     )
     st.caption(f"Timestamp: {data.get('timestamp', '—')}")
 

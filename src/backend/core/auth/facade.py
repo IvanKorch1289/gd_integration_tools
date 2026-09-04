@@ -113,7 +113,6 @@ class AuthFacade(AuthTokenMixin, AuthVerifyMixin, AuthCoreMixin):
         return self._quotas
 
 
-
 # Singleton per pattern (NotificationFacade, StorageFacade, etc.).
 _auth_facade: AuthFacade | None = None
 

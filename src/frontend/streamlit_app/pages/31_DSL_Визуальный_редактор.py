@@ -87,7 +87,6 @@ with st.sidebar:
     render_editor_sidebar(client)
 
 
-
 tab_visual, tab_yaml, tab_python, tab_diff, tab_canvas = st.tabs(
     ["Visual", "YAML", "Python", "Сравнение workflow", "Канвас (Drag-Drop)"]
 )
@@ -96,16 +95,19 @@ with tab_visual:
     from src.frontend.streamlit_app.pages._editor.visual.tab_visual import (
         render_visual_tab,
     )
+
     render_visual_tab()
 
 with tab_yaml:
     from src.frontend.streamlit_app.pages._editor.visual.tab_yaml import render_yaml_tab
+
     render_yaml_tab(client)
 
 with tab_python:
     from src.frontend.streamlit_app.pages._editor.visual.tab_python import (
         render_python_tab,
     )
+
     render_python_tab()
 
 # ── Sprint 12 K3 W1: Workflow Diff ──
@@ -116,6 +118,7 @@ with tab_canvas:
     from src.frontend.streamlit_app.pages._editor.visual.tab_canvas import (
         render_canvas_tab,
     )
+
     render_canvas_tab(client)
 
 related_pages_footer("31_DSL_Визуальный_редактор")

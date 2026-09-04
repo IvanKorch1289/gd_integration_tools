@@ -89,9 +89,7 @@ try:
             context_getter=_graphql_context_getter,
             dependencies=[
                 Depends(
-                    require_auth(
-                        [AuthMethod.API_KEY, AuthMethod.JWT, AuthMethod.MTLS]
-                    )
+                    require_auth([AuthMethod.API_KEY, AuthMethod.JWT, AuthMethod.MTLS])
                 )
             ],
         )
@@ -190,7 +188,7 @@ def _serialize_exchange(exchange: Any) -> dict[str, Any]:
             "status": str(getattr(exchange, "status", "unknown")),
             "body": getattr(getattr(exchange, "out_message", None), "body", None),
         }
-    except (AttributeError, TypeError):
+    except AttributeError, TypeError:
         return {"status": "error", "body": None}
 
 

@@ -31,7 +31,7 @@ except Exception as exc:
     items = []
 
 if items:
-    st.dataframe(items, width='stretch')
+    st.dataframe(items, width="stretch")
 else:
     st.info("Нет заказов.")
 
@@ -39,11 +39,7 @@ else:
 
 
 def _emit_crud_event(
-    *,
-    action: str,
-    outcome: str,
-    target: str,
-    extra: dict | None = None,
+    *, action: str, outcome: str, target: str, extra: dict | None = None
 ) -> None:
     """S175 M10.2: structured audit-event для CRUD operations.
 
@@ -84,10 +80,7 @@ with st.expander("Создать заказ"), st.form("create_order", clear_on_
         target = f"pledge_gd_id={int(pledge_gd_id)},order_kind_id={int(order_kind_id)}"
         try:
             result = client.create_order(
-                {
-                    "pledge_gd_id": int(pledge_gd_id),
-                    "order_kind_id": int(order_kind_id),
-                }
+                {"pledge_gd_id": int(pledge_gd_id), "order_kind_id": int(order_kind_id)}
             )
             st.success(f"Заказ создан: {result}")
             _emit_crud_event(
@@ -117,11 +110,7 @@ with st.expander("Удалить заказ"):
         try:
             client.delete_order(int(order_id))
             st.success(f"Заказ {order_id} удалён.")
-            _emit_crud_event(
-                action="delete_order",
-                outcome="success",
-                target=target,
-            )
+            _emit_crud_event(action="delete_order", outcome="success", target=target)
             st.rerun()
         except Exception as exc:
             st.error(f"Ошибка: {exc}")

@@ -47,12 +47,19 @@ class CapabilityClient(BaseAPIClient):
             if isinstance(response, list):
                 return response
             return response.get("events", []) if isinstance(response, dict) else []
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as cap_exc:
+        except (
+            ConnectionError,
+            TimeoutError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+        ) as cap_exc:
             # cycle-9/D-AUDIT-1072: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
             # wrong type.
             import logging
+
             logging.getLogger(__name__).debug(
                 "streamlit_capability_client.audit_failed",
                 extra={"error": str(cap_exc)},

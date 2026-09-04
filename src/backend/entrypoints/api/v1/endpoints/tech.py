@@ -114,9 +114,7 @@ router.add_api_route(
     summary="Загрузить Excel-файл для массового создания объектов",
     name="upload_excel_for_mass_create",
     # P0 (cycle 6): mass-create state-changing endpoint → admin role required.
-    dependencies=[
-        Depends(require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)))
-    ],
+    dependencies=[Depends(require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)))],
 )
 
 

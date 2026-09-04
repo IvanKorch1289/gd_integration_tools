@@ -171,8 +171,9 @@ def get_ai_gateway() -> AIGateway:
         from src.backend.core.di.providers.ai import get_ai_gateway_provider
 
         return get_ai_gateway_provider()
-    except (KeyError, RuntimeError):  # noqa: PIE801 — Python 3 tuple form (was X, Y syntax)
+    except KeyError, RuntimeError:  # noqa: PIE801 — Python 3 tuple form (was X, Y syntax)
         return AIGateway()
+
 
 async def invoke_via_gateway(
     *,
@@ -233,11 +234,16 @@ async def invoke_via_gateway(
         # to skip AIGateway (tool whitelist, capability gate, AI safety).
         # Now: throw on production, allow only in dev with explicit warning.
         import os
+
         is_dev = os.environ.get("APP_ENVIRONMENT", "development").lower() in (
-            "development", "dev", "test", "ci",
+            "development",
+            "dev",
+            "test",
+            "ci",
         )
         if is_dev:
             import warnings as _w
+
             _w.warn(
                 "ai_gateway_enforce=False: skipping AIGateway pipeline (DEV ONLY). "
                 "Tool whitelist, capability gate, and AI safety are DISABLED.",
@@ -247,9 +253,8 @@ async def invoke_via_gateway(
             return await legacy_callable(*legacy_args, **(legacy_kwargs or {}))
         else:
             from src.backend.core.ai.errors import AIGatewayEnforcementRequiredError
-            raise AIGatewayEnforcementRequiredError(
-                missing=("ai_gateway_enforce",),
-            )
+
+            raise AIGatewayEnforcementRequiredError(missing=("ai_gateway_enforce",))
 
     gw = gateway if gateway is not None else get_ai_gateway()
     request = AIRequest(

@@ -61,11 +61,7 @@ class MobileJwtVerifier:
     """
 
     def __init__(
-        self,
-        *,
-        backend: JwtBackend,
-        issuer_whitelist: list[str],
-        audience: str,
+        self, *, backend: JwtBackend, issuer_whitelist: list[str], audience: str
     ) -> None:
         if not issuer_whitelist:
             raise ValueError("issuer_whitelist must not be empty")

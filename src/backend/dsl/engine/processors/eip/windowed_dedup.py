@@ -60,7 +60,7 @@ def _serialize(body: Any) -> str:
     """Канонический JSON для in-memory dedup-key (через codecs.json helper)."""
     try:
         return canonical_json_bytes(body).decode("utf-8")
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return str(body)
 
 
@@ -116,6 +116,7 @@ class WindowedDedupProcessor(BaseProcessor):
         try:
             # S60 M2-#11: DI provider вместо inline infrastructure import
             from src.backend.core.di.providers.cache import get_redis_client_provider
+
             redis_client = get_redis_client_provider()
 
             key = str(_extract_path(exchange.in_message.body, self._key_from) or "")
@@ -205,6 +206,7 @@ class WindowedDedupProcessor(BaseProcessor):
         try:
             # S60 M2-#11: DI provider вместо inline infrastructure import
             from src.backend.core.di.providers.cache import get_redis_client_provider
+
             redis_client = get_redis_client_provider()
 
             redis_key = f"windowed:dedup:last:{self._prefix}:{key}"
@@ -272,6 +274,7 @@ class WindowedCollectProcessor(BaseProcessor):
         try:
             # S60 M2-#11: DI provider вместо inline infrastructure import
             from src.backend.core.di.providers.cache import get_redis_client_provider
+
             redis_client = get_redis_client_provider()
 
             key = str(_extract_path(exchange.in_message.body, self._key_from) or "")
@@ -380,6 +383,7 @@ class WindowedCollectProcessor(BaseProcessor):
         try:
             # S60 M2-#11: DI provider вместо inline infrastructure import
             from src.backend.core.di.providers.cache import get_redis_client_provider
+
             redis_client = get_redis_client_provider()
 
             buf_key = f"windowed:collect:buf:{key}"

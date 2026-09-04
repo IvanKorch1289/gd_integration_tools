@@ -207,6 +207,7 @@ class ForwardToProcessor(BaseProcessor):
     ) -> None:
         # S86 M2-#11 accelerated batch: DI provider.
         from src.backend.core.di.providers.cache import get_stream_client_provider
+
         get_stream_client = get_stream_client_provider()
 
         client = get_stream_client()

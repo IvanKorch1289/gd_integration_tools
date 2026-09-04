@@ -34,7 +34,11 @@ client = get_api_client()
 # ── Controls
 col1, col2, col3 = st.columns(3)
 top_n = col1.number_input(
-    "Top N процессоров", min_value=1, max_value=100, value=config.AUDIT_DEFAULT_LIMIT // 2, step=5
+    "Top N процессоров",
+    min_value=1,
+    max_value=100,
+    value=config.AUDIT_DEFAULT_LIMIT // 2,
+    step=5,
 )
 auto_refresh = col2.toggle("Авто-обновление (30s)", value=False)
 show_details = col3.toggle("Показать детали", value=True)
@@ -129,7 +133,9 @@ if top_processors:
     )
 
     if show_details:
-        st.dataframe(df_display, width='stretch', height=config.DATAFRAME_DEFAULT_HEIGHT - 100)
+        st.dataframe(
+            df_display, width="stretch", height=config.DATAFRAME_DEFAULT_HEIGHT - 100
+        )
     else:
         st.dataframe(
             df_display[
@@ -141,7 +147,7 @@ if top_processors:
                     "Доля ошибок (%)",
                 ]
             ],
-            width='stretch',
+            width="stretch",
             height=config.DATAFRAME_DEFAULT_HEIGHT - 100,
         )
 
@@ -158,7 +164,11 @@ if top_processors:
             chart_data = df_display[["Имя процессора", "Usage Count"]].set_index(
                 "Имя процессора"
             )
-            st.bar_chart(chart_data, horizontal=True, height=config.DATAFRAME_DEFAULT_HEIGHT - 100)
+            st.bar_chart(
+                chart_data,
+                horizontal=True,
+                height=config.DATAFRAME_DEFAULT_HEIGHT - 100,
+            )
 
     # Latency bar chart
     with chart_col2:
@@ -166,10 +176,12 @@ if top_processors:
         if not df_display.empty:
             latency_data = df_display[
                 ["Имя процессора", "Средняя задержка (мс)"]
-            ].set_index(
-                "Имя процессора"
+            ].set_index("Имя процессора")
+            st.bar_chart(
+                latency_data,
+                horizontal=True,
+                height=config.DATAFRAME_DEFAULT_HEIGHT - 100,
             )
-            st.bar_chart(latency_data, horizontal=True, height=config.DATAFRAME_DEFAULT_HEIGHT - 100)
 
     # Error rate chart
     if show_details and "Доля ошибок (%)" in df_display.columns:
@@ -182,9 +194,7 @@ if top_processors:
 
 else:
     st.info(
-        "Нет данных о использовании процессоров. "
-
-        "Проверьте, что DSL маршруты загружены."
+        "Нет данных о использовании процессоров. Проверьте, что DSL маршруты загружены."
     )
 
 st.divider()

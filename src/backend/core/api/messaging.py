@@ -4,6 +4,7 @@ Ponytail fix: services/* должен импортировать через core
 (not infrastructure.messaging directly). Это eliminates
 services → infrastructure.messaging violations.
 """
+
 from __future__ import annotations
 
 # Re-exports infrastructure.messaging (3+ services → infrastructure.messaging violations)
@@ -24,6 +25,7 @@ def __getattr__(name: str) -> object:
         from src.backend.infrastructure.messaging.kafka_pool_registration import (
             KafkaProducer,
         )
+
         return KafkaProducer
     raise AttributeError(f"module 'core.api.messaging' has no attribute {name!r}")
 

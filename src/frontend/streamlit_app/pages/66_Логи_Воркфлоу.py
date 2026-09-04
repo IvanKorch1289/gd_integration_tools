@@ -66,7 +66,12 @@ with tab_step:
         key="step_status",
     )
     limit = st.number_input(
-        "Лимит", min_value=10, max_value=1000, value=config.SEARCH_DEFAULT_LIMIT * 5, step=10, key="step_limit"
+        "Лимит",
+        min_value=10,
+        max_value=1000,
+        value=config.SEARCH_DEFAULT_LIMIT * 5,
+        step=10,
+        key="step_limit",
     )
 
     with st.spinner("Загрузка step-логов..."):
@@ -113,9 +118,7 @@ with tab_step:
                 if c in df.columns
             ]
             st.dataframe(
-                df[columns] if columns else df,
-                width='stretch',
-                hide_index=True,
+                df[columns] if columns else df, width="stretch", hide_index=True
             )
             st.caption(f"Всего записей: {len(df)}")
 
@@ -198,7 +201,7 @@ with tab_live:
             records = api._request("GET", "/api/v1/admin/audit/tail", params=params)
             if isinstance(records, list):
                 return records
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError):
+        except ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError:
             # cycle-9/D-AUDIT-1047: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
@@ -208,7 +211,7 @@ with tab_live:
                 records = api._request("GET", "/api/v1/admin/audit", params=params)
                 if isinstance(records, list):
                     return records
-            except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError):
+            except ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError:
                 # cycle-9/D-AUDIT-1047: см. выше — тот же narrow для fallback path.
                 return []
         return []
@@ -224,7 +227,12 @@ with tab_live:
                 "либо tail пуст."
             )
             return
-        st.dataframe(records, width='stretch', height=config.DATAFRAME_DEFAULT_HEIGHT + 100, hide_index=True)
+        st.dataframe(
+            records,
+            width="stretch",
+            height=config.DATAFRAME_DEFAULT_HEIGHT + 100,
+            hide_index=True,
+        )
 
     if autorefresh:
         _render_tail()

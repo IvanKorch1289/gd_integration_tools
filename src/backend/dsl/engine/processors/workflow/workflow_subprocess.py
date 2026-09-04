@@ -31,6 +31,7 @@ def _wf_factory() -> Any:  # R1 fix: lazy (was module-level `_wf_factory = ...`)
     """Lazy resolve workflow factory module (avoids import-time DI call)."""
     return get_workflow_factory_module_provider()
 
+
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
     from src.backend.dsl.engine.exchange import Exchange

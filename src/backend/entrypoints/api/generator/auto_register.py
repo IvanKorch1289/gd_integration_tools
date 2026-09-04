@@ -121,7 +121,7 @@ def _build_auto_endpoint(
         else:
             try:
                 body = await request.json()
-            except (ValueError, RuntimeError):
+            except ValueError, RuntimeError:
                 # Тело отсутствует или не валидный JSON — допустимо для
                 # action'а без payload_model; падать не нужно.
                 body = None
@@ -151,8 +151,7 @@ def _build_auto_endpoint(
             action=action,
             payload=payload,
             meta=ActionCommandMetaSchema(
-                principal=_principal,
-                permissions=list(_permissions),
+                principal=_principal, permissions=list(_permissions)
             ),
         )
         result = registry.dispatch(command)

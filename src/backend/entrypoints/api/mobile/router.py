@@ -100,9 +100,7 @@ def _build_mobile_jwt_verifier() -> Any:
 
     if not protections_on:
         return MobileJwtVerifier(
-            backend=backend,
-            issuer_whitelist=issuer_whitelist,
-            audience=audience,
+            backend=backend, issuer_whitelist=issuer_whitelist, audience=audience
         )
 
     from src.backend.core.auth.mobile_jwt_redis import (
@@ -169,9 +167,7 @@ async def _verify_mobile_token(authorization: str | None) -> str:
         # before falling through to demo path. Default OFF keeps current
         # fail-closed 401 behavior for production safety.
         try:
-            mobile_jwt_on = bool(
-                getattr(feature_flags, "mobile_jwt_enabled", False)
-            )
+            mobile_jwt_on = bool(getattr(feature_flags, "mobile_jwt_enabled", False))
         except Exception as _:
             mobile_jwt_on = False
 
@@ -330,9 +326,8 @@ async def refresh_token(
     # S49 W3 (cycle 275): if JWT path enabled, verify Authorization header first
     try:
         from src.backend.core.config.features import feature_flags
-        mobile_jwt_on = bool(
-            getattr(feature_flags, "mobile_jwt_enabled", False)
-        )
+
+        mobile_jwt_on = bool(getattr(feature_flags, "mobile_jwt_enabled", False))
     except Exception:
         mobile_jwt_on = False
 
@@ -381,7 +376,10 @@ async def refresh_token(
                 _log.warning(
                     "JWT refresh reuse detected (family revoked): user=%s "
                     "device=%s jti=%s tokens_invalidated=%d",
-                    user_id, device_id, ctx.jti[:8], invalidated,
+                    user_id,
+                    device_id,
+                    ctx.jti[:8],
+                    invalidated,
                 )
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -439,7 +437,10 @@ async def refresh_token(
         _log.warning(
             "mobile refresh reuse detected (family revoked): user=%s "
             "device=%s jti=%s tokens_invalidated=%d",
-            user_id, device_id, old_jti[:8], invalidated,
+            user_id,
+            device_id,
+            old_jti[:8],
+            invalidated,
         )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
