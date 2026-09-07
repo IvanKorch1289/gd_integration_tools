@@ -8,11 +8,9 @@ from __future__ import annotations
 
 import streamlit as st
 
-# 2026-08-14 cycle 206: миграция на ``core.frontend_facade`` (D-AUDIT-20601).
-# ``load_pipeline_from_yaml`` уже re-exported в facade (через
-# src.backend.services.dsl_portal). Импорт через facade устраняет
-# layer-violation (frontend → backend.dsl напрямую).
-from src.backend.core.frontend_facade import load_pipeline_from_yaml
+# S170 Phase B CL-12-2/9: миграция с core.frontend_facade на services.dsl_portal
+# (canonical layer-compliant путь, re-exports load_pipeline_from_yaml).
+from src.backend.services.dsl_portal import load_pipeline_from_yaml
 from src.frontend.streamlit_app.pages._editor.constants import (
     PROCESSOR_ICONS,
     VISUAL_PROCESSORS,
