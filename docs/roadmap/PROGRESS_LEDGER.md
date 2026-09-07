@@ -798,3 +798,12 @@ mqtt_handler 58% → 67% (остаток — broker-loop _listen, требует
 Verify: 21/21 mqtt passed; ruff 0.
 
 Решения (а)/(б) пользователя — по-прежнему открыты (4-е напоминание).
+
+## T3 ratchet-инкремент 5 (2026-09-06) — SecurityFacade домен 100%
+
+`b95d959c6`: facade.py ядро 95% → **100%** (_assert surface + lru_cache
+singleton). SecurityFacade-домен целиком: facade.py 100%, facade_pii 100%,
+facade_blacklist 100%.
+
+Решения (а) scope T3 и (б) ADR-0296/docker+Vault — повторно запрошены у
+пользователя (AskUserQuestion, 4-й раз); интерим-финиш действует.
