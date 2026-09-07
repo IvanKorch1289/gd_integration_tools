@@ -13,8 +13,6 @@ import importlib
 import sys
 from pathlib import Path
 
-import pytest
-
 
 class TestDlqBridgeMoved:
     """Verify dlq_bridge relocated to infrastructure layer."""
@@ -35,18 +33,14 @@ class TestDlqBridgeMoved:
     def test_new_location_importable(self) -> None:
         """New dlq module imports successfully."""
         sys.modules.pop("src.backend.infrastructure.di_bridge.dlq", None)
-        module = importlib.import_module(
-            "src.backend.infrastructure.di_bridge.dlq"
-        )
+        module = importlib.import_module("src.backend.infrastructure.di_bridge.dlq")
         # Verify exports still present
         assert hasattr(module, "get_dlq_envelope_class")
         assert hasattr(module, "get_dlq_reason_class")
 
     def test_get_dlq_envelope_class_callable(self) -> None:
         """get_dlq_envelope_class returns DLQ envelope class."""
-        from src.backend.infrastructure.di_bridge.dlq import (
-            get_dlq_envelope_class,
-        )
+        from src.backend.infrastructure.di_bridge.dlq import get_dlq_envelope_class
 
         cls = get_dlq_envelope_class()
         assert cls is not None
@@ -60,37 +54,34 @@ class TestInfrastructureLocatorMigrated:
         text = Path(
             "src/backend/core/di/providers/infrastructure_locator.py"
         ).read_text(encoding="utf-8")
-        assert (
-            "from src.backend.infrastructure.di_bridge.dlq import"
-            in text
-        ), (
+        assert "from src.backend.infrastructure.di_bridge.dlq import" in text, (
             "infrastructure_locator должна import из new location "
             "(Sprint 42 Item 2 migration)"
         )
-        assert (
-            "from src.backend.core.di.providers.dlq_bridge"
-            not in text
-        )
+        assert "from src.backend.core.di.providers.dlq_bridge" not in text
 
 
 class TestPiiEraseMigrated:
     """Verify pii_erase.py (the SECOND caller) uses new dlq location."""
 
     def test_pii_erase_imports_from_new_path(self) -> None:
-        """`src/backend/dsl/engine/processors/security/pii_erase.py` (caller) imports из new dlq location."""
+        """pii_erase ходит в new dlq location через DI-провайдер (S87).
+
+        Прямой импорт заменён на ``get_dlq_envelope_class_provider`` из
+        ``core.di.providers.cache``, который резолвит ``di_bridge.dlq``.
+        """
         text = Path(
             "src/backend/dsl/engine/processors/security/pii_erase.py"
         ).read_text(encoding="utf-8")
-        assert (
-            "from src.backend.infrastructure.di_bridge.dlq import"
-            in text
-        ), (
-            "pii_erase.py должна import из new dlq location "
-            "(Sprint 42 Item 2 migration)"
+        assert "get_dlq_envelope_class_provider" in text, (
+            "pii_erase.py должна ходить в dlq через DI-провайдер (S87 M2-#11 migration)"
         )
-        assert (
-            "from src.backend.core.di.providers.dlq_bridge"
-            not in text
+        assert "from src.backend.core.di.providers.dlq_bridge" not in text
+        provider = Path("src/backend/core/di/providers/cache.py").read_text(
+            encoding="utf-8"
+        )
+        assert 'resolve_module("di_bridge.dlq")' in provider, (
+            "провайдер должен резолвить new dlq location (di_bridge.dlq)"
         )
 
 
@@ -99,13 +90,11 @@ class TestAllowlistReduction:
 
     def test_dlq_bridge_entries_removed(self) -> None:
         """2 dlq_bridge entries removed from allowlist."""
-        text = Path("tools/check_layers_allowlist.txt").read_text(
-            encoding="utf-8"
-        )
+        text = Path("tools/check_layers_allowlist.txt").read_text(encoding="utf-8")
         dlq_lines = [
-            line for line in text.splitlines()
-            if line.startswith("#") is False
-            and "dlq_bridge" in line
+            line
+            for line in text.splitlines()
+            if line.startswith("#") is False and "dlq_bridge" in line
         ]
         assert len(dlq_lines) == 0, (
             f"All dlq_bridge entries should be removed, found: {dlq_lines}"

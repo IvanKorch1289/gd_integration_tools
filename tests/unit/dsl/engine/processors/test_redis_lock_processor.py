@@ -10,7 +10,6 @@
     * Custom key_prefix → попадает в RedisLock.
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -27,7 +26,7 @@ def _exchange_with() -> Exchange[Any]:
 
 
 def _patch_redis_lock(
-    *, acquire_return: bool | Exception, redis_lock_cls_mock: Any | None = None,
+    *, acquire_return: bool | Exception, redis_lock_cls_mock: Any | None = None
 ) -> Any:
     """Возвращает MagicMock для ``RedisLock`` class.
 
@@ -86,7 +85,7 @@ async def test_redis_lock_acquired_with_blocking_timeout() -> None:
     fake_cls.return_value = fake_instance
 
     with patch(
-        "src.backend.infrastructure.clients.storage.redis_lock.RedisLock", new=fake_cls,
+        "src.backend.infrastructure.clients.storage.redis_lock.RedisLock", new=fake_cls
     ):
         await proc.process(ex, context=MagicMock())
 
@@ -146,7 +145,7 @@ async def test_redis_lock_custom_key_prefix() -> None:
     fake_cls.return_value = fake_instance
 
     with patch(
-        "src.backend.infrastructure.clients.storage.redis_lock.RedisLock", new=fake_cls,
+        "src.backend.infrastructure.clients.storage.redis_lock.RedisLock", new=fake_cls
     ):
         await proc.process(ex, context=MagicMock())
 
@@ -179,17 +178,12 @@ async def test_redis_lock_import_error_fails_exchange() -> None:
     proc = RedisLockProcessor(key="any")
     ex = _exchange_with()
 
-    # Подменяем __import__ для модуля, чтобы from import дал ImportError.
-    import builtins
-
-    real_import = builtins.__import__
-
-    def _import(name: str, *args: Any, **kwargs: Any) -> Any:
-        if "redis_lock" in name and "infrastructure" in name:
-            raise ImportError("simulated: redis not installed")
-        return real_import(name, *args, **kwargs)
-
-    with patch("builtins.__import__", side_effect=_import):
+    # S76: прод импортирует RedisLock через DI-провайдер (importlib, мимо
+    # builtins.__import__), поэтому ImportError имитируем на провайдере.
+    with patch(
+        "src.backend.core.di.providers.cache.get_redis_lock_class_provider",
+        side_effect=ImportError("simulated: redis not installed"),
+    ):
         await proc.process(ex, context=MagicMock())
 
     assert ex.error is not None
@@ -223,5 +217,5 @@ def test_redis_lock_to_spec_full() -> None:
             "blocking_timeout": 10.0,
             "fail_on_contention": False,
             "key_prefix": "etl",
-        },
+        }
     }
