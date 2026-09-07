@@ -155,7 +155,7 @@ class ExpressSendFileProcessor(BaseProcessor):
                 # S87 M2-#11 final batch: DI provider (S78 added).
                 from src.backend.core.di.providers.cache import get_s3_client_provider
 
-                s3_client = get_s3_client_provider()
+                s3_client = get_s3_client_provider()()
 
                 data = await s3_client.get_object_bytes(str(key))
                 if data is not None:

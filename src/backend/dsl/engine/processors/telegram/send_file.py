@@ -142,7 +142,7 @@ class TelegramSendFileProcessor(BaseProcessor):
                 # S85 M2-#11 accelerated batch: DI provider вместо inline infrastructure import.
                 from src.backend.core.di.providers.cache import get_s3_client_provider
 
-                s3_client = get_s3_client_provider()
+                s3_client = get_s3_client_provider()()
                 data = await s3_client.get_object_bytes(str(key))
                 if data is not None:
                     return data
