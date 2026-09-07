@@ -269,3 +269,127 @@ async def test_registry_start_all_and_stop_all() -> None:
 @pytest.mark.asyncio
 async def test_get_trigger_registry_singleton() -> None:
     assert get_trigger_registry() is get_trigger_registry()
+
+
+# ── FileSensorTaskWrapper (55-87) ───────────────────────────────────
+
+
+def test_file_sensor_wrapper_requires_task_or_factory() -> None:
+    from src.backend.dsl.orchestration.triggers import FileSensorTaskWrapper
+
+    with pytest.raises(ValueError, match="either .task. or .task_factory"):
+        FileSensorTaskWrapper()
+
+
+@pytest.mark.asyncio
+async def test_file_sensor_wrapper_lazy_factory_start() -> None:
+    from src.backend.dsl.orchestration.triggers import FileSensorTaskWrapper
+
+    created: list[object] = []
+
+    def factory() -> asyncio.Task:
+        task = asyncio.create_task(asyncio.sleep(10))
+        created.append(task)
+        return task
+
+    wrapper = FileSensorTaskWrapper(task_factory=factory, name="sensor1")
+    assert wrapper.task is None  # лениво до start
+    await wrapper.start()
+    assert wrapper.task is not None
+    await wrapper.start()  # idempotent: factory не вызывается повторно
+    assert len(created) == 1
+    await wrapper.stop()
+    assert wrapper.task.done()
+
+
+@pytest.mark.asyncio
+async def test_file_sensor_wrapper_stop_without_task() -> None:
+    from src.backend.dsl.orchestration.triggers import FileSensorTaskWrapper
+
+    async def make() -> asyncio.Task:
+        return asyncio.create_task(asyncio.sleep(10))
+
+    wrapper = FileSensorTaskWrapper(task_factory=make, name="s2")
+    await wrapper.stop()  # task ещё None — no-op
+    assert wrapper.task is None
+
+
+@pytest.mark.asyncio
+async def test_file_sensor_wrapper_stop_done_task() -> None:
+    from src.backend.dsl.orchestration.triggers import FileSensorTaskWrapper
+
+    task = asyncio.create_task(asyncio.sleep(0))
+    await asyncio.sleep(0)  # дать завершиться
+    wrapper = FileSensorTaskWrapper(task=task)
+    await wrapper.stop()  # done() -> без cancel
+    assert task.done()
+
+
+# ── CronTrigger: next_fire None + dispatch failure (280, 287, 320-329) ──
+
+
+@pytest.mark.asyncio
+async def test_cron_trigger_no_next_fire_exits() -> None:
+    """get_next_fire_time=None -> loop завершается без dispatch."""
+
+    svc = _mock_dsl_service()
+    trigger = CronTrigger("c1", "route-1", "* * * * *")
+    trigger._aps_trigger = MagicMock()
+    trigger._aps_trigger.get_next_fire_time = MagicMock(return_value=None)
+    with patch("src.backend.dsl.service.get_dsl_service", return_value=svc):
+        await trigger.start()
+        await asyncio.sleep(0.05)
+    assert svc.dispatch.await_count == 0
+    await trigger.stop()
+
+
+@pytest.mark.asyncio
+async def test_cron_trigger_dispatch_failure_swallowed() -> None:
+    import datetime as _dt
+
+    svc = AsyncMock()
+    svc.dispatch = AsyncMock(side_effect=RuntimeError("backend down"))
+    trigger = CronTrigger("c1", "route-1", "* * * * *")
+    fake_aps = MagicMock()
+    now = _dt.datetime.now(_dt.UTC)
+    fake_aps.get_next_fire_time = MagicMock(
+        side_effect=lambda a, b: b + _dt.timedelta(seconds=0.01)
+    )
+    trigger._aps_trigger = fake_aps
+    with patch("src.backend.dsl.service.get_dsl_service", return_value=svc):
+        await trigger.start()
+        await asyncio.sleep(0.1)
+        await trigger.stop()
+    assert svc.dispatch.await_count >= 1  # исключение проглочено
+
+
+# ── WebhookTrigger.stop exception branch (445-451) ──────────────────
+
+
+@pytest.mark.asyncio
+async def test_webhook_stop_router_error_swallowed() -> None:
+    app, routes = _fake_app()
+    app.router = SimpleNamespace(routes=property(lambda self: (_ for _ in ()).throw(AttributeError("boom"))))
+    trigger = WebhookTrigger("wh1", "route-1", "/webhooks/orders", app=app)
+    await trigger.start()
+    await trigger.stop()  # AttributeError глотается (445-451)
+    assert trigger._route_added is False
+
+
+# ── TriggerRegistry stop_all swallow (522-534) ──────────────────────
+
+
+class _BadStopTrigger(_FakeTrigger):
+    async def stop(self) -> None:
+        raise RuntimeError("stop fail")
+
+
+@pytest.mark.asyncio
+async def test_registry_stop_all_swallows_errors() -> None:
+    registry = TriggerRegistry()
+    bad = _BadStopTrigger("bad")
+    good = _FakeTrigger("good")
+    registry.register(bad)
+    registry.register(good)
+    await registry.stop_all()  # исключение bad не мешает good
+    assert good.stopped is True
