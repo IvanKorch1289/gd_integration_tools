@@ -21,7 +21,7 @@ class TestFastMCPserver:
             patch(
                 "src.backend.dsl.agents.fastmcp_server.SkillRegistry",
             ) as mock_registry_cls,
-            patch("src.backend.dsl.agents.fastmcp_server.workflow_registry"),
+            patch("src.backend.infrastructure.workflow.registry.workflow_registry"),
         ):
             mock_registry = MagicMock()
             mock_registry.list_all.return_value = []
@@ -46,7 +46,7 @@ class TestFastMCPserver:
                 "src.backend.dsl.agents.fastmcp_server.SkillRegistry",
             ) as mock_registry_cls,
             patch(
-                "src.backend.dsl.agents.fastmcp_server.workflow_registry",
+                "src.backend.infrastructure.workflow.registry.workflow_registry",
             ) as mock_wf_registry,
         ):
             mock_registry = MagicMock()
@@ -66,7 +66,7 @@ class TestFastMCPserver:
             patch(
                 "src.backend.dsl.agents.fastmcp_server.SkillRegistry",
             ) as mock_registry_cls,
-            patch("src.backend.dsl.agents.fastmcp_server.workflow_registry"),
+            patch("src.backend.infrastructure.workflow.registry.workflow_registry"),
         ):
             mock_registry = MagicMock()
             mock_registry.list_all.return_value = []
@@ -86,7 +86,7 @@ class TestFastMCPserver:
             patch(
                 "src.backend.dsl.agents.fastmcp_server.SkillRegistry",
             ) as mock_registry_cls,
-            patch("src.backend.dsl.agents.fastmcp_server.workflow_registry"),
+            patch("src.backend.infrastructure.workflow.registry.workflow_registry"),
         ):
             mock_registry = MagicMock()
             mock_registry.list_all.return_value = []

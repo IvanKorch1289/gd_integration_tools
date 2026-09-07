@@ -35,8 +35,8 @@ async def test_search_with_mocked_service() -> None:
     )
 
     with patch(
-        "src.backend.infrastructure.clients.external.search_providers.get_web_search_service",
-        return_value=fake_service,
+        "src.backend.core.di.providers.web_search.get_web_search_provider",
+        return_value=lambda: fake_service,
     ):
         await proc.process(ex, AsyncMock())
 
@@ -52,8 +52,8 @@ async def test_query_from_body_source() -> None:
     fake_service.query = AsyncMock(return_value=[])
 
     with patch(
-        "src.backend.infrastructure.clients.external.search_providers.get_web_search_service",
-        return_value=fake_service,
+        "src.backend.core.di.providers.web_search.get_web_search_provider",
+        return_value=lambda: fake_service,
     ):
         await proc.process(ex, AsyncMock())
 

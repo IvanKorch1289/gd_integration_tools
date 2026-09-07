@@ -180,7 +180,7 @@ class TestCDCCaptureProcessorProcess:
         mock_exchange = _Exchange()
 
         with patch(
-            "src.backend.dsl.engine.processors.cdc_capture.get_cdc_client",
+            "src.backend.dsl.engine.processors.cdc_capture.get_cdc_client_provider",
             return_value=mock_client,
         ):
             await processor.process(mock_exchange, _Context())
@@ -212,7 +212,7 @@ class TestCDCCaptureProcessorProcess:
         mock_exchange = _Exchange()
 
         with patch(
-            "src.backend.dsl.engine.processors.cdc_capture.get_cdc_client",
+            "src.backend.dsl.engine.processors.cdc_capture.get_cdc_client_provider",
             return_value=mock_client,
         ):
             await processor.process(mock_exchange, _Context())
@@ -235,7 +235,7 @@ class TestCDCCaptureProcessorProcess:
         mock_exchange = _Exchange()
 
         with patch(
-            "src.backend.dsl.engine.processors.cdc_capture.get_cdc_client",
+            "src.backend.dsl.engine.processors.cdc_capture.get_cdc_client_provider",
             return_value=mock_client,
         ):
             await processor.process(mock_exchange, _Context())
@@ -261,7 +261,7 @@ class TestCDCCaptureProcessorProcess:
         mock_exchange.in_message.headers = {"X-Request-ID": "req_123"}
 
         with patch(
-            "src.backend.dsl.engine.processors.cdc_capture.get_cdc_client",
+            "src.backend.dsl.engine.processors.cdc_capture.get_cdc_client_provider",
             return_value=mock_client,
         ):
             await processor.process(mock_exchange, _Context())
