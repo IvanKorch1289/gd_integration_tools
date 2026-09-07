@@ -51,11 +51,15 @@ def render_import_tab() -> None:
         return "wsdl"
 
     if uploaded and st.button("Импортировать", key="imp_btn"):
-        from src.backend.core.frontend_facade import (
+        # S170 cycle 2: миграция с core.frontend_facade на canonical layer-compliant пути.
+        # ImportSource/Kind живут в core.interfaces (frontend→core ALLOWED per layer policy);
+        # get_import_service — в services.dsl_portal (frontend→services ALLOWED).
+        # См. ADR-0296 для миграционного паттерна.
+        from src.backend.core.interfaces.import_gateway import (
             ImportSource,
             ImportSourceKind,
-            get_import_service,
         )
+        from src.backend.services.dsl_portal import get_import_service
 
         content = uploaded.getvalue()
         source = ImportSource(
