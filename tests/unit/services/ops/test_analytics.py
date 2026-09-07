@@ -105,3 +105,17 @@ async def test_health_delegates_to_ping(
     mock_client.ping.return_value = True
     assert await service.health() is True
     mock_client.ping.assert_awaited_once()
+
+
+# ── T3 ratchet: get_analytics_service singleton (64-68) ─────────────
+
+
+def test_get_analytics_service_singleton() -> None:
+    from src.backend.services.ops import analytics as analytics_mod
+
+    analytics_mod._analytics_service_instance = None
+    svc1 = analytics_mod.get_analytics_service()
+    svc2 = analytics_mod.get_analytics_service()
+    assert svc1 is svc2
+    assert svc1 is not None
+    analytics_mod._analytics_service_instance = None
