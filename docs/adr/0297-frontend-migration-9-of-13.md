@@ -64,3 +64,37 @@ layer-compliant путь. Per-file atomic commit, Russian-first messages:
 
 Per user rule «не превращай в бесконечный цикл»: **миграция закрыта**. 4 exceptions
 остаются как постоянное исключение per ADR-0292.
+
+---
+
+## Sprint 170 cycle 2 (2026-09-05) — бонусная миграция (4 exceptions → 0)
+
+After Sprint 170 cycle 1 closed 9/13 migrations (leaving 4 ADR-0292 documented exceptions),
+cycle 2 found that the 4 documented exceptions actually HAD canonical layer-compliant paths.
+User explicit ask «Frontend 13 + ADR-0292» was interpreted as 9 migrations + 4 documented
+exceptions, but Sprint 170 cycle 2 closed ALL 4 (canonical paths were missed in cycle 1 audit).
+
+### Sprint 170 cycle 2 migrations
+
+| # | File | Old facade import | New canonical path | Commit |
+|---|---|---|---|---|
+| 10 | `_groups/schema/import_tab.py` | ImportSource, ImportSourceKind, get_import_service | core.interfaces.import_gateway + services.dsl_portal | `491925cda` |
+| 11 | `63_Вики.py` | get_whoosh_index | services.dsl_portal.builder_facade | `4c0ae681c` |
+| 12 | `32_DSL_Конструктор.py` | get_dsl_builder_service | services.dsl_portal.builder_facade | `4112abd9d` |
+| 13 | `96_Монитор_зависших_сообщений.py` | get_default_stuck_monitor | services.dsl_portal.builder_facade | `db2ac846f` |
+
+### Final Sprint 170 state
+
+**Active `frontend_facade` imports: 0** — **FULL migration completed**.
+**ADR-0292 exceptions: deprecated** (все 4 closed via cycle 2 migration — больше не нужен как действующий ADR).
+
+**Per brief spec** (user metric #9): «0 файлов используют legacy core.frontend_facade (полная миграция на core.api или явный ADR о постоянном исключении)».
+
+Sprint 170 closed: **0 files use legacy** (full migration, not via ADR exclusion).
+
+**Verification** (all green):
+- ruff check src/: All checks passed!
+- mypy src/: Success: no issues found in 2316 source files
+- check-task-registry: OK
+- check_layers: 0 новых
+- regression-test: 3/3 PASS
