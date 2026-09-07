@@ -190,3 +190,53 @@ async def test_listen_bounded_wait_branch_deterministic(monkeypatch) -> None:
 
     assert peak["n"] <= 2
     await opener
+
+
+# ── reconnect-ветка (171-173): первый connect падает, второй успешен ──
+
+
+@pytest.mark.asyncio
+async def test_listen_reconnects_after_connection_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """ConnectionError -> лог + retry; после переподключения сообщения идут."""
+    import src.backend.entrypoints.mqtt.mqtt_handler as mh
+
+    sleeps: list[float] = []
+
+    async def fake_sleep(seconds: float) -> None:
+        sleeps.append(seconds)
+
+    attempts = {"n": 0}
+    real_enter = _FakeClient.__aenter__
+
+    async def flaky_enter(self: _FakeClient) -> "_FakeClient":
+        attempts["n"] += 1
+        if attempts["n"] == 1:
+            raise ConnectionRefusedError("broker down")
+        return await real_enter(self)
+
+    _FakeClient.__aenter__ = flaky_enter  # type: ignore[method-assign]
+    handler = MqttHandler(_settings(topics=["gd/a"]))
+    handler._running = True
+    _FakeClient.current_msgs = [_FakeMessage("gd/a", b'{"action":"a.b"}')]
+
+    monkeypatch.setattr(mh.asyncio, "sleep", fake_sleep)
+    registry_mock = AsyncMock()
+    registry_mock.dispatch = AsyncMock()
+
+    try:
+        with patch("aiomqtt.Client", _FakeClient), patch(
+            "src.backend.core.api.extensions.action_handler_registry",
+            registry_mock,
+        ):
+            await handler._listen()
+            # задача сообщения могла не получить слот до выхода —
+            # добираем ВНУТРИ patch-контекста
+            await asyncio.gather(*handler._message_tasks, return_exceptions=True)
+    finally:
+        _FakeClient.__aenter__ = real_enter  # type: ignore[method-assign]
+
+    assert attempts["n"] >= 2  # был reconnect
+    assert sleeps == [5.0]  # пауза между попытками
+    assert registry_mock.dispatch.await_count == 1  # сообщение доставлено
