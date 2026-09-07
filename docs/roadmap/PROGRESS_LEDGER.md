@@ -1084,3 +1084,15 @@ M6-#3 — post-план до стенда.
 
 **Следствие для M6**: gate 15 закрывается ADR-0296 (не блокер финиша),
 gate 01 закрывается только по достижении 70% coverage.
+
+## Coverage-спринт (полные 70%) — инкремент 1 (2026-09-06)
+
+Решение пользователя: полные 70% => спринт стал основной полосой.
+Инкремент 1: hub_run_orchestrator — inline audit-fail swallow (206-219)
++ temp cleanup OSError (273-276) — `064189cff`. orchestrator 95%.
+
+Маршрут спринта (модули-кандидаты из mypy/cov отчётов): services/ops/*
+(done), services/jupyter/* (в процессе: hub_actions 98, orchestrator 95,
+core_mixin 100, nbclient 90), services/schema_registry (100/98/96),
+следующие: dsl/engine/dry_run.py, services/scheduler/cron_dashboard 100
+(уже), core/ai/gateway.py 61%→, gateway_audit_mixin 100 (уже).
