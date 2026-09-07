@@ -107,8 +107,9 @@ def render_properties_panel(client: Any) -> None:
     st.divider()
     st.subheader("📋 Спецификация конвейера")
     try:
-        # 2026-08-14 cycle 206: миграция на ``core.frontend_facade`` (D-AUDIT-20601).
-        from src.backend.core.frontend_facade import load_pipeline_from_yaml
+        # S170 Phase B CL-12: миграция с core.frontend_facade на services.dsl_portal
+        # (canonical layer-compliant путь, re-exports load_pipeline_from_yaml).
+        from src.backend.services.dsl_portal import load_pipeline_from_yaml
 
         pipeline = load_pipeline_from_yaml(st.session_state.yaml_output)
         with st.expander("JSON спецификация"):
