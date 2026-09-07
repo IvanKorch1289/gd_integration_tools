@@ -1158,3 +1158,8 @@ multi-day по решению (а); 15 (Vault) — ADR-0296; 19 — флак sha
 **Сводка сессии**: 17 ratchet-инкрементов (16 модулей ≥90%), 5 реальных
 багов исправлено, ADR-0296/0297/0298, LOAD_TEST_RESULTS_2026-09-05,
 негативная матрица 13/13, SLO 444 RPS / p99 150ms / err 0.00%.
+
+## Ratchet 17: gate 157 ImportError-ветка (2026-09-06)
+
+feature_flags недоступен (sys.modules None) -> except ImportError ->
+JupyterHubNotEnabledError — line 157 покрыта. 15/15 branch-тестов.
