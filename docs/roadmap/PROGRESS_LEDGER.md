@@ -750,3 +750,18 @@ detokenize passthrough, emit_audit_safe контракт) — коммиты `5b
 
 Сессия-2 новых приземлений (T3 фазы/F1) на master не имеет; ADR-0295
 (metrics honest audit) учтён в формулировках M6-#6.
+
+## T3 ratchet-инкремент 2 (2026-09-05) — facade_blacklist 71→98%
+
+Коммит `6b0538506`: 12 тестов JwtBlacklistMixin — Redis-ветка через
+MagicMock(spec=RedisJwtBlacklist) (isinstance-проходит) + реальный инстанс
+для unblacklist (`_redis.delete("blacklist:jwt:jti-9")`), scan-пагинация
+clear (2 страницы), fallback InMemory (revoke/clear), no-op методы,
+идемпотентный init, swallow-семантика ошибок. Verify: 57 passed; ruff 0.
+
+**Напоминание пользователю (открытые решения из `6c445974d`)**:
+- (а) scope T3: ratchets достаточны (интерим) / промежуточные 50% / полные 70%?
+- (б) инфраструктура: подтвердить ADR-0296 (интерим) / предоставить docker+Vault?
+
+Новых приземлений сессии-2 (T3 фазы/F1/G-MYPY recovery) не обнаружено;
+интерим-финиш действует, ratchets продолжаются.
