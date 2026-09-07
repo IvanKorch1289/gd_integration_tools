@@ -819,3 +819,20 @@ concurrency через gate-dispatch — peak ≤ max_concurrent_messages).
  mqtt_handler coverage: **90%** ✓ (остаток: 156-159 wait-ветка —
 детерминированный gate-тест в файле; 78-79/171-173 — swallow-ветки).
 Verify: 26 passed; ruff 0.
+
+## T3 ratchet-инкремент 5 (2026-09-06): scheduled_reports 42→94% — 2 РЕАЛЬНЫХ БАГА
+
+Пер-модульный спринт вскрыл два продакшен-бага в `ops/scheduled_reports.py`
+(`a4b2aa1ad`):
+1. **run_now — NameError на каждом запуске**: bare global
+   `action_handler_registry` (TYPE_CHECKING-импорт не исполняется;
+   LOAD_GLOBAL не вызывает module __getattr__) -> любой отчёт падал.
+   Фикс: честный lazy-импорт dsl.commands.registry внутри run_now.
+2. **export_method(data=..., title=...)** — не совпадало ни с одной
+   сигнатурой to_*(rows) -> TypeError на экспорте. Фикс: rows=data.
+
+Плюс 9 тестов (schedule/list/run_now success+error/delivery/history limit).
+Verify: ops+security suite зелёная; scheduled_reports 94%; ruff 0.
+
+**Напоминание**: решения (а) T3 scope / (б) ADR-0296 vs docker+Vault —
+открыты (ledger `6c445974d`).
