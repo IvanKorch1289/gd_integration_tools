@@ -21,7 +21,7 @@ def _facade_with_spy() -> tuple[SecurityFacade, list[tuple[str, str]]]:
     facade = SecurityFacade(
         capability_check=lambda plugin, action, resource: calls.append(
             (action, resource)
-        ),
+        )
     )
     return facade, calls
 
@@ -35,12 +35,15 @@ async def test_tokenize_pii_success_calls_tokenizer() -> None:
     mock_tokenizer = AsyncMock()
     mock_tokenizer.mask_reversible = AsyncMock(return_value=("<PII_NAME_1>", {"m": 1}))
 
-    with patch(
-        "src.backend.core.security.pii_tokenizer.PIITokenizer",
-        return_value=mock_tokenizer,
-    ), patch(
-        "src.backend.core.security.pii_tokenizer.PIIPolicy",
-        lambda **kw: SimpleNamespace(**kw),
+    with (
+        patch(
+            "src.backend.core.security.pii_tokenizer.PIITokenizer",
+            return_value=mock_tokenizer,
+        ),
+        patch(
+            "src.backend.core.security.pii_tokenizer.PIIPolicy",
+            lambda **kw: SimpleNamespace(**kw),
+        ),
     ):
         result = await facade.tokenize_pii("Иван Иванов")
 
@@ -54,12 +57,15 @@ async def test_tokenize_pii_success_calls_tokenizer() -> None:
 async def test_tokenize_pii_fail_open_returns_raw_and_audits() -> None:
     """Fail-open: при ошибке tokenizer возвращается raw text + audit-event."""
     facade, calls = _facade_with_spy()
-    with patch(
-        "src.backend.core.security.pii_tokenizer.PIITokenizer",
-        side_effect=RuntimeError("tokenizer down"),
-    ), patch(
-        "src.backend.services.security.facade_pii._emit_pii_fail_audit"
-    ) as mock_audit:
+    with (
+        patch(
+            "src.backend.core.security.pii_tokenizer.PIITokenizer",
+            side_effect=RuntimeError("tokenizer down"),
+        ),
+        patch(
+            "src.backend.services.security.facade_pii._emit_pii_fail_audit"
+        ) as mock_audit,
+    ):
         result = await facade.tokenize_pii("секретные данные")
 
     assert result == "секретные данные"  # fail-open: raw text
@@ -102,12 +108,15 @@ async def test_mask_pii_success_calls_masker() -> None:
 async def test_mask_pii_fail_open_returns_raw_and_audits() -> None:
     """Fail-open: при ошибке masker возвращается raw text + audit-event."""
     facade, calls = _facade_with_spy()
-    with patch(
-        "src.backend.core.security.pii_masker.PIIMasker",
-        side_effect=RuntimeError("masker down"),
-    ), patch(
-        "src.backend.services.security.facade_pii._emit_pii_fail_audit"
-    ) as mock_audit:
+    with (
+        patch(
+            "src.backend.core.security.pii_masker.PIIMasker",
+            side_effect=RuntimeError("masker down"),
+        ),
+        patch(
+            "src.backend.services.security.facade_pii._emit_pii_fail_audit"
+        ) as mock_audit,
+    ):
         result = await facade.mask_pii("мои данные")
 
     assert result == "мои данные"
@@ -122,9 +131,7 @@ def test_emit_pii_fail_audit_calls_emit_audit_safe() -> None:
     """Helper формирует audit-event с severity=error и failed_operation."""
     from src.backend.services.security.facade_pii import _emit_pii_fail_audit
 
-    with patch(
-        "src.backend.core.audit.facade._base.emit_audit_safe"
-    ) as mock_emit:
+    with patch("src.backend.core.audit.facade._base.emit_audit_safe") as mock_emit:
         _emit_pii_fail_audit("mask_pii", RuntimeError("boom"))
         mock_emit.assert_called_once()
         kwargs = mock_emit.call_args.kwargs
