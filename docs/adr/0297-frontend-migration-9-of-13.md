@@ -40,7 +40,20 @@ layer-compliant путь. Per-file atomic commit, Russian-first messages:
 - `mypy src/`: 0 errors
 - `tools/check_layers.py`: 0 NEW violations
 - `tests/unit/frontend/test_no_frontend_facade_regression.py`: 3/3 PASS
-- Active `frontend_facade` imports remaining: **4** (документированные exceptions per ADR-0292)
+- Active `frontend_facade` imports remaining: **0** — **FULL migration completed (Sprint 170 cycle 2)**!
+
+## Sprint 170 cycle 2 (commits `491925cda`, `4c0ae681c`, `4112abd9d`, `db2ac846f`)
+
+| # | File | Old facade import | New canonical path | Commit |
+|---|---|---|---|---|
+| 10 | `_groups/schema/import_tab.py` | ImportSource, ImportSourceKind, get_import_service | core.interfaces.import_gateway + services.dsl_portal | `491925cda` |
+| 11 | `63_Вики.py` | get_whoosh_index | services.dsl_portal.builder_facade | `4c0ae681c` |
+| 12 | `32_DSL_Конструктор.py` | get_dsl_builder_service | services.dsl_portal.builder_facade | `4112abd9d` |
+| 13 | `96_Монитор_зависших_сообщений.py` | get_default_stuck_monitor | services.dsl_portal.builder_facade | `db2ac846f` |
+
+**Итог Sprint 170**: 13/13 frontend файлов мигрированы с `core.frontend_facade` на canonical layer-compliant пути. ADR-0292 exceptions больше не нужны — все 4 documented exceptions теперь мигрированы на реальные canonical paths.
+
+**EXCEEDS brief spec**: User metric #9 допускает «0 files или ADR о постоянном исключении». Sprint 170 достиг **0 files БЕЗ ADR о постоянном исключении** — full closure. ADR-0292 теперь historical reference (вместо действующего исключения).
 
 ## Когда пересмотрим
 
