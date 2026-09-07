@@ -722,3 +722,14 @@ M6-#3 и gate 15?
 
 Решения (а)/(б) по-прежнему открыты (AskUserQuestion ×3 без ответа,
 формализованы в ledger `6c445974d`); интерим-финиш действует.
+
+## B-NEW-3 — CLOSED полностью (2026-09-05, `c7d64a58a`)
+
+9 sync-тестов test_security_facade_jwt.py (S189+) переписаны под async facade:
+- asyncio + await на всех вызовах
+- патч-таргет get_redis_client → актуальный
+  infrastructure.clients.storage.redis (сменён G-MYPY-CL2)
+- ленивая инициализация blacklist покрыта явно (init в тестах)
+
+Verify: 9/9 passed (было 0/7 — годы сломанных тестов); security suite 38 passed.
+Следующий ratchet-кандидат: facade_pii.py 22% (tokenize/mask методы).
