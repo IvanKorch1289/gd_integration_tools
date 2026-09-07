@@ -733,3 +733,20 @@ M6-#3 и gate 15?
 
 Verify: 9/9 passed (было 0/7 — годы сломанных тестов); security suite 38 passed.
 Следующий ratchet-кандидат: facade_pii.py 22% (tokenize/mask методы).
+
+## Обновление карты pre-prod-check (2026-09-05, ночь) — T3 ratchet facade_pii
+
+**Ratchet**: facade_pii.py 22% → **100%** (7 тестов PiiFacadeMixin:
+happy-path с spy capability-assert, fail-open + _emit_pii_fail_audit,
+detokenize passthrough, emit_audit_safe контракт) — коммиты `5bb0af399`,
+`dc656665a`.
+
+**Формат-хвост gate 04**: новые коммиты сессии-2 пришли без `ruff format`
+(16 файлов) — дозакрыто `2d0bc5ac4`. **Карта: 21/36 PASSED, FAILED 2**
+(без изменений по составу):
+- gate 01 coverage ≥50% — T3 post-план (ratchets продолжаются: hitl 90/100%,
+  facade_pii 100%, facade_blacklist 71% → кандидат)
+- gate 15 feature-flags — Vault, ADR-0296
+
+Сессия-2 новых приземлений (T3 фазы/F1) на master не имеет; ADR-0295
+(metrics honest audit) учтён в формулировках M6-#6.
