@@ -17,7 +17,7 @@ from src.backend.services.ops.scheduled_reports import (
     get_reports_service,
 )
 
-REGISTRY = "src.backend.dsl.commands.registry.action_handler_registry"
+REGISTRY = "src.backend.core.api.extensions.action_handler_registry"
 
 
 @pytest.fixture

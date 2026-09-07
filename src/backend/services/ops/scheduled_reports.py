@@ -20,7 +20,7 @@ from src.backend.core.logging import get_logger
 if TYPE_CHECKING:
     # Sprint 226: имя резолвится в runtime через module-level __getattr__
     # (_LAZY_MAP внизу файла); TYPE_CHECKING-импорт — статика для mypy.
-    from src.backend.dsl.commands.registry import action_handler_registry
+    pass
 
 __all__ = ("ReportSchedule", "ScheduledReportsService", "get_reports_service")
 
@@ -123,18 +123,16 @@ class ScheduledReportsService:
         start = time.monotonic()
 
         try:
-            from src.backend.core.types.invocation_command import (
-                ActionCommandMetaSchema,
-            )
-            from src.backend.schemas.invocation import ActionCommandSchema
             # P1-фикс (T3 ratchet, 2026-09-05): раньше — bare global
             # `action_handler_registry`, которого в globals никогда не было
             # (TYPE_CHECKING-импорт при runtime не исполняется, а
             # LOAD_GLOBAL не вызывает module __getattr__) -> каждый
             # run_now падал с NameError.
-            from src.backend.dsl.commands.registry import (
-                action_handler_registry,
+            from src.backend.core.api.extensions import action_handler_registry
+            from src.backend.core.types.invocation_command import (
+                ActionCommandMetaSchema,
             )
+            from src.backend.schemas.invocation import ActionCommandSchema
 
             command = ActionCommandSchema(
                 action=report.action,
