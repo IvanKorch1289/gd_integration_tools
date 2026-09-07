@@ -851,14 +851,16 @@ def set_record_express_message_sent_provider(emitter: Any) -> None:
 
 
 def get_dlq_envelope_class_provider() -> Any:
-    r"""Возвращает :class:\`DLQEnvelope\` (DLQ message envelope).
+    r"""Возвращает \`di_bridge.dlq\` module (DLQEnvelope/DLQReason accessors).
 
-    S87 final batch: lazy resolve для security/pii_erase.py.
+    S87 final batch: lazy resolve для security/pii_erase.py. Модуль
+    предоставляет ``get_dlq_envelope_class()`` / ``get_dlq_reason_class()``
+    (атрибута ``DLQEnvelope`` в di_bridge.dlq нет — только accessor-функции).
     """
     if "dlq_envelope_class" in _overrides:
         return _overrides["dlq_envelope_class"]
     module = resolve_module("di_bridge.dlq")
-    return module.DLQEnvelope
+    return module
 
 
 def set_dlq_envelope_class_provider(aclass: Any) -> None:

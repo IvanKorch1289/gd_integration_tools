@@ -325,8 +325,9 @@ class PiiEraseProcessor(BaseProcessor):
                 get_main_session_manager_provider,
             )
 
-            _main_session_module = get_main_session_manager_provider()
-            main_session_manager = _main_session_module.main_session_manager
+            # Провайдер возвращает сам singleton manager (контракт audit.py),
+            # а не module-обёртку.
+            main_session_manager = get_main_session_manager_provider()
 
             async with main_session_manager.get_session() as session:
                 from sqlalchemy import text
