@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import os
 import sys
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -260,3 +260,46 @@ def test_build_execution_service_returns_provider_result(
         sys.modules, "src.backend.core.di.providers.jupyter", fake_module,
     )
     assert _build_execution_service() is sentinel
+
+
+# ── audit emit failure (206-219) + temp cleanup (273-276) ───────────
+
+
+@pytest.mark.asyncio
+async def test_inline_audit_emit_failure_swallowed() -> None:
+    """Сбой emit_audit_safe (206-219) не ломает inline-прогон."""
+    registry = NotebookRegistry()
+    registry.register(NotebookSpec(name=NAME, path=f"{NAME}.ipynb"))
+    svc = _exec_ok()
+    with patch(
+        "src.backend.core.audit.facade.emit_audit_safe",
+        side_effect=RuntimeError("audit down"),
+    ):
+        result = await run_hub_notebook(
+            notebook_name=NAME,
+            notebook_content=b'{"cells": []}',
+            registry=registry,
+            execution_service=svc,
+        )
+    assert result.notebook_name == NAME
+    assert svc.execute.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_inline_temp_cleanup_os_error_swallowed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """OSError при unlink temp-файла (273-276) -> warning, не crash."""
+    import os as _os
+
+    monkeypatch.setattr(_os, "unlink", MagicMock(side_effect=OSError("busy")))
+    registry = NotebookRegistry()
+    registry.register(NotebookSpec(name=NAME, path=f"{NAME}.ipynb"))
+    svc = _exec_ok()
+    result = await run_hub_notebook(
+        notebook_name=NAME,
+        notebook_content=b'{"cells": []}',
+        registry=registry,
+        execution_service=svc,
+    )
+    assert result.notebook_name == NAME
