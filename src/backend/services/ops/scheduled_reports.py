@@ -11,11 +11,16 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from src.backend.core.di.app_state import app_state_singleton
 from src.backend.core.logging import get_logger
+
+if TYPE_CHECKING:
+    # Sprint 226: имя резолвится в runtime через module-level __getattr__
+    # (_LAZY_MAP внизу файла); TYPE_CHECKING-импорт — статика для mypy.
+    from src.backend.dsl.commands.registry import action_handler_registry
 
 __all__ = ("ReportSchedule", "ScheduledReportsService", "get_reports_service")
 
@@ -134,7 +139,10 @@ class ScheduledReportsService:
                     principal=f"report:{report.name}", permissions=[]
                 ),
             )
-            result = await action_handler_registry.dispatch(command)
+            # ponytail: action_handler_registry lazy __getattr__ proxy (Sprint 226).
+            result = await action_handler_registry.dispatch(  # type: ignore[name-defined]
+                command
+            )
 
             data = (
                 result

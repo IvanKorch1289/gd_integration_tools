@@ -100,14 +100,16 @@ def get_prometheus_temporal_exporter_class() -> Any:
 
     # Compatibility-only dynamic attribute: current lightweight backend exports
     # functions, while older installations may still provide the class.
-    return prometheus_temporal_exporter.PrometheusTemporalExporter
+    return getattr(prometheus_temporal_exporter, "PrometheusTemporalExporter", None)
 
 
 def get_prometheus_temporal_exporter_factory() -> Any:
     """Возвращает legacy exporter factory, если он есть в optional backend."""
     from src.backend.infrastructure.observability import prometheus_temporal_exporter
 
-    return prometheus_temporal_exporter.get_prometheus_temporal_exporter
+    return getattr(  # type: ignore[attr-defined]
+        prometheus_temporal_exporter, "get_prometheus_temporal_exporter", None
+    )
 
 
 def get_record_scale_event() -> Any:

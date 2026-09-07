@@ -24,7 +24,7 @@ from __future__ import annotations
 import base64
 import binascii
 from dataclasses import asdict
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
 from src.backend.services.jupyter.hub_run_orchestrator import (
@@ -32,6 +32,11 @@ from src.backend.services.jupyter.hub_run_orchestrator import (
     HubRunResult,
     run_hub_notebook,
 )
+
+if TYPE_CHECKING:
+    # Sprint 226: имя резолвится в runtime через module-level __getattr__
+    # (_LAZY_MAP внизу файла); TYPE_CHECKING-импорт — статика для mypy.
+    from src.backend.dsl.commands.action_registry import ActionHandlerSpec
 
 _logger = get_logger("services.jupyter.hub_actions")
 

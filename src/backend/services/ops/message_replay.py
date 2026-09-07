@@ -130,7 +130,10 @@ class MessageReplayService:
                     principal=f"replay:{msg.source}:{msg.id}", permissions=[]
                 ),
             )
-            result = await action_handler_registry.dispatch(command)
+            # ponytail: action_handler_registry lazy __getattr__ proxy (Sprint 226).
+            result = await action_handler_registry.dispatch(  # type: ignore[name-defined]
+                command
+            )
             msg.status = ReplayStatus.REPLAYED
             msg.replay_count += 1
             return {"status": "replayed", "id": msg.id, "result": result}

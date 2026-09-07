@@ -20,10 +20,13 @@ Outbox = outbox
 
 # Sprint 38 fix: KafkaProducer is conditional (requires aiokafka installed).
 # Lazy import via __getattr__ to avoid breaking imports on dev env.
-def __getattr__(name: str) -> object:
+# ponytail: PEP 562 lazy proxy; mypy sees orphan module-level signature.
+def __getattr__(name: str) -> object:  # type: ignore[misc]
     if name == "KafkaProducer":
-        from src.backend.infrastructure.messaging.kafka_pool_registration import (
-            KafkaProducer,
+        # kafka_pool_registration only registers; реальный KafkaProducer class
+        # в kafka_producer module (lazy импорт сохраняет optional aiokafka dep).
+        from src.backend.infrastructure.messaging.kafka_producer import (
+            KafkaProducer,  # type: ignore[attr-defined]
         )
 
         return KafkaProducer
