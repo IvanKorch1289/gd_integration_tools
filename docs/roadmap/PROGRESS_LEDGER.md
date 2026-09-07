@@ -1272,3 +1272,38 @@ blueprints 3, pii_erase 3, scan_file 1, express 1, subpackage_exports 1).
 ruff 0 (src/ + изменённые тесты); 210 passed (jupyter + schema_registry +
 storage_ext). Остаток B-NEW-8: blueprints 3, pii_erase 3, scan_file 1,
 express 1, subpackage_exports 1.
+
+## T3 ratchet 20 (2026-09-07): pii_erase — найден и исправлен prod-баг, B-NEW-8 #3 ЗАКРЫТ
+
+**Prod-фикс** (`ac1729106`, 2 файла):
+1. `core/di/providers/cache.py::get_dlq_envelope_class_provider` возвращал
+   `module.DLQEnvelope` — а в `di_bridge.dlq` нет атрибута `DLQEnvelope`
+   (только accessor-функции) → AttributeError на каждый вызов → DLQ-envelope
+   pii_erase молча терялся (swallow в except). Фикс: провайдер возвращает
+   модуль (контракт, который ожидает pii_erase; потребителей больше нет).
+2. `pii_erase._anonymize_db` трактовал результат
+   `get_main_session_manager_provider()` как module-обёртку
+   (`_x.main_session_manager`), а провайдер возвращает сам singleton
+   (контракт audit.py:170) → AttributeError → DB-анонимизация падала до SQL.
+   Фикс: прямое присваивание.
+
+Т.о. B-NEW-8 «pii_erase 3, len([])==0» был не stale-тестом, а симптомом
+реального регресса S87 — тесты ждали правильный контракт.
+
+**Test-ретаргеты** (`6b18cb5ae`):
+- `test_dlq_moved.py::test_pii_erase_imports_from_new_path` — сканер ждал
+  literal `from ...di_bridge.dlq import`, а архитектура с S87 — через
+  DI-провайдер; ассерт обновлён на провайдер + `resolve_module("di_bridge.dlq")`.
+- `test_redis_lock_processor.py::test_redis_lock_import_error_fails_exchange`
+  — hook `builtins.__import__` не срабатывает с S76 (прод идёт через
+  importlib-провайдер); ImportError теперь имитируется на провайдере.
+  (redis_lock не входил в список B-NEW-8 — найден прогоном slices.)
+
+**Верификация**: 287 passed (di + di_bridge + pii_erase + audit),
+2102 passed / 1 failed→0 (ops + dsl/processors slices), 16 passed
+(ретаргеты), collect 17218 / 0 errors, ruff 0 (src/ + тесты),
+mypy 0 issues на изменённых src.
+
+**Остаток B-NEW-8**: blueprints 3 (семантика Exchange.stop), scan_file 1
+(stale patch get_object_bytes), express 1 (stale mock zremrangebyrank),
+subpackage_exports 1 (фильтр импортов в тест-сканере).
