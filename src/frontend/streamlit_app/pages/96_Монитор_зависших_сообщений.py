@@ -113,7 +113,7 @@ else:
     in_memory_available = False
     try:
         # S6 fix: facade import via dsl_portal (R3.10d / S36).
-        from src.backend.core.frontend_facade import get_default_stuck_monitor
+        from src.backend.services.dsl_portal.builder_facade import get_default_stuck_monitor
 
         monitor = get_default_stuck_monitor()
         in_memory_available = True
