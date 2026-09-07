@@ -1003,3 +1003,13 @@ entrypoints используют manager.scheduler напрямую; (3) выр�
 Отложено: facade.py остаётся как есть (33% — lazy-прокси и capability-
 обвязка, не критичный путь). tests/unit/services/scheduler/ — 10 passed
 (cron_dashboard 100% сохранён).
+
+## T3 ratchet-инкремент 13 (2026-09-06): scheduler/admin 0→100%
+
+`c211bc9c6`: 4 теста lazy-прокси (SchedulerDLQStore/get_scheduler_dlq_store/
+get_scheduler_manager -> core.api.scheduler; unknown attr -> AttributeError).
+scheduler-пакет: cron_dashboard 100%, admin 100%, facade 33% (отложен —
+контракт vs реальный API, см. инкремент-отказ выше). Verify: 4/4; ruff 0.
+
+**Напоминание**: решения (а) T3 scope / (б) ADR-0296 vs docker+Vault —
+открыты (6-е напоминание); интерим-финиш действует.
