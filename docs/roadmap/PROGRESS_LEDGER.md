@@ -765,3 +765,16 @@ clear (2 страницы), fallback InMemory (revoke/clear), no-op методы
 
 Новых приземлений сессии-2 (T3 фазы/F1/G-MYPY recovery) не обнаружено;
 интерим-финиш действует, ratchets продолжаются.
+
+## T3 ratchet-инкремент 3 (2026-09-05) — SecurityFacade домен закрыт
+
+- `facade_blacklist.py` 98% → **100%** (unblacklist при отсутствии store — line 161;
+  реальный RedisJwtBlacklist для isinstance-ветки — `b717def0f`)
+- `facade.py` (ядро) 44% → **95%**: check_capability (delegation/failure→False),
+  get_secret (value/default), get_certificate (success/failure),
+  verify_signature → infrastructure.security.signatures (G-MYPY-CL1 path)
+- `facade_pii.py` 100% (пред. инкремент)
+
+**Security-домен TOTAL: 99%**. Verify: 18+38 passed; ruff 0.
+Напоминание: решения (а) T3 scope / (б) ADR-0296 — по-прежнему открыты
+(`6c445974d`); ratchets продолжаются в любом случае.
