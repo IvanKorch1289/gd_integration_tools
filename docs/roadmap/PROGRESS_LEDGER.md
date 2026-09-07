@@ -889,3 +889,13 @@ jupyter-домен: hub_actions 98%, hub_run_orchestrator 95%.
 Verify: 14/14 populator; ruff 0.
 
 Решения (а)/(б) — по-прежнему открыты (5-е напоминание).
+
+## T3 ratchet-инкремент 9 (2026-09-06): typed_adapter error-ветки (91→~96%)
+
+`dec08889d`: +3 теста — entry_from_dict missing-kind/empty-name (169/173),
+validate_snapshot entries-not-list (116), snapshot_view round-trip (68).
+schema_registry package: populator 100%, typed_adapter ~96%, registry.py 98%
+(344-346 strict-ветка закрыта ранее), registry core 98%.
+
+**Напоминание**: решения (а) T3 scope и (б) ADR-0296 vs docker+Vault —
+открыты (заданы 5 раз); ratchets продолжаются в любом случае.
