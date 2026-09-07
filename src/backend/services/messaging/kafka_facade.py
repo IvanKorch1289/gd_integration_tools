@@ -25,7 +25,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from functools import lru_cache
-from typing import Any
+from typing import Any, cast
 
 from src.backend.core.logging import get_logger
 from src.backend.core.observability.logging_helpers import log_audit_event_lite
@@ -73,10 +73,13 @@ class KafkaFacade:
         """Lazy-получить Kafka producer (через infrastructure)."""
         if self._producer is None:
             try:
-                # Lazy import infrastructure layer через facade
+                # Lazy import infrastructure layer через facade.
                 from src.backend.core.api.messaging import KafkaProducer
 
-                self._producer = KafkaProducer(bootstrap_servers=self._bootstrap)
+                # Экспорт идёт через module __getattr__ (lazy, aiokafka
+                # опционален) — статический тип object, реально это класс.
+                producer_cls = cast("type[Any]", KafkaProducer)
+                self._producer = producer_cls(bootstrap_servers=self._bootstrap)
             except Exception as exc:
                 log_audit_event_lite(
                     _logger,

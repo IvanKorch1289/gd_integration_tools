@@ -52,7 +52,7 @@ def _snapshot_to_dict(snapshot: object) -> dict[str, Any]:
 
 
 try:
-    from src.frontend.streamlit_app.utils.api_client import (
+    from src.frontend.streamlit_app.utils.api_client import (  # type: ignore[import-not-found]  # optional API-клиент, ImportError fallback ниже
         api_get,  # type: ignore[import-not-found]
     )
 except ImportError, AttributeError, ModuleNotFoundError:

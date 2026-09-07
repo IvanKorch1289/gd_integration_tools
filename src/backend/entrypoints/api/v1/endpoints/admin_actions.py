@@ -109,12 +109,14 @@ def _get_registry() -> Any:
         # D-AUDIT-11601 fix (cycle 116): canonical path
         # src.backend.dsl.commands.action_registry (НЕ
         # src.backend.core.actions.registry — модуль НЕ существует,
-        # type: ignore suppress'ил lint но runtime всегда падал
+        # type-ignore suppress'ил lint но runtime всегда падал
         # в except → mock-fallback). Реальный класс:
         # src/backend/dsl/commands/action_registry.py
         from src.backend.core.api.extensions import ActionHandlerRegistry
 
-        return ActionHandlerRegistry.get_instance()
+        # get_instance у ActionHandlerRegistry нет (stale API) — AttributeError
+        # ловится ниже → registry=None → 503 fail-LOUD (D-AUDIT-9701).
+        return ActionHandlerRegistry.get_instance()  # type: ignore[attr-defined]
     except ImportError, AttributeError, RuntimeError:
         logger.warning("ActionHandlerRegistry недоступен — используется mock")
         return None

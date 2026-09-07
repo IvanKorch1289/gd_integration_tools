@@ -110,7 +110,9 @@ async def phase_sentry_init(app: FastAPI) -> None:  # noqa: ARG001
     if os.environ.get("SENTRY_ENABLED", "false").lower() != "true":
         return
     try:
-        from src.backend.infrastructure.observability.sentry import init_sentry
+        from src.backend.infrastructure.observability.sentry import (  # type: ignore[import-not-found]
+            init_sentry,
+        )
 
         init_sentry(
             dsn=os.environ.get("SENTRY_DSN", ""),
@@ -126,7 +128,9 @@ async def phase_sentry_init(app: FastAPI) -> None:  # noqa: ARG001
 async def phase_logsink_router(app: FastAPI) -> None:  # noqa: ARG001
     """LogSink router (Wave 2.5) — multi-sink log routing."""
     try:
-        from src.backend.infrastructure.observability.logsink import init_logsink_router
+        from src.backend.infrastructure.observability.logsink import (  # type: ignore[import-not-found]
+            init_logsink_router,
+        )
 
         init_logsink_router()
     except Exception as ls_exc:
@@ -144,7 +148,7 @@ async def phase_audit_hmac_verify(app: FastAPI) -> None:  # noqa: ARG001
     """
     try:
         from src.backend.core.config.features import feature_flags
-        from src.backend.services.audit.chain_verifier import (
+        from src.backend.services.audit.chain_verifier import (  # type: ignore[import-not-found]  # optional phase
             schedule_periodic_chain_verify,
         )
 

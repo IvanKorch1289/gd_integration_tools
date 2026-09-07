@@ -161,10 +161,10 @@ class AuditProcessor(BaseProcessor):
         use через DI. Tracking: docs/roadmap/PRODUCTION_READINESS.md M2-#11.
         """
         # S79 M2-#11 batch 14: DI providers вместо inline infrastructure imports.
-        from src.backend.core.di.providers.db import get_main_session_manager_provider
-        from src.backend.core.di.providers.observability import (
+        from src.backend.core.di.providers.cache import (
             get_immutable_audit_store_class_provider,
         )
+        from src.backend.core.di.providers.db import get_main_session_manager_provider
 
         ImmutableAuditStore = get_immutable_audit_store_class_provider()
         main_session_manager = get_main_session_manager_provider()

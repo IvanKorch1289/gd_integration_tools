@@ -94,9 +94,8 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
             model_request_parameters: _ModelRequestParameters,
         ) -> _ModelResponse:
             """Single request через LiteLLMGateway."""
-            from src.backend.core.ai.gateway.client import LiteLLMGateway
-
-            assert isinstance(self._gateway, LiteLLMGateway)
+            # duck-typing: gateway с acompletion() (LiteLLMGateway живёт в
+            # services.ai.gateway.client — core не может импортировать services).
             prompt = "\n".join(
                 str(getattr(m, "content", m))
                 for m in messages
@@ -121,9 +120,8 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
             context: _ModelRequestContext | None = None,
         ) -> _StreamedResponse:
             """Streamed request — returns _SimpleStreamedResponse."""
-            from src.backend.core.ai.gateway.client import LiteLLMGateway
-
-            assert isinstance(self._gateway, LiteLLMGateway)
+            # duck-typing: gateway с acompletion() (LiteLLMGateway живёт в
+            # services.ai.gateway.client — core не может импортировать services).
             prompt = "\n".join(
                 str(getattr(m, "content", m))
                 for m in messages

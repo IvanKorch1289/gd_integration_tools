@@ -128,7 +128,10 @@ class DesktopRPASessionPool:
         headers: dict[str, str] = {}
         if self._api_key:
             headers["X-API-Key"] = self._api_key
-        return make_http_client(
+        # Pool требует httpx.AsyncClient API (aclose/get/...); WAF flag=ON
+        # возвращает OutboundHttpClient — интеграция pool'а с ним отдельный
+        # wave (S18 W1 carryover, см. комментарий ниже).
+        return make_http_client(  # type: ignore[return-value]
             plugin="desktop_rpa",
             base_url=self._base_url,
             timeout=httpx.Timeout(self._timeout),

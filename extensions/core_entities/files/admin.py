@@ -7,6 +7,7 @@ S168 delta-2026-06-19: OrderFileAdmin re-added (was missing after migration).
 """
 
 from sqladmin import ModelView
+from sqladmin.filters import OperationColumnFilter
 
 from extensions.core_entities.files.domain.models import File, OrderFile
 from src.backend.sdk import BaseAdmin
@@ -22,13 +23,13 @@ class FileAdmin(ModelView, BaseAdmin, model=File):
         column_list (List[str]): Список колонок, отображаемых в таблице.
         column_searchable_list (List[str]): Список колонок, по которым можно выполнять поиск.
         column_sortable_list (List[str]): Список колонок, по которым можно сортировать.
-        column_filters (List[str]): Список колонок, по которым можно фильтровать.
+        column_filters (List[ColumnFilter]): Фильтры по колонкам (sqladmin).
     """
 
     column_list = ["id", "name", "object_uuid", "created_at", "updated_at"]
     column_searchable_list = ["id", "name", "object_uuid"]
     column_sortable_list = ["id", "name", "created_at", "updated_at"]
-    column_filters = ["name"]
+    column_filters = [OperationColumnFilter("name")]
 
 
 class OrderFileAdmin(ModelView, BaseAdmin, model=OrderFile):
@@ -39,12 +40,15 @@ class OrderFileAdmin(ModelView, BaseAdmin, model=OrderFile):
         column_list (List[str]): Список колонок, отображаемых в таблице.
         column_searchable_list (List[str]): Список колонок, по которым можно выполнять поиск.
         column_sortable_list (List[str]): Список колонок, по которым можно сортировать.
-        column_filters (List[str]): Список колонок, по которым можно фильтровать.
+        column_filters (List[ColumnFilter]): Фильтры по колонкам (sqladmin).
         form_create_rules (List[str]): Список полей, отображаемых в форме создания.
     """
 
     column_list = ["id", "order_id", "file_id"]
     column_searchable_list = ["id", "order_id", "file_id"]
     column_sortable_list = ["id", "order_id", "file_id", "created_at", "updated_at"]
-    column_filters = ["order_id", "file_id"]
+    column_filters = [
+        OperationColumnFilter("order_id"),
+        OperationColumnFilter("file_id"),
+    ]
     form_create_rules = ["order_id", "file_id"]

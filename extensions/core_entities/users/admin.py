@@ -5,6 +5,7 @@ to extensions/core_entities/users/admin.py per master prompt v8 P2-10.
 """
 
 from sqladmin import ModelView
+from sqladmin.filters import BooleanFilter
 
 from extensions.core_entities.users.domain.models import User
 from src.backend.sdk import BaseAdmin
@@ -20,12 +21,15 @@ class UserAdmin(ModelView, BaseAdmin, model=User):
         column_list (List[str]): Список колонок, отображаемых в таблице.
         column_searchable_list (List[str]): Список колонок, по которым можно выполнять поиск.
         column_sortable_list (List[str]): Список колонок, по которым можно сортировать.
-        column_filters (List[str]): Список колонок, по которым можно фильтровать.
+        column_filters (List[ColumnFilter]): Фильтры по колонкам (sqladmin).
         form_create_rules (List[str]): Список полей, отображаемых в форме создания.
     """
 
     column_list = ["id", "username", "email", "is_superuser", "is_active", "created_at", "updated_at"]
     column_searchable_list = ["id", "username", "email"]
     column_sortable_list = ["id", "username", "email", "created_at", "updated_at"]
-    column_filters = ["is_superuser", "is_active"]
+    column_filters = [
+        BooleanFilter("is_superuser"),
+        BooleanFilter("is_active"),
+    ]
     form_create_rules = ["username", "email", "is_superuser", "is_active"]

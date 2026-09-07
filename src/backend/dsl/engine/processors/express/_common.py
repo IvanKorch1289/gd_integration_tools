@@ -13,12 +13,10 @@ from typing import TYPE_CHECKING, Any
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    # S87 M2-#11 final batch: DI provider.
-    from src.backend.core.di.providers.cache import get_express_bot_module_provider
     from src.backend.dsl.engine.exchange import Exchange
 
-    _express_bot_module = get_express_bot_module_provider()
-    ExpressBotClient = _express_bot_module.ExpressBotClient
+    # Реальный класс клиента (runtime — lazy через DI provider, см. ниже).
+    from src.backend.infrastructure.clients.external.express_bot import ExpressBotClient
 
 __all__ = ("get_express_client", "log_outgoing_message", "resolve_value")
 

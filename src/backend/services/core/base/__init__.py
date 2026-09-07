@@ -105,7 +105,9 @@ class BaseService[
         # его в SQLAlchemyRepository.__init__). Старый код
         # 'self.helper = self.HelperMethods(repo)' падал с AttributeError —
         # HelperMethods была только type-annotation, не значение.
-        self.helper = repo.helper if repo is not None else None
+        # helper — instance-attr конкретного repo (runtime приходит инстанс,
+        # см. extensions/*/get_*_repo), несвязанный TypeVar его не декларирует.
+        self.helper = repo.helper if repo is not None else None  # type: ignore[attr-defined]
 
     @asynccontextmanager
     async def _service_error_boundary(self):

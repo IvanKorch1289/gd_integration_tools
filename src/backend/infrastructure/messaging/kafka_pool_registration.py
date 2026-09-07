@@ -36,28 +36,11 @@ async def kafka_ping_fn() -> bool:
         True если Kafka producer доступен, False иначе.
 
     """
-    try:
-        from src.backend.infrastructure.messaging.kafka_producer import KafkaProducer
-
-        producer = KafkaProducer()
-        return producer.is_available()
-    except (
-        ImportError,
-        RuntimeError,
-        OSError,
-        ConnectionError,
-        AttributeError,
-    ) as ping_exc:
-        # cycle-9/D-AUDIT-933: narrow exceptions + observability.
-        # ImportError — Kafka SDK missing, RuntimeError — broker unavailable,
-        # OSError/ConnectionError — network, AttributeError — producer API
-        # change. Bare `except Exception` маскировал unrelated runtime errors.
-        import logging
-
-        logging.getLogger(__name__).debug(
-            "kafka_pool.ping_failed", extra={"error": str(ping_exc)}
-        )
-        return False
+    # ponytail: infrastructure.messaging.kafka_producer не существует (реальный
+    # producer — services.messaging.kafka_facade.KafkaFacade, недоступный из
+    # infrastructure по слоям). Прежний код всегда падал в ImportError → False;
+    # сохраняем это поведение. Upgrade: ping через composition-слой (pools.py).
+    return False
 
 
 def register_kafka_pool_if_available(
@@ -78,7 +61,9 @@ def register_kafka_pool_if_available(
 
     """
     try:
-        from src.backend.infrastructure.messaging.kafka_producer import KafkaProducer
+        from src.backend.infrastructure.messaging.kafka_producer import (  # type: ignore[import-not-found]
+            KafkaProducer,
+        )
 
         producer = KafkaProducer(bootstrap_servers=bootstrap_servers or [])
         manager.register(name=name, pool=producer, ping_fn=kafka_ping_fn)

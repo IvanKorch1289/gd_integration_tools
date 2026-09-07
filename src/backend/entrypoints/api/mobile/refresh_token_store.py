@@ -241,7 +241,7 @@ class InMemoryRefreshTokenStore:
 
 
 # Module-level singleton for demo mode (in-memory)
-_default_store: InMemoryRefreshTokenStore | None = None
+_default_store: RefreshTokenStore | None = None
 
 
 def get_refresh_token_store() -> RefreshTokenStore:

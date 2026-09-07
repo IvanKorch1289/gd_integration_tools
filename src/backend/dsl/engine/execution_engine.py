@@ -1,5 +1,5 @@
 import time
-from typing import Any
+from typing import Any, cast
 
 from src.backend.core.errors import RouteDisabledError, TenantContextRequiredError
 from src.backend.core.logging import get_logger
@@ -10,6 +10,7 @@ from src.backend.dsl.engine.middleware import (
     ErrorNormalizerMiddleware,
     MetricsMiddleware,
     MiddlewareChain,
+    ProcessorMiddleware,
     TimeoutMiddleware,
 )
 from src.backend.dsl.engine.pipeline import Pipeline
@@ -58,7 +59,9 @@ def _default_middleware_factory() -> MiddlewareChain:
         [
             TimeoutMiddleware(default_timeout=30.0),
             ErrorNormalizerMiddleware(),
-            TracingMiddleware(),
+            # P1-14: TracingMiddleware наследует core-Protocol (infrastructure
+            # не может импортировать dsl-ABC); сигнатуры before/after совпадают.
+            cast("ProcessorMiddleware", TracingMiddleware()),
             MetricsMiddleware(),
         ]
     )

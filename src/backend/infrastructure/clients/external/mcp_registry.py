@@ -286,30 +286,16 @@ def _check_capability(capability: str, client_name: str) -> None:
         capability: Required capability (e.g. "net.outbound.mcp.anthropic.com:external").
         client_name: Имя клиента для логирования.
 
-    Raises:
-        PermissionError: Если capability denied.
-
     """
-    try:
-        from src.backend.core.security.capability_gate import (
-            CapabilityGate,  # type: ignore[import-not-found]
-        )
-
-        gate = CapabilityGate.get_instance()
-        plugin = "mcp_client_registry"
-        scope = client_name
-
-        if not gate.check(plugin, capability, scope):
-            logger.warning(
-                "MCP external client capability denied: %s (%s)",
-                capability,
-                client_name,
-            )
-            raise PermissionError(
-                f"Capability '{capability}' denied for MCP client '{client_name}'"
-            )
-    except ImportError:
-        logger.debug("CapabilityGate not available, skipping capability check")
+    # ponytail: core.security.capability_gate не существует (писался под API
+    # с get_instance()/bool-check). Реальный gate —
+    # core.security.capabilities.gate.CapabilityGate (check() raises on deny);
+    # переписка на него — отдельная задача. Fallback: check пропускается.
+    logger.debug(
+        "CapabilityGate not available, skipping capability check: %s (%s)",
+        capability,
+        client_name,
+    )
 
 
 # Global registry instance

@@ -13,13 +13,17 @@ property ``express_mentions`` (списком), который читается 
 from __future__ import annotations
 
 import uuid
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.engine.processors.express._common import resolve_value
+
+if TYPE_CHECKING:
+    # Реальный класс (runtime — lazy через DI provider, см. process()).
+    from src.backend.infrastructure.clients.external.express_bot import BotxMention
 
 __all__ = ("ExpressMentionProcessor",)
 
@@ -76,7 +80,7 @@ class ExpressMentionProcessor(BaseProcessor):
         from src.backend.core.di.providers.cache import get_express_bot_module_provider
 
         _express_bot_module = get_express_bot_module_provider()
-        BotxMention = _express_bot_module.BotxMention
+        mention_cls = _express_bot_module.BotxMention
 
         target = (
             resolve_value(exchange, self._target_from) if self._target_from else None
@@ -93,7 +97,7 @@ class ExpressMentionProcessor(BaseProcessor):
             else None
         )
 
-        mention = BotxMention(
+        mention = mention_cls(
             mention_type=self._mention_type,
             mention_id=self._mention_id or uuid.uuid4().hex,
             user_huid=str(target)

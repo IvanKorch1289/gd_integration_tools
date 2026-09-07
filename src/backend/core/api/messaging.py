@@ -25,7 +25,7 @@ def __getattr__(name: str) -> object:  # type: ignore[misc]
     if name == "KafkaProducer":
         # kafka_pool_registration only registers; реальный KafkaProducer class
         # в kafka_producer module (lazy импорт сохраняет optional aiokafka dep).
-        from src.backend.infrastructure.messaging.kafka_producer import (
+        from src.backend.infrastructure.messaging.kafka_producer import (  # type: ignore[import-not-found]  # Kafka SDK optional — ImportError fallback ниже
             KafkaProducer,  # type: ignore[attr-defined]
         )
 

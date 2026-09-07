@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
@@ -12,6 +12,10 @@ from src.backend.dsl.engine.processors.telegram._common import (
     get_telegram_client,
     resolve_value,
 )
+
+if TYPE_CHECKING:
+    # Реальный класс (runtime — lazy через DI provider, см. process()).
+    from src.backend.infrastructure.clients.external.telegram_bot import TelegramButton
 
 __all__ = ("TelegramEditProcessor",)
 
@@ -64,7 +68,7 @@ class TelegramEditProcessor(BaseProcessor):
         from src.backend.core.di.providers.cache import get_telegram_bot_provider
 
         _telegram_module = get_telegram_bot_provider()
-        TelegramButton = _telegram_module.TelegramButton
+        button_cls = _telegram_module.TelegramButton
 
         chat_id = resolve_value(exchange, self._chat_id_from)
         message_id = resolve_value(exchange, self._message_id_from)
@@ -81,7 +85,7 @@ class TelegramEditProcessor(BaseProcessor):
         keyboard: list[list[TelegramButton]] | None = None
         if self._inline_keyboard is not None:
             keyboard = [
-                [TelegramButton(**self._normalize_btn(btn)) for btn in row]
+                [button_cls(**self._normalize_btn(btn)) for btn in row]
                 for row in self._inline_keyboard
             ]
 

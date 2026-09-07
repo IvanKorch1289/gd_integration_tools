@@ -14,11 +14,10 @@ from typing import TYPE_CHECKING
 from src.backend.dsl.engine.processors.express._common import resolve_value
 
 if TYPE_CHECKING:
-    # S85 M2-#11 accelerated batch: DI provider вместо inline infrastructure import.
-    from src.backend.core.di.providers.cache import get_telegram_bot_provider
-
-    _telegram_module = get_telegram_bot_provider()
-    TelegramBotClient = _telegram_module.TelegramBotClient
+    # Реальный класс клиента (runtime — lazy через DI provider, см. ниже).
+    from src.backend.infrastructure.clients.external.telegram_bot import (
+        TelegramBotClient,
+    )
 
 __all__ = ("get_telegram_client", "resolve_value")
 

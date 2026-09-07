@@ -31,7 +31,7 @@ from typing import TYPE_CHECKING, Any
 from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
-    pass
+    from sqlalchemy.ext.asyncio import AsyncSession  # noqa: F401 — type comment L112
 
 _logger = get_logger("workflow.compensating_driver")
 

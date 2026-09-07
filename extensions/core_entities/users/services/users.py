@@ -28,10 +28,9 @@ from extensions.core_entities.users.schemas.route import (  # S168 W15-17 P2-10
     UserSchemaOut,
     UserVersionSchemaOut,
 )
+from src.backend.core.api import BaseService, ServiceError
 from src.backend.core.auth.ad_directory import AdAuthError, AdSearchEntry
-from src.backend.core.api import ServiceError
 from src.backend.core.interfaces.repositories import UserRepositoryProtocol
-from src.backend.core.api import BaseService
 
 __all__ = ("UserService", "get_user_service", "AuthMethod")
 
@@ -219,14 +218,16 @@ class UserService(
                 "(or uv sync --extra dsl-extras-3)"
             )
 
-        # 1. Find user in AD
-        ad_user = await ad_client.find_user(login=username)
+        # 1. Find user in AD. Протокол ldap_contract — минимальный контракт
+        # core factory; полный API (find_user/validate_credentials) у
+        # конкретного AdDirectoryClient (services/auth/ad_directory_client).
+        ad_user = await ad_client.find_user(login=username)  # type: ignore[attr-defined]
         if ad_user is None:
             return None
 
         # 2. Validate credentials (bind)
         try:
-            valid = await ad_client.validate_credentials(
+            valid = await ad_client.validate_credentials(  # type: ignore[attr-defined]
                 user_dn=ad_user.dn, password=password
             )
         except AdAuthError:

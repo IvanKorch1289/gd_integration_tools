@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.backend.builder import RouteBuilder  # type: ignore[attr-defined]
+    from src.backend.dsl.builder import RouteBuilder
 
 
 class VaultSecretMixin:
