@@ -1163,3 +1163,13 @@ multi-day по решению (а); 15 (Vault) — ADR-0296; 19 — флак sha
 
 feature_flags недоступен (sys.modules None) -> except ImportError ->
 JupyterHubNotEnabledError — line 157 покрыта. 15/15 branch-тестов.
+
+## T3 ratchet-инкремент 17 (2026-09-06): SchedulerManager 25%→8 тестов
+
+`cc7eca754`: unit-тесты infrastructure SchedulerManager — memory-mode
+(sync_engine=None → MemoryJobStore + warning), schedule_cron valid/invalid,
+pause/resume round trip + missing → False, run_job_now missing → False,
+list_jobs empty, cleanup registry round trip.
+
+**Напоминание**: решения (а) полные 70% (multi-day спринт активен) и
+(б) ADR-0296 подтверждён — исполняются по ledger `da6828122`.
