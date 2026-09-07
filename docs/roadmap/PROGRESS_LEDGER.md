@@ -1031,3 +1031,18 @@ Verify: gateway_audit_mixin 100%; jupyter+ai suite 120 passed; ruff 0.
 Решения (а)/(б) пользователя — повторно запрошены (AskUserQuestion, ответа
 нет); интерим-финиш действует. Следующие ratchet-кандидаты — по свежему
 term-missing отчёту в следующем проходе.
+
+## T3 ratchet-инкремент 14 (2026-09-06): notification_hub 43→100%
+
+`41aee1c09`: 9 тестов NotificationHub (S223 thin-adapter над Gateway):
+send-трансляция (legacy template_key auto-slug, status queued→sent,
+context-прокидка), Gateway-failure -> error-dict, пер-канальные методы
+(email/express/webhook/telegram), express_broadcast sent-подсчёт,
+express_event emoji-форматирование, broadcast skip строк-таргетов,
+express_create_chat делегирование, _slug контракт.
+**B-NEW-6 (P3)**: _slug docstring-пример 'kd-12345' устарел — транслитерации
+нет, кириллица сохраняется ('кд-12345'); реальное поведение зафиксировано
+в тестах. Verify: 9/9; notification_hub 100%; ruff 0.
+
+**Напоминание**: решения (а) T3 scope / (б) ADR-0296 vs docker+Vault —
+открыты (7-е напоминание); интерим-финиш действует.
