@@ -120,7 +120,11 @@ def register_jupyter_hub_actions(registry: Any) -> list[str]:
     """
     # ActionHandlerSpec resolved via module-level __getattr__ proxy (Sprint 226)
 
-    spec = ActionHandlerSpec(
+    # T3-фикс (2026-09-06): LOAD_GLOBAL не вызывает module __getattr__,
+    # поэтому bare `ActionHandlerSpec` падал NameError. Резолвим явно.
+    spec_cls = __getattr__("ActionHandlerSpec")
+
+    spec = spec_cls(
         action="jupyter.hub_run",
         service_getter=get_jupyter_hub_run_service,
         service_method="run",
