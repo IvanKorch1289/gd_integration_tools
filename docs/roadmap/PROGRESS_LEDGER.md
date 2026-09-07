@@ -980,3 +980,14 @@ nb.cells; сбой kernel setup -> обёртка в JupyterExecutionError.
 
 **Напоминание**: решения (а) T3 scope / (б) ADR-0296 vs docker+Vault —
 открыты (6-е напоминание, `6c445974d`); ratchets продолжаются.
+
+## ADR-0298 (2026-09-06): удалённое исполнение — asyncssh, Fabric отклонён
+
+По запросу изучен Fabric (2.x/3.x, docs.fabfile.org) против текущей
+реализации (SshCommandProcessor + SftpClient + FtpUploadProcessor, все
+verified). Решение: **миграция отклонена** — Fabric sync-only (async API
+нет), миграция runtime = блокировка event loop (нарушение mandatory
+async-first) или двойная to_thread-обёртка. Условный план активации
+Fabric для fleet-ops/CLI слоя задокументирован в ADR-0298.
+`5e8c32cb3`. Коллизия ADR-номеров 0296 (два файла) устранена:
+frontend-migration перенумерован в ADR-0297 (`dc31222e4`).
