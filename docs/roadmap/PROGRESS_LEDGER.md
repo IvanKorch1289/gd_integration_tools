@@ -1173,3 +1173,13 @@ list_jobs empty, cleanup registry round trip.
 
 **Напоминание**: решения (а) полные 70% (multi-day спринт активен) и
 (б) ADR-0296 подтверждён — исполняются по ledger `da6828122`.
+
+## T3 ratchet-инкремент 17 (2026-09-06): infra_mongodb
+
+`b6ef497be`: 3 теста InfraMongoDBFindProcessor.process — query-фильтр
+прокидывается в coll.find, empty-query passthrough, set_result пишет в
+exchange.target. Клиент мокается через infrastructure_locator-провайдер.
+Verify: 3/3 passed; ruff 0.
+
+**Напоминание**: решения (а) T3 scope / (б) ADR-0296 vs docker+Vault —
+открыты (7-е напоминание); интерим-финиш действует.
