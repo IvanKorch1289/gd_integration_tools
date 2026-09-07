@@ -914,3 +914,16 @@ singleton). Verify: ops suite 170 passed; ruff 0.
 
 **Напоминание**: решения (а) T3 scope и (б) ADR-0296 vs docker+Vault —
 открыты (`6c445974d`); ratchets продолжаются.
+
+## T3 ratchet-инкремент 11 (2026-09-06): execution_service core_mixin 21→100%
+
+`7e3eee72c`: 5 тестов execute_notebook-оркестрации NotebookExecutionService
+(ядро движка за hub_run_orchestrator): happy path (markdown-ячейки
+пропускаются, upload/session/execute вызываются в порядке), spawn-ветка
+(server not ready -> start_server + wait_for_server), пустой server.url ->
+JupyterExecutionError, отсутствие kernel_id -> JupyterExecutionError
+(upload выполнен, execute_cell не вызывался).
+Verify: execution_service suite 32 passed; ruff 0.
+
+**Напоминание**: решения (а) T3 scope и (б) ADR-0296 vs docker+Vault —
+открыты (заданы 5 раз); ratchets продолжаются.
