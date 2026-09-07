@@ -787,3 +787,14 @@ swallow), WebhookTrigger.stop router-error swallow, TriggerRegistry.stop_all
 swallow. Коммит `2d0bc5ac4`-преемник (тест-файл test_triggers_coverage.py).
 Остаток непокрытых строк — Protocol-заглушки и branch-partials (осознанно).
 Решения (а)/(б) пользователя — по-прежнему открыты.
+
+## Инкремент (2026-09-06): mqtt_handler W3-покрытие + B-NEW-2 финал
+
+`cea2f3af8`: 5 новых тестов W3-путей (process_message timeout без raise,
+normal dispatch, stop отменяет in-flight message-задачи, publish
+success/broker-error) + починен последний B-NEW-2 (test_stop_cancels_task:
+AsyncMock done() возвращал корутину → заменён на явный _FakeTask).
+mqtt_handler 58% → 67% (остаток — broker-loop _listen, требует aiomqtt-моков).
+Verify: 21/21 mqtt passed; ruff 0.
+
+Решения (а)/(б) пользователя — по-прежнему открыты (4-е напоминание).
