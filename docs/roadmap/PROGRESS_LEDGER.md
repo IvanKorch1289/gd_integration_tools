@@ -1024,3 +1024,10 @@ Verify: gateway_audit_mixin 100%; jupyter+ai suite 120 passed; ruff 0.
 
 **Напоминание**: решения (а) T3 scope / (б) ADR-0296 vs docker+Vault —
 открыты (6-е напоминание); интерим-финиш действует.
+
+## T3 ratchet-инкремент 14 (2026-09-06): ops/analytics 84→100%
+
+Тест lazy-singleton get_analytics_service (идемпотентность + сброс стейта).
+Решения (а)/(б) пользователя — повторно запрошены (AskUserQuestion, ответа
+нет); интерим-финиш действует. Следующие ratchet-кандидаты — по свежему
+term-missing отчёту в следующем проходе.
