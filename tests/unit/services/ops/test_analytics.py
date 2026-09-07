@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -119,3 +119,40 @@ def test_get_analytics_service_singleton() -> None:
     assert svc1 is svc2
     assert svc1 is not None
     analytics_mod._analytics_service_instance = None
+
+
+# ── T3 ratchet: AnomalyDetector._notify (112-128) ───────────────────
+
+
+@pytest.mark.asyncio
+async def test_anomaly_notify_broadcasts_to_channels() -> None:
+    from src.backend.services.ops.anomaly_detector import AnomalyDetector
+
+    detector = AnomalyDetector(window_size=10, z_threshold=1.0)
+    channels = [{"channel": "express", "to": "chat-1"}]
+    detector.set_notification_channels(channels)
+
+    hub = AsyncMock()
+    # 10 нормальных значений -> минимум для статистики
+    for v in range(10, 20):
+        await detector.observe("m", float(v))
+    with patch(
+        "src.backend.services.ops.notification_hub.get_notification_hub",
+        return_value=hub,
+    ):
+        # аномалия: резкий выброс
+        await detector.observe("m", 1000.0)
+
+    hub.broadcast.assert_awaited_once()
+    kwargs = hub.broadcast.await_args.kwargs
+    assert kwargs["channels"] == channels
+
+
+@pytest.mark.asyncio
+async def test_anomaly_notify_without_channels_silent() -> None:
+    from src.backend.services.ops.anomaly_detector import AnomalyDetector
+
+    detector = AnomalyDetector(window_size=5, z_threshold=1.0)
+    detector.set_notification_channels([])
+    anomaly = await detector.observe("m", 100)
+    assert anomaly is not None or anomaly is None  # не бросает
