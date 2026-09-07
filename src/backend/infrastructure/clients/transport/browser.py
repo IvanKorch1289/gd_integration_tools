@@ -123,8 +123,8 @@ class BrowserClient:
         """
         if self._human_delays:
             await asyncio.sleep(
-                random.randint(min_ms, max_ms)
-                / 1000  # non-cryptographic use  # nosec B311 — non-crypto use
+                random.randint(min_ms, max_ms)  # nosec B311 — non-crypto use (delay jitter)
+                / 1000
             )  # human-like delay jitter, не криптография
 
     async def navigate(

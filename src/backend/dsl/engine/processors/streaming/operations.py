@@ -97,8 +97,8 @@ class SamplingProcessor(BaseProcessor):
         """Метод process (см. signature)."""
         # random.random() < p — эквивалентно Bernoulli trial (sampling, не крипто).
         if (
-            random.random() >= self._p
-        ):  # non-cryptographic use  # nosec B311 — non-crypto use
+            random.random() >= self._p  # nosec B311 — non-crypto use (Bernoulli sampling)
+        ):
             exchange.properties["_sampled_out"] = True
             # Помечаем как завершённое без ошибки, но downstream должен фильтровать.
             exchange.properties["_skip_downstream"] = True

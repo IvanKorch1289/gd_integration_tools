@@ -118,8 +118,8 @@ async def _random_delay(min_s: float = 1.0, max_s: float = 3.0) -> None:
 
     await asyncio.sleep(
         min_s
-        + random.random()
-        * (max_s - min_s)  # non-cryptographic use  # nosec B311 — non-crypto use
+        + random.random()  # nosec B311 — non-crypto use (rate-limit jitter)
+        * (max_s - min_s)
     )  # rate-limit jitter, не криптография
 
 
