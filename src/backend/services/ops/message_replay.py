@@ -131,9 +131,12 @@ class MessageReplayService:
                 ),
             )
             # ponytail: action_handler_registry lazy __getattr__ proxy (Sprint 226).
-            result = await action_handler_registry.dispatch(  # type: ignore[name-defined]
-                command
-            )
+            # P1-фикс (2026-09-06, ratchet): LOAD_GLOBAL не вызывает module
+            # __getattr__ -> bare name падал NameError на каждом replay.
+            # Явный lazy-импорт в точке использования — детерминированно.
+            from src.backend.dsl.commands.registry import action_handler_registry
+
+            result = await action_handler_registry.dispatch(command)
             msg.status = ReplayStatus.REPLAYED
             msg.replay_count += 1
             return {"status": "replayed", "id": msg.id, "result": result}
