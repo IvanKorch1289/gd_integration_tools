@@ -72,7 +72,8 @@ class CompensatingDriverWorker:
         if self._task is not None and not self._task.done():
             return
         self._stopping.clear()
-        self._task = asyncio.create_task(self._run(), name="compensating-driver-worker")
+        self._task = asyncio.create_task(self._run(), name="compensating-driver-worker")  # noqa: orphan-create-task
+
         _logger.info(
             "CompensatingDriverWorker started (interval=%.1fs)", self._interval
         )

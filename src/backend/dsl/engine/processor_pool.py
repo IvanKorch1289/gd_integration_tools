@@ -224,7 +224,8 @@ class ProcessorPool:
                 )
                 return result
 
-        tasks = [asyncio.create_task(run_with_sem(p)) for p in processors]
+        tasks = [asyncio.create_task(run_with_sem(p)) for p in processors]  # noqa: orphan-create-task
+
         for task in tasks:
             self._active.add(task)
 

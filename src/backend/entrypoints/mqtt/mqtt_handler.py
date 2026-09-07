@@ -157,7 +157,8 @@ class MqttHandler:
                                 in_flight, return_when=asyncio.FIRST_COMPLETED
                             )
                             in_flight -= done
-                        task: asyncio.Task[None] = asyncio.create_task(
+                        task: asyncio.Task[None] = asyncio.create_task(  # noqa: orphan-create-task
+
                             self._process_message(
                                 topic=str(message.topic), payload=message.payload
                             )

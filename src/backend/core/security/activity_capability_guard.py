@@ -171,7 +171,8 @@ def _emit_audit(context: CapabilityContext | None, event: dict[str, object]) -> 
         if asyncio.iscoroutine(coro):
             try:
                 loop = asyncio.get_running_loop()
-                loop.create_task(coro)
+                loop.create_task(coro)  # noqa: orphan-create-task
+
             except RuntimeError:
                 pass  # no running loop → drop coroutine (sync context)
     except (ImportError, AttributeError, RuntimeError) as audit_exc:

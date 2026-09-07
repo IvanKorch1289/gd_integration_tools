@@ -167,7 +167,8 @@ class IntervalTrigger:
                     return
                 await self._dispatch()
 
-        self._task = asyncio.create_task(_loop(), name=f"trigger:{self.name}")
+        self._task = asyncio.create_task(_loop(), name=f"trigger:{self.name}")  # noqa: orphan-create-task
+
         _log.info(
             "IntervalTrigger: %s started (route=%s, interval=%.1fs)",
             self.name,
@@ -286,7 +287,8 @@ class CronTrigger:
                     return
                 await self._dispatch()
 
-        self._task = asyncio.create_task(_loop(), name=f"trigger:{self.name}")
+        self._task = asyncio.create_task(_loop(), name=f"trigger:{self.name}")  # noqa: orphan-create-task
+
         _log.info(
             "CronTrigger: %s started (route=%s, cron=%r, tz=%s)",
             self.name,

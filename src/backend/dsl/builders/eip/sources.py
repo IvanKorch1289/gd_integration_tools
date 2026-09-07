@@ -53,7 +53,8 @@ def _create_or_defer_sensor_task(coro_factory: Callable[[], Any], *, name: str) 
 
     if loop is not None:
         # Eager path: create task immediately.
-        return asyncio.create_task(coro_factory(), name=name)
+        return asyncio.create_task(coro_factory(), name=name)  # noqa: orphan-create-task
+
 
     # Lazy path: return descriptor that defers task creation.
     class _DeferredTask:
@@ -65,7 +66,8 @@ def _create_or_defer_sensor_task(coro_factory: Callable[[], Any], *, name: str) 
         def start(self) -> asyncio.Task:
             if self._task is not None:
                 return self._task
-            self._task = asyncio.create_task(coro_factory(), name=name)
+            self._task = asyncio.create_task(coro_factory(), name=name)  # noqa: orphan-create-task
+
             return self._task
 
         async def stop(self) -> None:

@@ -200,7 +200,8 @@ class FileWatcherSource:
         чтобы ``wait_for`` не отменял async-generator ``stream()``.
         """
         queue: asyncio.Queue[FileEvent | None] = asyncio.Queue()
-        producer = asyncio.create_task(self._fill_queue(queue))
+        producer = asyncio.create_task(self._fill_queue(queue))  # noqa: orphan-create-task
+
         try:
             batch: list[FileEvent] = []
             while True:

@@ -145,7 +145,8 @@ class CertRotationWatcher:
             logger.warning("cert.rotation.already_started")
             return
         self._stop_event.clear()
-        self._task = asyncio.create_task(self._loop(), name="cert-rotation-watcher")
+        self._task = asyncio.create_task(self._loop(), name="cert-rotation-watcher")  # noqa: orphan-create-task
+
         logger.info("cert.rotation.task_started")
 
     async def stop(self) -> None:

@@ -322,7 +322,8 @@ class OutboundHttpClient:
             if asyncio.iscoroutine(coro):
                 try:
                     loop = asyncio.get_running_loop()
-                    loop.create_task(coro)
+                    loop.create_task(coro)  # noqa: orphan-create-task
+
                 except RuntimeError:  # noqa: violation-check — sync context, no event loop
                     pass  # no running loop → drop coroutine (sync context)
         except (ImportError, AttributeError, RuntimeError) as audit_exc:

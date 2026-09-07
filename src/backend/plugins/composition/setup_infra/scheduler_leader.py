@@ -106,7 +106,8 @@ async def _start_scheduler_with_leader_election() -> None:
 
     # S71 W3: start heartbeat BEFORE scheduler, чтобы lock не expired
     # до того, как scheduler начнёт работать.
-    _scheduler_heartbeat_task = asyncio.create_task(
+    _scheduler_heartbeat_task = asyncio.create_task(  # noqa: orphan-create-task
+
         _scheduler_heartbeat_loop(), name="scheduler-leader-heartbeat"
     )
     await get_scheduler_manager().start()

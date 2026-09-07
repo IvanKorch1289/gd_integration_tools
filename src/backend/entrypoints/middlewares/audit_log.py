@@ -176,7 +176,8 @@ class AuditLogMiddleware:
                     except RuntimeError:
                         loop = None
                     if loop is not None and loop.is_running():
-                        loop.create_task(writer.write(audit_event))
+                        loop.create_task(writer.write(audit_event))  # noqa: orphan-create-task
+
         except Exception as exc:
             _clickhouse_logger.debug("ClickHouse audit write skipped: %s", exc)
 
