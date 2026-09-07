@@ -53,9 +53,10 @@ def render_workflow_templates(client: APIClient) -> None:
     """
     import streamlit as st
 
-    # S6 fix: используем dsl_portal facade вместо прямого импорта
-    # ``src.backend.services.workflows.template_registry`` (R3.10d).
-    from src.backend.core.frontend_facade import (
+    # S170 CL-12-5/9: миграция с core.frontend_facade на services.dsl_portal
+    # (canonical layer-compliant путь, re-exports list_workflow_templates,
+    # search_workflow_templates).
+    from src.backend.services.dsl_portal import (
         list_workflow_templates,
         search_workflow_templates,
     )
@@ -108,8 +109,10 @@ def _render_template_card(tmpl, client: APIClient) -> None:
         st.code(yaml_text, language="yaml")
     with tab_graph:
         try:
-            # S44 W2: facade import (was lazy direct dsl, layer violation).
-            from src.backend.core.frontend_facade import WorkflowDeclaration, to_mermaid
+            # S170 CL-12-5/9: миграция с core.frontend_facade на services.dsl_portal
+            # (canonical layer-compliant путь, re-exports WorkflowDeclaration,
+            # to_mermaid).
+            from src.backend.services.dsl_portal import WorkflowDeclaration, to_mermaid
 
             decl = WorkflowDeclaration.model_validate(tmpl.raw)
             mermaid = to_mermaid(decl)
