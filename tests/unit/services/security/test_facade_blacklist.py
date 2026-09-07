@@ -240,3 +240,45 @@ def test_verify_signature_delegates() -> None:
         assert (
             facade.verify_signature(b"payload", "sig", 1700000000, "secret") is True
         )
+
+
+@pytest.mark.asyncio
+async def test_get_secret_registry_failure_returns_default() -> None:
+    """Сбой svcs_registry -> default (159-161)."""
+    facade = SecurityFacade()
+    with patch(
+        "src.backend.core.svcs_registry.get_service",
+        side_effect=RuntimeError("registry down"),
+    ):
+        assert await facade.get_secret("api.key", default="dflt") == "dflt"
+        assert await facade.get_secret("api.key") is None
+
+
+@pytest.mark.asyncio
+async def test_capability_assert_called_on_pii_operations() -> None:
+    """_assert (line 80) вызывается с plugin/action/resource."""
+    recorded: list[tuple[str, str, str]] = []
+
+    def capability_check(plugin: str, action: str, resource: str) -> None:
+        recorded.append((plugin, action, resource))
+
+    facade = SecurityFacade(capability_check=capability_check, plugin="test_pl")
+    with patch(
+        "src.backend.core.security.pii_tokenizer.PIITokenizer"
+    ) as mock_tok:
+        inst = AsyncMock()
+        inst.mask_reversible = AsyncMock(return_value=("<T>", {}))
+        mock_tok.return_value = inst
+        await facade.tokenize_pii("text")
+
+    assert recorded == [("test_pl", "security.pii.tokenize", "text")]
+
+
+def test_get_security_facade_lazy_singleton_cached() -> None:
+    """lru_cache: повторный вызов возвращает тот же инстанс (189)."""
+    from src.backend.services.security.facade import get_security_facade
+
+    first = get_security_facade()
+    second = get_security_facade()
+    assert first is second
+    assert isinstance(first, SecurityFacade)
