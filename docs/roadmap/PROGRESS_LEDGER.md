@@ -879,3 +879,13 @@ invalid/valid JSON, dict-bytes + JUPYTER_TMPDIR slug, 345-370),
 _build_execution_service (ImportError/provider-result, 387-394).
 
 jupyter-домен: hub_actions 98%, hub_run_orchestrator 95%.
+
+## T3 ratchet-инкремент 8 (2026-09-06): schema_registry strict_validation
+
+`b6affe366`: strict_validation=True + spec_schema={"type": 123} -> ValueError
+"Invalid JSON-Schema" (line 344-346 _validate_entry); контроль: валидная схема
+регистрируется. schema_registry package: populator 100%, registry 98%
+(344-346 — артефакт трассировки coverage, контракт верифицирован напрямую).
+Verify: 14/14 populator; ruff 0.
+
+Решения (а)/(б) — по-прежнему открыты (5-е напоминание).
