@@ -1118,3 +1118,14 @@ _http_get/_tcp_connect). Verify: 9/9; ruff 0.
 
 **Напоминание**: решения (а) T3 scope / (б) ADR-0296 vs docker+Vault —
 открыты (7-е напоминание); интерим-финиш действует.
+
+## B-NEW-7 (P2, test-infra): beartype claw INTERNALERROR в scoped-прогонах (2026-09-06)
+
+Симптом: `pytest tests/unit/services/execution/` с новым тест-файлом,
+импортирующим `services.execution.invoker.helpers`, падает INTERNALERROR:
+beartype.claw._clawstate circular import при collection. Воспроизводится
+только в некоторых порядках импорта (py3.14 + beartype claw hook).
+Тест-контент корректен (10 тестов helpers: serialize round-trip, defaults,
+created_at-парсинг, singleton) — отложен до починки beartype-интеракции.
+Файл НЕ закоммичен (в trees с другим порядком коллекции собирается чисто);
+содержимое сохранено в истории сессии.
