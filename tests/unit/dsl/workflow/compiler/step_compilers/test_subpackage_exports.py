@@ -9,6 +9,7 @@ After P1-11 (Sprint 16) split step_compilers.py into 4 files
 This prevents regression where a subpackage file might lose a function
 during future refactors.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -100,6 +101,11 @@ def test_no_duplicate_compile_functions_across_subpackages() -> None:
     for mod in (activity, flow, governance):
         for name in dir(mod):
             if name.startswith("compile_") and not name.startswith("_"):
+                obj = getattr(mod, name)
+                # Internal import (flow.py зовёт compile_activity_step из
+                # activity.py) — не дубликат; считаем только definitions.
+                if getattr(obj, "__module__", None) != mod.__name__:
+                    continue
                 all_names.append((name, mod.__name__))
 
     # Group by name
