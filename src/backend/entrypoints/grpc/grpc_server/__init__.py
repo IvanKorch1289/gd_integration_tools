@@ -145,14 +145,14 @@ def _patch_rpc_methods() -> None:
         _modname = _mod_info[1]
         try:
             _mod = importlib.import_module(_modname)
-        except Exception:
+        except Exception:  # nosec B112 — module import probe; iterate next on failure
             continue
         for _name in dir(_mod):
             if _name.startswith("_"):
                 continue
             try:
                 _obj = getattr(_mod, _name)
-            except Exception:
+            except Exception:  # nosec B112 — getattr probe on dynamic module
                 continue
             if not callable(_obj):
                 continue

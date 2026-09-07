@@ -229,7 +229,7 @@ class L3RetrievalGraphCache:
                     continue
                 try:
                     payload = orjson.loads(message.get("data") or b"{}")
-                except Exception as _:
+                except Exception as _:  # nosec B112 — invalid cache entries skipped silently
                     continue
                 ns = payload.get("namespace") or "*"
                 self.invalidate_namespace(ns)

@@ -145,6 +145,6 @@ class E2BSandbox(CodeSandbox):
                 artifacts[str(path)] = (
                     content.encode() if isinstance(content, str) else bytes(content)
                 )
-            except Exception as _:
+            except Exception as _:  # nosec B112 — artifact iteration: skip unreadable entries
                 continue
         return artifacts

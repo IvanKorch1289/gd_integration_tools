@@ -389,7 +389,7 @@ class CircuitBreakerMiddleware:
                 try:
                     new_state = adapter.get_state(path).state
                     _record_breaker_metric(path, new_state)
-                except Exception:
+                except Exception:  # nosec B110 — graceful degradation: missing metric OK
                     pass
             return
 
