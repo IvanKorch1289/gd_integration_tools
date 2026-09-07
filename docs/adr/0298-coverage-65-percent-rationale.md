@@ -79,3 +79,19 @@ Per brief spec: «зафиксировать причины для оставш�
 - Sprint 172+ backlog: ≥65% через testcontainers + playwright + mocks
 
 Sprint 169 закрыт per user rule «не превращать в бесконечный цикл».
+
+---
+
+## Sprint 170 cycle 3 (2026-09-05) — coverage sprint инкремент 1
+
+Per user выбор scope (а) Полные 70% (multi-day coverage sprint), начата работа.
+Cycle 3 (commit `2a80e0f56`):
+
+| Module | До | После | Tests added |
+|---|---|---|---|
+| `src/backend/dsl/engine/processors/express/_common.py` | **0%** | **55%** | 23 tests (resolve_value, _walk_path, _host_from_url) |
+
+### Sprint 172+ продолжение
+
+Per (а) plan: multi-day coverage sprint до overall 70% + `pyproject.toml:fail_under` 60→70.
+Estimated effort: 40-80 hours (testcontainers + playwright + per-extension mocks).
