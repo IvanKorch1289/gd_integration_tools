@@ -1141,3 +1141,20 @@ c dc_capture 13/13 уже починены мной в составе ratchet 15
 Остаток: fastmcp_server 4, blueprints 3, pii_erase 3, storage_ext 3,
 web_search 2 + прочие — ретаргет на актуальные контракты, полоса сессии-2
 (S170 ревизор — kimi).
+
+## Состояние на закрытие прохода (2026-09-06)
+
+**Верификация**: 246 passed (scheduler/mqtt/data_quality/schema_registry/
+jupyter); ruff 0; collect 17195/0 errors.
+
+**Наблюдение для будущего клинапа** (не блокер): в core/ai/gateway/gateway.py
+(L149) остаётся shadowed дубль _enforce_production_wiring — unreachable
+(задокументирован автором как backward-trace); удаление — клинап-кандидат
+полосы сессии-2, не вмешиваюсь в их активный рефакторинг.
+
+**Стабильная карта гейтов**: 02/03/04/11/33 закрыты; 01 (coverage) — T3
+multi-day по решению (а); 15 (Vault) — ADR-0296; 19 — флак shared-box.
+
+**Сводка сессии**: 17 ratchet-инкрементов (16 модулей ≥90%), 5 реальных
+багов исправлено, ADR-0296/0297/0298, LOAD_TEST_RESULTS_2026-09-05,
+негативная матрица 13/13, SLO 444 RPS / p99 150ms / err 0.00%.
