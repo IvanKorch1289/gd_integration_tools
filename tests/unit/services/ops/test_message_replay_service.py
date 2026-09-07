@@ -82,7 +82,7 @@ async def test_replay_one_dry_run_does_not_dispatch(
 ) -> None:
     mid = await service.record("webhook", "orders.create", {"a": 1})
     with patch(
-        "src.backend.dsl.commands.registry.action_handler_registry", registry_mock,
+        "src.backend.core.api.extensions.action_handler_registry", registry_mock,
     ):
         result = await service.replay_one(mid, dry_run=True)
     assert result["status"] == "dry_run"
@@ -96,7 +96,7 @@ async def test_replay_one_success_sets_status_and_count(
 ) -> None:
     mid = await service.record("webhook", "orders.create", {"a": 1})
     with patch(
-        "src.backend.dsl.commands.registry.action_handler_registry", registry_mock,
+        "src.backend.core.api.extensions.action_handler_registry", registry_mock,
     ):
         result = await service.replay_one(mid)
     assert result["status"] == "replayed"
@@ -116,7 +116,7 @@ async def test_replay_one_dispatch_failure_records_error(
     registry_mock = AsyncMock()
     registry_mock.dispatch = AsyncMock(side_effect=RuntimeError("down"))
     with patch(
-        "src.backend.dsl.commands.registry.action_handler_registry", registry_mock,
+        "src.backend.core.api.extensions.action_handler_registry", registry_mock,
     ):
         result = await service.replay_one(mid)
     assert result["status"] == "error"
@@ -131,7 +131,7 @@ async def test_replay_bulk_by_ids(service: MessageReplayService) -> None:
     registry_mock = AsyncMock()
     registry_mock.dispatch = AsyncMock(return_value={"ok": 1})
     with patch(
-        "src.backend.dsl.commands.registry.action_handler_registry", registry_mock,
+        "src.backend.core.api.extensions.action_handler_registry", registry_mock,
     ):
         result = await service.replay_bulk(message_ids=ids[:2])
     assert result["total"] == 2
@@ -144,7 +144,7 @@ async def test_replay_bulk_by_status_filter(service: MessageReplayService) -> No
     registry_mock = AsyncMock()
     registry_mock.dispatch = AsyncMock(return_value={"ok": 1})
     with patch(
-        "src.backend.dsl.commands.registry.action_handler_registry", registry_mock,
+        "src.backend.core.api.extensions.action_handler_registry", registry_mock,
     ):
         result = await service.replay_bulk(status_filter="stored")
     assert result["replayed"] == 3

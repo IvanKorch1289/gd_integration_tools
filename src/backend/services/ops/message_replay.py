@@ -134,7 +134,7 @@ class MessageReplayService:
             # P1-фикс (2026-09-06, ratchet): LOAD_GLOBAL не вызывает module
             # __getattr__ -> bare name падал NameError на каждом replay.
             # Явный lazy-импорт в точке использования — детерминированно.
-            from src.backend.dsl.commands.registry import action_handler_registry
+            from src.backend.core.api.extensions import action_handler_registry
 
             result = await action_handler_registry.dispatch(command)
             msg.status = ReplayStatus.REPLAYED
