@@ -1058,3 +1058,15 @@ Verify: 16/16; notification_adapters 91%; ruff 0.
 
 **Напоминание**: решения (а) T3 scope / (б) ADR-0296 vs docker+Vault —
 открыты (7-е напоминание); интерим-финиш действует.
+
+## Карта pre-prod-check (2026-09-06, обновление): 21/36 PASSED, FAILED 2
+
+Свежий прогон `tools/checks/pre_prod_check.py`: gate 04 ruff strict OK
+(format-хвост добит `a3572f630`), gate 19 startup OK, gate 02 mypy OK.
+FAILED 2 — оба внешние:
+- gate 01 coverage ≥50% — T3 (multi-day / post-план при (а)A);
+- gate 15 feature-flags — живой Vault (BLOCKED(infra), решение (б)).
+
+**Новые приземления сессии-2**: нет. Рабочее дерево чистое (кроме WIKI.md).
+Остаток ratchet-хвостов: mqtt_handler 78-79/253-265 (broker-интернал,
+убывающая отдача), B-NEW-4, P2-10.
