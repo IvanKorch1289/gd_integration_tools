@@ -968,3 +968,15 @@ _handle_message уходит в реальный реестр -> KeyError 'not r
 Verify: reconnect 1/1; mqtt suite 26 passed; mqtt_handler 92%.
 
 Решения (а)/(б) — по-прежнему открыты (7-е напоминание).
+
+## T3 ratchet-инкремент 12 (2026-09-06): nbclient backend 17→90%
+
+`6623b3a72`: 3 теста NbClientExecutionBackend — ImportError nbclient ->
+JupyterExecutionError с подсказкой установки; маппинг output-типов per cell
+(stream/execute_result, markdown пропускается) через мутацию реальных
+nb.cells; сбой kernel setup -> обёртка в JupyterExecutionError.
+Нюанс теста: name — служебный kwarg MagicMock, output-объекты через явные
+присваивания. Verify: 3/3; backend.py 90%; ruff 0.
+
+**Напоминание**: решения (а) T3 scope / (б) ADR-0296 vs docker+Vault —
+открыты (6-е напоминание, `6c445974d`); ratchets продолжаются.
