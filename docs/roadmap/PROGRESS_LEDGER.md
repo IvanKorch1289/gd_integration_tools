@@ -1129,3 +1129,15 @@ beartype.claw._clawstate circular import при collection. Воспроизво
 created_at-парсинг, singleton) — отложен до починки beartype-интеракции.
 Файл НЕ закоммичен (в trees с другим порядком коллекции собирается чисто);
 содержимое сохранено в истории сессии.
+
+## B-NEW-8 (P2, pre-existing, полоса сессии-2): stale dsl-тесты (2026-09-06)
+
+25 падающих тестов в tests/unit/dsl/ — stale patch-таргеты и контракты после
+S170-ревизий (fastmcp_server: workflow_registry API выпилен; cdc_capture:
+get_cdc_client → provider; blueprints/pii_erase/storage_ext/web_search —
+аналогичные дрейфы). Воспроизводятся на HEAD без WIP — pre-existing.
+c dc_capture 13/13 уже починены мной в составе ratchet 15.
+
+Остаток: fastmcp_server 4, blueprints 3, pii_erase 3, storage_ext 3,
+web_search 2 + прочие — ретаргет на актуальные контракты, полоса сессии-2
+(S170 ревизор — kimi).
