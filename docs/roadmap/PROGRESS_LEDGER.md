@@ -778,3 +778,12 @@ clear (2 страницы), fallback InMemory (revoke/clear), no-op методы
 **Security-домен TOTAL: 99%**. Verify: 18+38 passed; ruff 0.
 Напоминание: решения (а) T3 scope / (б) ADR-0296 — по-прежнему открыты
 (`6c445974d`); ratchets продолжаются в любом случае.
+
+## T3 ratchet-инкремент 4 (2026-09-05) — triggers.py 82→95%
+
++8 тестов: FileSensorTaskWrapper (lazy task_factory, идемпотентный start,
+stop без task/done-task), CronTrigger (next_fire=None → exit, dispatch-failure
+swallow), WebhookTrigger.stop router-error swallow, TriggerRegistry.stop_all
+swallow. Коммит `2d0bc5ac4`-преемник (тест-файл test_triggers_coverage.py).
+Остаток непокрытых строк — Protocol-заглушки и branch-partials (осознанно).
+Решения (а)/(б) пользователя — по-прежнему открыты.
