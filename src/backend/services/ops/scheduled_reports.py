@@ -127,6 +127,14 @@ class ScheduledReportsService:
                 ActionCommandMetaSchema,
             )
             from src.backend.schemas.invocation import ActionCommandSchema
+            # P1-фикс (T3 ratchet, 2026-09-05): раньше — bare global
+            # `action_handler_registry`, которого в globals никогда не было
+            # (TYPE_CHECKING-импорт при runtime не исполняется, а
+            # LOAD_GLOBAL не вызывает module __getattr__) -> каждый
+            # run_now падал с NameError.
+            from src.backend.dsl.commands.registry import (
+                action_handler_registry,
+            )
 
             command = ActionCommandSchema(
                 action=report.action,
@@ -161,7 +169,9 @@ class ScheduledReportsService:
                 export_method = getattr(
                     export_svc, f"to_{report.export_format}", export_svc.to_csv
                 )
-                export_result = await export_method(data=data, title=report.name)
+                # T3-фикс (2026-09-06): реальный контракт to_*(rows) — прежний
+                # вызов data=/title= падал TypeError для всех форматов.
+                export_result = await export_method(rows=data)
 
             if report.delivery_to and export_result:
                 from src.backend.services.ops.notification_hub import (
