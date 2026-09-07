@@ -234,3 +234,46 @@ def test_populate_from_routes_default_registry_path() -> None:
     )
     count = populator.populate_from_routes(route_registry, registry=reg)
     assert count == 1
+
+
+# ── registry.py 344-346: _validate_entry (jsonschema) ───────────────
+
+
+def test_register_validates_invalid_spec_schema_raises() -> None:
+    """strict_validation=True + невалидная schema -> ValueError (344-346).
+
+    Порог: _validate_entry вызывается только при strict_validation=True
+    (default False — каталог аналитический, не authoritative).
+    """
+    from src.backend.services.schema_registry.registry import (
+        SchemaEntry,
+        SchemaKind,
+        ServiceSchemaRegistry,
+    )
+
+    reg = ServiceSchemaRegistry(strict_validation=True)
+    entry = SchemaEntry(
+        kind=SchemaKind.PROCESSOR,
+        name="broken.schema",
+        spec_schema={"type": 123},
+    )
+    with pytest.raises(ValueError, match="Invalid JSON-Schema"):
+        reg.register(entry)
+
+
+def test_register_valid_schema_accepted() -> None:
+    """Валидная схема регистрируется без ошибок (контрольный)."""
+    from src.backend.services.schema_registry.registry import (
+        SchemaEntry,
+        SchemaKind,
+        ServiceSchemaRegistry,
+    )
+
+    reg = ServiceSchemaRegistry()
+    entry = SchemaEntry(
+        kind=SchemaKind.PROCESSOR,
+        name="good.schema",
+        spec_schema={"type": "object", "properties": {"a": {"type": "string"}}},
+    )
+    reg.register(entry)
+    assert reg.list_kind(SchemaKind.PROCESSOR)[0].name == "good.schema"
