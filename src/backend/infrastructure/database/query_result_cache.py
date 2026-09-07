@@ -22,7 +22,7 @@
 from __future__ import annotations
 
 import hashlib
-import pickle
+import pickle  # nosec B403 — internal cache serialization (controlled data)
 from typing import Any, Protocol
 
 import orjson

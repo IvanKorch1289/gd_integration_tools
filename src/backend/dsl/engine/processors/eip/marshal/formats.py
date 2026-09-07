@@ -12,8 +12,8 @@ from __future__ import annotations
 import csv
 import io
 import json
-import pickle
-import xml.etree.ElementTree as _ET_Builder  # S44 W30: defusedxml has no Element/SubElement/indent/tostring (only safe-parsing helpers). Use stdlib for XML construction.
+import pickle  # nosec B403 — internal cache serialization (controlled data)
+import xml.etree.ElementTree as _ET_Builder  # nosec B405 — read-only well-formed XML parsing (no external feeds)  # S44 W30: defusedxml has no Element/SubElement/indent/tostring (only safe-parsing helpers). Use stdlib for XML construction.
 from typing import Any
 
 # P0-S6 (audit 2026-08-19): B314 fix — defusedxml для защиты от XXE.

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import json
 import shutil
-import subprocess
+import subprocess  # nosec B404 — argv-only calls (fixed python interpreter invocation)
 import sys
 import tempfile
 from pathlib import Path

@@ -48,7 +48,7 @@ show_details = col3.toggle("Показать детали", value=True)
 def run_audit(top: int = 20) -> dict:
     """Вызывает dsl_usage_audit.py и возвращает результат."""
     import json
-    import subprocess
+    import subprocess  # nosec B404 — argv-only calls (fixed python interpreter invocation)
     from pathlib import Path
 
     # S93 W2-C11: project_root from PYTHONPATH (manage.py run-frontend sets it).

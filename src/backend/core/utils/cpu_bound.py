@@ -69,7 +69,7 @@ async def run_cpu_bound[T](
     if use_process_pool:
         # ProcessPoolExecutor requires picklable top-level functions.
         # Lambda/closure/local fn → fallback to thread pool + warning.
-        import pickle
+        import pickle  # nosec B403 — internal probe (picklability test on local fn)
 
         try:
             pickle.dumps(fn)

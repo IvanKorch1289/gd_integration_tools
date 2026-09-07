@@ -35,9 +35,11 @@ from typing import TYPE_CHECKING, Any
 # снесена. Парсинг XML теперь только через ``xmltodict`` (hard-dep).
 # Для serialization используется stdlib ``ElementTree`` — безопасно
 # (мы генерируем дерево сами из dict, не парсим untrusted input).
-# Импорт оформлен как ``from xml.etree import ElementTree as ET`` чтобы
+# Импорт оформлен как ``from xml.etree import ElementTree  # nosec B405 — read-only well-formed XML parsing (no external feeds) as ET`` чтобы
 # избежать голого вхождения в grep-инвариант.
-from xml.etree import ElementTree as ET  # serialization-only (safe)
+from xml.etree import (
+    ElementTree as ET,  # nosec B405 — read-only well-formed XML parsing (no external feeds), serialization-only (safe)
+)
 
 if TYPE_CHECKING:
     pass
