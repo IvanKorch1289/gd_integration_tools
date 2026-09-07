@@ -807,3 +807,15 @@ facade_blacklist 100%.
 
 Решения (а) scope T3 и (б) ADR-0296/docker+Vault — повторно запрошены у
 пользователя (AskUserQuestion, 4-й раз); интерим-финиш действует.
+
+## T3 ratchet финал (2026-09-06): mqtt_handler 67% → **90%**
+
+`b3b03b364` + F841-стиль: broker-loop `_listen` покрыт через aiomqtt-фейк
+(bounded-buffer kwargs, subscribe на topic, async-итератор с
+CancelledError-маркером конца, payload size-guard S103 P2-7, bounded
+concurrency через gate-dispatch — peak ≤ max_concurrent_messages).
+Коммиты: `b3b03b364`, `d6e…` (стиль).
+
+ mqtt_handler coverage: **90%** ✓ (остаток: 156-159 wait-ветка —
+детерминированный gate-тест в файле; 78-79/171-173 — swallow-ветки).
+Verify: 26 passed; ruff 0.
