@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -10,92 +10,109 @@ from src.backend.services.security.facade import SecurityFacade
 
 
 class TestJWTBlacklistFallback:
-    """Тесты JWT blacklist Redis fallback."""
+    """Тесты JWT blacklist Redis fallback (переписаны под async facade).
 
-    def test_redis_blacklist_used_when_available(self) -> None:
-        """При доступности Redis используется RedisJwtBlacklist."""
+    История: старые sync-тесты (S189+) вызывали async-методы без await —
+    не работали с момента появления async facade (B-NEW-3, 2026-09-05).
+    """
+
+    @pytest.mark.asyncio
+    async def test_redis_blacklist_used_when_available(self) -> None:
+        """Redis доступен -> RedisJwtBlacklist (multi-worker safe)."""
+        facade = SecurityFacade()
+        with (
+            patch("src.backend.infrastructure.clients.storage.redis.get_redis_client") as mock_rc,
+            patch("src.backend.core.auth.jwt_blacklist.RedisJwtBlacklist") as mock_cls,
+        ):
+            mock_rc.return_value.get_client = AsyncMock(return_value=object())
+            await facade.init_jwt_blacklist()
+            mock_cls.assert_called_once()
+            assert facade._jwt_blacklist is mock_cls.return_value
+
+    @pytest.mark.asyncio
+    async def test_in_memory_fallback_when_redis_unavailable(self) -> None:
+        """Redis недоступен -> InMemoryJwtBlacklist (single-process fallback)."""
+        from src.backend.services.security.facade_blacklist import InMemoryJwtBlacklist
+
+        facade = SecurityFacade()
         with patch(
-            "src.backend.core.auth.jwt_blacklist.RedisJwtBlacklist",
-        ) as mock_redis_cls:
-            mock_blacklist = mock_redis_cls.return_value
-
-            facade = SecurityFacade()
-
-            assert facade._jwt_blacklist is mock_blacklist
-
-    def test_in_memory_fallback_when_redis_unavailable(self) -> None:
-        """При недоступности Redis — in-memory fallback."""
-        with patch(
-            "src.backend.core.auth.jwt_blacklist.RedisJwtBlacklist",
+            "src.backend.infrastructure.clients.storage.redis.get_redis_client",
             side_effect=RuntimeError("Redis down"),
         ):
-            facade = SecurityFacade()
+            await facade.init_jwt_blacklist()
+            assert isinstance(facade._jwt_blacklist, InMemoryJwtBlacklist)
 
-            # Fallback должен быть dict-like с jti key
-            assert isinstance(facade._jwt_blacklist, dict)
-            assert "jti" in facade._jwt_blacklist
-
-    def test_blacklist_token_with_redis(self) -> None:
-        """blacklist_token добавляет через Redis."""
-        with patch(
-            "src.backend.core.auth.jwt_blacklist.RedisJwtBlacklist",
+    @pytest.mark.asyncio
+    async def test_blacklist_token_with_redis(self) -> None:
+        """blacklist_token добавляет через Redis-бэкенд."""
+        facade = SecurityFacade()
+        mock_blacklist = AsyncMock()
+        mock_blacklist.revoke = AsyncMock()
+        mock_blacklist.is_revoked = AsyncMock(return_value=True)
+        with (
+            patch("src.backend.infrastructure.clients.storage.redis.get_redis_client"),
+            patch("src.backend.core.auth.jwt_blacklist.RedisJwtBlacklist"),
+            patch.object(
+                facade, "_jwt_blacklist", mock_blacklist, create=True
+            ),
+            patch.object(facade, "_jwt_blacklist_ready", True, create=True),
         ):
+            assert await facade.blacklist_token("jti-test-1") is True
+            mock_blacklist.revoke.assert_awaited_once()
+            assert await facade.is_token_blacklisted("jti-test-1") is True
 
-            facade = SecurityFacade()
-            facade.blacklist_token("jti-test-1")
-
-            assert facade.is_token_blacklisted("jti-test-1") is True
-
-    def test_blacklist_token_with_fallback(self) -> None:
-        """blacklist_token работает с in-memory fallback."""
+    @pytest.mark.asyncio
+    async def test_blacklist_token_with_fallback(self) -> None:
+        """blacklist_token работает с in-memory fallback (без Redis)."""
+        facade = SecurityFacade()
         with patch(
-            "src.backend.core.auth.jwt_blacklist.RedisJwtBlacklist",
+            "src.backend.infrastructure.clients.storage.redis.get_redis_client",
             side_effect=RuntimeError("Redis down"),
         ):
-            facade = SecurityFacade()
-            facade.blacklist_token("jti-fallback-1")
+            assert await facade.blacklist_token("jti-fallback-1") is True
+            assert await facade.is_token_blacklisted("jti-fallback-1") is True
 
-            assert facade.is_token_blacklisted("jti-fallback-1") is True
-
-    def test_unblacklist_token(self) -> None:
-        """unblacklist_token удаляет токен."""
+    @pytest.mark.asyncio
+    async def test_unblacklist_token_with_fallback(self) -> None:
+        """unblacklist_token удаляет токен (in-memory fallback)."""
+        facade = SecurityFacade()
         with patch(
-            "src.backend.core.auth.jwt_blacklist.RedisJwtBlacklist",
+            "src.backend.infrastructure.clients.storage.redis.get_redis_client",
+            side_effect=RuntimeError("Redis down"),
         ):
+            await facade.blacklist_token("jti-1")
+            assert await facade.is_token_blacklisted("jti-1") is True
+            assert await facade.unblacklist_token("jti-1") is True
+            assert await facade.is_token_blacklisted("jti-1") is False
 
-            facade = SecurityFacade()
-            facade.blacklist_token("jti-1")
-            assert facade.is_token_blacklisted("jti-1") is True
-
-            facade.unblacklist_token("jti-1")
-            assert facade.is_token_blacklisted("jti-1") is False
-
-    def test_clear_blacklist_with_redis(self) -> None:
-        """clear_blacklist очищает Redis blacklist."""
+    @pytest.mark.asyncio
+    async def test_clear_blacklist_with_fallback(self) -> None:
+        """clear_blacklist очищает in-memory blacklist."""
+        facade = SecurityFacade()
         with patch(
-            "src.backend.core.auth.jwt_blacklist.RedisJwtBlacklist",
+            "src.backend.infrastructure.clients.storage.redis.get_redis_client",
+            side_effect=RuntimeError("Redis down"),
         ):
+            await facade.blacklist_token("jti-1")
+            await facade.blacklist_token("jti-2")
+            await facade.clear_blacklist()
+            assert await facade.is_token_blacklisted("jti-1") is False
+            assert await facade.is_token_blacklisted("jti-2") is False
 
-            facade = SecurityFacade()
-            facade.blacklist_token("jti-1")
-            facade.blacklist_token("jti-2")
-            facade.clear_blacklist()
-
-            assert facade.is_token_blacklisted("jti-1") is False
-            assert facade.is_token_blacklisted("jti-2") is False
-
-    def test_singleton_cached(self) -> None:
-        """get_security_facade returns same instance."""
+    @pytest.mark.asyncio
+    async def test_instances_independent(self) -> None:
+        """Конструктор не кэшируется; каждый инстанс — своё состояние."""
         f1 = SecurityFacade()
         f2 = SecurityFacade()
+        assert f1 is not f2
 
-        # SecurityFacade singleton pattern (lru_cache in get_security_facade)
-        # Each construction creates new instance for backward compat
-        assert f1 is not f2  # Different instances (constructor not cached)
-
-        # But the actual blacklist within each instance is consistent
-        f1.blacklist_token("test-jti")
-        assert f1.is_token_blacklisted("test-jti") is True
+        with patch(
+            "src.backend.infrastructure.clients.storage.redis.get_redis_client",
+            side_effect=RuntimeError("Redis down"),
+        ):
+            await f1.blacklist_token("only-f1")
+            assert await f1.is_token_blacklisted("only-f1") is True
+            assert await f2.is_token_blacklisted("only-f1") is False
 
 
 class TestInMemoryJwtBlacklistTTLCache:
