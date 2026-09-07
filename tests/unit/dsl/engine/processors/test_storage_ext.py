@@ -186,10 +186,10 @@ class TestTimeSeriesWriteProcess:
 
     async def test_timescale_write(self) -> None:
         proc = TimeSeriesWriteProcessor(
-            table="metrics", tags=["env"], field="value", backend="timescale",
+            table="metrics", tags=["env"], field="value", backend="timescale"
         )
         exchange = _Exchange(
-            body=[{"timestamp": "2024-01-01", "env": "prod", "value": 42}],
+            body=[{"timestamp": "2024-01-01", "env": "prod", "value": 42}]
         )
 
         mock_conn = AsyncMock()
@@ -202,7 +202,7 @@ class TestTimeSeriesWriteProcess:
         mock_db.get_async_engine.return_value = mock_engine
 
         with patch(
-            "src.backend.infrastructure.database.database.db_initializer", mock_db,
+            "src.backend.infrastructure.database.database.db_initializer", mock_db
         ):
             await proc.process(exchange, _Context())
 
@@ -214,7 +214,7 @@ class TestTimeSeriesWriteProcess:
         import sys
 
         proc = TimeSeriesWriteProcessor(
-            table="metrics", tags=["env"], field="value", backend="influxdb",
+            table="metrics", tags=["env"], field="value", backend="influxdb"
         )
         exchange = _Exchange(body=[{"env": "prod", "value": 42}])
 
@@ -251,7 +251,7 @@ class TestTimeSeriesWriteProcess:
         from builtins import __import__ as real_import
 
         proc = TimeSeriesWriteProcessor(
-            table="metrics", tags=["env"], backend="influxdb",
+            table="metrics", tags=["env"], backend="influxdb"
         )
         exchange = _Exchange(body=[{"env": "prod", "value": 42}])
 
@@ -305,7 +305,7 @@ class TestTimeSeriesWriteProcess:
         with (
             patch.dict("os.environ", {}, clear=True),
             patch(
-                "src.backend.infrastructure.database.database.db_initializer", mock_db,
+                "src.backend.infrastructure.database.database.db_initializer", mock_db
             ),
         ):
             await proc.process(exchange, _Context())
@@ -314,7 +314,7 @@ class TestTimeSeriesWriteProcess:
 
     async def test_none_timestamp_set_to_now(self) -> None:
         proc = TimeSeriesWriteProcessor(
-            table="metrics", tags=["env"], field="value", backend="timescale",
+            table="metrics", tags=["env"], field="value", backend="timescale"
         )
         exchange = _Exchange(body=[{"env": "prod", "value": 1}])
 
@@ -328,7 +328,7 @@ class TestTimeSeriesWriteProcess:
         mock_db.get_async_engine.return_value = mock_engine
 
         with patch(
-            "src.backend.infrastructure.database.database.db_initializer", mock_db,
+            "src.backend.infrastructure.database.database.db_initializer", mock_db
         ):
             await proc.process(exchange, _Context())
 
@@ -360,8 +360,8 @@ class TestPriorityEnqueueProcess:
         mock_client._raw_client = mock_redis
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.get_redis_client",
-            MagicMock(return_value=mock_client),
+            "src.backend.core.di.providers.cache.get_redis_client_provider",
+            MagicMock(return_value=MagicMock(return_value=mock_client)),
         ):
             await proc.process(exchange, _Context())
 
@@ -380,8 +380,8 @@ class TestPriorityEnqueueProcess:
         mock_client._raw_client = mock_redis
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.get_redis_client",
-            MagicMock(return_value=mock_client),
+            "src.backend.core.di.providers.cache.get_redis_client_provider",
+            MagicMock(return_value=MagicMock(return_value=mock_client)),
         ):
             await proc.process(exchange, _Context())
 
@@ -400,8 +400,8 @@ class TestPriorityEnqueueProcess:
         mock_client._raw_client = mock_redis
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.get_redis_client",
-            MagicMock(return_value=mock_client),
+            "src.backend.core.di.providers.cache.get_redis_client_provider",
+            MagicMock(return_value=MagicMock(return_value=mock_client)),
         ):
             await proc.process(exchange, _Context())
 
@@ -417,8 +417,8 @@ class TestPriorityEnqueueProcess:
         mock_client.zadd = AsyncMock(side_effect=RuntimeError("redis down"))
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.get_redis_client",
-            MagicMock(return_value=mock_client),
+            "src.backend.core.di.providers.cache.get_redis_client_provider",
+            MagicMock(return_value=MagicMock(return_value=mock_client)),
         ):
             await proc.process(exchange, _Context())
 
