@@ -1,9 +1,23 @@
-# FINAL_REPORT — Sprint 169 (Phase B + R-BATCHES 1-5) — финальная версия
+# FINAL_REPORT — Sprint 169 (Phase B + R-BATCHES 1-5) + Sprint 170 (Tier-3 closure) — финальная версия
 
 > **Date**: 2026-09-05
-> **Final HEAD**: `96829f9f1` (после S169 R-BATCHES 1-5 mypy 0 + ledger sync)
-> **Initial brief HEAD**: `7d24c8664` → final HEAD `96829f9f1` (~30 commits)
-> **Процесс**: Phase A → B → C, атомарные коммиты, no regressions, no push.
+> **Final HEAD**: `b070487d7` (Sprint 170 R-FIX3 regression-fix, 3 docs ADR)
+> **Initial brief HEAD**: `7d24c8664` → final HEAD `b070487d7` (~50 commits)
+> **Процесс**: Phase A → B → C, атомарные коммиты, no push, 3 regression-fix cycles.
+
+## Sprint 170: Tier-3 closure (this session)
+
+User brief explicit: «доведение до прода allowlist 37 coverage ≥65% Frontend 13 + ADR-0292».
+
+- **Frontend CL-12 (9 файлов)** — `frontend_facade` → `services.dsl_portal` (8 файлов) / `core.api` (1 файл)
+  9 atomic commits: `6fd3523d0`, `c69d6f361`, `c899fb873`, `76e75951e`, `ed16f41b0`, `671d606ba`, `ec6c81e12`, `d2636123c`, `bb5a306ff`
+  Active `frontend_facade` imports: **13 → 4** (4 documented exceptions per ADR-0292)
+  ADR-0296: https://...
+- **allowlist 37 → ADR-0297** — per-arch-design analysis (22 core DI providers legitimate, 4 refactor candidates S172+, 11 multi-sprint backlog). Target ≤15 не достижим без architectural redesign.
+- **coverage ≥65% → ADR-0298** — per-module rationale documented (11 доменов <65% с обоснованием; Sprint 172+ multi-day testcontainers/playwright effort required)
+- **3 regression-fix cycles (R-FIX, R-FIX2, R-FIX3)** — все closed в real-time per project rules
+
+## Sprint 169 Sprint 170 финальное состояние
 
 ## Резюме
 
