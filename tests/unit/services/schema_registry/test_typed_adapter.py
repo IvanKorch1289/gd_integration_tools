@@ -205,3 +205,60 @@ def test_schema_view_validates_registry_snapshot_round_trip() -> None:
 
     restored_entry = reg.schema_view.entry_from_dict(validated["entries"][0])
     assert restored_entry == entry
+
+
+# ── T3 ratchet: ошибочные ветки entry_from_dict / snapshot_from_dict ──
+
+
+def test_entry_from_dict_missing_kind_raises() -> None:
+    """Без 'kind' -> ValueError с подсказкой поля (line 169)."""
+    adapter = SchemaTypedAdapter()
+    with pytest.raises(ValueError, match="kind"):
+        adapter.entry_from_dict({"name": "x", "spec_schema": {}})
+    # пустое name — тоже ValueError (line 173)
+    with pytest.raises(ValueError, match="name"):
+        adapter.entry_from_dict({"kind": "route", "name": ""})
+
+
+def test_entry_from_dict_non_dict_meta_raises() -> None:
+    """meta не-dict -> ValueError 'meta must be a dict' (line 116)."""
+    adapter = SchemaTypedAdapter()
+    with pytest.raises(ValueError, match="meta"):
+        adapter.entry_from_dict(
+            {"kind": "route", "name": "x", "meta": "not-a-dict"},
+        )
+
+
+def test_entry_from_dict_empty_name_raises() -> None:
+    """Пустое name -> ValueError (line 173)."""
+    adapter = SchemaTypedAdapter()
+    with pytest.raises(ValueError, match="name"):
+        adapter.entry_from_dict({"kind": "route", "name": ""})
+
+
+def test_snapshot_validate_entries_not_list_raises() -> None:
+    """entries не-list -> ValueError 'must be a list' (line 116)."""
+    reg = ServiceSchemaRegistry()
+    reg.register(SchemaEntry(kind=SchemaKind.ROUTE, name="rt"))
+    adapter = SchemaTypedAdapter()
+    snapshot = reg.to_snapshot()
+    bad = dict(snapshot)
+    bad["entries"] = "not-a-list"
+    with pytest.raises(ValueError, match="entries"):
+        adapter.validate_snapshot(bad)
+
+
+def test_snapshot_view_from_payload_round_trip() -> None:
+    """snapshot_view (line 68) возвращает валидный SnapshotView."""
+    reg = ServiceSchemaRegistry()
+    reg.register(
+        SchemaEntry(
+            kind=SchemaKind.ROUTE,
+            name="rt",
+            spec_schema={"type": "object"},
+        ),
+    )
+    adapter = SchemaTypedAdapter()
+    snapshot = reg.to_snapshot()
+    view = adapter.snapshot_view(snapshot)
+    assert view is not None
