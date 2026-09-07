@@ -222,3 +222,30 @@ T3 ratchet (commit `65f297df6` + concurrent fixes в тестовых файла
 
 Per user rule «Не превращай в бесконечный цикл»: Sprint 169 closed. Regressions
 detected-and-fixed в real-time per project rules (atomic commit per fix).
+
+---
+
+## S170 R-FIX2 (2026-09-05) — second regression from parallel session T3 ratchet 10
+
+Phase A re-verify на HEAD `000efb3e4` обнаружил ещё одну регрессию от parallel session
+T3 ratchet 10 (commit `47889bacd`):
+
+| Regression | Source | Fix |
+|---|---|---|
+| **layers 1 NEW violation** | `services/ops/message_replay.py:137` — `from src.backend.dsl.commands.registry import action_handler_registry` | Изменён путь на `from src.backend.core.api.extensions import action_handler_registry` (canonical facade, Sprint 33 design) |
+| **test_message_replay_service.py** | 5 mock paths using `dsl.commands.registry.action_handler_registry` stale | `sed` обновил 5 mock paths → `core.api.extensions.action_handler_registry` |
+
+**Resolution** (commit `9e9f61bb1`): regression closed. Финальное состояние:
+
+| Metric | Post-fix |
+|---|---|
+| ruff src/ | **0** ✅ |
+| layers new | **0** ✅ |
+| test_message_replay_service.py | **11/11 PASS** ✅ |
+| mypy permissive | 0 ✅ |
+| bandit HIGH conf | 0 ✅ |
+| check-task-registry | OK ✅ |
+
+**Pattern**: parallel session T3 ratchet tests routinely introduce `from src.backend.dsl.commands.registry import action_handler_registry` — каждый такой import нарушает layers policy (services → dsl forbidden). Per Sprint 33 facade design, canonical path = `core.api.extensions.action_handler_registry`. **R-FIX pattern** (already documented): `from src.backend.core.api.extensions import action_handler_registry` + sync test mock path.
+
+Sprint 169 closed per user rule. Final HEAD: `9e9f61bb1`.
