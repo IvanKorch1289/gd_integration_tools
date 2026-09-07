@@ -851,3 +851,20 @@ dispatch/error). Verify: jupyter suite 70 passed; ruff 0.
 
 **Напоминание**: решения (а) T3 scope и (б) ADR-0296 vs docker+Vault —
 открыты (`6c445974d`); ratchets продолжаются.
+
+## T3 ratchet-инкремент 7 (2026-09-06): schema_registry populator 42→96%
+
+`87006064d`: 12 тестов populate_* (processor-specs meta-merge, routes
+spec/meta, actions sorted+get-ветка+без get, manifests через sys.modules
+инжекцию plugin_runtime.registry, guard-ветки ImportError/AttributeError→0).
+Найден артефакт: `core.plugin_runtime.registry` модуля не существует ->
+manifests-ветка schema_registry всегда 0 (fallback by design, задокументировано).
+
+Verify: 12/12; полный collect 16980/0; ruff 0.
+
+**Кумулятивный ratchet спринта**: hitl 100/90, SecurityFacade-домен 100/100/95,
+triggers 95%, mqtt_handler 90%, scheduled_reports 94% (+2 реальных бага),
+populator 96%. Больше 10 модулей подняты ≥90% за цикл.
+
+**НАПОМИНАНИЕ**: решения (а) scope T3 и (б) ADR-0296 vs docker+Vault
+(`6c445974d`) — по-прежнему без ответа; интерим-финиш действует.
