@@ -958,3 +958,13 @@ data_quality пакет: 9-23% → apply 85%, rule_mgmt 82%, check 67% (мёрт
   Gate 19 startup OK в этом прогоне (флак подтверждён).
 - Прогресс F1 (сессия-2): CL-12 серия — страницы 19/23/_groups/replay и др.
   мигрированы на фасады (9/13), ADR-0297 документирует исключения.
+
+## T3 ratchet-инкремент 12 (2026-09-06): mqtt_handler reconnect-ветка 90→92%
+
+`175097935`: test_listen_reconnects_after_connection_error — ConnectionError
+при первом __aenter__ -> лог + fake_sleep(5) -> retry -> сообщение доставлено.
+Урок: in-flight задачи добираются ВНУТРИ patch-контекста (после выхода
+_handle_message уходит в реальный реестр -> KeyError 'not registered').
+Verify: reconnect 1/1; mqtt suite 26 passed; mqtt_handler 92%.
+
+Решения (а)/(б) — по-прежнему открыты (7-е напоминание).
