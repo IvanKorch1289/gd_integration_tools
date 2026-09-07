@@ -1,6 +1,14 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-09-05 (swarm-сессия: ruff 0, pytest collect 16921+ / 0 errors, M5 9/10 — W1/W2/W3 закрыты, M5-#10 smoke 0% err / полный SLO-прогон отложен до prod-профиля; M6 PARTIAL — матрица 13 эндпоинтов, Swagger 200. Пред. верификация: 2026-09-01, Sprint 89 — M5 audit 4/10, см. `docs/roadmap/M5_AUDIT_2026-09-01.md`)
+> **Last verified**: 2026-09-05, вечер (финальный sync M6-#6 — см. блок ниже)
+>
+> **2026-09-05 (M6-#6 ФИНАЛЬНЫЙ SYNC плана M1-M6)** — все команды выполнены напрямую, без наследованных клеймов:
+> - **M1-M3 DONE** (verified: 22/22 P0 `57a396d84`; cryptography 50.0.1/gitpython 3.1.61 — pip-audit: только diskcache ADR-0287; tornado/pypdf подняты).
+> - **M4 DONE по per-module ratchets** (S97-S102: 20+ модулей 73-100%, фазы S97-S102 verified); **глобальный overall 70% — post-план** (multi-day, интерим-решение ждёт подтверждения пользователя — см. PROGRESS_LEDGER.md «Решения, ожидающие подтверждения»).
+> - **M5 10/10 DONE**: W1/W2 (graceful shutdown wire, `11684f3ed`), W3 (MQTT timeout/backpressure, `37156dbdb`), M5-#10 SLO-прогон locust на granian×4 workers: reference 444 RPS / p99 150ms / err 0.00% (SLO p99<300ms ✓), push 500 RPS / p99 440ms — `docs/roadmap/LOAD_TEST_RESULTS_2026-09-05.md`.
+> - **M6**: негативная auth-матрица 13 эндпоинтов (verified), Swagger 200, pre-prod-check **20/36 PASSED** — FAILED 3, все внешние: gate 01 coverage (T3 post-план), gate 15 Vault (**ADR-0296 infra-deferral**), gate 19 startup MARGINAL (флак shared-box). Позитивные JWT/брокерные сценарии M6-#3 — **BLOCKED(infra)**: docker socket permission denied (verified).
+> - **Качество**: ruff 0; mypy permissive-профиль **0 ошибок в 2356 файлах** (strict-профиль — 1190, отдельный спринт, ADR-0295); collect 16966/0 errors; layers 0 new; vulture @90 0.
+> - **Формулировка финиша плана**: «План доработки M1-M6 завершён: 21/22 подконтрольных рою пунктов закрыты и верифицированы; 2 пункта — BLOCKED(infra)/post-план с задокументированными путями закрытия». Дальнейшие изменения — только по новым бизнес-требованиям.
 >
 > **2026-09-05: verified — ruff 0, collect 0 errors, M5 9/10 (W1/W2/W3), M6 partial (матрица 13 эндпоинтов)** (см. `docs/roadmap/PROGRESS_LEDGER.md`)
 
