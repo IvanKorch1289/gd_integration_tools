@@ -167,3 +167,76 @@ async def test_clear_blacklist_swallows_backend_error() -> None:
     facade = _facade_with_blacklist(mock_blacklist)
     await facade.clear_blacklist()  # не бросает
     mock_blacklist.clear.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_unblacklist_without_store_returns_true() -> None:
+    """Store не инициализирован -> unblacklist тривиально успешен (line 161)."""
+    facade = SecurityFacade()
+    facade._jwt_blacklist = None  # type: ignore[attr-defined]
+    assert await facade.unblacklist_token("jti-any") is True
+
+
+# ── ядро facade.py (T3 ratchet) ─────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_check_capability_delegates_to_capabilities_facade() -> None:
+    facade = SecurityFacade()
+    with patch(
+        "src.backend.services.capabilities.facade.get_capability_facade"
+    ) as mock_cap:
+        mock_cap.return_value.check = MagicMock(return_value=True)
+        assert await facade.check_capability("t1", "ds.read", "user:1") is True
+        mock_cap.return_value.check.assert_called_once_with("t1", "ds.read", "user:1")
+
+
+@pytest.mark.asyncio
+async def test_check_capability_failure_returns_false() -> None:
+    facade = SecurityFacade()
+    with patch(
+        "src.backend.services.capabilities.facade.get_capability_facade",
+        side_effect=RuntimeError("facade down"),
+    ):
+        assert await facade.check_capability("t1", "ds.read", "user:1") is False
+
+
+@pytest.mark.asyncio
+async def test_get_secret_returns_value_and_default() -> None:
+    facade = SecurityFacade()
+    backend = AsyncMock()
+    backend.get_secret = AsyncMock(side_effect=[None, "s3cret"])
+    with patch(
+        "src.backend.core.svcs_registry.get_service", return_value=backend
+    ):
+        assert await facade.get_secret("k", default="fallback") == "fallback"
+        assert await facade.get_secret("k") == "s3cret"
+
+
+@pytest.mark.asyncio
+async def test_get_certificate_success_and_failure() -> None:
+    facade = SecurityFacade()
+    store = AsyncMock()
+    store.get = AsyncMock(return_value=b"-----BEGIN CERT")
+    with patch(
+        "src.backend.services.security.cert_store_facade.CertStore",
+        return_value=store,
+    ):
+        assert await facade.get_certificate("cert-1") == b"-----BEGIN CERT"
+    with patch(
+        "src.backend.services.security.cert_store_facade.CertStore",
+        side_effect=RuntimeError("no store"),
+    ):
+        assert await facade.get_certificate("cert-1") is None
+
+
+def test_verify_signature_delegates() -> None:
+    """Делегирование в core.net сигнатурную проверку (G-MYPY-CL1 path)."""
+    facade = SecurityFacade()
+    with patch(
+        "src.backend.infrastructure.security.signatures.verify_signature"
+    ) as mock_verify:
+        mock_verify.return_value = True
+        assert (
+            facade.verify_signature(b"payload", "sig", 1700000000, "secret") is True
+        )
