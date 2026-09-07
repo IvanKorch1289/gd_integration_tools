@@ -346,7 +346,7 @@ cat docs/STATUS.md | grep "План доработки"
 
 ## Status
 
-- **status**: in-progress (M4 phase 2, M5-#10 SLO run, M6 remainder)
+- **status**: CLOSED (2026-09-05, интерим) — M1-M5 DONE (verified), M6 21/36 гейтов; оговорки: gate 01 coverage → post-план (T3 ratchets приняты), gate 15 Vault → ADR-0296, позитивные сценарии M6-#3 → post-план (docker permission denied, verified). Полный отчёт: PROGRESS_LEDGER.md «ФИНАЛ ПЛАНА M1-M6»
 
 ---
 
