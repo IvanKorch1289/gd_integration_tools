@@ -1238,3 +1238,8 @@ blueprints 3, pii_erase 3, scan_file 1, express 1, subpackage_exports 1).
 
 **Верификация прохода**: data_quality + mqtt_handler + analytics —
 56 passed; ruff 0.
+
+## T3 ratchet 18 (2026-09-06): AnomalyDetector._notify 112-128 покрыт
+
+10 warmup-наблюдений -> выброс 1000: z-score >= 1 -> _notify broadcast
+на настроенные каналы (hub.broadcast asserted once). Verify: 12/12.
