@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from pydantic import BaseModel
 
 from src.backend.dsl.blueprints import (
@@ -11,6 +12,22 @@ from src.backend.dsl.blueprints import (
     request_response_with_compensation,
 )
 from src.backend.dsl.engine.pipeline import Pipeline
+
+
+@pytest.fixture(autouse=True)
+def _no_action_name_validation(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Blueprint-тесты проверяют структуру pipeline, а не регистрацию action.
+
+    ``action_handler_registry`` — глобальный синглтон: после импорта v1
+    routers другими тестами DX-1 валидация в ``build()`` начинала бы
+    отклонять условные имена из blueprint'ов (``messaging.publish_event``),
+    делая тесты зависимыми от порядка запуска. Отключаем валидацию.
+    """
+    from src.backend.dsl.builders.base import validation_mixin
+
+    monkeypatch.setattr(
+        validation_mixin.ValidationMixin, "_validate_action_names", lambda self: None
+    )
 
 
 class _Sample(BaseModel):
@@ -105,7 +122,7 @@ class TestRequestResponseWithCompensation:
                 super().__init__(name="noop")
 
             async def process(
-                self, exchange: Exchange, context: ExecutionContext,
+                self, exchange: Exchange, context: ExecutionContext
             ) -> None:  # pragma: no cover
                 return None
 

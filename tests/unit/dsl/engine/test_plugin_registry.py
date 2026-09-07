@@ -1,6 +1,5 @@
 """Unit tests for ProcessorPluginRegistry (legacy shim)."""
 
-
 from __future__ import annotations
 
 import warnings
@@ -13,6 +12,22 @@ from src.backend.dsl.engine.plugin_registry import (
     get_processor_plugin_registry,
 )
 from src.backend.dsl.engine.processors.base import BaseProcessor
+
+
+@pytest.fixture(autouse=True)
+def _isolate_global_processor_registry():
+    """Shim оборачивает глобальный ProcessorRegistry (singleton).
+
+    Регистрации из одного теста утекают в соседние (list_plugins видел
+    чужой "dummy"). Снапшотим FQN до теста и снимаем добавленное после.
+    """
+    from src.backend.dsl.registry import get_processor_registry
+
+    reg = get_processor_registry()
+    before = {spec.fqn for spec in reg.list_specs()}
+    yield
+    for fqn in {spec.fqn for spec in reg.list_specs()} - before:
+        reg.unregister(fqn)
 
 
 class DummyProcessor(BaseProcessor):
@@ -37,7 +52,7 @@ def test_register_dotted_path() -> None:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
         reg.register(
-            "dummy", "tests.unit.dsl.engine.test_plugin_registry.DummyProcessor",
+            "dummy", "tests.unit.dsl.engine.test_plugin_registry.DummyProcessor"
         )
     assert reg.get("dummy").__name__ == "DummyProcessor"
 
