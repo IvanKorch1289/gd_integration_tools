@@ -991,3 +991,15 @@ async-first) или двойная to_thread-обёртка. Условный п
 Fabric для fleet-ops/CLI слоя задокументирован в ADR-0298.
 `5e8c32cb3`. Коллизия ADR-номеров 0296 (два файла) устранена:
 frontend-migration перенумерован в ADR-0297 (`dc31222e4`).
+
+## SchedulerFacade ratchet — ОТЛОЖЕН (2026-09-06, решение по cost/benefit)
+
+Попытка поднять facade.py 33% вскрыла: (1) фасад написан против
+несуществующего API (add_job/remove_job; реальный SchedulerManager —
+schedule_cron/list_jobs/pause/resume); (2) прод-вызовов фасада нет —
+entrypoints используют manager.scheduler напрямую; (3) выравнивание
+контракта фасада + тесты = отдельное ревью-решение (менять публичный
+контракт фасада без прод-консьюмеров — риск без выгоды).
+Отложено: facade.py остаётся как есть (33% — lazy-прокси и capability-
+обвязка, не критичный путь). tests/unit/services/scheduler/ — 10 passed
+(cron_dashboard 100% сохранён).
