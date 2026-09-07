@@ -1,4 +1,4 @@
-# ADR-0296: S170 CL-12 Frontend facade migration (9/9 → 0 migratable, 4 exceptions remain)
+# ADR-0297: S170 CL-12 Frontend facade migration (9/9 → 0 migratable, 4 exceptions remain)
 
 **Date**: 2026-09-05
 **Status**: ACCEPTED + EXECUTED (commits `6fd3523d0` ... `bb5a306ff`)
