@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.backend.core.frontend_facade import get_dsl_builder_service
+from src.backend.services.dsl_portal.builder_facade import get_dsl_builder_service
 from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
     setup_page,
