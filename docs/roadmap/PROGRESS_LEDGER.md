@@ -1096,3 +1096,15 @@ gate 01 закрывается только по достижении 70% covera
 core_mixin 100, nbclient 90), services/schema_registry (100/98/96),
 следующие: dsl/engine/dry_run.py, services/scheduler/cron_dashboard 100
 (уже), core/ai/gateway.py 61%→, gateway_audit_mixin 100 (уже).
+
+## T3 ratchet-инкремент 16 (2026-09-06): e2b_backend 32→79% — финал
+
+`39d59a198`: 9 тестов E2BExecutionBackend — api_key ctor/env, _inject_parameters
+(repr-lines/empty), _convert_results (text-wrap/empty), execute missing
+api-key/notebook (async), _execute_sync sandbox lifecycle (params->code phase,
+error collection, kill в finally).
+Verify: 9/9 passed; e2b_backend 79% (остаток — to_thread/IO обёртка);
+ruff 0. Коммит `39d59a198`.
+
+**Напоминание**: решения (а) T3 scope / (б) ADR-0296 vs docker+Vault —
+открыты (7-е напоминание); интерим-финиш действует.
