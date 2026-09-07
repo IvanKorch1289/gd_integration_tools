@@ -12,7 +12,10 @@ from typing import Any
 
 import streamlit as st
 
-from src.backend.core.frontend_facade import (
+# S170 CL-12-7/9: миграция с core.frontend_facade на core.api (canonical
+# layer-compliant путь, FakeOutbox/OutboxBackend/OutboxEvent/OutboxEventStatus
+# re-exported в core.api.__init__ через PEP 562 lazy proxy).
+from src.backend.core.api import (
     FakeOutbox,
     OutboxBackend,
     OutboxEvent,
