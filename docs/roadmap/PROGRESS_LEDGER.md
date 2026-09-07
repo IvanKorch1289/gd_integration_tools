@@ -899,3 +899,18 @@ schema_registry package: populator 100%, typed_adapter ~96%, registry.py 98%
 
 **Напоминание**: решения (а) T3 scope и (б) ADR-0296 vs docker+Vault —
 открыты (заданы 5 раз); ratchets продолжаются в любом случае.
+
+## T3 ratchet-инкремент 10 (2026-09-06): message_replay 36→95% + P1-фикс
+
+Coverage-спринт вскрыл **третий экземпляр семейства** bare-global
+action_handler_registry: `message_replay.replay_one` падал NameError на
+каждом replay (LOAD_GLOBAL не вызывает module __getattr__ — тот же класс,
+что scheduled_reports и hub_actions). Фикс `47889bacd`: явный lazy-импорт
+в точке использования + explicit replay-principal сохранён.
+
+Тесты: 11 (record/trim, list-фильтры/пагинация, replay_one
+not_found/dry_run/success/failure, bulk по ids и status_filter, stats,
+singleton). Verify: ops suite 170 passed; ruff 0.
+
+**Напоминание**: решения (а) T3 scope и (б) ADR-0296 vs docker+Vault —
+открыты (`6c445974d`); ratchets продолжаются.
