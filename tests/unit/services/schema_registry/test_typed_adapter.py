@@ -86,14 +86,14 @@ def test_snapshot_view_round_trip_via_registry() -> None:
             name="orders.create",
             spec_schema={"type": "object"},
             meta={"protocol": "http"},
-        ),
+        )
     )
     reg.register(
         SchemaEntry(
             kind=SchemaKind.PROCESSOR,
             name="core:http_call",
             output_schema={"type": "string"},
-        ),
+        )
     )
 
     snapshot_payload = reg.to_snapshot()
@@ -224,9 +224,7 @@ def test_entry_from_dict_non_dict_meta_raises() -> None:
     """meta не-dict -> ValueError 'meta must be a dict' (line 116)."""
     adapter = SchemaTypedAdapter()
     with pytest.raises(ValueError, match="meta"):
-        adapter.entry_from_dict(
-            {"kind": "route", "name": "x", "meta": "not-a-dict"},
-        )
+        adapter.entry_from_dict({"kind": "route", "name": "x", "meta": "not-a-dict"})
 
 
 def test_entry_from_dict_empty_name_raises() -> None:
@@ -252,13 +250,24 @@ def test_snapshot_view_from_payload_round_trip() -> None:
     """snapshot_view (line 68) возвращает валидный SnapshotView."""
     reg = ServiceSchemaRegistry()
     reg.register(
-        SchemaEntry(
-            kind=SchemaKind.ROUTE,
-            name="rt",
-            spec_schema={"type": "object"},
-        ),
+        SchemaEntry(kind=SchemaKind.ROUTE, name="rt", spec_schema={"type": "object"})
     )
     adapter = SchemaTypedAdapter()
     snapshot = reg.to_snapshot()
     view = adapter.snapshot_view(snapshot)
     assert view is not None
+
+
+def test_validate_snapshot_rejects_bad_version() -> None:
+    """validate_snapshot с чужой версией -> ValueError (line 111)."""
+    adapter = SchemaTypedAdapter()
+    with pytest.raises(ValueError, match="Unsupported snapshot version"):
+        adapter.validate_snapshot({"version": "1.0", "entries": []})
+
+
+def test_entry_view_from_json_dict_guard_raises() -> None:
+    """SchemaEntryView.from_json_dict: без kind / с пустым name (lines 169, 173)."""
+    with pytest.raises(ValueError, match="kind"):
+        SchemaEntryView.from_json_dict({"name": "x"})
+    with pytest.raises(ValueError, match="name"):
+        SchemaEntryView.from_json_dict({"kind": "route", "name": ""})
