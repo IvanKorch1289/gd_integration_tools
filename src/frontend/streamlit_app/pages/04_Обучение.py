@@ -131,7 +131,7 @@ col_doctor, col_reset = st.columns(2)
 with col_doctor:
     if st.button("🩺 Запустить `make doctor` локально"):
         try:
-            res = subprocess.run(
+            res = subprocess.run(  # nosec B603 — argv-only (fixed python interpreter path)
                 [sys.executable, "tools/checks/doctor.py", "--quick"],
                 capture_output=True,
                 text=True,

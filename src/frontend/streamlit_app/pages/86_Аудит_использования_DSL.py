@@ -62,7 +62,7 @@ def run_audit(top: int = 20) -> dict:
         return {"error": f"Audit script not found: {audit_script}"}
 
     try:
-        result = subprocess.run(  # noqa: S603 — fixed python interpreter (sys.executable) + cwd=str(ROOT)
+        result = subprocess.run(  # noqa: S603  # nosec B603 — fixed python interpreter (sys.executable) + cwd=str(ROOT)
             [
                 sys.executable,
                 str(audit_script),
