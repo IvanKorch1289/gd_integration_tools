@@ -170,7 +170,6 @@ async def test_listen_bounded_wait_branch_deterministic(monkeypatch) -> None:
         await gate_closed.wait()
         active["n"] -= 1
 
-    original_process = handler._process_message
 
     async def probing(topic: str, payload: bytes | bytearray) -> None:
         await gated_dispatch(None)
