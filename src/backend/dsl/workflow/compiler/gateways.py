@@ -195,8 +195,8 @@ async def compile_or(decl: ActivityDeclaration, ctx: dict[str, Any]) -> Any:
         return None
 
     tasks: list[asyncio.Task[Any]] = [
-        asyncio.create_task(_run_branch_steps(branch, ctx))
-        for branch in spec.branches  # noqa: orphan-create-task
+        asyncio.create_task(_run_branch_steps(branch, ctx))  # noqa: orphan-create-task
+        for branch in spec.branches
     ]
 
     done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
