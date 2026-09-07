@@ -927,3 +927,20 @@ Verify: execution_service suite 32 passed; ruff 0.
 
 **Напоминание**: решения (а) T3 scope и (б) ADR-0296 vs docker+Vault —
 открыты (заданы 5 раз); ratchets продолжаются.
+
+## T3 ratchet-инкремент 10 (2026-09-06): DataQualityMonitor (data_quality пакет)
+
+`47d8a9e98`: 19 тестов — check-правила по контрактам ApplyMixin
+(not_null/range+bool-exclusion/regex_match+missing-pattern/enum values/
+type int-for-float/unique/length/unknown-check/disabled-skip), schema_infer
++ drift, stats, remediation (null-default/range-clip), singleton.
+
+**B-NEW-5 (P3, мёртвый код)**: `check_mixin._check_rule` — полный дубль
+_apply_rule-логики, НИКОГДА не вызывается (check() диспатчит через
+_apply_rule). Удаление — отдельный ревью-решение.
+
+data_quality пакет: 9-23% → apply 85%, rule_mgmt 82%, check 67% (мёртвый
+дубль), schema 100%, __init__ 99%. TOTAL 84%.
+
+**Напоминание**: решения (а) T3 scope / (б) ADR-0296 vs docker+Vault —
+открыты (заданы 5 раз).
