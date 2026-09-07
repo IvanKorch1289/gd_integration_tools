@@ -1046,3 +1046,15 @@ express_create_chat делегирование, _slug контракт.
 
 **Напоминание**: решения (а) T3 scope / (б) ADR-0296 vs docker+Vault —
 открыты (7-е напоминание); интерим-финиш действует.
+
+## T3 ratchet-инкремент 15 (2026-09-06): notification_adapters 0→91%
+
+`a4972a95a`: 16 тестов четырёх адаптеров каналов под Protocol
+NotificationChannel — email (per-recipient SMTP, health), express
+(per-recipient send, ping/no-ping health), telegram (env-token,
+parse_mode по content_type, no-token → False, health error → False),
+webhook (JSON-payload per URL, health always True).
+Verify: 16/16; notification_adapters 91%; ruff 0.
+
+**Напоминание**: решения (а) T3 scope / (б) ADR-0296 vs docker+Vault —
+открыты (7-е напоминание); интерим-финиш действует.
