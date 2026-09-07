@@ -836,3 +836,18 @@ Verify: ops+security suite зелёная; scheduled_reports 94%; ruff 0.
 
 **Напоминание**: решения (а) T3 scope / (б) ADR-0296 vs docker+Vault —
 открыты (ledger `6c445974d`).
+
+## T3 ratchet-инкремент 6 (2026-09-06): jupyter hub_actions 67→98% + P1-фикс
+
+Coverage-спринт вскрыл **третий латентный NameError той же семьи** (bare
+global + LOAD_GLOBAL без module __getattr__): `register_jupyter_hub_actions`
+падал бы при первом вызове. Продакшен-вызовов пока нет (заготовка точки
+интеграции), фикс превентивный `abd5ee767`: явный резолв
+`__getattr__("ActionHandlerSpec")`.
+
+Покрытие: hub_actions 67→98% (b64-декодирование +invalid, name-резолв из
+path/inline, register-ветки register_many/register/TypeError, handler
+dispatch/error). Verify: jupyter suite 70 passed; ruff 0.
+
+**Напоминание**: решения (а) T3 scope и (б) ADR-0296 vs docker+Vault —
+открыты (`6c445974d`); ratchets продолжаются.
