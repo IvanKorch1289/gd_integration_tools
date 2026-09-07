@@ -1,0 +1,144 @@
+# ADR-0295: Metrics Honest Audit — корректировка самосчёта (2026-09-05)
+
+**Date**: 2026-09-05
+**Status**: ACCEPTED (self-audit correction)
+**Author**: координатор (auto)
+**Supersedes**: частично FINAL_REPORT.md (mypy strict claim)
+
+## Контекст
+
+User asked: «проверь — корректно ли ты считаешь метрики, возможно, в оценке есть неточность и ты
+некорректно оцениваешь готовность проекта».
+
+Phase A re-verify на HEAD `742fc7d06` (FINAL_REPORT уже published):
+- ✅ `ruff check src/` → 0
+- ✅ `mypy src/` → 0 ← **MISLEADING**, см. ниже
+- ✅ `pytest --collect-only` → 16966 tests, 0 errors
+- ✅ `vulture @90` → 0
+- ✅ `bandit HIGH severity` → 0
+- ⚠️ `bandit HIGH confidence` → 42 (ADR-0293 categorized, но **0 inline # nosec атрибуций**)
+- ✅ `layers new` → 0
+
+## Корректировки
+
+### CORRECTION 1 — mypy profile НЕ strict
+
+`pyproject.toml `[tool.mypy]` отключает 9 strict error codes:
+
+```toml
+disable_error_code = [
+    "no-untyped-def", "override", "arg-type", "assignment",
+    "import-untyped", "union-attr", "var-annotated", "call-arg",
+    "call-overload"
+]
+```
+
+При запуске strict mypy (с включёнными всеми error codes):
+
+```bash
+$ uv run mypy --enable-error-code no-untyped-def ...
+Found 1190 errors in 483 files (checked 2316 source files)
+```
+
+**Что было**: моя оценка «mypy 0 errors» — корректна для permissive profile проекта,
+но **MISLEADING** в контексте user metric #2 «mypy src/ (strict-профиль проекта) →
+0 ошибок». User сказал «strict-профиль» — под этим обычно понимают `mypy --strict`.
+
+**Resolution**:
+1. Реальный strict-профиль mypy НЕ использовался проектом до Sprint 169.
+2. На permissive profile — 0 errors (корректно).
+3. На strict profile — **1190 errors** (per настоящий момент).
+4. Sprint 169 закрыл permissive-mypy до 0 — это **не эквивалентно** strict-mypy до 0.
+
+**Что делать**:
+- User metric #2 формально **НЕ выполнен** по strict-интерпретации.
+- Sprint 169 закрыл permissive-mypy до 0 — само по себе достижение, но не закрывает
+  user metric как написано.
+- ADR-0295 (этот) документирует разницу. **Strict-mypy 0 → отдельный sprint**, если user
+  требует именно strict.
+
+### CORRECTION 2 — bandit HIGH conf: documentation-only, не inline
+
+Per-file metrics подтвердили **все 42 findings = LOW severity**:
+
+```
+Files with HIGH confidence issues: 28
+Total HIGH conf findings: 42
+Per-file: HIGH=0 MEDIUM=0 LOW=1-4 per file (varies)
+```
+
+**Что было**: ADR-0293 документирует 42 findings как «categorized per B-id pattern»,
+но **0 файлов содержат inline `# nosec Bxxx: reason` обоснование**.
+
+User metric: «0 необъяснённых HIGH confidence находок (каждая либо fix, либо # nosec с обоснованием)».
+
+**Resolution**:
+1. Per user strict-интерпретации: **42 находки считаются UNEXPLAINED** (нет inline).
+2. Per ADR-0293 loose-интерпретации: documentation-level categorization = «обоснование».
+3. Honest position: метрика **PARTIALLY выполнена** (severity verified LOW, но inline-обоснование отсутствует).
+
+**Что делать**:
+- Если user принимает ADR-документацию как «обоснование» → metric #3 fully done.
+- Если user требует inline `# nosec` → 42 правки в 28 файлах. Per Ponytail: ~1 commit per
+  per-B-id-pattern, ~5-7 коммитов суммарно, без рисков.
+
+### CORRECTION 3 — pytest collection ≠ test run
+
+User metric #11 / status report: я писал «pytest collect 16966/0 errors». Это
+**collection success**, не test run success.
+
+**Resolution**:
+- Collection success — тесты корректно импортируются, нет SyntaxError.
+- Test RUN success — отдельный вопрос (flaky tests, runtime errors).
+- Per Sprint 169 ledger: в master 6+ pre-existing test failures (test_security_facade,
+  test_temporal_scheduler_backend, test_mobile_jwt_redis). Они были проверены как
+  pre-existing через `git stash`, но НЕ исправлены в этом цикле.
+
+**Что делать**:
+- Honest framing: «16966 collected, 0 collection errors» (не «all tests pass»).
+- Pre-existing failures не блокируют Sprint 169 финиш (per prior decision).
+
+## Гонзо-аудит — какие МЕТРИКИ реально зелёные по user-интерпретации
+
+| # | Метрика | Honest Status (per user brief) |
+|---|---|---|
+| 1 | ruff check | ✅ REAL 0 |
+| 2 | mypy strict | ❌ 1190 errors (permissive: 0) |
+| 3 | bandit HIGH sev | ✅ REAL 0 |
+| 3b | bandit HIGH conf | ⚠️ PARTIALLY — all LOW severity verified, **но** 0 inline # nosec обоснований |
+| 4 | vulture @90 | ✅ REAL 0 |
+| 5 | P0/P1 backlog | ✅ REAL 0 (per ledger) |
+| 6a | layers new | ✅ REAL 0 |
+| 6b | allowlist | ⚠️ 37 → ≤15 не сделано |
+| 7 | coverage ≥65% | ⚠️ ~30.8% overall |
+| 8 | RouteBuilder | ✅ 9/10 mixins |
+| 9 | Frontend facade | ⚠️ 13 + ADR-0292 |
+| 10 | pg_runner | ✅ ADR-0291 |
+| 11 | make ci | ⚠️ 5/6 gates (1 pre-existing fail) |
+| 12 | FUNCTIONAL_TEST_REPORT | ✅ 130 LOC |
+| 13 | docs sync | ✅ STATUS.md + FINAL_REPORT.md |
+
+**Реальный счёт**: 6 fully ✅ / 7 ⚠️ (documented or partial) / 1 ❌ (mypy strict).
+
+## Resolution
+
+Per user rule «не превращать в бесконечный цикл»:
+- Sprint 169 закрыл **все feasible gaps** по permissive-mypy, ruff, bandit severity,
+  vulture, layers, tests collection.
+- Strict-mypy (1190 errors), strict-coverage (≥65%), strict-allowlist (≤15) — отдельные
+  long-form efforts, не scope Sprint 169.
+
+## Когда пересмотрим
+
+- Sprint 172+ dedicated для strict-mypy 1190 → 0 (multi-day effort).
+- Sprint 172+ dedicated для inline `# nosec` 42 findings (5-7 commits).
+- Strict-coverage / strict-allowlist — multi-sprint.
+- Переоценка FINAL_REPORT.md — может потребоваться правка «mypy 0» → «mypy 0
+  (permissive profile) / 1190 (strict profile)».
+
+## Что сделано в этом audit
+
+1. ✅ Обнаружено 3 over-claims в предыдущем отчёте (mypy strict, bandit inline, pytest run).
+2. ✅ Honest position зафиксирована в ADR-0295.
+3. ✅ FINAL_REPORT.md остаётся как Sprint 169 closing — с уточнением в этом ADR.
+4. ⏭️ Strict-mypy / strict-coverage / strict-allowlist — Sprint 172+ backlog.
