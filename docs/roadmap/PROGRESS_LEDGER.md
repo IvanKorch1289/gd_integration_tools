@@ -1243,3 +1243,32 @@ blueprints 3, pii_erase 3, scan_file 1, express 1, subpackage_exports 1).
 
 10 warmup-наблюдений -> выброс 1000: z-score >= 1 -> _notify broadcast
 на настроенные каналы (hub.broadcast asserted once). Verify: 12/12.
+
+## T3 ratchet 19 (2026-09-07): storage_ext закрыт, typed_adapter + e2b_backend 100%
+
+1. **storage_ext PriorityEnqueue — B-NEW-8 #4 ЗАКРЫТ** (`071ee564a`):
+   корень был не в patch-таргете (ретаргет уже стоял), а в структуре мока —
+   прод дважды вызывает провайдер `get_redis_client_provider()()`, мок
+   `MagicMock(return_value=mock_client)` на втором вызове отдавал
+   auto-MagicMock (не-awaitable zadd) → except → exchange.fail →
+   properties пустые. Фикс: `MagicMock(return_value=MagicMock(return_value=mock_client))`
+   во всех 4 тестах; error-тест стал детерминированным (fallback на
+   сам клиент, zadd side_effect RuntimeError). 20/20.
+2. **schema_registry typed_adapter 94→100%** (`38b656a2e`):
+   line 111 (validate_snapshot чужая версия), 169+173 (guards kind/name
+   в `SchemaEntryView.from_json_dict` — прежние ratchet-тесты били в
+   `entry_from_dict`, не в classmethod). 19 passed.
+3. **jupyter e2b_backend 79→100%** (`8c588b2c5`):
+   ImportError-ветки nbformat/e2b (sys.modules=None), Sandbox.create
+   failure через полный execute-путь (re-raise, line 187), params-фаза
+   с injected source и error-сбором, results-конверсия в cell.outputs
+   (nbformat.read мок на in-memory nb — иначе мутации идут в fresh
+   копию с диска), logs-falsy ветка, kill-failure warning,
+   _convert_results text-fallback. 16 passed.
+4. **B-NEW-8 ретаргеты закоммичены** (`9c1959435`): cdc_capture,
+   fastmcp_server, web_search → DI-провайдеры. 21 passed.
+
+**Верификация**: collect 17218, 0 ошибок (17207 + 11 новых);
+ruff 0 (src/ + изменённые тесты); 210 passed (jupyter + schema_registry +
+storage_ext). Остаток B-NEW-8: blueprints 3, pii_erase 3, scan_file 1,
+express 1, subpackage_exports 1.
