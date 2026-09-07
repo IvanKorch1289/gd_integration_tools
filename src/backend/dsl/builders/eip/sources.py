@@ -55,7 +55,6 @@ def _create_or_defer_sensor_task(coro_factory: Callable[[], Any], *, name: str) 
         # Eager path: create task immediately.
         return asyncio.create_task(coro_factory(), name=name)  # noqa: orphan-create-task
 
-
     # Lazy path: return descriptor that defers task creation.
     class _DeferredTask:
         """Defers asyncio.Task creation until start() is called from async context."""

@@ -123,7 +123,6 @@ class CertFileWatcher:
             self.path.mkdir(parents=True, exist_ok=True)
         self._stop_event.clear()
         self._task = asyncio.create_task(  # noqa: orphan-create-task
-
             self._watch_loop(), name=f"cert-watcher-{self.path.name}"
         )
         _logger.info("cert.hot_reload.task_started")
