@@ -1200,3 +1200,26 @@ multi-day по решению (а) «полные 70%»; gate 15 Vault — ADR-0
   (полосы сессии-2 S97+ и мои per-module ratchets 1–17);
 - (б) docker/Vault для M6-#3 позитивных сценариев — требуется
   инфраструктурный доступ (docker socket permission denied, verified).
+
+## B-NEW-8 диагностика по семьям (2026-09-06, ratchet 18)
+
+Точная причина каждого семейства падений (для исполнителя — kimi):
+1. **fastmcp_server (4)**: тесты патчат module-level `workflow_registry` —
+   атрибут выпилен в S170-ревизии (класс FastMCPserver + skill_registry).
+   Ретаргет на новый контракт или удаление тестов.
+2. **blueprints (3) «DID NOT RAISE ConnectionError / exchange stopped»**:
+   контракт fail-CLOSED при DB backend error изменился — тесты ожидают
+   старое поведение. Пересверить с текущей семантикой Exchange.stop.
+3. **pii_erase (3) «len([])==0»**: результат check пуст — patch-таргет
+   или ожидания по violation-формату устарели.
+4. **storage_ext (3) «priority_enqueued_id»**: priority-путь не пишет
+   в properties — контракт поменялся.
+5. **web_search (2) — ИСПРАВЛЕНО мной** (`5e72f5eea`-серия... точнее
+   отдельным ретаргетом patch на core.di.providers.web_search) — 4/4.
+6. **scan_file (1) «get_object_bytes awaited 0»**: stale patch.
+7. **express (1) «zremrangebyrank awaited 0»**: stale mock.
+8. **subpackage_exports (1)**: дубль compile_activity_step —
+   flow.py реэкспортирует из activity.py; тест-сканер считает
+   импорт дублем. Фикс: фильтр импортов в тест-сканере.
+
+Все — pre-existing (воспроизводятся на чистом HEAD), полоса kimi/сессии-2.
