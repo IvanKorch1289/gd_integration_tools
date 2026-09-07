@@ -1013,3 +1013,14 @@ scheduler-пакет: cron_dashboard 100%, admin 100%, facade 33% (отложе�
 
 **Напоминание**: решения (а) T3 scope / (б) ADR-0296 vs docker+Vault —
 открыты (6-е напоминание); интерим-финиш действует.
+
+## T3 ratchet-инкремент 13 (2026-09-06): gateway_audit_mixin 39→100%
+
+`08e6dbfc5`: 6 тестов _AuditContext — 9-event audit sequence:
+event_type-маппинг (requested/sanitized/guarded.*), pii_detected+latency,
+guard-поля (type/verdict/categories), _emit_wrapper fallback smoke.
+AIRequest: prompt_ref (корректное optional-поле, не prompt).
+Verify: gateway_audit_mixin 100%; jupyter+ai suite 120 passed; ruff 0.
+
+**Напоминание**: решения (а) T3 scope / (б) ADR-0296 vs docker+Vault —
+открыты (6-е напоминание); интерим-финиш действует.
