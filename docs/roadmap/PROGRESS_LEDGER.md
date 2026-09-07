@@ -1108,3 +1108,13 @@ ruff 0. Коммит `39d59a198`.
 
 **Напоминание**: решения (а) T3 scope / (б) ADR-0296 vs docker+Vault —
 открыты (7-е напоминание); интерим-финиш действует.
+
+## T3 ratchet-инкремент 16 (2026-09-06): processor health-checks
+
+`eb109f531`: 9 тестов _check_* функций health.py (kafka/temporal/vault/
+clickhouse/redis/nats/graylog) — обе ветки: not-configured -> ok=True,
+настроен + сеть OK -> True; сеть мокается (no_network фикстура патчит
+_http_get/_tcp_connect). Verify: 9/9; ruff 0.
+
+**Напоминание**: решения (а) T3 scope / (б) ADR-0296 vs docker+Vault —
+открыты (7-е напоминание); интерим-финиш действует.
