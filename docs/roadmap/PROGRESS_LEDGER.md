@@ -1183,3 +1183,20 @@ Verify: 3/3 passed; ruff 0.
 
 **Напоминание**: решения (а) T3 scope / (б) ADR-0296 vs docker+Vault —
 открыты (7-е напоминание); интерим-финиш действует.
+
+## Верификация закрытия прохода (2026-09-06, вечер)
+
+- ruff src/ → All checks passed
+- collect: **17207 tests, 0 errors** (рост за сессию: 16966 → 17207)
+- Ключевые suite'ы (data_quality + mqtt + security + scheduler): **123 passed**
+- mypy permissive: 0/2356 (предыдущие прогоны)
+
+**Стабильное состояние гейтов**: FAILED 2 внешних (gate 01 coverage — T3
+multi-day по решению (а) «полные 70%»; gate 15 Vault — ADR-0296 подтверждён
+решением (б)). Остальные 34 гейта — OK/WARN/SKIP по назначению.
+
+**Открытые решения (ждут пользователя)**:
+- (а) scope T3 — выбрано «полные 70%»: multi-day спринт активен
+  (полосы сессии-2 S97+ и мои per-module ratchets 1–17);
+- (б) docker/Vault для M6-#3 позитивных сценариев — требуется
+  инфраструктурный доступ (docker socket permission denied, verified).
