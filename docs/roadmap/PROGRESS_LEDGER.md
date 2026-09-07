@@ -648,3 +648,27 @@ Gate 19 startup-time — OK в этом прогоне (маржинальнос
 | 11 | make ci | verified 5/6 (1 pre-existing fail) | ⚠️ documented |
 | 12 | FUNCTIONAL_TEST_REPORT.md | 130 LOC | ✅ |
 | 13 | docs sync | STATUS.md + FINAL_REPORT.md | ✅ |
+
+## M6-#1 прогресс: gate 02 CLOSED (2026-09-05, поздний вечер)
+
+**Gate 02 mypy ≤30 → OK**: хвост [import-not-found] (10 сайтов optional-импортов
+с ImportError-fallback) закрыт по конвенции G-MYPY — ignore на from-строке
+(важно: ruff I001 рефлоу многострочных импортов переносит trailing-комментарий
+на строку члена, где mypy его не видит). Итог: `mypy -p src` → Success: 0 issues
+в 2356 файлах (56→0: серии G-MYPY сессии-2 до 10 + мой хвост до 0).
+Коммиты `a38a61c8a`, формат-хвост `7f2…` (services.py).
+
+**Pre-prod-check: 21/36 PASSED, FAILED 2** (04 ruff strict → OK повторно):
+01 coverage (T3, multi-day), 15 feature-flags (Vault).
+
+## B-NEW-4 (P2, pre-existing): outbox-тесты падают в scoped-прогоне
+
+`pytest tests/unit/infrastructure/messaging/outbox/` → 2 collection errors:
+`repositories/outbox.py:28 → session_manager import DatabaseSessionManager`
+→ ImportError "(unknown location)". Прямой импорт вне pytest — OK; в full-run
+коллекции — OK (раннее импортирование session_manager спасает); scoped + после
+tests/unit/core/di — падает (частичная инициализация session_manager в
+sys.modules). **Воспроизводится на HEAD~1** (worktree-прогон) — НЕ регрессия
+недавних коммитов; цепь импортов (outbox/session_manager) стабильна с Sprint 42.
+Фикс требует разбора порядка импортов в цепочке database.database — отдельная
+задача, не блокер гейтов (pre-prod-check pytest не запускает).
