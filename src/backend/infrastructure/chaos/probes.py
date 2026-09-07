@@ -141,9 +141,9 @@ class ChaosEngineering:
             if probability is not None
             else (cfg.probability if cfg else 0.0)
         )
-        if p <= 0.0 or random.random() > p:
+        if p <= 0.0 or random.random() > p:  # nosec B311 — non-crypto use
             return
-        delay = random.uniform(0, max_delay_ms) / 1000.0
+        delay = random.uniform(0, max_delay_ms) / 1000.0  # nosec B311 — non-crypto use
         logger.warning("Chaos latency injected: %s delay=%.3fs", name, delay)
         await asyncio.sleep(delay)
 
@@ -170,7 +170,7 @@ class ChaosEngineering:
             if probability is not None
             else (cfg.probability if cfg else 0.0)
         )
-        if p <= 0.0 or random.random() > p:
+        if p <= 0.0 or random.random() > p:  # nosec B311 — non-crypto use
             return
         error = exc or RuntimeError(f"Chaos error probe: {name}")
         logger.warning("Chaos error injected: %s — %s", name, error)

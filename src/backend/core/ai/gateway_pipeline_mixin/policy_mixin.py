@@ -192,7 +192,9 @@ class PolicyMixin(_PipelineStepsProtocol):
                 )
                 if inspect.isawaitable(audit_result):
                     await audit_result
-            except Exception:  # pragma: no cover  # nosec B110 — audit must never block main flow
+            except (
+                Exception
+            ):  # pragma: no cover  # nosec B110 — audit must never block main flow
                 pass
             from src.backend.core.security.capabilities.errors import (
                 CapabilityDeniedError,

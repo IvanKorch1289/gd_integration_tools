@@ -113,7 +113,7 @@ def dry_run_route(
         DryRunResult со списком StepResult и total_ms.
 
     """
-    rng = random.Random(seed)  # non-cryptographic use
+    rng = random.Random(seed)  # non-cryptographic use  # nosec B311 — non-crypto use
     steps_src = route.get("steps") or route.get("processors") or []
     result = DryRunResult(route_id=route.get("route_id"))
 

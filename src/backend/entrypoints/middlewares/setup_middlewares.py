@@ -304,7 +304,9 @@ def build_default_registry() -> MiddlewareRegistry:
             drain_timeout = max(
                 5.0, (float(app_settings.graceful_shutdown_timeout) - 15.0) / 2
             )
-    except Exception:  # pragma: no cover  # nosec B110 — settings недоступны (unit-light)
+    except (
+        Exception
+    ):  # pragma: no cover  # nosec B110 — settings недоступны (unit-light)
         pass
     registry.register_builtin(
         "graceful_shutdown",

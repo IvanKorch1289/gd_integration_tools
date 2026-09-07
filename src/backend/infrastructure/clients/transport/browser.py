@@ -96,14 +96,14 @@ class BrowserClient:
         """
         ctx_kwargs: dict[str, Any] = {
             "viewport": {
-                "width": random.randint(  # non-cryptographic use
+                "width": random.randint(  # non-cryptographic use  # nosec B311 — non-crypto use
                     1280, 1920
                 ),  # stealth fingerprint randomization, не криптография
-                "height": random.randint(  # non-cryptographic use
+                "height": random.randint(  # non-cryptographic use  # nosec B311 — non-crypto use
                     720, 1080
                 ),  # stealth fingerprint randomization, не криптография
             },
-            "user_agent": random.choice(  # non-cryptographic use
+            "user_agent": random.choice(  # non-cryptographic use  # nosec B311 — non-crypto use
                 _USER_AGENTS
             ),  # stealth UA rotation, не криптография
         }
@@ -123,7 +123,8 @@ class BrowserClient:
         """
         if self._human_delays:
             await asyncio.sleep(
-                random.randint(min_ms, max_ms) / 1000  # non-cryptographic use
+                random.randint(min_ms, max_ms)
+                / 1000  # non-cryptographic use  # nosec B311 — non-crypto use
             )  # human-like delay jitter, не криптография
 
     async def navigate(

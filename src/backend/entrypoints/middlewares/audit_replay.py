@@ -91,7 +91,7 @@ class AuditReplayMiddleware:
         if self._sample_rate < 1.0:
             import random
 
-            if random.random() > self._sample_rate:
+            if random.random() > self._sample_rate:  # nosec B311 — non-crypto use
                 await self.app(scope, receive, send)
                 return
 

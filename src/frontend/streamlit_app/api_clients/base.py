@@ -122,7 +122,7 @@ class BaseAPIClient:
         backoff = min(self._initial_backoff * (2**attempt), _MAX_BACKOFF)
         if self._jitter_ratio > 0.0:
             # S311: not for crypto; this is for backoff spread only.
-            factor = random.uniform(1.0 - self._jitter_ratio, 1.0 + self._jitter_ratio)
+            factor = random.uniform(1.0 - self._jitter_ratio, 1.0 + self._jitter_ratio)  # nosec B311 — non-crypto use
             backoff = max(0.0, backoff * factor)
         time.sleep(backoff)
 

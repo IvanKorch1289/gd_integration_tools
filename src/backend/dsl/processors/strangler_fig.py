@@ -243,7 +243,7 @@ class StranglerFigProcessor(BaseProcessor):
         # Per-instance random для deterministic routing
         # S311: random для traffic split, не crypto (комментарий явно)
         self._rng = (
-            random.Random(deterministic_seed)
+            random.Random(deterministic_seed)  # nosec B311 — non-crypto use
             if deterministic_seed is not None
             else None
         )
@@ -266,7 +266,7 @@ class StranglerFigProcessor(BaseProcessor):
             roll_value = (
                 self._rng.random() * 100.0
                 if self._rng is not None
-                else random.random() * 100.0
+                else random.random() * 100.0  # nosec B311 — non-crypto use
             )
             target = (
                 RouteTarget.NEW if roll_value < self._split_pct else RouteTarget.OLD

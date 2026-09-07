@@ -54,18 +54,16 @@ class LoadBalancerProcessor(BaseProcessor):
         if self._strategy == "random":
             import random as _random
 
-            return _random.choice(  # load-balancing, не криптография  # non-cryptographic use
+            return _random.choice(  # nosec B311 — load-balancing, non-cryptographic use
                 self._targets
             )
 
         if self._strategy == "weighted" and self._weights:
             import random as _random
 
-            return _random.choices(
+            return _random.choices(  # nosec B311 — weighted load-balancing, non-cryptographic use
                 self._targets, weights=self._weights, k=1
-            )[  # non-cryptographic use
-                0
-            ]  # weighted load-balancing, не криптография
+            )[0]
 
         if self._strategy == "sticky" and self._sticky_header:
             key = exchange.in_message.headers.get(self._sticky_header, "")

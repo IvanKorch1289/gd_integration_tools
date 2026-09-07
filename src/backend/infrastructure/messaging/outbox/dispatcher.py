@@ -371,4 +371,4 @@ class OutboxDispatcher:
         jitter = self._retry_jitter
         # Зануление jitter приводит к детерминированному backoff —
         # поведение совместимо со старой реализацией без jitter.
-        return raw * (1.0 + random.uniform(-jitter, jitter))  # noqa: S311  # retry-jitter, не криптография
+        return raw * (1.0 + random.uniform(-jitter, jitter))  # noqa: S311  # retry-jitter, не криптография  # nosec B311 — non-crypto use
