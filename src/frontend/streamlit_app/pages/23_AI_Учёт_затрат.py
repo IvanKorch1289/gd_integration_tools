@@ -123,9 +123,9 @@ def _fallback_snapshot(window_hours: int) -> dict[str, Any]:
     не подключён (R2 admin facade) или backend недоступен.
     """
     try:
-        # The facade is annotated as a mapping but currently may forward the
-        # DashboardSnapshot object. Keep both response shapes runtime-safe.
-        from src.backend.core.frontend_facade import get_ai_cost_snapshot
+        # S170 CL-12-8/9: миграция с core.frontend_facade на services.dsl_portal
+        # (canonical layer-compliant путь, re-exports get_ai_cost_snapshot).
+        from src.backend.services.dsl_portal import get_ai_cost_snapshot
 
         snapshot: object = get_ai_cost_snapshot(
             window_hours=window_hours,
