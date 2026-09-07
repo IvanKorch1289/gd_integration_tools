@@ -249,3 +249,29 @@ T3 ratchet 10 (commit `47889bacd`):
 **Pattern**: parallel session T3 ratchet tests routinely introduce `from src.backend.dsl.commands.registry import action_handler_registry` — каждый такой import нарушает layers policy (services → dsl forbidden). Per Sprint 33 facade design, canonical path = `core.api.extensions.action_handler_registry`. **R-FIX pattern** (already documented): `from src.backend.core.api.extensions import action_handler_registry` + sync test mock path.
 
 Sprint 169 closed per user rule. Final HEAD: `9e9f61bb1`.
+
+---
+
+## S170 R-FIX3 (2026-09-05) — third regression from parallel session
+
+Phase A re-verify на HEAD `e3bfab0a3` обнаружил регрессию в check-task-registry gate
+после parallel session:
+
+| Regression | Source | Fix |
+|---|---|---|
+| **check-task-registry 1 violation** | `gateways.py:198` — `# noqa: orphan-create-task` comment placed on WRONG line (L200 instead of L198/L199 where `asyncio.create_task(...)` actually is) | Moved comment to L199 (right after `asyncio.create_task(...)`) |
+
+**Resolution** (commit `46a3d242f`): regression closed. Финальное состояние:
+
+| Metric | Post-fix |
+|---|---|
+| check-task-registry | **OK (0 violations)** ✅ |
+| ruff src/ | 0 ✅ |
+| layers new | 0 ✅ |
+
+**Pattern documented** (per ADR-0295 R-FIX3): `# noqa: orphan-create-task` MUST be on the
+SAME LINE as `asyncio.create_task(...)` call (not the surrounding expression like `for x in y`).
+check-task-registry tool uses line-by-line matching — comment must be directly after the
+`asyncio.create_task(...)` call within the same physical line.
+
+Sprint 170 closed per user rule. Final HEAD: `46a3d242f`.
