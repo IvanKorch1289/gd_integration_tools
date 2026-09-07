@@ -868,3 +868,14 @@ populator 96%. Больше 10 модулей подняты ≥90% за цик�
 
 **НАПОМИНАНИЕ**: решения (а) scope T3 и (б) ADR-0296 vs docker+Vault
 (`6c445974d`) — по-прежнему без ответа; интерим-финиш действует.
+
+## T3 ratchet-инкремент 8 (2026-09-06): hub_run_orchestrator 82→95%
+
+`b9fc499ba`: 15 тестов веток run_hub_notebook — gate OFF (157), inline-content
+disabled (181-187), NotebookParameterError (255), JupyterExecutionError
+propagation (273-276), inline temp-file cleanup (M7.2 finally), notebook not
+found, _collect_errors mixed outputs (311), _save_inline_notebook (str
+invalid/valid JSON, dict-bytes + JUPYTER_TMPDIR slug, 345-370),
+_build_execution_service (ImportError/provider-result, 387-394).
+
+jupyter-домен: hub_actions 98%, hub_run_orchestrator 95%.
