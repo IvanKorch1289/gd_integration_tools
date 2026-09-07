@@ -49,7 +49,7 @@ st.title("Wiki — поиск по документации")
 
 # Lazy-import чтобы set_page_config был первым st-вызовом.
 # S6 fix: facade import через dsl_portal (R3.10d / S36).
-from src.backend.core.frontend_facade import get_whoosh_index
+from src.backend.services.dsl_portal.builder_facade import get_whoosh_index
 
 # The facade deliberately returns ``Any`` to keep optional Whoosh imports lazy;
 # narrow only the callable surface consumed by this page instead of ignoring mypy.
