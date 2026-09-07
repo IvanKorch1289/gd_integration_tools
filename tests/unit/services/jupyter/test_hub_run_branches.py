@@ -303,3 +303,22 @@ async def test_inline_temp_cleanup_os_error_swallowed(
         execution_service=svc,
     )
     assert result.notebook_name == NAME
+
+
+# ── gate: ImportError при загрузке feature_flags (157) ──────────────
+
+
+@pytest.mark.asyncio
+async def test_gate_feature_flags_import_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """feature_flags недоступен -> except ImportError -> JupyterHubNotEnabledError."""
+    monkeypatch.setitem(sys.modules, "src.backend.core.config.features", None)
+    reg = NotebookRegistry()
+    reg.register(NotebookSpec(name=NAME, path=f"{NAME}.ipynb"))
+    with pytest.raises(JupyterHubNotEnabledError):
+        await run_hub_notebook(
+            notebook_name=NAME,
+            registry=reg,
+            execution_service=AsyncMock(),
+        )
