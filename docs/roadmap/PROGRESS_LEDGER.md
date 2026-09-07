@@ -1223,3 +1223,18 @@ multi-day по решению (а) «полные 70%»; gate 15 Vault — ADR-0
    импорт дублем. Фикс: фильтр импортов в тест-сканере.
 
 Все — pre-existing (воспроизводятся на чистом HEAD), полоса kimi/сессии-2.
+
+## Проход закрыт (2026-09-06): частичный ретаргет storage_ext откачен
+
+storage_ext PriorityEnqueue: 4 теста патчат старый
+`infrastructure...get_redis_client`, а прод теперь зовёт
+`get_redis_client_provider` из cache-провайдеров + `_raw_client`.
+Мой ретаргет уменьшил падения 4→2, но полный фикс требует
+выравнивания моков с _raw_client-контрактом — частичный ретаргет
+откачен (не коммитил), тест-файл остался в состоянии HEAD.
+Остаются открытыми в полосе сессии-2 (B-NEW-8: storage_ext 4,
+fastmcp 4 (ретаргет выполнен мной ранее — проверить в полном прогоне),
+blueprints 3, pii_erase 3, scan_file 1, express 1, subpackage_exports 1).
+
+**Верификация прохода**: data_quality + mqtt_handler + analytics —
+56 passed; ruff 0.
