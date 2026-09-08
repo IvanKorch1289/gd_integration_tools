@@ -1389,3 +1389,23 @@ working tree дважды. НЕ редактировать их до завер�
 - test_query_result_cache.test_json_datetime_fallback: добавить
   `UTC` в `from datetime import ...` (NameError).
 - smart_session_wire/tenant_filter e2e: см. `4e3277988` (в истории).
+
+## Ratchet 22 addendum (2026-09-08, день): статус после коллизий
+
+1. Потерянные при коллизии фиксы пере-применены и ЗАКОММИЧЕНЫ сразу:
+   `311080616` (chaos/s94/http_drain/query_cache) + `07c1955eb`
+   (inbox get_redis_client() вызов + s3 stub __str__) — 31 passed.
+2. Полоса kimi ушла на telegram-coverage циклы (11-13) — файлы
+   infrastructure больше не трогает; коллизия исчерпана.
+3. «Зависание» tests/unit/services на 34% — НЕ hang: файл
+   `test_presidio_ru.py` легитимно медленный (21s, загрузка NLP-модели),
+   под параллельной нагрузкой kimi выглядит как стоп. Машина 7.5Gi RAM,
+   load ~4 — ПОЛНЫЕ ПРОГОНЫ СЮИТОВ НЕ ПРОВОДИТЬ; только per-file/per-dir
+   с короткими timeout'ами.
+4. `543af9cf6` outbound_http waf-audit: TaskRegistry.create_task требует
+   keyword-only `name` — TypeError пробивал оба except и ронял callers
+   (найден через sse_source тесты).
+
+Остаток (не блокирует): cert_prometheus_exporter/vault_secrets падают
+только в полном infrastructure-прогоне (order-pollution, standalone
+зелёные); смарт-scheduler фасад 33% — артефакт скоупа (тесты в core/api).
