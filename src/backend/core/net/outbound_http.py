@@ -322,7 +322,7 @@ class OutboundHttpClient:
             if asyncio.iscoroutine(coro):
                 try:
                     loop = asyncio.get_running_loop()
-                    loop.create_task(coro)  # noqa: orphan-create-task
+                    get_task_registry().create_task(coro)
 
                 except RuntimeError:  # noqa: violation-check — sync context, no event loop
                     pass  # no running loop → drop coroutine (sync context)
@@ -332,6 +332,7 @@ class OutboundHttpClient:
             # change, RuntimeError — backend unavailable. never raise from
             # audit emission (best-effort).
             import logging
+from src.backend.core.utils.task_registry import get_task_registry
 
             logging.getLogger(__name__).debug(
                 "outbound_http.audit_emit_failed", extra={"error": str(audit_exc)}

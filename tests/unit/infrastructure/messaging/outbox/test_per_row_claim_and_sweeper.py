@@ -51,6 +51,8 @@ _stub_sm.main_session_manager = _StubSessionManager()  # type: ignore[attr-defin
 # the factory get AttributeError on import. Lambda accepts *args/**kwargs
 # to mirror any call shape.
 _stub_sm.get_main_session_manager = lambda *_a, **_kw: _StubSessionManager()  # type: ignore[attr-defined]
+# outbox.py импортирует DatabaseSessionManager только для аннотации типа.
+_stub_sm.DatabaseSessionManager = _StubSessionManager  # type: ignore[attr-defined]
 sys.modules["src.backend.infrastructure.database.session_manager"] = _stub_sm
 
 from src.backend.infrastructure.repositories.outbox import (
