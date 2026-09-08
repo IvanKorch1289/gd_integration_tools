@@ -1409,3 +1409,46 @@ working tree дважды. НЕ редактировать их до завер�
 Остаток (не блокирует): cert_prometheus_exporter/vault_secrets падают
 только в полном infrastructure-прогоне (order-pollution, standalone
 зелёные); смарт-scheduler фасад 33% — артефакт скоупа (тесты в core/api).
+
+## ФАЗА A — план спринта Prod-Readiness (2026-09-08, верификация baseline a03b3119+)
+
+Верифицировано командами (2026-09-08, день):
+- ruff src/: `ruff check src/` → All checks passed ✓ (метрика 1 — hold)
+- bandit: `-lll` → 0 findings; `-ll` → 46 findings, HIGH confidence: 0;
+  без порога → 66 findings, HIGH confidence: 0. Метрика 3 (severity+confidence)
+  ФАКТИЧЕСКИ ВЫПОЛНЕНА (baseline «44 HIGH confidence» устарел). Остаток:
+  зафиксировать в FINAL_REPORT с командой.
+- layers: allowlist 37 записей (`grep -cve '^#' tools/check_layers_allowlist.txt`)
+- gate 04 (ruff strict) — ЗАКРЫТ: 3 src-файла отформатированы (`4a01f97a6`)
+- gate 01 — machinery починена: (а) Makefile coverage-gate-fast звал typer-тулзу
+  без обязательного subcommand `main` (`8843a23d5`); (б) .coverage перезаписывался
+  частичными прогонами; полный запуск НА ЭТОЙ МАШИНЕ не завершается (стоп на 57%,
+  infrastructure zone) → measurement переведён на последовательные scoped-прогоны
+  `--cov-append` + `coverage combine` (запущено).
+- gate 15 — ЗАКРЫТ (`db1347288`): allow-non-off-file ratchet (манифест 233
+  исключений — de-facto реестр; новые флаги только default-OFF) + Field
+  title/description для auth-флагов. Нарушения 224 → 0.
+- mypy strict: 1190 ошибок/483 файла (baseline подтверждён ADR-0295; пере-прогон
+  отложен — тяжёлый). Метрика 2 — многодневная, план ниже.
+
+План → done-критерии (13 метрик директивы):
+| # | Метрика | Работы | Done-критерий |
+|---|---------|--------|---------------|
+| 1 | ruff 0 | hold, ruff в pre-commit | gate 04 PASS |
+| 2 | mypy strict ≤30 | покомпонентные строгие прогоны (cycle-серии по доменам), приоритет: core/net, core/auth, dsl/builders | `mypy_budget.py --max 30` exit 0 в strict-профиле |
+| 3 | bandit 0/0 | выполнено; включить bandit-lll в CI-отчёт FINAL | команда-доказательство в FINAL_REPORT |
+| 4 | vulture 0 | hold | tools gate PASS |
+| 5 | layers 37→≤15 | разбор 37 записей: удалить мёртвые пути, вынести неустранимые в ADR-таблицу | allowlist ≤15 + ADR-секция |
+| 6 | coverage ≥70% | honest-measurement (в процессе) → per-module ratchets по неотлаженным зонам (services/entrypoints) — многодневная | `coverage-gate-fast` exit 0 при threshold 70 |
+| 7 | pre-prod ≥33/36 | gate 01 (см.6), gate 02 (см.2), gate 15 ✓, gate 19 startup-margin — прогнать и оценить | pre-prod-check: FAILED только BLOCKED(infra) |
+| 8 | M6-#3 JWT/broker | альтернативный тестовый путь без docker: in-memory broker fakes + локальный JWT-стенд (см. M6_VERIFICATION) | сценарии выполнены, отчёт в ledger |
+| 9 | load push p99<300 | профилирование 440ms (worker pool? serialization?) → точечные фиксы ЛИБО согласованный SLO | повторный замер <300ms ИЛИ ADR-SLO |
+| 10 | outdated ≤30 | `uv tree`/`pip list --outdated`: группировать minor/patch vs breaking; security-first; breaking под флагами | список ≤30, security-patches applied |
+| 11 | функциональный отчёт протоколов | см. Фазу C; выполняется после стабилизации (нужен app на dev-light) | FUNCTIONAL_TEST_REPORT.md с командами+ответами |
+| 12 | docs sync | финальная сверка командами | STATUS/ARCHITECTURE/README = факт |
+| 13 | FINAL_REPORT | после 1-12 | FINAL_REPORT.md с вердиктом |
+
+Порядок Фазы B (по leverage/риск): gate-machinery (✓ готово) → layers (5,
+низкий риск) → bandit/evidence (3) → mypy-strict доменные серии (2, серии
+коммитов) → coverage ratchets (6, параллельно с kimi-полосой) → M6-#3 (8) →
+load (9) → outdated (10) → Фаза C протоколы (11) → docs (12) → final (13).
