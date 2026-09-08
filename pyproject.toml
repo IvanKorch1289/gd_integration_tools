@@ -929,6 +929,20 @@ disable_error_code = [
     "call-overload",
 ]
 
+# R2.MYPY-IMPORT: per-module ignore_missing_imports для внешних библиотек
+# без py.typed и без stub-пакетов (подавляет 88 [import-untyped] errors).
+# S188-S189: hvac (Vault) и grpc (gRPC) — official stubs не публикуются;
+# community stubs (types-grpc) заброшены.
+# S120: apscheduler, asyncpg, ldap3, reportlab, croniter — partial/no stubs;
+# мы используем только публичный API, типы внутренние.
+[[tool.mypy.overrides]]
+module = ["hvac", "hvac.*", "ldap3", "ldap3.*", "croniter", "reportlab.*",
+          "psutil", "pyautogui", "apscheduler.*", "asyncpg", "aiokafka",
+          "msgpack", "simpleeval", "aioimaplib", "casbin", "consul",
+          "onnxruntime", "diskcache", "sqlalchemy_continuum", "sqlalchemy_continuum.*",
+          "sqlalchemy_utils", "sqlalchemy_utils.*", "whoosh", "grpc", "grpc.*"]
+ignore_missing_imports = true
+
 
 [tool.ruff]
 line-length = 88
