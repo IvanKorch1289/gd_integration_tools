@@ -14,6 +14,7 @@ Future T1.3.1+ extensions (deferred to S39+):
 
 from __future__ import annotations
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -36,18 +37,43 @@ class AuthFlags(BaseSettings):
     # S68 W1: auth_mtls_client остаётся (НЕ удалён в scope W1 — ТОЛЬКО
     # auth_joserfc). Subagent S68 W1 случайно удалил оба; orchestrator
     # restore, чтобы не ломать 2 pre-existing tests.
-    auth_mtls_client: bool = False
+    auth_mtls_client: bool = Field(
+        default=False,
+        title="Auth: mTLS client certificate authentication",
+        description=(
+            "S68 W1. Owner: K1 Auth. mTLS client-cert аутентификация "
+            "на entrypoints. default-OFF: требует CA-bundle конфигурации "
+            "на ingress; включать только после K1 mTLS-test прогонов."
+        ),
+    )
 
     # S46 W1 (cycle 261): mobile_jwt_enabled (ADR-0262/ADR-0264). Phase 1
     # skeleton. Default OFF keeps current demo-fail-closed production path.
     # Phase 2: revocation + per-device rate limit. Phase 3: OWASP review.
-    mobile_jwt_enabled: bool = False
+    mobile_jwt_enabled: bool = Field(
+        default=False,
+        title="Auth: mobile JWT authentication (ADR-0262/ADR-0264)",
+        description=(
+            "S46 W1 (cycle 261). Owner: K1 Auth. Phase 1 skeleton; "
+            "default-OFF сохраняет текущий fail-closed demo-путь. "
+            "Phase 2: revocation + per-device rate limit. "
+            "Phase 3: OWASP review перед prod-включением."
+        ),
+    )
 
     # C2 (ledger, 2026-09-04): Phase 2 protections (revocation + per-device
     # rate limit, M1-#22) — opt-in. Включать ВМЕСТЕ с mobile_jwt_enabled в
     # production: RedisRevocationStore fail-CLOSED при Redis outage
     # (mobile_jwt_revoc_fail_closed, default True).
-    mobile_jwt_protections_enabled: bool = False
+    mobile_jwt_protections_enabled: bool = Field(
+        default=False,
+        title="Auth: mobile JWT Phase 2 protections (revocation + rate limit)",
+        description=(
+            "C2 (ledger, 2026-09-04). Owner: K1 Auth. Opt-in; включать "
+            "ВМЕСТЕ с mobile_jwt_enabled в production. "
+            "RedisRevocationStore fail-CLOSED при Redis outage."
+        ),
+    )
 
 
 __all__ = ("AuthFlags",)

@@ -68,9 +68,29 @@ def main(
         help="Список flag-name через запятую, которые разрешено иметь "
         "default!=False (исключения из default-OFF policy).",
     ),
+    allow_non_off_file: str = typer.Option(
+        "",
+        "--allow-non-off-file",
+        help="Путь к файлу исключений (по одному flag-name на строку, "
+        "# — комментарии). Ratchet-механизм: new flags default-OFF, "
+        "существующие явно перечислены. Дополняет --allow-non-off.",
+    ),
 ) -> None:
     """CLI-entrypoint (typer)."""
     allow = {n.strip() for n in allow_non_off.split(",") if n.strip()}
+    if allow_non_off_file:
+        from pathlib import Path
+
+        manifest = Path(allow_non_off_file)
+        if not manifest.exists():
+            console_err.print(
+                f"[bold red]✗ allow-non-off-file не найден:[/bold red] {manifest}"
+            )
+            raise typer.Exit(2)
+        for line in manifest.read_text(encoding="utf-8").splitlines():
+            name = line.strip()
+            if name and not name.startswith("#"):
+                allow.add(name)
     errors = _audit(allow)
 
     if errors:
