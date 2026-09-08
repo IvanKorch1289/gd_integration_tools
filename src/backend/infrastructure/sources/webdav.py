@@ -79,7 +79,7 @@ class WebDAVSource:
 
         return fnmatch.fnmatch(name, self._config.file_pattern)
 
-    def _load_marker(self, client) -> None:
+    def _load_marker(self, client: object) -> None:
         """Загружает уже обработанные файлы из marker'а на сервере."""
         if not self._config.marker_dedup or not self._config.processed_marker_path:
             return
@@ -96,7 +96,7 @@ class WebDAVSource:
             # Marker не существует — first run.
             self._processed_files = set()
 
-    def _save_marker(self, client) -> None:
+    def _save_marker(self, client: object) -> None:
         if not self._config.marker_dedup or not self._config.processed_marker_path:
             return
         try:
@@ -110,7 +110,7 @@ class WebDAVSource:
         except Exception as _:
             logger.exception("WebDAVSource._save_marker failed")
 
-    def _list_remote_files(self, client) -> list[str]:
+    def _list_remote_files(self, client: object) -> list[str]:
         try:
             items = client.ls(self._config.watch_path, detail=False)
             return [str(p) for p in items]

@@ -170,13 +170,13 @@ class S3Service:
         decoded_metadata = decode_base64(metadata)
         return decoded_metadata.get("content-type")
 
-    async def _invalidate_key_cache(self, key: str):
+    async def _invalidate_key_cache(self, key: str) -> None:
         """Выполнить операцию  invalidate key cache."""
         for cache in self._cache_handlers.values():
             await cache.invalidate(key)
         self.logger.debug(f"Кэш инвалидирован для ключа: {key}")
 
-    async def invalidate_cache(self, key: str | None = None):
+    async def invalidate_cache(self, key: str | None = None) -> None:
         """Выполнить операцию invalidate cache."""
         if key:
             await self._invalidate_key_cache(key)

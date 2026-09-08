@@ -30,7 +30,7 @@ class MailService:
         subject: str,
         message: str,
         html_message: str | None = None,
-    ):
+    ) -> None:
         """Асинхронно отправляет электронное письмо.
 
         Args:
@@ -110,7 +110,7 @@ class MailService:
         subject: str,
         template_name: str,
         template_context: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         """Отправляет письмо, используя шаблон.
 
         Args:
