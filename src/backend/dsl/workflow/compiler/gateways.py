@@ -25,6 +25,7 @@ import asyncio
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.workflow.gateways import BranchSpec, GatewaySpec
 from src.backend.dsl.workflow.spec import ActivityDeclaration
 
@@ -195,7 +196,7 @@ async def compile_or(decl: ActivityDeclaration, ctx: dict[str, Any]) -> Any:
         return None
 
     tasks: list[asyncio.Task[Any]] = [
-        asyncio.create_task(_run_branch_steps(branch, ctx))  # noqa: orphan-create-task
+        get_task_registry().create_task(_run_branch_steps(branch, ctx))
         for branch in spec.branches
     ]
 
