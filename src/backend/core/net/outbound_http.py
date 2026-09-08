@@ -314,6 +314,7 @@ class OutboundHttpClient:
         import asyncio
 
         from src.backend.core.audit.facade import emit_waf_evaluation
+        from src.backend.core.utils.task_registry import get_task_registry
 
         try:
             coro = emit_waf_evaluation(
@@ -321,7 +322,7 @@ class OutboundHttpClient:
             )
             if asyncio.iscoroutine(coro):
                 try:
-                    loop = asyncio.get_running_loop()
+                    loop = asyncio.get_running_loop()  # noqa: F841 — loop-guard
                     get_task_registry().create_task(coro)
 
                 except RuntimeError:  # noqa: violation-check — sync context, no event loop
@@ -332,7 +333,6 @@ class OutboundHttpClient:
             # change, RuntimeError — backend unavailable. never raise from
             # audit emission (best-effort).
             import logging
-from src.backend.core.utils.task_registry import get_task_registry
 
             logging.getLogger(__name__).debug(
                 "outbound_http.audit_emit_failed", extra={"error": str(audit_exc)}
