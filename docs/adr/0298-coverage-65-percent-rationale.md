@@ -127,3 +127,13 @@ Cycle 6 commit: `cfffcd504`. Cumulative cycles 3-6: 4 модуля improved, +27
 | `src/backend/dsl/engine/processors/express/send.py` | **15%** | **100%** | 26 тестов (__init__ + _normalize_btn + process per-field + metrics + to_spec) |
 
 Cycle 7 commit: `8f1177a17`. Cumulative cycles 3-7: 5 модулей improved, +357pp cumulative.
+
+### Sprint 170 cycle 8 (2026-09-05) — coverage sprint инкремент 6
+
+| Module | До | После | Tests |
+|---|---|---|---|
+| `src/backend/dsl/engine/processors/express/send_file.py` | **11%** | **97%** | 18 + 1 skip |
+
+Cycle 8 commit: `87a51dc3f`. **Cumulative cycles 3-8: 6 модулей improved, +443pp cumulative**.
+
+**Documented known issue**: `_load_file_bytes` (send_file.py:160) не имеет try/except вокруг `s3_client.get_object_bytes(key)` — S3 exceptions propagate up to process() caller. Per Sprint 169 closure rules (no source fix in coverage cycle), test skipped + comment documents the issue.
