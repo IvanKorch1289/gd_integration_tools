@@ -23,6 +23,7 @@ from collections.abc import Callable
 from typing import Any, Protocol
 
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.task_registry import get_task_registry
 
 __all__ = (
     "FileSensorTaskWrapper",
@@ -167,7 +168,7 @@ class IntervalTrigger:
                     return
                 await self._dispatch()
 
-        self._task = asyncio.create_task(_loop(), name=f"trigger:{self.name}")  # noqa: orphan-create-task
+        self._task = get_task_registry().create_task(_loop(), name=f"trigger:{self.name}")
 
         _log.info(
             "IntervalTrigger: %s started (route=%s, interval=%.1fs)",
@@ -287,7 +288,7 @@ class CronTrigger:
                     return
                 await self._dispatch()
 
-        self._task = asyncio.create_task(_loop(), name=f"trigger:{self.name}")  # noqa: orphan-create-task
+        self._task = get_task_registry().create_task(_loop(), name=f"trigger:{self.name}")
 
         _log.info(
             "CronTrigger: %s started (route=%s, cron=%r, tz=%s)",
