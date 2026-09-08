@@ -1578,3 +1578,45 @@ M tools/check_layers.py                           # 8 строк (sync межд�
 - M6-#3 + load-test — Sprint 4
 - FINAL_REPORT v2 — Sprint 5
 
+
+---
+
+## Phase B Sprint 1 — коммиты (2026-09-08, координатор)
+
+| ID | Статус | Коммит | Доказательство |
+|---|---|---|---|
+| R1.SYNTAX-FIX | DONE | `9629346a4` | `python3 -c "import ast; ast.parse(...)"` → OK; ruff clean; collect 17413 |
+| R1.SYNTAX-WARN | DONE | `659c08eeb` | check_layers.py: теперь SyntaxError → stderr warning; baseline: 14 legacy, 0 новых; rc=0 |
+| R1.MYPY-2 | DONE | `627683d1b` | mypy-strict 886→838 (-48 errors), 409→373 files; import-untyped 157→88 (-69); yaml 29→0 |
+
+**Sprint 1 итог**: 3 atomic-коммита, mypy-strict -48 errors, syntax fix блокировал silent fail в layer-checker, stubs baseline.
+
+### Sprint 1 остаток (defer)
+
+- R1.OUTDATED-1 (bulk 100 пакетов): 131→~30 за 1 PR. Lock-файл изменение крупное; оценочно 1-2 дня + ревью breaking changes. **Defer в Sprint 2** (после явного согласования пользователя на bulk-lock-change).
+- R1.MYPY-1 (top-3 code families): arg-type 353→~150 + assignment 83→30 + call-arg 99→40 ≈ -315 errors. Многодневный effort (per-file fixes в top-5: sqlalchemy.py 52, main.py 44, stream.py 15, transport/sources 12, cdc_sources 12). **Defer в Sprint 2**.
+- R1.MYPY-3 (cycles 2-3, добивка до ≤30): ADR-0299 с явным планом на остаток. Multi-sprint.
+
+### Top remaining [import-untyped] (88 errors) — без stubs на PyPI
+
+| Пакет | Count | Стратегия |
+|---|---|---|
+| hvac | 7 | type ignore на import line |
+| grpc / grpc.aio | 6+2 | type ignore |
+| croniter | 2 | typeshed has stubs? → recheck |
+| lxml | 2 | typeshed has stubs via lxml-stubs? → recheck |
+| ldap3 | 2 | type ignore |
+| reportlab.* | 3 | type ignore |
+| google.protobuf | 2 | type ignore |
+| asyncpg, apscheduler, msgpack, simpleeval, aioimaplib, sqlalchemy_continuum, sqlalchemy_utils | ~30 | per-module `# type: ignore[import-untyped]` |
+
+**План Sprint 2**: добавить per-module `# type: ignore[import-untyped]` для этих 13 модулей → -88 errors → mypy-strict 838→750.
+
+### Top-3 code families остаются (без stubs)
+
+- arg-type 353 — function call sites (top: sqlalchemy.py 52, main.py 44)
+- call-arg 99 — multi-arg calls with strict types
+- assignment 83 — type widening in vars
+
+**План Sprint 2-3**: per-file PR с type-ignore / cast / Protocol fixes.
+
