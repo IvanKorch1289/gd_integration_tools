@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, cast
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 from fastapi_pagination import Params
@@ -330,7 +330,10 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         :param data: Данные для создания объекта.
         :return: Созданный объект.
         """
-        return await self.helper._prepare_and_save_object(session=session, data=data)
+        return cast(  # type: ignore[no-any-return]  # S170 cycle 15 (ADR-0300): strict-mypy enable — helper returns Any but ConcreteTable is correct type
+            "ConcreteTable",
+            await self.helper._prepare_and_save_object(session=session, data=data),
+        )
 
     @main_session_manager.connection()
     async def bulk_create(
@@ -388,12 +391,15 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         if not existing_object:
             raise NotFoundError(message="Object not found")
 
-        return await self.helper._prepare_and_save_object(
-            session=session,
-            data=data,
-            existing_object=existing_object,
-            ignore_none=ignore_none,
-            load_into_memory=load_into_memory,
+        return cast(  # type: ignore[no-any-return]  # S170 cycle 15 (ADR-0300): strict-mypy enable — _prepare_and_save_object returns Any but ConcreteTable is correct
+            "ConcreteTable",
+            await self.helper._prepare_and_save_object(
+                session=session,
+                data=data,
+                existing_object=existing_object,
+                ignore_none=ignore_none,
+                load_into_memory=load_into_memory,
+            ),
         )
 
     @main_session_manager.connection()
