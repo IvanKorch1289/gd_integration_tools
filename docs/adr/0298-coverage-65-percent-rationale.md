@@ -103,3 +103,11 @@ Estimated effort: 40-80 hours (testcontainers + playwright + per-extension mocks
 | `src/backend/dsl/engine/processors/express/mention.py` | **25%** | **76%** | 16 тестов (__init__ validation + process() per type) |
 
 Cycle 4 commit: `977fb3c02`. Cumulative cycles 3-4: 2 modules improved, +106pp on those modules.
+
+### Sprint 170 cycle 5 (2026-09-05) — coverage sprint инкремент 3
+
+| Module | До | После | Tests added |
+|---|---|---|---|
+| `src/backend/dsl/engine/processors/express/edit.py` | **14%** | **100%** | 17 тестов (__init__ + to_spec + process per-field validation) |
+
+Cycle 5 commit: `68f8d4f4e`. Cumulative cycles 3-5: 3 модуля improved, +192pp cumulative.
