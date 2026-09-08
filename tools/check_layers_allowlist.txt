@@ -9,13 +9,6 @@ src/backend/core/ai/llm_gateway.py	core	src.backend.services.ai.gateway.client
 src/backend/core/ai/multi_agent.py	core	src.backend.services.ai.multi_agent.supervisor
 src/backend/core/ai/policy/enforcer/input_guard_mixin.py	core	src.backend.services.ai.guardrails.lakera_client
 src/backend/core/security/connector_auth.py	core	src.backend.services.authorization.facade
-src/backend/entrypoints/api/v1/endpoints/processors_catalog.py	entrypoints	src.backend.dsl.builder
-src/backend/entrypoints/api/v1/endpoints/processors_catalog.py	entrypoints	src.backend.dsl.engine.processors
-src/backend/entrypoints/mcp/mcp_server/tools_convert.py	entrypoints	src.backend.dsl.engine.processors.converters
-src/backend/entrypoints/mcp/mcp_server/tools_template.py	entrypoints	src.backend.dsl
-src/backend/entrypoints/mcp/mcp_server/tools_template.py	entrypoints	src.backend.dsl.templates_library
-src/backend/entrypoints/webhook/handler.py	entrypoints	src.backend.dsl.codec.json
-src/backend/entrypoints/webhook/handler.py	entrypoints	src.backend.dsl.engine.processors.scraping
 src/backend/infrastructure/clients/external/cdc/client.py	infrastructure	src.backend.dsl.commands.registry
 src/backend/infrastructure/workflow/executor/sequential_mixin.py	workflows	src.backend.dsl.engine.exchange
 src/backend/infrastructure/workflow/worker.py	workflows	src.backend.dsl.commands.setup.orchestrator

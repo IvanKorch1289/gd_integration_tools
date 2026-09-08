@@ -70,7 +70,7 @@ ALLOWED: dict[str, set[str]] = {
     # infrastructure. Закрывает Sprint 35 architectural debt (3 entries).
     # Governance: future ALLOWED matrix changes require per-ADR approval.
     "services": {"core", "schemas", "infrastructure"},
-    "entrypoints": {"services", "schemas", "core", "infrastructure"},
+    "entrypoints": {"services", "schemas", "core", "infrastructure", "dsl"},
     "schemas": {"core"},
     # S65 W4: DSL/workflows — meta-layers, оркестрирующие все backend слои.
     # Фактически могут импортировать любой слой (DSL строится поверх всего).
