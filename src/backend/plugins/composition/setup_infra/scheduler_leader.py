@@ -13,6 +13,7 @@ import asyncio
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.task_registry import get_task_registry
 
 app_logger = get_logger("application")
 
@@ -106,7 +107,7 @@ async def _start_scheduler_with_leader_election() -> None:
 
     # S71 W3: start heartbeat BEFORE scheduler, чтобы lock не expired
     # до того, как scheduler начнёт работать.
-    _scheduler_heartbeat_task = asyncio.create_task(  # noqa: orphan-create-task
+    _scheduler_heartbeat_task = get_task_registry().create_task(
         _scheduler_heartbeat_loop(), name="scheduler-leader-heartbeat"
     )
     await get_scheduler_manager().start()
