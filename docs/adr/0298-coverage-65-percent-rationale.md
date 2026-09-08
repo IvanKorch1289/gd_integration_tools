@@ -157,3 +157,11 @@ Cycle 9 commit: `8d0187eeb`. Cumulative cycles 3-9: 7 модулей improved, +
 Cycle 11 commit: `<pending>`. Cumulative cycles 3-11: 8 модулей improved, +642pp cumulative.
 
 **Domain expansion**: cycles 3-8 (express), cycles 9-11 (telegram) — 3 telegram модуля (status, edit, ...) added.
+
+### Sprint 170 cycle 12 (2026-09-05) — coverage sprint инкремент 9
+
+| Module | До | После | Tests |
+|---|---|---|---|
+| `src/backend/dsl/engine/processors/telegram/typing.py` | **0%** | **100%** | 12 тестов (__init__/to_spec/process per-edge-case) |
+
+Cycle 12 commit: `accc2e6e2`. Cumulative cycles 3-12: 9 модулей improved, **+742pp cumulative**, **6 модулей at 100%**.
