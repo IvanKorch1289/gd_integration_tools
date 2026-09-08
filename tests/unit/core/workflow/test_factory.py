@@ -23,6 +23,7 @@ class TestCreateWorkflowBackend:
 
     async def test_auto_dev_light_picks_lite_temporal(self) -> None:
         """``dev_light`` profile → ``LiteTemporalBackend`` (Sprint 7 P0-3 / S217)."""
+        pytest.importorskip("temporalio", reason="temporalio SDK not installed")
         backend = await create_workflow_backend(kind="auto", profile="dev_light")
         assert isinstance(backend, WorkflowBackend)
         # dev_light resolves to lite_temporal (Sprint 7 P0-3); pg_runner deprecated
