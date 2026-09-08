@@ -21,13 +21,27 @@ import pytest
 
 
 def test_lifespan_calls_ending_in_finally() -> None:
-    """``lifespan()`` содержит ``await ending()`` в finally-блоке."""
-    src = Path("src/backend/plugins/composition/lifecycle/lifespan.py").read_text()
-    assert "await ending()" in src, (
-        "V2 P0 #10 regression: lifespan не вызывает await ending() — HTTP drain сломан."
+    """Drain-цепочка: lifespan finally -> run_shutdown -> ``await ending()``.
+
+    S111 W2: lifespan отрефакторен в slim-оркестратор — ``await ending()``
+    переехал в ``lifecycle.shutdown.run_shutdown``. Guard проверяет оба
+    звена цепочки.
+    """
+    lifespan_src = Path(
+        "src/backend/plugins/composition/lifecycle/lifespan.py"
+    ).read_text()
+    assert "finally:" in lifespan_src, "V2 P0 #10: finally block отсутствует"
+    assert "await run_shutdown(" in lifespan_src, (
+        "V2 P0 #10 regression: lifespan не вызывает run_shutdown — HTTP drain сломан."
     )
-    # finally block: must be present around ending()
-    assert "finally:" in src, "V2 P0 #10: finally block отсутствует"
+
+    shutdown_src = Path(
+        "src/backend/plugins/composition/lifecycle/shutdown.py"
+    ).read_text()
+    assert "await ending()" in shutdown_src, (
+        "V2 P0 #10 regression: run_shutdown не вызывает await ending() — "
+        "graceful infra shutdown сломан."
+    )
 
 
 def test_http3_server_closes_on_shutdown() -> None:

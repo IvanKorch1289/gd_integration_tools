@@ -150,6 +150,16 @@ class TestChaosEngineering:
         assert a is b
 
     def test_is_chaos_enabled_safe_default(self) -> None:
-        with patch("src.backend.core.config.features.feature_flags") as mock_flags:
-            mock_flags.chaos_engineering_enabled = True
+        """Флаг читается через FeatureFlagService (S41 W5), не static registry."""
+        from src.backend.core.feature_flags.runtime_overrides import (
+            get_runtime_overrides,
+        )
+
+        overrides = get_runtime_overrides()
+        overrides.set("chaos_engineering_enabled", True)
+        try:
             assert is_chaos_enabled() is True
+        finally:
+            overrides.clear("chaos_engineering_enabled")
+        # После снятия override — static default (False).
+        assert is_chaos_enabled() is False

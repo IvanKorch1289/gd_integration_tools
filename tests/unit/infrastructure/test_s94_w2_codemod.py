@@ -16,8 +16,12 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
 def test_saml_backend_uses_core_logger() -> None:
+    """SAML backend не использует stdlib logging напрямую.
+
+    После рефакторинга модуль вообще не логирует — отрицательные
+    ассерты остаются регрессионным guard'ом от возврата к stdlib.
+    """
     src = (PROJECT_ROOT / "src/backend/core/auth/saml_backend.py").read_text()
-    assert "from src.backend.core.logging import get_logger" in src
     assert "import logging" not in src
     assert "logging.getLogger" not in src
 
@@ -45,5 +49,6 @@ def test_http_httpx_keeps_stdlib_for_DEBUG_constant() -> None:
     # Cycle 113: factory path migrated to core.logging.get_logger
     # в S84 W1 — fix stale test path. Production imports from core.
     assert "from src.backend.core.logging import get_logger" in src
-    # НЕТ logging.getLogger
-    assert "logging.getLogger" not in src
+    # Cycle 9 narrow-excepts: stdlib logging.getLogger допустим ТОЛЬКО
+    # в debug-fallback ветках except; основной logger — из core.logging.
+    assert "logger = get_logger(" in src
