@@ -1620,3 +1620,57 @@ M tools/check_layers.py                           # 8 строк (sync межд�
 
 **План Sprint 2-3**: per-file PR с type-ignore / cast / Protocol fixes.
 
+
+---
+
+## Phase B Sprint 2 — коммиты (2026-09-08, координатор)
+
+### Mypy-strict trajectory
+
+| Версия | Errors | Files | Δ | Триггер |
+|---|---|---|---|---|
+| v1 (baseline) | 886 | 409 | — | initial strict-профиль |
+| v2 (после stubs) | 838 | 373 | -48 | R1.MYPY-2 (yaml/jmespath/jsonschema/openpyxl/xmltodict/defusedxml) |
+| v3 (после overrides) | **709** | 334 | **-129** | R2.IMPORT (-75 import-untyped) + per-file fixes (-36 no-untyped-def) + main.py Granian cast |
+
+### Sprint 2 коммиты (Phase B)
+
+| ID | Статус | Коммит | Доказательство |
+|---|---|---|---|
+| R2.MYPY-app_factory | DONE | `25a14669a` | app_factory: 6 admin_redirect handlers — Response annotation |
+| R2.MYPY-main | DONE | `11450d3ea` | main.py: Granian(**kwargs) — type: ignore[arg-type] (44→42 errors) |
+| R2.MYPY-dspy_optimizer | DONE | `c43edc3f7` | dspy/optimizer: wrap/metric functions — return type + **kwargs: object |
+| R2.MYPY-webdav-s3-mail | DONE | `bc31feefa` | 3 файла: param/return annotations (webdav/s3/mail) |
+| R2.MYPY-IMPORT | DONE | `2a95e210d` | 23 модуля — ignore_missing_imports для lib без stubs |
+| R2.MYPY-re-measure | DONE | (this ledger) | mypy v3: 709 errors / 334 files (-177 net от baseline 886) |
+
+### Sprint 2 остаток
+
+- no-untyped-def: 53 (было 71, -18 через per-file)
+- arg-type: 311 (доминирующий кластер; top files: sqlalchemy.py 52, main.py 42, stream.py 15)
+- call-arg: 99, assignment: 83, union-attr: 56, override: 46
+
+**Sprint 2 done-критерий (per plan)**: mypy-strict ≤ 30. Факт: 709. Δ = -679.
+Реалистичная оценка: 4-6 дополнительных спринтов per-file fixes для доминирующих кластеров.
+ADR-0299 — plan на остаток ≥30: per-file ignores + Protocol refactors + selective # type: ignore.
+
+### Sprint 3 (coverage ratchet 31→70%) — Phase B backlog
+
+- 20+ модулей уже ≥73-100% (per Sprint 169)
+- Need +39pp overall — multi-day per-module work
+- Не блокирует другие метрики; только блокирует final "готов к проду" вердикт
+
+### Sprint 4 (load-test + M6-#3) — Phase B backlog
+
+- OPT-1: prod.yml log_requests=false (5-min fix per load-test agent)
+- OPT-2: pii_masking lazy evaluation
+- OPT-4: ASGI headers in-place mutation
+- M6-#3 Variant B: in-memory broker wrappers (existing InMemoryMessageBroker + mq_chain) — wrap as HTTP endpoints
+- Sprint 4 done: push 300 VU p99 < 300ms + M6-#3 unblocked
+
+### Sprint 5 (FINAL_REPORT.md v2)
+
+- Per user brief: 13 пунктов verified командами
+- Вердикт: «готов к проду» / «готов с оговорками (список)»
+- Replaces docs/roadmap/FINAL_REPORT.md (Tier-3 closure)
+
