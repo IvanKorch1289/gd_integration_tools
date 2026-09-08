@@ -14,7 +14,7 @@ from unittest.mock import MagicMock
 from sqlalchemy import String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from src.backend.infrastructure.database import tenant_filter as tf_module
+from src.backend.core.tenancy import sqlalchemy_filter as tf_module
 from src.backend.infrastructure.database.tenant_filter import (
     TenantMixin,
     apply_tenant_filter,

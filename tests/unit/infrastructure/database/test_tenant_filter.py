@@ -1,14 +1,31 @@
-"""Unit-tests for tenant filter (RLS helper)."""
+"""Unit-tests for tenant filter (RLS helper).
+
+S107 W1: ``infrastructure.database.tenant_filter`` — shim; реализация
+живёт в ``core.tenancy.sqlalchemy_filter``. Тесты патчат canonical-модуль
+(шим только реэкспортирует), сбрасывая ``_INSTALLED`` перед каждой
+проверкой регистрации.
+"""
 
 from __future__ import annotations
 
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+import pytest
+
+from src.backend.core.tenancy import sqlalchemy_filter
 from src.backend.infrastructure.database.tenant_filter import (
     TenantMixin,
     apply_tenant_filter,
 )
+
+CANONICAL = "src.backend.core.tenancy.sqlalchemy_filter"
+
+
+@pytest.fixture(autouse=True)
+def _reset_installed(monkeypatch: pytest.MonkeyPatch) -> None:
+    """apply_tenant_filter идемпотентен (_INSTALLED) — сбрасываем флаг."""
+    monkeypatch.setattr(sqlalchemy_filter, "_INSTALLED", False)
 
 
 def test_tenant_mixin_has_column() -> None:
@@ -18,7 +35,7 @@ def test_tenant_mixin_has_column() -> None:
 def test_apply_tenant_filter_registers_listeners() -> None:
     session_factory = MagicMock()
     with patch(
-        "src.backend.infrastructure.database.tenant_filter.event.listens_for",
+        f"{CANONICAL}.event.listens_for",
     ) as mock_listen:
         apply_tenant_filter(session_factory)
         assert mock_listen.call_count == 2
@@ -35,10 +52,10 @@ def test_filter_by_tenant_skips_non_select() -> None:
         return decorator
 
     with patch(
-        "src.backend.infrastructure.database.tenant_filter.event.listens_for",
+        f"{CANONICAL}.event.listens_for",
         fake_listens_for,
     ), patch(
-        "src.backend.infrastructure.database.tenant_filter.get_tenant_id",
+        f"{CANONICAL}.get_tenant_id",
         return_value="t1",
     ):
         apply_tenant_filter(MagicMock())
@@ -59,10 +76,10 @@ def test_filter_by_tenant_no_tenant_returns() -> None:
         return decorator
 
     with patch(
-        "src.backend.infrastructure.database.tenant_filter.event.listens_for",
+        f"{CANONICAL}.event.listens_for",
         fake_listens_for,
     ), patch(
-        "src.backend.infrastructure.database.tenant_filter.get_tenant_id",
+        f"{CANONICAL}.get_tenant_id",
         return_value=None,
     ):
         apply_tenant_filter(MagicMock())
@@ -84,10 +101,10 @@ def test_set_tenant_on_new_sets_when_empty() -> None:
         return decorator
 
     with patch(
-        "src.backend.infrastructure.database.tenant_filter.event.listens_for",
+        f"{CANONICAL}.event.listens_for",
         fake_listens_for,
     ), patch(
-        "src.backend.infrastructure.database.tenant_filter.get_tenant_id",
+        f"{CANONICAL}.get_tenant_id",
         return_value="t1",
     ):
         apply_tenant_filter(MagicMock())
@@ -108,10 +125,10 @@ def test_set_tenant_on_new_preserves_existing() -> None:
         return decorator
 
     with patch(
-        "src.backend.infrastructure.database.tenant_filter.event.listens_for",
+        f"{CANONICAL}.event.listens_for",
         fake_listens_for,
     ), patch(
-        "src.backend.infrastructure.database.tenant_filter.get_tenant_id",
+        f"{CANONICAL}.get_tenant_id",
         return_value="t1",
     ):
         apply_tenant_filter(MagicMock())

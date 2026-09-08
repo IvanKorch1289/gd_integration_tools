@@ -30,6 +30,20 @@ class _FakeSession:
         self.closed = True
 
 
+@pytest.fixture(autouse=True)
+def _disable_lag_probe(monkeypatch: pytest.MonkeyPatch) -> None:
+    """K2 S19: lag-probe трогает primary на первом read — отключаем flag.
+
+    Эти тесты проверяют routing/breaker в изоляции; lag-budget path
+    (``_update_lag_status`` открывает primary-сессию) здесь не тестируется.
+    """
+    from src.backend.core.config.features import feature_flags
+
+    monkeypatch.setattr(
+        feature_flags, "multi_replica_failover", False, raising=False
+    )
+
+
 class _FakeSessionMaker:
     """Фабрика, возвращающая помеченный label'ом :class:`_FakeSession`."""
 
