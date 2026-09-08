@@ -323,7 +323,9 @@ class OutboundHttpClient:
             if asyncio.iscoroutine(coro):
                 try:
                     loop = asyncio.get_running_loop()  # noqa: F841 — loop-guard
-                    get_task_registry().create_task(coro)
+                    get_task_registry().create_task(
+                        coro, name="outbound_http.waf_audit"
+                    )
 
                 except RuntimeError:  # noqa: violation-check — sync context, no event loop
                     pass  # no running loop → drop coroutine (sync context)
