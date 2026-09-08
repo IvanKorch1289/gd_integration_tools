@@ -137,3 +137,13 @@ Cycle 7 commit: `8f1177a17`. Cumulative cycles 3-7: 5 модулей improved, +
 Cycle 8 commit: `87a51dc3f`. **Cumulative cycles 3-8: 6 модулей improved, +443pp cumulative**.
 
 **Documented known issue**: `_load_file_bytes` (send_file.py:160) не имеет try/except вокруг `s3_client.get_object_bytes(key)` — S3 exceptions propagate up to process() caller. Per Sprint 169 closure rules (no source fix in coverage cycle), test skipped + comment documents the issue.
+
+### Sprint 170 cycle 9 (2026-09-05) — coverage sprint инкремент 7 (telegram domain)
+
+| Module | До | После | Tests |
+|---|---|---|---|
+| `src/backend/dsl/engine/processors/telegram/status.py` | **0%** | **100%** | 10 тестов (__init__/to_spec/process + bot_name + exception) |
+
+Cycle 9 commit: `8d0187eeb`. Cumulative cycles 3-9: 7 модулей improved, +543pp cumulative.
+
+**Domain expansion**: cycles 3-8 покрывали `express/` модули; cycle 9 начал `telegram/` модули (status.py).
