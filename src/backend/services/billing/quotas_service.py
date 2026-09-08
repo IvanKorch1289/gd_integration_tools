@@ -24,11 +24,11 @@ class QuotasService:
             "src.backend.core.di.providers.billing.get_quotas_backend_provider()."
         )
 
-    async def consume_request(self, tenant_id: str):  # pragma: no cover
+    async def consume_request(self, tenant_id: str) -> None:  # pragma: no cover
         """Заглушка интерфейса; не должна вызываться."""
         raise NotImplementedError("QuotasService.consume_request is a stub")
 
-    async def check_tokens(self, tenant_id: str, tokens: int):  # pragma: no cover
+    async def check_tokens(self, tenant_id: str, tokens: int) -> None:  # pragma: no cover
         """Заглушка интерфейса; не должна вызываться."""
         raise NotImplementedError("QuotasService.check_tokens is a stub")
 

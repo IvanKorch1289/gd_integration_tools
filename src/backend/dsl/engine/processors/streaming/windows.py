@@ -393,8 +393,8 @@ class GroupByKeyProcessor(_BaseWindow):
 
             key = jmespath.search(self._key_path, exchange.in_message.body)
         except (
-            jmespath.exceptions.ParseError,
-            jmespath.exceptions.JsonStringError,
+            jmespath.exceptions.JMESPathError,
+            TypeError,
         ) as exc:
             # D-AUDIT-12701 fix (cycle 127): narrow от bare
             # 'except Exception: _' (swallow'ил SystemExit, KeyboardInterrupt)

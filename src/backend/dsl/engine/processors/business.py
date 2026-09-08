@@ -69,8 +69,8 @@ class TenantScopeProcessor(BaseProcessor):
 
                 tenant_id = jmespath.search(self._body_path, exchange.in_message.body)
             except (
-                jmespath.exceptions.ParseError,
-                jmespath.exceptions.JsonStringError,
+                jmespath.exceptions.JMESPathError,
+                TypeError,
             ) as exc:
                 # D-AUDIT-12301 fix (cycle 123): narrow от broad
                 # 'except Exception: _' (которое swallow'ило ANY exception
