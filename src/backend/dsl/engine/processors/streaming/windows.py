@@ -392,10 +392,7 @@ class GroupByKeyProcessor(_BaseWindow):
             import jmespath
 
             key = jmespath.search(self._key_path, exchange.in_message.body)
-        except (
-            jmespath.exceptions.JMESPathError,
-            TypeError,
-        ) as exc:
+        except (jmespath.exceptions.JMESPathError, TypeError) as exc:
             # D-AUDIT-12701 fix (cycle 127): narrow от bare
             # 'except Exception: _' (swallow'ил SystemExit, KeyboardInterrupt)
             # до конкретных jmespath exceptions. Fallback key=None —
