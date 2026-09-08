@@ -384,6 +384,14 @@ def _check_file(path: Path, root: Path) -> list[tuple[str, str, str]]:
             # — ЕГО назначение (lazy resolve_module, без top-level импорта).
             if "/core/di/providers/" in rel:
                 continue
+            # Prod-Readiness 2026-09-08: facade-файлы core (audit/facade/,
+            # messaging/eventbus/facade.py, frontend_facade.py) —
+            # capability-checked фасады (V22 facade pattern), тот же
+            # санкционированный мост, что core/api/*.py.
+            if layer == "core" and ("facade" in Path(rel).name):
+                continue
+            if layer == "core" and "/facade/" in rel:
+                continue
             violations.append((rel, layer, module))
     return violations
 

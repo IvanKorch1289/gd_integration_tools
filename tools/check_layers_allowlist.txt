@@ -8,10 +8,6 @@ src/backend/core/ai/gateway_pipeline_mixin/output_mixin.py	core	src.backend.serv
 src/backend/core/ai/llm_gateway.py	core	src.backend.services.ai.gateway.client
 src/backend/core/ai/multi_agent.py	core	src.backend.services.ai.multi_agent.supervisor
 src/backend/core/ai/policy/enforcer/input_guard_mixin.py	core	src.backend.services.ai.guardrails.lakera_client
-src/backend/core/audit/facade/__init__.py	core	src.backend.infrastructure.audit.jsonl_audit
-src/backend/core/audit/facade/audit_service.py	core	src.backend.services.audit.clickhouse_audit_service
-src/backend/core/frontend_facade.py	core	src.backend.services.dsl_portal
-src/backend/core/messaging/eventbus/facade.py	core	src.backend.infrastructure.clients.messaging.event_bus
 src/backend/core/security/connector_auth.py	core	src.backend.services.authorization.facade
 src/backend/entrypoints/api/v1/endpoints/processors_catalog.py	entrypoints	src.backend.dsl.builder
 src/backend/entrypoints/api/v1/endpoints/processors_catalog.py	entrypoints	src.backend.dsl.engine.processors
