@@ -29,6 +29,7 @@ import asyncio
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.task_registry import get_task_registry
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession  # noqa: F401 — type comment L112
@@ -72,7 +73,7 @@ class CompensatingDriverWorker:
         if self._task is not None and not self._task.done():
             return
         self._stopping.clear()
-        self._task = asyncio.create_task(self._run(), name="compensating-driver-worker")  # noqa: orphan-create-task
+        self._task = get_task_registry().create_task(self._run(), name="compensating-driver-worker")
 
         _logger.info(
             "CompensatingDriverWorker started (interval=%.1fs)", self._interval
