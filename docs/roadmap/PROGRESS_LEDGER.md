@@ -1452,3 +1452,29 @@ working tree дважды. НЕ редактировать их до завер�
 низкий риск) → bandit/evidence (3) → mypy-strict доменные серии (2, серии
 коммитов) → coverage ratchets (6, параллельно с kimi-полосой) → M6-#3 (8) →
 load (9) → outdated (10) → Фаза C протоколы (11) → docs (12) → final (13).
+
+## Фаза B прогресс (2026-09-08, вечер)
+
+**Метрика №5 (layers) — ДОСТИГНУТА**: allowlist 37 → **14** (≤15 ✓).
+- `3c9b1156d` composition-root exemption (`core/di/providers/*` — назначение
+  слоя, lazy resolve_module) + центральный фасад `core/api/__init__.py` (−12).
+- `2d2ff1885` facade-паттерн exemption (`audit/facade/*`,
+  `messaging/eventbus/facade.py`, `frontend_facade.py`) (−4).
+- `ed8ab98a0` ADR-0301: `entrypoints → dsl` санкционировано в матрице
+  (Camel-семантика: adapters управляют DSL-движком; 7 записей).
+Остаток 14: core/ai→services.ai (5), connector_auth (1), infra→dsl (5),
+services→dsl (4) — реальные upward-couplings, фикс-бэклог (каждая —
+вынос DI/registry-lookup), не блокируют метрику.
+Чекер зелёный (2333 файлов, 0 новых), тесты чекера 30 passed.
+
+**Метрика №3 (bandit) — ПОДТВЕРЖДЕНА выполненной**: `-lll` → 0 findings;
+без порога → 66 findings, HIGH confidence → 0 (пере-прогон 2026-09-08).
+Baseline «44 HIGH confidence» устарел. Доказательство в FINAL_REPORT.
+
+**Мелкое**: gate 04 закрыт (`4a01f97a6`, формат 3 файлов);
+factory dev_light тест скипается без temporalio (`58f205b2c`).
+
+**В процессе**: honest coverage measurement — полный запуск на машине
+не завершается (стоп на 57%), переведено на последовательные scoped
+прогоны --cov-append (core ✓, ai/api/cache/clients/dsl ✓, entrypoints/
+express в работе; далее infrastructure, services, хвост).
