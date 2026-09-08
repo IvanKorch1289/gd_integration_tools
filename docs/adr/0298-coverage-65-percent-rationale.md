@@ -173,3 +173,11 @@ Cycle 12 commit: `accc2e6e2`. Cumulative cycles 3-12: 9 модулей improved,
 | `src/backend/dsl/engine/processors/telegram/reply.py` | **0%** | **100%** | 15 тестов (__init__ validation + process per-field) |
 
 Cycle 13 commit: `<pending>`. Cumulative cycles 3-13: 10 модулей improved, +842pp cumulative.
+
+### Sprint 170 cycle 14 (2026-09-05) — coverage sprint инкремент 11
+
+| Module | До | После | Tests |
+|---|---|---|---|
+| `src/backend/dsl/engine/processors/telegram/mention.py` | **0%** | **100%** | 16 тестов |
+
+Cycle 14 commit: `<pending>`. Cumulative cycles 3-14: 11 модулей improved, **+942pp cumulative**, **8 модулей at 100%**.
