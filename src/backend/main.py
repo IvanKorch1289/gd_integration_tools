@@ -150,7 +150,7 @@ def _run_granian() -> None:
     if settings.app.graceful_shutdown_timeout > 0:
         kwargs["workers_kill_timeout"] = int(settings.app.graceful_shutdown_timeout)
 
-    Granian(**kwargs).serve()
+    Granian(**kwargs).serve()  # type: ignore[arg-type]  # R2.MYPY-TOP: kwargs dict[str, object] vs Granian strict signature; runtime args match.
 
 
 def run() -> None:
