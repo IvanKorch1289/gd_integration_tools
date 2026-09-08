@@ -111,3 +111,11 @@ Cycle 4 commit: `977fb3c02`. Cumulative cycles 3-4: 2 modules improved, +106pp o
 | `src/backend/dsl/engine/processors/express/edit.py` | **14%** | **100%** | 17 тестов (__init__ + to_spec + process per-field validation) |
 
 Cycle 5 commit: `68f8d4f4e`. Cumulative cycles 3-5: 3 модуля improved, +192pp cumulative.
+
+### Sprint 170 cycle 6 (2026-09-05) — coverage sprint инкремент 4
+
+| Module | До | После | Tests added |
+|---|---|---|---|
+| `src/backend/dsl/engine/processors/express/reply.py` | **20%** | **100%** | 19 тестов (__init__ + to_spec + process per-field flow) |
+
+Cycle 6 commit: `cfffcd504`. Cumulative cycles 3-6: 4 модуля improved, +272pp cumulative.
