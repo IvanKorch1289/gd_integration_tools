@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Literal
 from watchfiles import Change
 
 from src.backend.core.interfaces.source import EventCallback, SourceKind
+from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.infrastructure.clients.base_connector import HealthResult
 
 if TYPE_CHECKING:
@@ -200,7 +201,7 @@ class FileWatcherSource:
         чтобы ``wait_for`` не отменял async-generator ``stream()``.
         """
         queue: asyncio.Queue[FileEvent | None] = asyncio.Queue()
-        producer = asyncio.create_task(self._fill_queue(queue))  # noqa: orphan-create-task
+        producer = get_task_registry().create_task(self._fill_queue(queue))
 
         try:
             batch: list[FileEvent] = []
