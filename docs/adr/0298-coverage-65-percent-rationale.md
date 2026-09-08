@@ -95,3 +95,11 @@ Cycle 3 (commit `2a80e0f56`):
 
 Per (а) plan: multi-day coverage sprint до overall 70% + `pyproject.toml:fail_under` 60→70.
 Estimated effort: 40-80 hours (testcontainers + playwright + per-extension mocks).
+
+### Sprint 170 cycle 4 (2026-09-05) — coverage sprint инкремент 2
+
+| Module | До | После | Tests added |
+|---|---|---|---|
+| `src/backend/dsl/engine/processors/express/mention.py` | **25%** | **76%** | 16 тестов (__init__ validation + process() per type) |
+
+Cycle 4 commit: `977fb3c02`. Cumulative cycles 3-4: 2 modules improved, +106pp on those modules.
