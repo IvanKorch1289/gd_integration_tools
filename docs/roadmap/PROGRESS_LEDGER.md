@@ -1478,3 +1478,103 @@ factory dev_light тест скипается без temporalio (`58f205b2c`).
 не завершается (стоп на 57%), переведено на последовательные scoped
 прогоны --cov-append (core ✓, ai/api/cache/clients/dsl ✓, entrypoints/
 express в работе; далее infrastructure, services, хвост).
+
+---
+
+## Phase A Sprint 1 — Multi-Sprint Prod-Readiness (2026-09-08, координатор)
+
+> **Predecessor**: aqualad-spectre-obsidian plan; HEAD `65667fb3d`.
+> **Подход**: рой аналитиков (system-analyst, code-reviewer, dead-code-hunter, verification-runner) + перепроверка brief-метрик перед фиксацией.
+
+### Критические расхождения с user brief (verified 2026-09-08)
+
+User brief утверждал:
+- bandit HIGH confidence = 44 → **факт 0** (Sprint 169 BATCHES 6-9 inline `# nosec` closed per ADR-0295; verified `bandit -r src/ -lll --confidence-level high` → High: 0; total nosec=40, specifically disabled=54)
+- layer allowlist = 37 → **факт 14** (commits `3c9b1156d` 37→25 + `2d2ff1885` 25→21 + ещё 7 удалений в cleanup-серии; **target ≤15 уже достигнут**)
+
+Эти два пункта **исключаются из Фазы B Sprint 1** — уже выполнены в Sprint 169 / последующих cleanup-коммитах.
+
+### Verified baseline 2026-09-08 (команды-доказательства)
+
+| Метрика | Факт | Цель | Δ | Команда |
+|---|---|---|---|---|
+| ruff check src/ | 0 | 0 | ✓ | `uv run ruff check src/` |
+| pytest --collect-only | 17413 tests, 0 errors | ≥17000 | ✓ | `uv run python -m pytest --collect-only -q` |
+| bandit HIGH severity | 0 | 0 | ✓ | `uv run bandit -r src/ -lll` |
+| bandit HIGH confidence | **0** | 0 | ✓ | `uv run bandit -r src/ -lll --confidence-level high` |
+| vulture @90 | 0 | 0 | ✓ | `uv run vulture src/ --min-confidence 90` |
+| mypy permissive | 0 / 2356 | 0 | ✓ | `uv run mypy -p src` |
+| **mypy STRICT (9 codes)** | **886 / 409 files** | ≤30 | **-856** | `uv run mypy src/ --no-incremental --enable-error-code=...` |
+| layer allowlist | **14** | ≤15 | ✓ | `awk '!/^#/ && NF' tools/check_layers_allowlist.txt \| wc -l` |
+| outdated packages | **131** | ≤30 | **-101** | `uv pip list --outdated \| wc -l` |
+| coverage overall | ~30.8-33% | ≥70% | **+37-39pp** | defer (full suite ~60 мин, Ponytail rule) |
+| pre-prod-check 36 gates | 20 PASS / 8 WARN / 5 SKIP / 3 FAILED | ≥33 PASS, 0 code-FAILED | +13 | `python tools/checks/pre_prod_check.py` |
+| M6-#3 | BLOCKED(docker) | unblock + pass | BLOCKER | `docker ps` → permission denied |
+| load-test push 300VU | p99 440ms | <300ms | -32% | `tests/perf/locust_push.py --users 300` |
+| FINAL_REPORT.md | v1 (Tier-3) | v2 (strict 13) | rewrite | cat docs/roadmap/FINAL_REPORT.md |
+
+### Mypy-strict decomposition (886 → 30)
+
+| Error code | Count | % | Домен |
+|---|---|---|---|
+| arg-type | 352 | 39.7% | services/infrastructure — function call sites |
+| import-untyped | 157 | 17.7% | external libs без py.typed (yaml, sqlalchemy_continuum, hvac, croniter, sqlalchemy_utils) — stubs |
+| call-arg | 99 | 11.2% | multi-arg call sites with strict types |
+| assignment | 80 | 9.0% | variable type widening |
+| no-untyped-def | 71 | 8.0% | untyped function defs |
+| union-attr | 46 | 5.2% | Optional/Union narrowing failures |
+| override | 46 | 5.2% | subclass override signature mismatches |
+| var-annotated | 21 | 2.4% | implicit Any assignments |
+| call-overload | 13 | 1.5% | overload resolution failures |
+
+**Top-5 файлов**: sqlalchemy base (52), main.py (44), stream.py (15), page_57_S3 (12), transport/sources (12).
+
+**Plan**: 7-9 циклов (per-cycle ~-100/-150 errors, ADR-0295 partial-rationale). Остаток ≤30 — ADR-0299 с явным планом на непокрытые кластеры (вероятно import-untyped stubs + override chain).
+
+### Outdated packages decomposition (131 → 30)
+
+| Категория | Кол-во | Стратегия |
+|---|---|---|
+| SECURITY (CVE-tracked) | 6 | bulk — starlette/lxml/gitpython/langsmith/click/joserfc |
+| SAFE-MINOR/PATCH (semver) | 94 | bulk `--upgrade-package` |
+| BREAKING (MAJOR) | 15 direct + 14 transitive | per-package analysis + integration tests |
+| DEV-ONLY | 21 | low priority, в конце |
+
+**Plan**: Шаг 1 (1 PR, 100 пакетов SECURITY+SAFE) → 30 outdated = target met. Шаг 2-3 — per-package MAJOR для <10.
+
+### Layer allowlist — фактическое состояние
+
+**Уже ≤15** (14 entries). Sprint 169 + cleanup-коммиты закрыли. Phase B не требуется.
+
+Однако **side-finding**: pre-existing syntax error в `cdc/client.py:188` (Python 2-style `except X, Y:`) создаёт blind spot в `check_layers.py` (line 314: AST-чекер молча проглатывает SyntaxError). Долгосрочно — добавить warning.
+
+### Pre-flight WIP-дерево (проверено, не наши правки)
+
+```
+M docs/adr/WIKI.md                                # WIKI
+M src/backend/core/di/providers/infrastructure_locator.py  # DI
+M src/backend/core/messaging/eventbus/facade.py   # eventbus facade
+M "src/frontend/streamlit_app/pages/96_*.py"      # Streamlit page
+M tools/check_layers.py                           # 8 строк (sync между ветками)
+```
+
+**Решение**: не трогать, передать в план как известные WIP (координация через ledger, если файлы наши — откатить, если не наши — оставить).
+
+### Решения Фазы A для Фазы B
+
+| Task ID | Домен | Задача | Оценка |
+|---|---|---|---|
+| **R1.MYPY-1** | core/services | mypy-strict cycle 1: top-3 code families — arg-type (352→150) + assignment (80→30) + call-arg (99→40) | 2-3 дня |
+| **R1.MYPY-2** | external stubs | Установить stubs для yaml/sqlalchemy_continuum/hvac/croniter/sqlalchemy_utils → -150 [import-untyped] | 0.5 дня |
+| **R1.OUTDATED-1** | deps | Bulk SECURITY+SAFE: 100 пакетов `--upgrade-package` одной командой → 131→30 | 1-2 дня |
+| **R1.SYNTAX-FIX** | infrastructure/clients/external/cdc | PEP 758 fix `cdc/client.py:188` + side-warning в check_layers.py | 0.5 дня |
+
+**Спринт 1 финиш (по плану)**: mypy-strict 886→~600, outdated 131→~30, syntax fix закрыт.
+
+### Не входит в Sprint 1 (defer)
+
+- R1.MYPY-3 (cycle 2-3, добивка до ≤30) — Sprint 2
+- Coverage ratchet 31→70% — Sprint 3
+- M6-#3 + load-test — Sprint 4
+- FINAL_REPORT v2 — Sprint 5
+
