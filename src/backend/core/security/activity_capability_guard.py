@@ -44,6 +44,7 @@ from typing import Any, TypeVar
 
 from src.backend.core.logging import get_logger
 from src.backend.core.security.capabilities import CapabilityDeniedError, CapabilityGate
+from src.backend.core.utils.task_registry import get_task_registry
 
 __all__ = (
     "CapabilityContext",
@@ -171,7 +172,7 @@ def _emit_audit(context: CapabilityContext | None, event: dict[str, object]) -> 
         if asyncio.iscoroutine(coro):
             try:
                 loop = asyncio.get_running_loop()
-                loop.create_task(coro)  # noqa: orphan-create-task
+                get_task_registry().create_task(coro)
 
             except RuntimeError:
                 pass  # no running loop → drop coroutine (sync context)
