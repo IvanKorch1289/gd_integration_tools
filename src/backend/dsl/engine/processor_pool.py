@@ -16,6 +16,8 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
+from src.backend.core.utils.task_registry import get_task_registry
+
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
     from src.backend.dsl.engine.exchange import Exchange
@@ -224,7 +226,7 @@ class ProcessorPool:
                 )
                 return result
 
-        tasks = [asyncio.create_task(run_with_sem(p)) for p in processors]  # noqa: orphan-create-task
+        tasks = [get_task_registry().create_task(run_with_sem(p)) for p in processors]
 
         for task in tasks:
             self._active.add(task)
