@@ -73,7 +73,9 @@ class CompensatingDriverWorker:
         if self._task is not None and not self._task.done():
             return
         self._stopping.clear()
-        self._task = get_task_registry().create_task(self._run(), name="compensating-driver-worker")
+        self._task = get_task_registry().create_task(
+            self._run(), name="compensating-driver-worker"
+        )
 
         _logger.info(
             "CompensatingDriverWorker started (interval=%.1fs)", self._interval

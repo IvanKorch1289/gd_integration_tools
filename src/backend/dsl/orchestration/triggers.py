@@ -168,7 +168,9 @@ class IntervalTrigger:
                     return
                 await self._dispatch()
 
-        self._task = get_task_registry().create_task(_loop(), name=f"trigger:{self.name}")
+        self._task = get_task_registry().create_task(
+            _loop(), name=f"trigger:{self.name}"
+        )
 
         _log.info(
             "IntervalTrigger: %s started (route=%s, interval=%.1fs)",
@@ -288,7 +290,9 @@ class CronTrigger:
                     return
                 await self._dispatch()
 
-        self._task = get_task_registry().create_task(_loop(), name=f"trigger:{self.name}")
+        self._task = get_task_registry().create_task(
+            _loop(), name=f"trigger:{self.name}"
+        )
 
         _log.info(
             "CronTrigger: %s started (route=%s, cron=%r, tz=%s)",

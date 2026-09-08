@@ -146,7 +146,9 @@ class CertRotationWatcher:
             logger.warning("cert.rotation.already_started")
             return
         self._stop_event.clear()
-        self._task = get_task_registry().create_task(self._loop(), name="cert-rotation-watcher")
+        self._task = get_task_registry().create_task(
+            self._loop(), name="cert-rotation-watcher"
+        )
 
         logger.info("cert.rotation.task_started")
 
