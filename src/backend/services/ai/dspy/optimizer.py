@@ -275,7 +275,7 @@ def _is_dspy_available() -> bool:
     return importlib.util.find_spec("dspy") is not None
 
 
-def _wrap_pipeline_to_dspy(pipeline: DSPyPipeline):
+def _wrap_pipeline_to_dspy(pipeline: DSPyPipeline) -> object:
     """Wrap our DSPyPipeline Protocol → DSPy Module (lazy import)."""
     if not _is_dspy_available():
         raise RuntimeError("DSPy SDK not available — cannot wrap pipeline")
@@ -285,11 +285,11 @@ def _wrap_pipeline_to_dspy(pipeline: DSPyPipeline):
     class _DSPyPipelineModule(dspy.Module):
         """DSPy Module wrapper поверх DSPyPipeline Protocol."""
 
-        def __init__(self, inner: DSPyPipeline):
+        def __init__(self, inner: DSPyPipeline) -> None:
             super().__init__()
             self._pipeline = inner
 
-        def forward(self, **kwargs) -> dspy.Prediction:
+        def forward(self, **kwargs: object) -> dspy.Prediction:
             example = _dspy_kwargs_to_example(kwargs)
             output = self._pipeline.forward(example)
             return dspy.Prediction(prediction=output)
@@ -299,10 +299,10 @@ def _wrap_pipeline_to_dspy(pipeline: DSPyPipeline):
 
 def _dspy_metric_adapter(
     pipeline: DSPyPipeline,
-) -> Callable[[dspy.Example, dspy.Prediction, None], float]:
+) -> Callable[..., float]:
     """Адаптер pipeline.metric → DSPy metric signature (example, prediction, ...)."""
 
-    def _metric(example: dspy.Example, prediction: dspy.Prediction, *_args) -> float:
+    def _metric(example: object, prediction: object, *_args: object) -> float:
         ex_dict = dict(example.inputs())
         ex_dict.update(example.labels())
         try:
