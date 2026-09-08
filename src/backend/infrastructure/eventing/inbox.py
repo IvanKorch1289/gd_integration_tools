@@ -65,8 +65,10 @@ class Inbox:
         """
         try:
             from src.backend.infrastructure.clients.storage.redis import (
-                get_redis_client as redis_client,
+                get_redis_client,
             )
+
+            redis_client = get_redis_client()
         except ImportError as exc:
             if self.fail_mode == "closed":
                 raise InboxUnavailableError(

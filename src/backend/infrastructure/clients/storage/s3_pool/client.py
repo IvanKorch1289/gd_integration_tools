@@ -33,6 +33,22 @@ except ImportError:  # botocore — опциональная зависимос�
             self.response = kwargs.get("error_response", {"Error": {"Code": ""}})
             self.operation_name = kwargs.get("operation_name", "")
 
+        def __str__(self) -> str:
+            # Формат совместим с botocore ClientError, чтобы silent-error
+            # сообщения ({'status': 'error', 'message': str(exc)}) были
+            # информативны и без botocore.
+            err = (
+                self.response.get("Error", {})
+                if isinstance(self.response, dict)
+                else {}
+            )
+            code = err.get("Code", "")
+            message = err.get("Message", "")
+            op = self.operation_name or "unknown"
+            return (
+                f"An error occurred ({code}) when calling the {op} operation: {message}"
+            )
+
 
 from src.backend.core.config.settings import FileStorageSettings
 from src.backend.core.errors import ServiceError
