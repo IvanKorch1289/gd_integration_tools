@@ -374,6 +374,16 @@ def _check_file(path: Path, root: Path) -> list[tuple[str, str, str]]:
                 continue
             if rel.endswith("core/api/workflow.py"):
                 continue
+            # Prod-Readiness 2026-09-08: core/api/__init__.py — центральный
+            # фасад (D160), ре-экспортирует dsl/schemas символы для
+            # entrypoints. Тот же паттерн, что перечисленные core/api/*.py.
+            if rel.endswith("core/api/__init__.py"):
+                continue
+            # Prod-Readiness 2026-09-08: core/di/providers/* — COMPOSITION
+            # ROOT (V22): резолв модулей любого слоя через module_registry
+            # — ЕГО назначение (lazy resolve_module, без top-level импорта).
+            if "/core/di/providers/" in rel:
+                continue
             violations.append((rel, layer, module))
     return violations
 
