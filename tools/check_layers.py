@@ -311,7 +311,16 @@ def _check_file(path: Path, root: Path) -> list[tuple[str, str, str]]:
         return []
     try:
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-    except SyntaxError:
+    except SyntaxError as e:
+        # R1.SYNTAX-WARN: emit warning to stderr so blind spot becomes
+        # visible. Do NOT fail CI here — file may be intentionally
+        # legacy/non-runnable, but layer-check cannot analyze it.
+        # Fix: resolve the SyntaxError separately (was: cdc/client.py:188 PEP 758).
+        print(
+            f"[check_layers] WARNING: cannot AST-parse {path.as_posix()} ({e.msg} @ line {e.lineno}); "
+            f"layer check SKIPPED for this file",
+            file=sys.stderr,
+        )
         return []
     violations: list[tuple[str, str, str]] = []
     rel = str(path.as_posix())
