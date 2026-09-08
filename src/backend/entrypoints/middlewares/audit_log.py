@@ -26,6 +26,7 @@ from datetime import UTC, datetime
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.entrypoints.middlewares import _body_hash
 
 __all__ = ("AuditLogMiddleware",)
@@ -176,7 +177,7 @@ class AuditLogMiddleware:
                     except RuntimeError:
                         loop = None
                     if loop is not None and loop.is_running():
-                        loop.create_task(writer.write(audit_event))  # noqa: orphan-create-task
+                        get_task_registry().create_task(writer.write(audit_event))
 
         except Exception as exc:
             _clickhouse_logger.debug("ClickHouse audit write skipped: %s", exc)
