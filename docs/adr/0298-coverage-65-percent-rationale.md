@@ -181,3 +181,13 @@ Cycle 13 commit: `<pending>`. Cumulative cycles 3-13: 10 модулей improved
 | `src/backend/dsl/engine/processors/telegram/mention.py` | **0%** | **100%** | 16 тестов |
 
 Cycle 14 commit: `<pending>`. Cumulative cycles 3-14: 11 модулей improved, **+942pp cumulative**, **8 модулей at 100%**.
+
+### Sprint 170 cycle 18 (2026-09-05) — coverage sprint инкремент 12
+
+| Module | До | После | Tests |
+|---|---|---|---|
+| `src/backend/dsl/engine/processors/telegram/send.py` | **0%** | **100%** | 19 тестов |
+
+Cycle 18 commit: `<pending>`. Cumulative cycles 3-18: 12 модулей improved, **+1042pp cumulative**, **9 модулей at 100%**.
+
+**Domain expansion**: cycles 3-8 (express), cycles 9+11-18 (telegram) — **9 telegram модулей at 100%** покрыты: status, edit, typing, reply, mention, send + express ones. 1 telegram модуль remaining: `send_file.py`.
