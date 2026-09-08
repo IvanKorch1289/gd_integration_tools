@@ -130,6 +130,12 @@ log:
   port: 9000
   use_tls: true
   ca_bundle: null
+  # R4.LOAD OPT-1 (load-test agent, 2026-09-08): disable per-request body
+  # logging в prod profile. InnerRequestLoggingMiddleware буферит и логирует
+  # body каждого response — главный cost-contributor p99 440ms @ 300VU push.
+  # Body-logging остаётся доступным в dev/dev_light (debugging), но OFF в prod
+  # для throughput. Structured request_id propagation (X-Request-ID) сохранён.
+  log_requests: false
 
 
 fs:
