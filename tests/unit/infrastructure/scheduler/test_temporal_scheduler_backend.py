@@ -38,7 +38,11 @@ def _make_factory_with_client() -> Any:
     client.create_schedule = AsyncMock()
     client.start_workflow = AsyncMock()
     client.list_schedules = MagicMock()  # будет async iter в тестах
-    client.get_schedule_handle = MagicMock()
+    # get_schedule_handle(...).delete() — await в prod (replace/cancel path),
+    # поэтому delete у дефолтного handle — AsyncMock.
+    handle = MagicMock()
+    handle.delete = AsyncMock()
+    client.get_schedule_handle = MagicMock(return_value=handle)
     client.get_workflow_handle = MagicMock()
     factory.get_client = AsyncMock(return_value=client)
     return factory
@@ -52,7 +56,7 @@ def _make_factory_with_client() -> Any:
 def test_init_lazy_factory() -> None:
     """Без client_factory используется singleton TemporalClientFactory()."""
     with patch(
-        "src.backend.infrastructure.workflow.temporal_client.TemporalClientFactory",
+        "src.backend.infrastructure.workflow.temporal_client.TemporalClientFactory"
     ) as mock_cls:
         backend = TemporalSchedulerBackend()
         assert backend._namespace == "default"
@@ -112,7 +116,7 @@ async def test_schedule_cron_happy_path() -> None:
     client.create_schedule.assert_awaited_once()
     # Проверяем, что spec был создан через ScheduleSpec (new SDK API).
     fake_spec_cls.assert_called_once_with(
-        cron_expressions=["*/5 * * * *"], time_zone_name="UTC",
+        cron_expressions=["*/5 * * * *"], time_zone_name="UTC"
     )
     fake_action_cls.assert_called_once()
 
@@ -186,8 +190,11 @@ async def test_schedule_cron_replace_existing_missing_schedule() -> None:
     """replace_existing=True, schedule не существует — не падает, продолжает."""
     factory = _make_factory_with_client()
     client = factory.get_client.return_value
-    # get_schedule_handle().delete() бросает (schedule не найден).
-    client.get_schedule_handle = MagicMock(side_effect=Exception("schedule not found"))
+    # get_schedule_handle().delete() бросает (schedule не найден);
+    # cycle-9/D-AUDIT-1023: prod ловит только RuntimeError/AttributeError/KeyError.
+    client.get_schedule_handle = MagicMock(
+        side_effect=RuntimeError("schedule not found")
+    )
 
     fake_client_module = MagicMock()
     fake_client_module.ScheduleCronSpec = MagicMock(return_value=MagicMock())
@@ -322,7 +329,8 @@ async def test_cancel_workflow_fallback() -> None:
     factory = _make_factory_with_client()
     client = factory.get_client.return_value
 
-    client.get_schedule_handle = MagicMock(side_effect=Exception("not schedule"))
+    # cycle-9/D-AUDIT-1023: prod ловит только RuntimeError/AttributeError/KeyError.
+    client.get_schedule_handle = MagicMock(side_effect=RuntimeError("not schedule"))
     wf_handle = MagicMock()
     wf_handle.cancel = AsyncMock()
     client.get_workflow_handle = MagicMock(return_value=wf_handle)
@@ -344,8 +352,8 @@ async def test_cancel_not_found() -> None:
     factory = _make_factory_with_client()
     client = factory.get_client.return_value
 
-    client.get_schedule_handle = MagicMock(side_effect=Exception("not schedule"))
-    client.get_workflow_handle = MagicMock(side_effect=Exception("not workflow"))
+    client.get_schedule_handle = MagicMock(side_effect=RuntimeError("not schedule"))
+    client.get_workflow_handle = MagicMock(side_effect=RuntimeError("not workflow"))
 
     backend = TemporalSchedulerBackend(factory)
     result = await backend.cancel("nonexistent")
@@ -422,7 +430,8 @@ async def test_list_jobs_handles_list_schedules_failure() -> None:
     """list_jobs: list_schedules бросает (старая temporalio) → fallback на cache."""
     factory = _make_factory_with_client()
     client = factory.get_client.return_value
-    client.list_schedules = MagicMock(side_effect=Exception("old temporalio"))
+    # cycle-9/D-AUDIT-1024: prod ловит RuntimeError/AttributeError/OSError.
+    client.list_schedules = MagicMock(side_effect=RuntimeError("old temporalio"))
 
     fake_client_module = MagicMock()
     fake_client_module.ScheduleListSchedule = MagicMock()
@@ -460,8 +469,7 @@ def test_parse_cron_5_fields() -> None:
 
     assert result is not None
     fake_spec_cls.assert_called_once_with(
-        cron_expressions=["*/5 * * * *"],
-        time_zone_name="UTC",
+        cron_expressions=["*/5 * * * *"], time_zone_name="UTC"
     )
 
 
