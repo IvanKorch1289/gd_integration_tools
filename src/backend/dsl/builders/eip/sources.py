@@ -17,6 +17,7 @@ import asyncio
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
 
+from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.builders.eip._base import EIPMixinBase
 
 if TYPE_CHECKING:
@@ -53,7 +54,7 @@ def _create_or_defer_sensor_task(coro_factory: Callable[[], Any], *, name: str) 
 
     if loop is not None:
         # Eager path: create task immediately.
-        return asyncio.create_task(coro_factory(), name=name)  # noqa: orphan-create-task
+        return get_task_registry().create_task(coro_factory(), name=name)
 
     # Lazy path: return descriptor that defers task creation.
     class _DeferredTask:
@@ -65,7 +66,7 @@ def _create_or_defer_sensor_task(coro_factory: Callable[[], Any], *, name: str) 
         def start(self) -> asyncio.Task:
             if self._task is not None:
                 return self._task
-            self._task = asyncio.create_task(coro_factory(), name=name)  # noqa: orphan-create-task
+            self._task = get_task_registry().create_task(coro_factory(), name=name)
 
             return self._task
 
