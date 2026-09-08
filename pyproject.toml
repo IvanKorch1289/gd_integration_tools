@@ -682,6 +682,15 @@ check_untyped_defs = true
 warn_return_any = true
 disallow_untyped_decorators = true
 
+[[tool.mypy.overrides]]
+# Phase 2: main.py (66 strict errors, 1 file) — uvicorn.run(**uvicorn_kwargs)
+# is fundamentally a **dict[str, object] call against uvicorn's strict-typed
+# signature; per-line # type: ignore[arg-type] at L96 documents the issue.
+# All other 65 errors cascade from this single line.
+module = "src.backend.main"
+check_untyped_defs = true
+warn_return_any = true
+disallow_untyped_decorators = true
 
 [[tool.mypy.overrides]]
 # Wave D.2: temporalio — optional extra (uv sync --extra workflow);

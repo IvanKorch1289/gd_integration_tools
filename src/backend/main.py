@@ -93,7 +93,7 @@ def _run_uvicorn() -> None:
     else:
         uvicorn_kwargs["workers"] = settings.app.workers
 
-    uvicorn.run(**uvicorn_kwargs)
+    uvicorn.run(**uvicorn_kwargs)  # type: ignore[arg-type]  # S170 cycle 16 (ADR-0300): uvicorn_kwargs is properly typed dict[str, object] — runtime args match uvicorn signature.
 
 
 def _run_granian() -> None:
