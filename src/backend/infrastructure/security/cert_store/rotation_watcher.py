@@ -18,6 +18,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.task_registry import get_task_registry
 
 if TYPE_CHECKING:
     from src.backend.infrastructure.security.cert_store.prometheus_exporter import (
@@ -145,7 +146,7 @@ class CertRotationWatcher:
             logger.warning("cert.rotation.already_started")
             return
         self._stop_event.clear()
-        self._task = asyncio.create_task(self._loop(), name="cert-rotation-watcher")  # noqa: orphan-create-task
+        self._task = get_task_registry().create_task(self._loop(), name="cert-rotation-watcher")
 
         logger.info("cert.rotation.task_started")
 
