@@ -1,7 +1,7 @@
 # ADR-0299: orphan-create-task → get_task_registry() migration plan
 
 **Date**: 2026-09-05
-**Status**: PROPOSED + PARTIALLY EXECUTED (commits `64d49a0c4`, `24cd8ed78`)
+**Status**: EXECUTED + CLOSED (12 commits, 13 sites migrated, 1 design-exception)
 **Author**: координатор (S170)
 **Related**: PROGRESS_LEDGER §check-task-registry, ADR-0295 R-FIX3, commit `379594fbb`
 
@@ -18,11 +18,29 @@ permanent fix.
 
 ## Cycle 10 progress (in-progress)
 
-| File | Status | Commit |
-|---|---|---|
-| `dsl/builders/eip/sources.py` (2 sites) | ✅ DONE | `64d49a0c4` |
-| `dsl/orchestration/triggers.py` (2 sites) | ✅ DONE | `24cd8ed78` |
-| **Σ** | **5 sites migrated, 11 remaining** | — |
+| # | File | Status | Commit |
+|---|---|---|---|
+| 1 | `dsl/builders/eip/sources.py` (2 sites) | ✅ DONE | `64d49a0c4` |
+| 2 | `dsl/orchestration/triggers.py` (2 sites) | ✅ DONE | `24cd8ed78` |
+| 3 | `infrastructure/workflow/compensating_driver.py` | ✅ DONE | `e5e8d018a` |
+| 4 | `dsl/engine/processor_pool.py` | ✅ DONE | `9dad5ea3d` |
+| 5 | `infrastructure/sources/file_watcher.py` | ✅ DONE | `5f7e965d3` |
+| 6 | `infrastructure/security/cert_store/rotation_watcher.py` | ✅ DONE | `c12ffd721` |
+| 7 | `infrastructure/security/cert_store/hot_reload.py` | ✅ DONE | `c12ffd721` |
+| 8 | `plugins/composition/setup_infra/scheduler_leader.py` | ✅ DONE | `0d8664ec1` |
+| 9 | `dsl/workflow/compiler/gateways.py` | ✅ DONE | `92635f662` |
+| 10 | `core/security/activity_capability_guard.py` (loop.create_task → registry) | ✅ DONE | `f427aac27` + F841 fix `a11776502` |
+| 11 | `entrypoints/middlewares/audit_log.py` (loop.create_task → registry) | ✅ DONE | `28032bacb` |
+| 12 | `entrypoints/mqtt/mqtt_handler.py` | ✅ DONE | `e4ea96d7f` |
+| **Σ** | **12 files migrated, 13 noqa suppressions removed** | — | — |
+
+**Remaining: 1 noqa site — intentional design-exception:**
+- `src/backend/core/utils/task_registry.py:96` — internal implementation of `TaskRegistry.create_task()` itself. Uses `loop.create_task()` directly because IT IS the registry. Source comment explicitly notes: "Сам TaskRegistry — это и есть санкционированная точка обёртки raw create_task; CI-gate orphan-create-task здесь не применим".
+
+**FINAL STATUS**:
+- `noqa: orphan-create-task` total in src/backend/: 16 → 1 (93.75% reduction)
+- Migration closed in 12 atomic commits (Sprint 170 cycle 10)
+- No architectural redesign required — registry IS the layer-bridging mechanism per Sprint 218 graceful shutdown design
 
 ## Migration pattern
 
