@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 
 from src.backend.core.config.settings import settings
 from src.backend.core.logging import get_logger
@@ -182,34 +182,34 @@ def _configure_business_routers(app: FastAPI) -> None:
     @_admin_bridge_router.get(
         "/api/admin/{path:path}", operation_id="admin_legacy_redirect_get"
     )
-    async def _admin_redirect_get(path: str):
+    async def _admin_redirect_get(path: str) -> Response:
         return await _do_admin_redirect(path, "GET")
 
     @_admin_bridge_router.post(
         "/api/admin/{path:path}", operation_id="admin_legacy_redirect_post"
     )
-    async def _admin_redirect_post(path: str):
+    async def _admin_redirect_post(path: str) -> Response:
         return await _do_admin_redirect(path, "POST")
 
     @_admin_bridge_router.put(
         "/api/admin/{path:path}", operation_id="admin_legacy_redirect_put"
     )
-    async def _admin_redirect_put(path: str):
+    async def _admin_redirect_put(path: str) -> Response:
         return await _do_admin_redirect(path, "PUT")
 
     @_admin_bridge_router.delete(
         "/api/admin/{path:path}", operation_id="admin_legacy_redirect_delete"
     )
-    async def _admin_redirect_delete(path: str):
+    async def _admin_redirect_delete(path: str) -> Response:
         return await _do_admin_redirect(path, "DELETE")
 
     @_admin_bridge_router.patch(
         "/api/admin/{path:path}", operation_id="admin_legacy_redirect_patch"
     )
-    async def _admin_redirect_patch(path: str):
+    async def _admin_redirect_patch(path: str) -> Response:
         return await _do_admin_redirect(path, "PATCH")
 
-    async def _do_admin_redirect(path: str, method: str):
+    async def _do_admin_redirect(path: str, method: str) -> Response:
         """Redirect legacy admin API paths to v1 admin API.
 
         Args:
