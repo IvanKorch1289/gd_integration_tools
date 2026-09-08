@@ -539,6 +539,15 @@ feature_flags = [
 [dependency-groups]
 dev = [
     "mypy>=1.20.1,<2.0.0",
+    # R1.MYPY-2: mypy-strict import-untyped stubs — снижают 157 [import-untyped] ошибок
+    # до 0 для библиотек с поддерживаемыми stub-пакетами (typeshed).
+    "types-PyYAML>=6.0.12,<7.0.0",
+    "types-jmespath>=1.0.2,<2.0.0",
+    "types-jsonschema>=4.23.0,<5.0.0",
+    "types-aiofiles>=24.1.0,<25.0.0",
+    "types-openpyxl>=3.1.5,<4.0.0",
+    "types-xmltodict>=0.13.0,<1.0.0",
+    "types-defusedxml>=0.7.0,<1.0.0",
     "py-spy>=0.4.0,<1.0.0",
     "grpcio-tools>=1.70.0,<2.0.0",
     "ruff>=0.15.10,<1.0.0",
