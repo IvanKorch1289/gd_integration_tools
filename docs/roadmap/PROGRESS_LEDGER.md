@@ -1346,3 +1346,46 @@ scan_file 1 (r21), express 1 (r21, prod-баг), subpackage_exports 1 (r21).
 Следующие кандидаты (из ledger pending): data_quality overall,
 F1-остаток ~11 frontend httpx sites (kimi), M6-#3 (BLOCKED docker/Vault),
 mypy strict 1190 (ADR-0295).
+
+## Ratchet 22 (2026-09-08): infrastructure-семейства + КОНФЛИКТ ФАЙЛОВ с полосой kimi
+
+**Закрыто и закоммичено** (зелёные прогоны на момент коммита):
+1. `4e3277988` database: smart_session_manager (autouse `_disable_lag_probe`
+   — lag-probe K2 S19 трогает primary), tenant_filter (патчи на canonical
+   `core.tenancy.sqlalchemy_filter`, сброс `_INSTALLED`), wire/e2e.
+2. `a01425555` rate_limit_integration: OrderEvent(order_id=int, action=...),
+   QuotaTracker контракт {remaining,limit,reset_at} + fake-Redis для
+   QuotaExceeded; SMTP/IMAP per-connector quota удалена из прода — тесты
+   сняты (rate limit живёт на middleware-слое).
+3. `c54b120ba` prod: inbox.seen_or_mark не ВЫЗЫВАЛ get_redis_client
+   (фабрика без вызова → dedup всегда fail-open/fail-closed) — исправлено;
+   outbox стабы дополнили DatabaseSessionManager (аннотация в outbox.py:28);
+   s3 stub BotoClientError.__str__ в формате botocore.
+4. `847edd1d0`+`64d49a0c4` outbound_http: дубль task-планирования
+   (NameError loop) — смёржен с полосой kimi (cycle-10 task_registry).
+5. `a2bb03006` data_quality 97% (0 пропущенных стейтментов):
+   type-mismatch, remediate не-dict/без-field, outlier-trim >1000,
+   length без __len__, json_schema ImportError.
+6. `fc0b26344` temporal scheduler backend: AsyncMock для handle.delete,
+   RuntimeError вместо bare Exception (контракт cycle-9).
+
+**КОНФЛИКТ**: полоса kimi параллельно делает cycle-10 рефактор
+(asyncio.create_task → get_task_registry) и откатывает общие тест-файлы
+(в т.ч. уже исправленные мной: chaos, s94_w2_codemod, http_drain,
+sse_source, query_result_cache). Мои правки этих файлов УТЕРЯНЫ из
+working tree дважды. НЕ редактировать их до завершения cycle-10!
+
+**Рецепты для пере-применения после cycle-10** (проверены, зелёные):
+- test_chaos_probes.test_is_chaos_enabled_safe_default: флаг через
+  `get_runtime_overrides().set("chaos_engineering_enabled", True)` +
+  finally clear (prod читает FeatureFlagService, не static registry).
+- test_s94_w2_codemod: saml_backend — убрать ассерт на get_logger
+  (модуль больше не логирует), оставить guard'ы на stdlib;
+  http_httpx — заменить `"logging.getLogger" not in src` на
+  `"logger = get_logger(" in src` (cycle-9 debug-fallbacks валидны).
+- test_v2_p0_10_http_drain.test_lifespan_calls_ending_in_finally:
+  цепочка lifespan finally → `await run_shutdown(` → shutdown.py
+  содержит `await ending()` (S111 W2 slim-рефактор).
+- test_query_result_cache.test_json_datetime_fallback: добавить
+  `UTC` в `from datetime import ...` (NameError).
+- smart_session_wire/tenant_filter e2e: см. `4e3277988` (в истории).
