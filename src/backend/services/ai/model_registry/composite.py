@@ -9,6 +9,8 @@ priority read-only backend.
 
 from __future__ import annotations
 
+from typing import Literal
+
 from src.backend.core.logging import get_logger
 from src.backend.services.ai.model_registry.adapter import (
     ModelRecord,
@@ -71,7 +73,7 @@ class CompositeModelRegistry:
         name: str,
         *,
         version: str | None = None,
-        stage: str | None = None,
+        stage: Literal["None", "Staging", "Production", "Archived"] | None = None,
         backend: str | None = None,
     ) -> ModelRecord | None:
         """Поиск модели; если указан backend — только в нём, иначе во всех."""
