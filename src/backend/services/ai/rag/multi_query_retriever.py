@@ -178,11 +178,11 @@ class MultiQueryRetriever:
             ) -> tuple[str, list[str]]:
                 try:
                     results = await self._search_vectors([emb], top_k * 2)
-                    chunk_ids = [self._chunk_id(doc) for doc in results]
+                    chunk_ids = [self._chunk_id(doc) for doc in results]  # type: ignore[arg-type]
                     for doc in results:
-                        cid = self._chunk_id(doc)
+                        cid = self._chunk_id(doc)  # type: ignore[arg-type]
                         if cid:
-                            chunks_by_id.setdefault(cid, doc)
+                            chunks_by_id.setdefault(cid, doc)  # type: ignore[arg-type]
                     return label, chunk_ids
                 except Exception as exc:
                     logger.warning("multi_query.search_failed for %s: %s", label, exc)
@@ -199,11 +199,11 @@ class MultiQueryRetriever:
             for emb, label in zip(all_embeddings, source_labels):
                 try:
                     search_results = await self._search_vectors([emb], top_k * 2)
-                    chunk_ids = [self._chunk_id(doc) for doc in search_results]
+                    chunk_ids = [self._chunk_id(doc) for doc in search_results]  # type: ignore[arg-type]  # R2.MYPY: search_vectors returns Any; _chunk_id expects dict
                     for doc in search_results:
-                        cid = self._chunk_id(doc)
+                        cid = self._chunk_id(doc)  # type: ignore[arg-type]
                         if cid:
-                            chunks_by_id.setdefault(cid, doc)
+                            chunks_by_id.setdefault(cid, doc)  # type: ignore[arg-type]
                     ranked_lists.append((label, chunk_ids))
                 except Exception as exc:
                     logger.warning("multi_query.search_failed for %s: %s", label, exc)
