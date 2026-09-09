@@ -233,7 +233,7 @@ class MCPClientRegistry:
             from src.backend.core.net.outbound_http import OutboundHttpClient
 
             waf_policy = spec.waf_policy or "strict"
-            self._http_client = OutboundHttpClient(waf_policy=waf_policy)
+            self._http_client = OutboundHttpClient(waf_policy=waf_policy)  # type: ignore[call-arg]  # R2.MYPY: OutboundHttpClient expects positional/policy object
             return self._http_client
         except ImportError as exc:
             raise RuntimeError(
@@ -261,7 +261,7 @@ class MCPClientRegistry:
                     VaultSecretsBackend,
                 )
 
-                broker = VaultSecretsBackend()
+                broker = VaultSecretsBackend()  # type: ignore[call-arg]  # R2.MYPY: VaultSecretsBackend requires addr from settings
             except Exception as _:
                 try:
                     from src.backend.infrastructure.security.env_secrets import (
