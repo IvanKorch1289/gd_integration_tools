@@ -224,7 +224,7 @@ class PolicyChain:
                 marker = PolicyMarkerProcessor(
                     policy_name=name, params=kwargs, enabled=False
                 )
-                self._builder._processors.append(marker)  # type: ignore[attr-defined]
+                self._builder._processors.append(marker)  # type: ignore[arg-type,attr-defined]
                 return self._builder
         except (ImportError, AttributeError, RuntimeError, TypeError) as marker_exc:
             # cycle-9/D-AUDIT-1724: narrow exceptions + observability.
@@ -239,7 +239,7 @@ class PolicyChain:
             )
 
         marker = PolicyMarkerProcessor(policy_name=name, params=kwargs, enabled=True)
-        self._builder._processors.append(marker)  # type: ignore[attr-defined]
+        self._builder._processors.append(marker)  # type: ignore[arg-type,attr-defined]
         return self._builder
 
 
@@ -322,4 +322,4 @@ class PolicyMixin:
     @property
     def policy(self) -> PolicyChain:
         """Возвращает PolicyChain proxy для chainable .policy.cache().policy.circuit_breaker()."""
-        return PolicyChain(self)
+        return PolicyChain(self)  # type: ignore[arg-type]
