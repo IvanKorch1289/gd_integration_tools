@@ -63,7 +63,8 @@ class MqSink(Sink):
         retry_on=(ConnectionError, TimeoutError, OSError),
     )
     @require_capability("mq.write", action="write")
-    async def send(self, payload: Any) -> SinkResult:
+    async def send(  # type: ignore[override]  # R2.MYPY: Sink.send signature mismatch,
+        self, payload: Any) -> SinkResult:
         """Публикует ``payload`` через FastStream-broker."""
         # S1: per-connector rate limit. Kafka/Redis — 500/s, Rabbit/NATS — 200/s.
         limiter = get_connector_rate_limiter()

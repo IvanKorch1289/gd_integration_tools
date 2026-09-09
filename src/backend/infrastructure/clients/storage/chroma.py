@@ -83,7 +83,7 @@ class ChromaVectorStore(BaseVectorStore):
         return self._collection
 
     @resilient(name="qdrant_upsert", max_attempts=3)
-    async def upsert(
+    async def upsert(  # type: ignore[override]
         self,
         embeddings: list[list[float]],
         documents: list[str],

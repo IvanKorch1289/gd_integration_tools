@@ -70,7 +70,7 @@ class QdrantVectorStore(BaseVectorStore):
         return client
 
     @resilient(name="qdrant_upsert", max_attempts=3)
-    async def upsert(
+    async def upsert(  # type: ignore[override]  # R2.MYPY: Awaitable vs Coroutine
         self,
         embeddings: list[list[float]],
         documents: list[str],

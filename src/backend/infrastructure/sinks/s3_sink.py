@@ -60,7 +60,8 @@ class S3Sink(Sink):
     @with_breaker("s3_sink", recovery_seconds=60)
     @with_retry(max_attempts=5, retry_on=(ConnectionError, TimeoutError, OSError))
     @require_capability("s3.write", action="write")
-    async def send(self, payload: Any) -> SinkResult:
+    async def send(  # type: ignore[override]  # R2.MYPY: Sink.send signature mismatch,
+        self, payload: Any) -> SinkResult:
         """Сериализует ``payload`` и выгружает в S3 через ``storage_client``."""
         # S1: per-connector rate limit (30/s, scope=key).
         limiter = get_connector_rate_limiter()

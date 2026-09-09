@@ -68,7 +68,8 @@ class EmailSink(Sink):
         retry_on=(ConnectionError, TimeoutError, OSError),
     )
     @require_capability("email.send", action="write")
-    async def send(self, payload: Any) -> SinkResult:
+    async def send(  # type: ignore[override]  # R2.MYPY: Sink.send signature mismatch,
+        self, payload: Any) -> SinkResult:
         """Формирует :class:`email.message.EmailMessage` и отправляет через aiosmtplib."""
         # S1: per-connector rate limit (10/s — SMTP is slow).
         limiter = get_connector_rate_limiter()
