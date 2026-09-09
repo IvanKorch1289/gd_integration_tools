@@ -109,18 +109,15 @@ class AuditReplayMiddleware:
             request_body_bytes = await self._collect_body(receive)
 
         # Re-inject body для downstream через replay_receive closure.
-        body_sent = False
-
+        # Prod-fix 2026-09-09 (M6-#3): replay ИДЕМПОТЕНТЕН — один-shot +
+        # http.disconnect ломал цепочку из нескольких потребителей
+        # (последний — FastAPI-парсер — получал disconnect → 422).
         async def replay_receive() -> Message:
-            nonlocal body_sent
-            if not body_sent:
-                body_sent = True
-                return {
-                    "type": "http.request",
-                    "body": request_body_bytes,
-                    "more_body": False,
-                }
-            return {"type": "http.disconnect"}
+            return {
+                "type": "http.request",
+                "body": request_body_bytes,
+                "more_body": False,
+            }
 
         # Capture response для audit record.
         response_status: dict[str, int] = {"status": 0}

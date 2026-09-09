@@ -201,13 +201,14 @@ class RequestBodyCacheMiddleware:
         Также сохраняет ``scope["original_receive"]`` для downstream,
         которым нужен raw channel.
         """
-        delivered = {"done": False}
-
+        # Prod-fix 2026-09-09 (M6-#3): replay ИДЕМПОТЕНТЕН — каждое
+        # потребление получает body (more_body=False завершает любой
+        # чанк-цикл). Бывший one-shot + http.disconnect ломал цепочку
+        # из нескольких потребителей (request_log / audit_replay /
+        # FastAPI-парсер): последний получал disconnect вместо body
+        # → 422 «Field required: body».
         async def replay_receive() -> Message:
-            if not delivered["done"]:
-                delivered["done"] = True
-                return {"type": "http.request", "body": body, "more_body": False}
-            return {"type": "http.disconnect"}
+            return {"type": "http.request", "body": body, "more_body": False}
 
         # Pre-fix bug: ``scope["receive"] = original_receive`` —
         # downstream FastAPI body-parser получал consumed channel и
