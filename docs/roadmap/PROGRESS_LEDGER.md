@@ -1805,3 +1805,36 @@ ADR-0299 — plan на остаток ≥30: per-file ignores + Protocol refacto
 - patterns: return type annotations, var-annotated ignores, assert narrowing для union-attr, type: ignore для union-attr на bytes.decode
 - остаётся: -492 для достижения ≤30 (multi-sprint)
 
+
+## Фаза B прогресс 2 (2026-09-09): pre-prod 22 PASSED / 1-2 FAIL (транзитные)
+
+Доказательства (команды из этого прохода):
+- **Coverage 72.04% honest** (метрика №6): scoped `--cov-append` по ВСЕМ
+  tests/unit директориям + `coverage combine` + `coverage xml` →
+  `check_coverage_gate.py main --threshold 70 --strict` →
+  `OK: 72.04% >= 70.00%`. Прежние ~31% — артефакт частичных прогонов
+  (full-suite single pass на shared-box не завершается: стоп на 57-67%).
+  fail_under 60→70 (`a937627c0`), все 3 gate-инвойса docs.mk починены
+  (subcommand `main`, `2d0d09773`). Timed-out скоупы: mcp (140s), workflows
+  (250s) — вклад консервативно НЕ учтён (цифра занижена, не завышена).
+- **mypy permissive 0 errors** (2356 файлов) — gate 02 PASS:
+  audit_versioning Any-аннотации (мой), sqlalchemy/webdav — полоса R2.MYPY
+  (kimi: 709→218 strict параллельно, -69% от 1190).
+- **gate 15** PASS: ratchet-манифест allow-non-off (`db1347288`).
+- **gate 04**: чинится форматом по мере коммитов параллельной полосы
+  (`32387b4d5` — 24 файла); протекает пока kimi коммитит.
+- **gate 19 startup**: 1.764s FAIL под нагрузкой → OK 1.3s на тихой (прямая
+  проверка) — load-шум, не регресс.
+- **P1 prod-blocker найден и закрыт** (`см. auth_required`): B-04 catch-22 —
+  auth_required (внешний) требовал Bearer на /auth/login ДО step-up-проверки
+  → позитивный логин невозможен (401 «Authentication required»). Login path
+  возвращён в public-префиксы: фактический guard — LoginStepUpMiddleware.
+  Живой dev_light-стенд: :8001, dev-пользователь dev_admin (argon2id, локальный
+  .run/dev.sqlite3). Открыто: /api/v1/auth/step-up-request из docstring
+  middleware НЕ реализован (токен не валидируется по значению) — следующий
+  цикл; логин под нагрузкой 30-60с (rate-limit backend timeout) — триаж.
+
+**Статус 13 метрик**: 1✓ 3✓ 4✓ 5✓(14) 6✓(72.04%) 7~(22P/8W/2F транзит.)
+2~(strict 218, kimi lane) 8~(unblock начат: dev-стенд+catch-22 fix; step-up
+endpoint + позитивные прогоны — след. цикл) 9~(OPT-1 применён kimi; rerun
+pending) 10~ 11~ 12~ 13~(FINAL_REPORT v2 существует, обновить в финале).
