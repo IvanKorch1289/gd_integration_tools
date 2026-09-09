@@ -2166,3 +2166,23 @@ kimi) + доменные серии R2.MYPY. Воспроизводимо: `make
 - FINAL_REPORT v6 baseline, ready for v7 update
 - Mypy-strict ≤30 still requires: -190 errors (multi-sprint)
 
+
+---
+
+## Phase B Sprint 12 (продолжение loop iteration 5) — 2026-09-09
+
+### Mypy-strict trajectory
+
+| Версия | HEAD | Errors | Δ |
+|---|---|---|---|
+| Sprint 12 iter 4 close | `f777ef339` | 220 | — |
+| sinks/storage override batch | `257f65f62` | 208 | -12 |
+| observability + redis mixin | `ea830ada9` | **204** | -4 |
+| **v23** | (this ledger) | **204** | **-16 Sprint 12 iter 5** |
+
+### Cumulative across all sessions
+
+- mypy-strict: **886 → 204 = -682 (-77%)**
+- 185+ atomic commits
+- FINAL_REPORT v6 baseline, ready for v7 update
+
