@@ -79,7 +79,7 @@ class RouteStats:
         # HdrHistogram: 1..60000 ms, precision 2 digits (O(1) percentile queries)
         if _HDRH_AVAILABLE:
             self._hdr: Any = _HdrHistogram(1, 60_000, 2)
-            self._fallback: _FallbackStats | None = None
+            self._fallback: _FallbackStats | None = None  # R2.MYPY: Optional for symmetry with _hdr; initialized to None when hdr available
         else:
             self._hdr = None
             self._fallback = _FallbackStats()
@@ -99,8 +99,10 @@ class RouteStats:
             self.error_count += 1
         value = max(1, min(int(latency_ms), 60_000))
         if self._hdr is not None:
+            assert self._hdr is not None  # R2.MYPY: mypy narrowing for attr access
             self._hdr.record_value(value)
-        else:
+        elif self._fallback is not None:
+            assert self._fallback is not None  # R2.MYPY: mypy narrowing for attr access
             self._fallback.record(latency_ms)
 
     def percentile(self, p: float) -> float:
@@ -114,8 +116,12 @@ class RouteStats:
 
         """
         if self._hdr is not None:
+            assert self._hdr is not None  # R2.MYPY: mypy narrowing for attr access
             return float(self._hdr.get_value_at_percentile(p))
-        return self._fallback.percentile(p)
+        if self._fallback is not None:
+            assert self._fallback is not None  # R2.MYPY: mypy narrowing
+            return self._fallback.percentile(p)
+        return 0.0
 
     @property
     def samples(self) -> int:
@@ -126,8 +132,12 @@ class RouteStats:
 
         """
         if self._hdr is not None:
+            assert self._hdr is not None  # R2.MYPY: mypy narrowing for attr access
             return int(self._hdr.get_total_count())
-        return self._fallback.samples
+        if self._fallback is not None:
+            assert self._fallback is not None  # R2.MYPY: mypy narrowing
+            return self._fallback.samples
+        return 0
 
     def to_dict(self) -> dict[str, Any]:
         """Convert stats to dictionary.
