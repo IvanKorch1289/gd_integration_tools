@@ -294,6 +294,20 @@ def build_rate_limit_checker(
       без Redis-зависимости.
     """
     try:
+        from src.backend.core.config.settings import settings
+
+        # Prod-Readiness 2026-09-09 (M6-#3): docstring обещает Fake для
+        # dev_light, но выбор игнорировал профиль — RedisRateLimitChecker
+        # при redis.enabled=False вешал POST /auth/login на 30-90с
+        # (connect retry на незарезолвленном клиенте).
+        if not bool(getattr(settings.redis, "enabled", True)):
+            return FakeRateLimitChecker(
+                max_per_window=max_per_window, window_seconds=window_seconds
+            )
+    except ImportError:
+        pass  # конфиг недоступен — решает DI-ветка ниже
+
+    try:
         from src.backend.core.di.providers.cache import get_redis_kv_client_provider
     except Exception as exc:  # pragma: no cover
         _logger.warning("RateLimit: DI redis-provider недоступен: %s", exc)

@@ -114,6 +114,17 @@ class RedisRateLimiter:
 
         """
         try:
+            from src.backend.core.config.settings import settings
+
+            # Prod-Readiness 2026-09-09 (M6-#3): redis.enabled=False
+            # (dev_light) — fail-open сразу, без попытки коннекта:
+            # get_redis_client() вешал запрос на 30-90с (connect retry).
+            if not bool(getattr(settings.redis, "enabled", True)):
+                return {"remaining": policy.limit, "reset_at": 0, "limit": policy.limit}
+        except (ImportError, AttributeError):
+            pass  # конфиг недоступен — обычный путь (fail-open в except ниже)
+
+        try:
             from src.backend.infrastructure.clients.storage.redis import (
                 get_redis_client as redis_client,
             )
