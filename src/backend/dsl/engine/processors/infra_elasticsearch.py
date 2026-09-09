@@ -64,7 +64,7 @@ class InfraElasticsearchSearchProcessor(BaseProcessor):
             get_elasticsearch_client_class,
         )
 
-        client = get_elasticsearch_client_class()(context)
+        client = get_elasticsearch_client_class()(context)  # type: ignore[arg-type]  # R2.MYPY: context ExecutionContext vs list[str]|None
         results = await client.search(
             index=self.index, query=self.query, size=self.size
         )
