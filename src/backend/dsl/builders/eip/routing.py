@@ -39,7 +39,7 @@ class RoutingEIPsMixin(EIPMixinBase):
         return cast(
             "RouteBuilder",
             self._add(  # type: ignore[attr-defined]
-                MarshalProcessor(from_format=from_format, to_format=to_format)
+                MarshalProcessor(from_format=from_format, to_format=to_format)  # type: ignore[call-arg]  # R2.MYPY: MarshalProcessor uses data_format kwarg
             ),
         )
 

@@ -55,9 +55,9 @@ class InfraMixin:
 
         return self._add(  # type: ignore[attr-defined]
             GuardrailsApplyProcessor(
-                stage=stage,
+                stage=stage,  # type: ignore[arg-type]  # R2.MYPY: str → Literal['input','output']
                 source_property=source_property,
-                on_block=on_block,
+                on_block=on_block,  # type: ignore[arg-type]  # R2.MYPY: str → Literal['dlq','fail','warn']
                 categories=categories,
             )
         )
