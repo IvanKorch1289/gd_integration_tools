@@ -2220,3 +2220,21 @@ file_search, app_state_singleton overload, inbox — ~8-10 errors;
    виновника. Метрика №11: WS auth VERIFIED; accept-ordering — next;
    MQTT/MQ (in-memory) — next; gRPC auto-servicer request_streaming —
    задокументировано; SSE payload-клиент — next.
+
+
+## МЕТРИКА №2 ДОСТИГНУТА (2026-09-09 ночь): mypy strict-профиль → **0 ошибок** на 2356 файлах
+
+Финальный хвост закрыт: cassette._build_sync_handler return-аннотация
+(`Callable[[httpx.Request], httpx.Response]`). Полная серия R2.MYPY:
+**1190 → 228 → 9 → 0** (порог gate 02 ≤30 выполнен с запасом; параллельная
+полоса kimi + мои батчи: scheduler_manager, search, file_search,
+app_state_singleton overload, inbox, _har/cassette/users/orderkinds).
+
+Команда-доказательство:
+`make type-check-strict-profile` → Success: no issues found in 2356 source files
+(mypy --enable-error-code × 9 из ADR-0295; permissive — 0 по-прежнему).
+
+Метрика №11: WS transport+route auth live-verified; denial после auth —
+accept-ordering в middleware-цепочке (изоляция — след. цикл). gRPC транспорт
+verified, auto-servicer request_streaming баг задокументирован. REST/GraphQL/MQ
+live-verified. FTR синхронизирован.
