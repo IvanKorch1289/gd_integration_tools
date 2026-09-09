@@ -159,7 +159,7 @@ class TestInnerRequestLoggingMiddleware:
         # Fallback НЕ потреблял канал: receive вызван ровно один раз.
         assert len(receive_calls) == 1
         assert any(
-            "body недоступен" in str(call)
+            "state['body'] отсутствует" in str(call)
             for call in middleware.logger.debug.call_args_list
         )
 
