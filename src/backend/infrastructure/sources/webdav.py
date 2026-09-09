@@ -18,7 +18,7 @@ import asyncio
 import time
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 from src.backend.core.logging import get_logger
 from src.backend.infrastructure.clients.base_connector import HealthResult
@@ -80,7 +80,7 @@ class WebDAVSource:
 
         return fnmatch.fnmatch(name, self._config.file_pattern)
 
-    def _load_marker(self, client: object) -> None:
+    def _load_marker(self, client: Any) -> None:
         """Загружает уже обработанные файлы из marker'а на сервере."""
         if not self._config.marker_dedup or not self._config.processed_marker_path:
             return
@@ -97,7 +97,7 @@ class WebDAVSource:
             # Marker не существует — first run.
             self._processed_files = set()
 
-    def _save_marker(self, client: object) -> None:
+    def _save_marker(self, client: Any) -> None:
         if not self._config.marker_dedup or not self._config.processed_marker_path:
             return
         try:
@@ -111,7 +111,7 @@ class WebDAVSource:
         except Exception as _:
             logger.exception("WebDAVSource._save_marker failed")
 
-    def _list_remote_files(self, client: object) -> list[str]:
+    def _list_remote_files(self, client: Any) -> list[str]:
         try:
             items = client.ls(self._config.watch_path, detail=False)
             return [str(p) for p in items]
