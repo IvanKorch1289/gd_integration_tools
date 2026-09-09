@@ -110,7 +110,7 @@ class InfraElasticsearchIndexProcessor(BaseProcessor):
             get_elasticsearch_client_class,
         )
 
-        client = get_elasticsearch_client_class()(context)
+        client = get_elasticsearch_client_class()(context)  # type: ignore[arg-type]
         doc_id = await client.index_document(
             index=self.index, document=self.document, doc_id=self.doc_id
         )
