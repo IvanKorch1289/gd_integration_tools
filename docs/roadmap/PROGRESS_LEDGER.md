@@ -1838,3 +1838,31 @@ ADR-0299 — plan на остаток ≥30: per-file ignores + Protocol refacto
 2~(strict 218, kimi lane) 8~(unblock начат: dev-стенд+catch-22 fix; step-up
 endpoint + позитивные прогоны — след. цикл) 9~(OPT-1 применён kimi; rerun
 pending) 10~ 11~ 12~ 13~(FINAL_REPORT v2 существует, обновить в финале).
+
+
+## M6-#3 unblock: live-триаж dev_light (2026-09-09)
+
+Стенд: `APP_PROFILE=dev_light APP_SERVER=uvicorn manage.py run --port 8001`
+(порт 8000 занят чужим granian-инстансом из /app без extensions — полоса
+load-test). Схема: `manage.py migrate` (20 таблиц в .run/dev.sqlite3),
+dev-юзер dev_admin создан (argon2id, time_cost=3/mem=64MiB — по схеме модели).
+
+**Найдено и закрыто**: catch-22 B-04 — auth_required (внешний middleware)
+требовал Bearer на /auth/login до step-up-проверки, поэтому 401 «Authentication
+required» приходил на ЛЮБОЙ логин. Fix: login path возвращён в public-префиксы
+auth_required; фактический guard — LoginStepUpMiddleware (X-Step-Up-Token +
+rate-limit). Коммит с fix в auth_required.py.
+
+**Новый блокер (открыт)**: POST /auth/login в dev_light висит 30/60/90с
+(растёт с числом попыток) и не доходит до проверки креденшеллов: в логе
+ежесекундный `SQL query executed` на протяжении запроса, ответ 422/401 без
+тела логина. Подозреваемый: rate-limit/limiter путь (get_rate_limiter при
+redis.enabled=false в dev_light.yml) — ожидание пула/коннекта с 30s таймаутом
+и повторами. След. шаг: триаж check_ip_rate_limit -> get_rate_limiter().check
+под dev_light (нужен in-memory fallback при redis disabled), затем
+step-up-request endpoint (задокументирован в login_step_up.py, НЕ реализован),
+затем позитивные прогоны протоколов в FUNCTIONAL_TEST_REPORT.
+
+Метрики: pre-prod 22 PASSED / 8 WARN / 5 SKIP / 1-2 FAIL (04 — формат
+параллельных коммитов R2.MYPY, 19 — load-шум startup 1.764 vs 1.695).
+Coverage honest 72.04% >= 70 (gate-strict PASS). mypy permissive 0/2356.
