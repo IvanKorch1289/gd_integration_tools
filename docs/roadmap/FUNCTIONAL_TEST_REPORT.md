@@ -179,3 +179,40 @@ $ curl -s -H "Authorization: Bearer $TOKEN" .../api/v1/admin/certs/expiring
 - Браузерные проверки Swagger/GraphQL playground/Streamlit.
 - step-up-request endpoint (docstring LoginStepUpMiddleware; токен сейчас
   presence-checked, не подписан) — реализовать выпуск+валидацию.
+
+
+### 2026-09-09 (доп.): B-04 flow ПОЛНОСТЬЮ РАБОТАЕТ live — step-up-request реализован
+
+**Реализовано** (коммит 8747e2635+): POST /api/v1/auth/step-up-request —
+выпуск подписанного HMAC-SHA256 токена (TTL 600s, IP-binding, nonce);
+LoginStepUpMiddleware (order 650, WIRED в setup_middlewares) валидирует
+подпись+expiry+IP вместо presence-check; CSRF safe-path, auth_required
+public prefix, api-key exemption — для pre-auth issuance.
+
+**Живая последовательность (verified 2026-09-09, порт 8002)**:
+
+```bash
+# 1. Login без step-up → 401 (guard активен):
+$ curl -s -o /dev/null -w "%{http_code}" -X POST .../api/v1/auth/login \
+    -H "Content-Type: application/json" -d '{"method":"password",...}'
+401
+
+# 2. Выпуск step-up токена → 200, token_len=161:
+$ curl -s -X POST .../api/v1/auth/step-up-request
+{"step_up_token":"eyJpcCI6IjEyNy4wLjAuMSIsImV4cCI6...","token_type":"step_up","expires_in":600}
+
+# 3. Login с токеном → 200 + JWT (212 chars, unmasked, 0.18s):
+$ curl -s -X POST .../api/v1/auth/login -H "X-Step-Up-Token: $ST" -d '{...}'
+{"access_token":"eyJ...","username":"dev_admin","is_superuser":true,...}
+
+# 4. Подделка токена (добавлен 'zzz' → подпись невалидна) → 401 ✓
+#    (IP-binding + HMAC validation работают live)
+
+# 5. Защищённый REST с JWT → 200 (readiness, 3ms);
+#    без JWT → 401; RBAC-контракт: certs/expiring → 403 admin_role_required
+```
+
+**Статус протоколов (metric #11)**: REST (positive+negative) ✓;
+GraphQL auth-pass ✓ (422 = multipart-контракт graphql-upload — документировать);
+WS/SSE-stream/gRPC/MQTT/MQ — требуют специализированных клиентов
+(manage.py grpc-serve, ws-клиент) — след. сессия.
