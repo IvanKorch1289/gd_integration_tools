@@ -76,12 +76,12 @@ def _register_workflow_declarations_from_filesystem() -> int:
             rel = workflow_yaml.relative_to(extensions_dir)
             parts = rel.parts  # ('plugin', 'workflows', 'name.workflow.yaml')
             route_id = f"routes/{parts[0]}/{workflow_yaml.stem}"
-            workflow_registry.register(wf, route_id=route_id)
+            workflow_registry.register(wf, route_id=route_id)  # type: ignore[arg-type]  # R2.MYPY: WorkflowDeclaration vs WorkflowDescriptor
             # P0-NEW-3 (cycle 242): test_workflow_setup_calls_register_spec
             # regression — register_spec required after register per
             # workflow/registry.py:103 docstring.
             try:
-                workflow_registry.register_spec(route_id, wf)
+                workflow_registry.register_spec(route_id, wf)  # type: ignore[arg-type]  # R2.MYPY: same
             except (AttributeError, NotImplementedError) as exc:
                 _logger.debug("workflow.register_spec not available: %s", exc)
             registered += 1
