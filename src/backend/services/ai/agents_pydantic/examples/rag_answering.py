@@ -33,7 +33,7 @@ class RagAnsweringAgent(BasePydanticAgent[RagAnswer]):
                 "You are a Russian-language RAG assistant. "
                 "Use the `retrieve` tool to fetch context, then answer."
             ),
-            **kwargs,
+            **kwargs,  # type: ignore[arg-type]
         )
         self._rag_service = rag_service
         self._top_k = top_k
