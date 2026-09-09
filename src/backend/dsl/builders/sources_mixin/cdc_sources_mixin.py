@@ -65,7 +65,7 @@ class CdcSourcesMixin:
             plugin=plugin,
             **kwargs,
         )
-        builder: RouteBuilder = cls(route_id=route_id, source=f"cdc:{table}")
+        builder: RouteBuilder = cls(route_id=route_id, source=f"cdc:{table}")  # type: ignore[call-arg]  # R2.MYPY: SourcesMixin __init__ via Protocol
         object.__setattr__(builder, "_source_instance", source_instance)
         return builder
 
@@ -106,7 +106,7 @@ class CdcSourcesMixin:
         from src.backend.core.cdc.registry import get_cdc_source
 
         source_instance = get_cdc_source(backend, **kwargs)
-        builder: RouteBuilder = cls(route_id=route_id, source=f"cdc-registry:{backend}")
+        builder: RouteBuilder = cls(route_id=route_id, source=f"cdc-registry:{backend}")  # type: ignore[call-arg]
         object.__setattr__(builder, "_source_instance", source_instance)
         return builder
 
@@ -160,7 +160,7 @@ class CdcSourcesMixin:
             plugin=plugin,
             **kwargs,
         )
-        builder: RouteBuilder = cls(route_id=route_id, source=f"cdc-logical:{table}")
+        builder: RouteBuilder = cls(route_id=route_id, source=f"cdc-logical:{table}")  # type: ignore[call-arg]
         object.__setattr__(builder, "_source_instance", source_instance)
         return builder
 
@@ -217,7 +217,7 @@ class CdcSourcesMixin:
             )
 
         """
-        builder: RouteBuilder = cls(
+        builder: RouteBuilder = cls(  # type: ignore[call-arg]
             route_id=route_id, source=f"cdc-capture:{profile}:{','.join(tables)}"
         )
         object.__setattr__(
