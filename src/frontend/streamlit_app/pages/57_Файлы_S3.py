@@ -95,17 +95,17 @@ with tab_mock:
     col1, col2, col3 = st.columns(3)
     col1.metric("Бакет", bucket)
     col2.metric("Объекты", len(objects))
-    total_size = sum(int(o["size_bytes"]) for o in objects)
+    total_size = sum(int(o["size_bytes"]) for o in objects)  # type: ignore[arg-type,call-overload]  # R2.MYPY: o["size_bytes"] object → int
     col3.metric("Общий размер", f"{total_size / 1024:.1f} KB")
 
     st.subheader(f"Объекты в `s3://{bucket}/{prefix}`")
     if objects:
-        st.dataframe(
+        st.dataframe(  # type: ignore[call-overload]
             [
                 {
                     "key": o["key"],
                     "size_bytes": o["size_bytes"],
-                    "size_kb": f"{int(o['size_bytes']) / 1024:.1f} KB",
+                    "size_kb": f"{int(o['size_bytes']) / 1024:.1f} KB",  # type: ignore[call-overload]
                     "modified": o["modified"],
                 }
                 for o in objects
