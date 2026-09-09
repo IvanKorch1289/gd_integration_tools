@@ -2238,3 +2238,17 @@ app_state_singleton overload, inbox, _har/cassette/users/orderkinds).
 accept-ordering в middleware-цепочке (изоляция — след. цикл). gRPC транспорт
 verified, auto-servicer request_streaming баг задокументирован. REST/GraphQL/MQ
 live-verified. FTR синхронизирован.
+
+
+## Strict-финал 2 (2026-09-09 ночь): **0 ошибок / 2356 файлов** — re-verified
+
+Оставшиеся 4 ошибки (file_watch ×2, costs/dashboard, anomaly_detector —
+свежий код полосы R2.MYPY) закрыты type-correct реструктурами:
+- file_watch: None-guard'ы для directory/pattern (glob по None невозможен)
+  + str()-коэрсия pattern (Arg 2 to_thread = directory, не pattern!).
+- dashboard: cast group_by → Literal['route','tenant','provider'].
+- anomaly_detector: channels variance-unpack ([*list] для list[str|dict]).
+
+Интересное: `# type: ignore[arg-type]` на репортуемой строке НЕ гасил эти
+ошибки (re-enabled коды) — сработали только честные тип-фиксы.
+`make type-check-strict-profile` → Success: 0/2356 (команда в ledger выше).
