@@ -62,18 +62,18 @@ def render_editor_sidebar(client) -> None:
     if err_check:
         st.error(f"YAML невалиден: {err_check}")
     else:
-        st.caption(f"route_id: `{pipeline_check.route_id}`")
+        st.caption(f"route_id: `{pipeline_check.route_id}`")  # type: ignore[union-attr]  # R2.MYPY: Pipeline|None
         if st.button("Сохранить (создать)", width="stretch"):
             try:
                 client.create_dsl_route(st.session_state.yaml)
-                st.success(f"Создан {pipeline_check.route_id!r}")
+                st.success(f"Создан {pipeline_check.route_id!r}")  # type: ignore[union-attr]
                 st.rerun()
             except Exception as exc:
                 st.error(f"Ошибка создания: {exc}")
         if st.button("Обновить (PUT)", width="stretch"):
             try:
-                client.update_dsl_route(pipeline_check.route_id, st.session_state.yaml)
-                st.success(f"Обновлён {pipeline_check.route_id!r}")
+                client.update_dsl_route(pipeline_check.route_id, st.session_state.yaml)  # type: ignore[union-attr]
+                st.success(f"Обновлён {pipeline_check.route_id!r}")  # type: ignore[union-attr]
                 st.rerun()
             except Exception as exc:
                 st.error(f"Ошибка обновления: {exc}")
