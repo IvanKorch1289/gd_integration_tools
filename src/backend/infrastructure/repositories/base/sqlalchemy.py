@@ -104,7 +104,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
 
                 if is_return_list:
                     # Возвращаем список объектов
-                    objects: list[ConcreteTable] = (  # type: ignore
+                    objects = (  # type: ignore[assignment]
                         result.scalars().unique().all()
                     )
                     return objects or []
@@ -146,7 +146,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
             if not result:
                 raise DatabaseError(message="Failed to create/update record")
 
-            primary_key = result.unique().scalar_one_or_none().id
+            primary_key = result.unique().scalar_one_or_none().id  # type: ignore[union-attr]  # R2.MYPY: scalar_one_or_none returns Row | None
             query = select(self.model).where(self.model.id == primary_key)
             return await self._get_loaded_object(session, query)
 
@@ -158,7 +158,9 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
             limit: int | None = None,
         ) -> Sequence[ConcreteTable]:  # type: ignore
             """Общий метод для получения версий объекта."""
-            obj = await self.main_class.get(session=session, key="id", value=object_id)
+            obj = await self.main_class.get(  # type: ignore[call-arg]  # R2.MYPY: self.main_class signature mismatch (missing self)
+                session=session, key="id", value=object_id
+            )
 
             if not obj or (isinstance(obj, list) and not obj):
                 return []
@@ -461,7 +463,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
                 version_model.transaction_id == transaction_id,
             )
         )
-        target_version = target_version.scalars().first()
+        target_version = target_version.scalars().first()  # type: ignore[assignment]  # R2.MYPY: scalars().first() returns Any | None
 
         if not target_version:
             raise NotFoundError(
@@ -474,7 +476,8 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
             for attr in target_version.__table__.columns.keys()  # type: ignore
         }
 
-        return await self.update(
+        return await self.update(  # type: ignore[call-arg]  # R2.MYPY: missing session arg
+            session=session,
             key="id",
             value=object_id,
             data=update_data,
