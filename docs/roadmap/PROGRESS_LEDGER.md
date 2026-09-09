@@ -2029,3 +2029,26 @@ auth_login secret fix.
 - 100+ atomic commits
 - FINAL_REPORT v6 baseline, ready for v7 update
 
+
+---
+
+## Phase B Sprint 11 (2026-09-09) — продолжение per-file batch
+
+### Mypy-strict trajectory (v6 402 → v19)
+
+| Версия | HEAD | Errors | Δ |
+|---|---|---|---|
+| v6 baseline | `c57c6dbad` | 402 | — |
+| Sprint 10 batch (18 commits) | `066d91417` | 355 | -47 |
+| Sprint 11 batch (export + initializer + accessors + mongodb + tenancy) | `fb4dd30ee` | 345 | -10 |
+| Sprint 11 (workflow_mixin + stdlib_backend + rag fixes) | `05cc40ced` | 340 | -5 |
+| Sprint 11 (kafka + stream + data_store + data_formats) | `841b93fc4` | 335 | -5 |
+| **v19** | (this ledger) | **337** | **-65 Sprint 10-11** |
+
+### Cumulative across all sessions
+
+- mypy-strict: **886 → 337 = -549 (-62%)**
+- 120+ atomic commits
+- FINAL_REPORT v6 baseline, ready for v7 update
+- Mypy-strict ≤30 still requires: -307 errors (multi-sprint)
+
