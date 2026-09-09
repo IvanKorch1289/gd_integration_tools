@@ -137,16 +137,14 @@ class InnerRequestLoggingMiddleware:
         if isinstance(cached, (bytes, bytearray)):
             body = bytes(cached)
         else:
-            # Fallback: receive() loop.
-            body_chunks: list[bytes] = []
-            more_body = True
-            while more_body:
-                message = await receive()
-                if message["type"] == "http.disconnect":
-                    break
-                body_chunks.append(message.get("body", b""))
-                more_body = message.get("more_body", False)
-            body = b"".join(body_chunks)
+            # Prod-fix 2026-09-09 (M6-#3): fallback-consume receive() здесь
+            # отъедал тело у FastAPI-парсера (422 «Field required: body»,
+            # запрос логировался, но endpoint получал пустой канал).
+            # Канал receive() НЕ трогаем — body не логируется.
+            self.logger.debug(
+                "request_log: state['body'] отсутствует — body не логируется"
+            )
+            return "<body недоступен для логирования>".encode()
 
         if len(body) > self.max_body_size:
             self.logger.debug(

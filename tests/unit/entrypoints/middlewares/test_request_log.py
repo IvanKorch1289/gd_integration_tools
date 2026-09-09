@@ -96,7 +96,7 @@ class TestInnerRequestLoggingMiddleware:
     async def test_logs_post_body_when_enabled(
         self, middleware: InnerRequestLoggingMiddleware,
     ) -> None:
-        """log_body=True + POST → логирует body."""
+        """log_body=True + POST + cached body → логирует body из state."""
         middleware.log_body = True
         app = AsyncMock()
         app.side_effect = _downstream_ok(status_code=201)
@@ -108,6 +108,7 @@ class TestInnerRequestLoggingMiddleware:
                 "POST",
                 "/path",
                 headers=[(b"content-type", b"application/json")],
+                state={"body": b'{"data": 1}'},
             ),
             _make_receive(b'{"data": 1}'),
             send,
@@ -116,6 +117,49 @@ class TestInnerRequestLoggingMiddleware:
         # log_body=True → _get_request_body вызван.
         assert any(
             "Тело запроса" in str(call)
+            for call in middleware.logger.debug.call_args_list
+        )
+
+    @pytest.mark.asyncio
+    async def test_post_body_without_cache_not_consumed(
+        self, middleware: InnerRequestLoggingMiddleware,
+    ) -> None:
+        """Нет state['body'] → body НЕ потребляется из receive (канал для
+        FastAPI-парсера), логируется placeholder (prod-fix M6-#3)."""
+        middleware.log_body = True
+        app = AsyncMock()
+
+        async def downstream(scope, receive, send):
+            msg = await receive()
+            # Канал не тронут: первый receive отдаёт тело парсеру.
+            assert msg["body"] == b'{"data": 1}'
+            await send({"type": "http.response.start", "status": 200, "headers": []})
+            await send({"type": "http.response.body", "body": b"ok"})
+
+        app.side_effect = downstream
+        middleware.app = app
+
+        receive_calls: list[int] = []
+
+        async def receive():
+            receive_calls.append(1)
+            return {"type": "http.request", "body": b'{"data": 1}', "more_body": False}
+
+        send = AsyncMock()
+        await middleware(
+            _make_scope(
+                "POST",
+                "/path",
+                headers=[(b"content-type", b"application/json")],
+            ),
+            receive,
+            send,
+        )
+
+        # Fallback НЕ потреблял канал: receive вызван ровно один раз.
+        assert len(receive_calls) == 1
+        assert any(
+            "body недоступен" in str(call)
             for call in middleware.logger.debug.call_args_list
         )
 
