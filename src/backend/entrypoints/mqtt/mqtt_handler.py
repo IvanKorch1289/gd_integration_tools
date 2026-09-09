@@ -157,7 +157,7 @@ class MqttHandler:
                                 in_flight, return_when=asyncio.FIRST_COMPLETED
                             )
                             in_flight -= done
-                        task: asyncio.Task[None] = get_task_registry().create_task(
+                        task: asyncio.Task[None] = get_task_registry().create_task(  # type: ignore[call-arg]  # R2.MYPY: create_task requires name kwarg
                             self._process_message(
                                 topic=str(message.topic), payload=message.payload
                             )
@@ -209,7 +209,7 @@ class MqttHandler:
             from src.backend.schemas.invocation import ActionCommandSchema
 
             command = ActionCommandSchema(
-                action=action, payload=data, meta={"source": "mqtt", "topic": topic}
+                action=action, payload=data, meta={"source": "mqtt", "topic": topic}  # type: ignore[arg-type]  # R2.MYPY: meta dict vs ActionCommandMetaSchema
             )
             await action_handler_registry.dispatch(command)
         except KeyError:
