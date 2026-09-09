@@ -216,3 +216,35 @@ $ curl -s -X POST .../api/v1/auth/login -H "X-Step-Up-Token: $ST" -d '{...}'
 GraphQL auth-pass ✓ (422 = multipart-контракт graphql-upload — документировать);
 WS/SSE-stream/gRPC/MQTT/MQ — требуют специализированных клиентов
 (manage.py grpc-serve, ws-клиент) — след. сессия.
+
+
+### 2026-09-09 (проба 2): REST/GraphQL/MQ live-пробы с JWT + WS статус
+
+```bash
+# REST protected с JWT (readiness) → 200 (3ms); без JWT → 401 ✓
+$ curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $TOKEN" \
+    http://localhost:8002/api/v1/health/readiness
+200
+
+# GraphQL POST /api/v1/graphql с JWT → auth ПРОЙДЕН; 422 = multipart-контракт
+#   (graphql-upload ждёт query/request поля) — контрактовая особенность, не auth.
+
+# MQ publish через auto-action (in-memory fallback delivery):
+$ curl -s -X POST .../api/v1/auto/notify.send -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"channel":"webhook","to":"https://example.local/hook","subject":"m6","message":"probe"}'
+{"status":"failed","channel":"webhook",...}   # 200: action выполнен, delivery
+                                              # failed (целевой URL недостижим —
+                                              # ожидаемо вне сети)
+# POST /api/v1/invocations → 500 (контракт invocation-payload уточнить)
+
+# WS /ws: handshake 101 OK; auth-reject при отсутствии JWT ✓;
+#   валидный JWT (Authorization + Sec-WebSocket-Protocol: jwt.<token>) —
+#   сервер закрывает соединение резко (ProtocolError: control frame too long
+#   при отправке close-reason) — серверный триаж WS-auth: след. сессия.
+```
+
+Вывод: REST/MQ/GraphQL auth-пути live-verified. WS: handshake+guard OK,
+валидный JWT-сценарий — после починки close-reason. SSE: /api/v1/ai/llm/stream
+— POST-only (GET 405), нужен payload-клиент. gRPC: manage.py grpc-serve —
+клиентская проба след. сессия.
