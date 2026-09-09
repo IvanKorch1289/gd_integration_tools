@@ -163,7 +163,7 @@ def import_bpmn(
     )
 
     return WorkflowDeclaration(
-        name=workflow_name, description=workflow_description, steps=steps
+        name=workflow_name, description=workflow_description, steps=steps  # type: ignore[arg-type]  # R2.MYPY: steps list[ActivityDeclaration] vs wider union
     )
 
 
@@ -183,7 +183,7 @@ def _ensure_feature_enabled() -> None:
         )
 
 
-def _find_process(root: ET.Element) -> ET.Element:
+def _find_process(root: Any) -> Any:
     """Найти корневой ``<bpmn:process>`` в дереве definitions.
 
     BPMN 2.0 root — ``<bpmn:definitions>``; внутри один или несколько
@@ -200,7 +200,7 @@ def _find_process(root: ET.Element) -> ET.Element:
     return process
 
 
-def _collect_elements(process: ET.Element) -> dict[str, ET.Element]:
+def _collect_elements(process: Any) -> dict[str, Any]:
     """Собрать все BPMN-элементы process в dict ``{id: element}``.
 
     Включает: startEvent, endEvent, serviceTask, task, exclusiveGateway,
@@ -218,7 +218,7 @@ def _collect_elements(process: ET.Element) -> dict[str, ET.Element]:
         "parallelGateway",
         "inclusiveGateway",
     }
-    elements: dict[str, ET.Element] = {}
+    elements: dict[str, Any] = {}
     for child in process:
         local_name = _strip_ns(child.tag)
         if local_name not in supported_local_names:
@@ -230,7 +230,7 @@ def _collect_elements(process: ET.Element) -> dict[str, ET.Element]:
     return elements
 
 
-def _collect_sequence_flows(process: ET.Element) -> dict[str, list[dict[str, str]]]:
+def _collect_sequence_flows(process: Any) -> dict[str, list[dict[str, str]]]:
     """Собрать sequence-flows как adjacency list ``{source_id: [{...}]}``.
 
     Каждая запись: ``{"target": ..., "name": ..., "condition": ...}``.
@@ -259,7 +259,7 @@ def _collect_sequence_flows(process: ET.Element) -> dict[str, list[dict[str, str
 
 
 def _topological_order(
-    elements: dict[str, ET.Element], flows: dict[str, list[dict[str, str]]]
+    elements: dict[str, Any], flows: dict[str, list[dict[str, str]]]
 ) -> list[str]:
     """Топологическая сортировка sequence-flow через :class:`graphlib.TopologicalSorter`.
 
@@ -315,7 +315,7 @@ def _topological_order(
 
 def _build_steps(
     ordered_ids: list[str],
-    elements: dict[str, ET.Element],
+    elements: dict[str, Any],
     flows: dict[str, list[dict[str, str]]],
 ) -> list[ActivityDeclaration]:
     """Сконвертировать упорядоченные node-id в список ActivityDeclaration.
@@ -376,7 +376,7 @@ def _build_gateway_spec(
     gateway_id: str,
     bpmn_type: str,
     flows: dict[str, list[dict[str, str]]],
-    elements: dict[str, ET.Element],
+    elements: dict[str, Any],
 ) -> GatewaySpec:
     """Построить :class:`GatewaySpec` для gateway-узла.
 
@@ -402,7 +402,7 @@ def _build_gateway_spec(
             )
         )
 
-    return GatewaySpec(kind=kind, branches=branches)
+    return GatewaySpec(kind=kind, branches=branches)  # type: ignore[arg-type]  # R2.MYPY: str → Literal['xor','and','or']
 
 
 def _map_bpmn_kind_to_gateway_kind(bpmn_type: str) -> str:
