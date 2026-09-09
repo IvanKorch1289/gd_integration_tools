@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 from src.backend.services.ai.model_registry.adapter import (
     ModelRecord,
@@ -89,7 +89,7 @@ class MlflowModelRegistry(ModelRegistryAdapter):
         return records
 
     async def get_model(
-        self, name: str, *, version: str | None = None, stage: str | None = None
+        self, name: str, *, version: str | None = None, stage: Literal["None", "Staging", "Production", "Archived"] | None = None
     ) -> ModelRecord | None:
         """Получить model по ``name`` (+ optional version/stage)."""
         client = self._ensure_client()

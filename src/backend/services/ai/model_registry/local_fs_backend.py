@@ -18,7 +18,7 @@ import asyncio
 import json
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from src.backend.core.logging import get_logger
 from src.backend.services.ai.model_registry.adapter import (
@@ -173,7 +173,7 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
         return records
 
     async def get_model(
-        self, name: str, *, version: str | None = None, stage: str | None = None
+        self, name: str, *, version: str | None = None, stage: Literal["None", "Staging", "Production", "Archived"] | None = None
     ) -> ModelRecord | None:
         """Находит модель по имени + version или stage."""
         candidates = await self.list_models()

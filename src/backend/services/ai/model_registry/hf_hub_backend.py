@@ -12,7 +12,7 @@ Hugging Face Hub не имеет понятия stage (Production/Staging) — �
 from __future__ import annotations
 
 import asyncio
-from typing import Any
+from typing import Any, Literal
 
 from src.backend.core.logging import get_logger
 from src.backend.services.ai.model_registry.adapter import (
@@ -91,7 +91,7 @@ class HuggingFaceModelRegistry(ModelRegistryAdapter):
         return [self._hf_to_record(m) for m in models]
 
     async def get_model(
-        self, name: str, *, version: str | None = None, stage: str | None = None
+        self, name: str, *, version: str | None = None, stage: Literal["None", "Staging", "Production", "Archived"] | None = None
     ) -> ModelRecord | None:
         """Метод get_model (см. signature)."""
         api = self._ensure_api()
