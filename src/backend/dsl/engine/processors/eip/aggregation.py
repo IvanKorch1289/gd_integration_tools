@@ -79,8 +79,8 @@ class BatchAggregatorProcessor:
             results.append(
                 {
                     "key": k,
-                    "window_start": datetime.fromtimestamp(start_sec, tz=ts.tzinfo),
-                    "window_end": datetime.fromtimestamp(end_sec, tz=ts.tzinfo),
+                    "window_start": datetime.fromtimestamp(start_sec, tz=ts.tzinfo),  # type: ignore[union-attr]  # R2.MYPY: ts Any|None
+                    "window_end": datetime.fromtimestamp(end_sec, tz=ts.tzinfo),  # type: ignore[union-attr]
                     "sum": agg["sum"],
                     "count": agg["count"],
                     "min": agg["min"],

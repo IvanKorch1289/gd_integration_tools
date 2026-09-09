@@ -149,8 +149,8 @@ class RedisRateLimiter:
                 results = await pipe.execute()
                 count = int(results[0]) if results else 0
             else:
-                count = await raw.incr(key)
-                await raw.expire(key, policy.window_seconds)
+                count = await raw.incr(key)  # type: ignore[union-attr]  # R2.MYPY: raw Any|RedisClient
+                await raw.expire(key, policy.window_seconds)  # type: ignore[union-attr]
         except Exception as exc:
             logger.warning("Rate limiter Redis failed (fail-open): %s", exc)
             return {"remaining": policy.limit, "reset_at": 0, "limit": policy.limit}
