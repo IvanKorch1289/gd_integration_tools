@@ -112,7 +112,7 @@ class StreamMixin(_RedisClientProtocol):
                 xadd_args["maxlen"] = max_len
                 xadd_args["approximate"] = approximate
 
-            event_id = await conn.xadd(stream, data, id="*", **xadd_args)
+            event_id = await conn.xadd(stream, data, id="*", **xadd_args)  # type: ignore[arg-type]  # R2.MYPY: dict[str,Any] → strict dict type
             return str(self.decode(event_id))
 
         return await self.execute("queue", op)

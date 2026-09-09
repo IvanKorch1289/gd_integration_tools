@@ -228,7 +228,7 @@ class _KafkaDebeziumStrategy(_CDCStrategy):
                 operation=op,
                 old=payload.get("before"),
                 new=payload.get("after"),
-                timestamp=datetime.fromtimestamp(
+                timestamp=datetime.fromtimestamp(  # type: ignore[arg-type]  # R2.MYPY: datetime → str
                     payload.get("ts_ms", 0) / 1000, tz=UTC
                 ),
             )

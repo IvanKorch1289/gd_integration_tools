@@ -135,7 +135,7 @@ class DataStoreMixin:
 
     def data_store(self, name: str = "default", backend: str = "memory") -> DataStore:
         """Get-or-create named :class:`DataStore` (lazy, per-builder scope)."""
-        stores: dict[str, DataStore] = getattr(self, "_data_stores", None)
+        stores: dict[str, DataStore] = getattr(self, "_data_stores", None)  # type: ignore[assignment]  # R2.MYPY: dict|None → dict
         if stores is None:
             stores = {}
             object.__setattr__(self, "_data_stores", stores)
