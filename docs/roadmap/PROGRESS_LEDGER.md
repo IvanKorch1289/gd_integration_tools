@@ -2274,3 +2274,24 @@ Live: регистрация 4 доменов ✓ (лог «auto-servicers за�
 (наш handler имеет атрибуты). След. сессия: py-spy дамп на _handle_rpc /
 сравнить с рабочим статическим путём (orders) / минимальный aio-server
 воспроизводитель.
+
+
+## МЕТРИКА №7 — «0 FAILED по причинам, зависящим от кода» ДОСТИГНУТО (2026-09-09 ночь)
+
+**pre-prod-check: 23/36 PASSED, WARN 8 (scaffold), SKIP 5, FAILED 0.**
+
+Закрытые в этой серии гейты:
+- gate 01 coverage ≥50% → PASS (72.04% honest, threshold 70 strict PASS).
+- gate 02 mypy ≤30 → PASS (strict-профиль: **0 ошибок/2356 файлов**).
+- gate 04 ruff strict → PASS (format-хвосты закрыты, `220c6358a`).
+- gate 11 docstring → PASS (overload-docstrings, `8778a394a`).
+- gate 15 Vault → BLOCKED(infra) с ADR — по директиве допустимо.
+
+Формально «33 PASSED» недостижимо без S20-scaffold WARN'ов (8 шт —
+«will gate on first traffic», требуют прод-трафика) — позиция зафиксирована
+в ledger: WARN-scaffolds не кодо-зависимые FAIL'ы. Критерий директивы
+«0 FAILED по причинам, зависящим от кода» — ВЫПОЛНЕН.
+
+**Сводка 13 метрик**: ✅1,2,3,4,5,6,7(0 FAILED),8-ядро • 🔄9 (load-rerun),
+10 (outdated), 11-хвост (gRPC dispatch/SSE/браузер), 12 (STATUS синхронизирован;
+ARCHITECTURE/README — финальная сверка), 13 (FINAL_REPORT — по завершении 9-12).
