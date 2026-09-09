@@ -94,7 +94,7 @@ class ExternalSourcesMixin:
             request_kwargs=request_kwargs,
             **kwargs,
         )
-        builder: RouteBuilder = cls(  # type: ignore[call-arg]  # R2.MYPY: SourcesMixin via Protocol
+        builder: RouteBuilder = cls(  # type: ignore[call-arg,assignment]  # R2.MYPY: SourcesMixin via Protocol
             route_id=route_id, source=f"grpc_stream:{stub_class}/{method}"
         )
         object.__setattr__(builder, "_source_instance", source_instance)

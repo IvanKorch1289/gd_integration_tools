@@ -90,7 +90,7 @@ class FileSourcesMixin:
             **kwargs,
         )
         source_label = ";".join(str(p) for p in normalized)
-        builder: RouteBuilder = cls(  # type: ignore[call-arg]  # R2.MYPY: SourcesMixin via Protocol
+        builder: RouteBuilder = cls(  # type: ignore[call-arg,assignment]  # R2.MYPY: SourcesMixin via Protocol
             route_id=route_id, source=f"filewatcher:{source_label}"
         )
         object.__setattr__(builder, "_source_instance", source_instance)

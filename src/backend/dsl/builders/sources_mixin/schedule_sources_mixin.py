@@ -43,7 +43,7 @@ class ScheduleSourcesMixin:
             )
 
         """
-        builder: RouteBuilder = cls(route_id=route_id, source=f"schedule:{cron_expr}")  # type: ignore[call-arg]  # R2.MYPY: SourcesMixin via Protocol
+        builder: RouteBuilder = cls(route_id=route_id, source=f"schedule:{cron_expr}")  # type: ignore[call-arg,assignment]  # R2.MYPY: SourcesMixin via Protocol
         # Сохраняем cron и kwargs для последующей регистрации в APScheduler
         object.__setattr__(
             builder,

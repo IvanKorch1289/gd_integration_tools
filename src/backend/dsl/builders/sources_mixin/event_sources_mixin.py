@@ -86,7 +86,7 @@ class EventSourcesMixin:
         if not channel:
             raise ValueError("from_event_subscribe: channel is required")
 
-        builder: RouteBuilder = cls(  # type: ignore[call-arg]  # R2.MYPY: SourcesMixin via Protocol
+        builder: RouteBuilder = cls(  # type: ignore[call-arg,assignment]  # R2.MYPY: SourcesMixin via Protocol
             route_id=route_id, source=f"event_subscribe:{channel}"
         )
         # Сохраняем конфиг для последующей регистрации в

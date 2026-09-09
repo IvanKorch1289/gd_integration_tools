@@ -55,6 +55,6 @@ class StreamingSourcesMixin:
             group=consumer_group,
             **kwargs,
         )
-        builder: RouteBuilder = cls(route_id=route_id, source=f"redis_streams:{stream}")  # type: ignore[call-arg]  # R2.MYPY: SourcesMixin via Protocol
+        builder: RouteBuilder = cls(route_id=route_id, source=f"redis_streams:{stream}")  # type: ignore[call-arg,assignment]  # R2.MYPY: SourcesMixin via Protocol
         object.__setattr__(builder, "_source_instance", source_instance)
         return builder
