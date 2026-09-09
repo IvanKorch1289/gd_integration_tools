@@ -253,11 +253,12 @@ class TestRequestBodyCacheMiddleware:
         assert scope["receive"] is replay
         assert scope["original_receive"] is original
 
-        # replay_receive возвращает http.request с body, потом http.disconnect.
+        # Prod-fix M6-#3: replay ИДЕМПОТЕНТЕН — каждый вызов отдаёт body
+        # (multi-consumer: request_log / audit_replay / FastAPI-парсер).
         msg1 = await replay()
         assert msg1 == {"type": "http.request", "body": b"payload", "more_body": False}
         msg2 = await replay()
-        assert msg2 == {"type": "http.disconnect"}
+        assert msg2 == {"type": "http.request", "body": b"payload", "more_body": False}
 
 
 class TestCachedBodyHelper:
@@ -396,4 +397,5 @@ class TestRequestBodyCacheMiddlewarePureASGI:
         assert msg1["more_body"] is False
 
         msg2 = await received_receive[0]()
-        assert msg2["type"] == "http.disconnect"
+        assert msg2["type"] == "http.request"
+        assert msg2["body"] == b"cached"
