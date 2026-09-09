@@ -83,7 +83,7 @@ class JsonDataFormat(DataFormat):
         ``target_type`` — optional hint (только для dict/list source).
         """
         if isinstance(data, bytes):
-            data = data.decode("utf-8")
+            data = data.decode("utf-8")  # type: ignore[assignment]  # R2.MYPY: bytes→str
         decoded = json.loads(data)
         if target_type is not None and target_type is not dict:
             return (
@@ -137,7 +137,7 @@ class XmlDataFormat(DataFormat):
     def unmarshal(self, data: bytes, target_type: type | None = None) -> Any:
         """Decode XML bytes → dict via defusedxml (XXE/billion-laughs safe)."""
         if isinstance(data, bytes):
-            data = data.decode("utf-8")
+            data = data.decode("utf-8")  # type: ignore[assignment]
         # P0-S6 (audit 2026-08-19): defusedxml imported at module level (B314 fix).
         root = ET.fromstring(data)
         return _xml_to_dict(root)
@@ -194,7 +194,7 @@ class CsvDataFormat(DataFormat):
     def unmarshal(self, data: bytes, target_type: type | None = None) -> Any:
         """Decode CSV bytes → list[dict]."""
         if isinstance(data, bytes):
-            data = data.decode("utf-8")
+            data = data.decode("utf-8")  # type: ignore[assignment]
         buf = io.StringIO(data)  # type: ignore[arg-type]  # R2.MYPY: data narrowed to str|None after decode
         reader = csv.DictReader(buf, delimiter=self._delimiter)
         return list(reader)
