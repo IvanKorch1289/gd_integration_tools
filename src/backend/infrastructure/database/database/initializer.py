@@ -151,7 +151,8 @@ class DatabaseInitializer:
     def _create_async_engine(self) -> AsyncEngine:
         """Создаёт и настраивает асинхронный engine SQLAlchemy."""
         return create_async_engine(
-            url=self.settings.async_connection_url, **self._engine_kwargs()
+            url=self.settings.async_connection_url,  # type: ignore[arg-type]  # R2.MYPY: Callable[[],str] → str|URL
+            **self._engine_kwargs()
         )
 
     def _create_sync_engine(self) -> Engine:

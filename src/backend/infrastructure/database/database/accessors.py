@@ -60,7 +60,7 @@ def get_smart_session_manager() -> Any:
 @lru_cache(maxsize=1)
 def get_external_db_registry() -> ExternalDatabaseRegistry:
     """Lazy singleton реестра внешних БД (Wave 6.1)."""
-    return ExternalDatabaseRegistry(configs=settings.external_databases.profiles)
+    return ExternalDatabaseRegistry(configs=settings.external_databases.profiles)  # type: ignore[arg-type]  # R2.MYPY: Callable[[],dict]
 
 
 def __getattr__(name: str) -> Any:

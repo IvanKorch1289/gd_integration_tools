@@ -134,7 +134,7 @@ class TenantFacade:
         new_ctx = CapabilityTenant(
             id=tenant_id, principal=principal_id or SYSTEM_TENANT_ID
         )
-        set_tenant(new_ctx)
+        set_tenant(new_ctx)  # type: ignore[arg-type]  # R2.MYPY: CapabilityTenant vs TenantContext
         try:
             yield new_ctx
         finally:

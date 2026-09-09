@@ -364,7 +364,8 @@ def _create_mongo_client() -> MongoDBClient:
     from src.backend.core.config.settings import settings
 
     return MongoDBClient(
-        connection_url=settings.mongo.connection_string, database=settings.mongo.name
+        connection_url=settings.mongo.connection_string,  # type: ignore[arg-type]  # R2.MYPY: Callable[[],str] → str
+        database=settings.mongo.name
     )
 
 
