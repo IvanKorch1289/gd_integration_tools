@@ -17,7 +17,7 @@ images, mention @user). Интеграция провайдер-специфич
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Literal
 
 from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
@@ -65,7 +65,7 @@ class TeamsAdapter:
                 f"Teams webhook failed: {response.status_code} {response.text[:200]}"
             )
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Метод health (см. signature)."""
         import time
 

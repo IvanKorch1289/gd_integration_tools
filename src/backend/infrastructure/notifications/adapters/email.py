@@ -8,7 +8,7 @@ Thin wrapper который делегирует в `src/infrastructure/clients/
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from src.backend.infrastructure.clients.base_connector import HealthResult
 
@@ -47,7 +47,7 @@ class EmailAdapter:
             html=self._html,
         )
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Метод health (см. signature)."""
         import time
 

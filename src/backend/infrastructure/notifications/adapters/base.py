@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Literal, Protocol, runtime_checkable
 
 from src.backend.infrastructure.clients.base_connector import HealthResult
 
@@ -28,7 +28,7 @@ class NotificationChannel(Protocol):
         """Метод send (см. signature)."""
         ...
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Метод health (см. signature)."""
         ...
 

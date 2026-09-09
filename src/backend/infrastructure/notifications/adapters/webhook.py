@@ -20,7 +20,7 @@ import hashlib
 import hmac
 import ipaddress
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Literal
 from urllib.parse import urlparse
 
 from src.backend.infrastructure.clients.base_connector import HealthResult
@@ -82,7 +82,7 @@ class WebhookAdapter:
                 f"webhook POST failed: {response.status_code} {response.text[:200]}"
             )
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Проверить, что upstream зарегистрирован."""
         import time
 

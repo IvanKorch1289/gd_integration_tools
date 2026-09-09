@@ -15,7 +15,7 @@ recipient = ``group_chat_id`` (UUID чата Express) или ``user_huid``
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from src.backend.core.logging import get_logger
 from src.backend.infrastructure.clients.base_connector import HealthResult
@@ -128,7 +128,7 @@ class ExpressAdapter:
             sync_id,
         )
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Проверка доступности Express интеграции."""
         import time
 

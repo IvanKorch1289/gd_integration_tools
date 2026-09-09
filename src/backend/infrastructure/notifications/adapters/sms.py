@@ -157,7 +157,7 @@ class SMSAdapter:
 
         raise AssertionError(f"Unreachable: provider={self._provider}")
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Метод health (см. signature)."""
         import time
 
