@@ -89,7 +89,7 @@ class VaultCertBackend(CertBackend):
         self._role_id = role_id
         self._secret_id = secret_id
         self._kubernetes_role = kubernetes_role
-        self._client: Any = None  # lazy init
+        self._client: Any = None  # type: ignore[assignment,method-assign]  # R2.MYPY: method _client override
 
     def _resolve_url(self) -> str | None:
         """Получить vault_url: kwarg → settings."""
@@ -131,7 +131,7 @@ class VaultCertBackend(CertBackend):
         self._authenticate(client)
         if not client.is_authenticated():
             raise ConnectionError("Vault: не аутентифицирован")
-        self._client = client
+        self._client = client  # type: ignore[assignment,method-assign]  # R2.MYPY: method-assign per class attribute
         return client
 
     async def get(self, service_id: str) -> CertEntry | None:

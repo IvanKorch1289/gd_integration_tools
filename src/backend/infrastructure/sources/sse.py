@@ -214,13 +214,13 @@ class SSESource:
         if outbound_client is None:
             from src.backend.core.net.migration_helper import make_http_client
 
-            outbound_client = make_http_client(
+            outbound_client = make_http_client(  # type: ignore[assignment]  # R2.MYPY: AsyncClient vs OutboundHttpClient
                 plugin=f"sse:{self._subscription_id[:8]}"
             )
 
         # OutboundHttpClient.stream() возвращает async context manager
         # (httpx API). WAF-check уже выполнен до открытия stream.
-        async with outbound_client.stream(
+        async with outbound_client.stream(  # type: ignore[union-attr]  # R2.MYPY: outbound_client Optional
             "GET", self._url, headers=request_headers, timeout=timeout
         ) as resp:
             resp.raise_for_status()
