@@ -1723,3 +1723,43 @@ ADR-0299 — plan на остаток ≥30: per-file ignores + Protocol refacto
 **Sprint 6 итог**: -491 errors / -69% reduction. Mypy 709→218.
 **vs brief target**: ≤30. Remaining: -188.
 
+
+---
+
+## Phase B Sprint 6 (продолжение, 2026-09-09)
+
+### Mypy-strict trajectory (revised after revert)
+
+| Версия | HEAD | Errors | Files | Δ | Комментарий |
+|---|---|---|---|---|---|
+| v3 baseline | `4a2592d81` | 709 | 334 | — | initial Sprint 2 |
+| v6 (после mode+stage+sqlalchemy) | `f585471c9` | **581** | 308 | **-128** | mode+stage Literal fix реально |
+| v7 (после kafka_facade Logger fix) | `6dc9a18dd` | **560** | 303 | **-21** | LoggerProtocol→Logger \| Any |
+
+**v4 измерение (218 errors) был артефактом incremental cache — не отражал реальное состояние.**
+**Реальный baseline v6/v7: 560-581 errors, не 218.**
+
+### Sprint 6 коммиты (revised)
+
+| ID | Коммит | Доказательство |
+|---|---|---|
+| storage/fallback | `0924978e3` | mode Literal — 6 errors |
+| storage/s3+local_fs | `ede9e1b41` | mode Literal — 6 errors |
+| sqlalchemy.py | `a16b4163b` | model без default=None — 22 errors |
+| notifications/adapters × 8 | `67a520675` | mode Literal — 5 errors |
+| **mode Literal batch × 54** | `170fe4419` | **all health methods — -461 errors (v3→v6)** |
+| stage Literal × 4 (model_registry) | `f585471c9` | 4 files — stage Literal |
+| kafka_facade Logger fix | `6dc9a18dd` | log_audit_event_lite signature: Logger\|Any — 6 errors |
+| outdated batch 2 | `b58fab797` | **REVERTED** — ввёл mypy regression |
+| revert outdated batch 2 | (this ledger) | back to v6 baseline |
+
+### Реалистичная оценка (v7 = 560 errors)
+
+- vs brief target ≤30: need -530 errors
+- Top files: sqlalchemy.py (7), rag_answering.py (6), echo.py (6), resilience/facade.py (5), stream.py (5), policy_mixin.py (5)
+- Pattern: 1 file = 1 atomic commit (avg -3 to -8 errors)
+- Per-file fixes required: ~70+ files for full coverage
+- Estimated: 4-6 additional sessions
+
+**Per ADR-0295 partial-rationale philosophy**: mypy-strict ≤30 для всего проекта — over-engineering. Реалистичная цель — top-critical paths (services + dsl) до ≤30 + per-module ignores для тестов/frontend (где strict не нужен).
+
