@@ -129,6 +129,8 @@ mail:
 
 
 log:
+  # OPT-1 (M6-#3): request-логи съедают 30%+ p99 на dev-box.
+  log_requests: false
   # disk-only: пустой host отключает remote-Graylog, всё пишется в файл.
   host: ""
   port: 9000
