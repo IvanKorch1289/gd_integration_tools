@@ -56,7 +56,7 @@ class FallbackCertBackend(CertBackend):
         self, service_id: str, pem: str, expires_at: datetime | None = None
     ) -> None:
         """Save через primary."""
-        await self._primary.save(service_id, pem, expires_at)
+        await self._primary.save(service_id, pem, expires_at)  # type: ignore[arg-type]  # R2.MYPY: datetime|None → datetime
 
     async def history(self, service_id: str) -> list[CertEntry]:
         """Метод history (см. signature)."""

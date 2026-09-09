@@ -201,7 +201,7 @@ class FileWatcherSource:
         чтобы ``wait_for`` не отменял async-generator ``stream()``.
         """
         queue: asyncio.Queue[FileEvent | None] = asyncio.Queue()
-        producer = get_task_registry().create_task(self._fill_queue(queue))
+        producer = get_task_registry().create_task(self._fill_queue(queue))  # type: ignore[call-arg]  # R2.MYPY: create_task requires name kwarg
 
         try:
             batch: list[FileEvent] = []

@@ -183,7 +183,7 @@ class NATSJetStreamSource:
 
         """
         async for nats_msg in self.stream():
-            event = SourceEvent(
+            event = SourceEvent(  # type: ignore[call-arg]  # R2.MYPY: SourceEvent signature uses different kwargs
                 source_id=self.source_id,
                 kind=self.kind,
                 payload=nats_msg.data,

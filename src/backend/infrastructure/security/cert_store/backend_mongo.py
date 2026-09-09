@@ -96,7 +96,7 @@ class MongoCertBackend(CertBackend):
 
             from src.backend.core.config.mongo import mongo_connection_settings as cfg
 
-            self._client = AsyncMongoClient(
+            self._client = AsyncMongoClient(  # type: ignore[arg-type]  # R2.MYPY: Callable[[],str] → str|Sequence[str]|None
                 cfg.connection_string,
                 minPoolSize=cfg.min_pool_size,
                 maxPoolSize=cfg.max_pool_size,

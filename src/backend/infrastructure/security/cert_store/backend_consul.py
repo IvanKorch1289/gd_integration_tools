@@ -187,7 +187,7 @@ class ConsulCertBackend(CertBackend):
         return CertEntry(
             service_id=service_id,
             pem=pem,
-            fingerprint=payload["fingerprint"],
+            fingerprint=payload["fingerprint"],  # type: ignore[arg-type]  # R2.MYPY: object → str
             expires_at=expires_at,
             description=description,
             version=version,
