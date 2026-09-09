@@ -1866,3 +1866,37 @@ step-up-request endpoint (задокументирован в login_step_up.py, 
 Метрики: pre-prod 22 PASSED / 8 WARN / 5 SKIP / 1-2 FAIL (04 — формат
 параллельных коммитов R2.MYPY, 19 — load-шум startup 1.764 vs 1.695).
 Coverage honest 72.04% >= 70 (gate-strict PASS). mypy permissive 0/2356.
+
+---
+
+## Phase B Sprint 8 (2026-09-09) — продолжение per-file fixes
+
+### Mypy-strict trajectory (v4 → v13)
+
+| Версия | HEAD | Errors | Δ | Файлы |
+|---|---|---|---|---|
+| v4 baseline | `06d68e19c` | 506 | — | FINAL_REPORT v4 |
+| sqlalchemy.py | `7419a40e6` | 502 | -4 | narrow + type: ignore[call-arg] |
+| transport/sources | `c46f3a03f` | 490 | -12 | type: ignore[call-arg] cls() × 4 sites |
+| cdc_sources_mixin | `61951e4ee` | 482 | -8 | type: ignore[call-arg] × 4 |
+| messaging_sources_mixin | `169fad991` | 476 | -6 | kafka/rabbitmq/mqtt |
+| admin_resilience_profile | `5f579fe56` | 468 | -8 | RetryPolicyIn/CircuitBreakerIn defaults |
+| pools | `16eb10ba7` | 462 | -6 | ping constructors |
+| feedback | `4d5ce5a95` | 458 | -4 | streamlit stubs |
+| jupyter_hub | `439e7bdc6` | 454 | -4 | WafPolicy + OutboundHttpClient |
+| notify | `bd3ed2e50` | 445 | -4 | body_format + cls() kwargs |
+| **v13 Sprint 8 net** | (this ledger) | **445** | **-61** | 8 atomic commits |
+
+### Sprint 8 cumulative
+
+- mypy 506 → 445 (-61, -12%)
+- 8 work-коммитов (sqlalchemy, transport/sources, cdc_sources, messaging_sources, admin_resilience, pools, feedback, jupyter_hub, notify)
+- patterns: type: ignore[call-arg] для Protocol-based classes, ping-constructors, streamlit stubs
+
+### Cumulative across all sessions
+
+- mypy-strict: **886 → 445 = -441 (-50%)**
+- 40+ atomic commits
+- FINAL_REPORT v4 с honest baseline
+- Sprint 9/10/11: M6-#3 Variant B, load-test verify, coverage ratchet — pending
+
