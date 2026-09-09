@@ -107,7 +107,7 @@ class SourcesMixin(_RouteBuilderProtocol):
 
         """
         source = f"nats_js:{stream}/{subject}?durable={durable}&url={nats_url}"
-        return cls(route_id=route_id, source=source, description=description)
+        return cls(route_id=route_id, source=source, description=description)  # type: ignore[call-arg]  # R2.MYPY: SourcesMixin __init__ inherits from Protocol; keyword args present at runtime
 
     @classmethod
     def from_webdav(
@@ -162,7 +162,7 @@ class SourcesMixin(_RouteBuilderProtocol):
         # Создаём source instance для smoke-валидации конструктора;
         # реальный wire-up идёт через source_registry на основе ``source`` URI.
         mod.WebDAVSource(cfg)
-        return cls(
+        return cls(  # type: ignore[call-arg]
             route_id=route_id, source=f"webdav:{route_id}", description=description
         )
 
@@ -293,7 +293,7 @@ class SourcesMixin(_RouteBuilderProtocol):
         mod = importlib.import_module("src.backend.infrastructure.sources.nats")
         # Smoke-валидация конструктора (S50 W2 pattern, как from_webdav).
         mod.NatsSource(subject=subject, nats_url=nats_url)
-        return cls(route_id=route_id, source=f"nats:{subject}", description=description)
+        return cls(route_id=route_id, source=f"nats:{subject}", description=description)  # type: ignore[call-arg]
 
     @classmethod
     def from_mongo(
@@ -365,7 +365,7 @@ class SourcesMixin(_RouteBuilderProtocol):
         )
         # Smoke-валидация конструктора (S50 W2 pattern).
         mod.MongoSource(cfg)
-        return cls(
+        return cls(  # type: ignore[call-arg]
             route_id=route_id,
             source=f"mongo:{database}/{collection or '*'}",
             description=description,
