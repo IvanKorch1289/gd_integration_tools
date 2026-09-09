@@ -215,9 +215,9 @@ class WhooshIndex:
 
         if self._ix is None:
             self._ix = self._open_or_create()
-        with self._ix.searcher() as searcher:
+        with self._ix.searcher() as searcher:  # type: ignore[union-attr]
             parser = qparser.MultifieldParser(
-                ["title", "content"], schema=self._ix.schema
+                ["title", "content"], schema=self._ix.schema  # type: ignore[union-attr]
             )
             full_query = f"({query}) AND category:{category}" if category else query
             parsed = parser.parse(full_query)
@@ -240,7 +240,7 @@ class WhooshIndex:
         """Метод doc_count (см. signature)."""
         if self._ix is None:
             self._ix = self._open_or_create()
-        with self._ix.searcher() as searcher:
+        with self._ix.searcher() as searcher:  # type: ignore[union-attr]
             return int(searcher.doc_count())
 
 
