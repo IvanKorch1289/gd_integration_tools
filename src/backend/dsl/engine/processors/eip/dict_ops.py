@@ -223,7 +223,7 @@ class PydashOmitProcessor(BaseProcessor):
             for field in self._fields:
                 new_body = _recursive_omit(new_body, field)
         else:
-            new_body = pydash.objects.omit(new_body, self._fields)
+            new_body = pydash.objects.omit(new_body, self._fields)  # type: ignore[arg-type]  # R2.MYPY: list[str] → Hashable|list[Hashable]
         exchange.set_out(body=new_body, headers=dict(exchange.in_message.headers))
         _log.debug(
             "PydashOmit: removed %d fields (deep=%s)", len(self._fields), self._deep
@@ -281,7 +281,7 @@ class PydashPickProcessor(BaseProcessor):
         if not isinstance(body, dict):
             _log.warning("PydashPick: body is not a dict, no-op")
             return
-        new_body = pydash.objects.pick(copy.deepcopy(body), self._fields)
+        new_body = pydash.objects.pick(copy.deepcopy(body), self._fields)  # type: ignore[arg-type]
         exchange.set_out(body=new_body, headers=dict(exchange.in_message.headers))
         _log.debug("PydashPick: kept %d fields", len(self._fields))
 
