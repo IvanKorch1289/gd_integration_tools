@@ -183,7 +183,7 @@ class DebeziumEventsCDCBackend(CDCSource):
         await self._consumer.start()
         return self._consumer
 
-    async def subscribe(
+    async def subscribe(  # type: ignore[override]
         self, *, tables: list[str], start_cursor: CDCCursor | None = None
     ) -> AsyncIterator[CDCEvent]:
         """Подписаться на Kafka topics ``<prefix>.<table>``.
@@ -271,7 +271,7 @@ class DebeziumEventsCDCBackend(CDCSource):
         except (ValueError, KeyError) as exc:
             _logger.warning("Invalid cursor for commit %r: %s", cursor.value, exc)
 
-    async def replay(
+    async def replay(  # type: ignore[override]
         self, *, start_cursor: CDCCursor, end_cursor: CDCCursor | None = None
     ) -> AsyncIterator[CDCEvent]:
         """Replay через ``consumer.seek()`` — rewind и re-read.

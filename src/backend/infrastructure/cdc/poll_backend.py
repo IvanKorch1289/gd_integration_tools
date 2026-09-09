@@ -82,7 +82,7 @@ class PollCDCBackend(CDCSource):
         self._stopped = asyncio.Event()
         self._cursor_log: list[CDCCursor] = []
 
-    async def subscribe(
+    async def subscribe(  # type: ignore[override]  # R2.MYPY: CDCSource AsyncIterator vs Coroutine[AsyncIterator]
         self, *, tables: list[str], start_cursor: CDCCursor | None = None
     ) -> AsyncIterator[CDCEvent]:
         """Polling-loop или feed consumption (зависит от режима).
@@ -193,7 +193,7 @@ class PollCDCBackend(CDCSource):
         """Записать cursor в журнал (для resume)."""
         self._cursor_log.append(cursor)
 
-    async def replay(
+    async def replay(  # type: ignore[override]  # R2.MYPY: CDCSource AsyncIterator vs Coroutine[AsyncIterator]
         self, *, start_cursor: CDCCursor, end_cursor: CDCCursor | None = None
     ) -> AsyncIterator[CDCEvent]:
         """Replay для polling backend = re-poll по тому же timestamp.

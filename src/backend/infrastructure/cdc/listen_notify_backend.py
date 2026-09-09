@@ -48,7 +48,7 @@ class ListenNotifyCDCBackend(CDCSource):
         self._stopped = asyncio.Event()
         self._cursor_log: list[CDCCursor] = []
 
-    async def subscribe(
+    async def subscribe(  # type: ignore[override]
         self, *, tables: list[str], start_cursor: CDCCursor | None = None
     ) -> AsyncIterator[CDCEvent]:
         """LISTEN на ``channel``; парсит payload в `CDCEvent`.
@@ -78,7 +78,7 @@ class ListenNotifyCDCBackend(CDCSource):
         """LISTEN/NOTIFY не имеет cursor-ack semantics; запись в журнал."""
         self._cursor_log.append(cursor)
 
-    async def replay(
+    async def replay(  # type: ignore[override]
         self, *, start_cursor: CDCCursor, end_cursor: CDCCursor | None = None
     ) -> AsyncIterator[CDCEvent]:
         """Replay для LISTEN/NOTIFY невозможен (push-only без хранилища).
