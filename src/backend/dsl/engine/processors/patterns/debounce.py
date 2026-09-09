@@ -56,7 +56,7 @@ class DebounceProcessor(BaseProcessor):
                 del self._last_seen[k]
 
             if len(self._last_seen) >= self._max_keys:
-                oldest = min(self._last_seen, key=self._last_seen.get)
+                oldest = min(self._last_seen, key=self._last_seen.get)  # type: ignore[arg-type]
                 del self._last_seen[oldest]
 
             last = self._last_seen.get(key, 0.0)

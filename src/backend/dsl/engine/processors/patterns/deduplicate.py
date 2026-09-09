@@ -54,7 +54,7 @@ class DeduplicateProcessor(BaseProcessor):
                 del self._seen[k]
 
             if len(self._seen) >= self._max_keys:
-                oldest = min(self._seen, key=self._seen.get)
+                oldest = min(self._seen, key=self._seen.get)  # type: ignore[arg-type]  # R2.MYPY: dict.get → min key signature
                 del self._seen[oldest]
 
             if key in self._seen:

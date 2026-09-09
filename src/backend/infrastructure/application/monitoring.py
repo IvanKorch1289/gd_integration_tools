@@ -84,7 +84,7 @@ class PrometheusMiddleware:
             await send(message)
 
         try:
-            await self.app(scope, receive, send_wrapper)
+            await self.app(scope, receive, send_wrapper)  # type: ignore[arg-type]  # R2.MYPY: send_wrapper Callable mismatch
         finally:
             _requests_in_progress.labels(**labels).dec()
             duration = time.perf_counter() - start
