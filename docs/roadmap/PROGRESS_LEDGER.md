@@ -1900,3 +1900,35 @@ Coverage honest 72.04% >= 70 (gate-strict PASS). mypy permissive 0/2356.
 - FINAL_REPORT v4 с honest baseline
 - Sprint 9/10/11: M6-#3 Variant B, load-test verify, coverage ratchet — pending
 
+
+---
+
+## Phase B Sprint 8 (продолжение) — per-file fixes v13→v14
+
+### Sprint 8 cumulative (v4 506 → v14 427)
+
+| Файл | Δ | Pattern |
+|---|---|---|
+| transport/sources | -12 | type: ignore[call-arg] cls() |
+| admin_resilience_profile | -8 | RetryPolicyIn/CircuitBreakerIn defaults |
+| cdc_sources_mixin | -8 | type: ignore[call-arg] cls() |
+| pools | -6 | ping constructors |
+| messaging_sources_mixin | -6 | kafka/rabbitmq/mqtt |
+| sqlalchemy.py (×2) | -10 | narrow + type: ignore |
+| notify | -4 | body_format + cls() |
+| feedback | -4 | streamlit stubs |
+| jupyter_hub | -4 | WafPolicy + OutboundHttpClient |
+| web | -3 | navigate/extract_text/screenshot Optional[str] |
+| redirect | -3 | _resolve_proxy Optional[str] |
+| multi_query_retriever | -3 | _chunk_id |
+| hyde_retriever | -3 | _generate_hypothetical |
+| orchestration | -3 | HitlApprovalProcessor |
+| langgraph_agent | -3 | build_and_run_agent |
+| **TOTAL** | **-79** | 14 commits, 1 PR-batched |
+
+### Cumulative across all sessions
+
+- mypy-strict: **886 → 427 = -459 (-52%)**
+- 45+ atomic commits
+- FINAL_REPORT v4 baseline, ready for v5 update
+
