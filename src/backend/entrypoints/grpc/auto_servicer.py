@@ -302,39 +302,36 @@ def register_auto_servicers(grpc_server: Any) -> int:
             )
             continue
 
-        # Throwaway-канал: нужен только чтобы построить stub и снять
-        # (де)сериализаторы; соединения по нему не происходит.
-        dummy_channel = grpc_lib.insecure_channel("localhost:1")
-        try:
-            stub = stub_cls(dummy_channel)
-            method_handlers: dict[str, Any] = {}
-            for attr_name in dir(stub):
-                if attr_name.startswith("_"):
-                    continue
-                stub_method = getattr(stub, attr_name)
-                full_rpc_path = getattr(stub_method, "_method", None)
-                if isinstance(full_rpc_path, bytes):
-                    full_rpc_path = full_rpc_path.decode("ascii")
-                request_serializer = getattr(stub_method, "_request_serializer", None)
-                response_deserializer = getattr(
-                    stub_method, "_response_deserializer", None
-                )
-                behavior = getattr(servicer, attr_name, None)
-                if not full_rpc_path:
-                    continue
-                if request_serializer is None or response_deserializer is None:
-                    continue
-                if behavior is None or not callable(behavior):
-                    continue
-                method_handlers[full_rpc_path] = (
-                    grpc_lib.unary_unary_rpc_method_handler(
-                        behavior,
-                        request_deserializer=request_serializer,
-                        response_serializer=response_deserializer,
-                    )
-                )
-        finally:
-            dummy_channel.close()
+        # M6-#3 prod-fix (2026-09-09): классы сообщений — из дескриптора
+        # сервиса (pb2); методы динамического servicer'а = имена RPC.
+        service_desc = bundle.pb2.DESCRIPTOR.services_by_name.get(
+            f"{service_cap}AutoService"
+        )
+        if service_desc is None:
+            logger.warning(
+                "gRPC auto-servicer: дескриптор %s не найден — домен пропущен",
+                service_cap,
+            )
+            continue
+
+        method_handlers: dict[str, Any] = {}
+        service_full_name = f"/{service_desc.full_name}"
+        for method_desc in service_desc.methods:
+            rpc_name = method_desc.name
+            behavior = getattr(servicer, rpc_name, None)
+            if behavior is None or not callable(behavior):
+                continue
+            request_deserializer = getattr(
+                bundle.pb2, method_desc.input_type.name
+            ).FromString
+            response_serializer = getattr(
+                bundle.pb2, method_desc.output_type.name
+            ).SerializeToString
+            method_handlers[rpc_name] = grpc_lib.unary_unary_rpc_method_handler(
+                behavior,
+                request_deserializer=request_deserializer,
+                response_serializer=response_serializer,
+            )
 
         if not method_handlers:
             logger.warning(
@@ -343,9 +340,7 @@ def register_auto_servicers(grpc_server: Any) -> int:
             )
             continue
 
-        # Полное имя сервиса — из любого метода ('/pkg.Service/Method').
-        sample = next(iter(method_handlers))
-        service_full_name = sample.rsplit("/", 1)[0].lstrip("/")
+        service_full_name = f"/{service_desc.full_name}"
 
         generic_handler = grpc_lib.method_handlers_generic_handler(
             service_full_name, method_handlers

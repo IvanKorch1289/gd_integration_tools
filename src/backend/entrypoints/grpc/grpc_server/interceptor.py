@@ -63,5 +63,12 @@ class AuthInterceptor(grpc.aio.ServerInterceptor):
                 except AbortError:
                     raise
 
-            return _abort
+            # Prod-fix 2026-09-09 (M6-#3): bare-функция как handler падала в
+            # grpc.aio _handle_rpc ('function' object has no attribute
+            # 'request_streaming') вместо чистого UNAUTHENTICATED.
+            return grpc.unary_unary_rpc_method_handler(
+                _abort,
+                request_deserializer=None,
+                response_serializer=None,
+            )
         return await continuation(handler_call_details)
