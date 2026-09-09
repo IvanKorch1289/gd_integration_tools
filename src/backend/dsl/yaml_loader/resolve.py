@@ -99,7 +99,7 @@ def _resolve_include_extends(
     extends_path = spec.pop("extends", None)
     if extends_path is not None:
         ext_str = str(extends_path)
-        resolved_path = _resolve_contained_path(ext_str, base_path, _trusted_root)
+        resolved_path = _resolve_contained_path(ext_str, base_path, _trusted_root or Path())  # type: ignore[arg-type]  # R2.MYPY: _trusted_root: Path|None; runtime fallback
 
         if not resolved_path.exists():
             raise FileNotFoundError(f"Extended YAML file not found: {resolved_path}")
@@ -162,7 +162,7 @@ def _resolve_include_extends(
 
         for inc_path in include_paths:
             inc_str = str(inc_path)
-            resolved_inc = _resolve_contained_path(inc_str, base_path, _trusted_root)
+            resolved_inc = _resolve_contained_path(inc_str, base_path, _trusted_root or Path())  # type: ignore[arg-type]
 
             # Check existence BEFORE tracking to avoid false-positive on first pass
             if not resolved_inc.exists():
