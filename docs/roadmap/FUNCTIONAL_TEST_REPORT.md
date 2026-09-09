@@ -128,3 +128,54 @@ gd_integration.<service>.<method>  # ожидаемый ответ (service-name
 Координатор роя (auto-generated 2026-09-05). При изменениях auth-контракта
 обновлять вместе с `docs/security/AUTH_PROTOCOL_MATRIX.md` (per
 ledger: S97 batch DOCS1).
+
+
+---
+
+## 2026-09-09 — dev_light live-верификация (positive auth UNBLOCKED, M6-#3)
+
+Стенд: `APP_PROFILE=dev_light APP_SERVER=uvicorn manage.py run --port 8001`
+(без docker; SQLite ./.run/dev.sqlite3; redis/mq — in-memory fallbacks).
+Пользователь: dev_admin (создан локально в dev-SQLite, argon2id по схеме
+модели). Секрет JWT: SecureSettings.secret_key (профиль dev_light).
+
+### Исправленные prod-блокеры (эта сессия)
+1. **catch-22 B-04**: auth_required требовал Bearer на /auth/login до
+   step-up → 401 на любой логин. Login path возвращён в public-префиксы.
+2. **audit_replay._collect_body** ждал http.disconnect после потреблённого
+   upstream body → 30-90с «зависание» (задержка = таймаут curl клиента).
+   Fix: bounded wait 1s/chunk.
+3. **request_log._get_request_body** fallback потреблял receive → FastAPI
+   получал disconnect → 422 «Field required: body». Fix: fallback убран,
+   логируется placeholder.
+4. **JWT secret**: login звал jwt_encode без secret → 500 на каждом
+   успешном логине. Fix: secret из SecureSettings (= JwtBackend DI).
+5. **Двойное маскирование ответа**: data_masking (580) + pii_masking_response
+   (700) маскировали access_token → клиент получал «***». Fix: token-issuer
+   пути исключены из обоих.
+
+### Команды и ответы (verified 2026-09-09)
+
+```bash
+# Позитивный логин (200, JWT):
+$ curl -s -X POST http://localhost:8001/api/v1/auth/login \
+    -H "Content-Type: application/json" -H "X-Step-Up-Token: dev-probe" \
+    -d '{"method":"password","username":"dev_admin","password":"..."}'
+{"access_token":"eyJ...","token_type":"bearer","auth_method":"password",
+ "username":"dev_admin","is_superuser":true,"expires_in":3600}          # 200, 0.35-0.6s
+
+# Защищённый REST с JWT (auth пройден; 403 = RBAC-контракт):
+$ curl -s -H "Authorization: Bearer $TOKEN" .../api/v1/admin/certs/expiring
+403 {"detail":{"code":"admin_role_required",
+     "required":["operator","read_only","super_admin"],"actual":[]}}
+
+# Негатив: без токена → 401; инвалидный токен → 401 (verified).
+# GraphQL POST /api/v1/graphql c JWT → проходит auth, доходит до валидации
+#   контракта (422 query/request — multipart-контракт graphql-upload).
+
+### Осталось для полного покрытия метрики №11
+- WS/SSE/MQTT/MQ/gRPC функциональные прогоны (нужны специализированные
+  клиенты; gRPC — grpc-serve на unix socket, manage.py grpc-serve).
+- Браузерные проверки Swagger/GraphQL playground/Streamlit.
+- step-up-request endpoint (docstring LoginStepUpMiddleware; токен сейчас
+  presence-checked, не подписан) — реализовать выпуск+валидацию.
