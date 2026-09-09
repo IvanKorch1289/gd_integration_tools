@@ -297,3 +297,23 @@ NO_PUSH_5S (connected, authenticated, waiting)  # соединение стаб�
 
 **Операционное**: port-war с параллельной полосой (their /app-сервер на
 8000/8002) — верификация только на выделенных портах с kill-by-PID.
+
+
+### 2026-09-09 (финальная верификация на свежем сервере :8010): WS ПОЛНЫЙ ФЛОУ ПОДТВЕРЖДЁН
+
+Прежние «отказы» наблюдались на устаревших/зомби-инстансах (старый код ws_auth).
+На свежем сервере с полным набором фиксов:
+
+```bash
+$ curl -s -X POST .../api/v1/auth/step-up-request          # → 200, token 169
+$ curl -s -X POST .../api/v1/auth/login -H "X-Step-Up-Token: $ST" -d '{...}'
+→ 200 {"access_token":"eyJ...","username":"dev_admin","is_superuser":true,...} (0.15s)
+
+$ python (websockets) ws://localhost:8010/ws?client_id=probe-m6
+    + Authorization: Bearer <jwt> + Sec-WebSocket-Protocol: jwt.<token>
+WS CONNECTED (auth accepted)
+NO_PUSH_5S — соединение стабильно открыто, аутентифицировано,
+ожидает событий (push только при событиях — корректно)
+```
+
+WS-строка метрики №11: ЗАКРЫТА (handshake + auth + стабильное соединение).
