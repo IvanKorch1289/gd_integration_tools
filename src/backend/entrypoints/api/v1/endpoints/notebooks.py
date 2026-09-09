@@ -207,7 +207,7 @@ builder.add_actions(
             service_getter=get_notebook_service,
             service_method="list_all",
             query_model=NotebookListQuery,
-            response_model=list[NotebookOut],
+            response_model=list[NotebookOut],  # type: ignore[arg-type]  # R2.MYPY: ActionSpec.response_model expects type[BaseModel]
             response_handler=_list_handler,
             tags=common_tags,
         ),
@@ -231,7 +231,7 @@ builder.add_actions(
             service_getter=get_notebook_service,
             service_method="list_versions",
             path_model=NotebookIdPath,
-            response_model=list[NotebookVersion],
+            response_model=list[NotebookVersion],  # type: ignore[arg-type]  # R2.MYPY: same
             response_handler=_list_versions_handler,
             tags=common_tags,
         ),
