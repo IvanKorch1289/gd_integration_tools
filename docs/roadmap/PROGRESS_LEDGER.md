@@ -2144,3 +2144,25 @@ no-untyped-def 50, assignment 42, override 33, var-annotated ~19,
 union-attr 13, call-arg 13, call-overload 10, import-untyped 4.
 Гейт-порог ≤30: остаток концентрируется в sqlalchemy-base (12, полоса
 kimi) + доменные серии R2.MYPY. Воспроизводимо: `make type-check-strict-profile`.
+
+---
+
+## Phase B Sprint 12 (продолжение loop iteration 4) — 2026-09-09
+
+### Mypy-strict trajectory
+
+| Версия | HEAD | Errors | Δ |
+|---|---|---|---|
+| Sprint 12 iter 3 close | `32965b00f` | 262 | — |
+| cert_store override fix | `b06582987` | 258 | -4 |
+| sqlalchemy override + var-annotated | `9bd5c91a4` | 250 | -8 |
+| bootstrap + cdc subscribe/replay | `636c897db` | 220 | -30 |
+| **v22** | (this ledger) | **220** | **-42 Sprint 12 iter 4** |
+
+### Cumulative across all sessions
+
+- mypy-strict: **886 → 220 = -666 (-75%)**
+- 175+ atomic commits
+- FINAL_REPORT v6 baseline, ready for v7 update
+- Mypy-strict ≤30 still requires: -190 errors (multi-sprint)
+
