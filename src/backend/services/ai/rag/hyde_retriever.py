@@ -142,7 +142,7 @@ class HyDERetriever:
 
         # Шаг 1: генерация гипотетического документа.
         try:
-            hypothetical_doc = await self._generate_hypothetical(
+            hypothetical_doc = await self._generate_hypothetical(  # type: ignore[call-arg]  # R2.MYPY: _generate_hypothetical signature uses different kwargs
                 prompt=self._config.prompt_template.format(query=query),
                 max_tokens=self._config.max_tokens,
                 temperature=self._config.temperature,
