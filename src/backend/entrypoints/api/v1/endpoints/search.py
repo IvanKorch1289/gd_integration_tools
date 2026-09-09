@@ -134,7 +134,7 @@ async def _safe_search(
 ) -> list[dict[str, Any]]:
     """Выполняет поиск с graceful-fallback при недоступности ES."""
     try:
-        service = get_search_service()
+        service: Any = get_search_service()
         return await service.search(index, query, size=limit, from_=offset, sort=sort)
     except Exception as exc:
         logger.warning("Search failed for index %s: %s", index, exc)

@@ -107,11 +107,11 @@ class SchedulerManager:
         except Exception as exc:
             self.logger.warning("Scheduler DLQ attach skipped: %s", exc)
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Останавливает планировщик при завершении работы приложения."""
         self.scheduler.shutdown()
 
-    def register_job_cleanup(self, job_name: str):
+    def register_job_cleanup(self, job_name: str) -> None:
         """Регистрирует обработчик для автоматической очистки задач с указанным именем.
 
         Args:
@@ -142,7 +142,7 @@ class SchedulerManager:
         self._event_handlers[job_name] = cleanup_job
         self.logger.info(f"Зарегистрирован обработчик для задачи '{job_name}'.")
 
-    def unregister_job_cleanup(self, job_name: str):
+    def unregister_job_cleanup(self, job_name: str) -> None:
         """Удаляет обработчик для задач с указанным именем.
 
         Args:
@@ -158,7 +158,7 @@ class SchedulerManager:
         del self._event_handlers[job_name]
         self.logger.info(f"Обработчик для задачи '{job_name}' удалён.")
 
-    def cleanup_all_jobs_by_name(self, job_name: str):
+    def cleanup_all_jobs_by_name(self, job_name: str) -> None:
         """Очищает все задачи с указанным именем.
 
         Args:
