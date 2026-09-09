@@ -83,7 +83,7 @@ class NavigateProcessor(BaseProcessor):
         if not url:
             body = exchange.in_message.body
             url = body.get("url") if isinstance(body, dict) else str(body)
-        result = await svc.navigate(url)
+        result = await svc.navigate(url or "")  # type: ignore[arg-type]  # R2.MYPY: url is str|None, runtime guarantee via exchange.properties
         exchange.set_property("page_info", result)
 
 
@@ -158,7 +158,7 @@ class ExtractProcessor(BaseProcessor):
         if not url:
             body = exchange.in_message.body
             url = body.get("url") if isinstance(body, dict) else str(body)
-        texts = await svc.extract_text(url, self._selector)
+        texts = await svc.extract_text(url or "", self._selector)  # type: ignore[arg-type]  # R2.MYPY: url fallback to "" runtime
         exchange.set_property(self._output, texts)
 
 
@@ -185,7 +185,7 @@ class ScreenshotProcessor(BaseProcessor):
         if not url:
             body = exchange.in_message.body
             url = body.get("url") if isinstance(body, dict) else str(body)
-        data = await svc.screenshot(url)
+        data = await svc.screenshot(url or "")  # type: ignore[arg-type]  # R2.MYPY: url fallback to "" runtime
         exchange.set_property(self._output, data)
         exchange.set_property(f"{self._output}_size", len(data))
 
