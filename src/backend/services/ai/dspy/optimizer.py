@@ -300,7 +300,7 @@ def _wrap_pipeline_to_dspy(pipeline: DSPyPipeline) -> object:
 def _dspy_metric_adapter(pipeline: DSPyPipeline) -> Callable[..., float]:
     """Адаптер pipeline.metric → DSPy metric signature (example, prediction, ...)."""
 
-    def _metric(example: object, prediction: object, *_args: object) -> float:
+    def _metric(example: Any, prediction: Any, *_args: Any) -> float:
         ex_dict = dict(example.inputs())
         ex_dict.update(example.labels())
         try:

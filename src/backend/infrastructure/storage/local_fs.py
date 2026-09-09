@@ -222,9 +222,11 @@ class LocalFSStorage(ObjectStorage):
                 async for chunk in stream:
                     await fh.write(chunk)
             else:
-                # Поддержка sync-итератора через to_thread (avoid blocking).
+                # Sync-итератор: fh (aiofiles) уже async — каждый chunk
+                # пишется без блокировки loop; to_thread здесь создавал
+                # никогда не awaiting coroutine (запись не выполнялась).
                 for chunk in stream:
-                    await asyncio.to_thread(fh.write, chunk)
+                    await fh.write(chunk)
         await aiofiles.os.replace(str(tmp), str(path))
         return str(path)
 

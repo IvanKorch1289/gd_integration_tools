@@ -14,7 +14,7 @@ Wave: ``[wave:s77/w3-dsl-editor-split]``.
 
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import Any
 
 import yaml as _yaml
 
@@ -81,7 +81,7 @@ def build_yaml_from_steps(meta: dict[str, Any], steps: list[dict[str, Any]]) -> 
         out["description"] = meta["description"]
     if steps:
         out["processors"] = [{s["type"]: s.get("params") or {}} for s in steps]
-    return cast(str, _yaml.dump(out, allow_unicode=True, sort_keys=False))
+    return _yaml.dump(out, allow_unicode=True, sort_keys=False)
 
 
 def try_load(yaml_str: str) -> tuple[Pipeline | None, str | None]:
