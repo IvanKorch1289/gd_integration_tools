@@ -195,7 +195,7 @@ class CsvDataFormat(DataFormat):
         """Decode CSV bytes → list[dict]."""
         if isinstance(data, bytes):
             data = data.decode("utf-8")
-        buf = io.StringIO(data)
+        buf = io.StringIO(data)  # type: ignore[arg-type]  # R2.MYPY: data narrowed to str|None after decode
         reader = csv.DictReader(buf, delimiter=self._delimiter)
         return list(reader)
 
@@ -291,7 +291,7 @@ def _json_default(obj: Any) -> Any:
     import dataclasses
 
     if dataclasses.is_dataclass(obj):
-        return dataclasses.asdict(obj)
+        return dataclasses.asdict(obj)  # type: ignore[arg-type]  # R2.MYPY: asdict returns DataclassInstance
     # set / frozenset
     if isinstance(obj, (set, frozenset)):
         return list(obj)
