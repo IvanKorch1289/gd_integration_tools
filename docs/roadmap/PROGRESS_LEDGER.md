@@ -1763,3 +1763,45 @@ ADR-0299 — plan на остаток ≥30: per-file ignores + Protocol refacto
 
 **Per ADR-0295 partial-rationale philosophy**: mypy-strict ≤30 для всего проекта — over-engineering. Реалистичная цель — top-critical paths (services + dsl) до ≤30 + per-module ignores для тестов/frontend (где strict не нужен).
 
+
+---
+
+## Phase B Sprint 7 (2026-09-09) — продолжение после v3
+
+### Mypy-strict trajectory (v3 → v9)
+
+| Версия | HEAD | Errors | Files | Δ | Комментарий |
+|---|---|---|---|---|---|
+| v7 Sprint 6 | `6dc9a18dd` | 560 | 303 | — | after mode+stage Literal + Logger fix |
+| Sprint 6 continued | `ea41554de` | 560 | — | — | resilience/facade cast |
+| Sprint 6 ledger | `b4039e48e` | (v3 report) | — | — | FINAL_REPORT v3 |
+| parallel session (style format) | `32387b4d5` | — | — | — | ruff format 24 файлов |
+| webdav fix | `959b688f9` | — | — | — | F821 Any import |
+| audit_versioning | `c48fe8ee7` | — | — | -3 | return type + var-annotated ignores |
+| step_trace + parallelism | `3acc86499` | — | — | -2 | Iterator[Any] return type |
+| slo_tracker | `8e017cf96` | — | — | -3 | assert narrowing _hdr/_fallback |
+| email_utils | `7d55bc69e` | — | — | -2 | union-attr ignore для bytes.decode |
+| **v9 Sprint 7 final** | (this ledger) | **522** | 292 | **-38** | Sprint 7 net reduction |
+
+### v9 code distribution
+
+| Error code | v7 (560) | v9 (522) | Δ |
+|---|---|---|---|
+| arg-type | 166 | 150 | -16 |
+| call-arg | 99 | 99 | 0 |
+| assignment | 83 | 83 | 0 |
+| union-attr | 54 | 49 | -5 |
+| no-untyped-def | 53 | 49 | -4 |
+| override | 46 | 46 | 0 |
+| var-annotated | 21 | 19 | -2 |
+| import-untyped | 13 | 13 | 0 |
+| call-overload | 9 | 9 | 0 |
+| **TOTAL** | **560** | **522** | **-38 (-7%)** |
+
+### Sprint 7 итог
+
+- 5 атомарных коммитов
+- mypy 560 → 522 (-38)
+- patterns: return type annotations, var-annotated ignores, assert narrowing для union-attr, type: ignore для union-attr на bytes.decode
+- остаётся: -492 для достижения ≤30 (multi-sprint)
+
