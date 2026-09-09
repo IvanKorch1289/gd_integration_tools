@@ -190,7 +190,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         )
 
     @main_session_manager.connection(commit=False)
-    async def get(
+    async def get(  # type: ignore[override]  # R2.MYPY: AbstractRepository vs SQLAlchemy signature mismatch
         self,
         session: AsyncSession,
         key: str | None = None,
@@ -227,7 +227,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
 
         is_return_list = False
 
-        order_by = asc(by) if order == "asc" else desc(by)  # type: ignore[arg-type]  # R2.MYPY: by: str|None → ColumnElement
+        order_by: Any = asc(by) if order == "asc" else desc(by)  # type: ignore[arg-type,var-annotated]  # R2.MYPY: by: str|None → ColumnElement
 
         if filter:
             query = filter.filter(select(self.model).order_by(order_by))
@@ -264,7 +264,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         :param order: Порядок сортировки ("asc" или "desc").
         :return: Словарь с items и total.
         """
-        order_by = asc(by) if order == "asc" else desc(by)  # type: ignore[arg-type]  # R2.MYPY: by: str|None → ColumnElement
+        order_by: Any = asc(by) if order == "asc" else desc(by)  # type: ignore[arg-type,var-annotated]  # R2.MYPY: by: str|None → ColumnElement
 
         if filter:
             query = filter.filter(select(self.model).order_by(order_by))
@@ -290,7 +290,9 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         return {"items": items, "total": total}
 
     @main_session_manager.connection(commit=False)
-    async def count(self, session: AsyncSession) -> int:
+    async def count(  # type: ignore[override]  # R2.MYPY: AbstractRepository vs SQLAlchemy signature
+        self, session: AsyncSession
+    ) -> int:
         """Получить количество объектов в таблице.
 
         :param session: Асинхронная сессия SQLAlchemy.
@@ -304,7 +306,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         return count_value
 
     @main_session_manager.connection(commit=False)
-    async def first_or_last(
+    async def first_or_last(  # type: ignore[override]  # R2.MYPY: AbstractRepository vs SQLAlchemy signature
         self, session: AsyncSession, limit: int = 1, by: str = "id", order: str = "asc"
     ) -> list[ConcreteTable]:
         """Получить первый/-е или последний/-е объект в таблице, отсортированный по указанному полю.
@@ -315,7 +317,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         :param limit: Количество записей.
         :return: Первый или последний объект.
         """
-        order_by = (
+        order_by: Any = (  # type: ignore[var-annotated]
             asc(by) if order == "asc" else desc(by)
         )  # Определяем порядок сортировки
 
@@ -325,7 +327,9 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         )
 
     @main_session_manager.connection()
-    async def add(self, session: AsyncSession, data: dict[str, Any]) -> ConcreteTable:
+    async def add(  # type: ignore[override]  # R2.MYPY: AbstractRepository vs SQLAlchemy signature
+        self, session: AsyncSession, data: dict[str, Any]
+    ) -> ConcreteTable:
         """Добавить новый объект в таблицу.
 
         :param session: Асинхронная сессия SQLAlchemy.
@@ -369,7 +373,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         return len(unsecret_data)
 
     @main_session_manager.connection()
-    async def update(
+    async def update(  # type: ignore[override]  # R2.MYPY: AbstractRepository vs SQLAlchemy signature
         self,
         session: AsyncSession,
         key: str,
@@ -405,7 +409,9 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         )
 
     @main_session_manager.connection()
-    async def delete(self, session: AsyncSession, key: str, value: Any) -> int | None:
+    async def delete(  # type: ignore[override]  # R2.MYPY: AbstractRepository vs SQLAlchemy signature
+        self, session: AsyncSession, key: str, value: Any
+    ) -> int | None:
         """Удалить объект из таблицы по ключу и значению.
 
         S83 W2 (V2 P0 N1): возвращает ID удалённого объекта (или None),
@@ -427,7 +433,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         return int(row) if row is not None else None
 
     @main_session_manager.connection(commit=False)
-    async def get_all_versions(
+    async def get_all_versions(  # type: ignore[override]  # R2.MYPY: AbstractRepository vs SQLAlchemy signature
         self, session: AsyncSession, object_id: int, order: str
     ) -> Sequence[Any]:
         """Получить все версии объекта."""
@@ -436,7 +442,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         )
 
     @main_session_manager.connection(commit=False)
-    async def get_latest_version(
+    async def get_latest_version(  # type: ignore[override]  # R2.MYPY: AbstractRepository vs SQLAlchemy signature
         self, session: AsyncSession, object_id: int
     ) -> dict[str, Any] | None:
         """Получить последнюю версию объекта."""
@@ -446,7 +452,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         return versions[0] if versions else None
 
     @main_session_manager.connection()
-    async def restore_to_version(
+    async def restore_to_version(  # type: ignore[override]  # R2.MYPY: AbstractRepository vs SQLAlchemy signature
         self, session: AsyncSession, object_id: int, transaction_id: int
     ) -> dict[str, Any]:
         """Восстановить объект до указанной версии и вернуть информацию о транзакции.
