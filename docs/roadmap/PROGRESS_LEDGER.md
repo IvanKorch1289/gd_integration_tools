@@ -1995,3 +1995,37 @@ auth_login secret fix.
 
 След. цикл: step-up-request endpoint (подпись токена), WS/SSE/gRPC/MQTT/MQ
 прогоны, браузерные проверки, outdated-батчи, load-rerun.
+
+---
+
+## Phase B Sprint 10 (2026-09-09) — продолжение per-file batch
+
+### Mypy-strict trajectory (v6 → v18)
+
+| Версия | HEAD | Errors | Δ |
+|---|---|---|---|
+| v6 baseline | `c57c6dbad` | 402 | — |
+| yaml_loader/resolve | `9259c6df8` | 400 | -2 |
+| lifecycle_mixin | `ad4f616c7` | 398 | -2 |
+| bpmn_importer | `5173c80fe` | 396 | -2 |
+| card_tokenize | `2c5aecd27` | 394 | -2 |
+| marshal/formats | `929902884` | 392 | -2 |
+| index (re-fix) | `1eadfb76d` | 390 | -2 |
+| dict_ops | `59ccafa8a` | 388 | -2 |
+| infra_elasticsearch | `563e71da3` | 386 | -2 |
+| webhook_sources_mixin | `c06a56208` | 384 | -2 |
+| admin_workflows | `93b8195ca` | 382 | -2 |
+| 6 sources_mixin files | `540df9aa5` | 370 | -12 |
+| routing + agent_dsl/infra | `e70466b02` | 366 | -4 |
+| utils + semantic + s3_pool | `5a165f82e` | 363 | -3 |
+| aggregation + rate_limiter | `18a63274d` | 361 | -2 |
+| client_metrics + sla_alerting | `10c2eb01e` | 359 | -2 |
+| whoosh_index | `19791ce45` | 357 | -2 |
+| **v18** | (this ledger) | **355** | **-47** |
+
+### Cumulative across all sessions
+
+- mypy-strict: **886 → 355 = -531 (-60%)**
+- 100+ atomic commits
+- FINAL_REPORT v6 baseline, ready for v7 update
+
