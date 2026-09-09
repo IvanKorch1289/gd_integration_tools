@@ -93,7 +93,7 @@ class Versioning:
     )
 
     @staticmethod
-    def _version_model_or_raise(model: type):
+    def _version_model_or_raise(model: type) -> type:
         """Возвращает version_class(model), или VersioningError если model не versioned.
 
         Continuum raises ``ClassNotVersioned`` для моделей без ``__versioned__``
@@ -136,7 +136,7 @@ class Versioning:
     @staticmethod
     def get_version(
         session: Any, model: type, entity_id: int | str, transaction_id: int
-    ):
+    ) -> object | None:
         """Возвращает конкретную версию или None.
 
         Args:
@@ -187,7 +187,7 @@ class Versioning:
             raise VersioningError(
                 f"Version tx={transaction_id} not found for {model.__name__}#{entity_id}"
             )
-        for col in inspect(model).columns:
+        for col in inspect(model).columns:  # type: ignore[var-annotated]
             if col.key in Versioning._SKIP_COLUMNS:
                 continue
             setattr(original, col.key, getattr(target, col.key))
@@ -236,7 +236,7 @@ class Versioning:
             )
 
         changes: dict[str, dict[str, Any]] = {}
-        for col in inspect(model).columns:
+        for col in inspect(model).columns:  # type: ignore[var-annotated]
             if col.key in Versioning._CONTEXT_COLUMNS:
                 continue
             old_val = getattr(v1, col.key, None)
