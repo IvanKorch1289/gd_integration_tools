@@ -2259,3 +2259,18 @@ live-verified. FTR синхронизирован.
 Коммиты: `acd046ea2` (двойной accept) + FTR-секция «WS ПОЛНЫЙ ФЛОУ».
 Evidence: connect → auth accepted → соединение стабильно 5с+ без закрытия;
 подделка/отсутствие токена → denial 1008 с коротким reason.
+
+
+## gRPC auto-servicer wiring (2026-09-09 ночь): регистрация работает (4 домена), dispatch — grpc-интерналы
+
+Реализовано и wired в serve() (`890e21084`): register_auto_servicers →
+add_generic_rpc_handlers с proper RpcMethodHandler (deser/ser из stub-методов).
+Корень неработоспособности: register_auto_servicers был DEAD CODE — grpc-serve
+его никогда не вызывал; /orderkinds.auto.* попадали в нецелевой handler.
+
+Live: регистрация 4 доменов ✓ (лог «auto-servicers зарегистрированы: 4»),
+но dispatch List всё ещё AttributeError «'function' object has no attribute
+'request_streaming'» внутри grpc.aio _handle_rpc:838 — grpc-интерналы
+(наш handler имеет атрибуты). След. сессия: py-spy дамп на _handle_rpc /
+сравнить с рабочим статическим путём (orders) / минимальный aio-server
+воспроизводитель.
