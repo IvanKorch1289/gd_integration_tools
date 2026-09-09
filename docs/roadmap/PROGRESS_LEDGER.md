@@ -1932,3 +1932,19 @@ Coverage honest 72.04% >= 70 (gate-strict PASS). mypy permissive 0/2356.
 - 45+ atomic commits
 - FINAL_REPORT v4 baseline, ready for v5 update
 
+
+
+## Фаза B статус (2026-09-09, финал прохода)
+
+- `db715f49d` rate-limiters (unified + global_ratelimit) уважают
+  redis.enabled=false — fail-open мгновенно (было: connect-wait 30-90с).
+- CB-тесты (4 шт, circuit_breaker_sliding/registry) — pre-existing
+  order-pollution, воспроизводится и на родителе коммита; изоляция —
+  отдельная задача.
+- Логин dev_light: credentials-цепочка верифицирована напрямую
+  (login_with_method → OK 0.1s, APP_PROFILE=dev_light). HTTP-ханг 60с
+  ВНУТРИ хендлера остаётся открытым: доходит до роута (Запрос+Тело в логе),
+  422 после обрыва клиента; per-second SQL пинг — фоновый шум (есть и в
+  idle). След. шаг: py-spy/faulthandler дамп на висящем запросе.
+- Осторожно: `pkill -f` паттерн, встречающийся в собственном heredoc,
+  убивает собственную команду (было: ledger-коммит потерян, повторён).
