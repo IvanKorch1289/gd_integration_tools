@@ -32,12 +32,12 @@ def parse_email(raw: bytes) -> dict[str, Any]:
             if part.get_content_type() == "text/plain":
                 payload = part.get_payload(decode=True)
                 if payload:
-                    body = payload.decode(errors="replace")
+                    body = payload.decode(errors="replace")  # type: ignore[union-attr]  # R2.MYPY: email Message bytes
                     break
     else:
         payload = msg.get_payload(decode=True)
         if payload:
-            body = payload.decode(errors="replace")
+            body = payload.decode(errors="replace")  # type: ignore[union-attr]  # R2.MYPY: email Message bytes
 
     return {
         "message_id": msg.get("Message-ID", ""),
