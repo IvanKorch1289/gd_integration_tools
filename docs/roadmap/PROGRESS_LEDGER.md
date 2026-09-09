@@ -1979,3 +1979,19 @@ Coverage honest 72.04% >= 70 (gate-strict PASS). mypy permissive 0/2356.
 - 70+ atomic commits
 - FINAL_REPORT v5 baseline, ready for v6 update
 
+
+
+## Финал прохода 2026-09-09 (вечер): POSITIVE AUTH UNBLOCKED — метрика №8 ядро закрыто
+
+Цепочка фиксов (все с тестами, зелёные): catch-22 auth_required →
+bounded-wait audit_replay → request_log без consume-fallback → JWT secret
+из SecureSettings → token-issuer skip в data_masking (580) +
+pii_masking_response (700) → идемпотентный replay-receive (multi-consumer).
+Живая верификация: POST /auth/login → **200 + реальный JWT за 0.35-0.6с**;
+защищённые роуты принимают Bearer (403 RBAC-контракт на certs/expiring);
+негатив 401/401-инвалид. Команды: FUNCTIONAL_TEST_REPORT.md (секция
+2026-09-09). Коммиты: `05c1c0fa5` `f0dc06e6e` `5250f3762` `b0b43e36d` +
+auth_login secret fix.
+
+След. цикл: step-up-request endpoint (подпись токена), WS/SSE/gRPC/MQTT/MQ
+прогоны, браузерные проверки, outdated-батчи, load-rerun.
