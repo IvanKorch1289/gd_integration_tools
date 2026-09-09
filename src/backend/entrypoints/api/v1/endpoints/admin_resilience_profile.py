@@ -69,8 +69,8 @@ class BulkheadIn(BaseModel):
 class ResilienceProfileIn(BaseModel):
     """Composite resilience profile (retry + cb + ratelimit + bulkhead)."""
 
-    retry: RetryPolicyIn = RetryPolicyIn()
-    circuit_breaker: CircuitBreakerIn = CircuitBreakerIn()
+    retry: RetryPolicyIn = RetryPolicyIn()  # type: ignore[call-arg]  # R2.MYPY: RetryPolicyIn defaults set via class-level model_dump defaults
+    circuit_breaker: CircuitBreakerIn = CircuitBreakerIn()  # type: ignore[call-arg]  # R2.MYPY: same as above
     rate_limit: RateLimitIn | None = None
     bulkhead: BulkheadIn | None = None
 
