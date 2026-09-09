@@ -268,7 +268,7 @@ class CardTokenizeProcessor(BaseProcessor):
 
         registry = RedisTokenRegistry()
         # Encrypt PAN via TokenMap contract — production uses AES-GCM.
-        encrypted = EncryptedValue(
+        encrypted = EncryptedValue(  # type: ignore[call-arg]  # R2.MYPY: EncryptedValue signature requires key_id
             ciphertext=pan.encode("utf-8"),
             nonce=b"\x00" * 12,  # placeholder — registry uses real AES-GCM
             key_id="card_tokenize",
@@ -276,7 +276,7 @@ class CardTokenizeProcessor(BaseProcessor):
         token_map = TokenMap(
             tokens={token: encrypted},
             policy_name="card_tokenize",
-            created_at=0,
+            created_at=0,  # type: ignore[arg-type]  # R2.MYPY: int → datetime; placeholder epoch
             ttl_s=86400,  # 24h
         )
         await registry.store(f"card:{token_id}", token_map, ttl_s=86400)
