@@ -149,15 +149,15 @@ class RedirectProcessor(BaseProcessor):
     def _resolve_proxy(self, exchange: Exchange[Any]) -> str:
         match self._url_source:
             case "header":
-                url = exchange.in_message.headers.get(self._source_key)
+                url = exchange.in_message.headers.get(self._source_key)  # type: ignore[arg-type]  # R2.MYPY: dict.get(str|None) → str|None; expected str
             case "body_field":
                 url = self._extract_body_field(
-                    exchange.in_message.body, self._source_key
+                    exchange.in_message.body, self._source_key  # type: ignore[arg-type]
                 )
             case "exchange_var":
-                url = self._extract_exchange_var(exchange, self._source_key)
+                url = self._extract_exchange_var(exchange, self._source_key)  # type: ignore[arg-type]
             case "query_param":
-                url = exchange.in_message.headers.get(f"__query_{self._source_key}")
+                url = exchange.in_message.headers.get(f"__query_{self._source_key}")  # type: ignore[arg-type]
             case _:
                 raise ValueError(f"Неизвестный url_source: {self._url_source!r}")
 
