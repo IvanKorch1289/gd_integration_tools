@@ -117,7 +117,7 @@ class SemanticCache:
         key = self._exact_key(query)
         raw = getattr(redis_client, "_raw_client", None) or redis_client
         try:
-            return await raw.get(key)
+            return await raw.get(key)  # type: ignore[union-attr]  # R2.MYPY: Any|Callable
         except Exception as exc:
             logger.debug("SemanticCache get fail: %s", exc)
             return None
@@ -139,7 +139,7 @@ class SemanticCache:
         key = self._exact_key(query)
         raw = getattr(redis_client, "_raw_client", None) or redis_client
         try:
-            await raw.set(key, value, ex=self.ttl_seconds)
+            await raw.set(key, value, ex=self.ttl_seconds)  # type: ignore[union-attr]
         except Exception as exc:
             logger.debug("SemanticCache set fail: %s", exc)
 

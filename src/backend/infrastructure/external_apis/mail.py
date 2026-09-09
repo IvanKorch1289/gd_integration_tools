@@ -84,12 +84,12 @@ class MailService:
             msg.attach(MIMEText(message, "plain", "utf-8"))
             msg.attach(MIMEText(html_message, "html", "utf-8"))
         else:
-            msg = MIMEText(message, "plain", "utf-8")
+            msg = MIMEText(message, "plain", "utf-8")  # type: ignore[assignment]  # R2.MYPY: MIMEMultipart vs MIMEText
 
         if not isinstance(to_emails, (list, tuple)):
             to_emails = [to_emails]
 
-        msg["Subject"] = Header(subject, "utf-8")
+        msg["Subject"] = Header(subject, "utf-8")  # type: ignore[assignment]  # R2.MYPY: msg dict[str] vs Header
         msg["From"] = formataddr(
             (
                 (
