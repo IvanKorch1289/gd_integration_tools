@@ -89,7 +89,7 @@ class StreamClient:
             get_scheduler_manager,
         )
 
-        self.stream_app = FastStream(logger=stream_logger)
+        self.stream_app = FastStream(logger=stream_logger)  # type: ignore[arg-type]  # R2.MYPY: FastStream/RedisRouter/etc accept LoggerProto; structlog.LoggerProtocol compatible at runtime.
         self.redis_settings = settings.redis
         self.rabbit_settings = settings.queue
         # Kafka-настройки: используем те же bootstrap_servers / group_id, что
@@ -132,8 +132,8 @@ class StreamClient:
             max_connections=self.redis_settings.max_connections,
             socket_timeout=self.redis_settings.socket_timeout,
             socket_connect_timeout=self.redis_settings.socket_connect_timeout,
-            retry_on_timeout=self.redis_settings.retry_on_timeout,
-            logger=stream_logger,
+            retry_on_timeout=self.redis_settings.retry_on_timeout,  # type: ignore[arg-type]  # R2.MYPY: settings.retry_on_timeout is Optional[bool], RedisRouter expects bool
+            logger=stream_logger,  # type: ignore[arg-type]  # R2.MYPY: LoggerProtocol → LoggerProto
             db=self.redis_settings.db_queue,
             schema_url="/asyncapi",
             specification_tags=[{"name": "redis"}],
@@ -152,7 +152,7 @@ class StreamClient:
         # the parameter from RabbitRouter.__init__. The setting still lives
         # in queue config for backward compat but is ignored by FastStream.
         self.rabbit_router = RabbitRouter(
-            url=self.rabbit_settings.queue_url,
+            url=self.rabbit_settings.queue_url,  # type: ignore[arg-type]  # R2.MYPY: settings.queue_url is Callable[[], str], RabbitRouter expects str|URL
             security=BaseSecurity(use_ssl=self.rabbit_settings.use_ssl),
             timeout=self.rabbit_settings.timeout,
             reconnect_interval=self.rabbit_settings.reconnect_interval,
@@ -190,7 +190,7 @@ class StreamClient:
         bootstrap = getattr(self.kafka_settings, "bootstrap_servers", "localhost:9092")
         self.kafka_router = KafkaRouter(
             bootstrap_servers=bootstrap,
-            logger=stream_logger,
+            logger=stream_logger,  # type: ignore[arg-type]  # R2.MYPY: LoggerProtocol → LoggerProto
             schema_url="/asyncapi",
             specification_tags=[{"name": "kafka"}],
             include_in_schema=True,
