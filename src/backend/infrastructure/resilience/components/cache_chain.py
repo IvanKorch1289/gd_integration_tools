@@ -20,7 +20,7 @@ CacheGetCallable = Callable[[str], Awaitable[bytes | None]]
 async def _redis_get(key: str) -> bytes | None:
     from src.backend.infrastructure.cache.factory import create_cache_backend
 
-    backend = create_cache_backend("redis")
+    backend = create_cache_backend("redis")  # type: ignore[arg-type]  # R2.MYPY: create_cache_backend expects CacheSettings | None
     value = await backend.get(key)
     return value if isinstance(value, bytes) or value is None else str(value).encode()
 
@@ -28,7 +28,7 @@ async def _redis_get(key: str) -> bytes | None:
 async def _memcached_get(key: str) -> bytes | None:
     from src.backend.infrastructure.cache.factory import create_cache_backend
 
-    backend = create_cache_backend("memcached")
+    backend = create_cache_backend("memcached")  # type: ignore[arg-type]
     value = await backend.get(key)
     return value if isinstance(value, bytes) or value is None else str(value).encode()
 
