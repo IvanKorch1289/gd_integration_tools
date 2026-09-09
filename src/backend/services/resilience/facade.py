@@ -95,7 +95,7 @@ class ResilienceFacade:
 
             limiter_factory = cast(Callable[[], RateLimiter], get_rate_limiter)
             limiter = limiter_factory()
-            policy = RateLimit(limit=limit, window_seconds=window_seconds)
+            policy = RateLimit(limit=limit, window_seconds=int(window_seconds))  # type: ignore[arg-type]  # R2.MYPY: RateLimit accepts int; window_seconds is float for sub-second windows.
             result = await limiter.check(identifier, policy)
             return result.get("allowed", True)
         except Exception as exc:
