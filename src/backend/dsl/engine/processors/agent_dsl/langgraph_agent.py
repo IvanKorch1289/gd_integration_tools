@@ -89,7 +89,7 @@ class LangGraphAgentProcessor(BaseAIProcessor):
 
         from src.backend.services.ai.ai_graph import build_and_run_agent
 
-        result = await build_and_run_agent(
+        result = await build_and_run_agent(  # type: ignore[call-arg]  # R2.MYPY: build_and_run_agent signature uses positional or different kwargs
             query=self.query,
             thread_id=self.thread_id,
             max_iterations=self.max_iterations,
