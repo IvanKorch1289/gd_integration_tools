@@ -72,6 +72,8 @@ DEFAULT_PUBLIC_PATH_PREFIXES: tuple[str, ...] = (
     # rate-limit 10/5min), который перехватывает запрос следующим слоем.
     "/api/v1/auth/methods",
     "/api/v1/auth/login",
+    # B-04 completion (M6-#3): выдаёт X-Step-Up-Token ДО аутентификации.
+    "/api/v1/auth/step-up-request",
 )
 
 

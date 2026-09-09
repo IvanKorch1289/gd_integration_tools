@@ -26,7 +26,12 @@ Pure ASGI (по образцу :mod:`security_headers`): оборачивает 
 
 from __future__ import annotations
 
+import base64
+import hashlib
+import hmac
 import json
+import time
+import uuid
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
@@ -41,7 +46,10 @@ __all__ = (
     "LOGIN_PATH",
     "LOGIN_RATE_LIMIT",
     "LOGIN_WINDOW_SECONDS",
+    "STEP_UP_TTL_SECONDS",
     "LoginStepUpMiddleware",
+    "issue_step_up_token",
+    "validate_step_up_token",
 )
 
 _logger = get_logger("entrypoints.middlewares.login_step_up")
@@ -50,9 +58,79 @@ _logger = get_logger("entrypoints.middlewares.login_step_up")
 LOGIN_PATH = "/api/v1/auth/login"
 LOGIN_RATE_LIMIT = 10
 LOGIN_WINDOW_SECONDS = 300  # 5 min
+STEP_UP_TTL_SECONDS = 600  # 10 min — жизнь X-Step-Up-Token.
 
 # Параметр тунблирования через DI (для тестов).
 DEFAULT_RATE_LIMIT_FACTORY: Callable[[], RateLimitChecker] | None = None
+
+
+def _signing_key() -> bytes:
+    """HMAC-ключ из SecureSettings.secret_key (тот же, что у JwtBackend)."""
+    try:
+        from src.backend.core.config.security import secure_settings
+
+        secret = secure_settings.secret_key
+        value = (
+            secret.get_secret_value()
+            if hasattr(secret, "get_secret_value")
+            else str(secret)
+        )
+        return value.encode("utf-8")
+    except Exception as exc:  # pragma: no cover — defensive (конфиг есть всегда)
+        _logger.error("login_step_up.signing_key_unavailable: %s", exc)
+        return b"login_step_up_fallback_key"
+
+
+def issue_step_up_token(client_ip: str) -> tuple[str, int]:
+    """Выпускает подписанный краткоживущий X-Step-Up-Token (B-04 completion).
+
+    Формат: ``base64url(payload_json).hex_signature``; payload связывает
+    клиентский IP + expiry (STEP_UP_TTL_SECONDS). Подпись — HMAC-SHA256
+    от SecureSettings.secret_key.
+
+    Returns:
+        (token, ttl_seconds).
+
+    """
+    payload = {
+        "ip": client_ip,
+        "exp": int(time.time()) + STEP_UP_TTL_SECONDS,
+        "nonce": uuid.uuid4().hex,
+    }
+    payload_b64 = base64.urlsafe_b64encode(
+        json.dumps(payload, separators=(",", ":")).encode("utf-8")
+    ).decode("ascii")
+    sig = hmac.new(
+        _signing_key(), payload_b64.encode("ascii"), hashlib.sha256
+    ).hexdigest()
+    return f"{payload_b64}.{sig}", STEP_UP_TTL_SECONDS
+
+
+def validate_step_up_token(token: str, client_ip: str) -> bool:
+    """Верифицирует X-Step-Up-Token: подпись, expiry, привязку к IP.
+
+    Prod-fix 2026-09-09 (M6-#3): раньше проверялось только наличие
+    header (presence-check) — любое non-empty значение проходило.
+    """
+    if not token:
+        return False
+    payload_b64, _, sig = token.partition(".")
+    if not payload_b64 or not sig:
+        return False
+    expected = hmac.new(
+        _signing_key(), payload_b64.encode("ascii"), hashlib.sha256
+    ).hexdigest()
+    if not hmac.compare_digest(sig, expected):
+        return False
+    try:
+        payload = json.loads(base64.urlsafe_b64decode(payload_b64.encode("ascii")))
+    except ValueError, json.JSONDecodeError:
+        return False
+    if not isinstance(payload, dict):
+        return False
+    if payload.get("ip") != client_ip:
+        return False
+    return int(payload.get("exp", 0)) >= int(time.time())
 
 
 def _default_rate_limit_factory() -> RateLimitChecker:
@@ -99,15 +177,15 @@ def _extract_client_ip(scope: Scope) -> str:
     return host if isinstance(host, str) else "-"
 
 
-def _has_step_up_token(scope: Scope) -> bool:
-    """True если ``X-Step-Up-Token`` присутствует и non-empty."""
+def _get_step_up_token(scope: Scope) -> str:
+    """Извлекает значение ``X-Step-Up-Token`` (или пустую строку)."""
     for header_name, header_value in scope.get("headers") or ():
         if header_name == b"x-step-up-token":
             try:
-                return bool(header_value.decode("latin-1").strip())
+                return header_value.decode("latin-1").strip()
             except UnicodeDecodeError:
-                return False
-    return False
+                return ""
+    return ""
 
 
 class LoginStepUpMiddleware:
@@ -181,22 +259,24 @@ class LoginStepUpMiddleware:
             await self.app(scope, receive, send)
             return
 
-        # 1. Step-up token required.
-        if not _has_step_up_token(scope):
+        # 1. Step-up token: извлекаем, верифицируем подпись+expiry+IP.
+        client_ip = _extract_client_ip(scope)
+        token_value = _get_step_up_token(scope)
+        if not validate_step_up_token(token_value, client_ip):
             _logger.warning(
-                "login_step_up.missing_token path=%s ip=%s",
-                path,
-                _extract_client_ip(scope),
+                "login_step_up.invalid_or_missing_token path=%s ip=%s", path, client_ip
             )
             await _send_401(
                 send,
                 error="step_up_token_required",
-                detail="X-Step-Up-Token header required for /api/v1/auth/login",
+                detail=(
+                    "Valid X-Step-Up-Token required — obtain via "
+                    "POST /api/v1/auth/step-up-request"
+                ),
             )
             return
 
         # 2. Rate limit per-IP (10 attempts / 5 min).
-        client_ip = _extract_client_ip(scope)
         identifier = f"login_stepup:ip:{client_ip}"
         try:
             allowed, _remaining, retry_after = await self._checker.check(identifier)

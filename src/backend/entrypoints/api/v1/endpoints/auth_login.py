@@ -38,7 +38,7 @@ from __future__ import annotations
 import time
 from typing import Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 from src.backend.core.logging import get_logger
@@ -55,6 +55,16 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 # === Schemas ===
 
 AuthMethodLiteral = Literal["password", "ldap"]
+
+
+class StepUpTokenResponse(BaseModel):
+    """Ответ ``POST /auth/step-up-request`` (B-04 completion, M6-#3)."""
+
+    step_up_token: str = Field(
+        ..., description="Кладётся в X-Step-Up-Token для POST /auth/login."
+    )
+    token_type: str = "step_up"
+    expires_in: int = Field(default=600, description="TTL токена в секундах.")
 
 
 class LoginRequest(BaseModel):
@@ -210,3 +220,29 @@ async def login(payload: LoginRequest) -> LoginResponse:
         is_superuser=is_superuser,
         expires_in=expires_in,
     )
+
+
+@router.post(
+    "/step-up-request",
+    response_model=StepUpTokenResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Выдать X-Step-Up-Token для POST /auth/login (B-04 flow)",
+    description=(
+        "Выпускает подписанный краткоживущий (10 мин) токен, привязанный "
+        "к клиентскому IP. Кладётся в header ``X-Step-Up-Token`` при "
+        "вызове ``POST /auth/login``. Сам endpoint публичный "
+        "(выдаётся ДО аутентификации) и rate-limited per-IP."
+    ),
+)
+async def step_up_request(request: Request) -> StepUpTokenResponse:
+    """Выпуск short-lived step-up токена (anti-credential-stuffing, B-04)."""
+    from src.backend.entrypoints.middlewares.login_step_up import issue_step_up_token
+
+    xff = request.headers.get("x-forwarded-for")
+    client_ip = (
+        xff.split(",")[0].strip()
+        if xff
+        else (request.client.host if request.client else "unknown")
+    )
+    token, ttl = issue_step_up_token(client_ip)
+    return StepUpTokenResponse(step_up_token=token, expires_in=ttl)

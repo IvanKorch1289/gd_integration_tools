@@ -6,7 +6,6 @@ B-04 fix (cycle 33): step-up auth для ``POST /api/v1/auth/login``:
 3. CSRF cookie default: ``httponly=True``, ``samesite=strict``.
 """
 
-
 from __future__ import annotations
 
 import json
@@ -43,11 +42,18 @@ def _downstream_ok(status_code: int = 200, body: bytes = b"ok"):
 
     async def downstream(scope, receive, send):
         await send(
-            {"type": "http.response.start", "status": status_code, "headers": []},
+            {"type": "http.response.start", "status": status_code, "headers": []}
         )
         await send({"type": "http.response.body", "body": body})
 
     return downstream
+
+
+def _token_for(ip: str = "127.0.0.1") -> bytes:
+    """Валидный подписанный X-Step-Up-Token для данного IP (M6-#3)."""
+    from src.backend.entrypoints.middlewares.login_step_up import issue_step_up_token
+
+    return issue_step_up_token(ip)[0].encode()
 
 
 def _make_scope(
@@ -95,11 +101,7 @@ class TestLoginStepUpMissingToken:
         mw = LoginStepUpMiddleware(app=app, rate_limit_factory=_make_fake_checker)
 
         send = AsyncMock()
-        await mw(
-            _make_scope("POST", LOGIN_PATH, headers=[]),
-            _make_receive(),
-            send,
-        )
+        await mw(_make_scope("POST", LOGIN_PATH, headers=[]), _make_receive(), send)
 
         start = _start_message(send)
         assert start is not None
@@ -122,11 +124,7 @@ class TestLoginStepUpMissingToken:
 
         send = AsyncMock()
         await mw(
-            _make_scope(
-                "POST",
-                LOGIN_PATH,
-                headers=[(b"x-step-up-token", b"   ")],
-            ),
+            _make_scope("POST", LOGIN_PATH, headers=[(b"x-step-up-token", b"   ")]),
             _make_receive(),
             send,
         )
@@ -144,11 +142,7 @@ class TestLoginStepUpMissingToken:
         mw = LoginStepUpMiddleware(app=app, rate_limit_factory=_make_fake_checker)
 
         send = AsyncMock()
-        await mw(
-            _make_scope("OPTIONS", LOGIN_PATH, headers=[]),
-            _make_receive(),
-            send,
-        )
+        await mw(_make_scope("OPTIONS", LOGIN_PATH, headers=[]), _make_receive(), send)
 
         start = _start_message(send)
         assert start is not None
@@ -163,11 +157,7 @@ class TestLoginStepUpMissingToken:
         mw = LoginStepUpMiddleware(app=app, rate_limit_factory=_make_fake_checker)
 
         send = AsyncMock()
-        await mw(
-            _make_scope("GET", LOGIN_PATH, headers=[]),
-            _make_receive(),
-            send,
-        )
+        await mw(_make_scope("GET", LOGIN_PATH, headers=[]), _make_receive(), send)
 
         start = _start_message(send)
         assert start is not None
@@ -212,7 +202,7 @@ class TestLoginStepUpRateLimit:
                 _make_scope(
                     "POST",
                     LOGIN_PATH,
-                    headers=[(b"x-step-up-token", b"tok")],
+                    headers=[(b"x-step-up-token", _token_for("127.0.0.1"))],
                 ),
                 _make_receive(),
                 send,
@@ -227,7 +217,7 @@ class TestLoginStepUpRateLimit:
             _make_scope(
                 "POST",
                 LOGIN_PATH,
-                headers=[(b"x-step-up-token", b"tok")],
+                headers=[(b"x-step-up-token", _token_for("127.0.0.1"))],
             ),
             _make_receive(),
             send,
@@ -263,7 +253,7 @@ class TestLoginStepUpRateLimit:
                 _make_scope(
                     "POST",
                     LOGIN_PATH,
-                    headers=[(b"x-step-up-token", b"tok")],
+                    headers=[(b"x-step-up-token", _token_for("1.0.0.1"))],
                     client=("1.0.0.1", 1234),
                 ),
                 _make_receive(),
@@ -276,7 +266,7 @@ class TestLoginStepUpRateLimit:
             _make_scope(
                 "POST",
                 LOGIN_PATH,
-                headers=[(b"x-step-up-token", b"tok")],
+                headers=[(b"x-step-up-token", _token_for("1.0.0.1"))],
                 client=("1.0.0.1", 1234),
             ),
             _make_receive(),
@@ -292,7 +282,7 @@ class TestLoginStepUpRateLimit:
             _make_scope(
                 "POST",
                 LOGIN_PATH,
-                headers=[(b"x-step-up-token", b"tok")],
+                headers=[(b"x-step-up-token", _token_for("2.0.0.2"))],
                 client=("2.0.0.2", 1234),
             ),
             _make_receive(),
@@ -320,7 +310,7 @@ class TestLoginStepUpRateLimit:
                     "POST",
                     LOGIN_PATH,
                     headers=[
-                        (b"x-step-up-token", b"tok"),
+                        (b"x-step-up-token", _token_for("1.0.0.1")),
                         (b"x-forwarded-for", b"1.0.0.1, 10.0.0.1"),
                     ],
                     client=("10.0.0.1", 1234),
@@ -336,7 +326,7 @@ class TestLoginStepUpRateLimit:
                 "POST",
                 LOGIN_PATH,
                 headers=[
-                    (b"x-step-up-token", b"tok"),
+                    (b"x-step-up-token", _token_for("1.0.0.1")),
                     (b"x-forwarded-for", b"1.0.0.1, 10.0.0.1"),
                 ],
                 client=("10.0.0.1", 1234),
@@ -364,7 +354,7 @@ class TestLoginStepUpSuccessPath:
             _make_scope(
                 "POST",
                 LOGIN_PATH,
-                headers=[(b"x-step-up-token", b"valid-step-up-tok")],
+                headers=[(b"x-step-up-token", _token_for("127.0.0.1"))],
             ),
             _make_receive(),
             send,
@@ -387,11 +377,7 @@ class TestLoginStepUpSuccessPath:
         mw = LoginStepUpMiddleware(app=app, rate_limit_factory=_make_fake_checker)
 
         send = AsyncMock()
-        await mw(
-            {"type": "websocket", "path": "/ws", "headers": []},
-            AsyncMock(),
-            send,
-        )
+        await mw({"type": "websocket", "path": "/ws", "headers": []}, AsyncMock(), send)
 
         msgs = [c.args[0] for c in send.await_args_list]
         assert any(m["type"] == "websocket.accept" for m in msgs)
@@ -406,9 +392,7 @@ class TestCSRFCookieDefaults:
         app = AsyncMock()
 
         async def downstream(scope, receive, send):
-            await send(
-                {"type": "http.response.start", "status": 200, "headers": []},
-            )
+            await send({"type": "http.response.start", "status": 200, "headers": []})
             await send({"type": "http.response.body", "body": b"ok"})
 
         app.side_effect = downstream
@@ -416,9 +400,7 @@ class TestCSRFCookieDefaults:
 
         send = AsyncMock()
         await csrf_mw(
-            _make_scope("GET", "/api/some-page", headers=[]),
-            _make_receive(),
-            send,
+            _make_scope("GET", "/api/some-page", headers=[]), _make_receive(), send
         )
 
         start = _start_message(send)
@@ -433,3 +415,64 @@ class TestCSRFCookieDefaults:
         # Secure flag зависит от settings.app.environment — здесь dev,
         # поэтому Secure НЕ должно быть.
         assert "secure" not in cookie_value
+
+
+class TestStepUpRequestEndpoint:
+    """Интеграция: POST /auth/step-up-request → валидный токен (M6-#3)."""
+
+    @pytest.mark.asyncio
+    async def test_issued_token_validates_and_passes_middleware(self) -> None:
+        from fastapi import FastAPI
+        from httpx import ASGITransport, AsyncClient
+
+        from src.backend.entrypoints.api.v1.endpoints.auth_login import (
+            router as auth_router,
+        )
+
+        api = FastAPI()
+        api.include_router(auth_router)
+
+        app = AsyncMock()
+        app.side_effect = _downstream_ok()
+        mw = LoginStepUpMiddleware(app=app, rate_limit_factory=_make_fake_checker)
+
+        transport = ASGITransport(app=api, client=("127.0.0.1", 321))
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            resp = await client.post("/auth/step-up-request")
+
+        assert resp.status_code == 200
+        payload = resp.json()
+        assert payload["token_type"] == "step_up"
+        assert payload["expires_in"] == 600
+
+        token = payload["step_up_token"]
+        scope = _make_scope(
+            "POST",
+            LOGIN_PATH,
+            headers=[(b"x-step-up-token", token.encode("ascii"))],
+            client=("127.0.0.1", 321),
+        )
+        send = AsyncMock()
+        await mw(scope, _make_receive(), send)
+        start = _start_message(send)
+        assert start is not None
+        assert start["status"] == 200, "issued token MUST pass middleware"
+
+    @pytest.mark.asyncio
+    async def test_garbage_token_rejected(self) -> None:
+        """Произвольная строка (presence-only) больше не проходит."""
+        app = AsyncMock()
+        app.side_effect = _downstream_ok()
+        mw = LoginStepUpMiddleware(app=app, rate_limit_factory=_make_fake_checker)
+
+        send = AsyncMock()
+        await mw(
+            _make_scope(
+                "POST", LOGIN_PATH, headers=[(b"x-step-up-token", b"dev-probe")]
+            ),
+            _make_receive(),
+            send,
+        )
+        start = _start_message(send)
+        assert start is not None
+        assert start["status"] == 401

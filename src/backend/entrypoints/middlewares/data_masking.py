@@ -51,7 +51,7 @@ _SENSITIVE_KEYS = frozenset(
 
 # Prod-fix 2026-09-09 (M6-#3): ответ token-issuer'а — это сам токен;
 # маскирование здесь ломало контракт (клиент получал "***" вместо JWT).
-_TOKEN_ISSUER_PATHS = frozenset({"/api/v1/auth/login"})
+_TOKEN_ISSUER_PATHS = frozenset({"/api/v1/auth/login", "/api/v1/auth/step-up-request"})
 
 
 class DataMaskingMiddleware:
