@@ -49,6 +49,10 @@ _SENSITIVE_KEYS = frozenset(
     }
 )
 
+# Prod-fix 2026-09-09 (M6-#3): ответ token-issuer'а — это сам токен;
+# маскирование здесь ломало контракт (клиент получал "***" вместо JWT).
+_TOKEN_ISSUER_PATHS = frozenset({"/api/v1/auth/login"})
+
 
 class DataMaskingMiddleware:
     """Pure ASGI middleware: маскирует PII в JSON-ответах (cycle 58)."""
@@ -72,6 +76,14 @@ class DataMaskingMiddleware:
 
         """
         if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        # Prod-fix 2026-09-09 (M6-#3): token-issuer endpoints исключены —
+        # выдача access_token и есть назначение ответа; маскировка
+        # превращала логин в бесполезный {"access_token": "***"}.
+        path = scope.get("path", "")
+        if path in _TOKEN_ISSUER_PATHS:
             await self.app(scope, receive, send)
             return
 
