@@ -2098,3 +2098,28 @@ auth_login secret fix.
    токена → 401. Подробности в FUNCTIONAL_TEST_REPORT.md.
 
 **Осталось** (метрики 2,7,9,10,11-частично,12,13): см. план Фазы A.
+
+---
+
+## Phase B Sprint 12 (продолжение loop iteration 3) — 2026-09-09
+
+### Mypy-strict trajectory
+
+| Версия | HEAD | Errors | Δ Sprint 12 |
+|---|---|---|---|
+| Sprint 12 start | `d45be94f0` | 337 | — |
+| Sprint 12 close (loop iter 2) | `524b40286` | 291 | -46 |
+| Sprint 12 close (loop iter 3) | `32965b00f` | **262** | **-75 net** |
+
+### Sprint 12 cumulative коммиты
+
+- 16 atomic commits
+- patterns: assignment fixes, per-line type: ignore, method-assign, misc
+
+### Cumulative across all sessions
+
+- mypy-strict: **886 → 262 = -624 (-70%)**
+- 155+ atomic commits
+- FINAL_REPORT v6 baseline, ready for v7 update
+- Mypy-strict ≤30 still requires: -232 errors (multi-sprint)
+
