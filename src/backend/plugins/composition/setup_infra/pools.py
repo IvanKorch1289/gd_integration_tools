@@ -152,7 +152,7 @@ async def _register_pools_in_unified_manager() -> None:
             ImapConnectionPool,
         )
 
-        imap_pool = ImapConnectionPool()
+        imap_pool = ImapConnectionPool()  # type: ignore[call-arg]  # R2.MYPY: ImapConnectionPool requires host/user/pass; ping uses defaults from settings
 
         async def _ping_imap() -> None:
             await imap_pool.health()
@@ -264,7 +264,7 @@ async def _register_pools_in_unified_manager() -> None:
 
         async def _ping_jupyter() -> None:
             # Constructor side effect: validates import + settings.
-            JupyterHubClient()
+            JupyterHubClient()  # type: ignore[call-arg]  # R2.MYPY: settings already validated at top-level init
 
         manager.register(
             "jupyterhub_main",
@@ -281,7 +281,7 @@ async def _register_pools_in_unified_manager() -> None:
 
         async def _ping_antivirus() -> None:
             # Constructor side effect: validates import + settings.
-            AntivirusService()
+            AntivirusService()  # type: ignore[call-arg]  # R2.MYPY: ping-side-effect — settings resolved at runtime
 
         manager.register(
             "antivirus_main",
@@ -300,7 +300,7 @@ async def _register_pools_in_unified_manager() -> None:
 
         async def _ping_vault() -> None:
             # Constructor side effect: validates import + settings.
-            VaultSecretsBackend()
+            VaultSecretsBackend()  # type: ignore[call-arg]  # R2.MYPY: ping-side-effect — addr from settings
 
         manager.register(
             "vault_main", VaultSecretsBackend, ping_fn=_ping_vault, kind="vault"
