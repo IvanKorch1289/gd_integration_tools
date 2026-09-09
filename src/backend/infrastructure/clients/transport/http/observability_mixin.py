@@ -20,7 +20,7 @@ class ObservabilityMixin(_HttpClientProtocol):
 
     __slots__ = ()
 
-    async def _log_request(
+    async def _log_request(  # type: ignore[override]  # R2.MYPY: HttpClientProtocol signature
         self,
         method: str,
         url: str,

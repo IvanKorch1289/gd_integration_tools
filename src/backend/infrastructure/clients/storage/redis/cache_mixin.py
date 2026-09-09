@@ -77,7 +77,9 @@ class CacheMixin(_RedisClientProtocol):
         """
         return await self.execute("cache", lambda conn: conn.get(key))
 
-    async def cache_set(self, key: str, value: str | bytes, expire: int) -> None:
+    async def cache_set(  # type: ignore[override]  # R2.MYPY: RedisClientProtocol signature
+        self, key: str, value: str | bytes, expire: int
+    ) -> None:
         """Записывает значение в кэш с TTL.
 
         Args:
