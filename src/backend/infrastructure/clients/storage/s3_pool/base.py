@@ -56,8 +56,8 @@ class BaseS3Client(ABC):
         """Проверяет, установлено ли соединение."""
 
     @abstractmethod
-    @asynccontextmanager
-    async def client_context(self) -> AsyncGenerator[Any]:  # type: ignore[misc]  # R2.MYPY: asynccontextmanager signature expects AsyncIterator
+    @asynccontextmanager  # type: ignore[arg-type]  # R2.MYPY: asynccontextmanager signature expects AsyncIterator[Never] not AsyncGenerator
+    async def client_context(self) -> AsyncGenerator[Any]:
         """Контекстный менеджер для операций с клиентом."""
 
     @abstractmethod
