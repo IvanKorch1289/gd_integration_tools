@@ -97,6 +97,15 @@ async def serve() -> None:
     # для streaming DownloadFile/UploadFile RPCs (S128 W3 + S131 W2).
     add_FileServiceServicer_to_server(FileStreamGRPCServicer(), grpc_server)
 
+    # M6-#3 prod-fix (2026-09-09): Wave 1.3 auto-servicers (порядка 130
+    # auto-actions → gRPC) регистрируются через add_generic_rpc_handlers
+    # с proper method_handler'ами (bare-функции падали с
+    # AttributeError request_streaming при dispatch).
+    from src.backend.entrypoints.grpc.auto_servicer import register_auto_servicers
+
+    auto_count = register_auto_servicers(grpc_server)
+    grpc_logger.info("gRPC auto-servicers зарегистрированы: %d", auto_count)
+
     credentials = _load_tls_credentials()
     if credentials is None:
         # dev/local-only: unix-socket или loopback. Запрещено в prod через

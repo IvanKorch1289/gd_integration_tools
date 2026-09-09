@@ -27,6 +27,7 @@ Servicer-классы НЕ перекрывают существующие hand-
 from __future__ import annotations
 
 import importlib
+import sys
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -39,7 +40,14 @@ __all__ = ("AutoServicerBundle", "build_auto_servicers", "register_auto_servicer
 
 
 _AUTO_PROTO_PACKAGE = "src.backend.entrypoints.grpc.protobuf.auto"
+
 _AUTO_PROTO_DIR = Path(__file__).resolve().parent / "protobuf" / "auto"
+
+# Генерированные pb2_grpc делают ``from auto import orderkinds_pb2`` —
+# каталог protobuf должен быть в sys.path, иначе импорт пары падает
+# (0 зарегистрированных auto-servicers).
+if str(_AUTO_PROTO_DIR.parent) not in sys.path:
+    sys.path.insert(0, str(_AUTO_PROTO_DIR.parent))
 
 
 class AutoServicerBundle:
@@ -130,7 +138,10 @@ def _build_rpc_method(action_id: str) -> Callable[..., Any]:
     Контракт: метод принимает ``request`` (protobuf message) и ``context``
     (gRPC ServicerContext), возвращает ``response`` (protobuf message).
     """
-    from google.protobuf.json_format import MessageToDict, ParseDict
+    from google.protobuf.json_format import (  # type: ignore[import-untyped]
+        MessageToDict,
+        ParseDict,
+    )
 
     async def rpc_impl(self: Any, request: Any, context: Any) -> Any:
         from src.backend.entrypoints.base import dispatch_action
@@ -261,6 +272,15 @@ def _build_servicer_class(service: str, base_cls: type, pb2: Any) -> type:
 def register_auto_servicers(grpc_server: Any) -> int:
     """Зарегистрировать все ``AutoServicerBundle`` в gRPC-сервере.
 
+    Prod-fix 2026-09-09 (M6-#3): генерированный
+    ``add_<Service>AutoServiceServicer_to_server`` регистрирует bare-функции
+    (``servicer.Method``) — gRPC v1.66+ при dispatch читает
+    ``request_streaming`` и падает
+    («'function' object has no attribute 'request_streaming'»).
+    Вместо generated-add регистрируем через
+    ``add_generic_rpc_handlers`` + ``grpc.unary_unary_rpc_method_handler``
+    с явными (де)сериализаторами, взятыми из stub-методов.
+
     Args:
         grpc_server: Экземпляр ``grpc.aio.Server``.
 
@@ -268,11 +288,75 @@ def register_auto_servicers(grpc_server: Any) -> int:
         Количество зарегистрированных сервисов.
 
     """
+    import grpc as grpc_lib
+
     bundles = build_auto_servicers()
+    registered = 0
     for bundle in bundles:
-        bundle.add_to_server(bundle.servicer_cls(), grpc_server)
-        logger.info(
-            "Wave 1.3: gRPC auto-servicer зарегистрирован для домена '%s'",
-            bundle.service,
+        servicer = bundle.servicer_cls()
+        service_cap = bundle.service.capitalize()
+        stub_cls = getattr(bundle.pb2_grpc, f"{service_cap}AutoServiceStub", None)
+        if stub_cls is None:
+            logger.warning(
+                "gRPC auto-servicer: stub %s не найден — домен пропущен",
+                service_cap,
+            )
+            continue
+
+        # Throwaway-канал: нужен только чтобы построить stub и снять
+        # (де)сериализаторы; соединения по нему не происходит.
+        dummy_channel = grpc_lib.insecure_channel("localhost:1")
+        try:
+            stub = stub_cls(dummy_channel)
+            method_handlers: dict[str, Any] = {}
+            for attr_name in dir(stub):
+                if attr_name.startswith("_"):
+                    continue
+                stub_method = getattr(stub, attr_name)
+                full_rpc_path = getattr(stub_method, "_method", None)
+                if isinstance(full_rpc_path, bytes):
+                    full_rpc_path = full_rpc_path.decode("ascii")
+                request_serializer = getattr(stub_method, "_request_serializer", None)
+                response_deserializer = getattr(
+                    stub_method, "_response_deserializer", None
+                )
+                behavior = getattr(servicer, attr_name, None)
+                if not full_rpc_path:
+                    continue
+                if request_serializer is None or response_deserializer is None:
+                    continue
+                if behavior is None or not callable(behavior):
+                    continue
+                method_handlers[full_rpc_path] = (
+                    grpc_lib.unary_unary_rpc_method_handler(
+                        behavior,
+                        request_deserializer=request_serializer,
+                        response_serializer=response_deserializer,
+                    )
+                )
+        finally:
+            dummy_channel.close()
+
+        if not method_handlers:
+            logger.warning(
+                "gRPC auto-servicer: нет RPC-методов для домена '%s' — пропущен",
+                bundle.service,
+            )
+            continue
+
+        # Полное имя сервиса — из любого метода ('/pkg.Service/Method').
+        sample = next(iter(method_handlers))
+        service_full_name = sample.rsplit("/", 1)[0].lstrip("/")
+
+        generic_handler = grpc_lib.method_handlers_generic_handler(
+            service_full_name, method_handlers
         )
-    return len(bundles)
+        grpc_server.add_generic_rpc_handlers((generic_handler,))
+        registered += 1
+        logger.info(
+            "Wave 1.3: gRPC auto-servicer зарегистрирован для домена '%s' "
+            "(%d RPC через add_generic_rpc_handlers)",
+            bundle.service,
+            len(method_handlers),
+        )
+    return registered
