@@ -369,7 +369,7 @@ class OrchestrationMixin:
         )
 
         return self._add(  # type: ignore[attr-defined]
-            HitlApprovalProcessor(
+            HitlApprovalProcessor(  # type: ignore[call-arg]  # R2.MYPY: HitlApprovalProcessor signature uses positional or different kwargs
                 task=task,
                 approvers=approvers,
                 timeout_seconds=timeout_seconds,
