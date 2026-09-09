@@ -107,7 +107,7 @@ class DataFormatsMixin:
         return list(csv.DictReader(io.StringIO(text)))
 
     def _to_xml(self, data: Any) -> str:
-        return _dict_to_xml_stdlib(data, root=self.root_tag)
+        return _dict_to_xml_stdlib(data, root=self.root_tag)  # type: ignore[arg-type]  # R2.MYPY: root: str|None → str
 
     def _from_xml(self, data: Any) -> dict[str, Any]:
         """XML → dict через ``xmltodict`` (hard-dep в pyproject.toml).
@@ -152,9 +152,9 @@ class DataFormatsMixin:
         ws = wb.active
         if ws is None:  # pragma: no cover - openpyxl always returns a sheet
             return b""
-        ws.title = self.sheet_name
+        ws.title = self.sheet_name  # type: ignore[union-attr]
         if data:
-            cols = self.headers or list(data[0].keys())
+            cols = self.headers or list(data[0].keys())  # type: ignore[assignment]  # R2.MYPY: str|None → str|_Decodable
             ws.append(list(cols))
             for row in data:
                 ws.append([row.get(c, "") for c in cols])
