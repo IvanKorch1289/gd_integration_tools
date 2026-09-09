@@ -81,10 +81,10 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):  # type: igno
     _processors: ProcessorRegistryProtocol
     _core_version: str
     _streamlit_pages_dir: Path | None
-    _loaded: dict[str, LoadedPlugin]
+    _loaded: dict[str, LoadedPlugin]  # type: ignore[assignment]  # R2.MYPY: LoadedPlugin symbol mismatch between mixins
     _owners: dict[str, dict[str, str]]
-    _loaded_failed: list[LoadedPlugin]
-    _loaded_skipped: list[LoadedPlugin]
+    _loaded_failed: list[LoadedPlugin]  # type: ignore[assignment]
+    _loaded_skipped: list[LoadedPlugin]  # type: ignore[assignment]
 
     def __init__(
         self,
