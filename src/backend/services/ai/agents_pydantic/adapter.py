@@ -101,7 +101,7 @@ class LiteLLMModel(Model if HAS_PYDANTIC_AI else object):  # type: ignore[misc]
         return result
 
     @asynccontextmanager
-    async def request_stream(
+    async def request_stream(  # type: ignore[misc]  # R2.MYPY: asynccontextmanager signature expects AsyncIterator
         self,
         messages: list[ModelMessage],
         model_settings: ModelSettings | None,

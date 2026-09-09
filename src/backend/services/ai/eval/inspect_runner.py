@@ -140,7 +140,7 @@ class InspectRunner:
         from src.backend.services.ai.eval.suites import REFERENCE_SUITES
 
         self._artifacts_dir = Path(artifacts_dir or "artifacts/inspect-ai")
-        self._suites: tuple[EvalSuite, ...] = tuple(suites or REFERENCE_SUITES)
+        self._suites: tuple[EvalSuite, ...] = tuple(suites or REFERENCE_SUITES)  # type: ignore[arg-type]  # R2.MYPY: tuple from Sequence|union type
 
     @property
     def suite_names(self) -> tuple[str, ...]:
