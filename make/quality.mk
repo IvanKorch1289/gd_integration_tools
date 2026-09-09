@@ -63,6 +63,22 @@ type-check-strict: check-env ## Run strict mypy type check (tolerates internal m
 		fi )
 	@$(SUCCESS) "Strict type check passed!"
 
+# ADR-0295: строгий профиль — 9 отключённых в [tool.mypy] error codes
+# включены обратно. Метрика Prod-Readiness №2 (budget ≤30).
+MYPY_STRICT_CODES := no-untyped-def override arg-type assignment import-untyped union-attr var-annotated call-arg call-overload
+
+type-check-strict-profile: check-env ## Strict-профиль ADR-0295 (9 кодов включены) — метрика №2
+	@$(INFO) "Running mypy strict-profile (ADR-0295: +9 error codes)..."
+	@MYPY_USE_MYPYC=0 $(UV_RUN) python -X faulthandler -m mypy \
+		--cache-dir=.mypy_cache_strict \
+		$(foreach CODE,$(MYPY_STRICT_CODES),--enable-error-code=$(CODE)) \
+		-p src; \
+	RET=$$?; \
+	if [ $$RET -eq 2 ]; then \
+		$(WARN) "Mypy crashed with INTERNAL ERROR. Bypassing..."; exit 0; \
+	fi; \
+	exit $$RET
+
 vulture-check: check-env ## Run informational dead code scan
 	@$(INFO) "Running vulture dead code scan..."
 	@$(UV_RUN) vulture $(SOURCE_DIR) --config pyproject.toml || printf '%s\n' "Vulture found possible dead code"

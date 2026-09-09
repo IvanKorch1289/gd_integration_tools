@@ -221,3 +221,4 @@ artifacts/ragas/*.json
 # Kimi Code runtime config (not source — agents override locally)
 /.kimi-code/config.toml
 
+.mypy_cache_strict/
