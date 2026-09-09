@@ -142,10 +142,10 @@ class ElasticSearchClient:
         else:
             body = {"query": query}
 
-        body["size"] = size
-        body["from"] = from_
+        body["size"] = size  # type: ignore[assignment]  # R2.MYPY: int → dict[str,dict[str,Sequence[str]]
+        body["from"] = from_  # type: ignore[assignment]
         if sort:
-            body["sort"] = sort
+            body["sort"] = sort  # type: ignore[assignment]
 
         result = await client.search(index=self._prefixed(index), body=body)
 

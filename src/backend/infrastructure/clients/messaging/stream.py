@@ -127,7 +127,7 @@ class StreamClient:
 
         redis_url = f"{self.redis_settings.redis_url}/{self.redis_settings.db_queue}"
 
-        self.redis_router = RedisRouter(
+        self.redis_router = RedisRouter(  # type: ignore[assignment]  # R2.MYPY: variable declared None
             url=redis_url,
             max_connections=self.redis_settings.max_connections,
             socket_timeout=self.redis_settings.socket_timeout,
@@ -151,7 +151,7 @@ class StreamClient:
         # NOTE: max_consumers removed — FastStream >=0.6.7 / 0.7.0 dropped
         # the parameter from RabbitRouter.__init__. The setting still lives
         # in queue config for backward compat but is ignored by FastStream.
-        self.rabbit_router = RabbitRouter(
+        self.rabbit_router = RabbitRouter(  # type: ignore[assignment]
             url=self.rabbit_settings.queue_url,  # type: ignore[arg-type]  # R2.MYPY: settings.queue_url is Callable[[], str], RabbitRouter expects str|URL
             security=BaseSecurity(use_ssl=self.rabbit_settings.use_ssl),
             timeout=self.rabbit_settings.timeout,
@@ -188,7 +188,7 @@ class StreamClient:
             return
 
         bootstrap = getattr(self.kafka_settings, "bootstrap_servers", "localhost:9092")
-        self.kafka_router = KafkaRouter(
+        self.kafka_router = KafkaRouter(  # type: ignore[assignment]
             bootstrap_servers=bootstrap,
             logger=stream_logger,  # type: ignore[arg-type]  # R2.MYPY: LoggerProtocol → LoggerProto
             schema_url="/asyncapi",

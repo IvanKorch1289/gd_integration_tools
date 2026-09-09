@@ -62,7 +62,7 @@ __all__ = (
 )
 
 
-class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
+class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):  # type: ignore[misc]  # R2.MYPY: LoadedPlugin symbol mismatch between mixins
     """In-tree plugin loader (3 mixins = 9 internal methods + 5 public).
 
     ADR-042 R1.2: V11 plugin loader (in-tree extensions/<name>/, no entry_points).
