@@ -263,8 +263,8 @@ def setup_page(
     st.set_page_config(
         page_title=title,
         page_icon=icon,
-        layout=layout,
-        initial_sidebar_state=initial_sidebar_state,
+        layout=layout,  # type: ignore[arg-type]  # R2.MYPY: layout: str → Literal['centered','wide']
+        initial_sidebar_state=initial_sidebar_state,  # type: ignore[arg-type]  # R2.MYPY: str → Literal
     )
 
 
