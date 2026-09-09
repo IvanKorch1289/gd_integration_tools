@@ -2080,3 +2080,21 @@ auth_login secret fix.
 - FINAL_REPORT v6 baseline, ready for v7 update
 - Mypy-strict ≤30 still requires: -261 errors (multi-sprint)
 
+
+
+## Фаза B (2026-09-09, финал 2): step-up-request РЕАЛИЗОВАН + live-verified
+
+1. **POST /auth/step-up-request** (`8747e2635` + csrf/base.yml/auth_required
+   wiring): выпуск HMAC-SHA256 X-Step-Up-Token (TTL 600s, IP-binding, nonce).
+2. **LoginStepUpMiddleware** — WIRED (order 650, был построен, но не
+   зарегистрирован!) + валидация подписи/expiry/IP вместо presence-check.
+3. **Инфра-вскрытие M6-#3**: reason-цепочка «30-90с зависание логина» =
+   (а) request_log fallback потреблял receive → FastAPI 422;
+   (б) audit_replay ждал disconnect; (в) rate-limiters не уважали
+   redis.enabled=false. Все исправлены; единственный потребитель body —
+   FastAPI-парсер (replay идемпотентен).
+4. **Live B-04 flow** (:8002): 401 без токена → step-up-request 200
+   (token_len=161) → login 200 + JWT 212 unmasked за 0.18с; подделка
+   токена → 401. Подробности в FUNCTIONAL_TEST_REPORT.md.
+
+**Осталось** (метрики 2,7,9,10,11-частично,12,13): см. план Фазы A.
