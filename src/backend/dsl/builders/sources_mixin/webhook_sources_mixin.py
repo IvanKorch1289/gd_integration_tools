@@ -47,6 +47,6 @@ class WebhookSourcesMixin:
         mod = importlib.import_module("src.backend.infrastructure.sources.webhook")
         WebhookSource = mod.WebhookSource
         source_instance = WebhookSource(source_id=route_id, path=path, **kwargs)
-        builder: RouteBuilder = cls(route_id=route_id, source=f"webhook:{path}")
+        builder: RouteBuilder = cls(route_id=route_id, source=f"webhook:{path}")  # type: ignore[call-arg]  # R2.MYPY: WebhookSourcesMixin via Protocol
         object.__setattr__(builder, "_source_instance", source_instance)
         return builder
