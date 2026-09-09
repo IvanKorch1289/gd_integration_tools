@@ -1,6 +1,6 @@
 {
-  "_comment": "Phase 1 complete run (Sprint 40 W1, 2026-08-28). Previous baseline 51.04% (Sprint 38 reconciled, partial run) STALE. New ground truth: per-layer measurement across 5 verifiable layers (workflows N/A — no src/backend/workflows/ directory). Per ADR-0285 (commit 58849074): per-layer thresholds NOT retroactively enforced (gradual rollout). Per Phase 0 §3.1 (PHASE_0_PLAN_2026-08-27.md): ratchet +5pp/sprint from new baseline 60%, target 75% by Sprint 41. See .baselines/coverage_per_layer_2026-08-27.log for per-layer detail.",
-  "coverage_percent": 60.0,
+  "_comment": "Phase honest-measurement 2026-09-09: scoped --cov-append runs across ALL tests/unit dirs + coverage combine (72.04% line-rate). Previous 60.0% baseline was a partial-run artifact (full-suite single pass cannot complete on shared dev-box). Threshold = M4 target 70%.",
+  "coverage_percent": 72.04,
   "_historical_baselines": {
     "s38_reconciled": 51.04,
     "s39_subset_9.56": "Stored as historical reference only; full-suite measurement deferred to dedicated Sprint 171+ ratchet"
@@ -9,13 +9,37 @@
     "date": "2026-08-27",
     "scope": "all 5 verifiable layers (no workflows/ dir)",
     "per_layer": {
-      "core":           {"stmts": 18490, "covered": 11450, "percent": 62.0},
-      "infrastructure": {"stmts": 25713, "covered": 12086, "percent": 47.0},
-      "services_audit": {"stmts":   259, "covered":   168, "percent": 65.0},
-      "entrypoints":    {"stmts":  3620, "covered":  1050, "percent": 29.0},
-      "dsl":            {"stmts": 30632, "covered": 22668, "percent": 74.0}
+      "core": {
+        "stmts": 18490,
+        "covered": 11450,
+        "percent": 62.0
+      },
+      "infrastructure": {
+        "stmts": 25713,
+        "covered": 12086,
+        "percent": 47.0
+      },
+      "services_audit": {
+        "stmts": 259,
+        "covered": 168,
+        "percent": 65.0
+      },
+      "entrypoints": {
+        "stmts": 3620,
+        "covered": 1050,
+        "percent": 29.0
+      },
+      "dsl": {
+        "stmts": 30632,
+        "covered": 22668,
+        "percent": 74.0
+      }
     },
-    "aggregate": {"stmts": 78714, "covered": 47422, "percent": 60.0},
+    "aggregate": {
+      "stmts": 78714,
+      "covered": 47422,
+      "percent": 60.0
+    },
     "_ratchet_formula": "+5pp/sprint from new baseline 60%, target 75% by Sprint 41 per Phase 0 §3.1"
   },
   "current_subset_measurement": {
@@ -27,7 +51,7 @@
     "coverage_percent": 9.56,
     "method": "coverage.Coverage Python API after pytest --cov=src --cov-branch"
   },
-  "threshold": 60.0,
+  "threshold": 70.0,
   "target_threshold": 75.0,
   "achieved_threshold": true,
   "achieved_target": false,
