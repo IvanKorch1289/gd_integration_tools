@@ -173,7 +173,11 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
         return records
 
     async def get_model(
-        self, name: str, *, version: str | None = None, stage: Literal["None", "Staging", "Production", "Archived"] | None = None
+        self,
+        name: str,
+        *,
+        version: str | None = None,
+        stage: Literal["None", "Staging", "Production", "Archived"] | None = None,
     ) -> ModelRecord | None:
         """Находит модель по имени + version или stage."""
         candidates = await self.list_models()

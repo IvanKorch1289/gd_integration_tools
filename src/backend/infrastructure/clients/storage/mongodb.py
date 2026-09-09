@@ -339,7 +339,9 @@ class MongoDBClient:
         except ConnectionError, TimeoutError, OSError:
             return False
 
-    async def health_check(self, *, mode: Literal["fast", "deep"] = "fast") -> dict[str, Any]:
+    async def health_check(
+        self, *, mode: Literal["fast", "deep"] = "fast"
+    ) -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
             import time

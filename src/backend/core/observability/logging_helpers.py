@@ -86,7 +86,8 @@ def log_with_context(
 
 
 def log_audit_event_lite(
-    logger: logging.Logger | Any,  # R2.MYPY: accept LoggerProtocol too (structlog/stdlib compat)
+    logger: logging.Logger
+    | Any,  # R2.MYPY: accept LoggerProtocol too (structlog/stdlib compat)
     *,
     severity: str,
     event: str,

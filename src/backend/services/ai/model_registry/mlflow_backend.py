@@ -89,7 +89,11 @@ class MlflowModelRegistry(ModelRegistryAdapter):
         return records
 
     async def get_model(
-        self, name: str, *, version: str | None = None, stage: Literal["None", "Staging", "Production", "Archived"] | None = None
+        self,
+        name: str,
+        *,
+        version: str | None = None,
+        stage: Literal["None", "Staging", "Production", "Archived"] | None = None,
     ) -> ModelRecord | None:
         """Получить model по ``name`` (+ optional version/stage)."""
         client = self._ensure_client()

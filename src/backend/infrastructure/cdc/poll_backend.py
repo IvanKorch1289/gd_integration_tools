@@ -226,7 +226,9 @@ class PollCDCBackend(CDCSource):
         """Остановить polling-loop или feed consumption."""
         self._stopped.set()
 
-    async def health_check(self, *, mode: Literal["fast", "deep"] = "fast") -> dict[str, Any]:
+    async def health_check(
+        self, *, mode: Literal["fast", "deep"] = "fast"
+    ) -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
             import time

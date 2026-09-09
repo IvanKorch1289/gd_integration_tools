@@ -178,9 +178,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
 
             return result.scalars().all()
 
-    def __init__(
-        self, model: type[ConcreteTable], load_joined_models: bool = False
-    ):
+    def __init__(self, model: type[ConcreteTable], load_joined_models: bool = False):
         self.model = model
         self.load_joined_models = load_joined_models
         self.helper = self.HelperMethods(

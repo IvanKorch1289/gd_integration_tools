@@ -93,7 +93,11 @@ class ModelRegistryAdapter(Protocol):
         ...
 
     async def get_model(
-        self, name: str, *, version: str | None = None, stage: Literal["None", "Staging", "Production", "Archived"] | None = None
+        self,
+        name: str,
+        *,
+        version: str | None = None,
+        stage: Literal["None", "Staging", "Production", "Archived"] | None = None,
     ) -> ModelRecord | None:
         """Конкретная версия / stage модели.
 

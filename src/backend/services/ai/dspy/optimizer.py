@@ -297,9 +297,7 @@ def _wrap_pipeline_to_dspy(pipeline: DSPyPipeline) -> object:
     return _DSPyPipelineModule(pipeline)
 
 
-def _dspy_metric_adapter(
-    pipeline: DSPyPipeline,
-) -> Callable[..., float]:
+def _dspy_metric_adapter(pipeline: DSPyPipeline) -> Callable[..., float]:
     """Адаптер pipeline.metric → DSPy metric signature (example, prediction, ...)."""
 
     def _metric(example: object, prediction: object, *_args: object) -> float:

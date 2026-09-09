@@ -186,7 +186,9 @@ class ChromaVectorStore(BaseVectorStore):
         )
         return len(ids) if ids else 0
 
-    async def health_check(self, *, mode: Literal["fast", "deep"] = "fast") -> dict[str, Any]:
+    async def health_check(
+        self, *, mode: Literal["fast", "deep"] = "fast"
+    ) -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
             import time

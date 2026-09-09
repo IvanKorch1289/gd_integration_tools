@@ -62,7 +62,16 @@ DEFAULT_PUBLIC_PATH_PREFIXES: tuple[str, ...] = (
     # и rate-limits 10 attempts/5min per IP — login НЕ может быть public.
     # /api/v1/auth/methods остаётся public (Login page нужны available
     # methods до аутентификации).
+    #
+    # Prod-Readiness 2026-09-09 FIX (catch-22): B-04 удалил login из
+    # public-префиксов ЭТОГО middleware, но auth_required стоит ВНЕШНЕ
+    # LoginStepUpMiddleware — каждый POST /auth/login отклонялся 401
+    # «Authentication required» (без Bearer ещё до step-up-проверки):
+    # позитивный логин был невозможен. Login path снова public ЗДЕСЬ:
+    # фактический guard — LoginStepUpMiddleware (X-Step-Up-Token +
+    # rate-limit 10/5min), который перехватывает запрос следующим слоем.
     "/api/v1/auth/methods",
+    "/api/v1/auth/login",
 )
 
 

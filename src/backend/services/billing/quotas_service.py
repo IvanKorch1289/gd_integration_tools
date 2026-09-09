@@ -28,7 +28,9 @@ class QuotasService:
         """Заглушка интерфейса; не должна вызываться."""
         raise NotImplementedError("QuotasService.consume_request is a stub")
 
-    async def check_tokens(self, tenant_id: str, tokens: int) -> None:  # pragma: no cover
+    async def check_tokens(
+        self, tenant_id: str, tokens: int
+    ) -> None:  # pragma: no cover
         """Заглушка интерфейса; не должна вызываться."""
         raise NotImplementedError("QuotasService.check_tokens is a stub")
 

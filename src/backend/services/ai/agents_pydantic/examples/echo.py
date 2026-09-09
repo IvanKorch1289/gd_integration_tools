@@ -23,5 +23,6 @@ class EchoAgent(BasePydanticAgent[EchoResult]):
 
     def __init__(self, **kwargs: object) -> None:
         super().__init__(
-            system_prompt="Echo back the user's message and its length.", **kwargs  # type: ignore[arg-type]
+            system_prompt="Echo back the user's message and its length.",
+            **kwargs,  # type: ignore[arg-type]
         )
