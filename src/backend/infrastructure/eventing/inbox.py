@@ -17,7 +17,7 @@ Sprint 8 K2 W4 — добавлен ``fail_mode`` параметр:
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 from src.backend.core.logging import get_logger
 
@@ -78,7 +78,7 @@ class Inbox:
             return False
 
         key = f"{self.prefix}{event_id}"
-        raw = getattr(redis_client, "_raw_client", None) or redis_client
+        raw: Any = getattr(redis_client, "_raw_client", None) or redis_client
 
         # SETNX — атомарно: устанавливаем ключ, только если его нет.
         try:
