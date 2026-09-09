@@ -179,7 +179,7 @@ def create_server() -> Any:
         line = document.lines[line_idx]
         # Извлекаем первое слово (ключ перед `:` или `=`).
         token = line.lstrip().split(":", 1)[0].split("=", 1)[0].strip(" -")
-        lookup = dict((*ROUTE_COMPLETIONS, *STEP_COMPLETIONS))
+        lookup = dict((*ROUTE_COMPLETIONS, *STEP_COMPLETIONS))  # type: ignore[arg-type]  # R2.MYPY: tuple type mismatch
         detail = lookup.get(token)
         if detail is None:
             return None

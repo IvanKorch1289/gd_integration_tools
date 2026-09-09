@@ -226,7 +226,7 @@ class ProcessorPool:
                 )
                 return result
 
-        tasks = [get_task_registry().create_task(run_with_sem(p)) for p in processors]
+        tasks = [get_task_registry().create_task(run_with_sem(p)) for p in processors]  # type: ignore[call-arg]  # R2.MYPY: name kwarg
 
         for task in tasks:
             self._active.add(task)

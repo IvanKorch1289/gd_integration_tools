@@ -288,7 +288,7 @@ class EmailReadProcessor(BaseProcessor):
                 _, msg_ids = conn.search(None, "ALL")
                 emails = []
                 for msg_id in (msg_ids[0] or b"").split():
-                    _, data = conn.fetch(msg_id, "(RFC822)")
+                    _, data = conn.fetch(msg_id, "(RFC822)")  # type: ignore[arg-type]  # R2.MYPY: Any|bytes → str
                     for part in data:
                         if isinstance(part, tuple) and len(part) >= 2:
                             emails.append(
