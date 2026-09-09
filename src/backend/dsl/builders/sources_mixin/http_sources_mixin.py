@@ -55,6 +55,6 @@ class HttpSourcesMixin:
             marker_dedup=marker_dedup,
         )
         source_instance = mod.WebDAVSource(cfg)
-        builder: RouteBuilder = cls(route_id=route_id, source=f"webdav:{route_id}")
+        builder: RouteBuilder = cls(route_id=route_id, source=f"webdav:{route_id}")  # type: ignore[call-arg]  # R2.MYPY: SourcesMixin via Protocol
         object.__setattr__(builder, "_source_instance", source_instance)
         return builder
