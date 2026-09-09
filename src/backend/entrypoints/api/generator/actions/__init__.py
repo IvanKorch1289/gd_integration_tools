@@ -195,10 +195,10 @@ class ActionRouterBuilder(CrudMixin):
         response_model = spec.response_model
         if spec.invocation is not None:
             if response_model is not None:
-                response_model = response_model | InvocationResultSchema
+                response_model = response_model | InvocationResultSchema  # type: ignore[assignment]  # R2.MYPY: UnionType vs type[BaseModel]
             else:
-                response_model = Any | InvocationResultSchema
-        self.router.add_api_route(
+                response_model = Any | InvocationResultSchema  # type: ignore[assignment]
+        self.router.add_api_route(  # type: ignore[call-arg]  # R2.MYPY: responses dict type
             path=spec.path,
             endpoint=endpoint,
             methods=[spec.method],
@@ -208,7 +208,7 @@ class ActionRouterBuilder(CrudMixin):
             status_code=spec.status_code,
             response_model=response_model,
             dependencies=list(spec.dependencies),
-            responses=spec.responses,
+            responses=spec.responses,  # type: ignore[arg-type]  # R2.MYPY: dict[int,Any] vs dict[int|str,dict[str,Any]]
             tags=list(spec.tags) or None,
         )
         metadata = action_spec_to_metadata(spec)
