@@ -125,7 +125,7 @@ class Versioning:
                 от continuum → re-raised как ``VersioningError``).
 
         """
-        VersionModel = Versioning._version_model_or_raise(model)
+        VersionModel: Any = Versioning._version_model_or_raise(model)
         return list(
             session.query(VersionModel)
             .filter(VersionModel.id == entity_id)
@@ -227,8 +227,8 @@ class Versioning:
             VersioningError: Если любая из версий не найдена.
 
         """
-        v1 = Versioning.get_version(session, model, entity_id, tx_id_1)
-        v2 = Versioning.get_version(session, model, entity_id, tx_id_2)
+        v1: Any = Versioning.get_version(session, model, entity_id, tx_id_1)
+        v2: Any = Versioning.get_version(session, model, entity_id, tx_id_2)
         if v1 is None or v2 is None:
             raise VersioningError(
                 f"Version tx={tx_id_1 if v1 is None else tx_id_2} not found "
