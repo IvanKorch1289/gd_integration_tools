@@ -16,10 +16,9 @@ from extensions.core_entities.orderkinds.schemas.route import (  # S168 W15-17 P
     OrderKindSchemaOut,
     OrderKindVersionSchemaOut,
 )
-from src.backend.core.api import ServiceError
+from src.backend.core.api import BaseService, ServiceError
 from src.backend.core.integrations.skb import APISKBService, get_skb_service
 from src.backend.core.interfaces.repositories import OrderKindRepositoryProtocol
-from src.backend.core.api import BaseService
 
 __all__ = ("OrderKindService", "get_order_kind_service")
 
@@ -95,9 +94,9 @@ def get_order_kind_service() -> OrderKindService:
         repo = importlib.import_module(_REPO_ORDERKINDS_MOD).get_order_kind_repo()
         _order_kind_service_instance = OrderKindService(
             repo=repo,
-            schema_in=OrderKindSchemaIn,
-            schema_out=OrderKindSchemaOut,
-            version_schema=OrderKindVersionSchemaOut,
+            schema_in=OrderKindSchemaIn,  # type: ignore[arg-type]
+            schema_out=OrderKindSchemaOut,  # type: ignore[arg-type]
+            version_schema=OrderKindVersionSchemaOut,  # type: ignore[arg-type]
             request_service=get_skb_service(),
         )
     return _order_kind_service_instance

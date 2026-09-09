@@ -43,7 +43,7 @@ import yaml
 from testkit.recorder._har import HARCassette, HAREntry, HARRecorder
 from testkit.recorder.secrets_mask import mask_request_body, mask_response_headers
 
-__all__ = ("cassette", "load_cassette", "save_cassette", "CassetteMode")
+# __all__ объявлен в конце модуля (все экспорты).
 
 CassetteMode = Literal["auto", "record", "replay"]
 

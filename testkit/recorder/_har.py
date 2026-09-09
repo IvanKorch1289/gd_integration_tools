@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -131,7 +132,7 @@ class HARRecorder:
         )
 
     @asynccontextmanager
-    async def async_client(self, **kwargs: Any):
+    async def async_client(self, **kwargs: Any) -> AsyncIterator[httpx.AsyncClient]:
         """Async-контекст: ``httpx.AsyncClient`` с записью."""
         recorder = self
 
@@ -157,7 +158,7 @@ class HARRecorder:
             yield client
 
     @contextmanager
-    def sync_client(self, **kwargs: Any):
+    def sync_client(self, **kwargs: Any) -> Iterator[httpx.Client]:
         """Sync-контекст: ``httpx.Client`` с записью."""
         recorder = self
 
@@ -183,7 +184,7 @@ class HARRecorder:
 @asynccontextmanager
 async def record_session(
     *, base_url: str | None = None, mask_secrets: bool = True, **kwargs: Any
-):
+) -> AsyncIterator[tuple[httpx.AsyncClient, HARCassette]]:
     """Удобная shortcut-обёртка: ``async with record_session() as (client, cassette):``."""
     recorder = HARRecorder(base_url=base_url, mask_secrets=mask_secrets)
     async with recorder.async_client(**kwargs) as client:

@@ -26,7 +26,7 @@ class UserSchemaIn(BaseSchema):
         ..., min_length=3, max_length=50, description="Имя пользователя"
     )
     password: SecretStr = Field(
-        ..., min_length=8, format="password", description="Пароль пользователя"
+        ..., min_length=8, description="Пароль пользователя"
     )
 
 
