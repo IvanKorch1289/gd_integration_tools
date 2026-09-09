@@ -122,12 +122,12 @@ class ExcelExporter:
 
         wb = Workbook()
         ws = wb.active
-        ws.title = sheet_name
+        ws.title = sheet_name  # type: ignore[union-attr]  # R2.MYPY: ws Optional
 
         fieldnames = list(data[0].keys())
-        ws.append(fieldnames)
+        ws.append(fieldnames)  # type: ignore[union-attr]
         for row in data:
-            ws.append([row.get(k, "") for k in fieldnames])
+            ws.append([row.get(k, "") for k in fieldnames])  # type: ignore[union-attr]
 
         # Авто-ширина колонок: max(ширина заголовка, max ширина значения в колонке).
         for col_idx, col_name in enumerate(fieldnames, start=1):
@@ -135,8 +135,8 @@ class ExcelExporter:
                 len(str(col_name)),
                 max((len(str(row.get(col_name, ""))) for row in data), default=0),
             )
-            ws.column_dimensions[
-                ws.cell(row=1, column=col_idx).column_letter
+            ws.column_dimensions[  # type: ignore[union-attr]
+                ws.cell(row=1, column=col_idx).column_letter  # type: ignore[union-attr]
             ].width = min(max_len + 2, 50)
 
         buffer = io.BytesIO()
