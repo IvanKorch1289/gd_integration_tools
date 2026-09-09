@@ -155,14 +155,14 @@ class AuthorizationFacade:
 
         if required_capability:
             cap_decision = await self._check_capability(
-                subject, required_capability, tenant_id
+                subject or "", required_capability, tenant_id  # type: ignore[arg-type]  # R2.MYPY: subject str|None runtime fallback
             )
             if not cap_decision.allowed:
                 return cap_decision
 
         if required_action and required_resource:
             policy_decision = self.check(
-                subject, required_action, required_resource, context
+                subject or "", required_action, required_resource, context  # type: ignore[arg-type]
             )
             if not policy_decision:
                 return AuthDecision(
