@@ -168,7 +168,7 @@ class CacheInvalidator:
             if isinstance(r, Exception):
                 logger.warning("Ошибка инвалидации тега: %s", r)
                 continue
-            total += int(r)
+            total += int(r)  # type: ignore[arg-type]  # R2.MYPY: r from gather can be BaseException; runtime skips via continue
         return total
 
     async def invalidate_pattern(self, pattern: str) -> int:
@@ -190,7 +190,7 @@ class CacheInvalidator:
             if isinstance(r, Exception):
                 logger.warning("Ошибка инвалидации по паттерну: %s", r)
                 continue
-            total += int(r)
+            total += int(r)  # type: ignore[arg-type]
         return total
 
     async def invalidate_tags(self, *tags: str) -> int:
