@@ -287,7 +287,7 @@ class ClientMetricsMixin:
     def report_pool(self, *, active: int, idle: int, waiting: int) -> None:
         """Обновить gauge-метрики pool-а. Обычно вызывается из validate()."""
         max_size = (
-            getattr(self, "pooling", None).max_size
+            getattr(self, "pooling", None).max_size  # type: ignore[union-attr]  # R2.MYPY: pooling Optional
             if getattr(self, "pooling", None)
             else 0
         )

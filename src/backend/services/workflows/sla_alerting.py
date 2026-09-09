@@ -173,7 +173,7 @@ def _emit_sla_metric(
 
     if _sla_counter and _sla_counter is not False:
         try:
-            _sla_counter.labels(
+            _sla_counter.labels(  # type: ignore[union-attr]  # R2.MYPY: _sla_counter Literal[True]|Any
                 workflow_id=workflow_id, tenant_id=tenant_id or "", level=level.value
             ).inc()
         except Exception as exc:
