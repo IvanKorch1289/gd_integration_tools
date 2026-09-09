@@ -61,7 +61,7 @@ class MessagingSourcesMixin:
             connect_url=bootstrap_servers,
             **kwargs,
         )
-        builder: RouteBuilder = cls(route_id=route_id, source=f"kafka:{topic}")
+        builder: RouteBuilder = cls(route_id=route_id, source=f"kafka:{topic}")  # type: ignore[call-arg]
         object.__setattr__(builder, "_source_instance", source_instance)
         return builder
 
@@ -107,7 +107,7 @@ class MessagingSourcesMixin:
             connect_url=url,
             **kwargs,
         )
-        builder: RouteBuilder = cls(route_id=route_id, source=f"rabbitmq:{queue}")
+        builder: RouteBuilder = cls(route_id=route_id, source=f"rabbitmq:{queue}")  # type: ignore[call-arg]
         object.__setattr__(builder, "_source_instance", source_instance)
         return builder
 
@@ -144,7 +144,7 @@ class MessagingSourcesMixin:
         """
         # MQTT Source-класса пока нет в infrastructure/sources/
         # — используем строковый DSN; source_instance = None (будущее расширение)
-        builder: RouteBuilder = cls(route_id=route_id, source=f"mqtt:{topic}")
+        builder: RouteBuilder = cls(route_id=route_id, source=f"mqtt:{topic}")  # type: ignore[call-arg]
         # Сохраняем параметры для будущей регистрации MQTTSource
         object.__setattr__(
             builder,
