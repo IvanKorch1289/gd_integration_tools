@@ -28,7 +28,7 @@ from __future__ import annotations
 import asyncio
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import aiofiles
 import aiofiles.os
@@ -228,7 +228,7 @@ class LocalFSStorage(ObjectStorage):
         await aiofiles.os.replace(str(tmp), str(path))
         return str(path)
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Проверяет доступность base_path (readable + writable)."""
         import time
 

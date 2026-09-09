@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import AbstractAsyncContextManager
-from typing import Any
+from typing import Any, Literal
 
 from botocore.config import Config as BotoConfig
 from botocore.exceptions import BotoCoreError, ClientError
@@ -499,7 +499,7 @@ class S3ObjectStorage(ObjectStorage):
 
     # ── health probe ─────────────────────────────────────────────────────
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Лёгкая проверка доступности bucket (для /healthz)."""
         import time
 
