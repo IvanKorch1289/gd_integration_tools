@@ -52,13 +52,14 @@ class FileSearchProcessor:
             except OSError:
                 continue
             for line_no, line in enumerate(content.splitlines(), start=1):
-                if regex.search(line):
+                match = regex.search(line)
+                if match is not None:
                     results.append(
                         {
                             "file": str(path.relative_to(root)),
                             "line_no": line_no,
                             "line": line,
-                            "match": regex.search(line).group(0),
+                            "match": match.group(0),
                         }
                     )
                     if len(results) >= self.max_results:
