@@ -13,7 +13,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, overload
 
 from src.backend.core.logging import get_logger
 
@@ -150,6 +150,16 @@ def _get_from_app_state(attr: str) -> Any | None:
     if _app_ref is not None:
         return getattr(_app_ref.state, attr, None)
     return None
+
+
+@overload
+def app_state_singleton[T](attr: str) -> Callable[[Callable[[], T]], Callable[[], T]]: ...
+
+
+@overload
+def app_state_singleton[T](
+    attr: str, factory: Callable[[], T]
+) -> Callable[[Callable[[], T]], Callable[[], T]]: ...
 
 
 def app_state_singleton[T](
