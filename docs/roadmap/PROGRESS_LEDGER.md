@@ -2123,3 +2123,16 @@ auth_login secret fix.
 - FINAL_REPORT v6 baseline, ready for v7 update
 - Mypy-strict ≤30 still requires: -232 errors (multi-sprint)
 
+
+
+## Фаза B доп. (2026-09-09 поздний вечер): R2.MYPY батчи + строгий замер
+
+- Strict re-measure (утро): 262/208 файлов (полоса kimi: 427→262).
+- Мои батчи: `0ea67f6c8` scheduler_manager annotations + search.py
+  var-annotated; `73e86d6c0` rpa file_search single-search (union-attr);
+  `0db961c41` app_state_singleton overload (T→Never inference — чинит
+  ВСЕ one-arg call-sites декоратора, io/search и будущие); `c9e54e022`
+  inbox raw-client Any.
+- Финальный re-measure запущен (результат — след. запись).
+- Измерение воспроизводимо: `make type-check-strict-profile`
+  (strict-профиль ADR-0295).
