@@ -130,7 +130,7 @@ class NotifyMixin:
 
             svc = get_notification_service()
             results = await svc.notify_multi(
-                channels=channels, title=title, body=body, body_format=body_format
+                channels=channels, title=title, body=body, body_format=body_format  # type: ignore[arg-type]  # R2.MYPY: body_format: str → Literal['text','html','markdown']
             )
             exch.set_property(result_property, results)
 
@@ -225,7 +225,7 @@ class NotifyMixin:
 
         description = kwargs.pop("description", None)
         source_tag = f"imap:{host}:{port}/{folder}"
-        builder = cls(
+        builder = cls(  # type: ignore[call-arg]  # R2.MYPY: NotifyMixin __init__ via Protocol
             route_id=route_id,
             source=source_tag,
             description=description,
