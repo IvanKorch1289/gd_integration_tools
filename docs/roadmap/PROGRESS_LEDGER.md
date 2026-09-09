@@ -1674,3 +1674,52 @@ ADR-0299 — plan на остаток ≥30: per-file ignores + Protocol refacto
 - Вердикт: «готов к проду» / «готов с оговорками (список)»
 - Replaces docs/roadmap/FINAL_REPORT.md (Tier-3 closure)
 
+
+---
+
+## Phase B Sprint 6 (2026-09-08, координатор) — MASSIVE REDUCTION
+
+### Mypy-strict trajectory (Sprint 6)
+
+| Версия | HEAD | Errors | Files | Δ |
+|---|---|---|---|---|
+| v3 baseline | `4a2592d81` | 709 | 334 | — |
+| storage/s3+local_fs (mode Literal) | `ede9e1b41` | ~703 | 334 | -6 |
+| sqlalchemy.py (model без default=None) | `a16b4163b` | ~681 | 332 | -22 |
+| notifications/adapters × 8 | `67a520675` | ~676 | 332 | -5 |
+| **mode Literal batch (50+ files)** | `170fe4419` | **218** | ~? | **-461 (-65%)** |
+
+### v4 code distribution (218 errors)
+
+| Error code | v3 | v4 | Δ |
+|---|---|---|---|
+| arg-type | 311 | 65 | **-246 (-79%)** |
+| call-arg | 99 | 18 | -81 (-82%) |
+| assignment | 83 | 26 | -57 (-69%) |
+| no-untyped-def | 53 | 27 | -26 (-49%) |
+| union-attr | 56 | 32 | -24 (-43%) |
+| override | 46 | 23 | -23 (-50%) |
+| var-annotated | 21 | 5 | -16 (-76%) |
+| call-overload | 9 | 4 | -5 |
+| import-untyped | 13 | 3 | -10 (-77%) |
+| **TOTAL** | **709** | **218** | **-491 (-69%)** |
+
+### Sprint 6 коммиты
+
+| ID | Коммит | Доказательство |
+|---|---|---|
+| storage/fallback | `0924978e3` | health mode Literal — 6 errors |
+| storage/s3+local_fs | `ede9e1b41` | health mode Literal — 6 errors |
+| sqlalchemy.py | `a16b4163b` | model без default=None — 22 errors |
+| notifications/adapters × 8 | `67a520675` | mode Literal — 5 errors |
+| **mode Literal batch × 54** | `170fe4419` | **all health/health_check methods — -461 errors** |
+
+### Реалистичная оценка финиша
+
+- v4 → ≤30 нужно: -188 errors (87% reduction remaining)
+- Top files now: bpmn_importer 11, dict_ops 10, poll_backend 9, feedback 8
+- Per-file pattern: 1 atomic commit per file = +5-15 sprint cycles
+
+**Sprint 6 итог**: -491 errors / -69% reduction. Mypy 709→218.
+**vs brief target**: ≤30. Remaining: -188.
+
