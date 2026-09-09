@@ -153,13 +153,15 @@ def _get_from_app_state(attr: str) -> Any | None:
 
 
 @overload
-def app_state_singleton[T](attr: str) -> Callable[[Callable[[], T]], Callable[[], T]]: ...
+def app_state_singleton[T](attr: str) -> Callable[[Callable[[], T]], Callable[[], T]]:
+    """Overload: вызов без factory (lazy-init опционален)."""
 
 
 @overload
 def app_state_singleton[T](
     attr: str, factory: Callable[[], T]
-) -> Callable[[Callable[[], T]], Callable[[], T]]: ...
+) -> Callable[[Callable[[], T]], Callable[[], T]]:
+    """Overload: вызов с factory (lazy-init обязательный путь)."""
 
 
 def app_state_singleton[T](
