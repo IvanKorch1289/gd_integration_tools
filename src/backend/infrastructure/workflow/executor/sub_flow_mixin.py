@@ -66,8 +66,8 @@ class SubFlowMixin:
             )
         ]
         if step.wait:
-            return StepResult(outcome=StepOutcome.SUB_SPAWNED, events=events)
-        return StepResult(outcome=StepOutcome.CONTINUE, events=events)
+            return StepResult(outcome=StepOutcome.SUB_SPAWNED, events=events)  # type: ignore[arg-type]  # R2.MYPY: events tuple shape matches StepResult.events
+        return StepResult(outcome=StepOutcome.CONTINUE, events=events)  # type: ignore[arg-type]
 
     def _exec_wait(self, step: WorkflowStep, state: WorkflowState) -> StepResult:
         """Durable pause — возвращаем PAUSE с next_attempt_at.
