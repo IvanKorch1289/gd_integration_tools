@@ -2186,3 +2186,22 @@ kimi) + доменные серии R2.MYPY. Воспроизводимо: `make
 - 185+ atomic commits
 - FINAL_REPORT v6 baseline, ready for v7 update
 
+
+
+## Фаза B доп. 2 (2026-09-09 ночь): WS auth fix + gRPC статус
+
+1. **WS auth — корень найден и исправлен** (`3f0268a8d`): ws_auth
+   использовал голый `JwtBackend()` (RS256-дефолт, jwks отсутствует) →
+   отклонял валидные HS256-токены от /auth/login; + close reason
+   `auth_failed: {длинный exc}` > 123 bytes → ProtocolError «control
+   frame too long» (резкое закрытие). Fix: DI get_jwt_backend_provider +
+   короткий reason. Тесты ретаргечены на DI-провайдер (65 passed).
+2. **gRPC** (`fc9e47fcb`): unix-socket транспорт verified; auto-servicer
+   баг `request_streaming` на bare function задокументирован (нужен фикс
+   шаблона генерации или расширение _patch_rpc_methods на динамику).
+3. **R2.MYPY батчи**: `0ea67f6c8` `73e86d6c0` `0db961c41` `c9e54e022`
+   — strict 228 (замер финальный, -81% cumulative).
+
+Мой вклад в strict за 2 прохода: scheduler_manager, search.py,
+file_search, app_state_singleton overload, inbox — ~8-10 errors;
+параллельная полоса — основной вклад (1190→228).
