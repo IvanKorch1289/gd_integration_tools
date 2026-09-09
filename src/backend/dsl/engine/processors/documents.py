@@ -239,12 +239,12 @@ class RenderXlsxProcessor(BaseProcessor):
             if not isinstance(data[0], dict):
                 raise ValueError("render_xlsx append_table требует list[dict] на входе")
             headers = list(data[0].keys())
-            ws.append(headers)
+            ws.append(headers)  # type: ignore[union-attr]
             for row in data:
-                ws.append([row.get(h) for h in headers])
+                ws.append([row.get(h) for h in headers])  # type: ignore[union-attr]
         elif self.params.mode == "replace" and isinstance(data, dict):
             for ws in wb.worksheets:
-                for row in ws.iter_rows():
+                for row in ws.iter_rows():  # type: ignore[union-attr]
                     for cell in row:
                         if isinstance(cell.value, str):
                             cell.value = _substitute_placeholders(cell.value, data)
