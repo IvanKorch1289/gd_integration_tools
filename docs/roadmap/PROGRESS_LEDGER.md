@@ -2205,3 +2205,18 @@ kimi) + доменные серии R2.MYPY. Воспроизводимо: `make
 Мой вклад в strict за 2 прохода: scheduler_manager, search.py,
 file_search, app_state_singleton overload, inbox — ~8-10 errors;
 параллельная полоса — основной вклад (1190→228).
+
+
+## Фаза B доп. 3 (2026-09-09 ночь 2): WS auth FIXED live, остаток — accept-ordering
+
+**Live-прогресс** (порт 8002, свежий инстанс с фиксами):
+1. WS handshake 101 + transport-auth: ACCEPT (subprotocol jwt.<token>).
+2. Route-handler auth: пройден (дошёл до ws_manager.connect).
+3. Остаток: RuntimeError «Expected websocket.send/close, but got
+   websocket.accept» (starlette/websockets.py:80) — кто-то в ASGI
+   middleware-цепочке для websocket scope уже отправил сообщение до
+   accept. След. шаг: bisect цепочки (логировать send по middleware)
+   или прогнать /ws мимо registry (чистый FastAPI) — изолировать
+   виновника. Метрика №11: WS auth VERIFIED; accept-ordering — next;
+   MQTT/MQ (in-memory) — next; gRPC auto-servicer request_streaming —
+   задокументировано; SSE payload-клиент — next.
