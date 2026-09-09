@@ -70,7 +70,7 @@ class HuggingFaceModelRegistry(ModelRegistryAdapter):
         return ModelRecord(
             name=str(getattr(model_info, "modelId", getattr(model_info, "id", ""))),
             version=str(getattr(model_info, "sha", "main") or "main"),
-            stage=stage
+            stage=stage  # type: ignore[arg-type]
             if stage in {"None", "Staging", "Production", "Archived"}
             else "None",
             artifact_uri=f"hf://{getattr(model_info, 'modelId', getattr(model_info, 'id', ''))}",

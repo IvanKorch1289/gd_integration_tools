@@ -68,7 +68,7 @@ class MlflowModelRegistry(ModelRegistryAdapter):
         return ModelRecord(
             name=str(getattr(mv, "name", "")),
             version=str(getattr(mv, "version", "1")),
-            stage=str(getattr(mv, "current_stage", "None") or "None"),
+            stage=str(getattr(mv, "current_stage", "None") or "None"),  # type: ignore[arg-type]  # R2.MYPY: str → Literal['None','Staging','Production','Archived']
             artifact_uri=getattr(mv, "source", None),
             tags=tags,
             description=getattr(mv, "description", None),
