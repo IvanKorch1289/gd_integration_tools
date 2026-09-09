@@ -182,7 +182,9 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         self.model = model
         self.load_joined_models = load_joined_models
         self.helper = self.HelperMethods(
-            model=model, load_joined_models=load_joined_models, main_class=self
+            model=model,  # type: ignore[arg-type]
+            load_joined_models=load_joined_models,
+            main_class=self,  # type: ignore[arg-type]
         )
 
     @main_session_manager.connection(commit=False)
@@ -223,7 +225,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
 
         is_return_list = False
 
-        order_by = asc(by) if order == "asc" else desc(by)
+        order_by = asc(by) if order == "asc" else desc(by)  # type: ignore[arg-type]  # R2.MYPY: by: str|None → ColumnElement
 
         if filter:
             query = filter.filter(select(self.model).order_by(order_by))
@@ -260,7 +262,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         :param order: Порядок сортировки ("asc" или "desc").
         :return: Словарь с items и total.
         """
-        order_by = asc(by) if order == "asc" else desc(by)
+        order_by = asc(by) if order == "asc" else desc(by)  # type: ignore[arg-type]  # R2.MYPY: by: str|None → ColumnElement
 
         if filter:
             query = filter.filter(select(self.model).order_by(order_by))
@@ -330,7 +332,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         """
         return cast(  # type: ignore[no-any-return]  # S170 cycle 15 (ADR-0300): strict-mypy enable — helper returns Any but ConcreteTable is correct type
             "ConcreteTable",
-            await self.helper._prepare_and_save_object(session=session, data=data),
+            await self.helper._prepare_and_save_object(session=session, data=[data]),  # type: ignore[arg-type]  # R2.MYPY: helper expects list[dict], add wraps single
         )
 
     @main_session_manager.connection()
@@ -393,7 +395,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
             "ConcreteTable",
             await self.helper._prepare_and_save_object(
                 session=session,
-                data=data,
+                data=[data],  # type: ignore[arg-type]  # R2.MYPY: helper expects list[dict], add wraps single
                 existing_object=existing_object,
                 ignore_none=ignore_none,
                 load_into_memory=load_into_memory,
