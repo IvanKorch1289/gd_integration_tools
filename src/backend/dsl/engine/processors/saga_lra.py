@@ -170,17 +170,17 @@ class SagaLRAProcessor(BaseProcessor):
         # re-execute already-compensated side effects. Fall through to
         # in-memory (no persistent resume) which will surface the error.
         terminal_states = {"compensating", "rolled_back", "compensation_failed"}
-        if state_record.state in terminal_states:
+        if state_record.state in terminal_states:  # type: ignore[union-attr]
             # Cycle 75: use module-level canonical logger.
             _lra_logger.warning(
                 "SagaLRA persistent resume skipped: previous state=%r "
                 "(terminal/compensation state). Forwarding to in-memory "
                 "execution which will not repeat forward steps.",
-                state_record.state,
+                state_record.state,  # type: ignore[union-attr]
             )
             return await self._run_in_memory(exchange, context)
 
-        start_idx = state_record.step_index + 1
+        start_idx = state_record.step_index + 1  # type: ignore[union-attr]
 
         for i in range(start_idx, len(self._steps)):
             step = self._steps[i]
@@ -211,9 +211,9 @@ class SagaLRAProcessor(BaseProcessor):
                 comp_actions: list[dict[str, Any]] = [
                     {
                         "step_index": idx,
-                        "forward_name": self._steps[idx].forward.name,
+                        "forward_name": self._steps[idx].forward.name,  # type: ignore[union-attr]
                         "compensate_name": (
-                            self._steps[idx].compensate.name
+                            self._steps[idx].compensate.name  # type: ignore[union-attr]
                             if self._steps[idx].compensate
                             else None
                         ),
