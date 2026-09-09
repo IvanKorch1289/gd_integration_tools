@@ -133,7 +133,7 @@ class FileWatchProcessor(BaseProcessor):
         effective_patterns = patterns if patterns is not None else (pattern or "*",)
 
         # Name учитывает все директории для readability.
-        dirs_label = ",".join(effective_dirs)
+        dirs_label = ",".join(effective_dirs)  # type: ignore[arg-type]  # R2.MYPY: tuple[str|None]|tuple[str,...] → str.join
         super().__init__(name=name or f"file_watch:{dirs_label}")
         self._directory = directory
         self._directories = effective_dirs
@@ -180,7 +180,7 @@ class FileWatchProcessor(BaseProcessor):
         for directory in effective_dirs:
             # S178 #2: isdir() — blocking, переносим в thread.
             try:
-                exists = await asyncio.to_thread(os.path.isdir, directory)
+                exists = await asyncio.to_thread(os.path.isdir, directory)  # type: ignore[arg-type]  # R2.MYPY: directory is Any|str|None, to_thread expects PathLike
             except OSError as exc:
                 exchange.fail(f"file_watch: OS error checking {directory}: {exc}")
                 return
@@ -196,7 +196,7 @@ class FileWatchProcessor(BaseProcessor):
                     for pattern in effective_patterns:
                         raw_paths.extend(
                             await asyncio.to_thread(
-                                _walk_matching_files, directory, pattern
+                                _walk_matching_files, directory, pattern  # type: ignore[arg-type]
                             )
                         )
                 else:
@@ -204,7 +204,7 @@ class FileWatchProcessor(BaseProcessor):
                     for pattern in effective_patterns:
                         raw_paths.extend(
                             await asyncio.to_thread(
-                                _list_matching_files, directory, pattern
+                                _list_matching_files, directory, pattern  # type: ignore[arg-type]
                             )
                         )
             except OSError as exc:
