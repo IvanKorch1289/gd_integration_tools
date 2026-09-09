@@ -2136,3 +2136,11 @@ auth_login secret fix.
 - Финальный re-measure запущен (результат — след. запись).
 - Измерение воспроизводимо: `make type-check-strict-profile`
   (strict-профиль ADR-0295).
+
+
+**Strict re-measure (финал прохода): 228 ошибок / 189 файлов**
+(262→228; cumulative 1190→228, **-81%**). Распределение: arg-type 58,
+no-untyped-def 50, assignment 42, override 33, var-annotated ~19,
+union-attr 13, call-arg 13, call-overload 10, import-untyped 4.
+Гейт-порог ≤30: остаток концентрируется в sqlalchemy-base (12, полоса
+kimi) + доменные серии R2.MYPY. Воспроизводимо: `make type-check-strict-profile`.
