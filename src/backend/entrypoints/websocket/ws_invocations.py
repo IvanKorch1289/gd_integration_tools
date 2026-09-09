@@ -149,7 +149,7 @@ async def websocket_invocations(websocket: WebSocket) -> None:
             # управляет каналами и task-life-cycle.
             request = InvocationRequest(
                 action=action,
-                payload=payload,
+                payload=payload,  # type: ignore[arg-type]
                 mode=mode,
                 reply_channel="ws",
                 invocation_id=invocation_id,

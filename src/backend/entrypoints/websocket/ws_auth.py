@@ -216,12 +216,14 @@ class WSAuthenticator:
         if not token:
             raise WSAuthError("Missing JWT token")
         try:
-            from src.backend.core.auth.jwt_backend import (
-                JwtBackend,
-                JwtVerificationError,
-            )
+            from src.backend.core.auth.jwt_backend import JwtVerificationError
+            from src.backend.core.di.providers.auth import get_jwt_backend_provider
 
-            backend = JwtBackend()
+            # Prod-fix 2026-09-09 (M6-#3): DI-бэкенд (HS256 + secret из
+            # SecureSettings — тот же выпускатель, что /auth/login), а не
+            # голый JwtBackend() (RS256-дефолт без jwks отклонял валидные
+            # HS256-токены).
+            backend = get_jwt_backend_provider()
             claims = await backend.decode(token)
         except ImportError as exc:
             raise WSAuthError(f"JWT backend unavailable: {exc}")

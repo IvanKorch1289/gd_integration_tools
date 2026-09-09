@@ -196,7 +196,8 @@ async def _authenticate_handshake(websocket: WebSocket) -> bool:
     try:
         session = await authenticator.authenticate_via_facade(credential)
     except WSAuthError as exc:
-        await websocket.close(code=1008, reason=f"auth_failed: {exc}")
+        # RFC 6455: close reason ≤ 123 bytes; детали — в лог (WS rejected).
+        await websocket.close(code=1008, reason="auth_failed")
         logger.warning(
             "WS rejected: auth failure source=%s method=%s reason=%s",
             credential.source,

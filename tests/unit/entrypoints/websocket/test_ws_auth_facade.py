@@ -136,7 +136,8 @@ class TestWSAuthenticatorJWT:
                 )
 
         with patch(
-            "src.backend.core.auth.jwt_backend.JwtBackend", _FakeBackend,
+            "src.backend.core.di.providers.auth.get_jwt_backend_provider",
+            return_value=_FakeBackend(),
         ), patch.object(
             authenticator, "_load_groups", new=AsyncMock(return_value={"ops"}),
         ):
@@ -157,8 +158,8 @@ class TestWSAuthenticatorJWT:
                 raise RuntimeError("invalid signature")
 
         with patch(
-            "src.backend.core.auth.jwt_backend.JwtBackend",
-            _FakeBackend,
+            "src.backend.core.di.providers.auth.get_jwt_backend_provider",
+            return_value=_FakeBackend(),
         ), pytest.raises(WSAuthError, match="JWT"):
             await authenticator.authenticate_jwt("malformed.token.here")
 
