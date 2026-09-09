@@ -219,7 +219,7 @@ class DocsIndexer:
                 from qdrant_client.models import Distance, VectorParams
 
                 self._qdrant.create_collection(
-                    collection_name=self._collection_name,
+                    collection_name=self._collection_name,  # type: ignore[call-arg]
                     vectors_config=VectorParams(size=384, distance=Distance.COSINE),
                 )
             except (ImportError, AttributeError, TypeError) as legacy_qdrant_exc:
@@ -238,7 +238,7 @@ class DocsIndexer:
                         "collection": self._collection_name,
                     },
                 )
-                self._qdrant.create_collection(self._collection_name)
+                self._qdrant.create_collection(self._collection_name)  # type: ignore[call-arg]  # R2.MYPY: fallback expects name kwarg
         self._collection_ready = True
 
     def discover_docs(self, roots: list[str] | None = None) -> list[Path]:
