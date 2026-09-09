@@ -109,7 +109,7 @@ builder.add_actions(
             service_method="list_workflows",
             query_model=ListWorkflowsQuery,
             argument_aliases={"status": "status_filter"},
-            response_model=list[WorkflowInstanceSchemaOut],
+            response_model=list[WorkflowInstanceSchemaOut],  # type: ignore[arg-type]  # R2.MYPY: list vs type[BaseModel]
             tags=common_tags,
         ),
         ActionSpec(
@@ -132,7 +132,7 @@ builder.add_actions(
             service_method="get_events",
             path_model=WorkflowInstanceIdPath,
             query_model=EventsQuery,
-            response_model=list[WorkflowEventSchemaOut],
+            response_model=list[WorkflowEventSchemaOut],  # type: ignore[arg-type]
             tags=common_tags,
         ),
         ActionSpec(
