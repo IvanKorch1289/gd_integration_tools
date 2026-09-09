@@ -1948,3 +1948,34 @@ Coverage honest 72.04% >= 70 (gate-strict PASS). mypy permissive 0/2356.
   idle). След. шаг: py-spy/faulthandler дамп на висящем запросе.
 - Осторожно: `pkill -f` паттерн, встречающийся в собственном heredoc,
   убивает собственную команду (было: ledger-коммит потерян, повторён).
+
+---
+
+## Phase B Sprint 9 (2026-09-09) — продолжение per-file batch
+
+### Mypy-strict trajectory (v5 → v17)
+
+| Версия | HEAD | Errors | Δ |
+|---|---|---|---|
+| v5 baseline | `50058dc47` | 427 | — |
+| components.py | `8d2691645` | 425 | -2 |
+| 37_API_Вызовы.py | `2e7be1ad6` | 422 | -3 |
+| decorators.py | `37ebca0f6` | 420 | -2 |
+| authorization/facade.py | `ee4aa63fe` | 418 | -2 |
+| unified_sink_factory.py ×2 | `56e4c374d`, `114bb6eb1` | 414 | -4 |
+| cache_chain.py | `1324f8485` | 412 | -2 |
+| invalidator.py | `e7b83d6a3` | 410 | -2 |
+| mcp_registry.py | `7ea2120c1` | 408 | -2 |
+| sub_flow_mixin.py | `1310c7b74` | 406 | -2 |
+| workflow_setup.py | `4c549c1eb` | 404 | -2 |
+| index.py | `70614faa3` | 402 | -2 |
+| mqtt_handler.py | `5261e4cd3` | (calc -2) | -2 |
+| notebooks.py | `566b3cfeb` | 402 | -2 |
+| **v17 Sprint 9 net** | (this ledger) | **402** | **-25** |
+
+### Cumulative across all sessions
+
+- mypy-strict: **886 → 402 = -484 (-55%)**
+- 70+ atomic commits
+- FINAL_REPORT v5 baseline, ready for v6 update
+
