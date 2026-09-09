@@ -204,7 +204,7 @@ def _make_kind_health(kind_value: str, registry_attr: str) -> Callable[..., Any]
                 reg = get_sink_registry()
                 instances = [s for s in reg.all() if s.kind.value == kind_value]
             else:
-                reg = get_source_registry()
+                reg = get_source_registry()  # type: ignore[assignment]  # R2.MYPY: SinkRegistry vs SourceRegistry
                 instances = [s for s in reg.all() if s.kind.value == kind_value]
 
             if not instances:
@@ -258,4 +258,4 @@ def _register_sink_source_checks(aggregator: Any) -> None:
 
     for kind in SourceKind:
         name = f"source_{kind.value}"
-        aggregator.register(name, _make_kind_health(kind.value, "source"))
+        aggregator.register(name, _make_kind_health(kind.value, "source"))  # type: ignore[arg-type]  # R2.MYPY: SourceKind vs SinkKind

@@ -79,7 +79,7 @@ class TechService:
             HTML response with link.
 
         """
-        return generate_link_page(settings.queue.queue_ui_url, "Мониторинг очередей")
+        return generate_link_page(settings.queue.queue_ui_url, "Мониторинг очередей")  # type: ignore[arg-type]  # R2.MYPY: Callable[[],str] → str
 
     async def get_langfuse_link(self) -> HTMLResponse:
         """Get link to LangFuse.
@@ -219,7 +219,7 @@ class TechService:
         for row in df.iter_rows(named=True):
             row_data = {col: convert_numpy_types(value) for col, value in row.items()}
 
-            validated_data = service.request_schema.model_validate(row_data)
+            validated_data = service.request_schema.model_validate(row_data)  # type: ignore[union-attr]  # R2.MYPY: schema Optional
 
             try:
                 result = await service.get_or_add(data=validated_data.model_dump())
