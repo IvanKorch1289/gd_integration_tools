@@ -17,7 +17,7 @@ from __future__ import annotations
 import ssl
 import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 from src.backend.core.codec.json import dumps_bytes
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
@@ -152,7 +152,7 @@ class MqttSink(Sink):
             },
         )
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Health: connect к брокеру без публикации (CONNECT/DISCONNECT)."""
         try:
             import aiomqtt

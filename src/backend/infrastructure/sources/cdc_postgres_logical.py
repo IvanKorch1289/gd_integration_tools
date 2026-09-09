@@ -22,7 +22,7 @@ Feature flag: ``feature_flags.cdc_postgres_enabled`` (default-OFF).
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Literal
 
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
 from src.backend.core.logging import get_logger
@@ -232,7 +232,7 @@ class CdcPostgresLogicalSource:
             await self._inner.stop()
             self._inner = None
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Health check (fast=basic, deep=full streaming probe)."""
         if self._inner is None:
             return HealthResult.failed(error="Not started", mode=mode)

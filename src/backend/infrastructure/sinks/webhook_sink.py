@@ -14,7 +14,7 @@ import hashlib
 import hmac
 import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 from src.backend.core.codec.json import dumps_bytes
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
@@ -135,7 +135,7 @@ class WebhookSink(Sink):
             details={"status_code": response.status_code, "signed": bool(self.secret)},
         )
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """HEAD-запрос на webhook-URL; ``ok`` если адрес отвечает."""
         try:
             import httpx

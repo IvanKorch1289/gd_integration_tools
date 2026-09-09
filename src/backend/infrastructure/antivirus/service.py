@@ -15,7 +15,7 @@ import mimetypes
 import uuid
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import Any, Literal
 
 from src.backend.core.config.settings import settings
 from src.backend.infrastructure.clients.transport.http import (
@@ -236,7 +236,7 @@ class AntivirusService:
             "под фактический ответ внешнего API."
         )
 
-    async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
+    async def health_check(self, *, mode: Literal["fast", "deep"] = "fast") -> dict[str, Any]:
         """S191 fix: real probe через существующий ping/connect метод.
 
         Returns:

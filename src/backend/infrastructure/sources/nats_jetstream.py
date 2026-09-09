@@ -13,7 +13,7 @@ import asyncio
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from src.backend.core.interfaces.source import SourceEvent, SourceKind
 from src.backend.core.logging import get_logger
@@ -210,7 +210,7 @@ class NATSJetStreamSource:
         self._running = False
         await self._close()
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Быстрая проверка: соединение с NATS установлено."""
         if self._nc is not None and not self._nc.is_closed:
             return HealthResult.ok(latency_ms=0.0, mode=mode)

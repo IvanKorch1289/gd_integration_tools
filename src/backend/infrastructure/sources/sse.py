@@ -30,7 +30,7 @@ import time
 import uuid
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from src.backend.core.security.connector_auth import check_source_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
@@ -113,7 +113,7 @@ class SSESource:
         """Остановить stream (cancel heartbeat + reconnect)."""
         self._stopped.set()
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Stateless stream source — всегда ok, если модуль импортируется."""
         return HealthResult.ok(latency_ms=0.0, mode=mode, kind="sse")
 

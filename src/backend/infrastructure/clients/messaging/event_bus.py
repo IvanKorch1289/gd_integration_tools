@@ -9,7 +9,7 @@ publish() валидирует payload через ``jsonschema``; на fail — 
 from __future__ import annotations
 
 import inspect
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel
 
@@ -326,7 +326,7 @@ class EventBus:
             correlation_id=correlation_id,
         )
 
-    async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
+    async def health_check(self, *, mode: Literal["fast", "deep"] = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
             import time

@@ -9,7 +9,7 @@ from asyncio import Lock
 from collections.abc import AsyncGenerator, Callable, Coroutine
 from contextlib import AsyncExitStack, asynccontextmanager
 from functools import wraps
-from typing import Any, ParamSpec, TypeVar
+from typing import Any, Literal, ParamSpec, TypeVar
 
 from src.backend.infrastructure.clients.storage.s3_pool.base import BaseS3Client
 
@@ -559,7 +559,7 @@ class S3Client(BaseS3Client):
                     return None
                 raise ServiceError(f"Файл {key} не найден") from exc
 
-    async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
+    async def health_check(self, *, mode: Literal["fast", "deep"] = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1).
 
         S48 W7 swarm audit (A2 Infra #2): до фикса возвращал статичный 'ok'

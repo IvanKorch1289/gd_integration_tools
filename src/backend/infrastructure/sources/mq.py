@@ -99,7 +99,7 @@ class MQSource:
                 self._broker = None
         logger.info("MQSource stopped: id=%s", self.source_id)
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Health check (fast=basic, deep=full probe)."""
         if self._broker is not None:
             return HealthResult.ok(latency_ms=0.0, mode=mode)

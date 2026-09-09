@@ -6,7 +6,7 @@ mixin (раньше — две почти идентичные копии по 4
 Использование::
 
     class MyConnector(ConnectorHealthMixin):
-        async def health(self, mode: str = "fast") -> HealthResult:
+        async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
             return await self._timed_health(self._probe, mode)
 """
 

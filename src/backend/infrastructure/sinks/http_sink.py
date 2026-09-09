@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
 from src.backend.core.resilience.connector_breaker import with_breaker
@@ -88,7 +88,7 @@ class HttpSink(Sink):
             },
         )
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """HEAD-запрос на URL; ``ok`` при 2xx/3xx/4xx (адрес отвечает)."""
         try:
             import httpx

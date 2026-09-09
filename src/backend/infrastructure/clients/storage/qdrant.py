@@ -9,7 +9,7 @@ ABC ``BaseVectorStore`` lives in ``core/interfaces/vector_store.py``.
 from __future__ import annotations
 
 import inspect
-from typing import Any
+from typing import Any, Literal
 
 from src.backend.core.interfaces.vector_store import BaseVectorStore
 from src.backend.core.logging import get_logger
@@ -229,7 +229,7 @@ class QdrantVectorStore(BaseVectorStore):
         )
         return int(result.count)
 
-    async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
+    async def health_check(self, *, mode: Literal["fast", "deep"] = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
             import time

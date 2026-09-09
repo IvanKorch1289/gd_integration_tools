@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import AsyncIterator
-from typing import Any
+from typing import Any, Literal
 
 import orjson
 
@@ -126,7 +126,7 @@ class RedisHash:
         raw = _get_raw_redis()
         return bool(await raw.hexists(self._key, field))
 
-    async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
+    async def health_check(self, *, mode: Literal["fast", "deep"] = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
             import time
@@ -213,7 +213,7 @@ class RedisSet:
         raw = _get_raw_redis()
         return int(await raw.scard(self._key) or 0)
 
-    async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
+    async def health_check(self, *, mode: Literal["fast", "deep"] = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
             import time
@@ -299,7 +299,7 @@ class RedisCursor:
             logger.warning("Cursor advance failed: %s — %s", self._key, exc)
             return False
 
-    async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
+    async def health_check(self, *, mode: Literal["fast", "deep"] = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
             import time

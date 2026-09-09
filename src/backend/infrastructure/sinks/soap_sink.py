@@ -11,7 +11,7 @@ import asyncio
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
 from src.backend.core.logging import get_logger
@@ -123,7 +123,7 @@ class SoapSink(Sink):
         method = getattr(service, self.operation)
         return method(**kwargs)
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Health: успешная загрузка WSDL."""
         start = time.perf_counter()
         try:

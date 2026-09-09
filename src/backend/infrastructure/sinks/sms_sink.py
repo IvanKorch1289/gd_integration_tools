@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Literal
 
 import httpx
 
@@ -172,7 +172,7 @@ class SmsSink(Sink):
             return self.default_to, payload, None
         return None, None, None
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """HEAD на endpoint провайдера (cheap probe).
 
         D-AUDIT-A2-01 fix (cycle 1): использует OutboundHttpClient для HEAD probe.

@@ -21,7 +21,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from src.backend.core.logging import get_logger
 
@@ -116,7 +116,7 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
         self._started = False
         _logger.info("imap pool stopped", extra={"name": self.name})
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Проверяет состояние IMAP-пула: fast — метрики очереди, deep — NOOP через acquire."""
         if not self._started:
             return HealthResult.failed(error="pool not started", mode=mode)

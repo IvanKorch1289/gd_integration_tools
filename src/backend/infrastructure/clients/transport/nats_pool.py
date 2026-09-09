@@ -22,7 +22,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import Any, Literal
 
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience.connector_resilience import resilient
@@ -142,7 +142,7 @@ class NatsConnectionPool:
         js = self._nc.jetstream()
         return await js.publish(subject, data, headers=headers or None)
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Check if NATS connection is alive."""
         if self._nc is None:
             return HealthResult.failed(

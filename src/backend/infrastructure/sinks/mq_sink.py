@@ -93,7 +93,7 @@ class MqSink(Sink):
 
         return SinkResult(ok=True, details={"broker": self.broker, "topic": self.topic})
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Health: connect/close без публикации."""
         broker = await self._build_broker()
         if broker is None:

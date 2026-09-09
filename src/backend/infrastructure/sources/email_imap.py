@@ -31,7 +31,7 @@ import ssl
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from src.backend.core.logging import get_logger
 from src.backend.infrastructure.clients.base_connector import HealthResult
@@ -183,7 +183,7 @@ class EmailIMAPSource:
         async for msg in self._idle_stream():
             yield msg
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Health: stateless streamer — всегда ok если объект создан."""
         return HealthResult.ok(latency_ms=0.0, mode=mode)
 

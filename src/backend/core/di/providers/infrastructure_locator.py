@@ -8,7 +8,7 @@
     convenience layer for DI wiring (lazy import + singleton access).
 
     Extensions and business code should prefer the domain facades in
-    ``core.cache.facade``, ``core.auth.facade``, ``core.messaging.eventbus.facade``,
+    ``core.cache.facade``, ``core.auth.facade``, ``infrastructure.clients.messaging.event_bus_facade``,
     ``core.audit.facade``, and ``services.storage.facade``. This locator
     is appropriate only for composition roots (FastAPI lifespan, CLI bootstrap)
     and DSL processor wiring.

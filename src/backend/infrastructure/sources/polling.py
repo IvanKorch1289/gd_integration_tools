@@ -12,7 +12,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Literal
 
 import httpx
 
@@ -90,7 +90,7 @@ class PollingSource:
         self._task = None
         logger.info("PollingSource stopped: id=%s", self.source_id)
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Health check (fast=basic, deep=full probe)."""
         if self._task is not None and not self._task.done():
             return HealthResult.ok(latency_ms=0.0, mode=mode)

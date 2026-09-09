@@ -126,7 +126,7 @@ class FileSink(Sink):
         os.replace(tmp_path, target)
         return written
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Доступна ли parent-директория для записи."""
         start = time.perf_counter()
         target = Path(self.path)

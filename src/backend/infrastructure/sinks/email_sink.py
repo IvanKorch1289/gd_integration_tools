@@ -12,7 +12,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 from email.message import EmailMessage
-from typing import Any
+from typing import Any, Literal
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
 from src.backend.core.resilience.connector_breaker import with_breaker
@@ -142,7 +142,7 @@ class EmailSink(Sink):
             msg.set_content(body)
         return msg
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Проверка доступности SMTP-сервера через ``EHLO``."""
         try:
             import aiosmtplib

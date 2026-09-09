@@ -258,7 +258,7 @@ class FileWatcherSource:
                 pass
             self._watch_task = None
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Health check: always healthy if not crashed."""
         if self._running:
             return HealthResult.ok(latency_ms=0.0, mode=mode)

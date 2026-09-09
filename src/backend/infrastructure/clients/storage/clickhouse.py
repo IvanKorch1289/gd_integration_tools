@@ -20,7 +20,7 @@ import asyncio
 import inspect
 import re
 import time
-from typing import Any
+from typing import Any, Literal
 
 import httpx
 
@@ -344,7 +344,7 @@ class ClickHouseClient:
         except ConnectionError, TimeoutError, OSError, httpx.HTTPError:
             return False
 
-    async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
+    async def health_check(self, *, mode: Literal["fast", "deep"] = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
             import time

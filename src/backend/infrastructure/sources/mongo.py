@@ -21,7 +21,7 @@ import time
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from src.backend.core.interfaces.source import SourceEvent, SourceKind
 from src.backend.core.logging import get_logger
@@ -327,7 +327,7 @@ class MongoSource:
         self._running = False
         await self._close()
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Быстрая проверка: client подключён (ping) или ещё ни разу не было connect."""
         async with self._lock:
             client = self._client

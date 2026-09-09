@@ -29,7 +29,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 from src.backend.infrastructure.clients.base_connector import HealthResult
 
@@ -124,7 +124,7 @@ class TelegramWebhookSource:
         """
         return f"{public_base_url.rstrip('/')}/api/v1/telegram/{self.bot_token}"
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Health: stateless webhook config — всегда ok."""
         return HealthResult.ok(latency_ms=0.0, mode=mode)
 

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 from src.backend.core.codec.json import dumps_str
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
@@ -74,7 +74,7 @@ class WsSink(Sink):
 
         return SinkResult(ok=True, details={"bytes": len(text), "url": self.url})
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Health: успешный handshake + close без отправки данных."""
         try:
             import websockets

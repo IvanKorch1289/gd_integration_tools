@@ -18,6 +18,7 @@ import asyncio
 import time
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
+from typing import Literal
 
 from src.backend.core.logging import get_logger
 from src.backend.infrastructure.clients.base_connector import HealthResult
@@ -165,7 +166,7 @@ class WebDAVSource:
         """Graceful shutdown."""
         self._closed = True
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Метод health (см. signature)."""
         if not self._closed:
             return HealthResult.ok(latency_ms=0.0, mode=mode)

@@ -24,7 +24,7 @@ import re
 import ssl
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
 from src.backend.core.logging import get_logger
@@ -160,7 +160,7 @@ class EmailSource:
         self._task = None
         logger.info("EmailSource stopped: id=%s", self.source_id)
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Health: задача жива и не упала."""
         if self._task is not None and not self._task.done():
             return HealthResult.ok(latency_ms=0.0, mode=mode)

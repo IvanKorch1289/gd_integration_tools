@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import inspect
-from typing import Any
+from typing import Any, Literal
 
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience.connector_resilience import resilient
@@ -253,7 +253,7 @@ class ElasticSearchClient:
         except ConnectionError, TimeoutError, OSError:
             return False
 
-    async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
+    async def health_check(self, *, mode: Literal["fast", "deep"] = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
             import time

@@ -24,7 +24,7 @@ from __future__ import annotations
 import asyncio
 import re
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from src.backend.core.logging import get_logger
 from src.backend.infrastructure.clients.base_connector import HealthResult
@@ -189,6 +189,6 @@ class OracleCDCSource:
                 yield changes
             await asyncio.sleep(self.poll_interval_seconds)
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Health: polling-source без persistent state — всегда ok."""
         return HealthResult.ok(latency_ms=0.0, mode=mode)

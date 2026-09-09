@@ -1,7 +1,7 @@
 """EventBusFacade — capability-checked фасад шины событий (S31 Task 3).
 
 S31 Task 3: Promoted from ``services/messaging/eventbus_facade.py`` to
-``core/messaging/eventbus/facade.py`` for architectural consistency
+``infrastructure/clients/messaging/event_bus_facade.py`` for architectural consistency
 (extensions/DSL should access messaging через core, not services).
 
 Скрывает выбор backend'а (Redis/Kafka/NATS) за единым API для extensions
@@ -26,7 +26,7 @@ from src.backend.core.logging import get_logger
 
 __all__ = ("CapabilityChecker", "EventBusFacade", "get_event_bus_facade")
 
-_logger = get_logger("core.messaging.eventbus.facade")
+_logger = get_logger("infrastructure.clients.messaging.event_bus_facade")
 
 CapabilityChecker = Callable[[str, str, str | None], None]
 

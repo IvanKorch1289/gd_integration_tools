@@ -24,7 +24,7 @@ limits из `PoolingProfile.max_size` + keepalive из `idle_timeout_s`. При
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Any, Final, Literal
 
 from src.backend.core.logging import get_logger
 
@@ -136,7 +136,7 @@ class HttpUpstreamClient(ClientMetricsMixin, InfrastructureClient):
             self._client = None
             self._started = False
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Check upstream health.
 
         Args:

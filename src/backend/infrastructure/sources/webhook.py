@@ -20,7 +20,7 @@ import asyncio
 import time
 from collections import OrderedDict
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
 from src.backend.core.logging import get_logger
@@ -93,7 +93,7 @@ class WebhookSource:
             self._on_event = None
         logger.info("WebhookSource stopped: id=%s", self.source_id)
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Метод health (см. signature)."""
         if self._on_event is not None:
             return HealthResult.ok(latency_ms=0.0, mode=mode)

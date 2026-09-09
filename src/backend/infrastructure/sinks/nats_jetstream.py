@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 import orjson
 
@@ -139,7 +139,7 @@ class NATSJetStreamSink(Sink):
 
         return await self.publish(self.default_subject, data)
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Health: подключение к NATS без публикации (CONNECT/DISCONNECT)."""
         try:
             import nats
