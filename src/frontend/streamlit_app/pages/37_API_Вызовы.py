@@ -59,11 +59,11 @@ if st.button("Отправить", type="primary"):
     if headers is not None:
         started = time.perf_counter()
         try:
-            with httpx.Client(timeout=30) as client:
+            with httpx.Client(timeout=30) as client:  # type: ignore[call-arg]  # R2.MYPY: Client signature uses stricter param types
                 kwargs = {"headers": headers}
                 if body is not None:
                     kwargs["json"] = body
-                resp = client.request(method, f"{BASE_URL}{path}", **kwargs)
+                resp = client.request(method, f"{BASE_URL}{path}", **kwargs)  # type: ignore[arg-type]  # R2.MYPY: kwargs dict types don't match request signature
             elapsed_ms = (time.perf_counter() - started) * 1000
             st.metric("Статус", resp.status_code)
             st.metric("Время, мс", f"{elapsed_ms:.1f}")
