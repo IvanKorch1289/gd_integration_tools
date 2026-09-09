@@ -86,6 +86,14 @@ class PIIMaskingResponseMiddleware:
             return
 
         path = scope.get("path", "")
+
+        # Prod-fix 2026-09-09 (M6-#3): token-issuer endpoints исключены —
+        # выдача access_token и есть назначение ответа (PII-маска
+        # превращала логин в {"access_token": "***"}).
+        if path in ("/api/v1/auth/login",):
+            await self.app(scope, receive, send)
+            return
+
         if not self._path_matches(path):
             await self.app(scope, receive, send)
             return
