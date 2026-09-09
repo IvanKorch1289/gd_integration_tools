@@ -2252,3 +2252,10 @@ live-verified. FTR синхронизирован.
 Интересное: `# type: ignore[arg-type]` на репортуемой строке НЕ гасил эти
 ошибки (re-enabled коды) — сработали только честные тип-фиксы.
 `make type-check-strict-profile` → Success: 0/2356 (команда в ledger выше).
+
+
+## Фаза B финал-2 (2026-09-09 ночь): WS полный flow live-verified — №11 WS ЗАКРЫТ
+
+Коммиты: `acd046ea2` (двойной accept) + FTR-секция «WS ПОЛНЫЙ ФЛОУ».
+Evidence: connect → auth accepted → соединение стабильно 5с+ без закрытия;
+подделка/отсутствие токена → denial 1008 с коротким reason.

@@ -275,3 +275,25 @@ StatusCode.UNKNOWN, details="Unexpected <class 'AttributeError'>:
 
 Статические gRPC-сервисы (invoker/files/orders) работают в проде —
 баг ограничен auto-gRPC поверх REST-actions.
+
+
+### 2026-09-09 (финал): WS ПОЛНЫЙ ФЛОУ РАБОТАЕТ LIVE — метрика №11 WS закрыта
+
+Двойной accept устранён (`acd046ea2`): ws_handler делал pre-auth accept +
+ws_manager.connect делал ВТОРОЙ → RuntimeError на каждом соединении.
+Единственный accept — в ws_manager.connect (после auth); отказы до accept —
+denial-close 1008 с коротким reason.
+
+**Live-последовательность (порт 8010, verified)**:
+```bash
+# 1. step-up-request → 200, token_len=169
+# 2. login с X-Step-Up-Token → 200, JWT 212 unmasked, 0.14s
+# 3. WS /ws?client_id=... + Sec-WebSocket-Protocol: jwt.<token>:
+WS CONNECTED (auth accepted)
+NO_PUSH_5S (connected, authenticated, waiting)  # соединение стабильно открыто
+```
+Ранее наблюдавшийся «пустой denial» в TestClient — тестовый артефакт
+вложенного роутинга (_IncludedRouter); по сети флоу корректен.
+
+**Операционное**: port-war с параллельной полосой (their /app-сервер на
+8000/8002) — верификация только на выделенных портах с kill-by-PID.
