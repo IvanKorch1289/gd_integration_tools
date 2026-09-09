@@ -95,7 +95,7 @@ def collect_hook_methods(
         if marker is None:
             continue
         repo_name, event = marker
-        items.append((repo_name, event, method))
+        items.append((repo_name, event, method))  # type: ignore[arg-type]  # R2.MYPY: marker is Any, items expects tuple[str,str,Callable]
     return tuple(items)
 
 
@@ -112,5 +112,5 @@ def collect_override_methods(
         if marker is None:
             continue
         repo_name, method_name = marker
-        items.append((repo_name, method_name, method))
+        items.append((repo_name, method_name, method))  # type: ignore[arg-type]
     return tuple(items)
