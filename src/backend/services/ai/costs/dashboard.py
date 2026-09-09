@@ -189,8 +189,15 @@ class AICostDashboard:
         self, *, group_by: str, window: timedelta, top_n: int
     ) -> list[CostRow]:
         try:
+            from typing import Literal, cast
+
+            group_by_typed = cast(
+                "Literal['route', 'tenant', 'provider']", group_by
+            )
             return await self._reader.fetch_costs(
-                group_by=group_by, window=window, top_n=top_n
+                group_by=group_by_typed,
+                window=window,
+                top_n=top_n,
             )
         except Exception as exc:
             logger.warning("AICostDashboard fetch %s failed: %s", group_by, exc)

@@ -178,6 +178,8 @@ class FileWatchProcessor(BaseProcessor):
         # S176 #4: scan all directories, aggregate results.
         all_matched: list[dict[str, Any]] = []
         for directory in effective_dirs:
+            if directory is None:
+                continue  # None-каталог (legacy tuple) — skip
             # S178 #2: isdir() — blocking, переносим в thread.
             try:
                 exists = await asyncio.to_thread(os.path.isdir, directory)  # type: ignore[arg-type]  # R2.MYPY: directory is Any|str|None, to_thread expects PathLike
@@ -193,18 +195,28 @@ class FileWatchProcessor(BaseProcessor):
             try:
                 if self._include_subdirs:
                     raw_paths: list[tuple[str, os.stat_result]] = []
-                    for pattern in effective_patterns:
+                    for pattern_item in effective_patterns:
+                        if pattern_item is None:
+                            continue  # None-паттерн не матчится (glob)
+                        pattern_item_str = str(pattern_item)
                         raw_paths.extend(
                             await asyncio.to_thread(
-                                _walk_matching_files, directory, pattern  # type: ignore[arg-type]
+                                _walk_matching_files,
+                                directory,
+                                pattern_item_str,
                             )
                         )
                 else:
                     raw_paths = []
-                    for pattern in effective_patterns:
+                    for pattern_item in effective_patterns:
+                        if pattern_item is None:
+                            continue  # None-паттерн не матчится (glob)
+                        pattern_item_str = str(pattern_item)
                         raw_paths.extend(
                             await asyncio.to_thread(
-                                _list_matching_files, directory, pattern  # type: ignore[arg-type]
+                                _list_matching_files,
+                                directory,
+                                pattern_item_str,
                             )
                         )
             except OSError as exc:
