@@ -66,8 +66,10 @@ def _create_emit_ai_invocation_event() -> None:
                 except Exception as exc:
                     logger.debug("LangFuseCallbackV3 init failed: %s", exc)
 
-                _unified_sink = UnifiedAISink(  # type: ignore[arg-type]  # R2.MYPY: audit/langfuse types don't match backend protocol slots
-                    audit_service=audit, langfuse_callback=langfuse, enabled=True
+                _unified_sink = UnifiedAISink(
+                    audit_service=audit,  # type: ignore[arg-type]  # R2.MYPY: AuditService vs AuditBackend
+                    langfuse_callback=langfuse,  # type: ignore[arg-type]  # R2.MYPY: LangFuseCallbackV3 vs LangfuseCallbackBackend
+                    enabled=True,
                 )
             except Exception as exc:
                 logger.warning("UnifiedAISink: init failed: %s", exc)
