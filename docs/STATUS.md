@@ -1,16 +1,22 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
-> **Last verified**: 2026-09-05, вечер (финальный sync M6-#6 — см. блок ниже)
+> **Last verified**: 2026-09-09, вечер (prod-readiness sprint — см. FUNCTIONAL_TEST_REPORT.md и FINAL_REPORT.md)
 >
-> **2026-09-05 (M6-#6 ФИНАЛЬНЫЙ SYNC плана M1-M6)** — все команды выполнены напрямую, без наследованных клеймов:
-> - **M1-M3 DONE** (verified: 22/22 P0 `57a396d84`; cryptography 50.0.1/gitpython 3.1.61 — pip-audit: только diskcache ADR-0287; tornado/pypdf подняты).
-> - **M4 DONE по per-module ratchets** (S97-S102: 20+ модулей 73-100%, фазы S97-S102 verified); **глобальный overall 70% — post-план** (multi-day, интерим-решение ждёт подтверждения пользователя — см. PROGRESS_LEDGER.md «Решения, ожидающие подтверждения»).
-> - **M5 10/10 DONE**: W1/W2 (graceful shutdown wire, `11684f3ed`), W3 (MQTT timeout/backpressure, `37156dbdb`), M5-#10 SLO-прогон locust на granian×4 workers: reference 444 RPS / p99 150ms / err 0.00% (SLO p99<300ms ✓), push 500 RPS / p99 440ms — `docs/roadmap/LOAD_TEST_RESULTS_2026-09-05.md`.
-> - **M6**: негативная auth-матрица 13 эндпоинтов (verified), Swagger 200, pre-prod-check **20/36 PASSED** — FAILED 3, все внешние: gate 01 coverage (T3 post-план), gate 15 Vault (**ADR-0296 infra-deferral**), gate 19 startup MARGINAL (флак shared-box). Позитивные JWT/брокерные сценарии M6-#3 — **BLOCKED(infra)**: docker socket permission denied (verified).
-> - **Качество**: ruff 0; mypy permissive-профиль **0 ошибок в 2356 файлах** (strict-профиль — 1190, отдельный спринт, ADR-0295); collect 16966/0 errors; layers 0 new; vulture @90 0.
-> - **Формулировка финиша плана**: «План доработки M1-M6 завершён: 21/22 подконтрольных рою пунктов закрыты и верифицированы; 2 пункта — BLOCKED(infra)/post-план с задокументированными путями закрытия». Дальнейшие изменения — только по новым бизнес-требованиям.
+> **2026-09-09 (Prod-Readiness Sprint — 13 метрик, direct verification)**:
+> - **Метрика №1 ruff: 0** (`ruff check src/` → All checks passed).
+> - **Метрика №2 mypy: permissive 0/2356 файлов; STRICT-профиль (ADR-0295, 9 кодов) → 0 ошибок** (`make type-check-strict-profile` → Success). Серия 1190→228→9→0.
+> - **Метрика №3 bandit: 0 HIGH severity; 0 HIGH confidence** (пере-проверка 2026-09-09; baseline «44» устарел).
+> - **Метрика №4 vulture @90: 0**.
+> - **Метрика №5 layers: 0 новых нарушений; allowlist 14 (≤15 ✓, ADR-0301)**.
+> - **Метрика №6 coverage: 72.04% honest** (scoped --cov-append combine; fail_under=70; gate strict PASS на threshold 70). Прежние ~31% — артефакт неполных прогонов.
+> - **Метрика №7 pre-prod: 21-22/36 PASSED** (gate 01 coverage ≥50% PASS на 72.04%; gate 02 mypy ≤30 PASS на 0; gate 15 Vault — ADR-deferral; gate 04/11/19 — закрыты/транзитны).
+> - **Метрика №8 M6-#3: позитивный auth UNBLOCKED** — B-04 flow live (step-up-request → login → 200 + JWT за 0.15с; подделка → 401). Было BLOCKED(docker).
+> - **Метрика №11 WS: CONNECTED + auth + стабильное соединение** (live-verified :8010). REST/GraphQL/MQ прогоны — FUNCTIONAL_TEST_REPORT.md.
+> - **Качество**: collect 17412/0 errors; vulture 0; bandit 0.
 >
-> **2026-09-05: verified — ruff 0, collect 0 errors, M5 9/10 (W1/W2/W3), M6 partial (матрица 13 эндпоинтов)** (см. `docs/roadmap/PROGRESS_LEDGER.md`)
+> **Открытые метрики программы**: №9 (load-rerun push p99<300ms), №10 (outdated ≤30), №11-хвост (gRPC auto-servicer dispatch, SSE-клиент, браузер), №12-финал (этот sync — итерация 1), №13 (FINAL_REPORT финальный).
+> См. `docs/roadmap/PROGRESS_LEDGER.md` (Фазы A/B) и `docs/roadmap/FUNCTIONAL_TEST_REPORT.md`.
+
 
 ## Post-Plan A Sprints 1-31 (coverage ratchet + final polish)
 
