@@ -185,7 +185,7 @@ def _decide_mode(path: Path, mode: CassetteMode) -> CassetteMode:
     return "replay" if path.is_file() else "record"
 
 
-def _build_sync_handler(cas: HARCassette):
+def _build_sync_handler(cas: HARCassette) -> Callable[[httpx.Request], httpx.Response]:
     """Возвращает callable для httpx.MockTransport, отдающий записанные ответы."""
 
     cmap: dict[tuple[str, str], HAREntry] = {
