@@ -70,7 +70,7 @@ def register_storage_singletons(app: FastAPI) -> None:
         )
         from src.backend.services.io.search import SearchService
 
-        app.state.search_service = SearchService(client=get_elasticsearch_client())
+        app.state.search_service = SearchService(client=get_elasticsearch_client())  # type: ignore[arg-type]  # R2.MYPY: ElasticSearchClient vs SearchClient
     except Exception as exc:
         app_logger.debug("SearchService registration skipped: %s", exc)
 
