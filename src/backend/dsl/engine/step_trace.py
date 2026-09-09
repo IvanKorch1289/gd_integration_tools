@@ -82,7 +82,7 @@ def record_trace(exchange: Any, trace: StepTrace) -> None:
 
 
 @contextlib.asynccontextmanager
-async def traced_step(exchange: Any, *, processor_name: str, input_value: Any = None):
+async def traced_step(exchange: Any, *, processor_name: str, input_value: Any = None) -> Any:
     """Async context, измеряющий длительность шага и записывающий StepTrace.
 
     Usage::

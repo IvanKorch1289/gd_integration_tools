@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Iterator
 
 __all__ = ("Hint", "ParallelismAnalyzer", "ParallelismReport", "StepDependency")
 
@@ -118,7 +118,7 @@ class ParallelismAnalyzer:
         return produces, consumes
 
     @staticmethod
-    def _iter_values(obj: Any):
+    def _iter_values(obj: Any) -> Iterator[Any]:
         if isinstance(obj, dict):
             for v in obj.values():
                 yield from ParallelismAnalyzer._iter_values(v)
