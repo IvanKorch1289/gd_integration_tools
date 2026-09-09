@@ -60,7 +60,7 @@ class EnvInlineCertBackend(CertBackend):
         _logger.warning("cert.env.delete_noop id=%s", service_id)
         return False
 
-    async def save(
+    async def save(  # type: ignore[override]  # R2.MYPY: CertBackend.save signature mismatch
         self, service_id: str, pem: str, expires_at: datetime | None = None
     ) -> None:
         """ENV — read-only, delegate to set (which is noop)."""

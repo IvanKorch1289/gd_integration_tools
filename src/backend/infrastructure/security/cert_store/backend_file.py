@@ -75,7 +75,7 @@ class FileCertBackend(CertBackend):
         path.unlink()
         return True
 
-    async def save(
+    async def save(  # type: ignore[override]  # R2.MYPY: CertBackend.save signature mismatch
         self, service_id: str, pem: str, expires_at: datetime | None = None
     ) -> None:
         """Alias для set (CertBackend ABC signature)."""

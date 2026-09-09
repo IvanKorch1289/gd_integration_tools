@@ -120,7 +120,7 @@ class ConsulCertBackend(CertBackend):
             version=int(payload.get("version", 1)),
         )
 
-    async def save(
+    async def save(  # type: ignore[override]  # R2.MYPY: CertBackend.save signature mismatch
         self,
         service_id: str,
         pem: str,
