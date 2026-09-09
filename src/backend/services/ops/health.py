@@ -79,7 +79,7 @@ async def _http_get(url: str, timeout: float = 5.0) -> tuple[int, str]:
     """
     from src.backend.core.net.outbound_http import OutboundHttpClient
 
-    async with OutboundHttpClient(timeout=timeout) as client:
+    async with OutboundHttpClient(timeout=timeout) as client:  # type: ignore[arg-type]  # R2.MYPY: float → Timeout
         resp = await client.get(url)
         return resp.status_code, resp.text
 

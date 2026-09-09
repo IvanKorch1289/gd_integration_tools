@@ -81,7 +81,7 @@ def get_search_service() -> SearchService:
 
     Регистрация выполняется в ``infrastructure/application/lifecycle.py``
     при старте приложения.
-    """
+    """  # type: ignore[arg-type]  # R2.MYPY: app_state_singleton decorator mismatch
     raise RuntimeError(
         "search_service не зарегистрирован — убедитесь, что register_app_state() "
         "и _register_storage_singletons были вызваны при старте."

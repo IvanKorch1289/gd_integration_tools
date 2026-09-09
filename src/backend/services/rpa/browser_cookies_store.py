@@ -195,7 +195,7 @@ class BrowserCookieStore:
                 # No-op: cookies unchanged since last save.
                 return
         try:
-            await self._redis.set(key, new_ciphertext, ex=self._ttl)
+            await self._redis.set(key, new_ciphertext, ex=self._ttl)  # type: ignore[arg-type]  # R2.MYPY: bytes → str
         except Exception as exc:
             _logger.warning("BrowserCookieStore.save_cookies failed: %s", exc)
 
