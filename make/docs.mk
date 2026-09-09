@@ -48,12 +48,12 @@ coverage-gate-strict: ## [wave:s19/k2-w4-coverage-ratchet-75] — coverage gate 
 	$(UV_RUN) pytest tests --cov=src/backend --cov-report=xml --cov-report=term --maxfail=20 -n auto
 	$(UV_RUN) python -m coverage combine  # S53 W4: merge per-worker
 	$(UV_RUN) python -m coverage report  # S53 W4: regenerate report
-	$(UV_RUN) python tools/check_coverage_gate.py --coverage-xml coverage.xml --baseline .baselines/coverage.json --threshold 75 --strict
+	$(UV_RUN) python tools/check_coverage_gate.py main --coverage-xml coverage.xml --baseline .baselines/coverage.json --threshold 75 --strict
 	@$(SUCCESS) "Coverage gate strict (75%) passed"
 
 coverage-gate-fast: ## Fast coverage gate (skip pytest, reuse existing coverage.xml)
 	@$(INFO) "Running coverage gate (fast, reuse coverage.xml)..."
-	$(UV_RUN) python tools/check_coverage_gate.py --coverage-xml coverage.xml --baseline .baselines/coverage.json --threshold 50 --strict
+	$(UV_RUN) python tools/check_coverage_gate.py main --coverage-xml coverage.xml --baseline .baselines/coverage.json --threshold 70 --strict
 	@$(SUCCESS) "Coverage gate (fast) passed"
 
 # Sprint 36 W1: Coverage Phase 0 (per-layer split). OOM mitigation для
