@@ -201,6 +201,7 @@ class RequestBodyCacheMiddleware:
         Также сохраняет ``scope["original_receive"]`` для downstream,
         которым нужен raw channel.
         """
+
         # Prod-fix 2026-09-09 (M6-#3): replay ИДЕМПОТЕНТЕН — каждое
         # потребление получает body (more_body=False завершает любой
         # чанк-цикл). Бывший one-shot + http.disconnect ломал цепочку

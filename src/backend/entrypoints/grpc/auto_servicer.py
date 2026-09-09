@@ -298,8 +298,7 @@ def register_auto_servicers(grpc_server: Any) -> int:
         stub_cls = getattr(bundle.pb2_grpc, f"{service_cap}AutoServiceStub", None)
         if stub_cls is None:
             logger.warning(
-                "gRPC auto-servicer: stub %s не найден — домен пропущен",
-                service_cap,
+                "gRPC auto-servicer: stub %s не найден — домен пропущен", service_cap
             )
             continue
 
