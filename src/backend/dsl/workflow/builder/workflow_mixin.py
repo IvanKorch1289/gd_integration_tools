@@ -22,7 +22,7 @@ class WorkflowMixin(_WorkflowBuilderProtocol):
         """
         from src.backend.dsl.workflow.builder import SagaBuilder
 
-        return SagaBuilder(self)
+        return SagaBuilder(self)  # type: ignore[arg-type]  # R2.MYPY: WorkflowMixin vs WorkflowBuilder expected
 
     def build(self) -> WorkflowDeclaration:
         """Собрать и провалидировать :class:`WorkflowDeclaration`.

@@ -168,7 +168,7 @@ class StdlibLogger(LoggerProtocol):
         """Вернуть новый logger с extra-контекстом (**kwargs в каждый log)."""
         adapter = logging.LoggerAdapter(self._inner, kwargs)
         wrapped = StdlibLogger.__new__(StdlibLogger)
-        wrapped._inner = adapter
+        wrapped._inner = adapter  # type: ignore[assignment]  # R2.MYPY: LoggerAdapter vs Logger expected
         return wrapped
 
 
