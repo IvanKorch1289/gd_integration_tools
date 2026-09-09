@@ -28,6 +28,7 @@ Audit middleware должен:
 
 from __future__ import annotations
 
+import asyncio
 import time
 from typing import Any
 
@@ -144,11 +145,26 @@ class AuditReplayMiddleware:
 
     @staticmethod
     async def _collect_body(receive: Receive) -> bytes:
-        """Collect body chunks через receive() (cycle 45 helper)."""
+        """Collect body chunks через receive() (cycle 45 helper).
+
+        Prod-fix 2026-09-09 (M6-#3): каждый chunk ждём с bounded timeout.
+        Если body уже потреблён выше по цепочке (например, промежуточным
+        logging/otel middleware), повторный receive() блокируется до
+        http.disconnect клиента — на /auth/login это выглядело как
+        30-90с «зависание» запроса. Таймаут прерывает ожидание: audit
+        получает пустой body, запрос идёт дальше.
+        """
         body_chunks: list[bytes] = []
         more_body = True
         while more_body:
-            message = await receive()
+            try:
+                message = await asyncio.wait_for(receive(), timeout=1.0)
+            except asyncio.TimeoutError:
+                logger.warning(
+                    "audit_replay.collect_body_timeout: body уже потреблён "
+                    "вышестоящим middleware — audit без request_body"
+                )
+                break
             if message["type"] == "http.disconnect":
                 break
             body_chunks.append(message.get("body", b""))
