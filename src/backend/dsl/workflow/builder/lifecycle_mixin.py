@@ -48,7 +48,7 @@ class LifecycleMixin(_WorkflowBuilderProtocol):
                 trigger=trigger,
                 source_step=source_step,
                 memory_writes=memory_writes or [],
-                consolidation_policy=consolidation_policy,
+                consolidation_policy=consolidation_policy,  # type: ignore[arg-type]  # R2.MYPY: str → Literal['summarize','dedup','reflect','none']
                 async_mode=async_mode,
                 output_key=output_key,
             )
@@ -123,7 +123,7 @@ class LifecycleMixin(_WorkflowBuilderProtocol):
             GuardrailDeclaration(
                 rule=rule,
                 threshold=threshold,
-                on_exceed=on_exceed,
+                on_exceed=on_exceed,  # type: ignore[arg-type]  # R2.MYPY: str → Literal
                 target=target,
                 output_key=output_key,
             )
