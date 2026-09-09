@@ -45,9 +45,9 @@ async def root_page() -> HTMLResponse:
     <script>
     (function() {{
         var links = {{
-            'link-logs': '{_safe_url(settings.logging.base_url)}',
-            'link-storage': '{_safe_url(settings.storage.interface_endpoint)}',
-            'link-queue': '{_safe_url(settings.queue.queue_ui_url)}'
+            'link-logs': '{_safe_url(settings.logging.base_url)}',  # type: ignore[arg-type]  # R2.MYPY: settings.X is Callable[[], str]
+            'link-storage': '{_safe_url(settings.storage.interface_endpoint)}',  # type: ignore[arg-type]
+            'link-queue': '{_safe_url(settings.queue.queue_ui_url)}'  # type: ignore[arg-type]
         }};
         for (var id in links) {{
             var el = document.getElementById(id);
