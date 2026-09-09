@@ -57,7 +57,7 @@ class BaseS3Client(ABC):
 
     @abstractmethod
     @asynccontextmanager
-    async def client_context(self) -> AsyncGenerator[Any]:
+    async def client_context(self) -> AsyncGenerator[Any]:  # type: ignore[misc]  # R2.MYPY: asynccontextmanager signature expects AsyncIterator
         """Контекстный менеджер для операций с клиентом."""
 
     @abstractmethod

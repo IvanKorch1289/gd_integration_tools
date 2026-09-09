@@ -51,7 +51,7 @@ class SemanticMemory:
             raise RuntimeError(
                 "SemanticMemory: embedder или qdrant_client не сконфигурированы."
             )
-        vectors = await self._embedder.embed([text])
+        vectors = await self._embedder.embed([text])  # type: ignore[union-attr]  # R2.MYPY: _embedder Optional runtime guarantee
         point_id = str(uuid.uuid4())
         payload: dict[str, Any] = {"text": text, **(meta or {})}
         if tenant:
