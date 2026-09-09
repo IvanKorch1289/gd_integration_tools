@@ -173,9 +173,22 @@ async def login(payload: LoginRequest) -> LoginResponse:
     # encode() returns (token_str, expires_in_seconds) — см. jwt_backend.
     # Никаких mock-fallback: encode-ошибка должна быть видна как 5xx, а не как
     # 200 OK с поддельным токеном, который сломает каждый downstream verify.
+    #
+    # Prod-fix 2026-09-09 (M6-#3): secret передаётся из SecureSettings
+    # (тот же, что в JwtBackend DI-provider) — иначе HS256-encode падал
+    # «secret обязателен» → 500 на каждый успешный логин.
+    from src.backend.core.config.security import secure_settings
+
+    _secret = secure_settings.secret_key
+    secret_value = (
+        _secret.get_secret_value()
+        if hasattr(_secret, "get_secret_value")
+        else str(_secret)
+    )
     result = jwt_encode(
         subject=user.username,
         claims={"auth_method": payload.method, "is_superuser": is_superuser},
+        secret=secret_value,
     )
     if isinstance(result, tuple) and len(result) == 2:
         token, expires_in = result
