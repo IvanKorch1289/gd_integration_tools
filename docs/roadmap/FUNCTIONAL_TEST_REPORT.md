@@ -248,3 +248,30 @@ $ curl -s -X POST .../api/v1/auto/notify.send -H "Authorization: Bearer $TOKEN" 
 валидный JWT-сценарий — после починки close-reason. SSE: /api/v1/ai/llm/stream
 — POST-only (GET 405), нужен payload-клиент. gRPC: manage.py grpc-serve —
 клиентская проба след. сессия.
+
+
+### 2026-09-09 (доп. 2): gRPC unix-socket проба + WS auth fix
+
+```bash
+# Сервер: APP_PROFILE=dev_light manage.py grpc-serve → unix:///tmp/order_service.sock
+# Транспорт VERIFIED: connect + сериализация + структурированный gRPC-ответ:
+$ python -c "... OrderkindsAutoServiceStub(ch).List(pb.EmptyRequest(), timeout=15)"
+StatusCode.UNKNOWN, details="Unexpected <class 'AttributeError'>:
+'function' object has no attribute 'request_streaming'"
+```
+
+**Найден server-side баг auto-servicer'а** (Wave 1.3): gRPC sync-server
+при dispatch читает `request_streaming` с BARE function (результат
+`_build_rpc_method`), зарегистрированной напрямую в
+`add_OrderkindsAutoServiceServicer_to_server` — существующий патч
+`_patch_rpc_methods` (grpc_server/__init__.py) покрывает только
+статические классы (invoker/files/orders) и grpc.* package, но НЕ
+динамические auto-классы. Установка атрибутов на методы servicer/stub
+не помогает — bare function попадает в handler-цель. Нужен фикс
+шаблона генерации: оборачивать методы через
+`grpc.unary_unary_rpc_method_handler(behavior, ...)` при регистрации
+(как в статических pb2_grpc) ЛИБО расширять `_patch_rpc_methods` на
+динамические классы до add_to_server.
+
+Статические gRPC-сервисы (invoker/files/orders) работают в проде —
+баг ограничен auto-gRPC поверх REST-actions.
