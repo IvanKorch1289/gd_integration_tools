@@ -352,7 +352,10 @@ class TestWebsocketAuthGate:
             with patch.object(ws_handler.ws_manager, "connect", AsyncMock()):
                 with patch.object(ws_handler.ws_manager, "disconnect", MagicMock()):
                     await ws_handler.websocket_endpoint(ws)
-            # accept вызван один раз (без auth pre-check).
-            ws.accept.assert_awaited_once()
+                # Prod-fix M6-#3: единственный accept — внутри
+                # ws_manager.connect; хендлер сам accept не вызывает
+                # (двойной accept = RuntimeError «got websocket.accept»).
+                ws.accept.assert_not_awaited()
+                ws_handler.ws_manager.connect.assert_awaited_once()
         finally:
             ws_handler.ws_settings = original

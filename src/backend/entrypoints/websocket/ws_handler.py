@@ -251,17 +251,17 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
     """
     # S172 M1.1: опциональная auth на handshake. Можно отключить
     # ``WSSettings.require_auth=False`` для dev/test режима.
+    #
+    # Prod-fix 2026-09-09 (M6-#3): pre-auth ``websocket.accept()`` УДАЛЁН —
+    # он был ПЕРВЫМ accept, а ``ws_manager.connect`` делал ВТОРОЙ →
+    # RuntimeError «got websocket.accept» на каждом WS-соединении.
+    # Единственный accept теперь в ws_manager.connect (после auth);
+    # отказы до accept закрываются denial-close 1008 (по образцу
+    # ws_invocations, где auth выполняется ДО accept).
     require_auth = getattr(ws_settings, "require_auth", True)
     if require_auth:
-        try:
-            await websocket.accept()
-        except Exception as exc:
-            logger.debug("WS accept failed pre-auth: %s", exc)
-            return
         if not await _authenticate_handshake(websocket):
             return
-    else:
-        await websocket.accept()
 
     # S163 W33: extract action_id из query params (option A bind at handshake).
     action_id_param = websocket.query_params.get("action_id") or None
