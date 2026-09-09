@@ -90,7 +90,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
         self, *, tenant_id: str, query: str | None, top_k: int
     ) -> list[Any]:
         """Адаптирует tenant-scoped recall к canonical LangMem API."""
-        return await self._long.recall(tenant_id, "semantic", query=query, top_k=top_k)
+        return await self._long.recall(tenant_id, "semantic", query=query, top_k=top_k)  # type: ignore[union-attr]  # R2.MYPY: _long Any|None
 
     async def _remember_fact(
         self,
@@ -110,7 +110,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
             entry = await remember_fact(tenant_id, content, vectors[0])
             return str(entry.entry_id)
 
-        fact_id = await self._long.add_semantic(
+        fact_id = await self._long.add_semantic(  # type: ignore[union-attr]
             text=content,
             tenant=tenant_id,
             meta={
@@ -346,7 +346,7 @@ def _lang_to_fact(raw: Any) -> MemoryFact:
     )
 
 
-@app_state_singleton("memory_gateway")
+@app_state_singleton("memory_gateway")  # type: ignore[arg-type]  # R2.MYPY: app_state_singleton decorator signature
 def get_memory_gateway() -> UnifiedMemoryGateway:
     """Block 4.1: singleton :class:`UnifiedMemoryGateway` через app.state.
 
