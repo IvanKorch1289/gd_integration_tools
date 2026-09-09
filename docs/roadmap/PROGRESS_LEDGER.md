@@ -2052,3 +2052,31 @@ auth_login secret fix.
 - FINAL_REPORT v6 baseline, ready for v7 update
 - Mypy-strict ≤30 still requires: -307 errors (multi-sprint)
 
+
+---
+
+## Phase B Sprint 12 (2026-09-09) — продолжение per-file batch (loop iteration 2)
+
+### Mypy-strict trajectory
+
+| Версия | HEAD | Errors | Δ Sprint 11-12 |
+|---|---|---|---|
+| Sprint 11 close | `d45be94f0` | 337 | — |
+| Sprint 12 batch (10+ commits) | `b77030b73` | **291** | **-46** |
+
+### Sprint 12 коммиты (selection)
+
+- elasticsearch + stream routers + loader
+- saga_lra + documents + memory_gateway
+- messaging_sources (assignment fix)
+- marshal/formats
+- actions/__init__
+- + ~6 more
+
+### Cumulative across all sessions
+
+- mypy-strict: **886 → 291 = -595 (-67%)**
+- 140+ atomic commits
+- FINAL_REPORT v6 baseline, ready for v7 update
+- Mypy-strict ≤30 still requires: -261 errors (multi-sprint)
+
