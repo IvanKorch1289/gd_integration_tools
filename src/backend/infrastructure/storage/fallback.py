@@ -28,7 +28,7 @@ failure может быть "временный" — например 5xx от S
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator
-from typing import Any
+from typing import Any, Literal
 
 from src.backend.core.interfaces.storage import ObjectStorage
 from src.backend.core.logging import get_logger
@@ -288,7 +288,7 @@ class FallbackObjectStorage(ObjectStorage):
         """True если primary supports presigned (default True)."""
         return self._primary.supports_presigned()
 
-    async def health(self, mode: str = "fast") -> HealthResult:
+    async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Health: primary если available, иначе secondary.
 
         Используется ``ResilienceCoordinator`` (W26) для breaker state.
