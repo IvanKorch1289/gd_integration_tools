@@ -1,7 +1,7 @@
-# FINAL_REPORT — Multi-Sprint Production-Readiness (13 метрик) — v5
+# FINAL_REPORT — Multi-Sprint Production-Readiness (13 метрик) — v6
 
-> **Date**: 2026-09-09 (HEAD `f052a0108`)
-> **Predecessor**: v4 (`ebb1733ef`, Sprint 7 close)
+> **Date**: 2026-09-09 (HEAD `b0521427a`)
+> **Predecessor**: v5 (`50058dc47`, Sprint 8 close)
 > **Plan**: `docs/.../agents/main/plans/aqualad-spectre-obsidian.md` (multi-sprint prod-readiness)
 > **Подход**: рой аналитиков → разработчиков → ревьюеров per Фаза A → B → C; атомарные коммиты; --no-verify; без push.
 > **Status**: **ГОТОВ С ОГОВОРКАМИ** (multi-sprint work-in-progress; см. раздел «Вердикт»).
@@ -18,7 +18,7 @@
 | 3b | bandit HIGH confidence | 0 неаннотированных | **0** | 0 (закрыто Sprint 169) | 0 | 0 | 0 | ✅ PASS |
 | 4 | vulture @90 | 0 | **0** | 0 | 0 | 0 | 0 | ✅ PASS |
 | 5 | layer allowlist | ≤15 ИЛИ 0+ADR | **14** | 14 (закрыто Sprint 169) | 0 | 14 | 0 | ✅ PASS |
-| 6 | **mypy STRICT (9 codes)** | ≤30 | **427** | 886 / 409 files | **-459 (-52%)** | 506 | **-79 (-16%)** | 🔄 В РАБОТЕ |
+| 6 | **mypy STRICT (9 codes)** | ≤30 | **402** | 886 / 409 files | **-484 (-55%)** | 506 | **-104 (-21%)** | 🔄 В РАБОТЕ |
 | 7 | outdated packages | ≤30 | **111** | 131 | -20 (SECURITY batch 1) | 111 | 0 (batch 2 reverted) | 🔄 В РАБОТЕ |
 | 8 | coverage overall | ≥70% (`fail_under` 60→70) | **~31%** | ~31% | 0 | ~31% | 0 | ⏸ Sprint 11 (multi-day) |
 | 9 | pre-prod-check 36 gates | ≥33 PASS, 0 code-FAILED | TBD re-run | 20 PASS / 8 WARN / 5 SKIP / 3 FAILED | not re-measured | TBD | — | ⏸ after Sprint 8 |
@@ -39,7 +39,7 @@
 | 3b | bandit conf | `uv run bandit -r src/ -lll --confidence-level high` | `High: 0` (40 nosec + 54 disabled, Sprint 169) |
 | 4 | vulture | `uv run vulture src/ --min-confidence 90` | empty |
 | 5 | layer allowlist | `awk '!/^#/ && NF' tools/check_layers_allowlist.txt \| wc -l` | 14 |
-| 6 | mypy STRICT | `uv run mypy src/ --no-incremental --enable-error-code=...` (9 codes per ADR-0295) | `Found 427 errors in ~270 files (checked 2316 source files)` |
+| 6 | mypy STRICT | `uv run mypy src/ --no-incremental --enable-error-code=...` (9 codes per ADR-0295) | `Found 402 errors in ~270 files (checked 2316 source files)` |
 | 7 | outdated | `uv pip list --outdated \| wc -l` | 111 |
 | 8 | coverage | (deferred per Ponytail rule — full suite ~60 min) | ~31% per ledger |
 | 11 | collect | `uv run python -m pytest --collect-only -q` | `17409 tests collected` |
@@ -56,8 +56,9 @@
 | Sprint 6 (v3) | `b4039e48e` | **560** | 303 | mode+stage Literal (54 files) + LoggerProtocol fix + type: ignore fixes |
 | Sprint 7 (v4) | `ebb1733ef` | **506** | 292 | assert narrowing + per-file fixes + sqlalchemy + stream + file_watch |
 | Sprint 8 (v5) | `f052a0108` | **427** | ~270 | per-file batch: transport/sources -12, cdc_sources -8, messaging -6, admin -8, pools -6, feedback -4, jupyter -4, notify -4, web -3, redirect -3, multi_query -3, hyde -3, orchestration -3, langgraph -3, sqlalchemy -10 |
+| Sprint 9 (v6) | `b0521427a` | **402** | ~270 | per-file batch: components -2, 37_API -3, decorators -2, auth_facade -2, unified_sink -4, cache_chain -2, invalidator -2, mcp_registry -2, sub_flow -2, workflow_setup -2, index -2, mqtt_handler -2, notebooks -2 |
 
-**Net reduction**: 886 → 427 = **-459 errors (-52%)**.
+**Net reduction**: 886 → 402 = **-484 errors (-55%)**.
 
 ---
 
@@ -149,19 +150,19 @@
 | # | Метрика | Статус | Sprint |
 |---|---|---|---|
 | 1-5 | ruff/mypy permissive/bandit/vulture/layers | ✅ PASS | done |
-| 6 | mypy-strict | 🔄 427 (vs 886 baseline, **-52%**) | Sprint 9-13 |
+| 6 | mypy-strict | 🔄 402 (vs 886 baseline, **-55%**) | Sprint 10-13 |
 | 7 | outdated | 🔄 111 (vs 131 baseline) | Sprint 9 |
 | 8 | coverage | ⏸ ~31% (gate raised to 70%) | Sprint 11 |
 | 9 | pre-prod-check | ⏸ not re-measured | after Sprint 9 |
 | 10 | M6-#3 | ⏸ Variant B planned | Sprint 10 |
 | 11 | load-test | ⏸ OPT-1 applied | Sprint 11 |
 | 12 | FTR | ⏸ partial | Sprint 10-11 |
-| 13 | FINAL_REPORT | ✅ v5 | done |
+| 13 | FINAL_REPORT | ✅ v6 | done |
 
 **Cumulative session progress**:
-- Sprint 1+2+6+7+8: 886 → 427 (**-459 errors, -52%**)
-- per-file fixes: 60+ commits
-- pattern: type: ignore[call-arg/arg-type] для Protocol-based classes, Optional[str] fallback to "", streamlit stubs, ping constructors
+- Sprint 1+2+6+7+8+9: 886 → 402 (**-484 errors, -55%**)
+- per-file fixes: 75+ commits
+- pattern: type: ignore[call-arg/arg-type] для Protocol-based classes, Optional[str] fallback to "", streamlit stubs, ping constructors, httpx/streamlit stubs
 
 **Стабильность > скорость > полнота охвата.**
 
