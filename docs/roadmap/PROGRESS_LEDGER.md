@@ -2782,3 +2782,26 @@ ruff 0 + strict mypy 0 пере-подтверждены на текущем HEA
 
 Программа Prod-Readiness переведена в стабильное состояние:
 все кодо-зависимые гейты PASS, все хвосты — с владельцами и путями.
+
+
+## ФИНАЛЬНЫЙ СТАТУС (2026-09-10): все кодо-зависимые метрики PASS, 4 хвоста с путями
+
+Заморожено на HEAD `c4e1ace0f` + `0b194bff5` (DEPS same-major) +
+`fb18fd48e` (реестр) + `ffbeb99c9` (ФИНАЛЬНЫЙ ВЕРДИКТ).
+
+### Скорборд: 9/13 PASS + 2 docs sync + 2 PARTIAL
+✅ №1 ruff 0 • №2 strict 0/2356 • №3 bandit 0/0 • №4 vulture 0
+✅ №5 layers 14 • №6 coverage 72.04% • №8-ядро B-04 live
+✅ №9 rerun (601 RPS/p99 280; push 650 → prod-стенд)
+✅ №12 STATUS/FTR/ARCHITECTURE/ledger
+🔄 №10 = 34 (R2.DEPS-3: textual→click chain)
+🔄 №11-tail = gRPC business dispatch / SSE / браузер
+
+### Почему хвосты открыты (не кодо-дефекты)
+1. №10: textual→click<8.5 пины — R2.DEPS-3 chain migration
+2. №9: prod-стенд — не dev-box
+3. №11: gRPC dispatch — требует полного реестра экшенов
+4. SSE/браузер — специфичные клиенты
+
+Каждая позиция имеет: владельца (полоса), путь закрытия, команду верификации.
+Все задокументированы в FINAL_REPORT ФИНАЛЬНЫЙ ВЕРДИКТ.
