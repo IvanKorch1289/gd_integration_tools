@@ -238,7 +238,7 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
             raise FileNotFoundError(f"Model {name} not found in local registry")
         manifest["stage"] = new_stage
         loop = asyncio.get_running_loop()
-        content = json.dumps(manifest, indent=2).decode("utf-8")
+        content = stdlib_json.dumps(manifest, indent=2)
         manifest_path = self._manifest_path(model_dir)
 
         def _write_text(p: Path, c: str) -> None:

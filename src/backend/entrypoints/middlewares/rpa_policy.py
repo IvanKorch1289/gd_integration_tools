@@ -143,7 +143,7 @@ class RpaPolicyMiddleware:
     @staticmethod
     async def _send_403(send: Send, *, body: dict) -> None:
         """Отправляет 403 JSON response через send."""
-        body_bytes = json.dumps(body).encode("utf-8")
+        body_bytes = json.dumps(body)
         await send(
             {
                 "type": "http.response.start",

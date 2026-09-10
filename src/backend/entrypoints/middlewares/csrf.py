@@ -273,7 +273,7 @@ class CSRFMiddleware:
         """
         body = build_error_envelope(code=error, detail=detail, scope=scope)
         body["error"] = body["code"]  # backward-compat alias для legacy clients
-        body_bytes = json.dumps(body).encode("utf-8")
+        body_bytes = json.dumps(body)
         await send(
             {
                 "type": "http.response.start",

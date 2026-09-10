@@ -84,7 +84,7 @@ class IPRestrictionMiddleware:
         """Отправляет 403 JSON response через send (cycle 39/40 lesson)."""
         body_bytes = json.dumps(
             {"detail": "Доступ запрещен для вашего IP-адреса"}
-        ).encode("utf-8")
+        )
         await send(
             {
                 "type": "http.response.start",

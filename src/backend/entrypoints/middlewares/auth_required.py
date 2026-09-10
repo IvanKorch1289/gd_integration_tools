@@ -202,7 +202,7 @@ class AuthRequiredMiddleware:
     @staticmethod
     async def _send_401(send: Send) -> None:
         """Отправляет 401 JSON response через send (cycle 39 lesson)."""
-        body = json.dumps({"detail": "Authentication required"}).encode("utf-8")
+        body = json.dumps({"detail": "Authentication required"})
         await send(
             {
                 "type": "http.response.start",
