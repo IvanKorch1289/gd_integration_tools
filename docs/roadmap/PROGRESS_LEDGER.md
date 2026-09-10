@@ -2698,3 +2698,16 @@ smoke green). Остаток 34 заблокирован родительски�
 
 Цель ≤30 недостижима без constraint widening + parent package updates.
 R2.DEPS-2 — отдельная серия (spint-бюджет), координация с полосой R2.MYPY.
+
+
+## R2.DEPS-2 статус (2026-09-09/10 финал): 35 outdated — резолвер заблокирован родителями
+
+Blanket `uv lock --upgrade` и точечные `--upgrade-package` не двигают
+транзитивные MAJOR — родительские пакеты имеют верхние пины:
+- textual 1.x → требует rich<15
+- spacy/thinc 8.x → взаимные пины
+- grpcio-tools 1.71 → protobuf<6
+- deepeval/qdrant-client → portalocker<4
+
+Для ≤30 нужно обновить родительские пакеты первыми (цепная миграция).
+R2.DEPS-2 → координация с полосой R2.MYPY + отдельная серия.
