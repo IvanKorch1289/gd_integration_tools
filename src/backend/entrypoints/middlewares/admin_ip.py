@@ -14,10 +14,11 @@ Cycle 41: использует no-raise pattern (cycle 39 lesson) — 403
 
 from __future__ import annotations
 
-import json
 import re
 from re import compile
 
+# PERF-6.6 P12: orjson для IP restriction error bodies.
+import orjson as json
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from src.backend.core.config.settings import settings
