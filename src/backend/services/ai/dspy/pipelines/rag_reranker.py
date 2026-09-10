@@ -19,10 +19,12 @@ Block 3.1 (gap-ai-3.1) реализация:
 
 from __future__ import annotations
 
-import json
 import math
 from dataclasses import dataclass
 from typing import Any
+
+# PERF-6.6 P10h: orjson для DSPy pipeline serialization.
+import orjson as json
 
 from src.backend.core.logging import get_logger
 
@@ -122,7 +124,7 @@ class _RagRerankerPipeline:
         query = str(example.get("query") or "")
         candidates = example.get("candidates") or []
         if not query or not candidates:
-            return json.dumps([d.get("id") for d in candidates], ensure_ascii=False)
+            return json.dumps([d.get("id") for d in candidates])
 
         reranker = _resolve_bge_reranker()
         if reranker is not None:
