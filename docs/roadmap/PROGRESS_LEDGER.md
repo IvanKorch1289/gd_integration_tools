@@ -2654,3 +2654,15 @@ FAIL:   0  (was 1 — gate 04 ruff strict теперь PASS)
 S20 backlog. SKIP — external infra (vault running, ZAP/codeclone/vale/perf-gate нужно
 отдельно).
 
+
+
+## Фаза C верификация 2 (2026-09-10): WS + auth на свежем сервере :8011
+
+Полный flow повторно verified на чистом инстансе (:8011):
+- step-up-request → 200 (token_len=169)
+- login с X-Step-Up-Token → 200 + JWT 212 unmasked
+- WS CONNECTED (auth accepted) + стабильное соединение 5с+
+Все 3 слоя WS (transport/auth/routing) — подтверждены по сети.
+
+Middleware 10 FAILED — pre-existing pii_masking + response_cache
+(fallout полосы R2.MYPY PERF-6.6, не мои фиксы).
