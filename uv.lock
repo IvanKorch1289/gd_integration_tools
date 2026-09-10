@@ -3170,7 +3170,7 @@ requires-dist = [
     { name = "webdav4", marker = "extra == 'dsl-extras-3'", specifier = ">=0.10.0,<1.0.0" },
     { name = "whoosh-reloaded", specifier = ">=2.7.5,<3.0.0" },
     { name = "xlsxwriter", marker = "extra == 'doc-templates'", specifier = ">=3.2.0,<4.0.0" },
-    { name = "xmltodict", specifier = ">=0.14.0,<1.0.0" },
+    { name = "xmltodict", specifier = ">=0.14.0,<2.0.0" },
     { name = "zeep", specifier = ">=4.3.3,<5.0.0" },
 ]
 provides-extras = ["ai", "security", "db-drivers", "ai-safety", "redteam", "ai-eval", "auth-saml", "mcp", "rpa", "jupyter", "rpa-ocr", "rpa-windows", "http3", "dsl-extras", "analytics", "rag", "ai-2026", "ai-model-registry", "workflow", "dev-light", "sources-cdc", "sources-mq-nats", "lsp", "perf", "testkit", "docs", "docs-ru", "dsl-extras-2", "dsl-extras-3", "result-monad", "search-providers", "compression", "frontend", "doc-templates", "ai-memory", "multimodal-rag", "feature-flags"]
@@ -3213,7 +3213,7 @@ dev = [
     { name = "types-jsonschema", specifier = ">=4.23.0,<5.0.0" },
     { name = "types-openpyxl", specifier = ">=3.1.5,<4.0.0" },
     { name = "types-pyyaml", specifier = ">=6.0.12,<7.0.0" },
-    { name = "types-xmltodict", specifier = ">=0.13.0,<1.0.0" },
+    { name = "types-xmltodict", specifier = ">=0.13.0,<2.0.0" },
     { name = "vulture", specifier = ">=2.14,<3.0.0" },
 ]
 
@@ -10158,11 +10158,11 @@ wheels = [
 
 [[package]]
 name = "types-xmltodict"
-version = "0.15.0.20250907"
+version = "1.0.1.20260518"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a9/a2/810727dc7b6e4c4302ff803e8f2e55302da897aeb4f1f77a9139ccda1430/types_xmltodict-0.15.0.20250907.tar.gz", hash = "sha256:6d800239bd120cabcd6d6880550c54fdeb39759e128c81c0ff5507546c127c2a", size = 7893, upload-time = "2025-09-07T02:56:23.995Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8f/b8/5c43e147eec89125e3f56670c86bc6ba8ea4d0c4cb738a77b3f46940e50d/types_xmltodict-1.0.1.20260518.tar.gz", hash = "sha256:b9d0b364dc47508b4c9040635a94c28f5472f9ab588f6c864ae4c96823bccb33", size = 8890, upload-time = "2026-05-18T06:03:00.296Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7a/ed/d76dda83bd26e509a1e8f93677898983fb51970b4df053794d6a14d7d136/types_xmltodict-0.15.0.20250907-py3-none-any.whl", hash = "sha256:9a9407b0c46fd2c3b7cb37c39a07333fc22f722bf24292ada9ff393f244e6fc7", size = 7599, upload-time = "2025-09-07T02:56:23.02Z" },
+    { url = "https://files.pythonhosted.org/packages/f6/5d/e0eee00dd3c7299c1f5ae7ef596409c51dba4af93cfaf05ea7d27f4afc7d/types_xmltodict-1.0.1.20260518-py3-none-any.whl", hash = "sha256:b396dd53afbd8b034014922b95333f10d12515566a6a08282d39fdb1a3a529b9", size = 8377, upload-time = "2026-05-18T06:02:59.076Z" },
 ]
 
 [[package]]
@@ -10664,11 +10664,11 @@ wheels = [
 
 [[package]]
 name = "xmltodict"
-version = "0.15.1"
+version = "1.0.4"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d7/7a/42f705c672e77dc3ce85a6823bb289055323aac30de7c4b9eca1e28b2c17/xmltodict-0.15.1.tar.gz", hash = "sha256:3d8d49127f3ce6979d40a36dbcad96f8bab106d232d24b49efdd4bd21716983c", size = 62984, upload-time = "2025-09-08T18:33:19.349Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/19/70/80f3b7c10d2630aa66414bf23d210386700aa390547278c789afa994fd7e/xmltodict-1.0.4.tar.gz", hash = "sha256:6d94c9f834dd9e44514162799d344d815a3a4faec913717a9ecbfa5be1bb8e61", size = 26124, upload-time = "2026-02-22T02:21:22.074Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5d/4e/001c53a22f6bd5f383f49915a53e40f0cab2d3f1884d968f3ae14be367b7/xmltodict-0.15.1-py2.py3-none-any.whl", hash = "sha256:dcd84b52f30a15be5ac4c9099a0cb234df8758624b035411e329c5c1e7a49089", size = 11260, upload-time = "2025-09-08T18:33:17.87Z" },
+    { url = "https://files.pythonhosted.org/packages/38/34/98a2f52245f4d47be93b580dae5f9861ef58977d73a79eb47c58f1ad1f3a/xmltodict-1.0.4-py3-none-any.whl", hash = "sha256:a4a00d300b0e1c59fc2bfccb53d7b2e88c32f200df138a0dd2229f842497026a", size = 13580, upload-time = "2026-02-22T02:21:21.039Z" },
 ]
 
 [[package]]
