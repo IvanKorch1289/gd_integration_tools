@@ -374,3 +374,14 @@ In-process полный цикл (server + client, единый event loop):
 (загрузка extensions → реестр экшенов) — production deploy через
 `create_app()` обеспечивает это автоматически. Standalone grpc-serve —
 dev/test утилита.
+
+
+### 2026-09-10 (доп. 2): gRPC auto-servicer — ФИНАЛЬНЫЙ СТАТУС
+
+**Инфраструктура полностью верифицирована**: transport ✓ / auth ✓ / routing ✓.
+Behavior вызван, dispatch_action работает — но экшен orderkinds.list
+не зарегистрирован в standalone grpc-serve (extensions не загружены).
+
+**Решение**: gRPC auto-RPC business dispatch — production-only контекст
+(полное приложение загружает extensions → полный реестр экшенов).
+Для dev-тестирования gRPC использовать create_app() + uvicorn.
