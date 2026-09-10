@@ -2676,3 +2676,11 @@ Full cycle: 1→13 прямая верификация (не унаследов�
 
 Следующий цикл: №10 MAJOR-миграции (R2.DEPS-2), №11 gRPC/SSE/браузер,
 №9 прод-стенд. Все хвосты задокументированы в FINAL_REPORT.
+
+
+## Финальный smoke (2026-09-10): 1522 passed, 1 environmental failed
+
+`test_langgraph_postgres_saver::test_acquire_raises_without_dsn` —
+тест ожидает отсутствие postgres настроек в окружении, но dev_light
+профиль их имеет (SQLite + postgres конфигурация). Environmental
+(профиль-зависимый), не регресс от наших изменений.
