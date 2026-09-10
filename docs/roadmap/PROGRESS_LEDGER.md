@@ -2735,3 +2735,20 @@ R2.DEPS-3 — координация с полосой R2.MYPY + отдельн�
 Для bodyless методов (GET/HEAD/OPTIONS/TRACE) state не определялся →
 UnboundLocalError на строках 120/141/144 (auth/request_id/correlation_id).
 Fix: `state` определён до ветвления. Middleware suite: 522 passed / 0 failed.
+
+
+## R2.DEPS-2 + strict re-verify (2026-09-10, финал): pre-prod **23/36 PASSED, FAILED 0**
+
+- **Strict mypy re-verified: 0 / 2356 файлов** (`b3328c985` — numpy 2.5.3 lock,
+  `532a5dd1d` — brotli None-guard для union-attr).
+- **hishel 0.1→1.3 REVERTED** (`36787af9a`) — AsyncCacheTransport удалён в 1.3,
+  httpx_cache_adapter несовместим; задокументировано для R2.DEPS-3.
+- **Middleware suite**: 522 passed / 0 failed (audit_log UnboundLocalError fix +
+  cache_clear fixtures для pii_masking lru_cache — все 17 тест-файлов зелёные).
+- **CB order-pollution** — resolved (тесты в изоляции и в full suite — green).
+- **gRPC auto-servicer**: dispatcher fix + wired in serve() (`890e21084`);
+  business dispatch NotImplementedError — граница standalone-контекста.
+- **WS**: full flow live на :8010 (`f646abad4`).
+
+**Скорборд**: ✅ 9 из 13 закрыты • 🔄 4 PARTIAL с путями: №10 (44→30, R2.DEPS-2),
+№9 (push-SLO → prod-стенд), №11-хвост (gRPC dispatch/SSE/браузер), №7 (formal 23<33, S20-scaffolds).
