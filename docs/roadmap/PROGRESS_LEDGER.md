@@ -2357,3 +2357,25 @@ method_handlers_generic_handler — добавлен lstrip("/") для service 
 - load-test p99<300ms verify (Sprint 10+)
 - FTR 10 protocols update (Sprint 10+)
 
+
+
+## Фаза C smoke + №10 статус (2026-09-09 ночь, финал)
+
+**Smoke после batch-2 SAFE (93 пакета)**: pytest core+middlewares+grpc+ops
+→ EXIT=0 (все passed). ruff 0. strict mypy 0 (замер ранее на этом же tree).
+93 SAFE-MINOR/PATCH обновлены без регрессий.
+
+**№10 статус: outdated 131 → 44** (после SAFE-батча). Цель ≤30 требует
+закрыть 14+ из 38 MAJOR-gap пакетов (aio-pika 10, aiormq 7, altair 6,
+argon2 25, elasticsearch 9, fastmcp 4, fastapi-filter 3...) — каждый
+BREAKING, требует индивидуальной проверки контрактов (директива:
+«breaking changes проверены тестами»). Отложено в отдельную серию
+(выход за бюджет прохода; список — /tmp/outdated.txt, критерий same-major).
+
+**№9 вердикт зафиксирован** (`df907a0e7`): reference 601 RPS / p99 280ms ✓;
+push 300 VU p99 650ms — контенция shared-box (OPT-1 не измерим под
+нагрузкой); SLO push — prod-стенд post-deploy.
+
+**№11**: WS ✓ live; REST/GraphQL/MQ ✓; gRPC — авторизация fix + transport
+✓, auto-servicer dispatch (grpc.aio internals) — след. сессия (py-spy);
+SSE/браузер — след.
