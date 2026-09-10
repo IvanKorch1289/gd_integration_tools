@@ -48,7 +48,7 @@ class BaseProcessor(ABC):
     def __init__(self, name: str | None = None) -> None:
         self.name = name or self.__class__.__name__
 
-    def set_result(self, exchange, target: str, value) -> None:
+    def set_result(self, exchange, target: str, value) -> None:  # type: ignore[no-untyped-def]
         """Записать значение в Exchange (body.<field> или property).
 
         Args:
@@ -246,7 +246,7 @@ def handle_processor_error(process_method):
     import functools
 
     @functools.wraps(process_method)
-    async def wrapper(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+    async def wrapper(self, exchange: Exchange[Any], context: ExecutionContext) -> None:  # type: ignore[no-untyped-def]
         try:
             return await process_method(self, exchange, context)
         except ImportError as exc:

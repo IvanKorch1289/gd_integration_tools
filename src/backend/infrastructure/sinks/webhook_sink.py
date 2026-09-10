@@ -53,7 +53,7 @@ class WebhookSink(Sink):
     @with_breaker("webhook_sink")
     @with_retry(max_attempts=3, retry_on=(ConnectionError, TimeoutError, OSError))
     @require_capability("webhook.write", action="write")
-    async def send(self, payload: Any) -> SinkResult:
+    async def send(self, payload: Any) -> SinkResult:  # type: ignore[override]
         """Подписывает и отправляет ``payload`` на ``url``.
 
         S21 W5: при включённом ``webhook_resilience_policy_enabled`` и

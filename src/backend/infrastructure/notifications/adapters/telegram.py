@@ -104,7 +104,7 @@ class TelegramAdapter:
         msg = TelegramMessage(
             chat_id=recipient,
             text=text,
-            parse_mode=parse_mode,
+            parse_mode=parse_mode,  # type: ignore[arg-type]
             inline_keyboard=inline,
             reply_keyboard=reply,
             disable_notification=bool(metadata.get("silent", False)),

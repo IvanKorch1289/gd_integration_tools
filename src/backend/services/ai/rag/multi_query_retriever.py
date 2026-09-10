@@ -198,7 +198,7 @@ class MultiQueryRetriever:
         else:
             for emb, label in zip(all_embeddings, source_labels):
                 try:
-                    search_results = await self._search_vectors([emb], top_k * 2)
+                    search_results = await self._search_vectors([emb], top_k * 2)  # type: ignore[assignment]
                     chunk_ids = [self._chunk_id(doc) for doc in search_results]  # type: ignore[arg-type]  # R2.MYPY: search_vectors returns Any; _chunk_id expects dict
                     for doc in search_results:
                         cid = self._chunk_id(doc)  # type: ignore[arg-type]

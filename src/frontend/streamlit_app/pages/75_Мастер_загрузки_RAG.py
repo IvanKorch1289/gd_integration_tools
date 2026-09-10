@@ -54,7 +54,7 @@ elif step == 3:
         _providers = client.list_embedding_providers()
     except Exception as exc:
         st.error(f"Ошибка API: {exc}")
-        _providers = None
+        _providers = None  # type: ignore[assignment]
     providers = _providers or ["sentence-transformers", "bge-m3", "openai"]
     st.session_state["ingest_provider"] = st.selectbox("Провайдер", providers)
     st.session_state["ingest_collection"] = st.text_input("Коллекция", value="default")

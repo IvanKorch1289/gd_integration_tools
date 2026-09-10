@@ -51,7 +51,8 @@ st.title("🔎 Поиск")
 st.caption("Единый поиск по audit-логам, заказам и notebooks (Elasticsearch).")
 
 q = st.text_input(
-    "Запрос", value=st.session_state.get("search_q", "", key="search_text_1")
+    "Запрос",
+    value=st.session_state.get("search_q", "", key="search_text_1"),  # type: ignore[call-overload]
 )
 st.session_state["search_q"] = q
 

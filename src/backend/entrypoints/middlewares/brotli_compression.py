@@ -116,7 +116,7 @@ class BrotliCompressionMiddleware:
                 if len(full_body) >= self.minimum_size and self._is_json(
                     captured_headers[0]
                 ):
-                    compressed = self._brotli.compress(full_body, quality=self.quality)
+                    compressed = self._brotli.compress(full_body, quality=self.quality)  # type: ignore[union-attr]
                     headers = [
                         (n, v)
                         for n, v in captured_headers[0]

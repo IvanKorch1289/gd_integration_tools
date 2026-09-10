@@ -155,7 +155,7 @@ class DirectoryScanProcessor(BaseProcessor):
         path = self._path
         if not path:
             body = exchange.in_message.body
-            path = body.get("path") if isinstance(body, dict) else str(body)
+            path = body.get("path") if isinstance(body, dict) else str(body)  # type: ignore[assignment]
         if not path:
             exchange.fail("DirectoryScanProcessor: no path provided")
             return
@@ -198,7 +198,7 @@ class DirectoryScanProcessor(BaseProcessor):
             captured[target] = value
             original_set_result(_exchange, target, value)
 
-        inner.set_result = _capture_set_result  # type: ignore[method-assign]
+        inner.set_result = _capture_set_result  # type: ignore[assignment,method-assign]
         try:
             # Используем self-collected exchange через перехват.
             await inner.process(exchange, context)

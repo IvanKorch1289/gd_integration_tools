@@ -69,7 +69,7 @@ class Invoker(InvokeModesMixin, DeferredMixin, TemporalMixin, RunMixin):
         делается fallback на однопозиционный вызов.
         """
         try:
-            return await self._dispatcher.dispatch(command, context=context)
+            return await self._dispatcher.dispatch(command, context=context)  # type: ignore[call-arg]
         except TypeError:
             # Legacy ActionDispatcher Protocol (без context-параметра) —
             # вызываем без context, теряем middleware-цепочку только в

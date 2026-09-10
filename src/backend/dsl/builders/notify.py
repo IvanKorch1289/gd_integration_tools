@@ -130,7 +130,10 @@ class NotifyMixin:
 
             svc = get_notification_service()
             results = await svc.notify_multi(
-                channels=channels, title=title, body=body, body_format=body_format  # type: ignore[arg-type]  # R2.MYPY: body_format: str → Literal['text','html','markdown']
+                channels=channels,
+                title=title,
+                body=body,
+                body_format=body_format,  # type: ignore[arg-type]  # R2.MYPY: body_format: str → Literal['text','html','markdown']
             )
             exch.set_property(result_property, results)
 

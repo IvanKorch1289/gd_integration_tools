@@ -65,7 +65,7 @@ class SessionMixin(_HttpClientProtocol):
             self.logger.debug(
                 "HTTP-сессия закрыта", extra={"session_id": id(self.client)}
             )
-        self.client = None
+        self.client = None  # type: ignore[assignment]
 
     async def _connection_purger(self) -> None:
         while True:

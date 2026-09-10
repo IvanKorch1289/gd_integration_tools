@@ -54,7 +54,7 @@ class PdfReadProcessor(BaseProcessor):
 
         body = exchange.in_message.body
         try:
-            text = await asyncio.to_thread(read_pdf, body)
+            text = await asyncio.to_thread(read_pdf, body)  # type: ignore[arg-type]
         except Exception as exc:
             exchange.fail(f"pdf_read failed: {exc}")
             return
@@ -283,7 +283,7 @@ class ExcelReadProcessor(BaseProcessor):
             else:
                 raise ValueError("excel_read expects bytes or file path")
             ws = wb[self._sheet] if self._sheet else wb.active
-            rows = list(ws.iter_rows(values_only=True))
+            rows = list(ws.iter_rows(values_only=True))  # type: ignore[union-attr]
             wb.close()
             if not rows:
                 return []

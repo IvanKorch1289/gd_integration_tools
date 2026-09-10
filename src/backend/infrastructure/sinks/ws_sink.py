@@ -51,7 +51,8 @@ class WsSink(Sink):
     @with_retry(max_attempts=3, retry_on=(ConnectionError, TimeoutError, OSError))
     @require_capability("ws.send", action="write")
     async def send(  # type: ignore[override]  # R2.MYPY: Sink.send signature mismatch,
-        self, payload: Any) -> SinkResult:
+        self, payload: Any
+    ) -> SinkResult:
         """Сериализует payload (JSON) и публикует через короткое WS-соединение."""
         try:
             import websockets

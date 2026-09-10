@@ -199,7 +199,7 @@ def _build_service_dsl(name: str, crud: bool) -> dict[str, Any]:
     service = {"service": name, "version": "1.0.0", "description": f"Service: {name}"}
 
     if crud:
-        service["endpoints"] = [
+        service["endpoints"] = [  # type: ignore[assignment]
             {"method": "GET", "path": f"/{name}", "action": "list"},
             {"method": "POST", "path": f"/{name}", "action": "create"},
             {"method": "GET", "path": f"/{name}/{{id}}", "action": "get"},
@@ -207,7 +207,7 @@ def _build_service_dsl(name: str, crud: bool) -> dict[str, Any]:
             {"method": "DELETE", "path": f"/{name}/{{id}}", "action": "delete"},
         ]
     else:
-        service["endpoints"] = [
+        service["endpoints"] = [  # type: ignore[assignment]
             {"method": "GET", "path": f"/{name}", "action": "invoke"}
         ]
 

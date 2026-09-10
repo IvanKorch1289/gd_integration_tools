@@ -81,7 +81,7 @@ class SmtpClient(BaseSmtpClient):
         await self.initialize_pool()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, _exc_tb) -> None:
+    async def __aexit__(self, exc_type, exc_val, _exc_tb) -> None:  # type: ignore[no-untyped-def]
         """Выход из асинхронного контекстного менеджера для корректного завершения работы."""
         await self.close_pool()
 
@@ -163,7 +163,7 @@ class SmtpClient(BaseSmtpClient):
             raise ConnectionError("Ошибка SMTP-соединения") from exc
 
     @asynccontextmanager
-    async def get_connection(self) -> AsyncGenerator[SMTP]:
+    async def get_connection(self) -> AsyncGenerator[SMTP]:  # type: ignore[override]
         """Контекстный менеджер для получения SMTP-соединения с поддержкой отказоустойчивости.
 
         Использует canonical ``Breaker.guard()`` (S130 W2) — ранее

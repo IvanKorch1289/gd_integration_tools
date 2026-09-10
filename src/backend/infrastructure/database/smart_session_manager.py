@@ -164,7 +164,7 @@ class SmartSessionManager:
         return self._lag_exceeded
 
     @asynccontextmanager
-    async def acquire(self, mode: SessionMode = "read"):
+    async def acquire(self, mode: SessionMode = "read"):  # type: ignore[no-untyped-def]
         """Возвращает :class:`AsyncSession` согласно ``mode``.
 
         Args:

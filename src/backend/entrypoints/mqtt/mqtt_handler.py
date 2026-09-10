@@ -209,7 +209,9 @@ class MqttHandler:
             from src.backend.schemas.invocation import ActionCommandSchema
 
             command = ActionCommandSchema(
-                action=action, payload=data, meta={"source": "mqtt", "topic": topic}  # type: ignore[arg-type]  # R2.MYPY: meta dict vs ActionCommandMetaSchema
+                action=action,
+                payload=data,
+                meta={"source": "mqtt", "topic": topic},  # type: ignore[arg-type]  # R2.MYPY: meta dict vs ActionCommandMetaSchema
             )
             await action_handler_registry.dispatch(command)
         except KeyError:

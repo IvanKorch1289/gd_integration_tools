@@ -93,7 +93,7 @@ class AuditLogMiddleware:
         # Capture response status для audit.
         response_status: dict[str, int] = {"status": 0}
 
-        async def send_wrapper(message) -> None:
+        async def send_wrapper(message) -> None:  # type: ignore[no-untyped-def]
             if message["type"] == "http.response.start":
                 response_status["status"] = message.get("status", 0)
             await send(message)
@@ -177,7 +177,7 @@ class AuditLogMiddleware:
                     except RuntimeError:
                         loop = None
                     if loop is not None and loop.is_running():
-                        get_task_registry().create_task(writer.write(audit_event))
+                        get_task_registry().create_task(writer.write(audit_event))  # type: ignore[call-arg]
 
         except Exception as exc:
             _clickhouse_logger.debug("ClickHouse audit write skipped: %s", exc)

@@ -204,7 +204,7 @@ class DSLYamlWatcher:
             ):
                 if not any(_is_yaml_path(path) for _, path in changes):
                     continue
-                await asyncio.to_thread(self._sync_reload_incremental, changes)
+                await asyncio.to_thread(self._sync_reload_incremental, changes)  # type: ignore[arg-type]
         except asyncio.CancelledError:
             raise
         except Exception as exc:

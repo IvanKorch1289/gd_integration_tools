@@ -58,7 +58,8 @@ class SoapSink(Sink):
     @with_retry(max_attempts=3, retry_on=(ConnectionError, TimeoutError, OSError))
     @require_capability("soap.invoke", action="write")
     async def send(  # type: ignore[override]  # R2.MYPY: Sink.send signature mismatch,
-        self, payload: Any) -> SinkResult:
+        self, payload: Any
+    ) -> SinkResult:
         """Вызывает SOAP-операцию через ``asyncio.to_thread`` (zeep — sync)."""
         try:
             client = await asyncio.to_thread(self._get_client)

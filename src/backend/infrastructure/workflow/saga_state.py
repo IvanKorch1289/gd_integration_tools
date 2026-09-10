@@ -145,7 +145,7 @@ class WorkflowState(BaseModel, TenantMixin):
     )
 
     # Переопределяем int-id BaseModel на UUID для consistent saga key
-    id: Mapped[uuid.UUID] = mapped_column(
+    id: Mapped[uuid.UUID] = mapped_column(  # type: ignore[assignment]
         uuid_t(), primary_key=True, default=uuid.uuid4
     )
 

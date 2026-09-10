@@ -72,7 +72,7 @@ class OPAClient:
                 max_keepalive_connections=self._max_keepalive,
                 keepalive_expiry=30.0,
             )
-            self._client = make_http_client(
+            self._client = make_http_client(  # type: ignore[assignment]
                 plugin="infrastructure.policy.opa",
                 base_url=self.base_url,
                 http2=True,

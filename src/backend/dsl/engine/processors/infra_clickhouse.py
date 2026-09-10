@@ -44,6 +44,6 @@ class InfraClickHouseQueryProcessor(BaseProcessor):
             get_clickhouse_client_class,
         )
 
-        client = get_clickhouse_client_class()(context)
+        client = get_clickhouse_client_class()(context)  # type: ignore[arg-type]
         result = await client.query(self.sql)
         self.set_result(exchange, self.target, result)

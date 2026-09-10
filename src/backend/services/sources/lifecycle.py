@@ -105,7 +105,7 @@ async def start_all_sources(
             reply_channel=spec.reply_channel,
         )
         try:
-            await source.start(adapter.handle)
+            await source.start(adapter.handle)  # type: ignore[arg-type]
         except Exception as exc:
             logger.error("Source %s: start failed: %s", spec.id, exc)
 

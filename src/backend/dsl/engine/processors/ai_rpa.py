@@ -156,7 +156,7 @@ class AIRpaProcessor(BaseProcessor):
                 f"ai_rpa: LLM call failed after {self._max_retries} attempts: {exc}"
             )
 
-    def _get_llm_client(self, context: ExecutionContext):
+    def _get_llm_client(self, context: ExecutionContext):  # type: ignore[no-untyped-def]
         """Извлекает LLM client из контекста выполнения."""
         client = getattr(context, "llm_client", None)
         if client is not None:

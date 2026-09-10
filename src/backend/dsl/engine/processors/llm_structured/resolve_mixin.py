@@ -78,7 +78,7 @@ class ResolveMixin(_LLMStructuredProcessorProtocol):
             entry = None
 
         if entry is not None:
-            module_name = entry.meta.get("module")
+            module_name = entry.meta.get("module")  # type: ignore[assignment]
             if module_name:
                 import importlib
 

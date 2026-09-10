@@ -17,7 +17,7 @@ class CacheMixin(_BaseServiceProtocol):
 
     __slots__ = ()
 
-    async def _invalidate_entity_cache(self, *, entity_id: Any = None) -> None:
+    async def _invalidate_entity_cache(self, *, entity_id: Any = None) -> None:  # type: ignore[override]
         """Инвалидирует кэш сущности после write-операции.
 
         Вызывает ``response_cache.invalidate_pattern`` (legacy) и

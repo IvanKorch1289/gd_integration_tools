@@ -218,7 +218,7 @@ class PluginResourceMonitor:
                         counts[plugin] += 1
                         total += 1
                         break
-                f = f.f_back
+                f = f.f_back  # type: ignore[assignment]
 
         if total == 0:
             return dict.fromkeys(self._plugins, 0.0)

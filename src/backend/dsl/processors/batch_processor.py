@@ -136,7 +136,7 @@ class BatchProcessor(BaseProcessor):
         await session.run_sync(_do)
 
     async def _do_delete(self, session: Any, batch: list[dict]) -> None:
-        pk_col = sa_inspect(self._model).primary_key[0]
+        pk_col = sa_inspect(self._model).primary_key[0]  # type: ignore[var-annotated]
         ids = [r[pk_col.name] for r in batch if r.get(pk_col.name) is not None]
         if ids:
             await session.execute(delete(self._model).where(pk_col.in_(ids)))

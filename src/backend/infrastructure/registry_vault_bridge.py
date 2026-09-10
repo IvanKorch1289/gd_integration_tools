@@ -64,7 +64,7 @@ def wire_vault_rotations(
     return wired
 
 
-def _build_reload_callback(*, registry: ConnectorRegistry, client_name: str):
+def _build_reload_callback(*, registry: ConnectorRegistry, client_name: str):  # type: ignore[no-untyped-def]
     """Сформировать async-callback для конкретного клиента.
 
     Callback делает `registry.reload(name)` и логирует с явной привязкой

@@ -60,7 +60,7 @@ class ApplyMixin(_DataQualityProtocol):
             "list": list,
         }
         expected_type = type_map.get(expected, str)
-        if value is not None and not isinstance(value, expected_type):
+        if value is not None and not isinstance(value, expected_type):  # type: ignore[arg-type]
             return DQViolation(
                 rule.name,
                 rule.field,

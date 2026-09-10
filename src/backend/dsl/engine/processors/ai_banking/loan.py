@@ -135,7 +135,7 @@ class LoanEligibilityProcessor(_BankingAIProcessor):
         return await self._check_capability_via_facade(exchange)
 
 
-def to_spec(self) -> dict[str, Any] | None:
+def to_spec(self) -> dict[str, Any] | None:  # type: ignore[no-untyped-def]
     """Метод to_spec (см. signature)."""
     spec: dict[str, Any] = {}
     if self.model:

@@ -217,7 +217,8 @@ class WhooshIndex:
             self._ix = self._open_or_create()
         with self._ix.searcher() as searcher:  # type: ignore[union-attr]
             parser = qparser.MultifieldParser(
-                ["title", "content"], schema=self._ix.schema  # type: ignore[union-attr]
+                ["title", "content"],
+                schema=self._ix.schema,  # type: ignore[union-attr]
             )
             full_query = f"({query}) AND category:{category}" if category else query
             parsed = parser.parse(full_query)

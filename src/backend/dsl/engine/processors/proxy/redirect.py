@@ -152,7 +152,8 @@ class RedirectProcessor(BaseProcessor):
                 url = exchange.in_message.headers.get(self._source_key)  # type: ignore[arg-type]  # R2.MYPY: dict.get(str|None) → str|None; expected str
             case "body_field":
                 url = self._extract_body_field(
-                    exchange.in_message.body, self._source_key  # type: ignore[arg-type]
+                    exchange.in_message.body,
+                    self._source_key,  # type: ignore[arg-type]
                 )
             case "exchange_var":
                 url = self._extract_exchange_var(exchange, self._source_key)  # type: ignore[arg-type]

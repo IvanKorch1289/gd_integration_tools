@@ -201,9 +201,7 @@ class FileWatchProcessor(BaseProcessor):
                         pattern_item_str = str(pattern_item)
                         raw_paths.extend(
                             await asyncio.to_thread(
-                                _walk_matching_files,
-                                directory,
-                                pattern_item_str,
+                                _walk_matching_files, directory, pattern_item_str
                             )
                         )
                 else:
@@ -214,9 +212,7 @@ class FileWatchProcessor(BaseProcessor):
                         pattern_item_str = str(pattern_item)
                         raw_paths.extend(
                             await asyncio.to_thread(
-                                _list_matching_files,
-                                directory,
-                                pattern_item_str,
+                                _list_matching_files, directory, pattern_item_str
                             )
                         )
             except OSError as exc:

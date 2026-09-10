@@ -256,6 +256,6 @@ def _register_sink_source_checks(aggregator: Any) -> None:
         name = f"sink_{kind.value}"
         aggregator.register(name, _make_kind_health(kind.value, "sink"))
 
-    for kind in SourceKind:
+    for kind in SourceKind:  # type: ignore[assignment]
         name = f"source_{kind.value}"
         aggregator.register(name, _make_kind_health(kind.value, "source"))  # type: ignore[arg-type]  # R2.MYPY: SourceKind vs SinkKind

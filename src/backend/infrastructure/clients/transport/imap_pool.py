@@ -181,7 +181,7 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
             # Verify livenessо: если connection упал — replace.
             if not await self._is_alive(conn):
                 with _suppress():
-                    await conn.logout()
+                    await conn.logout()  # type: ignore[union-attr]
                 conn = await self._dial()
             async with self.track("ACQUIRE"):
                 yield conn

@@ -119,7 +119,7 @@ async def run_workflow_by_id(
     try:
         if parent_handle is not None:
             handle = await backend.start_child_workflow(
-                parent_handle=parent_handle,
+                parent_handle=parent_handle,  # type: ignore[arg-type]
                 workflow_name=workflow_id,
                 workflow_id=child_wf_id,
                 input=input_data,

@@ -177,7 +177,7 @@ async def run_shutdown(app: FastAPI, task_registry: Any) -> None:
         from src.backend.core.resilience._pyrate_compat import shutdown_pyrate_leaker
         from src.backend.entrypoints.dependencies.rate_limit import get_default_limiter
 
-        await shutdown_pyrate_leaker(get_default_limiter())
+        await shutdown_pyrate_leaker(get_default_limiter())  # type: ignore[arg-type]
     except Exception as leaker_exc:
         _logger.warning("pyrate Leaker shutdown skipped: %s", leaker_exc)
 

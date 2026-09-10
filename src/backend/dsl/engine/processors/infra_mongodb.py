@@ -57,7 +57,7 @@ class InfraMongoDBFindProcessor(BaseProcessor):
             get_mongodb_client_class,
         )
 
-        client = get_mongodb_client_class()(context)
+        client = get_mongodb_client_class()(context)  # type: ignore[arg-type]
         # duck-typed контракт процессора: unit-тесты патчат провайдер
         # mock-классом с __getitem__ (реальный MongoDBClient — .collection()).
         coll = client[self.collection]  # type: ignore[index]

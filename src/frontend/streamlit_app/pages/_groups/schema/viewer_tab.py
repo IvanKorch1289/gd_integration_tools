@@ -103,7 +103,7 @@ def render_viewer_tab() -> None:
         )
         if xml_text.strip():
             try:
-                from lxml import etree
+                from lxml import etree  # type: ignore[import-untyped]
 
                 parser = etree.XMLParser(resolve_entities=False, no_network=True)
                 root = etree.fromstring(xml_text.encode(), parser=parser)

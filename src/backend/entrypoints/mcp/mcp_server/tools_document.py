@@ -66,7 +66,7 @@ def _register_document_tools(mcp: Any) -> None:
                     "engine": meta.get("engine"),
                     "mime": meta.get("mime"),
                     "size_bytes": meta.get("size_bytes"),
-                    "warnings": list(meta.get("warnings") or []),
+                    "warnings": list(meta.get("warnings") or []),  # type: ignore[call-overload]
                     "filename": meta.get("filename"),
                 }
             ).decode("utf-8")

@@ -70,7 +70,7 @@ __all__ += ["ConnectorRegistry", "get_provider", "register_provider"]
 
 
 # Эти импорты могут вызывать циклические зависимости, поэтому import-поздние.
-def __getattr__(name: str):
+def __getattr__(name: str):  # type: ignore[no-untyped-def]
     if name == "ConnectorRegistry":
         from src.backend.infrastructure.registry import ConnectorRegistry
 

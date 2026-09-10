@@ -48,7 +48,7 @@ builder = ActionRouterBuilder(router)
 # --- HTML redirects (link-getters; нестандартный response_class) -----------
 
 
-def _html_redirect_factory(method_name: str):
+def _html_redirect_factory(method_name: str):  # type: ignore[no-untyped-def]
     """Возвращает endpoint-функцию, отдающую HTML-ссылку из tech-сервиса.
 
     Использование ``add_api_route`` вместо ``@router.get`` соответствует

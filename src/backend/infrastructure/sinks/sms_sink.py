@@ -93,7 +93,8 @@ class SmsSink(Sink):
     )
     @require_capability("sms.send", action="write")
     async def send(  # type: ignore[override]  # R2.MYPY: Sink.send signature mismatch,
-        self, payload: Any) -> SinkResult:
+        self, payload: Any
+    ) -> SinkResult:
         """S203 W5: отправить SMS через httpx POST.
 
         Поддерживает payload dict ``{"to": ..., "body": ..., "from": ...}``

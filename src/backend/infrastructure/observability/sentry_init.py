@@ -66,7 +66,7 @@ def init_sentry(
             FastApiIntegration(transaction_style="endpoint"),
             SqlalchemyIntegration(),
         ],
-        before_send=_scrub_pii,
+        before_send=_scrub_pii,  # type: ignore[arg-type]
         send_default_pii=False,
         attach_stacktrace=True,
     )

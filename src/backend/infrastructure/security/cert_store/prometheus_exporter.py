@@ -91,7 +91,7 @@ class CertPrometheusExporter:
 
         # Получить истекающие через backend
         try:
-            entries = await store._backend.list_expiring(before=before)
+            entries = await store._backend.list_expiring(before=before)  # type: ignore[arg-type]
         except Exception as exc:
             logger.warning("cert.prometheus.list_expiring_error: %s", exc)
             return

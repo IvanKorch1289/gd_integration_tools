@@ -109,7 +109,7 @@ class ServiceDSLRegistry:
 service_dsl_registry = ServiceDSLRegistry()
 
 
-def service_dsl(
+def service_dsl(  # type: ignore[no-untyped-def]
     name: str,
     *,
     schema_in: type[BaseModel] | None = None,
@@ -145,7 +145,7 @@ def service_dsl(
         # вызов повторит попытку (cache не хранит negative-result).
         @functools.cache
         def getter() -> Any:
-            instance = cls.__new__(cls)
+            instance = cls.__new__(cls)  # type: ignore[call-overload]
             with contextlib.suppress(TypeError):
                 original_init(instance)
             return instance
@@ -175,7 +175,7 @@ _ACTION_ATTR = "_action_meta"
 _pending_actions: list[dict[str, Any]] = []
 
 
-def register_action(
+def register_action(  # type: ignore[no-untyped-def]
     action: str,
     *,
     payload_model: type[BaseModel] | None = None,

@@ -104,7 +104,7 @@ class TenantFacade:
         return getattr(ctx, "principal_id", None)
 
     @asynccontextmanager
-    async def with_tenant(self, tenant_id: str, principal_id: str | None = None):
+    async def with_tenant(self, tenant_id: str, principal_id: str | None = None):  # type: ignore[no-untyped-def]
         """Async context manager для scoped tenant (S193 fix).
 
         Использует ``CapabilityTenant`` из ``core.security.capabilities.tenant``

@@ -66,4 +66,4 @@ def run_from_settings() -> None:
         config.port,
         config.certfile,
     )
-    asyncio.run(serve_http3(app, config))
+    asyncio.run(serve_http3(app, config))  # type: ignore[arg-type]

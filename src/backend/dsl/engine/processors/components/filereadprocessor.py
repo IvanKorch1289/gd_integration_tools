@@ -65,7 +65,7 @@ class FileReadProcessor(BaseProcessor):
                     data = await f.read()
             else:
                 async with aiofiles.open(path, encoding=self._encoding) as f:
-                    data = await f.read()
+                    data = await f.read()  # type: ignore[assignment]
 
             exchange.set_out(body=data, headers=dict(exchange.in_message.headers))
             exchange.in_message.set_header("CamelFileName", path)

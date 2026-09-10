@@ -76,7 +76,7 @@ def _register_analytics_tool(mcp: FastMCP, action_name: str) -> None:
         command = ActionCommandSchema(
             action=_action,
             payload=parsed_payload,
-            meta={"source": "mcp", "namespace": "analytics"},
+            meta={"source": "mcp", "namespace": "analytics"},  # type: ignore[arg-type]
         )
 
         try:

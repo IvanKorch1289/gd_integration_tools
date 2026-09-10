@@ -40,6 +40,6 @@ class ProfileMixin(_ExternalDatabaseProtocol):
     __slots__ = ()
 
     @staticmethod
-    def _get_profile_settings(profile_name: str):
+    def _get_profile_settings(profile_name: str):  # type: ignore[no-untyped-def]
         """Возвращает resolved settings профиля внешней БД."""
         return settings.external_databases.get_profile(profile_name)

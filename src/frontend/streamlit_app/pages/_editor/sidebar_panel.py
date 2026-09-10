@@ -17,7 +17,7 @@ from src.frontend.streamlit_app.pages._editor.history import (
 from src.frontend.streamlit_app.pages._editor.yaml_sync import try_load
 
 
-def render_editor_sidebar(client) -> None:
+def render_editor_sidebar(client) -> None:  # type: ignore[no-untyped-def]
     """Render full sidebar panel (history + routes + save)."""
     # Undo/Redo controls
     st.subheader("↩️ История изменений")

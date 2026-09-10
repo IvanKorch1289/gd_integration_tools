@@ -36,7 +36,7 @@ try:
     # get_cdc_client_provider() сам handle'ит ImportError (resolve_module lazy).
     from src.backend.core.di.providers.db import get_cdc_client_provider
 except ImportError:
-    get_cdc_client_provider = None
+    get_cdc_client_provider = None  # type: ignore[assignment]
 
 __all__ = ("CDCCaptureProcessor",)
 

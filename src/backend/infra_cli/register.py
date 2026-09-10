@@ -9,7 +9,7 @@ from src.backend.infrastructure.clients.health_adapter import HealthAdapter
 from src.backend.infrastructure.registry import get_registry
 
 
-def register_connector(name: str, target) -> None:
+def register_connector(name: str, target) -> None:  # type: ignore[no-untyped-def]
     """Регистрирует legacy-объект (source/sink/storage) через HealthAdapter в ConnectorRegistry."""
     adapter = HealthAdapter(name=name, target=target)
     get_registry().register(adapter)

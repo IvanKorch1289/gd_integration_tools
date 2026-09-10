@@ -116,7 +116,7 @@ def _build_mobile_jwt_verifier() -> Any:
         issuer_whitelist=issuer_whitelist,
         audience=audience,
         revocation_store=RedisRevocationStore(),
-        rate_limiter=RedisRateLimiter(max_requests=10, window_seconds=60.0),
+        rate_limiter=RedisRateLimiter(max_requests=10, window_seconds=60.0),  # type: ignore[arg-type]
     )
 
 

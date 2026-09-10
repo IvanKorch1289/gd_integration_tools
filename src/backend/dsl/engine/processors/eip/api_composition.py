@@ -315,7 +315,7 @@ class APICompositionProcessor(BaseProcessor):
                     merged.setdefault("_items", []).append(v)
             final = merged
         elif self._merge_strategy == MergeStrategy.LIST:
-            final = list(results.values())
+            final = list(results.values())  # type: ignore[assignment]
         elif self._merge_strategy == MergeStrategy.CUSTOM:
             assert self._custom_merger is not None  # nosec
             final = self._custom_merger(results)

@@ -117,7 +117,7 @@ class ProcessMixin(_LLMStructuredProcessorProtocol):
         # ── Write result ──
         self._write_result(exchange, result)
 
-    async def _call_with_completion(self, call: Any) -> tuple[Any, Any]:
+    async def _call_with_completion(self, call: Any) -> tuple[Any, Any]:  # type: ignore[override]
         """Вызывает instructor и возвращает ``(parsed_obj, raw_response)``.
 
         ``instructor>=1.7`` поддерживает ``create_with_completion`` для

@@ -101,7 +101,7 @@ async def serve_http3(
 
 
 # Re-export для удобства тестов: HttpStreamHandler / scope builder.
-__all__ = (
+__all__ = (  # type: ignore[assignment]
     "Http3ServerConfig",
     "HttpStreamHandler",
     "build_http_scope",

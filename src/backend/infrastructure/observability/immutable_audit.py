@@ -422,7 +422,7 @@ class _SessionScope:
             f"{type(self._src).__name__}"
         )
 
-    async def __aexit__(self, exc_type, exc, tb) -> None:
+    async def __aexit__(self, exc_type, exc, tb) -> None:  # type: ignore[no-untyped-def]
         if self._gen is None:
             return
         if hasattr(self._gen, "__aexit__"):

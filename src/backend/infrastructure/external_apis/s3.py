@@ -116,7 +116,7 @@ class S3Service:
                 if await self._check_object_exists(key):
                     content = await self.client.get_object_bytes(key)
                     filename = await self.get_original_filename(key) or key
-                    archive.writestr(filename, content)
+                    archive.writestr(filename, content)  # type: ignore[arg-type]
         buffer.seek(0)
         return StreamingResponse(
             iter([buffer.getvalue()]),

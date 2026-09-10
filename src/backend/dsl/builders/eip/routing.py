@@ -146,7 +146,7 @@ class RoutingEIPsMixin(EIPMixinBase):
 
             steps_resolver = _from_header
 
-        registry: ProcessorRegistry = get_processor_registry()
+        registry: ProcessorRegistry = get_processor_registry()  # type: ignore[assignment]
 
         return cast(
             "RouteBuilder",

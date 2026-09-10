@@ -61,7 +61,7 @@ def register_kafka_pool_if_available(
 
     """
     try:
-        from src.backend.infrastructure.messaging.kafka_producer import (  # type: ignore[import-not-found]
+        from src.backend.infrastructure.messaging.kafka_producer import (  # type: ignore[import-not-found,import-untyped]
             KafkaProducer,
         )
 

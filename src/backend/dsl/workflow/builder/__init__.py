@@ -93,7 +93,7 @@ class WorkflowBuilder(
         self._steps: list[WorkflowStep] = []
         self._default_timeout_s: float = 300.0
         self._default_retry_policy: RetryPolicy | None = None
-        self._sla: Any | None = None
+        self._sla: Any | None = None  # type: ignore[assignment]
 
     def description(self, text: str) -> Self:
         """Установить человекочитаемое описание workflow."""

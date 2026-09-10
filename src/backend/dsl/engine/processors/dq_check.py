@@ -59,7 +59,7 @@ class DQCheckProcessor(BaseProcessor):
             monitor.add_rule(rule)
 
         body = exchange.in_message.body
-        result = await monitor.check(body, dataset=self._dataset)
+        result = await monitor.check(body, dataset=self._dataset)  # type: ignore[arg-type]
         exchange.set_property("dq_result", result)
 
         if self._fail_on_violation and not result.get("is_clean", True):

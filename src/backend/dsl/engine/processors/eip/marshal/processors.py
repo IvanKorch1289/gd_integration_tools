@@ -140,7 +140,7 @@ class UnmarshalProcessor(BaseProcessor):
                     existing_ct,
                     self._data_format.content_type,
                 )
-        decoded = self._data_format.unmarshal(body, self._target_type)
+        decoded = self._data_format.unmarshal(body, self._target_type)  # type: ignore[arg-type]
         exchange.in_message.body = decoded
         with self._lock:
             self._count += 1

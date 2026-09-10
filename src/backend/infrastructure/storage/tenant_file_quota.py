@@ -370,7 +370,7 @@ def get_tenant_file_quota_manager() -> TenantFileQuotaManager:
     try:
         from src.backend.core.di.app_state import app_state_singleton
 
-        redis = app_state_singleton("redis_kv_client", factory=None)
+        redis = app_state_singleton("redis_kv_client", factory=None)  # type: ignore[call-overload]
         return TenantFileQuotaManager(redis_client=redis)
     except (ImportError, AttributeError, RuntimeError, KeyError) as di_exc:
         # cycle-9/D-AUDIT-1702: narrow exceptions + observability.
@@ -383,4 +383,4 @@ def get_tenant_file_quota_manager() -> TenantFileQuotaManager:
         return TenantFileQuotaManager(redis_client=None)
 
 
-__all__ += ("get_tenant_file_quota_manager",)
+__all__ += ("get_tenant_file_quota_manager",)  # type: ignore[assignment]

@@ -161,7 +161,7 @@ def _build_default_dlq_handler(state: Any) -> DLQHandler | None:
                 original_payload=getattr(event, "payload", {}),
                 error_class=type(reason).__name__,
                 error_message=str(reason),
-                reason="retries_exhausted",
+                reason="retries_exhausted",  # type: ignore[arg-type]
                 retry_count=getattr(event, "retry_count", 0),
                 metadata={
                     "outbox_id": getattr(event, "id", None),

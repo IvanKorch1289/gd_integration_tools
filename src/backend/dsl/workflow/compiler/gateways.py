@@ -196,7 +196,7 @@ async def compile_or(decl: ActivityDeclaration, ctx: dict[str, Any]) -> Any:
         return None
 
     tasks: list[asyncio.Task[Any]] = [
-        get_task_registry().create_task(_run_branch_steps(branch, ctx))
+        get_task_registry().create_task(_run_branch_steps(branch, ctx))  # type: ignore[call-arg]
         for branch in spec.branches
     ]
 

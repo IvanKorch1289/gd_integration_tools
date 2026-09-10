@@ -139,5 +139,5 @@ class HuggingFaceModelRegistry(ModelRegistryAdapter):
         current = await self.get_model(name, version=version)
         if current is None:
             raise RuntimeError(f"HF Hub: model {name}/{version} не найден")
-        current.stage = new_stage
+        current.stage = new_stage  # type: ignore[assignment]
         return current

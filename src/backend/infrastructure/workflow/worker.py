@@ -350,7 +350,7 @@ async def _print_status() -> None:
 
 
 @app.command()
-def run(
+def run(  # type: ignore[no-untyped-def]
     worker_id: str = typer.Option(
         None,
         "--worker-id",

@@ -50,7 +50,7 @@ async def phase_otel_metrics(app: FastAPI) -> None:  # noqa: ARG001
     try:
         from src.backend.infrastructure.observability.otel import setup_otel_metrics
 
-        setup_otel_metrics(
+        setup_otel_metrics(  # type: ignore[call-arg]
             service_name=os.environ.get("OTEL_SERVICE_NAME", "gd_integration"),
             exporter=os.environ.get("OTEL_METRICS_EXPORTER", "console"),
             endpoint=os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT") or None,
@@ -110,7 +110,7 @@ async def phase_sentry_init(app: FastAPI) -> None:  # noqa: ARG001
     if os.environ.get("SENTRY_ENABLED", "false").lower() != "true":
         return
     try:
-        from src.backend.infrastructure.observability.sentry import (  # type: ignore[import-not-found]
+        from src.backend.infrastructure.observability.sentry import (  # type: ignore[import-not-found,import-untyped]
             init_sentry,
         )
 
@@ -128,7 +128,7 @@ async def phase_sentry_init(app: FastAPI) -> None:  # noqa: ARG001
 async def phase_logsink_router(app: FastAPI) -> None:  # noqa: ARG001
     """LogSink router (Wave 2.5) — multi-sink log routing."""
     try:
-        from src.backend.infrastructure.observability.logsink import (  # type: ignore[import-not-found]
+        from src.backend.infrastructure.observability.logsink import (  # type: ignore[import-not-found,import-untyped]
             init_logsink_router,
         )
 
@@ -148,7 +148,7 @@ async def phase_audit_hmac_verify(app: FastAPI) -> None:  # noqa: ARG001
     """
     try:
         from src.backend.core.config.features import feature_flags
-        from src.backend.services.audit.chain_verifier import (  # type: ignore[import-not-found]  # optional phase
+        from src.backend.services.audit.chain_verifier import (  # type: ignore[import-not-found,import-untyped]  # optional phase
             schedule_periodic_chain_verify,
         )
 

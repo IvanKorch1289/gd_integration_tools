@@ -216,7 +216,7 @@ def register_app_state(app: FastAPI) -> None:
         )
 
     app.state.authorization_gateway = AuthorizationGateway(
-        capability_gateway=FacadeCapabilityAdapter(get_capability_facade()),
+        capability_gateway=FacadeCapabilityAdapter(get_capability_facade()),  # type: ignore[arg-type]
         policies=tuple(auth_policies),
     )
 

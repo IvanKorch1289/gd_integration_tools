@@ -383,7 +383,7 @@ class WebhookTrigger:
         app = self._app
         if app is None:
             try:
-                from src.backend.entrypoints.api.app import (  # type: ignore[import-not-found]  # optional app-импорт (dev_light), ImportError fallback
+                from src.backend.entrypoints.api.app import (  # type: ignore[import-not-found,import-untyped]  # optional app-импорт (dev_light), ImportError fallback
                     get_app,  # type: ignore[import-not-found]
                 )
 

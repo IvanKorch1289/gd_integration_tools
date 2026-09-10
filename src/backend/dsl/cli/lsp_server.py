@@ -109,19 +109,21 @@ def create_server() -> Any:
     server = LanguageServer("gd-dsl-lsp", "0.1.0")
 
     @server.feature(lsp_types.TEXT_DOCUMENT_DID_OPEN)
-    async def did_open(ls: LanguageServer, params: lsp_types.DidOpenTextDocumentParams):
+    async def did_open(ls: LanguageServer, params: lsp_types.DidOpenTextDocumentParams):  # type: ignore[no-untyped-def]
         """Run linter и публикует diagnostics при открытии буфера."""
         await _publish_diagnostics(ls, params.text_document.uri)
 
     @server.feature(lsp_types.TEXT_DOCUMENT_DID_CHANGE)
-    async def did_change(
+    async def did_change(  # type: ignore[no-untyped-def]
         ls: LanguageServer, params: lsp_types.DidChangeTextDocumentParams
     ):
         """Run linter после каждого change в буфере."""
         await _publish_diagnostics(ls, params.text_document.uri)
 
     @server.feature(lsp_types.TEXT_DOCUMENT_DID_SAVE)
-    async def did_save(ls: LanguageServer, params: lsp_types.DidSaveTextDocumentParams):
+    async def did_save(  # type: ignore[no-untyped-def]
+        ls: LanguageServer, params: lsp_types.DidSaveTextDocumentParams
+    ) -> None:
         """Re-lint при save (на случай внешних правок route.toml)."""
         await _publish_diagnostics(ls, params.text_document.uri)
 
@@ -179,7 +181,7 @@ def create_server() -> Any:
         line = document.lines[line_idx]
         # Извлекаем первое слово (ключ перед `:` или `=`).
         token = line.lstrip().split(":", 1)[0].split("=", 1)[0].strip(" -")
-        lookup = dict((*ROUTE_COMPLETIONS, *STEP_COMPLETIONS))  # type: ignore[arg-type]  # R2.MYPY: tuple type mismatch
+        lookup: dict[str, object] = dict((*ROUTE_COMPLETIONS, *STEP_COMPLETIONS))  # type: ignore[arg-type,var-annotated]  # R2.MYPY: tuple type mismatch
         detail = lookup.get(token)
         if detail is None:
             return None

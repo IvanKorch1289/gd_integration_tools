@@ -63,7 +63,9 @@ class OpenAPIImportGateway:
         if version_str.startswith("3.1"):
             from openapi_pydantic.v3.v3_1 import OpenAPI as OpenAPIModel
         elif version_str.startswith("3.0") or not version_str:
-            from openapi_pydantic.v3.v3_0 import OpenAPI as OpenAPIModel
+            from openapi_pydantic.v3.v3_0 import (  # type: ignore[assignment]
+                OpenAPI as OpenAPIModel,  # type: ignore[assignment]
+            )
         else:
             raise ValueError(
                 f"OpenAPI: неподдерживаемая версия {version_str!r} "

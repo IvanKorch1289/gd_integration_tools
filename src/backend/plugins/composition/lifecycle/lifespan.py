@@ -43,7 +43,7 @@ __all__ = ("_register_outbox_dispatcher", "lifespan")
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI):  # type: ignore[no-untyped-def]
     """FastAPI lifespan: signal install → startup → yield → shutdown.
 
     Slim wrapper around per-phase handlers in :mod:`startup` /

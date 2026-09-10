@@ -80,7 +80,7 @@ def _register_ai_tool(mcp: FastMCP, action_name: str) -> None:
         command = ActionCommandSchema(
             action=_action,
             payload=parsed_payload,
-            meta={"source": "mcp", "namespace": "ai"},
+            meta={"source": "mcp", "namespace": "ai"},  # type: ignore[arg-type]
         )
 
         try:

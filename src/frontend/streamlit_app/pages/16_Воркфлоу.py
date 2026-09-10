@@ -238,7 +238,7 @@ with tab_list:
 with tab_timeline:
     focus_id = st.text_input(
         "ID экземпляра",
-        value=st.session_state.get("_workflow_focus_id", "", key="wf_id_3"),
+        value=st.session_state.get("_workflow_focus_id", "", key="wf_id_3"),  # type: ignore[call-overload]
         placeholder="UUID",
     )
     if not focus_id:

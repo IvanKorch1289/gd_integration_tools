@@ -98,7 +98,7 @@ class DataMaskingMiddleware:
         # Non-JSON → pass through both start + body immediately.
         should_mask: bool = True
 
-        async def send_wrapper(message) -> None:
+        async def send_wrapper(message) -> None:  # type: ignore[no-untyped-def]
             if message["type"] == "http.response.start":
                 response_status["status"] = message.get("status", 200)
                 # Capture content-type + headers.

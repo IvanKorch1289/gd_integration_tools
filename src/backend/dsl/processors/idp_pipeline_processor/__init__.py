@@ -108,7 +108,7 @@ class IDPPipelineProcessor(
             raise ValueError(
                 f"doc_type ∈ auto|{sorted(_VALID_TYPES)}, получено {doc_type!r}"
             )
-        super().__init__(name=name or "idp_pipeline")
+        super().__init__(name=name or "idp_pipeline")  # type: ignore[call-arg]
         self._doc_type = doc_type
         self._threshold = float(confidence_threshold)
         # Shallow copy so callers cannot mutate our state.

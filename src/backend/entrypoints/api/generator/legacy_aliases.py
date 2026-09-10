@@ -48,7 +48,7 @@ async def _dispatch_with(
         payload = dict(request.query_params)
         payload.update(body)
         if item_id is not None:
-            payload["id"] = item_id
+            payload["id"] = item_id  # type: ignore[assignment]
     except Exception as exc:
         return JSONResponse(status_code=400, content={"detail": f"Bad request: {exc}"})
 
@@ -68,7 +68,7 @@ async def _dispatch_with(
             tuple(extract_user_permissions(_auth)) if _auth is not None else ()
         )
 
-        command = ActionCommandSchema(
+        command = ActionCommandSchema(  # type: ignore[call-arg]
             action=action,
             payload=payload,
             mode="sync",
@@ -141,7 +141,7 @@ _ALIASES: list[tuple[str, dict[str, str], list[str]]] = [
 ]
 
 
-def _make_handler(action: str, with_item_id: bool):
+def _make_handler(action: str, with_item_id: bool) -> object:  # type: ignore[no-untyped-def]
     """Создать замыкание-handler для конкретного action."""
 
     async def _handler(request: "Request", item_id: int | None = None) -> JSONResponse:
@@ -161,7 +161,7 @@ def _build_alias_router() -> APIRouter:
         action = params["action"]
         with_item_id = params.get("item_id") == "path"
         handler = _make_handler(action, with_item_id)
-        router.add_api_route(path, handler, methods=methods, name=f"legacy.{action}")
+        router.add_api_route(path, handler, methods=methods, name=f"legacy.{action}")  # type: ignore[arg-type]  # R2.MYPY: handler object → Callable
 
     return router
 

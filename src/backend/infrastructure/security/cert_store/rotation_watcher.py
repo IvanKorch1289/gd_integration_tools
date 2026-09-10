@@ -43,7 +43,7 @@ class CertRotationWatcher:
 
     """
 
-    def __init__(
+    def __init__(  # type: ignore[no-untyped-def]
         self,
         *,
         cert_store: CertStore,
@@ -67,7 +67,7 @@ class CertRotationWatcher:
         now = datetime.now(UTC)
         before = now.timestamp() + self._rotation_threshold_days * 86400
         try:
-            entries = await self._cert_store._backend.list_expiring(before=before)
+            entries = await self._cert_store._backend.list_expiring(before=before)  # type: ignore[arg-type]
         except Exception as exc:
             logger.warning("cert.rotation.list_expiring_error: %s", exc)
             self._record_rotation(success=False)

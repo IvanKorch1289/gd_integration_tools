@@ -80,7 +80,7 @@ def _register_system_tool(mcp: FastMCP, action_name: str) -> None:
         command = ActionCommandSchema(
             action=_action,
             payload=parsed_payload,
-            meta={"source": "mcp", "namespace": "system"},
+            meta={"source": "mcp", "namespace": "system"},  # type: ignore[arg-type]
         )
 
         try:

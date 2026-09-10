@@ -35,7 +35,7 @@ async def check_all_services():
             }
 
             await get_stream_client().publish_to_redis(
-                message=EmailSchema.model_validate(data),
+                message=EmailSchema.model_validate(data),  # type: ignore[arg-type]
                 stream=settings.redis.get_stream_name("email"),
             )
         scheduler_logger.info(f"Проверка состояния завершена. Результат: {result}")

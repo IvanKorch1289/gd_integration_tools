@@ -75,7 +75,7 @@ async def phase_dsl_commands(app: FastAPI) -> None:  # noqa: ARG001
     """DSL commands/routes — registers action handlers + routes."""
 
     try:
-        from src.backend.plugins.composition.bootstrap import (  # type: ignore[import-not-found]  # optional
+        from src.backend.plugins.composition.bootstrap import (  # type: ignore[import-not-found,import-untyped]  # optional
             register_dsl_commands,  # type: ignore[import-not-found]  # optional
         )
 
@@ -177,7 +177,7 @@ async def phase_workflow_runtime(app: FastAPI) -> None:  # noqa: ARG001
             start_workflow_runtime,
         )
 
-        await start_workflow_runtime()
+        await start_workflow_runtime()  # type: ignore[call-arg]
 
     except Exception as wf_exc:
         _logger.warning("Workflow runtime startup skipped: %s", wf_exc)

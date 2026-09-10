@@ -47,7 +47,7 @@ async def _composite() -> Any:
             MlflowModelRegistry,
         )
 
-        backends["mlflow"] = MlflowModelRegistry()
+        backends["mlflow"] = MlflowModelRegistry()  # type: ignore[call-arg]
     except (ImportError, AttributeError, RuntimeError) as mlflow_exc:
         # cycle-9/D-AUDIT-1730: narrow exceptions + observability.
         # ImportError — mlflow_backend missing, AttributeError — API

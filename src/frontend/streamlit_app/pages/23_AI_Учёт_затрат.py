@@ -36,7 +36,7 @@ def _snapshot_to_dict(snapshot: object) -> dict[str, Any]:
     if isinstance(snapshot, Mapping):
         payload = snapshot
     elif isinstance(snapshot, _SnapshotSerializable):
-        payload = snapshot.to_dict()
+        payload = snapshot.to_dict()  # type: ignore[assignment]
     else:
         raise TypeError("AI cost snapshot must be a mapping or expose to_dict()")
 
@@ -52,7 +52,7 @@ def _snapshot_to_dict(snapshot: object) -> dict[str, Any]:
 
 
 try:
-    from src.frontend.streamlit_app.utils.api_client import (  # type: ignore[import-not-found]  # optional API-клиент, ImportError fallback ниже
+    from src.frontend.streamlit_app.utils.api_client import (  # type: ignore[import-not-found,import-untyped]  # optional API-клиент, ImportError fallback ниже
         api_get,  # type: ignore[import-not-found]
     )
 except ImportError, AttributeError, ModuleNotFoundError:

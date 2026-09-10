@@ -246,7 +246,7 @@ class HitlApprovalProcessor(BaseProcessor):
         else:
             exchange.fail(f"Unknown HITL action: {action}")
 
-    async def _wait_for_decision(self, signal_id: str):
+    async def _wait_for_decision(self, signal_id: str):  # type: ignore[no-untyped-def]
         """Ждёт решения через HitlService без polling (S133 W4).
 
         ponytail: event-driven wakeup вместо busy-wait. Для multi-instance

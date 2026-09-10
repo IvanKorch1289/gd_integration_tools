@@ -22,7 +22,7 @@ class MetricsMixin(_LLMStructuredProcessorProtocol):
     __slots__ = ()
 
     @staticmethod
-    def _estimate_cost(raw_response: Any) -> float | None:
+    def _estimate_cost(raw_response: Any) -> float | None:  # type: ignore[override]
         """Оценивает стоимость через ``litellm.completion_cost``.
 
         Args:
@@ -43,7 +43,7 @@ class MetricsMixin(_LLMStructuredProcessorProtocol):
             return None
 
     @staticmethod
-    def _extract_tokens(raw_response: Any) -> int | None:
+    def _extract_tokens(raw_response: Any) -> int | None:  # type: ignore[override]
         """Извлекает total_tokens из usage."""
         if raw_response is None:
             return None

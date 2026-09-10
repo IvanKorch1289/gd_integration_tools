@@ -76,7 +76,8 @@ class FileSink(Sink):
     @with_retry(max_attempts=2, retry_on=(ConnectionError, TimeoutError, OSError))
     @require_capability("file.write", action="write")
     async def send(  # type: ignore[override]  # R2.MYPY: Sink.send signature mismatch,
-        self, payload: Any) -> SinkResult:
+        self, payload: Any
+    ) -> SinkResult:
         """Сериализует ``payload`` (JSON если dict/list) и пишет в файл."""
         # S1: per-connector rate limit (50/s, scope=path).
         limiter = get_connector_rate_limiter()

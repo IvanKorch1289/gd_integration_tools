@@ -118,7 +118,7 @@ class ExpressAdapter:
             if config is None:
                 raise RuntimeError(f"Express бот {bot_name!r} не найден в настройках")
 
-        client = ExpressBotClient(config)
+        client = ExpressBotClient(config)  # type: ignore[arg-type]
         async with client:
             sync_id = await client.send_message(msg)
         _logger.debug(

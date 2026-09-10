@@ -71,7 +71,7 @@ def _component_to_dict(component: ComponentStatus) -> dict[str, Any]:
     }
 
 
-def build_resilience_health_check(
+def build_resilience_health_check(  # type: ignore[no-untyped-def]
     component: str, coordinator: ResilienceCoordinator | None = None
 ):
     """Возвращает async health-check callable для одного компонента.

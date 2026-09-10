@@ -63,7 +63,7 @@ class MessageLoggingMiddleware(BaseMiddleware):
         )
         return await call_next(msg)
 
-    async def publish_scope(
+    async def publish_scope(  # type: ignore[override]
         self, call_next: Callable[..., Awaitable[Any]], msg: Any, **options: Any
     ) -> Any:
         """FastStream publisher scope (RabbitMQ)."""

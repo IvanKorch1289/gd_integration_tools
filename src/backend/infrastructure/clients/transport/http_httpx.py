@@ -389,7 +389,7 @@ class HttpxClient:
             retry=retry_if_exception_type(
                 (httpx.TransportError, httpx.TimeoutException)
             ),
-            before_sleep=before_sleep_log(logger, logging.DEBUG),
+            before_sleep=before_sleep_log(logger, logging.DEBUG),  # type: ignore[arg-type]
             reraise=True,
         )
 

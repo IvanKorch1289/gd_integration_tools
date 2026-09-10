@@ -61,7 +61,8 @@ class GrpcSink(Sink):
     @with_retry(max_attempts=3, retry_on=(ConnectionError, TimeoutError, OSError))
     @require_capability("grpc.invoke", action="write")
     async def send(  # type: ignore[override]  # R2.MYPY: Sink.send signature mismatch,
-        self, payload: Any) -> SinkResult:
+        self, payload: Any
+    ) -> SinkResult:
         """Открывает канал, вызывает unary RPC и возвращает ответ."""
         # S1: per-connector rate limit. Scope — per-method для изоляции.
         limiter = get_connector_rate_limiter()

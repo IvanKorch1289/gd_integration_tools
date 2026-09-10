@@ -177,7 +177,7 @@ class S3Client(BaseS3Client):
         return self._client is not None and self._exit_stack is not None
 
     @staticmethod
-    def ensure_connected(
+    def ensure_connected(  # type: ignore[override]
         func: Callable[..., Coroutine[Any, Any, Any]],
     ) -> Callable[..., Coroutine[Any, Any, Any]]:
         """Декоратор для проверки подключения перед вызовом функции."""

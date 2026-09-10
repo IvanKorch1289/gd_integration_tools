@@ -177,7 +177,7 @@ class ChaosEngineering:
         raise error
 
     @asynccontextmanager
-    async def exhaust_pool(self, name: str, duration_seconds: float = 5.0):
+    async def exhaust_pool(self, name: str, duration_seconds: float = 5.0):  # type: ignore[no-untyped-def]
         """Временно «исчерпывает» пул — устанавливает max_size=0.
 
         Восстанавливает исходный размер при выходе из контекста.
@@ -261,7 +261,7 @@ class ChaosEngineering:
                 )
 
     @asynccontextmanager
-    async def partition(self, name: str, duration_seconds: float = 5.0):
+    async def partition(self, name: str, duration_seconds: float = 5.0):  # type: ignore[no-untyped-def]
         """Временно «разрывает» связь с пулом — делает ping_fn no-op.
 
         Полезно для проверки поведения health-check и circuit breaker.

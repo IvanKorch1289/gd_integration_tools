@@ -152,12 +152,12 @@ class DatabaseInitializer:
         """Создаёт и настраивает асинхронный engine SQLAlchemy."""
         return create_async_engine(
             url=self.settings.async_connection_url,  # type: ignore[arg-type]  # R2.MYPY: Callable[[],str] → str|URL
-            **self._engine_kwargs()
+            **self._engine_kwargs(),
         )
 
     def _create_sync_engine(self) -> Engine:
         """Создаёт и настраивает синхронный engine SQLAlchemy."""
-        return create_engine(
+        return create_engine(  # type: ignore[call-overload]
             url=self.settings.sync_connection_url, **self._engine_kwargs()
         )
 

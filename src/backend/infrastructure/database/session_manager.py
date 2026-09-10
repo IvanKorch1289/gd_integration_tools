@@ -126,7 +126,7 @@ class DatabaseSessionManager:
                                 execution_options={"isolation_level": isolation_level}
                             )
 
-                        result = await method(*args, session=session, **kwargs)
+                        result = await method(*args, session=session, **kwargs)  # type: ignore[arg-type]
 
                         if commit and session.in_transaction():
                             await session.commit()

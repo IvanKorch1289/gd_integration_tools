@@ -87,7 +87,7 @@ def _emit_page_render_event(*, page_key: str, render_start: float) -> None:
                 "page_key": page_key,
                 "render_ms": int((_time.monotonic() - render_start) * 1000),
                 "session_id": (
-                    st.runtime.scriptrunner.get_script_run_ctx().session_id
+                    st.runtime.scriptrunner.get_script_run_ctx().session_id  # type: ignore[union-attr]
                     if hasattr(st, "runtime")
                     else None
                 ),

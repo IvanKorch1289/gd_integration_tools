@@ -243,7 +243,7 @@ class RenderXlsxProcessor(BaseProcessor):
             for row in data:
                 ws.append([row.get(h) for h in headers])  # type: ignore[union-attr]
         elif self.params.mode == "replace" and isinstance(data, dict):
-            for ws in wb.worksheets:
+            for ws in wb.worksheets:  # type: ignore[assignment]
                 for row in ws.iter_rows():  # type: ignore[union-attr]
                     for cell in row:
                         if isinstance(cell.value, str):

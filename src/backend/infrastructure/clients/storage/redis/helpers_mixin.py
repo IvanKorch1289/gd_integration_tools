@@ -96,7 +96,7 @@ class HelpersMixin(_RedisClientProtocol):
         return {key: self.decode(value) if value is not None else None}
 
     async def invalidate_cache(  # type: ignore[override]  # R2.MYPY: RedisClientProtocol signature
-        self
+        self,
     ) -> dict[str, str]:
         """Очищает текущую БД кэша (flushdb).
 

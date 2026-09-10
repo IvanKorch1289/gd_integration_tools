@@ -136,7 +136,7 @@ class RetryProcessor(BaseProcessor):
         if self._backoff == "exponential":
             base = wait_exponential(multiplier=self._delay, min=self._delay, max=60.0)
         else:
-            base = wait_fixed(self._delay)
+            base = wait_fixed(self._delay)  # type: ignore[assignment]
         if self._jitter > 0:
             return base + wait_random(0, self._jitter)
         return base

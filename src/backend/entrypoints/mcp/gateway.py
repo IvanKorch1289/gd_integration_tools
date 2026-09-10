@@ -252,7 +252,7 @@ class MCPGateway:
         registered = 0
         try:
             for skill_id in registry.list_skills():
-                namespace = get_namespace_for_action(skill_id)
+                namespace = get_namespace_for_action(skill_id)  # type: ignore[arg-type]
                 if namespace is not None:
                     registered += 1
                     logger.debug(

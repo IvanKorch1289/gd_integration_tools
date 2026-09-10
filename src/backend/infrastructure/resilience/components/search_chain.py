@@ -35,7 +35,7 @@ async def _es_search(
     response = await client.search(
         index=index, query={"match": {"_all": query}}, size=limit
     )
-    return [hit["_source"] for hit in response["hits"]["hits"]]
+    return [hit["_source"] for hit in response["hits"]["hits"]]  # type: ignore[call-overload]
 
 
 async def _sqlite_fts5_search(

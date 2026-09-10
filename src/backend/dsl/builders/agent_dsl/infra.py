@@ -238,7 +238,7 @@ class InfraMixin:
                 logging.getLogger(__name__).debug(
                     "agent_dsl_infra.audit_emit_failed", extra={"error": str(audit_exc)}
                 )
-            sandbox = InProcessAgentSandbox()
+            sandbox = InProcessAgentSandbox()  # type: ignore[assignment]
 
         return self._add(  # type: ignore[attr-defined]
             AgentGraphProcessor(

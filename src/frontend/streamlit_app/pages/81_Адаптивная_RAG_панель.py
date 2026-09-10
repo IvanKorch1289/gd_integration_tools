@@ -16,7 +16,7 @@ from src.frontend.streamlit_app.shared.components import (
 try:
     from src.frontend.streamlit_app.api_clients import APIClient
 except ImportError:  # pragma: no cover
-    APIClient = None  # type: ignore[misc]
+    APIClient = None  # type: ignore[assignment,misc]
 
 setup_page()
 st.title("🧠 Дашборд стратегий Adaptive RAG")

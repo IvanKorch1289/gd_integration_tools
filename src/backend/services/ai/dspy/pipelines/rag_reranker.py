@@ -157,7 +157,7 @@ class _RagRerankerPipeline:
                 return 0.0
             return len(doc_tokens & query_tokens) / max(len(query_tokens), 1)
 
-        ranked = sorted(candidates, key=_score, reverse=True)
+        ranked = sorted(candidates, key=_score, reverse=True)  # type: ignore[arg-type]
         return json.dumps([d.get("id") for d in ranked], ensure_ascii=False)  # type: ignore
 
     def metric(self, example: dict[str, Any], output: str) -> float:

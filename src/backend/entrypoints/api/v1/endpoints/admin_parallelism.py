@@ -51,7 +51,7 @@ async def parallelism_report(name: str) -> dict[str, Any]:
         # src.backend.dsl.commands.registry).
         from src.backend.core.api.extensions import route_registry
     except ImportError:
-        route_registry = None
+        route_registry = None  # type: ignore[assignment]
 
     steps: list[dict[str, Any]] = []
     if route_registry is not None:

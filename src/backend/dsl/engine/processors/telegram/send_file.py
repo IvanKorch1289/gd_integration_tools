@@ -120,7 +120,7 @@ class TelegramSendFileProcessor(BaseProcessor):
                     file_data=file_bytes,
                     file_name=file_name,
                     caption=caption,
-                    parse_mode=self._parse_mode,
+                    parse_mode=self._parse_mode,  # type: ignore[arg-type]
                     disable_notification=self._disable_notification,
                 )
             exchange.set_property(self._result_property, message_id)

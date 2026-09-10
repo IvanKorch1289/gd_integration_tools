@@ -79,7 +79,9 @@ class RouteStats:
         # HdrHistogram: 1..60000 ms, precision 2 digits (O(1) percentile queries)
         if _HDRH_AVAILABLE:
             self._hdr: Any = _HdrHistogram(1, 60_000, 2)
-            self._fallback: _FallbackStats | None = None  # R2.MYPY: Optional for symmetry with _hdr; initialized to None when hdr available
+            self._fallback: _FallbackStats | None = (
+                None  # R2.MYPY: Optional for symmetry with _hdr; initialized to None when hdr available
+            )
         else:
             self._hdr = None
             self._fallback = _FallbackStats()
@@ -232,7 +234,7 @@ class SLOBudgetExceeded(Exception):
         self.max_error_rate = max_error_rate
 
 
-def enforce_slo(route_id: str, *, max_error_rate: float = 5.0):
+def enforce_slo(route_id: str, *, max_error_rate: float = 5.0):  # type: ignore[no-untyped-def]
     """Decorator: отклоняет вызов, если SLO error-budget превышен.
 
     Args:

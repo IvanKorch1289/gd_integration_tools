@@ -148,7 +148,7 @@ class IngestFileProcessor(BaseProcessor):
             },
         )
 
-    async def _invoke_parse(
+    async def _invoke_parse(  # type: ignore[no-untyped-def]
         self, parse_document, content: bytes, mime: str, filename: str | None
     ):
         """Выбор engine: auto / markitdown / legacy с подменой settings."""

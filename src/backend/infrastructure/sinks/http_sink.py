@@ -49,7 +49,8 @@ class HttpSink(Sink):
     @with_retry(max_attempts=3, retry_on=(ConnectionError, TimeoutError, OSError))
     @require_capability("http.send", action="write")
     async def send(  # type: ignore[override]  # R2.MYPY: Sink.send signature mismatch,
-        self, payload: Any) -> SinkResult:
+        self, payload: Any
+    ) -> SinkResult:
         """Отправляет ``payload`` в ``url`` указанным методом."""
         # S1: per-connector rate limit (100/s).
         limiter = get_connector_rate_limiter()
@@ -71,7 +72,7 @@ class HttpSink(Sink):
                     method=self.method,
                     url=self.url,
                     json=payload if not isinstance(payload, (bytes, str)) else None,
-                    content=payload if isinstance(payload, (bytes, str)) else None,
+                    content=payload if isinstance(payload, (bytes, str)) else None,  # type: ignore[arg-type]
                     headers=self.headers,
                 )
         except Exception as exc:

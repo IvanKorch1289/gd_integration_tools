@@ -163,7 +163,9 @@ def import_bpmn(
     )
 
     return WorkflowDeclaration(
-        name=workflow_name, description=workflow_description, steps=steps  # type: ignore[arg-type]  # R2.MYPY: steps list[ActivityDeclaration] vs wider union
+        name=workflow_name,
+        description=workflow_description,
+        steps=steps,  # type: ignore[arg-type]  # R2.MYPY: steps list[ActivityDeclaration] vs wider union
     )
 
 

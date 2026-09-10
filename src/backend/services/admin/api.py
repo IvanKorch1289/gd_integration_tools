@@ -70,7 +70,7 @@ class AdminService:
 
             capability_facade = get_capability_facade()
             return AuthorizationGateway(
-                capability_gateway=FacadeCapabilityAdapter(capability_facade)
+                capability_gateway=FacadeCapabilityAdapter(capability_facade)  # type: ignore[arg-type]
             )
         except Exception as exc:
             logger.warning("AuthorizationGateway unavailable: %s", exc)

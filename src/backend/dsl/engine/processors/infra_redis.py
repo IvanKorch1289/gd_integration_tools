@@ -44,7 +44,7 @@ class InfraRedisGetProcessor(BaseProcessor):
             get_redis_client_class,
         )
 
-        client = get_redis_client_class()(context)
+        client = get_redis_client_class()(context)  # type: ignore[arg-type]
         # duck-typed контракт процессора: unit-тесты патчат провайдер
         # mock-классом с .get(); реальный RedisClient использует cache_get.
         value = await client.get(self.key)  # type: ignore[attr-defined]

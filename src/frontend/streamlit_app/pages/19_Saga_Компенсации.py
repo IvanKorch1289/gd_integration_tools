@@ -50,7 +50,7 @@ def _fetch_stats(tenant: str, days: int) -> dict:
     to_dt = datetime.now(UTC)
     from_dt = to_dt - timedelta(days=days)
     return asyncio.run(
-        aggregate_saga_stats(tenant_id=tenant or None, from_dt=from_dt, to_dt=to_dt)
+        aggregate_saga_stats(tenant_id=tenant or None, from_dt=from_dt, to_dt=to_dt)  # type: ignore[arg-type]
     )
 
 

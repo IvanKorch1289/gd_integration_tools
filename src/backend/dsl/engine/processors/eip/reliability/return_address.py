@@ -84,7 +84,7 @@ class ReturnAddressProcessor(BaseProcessor):
             if asyncio.iscoroutine(addr):
                 addr = await addr
         else:
-            addr = self._static_address
+            addr = self._static_address  # type: ignore[assignment]
 
         addr_str = str(addr)
         exchange.in_message.set_header(self._header_name, addr_str)

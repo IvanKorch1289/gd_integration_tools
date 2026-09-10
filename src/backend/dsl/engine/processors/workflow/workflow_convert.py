@@ -114,7 +114,7 @@ class WorkflowConvertProcessor(BaseProcessor):
 
                 intermediate = yaml.safe_load(data) if isinstance(data, str) else data
             elif self.from_format == "string":
-                intermediate = json.loads(data) if data else {}
+                intermediate = json.loads(data) if data else {}  # type: ignore[arg-type]
             else:  # dict
                 intermediate = data
 

@@ -320,7 +320,7 @@ templates: dict[str, TemplateInfo] = {
             "update_action": "Action для обновления",
             "delete_action": "Action для удаления",
         },
-        builder=_crud_with_audit,
+        builder=_crud_with_audit,  # type: ignore[arg-type]
     ),
     "export.scheduled": TemplateInfo(
         name="Экспорт отчёта по расписанию",

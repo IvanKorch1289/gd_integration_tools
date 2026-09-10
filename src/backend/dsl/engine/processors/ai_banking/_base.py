@@ -101,7 +101,7 @@ class _BankingAIProcessor(BaseProcessor):
             max_attempts=3, initial_backoff=1.0, multiplier=2.0, on=_retryable
         )
         async def _chat_with_retry() -> Any:
-            return await agent.chat(
+            return await agent.chat(  # type: ignore[call-arg]
                 messages=[{"role": "user", "content": prompt}],
                 model=model or "default",
                 response_format=output_model,

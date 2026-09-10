@@ -291,11 +291,11 @@ class ClaimCheckProcessor(BaseProcessor):
             )
 
         elif self._mode == "retrieve":
-            token = exchange.properties.get("_claim_token")
+            token = exchange.properties.get("_claim_token")  # type: ignore[assignment]
             if not token:
                 body = exchange.in_message.body
                 if isinstance(body, dict):
-                    token = body.get("_claim_token")
+                    token = body.get("_claim_token")  # type: ignore[assignment]
 
             if not token:
                 exchange.fail("No claim token found")

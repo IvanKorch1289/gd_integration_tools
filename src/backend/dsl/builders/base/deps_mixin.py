@@ -74,7 +74,7 @@ class DepsMixin(_RouteBuilderProtocol):
                 and len(dep) == 2
                 and all(isinstance(x, str) for x in dep)
             ):
-                flat.append(tuple(dep))
+                flat.append(tuple(dep))  # type: ignore[arg-type]
             else:
                 raise TypeError(
                     f"depends: ожидается str или tuple[str, str], получено {dep!r}"

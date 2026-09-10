@@ -214,6 +214,12 @@ def build_default_registry() -> MiddlewareRegistry:
         {"enabled": feature_flags.ai_agent_dsl_enabled},
         order=640,
     )
+    # B-04 completion (M6-#3, prod-fix 2026-09-09): step-up guard для
+    # /auth/login — X-Step-Up-Token (подписной, TTL 600s) + rate-limit
+    # 10/5min per-IP. Работает ПОСЛЕ auth_required (login — public path).
+    from src.backend.entrypoints.middlewares.login_step_up import LoginStepUpMiddleware
+
+    registry.register_builtin("login_step_up", LoginStepUpMiddleware, order=650)
     # S183: WebSocket rate limit (registered after auth, Layer 3).
     from src.backend.entrypoints.middlewares.ws_rate_limit import (
         WebSocketRateLimitMiddleware,
@@ -264,7 +270,11 @@ def build_default_registry() -> MiddlewareRegistry:
             "enabled": settings.secure.csrf_enabled
             if hasattr(settings.secure, "csrf_enabled")
             else True,
-            "safe_paths": ("/api/v1/webhook/", "/api/v1/auth/login"),
+            "safe_paths": (
+                "/api/v1/webhook/",
+                "/api/v1/auth/login",
+                "/api/v1/auth/step-up-request",
+            ),  # M6-#3: pre-auth issuance
         },
         order=740,
     )

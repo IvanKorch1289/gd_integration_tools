@@ -66,14 +66,14 @@ class ChannelPurgerProcessor(BaseProcessor):
             logger.warning(
                 "ChannelPurger DRY-RUN для %s (ничего не удалено)", self._channel
             )
-            exchange.out_message.body = {
+            exchange.out_message.body = {  # type: ignore[union-attr]
                 "purged": False,
                 "dry_run": True,
                 "channel": self._channel,
             }
             return
         deleted = await self._broker.purge(self._channel)
-        exchange.out_message.body = {
+        exchange.out_message.body = {  # type: ignore[union-attr]
             "purged": True,
             "deleted": deleted,
             "channel": self._channel,

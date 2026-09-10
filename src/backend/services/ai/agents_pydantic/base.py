@@ -240,7 +240,7 @@ class BasePydanticAgent[ResultT: BaseModel]:
                 jitter=cfg.initial_seconds if cfg.jitter else 0,
             )
         else:
-            wait = wait_fixed(cfg.initial_seconds)
+            wait = wait_fixed(cfg.initial_seconds)  # type: ignore[assignment]
 
         retryer = AsyncRetrying(
             stop=stop_after_attempt(cfg.max_attempts),

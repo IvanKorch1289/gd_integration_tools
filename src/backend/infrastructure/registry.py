@@ -230,7 +230,7 @@ class ConnectorRegistry:
                     error=f"{type(result).__name__}: {result}", mode=mode
                 )
             else:
-                out[name] = result
+                out[name] = result  # type: ignore[assignment]
         return out
 
     async def reload(self, name: str) -> float:

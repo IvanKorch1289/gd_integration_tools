@@ -19,7 +19,7 @@ from src.frontend.streamlit_app.pages._editor.properties import render_propertie
 from src.frontend.streamlit_app.pages._editor.yaml_sync import sync_yaml, yaml_to_steps
 
 
-def render_canvas_tab(client) -> None:
+def render_canvas_tab(client) -> None:  # type: ignore[no-untyped-def]
     """Render Canvas (Drag-Drop) tab: 3 columns palette/canvas/properties."""
     col_palette, col_canvas, col_props = st.columns([1, 2, 1])
 

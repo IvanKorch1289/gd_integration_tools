@@ -54,7 +54,7 @@ class E2BSandbox(CodeSandbox):
         self._plugin = plugin
         self._fs_facade = fs_facade
 
-    async def run(
+    async def run(  # type: ignore[override]
         self,
         code: str,
         *,

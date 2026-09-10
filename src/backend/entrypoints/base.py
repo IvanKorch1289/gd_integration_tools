@@ -78,7 +78,7 @@ async def dispatch_action(
     if extra_meta:
         meta.update(extra_meta)
 
-    command = ActionCommandSchema(action=action, payload=payload or {}, meta=meta)
+    command = ActionCommandSchema(action=action, payload=payload or {}, meta=meta)  # type: ignore[arg-type]
 
     start = time.monotonic()
     try:

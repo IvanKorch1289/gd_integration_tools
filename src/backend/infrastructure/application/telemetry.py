@@ -3,7 +3,7 @@ from fastapi import FastAPI
 __all__ = ("setup_tracing",)
 
 
-def setup_tracing(app: FastAPI):
+def setup_tracing(app: FastAPI):  # type: ignore[no-untyped-def]
     """Настраивает трассировку для FastAPI-приложения с использованием OpenTelemetry.
 
     Args:

@@ -76,7 +76,7 @@ class TelegramTypingProcessor(BaseProcessor):
             if client is None:
                 return
             async with client:
-                await client.send_chat_action(str(chat_id), self._action)
+                await client.send_chat_action(str(chat_id), self._action)  # type: ignore[arg-type]
             _logger.debug("TelegramTyping: chat_id=%s action=%s", chat_id, self._action)
         except Exception as exc:
             _logger.warning("TelegramTyping: ошибка: %s", exc)

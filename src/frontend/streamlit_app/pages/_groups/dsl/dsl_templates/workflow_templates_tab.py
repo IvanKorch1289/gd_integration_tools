@@ -89,7 +89,7 @@ def render_workflow_templates(client: APIClient) -> None:
             _render_template_card(tmpl, client)
 
 
-def _render_template_card(tmpl, client: APIClient) -> None:
+def _render_template_card(tmpl, client: APIClient) -> None:  # type: ignore[no-untyped-def]
     """Per-template expander content: YAML/Mermaid tabs + Deploy flow.
 
     Args:
@@ -130,7 +130,7 @@ def _render_template_card(tmpl, client: APIClient) -> None:
         _deploy_template(tmpl, target, client)
 
 
-def _deploy_template(tmpl, target: str, client: APIClient) -> None:
+def _deploy_template(tmpl, target: str, client: APIClient) -> None:  # type: ignore[no-untyped-def]
     """POST /api/v1/admin/workflow-templates/{name}/deploy.
 
     Args:

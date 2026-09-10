@@ -73,7 +73,7 @@ async def _verify(scope: dict[str, Any]) -> bool:
         return False
 
     try:
-        ctx = await verify_request(request, methods=methods)
+        ctx = await verify_request(request, methods=methods)  # type: ignore[arg-type]
     except Exception as exc:
         logger.debug("MCP verify_request failed: %s", exc)
         return False

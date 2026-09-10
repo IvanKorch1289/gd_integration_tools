@@ -81,7 +81,7 @@ class CertFileWatcher:
                 import asyncio
 
                 pem = await asyncio.to_thread(file_path.read_text, encoding="utf-8")
-                await self.store.set(cert_id, pem=pem)
+                await self.store.set(cert_id, pem=pem)  # type: ignore[call-arg]
                 _logger.info(
                     "cert.hot_reload.%s id=%s size=%d", event_type, cert_id, len(pem)
                 )

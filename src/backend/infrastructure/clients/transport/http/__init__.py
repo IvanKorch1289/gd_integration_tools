@@ -83,7 +83,7 @@ class HttpClient(SessionMixin, PrepMixin, RequestMixin, ObservabilityMixin):
         self.settings = settings.http_base_settings
         self.logger = get_logger("request")
 
-        self.client: httpx.AsyncClient | None = None
+        self.client: httpx.AsyncClient | None = None  # type: ignore[assignment]
 
         self.last_activity: float = 0.0
         self.active_requests: int = 0

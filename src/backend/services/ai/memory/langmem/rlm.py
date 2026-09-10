@@ -173,7 +173,7 @@ async def _set_payload(
 class RLMConsolidator:
     """Фоновый consolidator для semantic memory — re-embed + reindex."""
 
-    def __init__(
+    def __init__(  # type: ignore[no-untyped-def]
         self,
         qdrant_client,
         embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2",

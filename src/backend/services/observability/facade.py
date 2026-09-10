@@ -71,7 +71,7 @@ class ObservabilityFacade:
             _logger.debug("observability.record_metric failed: %s", exc)
 
     @asynccontextmanager
-    async def start_span(self, name: str, *, attributes: dict[str, Any] | None = None):
+    async def start_span(self, name: str, *, attributes: dict[str, Any] | None = None):  # type: ignore[no-untyped-def]
         """Async context manager для distributed tracing span.
 
         Args:

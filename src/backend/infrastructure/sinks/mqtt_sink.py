@@ -102,7 +102,8 @@ class MqttSink(Sink):
     @with_retry(max_attempts=3, retry_on=(ConnectionError, TimeoutError, OSError))
     @require_capability("mqtt.write", action="write")
     async def send(  # type: ignore[override]  # R2.MYPY: Sink.send signature mismatch,
-        self, payload: Any) -> SinkResult:
+        self, payload: Any
+    ) -> SinkResult:
         """Публикует ``payload`` в ``topic`` MQTT-брокера.
 
         ``payload`` сериализуется через :func:`dumps_bytes` (orjson)

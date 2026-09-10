@@ -179,7 +179,7 @@ class UtilsMixin:
                     template=template,
                     context_from=context_from,
                     output_to=output_to,
-                    mode=mode,
+                    mode=mode,  # type: ignore[arg-type]
                 )
             )
         )

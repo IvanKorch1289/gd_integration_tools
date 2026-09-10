@@ -152,7 +152,7 @@ class DataFormatsMixin:
         ws = wb.active
         if ws is None:  # pragma: no cover - openpyxl always returns a sheet
             return b""
-        ws.title = self.sheet_name  # type: ignore[union-attr]
+        ws.title = self.sheet_name  # type: ignore[assignment,union-attr]
         if data:
             cols = self.headers or list(data[0].keys())  # type: ignore[assignment]  # R2.MYPY: str|None → str|_Decodable
             ws.append(list(cols))

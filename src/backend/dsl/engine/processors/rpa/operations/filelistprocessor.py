@@ -51,7 +51,7 @@ class FileListProcessor(BaseProcessor):
         """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="read"):
             return
-        pattern = self.pattern or exchange.in_message.body.get("pattern")
+        pattern = self.pattern or exchange.in_message.body.get("pattern")  # type: ignore[union-attr]
         if not pattern:
             raise ValueError("FileListProcessor: pattern обязателен")
         if self.recursive and "**" not in pattern:

@@ -265,8 +265,8 @@ class EmbeddingProcessor(BaseProcessor):
 
         rag = get_rag_service()
         if hasattr(rag, "_embed"):
-            result = rag._embed(text)
-            return result.tolist() if hasattr(result, "tolist") else list(result)
+            result = rag._embed(text)  # type: ignore[arg-type]
+            return result.tolist() if hasattr(result, "tolist") else list(result)  # type: ignore[call-overload]
         raise RuntimeError("Sentence-transformers not available via RAG service")
 
     async def _openai_embed(self, text: str) -> list[float]:

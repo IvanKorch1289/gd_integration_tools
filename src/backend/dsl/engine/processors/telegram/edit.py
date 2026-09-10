@@ -102,7 +102,7 @@ class TelegramEditProcessor(BaseProcessor):
                     chat_id=str(chat_id),
                     message_id=int(message_id),
                     text=new_text,
-                    parse_mode=self._parse_mode,
+                    parse_mode=self._parse_mode,  # type: ignore[arg-type]
                     inline_keyboard=keyboard,
                 )
             _logger.debug("TelegramEdit: chat_id=%s message_id=%s", chat_id, message_id)

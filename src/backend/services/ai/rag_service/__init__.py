@@ -71,7 +71,7 @@ def get_rag_service() -> RAGService:
     """
     # S133 W4: default store — memory-backed vector store для non-request
     # контекстов (tests / DSL без зарегистрированного app.state).
-    from src.backend.core.vector_store.memory import (  # type: ignore[import-not-found]
+    from src.backend.core.vector_store.memory import (  # type: ignore[import-not-found,import-untyped]
         InMemoryVectorStore,
     )
 

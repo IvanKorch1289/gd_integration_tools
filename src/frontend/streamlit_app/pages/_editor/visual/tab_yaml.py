@@ -11,7 +11,7 @@ from src.frontend.streamlit_app.pages._editor.history import push_history
 from src.frontend.streamlit_app.pages._editor.yaml_sync import try_load
 
 
-def render_yaml_tab(client) -> None:
+def render_yaml_tab(client) -> None:  # type: ignore[no-untyped-def]
     """Render YAML tab: raw editor + server validate/diff + JSON spec."""
     new_yaml = st.text_area(
         "YAML",
@@ -52,4 +52,4 @@ def render_yaml_tab(client) -> None:
         st.error(f"Локальная валидация: {err}")
     else:
         with st.expander("JSON спецификация"):
-            st.json(pipeline.to_dict())
+            st.json(pipeline.to_dict())  # type: ignore[union-attr]

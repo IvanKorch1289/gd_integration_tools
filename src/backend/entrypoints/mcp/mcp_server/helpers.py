@@ -111,7 +111,9 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
             parsed_payload = {"raw": payload}
 
         command = ActionCommandSchema(
-            action=_action, payload=parsed_payload, meta={"source": "mcp"}
+            action=_action,
+            payload=parsed_payload,
+            meta={"source": "mcp"},  # type: ignore[arg-type]
         )
 
         try:

@@ -96,12 +96,12 @@ try:
     else:
         from fastapi import APIRouter
 
-        graphql_router = APIRouter()  # empty router (no actions yet)
+        graphql_router = APIRouter()  # type: ignore[assignment,no-redef]  # R2.MYPY: APIRouter vs GraphQLRouter; redefinition in else branch
 except Exception as _exc:  # pragma: no cover — defensive
     logger.warning("graphql_router init failed: %s — empty router", _exc)
     from fastapi import APIRouter
 
-    graphql_router = APIRouter()
+    graphql_router = APIRouter()  # type: ignore[assignment]  # R2.MYPY: APIRouter vs GraphQLRouter
 
 __all__ = (
     "FileType",

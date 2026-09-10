@@ -321,7 +321,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         if debug:
             renderer = structlog.dev.ConsoleRenderer()
         else:
-            renderer = structlog.processors.JSONRenderer()
+            renderer = structlog.processors.JSONRenderer()  # type: ignore[assignment]
 
         structlog.configure(
             processors=[

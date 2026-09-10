@@ -109,6 +109,6 @@ class AsyncSoapClient:
     @staticmethod
     def parse_envelope(xml_str: str) -> Any:
         """Парсит XML-ответ в lxml.etree-дерево."""
-        from lxml import etree
+        from lxml import etree  # type: ignore[import-untyped]
 
         return etree.fromstring(xml_str.encode("utf-8"), resolve_entities=False)

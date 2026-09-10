@@ -254,7 +254,7 @@ async def invoke_via_gateway(
         else:
             from src.backend.core.ai.errors import AIGatewayEnforcementRequiredError
 
-            raise AIGatewayEnforcementRequiredError(missing=("ai_gateway_enforce",))
+            raise AIGatewayEnforcementRequiredError(missing=("ai_gateway_enforce",))  # type: ignore[call-arg]
 
     gw = gateway if gateway is not None else get_ai_gateway()
     request = AIRequest(

@@ -43,7 +43,9 @@ class ProtobufEncodeProcessor(BaseProcessor):
             exchange.fail("protobuf_encode: body must be dict or bytes")
             return
         try:
-            from google.protobuf.json_format import ParseDict
+            from google.protobuf.json_format import (  # type: ignore[import-untyped]
+                ParseDict,  # type: ignore[import-untyped]
+            )
 
             msg = ParseDict(body, cls())
         except ImportError:

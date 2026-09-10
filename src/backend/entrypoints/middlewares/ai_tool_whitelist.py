@@ -46,7 +46,7 @@ class AIToolWhitelistMiddleware:
 
     AGENT_PATH_PREFIX = "/api/v1/agent/tools/invoke"
 
-    def __init__(
+    def __init__(  # type: ignore[no-untyped-def]
         self, app: ASGIApp, *, enabled: bool = True, on_tool_check=None
     ) -> None:
         """Инициализирует middleware.
@@ -187,7 +187,7 @@ class AIToolWhitelistMiddleware:
         await send({"type": "http.response.body", "body": body_bytes})
 
     @staticmethod
-    async def _send_403(send: Send, **payload) -> None:
+    async def _send_403(send: Send, **payload) -> None:  # type: ignore[no-untyped-def]
         """Отправляет 403 JSON response через send (no-raise, cycle 39)."""
         body_bytes = json.dumps(payload).encode("utf-8")
         await send(

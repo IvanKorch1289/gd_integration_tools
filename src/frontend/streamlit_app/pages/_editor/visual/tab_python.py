@@ -17,7 +17,7 @@ def render_python_tab() -> None:
         st.error(f"Невалидный YAML: {err}")
         st.caption("Исправьте YAML — Python-код сгенерируется автоматически.")
     else:
-        st.code(pipeline.to_python(), language="python")
+        st.code(pipeline.to_python(), language="python")  # type: ignore[union-attr]
         st.caption(
             "Round-trip: этот код, выполненный в Python, создаёт идентичный "
             "Pipeline через RouteBuilder."

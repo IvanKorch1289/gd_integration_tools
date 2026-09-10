@@ -115,7 +115,7 @@ class LoggerManager:
         self.hostname = hostname
         self.debug = debug
 
-        self.log_queue = Queue()
+        self.log_queue = Queue()  # type: ignore[var-annotated]
         self.queue_listener: QueueListener | None = None
         self.handlers: list[Handler] = []
         self.graylog: GraylogHandler = handler

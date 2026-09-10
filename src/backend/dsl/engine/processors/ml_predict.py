@@ -123,7 +123,7 @@ class MLPredictProcessor(BaseProcessor):
         value = body
         for k in key.split("."):
             if isinstance(value, dict):
-                value = value.get(k)
+                value = value.get(k)  # type: ignore[assignment]
             else:
                 return value
         return value

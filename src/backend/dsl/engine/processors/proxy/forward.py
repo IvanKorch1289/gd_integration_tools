@@ -124,7 +124,7 @@ class ForwardToProcessor(BaseProcessor):
             resp = await client.request(
                 method=method,
                 url=target_url,
-                content=body if isinstance(body, (bytes, bytearray, str)) else None,
+                content=body if isinstance(body, (bytes, bytearray, str)) else None,  # type: ignore[arg-type]
                 json=body if isinstance(body, (dict, list)) else None,
                 headers=headers,
             )

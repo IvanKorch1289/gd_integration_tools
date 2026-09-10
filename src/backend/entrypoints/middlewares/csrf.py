@@ -164,7 +164,7 @@ class CSRFMiddleware:
         response_headers: list[tuple[bytes, bytes]] = []
         response_status: dict[str, int] = {"status": 200}
 
-        async def send_wrapper(message) -> None:
+        async def send_wrapper(message) -> None:  # type: ignore[no-untyped-def]
             if message["type"] == "http.response.start":
                 response_status["status"] = message.get("status", 200)
                 headers = list(message.get("headers", []))

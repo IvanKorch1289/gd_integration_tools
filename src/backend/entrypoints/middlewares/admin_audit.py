@@ -107,7 +107,7 @@ class AdminAuditMiddleware:
         # Capture response status через send_wrapper.
         response_status: dict[str, int] = {"status": 0}
 
-        async def send_wrapper(message) -> None:
+        async def send_wrapper(message) -> None:  # type: ignore[no-untyped-def]
             if message["type"] == "http.response.start":
                 response_status["status"] = message.get("status", 0)
             await send(message)

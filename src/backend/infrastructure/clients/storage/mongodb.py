@@ -365,7 +365,7 @@ def _create_mongo_client() -> MongoDBClient:
 
     return MongoDBClient(
         connection_url=settings.mongo.connection_string,  # type: ignore[arg-type]  # R2.MYPY: Callable[[],str] → str
-        database=settings.mongo.name
+        database=settings.mongo.name,
     )
 
 

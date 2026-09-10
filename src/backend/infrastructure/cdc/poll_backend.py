@@ -53,7 +53,7 @@ class PollCDCBackend(CDCSource):
         feed: AsyncIterator[dict[str, Any]] | None = None,
         sql_executor: Callable[
             [str, list[Any]], Awaitable[list[dict[str, Any]]] | None
-        ] = None,
+        ] = None,  # type: ignore[assignment]
         table: str | None = None,
     ) -> None:
         """Параметры:

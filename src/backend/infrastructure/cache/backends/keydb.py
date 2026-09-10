@@ -17,6 +17,6 @@ __all__ = ("KeyDBBackend",)
 class KeyDBBackend(RedisBackend):
     """KeyDB-бэкенд (RESP-совместимый, многопоточный)."""
 
-    def __init__(self, client, *, active_replica: bool = False) -> None:
+    def __init__(self, client, *, active_replica: bool = False) -> None:  # type: ignore[no-untyped-def]
         super().__init__(client=client)
         self._active_replica = active_replica

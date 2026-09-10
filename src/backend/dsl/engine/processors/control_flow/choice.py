@@ -47,7 +47,7 @@ class ChoiceBranch:
             return bool(self.predicate(exchange))
         import jmespath
 
-        return bool(jmespath.search(self.expr, exchange.in_message.body))
+        return bool(jmespath.search(self.expr, exchange.in_message.body))  # type: ignore[arg-type]
 
 
 class ChoiceProcessor(BaseProcessor):

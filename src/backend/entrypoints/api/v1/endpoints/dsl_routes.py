@@ -306,7 +306,7 @@ builder.add_actions(
             description="Возвращает отсортированный список route_id, сохранённых в YAMLStore.",
             service_getter=_get_facade,
             service_method="list_routes",
-            response_model=list[str],
+            response_model=list[str],  # type: ignore[arg-type]
             tags=common_tags,
         ),
         ActionSpec(
