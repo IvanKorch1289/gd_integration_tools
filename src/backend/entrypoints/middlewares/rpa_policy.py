@@ -28,8 +28,8 @@ Cycle 40 critical: как и cycle 39 (BlockedRoutes), pure ASGI
 
 from __future__ import annotations
 
-import json
-
+# PERF-6.6 P12: orjson для RPA policy 403 response body.
+import orjson as json
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from src.backend.core.logging import get_logger
