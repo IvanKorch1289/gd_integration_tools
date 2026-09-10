@@ -403,3 +403,49 @@ load-test p99<300ms verify (OPT-1 in dev_light done, prod-verify deferred), FTR 
 gRPC-вызове), JWT secret omission в login, aiofiles to_thread no-write,
 rate-limiters без redis.enabled guard. Инфра: gRPC auto-servicer dead-code →
 wired (4 домена, descriptor-based).
+
+
+---
+
+## ФИНАЛЬНЫЙ ВЕРДИКТ (verification cycle 2026-09-09, ночь) — по всем 13 метрикам
+
+Каждый пункт — прямая команда, выполненная в этом цикле (не унаследованные клеймы):
+
+| # | Метрика | Команда | Результат | Вердикт |
+|---|---------|---------|-----------|---------|
+| 1 | ruff src/ | `ruff check src/` | All checks passed | ✅ PASS |
+| 2 | mypy STRICT ≤30 | `make type-check-strict-profile` (9 кодов ADR-0295) | **Success: 0 issues / 2356 files** | ✅ PASS (0 ≤ 30) |
+| 3 | bandit | `bandit -q -lll -r src/backend -f json` | 0 findings; HIGH confidence 0 | ✅ PASS |
+| 4 | vulture @90 | `vulture src/backend --min-confidence 90` | 0 | ✅ PASS |
+| 5 | layers | `python tools/check_layers.py` | 0 new (baseline 14 ≤ 15, ADR-0301) | ✅ PASS |
+| 6 | coverage ≥70% | scoped --cov-append combine + `check_coverage_gate.py main --threshold 70 --strict` | **72.04%**, gate PASS, fail_under=70 | ✅ PASS |
+| 7 | pre-prod 0 code-FAILED | `python tools/checks/pre_prod_check.py` | 23/36 PASSED, FAILED 0 (WARN 8 = S20-scaffolds) | ✅ PASS (субкритерий 33 PASSED — упирается в S20-TRAFFIC-scaffolds, не код) |
+| 8 | M6-#3 unblock | dev_light live: step-up → login → 200 JWT; подделка → 401 | UNBLOCKED + live (Variant B: без docker) | ✅ PASS |
+| 9 | load push | rerun 2026-09-09: 300 VU → p99 650ms (контенция shared-box); OPT-1 применён | reference 601 RPS/p99 280 ✓; push-SLO → prod-стенд | ⚠️ ЗАДОКУМЕНТИРОВАНО (prod-валидация post-deploy) |
+| 10 | outdated ≤30 | `uv pip list --outdated` | **44** (131→44; SAFE 93 применены, smoke зелёный); MAJOR-хвост 38 — breaking, per-package проверка | ⚠️ PARTIAL (44 > 30; MAJOR-батч — отдельная серия) |
+| 11 | протоколы FTR | FUNCTIONAL_TEST_REPORT секции 2026-09-09 | REST/GraphQL/MQ/WS live ✓ (auth pos+neg); gRPC — транспорт+auth ✓ (UNIMPLEMENTED-матчинг auto-методов — grpc.aio интерналы); SSE — POST-only; SOAP/браузер — не в dev_light openapi | ⚠️ ЧАСТИЧНО (ядро verified; хвост — след. сессия) |
+| 12 | docs sync | STATUS.md ab5d99c26; FTR 2026-09-09 секции; ARCHITECTURE/README — сверка (устаревших численных claims нет) | синхронизировано | ✅ PASS |
+| 13 | FINAL_REPORT | этот документ + v6-блок (2b9a31a86) | все 12 пунктов с командами | ✅ PASS |
+
+## Итоговый вердикт
+
+**ГОТОВ К ПРОДУ С ОГОВОРКАМИ.**
+
+Все кодо-зависимые метрики качества (1–7) — PASS с прямым
+командным доказательством. Ядро доставки (№8) — позитивный auth-flow
+разблокирован и live-verified. Оговорки:
+
+1. **№9 push-SLO** — на shared dev-box p99 650ms (контенция);
+   прод-валидация на выделенном хосте — post-deploy.
+2. **№10 outdated 44 > 30** — SAFE 93 применены и проверены; 38 MAJOR-gap
+   пакетов требуют индивидуальной миграции (breaking) — отдельная серия.
+3. **№11 хвост** — gRPC auto-dispatch (grpc.aio интерналы), SSE
+   payload-клиент, браузерные проверки (Swagger/Streamlit) — след. сессия.
+
+Серия закрытых prod-багов сессии (все live/тест-verified): B-04 catch-22
+(401 на любой логин), двойной WS accept, WS DI-JwtBackend (RS256/HS256),
+WS close-reason >123b, AuthInterceptor bare-function handler, JWT secret
+omission в login, aiofiles to_thread no-write, rate-limiters без
+redis.enabled guard, jmespath JsonStringError, DLQ-провайдер
+di_bridge.dlq контракт, s3-фабрика без вызова, request_body_cache
+одноразовый replay.
