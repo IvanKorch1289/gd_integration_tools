@@ -112,17 +112,17 @@ def _make_send_wrapper(send: Send, request_id: str, correlation_id: str) -> Send
 
     async def send_wrapper(message: Message) -> None:
         if message["type"] == "http.response.start":
-            existing: list[tuple[bytes, bytes]] = list(message.get("headers", []))
-            # Удаляем potential existing headers (defensive: client may have
-            # sent через downstream middleware, но upstream клиент не мог).
-            existing = [
-                (k, v)
-                for k, v in existing
-                if k not in (b"x-request-id", b"x-correlation-id")
-            ]
+            # OPT-4 perf (PERF-6.6): in-place mutation вместо list copy + filter.
+            # ASGI spec allows mutation of message["headers"] in-place.
+            # Saves: ~1 list comp + 1 list append per request на hot-path.
+            existing: list[tuple[bytes, bytes]] = message.get("headers", [])
+            # Strip pre-existing x-request-id/x-correlation-id (rare, defensive)
+            for i in range(len(existing) - 1, -1, -1):
+                k = existing[i][0]
+                if k == b"x-request-id" or k == b"x-correlation-id":
+                    existing.pop(i)
             existing.append(request_id_header)
             existing.append(correlation_id_header)
-            message["headers"] = existing
         await send(message)
 
     return send_wrapper
