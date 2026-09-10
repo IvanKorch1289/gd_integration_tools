@@ -71,12 +71,12 @@ class AuditLogMiddleware:
 
         # IL-OBS1: сначала пробуем cached body из RequestBodyCacheMiddleware
         # (state['body']), затем graceful fallback на чтение receive() chunks.
+        state = scope.get("state", {}) if "state" in scope else {}
         if bodyless_method:
             # Bodyless HTTP-метод — пропускаем receive-loop полностью.
             # Audit metadata (status, duration) captured by send_wrapper below.
             pass
         else:
-            state = scope.get("state", {}) if "state" in scope else {}
             cached = state.get("body") if isinstance(state, dict) else None
             if isinstance(cached, (bytes, bytearray)):
                 body_bytes = bytes(cached)
