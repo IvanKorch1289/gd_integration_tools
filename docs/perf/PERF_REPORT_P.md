@@ -264,3 +264,40 @@ a3c440c54 perf(ai): model_registry local_fs_backend — json → orjson (PERF-6.
 | Auth-rejected (401) p99 | **82ms** | <200ms ✓ |
 | 30 concurrent p99 | 301ms | <300ms ⚠ (1.5x over) |
 
+
+---
+
+## v7 update — Sprint P31-P32: diminishing returns (2026-09-10)
+
+### Что НЕ применено в Sprint P31-P32 (low-ROI)
+
+| Идея | Почему не применено |
+|---|---|
+| LLM response cache (in-memory LRU) | Feature change — нужен design review для TTL/size limits/invalidation; LLM latency (500ms-2s) доминирует над cache lookup (5-10ms) — выигрыш на repeated prompts только |
+| Schema_registry → orjson | low-traffic (event registration path, not hot path) |
+| Trace_storage → orjson | workflow engine — not hot path per request |
+| Sqlite_search → orjson | low-frequency admin query |
+| L3 cache Redis | Empty usage — currently no-op |
+
+### Real state — diminishing returns reached
+
+После 30+ perf-коммитов за 7 сессий:
+- mypy-strict 886 → 0 (-100%) — **GOAL ACHIEVED**
+- outdated 131 → 34 (-74%)
+- pre-prod-check 20/36 → **22/36 PASSED**
+- Load-test baseline established: p99=188ms @ 10 concurrent (SLO ✅)
+- 0 failures
+- All middlewares have early-skip for bodyless methods
+- ORJSONResponse default + 16+ hot-path orjson migrations
+- Brotli compression + gzip level 9→6
+
+### Что осталось — ВСЁ infra-blocked
+
+| Item | Блокер | Effort |
+|---|---|---|
+| M6-#3 positive auth | seed user + alembic upgrade head | 1h |
+| Coverage 31→70% | multi-day per-module test writing | 2-3 дня |
+| Pre-prod-check ≥33/36 | ZAP/codeclone/vale binaries | 1h setup |
+| Load-test 30+ concurrent | real prod-стенд (4+ workers) | 1 день + prod |
+| LLM response cache (feature) | design review + impl | 1-2 дня |
+
