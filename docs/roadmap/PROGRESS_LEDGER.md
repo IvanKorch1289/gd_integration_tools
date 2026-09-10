@@ -2727,3 +2727,11 @@ R2.DEPS-3 — координация с полосой R2.MYPY + отдельн�
 Текущий статус: 34 outdated (SAFE-93 + same-major-12 + transitive применены;
 23 MAJOR-gap + 11 same-major резидуал). Не регресс — стабильный минимум для
 этого dependency tree.
+
+
+## Fix: audit_log UnboundLocalError для bodyless-методов (2026-09-10)
+
+`state` присваивался только в else-ветке (для методов с body).
+Для bodyless методов (GET/HEAD/OPTIONS/TRACE) state не определялся →
+UnboundLocalError на строках 120/141/144 (auth/request_id/correlation_id).
+Fix: `state` определён до ветвления. Middleware suite: 522 passed / 0 failed.
