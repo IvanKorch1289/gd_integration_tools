@@ -31,10 +31,11 @@ Cycle 43 critical: scope['state'] модифицируется в __call__
 
 from __future__ import annotations
 
-import json
 from collections.abc import Iterable
 from pathlib import PurePosixPath
 
+# PERF-6.6 P12: orjson для auth 401 response body (auth hot-path).
+import orjson as json
 from starlette.requests import Request
 from starlette.types import ASGIApp, Receive, Scope, Send
 
