@@ -59,26 +59,38 @@ class AuditLogMiddleware:
             await self.app(scope, receive, send)
             return
 
+        # PERF-6.6 P35: skip body buffering для bodyless HTTP-методов.
+        # GET/HEAD/OPTIONS/TRACE не имеют body — пропускаем receive-loop
+        # (-2-5μs per request). Audit метаданные идут через normal path
+        # ниже (status/duration captured by send_wrapper).
+        method = scope.get("method", "")
+        bodyless_method = method in ("GET", "HEAD", "OPTIONS", "TRACE")
+
         start = _time.monotonic()
         body_bytes: bytes = b""
 
         # IL-OBS1: сначала пробуем cached body из RequestBodyCacheMiddleware
         # (state['body']), затем graceful fallback на чтение receive() chunks.
-        state = scope.get("state", {}) if "state" in scope else {}
-        cached = state.get("body") if isinstance(state, dict) else None
-        if isinstance(cached, (bytes, bytearray)):
-            body_bytes = bytes(cached)
+        if bodyless_method:
+            # Bodyless HTTP-метод — пропускаем receive-loop полностью.
+            # Audit metadata (status, duration) captured by send_wrapper below.
+            pass
         else:
-            # Pure ASGI: collect body chunks через receive().
-            body_chunks: list[bytes] = []
-            more_body = True
-            while more_body:
-                message = await receive()
-                if message["type"] == "http.disconnect":
-                    break
-                body_chunks.append(message.get("body", b""))
-                more_body = message.get("more_body", False)
-            body_bytes = b"".join(body_chunks)
+            state = scope.get("state", {}) if "state" in scope else {}
+            cached = state.get("body") if isinstance(state, dict) else None
+            if isinstance(cached, (bytes, bytearray)):
+                body_bytes = bytes(cached)
+            else:
+                # Pure ASGI: collect body chunks через receive().
+                body_chunks: list[bytes] = []
+                more_body = True
+                while more_body:
+                    message = await receive()
+                    if message["type"] == "http.disconnect":
+                        break
+                    body_chunks.append(message.get("body", b""))
+                    more_body = message.get("more_body", False)
+                body_bytes = b"".join(body_chunks)
 
         # Re-inject body для downstream handlers.
         body_sent = False
