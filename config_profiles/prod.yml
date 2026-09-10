@@ -141,6 +141,11 @@ log:
   # остальные GZIP fallback (per middleware chain). Lazy-import brotli pkg.
   compression_brotli: true
   gzip_minimum_size: 512
+  # PERF-6.6 P15: gzip level 9 → 6 (default base=9). level 6 — CPU/Ratio
+  # sweet-spot (level 9 — 2-3x slower CPU при лишь ~3-5% лучшем ratio).
+  # Brotli покрывает primary compression path; gzip fallback для legacy
+  # clients должен быть CPU-efficient, не storage-efficient.
+  gzip_compresslevel: 6
 
 
 fs:
