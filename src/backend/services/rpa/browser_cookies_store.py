@@ -30,9 +30,11 @@ Feature-flag:
 
 from __future__ import annotations
 
-import json
 import os
 from typing import Any, Protocol
+
+# PERF-6.6 P10f: orjson alias — 3-5x faster JSON serialize vs stdlib.
+import orjson as json
 
 from src.backend.core.logging import get_logger
 
@@ -165,9 +167,8 @@ class BrowserCookieStore:
         # event when browser context didn't accumulate new cookies.
         new_payload = json.dumps(
             sorted(cookies, key=lambda c: c.get("name", "")),
-            ensure_ascii=False,
             default=str,
-        ).encode("utf-8")
+        )
         new_ciphertext = self._fernet.encrypt(new_payload)
         try:
             existing_raw = await self._redis.get(key)
