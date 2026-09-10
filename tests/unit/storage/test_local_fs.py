@@ -21,7 +21,10 @@ from pathlib import Path
 
 import pytest
 
-from src.backend.infrastructure.storage.local_fs import LocalFSStorage
+from src.backend.infrastructure.storage.local_fs import (
+    LocalFSStorage,
+    _is_safe_tenant_segment,
+)
 
 
 @pytest.fixture
@@ -147,3 +150,47 @@ def test_tenant_root_custom_prefix(tmp_path: Path) -> None:
     """``tenant_root_prefix`` параметр работает."""
     storage = LocalFSStorage(tmp_path, tenant_root_prefix="orgs")
     assert storage.tenant_root("acme") == tmp_path / "orgs" / "acme"
+
+
+@pytest.mark.asyncio
+async def test_health_fast_mode_passes(storage: LocalFSStorage) -> None:
+    """health(fast) → status='ok' на writable root."""
+    result = await storage.health(mode="fast")
+    assert result.status == "ok"
+
+
+@pytest.mark.asyncio
+async def test_health_deep_mode_passes(storage: LocalFSStorage) -> None:
+    """health(deep) → status='ok', проверяет read+write на root."""
+    result = await storage.health(mode="deep")
+    assert result.status == "ok"
+
+
+@pytest.mark.asyncio
+async def test_health_returns_metadata(storage: LocalFSStorage) -> None:
+    """health result содержит mode и latency_ms."""
+    result = await storage.health(mode="fast")
+    assert result.mode in ("fast", "deep")
+    assert result.latency_ms >= 0
+
+
+@pytest.mark.asyncio
+async def test_upload_stream_writes_to_disk(
+    storage: LocalFSStorage,
+) -> None:
+    """upload_stream бьёт большие chunk'и в файл и download читает их обратно."""
+    chunks = [b"chunk-1-", b"chunk-2-", b"chunk-3-final"]
+    await storage.upload_stream("stream/file.bin", chunks)
+
+    data = await storage.download("stream/file.bin")
+    assert data == b"".join(chunks)
+
+
+def test_is_safe_tenant_segment_helper() -> None:
+    """Прямой тест helper функции _is_safe_tenant_segment."""
+    # Валидные
+    for safe in ["acme", "tenant_1", "t1", "a-b-c", "1-2-3"]:
+        assert _is_safe_tenant_segment(safe), f"expected safe: {safe}"
+    # Невалидные
+    for bad in ["../etc", "with/slash", "with space", "..", "", "a" * 65]:
+        assert not _is_safe_tenant_segment(bad), f"expected unsafe: {bad}"
