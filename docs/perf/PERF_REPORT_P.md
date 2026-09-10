@@ -51,3 +51,19 @@
 .venv/bin/python -m pytest --collect-only -q      # 525 middleware tests
 ```
 
+
+## Sprint P5c — response_cache ETag optimization (commit `1e24b217e`)
+
+- Skip xxhash computation если client не поддерживает If-None-Match
+- Body всё равно буферизуется для отправки
+- Ожидаемый эффект: **−1-10μs per GET request** от cache-disabled clients
+
+## Cumulative commits
+
+```
+8afbc3bb7 perf(middleware): request_id OPT-4 — in-place header mutation
+96c8385cc perf(prod): Brotli compression включён в prod
+581af143d perf(middleware): pii_masking — lru_cache на _is_enabled()
+1e24b217e perf(middleware): response_cache — skip ETag если нет If-None-Match
+657392b2c docs(perf): PERF_REPORT_P.md
+```
