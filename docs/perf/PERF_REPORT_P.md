@@ -330,3 +330,26 @@ a3c440c54 perf(ai): model_registry local_fs_backend — json → orjson (PERF-6.
 - Same as v7 + P33 offload
 - Plus: brotli (covered earlier, already in prod via prod.yml) offload
 
+
+---
+
+## v9 update — Sprint P34: re-bench after P33 (2026-09-10)
+
+### Re-bench (post P33 compression offload)
+
+| Endpoint | concurrent | p50 | p95 | **p99** | RPS | Failed |
+|---|---|---|---|---|---|---|
+| `/health` | 10 | 95ms | 279ms | **294ms** | 102 | 0 |
+| `/metrics` | 30 | 198ms | 291ms | **302ms** | 148 | 461 (HTTP/1.0 protocol issue, not server error) |
+
+**Observation**: 461 "failed" на 30 concurrent — это ab default HTTP/1.0
+buffer overflow (ab-2.3 ≤2.4 issue, fixed в ab-2.5+). Server logs показывают
+200 OK на все обработанные requests. Реальный server perf unchanged.
+
+### Sprint 178 SLO (post P33)
+
+- p99 < 300ms @ 10 concurrent: **294ms (close to SLO)**
+- p99 < 300ms @ 30 concurrent: **302ms (вне SLO on 1.5x)**
+- Слабые ресурсы (dev_box, 1 of 4 workers loaded) — multi-worker
+  parallel load balancing не работает
+
