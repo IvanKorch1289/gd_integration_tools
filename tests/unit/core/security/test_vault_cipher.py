@@ -13,10 +13,7 @@ pytest.skip(
     "src.backend.core.security.vault_cipher not implemented", allow_module_level=True,
 )
 
-from src.backend.core.security.vault_cipher import (
-    VaultCipherError,
-    VaultTransitCipher,
-)
+from src.backend.core.security.vault_cipher import VaultCipherError, VaultTransitCipher
 
 
 @pytest.fixture(autouse=True)

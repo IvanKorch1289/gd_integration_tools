@@ -19,14 +19,10 @@ from __future__ import annotations
 
 from typing import Any
 
-import pytest
-
 
 def _make_adapter_with_mock_breaker() -> tuple[Any, Any]:
     """Create adapter with mock registry returning a mock breaker."""
-    from src.backend.core.resilience.breaker_policy_adapter import (
-        BreakerPolicyAdapter,
-    )
+    from src.backend.core.resilience.breaker_policy_adapter import BreakerPolicyAdapter
 
     mock_breaker = MagicMock()
     mock_breaker._state = "closed"
@@ -84,9 +80,7 @@ def test_get_state_returns_route_breaker_state() -> None:
 
 def test_record_failure_opens_breaker_at_threshold() -> None:
     """record_failure: threshold failures → state = OPEN via _set_state."""
-    from src.backend.core.resilience.breaker_policy_adapter import (
-        BreakerPolicy,
-    )
+    from src.backend.core.resilience.breaker_policy_adapter import BreakerPolicy
 
     adapter, mock_breaker = _make_adapter_with_mock_breaker()
     policy = BreakerPolicy(failure_threshold=3)
@@ -102,9 +96,7 @@ def test_record_failure_opens_breaker_at_threshold() -> None:
 
 def test_record_failure_no_op_when_already_open() -> None:
     """record_failure on OPEN breaker does nothing (recovery via TTL)."""
-    from src.backend.core.resilience.breaker_policy_adapter import (
-        BreakerPolicy,
-    )
+    from src.backend.core.resilience.breaker_policy_adapter import BreakerPolicy
 
     adapter, mock_breaker = _make_adapter_with_mock_breaker()
     mock_breaker._state = "open"
@@ -118,9 +110,7 @@ def test_record_failure_no_op_when_already_open() -> None:
 
 def test_record_success_closes_breaker_from_open() -> None:
     """record_success on OPEN → CLOSED via _set_state."""
-    from src.backend.core.resilience.breaker_policy_adapter import (
-        BreakerPolicy,
-    )
+    from src.backend.core.resilience.breaker_policy_adapter import BreakerPolicy
 
     adapter, mock_breaker = _make_adapter_with_mock_breaker()
     mock_breaker._state = "open"
@@ -134,9 +124,7 @@ def test_record_success_closes_breaker_from_open() -> None:
 
 def test_record_success_resets_count_when_closed() -> None:
     """record_success on CLOSED just resets failure count."""
-    from src.backend.core.resilience.breaker_policy_adapter import (
-        BreakerPolicy,
-    )
+    from src.backend.core.resilience.breaker_policy_adapter import BreakerPolicy
 
     adapter, mock_breaker = _make_adapter_with_mock_breaker()
     mock_breaker._state = "closed"
@@ -159,9 +147,7 @@ def test_should_allow_returns_true_for_closed_breaker() -> None:
 
 def test_should_allow_returns_false_for_open_breaker() -> None:
     """should_allow returns False when breaker state is 'open'."""
-    from src.backend.core.resilience.breaker_policy_adapter import (
-        BreakerPolicy,
-    )
+    from src.backend.core.resilience.breaker_policy_adapter import BreakerPolicy
 
     adapter, mock_breaker = _make_adapter_with_mock_breaker()
     mock_breaker._state = "open"
@@ -181,9 +167,7 @@ def test_get_state_returns_fresh_snapshot() -> None:
 
 def test_record_failure_handles_missing_wrapper_api() -> None:
     """If wrapper API missing, log + skip (graceful)."""
-    from src.backend.core.resilience.breaker_policy_adapter import (
-        BreakerPolicyAdapter,
-    )
+    from src.backend.core.resilience.breaker_policy_adapter import BreakerPolicyAdapter
 
     mock_breaker = MagicMock(spec=[])  # no _set_state
     mock_breaker._state = "closed"

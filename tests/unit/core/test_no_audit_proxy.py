@@ -13,7 +13,6 @@ Verified: 3 call sites (2 prod entrypoints + 1 test mock unaffected).
 
 from __future__ import annotations
 
-import importlib
 import sys
 from pathlib import Path
 

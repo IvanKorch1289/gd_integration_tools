@@ -67,7 +67,6 @@ class TestADR0286Allowance:
 
     def test_check_layers_matrix_includes_services_for_infrastructure(self) -> None:
         """ALLOWED map: infrastructure includes services per ADR-0286."""
-        import re
 
         from tools.check_layers import ALLOWED  # type: ignore[import-not-found]
 

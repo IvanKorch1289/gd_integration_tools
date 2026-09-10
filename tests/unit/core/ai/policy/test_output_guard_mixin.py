@@ -19,7 +19,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from src.backend.core.ai.errors import GuardrailViolationError
-from src.backend.core.ai.gateway_models import AIRequest, AIResponse
+from src.backend.core.ai.gateway_models import AIResponse
 from src.backend.core.ai.policy.enforcer.output_guard_mixin import OutputGuardMixin
 from src.backend.core.ai.policy.spec import GuardRef
 

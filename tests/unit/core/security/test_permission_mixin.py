@@ -24,10 +24,7 @@ import pytest
 from src.backend.core.security.authorization_gateway.permission_mixin import (
     PermissionMixin,
 )
-from src.backend.core.security.authorization_gateway.state import (
-    AuthorizationReason,
-    PolicyDecider,
-)
+from src.backend.core.security.authorization_gateway.state import AuthorizationReason
 
 
 class TestPermissionMixinFactory:

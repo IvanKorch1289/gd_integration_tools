@@ -109,7 +109,9 @@ def test_all_callers_migrated_to_infrastructure_notifications() -> None:
         .joinpath("notify/__init__.py")
         .read_text(encoding="utf-8")
     )
-    assert "from src.backend.infrastructure.notifications import (" in text
+    assert "get_notifications_module_provider" in text, (
+        "notify/__init__.py должен использовать DI provider (M6-#3)"
+    )
     assert "get_gateway" in text
     assert "from src.backend.core.notifications" not in text
 
@@ -121,11 +123,9 @@ def test_all_callers_migrated_to_infrastructure_notifications() -> None:
     ext_text = Path(
         "extensions/core_entities/orders/workflows/orders_dsl.py"
     ).read_text(encoding="utf-8")
-    assert (
-        "from src.backend.infrastructure.notifications import get_gateway" in ext_text
-    ), (
-        "extensions/core_entities/orders/workflows/orders_dsl.py должна import "
-        "из infrastructure.notifications (Sprint 36 fix для Sprint 35 overshoot)"
+    assert "get_notification_gateway" in ext_text, (
+        "extensions/core_entities/orders/workflows/orders_dsl.py должна "
+        "использовать DI provider (M6-#3: inline-import заменён на DI)"
     )
     assert "from src.backend.core.notifications" not in ext_text
 

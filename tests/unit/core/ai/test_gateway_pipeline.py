@@ -160,11 +160,7 @@ async def test_pipeline_passes_fallbacks_from_policy(
     resolver to return one with ``allow_all_tools=True`` to preserve the
     pre-S209 "fallbacks from policy" test intent.
     """
-    from src.backend.core.ai.policy.spec import (
-        AIPolicySpec,
-        ModelRouterSpec,
-        ToolsSpec,
-    )
+    from src.backend.core.ai.policy.spec import AIPolicySpec, ModelRouterSpec, ToolsSpec
 
     policy = AIPolicySpec(
         name="credit_check",

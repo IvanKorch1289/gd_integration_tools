@@ -9,12 +9,13 @@ Covers:
 
 from __future__ import annotations
 
+import itertools
+
 import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from src.backend.core.resilience.degradation import DegradationMode, mode_at_least
-import itertools
 
 ALL_MODES = list(DegradationMode)
 STRICTNESS: dict[DegradationMode, int] = {

@@ -48,8 +48,8 @@ def test_canonical_rate_limiter_protocol_still_works() -> None:
     """Канонический ``RateLimiter`` Protocol остался работать после удаления facade."""
     from src.backend.core.resilience.rate_limiter import (
         RateLimit,
-        RateLimitExceeded,
         RateLimiter,
+        RateLimitExceeded,
         RedisRateLimiter,
         get_rate_limiter,
     )
@@ -76,8 +76,8 @@ def test_resilience_init_does_not_reexport_unified_rate_limiter() -> None:
     """``core.resilience.__init__`` не ре-экспортирует удалённый facade."""
     from src.backend.core.resilience import (
         RateLimit,
-        RateLimitExceeded,
         RateLimiter,
+        RateLimitExceeded,
         RedisRateLimiter,
     )
 

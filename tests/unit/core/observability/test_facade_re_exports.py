@@ -16,8 +16,6 @@ Note (Sprint 40 W1 Item 6b): ``core.observability.log_indexer`` proxy REMOVED
 
 from __future__ import annotations
 
-import pytest
-
 from src.backend.core.observability.metrics import DEFAULT_LABELS
 from src.backend.core.observability.metrics import MetricsRegistry as MR_Class
 from src.backend.core.observability.metrics import metrics_registry as mr_singleton

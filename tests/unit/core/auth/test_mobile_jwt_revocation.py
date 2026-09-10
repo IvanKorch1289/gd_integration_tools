@@ -18,7 +18,6 @@ from src.backend.core.auth.mobile_jwt_revocation import (
     RateLimitDecision,
 )
 
-
 pytestmark = pytest.mark.asyncio
 
 

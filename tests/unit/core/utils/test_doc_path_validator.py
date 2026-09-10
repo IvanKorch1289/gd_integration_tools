@@ -7,8 +7,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 
 def test_validate_doc_paths_with_explicit_root(tmp_path: Path) -> None:
     """validate_doc_paths(explicit_repo_root) returns dict с categories."""

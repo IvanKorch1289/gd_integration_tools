@@ -17,16 +17,12 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-
 pytestmark = pytest.mark.asyncio
 
 
 async def _fresh_store() -> Any:
     """Fresh DSLVariableStore for each test (in-memory backend)."""
-    from src.backend.core.dsl.variables import (
-        DSLVariableStore,
-        InMemoryVariableBackend,
-    )
+    from src.backend.core.dsl.variables import DSLVariableStore, InMemoryVariableBackend
 
     return DSLVariableStore.configure([InMemoryVariableBackend()])
 

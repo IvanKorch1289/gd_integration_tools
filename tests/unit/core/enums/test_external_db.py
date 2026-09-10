@@ -131,8 +131,8 @@ def test_object_meta_view_cannot_have_parameters() -> None:
     """view не должен иметь parameters."""
     from src.backend.core.enums.external_db import (
         ExternalDBObjectMeta,
-        ExternalDBParameterMeta,
         ExternalDBObjectTypeChoices,
+        ExternalDBParameterMeta,
     )
 
     with pytest.raises(ValidationError, match="parameters"):
@@ -226,8 +226,8 @@ def test_object_meta_qualified_name_with_package() -> None:
     """qualified_name с package → schema.package.object_name."""
     from src.backend.core.enums.external_db import (
         ExternalDBObjectMeta,
-        ExternalDBParameterMeta,
         ExternalDBObjectTypeChoices,
+        ExternalDBParameterMeta,
     )
 
     m = ExternalDBObjectMeta(
@@ -245,8 +245,8 @@ def test_object_meta_is_read_operation() -> None:
     """is_read_operation True для view/function/query, False для procedure."""
     from src.backend.core.enums.external_db import (
         ExternalDBObjectMeta,
-        ExternalDBParameterMeta,
         ExternalDBObjectTypeChoices,
+        ExternalDBParameterMeta,
     )
 
     view = ExternalDBObjectMeta(

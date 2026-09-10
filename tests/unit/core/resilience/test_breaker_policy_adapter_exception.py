@@ -14,9 +14,7 @@ import pytest
 
 def _make_adapter_with_mock() -> tuple[Any, MagicMock]:
     """Create adapter with mock registry returning mock breaker."""
-    from src.backend.core.resilience.breaker_policy_adapter import (
-        BreakerPolicyAdapter,
-    )
+    from src.backend.core.resilience.breaker_policy_adapter import BreakerPolicyAdapter
 
     mock_breaker = MagicMock()
     mock_breaker._state = "closed"
@@ -59,9 +57,7 @@ def test_record_failure_without_exception_works() -> None:
 
 def test_record_failure_with_exception_at_threshold() -> None:
     """When threshold reached, exception type is logged."""
-    from src.backend.core.resilience.breaker_policy_adapter import (
-        BreakerPolicy,
-    )
+    from src.backend.core.resilience.breaker_policy_adapter import BreakerPolicy
 
     adapter, mock_breaker = _make_adapter_with_mock()
     policy = BreakerPolicy(failure_threshold=2)
@@ -79,9 +75,7 @@ def test_record_failure_with_exception_at_threshold() -> None:
 
 def test_record_failure_positional_exception_not_supported() -> None:
     """exception parameter is keyword-only (prevents accidental misuse)."""
-    from src.backend.core.resilience.breaker_policy_adapter import (
-        BreakerPolicy,
-    )
+    from src.backend.core.resilience.breaker_policy_adapter import BreakerPolicy
 
     adapter, _ = _make_adapter_with_mock()
     policy = BreakerPolicy(failure_threshold=3)

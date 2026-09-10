@@ -41,7 +41,9 @@ def test_build_casbin_calls_auth_gateway() -> None:
 
 def test_casbin_dunder_all() -> None:
     """__all__ = ('CasbinPolicyDecider', 'build_casbin_policy_decider')."""
-    from src.backend.core.security.authorization_gateway.policies import casbin_policy_decider
+    from src.backend.core.security.authorization_gateway.policies import (
+        casbin_policy_decider,
+    )
 
     assert casbin_policy_decider.__all__ == (
         "CasbinPolicyDecider",
@@ -101,7 +103,9 @@ def test_build_opa_default_policy_name() -> None:
 
 def test_opa_dunder_all() -> None:
     """__all__ = ('OPAPolicyDecider', 'build_opa_policy_decider')."""
-    from src.backend.core.security.authorization_gateway.policies import opa_policy_decider
+    from src.backend.core.security.authorization_gateway.policies import (
+        opa_policy_decider,
+    )
 
     assert opa_policy_decider.__all__ == (
         "OPAPolicyDecider",

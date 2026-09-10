@@ -5,9 +5,6 @@ contextvars-based correlation_id / request_id / tenant_id + start_span context m
 
 from __future__ import annotations
 
-import pytest
-import structlog
-
 
 def test_module_dunder_all() -> None:
     """__all__ = 10 symbols."""

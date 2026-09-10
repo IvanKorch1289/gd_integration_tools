@@ -118,9 +118,9 @@ def test_parse_dt_string_iso_with_offset() -> None:
 
 def test_parse_dt_unsupported_type_raises() -> None:
     """parse_dt(unsupported) → TypeError."""
-    from src.backend.core.utils.datetime_utils import parse_dt
-
     import pytest
+
+    from src.backend.core.utils.datetime_utils import parse_dt
 
     with pytest.raises(TypeError, match="unsupported"):
         parse_dt([1, 2, 3])  # type: ignore[arg-type]

@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import pytest
 
-
 # P1-6 promoted symbols: (facade_name, original_module, original_name)
 PROMOTED: list[tuple[str, str, str]] = [
     ("BasePlugin", "src.backend.core.interfaces.plugin", "BasePlugin"),

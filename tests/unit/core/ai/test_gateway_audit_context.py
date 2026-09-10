@@ -6,7 +6,7 @@ AsyncMock. Проверяются event_type-маппинги, pii_detected/late
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 

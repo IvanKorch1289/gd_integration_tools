@@ -15,7 +15,6 @@ Caller inventory verified 2026-08-27:
 
 from __future__ import annotations
 
-import importlib
 import sys
 from pathlib import Path
 

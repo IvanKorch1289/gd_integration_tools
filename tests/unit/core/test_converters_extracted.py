@@ -108,8 +108,9 @@ class TestTransferModelToSchema:
     """transfer_model_to_schema — ORM/dict → pydantic schema."""
 
     def test_dict_to_pydantic_schema(self) -> None:
-        from src.backend.dsl.codec.converters import transfer_model_to_schema
         from pydantic import BaseModel
+
+        from src.backend.dsl.codec.converters import transfer_model_to_schema
 
         class UserSchema(BaseModel):
             name: str
@@ -122,8 +123,9 @@ class TestTransferModelToSchema:
         assert result.age == 30
 
     def test_invalid_data_raises_value_error(self) -> None:
-        from src.backend.dsl.codec.converters import transfer_model_to_schema
         from pydantic import BaseModel
+
+        from src.backend.dsl.codec.converters import transfer_model_to_schema
 
         class UserSchema(BaseModel):
             name: str
@@ -136,8 +138,9 @@ class TestTransferModelToSchema:
 
     def test_from_attributes_true(self) -> None:
         """from_attributes=True: pydantic может читать атрибуты объекта."""
-        from src.backend.dsl.codec.converters import transfer_model_to_schema
         from pydantic import BaseModel
+
+        from src.backend.dsl.codec.converters import transfer_model_to_schema
 
         class UserSchema(BaseModel):
             name: str

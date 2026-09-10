@@ -13,9 +13,7 @@ class TestCapabilityDeniedError:
     a capability it doesn't have."""
 
     def test_basic_construction(self) -> None:
-        from src.backend.core.security.capabilities.errors import (
-            CapabilityDeniedError,
-        )
+        from src.backend.core.security.capabilities.errors import CapabilityDeniedError
 
         err = CapabilityDeniedError(
             plugin="my_plugin",
@@ -33,9 +31,7 @@ class TestCapabilityDeniedError:
         assert err.correlation_id == "corr-123"
 
     def test_message_format(self) -> None:
-        from src.backend.core.security.capabilities.errors import (
-            CapabilityDeniedError,
-        )
+        from src.backend.core.security.capabilities.errors import CapabilityDeniedError
 
         err = CapabilityDeniedError(
             plugin="my_plugin",
@@ -50,9 +46,7 @@ class TestCapabilityDeniedError:
         assert "ai.chat" in msg
 
     def test_correlation_id_in_audit_payload(self) -> None:
-        from src.backend.core.security.capabilities.errors import (
-            CapabilityDeniedError,
-        )
+        from src.backend.core.security.capabilities.errors import CapabilityDeniedError
 
         err = CapabilityDeniedError(
             plugin="plugin",
@@ -70,9 +64,7 @@ class TestInheritance:
     """Errors should inherit from appropriate base classes."""
 
     def test_capability_denied_is_exception(self) -> None:
-        from src.backend.core.security.capabilities.errors import (
-            CapabilityDeniedError,
-        )
+        from src.backend.core.security.capabilities.errors import CapabilityDeniedError
 
         assert issubclass(CapabilityDeniedError, Exception)
         # Can be raised and caught

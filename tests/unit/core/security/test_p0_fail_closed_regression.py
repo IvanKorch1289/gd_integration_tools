@@ -26,9 +26,7 @@ class TestToolPolicyFailClosed:
 
     def test_enforce_tool_policy_disallowed_tool_raises(self) -> None:
         """Sprint 203 cycle 30 fix — tool в blacklist → ToolPolicyViolationError."""
-        from src.backend.core.ai.policy.enforcer.tools_policy import (
-            enforce_tool_policy,
-        )
+        from src.backend.core.ai.policy.enforcer.tools_policy import enforce_tool_policy
         from src.backend.core.ai.policy.spec import ToolsSpec
 
         spec = ToolsSpec(whitelist=[], blacklist=["dangerous.*"])
@@ -37,9 +35,7 @@ class TestToolPolicyFailClosed:
 
     def test_enforce_tool_policy_whitelist_match_passes(self) -> None:
         """tool в whitelist → no exception."""
-        from src.backend.core.ai.policy.enforcer.tools_policy import (
-            enforce_tool_policy,
-        )
+        from src.backend.core.ai.policy.enforcer.tools_policy import enforce_tool_policy
         from src.backend.core.ai.policy.spec import ToolsSpec
 
         spec = ToolsSpec(whitelist=["safe.*"], blacklist=[])
