@@ -334,15 +334,17 @@ async def _save_inline_notebook(
         Путь к сохранённому файлу.
 
     """
-    import json
+    # PERF-6.6 P10d: orjson для notebook JSON validation (hot-path).
     import os
     import tempfile
+
+    import orjson
 
     # Если str — парсим как JSON чтобы валидировать структуру
     if isinstance(content, str):
         try:
-            json.loads(content)  # validate JSON
-        except json.JSONDecodeError as exc:
+            orjson.loads(content)  # validate JSON
+        except orjson.JSONDecodeError as exc:
             raise HubRunError(
                 f"notebook_content (str) is not valid JSON: {exc}"
             ) from exc
@@ -350,8 +352,8 @@ async def _save_inline_notebook(
     else:
         # Validate bytes are valid JSON before writing
         try:
-            json.loads(content.decode("utf-8"))
-        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            orjson.loads(content.decode("utf-8"))
+        except (orjson.JSONDecodeError, UnicodeDecodeError) as exc:
             raise HubRunError(
                 f"notebook_content (bytes) is not valid JSON .ipynb: {exc}"
             ) from exc
