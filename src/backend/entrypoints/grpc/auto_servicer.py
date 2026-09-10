@@ -315,7 +315,7 @@ def register_auto_servicers(grpc_server: Any) -> int:
             continue
 
         method_handlers: dict[str, Any] = {}
-        service_full_name = f"/{service_desc.full_name}"
+        service_full_name = service_desc.full_name
         for method_desc in service_desc.methods:
             rpc_name = method_desc.name
             behavior = getattr(servicer, rpc_name, None)
@@ -340,7 +340,7 @@ def register_auto_servicers(grpc_server: Any) -> int:
             )
             continue
 
-        service_full_name = f"/{service_desc.full_name}"
+        service_full_name = service_desc.full_name
 
         generic_handler = grpc_lib.method_handlers_generic_handler(
             service_full_name, method_handlers
