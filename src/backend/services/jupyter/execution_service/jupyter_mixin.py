@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import time
 import uuid
 from typing import Any
 
 import httpx
+
+# PERF-6.6 P10d: orjson alias — 3-5x faster JSON parse/serialize vs stdlib.
+import orjson as json
 
 from src.backend.core.logging import get_logger
 from src.backend.services.jupyter.execution_service.errors import JupyterExecutionError
@@ -186,7 +188,7 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
                     _heartbeat_loop(), name=f"jupyter.heartbeat.{kernel_id}"
                 )
 
-                await ws.send(json.dumps(execute_msg))
+                await ws.send(json.dumps(execute_msg).decode())
 
                 # Wait for execute_reply with msg_id matching our request
                 deadline = time.monotonic() + timeout
