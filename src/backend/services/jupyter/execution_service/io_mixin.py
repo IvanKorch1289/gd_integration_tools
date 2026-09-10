@@ -110,8 +110,8 @@ class IOMixin(_NotebookExecutionProtocol):
             _logger.warning("nbformat not installed — falling back to manual JSON read")
 
             def _read_json() -> Any:
-                with open(notebook_path, encoding="utf-8") as fh:
-                    return json.load(fh)
+                with open(notebook_path, "rb") as fh:
+                    return json.loads(fh.read())
 
             data = await asyncio.to_thread(_read_json)
             cells = [

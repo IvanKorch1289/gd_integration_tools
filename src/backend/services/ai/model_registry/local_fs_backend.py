@@ -15,11 +15,13 @@ Lazy-import тяжёлых библиотек (torch, sklearn, catboost, lightgb
 from __future__ import annotations
 
 import asyncio
+
+# PERF-6.6 P12b: orjson для model registry file IO (manifest load/save).
+import json as stdlib_json
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
-# PERF-6.6 P12b: orjson для model registry file IO (manifest load/save).
 import orjson as json
 
 from src.backend.core.logging import get_logger
@@ -212,7 +214,7 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
             "created_at": datetime.now(UTC).isoformat(),
         }
         manifest_path = self._manifest_path(model_dir)
-        content = json.dumps(manifest, ensure_ascii=False, indent=2)
+        content = stdlib_json.dumps(manifest, ensure_ascii=False, indent=2)
         await loop.run_in_executor(
             None, lambda: manifest_path.write_text(content, encoding="utf-8")
         )

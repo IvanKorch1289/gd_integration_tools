@@ -27,7 +27,7 @@ class _CreditScoringPipeline:
             decision = "review"
         else:
             decision = "reject"
-        return json.dumps({"decision": decision, "score": score_input})
+        return json.dumps({"decision": decision, "score": score_input}).decode("utf-8")
 
     def metric(self, example: dict[str, Any], output: str) -> float:
         """Возвращает 1.0 если decision совпадает, partial для score-mismatch."""

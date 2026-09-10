@@ -47,7 +47,7 @@ class _DocumentParserPipeline:
 
         return json.dumps(
             {"passport": passport, "dob": dob, "full_name": full_name},
-        )
+        ).decode("utf-8")
 
     def metric(self, example: dict[str, Any], output: str) -> float:
         """Сравнивает распарсенный output с ожидаемым результатом (dspy metric)."""

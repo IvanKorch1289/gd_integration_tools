@@ -252,7 +252,7 @@ class WebhookSignatureMiddleware:
     @staticmethod
     async def _send_401(send: Send, *, detail: str) -> None:
         """Отправляет 401 JSON response через send (cycle 39 lesson)."""
-        body = json.dumps({"detail": detail}).encode("utf-8")
+        body = json.dumps({"detail": detail})  # orjson.dumps → bytes
         await send(
             {
                 "type": "http.response.start",
@@ -279,7 +279,7 @@ class WebhookSignatureMiddleware:
             code="webhook_not_configured", detail=detail, scope=scope
         )
         body["error"] = body["code"]  # backward-compat alias для legacy clients
-        body_bytes = json.dumps(body).encode("utf-8")
+        body_bytes = json.dumps(body)  # orjson.dumps → bytes
         await send(
             {
                 "type": "http.response.start",

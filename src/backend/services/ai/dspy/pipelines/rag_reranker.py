@@ -124,7 +124,7 @@ class _RagRerankerPipeline:
         query = str(example.get("query") or "")
         candidates = example.get("candidates") or []
         if not query or not candidates:
-            return json.dumps([d.get("id") for d in candidates])
+            return json.dumps([d.get("id") for d in candidates]).decode("utf-8")
 
         reranker = _resolve_bge_reranker()
         if reranker is not None:
@@ -139,8 +139,8 @@ class _RagRerankerPipeline:
                     reverse=True,
                 )
                 return json.dumps(
-                    [doc.get("id") for doc, _ in ranked], ensure_ascii=False
-                )
+                    [doc.get("id") for doc, _ in ranked]
+                ).decode("utf-8")
             except Exception as exc:
                 logger.warning(
                     "FlagReranker.compute_score failed (%s), fallback на token-overlap",
