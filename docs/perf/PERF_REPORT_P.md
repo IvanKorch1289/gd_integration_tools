@@ -301,3 +301,32 @@ a3c440c54 perf(ai): model_registry local_fs_backend — json → orjson (PERF-6.
 | Load-test 30+ concurrent | real prod-стенд (4+ workers) | 1 день + prod |
 | LLM response cache (feature) | design review + impl | 1-2 дня |
 
+
+---
+
+## v8 update — Sprint P33: compression middlewares → run_in_executor (2026-09-10)
+
+### P33: gzip + brotli middlewares offload compression to ExecutorThread pool
+
+**Проблема**: `gzip.compress` и `brotli.compress` — sync CPU-heavy операции.
+Для bodies ≥ 1KB они блокируют event loop:
+- gzip 1-5ms на 100KB-1MB bodies
+- brotli 5-50ms на тех же размерах
+
+**Решение**: `loop.run_in_executor(None, ...)` для bodies ≥ 1KB (1KB threshold
+подобрано эмпирически — для меньших bodies overhead executor > compression time).
+
+**Файлы**:
+- `gzip_compression_excluding.py` (commit `3f5205520`)
+- `brotli_compression.py` (commit `ab03eec30`)
+
+**Impact**:
+- /metrics, /health, /asyncapi — small bodies (< 1KB), sync path, no change
+- JSON response > 1KB — compression offloaded, event loop free
+- /api/v1/admin/users with 5KB response — sync (5KB < 1KB threshold)
+- LLM streaming response > 1KB — offloaded
+
+**Cumulative Sprint P3-P33 wins** (32 perf-коммитов за 8 сессий):
+- Same as v7 + P33 offload
+- Plus: brotli (covered earlier, already in prod via prod.yml) offload
+
