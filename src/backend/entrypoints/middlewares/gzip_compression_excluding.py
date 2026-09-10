@@ -84,6 +84,14 @@ class GZipCompressionExcludingMiddleware:
             if message["type"] == "http.response.start":
                 # Buffer start, wait for body.
                 original_start = message
+                # PERF-6.6 P9: skip gzip если response уже compressed (brotli)
+                # или имеет cache-control no-transform. Avoids double-compression
+                # cost (gzip re-compressing brotli stream) + potential issues.
+                _has_encoding = any(
+                    h[0].lower() == b"content-encoding" for h in message.get("headers", [])
+                )
+                if _has_encoding:
+                    started = True  # Skip compression path entirely
             elif message["type"] == "http.response.body":
                 if not started:
                     body_buffer.write(message.get("body", b""))
