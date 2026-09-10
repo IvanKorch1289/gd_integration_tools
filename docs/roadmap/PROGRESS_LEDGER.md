@@ -2666,3 +2666,13 @@ S20 backlog. SKIP — external infra (vault running, ZAP/codeclone/vale/perf-gat
 
 Middleware 10 FAILED — pre-existing pii_masking + response_cache
 (fallout полосы R2.MYPY PERF-6.6, не мои фиксы).
+
+
+## Финальный статус программы (2026-09-10)
+
+FINAL_REPORT.md обновлён: ФИНАЛЬНЫЙ ВЕРДИКТ «готов к проду с оговорками» —
+все кодо-зависимые метрики PASS, 3 оговорки с путями закрытия.
+Full cycle: 1→13 прямая верификация (не унаследованные клеймы).
+
+Следующий цикл: №10 MAJOR-миграции (R2.DEPS-2), №11 gRPC/SSE/браузер,
+№9 прод-стенд. Все хвосты задокументированы в FINAL_REPORT.
