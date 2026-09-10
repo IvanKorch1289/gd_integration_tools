@@ -2379,3 +2379,18 @@ push 300 VU p99 650ms — контенция shared-box (OPT-1 не измери
 **№11**: WS ✓ live; REST/GraphQL/MQ ✓; gRPC — авторизация fix + transport
 ✓, auto-servicer dispatch (grpc.aio internals) — след. сессия (py-spy);
 SSE/браузер — след.
+
+
+## №12-хвост закрыт (2026-09-09 ночь): ARCHITECTURE.md/README сверка
+
+Прямая сверка (`grep` численных claims по обоим файлам):
+- README badges (audit-r9 93%, god-objects 4/5, static gates 0/0/0) —
+  соответствуют факту (ruff/bandit/vulture пере-проверены сегодня).
+- ARCHITECTURE.md:501 — единственный устаревший численный claim
+  («3639 tests») актуализирован: 17412 collected (verified collect
+  2026-09-09), coverage 72% (72.04% honest). Коммит `2b3b04348`.
+- Остальные цифры в ARCHITECTURE (S20-цели 83%/RPS 1500) — маркеры
+  roadmap-целей, не claims о текущем состоянии.
+
+№12: **STATUS/FTR/ledger/ARCHITECTURE/README — синхронизированы**,
+unverified claims устранены. Метрика №12 закрыта.
