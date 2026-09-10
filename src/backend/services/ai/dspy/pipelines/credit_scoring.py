@@ -5,9 +5,11 @@
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from typing import Any
+
+# PERF-6.6 P10g: orjson для LLM output parsing (hot-path).
+import orjson as json
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,9 +27,7 @@ class _CreditScoringPipeline:
             decision = "review"
         else:
             decision = "reject"
-        return json.dumps(
-            {"decision": decision, "score": score_input}, ensure_ascii=False
-        )
+        return json.dumps({"decision": decision, "score": score_input})
 
     def metric(self, example: dict[str, Any], output: str) -> float:
         """Возвращает 1.0 если decision совпадает, partial для score-mismatch."""
