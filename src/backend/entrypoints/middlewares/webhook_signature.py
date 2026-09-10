@@ -40,10 +40,11 @@ middlewares (csrf, rpa, и т.п.). Поля ``code``, ``detail``, ``error_id``,
 
 from __future__ import annotations
 
-import json
 import os
 from collections.abc import Mapping
 
+# PERF-6.6 P10i: orjson для 401 response body serialization.
+import orjson as json
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from src.backend.core.errors import build_error_envelope
