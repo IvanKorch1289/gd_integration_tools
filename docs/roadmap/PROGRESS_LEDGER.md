@@ -2684,3 +2684,17 @@ Full cycle: 1→13 прямая верификация (не унаследов�
 тест ожидает отсутствие postgres настроек в окружении, но dev_light
 профиль их имеет (SQLite + postgres конфигурация). Environmental
 (профиль-зависимый), не регресс от наших изменений.
+
+
+## R2.DEPS финал (2026-09-09 ночь): outdated 131 → 34, ≤30 требует R2.DEPS-2
+
+SAFE-93 + same-major-12 применены и верифицированы (imports OK, ruff 0,
+smoke green). Остаток 34 заблокирован родительскими констрейнтами:
+- 12 same-major (click 8.5, tomlkit 0.15, typer 0.27, pydantic-core 2.49...)
+  — `uv lock --upgrade-package` не двигает (родительские pins)
+- 23 MAJOR (aio-pika 10, redis 8, protobuf 7, elasticsearch 9, fastmcp 4,
+  thinc 9, textual 8, structlog 26, rich 15, websockets 17, uuid-utils 1...)
+  — breaking-миграции, per-package тесты
+
+Цель ≤30 недостижима без constraint widening + parent package updates.
+R2.DEPS-2 — отдельная серия (spint-бюджет), координация с полосой R2.MYPY.
