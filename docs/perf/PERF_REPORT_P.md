@@ -423,3 +423,26 @@ buffer overflow (ab-2.3 ≤2.4 issue, fixed в ab-2.5+). Server logs показ�
 | **pre-prod-check ≥33/36** | 22/36 (need 11 more) ⚠ |
 | **Coverage 70%** | rpa/services 70% (target met per-module) ✅ |
 
+
+---
+
+## v13 update — Sprint 15: focused coverage tests batch 2 (2026-09-10)
+
+### Sprint 15 modules
+
+| Модуль | Before | After | Tests added | Commit |
+|---|---|---|---|---|
+| `src.backend.infrastructure.observability.memory_metrics` | 64% | **92%** (+28pp) | 11 (_key, inc_counter, set_gauge, observe_histogram, snapshot, reset, thread-safety) | `dca603cda` |
+| `src.backend.services.observability.facade` | 40% | **70%+** (+30pp) | 10 (__init__, record_metric, start_span, set/get_correlation_id, singleton) | `75f12030e` |
+
+### Sprint 14-15 cumulative coverage (3 сессии)
+
+| Module | Original | Sprint 14 | Sprint 15 | Total Δ |
+|---|---|---|---|---|
+| `infrastructure/storage/local_fs` | 66% | 85% | — | **+19pp** |
+| `services/rpa/desktop_session_pool` | 0% | 83% | — | **+83pp** |
+| `services/rpa/browser_pool` | 33% | 50% | — | **+17pp** |
+| `infrastructure/observability/memory_metrics` | 64% | — | 92% | **+28pp** |
+| `services/observability/facade` | 40% | — | 70%+ | **+30pp** |
+| **Total cumulative** | — | — | — | **+177pp** |
+
