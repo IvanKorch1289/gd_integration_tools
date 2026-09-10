@@ -356,3 +356,21 @@ WS-строка метрики №11: ЗАКРЫТА (handshake + auth + ста�
 Оставшийся NotImplementedError — ожидаемое поведение standalone grpc-serve
 без загруженных экшенов расширений. В production (полное приложение)
 реестр заполнен и dispatch возвращает данные.
+
+
+## gRPC auto-servicer — routing FULLY VERIFIED (2026-09-10)
+
+In-process полный цикл (server + client, единый event loop):
+- transport ✓ / auth ✓ / method dispatch ✓ / behavior ✓
+- Бизнес-слой: NotImplementedError (экшен orderkinds.list не в реестре
+  standalone-процесса — extensions регистрируют экшены при create_app).
+
+**Корневая причина (фиксирована)**: `service_full_name = f"/{full_name}"` с
+ведущим слэшем → `_GenericRpcHandler` добавлял второй слэш → ключи
+`//orderkinds...` → UNIMPLEMENTED. Fix: `service_full_name = full_name`
+(без слэша) — `3af175bf0`.
+
+**Оставшееся**: gRPC auto-servicer требует полного контекста приложения
+(загрузка extensions → реестр экшенов) — production deploy через
+`create_app()` обеспечивает это автоматически. Standalone grpc-serve —
+dev/test утилита.
