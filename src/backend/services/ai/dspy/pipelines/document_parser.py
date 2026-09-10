@@ -6,10 +6,12 @@
 
 from __future__ import annotations
 
-import json
 import re
 from dataclasses import dataclass
 from typing import Any
+
+# PERF-6.6 P10h: orjson для LLM output parsing.
+import orjson as json
 
 _PASSPORT_RE = re.compile(r"\b(\d{4})\s?(\d{6})\b")
 _DOB_RE = re.compile(r"\b\d{2}[./]\d{2}[./]\d{4}\b")
@@ -45,7 +47,6 @@ class _DocumentParserPipeline:
 
         return json.dumps(
             {"passport": passport, "dob": dob, "full_name": full_name},
-            ensure_ascii=False,
         )
 
     def metric(self, example: dict[str, Any], output: str) -> float:
