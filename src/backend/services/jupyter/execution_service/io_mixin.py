@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import asyncio
-import json
 from typing import Any
 
 import httpx
+
+# PERF-6.6 P10d: orjson alias — 3-5x faster JSON serialize vs stdlib.
+import orjson as json
 
 from src.backend.core.logging import get_logger
 from src.backend.services.jupyter.execution_service.errors import JupyterExecutionError
@@ -124,7 +126,7 @@ class IOMixin(_NotebookExecutionProtocol):
         # 2. Inject parameters cell at the top
         if parameters:
             param_source = "\n".join(
-                f"{key} = {json.dumps(value)}" for key, value in parameters.items()
+                f"{key} = {json.dumps(value).decode()}" for key, value in parameters.items()
             )
             cells.insert(0, {"cell_type": "code", "source": param_source})
 
