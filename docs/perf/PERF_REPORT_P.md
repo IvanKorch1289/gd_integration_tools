@@ -194,3 +194,25 @@ a3c440c54 perf(ai): model_registry local_fs_backend — json → orjson (PERF-6.
   dead code. Skip.
 - **Coverage ratchet / M6-#3 / Load-test prod-стенд / FTR** — все infra-blocked.
 
+
+---
+
+## v5 update — Sprint P15-P16: gzip level + INFRA_REQUEST
+
+### Sprint P15 (commit `fe0526763`): gzip compresslevel 9 → 6 в prod
+
+- Brotli покрывает primary compression path
+- Gzip fallback — level 6 CPU/Ratio sweet-spot
+- Level 9 → 6: ~2-3x faster на CPU при +3-5% к ratio
+
+### Sprint P16 (commit `c54fd5d0f`): INFRA_REQUEST.md
+
+См. `docs/perf/INFRA_REQUEST.md` для деталей что нужно от пользователя:
+
+| Action | Effort | Разблокирует |
+|---|---|---|
+| Docker socket access | 5 мин | M6-#3 + FTR (2 метрики) |
+| Prod-стенд SSH access | 1 час setup | load-test p99 verify (1 метрика) |
+| Time для coverage tests | 2-3 дня | coverage ≥70% (1 метрика) |
+| Pre-prod-check re-measure | 1 час | gates verification (1 метрика) |
+
