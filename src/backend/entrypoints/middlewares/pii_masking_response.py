@@ -24,6 +24,7 @@ Cycle 54 critical: response body modification.
 (with updated content-length) + http.response.body с masked body.
 """
 
+import functools
 import re
 from collections.abc import Iterable
 from typing import Any
@@ -194,8 +195,13 @@ class PIIMaskingResponseMiddleware:
     # ----------------------------------------------------------------- helpers
 
     @staticmethod
+    @functools.lru_cache(maxsize=1)
     def _is_enabled() -> bool:
-        """Lazy-проверка feature-flag ``pii_response_middleware_enabled``."""
+        """Lazy-проверка feature-flag ``pii_response_middleware_enabled``.
+
+        PERF-6.6 P5b: lru_cache(maxsize=1) — feature_flag меняется только при
+        restart процесса; cache избегает re-eval на каждом request.
+        """
         try:
             from src.backend.core.config.features import feature_flags
 
