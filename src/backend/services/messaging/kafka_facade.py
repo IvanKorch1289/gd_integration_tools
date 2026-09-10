@@ -258,10 +258,10 @@ class KafkaFacade:
         if isinstance(value, bytes):
             return value
         if isinstance(value, dict):
-            import json
+            # PERF-6.6 P10c: orjson в 3-5x быстрее stdlib json.
+            import orjson
 
-            return json.dumps(value).encode("utf-8")
-        return str(value).encode("utf-8")
+            return orjson.dumps(value)
 
 
 @lru_cache(maxsize=1)
