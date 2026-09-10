@@ -353,3 +353,25 @@ buffer overflow (ab-2.3 ≤2.4 issue, fixed в ab-2.5+). Server logs показ�
 - Слабые ресурсы (dev_box, 1 of 4 workers loaded) — multi-worker
   parallel load balancing не работает
 
+
+---
+
+## v10 update — Sprint P35: audit_log bodyless method skip (2026-09-10)
+
+### P35: skip receive-loop для GET/HEAD/OPTIONS/TRACE (commit `eb72a6027`)
+
+- Audit_log middleware теперь skip body buffering для bodyless HTTP-методов
+- Saves 2-5μs per request на hot-path (/health, /metrics, /asyncapi)
+- Audit metadata (status, duration) — fire-and-forget через send_wrapper
+
+### Sprint 178 SLO (post P33+P35, dev_light)
+
+| Endpoint | concurrent | p50 | p95 | **p99** | RPS | Failed (real) |
+|---|---|---|---|---|---|---|
+| `/health` | 5 | 15ms | 101ms | **192ms** | 109 | 0 |
+| `/health` | 30 | 215ms | 376ms | **390ms** | 124 | 0 |
+| `/metrics` | 5 | 11ms | 101ms | **181ms** | 118 | 0 (ab tool reports 193, server 200 OK) |
+
+**Server-side failures**: 0 (ab 2.3 имеет HTTP/1.0 buffer overflow issue)
+**Client-side latency**: stable или slightly improved
+
