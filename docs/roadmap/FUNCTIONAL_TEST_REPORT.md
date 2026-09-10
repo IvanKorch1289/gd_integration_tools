@@ -3,6 +3,10 @@
 > **Создан**: 2026-09-05 (координатор). Источник: прямые пробы и ledger
 > SWARM_SYNTHESIS 2026-09-02 для негативных auth-кейсов и public 200.
 > **Обновляется**: при каждом релизе или изменении auth-контракта.
+> **2026-09-10 (Sprint P23-P26)**: live-верификация на dev_light с поднятыми services
+> (postgres+redis+clamav+gd-app-light, без Vault — `vault.enabled=false`). Все public
+> и negative-auth endpoints верифицированы. Positive auth blocked: `migrations/versions/`
+> пустой → seed users отсутствуют → alembic upgrade head + seed migration required.
 
 ## Coverage matrix
 
