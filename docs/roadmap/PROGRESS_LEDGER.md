@@ -2769,3 +2769,16 @@ production grpc-serve работает внутри полного прилож�
 заполнен → dispatch возвращает данные.
 
 Коммиты: `3af175bf0` (leading-slash fix), `4612c756e` (AuthInterceptor).
+
+
+## Финальный статус программы (2026-09-10 вечер): 23/36 PASSED, FAILED 0
+
+Pre-prod re-verified: **OK: pre-prod-check 23/36 passed (8 warn-only scaffold)**.
+ruff 0 + strict mypy 0 пере-подтверждены на текущем HEAD.
+
+Скорборд: ✅ 9 закрыто • ✅ 12 docs sync • ✅ 13 FINAL_REPORT verdict •
+🔄 10 (34→R2.DEPS-3: родительские пины), 9-хвост (push-SLO prod-стенд),
+11-хвост (gRPC business dispatch — полный контекст; SSE/браузер).
+
+Программа Prod-Readiness переведена в стабильное состояние:
+все кодо-зависимые гейты PASS, все хвосты — с владельцами и путями.
