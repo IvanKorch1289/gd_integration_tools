@@ -498,7 +498,7 @@ Caller может явно вызвать `reset_degradation()` для форс�
                                                 │  L10 Test Coverage                 │
                                                 │  unit / integration / e2e / chaos │
                                                 │  perf / security / smoke          │
-                                                │  3639 tests; 50% → 83% (S20)      │
+                                                │  17412 tests; 72% (S20-цель 83%)  │
                                                 └────────────────────────────────────┘
 ```
 
