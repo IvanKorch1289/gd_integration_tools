@@ -317,3 +317,19 @@ NO_PUSH_5S — соединение стабильно открыто, ауте�
 ```
 
 WS-строка метрики №11: ЗАКРЫТА (handshake + auth + стабильное соединение).
+
+
+### 2026-09-09 (доп. 3): gRPC auto-servicer — цепочка восстановлена, верификация по слоям
+
+```bash
+# Сервер: APP_PROFILE=dev_light manage.py grpc-serve → unix:///tmp/order_service.sock
+# Проба List без ключа → UNAUTHENTICATED (auth interceptor ✓, чистый код-ответ)
+# Проба List с x-api-key → dispatch находит behavior (routing ✓) →
+#   NotImplementedError: Method not implemented
+#   = экшен orderkinds.list не в standalone-реестре (расширения грузит
+#   полное приложение) — граница окружения, не код-баг.
+```
+
+Слой-статус: transport ✓ / auth ✓ / routing ✓ (после фикса ведущего слэша
+`3af175bf0`) / business dispatch — требует полного реестра экшенов
+(production-контекст). Коммиты: `890e21084` `3af175bf0` `4612c756e`.
