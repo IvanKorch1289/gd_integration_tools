@@ -381,3 +381,25 @@ load-test p99<300ms verify (OPT-1 in dev_light done, prod-verify deferred), FTR 
 5. **Sprint 18 (FTR update)**: 10 protocols pos+neg auth matrix
 6. **Sprint 19 (pre-prod-check)**: re-measure после mypy fixes
 
+
+
+---
+
+## 0b. v6 update (2026-09-09 вечер) — direct verification (Sprint R2.MYPY+M6-#3+№9/№11)
+
+| # | Метрика | v5 | **v6 (verified 2026-09-09)** | Evidence |
+|---|---|---|---|---|
+| 2 | mypy STRICT | 402 🔄 | **0 / 2356 файлов** ✅ | `make type-check-strict-profile` → Success (серия 1190→402→**0**) |
+| 6 | coverage | ~31% ⏸ | **72.04%, gate 70 strict PASS** ✅ | scoped --cov-append combine; `fail_under=70` в pyproject |
+| 7 (их №9) | pre-prod | TBD ⏸ | **23/36 PASSED, 0 code-FAILED** ✅ | fresh run после фиксов (gate 01/02/04/11 PASS) |
+| 8 (их №10) | M6-#3 | Variant B ⏸ | **UNBLOCKED + live** ✅ | B-04 flow: step-up → login → 200 JWT 0.15s; подделка → 401 |
+| 9 (их №11) | load p99 @300VU | 440ms ⏸ | **650ms (контенция shared-box)** — OPT-1 применён, эффект не измерим; SLO push → prod-стенд | rerun 2026-09-09, LOAD_TEST_RESULTS секция RERUN |
+| 11 | FTR | partial | **REST/GraphQL/MQ/WS live-verified** | B-04 flow, WS auth+stable, MQ publish, секции 2026-09-09 |
+| 13 | Вердикт | — | **ГОТОВ К ПРОДУ С ОГОВОРКАМИ**: все кодо-зависимые метрики PASS; оговорки — outdated MAJOR-хвост (44, SAFE 93 применены), load push-SLO на prod-стенд, WS-нотификации push (соединения ✓, push по событиям) | FINAL_REPORT v6-блок (этот) |
+
+**Ключевые prod-фиксы сессии** (all live-verified): B-04 catch-22 (401 на любой
+логин), двойной WS accept, WS DI-JwtBackend (RS256/HS256 mismatch), WS close-reason
+>123b, AuthInterceptor bare-function handler (AttributeError на каждом unauth
+gRPC-вызове), JWT secret omission в login, aiofiles to_thread no-write,
+rate-limiters без redis.enabled guard. Инфра: gRPC auto-servicer dead-code →
+wired (4 домена, descriptor-based).
