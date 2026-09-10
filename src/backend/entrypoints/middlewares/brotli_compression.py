@@ -114,8 +114,10 @@ class BrotliCompressionMiddleware:
                     return
                 # final chunk — решаем, сжимать или нет
                 full_body = b"".join(buffer)
-                if len(full_body) >= self.minimum_size and self._is_json(
-                    captured_headers[0]
+                if (
+                    len(full_body) >= self.minimum_size
+                    and self._is_json(captured_headers[0])
+                    and self._brotli is not None
                 ):
                     # PERF-6.6 P33: brotli.compress — CPU-heavy (5-50ms для
                     # bodies 100KB-1MB). Offload в ExecutorThread pool чтобы
@@ -127,13 +129,13 @@ class BrotliCompressionMiddleware:
                         compressed = await loop.run_in_executor(
                             None,
                             functools.partial(  # type: ignore[union-attr]
-                                self._brotli.compress,
-                                full_body,
-                                quality=self.quality,
+                                self._brotli.compress, full_body, quality=self.quality
                             ),
                         )
                     else:
-                        compressed = self._brotli.compress(full_body, quality=self.quality)  # type: ignore[union-attr]
+                        compressed = self._brotli.compress(
+                            full_body, quality=self.quality
+                        )  # type: ignore[union-attr]
                     headers = [
                         (n, v)
                         for n, v in captured_headers[0]
