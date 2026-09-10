@@ -343,7 +343,8 @@ class AuthorizationFacade:
         Fail-closed: при отсутствии Redis или ошибке парсинга — отказ.
         """
         try:
-            import json as _json
+            # PERF-6.6 P10b: orjson для Redis session parsing (hot-path auth).
+            import orjson as _json
 
             from src.backend.core.api.storage import get_redis_client
 
