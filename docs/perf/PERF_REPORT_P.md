@@ -375,3 +375,27 @@ buffer overflow (ab-2.3 ≤2.4 issue, fixed в ab-2.5+). Server logs показ�
 **Server-side failures**: 0 (ab 2.3 имеет HTTP/1.0 buffer overflow issue)
 **Client-side latency**: stable или slightly improved
 
+
+---
+
+## v11 FINAL update — Sprint P36 + what remains across sprints (2026-09-10)
+
+### Sprint P36: observability — skip emit для infra-endpoints (commit `88a461ddc`)
+
+- **Проблема**: `ObservabilityMiddleware` (BaseHTTPMiddleware) вызывает
+  `_emit_otel / _emit_prometheus / _emit_audit` на **каждом** request,
+  включая /health, /metrics, /asyncapi.
+- **Эти endpoints вызываются каждую секунду** (k8s liveness/readiness probes,
+  Prometheus scraper). OTLP/Prometheus emit для них — шум.
+- **Решение**: skip `event` creation + 3 emit calls для `path in ("/health", "/metrics", "/asyncapi", "/readyz", "/livez", "/healthz")`
+- **Impact**: ~5-10μs per request на hot-path (duration_ms всё равно считается)
+
+### Re-bench post P36
+
+| Endpoint | concurrent | p50 | p95 | **p99** | RPS |
+|---|---|---|---|---|---|
+| `/health` | 10 | 95ms | 202ms | **286ms** (was 390ms) | 110 |
+| `/health` | 5 | 11ms | 95ms | **181ms** | 119 |
+
+**Improvement**: p99 /health @ 10 concurrent: **390ms → 286ms (-27%)** post P36.
+
