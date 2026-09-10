@@ -13,6 +13,7 @@ compression (downstream handlers pass through unchanged).
 
 from __future__ import annotations
 
+import asyncio
 import gzip
 import io
 
@@ -100,9 +101,22 @@ class GZipCompressionExcludingMiddleware:
                         # Last body chunk — compress и send.
                         body_data = body_buffer.getvalue()
                         if len(body_data) >= self.minimum_size:
-                            compressed = gzip.compress(
-                                body_data, compresslevel=self.compresslevel
-                            )
+                            # PERF-6.6 P33: gzip.compress sync → run_in_executor.
+                            # Для bodies > 100KB sync gzip блокирует event loop
+                            # 1-5ms — с ExecutorThread pool это offloaded.
+                            # Малые bodies (< 1KB) остаются sync — overhead.
+                            if len(body_data) >= 1024:
+                                loop = asyncio.get_running_loop()
+                                compressed = await loop.run_in_executor(
+                                    None,
+                                    gzip.compress,
+                                    body_data,
+                                    self.compresslevel,
+                                )
+                            else:
+                                compressed = gzip.compress(
+                                    body_data, compresslevel=self.compresslevel
+                                )
                             # Update headers: Content-Encoding, Content-Length.
                             from starlette.datastructures import MutableHeaders
 
