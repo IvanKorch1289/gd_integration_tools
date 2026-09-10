@@ -2433,3 +2433,11 @@ unverified claims устранены. Метрика №12 закрыта.
 
 Верификация: imports OK, ruff 0; полный smoke-срез — после спада нагрузки
 (параллельный pytest полосы занимает бокс, load 16-20).
+
+
+## Strict-финал 3 (2026-09-09 ночь): **0 ошибок** re-verified после orjson-миграции
+
+Последняя ошибка rag_reranker:163 (sorted-кортежи .get — false positive
+на tuple[dict,float] элементах) — точечный type: ignore с обоснованием.
+`make type-check-strict-profile` → **Success: 0 issues / 2356 files**.
+Коммит `7563f24be`.
