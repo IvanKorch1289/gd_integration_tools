@@ -20,6 +20,7 @@ JSON traffic ~60% (Brotli vs GZIP +20-30% при quality=4).
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from src.backend.core.logging import get_logger
@@ -116,7 +117,23 @@ class BrotliCompressionMiddleware:
                 if len(full_body) >= self.minimum_size and self._is_json(
                     captured_headers[0]
                 ):
-                    compressed = self._brotli.compress(full_body, quality=self.quality)  # type: ignore[union-attr]
+                    # PERF-6.6 P33: brotli.compress — CPU-heavy (5-50ms для
+                    # bodies 100KB-1MB). Offload в ExecutorThread pool чтобы
+                    # не блокировать event loop.
+                    if len(full_body) >= 1024:
+                        import functools
+
+                        loop = asyncio.get_running_loop()
+                        compressed = await loop.run_in_executor(
+                            None,
+                            functools.partial(  # type: ignore[union-attr]
+                                self._brotli.compress,
+                                full_body,
+                                quality=self.quality,
+                            ),
+                        )
+                    else:
+                        compressed = self._brotli.compress(full_body, quality=self.quality)  # type: ignore[union-attr]
                     headers = [
                         (n, v)
                         for n, v in captured_headers[0]
