@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse, ORJSONResponse, Response
 
 from src.backend.core.config.settings import settings
 from src.backend.core.logging import get_logger
@@ -56,6 +56,9 @@ def create_app() -> FastAPI:
         debug=settings.app.debug_mode,
         docs_url="/docs" if settings.app.enable_swagger else None,
         redoc_url="/redoc" if settings.app.enable_redoc else None,
+        # PERF-6.6 P8: orjson default response class — 3-5x faster JSON serialization
+        # vs stdlib json. Critical for hot-path JSON endpoints (DSL routes, RAG, AI).
+        default_response_class=ORJSONResponse,
     )
 
     try:
