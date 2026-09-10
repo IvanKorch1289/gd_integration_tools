@@ -46,7 +46,7 @@ class _DocumentParserPipeline:
                 break
 
         return json.dumps(
-            {"passport": passport, "dob": dob, "full_name": full_name},
+            {"passport": passport, "dob": dob, "full_name": full_name}
         ).decode("utf-8")
 
     def metric(self, example: dict[str, Any], output: str) -> float:

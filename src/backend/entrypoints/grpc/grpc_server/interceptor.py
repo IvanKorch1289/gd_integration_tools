@@ -67,8 +67,6 @@ class AuthInterceptor(grpc.aio.ServerInterceptor):
             # grpc.aio _handle_rpc ('function' object has no attribute
             # 'request_streaming') вместо чистого UNAUTHENTICATED.
             return grpc.unary_unary_rpc_method_handler(
-                _abort,
-                request_deserializer=None,
-                response_serializer=None,
+                _abort, request_deserializer=None, response_serializer=None
             )
         return await continuation(handler_call_details)

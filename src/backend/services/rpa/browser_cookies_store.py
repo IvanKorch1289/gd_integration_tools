@@ -166,8 +166,7 @@ class BrowserCookieStore:
         # since last save. Avoids redundant Redis writes on every nav
         # event when browser context didn't accumulate new cookies.
         new_payload = json.dumps(
-            sorted(cookies, key=lambda c: c.get("name", "")),
-            default=str,
+            sorted(cookies, key=lambda c: c.get("name", "")), default=str
         )
         new_ciphertext = self._fernet.encrypt(new_payload)
         try:

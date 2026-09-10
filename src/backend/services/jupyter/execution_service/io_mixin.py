@@ -126,7 +126,8 @@ class IOMixin(_NotebookExecutionProtocol):
         # 2. Inject parameters cell at the top
         if parameters:
             param_source = "\n".join(
-                f"{key} = {json.dumps(value).decode()}" for key, value in parameters.items()
+                f"{key} = {json.dumps(value).decode()}"
+                for key, value in parameters.items()
             )
             cells.insert(0, {"cell_type": "code", "source": param_source})
 

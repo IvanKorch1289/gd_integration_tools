@@ -82,9 +82,7 @@ class IPRestrictionMiddleware:
     @staticmethod
     async def _send_403(send: Send) -> None:
         """Отправляет 403 JSON response через send (cycle 39/40 lesson)."""
-        body_bytes = json.dumps(
-            {"detail": "Доступ запрещен для вашего IP-адреса"}
-        )
+        body_bytes = json.dumps({"detail": "Доступ запрещен для вашего IP-адреса"})
         await send(
             {
                 "type": "http.response.start",

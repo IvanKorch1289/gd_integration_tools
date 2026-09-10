@@ -88,7 +88,8 @@ class GZipCompressionExcludingMiddleware:
                 # или имеет cache-control no-transform. Avoids double-compression
                 # cost (gzip re-compressing brotli stream) + potential issues.
                 _has_encoding = any(
-                    h[0].lower() == b"content-encoding" for h in message.get("headers", [])
+                    h[0].lower() == b"content-encoding"
+                    for h in message.get("headers", [])
                 )
                 if _has_encoding:
                     started = True  # Skip compression path entirely

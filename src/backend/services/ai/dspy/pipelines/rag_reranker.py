@@ -138,9 +138,7 @@ class _RagRerankerPipeline:
                     key=lambda pair: pair[1],
                     reverse=True,
                 )
-                return json.dumps(
-                    [doc.get("id") for doc, _ in ranked]
-                ).decode("utf-8")
+                return json.dumps([doc.get("id") for doc, _ in ranked]).decode("utf-8")
             except Exception as exc:
                 logger.warning(
                     "FlagReranker.compute_score failed (%s), fallback на token-overlap",
