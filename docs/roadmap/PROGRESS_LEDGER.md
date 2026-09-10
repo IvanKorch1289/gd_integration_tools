@@ -2826,3 +2826,15 @@ transport → auth interceptor → method dispatch → behavior → dispatch_act
 Файл: auto_servicer.py — descriptor-based регистрация через
 method_handlers_generic_handler (4 домена, 13 RPC). Routing fix
 (ведущий слэш) — committed `3af175bf0`.
+
+
+## Фаза B доп. (2026-09-10 ночь 2): core 4141 passed / 0 failed
+
+- 6 тестовых фиксов (orjson-миграция + R2.MYPY регрессии):
+  1. create_task name kwarg (activity_capability_guard)
+  2. JWT fail-closed env override (mobile_jwt_redis)
+  3. no_notifications stale asserts ×2
+  4. rate_limiter redis.enabled fixture
+  5. storage_facade __all__ count 4→5
+  6. app_state_singleton overload docstrings
+- Core suite: **4141 passed / 0 failed** (полный, не slice).
