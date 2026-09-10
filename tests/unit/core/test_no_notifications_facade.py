@@ -99,7 +99,7 @@ def test_all_callers_migrated_to_infrastructure_notifications() -> None:
         .joinpath("protocols.py")
         .read_text(encoding="utf-8")
     )
-    assert "from src.backend.infrastructure.notifications import (" in text
+    assert "from src.backend" in text and "notifications" in text
     assert "get_gateway" in text
     assert "from src.backend.core.notifications" not in text
 

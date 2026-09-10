@@ -171,7 +171,9 @@ def _emit_audit(context: CapabilityContext | None, event: dict[str, object]) -> 
         )
         if asyncio.iscoroutine(coro):
             try:
-                get_task_registry().create_task(coro)
+                get_task_registry().create_task(
+                    coro, name=f"capability_guard.audit.{event_name}"
+                )
 
             except RuntimeError:
                 pass  # no running loop → drop coroutine (sync context)

@@ -56,6 +56,8 @@ class _FakeRedis:
 
 @pytest.fixture
 def fake_redis(monkeypatch: pytest.MonkeyPatch) -> _FakeRedis:
+    # M6-#3: включить redis.enabled (guard в unified_rate_limiter
+    # не пропускает к fake_redis при redis.enabled=False в dev_light).
     """Подменяет ``get_redis_client`` на in-memory fake для unified_rate_limiter.
 
     Production code (unified_rate_limiter.py:94) делает
@@ -66,6 +68,10 @@ def fake_redis(monkeypatch: pytest.MonkeyPatch) -> _FakeRedis:
     import src.backend.infrastructure.clients.storage.redis as redis_mod
 
     monkeypatch.setattr(redis_mod, "get_redis_client", lambda: fake)
+    # M6-#3: включить redis.enabled (guard в unified_rate_limiter
+    # возвращает fail-open при enabled=False, не достигая fake_redis)
+    from src.backend.core.config.settings import settings as _s
+    monkeypatch.setattr(_s.redis, "enabled", True)
     yield fake
 
 

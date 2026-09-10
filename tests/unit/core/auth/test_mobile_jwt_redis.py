@@ -171,6 +171,9 @@ async def test_revocation_fails_open_when_redis_unavailable(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """is_revoked() returns False when Redis unavailable (fail-open)."""
+    # M6-#3: fail-CLOSED enforced по умолчанию (mobile_jwt_revoc_fail_closed=True).
+    # Отключаем для legacy fail-open теста."""
+    monkeypatch.setenv("FEATURE_MOBILE_JWT_REVOC_FAIL_CLOSED", "false")
 
     def _unavailable() -> None:
         return None  # get_redis_client returns None

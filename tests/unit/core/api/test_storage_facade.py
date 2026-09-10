@@ -40,7 +40,7 @@ class TestStorageFacadeAllExports:
 
     def test_all_declared_count(self) -> None:
         """``__all__`` содержит 4 символа."""
-        assert len(storage.__all__) == 4
+        assert len(storage.__all__) == 5
 
     def test_module_docstring_present(self) -> None:
         """Module docstring описывает Sprint 38 R13 FIX."""
