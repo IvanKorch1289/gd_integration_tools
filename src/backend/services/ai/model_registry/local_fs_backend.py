@@ -15,10 +15,12 @@ Lazy-import тяжёлых библиотек (torch, sklearn, catboost, lightgb
 from __future__ import annotations
 
 import asyncio
-import json
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
+
+# PERF-6.6 P12b: orjson для model registry file IO (manifest load/save).
+import orjson as json
 
 from src.backend.core.logging import get_logger
 from src.backend.services.ai.model_registry.adapter import (
@@ -234,7 +236,7 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
             raise FileNotFoundError(f"Model {name} not found in local registry")
         manifest["stage"] = new_stage
         loop = asyncio.get_running_loop()
-        content = json.dumps(manifest, ensure_ascii=False, indent=2)
+        content = json.dumps(manifest, indent=2).decode("utf-8")
         manifest_path = self._manifest_path(model_dir)
 
         def _write_text(p: Path, c: str) -> None:
