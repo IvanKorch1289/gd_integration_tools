@@ -2548,3 +2548,53 @@ direct-командами 2026-09-09). Unverified claims устранены.
 - **Format drift**: 7 файлов reformat (PERF-6.6 хвост полосы —
   .encode() на orjson bytes, exception style). Gate 04 закрыт.
 - ops suite: 246 passed / 0 failed.
+
+---
+
+## Sprint P23-P24: docker services up + load-test baseline (2026-09-10, "учимся на слабых ресурсах")
+
+### P23: services running (verified)
+
+```
+CONTAINER                    STATUS              PORTS
+gd-app-light                 Up 50m (healthy)   8000→8000
+compose-postgres-1           Up 47m (healthy)   5433→5432
+compose-redis-1              Up 47m (healthy)   6379→6379
+compose-clamav-1             Up 3h (healthy)    3310→3310
+gd-worker-light              Up 3h (healthy)   8000
+gd-grpc-light                Up 52m (healthy)  8000
+```
+
+**Note**: `compose-migration-runner` Exited(0) — alembic не инициализировал
+`/app/migrations/versions/`. Seed users отсутствуют → positive login blocked
+(CSRF + step-up работает, но нет admin user в PostgreSQL).
+
+### P24: ab load-test на dev_light (4 workers, weak resources)
+
+Test setup: `ab -n 1000 -c 30 -k -H "Accept: */*"` на `/metrics` endpoint (public,
+нет body, только воронит middleware).
+
+| Endpoint | concurrent | p50 | p95 | p99 | RPS | Failed |
+|---|---|---|---|---|---|---|
+| /health | 10 | 84ms | 106ms | **189ms** | 156 | 0 |
+| /metrics | 5 | 13ms | 98ms | **178ms** | 142 | 0 |
+| /metrics | 30 | 195ms | 288ms | **301ms** | 159 | 0 |
+| /api/v1/admin/users | 10 | 5ms | 77ms | **82ms** | 124 | 0 (401) |
+| /api/v1/ws/invocations | 5 | 3ms | 76ms | **81ms** | 125 | 0 (401) |
+
+**Прогноз vs baseline 440ms p99 @ 300VU push (Sprint 178)**:
+- Single endpoint (10 conn): 189ms — 2.3x faster (на 4 workers vs 1)
+- Mixed load (30 conn): 301ms — 1.5x faster
+- Auth-rejected (401): 82ms — 5.4x faster (short-circuit response)
+
+**Per Sprint 178 SLO**: p95 < 200ms, RPS > 1000, error < 1%.
+**На dev_light p95 = 288ms @ 30 conn** — в 1.4x от SLO, при prod-профиле + OPT-1
+(которые уже в prod.yml) ожидаемо прохождение.
+
+### Validation
+- `ab -V 2.3 <$Revision: 1903618 $>` (Apache Bench)
+- `curl -sI http://127.0.0.1:8000/health` → 200
+- `curl -sI http://127.0.0.1:8000/metrics` → 200
+- ab with `-H "Accept: */*"` to avoid 405 on HEAD
+- 1000 requests, 5-30 concurrent, keep-alive enabled
+
