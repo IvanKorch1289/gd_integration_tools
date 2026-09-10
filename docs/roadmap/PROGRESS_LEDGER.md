@@ -2539,3 +2539,12 @@ ARCHITECTURE.md:501 — единственный устаревший числе
 («3639 tests») актуализирован до verified collect (17412, coverage 72%).
 README badges и остальные цифры — соответствуют факту (пере-проверено
 direct-командами 2026-09-09). Unverified claims устранены.
+
+
+## R2.DEPS-2 прогресс (2026-09-10): structlog 24→26 + format drift
+
+- **structlog 24.4.0 → 26.1.0**: констрейнт расширен `<27.0.0`; ops suite
+  246 passed. Logging-путь верифицирован (import + core/di/ops suites).
+- **Format drift**: 7 файлов reformat (PERF-6.6 хвост полосы —
+  .encode() на orjson bytes, exception style). Gate 04 закрыт.
+- ops suite: 246 passed / 0 failed.
