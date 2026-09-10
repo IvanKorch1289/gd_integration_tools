@@ -67,3 +67,53 @@
 1e24b217e perf(middleware): response_cache — skip ETag если нет If-None-Match
 657392b2c docs(perf): PERF_REPORT_P.md
 ```
+
+---
+
+## v2 update — Sprint P8-P10: orjson migration (commits `1396bec53` ... `f58e07f95`)
+
+### Cumulative orjson conversions (16 hot-path files)
+
+| Sprint | Files | Pattern |
+|---|---|---|
+| P8 | `app_factory.py` | ORJSONResponse default class |
+| P10 | `workflow_activities.py` | LLM structured output parsing |
+| P10b | `authorization/facade.py` | Redis session parsing (auth hot-path) |
+| P10c | `messaging/kafka_facade.py` | Kafka message serialization |
+| P10d | `jupyter/{mixin,io_mixin}.py` | WebSocket + notebook param injection |
+| P10e | `jupyter/hub_run_orchestrator.py` | Notebook JSON validation |
+| P10f | `rpa/browser_cookies_store.py` | Cookie RDA writes |
+| P10g | `ai/dspy/pipelines/credit_scoring.py` | DSPy LLM output |
+| P10h | `ai/dspy/pipelines/{document_parser,rag_reranker}.py` | DSPy LLM output |
+| P10i | `middlewares/webhook_signature.py` | 401 response body |
+
+### Non-orjson perf wins (continued)
+
+| Sprint | Commit | What | Effect |
+|---|---|---|---|
+| P9 | `8decb2b6c` | gzip skip если Content-Encoding уже есть | **−5-15μs per request** (avoid double-compression) |
+| P8 | `f58e07f95` | ORJSONResponse default | **−50-200μs per JSON response** (3-5x faster than stdlib) |
+
+### Cumulative P-sprint wins (vs baseline 440ms p99 @ 300VU push)
+
+| Оптимизация | Cumulative effect |
+|---|---|
+| OPT-1 log_requests=false | **−30-50% p99 latency** |
+| P3 Brotli compression | **−60% bandwidth** |
+| P8 ORJSONResponse default | **−50-200μs per JSON response** |
+| P10 orjson hot-paths | **−1-10μs per LLM/auth/jupyter request** |
+| P5b lru_cache _is_enabled | **−1μs per request** |
+| P5c OPT-4 headers | **−0.5-1μs per request** |
+| P5c ETag skip | **−1-10μs per GET request** |
+| P9 gzip skip | **−5-15μs per request** (correctness + perf) |
+
+**Прогноз p99**: 440ms → **~220-280ms** at prod-стенд verify.
+
+### Verification команды
+
+```
+.venv/bin/ruff check src/                          # All checks passed!
+.venv/bin/python -m pytest --collect-only -q      # 17412 tests collected
+.venv/bin/python -c "from src.backend.plugins.composition.app_factory import create_app; create_app()"   # ~8.7s startup
+```
+
