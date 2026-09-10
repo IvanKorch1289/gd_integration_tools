@@ -15,11 +15,13 @@
 
 from __future__ import annotations
 
-import json
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
+
+# PERF-6.6 P12b: orjson для DSPy optimizer dataset loading.
+import orjson as json
 
 from src.backend.core.logging import get_logger
 
