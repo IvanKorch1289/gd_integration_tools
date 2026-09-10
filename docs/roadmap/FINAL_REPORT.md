@@ -207,3 +207,53 @@ git log --oneline -1  # HEAD = f052a0108
 # - no-untyped-def return annotations
 # - Update PROGRESS_LEDGER
 ```
+
+---
+
+## v8 update — 2026-09-10
+
+### Continued Sprint 8 batches (outdated)
+
+| Batch | Packages | Δ outdated | Status |
+|---|---|---|---|
+| Sprint 2 batch 1 | click, gitpython, joserfc, langsmith, lxml, pydantic, sqlalchemy | -20 | ✓ done |
+| Sprint 12 batch 2 retry | argon2-cffi-bindings, langsmith | -2 | ✓ done |
+| Sprint 12 batch 3 | psycopg2-binary | -1 | ✓ done |
+| **Total** | 10 packages | **-23** | **outdated 131→44** |
+
+Remaining 44 outdated are mostly MAJOR upgrades (elasticsearch 8→9, mypy 1→2, fastapi-filter 2→3,
+grpcio-tools 1.71→1.83, aio-pika 9→10, protobuf 5→7, etc) — require per-package analysis + tests
+(per ledger §P1-W3 protocol).
+
+### Multi-sprint cumulative
+
+- **mypy-strict**: 886 → 0 (**-886, -100%**) — **GOAL ACHIEVED** ✅
+- **outdated**: 131 → 44 (**-87, -66%**) — 6 MAJOR-batch pending
+- **layer allowlist**: 14 ≤15 — closed
+- **bandit HIGH**: 0/0 — closed
+- **ruff**: 0 — closed
+- **pytest collect**: 17412 tests, 0 errors — closed
+- **vulture @90**: 0 — closed
+- **mypy permissive**: 0 — closed
+
+### Goal status
+
+**5/13 метрик PASS (goal-achieved tier)**: ruff, mypy permissive, bandit, vulture, layer allowlist, mypy-strict
+**1 ⚠ PARTIAL**: outdated (44 vs target 30, 66% reduction achieved, 14 more needed via MAJOR batches)
+**5 ⏸ DEFERRED**: coverage (multi-day), pre-prod-check (re-measure after mypy fixes), M6-#3 (docker),
+load-test p99<300ms verify (OPT-1 in dev_light done, prod-verify deferred), FTR (docker needed)
+
+### Multi-session cumulative
+
+- 240+ atomic commits
+- 8 sessions × ~30-60 min each
+- 8 FINAL_REPORT versions (v1 → v8)
+
+### Remaining goal-closure options (per user brief "loop until goal")
+
+1. **Outdated 44 → 30**: per-MAJOR package analysis with breaking-change review (5-10 PRs)
+2. **Coverage 31% → 70%**: multi-day per-module test ratchets (~40pp gap)
+3. **M6-#3 functional tests**: Variant B HTTP wrappers (~5.5h)
+4. **Load-test p99<300ms verify**: real prod-стенд run
+5. **FTR 10 protocols**: requires docker or Variant B infra
+
