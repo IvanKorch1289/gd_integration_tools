@@ -93,7 +93,7 @@ dependencies = [
     # K2 S7: unified httpx transport stack (RetryTransport + CacheTransport).
     # Lazy-import — feature-flagged через httpx_unified_transport (default-OFF).
     "httpx-retries>=0.4,<1.0",
-    "hishel>=0.0.30,<1.0",
+    "hishel>=0.0.30,<2.0",
     "msgpack>=1.2.1,<2.0.0",
     "xmltodict>=0.14.0,<2.0.0",
     "qdrant-client>=1.12.0,<2.0.0",
@@ -191,7 +191,7 @@ security = [
     "pip-audit>=2.7,<3",
     # K4 Sprint 55 W5: user-approved performance libraries.
     # rich: terminal UI (tables, progress bars, syntax highlighting).
-    "rich>=14.0.0,<15.0.0",
+    "rich>=14.0.0,<16.0.0",
 ]
 db_drivers = [
     "oracledb>=2.5.0,<3.0.0",     # Oracle (CDC, external_db)
