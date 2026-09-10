@@ -288,7 +288,7 @@ def test_login_password_success(client: TestClient) -> None:
         ),
         patch(
             "src.backend.entrypoints.api.v1.endpoints.auth_login._get_jwt_backend",
-            AsyncMock(return_value=lambda subject, claims: ("mock-token-xyz", 3600)),
+            AsyncMock(return_value=lambda subject, claims, **kwargs: ("mock-token-xyz", 3600)),
         ),
     ):
         r = client.post(
