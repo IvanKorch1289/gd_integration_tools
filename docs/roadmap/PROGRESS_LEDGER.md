@@ -2499,3 +2499,22 @@ FAILED:  1 (gate 04 ruff strict — recipe warning, не реальный failur
 - Load-test prod-стенд verify
 - Coverage ratchet (multi-day)
 
+
+
+## R2.DEPS статус 2 (2026-09-09): outdated = 34 (23 MAJOR + 11 same-major)
+
+SAFE-батчи посажены: aiofiles 25, asgi-correlation-id 5, argon2 25/26,
+xmltodict 1.0, uuid-utils, packaging 26, importlib-resources 7,
+same-major транзитивные ×12. Все smoke зелёные.
+
+Для достижения ≤30 осталось закрыть 4+ из 23 MAJOR-gap. Это breaking-миграции:
+- redis 5→8 (ключевой клиент — полный smoke auth/cache/rate-limiter)
+- protobuf 5→7 (grpc — кодегенерация + wire-совместимость)
+- aio-pika 9→10 / aiormq 6→7 / pamqp 3→4 (MQ-стек)
+- elasticsearch 8→9 / elastic-transport 8→9 (поисковый стек)
+- остальные: altair, fastapi-filter, hishel, magika, portalocker,
+  rich, structlog, textual, thinc, websockets 16→17, uuid-utils 0→1
+
+Каждый: constraint widening + upgrade + affected tests + smoke. Серия —
+отдельный спринт R2.DEPS-2 (запрещено гонять на contended box без
+coordination — правило памяти).
