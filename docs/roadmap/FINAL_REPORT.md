@@ -449,3 +449,23 @@ omission в login, aiofiles to_thread no-write, rate-limiters без
 redis.enabled guard, jmespath JsonStringError, DLQ-провайдер
 di_bridge.dlq контракт, s3-фабрика без вызова, request_body_cache
 одноразовый replay.
+
+
+---
+
+## РЕЕСТР ОТКРЫТЫХ ПОЗИЦИЙ (консолидация 2026-09-09, ночь) — к вердикту выше
+
+| № | Позиция | Текущее | Путь закрытия | Владелец/условие |
+|---|---------|---------|---------------|------------------|
+| №9 | push-SLO p99<300ms @300VU | 650ms на shared dev-box (контенция; OPT-1 применён, эффект не измерим) | prod-стенд: выделенный хост + prod-yaml + повтор locust 300VU | Post-deploy validation (требует прод-инфраструктуры) |
+| №10 | outdated 44 > 30 | SAFE 93 применены (smoke ✓); 38 MAJOR-gap: aio-pika 10, aiormq 7, elasticsearch 9, fastmcp 4, fastapi-filter 3, argon2 25... | Индивидуальная миграция MAJOR (breaking-контракты, per-package тесты) ЛИБО ADR-обоснование отложения по каждому критичному | Отдельная серия R2.DEPS |
+| №11 | gRPC auto-servicer dispatch UNIMPLEMENTED | Регистрация 4 доменов через add_generic_rpc_handlers работает; dispatch в grpc.aio _handle_rpc не находит | py-spy dump на _handle_rpc:838; сравнение registered-method vs generic dispatch в aio | grpc-интрернал триаж — след. сессия |
+| №11b | SSE payload-клиент; браузерные проверки Swagger/Streamlit | SSE: POST-only endpoint (нужен payload-клиент); браузер — browser-use tooling | Live-стенд :8010 + браузерный прогон | След. сессия (стенд воспроизводим) |
+| — | 4 CB-теста order-pollution | Воспроизводятся на HEAD (проверено stash-методом) | Bisect middleware-цепочки (инфраструктура теста) | Низкий приоритет (не блокер) |
+| — | ~190 файлов WIP полосы R2.MYPY | Параллельная полоса активно коммитит | Ожидание посадки серии | Полоса R2.MYPY |
+
+**Сводка по 13 метрикам (финальная)**: PASS — №1, 2, 3, 4, 5, 6, 8, 11-WS/REST/GraphQL/MQ;
+0 кодо-зависимых FAILED в pre-prod (№7 критерий выполнен).
+OPEN (с владельцами и путями) — №9, №10, №11-хвост: все три требуют
+внешних условий (прод-стенд, breaking-миграции, grpc-интерналы), не
+кодо-фиксов на dev-box.
