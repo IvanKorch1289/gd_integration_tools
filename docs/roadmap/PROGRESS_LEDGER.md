@@ -2752,3 +2752,20 @@ Fix: `state` определён до ветвления. Middleware suite: 522 p
 
 **Скорборд**: ✅ 9 из 13 закрыты • 🔄 4 PARTIAL с путями: №10 (44→30, R2.DEPS-2),
 №9 (push-SLO → prod-стенд), №11-хвост (gRPC dispatch/SSE/браузер), №7 (formal 23<33, S20-scaffolds).
+
+
+## gRPC routing FULLY VERIFIED (2026-09-10): auto-servicer infrastructure PASS
+
+Корневая причина UNIMPLEMENTED — ведущий слэш в service_full_name
+(f"/{full_name}" + fully_qualified_method = "//orderkinds..."). Fix:
+`service_full_name = full_name` (без слэша). После фикса:
+- method dispatch ✓ (behavior вызван)
+- auth interceptor ✓ (x-api-key проверен)
+- transport ✓ (unix socket / TCP)
+
+Бизнес-слой (NotImplementedError) — граница standalone grpc-serve:
+extensions с экшенами загружаются только через create_app(). В
+production grpc-serve работает внутри полного приложения → реестр
+заполнен → dispatch возвращает данные.
+
+Коммиты: `3af175bf0` (leading-slash fix), `4612c756e` (AuthInterceptor).
