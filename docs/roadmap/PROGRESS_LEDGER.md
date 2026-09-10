@@ -2416,3 +2416,20 @@ unverified claims устранены. Метрика №12 закрыта.
 Оставшийся шаг (след. сессия): либо грузить extensions-реестр в grpc-serve
 (тяжелее startup), либо документировать порядок: gRPC auto-RPC доступны в
 полном приложении (production — там полный реестр).
+
+
+## R2.DEPS статус (2026-09-09 ночь 3): outdated 131 → 34
+
+Серии выполнены:
+- SAFE same-major (93+11): aiofiles 25, asgi-correlation-id 5, argon2-cffi 25
+  +bindings 26, xmltodict 1.0, uuid-utils, packaging 26, importlib-resources 7,
+  click/presidio/pydantic-core/typer/tomlkit транзитивные — все коммиты с
+  зелёными затронутыми suite'ами (smoke EXIT=0).
+- Остаток **34** (23 MAJOR + 11 same-major transitive, появились после
+  пересчёта): цель ≤30 почти достигнута — остались aio-pika/aiormq/pamqp
+  (MQ-стек), redis 8, protobuf 7, elasticsearch 9, mypy 2.3 (dev),
+  textual/altair/thinc (UI/NLP), websockets 17, rich 15, portalocker 4,
+  fastapi-filter 3, hishel, pytest-cov 7 (test-infra), uuid-utils 1.0.
+
+Верификация: imports OK, ruff 0; полный smoke-срез — после спада нагрузки
+(параллельный pytest полосы занимает бокс, load 16-20).
