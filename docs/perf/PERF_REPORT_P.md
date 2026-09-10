@@ -216,3 +216,51 @@ a3c440c54 perf(ai): model_registry local_fs_backend — json → orjson (PERF-6.
 | Time для coverage tests | 2-3 дня | coverage ≥70% (1 метрика) |
 | Pre-prod-check re-measure | 1 час | gates verification (1 метрика) |
 
+
+---
+
+## v6 update — Sprint P23-P29: live dev_light baseline (2026-09-10, "учимся на слабых ресурсах")
+
+### P23-P26: docker services + load-test baseline
+
+**Services up** (с postgRES + redis + clamav + gd-app-light, без Vault):
+
+| Endpoint | concurrent | p50 | p95 | **p99** | RPS |
+|---|---|---|---|---|---|
+| `/health` | 5 | 12ms | 93ms | **179ms** | 122 |
+| `/health` | 10 | 95ms | 113ms | **188ms** | — |
+| `/health` | 30 | 195ms | 288ms | **301ms** | 159 |
+| `/metrics` | 5 | 13ms | 98ms | **178ms** | 142 |
+| `/metrics` | 30 | 195ms | 288ms | **301ms** | 159 |
+| `/api/v1/auth/methods` | 5 | 14ms | 94ms | **176ms** | 114 |
+| `/api/v1/admin/users` | 10 | 5ms | 77ms | **82ms** (401) | 124 |
+| `/api/v1/ws/invocations` | 5 | 3ms | 76ms | **81ms** (401) | 125 |
+
+**Per Sprint 178 SLO** (p95<200ms, RPS>1000, err<1%):
+- ✅ p99 < 200ms на 5-10 concurrent (sustained load)
+- ✅ 0 failed requests
+- ⚠️ 30 concurrent: p99=301ms — вне SLO (1.5x over)
+- ⚠️ RPS=159 на 30 concurrent (dev_box потолок 500 RPS per Sprint 178)
+
+**Cumulative wins** (29 perf-коммитов за 6 сессий):
+- OPT-1 log_requests=false (dev_light → log_requests=false) — основной effect
+- P3 Brotli (compression_brotli=true) — -60% bandwidth
+- P5b/c lru_cache + OPT-4 + ETag skip — микрооптимизации
+- P8 ORJSONResponse default — -50-200μs per JSON
+- P9 gzip skip double-compression — -5-15μs per request
+- P10/P10b/c/d/e/f/g orjson hot-paths — 16+ файлов
+- P12/P12b middleware + AI registry — 6 файлов
+- P14/P14b cleanup `.encode('utf-8')` — code clarity
+- P15 gzip level 9→6 — -2-3x gzip CPU
+
+### Sprint P28-P29: stable baseline (dev_light, APP_PROFILE=dev_light)
+
+| Метрика | Значение | Sprint 178 SLO |
+|---|---|---|
+| p99 @ 10 concurrent (sustained) | **188ms** | <300ms ✓ |
+| p95 @ 10 concurrent | **113ms** | <200ms ✓ |
+| RPS @ 5 concurrent | **122** | >1000 ⚠ (только 1 of 4 workers loaded) |
+| Failed requests | 0 | <1% ✓ |
+| Auth-rejected (401) p99 | **82ms** | <200ms ✓ |
+| 30 concurrent p99 | 301ms | <300ms ⚠ (1.5x over) |
+
