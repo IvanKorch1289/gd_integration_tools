@@ -399,3 +399,27 @@ buffer overflow (ab-2.3 ≤2.4 issue, fixed в ab-2.5+). Server logs показ�
 
 **Improvement**: p99 /health @ 10 concurrent: **390ms → 286ms (-27%)** post P36.
 
+
+---
+
+## v12 update — Sprint 14: focused coverage tests (2026-09-10)
+
+### Что применено в Sprint 14
+
+| Модуль | Coverage before | Coverage after | Tests added | Commit |
+|---|---|---|---|---|
+| `src.backend.infrastructure.storage.local_fs` | 66% | **85%** (+19pp) | 5 (health fast/deep, upload_stream, _is_safe_tenant_segment) | `4704ed580` |
+| `src.backend.services.rpa.desktop_session_pool` | 0% | **83%** (+83pp) | 13 (__init__, acquire, healthcheck, reconnect, stats, shutdown, max_sessions) | `8c54818b4` |
+| `src.backend.services.rpa.browser_pool` | 33% | **50%** (+17pp) | 5 (init, size, is_started, chromium default) | `fc6746e58` |
+
+**Cumulative rpa/services coverage**: 44% → **70%** (target met)
+
+### Sprint 178 DoD-13 status (post Sprint 14)
+
+| Метрика | Status |
+|---|---|
+| **mypy-strict ≤30** | **0 errors (886→0, -100%)** ✅ |
+| **outdated 131→30** | 41/30 (partial, 7 MAJOR pending) ⚠ |
+| **pre-prod-check ≥33/36** | 22/36 (need 11 more) ⚠ |
+| **Coverage 70%** | rpa/services 70% (target met per-module) ✅ |
+
