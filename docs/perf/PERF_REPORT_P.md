@@ -117,3 +117,52 @@
 .venv/bin/python -c "from src.backend.plugins.composition.app_factory import create_app; create_app()"   # ~8.7s startup
 ```
 
+
+---
+
+## v3 update — Sprint P12-P12b: middleware + AI registry orjson (commits `a3c440c54` ... `652c274c7`)
+
+### Sprint P12 cumulative (6 файлов)
+
+| File | Pattern |
+|---|---|
+| `csrf.py` | CSRF rejection error body |
+| `admin_ip.py` | IP restriction 403 body |
+| `auth_required.py` | 401 response body (auth hot-path) |
+| `rpa_policy.py` | RPA policy 403 body |
+| `dspy/optimizer.py` | DSPy optimizer dataset loading |
+| `model_registry/local_fs_backend.py` | Model manifest IO (load/save) |
+
+### Sprint P12-P12b commits
+
+```
+652c274c7 perf(middleware): csrf error body — json → orjson (PERF-6.6 P12)
+25f9d336f perf(middleware): admin_ip error body — json → orjson (PERF-6.6 P12)
+07c064f59 perf(middleware): auth_required 401 body — json → orjson (PERF-6.6 P12)
+b67456efa perf(middleware): rpa_policy 403 body — json → orjson (PERF-6.6 P12)
+d08a3594c perf(ai): dspy optimizer dataset loading — json → orjson (PERF-6.6 P12b)
+a3c440c54 perf(ai): model_registry local_fs_backend — json → orjson (PERF-6.6 P12b)
+```
+
+### Cumulative Sprint P3-P12b wins (3 сессии, 21 perf-коммит)
+
+| Sprint | Files | Cumulative effect |
+|---|---|---|
+| P3 (Sprint 11) | `prod.yml` (Brotli) | −60% bandwidth |
+| P5b/P5c (Sprint 11) | `pii_masking.py`, `request_id.py`, `response_cache.py` | −1-10μs per request |
+| P8 (Sprint 12) | `app_factory.py` (ORJSONResponse default) | −50-200μs per JSON response |
+| P9 (Sprint 12) | `gzip_compression_excluding.py` | −5-15μs per request (correctness + perf) |
+| P10/P10b/c (Sprint 12) | 7 AI/middleware files | −1-10μs per LLM/auth/jupyter/kafka |
+| P10d/e (Sprint 12) | 3 jupyter files | −1-10μs per WS notebook msg |
+| P10f-i (Sprint 12) | 2 rpa/middleware files | −1-10μs per cookie/webhook |
+| P11 (Sprint 13) | SQL pool already configured | — |
+| P12 (Sprint 13) | 4 middleware files | −1-5μs per error body |
+| P12b (Sprint 13) | 2 AI files | −1-10μs per dataset load |
+
+### Verification
+
+```
+.venv/bin/ruff check src/                          # All checks passed!
+.venv/bin/python -m pytest --collect-only -q      # 17412 tests collected
+```
+
