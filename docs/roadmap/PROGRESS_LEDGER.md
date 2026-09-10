@@ -2394,3 +2394,25 @@ SSE/браузер — след.
 
 №12: **STATUS/FTR/ledger/ARCHITECTURE/README — синхронизированы**,
 unverified claims устранены. Метрика №12 закрыта.
+
+
+## gRPC dispatch триаж — ФИНАЛ (2026-09-09 ночь): цепочка восстановлена до бизнес-слоя
+
+Корневая цепочка (все fixed):
+1. ~~Dead code~~: register_auto_servicers никогда не вызывался → wired в serve() (`890e21084`).
+2. ~~Registration keys~~: bytes _method декодированы, ключи — КОРОТКИЕ имена RPC
+   (method_handlers_generic_handler сам добавляет '/{service}/'; раньше был
+   двойной слэш → UNIMPLEMENTED «Method not found») (`3af175bf0`).
+3. ~~AuthInterceptor~~: bare _abort функция как handler → proper
+   unary_unary_rpc_method_handler (`4612c756e`).
+4. **Текущий статус**: POST /orderkinds.auto.../List с x-api-key → проходит
+   auth → dispatch находит behavior → rpc_impl вызывает dispatch_action →
+   **NotImplementedError: Method not implemented** — экшен orderkinds.list
+   не зарегистрирован в standalone grpc-serve (расширения с экшенами грузит
+   полное приложение). Это граница окружения, не код-баг: для полного
+   диспатча grpc-serve должен запускаться в контексте полного приложения
+   (как REST-эндпоинты).
+
+Оставшийся шаг (след. сессия): либо грузить extensions-реестр в grpc-serve
+(тяжелее startup), либо документировать порядок: gRPC auto-RPC доступны в
+полном приложении (production — там полный реестр).
