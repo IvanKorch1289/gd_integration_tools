@@ -78,6 +78,17 @@ class TestFeatureFlagDisabled:
         assert body["phone"] == "+7 (999) 123-45-67"
 
 
+@pytest.fixture(autouse=True)
+def _clear_pii_cache():
+    """Сброс lru_cache _is_enabled перед каждым тестом (monkeypatch меняет flag)."""
+    from src.backend.entrypoints.middlewares.pii_masking_response import (
+        PIIMaskingResponseMiddleware,
+    )
+    PIIMaskingResponseMiddleware._is_enabled.cache_clear()
+    yield
+    PIIMaskingResponseMiddleware._is_enabled.cache_clear()
+
+
 class TestFeatureFlagEnabled:
     """flag=ON: маскировка применяется по path/Content-Type правилам."""
 

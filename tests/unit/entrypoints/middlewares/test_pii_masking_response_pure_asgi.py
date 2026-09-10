@@ -69,6 +69,17 @@ def _make_receive():
     return receive
 
 
+@pytest.fixture(autouse=True)
+def _clear_pii_cache():
+    """Сброс lru_cache _is_enabled (monkeypatch меняет feature flag)."""
+    from src.backend.entrypoints.middlewares.pii_masking_response import (
+        PIIMaskingResponseMiddleware,
+    )
+    PIIMaskingResponseMiddleware._is_enabled.cache_clear()
+    yield
+    PIIMaskingResponseMiddleware._is_enabled.cache_clear()
+
+
 class TestPIIMaskingResponseMiddlewarePureASGI:
     """Cycle 54: pure ASGI regression-тесты для PIIMaskingResponseMiddleware."""
 
