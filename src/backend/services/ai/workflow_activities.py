@@ -171,10 +171,12 @@ async def _execute_llm_call(
     structured: dict[str, Any] | None = None
     if input_.structured_output_schema is not None and content_str:
         try:
-            import json
+            # PERF-6.6 P10: orjson в 3-5x быстрее stdlib json на парсинге;
+            # critical для LLM output parsing (hot-path).
+            import orjson
 
-            structured = json.loads(content_str)
-        except json.JSONDecodeError:
+            structured = orjson.loads(content_str)
+        except orjson.JSONDecodeError:
             _logger.warning(
                 "structured_output_schema задан, но content не валидный JSON"
             )
