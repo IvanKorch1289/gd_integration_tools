@@ -2805,3 +2805,24 @@ ruff 0 + strict mypy 0 пере-подтверждены на текущем HEA
 
 Каждая позиция имеет: владельца (полоса), путь закрытия, команду верификации.
 Все задокументированы в FINAL_REPORT ФИНАЛЬНЫЙ ВЕРДИКТ.
+
+
+## gRPC business dispatch — финальный статус (2026-09-10)
+
+**Routing chain ПОЛНОСТЬЮ РАБОТАЕТ** (verified in-process + live):
+transport → auth interceptor → method dispatch → behavior → dispatch_action.
+
+**Бизнес-слой**: dispatch_action('orderkinds.list') → NotImplementedError —
+экшены регистрируются через plugin_loader при create_app() (extensions
+грузят реестр экшенов). Standalone grpc-serve — lightweight dev/test
+утилита, не загружает extensions.
+
+**Решение**: gRPC auto-RPC business dispatch — production-only контекст.
+В standalone grpc-serve — документированное ограничение (behavior вызван,
+но экшен недоступен без полного реестра). Для dev-тестирования gRPC:
+использовать create_app() + uvicorn (REST + WS + gRPC в одном процессе)
+или запускать grpc-serve после init_extension_actions().
+
+Файл: auto_servicer.py — descriptor-based регистрация через
+method_handlers_generic_handler (4 домена, 13 RPC). Routing fix
+(ведущий слэш) — committed `3af175bf0`.
