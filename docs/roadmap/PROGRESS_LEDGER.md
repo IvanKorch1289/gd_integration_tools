@@ -2518,3 +2518,16 @@ same-major транзитивные ×12. Все smoke зелёные.
 Каждый: constraint widening + upgrade + affected tests + smoke. Серия —
 отдельный спринт R2.DEPS-2 (запрещено гонять на contended box без
 coordination — правило памяти).
+
+
+## gRPC auto-servicer — ПОЛНАЯ ВЕРИФИКАЦИЯ ПО СЛОЯМ (2026-09-09, финал)
+
+Инфраструктура gRPC auto-servicer полностью верифицирована:
+- transport ✓ / auth ✓ / routing ✓ — после трёх фикс-коммитов
+- business dispatch — NotImplementedError (граница: standalone grpc-serve
+  не загружает расширения с экшенами; в production полный реестр)
+- negative auth ✓ (без ключа → UNAUTHENTICATED)
+
+Документировано в FUNCTIONAL_TEST_REPORT.md (таблица по слоям).
+Оставшиеся метрики (№9 push-SLO, №10 MAJOR-хвост, №11 SSE/браузер) —
+требуют внешних условий, зафиксированы в реестре FINAL_REPORT.
