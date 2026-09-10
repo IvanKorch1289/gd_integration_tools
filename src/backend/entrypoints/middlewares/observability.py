@@ -195,7 +195,14 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
         # Prometheus scraper). OTLP-экспорт для них — шум. Пропускаем emit,
         # но duration_ms всё равно считается чтобы не ломать middleware-цепочку.
         path = request.url.path
-        skip_emit = path in ("/health", "/metrics", "/asyncapi", "/readyz", "/livez", "/healthz")
+        skip_emit = path in (
+            "/health",
+            "/metrics",
+            "/asyncapi",
+            "/readyz",
+            "/livez",
+            "/healthz",
+        )
 
         start = time.monotonic()
         response = await call_next(request)

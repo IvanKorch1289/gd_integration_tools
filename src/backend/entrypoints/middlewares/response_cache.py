@@ -75,14 +75,10 @@ class ResponseCacheMiddleware:
             await self.app(scope, receive, send)
             return
 
-        # PERF-6.6 P5c: skip ETag computation если client не поддерживает
-        # If-None-Match. Body всё равно буферизуем для отправки, но хеширование
-        # пропускаем (xxhash ~1μs на маленький body, ~10μs на большой).
-        compute_etag = False
-        for k, _v in scope.get("headers", []):
-            if k.lower() == b"if-none-match":
-                compute_etag = True
-                break
+        # Cycle 55: ETag вычисляется ВСЕГДА для 200 JSON GET —
+        # If-None-Match используется только для 304 (Not Modified) ниже.
+        # Без этого ETag никогда не добавляется на первый запрос,
+        # кэширование не работает.
 
         # Cycle 55 critical: collect body chunks через send-wrapper
         # для вычисления ETag. Pure ASGI: body приходит через
@@ -131,19 +127,6 @@ class ResponseCacheMiddleware:
         # Compute ETag (только если client поддерживает If-None-Match).
         body = b"".join(body_chunks)
         if not body:
-            return
-
-        if not compute_etag:
-            # Без If-None-Match — отдаём оригинал, без ETag header.
-            await send(
-                {
-                    "type": "http.response.start",
-                    "status": response_status["status"],
-                    "headers": response_headers,
-                }
-            )
-            for chunk in body_chunks:
-                await send({"type": "http.response.body", "body": chunk})
             return
 
         if _USE_XXHASH:

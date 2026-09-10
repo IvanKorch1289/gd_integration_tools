@@ -108,10 +108,7 @@ class GZipCompressionExcludingMiddleware:
                             if len(body_data) >= 1024:
                                 loop = asyncio.get_running_loop()
                                 compressed = await loop.run_in_executor(
-                                    None,
-                                    gzip.compress,
-                                    body_data,
-                                    self.compresslevel,
+                                    None, gzip.compress, body_data, self.compresslevel
                                 )
                             else:
                                 compressed = gzip.compress(
