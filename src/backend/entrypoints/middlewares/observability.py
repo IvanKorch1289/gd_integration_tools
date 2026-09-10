@@ -190,14 +190,24 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
         НЕ ДОЛЖНЫ ломать request flow — degraded mode лучше чем 5xx
         на каждый запрос при сбое метрик-инфраструктуры.
         """
+        # PERF-6.6 P36: skip observability event creation для infra-endpoints.
+        # /health, /metrics, /asyncapi вызываются каждую секунду (k8s probes,
+        # Prometheus scraper). OTLP-экспорт для них — шум. Пропускаем emit,
+        # но duration_ms всё равно считается чтобы не ломать middleware-цепочку.
+        path = request.url.path
+        skip_emit = path in ("/health", "/metrics", "/asyncapi", "/readyz", "/livez", "/healthz")
+
         start = time.monotonic()
         response = await call_next(request)
         duration_ms = (time.monotonic() - start) * 1000
 
+        if skip_emit:
+            return response
+
         # Собираем unified event
         event: dict[str, Any] = {
             "method": request.method,
-            "path": request.url.path,
+            "path": path,
             "status_code": response.status_code,
             "duration_ms": duration_ms,
             "service": self.config.service_name,
