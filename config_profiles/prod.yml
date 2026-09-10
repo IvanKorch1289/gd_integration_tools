@@ -136,6 +136,11 @@ log:
   # Body-logging остаётся доступным в dev/dev_light (debugging), но OFF в prod
   # для throughput. Structured request_id propagation (X-Request-ID) сохранён.
   log_requests: false
+  # PERF-6.6 Sprint P3: Brotli compression для JSON responses.
+  # -60% bandwidth vs GZIP. Клиенты с Accept-Encoding: br получат brotli,
+  # остальные GZIP fallback (per middleware chain). Lazy-import brotli pkg.
+  compression_brotli: true
+  gzip_minimum_size: 512
 
 
 fs:
