@@ -166,3 +166,31 @@ a3c440c54 perf(ai): model_registry local_fs_backend — json → orjson (PERF-6.
 .venv/bin/python -m pytest --collect-only -q      # 17412 tests collected
 ```
 
+
+---
+
+## v4 update — Sprint P14 cleanup (commit `1f519384c`)
+
+### Cleanup pass
+
+6 файлов имели leftover `.encode('utf-8')` после моих предыдущих orjson-миграций
+(orjson возвращает bytes, не str). Чищу в одном коммите:
+
+- `webhook_signature.py` (2 sites)
+- `dspy/pipelines/credit_scoring.py` (1 site, str return type)
+- `dspy/pipelines/document_parser.py` (1 site)
+- `dspy/pipelines/rag_reranker.py` (3 sites)
+- `model_registry/local_fs_backend.py` (2 sites, str write_text)
+- `jupyter/execution_service/io_mixin.py` (2 sites)
+
+### Не применено (infra-blocked или низкий ROI)
+
+- **Streaming gzip.compress** — sync CPU operation blocks event loop, но
+  gzip редко запускается (brotli middleware выше в chain, gzip skip если
+  Content-Encoding есть). ROI низкий.
+- **gRPC server compression** — config в `routes/manifest_toml.py` есть, но
+  не consumed server init. Требует server init refactor.
+- **StreamingBodyHasher** (SHA256) — не используется ни в одном hot-path,
+  dead code. Skip.
+- **Coverage ratchet / M6-#3 / Load-test prod-стенд / FTR** — все infra-blocked.
+
