@@ -2531,3 +2531,11 @@ coordination — правило памяти).
 Документировано в FUNCTIONAL_TEST_REPORT.md (таблица по слоям).
 Оставшиеся метрики (№9 push-SLO, №10 MAJOR-хвост, №11 SSE/браузер) —
 требуют внешних условий, зафиксированы в реестре FINAL_REPORT.
+
+
+## №12-хвост закрыт (2026-09-10): ARCHITECTURE.md stale test counter (commit 2b3b04348)
+
+ARCHITECTURE.md:501 — единственный устаревший численный claim
+(«3639 tests») актуализирован до verified collect (17412, coverage 72%).
+README badges и остальные цифры — соответствуют факту (пере-проверено
+direct-командами 2026-09-09). Unverified claims устранены.
