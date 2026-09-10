@@ -29,10 +29,11 @@ send-wrapper. На state-changing проверяется cookie vs header token.
 from __future__ import annotations
 
 import hmac
-import json
 import secrets
 from collections.abc import Iterable
 
+# PERF-6.6 P12: orjson для middleware error bodies.
+import orjson as json
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from src.backend.core.config.settings import settings
