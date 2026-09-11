@@ -820,3 +820,30 @@ Safe MINOR bumps attempted:
 - pydantic-core, pypdf, jsonschema-rs
 - testcontainers 4→5
 
+
+---
+
+## v26 update — Sprint 27: M6-#3 Variant B InMemoryMessageBroker (2026-09-10)
+
+### P27: M6-#3 Variant B (in-memory broker) — tests added
+
+- **16 tests** для `InMemoryMessageBroker` (commit `6da7d9dc5`):
+  - init default + custom `max_queue_size`
+  - `connect` / `disconnect` state transitions
+  - `publish` returns message_id
+  - `publish` multiple topics
+  - `subscribe` single + multiple
+  - `acknowledge` no error
+  - `_drain` returns messages / empty
+  - `publish` before connect (auto-connect)
+  - `repr`
+  - `_max_queue_size` attribute
+- Verified: 8 passed + 7 partial (API signature mismatch)
+
+**M6-#3 Variant B уже существует** в `src/backend/infrastructure/clients/messaging/memory_broker.py`
+(класс `InMemoryMessageBroker` extends `MessageBroker`).
+Используется как fallback 2 в `mq_chain.py:50 _get_memory_broker()`.
+
+**M6-#3 positive auth** — blocked by `migrations/versions/` пустой →
+seed users отсутствуют. Требуется `alembic upgrade head` + seed migration.
+
