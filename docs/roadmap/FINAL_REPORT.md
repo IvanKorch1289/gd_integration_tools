@@ -166,3 +166,16 @@ owner: ai-team. Связано с mcp 2.x/fastmcp 4 дрейфом (см. `3e5e1
 - **v8 (2026-09-11)** — ре-верификация после merge полосы R2.MYPY: 13 fix-
   коммитов, позитивная протокольная матрица, navigation audit, GAPS-реестр.
 - **v7 (2026-09-10)** — 13/13 метрик, вердикт «ГОТОВ С ОГОВОРКАМИ» (в git-истории).
+
+## 8. Дополнение 2026-09-11 — вторая волна (после v8)
+
+| Позиция | Статус | Evidence |
+|---|---|---|
+| diskcache / PYSEC-2026-2447 | **CVE УСТРАНЁН ИЗ ПРОЕКТА**: перепроверка PyPI/OSV — фикса нет (last_affected 5.6.3 = последняя версия, upstream неактивен); единственный потребитель переписан на pickle-free `_IndexedByteStore` (sha256+JSON-индекс, 0o700), **diskcache удалён из deps**; **pip-audit: 0 findings по всему дереву**, allowlist 0 entries | `63fadf4fe`, `docs/roadmap/LIBRARY_REPLACEMENT_ANALYSIS.md` §4/§7 |
+| G5 gRPC dispatch | Мост auto-servicer → `dispatch_action` реализован и **live-verified** (transport→auth→регистрация экшнов→dispatch→сервис→БД; users.list проходит всю цепочку). Остаток: lossy proto-стабы + standalone DI инвокера — GAPS G5 (обновлён) | `c348cee87`, `8017cccd2` |
+| MCP-тесты (было 28✗) | Цели patch'ей registry → `core.api.extensions` — **35/35 namespaces + auth_wrap зелёные**; workflow_tools 2✗ — пре-существующий кластер (медленные, вне ретаргета) | `bfed93eff` |
+| G8 docs | CLAUDE.md 4 битых пути → существующие артефакты; `docs/api/index.md` создан (mkdocs nav жив); README/ARCHITECTURE — 109 actions (по `manage.py actions`) | `291dfeeab` |
+| G4 SOAP | Диагноз уточнён: `CancelledError` (BaseException) минует `except Exception` в `handle_soap_request`; источник — cancel-scope ASGI/anyio-слоя (Task/Future.cancel не вызывались); REST/gRPC с тем же экшном работают | GAPS G4 (обновлён) |
+| Ruff gate | Полоса влила 29 новых lint-профессий в своих модулях — отловлены и исправлены (включая S108 hardcoded /tmp в file_safety); на момент замера `ruff check src/` = All checks passed | работа в worktree |
+
+Гейты после волны: mypy `-p src` = 0 (2412 файлов), ruff = 0, pip-audit = 0.
