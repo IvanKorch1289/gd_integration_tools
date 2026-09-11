@@ -119,8 +119,9 @@ async def run_async_migrations() -> None:
 
     Для SQLite (W21.2 dev_light) ветка versions/*.py содержит PG-specific
     код (pg_notify trigger, gen_random_uuid, '{}'::jsonb) и не запускается.
-    Вместо этого таблицы создаются через ``metadata.create_all`` —
-    подходит для одноразового локального стенда.
+    Вместо этого таблицы создаются через ``metadata.create_all``, после чего
+    применяется идемпотентный initial-data seed (admin + orderkinds) —
+    иначе "bootstrap пустого окружения" остаётся без учётки (OP-1).
     """
     is_sqlite = settings.database.type.value == "sqlite"
 
@@ -132,6 +133,13 @@ async def run_async_migrations() -> None:
         )
         async with connectable.begin() as connection:
             await connection.run_sync(target_metadata.create_all)
+            # Seed выполняется и на sqlite: versions/*.py здесь не гоняются,
+            # поэтому без этого вызова dev-стенд остаётся без admin-учётки.
+            from src.backend.infrastructure.database.migrations.seed_data import (
+                apply_default_seed,
+            )
+
+            await connection.run_sync(apply_default_seed)
         await connectable.dispose()
         return
 

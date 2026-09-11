@@ -35,6 +35,15 @@ class TestSeedMigrationFile:
     def migration_tree(self, migration_source: str) -> ast.Module:
         return ast.parse(migration_source)
 
+    @pytest.fixture
+    def seed_source(self) -> str:
+        """SQL seed'а живёт в seed_data.py (переиспользуется sqlite-веткой env.py)."""
+        seed_path = Path(
+            "src/backend/infrastructure/database/migrations/seed_data.py"
+        )
+        assert seed_path.exists()
+        return seed_path.read_text(encoding="utf-8")
+
     def test_file_exists(self, migration_path: Path) -> None:
         """Файл миграции существует."""
         assert migration_path.exists()
@@ -47,7 +56,6 @@ class TestSeedMigrationFile:
         """Helper: extract string constants from module-level assignment (handles AnnAssign)."""
         results: list[str] = []
         for node in ast.walk(migration_tree):
-            target = None
             value = None
             if isinstance(node, ast.AnnAssign):
                 # Python 3.x: ``x: str = "..."`` → AnnAssign.
@@ -85,27 +93,29 @@ class TestSeedMigrationFile:
         assert "upgrade" in funcs
         assert "downgrade" in funcs
 
-    def test_uses_on_conflict_do_nothing(self, migration_source: str) -> None:
+    def test_uses_on_conflict_do_nothing(self, seed_source: str) -> None:
         """Идемпотентность через ON CONFLICT DO NOTHING."""
-        assert "ON CONFLICT" in migration_source
-        assert "DO NOTHING" in migration_source
+        assert "ON CONFLICT" in seed_source
+        assert "DO NOTHING" in seed_source
 
-    def test_inserts_admin_user(self, migration_source: str) -> None:
+    def test_inserts_admin_user(self, seed_source: str) -> None:
         """Inserts default admin user."""
-        assert "INSERT INTO users" in migration_source
-        assert "admin" in migration_source
-        assert "is_superuser" in migration_source
+        assert "INSERT INTO users" in seed_source
+        assert "admin" in seed_source
+        assert "is_superuser" in seed_source
 
-    def test_inserts_orderkinds(self, migration_source: str) -> None:
+    def test_inserts_orderkinds(self, seed_source: str) -> None:
         """Inserts default orderkinds (≥4 базовых)."""
-        assert "INSERT INTO orderkinds" in migration_source
-        assert "registration" in migration_source
-        assert "cadastral_passport" in migration_source
-        assert "encumbrance_registration" in migration_source
-        assert "ownership_transfer" in migration_source
+        assert "INSERT INTO orderkinds" in seed_source
+        assert "registration" in seed_source
+        assert "cadastral_passport" in seed_source
+        assert "encumbrance_registration" in seed_source
+        assert "ownership_transfer" in seed_source
 
-    def test_password_is_hashed_not_plaintext(self, migration_source: str) -> None:
-        """Пароль хранится в виде хэша pbkdf2_sha512, НЕ plaintext."""
+    def test_password_is_hashed_not_plaintext(
+        self, migration_source: str, seed_source: str
+    ) -> None:
+        """Пароль хранится в виде argon2id-хэша (контракт User), НЕ plaintext."""
         # Проверяем что plaintext-пароль НЕ присутствует напрямую в комментариях.
         # (в docstring/hash references допустимо).
         lines_with_plaintext = [
@@ -124,36 +134,44 @@ class TestSeedMigrationFile:
                 or "plaintext" in line.lower()
                 or line.strip().startswith('"""')
             ), f"Plaintext password in code: {line!r}"
-        # Но хэш pbkdf2_sha512 присутствует.
-        assert "pbkdf2-sha512" in migration_source
-        assert "$pbkdf2-sha512$" in migration_source
+        # Хэш argon2id (контракт User.verify_password), делегирован в seed_data.
+        assert "argon2id" in seed_source
+        assert "apply_default_seed" in migration_source
 
 
 class TestPasswordHash:
-    """Verify password hash совместим с passlib/sqlalchemy_utils.PasswordType."""
+    """Verify password hash совместим с User.verify_password (argon2)."""
 
     def test_hash_format(self) -> None:
-        """Хэш имеет формат pbkdf2_sha512 (passlib default)."""
-        hash_str = (
-            "$pbkdf2-sha512$25000$i1Gqda611ppT6r3XOocQ4g$"
-            "wS.x/pn5Q/fV/EREjpLpeJHQ0BvB6eHve/1v4RR0kcpfI.yHWgWIEhFwrwoYPg5ddMcZUgXnU7/nH/IpBSDP5Q"
+        """Хэш имеет формат argon2id (PHC) и принимает документированный пароль."""
+        from src.backend.infrastructure.database.migrations.seed_data import (
+            _DEFAULT_ADMIN_PASSWORD_HASH,
         )
-        # Verify with passlib.
-        from passlib.context import CryptContext
 
-        ctx = CryptContext(schemes=["pbkdf2_sha512"], deprecated="auto")
-        assert ctx.verify("admin-default-password-change-me", hash_str) is True
+        assert _DEFAULT_ADMIN_PASSWORD_HASH.startswith("$argon2id$")
+        from extensions.core_entities.users.domain.models import _get_password_hasher
+
+        hasher = _get_password_hasher()
+        hasher.verify(
+            _DEFAULT_ADMIN_PASSWORD_HASH, "admin-default-password-change-me"
+        )
 
     def test_hash_does_not_verify_wrong_password(self) -> None:
         """Хэш НЕ принимает неправильный пароль."""
-        hash_str = (
-            "$pbkdf2-sha512$25000$i1Gqda611ppT6r3XOocQ4g$"
-            "wS.x/pn5Q/fV/EREjpLpeJHQ0BvB6eHve/1v4RR0kcpfI.yHWgWIEhFwrwoYPg5ddMcZUgXnU7/nH/IpBSDP5Q"
-        )
-        from passlib.context import CryptContext
+        from argon2.exceptions import VerifyMismatchError
 
-        ctx = CryptContext(schemes=["pbkdf2_sha512"], deprecated="auto")
-        assert ctx.verify("wrong-password", hash_str) is False
+        from extensions.core_entities.users.domain.models import _get_password_hasher
+        from src.backend.infrastructure.database.migrations.seed_data import (
+            _DEFAULT_ADMIN_PASSWORD_HASH,
+        )
+
+        try:
+            _get_password_hasher().verify(
+                _DEFAULT_ADMIN_PASSWORD_HASH, "wrong-password"
+            )
+        except VerifyMismatchError:
+            return
+        raise AssertionError("wrong password accepted")
 
 
 class TestAlembicChain:
@@ -239,8 +257,7 @@ class TestRealisticExample:
         from pathlib import Path
 
         src = Path(
-            "src/backend/infrastructure/database/migrations/versions/"
-            "2026_09_11_1000-aa1b2c3d4e5f_seed_default_admin.py"
+            "src/backend/infrastructure/database/migrations/seed_data.py"
         ).read_text()
         # Оба INSERT должны иметь ON CONFLICT.
         assert "ON CONFLICT (username) DO NOTHING" in src
