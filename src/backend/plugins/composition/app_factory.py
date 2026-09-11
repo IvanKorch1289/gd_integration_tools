@@ -79,6 +79,18 @@ def create_app() -> FastAPI:
 
 def _configure_application_components(app: FastAPI) -> None:
     """Настройка системных компонентов приложения."""
+    # G4-fix (2026-09-11): register_app_state наполняет app.state
+    # (invoker/reply_registry/vault_refresher/ai_gateway); без него SOAP
+    # и прочие Depends(get_invoker_dep) падали AttributeError → 500.
+    from src.backend.plugins.composition.di import register_app_state
+
+    try:
+        register_app_state(app)
+    except Exception as exc:
+        get_logger("app_factory").warning(
+            "register_app_state пропущен: %s — часть Depends может отдавать 500", exc
+        )
+
     # Middleware для обработки запросов
     setup_middlewares(app=app)
 
