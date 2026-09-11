@@ -54,10 +54,4 @@ from src.backend.core.canonical_map.map import (
     get_canonical_map,
 )
 
-__all__ = (
-    "CanonicalMap",
-    "ImportRule",
-    "LayerRule",
-    "PathEntry",
-    "get_canonical_map",
-)
+__all__ = ("CanonicalMap", "ImportRule", "LayerRule", "PathEntry", "get_canonical_map")

@@ -27,11 +27,7 @@ from src.backend.core.outbox_verify.store.base import (
 
 logger = logging.getLogger(__name__)
 
-__all__ = (
-    "OutboxPublishResult",
-    "OutboxPublishService",
-    "get_outbox_publish_service",
-)
+__all__ = ("OutboxPublishResult", "OutboxPublishService", "get_outbox_publish_service")
 
 
 @dataclass(slots=True)
@@ -97,12 +93,10 @@ class OutboxPublishService:
         if state == OutboxPublishState.PUBLISHING:
             # Concurrent publisher.
             logger.warning(
-                "Outbox: in_progress event_id=%s (concurrent publisher)",
-                event_id,
+                "Outbox: in_progress event_id=%s (concurrent publisher)", event_id
             )
             return OutboxPublishResult(
-                outcome=OutboxPublishOutcome.IN_PROGRESS,
-                entry=entry,
+                outcome=OutboxPublishOutcome.IN_PROGRESS, entry=entry
             )
 
         # state == PENDING → caller acquired lock → publish.
@@ -112,15 +106,9 @@ class OutboxPublishService:
         except Exception as exc:
             await self._store.fail(event_id, error=str(exc))
             failed_entry = await self._store.get(event_id)
-            logger.info(
-                "Outbox: publish failed event_id=%s err=%s",
-                event_id,
-                exc,
-            )
+            logger.info("Outbox: publish failed event_id=%s err=%s", event_id, exc)
             return OutboxPublishResult(
-                outcome=OutboxPublishOutcome.FAILED,
-                entry=failed_entry,
-                error=str(exc),
+                outcome=OutboxPublishOutcome.FAILED, entry=failed_entry, error=str(exc)
             )
 
         # Phase 2: Confirm.

@@ -105,9 +105,7 @@ def validate_contract(contract: RouteContract) -> list[str]:
 
     # timeout_seconds.
     if contract.timeout_seconds <= 0:
-        errors.append(
-            f"timeout_seconds must be > 0 (got {contract.timeout_seconds})"
-        )
+        errors.append(f"timeout_seconds must be > 0 (got {contract.timeout_seconds})")
     elif contract.timeout_seconds > 300:
         errors.append(
             f"timeout_seconds must be <= 300 (SLA-bound, got {contract.timeout_seconds})"
@@ -115,9 +113,7 @@ def validate_contract(contract: RouteContract) -> list[str]:
 
     # owner.
     if not contract.owner or not contract.owner.strip():
-        errors.append(
-            "owner is required (no orphan routes — assign team/person)"
-        )
+        errors.append("owner is required (no orphan routes — assign team/person)")
 
     # side_effects.
     if not contract.side_effects:

@@ -32,10 +32,4 @@ from src.backend.core.dsl_lint.linter import (
     get_dsl_linter,
 )
 
-__all__ = (
-    "DSLLinter",
-    "LintResult",
-    "LintSeverity",
-    "LintViolation",
-    "get_dsl_linter",
-)
+__all__ = ("DSLLinter", "LintResult", "LintSeverity", "LintViolation", "get_dsl_linter")

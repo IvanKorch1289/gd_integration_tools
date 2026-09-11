@@ -27,8 +27,8 @@ __all__ = ("apply_default_seed", "remove_default_seed")
 _DEFAULT_ADMIN_USERNAME = "admin"
 # Это argon2id-ХЭШ (не секрет); S105 здесь триггерится на строковый литерал.
 _DEFAULT_ADMIN_PASSWORD_HASH = (  # noqa: S105
-    "$argon2id$v=19$m=65536,t=3,p=4$v70cgsB+t3Ezpn1nvqvSig$"
-    "oBpjlXKJeqdqbyzPTJeAKGtCQSZIF1Ed3U6v5jWOyOA"
+    "$argon2id$v=19$m=65536,t=3,p=4$v70cgsB+t3Ezpn1nvqvSig$"  # noqa: S105
+    "oBpjlXKJeqdqbyzPTJeAKGtCQSZIF1Ed3U6v5jWOyOA"  # noqa: S105
 )
 
 _DEFAULT_ORDER_KINDS: list[dict[str, Any]] = [

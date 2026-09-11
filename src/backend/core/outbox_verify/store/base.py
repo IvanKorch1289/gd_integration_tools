@@ -45,7 +45,9 @@ class OutboxPublishStore(ABC):
     """Abstract storage для publish verification."""
 
     @abstractmethod
-    async def begin(self, event_id: str) -> tuple[OutboxPublishState, OutboxPublishEntry | None]:
+    async def begin(
+        self, event_id: str
+    ) -> tuple[OutboxPublishState, OutboxPublishEntry | None]:
         """Lock для publish. Returns (state, entry).
 
         - (PENDING, None) → caller может publish.

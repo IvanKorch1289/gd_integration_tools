@@ -37,17 +37,13 @@ class TraceContextCarrier:
                 f"00-{context.trace_id}-{context.span_id}-01"
             )
         if context.correlation_id:
-            headers[TraceContextCarrier.CORRELATION_ID_HEADER] = (
-                context.correlation_id
-            )
+            headers[TraceContextCarrier.CORRELATION_ID_HEADER] = context.correlation_id
         if context.tenant_id:
             headers[TraceContextCarrier.TENANT_ID_HEADER] = context.tenant_id
         if context.route_id:
             headers[TraceContextCarrier.ROUTE_ID_HEADER] = context.route_id
         if context.business_keys:
-            keys_str = ",".join(
-                f"{k}={v}" for k, v in context.business_keys.items()
-            )
+            keys_str = ",".join(f"{k}={v}" for k, v in context.business_keys.items())
             headers[TraceContextCarrier.BUSINESS_KEYS_HEADER] = keys_str
         return headers
 
@@ -74,9 +70,7 @@ class TraceContextCarrier:
         return SemanticContext(
             trace_id=trace_id,
             span_id=span_id,
-            correlation_id=headers.get(
-                TraceContextCarrier.CORRELATION_ID_HEADER, ""
-            ),
+            correlation_id=headers.get(TraceContextCarrier.CORRELATION_ID_HEADER, ""),
             tenant_id=headers.get(TraceContextCarrier.TENANT_ID_HEADER, ""),
             route_id=headers.get(TraceContextCarrier.ROUTE_ID_HEADER, ""),
             business_keys=business_keys,
@@ -104,9 +98,7 @@ class CorrelationPropagator:
         return context.to_dict()
 
     @staticmethod
-    def extract_from_metadata(
-        metadata: dict[str, Any]
-    ) -> SemanticContext:
+    def extract_from_metadata(metadata: dict[str, Any]) -> SemanticContext:
         """Extract из MQ message metadata."""
         if not metadata:
             return SemanticContext()

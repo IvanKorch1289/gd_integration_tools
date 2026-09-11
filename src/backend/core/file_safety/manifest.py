@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import tempfile
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -65,7 +66,12 @@ class FileSafetyService:
     """Service для manifest creation + quarantine + atomic handoff."""
 
     def __init__(self, *, staging_dir: str | None = None) -> None:
-        self._staging_dir = Path(staging_dir) if staging_dir else Path("/tmp/gd_filesafety_staging")
+        # tempfile.gettempdir() вместо литерала /tmp (ruff S108); поведение то же.
+        self._staging_dir = (
+            Path(staging_dir)
+            if staging_dir
+            else Path(tempfile.gettempdir()) / "gd_filesafety_staging"
+        )
         self._staging_dir.mkdir(parents=True, exist_ok=True)
 
     @property
@@ -97,12 +103,7 @@ class FileSafetyService:
             attributes=attributes or {},
         )
 
-    def stage_file(
-        self,
-        *,
-        content: bytes,
-        filename: str = "",
-    ) -> Path:
+    def stage_file(self, *, content: bytes, filename: str = "") -> Path:
         """Stage file в staging dir. Returns path."""
         staged = self._staging_dir / f"{uuid.uuid4()}_{filename}"
         staged.write_bytes(content)

@@ -5,12 +5,10 @@ Coverage target: mq_trace_propagator.py 26% → 70%+.
 
 from __future__ import annotations
 
-import pytest
-
 from src.backend.infrastructure.observability.mq_trace_propagator import (
     _bytes_to_str,
-    inject_into_headers,
     extract_from_headers,
+    inject_into_headers,
 )
 
 

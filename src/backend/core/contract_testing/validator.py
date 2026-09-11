@@ -52,9 +52,7 @@ def _check_type(value: Any, expected: str | list[str]) -> bool:
     return False
 
 
-def _validate(
-    value: Any, schema: dict[str, Any], path: str = "$"
-) -> list[str]:
+def _validate(value: Any, schema: dict[str, Any], path: str = "$") -> list[str]:
     """Recursive validator. Returns list of error messages."""
     errors: list[str] = []
 
@@ -62,8 +60,7 @@ def _validate(
     if "type" in schema:
         if not _check_type(value, schema["type"]):
             errors.append(
-                f"{path}: expected type {schema['type']!r}, "
-                f"got {type(value).__name__}"
+                f"{path}: expected type {schema['type']!r}, got {type(value).__name__}"
             )
             return errors  # дальнейшая валидация бессмысленна.
 
@@ -83,7 +80,9 @@ def _validate(
             )
         if "pattern" in schema:
             if not re.search(schema["pattern"], value):
-                errors.append(f"{path}: string does not match pattern {schema['pattern']!r}")
+                errors.append(
+                    f"{path}: string does not match pattern {schema['pattern']!r}"
+                )
 
     # number constraints.
     if isinstance(value, (int, float)) and not isinstance(value, bool):
@@ -102,27 +101,19 @@ def _validate(
         for field_name, field_schema in properties.items():
             if field_name in value:
                 errors.extend(
-                    _validate(
-                        value[field_name],
-                        field_schema,
-                        f"{path}.{field_name}",
-                    )
+                    _validate(value[field_name], field_schema, f"{path}.{field_name}")
                 )
 
     # array constraints.
     if isinstance(value, list):
         if "items" in schema:
             for i, item in enumerate(value):
-                errors.extend(
-                    _validate(item, schema["items"], f"{path}[{i}]")
-                )
+                errors.extend(_validate(item, schema["items"], f"{path}[{i}]"))
 
     return errors
 
 
-def validate_against_schema(
-    value: Any, schema: dict[str, Any]
-) -> list[str]:
+def validate_against_schema(value: Any, schema: dict[str, Any]) -> list[str]:
     """Validate ``value`` against ``schema``. Returns list of errors (empty if valid).
 
     Raises:

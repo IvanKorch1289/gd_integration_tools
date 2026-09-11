@@ -3,13 +3,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 
-from src.backend.core.connectors.base import (
-    AuthModel,
-    BaseConnector,
-    ConnectorMetadata,
-)
+from src.backend.core.connectors.base import AuthModel, BaseConnector, ConnectorMetadata
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +24,7 @@ class ConnectorRegistry:
             raise ValueError("Connector must have non-empty metadata.name")
         if meta.name in self._connectors:
             logger.warning(
-                "ConnectorRegistry: overwriting existing connector name=%s",
-                meta.name,
+                "ConnectorRegistry: overwriting existing connector name=%s", meta.name
             )
         self._connectors[meta.name] = connector
         logger.info(

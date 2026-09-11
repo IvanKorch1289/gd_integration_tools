@@ -17,17 +17,13 @@ Singleton: ``get_idempotency_service()`` — module-level lazy accessor.
 
 from __future__ import annotations
 
-import asyncio
 import functools
-import inspect
 import logging
-import time
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable
 
 from src.backend.core.idempotency.backends.base import (
     IdempotencyBackend,
-    IdempotencyEntry,
     IdempotencyOutcome,
 )
 
@@ -116,18 +112,13 @@ class IdempotencyService:
         existing = await self._backend.get(key)
         if existing is not None:
             if existing.state == IdempotencyOutcome.COMMITTED:
-                logger.debug(
-                    "Idempotency: replay cached result for key=%s", key
-                )
+                logger.debug("Idempotency: replay cached result for key=%s", key)
                 return IdempotencyState(
-                    result=existing.result,
-                    replayed=True,
-                    committed=True,
+                    result=existing.result, replayed=True, committed=True
                 )
             if existing.state == IdempotencyOutcome.PENDING:
                 logger.warning(
-                    "Idempotency: conflict — concurrent in-flight for key=%s",
-                    key,
+                    "Idempotency: conflict — concurrent in-flight for key=%s", key
                 )
                 return IdempotencyState(conflict=True)
 
@@ -140,9 +131,7 @@ class IdempotencyService:
             existing = await self._backend.get(key)
             if existing is not None:
                 return IdempotencyState(
-                    result=existing.result,
-                    replayed=True,
-                    committed=True,
+                    result=existing.result, replayed=True, committed=True
                 )
 
         # 3. Execute fn.
@@ -157,10 +146,7 @@ class IdempotencyService:
         return IdempotencyState(result=result, replayed=False, committed=True)
 
     def idempotent(
-        self,
-        key_fn: Callable[..., str],
-        *,
-        ttl_seconds: int | None = None,
+        self, key_fn: Callable[..., str], *, ttl_seconds: int | None = None
     ) -> Callable[[Callable[..., Awaitable[Any]]], Callable[..., Awaitable[Any]]]:
         """Decorator: auto-dedupe по ``key_fn(args, kwargs)``.
 
@@ -178,6 +164,7 @@ class IdempotencyService:
                 ...
 
         """
+
         def decorator(
             fn: Callable[..., Awaitable[Any]],
         ) -> Callable[..., Awaitable[Any]]:

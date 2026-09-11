@@ -18,10 +18,7 @@ logger = logging.getLogger(__name__)
 __all__ = ("ContractTestHarness", "get_contract_test_harness")
 
 # Route function: ``def route(payload) -> dict`` or async ``async def route(payload) -> dict``.
-RouteFn = Union[
-    Callable[[Any], Any],
-    Callable[[Any], Awaitable[Any]],
-]
+RouteFn = Union[Callable[[Any], Any], Callable[[Any], Awaitable[Any]]]
 
 
 class ContractTestHarness:
@@ -30,11 +27,7 @@ class ContractTestHarness:
     def __init__(self) -> None:
         self._results: list[ContractTestResult] = []
 
-    def run(
-        self,
-        test_case: ContractTestCase,
-        route_fn: RouteFn,
-    ) -> ContractTestResult:
+    def run(self, test_case: ContractTestCase, route_fn: RouteFn) -> ContractTestResult:
         """Run one contract test.
 
         Args:
@@ -90,17 +83,13 @@ class ContractTestHarness:
         return result
 
     def run_suite(
-        self,
-        test_cases: list[ContractTestCase],
-        route_fn: RouteFn,
+        self, test_cases: list[ContractTestCase], route_fn: RouteFn
     ) -> list[ContractTestResult]:
         """Run multiple contract tests."""
         return [self.run(tc, route_fn) for tc in test_cases]
 
     def run_compatibility(
-        self,
-        compat: CompatibilityTest,
-        route_fn: RouteFn,
+        self, compat: CompatibilityTest, route_fn: RouteFn
     ) -> ContractTestResult:
         """Verify backward-compat: old_payload should still work."""
         # Reuse ContractTestCase semantics.
@@ -135,10 +124,9 @@ class ContractTestHarness:
                 if loop.is_running():
                     # Create a task in the running loop and wait.
                     import concurrent.futures
+
                     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
-                        future = ex.submit(
-                            asyncio.run, self._await_coro(result)
-                        )
+                        future = ex.submit(asyncio.run, self._await_coro(result))
                         return future.result()
                 else:
                     return loop.run_until_complete(result)

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -156,7 +155,7 @@ timeout_seconds = 15
 idempotency_key_field = "cdc_lsn"
 dlq_topic = "events.{{route_id}}.dlq"
 """,
-            ),
+            )
         ],
     )
     catalog.register(cdc_enrich)
@@ -180,7 +179,7 @@ owner = "{{owner}}"
 [contract]
 timeout_seconds = 60
 """,
-            ),
+            )
         ],
     )
     catalog.register(file_watch)
@@ -207,7 +206,7 @@ retry_policy = "exponential"
 max_retries = 3
 dlq_topic = "events.{{route_id}}.dlq"
 """,
-            ),
+            )
         ],
     )
     catalog.register(saga)

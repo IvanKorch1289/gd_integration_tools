@@ -41,10 +41,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.route_simulation.mock import (
-    MockConnector,
-    RecordedCall,
-)
+from src.backend.core.route_simulation.mock import MockConnector, RecordedCall
 from src.backend.core.route_simulation.simulator import (
     RouteSimulator,
     SimulationResult,

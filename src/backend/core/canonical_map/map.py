@@ -6,17 +6,10 @@ import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
-__all__ = (
-    "CanonicalMap",
-    "ImportRule",
-    "LayerRule",
-    "PathEntry",
-    "get_canonical_map",
-)
+__all__ = ("CanonicalMap", "ImportRule", "LayerRule", "PathEntry", "get_canonical_map")
 
 
 @dataclass(slots=True)
@@ -92,10 +85,7 @@ class CanonicalMap:
         return self._paths.get(path)
 
     def list_paths(
-        self,
-        *,
-        layer: str | None = None,
-        tag: str | None = None,
+        self, *, layer: str | None = None, tag: str | None = None
     ) -> list[PathEntry]:
         """List paths с фильтрами."""
         result = list(self._paths.values())
@@ -108,9 +98,7 @@ class CanonicalMap:
     def get_layer(self, name: str) -> LayerRule | None:
         return self._layers.get(name)
 
-    def check_import(
-        self, source_module: str, target_module: str
-    ) -> list[str]:
+    def check_import(self, source_module: str, target_module: str) -> list[str]:
         """Check если ``source_module`` нарушает rules при import ``target_module``.
 
         Returns:
@@ -133,9 +121,7 @@ class CanonicalMap:
                     violations.append(msg)
         return violations
 
-    def check_imports(
-        self, *, project_root: str | None = None
-    ) -> list[str]:
+    def check_imports(self, *, project_root: str | None = None) -> list[str]:
         """Scan project imports и detect violations.
 
         Args:
@@ -167,15 +153,11 @@ class CanonicalMap:
             for node in ast.walk(tree):
                 if isinstance(node, ast.ImportFrom) and node.module:
                     target = node.module
-                    violations.extend(
-                        self.check_import(source_module, target)
-                    )
+                    violations.extend(self.check_import(source_module, target))
                 elif isinstance(node, ast.Import):
                     for alias in node.names:
                         target = alias.name
-                        violations.extend(
-                            self.check_import(source_module, target)
-                        )
+                        violations.extend(self.check_import(source_module, target))
         return violations
 
     def size(self) -> int:

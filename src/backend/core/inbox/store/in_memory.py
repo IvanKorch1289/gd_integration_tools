@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import Any
 
 from src.backend.core.inbox.store.base import InboxEntry, InboxState, InboxStore
 
@@ -60,9 +59,7 @@ class InMemoryInboxStore(InboxStore):
                 entry.committed_at = time.time()
                 entry.last_error = None
 
-    async def fail(
-        self, consumer_id: str, message_id: str, error: str
-    ) -> None:
+    async def fail(self, consumer_id: str, message_id: str, error: str) -> None:
         """``RECEIVED → FAILED``, инкрементирует attempts, сохраняет error."""
         async with self._lock:
             key = _make_key(consumer_id, message_id)
@@ -72,9 +69,7 @@ class InMemoryInboxStore(InboxStore):
                 entry.last_error = error
                 entry.attempts += 1
 
-    async def get(
-        self, consumer_id: str, message_id: str
-    ) -> InboxEntry | None:
+    async def get(self, consumer_id: str, message_id: str) -> InboxEntry | None:
         """Получить entry или None."""
         async with self._lock:
             return self._entries.get(_make_key(consumer_id, message_id))

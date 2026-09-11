@@ -34,7 +34,10 @@ from src.backend.core.outbox_verify.service import (
     OutboxPublishState,
     get_outbox_publish_service,
 )
-from src.backend.core.outbox_verify.store.base import OutboxPublishEntry, OutboxPublishStore
+from src.backend.core.outbox_verify.store.base import (
+    OutboxPublishEntry,
+    OutboxPublishStore,
+)
 from src.backend.core.outbox_verify.store.in_memory import InMemoryOutboxVerifyStore
 
 __all__ = (

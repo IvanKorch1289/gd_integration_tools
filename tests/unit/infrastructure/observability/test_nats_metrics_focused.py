@@ -7,9 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.backend.infrastructure.observability.nats_metrics import (
-    record_consumer_info,
-)
+from src.backend.infrastructure.observability.nats_metrics import record_consumer_info
 
 
 def test_record_consumer_info_basic() -> None:

@@ -721,6 +721,8 @@ def define_checks() -> list[tuple[str, Callable[[], CheckResult]]]:
             lambda: _check_python_script(
                 "docstring-coverage",
                 "check_docstrings.py",
+                "--allowlist",
+                "tools/check_docstrings_allowlist.txt",
                 "src/backend/core",
                 "src/backend/dsl/engine",
                 "src/backend/core/interfaces",

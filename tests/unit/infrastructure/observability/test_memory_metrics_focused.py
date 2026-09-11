@@ -5,9 +5,7 @@ Coverage target: memory_metrics.py 64% → 70%+.
 
 from __future__ import annotations
 
-from src.backend.infrastructure.observability.memory_metrics import (
-    MemoryMetricsBackend,
-)
+from src.backend.infrastructure.observability.memory_metrics import MemoryMetricsBackend
 
 
 def test_key_includes_labels() -> None:

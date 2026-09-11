@@ -5,16 +5,10 @@ from __future__ import annotations
 import enum
 import logging
 from dataclasses import dataclass, field
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
-__all__ = (
-    "ToolCapability",
-    "ToolPolicy",
-    "ToolPolicyEngine",
-    "get_tool_policy_engine",
-)
+__all__ = ("ToolCapability", "ToolPolicy", "ToolPolicyEngine", "get_tool_policy_engine")
 
 
 class ToolCapability(str, enum.Enum):
@@ -48,8 +42,7 @@ class ToolPolicyEngine:
     def register(self, policy: ToolPolicy) -> None:
         if policy.tool_name in self._policies:
             logger.warning(
-                "ToolPolicyEngine: overwriting policy tool_name=%s",
-                policy.tool_name,
+                "ToolPolicyEngine: overwriting policy tool_name=%s", policy.tool_name
             )
         self._policies[policy.tool_name] = policy
 
@@ -57,11 +50,7 @@ class ToolPolicyEngine:
         return self._policies.get(tool_name)
 
     def is_allowed(
-        self,
-        *,
-        tool: str,
-        agent: str | None = None,
-        tenant: str | None = None,
+        self, *, tool: str, agent: str | None = None, tenant: str | None = None
     ) -> bool:
         """Check if tool call is allowed для (agent, tenant).
 

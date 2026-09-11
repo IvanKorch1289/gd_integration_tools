@@ -12,7 +12,6 @@
 from __future__ import annotations
 
 import enum
-from typing import Any
 
 
 class FailureClass(str, enum.Enum):
@@ -26,25 +25,39 @@ class FailureClass(str, enum.Enum):
 
 
 # Type tags, по которым можно быстро классифицировать exception.
-_RETRYABLE_TYPES = frozenset({
-    "TimeoutError", "ConnectionError", "ConnectionRefusedError",
-    "ConnectionResetError", "BrokenPipeError", "OSError",
-    "asyncio.TimeoutError",
-})
+_RETRYABLE_TYPES = frozenset(
+    {
+        "TimeoutError",
+        "ConnectionError",
+        "ConnectionRefusedError",
+        "ConnectionResetError",
+        "BrokenPipeError",
+        "OSError",
+        "asyncio.TimeoutError",
+    }
+)
 
-_POISON_TYPES = frozenset({
-    "ValueError", "KeyError", "TypeError", "UnicodeDecodeError",
-    "json.JSONDecodeError", "pydantic.ValidationError",
-})
+_POISON_TYPES = frozenset(
+    {
+        "ValueError",
+        "KeyError",
+        "TypeError",
+        "UnicodeDecodeError",
+        "json.JSONDecodeError",
+        "pydantic.ValidationError",
+    }
+)
 
-_BUSINESS_TYPES = frozenset({
-    "BadRequestError", "UnprocessableError", "NotFoundError",
-})
+_BUSINESS_TYPES = frozenset({"BadRequestError", "UnprocessableError", "NotFoundError"})
 
-_SECURITY_TYPES = frozenset({
-    "AuthenticationError", "AuthorizationError",
-    "PermissionError", "PermissionDeniedError",
-})
+_SECURITY_TYPES = frozenset(
+    {
+        "AuthenticationError",
+        "AuthorizationError",
+        "PermissionError",
+        "PermissionDeniedError",
+    }
+)
 
 
 class FailureTaxonomy:

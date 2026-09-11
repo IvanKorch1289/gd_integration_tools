@@ -10,13 +10,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-__all__ = (
-    "Checkpoint",
-    "RPAState",
-    "RPAWorkflow",
-    "WorkflowRun",
-    "get_rpa_workflow",
-)
+__all__ = ("Checkpoint", "RPAState", "RPAWorkflow", "WorkflowRun", "get_rpa_workflow")
 
 
 class RPAState(str, enum.Enum):
@@ -65,10 +59,7 @@ class RPAWorkflow:
         self._runs: dict[str, WorkflowRun] = {}
 
     async def start(
-        self,
-        *,
-        workflow_id: str,
-        metadata: dict[str, Any] | None = None,
+        self, *, workflow_id: str, metadata: dict[str, Any] | None = None
     ) -> WorkflowRun:
         """Start new workflow run."""
         import time
@@ -96,9 +87,7 @@ class RPAWorkflow:
         import time
 
         if run.state not in (RPAState.RUNNING, RPAState.PAUSED):
-            raise RuntimeError(
-                f"Cannot run step {step_name!r} in state {run.state}"
-            )
+            raise RuntimeError(f"Cannot run step {step_name!r} in state {run.state}")
         cp = Checkpoint(
             step_name=step_name,
             state=RPAState.RUNNING,
@@ -110,14 +99,11 @@ class RPAWorkflow:
         return cp
 
     async def pause(
-        self,
-        run: WorkflowRun,
-        *,
-        reason: str,
-        operator: str | None = None,
+        self, run: WorkflowRun, *, reason: str, operator: str | None = None
     ) -> None:
         """Pause workflow для human takeover."""
         import time
+
         if run.state != RPAState.RUNNING:
             raise RuntimeError(f"Cannot pause in state {run.state}")
         run.state = RPAState.PAUSED
@@ -125,14 +111,10 @@ class RPAWorkflow:
         run.pause_reason = reason
         run.operator = operator
 
-    async def resume(
-        self,
-        run: WorkflowRun,
-        *,
-        operator: str | None = None,
-    ) -> None:
+    async def resume(self, run: WorkflowRun, *, operator: str | None = None) -> None:
         """Resume workflow после human action."""
         import time
+
         if run.state != RPAState.PAUSED:
             raise RuntimeError(f"Cannot resume in state {run.state}")
         run.state = RPAState.RUNNING
@@ -143,12 +125,14 @@ class RPAWorkflow:
     async def complete(self, run: WorkflowRun) -> None:
         """Mark workflow as completed."""
         import time
+
         run.state = RPAState.COMPLETED
         run.completed_at = time.time()
 
     async def fail(self, run: WorkflowRun, error: str) -> None:
         """Mark workflow as failed (с evidence)."""
         import time
+
         run.state = RPAState.FAILED
         run.last_error = error
         run.completed_at = time.time()

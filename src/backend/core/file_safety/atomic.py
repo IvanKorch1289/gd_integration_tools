@@ -3,11 +3,7 @@
 from __future__ import annotations
 
 import os
-import shutil
 from pathlib import Path
-from typing import Any
-
-from src.backend.core.file_safety.manifest import FileManifest
 
 __all__ = ("AtomicHandoff",)
 
@@ -49,12 +45,9 @@ class AtomicHandoff:
         return final_path
 
     @staticmethod
-    def verify_checksum(
-        *,
-        path: Path | str,
-        expected_sha256: str,
-    ) -> bool:
+    def verify_checksum(*, path: Path | str, expected_sha256: str) -> bool:
         """Verify file integrity via SHA-256."""
         import hashlib
+
         actual = hashlib.sha256(Path(path).read_bytes()).hexdigest()
         return actual == expected_sha256

@@ -45,9 +45,7 @@ class InMemoryDLQStore(DLQStore):
         async with self._lock:
             return self._records.get(record_id)
 
-    async def mark_replayed(
-        self, record_id: str, operator: str
-    ) -> None:
+    async def mark_replayed(self, record_id: str, operator: str) -> None:
         async with self._lock:
             record = self._records.get(record_id)
             if record is not None:

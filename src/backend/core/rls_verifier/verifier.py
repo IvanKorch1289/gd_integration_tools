@@ -66,9 +66,7 @@ class RLSVerifier:
         re.compile(r"\bWHERE\s+.*tenant", re.IGNORECASE),
     )
 
-    def verify_query(
-        self, query: str, context: TenantContext
-    ) -> bool:
+    def verify_query(self, query: str, context: TenantContext) -> bool:
         """Verify query respects tenant isolation.
 
         Returns:
@@ -89,9 +87,7 @@ class RLSVerifier:
                 return False
 
         # Must have tenant_id filter.
-        has_tenant_filter = any(
-            p.search(query) for p in self.TENANT_FILTER_PATTERNS
-        )
+        has_tenant_filter = any(p.search(query) for p in self.TENANT_FILTER_PATTERNS)
         if not has_tenant_filter:
             logger.warning(
                 "RLSVerifier: missing tenant filter in query: %s", query[:100]
@@ -100,12 +96,7 @@ class RLSVerifier:
 
         return True
 
-    def verify_access(
-        self,
-        *,
-        resource_tenant_id: str,
-        context: TenantContext,
-    ) -> bool:
+    def verify_access(self, *, resource_tenant_id: str, context: TenantContext) -> bool:
         """Verify context can access resource."""
         if context.is_admin:
             return True

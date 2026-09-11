@@ -19,7 +19,9 @@ class InMemoryOutboxVerifyStore(OutboxPublishStore):
         self._entries: dict[str, OutboxPublishEntry] = {}
         self._lock = asyncio.Lock()
 
-    async def begin(self, event_id: str) -> tuple[OutboxPublishState, OutboxPublishEntry | None]:
+    async def begin(
+        self, event_id: str
+    ) -> tuple[OutboxPublishState, OutboxPublishEntry | None]:
         async with self._lock:
             existing = self._entries.get(event_id)
             if existing is not None:

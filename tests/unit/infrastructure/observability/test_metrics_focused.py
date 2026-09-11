@@ -5,23 +5,21 @@ Coverage target: metrics.py → 70%+.
 
 from __future__ import annotations
 
-import pytest
-
 from src.backend.infrastructure.observability.metrics import (
     get_dsl_metrics,
-    record_pipeline_execution,
-    record_pool_metric,
-    record_cache_hit,
-    record_cache_miss,
-    record_express_message_sent,
-    record_express_command_received,
-    record_express_delivery_latency,
-    record_ai_token_usage,
     record_ai_semantic_cache_hit,
     record_ai_semantic_cache_miss,
-    record_antivirus_scan,
+    record_ai_token_usage,
     record_antivirus_cache_hit,
     record_antivirus_cache_miss,
+    record_antivirus_scan,
+    record_cache_hit,
+    record_cache_miss,
+    record_express_command_received,
+    record_express_delivery_latency,
+    record_express_message_sent,
+    record_pipeline_execution,
+    record_pool_metric,
     record_queue_consumer_lag,
     record_queue_dlq_depth,
 )

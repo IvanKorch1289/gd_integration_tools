@@ -4,14 +4,8 @@ from __future__ import annotations
 
 import enum
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any
 
-from src.backend.core.file_safety.manifest import (
-    FileManifest,
-    FileSafetyService,
-    compute_sha256,
-)
+from src.backend.core.file_safety.manifest import FileManifest, FileSafetyService
 
 __all__ = (
     "QuarantineDecision",

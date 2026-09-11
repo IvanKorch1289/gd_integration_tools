@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import enum
-import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -48,9 +47,7 @@ class LintResult:
 
     @property
     def warning_count(self) -> int:
-        return sum(
-            1 for v in self.violations if v.severity == LintSeverity.WARNING
-        )
+        return sum(1 for v in self.violations if v.severity == LintSeverity.WARNING)
 
 
 class DSLLinter:
@@ -190,16 +187,23 @@ class DSLLinter:
     def _detect_sensitive_fields(self, route_config: dict[str, Any]) -> list[str]:
         """Heuristic: detect sensitive fields (PII keywords)."""
         sensitive_keywords = {
-            "ssn", "passport", "credit_card", "card_number",
-            "email", "phone", "address", "dob", "birth_date",
+            "ssn",
+            "passport",
+            "credit_card",
+            "card_number",
+            "email",
+            "phone",
+            "address",
+            "dob",
+            "birth_date",
         }
         found = []
         # Scan inputs.
         inputs = route_config.get("input_fields", [])
-        for field in inputs:
-            field_lower = field.lower()
+        for input_field in inputs:
+            field_lower = input_field.lower()
             if any(kw in field_lower for kw in sensitive_keywords):
-                found.append(field)
+                found.append(input_field)
         # Scan description.
         description = route_config.get("description", "").lower()
         for kw in sensitive_keywords:

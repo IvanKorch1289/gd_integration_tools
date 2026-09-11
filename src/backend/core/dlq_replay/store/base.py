@@ -49,9 +49,7 @@ class DLQStore(ABC):
         """Получить record по ID."""
 
     @abstractmethod
-    async def mark_replayed(
-        self, record_id: str, operator: str
-    ) -> None:
+    async def mark_replayed(self, record_id: str, operator: str) -> None:
         """Mark record as replayed (audit)."""
 
     @abstractmethod

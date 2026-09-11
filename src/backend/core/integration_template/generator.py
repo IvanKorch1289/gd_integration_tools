@@ -8,11 +8,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from src.backend.core.integration_template.catalog import (
-    Template,
-    TemplateCatalog,
-    TemplateFile,
-)
+from src.backend.core.integration_template.catalog import Template
 
 logger = logging.getLogger(__name__)
 
@@ -69,10 +65,7 @@ class TemplateGenerator:
         target = Path(target_dir)
         target.mkdir(parents=True, exist_ok=True)
 
-        result = GenerationResult(
-            template_name=template.name,
-            target_dir=str(target),
-        )
+        result = GenerationResult(template_name=template.name, target_dir=str(target))
 
         # 1. Validate required variables.
         missing = [v for v in template.variables if v not in variables]
@@ -129,6 +122,7 @@ class TemplateGenerator:
 
     def _render(self, content: str, variables: dict[str, Any]) -> str:
         """Substitute ``{{var}}`` patterns."""
+
         def _replace(match: re.Match[str]) -> str:
             var_name = match.group(1).strip()
             if var_name not in variables:

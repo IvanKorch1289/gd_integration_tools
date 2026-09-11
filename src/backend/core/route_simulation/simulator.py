@@ -67,11 +67,7 @@ class RouteSimulator:
     Шаги задаются как список ``SimStepFn`` или регистрируются через decorator.
     """
 
-    def __init__(
-        self,
-        *,
-        connectors: dict[str, MockConnector] | None = None,
-    ) -> None:
+    def __init__(self, *, connectors: dict[str, MockConnector] | None = None) -> None:
         self._connectors: dict[str, MockConnector] = connectors or {}
         # Steps: list of (name, callable).
         self._steps: list[tuple[str, SimStepFn]] = []
@@ -97,9 +93,7 @@ class RouteSimulator:
             c.reset()
 
     def simulate(
-        self,
-        contract_route_id: str,
-        payload: dict[str, Any] | None = None,
+        self, contract_route_id: str, payload: dict[str, Any] | None = None
     ) -> SimulationResult:
         """Запустить simulation.
 
@@ -128,9 +122,7 @@ class RouteSimulator:
                 except Exception as exc:
                     result.success = False
                     result.error = f"step {name!r} failed: {exc}"
-                    logger.warning(
-                        "Simulation: step %s failed: %s", name, exc
-                    )
+                    logger.warning("Simulation: step %s failed: %s", name, exc)
                     break
                 # If step returns dict, merge into current payload (replace keys).
                 if isinstance(step_result, dict):
@@ -142,9 +134,7 @@ class RouteSimulator:
                 step_duration = (time.time() - step_start) * 1000
                 result.execution_log.append(
                     SimulationStep(
-                        name=name,
-                        result=step_result,
-                        duration_ms=step_duration,
+                        name=name, result=step_result, duration_ms=step_duration
                     )
                 )
         finally:

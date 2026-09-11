@@ -46,9 +46,7 @@ class DLQReplayService:
     """Service для DLQ send/list/replay с taxonomy classification."""
 
     def __init__(
-        self,
-        store: DLQStore,
-        taxonomy: FailureTaxonomy | None = None,
+        self, store: DLQStore, taxonomy: FailureTaxonomy | None = None
     ) -> None:
         self._store = store
         self._taxonomy = taxonomy or classify_exception.__globals__["_default_taxonomy"]
@@ -111,11 +109,7 @@ class DLQReplayService:
         )
 
     async def replay(
-        self,
-        *,
-        record_id: str,
-        operator: str,
-        replay_fn: ReplayFn,
+        self, *, record_id: str, operator: str, replay_fn: ReplayFn
     ) -> bool:
         """Replay record через callback. Returns success."""
         record = await self._store.get(record_id)
@@ -132,16 +126,12 @@ class DLQReplayService:
         try:
             success = await replay_fn(record)
         except Exception as exc:
-            logger.error(
-                "DLQ: replay record_id=%s failed: %s", record_id, exc
-            )
+            logger.error("DLQ: replay record_id=%s failed: %s", record_id, exc)
             return False
         if success:
             await self._store.mark_replayed(record_id, operator)
             logger.info(
-                "DLQ: replay record_id=%s by operator=%s success",
-                record_id,
-                operator,
+                "DLQ: replay record_id=%s by operator=%s success", record_id, operator
             )
         return success
 

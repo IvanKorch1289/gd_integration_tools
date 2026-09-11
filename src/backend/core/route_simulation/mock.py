@@ -30,12 +30,7 @@ class MockConnector:
     Не делает реальных side effects.
     """
 
-    def __init__(
-        self,
-        *,
-        name: str,
-        default_response: Any = None,
-    ) -> None:
+    def __init__(self, *, name: str, default_response: Any = None) -> None:
         self.name = name
         self.calls: list[RecordedCall] = []
         self._responses: dict[str, Any] = {}
@@ -46,11 +41,7 @@ class MockConnector:
         self._responses[method] = response
 
     def record(
-        self,
-        method: str,
-        *args: Any,
-        response: Any = None,
-        **kwargs: Any,
+        self, method: str, *args: Any, response: Any = None, **kwargs: Any
     ) -> Any:
         """Записать вызов и вернуть programmed response.
 

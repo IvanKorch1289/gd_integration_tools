@@ -83,15 +83,11 @@ class InboxStore(ABC):
         """``RECEIVED → COMMITTED``."""
 
     @abstractmethod
-    async def fail(
-        self, consumer_id: str, message_id: str, error: str
-    ) -> None:
+    async def fail(self, consumer_id: str, message_id: str, error: str) -> None:
         """``RECEIVED → FAILED``, инкрементирует attempts, сохраняет error."""
 
     @abstractmethod
-    async def get(
-        self, consumer_id: str, message_id: str
-    ) -> InboxEntry | None:
+    async def get(self, consumer_id: str, message_id: str) -> InboxEntry | None:
         """Получить entry или None."""
 
     @abstractmethod
