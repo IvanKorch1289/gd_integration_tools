@@ -47,9 +47,13 @@ class EventSchemaValidationError(BaseError):
     """Payload не соответствует зарегистрированной для канала JSON-Schema (S13 K3 W3)."""
 
     def __init__(self, channel: str, event_type: str, reason: str) -> None:
+        # ponytail: BaseError.__init__ expects message as kw-arg, not positional.
+        # Fix: explicit message= to ensure self.message is populated.
         super().__init__(
-            f"EventBus schema validation failed for channel='{channel}', "
-            f"event_type='{event_type}': {reason}"
+            message=(
+                f"EventBus schema validation failed for channel='{channel}', "
+                f"event_type='{event_type}': {reason}"
+            )
         )
         self.channel = channel
         self.event_type = event_type
