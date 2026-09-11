@@ -54,7 +54,7 @@ X.509/FIDO2. Замечание: проект одного автора (Ron Fre
 |---|---|---|
 | `infrastructure/cache/backends/` | 5 тонких адаптеров (91–210 LOC) под CacheBackend-протокол: redis/keydb/memcached/memory/disk | KEEP (это и есть интеграционный слой) |
 | `infrastructure/cache/backends/disk.py` (132 LOC) | Самописный: sha256-шардирование, JSON-bytes значения, **без pickle** | **KEEP** — сознательно безопаснее библиотеки |
-| `diskcache` 5.6.3 | В deps ради единственного потребителя `decorators/caching/storage/disk.py`; несёт **PYSEC-2026-2447** (pickle-RCE при записи в cache dir; fix-версии нет; ADR-0287) | **REPLACE-candidate (обратный)**: по ADR — перевести decorators-disk fallback на собственный pickle-free backend и **удалить diskcache из deps**, закрыв CVE целиком. Условие: API-совместимость (TTL, iterkeys/pop) — покрывается тестами caching-suite (19+) |
+| `diskcache` 5.6.3 | Был в deps ради единственного потребителя `decorators/caching/storage/disk.py`; нёс **PYSEC-2026-2447** (pickle-RCE при записи в cache dir; fix-версии нет; ADR-0287) | **✅ ВЫПОЛНЕНО 2026-09-11**: перепроверено на PyPI/OSV — последний релиз 5.6.3 = last_affected, upstream неактивен (GitHub Releases пуст). Потребитель переписан на собственный pickle-free `_IndexedByteStore` (sha256-файлы + JSON-индекс), **diskcache удалён из deps**; pip-audit = 0 findings, allowlist очищен (0 entries). Ограничение: индекс per-process (был sqlite) — для default-OFF fallback приемлемо |
 | `cachetools` 7.1.8 | MemoryBackend — тонкая обёртка TTL | KEEP |
 
 ## 5. Прочие проверенные области
@@ -79,8 +79,8 @@ X.509/FIDO2. Замечание: проект одного автора (Ron Fre
 
 ## 7. План (если принимать)
 
-| Шаг | Действие | Условие |
+| Шаг | Действие | Статус |
 |---|---|---|
-| 1 | ADR: diskcache → собственный pickle-free backend в decorators-disk; удаление diskcache из deps (CVE закрывается, −1 зависимость) | координация uv.lock с полосой; прогон caching-suite + pip-audit = 0 находок |
-| 2 | Унификация: 6 прямых tenacity-файлов → фасад `core.resilience.retry` | чистый refactor, тесты зелёные |
+| 1 | diskcache → собственный pickle-free backend; удаление из deps; allowlist 0 entries | **✅ выполнено 2026-09-11** (pip-audit 0) |
+| 2 | Унификация: 6 прямых tenacity-файлов → фасад `core.resilience.retry` | открыт (refactor, не срочно) |
 | 3 | SSH/SFTP/TerminalExec/cache-адаптеры/encoding — без изменений | — |

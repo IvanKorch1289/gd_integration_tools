@@ -1,4 +1,4 @@
-# pip-audit allowlist — Active CVEs (verified 2026-09-04)
+# pip-audit allowlist — Active CVEs (verified 2026-09-11)
 #
 # Формат: одна VULN-id (PYSEC-XXXX, GHSA-XXXX или CVE-XXXX) на строку.
 # Каждая строка должна сопровождаться комментарием выше:
@@ -15,18 +15,10 @@
 # CVE-2026-44708/44896 ID-строки удалены — их же комментарии S58 помечали
 # их stale («Removed from active list»), ID оставались по ошибке и
 # маскировали потенциальные находки.
-# Active count: 2 entries.
-
-# === Active entries (S96 verified) ===
-
-# diskcache 5.6.3 — ADR-0287 (no upstream fix available)
-# S58: installed 5.6.3, no fix-version on PyPI.
-# PYSEC-2026-2447 — only known CVE. Deferred to upstream release.
-# Review date: 2026-12-01.
-PYSEC-2026-2447
-
-# diskcache 5.6.3 — ADR-0287 (CVE-2025-69872 — diskcache 6.x decorator
-# API breaking changes требует alembic compatibility review)
-# S58: still 5.6.3 in installed; CVE applies to 5.6.3 line.
-# Deferred together with PYSEC-2026-2447.
-CVE-2025-69872
+#
+# 2026-09-11: diskcache (PYSEC-2026-2447 / CVE-2025-69872) УДАЛЁН из
+# зависимостей — upstream-фикса нет (OSV: last_affected 5.6.3 = последняя
+# версия, проект неактивен). Единственный потребитель (decorators
+# DiskTTLCache) переведён на собственный pickle-free backend
+# (caching/storage/disk.py). pip-audit: 0 findings. Обе записи удалены.
+# Active count: 0 entries.
