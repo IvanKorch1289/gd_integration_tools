@@ -157,10 +157,11 @@ class MqttHandler:
                                 in_flight, return_when=asyncio.FIRST_COMPLETED
                             )
                             in_flight -= done
-                        task: asyncio.Task[None] = get_task_registry().create_task(  # type: ignore[call-arg]  # R2.MYPY: create_task requires name kwarg
+                        task: asyncio.Task[None] = get_task_registry().create_task(
                             self._process_message(
                                 topic=str(message.topic), payload=message.payload
-                            )
+                            ),
+                            name="mqtt-message-process",
                         )
                         in_flight.add(task)
                         task.add_done_callback(in_flight.discard)

@@ -64,9 +64,9 @@ def _patch_factory(monkeypatch: pytest.MonkeyPatch, backend: Any) -> None:
 
 
 def _patch_s3(monkeypatch: pytest.MonkeyPatch, s3_client: Any) -> None:
-    """Подменяет lazy-импорт ``s3_client`` через ``sys.modules``."""
+    """Подменяет DI-resolve s3_pool (R1-контракт: фабрика ``get_s3_client``)."""
     fake_module = types.ModuleType("src.backend.infrastructure.clients.storage.s3_pool")
-    fake_module.s3_client = s3_client  # type: ignore[attr-defined]
+    fake_module.get_s3_client = lambda: s3_client  # type: ignore[attr-defined]
     monkeypatch.setitem(
         sys.modules, "src.backend.infrastructure.clients.storage.s3_pool", fake_module,
     )

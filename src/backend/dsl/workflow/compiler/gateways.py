@@ -196,8 +196,10 @@ async def compile_or(decl: ActivityDeclaration, ctx: dict[str, Any]) -> Any:
         return None
 
     tasks: list[asyncio.Task[Any]] = [
-        get_task_registry().create_task(_run_branch_steps(branch, ctx))  # type: ignore[call-arg]
-        for branch in spec.branches
+        get_task_registry().create_task(
+            _run_branch_steps(branch, ctx), name=f"gateway-parallel:{idx}"
+        )
+        for idx, branch in enumerate(spec.branches)
     ]
 
     done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)

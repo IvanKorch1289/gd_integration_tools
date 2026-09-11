@@ -189,7 +189,9 @@ class AuditLogMiddleware:
                     except RuntimeError:
                         loop = None
                     if loop is not None and loop.is_running():
-                        get_task_registry().create_task(writer.write(audit_event))  # type: ignore[call-arg]
+                        get_task_registry().create_task(
+                            writer.write(audit_event), name="audit-clickhouse-write"
+                        )
 
         except Exception as exc:
             _clickhouse_logger.debug("ClickHouse audit write skipped: %s", exc)
