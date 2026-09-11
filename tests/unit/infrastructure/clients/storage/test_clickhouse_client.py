@@ -11,6 +11,7 @@ ConnectionError/TimeoutError/OSError).
 
 from __future__ import annotations
 
+import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
@@ -188,11 +189,12 @@ async def test_ensure_client_pre_ping_recreates_pool_on_httpx_error() -> None:
     и пропускал httpx.ConnectError → propagate'илось в execute/query/insert.
     """
     client = ClickHouseClient(keepalive_expiry=0.0, pool_pre_ping=True)
-    # Force pre-ping path: last_used far in the past.
+    # Force pre-ping path: last_used в прошлом (guard требует >0), но
+    # created_at свежий — чтобы не сработала recycle-ветка.
     client._client = AsyncMock()
     client._client.get = AsyncMock(side_effect=httpx.ConnectError("down"))
-    client._client_created_at = 0.0
-    client._last_used_at = 0.0
+    client._client_created_at = time.monotonic()
+    client._last_used_at = time.monotonic() - 10.0
 
     close_calls = 0
     original_close = client.close
