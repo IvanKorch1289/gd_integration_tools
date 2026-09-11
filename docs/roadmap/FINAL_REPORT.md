@@ -196,3 +196,21 @@ owner: ai-team. Связано с mcp 2.x/fastmcp 4 дрейфом (см. `3e5e1
 | **G4 SOAP invoke** | **ЗАКРЫТ**: корень — `create_app()` не вызывал `register_app_state()`, `app.state.invoker` отсутствовал → `Depends(get_invoker_dep)` падал AttributeError→500 (три раунда диагностики уводил в сторону CancelledError-шум aiosqlite-очистки). Фикс: вызов композиции в `_configure_application_components` (`49d929b05`) | Live: `/soap/invoke` InvokeRequest(users.list)+JWT → **200 `status=ok`**; незарегистрированная операция → 404 SOAP Fault; forged → 401 |
 | Протокольная матрица | **REST 200 · GraphQL 200 · SSE 200 · SOAP invoke 200 · WS 200 · gRPC auth+dispatch-мост · негатив 401/403** — все достижимые на dev-box позиции PASS | FUNCTIONAL_TEST_REPORT 2026-09-11 |
 | Осталось (вне dev-box / next sprint) | G1 coverage-CI · G2 push-SLO стенд · G3 deps MAJOR · G5 proto v2 · G6 MQ · G7 MCP flag · G8 хвост (docs/docs→vale, счётчики) · G10 debt | PROD_READINESS_GAPS.md |
+
+## 11. Дополнение 2026-09-11 — пятая волна: внедрение предложений внешнего плана
+
+Фактчек внешних предложений против HEAD (часть — устарела или уже выполнена):
+
+| Внешнее предложение | Фактчек | Статус |
+|---|---|---|
+| Initial Alembic migration + idempotent seed | «migrations/versions пуст» — **устарело**: 23 версии на месте. Реальная дыра: seed-миграция aa1b2c3d4e5f (полоса, OP-1) не выполнялась на sqlite (env.py W21.2 идёт через create_all), и использовала pbkdf2-хэш при argon2-контракте User + NOW()/tenant_id несовместимости | **✅ исправлено** `056f4b722`: seed_data.py (переиспользуемый, портативный), вызов в sqlite-ветке env.py; live: чистый sqlite → admin+4 orderkinds, verify_password=True |
+| Kill-switch runbook | **Уже существует** — docs/runbooks/feature-flag-kill-switch.md (297 строк, verified 2026-09-11) | ✅ закрыто ранее |
+| ADR «accepted outdated-minimum» | **Уже принят** полосой — ADR-0302 (32 пакета) | ✅ закрыто ранее (9cf3429ba) |
+| Saga double-fault chaos-тест | **✅ реализовано** `64eaed9d0`: 6 составных сценариев + реальный fix (_get_repo failure → in-memory fallback; ранее RuntimeError не обрабатывался) | ✅ |
+| SBOM diff gate (license/CVE threshold) | Инфраструктура есть (generate_sbom.py, sbom.yml, policy.md) | Backlog — CI-джоб (вне dev-box) |
+| Contract-diff gate (протокольная синхронизация) | api_fuzz_runner есть; расширение на GraphQL/gRPC diff | Backlog — след. спринт |
+
+Крупные инициативы внешнего плана (Connector Catalog, Idempotency Service, Route
+contract/dry-run, RPA state machine, Agent policy engine, Template Catalog) —
+приняты в roadmap-бэклог (волны 1-3 внешнего документа); часть уже существует
+(core/idempotency/service.py — полоса, infrastructure/antivirus, chaos, eventing).
