@@ -795,3 +795,28 @@ buffer overflow (ab-2.3 ≤2.4 issue, fixed в ab-2.5+). Server logs показ�
 - perf wins: ~35 коммитов
 - infra-blocked: 5 метрик (требуют docker / prod-стенд / time)
 
+
+---
+
+## v25 update — Sprint 26: outdated 33 (no change, MAJOR blocked) (2026-09-10)
+
+### P26: outdated 33 (no change)
+
+Safe MINOR bumps attempted:
+- numpy 2.5.3 (blocked by pyproject constraint or already at max)
+- pyarrow 25.0.1
+- jsonschema-rs 0.56.0
+- hishel 1.3.1
+- packaging 26.3
+- pypdf 6.18.1 (already done in Sprint 25)
+
+**Все 33 outdated — MAJOR-version constraints** (require per-package analysis):
+- elasticsearch 8→9, mypy 1→2, redis 5→8, protobuf 5→7
+- fastapi, pydantic, aiormq, aio-pika
+- numpy, pyarrow, jsonschema-rs, grpcio-tools
+- presidio-anonymizer, hishel, click, packaging
+- portalocker, pamqp, magika, rich
+- portalocker, redis, onnxruntime
+- pydantic-core, pypdf, jsonschema-rs
+- testcontainers 4→5
+
