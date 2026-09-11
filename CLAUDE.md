@@ -2,7 +2,7 @@
 
 > **Версия документа**: V22 (синхронизирована с `ARCHITECTURE.md` от 2026-08-19). Sprint 3 audit cleanup: bandit HIGH blocking, lazy `__getattr__` proxies fix, ADR regen.
 > Любая работа выполняется в соответствии с этим документом и `ARCHITECTURE.md`.
-> GAP-анализ: `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md`.
+> GAP-анализ: `docs/architecture/repository-navigation-audit.md` (актуальный, 2026-09-11).
 
 ---
 
@@ -26,7 +26,7 @@
 
 ## Текущий план
 
-**Главные документы**: `ARCHITECTURE.md` (карта архитектуры) и `/root/.claude/plans/foamy-puzzling-dragonfly.md` (полный аналитический GAP-анализ).
+**Главные документы**: `ARCHITECTURE.md` (карта архитектуры) и `docs/architecture/canonical-module-map.md` (каноническая карта модулей, 2026-09-11).
 
 **Срок**: 14-15 недель ≈ 3.5 месяца при параллельной работе **4 разработчиков**:
 - **Dev1 — Plugin/Platform** (capability-gate, ASGI middleware, Auth, WAF, supply-chain, leak prevention)
@@ -42,7 +42,7 @@
 
 1. `ARCHITECTURE.md` — карта архитектуры;
 2. `graphify-out/GRAPH_REPORT.md` (если есть);
-3. `graphify-out/wiki/index.md` (основной индекс при наличии);
+3. `graphify-out/GRAPH_REPORT.md` (графовый отчёт, генерируется `graphify update .`);
 4. `ARCHITECTURE.md`;
 5. `.claude/CONTEXT.md` — краткая оперативная сводка;
 6. Точечные документы и исходники по задаче.
@@ -456,7 +456,7 @@ python tools/checks/check_layers.py
 @include .claude/rules/path-policy.md
 ## Ссылки
 
-    /root/.claude/plans/foamy-puzzling-dragonfly.md — полный аналитический GAP-анализ
+    docs/architecture/canonical-module-map.md — каноническая карта модулей
     ARCHITECTURE.md — карта архитектуры (требует обновления после Wave 12)
     .claude/CONTEXT.md — оперативная сводка
     .claude/DECISIONS.md — устойчивые решения

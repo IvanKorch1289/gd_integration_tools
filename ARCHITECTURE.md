@@ -37,7 +37,7 @@ AI-агентами и developer portal на Streamlit.
                           │
 ┌─────────────────────────▼────────────────────────────────────────┐
 │  ActionHandlerRegistry (dsl/commands/)                           │
-│  35+ actions: orders.* · users.* · files.* · orderkinds.* ·     │
+│  109 actions: orders.* · users.* · files.* · orderkinds.* ·     │
 │  skb.* · dadata.* · tech.* · admin.* · ai.* · rag.*             │
 └─────────────────────────┬────────────────────────────────────────┘
                           │
