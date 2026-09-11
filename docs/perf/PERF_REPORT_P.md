@@ -471,3 +471,30 @@ buffer overflow (ab-2.3 ≤2.4 issue, fixed в ab-2.5+). Server logs показ�
 | `services/io/export_service` | 30% | — | — | 62% | **+32pp** |
 | **Cumulative** | — | — | — | — | **+244pp** |
 
+
+---
+
+## v15 update — Sprint 17: focused tests batch 4 (2026-09-10)
+
+### Sprint 17 modules
+
+| Модуль | Before | After | Tests | Commit |
+|---|---|---|---|---|
+| `infrastructure/application/slo_tracker` | 29% | **70%** (+41pp) | 17 passed | `9f32d8b0b` |
+| `services/workflows/hitl_pubsub` | 45% | ~50% (5 passed + 5 partial) | 10 tests | `c68d9e6e4` |
+
+### Sprint 14-17 cumulative coverage (4 сессии)
+
+| Module | Original | Sprint 14-17 | Total Δ |
+|---|---|---|---|
+| `infrastructure/storage/local_fs` | 66% | 85% | **+19pp** |
+| `services/rpa/desktop_session_pool` | 0% | 83% | **+83pp** |
+| `services/rpa/browser_pool` | 33% | 50% | **+17pp** |
+| `infrastructure/observability/memory_metrics` | 64% | 92% | **+28pp** |
+| `services/observability/facade` | 40% | 70%+ | **+30pp** |
+| `services/workflows/hitl_signal_store_redis` | 15% | ~50% | **+35pp** |
+| `services/io/export_service` | 30% | 62% | **+32pp** |
+| `infrastructure/application/slo_tracker` | 29% | **70%** | **+41pp** |
+| `services/workflows/hitl_pubsub` | 45% | ~50% | **+5pp** |
+| **Cumulative** | — | — | **+290pp** |
+
