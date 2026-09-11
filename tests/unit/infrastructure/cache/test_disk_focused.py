@@ -5,7 +5,7 @@ Coverage target: disk.py 27% → 70%+.
 
 from __future__ import annotations
 
-import tempfile
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -20,35 +20,39 @@ def disk_cache(tmp_path: Path) -> DiskCacheBackend:
 
 
 def test_init_with_string_path(tmp_path: Path) -> None:
-    """Constructor принимает string path."""
+    """Constructor принимает string path (resolve() в _base)."""
     backend = DiskCacheBackend(base_path=str(tmp_path))
-    assert backend._base_path == Path(str(tmp_path))
+    assert backend._base == tmp_path.resolve()
 
 
 def test_init_with_path_object(tmp_path: Path) -> None:
     """Constructor принимает Path object."""
     backend = DiskCacheBackend(base_path=tmp_path)
-    assert backend._base_path == tmp_path
+    assert backend._base == tmp_path.resolve()
 
 
 def test_safe_path_simple_key(disk_cache: DiskCacheBackend) -> None:
-    """_safe_path converts simple key → safe file path."""
+    """_safe_path хэширует ключ: shard-каталог + sha256-имя файла."""
     path = disk_cache._safe_path("my_key")
-    assert path.suffix == ".cache"
-    assert "my_key" in str(path)
+    digest = hashlib.sha256(b"my_key").hexdigest()
+    assert path.parent.name == digest[:2]
+    assert path.name == digest
+    assert "my_key" not in str(path)  # ключ не восстанавливается из имени
 
 
 def test_safe_path_with_slash(disk_cache: DiskCacheBackend) -> None:
     """_safe_path sanitizes slashes (path traversal prevention)."""
     path = disk_cache._safe_path("foo/bar")
-    # No subdirectory created; path is flattened
-    assert "/" not in path.name or path.name.endswith(".cache")
+    # Hash flattens any key: no traversal, no subdirectories beyond shard
+    assert path.parent.parent == disk_cache._base
+    assert path.name == hashlib.sha256(b"foo/bar").hexdigest()
 
 
 def test_safe_path_empty(disk_cache: DiskCacheBackend) -> None:
-    """_safe_path с empty key → default name."""
+    """_safe_path с empty key → детерминированный sha256("") путь."""
     path = disk_cache._safe_path("")
-    assert path.suffix == ".cache"
+    assert path.name == hashlib.sha256(b"").hexdigest()
+    assert path.parent.name == hashlib.sha256(b"").hexdigest()[:2]
 
 
 @pytest.mark.asyncio
@@ -111,13 +115,14 @@ async def test_delete_nonexistent(disk_cache: DiskCacheBackend) -> None:
 
 @pytest.mark.asyncio
 async def test_delete_pattern(disk_cache: DiskCacheBackend) -> None:
-    """delete_pattern() удаляет все keys с matching pattern."""
+    """delete_pattern() — документированный no-op (ключи не восстанавливаются из хэша)."""
     await disk_cache.set("prefix_a", b"1")
     await disk_cache.set("prefix_b", b"2")
     await disk_cache.set("other", b"3")
     await disk_cache.delete_pattern("prefix_")
-    assert await disk_cache.get("prefix_a") is None
-    assert await disk_cache.get("prefix_b") is None
+    # no-op: все значения остаются на месте
+    assert await disk_cache.get("prefix_a") == b"1"
+    assert await disk_cache.get("prefix_b") == b"2"
     assert await disk_cache.get("other") == b"3"
 
 
