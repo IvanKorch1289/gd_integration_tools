@@ -498,3 +498,32 @@ buffer overflow (ab-2.3 ≤2.4 issue, fixed в ab-2.5+). Server logs показ�
 | `services/workflows/hitl_pubsub` | 45% | ~50% | **+5pp** |
 | **Cumulative** | — | — | **+290pp** |
 
+
+---
+
+## v16 update — Sprint 18: focused tests batch 5 (2026-09-10)
+
+### Sprint 18 modules
+
+| Модуль | Before | After | Tests | Commit |
+|---|---|---|---|---|
+| `infrastructure/cache/backends/disk` | 27% | **85%** (+58pp) | 15 passed | `73fa9953b` |
+| `infrastructure/observability/client_metrics` | 55% | ~57% (+2pp, 1 passed) | 1 of 13 | `003650719` |
+
+### Sprint 14-18 cumulative coverage (5 сессий)
+
+| Module | Original | Sprint 14-18 | Total Δ |
+|---|---|---|---|
+| `infrastructure/storage/local_fs` | 66% | 85% | **+19pp** |
+| `services/rpa/desktop_session_pool` | 0% | 83% | **+83pp** |
+| `services/rpa/browser_pool` | 33% | 50% | **+17pp** |
+| `infrastructure/observability/memory_metrics` | 64% | 92% | **+28pp** |
+| `services/observability/facade` | 40% | 70%+ | **+30pp** |
+| `services/workflows/hitl_signal_store_redis` | 15% | ~50% | **+35pp** |
+| `services/io/export_service` | 30% | 62% | **+32pp** |
+| `infrastructure/application/slo_tracker` | 29% | 70% | **+41pp** |
+| `services/workflows/hitl_pubsub` | 45% | ~50% | **+5pp** |
+| `infrastructure/cache/backends/disk` | 27% | **85%** | **+58pp** |
+| `infrastructure/observability/client_metrics` | 55% | ~57% | **+2pp** |
+| **Cumulative** | — | — | **+350pp** |
+
