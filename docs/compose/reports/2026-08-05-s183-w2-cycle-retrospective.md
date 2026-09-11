@@ -67,7 +67,7 @@ Sprint 183 W1 closed 3/3 P0 fixes + 1 sham-fix correction. After Judge feedback 
 | File | Change |
 |---|---|
 | `tools/migrations/migrate_dlq_partition.py` | Dry-run-default ClickHouse migration script (parity with `migrate_api_keys_to_argon2.py`) |
-| `docs/migrations/dlq_partition_migration.md` | Step-by-step with rollback plan |
+| `docs/migration/dlq-partition.md` | Step-by-step with rollback plan |
 | `tests/unit/tools/test_migrate_dlq_partition_dryrun.py` | 19 strict dry-run vs confirm-mode tests |
 
 **Pre-existing per parallel-cycle**: cycle-38 (B-22) closed this BEFORE W2 launched. Verified via `git log`. Not committed by this W2 batch; carried-over for traceability.

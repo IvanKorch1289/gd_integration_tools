@@ -48,12 +48,16 @@
 
 - **Тип**: code (P2). **Owner**: entrypoints-team. **Статус**: диагностическая сессия 2026-09-11 (вторая итерация).
 - **Уточнённая диагностика**: in-process репро подтвердило — исключение это
-  `asyncio.CancelledError` (BaseException), возникающее на `aiosqlite.commit/close`
-  внутри `dispatch_action("orderkinds_list")`; оно **не ловится** `except Exception`
-  в `handle_soap_request` → уходит в exception-middleware → JSON 500 вместо SOAP Fault.
-  Инструментация `Task.cancel`/`Future.cancel` дала **0 вызовов** → отмену инжектит
-  cancel-scope ASGI/anyio-слоя (поиск источника продолжается); тот же экшн через
-  REST и через gRPC-мост отрабатывает корректно — дефект локализован в SOAP/HTTP-связке.
+  `asyncio.CancelledError` (BaseException), возникающее на `aiosqlite.commit/close`;
+  оно **не ловится** `except Exception` в `handle_soap_request` → уходит в
+  exception-middleware → JSON 500 вместо SOAP Fault. Инструментация `Task.cancel` /
+  `Future.cancel` / `anyio.CancelScope.cancel` дала **0 вызовов**.
+  **Новая находка (3-я итерация)**: SOAP-операции используют underscore-имена
+  (`orderkinds_list`, регистрируются `@service_dsl`), и их dispatch идёт через
+  **DSL-путь** (`dsl.dispatch(route_id=...)`), а НЕ через ActionHandlerRegistry —
+  трассировка показала, что `CrudMixin.list` даже не вызывается; CancelledError
+  рождается внутри DSL-engine dispatch. Инвариант: тот же сервис через REST/gRPC
+  (dot-имена, CRUD-registry) работает.
 - **Шаг**: (1) локализовать cancel-scope (трассировка `anyio.CancelScope.cancel`);
   (2) решить семантику: honest 504/SOAP-Fault при отмене + запрет кидать отмену
   поверх незавершённой DB-транзакции.

@@ -40,7 +40,7 @@
 - `src/backend/dsl/engine/processors/workflow/best_practices/claim_check.py` (D170)
 
 ### Docs
-- `docs/workflow/versioning.md` (D172)
+- `docs/workflows/worker-versioning.md` (D172)
 - `docs/security/envelope_encryption.md` (D174)
 - `docs/security/cert_hot_reload.md` (D245)
 - `docs/m11_deferred_tests.md` (24 deferred tests tracking)
