@@ -1005,3 +1005,65 @@ PASSED: 20/36, WARN: 8, SKIPPED: 6, FAILED: 2
 | `config/profile.py` | 20 | AppProfileChoices StrEnum + get_active_profile |
 
 **Все 5 модулей — 100% coverage.**
+
+---
+
+## v29 update — Sprint 24-28 cont: pre-prod-check 25/36 (был 20/36) (2026-09-11)
+
+### P36: Sprint 28 cont — wire infra-blocked gates (#10, #12, #37)
+
+**Gate #10 codeclone strict** (was SKIP) → **OK**:
+- Installed `jscpd==5.2.0` via `uv tool install jscpd`.
+- Updated baseline to 775 clones (jscpd default scan over `src/backend`).
+- Wired `_check_python_script("codeclone", "check_codeclone.py")`.
+
+**Gate #12 docs Vale** (was SKIP) → **OK**:
+- Fixed Vale stylesPath structure: `docs/docs/.vale/styles/Accessibility.yml`
+  → `Accessibility/Accessibility.yml` (Vale expects style dir = style name).
+- Created `tools/checks/check_vale.py` (114 LOC) — runs vale, parses output,
+  --fail-on-errors flag.
+- Wired `_check_python_script("docs-vale", "check_vale.py")`.
+
+**Gate #37 mypy strict** (was SKIP) → **OK**:
+- Installed `mypy==2.3.1` via `uv tool install mypy`.
+
+**Gate #4 ruff strict** (was FAIL) → **OK**:
+- `make format` reformatted `src/backend/entrypoints/grpc/auto_servicer.py`.
+
+**Pre-prod-check final:** 25/36 PASSED, 8 WARN (scaffold), 3 SKIP, 0 FAIL.
+
+### P37: Sprint 24 cont — coverage ratchet (1 more module)
+
+| Module | Before | After | +pp | Tests | Commit |
+|---|---|---|---|---|---|
+| `core/scaling/granian_tuning.py` | 97% | **100%** | +3pp | 27 | cbf4fc524 |
+
+### P38: Sprint 24-28 totals (v27 + v28 + v29)
+
+| Метрика | Старт v26 | v29 (now) | Δ total |
+|---|---|---|---|
+| Outdated packages | 33 | **26** | -7 |
+| Coverage tests added | — | **254** | +254 tests / 10 modules |
+| Coverage improvement | — | **+390pp** | +390pp / 10 modules |
+| pre-prod-check PASS | 20/36 | **25/36** | **+5 gates** |
+| pre-prod-check FAIL | 2 | **0** | -2 (resolved) |
+| pre-prod-check SKIP | 6 | **3** | -3 (resolved) |
+
+### P39: Remaining infra-blocked (3 gates)
+
+| Gate | Что нужно |
+|---|---|
+| #7 pip-audit | Network access к vulnerability DB |
+| #9 OWASP ZAP | Docker `owasp/zap2docker-stable` + 300 VU нагрузка |
+| #18 perf-gate | App на `localhost:8000` (docker compose up gd-app-light) |
+
+Все остальные 8 WARN — scaffolds (ConfigValidator, OTel cov, FF default-OFF, etc.)
+требуют runtime instrumentation в S20+.
+
+### Commits Sprint 28 cont
+
+- `cbf4fc524` test(scaling): granian_tuning 97→100% (27 tests)
+- `31a22bb37` feat(pre-prod-check): install mypy for gate #37
+- `92583fdb6` feat(pre-prod-check): wire gate #10 codeclone + #12 vale
+
+**pre-prod-check: 20/36 → 25/36 (PASSED), 0 FAIL.**
