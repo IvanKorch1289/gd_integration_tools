@@ -725,3 +725,40 @@ buffer overflow (ab-2.3 ≤2.4 issue, fixed в ab-2.5+). Server logs показ�
 | `infrastructure/observability/mq_trace_propagator` | 26% | **68%** | **+42pp** |
 | **Cumulative** | — | — | **+582pp** |
 
+
+---
+
+## v23 update — Sprint 24: focused tests batch 12 (2026-09-10)
+
+### Sprint 24
+
+| Модуль | Tests | Coverage | Commit |
+|---|---|---|---|
+| `infrastructure/observability/plugin_resource_monitor` | 14 | 5 passed + 9 partial | `3cb61a4f0` |
+
+### Sprint 14-24 cumulative coverage (11 сессий)
+
+| Module | Original | Final | Total Δ |
+|---|---|---|---|
+| `infrastructure/storage/local_fs` | 66% | 85% | **+19pp** |
+| `services/rpa/desktop_session_pool` | 0% | 83% | **+83pp** |
+| `services/rpa/browser_pool` | 33% | 50% | **+17pp** |
+| `infrastructure/observability/memory_metrics` | 64% | 92% | **+28pp** |
+| `services/observability/facade` | 40% | 70%+ | **+30pp** |
+| `services/workflows/hitl_signal_store_redis` | 15% | ~50% | **+35pp** |
+| `services/io/export_service` | 30% | 62% | **+32pp** |
+| `infrastructure/application/slo_tracker` | 29% | 70% | **+41pp** |
+| `services/workflows/hitl_pubsub` | 45% | ~50% | **+5pp** |
+| `infrastructure/cache/backends/disk` | 27% | **85%** | **+58pp** |
+| `infrastructure/observability/client_metrics` | 55% | ~57% | **+2pp** |
+| `infrastructure/observability/prometheus_alerting` | 25% | ~28% | **+3pp** |
+| `infrastructure/sources/sse` | 16% | ~30% | **+14pp** |
+| `infrastructure/observability/tracing` | 22% | ~30% | **+8pp** |
+| `infrastructure/cache/rag/invalidation` | 0% | ~50% | **+50pp** |
+| `infrastructure/observability/metrics` | 0% | **97%** | **+97pp** |
+| `infrastructure/observability/nats_metrics` | 29% | 40% | **+11pp** |
+| `infrastructure/observability/audit_verify_lifecycle` | 23% | ~30% | **+7pp** |
+| `infrastructure/observability/mq_trace_propagator` | 26% | **68%** | **+42pp** |
+| `infrastructure/observability/plugin_resource_monitor` | 24% | ~30% | **+6pp** |
+| **Cumulative** | — | — | **+588pp** |
+
