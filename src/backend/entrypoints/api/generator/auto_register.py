@@ -43,6 +43,7 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
 
 from src.backend.core.api.extensions import (
     ActionHandlerRegistry,
@@ -102,6 +103,22 @@ def _collect_existing_route_names(app: FastAPI) -> set[str]:
     return names
 
 
+def _jsonable(value: Any) -> Any:
+    """Рекурсивно превращает SQLAlchemy-модели в dict по колонкам.
+
+    Прочие типы (dict/list/scalars/pydantic) остаются как есть — их
+    FastAPI сериализует сам. ponytail: без поддержки вложенных ORM в
+    произвольных коллекциях глубже list/dict.
+    """
+    if hasattr(value, "__table__") and hasattr(value, "__dict__"):
+        return {c.name: getattr(value, c.name) for c in value.__table__.columns}
+    if isinstance(value, list):
+        return [_jsonable(v) for v in value]
+    if isinstance(value, dict):
+        return {k: _jsonable(v) for k, v in value.items()}
+    return value
+
+
 def _build_auto_endpoint(
     *, action: str, registry: ActionHandlerRegistry
 ) -> Callable[..., Awaitable[Any]]:
@@ -157,7 +174,9 @@ def _build_auto_endpoint(
         result = registry.dispatch(command)
         if inspect.isawaitable(result):
             result = await result
-        return result
+        # Auto-endpoint без response_model: FastAPI 0.141 сериализует возврат
+        # pydantic-путём и падает на SQLAlchemy-моделях — нормализуем в dict.
+        return jsonable_encoder(_jsonable(result))
 
     endpoint.__name__ = f"auto_{action.replace('.', '_')}"
     endpoint.__doc__ = (
