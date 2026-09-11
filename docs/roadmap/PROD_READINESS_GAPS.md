@@ -46,31 +46,39 @@
 
 ## G4. SOAP business invoke — 500 на валидных WSDL-операциях
 
-- **Тип**: code (P2). **Owner**: entrypoints-team.
-- **Причина**: `/soap/invoke` с зарегистрированной операцией (`orderkinds_list`)
-  возвращает 500; в трейсе — CancelledError на aiosqlite-сессии (path
-  dispatch → invocation bridge). WSDL и auth — PASS; сломан именно dispatch.
-- **Шаг**: воспроизвести in-process с ToolClient/ASGITransport на
-  testserver-хосте, восстановить конверсию исключений dispatch → SOAP Fault.
-- **Done**: `curl -H auth -d envelope` → 200 SOAP-response или корректный
-  SOAP Fault (не 500) для известных операций.
-- **Риск**: SOAP-потребители получают opaque 500 вместо Fault — диагностика
-  на стороне клиента невозможна.
+- **Тип**: code (P2). **Owner**: entrypoints-team. **Статус**: диагностическая сессия 2026-09-11 (вторая итерация).
+- **Уточнённая диагностика**: in-process репро подтвердило — исключение это
+  `asyncio.CancelledError` (BaseException), возникающее на `aiosqlite.commit/close`
+  внутри `dispatch_action("orderkinds_list")`; оно **не ловится** `except Exception`
+  в `handle_soap_request` → уходит в exception-middleware → JSON 500 вместо SOAP Fault.
+  Инструментация `Task.cancel`/`Future.cancel` дала **0 вызовов** → отмену инжектит
+  cancel-scope ASGI/anyio-слоя (поиск источника продолжается); тот же экшн через
+  REST и через gRPC-мост отрабатывает корректно — дефект локализован в SOAP/HTTP-связке.
+- **Шаг**: (1) локализовать cancel-scope (трассировка `anyio.CancelScope.cancel`);
+  (2) решить семантику: honest 504/SOAP-Fault при отмене + запрет кидать отмену
+  поверх незавершённой DB-транзакции.
+- **Done**: `/soap/invoke` с валидной операцией → 200 SOAP-response (или корректный
+  SOAP Fault без потери JSON-обёртки).
+- **Риск**: SOAP-потребители получают opaque 500; отмена поверх транзакции.
 - **Срок**: следующий спринт.
 
-## G5. gRPC business dispatch: auto-servicer'ы абстрактные
+## G5. gRPC business dispatch: мост готов (2026-09-11), остались контракты proto
 
-- **Тип**: code/feature (P2). **Owner**: entrypoints-team.
-- **Причина**: standalone `grpc-serve` поднимает 3 явных servicer'а + 4
-  auto-servicer'а; auth-интерцептор PASS (neg+pos). Но RPC auto-доменов
-  (users/orders/orderkinds/files) доходят до сгенерированных абстрактных
-  методов → UNIMPLEMENTED `NotImplementedError`. Мост
-  auto-servicer → ActionDispatcher не реализован.
-- **Шаг**: в `auto_servicer.register_auto_servicers` привязать behavior к
-  `dispatch_action(action=<domain>.<rpc>, source="grpc", ...)` вместо методов
-  сгенерированного базового класса.
-- **Done**: grpcio-клиент `List/Get` с валидным api-key получает данные.
-- **Риск**: gRPC-потребители (compose-сервис) не имеют бизнес-API.
+- **Тип**: code/feature. **Owner**: entrypoints-team. **Статус**: частично закрыт `c348cee87`.
+- **Сделано**: RPC auto-доменов более не падают UNIMPLEMENTED NotImplementedError —
+  мост `auto_servicer._make_dispatch_behavior` диспетчеризует в
+  `dispatch_action("<domain>.<rpc>", source="grpc")` (алиас create→add,
+  data-wrap для CRUD, dict→ParseDict). Live-verified: transport → AuthInterceptor
+  → регистрация экшнов (добавлена в standalone serve) → dispatch → сервис → БД.
+- **Остаток**: (а) proto-стабы lossy — `Get(EmptyRequest)` без id, списки не
+  маппятся в single-message, `UserSchemaIn` не несёт обязательные поля
+  (SecretStr→Any) — нужна **регенерация proto v2** из JSON-schema экшенов;
+  (б) standalone `InvokerGRPCServicer.Invoke` — `get_invoker` DI требует
+  app_state, которого в standalone нет (нужен composition-бридж).
+- **Done**: (а) proto v2 сгенерированы, Get/List/Create с полным фиделити;
+  (б) Invoke в standalone отвечает данными.
+- **Риск**: gRPC-потребители имеют транспорт+auth, но бизнес-вызовы через
+  авто-домены ограничены; полный обходной путь сегодня — REST/auto.
 - **Срок**: следующий спринт.
 
 ## G6. MQ-протоколы (Kafka/Rabbit/Redis Streams) — BLOCKED(infra)
