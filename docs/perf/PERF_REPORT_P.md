@@ -446,3 +446,28 @@ buffer overflow (ab-2.3 ≤2.4 issue, fixed в ab-2.5+). Server logs показ�
 | `services/observability/facade` | 40% | — | 70%+ | **+30pp** |
 | **Total cumulative** | — | — | — | **+177pp** |
 
+
+---
+
+## v14 update — Sprint 16: focused tests batch 3 (2026-09-10)
+
+### Sprint 16 modules
+
+| Модуль | Before | After | Tests | Commit |
+|---|---|---|---|---|
+| `services/workflows/hitl_signal_store_redis` | 15% | ~50% (6 passed + 5 partial) | 11 tests | `951b6efed` |
+| `services/io/export_service` | 30% | **62%** (+32pp) | 10 passed | `9b163d7b3` |
+
+### Sprint 14-16 cumulative coverage (3 сессии)
+
+| Module | Original | Sprint 14 | Sprint 15 | Sprint 16 | Total Δ |
+|---|---|---|---|---|---|
+| `infrastructure/storage/local_fs` | 66% | 85% | — | — | **+19pp** |
+| `services/rpa/desktop_session_pool` | 0% | 83% | — | — | **+83pp** |
+| `services/rpa/browser_pool` | 33% | 50% | — | — | **+17pp** |
+| `infrastructure/observability/memory_metrics` | 64% | — | 92% | — | **+28pp** |
+| `services/observability/facade` | 40% | — | 70%+ | — | **+30pp** |
+| `services/workflows/hitl_signal_store_redis` | 15% | — | — | 50% (partial) | **+35pp** |
+| `services/io/export_service` | 30% | — | — | 62% | **+32pp** |
+| **Cumulative** | — | — | — | — | **+244pp** |
+
