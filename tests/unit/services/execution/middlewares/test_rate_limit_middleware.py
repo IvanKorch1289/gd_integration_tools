@@ -138,12 +138,38 @@ class TestRateLimitMiddleware:
         assert result.error.recoverable is True
 
     @pytest.mark.asyncio
-    async def test_limiter_none_passes_through(
+    async def test_limiter_none_fail_closed_by_default(
         self,
         registry: MagicMock,
         next_handler: AsyncMock,
         dispatch_context: DispatchContext,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        """limiter недоступен + fail_mode=closed (default) → rate_limited error."""
+        registry.get_metadata.return_value = ActionMetadata(
+            action="action", rate_limit=10,
+        )
+        mw = RateLimitMiddleware(registry=registry)
+        mw._limiter_provider = lambda: None
+        result = await mw("action", {}, dispatch_context, next_handler)
+        assert result.success is False
+        assert result.error is not None and result.error.code == "rate_limited"
+        next_handler.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_limiter_none_passes_through_when_fail_mode_open(
+        self,
+        registry: MagicMock,
+        next_handler: AsyncMock,
+        dispatch_context: DispatchContext,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """limiter недоступен + явный rate_limit_fail_mode=open → pass-through."""
+        from src.backend.core.config.services.resilience import resilience_settings
+
+        monkeypatch.setattr(
+            resilience_settings, "rate_limit_fail_mode", "open"
+        )
         registry.get_metadata.return_value = ActionMetadata(
             action="action", rate_limit=10,
         )

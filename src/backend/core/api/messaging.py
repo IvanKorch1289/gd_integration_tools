@@ -30,6 +30,18 @@ def __getattr__(name: str) -> object:  # type: ignore[misc]
         )
 
         return KafkaProducer
+    if name in {
+        "OutboxStuckMonitor",
+        "OutboxStuckMonitorSettings",
+        "default_stuck_monitor",
+        "start_outbox_stuck_monitor",
+        "stop_outbox_stuck_monitor",
+    }:
+        # S44 W3 shim (services/messaging/outbox_monitor.py) резолвит
+        # legacy-имена через этот фасад — lazy, как и KafkaProducer.
+        from src.backend.infrastructure.messaging.outbox import stuck_monitor
+
+        return getattr(stuck_monitor, name)
     raise AttributeError(f"module 'core.api.messaging' has no attribute {name!r}")
 
 

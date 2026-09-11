@@ -6,7 +6,6 @@ Coverage target: hitl_signal_store_redis.py 15% → 70%+.
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -35,18 +34,8 @@ def _make_signal(
 
 
 def _make_redis_hgetall_dict(sig: HitlPendingSignal) -> dict[str, str]:
-    """Convert signal → dict для mock hgetall response."""
-    return {
-        "signal_id": sig.signal_id,
-        "tenant_id": sig.tenant_id,
-        "workflow_id": sig.workflow_id,
-        "step": sig.step,
-        "approvers": json.dumps(list(sig.approvers)),
-        "timeout_at": sig.timeout_at.isoformat(),
-        "prompt": sig.prompt,
-        "context": json.dumps(sig.context),
-        "created_at": sig.created_at.isoformat(),
-    }
+    """hgetall-ответ в формате store: ``{signal_id: json(to_dict(sig))}``."""
+    return {sig.signal_id: json.dumps(sig.to_dict())}
 
 
 @pytest.fixture
@@ -90,9 +79,9 @@ async def test_get_returns_none_when_missing(store: RedisHitlSignalStore) -> Non
 
 @pytest.mark.asyncio
 async def test_get_returns_signal_when_present(store: RedisHitlSignalStore, mock_redis: MagicMock) -> None:
-    """get(signal_id) — hgetall returns valid dict → returns HitlPendingSignal."""
+    """get(signal_id) — hget возвращает JSON to_dict → HitlPendingSignal."""
     sig = _make_signal()
-    mock_redis.hgetall = AsyncMock(return_value=_make_redis_hgetall_dict(sig))
+    mock_redis.hget = AsyncMock(return_value=json.dumps(sig.to_dict()))
     result = await store.get("sig-1")
     assert result is not None
     assert result.signal_id == "sig-1"
@@ -103,15 +92,14 @@ async def test_get_returns_signal_when_present(store: RedisHitlSignalStore, mock
 async def test_list_pending_returns_signals(
     store: RedisHitlSignalStore, mock_redis: MagicMock
 ) -> None:
-    """list_pending() — SCAN-based discovery."""
+    """list_pending() — один hgetall, значения JSON to_dict."""
     sig1 = _make_signal("sig-1")
     sig2 = _make_signal("sig-2")
-    mock_redis.scan = AsyncMock(return_value=(0, ["hitl:signals:sig-1", "hitl:signals:sig-2"]))
     mock_redis.hgetall = AsyncMock(
-        side_effect=[
-            _make_redis_hgetall_dict(sig1),
-            _make_redis_hgetall_dict(sig2),
-        ]
+        return_value={
+            sig1.signal_id: json.dumps(sig1.to_dict()),
+            sig2.signal_id: json.dumps(sig2.to_dict()),
+        }
     )
     result = await store.list_pending()
     assert len(result) == 2
@@ -119,44 +107,81 @@ async def test_list_pending_returns_signals(
 
 
 @pytest.mark.asyncio
-async def test_mark_resolved_success(store: RedisHitlSignalStore) -> None:
-    """mark_resolved → удаляет signal."""
+async def test_mark_resolved_success(
+    store: RedisHitlSignalStore, mock_redis: MagicMock
+) -> None:
+    """mark_resolved (без pipeline) — resolved-поля выставлены, publish отправлен."""
     sig = _make_signal()
-    await store.put(sig)
-    await store.mark_resolved("sig-1")
-    result = await store.get("sig-1")
-    assert result is None
+    mock_redis.pipeline = None  # форсируем без-pipeline ветку
+    mock_redis.hget = AsyncMock(return_value=json.dumps(sig.to_dict()))
+    mock_redis.publish = AsyncMock(return_value=1)
+
+    resolved = await store.mark_resolved("sig-1", action="approve", resolved_by="alice")
+
+    assert resolved.is_resolved is True
+    assert resolved.resolved_action == "approve"
+    assert resolved.resolved_by == "alice"
+    mock_redis.hset.assert_awaited_once()
+    mock_redis.publish.assert_awaited_once()
 
 
 @pytest.mark.asyncio
 async def test_mark_resolved_contention(
     store: RedisHitlSignalStore, mock_redis: MagicMock
 ) -> None:
-    """mark_resolved с pipeline contention → HITLWatchContentionError."""
-    pipeline = MagicMock()
-    pipeline.watch = MagicMock()
-    pipeline.hget = AsyncMock()
-    pipeline.multi = MagicMock(side_effect=Exception("WatchError: WATCH"))
-    pipeline.execute = AsyncMock()
-    pipeline.unwatch = MagicMock()
-    mock_redis.pipeline = MagicMock(return_value=pipeline)
+    """mark_resolved: persistent WATCH conflict → HITLWatchContentionError."""
+    from redis.exceptions import WatchError
+
+    class _Pipe:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        async def watch(self, key: str) -> None:
+            self.calls += 1
+            raise WatchError()
+
+        async def hget(self, key: str, field: str) -> None:  # pragma: no cover
+            return None
+
+        def multi(self) -> None:  # pragma: no cover
+            return None
+
+        async def execute(self) -> None:  # pragma: no cover
+            return None
+
+        async def unwatch(self) -> None:  # pragma: no cover
+            return None
+
+    class _PipelineCtx:
+        def __init__(self, pipe: _Pipe) -> None:
+            self._pipe = pipe
+
+        async def __aenter__(self) -> _Pipe:
+            return self._pipe
+
+        async def __aexit__(self, *exc: object) -> None:
+            return None
+
+    pipe = _Pipe()
+    mock_redis.pipeline = MagicMock(return_value=_PipelineCtx(pipe))
 
     with pytest.raises(HITLWatchContentionError):
-        await store.mark_resolved("sig-1")
+        await store.mark_resolved("sig-1", action="approve", resolved_by="alice")
+    assert pipe.calls == 2  # max_watch_retries fixture = 2
 
 
 @pytest.mark.asyncio
 async def test_wait_for_returns_false_on_timeout(
     store: RedisHitlSignalStore, mock_redis: MagicMock
 ) -> None:
-    """wait_for → pubsub.listen() с timeout → False."""
+    """wait_for → get_message timeout → False."""
     import asyncio
 
     pubsub = AsyncMock()
-    pubsub.subscribe = AsyncMock()
-    pubsub.unsubscribe = AsyncMock()
-    pubsub.listen = AsyncMock(side_effect=asyncio.TimeoutError())
-    # Production: pubsub() is awaited (returns coroutine → resolved to client)
+    pubsub.psubscribe = AsyncMock()
+    pubsub.punsubscribe = AsyncMock()
+    pubsub.aclose = AsyncMock()
+    pubsub.get_message = AsyncMock(side_effect=asyncio.TimeoutError())
     mock_redis.pubsub = AsyncMock(return_value=pubsub)
 
     result = await store.wait_for("sig-1", timeout=0.1)
@@ -167,12 +192,16 @@ async def test_wait_for_returns_false_on_timeout(
 async def test_wait_for_returns_true_on_message(
     store: RedisHitlSignalStore, mock_redis: MagicMock
 ) -> None:
-    """wait_for получает message с правильным signal_id → True."""
+    """wait_for получает JSON-message с правильным signal_id → True."""
     pubsub = AsyncMock()
-    pubsub.subscribe = AsyncMock()
-    pubsub.unsubscribe = AsyncMock()
-    pubsub.listen = AsyncMock(
-        return_value={"type": "message", "data": b"sig-1"}
+    pubsub.psubscribe = AsyncMock()
+    pubsub.punsubscribe = AsyncMock()
+    pubsub.aclose = AsyncMock()
+    pubsub.get_message = AsyncMock(
+        return_value={
+            "type": "message",
+            "data": json.dumps({"signal_id": "sig-1", "action": "approve"}),
+        }
     )
     mock_redis.pubsub = AsyncMock(return_value=pubsub)
 

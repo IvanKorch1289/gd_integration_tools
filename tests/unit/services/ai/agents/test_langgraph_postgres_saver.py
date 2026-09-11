@@ -50,28 +50,20 @@ async def test_acquire_raises_when_package_missing(
         await wrapper.acquire()
 
 
-@pytest.mark.asyncio
-async def test_acquire_raises_without_dsn(monkeypatch: pytest.MonkeyPatch) -> None:
-    """При enabled но без DSN — LangGraphPostgresSaverUnavailable."""
-    # Имитируем установленный langchain_postgres но без DSN
-    fake_pkg = MagicMock()
-    fake_pkg.AsyncPostgresSaver.from_conn_string = MagicMock()
-    monkeypatch.setitem(sys.modules, "langchain_postgres", fake_pkg)
+def test_resolve_dsn_raises_without_dsn(monkeypatch: pytest.MonkeyPatch) -> None:
+    """При enabled, но недоступном DSN — _resolve_dsn поднимает Unavailable.
 
+    На dev-боксе settings.database существует (sqlite), поэтому базу
+    «убираем» патчем singleton-атрибута; контракт: пустой DSN →
+    Unavailable без реальных connect-попыток.
+    """
     wrapper = LangGraphPostgresSaverWrapper(dsn=None, enabled=True)
-    # Гарантируем отсутствие settings.database
-    import src.backend.services.ai.agents.langgraph_postgres_saver as mod
-
-    def _raise_settings() -> Any:
-        raise RuntimeError("settings missing")
-
     monkeypatch.setattr(
-        mod, "_resolve_dsn", _raise_settings, raising=False,
-    )  # noop fallback
-    # Перепроверим: метод _resolve_dsn — instance method; если settings нет,
-    # raise происходит изнутри.
+        "src.backend.core.config.settings.settings.database", None, raising=False
+    )
+
     with pytest.raises(LangGraphPostgresSaverUnavailable):
-        await wrapper.acquire()
+        wrapper._resolve_dsn()
 
 
 @pytest.mark.asyncio

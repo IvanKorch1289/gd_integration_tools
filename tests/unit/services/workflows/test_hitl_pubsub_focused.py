@@ -33,7 +33,7 @@ def test_channel_name_with_uuid_tenant() -> None:
 
 
 class _FakeRedisFactory:
-    """Factory that mimics get_redis_client()() — returns instance with get_client()."""
+    """Factory that mimics get_redis_client()() → await get_client() → redis."""
 
     def __init__(self, redis_client: MagicMock) -> None:
         self._redis = redis_client
@@ -41,8 +41,8 @@ class _FakeRedisFactory:
     def __call__(self) -> _FakeRedisFactory:
         return self
 
-    def get_client(self, name: str) -> AsyncMock:
-        return AsyncMock(return_value=self._redis)
+    async def get_client(self, name: str) -> MagicMock:
+        return self._redis
 
 
 @pytest.mark.asyncio

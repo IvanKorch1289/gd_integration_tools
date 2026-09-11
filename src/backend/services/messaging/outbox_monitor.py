@@ -54,7 +54,7 @@ def __getattr__(name: str) -> Any:
         "start_outbox_stuck_monitor",
         "stop_outbox_stuck_monitor",
     }:
-        from src.backend.core.api.messaging import stuck_monitor as _m
+        import src.backend.core.api.messaging as _m
 
         return getattr(_m, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
