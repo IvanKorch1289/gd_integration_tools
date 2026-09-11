@@ -49,7 +49,7 @@ class _IndexedByteStore:
             raw = self._index_path.read_text(encoding="utf-8")
             data = json.loads(raw)
             return data if isinstance(data, dict) else {}
-        except (OSError, ValueError):
+        except OSError, ValueError:
             return {}
 
     def _save_index(self) -> None:
@@ -154,9 +154,7 @@ class DiskTTLCache:
             self._store.delete(key)
 
     def _delete_pattern_sync(self, pattern: str) -> None:
-        matched = [
-            key for key in self._store.keys() if fnmatch.fnmatch(key, pattern)
-        ]
+        matched = [key for key in self._store.keys() if fnmatch.fnmatch(key, pattern)]
         for key in matched:
             self._store.delete(key)
 
@@ -173,9 +171,7 @@ class DiskTTLCache:
             and envelope.is_fresh()
             and envelope.ttl_seconds
         ):
-            envelope = await asyncio.to_thread(
-                self._set_renewed_sync, key, envelope
-            )
+            envelope = await asyncio.to_thread(self._set_renewed_sync, key, envelope)
 
         return envelope
 

@@ -714,9 +714,7 @@ def define_checks() -> list[tuple[str, Callable[[], CheckResult]]]:
         ),
         (
             "10 codeclone strict",
-            lambda: _check_optional(
-                "codeclone", "requires running codeclone MCP server"
-            ),
+            lambda: _check_python_script("codeclone", "check_codeclone.py"),
         ),
         (
             "11 docstring coverage",
@@ -728,7 +726,7 @@ def define_checks() -> list[tuple[str, Callable[[], CheckResult]]]:
                 "src/backend/core/interfaces",
             ),
         ),
-        ("12 docs Vale", lambda: _check_optional("docs-vale", "requires vale binary")),
+        ("12 docs Vale", lambda: _check_python_script("docs-vale", "check_vale.py")),
         (
             "13 WAF coverage strict",
             lambda: _check_python_script("waf-coverage", "check_waf_coverage.py"),

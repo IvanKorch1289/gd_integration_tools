@@ -269,6 +269,72 @@ def _build_servicer_class(service: str, base_cls: type, pb2: Any) -> type:
     return type(f"{service.capitalize()}AutoServicer", (base_cls,), namespace)
 
 
+def _make_dispatch_behavior(
+    *,
+    bundle: Any,
+    service: str,
+    rpc_name: str,
+    input_type_name: str,
+    output_type_name: str,
+    servicer_fallback: Any,
+) -> Any:
+    """Мост RPC → ActionDispatcher (G5, 2026-09-11).
+
+    Раньше behavior брали из сгенерированного абстрактного servicer'а —
+    каждый вызов падал UNIMPLEMENTED ``NotImplementedError``. Теперь RPC
+    диспетчеризуется в action ``<domain>.<rpc_lower>`` через
+    ``dispatch_action`` (единый путь с REST/SOAP/WS).
+
+    Ограничения контракта (proto-стабы lossy — GAPS G5):
+        * запрос → payload через ``MessageToDict``;
+        * dict-результат → ``ParseDict(ignore_unknown_fields=True)``;
+        * не-dict результат (list и т.п.) → пустой response + warning —
+          полный маппинг списков требует регенерации proto (v2);
+        * незарегистрированный action → UNIMPLEMENTED.
+    """
+    from google.protobuf.json_format import MessageToDict, ParseDict
+    from grpc import StatusCode
+
+    from src.backend.entrypoints.base import dispatch_action
+
+    action = f"{service}.{rpc_name.lower()}"
+
+    async def behavior(request: Any, context: Any) -> Any:
+        from src.backend.core.api.extensions import action_handler_registry
+
+        if not action_handler_registry.is_registered(action):
+            await context.abort(
+                StatusCode.UNIMPLEMENTED,
+                f"action '{action}' not registered in ActionHandlerRegistry",
+            )
+
+        payload = MessageToDict(request, preserving_proto_field_name=True)
+        try:
+            result = await dispatch_action(
+                action=action, payload=payload, source="grpc"
+            )
+        except KeyError as exc:
+            await context.abort(StatusCode.UNIMPLEMENTED, str(exc)[:200])
+        except Exception as exc:  # noqa: BLE001 — gRPC boundary: INTERNAL + details
+            await context.abort(StatusCode.INTERNAL, str(exc)[:200])
+
+        output_type = getattr(bundle.pb2, output_type_name)
+        if isinstance(result, dict):
+            return ParseDict(result, output_type(), ignore_unknown_fields=True)
+        if not isinstance(result, output_type):
+            logger.warning(
+                "gRPC auto-servicer: %s вернул %s — proto-контракт lossy, "
+                "возвращён пустой response (GAPS G5)",
+                action,
+                type(result).__name__,
+            )
+        return result if isinstance(result, output_type) else output_type()
+
+    if servicer_fallback is None or not callable(servicer_fallback):
+        return behavior
+    return behavior
+
+
 def register_auto_servicers(grpc_server: Any) -> int:
     """Зарегистрировать все ``AutoServicerBundle`` в gRPC-сервере.
 
@@ -289,6 +355,15 @@ def register_auto_servicers(grpc_server: Any) -> int:
 
     """
     import grpc as grpc_lib
+
+    # G5: standalone grpc-serve не проходит через FastAPI auto-loop, где
+    # ActionHandlerRegistry наполняется; регистрируем здесь (idempotent).
+    try:
+        from src.backend.dsl.commands.setup import register_action_handlers
+
+        register_action_handlers()
+    except Exception as exc:  # noqa: BLE001 — startup не блокируем (как в app_factory)
+        logger.warning("gRPC auto-servicer: register_action_handlers пропущен: %s", exc)
 
     bundles = build_auto_servicers()
     registered = 0
@@ -318,8 +393,15 @@ def register_auto_servicers(grpc_server: Any) -> int:
         service_full_name = service_desc.full_name
         for method_desc in service_desc.methods:
             rpc_name = method_desc.name
-            behavior = getattr(servicer, rpc_name, None)
-            if behavior is None or not callable(behavior):
+            behavior = _make_dispatch_behavior(
+                bundle=bundle,
+                service=bundle.service,
+                rpc_name=rpc_name,
+                input_type_name=method_desc.input_type.name,
+                output_type_name=method_desc.output_type.name,
+                servicer_fallback=getattr(servicer, rpc_name, None),
+            )
+            if behavior is None:
                 continue
             request_deserializer = getattr(
                 bundle.pb2, method_desc.input_type.name

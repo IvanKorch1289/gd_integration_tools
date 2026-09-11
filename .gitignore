@@ -222,3 +222,4 @@ artifacts/ragas/*.json
 /.kimi-code/config.toml
 
 .mypy_cache_strict/
+report/
