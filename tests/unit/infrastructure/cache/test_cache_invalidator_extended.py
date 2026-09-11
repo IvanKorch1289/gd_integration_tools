@@ -21,7 +21,6 @@ from __future__ import annotations
 import pytest
 
 from src.backend.infrastructure.cache.invalidator import (
-    CacheBackendProtocol,
     CacheInvalidator,
     InMemoryCacheBackend,
     get_cache_invalidator,
