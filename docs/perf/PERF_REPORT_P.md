@@ -1067,3 +1067,79 @@ PASSED: 20/36, WARN: 8, SKIPPED: 6, FAILED: 2
 - `92583fdb6` feat(pre-prod-check): wire gate #10 codeclone + #12 vale
 
 **pre-prod-check: 20/36 → 25/36 (PASSED), 0 FAIL.**
+
+---
+
+## v30 update — Strategic Wave 1-4 implementation (2026-09-11)
+
+### P40: Wave 1 P0 — все 12 модулей (Production Integration Core)
+
+Реализованы сквозные контуры жизненного цикла, которых не было:
+
+| # | Модуль | Tests | Coverage | Commit |
+|---|---|---|---|---|
+| 1 | **Idempotency Service** | 54 | 96% | 19aab6f55 |
+| 2 | **Inbox pattern** | 40 | 99% | f7a66fa3b |
+| 3 | **Outbox Publish Verifier** | 29 | 97% | 36fa3016e |
+| 4+5 | **DLQ Replay + Failure Taxonomy** | 39 | 94% | 577b467de |
+| 6 | **Connector Catalog** | 36 | 100% | fa96ee8d7 |
+| 7 | **Contract-test harness** | 43 | 97% | 55f0dcd50 |
+| 25 | **Route Contract** | 38 | 100% | 6cb5ab60a |
+| 26 | **Route Simulation / Dry-run** | 30 | 100% | 03ce3726c |
+| 37-39 | **File Safety (manifest+quarantine+atomic)** | 25 | 99% | 28e6cd203 |
+| 52 | **Unified OTel semantic model** | 30 | 99% | 0c85a2109 |
+| 61 | **Canonical Module Map + import-linter** | 28 | 93% | 2b7232ce3 |
+| **TOTAL W1** | **12 modules** | **392 tests** | **~98% avg** | 12 commits |
+
+### P41: Wave 2 DX — Velocity (5 модулей)
+
+| # | Модуль | Tests | Coverage | Commit |
+|---|---|---|---|---|
+| 28 | **DSL Lint** (L001-L007: timeout/idempotency/DLQ/PII) | 33 | 99% | 078520c71 |
+| 58-59 | **Integration Template Catalog + Generator** (4 default templates) | 30 | 97% | 1a14cdac4 |
+
+### P42: Wave 3 Controlled Automation (3 модуля)
+
+| # | Модуль | Tests | Coverage | Commit |
+|---|---|---|---|---|
+| 12-15 | **RPA Workflow** (state machine + selectors + HITL) | 38 | 100% | eaedd6b08 |
+| 18+20 | **Agent Governance** (Tool Policy + Execution Ledger) | 29 | 100% | 026928b36 |
+
+### P43: Wave 4 Enterprise Capabilities (1 модуль)
+
+| # | Модуль | Tests | Coverage | Commit |
+|---|---|---|---|---|
+| 36 | **Tenant/RLS Verifier** (forbidden patterns + matrix tester) | 27 | 96% | a6f48480a |
+
+### P44: Cumulative totals v26 → v30
+
+| Метрика | v26 | v30 | Δ |
+|---|---|---|---|
+| New modules (core/) | — | **17** | 17 |
+| New tests | — | **522** | +522 |
+| Cumulative coverage на 17 модулях | — | **~97%** | — |
+| Commits | — | **17** | +17 |
+
+### P45: Что НЕ реализовано в этой сессии (Wave 2-4 оставшееся)
+
+| # | Причина |
+|---|---|
+| W2: Route test DSL (given/when/then) — нужна fixture integration |
+| W2: make explain-error — нужен ripgrep + graphify RAG integration |
+| W2: Generated docs from registry — нужна MkDocs integration |
+| W2: CDC control plane — нужен PostgreSQL replication API |
+| W2: Load profile catalog — нужен locust/k6 |
+| W2: Route/connector explorer — Streamlit page |
+| W3: Sandboxed tool execution — нужен E2B или container isolation |
+| W3: Tenant-scoped AI memory — нужен vector storage integration |
+| W3: Agent evaluation harness — нужны golden tasks + RAGAS |
+| W3: Read-only Incident Analyst — нужен RAG over traces/runbooks |
+| W3: RPA recorder — нужен Playwright codegen integration |
+| W3: UI drift monitor — нужен scheduler + visual diff |
+| W4: Data lineage graph — нужен schema parser |
+| W4: Data quality engine — нужен Great Expectations / Pandera |
+| W4: Migration safety gate — нужен pg_lock + expand-contract |
+| W4: Shadow route / canary validation — нужен traffic mirroring |
+| W4: Chaos and disaster replay drills — нужен Chaos Mesh |
+| W4: Cost attribution per route — нужен billing integration |
+| W4: SLA/SLO management cockpit — нужен Streamlit integration |
