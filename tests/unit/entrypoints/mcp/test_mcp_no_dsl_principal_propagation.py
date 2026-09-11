@@ -81,7 +81,7 @@ class TestMcpAuthBypassDesign:
             "_action_input_schema_json",
             return_value=None,
         ), patch(
-            "src.backend.dsl.commands.registry.action_handler_registry",
+            "src.backend.core.api.extensions.action_handler_registry",
         ) as mock_registry:
             mock_registry.is_registered = MagicMock(return_value=False)
 

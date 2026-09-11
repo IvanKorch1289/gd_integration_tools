@@ -22,7 +22,7 @@ def test_action_input_schema_json_returns_none_for_unknown_action() -> None:
     mock_registry = MagicMock()
     mock_registry.get_metadata.return_value = None
     with patch(
-        "src.backend.dsl.commands.registry.action_handler_registry", mock_registry,
+        "src.backend.core.api.extensions.action_handler_registry", mock_registry,
     ):
         result = _action_input_schema_json("nonexistent_action_xyz")
     assert result is None
@@ -36,7 +36,7 @@ def test_action_input_schema_json_handles_exception() -> None:
     mock_metadata.input_model.model_json_schema.side_effect = RuntimeError("boom")
     mock_registry.get_metadata.return_value = mock_metadata
     with patch(
-        "src.backend.dsl.commands.registry.action_handler_registry", mock_registry,
+        "src.backend.core.api.extensions.action_handler_registry", mock_registry,
     ):
         result = _action_input_schema_json("some_action")
     assert result is None
@@ -143,7 +143,7 @@ def test_action_input_schema_json_unknown_action_returns_none_property(
     mock_registry = MagicMock()
     mock_registry.get_metadata.return_value = None
     with patch(
-        "src.backend.dsl.commands.registry.action_handler_registry", mock_registry,
+        "src.backend.core.api.extensions.action_handler_registry", mock_registry,
     ):
         result = _action_input_schema_json(action_name)
     assert result is None

@@ -97,7 +97,7 @@ class TestTriggerAndMaybeWait:
                 return_value=mock_status,
             ):
                 with patch(
-                    "src.backend.dsl.commands.registry.action_handler_registry.is_registered",
+                    "src.backend.core.api.extensions.action_handler_registry.is_registered",
                     return_value=False,
                 ):
                     result = await _trigger_and_maybe_wait(
@@ -138,7 +138,7 @@ class TestTriggerAndMaybeWait:
                 return_value=mock_status,
             ):
                 with patch(
-                    "src.backend.dsl.commands.registry.action_handler_registry.is_registered",
+                    "src.backend.core.api.extensions.action_handler_registry.is_registered",
                     return_value=False,
                 ):
                     with patch("asyncio.sleep", AsyncMock()):

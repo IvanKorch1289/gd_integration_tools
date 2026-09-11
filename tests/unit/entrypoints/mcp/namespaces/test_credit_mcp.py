@@ -35,7 +35,7 @@ def mock_registry() -> MagicMock:
 @pytest.fixture(autouse=True)
 def patch_registry(mock_registry: MagicMock) -> Any:
     with patch(
-        "src.backend.dsl.commands.registry.action_handler_registry", mock_registry,
+        "src.backend.core.api.extensions.action_handler_registry", mock_registry,
     ):
         yield
 
