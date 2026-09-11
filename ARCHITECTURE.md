@@ -1,6 +1,6 @@
 # ARCHITECTURE.md
 
-> Последняя синхронизация: 2026-08-19 (Sprint 3 audit cleanup).
+> Последняя синхронизация: 2026-09-11 (prod-readiness re-verification, FINAL_REPORT v8 + wave 2).
 > См. `CLAUDE.md:612` для версии и `docs/audit/SYNTHESIS_2026-08-13.md` для истории.
 
 ## Назначение проекта

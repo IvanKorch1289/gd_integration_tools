@@ -32,10 +32,15 @@
 
 ## Текущая фаза
 
-**Sprint 36 — Production Readiness (90%+)** (2026-08-18 → 2026-08-31).
-Sprint 35 закрыт (5 волн: SBOM+cosign, OWASP ZAP, chaos, hypothesis, pip-audit).
+**Prod-readiness re-verification** (2026-09-11): FINAL_REPORT v8 — вердикт
+«ГОТОВ К ПРОДУ С ОГОВОРКАМИ»; открытые позиции и владельцы —
+`docs/roadmap/PROD_READINESS_GAPS.md` (10 позиций). Источник правды по
+roadmap — `docs/roadmap/` (FINAL_REPORT.md + PROD_READINESS_GAPS.md);
+карта модулей — `docs/architecture/canonical-module-map.md`.
 
-`PLAN.md` V22 — источник правды по roadmap и архитектурным решениям.
+Исторические фазы (Sprint 35: SBOM+cosign/OWASP ZAP/chaos/hypothesis/pip-audit;
+Sprint 171+: middleware/RPA/integration audits) — см. git-историю и
+`docs/roadmap/PERF_REPORT_P.md`.
 
 **Sprint 171 (S170+): M5 Middleware audit complete (commit 60f96f9).**
 - 30+ ASGI middleware inventoried + centralization: INN validation (3→1),
