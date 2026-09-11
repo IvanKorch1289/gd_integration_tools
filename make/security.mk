@@ -57,6 +57,16 @@ sbom: ## D-AUDIT-11-5 fix (cycle 1): canonical path — dist/sbom/sbom.cdx.json.
 	$(UV_RUN) pip-audit --format cyclonedx-json --output dist/sbom/sbom.cdx.json -r dist/audit-requirements.txt $$ALLOW || true
 	@$(SUCCESS) "SBOM written to dist/sbom/sbom.cdx.json (via pip-audit cyclonedx-json from .venv)"
 
+sbom-diff-gate: ## OP-3: SBOM diff gate — fail on new copyleft / unknown licenses / drift
+	@$(INFO) "Running SBOM diff gate (current vs baseline)..."
+	@test -f dist/sbom/sbom.cdx.json || { $(ERROR) "dist/sbom/sbom.cdx.json missing — run 'make sbom' first"; exit 1; }
+	@mkdir -p dist/sbom
+	@test -f dist/sbom/sbom.baseline.json || cp dist/sbom/sbom.cdx.json dist/sbom/sbom.baseline.json
+	@$(UV_RUN) python tools/checks/sbom_diff_gate.py \
+		--current dist/sbom/sbom.cdx.json \
+		--baseline dist/sbom/sbom.baseline.json \
+		--threshold-new-components 20
+
 audit-deps: ## D-AUDIT-11-4 fix (cycle 1): pip-audit с allowlist, пишет JSON в dist/pip-audit.json для CI gate
 	@$(INFO) "Running pip-audit (dist/pip-audit.json)..."
 	@mkdir -p dist
