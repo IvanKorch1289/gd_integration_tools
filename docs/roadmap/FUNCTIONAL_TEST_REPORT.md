@@ -24,8 +24,7 @@ context_getter `request: Request`).
 | GraphQL | POST `/api/v1/graphql` `{__typename}` +JWT = **200** `{"data":{"__typename":"AutoQuery"}}` | 401 unauth | **PASS** (после фикса 7dc48bd32) |
 | WebSocket | `/ws` + subprotocol `jwt.<token>` = подключение + JSON-dispatch ответ (`{"action":"ping","error":"Маршрут 'ping' не найден"}`) | 403 no credential | **PASS** |
 | SSE | `/events/stream` +JWT = **200**, поток получен | 401 unauth | **PASS** |
-| SOAP | WSDL `/soap/wsdl` +JWT = **200** (валидный XML, 525 operations) | 401 unauth | **WSDL PASS** |
-| SOAP invoke | `/soap/invoke` с валидной WSDL-операцией (`orderkinds_list`) = **500** (CancelledError в DB-сессии) | — | **FAIL** → PROD_READINESS_GAPS №4 (P2) |
+| SOAP | `/soap/wsdl` +JWT = **200** (валидный XML, 525 operations); `/soap/invoke` InvokeRequest(action=users.list) +JWT = **200 `status=ok`** (после G4-фикса `49d929b05`); незарегистрированная операция = 404 SOAP Fault | 401 unauth | ✅ **PASS** |
 | gRPC auth | standalone `grpc-serve` (unix socket): List с верным `x-api-key` прошёл интерцептор | неверный ключ = UNAUTHENTICATED | **PASS** |
 | gRPC dispatch | после auth: UNIMPLEMENTED `NotImplementedError` — сгенерированные auto-servicer'ы абстрактные, моста к ActionDispatcher нет | — | **KNOWN GAP** → GAPS №5 |
 | MCP | feature-flag `mcp.http_enabled=false` (default) — mount skipped по дизайну | — | **DISABLED (by design)** |

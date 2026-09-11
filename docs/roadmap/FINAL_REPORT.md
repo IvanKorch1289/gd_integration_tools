@@ -188,3 +188,11 @@ owner: ai-team. Связано с mcp 2.x/fastmcp 4 дрейфом (см. `3e5e1
 | G8 навигация | Дубли каталогов устранены: `docs/workflow/`→`workflows/worker-versioning.md`, `docs/migrations/`→`migration/` (git mv; синхронно с полосой 9cf3429ba); AGENTS.md — актуальная фаза + канонические источники вместо PLAN.md/Sprint-36; ARCHITECTURE.md — дата 2026-09-11 | `8f62c06bb` |
 | Ruff gate | 29 новых lint-профессий полосы (F402/S108 в новых модулях) — исправлены, gate восстановлен | worktree |
 | Остаётся красным | smart_session (7, load-flak), workflow_tools (2), mq_trace (1, WIP полосы), langfuse (1, флак), SOAP invoke (G4) | — |
+
+## 10. Дополнение 2026-09-11 — четвёртая волна: G4 закрыт, протокольная матрица полностью зелёная
+
+| Позиция | Статус | Evidence |
+|---|---|---|
+| **G4 SOAP invoke** | **ЗАКРЫТ**: корень — `create_app()` не вызывал `register_app_state()`, `app.state.invoker` отсутствовал → `Depends(get_invoker_dep)` падал AttributeError→500 (три раунда диагностики уводил в сторону CancelledError-шум aiosqlite-очистки). Фикс: вызов композиции в `_configure_application_components` (`49d929b05`) | Live: `/soap/invoke` InvokeRequest(users.list)+JWT → **200 `status=ok`**; незарегистрированная операция → 404 SOAP Fault; forged → 401 |
+| Протокольная матрица | **REST 200 · GraphQL 200 · SSE 200 · SOAP invoke 200 · WS 200 · gRPC auth+dispatch-мост · негатив 401/403** — все достижимые на dev-box позиции PASS | FUNCTIONAL_TEST_REPORT 2026-09-11 |
+| Осталось (вне dev-box / next sprint) | G1 coverage-CI · G2 push-SLO стенд · G3 deps MAJOR · G5 proto v2 · G6 MQ · G7 MCP flag · G8 хвост (docs/docs→vale, счётчики) · G10 debt | PROD_READINESS_GAPS.md |

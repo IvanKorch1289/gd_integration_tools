@@ -44,20 +44,23 @@
 - **Риск**: накопление security-debt; redis 5.x EOL-окно.
 - **Срок**: 2 спринта.
 
-## G4. SOAP business invoke — 500 на валидных WSDL-операциях
+## G4. SOAP business invoke — ✅ ЗАКРЫТО (2026-09-11, `49d929b05`)
 
-- **Тип**: code (P2). **Owner**: entrypoints-team. **Статус**: диагностическая сессия 2026-09-11 (вторая итерация).
-- **Уточнённая диагностика**: in-process репро подтвердило — исключение это
-  `asyncio.CancelledError` (BaseException), возникающее на `aiosqlite.commit/close`;
-  оно **не ловится** `except Exception` в `handle_soap_request` → уходит в
-  exception-middleware → JSON 500 вместо SOAP Fault. Инструментация `Task.cancel` /
-  `Future.cancel` / `anyio.CancelScope.cancel` дала **0 вызовов**.
-  **Новая находка (3-я итерация)**: SOAP-операции используют underscore-имена
-  (`orderkinds_list`, регистрируются `@service_dsl`), и их dispatch идёт через
-  **DSL-путь** (`dsl.dispatch(route_id=...)`), а НЕ через ActionHandlerRegistry —
-  трассировка показала, что `CrudMixin.list` даже не вызывается; CancelledError
-  рождается внутри DSL-engine dispatch. Инвариант: тот же сервис через REST/gRPC
-  (dot-имена, CRUD-registry) работает.
+- **Тип**: code (P2). **Owner**: entrypoints-team. **Статус**: закрыт.
+- **Корень**: `create_app()` никогда не вызывал `register_app_state()` —
+  `app.state.invoker` (и reply_registry/vault_refresher) не заполнялись;
+  SOAP-роут объявляет `Depends(get_invoker_dep)` → AttributeError в
+  dependency-solve → 500 (маскировался CancelledError-шумом очистки
+  aiosqlite-сессии, что уводило три раунда диагностики в сторону).
+- **Фикс**: вызов `register_app_state(app)` в `_configure_application_components`
+  (guarded, как остальные шаги композиции).
+- **Live-верификация**: `POST /soap/invoke` с конвертом InvokeRequest
+  (action=users.list) + JWT → **200**, `status=ok`, result присутствует;
+  незарегистрированная операция → **404 SOAP Fault** (протокольно-корректный
+  ответ); forged token → 401.
+- **Косметика в backlog**: результат list-экшнов сериализуется через str()
+  ORM-объектов — применить _jsonable-нормализацию из auto_register в
+  Invoker-сериализации.
 - **Шаг**: (1) локализовать cancel-scope (трассировка `anyio.CancelScope.cancel`);
   (2) решить семантику: honest 504/SOAP-Fault при отмене + запрет кидать отмену
   поверх незавершённой DB-транзакции.
