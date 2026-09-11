@@ -23,6 +23,8 @@ God-objects refactored: 4/5 done (graphql now).
 from types import SimpleNamespace
 from typing import Any
 
+from fastapi import Request
+
 from src.backend.core.api.extensions import (
     Exchange,
     ExchangeStatus,
@@ -46,7 +48,9 @@ logger = get_logger(__name__)
 # выше ``try``-блока который использует его в GraphQLRouter(...). Это
 # решает ruff F821 (Undefined name) и сохраняет forward-reference в
 # пределах одного модуля (function body resolves at call time).
-async def _graphql_context_getter(request: Any) -> dict[str, Any]:
+# Аннотация Request обязательна: с `Any` FastAPI трактует параметр как
+# query-поле "request" → 422 на каждый POST (регрессия R2.MYPY).
+async def _graphql_context_getter(request: Request) -> dict[str, Any]:
     """Strawberry ASGI context getter (Round 87 verbatim).
 
     Build context dict из FastAPI/Starlette ``request``:
