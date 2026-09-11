@@ -16,7 +16,9 @@ class DiskTTLCache:
 
     def __init__(self, directory: str | Path) -> None:
         self.directory = Path(directory)
-        self.directory.mkdir(parents=True, exist_ok=True)
+        # PYSEC-2026-2447: pickle-deserialization из cache dir; режим 0o700
+        # отсекает запись третьими сторонами (действует при создании dir).
+        self.directory.mkdir(parents=True, exist_ok=True, mode=0o700)
         self._cache = Cache(str(self.directory))
 
     @staticmethod
