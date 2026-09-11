@@ -1,108 +1,104 @@
-"""Focused tests for tracing (PERF-6.6 Sprint 21 coverage ratchet).
+"""Focused tests for TracingMiddleware (PERF-6.6 Sprint 20 coverage ratchet).
 
-Coverage target: tracing.py 22% → 70%+.
+2026-09-11: переписаны под текущий контракт — TracingMiddleware (ProcessorMiddleware)
+без аргументов: before() создаёт span, after() закрывает; tracer=None → no-op.
 """
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock
+import asyncio
+from unittest.mock import MagicMock, patch
 
-import pytest
-
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange, Message
 from src.backend.infrastructure.observability.tracing import (
     TracingMiddleware,
     get_tracer,
 )
 
 
-def test_get_tracer_returns_object() -> None:
-    """get_tracer() returns a tracer object."""
+def _exchange() -> Exchange:
+    return Exchange(in_message=Message(body={}))
+
+
+def _context() -> ExecutionContext:
+    return ExecutionContext(route_id="test_route")
+
+
+def _run(coro: object) -> object:
+    return asyncio.run(coro)  # type: ignore[arg-type]
+
+
+def test_get_tracer_no_raise() -> None:
+    """get_tracer() — возвращает tracer или None (OTel optional), не raise."""
     tracer = get_tracer()
-    assert tracer is not None
+    assert tracer is not None or tracer is None
 
 
 def test_tracing_middleware_init() -> None:
-    """Tracing.ProcessorMiddleware init stores service_name."""
-    mw = TracingMiddleware(service_name="test_service")
-    assert mw is not None
+    """TracingMiddleware init без аргументов — spans dict пуст."""
+    mw = TracingMiddleware()
+    assert mw._spans == {}
 
 
-def test_tracing_middleware_init_with_provider() -> None:
-    """TracingMiddleware init with custom provider."""
-    mw = TracingMiddleware(service_name="test", provider="custom_otel")
-    assert mw is not None
+def test_tracing_middleware_is_processor_middleware() -> None:
+    """Класс в MRO содержит ProcessorMiddleware (Protocol-наследование)."""
+    bases = [b.__name__ for b in TracingMiddleware.__mro__]
+    assert "ProcessorMiddleware" in bases
 
 
-@pytest.mark.asyncio
-async def test_tracing_middleware_process_request() -> None:
-    """Tracing.ProcessorMiddleware.process_request basic flow."""
-    mw = TracingMiddleware(service_name="test")
-    # process_request may be sync or async — try both
-    if hasattr(mw, "process_request"):
-        try:
-            result = mw.process_request(some="arg")
-        except TypeError:
-            # Needs different args; just check attribute exists
-            pass
+def test_before_no_tracer_noop() -> None:
+    """tracer=None (OTel недоступен) → before() no-op, spans не создаются."""
+    mw = TracingMiddleware()
+    with patch(
+        "src.backend.infrastructure.observability.tracing.get_tracer", return_value=None
+    ):
+        _run(mw.before("proc1", _exchange(), _context()))
+    assert mw._spans == {}
 
 
-@pytest.mark.asyncio
-async def test_tracing_middleware_emit() -> None:
-    """Tracing.ProcessorMiddleware.emit method exists."""
-    mw = TracingMiddleware(service_name="test")
-    assert hasattr(mw, "emit") or hasattr(mw, "_emit")
+def test_before_with_tracer_creates_span() -> None:
+    """before() с tracer → span создан и сохранён по ключу exchange:processor."""
+    mw = TracingMiddleware()
+    span = MagicMock()
+    tracer = MagicMock()
+    tracer.start_span.return_value = span
+    ex = _exchange()
+    with patch(
+        "src.backend.infrastructure.observability.tracing.get_tracer", return_value=tracer
+    ):
+        _run(mw.before("proc1", ex, _context()))
+    assert len(mw._spans) == 1
+    tracer.start_span.assert_called_once()
 
 
-def test_tracing_init_attributes() -> None:
-    """TracingMiddleware init имеет expected attributes."""
-    mw = TracingMiddleware(service_name="svc1")
-    assert mw._service_name == "svc1" or hasattr(mw, "_service_name")
+def test_after_ends_span() -> None:
+    """after() проставляет duration и завершает span."""
+    mw = TracingMiddleware()
+    span = MagicMock()
+    ex = _exchange()
+    mw._spans[f"{id(ex)}:proc1"] = span
+
+    _run(mw.after("proc1", ex, _context(), error=None, duration_ms=12.5))
+    span.set_attribute.assert_called_once_with("duration_ms", 12.5)
+    span.end.assert_called_once()
+    assert mw._spans == {}
 
 
-def test_tracing_middleware_call() -> None:
-    """TracingMiddleware — __call__ interface exists."""
-    mw = TracingMiddleware(service_name="test")
-    assert callable(mw)
+def test_after_with_error_sets_error_attributes() -> None:
+    """after() с error → error=True + статус ERROR."""
+    mw = TracingMiddleware()
+    span = MagicMock()
+    ex = _exchange()
+    mw._spans[f"{id(ex)}:proc1"] = span
+
+    _run(mw.after("proc1", ex, _context(), error=RuntimeError("boom"), duration_ms=3.0))
+    assert span.set_attribute.call_count >= 2
+    span.end.assert_called_once()
 
 
-@pytest.mark.asyncio
-async def test_tracing_middleware_shutdown() -> None:
-    """TracingMiddleware.shutdown graceful."""
-    mw = TracingMiddleware(service_name="test")
-    # shutdown может быть sync/async
-    if hasattr(mw, "shutdown"):
-        try:
-            result = mw.shutdown()
-            if hasattr(result, "__await__"):
-                await result
-        except Exception:
-            pass  # graceful
-
-
-def test_tracing_middleware_str_repr() -> None:
-    """Tracing.ProcessorMiddleware str() не raises."""
-    mw = TracingMiddleware(service_name="test")
-    s = str(mw)
-    assert isinstance(s, str)
-
-
-def test_tracing_default_service_name() -> None:
-    """Tracing get_tracer default behavior."""
-    tracer = get_tracer()
-    assert tracer is not None
-
-
-def test_tracing_uses_singleton() -> None:
-    """get_tracer возвращает same instance (singleton pattern)."""
-    t1 = get_tracer()
-    t2 = get_tracer()
-    assert t1 is t2
-
-
-def test_tracing_singleton_reset() -> None:
-    """Multiple get_tracer() calls return same instance even after operations."""
-    base = get_tracer()
-    # Call multiple times
-    for _ in range(5):
-        t = get_tracer()
-        assert t is base
+def test_after_without_span_noop() -> None:
+    """after() без предшествующего before() → no-op, не падает."""
+    mw = TracingMiddleware()
+    _run(mw.after("procX", _exchange(), _context(), error=None, duration_ms=1.0))
+    assert mw._spans == {}

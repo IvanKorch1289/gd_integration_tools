@@ -1,12 +1,13 @@
 """Focused tests for audit_verify_lifecycle (PERF-6.6 Sprint 22 coverage ratchet).
 
-Coverage target: audit_verify_lifecycle.py 23% → 70%+.
+2026-09-11: переписаны под текущий контракт — AuditVerifyScheduler(*, store,
+interval_hours=24.0), verify() через store, start_audit_verify(store=...).
 """
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, UTC
-from unittest.mock import AsyncMock, MagicMock, patch
+import asyncio
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -14,94 +15,106 @@ from src.backend.infrastructure.observability.audit_verify_lifecycle import (
     AuditVerifyScheduler,
     start_audit_verify,
     stop_audit_verify,
-    try_start_default,
 )
 
 
+def _make_store(valid: bool = True) -> MagicMock:
+    """Fake ImmutableAuditStore с verify()."""
+    store = MagicMock()
+    store.verify = AsyncMock(return_value=MagicMock(valid=valid))
+    return store
+
+
 def test_scheduler_init_default() -> None:
-    """AuditVerifyScheduler init с default args."""
-    s = AuditVerifyScheduler()
-    assert s is not None
+    """AuditVerifyScheduler init со store — default 24h."""
+    s = AuditVerifyScheduler(store=_make_store())
+    assert s.interval_seconds == 24.0 * 3600.0
+    assert s.is_running is False
+    assert s.runs_total == 0
 
 
 def test_scheduler_init_custom() -> None:
-    """AuditVerifyScheduler init с custom interval."""
-    s = AuditVerifyScheduler(
-        interval_seconds=600,
-        batch_size=500,
+    """AuditVerifyScheduler init с custom interval_hours."""
+    s = AuditVerifyScheduler(store=_make_store(), interval_hours=1.0)
+    assert s.interval_seconds == 3600.0
+
+
+def test_scheduler_init_invalid_interval() -> None:
+    """interval_hours <= 0 → ValueError."""
+    with pytest.raises(ValueError, match="interval_hours"):
+        AuditVerifyScheduler(store=_make_store(), interval_hours=0)
+
+
+def test_scheduler_str_no_raise() -> None:
+    """str/repr не raise."""
+    s = AuditVerifyScheduler(store=_make_store())
+    assert isinstance(str(s), str)
+
+
+def test_scheduler_with_concrete_store() -> None:
+    """AuditVerifyScheduler с concrete store-моком."""
+    store = _make_store()
+    s = AuditVerifyScheduler(store=store)
+    assert s._store is store
+
+
+@pytest.mark.asyncio
+async def test_scheduler_run_once_increments_total() -> None:
+    """Одна итерация loop → verify вызван, runs_total растёт."""
+    s = AuditVerifyScheduler(store=_make_store(), interval_hours=1 / 3600)
+    await s.start()
+    # Даём loop-таске стартовать и выполнить verify до stop
+    for _ in range(100):
+        if s.runs_total >= 1:
+            break
+        await asyncio.sleep(0.01)
+    await s.stop()
+    assert s.is_running is False
+    assert s.runs_total >= 1
+
+
+@pytest.mark.asyncio
+async def test_scheduler_loop_survives_verify_error() -> None:
+    """verify() с ошибкой → loop живёт (defense-in-depth), runs_total не растёт."""
+    store = _make_store()
+    store.verify = AsyncMock(side_effect=RuntimeError("db down"))
+    s = AuditVerifyScheduler(store=store, interval_hours=1 / 3600)
+    await s.start()
+    await s.stop()
+    assert s.runs_total == 0
+
+
+def test_start_audit_verify_returns_none() -> None:
+    """start_audit_verify(*) без store → TypeError (обязательный kwarg)."""
+    with pytest.raises(TypeError):
+        import asyncio
+
+        asyncio.run(start_audit_verify())  # type: ignore[call-arg]
+
+
+@pytest.mark.asyncio
+async def test_stop_audit_verify_handles_no_scheduler() -> None:
+    """stop_audit_verify() без активного scheduler — не raise."""
+    await stop_audit_verify()
+
+
+@pytest.mark.asyncio
+async def test_start_audit_verify_idempotent() -> None:
+    """Повторный start_audit_verify с running scheduler — no-op."""
+    from src.backend.infrastructure.observability.audit_verify_lifecycle import (
+        start_audit_verify,
     )
-    assert s is not None
 
+    store = _make_store()
+    s = AuditVerifyScheduler(store=store, interval_hours=24.0)
+    # Эмулируем занятый singleton без реального запуска loop
+    import src.backend.infrastructure.observability.audit_verify_lifecycle as mod
 
-def test_scheduler_init_with_redis() -> None:
-    """AuditVerifyScheduler init с custom redis client."""
-    mock_redis = MagicMock()
-    s = AuditVerifyScheduler(redis_client=mock_redis)
-    assert s is not None
-
-
-def test_scheduler_repr() -> None:
-    """AuditVerifyScheduler str/repr не raise."""
-    s = AuditVerifyScheduler()
-    s_str = str(s)
-    assert isinstance(s_str, str)
-
-
-def test_scheduler_attributes() -> None:
-    """AuditVerifyScheduler имеет expected attributes."""
-    s = AuditVerifyScheduler(interval_seconds=300, batch_size=200)
-    assert s._interval_seconds == 300 or hasattr(s, "_interval_seconds")
-
-
-def test_scheduler_with_concrete_storage() -> None:
-    """AuditVerifyScheduler init с concrete storage backend."""
-    s = AuditVerifyScheduler(
-        redis_client=MagicMock(),
-        storage_url="memory://",
-    )
-    assert s is not None
-
-
-def test_start_audit_verify_returns_instance() -> None:
-    """start_audit_verify() returns AuditVerifyScheduler."""
-    with patch(
-        "src.backend.infrastructure.observability.audit_verify_lifecycle.AuditVerifyScheduler"
-    ) as mock_cls:
-        mock_cls.return_value = MagicMock()
-        result = start_audit_verify()
-        # May return None или instance
-        if result is not None:
-            assert result is not None
-
-
-def test_stop_audit_verify_handles_no_scheduler() -> None:
-    """stop_audit_verify() handles no active scheduler."""
-    # Должен НЕ raise
-    import asyncio
-
+    mod.default_scheduler = s
+    s._running = True
     try:
-        asyncio.run(stop_audit_verify())
-    except Exception as exc:
-        # Если raise — fail
-        pytest.fail(f"stop_audit_verify raised: {exc}")
-
-
-def test_try_start_default_handles_no_config() -> None:
-    """try_start_default() handles missing config."""
-    with patch(
-        "src.backend.infrastructure.observability.audit_verify_lifecycle.settings"
-    ) as mock_settings:
-        # Без audit_verify attribute → не should fail loudly
-        del mock_settings.audit_verify
-        try:
-            result = asyncio_run(try_start_default())
-        except Exception:
-            result = None
-    # Должен handle gracefully (None или возвращать instance)
-
-
-def asyncio_run(coro):
-    """Helper: run coroutine to completion."""
-    import asyncio
-
-    return asyncio.get_event_loop().run_until_complete(coro)
+        await start_audit_verify(store=store)
+        assert mod.default_scheduler is s
+    finally:
+        mod.default_scheduler = None
+        s._running = False

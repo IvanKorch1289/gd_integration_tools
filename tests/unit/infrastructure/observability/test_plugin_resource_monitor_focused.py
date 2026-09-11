@@ -1,115 +1,98 @@
 """Focused tests for plugin_resource_monitor (PERF-6.6 Sprint 24 coverage ratchet).
 
-Coverage target: plugin_resource_monitor.py 24% → 70%+.
+2026-09-11: переписаны под текущий контракт — PluginResourceMetrics(plugin,
+cpu_percent, rss_bytes, requests_total) dataclass; _RequestCounter.total;
+monitor: record_action()/snapshot()/run()/stop(), без register/metrics.
 """
 
 from __future__ import annotations
 
-import pytest
-
 from src.backend.infrastructure.observability.plugin_resource_monitor import (
-    PluginResourceMonitor,
     PluginResourceMetrics,
+    PluginResourceMonitor,
     _RequestCounter,
 )
 
 
 def test_request_counter_init() -> None:
-    """_RequestCounter init — count starts at 0."""
+    """_RequestCounter init — total starts at 0."""
     rc = _RequestCounter()
-    assert rc.count == 0 or hasattr(rc, "count")
+    assert rc.total == 0
 
 
-def test_request_counter_inc() -> None:
-    """_RequestCounter.inc() — increment."""
-    rc = _RequestCounter()
-    rc.inc()
-    rc.inc()
-    assert rc.count == 2
+def test_request_counter_total_increment() -> None:
+    """Инкремент счётчика — monitor.record_action() увеличивает total."""
+    monitor = PluginResourceMonitor(plugins=("orders",))
+    monitor.record_action("orders")
+    monitor.record_action("orders")
+    assert monitor._counters["orders"].total == 2
 
 
-def test_request_counter_str() -> None:
-    """_RequestCounter str() — non-empty."""
-    rc = _RequestCounter()
-    s = str(rc)
-    assert isinstance(s, str)
+def test_request_counter_unknown_plugin_ignored() -> None:
+    """record_action для плагина вне списка — не создаёт счётчик."""
+    monitor = PluginResourceMonitor(plugins=("orders",))
+    monitor.record_action("unknown")
+    assert "unknown" not in monitor._counters
 
 
 def test_metrics_init_default() -> None:
-    """PluginResourceMetrics init — empty registry."""
-    m = PluginResourceMetrics()
-    assert m is not None
-
-
-def test_metrics_init_with_plugin() -> None:
-    """PluginResourceMetrics init с plugin name."""
+    """PluginResourceMetrics init — нули по умолчанию."""
     m = PluginResourceMetrics(plugin="my-plugin")
-    assert m is not None
+    assert m.plugin == "my-plugin"
+    assert m.cpu_percent == 0.0
+    assert m.rss_bytes == 0
+    assert m.requests_total == 0
 
 
-def test_metrics_register() -> None:
-    """PluginResourceMetrics.register() — registers resource."""
-    m = PluginResourceMetrics()
-    m.register("cpu", 50.0)
-    m.register("memory", 70.0)
-
-
-def test_metrics_register_threshold() -> None:
-    """PluginResourceMetrics.register() с threshold."""
-    m = PluginResourceMetrics()
-    m.register("cpu", 90.0, threshold=80.0)
+def test_metrics_init_with_values() -> None:
+    """PluginResourceMetrics init со значениями."""
+    m = PluginResourceMetrics(
+        plugin="test", cpu_percent=12.5, rss_bytes=1024, requests_total=7
+    )
+    assert m.cpu_percent == 12.5
+    assert m.requests_total == 7
 
 
 def test_metrics_repr() -> None:
-    """PluginResourceMetrics str/repr — non-empty."""
+    """PluginResourceMetrics repr — содержит plugin name."""
     m = PluginResourceMetrics(plugin="test")
-    s = str(m)
-    assert isinstance(s, str)
+    s = repr(m)
+    assert "test" in s
 
 
 def test_monitor_init_default() -> None:
     """PluginResourceMonitor init — default config."""
     m = PluginResourceMonitor()
-    assert m is not None
+    assert m._plugins == ()
+    assert m._interval == 30.0
+    assert m._stopped.is_set() is False
 
 
-def test_monitor_init_with_metrics() -> None:
-    """PluginResourceMonitor init с custom metrics."""
-    metrics = PluginResourceMetrics()
-    m = PluginResourceMonitor(metrics=metrics)
-    assert m._metrics is metrics or hasattr(m, "_metrics")
+def test_monitor_init_with_plugins() -> None:
+    """PluginResourceMonitor init со списком плагинов."""
+    m = PluginResourceMonitor(plugins=("a", "b"), interval_seconds=5.0)
+    assert m._plugins == ("a", "b")
+    assert m._interval == 5.0
 
 
-def test_monitor_register() -> None:
-    """PluginResourceMonitor.register() — proxies to metrics."""
+def test_monitor_snapshot_empty() -> None:
+    """snapshot() без плагинов → пустой список."""
     m = PluginResourceMonitor()
-    m.register("cpu", 50.0)
+    assert m.snapshot() == []
 
 
-def test_monitor_start_stop() -> None:
-    """PluginResourceMonitor start/stop — не raise."""
-    import asyncio
-
-    m = PluginResourceMonitor()
-    try:
-        asyncio.run(m.start())
-        asyncio.run(m.stop())
-    except Exception:
-        pass  # graceful
+def test_monitor_snapshot_with_data() -> None:
+    """snapshot() возвращает PluginResourceMetrics per-plugin."""
+    m = PluginResourceMonitor(plugins=("orders",))
+    m.record_action("orders")
+    snap = m.snapshot()
+    assert len(snap) == 1
+    assert snap[0].plugin == "orders"
+    assert snap[0].requests_total >= 1
 
 
-def test_metrics_str_with_data() -> None:
-    """PluginResourceMetrics str() — содержит data."""
-    m = PluginResourceMetrics()
-    m.register("cpu", 50.0)
-    s = str(m)
-    assert "cpu" in s or "50" in s
-
-
-def test_request_counter_reset() -> None:
-    """_RequestCounter — имеет reset или similar."""
-    rc = _RequestCounter()
-    rc.inc()
-    if hasattr(rc, "reset"):
-        rc.reset()
-        assert rc.count == 0
+def test_monitor_stop_sets_event() -> None:
+    """stop() выставляет _stopped (loop завершится)."""
+    m = PluginResourceMonitor(plugins=("orders",))
+    m.stop()
+    assert m._stopped.is_set() is True
