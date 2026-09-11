@@ -31,20 +31,14 @@ from src.backend.plugins.composition import waf_setup
 
 @pytest.fixture
 def clean_registry() -> Any:
-    """Сбрасывает глобальный ``svcs_registry`` на время теста и восстанавливает."""
+    """Сбрасывает глобальный ``svcs_registry`` на время теста (clear до/после)."""
     from src.backend.core import svcs_registry
 
-    original_known = set(svcs_registry._known_keys)
-    original_singletons = dict(svcs_registry._singletons)
+    svcs_registry.clear_registry()
     try:
-        svcs_registry._known_keys.clear()
-        svcs_registry._singletons.clear()
         yield svcs_registry
     finally:
-        svcs_registry._known_keys.clear()
-        svcs_registry._known_keys.update(original_known)
-        svcs_registry._singletons.clear()
-        svcs_registry._singletons.update(original_singletons)
+        svcs_registry.clear_registry()
 
 
 def _make_waf_settings_stub(**overrides: object) -> SimpleNamespace:

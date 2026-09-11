@@ -28,21 +28,18 @@ from src.backend.plugins.composition import service_setup
 
 @pytest.fixture
 def clean_registry() -> Any:
-    """Полная изоляция глобального ``svcs_registry`` на время теста."""
+    """Полная изоляция глобального ``svcs_registry`` на время теста.
+
+    svcs_registry больше не раскрывает ``_known_keys``/``_singletons`` —
+    используем публичный ``clear_registry()`` до и после теста.
+    """
     from src.backend.core import svcs_registry
 
-    original_known = set(svcs_registry._known_keys)
-    original_singletons = dict(svcs_registry._singletons)
+    svcs_registry.clear_registry()
     try:
-        # Очищаем, но не пересоздаём svcs.Registry (он не имеет clean API).
-        svcs_registry._known_keys.clear()
-        svcs_registry._singletons.clear()
         yield svcs_registry
     finally:
-        svcs_registry._known_keys.clear()
-        svcs_registry._known_keys.update(original_known)
-        svcs_registry._singletons.clear()
-        svcs_registry._singletons.update(original_singletons)
+        svcs_registry.clear_registry()
 
 
 @pytest.fixture
@@ -287,9 +284,9 @@ def test_register_all_services_idempotent(
     """Повторный вызов не падает и не дублирует state."""
     _mock_all_service_factories()
     service_setup.register_all_services()
-    known_first = set(clean_registry._known_keys)
+    known_first = set(clean_registry.list_services())
     service_setup.register_all_services()
-    known_second = set(clean_registry._known_keys)
+    known_second = set(clean_registry.list_services())
     # Число зарегистрированных ключей не должно расти бесконтрольно.
     assert known_first <= known_second
 
@@ -318,7 +315,7 @@ def test_register_all_services_populates_string_factories(
         "webhook",
         "langmem",
     }
-    registered = {k for k in clean_registry._known_keys if isinstance(k, str)}
+    registered = set(clean_registry.list_services())
     missing = expected - registered
     assert not missing, f"missing factories: {missing}"
 

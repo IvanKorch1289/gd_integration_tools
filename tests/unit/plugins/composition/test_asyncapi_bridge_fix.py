@@ -65,14 +65,20 @@ def test_asyncapi_bridge_calls_build_asyncapi_json() -> None:
 
 
 def test_asyncapi_bridge_uses_jsonresponse() -> None:
-    """Bridge использует ``JSONResponse`` (не redirect, не HTMLResponse)."""
-    source = inspect.getsource(app_factory._configure_business_routers)
+    """Bridge использует ``JSONResponse`` (не redirect, не HTMLResponse).
+
+    Бридж вынесен из ``_configure_business_routers`` в standalone-функцию
+    (см. app_factory: GET /asyncapi) — грепаем модуль целиком.
+    """
+    source = inspect.getsource(app_factory)
     assert "JSONResponse" in source, (
         "NEW-3a fix: bridge should use JSONResponse for spec"
     )
-    assert "JSONResponse(content=build_asyncapi_json" in source, (
-        "Bridge should serve JSONResponse(content=build_asyncapi_json(), ...)"
+    # Форматирование многострочное: JSONResponse(\n content=build_asyncapi_json()...
+    assert "build_asyncapi_json()" in source, (
+        "Bridge should serve build_asyncapi_json() via JSONResponse"
     )
+    assert "JSONResponse(" in source
 
 
 def test_bridge_route_returns_200_with_asyncapi_spec_via_test_client() -> None:
