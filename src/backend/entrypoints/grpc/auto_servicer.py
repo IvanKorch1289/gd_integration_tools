@@ -297,7 +297,11 @@ def _make_dispatch_behavior(
 
     from src.backend.entrypoints.base import dispatch_action
 
-    action = f"{service}.{rpc_name.lower()}"
+    # CRUD-registry: имена из _CRUD_METHODS (add/get/update/delete/list);
+    # proto-RPC Create → действие add (алиас имен, не новый action).
+    _ACTION_ALIASES = {"create": "add"}
+    rpc_lower = _ACTION_ALIASES.get(rpc_name.lower(), rpc_name.lower())
+    action = f"{service}.{rpc_lower}"
 
     async def behavior(request: Any, context: Any) -> Any:
         from src.backend.core.api.extensions import action_handler_registry
@@ -309,6 +313,9 @@ def _make_dispatch_behavior(
             )
 
         payload = MessageToDict(request, preserving_proto_field_name=True)
+        if rpc_lower == "add":
+            # Контракт CRUD: service.add(data: dict) — payload оборачивается.
+            payload = {"data": payload}
         try:
             result = await dispatch_action(
                 action=action, payload=payload, source="grpc"
