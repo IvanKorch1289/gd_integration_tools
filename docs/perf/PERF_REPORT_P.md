@@ -556,3 +556,33 @@ buffer overflow (ab-2.3 ≤2.4 issue, fixed в ab-2.5+). Server logs показ�
 | `infrastructure/observability/prometheus_alerting` | 25% | ~28% | **+3pp** |
 | **Cumulative** | — | — | **+353pp** |
 
+
+---
+
+## v18 update — Sprint 20: focused tests batch 7 (2026-09-10)
+
+### Sprint 20
+
+| Модуль | Tests | Result | Commit |
+|---|---|---|---|
+| `infrastructure/sources/sse` | 15 | 4 passed + 11 partial (API mismatch) | `2f19867bd` |
+
+### Sprint 14-20 cumulative coverage (7 сессий)
+
+| Module | Original | Sprint 14-20 | Total Δ |
+|---|---|---|---|
+| `infrastructure/storage/local_fs` | 66% | 85% | **+19pp** |
+| `services/rpa/desktop_session_pool` | 0% | 83% | **+83pp** |
+| `services/rpa/browser_pool` | 33% | 50% | **+17pp** |
+| `infrastructure/observability/memory_metrics` | 64% | 92% | **+28pp** |
+| `services/observability/facade` | 40% | 70%+ | **+30pp** |
+| `services/workflows/hitl_signal_store_redis` | 15% | ~50% | **+35pp** |
+| `services/io/export_service` | 30% | 62% | **+32pp** |
+| `infrastructure/application/slo_tracker` | 29% | 70% | **+41pp** |
+| `services/workflows/hitl_pubsub` | 45% | ~50% | **+5pp** |
+| `infrastructure/cache/backends/disk` | 27% | **85%** | **+58pp** |
+| `infrastructure/observability/client_metrics` | 55% | ~57% | **+2pp** |
+| `infrastructure/observability/prometheus_alerting` | 25% | ~28% | **+3pp** |
+| `infrastructure/sources/sse` | 16% | ~30% | **+14pp** |
+| **Cumulative** | — | — | **+367pp** |
+
