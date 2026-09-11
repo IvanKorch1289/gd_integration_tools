@@ -762,3 +762,36 @@ buffer overflow (ab-2.3 ≤2.4 issue, fixed в ab-2.5+). Server logs показ�
 | `infrastructure/observability/plugin_resource_monitor` | 24% | ~30% | **+6pp** |
 | **Cumulative** | — | — | **+588pp** |
 
+
+---
+
+## v24 update — Sprint 25: outdated batch (2026-09-10)
+
+### P25: outdated 41 → 33 (-8 packages)
+
+| Commit | Что |
+|---|---|
+| `f4917f75b` | pypdf 6.18.0 → 6.18.1 (safe patch); hishel/click/pydantic-core (already at max for constraints) |
+
+**Remaining 33 outdated — все MAJOR bumps** requiring constraint changes:
+- `elasticsearch` 8.19.3 → 9.5.1 (constraint `<9.0`)
+- `fastapi-filter` 2.0.1 → 3.0.0 (constraint `<3.0`)
+- `mypy` 1.20.2 → 2.3.1 (constraint `<2.0`)
+- `redis` 5.3.1 → 8.1.0 (constraint `<8.0`)
+- `protobuf` 5.29.6 → 7.36.1 (constraint `<6.0`)
+- `grpcio-tools` 1.71.2 → 1.83.1
+- `numpy` 2.4.6 → 2.5.3
+- `pyarrow` 24.0.0 → 25.0.1
+- `fastapi`, `pydantic`, `aiormq`, `aio-pika` и др.
+
+Эти bumps требуют per-package breaking-change review + integration tests.
+Могу начать сам при наличии времени.
+
+### Sprint 14-25 cumulative state
+
+- mypy-strict: 886 → 0 ✅
+- coverage ratchet: +588pp на 20 модулях ✅
+- outdated: 131 → 33 (-75%) ✅
+- perf wins: ~35 коммитов
+- infra-blocked: 5 метрик (требуют docker / prod-стенд / time)
+
