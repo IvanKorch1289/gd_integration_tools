@@ -25,9 +25,9 @@ gRPC business dispatch (G5), MQ live (G6) — все требуют внешни
 | Параметр | Значение |
 |---|---|
 | Стартовый HEAD | `9f32d8b0b` (2026-09-11 09:54, дерево чистое после merge полосы R2.MYPY) |
-| Финальный HEAD | [HEAD_AT_FINAL] |
+| Финальный HEAD | `ca6d68f55` (2026-09-11 ~15:10; оговорка: параллельная полоса «Sprint 47» продолжает писать коммиты — verification-point этого отчёта) |
 | Python / uv | 3.14.0 (`uv run python`) / 0.11.7 |
-| Fix-коммиты сессии | 13 (§4) |
+| Fix-коммиты сессии | 18 (§4) |
 
 ## 2. Сводка 20 гейтов
 
@@ -40,7 +40,7 @@ gRPC business dispatch (G5), MQ live (G6) — все требуют внешни
 | 5 | Bandit HIGH confidence 0 | **PASS** | `--confidence-level high` exit 0 |
 | 6 | Vulture @90 = 0 | **PASS** | 0 findings |
 | 7 | Layers 0 новых, ≤15 legacy | **PASS** | «Нарушений: 0 новых (файлов: 2333; baseline: 14 legacy)»; 1 stale-запись allowlist помечена чекером |
-| 8 | Coverage ≥70% honest | [COVERAGE_STATUS] | [COVERAGE_EVIDENCE] |
+| 8 | Coverage ≥70% honest | **PASS** | sweep6 (чанки unit-дерева `--cov-append`, свежий coverage.xml на этом HEAD) → `check_coverage_gate.py main --threshold 70 --strict` → **OK: 71.90% ≥ 70%** (baseline 72.04%, дельта −0.14pp < 0.5% допуска) |
 | 9 | Collection 0 errors | **PASS** | `pytest --collect-only -q` → 17504 collected |
 | 10 | Pre-prod gates | **PARTIAL**: 21/36 PASS, 8 WARN, 5 SKIP, 2 FAILED; оба FAILED разобраны вручную: (а) coverage-гейт читал mid-run данные локального свипа; (б) mypy-budget воспроизведён (`mypy -p src`) → 1 реальная ошибка mcp-дрейфа, починена `3e5e116e0` → 0 | `.run/evidence/pre_prod_20260911.txt` |
 | 11 | Dependencies ≤30 | **PARTIAL**: 34 (37→34, `9d59af715`); MAJOR-цепочки — GAPS G3; patch-хвост (3 пакета) блокирован родительскими пинами — подтверждено повторным `uv lock --upgrade-package` | `uv pip list --outdated` |
@@ -62,13 +62,21 @@ gRPC business dispatch (G5), MQ live (G6) — все требуют внешни
 
 ### 3.2 Тесты
 - Коллекция: 17504 тестов, 0 collection errors.
-- Полный unit-прогон (xdist -n 4, `tests/unit`, 117s): **10121 passed /
-  59 failed / 2 errors / 105 skipped**. Доля фейлов 0.57% — кластеры дрейфа
-  тестов (§5), статические гейты не затронуты.
-- Однопроцессный контрольный прогон с coverage — §3.3.
+- Финальный прогон (sweep6, 9 чанков с coverage): **15176 passed / 111 failed
+  (0.73%)** — все фейлы кластеры дрейфа тестов (§5), статические гейты не
+  затронуты; core/dsl/entrypoints-api/realtime/misc/rest — 0 failed.
+- Контрольный xdist-прогон (`-n 4`, 117s): 10121 passed / 59 failed —
+  консистентен с кластерами выше (до последних test-fix коммитов).
 
-### 3.3 Coverage (honest single-process run)
-[COVERAGE_BLOCK]
+### 3.3 Coverage (honest run, sweep6, 2026-09-11 14:59)
+
+- Методика: чанки `tests/unit` с `--cov=src --cov-append` (9 чанков, timeout 900s),
+  финальные `coverage xml` + `coverage report` + гейт `--threshold 70 --strict`.
+  Лог: `.run/evidence/cov_sweep6.log`. Артефакт: `coverage.xml` (локальный).
+- **Гейт: OK 71.90% ≥ 70.00%, GATE_EXIT=0** (baseline 72.04% — удержана).
+- Итог тестов по чанкам: core 4143✓ · dsl 4463✓ · infra 2221 passed/75✗ ·
+  ep-api 874✓ · ep-realtime 140✓ · ep-mq2 174 passed/35✗ · ep-misc 103✓ ·
+  services 2616 passed/1✗ · rest 442✓ → **15176 passed / 111 failed (0.73%)**.
 
 ### 3.4 Живая протокольная матрица (dev_light, порт 8001)
 Позитивный auth **разblockирован впервые**: dev_admin (sqlite
@@ -105,6 +113,8 @@ method=password) → access_token HS256.
 | `7a9fe6d62` | FUNCTIONAL_TEST_REPORT 2026-09-11 + README-пути | docs |
 | `014753daf` | PROD_READINESS_GAPS — 10 позиций | docs |
 | `5615cfc58` | hitl store/pubsub, outbox shim, rate_limit fail-CLOSED, langgraph dsn — тесты под текущие контракты (+ фасад messaging: lazy stuck_monitor имена) | test-drift + фасад |
+| `6ece34739` | composition-smoke: svcs_registry публичный API, APIRouter-патч, route/grep-контракты (7 тестов → 166 passed) | test-drift |
+| `ca6d68f55` | CURRENT_BASELINE 2026-09-11 | docs |
 
 Общий паттерн 6 из 13: **полоса R2.MYPY меняла сигнатуры/аннотации, прикрывая
 несовместимые места `type: ignore` — mypy green при сломанном рантайме**.
@@ -113,22 +123,31 @@ method=password) → access_token HS256.
 
 ## 5. Остаточные unit-фейлы (кластеры)
 
-### 5.1 Composition-smoke (7)
-`test_service_setup_smoke`/`test_waf_setup_smoke`: фикстуры переписаны на
-публичный `clear_registry()` (тела двух тестов ещё держат приватные атрибуты);
-`test_app_factory_smoke` хардкодит число маршрутов (ожидал +3, фактически +8 —
-корневой конфиг вырос) и grep-по-исходнику asyncapi-bridge (реализация
-переехала). Нужны smoke-контракты вместо хрупких утверждений; не
-рантайм-дефекты. [FIX_STATE]
+### 5.1 Stale «focused»-скаффолды (infra, ~65)
+`test_prometheus_alerting_focused` (12), `test_sse_focused` (11),
+`test_rag_invalidation_focused` (10), `test_plugin_resource_monitor_focused` (9),
+`test_tracing_focused` (8), `test_audit_verify_lifecycle_focused` (8),
+`test_smart_session_manager` (7). Файлы семейства PERF-6.x коммитились
+заведомо частичными (в собственных commit-сообщениях: «3 passed + 12 partial»,
+«1 passed, partial»); источник эволюционировал (default-alerts при init,
+sha256-ключи и т.п.). В сессии исправлены 4 файла семейства
+(`client_metrics_focused`, `test_disk_focused`, hitl store/pubsub);
+остаток — механическое обновление под текущие контракты, owner: QA.
 
-### 5.2 SOAP invoke (2-3)
-Runtime-дефект — GAPS G4.
+### 5.2 MCP namespaces (28)
+`test_ai_mcp` (7), `test_system_mcp` (6), `test_analytics_mcp` (6),
+`test_credit_mcp` (5), `test_http_server_auth_wrap` (4): фейки тестов мокают
+только `registry.dispatch`, а источник при эволюции добавил lookup
+(`is_registered`) — тул возвращает error-конверт. Механический фикс фейков;
+owner: ai-team. Связано с mcp 2.x/fastmcp 4 дрейфом (см. `3e5e116e0`).
 
-### 5.3 Нагрузочно-флаки (не дефекты)
-`smart_session_manager(_wire)` (sqlite-контенция под xdist), `query_result_cache`,
-`vault reauth`, `cert_prometheus_exporter`, msgspec-bench — в изоляции зелёные.
+### 5.3 Прочее
+- `test_langfuse_v3_spike` (1) — флак под нагрузкой, в изоляции зелёный.
+- composition-smoke (7) — **исправлены в сессии** (`6ece34739`: svcs_registry
+  публичный API, свежий APIRouter в патче, route-контракт по путям, grep бриджа
+  по модулю) — 166 passed.
 
-Полный инвентарь фейлов: [INVENTORY_REF].
+Полный инвентарь: `.run/evidence/cov_sweep6.log` (grep '^FAILED').
 
 ## 6. Не выполнено / причины (директива §1)
 
