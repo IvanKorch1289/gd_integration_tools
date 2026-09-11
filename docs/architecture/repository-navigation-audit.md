@@ -90,7 +90,7 @@
 
 - `tools/check_layers.py`: **0 новых нарушений**, baseline 14 legacy (`tools/check_layers_allowlist.txt`; 1 запись stale — чекер предлагает `--update-allowlist`).
 - Направление core→infrastructure выдержано: 43 raw-grep-хита = TYPE_CHECKING/docstring-ложные + санкционированные facade-исключения.
-- Blind spot чекера: ~29 файлов (entrypoints/mcp, streamlit) skip'аются как SyntaxError «multiple exception types must be parenthesized» — PEP-758 синтаксис, который чекер парсит старым AST. Требует фиксации парсера чекера на 3.14.
+- Примечание: аналитический агент сообщал о ~29 файлах, skip'аемых чекером как SyntaxError; прямая перепроверка (`ast.parse` под 3.14 по всем src/backend: 0 ошибок; 0 WARNING в выводе чекера) опровергла это — предупреждение появлялось только при парсинге системным Python 3.12, которым чекер не запускается (`uv run` = 3.14).
 
 ## 7. Целевая логика для нового разработчика (фактическая, без оговорок)
 
