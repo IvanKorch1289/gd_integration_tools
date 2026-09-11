@@ -142,7 +142,17 @@ class SagaLRAProcessor(BaseProcessor):
             seed = f"{wf_id_str}::{run_id}"
             workflow_id = uuid.uuid5(uuid.NAMESPACE_DNS, seed)
 
-        repo = await self._get_repo()
+        try:
+            repo = await self._get_repo()
+        except Exception as repo_exc:
+            # Chaos-hardening (double-fault): упавший state-store не должен
+            # убивать saga — деградируем в in-memory (same as repo=None).
+            _lra_logger.warning(
+                "SagaLRA '%s': state-store unavailable (%s) — in-memory fallback",
+                self.name,
+                repo_exc,
+            )
+            repo = None
         state_record = None
         if repo is not None:
             try:

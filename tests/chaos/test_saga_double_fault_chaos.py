@@ -92,7 +92,7 @@ def test_double_fault_continues_remaining_compensations() -> None:
     """comp_B упал → comp_A всё равно вызывается; exchange failed на шаге C."""
     calls: list[str] = []
     ex = _exchange()
-    asyncio.run(_saga(calls).process(ex, _ctx()))
+    asyncio.run(_make_saga(calls).process(ex, _ctx()))
 
     assert ex.status == ExchangeStatus.failed
     assert "comp_B" in calls
@@ -104,7 +104,7 @@ def test_double_fault_state_and_properties() -> None:
     """После double-fault: failed-статус, failed_step=2, saga_error задан."""
     calls: list[str] = []
     ex = _exchange()
-    asyncio.run(_saga(calls).process(ex, _ctx()))
+    asyncio.run(_make_saga(calls).process(ex, _ctx()))
 
     assert ex.get_property("saga_failed_step") == 2
     assert ex.get_property("saga_error")
@@ -184,7 +184,9 @@ async def test_persistent_double_fault_persists_compensating_state() -> None:
     calls: list[str] = []
     repo = MagicMock()
     repo.load = AsyncMock(return_value=None)
-    repo.save = AsyncMock(return_value=None)
+    # save() возвращает state-record (используется далее как state_record).
+    state_record = MagicMock(state="running", step_index=0)
+    repo.save = AsyncMock(return_value=state_record)
 
     saga = _make_saga(calls)
     saga._get_repo = AsyncMock(return_value=repo)  # type: ignore[method-assign]
