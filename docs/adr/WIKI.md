@@ -11,6 +11,7 @@ Quick navigation: [INDEX.md](INDEX.md) (slot-based) · [directory](.)
 
 | # | Title | Status | Date | Sprint |
 |---|-------|--------|------|--------|
+| 0302 | Accepted outdated-minimum для 32 residual пакетов (Wave OP-5) | — | 2026-09-11 | — |
 | 0301 | entrypoints → dsl (санкционированное направление импортов) | — | 2026-09-08 | — |
 | 0300 | Out-of-scope implementation plan per user explicit ask | — | 2026-09-05 | — |
 | 0299 | orphan-create-task → get_task_registry() migration plan | — | 2026-09-05 | — |
@@ -60,9 +61,8 @@ Quick navigation: [INDEX.md](INDEX.md) (slot-based) · [directory](.)
 | 0258 | dependabot Python bumps BLOCKED by aio-pika pre-release constraint | — | 2026-08-30 | — |
 | 0257 | Coverage extension — real measurement = 13% (was fake 90.35%) | — | 2026-08-30 | — |
 | 0256 | `pytest` integration/ai RUNS — R12/R13 otel-block FALSE CLAIM | — | 2026-08-30 | — |
-| 0255 | L5 Security Chain restoration (S44 W1) | — | 2026-08-30 | — |
 
-*Всего: 263 ADR-файлов. Показано топ-50 (newest first).*
+*Всего: 264 ADR-файлов. Показано топ-50 (newest first).*
 
 <!-- adr_wiki:end -->
 
