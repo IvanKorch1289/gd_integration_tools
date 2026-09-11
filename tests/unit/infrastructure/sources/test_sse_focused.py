@@ -1,38 +1,48 @@
 """Focused tests for SSESource (PERF-6.6 Sprint 20 coverage ratchet).
 
-Coverage target: sse.py 16% → 70%+.
+2026-09-11: переписаны под текущий контракт — SSEEvent(data, event_id,
+event_type, timestamp) без id/retry/str/to_dict; SSESource без
+retry_ms/timeout/buffer_size, _stopped — asyncio.Event (stop() → set()).
 """
 
 from __future__ import annotations
 
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
+import dataclasses
 
 from src.backend.infrastructure.sources.sse import SSEEvent, SSESource
 
 
 def test_sse_event_init_minimal() -> None:
-    """SSEEvent minimal init (only event)."""
-    ev = SSEEvent(event="message")
-    assert ev.event == "message"
-    assert ev.data == ""
-    assert ev.id is None
-
-
-def test_sse_event_init_with_data() -> None:
-    """SSEEvent init with event + data."""
-    ev = SSEEvent(event="update", data="hello", id="123")
-    assert ev.event == "update"
+    """SSEEvent minimal init (только data)."""
+    ev = SSEEvent(data="hello")
     assert ev.data == "hello"
-    assert ev.id == "123"
+    assert ev.event_id is None
+    assert ev.event_type == "message"
+    assert ev.timestamp > 0
+
+
+def test_sse_event_init_with_id_and_type() -> None:
+    """SSEEvent init с event_id + event_type."""
+    ev = SSEEvent(data="hello", event_id="123", event_type="update")
+    assert ev.event_id == "123"
+    assert ev.event_type == "update"
 
 
 def test_sse_event_init_full() -> None:
-    """SSEEvent init with all fields."""
-    ev = SSEEvent(event="alert", data="{}", id="42", retry=5000)
-    assert ev.retry == 5000
+    """SSEEvent init со всеми полями (data — dict для parse_json)."""
+    ev = SSEEvent(data={"k": "v"}, event_id="42", event_type="alert", timestamp=1.5)
+    assert ev.data == {"k": "v"}
+    assert ev.event_id == "42"
+    assert ev.timestamp == 1.5
+
+
+def test_sse_event_is_dataclass() -> None:
+    """SSEEvent — dataclass (поля сериализуются asdict)."""
+    ev = SSEEvent(data="y", event_id="42", event_type="x")
+    d = dataclasses.asdict(ev)
+    assert d["data"] == "y"
+    assert d["event_id"] == "42"
+    assert d["event_type"] == "x"
 
 
 def test_sse_source_init_with_url() -> None:
@@ -51,86 +61,59 @@ def test_sse_source_init_with_headers() -> None:
 
 
 def test_sse_source_init_default_state() -> None:
-    """SSESource init — not running, not stopped."""
+    """SSESource init — _stopped Event не set (source активен)."""
     src = SSESource(url="https://example.com/events")
-    assert src._stopped is False
+    assert src._stopped.is_set() is False
 
 
-def test_sse_source_init_with_retry_timeout() -> None:
-    """SSESource init с custom retry + timeout."""
+def test_sse_source_init_with_reconnect_options() -> None:
+    """SSESource init с reconnect/heartbeat опциями."""
     src = SSESource(
         url="https://example.com/events",
-        retry_ms=10000,
-        timeout=5.0,
+        heartbeat_timeout_s=30.0,
+        reconnect_max_retries=5,
+        reconnect_initial_delay_s=0.5,
     )
-    assert src._retry_ms == 10000
-    assert src._timeout == 5.0
+    assert src._heartbeat_timeout_s == 30.0
+    assert src._reconnect_max_retries == 5
+    assert src._reconnect_initial_delay_s == 0.5
 
 
 def test_sse_source_stop_marks_stopped() -> None:
-    """stop() помечает source как stopped."""
+    """stop() выставляет _stopped Event."""
     src = SSESource(url="https://example.com/events")
     src.stop()
-    assert src._stopped is True
+    assert src._stopped.is_set() is True
 
 
-@pytest.mark.asyncio
-async def test_health_fast_mode() -> None:
-    """health(fast) возвращает HealthResult с ok status."""
+def test_health_fast_mode() -> None:
+    """health(fast) — stateless источник всегда ok."""
     src = SSESource(url="https://example.com/events")
-    # Don't actually connect — mock the connection
-    src._connected = True
-    result = await src.health(mode="fast")
-    assert result.status == "ok"
 
+    async def run() -> object:
+        return await src.health(mode="fast")
 
-@pytest.mark.asyncio
-async def test_health_fast_disconnected() -> None:
-    """health(fast) при disconnected → degraded."""
-    src = SSESource(url="https://example.com/events")
-    src._connected = False
-    result = await src.health(mode="fast")
-    # Should return not-ok
-    assert result.status != "ok" or result.mode == "fast"
+    import asyncio
 
-
-def test_sse_event_str_repr() -> None:
-    """SSEEvent — str() формат для SSE protocol."""
-    ev = SSEEvent(event="message", data="hello", id="42")
-    s = str(ev)
-    # Должен содержать event: и data:
-    assert "event:" in s or "message" in s
-    assert "data:" in s or "hello" in s
-
-
-def test_sse_event_str_with_id() -> None:
-    """SSEEvent — str() включает id когда задан."""
-    ev = SSEEvent(event="x", data="y", id="abc")
-    s = str(ev)
-    assert "abc" in s
-
-
-def test_sse_event_to_dict() -> None:
-    """SSEEvent.to_dict() — serializable representation."""
-    ev = SSEEvent(event="x", data="y", id="42")
-    d = ev.to_dict()
-    assert d["event"] == "x"
-    assert d["data"] == "y"
-    assert d["id"] == "42"
+    result = asyncio.run(run())
+    assert result.status == "ok"  # type: ignore[attr-defined]
 
 
 def test_sse_source_state_transitions() -> None:
-    """SSESource state transitions: init → running → stopped."""
+    """SSESource state transitions: init (unset) → stop (set)."""
     src = SSESource(url="https://example.com/events")
-    assert src._stopped is False
+    assert src._stopped.is_set() is False
     src.stop()
-    assert src._stopped is True
+    assert src._stopped.is_set() is True
 
 
-def test_sse_source_init_with_buffer_size() -> None:
-    """SSESource init с buffer_size."""
-    src = SSESource(
-        url="https://example.com/events",
-        buffer_size=2048,
-    )
-    assert src._buffer_size == 2048
+def test_sse_source_init_parse_json_flag() -> None:
+    """SSESource init с parse_json=False сохраняется."""
+    src = SSESource(url="https://example.com/events", parse_json=False)
+    assert src._parse_json is False
+
+
+def test_sse_source_init_last_event_id() -> None:
+    """SSESource init с last_event_id (resume через Last-Event-ID)."""
+    src = SSESource(url="https://example.com/events", last_event_id="abc-1")
+    assert src._last_event_id == "abc-1"
