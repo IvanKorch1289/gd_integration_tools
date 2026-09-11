@@ -968,3 +968,40 @@ PASSED: 20/36, WARN: 8, SKIPPED: 6, FAILED: 2
 - `106f295ed` test(messaging): EventBus 38→53% + fix BaseError message= kwarg
 - `7a3091f1e` test(messaging): ReplyChannel 21→86%
 - `e642343e1` test(messaging): InMemoryMessageBroker 31→96%
+
+---
+
+## v28 update — Sprint 24 cont: coverage ratchet на blueprints/tenancy/core (2026-09-11)
+
+### P33: Sprint 24 cont — focused tests на 5 дополнительных модулях
+
+| Module | Before | After | +pp | Tests | Commit |
+|---|---|---|---|---|---|
+| `dsl/blueprints/_python_blueprints.py` | 19% | **100%** | +81pp | 29 | 50f325874 |
+| `core/tenancy/slo.py` | 53% | **100%** | +47pp | 30 | 9d8835230 |
+| `core/errors.py` | 60% | **100%** | +40pp | 43 | d42f9ac9f |
+| `core/auth/facade.py` | 62% | **100%** | +38pp | 22 | 24eba7039 |
+| `core/config/profile.py` | 82% | **100%** | +18pp | 25 | a246f81d7 |
+| **Cumulative Sprint 24 cont** | — | — | **+224pp / 5 modules** | **149 tests** | 5 commits |
+
+### P34: Cumulative Sprint 24-28 totals (v27 + v28)
+
+| Метрика | Старт v26 | v27 | v28 (now) | Δ total |
+|---|---|---|---|---|
+| Outdated packages | 33 | 26 | **26** | -7 |
+| Coverage tests added | — | 78 | **227** | +227 tests / 9 modules |
+| Coverage improvement | — | +163pp | **+387pp** | +387pp / 9 modules |
+| pre-prod-check PASS | 20/36 | 20/36 | **20/36** | (infra-blocked) |
+| Commits (perf+test) | — | 4 | **9** | +9 commits |
+
+### P35: Modules touched в Sprint 24 cont
+
+| Module | LOC | Notes |
+|---|---|---|
+| `_python_blueprints.py` | 39 | 4 blueprint-функции (api_normalize, cdc, file_watch, saga) |
+| `slo.py` | 39 | TenantSLO + SLOEvaluation pure-evaluator |
+| `errors.py` | 79 | BaseError + 12 наследников + build_error_envelope |
+| `auth/facade.py` | 37 | AuthFacade + lazy accessors + singleton |
+| `config/profile.py` | 20 | AppProfileChoices StrEnum + get_active_profile |
+
+**Все 5 модулей — 100% coverage.**
