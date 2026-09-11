@@ -89,8 +89,8 @@
 | SOAP | `POST /soap/` | XML envelope → dispatch через DSL/actions |
 | SOAP WSDL | `GET /soap/wsdl` | Автогенерированный WSDL |
 | WebSocket | `/ws/*` | Bidirectional messaging |
-| SSE | `/sse/*` | Server-Sent Events |
-| Webhook | `/webhook/*` | Входящие webhooks |
+| SSE | `/events/stream` | Server-Sent Events |
+| Webhook | `/webhooks/*` | Входящие webhooks |
 | RabbitMQ | `/stream/rabbit/*` | Pub/Sub через AMQP |
 | Redis Streams | `/stream/redis/*` | Pub/Sub через Redis |
 | MCP | FastMCP server | Model Context Protocol для LLM-агентов |

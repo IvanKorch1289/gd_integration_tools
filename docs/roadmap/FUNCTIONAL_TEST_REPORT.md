@@ -3,7 +3,45 @@
 > **Создан**: 2026-09-05 (координатор). Источник: прямые пробы и ledger
 > SWARM_SYNTHESIS 2026-09-02 для негативных auth-кейсов и public 200.
 > **Обновляется**: при каждом релизе или изменении auth-контракта.
-> **2026-09-10 (Sprint P23-P26)**: live-верификация на dev_light с поднятыми services
+
+## 2026-09-11 — live-матрица на HEAD 9f32d8b0b + fix-коммиты (dev_light, порт 8001)
+
+Полный положительный auth-флоу **РАЗБЛОКИРОВАН**: dev_admin ресечен в
+`.run/dev.sqlite3` (argon2id), `step-up-request → login → JWT` — **PASS**.
+(Заметка от 2026-09-10 о «пустых migrations/versions» ошибочна: миграции живут в
+`src/backend/infrastructure/database/migrations/versions/` — 23 файла, схема в
+dev-BD уже применена.)
+
+Fix-коммиты этой сессии, найденные live-матрицей: `7b95bcbfa` (CrudMixin.list
+→ Params), `5682594f9` (auto-endpoints ORM-сериализация), `7dc48bd32` (GraphQL
+context_getter `request: Request`).
+
+| Протокол | Позитивный (auth) | Негативный (unauth/forged) | Результат |
+|---|---|---|---|
+| REST public | `/health`, `/docs`, `/metrics`, `/asyncapi`, `/api/v1/auth/methods`, `/openapi.json` = 200 | — | **PASS** |
+| REST protected | `/api/v1/auto/users.list` +JWT = **200** (PII-маскирование в ответе: email/password скрыты) | 401 unauth; 401 forged token | **PASS** |
+| Auth flow | step-up → login → access_token (HS256) | login без step-up = 401 `step_up_token_required`; неверный пароль = 401 | **PASS** |
+| GraphQL | POST `/api/v1/graphql` `{__typename}` +JWT = **200** `{"data":{"__typename":"AutoQuery"}}` | 401 unauth | **PASS** (после фикса 7dc48bd32) |
+| WebSocket | `/ws` + subprotocol `jwt.<token>` = подключение + JSON-dispatch ответ (`{"action":"ping","error":"Маршрут 'ping' не найден"}`) | 403 no credential | **PASS** |
+| SSE | `/events/stream` +JWT = **200**, поток получен | 401 unauth | **PASS** |
+| SOAP | WSDL `/soap/wsdl` +JWT = **200** (валидный XML, 525 operations) | 401 unauth | **WSDL PASS** |
+| SOAP invoke | `/soap/invoke` с валидной WSDL-операцией (`orderkinds_list`) = **500** (CancelledError в DB-сессии) | — | **FAIL** → PROD_READINESS_GAPS №4 (P2) |
+| gRPC auth | standalone `grpc-serve` (unix socket): List с верным `x-api-key` прошёл интерцептор | неверный ключ = UNAUTHENTICATED | **PASS** |
+| gRPC dispatch | после auth: UNIMPLEMENTED `NotImplementedError` — сгенерированные auto-servicer'ы абстрактные, моста к ActionDispatcher нет | — | **KNOWN GAP** → GAPS №5 |
+| MCP | feature-flag `mcp.http_enabled=false` (default) — mount skipped по дизайну | — | **DISABLED (by design)** |
+| MQ (Redis Streams/Rabbit/Kafka) | broker'ы на dev-box отсутствуют (docker недоступен) | — | **BLOCKED(infra)** |
+
+Негативные PII-наблюдения (позитивный сигнал безопасности): в error-конверте
+500 маскируются correlation_id/request_id; `users.list` маскирует email/password.
+
+Команды воспроизведения: см. git-историю отчёта (curl + python websockets +
+grpcio-клиент, сервер `APP_PROFILE=dev_light uvicorn src.backend.main:app --port 8001`).
+
+---
+
+## История: 2026-09-10 (Sprint P23-P26)
+
+> live-верификация на dev_light с поднятыми services
 > (postgres+redis+clamav+gd-app-light, без Vault — `vault.enabled=false`). Все public
 > и negative-auth endpoints верифицированы. Positive auth blocked: `migrations/versions/`
 > пустой → seed users отсутствуют → alembic upgrade head + seed migration required.
