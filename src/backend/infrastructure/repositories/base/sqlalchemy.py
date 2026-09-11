@@ -50,7 +50,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         async def _prepare_and_save_object(
             self,
             session: AsyncSession,
-            data: list[dict[str, Any]],
+            data: dict[str, Any],
             existing_object: ConcreteTable | None = None,  # type: ignore
             ignore_none: bool = True,
             load_into_memory: bool = True,
@@ -338,7 +338,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         """
         return cast(  # type: ignore[no-any-return]  # S170 cycle 15 (ADR-0300): strict-mypy enable — helper returns Any but ConcreteTable is correct type
             "ConcreteTable",
-            await self.helper._prepare_and_save_object(session=session, data=[data]),  # type: ignore[arg-type]  # R2.MYPY: helper expects list[dict], add wraps single
+            await self.helper._prepare_and_save_object(session=session, data=data),
         )
 
     @main_session_manager.connection()
@@ -401,7 +401,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
             "ConcreteTable",
             await self.helper._prepare_and_save_object(
                 session=session,
-                data=[data],  # type: ignore[arg-type]  # R2.MYPY: helper expects list[dict], add wraps single
+                data=data,
                 existing_object=existing_object,
                 ignore_none=ignore_none,
                 load_into_memory=load_into_memory,
