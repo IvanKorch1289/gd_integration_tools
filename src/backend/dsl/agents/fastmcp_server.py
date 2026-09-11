@@ -26,8 +26,10 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, Any
 
-from mcp.server.fastmcp import FastMCP
-from mcp.server.fastmcp.prompts.base import Prompt, PromptArgument
+# mcp 2.x удалил mcp.server.fastmcp (FastMCP → MCPServer); каноничный
+# источник — пакет fastmcp (ADR-0070), API-поверхность та же.
+from fastmcp import FastMCP
+from fastmcp.prompts.base import Prompt
 
 from src.backend.core.ai.errors import MCPToolError
 from src.backend.core.ai.skill_registry import SkillRegistry, SkillSpec
@@ -132,7 +134,7 @@ class FastMCPserver:
         """
         self._ensure_mcp()
         assert self._mcp is not None  # nosec
-        return self._mcp.streamable_http_app()
+        return self._mcp.http_app()
 
     # ── Lifecycle (no-ops — managed by caller) ────────────────────────────────
 
@@ -201,29 +203,12 @@ class FastMCPserver:
         for wf in descriptors:
             safe_name = f"workflow_{wf.name.replace('.', '_').replace('-', '_')}"
             prompt_fn = _build_workflow_prompt_fn(wf)
-            prompt_obj = Prompt(
+            # fastmcp 4.x: Prompt без fn/context_kwarg — функции конвертируются
+            # через from_function (arguments выводятся из сигнатуры prompt_fn).
+            prompt_obj = Prompt.from_function(
+                prompt_fn,
                 name=safe_name,
-                title=None,
                 description=wf.description or f"Workflow catalogue: {wf.name}",
-                arguments=[
-                    PromptArgument(
-                        name="payload",
-                        description="JSON payload for the workflow",
-                        required=True,
-                    ),
-                    PromptArgument(
-                        name="wait",
-                        description="Wait for workflow completion",
-                        required=False,
-                    ),
-                    PromptArgument(
-                        name="timeout_s",
-                        description="Timeout in seconds",
-                        required=False,
-                    ),
-                ],
-                fn=prompt_fn,
-                context_kwarg=None,
             )
             self._mcp.add_prompt(prompt_obj)
 
