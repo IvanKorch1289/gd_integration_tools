@@ -193,8 +193,12 @@ class CrudMixin(_BaseServiceProtocol):
         и вернуть items (как ожидает test_crud_mixin_list).
         """
         async with self._service_error_boundary():
+            # repo.get_paginated принимает fastapi_pagination.Params(page, size);
+            # ponytail: offset трактуется как кратный limit (page = offset/limit + 1).
             result = await self.repo.get_paginated(
-                limit=limit, offset=offset, by=by, order=order
+                pagination=Params(page=offset // limit + 1, size=limit),
+                by=by,
+                order=order,
             )
         # Поддержка пустого ответа (tests/unit/.../test_list_returns_empty_when_no_items)
         if not result:
