@@ -81,7 +81,17 @@ def _parse_soap_request(xml_body: bytes) -> tuple[str, dict[str, Any]]:
     payload: dict[str, Any] = {}
     for child in operation_element:
         child_tag = child.tag.split("}")[1] if "}" in child.tag else child.tag
-        payload[child_tag] = child.text
+        text = child.text or ""
+        # G4-fix (2026-09-14): XML values always come as str, but CRUD-сервисы
+        # ожидают числовые типы. Коэрсируем простые числовые строки.
+        if text.isdigit():
+            payload[child_tag] = int(text)
+        elif text.replace(".", "", 1).isdigit() and "." in text:
+            payload[child_tag] = float(text)
+        elif text.lower() in ("true", "false"):
+            payload[child_tag] = text.lower() == "true"
+        else:
+            payload[child_tag] = text
 
     return operation_name, payload
 
@@ -189,17 +199,26 @@ async def handle_soap_request(request: Request) -> Response:
 
         logger.info("SOAP запрос: операция=%s", operation)
 
+        # G4-fix (2026-09-14): WSDL публикует operations с underscores
+        # (orderkinds_list), а registry содержит dot-form (orderkinds.list).
+        # Пробуем обе формы — иначе ни одна WSDL-операция не диспатчится.
+        resolved = operation
+        if not action_handler_registry.is_registered(resolved):
+            dotted = operation.replace("_", ".", 1)
+            if action_handler_registry.is_registered(dotted):
+                resolved = dotted
+
         # Стратегия 1: прямой dispatch через ActionHandlerRegistry
-        if action_handler_registry.is_registered(operation):
+        if action_handler_registry.is_registered(resolved):
             # P0 (cycle 5): пробрасываем auth context для principal/permissions
             soap_auth = getattr(request.state, "auth", None)
-            result = await _dispatch_via_action(operation, payload, auth=soap_auth)
+            result = await _dispatch_via_action(resolved, payload, auth=soap_auth)
             xml = _build_soap_response(operation, result)
             return Response(content=xml, media_type=content_type, status_code=200)
 
         # Стратегия 2: DSL-маршрут
         dsl = get_dsl_service()
-        route_id = operation if "." in operation else f"soap.{operation}"
+        route_id = resolved if "." in resolved else f"soap.{resolved}"
 
         # Sprint 1.1: проброс principal/permissions из ``request.state.auth``
         # в ``ExecutionContext`` для route-wide permission enforcement.
