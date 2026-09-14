@@ -278,3 +278,15 @@ CVSS-diff остаётся P2-усилением.
 
 Команды верификации (все exit 0): `make sbom-diff-gate`, `make contract-diff-gate`,
 `pytest tests/unit/tools/ tests/unit/services/auth/ tests/unit/infrastructure/database/ -q`.
+
+## 16. Дополнение 2026-09-14 — SOAP invoke закрыт (G4 ✅), остаток P2
+
+| Позиция | Статус | Evidence |
+|---|---|---|
+| **G4 SOAP invoke** | **✅ ЗАКРЫТ** — `/soap/invoke` с `InvokeRequest(action=orderkinds.list)` + JWT → **200, `status=ok`** | Live curl `1d93316aa` |
+| SOAP underscore→dot | WSDL публикует `orderkinds_list`, registry содержит `orderkinds.list` — underscore→dot resolution добавлена в `handle_soap_request` | `1d93316aa` |
+| SOAP type coercion | XML values всегда str → коэрсируются в int/float/bool для CRUD-сервисов | там же |
+| Named-op `/soap/` path | Остаток: registry import duplication между `core.api.extensions` и `dsl.commands.action_registry` — требует architecture-level решения | Backlog |
+
+Внешнее ревью P0/P1/P2 — все 5 позиций закрыты.
+Протокольная матрица (достижимое на dev-box): REST+GraphQL+SSE+WS+SOAP+gRPC Invoke = все 200 ok.
