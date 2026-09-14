@@ -43,6 +43,25 @@ def __getattr__(name: str) -> Any:
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
+def _lazy(name: str) -> Any:
+    """Явный lazy-резолв для function bodies.
+
+    PEP 562 __getattr__ срабатывает только на module.attr access —
+    bare-name lookup внутри функций идёт мимо него и даёт NameError
+    при первом вызове (2026-09-14, admin/feature-flags).
+    """
+    if name in globals():
+        return globals()[name]
+    if name in _LAZY_MAP:
+        import importlib
+
+        mod_path, attr = _LAZY_MAP[name]
+        value = getattr(importlib.import_module(mod_path), attr)
+        globals()[name] = value
+        return value
+    raise AttributeError(name)
+
+
 __all__ = ("AdminService", "get_admin_service")
 
 
@@ -187,10 +206,12 @@ class AdminService:
 
     async def list_actions(self) -> dict[str, Any]:
         """Возвращает список зарегистрированных action-команд."""
+        action_handler_registry = _lazy("action_handler_registry")
         return {"actions": list(action_handler_registry.list_actions())}
 
     async def list_routes(self) -> dict[str, Any]:
         """Возвращает все DSL-маршруты с их статусом."""
+        route_registry = _lazy("route_registry")
         all_routes = route_registry.list_routes()
         enabled = set(route_registry.list_enabled_routes())
         flags = route_registry.get_route_feature_flags()
@@ -204,6 +225,7 @@ class AdminService:
 
     async def list_feature_flags(self) -> dict[str, Any]:
         """Возвращает состояние всех feature-флагов."""
+        route_registry = _lazy("route_registry")
         flags = route_registry.get_route_feature_flags()
         unique_flags = sorted(set(flags.values()))
         return {
