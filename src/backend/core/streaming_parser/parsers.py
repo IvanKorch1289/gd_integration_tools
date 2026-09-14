@@ -82,9 +82,7 @@ class StreamingCSVParser:
         if not path.exists():
             raise FileNotFoundError(f"CSV file not found: {path}")
         with open(path, encoding=encoding, newline="") as f:
-            reader = csv.reader(
-                f, delimiter=self._delimiter, quotechar=self._quotechar
-            )
+            reader = csv.reader(f, delimiter=self._delimiter, quotechar=self._quotechar)
             try:
                 header = next(reader)
             except StopIteration:
@@ -99,9 +97,7 @@ class StreamingCSVParser:
                     row = row + [""] * (len(header) - len(row))
                 data = dict(zip(header, row))
                 yield ParsedRecord(
-                    data=data,
-                    row_number=row_number,
-                    raw_line=",".join(row),
+                    data=data, row_number=row_number, raw_line=",".join(row)
                 )
 
 
@@ -124,11 +120,7 @@ class StreamingJSONParser:
         self._decoder = json.JSONDecoder()
 
     def parse_file(
-        self,
-        path: str | Path,
-        *,
-        chunk_size: int = 16384,
-        max_rows: int | None = None,
+        self, path: str | Path, *, chunk_size: int = 16384, max_rows: int | None = None
     ) -> Iterator[ParsedRecord]:
         """Stream-parse JSON array file.
 
@@ -201,10 +193,7 @@ class StreamingJSONParser:
                         for item in obj:
                             if isinstance(item, dict):
                                 row_number += 1
-                                if (
-                                    max_rows is not None
-                                    and row_number > max_rows
-                                ):
+                                if max_rows is not None and row_number > max_rows:
                                     return
                                 yield ParsedRecord(
                                     data=item,

@@ -85,10 +85,7 @@ class ShadowComparator:
     """Compares two ShadowResult objects."""
 
     def compare(
-        self,
-        baseline: ShadowResult,
-        shadow: ShadowResult,
-        rule: ComparisonRule,
+        self, baseline: ShadowResult, shadow: ShadowResult, rule: ComparisonRule
     ) -> "ComparisonOutcome":
         """Compare baseline vs shadow using rule."""
         if baseline.error or shadow.error:
@@ -109,10 +106,7 @@ class ShadowComparator:
         )
 
     def _apply_rule(
-        self,
-        baseline: Any,
-        shadow: Any,
-        rule: ComparisonRule,
+        self, baseline: Any, shadow: Any, rule: ComparisonRule
     ) -> tuple[bool, str]:
         if rule.type == ComparisonType.EXACT:
             if baseline == shadow:
@@ -162,15 +156,11 @@ class ShadowRouter:
 
     # ─── Registration ──────────────────────────────────
 
-    def add_baseline(
-        self, route_id: str, version: str, fn: RouteFn
-    ) -> None:
+    def add_baseline(self, route_id: str, version: str, fn: RouteFn) -> None:
         """Register baseline function для route."""
         self._baseline[(route_id, version)] = fn
 
-    def add_shadow(
-        self, route_id: str, version: str, fn: RouteFn
-    ) -> None:
+    def add_shadow(self, route_id: str, version: str, fn: RouteFn) -> None:
         """Register shadow function (new version) для route."""
         self._shadow[(route_id, version)] = fn
 
@@ -183,9 +173,7 @@ class ShadowRouter:
 
     # ─── Mirror decision (sticky by tenant) ───────────
 
-    def should_mirror(
-        self, route_id: str, tenant_id: str | None = None
-    ) -> bool:
+    def should_mirror(self, route_id: str, tenant_id: str | None = None) -> bool:
         """Determine if a request should be mirrored to shadow.
 
         Sticky by MD5(tenant_id) for consistent UX.
@@ -202,7 +190,8 @@ class ShadowRouter:
             return random.random() * 100 < percent  # noqa: S311
         # Sticky by hash.
         hash_val = int(
-            hashlib.md5(tenant_id.encode("utf-8")).hexdigest(), 16  # noqa: S324
+            hashlib.md5(tenant_id.encode("utf-8")).hexdigest(),
+            16,  # noqa: S324
         )
         bucket = (hash_val % 10000) / 100.0
         return bucket < percent
@@ -210,10 +199,7 @@ class ShadowRouter:
     # ─── Execution ─────────────────────────────────────
 
     async def run_shadow(
-        self,
-        route_id: str,
-        shadow_version: str,
-        payload: Any,
+        self, route_id: str, shadow_version: str, payload: Any
     ) -> ShadowResult:
         """Run shadow version и record result."""
         import inspect
@@ -251,10 +237,7 @@ class ShadowRouter:
             )
 
     async def run_baseline(
-        self,
-        route_id: str,
-        baseline_version: str,
-        payload: Any,
+        self, route_id: str, baseline_version: str, payload: Any
     ) -> ShadowResult:
         """Run baseline version."""
         import inspect
@@ -292,10 +275,7 @@ class ShadowRouter:
             )
 
     def compare(
-        self,
-        baseline: ShadowResult,
-        shadow: ShadowResult,
-        rule: ComparisonRule,
+        self, baseline: ShadowResult, shadow: ShadowResult, rule: ComparisonRule
     ) -> ComparisonOutcome:
         """Compare baseline vs shadow using rule."""
         return self._comparator.compare(baseline, shadow, rule)
@@ -315,9 +295,7 @@ def _flatten(obj: Any, prefix: str = "") -> dict[str, Any]:
     return result
 
 
-def _approx_equal(
-    a: Any, b: Any, tolerance: float
-) -> tuple[bool, str]:
+def _approx_equal(a: Any, b: Any, tolerance: float) -> tuple[bool, str]:
     """Compare numbers (or dicts of numbers) with absolute tolerance."""
     if isinstance(a, (int, float)) and isinstance(b, (int, float)):
         if abs(a - b) <= tolerance:
@@ -336,9 +314,7 @@ def _approx_equal(
     return False, f"types differ: {type(a).__name__} vs {type(b).__name__}"
 
 
-def _diff_summary(
-    baseline: ShadowResult, shadow: ShadowResult
-) -> dict[str, Any]:
+def _diff_summary(baseline: ShadowResult, shadow: ShadowResult) -> dict[str, Any]:
     """Quick diff summary для failing comparison."""
     return {
         "route_id": baseline.route_id,
