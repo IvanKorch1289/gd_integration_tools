@@ -160,7 +160,9 @@ def extract_action_matrix() -> dict[str, Any]:
                 wsdl_resp.body if isinstance(wsdl_resp.body, bytes)
                 else str(wsdl_resp.body).encode()
             )
-            root = ET.fromstring(body)
+            # S314: WSDL генерируется самим приложением из internal registry —
+            # defusedxml не нужен, но ruff требует обоснование.
+            root = ET.fromstring(body)  # noqa: S314
             wsdl_ns = "{http://schemas.xmlsoap.org/wsdl/}"
             for op in root.iter(f"{wsdl_ns}operation"):
                 name = op.get("name")
