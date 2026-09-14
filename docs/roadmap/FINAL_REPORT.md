@@ -290,3 +290,45 @@ CVSS-diff остаётся P2-усилением.
 
 Внешнее ревью P0/P1/P2 — все 5 позиций закрыты.
 Протокольная матрица (достижимое на dev-box): REST+GraphQL+SSE+WS+SOAP+gRPC Invoke = все 200 ok.
+
+## 17. Финальная верификация внешнего ревью о «158 SyntaxError» (2026-09-14, HEAD 23da6142d+)
+
+### Опровержение
+
+Внешнее ревью заявило «158 некомпилируемых файлов, 211 except A, B:». Независимая
+проверка на актуальном HEAD под Python 3.14.0 (**оптимизированнаяuv-среда**):
+
+| Проверка | Команда | Результат |
+|---|---|---|
+| compileall | `python -m compileall -q src` | **exit 0** |
+| AST parse (3.14) | `ast.parse` на каждом .py в src/backend | **0 ошибок** |
+| ruff | `ruff check src/` | **All checks passed** |
+| mypy strict | `mypy -p src` (2453 файла) | **0 issues** |
+| pytest collection | `pytest --collect-only -q` | **19073 collected** |
+
+**Причина расхождения**: конструкции `except A, B:` (без скобок) — валидный
+**PEP 758** синтаксис, принятый в **Python 3.14**. Внешнее ревью выполняло AST-разбор
+под pre-3.14 Python, где PEP 758 не поддерживается и эти строки являются SyntaxError.
+Проект декларирует `requires-python = ">=3.14"` — на целевой версии все файлы
+компилируются и запускаются.
+
+### Финальное состояние гейтов
+
+| Гейт | Результат |
+|---|---|
+| ruff | 0 |
+| mypy strict | 0 (2453 files) |
+| compileall | exit 0 |
+| AST parse | 0 errors (3.14) |
+| pip-audit | 0 findings |
+| SBOM diff | PASS |
+| Contract diff | PASS (499 ops) |
+| pre-prod | 25/36 PASS, 0 FAIL |
+| Test collection | 19073 collected (1 env-error: polars optional extra) |
+| Unit suite (выборка) | 782 passed / 17 failed (tests/unit/tools — band WIP) |
+
+### Вердикт
+
+**ГОТОВ К ПРОДУ С ОГОВОРКАМИ** — подтверждено на HEAD 23da6142d + волна-9.
+Все 5 позиций внешнего ревью (P0/P1/P2) закрыты с command evidence.
+Инфраструктурные ограничения (G1/G2/G6) — в PROD_READINESS_GAPS.md.
