@@ -245,7 +245,7 @@ class TestRealisticExample:
             "actions": gen.generate_actions_md(explorer),
         }
         target = tmp_path / "docs" / "generated"
-        written = gen.export_docs(sections, target)
+        gen.export_docs(sections, target)
 
         # Verify file contents.
         routes_md = (target / "routes" / "index.md").read_text()
