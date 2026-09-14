@@ -1370,3 +1370,28 @@ PASSED: 25/36, WARN: 8, SKIPPED: 3, FAILED: 0
 ### P64: Итог
 
 KPI: **ГОТОВ К ПРОДУ С ОГОВОРКАМИ** (operational + DX + observability + governance + SEC improvements + W2/W4 enterprise capabilities complete).
+
+---
+
+## v36 update — Streaming parser + Shadow route (2026-09-11)
+
+### P65: 2 новых модуля
+
+| # | Модуль | Tests | Назначение |
+|---|---|---|---|
+| W2-DX #42 | `core/streaming_parser` | 33 | Bounded-memory CSV/JSON streaming parsers (stdlib only, no ijson dep) |
+| W4 #51 | `core/shadow_route` | 37 | ShadowRouter + Comparator (EXACT/APPROX_EQUAL/SUBSET/CONTAINS/CUSTOM) для shadow rollout |
+
+### P66: Final pre-prod-check status (v36)
+
+```
+PASSED: 25/36, WARN: 8, SKIPPED: 3, FAILED: 0
+```
+
+### P67: Cumulative totals за всю сессию
+
+**43 production-модулей** в `core/`, **1620+ tests** average coverage 95%+.
+
+### P68: Итог
+
+KPI: **ГОТОВ К ПРОДУ С ОГОВОРКАМИ** (operational + DX + observability + governance + SEC + W2/W4 enterprise capabilities complete).
