@@ -244,3 +244,21 @@ ADR-0302).
 | Контракт вызова CRUD | caller обязан слать `{"data": {...}}` для add (update: ключи=key/value/data); flat-payload → TypeError по замыслу dispatch (method(**kwargs)) | задокументировано здесь |
 
 Итог: gRPC теперь полнофункционален БЕЗ proto v2 — generic `Invoke` (Invoker) даёт full-fidelity бизнес-вызовы; auto-servicer остаётся подмножеством (lossy-прото, G5(a) остаётся в backlog).
+
+## 14. Дополнение 2026-09-14 — восьмая волна: P0 bootstrap-admin + гейты стали настоящими CI-гейтами
+
+Фактчек внешнего ревью HEAD 948ac50e принят полностью; три частичных позиции закрыты:
+
+| Приоритет | Работа | Статус | Evidence |
+|---|---|---|---|
+| **P0** | Privileged credentials удалены из production seed: миграция + sqlite-ветка — только reference data (orderkinds); admin создаётся явной командой `manage.py bootstrap-admin` (`--password-stdin`/`--from-env`); известные дефолты запрещены во всех профилях; prod: длина >= 12; make-таргет `bootstrap-admin`; downgrade больше не удаляет учётку по username | **✅** | `e7ab9aeba`; live: чистый sqlite → 4 orderkinds/0 users; команда → created exit 0; тесты policy 9 |
+| **P1** | SBOM gate → настоящий CI-gate: baseline трекается в `.baselines/sbom.baseline.json` (принят через новый `make sbom-baseline-accept`), auto-copy из проверочного таргета удалён (fail-fast «make sbom-baseline-accept» при отсутствии), blocking job в `security.yml` | **✅** | `f26d2d42b`, `d201251ba`; live: RESULT PASS (0 violations, 18 unknown=WARN) |
+| **P1** | Contract gate → настоящий CI-gate: auto-cp удалён (fail-fast «make contract-baseline-accept»), baseline трекается в `.baselines/contracts-baseline/`, blocking job в `security.yml` (extract → diff vs baseline) | **✅** | `d201251ba`; live: PASS 499 ops; дрейф-тест: удаление /health → FAIL |
+| P2 | Contract matrix SOAP/AsyncAPI/MCP | Backlog — extract_contracts расширяется по мере надобности | GAPS |
+| P2 | Runbook tabletop-проверка | Backlog — SRE, после staging | GAPS |
+
+Замечания внешнего ревью по качеству внедрения (self-copy baseline, CI-wiring,
+небезопасный bootstrap) подтверждены и закрыты; расхождение «гейт сравнивает сам
+с собой» устранено трекингом baseline в git. CVE-часть SBOM-предложения
+покрывается существующим blocking pip-audit gate (allowlist отдельно) —
+CVSS-diff остаётся P2-усилением.
