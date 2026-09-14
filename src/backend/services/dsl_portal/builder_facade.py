@@ -108,6 +108,28 @@ def __getattr__(name: str) -> Any:
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
+# Sprint 225 фикс-дополнение (2026-09-14): symbols, используемые в function
+# bodies как bare globals — PEP 562 __getattr__ не срабатывает на free-variable
+# lookup. Eager import добавляет их в module globals.
+from src.backend.dsl.engine.dry_run import dry_run_route as dry_run_route  # noqa: E402
+from src.backend.dsl.engine.dry_run import waterfall_lines as waterfall_lines
+from src.backend.dsl.engine.execution_engine import (  # noqa: E402
+    ExecutionEngine as ExecutionEngine,
+)
+from src.backend.dsl.engine.pipeline import Pipeline as Pipeline  # noqa: E402
+from src.backend.dsl.engine.tracer import get_tracer as get_tracer  # noqa: E402
+from src.backend.dsl.registry import route_registry as route_registry  # noqa: E402
+from src.backend.dsl.workflow.spec import (  # noqa: E402
+    WorkflowDeclaration as WorkflowDeclaration,
+)
+from src.backend.dsl.workflow.versioning import (  # noqa: E402
+    get_global_registry as get_global_registry,
+)
+from src.backend.dsl.yaml_loader.loaders import (  # noqa: E402
+    load_pipeline_from_yaml as load_pipeline_from_yaml,
+)
+
+
 def list_workflow_templates() -> list[Any]:
     """S6 fix: тонкая facade-обёртка над :func:`services.workflows.template_registry.get_template_registry`.
 
