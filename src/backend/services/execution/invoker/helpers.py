@@ -116,11 +116,22 @@ def _deserialize_request(raw: dict[str, Any]) -> InvocationRequest:
 
 
 def get_invoker() -> Invoker:
-    """Singleton-доступ к Invoker'у (для DI и DSL processors).
+    """Singleton-доступ к Invoker'у (для DI, DSL processors, gRPC standalone).
 
     Сначала ищет инстанс в ``app.state.invoker`` (composition root в
-    :func:`src.plugins.composition.di.register_app_state`);
-    для non-request контекстов lazy-создаёт через factory ``Invoker()``.
-    Тело перезаписывается декоратором; ``raise`` — для mypy.
+    :func:`src.plugins.composition.di.register_app_state`); если state не
+    зарегистрирован (standalone grpc-serve, тесты) — создаёт standalone
+    ``Invoker()`` (dispatcher через get_action_dispatcher(), reply_registry
+    — lazy). G5(b)-fix 2026-09-14: прежнее тело всегда raise'ило
+    «overridden by app_state_singleton», хотя декоратор тело не заменял —
+    gRPC Invoke был сломан с самого начала.
     """
-    raise RuntimeError("get_invoker overridden by app_state_singleton")
+    try:
+        from src.backend.core.di.app_state import _get_from_app_state
+
+        instance = _get_from_app_state("invoker")
+        if instance is not None:
+            return instance  # type: ignore[no-any-return]
+    except Exception:  # noqa: BLE001 — non-FastAPI контексты
+        pass
+    return Invoker()

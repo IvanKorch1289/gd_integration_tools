@@ -23,7 +23,11 @@ from contextlib import asynccontextmanager as asynccontextmanager
 
 from src.backend.core.errors import NotFoundError as NotFoundError
 from src.backend.core.errors import ServiceError as ServiceError
+from src.backend.core.utils.converters import (
+    transfer_model_to_schema as transfer_model_to_schema,
+)
 from src.backend.schemas.base import BaseSchema as BaseSchema
+from src.backend.schemas.base import PaginatedResult as PaginatedResult
 
 
 def _is_orm_model(instance: Any) -> bool:
@@ -101,13 +105,79 @@ class BaseService[
         self.request_schema = request_schema
         self.version_schema = version_schema
         self.table_name = table_name
-        # NEW-1 fix (2026-08-13): helper проксируется от repo (который создаёт
-        # его в SQLAlchemyRepository.__init__). Старый код
-        # 'self.helper = self.HelperMethods(repo)' падал с AttributeError —
-        # HelperMethods была только type-annotation, не значение.
-        # helper — instance-attr конкретного repo (runtime приходит инстанс,
-        # см. extensions/*/get_*_repo), несвязанный TypeVar его не декларирует.
-        self.helper = repo.helper if repo is not None else None  # type: ignore[attr-defined]
+        # G4-хвост fix (2026-09-14): восстановлен СОБСТВЕННЫЙ HelperMethods
+        # (S61 потерял его: self.helper переприназначали на repo.helper,
+        # у которого нет _transfer/_process_and_transfer → все write-CRUD
+        # сервисов падали AttributeError→ServiceError).
+        self.helper = (
+            BaseService.ServiceHelper(repo) if repo is not None else None
+        )  # type: ignore[attr-defined]
+
+    class ServiceHelper:
+        """Преобразование ORM-моделей в схемы + вызов repo-методов по имени.
+
+        Восстановлен из pre-S61 BaseService (2026-09-14): CrudMixin и
+        VersioningMixin вызывают helper._process_and_transfer/_transfer.
+        """
+
+        def __init__(self, repo: Any) -> None:
+            self.repo = repo
+
+        async def _transfer(
+            self,
+            instance: Any,
+            response_schema: type[BaseSchema],
+            from_attributes: bool = True,
+        ) -> BaseSchema | None:
+            """ORM-модель → схема ответа (не-ORM проходит как есть)."""
+            cls = instance.__class__
+            is_orm = hasattr(cls, "__tablename__") and hasattr(cls, "__table__")
+            if is_orm or hasattr(instance.__class__, "version_parent"):
+                return transfer_model_to_schema(  # type: ignore[return-value]
+                    instance=instance,
+                    schema=response_schema,
+                    from_attributes=from_attributes,
+                )
+            from typing import cast
+
+            return cast(BaseSchema | None, instance)
+
+        async def _transfer_paginated(
+            self, items: list[Any], response_schema: type[BaseSchema]
+        ) -> list[BaseSchema | None]:
+            """Список моделей → список схем."""
+            return [await self._transfer(item, response_schema) for item in items]
+
+        async def _process_and_transfer(
+            self,
+            repo_method: str,
+            response_schema: type[BaseSchema],
+            *args: Any,
+            **kwargs: Any,
+        ) -> Any:
+            """Вызвать repo-метод по имени и преобразовать результат в схемы."""
+            try:
+                instance = await getattr(self.repo, repo_method)(*args, **kwargs)
+
+                if isinstance(instance, dict) and "items" in instance:
+                    items = await self._transfer_paginated(
+                        instance["items"], response_schema
+                    )
+                    return PaginatedResult(items=items, total=instance["total"])
+
+                if not instance:
+                    return []
+
+                if isinstance(instance, list):
+                    return [
+                        await self._transfer(item, response_schema) for item in instance
+                    ]
+
+                return await self._transfer(instance, response_schema)
+            except ServiceError:
+                raise
+            except Exception as exc:
+                raise ServiceError from exc
 
     @asynccontextmanager
     async def _service_error_boundary(self):

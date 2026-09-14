@@ -39,8 +39,15 @@ def test_service_with_repo_none_does_not_raise() -> None:
     assert svc.helper is None
 
 
-def test_service_with_repo_uses_repo_helper() -> None:
-    """Service(repo=fake) устанавливает helper=repo.helper (proxy)."""
+def test_service_with_repo_gets_service_helper_bound_to_repo() -> None:
+    """Service(repo=fake) → ServiceHelper, привязанный к repo (G4-хвост fix).
+
+    2026-09-14: helper восстановлен как СОБСТВЕННЫЙ ServiceHelper(repo)
+    (нужны _transfer/_process_and_transfer для CrudMixin/VersioningMixin);
+    NEW-1-проксирование repo.helper ломало write-CRUD (AttributeError
+    внутри _process_and_transfer, которой у repo.helper нет).
+    Инвариант NEW-1 сохранён: helper привязан к переданному repo.
+    """
     from src.backend.services.core.base import BaseService
 
     class _TestService(BaseService):
@@ -50,7 +57,8 @@ def test_service_with_repo_uses_repo_helper() -> None:
     svc = _TestService(
         repo=fake_repo, response_schema=None, request_schema=None,
     )
-    assert svc.helper == "fake-helper-marker"
+    assert svc.helper is not None
+    assert svc.helper.repo is fake_repo
 
 
 def test_helper_attr_does_not_raise_attributeerror() -> None:
