@@ -39,6 +39,7 @@ def _get_client():
     """Lazy API client getter (allows test patching via patch.object)."""
     return get_api_client()
 
+
 # ─── In-process explorer (для filter/search/groupBy) ───
 explorer: RegistryExplorer = get_registry_explorer()
 
@@ -103,11 +104,7 @@ metric_cols[0].metric("Routes", summary["routes"])
 metric_cols[1].metric("Connectors", summary["connectors"])
 metric_cols[2].metric("Actions", summary["actions"])
 # Count distinct owners via the to_dict export (no local var needed).
-_distinct_owners = {
-    e["owner"]
-    for e in explorer.to_dict()["routes"]
-    if e.get("owner")
-}
+_distinct_owners = {e["owner"] for e in explorer.to_dict()["routes"] if e.get("owner")}
 metric_cols[3].metric("Owners", len(_distinct_owners))
 
 st.divider()
@@ -128,29 +125,19 @@ with tab_routes:
         all_owners = sorted({r.owner for r in routes if r.owner})
         all_tags = sorted({t for r in routes for t in r.tags})
 
-        owner_filter = fcol1.selectbox(
-            "Owner", ["(all)"] + all_owners, key="reg_owner"
-        )
-        tag_filter = fcol2.multiselect(
-            "Tags", all_tags, key="reg_tags"
-        )
+        owner_filter = fcol1.selectbox("Owner", ["(all)"] + all_owners, key="reg_owner")
+        tag_filter = fcol2.multiselect("Tags", all_tags, key="reg_tags")
         search = fcol3.text_input("Search by id", key="reg_search")
 
         filtered = routes
         if owner_filter != "(all)":
             filtered = [r for r in filtered if r.owner == owner_filter]
         if tag_filter:
-            filtered = [
-                r
-                for r in filtered
-                if all(t in r.tags for t in tag_filter)
-            ]
+            filtered = [r for r in filtered if all(t in r.tags for t in tag_filter)]
         if search:
             s = search.lower()
             filtered = [
-                r
-                for r in filtered
-                if s in r.id.lower() or s in r.source.lower()
+                r for r in filtered if s in r.id.lower() or s in r.source.lower()
             ]
 
         st.caption(f"Найдено: {len(filtered)} из {len(routes)}")
@@ -178,8 +165,8 @@ with tab_routes:
                 by_owner[r.owner or "(none)"] = by_owner.get(r.owner or "(none)", 0) + 1
             owner_df = pl.DataFrame(
                 [
-                    {"owner": k, "count": v} for k, v in
-                    sorted(by_owner.items(), key=lambda x: -x[1])
+                    {"owner": k, "count": v}
+                    for k, v in sorted(by_owner.items(), key=lambda x: -x[1])
                 ]
             )
             st.dataframe(owner_df, width="stretch", height=200)
@@ -210,29 +197,33 @@ with tab_connectors:
         st.info("Нет коннекторов.")
     else:
         ccol1, ccol2 = st.columns(2)
-        all_cats = sorted({c.category for c in connectors if c.category})
-        all_auths = sorted({c.auth for c in connectors if c.auth})
+        all_cats = sorted({con.category for con in connectors if con.category})
+        all_auths = sorted({con.auth for con in connectors if con.auth})
 
         cat_filter = ccol1.multiselect("Category", all_cats, key="reg_cats")
         auth_filter = ccol2.multiselect("Auth", all_auths, key="reg_auths")
 
-        filtered = connectors
+        connectors_filtered: list[ConnectorEntry] = list(connectors)
         if cat_filter:
-            filtered = [c for c in filtered if c.category in cat_filter]
+            connectors_filtered = [
+                con for con in connectors_filtered if con.category in cat_filter
+            ]
         if auth_filter:
-            filtered = [c for c in filtered if c.auth in auth_filter]
+            connectors_filtered = [
+                con for con in connectors_filtered if con.auth in auth_filter
+            ]
 
-        st.caption(f"Найдено: {len(filtered)} из {len(connectors)}")
-        if filtered:
+        st.caption(f"Найдено: {len(connectors_filtered)} из {len(connectors)}")
+        if connectors_filtered:
             df = pl.DataFrame(
                 [
                     {
-                        "name": c.name,
-                        "category": c.category or "—",
-                        "auth": c.auth or "—",
-                        "description": c.description or "—",
+                        "name": con.name,
+                        "category": con.category or "—",
+                        "auth": con.auth or "—",
+                        "description": con.description or "—",
                     }
-                    for c in filtered
+                    for con in connectors_filtered
                 ]
             )
             st.dataframe(df, width="stretch", height=400)
@@ -241,7 +232,9 @@ with tab_actions:
     st.subheader("Actions")
     actions = explorer.list_actions()
     if not actions:
-        st.info("Нет actions в реестре. Действия регистрируются через core.registry_explorer.")
+        st.info(
+            "Нет actions в реестре. Действия регистрируются через core.registry_explorer."
+        )
     else:
         df = pl.DataFrame(
             [

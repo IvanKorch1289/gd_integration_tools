@@ -17,6 +17,7 @@ import streamlit as st
 from src.backend.core.cost_attribution import (
     CostAttribution,
     CostRecord,
+    ResourceType,
     get_cost_registry,
 )
 from src.frontend.streamlit_app.shared.components import (
@@ -76,12 +77,7 @@ if not records:
 
 # ─── Tabs ───
 tab_breakdown, tab_top, tab_table, tab_export = st.tabs(
-    [
-        "📊 Breakdown",
-        "🏆 Top consumers",
-        "📋 All records",
-        "💾 Export",
-    ]
+    ["📊 Breakdown", "🏆 Top consumers", "📋 All records", "💾 Export"]
 )
 
 with tab_breakdown:
@@ -118,9 +114,10 @@ with tab_top:
     pairs: dict[tuple[str, str, str], float] = {}
     units: dict[tuple[str, str, str], float] = {}
     for r in records:
-        key = (r.tenant_id, r.route_id, r.agent or "(no-agent)")
-        pairs[key] = pairs.get(key, 0.0) + r.cost_usd
-        units[key] = units.get(key, 0.0) + r.units
+        agent_label: str = r.agent if r.agent else "(no-agent)"
+        combo_key: tuple[str, str, str] = (r.tenant_id, r.route_id, agent_label)
+        pairs[combo_key] = pairs.get(combo_key, 0.0) + r.cost_usd
+        units[combo_key] = units.get(combo_key, 0.0) + r.units
     for (t, r_id, a), cost in sorted(pairs.items(), key=lambda x: -x[1])[:20]:
         top_df_data.append(
             {
@@ -172,17 +169,22 @@ with tab_export:
             r.route_id: by_route.get(r.route_id, 0.0) + r.cost_usd
             for r in records
             for by_route in [
-                {r.route_id: sum(rr.cost_usd for rr in records if rr.route_id == r.route_id)}
+                {
+                    r.route_id: sum(
+                        rr.cost_usd for rr in records if rr.route_id == r.route_id
+                    )
+                }
             ]
             for k, v in by_route.items()
-        }.copy() if records else {},
+        }.copy()
+        if records
+        else {},
         "records": [r.to_dict() for r in records],
     }
     # Simpler: use to_dict from registry-style aggregation.
     from src.backend.core.cost_attribution import CostReport
-    rep = CostReport(
-        timestamp=__import__("time").time(), records=records
-    )
+
+    rep = CostReport(timestamp=__import__("time").time(), records=records)
     st.json(rep.to_dict())
 
     st.download_button(
