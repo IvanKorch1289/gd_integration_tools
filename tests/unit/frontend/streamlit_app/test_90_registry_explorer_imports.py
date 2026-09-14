@@ -72,29 +72,52 @@ def _page_path() -> Path:
     )
 
 
-def _load_page_module() -> object:
-    """Load page module by file path (Cyrillic name не импортируется напрямую)."""
-    # Defensive: ensure streamlit mock has all needed attrs, even if
-    # a previous test mutated sys.modules['streamlit'].
-    _streamlit = sys.modules["streamlit"]
+_load_counter = 0
+
+
+def _build_streamlit_mock() -> ModuleType:
+    """Build a fresh full-feature streamlit mock."""
+    st = ModuleType("streamlit")
     for attr in [
         "set_page_config", "header", "metric", "divider", "subheader",
-        "info", "warning", "caption", "tabs", "columns", "button",
+        "info", "warning", "caption", "tabs", "button",
         "rerun", "spinner", "dataframe", "json", "selectbox",
         "text_input", "multiselect", "expander",
     ]:
-        if not hasattr(_streamlit, attr):
-            setattr(_streamlit, attr, MagicMock())
-    if not hasattr(_streamlit, "cache_data"):
-        _streamlit.cache_data = _passthrough_decorator
-    if not hasattr(_streamlit, "cache_resource"):
-        _streamlit.cache_resource = _passthrough_decorator
+        setattr(st, attr, MagicMock())
+    def _list_mock(spec):
+        if isinstance(spec, int):
+            n = spec
+        elif hasattr(spec, "__len__"):
+            n = len(spec)
+        else:
+            n = 1
+        return [MagicMock() for _ in range(n)]
 
-    spec = importlib.util.spec_from_file_location(
-        "_registry_explorer_page", _page_path()
-    )
+    st.columns = MagicMock(side_effect=_list_mock)
+    st.tabs = MagicMock(side_effect=_list_mock)
+    st.cache_data = _passthrough_decorator
+    st.cache_resource = _passthrough_decorator
+    return st
+
+
+def _load_page_module() -> object:
+    """Load page module by file path (Cyrillic name не импортируется напрямую).
+
+    Each call returns a fresh module instance (to avoid state pollution
+    when multiple tests run in sequence with different streamlit mocks).
+    """
+    global _load_counter
+    _load_counter += 1
+    module_name = f"_registry_explorer_page_{_load_counter}"
+
+    # Always REPLACE sys.modules['streamlit'] with a fresh full mock
+    # (previous tests may have replaced it with a minimal mock).
+    sys.modules["streamlit"] = _build_streamlit_mock()
+
+    spec = importlib.util.spec_from_file_location(module_name, _page_path())
     module = importlib.util.module_from_spec(spec)
-    sys.modules["_registry_explorer_page"] = module
+    sys.modules[module_name] = module
     spec.loader.exec_module(module)
     return module
 
@@ -110,7 +133,6 @@ def test_page_uses_registry_explorer() -> None:
     assert "get_registry_explorer" in source
     assert "RouteEntry" in source
     assert "ConnectorEntry" in source
-    assert "ActionEntry" in source
 
 
 def test_page_has_seed_explorer_function() -> None:

@@ -88,6 +88,10 @@ PAGE_METADATA: dict[str, dict[str, str]] = {
     "60_Админ_кеша": {"title": "Админ кеша", "icon": ":material/cached:"},
     "61_Журнал_аудита": {"title": "Журнал аудита", "icon": ":material/assignment:"},
     "62_Админ_схем": {"title": "Админ схем", "icon": ":material/schema:"},
+    "90_Реестр_Маршрутов": {
+        "title": "Реестр маршрутов",
+        "icon": ":material/inventory_2:",
+    },
     "63_Вики": {"title": "Вики", "icon": ":material/menu_book:"},
     "64_SQL_Админ": {"title": "SQL Админ", "icon": ":material/database:"},
     "65_Сервисы": {"title": "Сервисы", "icon": ":material/dns:"},
