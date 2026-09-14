@@ -234,3 +234,13 @@ contract/dry-run, RPA state machine, Agent policy engine, Template Catalog) —
 `make contract-diff-gate`, `pytest tests/chaos/test_saga_double_fault_chaos.py`,
 `alembic upgrade head` на чистом sqlite, docs/runbooks/feature-flag-kill-switch.md,
 ADR-0302).
+
+## 13. Дополнение 2026-09-14 — седьмая волна: G5(b) закрыт, write-CRUD восстановлен
+
+| Позиция | Статус | Evidence |
+|---|---|---|
+| **G5(b) standalone Invoker** | **ЗАКРЫТ**: `helpers.get_invoker` (декоратор тело не перезаписывал — всегда RuntimeError) → state-lookup + standalone `Invoker()`; grpc-serve регистрирует минимальный state (invoker/reply_registry) через `set_app_ref` | Live: `Invoke(users.add, data={...})` → **`status: "ok"`, result_json с полной схемой** (`a6730dced`, bootstrap в server.py) |
+| **Write-CRUD восстановлен** | **Критическая находка**: CrudMixin звал `helper._process_and_transfer`, которой нигде не было (S61-рефакторинг потерял при извлечении миксинов; NEW-1 дополнительно переприназначил helper на repo.helper) → add/update всех сущностей падали AttributeError→ServiceError **с момента S61**. Восстановлен `BaseService.ServiceHelper(repo)` с `_transfer/_transfer_paginated/_process_and_transfer` | `a6730dced`; Live: REST `users.add(data)` → 200 (PII-маскирование в ответе); gRPC Invoke → ok |
+| Контракт вызова CRUD | caller обязан слать `{"data": {...}}` для add (update: ключи=key/value/data); flat-payload → TypeError по замыслу dispatch (method(**kwargs)) | задокументировано здесь |
+
+Итог: gRPC теперь полнофункционален БЕЗ proto v2 — generic `Invoke` (Invoker) даёт full-fidelity бизнес-вызовы; auto-servicer остаётся подмножеством (lossy-прото, G5(a) остаётся в backlog).
