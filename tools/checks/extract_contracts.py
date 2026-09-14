@@ -39,6 +39,7 @@ _logger = get_logger("contract-extract")
 _REST_FILE = "rest_openapi.json"
 _GRAPHQL_FILE = "graphql_introspection.json"
 _GRPC_FILE = "grpc_proto.json"
+_ACTION_MATRIX_FILE = "action_matrix.json"
 
 
 def extract_rest() -> dict[str, Any]:
@@ -114,6 +115,110 @@ def extract_grpc() -> dict[str, Any]:
     return {"services": services}
 
 
+def extract_action_matrix() -> dict[str, Any]:
+    """Матрица «публичный action × протокол» (P2, 2026-09-14).
+
+    Источники:
+        * registry (ActionHandlerRegistry) — ground truth публичных actions;
+        * REST — OpenAPI-пути ``/api/v1/auto/<action>``;
+        * gRPC — auto-servicer домены: ``<domain>.<rpc_lower>``;
+        * SOAP — WSDL-операции (``safe_name = dots→underscores``).
+
+    AsyncAPI/MCP — информационные секции (в dev_light пусты: MQ-пары
+    отсутствуют, MCP HTTP disabled by default).
+    """
+    import asyncio
+    import xml.etree.ElementTree as ET
+
+    from src.backend.core.api.extensions import action_handler_registry
+    from src.backend.main import app
+
+    actions = sorted(action_handler_registry.list_actions())
+
+    spec = app.openapi()
+    rest_paths = set(spec.get("paths", {}).keys())
+
+    grpc_actions: set[str] = set()
+    from src.backend.entrypoints.grpc.auto_servicer import build_auto_servicers
+
+    for bundle in build_auto_servicers():
+        service_cap = bundle.service.capitalize()
+        svc_desc = bundle.pb2.DESCRIPTOR.services_by_name.get(
+            f"{service_cap}AutoService"
+        )
+        if svc_desc is None:
+            continue
+        domain = bundle.service
+        for method_desc in svc_desc.methods:
+            grpc_actions.add(f"{domain}.{method_desc.name.lower()}")
+
+    wsdl_resp = asyncio.run(_get_wsdl_safe())
+    wsdl_ops: set[str] = set()
+    if wsdl_resp:
+        try:
+            body = (
+                wsdl_resp.body if isinstance(wsdl_resp.body, bytes)
+                else str(wsdl_resp.body).encode()
+            )
+            root = ET.fromstring(body)
+            wsdl_ns = "{http://schemas.xmlsoap.org/wsdl/}"
+            for op in root.iter(f"{wsdl_ns}operation"):
+                name = op.get("name")
+                if name:
+                    wsdl_ops.add(name)
+        except ET.ParseError as exc:
+            _logger.warning("WSDL parse failed: %s", exc)
+
+    matrix_actions: dict[str, dict[str, bool]] = {}
+    for action in actions:
+        matrix_actions[action] = {
+            "rest": f"/api/v1/auto/{action}" in rest_paths,
+            "grpc": action in grpc_actions,
+            "soap": action.replace(".", "_") in wsdl_ops,
+        }
+
+    return {
+        "actions": matrix_actions,
+        "asyncapi_channels": _asyncapi_channels(),
+        "mcp": _mcp_info(),
+    }
+
+
+async def _get_wsdl_safe() -> Any | None:
+    """Безопасно получить WSDL-ответ (registry может быть пуст)."""
+    try:
+        from src.backend.entrypoints.soap.soap_handler import get_wsdl
+
+        return await get_wsdl()
+    except Exception as exc:  # noqa: BLE001
+        _logger.warning("WSDL extract failed: %s", exc)
+        return None
+
+
+def _asyncapi_channels() -> list[str]:
+    """AsyncAPI-каналы (пусто в dev_light: нет MQ-пар)."""
+    try:
+        from src.backend.entrypoints.asyncapi.exporter import build_asyncapi_spec
+
+        spec = build_asyncapi_spec()
+        if spec is None or not hasattr(spec, "channels"):
+            return []
+        return sorted((spec.channels or {}).keys())
+    except Exception as exc:  # noqa: BLE001
+        _logger.warning("asyncapi channels extract failed: %s", exc)
+        return []
+
+
+def _mcp_info() -> dict[str, Any]:
+    """MCP HTTP disabled by default → tools пусто (informational)."""
+    from src.backend.core.config.settings import settings
+
+    enabled = bool(
+        getattr(getattr(settings, "mcp", None), "http_enabled", False)
+    )
+    return {"enabled": enabled, "tools": []}
+
+
 def extract_all(out_dir: Path) -> dict[str, str]:
     """Извлечь все три контракта; возвращает карту протокол → статус."""
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -123,6 +228,7 @@ def extract_all(out_dir: Path) -> dict[str, str]:
         ("REST", extract_rest, _REST_FILE),
         ("GraphQL", extract_graphql, _GRAPHQL_FILE),
         ("gRPC", extract_grpc, _GRPC_FILE),
+        ("ActionMatrix", extract_action_matrix, _ACTION_MATRIX_FILE),
     ):
         try:
             data = fn()

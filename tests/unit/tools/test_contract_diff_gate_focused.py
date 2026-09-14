@@ -8,6 +8,9 @@ from pathlib import Path
 import pytest
 
 from tools.checks.contract_diff_gate import (
+    _diff_action_matrix,
+    _diff_asyncapi_channels,
+    _diff_mcp_tools,
     ContractBreakingChange,
     ContractDiff,
     _diff_graphql,
@@ -497,3 +500,44 @@ class TestRealisticExample:
         assert len(diff.grpc_breaking) >= 1
         assert diff.total_breaking >= 3
         assert diff.has_breaking is True
+
+
+class TestActionMatrix:
+    """P2: матрица action × протокол (2026-09-14)."""
+
+    def test_action_removed_is_breaking(self) -> None:
+        current = {"actions": {"a.list": {"rest": True, "soap": True}}}
+        baseline = {
+            "actions": {
+                "a.list": {"rest": True, "soap": True},
+                "b.add": {"rest": True, "soap": False},
+            },
+        }
+        breaking, nb = _diff_action_matrix(current, baseline)
+        assert len(breaking) == 1
+        assert breaking[0].change_type == "action_removed"
+
+    def test_protocol_coverage_lost_is_breaking(self) -> None:
+        current = {"actions": {"a.list": {"rest": True, "soap": False}}}
+        baseline = {"actions": {"a.list": {"rest": True, "soap": True}}}
+        breaking, _ = _diff_action_matrix(current, baseline)
+        assert any(c.change_type == "protocol_coverage_lost" for c in breaking)
+
+    def test_protocol_gain_is_non_breaking(self) -> None:
+        current = {"actions": {"a.list": {"rest": True, "grpc": True}}}
+        baseline = {"actions": {"a.list": {"rest": True, "grpc": False}}}
+        breaking, nb = _diff_action_matrix(current, baseline)
+        assert breaking == []
+        assert nb == 2
+
+    def test_asyncapi_channel_removed(self) -> None:
+        breaking = _diff_asyncapi_channels(
+            {"channels": ["keep"]}, {"channels": ["keep", "gone"]}
+        )
+        assert any(c.change_type == "channel_removed" for c in breaking)
+
+    def test_mcp_tool_removed(self) -> None:
+        breaking = _diff_mcp_tools(
+            {"tools": ["t1"]}, {"tools": ["t1", "t2"]}
+        )
+        assert any("t2" in c.description for c in breaking)

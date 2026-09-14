@@ -1,0 +1,669 @@
+{
+  "actions": {
+    "admin.get_cache_value": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "admin.get_config": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "admin.invalidate_cache": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "admin.invalidate_cache_by_pattern": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "admin.invalidate_cache_by_tag": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "admin.invalidate_table": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "admin.list_cache_keys": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "agent_memory.add_message": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "agent_memory.clear": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "agent_memory.get_conversation": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "agent_memory.get_facts": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "agent_memory.load": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "agent_memory.save": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "agent_memory.set_fact": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "ai.chat": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "ai.parse_webpage": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "ai.run_agent": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "ai.search_web": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "analytics.aggregate": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "analytics.count": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "analytics.insert_batch": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "analytics.insert_event": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "analytics.query": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "anomaly.list_metrics": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "anomaly.observe": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "anomaly.stats": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "connector.import": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "connector.list_imported": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "dadata.get_geolocate": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "dq.check": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "dq.schema_infer": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "dq.stats": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "export.to_csv": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "export.to_excel": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "export.to_pdf": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "files.add": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "files.create": {
+      "rest": true,
+      "grpc": true,
+      "soap": true
+    },
+    "files.create_many": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "files.delete": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "files.get": {
+      "rest": true,
+      "grpc": true,
+      "soap": true
+    },
+    "files.list": {
+      "rest": true,
+      "grpc": true,
+      "soap": true
+    },
+    "files.update": {
+      "rest": true,
+      "grpc": true,
+      "soap": true
+    },
+    "notebooks.create": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "notebooks.delete": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "notebooks.get": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "notebooks.list": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "notebooks.restore_version": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "notebooks.update_content": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "notify.broadcast": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "notify.email": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "notify.express": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "notify.express_broadcast": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "notify.express_create_chat": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "notify.express_event": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "notify.send": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "notify.telegram": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "notify.webhook": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "orderkinds.add": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "orderkinds.create": {
+      "rest": true,
+      "grpc": true,
+      "soap": true
+    },
+    "orderkinds.create_many": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "orderkinds.delete": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "orderkinds.get": {
+      "rest": true,
+      "grpc": true,
+      "soap": true
+    },
+    "orderkinds.list": {
+      "rest": true,
+      "grpc": true,
+      "soap": true
+    },
+    "orderkinds.update": {
+      "rest": true,
+      "grpc": true,
+      "soap": true
+    },
+    "orders.add": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "orders.create": {
+      "rest": true,
+      "grpc": true,
+      "soap": true
+    },
+    "orders.create_many": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "orders.create_skb_order": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "orders.delete": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "orders.get": {
+      "rest": true,
+      "grpc": true,
+      "soap": true
+    },
+    "orders.get_file_and_json": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "orders.get_file_base64": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "orders.get_file_from_storage": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "orders.get_file_link": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "orders.get_result": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "orders.list": {
+      "rest": true,
+      "grpc": true,
+      "soap": true
+    },
+    "orders.send_order_data": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "orders.update": {
+      "rest": true,
+      "grpc": true,
+      "soap": true
+    },
+    "rag.augment_prompt": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "rag.count": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "rag.delete": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "rag.ingest": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "rag.search": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "replay.bulk": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "replay.list": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "replay.one": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "replay.stats": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "reports.history": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "reports.list": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "reports.run_now": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "reports.schedule": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "search.aggregate": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "search.bulk_index": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "search.delete_document": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "search.index_document": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "search.query": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "skb.add_request": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "skb.get_objects_by_address": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "skb.get_orders_list": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "skb.get_request_kinds": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "skb.get_response_by_order": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "tech.check_all_services": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "tech.check_database": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "tech.check_redis": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "tech.check_s3": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "tech.send_email": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "users.add": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "users.create": {
+      "rest": true,
+      "grpc": true,
+      "soap": true
+    },
+    "users.create_many": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "users.delete": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "users.get": {
+      "rest": true,
+      "grpc": true,
+      "soap": true
+    },
+    "users.list": {
+      "rest": true,
+      "grpc": true,
+      "soap": true
+    },
+    "users.update": {
+      "rest": true,
+      "grpc": true,
+      "soap": true
+    },
+    "web.click": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "web.extract_table": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "web.extract_text": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "web.fill_form": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "web.monitor_changes": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "web.navigate": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "web.parse_page": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "web.run_scenario": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "web.screenshot": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "web_search.deep_research": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "web_search.query": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "webhook.cancel": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "webhook.dlq_list": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "webhook.dlq_retry": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "webhook.execute": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "webhook.list_scheduled": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "webhook.relay": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "webhook.schedule": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    },
+    "webhook.transform": {
+      "rest": true,
+      "grpc": false,
+      "soap": true
+    }
+  },
+  "asyncapi_channels": [],
+  "mcp": {
+    "enabled": false,
+    "tools": []
+  }
+}

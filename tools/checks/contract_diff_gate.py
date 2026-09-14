@@ -75,9 +75,11 @@ class ContractDiff:
     rest_breaking: list[ContractBreakingChange] = field(default_factory=list)
     graphql_breaking: list[ContractBreakingChange] = field(default_factory=list)
     grpc_breaking: list[ContractBreakingChange] = field(default_factory=list)
+    matrix_breaking: list[ContractBreakingChange] = field(default_factory=list)
     rest_non_breaking: int = 0
     graphql_non_breaking: int = 0
     grpc_non_breaking: int = 0
+    matrix_non_breaking: int = 0
 
     @property
     def total_breaking(self) -> int:
@@ -85,6 +87,7 @@ class ContractDiff:
             len(self.rest_breaking)
             + len(self.graphql_breaking)
             + len(self.grpc_breaking)
+            + len(self.matrix_breaking)
         )
 
     @property
@@ -319,6 +322,85 @@ def _diff_grpc(
     return breaking, non_breaking
 
 
+def _diff_action_matrix(
+    current: dict[str, Any], baseline: dict[str, Any]
+) -> tuple[list[ContractBreakingChange], int]:
+    """Diff матрицы «action × протокол» (P2, 2026-09-14).
+
+    Breaking: action удалён целиком; action потерял протокол, который
+    был в baseline (coverage lost). Добавление action/протокола —
+    non-breaking.
+    """
+    breaking: list[ContractBreakingChange] = []
+    non_breaking = 0
+
+    current_actions: dict[str, dict[str, bool]] = current.get("actions", {})
+    baseline_actions: dict[str, dict[str, bool]] = baseline.get("actions", {})
+
+    for action in baseline_actions:
+        if action not in current_actions:
+            breaking.append(
+                ContractBreakingChange(
+                    protocol="matrix",
+                    change_type="action_removed",
+                    location=action,
+                    description=f"Public action removed: {action}",
+                )
+            )
+            continue
+        for proto, had in baseline_actions[action].items():
+            if had and not current_actions[action].get(proto, False):
+                breaking.append(
+                    ContractBreakingChange(
+                        protocol="matrix",
+                        change_type="protocol_coverage_lost",
+                        location=f"{action}.{proto}",
+                        description=(
+                            f"Action {action} потерял протокол {proto} "
+                            f"(был в baseline)"
+                        ),
+                    )
+                )
+
+    for action, coverage in current_actions.items():
+        non_breaking += sum(1 for v in coverage.values() if v)
+    return breaking, non_breaking
+
+
+def _diff_asyncapi_channels(
+    current: dict[str, Any], baseline: dict[str, Any]
+) -> list[ContractBreakingChange]:
+    """AsyncAPI: удаление канала — breaking."""
+    current_ch = set(current.get("channels", []))
+    baseline_ch = set(baseline.get("channels", []))
+    return [
+        ContractBreakingChange(
+            protocol="asyncapi",
+            change_type="channel_removed",
+            location=ch,
+            description=f"AsyncAPI channel removed: {ch}",
+        )
+        for ch in sorted(baseline_ch - current_ch)
+    ]
+
+
+def _diff_mcp_tools(
+    current: dict[str, Any], baseline: dict[str, Any]
+) -> list[ContractBreakingChange]:
+    """MCP: удаление tool — breaking (только когда baseline перечислял tools)."""
+    baseline_tools = set(baseline.get("tools", []))
+    current_tools = set(current.get("tools", []))
+    return [
+        ContractBreakingChange(
+            protocol="mcp",
+            change_type="tool_removed",
+            location=tool,
+            description=f"MCP tool removed: {tool}",
+        )
+        for tool in sorted(baseline_tools - current_tools)
+    ]
+
+
 def diff_contracts(
     *, current_dir: Path, baseline_dir: Path
 ) -> ContractDiff:
@@ -335,13 +417,38 @@ def diff_contracts(
     baseline_grpc = _load_json(baseline_dir / "grpc_proto.json")
     grpc_breaking, grpc_nb = _diff_grpc(current_grpc, baseline_grpc)
 
+    matrix_breaking: list[ContractBreakingChange] = []
+    matrix_nb = 0
+    current_matrix = current_dir / "action_matrix.json"
+    if current_matrix.exists():
+        current_m = _load_json(current_matrix)
+        baseline_path = baseline_dir / "action_matrix.json"
+        baseline_m = (
+            _load_json(baseline_path)
+            if baseline_path.exists()
+            else {"actions": {}}
+        )
+        matrix_breaking, matrix_nb = _diff_action_matrix(
+            current_m, baseline_m
+        )
+        matrix_breaking.extend(_diff_asyncapi_channels(
+            current_m.get("asyncapi_channels", {})
+            and {"channels": current_m.get("asyncapi_channels", [])},
+            {"channels": baseline_m.get("asyncapi_channels", [])},
+        ) if baseline_m.get("asyncapi_channels") else [])
+        matrix_breaking.extend(_diff_mcp_tools(
+            current_m.get("mcp", {}), baseline_m.get("mcp", {})
+        ))
+
     return ContractDiff(
         rest_breaking=rest_breaking,
         graphql_breaking=graphql_breaking,
         grpc_breaking=grpc_breaking,
+        matrix_breaking=matrix_breaking,
         rest_non_breaking=rest_nb,
         graphql_non_breaking=graphql_nb,
         grpc_non_breaking=grpc_nb,
+        matrix_non_breaking=matrix_nb,
     )
 
 
@@ -355,6 +462,7 @@ def _format_report(diff: ContractDiff) -> str:
     lines.append(f"REST breaking:     {len(diff.rest_breaking)}")
     lines.append(f"GraphQL breaking:  {len(diff.graphql_breaking)}")
     lines.append(f"gRPC breaking:     {len(diff.grpc_breaking)}")
+    lines.append(f"Matrix breaking:   {len(diff.matrix_breaking)}")
     lines.append("---")
     lines.append(f"Total breaking:    {diff.total_breaking}")
     lines.append(f"Non-breaking ops:  {diff.rest_non_breaking + diff.graphql_non_breaking + diff.grpc_non_breaking}")
@@ -364,6 +472,7 @@ def _format_report(diff: ContractDiff) -> str:
         ("REST", diff.rest_breaking),
         ("GRAPHQL", diff.graphql_breaking),
         ("GRPC", diff.grpc_breaking),
+        ("MATRIX", diff.matrix_breaking),
     ]:
         if changes:
             lines.append(f"--- {protocol} BREAKING CHANGES ---")
