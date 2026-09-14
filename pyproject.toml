@@ -196,7 +196,7 @@ security = [
     "rich>=14.0.0,<16.0.0",
 ]
 db_drivers = [
-    "oracledb>=2.5.0,<3.0.0",     # Oracle (CDC, external_db)
+    "oracledb>=2.5.0,<27.0.0",     # Oracle (CDC, external_db)
     "aioodbc>=0.5.0,<1.0.0",      # MSSQL (latest available is 0.5.0)
     "aiomysql>=0.2.0,<1.0.0",     # MySQL
 ]
