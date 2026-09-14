@@ -25,12 +25,7 @@ _logger = get_logger("auth.bootstrap_admin")
 
 #: Пароли, запрещённые во всех профилях (публично известные дефолты).
 KNOWN_DEFAULT_PASSWORDS = frozenset(
-    {
-        "admin",
-        "admin-default-password-change-me",
-        "password",
-        "changeme",
-    }
+    {"admin", "admin-default-password-change-me", "password", "changeme"}
 )
 
 _MIN_PROD_PASSWORD_LENGTH = 12
@@ -55,9 +50,7 @@ def read_password(*, password_stdin: bool, from_env: str | None) -> str:
     elif from_env:
         password = os.environ.get(from_env, "").strip()
     else:
-        raise ValueError(
-            "Укажите источник пароля: --password-stdin или --from-env VAR"
-        )
+        raise ValueError("Укажите источник пароля: --password-stdin или --from-env VAR")
     if not password:
         raise ValueError("Пароль пуст")
     return password
@@ -78,10 +71,7 @@ def _validate_password_policy(password: str, *, profile: str) -> None:
 
 
 def bootstrap_admin_user(
-    *,
-    username: str,
-    password: str,
-    email: str | None = None,
+    *, username: str, password: str, email: str | None = None
 ) -> str:
     """Создать или сбросить пароль суперпользователя (идемпотентно).
 
@@ -115,17 +105,14 @@ def bootstrap_admin_user(
 
         async with main_session_manager.create_session() as session:
             user = (
-                await session.execute(
-                    sa.select(User).where(User.username == username)
-                )
+                await session.execute(sa.select(User).where(User.username == username))
             ).scalar_one_or_none()
             if user is not None:
                 user.set_password(password)
                 user.is_active = True
                 outcome = "password_updated"
                 _logger.warning(
-                    "bootstrap_admin: пароль существующего пользователя %r "
-                    "обновлён",
+                    "bootstrap_admin: пароль существующего пользователя %r обновлён",
                     username,
                 )
             else:

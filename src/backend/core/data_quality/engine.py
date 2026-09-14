@@ -136,9 +136,7 @@ class DataQualityEngine:
         """List all registered record types."""
         return list(self._rulesets.keys())
 
-    def check(
-        self, record_type: str, records: list[Any]
-    ) -> QualityReport:
+    def check(self, record_type: str, records: list[Any]) -> QualityReport:
         """Check records against registered rules.
 
         Args:
@@ -171,8 +169,7 @@ class DataQualityEngine:
                 report.failed += 1
                 if ruleset.quarantine_on_failure:
                     reasons = "; ".join(
-                        v.reason for v in report.violations
-                        if v.record is record
+                        v.reason for v in report.violations if v.record is record
                     )
                     self.quarantine(record, reasons)
         return report

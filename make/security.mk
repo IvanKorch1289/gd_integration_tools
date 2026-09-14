@@ -57,17 +57,20 @@ sbom: ## D-AUDIT-11-5 fix (cycle 1): canonical path — dist/sbom/sbom.cdx.json.
 	$(UV_RUN) pip-audit --format cyclonedx-json --output dist/sbom/sbom.cdx.json -r dist/audit-requirements.txt $$ALLOW || true
 	@$(SUCCESS) "SBOM written to dist/sbom/sbom.cdx.json (via pip-audit cyclonedx-json from .venv)"
 
-contract-diff-gate: ## OP-6: extract contracts + diff vs baseline (fail on breaking)
+contract-diff-gate: ## OP-6: contracts diff vs принятый baseline (.baselines/contracts-baseline) — fail on breaking
 	@$(INFO) "Extracting protocol contracts (REST/GraphQL/gRPC)..."
+	@test -f .baselines/contracts-baseline/rest_openapi.json || { $(ERROR) ".baselines/contracts-baseline/rest_openapi.json отсутствует — примите первый baseline: make contract-baseline-accept"; exit 2; }
 	@$(UV_RUN) python tools/checks/extract_contracts.py --out .baselines/contracts
-	@mkdir -p .baselines/contracts-baseline
-	@if [ ! -f .baselines/contracts-baseline/rest_openapi.json ]; then \
-		cp .baselines/contracts/*.json .baselines/contracts-baseline/; \
-		$(SUCCESS) "Baseline создан (первый запуск)"; \
-	fi
 	@$(UV_RUN) python tools/checks/contract_diff_gate.py diff \
 		--current .baselines/contracts \
 		--baseline .baselines/contracts-baseline
+
+contract-baseline-accept: ## OP-6: принять текущие контракты как новый baseline (после review)
+	@$(INFO) "Accepting current contracts as baseline..."
+	@$(UV_RUN) python tools/checks/extract_contracts.py --out .baselines/contracts
+	@mkdir -p .baselines/contracts-baseline
+	@cp .baselines/contracts/*.json .baselines/contracts-baseline/
+	@$(SUCCESS) "Baseline принят: .baselines/contracts-baseline/"
 
 bootstrap-admin: ## P0: создать/сбросить суперпользователя (пароль через stdin: `make bootstrap-admin < pw.txt`)
 	@$(UV_RUN) python manage.py bootstrap-admin --password-stdin

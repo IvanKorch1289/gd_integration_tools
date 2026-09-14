@@ -109,9 +109,7 @@ class BaseService[
         # (S61 потерял его: self.helper переприназначали на repo.helper,
         # у которого нет _transfer/_process_and_transfer → все write-CRUD
         # сервисов падали AttributeError→ServiceError).
-        self.helper = (
-            BaseService.ServiceHelper(repo) if repo is not None else None
-        )  # type: ignore[attr-defined]
+        self.helper = BaseService.ServiceHelper(repo) if repo is not None else None  # type: ignore[attr-defined]
 
     class ServiceHelper:
         """Преобразование ORM-моделей в схемы + вызов repo-методов по имени.

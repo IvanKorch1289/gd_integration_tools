@@ -48,14 +48,9 @@ _RISKY_OPERATIONS = {
 
 
 # Tables которые нельзя блокировать (production hot tables).
-_SENSITIVE_TABLES = frozenset({
-    "orders",
-    "users",
-    "transactions",
-    "audit_events",
-    "files",
-    "outbox_messages",
-})
+_SENSITIVE_TABLES = frozenset(
+    {"orders", "users", "transactions", "audit_events", "files", "outbox_messages"}
+)
 
 
 @dataclass(slots=True)
@@ -123,9 +118,7 @@ class MigrationSafetyGate:
     def __init__(self) -> None:
         pass
 
-    def analyze_migration(
-        self, migration_path: str | Path
-    ) -> MigrationReport:
+    def analyze_migration(self, migration_path: str | Path) -> MigrationReport:
         """Analyze a single migration file."""
         path = Path(migration_path)
         if not path.exists():
@@ -136,9 +129,7 @@ class MigrationSafetyGate:
         report.has_rollback = self._has_rollback(source)
         return report
 
-    def _analyze_source(
-        self, source: str, file_path: str
-    ) -> list[Finding]:
+    def _analyze_source(self, source: str, file_path: str) -> list[Finding]:
         """Parse source и detect risky operations."""
         findings: list[Finding] = []
         try:
@@ -189,17 +180,13 @@ class MigrationSafetyGate:
                 )
             )
             # Sensitive table bonus risk.
-            if table in _SENSITIVE_TABLES and risk in (
-                RiskLevel.MEDIUM, RiskLevel.LOW
-            ):
+            if table in _SENSITIVE_TABLES and risk in (RiskLevel.MEDIUM, RiskLevel.LOW):
                 findings.append(
                     Finding(
                         operation=f"{op_name}_sensitive",
                         table=table,
                         risk=RiskLevel.HIGH,
-                        description=(
-                            f"Operation on sensitive table '{table}'"
-                        ),
+                        description=(f"Operation on sensitive table '{table}'"),
                         recommendation=(
                             "Consider online migration (CONCURRENTLY, "
                             "CREATE INDEX CONCURRENTLY) for zero-downtime"
@@ -253,9 +240,7 @@ class MigrationSafetyGate:
         func_name = self._get_call_name(call_node.func)
         if not func_name:
             return ""
-        op_name = (
-            func_name[3:] if func_name.startswith("op.") else func_name
-        )
+        op_name = func_name[3:] if func_name.startswith("op.") else func_name
 
         args = call_node.args
         if op_name in _TABLE_OPS_WITH_TABLE_AS_2ND and len(args) >= 2:
@@ -272,7 +257,9 @@ class MigrationSafetyGate:
         if op_name.startswith("drop_table"):
             return "Use expand-contract: deprecate → archive → drop in next release"
         if op_name.startswith("drop_column"):
-            return "Use soft-delete: add nullable → backfill nulls → drop in next release"
+            return (
+                "Use soft-delete: add nullable → backfill nulls → drop in next release"
+            )
         if op_name.startswith("alter_column"):
             return "Ensure migration is non-blocking; avoid ALTER TYPE on large tables"
         if "create_index" in op_name:

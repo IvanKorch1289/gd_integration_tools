@@ -93,7 +93,9 @@ async def serve() -> None:
         _state.state.reply_registry = get_reply_channel_registry()
         _state.state.invoker = Invoker()
         set_app_ref(_state)  # type: ignore[arg-type]
-        grpc_logger.info("gRPC standalone: app.state (invoker/reply_registry) зарегистрирован")
+        grpc_logger.info(
+            "gRPC standalone: app.state (invoker/reply_registry) зарегистрирован"
+        )
     except Exception as exc:  # noqa: BLE001 — запуск не блокируем
         grpc_logger.warning("gRPC standalone: state bootstrap skipped: %s", exc)
 

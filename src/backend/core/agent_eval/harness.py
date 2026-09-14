@@ -163,16 +163,9 @@ class AgentEvalHarness:
         return len(self._tool_use)
 
     def total_tests(self) -> int:
-        return (
-            self.golden_count()
-            + self.injection_count()
-            + self.tool_use_count()
-        )
+        return self.golden_count() + self.injection_count() + self.tool_use_count()
 
-    async def run(
-        self,
-        agent_fn: AgentFn,
-    ) -> EvalReport:
+    async def run(self, agent_fn: AgentFn) -> EvalReport:
         """Run all tests against agent_fn.
 
         Args:
@@ -226,9 +219,7 @@ class AgentEvalHarness:
             report.weighted_score = weighted_sum / weight_total
         return report
 
-    async def _run_golden(
-        self, task: GoldenTask, agent_fn: AgentFn
-    ) -> EvalTaskResult:
+    async def _run_golden(self, task: GoldenTask, agent_fn: AgentFn) -> EvalTaskResult:
         """Run a golden task."""
         start = time.time()
         try:
@@ -271,15 +262,13 @@ class AgentEvalHarness:
             ]
             # Check should_not_contain (none must be present).
             leaked = [
-                s for s in test.should_not_contain
+                s
+                for s in test.should_not_contain
                 if re.search(re.escape(s.lower()), output_str)
             ]
 
             passed = not missing_contains and not leaked
-            details = {
-                "missing_contains": missing_contains,
-                "leaked": leaked,
-            }
+            details = {"missing_contains": missing_contains, "leaked": leaked}
             return EvalTaskResult(
                 task_name=test.name,
                 task_type="injection",

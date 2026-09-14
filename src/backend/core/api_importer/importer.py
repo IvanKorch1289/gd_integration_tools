@@ -101,11 +101,7 @@ def import_openapi(spec: dict[str, Any]) -> ImportedAPI:
     for path, path_item in paths.items():
         summary = path_item.get("summary", "")
         description = path_item.get("description", "")
-        path_info = PathInfo(
-            path=path,
-            summary=summary,
-            description=description,
-        )
+        path_info = PathInfo(path=path, summary=summary, description=description)
         for method in _OPENAPI_METHODS:
             op = path_item.get(method)
             if not isinstance(op, dict):
@@ -126,9 +122,7 @@ def import_openapi(spec: dict[str, Any]) -> ImportedAPI:
         if path_info.operations:
             api.paths.append(path_info)
     logger.info(
-        "import_openapi: %d paths, %d operations",
-        len(api.paths),
-        api.operation_count(),
+        "import_openapi: %d paths, %d operations", len(api.paths), api.operation_count()
     )
     return api
 
@@ -155,19 +149,14 @@ def import_swagger(spec: dict[str, Any]) -> ImportedAPI:
     for path, path_item in paths.items():
         summary = path_item.get("summary", "")
         description = path_item.get("description", "")
-        path_info = PathInfo(
-            path=path,
-            summary=summary,
-            description=description,
-        )
+        path_info = PathInfo(path=path, summary=summary, description=description)
         for method in _SWAGGER_METHODS:
             op = path_item.get(method)
             if not isinstance(op, dict):
                 continue
             # Swagger 2.0 body is in parameters with in=body.
             body_param = next(
-                (p for p in op.get("parameters", []) if p.get("in") == "body"),
-                {},
+                (p for p in op.get("parameters", []) if p.get("in") == "body"), {}
             )
             other_params = [
                 p for p in op.get("parameters", []) if p.get("in") != "body"
@@ -188,9 +177,7 @@ def import_swagger(spec: dict[str, Any]) -> ImportedAPI:
         if path_info.operations:
             api.paths.append(path_info)
     logger.info(
-        "import_swagger: %d paths, %d operations",
-        len(api.paths),
-        api.operation_count(),
+        "import_swagger: %d paths, %d operations", len(api.paths), api.operation_count()
     )
     return api
 
@@ -243,9 +230,7 @@ def generate_connector_draft(
     )
 
 
-def generate_route_draft(
-    imported: ImportedAPI, route_id: str
-) -> dict[str, str]:
+def generate_route_draft(imported: ImportedAPI, route_id: str) -> dict[str, str]:
     """Generate route.yaml + test scaffold (as dict of file path → content)."""
     connector = generate_connector_draft(imported, name=route_id)
     files: dict[str, str] = {}
@@ -263,20 +248,22 @@ def _render_route_toml(connector: ConnectorDraft, route_id: str) -> str:
     """Render route.toml из connector draft."""
     lines: list[str] = []
     lines.append("[route]")
-    lines.append(f"id = \"{route_id}\"")
-    lines.append(f"source = \"timer:60s|api={connector.base_url}\"")
-    lines.append(f"description = \"Auto-generated from {connector.name} {connector.version}\"")
-    lines.append("owner = \"team-imports\"")
+    lines.append(f'id = "{route_id}"')
+    lines.append(f'source = "timer:60s|api={connector.base_url}"')
+    lines.append(
+        f'description = "Auto-generated from {connector.name} {connector.version}"'
+    )
+    lines.append('owner = "team-imports"')
     lines.append("")
     lines.append("[contract]")
     lines.append("timeout_seconds = 30")
-    lines.append("idempotency_key_field = \"request_id\"")
-    lines.append("dlq_topic = \"events.{route_id}.dlq\"")
+    lines.append('idempotency_key_field = "request_id"')
+    lines.append('dlq_topic = "events.{route_id}.dlq"')
     lines.append("")
     lines.append("[security]")
     if connector.auth_schemes:
         lines.append(f"# Auth schemes: {', '.join(connector.auth_schemes)}")
-    lines.append("# requires_permission = \"api.read.{}".format(route_id) + "\"")
+    lines.append('# requires_permission = "api.read.{}'.format(route_id) + '"')
     return "\n".join(lines) + "\n"
 
 
@@ -316,9 +303,7 @@ def harness() -> ContractTestHarness:
 '''
 
 
-def export_route_draft(
-    files: dict[str, str], target_dir: str | Path
-) -> list[Path]:
+def export_route_draft(files: dict[str, str], target_dir: str | Path) -> list[Path]:
     """Write generated files в target directory.
 
     Returns:
@@ -351,9 +336,7 @@ class APIImporter:
             return import_swagger(data)
         raise ValueError(f"Unknown spec format in {path}")
 
-    def import_from_dict(
-        self, spec: dict[str, Any]
-    ) -> ImportedAPI:
+    def import_from_dict(self, spec: dict[str, Any]) -> ImportedAPI:
         """Import API from dict (auto-detect)."""
         if "openapi" in spec:
             return import_openapi(spec)
