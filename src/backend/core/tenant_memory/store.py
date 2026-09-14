@@ -10,12 +10,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-__all__ = (
-    "MemoryAccessPolicy",
-    "MemoryEntry",
-    "TenantMemoryStore",
-    "get_memory_store",
-)
+__all__ = ("MemoryAccessPolicy", "MemoryEntry", "TenantMemoryStore", "get_memory_store")
 
 
 @dataclass(slots=True)
@@ -84,9 +79,7 @@ class TenantMemoryStore:
     ) -> MemoryEntry:
         """Store key=value для tenant."""
         if not self._check_tenant_allowed(tenant_id):
-            raise PermissionError(
-                f"Tenant '{tenant_id}' not allowed by policy"
-            )
+            raise PermissionError(f"Tenant '{tenant_id}' not allowed by policy")
         if self._policy.read_only:
             raise PermissionError("Memory store is read-only")
         if self._is_key_blocked(key):
@@ -109,9 +102,7 @@ class TenantMemoryStore:
     def get(self, tenant_id: str, key: str) -> Any:
         """Get value для tenant.key. Raises KeyError if missing/expired."""
         if not self._check_tenant_allowed(tenant_id):
-            raise PermissionError(
-                f"Tenant '{tenant_id}' not allowed by policy"
-            )
+            raise PermissionError(f"Tenant '{tenant_id}' not allowed by policy")
         if self._is_key_blocked(key):
             raise PermissionError(f"Key '{key}' blocked by policy")
         entry = self._get_entry(tenant_id, key)
@@ -123,15 +114,13 @@ class TenantMemoryStore:
         """Get value или default. No exception."""
         try:
             return self.get(tenant_id, key)
-        except (KeyError, PermissionError):
+        except KeyError, PermissionError:
             return default
 
     def delete(self, tenant_id: str, key: str) -> bool:
         """Delete key. Returns True if existed."""
         if not self._check_tenant_allowed(tenant_id):
-            raise PermissionError(
-                f"Tenant '{tenant_id}' not allowed by policy"
-            )
+            raise PermissionError(f"Tenant '{tenant_id}' not allowed by policy")
         if self._is_key_blocked(key):
             raise PermissionError(f"Key '{key}' blocked by policy")
         tenant_data = self._store.get(tenant_id, {})
@@ -149,27 +138,15 @@ class TenantMemoryStore:
     def list_keys(self, tenant_id: str) -> list[str]:
         """List all keys для tenant (excluding expired)."""
         if not self._check_tenant_allowed(tenant_id):
-            raise PermissionError(
-                f"Tenant '{tenant_id}' not allowed by policy"
-            )
+            raise PermissionError(f"Tenant '{tenant_id}' not allowed by policy")
         tenant_data = self._store.get(tenant_id, {})
         now = time.time()
-        return [
-            k
-            for k, entry in tenant_data.items()
-            if not entry.is_expired(now)
-        ]
+        return [k for k, entry in tenant_data.items() if not entry.is_expired(now)]
 
-    def search(
-        self,
-        tenant_id: str,
-        pattern: str,
-    ) -> list[MemoryEntry]:
+    def search(self, tenant_id: str, pattern: str) -> list[MemoryEntry]:
         """Search entries by key pattern (glob, e.g. 'user.pref.*')."""
         if not self._check_tenant_allowed(tenant_id):
-            raise PermissionError(
-                f"Tenant '{tenant_id}' not allowed by policy"
-            )
+            raise PermissionError(f"Tenant '{tenant_id}' not allowed by policy")
         tenant_data = self._store.get(tenant_id, {})
         now = time.time()
         result: list[MemoryEntry] = []
@@ -185,9 +162,7 @@ class TenantMemoryStore:
     def clear_tenant(self, tenant_id: str) -> int:
         """Clear all entries для tenant. Returns count removed."""
         if not self._check_tenant_allowed(tenant_id):
-            raise PermissionError(
-                f"Tenant '{tenant_id}' not allowed by policy"
-            )
+            raise PermissionError(f"Tenant '{tenant_id}' not allowed by policy")
         if self._policy.read_only:
             raise PermissionError("Memory store is read-only")
         count = len(self._store.get(tenant_id, {}))
@@ -199,9 +174,7 @@ class TenantMemoryStore:
         now = time.time()
         count = 0
         for tenant_data in self._store.values():
-            expired_keys = [
-                k for k, e in tenant_data.items() if e.is_expired(now)
-            ]
+            expired_keys = [k for k, e in tenant_data.items() if e.is_expired(now)]
             for k in expired_keys:
                 del tenant_data[k]
                 count += 1
@@ -227,9 +200,7 @@ class TenantMemoryStore:
 
     # ─── Helpers ──────────────────────────────────────────
 
-    def _get_entry(
-        self, tenant_id: str, key: str
-    ) -> MemoryEntry | None:
+    def _get_entry(self, tenant_id: str, key: str) -> MemoryEntry | None:
         tenant_data = self._store.get(tenant_id, {})
         entry = tenant_data.get(key)
         if entry is None:

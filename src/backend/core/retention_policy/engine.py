@@ -93,9 +93,7 @@ class RetentionEngine:
     def add_hold(self, hold: LegalHold) -> None:
         self._holds.append(hold)
 
-    def remove_hold(
-        self, data_type: str, reason: str
-    ) -> int:
+    def remove_hold(self, data_type: str, reason: str) -> int:
         """Remove holds by data_type + reason. Returns count."""
         before = len(self._holds)
         self._holds = [
@@ -111,9 +109,7 @@ class RetentionEngine:
     def holds_for_type(self, data_type: str) -> list[LegalHold]:
         return [h for h in self._holds if h.data_type == data_type]
 
-    def has_active_hold(
-        self, data_type: str, now: datetime | None = None
-    ) -> bool:
+    def has_active_hold(self, data_type: str, now: datetime | None = None) -> bool:
         """Check if data_type has active hold."""
         current = now or datetime.now(UTC)
         for hold in self._holds:
@@ -128,11 +124,7 @@ class RetentionEngine:
 
     # ─── Evaluation ──────────────────────────────────
 
-    def evaluate(
-        self,
-        data_type: str,
-        age_days: float,
-    ) -> RetentionVerdict:
+    def evaluate(self, data_type: str, age_days: float) -> RetentionVerdict:
         """Evaluate retention policy для data_type с заданным возрастом.
 
         Returns:

@@ -99,9 +99,7 @@ class CanaryController:
 
     # ─── Traffic split ────────────────────────────────────
 
-    def get_split(
-        self, route_id: str, tenant_id: str | None = None
-    ) -> TrafficSplit:
+    def get_split(self, route_id: str, tenant_id: str | None = None) -> TrafficSplit:
         """Determine which version handles a request.
 
         Sticky by tenant_id (deterministic hash) для consistent user experience.
@@ -118,15 +116,19 @@ class CanaryController:
         if tenant_id is None:
             # No tenant → use canary_percent as probability.
             import random
+
             return (
                 TrafficSplit.CANARY
-                if random.random() * 100 < config.canary_percent
+                if random.random() * 100 < config.canary_percent  # noqa: S311
                 else TrafficSplit.BASELINE
             )
 
-        # Hash tenant_id → percentage bucket.
-        hash_val = int(
-            hashlib.md5(tenant_id.encode("utf-8")).hexdigest(), 16
+        # Hash tenant_id → percentage bucket (MD5 OK — stable sticky split, not crypto).
+        hash_val = int(  # noqa: S324
+            hashlib.md5(  # noqa: S324
+                tenant_id.encode("utf-8")
+            ).hexdigest(),
+            16,
         )
         bucket = (hash_val % 10000) / 100.0  # 0.00 - 99.99
         return (
@@ -173,9 +175,7 @@ class CanaryController:
             latency_delta = 0.0
 
         # Error rate delta (absolute).
-        error_rate_delta = (
-            canary_metrics.error_rate - baseline_metrics.error_rate
-        )
+        error_rate_delta = canary_metrics.error_rate - baseline_metrics.error_rate
 
         # Latency check.
         if latency_delta > config.max_latency_increase_pct:

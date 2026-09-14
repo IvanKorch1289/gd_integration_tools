@@ -252,9 +252,7 @@ class AdminService:
         registry = _lazy("route_registry")
         registry.toggle_feature_flag(flag_name, enable=enable)
         affected = [
-            r
-            for r, fl in registry.get_route_feature_flags().items()
-            if fl == flag_name
+            r for r, fl in registry.get_route_feature_flags().items() if fl == flag_name
         ]
         return {"flag": flag_name, "enabled": enable, "affected_routes": affected}
 

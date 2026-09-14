@@ -82,27 +82,19 @@ def _action_to_dsl_step(idx: int, action: RecordedAction) -> DSLStep:
     """Convert RecordedAction → DSLStep."""
     if action.action == RecorderActionType.NAVIGATE:
         return DSLStep(
-            name=f"step_{idx}_navigate",
-            action="browser.open",
-            args={"url": action.url},
+            name=f"step_{idx}_navigate", action="browser.open", args={"url": action.url}
         )
     if action.action == RecorderActionType.CLICK:
         return DSLStep(
             name=f"step_{idx}_click",
             action="browser.click",
-            args={
-                "selector": action.selector,
-                "timeout": action.timeout_seconds,
-            },
+            args={"selector": action.selector, "timeout": action.timeout_seconds},
         )
     if action.action == RecorderActionType.FILL:
         return DSLStep(
             name=f"step_{idx}_fill",
             action="browser.fill",
-            args={
-                "selector": action.selector,
-                "value": action.value,
-            },
+            args={"selector": action.selector, "value": action.value},
         )
     if action.action == RecorderActionType.SUBMIT:
         return DSLStep(
@@ -137,16 +129,10 @@ def _action_to_dsl_step(idx: int, action: RecordedAction) -> DSLStep:
             action="browser.assert",
             args={"selector": action.selector, "expected": action.value},
         )
-    return DSLStep(
-        name=f"step_{idx}_unknown",
-        action=action.action,
-        args={},
-    )
+    return DSLStep(name=f"step_{idx}_unknown", action=action.action, args={})
 
 
-def parse_recorded_actions(
-    actions: list[RecordedAction],
-) -> list[DSLStep]:
+def parse_recorded_actions(actions: list[RecordedAction]) -> list[DSLStep]:
     """Convert list of recorded actions to DSL steps."""
     return [_action_to_dsl_step(i, a) for i, a in enumerate(actions)]
 
@@ -155,10 +141,7 @@ def parse_recorded_actions(
 
 
 def generate_route_draft(
-    actions: list[RecordedAction],
-    route_id: str,
-    *,
-    base_url: str = "",
+    actions: list[RecordedAction], route_id: str, *, base_url: str = ""
 ) -> dict[str, str]:
     """Generate route.yaml + test scaffold from recorded actions.
 
@@ -178,10 +161,7 @@ def generate_route_draft(
 
 
 def _render_route_yaml(
-    route_id: str,
-    steps: list[DSLStep],
-    base_url: str,
-    actions: list[RecordedAction],
+    route_id: str, steps: list[DSLStep], base_url: str, actions: list[RecordedAction]
 ) -> str:
     """Render route.yaml content."""
     lines: list[str] = []
@@ -189,26 +169,24 @@ def _render_route_yaml(
     lines.append("# TODO: verify selectors, add assertions, run lint+tests.")
     lines.append("")
     lines.append("[route]")
-    lines.append(f"id = \"{route_id}\"")
+    lines.append(f'id = "{route_id}"')
     if base_url:
-        lines.append(f"source = \"browser://{base_url}\"")
+        lines.append(f'source = "browser://{base_url}"')
     else:
-        lines.append("source = \"rpa://recorded\"")
-    lines.append(
-        f"description = \"Auto-generated from {len(actions)} recorded actions\""
-    )
-    lines.append("owner = \"team-rpa\"")
-    lines.append("kind = \"rpa\"")
+        lines.append('source = "rpa://recorded"')
+    lines.append(f'description = "Auto-generated from {len(actions)} recorded actions"')
+    lines.append('owner = "team-rpa"')
+    lines.append('kind = "rpa"')
     lines.append("")
     lines.append("[contract]")
     lines.append("timeout_seconds = 60")
-    lines.append("dlq_topic = \"events.rpa.{}.dlq\"".format(route_id))
+    lines.append('dlq_topic = "events.rpa.{}.dlq"'.format(route_id))
     lines.append("")
     lines.append("[steps]")
     for step in steps:
         lines.append("[[steps.item]]")
-        lines.append(f"name = \"{step.name}\"")
-        lines.append(f"action = \"{step.action}\"")
+        lines.append(f'name = "{step.name}"')
+        lines.append(f'action = "{step.action}"')
         for k, v in step.args.items():
             lines.append(f"{k} = {repr(v)}")
         lines.append("")
@@ -240,9 +218,7 @@ async def test_{route_id}_happy_path() -> None:
 # ─── Export ───────────────────────────────────────────
 
 
-def export_dsl_draft(
-    files: dict[str, str], target_dir: str | Path
-) -> list[Path]:
+def export_dsl_draft(files: dict[str, str], target_dir: str | Path) -> list[Path]:
     """Write generated files в target_dir."""
     target = Path(target_dir)
     target.mkdir(parents=True, exist_ok=True)

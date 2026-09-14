@@ -119,115 +119,225 @@ class IncidentReport:
 _PATTERNS: dict[str, dict[str, Any]] = {
     "TimeoutError": {
         "hypotheses": [
-            ("External dependency slow/dead",
-             "Upstream service unreachable или timeout; проверить p99 latency зависимости.",
-             "external", 0.7),
-            ("Network issue (DNS, firewall, packet loss)",
-             "Network path к upstream прерван; проверить DNS resolution, firewall rules.",
-             "infra", 0.5),
-            ("Resource exhaustion (DB connection pool)",
-             "Connection pool исчерпан; проверить pool metrics и active queries.",
-             "infra", 0.4),
+            (
+                "External dependency slow/dead",
+                "Upstream service unreachable или timeout; проверить p99 latency зависимости.",
+                "external",
+                0.7,
+            ),
+            (
+                "Network issue (DNS, firewall, packet loss)",
+                "Network path к upstream прерван; проверить DNS resolution, firewall rules.",
+                "infra",
+                0.5,
+            ),
+            (
+                "Resource exhaustion (DB connection pool)",
+                "Connection pool исчерпан; проверить pool metrics и active queries.",
+                "infra",
+                0.4,
+            ),
         ],
         "recommendations": [
-            ("investigate", "Проверить health upstream dependency через dashboard.",
-             "low", True, "Read-only check"),
-            ("scale", "Увеличить timeout / connection pool если recent deploy.",
-             "medium", True, "Affects new requests only"),
+            (
+                "investigate",
+                "Проверить health upstream dependency через dashboard.",
+                "low",
+                True,
+                "Read-only check",
+            ),
+            (
+                "scale",
+                "Увеличить timeout / connection pool если recent deploy.",
+                "medium",
+                True,
+                "Affects new requests only",
+            ),
         ],
     },
     "OutOfMemoryError": {
         "hypotheses": [
-            ("Memory leak в новом коде",
-             "Recent deploy ввёл утечку памяти; проверить heap dump.",
-             "code", 0.8),
-            ("Unbounded data growth (large query result)",
-             "Query возвращает больше данных чем ожидалось; bounded pagination.",
-             "code", 0.5),
+            (
+                "Memory leak в новом коде",
+                "Recent deploy ввёл утечку памяти; проверить heap dump.",
+                "code",
+                0.8,
+            ),
+            (
+                "Unbounded data growth (large query result)",
+                "Query возвращает больше данных чем ожидалось; bounded pagination.",
+                "code",
+                0.5,
+            ),
         ],
         "recommendations": [
-            ("rollback", "Rollback к предыдущему deploy если недавний.",
-             "low", True, "Restore service quickly"),
-            ("scale", "Restart pods для освобождения memory.",
-             "low", True, "Temporary fix"),
+            (
+                "rollback",
+                "Rollback к предыдущему deploy если недавний.",
+                "low",
+                True,
+                "Restore service quickly",
+            ),
+            (
+                "scale",
+                "Restart pods для освобождения memory.",
+                "low",
+                True,
+                "Temporary fix",
+            ),
         ],
     },
     "ConnectionError": {
         "hypotheses": [
-            ("Database down или restarted",
-             "DB connection refused; проверить pg_is_in_recovery().",
-             "infra", 0.8),
-            ("Network partition / firewall change",
-             "Network rules changed; verify с network team.",
-             "infra", 0.5),
+            (
+                "Database down или restarted",
+                "DB connection refused; проверить pg_is_in_recovery().",
+                "infra",
+                0.8,
+            ),
+            (
+                "Network partition / firewall change",
+                "Network rules changed; verify с network team.",
+                "infra",
+                0.5,
+            ),
         ],
         "recommendations": [
-            ("investigate", "Check DB / network health via status page.",
-             "low", True, "No side effects"),
-            ("scale", "Restart pods для re-establish connections.",
-             "low", True, "Reconnects on startup"),
+            (
+                "investigate",
+                "Check DB / network health via status page.",
+                "low",
+                True,
+                "No side effects",
+            ),
+            (
+                "scale",
+                "Restart pods для re-establish connections.",
+                "low",
+                True,
+                "Reconnects on startup",
+            ),
         ],
     },
     "IntegrityError": {
         "hypotheses": [
-            ("Schema mismatch (expected vs actual columns)",
-             "Recent migration changed schema; application using old model.",
-             "code", 0.9),
-            ("Concurrent update conflict",
-             "Two transactions updated same row; need retry with fresh data.",
-             "data", 0.4),
+            (
+                "Schema mismatch (expected vs actual columns)",
+                "Recent migration changed schema; application using old model.",
+                "code",
+                0.9,
+            ),
+            (
+                "Concurrent update conflict",
+                "Two transactions updated same row; need retry with fresh data.",
+                "data",
+                0.4,
+            ),
         ],
         "recommendations": [
-            ("rollback", "Rollback recent schema migration.",
-             "medium", True, "Restore compatibility"),
-            ("investigate", "Check migration history vs application deploys.",
-             "low", True, "Diagnostic"),
+            (
+                "rollback",
+                "Rollback recent schema migration.",
+                "medium",
+                True,
+                "Restore compatibility",
+            ),
+            (
+                "investigate",
+                "Check migration history vs application deploys.",
+                "low",
+                True,
+                "Diagnostic",
+            ),
         ],
     },
     "PermissionError": {
         "hypotheses": [
-            ("File/directory mode changed (chmod 0o700 vs 0o755)",
-             "Permission fix вроде diskcache migration (commit 63fadf4fe) изменил mode на 0o700.",
-             "config", 0.85),
-            ("User running as wrong uid/gid",
-             "Container running process as different user than file owner.",
-             "config", 0.3),
+            (
+                "File/directory mode changed (chmod 0o700 vs 0o755)",
+                "Permission fix вроде diskcache migration (commit 63fadf4fe) изменил mode на 0o700.",
+                "config",
+                0.85,
+            ),
+            (
+                "User running as wrong uid/gid",
+                "Container running process as different user than file owner.",
+                "config",
+                0.3,
+            ),
         ],
         "recommendations": [
-            ("investigate", "ls -la на проблемном path; проверить uid процесса.",
-             "low", True, "Read-only"),
-            ("scale", "Restart с correct user если misconfigured.",
-             "low", True, "Pod restart"),
+            (
+                "investigate",
+                "ls -la на проблемном path; проверить uid процесса.",
+                "low",
+                True,
+                "Read-only",
+            ),
+            (
+                "scale",
+                "Restart с correct user если misconfigured.",
+                "low",
+                True,
+                "Pod restart",
+            ),
         ],
     },
     "KeyError": {
         "hypotheses": [
-            ("Config missing (env var / secret not loaded)",
-             "Required config / secret не загружен; check deployment yaml.",
-             "config", 0.7),
-            ("Schema field rename в recent deploy",
-             "Код ожидает старое имя поля, БД/контракт имеет новое.",
-             "code", 0.4),
+            (
+                "Config missing (env var / secret not loaded)",
+                "Required config / secret не загружен; check deployment yaml.",
+                "config",
+                0.7,
+            ),
+            (
+                "Schema field rename в recent deploy",
+                "Код ожидает старое имя поля, БД/контракт имеет новое.",
+                "code",
+                0.4,
+            ),
         ],
         "recommendations": [
-            ("investigate", "Check config + secret presence в deployment.",
-             "low", True, "Diagnostic"),
-            ("rollback", "Rollback если недавний deploy изменил field names.",
-             "medium", True, "Restore compatibility"),
+            (
+                "investigate",
+                "Check config + secret presence в deployment.",
+                "low",
+                True,
+                "Diagnostic",
+            ),
+            (
+                "rollback",
+                "Rollback если недавний deploy изменил field names.",
+                "medium",
+                True,
+                "Restore compatibility",
+            ),
         ],
     },
     "ValidationError": {
         "hypotheses": [
-            ("Request schema changed (missing field)",
-             "API consumers используют устаревший contract.",
-             "code", 0.6),
-            ("Pydantic model update с new required field",
-             "Model adds new required field without default.",
-             "code", 0.5),
+            (
+                "Request schema changed (missing field)",
+                "API consumers используют устаревший contract.",
+                "code",
+                0.6,
+            ),
+            (
+                "Pydantic model update с new required field",
+                "Model adds new required field without default.",
+                "code",
+                0.5,
+            ),
         ],
         "recommendations": [
-            ("investigate", "Check recent model changes и contract version.",
-             "low", True, "Diagnostic"),
+            (
+                "investigate",
+                "Check recent model changes и contract version.",
+                "low",
+                True,
+                "Diagnostic",
+            )
         ],
     },
 }
@@ -320,15 +430,11 @@ class IncidentAnalyst:
 
         return report
 
-    def _build_evidence(
-        self, ctx: IncidentContext, hypothesis_title: str
-    ) -> list[str]:
+    def _build_evidence(self, ctx: IncidentContext, hypothesis_title: str) -> list[str]:
         """Build evidence list для hypothesis из context."""
         evidence: list[str] = []
         if ctx.recent_deploys:
-            evidence.append(
-                f"Recent deploys: {', '.join(ctx.recent_deploys[:3])}"
-            )
+            evidence.append(f"Recent deploys: {', '.join(ctx.recent_deploys[:3])}")
         if ctx.recent_config_changes:
             evidence.append(
                 f"Config changes: {', '.join(ctx.recent_config_changes[:3])}"
@@ -365,20 +471,15 @@ class IncidentAnalyst:
                 if h.category == "config":
                     h.confidence = min(1.0, h.confidence + 0.15)
 
-    def _classify_severity(
-        self, ctx: IncidentContext, report: IncidentReport
-    ) -> str:
+    def _classify_severity(self, ctx: IncidentContext, report: IncidentReport) -> str:
         """Classify severity based on error_rate + p99 + error type."""
         if ctx.error_rate is not None and ctx.error_rate > 0.5:
             return "critical"
-        if ctx.error_type in (
-            "OutOfMemoryError",
-            "SystemError",
-        ):
+        if ctx.error_type in ("OutOfMemoryError", "SystemError"):
             return "critical"
-        if (
-            ctx.error_rate is not None and ctx.error_rate > 0.1
-        ) or (ctx.latency_p99_ms and ctx.latency_p99_ms > 5000):
+        if (ctx.error_rate is not None and ctx.error_rate > 0.1) or (
+            ctx.latency_p99_ms and ctx.latency_p99_ms > 5000
+        ):
             return "high"
         if report.hypotheses and report.hypotheses[0].confidence > 0.7:
             return "medium"

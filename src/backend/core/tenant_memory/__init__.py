@@ -38,9 +38,4 @@ from src.backend.core.tenant_memory.store import (
     get_memory_store,
 )
 
-__all__ = (
-    "MemoryAccessPolicy",
-    "MemoryEntry",
-    "TenantMemoryStore",
-    "get_memory_store",
-)
+__all__ = ("MemoryAccessPolicy", "MemoryEntry", "TenantMemoryStore", "get_memory_store")
