@@ -79,6 +79,20 @@ class SBOMDiff:
         return self.fail_on_unknown and bool(self.unknown_licenses)
 
 
+def _extract_vuln_ids(audit_path: Path) -> set[str]:
+    """pip-audit JSON → set vuln ID (dedupe по (pkg, id))."""
+    data = json.loads(audit_path.read_text(encoding="utf-8"))
+    ids: set[str] = set()
+    for dep in data.get("dependencies", []):
+        for vuln in dep.get("vulns", []):
+            vid = vuln.get("id")
+            if vid:
+                ids.add(vid)
+            for alias in vuln.get("aliases", []) or []:
+                ids.add(alias)
+    return ids
+
+
 def _parse_components(sbom_path: Path) -> list[SBOMComponent]:
     """Parse CycloneDX JSON → list of SBOMComponent."""
     if not sbom_path.exists():
@@ -161,7 +175,7 @@ def diff_sboms(
     )
 
 
-def _format_report(diff: SBOMDiff) -> str:
+def _format_report(diff: SBOMDiff, *, new_cves: list[str] | None = None) -> str:
     """Human-readable diff report."""
     lines: list[str] = []
     lines.append("=" * 70)
@@ -247,6 +261,21 @@ def main() -> int:
         help="Path to file with denied license IDs (one per line)",
     )
     parser.add_argument(
+        "--audit-current",
+        type=Path,
+        help="pip-audit JSON текущего прогона (dist/pip-audit.json)",
+    )
+    parser.add_argument(
+        "--audit-baseline",
+        type=Path,
+        help="pip-audit JSON принятого baseline (известные/принятые CVE)",
+    )
+    parser.add_argument(
+        "--vuln-allowlist",
+        type=Path,
+        help=".security/pip-audit-allowlist.txt (ID по одному в строке)",
+    )
+    parser.add_argument(
         "--fail-on-unknown",
         action="store_true",
         help="Строгий режим: unknown license тоже fail (default: WARN)",
@@ -283,12 +312,30 @@ def main() -> int:
     )
     diff.fail_on_unknown = args.fail_on_unknown
 
+    # CVE diff (P1-дополнение): новые vuln ID vs baseline, минус allowlist.
+    new_cves: list[str] = []
+    if args.audit_current:
+        current_vulns = _extract_vuln_ids(args.audit_current)
+        baseline_vulns = (
+            _extract_vuln_ids(args.audit_baseline)
+            if args.audit_baseline and Path(args.audit_baseline).exists()
+            else set()
+        )
+        allow = set()
+        if args.vuln_allowlist and Path(args.vuln_allowlist).exists():
+            allow = {
+                line.strip()
+                for line in Path(args.vuln_allowlist).read_text().splitlines()
+                if line.strip() and not line.startswith("#")
+            }
+        new_cves = sorted(current_vulns - baseline_vulns - allow)
+
     # Format + print report.
-    report = _format_report(diff)
+    report = _format_report(diff, new_cves=new_cves)
     print(report)
 
     # Decision.
-    if diff.has_violations:
+    if diff.has_violations or new_cves:
         return 1
 
     if len(diff.added) > args.threshold_new_components:

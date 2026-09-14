@@ -85,10 +85,20 @@ sbom-diff-gate: ## OP-3: SBOM diff gate — fail on new copyleft; unknown licens
 	# P0/P1 (2026-09-14): baseline трекается в .baselines/ (без self-copy);
 	# приём нового baseline — явный make sbom-baseline-accept.
 	@test -f .baselines/sbom.baseline.json || { $(ERROR) ".baselines/sbom.baseline.json отсутствует — make sbom-baseline-accept"; exit 2; }
+	@test -f dist/pip-audit.json || $(UV_RUN) pip-audit --format json --output dist/pip-audit.json -r dist/audit-requirements.txt $$ALLOW || true
 	@$(UV_RUN) python tools/checks/sbom_diff_gate.py \
 		--current dist/sbom/sbom.cdx.json \
 		--baseline .baselines/sbom.baseline.json \
+		--audit-current dist/pip-audit.json \
+		--audit-baseline .baselines/pip-audit.baseline.json \
+		--vuln-allowlist .security/pip-audit-allowlist.txt \
 		--threshold-new-components 20
+
+pip-audit-baseline-accept: ## OP-3: принять текущие CVE как baseline (после review; новые CVE всё равно блокируют)
+	@$(INFO) "Accepting current pip-audit as CVE baseline..."
+	@test -f dist/pip-audit.json || { $(ERROR) "dist/pip-audit.json missing — run make audit-deps"; exit 2; }
+	@cp dist/pip-audit.json .baselines/pip-audit.baseline.json
+	@$(SUCCESS) "CVE baseline принят"
 
 sbom-baseline-accept: ## OP-3: принять текущий SBOM как baseline (после review)
 	@$(INFO) "Accepting current SBOM as baseline..."
