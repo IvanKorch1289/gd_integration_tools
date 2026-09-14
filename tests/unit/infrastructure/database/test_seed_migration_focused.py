@@ -113,12 +113,20 @@ class TestSeedMigrationFile:
         assert "ownership_transfer" in seed_source
 
 class TestNoPrivilegedCredentials:
-    """P0: privileged credentials отсутствуют в seed-модуле."""
+    """P0: privileged credentials отсутствуют в seed-миграции."""
 
-    def test_no_default_password_hash_in_source(self, seed_source: str) -> None:
-        """P0: в reference-seed нет парольных хэшей вовсе."""
-        assert "$argon2id$" not in seed_source
-        assert "$pbkdf2" not in seed_source
+    @pytest.fixture
+    def migration_source(self) -> str:
+        path = Path(
+            "src/backend/infrastructure/database/migrations/versions/"
+            "2026_09_11_1000-aa1b2c3d4e5f_seed_default_admin.py"
+        )
+        return path.read_text(encoding="utf-8")
+
+    def test_no_default_password_hash_in_source(self, migration_source: str) -> None:
+        """P0: в миграции нет парольных хэшей вовсе."""
+        assert "$argon2id$" not in migration_source
+        assert "$pbkdf2" not in migration_source
 
 
 class TestAlembicChain:
