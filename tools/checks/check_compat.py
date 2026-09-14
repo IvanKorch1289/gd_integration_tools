@@ -26,8 +26,8 @@ from pathlib import Path
 
 from src.backend.core.plugin_runtime.compat_checker import check_compatibility
 from src.backend.services.plugins.manifest_toml import (
-    PluginManifestError,
     PluginManifest,
+    PluginManifestError,
     load_plugin_manifest,
 )
 

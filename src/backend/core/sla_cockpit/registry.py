@@ -94,8 +94,7 @@ class SLARegistry:
 
     def list_by_tenant(self, tenant_id: str) -> list[SLO]:
         return [
-            slo for (tid, _), slo in self._slo.items()
-            if tid == tenant_id or tid == "*"
+            slo for (tid, _), slo in self._slo.items() if tid == tenant_id or tid == "*"
         ]
 
     def size(self) -> int:

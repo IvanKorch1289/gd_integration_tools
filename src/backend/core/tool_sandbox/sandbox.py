@@ -103,21 +103,14 @@ class ToolSandbox:
 
         self._config = replace(self._config, **kwargs)
 
-    def wrap(
-        self, fn: Callable[..., Any]
-    ) -> SandboxedTool:
+    def wrap(self, fn: Callable[..., Any]) -> SandboxedTool:
         """Decorator: wrap function as sandboxed tool."""
         return SandboxedTool(
-            name=getattr(fn, "__name__", "sandboxed_tool"),
-            func=fn,
-            config=self._config,
+            name=getattr(fn, "__name__", "sandboxed_tool"), func=fn, config=self._config
         )
 
     async def execute(
-        self,
-        tool: SandboxedTool,
-        *args: Any,
-        **kwargs: Any,
+        self, tool: SandboxedTool, *args: Any, **kwargs: Any
     ) -> SandboxResult:
         """Execute sandboxed tool с limits enforcement."""
         result = SandboxResult(value=None, success=True)
@@ -140,8 +133,7 @@ class ToolSandbox:
         try:
             if inspect.iscoroutinefunction(tool.func):
                 output = await asyncio.wait_for(
-                    tool.func(*args, **kwargs),
-                    timeout=self._config.max_cpu_seconds,
+                    tool.func(*args, **kwargs), timeout=self._config.max_cpu_seconds
                 )
             else:
                 # Run sync function в executor с timeout.
@@ -154,9 +146,7 @@ class ToolSandbox:
             result.success = True
         except asyncio.TimeoutError:
             result.success = False
-            result.error = (
-                f"Timeout exceeded: {self._config.max_cpu_seconds}s"
-            )
+            result.error = f"Timeout exceeded: {self._config.max_cpu_seconds}s"
             result.error_type = "TimeoutError"
             violations.append("timeout_exceeded")
             result.policy_violations.append("timeout_exceeded")

@@ -97,9 +97,7 @@ class LineageGraph:
     def add_node(self, node: LineageNode) -> None:
         """Register a node."""
         if node.id in self._nodes:
-            logger.debug(
-                "LineageGraph: overwriting existing node id=%s", node.id
-            )
+            logger.debug("LineageGraph: overwriting existing node id=%s", node.id)
         self._nodes[node.id] = node
 
     def add_edge(self, edge: LineageEdge) -> None:
@@ -135,9 +133,7 @@ class LineageGraph:
 
     # ─── Traversal ─────────────────────────────────────────
 
-    def upstream(
-        self, node_id: str, *, max_depth: int | None = None
-    ) -> dict[str, str]:
+    def upstream(self, node_id: str, *, max_depth: int | None = None) -> dict[str, str]:
         """Find all upstream nodes (sources).
 
         Returns:
@@ -196,9 +192,7 @@ class LineageGraph:
         """Alias для upstream() — sources of data."""
         return self.upstream(node_id)
 
-    def path(
-        self, source: str, target: str
-    ) -> list[str] | None:
+    def path(self, source: str, target: str) -> list[str] | None:
         """Shortest path source → target через BFS."""
         if source not in self._nodes or target not in self._nodes:
             return None
@@ -211,11 +205,12 @@ class LineageGraph:
             if node_id == target:
                 # Reconstruct path.
                 path = [target]
-                cur: str | None = target
+                cur: str = target
                 while visited.get(cur) is not None:
-                    cur = visited[cur]
-                    if cur is None:
+                    parent = visited[cur]
+                    if parent is None:
                         break
+                    cur = parent
                     path.append(cur)
                 return list(reversed(path))
             for neighbor_id, _ in self._forward.get(node_id, []):
@@ -256,7 +251,12 @@ class LineageGraph:
     def to_dict(self) -> dict[str, Any]:
         return {
             "nodes": [
-                {"id": n.id, "kind": n.kind.value, "owner": n.owner, "description": n.description}
+                {
+                    "id": n.id,
+                    "kind": n.kind.value,
+                    "owner": n.owner,
+                    "description": n.description,
+                }
                 for n in self._nodes.values()
             ],
             "edges": [
@@ -264,10 +264,7 @@ class LineageGraph:
                 for s, targets in self._forward.items()
                 for t, k in targets
             ],
-            "stats": {
-                "node_count": self.size(),
-                "edge_count": self.edge_count(),
-            },
+            "stats": {"node_count": self.size(), "edge_count": self.edge_count()},
         }
 
 

@@ -108,12 +108,7 @@ class ErrorExplainer:
     def __init__(self, project_root: Path | None = None) -> None:
         self._project_root = project_root or Path.cwd()
 
-    def explain(
-        self,
-        exc: BaseException,
-        *,
-        tb: Any = None,
-    ) -> ErrorExplanation:
+    def explain(self, exc: BaseException, *, tb: Any = None) -> ErrorExplanation:
         """Generate explanation для exception."""
         # Use provided traceback or extract from exception.
         if tb is None:
@@ -125,11 +120,16 @@ class ErrorExplainer:
         exc_message = str(exc)
 
         # Get hints based on exception type.
-        hints = list(_EXCEPTION_HINTS.get(exc_type, [
-            "Check exception traceback for root cause.",
-            "Use logging for context.",
-            "Review related tests for expected behavior.",
-        ]))
+        hints = list(
+            _EXCEPTION_HINTS.get(
+                exc_type,
+                [
+                    "Check exception traceback for root cause.",
+                    "Use logging for context.",
+                    "Review related tests for expected behavior.",
+                ],
+            )
+        )
 
         # Suggest reproduction commands.
         commands = self._suggest_commands(exc_type, source_file)
@@ -148,9 +148,7 @@ class ErrorExplainer:
             related_files=related,
         )
 
-    def _extract_source(
-        self, tb: Any
-    ) -> tuple[str, int, str]:
+    def _extract_source(self, tb: Any) -> tuple[str, int, str]:
         """Extract source file, line, function name из traceback."""
         if tb is None:
             return ("", 0, "")
@@ -184,9 +182,7 @@ class ErrorExplainer:
             rel_path = file_path
         return (rel_path, line_no, func_name)
 
-    def _suggest_commands(
-        self, exc_type: str, source_file: str
-    ) -> list[str]:
+    def _suggest_commands(self, exc_type: str, source_file: str) -> list[str]:
         """Suggest reproduction commands."""
         cmds: list[str] = []
         if source_file:
@@ -220,9 +216,7 @@ class ErrorExplainer:
 
 
 def explain_error(
-    exc: BaseException,
-    *,
-    project_root: Path | None = None,
+    exc: BaseException, *, project_root: Path | None = None
 ) -> ErrorExplanation:
     """Convenience function: explain exception."""
     expl = ErrorExplainer(project_root=project_root)

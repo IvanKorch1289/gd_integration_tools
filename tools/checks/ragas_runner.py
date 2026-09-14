@@ -47,7 +47,6 @@ from src.backend.services.ai.eval.ragas_evaluator import (
     RAGASReport,
 )
 
-
 ARTIFACT_DIR = Path("artifacts/ragas")
 REFERENCE_DATASETS: dict[str, tuple[RAGASRecord, ...]] = {
     "banking": BANKING_QA_SAMPLES,

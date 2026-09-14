@@ -1,0 +1,135 @@
+{
+  "services": [
+    {
+      "name": "FilesAutoService",
+      "methods": [
+        {
+          "name": "Create"
+        },
+        {
+          "name": "CreateMany"
+        },
+        {
+          "name": "Get"
+        },
+        {
+          "name": "List"
+        },
+        {
+          "name": "Update"
+        }
+      ]
+    },
+    {
+      "name": "OrderkindsAutoService",
+      "methods": [
+        {
+          "name": "Create"
+        },
+        {
+          "name": "CreateMany"
+        },
+        {
+          "name": "Get"
+        },
+        {
+          "name": "List"
+        },
+        {
+          "name": "Update"
+        }
+      ]
+    },
+    {
+      "name": "OrdersAutoService",
+      "methods": [
+        {
+          "name": "Create"
+        },
+        {
+          "name": "CreateMany"
+        },
+        {
+          "name": "Get"
+        },
+        {
+          "name": "List"
+        },
+        {
+          "name": "Update"
+        }
+      ]
+    },
+    {
+      "name": "UsersAutoService",
+      "methods": [
+        {
+          "name": "Create"
+        },
+        {
+          "name": "CreateMany"
+        },
+        {
+          "name": "Get"
+        },
+        {
+          "name": "List"
+        },
+        {
+          "name": "Update"
+        }
+      ]
+    },
+    {
+      "name": "InvokerService",
+      "methods": [
+        {
+          "name": "Invoke"
+        }
+      ]
+    },
+    {
+      "name": "OrderService",
+      "methods": [
+        {
+          "name": "CreateOrder"
+        },
+        {
+          "name": "GetOrderResult"
+        },
+        {
+          "name": "GetOrder"
+        },
+        {
+          "name": "DeleteOrder"
+        },
+        {
+          "name": "CreateSKBOrder"
+        },
+        {
+          "name": "GetFileAndJson"
+        },
+        {
+          "name": "SendOrderData"
+        }
+      ]
+    },
+    {
+      "name": "FileService",
+      "methods": [
+        {
+          "name": "GetFile"
+        },
+        {
+          "name": "DeleteFile"
+        },
+        {
+          "name": "DownloadFile"
+        },
+        {
+          "name": "UploadFile"
+        }
+      ]
+    }
+  ]
+}

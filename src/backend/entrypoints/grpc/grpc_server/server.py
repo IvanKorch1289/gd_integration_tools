@@ -70,10 +70,32 @@ async def serve() -> None:
     """Запуск gRPC-сервера с регистрацией всех servicer."""
     from concurrent import futures
     from pathlib import Path
+    from types import SimpleNamespace
 
     from grpc.aio import server
 
     Path(settings.grpc.socket_path).unlink(missing_ok=True)
+
+    # G5(b)-fix (2026-09-14): standalone grpc-serve вне FastAPI — app.state
+    # не существует, InvokerGRPCServicer.Invoke падал
+    # «get_invoker overridden by app_state_singleton». Регистрируем
+    # минимальный state (invoker + reply_registry) через set_app_ref:
+    # геттеры core/di читают только контракт `.state.<attr>`.
+    from src.backend.core.di.app_state import set_app_ref
+    from src.backend.infrastructure.messaging.invocation_replies import (
+        get_reply_channel_registry,
+    )
+    from src.backend.services.execution.invoker import Invoker
+
+    _state = SimpleNamespace()
+    _state.state = SimpleNamespace()
+    try:
+        _state.state.reply_registry = get_reply_channel_registry()
+        _state.state.invoker = Invoker()
+        set_app_ref(_state)  # type: ignore[arg-type]
+        grpc_logger.info("gRPC standalone: app.state (invoker/reply_registry) зарегистрирован")
+    except Exception as exc:  # noqa: BLE001 — запуск не блокируем
+        grpc_logger.warning("gRPC standalone: state bootstrap skipped: %s", exc)
 
     interceptors = []
     api_key = getattr(settings.secure, "api_key", None)

@@ -11,12 +11,7 @@ from src.backend.core.sla_cockpit.registry import SLOStatus
 
 logger = __import__("logging").getLogger(__name__)
 
-__all__ = (
-    "SLOCockpit",
-    "SLOMeasurement",
-    "SLOReport",
-    "get_sla_cockpit",
-)
+__all__ = ("SLOCockpit", "SLOMeasurement", "SLOReport", "get_sla_cockpit")
 
 
 @dataclass(slots=True)
@@ -48,21 +43,15 @@ class SLOReport:
 
     @property
     def at_risk_count(self) -> int:
-        return sum(
-            1 for e in self.evaluations if e.status == SLOStatus.AT_RISK
-        )
+        return sum(1 for e in self.evaluations if e.status == SLOStatus.AT_RISK)
 
     @property
     def healthy_count(self) -> int:
-        return sum(
-            1 for e in self.evaluations if e.status == SLOStatus.HEALTHY
-        )
+        return sum(1 for e in self.evaluations if e.status == SLOStatus.HEALTHY)
 
     @property
     def unknown_count(self) -> int:
-        return sum(
-            1 for e in self.evaluations if e.status == SLOStatus.UNKNOWN
-        )
+        return sum(1 for e in self.evaluations if e.status == SLOStatus.UNKNOWN)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -122,10 +111,7 @@ class SLOCockpit:
     def generate_report(self) -> SLOReport:
         """Generate aggregated report from current state."""
         evaluations = self._evaluator.history()
-        return SLOReport(
-            timestamp=time.time(),
-            evaluations=evaluations,
-        )
+        return SLOReport(timestamp=time.time(), evaluations=evaluations)
 
     def clear_history(self) -> None:
         self._evaluator.clear_history()

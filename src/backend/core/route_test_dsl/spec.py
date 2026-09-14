@@ -152,11 +152,7 @@ class RouteTest:
         return self
 
     def then(
-        self,
-        description: str,
-        expected: Any = None,
-        *,
-        comparator: str = "eq",
+        self, description: str, expected: Any = None, *, comparator: str = "eq"
     ) -> "RouteTest":
         """Add assertion step."""
         self._spec.then_steps.append(
@@ -218,9 +214,7 @@ class RouteTest:
         )
         return self
 
-    def expect_dlq_on_failure(
-        self, error_class: type[BaseException]
-    ) -> "RouteTest":
+    def expect_dlq_on_failure(self, error_class: type[BaseException]) -> "RouteTest":
         """Verify DLQ routing on failure."""
         self._spec.expect_steps.append(
             _ExpectStep(
@@ -275,11 +269,7 @@ class RouteTestRunner:
         # In-memory captures для tests.
         self._captures: dict[str, _MetricCapture] = {}
 
-    def run(
-        self,
-        spec: RouteTestSpec,
-        route_fn: RouteFn,
-    ) -> RouteTestResult:
+    def run(self, spec: RouteTestSpec, route_fn: RouteFn) -> RouteTestResult:
         """Execute spec."""
         import asyncio
         import inspect
@@ -305,9 +295,8 @@ class RouteTestRunner:
                     if loop.is_running():
                         # New thread for sync execution.
                         import concurrent.futures
-                        with concurrent.futures.ThreadPoolExecutor(
-                            max_workers=1
-                        ) as ex:
+
+                        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
                             fut = ex.submit(asyncio.run, output)
                             output = fut.result()
                     else:
@@ -375,9 +364,7 @@ class RouteTestRunner:
         capture = self._captures.setdefault(test_name, _MetricCapture())
         capture.events.append({"type": event_type})
 
-    def _evaluate_then(
-        self, then: _ThenStep, output: Any
-    ) -> AssertionResult:
+    def _evaluate_then(self, then: _ThenStep, output: Any) -> AssertionResult:
         """Evaluate a then() assertion."""
         if then.comparator == "truthy":
             passed = bool(output)
@@ -415,9 +402,7 @@ class RouteTestRunner:
         )
 
     def _evaluate_expect(
-        self,
-        expect: _ExpectStep,
-        capture: _MetricCapture,
+        self, expect: _ExpectStep, capture: _MetricCapture
     ) -> AssertionResult:
         """Evaluate an expect_*() step against captured state."""
         if expect.expectation_type == ExpectationType.METRIC:

@@ -35,9 +35,4 @@ from src.backend.core.error_explainer.explainer import (
     get_error_explainer,
 )
 
-__all__ = (
-    "ErrorExplanation",
-    "ErrorExplainer",
-    "explain_error",
-    "get_error_explainer",
-)
+__all__ = ("ErrorExplanation", "ErrorExplainer", "explain_error", "get_error_explainer")

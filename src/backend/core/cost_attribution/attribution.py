@@ -111,7 +111,7 @@ class CostReport:
             result[agent] = result.get(agent, 0.0) + r.cost_usd
         return result
 
-    def top_consumers(self, limit: int = 5) -> list[tuple[str, float]]:
+    def top_consumers(self, limit: int = 5) -> list[tuple[tuple[str, str, str], float]]:
         """Top N (tenant_id, route_id, agent) by cost."""
         pairs: dict[tuple[str, str, str], float] = {}
         for r in self.records:
@@ -232,6 +232,7 @@ def track_cost(
         async def call_llm(tenant_id: str, tokens: int):
             return await _openai(...)
     """
+
     def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
         # Capture defaults for closure.
         rt = resource_type
@@ -247,16 +248,8 @@ def track_cost(
                 # Extract tenant_id / route_id / units from kwargs (or args).
                 bound = inspect.signature(fn).bind_partial(*args, **kwargs)
                 bound.apply_defaults()
-                tenant = (
-                    bound.arguments.get(tenant_arg, "*")
-                    if tenant_arg
-                    else "*"
-                )
-                route = (
-                    bound.arguments.get(route_arg, "*")
-                    if route_arg
-                    else "*"
-                )
+                tenant = bound.arguments.get(tenant_arg, "*") if tenant_arg else "*"
+                route = bound.arguments.get(route_arg, "*") if route_arg else "*"
                 units = (
                     bound.arguments.get(units_arg_name, units_default)
                     if units_arg_name
@@ -281,16 +274,8 @@ def track_cost(
         def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             bound = inspect.signature(fn).bind_partial(*args, **kwargs)
             bound.apply_defaults()
-            tenant = (
-                bound.arguments.get(tenant_arg, "*")
-                if tenant_arg
-                else "*"
-            )
-            route = (
-                bound.arguments.get(route_arg, "*")
-                if route_arg
-                else "*"
-            )
+            tenant = bound.arguments.get(tenant_arg, "*") if tenant_arg else "*"
+            route = bound.arguments.get(route_arg, "*") if route_arg else "*"
             units = (
                 bound.arguments.get(units_arg_name, units_default)
                 if units_arg_name
