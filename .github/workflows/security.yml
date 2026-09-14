@@ -259,3 +259,53 @@ jobs:
           name: npm-audit-${{ matrix.admin-react-dir }}
           path: ${{ matrix.admin-react-dir }}/npm-audit.*
           retention-days: 30
+
+  sbom-contract-diff:
+    name: SBOM + Contract diff gates (OP-3/OP-6)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Baseline контракты берутся из tracked файлов (.baselines/) —
+          # history не нужен, но fetch-depth 0 безопаснее для будущих
+          # diff против origin/main.
+          fetch-depth: 0
+
+      - name: Setup Python 3.14
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Sync deps (dev-light достаточно для импорта приложения)
+        run: uv sync --extra dev-light
+
+      # OP-3: SBOM drift — сравнение с принятым baseline (.baselines/sbom.baseline.json).
+      # New CVEs — отдельный gate (pip-audit blocking в job bandit/safety выше).
+      - name: SBOM diff gate
+        run: make sbom-diff-gate
+
+      # OP-6: contract drift — breaking REST/GraphQL/gRPC changes vs baseline.
+      - name: Contract diff gate
+        run: make contract-diff-gate
+
+      - name: Upload contract diff artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: protocol-contracts
+          path: |
+            .baselines/contracts/rest_openapi.json
+            .baselines/contracts/graphql_introspection.json
+            .baselines/contracts/grpc_proto.json
+          retention-days: 30
+          if-no-files-found: warn
