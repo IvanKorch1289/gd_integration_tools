@@ -250,6 +250,7 @@ class AdminService:
             dict с результатом операции.
 
         """
+        route_registry = _lazy("route_registry")
         route_registry.toggle_feature_flag(flag_name, enable=enable)
         affected = [
             r

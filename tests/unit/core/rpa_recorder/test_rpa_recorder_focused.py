@@ -8,8 +8,8 @@ import pytest
 
 from src.backend.core.rpa_recorder import (
     DSLStep,
-    RecorderActionType,
     RecordedAction,
+    RecorderActionType,
     RPARecorder,
     export_dsl_draft,
     generate_route_draft,
