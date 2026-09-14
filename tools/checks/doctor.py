@@ -74,10 +74,10 @@ def check_uv_available(report: DoctorReport) -> None:
     """uv установлен в PATH."""
     try:
         proc = subprocess.run(
-            ["uv", "--version"],
+            ["uv", "--version"],  # noqa: S607 — uv из PATH, не системный бинарник
             capture_output=True,
             text=True,
-            timeout=5,  # noqa: S607  # PATH-managed executable (partial path intentional)
+            timeout=5,
         )
         report.add("uv-binary", proc.returncode == 0, proc.stdout.strip())
     except (FileNotFoundError, subprocess.TimeoutExpired) as exc:

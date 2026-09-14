@@ -197,7 +197,17 @@ async def login(payload: LoginRequest) -> LoginResponse:
     )
     result = jwt_encode(
         subject=user.username,
-        claims={"auth_method": payload.method, "is_superuser": is_superuser},
+        claims={
+            "auth_method": payload.method,
+            "is_superuser": is_superuser,
+            # P0-хвост (tabletop 2026-09-14): без admin_roles claim
+            # require_admin() отклоняет kill-switch/админ-endpoints даже
+            # для is_superuser — bootstrap-admin не мог выполнить
+            # свой же runbook.
+            **(
+                {"admin_roles": ["super_admin"]} if is_superuser else {}
+            ),
+        },
         secret=secret_value,
     )
     if isinstance(result, tuple) and len(result) == 2:
