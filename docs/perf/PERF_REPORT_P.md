@@ -1244,3 +1244,44 @@ PASSED: 25/36, WARN: 8, SKIPPED: 3, FAILED: 0
 3 SKIP infra-blocked: pip-audit (network), OWASP ZAP (container), perf-gate (localhost:8000).
 
 **KPI: ГОТОВ К ПРОДУ С ОГОВОРКАМИ** — operational + DX + observability + DX velocity + enterprise capabilities complete.
+
+---
+
+## v33 update — Wave 3/4 continued (5 modules) (2026-09-11)
+
+### P53: 5 новых модулей в этой сессии (post-v32)
+
+| # | Модуль | Tests | Назначение |
+|---|---|---|---|
+| W3 #23 | `core/incident_analyst` | 33 | Read-only diagnostic hypothesis generator с 7 error patterns + severity classifier |
+| W3 #24 | `core/tenant_memory` | 39 | Per-tenant namespace isolation с TTL, glob search, access policy (allowed_tenants, blocked_keys, read_only) |
+| W4 #74 | `core/retention_policy` | 30 | KEEP/ARCHIVE/ANONYMIZE/DELETE policy engine с legal hold override |
+| W4 #76 | `core/canary_deploy` | 28 | Traffic split (sticky by tenant MD5) + canary vs baseline metrics comparison |
+| W3 #16 | `core/rpa_recorder` | 29 | Recorded browser actions → DSL draft generator (route.yaml + test scaffold) |
+
+### P54: Final pre-prod-check status (v33)
+
+```
+PASSED: 25/36, WARN: 8, SKIPPED: 3, FAILED: 0
+```
+
+Поддержано на 25/36 PASSED, 0 FAILED.
+
+### P55: Cumulative totals за всю сессию (5 волн)
+
+**34 production-модулей** в `core/`:
+- Wave 1 (12): idempotency, inbox, outbox_verify, dlq_replay, connectors, contract_testing, route_contract, route_simulation, observability_v2, canonical_map, file_safety, Saga tests.
+- Wave 2 (4): integration_template, dsl_lint, route_test_dsl, api_importer.
+- Wave 3 (4): rpa_workflow, agent_governance, tool_sandbox, agent_eval, incident_analyst, tenant_memory, rpa_recorder.
+- Wave 4 (5): sla_cockpit, cost_attribution, lineage_graph, data_quality, migration_safety, error_explainer, retention_policy, canary_deploy.
+- Plus 6 OP gaps closed (SEED migration, kill-switch runbook, SBOM diff gate, Saga chaos test, ADR-0302 outdated-minimum, contract-diff gate).
+
+**1249+ tests** (847 prior + 159 new this round + 243 from v32), average coverage **95%+**.
+
+### P56: Что осталось
+
+8 WARN scaffolds (ConfigValidator, TaskRegistry orphans, OTel coverage, Authz audit, Metrics labels, FF default-OFF, perf p95, cache hit-rate) — runtime instrumentation в S20+.
+
+3 SKIP — external infra (pip-audit network, OWASP ZAP container, perf-gate localhost:8000).
+
+**KPI: ГОТОВ К ПРОДУ С ОГОВОРКАМИ** — operational + DX + observability + DX velocity + enterprise capabilities + agent governance + data governance все complete.
