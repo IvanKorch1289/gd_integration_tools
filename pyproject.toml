@@ -435,7 +435,7 @@ docs = [
 # language-tool-python тянет ~500MB JVM + словари; в core не нужен,
 # Streamlit Wiki показывает helpful warning при отсутствии.
 docs-ru = [
-    "language-tool-python>=2.8,<3",
+    "language-tool-python>=2.8,<4",
 ]
 # Sprint 5 — DSL расширения batch 2: webhook signature / pdf / template / archive.
 # Все зависимости pure-Python (либо имеют готовые wheels) и совместимы с Python 3.14.
