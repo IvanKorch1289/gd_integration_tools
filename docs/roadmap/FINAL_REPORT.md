@@ -262,3 +262,19 @@ ADR-0302).
 с собой» устранено трекингом baseline в git. CVE-часть SBOM-предложения
 покрывается существующим blocking pip-audit gate (allowlist отдельно) —
 CVSS-diff остаётся P2-усилением.
+
+## 15. Дополнение 2026-09-14 — финальная верификация внешнего ревью (HEAD 93f138aca)
+
+Все пять позиций приоритетного остатка из внешнего ревью HEAD 948ac50e закрыты и
+верифицированы командами на актуальном HEAD (93f138aca + fix-коммиты волны-9):
+
+| Приоритет | Внешний done-критерий | Фактический статус | Доказательство |
+|---|---|---|---|
+| **P0** | Чистый prod deploy не создаёт учётку с публично известным паролем | **✅ ЗАКРЫТ**: production seed = только reference data (orderkinds); bootstrap-admin — явная команда с stdin/env-паролем, известные дефолты отклоняются во всех профилях, prod ≥12 символов | Live: чистый sqlite → 4 orderkinds/0 users; `manage.py bootstrap-admin --password-stdin` → created; тесты policy 9/9 |
+| **P1** | SBOM gate в CI, new HIGH/CRITICAL CVE + запрещённая лицензия блокируют PR | **✅ ЗАКРЫТ**: baseline трекается (`.baselines/sbom.baseline.json`), fail-fast при отсутствии, CVE-diff (`--audit-current/--audit-baseline` vs allowlist), blocking job в security.yml | Live: PASS (0 violations, 18 unknown=WARN); 26/26 тестов |
+| **P1** | Contract gate в CI, breaking change блокирует PR | **✅ ЗАКРЫТ**: baseline трекается (`.baselines/contracts-baseline/` — 4 файла вкл. action_matrix.json), fail-fast, blocking job; дрейф-тест FAIL-детект | Live: PASS, 499 non-breaking ops, matrix 0 breaking; 35/35 тестов |
+| **P2** | Contract matrix SOAP/AsyncAPI/MCP | **✅ ОСНОВА ГОТОВА**: action_matrix.json (132 actions × rest/grpc/soap) tracked в baseline; matrix-diff в гейте (action_removed/protocol_coverage_lost = breaking); AsyncAPI/MCP секции информационные (заполняются при включении соответствующих транспортов) | Live: extract OK, matrix 0 breaking; дрейф-тест soap-loss → FAIL |
+| **P2** | Runbook smoke | **✅ ВЫПОЛНЕНО**: kill-switch toggle OFF→ON через API — 200×2 на живом dev_light-стенде; попутно закрыт 403 admin_role_required (admin_roles claim в JWT) | `817eff4c1`; FUNCTIONAL_TEST_REPORT |
+
+Команды верификации (все exit 0): `make sbom-diff-gate`, `make contract-diff-gate`,
+`pytest tests/unit/tools/ tests/unit/services/auth/ tests/unit/infrastructure/database/ -q`.
