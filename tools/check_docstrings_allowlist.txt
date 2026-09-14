@@ -248,3 +248,10 @@ src/backend/core/cdc_control_plane/plane.py:305:0 get_cdc_control_plane
 src/backend/core/cdc_control_plane/plane.py:312:0 reset_cdc_control_plane
 src/backend/core/ai_sandbox/sandbox.py:88:0 to_dict
 src/backend/core/ai_sandbox/sandbox.py:145:0 config
+src/backend/core/shadow_route/comparator.py:54:0 to_dict
+src/backend/core/shadow_route/comparator.py:171:0 get_mirror_percent
+src/backend/core/shadow_route/comparator.py:332:0 get_shadow_router
+src/backend/core/shadow_route/comparator.py:339:0 reset_shadow_router
+src/backend/core/streaming_parser/parsers.py:47:0 get
+src/backend/core/streaming_parser/parsers.py:214:0 get_csv_parser
+src/backend/core/streaming_parser/parsers.py:221:0 get_json_parser
