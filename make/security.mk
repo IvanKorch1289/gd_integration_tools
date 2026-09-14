@@ -57,6 +57,18 @@ sbom: ## D-AUDIT-11-5 fix (cycle 1): canonical path — dist/sbom/sbom.cdx.json.
 	$(UV_RUN) pip-audit --format cyclonedx-json --output dist/sbom/sbom.cdx.json -r dist/audit-requirements.txt $$ALLOW || true
 	@$(SUCCESS) "SBOM written to dist/sbom/sbom.cdx.json (via pip-audit cyclonedx-json from .venv)"
 
+contract-diff-gate: ## OP-6: extract contracts + diff vs baseline (fail on breaking)
+	@$(INFO) "Extracting protocol contracts (REST/GraphQL/gRPC)..."
+	@$(UV_RUN) python tools/checks/extract_contracts.py --out .baselines/contracts
+	@mkdir -p .baselines/contracts-baseline
+	@if [ ! -f .baselines/contracts-baseline/rest_openapi.json ]; then \
+		cp .baselines/contracts/*.json .baselines/contracts-baseline/; \
+		$(SUCCESS) "Baseline создан (первый запуск)"; \
+	fi
+	@$(UV_RUN) python tools/checks/contract_diff_gate.py diff \
+		--current .baselines/contracts \
+		--baseline .baselines/contracts-baseline
+
 sbom-diff-gate: ## OP-3: SBOM diff gate — fail on new copyleft; unknown licenses = WARN
 	@$(INFO) "Running SBOM diff gate (current vs baseline)..."
 	@mkdir -p dist/sbom

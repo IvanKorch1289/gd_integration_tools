@@ -243,8 +243,13 @@ def _diff_graphql(
         if type_name not in current_types:
             continue  # Already flagged as removed.
         current_type = current_types[type_name]
-        baseline_fields = {f["name"]: f for f in baseline_type.get("fields", [])}
-        current_fields = {f["name"]: f for f in current_type.get("fields", [])}
+        # null-guard: скаляры/enum в интроспекции имеют fields=null.
+        baseline_fields = {
+            f["name"]: f for f in (baseline_type.get("fields") or [])
+        }
+        current_fields = {
+            f["name"]: f for f in (current_type.get("fields") or [])
+        }
         for field_name in baseline_fields:
             if field_name not in current_fields:
                 breaking.append(
