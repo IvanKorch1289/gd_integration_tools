@@ -99,7 +99,9 @@ async def labeled_count(tenant_id: str | None = None) -> dict[str, Any]:
         from src.backend.services.ai.feedback.feedback_service import AIFeedbackService
 
         service = AIFeedbackService()
-        items = await service.list_labeled(tenant_id=tenant_id, limit=10_000)  # type: ignore[call-arg]
+        # P0-fix (2026-09-14): list_labeled не принимает tenant_id —
+        # count глобальный (tenant-фильтрация не реализована в сервисе).
+        items = await service.list_labeled(limit=10_000)
         return {"tenant_id": tenant_id, "count": len(items)}
     except (ImportError, AttributeError, OSError) as exc:
         logger.warning(
