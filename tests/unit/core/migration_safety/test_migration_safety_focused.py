@@ -11,7 +11,6 @@ from src.backend.core.migration_safety import (
     MigrationReport,
     MigrationSafetyGate,
     RiskLevel,
-    analyze_migration,
     get_safety_gate,
 )
 from src.backend.core.migration_safety.gate import reset_safety_gate

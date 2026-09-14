@@ -98,11 +98,11 @@ class TestSeedMigrationFile:
         assert "ON CONFLICT" in seed_source
         assert "DO NOTHING" in seed_source
 
-    def test_inserts_admin_user(self, seed_source: str) -> None:
-        """Inserts default admin user."""
-        assert "INSERT INTO users" in seed_source
-        assert "admin" in seed_source
-        assert "is_superuser" in seed_source
+    def test_no_privileged_accounts_in_seed(self, seed_source: str) -> None:
+        """P0: seed НЕ создаёт пользователей (bootstrap — отдельная команда)."""
+        assert "INSERT INTO users" not in seed_source
+        assert "password" not in seed_source.lower()
+        assert "argon2" not in seed_source.lower()
 
     def test_inserts_orderkinds(self, seed_source: str) -> None:
         """Inserts default orderkinds (≥4 базовых)."""
@@ -112,66 +112,13 @@ class TestSeedMigrationFile:
         assert "encumbrance_registration" in seed_source
         assert "ownership_transfer" in seed_source
 
-    def test_password_is_hashed_not_plaintext(
-        self, migration_source: str, seed_source: str
-    ) -> None:
-        """Пароль хранится в виде argon2id-хэша (контракт User), НЕ plaintext."""
-        # Проверяем что plaintext-пароль НЕ присутствует напрямую в комментариях.
-        # (в docstring/hash references допустимо).
-        lines_with_plaintext = [
-            line
-            for line in migration_source.split("\n")
-            if "admin-default-password-change-me" in line
-            and not line.strip().startswith("#")  # допускаем в комментариях.
-            and "DEFAULT_ADMIN_PASSWORD_HASH" not in line  # и в docstring/hash.
-        ]
-        # Plaintext может быть ТОЛЬКО в комментариях или docstring — не в коде.
-        # Если найдено в коде — fail.
-        for line in lines_with_plaintext:
-            # Разрешаем только в docstring/hash variables.
-            assert (
-                "DEFAULT_ADMIN_PASSWORD_HASH" in line
-                or "plaintext" in line.lower()
-                or line.strip().startswith('"""')
-            ), f"Plaintext password in code: {line!r}"
-        # Хэш argon2id (контракт User.verify_password), делегирован в seed_data.
-        assert "argon2id" in seed_source
-        assert "apply_default_seed" in migration_source
+class TestNoPrivilegedCredentials:
+    """P0: privileged credentials отсутствуют в seed-модуле."""
 
-
-class TestPasswordHash:
-    """Verify password hash совместим с User.verify_password (argon2)."""
-
-    def test_hash_format(self) -> None:
-        """Хэш имеет формат argon2id (PHC) и принимает документированный пароль."""
-        from src.backend.infrastructure.database.migrations.seed_data import (
-            _DEFAULT_ADMIN_PASSWORD_HASH,
-        )
-
-        assert _DEFAULT_ADMIN_PASSWORD_HASH.startswith("$argon2id$")
-        from extensions.core_entities.users.domain.models import _get_password_hasher
-
-        hasher = _get_password_hasher()
-        hasher.verify(
-            _DEFAULT_ADMIN_PASSWORD_HASH, "admin-default-password-change-me"
-        )
-
-    def test_hash_does_not_verify_wrong_password(self) -> None:
-        """Хэш НЕ принимает неправильный пароль."""
-        from argon2.exceptions import VerifyMismatchError
-
-        from extensions.core_entities.users.domain.models import _get_password_hasher
-        from src.backend.infrastructure.database.migrations.seed_data import (
-            _DEFAULT_ADMIN_PASSWORD_HASH,
-        )
-
-        try:
-            _get_password_hasher().verify(
-                _DEFAULT_ADMIN_PASSWORD_HASH, "wrong-password"
-            )
-        except VerifyMismatchError:
-            return
-        raise AssertionError("wrong password accepted")
+    def test_no_default_password_hash_in_source(self, seed_source: str) -> None:
+        """P0: в reference-seed нет парольных хэшей вовсе."""
+        assert "$argon2id$" not in seed_source
+        assert "$pbkdf2" not in seed_source
 
 
 class TestAlembicChain:
@@ -252,13 +199,11 @@ class TestExports:
 class TestRealisticExample:
     """Realistic: idempotency check — running upgrade twice should not fail."""
 
-    def test_on_conflict_in_admin_insert(self) -> None:
-        """Admin INSERT использует ON CONFLICT (username) DO NOTHING."""
+    def test_on_conflict_in_orderkinds_insert(self) -> None:
+        """orderkinds INSERT использует ON CONFLICT (skb_uuid) DO NOTHING."""
         from pathlib import Path
 
         src = Path(
             "src/backend/infrastructure/database/migrations/seed_data.py"
         ).read_text()
-        # Оба INSERT должны иметь ON CONFLICT.
-        assert "ON CONFLICT (username) DO NOTHING" in src
         assert "ON CONFLICT (skb_uuid) DO NOTHING" in src

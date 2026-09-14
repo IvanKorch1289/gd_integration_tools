@@ -69,6 +69,9 @@ contract-diff-gate: ## OP-6: extract contracts + diff vs baseline (fail on break
 		--current .baselines/contracts \
 		--baseline .baselines/contracts-baseline
 
+bootstrap-admin: ## P0: создать/сбросить суперпользователя (пароль через stdin: `make bootstrap-admin < pw.txt`)
+	@$(UV_RUN) python manage.py bootstrap-admin --password-stdin
+
 sbom-diff-gate: ## OP-3: SBOM diff gate — fail on new copyleft; unknown licenses = WARN
 	@$(INFO) "Running SBOM diff gate (current vs baseline)..."
 	@mkdir -p dist/sbom

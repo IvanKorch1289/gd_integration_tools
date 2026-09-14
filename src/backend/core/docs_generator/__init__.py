@@ -34,9 +34,6 @@
 
 from __future__ import annotations
 
-from src.backend.core.docs_generator.generator import (
-    DocsGenerator,
-    get_docs_generator,
-)
+from src.backend.core.docs_generator.generator import DocsGenerator, get_docs_generator
 
 __all__ = ("DocsGenerator", "get_docs_generator")
