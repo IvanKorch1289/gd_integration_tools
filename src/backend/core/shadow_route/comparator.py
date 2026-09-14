@@ -197,7 +197,9 @@ class ShadowRouter:
             return True
         if tenant_id is None:
             import random
-            return random.random() * 100 < percent
+
+            # S311: random для traffic-split (не crypto) — canary bucket.
+            return random.random() * 100 < percent  # noqa: S311
         # Sticky by hash.
         hash_val = int(
             hashlib.md5(tenant_id.encode("utf-8")).hexdigest(), 16  # noqa: S324
