@@ -170,12 +170,22 @@ class TestDiffSBOMs:
         assert diff.has_violations is True
 
     def test_unknown_license_flagged(self) -> None:
+        """unknown license попадает в отчёт; по умолчанию WARN (не fail)."""
         current = [
             SBOMComponent(name="x", version="1.0", licenses=[]),
         ]
         diff = diff_sboms(current=current, baseline=[])
         assert len(diff.unknown_licenses) == 1
         assert diff.unknown_licenses[0].name == "x"
+        assert diff.has_violations is False  # default policy: unknown = WARN
+
+    def test_unknown_license_fails_in_strict_mode(self) -> None:
+        """--fail-on-unknown: unknown license → has_violations."""
+        current = [
+            SBOMComponent(name="x", version="1.0", licenses=[]),
+        ]
+        diff = diff_sboms(current=current, baseline=[])
+        diff.fail_on_unknown = True
         assert diff.has_violations is True
 
     def test_mit_components_pass(self) -> None:

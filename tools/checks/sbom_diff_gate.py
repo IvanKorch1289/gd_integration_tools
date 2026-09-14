@@ -67,10 +67,16 @@ class SBOMDiff:
     unknown_licenses: list[SBOMComponent] = field(default_factory=list)
     total_components: int = 0
     delta_components: int = 0
+    # OP-3 policy (2026-09-14): unknown-licenses — WARN по умолчанию
+    # (pip-audit/метаданные ряда дистров не несут license field);
+    # строгий режим — через --fail-on-unknown.
+    fail_on_unknown: bool = False
 
     @property
     def has_violations(self) -> bool:
-        return bool(self.license_violations or self.unknown_licenses)
+        if self.license_violations:
+            return True
+        return self.fail_on_unknown and bool(self.unknown_licenses)
 
 
 def _parse_components(sbom_path: Path) -> list[SBOMComponent]:
@@ -90,9 +96,13 @@ def _parse_components(sbom_path: Path) -> list[SBOMComponent]:
         licenses: list[str] = []
         for lic in comp.get("licenses", []):
             license_obj = lic.get("license", {})
-            lic_id = license_obj.get("id") or license_obj.get("name")
+            lic_id = (
+                license_obj.get("id")
+                or license_obj.get("name")
+                or lic.get("expression")  # CycloneDX expression-form (e.g. "MIT OR Apache-2.0")
+            )
             if lic_id:
-                licenses.append(lic_id)
+                licenses.append(str(lic_id))
         components.append(
             SBOMComponent(
                 name=comp.get("name", ""),
@@ -198,8 +208,10 @@ def _format_report(diff: SBOMDiff) -> str:
         lines.append("")
 
     lines.append("=" * 70)
-    if diff.has_violations:
+    if diff.license_violations:
         lines.append("RESULT: FAIL (license violations)")
+    elif diff.has_violations:
+        lines.append("RESULT: FAIL (unknown licenses, --fail-on-unknown)")
     else:
         lines.append("RESULT: PASS")
     lines.append("=" * 70)
@@ -235,6 +247,11 @@ def main() -> int:
         help="Path to file with denied license IDs (one per line)",
     )
     parser.add_argument(
+        "--fail-on-unknown",
+        action="store_true",
+        help="Строгий режим: unknown license тоже fail (default: WARN)",
+    )
+    parser.add_argument(
         "--update-baseline",
         action="store_true",
         help="Update baseline with current SBOM (after accepting changes)",
@@ -264,6 +281,7 @@ def main() -> int:
         baseline=baseline,
         deny_licenses=deny_licenses,
     )
+    diff.fail_on_unknown = args.fail_on_unknown
 
     # Format + print report.
     report = _format_report(diff)
