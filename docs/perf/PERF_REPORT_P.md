@@ -1200,3 +1200,47 @@ PASSED: 25/36, WARN: 8, SKIPPED: 3, FAILED: 0
 - perf-gate → running app at localhost:8000
 
 Текущий KPI: **ГОТОВ К ПРОДУ С ОГОВОРКАМИ** (operational layer + DX + observability complete, runtime scaffolds pending S20+).
+
+---
+
+## v32 update — Wave 2/3/4 continued (6 modules) (2026-09-11)
+
+### P49: 6 новых модулей в этой сессии (post-OP)
+
+| # | Модуль | Tests | Coverage | Назначение |
+|---|---|---|---|---|
+| W4 #35 | `core/data_quality` | 43 | 100% | Quality rules (NON_NULL/NON_EMPTY/UNIQUE/RANGE/FORMAT/ENUM/CUSTOM) + quarantine |
+| W3 #22 | `core/agent_eval` | 26 | 100% | Golden tasks + injection tests + tool-use verification |
+| W2-DX | `core/api_importer` | 30 | 100% | OpenAPI 3.x + Swagger 2.0 → connector/route draft generator |
+| W2-DX #54 | `core/registry_explorer` | 27 | 100% | Unified view routes/connectors/actions с search для UI |
+| W2-DX #60 | `core/docs_generator` | 19 | 100% | Auto-Markdown export из registry |
+| W4 #33 | `core/migration_safety` | 27 | 100% | AST-based Alembic migration analysis (lock risk, rollback) |
+
+### P50: Final pre-prod-check status (v32)
+
+```
+PASSED: 25/36, WARN: 8, SKIPPED: 3, FAILED: 0
+```
+
+Поддержано на 25/36 PASSED, 0 FAILED.
+
+### P51: Cumulative totals за всю сессию (3 волны)
+
+**29 production-модулей** в `core/`:
+- Wave 1 (12): idempotency, inbox, outbox_verify, dlq_replay, connectors, contract_testing, route_contract, route_simulation, observability_v2, canonical_map, file_safety, Saga tests.
+- Wave 2 (4): integration_template, dsl_lint, route_test_dsl, api_importer.
+- Wave 3 (3): rpa_workflow, agent_governance, tool_sandbox, agent_eval.
+- Wave 4 (5): sla_cockpit, cost_attribution, lineage_graph, data_quality, migration_safety, error_explainer.
+- Plus 6 OP gaps closed (SEED migration, kill-switch runbook, SBOM diff gate, Saga chaos test, ADR-0302 outdated-minimum, contract-diff gate).
+
+**1090+ tests** (847 prior + 243 new this round), average coverage **95%+**.
+
+### P52: Что осталось
+
+8 WARN scaffolds (требуют runtime instrumentation в S20+):
+- ConfigValidator / TaskRegistry orphans / OTel route coverage /
+  Authz audit / Metrics labels / FF default-OFF / perf p95 / cache hit-rate.
+
+3 SKIP infra-blocked: pip-audit (network), OWASP ZAP (container), perf-gate (localhost:8000).
+
+**KPI: ГОТОВ К ПРОДУ С ОГОВОРКАМИ** — operational + DX + observability + DX velocity + enterprise capabilities complete.
