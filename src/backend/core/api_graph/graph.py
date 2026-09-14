@@ -82,6 +82,7 @@ class EndpointNode:
     response_schema: str = ""
 
     def full_name(self) -> str:
+        """Return canonical full name ``METHOD path`` (e.g. ``GET /orders/{id}``)."""
         return f"{self.method.upper()} {self.path}"
 
 
@@ -156,7 +157,11 @@ class OpenAPIGraph:
             if edge.target == target and edge.source.startswith("endpoint:"):
                 # Find endpoint by id.
                 ep = next(
-                    (e for e in self._endpoints if f"endpoint:{e.full_name()}" == edge.source),
+                    (
+                        e
+                        for e in self._endpoints
+                        if f"endpoint:{e.full_name()}" == edge.source
+                    ),
                     None,
                 )
                 if ep is not None and ep not in result:
@@ -259,31 +264,29 @@ def import_openapi_graph(spec: dict[str, Any]) -> OpenAPIGraph:
     components = spec.get("components", {})
     schemas = components.get("schemas", {})
     for name in schemas:
-        graph.add_node(GraphNode(
-            id=f"schema:{name}",
-            type=GraphNodeType.SCHEMA,
-            name=name,
-        ))
+        graph.add_node(
+            GraphNode(id=f"schema:{name}", type=GraphNodeType.SCHEMA, name=name)
+        )
 
     for name, schema in schemas.items():
         refs: set[str] = set()
         _extract_refs(schema, refs)
         for ref in refs:
-            graph.add_edge(GraphEdge(
-                source=f"schema:{name}",
-                target=f"schema:{ref}",
-                kind="ref",
-            ))
+            graph.add_edge(
+                GraphEdge(source=f"schema:{name}", target=f"schema:{ref}", kind="ref")
+            )
 
     # 2. Security scheme nodes.
     security_schemes = components.get("securitySchemes", {})
     for name in security_schemes:
-        graph.add_node(GraphNode(
-            id=f"security:{name}",
-            type=GraphNodeType.SECURITY,
-            name=name,
-            metadata=security_schemes[name],
-        ))
+        graph.add_node(
+            GraphNode(
+                id=f"security:{name}",
+                type=GraphNodeType.SECURITY,
+                name=name,
+                metadata=security_schemes[name],
+            )
+        )
 
     # 3. Endpoint nodes + edges.
     for path, path_item in spec.get("paths", {}).items():
@@ -312,11 +315,13 @@ def import_openapi_graph(spec: dict[str, Any]) -> OpenAPIGraph:
                 m = _REF_PATTERN.match(ref)
                 if m and m.group(1) == "schemas":
                     ep.request_schema = m.group(2)
-                    graph.add_edge(GraphEdge(
-                        source=f"endpoint:{ep.full_name()}",
-                        target=f"schema:{m.group(2)}",
-                        kind="consumes",
-                    ))
+                    graph.add_edge(
+                        GraphEdge(
+                            source=f"endpoint:{ep.full_name()}",
+                            target=f"schema:{m.group(2)}",
+                            kind="consumes",
+                        )
+                    )
             # Extract response schema ref (200 status).
             responses = op.get("responses", {})
             resp_200 = responses.get("200", {})
@@ -330,33 +335,38 @@ def import_openapi_graph(spec: dict[str, Any]) -> OpenAPIGraph:
                 m = _REF_PATTERN.match(ref)
                 if m and m.group(1) == "schemas":
                     ep.response_schema = m.group(2)
-                    graph.add_edge(GraphEdge(
-                        source=f"endpoint:{ep.full_name()}",
-                        target=f"schema:{m.group(2)}",
-                        kind="produces",
-                    ))
+                    graph.add_edge(
+                        GraphEdge(
+                            source=f"endpoint:{ep.full_name()}",
+                            target=f"schema:{m.group(2)}",
+                            kind="produces",
+                        )
+                    )
             # Edge to security scheme.
             for scheme in ep.security_schemes:
-                graph.add_edge(GraphEdge(
-                    source=f"endpoint:{ep.full_name()}",
-                    target=f"security:{scheme}",
-                    kind="secured_by",
-                ))
+                graph.add_edge(
+                    GraphEdge(
+                        source=f"endpoint:{ep.full_name()}",
+                        target=f"security:{scheme}",
+                        kind="secured_by",
+                    )
+                )
             # Endpoint node.
-            graph.add_node(GraphNode(
-                id=f"endpoint:{ep.full_name()}",
-                type=GraphNodeType.ENDPOINT,
-                name=ep.full_name(),
-                metadata={"path": path, "method": method.upper()},
-            ))
+            graph.add_node(
+                GraphNode(
+                    id=f"endpoint:{ep.full_name()}",
+                    type=GraphNodeType.ENDPOINT,
+                    name=ep.full_name(),
+                    metadata={"path": path, "method": method.upper()},
+                )
+            )
             graph._endpoints.append(ep)
 
     return graph
 
 
 def _extract_security_schemes(
-    operation: dict[str, Any],
-    available: dict[str, Any],
+    operation: dict[str, Any], available: dict[str, Any]
 ) -> list[str]:
     """Resolve security schemes для operation (including global)."""
     schemes: set[str] = set()

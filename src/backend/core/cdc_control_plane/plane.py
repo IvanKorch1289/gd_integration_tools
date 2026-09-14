@@ -110,11 +110,7 @@ class CDCControlPlane:
     # ─── Slot lifecycle ──────────────────────────────────
 
     def create_slot(
-        self,
-        name: str,
-        *,
-        table: str = "",
-        plugin: str = "test_decoding",
+        self, name: str, *, table: str = "", plugin: str = "test_decoding"
     ) -> PublicationSlot:
         """Create a new publication slot."""
         if name in self._slots:
@@ -140,11 +136,7 @@ class CDCControlPlane:
         logger.info("CDC: dropped slot name=%s", name)
         return True
 
-    def list_slots(
-        self,
-        *,
-        status: SlotStatus | None = None,
-    ) -> list[PublicationSlot]:
+    def list_slots(self, *, status: SlotStatus | None = None) -> list[PublicationSlot]:
         """List slots, optionally filtered by status."""
         slots = list(self._slots.values())
         if status is not None:
@@ -190,19 +182,13 @@ class CDCControlPlane:
     # ─── Lag tracking ─────────────────────────────────────
 
     def update_lag(
-        self,
-        name: str,
-        *,
-        bytes: int = 0,
-        events: int = 0,
+        self, name: str, *, bytes: int = 0, events: int = 0
     ) -> ReplicationLag:
         """Update lag snapshot for a slot."""
         slot = self._slots.get(name)
         if slot is None:
             raise KeyError(f"Slot '{name}' not found")
-        slot.lag = ReplicationLag(
-            bytes=bytes, events=events, last_update=time.time()
-        )
+        slot.lag = ReplicationLag(bytes=bytes, events=events, last_update=time.time())
         return slot.lag
 
     def get_lag(self, name: str) -> ReplicationLag | None:
@@ -215,11 +201,7 @@ class CDCControlPlane:
     # ─── Offset / replay ─────────────────────────────────
 
     def update_offset(
-        self,
-        name: str,
-        *,
-        value: int,
-        event_id: str | None = None,
+        self, name: str, *, value: int, event_id: str | None = None
     ) -> Offset:
         """Update current offset для slot."""
         slot = self._slots.get(name)
@@ -235,11 +217,7 @@ class CDCControlPlane:
         return slot.offset
 
     def replay_from(
-        self,
-        name: str,
-        *,
-        offset: int | None = None,
-        to_offset: int | None = None,
+        self, name: str, *, offset: int | None = None, to_offset: int | None = None
     ) -> Offset:
         """Replay slot from a specific offset (or current).
 
@@ -261,10 +239,7 @@ class CDCControlPlane:
         slot.offset = new_offset
         # Reset lag to 0.
         slot.lag = ReplicationLag()
-        logger.info(
-            "CDC: replay slot name=%s from %s to %s",
-            name, start, target,
-        )
+        logger.info("CDC: replay slot name=%s from %s to %s", name, start, target)
         return new_offset
 
     # ─── Status / dashboard data ─────────────────────────
@@ -284,10 +259,7 @@ class CDCControlPlane:
                 "events": slot.lag.events,
                 "lag_seconds": slot.lag.lag_seconds,
             },
-            "offset": {
-                "value": slot.offset.value,
-                "event_id": slot.offset.event_id,
-            },
+            "offset": {"value": slot.offset.value, "event_id": slot.offset.event_id},
             "created_at": slot.created_at,
             "metadata": dict(slot.metadata),
         }

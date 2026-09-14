@@ -101,17 +101,14 @@ class ProcessSandboxResult:
 def _apply_rlimits(config: ProcessSandboxConfig) -> None:
     """Apply RLIMIT_* в current subprocess (pre-exec)."""
     # Address space (virtual memory).
-    resource.setrlimit(
-        resource.RLIMIT_AS, (config.max_memory_mb * 1024 * 1024,) * 2
-    )
+    resource.setrlimit(resource.RLIMIT_AS, (config.max_memory_mb * 1024 * 1024,) * 2)
     # CPU time.
     resource.setrlimit(
         resource.RLIMIT_CPU, (config.max_cpu_seconds, config.max_cpu_seconds + 1)
     )
     # Open file descriptors.
     resource.setrlimit(
-        resource.RLIMIT_NOFILE,
-        (config.max_open_files, config.max_open_files),
+        resource.RLIMIT_NOFILE, (config.max_open_files, config.max_open_files)
     )
     # Max child processes (NPROC is per-uid).
     try:
@@ -123,8 +120,7 @@ def _apply_rlimits(config: ProcessSandboxConfig) -> None:
         logger.debug("RLIMIT_NPROC not supported: %s", exc)
     # File size.
     resource.setrlimit(
-        resource.RLIMIT_FSIZE,
-        (config.max_file_size_mb * 1024 * 1024,) * 2,
+        resource.RLIMIT_FSIZE, (config.max_file_size_mb * 1024 * 1024,) * 2
     )
 
 
@@ -157,10 +153,7 @@ class ProcessSandbox:
         self._config.validate()
 
     def run(
-        self,
-        code: str,
-        *,
-        timeout_seconds: float | None = None,
+        self, code: str, *, timeout_seconds: float | None = None
     ) -> ProcessSandboxResult:
         """Run Python code в isolated subprocess с rlimits.
 
@@ -273,7 +266,7 @@ class ProcessSandbox:
                 if line.startswith("__exit__:"):
                     try:
                         exit_code = int(line.split(":", 1)[1])
-                    except (ValueError, IndexError):
+                    except ValueError, IndexError:
                         pass
             success = exit_code == 0 and not oom
             return ProcessSandboxResult(
@@ -293,38 +286,7 @@ class ProcessSandbox:
                     pass
 
     def _kill_subprocess(
-        self,
-        cmd: list[str],
-        env: dict[str, str] | None,
-        cwd: str | None,
-    ) -> None:
-        """Best-effort cleanup of timed-out subprocess."""
-        try:
-            proc = subprocess.Popen(  # noqa: S603
-                cmd,
-                env=env or None,
-                cwd=cwd,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-            try:
-                proc.kill()
-            except OSError:
-                pass
-            try:
-                proc.wait(timeout=2.0)
-            except subprocess.TimeoutExpired:
-                pass
-        except Exception:
-            logger.warning(
-                "Failed to clean up timed-out subprocess", exc_info=True
-            )
-
-    def _kill_subprocess(
-        self,
-        cmd: list[str],
-        env: dict[str, str] | None,
-        cwd: str | None,
+        self, cmd: list[str], env: dict[str, str] | None, cwd: str | None
     ) -> None:
         """Best-effort cleanup of timed-out subprocess."""
         try:
@@ -351,9 +313,7 @@ class ProcessSandbox:
 _sandbox: ProcessSandbox | None = None
 
 
-def get_process_sandbox(
-    config: ProcessSandboxConfig | None = None,
-) -> ProcessSandbox:
+def get_process_sandbox(config: ProcessSandboxConfig | None = None) -> ProcessSandbox:
     """Module-level singleton getter."""
     global _sandbox
     if _sandbox is None:
