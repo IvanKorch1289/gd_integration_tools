@@ -82,11 +82,20 @@ sbom-diff-gate: ## OP-3: SBOM diff gate — fail on new copyleft; unknown licens
 	# pip-audit-формат licenses не несёт — им гейт нельзя судить.
 	@$(UV_RUN) python tools/checks/generate_sbom.py
 	@test -f dist/sbom/sbom.cdx.json || { $(ERROR) "dist/sbom/sbom.cdx.json missing after generate_sbom"; exit 1; }
-	@test -f dist/sbom/sbom.baseline.json || cp dist/sbom/sbom.cdx.json dist/sbom/sbom.baseline.json
+	# P0/P1 (2026-09-14): baseline трекается в .baselines/ (без self-copy);
+	# приём нового baseline — явный make sbom-baseline-accept.
+	@test -f .baselines/sbom.baseline.json || { $(ERROR) ".baselines/sbom.baseline.json отсутствует — make sbom-baseline-accept"; exit 2; }
 	@$(UV_RUN) python tools/checks/sbom_diff_gate.py \
 		--current dist/sbom/sbom.cdx.json \
-		--baseline dist/sbom/sbom.baseline.json \
+		--baseline .baselines/sbom.baseline.json \
 		--threshold-new-components 20
+
+sbom-baseline-accept: ## OP-3: принять текущий SBOM как baseline (после review)
+	@$(INFO) "Accepting current SBOM as baseline..."
+	@mkdir -p dist/sbom .baselines
+	@$(UV_RUN) python tools/checks/generate_sbom.py
+	@cp dist/sbom/sbom.cdx.json .baselines/sbom.baseline.json
+	@$(SUCCESS) "Baseline принят: .baselines/sbom.baseline.json"
 
 audit-deps: ## D-AUDIT-11-4 fix (cycle 1): pip-audit с allowlist, пишет JSON в dist/pip-audit.json для CI gate
 	@$(INFO) "Running pip-audit (dist/pip-audit.json)..."
