@@ -214,3 +214,23 @@ owner: ai-team. Связано с mcp 2.x/fastmcp 4 дрейфом (см. `3e5e1
 contract/dry-run, RPA state machine, Agent policy engine, Template Catalog) —
 приняты в roadmap-бэклог (волны 1-3 внешнего документа); часть уже существует
 (core/idempotency/service.py — полоса, infrastructure/antivirus, chaos, eventing).
+
+## 12. Дополнение 2026-09-14 — шестая волна: OP-3/OP-6 гейты доведены до рабочего состояния
+
+Фактчек полосного OP_VERIFICATION_REPORT («6 operational gaps closed») показал:
+скрипты OP-3/OP-6 были написаны с тестами, но **фактически не запускались** —
+гейт SBOM был непроходим в принципе (pip-audit-формат CycloneDX не несёт license
+полей → все 29 считались unknown → FAIL), у contract-diff не существовало
+генератора входных контрактов, и diff падал на null-полях интроспекции.
+
+| Гейт | Доработка | Результат |
+|---|---|---|
+| SBOM diff (OP-3) | unknown license = WARN (строгий режим `--fail-on-unknown`); поддержка CycloneDX expression-лицензий; make-рецепт генерит лицензионный SBOM через generate_sbom.py | `make sbom-diff-gate` → **PASS** (0 violations, 18 unknown=WARN: системный мусор в venv + expression-пропуски устранены парсером), 26/26 тестов (`a18d0df94`) |
+| Contract diff (OP-6) | `tools/checks/extract_contracts.py` — извлекает REST OpenAPI / GraphQL introspection / gRPC services из приложения (REST OK, GraphQL OK, gRPC OK); null-guard скаляров интроспекции в gate; make `contract-diff-gate` = extract→baseline→diff | `make contract-diff-gate` → **PASS** (499 non-breaking ops); дрейф-тест: удаление /health из current → FAIL `[removed_endpoint] GET /health` (`820152544`) |
+| Паразитный шум SBOM | В venv попали системные пакеты Ubuntu (cloud-init, Brlapi, cupshelpers, language-selector, bcc) — источник unknown-license WARN'ов | Зафиксировано как env-проблема (пересоздать venv без system-site) — в GAPS |
+
+Итог по внешнему плану: все 6 позиций финальной секции внедрены и доведены
+до рабочего состояния (проверяемо командами `make sbom-diff-gate`,
+`make contract-diff-gate`, `pytest tests/chaos/test_saga_double_fault_chaos.py`,
+`alembic upgrade head` на чистом sqlite, docs/runbooks/feature-flag-kill-switch.md,
+ADR-0302).
