@@ -169,7 +169,7 @@ async def phase_outbox_dispatcher(app: FastAPI) -> None:
         _logger.warning("OutboxStuckMonitor registration skipped: %s", exc)
 
 
-async def phase_workflow_runtime(app: FastAPI) -> None:  # noqa: ARG001
+async def phase_workflow_runtime(app: FastAPI) -> None:
     """Workflow runtime startup."""
 
     try:
@@ -177,7 +177,7 @@ async def phase_workflow_runtime(app: FastAPI) -> None:  # noqa: ARG001
             start_workflow_runtime,
         )
 
-        await start_workflow_runtime()  # type: ignore[call-arg]
+        await start_workflow_runtime(app)
 
     except Exception as wf_exc:
         _logger.warning("Workflow runtime startup skipped: %s", wf_exc)
