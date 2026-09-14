@@ -92,6 +92,10 @@ PAGE_METADATA: dict[str, dict[str, str]] = {
         "title": "Реестр маршрутов",
         "icon": ":material/inventory_2:",
     },
+    "91_Операционные_Затраты": {
+        "title": "Операционные затраты",
+        "icon": ":material/payments:",
+    },
     "63_Вики": {"title": "Вики", "icon": ":material/menu_book:"},
     "64_SQL_Админ": {"title": "SQL Админ", "icon": ":material/database:"},
     "65_Сервисы": {"title": "Сервисы", "icon": ":material/dns:"},

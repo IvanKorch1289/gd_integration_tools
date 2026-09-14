@@ -27,10 +27,10 @@ from src.frontend.streamlit_app.shared.page_registry import (
 )
 
 
-def test_registry_has_70_pages() -> None:
-    """PAGE_METADATA должна содержать все 70 pages (S172: Home переехал в entry-point; S175: +90_Реестр_Маршрутов)."""
-    assert len(PAGE_METADATA) == 70, (
-        f"Expected 70 pages, got {len(PAGE_METADATA)}"
+def test_registry_has_71_pages() -> None:
+    """PAGE_METADATA должна содержать все 71 pages (S172: Home переехал в entry-point; S175: +90_Реестр_Маршрутов, +91_Операционные_Затраты)."""
+    assert len(PAGE_METADATA) == 71, (
+        f"Expected 71 pages, got {len(PAGE_METADATA)}"
     )
 
 
