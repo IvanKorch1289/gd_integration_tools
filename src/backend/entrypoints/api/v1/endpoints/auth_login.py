@@ -204,9 +204,7 @@ async def login(payload: LoginRequest) -> LoginResponse:
             # require_admin() отклоняет kill-switch/админ-endpoints даже
             # для is_superuser — bootstrap-admin не мог выполнить
             # свой же runbook.
-            **(
-                {"admin_roles": ["super_admin"]} if is_superuser else {}
-            ),
+            **({"admin_roles": ["super_admin"]} if is_superuser else {}),
         },
         secret=secret_value,
     )

@@ -12,8 +12,7 @@ from src.backend.core.state.runtime import disabled_feature_flags
 from src.backend.core.svcs_registry import list_services as _list_services
 
 if TYPE_CHECKING:
-    from src.backend.dsl.commands.action_registry import action_handler_registry
-    from src.backend.dsl.commands.registry import route_registry
+    pass
 
 # Sprint 225: 2 services → dsl imports converted to lazy __getattr__ proxy.
 # action_handler_registry и route_registry — глобальные singleton registries,
@@ -206,15 +205,15 @@ class AdminService:
 
     async def list_actions(self) -> dict[str, Any]:
         """Возвращает список зарегистрированных action-команд."""
-        action_handler_registry = _lazy("action_handler_registry")
-        return {"actions": list(action_handler_registry.list_actions())}
+        registry = _lazy("action_handler_registry")
+        return {"actions": list(registry.list_actions())}
 
     async def list_routes(self) -> dict[str, Any]:
         """Возвращает все DSL-маршруты с их статусом."""
-        route_registry = _lazy("route_registry")
-        all_routes = route_registry.list_routes()
-        enabled = set(route_registry.list_enabled_routes())
-        flags = route_registry.get_route_feature_flags()
+        registry = _lazy("route_registry")
+        all_routes = registry.list_routes()
+        enabled = set(registry.list_enabled_routes())
+        flags = registry.get_route_feature_flags()
         return {
             "total": len(all_routes),
             "routes": [
@@ -225,8 +224,8 @@ class AdminService:
 
     async def list_feature_flags(self) -> dict[str, Any]:
         """Возвращает состояние всех feature-флагов."""
-        route_registry = _lazy("route_registry")
-        flags = route_registry.get_route_feature_flags()
+        registry = _lazy("route_registry")
+        flags = registry.get_route_feature_flags()
         unique_flags = sorted(set(flags.values()))
         return {
             "flags": [
@@ -250,23 +249,24 @@ class AdminService:
             dict с результатом операции.
 
         """
-        route_registry = _lazy("route_registry")
-        route_registry.toggle_feature_flag(flag_name, enable=enable)
+        registry = _lazy("route_registry")
+        registry.toggle_feature_flag(flag_name, enable=enable)
         affected = [
             r
-            for r, fl in route_registry.get_route_feature_flags().items()
+            for r, fl in registry.get_route_feature_flags().items()
             if fl == flag_name
         ]
         return {"flag": flag_name, "enabled": enable, "affected_routes": affected}
 
     async def system_info(self) -> dict[str, Any]:
         """Сводная информация о системе."""
+        registry = _lazy("route_registry")
         return {
             "services": _list_services(),
-            "actions_count": len(action_handler_registry.list_actions()),
-            "routes_total": len(route_registry.list_routes()),
-            "routes_enabled": len(route_registry.list_enabled_routes()),
-            "routes_disabled": len(route_registry.list_disabled_routes()),
+            "actions_count": len(_lazy("action_handler_registry").list_actions()),
+            "routes_total": len(registry.list_routes()),
+            "routes_enabled": len(registry.list_enabled_routes()),
+            "routes_disabled": len(registry.list_disabled_routes()),
             "feature_flags_disabled": sorted(disabled_feature_flags),
         }
 
