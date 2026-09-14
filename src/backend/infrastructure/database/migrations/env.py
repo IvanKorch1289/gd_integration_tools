@@ -133,13 +133,14 @@ async def run_async_migrations() -> None:
         )
         async with connectable.begin() as connection:
             await connection.run_sync(target_metadata.create_all)
-            # Seed выполняется и на sqlite: versions/*.py здесь не гоняются,
-            # поэтому без этого вызова dev-стенд остаётся без admin-учётки.
+            # Reference seed (orderkinds) выполняется и на sqlite:
+            # versions/*.py здесь не гоняются. Привилегированные учётки —
+            # только через manage.py bootstrap-admin (P0).
             from src.backend.infrastructure.database.migrations.seed_data import (
-                apply_default_seed,
+                apply_reference_seed,
             )
 
-            await connection.run_sync(apply_default_seed)
+            await connection.run_sync(apply_reference_seed)
         await connectable.dispose()
         return
 

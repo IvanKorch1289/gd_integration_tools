@@ -1,18 +1,19 @@
-"""Идемпотентный initial-data seed: admin-пользователь + базовые orderkinds.
+"""Reference-data seed (идемпотентный): базовые orderkinds.
+
+Привилегированные учётные данные (admin-пользователь) сюда НЕ входят:
+bootstrap администратора — явная операция ``manage.py bootstrap-admin``
+(пароль только через stdin/env; в prod-профиле слабые/известные пароли
+запрещены). Разделение reference data vs privileged credentials —
+P0 внешнего плана (2026-09-14).
 
 Используется из двух мест:
 - миграция ``aa1b2c3d4e5f`` (PostgreSQL path, ``alembic upgrade head``);
 - sqlite-ветка ``env.py`` (W21.2: на sqlite versions/*.py не выполняются,
-  таблицы создаются через ``metadata.create_all`` — поэтому seed применяется
-  отдельным вызовом :func:`apply_default_seed`).
+  таблицы создаются через ``metadata.create_all``).
 
-Идемпотентность: ``ON CONFLICT DO NOTHING`` по уникальным ключам
-(users.username, orderkinds.skb_uuid). Портативность: даты передаются
-bind-параметрами (без ``NOW()`` — на sqlite его нет).
-
-Безопасность: пароль дефолтного admin — ``admin-default-password-change-me``,
-хранится argon2id-хэшем (контракт ``User.verify_password``) и подлежит смене
-при первом входе; НЕ для production as-is.
+Идемпотентность: ``ON CONFLICT DO NOTHING`` по уникальному ключу
+(orderkinds.skb_uuid). Портативность: даты передаются bind-параметрами
+(без ``NOW()`` — на sqlite его нет).
 """
 
 from __future__ import annotations
@@ -22,14 +23,7 @@ from typing import Any
 
 import sqlalchemy as sa
 
-__all__ = ("apply_default_seed", "remove_default_seed")
-
-_DEFAULT_ADMIN_USERNAME = "admin"
-# Это argon2id-ХЭШ (не секрет); S105 здесь триггерится на строковый литерал.
-_DEFAULT_ADMIN_PASSWORD_HASH = (  # noqa: S105
-    "$argon2id$v=19$m=65536,t=3,p=4$v70cgsB+t3Ezpn1nvqvSig$"  # noqa: S105
-    "oBpjlXKJeqdqbyzPTJeAKGtCQSZIF1Ed3U6v5jWOyOA"  # noqa: S105
-)
+__all__ = ("apply_reference_seed", "remove_reference_seed")
 
 _DEFAULT_ORDER_KINDS: list[dict[str, Any]] = [
     {
@@ -55,34 +49,9 @@ _DEFAULT_ORDER_KINDS: list[dict[str, Any]] = [
 ]
 
 
-def apply_default_seed(bind: sa.Connection) -> None:
-    """Вставить default admin + orderkinds (идемпотентно, PG и sqlite)."""
+def apply_reference_seed(bind: sa.Connection) -> None:
+    """Вставить базовые orderkinds (идемпотентно, PG и sqlite)."""
     now = datetime.now(UTC)
-    bind.execute(
-        sa.text(
-            """
-            INSERT INTO users (
-                username, email, password, is_active, is_superuser, tenant_id,
-                created_at, updated_at
-            )
-            VALUES (
-                :username, :email, :password, :is_active, :is_superuser,
-                :tenant_id, :created_at, :updated_at
-            )
-            ON CONFLICT (username) DO NOTHING
-            """
-        ),
-        {
-            "username": _DEFAULT_ADMIN_USERNAME,
-            "email": "admin@example.com",
-            "password": _DEFAULT_ADMIN_PASSWORD_HASH,
-            "is_active": True,
-            "is_superuser": True,
-            "tenant_id": "default",
-            "created_at": now,
-            "updated_at": now,
-        },
-    )
     for kind in _DEFAULT_ORDER_KINDS:
         bind.execute(
             sa.text(
@@ -100,14 +69,10 @@ def apply_default_seed(bind: sa.Connection) -> None:
         )
 
 
-def remove_default_seed(bind: sa.Connection) -> None:
-    """Downgrade: удалить только seeded данные (не схему)."""
+def remove_reference_seed(bind: sa.Connection) -> None:
+    """Downgrade: удалить только reference-данные (не схему)."""
     for kind in _DEFAULT_ORDER_KINDS:
         bind.execute(
             sa.text("DELETE FROM orderkinds WHERE skb_uuid = :skb_uuid"),
             {"skb_uuid": kind["skb_uuid"]},
         )
-    bind.execute(
-        sa.text("DELETE FROM users WHERE username = :username"),
-        {"username": _DEFAULT_ADMIN_USERNAME},
-    )

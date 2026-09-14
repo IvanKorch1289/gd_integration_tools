@@ -8,7 +8,6 @@ import pytest
 
 from src.backend.core.api_importer import (
     APIImporter,
-    ConnectorDraft,
     ImportedAPI,
     OperationInfo,
     PathInfo,
@@ -18,7 +17,6 @@ from src.backend.core.api_importer import (
     import_openapi,
     import_swagger,
 )
-
 
 SAMPLE_OPENAPI = {
     "openapi": "3.0.0",
@@ -270,7 +268,7 @@ class TestExportRouteDraft:
         # Subdirectory: route_id + suffix makes it path-like.
         files = generate_route_draft(api, route_id="nested-r1")
         target = tmp_path / "extensions" / "nested-r1"
-        written = export_route_draft(files, target)
+        export_route_draft(files, target)
         assert (target / "route.toml").exists()
         assert (target / "test_nested-r1.py").exists()
 
@@ -302,7 +300,7 @@ class TestExports:
     def test_module_all(self) -> None:
         from src.backend.core import api_importer
 
-        assert len(api_importer.__all__) == 9
+        assert len(api_importer.__all__) == 10
 
 
 class TestRealisticExample:
@@ -362,7 +360,7 @@ class TestRealisticExample:
 
         # 4. Export to disk.
         target = tmp_path / "extensions" / "petstore"
-        written = export_route_draft(files, target)
+        export_route_draft(files, target)
         assert (target / "route.toml").exists()
         assert (target / "test_petstore-sync.py").exists()
         # Verify content.

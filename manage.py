@@ -93,6 +93,48 @@ def http3_serve(
     run_from_settings()
 
 
+@app.command("bootstrap-admin")
+def bootstrap_admin(
+    username: str = typer.Option("admin", "--username", help="Логин администратора"),
+    password_stdin: bool = typer.Option(
+        False, "--password-stdin", help="Читать пароль из stdin (до EOF)"
+    ),
+    from_env: str | None = typer.Option(
+        None, "--from-env", help="Имя переменной окружения с паролем"
+    ),
+    email: str | None = typer.Option(None, "--email", help="Email администратора"),
+) -> None:
+    """Создать/сбросить суперпользователя (P0: пароль только stdin/env).
+
+    Известные дефолтные пароли запрещены; в prod-профиле минимальная
+    длина 12. Идемпотентно: существующий пользователь получает новый пароль.
+    """
+    from src.backend.services.auth.bootstrap_admin import (
+        bootstrap_admin_user,
+        read_password,
+    )
+
+    try:
+        password = read_password(password_stdin=password_stdin, from_env=from_env)
+    except ValueError as exc:
+        typer.secho(f"[FAIL] {exc}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=2) from exc
+
+    try:
+        outcome = bootstrap_admin_user(
+            username=username, password=password, email=email
+        )
+    except ValueError as exc:
+        typer.secho(f"[FAIL] {exc}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=2) from exc
+
+    typer.secho(
+        f"[OK] admin user {username!r}: {outcome} "
+        f"(profile={os.environ.get('APP_PROFILE', 'default')})",
+        fg=typer.colors.GREEN,
+    )
+
+
 @app.command("grpc-serve")
 def grpc_serve(
     socket_path: str | None = typer.Option(

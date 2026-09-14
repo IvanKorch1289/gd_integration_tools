@@ -49,6 +49,7 @@ __all__ = (
     "ImportedAPI",
     "OperationInfo",
     "PathInfo",
+    "export_route_draft",
     "generate_connector_draft",
     "generate_route_draft",
     "import_openapi",

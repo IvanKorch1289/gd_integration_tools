@@ -1,13 +1,12 @@
-"""seed_default_admin — initial data seed (Wave OP-1 / ADR-0296 close M6-#3).
+"""seed_reference_data — reference data (orderkinds), идемпотентно.
 
-Логика seed'а живёт в :mod:`seed_data` (переиспользуется sqlite-веткой
-``env.py``, где versions/*.py не выполняются — см. W21.2).
+P0 (2026-09-14): привилегированные учётные данные (admin) УДАЛЕНЫ из
+миграции — bootstrap администратора теперь явная команда
+``manage.py bootstrap-admin`` (пароль через stdin/env; известные дефолты
+запрещены в prod-профиле). Миграция создаёт только reference data.
 
-Идемпотентность: повторный ``alembic upgrade head`` безопасен
-(``ON CONFLICT DO NOTHING``). Downgrade удаляет только seeded данные.
-
-Пароль дефолтного admin хранится argon2id-хэшем (контракт
-``User.verify_password``); подлежит смене при первом входе.
+Идемпотентность: повторный ``alembic upgrade head`` безопасен.
+Downgrade удаляет только reference-данные.
 """
 
 from typing import Sequence, Union
@@ -15,8 +14,8 @@ from typing import Sequence, Union
 from alembic import op
 
 from src.backend.infrastructure.database.migrations.seed_data import (
-    apply_default_seed,
-    remove_default_seed,
+    apply_reference_seed,
+    remove_reference_seed,
 )
 
 # revision identifiers, used by Alembic.
@@ -27,10 +26,10 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    """Insert default admin user + orderkinds (идемпотентно)."""
-    apply_default_seed(op.get_bind())
+    """Insert reference data (orderkinds) — идемпотентно."""
+    apply_reference_seed(op.get_bind())
 
 
 def downgrade() -> None:
-    """Remove seeded data (НЕ удаляет схему)."""
-    remove_default_seed(op.get_bind())
+    """Remove reference data (НЕ удаляет схему)."""
+    remove_reference_seed(op.get_bind())

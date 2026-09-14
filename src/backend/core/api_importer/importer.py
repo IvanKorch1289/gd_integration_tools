@@ -266,7 +266,7 @@ def _render_route_toml(connector: ConnectorDraft, route_id: str) -> str:
     lines.append(f"id = \"{route_id}\"")
     lines.append(f"source = \"timer:60s|api={connector.base_url}\"")
     lines.append(f"description = \"Auto-generated from {connector.name} {connector.version}\"")
-    lines.append(f"owner = \"team-imports\"")
+    lines.append("owner = \"team-imports\"")
     lines.append("")
     lines.append("[contract]")
     lines.append("timeout_seconds = 30")
