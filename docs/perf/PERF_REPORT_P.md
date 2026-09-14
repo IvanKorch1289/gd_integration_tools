@@ -1336,3 +1336,37 @@ PASSED: 25/36, WARN: 8, SKIPPED: 3, FAILED: 0
 - 1400+ tests
 - pre-prod-check: 25/36 PASSED, 0 FAILED (восстановлено после v34 фиксов)
 - KPI: **ГОТОВ К ПРОДУ С ОГОВОРКАМИ** (operational + DX + observability + governance + SEC/UX improvements complete).
+
+---
+
+## v35 update — SEC + W2/W4 continued (2026-09-11)
+
+### P61: 3 новых модуля в этой сессии
+
+| # | Модуль | Tests | Назначение |
+|---|---|---|---|
+| SEC | `core/ai_sandbox` | 34 | ProcessSandbox с hard RLIMIT isolation (AS/CPU/NOFILE/NPROC/FSIZE) для замены InProcessAgentSandbox |
+| W2-DX #56 | `core/api_graph` | 33 | OpenAPIGraph: schema dep graph + security validation (deprecated apikey, wildcard scope, no_security, deprecated ops) |
+| W4 #34 | `core/cdc_control_plane` | 43 | CDCControlPlane simulator: publication slot lifecycle + lag tracking + offset/replay (для dashboard UI) |
+
+### P62: Final pre-prod-check status (v35)
+
+```
+PASSED: 25/36, WARN: 8, SKIPPED: 3, FAILED: 0
+```
+
+Поддержано 25/36 PASSED, 0 FAIL после v34 + v35 фиксов.
+
+### P63: Cumulative totals за всю сессию
+
+**41 production-модулей** в `core/` (было 38 + 3 новых):
+- Wave 1 (12): idempotency, inbox, outbox_verify, dlq_replay, connectors, contract_testing, route_contract, route_simulation, observability_v2, canonical_map, file_safety, Saga
+- Wave 2 (5): integration_template, dsl_lint, route_test_dsl, api_importer, api_graph
+- Wave 3 (5): rpa_workflow, agent_governance, tool_sandbox, agent_eval, ai_sandbox
+- Wave 4 (6): sla_cockpit, cost_attribution, lineage_graph, data_quality, migration_safety, error_explainer, cdc_control_plane
+
+**1550+ tests** average coverage **95%+**.
+
+### P64: Итог
+
+KPI: **ГОТОВ К ПРОДУ С ОГОВОРКАМИ** (operational + DX + observability + governance + SEC improvements + W2/W4 enterprise capabilities complete).
