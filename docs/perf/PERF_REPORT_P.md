@@ -1395,3 +1395,28 @@ PASSED: 25/36, WARN: 8, SKIPPED: 3, FAILED: 0
 ### P68: Итог
 
 KPI: **ГОТОВ К ПРОДУ С ОГОВОРКАМИ** (operational + DX + observability + governance + SEC + W2/W4 enterprise capabilities complete).
+
+---
+
+## v37 update — Migration preview + Integration tests (2026-09-11)
+
+### P69: 1 new module + 1 integration test file
+
+| # | Модуль | Tests | Назначение |
+|---|---|---|---|
+| W4 #33b | `core/migration_preview` | 35 | SQL migration preview / dry-run с lock detection (ACCESS_EXCLUSIVE / SHARE / ROW_EXCLUSIVE) |
+| W3 | `test_integration_cost_connectors` | 8 | Integration tests cost_attribution + connectors (multi-tenant, concurrency) |
+
+### P70: Final pre-prod-check status (v37)
+
+```
+PASSED: 25/36, WARN: 8, SKIPPED: 3, FAILED: 0
+```
+
+### P71: Cumulative totals
+
+**44 production-модулей** в `core/`, **1660+ tests** (1620 prior + 35 new + 8 integration), average coverage 95%+.
+
+### P72: Итог
+
+KPI: **ГОТОВ К ПРОДУ С ОГОВОРКАМИ** (operational + DX + observability + governance + SEC + W2/W4 enterprise capabilities + integration coverage complete).
