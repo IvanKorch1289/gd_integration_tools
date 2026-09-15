@@ -324,3 +324,57 @@ class TestRealisticExample:
         # Even numbers from 0..498: count=250, sum = 0+2+...+498 = 250*249 = 62250.
         assert user_count == 250
         assert user_total == 250 * 249  # 0+2+...+498 (no wait, last is 498)
+
+
+class TestStreamingCSVGzip:
+    """Sprint 175+ P1.4: gzip auto-detection для CSV."""
+
+    def test_gzip_csv_detected_by_extension(
+        self, tmp_path: Path
+    ) -> None:
+        """CSV.gz files auto-detected and decompressed on-the-fly."""
+        import gzip
+
+        csv_path = tmp_path / "data.csv"
+        gz_path = tmp_path / "data.csv.gz"
+
+        # Write plain CSV.
+        csv_path.write_text("id,name\n1,Alice\n2,Bob\n", encoding="utf-8")
+
+        # Create .gz version.
+        with gzip.open(gz_path, "wt", encoding="utf-8") as f:
+            f.write("id,name\n1,Alice\n2,Bob\n3,Charlie\n")
+
+        parser = StreamingCSVParser()
+        records = list(parser.parse_file(gz_path))
+        assert len(records) == 3
+        assert records[0]["name"] == "Alice"
+        assert records[2]["name"] == "Charlie"
+
+    def test_plain_csv_works(self, tmp_path: Path) -> None:
+        """Plain CSV (no .gz) still works."""
+        csv_path = tmp_path / "data.csv"
+        csv_path.write_text(
+            "id,name\n1,Alice\n2,Bob\n", encoding="utf-8"
+        )
+        parser = StreamingCSVParser()
+        records = list(parser.parse_file(csv_path))
+        assert len(records) == 2
+
+    def test_gzip_with_max_rows(
+        self, tmp_path: Path
+    ) -> None:
+        import gzip
+
+        gz_path = tmp_path / "data.csv.gz"
+        with gzip.open(gz_path, "wt", encoding="utf-8") as f:
+            for i in range(100):
+                f.write(f"{i},row{i}\n")
+        parser = StreamingCSVParser()
+        records = list(parser.parse_file(gz_path, max_rows=10))
+        assert len(records) == 10
+
+    def test_gzip_missing_file(self, tmp_path: Path) -> None:
+        parser = StreamingCSVParser()
+        with pytest.raises(FileNotFoundError):
+            list(parser.parse_file(tmp_path / "missing.csv.gz"))

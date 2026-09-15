@@ -44,11 +44,21 @@ from src.backend.core.registry_explorer.explorer import (
     RouteEntry,
     get_registry_explorer,
 )
+from src.backend.core.registry_explorer.auto_seed import (
+    StreamlitPageRegistry,
+    auto_seed_from_project,
+    get_page_registry,
+    reset_page_registry,
+)
 
 __all__ = (
     "ActionEntry",
     "ConnectorEntry",
     "RegistryExplorer",
     "RouteEntry",
+    "StreamlitPageRegistry",
+    "auto_seed_from_project",
+    "get_page_registry",
     "get_registry_explorer",
+    "reset_page_registry",
 )

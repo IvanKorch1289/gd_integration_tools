@@ -236,7 +236,7 @@ class TestExports:
     def test_module_all(self) -> None:
         from src.backend.core import registry_explorer
 
-        assert len(registry_explorer.__all__) == 5
+        assert len(registry_explorer.__all__) == 9
 
 
 class TestRealisticExample:

@@ -402,7 +402,7 @@ class TestExports:
     def test_module_all(self) -> None:
         from src.backend.core import cost_attribution
 
-        assert len(cost_attribution.__all__) == 7
+        assert len(cost_attribution.__all__) == 8
 
 
 class TestRealisticExample:

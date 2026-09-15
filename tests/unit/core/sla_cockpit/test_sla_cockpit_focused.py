@@ -309,7 +309,7 @@ class TestExports:
     def test_module_all(self) -> None:
         from src.backend.core import sla_cockpit
 
-        assert len(sla_cockpit.__all__) == 12
+        assert len(sla_cockpit.__all__) == 14
 
 
 class TestRealisticExample:

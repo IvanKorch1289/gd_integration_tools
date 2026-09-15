@@ -25,6 +25,18 @@ type-check-budget: check-env ## Sprint 10 K2: mypy budget gate (max 5 errors, ra
 	@$(UV_RUN) python tools/checks/mypy_budget.py --max 5
 	@$(SUCCESS) "Mypy budget OK"
 
+migration-preview: check-env ## Sprint 175+ W3: SQL migration preview (CRITICAL/HIGH detection)
+	@$(INFO) "Running migration preview gate..."
+	@$(UV_RUN) python -m src.backend.core.migration_preview.cli_main \
+		--alembic-dir src/backend/infrastructure/database/migrations \
+		--output /tmp/migration_preview.json
+	@$(SUCCESS) "Migration preview OK"
+
+migration-preview-strict: migration-preview ## S175+: STRICT mode (fail on CRITICAL ops)
+	@$(UV_RUN) python -m src.backend.core.migration_preview.cli_main \
+		--strict --alembic-dir src/backend/infrastructure/database/migrations \
+		--output /tmp/migration_preview_strict.json
+
 startup-time-gate: check-env ## Sprint 10 K2 W3: startup-time gate (<3s total, fail-on-regression)
 	@$(INFO) "Running startup-time gate..."
 	@$(UV_RUN) python tools/checks/startup_time.py

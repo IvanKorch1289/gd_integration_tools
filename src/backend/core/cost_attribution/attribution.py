@@ -180,6 +180,35 @@ class CostAttribution:
     def clear(self) -> None:
         self._records.clear()
 
+    def purge_older_than(
+        self, seconds: float, now: float | None = None
+    ) -> int:
+        """Remove records older than ``seconds`` (Sprint 175+ P1.2).
+
+        Args:
+            seconds: Age threshold (records with timestamp < now - seconds
+                are removed).
+            now: Reference time (default: time.time()).
+
+        Returns:
+            Number of records removed.
+        """
+        if now is None:
+            now = time.time()
+        before = len(self._records)
+        keep_from = 0
+        for i, r in enumerate(self._records):
+            if r.timestamp >= now - seconds:
+                keep_from = i
+                break
+            keep_from = i + 1
+        else:
+            self._records.clear()
+            return before
+        if keep_from > 0:
+            del self._records[:keep_from]
+        return before - len(self._records)
+
     def generate_report(self) -> CostReport:
         return CostReport(timestamp=time.time(), records=list(self._records))
 

@@ -692,7 +692,11 @@ def define_checks() -> list[tuple[str, Callable[[], CheckResult]]]:
                 "mypy-budget", "mypy_budget.py", "--max", "30"
             ),
         ),
-        ("03 layers", lambda: _check_python_script("check-layers", "check_layers.py")),
+        (
+            "03a migration-preview",
+            lambda: _check_make_target("migration-preview", "migration-preview"),
+        ),
+        ("04 layers", lambda: _check_python_script("check-layers", "check_layers.py")),
         ("04 ruff strict", lambda: _check_make_target("lint", "lint-strict")),
         ("05 secrets", lambda: _check_make_target("secrets", "secrets-check")),
         (

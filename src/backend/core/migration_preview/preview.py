@@ -165,17 +165,50 @@ class MigrationPreviewReport:
 # Regex patterns (one per operation type).
 # Order matters: more specific patterns first (DROP COLUMN before ALTER TABLE).
 _PATTERNS: list[tuple[re.Pattern, OperationType]] = [
-    (re.compile(r"^\s*CREATE\s+TABLE\b", re.IGNORECASE | re.MULTILINE), OperationType.CREATE_TABLE),
-    (re.compile(r"^\s*DROP\s+TABLE\b", re.IGNORECASE | re.MULTILINE), OperationType.DROP_TABLE),
-    (re.compile(r"^\s*ALTER\s+TABLE\b", re.IGNORECASE | re.MULTILINE), OperationType.ALTER_TABLE),
-    (re.compile(r"^\s*CREATE\s+(?:UNIQUE\s+)?INDEX\b", re.IGNORECASE | re.MULTILINE), OperationType.CREATE_INDEX),
-    (re.compile(r"^\s*DROP\s+INDEX\b", re.IGNORECASE | re.MULTILINE), OperationType.DROP_INDEX),
-    (re.compile(r"^\s*TRUNCATE\b", re.IGNORECASE | re.MULTILINE), OperationType.TRUNCATE),
-    (re.compile(r"^\s*INSERT\s+INTO\b", re.IGNORECASE | re.MULTILINE), OperationType.INSERT),
-    (re.compile(r"^\s*UPDATE\s+\w+\b", re.IGNORECASE | re.MULTILINE), OperationType.UPDATE),
-    (re.compile(r"^\s*DELETE\s+FROM\b", re.IGNORECASE | re.MULTILINE), OperationType.DELETE),
-    (re.compile(r"^\s*CREATE\s+VIEW\b", re.IGNORECASE | re.MULTILINE), OperationType.CREATE_VIEW),
-    (re.compile(r"^\s*DROP\s+VIEW\b", re.IGNORECASE | re.MULTILINE), OperationType.DROP_VIEW),
+    (
+        re.compile(r"^\s*CREATE\s+TABLE\b", re.IGNORECASE | re.MULTILINE),
+        OperationType.CREATE_TABLE,
+    ),
+    (
+        re.compile(r"^\s*DROP\s+TABLE\b", re.IGNORECASE | re.MULTILINE),
+        OperationType.DROP_TABLE,
+    ),
+    (
+        re.compile(r"^\s*ALTER\s+TABLE\b", re.IGNORECASE | re.MULTILINE),
+        OperationType.ALTER_TABLE,
+    ),
+    (
+        re.compile(r"^\s*CREATE\s+(?:UNIQUE\s+)?INDEX\b", re.IGNORECASE | re.MULTILINE),
+        OperationType.CREATE_INDEX,
+    ),
+    (
+        re.compile(r"^\s*DROP\s+INDEX\b", re.IGNORECASE | re.MULTILINE),
+        OperationType.DROP_INDEX,
+    ),
+    (
+        re.compile(r"^\s*TRUNCATE\b", re.IGNORECASE | re.MULTILINE),
+        OperationType.TRUNCATE,
+    ),
+    (
+        re.compile(r"^\s*INSERT\s+INTO\b", re.IGNORECASE | re.MULTILINE),
+        OperationType.INSERT,
+    ),
+    (
+        re.compile(r"^\s*UPDATE\s+\w+\b", re.IGNORECASE | re.MULTILINE),
+        OperationType.UPDATE,
+    ),
+    (
+        re.compile(r"^\s*DELETE\s+FROM\b", re.IGNORECASE | re.MULTILINE),
+        OperationType.DELETE,
+    ),
+    (
+        re.compile(r"^\s*CREATE\s+VIEW\b", re.IGNORECASE | re.MULTILINE),
+        OperationType.CREATE_VIEW,
+    ),
+    (
+        re.compile(r"^\s*DROP\s+VIEW\b", re.IGNORECASE | re.MULTILINE),
+        OperationType.DROP_VIEW,
+    ),
 ]
 
 
@@ -187,9 +220,7 @@ _TABLE_PATTERN = re.compile(
 class MigrationPreviewer:
     """Parse + analyze SQL migration file."""
 
-    def preview_file(
-        self, path: str | Path
-    ) -> MigrationPreviewReport:
+    def preview_file(self, path: str | Path) -> MigrationPreviewReport:
         """Preview migration from file."""
         path = Path(path)
         if not path.exists():
@@ -197,9 +228,7 @@ class MigrationPreviewer:
         sql = path.read_text(encoding="utf-8")
         return self.preview_string(sql, file_path=str(path))
 
-    def preview_string(
-        self, sql: str, file_path: str = ""
-    ) -> MigrationPreviewReport:
+    def preview_string(self, sql: str, file_path: str = "") -> MigrationPreviewReport:
         """Preview migration from SQL string.
 
         Splits SQL by ';' and analyzes each statement.
@@ -274,7 +303,9 @@ class MigrationPreviewer:
             notes.append("PERMANENT data loss — ensure backups exist")
         elif op_type == OperationType.TRUNCATE:
             notes.append("Removes all rows; no transaction rollback possible")
-        elif op_type == OperationType.ALTER_TABLE and "DROP COLUMN" in stmt_clean.upper():
+        elif (
+            op_type == OperationType.ALTER_TABLE and "DROP COLUMN" in stmt_clean.upper()
+        ):
             op_type = OperationType.DROP_COLUMN
             notes.append("Column data will be lost")
             severity = Severity.CRITICAL

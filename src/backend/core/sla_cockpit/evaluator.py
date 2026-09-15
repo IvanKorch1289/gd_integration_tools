@@ -204,3 +204,106 @@ class SLOEvaluator:
 
     def clear_history(self) -> None:
         self._history.clear()
+
+
+@dataclass(slots=True)
+class SLOPeriodReport:
+    """Aggregated SLO report over a period (Wave 175+ P1.3).
+
+    Attributes:
+        slo_id: SLO identifier.
+        slo_version: SLO version.
+        start_time: Period start (Unix timestamp).
+        end_time: Period end.
+        evaluation_count: Number of evaluations in period.
+        healthy_count: Count of HEALTHY evaluations.
+        at_risk_count: Count of AT_RISK evaluations.
+        breach_count: Count of BREACH evaluations.
+        worst_latency_p99_ms: Highest observed p99 latency.
+        worst_error_rate: Highest observed error rate.
+    """
+
+    slo_id: str
+    slo_version: str
+    start_time: float
+    end_time: float
+    evaluation_count: int = 0
+    healthy_count: int = 0
+    at_risk_count: int = 0
+    breach_count: int = 0
+    worst_latency_p99_ms: float = 0.0
+    worst_error_rate: float = 0.0
+
+    @property
+    def availability(self) -> float:
+        """Computed availability ratio (healthy / total)."""
+        if self.evaluation_count == 0:
+            return 1.0
+        return self.healthy_count / self.evaluation_count
+
+    @property
+    def period_seconds(self) -> float:
+        return max(0.0, self.end_time - self.start_time)
+
+    def to_dict(self) -> dict:
+        return {
+            "slo_id": self.slo_id,
+            "slo_version": self.slo_version,
+            "start_time": self.start_time,
+            "end_time": self.end_time,
+            "period_seconds": self.period_seconds,
+            "evaluation_count": self.evaluation_count,
+            "healthy_count": self.healthy_count,
+            "at_risk_count": self.at_risk_count,
+            "breach_count": self.breach_count,
+            "availability": self.availability,
+            "worst_latency_p99_ms": self.worst_latency_p99_ms,
+            "worst_error_rate": self.worst_error_rate,
+        }
+
+
+def aggregate_evaluations(
+    evaluations: list[SLOEvaluation],
+    slo: "SLO",
+    start_time: float,
+    end_time: float,
+) -> SLOPeriodReport:
+    """Aggregate multiple SLOEvaluation в period report.
+
+    Args:
+        evaluations: List of SLOEvaluation (all for same SLO).
+        slo: The SLO definition.
+        start_time: Period start.
+        end_time: Period end.
+
+    Returns:
+        SLOPeriodReport with aggregated counts.
+    """
+    import time as _time
+
+    report = SLOPeriodReport(
+        slo_id=slo.tenant_id + ":" + (
+            next(
+                (e.route_id for e in evaluations if e.route_id),
+                slo.tenant_id,
+            )
+        ),
+        slo_version=slo.tenant_id,
+        start_time=start_time,
+        end_time=end_time,
+    )
+    for e in evaluations:
+        if e.tenant_slo is not slo:
+            continue
+        report.evaluation_count += 1
+        if e.status == SLOStatus.HEALTHY:
+            report.healthy_count += 1
+        elif e.status == SLOStatus.AT_RISK:
+            report.at_risk_count += 1
+        elif e.status == SLOStatus.BREACH:
+            report.breach_count += 1
+        if e.actual_latency_p99_ms > report.worst_latency_p99_ms:
+            report.worst_latency_p99_ms = e.actual_latency_p99_ms
+        if e.actual_error_rate > report.worst_error_rate:
+            report.worst_error_rate = e.actual_error_rate
+    return report

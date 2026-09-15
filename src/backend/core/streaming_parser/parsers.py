@@ -2,11 +2,14 @@
 
 Pure-Python stdlib: uses ``csv`` для CSV и chunked ``json`` для
 JSON arrays-of-objects. Bounded memory via configurable chunk_size.
+
+Sprint 175+ P1.4: Auto-detects ``.gz`` extension для CSV (gzip module).
 """
 
 from __future__ import annotations
 
 import csv
+import gzip
 import json
 import logging
 from dataclasses import dataclass
@@ -81,7 +84,13 @@ class StreamingCSVParser:
         path = Path(path)
         if not path.exists():
             raise FileNotFoundError(f"CSV file not found: {path}")
-        with open(path, encoding=encoding, newline="") as f:
+        # Auto-detect gzip (Sprint 175+ P1.4) by .gz extension.
+        opener = (
+            lambda: gzip.open(path, "rt", encoding=encoding, newline="")
+            if str(path).endswith(".gz")
+            else open(path, encoding=encoding, newline="")
+        )
+        with opener() as f:
             reader = csv.reader(f, delimiter=self._delimiter, quotechar=self._quotechar)
             try:
                 header = next(reader)

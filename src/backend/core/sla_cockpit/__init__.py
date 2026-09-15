@@ -61,6 +61,8 @@ from src.backend.core.sla_cockpit.evaluator import (
     SLOBreachDetail,
     SLOEvaluation,
     SLOEvaluator,
+    SLOPeriodReport,
+    aggregate_evaluations,
     evaluate_slo,
 )
 from src.backend.core.sla_cockpit.registry import SLO, SLARegistry, get_sla_registry
@@ -72,9 +74,11 @@ __all__ = (
     "SLOEvaluator",
     "SLOEvaluation",
     "SLOMeasurement",
+    "SLOPeriodReport",
     "SLOReport",
     "SLARegistry",
     "SLOStatus",
+    "aggregate_evaluations",
     "evaluate_slo",
     "get_sla_cockpit",
     "get_sla_registry",
