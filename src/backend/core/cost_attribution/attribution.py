@@ -180,9 +180,7 @@ class CostAttribution:
     def clear(self) -> None:
         self._records.clear()
 
-    def purge_older_than(
-        self, seconds: float, now: float | None = None
-    ) -> int:
+    def purge_older_than(self, seconds: float, now: float | None = None) -> int:
         """Remove records older than ``seconds`` (Sprint 175+ P1.2).
 
         Args:
@@ -210,6 +208,7 @@ class CostAttribution:
         return before - len(self._records)
 
     def generate_report(self) -> CostReport:
+        """Generate aggregated CostReport from current records."""
         return CostReport(timestamp=time.time(), records=list(self._records))
 
 

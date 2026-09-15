@@ -80,10 +80,10 @@ class AggregatorConfig:
         ):
             raise ValueError("custom_reducer required for CUSTOM strategy")
         # correlation_key can be either a callable or a string (header name).
-        if not (callable(self.correlation_key) or isinstance(self.correlation_key, str)):
-            raise ValueError(
-                "correlation_key must be callable or string"
-            )
+        if not (
+            callable(self.correlation_key) or isinstance(self.correlation_key, str)
+        ):
+            raise ValueError("correlation_key must be callable or string")
 
 
 @dataclass(slots=True)
@@ -112,7 +112,8 @@ def _key_of(msg: Message, key_fn: Callable[[Message], str] | str) -> str:
 
 
 def _combine(
-    messages: list[Message], strategy: CompletionStrategy,
+    messages: list[Message],
+    strategy: CompletionStrategy,
     reducer: Callable[[list[Message]], Any] | None,
 ) -> Any:
     """Combine flushed messages per strategy."""
@@ -144,9 +145,7 @@ def _combine(
 
 
 def aggregate(
-    messages: Iterable[Message],
-    *,
-    config: AggregatorConfig,
+    messages: Iterable[Message], *, config: AggregatorConfig
 ) -> list[AggregatedBatch]:
     """Aggregate messages into batches по correlation key.
 
@@ -187,12 +186,7 @@ def aggregate(
             first_seen.pop(key, None)
             result = _combine(msgs, config.completion_strategy, config.custom_reducer)
             batches.append(
-                AggregatedBatch(
-                    key=key,
-                    result=result,
-                    size=len(msgs),
-                    elapsed=elapsed,
-                )
+                AggregatedBatch(key=key, result=result, size=len(msgs), elapsed=elapsed)
             )
     # Flush remaining.
     for key, msgs in pending.items():
@@ -201,20 +195,13 @@ def aggregate(
         elapsed = msgs[-1].timestamp - first_seen[key]
         result = _combine(msgs, config.completion_strategy, config.custom_reducer)
         batches.append(
-            AggregatedBatch(
-                key=key,
-                result=result,
-                size=len(msgs),
-                elapsed=elapsed,
-            )
+            AggregatedBatch(key=key, result=result, size=len(msgs), elapsed=elapsed)
         )
     return batches
 
 
 def aggregate_stream(
-    messages: Iterator[Message],
-    *,
-    config: AggregatorConfig,
+    messages: Iterator[Message], *, config: AggregatorConfig
 ) -> Iterator[AggregatedBatch]:
     """Streaming version of aggregate (yields batches on completion)."""
     pending: dict[str, list[Message]] = defaultdict(list)
@@ -245,5 +232,5 @@ def aggregate_stream(
             first_seen.pop(key, None)
             result = _combine(msgs, config.completion_strategy, config.custom_reducer)
             yield AggregatedBatch(
-                key=key, result=result, size=len(msgs), elapsed=elapsed,
+                key=key, result=result, size=len(msgs), elapsed=elapsed
             )

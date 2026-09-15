@@ -264,14 +264,18 @@ def cli_main() -> int:
         try:
             explorer.register_route(
                 RouteEntry(
-                    id="order-create", source="timer:60s",
-                    owner="team-payments", tags=("prod",),
+                    id="order-create",
+                    source="timer:60s",
+                    owner="team-payments",
+                    tags=("prod",),
                 )
             )
             explorer.register_route(
                 RouteEntry(
-                    id="dadata-enrich", source="action:order-create",
-                    owner="team-payments", tags=("prod",),
+                    id="dadata-enrich",
+                    source="action:order-create",
+                    owner="team-payments",
+                    tags=("prod",),
                 )
             )
         except Exception:
@@ -289,9 +293,7 @@ def cli_main() -> int:
             md = "# SLA Snapshot\n\n"
             report = cockpit.generate_report()
             for e in report.evaluations[:20]:
-                md += (
-                    f"- **{e.tenant_id}/{e.route_id}**: `{e.status.value}`\n"
-                )
+                md += f"- **{e.tenant_id}/{e.route_id}**: `{e.status.value}`\n"
             sections["sla"] = md
         except Exception:
             sections["sla"] = "# SLA Snapshot\n\n_SLA Cockpit not available._\n"
@@ -311,9 +313,7 @@ def cli_main() -> int:
                 )
             sections["cdc"] = md
         except Exception:
-            sections["cdc"] = (
-                "# CDC Control Plane\n\n_Plane not available._\n"
-            )
+            sections["cdc"] = "# CDC Control Plane\n\n_Plane not available._\n"
 
     if not sections:
         parser.error(
@@ -330,4 +330,5 @@ def cli_main() -> int:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(cli_main())

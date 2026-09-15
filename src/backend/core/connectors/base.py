@@ -79,9 +79,7 @@ class BaseConnector(ABC):
 
         """
 
-    def validate_config(
-        self, config: dict[str, Any]
-    ) -> tuple[bool, str | None]:
+    def validate_config(self, config: dict[str, Any]) -> tuple[bool, str | None]:
         """Validate config against ``config_schema()`` (Sprint 175+ P0.4).
 
         Pure-stdlib implementation: only checks required fields and types

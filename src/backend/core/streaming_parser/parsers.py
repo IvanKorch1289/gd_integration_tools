@@ -224,6 +224,7 @@ _json_parser: StreamingJSONParser | None = None
 
 
 def get_csv_parser() -> StreamingCSVParser:
+    """Return singleton StreamingCSVParser (lazy init)."""
     global _csv_parser
     if _csv_parser is None:
         _csv_parser = StreamingCSVParser()
@@ -231,6 +232,7 @@ def get_csv_parser() -> StreamingCSVParser:
 
 
 def get_json_parser() -> StreamingJSONParser:
+    """Return singleton StreamingJSONParser (lazy init)."""
     global _json_parser
     if _json_parser is None:
         _json_parser = StreamingJSONParser()

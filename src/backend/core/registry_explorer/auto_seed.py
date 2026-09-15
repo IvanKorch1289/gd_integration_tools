@@ -142,9 +142,7 @@ class StreamlitPageRegistry:
             source = meta.get("source", "unknown")
             owner = meta.get("owner", "")
             self.explorer.register_route(
-                RouteEntry(
-                    id=route_id, source=source, owner=owner,
-                )
+                RouteEntry(id=route_id, source=source, owner=owner)
             )
             count += 1
         return count
@@ -174,8 +172,7 @@ class StreamlitPageRegistry:
 
 
 def auto_seed_from_project(
-    extensions_dir: Path | None = None,
-    routes_dir: Path | None = None,
+    extensions_dir: Path | None = None, routes_dir: Path | None = None
 ) -> StreamlitPageRegistry:
     """Standalone auto-seed для project.
 
@@ -188,9 +185,7 @@ def auto_seed_from_project(
     """
     explorer = get_registry_explorer()
     reg = StreamlitPageRegistry(
-        explorer=explorer,
-        extensions_dir=extensions_dir,
-        routes_dir=routes_dir,
+        explorer=explorer, extensions_dir=extensions_dir, routes_dir=routes_dir
     )
     reg.auto_seed(force=True)
     return reg

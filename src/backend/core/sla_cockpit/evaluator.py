@@ -263,10 +263,7 @@ class SLOPeriodReport:
 
 
 def aggregate_evaluations(
-    evaluations: list[SLOEvaluation],
-    slo: "SLO",
-    start_time: float,
-    end_time: float,
+    evaluations: list[SLOEvaluation], slo: "SLO", start_time: float, end_time: float
 ) -> SLOPeriodReport:
     """Aggregate multiple SLOEvaluation в period report.
 
@@ -281,12 +278,9 @@ def aggregate_evaluations(
     """
 
     report = SLOPeriodReport(
-        slo_id=slo.tenant_id + ":" + (
-            next(
-                (e.route_id for e in evaluations if e.route_id),
-                slo.tenant_id,
-            )
-        ),
+        slo_id=slo.tenant_id
+        + ":"
+        + (next((e.route_id for e in evaluations if e.route_id), slo.tenant_id)),
         slo_version=slo.tenant_id,
         start_time=start_time,
         end_time=end_time,

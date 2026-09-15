@@ -43,9 +43,7 @@ def main() -> int:
         help="Output JSON file",
     )
     parser.add_argument(
-        "--strict",
-        action="store_true",
-        help="Fail (exit 1) on CRITICAL operations",
+        "--strict", action="store_true", help="Fail (exit 1) on CRITICAL operations"
     )
 
     args = parser.parse_args()
@@ -95,8 +93,7 @@ def main() -> int:
     }
     args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
     print(
-        f"Scanned {len(files)} migrations: "
-        f"{total_critical} CRITICAL, {total_high} HIGH"
+        f"Scanned {len(files)} migrations: {total_critical} CRITICAL, {total_high} HIGH"
     )
 
     if args.strict and total_critical > 0:
