@@ -85,11 +85,14 @@ class StreamingCSVParser:
         if not path.exists():
             raise FileNotFoundError(f"CSV file not found: {path}")
         # Auto-detect gzip (Sprint 175+ P1.4) by .gz extension.
-        opener = (
-            lambda: gzip.open(path, "rt", encoding=encoding, newline="")
-            if str(path).endswith(".gz")
-            else open(path, encoding=encoding, newline="")
-        )
+        if str(path).endswith(".gz"):
+            opener: Any = lambda: gzip.open(  # noqa: E731 — conditional opener
+                path, "rt", encoding=encoding, newline=""
+            )
+        else:
+            opener = lambda: open(  # noqa: E731 — conditional opener
+                path, encoding=encoding, newline=""
+            )
         with opener() as f:
             reader = csv.reader(f, delimiter=self._delimiter, quotechar=self._quotechar)
             try:

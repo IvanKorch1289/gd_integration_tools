@@ -37,18 +37,18 @@
 
 from __future__ import annotations
 
+from src.backend.core.registry_explorer.auto_seed import (
+    StreamlitPageRegistry,
+    auto_seed_from_project,
+    get_page_registry,
+    reset_page_registry,
+)
 from src.backend.core.registry_explorer.explorer import (
     ActionEntry,
     ConnectorEntry,
     RegistryExplorer,
     RouteEntry,
     get_registry_explorer,
-)
-from src.backend.core.registry_explorer.auto_seed import (
-    StreamlitPageRegistry,
-    auto_seed_from_project,
-    get_page_registry,
-    reset_page_registry,
 )
 
 __all__ = (

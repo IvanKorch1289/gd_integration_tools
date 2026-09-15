@@ -248,7 +248,7 @@ def cli_main() -> int:
             explorer.clear()
             from src.backend.core.connectors import get_connector_registry
 
-            for connector in get_connector_registry().list_connectors():
+            for connector in get_connector_registry().list_all():
                 meta = connector.metadata()
                 explorer.register_connector(
                     type(meta)(
@@ -287,10 +287,10 @@ def cli_main() -> int:
 
             cockpit = get_sla_cockpit()
             md = "# SLA Snapshot\n\n"
-            for sl in cockpit.list_slos()[:20]:
+            report = cockpit.generate_report()
+            for e in report.evaluations[:20]:
                 md += (
-                    f"- **{sl.name}** v{sl.version}: `{sl.targets}` "
-                    f"owner={sl.owner}\n"
+                    f"- **{e.tenant_id}/{e.route_id}**: `{e.status.value}`\n"
                 )
             sections["sla"] = md
         except Exception:

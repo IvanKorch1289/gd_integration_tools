@@ -8,10 +8,8 @@ no manual ``_seed_explorer()`` call needed.
 from __future__ import annotations
 
 import logging
-import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 from src.backend.core.registry_explorer.explorer import (
     ActionEntry,

@@ -279,7 +279,6 @@ def aggregate_evaluations(
     Returns:
         SLOPeriodReport with aggregated counts.
     """
-    import time as _time
 
     report = SLOPeriodReport(
         slo_id=slo.tenant_id + ":" + (
@@ -293,7 +292,7 @@ def aggregate_evaluations(
         end_time=end_time,
     )
     for e in evaluations:
-        if e.tenant_slo is not slo:
+        if e.slo is not slo:
             continue
         report.evaluation_count += 1
         if e.status == SLOStatus.HEALTHY:
@@ -302,8 +301,14 @@ def aggregate_evaluations(
             report.at_risk_count += 1
         elif e.status == SLOStatus.BREACH:
             report.breach_count += 1
-        if e.actual_latency_p99_ms > report.worst_latency_p99_ms:
+        if e.actual_latency_p99_ms is not None and (
+            report.worst_latency_p99_ms is None
+            or e.actual_latency_p99_ms > report.worst_latency_p99_ms
+        ):
             report.worst_latency_p99_ms = e.actual_latency_p99_ms
-        if e.actual_error_rate > report.worst_error_rate:
+        if e.actual_error_rate is not None and (
+            report.worst_error_rate is None
+            or e.actual_error_rate > report.worst_error_rate
+        ):
             report.worst_error_rate = e.actual_error_rate
     return report

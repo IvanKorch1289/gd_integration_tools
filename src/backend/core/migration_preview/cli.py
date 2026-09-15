@@ -5,12 +5,10 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import tempfile
 from pathlib import Path
 
-from src.backend.core.migration_preview.preview import (
-    MigrationPreviewer,
-    Severity,
-)
+from src.backend.core.migration_preview.preview import MigrationPreviewer
 
 
 def scan_alembic_versions(alembic_dir: Path) -> list[Path]:
@@ -41,7 +39,7 @@ def main() -> int:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("/tmp/migration_preview.json"),
+        default=Path(tempfile.gettempdir()) / "migration_preview.json",  # noqa: S108
         help="Output JSON file",
     )
     parser.add_argument(
