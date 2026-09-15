@@ -40,6 +40,7 @@ from src.backend.core.cost_attribution.attribution import (
     ResourceType,
     get_cost_attribution,
     get_cost_registry,
+    reset_cost_attribution,
     track_cost,
 )
 
@@ -50,5 +51,6 @@ __all__ = (
     "ResourceType",
     "get_cost_attribution",
     "get_cost_registry",
+    "reset_cost_attribution",
     "track_cost",
 )

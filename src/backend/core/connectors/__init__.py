@@ -56,6 +56,7 @@ from src.backend.core.connectors.base import (
 from src.backend.core.connectors.registry import (
     ConnectorRegistry,
     get_connector_registry,
+    reset_connector_registry,
 )
 
 __all__ = (
@@ -67,4 +68,5 @@ __all__ = (
     "ConnectorStatus",
     "OperationSchema",
     "get_connector_registry",
+    "reset_connector_registry",
 )
