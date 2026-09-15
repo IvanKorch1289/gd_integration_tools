@@ -188,9 +188,18 @@ async def test_get_all_custom_tables(service: TechService) -> None:
 # ── upload excel ────────────────────────────────────────────────
 
 
+def _polars_available() -> bool:
+    """Безопасная проверка доступности polars (может быть partial import)."""
+    try:
+        import importlib.util
+        spec = importlib.util.find_spec("polars")
+        return spec is not None
+    except (ValueError, ModuleNotFoundError, AttributeError):
+        return False
+
+
 @pytest.mark.skipif(
-    # Cycle 127: polars not in pyproject deps; defer to integration env.
-    not __import__("importlib").util.find_spec("polars"),
+    not _polars_available(),
     reason="polars not installed (defer to integration env)",
 )
 @pytest.mark.asyncio
