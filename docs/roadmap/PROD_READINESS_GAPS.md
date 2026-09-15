@@ -1,4 +1,4 @@
-# PROD_READINESS_GAPS — 2026-09-11
+# PROD_READINESS_GAPS — 2026-09-14 (обновлено)
 
 > Реестр позиций, не позволяющих заявить «ГОТОВ К ПРОДУ» без оговорок, либо
 > требующих внешних условий. Каждая: owner, тип, причина, минимальный шаг,
@@ -149,3 +149,22 @@
 - **Риск**: дубли расходятся поведением → скрытые баги (прецедент —
   create_task-контракт в этой сессии).
 - **Срок**: 2-3 спринта.
+
+---
+
+## Обновление 2026-09-14 (волны 6–9)
+
+| Изменение | Коммит |
+|---|---|
+| G4 SOAP invoke → ✅ ЗАКРЫТ (underscore→dot + type coercion) | `1d93316aa` |
+| G5(b) standalone Invoke → ✅ (state bootstrap + get_invoker fix) | `a6730dced` |
+| P0 bootstrap-admin (reference-only seed) → ✅ | `e7ab9aeba` |
+| OP-3/OP-6 гейты → blocking CI jobs | `d201251ba` |
+| CVE-diff в SBOM gate | `619040c6c` |
+| Contract matrix (action × REST/gRPC/SOAP) | `35f06b299` |
+| Write-CRUD восстановлен (ServiceHelper) | `a6730dced` |
+| auth_login admin_roles claim | `817eff4c1` |
+| Temporal runtime app fix | `5ee45d8db` |
+
+Оставшиеся инфраструктурные: G1/G2/G6 — требуют CI-runner, prod-стенд, брокеры.
+Оставшиеся кодовые: G5(a) proto v2 (backlog), G8 docs хвост (backlog), G10 nav debt (backlog).
