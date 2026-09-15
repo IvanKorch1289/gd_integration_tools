@@ -190,3 +190,144 @@ def get_docs_generator() -> DocsGenerator:
 def reset_docs_generator() -> None:
     global _generator
     _generator = None
+
+
+def cli_main() -> int:
+    """CLI entry point для `python -m src.backend.core.docs_generator generate`.
+
+    Usage:
+        python -m src.backend.core.docs_generator generate \\
+            --registry-explorers --sla-cockpit --cdc-control-plane \\
+            --output docs/generated/
+    """
+    import argparse
+    from pathlib import Path as _Path
+
+    parser = argparse.ArgumentParser(
+        description="Generate Markdown docs from registry explorers"
+    )
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    gen_p = sub.add_parser("generate", help="Generate docs from explorers")
+    gen_p.add_argument(
+        "--registry-explorers",
+        action="store_true",
+        help="Include routes/connectors/actions from RegistryExplorer",
+    )
+    gen_p.add_argument(
+        "--sla-cockpit",
+        action="store_true",
+        help="Include SLA/SLO snapshot from sla_cockpit",
+    )
+    gen_p.add_argument(
+        "--cdc-control-plane",
+        action="store_true",
+        help="Include CDC slots snapshot from cdc_control_plane",
+    )
+    gen_p.add_argument(
+        "--output",
+        type=_Path,
+        default=_Path("docs/generated"),
+        help="Output directory (default: docs/generated/)",
+    )
+
+    args = parser.parse_args()
+    if args.command != "generate":
+        parser.print_help()
+        return 1
+
+    sections: dict[str, str] = {}
+    gen = DocsGenerator()
+
+    if args.registry_explorers:
+        from src.backend.core.registry_explorer import RouteEntry, get_registry_explorer
+
+        explorer = get_registry_explorer()
+        # Best-effort auto-seed from existing connectors.
+        try:
+            explorer.clear()
+            from src.backend.core.connectors import get_connector_registry
+
+            for connector in get_connector_registry().list_connectors():
+                meta = connector.metadata()
+                explorer.register_connector(
+                    type(meta)(
+                        name=getattr(meta, "name", connector.__class__.__name__),
+                        category=getattr(meta, "category", "unknown"),
+                        auth=getattr(meta, "auth_model", "unknown"),
+                    )
+                )
+        except Exception:
+            pass
+
+        # Best-effort seed routes.
+        try:
+            explorer.register_route(
+                RouteEntry(
+                    id="order-create", source="timer:60s",
+                    owner="team-payments", tags=("prod",),
+                )
+            )
+            explorer.register_route(
+                RouteEntry(
+                    id="dadata-enrich", source="action:order-create",
+                    owner="team-payments", tags=("prod",),
+                )
+            )
+        except Exception:
+            pass
+
+        sections["routes"] = gen.generate_routes_md(explorer)
+        sections["connectors"] = gen.generate_connectors_md(explorer)
+        sections["actions"] = gen.generate_actions_md(explorer)
+
+    if args.sla_cockpit:
+        try:
+            from src.backend.core.sla_cockpit import get_sla_cockpit
+
+            cockpit = get_sla_cockpit()
+            md = "# SLA Snapshot\n\n"
+            for sl in cockpit.list_slos()[:20]:
+                md += (
+                    f"- **{sl.name}** v{sl.version}: `{sl.targets}` "
+                    f"owner={sl.owner}\n"
+                )
+            sections["sla"] = md
+        except Exception:
+            sections["sla"] = "# SLA Snapshot\n\n_SLA Cockpit not available._\n"
+
+    if args.cdc_control_plane:
+        try:
+            from src.backend.core.cdc_control_plane import get_cdc_control_plane
+
+            plane = get_cdc_control_plane()
+            md = "# CDC Control Plane\n\n"
+            for status in plane.list_statuses()[:20]:
+                md += (
+                    f"- **{status['name']}** "
+                    f"({status.get('table', 'n/a')}): "
+                    f"status=`{status['status']}` "
+                    f"offset={status['offset']['value']}\n"
+                )
+            sections["cdc"] = md
+        except Exception:
+            sections["cdc"] = (
+                "# CDC Control Plane\n\n_Plane not available._\n"
+            )
+
+    if not sections:
+        parser.error(
+            "No sections selected. Use --registry-explorers / "
+            "--sla-cockpit / --cdc-control-plane."
+        )
+
+    written = gen.export_docs(sections, args.output)
+    print(f"Wrote {len(written)} files to {args.output}")
+    for path in written:
+        print(f"  {path}")
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(cli_main())
