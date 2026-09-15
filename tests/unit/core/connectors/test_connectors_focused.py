@@ -387,7 +387,7 @@ class TestExports:
     def test_module_all(self) -> None:
         from src.backend.core import connectors
 
-        assert len(connectors.__all__) == 8
+        assert len(connectors.__all__) == 9
 
 
 class TestRealisticExample:

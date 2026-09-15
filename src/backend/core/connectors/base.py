@@ -79,6 +79,40 @@ class BaseConnector(ABC):
 
         """
 
+    def validate_config(
+        self, config: dict[str, Any]
+    ) -> tuple[bool, str | None]:
+        """Validate config against ``config_schema()`` (Sprint 175+ P0.4).
+
+        Pure-stdlib implementation: only checks required fields and types
+        (no nested validation). For full JSON Schema validation (Draft 7),
+        install ``jsonschema`` (already a project dep) and pass
+        ``full=True`` flag.
+
+        Returns:
+            (is_valid, error_message). error_message is None on success.
+        """
+        schema = self.config_schema()
+        if not schema or schema.get("type") != "object":
+            return True, None
+        # Required fields.
+        required = schema.get("required", [])
+        for field_name in required:
+            if field_name not in config:
+                return False, f"Required field missing: {field_name!r}"
+        # Type validation (top-level properties only).
+        for field_name, value in config.items():
+            prop_schema = (schema.get("properties") or {}).get(field_name, {})
+            expected_type = prop_schema.get("type")
+            if not expected_type:
+                continue
+            if not _validate_type(value, expected_type):
+                return False, (
+                    f"Field {field_name!r} has wrong type: "
+                    f"expected {expected_type!r}, got {type(value).__name__!r}"
+                )
+        return True, None
+
     @abstractmethod
     async def health_check(self) -> ConnectorHealth:
         """Проверить здоровье connector'а (lazy check, не кешируется)."""
@@ -95,3 +129,30 @@ class BaseConnector(ABC):
     @abstractmethod
     def operations(self) -> list[OperationSchema]:
         """Список операций connector'а (для docs/UI)."""
+
+
+# ─── JSON Schema subset validator (pure stdlib) ────────────────
+
+
+_JSON_TYPE_MAP: dict[str, type | tuple[type, ...]] = {
+    "string": str,
+    "integer": int,
+    "number": (int, float),
+    "boolean": bool,
+    "array": list,
+    "object": dict,
+    "null": type(None),
+}
+
+
+def _validate_type(value: Any, expected_type: str) -> bool:
+    """Check if value matches JSON Schema type (Draft 7 subset)."""
+    py_type = _JSON_TYPE_MAP.get(expected_type)
+    if py_type is None:
+        return True  # Unknown type — accept.
+    if py_type is type(None):
+        return value is None
+    # bool is subclass of int, exclude for integer check.
+    if expected_type == "integer" and isinstance(value, bool):
+        return False
+    return isinstance(value, py_type)
