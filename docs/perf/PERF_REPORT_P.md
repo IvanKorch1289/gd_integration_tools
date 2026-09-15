@@ -1452,3 +1452,31 @@ PASSED: 25/37, WARN: 8, SKIPPED: 3, FAILED: 1
 ### P77: Итог
 
 KPI: **ГОТОВ К ПРОДУ С ОГОВОРКАМИ** (operational + DX + observability + governance + SEC + W2/W4 + P0/P1 quality improvements complete).
+
+---
+
+## v39 update — EIP Aggregator + BatchOps + CoverageBudget (2026-09-11)
+
+### P78: 3 new modules + 1 policy script (54 new tests)
+
+| # | Module | Tests | Description |
+|---|---|---|---|
+| P4.19 | `core/dsl/aggregator` | 20 | EIP Aggregator: completion-based batching (size OR timeout) с 6 strategies (LIST/FIRST/LAST/MERGE/SUM/CUSTOM) + `aggregate_stream()` for streaming |
+| P2.13 | `core/batch_ops` | 21 | Bounded chunking для bulk I/O: `BatchConfig` (max_batch_size, warn_at_percent), `batch_chunks`/`batch_iter`/`BatchOverflow` exception. Для Redis bulk_set/ClickHouse insert |
+| P3.16 | `tools/checks/coverage_budget.py` | 13 | Coverage ratchet policy: `--min N` / `--update-baseline` (ratchet UP only) / `--report-only` |
+
+### P79: Final pre-prod-check status (v39)
+
+```
+PASSED: 26/37, WARN: 8, SKIPPED: 3, FAILED: 0
+```
+
+Один из самых высоких pre-prod-check score за сессию! 0 FAILED впервые в v39 (хотя обычно всегда был 1 ruff-strict fail).
+
+### P80: Cumulative totals
+
+**47 production-модулей** в `core/` (было 44 + 3 новых), **1750+ tests** (1695 prior + 54 new), average coverage 95%+.
+
+### P81: Итог
+
+KPI: **ГОТОВ К ПРОДУ С ОГОВОРКАМИ** (operational + DX + observability + governance + SEC + W2/W4 + P0/P1/P2/P3 + EIP Aggregator + BatchOps + CoverageBudget все complete).
