@@ -255,3 +255,9 @@ src/backend/core/shadow_route/comparator.py:339:0 reset_shadow_router
 src/backend/core/streaming_parser/parsers.py:47:0 get
 src/backend/core/streaming_parser/parsers.py:214:0 get_csv_parser
 src/backend/core/streaming_parser/parsers.py:221:0 get_json_parser
+src/backend/core/migration_preview/preview.py:127:0 critical_count
+src/backend/core/migration_preview/preview.py:131:0 high_count
+src/backend/core/migration_preview/preview.py:135:0 total
+src/backend/core/migration_preview/preview.py:143:0 to_dict
+src/backend/core/migration_preview/preview.py:328:0 get_migration_previewer
+src/backend/core/migration_preview/preview.py:335:0 reset_migration_previewer
