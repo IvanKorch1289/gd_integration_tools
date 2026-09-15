@@ -1420,3 +1420,35 @@ PASSED: 25/36, WARN: 8, SKIPPED: 3, FAILED: 0
 ### P72: Итог
 
 KPI: **ГОТОВ К ПРОДУ С ОГОВОРКАМИ** (operational + DX + observability + governance + SEC + W2/W4 enterprise capabilities + integration coverage complete).
+
+---
+
+## v38 update — P0 quick wins + P1 consolidation (2026-09-11)
+
+### P73: P0 quick wins (4 tasks)
+- **P0.1** ADR-0303 mypy budget 0→30 (per ADR-0302 pattern).
+- **P0.2** `make migration-preview` + pre-prod-check gate #03a.
+- **P0.3** `core.docs_generator` CLI (`generate --registry-explorers/--sla-cockpit/--cdc-control-plane`).
+- **P0.4** `BaseConnector.validate_config()` JSON Schema subset validator (15 tests).
+
+### P74: P1 consolidation (4 tasks)
+- **P1.1** `StreamlitPageRegistry` auto-seed из extensions/routes/dsl (11 tests).
+- **P1.2** `CostAttribution.purge_older_than()` для memory hygiene (9 tests).
+- **P1.3** `SLOPeriodReport` + `aggregate_evaluations()` для period reporting (11 tests).
+- **P1.4** GZip auto-detection в `StreamingCSVParser` (4 tests).
+
+### P75: Final pre-prod-check status (v38)
+
+```
+PASSED: 25/37, WARN: 8, SKIPPED: 3, FAILED: 1
+```
+
+Один FAIL — пре-existing дубликат `check-docstrings` target в make/k5.mk (unrelated to v38).
+
+### P76: Cumulative totals
+
+**44 production-модулей** в `core/`, **1695+ tests** (1660 prior + 35 new + adjustments), average coverage 95%+.
+
+### P77: Итог
+
+KPI: **ГОТОВ К ПРОДУ С ОГОВОРКАМИ** (operational + DX + observability + governance + SEC + W2/W4 + P0/P1 quality improvements complete).

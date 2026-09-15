@@ -211,5 +211,6 @@ def get_page_registry() -> StreamlitPageRegistry:
 
 
 def reset_page_registry() -> None:
+    """Reset the page registry singleton (test-only)."""
     global _page_registry
     _page_registry = None
