@@ -188,9 +188,9 @@ class ShadowRouter:
 
             # S311: random для traffic-split (не crypto) — canary bucket.
             return random.random() * 100 < percent  # noqa: S311
-        # Sticky by hash (S324: md5 для canary bucketing — не crypto).
+        # Sticky by hash (md5 для canary bucketing — не crypto).
         hash_val = int(
-            hashlib.md5(tenant_id.encode("utf-8")).hexdigest(),  # noqa: S324
+            hashlib.md5(tenant_id.encode("utf-8"), usedforsecurity=False).hexdigest(),
             16,
         )
         bucket = (hash_val % 10000) / 100.0

@@ -123,11 +123,9 @@ class CanaryController:
                 else TrafficSplit.BASELINE
             )
 
-        # Hash tenant_id → percentage bucket (MD5 OK — stable sticky split, not crypto).
-        hash_val = int(  # noqa: S324
-            hashlib.md5(  # noqa: S324
-                tenant_id.encode("utf-8")
-            ).hexdigest(),
+        # Hash tenant_id → percentage bucket (MD5 — stable sticky split, not crypto).
+        hash_val = int(
+            hashlib.md5(tenant_id.encode("utf-8"), usedforsecurity=False).hexdigest(),
             16,
         )
         bucket = (hash_val % 10000) / 100.0  # 0.00 - 99.99
