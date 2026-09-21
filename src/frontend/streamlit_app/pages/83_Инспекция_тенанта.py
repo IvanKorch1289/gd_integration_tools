@@ -166,7 +166,7 @@ try:
     raw = client.get("/admin/scheduler/dlq", params={"limit": 10})
     if isinstance(raw, list):
         dlq_entries = raw
-except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError):
+except ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError:
     # cycle-9/D-AUDIT-1044: narrow exceptions + observability.
     # ConnectionError/TimeoutError — server unreachable, RuntimeError —
     # API failure, ValueError — invalid response, TypeError — wrong type.

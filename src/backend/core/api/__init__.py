@@ -51,6 +51,13 @@ from src.backend.sdk import (
     unregister_infra_module,
 )
 
+# S170 P1 fix (аудит 2026-09-21, pytest failure): tests patch
+# ``src.backend.core.api.extensions`` — Python's ``patch()`` требует, чтобы
+# имя было атрибутом модуля. Импортируем submodule чтобы привязать его к
+# package namespace. Это не даёт overhead: submodule уже загружен первым
+# импортом через ``from src.backend.core.api import extensions``.
+import src.backend.core.api.extensions as extensions  # noqa: F401, E402
+
 __all__ = [
     "AIGateway",
     # === AI Tool Policy (re-exported) ===

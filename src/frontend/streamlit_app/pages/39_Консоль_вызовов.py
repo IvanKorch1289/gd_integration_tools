@@ -248,7 +248,7 @@ if st.button("Опросить") and poll_id:
             st.metric("HTTP", resp.status_code)
             try:
                 st.json(resp.json())
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 # cycle-9/D-AUDIT-1055: narrow exceptions + observability.
                 # ValueError для malformed JSON, TypeError для wrong type.
                 st.code(resp.text[:10_000])
