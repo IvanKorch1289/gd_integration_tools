@@ -266,7 +266,7 @@ class ProcessSandbox:
                 if line.startswith("__exit__:"):
                     try:
                         exit_code = int(line.split(":", 1)[1])
-                    except (ValueError, IndexError):
+                    except ValueError, IndexError:
                         pass
             success = exit_code == 0 and not oom
             return ProcessSandboxResult(
