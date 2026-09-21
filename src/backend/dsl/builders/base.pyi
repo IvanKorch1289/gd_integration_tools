@@ -2494,6 +2494,30 @@ class RouteBuilder:
         """Routing Slip EIP: динамическая цепочка processors per-message."""
         ...
 
+    def rpa_click(self, *, selector: str, timeout: float = ...) -> RouteBuilder:
+        """Browser click по CSS/XPath селектору (Cycle 15 / P4-A)."""
+        ...
+
+    def rpa_extract(
+        self, *, selector: str, attribute: Union[str, None] = ...
+    ) -> RouteBuilder:
+        """Browser extract text/attribute (Cycle 15 / P4-A)."""
+        ...
+
+    def rpa_fill(self, *, selector: str, value: str) -> RouteBuilder:
+        """Browser fill input (Cycle 15 / P4-A)."""
+        ...
+
+    def rpa_navigate(self, *, url: str) -> RouteBuilder:
+        """Browser navigate через Playwright (Cycle 15 / P4-A)."""
+        ...
+
+    def rpa_screenshot(
+        self, *, full_page: bool = ..., path: Union[str, None] = ...
+    ) -> RouteBuilder:
+        """Browser screenshot (Cycle 15 / P4-A)."""
+        ...
+
     def run_scenario(self, steps: Union[list[dict], None] = ...) -> RouteBuilder:
         """Multi-step web сценарий (navigate/click/fill/extract)."""
         ...
