@@ -43,8 +43,12 @@ class FileStorageSettings(BaseSettingsWithLoader):
         description="Имя корзины по умолчанию",
         json_schema_extra={"example": "my-bucket"},
     )
-    access_key: str = Field("", description="Ключ доступа к хранилищу (пусто = anonymous)")
-    secret_key: str = Field("", description="Секретный ключ (пусто = anonymous/public bucket)")
+    access_key: str = Field(
+        "", description="Ключ доступа к хранилищу (пусто = anonymous)"
+    )
+    secret_key: str = Field(
+        "", description="Секретный ключ (пусто = anonymous/public bucket)"
+    )
     endpoint: str = Field(
         ...,
         description="URL API-эндпоинта хранилища",
