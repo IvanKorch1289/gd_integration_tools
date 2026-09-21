@@ -99,7 +99,7 @@
 | [ADR-0162](0162-sprint-80-litellm-pool-registration-closure.md) | Sprint 80 closure: P1 #6 LiteLLM Gateway pool registration (PoolHealthMonitor integration, 8 NEW tests) (6 commits) | Accepted |
 | [ADR-0163](0163-sprint-81-circuit-breaker-middleware-closure.md) | Sprint 81 closure: P1 #8 CircuitBreakerMiddleware restoration (per-route state, sliding window, 13 NEW tests) (4 commits) | Accepted |
 | [ADR-0248](0248-s43-deep-audit-quick-wins.md) | Sprint 43: Deep-Audit Quick Wins (Layer linter P0 + P7 logger + schemas shims) | Unknown |
-| [ADR-0249](0249-s44-audit-followup-facades.md) | Sprint 44: Audit Follow-up — Facades + Migrations | Unknown |
+| [ADR-0249](0249a-s44-audit-followup-facades.md) | Sprint 44: Audit Follow-up — Facades + Migrations | Unknown |
 | [ADR-0250](0250-s45-audit-backlog-closure.md) | Sprint 45: Audit Backlog QW10 + S1 Closure | Unknown |
 | [ADR-0251](0251-s13-circuit-breaker-shared-state.md) | S13: Circuit Breaker Middleware → Shared State | Unknown |
 

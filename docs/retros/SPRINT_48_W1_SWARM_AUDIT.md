@@ -472,7 +472,7 @@ Pattern consistent с W7/W8/W9 audit-fallback chain.
 ### Sprint 53 docs added
 - `docs/roadmap/SPRINT_53_PLAN.md` — full sprint plan with minimum test
   subset for each upgrade
-- `docs/adr/0288-tornado-6.5.7-to-6.5.8-rationale.md` — BUMP (LOW risk, ~10 min validation)
+- `docs/adr/0288a-tornado-6.5.7-to-6.5.8-rationale.md` — BUMP (LOW risk, ~10 min validation)
 - `docs/adr/0289-pypdf-6.14.2-to-6.16.1-rationale.md` — BUMP (LOW risk, ~50 min validation)
 
 ### Sprint 53 actual (this session)

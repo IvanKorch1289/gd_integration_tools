@@ -347,7 +347,7 @@ ruff=0, collect=16966/0 errors сохраняются на всём протяж
   builder_service (2), gateway_adapter (2)
 - Все ошибки — singletons или 2-of-cluster (get_global_registry кластер
   уже закрыт CL10). Каждая требует отдельного анализа file-by-file.
-- ADR на остаток: см. `docs/adr/0289-mypy-partial-rationale.md` (запланировано).
+- ADR на остаток: см. `docs/adr/0289a-mypy-partial-rationale.md` (запланировано).
 
 ---
 

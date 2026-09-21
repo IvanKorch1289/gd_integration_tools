@@ -15,7 +15,7 @@ Per master prompt v8 P2-3: "Deduplicate ADRs: 11 collision-slots →
 
 Пример (ADR-0109):
 - `0109-feature-flag-dependency-check-fix.md` (Accepted S41 W2)
-- `0109-script-runner-dsl.md` (—)
+- `0109a-script-runner-dsl.md` (—)
 
 ## Decision
 
@@ -37,7 +37,7 @@ For each of 11 collision-slots:
 1. **Identify the "primary" ADR** (earlier in time / more "accepted")
 2. **Rename the secondary to `-a` or `-b` suffix:**
    - Example: `0109-feature-flag-dependency-check-fix.md` stays
-   - `0109-script-runner-dsl.md` → `0109a-script-runner-dsl.md`
+   - `0109a-script-runner-dsl.md` → `0109a-script-runner-dsl.md`
 3. **Update INDEX.md:** add the new path
 4. **Update back-references in sprint-closure ADRs** (search for "0109-"
    pattern, replace with "0109a-" where appropriate)

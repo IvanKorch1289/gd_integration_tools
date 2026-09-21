@@ -90,7 +90,7 @@ Sprint 58 (M3-#5 final cleanup).
 ## Related
 - `docs/roadmap/M3_AUDIT_2026-09-01.md` — CVE inventory
 - `docs/adr/0287-diskcache-pyssec-2447-deferral.md` — diskcache ADR
-- `docs/adr/0288-tornado-6.5.7-to-6.5.8-rationale.md` — tornado ADR
+- `docs/adr/0288a-tornado-6.5.7-to-6.5.8-rationale.md` — tornado ADR
 - `docs/adr/0289-pypdf-6.14.2-to-6.16.1-rationale.md` — pypdf ADR
 ## Addendum (S96, 2026-09-04) — гигиена после DEP1
 
