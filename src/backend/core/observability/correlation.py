@@ -157,7 +157,7 @@ def start_span(name: str, attributes: dict[str, Any] | None = None) -> Any:
         tracer = trace.get_tracer(__name__)
         with tracer.start_as_current_span(name, attributes=attributes or {}) as span:
             yield span
-    except ImportError, AttributeError:
+    except (ImportError, AttributeError):
         # OTel SDK не установлен или TracerProvider не сконфигурирован.
         # Backward-compat fallback (no exception, no observable side effect).
         yield None
