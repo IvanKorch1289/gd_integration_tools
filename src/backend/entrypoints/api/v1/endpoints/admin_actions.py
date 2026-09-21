@@ -117,7 +117,7 @@ def _get_registry() -> Any:
         # get_instance у ActionHandlerRegistry нет (stale API) — AttributeError
         # ловится ниже → registry=None → 503 fail-LOUD (D-AUDIT-9701).
         return ActionHandlerRegistry.get_instance()  # type: ignore[attr-defined]
-    except (ImportError, AttributeError, RuntimeError):
+    except ImportError, AttributeError, RuntimeError:
         logger.warning("ActionHandlerRegistry недоступен — используется mock")
         return None
 
