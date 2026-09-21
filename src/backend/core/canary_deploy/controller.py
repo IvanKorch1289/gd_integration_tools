@@ -211,6 +211,7 @@ class CanaryController:
         )
 
     def clear(self) -> None:
+        """Сбросить все canary-конфигурации (test hook)."""
         self._configs.clear()
 
 
@@ -218,6 +219,7 @@ _controller: CanaryController | None = None
 
 
 def get_canary_controller() -> CanaryController:
+    """Вернуть process-wide singleton CanaryController (lazy init)."""
     global _controller
     if _controller is None:
         _controller = CanaryController()
@@ -225,5 +227,6 @@ def get_canary_controller() -> CanaryController:
 
 
 def reset_canary_controller() -> None:
+    """Сбросить singleton (test isolation)."""
     global _controller
     _controller = None

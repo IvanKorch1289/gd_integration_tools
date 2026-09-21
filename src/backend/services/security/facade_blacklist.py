@@ -55,25 +55,31 @@ class InMemoryJwtBlacklist:
         self._lock = asyncio.Lock()
 
     async def revoke(self, jti: str, expires_at: int) -> None:
+        """Добавить jti в blacklist (expires_at учтён через ttl=86400)."""
         # expires_at учтён через ttl=86400; bool-значение не нужно хранить.
         async with self._lock:
             self._store[jti] = True
 
     async def unrevoke(self, jti: str) -> None:
+        """Убрать jti из blacklist (административный false-positive откат)."""
         async with self._lock:
             self._store.pop(jti, None)
 
     async def is_revoked(self, jti: str) -> bool:
+        """Проверить, отозван ли конкретный token id."""
         async with self._lock:
             return jti in self._store
 
     async def is_iat_revoked(self, iat: int | None) -> bool:
+        """Batch revoke по issued-at: in-memory fallback не поддерживает."""
         return False  # in-memory fallback не поддерживает batch revoke
 
     async def revoke_before_time(self, time_threshold: int) -> None:
+        """Batch revoke до time_threshold: no-op in in-memory fallback."""
         return None  # no-op in in-memory fallback
 
     async def clear(self) -> None:
+        """Полностью очистить blacklist (thread-safe через asyncio.Lock)."""
         # Review-fix (2026-09-05): sync `with` на asyncio.Lock → TypeError;
         # раньше глотался clear_blacklist except'ом (silent no-op).
         async with self._lock:
