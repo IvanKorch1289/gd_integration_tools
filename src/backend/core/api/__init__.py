@@ -33,10 +33,6 @@ from typing import Any as Any
 # S170 P1 fix (аудит 2026-09-21, pytest failure): tests patch
 # ``src.backend.core.api.extensions`` — Python's ``patch()`` требует, чтобы
 # имя было атрибутом модуля. Импортируем submodule чтобы привязать его к
-# package namespace. Это не даёт overhead: submodule уже загружен первым
-# импортом через ``from src.backend.core.api import extensions``.
-import src.backend.core.api.extensions as extensions  # noqa: F401, E402
-
 # Re-export from existing single entry point (src/backend/sdk).
 # This facade does NOT replace SDK; it complements it with explicit
 # DI providers + AIGateway + SchedulerManager + workflow builders.
