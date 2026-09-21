@@ -2,16 +2,9 @@
 
 from __future__ import annotations
 
-import time
 from unittest.mock import MagicMock
 
-import pytest
-
-from src.backend.core.sla_cockpit import (
-    SLO,
-    SLOStatus,
-    aggregate_evaluations,
-)
+from src.backend.core.sla_cockpit import SLO, SLOStatus, aggregate_evaluations
 
 
 def _eval(
