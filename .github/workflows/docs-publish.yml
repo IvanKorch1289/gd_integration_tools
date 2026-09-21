@@ -54,15 +54,12 @@ jobs:
       - name: Build mkdocs site
         run: uv run mkdocs build --clean --strict
 
+      - name: Configure git for mike
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
       - name: Deploy to GitHub Pages (mike handles versions + alias)
-        uses: mhausenblas/mkdocs-deploy-gh-pages-action@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site
-          fail_on_error: true
-          mkdocs_yml: mkdocs.yml
-          mike_version: latest
-          mike_keep_history: true
-          mike_alias: latest
-          mike_push: true
-          mike_git_push_options: --force
+        # Заменил несуществующий mhausenblas/mkdocs-deploy-gh-pages-action@v1
+        # ("repository not found" ломал Set up job) на прямой mike deploy.
+        run: uv run mike deploy --push --update-aliases latest latest
