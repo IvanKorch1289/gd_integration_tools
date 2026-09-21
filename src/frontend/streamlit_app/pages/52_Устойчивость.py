@@ -46,7 +46,7 @@ try:
     from src.backend.core.api import feature_flags as _ff
 
     _flag_enabled: bool = bool(getattr(_ff, "resilience_dashboard_enabled", False))
-except ImportError, AttributeError, RuntimeError:
+except (ImportError, AttributeError, RuntimeError):
     # cycle-9/D-AUDIT-1053: narrow exceptions + observability.
     # ImportError — features module missing, AttributeError — API change,
     # RuntimeError — feature_flags unavailable.

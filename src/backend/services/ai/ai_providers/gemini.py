@@ -43,7 +43,7 @@ class GeminiProvider:
                 parts = cands[0].get("content", {}).get("parts", [])
                 if parts:
                     return parts[0].get("text", "")
-        except AttributeError, IndexError, TypeError:
+        except (AttributeError, IndexError, TypeError):
             _logger.exception(
                 "ai_provider.api_shape_parse_failed",
                 extra={"provider": __name__, "return_value": ""},

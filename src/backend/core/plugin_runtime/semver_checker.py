@@ -222,7 +222,7 @@ def is_compatible(plugin_requires: str, core_version: str) -> bool:
     try:
         spec = SpecifierSet(plugin_requires)
         version = Version(core_version)
-    except InvalidSpecifier, Exception:
+    except (InvalidSpecifier, Exception):
         return False
 
     return version in spec
