@@ -39,9 +39,16 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: Sync deps
+        # gen_dsl_stubs импортирует dsl-модули (inspect.get_type_hints) —
+        # нужен полный sync.
         run: uv sync
 
       - name: Verify .pyi stubs match generated output
-        # --check генерирует stub в памяти и сравнивает с committed
-        # .pyi; exit 1 при drift (см. tools/gen_dsl_stubs.py).
-        run: uv run python tools/gen_dsl_stubs.py --check
+        # Аудит 2026-09-21: `--check` сравнивает СЫРОЙ вывод генератора с
+        # ruff-форматированными .pyi — структурно не мог быть зелёным
+        # (однострочные сигнатуры vs multiline). Канонический пайплайн
+        # для generated-code gate: regenerate -> format -> git diff.
+        run: |
+          uv run python tools/gen_dsl_stubs.py
+          uv run ruff format src/backend/dsl/builders/base.pyi src/backend/dsl/workflow/builder.pyi
+          git diff --exit-code -- '*.pyi'
