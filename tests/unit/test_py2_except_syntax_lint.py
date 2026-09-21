@@ -36,8 +36,11 @@ def _scan_for_py2_except(path: Path) -> list[tuple[int, str]]:
         return []
     try:
         tree = ast.parse(text)
-    except SyntaxError:
-        return []  # Let other linters catch actual SyntaxError.
+    except SyntaxError as e:
+        # Fail-closed (аудит 2026-09-21): непарсящийся файл — сам по себе
+        # нарушение, а не повод для молчаливого пропуска. Раньше этот
+        # branch возвращал [] и скрывал 159-файловую регрессию.
+        return [(e.lineno or 0, f"SYNTAX ERROR: {e.msg} — файл не парсится AST")]
     lines = text.splitlines()
     offenders: list[tuple[int, str]] = []
     for node in ast.walk(tree):
