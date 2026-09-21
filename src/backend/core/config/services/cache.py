@@ -37,8 +37,9 @@ class RedisSettings(BaseSettingsWithLoader):
         json_schema_extra={"example": 6379},
     )
     password: str | None = Field(
-        ...,
-        description="Пароль для аутентификации в Redis",
+        default=None,
+        description="Пароль для аутентификации в Redis (None = без auth); "
+        "обязателен в проде — валидируется при подключении",
         json_schema_extra={"example": "securepassword123"},
     )
     encoding: str = Field(
