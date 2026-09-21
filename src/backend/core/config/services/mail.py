@@ -89,7 +89,7 @@ class MailSettings(BaseSettingsWithLoader):
         json_schema_extra={"example": "noreply@example.com"},
     )
     template_folder: Path | None = Field(
-        ...,
+        default=None,
         description="Путь к директории с шаблонами писем",
         json_schema_extra={"example": "/app/email_templates"},
     )

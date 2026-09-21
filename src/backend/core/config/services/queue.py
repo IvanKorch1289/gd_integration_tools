@@ -95,17 +95,17 @@ class QueueSettings(BaseSettingsWithLoader):
         json_schema_extra={"example": True},
     )
     ca_bundle: Path | None = Field(
-        ...,
+        default=None,
         description="Путь к файлу CA сертификата",
         json_schema_extra={"example": "/path/to/ca.pem"},
     )
     username: str | None = Field(
-        ...,
+        default=None,
         description="Имя пользователя для аутентификации",
         json_schema_extra={"example": "kafka-user"},
     )
     password: str | None = Field(
-        ...,
+        default=None,
         description="Пароль для аутентификации",
         json_schema_extra={"example": "securepassword123"},
     )

@@ -89,13 +89,13 @@ class RedisSettings(BaseSettingsWithLoader):
         json_schema_extra={"example": 50},
     )
     socket_timeout: int | None = Field(
-        ...,
+        default=None,
         ge=1,
         description="Таймаут операций с сокетом в секундах",
         json_schema_extra={"example": 10},
     )
     socket_connect_timeout: int | None = Field(
-        ...,
+        default=None,
         ge=1,
         description="Таймаут установления соединения в секундах",
         json_schema_extra={"example": 5},
@@ -140,19 +140,19 @@ class RedisSettings(BaseSettingsWithLoader):
         json_schema_extra={"example": False},
     )
     ca_bundle: str | None = Field(
-        ...,
+        default=None,
         description="Путь к пакету CA-сертификатов для проверки SSL",
         json_schema_extra={"example": "/path/to/ca_bundle.crt"},
     )
 
     # Параметры потоков
     main_stream: str | None = Field(
-        ...,
+        default=None,
         description="Имя основного потока Redis",
         json_schema_extra={"example": "example-stream"},
     )
     dlq_stream: str | None = Field(
-        ...,
+        default=None,
         description="Имя потока DLQ Redis",
         json_schema_extra={"example": "dlq-example-stream"},
     )
