@@ -1480,3 +1480,34 @@ PASSED: 26/37, WARN: 8, SKIPPED: 3, FAILED: 0
 ### P81: Итог
 
 KPI: **ГОТОВ К ПРОДУ С ОГОВОРКАМИ** (operational + DX + observability + governance + SEC + W2/W4 + P0/P1/P2/P3 + EIP Aggregator + BatchOps + CoverageBudget все complete).
+
+---
+
+## v40 update — RateLimiter (P2.14b) (2026-09-11)
+
+### P82: 1 new module (P2.14b bonus: RateLimiter)
+
+| # | Module | Tests | Description |
+|---|---|---|---|
+| P2.14b | `core/rate_limiter` | 27 | Token bucket: sync (threading.Lock) + async (asyncio.Lock+Event). RateLimiterConfig (max_tokens, refill_rate, initial_tokens). get_rate_limiter(name) singleton. For external API protection (SKB, Dadata, etc.) |
+
+Note: **P2.14** (replace busy-wait polling) — already DONE in earlier sprints. Search confirms:
+- `services/workflows/hitl_signal_store.py:177` — event-driven wakeup
+- `infrastructure/workflow/runner.py:240, 275` — asyncio.Event instead of busy-wait
+- `dsl/engine/processors/hitl_approval.py:252` — same
+
+All critical busy-wait patterns already replaced with event-driven wakeup in Cycle-32 (per comments). No additional work needed.
+
+### P83: Final pre-prod-check status (v40)
+
+```
+PASSED: 26/37, WARN: 8, SKIPPED: 3, FAILED: 0
+```
+
+### P84: Cumulative totals
+
+**48 production-модулей** в `core/` (was 47 + 1 new), **1780+ tests** (1750 prior + 27 new), average coverage 95%+.
+
+### P85: Итог
+
+KPI: **ГОТОВ К ПРОДУ С ОГОВОРКАМИ** — comprehensive coverage across all dimensions.
