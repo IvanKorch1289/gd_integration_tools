@@ -92,9 +92,9 @@ repos:
         pass_filenames: false
         stages: [pre-push]
 
-      # Wave P0 — Python 3 syntax gate: блокирует commit при except A, B:
+      # ADR-0304 — fail-closed AST gate: каждый .py обязан разбираться
       - id: check-python3-syntax
-        name: "Python 3 syntax gate (except-tuple-no-paren)"
+        name: "Fail-closed AST parse gate (syntax-parse-failed)"
         entry: uv run python tools/checks/check_python3_syntax.py --root src
         language: system
         types: [python]
