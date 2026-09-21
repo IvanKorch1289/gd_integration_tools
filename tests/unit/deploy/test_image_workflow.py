@@ -24,7 +24,6 @@ token-stream → events → nodes (полноценный AST для YAML); Pyth
     * pipeline ordering: scan ждёт build, sign ждёт build+scan, push ждёт sign.
 """
 
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -101,8 +100,7 @@ def workflow() -> dict[str, Any]:
     raw = IMAGE_WORKFLOW.read_text(encoding="utf-8")
     parsed = yaml.safe_load(raw)
     assert isinstance(parsed, dict), (
-        f"image.yml должен быть мапом верхнего уровня, "
-        f"got {type(parsed).__name__}"
+        f"image.yml должен быть мапом верхнего уровня, got {type(parsed).__name__}"
     )
     return parsed
 
@@ -167,9 +165,7 @@ def test_workflow_has_id_token_for_cosign(workflow: dict[str, Any]) -> None:
 def test_workflow_jobs_keys(workflow: dict[str, Any]) -> None:
     """Присутствуют все 4 job'а: build, scan, sign, push."""
     jobs = workflow["jobs"]
-    assert isinstance(jobs, dict), (
-        f"jobs должен быть мапом, got {type(jobs).__name__}"
-    )
+    assert isinstance(jobs, dict), f"jobs должен быть мапом, got {type(jobs).__name__}"
     actual = set(jobs.keys())
     missing = REQUIRED_JOBS - actual
     assert not missing, (
@@ -184,9 +180,7 @@ def test_workflow_jobs_keys(workflow: dict[str, Any]) -> None:
 
 
 @pytest.mark.parametrize("job_name", sorted(REQUIRED_JOBS))
-def test_job_has_runs_on_and_steps(
-    workflow: dict[str, Any], job_name: str,
-) -> None:
+def test_job_has_runs_on_and_steps(workflow: dict[str, Any], job_name: str) -> None:
     """Каждый job имеет ``runs-on`` и непустой ``steps``."""
     job = workflow["jobs"][job_name]
     assert isinstance(job, dict), f"job '{job_name}' должен быть мапом"
@@ -222,9 +216,7 @@ def test_build_job_loads_image_locally(workflow: dict[str, Any]) -> None:
     build = workflow["jobs"]["build"]
     build_steps = _step_with(build, "docker/build-push-action")
     assert build_steps, "build job: нет шагов docker/build-push-action"
-    loads = [
-        step.get("with", {}).get("load") for step in build_steps
-    ]
+    loads = [step.get("with", {}).get("load") for step in build_steps]
     assert any(load is True for load in loads), (
         f"build job: docker/build-push-action должен иметь load: true "
         f"(без него scan-jobs не получит локальный образ), got loads={loads}"
@@ -248,12 +240,9 @@ def test_scan_job_severity_blocks_high_critical(workflow: dict[str, Any]) -> Non
     scan = workflow["jobs"]["scan"]
     trivy_steps = _step_with(scan, "aquasecurity/trivy-action")
     assert trivy_steps, "scan job: нет шагов aquasecurity/trivy-action"
-    severities = [
-        step.get("with", {}).get("severity") for step in trivy_steps
-    ]
+    severities = [step.get("with", {}).get("severity") for step in trivy_steps]
     matched = [
-        s for s in severities
-        if isinstance(s, str) and "HIGH" in s and "CRITICAL" in s
+        s for s in severities if isinstance(s, str) and "HIGH" in s and "CRITICAL" in s
     ]
     assert matched, (
         "scan job: severity должен включать HIGH и CRITICAL "
@@ -304,20 +293,16 @@ def test_push_job_targets_ghcr(workflow: dict[str, Any]) -> None:
         "push job должен использовать docker/build-push-action"
     )
     login_steps = _step_with(push, "docker/login-action")
-    assert login_steps, (
-        "push job должен делать docker/login-action перед push в GHCR"
-    )
-    registries = [
-        step.get("with", {}).get("registry", "") for step in login_steps
-    ]
+    assert login_steps, "push job должен делать docker/login-action перед push в GHCR"
+    registries = [step.get("with", {}).get("registry", "") for step in login_steps]
     env_registry = workflow.get("env", {}).get("REGISTRY", "")
     # Разрешаем литерал ``ghcr.io`` или env-ссылку ``${{ env.REGISTRY }}``,
     # которая должна указывать на env.REGISTRY == "ghcr.io" (yaml.safe_load
     # не resolve'ит ${{ ... }}, проверяем оба паттерна на сырых строках).
     matched = [
-        r for r in registries
-        if "ghcr.io" in r
-        or (env_registry == "ghcr.io" and "REGISTRY" in r)
+        r
+        for r in registries
+        if "ghcr.io" in r or (env_registry == "ghcr.io" and "REGISTRY" in r)
     ]
     assert matched, (
         f"push job login registry должен указывать на ghcr.io "
@@ -343,8 +328,7 @@ def test_sign_depends_on_build_and_scan(workflow: dict[str, Any]) -> None:
     needs_set = _needs_set(workflow["jobs"]["sign"])
     for required in ("build", "scan"):
         assert required in needs_set, (
-            f"sign job должен depends_on: {required}, "
-            f"got needs={sorted(needs_set)}"
+            f"sign job должен depends_on: {required}, got needs={sorted(needs_set)}"
         )
 
 

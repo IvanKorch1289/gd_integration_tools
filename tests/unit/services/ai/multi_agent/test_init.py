@@ -35,9 +35,7 @@ class TestMultiAgentFacadeAllExports:
     )
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(multi_agent, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
+        assert hasattr(multi_agent, symbol_name), f"Missing export: {symbol_name}"
         assert symbol_name in multi_agent.__all__, (
             f"{symbol_name} not declared in __all__"
         )
@@ -49,7 +47,10 @@ class TestMultiAgentFacadeAllExports:
     def test_module_docstring_present(self) -> None:
         """Module docstring описывает multi-agent supervisor (K4 Sprint 7)."""
         assert multi_agent.__doc__ is not None
-        assert "supervisor" in multi_agent.__doc__.lower() or "multi-agent" in multi_agent.__doc__.lower()
+        assert (
+            "supervisor" in multi_agent.__doc__.lower()
+            or "multi-agent" in multi_agent.__doc__.lower()
+        )
 
 
 @pytest.mark.unit

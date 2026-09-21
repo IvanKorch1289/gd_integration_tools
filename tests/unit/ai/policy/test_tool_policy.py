@@ -61,26 +61,16 @@ class TestAgentToolPolicyCheck:
     def test_denied_tool_returns_deny_even_if_allowed(self) -> None:
         """denied_tools имеет приоритет над allowed_tools."""
         p = AgentToolPolicy(
-            agent_id="test",
-            allowed_tools=["foo", "bar"],
-            denied_tools=["foo"],
+            agent_id="test", allowed_tools=["foo", "bar"], denied_tools=["foo"]
         )
         assert p.check("foo") == ToolPermission.DENY
 
     def test_allowed_tool_with_audit_all_returns_audit(self) -> None:
-        p = AgentToolPolicy(
-            agent_id="test",
-            allowed_tools=["foo"],
-            audit_all=True,
-        )
+        p = AgentToolPolicy(agent_id="test", allowed_tools=["foo"], audit_all=True)
         assert p.check("foo") == ToolPermission.AUDIT
 
     def test_allowed_tool_without_audit_all_returns_allow(self) -> None:
-        p = AgentToolPolicy(
-            agent_id="test",
-            allowed_tools=["foo"],
-            audit_all=False,
-        )
+        p = AgentToolPolicy(agent_id="test", allowed_tools=["foo"], audit_all=False)
         assert p.check("foo") == ToolPermission.ALLOW
 
     def test_unknown_tool_returns_deny(self) -> None:
@@ -161,8 +151,6 @@ class TestAgentToolPolicyIntegration:
         from src.backend.core.svcs_registry import get_service, register_factory
 
         # Custom factory
-        custom = AgentToolPolicy(
-            agent_id="custom_agent", allowed_tools=["search"],
-        )
+        custom = AgentToolPolicy(agent_id="custom_agent", allowed_tools=["search"])
         register_factory(AgentToolPolicy, lambda: custom)
         assert get_service(AgentToolPolicy) is custom

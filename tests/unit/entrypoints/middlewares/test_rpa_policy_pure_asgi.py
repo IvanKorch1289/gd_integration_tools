@@ -5,7 +5,6 @@ Middleware deny-by-default для ``/api/v1/rpa/*`` endpoints. Cycle 40:
 отправляется напрямую через ``send()`` (НЕ raise, как в cycle 39).
 """
 
-
 from __future__ import annotations
 
 import json
@@ -42,6 +41,7 @@ def _make_auth(roles: list[str] | set[str]) -> MagicMock:
 @pytest.mark.asyncio
 async def test_denies_403_when_no_auth_context() -> None:
     """RPA path без auth context → 403 (fail-closed)."""
+
     async def downstream(scope, receive, send):
         raise AssertionError("downstream должен быть skipped")
 
@@ -74,6 +74,7 @@ async def test_denies_403_when_no_auth_context() -> None:
 @pytest.mark.asyncio
 async def test_denies_403_when_role_not_in_auth_roles() -> None:
     """RPA path + auth без required role → 403."""
+
     async def downstream(scope, receive, send):
         raise AssertionError("downstream должен быть skipped")
 
@@ -103,6 +104,7 @@ async def test_denies_403_when_role_not_in_auth_roles() -> None:
 @pytest.mark.asyncio
 async def test_allows_when_role_in_auth_roles() -> None:
     """RPA path + auth с required role → pass through."""
+
     async def downstream(scope, receive, send):
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"ok"})
@@ -133,6 +135,7 @@ async def test_allows_when_role_in_auth_roles() -> None:
 @pytest.mark.asyncio
 async def test_passes_through_non_rpa_path_even_without_auth() -> None:
     """Non-RPA path не проверяет auth — pass through без auth context."""
+
     async def downstream(scope, receive, send):
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"ok"})
@@ -162,14 +165,13 @@ async def test_passes_through_non_rpa_path_even_without_auth() -> None:
 @pytest.mark.asyncio
 async def test_custom_path_prefix() -> None:
     """Кастомный rpa_path_prefix — проверяется через custom prefix."""
+
     async def downstream(scope, receive, send):
         raise AssertionError("downstream должен быть skipped")
 
     app = AsyncMock()
     app.side_effect = downstream
-    mw = RpaPolicyMiddleware(
-        app=app, rpa_path_prefix="/api/v1/custom-rpa",
-    )
+    mw = RpaPolicyMiddleware(app=app, rpa_path_prefix="/api/v1/custom-rpa")
 
     send = AsyncMock()
     await mw(
@@ -193,6 +195,7 @@ async def test_custom_path_prefix() -> None:
 @pytest.mark.asyncio
 async def test_passes_through_non_http_scope() -> None:
     """Non-HTTP scope (websocket) пробрасывается без role-gate."""
+
     async def downstream(scope, receive, send):
         await send({"type": "websocket.accept"})
 
@@ -250,6 +253,7 @@ async def test_does_not_call_downstream_when_blocked() -> None:
 @pytest.mark.asyncio
 async def test_handles_roles_as_list_or_set() -> None:
     """Middleware корректно обрабатывает roles как list И как set."""
+
     async def downstream(scope, receive, send):
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"ok"})

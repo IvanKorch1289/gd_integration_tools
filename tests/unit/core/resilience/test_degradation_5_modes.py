@@ -1,6 +1,5 @@
 """Unit-тесты 5-уровневой Graceful Degradation (S13 K2 W4)."""
 
-
 from __future__ import annotations
 
 import pytest
@@ -36,7 +35,7 @@ def test_legacy_aliases_have_same_strictness() -> None:
 async def test_set_mode_records_transition() -> None:
     mgr = DegradationManager()
     transition = await mgr.set_mode(
-        DegradationMode.READ_ONLY, actor="ops-1", reason="db primary failure",
+        DegradationMode.READ_ONLY, actor="ops-1", reason="db primary failure"
     )
     assert isinstance(transition, DegradationTransition)
     assert transition.to_mode == "read_only"

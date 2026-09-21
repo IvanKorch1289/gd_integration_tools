@@ -19,7 +19,6 @@ CVE-handling отделено: ``|| true`` подавляет exit != 0 при C
 ``audit-deps`` target.
 """
 
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -129,11 +128,7 @@ class TestSBOMViaVenv:
 
 @pytest.mark.parametrize(
     "legacy_pattern",
-    [
-        "cyclonedx-py environment",
-        "cyclonedx-py requirements",
-        "-o dist/sbom.cdx.json",
-    ],
+    ["cyclonedx-py environment", "cyclonedx-py requirements", "-o dist/sbom.cdx.json"],
 )
 def test_sbom_no_legacy_patterns(legacy_pattern: str) -> None:
     """Regression guard: ни один legacy SBOM-паттерн не должен вернуться в make/security.mk."""

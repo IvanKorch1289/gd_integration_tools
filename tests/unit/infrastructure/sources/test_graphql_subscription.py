@@ -1,6 +1,5 @@
 """Unit-тесты GraphQLSubscriptionSource (K3 W5b S3)."""
 
-
 from __future__ import annotations
 
 import pytest
@@ -26,7 +25,7 @@ def test_source_constructor() -> None:
 def test_graphql_event_dataclass() -> None:
     """GraphQLEvent имеет ожидаемые поля."""
     event = GraphQLEvent(
-        data={"hello": "world"}, subscription_id="sub-1", timestamp=1234567890.0,
+        data={"hello": "world"}, subscription_id="sub-1", timestamp=1234567890.0
     )
     assert event.data == {"hello": "world"}
     assert event.subscription_id == "sub-1"

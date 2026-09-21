@@ -137,9 +137,7 @@ class TestExpectationType:
 class TestAssertionResult:
     def test_defaults(self) -> None:
         a = AssertionResult(
-            expectation_type=ExpectationType.RETURN_VALUE,
-            description="d",
-            passed=True,
+            expectation_type=ExpectationType.RETURN_VALUE, description="d", passed=True
         )
         assert a.actual is None
         assert a.expected is None

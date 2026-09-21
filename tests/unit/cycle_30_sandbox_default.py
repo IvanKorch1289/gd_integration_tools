@@ -8,7 +8,6 @@ Cycle 30 fix: AgentGraphProcessor.isolated default changed from
 False to True (line 117). Builder already had True (infra.py:141).
 """
 
-
 from __future__ import annotations
 
 
@@ -30,9 +29,7 @@ class TestProcessPoolDefault:
         path = "src/backend/dsl/builders/agent_dsl/infra.py"
         with open(path) as f:
             content = f.read()
-        assert "isolated: bool = True" in content, (
-            "Builder must default isolated=True"
-        )
+        assert "isolated: bool = True" in content, "Builder must default isolated=True"
 
     def test_in_process_still_available_explicitly(self):
         """isolated=False must still work for dev_light (explicit opt-in)."""

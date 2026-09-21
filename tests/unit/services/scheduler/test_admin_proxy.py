@@ -20,9 +20,7 @@ def test_proxy_scheduler_dlq_store_class() -> None:
 
 
 def test_proxy_get_scheduler_dlq_store_callable() -> None:
-    from src.backend.infrastructure.scheduler.dlq import (
-        get_scheduler_dlq_store as real,
-    )
+    from src.backend.infrastructure.scheduler.dlq import get_scheduler_dlq_store as real
 
     assert admin.get_scheduler_dlq_store is real
 

@@ -53,12 +53,15 @@ class TestBootstrapRemoved:
 
     @pytest.mark.asyncio
     async def test_start_runtime_no_crash_without_bootstrap(
-        self, _clean_registry: workflow_setup.WorkflowCompilerRegistry,
+        self, _clean_registry: workflow_setup.WorkflowCompilerRegistry
     ) -> None:
         """D-AUDIT-A8-05 fix: ``start_workflow_runtime`` отрабатывает без bootstrap."""
         app = SimpleNamespace(state=SimpleNamespace())
         await workflow_setup.start_workflow_runtime(app)
-        assert app.state.workflow_compiler_registry is workflow_setup.workflow_compiler_registry
+        assert (
+            app.state.workflow_compiler_registry
+            is workflow_setup.workflow_compiler_registry
+        )
 
 
 @pytest.mark.asyncio

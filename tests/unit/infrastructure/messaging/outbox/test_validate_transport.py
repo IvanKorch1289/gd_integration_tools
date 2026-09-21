@@ -35,9 +35,10 @@ def test_validate_transport_all_allowed() -> None:
     """All 7 allowed values → returns lowercased input."""
     for t in ("kafka", "rabbitmq", "nats", "clickhouse", "s3", "webhook", "other"):
         assert validate_transport(t) == t
-    assert frozenset(
-        {"kafka", "rabbitmq", "nats", "clickhouse", "s3", "webhook", "other"},
-    ) == ALLOWED_TRANSPORTS
+    assert (
+        frozenset({"kafka", "rabbitmq", "nats", "clickhouse", "s3", "webhook", "other"})
+        == ALLOWED_TRANSPORTS
+    )
 
 
 def test_validate_transport_normalizes_case_and_whitespace() -> None:
@@ -82,7 +83,7 @@ async def session_factory() -> async_sessionmaker[AsyncSession]:
 
 
 async def _write_inline(
-    session: AsyncSession, *, topic: str, transport: str = "other",
+    session: AsyncSession, *, topic: str, transport: str = "other"
 ) -> int:
     """Inline replica of write_within_session (S81 W2, validates transport)."""
     transport = validate_transport(transport)
@@ -102,7 +103,7 @@ async def test_write_within_session_default_transport(
         from sqlalchemy import select as sa_select
 
         result = await session.execute(
-            sa_select(OutboxMessage).where(OutboxMessage.id == msg_id),
+            sa_select(OutboxMessage).where(OutboxMessage.id == msg_id)
         )
         msg = result.scalar_one()
     assert msg.transport == "other"
@@ -118,7 +119,7 @@ async def test_write_within_session_explicit_transport(
         from sqlalchemy import select as sa_select
 
         result = await session.execute(
-            sa_select(OutboxMessage).where(OutboxMessage.id == msg_id),
+            sa_select(OutboxMessage).where(OutboxMessage.id == msg_id)
         )
         msg = result.scalar_one()
     assert msg.transport == "kafka"
@@ -143,7 +144,7 @@ async def test_write_within_session_normalizes_transport(
         from sqlalchemy import select as sa_select
 
         result = await session.execute(
-            sa_select(OutboxMessage).where(OutboxMessage.id == msg_id),
+            sa_select(OutboxMessage).where(OutboxMessage.id == msg_id)
         )
         msg = result.scalar_one()
     assert msg.transport == "kafka"

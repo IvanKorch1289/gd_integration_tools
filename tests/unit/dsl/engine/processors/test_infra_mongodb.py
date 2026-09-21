@@ -50,7 +50,9 @@ async def test_process_queries_collection_and_sets_result() -> None:
         await proc.process(exchange, _context())
 
     coll.find.assert_awaited_once_with({"active": True})
-    mock_set_result.assert_called_once_with(exchange, "body.result", [{"u": 1}, {"u": 2}])
+    mock_set_result.assert_called_once_with(
+        exchange, "body.result", [{"u": 1}, {"u": 2}]
+    )
 
 
 @pytest.mark.asyncio

@@ -1,6 +1,5 @@
 """Unit-тесты ResilienceProfile + InMemoryResilienceProfileStore (S13 K2 W5)."""
 
-
 from __future__ import annotations
 
 import pytest

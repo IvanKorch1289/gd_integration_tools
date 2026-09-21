@@ -14,8 +14,8 @@ Per ADR-0282 §3 Phase B (governance rule): future ALLOWED matrix changes
 
 from __future__ import annotations
 
-from pathlib import Path
 import re
+from pathlib import Path
 
 
 def _parse_allowed_matrix() -> dict[str, set[str]]:

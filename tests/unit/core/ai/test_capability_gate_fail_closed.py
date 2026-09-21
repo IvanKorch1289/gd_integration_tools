@@ -34,7 +34,7 @@ async def test_no_capability_gate_fail_closed_in_production() -> None:
     from src.backend.core.security.capabilities.errors import CapabilityDeniedError
 
     request = AIRequest(
-        workflow_id="credit_check", tenant_id="t1", correlation_id="c-001",
+        workflow_id="credit_check", tenant_id="t1", correlation_id="c-001"
     )
     gw = _StubGateway(capability_gate=None, ai_policy_enforce=True)
 
@@ -45,8 +45,10 @@ async def test_no_capability_gate_fail_closed_in_production() -> None:
     ):
         with pytest.raises(CapabilityDeniedError) as exc_info:
             await gw._check_capability(request)
-        assert "capability_gate_not_configured" in str(exc_info.value).lower() or \
-               "capability" in str(exc_info.value).lower()
+        assert (
+            "capability_gate_not_configured" in str(exc_info.value).lower()
+            or "capability" in str(exc_info.value).lower()
+        )
 
 
 @pytest.mark.unit
@@ -54,7 +56,7 @@ async def test_no_capability_gate_fail_closed_in_production() -> None:
 async def test_no_capability_gate_allows_in_dev() -> None:
     """ai_policy_enforce=False + capability_gate=None → silent allow (dev mode)."""
     request = AIRequest(
-        workflow_id="credit_check", tenant_id="t1", correlation_id="c-001",
+        workflow_id="credit_check", tenant_id="t1", correlation_id="c-001"
     )
     gw = _StubGateway(capability_gate=None, ai_policy_enforce=False)
 
@@ -74,7 +76,7 @@ async def test_capability_gate_without_check_attr_fail_closed_in_production() ->
     from src.backend.core.security.capabilities.errors import CapabilityDeniedError
 
     request = AIRequest(
-        workflow_id="credit_check", tenant_id="t1", correlation_id="c-001",
+        workflow_id="credit_check", tenant_id="t1", correlation_id="c-001"
     )
     gate = object()  # нет атрибута .check
     gw = _StubGateway(capability_gate=gate, ai_policy_enforce=True)
@@ -95,7 +97,7 @@ async def test_capability_gate_check_none_fail_closed_in_production() -> None:
     from src.backend.core.security.capabilities.errors import CapabilityDeniedError
 
     request = AIRequest(
-        workflow_id="credit_check", tenant_id="t1", correlation_id="c-001",
+        workflow_id="credit_check", tenant_id="t1", correlation_id="c-001"
     )
     gate = type("G", (), {"check": None})()
     gw = _StubGateway(capability_gate=gate, ai_policy_enforce=True)

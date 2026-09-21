@@ -7,7 +7,6 @@ P3 message claim-check: процессор :class:`ClaimCheckProcessor` уже �
 параметрами (store, ttl, threshold).
 """
 
-
 from __future__ import annotations
 
 import pytest
@@ -31,9 +30,8 @@ class TestClaimCheckBuilder:
         assert proc._threshold == 256 * 1024
 
     def test_claim_check_in_custom_args(self) -> None:
-        rb = (
-            RouteBuilder.from_("test", source="http:/test")
-            .claim_check_in(store="s3", ttl_seconds=60, threshold_bytes=1024)
+        rb = RouteBuilder.from_("test", source="http:/test").claim_check_in(
+            store="s3", ttl_seconds=60, threshold_bytes=1024
         )
         proc = rb._processors[0]
         assert isinstance(proc, ClaimCheckProcessor)

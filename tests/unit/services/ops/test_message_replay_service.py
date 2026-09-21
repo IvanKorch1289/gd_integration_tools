@@ -77,12 +77,11 @@ async def test_replay_one_not_found(service: MessageReplayService) -> None:
 
 @pytest.mark.asyncio
 async def test_replay_one_dry_run_does_not_dispatch(
-    service: MessageReplayService,
-    registry_mock: AsyncMock,
+    service: MessageReplayService, registry_mock: AsyncMock
 ) -> None:
     mid = await service.record("webhook", "orders.create", {"a": 1})
     with patch(
-        "src.backend.core.api.extensions.action_handler_registry", registry_mock,
+        "src.backend.core.api.extensions.action_handler_registry", registry_mock
     ):
         result = await service.replay_one(mid, dry_run=True)
     assert result["status"] == "dry_run"
@@ -91,12 +90,11 @@ async def test_replay_one_dry_run_does_not_dispatch(
 
 @pytest.mark.asyncio
 async def test_replay_one_success_sets_status_and_count(
-    service: MessageReplayService,
-    registry_mock: AsyncMock,
+    service: MessageReplayService, registry_mock: AsyncMock
 ) -> None:
     mid = await service.record("webhook", "orders.create", {"a": 1})
     with patch(
-        "src.backend.core.api.extensions.action_handler_registry", registry_mock,
+        "src.backend.core.api.extensions.action_handler_registry", registry_mock
     ):
         result = await service.replay_one(mid)
     assert result["status"] == "replayed"
@@ -116,7 +114,7 @@ async def test_replay_one_dispatch_failure_records_error(
     registry_mock = AsyncMock()
     registry_mock.dispatch = AsyncMock(side_effect=RuntimeError("down"))
     with patch(
-        "src.backend.core.api.extensions.action_handler_registry", registry_mock,
+        "src.backend.core.api.extensions.action_handler_registry", registry_mock
     ):
         result = await service.replay_one(mid)
     assert result["status"] == "error"
@@ -131,7 +129,7 @@ async def test_replay_bulk_by_ids(service: MessageReplayService) -> None:
     registry_mock = AsyncMock()
     registry_mock.dispatch = AsyncMock(return_value={"ok": 1})
     with patch(
-        "src.backend.core.api.extensions.action_handler_registry", registry_mock,
+        "src.backend.core.api.extensions.action_handler_registry", registry_mock
     ):
         result = await service.replay_bulk(message_ids=ids[:2])
     assert result["total"] == 2
@@ -140,20 +138,18 @@ async def test_replay_bulk_by_ids(service: MessageReplayService) -> None:
 
 @pytest.mark.asyncio
 async def test_replay_bulk_by_status_filter(service: MessageReplayService) -> None:
-    ids = [await service.record("webhook", f"act.{i}", {}) for i in range(3)]
+    _ids = [await service.record("webhook", f"act.{i}", {}) for i in range(3)]
     registry_mock = AsyncMock()
     registry_mock.dispatch = AsyncMock(return_value={"ok": 1})
     with patch(
-        "src.backend.core.api.extensions.action_handler_registry", registry_mock,
+        "src.backend.core.api.extensions.action_handler_registry", registry_mock
     ):
         result = await service.replay_bulk(status_filter="stored")
     assert result["replayed"] == 3
 
 
 @pytest.mark.asyncio
-async def test_stats_groups_by_status_and_source(
-    service: MessageReplayService,
-) -> None:
+async def test_stats_groups_by_status_and_source(service: MessageReplayService) -> None:
     await service.record("webhook", "a.one", {})
     await service.record("cron", "a.two", {})
     stats = await service.stats()

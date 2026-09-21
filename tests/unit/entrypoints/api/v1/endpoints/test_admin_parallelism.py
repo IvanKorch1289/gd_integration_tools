@@ -55,7 +55,7 @@ def _fake_registry_module(route: Any | None = None) -> MagicMock:
     reason="S44 W32: pytest --import-mode=importlib (pyproject.toml) "
     "breaks dsl.engine.processors import chain. Pre-existing test "
     "infrastructure issue. See test_parallelism_report_registry_import_error "
-    "(the only test in this file that mocks the import to fail; it works).",
+    "(the only test in this file that mocks the import to fail; it works)."
 )
 @pytest.mark.asyncio
 async def test_parallelism_report_with_registry() -> None:
@@ -70,9 +70,7 @@ async def test_parallelism_report_with_registry() -> None:
 
     fake_module = _fake_registry_module(FakeRoute())
 
-    with patch.dict(
-        sys.modules, {"src.backend.dsl.registry": fake_module},
-    ):
+    with patch.dict(sys.modules, {"src.backend.dsl.registry": fake_module}):
         result = await mod.parallelism_report("test-route")
 
     assert result["route_id"] == "test-route"
@@ -86,16 +84,17 @@ async def test_parallelism_report_with_registry() -> None:
 
 @pytest.mark.skip(
     reason="S44 W32: pytest --import-mode=importlib breaks dsl import chain. "
-    "Pre-existing infrastructure issue.",
+    "Pre-existing infrastructure issue."
 )
 @pytest.mark.asyncio
 async def test_parallelism_report_route_not_found() -> None:
     """parallelism_report raises 404 when route is not found."""
     fake_module = _fake_registry_module(None)
 
-    with patch.dict(
-        sys.modules, {"src.backend.dsl.registry": fake_module},
-    ), pytest.raises(HTTPException) as exc_info:
+    with (
+        patch.dict(sys.modules, {"src.backend.dsl.registry": fake_module}),
+        pytest.raises(HTTPException) as exc_info,
+    ):
         await mod.parallelism_report("missing")
 
     assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
@@ -105,9 +104,7 @@ async def test_parallelism_report_route_not_found() -> None:
 @pytest.mark.asyncio
 async def test_parallelism_report_registry_import_error() -> None:
     """parallelism_report works when route_registry import fails."""
-    with patch.dict(
-        sys.modules, {"src.backend.dsl.registry": None}, clear=False,
-    ):
+    with patch.dict(sys.modules, {"src.backend.dsl.registry": None}, clear=False):
         # Remove the module from sys.modules to force ImportError
         original = sys.modules.pop("src.backend.dsl.registry", None)
         try:
@@ -126,7 +123,7 @@ async def test_parallelism_report_registry_import_error() -> None:
 
 @pytest.mark.skip(
     reason="S44 W32: pytest --import-mode=importlib breaks dsl import chain. "
-    "Pre-existing infrastructure issue.",
+    "Pre-existing infrastructure issue."
 )
 @pytest.mark.asyncio
 async def test_parallelism_report_registry_exception() -> None:
@@ -136,9 +133,7 @@ async def test_parallelism_report_registry_exception() -> None:
     fake_module = MagicMock()
     fake_module.route_registry = fake_registry
 
-    with patch.dict(
-        sys.modules, {"src.backend.dsl.registry": fake_module},
-    ):
+    with patch.dict(sys.modules, {"src.backend.dsl.registry": fake_module}):
         result = await mod.parallelism_report("any")
 
     assert result["total_steps"] == 0
@@ -150,7 +145,7 @@ async def test_parallelism_report_registry_exception() -> None:
 
 @pytest.mark.skip(
     reason="S44 W32: pytest --import-mode=importlib breaks dsl import chain. "
-    "Pre-existing infrastructure issue.",
+    "Pre-existing infrastructure issue."
 )
 def test_parallelism_report_http_200() -> None:
     """HTTP GET returns 200 with report data."""
@@ -161,9 +156,7 @@ def test_parallelism_report_http_200() -> None:
 
     fake_module = _fake_registry_module(FakeRoute())
 
-    with patch.dict(
-        sys.modules, {"src.backend.dsl.registry": fake_module},
-    ):
+    with patch.dict(sys.modules, {"src.backend.dsl.registry": fake_module}):
         client = TestClient(app)
         resp = client.get("/api/v1/admin/routes/test-route/parallelism-report")
 
@@ -175,16 +168,14 @@ def test_parallelism_report_http_200() -> None:
 
 @pytest.mark.skip(
     reason="S44 W32: pytest --import-mode=importlib breaks dsl import chain. "
-    "Pre-existing infrastructure issue.",
+    "Pre-existing infrastructure issue."
 )
 def test_parallelism_report_http_404() -> None:
     """HTTP GET returns 404 when route not found."""
     app = _make_app()
     fake_module = _fake_registry_module(None)
 
-    with patch.dict(
-        sys.modules, {"src.backend.dsl.registry": fake_module},
-    ):
+    with patch.dict(sys.modules, {"src.backend.dsl.registry": fake_module}):
         client = TestClient(app, raise_server_exceptions=False)
         resp = client.get("/api/v1/admin/routes/missing/parallelism-report")
 

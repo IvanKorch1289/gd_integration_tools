@@ -48,9 +48,7 @@ def test_validate_profile_dev_light_succeeds(
     assert "syntax + schema valid" in result.stdout
 
 
-def test_validate_profile_nonexistent_profile_errors(
-    runner: CliRunner,
-) -> None:
+def test_validate_profile_nonexistent_profile_errors(runner: CliRunner) -> None:
     """Non-existent profile name → exit code 1 + ERROR message."""
     result = runner.invoke(app, ["validate-profile", "definitely_does_not_exist_xyz"])
     assert result.exit_code == 1
@@ -76,6 +74,7 @@ def test_validate_profile_prod_with_debug_true_errors(
             if "prod.yml" in str(p) and "config_profiles" in str(p):
                 return prod_with_debug / "prod.yml"
             return p
+
         mock_path.side_effect = path_side_effect
         # Verify via subprocess (simpler than mocking Path)
         result = subprocess.run(

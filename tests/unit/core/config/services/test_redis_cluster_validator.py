@@ -6,7 +6,6 @@
 - cluster_mode=False + cluster_nodes=[...] → OK (warning, не error)
 """
 
-
 from __future__ import annotations
 
 import pytest
@@ -24,11 +23,10 @@ class TestRedisClusterModeConsistency:
         """
         from src.backend.core.config.services.cache import RedisSettings
 
-        with pytest.raises(ValidationError, match="cluster_mode=True требует непустого"):
-            RedisSettings(
-                cluster_mode=True,
-                cluster_nodes=[],
-            )
+        with pytest.raises(
+            ValidationError, match="cluster_mode=True требует непустого"
+        ):
+            RedisSettings(cluster_mode=True, cluster_nodes=[])
 
     def test_cluster_mode_true_with_cluster_nodes_ok(self) -> None:
         """cluster_mode=True + cluster_nodes=['redis-0:6379'] → OK."""
@@ -45,10 +43,7 @@ class TestRedisClusterModeConsistency:
         """cluster_mode=False + cluster_nodes=[] → OK (single Redis instance)."""
         from src.backend.core.config.services.cache import RedisSettings
 
-        s = RedisSettings(
-            cluster_mode=False,
-            cluster_nodes=[],
-        )
+        s = RedisSettings(cluster_mode=False, cluster_nodes=[])
         assert s.cluster_mode is False
 
     def test_cluster_mode_false_with_cluster_nodes_ok_with_warning(self) -> None:
@@ -61,10 +56,7 @@ class TestRedisClusterModeConsistency:
         from src.backend.core.config.services.cache import RedisSettings
 
         # Не должно raise — warning через logger.
-        s = RedisSettings(
-            cluster_mode=False,
-            cluster_nodes=["redis-0:6379"],
-        )
+        s = RedisSettings(cluster_mode=False, cluster_nodes=["redis-0:6379"])
         assert s.cluster_mode is False
         assert s.cluster_nodes == ["redis-0:6379"]
 
@@ -74,10 +66,7 @@ class TestRedisClusterModeConsistency:
 
         # cluster_mode=False → cross-field check skip → только format check.
         with pytest.raises(ValidationError, match="cluster_nodes: ожидается формат"):
-            RedisSettings(
-                cluster_mode=False,
-                cluster_nodes=["invalid-no-port"],
-            )
+            RedisSettings(cluster_mode=False, cluster_nodes=["invalid-no-port"])
 
         with pytest.raises(ValidationError, match="cluster_nodes: некорректный"):
             RedisSettings(

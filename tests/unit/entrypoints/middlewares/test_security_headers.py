@@ -16,7 +16,6 @@ implementations, but the new test_preserves_streaming_body_chunks
 verifies the property that only the ASGI implementation can satisfy.
 """
 
-
 from __future__ import annotations
 
 from unittest.mock import AsyncMock
@@ -48,13 +47,7 @@ def _make_middleware() -> tuple[SecurityHeadersMiddleware, AsyncMock]:
 
     async def downstream_app(scope, receive, send):
         # Start response (status + headers) + body.
-        await send(
-            {
-                "type": "http.response.start",
-                "status": 200,
-                "headers": [],
-            },
-        )
+        await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"ok"})
 
     inner.side_effect = downstream_app
@@ -110,9 +103,7 @@ async def test_all_security_headers_present() -> None:
     await mw(_http_scope(), AsyncMock(), send)
     headers = _captured_headers(send)
     for header, expected_value in EXPECTED_HEADERS.items():
-        assert headers.get(header) == expected_value, (
-            f"header {header!r} mismatch"
-        )
+        assert headers.get(header) == expected_value, f"header {header!r} mismatch"
 
 
 @pytest.mark.asyncio
@@ -130,7 +121,7 @@ async def test_headers_override_downstream_defaults() -> None:
                     (b"x-frame-options", b"SAMEORIGIN"),
                     (b"x-content-type-options", b"text/html"),
                 ],
-            },
+            }
         )
         await send({"type": "http.response.body", "body": b"ok"})
 
@@ -161,13 +152,7 @@ async def test_headers_added_to_error_response() -> None:
     mw, inner = _make_middleware()
 
     async def error_app(scope, receive, send):
-        await send(
-            {
-                "type": "http.response.start",
-                "status": 500,
-                "headers": [],
-            },
-        )
+        await send({"type": "http.response.start", "status": 500, "headers": []})
         await send({"type": "http.response.body", "body": b"err"})
 
     inner.side_effect = error_app
@@ -208,7 +193,8 @@ async def test_preserves_streaming_body_chunks() -> None:
 
     # Find all body messages in order.
     body_messages = [
-        call.args[0] for call in send.await_args_list
+        call.args[0]
+        for call in send.await_args_list
         if call.args[0]["type"] == "http.response.body"
     ]
     assert len(body_messages) == 4  # 3 chunks + 1 final empty
@@ -248,12 +234,15 @@ async def test_does_not_buffer_headers_until_body_complete() -> None:
     assert seen_types == ["app:start", "app:body1", "app:body2"]
     # And the headers we inject must appear on the FIRST http.response.start.
     start_idx = next(
-        i for i, c in enumerate(send.await_args_list)
+        i
+        for i, c in enumerate(send.await_args_list)
         if c.args[0]["type"] == "http.response.start"
     )
     body1_idx = next(
         i
-        for i, c in enumerate(send.await_args_list[start_idx + 1 :], start=start_idx + 1)
+        for i, c in enumerate(
+            send.await_args_list[start_idx + 1 :], start=start_idx + 1
+        )
         if c.args[0]["type"] == "http.response.body"
     )
     assert start_idx < body1_idx, "headers must be sent before any body chunk"

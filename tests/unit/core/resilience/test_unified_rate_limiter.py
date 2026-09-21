@@ -1,6 +1,5 @@
 """Тесты unified rate-limiter (Sprint 1 V16 Single-Entry, Step 3.2)."""
 
-
 from __future__ import annotations
 
 from src.backend.core.resilience.rate_limiter import (

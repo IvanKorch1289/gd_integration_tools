@@ -1,6 +1,5 @@
 """D-AUDIT-07: management endpoints auth guard (CDC + Filewatcher)."""
 
-
 from __future__ import annotations
 
 from unittest.mock import patch
@@ -40,7 +39,7 @@ def test_cdc_no_auth_rejected() -> None:
 def test_cdc_admin_ok() -> None:
     app = _build_app(with_admin=True)
     with patch(
-        "src.backend.entrypoints.cdc.cdc_routes.get_cdc_client_provider",
+        "src.backend.entrypoints.cdc.cdc_routes.get_cdc_client_provider"
     ) as mock_provider:
         mock_provider.return_value.list_subscriptions.return_value = []
         client = TestClient(app)

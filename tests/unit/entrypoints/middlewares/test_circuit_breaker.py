@@ -6,16 +6,11 @@ S81 W1 design: per-route state, sliding window, BreakerPolicy config.
 
 from __future__ import annotations
 
-import time
 from unittest.mock import MagicMock
-
-import pytest
 
 from src.backend.entrypoints.middlewares.circuit_breaker import (
     BreakerPolicy,
-    BreakerState,
     CircuitBreakerMiddleware,
-    RouteBreakerState,
 )
 
 # BreakerPolicy tests
@@ -50,11 +45,10 @@ def test_breaker_policy_custom() -> None:
 # ============================================================================
 
 
-
-
 # Legacy deque-based state machine tests REMOVED in S51 W2 (cycle 282)
 # per ADR-0271 (S13 Phase 2c deprecation). SlidingWindowBreaker
 # behavior is now tested in SlidingWindowBreaker's own tests.
+
 
 async def test_open_circuit_returns_503() -> None:
     """OPEN circuit — return 503 immediately (no upstream call).
@@ -67,10 +61,7 @@ async def test_open_circuit_returns_503() -> None:
     """
     policy = BreakerPolicy(failure_threshold=1)
     # S51 W1: registry-backed path with explicit use_breaker_registry=True
-    m = _make_middleware(
-        default_policy=policy,
-        use_breaker_registry=True,
-    )
+    m = _make_middleware(default_policy=policy, use_breaker_registry=True)
     # Mock adapter to simulate OPEN state for any route
     mock_adapter = MagicMock()
     mock_adapter.should_allow = MagicMock(return_value=False)
@@ -104,6 +95,7 @@ async def test_open_circuit_returns_503() -> None:
     assert response_start["status"] == 503
     # Verify response body content (JSON-encoded with registry source)
     import json
+
     body_messages = [s for s in sent if s["type"] == "http.response.body"]
     if body_messages:
         body_bytes = b"".join(m.get("body", b"") for m in body_messages)
@@ -117,13 +109,9 @@ async def test_registry_path_records_success() -> None:
 
     S51 W1 (cycle 280): verifies the new __call__ registry dispatch path.
     """
-    from starlette.responses import JSONResponse
 
     policy = BreakerPolicy(failure_threshold=1)
-    m = _make_middleware(
-        default_policy=policy,
-        use_breaker_registry=True,
-    )
+    m = _make_middleware(default_policy=policy, use_breaker_registry=True)
     mock_adapter = MagicMock()
     mock_adapter.should_allow = MagicMock(return_value=True)
     mock_adapter.record_success = MagicMock()
@@ -154,10 +142,7 @@ async def test_registry_path_records_failure_on_exception() -> None:
     S51 W1 (cycle 280): verifies failure recording in registry dispatch.
     """
     policy = BreakerPolicy(failure_threshold=1)
-    m = _make_middleware(
-        default_policy=policy,
-        use_breaker_registry=True,
-    )
+    m = _make_middleware(default_policy=policy, use_breaker_registry=True)
     mock_adapter = MagicMock()
     mock_adapter.should_allow = MagicMock(return_value=True)
     mock_adapter.record_success = MagicMock()

@@ -8,7 +8,6 @@ S164 W3: async Protocol + asyncio.to_thread (CPU-bound offload).
 RPA pipelines.
 """
 
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -50,6 +49,7 @@ async def test_noop_satisfies_ocr_processor_protocol() -> None:
 async def test_pytesseract_is_available_false_when_not_imported() -> None:
     """PytesseractOCRProcessor.is_available() → False если pytesseract не установлен."""
     import builtins
+
     real_import = builtins.__import__
 
     def fake_import(name: str, *args: object, **kwargs: object) -> object:
@@ -66,6 +66,7 @@ async def test_pytesseract_is_available_false_when_not_imported() -> None:
 async def test_pytesseract_recognize_returns_empty_on_missing_dep() -> None:
     """Pytesseract.recognize() с missing dep → empty string + warning."""
     import builtins
+
     real_import = builtins.__import__
 
     def fake_import(name: str, *args: object, **kwargs: object) -> object:
@@ -84,7 +85,7 @@ async def test_pytesseract_recognize_returns_empty_on_tesseract_error() -> None:
     """Pytesseract.recognize() с Tesseract runtime error → empty string (graceful)."""
     fake_pytesseract = type("FakePytesseract", (), {})()
     fake_pytesseract.image_to_string = lambda *args, **kwargs: (_ for _ in ()).throw(
-        RuntimeError("tesseract crashed"),
+        RuntimeError("tesseract crashed")
     )
 
     with patch.dict("sys.modules", {"pytesseract": fake_pytesseract}):

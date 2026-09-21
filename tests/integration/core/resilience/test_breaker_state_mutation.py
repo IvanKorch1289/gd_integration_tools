@@ -14,7 +14,6 @@ import asyncio
 
 import pytest
 
-
 pytestmark = pytest.mark.asyncio
 
 
@@ -116,9 +115,7 @@ async def test_should_allow_returns_false_when_open() -> None:
 async def test_state_snapshot_returns_fresh_instances() -> None:
     """Multiple get_state calls return fresh RouteBreakerState instances."""
     from src.backend.core.resilience.breaker import BreakerRegistry
-    from src.backend.core.resilience.breaker_policy_adapter import (
-        BreakerPolicyAdapter,
-    )
+    from src.backend.core.resilience.breaker_policy_adapter import BreakerPolicyAdapter
 
     registry = BreakerRegistry()
     adapter = BreakerPolicyAdapter(registry=registry)

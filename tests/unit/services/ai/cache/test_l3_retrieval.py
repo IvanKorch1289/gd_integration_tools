@@ -16,7 +16,9 @@ from unittest.mock import patch
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="S171 M13.3 R3 partial: test/code sync needed — cache.lookup returns data when disabled (test expects None). Defer to M14 (see docs/m11_deferred_tests.md)")
+pytestmark = pytest.mark.skip(
+    reason="S171 M13.3 R3 partial: test/code sync needed — cache.lookup returns data when disabled (test expects None). Defer to M14 (see docs/m11_deferred_tests.md)"
+)
 
 
 from src.backend.services.ai.semantic_cache import (
@@ -30,7 +32,7 @@ def _enable_flag(monkeypatch: pytest.MonkeyPatch, value: bool = True) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(
-        feature_flags, "rag_cache_l3_retrieval_invalidation", value, raising=False,
+        feature_flags, "rag_cache_l3_retrieval_invalidation", value, raising=False
     )
 
 
@@ -127,7 +129,7 @@ async def test_l3_publish_invalidate_calls_redis(
     from src.backend.core.di import providers as _providers
 
     monkeypatch.setattr(
-        _providers, "get_redis_stream_client_provider", lambda: fake_raw, raising=False,
+        _providers, "get_redis_stream_client_provider", lambda: fake_raw, raising=False
     )
     ok = await cache.publish_invalidate("ns-1", doc_id="doc-42")
     assert ok is True

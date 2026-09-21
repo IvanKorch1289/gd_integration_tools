@@ -1,6 +1,5 @@
 """Unit-тесты TemplateEngine processors."""
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -18,7 +17,7 @@ def _ex(body: Any = None, headers: dict[str, Any] | None = None) -> Exchange[Any
 @pytest.mark.asyncio
 async def test_render_template_from_body() -> None:
     proc = RenderTemplateProcessor(
-        template_string="Hello {{ name }}!", result_property="out",
+        template_string="Hello {{ name }}!", result_property="out"
     )
     exchange = _ex({"name": "Alice"})
     await proc.process(exchange, None)  # type: ignore[arg-type]
@@ -53,7 +52,7 @@ async def test_render_template_from_properties() -> None:
 @pytest.mark.asyncio
 async def test_render_template_non_dict_body() -> None:
     proc = RenderTemplateProcessor(
-        template_string="Hello {{ name }}!", result_property="out",
+        template_string="Hello {{ name }}!", result_property="out"
     )
     exchange = _ex("text")
     await proc.process(exchange, None)  # type: ignore[arg-type]

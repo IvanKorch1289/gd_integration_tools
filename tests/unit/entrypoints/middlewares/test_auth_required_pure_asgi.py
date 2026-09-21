@@ -5,7 +5,6 @@ endpoints. Cycle 43: переписано с BaseHTTPMiddleware на pure ASGI
 — 401 отправляется через send (no-raise, cycle 39 lesson).
 """
 
-
 from __future__ import annotations
 
 import json
@@ -31,9 +30,11 @@ def _start_message(send: AsyncMock) -> dict | None:
 
 def _downstream_ok():
     """Downstream возвращающий 200 OK."""
+
     async def downstream(scope, receive, send):
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"ok"})
+
     return downstream
 
 
@@ -60,7 +61,7 @@ class TestAuthRequiredMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_public_path_passes_through_without_auth(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Public path (e.g. /health) → пробрасывается downstream без auth."""
         app = AsyncMock()
@@ -83,7 +84,7 @@ class TestAuthRequiredMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_options_preflight_bypasses_auth(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """OPTIONS preflight (CORS) → пробрасывается downstream без auth."""
         app = AsyncMock()
@@ -105,7 +106,7 @@ class TestAuthRequiredMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_non_public_without_credentials_returns_401(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Non-public path + no credentials → 401 JSON через send (no-raise)."""
         app = AsyncMock()
@@ -122,11 +123,7 @@ class TestAuthRequiredMiddlewarePureASGI:
         )
 
         send = AsyncMock()
-        await mw(
-            _make_scope("GET", "/api/v1/protected"),
-            AsyncMock(),
-            send,
-        )
+        await mw(_make_scope("GET", "/api/v1/protected"), AsyncMock(), send)
 
         # 401 отправлен через send.
         start = _start_message(send)
@@ -134,7 +131,8 @@ class TestAuthRequiredMiddlewarePureASGI:
         assert start["status"] == 401
         # Body — JSON с detail.
         body_msg = next(
-            c.args[0] for c in send.await_args_list
+            c.args[0]
+            for c in send.await_args_list
             if c.args[0]["type"] == "http.response.body"
         )
         parsed = json.loads(body_msg["body"].decode("utf-8"))
@@ -143,7 +141,7 @@ class TestAuthRequiredMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_non_public_with_valid_credentials_passes_through(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Non-public + valid AuthContext → пробрасывает downstream.
 
@@ -162,7 +160,7 @@ class TestAuthRequiredMiddlewarePureASGI:
 
         # Patch'уем оба пути (core.auth + deps.auth_selector).
         monkeypatch.setattr(
-            "src.backend.core.auth.auth_selector.verify_request", mock_verify,
+            "src.backend.core.auth.auth_selector.verify_request", mock_verify
         )
         monkeypatch.setattr(
             "src.backend.entrypoints.api.dependencies.auth_selector.verify_request",
@@ -195,18 +193,14 @@ class TestAuthRequiredMiddlewarePureASGI:
         mw = AuthRequiredMiddleware(app=app)
 
         send = AsyncMock()
-        await mw(
-            {"type": "websocket", "path": "/ws", "headers": []},
-            AsyncMock(),
-            send,
-        )
+        await mw({"type": "websocket", "path": "/ws", "headers": []}, AsyncMock(), send)
 
         msgs = [c.args[0] for c in send.await_args_list]
         assert any(m["type"] == "websocket.accept" for m in msgs)
 
     @pytest.mark.asyncio
     async def test_does_not_call_downstream_when_unauthenticated(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """При 401 downstream НЕ вызывается (cycle 43 invariant)."""
         app = AsyncMock()
@@ -223,11 +217,7 @@ class TestAuthRequiredMiddlewarePureASGI:
         )
 
         send = AsyncMock()
-        await mw(
-            _make_scope("GET", "/api/v1/protected"),
-            AsyncMock(),
-            send,
-        )
+        await mw(_make_scope("GET", "/api/v1/protected"), AsyncMock(), send)
 
         # 401 отправлен (если бы downstream был вызван, тест упал бы).
         start = _start_message(send)
@@ -236,7 +226,7 @@ class TestAuthRequiredMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_401_response_includes_www_authenticate_header(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """401 response содержит WWW-Authenticate header (RFC 7235)."""
         app = AsyncMock()
@@ -253,11 +243,7 @@ class TestAuthRequiredMiddlewarePureASGI:
         )
 
         send = AsyncMock()
-        await mw(
-            _make_scope("GET", "/api/v1/protected"),
-            AsyncMock(),
-            send,
-        )
+        await mw(_make_scope("GET", "/api/v1/protected"), AsyncMock(), send)
 
         start = _start_message(send)
         assert start is not None
@@ -268,7 +254,7 @@ class TestAuthRequiredMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_accepted_methods_passed_to_verify_request(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """accepted_methods constructor arg → пробрасывается в verify_request.
 
@@ -283,7 +269,7 @@ class TestAuthRequiredMiddlewarePureASGI:
         app = AsyncMock()
         app.side_effect = _downstream_ok()
         mw = AuthRequiredMiddleware(
-            app=app, accepted_methods=[AuthMethod.API_KEY, AuthMethod.JWT],
+            app=app, accepted_methods=[AuthMethod.API_KEY, AuthMethod.JWT]
         )
 
         # Direct AsyncMock (без сохранения в переменную) — patcher
@@ -294,11 +280,7 @@ class TestAuthRequiredMiddlewarePureASGI:
         )
 
         send = AsyncMock()
-        await mw(
-            _make_scope("GET", "/api/v1/protected"),
-            AsyncMock(),
-            send,
-        )
+        await mw(_make_scope("GET", "/api/v1/protected"), AsyncMock(), send)
 
         # Если middleware вызвал verify_request — должно быть 401
         # (потому что return_value=None → ctx=None → 401).

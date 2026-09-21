@@ -32,9 +32,7 @@ class TestCdcSourceModels:
     def test_cdc_cursor_with_topic(self) -> None:
         """``CDCCursor`` с topic (S178 fix)."""
         cursor = CDCCursor(
-            value="kafka_offset_42",
-            backend="debezium",
-            topic="public.users",
+            value="kafka_offset_42", backend="debezium", topic="public.users"
         )
         assert cursor.topic == "public.users"
 
@@ -123,11 +121,7 @@ class TestFakeCDCSource:
     @pytest.mark.asyncio
     async def test_subscribe_filters_by_tables(self) -> None:
         """subscribe(tables=['x']) → только события с table='x'."""
-        events = [
-            _make_event("x", "1"),
-            _make_event("y", "2"),
-            _make_event("x", "3"),
-        ]
+        events = [_make_event("x", "1"), _make_event("y", "2"), _make_event("x", "3")]
         fake = FakeCDCSource(events=events)
         result = []
         async for ev in fake.subscribe(tables=["x"]):
@@ -139,11 +133,7 @@ class TestFakeCDCSource:
     @pytest.mark.asyncio
     async def test_subscribe_with_start_cursor_skips_prior(self) -> None:
         """subscribe(start_cursor=X) → пропускает события до X включительно."""
-        events = [
-            _make_event("x", "1"),
-            _make_event("x", "2"),
-            _make_event("x", "3"),
-        ]
+        events = [_make_event("x", "1"), _make_event("x", "2"), _make_event("x", "3")]
         fake = FakeCDCSource(events=events)
         start = CDCCursor(value="1", backend="test")
         result = []
@@ -194,11 +184,7 @@ class TestFakeCDCSource:
     @pytest.mark.asyncio
     async def test_replay_without_end_cursor_yields_all(self) -> None:
         """replay(start_cursor=X) без end_cursor → yield все события от X."""
-        events = [
-            _make_event("x", "1"),
-            _make_event("x", "2"),
-            _make_event("x", "3"),
-        ]
+        events = [_make_event("x", "1"), _make_event("x", "2"), _make_event("x", "3")]
         fake = FakeCDCSource(events=events)
         start = CDCCursor(value="1", backend="test")
         result = []

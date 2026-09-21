@@ -60,7 +60,7 @@ def test_uvicorn_graceful_shutdown_supported() -> None:
     uvicorn CLI. Если uvicorn отсутствует — skip (некоторые envs).
     """
     try:
-        import uvicorn  # type: ignore[import-not-found]
+        import uvicorn  # type: ignore[import-not-found]  # noqa: F401 — availability probe
     except ImportError:
         pytest.skip("uvicorn не установлен")
 

@@ -7,6 +7,7 @@
 4. FtpUploadProcessor — SFTP/FTP file upload
 5. HttpRequestProcessor — async HTTP request
 """
+
 from __future__ import annotations
 
 import ssl
@@ -23,6 +24,7 @@ class TestCsvReadProcessor:
         from src.backend.dsl.engine.processors.rpa.operations.csvreadprocessor import (
             CsvReadProcessor,
         )
+
         csv_file = tmp_path / "data.csv"
         csv_file.write_text("name,age\nAlice,30\nBob,25\n")
         p = CsvReadProcessor(src=str(csv_file), delimiter=",", to="body.rows")
@@ -43,6 +45,7 @@ class TestCsvReadProcessor:
         from src.backend.dsl.engine.processors.rpa.operations.csvreadprocessor import (
             CsvReadProcessor,
         )
+
         p = CsvReadProcessor(content="a,b\n1,2\n", to="body.rows")
         ex = MagicMock()
         ex.in_message = MagicMock()
@@ -62,9 +65,10 @@ class TestCsvWriteProcessor:
         from src.backend.dsl.engine.processors.rpa.operations.csvwriteprocessor import (
             CsvWriteProcessor,
         )
+
         out = tmp_path / "out.csv"
         p = CsvWriteProcessor(
-            dst=str(out), rows=[{"a": "1", "b": "2"}, {"a": "3", "b": "4"}],
+            dst=str(out), rows=[{"a": "1", "b": "2"}, {"a": "3", "b": "4"}]
         )
         ex = MagicMock()
         ex.in_message = MagicMock()
@@ -85,8 +89,7 @@ class TestEmailReadProcessor:
         from src.backend.dsl.engine.processors.rpa.system import EmailReadProcessor
 
         p = EmailReadProcessor(
-            host="imap.example.com", port=993,
-            user="u", password="p", folder="INBOX",
+            host="imap.example.com", port=993, user="u", password="p", folder="INBOX"
         )
         assert p.host == "imap.example.com"
         assert p.port == 993
@@ -97,8 +100,7 @@ class TestEmailReadProcessor:
         from src.backend.dsl.engine.processors.rpa.system import EmailReadProcessor
 
         p = EmailReadProcessor(
-            host="imap.example.com", port=993,
-            user="u", password="p", folder="INBOX",
+            host="imap.example.com", port=993, user="u", password="p", folder="INBOX"
         )
         ex = MagicMock()
         ex.in_message = MagicMock()
@@ -127,10 +129,14 @@ class TestFtpUploadProcessor:
         from src.backend.dsl.engine.processors.rpa.operations.ftpuploadprocessor import (
             FtpUploadProcessor,
         )
+
         p = FtpUploadProcessor(
-            host="ftp.example.com", port=21,
-            user="u", password="p",
-            local_path="/tmp/file.txt", remote_path="/upload/file.txt",
+            host="ftp.example.com",
+            port=21,
+            user="u",
+            password="p",
+            local_path="/tmp/file.txt",
+            remote_path="/upload/file.txt",
         )
         assert p.host == "ftp.example.com"
         assert p.port == 21
@@ -138,7 +144,7 @@ class TestFtpUploadProcessor:
         assert p._allow_insecure is False
 
     def test_insecure_requires_both_flag_and_env(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         from src.backend.dsl.engine.processors.rpa.operations.ftpuploadprocessor import (
             FtpUploadProcessor,
@@ -146,9 +152,12 @@ class TestFtpUploadProcessor:
 
         # Flag without env → still secure.
         p = FtpUploadProcessor(
-            host="ftp.example.com", port=21,
-            user="u", password="p",
-            local_path="/tmp/file.txt", remote_path="/r",
+            host="ftp.example.com",
+            port=21,
+            user="u",
+            password="p",
+            local_path="/tmp/file.txt",
+            remote_path="/r",
             allow_insecure_ftp=True,
         )
         assert p._allow_insecure is False
@@ -156,24 +165,30 @@ class TestFtpUploadProcessor:
         # Env without flag → still secure.
         monkeypatch.setenv("FTP_INSECURE_OK", "1")
         p = FtpUploadProcessor(
-            host="ftp.example.com", port=21,
-            user="u", password="p",
-            local_path="/tmp/file.txt", remote_path="/r",
+            host="ftp.example.com",
+            port=21,
+            user="u",
+            password="p",
+            local_path="/tmp/file.txt",
+            remote_path="/r",
         )
         assert p._allow_insecure is False
 
         # Both → insecure allowed.
         p = FtpUploadProcessor(
-            host="ftp.example.com", port=21,
-            user="u", password="p",
-            local_path="/tmp/file.txt", remote_path="/r",
+            host="ftp.example.com",
+            port=21,
+            user="u",
+            password="p",
+            local_path="/tmp/file.txt",
+            remote_path="/r",
             allow_insecure_ftp=True,
         )
         assert p._allow_insecure is True
 
     @pytest.mark.asyncio
     async def test_plaintext_ftplib_never_imported_by_default(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
         """Default path must not instantiate ``ftplib.FTP`` — only ``FTP_TLS``."""
         from src.backend.dsl.engine.processors.rpa.operations import (
@@ -186,9 +201,12 @@ class TestFtpUploadProcessor:
         src = tmp_path / "data.txt"
         src.write_text("hello")
         p = FtpUploadProcessor(
-            host="ftp.example.com", port=21,
-            user="u", password="p",
-            local_path=str(src), remote_path="/r/x.txt",
+            host="ftp.example.com",
+            port=21,
+            user="u",
+            password="p",
+            local_path=str(src),
+            remote_path="/r/x.txt",
         )
 
         plain_calls: list[Any] = []
@@ -209,11 +227,7 @@ class TestFtpUploadProcessor:
             def close(self) -> None: ...
 
         # Patch the names imported inside ``_upload`` (lazy import).
-        fake_module = type(
-            "FakeFtpLib",
-            (),
-            {"FTP": _StubFTP, "FTP_TLS": _StubFTP},
-        )
+        fake_module = type("FakeFtpLib", (), {"FTP": _StubFTP, "FTP_TLS": _StubFTP})
         monkeypatch.setattr(ftp_mod, "ftplib", fake_module, raising=False)
         # Also intercept the in-function ``from ftplib import FTP_TLS``.
         import ftplib as real_ftplib
@@ -237,7 +251,7 @@ class TestFtpUploadProcessor:
 
     @pytest.mark.asyncio
     async def test_insecure_path_uses_plaintext_with_double_consent(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
         """Only when BOTH the ctor flag and env var are set may plaintext be used."""
         from src.backend.dsl.engine.processors.rpa.operations import (
@@ -251,9 +265,12 @@ class TestFtpUploadProcessor:
         src = tmp_path / "data.txt"
         src.write_text("hello")
         p = FtpUploadProcessor(
-            host="ftp.example.com", port=21,
-            user="u", password="p",
-            local_path=str(src), remote_path="/r/x.txt",
+            host="ftp.example.com",
+            port=21,
+            user="u",
+            password="p",
+            local_path=str(src),
+            remote_path="/r/x.txt",
             allow_insecure_ftp=True,
         )
         assert p._allow_insecure is True
@@ -298,6 +315,7 @@ class TestHttpRequestProcessor:
         from src.backend.dsl.engine.processors.rpa.operations.httprequestprocessor import (
             HttpRequestProcessor,
         )
+
         p = HttpRequestProcessor(method="GET", url="https://api.example.com/data")
         ex = MagicMock()
         ex.in_message = MagicMock()
@@ -316,8 +334,10 @@ class TestHttpRequestProcessor:
         class _MockClient:
             async def __aenter__(self):
                 return self
+
             async def __aexit__(self, *a):
                 return False
+
             async def request(self, *a, **kw):
                 return mock_resp
 

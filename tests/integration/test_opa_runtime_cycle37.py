@@ -18,7 +18,6 @@
 (async query метод). ``httpx`` не используется.
 """
 
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -72,7 +71,7 @@ class _FakeOPA:
         self.calls: list[tuple[str, dict[str, Any]]] = []
 
     async def query(
-        self, policy: str, input_doc: dict[str, Any],
+        self, policy: str, input_doc: dict[str, Any]
     ) -> _FakePolicyDecision:
         self.calls.append((policy, dict(input_doc)))
         if self._raises is not None:
@@ -89,11 +88,7 @@ class _FakeTenantScopedCasbin:
         self.calls: list[tuple[str, str, str, str | None]] = []
 
     def enforce(
-        self,
-        user_id: str,
-        resource: str,
-        action: str,
-        tenant_id: str | None = None,
+        self, user_id: str, resource: str, action: str, tenant_id: str | None = None
     ) -> bool:
         self.calls.append((user_id, resource, action, tenant_id))
         if self._raises is not None:
@@ -107,9 +102,7 @@ class _FakeTenantScopedCasbin:
 class _AllowAllCapability:
     """Capability-gateway, который всегда пропускает."""
 
-    def check(
-        self, principal: str, resource: str, scope: str | None = None,
-    ) -> None:
+    def check(self, principal: str, resource: str, scope: str | None = None) -> None:
         return None  # allow (не raise)
 
 
@@ -130,9 +123,7 @@ class TestFactoryWrappers:
     def test_build_opa_policy_decider_custom_policy_name(self) -> None:
         """policy_name пробрасывается в decider через opa_step."""
         opa = _FakeOPA(allow=True)
-        decider = build_opa_policy_decider(
-            opa, policy_name="custom/policy",
-        )
+        decider = build_opa_policy_decider(opa, policy_name="custom/policy")
         # policy_name фиксируется замыканием внутри opa_step, но сам
         # ``decider`` это callable — проверим, что он вызывается без ошибок.
         assert callable(decider)
@@ -392,7 +383,7 @@ class TestCompositionRootWiring:
         return FastAPI()
 
     def test_engine_disabled_means_no_policies(
-        self, fresh_app: FastAPI, monkeypatch: pytest.MonkeyPatch,
+        self, fresh_app: FastAPI, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """engine_enabled=False (default) → _policies пустой."""
         # B-12 fix (cycle 37): composition root не инстанцирует движки.
@@ -419,7 +410,7 @@ class TestCompositionRootWiring:
         assert gw._policies == ()
 
     def test_engine_enabled_wires_opa_only(
-        self, fresh_app: FastAPI, monkeypatch: pytest.MonkeyPatch,
+        self, fresh_app: FastAPI, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """engine_enabled=True + opa_url → ровно 1 policy-decider (OPA)."""
 

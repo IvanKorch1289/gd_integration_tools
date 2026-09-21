@@ -5,7 +5,6 @@
 :class:`unittest.mock.AsyncMock`, чтобы не поднимать реальный memcached.
 """
 
-
 from __future__ import annotations
 
 from unittest.mock import AsyncMock
@@ -15,9 +14,7 @@ import pytest
 # aiomcache опционален — без него MemcachedBackend.__init__ бросает RuntimeError.
 pytest.importorskip("aiomcache")
 
-from src.backend.infrastructure.cache.backends.memcached import (
-    MemcachedBackend,
-)
+from src.backend.infrastructure.cache.backends.memcached import MemcachedBackend
 
 
 @pytest.fixture
@@ -70,9 +67,7 @@ async def test_delete_multiple_keys(backend: MemcachedBackend) -> None:
     assert backend._client.delete.await_count == 3
 
 
-async def test_delete_pattern_raises_not_implemented(
-    backend: MemcachedBackend,
-) -> None:
+async def test_delete_pattern_raises_not_implemented(backend: MemcachedBackend) -> None:
     """``delete_pattern`` raises NotImplementedError вместо silent no-op.
 
     S181 P0-#10 — silent warning был foot-gun (cache invalidation silently
@@ -84,13 +79,6 @@ async def test_delete_pattern_raises_not_implemented(
         await backend.delete_pattern("any:*")
         await backend.delete_pattern("other:*")
     backend._client.delete.assert_not_called()
-    """``delete_pattern`` логирует только один warning за процесс и не вызывает client."""
-    with caplog.at_level(logging.WARNING):
-        await backend.delete_pattern("any:*")
-        await backend.delete_pattern("other:*")
-    backend._client.delete.assert_not_called()
-    assert sum("delete_pattern" in r.message for r in caplog.records) == 1
-
 
 
 async def test_exists_true(backend: MemcachedBackend) -> None:

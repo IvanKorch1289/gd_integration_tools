@@ -1,6 +1,5 @@
 """Unit-тесты ZipArchiveProcessor — Wave [wave:s5/k3-w2-processor-pack-2]."""
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -32,7 +31,7 @@ async def test_pack_then_unpack_roundtrip() -> None:
     assert isinstance(archive_bytes, bytes) and archive_bytes[:2] == b"PK"
 
     unpack = ZipArchiveProcessor(
-        mode="unpack", source="body.archive", to="body.unpacked",
+        mode="unpack", source="body.archive", to="body.unpacked"
     )
     ex2 = _ex({"archive": archive_bytes})
     await unpack.process(ex2, AsyncMock())

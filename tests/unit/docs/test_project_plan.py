@@ -47,15 +47,9 @@ def test_project_plan_declares_v22_frozen() -> None:
         "PROJECT_PLAN.md должен явно зафиксировать V22 как baseline."
     )
     # Архитектурные инварианты V22 (subset обязательных маркеров).
-    required_invariants = (
-        "4-layer",
-        "Capability-checked facades",
-        "Multi-protocol",
-    )
+    required_invariants = ("4-layer", "Capability-checked facades", "Multi-protocol")
     missing = [inv for inv in required_invariants if inv not in content]
-    assert not missing, (
-        f"V22 invariants отсутствуют в PROJECT_PLAN.md: {missing}"
-    )
+    assert not missing, f"V22 invariants отсутствуют в PROJECT_PLAN.md: {missing}"
 
 
 def test_project_plan_sprint_1_to_8_status() -> None:
@@ -68,10 +62,7 @@ def test_project_plan_sprint_1_to_8_status() -> None:
 
     # Колонка статуса: ловит canonical маркеры + расширения (partial→S8A и т.п.).
     # Sprint статусы — closed/partial/closure/blocked; обозначаются ✅/🟡/⚠️/🔴.
-    sprint_rows = re.findall(
-        r"\*\*Sprint \d+\*\* \| .+? \| (\S+).*?",
-        content,
-    )
+    sprint_rows = re.findall(r"\*\*Sprint \d+\*\* \| .+? \| (\S+).*?", content)
     valid_status_prefixes = ("✅", "🟡", "⚠️", "🔴")
     assert len(sprint_rows) == 8, (
         f"Sprint status rows должно быть ровно 8 (найдено {len(sprint_rows)})."
@@ -104,9 +95,7 @@ def test_project_plan_target_9_per_10_per_domain() -> None:
         "Notifications",
     )
     missing = [d for d in required_domains if d not in content]
-    assert not missing, (
-        f"Домены отсутствуют в PROJECT_PLAN.md target matrix: {missing}"
-    )
+    assert not missing, f"Домены отсутствуют в PROJECT_PLAN.md target matrix: {missing}"
 
 
 def test_project_plan_references_canonical_sources() -> None:
@@ -134,13 +123,10 @@ def test_project_plan_replaces_plan_md_notion() -> None:
         "PROJECT_PLAN.md должен явно упоминать PLAN.md как заменяемый документ."
     )
     # Должна присутствовать явная нота о replacement.
-    replacement_phrases = (
-        "replacement for",
-        "replaces",
-        "замен",
-        "replacement",
+    replacement_phrases = ("replacement for", "replaces", "замен", "replacement")
+    has_replacement_note = any(
+        p.lower() in content.lower() for p in replacement_phrases
     )
-    has_replacement_note = any(p.lower() in content.lower() for p in replacement_phrases)
     assert has_replacement_note, (
         "PROJECT_PLAN.md должен содержать explicit replacement note для PLAN.md."
     )

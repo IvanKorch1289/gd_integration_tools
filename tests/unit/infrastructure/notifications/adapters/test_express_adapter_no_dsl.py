@@ -17,8 +17,6 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-import pytest
-
 
 def test_express_adapter_no_dsl_imports() -> None:
     """Express adapter does NOT import from dsl.engine.processors.express._common.

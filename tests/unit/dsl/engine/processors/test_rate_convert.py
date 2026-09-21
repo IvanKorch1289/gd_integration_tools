@@ -1,6 +1,5 @@
 """Unit-тесты RateConvertProcessor — Wave [wave:s5/k3-w4-processor-pack-4]."""
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -25,7 +24,7 @@ def _enable(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.asyncio
 async def test_convert_with_mocked_provider() -> None:
     proc = RateConvertProcessor(
-        from_currency="USD", to_currency="EUR", amount=100, to="body.eur",
+        from_currency="USD", to_currency="EUR", amount=100, to="body.eur"
     )
     ex = _ex({})
 

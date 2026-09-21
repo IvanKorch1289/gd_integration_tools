@@ -22,9 +22,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 
 def _make_middleware(
-    *,
-    use_breaker_registry: bool | None = None,
-    flag_value: bool | None = None,
+    *, use_breaker_registry: bool | None = None, flag_value: bool | None = None
 ) -> Any:
     """Build CircuitBreakerMiddleware with explicit flag config."""
     from src.backend.entrypoints.middlewares.circuit_breaker import (
@@ -167,7 +165,9 @@ def test_registry_adapter_failure_recording() -> None:
 
     # Trigger failure recording
     middleware._record_failure_for_route("/api/v1/slow", MagicMock())
-    mock_adapter.record_failure.assert_called_once_with("/api/v1/slow", mock_adapter.record_failure.call_args.args[1])
+    mock_adapter.record_failure.assert_called_once_with(
+        "/api/v1/slow", mock_adapter.record_failure.call_args.args[1]
+    )
 
     # Trigger success recording
     middleware._record_success_for_route("/api/v1/slow")
@@ -207,9 +207,13 @@ def test_preflight_script_exists() -> None:
     """Pre-flight script (verify_s13_phase4_readiness.sh) provides deployment readiness check."""
     import os
 
-    script_path = "/home/user/dev/gd_integration_tools/scripts/verify_s13_phase4_readiness.sh"
+    script_path = (
+        "/home/user/dev/gd_integration_tools/scripts/verify_s13_phase4_readiness.sh"
+    )
     assert os.path.exists(script_path), f"Pre-flight script not found at {script_path}"
-    assert os.access(script_path, os.X_OK), f"Pre-flight script not executable: {script_path}"
+    assert os.access(script_path, os.X_OK), (
+        f"Pre-flight script not executable: {script_path}"
+    )
 
 
 def test_phase4_feature_flag_documented_in_settings() -> None:

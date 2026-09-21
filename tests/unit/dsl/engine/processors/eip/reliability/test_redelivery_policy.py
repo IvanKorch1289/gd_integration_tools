@@ -15,7 +15,6 @@ ValueError). До фикса ``redelivery_policy.py:145`` использовал
 cycle-1/B-04
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -133,10 +132,7 @@ async def test_exhausted_after_max_attempts() -> None:
 def test_exhausted_backoff_capped() -> None:
     """``max_delay_s`` ограничивает рост delay."""
     op = RedeliveryPolicyProcessor(
-        max_attempts=10,
-        initial_delay_s=10.0,
-        backoff_multiplier=10.0,
-        max_delay_s=15.0,
+        max_attempts=10, initial_delay_s=10.0, backoff_multiplier=10.0, max_delay_s=15.0
     )
     # attempt=4 → delay = 10 * 10^3 = 10000, cap = 15.
     assert op._compute_delay(4) == 15.0
@@ -155,7 +151,7 @@ def test_constructor_validation() -> None:
 def test_to_spec_serialization() -> None:
     """``to_spec()`` возвращает JSON-Schema spec с retry/backoff параметрами."""
     op = RedeliveryPolicyProcessor(
-        max_attempts=5, initial_delay_s=2.0, backoff_multiplier=1.5, max_delay_s=30.0,
+        max_attempts=5, initial_delay_s=2.0, backoff_multiplier=1.5, max_delay_s=30.0
     )
     assert op.to_spec() == {
         "type": "redelivery_policy",

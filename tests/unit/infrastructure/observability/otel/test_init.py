@@ -24,17 +24,12 @@ class TestOtelFacadeAllExports:
     """``__all__`` audit + callable identity."""
 
     @pytest.mark.parametrize(
-        "symbol_name",
-        ["configure_otel", "setup_otel_metrics", "shutdown_otel_metrics"],
+        "symbol_name", ["configure_otel", "setup_otel_metrics", "shutdown_otel_metrics"]
     )
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(otel, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
-        assert symbol_name in otel.__all__, (
-            f"{symbol_name} not declared in __all__"
-        )
+        assert hasattr(otel, symbol_name), f"Missing export: {symbol_name}"
+        assert symbol_name in otel.__all__, f"{symbol_name} not declared in __all__"
 
     def test_all_declared_count(self) -> None:
         """``__all__`` содержит 3 символа."""
@@ -43,7 +38,11 @@ class TestOtelFacadeAllExports:
     def test_module_docstring_present(self) -> None:
         """Module docstring описывает OpenTelemetry baseline."""
         assert otel.__doc__ is not None
-        assert "OpenTelemetry" in otel.__doc__ or "OTel" in otel.__doc__ or "otel" in otel.__doc__.lower()
+        assert (
+            "OpenTelemetry" in otel.__doc__
+            or "OTel" in otel.__doc__
+            or "otel" in otel.__doc__.lower()
+        )
 
 
 @pytest.mark.unit

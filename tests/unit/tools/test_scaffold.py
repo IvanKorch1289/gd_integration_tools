@@ -7,6 +7,7 @@ Scaffold СОЗДАЁТ файлы в ``src/dsl/...`` (без backend), но р�
 
 M14.3: fix path bug.
 """
+
 from __future__ import annotations
 
 import subprocess
@@ -16,9 +17,19 @@ class TestScaffoldPaths:
     def test_processor_path_includes_backend(self) -> None:
         """Scaffold processor создаёт файл в src/backend/dsl/..."""
         result = subprocess.run(
-            ["python", "tools/scaffold.py", "processor",
-             "--name", "TestProc", "--module", "testproc", "--dry-run"],
-            capture_output=True, text=True, cwd="/home/user/dev/gd_integration_tools",
+            [
+                "python",
+                "tools/scaffold.py",
+                "processor",
+                "--name",
+                "TestProc",
+                "--module",
+                "testproc",
+                "--dry-run",
+            ],
+            capture_output=True,
+            text=True,
+            cwd="/home/user/dev/gd_integration_tools",
         )
         # dry-run output должен указывать правильный путь
         assert "src/backend/dsl/engine/processors/testproc.py" in result.stdout, (
@@ -33,9 +44,17 @@ class TestScaffoldPaths:
     def test_route_path_includes_backend(self) -> None:
         """Scaffold route создаёт файл в src/backend/dsl/..."""
         result = subprocess.run(
-            ["python", "tools/scaffold.py", "route",
-             "--name", "test.demo", "--dry-run"],
-            capture_output=True, text=True, cwd="/home/user/dev/gd_integration_tools",
+            [
+                "python",
+                "tools/scaffold.py",
+                "route",
+                "--name",
+                "test.demo",
+                "--dry-run",
+            ],
+            capture_output=True,
+            text=True,
+            cwd="/home/user/dev/gd_integration_tools",
         )
         assert "src/backend/dsl/routes/test_demo.py" in result.stdout, (
             f"Scaffold route должен создавать в src/backend/dsl/, "

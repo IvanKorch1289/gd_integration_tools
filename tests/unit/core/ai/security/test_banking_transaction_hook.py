@@ -24,8 +24,7 @@ class TestBankingHookNonBanking:
 
     def test_non_banking_workflow_passes_through(self) -> None:
         result = banking_transaction_hook(
-            subject="alice",
-            context={"workflow": "credit.score"},
+            subject="alice", context={"workflow": "credit.score"}
         )
         assert result.allowed is True
 
@@ -55,8 +54,7 @@ class TestBankingHookSQL:
         result = banking_transaction_hook(
             subject="alice",
             context=_ctx(
-                tool_name="call_procedure",
-                sql_query="CALL sp_bank_transfer(...)",
+                tool_name="call_procedure", sql_query="CALL sp_bank_transfer(...)"
             ),
         )
         assert result.allowed is True
@@ -76,7 +74,9 @@ class TestBankingHookFilePath:
     def test_banking_config_path_blocked(self) -> None:
         result = banking_transaction_hook(
             subject="alice",
-            context=_ctx(tool_name="file_write", file_path="/opt/bank/conf/secrets.yaml"),
+            context=_ctx(
+                tool_name="file_write", file_path="/opt/bank/conf/secrets.yaml"
+            ),
         )
         assert result.allowed is False
 
@@ -128,8 +128,7 @@ class TestBankingHookHappyPath:
 
     def test_banking_workflow_minimal_context(self) -> None:
         result = banking_transaction_hook(
-            subject="alice",
-            context={"workflow": "banking.transfer"},
+            subject="alice", context={"workflow": "banking.transfer"}
         )
         assert result.allowed is True
         assert result.threat_level == ThreatLevel.LOW

@@ -232,12 +232,7 @@ def test_builder_pause_resume() -> None:
 
 def test_builder_pause_resume_round_trip() -> None:
     """pause/resume survive model_dump → model_validate round-trip."""
-    wf1 = (
-        WorkflowBuilder("flow")
-        .pause(output_key="ts")
-        .resume()
-        .build()
-    )
+    wf1 = WorkflowBuilder("flow").pause(output_key="ts").resume().build()
     payload = wf1.model_dump()
     wf2 = WorkflowDeclaration.model_validate(payload)
     assert isinstance(wf2.steps[0], PauseDeclaration)

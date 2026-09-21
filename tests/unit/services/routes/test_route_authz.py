@@ -24,19 +24,22 @@ class TestCheckRoutePermission:
     @pytest.mark.asyncio
     async def test_empty_permissions_returns_true(self) -> None:
         allowed, reason = await check_route_permission(
-            route_id="r1", principal="user-1", permissions=(),
+            route_id="r1", principal="user-1", permissions=()
         )
         assert allowed is True
         assert reason == "no_permissions_required"
 
     @pytest.mark.asyncio
     async def test_gateway_unavailable_raises_runtime_error(self) -> None:
-        with patch(
-            "src.backend.services.routes.route_authz._resolve_authz_gateway",
-            side_effect=ImportError("no module"),
-        ), pytest.raises(RuntimeError, match="AuthorizationGateway unavailable"):
+        with (
+            patch(
+                "src.backend.services.routes.route_authz._resolve_authz_gateway",
+                side_effect=ImportError("no module"),
+            ),
+            pytest.raises(RuntimeError, match="AuthorizationGateway unavailable"),
+        ):
             await check_route_permission(
-                route_id="r1", principal="user-1", permissions=("role:admin",),
+                route_id="r1", principal="user-1", permissions=("role:admin",)
             )
 
     @pytest.mark.asyncio
@@ -46,7 +49,7 @@ class TestCheckRoutePermission:
             return_value=None,
         ):
             allowed, reason = await check_route_permission(
-                route_id="r1", principal="user-1", permissions=("role:admin",),
+                route_id="r1", principal="user-1", permissions=("role:admin",)
             )
             assert allowed is False
             assert "authorization_gateway_not_registered" in reason
@@ -59,18 +62,21 @@ class TestCheckRoutePermission:
 
         authz_instance = MagicMock()
         authz_instance.authorize = AsyncMock(
-            return_value=FakeDecision(allowed=True, reasons=[]),
+            return_value=FakeDecision(allowed=True, reasons=[])
         )
 
-        with patch(
-            "src.backend.services.routes.route_authz._resolve_authz_gateway",
-            return_value=gateway,
-        ), patch(
-            "src.backend.services.routes.route_authz.AuthorizationGateway",
-            return_value=authz_instance,
+        with (
+            patch(
+                "src.backend.services.routes.route_authz._resolve_authz_gateway",
+                return_value=gateway,
+            ),
+            patch(
+                "src.backend.services.routes.route_authz.AuthorizationGateway",
+                return_value=authz_instance,
+            ),
         ):
             allowed, reason = await check_route_permission(
-                route_id="r1", principal="user-1", permissions=("role:admin",),
+                route_id="r1", principal="user-1", permissions=("role:admin",)
             )
             assert allowed is True
             assert reason == "allowed"
@@ -92,20 +98,23 @@ class TestCheckRoutePermission:
             return_value=FakeDecision(
                 allowed=False,
                 reasons=[
-                    FakeReason(outcome="deny", source="policy", detail="no_access"),
+                    FakeReason(outcome="deny", source="policy", detail="no_access")
                 ],
-            ),
+            )
         )
 
-        with patch(
-            "src.backend.services.routes.route_authz._resolve_authz_gateway",
-            return_value=gateway,
-        ), patch(
-            "src.backend.services.routes.route_authz.AuthorizationGateway",
-            return_value=authz_instance,
+        with (
+            patch(
+                "src.backend.services.routes.route_authz._resolve_authz_gateway",
+                return_value=gateway,
+            ),
+            patch(
+                "src.backend.services.routes.route_authz.AuthorizationGateway",
+                return_value=authz_instance,
+            ),
         ):
             allowed, reason = await check_route_permission(
-                route_id="r1", principal="user-1", permissions=("role:admin",),
+                route_id="r1", principal="user-1", permissions=("role:admin",)
             )
             assert allowed is False
             assert "no_access" in reason
@@ -119,15 +128,18 @@ class TestCheckRoutePermission:
         authz_instance = MagicMock()
         authz_instance.authorize = MagicMock(side_effect=RuntimeError("conn failed"))
 
-        with patch(
-            "src.backend.services.routes.route_authz._resolve_authz_gateway",
-            return_value=gateway,
-        ), patch(
-            "src.backend.services.routes.route_authz.AuthorizationGateway",
-            return_value=authz_instance,
+        with (
+            patch(
+                "src.backend.services.routes.route_authz._resolve_authz_gateway",
+                return_value=gateway,
+            ),
+            patch(
+                "src.backend.services.routes.route_authz.AuthorizationGateway",
+                return_value=authz_instance,
+            ),
         ):
             allowed, reason = await check_route_permission(
-                route_id="r1", principal="user-1", permissions=("role:admin",),
+                route_id="r1", principal="user-1", permissions=("role:admin",)
             )
             assert allowed is False
             assert "authorization_check_error" in reason
@@ -140,15 +152,18 @@ class TestCheckRoutePermission:
 
         authz_instance = MagicMock()
         authz_instance.authorize = MagicMock(
-            return_value=FakeDecision(allowed=True, reasons=[]),
+            return_value=FakeDecision(allowed=True, reasons=[])
         )
 
-        with patch(
-            "src.backend.services.routes.route_authz._resolve_authz_gateway",
-            return_value=gateway,
-        ), patch(
-            "src.backend.services.routes.route_authz.AuthorizationGateway",
-            return_value=authz_instance,
+        with (
+            patch(
+                "src.backend.services.routes.route_authz._resolve_authz_gateway",
+                return_value=gateway,
+            ),
+            patch(
+                "src.backend.services.routes.route_authz.AuthorizationGateway",
+                return_value=authz_instance,
+            ),
         ):
             await check_route_permission(
                 route_id="my_route",

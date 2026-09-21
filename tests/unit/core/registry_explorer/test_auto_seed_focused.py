@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import textwrap
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -55,8 +54,7 @@ class TestAutoSeedIdempotent:
     def test_force_rerun(self) -> None:
         explorer = RegistryExplorer()
         reg = StreamlitPageRegistry(
-            explorer=explorer,
-            extensions_dir=Path("/nonexistent"),
+            explorer=explorer, extensions_dir=Path("/nonexistent")
         )
         reg.auto_seed()
         # Force re-run.
@@ -81,9 +79,7 @@ class TestAutoSeedFromExtensions:
         )
 
         explorer = RegistryExplorer()
-        reg = StreamlitPageRegistry(
-            explorer=explorer, extensions_dir=ext_dir,
-        )
+        reg = StreamlitPageRegistry(explorer=explorer, extensions_dir=ext_dir)
         n = reg.auto_seed(force=True)
         assert n == 1
         # Verify connector was registered.
@@ -108,9 +104,7 @@ class TestAutoSeedFromRoutes:
         )
 
         explorer = RegistryExplorer()
-        reg = StreamlitPageRegistry(
-            explorer=explorer, routes_dir=r_dir,
-        )
+        reg = StreamlitPageRegistry(explorer=explorer, routes_dir=r_dir)
         n = reg.auto_seed(force=True)
         assert n == 1
         r = explorer.find_route("my-route")
@@ -138,20 +132,16 @@ class TestAutoSeedErrors:
         ext_dir.mkdir()
         (ext_dir / "bad_plugin").mkdir()
         (ext_dir / "bad_plugin" / "plugin.toml").write_text(
-            "name = invalid [unclosed",
-            encoding="utf-8",
+            "name = invalid [unclosed", encoding="utf-8"
         )
         # Add a good one.
         (ext_dir / "good_plugin").mkdir()
         (ext_dir / "good_plugin" / "plugin.toml").write_text(
-            'name = "good"',
-            encoding="utf-8",
+            'name = "good"', encoding="utf-8"
         )
 
         explorer = RegistryExplorer()
-        reg = StreamlitPageRegistry(
-            explorer=explorer, extensions_dir=ext_dir,
-        )
+        reg = StreamlitPageRegistry(explorer=explorer, extensions_dir=ext_dir)
         n = reg.auto_seed(force=True)
         # At least 1 registered (the good one).
         assert n >= 1
@@ -160,9 +150,7 @@ class TestAutoSeedErrors:
 class TestModuleLevelFunctions:
     def test_auto_seed_from_project(self) -> None:
         """Standalone auto-seed function returns registry."""
-        reg = auto_seed_from_project(
-            extensions_dir=Path("/nonexistent"),
-        )
+        reg = auto_seed_from_project(extensions_dir=Path("/nonexistent"))
         assert isinstance(reg, StreamlitPageRegistry)
         assert reg.auto_seeded is True
 

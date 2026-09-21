@@ -15,7 +15,9 @@ from src.backend.services.workflows.hitl_models import HitlPendingSignal
 from src.backend.services.workflows.hitl_signal_store import InMemoryHitlSignalStore
 
 
-def _signal(signal_id: str, *, tenant_id: str = "t1", minutes_ago: int = 0) -> HitlPendingSignal:
+def _signal(
+    signal_id: str, *, tenant_id: str = "t1", minutes_ago: int = 0
+) -> HitlPendingSignal:
     return HitlPendingSignal(
         signal_id=signal_id,
         workflow_id=f"wf-{signal_id}",

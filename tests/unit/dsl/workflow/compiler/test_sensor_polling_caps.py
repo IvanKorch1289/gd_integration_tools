@@ -11,7 +11,6 @@ poll_interval_s > 0 (defense-in-depth, BaseModel gt=0.0 уже проверяе�
 которые компилятор должен дополнительно защищать).
 """
 
-
 from __future__ import annotations
 
 import sys
@@ -47,9 +46,7 @@ from src.backend.dsl.workflow.compiler.step_compilers import (
     SensorTimeoutRequiredError,
     compile_sensor_step,
 )
-from src.backend.dsl.workflow.spec.advanced_declarations import (
-    SensorDeclaration,
-)
+from src.backend.dsl.workflow.spec.advanced_declarations import SensorDeclaration
 
 
 def _make_decl(
@@ -60,9 +57,7 @@ def _make_decl(
 ) -> SensorDeclaration:
     """Create SensorDeclaration. Note: BaseModel уже валидирует gt=0.0."""
     return SensorDeclaration(
-        predicate=predicate,
-        poll_interval_s=poll_interval_s,
-        timeout_s=timeout_s,
+        predicate=predicate, poll_interval_s=poll_interval_s, timeout_s=timeout_s
     )
 
 
@@ -98,7 +93,9 @@ class TestSensorPollingGuards:
         decl = _make_decl(timeout_s=1000.0, poll_interval_s=1.0)
 
         # Mock execute_activity → None (predicate never truthy)
-        with patch("temporalio.workflow.execute_activity", new=AsyncMock(return_value=None)):
+        with patch(
+            "temporalio.workflow.execute_activity", new=AsyncMock(return_value=None)
+        ):
             with patch("temporalio.workflow.sleep", new=AsyncMock()):
                 with pytest.raises(SensorMaxIterationsError) as exc_info:
                     await compile_sensor_step(decl, _ctx())
@@ -111,7 +108,9 @@ class TestSensorPollingGuards:
         """Predicate возвращает truthy → sensor завершается на первой итерации (regression)."""
         decl = _make_decl(timeout_s=60.0)
 
-        with patch("temporalio.workflow.execute_activity", new=AsyncMock(return_value=True)):
+        with patch(
+            "temporalio.workflow.execute_activity", new=AsyncMock(return_value=True)
+        ):
             with patch("temporalio.workflow.sleep", new=AsyncMock()) as mock_sleep:
                 result = await compile_sensor_step(decl, _ctx())
 
@@ -130,7 +129,9 @@ class TestSensorPollingGuards:
         # Проверяем через runtime: timeout=0 + predicate=None → timeout срабатывает сразу.
         decl = _make_decl(timeout_s=0.0001, poll_interval_s=1.0)
 
-        with patch("temporalio.workflow.execute_activity", new=AsyncMock(return_value=None)):
+        with patch(
+            "temporalio.workflow.execute_activity", new=AsyncMock(return_value=None)
+        ):
             with patch("temporalio.workflow.sleep", new=AsyncMock()):
                 with pytest.raises(TimeoutError):
                     await compile_sensor_step(decl, _ctx())

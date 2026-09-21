@@ -16,7 +16,6 @@ literal-секреты в YAML — для production secret-store использ
 SecretRef-маркеры (см. ``docs/reference/dsl/to_spec_audit.md``).
 """
 
-
 from __future__ import annotations
 
 import pytest
@@ -36,7 +35,7 @@ def _round_trip(builder: RouteBuilder) -> tuple[dict, dict]:
 
 @pytest.mark.xfail(
     reason="W28 processors: geoip method missing (RouteBuilder has no geoip), "
-    "other processors have incomplete to_spec() — S30 carryover",
+    "other processors have incomplete to_spec() — S30 carryover"
 )
 @pytest.mark.parametrize(
     "method,kwargs",
@@ -110,7 +109,7 @@ def test_w28_processor_round_trip(method: str, kwargs: dict) -> None:
 
 
 @pytest.mark.xfail(
-    reason="W28 pipeline uses geoip (missing method) + processors with broken to_spec()",
+    reason="W28 pipeline uses geoip (missing method) + processors with broken to_spec()"
 )
 def test_w28_pipeline_full_chain() -> None:
     """Реалистичный banking-pipeline: tenant → masking → outbox → compliance.
@@ -162,7 +161,7 @@ def test_mask_default_patterns_omitted() -> None:
 def test_compliance_labels_emits_full_list() -> None:
     """``compliance_labels`` всегда сохраняет labels (нет default-значения)."""
     builder = RouteBuilder.from_("rt.cl", source="test:rt").compliance_labels(
-        labels=["PII", "PCI"],
+        labels=["PII", "PCI"]
     )
     spec = builder.build().to_dict()
     assert spec["processors"][0] == {"compliance_labels": {"labels": ["PII", "PCI"]}}

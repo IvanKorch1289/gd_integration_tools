@@ -6,7 +6,6 @@ Ponytail-YAGNI: tests run without Temporal/Prometheus chain deps by
 replicating the minimal WorkflowDeclaration structure inline.
 """
 
-
 from __future__ import annotations
 
 import ast
@@ -83,13 +82,14 @@ class TestRoundTripSemantics:
                 "description": "Test workflow",
                 "version": "1.0",
                 "steps": [
-                    {"name": "step1", "type": "log", "params": {"message": "hello"}},
+                    {"name": "step1", "type": "log", "params": {"message": "hello"}}
                 ],
-            },
+            }
         }
         # Simulate YAML round-trip: serialize → parse → equal
         # This is what to_yaml + from_yaml do conceptually
         import json
+
         serialized = json.dumps(original_payload, sort_keys=True)
         deserialized = json.loads(serialized)
         assert deserialized == original_payload
@@ -99,7 +99,8 @@ class TestRoundTripSemantics:
         with open("src/backend/dsl/workflow/yaml_io.py") as f:
             tree = ast.parse(f.read())
         for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef) and node.name in ("to_yaml", "from_yaml"):
-                assert ast.get_docstring(node), (
-                    f"{node.name} must have docstring"
-                )
+            if isinstance(node, ast.FunctionDef) and node.name in (
+                "to_yaml",
+                "from_yaml",
+            ):
+                assert ast.get_docstring(node), f"{node.name} must have docstring"

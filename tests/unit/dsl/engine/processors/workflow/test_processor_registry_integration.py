@@ -9,7 +9,6 @@ required_capability, но не зарегистрированы в ProcessorRegi
 meta во все 4 файла.
 """
 
-
 from __future__ import annotations
 
 from src.backend.dsl.engine.processors.workflow import (

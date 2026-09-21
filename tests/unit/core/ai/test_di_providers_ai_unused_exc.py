@@ -3,6 +3,7 @@
 the name. This test ensures the provider still returns ``None`` when
 ``app_state_singleton`` raises — that was the only side effect.
 """
+
 from __future__ import annotations
 
 import sys

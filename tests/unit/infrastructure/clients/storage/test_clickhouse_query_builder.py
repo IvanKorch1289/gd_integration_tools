@@ -1,6 +1,5 @@
 """Unit-тесты ClickHouseQueryBuilder (S13 K2 W2)."""
 
-
 from __future__ import annotations
 
 from unittest.mock import AsyncMock

@@ -43,17 +43,13 @@ def _fake_nbclient(execute_side_effect: Exception | None = None) -> MagicMock:
     client.execute_cell = MagicMock(side_effect=_execute_cell)
     fake.NotebookClient = MagicMock(return_value=client)
     if execute_side_effect is not None:
-        client.setup_kernel = MagicMock(
-            side_effect=execute_side_effect,
-        )
+        client.setup_kernel = MagicMock(side_effect=execute_side_effect)
     fake._cells = cells
     return fake
 
 
 @pytest.mark.asyncio
-async def test_execute_requires_nbclient(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_execute_requires_nbclient(monkeypatch: pytest.MonkeyPatch) -> None:
     """nbclient отсутствует -> JupyterExecutionError с подсказкой установки."""
     monkeypatch.setitem(sys.modules, "nbclient", None)
     backend = NbClientExecutionBackend()
@@ -80,14 +76,14 @@ async def test_execute_maps_outputs_and_skips_markdown(
 
     assert [r["cell_index"] for r in results] == [0, 2]
     assert results[0]["outputs"] == [
-        {"output_type": "stream", "name": "stdout", "text": "hello\n"},
+        {"output_type": "stream", "name": "stdout", "text": "hello\n"}
     ]
     assert results[1]["outputs"] == [
         {
             "output_type": "execute_result",
             "execution_count": 2,
             "data": {"text/plain": "2"},
-        },
+        }
     ]
 
 

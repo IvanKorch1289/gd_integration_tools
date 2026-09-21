@@ -57,7 +57,7 @@ async def test_search_without_rapidfuzz_returns_error_payload(facade) -> None:
     тест пропускается.
     """
     try:
-        import rapidfuzz
+        import rapidfuzz  # noqa: F401 — availability probe (try/except ImportError guard)
     except ImportError:
         result = await facade.search(q="proxy", limit=5)
         assert result["items"] == []

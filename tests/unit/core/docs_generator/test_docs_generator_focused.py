@@ -25,40 +25,82 @@ def _reset() -> None:
 def populated_explorer() -> RegistryExplorer:
     """Registry with sample data."""
     e = RegistryExplorer()
-    e.register_route(RouteEntry(
-        id="order-create", source="timer:60s", owner="team-payments",
-        timeout_seconds=30.0, tags=["prod", "critical"], tenant_id="t1",
-    ))
-    e.register_route(RouteEntry(
-        id="dadata-enrich", source="action:order-create",
-        owner="team-payments", timeout_seconds=5.0, tags=["prod"],
-    ))
-    e.register_route(RouteEntry(
-        id="health-check", source="http://health",
-        owner="team-sre", timeout_seconds=1.0, tags=["ops"],
-    ))
-    e.register_connector(ConnectorEntry(
-        name="skb", category="external", auth="oauth2",
-        base_url="https://skb.example.com/v1",
-        version="1.0.0", owner="team-payments", tags=["prod", "critical"],
-    ))
-    e.register_connector(ConnectorEntry(
-        name="dadata", category="external", auth="api_key",
-        version="2.1.0", owner="team-payments", tags=["prod"],
-    ))
-    e.register_connector(ConnectorEntry(
-        name="postgres", category="db", auth="none",
-        version="15.0", owner="team-data", tags=["prod"],
-    ))
-    e.register_action(ActionEntry(
-        name="orders.create", side_effect="write",
-        owner="team-payments", params=["order_id", "amount"],
-        tags=["write"],
-    ))
-    e.register_action(ActionEntry(
-        name="customers.get_profile", side_effect="read",
-        owner="team-payments", params=["customer_id"],
-    ))
+    e.register_route(
+        RouteEntry(
+            id="order-create",
+            source="timer:60s",
+            owner="team-payments",
+            timeout_seconds=30.0,
+            tags=["prod", "critical"],
+            tenant_id="t1",
+        )
+    )
+    e.register_route(
+        RouteEntry(
+            id="dadata-enrich",
+            source="action:order-create",
+            owner="team-payments",
+            timeout_seconds=5.0,
+            tags=["prod"],
+        )
+    )
+    e.register_route(
+        RouteEntry(
+            id="health-check",
+            source="http://health",
+            owner="team-sre",
+            timeout_seconds=1.0,
+            tags=["ops"],
+        )
+    )
+    e.register_connector(
+        ConnectorEntry(
+            name="skb",
+            category="external",
+            auth="oauth2",
+            base_url="https://skb.example.com/v1",
+            version="1.0.0",
+            owner="team-payments",
+            tags=["prod", "critical"],
+        )
+    )
+    e.register_connector(
+        ConnectorEntry(
+            name="dadata",
+            category="external",
+            auth="api_key",
+            version="2.1.0",
+            owner="team-payments",
+            tags=["prod"],
+        )
+    )
+    e.register_connector(
+        ConnectorEntry(
+            name="postgres",
+            category="db",
+            auth="none",
+            version="15.0",
+            owner="team-data",
+            tags=["prod"],
+        )
+    )
+    e.register_action(
+        ActionEntry(
+            name="orders.create",
+            side_effect="write",
+            owner="team-payments",
+            params=["order_id", "amount"],
+            tags=["write"],
+        )
+    )
+    e.register_action(
+        ActionEntry(
+            name="customers.get_profile",
+            side_effect="read",
+            owner="team-payments",
+            params=["customer_id"],
+        )
+    )
     return e
 
 
@@ -222,21 +264,31 @@ class TestRealisticExample:
     def test_full_pipeline(self, tmp_path: Path) -> None:
         explorer = RegistryExplorer()
         # Routes.
-        explorer.register_route(RouteEntry(
-            id="order-create", source="timer:60s",
-            owner="team-payments", timeout_seconds=30.0,
-            tags=["prod"],
-        ))
+        explorer.register_route(
+            RouteEntry(
+                id="order-create",
+                source="timer:60s",
+                owner="team-payments",
+                timeout_seconds=30.0,
+                tags=["prod"],
+            )
+        )
         # Connectors.
-        explorer.register_connector(ConnectorEntry(
-            name="skb", category="external", auth="oauth2",
-            version="1.0", owner="team-payments",
-        ))
+        explorer.register_connector(
+            ConnectorEntry(
+                name="skb",
+                category="external",
+                auth="oauth2",
+                version="1.0",
+                owner="team-payments",
+            )
+        )
         # Actions.
-        explorer.register_action(ActionEntry(
-            name="orders.create", side_effect="write",
-            owner="team-payments",
-        ))
+        explorer.register_action(
+            ActionEntry(
+                name="orders.create", side_effect="write", owner="team-payments"
+            )
+        )
 
         gen = DocsGenerator()
         sections = {

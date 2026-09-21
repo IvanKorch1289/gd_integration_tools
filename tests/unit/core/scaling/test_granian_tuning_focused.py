@@ -13,11 +13,8 @@
 
 from __future__ import annotations
 
-import os
 from typing import Any
 from unittest.mock import patch
-
-import pytest
 
 from src.backend.core.scaling.granian_tuning import GranianTuning, granian_tuning
 
@@ -150,9 +147,7 @@ class TestResolvedInterface:
         import sys
 
         # Force ImportError by removing module temporarily.
-        saved = sys.modules.pop(
-            "src.backend.core.config.features", None
-        )
+        saved = sys.modules.pop("src.backend.core.config.features", None)
         try:
             # Patch the import to raise.
             import builtins
@@ -209,9 +204,7 @@ class TestBuildCliCommand:
         try:
             feature_flags.granian_rsgi_mode_enabled = True
             t = GranianTuning(workers=2)
-            cmd = t.build_cli_command(
-                app="src.app:app", host="0.0.0.0", port=9000
-            )
+            cmd = t.build_cli_command(app="src.app:app", host="0.0.0.0", port=9000)
             host_idx = cmd.index("--host")
             assert cmd[host_idx + 1] == "0.0.0.0"
             port_idx = cmd.index("--port")

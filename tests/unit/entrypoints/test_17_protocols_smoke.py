@@ -20,7 +20,6 @@ import sys
 
 import pytest
 
-
 # 17 entrypoint protocols (per docs/adr/0260-dsl-external-lib-usage-map-cycle-250.md)
 PROTOCOL_DIRS = (
     "api",
@@ -70,11 +69,7 @@ def test_protocol_has_exports(protocol: str) -> None:
     except ImportError:
         pytest.xfail(f"{protocol} not importable in test env")
 
-    exports = [
-        name
-        for name in dir(mod)
-        if not name.startswith("_")
-    ]
+    exports = [name for name in dir(mod) if not name.startswith("_")]
     assert len(exports) > 0, (
         f"{protocol} module has no public exports (only dunders). "
         f"Check if package is empty or all symbols are private."
@@ -96,8 +91,7 @@ def test_protocol_count_is_17() -> None:
 def test_sys_modules_contains_protocols() -> None:
     """After import, each protocol appears in sys.modules (proves import side-effect)."""
     imported = [
-        p for p in PROTOCOL_DIRS
-        if f"src.backend.entrypoints.{p}" in sys.modules
+        p for p in PROTOCOL_DIRS if f"src.backend.entrypoints.{p}" in sys.modules
     ]
     # Don't require all 17 — some may have been xfailed — just sanity check
     assert len(imported) >= 5, (

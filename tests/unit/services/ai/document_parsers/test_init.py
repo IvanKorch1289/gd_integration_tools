@@ -24,14 +24,11 @@ class TestDocumentParsersFacadeAllExports:
     """``__all__`` audit + callable/set identity."""
 
     @pytest.mark.parametrize(
-        "symbol_name",
-        ["SUPPORTED_MIME_TYPES", "parse_document", "sniff_mime"],
+        "symbol_name", ["SUPPORTED_MIME_TYPES", "parse_document", "sniff_mime"]
     )
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(document_parsers, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
+        assert hasattr(document_parsers, symbol_name), f"Missing export: {symbol_name}"
         assert symbol_name in document_parsers.__all__, (
             f"{symbol_name} not declared in __all__"
         )
@@ -43,7 +40,10 @@ class TestDocumentParsersFacadeAllExports:
     def test_module_docstring_present(self) -> None:
         """Module docstring описывает document parsers (RAG/MCP/DSL/AIFs)."""
         assert document_parsers.__doc__ is not None
-        assert "document" in document_parsers.__doc__.lower() or "parser" in document_parsers.__doc__.lower()
+        assert (
+            "document" in document_parsers.__doc__.lower()
+            or "parser" in document_parsers.__doc__.lower()
+        )
 
 
 @pytest.mark.unit

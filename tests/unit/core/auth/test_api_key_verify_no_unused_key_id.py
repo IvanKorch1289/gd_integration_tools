@@ -2,6 +2,7 @@
 unused (F841). The fix removes the local. We verify the API key path
 still authenticates correctly via the underlying manager.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -21,7 +22,9 @@ class _FakeKeyInfo:
 
 class TestApiKeyVerifyNoUnusedKeyId:
     @pytest.mark.asyncio
-    async def test_valid_api_key_authenticates(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    async def test_valid_api_key_authenticates(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         facade = AuthFacade()
 
         async def _validate_key(api_key: str) -> _FakeKeyInfo:
@@ -36,8 +39,7 @@ class TestApiKeyVerifyNoUnusedKeyId:
                 return True
 
         monkeypatch.setattr(
-            "src.backend.core.auth.api_key_backend.APIKeyAuth",
-            lambda: _StubApiKey(),
+            "src.backend.core.auth.api_key_backend.APIKeyAuth", lambda: _StubApiKey()
         )
         monkeypatch.setattr(
             "src.backend.core.di.providers.auth.get_api_key_manager_provider",

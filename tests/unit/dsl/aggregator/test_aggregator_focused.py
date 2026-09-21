@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-import time
-
 import pytest
 
 from src.backend.dsl.aggregator import (
-    AggregatedBatch,
     AggregatorConfig,
     CompletionStrategy,
     Message,
@@ -27,9 +24,7 @@ def _msg(key: str, value: float = 1.0, ts: float = 0.0) -> Message:
 
 class TestConfig:
     def test_defaults(self) -> None:
-        c = AggregatorConfig(
-            correlation_key="customer_id", completion_size=10
-        )
+        c = AggregatorConfig(correlation_key="customer_id", completion_size=10)
         assert c.completion_strategy == CompletionStrategy.LIST
         assert c.completion_timeout is None
 
@@ -47,24 +42,21 @@ class TestConfig:
 
     def test_validate_correlation_key_callable(self) -> None:
         c = AggregatorConfig(
-            correlation_key=lambda m: m.headers["k"],
-            completion_size=1,
+            correlation_key=lambda m: m.headers["k"], completion_size=1
         )
         assert callable(c.correlation_key)
 
 
 class TestKeyExtraction:
     def test_string_correlation_key(self) -> None:
-        c = AggregatorConfig(
-            correlation_key="customer_id", completion_size=3,
-        )
+        c = AggregatorConfig(correlation_key="customer_id", completion_size=3)
         m = _msg("c1")
         # Headers dict → key extraction.
         assert c.correlation_key in m.headers
 
     def test_callable_correlation_key(self) -> None:
         c = AggregatorConfig(
-            correlation_key=lambda m: m.body["type"], completion_size=1,
+            correlation_key=lambda m: m.body["type"], completion_size=1
         )
         m = Message(body={"type": "alpha"}, headers={}, timestamp=0.0)
         assert c.correlation_key(m) == "alpha"
@@ -74,9 +66,7 @@ class TestAggregateBasic:
     def test_size_completion(self) -> None:
         """Flush when N messages accumulated."""
         msgs = [_msg("c1", i + 1) for i in range(5)]
-        config = AggregatorConfig(
-            correlation_key="customer_id", completion_size=3,
-        )
+        config = AggregatorConfig(correlation_key="customer_id", completion_size=3)
         batches = aggregate(msgs, config=config)
         # 5 messages / 3 per batch = 1 complete batch + 1 partial.
         assert len(batches) == 2
@@ -92,7 +82,7 @@ class TestAggregateBasic:
             _msg("c1", 2.0, ts=base + 6),  # elapsed = 6 < 10.
         ]
         config = AggregatorConfig(
-            correlation_key="customer_id", completion_timeout=10.0,
+            correlation_key="customer_id", completion_timeout=10.0
         )
         batches = aggregate(msgs, config=config)
         # 2 messages — both stay in pending (elapsed<10).
@@ -109,7 +99,7 @@ class TestAggregateBasic:
             _msg("c1", 2.0, ts=base + 12),  # elapsed=12 >= 10 → flush all.
         ]
         config = AggregatorConfig(
-            correlation_key="customer_id", completion_timeout=10.0,
+            correlation_key="customer_id", completion_timeout=10.0
         )
         batches = aggregate(msgs, config=config)
         # 2 messages flushed together when timeout reached.
@@ -119,21 +109,15 @@ class TestAggregateBasic:
 
     def test_multi_key_isolation(self) -> None:
         """Different keys aggregated independently."""
-        msgs = (
-            [_msg("c1", 1.0), _msg("c2", 2.0), _msg("c1", 3.0), _msg("c2", 4.0)]
-        )
-        config = AggregatorConfig(
-            correlation_key="customer_id", completion_size=2,
-        )
+        msgs = [_msg("c1", 1.0), _msg("c2", 2.0), _msg("c1", 3.0), _msg("c2", 4.0)]
+        config = AggregatorConfig(correlation_key="customer_id", completion_size=2)
         batches = aggregate(msgs, config=config)
         # Each key has 2 messages → 2 complete batches.
         assert len(batches) == 2
         assert {b.key for b in batches} == {"c1", "c2"}
 
     def test_empty_input(self) -> None:
-        config = AggregatorConfig(
-            correlation_key="k", completion_size=1,
-        )
+        config = AggregatorConfig(correlation_key="k", completion_size=1)
         assert aggregate([], config=config) == []
 
 
@@ -236,9 +220,7 @@ class TestAggregateStream:
     def test_streaming_yields_completed(self) -> None:
         """Streaming version yields batch on each completion."""
         msgs = [_msg("c1", i) for i in range(7)]
-        config = AggregatorConfig(
-            correlation_key="k", completion_size=3,
-        )
+        config = AggregatorConfig(correlation_key="k", completion_size=3)
         results = list(aggregate_stream(iter(msgs), config=config))
         # 7 messages / 3 per batch = 2 complete batches.
         assert len(results) == 2

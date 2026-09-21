@@ -71,11 +71,7 @@ def test_empty_dict_exits_nonzero(cwd: Path) -> None:
 
 def test_clean_report_exits_zero(cwd: Path) -> None:
     """Real report без vulns → exit 0, PASS."""
-    report = {
-        "dependencies": [
-            {"name": "fastapi", "version": "0.110.0", "vulns": []},
-        ],
-    }
+    report = {"dependencies": [{"name": "fastapi", "version": "0.110.0", "vulns": []}]}
     (cwd / "pip-audit.json").write_text(json.dumps(report))
     result = _run_gate(cwd)
     assert result.returncode == 0
@@ -89,11 +85,9 @@ def test_unignored_vuln_exits_nonzero(cwd: Path) -> None:
             {
                 "name": "fastapi",
                 "version": "0.50.0",
-                "vulns": [
-                    {"id": "GHSA-test-001", "fix_versions": ["0.110.0"]},
-                ],
-            },
-        ],
+                "vulns": [{"id": "GHSA-test-001", "fix_versions": ["0.110.0"]}],
+            }
+        ]
     }
     (cwd / "pip-audit.json").write_text(json.dumps(report))
     result = _run_gate(cwd)

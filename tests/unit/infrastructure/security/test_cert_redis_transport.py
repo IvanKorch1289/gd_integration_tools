@@ -1,4 +1,5 @@
 """TDD: Redis transport для cert store subscribe_updates (S171 M22, D257)."""
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
@@ -9,9 +10,9 @@ class TestRedisCertTransport:
         from src.backend.infrastructure.security.cert_store.transport_redis import (
             RedisCertTransport,
         )
+
         transport = RedisCertTransport(
-            redis_url="redis://localhost:6379/0",
-            channel="cert:updated",
+            redis_url="redis://localhost:6379/0", channel="cert:updated"
         )
         assert transport._redis_url == "redis://localhost:6379/0"
         assert transport._channel == "cert:updated"
@@ -20,6 +21,7 @@ class TestRedisCertTransport:
         from src.backend.infrastructure.security.cert_store.transport_redis import (
             RedisCertTransport,
         )
+
         transport = RedisCertTransport(redis_url="redis://localhost:6379/0")
         assert transport._channel == "cert:updated"
 
@@ -27,6 +29,7 @@ class TestRedisCertTransport:
         from src.backend.infrastructure.security.cert_store.transport_redis import (
             RedisCertTransport,
         )
+
         transport = RedisCertTransport(redis_url="redis://x")
         msg = transport._format_message("skb_api", action="set")
         assert msg["cert_id"] == "skb_api"
@@ -38,6 +41,7 @@ class TestRedisCertTransport:
         from src.backend.infrastructure.security.cert_store.transport_redis import (
             RedisCertTransport,
         )
+
         transport = RedisCertTransport(redis_url="redis://x")
         # Mock redis_client
         mock_redis = MagicMock()
@@ -53,6 +57,7 @@ class TestRedisCertTransport:
         from src.backend.infrastructure.security.cert_store.transport_redis import (
             RedisCertTransport,
         )
+
         transport = RedisCertTransport(redis_url="redis://x")
         # Mock pubsub
         mock_redis = MagicMock()
@@ -64,4 +69,5 @@ class TestRedisCertTransport:
         result = transport.subscribe()
         # Проверить тип — async generator
         import inspect
+
         assert inspect.isasyncgen(result)

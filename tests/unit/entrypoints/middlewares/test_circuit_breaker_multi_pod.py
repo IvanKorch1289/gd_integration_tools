@@ -14,23 +14,17 @@ state-consistency properties that we CAN verify.
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import MagicMock
 
-import pytest
 
-
-def _make_shared_registry_test(
-    *,
-    threshold: int = 2,
-) -> Any:
+def _make_shared_registry_test(*, threshold: int = 2) -> Any:
     """Create 2 middleware instances sharing a BreakerRegistry.
 
     Returns (mw_a, mw_b, shared_adapter_registry).
     """
     from src.backend.core.resilience.breaker import BreakerRegistry
-    from src.backend.core.resilience.breaker_policy_adapter import (
-        BreakerPolicyAdapter,
-    )
+    from src.backend.core.resilience.breaker_policy_adapter import BreakerPolicyAdapter
     from src.backend.entrypoints.middlewares.circuit_breaker import (
         BreakerPolicy,
         CircuitBreakerMiddleware,
@@ -41,14 +35,10 @@ def _make_shared_registry_test(
 
     policy = BreakerPolicy(failure_threshold=threshold, window_seconds=60.0)
     mw_a = CircuitBreakerMiddleware(
-        app=MagicMock(),
-        default_policy=policy,
-        use_breaker_registry=True,
+        app=MagicMock(), default_policy=policy, use_breaker_registry=True
     )
     mw_b = CircuitBreakerMiddleware(
-        app=MagicMock(),
-        default_policy=policy,
-        use_breaker_registry=True,
+        app=MagicMock(), default_policy=policy, use_breaker_registry=True
     )
     mw_a._adapter = shared_adapter
     mw_b._adapter = shared_adapter

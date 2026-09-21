@@ -12,6 +12,7 @@ backend erasure (cycle-8/D-AUDIT-804).
 Эти тесты верифицируют fail-CLOSED contract:
 mock exception в backend → ``process()`` re-raises → exchange failed.
 """
+
 from __future__ import annotations
 
 import importlib.util
@@ -75,15 +76,18 @@ class TestDeleteVectorsFailClosed:
         # Patch vector store to raise
         fake_store = MagicMock()
         fake_store.delete_where = AsyncMock(
-            side_effect=ConnectionError("qdrant backend unreachable"),
+            side_effect=ConnectionError("qdrant backend unreachable")
         )
 
-        with patch(
-            "src.backend.infrastructure.clients.storage.vector_store.get_vector_store",
-            return_value=fake_store,
-        ), patch(
-            "src.backend.services.capabilities.facade.get_capability_facade",
-            return_value=_cap_facade_mock(allow=True),
+        with (
+            patch(
+                "src.backend.infrastructure.clients.storage.vector_store.get_vector_store",
+                return_value=fake_store,
+            ),
+            patch(
+                "src.backend.services.capabilities.facade.get_capability_facade",
+                return_value=_cap_facade_mock(allow=True),
+            ),
         ):
             # Inner _delete_vectors should raise (not return 0 silently).
             with pytest.raises(ConnectionError, match="qdrant backend"):
@@ -102,15 +106,18 @@ class TestDeleteVectorsFailClosed:
 
         fake_store = MagicMock()
         fake_store.delete_where = AsyncMock(
-            side_effect=ConnectionError("qdrant backend unreachable"),
+            side_effect=ConnectionError("qdrant backend unreachable")
         )
 
-        with patch(
-            "src.backend.infrastructure.clients.storage.vector_store.get_vector_store",
-            return_value=fake_store,
-        ), patch(
-            "src.backend.services.capabilities.facade.get_capability_facade",
-            return_value=_cap_facade_mock(allow=True),
+        with (
+            patch(
+                "src.backend.infrastructure.clients.storage.vector_store.get_vector_store",
+                return_value=fake_store,
+            ),
+            patch(
+                "src.backend.services.capabilities.facade.get_capability_facade",
+                return_value=_cap_facade_mock(allow=True),
+            ),
         ):
             # @handle_processor_error catches re-raise → exchange.error + stop.
             await proc.process(exchange, context)
@@ -145,10 +152,13 @@ class TestAnonymizeDbFailClosed:
 
         fake_mgr = MagicMock()
         fake_mgr.get_session = MagicMock(return_value=_RaisingCtx())
-        with patch(
-            "src.backend.infrastructure.database.session_manager.main_session_manager",
-            fake_mgr,
-        ), pytest.raises(ConnectionError, match="postgres unreachable"):
+        with (
+            patch(
+                "src.backend.infrastructure.database.session_manager.main_session_manager",
+                fake_mgr,
+            ),
+            pytest.raises(ConnectionError, match="postgres unreachable"),
+        ):
             await proc._anonymize_db("erasure-1")
 
     @pytest.mark.asyncio
@@ -168,12 +178,15 @@ class TestAnonymizeDbFailClosed:
 
         fake_mgr = MagicMock()
         fake_mgr.get_session = MagicMock(return_value=_RaisingCtx())
-        with patch(
-            "src.backend.infrastructure.database.session_manager.main_session_manager",
-            fake_mgr,
-        ), patch(
-            "src.backend.services.capabilities.facade.get_capability_facade",
-            return_value=_cap_facade_mock(allow=True),
+        with (
+            patch(
+                "src.backend.infrastructure.database.session_manager.main_session_manager",
+                fake_mgr,
+            ),
+            patch(
+                "src.backend.services.capabilities.facade.get_capability_facade",
+                return_value=_cap_facade_mock(allow=True),
+            ),
         ):
             # Stub vector store чтобы vector step прошёл успешно.
             fake_store = MagicMock()
@@ -203,7 +216,6 @@ class TestDqWriteEnqueue:
         mod = _load_pii_erase_module()
         proc = mod.PiiEraseProcessor(scope="user:42", hard_delete=True)
 
-
         captured: list[Any] = []
 
         class _CaptureWriter:
@@ -220,9 +232,7 @@ class TestDqWriteEnqueue:
         ):
             exc = ConnectionError("backend down")
             await proc._enqueue_failure_to_dlq(
-                erasure_id="erasure-abc",
-                step="vectors",
-                exc=exc,
+                erasure_id="erasure-abc", step="vectors", exc=exc
             )
         assert len(captured) == 1
         env = captured[0]

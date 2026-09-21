@@ -7,13 +7,9 @@ from __future__ import annotations
 
 import json
 
-import pandas as pd
-import pytest
-
 from src.backend.services.io.export_service import (
     CsvExporter,
     ExcelExporter,
-    ExportFacade,
     JsonExporter,
     PdfExporter,
     list_formats,
@@ -76,7 +72,6 @@ def test_json_exporter_export_dataframe() -> None:
 def test_pdf_exporter_get_extension() -> None:
     """PdfExporter.get_extension() == 'pdf'."""
     assert PdfExporter().get_extension() == "pdf"
-
 
 
 def test_pdf_exporter_get_extension_only() -> None:

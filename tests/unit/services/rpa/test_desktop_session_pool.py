@@ -9,21 +9,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.backend.services.rpa.desktop_session_pool import (
-    DesktopRPASessionPool,
-    DesktopRPASessionStats,
-    _PooledSession,
-)
+from src.backend.services.rpa.desktop_session_pool import DesktopRPASessionPool
 
 
 @pytest.fixture
 def pool() -> DesktopRPASessionPool:
     """Pool instance with base_url only (no API key, fast timeout)."""
     return DesktopRPASessionPool(
-        base_url="http://rpa-test:8080",
-        timeout=1.0,
-        ttl_seconds=60.0,
-        max_sessions=4,
+        base_url="http://rpa-test:8080", timeout=1.0, ttl_seconds=60.0, max_sessions=4
     )
 
 
@@ -87,9 +80,7 @@ async def test_acquire_reuses_existing_session(pool: DesktopRPASessionPool) -> N
 @pytest.mark.asyncio
 async def test_healthcheck_returns_bool(pool: DesktopRPASessionPool) -> None:
     """healthcheck возвращает bool (True или False)."""
-    with patch(
-        "src.backend.services.rpa.desktop_session_pool.make_http_client"
-    ):
+    with patch("src.backend.services.rpa.desktop_session_pool.make_http_client"):
         async with pool.acquire("default"):
             pass
         result = await pool.healthcheck("default")
@@ -97,17 +88,13 @@ async def test_healthcheck_returns_bool(pool: DesktopRPASessionPool) -> None:
 
 
 @pytest.mark.asyncio
-async def test_healthcheck_false_when_no_session(
-    pool: DesktopRPASessionPool,
-) -> None:
+async def test_healthcheck_false_when_no_session(pool: DesktopRPASessionPool) -> None:
     """healthcheck возвращает False если session не существует."""
     assert await pool.healthcheck("never_existed") is False
 
 
 @pytest.mark.asyncio
-async def test_reconnect_replaces_session(
-    pool: DesktopRPASessionPool,
-) -> None:
+async def test_reconnect_replaces_session(pool: DesktopRPASessionPool) -> None:
     """reconnect() сбрасывает cached session — следующий acquire создаст новый."""
     with patch(
         "src.backend.services.rpa.desktop_session_pool.make_http_client"
@@ -158,9 +145,7 @@ async def test_shutdown_closes_all_clients(pool: DesktopRPASessionPool) -> None:
 
 
 @pytest.mark.asyncio
-async def test_max_sessions_enforced(
-    pool: DesktopRPASessionPool,
-) -> None:
+async def test_max_sessions_enforced(pool: DesktopRPASessionPool) -> None:
     """Если max_sessions превышен → старые sessions evicted."""
     with patch("src.backend.services.rpa.desktop_session_pool.make_http_client"):
         # pool.max_sessions = 4

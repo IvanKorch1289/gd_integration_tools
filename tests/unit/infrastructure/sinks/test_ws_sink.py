@@ -1,6 +1,5 @@
 """Unit-tests for WsSink."""
 
-
 from __future__ import annotations
 
 import sys
@@ -110,4 +109,5 @@ async def test_health_false_on_exception(fake_websockets: types.ModuleType) -> N
     with patched_auth_allow():
         h = await sink.health()
     assert h.status == "failed"
-    h = await sink.health(); assert h.status == "failed"
+    h = await sink.health()
+    assert h.status == "failed"

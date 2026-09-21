@@ -73,7 +73,9 @@ def test_route_builder_mro_size() -> None:
     """
     rb = _build_route_builder()
     mro = rb.__class__.__mro__
-    mixins = [c for c in mro if c.__name__.endswith("Mixin") or c.__name__ == "RouteBuilder"]
+    mixins = [
+        c for c in mro if c.__name__.endswith("Mixin") or c.__name__ == "RouteBuilder"
+    ]
     assert len(mixins) == 76, (
         f"Expected 76 mixins in MRO, got {len(mixins)}. "
         f"MRO: {[c.__name__ for c in mro]}"
@@ -111,14 +113,14 @@ def test_route_builder_attr_lookup_baseline() -> None:
     # (cycle 204 Tier 3 diagnostic fallback) → perf baseline ломается.
     # Используем реальные public methods + cross-mixin methods.
     attrs = [
-        "description",     # __slots__ attr (0.05 us)
-        "route_id",        # __slots__ attr
-        "source",          # __slots__ attr
-        "_add",            # core method (1-step MRO)
-        "from_",           # classmethod
+        "description",  # __slots__ attr (0.05 us)
+        "route_id",  # __slots__ attr
+        "source",  # __slots__ attr
+        "_add",  # core method (1-step MRO)
+        "from_",  # classmethod
         "notebook_execute",  # NotebookMixin (cross-mixin, ~0.2 us)
-        "feature_flag",    # FeatureMixin (cross-mixin)
-        "cache",           # CacheMixin (cross-mixin)
+        "feature_flag",  # FeatureMixin (cross-mixin)
+        "cache",  # CacheMixin (cross-mixin)
     ]
 
     results = {}

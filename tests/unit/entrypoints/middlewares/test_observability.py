@@ -13,7 +13,6 @@
 поля из :class:`ObservabilityConfig` + request metadata.
 """
 
-
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -70,13 +69,13 @@ async def test_event_payload_contains_all_metadata_fields() -> None:
     # Capture what would be emitted. Patch all 3 emit functions.
     with (
         patch(
-            "src.backend.entrypoints.middlewares.observability._emit_otel",
+            "src.backend.entrypoints.middlewares.observability._emit_otel"
         ) as mock_otel,
         patch(
-            "src.backend.entrypoints.middlewares.observability._emit_prometheus",
+            "src.backend.entrypoints.middlewares.observability._emit_prometheus"
         ) as mock_prom,
         patch(
-            "src.backend.entrypoints.middlewares.observability._emit_audit",
+            "src.backend.entrypoints.middlewares.observability._emit_audit"
         ) as mock_audit,
     ):
         # All channels enabled — каждый emit должен быть вызван с event.

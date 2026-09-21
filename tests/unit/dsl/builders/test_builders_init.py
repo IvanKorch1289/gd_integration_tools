@@ -1,6 +1,5 @@
 """Unit tests for dsl.builders.__init__ lazy imports."""
 
-
 from __future__ import annotations
 
 import pytest

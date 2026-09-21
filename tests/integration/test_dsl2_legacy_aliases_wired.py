@@ -58,11 +58,17 @@ def test_legacy_aliases_use_crud_method_names() -> None:
     Post-fix: uses 'orders.get', 'orders.add' (CRUD method names).
     """
     # Get all action names from legacy_aliases
-    alias_actions = {params["action"] for _path, params, _methods in legacy_aliases._ALIASES}
+    alias_actions = {
+        params["action"] for _path, params, _methods in legacy_aliases._ALIASES
+    }
 
     # None of them should be 'list' or 'create' (these were the broken names)
-    assert "list" not in alias_actions, "legacy_aliases still uses 'list' verbs (DSL-2 regression)"
-    assert "create" not in alias_actions, "legacy_aliases still uses 'create' verbs (DSL-2 regression)"
+    assert "list" not in alias_actions, (
+        "legacy_aliases still uses 'list' verbs (DSL-2 regression)"
+    )
+    assert "create" not in alias_actions, (
+        "legacy_aliases still uses 'create' verbs (DSL-2 regression)"
+    )
 
     # They should use 'get' and 'add' (CRUD method names)
     for action in alias_actions:
@@ -74,8 +80,7 @@ def test_legacy_aliases_use_crud_method_names() -> None:
 
 def test_register_users_helper_exists_and_is_wired() -> None:
     """DSL-2 fix: _register_users() exists and is called by orchestrator."""
-    from src.backend.dsl.commands.setup import registers_domains
-    from src.backend.dsl.commands.setup import orchestrator
+    from src.backend.dsl.commands.setup import orchestrator, registers_domains
 
     assert hasattr(registers_domains, "_register_users"), (
         "_register_users() missing from registers_domains"
@@ -94,8 +99,7 @@ def test_register_users_helper_exists_and_is_wired() -> None:
 
 def test_register_orderkinds_helper_exists_and_is_wired() -> None:
     """DSL-2 fix: _register_orderkinds() exists and is called by orchestrator."""
-    from src.backend.dsl.commands.setup import registers_domains
-    from src.backend.dsl.commands.setup import orchestrator
+    from src.backend.dsl.commands.setup import orchestrator, registers_domains
 
     assert hasattr(registers_domains, "_register_orderkinds"), (
         "_register_orderkinds() missing from registers_domains"

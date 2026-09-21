@@ -52,9 +52,7 @@ def _make_event(**kwargs: Any) -> AuditEvent:
 def _failing_client() -> AsyncMock:
     """AsyncMock ClickHouse client: ``insert()`` always raises RuntimeError."""
     client = AsyncMock()
-    client.insert = AsyncMock(
-        side_effect=RuntimeError("ClickHouse connection refused"),
-    )
+    client.insert = AsyncMock(side_effect=RuntimeError("ClickHouse connection refused"))
     return client
 
 
@@ -104,10 +102,7 @@ async def test_set_dlq_writer_receives_envelope_on_failure() -> None:
 async def test_init_dlq_writer_kwarg_receives_envelope() -> None:
     """Передача dlq_writer через __init__() — same behavior."""
     writer = InMemoryDLQWriter()
-    service = ClickHouseAuditService(
-        client=_failing_client(),
-        dlq_writer=writer,
-    )
+    service = ClickHouseAuditService(client=_failing_client(), dlq_writer=writer)
 
     event = _make_event(event_id="init-kwarg-test")
 
@@ -128,9 +123,7 @@ async def test_dlq_writer_priority_over_legacy_path(tmp_path: Any) -> None:
     legacy_path = tmp_path / "legacy.jsonl"
     writer = InMemoryDLQWriter()
     service = ClickHouseAuditService(
-        client=_failing_client(),
-        dlq_path=legacy_path,
-        dlq_writer=writer,
+        client=_failing_client(), dlq_path=legacy_path, dlq_writer=writer
     )
 
     event = _make_event()
@@ -153,14 +146,10 @@ async def test_dlq_writer_priority_over_legacy_path(tmp_path: Any) -> None:
 async def test_emit_batch_through_writer() -> None:
     """emit_batch — каждое событие пишется в отдельный envelope."""
     writer = InMemoryDLQWriter()
-    service = ClickHouseAuditService(
-        client=_failing_client(),
-        dlq_writer=writer,
-    )
+    service = ClickHouseAuditService(client=_failing_client(), dlq_writer=writer)
 
     events = [
-        _make_event(event_id=f"batch-{i}", event_type="batch.event")
-        for i in range(4)
+        _make_event(event_id=f"batch-{i}", event_type="batch.event") for i in range(4)
     ]
 
     with patch("src.backend.core.config.features.feature_flags", _flags_on()):
@@ -182,10 +171,7 @@ async def test_successful_emit_does_not_write_dlq() -> None:
     ok_client = AsyncMock()
     ok_client.insert = AsyncMock(return_value=None)
     writer = InMemoryDLQWriter()
-    service = ClickHouseAuditService(
-        client=ok_client,
-        dlq_writer=writer,
-    )
+    service = ClickHouseAuditService(client=ok_client, dlq_writer=writer)
 
     event = _make_event()
 
@@ -203,10 +189,7 @@ async def test_successful_emit_does_not_write_dlq() -> None:
 async def test_off_flag_does_not_write_dlq() -> None:
     """feature flag = OFF → ClickHouse skip + DLQ skip (no-op)."""
     writer = InMemoryDLQWriter()
-    service = ClickHouseAuditService(
-        client=_failing_client(),
-        dlq_writer=writer,
-    )
+    service = ClickHouseAuditService(client=_failing_client(), dlq_writer=writer)
 
     event = _make_event()
     flags = MagicMock()
@@ -226,13 +209,8 @@ async def test_off_flag_does_not_write_dlq() -> None:
 async def test_dlq_writer_failure_is_fire_and_forget() -> None:
     """DLQ-writer raise → caller НЕ получает исключение (audit-mid не валится)."""
     broken_writer = MagicMock()
-    broken_writer.write = AsyncMock(
-        side_effect=OSError("DLQ backend down"),
-    )
-    service = ClickHouseAuditService(
-        client=_failing_client(),
-        dlq_writer=broken_writer,
-    )
+    broken_writer.write = AsyncMock(side_effect=OSError("DLQ backend down"))
+    service = ClickHouseAuditService(client=_failing_client(), dlq_writer=broken_writer)
     event = _make_event()
 
     with patch("src.backend.core.config.features.feature_flags", _flags_on()):

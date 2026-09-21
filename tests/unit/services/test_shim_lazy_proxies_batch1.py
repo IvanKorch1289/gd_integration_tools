@@ -25,18 +25,18 @@ class TestCacheMetricsShimProxy:
         assert set(__all__) == {"get_cache_metrics_snapshot", "get_metrics_snapshot"}
 
     def test_get_cache_metrics_snapshot_identity(self) -> None:
-        from src.backend.services.cache.metrics import get_cache_metrics_snapshot
         from src.backend.infrastructure.cache.metrics_collector import (
             get_cache_metrics_snapshot as _orig,
         )
+        from src.backend.services.cache.metrics import get_cache_metrics_snapshot
 
         assert get_cache_metrics_snapshot is _orig
 
     def test_get_metrics_snapshot_identity(self) -> None:
-        from src.backend.services.cache.metrics import get_metrics_snapshot
         from src.backend.infrastructure.cache.rag.metrics import (
             get_metrics_snapshot as _orig,
         )
+        from src.backend.services.cache.metrics import get_metrics_snapshot
 
         assert get_metrics_snapshot is _orig
 
@@ -56,17 +56,19 @@ class TestClickHouseAdminShimProxy:
         assert set(__all__) == {"AdminClickHouseClient", "get_admin_clickhouse_client"}
 
     def test_admin_clickhouse_client_identity(self) -> None:
-        from src.backend.services.admin.clickhouse_admin import AdminClickHouseClient
         from src.backend.infrastructure.clients.storage.clickhouse_admin_client import (
             AdminClickHouseClient as _orig,
         )
+        from src.backend.services.admin.clickhouse_admin import AdminClickHouseClient
 
         assert AdminClickHouseClient is _orig
 
     def test_get_admin_clickhouse_client_identity(self) -> None:
-        from src.backend.services.admin.clickhouse_admin import get_admin_clickhouse_client
         from src.backend.infrastructure.clients.storage.clickhouse_admin_client import (
             get_admin_clickhouse_client as _orig,
+        )
+        from src.backend.services.admin.clickhouse_admin import (
+            get_admin_clickhouse_client,
         )
 
         assert get_admin_clickhouse_client is _orig
@@ -81,18 +83,18 @@ class TestResilienceRateLimiterShimProxy:
         assert set(__all__) == {"RateLimit", "RateLimitExceeded", "get_rate_limiter"}
 
     def test_rate_limit_identity(self) -> None:
-        from src.backend.services.resilience.rate_limiter import RateLimit
         from src.backend.infrastructure.resilience.unified_rate_limiter import (
             RateLimit as _orig,
         )
+        from src.backend.services.resilience.rate_limiter import RateLimit
 
         assert RateLimit is _orig
 
     def test_rate_limit_exceeded_identity(self) -> None:
-        from src.backend.services.resilience.rate_limiter import RateLimitExceeded
         from src.backend.infrastructure.resilience.unified_rate_limiter import (
             RateLimitExceeded as _orig,
         )
+        from src.backend.services.resilience.rate_limiter import RateLimitExceeded
 
         assert RateLimitExceeded is _orig
 
@@ -111,18 +113,18 @@ class TestWorkflowShimProxy:
         assert set(__all__) == {"WorkflowDescriptor", "workflow_registry"}
 
     def test_workflow_descriptor_identity(self) -> None:
-        from src.backend.services.workflow import WorkflowDescriptor
         from src.backend.infrastructure.workflow.registry import (
             WorkflowDescriptor as _orig,
         )
+        from src.backend.services.workflow import WorkflowDescriptor
 
         assert WorkflowDescriptor is _orig
 
     def test_workflow_registry_identity(self) -> None:
-        from src.backend.services.workflow import workflow_registry
         from src.backend.infrastructure.workflow.registry import (
             workflow_registry as _orig,
         )
+        from src.backend.services.workflow import workflow_registry
 
         assert workflow_registry is _orig
 
@@ -140,18 +142,16 @@ class TestSchedulerAdminShimProxy:
         }
 
     def test_scheduler_dlq_store_identity(self) -> None:
+        from src.backend.infrastructure.scheduler.dlq import SchedulerDLQStore as _orig
         from src.backend.services.scheduler.admin import SchedulerDLQStore
-        from src.backend.infrastructure.scheduler.dlq import (
-            SchedulerDLQStore as _orig,
-        )
 
         assert SchedulerDLQStore is _orig
 
     def test_get_scheduler_dlq_store_identity(self) -> None:
-        from src.backend.services.scheduler.admin import get_scheduler_dlq_store
         from src.backend.infrastructure.scheduler.dlq import (
             get_scheduler_dlq_store as _orig,
         )
+        from src.backend.services.scheduler.admin import get_scheduler_dlq_store
 
         assert get_scheduler_dlq_store is _orig
 

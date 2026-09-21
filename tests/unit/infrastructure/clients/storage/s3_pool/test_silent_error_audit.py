@@ -89,9 +89,7 @@ class TestS3SilentErrorAuditHelper:
         """``_emit_s3_silent_error_audit`` delegates to ``emit_audit_safe``."""
         pool = _make_pool()
         # Patch ``emit_audit_safe`` в namespace где helper импортирует.
-        with patch(
-            "src.backend.core.audit.facade._base.emit_audit_safe"
-        ) as mock_emit:
+        with patch("src.backend.core.audit.facade._base.emit_audit_safe") as mock_emit:
             exc = RuntimeError("test error")
             # Production method is sync (not async def) — calls emit_audit_safe directly.
             pool._emit_s3_silent_error_audit("put_object", exc)
@@ -128,9 +126,7 @@ class TestS3DeleteObjectDeadCodeRemoval:
         """При исключении audit-emit вызывается ровно один раз (не дважды)."""
         # Static check: один вызов audit внутри одного except block.
         src = inspect.getsource(S3Client.delete_object)
-        audit_call_count = src.count(
-            "self._emit_s3_silent_error_audit(\"delete_object\""
-        )
+        audit_call_count = src.count('self._emit_s3_silent_error_audit("delete_object"')
         assert audit_call_count == 1
 
 
@@ -157,19 +153,19 @@ class TestS3SilentErrorReturnShape:
 
         pool._client.put_object = fake_put
 
-        with patch.object(type(pool), "is_connected", new_callable=lambda: lambda self: True):
+        with patch.object(
+            type(pool), "is_connected", new_callable=lambda: lambda self: True
+        ):
             with patch.object(pool, "client_context") as mock_ctx:
-                mock_ctx.return_value.__aenter__ = AsyncMock(
-                    return_value=pool._client
-                )
+                mock_ctx.return_value.__aenter__ = AsyncMock(return_value=pool._client)
                 mock_ctx.return_value.__aexit__ = AsyncMock(return_value=None)
 
-                result = await pool.put_object(
-                    key="k", body=b"x", metadata={}
-                )
+                result = await pool.put_object(key="k", body=b"x", metadata={})
         assert result["status"] == "error"
         assert "message" in result
-        assert "denied" in result["message"].lower() or "AccessDenied" in result["message"]
+        assert (
+            "denied" in result["message"].lower() or "AccessDenied" in result["message"]
+        )
         # Audit emit called
         pool._emit_s3_silent_error_audit.assert_called_once()
 
@@ -187,18 +183,18 @@ class TestS3SilentErrorReturnShape:
 
         pool._client.copy_object = fake_copy
 
-        with patch.object(type(pool), "is_connected", new_callable=lambda: lambda self: True):
+        with patch.object(
+            type(pool), "is_connected", new_callable=lambda: lambda self: True
+        ):
             with patch.object(pool, "client_context") as mock_ctx:
-                mock_ctx.return_value.__aenter__ = AsyncMock(
-                    return_value=pool._client
-                )
+                mock_ctx.return_value.__aenter__ = AsyncMock(return_value=pool._client)
                 mock_ctx.return_value.__aexit__ = AsyncMock(return_value=None)
 
-                result = await pool.copy_object(
-                    source_key="src", dest_key="dst"
-                )
+                result = await pool.copy_object(source_key="src", dest_key="dst")
         assert result["status"] == "error"
-        assert "throttled" in result["message"].lower() or "SlowDown" in result["message"]
+        assert (
+            "throttled" in result["message"].lower() or "SlowDown" in result["message"]
+        )
         # Sprint C2 fix: audit emit added
         pool._emit_s3_silent_error_audit.assert_called_once()
         # Audit call args: ("copy_object", exc)

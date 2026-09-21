@@ -145,6 +145,7 @@ class TestToolSandboxExecuteSync:
 
         def slow_tool():
             import time
+
             time.sleep(1.0)
             return "done"
 
@@ -181,9 +182,7 @@ class TestToolSandboxExecuteAsync:
 
 class TestToolSandboxPolicy:
     async def test_network_blocked(self) -> None:
-        s = ToolSandbox(
-            SandboxConfig(allow_network=False, mode=SandboxMode.ENFORCE)
-        )
+        s = ToolSandbox(SandboxConfig(allow_network=False, mode=SandboxMode.ENFORCE))
 
         def fetch_url():
             return "data"
@@ -194,9 +193,7 @@ class TestToolSandboxPolicy:
         assert "network_access_denied" in result.policy_violations
 
     async def test_filesystem_blocked(self) -> None:
-        s = ToolSandbox(
-            SandboxConfig(allow_filesystem=False, mode=SandboxMode.ENFORCE)
-        )
+        s = ToolSandbox(SandboxConfig(allow_filesystem=False, mode=SandboxMode.ENFORCE))
 
         def read_file():
             return "content"
@@ -207,9 +204,7 @@ class TestToolSandboxPolicy:
         assert "filesystem_access_denied" in result.policy_violations
 
     async def test_safe_tool_passes(self) -> None:
-        s = ToolSandbox(
-            SandboxConfig(allow_network=False, allow_filesystem=False)
-        )
+        s = ToolSandbox(SandboxConfig(allow_network=False, allow_filesystem=False))
 
         def safe_compute(x: int) -> int:
             return x * 2
@@ -263,13 +258,15 @@ class TestExports:
 class TestRealisticExample:
     async def test_safe_calculator_tool(self) -> None:
         """Realistic: safe calculator tool wrapped в sandbox."""
-        s = ToolSandbox(SandboxConfig(
-            max_cpu_seconds=2.0,
-            max_memory_mb=64,
-            allow_network=False,
-            allow_filesystem=False,
-            mode=SandboxMode.ENFORCE,
-        ))
+        s = ToolSandbox(
+            SandboxConfig(
+                max_cpu_seconds=2.0,
+                max_memory_mb=64,
+                allow_network=False,
+                allow_filesystem=False,
+                mode=SandboxMode.ENFORCE,
+            )
+        )
 
         def calculate(operation: str, a: float, b: float) -> dict:
             ops = {
@@ -287,11 +284,11 @@ class TestRealisticExample:
 
     async def test_dangerous_tool_rejected(self) -> None:
         """Tool name suggests network access → blocked under strict mode."""
-        s = ToolSandbox(SandboxConfig(
-            allow_network=False,
-            allow_filesystem=False,
-            mode=SandboxMode.ENFORCE,
-        ))
+        s = ToolSandbox(
+            SandboxConfig(
+                allow_network=False, allow_filesystem=False, mode=SandboxMode.ENFORCE
+            )
+        )
 
         def fetch_external_api():
             return "leaked"

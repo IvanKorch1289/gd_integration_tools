@@ -47,10 +47,7 @@ class TestFacadeCapabilityAdapter:
         facade.check_tenant.return_value = True
         adapter = FacadeCapabilityAdapter(facade=facade)
         result = adapter.check_tenant(
-            capability="read",
-            tenant="tenant_a",
-            principal="user_1",
-            scope="prod",
+            capability="read", tenant="tenant_a", principal="user_1", scope="prod"
         )
         assert result is True
         facade.check_tenant.assert_called_once_with(

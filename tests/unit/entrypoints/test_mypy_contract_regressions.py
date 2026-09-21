@@ -32,9 +32,7 @@ def test_default_whitelist_check_treats_non_raising_check_as_allowed() -> None:
         assert _default_whitelist_check("tenant-a", "search") is True
 
     gate_type.return_value.check.assert_called_once_with(
-        "tenant-a",
-        "agent.tools.invoke.search",
-        "tool:search",
+        "tenant-a", "agent.tools.invoke.search", "tool:search"
     )
 
 
@@ -53,14 +51,11 @@ async def test_authenticate_jwt_awaits_async_decode() -> None:
             exp=None,
             jti="token-1",
             raw={"groups": ["operators"]},
-        ),
+        )
     )
     backend = SimpleNamespace(decode=decode)
 
-    with patch(
-        "src.backend.core.auth.jwt_backend.JwtBackend",
-        return_value=backend,
-    ):
+    with patch("src.backend.core.auth.jwt_backend.JwtBackend", return_value=backend):
         session = await WSAuthenticator().authenticate_jwt("header.payload.signature")
 
     decode.assert_awaited_once_with("header.payload.signature")
@@ -83,10 +78,7 @@ async def test_webhook_sender_non_dict_result_goes_to_dlq() -> None:
 
     with (
         patch.object(relay, "_dlq_push", dlq_push),
-        patch(
-            "src.backend.core.resilience.retry.make_async_retry",
-            malformed_retry,
-        ),
+        patch("src.backend.core.resilience.retry.make_async_retry", malformed_retry),
     ):
         result = await relay._send_with_retry(
             RelayRule(id="rule-1", target_url="https://example.test"),

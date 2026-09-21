@@ -59,7 +59,7 @@ class TestMockConnectorRecord:
 
     def test_record_timestamp(self) -> None:
         m = MockConnector(name="db")
-        before = m.record("x")  # timestamp 1
+        _before = m.record("x")  # timestamp 1
         assert m.calls[0].timestamp > 0
 
 

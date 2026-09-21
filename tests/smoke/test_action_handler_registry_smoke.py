@@ -4,7 +4,6 @@
 получение метаданных, листинг, dispatch через in-memory stub.
 """
 
-
 from __future__ import annotations
 
 from dataclasses import dataclass

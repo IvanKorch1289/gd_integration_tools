@@ -5,7 +5,6 @@ Tests importability + class presence + exception type correctness
 (without complex internal state setup).
 """
 
-
 from __future__ import annotations
 
 import os
@@ -80,6 +79,7 @@ class TestCapabilityGate:
         import inspect
 
         from src.backend.core.security.capabilities.gate import CapabilityGate
+
         sig = inspect.signature(CapabilityGate.check)
         params = list(sig.parameters.keys())
         assert "plugin" in params

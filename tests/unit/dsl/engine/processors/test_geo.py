@@ -1,6 +1,5 @@
 """Unit-тесты GeoProcessor — Wave [wave:s5/k3-w3-processor-pack-3]."""
 
-
 from __future__ import annotations
 
 from typing import Any

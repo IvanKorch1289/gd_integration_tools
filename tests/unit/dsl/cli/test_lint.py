@@ -9,8 +9,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from src.backend.dsl.cli.lint import lint_file
 
 
@@ -70,8 +68,7 @@ def test_lint_file_string_processor(tmp_path: Path) -> None:
     """Processor as string (shorthand) → no error."""
     p = tmp_path / "string_proc.yaml"
     p.write_text(
-        "route_id: x\nsource: y\nprocessors:\n  - just_a_string\n",
-        encoding="utf-8",
+        "route_id: x\nsource: y\nprocessors:\n  - just_a_string\n", encoding="utf-8"
     )
     errors = lint_file(p)
     assert errors == []

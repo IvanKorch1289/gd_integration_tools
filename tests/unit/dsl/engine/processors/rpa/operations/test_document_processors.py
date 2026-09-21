@@ -38,7 +38,10 @@ class TestPdfReadProcessor:
         exchange.in_message.body = b"%PDF-1.4 fake"
         exchange.set_property = MagicMock()
 
-        with patch("src.backend.utilities.pdf_reader.read_pdf", return_value="page1 text\n\npage2 text") as mock_read:
+        with patch(
+            "src.backend.utilities.pdf_reader.read_pdf",
+            return_value="page1 text\n\npage2 text",
+        ) as mock_read:
             await processor.process(exchange, MagicMock())
 
         mock_read.assert_called_once()
@@ -58,8 +61,10 @@ class TestPdfMergeProcessor:
         exchange.in_message.body = [b"%PDF-1.4 a", b"%PDF-1.4 b"]
         exchange.set_property = MagicMock()
 
-        with patch("pypdf.PdfWriter") as mock_writer_cls, \
-             patch("pypdf.PdfReader") as mock_reader_cls:
+        with (
+            patch("pypdf.PdfWriter") as mock_writer_cls,
+            patch("pypdf.PdfReader") as mock_reader_cls,
+        ):
             mock_writer = MagicMock()
             mock_writer_cls.return_value = mock_writer
             mock_writer.write.return_value = None

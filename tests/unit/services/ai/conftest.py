@@ -7,6 +7,7 @@
 Без этого fixture новые тесты, забывшие ``cache_clear()``,
 получат stale gateway из предыдущего теста (silent pollution).
 """
+
 from __future__ import annotations
 
 import pytest

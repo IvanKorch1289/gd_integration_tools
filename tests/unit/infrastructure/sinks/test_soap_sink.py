@@ -1,6 +1,5 @@
 """Unit-tests for SoapSink."""
 
-
 from __future__ import annotations
 
 import sys

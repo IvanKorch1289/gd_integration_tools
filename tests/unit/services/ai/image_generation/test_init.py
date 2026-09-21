@@ -25,17 +25,11 @@ class TestImageGenerationFacadeAllExports:
 
     @pytest.mark.parametrize(
         "symbol_name",
-        [
-            "ImageGenerationUnavailable",
-            "ImageResult",
-            "LiteLLMImageGenerationService",
-        ],
+        ["ImageGenerationUnavailable", "ImageResult", "LiteLLMImageGenerationService"],
     )
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(image_generation, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
+        assert hasattr(image_generation, symbol_name), f"Missing export: {symbol_name}"
         assert symbol_name in image_generation.__all__, (
             f"{symbol_name} not declared in __all__"
         )
@@ -47,7 +41,10 @@ class TestImageGenerationFacadeAllExports:
     def test_module_docstring_present(self) -> None:
         """Module docstring описывает image generation (K4 S7 + V11.1)."""
         assert image_generation.__doc__ is not None
-        assert "image" in image_generation.__doc__.lower() or "LiteLLM" in image_generation.__doc__
+        assert (
+            "image" in image_generation.__doc__.lower()
+            or "LiteLLM" in image_generation.__doc__
+        )
 
 
 @pytest.mark.unit

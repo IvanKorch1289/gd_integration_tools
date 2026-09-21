@@ -55,9 +55,17 @@ def _has_require_admin_in_router(kwargs: ast.keyword) -> bool:
     if not isinstance(kwargs.value, ast.List):
         return False
     for elt in kwargs.value.elts:
-        if isinstance(elt, ast.Call) and isinstance(elt.func, ast.Name) and elt.func.id == "Depends":
+        if (
+            isinstance(elt, ast.Call)
+            and isinstance(elt.func, ast.Name)
+            and elt.func.id == "Depends"
+        ):
             for sub in elt.args:
-                if isinstance(sub, ast.Call) and isinstance(sub.func, ast.Name) and sub.func.id == "require_admin":
+                if (
+                    isinstance(sub, ast.Call)
+                    and isinstance(sub.func, ast.Name)
+                    and sub.func.id == "require_admin"
+                ):
                     return True
     return False
 
@@ -101,9 +109,7 @@ class TestAiCostsCoverage:
             for kw in router.keywords:
                 if kw.arg == "dependencies" and _has_require_admin_in_router(kw):
                     found = True
-        assert found, (
-            "ai_costs.py: APIRouter(...) НЕ имеет require_admin. P0 cycle 6."
-        )
+        assert found, "ai_costs.py: APIRouter(...) НЕ имеет require_admin. P0 cycle 6."
 
     def test_no_legacy_require_auth_call(self) -> None:
         """В ai_costs.py НЕ должно быть ``require_auth(`` call."""
@@ -117,8 +123,7 @@ class TestTechEndpointsCoverage:
     """Cycle 6 fix: ``tech.py`` per-endpoint ``require_admin``."""
 
     @pytest.mark.parametrize(
-        "spec_name",
-        ["send_email", "degradation_snapshot", "get_all_custom_tables"],
+        "spec_name", ["send_email", "degradation_snapshot", "get_all_custom_tables"]
     )
     def test_action_spec_has_require_admin(self, spec_name: str) -> None:
         """``ActionSpec(name=spec_name, ..., dependencies=[..., require_admin(...)])``."""
@@ -142,7 +147,9 @@ class TestTechEndpointsCoverage:
                 # Проверяем dependencies
                 for kw in node.keywords:
                     if kw.arg == "dependencies" and isinstance(kw.value, ast.List):
-                        if _has_require_admin_in_router(ast.keyword(arg="dependencies", value=kw.value)):
+                        if _has_require_admin_in_router(
+                            ast.keyword(arg="dependencies", value=kw.value)
+                        ):
                             found = True
         assert found, (
             f"tech.py: ActionSpec(name='{spec_name}', ...) НЕ имеет require_admin в "
@@ -159,11 +166,8 @@ class TestTechEndpointsCoverage:
                 continue
             func = node.func
             # Поддерживаем и `add_api_route(...)` и `router.add_api_route(...)`
-            is_target = (
-                (isinstance(func, ast.Name) and func.id == "add_api_route")
-                or (
-                    isinstance(func, ast.Attribute) and func.attr == "add_api_route"
-                )
+            is_target = (isinstance(func, ast.Name) and func.id == "add_api_route") or (
+                isinstance(func, ast.Attribute) and func.attr == "add_api_route"
             )
             if not is_target:
                 continue
@@ -195,9 +199,7 @@ class TestTechEndpointsCoverage:
                 and isinstance(node.func, ast.Name)
                 and node.func.id == "ActionSpec"
             ):
-                name_kw = next(
-                    (kw for kw in node.keywords if kw.arg == "name"), None
-                )
+                name_kw = next((kw for kw in node.keywords if kw.arg == "name"), None)
                 if (
                     name_kw
                     and isinstance(name_kw.value, ast.Constant)
@@ -228,6 +230,4 @@ class TestAdminRolesImport:
         assert (
             "from src.backend.core.auth.admin_roles import AdminRole, require_admin"
             in source
-        ), (
-            f"{rel_path}: НЕ импортирует AdminRole, require_admin. P0 cycle 6."
-        )
+        ), f"{rel_path}: НЕ импортирует AdminRole, require_admin. P0 cycle 6."

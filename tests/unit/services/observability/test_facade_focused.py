@@ -50,7 +50,7 @@ async def test_record_metric_with_tags() -> None:
 async def test_start_span_basic() -> None:
     """start_span() — async context manager, yields span or None."""
     f = ObservabilityFacade(plugin="test")
-    async with f.start_span("test_span") as span:
+    async with f.start_span("test_span") as _span:
         pass
 
 
@@ -79,6 +79,7 @@ def test_get_correlation_id_returns_str_or_none() -> None:
 def test_get_observability_facade_singleton() -> None:
     """get_observability_facade — module-level singleton accessor."""
     from src.backend.services.observability import facade as fmod
+
     fmod._facade = None
     f1 = get_observability_facade()
     f2 = get_observability_facade()

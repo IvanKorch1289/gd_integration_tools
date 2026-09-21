@@ -98,7 +98,7 @@ class _FakeLLMGateway:
         **kwargs: Any,
     ) -> dict[str, Any]:
         self.calls.append(
-            {"messages": messages, "model": model, "stream": stream, **kwargs},
+            {"messages": messages, "model": model, "stream": stream, **kwargs}
         )
         return dict(self._payload)
 
@@ -117,7 +117,7 @@ class _FakeSanitizer:
         self._fail = fail
 
     async def sanitize_async(
-        self, text: str, *, language: str | None = None,
+        self, text: str, *, language: str | None = None
     ) -> _FakeSanitizerResult:
         self.calls.append((text, language))
         if self._fail:
@@ -159,7 +159,7 @@ async def test_resolve_policy_no_resolver_returns_none() -> None:
     """Без ``policy_resolver`` mixin возвращает ``None`` без side-effects."""
     mixin = _make_mixin()
     req = AIRequest(
-        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi",
+        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi"
     )
     result = await mixin._resolve_policy(req)
     assert result is None
@@ -204,7 +204,7 @@ async def test_resolve_policy_none_in_strict_mode_raises(
 
     mixin = _make_mixin(_policy_resolver=_Resolver())
     req = AIRequest(
-        workflow_id="x", tenant_id="t", correlation_id="c", prompt_inline="hi",
+        workflow_id="x", tenant_id="t", correlation_id="c", prompt_inline="hi"
     )
     with pytest.raises(PolicyNotResolvedError):
         await mixin._resolve_policy(req)
@@ -233,7 +233,7 @@ async def test_resolve_policy_none_in_soft_mode_returns_none(
 
     mixin = _make_mixin(_policy_resolver=_Resolver())
     req = AIRequest(
-        workflow_id="x", tenant_id="t", correlation_id="c", prompt_inline="hi",
+        workflow_id="x", tenant_id="t", correlation_id="c", prompt_inline="hi"
     )
     assert await mixin._resolve_policy(req) is None
 
@@ -247,10 +247,11 @@ async def test_check_capability_no_gate_fails_closed_in_production() -> None:
     """P0-S4 (audit 2026-08-18): без ``capability_gate`` → fail-closed в production."""
     mixin = _make_mixin()
     req = AIRequest(
-        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi",
+        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi"
     )
     # Default ai_policy_enforce=True → CapabilityDeniedError.
     from src.backend.core.security.capabilities.errors import CapabilityDeniedError
+
     with pytest.raises(CapabilityDeniedError):
         await mixin._check_capability(req)
 
@@ -263,7 +264,7 @@ async def test_check_capability_no_gate_allows_in_dev(
     """P0-S4: dev (ai_policy_enforce=False) → backward-compat silent allow."""
     mixin = _make_mixin()
     req = AIRequest(
-        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi",
+        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi"
     )
     monkeypatch.setattr(
         "src.backend.core.config.features.feature_flags.ai_policy_enforce",
@@ -298,7 +299,7 @@ async def test_check_capability_async_check_awaited() -> None:
     gate.check = MagicMock(return_value=asyncio.sleep(0))  # awaitable
     mixin = _make_mixin(_capability_gate=gate)
     req = AIRequest(
-        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi",
+        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi"
     )
     await mixin._check_capability(req)
     gate.check.assert_called_once()
@@ -311,9 +312,10 @@ async def test_check_capability_gate_without_check_attr_fails_closed() -> None:
     gate = MagicMock(spec=[])  # no `check` attribute
     mixin = _make_mixin(_capability_gate=gate)
     req = AIRequest(
-        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi",
+        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi"
     )
     from src.backend.core.security.capabilities.errors import CapabilityDeniedError
+
     with pytest.raises(CapabilityDeniedError):
         await mixin._check_capability(req)
 
@@ -350,7 +352,7 @@ async def test_input_sanitizers_empty_prompt_returns_empty() -> None:
     """Пустой ``prompt_inline``/``prompt_ref`` → ``\"\"``."""
     mixin = _make_mixin()
     req = AIRequest(
-        workflow_id="wf", tenant_id="t", correlation_id="c",
+        workflow_id="wf", tenant_id="t", correlation_id="c"
     )  # no prompt_inline/prompt_ref
     result = await mixin._apply_input_sanitizers(req, None)
     assert result == ""
@@ -359,7 +361,7 @@ async def test_input_sanitizers_empty_prompt_returns_empty() -> None:
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_input_sanitizers_happy_path_masks_pii(
-    basic_request: AIRequest, basic_policy: AIPolicySpec,
+    basic_request: AIRequest, basic_policy: AIPolicySpec
 ) -> None:
     """Sanitizer маскирует e-mail и сохраняет replacements в state."""
     sanitizer = _FakeSanitizer()
@@ -374,7 +376,7 @@ async def test_input_sanitizers_happy_path_masks_pii(
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_input_sanitizers_runtime_error_fails_closed_in_production(
-    basic_request: AIRequest, caplog: pytest.LogCaptureFixture,
+    basic_request: AIRequest, caplog: pytest.LogCaptureFixture
 ) -> None:
     """P0-S5 (audit 2026-08-18): RuntimeError из sanitizer → fail-closed в production."""
     sanitizer = _FakeSanitizer(fail=True)
@@ -387,7 +389,8 @@ async def test_input_sanitizers_runtime_error_fails_closed_in_production(
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_input_sanitizers_runtime_error_failsoft_in_dev(
-    basic_request: AIRequest, caplog: pytest.LogCaptureFixture,
+    basic_request: AIRequest,
+    caplog: pytest.LogCaptureFixture,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """P0-S5: dev (ai_policy_enforce=False) → fail-soft (original prompt)."""
@@ -399,7 +402,7 @@ async def test_input_sanitizers_runtime_error_failsoft_in_dev(
         raising=False,
     )
     with caplog.at_level(
-        logging.WARNING, logger="src.backend.core.ai.gateway_pipeline_mixin",
+        logging.WARNING, logger="src.backend.core.ai.gateway_pipeline_mixin"
     ):
         result = await mixin._apply_input_sanitizers(basic_request, None)
     assert result == "Контакт: alice@x.io"
@@ -425,7 +428,7 @@ async def test_input_sanitizers_generic_exception_fails_closed_in_production(
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_input_sanitizers_generic_exception_failsoft_in_dev(
-    basic_request: AIRequest, monkeypatch: pytest.MonkeyPatch,
+    basic_request: AIRequest, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """P0-S5: dev (ai_policy_enforce=False) → fail-soft на original prompt."""
 
@@ -495,9 +498,7 @@ async def test_input_guards_happy_path() -> None:
     """``policy_enforcer.guard_input`` вызывается и его результат пробрасывается."""
     enforcer = MagicMock()
     enforcer.guard_input = AsyncMock(
-        return_value=[
-            GuardResult(guard_name="nemo:PromptInjection", verdict="passed"),
-        ],
+        return_value=[GuardResult(guard_name="nemo:PromptInjection", verdict="passed")]
     )
     policy = AIPolicySpec(
         name="x",
@@ -534,7 +535,7 @@ async def test_output_guards_happy_path() -> None:
     """Output guards happy path — результат enforcer'а возвращается."""
     enforcer = MagicMock()
     enforcer.guard_output = AsyncMock(
-        return_value=[GuardResult(guard_name="llama_guard:safe_v3", verdict="passed")],
+        return_value=[GuardResult(guard_name="llama_guard:safe_v3", verdict="passed")]
     )
     response = AIResponse(content="hello")
     policy = AIPolicySpec(
@@ -560,7 +561,7 @@ async def test_render_prompt_no_budget_returns_sanitized() -> None:
     mixin = _make_mixin()
     result = await mixin._render_prompt(
         request=AIRequest(
-            workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi",
+            workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi"
         ),
         policy=None,
         sanitized="sanitized text",
@@ -583,7 +584,7 @@ async def test_render_prompt_under_limit_unchanged() -> None:
     text = "short prompt"
     result = await mixin._render_prompt(
         request=AIRequest(
-            workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi",
+            workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi"
         ),
         policy=policy,
         sanitized=text,
@@ -614,7 +615,7 @@ async def test_render_prompt_over_limit_truncates_with_tiktoken() -> None:
     long_text = " ".join(f"word{i}" for i in range(500))
     result = await mixin._render_prompt(
         request=AIRequest(
-            workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi",
+            workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi"
         ),
         policy=policy,
         sanitized=long_text,
@@ -644,7 +645,7 @@ async def test_render_prompt_over_limit_fallback_no_tiktoken() -> None:
     with patch.dict("sys.modules", {"tiktoken": None}):
         result = await mixin._render_prompt(
             request=AIRequest(
-                workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi",
+                workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi"
             ),
             policy=policy,
             sanitized=long_text,
@@ -776,7 +777,7 @@ async def test_output_sanitizers_runtime_error_fallback(
     mixin = _make_mixin(_sanitizer=sanitizer)
     response = AIResponse(content="hello")
     with caplog.at_level(
-        logging.WARNING, logger="src.backend.core.ai.gateway_pipeline_mixin",
+        logging.WARNING, logger="src.backend.core.ai.gateway_pipeline_mixin"
     ):
         result = await mixin._apply_output_sanitizers(response, None)
     assert result is response
@@ -816,7 +817,7 @@ async def test_audit_emit_no_service_silent_noop() -> None:
     """Без ``audit_service`` и без unified service — no-op."""
     mixin = _make_mixin()
     req = AIRequest(
-        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi",
+        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi"
     )
     response = AIResponse(content="hi")
     # Подменяем get_unified_audit_service чтобы он упал ImportError'ом
@@ -846,7 +847,7 @@ async def test_audit_emit_policy_name_default() -> None:
     audit.emit = AsyncMock()
     mixin = _make_mixin(_audit_service=audit)
     req = AIRequest(
-        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi",
+        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi"
     )
     response = AIResponse(content="hi")
     await mixin._audit_emit(req, None, response)
@@ -885,7 +886,7 @@ async def test_cost_track_no_tracker_noop() -> None:
     """Без ``cost_tracker`` — early return."""
     mixin = _make_mixin()
     req = AIRequest(
-        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi",
+        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi"
     )
     response = AIResponse(content="hi", cost_usd=0.01)
     await mixin._cost_track(req, None, response)  # no raise
@@ -900,7 +901,7 @@ async def test_cost_track_calls_record_cost_and_tokens() -> None:
     tracker.record_tokens = MagicMock()
     mixin = _make_mixin(_cost_tracker=tracker)
     req = AIRequest(
-        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi",
+        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi"
     )
     response = AIResponse(
         content="hi",
@@ -923,7 +924,7 @@ async def test_cost_track_no_cost_record_skipped() -> None:
     tracker.record_tokens = MagicMock()
     mixin = _make_mixin(_cost_tracker=tracker)
     req = AIRequest(
-        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi",
+        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi"
     )
     response = AIResponse(content="hi", cost_usd=0.0)
     await mixin._cost_track(req, None, response)
@@ -939,7 +940,7 @@ async def test_cost_track_exception_swallowed() -> None:
     tracker.record_cost = MagicMock(side_effect=RuntimeError("boom"))
     mixin = _make_mixin(_cost_tracker=tracker)
     req = AIRequest(
-        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi",
+        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi"
     )
     response = AIResponse(content="hi", cost_usd=0.01, model_used="m")
     await mixin._cost_track(req, None, response)  # no raise
@@ -966,7 +967,7 @@ def test_resolve_llm_gateway_caches(monkeypatch: pytest.MonkeyPatch) -> None:
     """``_resolve_llm_gateway`` кеширует singleton gateway."""
     sentinel = object()
     monkeypatch.setattr(
-        "src.backend.services.ai.gateway.get_litellm_gateway", lambda: sentinel,
+        "src.backend.services.ai.gateway.get_litellm_gateway", lambda: sentinel
     )
     mixin = _make_mixin(_llm_gateway=None)
     mixin._llm_gateway = None
@@ -1049,7 +1050,7 @@ def test_extract_completion_dict_response_with_empty_choices() -> None:
     """``choices=[]`` → ``content=\"\"``, tokens=0, model=fallback."""
     payload = {"choices": [], "usage": {}, "model": "x"}
     content, p, c, m = PipelineStepsMixin._extract_completion(
-        payload, fallback_model="fb",
+        payload, fallback_model="fb"
     )
     assert content == ""
     assert p == 0
@@ -1113,7 +1114,7 @@ async def test_audit_emit_emits_single_event_with_correct_severity() -> None:
     audit.emit = AsyncMock()
     mixin = _make_mixin(_audit_service=audit)
     req = AIRequest(
-        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi",
+        workflow_id="wf", tenant_id="t", correlation_id="c", prompt_inline="hi"
     )
     response = AIResponse(content="hi", model_used="m")
     await mixin._audit_emit(req, None, response)

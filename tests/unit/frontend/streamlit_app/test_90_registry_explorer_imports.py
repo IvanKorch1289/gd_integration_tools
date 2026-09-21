@@ -13,34 +13,55 @@ from __future__ import annotations
 import ast
 import importlib.util
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from types import ModuleType
 from unittest.mock import MagicMock, patch
 
-
 # Mock streamlit (full surface) BEFORE any imports.
 _streamlit_mock = ModuleType("streamlit")
 for attr in [
-    "set_page_config", "header", "metric", "divider", "subheader",
-    "info", "warning", "caption", "tabs", "columns", "button",
-    "rerun", "spinner", "dataframe", "json", "selectbox",
-    "text_input", "multiselect", "expander",
+    "set_page_config",
+    "header",
+    "metric",
+    "divider",
+    "subheader",
+    "info",
+    "warning",
+    "caption",
+    "tabs",
+    "columns",
+    "button",
+    "rerun",
+    "spinner",
+    "dataframe",
+    "json",
+    "selectbox",
+    "text_input",
+    "multiselect",
+    "expander",
 ]:
     setattr(_streamlit_mock, attr, MagicMock())
 
+
 # cache_data / cache_resource are DECORATORS (not MagicMock instances).
 # Using a real function-decorator mock avoids "module has no attribute" errors.
-def _passthrough_decorator(*_args: object, **_kwargs: object) -> Callable[[Callable[..., object]], Callable[..., object]]:
+def _passthrough_decorator(
+    *_args: object, **_kwargs: object
+) -> Callable[[Callable[..., object]], Callable[..., object]]:
     """Return a no-op decorator."""
+
     def _decorator(fn: Callable[..., object]) -> Callable[..., object]:
         return fn
+
     return _decorator
+
 
 _streamlit_mock.cache_data = _passthrough_decorator
 _streamlit_mock.cache_resource = _passthrough_decorator
-_streamlit_mock.tabs = MagicMock(
-    return_value=[MagicMock(), MagicMock(), MagicMock()]
-)
+_streamlit_mock.tabs = MagicMock(return_value=[MagicMock(), MagicMock(), MagicMock()])
+
+
 # st.columns is called with different sizes depending on context.
 # Use side_effect to return a variable-length list.
 def _columns_mock(spec):
@@ -51,6 +72,8 @@ def _columns_mock(spec):
     else:
         n = 1
     return [MagicMock() for _ in range(n)]
+
+
 _streamlit_mock.columns = MagicMock(side_effect=_columns_mock)
 sys.modules["streamlit"] = _streamlit_mock
 
@@ -79,12 +102,27 @@ def _build_streamlit_mock() -> ModuleType:
     """Build a fresh full-feature streamlit mock."""
     st = ModuleType("streamlit")
     for attr in [
-        "set_page_config", "header", "metric", "divider", "subheader",
-        "info", "warning", "caption", "tabs", "button",
-        "rerun", "spinner", "dataframe", "json", "selectbox",
-        "text_input", "multiselect", "expander",
+        "set_page_config",
+        "header",
+        "metric",
+        "divider",
+        "subheader",
+        "info",
+        "warning",
+        "caption",
+        "tabs",
+        "button",
+        "rerun",
+        "spinner",
+        "dataframe",
+        "json",
+        "selectbox",
+        "text_input",
+        "multiselect",
+        "expander",
     ]:
         setattr(st, attr, MagicMock())
+
     def _list_mock(spec):
         if isinstance(spec, int):
             n = spec
@@ -139,9 +177,7 @@ def test_page_has_seed_explorer_function() -> None:
     """``_seed_explorer`` функция определена."""
     tree = ast.parse(_page_path().read_text(encoding="utf-8"))
     func_names = {
-        node.name
-        for node in ast.walk(tree)
-        if isinstance(node, ast.FunctionDef)
+        node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)
     }
     assert "_seed_explorer" in func_names
 
@@ -184,7 +220,10 @@ def test_seed_explorer_populates_registry() -> None:
     with patch.object(page_mod, "get_api_client", return_value=fake_client):
         page_mod._seed_explorer()
 
-    assert explorer.route_count() + explorer.connector_count() + explorer.action_count() == 2
+    assert (
+        explorer.route_count() + explorer.connector_count() + explorer.action_count()
+        == 2
+    )
     assert explorer.find_route("order-create") is not None
     assert explorer.find_route("order-create").owner == "team-x"
     assert "prod" in explorer.find_route("order-create").tags
@@ -203,7 +242,10 @@ def test_seed_explorer_handles_empty_inventory() -> None:
     with patch.object(page_mod, "get_api_client", return_value=fake_client):
         page_mod._seed_explorer()
 
-    assert explorer.route_count() + explorer.connector_count() + explorer.action_count() == 0
+    assert (
+        explorer.route_count() + explorer.connector_count() + explorer.action_count()
+        == 0
+    )
 
 
 def test_seed_explorer_handles_api_failure() -> None:
@@ -220,7 +262,10 @@ def test_seed_explorer_handles_api_failure() -> None:
         page_mod._seed_explorer()
 
     # No crash, no routes added.
-    assert explorer.route_count() + explorer.connector_count() + explorer.action_count() == 0
+    assert (
+        explorer.route_count() + explorer.connector_count() + explorer.action_count()
+        == 0
+    )
 
 
 def test_registry_explorer_search_filter() -> None:

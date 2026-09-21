@@ -4,7 +4,6 @@
 через @processor() decorator в ProcessorRegistry.
 """
 
-
 from __future__ import annotations
 
 from src.backend.dsl.engine.processors.agent_dsl import (
@@ -91,11 +90,25 @@ class TestAgentDSLProcessorsInRegistry:
     def test_all_modules_importable(self) -> None:
         """19 модулей импортируются без ошибок (sanity-check)."""
         expected_modules = (
-            agent_run, agent_branch, agent_graph, agent_loop,
-            agent_parallel, agent_security_check, agent_pii_mask,
-            ai_tool_dispatch, bind_skill, guardrails_apply, langgraph_agent,
-            mcp_tool, memory_recall, memory_store, pii_mask, pii_unmask,
-            plan_execute, reflection_loop, skill_invoke,
+            agent_run,
+            agent_branch,
+            agent_graph,
+            agent_loop,
+            agent_parallel,
+            agent_security_check,
+            agent_pii_mask,
+            ai_tool_dispatch,
+            bind_skill,
+            guardrails_apply,
+            langgraph_agent,
+            mcp_tool,
+            memory_recall,
+            memory_store,
+            pii_mask,
+            pii_unmask,
+            plan_execute,
+            reflection_loop,
+            skill_invoke,
         )
         assert len(expected_modules) == 19
         for module in expected_modules:

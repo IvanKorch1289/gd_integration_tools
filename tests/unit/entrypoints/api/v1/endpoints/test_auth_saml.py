@@ -1,6 +1,5 @@
 """Unit tests for SAML endpoints."""
 
-
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
@@ -75,7 +74,7 @@ class TestSamlLogin:
         resp = await saml_mod.saml_login(request, return_to="https://evil.com")
         assert resp.status_code == 302
         request.app.state.saml_sp_handler.initiate_login.assert_called_once_with(
-            return_to=None,
+            return_to=None
         )
 
 

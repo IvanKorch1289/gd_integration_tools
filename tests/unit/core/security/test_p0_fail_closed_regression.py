@@ -85,7 +85,7 @@ class TestInProcessSandboxFailClosed:
     """P0 (1a): InProcessAgentSandbox default settings → RuntimeError."""
 
     def test_in_process_sandbox_default_settings_raise(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Sprint 172 ARC-008 fix — production env должен блокировать
         zero-isolation construction."""

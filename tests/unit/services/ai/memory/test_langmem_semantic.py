@@ -17,7 +17,6 @@ Cycle 63 invariant: tests catch regressions in Qdrant vector storage
 that could lead to silent memory corruption in AI agents.
 """
 
-
 from __future__ import annotations
 
 import re
@@ -63,9 +62,7 @@ class TestSemanticMemoryInit:
         """is_configured returns True when both client and embedder set."""
         from src.backend.services.ai.memory.langmem.semantic import SemanticMemory
 
-        mem = SemanticMemory(
-            qdrant_client=AsyncMock(), embedder=MagicMock(),
-        )
+        mem = SemanticMemory(qdrant_client=AsyncMock(), embedder=MagicMock())
         assert mem.is_configured is True
 
 
@@ -81,9 +78,7 @@ class TestSemanticMemoryAdd:
         qdrant.upsert = AsyncMock()
         embedder = MagicMock()
         embedder.embed = AsyncMock(return_value=[[0.1, 0.2, 0.3]])
-        mem = SemanticMemory(
-            qdrant_client=qdrant, embedder=embedder, collection="test",
-        )
+        mem = SemanticMemory(qdrant_client=qdrant, embedder=embedder, collection="test")
         return mem, qdrant, embedder
 
     @pytest.mark.asyncio
@@ -119,14 +114,11 @@ class TestSemanticMemoryAdd:
 
         # UUID format: 8-4-4-4-12.
         assert re.match(
-            r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
-            point_id,
+            r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", point_id
         )
 
     @pytest.mark.asyncio
-    async def test_add_upserts_point_with_vector_and_payload(
-        self, memory,
-    ) -> None:
+    async def test_add_upserts_point_with_vector_and_payload(self, memory) -> None:
         """add() upsert point has vector from embedder + text in payload."""
         mem, qdrant, _embedder = memory
 
@@ -195,9 +187,7 @@ class TestSemanticMemoryAdd:
         assert "text" in payload  # only "text" key, no meta keys
 
     @pytest.mark.asyncio
-    async def test_add_multiple_calls_return_different_point_ids(
-        self, memory,
-    ) -> None:
+    async def test_add_multiple_calls_return_different_point_ids(self, memory) -> None:
         """Каждый add() возвращает уникальный point_id."""
         mem, _qdrant, _embedder = memory
 
@@ -274,7 +264,7 @@ class TestSemanticMemoryAddErrors:
         embedder.embed = AsyncMock(return_value=[[0.1]])
 
         mem = SemanticMemory(
-            qdrant_client=qdrant, embedder=embedder, collection="my_bank_v1",
+            qdrant_client=qdrant, embedder=embedder, collection="my_bank_v1"
         )
 
         await mem.add(text="x")
@@ -312,6 +302,5 @@ class TestSemanticMemoryMissingClientMethod:
 
         # Returns valid UUID.
         assert re.match(
-            r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
-            point_id,
+            r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", point_id
         )

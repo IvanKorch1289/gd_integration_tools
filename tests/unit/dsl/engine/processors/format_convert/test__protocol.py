@@ -9,7 +9,10 @@ from __future__ import annotations
 
 def test_format_convert_protocol_has_four_attrs() -> None:
     """Protocol имеет 4 аннотированных атрибута."""
-    from src.backend.dsl.engine.processors.format_convert._protocol import _FormatConvertProtocol
+    from src.backend.dsl.engine.processors.format_convert._protocol import (
+        _FormatConvertProtocol,
+    )
+
     annotations = _FormatConvertProtocol.__annotations__
     expected = {"secret", "algorithm", "claims", "schema"}
     assert expected.issubset(set(annotations.keys()))
@@ -17,19 +20,28 @@ def test_format_convert_protocol_has_four_attrs() -> None:
 
 def test_format_convert_protocol_secret_optional() -> None:
     """secret — Optional (str | None)."""
-    from src.backend.dsl.engine.processors.format_convert._protocol import _FormatConvertProtocol
+    from src.backend.dsl.engine.processors.format_convert._protocol import (
+        _FormatConvertProtocol,
+    )
+
     annotations = _FormatConvertProtocol.__annotations__
     assert "str | None" in str(annotations["secret"])
 
 
 def test_format_convert_protocol_algorithm_optional() -> None:
     """algorithm — Optional (str | None)."""
-    from src.backend.dsl.engine.processors.format_convert._protocol import _FormatConvertProtocol
+    from src.backend.dsl.engine.processors.format_convert._protocol import (
+        _FormatConvertProtocol,
+    )
+
     annotations = _FormatConvertProtocol.__annotations__
     assert "str | None" in str(annotations["algorithm"])
 
 
 def test_format_convert_protocol_name() -> None:
     r"""Класс называется \`_FormatConvertProtocol\`."""
-    from src.backend.dsl.engine.processors.format_convert._protocol import _FormatConvertProtocol
+    from src.backend.dsl.engine.processors.format_convert._protocol import (
+        _FormatConvertProtocol,
+    )
+
     assert _FormatConvertProtocol.__name__ == "_FormatConvertProtocol"

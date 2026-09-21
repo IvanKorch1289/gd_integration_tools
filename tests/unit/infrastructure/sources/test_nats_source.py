@@ -13,7 +13,6 @@
 только логика через mock nats-py.
 """
 
-
 from __future__ import annotations
 
 import asyncio
@@ -26,13 +25,12 @@ import pytest
 
 from src.backend.infrastructure.sources.nats import NatsMessage, NatsSource
 
-
 # ──────────────────────────────────────────────────────────────────────────────
 # Вспомогательные фабрики
 
 
 def _make_fake_nats_msg(
-    subject: str = "orders.created", data: bytes = b"{}", reply: str | None = None,
+    subject: str = "orders.created", data: bytes = b"{}", reply: str | None = None
 ) -> MagicMock:
     """Создаёт mock NATS-сообщения."""
     msg = MagicMock()
@@ -136,7 +134,7 @@ def test_kind_is_mq() -> None:
 async def test_stream_emits_messages(monkeypatch: pytest.MonkeyPatch) -> None:
     """NatsSource.stream() эмитирует NatsMessage для каждого входящего msg."""
     fake_msg = _make_fake_nats_msg(
-        subject="orders.created", data=b'{"order_id": 42}', reply="orders.reply",
+        subject="orders.created", data=b'{"order_id": 42}', reply="orders.reply"
     )
     _install_fake_nats(monkeypatch, [fake_msg])
 
@@ -199,7 +197,7 @@ async def test_stream_import_error_raises(monkeypatch: pytest.MonkeyPatch) -> No
 async def test_stream_reconnect_exhausted(monkeypatch: pytest.MonkeyPatch) -> None:
     """При постоянной ошибке connect — RuntimeError после max_attempts."""
     _install_fake_nats(
-        monkeypatch, [], connect_raises=ConnectionError("nats unreachable"),
+        monkeypatch, [], connect_raises=ConnectionError("nats unreachable")
     )
 
     src = NatsSource(
@@ -232,7 +230,7 @@ async def test_stream_reconnects_after_initial_failure(
             side_effect=[
                 _make_fake_nats_msg(subject="x", data=b"first"),
                 RuntimeError("stop"),
-            ],
+            ]
         )
         sub.unsubscribe = AsyncMock()
         nc = MagicMock()
@@ -256,7 +254,7 @@ async def test_stream_reconnects_after_initial_failure(
     )
 
     src = NatsSource(
-        subject="x", max_reconnect_attempts=3, reconnect_delay_seconds=0.01,
+        subject="x", max_reconnect_attempts=3, reconnect_delay_seconds=0.01
     )
 
     received: list[NatsMessage] = []
@@ -295,11 +293,11 @@ async def test_start_invokes_callback(monkeypatch: pytest.MonkeyPatch) -> None:
 
     try:
         await asyncio.wait_for(task, timeout=2.0)
-    except (TimeoutError, asyncio.CancelledError):
+    except TimeoutError, asyncio.CancelledError:
         task.cancel()
         try:
             await task
-        except (asyncio.CancelledError, Exception):
+        except asyncio.CancelledError, Exception:
             pass
 
     assert len(received_events) >= 1
@@ -334,11 +332,11 @@ async def test_start_callback_error_does_not_stop(
 
     try:
         await asyncio.wait_for(task, timeout=2.0)
-    except (TimeoutError, asyncio.CancelledError):
+    except TimeoutError, asyncio.CancelledError:
         task.cancel()
         try:
             await task
-        except (asyncio.CancelledError, Exception):
+        except asyncio.CancelledError, Exception:
             pass
 
     # Проверяем: on_event был вызван хотя бы раз (и упал)

@@ -5,6 +5,7 @@ CertStore автоматически обновляется + уведомляе
 
 Pattern (D237, D238 TDD discipline): RED → fix → GREEN.
 """
+
 from __future__ import annotations
 
 import tempfile
@@ -20,6 +21,7 @@ class TestCertFileWatcher:
         from src.backend.infrastructure.security.cert_store.hot_reload import (
             CertFileWatcher,
         )
+
         with tempfile.TemporaryDirectory() as tmp:
             mock_store = MagicMock()
             watcher = CertFileWatcher(path=Path(tmp), store=mock_store)
@@ -31,6 +33,7 @@ class TestCertFileWatcher:
         from src.backend.infrastructure.security.cert_store.hot_reload import (
             CertFileWatcher,
         )
+
         with tempfile.TemporaryDirectory() as tmp:
             watcher = CertFileWatcher(path=Path(tmp), store=MagicMock())
             # Метод _should_handle должен фильтровать
@@ -47,6 +50,7 @@ class TestCertFileEvents:
         from src.backend.infrastructure.security.cert_store.hot_reload import (
             CertFileWatcher,
         )
+
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             mock_store = AsyncMock()
@@ -63,6 +67,7 @@ class TestCertFileEvents:
         from src.backend.infrastructure.security.cert_store.hot_reload import (
             CertFileWatcher,
         )
+
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             mock_store = AsyncMock()

@@ -1,6 +1,5 @@
 """Unit-тесты AIWorkspaceCleaner (V15 R-V15-11, task K3 Sprint-2 Wave 2)."""
 
-
 from __future__ import annotations
 
 import time

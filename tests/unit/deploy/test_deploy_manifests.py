@@ -24,7 +24,6 @@ Helm CLI не установлен в тестовой среде, а офлай
 требует рендеринга values.
 """
 
-
 from __future__ import annotations
 
 import importlib.util
@@ -80,7 +79,7 @@ HELM_SERVICEMONITOR_FILE: Path = (
 # Зафиксированы в Sprint 171 K-OPS-4 audit (2026-08-03): оба модуля реально
 # отсутствуют, контейнер падает в CrashLoopBackOff.
 DEPRECATED_WORKER_PATHS: frozenset[str] = frozenset(
-    {"src.workflows.worker", "src.backend.workflows.worker"},
+    {"src.workflows.worker", "src.backend.workflows.worker"}
 )
 
 
@@ -393,7 +392,7 @@ def helm_security_ctx() -> dict[str, Any]:
 
 
 def test_k8s_app_runasuser_matches_values(
-    k8s_app_deployment: dict[str, Any], helm_security_ctx: dict[str, Any],
+    k8s_app_deployment: dict[str, Any], helm_security_ctx: dict[str, Any]
 ) -> None:
     """``runAsUser/Group/fsGroup`` в raw k8s deployment совпадают с values.yaml.
 

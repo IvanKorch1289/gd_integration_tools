@@ -8,6 +8,7 @@ Pattern (D275, Ponytail): thin wrapper.
 - Sliding window: интервалы с overlap
 - Session window: gap-based
 """
+
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -18,8 +19,9 @@ class TestBatchAggregatorProcessor:
         from src.backend.dsl.engine.processors.eip.aggregation import (
             BatchAggregatorProcessor,
         )
+
         proc = BatchAggregatorProcessor(
-            window_type="tumbling", window_size_seconds=60.0,
+            window_type="tumbling", window_size_seconds=60.0
         )
         assert proc._window_type == "tumbling"
 
@@ -27,8 +29,9 @@ class TestBatchAggregatorProcessor:
         from src.backend.dsl.engine.processors.eip.aggregation import (
             BatchAggregatorProcessor,
         )
+
         proc = BatchAggregatorProcessor(
-            window_type="tumbling", window_size_seconds=60.0,
+            window_type="tumbling", window_size_seconds=60.0
         )
         events = [
             {"key": "a", "value": 1, "ts": datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC)},

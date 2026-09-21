@@ -8,7 +8,6 @@
 snapshot() shape) сломают ассерты в десятках тестов одновременно.
 """
 
-
 from __future__ import annotations
 
 from src.backend.infrastructure.observability.memory_metrics import MemoryMetricsBackend

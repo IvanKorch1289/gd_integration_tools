@@ -38,9 +38,7 @@ class TestSeedMigrationFile:
     @pytest.fixture
     def seed_source(self) -> str:
         """SQL seed'а живёт в seed_data.py (переиспользуется sqlite-веткой env.py)."""
-        seed_path = Path(
-            "src/backend/infrastructure/database/migrations/seed_data.py"
-        )
+        seed_path = Path("src/backend/infrastructure/database/migrations/seed_data.py")
         assert seed_path.exists()
         return seed_path.read_text(encoding="utf-8")
 
@@ -52,7 +50,9 @@ class TestSeedMigrationFile:
         """Python syntax валиден."""
         ast.parse(migration_source)
 
-    def _extract_str_constant(self, migration_tree: ast.Module, target_id: str) -> list[str]:
+    def _extract_str_constant(
+        self, migration_tree: ast.Module, target_id: str
+    ) -> list[str]:
         """Helper: extract string constants from module-level assignment (handles AnnAssign)."""
         results: list[str] = []
         for node in ast.walk(migration_tree):
@@ -112,6 +112,7 @@ class TestSeedMigrationFile:
         assert "encumbrance_registration" in seed_source
         assert "ownership_transfer" in seed_source
 
+
 class TestNoPrivilegedCredentials:
     """P0: privileged credentials отсутствуют в seed-миграции."""
 
@@ -139,9 +140,7 @@ class TestAlembicChain:
 
         cfg = Config("alembic.ini")
         sd = ScriptDirectory.from_config(cfg)
-        revs = [
-            rev.revision for rev in sd.walk_revisions()
-        ]
+        revs = [rev.revision for rev in sd.walk_revisions()]
         assert "aa1b2c3d4e5f" in revs
 
     def test_chain_continuity(self) -> None:

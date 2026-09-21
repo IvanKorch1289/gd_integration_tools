@@ -63,10 +63,7 @@ class _FakeRequest:
     """
 
     def __init__(
-        self,
-        *,
-        cookie: str | None = None,
-        header_value: str | None = None,
+        self, *, cookie: str | None = None, header_value: str | None = None
     ) -> None:
         self._cookies = _FakeCookies(cookie)
         items: list[tuple[str, str]] = []
@@ -126,7 +123,8 @@ async def test_saml_rejection_emits_error_log(caplog: pytest.LogCaptureFixture) 
         with pytest.raises(NotImplementedError):
             await _verify_saml(req)  # type: ignore[arg-type]
     error_records = [
-        r for r in caplog.records
+        r
+        for r in caplog.records
         if r.levelno == logging.ERROR
         and "cycle-6/D-AUDIT-601" in r.getMessage()
         and "SECURITY-P0-001" in r.getMessage()

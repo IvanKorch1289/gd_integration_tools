@@ -18,7 +18,6 @@ Note (S-L7-5 scope):
     текущий gap см. в test_mq_trace_propagator_wiring.py.
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -50,6 +49,7 @@ def _reset_otel_tracer_provider() -> None:
     _trace._TRACER_PROVIDER = None  # noqa: SLF001
     _trace._TRACER_PROVIDER_SET_ONCE = Once()  # noqa: SLF001
 
+
 # ----------------------------- S-L7-5: tenant_id label ---------------------
 
 
@@ -70,7 +70,7 @@ class TestTenantIdInDefaultLabels:
             counter.labels(status="200")
         # С полным набором — OK.
         counter.labels(
-            tenant_id="acme", route_id="r1", component="api", env="test", status="200",
+            tenant_id="acme", route_id="r1", component="api", env="test", status="200"
         ).inc()
 
 
@@ -128,9 +128,7 @@ class TestMQTracePropagator:
         headers: dict[str, str] = {}
         with tracer.start_as_current_span("s4-l7-regression") as span:
             inject_into_headers(headers)
-            expected_trace_id = format(
-                span.get_span_context().trace_id, "032x"
-            )
+            expected_trace_id = format(span.get_span_context().trace_id, "032x")
         # W3C traceparent: "00-<32hex trace_id>-<16hex span_id>-<flags>"
         assert "traceparent" in headers, (
             "inject_into_headers должен записать traceparent при active span"
@@ -159,9 +157,7 @@ class TestMQTracePropagator:
         tracer = trace.get_tracer("gd.test.mq_trace_propagator")
 
         with tracer.start_as_current_span("original") as span:
-            original_trace_id = format(
-                span.get_span_context().trace_id, "032x"
-            )
+            original_trace_id = format(span.get_span_context().trace_id, "032x")
             headers: dict[str, str] = {}
             inject_into_headers(headers)
 
@@ -175,10 +171,7 @@ class TestMQTracePropagator:
             current = trace.get_current_span()
             assert format(current.get_span_context().trace_id, "032x") == (
                 original_trace_id
-            ), (
-                "round-trip inject→extract должен сохранять trace_id "
-                "(S-L7-5 regression)"
-            )
+            ), "round-trip inject→extract должен сохранять trace_id (S-L7-5 regression)"
         finally:
             context.detach(token)
 
@@ -197,15 +190,13 @@ class TestMQTracePropagator:
         trace.set_tracer_provider(provider)
         tracer = trace.get_tracer("gd.test.mq_trace_propagator")
         with tracer.start_as_current_span("case-test") as span:
-            expected_trace_id = format(
-                span.get_span_context().trace_id, "032x"
-            )
+            expected_trace_id = format(span.get_span_context().trace_id, "032x")
             # Имитируем брокер, который сохранил регистр заголовка.
             mixed_headers: dict[str, Any] = {
                 "Traceparent": (
                     f"00-{expected_trace_id}-"
                     f"{format(span.get_span_context().span_id, '016x')}-01"
-                ),
+                )
             }
         extracted = extract_from_headers(mixed_headers)
         assert extracted is not None
@@ -233,17 +224,11 @@ class TestMQTracePropagator:
         trace.set_tracer_provider(provider)
         tracer = trace.get_tracer("gd.test.mq_trace_propagator")
         with tracer.start_as_current_span("kafka-bytes") as span:
-            expected_trace_id = format(
-                span.get_span_context().trace_id, "032x"
-            )
-            span_id_hex = format(
-                span.get_span_context().span_id, "016x"
-            )
+            expected_trace_id = format(span.get_span_context().trace_id, "032x")
+            span_id_hex = format(span.get_span_context().span_id, "016x")
         # Kafka-стиль: traceparent — bytes.
         kafka_headers: dict[str, Any] = {
-            "traceparent": (
-                f"00-{expected_trace_id}-{span_id_hex}-01"
-            ).encode("utf-8"),
+            "traceparent": (f"00-{expected_trace_id}-{span_id_hex}-01").encode("utf-8")
         }
         extracted = extract_from_headers(kafka_headers)
         assert extracted is not None

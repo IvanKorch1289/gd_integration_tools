@@ -3,6 +3,7 @@
 Pattern (D288, Ponytail): AST-based regex validator.
 Validates src/backend/ + extensions/ paths cited in docs/.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -13,6 +14,7 @@ import pytest
 @pytest.fixture(scope="module")
 def doc_validator():
     from src.backend.core.utils.doc_path_validator import DocPathValidator
+
     return DocPathValidator(Path("/home/user/dev/gd_integration_tools"))
 
 
@@ -44,9 +46,27 @@ class TestDocReferences:
         # D288 xfail: pass when all missing are ADR planned
         # На данный момент — все missing = ADR planned (по M14-M25 audit)
         assert all(
-            m.startswith(("core/ai/", "core/audit/", "core/auth/", "core/config/", "core/resilience/", "core/security/", "dsl/", "entrypoints/", "infrastructure/", "plugins/", "services/", "testkit/", "workflows/"))
+            m.startswith(
+                (
+                    "core/ai/",
+                    "core/audit/",
+                    "core/auth/",
+                    "core/config/",
+                    "core/resilience/",
+                    "core/security/",
+                    "dsl/",
+                    "entrypoints/",
+                    "infrastructure/",
+                    "plugins/",
+                    "services/",
+                    "testkit/",
+                    "workflows/",
+                )
+            )
             for m in missing
-        ), f"Non-ADR missing paths: {[m for m in missing if not m.startswith(('core/ai/', 'core/audit/', 'core/auth/', 'core/config/', 'core/resilience/', 'core/security/', 'dsl/', 'entrypoints/', 'infrastructure/', 'plugins/', 'services/', 'testkit/', 'workflows/'))]}"
+        ), (
+            f"Non-ADR missing paths: {[m for m in missing if not m.startswith(('core/ai/', 'core/audit/', 'core/auth/', 'core/config/', 'core/resilience/', 'core/security/', 'dsl/', 'entrypoints/', 'infrastructure/', 'plugins/', 'services/', 'testkit/', 'workflows/'))]}"
+        )
 
     def test_no_unexpected_missing_extensions(self, doc_validator) -> None:
         result = doc_validator.find_missing()
@@ -59,5 +79,6 @@ class TestDocReferences:
 
     def test_validator_class_is_importable(self) -> None:
         from src.backend.core.utils.doc_path_validator import DocPathValidator
+
         assert hasattr(DocPathValidator, "collect_referenced_paths")
         assert hasattr(DocPathValidator, "find_missing")

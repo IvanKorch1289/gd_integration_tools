@@ -1,4 +1,5 @@
 """TDD: WafCheckProcessor — DSL обёртка над core/net/waf."""
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
@@ -17,19 +18,15 @@ def _bypass_auth() -> None:
 class TestWafCheckProcessor:
     def test_instantiates(self) -> None:
         from src.backend.dsl.engine.processors.waf_check import WafCheckProcessor
-        p = WafCheckProcessor(
-            source_property="body.request",
-            action="block",
-        )
+
+        p = WafCheckProcessor(source_property="body.request", action="block")
         assert p.action == "block"
 
     @pytest.mark.asyncio
     async def test_blocks_malicious_request(self) -> None:
         from src.backend.dsl.engine.processors.waf_check import WafCheckProcessor
-        p = WafCheckProcessor(
-            source_property="body",
-            action="block",
-        )
+
+        p = WafCheckProcessor(source_property="body", action="block")
         ex = MagicMock()
         ex.in_message = MagicMock()
         ex.in_message.body = {"path": "/admin/../etc/passwd"}
@@ -45,6 +42,7 @@ class TestWafOwaspPatterns:
 
     def test_detects_xss_event_handler(self) -> None:
         from src.backend.dsl.engine.processors.waf_check import WafCheckProcessor
+
         p = WafCheckProcessor(source_property="body", action="flag")
         ex = MagicMock()
         ex.in_message = MagicMock()
@@ -53,6 +51,7 @@ class TestWafOwaspPatterns:
         ex.set_error = MagicMock()
         ex.stop = MagicMock()
         import asyncio
+
         asyncio.run(p.process(ex, MagicMock()))
         # Verify decision
         assert ex.set_property.called
@@ -64,6 +63,7 @@ class TestWafOwaspPatterns:
 
     def test_detects_command_injection(self) -> None:
         from src.backend.dsl.engine.processors.waf_check import WafCheckProcessor
+
         p = WafCheckProcessor(source_property="body", action="flag")
         ex = MagicMock()
         ex.in_message = MagicMock()
@@ -72,18 +72,23 @@ class TestWafOwaspPatterns:
         ex.set_error = MagicMock()
         ex.stop = MagicMock()
         import asyncio
+
         asyncio.run(p.process(ex, MagicMock()))
         assert ex.set_property.called
 
     def test_detects_xxe(self) -> None:
         from src.backend.dsl.engine.processors.waf_check import WafCheckProcessor
+
         p = WafCheckProcessor(source_property="body", action="flag")
         ex = MagicMock()
         ex.in_message = MagicMock()
-        ex.in_message.body = {"xml": "<?xml version='1.0'?><!DOCTYPE foo [<!ENTITY xxe SYSTEM 'file:///etc/passwd'>]><foo>&xxe;</foo>"}
+        ex.in_message.body = {
+            "xml": "<?xml version='1.0'?><!DOCTYPE foo [<!ENTITY xxe SYSTEM 'file:///etc/passwd'>]><foo>&xxe;</foo>"
+        }
         ex.set_property = MagicMock()
         ex.set_error = MagicMock()
         ex.stop = MagicMock()
         import asyncio
+
         asyncio.run(p.process(ex, MagicMock()))
         assert ex.set_property.called

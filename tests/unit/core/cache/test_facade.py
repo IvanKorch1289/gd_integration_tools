@@ -81,12 +81,22 @@ async def test_fallback_decorator() -> None:
     class FailingFacade(MemoryCacheFacade):
         async def get(self, key: str) -> bytes | None:
             raise CacheError("primary down")
-        async def set(self, key: str, value: bytes, ttl_seconds: int | None = None, tags: list[str] | None = None) -> None:
+
+        async def set(
+            self,
+            key: str,
+            value: bytes,
+            ttl_seconds: int | None = None,
+            tags: list[str] | None = None,
+        ) -> None:
             raise CacheError("primary down")
+
         async def delete(self, *keys: str) -> None:
             raise CacheError("primary down")
+
         async def delete_by_tag(self, tag: str) -> int:
             raise CacheError("primary down")
+
         async def exists(self, key: str) -> bool:
             raise CacheError("primary down")
 
@@ -164,7 +174,7 @@ def redis_facade(redis_backend: _StubRedisBackend) -> RedisCacheFacade:
 
 @pytest.mark.asyncio
 async def test_redis_facade_get_set_roundtrip(
-    redis_facade: RedisCacheFacade, redis_backend: _StubRedisBackend,
+    redis_facade: RedisCacheFacade, redis_backend: _StubRedisBackend
 ) -> None:
     await redis_facade.set("k", b"value")
     assert await redis_facade.get("k") == b"value"
@@ -185,7 +195,7 @@ async def test_redis_facade_ttl_passed_to_backend(
 
 @pytest.mark.asyncio
 async def test_redis_facade_tags_bind_to_index(
-    redis_facade: RedisCacheFacade, redis_backend: _StubRedisBackend,
+    redis_facade: RedisCacheFacade, redis_backend: _StubRedisBackend
 ) -> None:
     await redis_facade.set("user:1", b"u1", tags=["tenant:a", "user:1"])
     await redis_facade.set("user:2", b"u2", tags=["tenant:a"])
@@ -194,9 +204,7 @@ async def test_redis_facade_tags_bind_to_index(
 
 
 @pytest.mark.asyncio
-async def test_redis_facade_delete_by_tag(
-    redis_facade: RedisCacheFacade,
-) -> None:
+async def test_redis_facade_delete_by_tag(redis_facade: RedisCacheFacade) -> None:
     await redis_facade.set("a", b"1", tags=["t"])
     await redis_facade.set("b", b"2", tags=["t"])
     n = await redis_facade.delete_by_tag("t")
@@ -207,7 +215,7 @@ async def test_redis_facade_delete_by_tag(
 
 @pytest.mark.asyncio
 async def test_redis_facade_healthcheck(
-    redis_facade: RedisCacheFacade, redis_backend: _StubRedisBackend,
+    redis_facade: RedisCacheFacade, redis_backend: _StubRedisBackend
 ) -> None:
     assert await redis_facade.healthcheck() is True
     assert redis_backend.healthcheck_called == 1
@@ -219,7 +227,7 @@ async def test_redis_facade_healthcheck(
 
 @pytest.mark.asyncio
 async def test_redis_facade_backend_errors_raise_cache_error(
-    redis_facade: RedisCacheFacade, redis_backend: _StubRedisBackend,
+    redis_facade: RedisCacheFacade, redis_backend: _StubRedisBackend
 ) -> None:
     """Backend exception → CacheError (консьюмер может перехватить через FallbackCacheFacade)."""
     redis_backend.store = None  # type: ignore[assignment]
@@ -243,17 +251,13 @@ def disk_facade(disk_root: str) -> DiskCacheFacade:
 
 
 @pytest.mark.asyncio
-async def test_disk_facade_get_set_roundtrip(
-    disk_facade: DiskCacheFacade,
-) -> None:
+async def test_disk_facade_get_set_roundtrip(disk_facade: DiskCacheFacade) -> None:
     await disk_facade.set("k", b"value")
     assert await disk_facade.get("k") == b"value"
 
 
 @pytest.mark.asyncio
-async def test_disk_facade_missing_returns_none(
-    disk_facade: DiskCacheFacade,
-) -> None:
+async def test_disk_facade_missing_returns_none(disk_facade: DiskCacheFacade) -> None:
     assert await disk_facade.get("nonexistent") is None
 
 
@@ -274,17 +278,13 @@ async def test_disk_facade_exists(disk_facade: DiskCacheFacade) -> None:
 
 
 @pytest.mark.asyncio
-async def test_disk_facade_delete_by_tag_noop(
-    disk_facade: DiskCacheFacade,
-) -> None:
+async def test_disk_facade_delete_by_tag_noop(disk_facade: DiskCacheFacade) -> None:
     """Tag invalidation не поддерживается в DiskCacheFacade (Redis-only feature)."""
     assert await disk_facade.delete_by_tag("any") == 0
 
 
 @pytest.mark.asyncio
-async def test_disk_facade_healthcheck(
-    disk_facade: DiskCacheFacade,
-) -> None:
+async def test_disk_facade_healthcheck(disk_facade: DiskCacheFacade) -> None:
     assert await disk_facade.healthcheck() is True
 
 

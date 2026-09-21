@@ -23,8 +23,7 @@ class TestLoadKeysFile:
     def test_basic_format(self, tmp_path: Path) -> None:
         path = tmp_path / "keys.txt"
         path.write_text(
-            "service_a:gd_aaaaaaaaaaaaaaaaaaaa\n"
-            "service_b:gd_bbbbbbbbbbbbbbbbbbbb\n",
+            "service_a:gd_aaaaaaaaaaaaaaaaaaaa\nservice_b:gd_bbbbbbbbbbbbbbbbbbbb\n"
         )
         result = mig._load_keys_file(path)
         assert result == {
@@ -34,27 +33,18 @@ class TestLoadKeysFile:
 
     def test_skip_empty_and_comment_lines(self, tmp_path: Path) -> None:
         path = tmp_path / "keys.txt"
-        path.write_text(
-            "# comment\n"
-            "\n"
-            "service_a:gd_aaa\n"
-            "  \n",
-        )
+        path.write_text("# comment\n\nservice_a:gd_aaa\n  \n")
         result = mig._load_keys_file(path)
         assert result == {"service_a": "gd_aaa"}
 
     def test_skip_invalid_format_no_colon(self, tmp_path: Path, caplog) -> None:
         path = tmp_path / "keys.txt"
-        path.write_text(
-            "service_a:gd_aaa\n"
-            "no_colon_line\n"
-            "service_b:gd_bbb\n",
-        )
+        path.write_text("service_a:gd_aaa\nno_colon_line\nservice_b:gd_bbb\n")
         result = mig._load_keys_file(path)
         assert result == {"service_a": "gd_aaa", "service_b": "gd_bbb"}
 
     def test_duplicate_client_id_warns_last_wins(
-        self, tmp_path: Path, caplog: pytest.LogCaptureFixture,
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
     ) -> None:
         path = tmp_path / "keys.txt"
         path.write_text("client:gd_first\nclient:gd_second\n")
@@ -71,19 +61,14 @@ class TestProcessOne:
         conn = MagicMock()
         stored = {
             "client_id": "c1",
-            "key_hash": "$argon2id$v=19$m=65536,t=3,p=4$"
-            "salt123456789012345678901$h",
+            "key_hash": "$argon2id$v=19$m=65536,t=3,p=4$salt123456789012345678901$h",
             "hash_algo": "argon2id",
         }
         conn.get = AsyncMock(return_value=json.dumps(stored).encode())
 
         stats = mig.MigrationStats()
         await mig._process_one(
-            conn,
-            "apikey:c1",
-            keys_map={"c1": "irrelevant"},
-            dry_run=True,
-            stats=stats,
+            conn, "apikey:c1", keys_map={"c1": "irrelevant"}, dry_run=True, stats=stats
         )
         assert stats.scanned == 1
         assert stats.skipped_already_argon2 == 1
@@ -194,10 +179,7 @@ class TestProcessOne:
 
         stored_sha = hashlib.sha256(b"original-key").hexdigest()
         conn = MagicMock()
-        stored = {
-            "client_id": "c1",
-            "key_hash": stored_sha,
-        }
+        stored = {"client_id": "c1", "key_hash": stored_sha}
         conn.get = AsyncMock(return_value=json.dumps(stored).encode())
 
         stats = mig.MigrationStats()
@@ -220,11 +202,7 @@ class TestProcessOne:
 
         stats = mig.MigrationStats()
         await mig._process_one(
-            conn,
-            "apikey:corrupt",
-            keys_map={},
-            dry_run=True,
-            stats=stats,
+            conn, "apikey:corrupt", keys_map={}, dry_run=True, stats=stats
         )
         assert stats.failed_other == 1
         assert stats.scanned == 0
@@ -243,7 +221,9 @@ class TestArgs:
         assert args.redis_url == "redis://localhost:6379"
         assert args.key_prefix == "apikey:"
 
-    def test_dry_run_flag_sets_dry_run_true(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_dry_run_flag_sets_dry_run_true(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         monkeypatch.delenv("MIGRATE_REDIS_URL", raising=False)
         monkeypatch.delenv("MIGRATE_KEYS_FILE", raising=False)
         with patch.object(sys, "argv", ["mig", "--dry-run"]):
@@ -263,7 +243,9 @@ class TestArgs:
         """Confirm mode → main() resolves dry_run = False."""
         monkeypatch.delenv("MIGRATE_REDIS_URL", raising=False)
         monkeypatch.delenv("MIGRATE_KEYS_FILE", raising=False)
-        with patch.object(sys, "argv", ["mig", "--confirm", "--redis-url", "x", "--keys-file", "y"]):
+        with patch.object(
+            sys, "argv", ["mig", "--confirm", "--redis-url", "x", "--keys-file", "y"]
+        ):
             args = mig._parse_args()
         # dry_run computation lives in main() / _run_migration.
         assert args.confirm is True

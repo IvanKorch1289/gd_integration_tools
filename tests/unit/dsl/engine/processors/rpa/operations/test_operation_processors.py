@@ -106,7 +106,9 @@ class TestEncryptProcessor:
 
     @pytest.mark.asyncio
     async def test_process_encrypts_data(self) -> None:
-        processor = EncryptProcessor(key="secret-key-1234567890123456", source="body", target="encrypted")
+        processor = EncryptProcessor(
+            key="secret-key-1234567890123456", source="body", target="encrypted"
+        )
         _allow(processor)
         exchange = MagicMock(spec=Exchange)
         exchange.in_message = MagicMock()
@@ -127,7 +129,9 @@ class TestDecryptProcessor:
 
     @pytest.mark.asyncio
     async def test_process_decrypts_data(self) -> None:
-        processor = DecryptProcessor(key="secret-key-1234567890123456", source="body", target="decrypted")
+        processor = DecryptProcessor(
+            key="secret-key-1234567890123456", source="body", target="decrypted"
+        )
         _allow(processor)
         exchange = MagicMock(spec=Exchange)
         exchange.in_message = MagicMock()

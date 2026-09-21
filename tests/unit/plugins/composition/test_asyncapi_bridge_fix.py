@@ -40,9 +40,7 @@ def test_create_app_source_has_asyncapi_bridge_router() -> None:
         "NEW-3a fix regressed: _asyncapi_bridge_router missing from "
         "_configure_business_routers()"
     )
-    assert "APIRouter()" in source, (
-        "Expected APIRouter() instantiation for bridge"
-    )
+    assert "APIRouter()" in source, "Expected APIRouter() instantiation for bridge"
 
 
 def test_asyncapi_bridge_route_pattern() -> None:
@@ -98,8 +96,7 @@ def test_bridge_route_returns_200_with_asyncapi_spec_via_test_client() -> None:
     @mock_router.get("/asyncapi", include_in_schema=False)
     async def asyncapi_legacy_serve():
         return JSONResponse(
-            content=build_asyncapi_json_mock(),
-            media_type="application/json",
+            content=build_asyncapi_json_mock(), media_type="application/json"
         )
 
     app = FastAPI()
@@ -134,4 +131,3 @@ def test_bridge_excluded_from_openapi() -> None:
         "NEW-3a fix regressed: include_in_schema=False keyword not found in "
         "_configure_business_routers() AST"
     )
-

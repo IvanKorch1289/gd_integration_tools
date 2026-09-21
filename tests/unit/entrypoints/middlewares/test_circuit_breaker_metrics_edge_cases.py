@@ -21,10 +21,7 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 
-def _make_middleware(
-    *,
-    use_breaker_registry: bool = False,
-) -> Any:
+def _make_middleware(*, use_breaker_registry: bool = False) -> Any:
     """Build CircuitBreakerMiddleware with explicit config."""
     from src.backend.entrypoints.middlewares.circuit_breaker import (
         BreakerPolicy,
@@ -89,11 +86,7 @@ async def test_metrics_isolated_per_route_name() -> None:
     recorder = _MetricRecorder()
     middleware = _make_middleware(use_breaker_registry=True)
 
-    routes = [
-        "/api/v1/route_a",
-        "/api/v1/route_b",
-        "/api/v1/route_c",
-    ]
+    routes = ["/api/v1/route_a", "/api/v1/route_b", "/api/v1/route_c"]
 
     with patch.object(middleware, "_get_adapter") as mock_adapter:
         mock_adapter.return_value.should_allow.return_value = False

@@ -12,7 +12,7 @@
 from __future__ import annotations
 
 import asyncio
-import time
+from typing import Any
 
 import pytest
 
@@ -25,9 +25,6 @@ from src.backend.core.idempotency.backends.base import (
     IdempotencyBackend,
     IdempotencyEntry,
     IdempotencyOutcome,
-)
-from src.backend.core.idempotency.backends.in_memory import (
-    InMemoryIdempotencyBackend as InMemoryBackendAlias,
 )
 from src.backend.core.idempotency.service import (
     IdempotencyConflict,
@@ -264,9 +261,7 @@ class TestInMemoryTestHelpers:
         """``clear()`` удаляет все entries."""
         b = InMemoryIdempotencyBackend()
         # Synchronous test (clear doesn't need async).
-        b._entries["k1"] = IdempotencyEntry(
-            key="k1", state=IdempotencyOutcome.PENDING
-        )
+        b._entries["k1"] = IdempotencyEntry(key="k1", state=IdempotencyOutcome.PENDING)
         b.clear()
         assert b.size() == 0
 
@@ -276,7 +271,6 @@ class TestExecuteOrReplayConflict:
 
     async def test_conflict_on_pending_entry(self) -> None:
         """Если entry уже PENDING (concurrent) → conflict=True."""
-        from unittest.mock import AsyncMock
 
         backend = InMemoryIdempotencyBackend()
         # Pre-populate as PENDING (simulating concurrent caller).
@@ -303,9 +297,7 @@ class TestExecuteOrReplayLockedBackend:
         backend.get = AsyncMock(return_value=None)
         backend.begin = AsyncMock(return_value=IdempotencyOutcome.LOCKED)
         svc = IdempotencyService(backend=backend)
-        state = await svc.execute_or_replay(
-            "k1", lambda: asyncio.sleep(0, result="x")
-        )
+        state = await svc.execute_or_replay("k1", lambda: asyncio.sleep(0, result="x"))
         assert state.conflict is True
 
     async def test_committed_outcome_after_begin_replays(self) -> None:
@@ -313,14 +305,13 @@ class TestExecuteOrReplayLockedBackend:
         from unittest.mock import AsyncMock, MagicMock
 
         committed_entry = IdempotencyEntry(
-            key="k1",
-            state=IdempotencyOutcome.COMMITTED,
-            result={"race": "winner"},
+            key="k1", state=IdempotencyOutcome.COMMITTED, result={"race": "winner"}
         )
 
         backend = MagicMock(spec=IdempotencyBackend)
         backend.get = AsyncMock(return_value=None)
         backend.begin = AsyncMock(return_value=IdempotencyOutcome.COMMITTED)
+
         # After race detected, get returns the winning entry.
         async def get_side_effect(key: str) -> IdempotencyEntry | None:
             return committed_entry
@@ -378,9 +369,7 @@ class TestExecuteOrReplay:
     async def test_first_call_executes_fn(self) -> None:
         """First call → execute fn, committed=True."""
         svc = IdempotencyService(backend=InMemoryIdempotencyBackend())
-        state = await svc.execute_or_replay(
-            "k1", lambda: asyncio.sleep(0, result="ok")
-        )
+        state = await svc.execute_or_replay("k1", lambda: asyncio.sleep(0, result="ok"))
         assert state.replayed is False
         assert state.committed is True
         assert state.result == "ok"
@@ -442,7 +431,9 @@ class TestExecuteOrReplay:
     async def test_custom_ttl(self) -> None:
         """``ttl_seconds=60`` override default."""
         svc = IdempotencyService(backend=InMemoryIdempotencyBackend())
-        await svc.execute_or_replay("k1", lambda: asyncio.sleep(0, result=1), ttl_seconds=60)
+        await svc.execute_or_replay(
+            "k1", lambda: asyncio.sleep(0, result=1), ttl_seconds=60
+        )
         entry = await svc.backend.get("k1")
         assert entry is not None
         assert entry.ttl_seconds == 60
@@ -522,7 +513,8 @@ class TestIdempotentDecorator:
         """Decorator attaches ``__idempotency_key_fn__`` + ``__idempotency_ttl__``."""
         svc = IdempotencyService(backend=InMemoryIdempotencyBackend())
 
-        key_fn = lambda args, kwargs: f"k:{args[0]}"
+        def key_fn(args, kwargs):
+            return f"k:{args[0]}"
 
         @svc.idempotent(key_fn=key_fn, ttl_seconds=120)
         async def my_func(x: int) -> int:

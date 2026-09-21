@@ -12,6 +12,7 @@ This test verifies:
 * Identity is preserved (shim IS the canonical facade, not a copy)
 * Idempotent: re-import returns same objects
 """
+
 from __future__ import annotations
 
 import importlib
@@ -78,6 +79,7 @@ def test_facades_lazy_attribute_access() -> None:
     # Use a likely-present symbol: AIGateway is in core.ai.
     try:
         from src.backend.core import api, facades
+
         # If both have attribute, they should be the same
         for sym in dir(api):
             if not sym.startswith("_") and sym[0].isupper():  # public class
@@ -100,24 +102,26 @@ def test_facades_is_pure_backward_compat_shim() -> None:
     nodes (no defs, no classes, no assignments).
     """
     import ast
+
     source = ast.parse(open("src/backend/core/facades.py").read())
     # All top-level statements must be imports (or docstring)
     non_import_nodes = [
-        node for node in source.body
-        if not isinstance(node, (ast.Import, ast.ImportFrom, ast.Expr))  # Expr = docstring
+        node
+        for node in source.body
+        if not isinstance(
+            node, (ast.Import, ast.ImportFrom, ast.Expr)
+        )  # Expr = docstring
     ]
     # Allow only `__all__ = __all__` re-export assignment (canonical shim pattern)
     allowed_non_imports = [
-        n for n in non_import_nodes
+        n
+        for n in non_import_nodes
         if isinstance(n, ast.Assign)
         and len(n.targets) == 1
         and isinstance(n.targets[0], ast.Name)
         and n.targets[0].id == "__all__"
     ]
-    unexpected = [
-        n for n in non_import_nodes
-        if n not in allowed_non_imports
-    ]
+    unexpected = [n for n in non_import_nodes if n not in allowed_non_imports]
     assert not unexpected, (
         f"facades.py should be a pure shim (imports + docstring + __all__ re-export only), "
         f"found unexpected: {[type(n).__name__ for n in unexpected]}"

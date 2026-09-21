@@ -3,6 +3,7 @@
 Pattern (D285, Ponytail): thin wrapper над prometheus_client.
 Все алерты в одном месте для observability.
 """
+
 from __future__ import annotations
 
 
@@ -11,6 +12,7 @@ class TestPrometheusAlertManager:
         from src.backend.infrastructure.observability.prometheus_alerting import (
             PrometheusAlertManager,
         )
+
         mgr = PrometheusAlertManager()
         assert mgr is not None
 
@@ -18,6 +20,7 @@ class TestPrometheusAlertManager:
         from src.backend.infrastructure.observability.prometheus_alerting import (
             PrometheusAlertManager,
         )
+
         mgr = PrometheusAlertManager()
         # Default alerts: cert_expired, cert_rotation_failed, sse_stream_error
         assert "cert_expired_total" in mgr._alerts
@@ -33,6 +36,7 @@ class TestPrometheusAlertManager:
         from src.backend.infrastructure.observability.prometheus_alerting import (
             PrometheusAlertManager,
         )
+
         mgr = PrometheusAlertManager()
         yaml_str = mgr.render_rules_yaml()
         assert "groups:" in yaml_str
@@ -45,6 +49,7 @@ class TestPrometheusAlertManager:
         from src.backend.infrastructure.observability.prometheus_alerting import (
             PrometheusAlertManager,
         )
+
         mgr = PrometheusAlertManager()
         mgr.register_alert(
             "my_custom_total",
@@ -62,6 +67,7 @@ class TestPrometheusAlertManager:
         from src.backend.infrastructure.observability.prometheus_alerting import (
             PrometheusAlertManager,
         )
+
         mgr = PrometheusAlertManager()
         assert "cert_expired_total" in mgr._alerts
         mgr.unregister_alert("cert_expired_total")
@@ -71,10 +77,14 @@ class TestPrometheusAlertManager:
         from src.backend.infrastructure.observability.prometheus_alerting import (
             PrometheusAlertManager,
         )
+
         mgr = PrometheusAlertManager()
         mgr.register_alert(
-            "test_alert", condition="test > 5", severity="info",
-            summary="t", description="d",
+            "test_alert",
+            condition="test > 5",
+            severity="info",
+            summary="t",
+            description="d",
         )
         yaml_str = mgr.render_rules_yaml()
         assert "test_alert" in yaml_str

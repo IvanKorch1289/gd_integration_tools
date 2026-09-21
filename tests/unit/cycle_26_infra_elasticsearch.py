@@ -7,7 +7,6 @@ User request (turn 39): wrap unused deps (elasticsearch) in DSL.
 Verified: src/backend/dsl/engine/processors/infra_elasticsearch.py created.
 """
 
-
 from __future__ import annotations
 
 import ast
@@ -65,17 +64,19 @@ class TestRegistryAnnotations:
         with open(path) as f:
             content = f.read()
         # Look for decorator + class pattern
-        assert '@processor(\n    "infra_elasticsearch_search"' in content or \
-               '@processor("infra_elasticsearch_search"' in content, \
-            "Search processor must use @processor decorator"
+        assert (
+            '@processor(\n    "infra_elasticsearch_search"' in content
+            or '@processor("infra_elasticsearch_search"' in content
+        ), "Search processor must use @processor decorator"
 
     def test_index_processor_decorated(self):
         path = "src/backend/dsl/engine/processors/infra_elasticsearch.py"
         with open(path) as f:
             content = f.read()
-        assert '@processor(\n    "infra_elasticsearch_index"' in content or \
-               '@processor("infra_elasticsearch_index"' in content, \
-            "Index processor must use @processor decorator"
+        assert (
+            '@processor(\n    "infra_elasticsearch_index"' in content
+            or '@processor("infra_elasticsearch_index"' in content
+        ), "Index processor must use @processor decorator"
 
     def test_namespace_infra(self):
         path = "src/backend/dsl/engine/processors/infra_elasticsearch.py"

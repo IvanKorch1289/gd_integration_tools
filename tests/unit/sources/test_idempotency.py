@@ -1,6 +1,5 @@
 """W23 — DedupeStore (memory backend)."""
 
-
 from __future__ import annotations
 
 import pytest

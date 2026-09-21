@@ -49,25 +49,23 @@ class TestIsExtensionPath:
         assert is_extension_path("extensions.my_ext.infrastructure.foo")
 
     def test_valid_extension_path_with_underscore(self) -> None:
-        assert is_extension_path(
-            "extensions.skill_plugin.adapters.banking_metrics",
-        )
+        assert is_extension_path("extensions.skill_plugin.adapters.banking_metrics")
 
     @pytest.mark.parametrize(
         "bad_path",
         [
             "src.backend.core.auth.api_key_backend",  # core
-            "src.backend.infrastructure.cache",       # infrastructure
-            "infrastructure.cache.rag",                # bare infra
-            "core.ai.gateway",                          # bare core
-            "my_extension.foo",                         # no prefix
-            "extensions",                                # only prefix
-            "extensions.",                               # trailing dot
-            "extensions..double",                       # double dot
-            "extensions.foo..bar",                       # double dot in middle
-            "",                                           # empty
-            "EXTENSIONS.FOO.BAR",                        # uppercase not allowed
-            "extensions.foo-bar",                        # hyphen not allowed
+            "src.backend.infrastructure.cache",  # infrastructure
+            "infrastructure.cache.rag",  # bare infra
+            "core.ai.gateway",  # bare core
+            "my_extension.foo",  # no prefix
+            "extensions",  # only prefix
+            "extensions.",  # trailing dot
+            "extensions..double",  # double dot
+            "extensions.foo..bar",  # double dot in middle
+            "",  # empty
+            "EXTENSIONS.FOO.BAR",  # uppercase not allowed
+            "extensions.foo-bar",  # hyphen not allowed
         ],
     )
     def test_invalid_extension_paths(self, bad_path: str) -> None:
@@ -83,30 +81,19 @@ class TestRegisterExtensionModule:
 
     def test_register_basic(self) -> None:
         assert register_extension_module(
-            "my_ext.metrics",
-            "extensions.my_ext.infrastructure.metrics",
+            "my_ext.metrics", "extensions.my_ext.infrastructure.metrics"
         )
         assert list_extension_modules() == {
-            "my_ext.metrics": "extensions.my_ext.infrastructure.metrics",
+            "my_ext.metrics": "extensions.my_ext.infrastructure.metrics"
         }
 
     def test_register_returns_true_on_new(self) -> None:
-        assert (
-            register_extension_module(
-                "k1", "extensions.k1.infra.foo",
-            )
-            is True
-        )
+        assert register_extension_module("k1", "extensions.k1.infra.foo") is True
 
     def test_register_idempotent_same_path(self) -> None:
         register_extension_module("k1", "extensions.k1.infra.foo")
-        assert (
-            register_extension_module("k1", "extensions.k1.infra.foo")
-            is False
-        )
-        assert list_extension_modules() == {
-            "k1": "extensions.k1.infra.foo",
-        }
+        assert register_extension_module("k1", "extensions.k1.infra.foo") is False
+        assert list_extension_modules() == {"k1": "extensions.k1.infra.foo"}
 
     def test_register_duplicate_with_different_path_raises(self) -> None:
         register_extension_module("k1", "extensions.k1.infra.foo")
@@ -118,8 +105,8 @@ class TestRegisterExtensionModule:
         [
             "src.backend.x",
             "core.foo",
-            "extensions.",      # empty after prefix
-            "extensions..x",    # double dot
+            "extensions.",  # empty after prefix
+            "extensions..x",  # double dot
             "",
         ],
     )
@@ -184,8 +171,7 @@ class TestResolveExtensionModule:
         Mock ``import_module`` чтобы не нужен был реальный package.
         """
         register_extension_module(
-            "clients.storage.redis",
-            "extensions.overrides.dummy_redis",
+            "clients.storage.redis", "extensions.overrides.dummy_redis"
         )
 
         sentinel = object()
@@ -212,9 +198,7 @@ class TestResolveExtensionModule:
                     # Чтобы обеспечить extension-wins: registry-extension содержит
                     # key ``clients.storage.redis`` → resolver должен
                     # попытаться import нашего extension path'а.
-                    assert (
-                        resolve_module("clients.storage.redis") is sentinel
-                    )
+                    assert resolve_module("clients.storage.redis") is sentinel
 
     def test_resolve_unknown_key_raises(self) -> None:
         with pytest.raises(ModuleRegistryError):
@@ -223,8 +207,7 @@ class TestResolveExtensionModule:
     def test_resolve_extension_import_failure_wraps(self) -> None:
         """Если extension-модуль не import'ится — ModuleRegistryError."""
         register_extension_module(
-            "definitely_missing.ext",
-            "extensions.surely_does_not_exist.foo",
+            "definitely_missing.ext", "extensions.surely_does_not_exist.foo"
         )
         with pytest.raises(ModuleRegistryError, match="import failed"):
             resolve_module("definitely_missing.ext")
@@ -238,13 +221,10 @@ class TestThreadSafety:
 
         def _register(idx: int) -> None:
             register_extension_module(
-                f"key_{idx}", f"extensions.thread_{idx}.infra.foo",
+                f"key_{idx}", f"extensions.thread_{idx}.infra.foo"
             )
 
-        threads = [
-            threading.Thread(target=_register, args=(i,))
-            for i in range(50)
-        ]
+        threads = [threading.Thread(target=_register, args=(i,)) for i in range(50)]
         for t in threads:
             t.start()
         for t in threads:
@@ -261,10 +241,12 @@ class TestPublicSDKExport:
 
     def test_sdk_exports_register_infra_module(self) -> None:
         from src.backend.sdk import register_infra_module
+
         assert callable(register_infra_module)
 
     def test_sdk_exports_unregister_infra_module(self) -> None:
         from src.backend.sdk import unregister_infra_module
+
         assert callable(unregister_infra_module)
 
     def test_sdk_exports_extension_registration_error(self) -> None:

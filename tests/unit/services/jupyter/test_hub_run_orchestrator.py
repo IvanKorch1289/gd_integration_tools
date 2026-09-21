@@ -49,7 +49,7 @@ def _enable_flag(monkeypatch: pytest.MonkeyPatch) -> None:
     from src.backend.core.config.security import secure_settings
 
     monkeypatch.setattr(
-        secure_settings, "jupyter_inline_content_enabled", True, raising=False,
+        secure_settings, "jupyter_inline_content_enabled", True, raising=False
     )
 
 
@@ -65,18 +65,14 @@ class TestNotebookSpecValidation:
 
     def test_validate_required_missing(self) -> None:
         spec = NotebookSpec(
-            name="x",
-            path="x.ipynb",
-            parameters_schema={"customer_id": {"type": "int"}},
+            name="x", path="x.ipynb", parameters_schema={"customer_id": {"type": "int"}}
         )
         errors = spec.validate_parameters({})
         assert any("customer_id" in e for e in errors)
 
     def test_validate_type_mismatch(self) -> None:
         spec = NotebookSpec(
-            name="x",
-            path="x.ipynb",
-            parameters_schema={"amount": {"type": "float"}},
+            name="x", path="x.ipynb", parameters_schema={"amount": {"type": "float"}}
         )
         errors = spec.validate_parameters({"amount": "not_a_number"})
         assert any("amount" in e and "float" in e for e in errors)
@@ -123,16 +119,14 @@ class TestNotebookRegistry:
 
 
 class TestRunHubNotebookHappyPath:
-    async def test_runs_registered_notebook(
-        self, registry: NotebookRegistry,
-    ) -> None:
+    async def test_runs_registered_notebook(self, registry: NotebookRegistry) -> None:
         registry.register(
             NotebookSpec(
                 name="credit_scoring",
                 path="notebooks/credit.ipynb",
                 default_parameters={"threshold": 0.5},
                 parameters_schema={"customer_id": {"type": "int"}},
-            ),
+            )
         )
 
         mock_svc = AsyncMock()
@@ -141,8 +135,8 @@ class TestRunHubNotebookHappyPath:
                 {
                     "cell_index": 0,
                     "outputs": [{"output_type": "stream", "text": "score=0.85"}],
-                },
-            ],
+                }
+            ]
         }
 
         result = await run_hub_notebook(
@@ -164,52 +158,51 @@ class TestRunHubNotebookHappyPath:
         assert call_kwargs["parameters"] == {"customer_id": 42, "threshold": 0.5}
         assert call_kwargs["user_name"] == "default"
 
-    async def test_passes_user_name_through(
-        self, registry: NotebookRegistry,
-    ) -> None:
+    async def test_passes_user_name_through(self, registry: NotebookRegistry) -> None:
         registry.register(NotebookSpec(name="x", path="x.ipynb"))
         mock_svc = AsyncMock()
         mock_svc.execute.return_value = {"outputs": []}
 
         await run_hub_notebook(
-            notebook_name="x", user_name="alice", registry=registry,
+            notebook_name="x",
+            user_name="alice",
+            registry=registry,
             execution_service=mock_svc,
         )
         assert mock_svc.execute.await_args.kwargs["user_name"] == "alice"
 
 
 class TestRunHubNotebookErrors:
-    async def test_feature_flag_off_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    async def test_feature_flag_off_raises(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         monkeypatch.setattr(feature_flags, "jupyter_hub_enabled", False)
         mock_svc = AsyncMock()
         with pytest.raises(JupyterHubNotEnabledError):
             await run_hub_notebook(
-                notebook_name="any", execution_service=mock_svc,
+                notebook_name="any",
+                execution_service=mock_svc,
                 registry=NotebookRegistry(),
             )
         mock_svc.execute.assert_not_awaited()
 
-    async def test_notebook_not_found_raises(
-        self, registry: NotebookRegistry,
-    ) -> None:
+    async def test_notebook_not_found_raises(self, registry: NotebookRegistry) -> None:
         mock_svc = AsyncMock()
         with pytest.raises(NotebookNotFoundError, match="absent"):
             await run_hub_notebook(
-                notebook_name="absent",
-                registry=registry,
-                execution_service=mock_svc,
+                notebook_name="absent", registry=registry, execution_service=mock_svc
             )
         mock_svc.execute.assert_not_awaited()
 
     async def test_parameter_validation_raises(
-        self, registry: NotebookRegistry,
+        self, registry: NotebookRegistry
     ) -> None:
         registry.register(
             NotebookSpec(
                 name="strict",
                 path="strict.ipynb",
                 parameters_schema={"customer_id": {"type": "int"}},
-            ),
+            )
         )
         mock_svc = AsyncMock()
         with pytest.raises(NotebookParameterError) as excinfo:
@@ -222,9 +215,7 @@ class TestRunHubNotebookErrors:
         assert "customer_id" in str(excinfo.value)
         mock_svc.execute.assert_not_awaited()
 
-    async def test_execution_error_propagates(
-        self, registry: NotebookRegistry,
-    ) -> None:
+    async def test_execution_error_propagates(self, registry: NotebookRegistry) -> None:
         registry.register(NotebookSpec(name="x", path="x.ipynb"))
         mock_svc = AsyncMock()
         from src.backend.services.jupyter.execution_service import JupyterExecutionError
@@ -233,16 +224,12 @@ class TestRunHubNotebookErrors:
 
         with pytest.raises(JupyterExecutionError, match="kernel died"):
             await run_hub_notebook(
-                notebook_name="x",
-                registry=registry,
-                execution_service=mock_svc,
+                notebook_name="x", registry=registry, execution_service=mock_svc
             )
 
 
 class TestCollectErrors:
-    async def test_collects_cell_errors(
-        self, registry: NotebookRegistry,
-    ) -> None:
+    async def test_collects_cell_errors(self, registry: NotebookRegistry) -> None:
         registry.register(NotebookSpec(name="x", path="x.ipynb"))
         mock_svc = AsyncMock()
         mock_svc.execute.return_value = {
@@ -254,16 +241,14 @@ class TestCollectErrors:
                             "output_type": "error",
                             "ename": "ZeroDivisionError",
                             "evalue": "division by zero",
-                        },
+                        }
                     ],
-                },
-            ],
+                }
+            ]
         }
 
         result = await run_hub_notebook(
-            notebook_name="x",
-            registry=registry,
-            execution_service=mock_svc,
+            notebook_name="x", registry=registry, execution_service=mock_svc
         )
         assert len(result.errors) == 1
         assert "ZeroDivisionError" in result.errors[0]
@@ -301,7 +286,7 @@ class TestRunHubNotebookInline:
     """S170 EXT: inline notebook content (multipart/SOAP/GraphQL)."""
 
     async def test_inline_notebook_bytes(
-        self, registry: NotebookRegistry, tmp_path: Path,
+        self, registry: NotebookRegistry, tmp_path: Path
     ) -> None:
         """Inline bytes (.ipynb JSON) → save to temp → execute."""
         notebook_json = (
@@ -326,7 +311,7 @@ class TestRunHubNotebookInline:
         mock_svc.execute.assert_awaited_once()
 
     async def test_inline_notebook_str(
-        self, registry: NotebookRegistry, tmp_path: Path,
+        self, registry: NotebookRegistry, tmp_path: Path
     ) -> None:
         """Inline str (.ipynb JSON) — также принимается."""
         notebook_json = (
@@ -344,9 +329,7 @@ class TestRunHubNotebookInline:
         )
         assert (tmp_path / "inline_s.ipynb").exists()
 
-    async def test_inline_invalid_json_raises(
-        self, registry: NotebookRegistry,
-    ) -> None:
+    async def test_inline_invalid_json_raises(self, registry: NotebookRegistry) -> None:
         """Невалидный JSON → HubRunError."""
         from src.backend.services.jupyter.hub_run_orchestrator import HubRunError
 
@@ -360,7 +343,7 @@ class TestRunHubNotebookInline:
             )
 
     async def test_path_override_skips_registry(
-        self, registry: NotebookRegistry,
+        self, registry: NotebookRegistry
     ) -> None:
         """notebook_path_override используется без обращения к реестру."""
         mock_svc = AsyncMock()
@@ -378,12 +361,10 @@ class TestRunHubNotebookInline:
         )
 
     async def test_inline_takes_priority_over_registry(
-        self, registry: NotebookRegistry, tmp_path: Path,
+        self, registry: NotebookRegistry, tmp_path: Path
     ) -> None:
         """Если передан content — registry НЕ используется."""
-        registry.register(
-            NotebookSpec(name="registered", path="registered.ipynb"),
-        )
+        registry.register(NotebookSpec(name="registered", path="registered.ipynb"))
         mock_svc = AsyncMock()
         mock_svc.execute.return_value = {"outputs": []}
 
@@ -394,9 +375,8 @@ class TestRunHubNotebookInline:
             registry=registry,
             execution_service=mock_svc,
         )
-        assert (
-            mock_svc.execute.await_args.kwargs["notebook_path"]
-            == str(tmp_path / "p.ipynb")
+        assert mock_svc.execute.await_args.kwargs["notebook_path"] == str(
+            tmp_path / "p.ipynb"
         )
 
 
@@ -418,6 +398,7 @@ class TestRunHubNotebookActionService:
 
         async def _fake(**kwargs):
             from src.backend.services.jupyter.hub_run_orchestrator import HubRunResult
+
             return HubRunResult(
                 notebook_name=kwargs.get("notebook_name", "x"),
                 notebook_path=kwargs.get("notebook_path_override", "x.ipynb"),
@@ -431,10 +412,7 @@ class TestRunHubNotebookActionService:
         original = hub_actions.run_hub_notebook
         hub_actions.run_hub_notebook = _fake
         try:
-            result = await svc.run(
-                notebook_content_b64=b64,
-                parameters={"x": 1},
-            )
+            result = await svc.run(notebook_content_b64=b64, parameters={"x": 1})
         finally:
             hub_actions.run_hub_notebook = original
 
@@ -481,9 +459,7 @@ class TestRunHubNotebookActionService:
         original = hub_actions.run_hub_notebook
         hub_actions.run_hub_notebook = _fake
         try:
-            result = await svc.run(
-                notebook_path="notebooks/credit_scoring.ipynb",
-            )
+            result = await svc.run(notebook_path="notebooks/credit_scoring.ipynb")
         finally:
             hub_actions.run_hub_notebook = original
 

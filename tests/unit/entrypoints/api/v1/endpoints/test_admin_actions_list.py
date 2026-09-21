@@ -10,7 +10,7 @@ registry is None ИЛИ registry.list_all() throws Exception → admin UI
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 from fastapi import HTTPException
@@ -23,6 +23,7 @@ async def test_list_actions_registry_none_raises_503(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """registry is None → 503 (НЕ silent mock)."""
+
     # Stub feature_flags так, чтобы admin_marketplace_endpoints = True
     class _Flags:
         admin_marketplace_endpoints = True
@@ -44,6 +45,7 @@ async def test_list_actions_list_all_raises_503(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """registry.list_all() throws → 503 (НЕ silent mock)."""
+
     class _Flags:
         admin_marketplace_endpoints = True
 
@@ -53,21 +55,24 @@ async def test_list_actions_list_all_raises_503(
 
     # Mock registry, list_all() raises AttributeError
     mock_reg = MagicMock()
-    mock_reg.list_all = MagicMock(side_effect=AttributeError("'NoneType' has no attribute 'list_all'"))
+    mock_reg.list_all = MagicMock(
+        side_effect=AttributeError("'NoneType' has no attribute 'list_all'")
+    )
     monkeypatch.setattr(admin_actions, "_get_registry", lambda: mock_reg)
 
     with pytest.raises(HTTPException) as exc_info:
         await admin_actions.list_actions()
     assert exc_info.value.status_code == 503
     assert "Не удалось прочитать реестр" in str(exc_info.value.detail)
-    assert "AttributeError" in str(exc_info.value.detail) or "NoneType" in str(exc_info.value.detail)
+    assert "AttributeError" in str(exc_info.value.detail) or "NoneType" in str(
+        exc_info.value.detail
+    )
 
 
 @pytest.mark.asyncio
-async def test_list_actions_returns_specs(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_list_actions_returns_specs(monkeypatch: pytest.MonkeyPatch) -> None:
     """Happy path: registry.list_all() возвращает specs → сериализуются в ActionSummary."""
+
     class _Flags:
         admin_marketplace_endpoints = True
 

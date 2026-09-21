@@ -1,6 +1,5 @@
 """Unit-тесты UnitConversionProcessor — Wave [wave:s5/k3-w3-processor-pack-3]."""
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -26,7 +25,7 @@ def _enable(monkeypatch: pytest.MonkeyPatch) -> None:
 async def test_meter_to_foot() -> None:
     pytest.importorskip("pint")
     proc = UnitConversionProcessor(
-        from_unit="meter", to_unit="foot", value=1.0, to="body.feet",
+        from_unit="meter", to_unit="foot", value=1.0, to="body.feet"
     )
     ex = _ex({})
     await proc.process(ex, AsyncMock())

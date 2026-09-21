@@ -22,7 +22,6 @@ def _make_app() -> FastAPI:
     # override dependency чтобы не требовать auth в unit-context.
     _admin_dep = getattr(mod, "_admin_dep", None)
     if _admin_dep is not None:
-
         app.dependency_overrides[_admin_dep] = lambda: None
     return app
 
@@ -40,7 +39,7 @@ def test_create_watcher_success(temp_dir: Path) -> None:
     """POST / creates a watcher and returns its spec."""
     app = _make_app()
     spec = WatcherSpec(
-        directory=str(temp_dir), pattern="*.csv", route_id="r1", poll_interval=2.0,
+        directory=str(temp_dir), pattern="*.csv", route_id="r1", poll_interval=2.0
     )
 
     with patch.object(mod.watcher_manager, "add", return_value=spec):
@@ -104,7 +103,7 @@ def test_delete_watcher_not_found() -> None:
     app = _make_app()
 
     with patch.object(
-        mod.watcher_manager, "remove", side_effect=KeyError("Watcher w-123 не найден"),
+        mod.watcher_manager, "remove", side_effect=KeyError("Watcher w-123 не найден")
     ):
         client = TestClient(app, raise_server_exceptions=False)
         resp = client.delete("/api/v1/watchers/w-123")
@@ -128,7 +127,7 @@ def test_list_watchers() -> None:
             "route_id": "r1",
             "poll_interval": 5.0,
             "active": True,
-        },
+        }
     ]
 
     with patch.object(mod.watcher_manager, "list_watchers", return_value=mock_watchers):

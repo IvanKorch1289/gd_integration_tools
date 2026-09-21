@@ -47,7 +47,9 @@ class TestQualityRule:
         assert r.regex == r"^.+@.+$"
 
     def test_enum_with_allowed(self) -> None:
-        r = QualityRule(field="status", kind=RuleKind.ENUM, allowed=("active", "inactive"))
+        r = QualityRule(
+            field="status", kind=RuleKind.ENUM, allowed=("active", "inactive")
+        )
         assert r.allowed == ("active", "inactive")
 
 
@@ -135,20 +137,24 @@ class TestRegister:
 class TestCheckNonNull:
     def test_non_null_pass(self) -> None:
         e = DataQualityEngine()
-        e.register(RuleSet(
-            record_type="order",
-            rules=[QualityRule(field="id", kind=RuleKind.NON_NULL)],
-        ))
+        e.register(
+            RuleSet(
+                record_type="order",
+                rules=[QualityRule(field="id", kind=RuleKind.NON_NULL)],
+            )
+        )
         report = e.check("order", [{"id": "o1"}])
         assert report.passed == 1
         assert report.failed == 0
 
     def test_non_null_fail(self) -> None:
         e = DataQualityEngine()
-        e.register(RuleSet(
-            record_type="order",
-            rules=[QualityRule(field="id", kind=RuleKind.NON_NULL)],
-        ))
+        e.register(
+            RuleSet(
+                record_type="order",
+                rules=[QualityRule(field="id", kind=RuleKind.NON_NULL)],
+            )
+        )
         report = e.check("order", [{"id": None}])
         assert report.passed == 0
         assert report.failed == 1
@@ -158,28 +164,34 @@ class TestCheckNonNull:
 class TestCheckNonEmpty:
     def test_empty_string_fail(self) -> None:
         e = DataQualityEngine()
-        e.register(RuleSet(
-            record_type="x",
-            rules=[QualityRule(field="name", kind=RuleKind.NON_EMPTY)],
-        ))
+        e.register(
+            RuleSet(
+                record_type="x",
+                rules=[QualityRule(field="name", kind=RuleKind.NON_EMPTY)],
+            )
+        )
         report = e.check("x", [{"name": ""}])
         assert report.failed == 1
 
     def test_empty_list_fail(self) -> None:
         e = DataQualityEngine()
-        e.register(RuleSet(
-            record_type="x",
-            rules=[QualityRule(field="tags", kind=RuleKind.NON_EMPTY)],
-        ))
+        e.register(
+            RuleSet(
+                record_type="x",
+                rules=[QualityRule(field="tags", kind=RuleKind.NON_EMPTY)],
+            )
+        )
         report = e.check("x", [{"tags": []}])
         assert report.failed == 1
 
     def test_non_empty_pass(self) -> None:
         e = DataQualityEngine()
-        e.register(RuleSet(
-            record_type="x",
-            rules=[QualityRule(field="name", kind=RuleKind.NON_EMPTY)],
-        ))
+        e.register(
+            RuleSet(
+                record_type="x",
+                rules=[QualityRule(field="name", kind=RuleKind.NON_EMPTY)],
+            )
+        )
         report = e.check("x", [{"name": "Alice"}])
         assert report.passed == 1
 
@@ -187,37 +199,51 @@ class TestCheckNonEmpty:
 class TestCheckRange:
     def test_range_pass(self) -> None:
         e = DataQualityEngine()
-        e.register(RuleSet(
-            record_type="x",
-            rules=[QualityRule(field="amount", kind=RuleKind.RANGE, min=0, max=100)],
-        ))
+        e.register(
+            RuleSet(
+                record_type="x",
+                rules=[
+                    QualityRule(field="amount", kind=RuleKind.RANGE, min=0, max=100)
+                ],
+            )
+        )
         report = e.check("x", [{"amount": 50}])
         assert report.passed == 1
 
     def test_range_min_fail(self) -> None:
         e = DataQualityEngine()
-        e.register(RuleSet(
-            record_type="x",
-            rules=[QualityRule(field="amount", kind=RuleKind.RANGE, min=0, max=100)],
-        ))
+        e.register(
+            RuleSet(
+                record_type="x",
+                rules=[
+                    QualityRule(field="amount", kind=RuleKind.RANGE, min=0, max=100)
+                ],
+            )
+        )
         report = e.check("x", [{"amount": -1}])
         assert report.failed == 1
 
     def test_range_max_fail(self) -> None:
         e = DataQualityEngine()
-        e.register(RuleSet(
-            record_type="x",
-            rules=[QualityRule(field="amount", kind=RuleKind.RANGE, min=0, max=100)],
-        ))
+        e.register(
+            RuleSet(
+                record_type="x",
+                rules=[
+                    QualityRule(field="amount", kind=RuleKind.RANGE, min=0, max=100)
+                ],
+            )
+        )
         report = e.check("x", [{"amount": 200}])
         assert report.failed == 1
 
     def test_range_non_numeric_fail(self) -> None:
         e = DataQualityEngine()
-        e.register(RuleSet(
-            record_type="x",
-            rules=[QualityRule(field="amount", kind=RuleKind.RANGE, min=0)],
-        ))
+        e.register(
+            RuleSet(
+                record_type="x",
+                rules=[QualityRule(field="amount", kind=RuleKind.RANGE, min=0)],
+            )
+        )
         report = e.check("x", [{"amount": "not-a-number"}])
         assert report.failed == 1
 
@@ -225,19 +251,31 @@ class TestCheckRange:
 class TestCheckFormat:
     def test_format_email_pass(self) -> None:
         e = DataQualityEngine()
-        e.register(RuleSet(
-            record_type="user",
-            rules=[QualityRule(field="email", kind=RuleKind.FORMAT, regex=r"^[^@]+@[^@]+$")],
-        ))
+        e.register(
+            RuleSet(
+                record_type="user",
+                rules=[
+                    QualityRule(
+                        field="email", kind=RuleKind.FORMAT, regex=r"^[^@]+@[^@]+$"
+                    )
+                ],
+            )
+        )
         report = e.check("user", [{"email": "alice@example.com"}])
         assert report.passed == 1
 
     def test_format_email_fail(self) -> None:
         e = DataQualityEngine()
-        e.register(RuleSet(
-            record_type="user",
-            rules=[QualityRule(field="email", kind=RuleKind.FORMAT, regex=r"^[^@]+@[^@]+$")],
-        ))
+        e.register(
+            RuleSet(
+                record_type="user",
+                rules=[
+                    QualityRule(
+                        field="email", kind=RuleKind.FORMAT, regex=r"^[^@]+@[^@]+$"
+                    )
+                ],
+            )
+        )
         report = e.check("user", [{"email": "not-an-email"}])
         assert report.failed == 1
 
@@ -245,19 +283,31 @@ class TestCheckFormat:
 class TestCheckEnum:
     def test_enum_pass(self) -> None:
         e = DataQualityEngine()
-        e.register(RuleSet(
-            record_type="order",
-            rules=[QualityRule(field="status", kind=RuleKind.ENUM, allowed=("active", "closed"))],
-        ))
+        e.register(
+            RuleSet(
+                record_type="order",
+                rules=[
+                    QualityRule(
+                        field="status", kind=RuleKind.ENUM, allowed=("active", "closed")
+                    )
+                ],
+            )
+        )
         report = e.check("order", [{"status": "active"}])
         assert report.passed == 1
 
     def test_enum_fail(self) -> None:
         e = DataQualityEngine()
-        e.register(RuleSet(
-            record_type="order",
-            rules=[QualityRule(field="status", kind=RuleKind.ENUM, allowed=("active", "closed"))],
-        ))
+        e.register(
+            RuleSet(
+                record_type="order",
+                rules=[
+                    QualityRule(
+                        field="status", kind=RuleKind.ENUM, allowed=("active", "closed")
+                    )
+                ],
+            )
+        )
         report = e.check("order", [{"status": "unknown"}])
         assert report.failed == 1
 
@@ -265,19 +315,21 @@ class TestCheckEnum:
 class TestCheckUnique:
     def test_unique_pass(self) -> None:
         e = DataQualityEngine()
-        e.register(RuleSet(
-            record_type="x",
-            rules=[QualityRule(field="id", kind=RuleKind.UNIQUE)],
-        ))
+        e.register(
+            RuleSet(
+                record_type="x", rules=[QualityRule(field="id", kind=RuleKind.UNIQUE)]
+            )
+        )
         report = e.check("x", [{"id": "a"}, {"id": "b"}, {"id": "c"}])
         assert report.passed == 3
 
     def test_unique_fail(self) -> None:
         e = DataQualityEngine()
-        e.register(RuleSet(
-            record_type="x",
-            rules=[QualityRule(field="id", kind=RuleKind.UNIQUE)],
-        ))
+        e.register(
+            RuleSet(
+                record_type="x", rules=[QualityRule(field="id", kind=RuleKind.UNIQUE)]
+            )
+        )
         report = e.check("x", [{"id": "a"}, {"id": "b"}, {"id": "a"}])
         assert report.passed == 2
         assert report.failed == 1
@@ -291,10 +343,12 @@ class TestCheckCustom:
         def is_even(record):
             return record["n"] % 2 == 0
 
-        e.register(RuleSet(
-            record_type="x",
-            rules=[QualityRule(field="n", kind=RuleKind.CUSTOM, custom_fn=is_even)],
-        ))
+        e.register(
+            RuleSet(
+                record_type="x",
+                rules=[QualityRule(field="n", kind=RuleKind.CUSTOM, custom_fn=is_even)],
+            )
+        )
         report = e.check("x", [{"n": 2}, {"n": 4}])
         assert report.passed == 2
 
@@ -304,10 +358,12 @@ class TestCheckCustom:
         def is_even(record):
             return record["n"] % 2 == 0
 
-        e.register(RuleSet(
-            record_type="x",
-            rules=[QualityRule(field="n", kind=RuleKind.CUSTOM, custom_fn=is_even)],
-        ))
+        e.register(
+            RuleSet(
+                record_type="x",
+                rules=[QualityRule(field="n", kind=RuleKind.CUSTOM, custom_fn=is_even)],
+            )
+        )
         report = e.check("x", [{"n": 2}, {"n": 3}])
         assert report.failed == 1
 
@@ -317,10 +373,12 @@ class TestCheckCustom:
         def bad_fn(record):
             raise ValueError("boom")
 
-        e.register(RuleSet(
-            record_type="x",
-            rules=[QualityRule(field="n", kind=RuleKind.CUSTOM, custom_fn=bad_fn)],
-        ))
+        e.register(
+            RuleSet(
+                record_type="x",
+                rules=[QualityRule(field="n", kind=RuleKind.CUSTOM, custom_fn=bad_fn)],
+            )
+        )
         report = e.check("x", [{"n": 1}])
         assert report.failed == 1
         assert "custom raised" in report.violations[0].reason
@@ -337,10 +395,11 @@ class TestCheckNoRuleSet:
 class TestQuarantine:
     def test_quarantine_on_failure(self) -> None:
         e = DataQualityEngine()
-        e.register(RuleSet(
-            record_type="x",
-            rules=[QualityRule(field="id", kind=RuleKind.NON_NULL)],
-        ))
+        e.register(
+            RuleSet(
+                record_type="x", rules=[QualityRule(field="id", kind=RuleKind.NON_NULL)]
+            )
+        )
         e.check("x", [{"id": None}, {"id": "ok"}])
         assert e.quarantine_size() == 1
         quarantined = e.get_quarantine()
@@ -378,10 +437,12 @@ class TestObjectRecords:
                 self.amount = amount
 
         e = DataQualityEngine()
-        e.register(RuleSet(
-            record_type="order",
-            rules=[QualityRule(field="id", kind=RuleKind.NON_NULL)],
-        ))
+        e.register(
+            RuleSet(
+                record_type="order",
+                rules=[QualityRule(field="id", kind=RuleKind.NON_NULL)],
+            )
+        )
         report = e.check("order", [Order("o1", 100), Order(None, 200)])
         assert report.passed == 1
         assert report.failed == 1
@@ -412,25 +473,42 @@ class TestRealisticExample:
 
     def test_order_validation(self) -> None:
         engine = get_data_quality_engine()
-        engine.register(RuleSet(
-            record_type="order",
-            rules=[
-                QualityRule(field="id", kind=RuleKind.NON_NULL),
-                QualityRule(field="id", kind=RuleKind.UNIQUE),
-                QualityRule(field="amount", kind=RuleKind.RANGE, min=0, max=1_000_000),
-                QualityRule(field="email", kind=RuleKind.FORMAT, regex=r"^[^@]+@[^@]+$"),
-                QualityRule(
-                    field="status", kind=RuleKind.ENUM,
-                    allowed=("new", "paid", "shipped", "delivered"),
-                ),
-            ],
-        ))
+        engine.register(
+            RuleSet(
+                record_type="order",
+                rules=[
+                    QualityRule(field="id", kind=RuleKind.NON_NULL),
+                    QualityRule(field="id", kind=RuleKind.UNIQUE),
+                    QualityRule(
+                        field="amount", kind=RuleKind.RANGE, min=0, max=1_000_000
+                    ),
+                    QualityRule(
+                        field="email", kind=RuleKind.FORMAT, regex=r"^[^@]+@[^@]+$"
+                    ),
+                    QualityRule(
+                        field="status",
+                        kind=RuleKind.ENUM,
+                        allowed=("new", "paid", "shipped", "delivered"),
+                    ),
+                ],
+            )
+        )
         records = [
             {"id": "o1", "amount": 100, "email": "alice@x.com", "status": "new"},
-            {"id": "o2", "amount": -5, "email": "bob@x.com", "status": "new"},  # bad amount
+            {
+                "id": "o2",
+                "amount": -5,
+                "email": "bob@x.com",
+                "status": "new",
+            },  # bad amount
             {"id": "o1", "amount": 50, "email": "x@y.com", "status": "new"},  # dup id
             {"id": "o4", "amount": 100, "email": "bad", "status": "new"},  # bad email
-            {"id": "o5", "amount": 100, "email": "e@x.com", "status": "bad"},  # bad enum
+            {
+                "id": "o5",
+                "amount": 100,
+                "email": "e@x.com",
+                "status": "bad",
+            },  # bad enum
         ]
         report = engine.check("order", records)
         assert report.total == 5

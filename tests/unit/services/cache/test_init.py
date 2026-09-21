@@ -38,8 +38,9 @@ def test_get_unified_cache_facade_extension_path() -> None:
     from src.backend.services.cache import get_unified_cache_facade
 
     fake_facade = MagicMock()
-    with patch("src.backend.core.svcs_registry.has_service", return_value=True), patch(
-        "src.backend.core.svcs_registry.get_service", return_value=fake_facade
+    with (
+        patch("src.backend.core.svcs_registry.has_service", return_value=True),
+        patch("src.backend.core.svcs_registry.get_service", return_value=fake_facade),
     ):
         result = get_unified_cache_facade(plugin="extension")
     assert result is fake_facade
@@ -55,8 +56,9 @@ def test_get_unified_cache_facade_non_extension_returns_new_instance() -> None:
     fake_facade._disk = MagicMock()
     fake_facade._check = MagicMock()
 
-    with patch("src.backend.core.svcs_registry.has_service", return_value=True), patch(
-        "src.backend.core.svcs_registry.get_service", return_value=fake_facade
+    with (
+        patch("src.backend.core.svcs_registry.has_service", return_value=True),
+        patch("src.backend.core.svcs_registry.get_service", return_value=fake_facade),
     ):
         result = get_unified_cache_facade(plugin="my_plugin")
 
@@ -67,6 +69,7 @@ def test_get_unified_cache_facade_non_extension_returns_new_instance() -> None:
 def test_get_unified_cache_facade_raises_when_not_registered() -> None:
     """get_unified_cache_facade → RuntimeError если facade не зарегистрирован."""
     import pytest
+
     from src.backend.services.cache import get_unified_cache_facade
 
     with patch("src.backend.core.svcs_registry.has_service", return_value=False):

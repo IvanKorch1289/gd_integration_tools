@@ -13,9 +13,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-import pytest
 from pydantic import BaseModel
 
 from src.backend.dsl.blueprints._python_blueprints import (
@@ -164,47 +161,35 @@ class TestFileWatchParseValidateAction:
     def test_returns_pipeline(self) -> None:
         """Функция возвращает ``Pipeline``."""
         p = file_watch_parse_validate_action(
-            route_id="fw",
-            watch_path="/tmp/inbox",
-            action="process_file",
+            route_id="fw", watch_path="/tmp/inbox", action="process_file"
         )
         assert isinstance(p, Pipeline)
 
     def test_route_id(self) -> None:
         """``Pipeline.route_id``."""
         p = file_watch_parse_validate_action(
-            route_id="fw-r",
-            watch_path="/data",
-            action="process",
+            route_id="fw-r", watch_path="/data", action="process"
         )
         assert p.route_id == "fw-r"
 
     def test_default_file_glob(self) -> None:
         """``file_glob='*.json'`` default → отражено в pipeline source."""
         p = file_watch_parse_validate_action(
-            route_id="fw",
-            watch_path="/data",
-            action="process",
+            route_id="fw", watch_path="/data", action="process"
         )
         assert isinstance(p, Pipeline)
 
     def test_custom_file_glob(self) -> None:
         """Custom file_glob."""
         p = file_watch_parse_validate_action(
-            route_id="fw",
-            watch_path="/data",
-            file_glob="*.csv",
-            action="process",
+            route_id="fw", watch_path="/data", file_glob="*.csv", action="process"
         )
         assert isinstance(p, Pipeline)
 
     def test_with_schema(self) -> None:
         """``schema=Model`` → добавляет normalize + validate шаги."""
         p = file_watch_parse_validate_action(
-            route_id="fw",
-            watch_path="/data",
-            schema=_SampleSchema,
-            action="process",
+            route_id="fw", watch_path="/data", schema=_SampleSchema, action="process"
         )
         # schema добавляет processors.
         assert isinstance(p, Pipeline)
@@ -213,9 +198,7 @@ class TestFileWatchParseValidateAction:
     def test_default_description(self) -> None:
         """Auto description."""
         p = file_watch_parse_validate_action(
-            route_id="fw",
-            watch_path="/data/inbox",
-            action="process",
+            route_id="fw", watch_path="/data/inbox", action="process"
         )
         assert "File watch" in p.description or "/data/inbox" in p.description
 
@@ -245,18 +228,14 @@ class TestRequestResponseWithCompensation:
     def test_route_id(self) -> None:
         """``Pipeline.route_id``."""
         p = request_response_with_compensation(
-            route_id="my-saga",
-            request_url="https://x",
-            compensate_url="https://y",
+            route_id="my-saga", request_url="https://x", compensate_url="https://y"
         )
         assert p.route_id == "my-saga"
 
     def test_default_request_method(self) -> None:
         """``request_method='POST'`` default."""
         p = request_response_with_compensation(
-            route_id="r",
-            request_url="https://x",
-            compensate_url="https://y",
+            route_id="r", request_url="https://x", compensate_url="https://y"
         )
         assert isinstance(p, Pipeline)
 
@@ -292,16 +271,14 @@ class TestRequestResponseWithCompensation:
 
     def test_with_extra_processors(self) -> None:
         """``extra_processors`` добавляются в pipeline."""
-        from src.backend.dsl.engine.processors.components import (
-            HttpCallProcessor,
-        )
+        from src.backend.dsl.engine.processors.components import HttpCallProcessor
 
         p = request_response_with_compensation(
             route_id="r",
             request_url="https://x",
             compensate_url="https://y",
             extra_processors=[
-                HttpCallProcessor(url="https://extra", method="GET", timeout=5),
+                HttpCallProcessor(url="https://extra", method="GET", timeout=5)
             ],
         )
         assert isinstance(p, Pipeline)

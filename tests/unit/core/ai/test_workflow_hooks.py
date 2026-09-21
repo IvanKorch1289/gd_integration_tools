@@ -24,16 +24,14 @@ class TestBankingTransactionHook:
     def test_non_banking_workflow_allows(self) -> None:
         """Non-banking workflow — allow."""
         decision = banking_transaction_hook(
-            subject="user:1",
-            context={"workflow": "data.process"},
+            subject="user:1", context={"workflow": "data.process"}
         )
         assert decision.allowed is True
 
     def test_banking_workflow_returns_low_threat(self) -> None:
         """Banking workflow → LOW threat, allowed."""
         decision = banking_transaction_hook(
-            subject="user:1",
-            context={"workflow": "banking.payment"},
+            subject="user:1", context={"workflow": "banking.payment"}
         )
         assert decision.allowed is True
         assert decision.threat_level == ThreatLevel.LOW
@@ -46,8 +44,7 @@ class TestRPABrowserHook:
     def test_non_rpa_workflow_allows(self) -> None:
         """Non-RPA workflow — allow."""
         decision = rpa_browser_hook(
-            subject="bot:1",
-            context={"workflow": "data.export"},
+            subject="bot:1", context={"workflow": "data.export"}
         )
         assert decision.allowed is True
 
@@ -55,10 +52,7 @@ class TestRPABrowserHook:
         """RPA + /tmp/ path — block."""
         decision = rpa_browser_hook(
             subject="bot:1",
-            context={
-                "workflow": "rpa.browser.click",
-                "file_path": "/tmp/data.csv",
-            },
+            context={"workflow": "rpa.browser.click", "file_path": "/tmp/data.csv"},
         )
         assert decision.allowed is False
         assert decision.threat_level == ThreatLevel.HIGH
@@ -67,10 +61,7 @@ class TestRPABrowserHook:
         """RPA + safe path — allow."""
         decision = rpa_browser_hook(
             subject="bot:1",
-            context={
-                "workflow": "rpa.browser.click",
-                "file_path": "/work/data.csv",
-            },
+            context={"workflow": "rpa.browser.click", "file_path": "/work/data.csv"},
         )
         assert decision.allowed is True
 
@@ -81,8 +72,7 @@ class TestCodeGenerationHook:
     def test_non_code_generation_workflow_allows(self) -> None:
         """Non-code-generation workflow — allow."""
         decision = code_generation_hook(
-            subject="agent:1",
-            context={"workflow": "data.process"},
+            subject="agent:1", context={"workflow": "data.process"}
         )
         assert decision.allowed is True
 
@@ -90,10 +80,7 @@ class TestCodeGenerationHook:
         """Code gen + /etc/ path — block."""
         decision = code_generation_hook(
             subject="agent:1",
-            context={
-                "workflow": "code_generation.python",
-                "file_path": "/etc/passwd",
-            },
+            context={"workflow": "code_generation.python", "file_path": "/etc/passwd"},
         )
         assert decision.allowed is False
         assert decision.threat_level == ThreatLevel.CRITICAL
@@ -116,8 +103,7 @@ class TestDataExportHook:
     def test_non_data_export_workflow_allows(self) -> None:
         """Non-export workflow — allow."""
         decision = data_export_hook(
-            subject="user:1",
-            context={"workflow": "data.process", "row_count": 1000},
+            subject="user:1", context={"workflow": "data.process", "row_count": 1000}
         )
         assert decision.allowed is True
 

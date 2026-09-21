@@ -2,6 +2,7 @@
 
 Thin wrapper для запуска sub-workflow из текущего workflow.
 """
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -20,10 +21,10 @@ def _bypass_auth() -> None:
     )
 
     WorkflowSubprocessProcessor.auth_check = AsyncMock(  # type: ignore[method-assign]
-        return_value=True,
+        return_value=True
     )
     WorkflowConvertProcessor.auth_check = AsyncMock(  # type: ignore[method-assign]
-        return_value=True,
+        return_value=True
     )
 
 
@@ -50,10 +51,7 @@ class TestRunWorkflowByIdStandaloneGuard:
                 "src.backend.infrastructure.workflow.factory.create_workflow_backend",
                 new=AsyncMock(return_value=backend),
             ),
-            patch(
-                "src.backend.core.di.app_state.get_app_ref",
-                return_value=mock_app,
-            ),
+            patch("src.backend.core.di.app_state.get_app_ref", return_value=mock_app),
             patch(
                 "src.backend.core.config.features.feature_flags",
                 new=MagicMock(workflow_subprocess_require_parent=True),
@@ -62,8 +60,9 @@ class TestRunWorkflowByIdStandaloneGuard:
             from src.backend.dsl.engine.processors.workflow.workflow_subprocess import (
                 run_workflow_by_id,
             )
+
             result = await run_workflow_by_id(
-                "child_wf", input_data={"x": 1}, timeout=10.0,
+                "child_wf", input_data={"x": 1}, timeout=10.0
             )
 
         # Standalone заблокирован.
@@ -94,10 +93,7 @@ class TestRunWorkflowByIdStandaloneGuard:
                 "src.backend.infrastructure.workflow.factory.create_workflow_backend",
                 new=AsyncMock(return_value=backend),
             ),
-            patch(
-                "src.backend.core.di.app_state.get_app_ref",
-                return_value=mock_app,
-            ),
+            patch("src.backend.core.di.app_state.get_app_ref", return_value=mock_app),
             patch(
                 "src.backend.core.config.features.feature_flags",
                 new=MagicMock(workflow_subprocess_require_parent=False),
@@ -106,8 +102,9 @@ class TestRunWorkflowByIdStandaloneGuard:
             from src.backend.dsl.engine.processors.workflow.workflow_subprocess import (
                 run_workflow_by_id,
             )
+
             result = await run_workflow_by_id(
-                "child_wf", input_data={"x": 1}, timeout=10.0,
+                "child_wf", input_data={"x": 1}, timeout=10.0
             )
 
         # Standalone прошёл, backend вызван.
@@ -141,7 +138,7 @@ class TestRunWorkflowByIdReal:
             )
 
             result = await run_workflow_by_id(
-                "child_wf", input_data={"x": 1}, timeout=30.0,
+                "child_wf", input_data={"x": 1}, timeout=30.0
             )
 
         # Реальные поля от backend, не stub:
@@ -171,7 +168,7 @@ class TestRunWorkflowByIdReal:
             )
 
             result = await run_workflow_by_id(
-                "child_wf", input_data={"x": 1}, timeout=30.0,
+                "child_wf", input_data={"x": 1}, timeout=30.0
             )
 
         # Fallback тоже падает (тот же mock) — backend = None,
@@ -185,8 +182,9 @@ class TestWorkflowSubprocessProcessor:
         from src.backend.dsl.engine.processors.workflow.workflow_subprocess import (
             WorkflowSubprocessProcessor,
         )
+
         p = WorkflowSubprocessProcessor(
-            workflow_id="child_wf", input_from="body", to="body.subprocess_result",
+            workflow_id="child_wf", input_from="body", to="body.subprocess_result"
         )
         assert p.workflow_id == "child_wf"
         assert p.input_from == "body"
@@ -196,8 +194,9 @@ class TestWorkflowSubprocessProcessor:
         from src.backend.dsl.engine.processors.workflow.workflow_subprocess import (
             WorkflowSubprocessProcessor,
         )
+
         p = WorkflowSubprocessProcessor(
-            workflow_id="child_wf", input_from="body", to="body.subprocess_result",
+            workflow_id="child_wf", input_from="body", to="body.subprocess_result"
         )
         ex = MagicMock()
         ex.in_message = MagicMock()
@@ -222,10 +221,13 @@ class TestWorkflowSubprocessProcessor:
         from src.backend.dsl.engine.processors.workflow.workflow_subprocess import (
             WorkflowSubprocessProcessor,
         )
+
         p = WorkflowSubprocessProcessor(workflow_id="missing_wf")
         ex = MagicMock()
+
         class _Msg:
             pass
+
         ex.in_message = _Msg()
         ex.in_message.body = {}
         ex.set_property = MagicMock()
@@ -248,8 +250,9 @@ class TestWorkflowConvertProcessor:
         from src.backend.dsl.engine.processors.workflow.workflow_convert import (
             WorkflowConvertProcessor,
         )
+
         p = WorkflowConvertProcessor(
-            from_format="json", to_format="yaml", source_property="body.a",
+            from_format="json", to_format="yaml", source_property="body.a"
         )
         assert p.from_format == "json"
         assert p.to_format == "yaml"
@@ -259,8 +262,9 @@ class TestWorkflowConvertProcessor:
         from src.backend.dsl.engine.processors.workflow.workflow_convert import (
             WorkflowConvertProcessor,
         )
+
         p = WorkflowConvertProcessor(
-            from_format="json", to_format="yaml", source_property="body",
+            from_format="json", to_format="yaml", source_property="body"
         )
         ex = MagicMock()
         ex.in_message = MagicMock()

@@ -64,6 +64,7 @@ class TestBreakerLikeProtocol:
 
     def test_protocol_structure(self) -> None:
         """Проверяет что Protocol имеет ожидаемые методы."""
+
         # Protocol проверяется через наличие методов на duck-typed объекте
         class MockBreaker:
             def is_open(self) -> bool:
@@ -244,9 +245,7 @@ class TestSlidingWindowBreaker:
         import asyncio
 
         async def run_test() -> None:
-            spec = BreakerSpec(
-                failure_threshold=2, excluded_exceptions=(KeyError,),
-            )
+            spec = BreakerSpec(failure_threshold=2, excluded_exceptions=(KeyError,))
             breaker = SlidingWindowBreaker(name="test_route", spec=spec)
 
             # KeyError не должно считаться

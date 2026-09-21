@@ -11,7 +11,6 @@
 T-P0.1.20 — P0 v9 small worst-файл, цель 80%+ coverage.
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -73,7 +72,7 @@ class TestCreateExchange:
         adapter = SoapAdapter()
 
         exchange = await adapter.create_exchange(
-            {"operation": "Ping", "payload": {"x": 1}},
+            {"operation": "Ping", "payload": {"x": 1}}
         )
 
         assert exchange.in_message.body == {"x": 1}

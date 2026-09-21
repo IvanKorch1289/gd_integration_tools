@@ -118,12 +118,7 @@ class TestCLIMain:
 
     def test_cli_max_100_passes(self) -> None:
         result = subprocess.run(
-            [
-                sys.executable,
-                "tools/checks/check_routebuilder_mro.py",
-                "--max",
-                "100",
-            ],
+            [sys.executable, "tools/checks/check_routebuilder_mro.py", "--max", "100"],
             capture_output=True,
             text=True,
         )
@@ -132,11 +127,7 @@ class TestCLIMain:
 
     def test_cli_info_prints_breakdown(self) -> None:
         result = subprocess.run(
-            [
-                sys.executable,
-                "tools/checks/check_routebuilder_mro.py",
-                "--info",
-            ],
+            [sys.executable, "tools/checks/check_routebuilder_mro.py", "--info"],
             capture_output=True,
             text=True,
         )

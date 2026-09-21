@@ -19,18 +19,11 @@ from src.backend.services.storage import StorageFacade, get_storage_facade
 class TestStorageFacadeAllExports:
     """``__all__`` audit + class/function identity."""
 
-    @pytest.mark.parametrize(
-        "symbol_name",
-        ["StorageFacade", "get_storage_facade"],
-    )
+    @pytest.mark.parametrize("symbol_name", ["StorageFacade", "get_storage_facade"])
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(storage, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
-        assert symbol_name in storage.__all__, (
-            f"{symbol_name} not declared in __all__"
-        )
+        assert hasattr(storage, symbol_name), f"Missing export: {symbol_name}"
+        assert symbol_name in storage.__all__, f"{symbol_name} not declared in __all__"
 
     def test_all_declared_count(self) -> None:
         """``__all__`` содержит 2 символа."""

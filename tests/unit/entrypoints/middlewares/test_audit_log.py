@@ -1,6 +1,5 @@
 """Unit tests for AuditLogMiddleware (cycle 48 pure ASGI)."""
 
-
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -28,7 +27,7 @@ def _downstream_ok(status_code: int = 200, body: bytes = b"ok"):
                 break
             more_body = msg.get("more_body", False)
         await send(
-            {"type": "http.response.start", "status": status_code, "headers": []},
+            {"type": "http.response.start", "status": status_code, "headers": []}
         )
         await send({"type": "http.response.body", "body": body})
 
@@ -57,6 +56,7 @@ def _make_scope(
 def _make_receive(body: bytes = b""):
     async def receive():
         return {"type": "http.request", "body": body, "more_body": False}
+
     return receive
 
 
@@ -72,7 +72,7 @@ class TestAuditLogMiddleware:
 
     @pytest.mark.asyncio
     async def test_logs_and_returns_response(
-        self, middleware: AuditLogMiddleware,
+        self, middleware: AuditLogMiddleware
     ) -> None:
         """Happy path: logs audit event and returns response."""
         app = AsyncMock()
@@ -94,10 +94,7 @@ class TestAuditLogMiddleware:
                 _make_scope(
                     "POST",
                     "/api",
-                    headers=[
-                        (b"host", b"test"),
-                        (b"user-agent", b"pytest"),
-                    ],
+                    headers=[(b"host", b"test"), (b"user-agent", b"pytest")],
                     state={
                         "auth": type("A", (), {"principal": "client-42"})(),
                         "request_id": "req-1",
@@ -153,13 +150,14 @@ class TestAuditLogMiddleware:
         audit_event = call_args.kwargs["extra"]
         # payload_hash из cached body (не из receive).
         from src.backend.entrypoints.middlewares import _body_hash
+
         assert audit_event["payload_hash"] == _body_hash.payload_hash(
-            b"cached", prefix_len=16,
+            b"cached", prefix_len=16
         )
 
     @pytest.mark.asyncio
     async def test_body_read_failure_graceful(
-        self, middleware: AuditLogMiddleware,
+        self, middleware: AuditLogMiddleware
     ) -> None:
         """Pure ASGI: graceful fallback когда body read fails (http.disconnect)."""
         app = AsyncMock()
@@ -181,11 +179,7 @@ class TestAuditLogMiddleware:
             ),
         ):
             send = AsyncMock()
-            await middleware(
-                _make_scope("POST", "/api"),
-                disconnect_receive,
-                send,
-            )
+            await middleware(_make_scope("POST", "/api"), disconnect_receive, send)
 
         # 200 — audit emit'd даже без body.
         start = _start_message(send)
@@ -214,11 +208,7 @@ class TestAuditLogMiddleware:
         ):
             send = AsyncMock()
             # Должен НЕ raise — audit failure silent.
-            await middleware(
-                _make_scope("GET", "/api"),
-                _make_receive(),
-                send,
-            )
+            await middleware(_make_scope("GET", "/api"), _make_receive(), send)
 
         start = _start_message(send)
         assert start is not None
@@ -226,7 +216,7 @@ class TestAuditLogMiddleware:
 
     @pytest.mark.asyncio
     async def test_clickhouse_failure_ignored(
-        self, middleware: AuditLogMiddleware,
+        self, middleware: AuditLogMiddleware
     ) -> None:
         """ClickHouse insert error is silently ignored."""
         app = AsyncMock()
@@ -248,11 +238,7 @@ class TestAuditLogMiddleware:
         ):
             send = AsyncMock()
             # Должен НЕ raise.
-            await middleware(
-                _make_scope("GET", "/api"),
-                _make_receive(),
-                send,
-            )
+            await middleware(_make_scope("GET", "/api"), _make_receive(), send)
 
         start = _start_message(send)
         assert start is not None
@@ -278,9 +264,7 @@ class TestAuditLogMiddleware:
             send = AsyncMock()
             # Без 'client' в scope.
             await middleware(
-                _make_scope("GET", "/api", client=None),
-                _make_receive(),
-                send,
+                _make_scope("GET", "/api", client=None), _make_receive(), send
             )
 
         call_args = middleware.logger.info.call_args
@@ -300,11 +284,7 @@ class TestAuditLogMiddleware:
         mw.logger = MagicMock()
 
         send = AsyncMock()
-        await mw(
-            {"type": "websocket", "path": "/ws", "headers": []},
-            AsyncMock(),
-            send,
-        )
+        await mw({"type": "websocket", "path": "/ws", "headers": []}, AsyncMock(), send)
 
         # websocket.accept прошёл, logger НЕ вызван.
         msgs = [c.args[0] for c in send.await_args_list]
@@ -345,11 +325,7 @@ class TestAuditLogMiddleware:
             ),
         ):
             send = AsyncMock()
-            await mw(
-                _make_scope("POST", "/api"),
-                _make_receive(b"audit-payload"),
-                send,
-            )
+            await mw(_make_scope("POST", "/api"), _make_receive(b"audit-payload"), send)
 
         # Downstream прочитал body через replay.
         assert captured_body["body"] == b"audit-payload"
@@ -431,11 +407,7 @@ class TestAuditLogMiddleware:
         ):
             send = AsyncMock()
             # Должен НЕ raise — logger bug logged, не propagated.
-            await mw(
-                _make_scope("GET", "/api"),
-                _make_receive(),
-                send,
-            )
+            await mw(_make_scope("GET", "/api"), _make_receive(), send)
 
         # 200 — request не сломан.
         start = _start_message(send)

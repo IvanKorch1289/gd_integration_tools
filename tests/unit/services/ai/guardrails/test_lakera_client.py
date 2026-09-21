@@ -3,6 +3,7 @@
 Lakera is the PII/guardrail provider. Construction without API key
 must fail-closed (P0-S2 audit fix).
 """
+
 from __future__ import annotations
 
 import pytest
@@ -11,7 +12,9 @@ import pytest
 class TestLakeraClientFailClosed:
     """Lakera client должен fail-closed без LAKERA_API_KEY (P0-S2)."""
 
-    def test_no_api_key_raises_unavailable(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_no_api_key_raises_unavailable(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Sprint 7 P0-S2: construction without API key → raises LakeraGuardrailUnavailableError."""
         monkeypatch.delenv("LAKERA_API_KEY", raising=False)
 
@@ -41,9 +44,7 @@ class TestLakeraClientFailClosed:
 class TestLakeraClientAvailable:
     """When LAKERA_API_KEY is set, client should construct successfully."""
 
-    def test_with_api_key_constructs(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_with_api_key_constructs(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("LAKERA_API_KEY", "test-key-12345")
 
         from src.backend.services.ai.guardrails.lakera_client import LakeraClient

@@ -17,7 +17,7 @@ import pytest
 
 
 def pytest_collection_modifyitems(
-    config: pytest.Config, items: list[pytest.Item],
+    config: pytest.Config, items: list[pytest.Item]
 ) -> None:
     """Авто-помечает все тесты в этом каталоге маркерами chaos и requires_toxiproxy.
 

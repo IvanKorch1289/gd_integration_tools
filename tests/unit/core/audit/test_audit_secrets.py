@@ -29,14 +29,14 @@ def captured_emits() -> list[dict[str, object]]:
 @pytest.fixture
 def mock_emit_audit(captured_emits: list[dict[str, object]]) -> None:
     """Подменяет ``emit_audit`` в submodule на capture-list appender."""
+
     async def fake_emit_audit(**kwargs: object) -> None:
         captured_emits.append(kwargs)
 
     sync_def = lambda **kwargs: captured_emits.append(kwargs) or None  # noqa: E731
 
     with patch(
-        "src.backend.core.audit.facade.secrets.emit_audit",
-        side_effect=sync_def,
+        "src.backend.core.audit.facade.secrets.emit_audit", side_effect=sync_def
     ):
         yield
 
@@ -46,8 +46,7 @@ class TestEmitSecretRotation:
     """``emit_secret_rotation`` — sync wrapper (Path A pattern C)."""
 
     def test_emits_rotation_event_with_full_kwargs(
-        self,
-        captured_emits: list[dict[str, object]],
+        self, captured_emits: list[dict[str, object]]
     ) -> None:
         """``emit_secret_rotation`` формирует details + передаёт все kwargs."""
         with patch(
@@ -76,8 +75,7 @@ class TestEmitSecretRotation:
         assert "error_class" not in details  # None → key omitted
 
     def test_emits_rotation_with_error_class(
-        self,
-        captured_emits: list[dict[str, object]],
+        self, captured_emits: list[dict[str, object]]
     ) -> None:
         """``error_class`` not-None → добавляется в details."""
         with patch(
@@ -104,16 +102,15 @@ class TestEmitSecretAccess:
 
     @pytest.mark.asyncio
     async def test_emits_access_event_cache_hit_success(
-        self,
-        captured_emits: list[dict[str, object]],
+        self, captured_emits: list[dict[str, object]]
     ) -> None:
         """``emit_secret_access`` — cache hit, success path."""
+
         async def fake_emit(**kw: object) -> None:
             captured_emits.append(kw)
 
         with patch(
-            "src.backend.core.audit.facade.secrets.emit_audit",
-            side_effect=fake_emit,
+            "src.backend.core.audit.facade.secrets.emit_audit", side_effect=fake_emit
         ):
             await emit_secret_access(
                 credential_name="db_pwd",
@@ -136,16 +133,15 @@ class TestEmitSecretAccess:
 
     @pytest.mark.asyncio
     async def test_emits_access_event_cache_miss_failure_with_error(
-        self,
-        captured_emits: list[dict[str, object]],
+        self, captured_emits: list[dict[str, object]]
     ) -> None:
         """``emit_secret_access`` — cache miss, failure с error_class."""
+
         async def fake_emit(**kw: object) -> None:
             captured_emits.append(kw)
 
         with patch(
-            "src.backend.core.audit.facade.secrets.emit_audit",
-            side_effect=fake_emit,
+            "src.backend.core.audit.facade.secrets.emit_audit", side_effect=fake_emit
         ):
             await emit_secret_access(
                 credential_name="api_token",
@@ -164,12 +160,12 @@ class TestEmitSecretAccess:
     @pytest.mark.asyncio
     async def test_swallows_import_error(self) -> None:
         """``ImportError`` от ``emit_audit`` → swallowed + DEBUG log, no raise."""
+
         async def fake_emit(**kw: object) -> None:
             raise ImportError("audit facade missing")
 
         with patch(
-            "src.backend.core.audit.facade.secrets.emit_audit",
-            side_effect=fake_emit,
+            "src.backend.core.audit.facade.secrets.emit_audit", side_effect=fake_emit
         ):
             # Не должно raise.
             await emit_secret_access(
@@ -183,12 +179,12 @@ class TestEmitSecretAccess:
     @pytest.mark.asyncio
     async def test_swallows_attribute_error(self) -> None:
         """``AttributeError`` → swallowed (API change)."""
+
         async def fake_emit(**kw: object) -> None:
             raise AttributeError("emit_audit missing")
 
         with patch(
-            "src.backend.core.audit.facade.secrets.emit_audit",
-            side_effect=fake_emit,
+            "src.backend.core.audit.facade.secrets.emit_audit", side_effect=fake_emit
         ):
             await emit_secret_access(
                 credential_name="x",
@@ -201,12 +197,12 @@ class TestEmitSecretAccess:
     @pytest.mark.asyncio
     async def test_swallows_runtime_error(self) -> None:
         """``RuntimeError`` → swallowed (backend unavailable)."""
+
         async def fake_emit(**kw: object) -> None:
             raise RuntimeError("backend unavailable")
 
         with patch(
-            "src.backend.core.audit.facade.secrets.emit_audit",
-            side_effect=fake_emit,
+            "src.backend.core.audit.facade.secrets.emit_audit", side_effect=fake_emit
         ):
             await emit_secret_access(
                 credential_name="x",
@@ -219,12 +215,12 @@ class TestEmitSecretAccess:
     @pytest.mark.asyncio
     async def test_does_not_swallow_unexpected_exception(self) -> None:
         """``ValueError`` (не в narrow-list) → пробрасывается."""
+
         async def fake_emit(**kw: object) -> None:
             raise ValueError("unexpected")
 
         with patch(
-            "src.backend.core.audit.facade.secrets.emit_audit",
-            side_effect=fake_emit,
+            "src.backend.core.audit.facade.secrets.emit_audit", side_effect=fake_emit
         ):
             with pytest.raises(ValueError, match="unexpected"):
                 await emit_secret_access(

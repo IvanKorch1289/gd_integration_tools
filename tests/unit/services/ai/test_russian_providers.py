@@ -9,10 +9,10 @@
 - ``RuntimeError("API key not set")`` если ключ пустой
 - Один позитивный smoke-тест: extract_text парсит dict
 """
+
 from __future__ import annotations
 
 import pytest
-
 
 
 def test_yandexgpt_instantiation_with_defaults() -> None:
@@ -55,9 +55,7 @@ def test_yandexgpt_extract_text() -> None:
 
     p = YandexGPTProvider()
     response = {
-        "choices": [
-            {"message": {"role": "assistant", "content": "Привет, мир!"}},
-        ],
+        "choices": [{"message": {"role": "assistant", "content": "Привет, мир!"}}]
     }
     assert p.extract_text(response) == "Привет, мир!"
 
@@ -104,7 +102,9 @@ def test_settings_classes_loaded() -> None:
 
 
 @pytest.mark.asyncio
-async def test_yandexgpt_chat_raises_without_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_yandexgpt_chat_raises_without_api_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """``chat()`` без API key → ``RuntimeError("API key not set")``."""
     from src.backend.core.config.ai import yandexgpt_settings
     from src.backend.services.ai.ai_providers.russian import YandexGPTProvider

@@ -60,10 +60,10 @@ def _config_from_stub(stub: dict[str, Any]) -> SamlConfig:
 
 
 @pytest.mark.parametrize(
-    "idp_fixture", ["okta_stub_metadata", "azure_ad_stub_metadata"],
+    "idp_fixture", ["okta_stub_metadata", "azure_ad_stub_metadata"]
 )
 def test_login_redirect_url_matrix(
-    request: pytest.FixtureRequest, idp_fixture: str,
+    request: pytest.FixtureRequest, idp_fixture: str
 ) -> None:
     """Проверяет, что :meth:`build_login_redirect_url` валиден для каждого IdP.
 
@@ -112,15 +112,13 @@ def test_assertion_decoded_returns_principal_and_attributes(
 # ---------------------------------------------------------------------------
 
 
-def test_logout_redirect_for_azure_ad(
-    azure_ad_stub_metadata: dict[str, Any],
-) -> None:
+def test_logout_redirect_for_azure_ad(azure_ad_stub_metadata: dict[str, Any]) -> None:
     """SLO redirect содержит ``SessionIndex`` и ``NameID``."""
     config = _config_from_stub(azure_ad_stub_metadata)
     backend = SamlBackend(config=config)
 
     url = backend.build_logout_redirect_url(
-        session_index="azure-sess-42", name_id="bob@example.com",
+        session_index="azure-sess-42", name_id="bob@example.com"
     )
 
     assert azure_ad_stub_metadata["slo_url"] in url
@@ -153,9 +151,7 @@ def test_replay_defence_blocks_reuse_of_request_id(
 # ---------------------------------------------------------------------------
 
 
-def test_keycloak_saml_descriptor_accessible(
-    keycloak_container: Any,
-) -> None:
+def test_keycloak_saml_descriptor_accessible(keycloak_container: Any) -> None:
     """Realm Keycloak отдаёт SAML descriptor XML (HTTP 200 + XML-payload).
 
     Тест пропускается если Docker/testcontainers недоступны (фикстура

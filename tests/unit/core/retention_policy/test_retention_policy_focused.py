@@ -110,9 +110,7 @@ class TestEvaluateNoPolicy:
 class TestEvaluateRetention:
     def test_within_window(self) -> None:
         e = RetentionEngine()
-        e.register(RetentionPolicy(
-            data_type="session", retention_days=1,
-        ))
+        e.register(RetentionPolicy(data_type="session", retention_days=1))
         verdict = e.evaluate("session", age_days=0.5)
         assert verdict.action == RetentionAction.KEEP
 
@@ -124,19 +122,21 @@ class TestEvaluateRetention:
 
     def test_past_window_delete(self) -> None:
         e = RetentionEngine()
-        e.register(RetentionPolicy(
-            data_type="session", retention_days=1,
-            action=RetentionAction.DELETE,
-        ))
+        e.register(
+            RetentionPolicy(
+                data_type="session", retention_days=1, action=RetentionAction.DELETE
+            )
+        )
         verdict = e.evaluate("session", age_days=2)
         assert verdict.action == RetentionAction.DELETE
 
     def test_past_window_archive(self) -> None:
         e = RetentionEngine()
-        e.register(RetentionPolicy(
-            data_type="audit", retention_days=2555,
-            action=RetentionAction.ARCHIVE,
-        ))
+        e.register(
+            RetentionPolicy(
+                data_type="audit", retention_days=2555, action=RetentionAction.ARCHIVE
+            )
+        )
         verdict = e.evaluate("audit", age_days=3000)
         assert verdict.action == RetentionAction.ARCHIVE
 
@@ -144,31 +144,39 @@ class TestEvaluateRetention:
 class TestEvaluateLegalHold:
     def test_hold_blocks_delete(self) -> None:
         e = RetentionEngine()
-        e.register(RetentionPolicy(
-            data_type="audit", retention_days=2555,
-            action=RetentionAction.DELETE,
-        ))
-        e.add_hold(LegalHold(
-            data_type="audit", reason="investigation",
-            created_at=datetime.now(UTC).isoformat(),
-        ))
+        e.register(
+            RetentionPolicy(
+                data_type="audit", retention_days=2555, action=RetentionAction.DELETE
+            )
+        )
+        e.add_hold(
+            LegalHold(
+                data_type="audit",
+                reason="investigation",
+                created_at=datetime.now(UTC).isoformat(),
+            )
+        )
         verdict = e.evaluate("audit", age_days=3000)
         assert verdict.action == RetentionAction.KEEP
         assert verdict.blocked_by_hold is True
 
     def test_hold_with_expiry_in_past(self) -> None:
         e = RetentionEngine()
-        e.register(RetentionPolicy(
-            data_type="audit", retention_days=2555,
-            action=RetentionAction.DELETE,
-        ))
+        e.register(
+            RetentionPolicy(
+                data_type="audit", retention_days=2555, action=RetentionAction.DELETE
+            )
+        )
         # Hold expired 1 day ago.
         expired = (datetime.now(UTC) - timedelta(days=1)).isoformat()
-        e.add_hold(LegalHold(
-            data_type="audit", reason="r",
-            created_at="2024-01-01T00:00:00",
-            expires_at=expired,
-        ))
+        e.add_hold(
+            LegalHold(
+                data_type="audit",
+                reason="r",
+                created_at="2024-01-01T00:00:00",
+                expires_at=expired,
+            )
+        )
         verdict = e.evaluate("audit", age_days=3000)
         # Hold expired → delete applies.
         assert verdict.action == RetentionAction.DELETE
@@ -176,13 +184,16 @@ class TestEvaluateLegalHold:
 
     def test_hold_active_for_different_type(self) -> None:
         e = RetentionEngine()
-        e.register(RetentionPolicy(
-            data_type="audit", retention_days=1, action=RetentionAction.DELETE,
-        ))
-        e.add_hold(LegalHold(
-            data_type="OTHER", reason="r",
-            created_at=datetime.now(UTC).isoformat(),
-        ))
+        e.register(
+            RetentionPolicy(
+                data_type="audit", retention_days=1, action=RetentionAction.DELETE
+            )
+        )
+        e.add_hold(
+            LegalHold(
+                data_type="OTHER", reason="r", created_at=datetime.now(UTC).isoformat()
+            )
+        )
         # Hold is for OTHER, not audit.
         verdict = e.evaluate("audit", age_days=10)
         assert verdict.action == RetentionAction.DELETE
@@ -214,9 +225,11 @@ class TestLegalHoldManagement:
 
     def test_has_active_hold(self) -> None:
         e = RetentionEngine()
-        e.add_hold(LegalHold(
-            data_type="x", reason="r", created_at=datetime.now(UTC).isoformat()
-        ))
+        e.add_hold(
+            LegalHold(
+                data_type="x", reason="r", created_at=datetime.now(UTC).isoformat()
+            )
+        )
         assert e.has_active_hold("x") is True
         assert e.has_active_hold("y") is False
 
@@ -224,16 +237,16 @@ class TestLegalHoldManagement:
 class TestApplyToRecord:
     def test_anonymize_removes_fields(self) -> None:
         e = RetentionEngine()
-        e.register(RetentionPolicy(
-            data_type="user",
-            retention_days=365,
-            action=RetentionAction.ANONYMIZE,
-            anonymize_fields=("email", "phone"),
-        ))
-        record = {"id": 1, "email": "alice@x.com", "phone": "+1234"}
-        verdict = e.apply_to_record(
-            record, "user", created_at=_days_ago(400)
+        e.register(
+            RetentionPolicy(
+                data_type="user",
+                retention_days=365,
+                action=RetentionAction.ANONYMIZE,
+                anonymize_fields=("email", "phone"),
+            )
         )
+        record = {"id": 1, "email": "alice@x.com", "phone": "+1234"}
+        verdict = e.apply_to_record(record, "user", created_at=_days_ago(400))
         assert verdict.action == RetentionAction.ANONYMIZE
         assert record["email"] == "[REDACTED]"
         assert record["phone"] == "[REDACTED]"
@@ -241,27 +254,25 @@ class TestApplyToRecord:
 
     def test_archive_adds_metadata(self) -> None:
         e = RetentionEngine()
-        e.register(RetentionPolicy(
-            data_type="audit", retention_days=2555,
-            action=RetentionAction.ARCHIVE,
-        ))
-        record = {"id": 1, "data": "x"}
-        verdict = e.apply_to_record(
-            record, "audit", created_at=_days_ago(3000)
+        e.register(
+            RetentionPolicy(
+                data_type="audit", retention_days=2555, action=RetentionAction.ARCHIVE
+            )
         )
+        record = {"id": 1, "data": "x"}
+        verdict = e.apply_to_record(record, "audit", created_at=_days_ago(3000))
         assert verdict.action == RetentionAction.ARCHIVE
         assert "_archived_at" in record
 
     def test_delete_does_not_mutate(self) -> None:
         e = RetentionEngine()
-        e.register(RetentionPolicy(
-            data_type="session", retention_days=1,
-            action=RetentionAction.DELETE,
-        ))
-        record = {"id": 1, "token": "abc"}
-        verdict = e.apply_to_record(
-            record, "session", created_at=_days_ago(2)
+        e.register(
+            RetentionPolicy(
+                data_type="session", retention_days=1, action=RetentionAction.DELETE
+            )
         )
+        record = {"id": 1, "token": "abc"}
+        verdict = e.apply_to_record(record, "session", created_at=_days_ago(2))
         # Record unchanged (caller responsible for delete).
         assert verdict.action == RetentionAction.DELETE
         assert record["id"] == 1
@@ -271,9 +282,7 @@ class TestApplyToRecord:
         e = RetentionEngine()
         e.register(RetentionPolicy(data_type="x", retention_days=10))
         record = {"id": 1, "data": "x"}
-        verdict = e.apply_to_record(
-            record, "x", created_at=_days_ago(1)
-        )
+        verdict = e.apply_to_record(record, "x", created_at=_days_ago(1))
         assert verdict.action == RetentionAction.KEEP
         assert record == {"id": 1, "data": "x"}
 
@@ -304,21 +313,30 @@ class TestRealisticExample:
     def test_bank_retention_policy(self) -> None:
         engine = get_retention_engine()
         # Audit log: 7 years archive (regulatory).
-        engine.register(RetentionPolicy(
-            data_type="audit_log", retention_days=2555,
-            action=RetentionAction.ARCHIVE,
-        ))
+        engine.register(
+            RetentionPolicy(
+                data_type="audit_log",
+                retention_days=2555,
+                action=RetentionAction.ARCHIVE,
+            )
+        )
         # Session token: 1 day delete.
-        engine.register(RetentionPolicy(
-            data_type="session_token", retention_days=1,
-            action=RetentionAction.DELETE,
-        ))
+        engine.register(
+            RetentionPolicy(
+                data_type="session_token",
+                retention_days=1,
+                action=RetentionAction.DELETE,
+            )
+        )
         # User PII: 1 year anonymize (GDPR).
-        engine.register(RetentionPolicy(
-            data_type="user_pii", retention_days=365,
-            action=RetentionAction.ANONYMIZE,
-            anonymize_fields=("email", "phone", "ssn"),
-        ))
+        engine.register(
+            RetentionPolicy(
+                data_type="user_pii",
+                retention_days=365,
+                action=RetentionAction.ANONYMIZE,
+                anonymize_fields=("email", "phone", "ssn"),
+            )
+        )
 
         # Within retention → keep.
         v1 = engine.evaluate("audit_log", age_days=100)
@@ -335,11 +353,13 @@ class TestRealisticExample:
         assert v5.action == RetentionAction.ANONYMIZE
 
         # Legal hold blocks delete.
-        engine.add_hold(LegalHold(
-            data_type="session_token",
-            reason="fraud-investigation",
-            created_at=datetime.now(UTC).isoformat(),
-        ))
+        engine.add_hold(
+            LegalHold(
+                data_type="session_token",
+                reason="fraud-investigation",
+                created_at=datetime.now(UTC).isoformat(),
+            )
+        )
         v6 = engine.evaluate("session_token", age_days=10)
         assert v6.action == RetentionAction.KEEP
         assert v6.blocked_by_hold is True

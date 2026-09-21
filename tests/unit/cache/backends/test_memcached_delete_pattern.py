@@ -19,9 +19,7 @@ import sys
 
 sys.modules.setdefault("aiomcache", aiomcache_mock)
 
-from src.backend.infrastructure.cache.backends.memcached import (
-    MemcachedBackend,
-)
+from src.backend.infrastructure.cache.backends.memcached import MemcachedBackend
 
 
 def _make_backend() -> MemcachedBackend:

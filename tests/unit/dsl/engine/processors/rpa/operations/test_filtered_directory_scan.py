@@ -1,4 +1,5 @@
 """Tests for FilteredDirectoryScanProcessor (S171 M7)."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -12,6 +13,7 @@ class TestFilteredDirectoryScanProcessor:
         from src.backend.dsl.engine.processors.rpa.operations.filtereddirectoryscanprocessor import (
             FilteredDirectoryScanProcessor,
         )
+
         p = FilteredDirectoryScanProcessor(directory="/tmp", pattern="*.txt")
         assert p.directory == "/tmp"
         assert p.pattern == "*.txt"
@@ -21,11 +23,12 @@ class TestFilteredDirectoryScanProcessor:
         from src.backend.dsl.engine.processors.rpa.operations.filtereddirectoryscanprocessor import (
             FilteredDirectoryScanProcessor,
         )
+
         (tmp_path / "a.txt").write_text("a")
         (tmp_path / "sub").mkdir()
         (tmp_path / "sub" / "b.txt").write_text("b")
         p = FilteredDirectoryScanProcessor(
-            directory=str(tmp_path), pattern="**/*.txt", to="body.files",
+            directory=str(tmp_path), pattern="**/*.txt", to="body.files"
         )
         p.auth_check = AsyncMock(return_value=True)
         ex = MagicMock()
@@ -44,10 +47,11 @@ class TestFilteredDirectoryScanProcessor:
         from src.backend.dsl.engine.processors.rpa.operations.filtereddirectoryscanprocessor import (
             FilteredDirectoryScanProcessor,
         )
+
         (tmp_path / "small.txt").write_text("hi")
         (tmp_path / "big.txt").write_text("x" * 1000)
         p = FilteredDirectoryScanProcessor(
-            directory=str(tmp_path), pattern="*.txt", min_size=100, to="body.files",
+            directory=str(tmp_path), pattern="*.txt", min_size=100, to="body.files"
         )
         p.auth_check = AsyncMock(return_value=True)
         ex = MagicMock()

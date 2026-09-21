@@ -45,7 +45,9 @@ def _make_succeeding_step(name: str = "step_ok") -> MagicMock:
     return step
 
 
-def _make_failing_step(name: str = "step_fail", error: str = "step failed") -> MagicMock:
+def _make_failing_step(
+    name: str = "step_fail", error: str = "step failed"
+) -> MagicMock:
     """Шаг, который всегда raises при process()."""
     step = MagicMock(spec=BaseProcessor)
     step.name = name
@@ -122,9 +124,7 @@ class TestSagaDoubleFault:
         # ARRANGE.
         step1_reserve = _make_succeeding_step("reserve_balance")
         step2_charge = _make_succeeding_step("charge_payment")
-        step2_refund = _make_failing_step(
-            "refund_payment", error="refund API down"
-        )
+        step2_refund = _make_failing_step("refund_payment", error="refund API down")
         step3_notify = _make_failing_step("notify_partner", error="timeout")
 
         saga = SagaProcessor(
@@ -157,9 +157,7 @@ class TestSagaDoubleFault:
         #   1. workflow.compensation_start (when step3 failed)
         #   2. workflow.compensation_fail (step2_refund failed)
         #   3. workflow.compensation_fail (because ANY failed — terminal)
-        audit_events = [
-            call.kwargs["event_type"] for call in mock_audit.call_args_list
-        ]
+        audit_events = [call.kwargs["event_type"] for call in mock_audit.call_args_list]
         assert "workflow.compensation_start" in audit_events
         assert audit_events.count("workflow.compensation_fail") >= 2, (
             f"Expected ≥2 compensation_fail events, got {audit_events}"
@@ -170,7 +168,9 @@ class TestSagaDoubleFault:
         # saga_error содержит сообщение об ошибке (не имя step).
         assert "timeout" in (ex.get_property("saga_error") or "")
 
-    async def test_double_fault_does_not_hang_on_repeated_compensate_failures(self) -> None:
+    async def test_double_fault_does_not_hang_on_repeated_compensate_failures(
+        self,
+    ) -> None:
         """Multiple compensate failures → saga завершается за bounded time.
 
         Защита от infinite loop: если compensate вызывает side effect, который
@@ -192,10 +192,7 @@ class TestSagaDoubleFault:
         import asyncio
 
         try:
-            await asyncio.wait_for(
-                saga.process(ex, context=MagicMock()),
-                timeout=5.0,
-            )
+            await asyncio.wait_for(saga.process(ex, context=MagicMock()), timeout=5.0)
         except asyncio.TimeoutError:
             pytest.fail("Saga double-fault caused infinite hang")
 
@@ -233,9 +230,7 @@ class TestSagaDoubleFault:
         assert ex.status == ExchangeStatus.failed
 
         # Multiple compensation_fail events.
-        audit_events = [
-            call.kwargs["event_type"] for call in mock_audit.call_args_list
-        ]
+        audit_events = [call.kwargs["event_type"] for call in mock_audit.call_args_list]
         # 1 compensation_start + 2 compensation_fail (per failed comp) + 1 final = 4.
         compensation_fails = [
             e for e in audit_events if e == "workflow.compensation_fail"
@@ -429,8 +424,6 @@ class TestRealisticBankingSaga:
         assert "AML timeout" in (ex.get_property("saga_error") or "")
 
         # ASSERT: audit events.
-        audit_events = [
-            call.kwargs["event_type"] for call in mock_audit.call_args_list
-        ]
+        audit_events = [call.kwargs["event_type"] for call in mock_audit.call_args_list]
         assert "workflow.compensation_start" in audit_events
         assert audit_events.count("workflow.compensation_fail") >= 2

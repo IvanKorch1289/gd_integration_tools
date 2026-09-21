@@ -15,6 +15,7 @@ from src.backend.entrypoints.middlewares.audit_replay import (
 
 def _downstream_ok(status_code: int = 200, body: bytes = b"ok"):
     """Downstream возвращающий 200 OK (или заданный status)."""
+
     async def downstream(scope, receive, send):
         # Consume body from receive (validates body re-injection).
         body_bytes = b""
@@ -26,7 +27,7 @@ def _downstream_ok(status_code: int = 200, body: bytes = b"ok"):
             body_bytes += msg.get("body", b"")
             more_body = msg.get("more_body", False)
         await send(
-            {"type": "http.response.start", "status": status_code, "headers": []},
+            {"type": "http.response.start", "status": status_code, "headers": []}
         )
         await send({"type": "http.response.body", "body": body})
 
@@ -53,8 +54,10 @@ def _make_scope(
 
 def _make_receive(body: bytes):
     """ASGI receive callable возвращающая body chunk."""
+
     async def receive():
         return {"type": "http.request", "body": body, "more_body": False}
+
     return receive
 
 
@@ -73,14 +76,8 @@ class TestAuditReplayMiddleware:
         mw = AuditReplayMiddleware(app)
 
         send = AsyncMock()
-        with patch(
-            "src.backend.core.di.providers.get_redis_stream_client_provider",
-        ):
-            await mw(
-                _make_scope("GET", "/health"),
-                _make_receive(b""),
-                send,
-            )
+        with patch("src.backend.core.di.providers.get_redis_stream_client_provider"):
+            await mw(_make_scope("GET", "/health"), _make_receive(b""), send)
 
         # 200 от downstream (без audit).
         msgs = [c.args[0] for c in send.await_args_list]
@@ -95,20 +92,13 @@ class TestAuditReplayMiddleware:
         mw._sample_rate = 0.0
 
         send = AsyncMock()
-        with patch(
-            "src.backend.core.di.providers.get_redis_stream_client_provider",
-        ):
-            await mw(
-                _make_scope("GET", "/api/v1/users"),
-                _make_receive(b""),
-                send,
-            )
+        with patch("src.backend.core.di.providers.get_redis_stream_client_provider"):
+            await mw(_make_scope("GET", "/api/v1/users"), _make_receive(b""), send)
 
         # Downstream отработал (200 OK).
         msgs = [c.args[0] for c in send.await_args_list]
         assert any(
-            m["type"] == "http.response.start" and m["status"] == 200
-            for m in msgs
+            m["type"] == "http.response.start" and m["status"] == 200 for m in msgs
         )
 
     @pytest.mark.asyncio
@@ -128,10 +118,7 @@ class TestAuditReplayMiddleware:
                 _make_scope(
                     "POST",
                     "/api/v1/users",
-                    headers=[
-                        (b"host", b"test"),
-                        (b"x-correlation-id", b"corr-1"),
-                    ],
+                    headers=[(b"host", b"test"), (b"x-correlation-id", b"corr-1")],
                 ),
                 _make_receive(b'{"x":1}'),
                 send,
@@ -189,17 +176,12 @@ class TestAuditReplayMiddleware:
         ):
             send = AsyncMock()
             # Должен НЕ raise — audit failures non-blocking.
-            await mw(
-                _make_scope("GET", "/api"),
-                _make_receive(b""),
-                send,
-            )
+            await mw(_make_scope("GET", "/api"), _make_receive(b""), send)
 
         # Downstream отработал.
         msgs = [c.args[0] for c in send.await_args_list]
         assert any(
-            m["type"] == "http.response.start" and m["status"] == 200
-            for m in msgs
+            m["type"] == "http.response.start" and m["status"] == 200 for m in msgs
         )
 
     @pytest.mark.asyncio
@@ -215,11 +197,7 @@ class TestAuditReplayMiddleware:
             return_value=redis_mock,
         ):
             send = AsyncMock()
-            await mw(
-                _make_scope("POST", "/api"),
-                _make_receive(b"x" * 10000),
-                send,
-            )
+            await mw(_make_scope("POST", "/api"), _make_receive(b"x" * 10000), send)
 
         entry = redis_mock.add_to_stream.await_args.kwargs["data"]
         # Body truncated до 8192.
@@ -238,9 +216,7 @@ class TestAuditReplayMiddleware:
 
         send = AsyncMock()
         await mw(
-            {"type": "websocket", "path": "/api", "headers": []},
-            AsyncMock(),
-            send,
+            {"type": "websocket", "path": "/api", "headers": []}, AsyncMock(), send
         )
 
         msgs = [c.args[0] for c in send.await_args_list]
@@ -274,9 +250,7 @@ class TestAuditReplayMiddleware:
         ):
             send = AsyncMock()
             await mw(
-                _make_scope("POST", "/api"),
-                _make_receive(b"important-payload"),
-                send,
+                _make_scope("POST", "/api"), _make_receive(b"important-payload"), send
             )
 
         # Downstream прочитал body через replay (не через _receive).
@@ -290,26 +264,19 @@ class TestAuditReplayMiddleware:
         mw = AuditReplayMiddleware(app)
 
         # Make _audit raise (simulating internal bug).
-        with patch.object(
-            mw, "_audit", side_effect=RuntimeError("audit bug"),
-        ):
+        with patch.object(mw, "_audit", side_effect=RuntimeError("audit bug")):
             send = AsyncMock()
             with patch(
                 "src.backend.core.di.providers.get_redis_stream_client_provider",
                 return_value=AsyncMock(),
             ):
                 # Должен НЕ raise — audit error logged, not propagated.
-                await mw(
-                    _make_scope("GET", "/api"),
-                    _make_receive(b""),
-                    send,
-                )
+                await mw(_make_scope("GET", "/api"), _make_receive(b""), send)
 
         # 200 от downstream (audit failed silently).
         msgs = [c.args[0] for c in send.await_args_list]
         assert any(
-            m["type"] == "http.response.start" and m["status"] == 200
-            for m in msgs
+            m["type"] == "http.response.start" and m["status"] == 200 for m in msgs
         )
 
     @pytest.mark.asyncio
@@ -327,11 +294,7 @@ class TestAuditReplayMiddleware:
             send = AsyncMock()
             scope = _make_scope("GET", "/api")
             scope["query_string"] = b"foo=bar&baz=qux"
-            await mw(
-                scope,
-                _make_receive(b""),
-                send,
-            )
+            await mw(scope, _make_receive(b""), send)
 
         entry = redis_mock.add_to_stream.await_args.kwargs["data"]
         assert entry["query"] == "foo=bar&baz=qux"
@@ -354,7 +317,7 @@ class TestListAuditRecords:
 
         assert records == [{"id": "1", "path": "/api"}]
         redis_mock.read_stream.assert_awaited_once_with(
-            stream_name="audit:requests", count=10, start_id="-",
+            stream_name="audit:requests", count=10, start_id="-"
         )
 
     @pytest.mark.asyncio
@@ -377,7 +340,7 @@ class TestReplayAuditRecord:
         """Returns record data when found."""
         redis_mock = AsyncMock()
         redis_mock.read_stream.return_value = [
-            {"method": "POST", "path": "/api", "request_body": "{}"},
+            {"method": "POST", "path": "/api", "request_body": "{}"}
         ]
 
         with patch(

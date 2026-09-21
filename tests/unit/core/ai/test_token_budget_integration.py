@@ -120,18 +120,13 @@ def _build_request(**kwargs: Any) -> Any:  # type: ignore[no-untyped-def]
 
 
 def _build_budget(
-    *,
-    soft_limit: int = 1000,
-    hard_limit: int = 2000,
-    period: str = BudgetPeriod.DAILY,
+    *, soft_limit: int = 1000, hard_limit: int = 2000, period: str = BudgetPeriod.DAILY
 ) -> TokenBudget:
     """Build TokenBudget с in-memory backend."""
     return TokenBudget(
         backend=InMemoryTokenBudgetBackend(),
         default_config=TokenBudgetConfig(
-            soft_limit=soft_limit,
-            hard_limit=hard_limit,
-            period=period,
+            soft_limit=soft_limit, hard_limit=hard_limit, period=period
         ),
     )
 
@@ -144,7 +139,7 @@ class TestBudgetNotConfigured:
 
     @pytest.mark.asyncio
     async def test_no_budget_passes_through(
-        self, audit_service: _StubAuditService,
+        self, audit_service: _StubAuditService
     ) -> None:
         """Pipeline без _token_budget → no exception (backward-compat)."""
 
@@ -162,9 +157,7 @@ class TestBudgetEnforced:
     """С _token_budget настроенным — проверка reservation + correction."""
 
     @pytest.mark.asyncio
-    async def test_pre_call_reserves(
-        self, audit_service: _StubAuditService,
-    ) -> None:
+    async def test_pre_call_reserves(self, audit_service: _StubAuditService) -> None:
         """Pre-call reserves estimated tokens + post-call corrects."""
 
         class _Gateway(EnforcedInvokeMixin, _StubPipeline):
@@ -188,7 +181,7 @@ class TestBudgetEnforced:
 
     @pytest.mark.asyncio
     async def test_actual_exceeds_estimated_extra_reserved(
-        self, audit_service: _StubAuditService,
+        self, audit_service: _StubAuditService
     ) -> None:
         """Actual > estimated → дополнительная reservation на diff."""
 
@@ -197,7 +190,7 @@ class TestBudgetEnforced:
             _actual_tokens = (5000, 6000)  # prompts, completions
 
             async def _invoke_llm(  # type: ignore[override]
-                self, rendered: Any, policy: Any, stream: bool,
+                self, rendered: Any, policy: Any, stream: bool
             ) -> Any:
                 class _C:
                     content = "stub"
@@ -226,7 +219,7 @@ class TestBudgetEnforced:
 
     @pytest.mark.asyncio
     async def test_hard_limit_pre_call_raises(
-        self, audit_service: _StubAuditService,
+        self, audit_service: _StubAuditService
     ) -> None:
         """Если estimated уже превышает hard_limit → BudgetExceeded."""
 
@@ -250,7 +243,7 @@ class TestBudgetEnforced:
 
     @pytest.mark.asyncio
     async def test_hard_limit_post_call_raises(
-        self, audit_service: _StubAuditService,
+        self, audit_service: _StubAuditService
     ) -> None:
         """Если actual (post-call diff) превышает hard_limit → BudgetExceeded."""
 
@@ -258,7 +251,7 @@ class TestBudgetEnforced:
             _audit_service = audit_service
 
             async def _invoke_llm(  # type: ignore[override]
-                self, rendered: Any, policy: Any, stream: bool,
+                self, rendered: Any, policy: Any, stream: bool
             ) -> Any:
                 class _C:
                     content = "stub"
@@ -283,7 +276,7 @@ class TestBudgetEnforced:
 
     @pytest.mark.asyncio
     async def test_empty_tenant_id_skips(
-        self, audit_service: _StubAuditService,
+        self, audit_service: _StubAuditService
     ) -> None:
         """Empty ``tenant_id`` → budget skipped (no error)."""
 
@@ -309,9 +302,7 @@ class TestRender429Contract:
     """Verify render_429 JSON contract (callers depend on it)."""
 
     def test_render_429_shape(self) -> None:
-        exc = BudgetExceeded(
-            tenant_id="t-x", used=200, hard_limit=100, period="daily",
-        )
+        exc = BudgetExceeded(tenant_id="t-x", used=200, hard_limit=100, period="daily")
         body = render_429(exc)
         assert body["error"] == "token_budget_exceeded"
         assert body["tenant_id"] == "t-x"
@@ -326,7 +317,7 @@ class TestPreCallHelperUnit:
 
     @pytest.mark.asyncio
     async def test_no_budget_attribute_returns_none(
-        self, audit_service: _StubAuditService,
+        self, audit_service: _StubAuditService
     ) -> None:
         """Без _token_budget attribute — no-op (backward-compat)."""
 
@@ -336,13 +327,13 @@ class TestPreCallHelperUnit:
         gw = _Gateway()
         request = _build_request()
         snapshot = await gw._enforce_token_budget_pre_call(
-            request, estimated_tokens=1000,
+            request, estimated_tokens=1000
         )
         assert snapshot is None
 
     @pytest.mark.asyncio
     async def test_no_budget_via_dunder_getattr(
-        self, audit_service: _StubAuditService,
+        self, audit_service: _StubAuditService
     ) -> None:
         """``_token_budget=None`` → return None."""
 
@@ -353,7 +344,7 @@ class TestPreCallHelperUnit:
         gw._token_budget = None  # type: ignore[attr-defined]
         request = _build_request()
         snapshot = await gw._enforce_token_budget_pre_call(
-            request, estimated_tokens=1000,
+            request, estimated_tokens=1000
         )
         assert snapshot is None
 
@@ -364,9 +355,7 @@ class TestPreCallHelperUnit:
 class _FlakyBackend(InMemoryTokenBudgetBackend):
     """Backend с always-failing ``increment`` — имитирует Redis-outage."""
 
-    async def increment(
-        self, *, key: str, amount: int, ttl_seconds: int
-    ) -> int:
+    async def increment(self, *, key: str, amount: int, ttl_seconds: int) -> int:
         raise ConnectionError("simulated redis outage")
 
 
@@ -410,9 +399,7 @@ class TestBudgetBackendUnavailableFailClosed:
         request = _build_request(tenant_id="t-redis-down")
 
         with pytest.raises(BudgetEnforcementError) as ctx:
-            await gw._enforce_token_budget_pre_call(
-                request, estimated_tokens=100
-            )
+            await gw._enforce_token_budget_pre_call(request, estimated_tokens=100)
         body = ctx.value.body
         assert body["error"] == "token_budget_backend_unavailable"
         assert body["tenant_id"] == "t-redis-down"
@@ -499,12 +486,7 @@ class TestBudgetBackendUnavailableFailClosed:
         # Post-call споткнётся на refинансировании — это и есть целевой тест.
         # Прямой вызов post-call с broken budget → ожидаем 503-body.
         completion = type(
-            "_C",
-            (),
-            {
-                "tokens_prompt": 5000,
-                "tokens_completion": 5000,
-            },
+            "_C", (), {"tokens_prompt": 5000, "tokens_completion": 5000}
         )()
         with pytest.raises(BudgetEnforcementError) as ctx:
             await gw._enforce_token_budget_post_call(
@@ -544,9 +526,7 @@ class TestBudgetBackendUnavailableFailClosed:
         request = _build_request(tenant_id="t-per-tenant-closed")
 
         with pytest.raises(BudgetEnforcementError) as ctx:
-            await gw._enforce_token_budget_pre_call(
-                request, estimated_tokens=100
-            )
+            await gw._enforce_token_budget_pre_call(request, estimated_tokens=100)
         assert ctx.value.body["error"] == "token_budget_backend_unavailable"
 
     def test_render_503_shape(self) -> None:
@@ -560,9 +540,7 @@ class TestBudgetBackendUnavailableFailClosed:
 
     def test_render_503_distinct_from_render_429(self) -> None:
         """render_503 и render_429 имеют разные error-keys (caller dispatch)."""
-        backend_exc = BudgetBackendUnavailable(
-            backend="token_budget", tenant_id="t-1"
-        )
+        backend_exc = BudgetBackendUnavailable(backend="token_budget", tenant_id="t-1")
         hard_exc = BudgetExceeded(
             tenant_id="t-1", used=200, hard_limit=100, period="daily"
         )

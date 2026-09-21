@@ -1,6 +1,5 @@
 """Тесты unified circuit breaker (Sprint 1 V16 Single-Entry, Step 3.2)."""
 
-
 from __future__ import annotations
 
 import pytest

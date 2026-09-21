@@ -91,8 +91,7 @@ def test_get_breaker_returns_breaker_instance() -> None:
     fake_registry.get_or_create = MagicMock(return_value=fake_breaker)
 
     with patch(
-        "src.backend.core.resilience.get_breaker_registry",
-        return_value=fake_registry,
+        "src.backend.core.resilience.get_breaker_registry", return_value=fake_registry
     ):
         facade = ResilienceFacade()
         result = facade.get_breaker("redis")
@@ -128,12 +127,15 @@ def test_bulkhead_creates_new_when_missing() -> None:
 
     fake_bh = MagicMock(name="bulkhead-new")
 
-    with patch(
-        "src.backend.core.resilience.bulkhead_registry.get_bulkhead_registry",
-        return_value=fake_registry,
-    ), patch(
-        "src.backend.core.resilience.backpressure.bulkhead.AdaptiveBulkhead",
-        return_value=fake_bh,
+    with (
+        patch(
+            "src.backend.core.resilience.bulkhead_registry.get_bulkhead_registry",
+            return_value=fake_registry,
+        ),
+        patch(
+            "src.backend.core.resilience.backpressure.bulkhead.AdaptiveBulkhead",
+            return_value=fake_bh,
+        ),
     ):
         facade = ResilienceFacade()
         result = facade.bulkhead("kafka_produce")
@@ -149,10 +151,7 @@ def test_with_retry_returns_decorator() -> None:
 
     fake_decorator = MagicMock()
 
-    with patch(
-        "src.backend.core.resilience.with_retry",
-        return_value=fake_decorator,
-    ):
+    with patch("src.backend.core.resilience.with_retry", return_value=fake_decorator):
         facade = ResilienceFacade()
         result = facade.with_retry()
         assert result is fake_decorator

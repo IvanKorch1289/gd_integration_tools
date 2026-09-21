@@ -19,24 +19,20 @@ class TestGetAiAgentServiceFactory:
 
     def test_returns_ai_agent_service_instance(self) -> None:
         """Bare fallback: без app.state возвращает AIAgentService instance."""
-        with patch(
-            "src.backend.core.di.app_state.get_app_ref", return_value=None,
-        ):
+        with patch("src.backend.core.di.app_state.get_app_ref", return_value=None):
             agent = get_ai_agent_service()
 
         assert isinstance(agent, AIAgentService)
 
     def test_no_longer_raises_not_implemented_error(self) -> None:
         """Regression: AGENTS-P0-001 — функция больше не поднимает NotImplementedError."""
-        with patch(
-            "src.backend.core.di.app_state.get_app_ref", return_value=None,
-        ):
+        with patch("src.backend.core.di.app_state.get_app_ref", return_value=None):
             try:
                 get_ai_agent_service()
             except NotImplementedError:
                 pytest.fail(
                     "get_ai_agent_service() must not raise NotImplementedError "
-                    "(cycle-5/D-AUDIT-501)",
+                    "(cycle-5/D-AUDIT-501)"
                 )
 
     def test_prefers_app_state_singleton(self) -> None:
@@ -46,8 +42,7 @@ class TestGetAiAgentServiceFactory:
         sentinel_app.state.ai_agent_service = sentinel
 
         with patch(
-            "src.backend.core.di.app_state.get_app_ref",
-            return_value=sentinel_app,
+            "src.backend.core.di.app_state.get_app_ref", return_value=sentinel_app
         ):
             agent = get_ai_agent_service()
 
@@ -68,13 +63,12 @@ class TestGetAiAgentServiceFactory:
         from src.backend.core.ai.errors import AIGatewayProductionWiringError
 
         with (
-            patch(
-                "src.backend.core.di.app_state.get_app_ref", return_value=None,
-            ),
+            patch("src.backend.core.di.app_state.get_app_ref", return_value=None),
             patch(
                 "src.backend.services.ai.ai_agent.AIAgentService",
                 side_effect=RuntimeError("settings missing"),
-            ),pytest.raises(AIGatewayProductionWiringError) as exc_info,
+            ),
+            pytest.raises(AIGatewayProductionWiringError) as exc_info,
         ):
             get_ai_agent_service()
 

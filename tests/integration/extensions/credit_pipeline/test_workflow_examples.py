@@ -7,7 +7,6 @@
 требует feature-flag ``workflow_yaml_round_trip=True``.
 """
 
-
 from __future__ import annotations
 
 from pathlib import Path

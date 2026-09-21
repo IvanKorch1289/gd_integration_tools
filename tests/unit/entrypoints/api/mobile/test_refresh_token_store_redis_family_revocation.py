@@ -16,7 +16,6 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-
 pytestmark = pytest.mark.asyncio
 
 
@@ -39,9 +38,7 @@ def mock_redis(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
     def _get_client() -> AsyncMock:
         return client
 
-    monkeypatch.setattr(
-        "src.backend.core.storage.redis.get_redis_client", _get_client
-    )
+    monkeypatch.setattr("src.backend.core.storage.redis.get_redis_client", _get_client)
     return client
 
 
@@ -73,9 +70,7 @@ async def test_generation_key_custom_prefix() -> None:
 # ── is_valid with generation check ─────────────────────────────────
 
 
-async def test_is_valid_fails_when_generation_mismatch(
-    mock_redis: AsyncMock,
-) -> None:
+async def test_is_valid_fails_when_generation_mismatch(mock_redis: AsyncMock) -> None:
     """is_valid: token key exists but generation doesn't match → False."""
     # Token at gen=0, current gen=1 (family revoked)
     mock_redis.cache_get = AsyncMock(
@@ -92,9 +87,7 @@ async def test_is_valid_fails_when_generation_mismatch(
     assert await store.is_valid("u1", "d1", "jti-A") is False
 
 
-async def test_is_valid_succeeds_when_generation_matches(
-    mock_redis: AsyncMock,
-) -> None:
+async def test_is_valid_succeeds_when_generation_matches(mock_redis: AsyncMock) -> None:
     """is_valid: token at current generation → True."""
     # Token at gen=2, current gen=2
     mock_redis.cache_get = AsyncMock(
@@ -111,9 +104,7 @@ async def test_is_valid_succeeds_when_generation_matches(
     assert await store.is_valid("u1", "d1", "jti-A") is True
 
 
-async def test_is_valid_fails_when_no_token_key(
-    mock_redis: AsyncMock,
-) -> None:
+async def test_is_valid_fails_when_no_token_key(mock_redis: AsyncMock) -> None:
     """is_valid: token key doesn't exist → False."""
     mock_redis.cache_get = AsyncMock(return_value=None)
     from src.backend.entrypoints.api.mobile.refresh_token_store_redis import (
@@ -127,9 +118,7 @@ async def test_is_valid_fails_when_no_token_key(
 # ── issue stamps current generation ─────────────────────────────────
 
 
-async def test_issue_stamps_current_generation(
-    mock_redis: AsyncMock,
-) -> None:
+async def test_issue_stamps_current_generation(mock_redis: AsyncMock) -> None:
     """issue: writes token value with current generation number."""
     # First cache_get (generation read) returns 0
     mock_redis.cache_get = AsyncMock(return_value=b"0")
@@ -150,9 +139,7 @@ async def test_issue_stamps_current_generation(
 # ── revoke_family ───────────────────────────────────────────────────
 
 
-async def test_revoke_family_increments_generation(
-    mock_redis: AsyncMock,
-) -> None:
+async def test_revoke_family_increments_generation(mock_redis: AsyncMock) -> None:
     """revoke_family: INCR generation counter."""
     captured: dict[str, Any] = {}
 
@@ -184,9 +171,7 @@ async def test_revoke_family_returns_zero_on_redis_error(
     def _raise() -> None:
         raise ConnectionError("redis down")
 
-    monkeypatch.setattr(
-        "src.backend.core.storage.redis.get_redis_client", _raise
-    )
+    monkeypatch.setattr("src.backend.core.storage.redis.get_redis_client", _raise)
 
     from src.backend.entrypoints.api.mobile.refresh_token_store_redis import (
         RedisRefreshTokenStore,
@@ -197,9 +182,7 @@ async def test_revoke_family_returns_zero_on_redis_error(
     assert result == 0  # fail-CLOSED for security audit
 
 
-async def test_revoke_family_cleans_up_old_keys(
-    mock_redis: AsyncMock,
-) -> None:
+async def test_revoke_family_cleans_up_old_keys(mock_redis: AsyncMock) -> None:
     """revoke_family: SCAN + DEL old generation keys after INCR."""
 
     async def _execute_with_scan(namespace: str, fn: Any) -> Any:
@@ -222,9 +205,7 @@ async def test_revoke_family_cleans_up_old_keys(
 # ── E2E: revocation triggers reuse detection ────────────────────────
 
 
-async def test_full_revoke_then_is_valid_returns_false(
-    mock_redis: AsyncMock,
-) -> None:
+async def test_full_revoke_then_is_valid_returns_false(mock_redis: AsyncMock) -> None:
     """After revoke_family, is_valid returns False for previously-valid tokens.
 
     This simulates the post-revocation check — token exists but is

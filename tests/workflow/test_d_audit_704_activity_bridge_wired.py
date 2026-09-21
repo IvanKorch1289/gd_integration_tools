@@ -17,7 +17,6 @@ Runtime: все ``temporalio.*`` импорты мокаются через ``sy
 SDK может отсутствовать в test env (lazy-import pattern).
 """
 
-
 from __future__ import annotations
 
 from types import SimpleNamespace
@@ -76,8 +75,7 @@ class TestBuildTemporalActivities:
 
         fake_activity = _patch_temporalio_activity()
         with patch.dict(
-            "sys.modules",
-            {"temporalio": MagicMock(activity=fake_activity)},
+            "sys.modules", {"temporalio": MagicMock(activity=fake_activity)}
         ):
             activities = await lifecycle._build_temporal_activities()
 
@@ -99,12 +97,15 @@ class TestBuildTemporalActivities:
         fake_bridge.decorate = MagicMock()
 
         # Patch модуль activity_bridge (composition делает lazy import).
-        with patch(
-            "src.backend.dsl.workflow.compiler.activity_bridge.ActivityBridge",
-            return_value=fake_bridge,
-        ), patch(
-            "src.backend.dsl.workflow.compiler.activity_bridge.register_langgraph_checkpoint_activities",
-            fake_register,
+        with (
+            patch(
+                "src.backend.dsl.workflow.compiler.activity_bridge.ActivityBridge",
+                return_value=fake_bridge,
+            ),
+            patch(
+                "src.backend.dsl.workflow.compiler.activity_bridge.register_langgraph_checkpoint_activities",
+                fake_register,
+            ),
         ):
             await lifecycle._build_temporal_activities()
 
@@ -119,7 +120,7 @@ class TestBuildTemporalActivities:
         fake_bridge = MagicMock()
         fake_bridge._cache = {LANGGRAPH_CHECKPOINT_GET_ACTIVITY: MagicMock()}
         fake_bridge.decorate = MagicMock(
-            side_effect=RuntimeError("temporalio SDK not installed"),
+            side_effect=RuntimeError("temporalio SDK not installed")
         )
 
         with patch(
@@ -136,8 +137,9 @@ class TestBuildTemporalActivities:
         from src.backend.plugins.composition.setup_infra import lifecycle
 
         # Hide the import → ImportError
-        with patch.dict("sys.modules", {"temporalio": MagicMock()}), patch(
-            "src.backend.plugins.composition.setup_infra.lifecycle.app_logger",
+        with (
+            patch.dict("sys.modules", {"temporalio": MagicMock()}),
+            patch("src.backend.plugins.composition.setup_infra.lifecycle.app_logger"),
         ):
             # Force ImportError by patching builtins.__import__
             import builtins
@@ -192,15 +194,18 @@ class TestWrapperInStartingOperations:
         fake_activities = [MagicMock(name="act1"), MagicMock(name="act2")]
         # Patch source module (wrapper делает local re-import — patch на
         # ``lifecycle.start_temporal_worker_runtime`` не подхватывается).
-        with patch.object(
-            lifecycle,
-            "_build_temporal_activities",
-            new=AsyncMock(return_value=fake_activities),
-        ), patch.object(
-            temporal_worker_runtime,
-            "start_temporal_worker_runtime",
-            new=AsyncMock(),
-        ) as mock_start:
+        with (
+            patch.object(
+                lifecycle,
+                "_build_temporal_activities",
+                new=AsyncMock(return_value=fake_activities),
+            ),
+            patch.object(
+                temporal_worker_runtime,
+                "start_temporal_worker_runtime",
+                new=AsyncMock(),
+            ) as mock_start,
+        ):
             await lifecycle._start_temporal_worker_runtime_with_activities()
 
         mock_start.assert_awaited_once_with(activities=fake_activities)
@@ -235,18 +240,21 @@ class TestStartTemporalWorkerRuntimeActivitiesParam:
 
         sentinel_activities = [MagicMock(name="a1"), MagicMock(name="a2")]
 
-        with patch(
-            "src.backend.core.config.features.FeatureFlags",
-            return_value=fake_flags,
-        ), patch(
-            "src.backend.infrastructure.workflow.temporal_client.TemporalClientFactory",
-            return_value=fake_factory,
-        ), patch.dict(
-            "sys.modules",
-            {
-                "temporalio.worker": fake_worker_mod,
-                "temporalio.opentelemetry": MagicMock(),
-            },
+        with (
+            patch(
+                "src.backend.core.config.features.FeatureFlags", return_value=fake_flags
+            ),
+            patch(
+                "src.backend.infrastructure.workflow.temporal_client.TemporalClientFactory",
+                return_value=fake_factory,
+            ),
+            patch.dict(
+                "sys.modules",
+                {
+                    "temporalio.worker": fake_worker_mod,
+                    "temporalio.opentelemetry": MagicMock(),
+                },
+            ),
         ):
             await mod.start_temporal_worker_runtime(activities=sentinel_activities)
 
@@ -273,18 +281,21 @@ class TestStartTemporalWorkerRuntimeActivitiesParam:
         fake_flags = MagicMock()
         fake_flags.workflow_use_temporal = True
 
-        with patch(
-            "src.backend.core.config.features.FeatureFlags",
-            return_value=fake_flags,
-        ), patch(
-            "src.backend.infrastructure.workflow.temporal_client.TemporalClientFactory",
-            return_value=fake_factory,
-        ), patch.dict(
-            "sys.modules",
-            {
-                "temporalio.worker": fake_worker_mod,
-                "temporalio.opentelemetry": MagicMock(),
-            },
+        with (
+            patch(
+                "src.backend.core.config.features.FeatureFlags", return_value=fake_flags
+            ),
+            patch(
+                "src.backend.infrastructure.workflow.temporal_client.TemporalClientFactory",
+                return_value=fake_factory,
+            ),
+            patch.dict(
+                "sys.modules",
+                {
+                    "temporalio.worker": fake_worker_mod,
+                    "temporalio.opentelemetry": MagicMock(),
+                },
+            ),
         ):
             await mod.start_temporal_worker_runtime()
 

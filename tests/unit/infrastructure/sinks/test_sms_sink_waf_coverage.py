@@ -6,7 +6,6 @@
 Фикс: заменено на ``OutboundHttpClient`` с WAF pre-hook + capability-gate.
 """
 
-
 from __future__ import annotations
 
 import inspect

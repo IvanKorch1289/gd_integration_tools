@@ -52,7 +52,7 @@ def test_build_gold_set_full(pii_audit_module) -> None:
 def test_precision_recall_zero_when_presidio_unavailable(pii_audit_module) -> None:
     """Без Presidio все documents → 0 entities found → precision/recall = 0."""
     try:
-        import presidio_analyzer
+        import presidio_analyzer  # noqa: F401 — availability probe (try/except ImportError guard)
     except ImportError:
         docs = pii_audit_module._build_gold_set(mode="smoke")
         found = [set() for _ in docs]  # пусто
@@ -62,11 +62,11 @@ def test_precision_recall_zero_when_presidio_unavailable(pii_audit_module) -> No
 
 
 def test_cli_exits_with_error_when_threshold_unmet(
-    pii_audit_module, tmp_path: Path,
+    pii_audit_module, tmp_path: Path
 ) -> None:
     """CLI с threshold 0.9 и без Presidio → exit code 1."""
     try:
-        import presidio_analyzer
+        import presidio_analyzer  # noqa: F401 — availability probe (try/except ImportError guard)
 
         pytest.skip("Presidio установлен — поведение будет другим")
     except ImportError:
@@ -74,7 +74,7 @@ def test_cli_exits_with_error_when_threshold_unmet(
 
     report = tmp_path / "report.json"
     exit_code = pii_audit_module.main(
-        ["--mode", "smoke", "--threshold", "0.9", "--report", str(report)],
+        ["--mode", "smoke", "--threshold", "0.9", "--report", str(report)]
     )
     assert exit_code == 1
     assert report.exists()
@@ -87,6 +87,6 @@ def test_cli_exits_zero_at_zero_threshold(pii_audit_module, tmp_path: Path) -> N
     """При threshold 0.0 даже precision=0 OK (защита от false-failure без Presidio)."""
     report = tmp_path / "report.json"
     exit_code = pii_audit_module.main(
-        ["--mode", "smoke", "--threshold", "0.0", "--report", str(report)],
+        ["--mode", "smoke", "--threshold", "0.0", "--report", str(report)]
     )
     assert exit_code == 0

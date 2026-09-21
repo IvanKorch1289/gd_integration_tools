@@ -9,16 +9,11 @@ Helper functions tested:
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
 
 import pytest
 
-from src.backend.dsl.yaml_store import (
-    YAMLStore,
-    _filename_to_route,
-    _route_to_filename,
-)
+from src.backend.dsl.yaml_store import YAMLStore, _filename_to_route, _route_to_filename
 
 
 class TestRouteFilename:
@@ -58,13 +53,15 @@ class TestYAMLStoreLifecycle:
         assert store.list() == []
 
     def test_save_creates_file(self, tmp_path: Path) -> None:
-        store = YAMLStore(tmp_path)
+        _store = YAMLStore(tmp_path)
         # Minimal valid Pipeline mock — use dict
         from src.backend.dsl.engine.pipeline import Pipeline
 
-        pipeline = Pipeline.model_validate(
-            {"id": "test.route", "name": "Test", "steps": []}
-        ) if hasattr(Pipeline, "model_validate") else None
+        pipeline = (
+            Pipeline.model_validate({"id": "test.route", "name": "Test", "steps": []})
+            if hasattr(Pipeline, "model_validate")
+            else None
+        )
         if pipeline is None:
             pytest.skip("Pipeline doesn't support model_validate")
 
@@ -85,8 +82,16 @@ class TestYAMLStoreDiff:
         store = YAMLStore(tmp_path)
         from src.backend.dsl.engine.pipeline import Pipeline
 
-        p1 = Pipeline.model_validate({"id": "test", "steps": []}) if hasattr(Pipeline, "model_validate") else None
-        p2 = Pipeline.model_validate({"id": "test", "steps": []}) if hasattr(Pipeline, "model_validate") else None
+        p1 = (
+            Pipeline.model_validate({"id": "test", "steps": []})
+            if hasattr(Pipeline, "model_validate")
+            else None
+        )
+        p2 = (
+            Pipeline.model_validate({"id": "test", "steps": []})
+            if hasattr(Pipeline, "model_validate")
+            else None
+        )
         if p1 is None or p2 is None:
             pytest.skip("Pipeline doesn't support model_validate")
         # Same content → empty diff

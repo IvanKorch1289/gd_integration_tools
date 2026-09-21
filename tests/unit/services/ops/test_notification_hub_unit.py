@@ -36,10 +36,10 @@ def _gateway_mock(status: str = "queued", request_id: str = "req-1") -> AsyncMoc
 async def test_send_translates_to_gateway_contract(hub: NotificationHub) -> None:
     """send: channel/to/subject/message -> legacy template_key + context."""
     gw = _gateway_mock()
-    with patch(
-        "src.backend.infrastructure.notifications.get_gateway", return_value=gw,
-    ):
-        result = await hub.send("email", "user@bank.ru", subject="КД №123", message="тело")
+    with patch("src.backend.infrastructure.notifications.get_gateway", return_value=gw):
+        result = await hub.send(
+            "email", "user@bank.ru", subject="КД №123", message="тело"
+        )
 
     assert result["status"] == "sent"  # queued -> sent
     assert result["request_id"] == "req-1"
@@ -55,9 +55,7 @@ async def test_send_gateway_failure_returns_error_dict(hub: NotificationHub) -> 
     """Сбой Gateway -> error-dict, не исключение."""
     gw = AsyncMock()
     gw.send = AsyncMock(side_effect=RuntimeError("smtp down"))
-    with patch(
-        "src.backend.infrastructure.notifications.get_gateway", return_value=gw,
-    ):
+    with patch("src.backend.infrastructure.notifications.get_gateway", return_value=gw):
         result = await hub.send("email", "user@bank.ru", subject="s", message="m")
     assert result["status"] == "error"
     assert "smtp down" in result["message"]
@@ -67,9 +65,7 @@ async def test_send_gateway_failure_returns_error_dict(hub: NotificationHub) -> 
 async def test_per_channel_methods_map_correctly(hub: NotificationHub) -> None:
     """email/express/webhook/telegram маппятся в send с нужным channel."""
     gw = _gateway_mock()
-    with patch(
-        "src.backend.infrastructure.notifications.get_gateway", return_value=gw,
-    ):
+    with patch("src.backend.infrastructure.notifications.get_gateway", return_value=gw):
         await hub.email("a@b", "s", "m")
         await hub.express("chat-1", "s", "m", is_direct=True)
         await hub.webhook("https://hook", "s", "m", secret="sec")
@@ -86,11 +82,14 @@ async def test_per_channel_methods_map_correctly(hub: NotificationHub) -> None:
 @pytest.mark.asyncio
 async def test_express_broadcast_counts_sent(hub: NotificationHub) -> None:
     gw = AsyncMock()
-    results_per_call = [SimpleNamespace(status="sent", request_id="r1")]
-    gw.send = AsyncMock(side_effect=[SimpleNamespace(status="sent", request_id="r1"), SimpleNamespace(status="failed", request_id="r2")])
-    with patch(
-        "src.backend.infrastructure.notifications.get_gateway", return_value=gw,
-    ):
+    _results_per_call = [SimpleNamespace(status="sent", request_id="r1")]
+    gw.send = AsyncMock(
+        side_effect=[
+            SimpleNamespace(status="sent", request_id="r1"),
+            SimpleNamespace(status="failed", request_id="r2"),
+        ]
+    )
+    with patch("src.backend.infrastructure.notifications.get_gateway", return_value=gw):
         result = await hub.express_broadcast(["c1", "c2"], "s", "m")
     assert result["status"] == "broadcast"
     assert result["total"] == 2
@@ -100,9 +99,7 @@ async def test_express_broadcast_counts_sent(hub: NotificationHub) -> None:
 @pytest.mark.asyncio
 async def test_express_event_formats_emoji_body(hub: NotificationHub) -> None:
     gw = _gateway_mock()
-    with patch(
-        "src.backend.infrastructure.notifications.get_gateway", return_value=gw,
-    ):
+    with patch("src.backend.infrastructure.notifications.get_gateway", return_value=gw):
         await hub.express_event("alert", "chat-1", {"order": 42, "user": "op"})
     ctx = gw.send.await_args.kwargs["context"]
     body = ctx["message"]
@@ -115,16 +112,9 @@ async def test_express_event_formats_emoji_body(hub: NotificationHub) -> None:
 async def test_broadcast_skips_string_targets(hub: NotificationHub) -> None:
     """channels-элементы-строки пропускаются (контракт требует dict)."""
     gw = _gateway_mock()
-    with patch(
-        "src.backend.infrastructure.notifications.get_gateway", return_value=gw,
-    ):
+    with patch("src.backend.infrastructure.notifications.get_gateway", return_value=gw):
         result = await hub.broadcast(
-            [
-                "bare-string",
-                {"channel": "email", "to": "a@b"},
-            ],
-            "s",
-            "m",
+            ["bare-string", {"channel": "email", "to": "a@b"}], "s", "m"
         )
     assert result["total"] == 2  # считаются ВСЕ targets (контракт)
     assert result["sent"] == 1
@@ -152,18 +142,18 @@ def test_notification_request_defaults() -> None:
     assert req.priority == "normal"
     assert req.recipients == []
 
+
 @pytest.mark.asyncio
 async def test_express_create_chat_delegates_to_client(hub: NotificationHub) -> None:
     """197-200: create_chat делегирует в legacy Express client."""
     client = AsyncMock()
     with patch(
-        "src.backend.core.di.providers.get_express_client_provider",
-        return_value=client,
+        "src.backend.core.di.providers.get_express_client_provider", return_value=client
     ):
         result = await hub.express_create_chat(
-            name="chat", members=["u1"], description="d",
+            name="chat", members=["u1"], description="d"
         )
     client.create_chat.assert_awaited_once_with(
-        name="chat", members=["u1"], description="d", chat_type="group_chat",
+        name="chat", members=["u1"], description="d", chat_type="group_chat"
     )
     assert result is client.create_chat.return_value

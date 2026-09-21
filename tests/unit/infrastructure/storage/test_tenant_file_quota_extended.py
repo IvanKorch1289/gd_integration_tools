@@ -12,8 +12,6 @@ Per Sprint 41 gap-doc Item 2: coverage ratchet +5pp via infrastructure tests.
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock
-
 import pytest
 
 from src.backend.infrastructure.storage.tenant_file_quota import (
@@ -80,8 +78,7 @@ class TestQuotaCheckResult:
     def test_to_dict_denied(self) -> None:
         """to_dict returns reason when allowed=False."""
         result = QuotaCheckResult(
-            allowed=False,
-            reason="file count exceeded: 101 > 100",
+            allowed=False, reason="file count exceeded: 101 > 100"
         )
         d = result.to_dict()
         assert d["allowed"] is False

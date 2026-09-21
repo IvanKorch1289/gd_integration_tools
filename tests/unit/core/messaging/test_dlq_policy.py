@@ -1,6 +1,5 @@
 """Unit-тесты DLQPolicy + Registry + Resolver + Cleanup job (S13 K3 W4)."""
 
-
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -80,7 +79,7 @@ async def test_cleanup_job_runs_per_policy() -> None:
     client.execute = AsyncMock(return_value=[{"count()": 5}])
     fixed_now = datetime(2026, 5, 20, 12, 0, 0, tzinfo=UTC)
     job = DLQCleanupJob(
-        ch_client=client, registry=default_policy_registry, clock=lambda: fixed_now,
+        ch_client=client, registry=default_policy_registry, clock=lambda: fixed_now
     )
     stats = await job.run()
     assert stats.errors == []

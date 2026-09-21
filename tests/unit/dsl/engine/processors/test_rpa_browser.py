@@ -12,7 +12,6 @@ Round-trip тесты проверяют что ``required_capability`` объя
 соответствует documented vocabulary.
 """
 
-
 from __future__ import annotations
 
 from typing import Any

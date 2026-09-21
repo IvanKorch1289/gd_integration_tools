@@ -37,8 +37,7 @@ def test_crud_methods_contains_list() -> None:
     from src.backend.dsl.service_dsl import _CRUD_METHODS
 
     assert "list" in _CRUD_METHODS, (
-        f"NEW-1c fix regressed: _CRUD_METHODS = {_CRUD_METHODS}, "
-        f"missing 'list'"
+        f"NEW-1c fix regressed: _CRUD_METHODS = {_CRUD_METHODS}, missing 'list'"
     )
 
 
@@ -48,6 +47,7 @@ def test_list_calls_repo_get_paginated() -> None:
 
     class _NoOpBoundary:
         """No-op async context manager (заменяет AsyncMock который не поддерживает)."""
+
         async def __aenter__(self):
             return self
 
@@ -62,9 +62,7 @@ def test_list_calls_repo_get_paginated() -> None:
             self.repo = repo
 
     fake_repo = MagicMock()
-    fake_repo.get_paginated = AsyncMock(
-        return_value={"items": ["a", "b"], "total": 2}
-    )
+    fake_repo.get_paginated = AsyncMock(return_value={"items": ["a", "b"], "total": 2})
 
     svc = _TestService(repo=fake_repo)
     result = asyncio.run(svc.list(limit=10, offset=0, by="id", order="asc"))

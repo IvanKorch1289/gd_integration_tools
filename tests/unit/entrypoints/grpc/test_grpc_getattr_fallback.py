@@ -28,9 +28,7 @@ def test_getattr_fallback_set_on_all_servicers() -> None:
     from src.backend.entrypoints.grpc.grpc_server.file_stream import (
         FileStreamGRPCServicer,
     )
-    from src.backend.entrypoints.grpc.grpc_server.invoker import (
-        InvokerGRPCServicer,
-    )
+    from src.backend.entrypoints.grpc.grpc_server.invoker import InvokerGRPCServicer
     from src.backend.entrypoints.grpc.grpc_server.order import OrderGRPCServicer
 
     _patch_rpc_methods()

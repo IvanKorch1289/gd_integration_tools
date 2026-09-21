@@ -31,9 +31,7 @@ class TestTenantSLODefaults:
     def test_custom_values(self) -> None:
         """Кастомные пороги сохраняются."""
         slo = TenantSLO(
-            latency_p99_ms=200.0,
-            availability_target=0.9999,
-            error_rate_target=0.001,
+            latency_p99_ms=200.0, availability_target=0.9999, error_rate_target=0.001
         )
         assert slo.latency_p99_ms == 200.0
         assert slo.availability_target == 0.9999
@@ -49,7 +47,11 @@ class TestTenantSLODefaults:
         """``TenantSLO`` — slots-based (нет __dict__)."""
         slo = TenantSLO()
         # slots classes don't have __dict__ on instances.
-        assert not hasattr(slo, "__dict__") or slo.__slots__ == ("latency_p99_ms", "availability_target", "error_rate_target")
+        assert not hasattr(slo, "__dict__") or slo.__slots__ == (
+            "latency_p99_ms",
+            "availability_target",
+            "error_rate_target",
+        )
 
 
 class TestTenantSLOFactoryMethods:
@@ -168,9 +170,7 @@ class TestTenantSLOEvaluate:
         """Все метрики within → ``within_slo=True``."""
         slo = TenantSLO()
         result = slo.evaluate(
-            latency_p99_ms=100.0,
-            availability=0.9999,
-            error_rate=0.001,
+            latency_p99_ms=100.0, availability=0.9999, error_rate=0.001
         )
         assert result.latency_ok is True
         assert result.availability_ok is True
@@ -180,11 +180,7 @@ class TestTenantSLOEvaluate:
     def test_evaluate_all_exceed_budget(self) -> None:
         """Все метрики exceeded → ``within_slo=False``."""
         slo = TenantSLO()
-        result = slo.evaluate(
-            latency_p99_ms=1000.0,
-            availability=0.9,
-            error_rate=0.5,
-        )
+        result = slo.evaluate(latency_p99_ms=1000.0, availability=0.9, error_rate=0.5)
         assert result.latency_ok is False
         assert result.availability_ok is False
         assert result.error_rate_ok is False
@@ -213,9 +209,7 @@ class TestSLOEvaluationToLogDict:
         """Все expected keys присутствуют."""
         slo = TenantSLO()
         result = slo.evaluate(
-            latency_p99_ms=200.0,
-            availability=0.9999,
-            error_rate=0.005,
+            latency_p99_ms=200.0, availability=0.9999, error_rate=0.005
         )
         log_dict = result.to_log_dict()
         assert "slo.latency_p99_ms" in log_dict
@@ -232,14 +226,10 @@ class TestSLOEvaluationToLogDict:
     def test_to_log_dict_values_match(self) -> None:
         """Values в log_dict совпадают с evaluation."""
         slo = TenantSLO(
-            latency_p99_ms=300.0,
-            availability_target=0.9995,
-            error_rate_target=0.005,
+            latency_p99_ms=300.0, availability_target=0.9995, error_rate_target=0.005
         )
         result = slo.evaluate(
-            latency_p99_ms=100.0,
-            availability=0.9999,
-            error_rate=0.001,
+            latency_p99_ms=100.0, availability=0.9999, error_rate=0.001
         )
         log_dict = result.to_log_dict()
         assert log_dict["slo.latency_p99_ms"] == 100.0

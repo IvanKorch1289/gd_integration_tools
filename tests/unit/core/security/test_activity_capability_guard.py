@@ -26,7 +26,7 @@ def _reset_context() -> Any:
 
 
 def _build_context(
-    *, deny: tuple[str, ...] = (), audit: Any = None,
+    *, deny: tuple[str, ...] = (), audit: Any = None
 ) -> CapabilityContext:
     """Сконструировать тестовый CapabilityContext с mock-gate.
 
@@ -45,7 +45,7 @@ def _build_context(
 
     gate.check.side_effect = _check
     return CapabilityContext(
-        plugin_name="test-plugin", gate=gate, scope=None, audit=audit,
+        plugin_name="test-plugin", gate=gate, scope=None, audit=audit
     )
 
 
@@ -90,7 +90,7 @@ def test_audit_event_emitted_on_deny(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     audit_events: list[dict[str, object]] = []
     set_active_capability_context(
-        _build_context(deny=("net.outbound.x",), audit=audit_events.append),
+        _build_context(deny=("net.outbound.x",), audit=audit_events.append)
     )
 
     @capability_guarded_activity(("net.outbound.x",))
@@ -197,7 +197,7 @@ def test_dual_emit_calls_both_callback_and_facade(
                 "action": action,
                 "outcome": outcome,
                 "details": details,
-            },
+            }
         )
 
     monkeypatch.setattr("src.backend.core.audit.facade.emit_audit", fake_emit_audit)
@@ -237,7 +237,7 @@ class TestErrorAndMarkerBranches:
     """
 
     def test_is_gate_enabled_returns_false_on_exception(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """L134-136: feature_flags read fails → _is_gate_enabled returns False."""
         from src.backend.core.security import activity_capability_guard as acg
@@ -246,16 +246,21 @@ class TestErrorAndMarkerBranches:
         raising_flags = type(
             "RaisingFlags",
             (),
-            {"activity_capability_gate_enabled": property(lambda _self: (_ for _ in ()).throw(RuntimeError("down")))},
+            {
+                "activity_capability_gate_enabled": property(
+                    lambda _self: (_ for _ in ()).throw(RuntimeError("down"))
+                )
+            },
         )()
         monkeypatch.setattr(
-            "src.backend.core.config.features.feature_flags", raising_flags,
+            "src.backend.core.config.features.feature_flags", raising_flags
         )
 
         assert acg._is_gate_enabled() is False
 
     def test_legacy_audit_callback_exception_suppressed(self) -> None:
         """L150-151: legacy audit callback raises → log + suppress (no re-raise)."""
+
         def failing_audit(event: dict[str, object]) -> None:
             raise RuntimeError("audit backend down")
 
@@ -263,12 +268,14 @@ class TestErrorAndMarkerBranches:
         context.audit = failing_audit
         # Should not raise — exception is swallowed at L150-151
         from src.backend.core.security.activity_capability_guard import _emit_audit
+
         _emit_audit(context, {"event": "test"})
 
     def test_async_audit_emission_without_event_loop(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """L175-176: async audit with no running loop → drop coroutine, no raise."""
+
         # When called from sync test (no running loop), asyncio.get_running_loop()
         # raises RuntimeError which is caught at L175-176. Mock audit facade to
         # return a real coroutine so the asyncio.iscoroutine(coro) branch (L171) fires.
@@ -278,11 +285,10 @@ class TestErrorAndMarkerBranches:
         def fake_emit_audit(**kwargs: object) -> Any:
             return _coro()
 
-        monkeypatch.setattr(
-            "src.backend.core.audit.facade.emit_audit", fake_emit_audit,
-        )
+        monkeypatch.setattr("src.backend.core.audit.facade.emit_audit", fake_emit_audit)
 
         from src.backend.core.security.activity_capability_guard import _emit_audit
+
         context = _build_context()
         # Should not raise — L175-176 catches RuntimeError from no running loop
         _emit_audit(context, {"event": "noop-loop-test"})
@@ -303,7 +309,7 @@ class TestErrorAndMarkerBranches:
         assert getattr(decorated, "__activity_name__", None) == "preserved_marker"
 
     def test_emit_audit_facade_raises_import_error_suppressed(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """L177-187: outer except catches ImportError from emit_audit → log + suppress.
 
@@ -312,14 +318,14 @@ class TestErrorAndMarkerBranches:
         and suppresses — the policy decider flow continues without
         raising audit failure to the caller (best-effort emit semantics).
         """
+
         def _raising(**kwargs: object) -> Any:
             raise ImportError("audit facade missing")
 
-        monkeypatch.setattr(
-            "src.backend.core.audit.facade.emit_audit", _raising,
-        )
+        monkeypatch.setattr("src.backend.core.audit.facade.emit_audit", _raising)
 
         from src.backend.core.security.activity_capability_guard import _emit_audit
+
         context = _build_context()
         # Should not raise — L177-187 narrow except swallows the import error
         _emit_audit(context, {"event": "facade-missing-test"})

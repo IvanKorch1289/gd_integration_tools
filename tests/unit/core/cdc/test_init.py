@@ -44,12 +44,8 @@ class TestCdcFacadeAllExports:
     )
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(cdc, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
-        assert symbol_name in cdc.__all__, (
-            f"{symbol_name} not declared in __all__"
-        )
+        assert hasattr(cdc, symbol_name), f"Missing export: {symbol_name}"
+        assert symbol_name in cdc.__all__, f"{symbol_name} not declared in __all__"
 
     def test_all_declared_count(self) -> None:
         """``__all__`` содержит 9 символов."""
@@ -77,7 +73,9 @@ class TestCdcFacadeProtocols:
         # (matches CDCSource contract via structural subtyping).
         assert callable(FakeCDCSource)
         # Protocol classes have ``__call__`` only if ``__init__`` is declared.
-        assert hasattr(FakeCDCSource, "__subclasshook__") or hasattr(FakeCDCSource, "__call__")
+        assert hasattr(FakeCDCSource, "__subclasshook__") or hasattr(
+            FakeCDCSource, "__call__"
+        )
 
     def test_cdc_event_is_class(self) -> None:
         """``CDCEvent`` — class (Pydantic model или dataclass)."""

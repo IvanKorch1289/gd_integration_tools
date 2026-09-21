@@ -31,8 +31,8 @@ class TestCapabilityVocabulary:
         v = CapabilityVocabulary()
         v.register(
             CapabilityDef(
-                name="my.do", matcher=ExactAliasMatcher(), aliases=("legacy.do",),
-            ),
+                name="my.do", matcher=ExactAliasMatcher(), aliases=("legacy.do",)
+            )
         )
         assert v.has("legacy.do")
         assert v.get("legacy.do").name == "my.do"
@@ -72,7 +72,9 @@ class TestCapabilityVocabulary:
             "llm.invoke",
         ):
             assert v.has(name), f"missing {name}"
-        assert len(v.all()) == 49  # Cycle 61 L10: 5 capabilities added since S153 W4c (44 → 49)
+        assert (
+            len(v.all()) == 49
+        )  # Cycle 61 L10: 5 capabilities added since S153 W4c (44 → 49)
 
     def test_fs_create_new_registered(self) -> None:
         """V15 R-V15-4: capability fs.create_new обязательна для AIFsFacade."""
@@ -96,7 +98,7 @@ class TestCapabilityVocabulary:
                 matcher=ExactAliasMatcher(),
                 public=True,
                 scope_required=False,
-            ),
+            )
         )
         publics = v.public_capabilities()
         assert any(d.name == "public.ping" for d in publics)

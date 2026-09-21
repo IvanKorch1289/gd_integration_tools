@@ -7,7 +7,8 @@ ContinueAsNewHandler.extract_marker().
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -29,9 +30,7 @@ async def test_processor_marker_readable_by_handler() -> None:
 
     # Step 1: Processor sets marker in exchange
     processor = WorkflowContinueAsNewProcessor(
-        same_workflow_id=True,
-        same_input=False,
-        search_attributes={"priority": "high"},
+        same_workflow_id=True, same_input=False, search_attributes={"priority": "high"}
     )
 
     exchange = MagicMock()

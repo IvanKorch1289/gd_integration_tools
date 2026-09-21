@@ -39,9 +39,7 @@ def _entry(rule_id: str = "r1", error: str = "boom") -> DLQEntry:
 
 def _rule(rule_id: str = "r1") -> RelayRule:
     return RelayRule(
-        id=rule_id,
-        event_type="evt",
-        target_url="https://example.invalid/hook",
+        id=rule_id, event_type="evt", target_url="https://example.invalid/hook"
     )
 
 
@@ -109,7 +107,9 @@ def test_dlq_remove_logs_error_on_lrem_failure(
                 new_callable=AsyncMock,
                 return_value=fake_raw,
             ),
-            caplog.at_level("ERROR", logger="src.backend.services.integrations.webhook_relay"),
+            caplog.at_level(
+                "ERROR", logger="src.backend.services.integrations.webhook_relay"
+            ),
         ):
             await relay._dlq_remove("e123")
 
@@ -117,13 +117,9 @@ def test_dlq_remove_logs_error_on_lrem_failure(
 
     asyncio.run(_run())
 
-    error_records = [
-        r for r in caplog.records if r.levelname == "ERROR"
-    ]
+    error_records = [r for r in caplog.records if r.levelname == "ERROR"]
     assert error_records, "expected ERROR log on LREM failure"
-    assert any(
-        "DLQ Redis remove failed" in r.getMessage() for r in error_records
-    )
+    assert any("DLQ Redis remove failed" in r.getMessage() for r in error_records)
     # exc_info=True → record.exc_info не пустой
     assert any(r.exc_info is not None for r in error_records)
 
@@ -157,11 +153,7 @@ def test_dlq_retry_rule_not_found_moves_to_dead_rule_queue() -> None:
             # Мокаем _send_with_retry: live → success (чтобы не уходил в DLQ снова),
             # ghost-rule → не вызывается (rule отсутствует → rule_not_found path).
             relay._send_with_retry = AsyncMock(  # type: ignore[method-assign]
-                return_value={
-                    "rule_id": "live",
-                    "status": "sent",
-                    "status_code": 200,
-                },
+                return_value={"rule_id": "live", "status": "sent", "status_code": 200}
             )
             return await relay.dlq_retry()
 
@@ -198,7 +190,7 @@ def test_dlq_retry_no_dead_leaves_main_dlq_intact() -> None:
         ):
             # Чтобы _send_with_retry не делал реальный HTTP — мокаем целиком.
             relay._send_with_retry = AsyncMock(  # type: ignore[method-assign]
-                return_value={"rule_id": "r1", "status": "sent", "status_code": 200},
+                return_value={"rule_id": "r1", "status": "sent", "status_code": 200}
             )
             return await relay.dlq_retry()
 

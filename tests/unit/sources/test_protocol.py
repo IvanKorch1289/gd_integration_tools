@@ -1,6 +1,5 @@
 """W23 — контракт ``Source`` Protocol и ``SourceEvent``."""
 
-
 from __future__ import annotations
 
 import pytest

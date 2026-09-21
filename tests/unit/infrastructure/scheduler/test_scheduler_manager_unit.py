@@ -6,10 +6,9 @@ run_job_now возвращают True/False по наличию, cleanup-рее�
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from types import SimpleNamespace
 
 import pytest
-from types import SimpleNamespace
 
 from src.backend.infrastructure.scheduler.scheduler_manager import SchedulerManager
 
@@ -40,7 +39,7 @@ def manager(monkeypatch: pytest.MonkeyPatch) -> SchedulerManager:
 
 def test_schedule_cron_registers_and_returns_name(manager: SchedulerManager) -> None:
     job_id = manager.schedule_cron(
-        name="nightly", cron_expr="0 9 * * MON", callable_ref=lambda: None,
+        name="nightly", cron_expr="0 9 * * MON", callable_ref=lambda: None
     )
     assert job_id == "nightly"
     jobs = manager.list_jobs()
@@ -50,7 +49,7 @@ def test_schedule_cron_registers_and_returns_name(manager: SchedulerManager) -> 
 def test_schedule_cron_invalid_cron_raises(manager: SchedulerManager) -> None:
     with pytest.raises(ValueError):
         manager.schedule_cron(
-            name="bad", cron_expr="not a cron", callable_ref=lambda: None,
+            name="bad", cron_expr="not a cron", callable_ref=lambda: None
         )
 
 
@@ -86,6 +85,8 @@ def test_cleanup_registry_round_trip(manager: SchedulerManager) -> None:
     # повторная регистрация/снятие — не бросают
 
 
-def test_default_jobstore_is_memory_without_sync_engine(manager: SchedulerManager) -> None:
+def test_default_jobstore_is_memory_without_sync_engine(
+    manager: SchedulerManager,
+) -> None:
     """Без sync_engine default-jobstore — MemoryJobStore (durable off)."""
     assert manager._default_jobstore_is_memory is True

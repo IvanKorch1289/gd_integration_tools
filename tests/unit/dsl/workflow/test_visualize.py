@@ -8,7 +8,6 @@
     * DOT/Mermaid syntax валиден (basic regex проверки).
 """
 
-
 from __future__ import annotations
 
 from src.backend.dsl.workflow.spec import (

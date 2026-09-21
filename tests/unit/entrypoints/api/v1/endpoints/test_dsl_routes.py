@@ -1,6 +1,5 @@
 """Unit tests for DSL routes admin endpoints."""
 
-
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -20,7 +19,7 @@ class TestParseYamlOr400:
 
     def test_invalid_yaml_raises_400(self) -> None:
         with patch.object(
-            dsl_mod, "load_pipeline_from_yaml", side_effect=ValueError("bad"),
+            dsl_mod, "load_pipeline_from_yaml", side_effect=ValueError("bad")
         ):
             with pytest.raises(HTTPException) as exc_info:
                 dsl_mod._parse_yaml_or_400("bad")
@@ -74,7 +73,7 @@ class TestDSLRoutesFacade:
 
     @pytest.mark.asyncio
     async def test_create_route_conflict(
-        self, facade: dsl_mod._DSLRoutesFacade,
+        self, facade: dsl_mod._DSLRoutesFacade
     ) -> None:
         with (
             patch.object(dsl_mod, "_yaml_store") as mock_store,
@@ -106,7 +105,7 @@ class TestDSLRoutesFacade:
 
     @pytest.mark.asyncio
     async def test_update_route_not_found(
-        self, facade: dsl_mod._DSLRoutesFacade,
+        self, facade: dsl_mod._DSLRoutesFacade
     ) -> None:
         with patch.object(dsl_mod, "_yaml_store") as mock_store:
             mock_store.return_value.exists.return_value = False
@@ -116,7 +115,7 @@ class TestDSLRoutesFacade:
 
     @pytest.mark.asyncio
     async def test_update_route_mismatch(
-        self, facade: dsl_mod._DSLRoutesFacade,
+        self, facade: dsl_mod._DSLRoutesFacade
     ) -> None:
         with (
             patch.object(dsl_mod, "_yaml_store") as mock_store,
@@ -132,7 +131,7 @@ class TestDSLRoutesFacade:
 
     @pytest.mark.asyncio
     async def test_delete_route_not_found(
-        self, facade: dsl_mod._DSLRoutesFacade,
+        self, facade: dsl_mod._DSLRoutesFacade
     ) -> None:
         with patch.object(dsl_mod, "_yaml_store") as mock_store:
             mock_store.return_value.delete.return_value = False
@@ -142,10 +141,10 @@ class TestDSLRoutesFacade:
 
     @pytest.mark.asyncio
     async def test_validate_route_invalid(
-        self, facade: dsl_mod._DSLRoutesFacade,
+        self, facade: dsl_mod._DSLRoutesFacade
     ) -> None:
         with patch.object(
-            dsl_mod, "load_pipeline_from_yaml", side_effect=ValueError("bad"),
+            dsl_mod, "load_pipeline_from_yaml", side_effect=ValueError("bad")
         ):
             result = await facade.validate_route(yaml="bad")
             assert result.valid is False

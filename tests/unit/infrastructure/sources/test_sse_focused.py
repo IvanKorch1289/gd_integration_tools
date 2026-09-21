@@ -54,8 +54,7 @@ def test_sse_source_init_with_url() -> None:
 def test_sse_source_init_with_headers() -> None:
     """SSESource init с headers dict."""
     src = SSESource(
-        url="https://example.com/events",
-        headers={"Authorization": "Bearer test"},
+        url="https://example.com/events", headers={"Authorization": "Bearer test"}
     )
     assert src._headers["Authorization"] == "Bearer test"
 

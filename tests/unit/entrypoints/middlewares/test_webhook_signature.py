@@ -10,7 +10,6 @@ P0 security fix (cycle 33): раньше ``WebhookSignatureMiddleware`` skip-ver
 ``WEBHOOK_ALLOW_MISSING_SECRET=true`` (явный opt-in).
 """
 
-
 from __future__ import annotations
 
 import json
@@ -70,9 +69,7 @@ def _make_receive(body: bytes):
 def _read_counter_value(path_prefix: str) -> float:
     """Возвращает текущее значение counter для path_prefix (0 если нет)."""
     try:
-        sample = webhook_signature_missing_secret_total.labels(
-            path_prefix=path_prefix,
-        )
+        sample = webhook_signature_missing_secret_total.labels(path_prefix=path_prefix)
     except Exception:
         return 0.0
     # prometheus_client.Counter.labels(...) → child без _value; читаем
@@ -88,7 +85,7 @@ class TestWebhookSignatureMissingSecret:
 
     @pytest.mark.asyncio
     async def test_webhook_signature_missing_secret_returns_503(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Path protected, но secret не сконфигурирован → 503 JSON."""
         monkeypatch.delenv("APP_ENVIRONMENT", raising=False)
@@ -97,9 +94,7 @@ class TestWebhookSignatureMissingSecret:
         before = _read_counter_value("/webhooks/")
 
         async def downstream(scope, receive, send):
-            raise AssertionError(
-                "downstream НЕ должен быть вызван при missing secret",
-            )
+            raise AssertionError("downstream НЕ должен быть вызван при missing secret")
 
         app = AsyncMock()
         app.side_effect = downstream
@@ -111,9 +106,7 @@ class TestWebhookSignatureMissingSecret:
 
         send = AsyncMock()
         await mw(
-            _make_scope("/webhooks/stripe"),
-            _make_receive(b'{"event":"test"}'),
-            send,
+            _make_scope("/webhooks/stripe"), _make_receive(b'{"event":"test"}'), send
         )
 
         start = _start_message(send)
@@ -135,7 +128,7 @@ class TestWebhookSignatureMissingSecret:
 
     @pytest.mark.asyncio
     async def test_webhook_signature_missing_secret_does_not_call_downstream(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Cycle 33 invariant: при 503 downstream НЕ вызывается."""
         monkeypatch.delenv("APP_ENVIRONMENT", raising=False)
@@ -147,17 +140,11 @@ class TestWebhookSignatureMissingSecret:
         app = AsyncMock()
         app.side_effect = downstream
         mw = WebhookSignatureMiddleware(
-            app=app,
-            path_prefixes=("/webhooks/",),
-            secrets_by_prefix={},
+            app=app, path_prefixes=("/webhooks/",), secrets_by_prefix={}
         )
 
         send = AsyncMock()
-        await mw(
-            _make_scope("/webhooks/stripe"),
-            _make_receive(b"{}"),
-            send,
-        )
+        await mw(_make_scope("/webhooks/stripe"), _make_receive(b"{}"), send)
 
         start = _start_message(send)
         assert start is not None
@@ -166,7 +153,7 @@ class TestWebhookSignatureMissingSecret:
 
     @pytest.mark.asyncio
     async def test_dev_escape_with_both_env_vars(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """APP_ENVIRONMENT=dev + WEBHOOK_ALLOW_MISSING_SECRET=true → passthrough."""
         monkeypatch.setenv("APP_ENVIRONMENT", "dev")
@@ -175,17 +162,11 @@ class TestWebhookSignatureMissingSecret:
         app = AsyncMock()
         app.side_effect = _downstream_ok()
         mw = WebhookSignatureMiddleware(
-            app=app,
-            path_prefixes=("/webhooks/",),
-            secrets_by_prefix={},
+            app=app, path_prefixes=("/webhooks/",), secrets_by_prefix={}
         )
 
         send = AsyncMock()
-        await mw(
-            _make_scope("/webhooks/stripe"),
-            _make_receive(b"{}"),
-            send,
-        )
+        await mw(_make_scope("/webhooks/stripe"), _make_receive(b"{}"), send)
 
         start = _start_message(send)
         assert start is not None
@@ -193,7 +174,7 @@ class TestWebhookSignatureMissingSecret:
 
     @pytest.mark.asyncio
     async def test_dev_escape_requires_both_env_vars(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Только opt-in env var БЕЗ APP_ENVIRONMENT=dev → 503 (fail-closed)."""
         monkeypatch.delenv("APP_ENVIRONMENT", raising=False)
@@ -205,17 +186,11 @@ class TestWebhookSignatureMissingSecret:
         app = AsyncMock()
         app.side_effect = downstream
         mw = WebhookSignatureMiddleware(
-            app=app,
-            path_prefixes=("/webhooks/",),
-            secrets_by_prefix={},
+            app=app, path_prefixes=("/webhooks/",), secrets_by_prefix={}
         )
 
         send = AsyncMock()
-        await mw(
-            _make_scope("/webhooks/stripe"),
-            _make_receive(b"{}"),
-            send,
-        )
+        await mw(_make_scope("/webhooks/stripe"), _make_receive(b"{}"), send)
 
         start = _start_message(send)
         assert start is not None
@@ -223,31 +198,23 @@ class TestWebhookSignatureMissingSecret:
 
     @pytest.mark.asyncio
     async def test_dev_env_alone_does_not_escape(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """APP_ENVIRONMENT=dev БЕЗ opt-in env var → 503 (нет implicit escape)."""
         monkeypatch.setenv("APP_ENVIRONMENT", "dev")
         monkeypatch.delenv("WEBHOOK_ALLOW_MISSING_SECRET", raising=False)
 
         async def downstream(scope, receive, send):
-            raise AssertionError(
-                "downstream должен быть skipped без explicit opt-in",
-            )
+            raise AssertionError("downstream должен быть skipped без explicit opt-in")
 
         app = AsyncMock()
         app.side_effect = downstream
         mw = WebhookSignatureMiddleware(
-            app=app,
-            path_prefixes=("/webhooks/",),
-            secrets_by_prefix={},
+            app=app, path_prefixes=("/webhooks/",), secrets_by_prefix={}
         )
 
         send = AsyncMock()
-        await mw(
-            _make_scope("/webhooks/stripe"),
-            _make_receive(b"{}"),
-            send,
-        )
+        await mw(_make_scope("/webhooks/stripe"), _make_receive(b"{}"), send)
 
         start = _start_message(send)
         assert start is not None
@@ -255,7 +222,7 @@ class TestWebhookSignatureMissingSecret:
 
     @pytest.mark.asyncio
     async def test_production_with_optin_env_still_fail_closed(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """APP_ENVIRONMENT=production + opt-in → всё равно 503 (defense in depth)."""
         monkeypatch.setenv("APP_ENVIRONMENT", "production")
@@ -267,17 +234,11 @@ class TestWebhookSignatureMissingSecret:
         app = AsyncMock()
         app.side_effect = downstream
         mw = WebhookSignatureMiddleware(
-            app=app,
-            path_prefixes=("/webhooks/",),
-            secrets_by_prefix={},
+            app=app, path_prefixes=("/webhooks/",), secrets_by_prefix={}
         )
 
         send = AsyncMock()
-        await mw(
-            _make_scope("/webhooks/stripe"),
-            _make_receive(b"{}"),
-            send,
-        )
+        await mw(_make_scope("/webhooks/stripe"), _make_receive(b"{}"), send)
 
         start = _start_message(send)
         assert start is not None
@@ -285,7 +246,7 @@ class TestWebhookSignatureMissingSecret:
 
     @pytest.mark.asyncio
     async def test_metric_label_uses_most_specific_path_prefix(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Метка path_prefix в counter использует самый специфичный matched prefix."""
         monkeypatch.delenv("APP_ENVIRONMENT", raising=False)
@@ -306,11 +267,7 @@ class TestWebhookSignatureMissingSecret:
         )
 
         send = AsyncMock()
-        await mw(
-            _make_scope("/webhooks/stripe/payment"),
-            _make_receive(b"{}"),
-            send,
-        )
+        await mw(_make_scope("/webhooks/stripe/payment"), _make_receive(b"{}"), send)
 
         start = _start_message(send)
         assert start is not None

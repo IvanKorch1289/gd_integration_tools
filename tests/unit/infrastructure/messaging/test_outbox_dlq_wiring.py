@@ -4,12 +4,12 @@ Post-FW1: ``start_outbox_dispatcher`` пытается построить ``Inbo
 из ``state.outbox_dlq_session_factory`` (если зарегистрирован).
 Pre-FW1: всегда fallback к ``_BackendDLQHandler`` (та же outbox-таблица).
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
 
 import pytest
-
 
 
 def test_build_default_dlq_returns_none_without_session_factory() -> None:

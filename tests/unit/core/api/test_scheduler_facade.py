@@ -20,15 +20,10 @@ from src.backend.core.api.scheduler import dlq, scheduler_manager
 class TestSchedulerFacadeAllExports:
     """``__all__`` audit + module identity."""
 
-    @pytest.mark.parametrize(
-        "symbol_name",
-        ["dlq", "scheduler_manager"],
-    )
+    @pytest.mark.parametrize("symbol_name", ["dlq", "scheduler_manager"])
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(scheduler, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
+        assert hasattr(scheduler, symbol_name), f"Missing export: {symbol_name}"
         assert symbol_name in scheduler.__all__, (
             f"{symbol_name} not declared in __all__"
         )

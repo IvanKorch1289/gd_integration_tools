@@ -1,6 +1,5 @@
 """Unit-тесты NATSJetStreamSource.fetch_consumer_info + admin endpoint (S13 K3 W5)."""
 
-
 from __future__ import annotations
 
 from types import SimpleNamespace
@@ -14,7 +13,7 @@ def source():
     from src.backend.infrastructure.sources.nats_jetstream import NATSJetStreamSource
 
     return NATSJetStreamSource(
-        subject="orders.created", stream="ORDERS", durable="orders-consumer",
+        subject="orders.created", stream="ORDERS", durable="orders-consumer"
     )
 
 

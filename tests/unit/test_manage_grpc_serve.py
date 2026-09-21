@@ -9,6 +9,7 @@ Ponytail/YAGNI: thin CLI wrapper, minimal logic.
 from __future__ import annotations
 
 import os
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -47,8 +48,7 @@ def test_grpc_serve_help(cli_runner: CliRunner) -> None:
 
 
 def test_grpc_serve_default_invokes_serve(
-    cli_runner: CliRunner,
-    mock_serve: MagicMock,
+    cli_runner: CliRunner, mock_serve: MagicMock
 ) -> None:
     """Default invocation (no flags) → serve() called через asyncio.run."""
     # asyncio.run патчим — иначе actual event loop попытка
@@ -60,14 +60,12 @@ def test_grpc_serve_default_invokes_serve(
 
 
 def test_grpc_serve_socket_option_sets_env(
-    cli_runner: CliRunner,
-    mock_serve: MagicMock,
+    cli_runner: CliRunner, mock_serve: MagicMock
 ) -> None:
     """--socket задаёт GRPC_SOCKET_PATH env var."""
     with patch("manage.asyncio.run") as mock_run:
         result = cli_runner.invoke(
-            app,
-            ["grpc-serve", "--socket", "/tmp/test-grpc.sock"],
+            app, ["grpc-serve", "--socket", "/tmp/test-grpc.sock"]
         )
         assert result.exit_code == 0, result.output
         assert os.environ.get("GRPC_SOCKET_PATH") == "/tmp/test-grpc.sock"
@@ -75,18 +73,14 @@ def test_grpc_serve_socket_option_sets_env(
 
 
 def test_grpc_serve_max_workers_option_sets_env(
-    cli_runner: CliRunner,
-    mock_serve: MagicMock,
+    cli_runner: CliRunner, mock_serve: MagicMock
 ) -> None:
     """--max-workers задаёт GRPC_MAX_WORKERS env var."""
     # Очищаем env чтобы избежать leakage из других тестов
     env_backup = os.environ.pop("GRPC_MAX_WORKERS", None)
     try:
-        with patch("manage.asyncio.run") as mock_run:
-            result = cli_runner.invoke(
-                app,
-                ["grpc-serve", "--max-workers", "5"],
-            )
+        with patch("manage.asyncio.run") as _mock_run:
+            result = cli_runner.invoke(app, ["grpc-serve", "--max-workers", "5"])
             assert result.exit_code == 0, result.output
             assert os.environ.get("GRPC_MAX_WORKERS") == "5"
     finally:

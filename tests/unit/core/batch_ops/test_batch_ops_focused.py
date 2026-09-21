@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+
 import pytest
 
 from src.backend.core.batch_ops import (
@@ -162,7 +163,4 @@ class TestRealisticExample:
         with caplog.at_level(logging.WARNING, logger="core.batch_ops.limiter"):
             list(batch_chunks(items, config=config))
         # Should have a warning about "exceeds 2x limit".
-        assert any(
-            "exceeds" in m and "2x limit" in m
-            for m in caplog.messages
-        )
+        assert any("exceeds" in m and "2x limit" in m for m in caplog.messages)

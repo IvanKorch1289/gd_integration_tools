@@ -1,6 +1,5 @@
 """Unit-тесты HitlHistoryService — Sprint 12 K5 W2."""
 
-
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -43,7 +42,7 @@ async def test_history_single_approve() -> None:
             '{"signal_id": "sig-1", "comment": "ok"}',
             ts,
             5000,
-        ),
+        )
     ]
     client = MagicMock()
     client.query = AsyncMock(return_value=_make_result(rows))

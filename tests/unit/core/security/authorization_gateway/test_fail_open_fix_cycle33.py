@@ -19,7 +19,6 @@ Counter читаем напрямую через ``prometheus_client.Counter._va
 (не через Registry API), чтобы не зависеть от test-isolation helpers.
 """
 
-
 from __future__ import annotations
 
 import logging
@@ -54,7 +53,7 @@ class TestIsEnabledFailOpenFix:
     """B-01 fix: ``_is_enabled()`` должен остаться enabled при ошибке feature-flag."""
 
     def test_authz_is_enabled_logs_on_exception_returns_true(
-        self, gateway: AuthorizationGateway, caplog: pytest.LogCaptureFixture,
+        self, gateway: AuthorizationGateway, caplog: pytest.LogCaptureFixture
     ) -> None:
         """При падении ``get_feature_flag_service()`` _is_enabled() возвращает True.
 
@@ -78,7 +77,9 @@ class TestIsEnabledFailOpenFix:
 
         feature_flags_module.get_feature_flag_service = _boom
         try:
-            with caplog.at_level(logging.ERROR, logger="core.security.authorization_gateway"):
+            with caplog.at_level(
+                logging.ERROR, logger="core.security.authorization_gateway"
+            ):
                 result = gateway._is_enabled()
         finally:
             feature_flags_module.get_feature_flag_service = original_getter
@@ -92,12 +93,12 @@ class TestIsEnabledFailOpenFix:
             "authz feature-flag lookup failed" in record.message
             for record in caplog.records
         ), "ERROR-лог с описанием деградации обязателен"
-        assert any(
-            record.levelno == logging.ERROR for record in caplog.records
-        ), "должен быть именно ERROR level (не WARNING)"
+        assert any(record.levelno == logging.ERROR for record in caplog.records), (
+            "должен быть именно ERROR level (не WARNING)"
+        )
 
     def test_authz_is_enabled_constructor_override_takes_precedence(
-        self, gateway: AuthorizationGateway,
+        self, gateway: AuthorizationGateway
     ) -> None:
         """Конструкторский ``enabled=False`` имеет приоритет над fallback.
 
@@ -106,14 +107,14 @@ class TestIsEnabledFailOpenFix:
         и при исключении НЕ должен инвертироваться в True.
         """
         explicit = AuthorizationGateway(
-            capability_gateway=CapabilityGate(), enabled=False,
+            capability_gateway=CapabilityGate(), enabled=False
         )
         assert explicit._enabled is False
         # feature-flag service тут не должен вызываться (early return).
         assert explicit._is_enabled() is False
 
     def test_authz_is_enabled_happy_path_returns_flag_value(
-        self, monkeypatch: pytest.MonkeyPatch, gateway: AuthorizationGateway,
+        self, monkeypatch: pytest.MonkeyPatch, gateway: AuthorizationGateway
     ) -> None:
         """Happy-path: feature flag = True → _is_enabled() = True."""
         monkeypatch.setattr(
@@ -127,16 +128,12 @@ class TestCheckEngineFailureWarning:
     """B-03 fix: ``check()`` логирует WARNING + инкрементит counter при ошибке engine'а."""
 
     def test_check_logs_warning_on_casbin_exception_returns_false(
-        self,
-        gateway: AuthorizationGateway,
-        caplog: pytest.LogCaptureFixture,
+        self, gateway: AuthorizationGateway, caplog: pytest.LogCaptureFixture
     ) -> None:
         """Casbin engine бросает → WARNING + counter inc + return False."""
         before = _counter_value("casbin")
 
-        def _exploding_casbin(
-            subject: str, action: str, resource: str,
-        ) -> bool | None:
+        def _exploding_casbin(subject: str, action: str, resource: str) -> bool | None:
             raise ConnectionError("casbin enforcer socket closed")
 
         # Monkeypatch на инстансе: метод `_casbin_check` объявлен в
@@ -144,7 +141,7 @@ class TestCheckEngineFailureWarning:
         gateway._casbin_check = _exploding_casbin  # type: ignore[method-assign]
 
         with caplog.at_level(
-            logging.WARNING, logger="core.security.authorization_gateway",
+            logging.WARNING, logger="core.security.authorization_gateway"
         ):
             result = gateway.check("alice", "read", "document:1")
 
@@ -155,48 +152,37 @@ class TestCheckEngineFailureWarning:
         assert any(
             "engine=casbin failed" in record.message for record in caplog.records
         ), "WARNING-лог с engine=casbin обязателен"
-        assert any(
-            record.levelno == logging.WARNING for record in caplog.records
-        )
+        assert any(record.levelno == logging.WARNING for record in caplog.records)
         assert _counter_value("casbin") == before + 1, (
             "counter authz_check_engine_failed_total{engine=casbin} "
             "должен инкрементироваться ровно на 1"
         )
 
     def test_check_logs_warning_on_opa_exception_returns_false(
-        self,
-        gateway: AuthorizationGateway,
-        caplog: pytest.LogCaptureFixture,
+        self, gateway: AuthorizationGateway, caplog: pytest.LogCaptureFixture
     ) -> None:
         """OPA engine бросает → WARNING + counter inc + return False."""
         before = _counter_value("opa")
 
         def _exploding_opa(
-            subject: str,
-            action: str,
-            resource: str,
-            context: dict[str, object] | None,
+            subject: str, action: str, resource: str, context: dict[str, object] | None
         ) -> bool | None:
             raise TimeoutError("opa query timeout after 5s")
 
         gateway._opa_check = _exploding_opa  # type: ignore[method-assign]
 
         with caplog.at_level(
-            logging.WARNING, logger="core.security.authorization_gateway",
+            logging.WARNING, logger="core.security.authorization_gateway"
         ):
             result = gateway.check("alice", "read", "document:2")
 
         assert result is False
-        assert any(
-            "engine=opa failed" in record.message for record in caplog.records
-        )
-        assert any(
-            record.levelno == logging.WARNING for record in caplog.records
-        )
+        assert any("engine=opa failed" in record.message for record in caplog.records)
+        assert any(record.levelno == logging.WARNING for record in caplog.records)
         assert _counter_value("opa") == before + 1
 
     def test_check_in_memory_fallback_short_circuits(
-        self, gateway: AuthorizationGateway,
+        self, gateway: AuthorizationGateway
     ) -> None:
         """In-memory hit НЕ вызывает engine'и → counter не растёт.
 

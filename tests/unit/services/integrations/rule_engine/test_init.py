@@ -22,15 +22,10 @@ from src.backend.services.integrations.rule_engine import (
 class TestRuleEngineFacadeAllExports:
     """``__all__`` audit + class identity."""
 
-    @pytest.mark.parametrize(
-        "symbol_name",
-        ["RuleEngineRegistry", "RulesetCacheEntry"],
-    )
+    @pytest.mark.parametrize("symbol_name", ["RuleEngineRegistry", "RulesetCacheEntry"])
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(rule_engine, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
+        assert hasattr(rule_engine, symbol_name), f"Missing export: {symbol_name}"
         assert symbol_name in rule_engine.__all__, (
             f"{symbol_name} not declared in __all__"
         )
@@ -42,7 +37,10 @@ class TestRuleEngineFacadeAllExports:
     def test_module_docstring_present(self) -> None:
         """Module docstring описывает rule-engine registry."""
         assert rule_engine.__doc__ is not None
-        assert "rule" in rule_engine.__doc__.lower() or "registry" in rule_engine.__doc__.lower()
+        assert (
+            "rule" in rule_engine.__doc__.lower()
+            or "registry" in rule_engine.__doc__.lower()
+        )
 
 
 @pytest.mark.unit
@@ -62,6 +60,6 @@ class TestRuleEngineFacadeIdentity:
         try:
             reg = RuleEngineRegistry()
             assert reg is not None
-        except (TypeError, AttributeError):
+        except TypeError, AttributeError:
             # Если требует обязательных args, проверяем только type identity.
             assert RuleEngineRegistry is not None

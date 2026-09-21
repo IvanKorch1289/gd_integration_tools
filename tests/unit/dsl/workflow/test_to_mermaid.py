@@ -7,7 +7,6 @@
     * mix shapes.
 """
 
-
 from __future__ import annotations
 
 from src.backend.dsl.workflow.spec import (

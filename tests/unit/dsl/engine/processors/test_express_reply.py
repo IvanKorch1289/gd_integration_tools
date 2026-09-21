@@ -3,6 +3,7 @@
 T3 coverage sprint cycle 6: тесты для ``ExpressReplyProcessor.__init__``
 (validation) и ``process()`` (reply via BotxMessage).
 """
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -126,19 +127,23 @@ async def test_process_sends_reply_and_stores_sync_id() -> None:
     ex, captured = _make_exchange(properties={"group_chat_id": "chat-1"})
 
     fake_client = _FakeClient(reply_id="reply-sync-XYZ")
-    with patch(
-        "src.backend.dsl.engine.processors.express.reply.get_express_client",
-        return_value=fake_client,
-    ), patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(BotxMessage=_FakeBotxMessage),
-    ), patch(
-        "src.backend.dsl.engine.processors.express.reply.resolve_value",
-        lambda exch, expr: {
-            "header.X-Express-Sync-Id": "src-001",
-            "body.group_chat_id": "chat-1",
-            "body.text": None,
-        }.get(expr),
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.reply.get_express_client",
+            return_value=fake_client,
+        ),
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(BotxMessage=_FakeBotxMessage),
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.reply.resolve_value",
+            lambda exch, expr: {
+                "header.X-Express-Sync-Id": "src-001",
+                "body.group_chat_id": "chat-1",
+                "body.text": None,
+            }.get(expr),
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -157,19 +162,23 @@ async def test_process_uses_body_from_when_body_none() -> None:
     ex, captured = _make_exchange(properties={"text": "dynamic text"})
 
     fake_client = _FakeClient(reply_id="reply-1")
-    with patch(
-        "src.backend.dsl.engine.processors.express.reply.get_express_client",
-        return_value=fake_client,
-    ), patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(BotxMessage=_FakeBotxMessage),
-    ), patch(
-        "src.backend.dsl.engine.processors.express.reply.resolve_value",
-        lambda exch, expr: {
-            "header.X-Express-Sync-Id": "src-1",
-            "body.group_chat_id": "chat-1",
-            "properties.text": "dynamic text",
-        }.get(expr),
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.reply.get_express_client",
+            return_value=fake_client,
+        ),
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(BotxMessage=_FakeBotxMessage),
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.reply.resolve_value",
+            lambda exch, expr: {
+                "header.X-Express-Sync-Id": "src-1",
+                "body.group_chat_id": "chat-1",
+                "properties.text": "dynamic text",
+            }.get(expr),
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -183,15 +192,19 @@ async def test_process_static_body_priority_over_body_from() -> None:
     ex, _captured = _make_exchange(properties={"text": "DYNAMIC"})
 
     fake_client = _FakeClient()
-    with patch(
-        "src.backend.dsl.engine.processors.express.reply.get_express_client",
-        return_value=fake_client,
-    ), patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(BotxMessage=_FakeBotxMessage),
-    ), patch(
-        "src.backend.dsl.engine.processors.express.reply.resolve_value",
-        lambda exch, expr: "src-1",
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.reply.get_express_client",
+            return_value=fake_client,
+        ),
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(BotxMessage=_FakeBotxMessage),
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.reply.resolve_value",
+            lambda exch, expr: "src-1",
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -204,12 +217,15 @@ async def test_process_skips_when_source_sync_id_missing() -> None:
     proc = ExpressReplyProcessor(body="text")
     ex, captured = _make_exchange()
 
-    with patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(BotxMessage=_FakeBotxMessage),
-    ), patch(
-        "src.backend.dsl.engine.processors.express.reply.resolve_value",
-        return_value=None,
+    with (
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(BotxMessage=_FakeBotxMessage),
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.reply.resolve_value",
+            return_value=None,
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -222,16 +238,19 @@ async def test_process_skips_when_text_empty() -> None:
     proc = ExpressReplyProcessor(body="placeholder")  # validation passes
     ex, captured = _make_exchange(properties={"group_chat_id": "chat-1"})
 
-    with patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(BotxMessage=_FakeBotxMessage),
-    ), patch(
-        "src.backend.dsl.engine.processors.express.reply.resolve_value",
-        lambda exch, expr: {
-            "header.X-Express-Sync-Id": "src-1",
-            "body.group_chat_id": "chat-1",
-            "": None,
-        }.get(expr),
+    with (
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(BotxMessage=_FakeBotxMessage),
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.reply.resolve_value",
+            lambda exch, expr: {
+                "header.X-Express-Sync-Id": "src-1",
+                "body.group_chat_id": "chat-1",
+                "": None,
+            }.get(expr),
+        ),
     ):
         # Override body to None through body_from path
         proc._body = None
@@ -246,12 +265,15 @@ async def test_process_skips_when_chat_id_missing() -> None:
     proc = ExpressReplyProcessor(body="text")
     ex, captured = _make_exchange(properties={"group_chat_id": None})
 
-    with patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(BotxMessage=_FakeBotxMessage),
-    ), patch(
-        "src.backend.dsl.engine.processors.express.reply.resolve_value",
-        lambda exch, expr: "src-1" if expr == "header.X-Express-Sync-Id" else None,
+    with (
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(BotxMessage=_FakeBotxMessage),
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.reply.resolve_value",
+            lambda exch, expr: "src-1" if expr == "header.X-Express-Sync-Id" else None,
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -264,15 +286,21 @@ async def test_process_client_none_skips_silently() -> None:
     proc = ExpressReplyProcessor(body="text")
     ex, captured = _make_exchange(properties={"group_chat_id": "chat-1"})
 
-    with patch(
-        "src.backend.dsl.engine.processors.express.reply.get_express_client",
-        return_value=None,
-    ), patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(BotxMessage=_FakeBotxMessage),
-    ), patch(
-        "src.backend.dsl.engine.processors.express.reply.resolve_value",
-        lambda exch, expr: "src-1" if expr == "header.X-Express-Sync-Id" else "chat-1",
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.reply.get_express_client",
+            return_value=None,
+        ),
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(BotxMessage=_FakeBotxMessage),
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.reply.resolve_value",
+            lambda exch, expr: (
+                "src-1" if expr == "header.X-Express-Sync-Id" else "chat-1"
+            ),
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -292,15 +320,21 @@ async def test_process_client_exception_records_error() -> None:
     error_client.__aexit__ = AsyncMock(return_value=None)
     error_client.reply = AsyncMock(side_effect=RuntimeError("BotX 503"))
 
-    with patch(
-        "src.backend.dsl.engine.processors.express.reply.get_express_client",
-        return_value=error_client,
-    ), patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(BotxMessage=_FakeBotxMessage),
-    ), patch(
-        "src.backend.dsl.engine.processors.express.reply.resolve_value",
-        lambda exch, expr: "src-1" if expr == "header.X-Express-Sync-Id" else "chat-1",
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.reply.get_express_client",
+            return_value=error_client,
+        ),
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(BotxMessage=_FakeBotxMessage),
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.reply.resolve_value",
+            lambda exch, expr: (
+                "src-1" if expr == "header.X-Express-Sync-Id" else "chat-1"
+            ),
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -314,15 +348,21 @@ async def test_process_source_sync_id_coerced_to_str() -> None:
     ex, _captured = _make_exchange(properties={"group_chat_id": "chat-1"})
 
     fake_client = _FakeClient()
-    with patch(
-        "src.backend.dsl.engine.processors.express.reply.get_express_client",
-        return_value=fake_client,
-    ), patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(BotxMessage=_FakeBotxMessage),
-    ), patch(
-        "src.backend.dsl.engine.processors.express.reply.resolve_value",
-        lambda exch, expr: 12345 if expr == "header.X-Express-Sync-Id" else "chat-1",
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.reply.get_express_client",
+            return_value=fake_client,
+        ),
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(BotxMessage=_FakeBotxMessage),
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.reply.resolve_value",
+            lambda exch, expr: (
+                12345 if expr == "header.X-Express-Sync-Id" else "chat-1"
+            ),
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -337,15 +377,19 @@ async def test_process_chat_id_coerced_to_str() -> None:
     ex, _captured = _make_exchange()
 
     fake_client = _FakeClient()
-    with patch(
-        "src.backend.dsl.engine.processors.express.reply.get_express_client",
-        return_value=fake_client,
-    ), patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(BotxMessage=_FakeBotxMessage),
-    ), patch(
-        "src.backend.dsl.engine.processors.express.reply.resolve_value",
-        lambda exch, expr: "src-1" if expr == "header.X-Express-Sync-Id" else 9999,
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.reply.get_express_client",
+            return_value=fake_client,
+        ),
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(BotxMessage=_FakeBotxMessage),
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.reply.resolve_value",
+            lambda exch, expr: "src-1" if expr == "header.X-Express-Sync-Id" else 9999,
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -356,22 +400,25 @@ async def test_process_chat_id_coerced_to_str() -> None:
 
 @pytest.mark.asyncio
 async def test_process_default_result_property_customizable() -> None:
-    proc = ExpressReplyProcessor(
-        body="text",
-        result_property="custom_reply_id",
-    )
+    proc = ExpressReplyProcessor(body="text", result_property="custom_reply_id")
     ex, captured = _make_exchange(properties={"group_chat_id": "chat-1"})
 
     fake_client = _FakeClient(reply_id="r-123")
-    with patch(
-        "src.backend.dsl.engine.processors.express.reply.get_express_client",
-        return_value=fake_client,
-    ), patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(BotxMessage=_FakeBotxMessage),
-    ), patch(
-        "src.backend.dsl.engine.processors.express.reply.resolve_value",
-        lambda exch, expr: "src-1" if expr == "header.X-Express-Sync-Id" else "chat-1",
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.reply.get_express_client",
+            return_value=fake_client,
+        ),
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(BotxMessage=_FakeBotxMessage),
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.reply.resolve_value",
+            lambda exch, expr: (
+                "src-1" if expr == "header.X-Express-Sync-Id" else "chat-1"
+            ),
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -380,10 +427,7 @@ async def test_process_default_result_property_customizable() -> None:
 
 @pytest.mark.asyncio
 async def test_process_exception_uses_custom_result_property_error_key() -> None:
-    proc = ExpressReplyProcessor(
-        body="text",
-        result_property="custom_id",
-    )
+    proc = ExpressReplyProcessor(body="text", result_property="custom_id")
     ex, captured = _make_exchange(properties={"group_chat_id": "chat-1"})
 
     error_client = MagicMock()
@@ -391,15 +435,21 @@ async def test_process_exception_uses_custom_result_property_error_key() -> None
     error_client.__aexit__ = AsyncMock(return_value=None)
     error_client.reply = AsyncMock(side_effect=RuntimeError("timeout"))
 
-    with patch(
-        "src.backend.dsl.engine.processors.express.reply.get_express_client",
-        return_value=error_client,
-    ), patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(BotxMessage=_FakeBotxMessage),
-    ), patch(
-        "src.backend.dsl.engine.processors.express.reply.resolve_value",
-        lambda exch, expr: "src-1" if expr == "header.X-Express-Sync-Id" else "chat-1",
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.reply.get_express_client",
+            return_value=error_client,
+        ),
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(BotxMessage=_FakeBotxMessage),
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.reply.resolve_value",
+            lambda exch, expr: (
+                "src-1" if expr == "header.X-Express-Sync-Id" else "chat-1"
+            ),
+        ),
     ):
         await proc.process(ex, _ctx())
 

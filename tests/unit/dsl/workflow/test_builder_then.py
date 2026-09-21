@@ -8,7 +8,6 @@ D-A8-06 (P0): extensions/core_entities/orders/workflows/orders_dsl.py
 src/backend/dsl/workflow/builder/__init__.py.
 """
 
-
 from __future__ import annotations
 
 from src.backend.dsl.workflow.builder import WorkflowBuilder

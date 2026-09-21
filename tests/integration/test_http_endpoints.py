@@ -11,7 +11,9 @@ import os
 import sys
 
 # Repo root в sys.path для extensions/testkit
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_REPO_ROOT = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
@@ -32,9 +34,20 @@ def test_openapi_schema_loads() -> bool:
         return False
     try:
         result = subprocess.run(  # noqa: S603
-            [curl_bin, "-sS", "-o", "/dev/null", "-w", "%{http_code}",
-             "-m", "10", "http://localhost:8000/openapi.json"],
-            capture_output=True, text=True, check=True,
+            [
+                curl_bin,
+                "-sS",
+                "-o",
+                "/dev/null",
+                "-w",
+                "%{http_code}",
+                "-m",
+                "10",
+                "http://localhost:8000/openapi.json",
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
         )
         return result.stdout.strip() == "200"
     except Exception:
@@ -77,7 +90,9 @@ def test_admin_endpoints_registered() -> bool:
     try:
         result = subprocess.run(  # noqa: S603
             [curl_bin, "-sS", "-m", "10", "http://localhost:8000/openapi.json"],
-            capture_output=True, text=True, check=True,
+            capture_output=True,
+            text=True,
+            check=True,
         )
         spec = json.loads(result.stdout)
     except Exception:
@@ -104,7 +119,9 @@ def test_dsl_routes_registered() -> bool:
     try:
         result = subprocess.run(  # noqa: S603
             [curl_bin, "-sS", "-m", "10", "http://localhost:8000/openapi.json"],
-            capture_output=True, text=True, check=True,
+            capture_output=True,
+            text=True,
+            check=True,
         )
         spec = json.loads(result.stdout)
     except Exception:
@@ -143,7 +160,9 @@ def test_admin_endpoints_count() -> bool:
     try:
         result = subprocess.run(  # noqa: S603
             [curl_bin, "-sS", "-m", "10", "http://localhost:8000/openapi.json"],
-            capture_output=True, text=True, check=True,
+            capture_output=True,
+            text=True,
+            check=True,
         )
         spec = json.loads(result.stdout)
     except Exception:
@@ -152,7 +171,9 @@ def test_admin_endpoints_count() -> bool:
     admin_count = sum(1 for p in paths if "/api/v1/admin/" in p)
     auto_count = sum(1 for p in paths if "/api/v1/auto/" in p)
     dsl_routes_count = sum(1 for p in paths if "/dsl-routes" in p)
-    print(f"  [info] admin={admin_count} auto={auto_count} dsl-routes={dsl_routes_count}")
+    print(
+        f"  [info] admin={admin_count} auto={auto_count} dsl-routes={dsl_routes_count}"
+    )
     return admin_count >= 100 and auto_count >= 100 and dsl_routes_count >= 5
 
 
@@ -167,7 +188,9 @@ def test_layer_violations_zero_new() -> bool:
     try:
         result = subprocess.run(  # noqa: S603
             [py, "tools/check_layers.py"],
-            capture_output=True, text=True, cwd="/home/user/dev/gd_integration_tools",
+            capture_output=True,
+            text=True,
+            cwd="/home/user/dev/gd_integration_tools",
         )
         return result.returncode == 0 and "Нарушений: 0 новых" in result.stdout
     except Exception:
@@ -182,9 +205,9 @@ def test_bandit_strict_no_high() -> bool:
     py = sys.executable  # use venv Python (bandit installed)
     try:
         result = subprocess.run(  # noqa: S603
-            [py, "-m", "bandit", "-r", "src/backend", "-lll",
-             "-c", "pyproject.toml"],
-            capture_output=True, text=True,
+            [py, "-m", "bandit", "-r", "src/backend", "-lll", "-c", "pyproject.toml"],
+            capture_output=True,
+            text=True,
             cwd="/home/user/dev/gd_integration_tools",
         )
         combined = (result.stdout or "") + (result.stderr or "")
@@ -218,7 +241,8 @@ def test_per_layer_diagnostic_works() -> bool:
     try:
         result = subprocess.run(  # noqa: S603
             [sys.executable, "tools/coverage/per_layer_diagnostic.py"],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
             cwd="/home/user/dev/gd_integration_tools",
         )
         return result.returncode == 0
@@ -231,7 +255,10 @@ def test_layer_lint_allowlist_includes_core_lazy_proxies() -> bool:
 
     p = "/home/user/dev/gd_integration_tools/tools/check_layers.py"
     content = open(p, encoding="utf-8").read()
-    return "CORE_LAZY_PROXY_EXCEPTIONS" in content and "src.backend.services.auth" in content
+    return (
+        "CORE_LAZY_PROXY_EXCEPTIONS" in content
+        and "src.backend.services.auth" in content
+    )
 
 
 def test_ci_bandit_blocking_gate() -> bool:
@@ -253,9 +280,20 @@ def test_bandit_medium_count_trend() -> bool:
     py = sys.executable
     try:
         result = subprocess.run(  # noqa: S603
-            [py, "-m", "bandit", "-r", "src/backend", "-c", ".bandit",
-             "-f", "json", "-ll"],
-            capture_output=True, text=True,
+            [
+                py,
+                "-m",
+                "bandit",
+                "-r",
+                "src/backend",
+                "-c",
+                ".bandit",
+                "-f",
+                "json",
+                "-ll",
+            ],
+            capture_output=True,
+            text=True,
             cwd="/home/user/dev/gd_integration_tools",
             check=False,
         )
@@ -292,11 +330,15 @@ def test_httpx_unified_transport_default_on() -> bool:
     py = sys.executable
     try:
         result = subprocess.run(  # noqa: S603
-            [py, "-c",
-             "from src.backend.infrastructure.clients.transport.http_httpx import "
-             "is_httpx_retries_available, is_hishel_available; "
-             "print('OK' if is_httpx_retries_available() and is_hishel_available() else 'OFF')"],
-            capture_output=True, text=True,
+            [
+                py,
+                "-c",
+                "from src.backend.infrastructure.clients.transport.http_httpx import "
+                "is_httpx_retries_available, is_hishel_available; "
+                "print('OK' if is_httpx_retries_available() and is_hishel_available() else 'OFF')",
+            ],
+            capture_output=True,
+            text=True,
             cwd="/home/user/dev/gd_integration_tools",
         )
         return "OK" in result.stdout
@@ -328,7 +370,10 @@ def main() -> int:
         ("Bandit-strict HIGH = 0", test_bandit_strict_no_high),
         ("ADR INDEX актуальный", test_adr_index_current),
         ("Per-layer diagnostic works", test_per_layer_diagnostic_works),
-        ("Layer lint includes CORE_LAZY_PROXY_EXCEPTIONS", test_layer_lint_allowlist_includes_core_lazy_proxies),
+        (
+            "Layer lint includes CORE_LAZY_PROXY_EXCEPTIONS",
+            test_layer_lint_allowlist_includes_core_lazy_proxies,
+        ),
         ("CI bandit blocking gate", test_ci_bandit_blocking_gate),
         ("Bandit MEDIUM count ≤ 2 (Sprint 6 target)", test_bandit_medium_count_trend),
         ("defusedxml в pyproject.toml", test_defusedxml_in_pyproject),

@@ -26,7 +26,6 @@ Stub'и подменяют **только внешние модели** (network
 ``-m 'not e2e'``).
 """
 
-
 from __future__ import annotations
 
 import io
@@ -59,13 +58,11 @@ class StubBLIP2:
         self._device = kwargs.get("device", "cpu")
 
     async def caption(
-        self, image_bytes: bytes, *, max_new_tokens: int = 50,
+        self, image_bytes: bytes, *, max_new_tokens: int = 50
     ) -> CaptionResult:
         """Возвращает фиксированный caption для любых image bytes."""
         return CaptionResult(
-            caption=STUB_CAT_CAPTION,
-            model=self._model_name,
-            device=self._device,
+            caption=STUB_CAT_CAPTION, model=self._model_name, device=self._device
         )
 
 
@@ -81,7 +78,7 @@ class StubWhisper:
         self._language = kwargs.get("language", "en")
 
     async def transcribe(
-        self, audio_bytes: bytes, *, suffix: str = ".wav",
+        self, audio_bytes: bytes, *, suffix: str = ".wav"
     ) -> TranscriptionResult:
         """Возвращает фиксированный transcript для любого audio."""
         return TranscriptionResult(
@@ -98,8 +95,22 @@ class StubWhisper:
 # Размерность (16) — между dummy 384-dim и production 512-dim; выбрана
 # минимальной, чтобы тест был читаемым и cosine-similarity тривиальной.
 _TOKEN_VOCAB: tuple[str, ...] = (
-    "cat", "dog", "mat", "bird", "fish", "tree", "house", "car",
-    "hello", "world", "image", "audio", "text", "ingest", "search", "rag",
+    "cat",
+    "dog",
+    "mat",
+    "bird",
+    "fish",
+    "tree",
+    "house",
+    "car",
+    "hello",
+    "world",
+    "image",
+    "audio",
+    "text",
+    "ingest",
+    "search",
+    "rag",
 )
 _TOKEN_INDEX: dict[str, int] = {tok: i for i, tok in enumerate(_TOKEN_VOCAB)}
 
@@ -166,9 +177,9 @@ class StubLiteLLM:
                             "Based on the retrieved context, the answer "
                             "references a cat sitting on a mat."
                         ),
-                    },
-                },
-            ],
+                    }
+                }
+            ]
         }
 
 
@@ -218,8 +229,7 @@ def stub_blip2(monkeypatch: pytest.MonkeyPatch) -> type[StubBLIP2]:
 def stub_whisper(monkeypatch: pytest.MonkeyPatch) -> type[StubWhisper]:
     """Подменяет ``WhisperSTT`` в модуле на stub."""
     monkeypatch.setattr(
-        "src.backend.services.ai.rag.multimodal.whisper_stt.WhisperSTT",
-        StubWhisper,
+        "src.backend.services.ai.rag.multimodal.whisper_stt.WhisperSTT", StubWhisper
     )
     return StubWhisper
 
@@ -274,6 +284,7 @@ async def test_image_caption_pipeline_e2e(
         * LLM ответ содержит слово ``cat``;
         * LLM.last_messages содержит retrieved caption в context.
     """
+
     # Inject caption_provider directly on ImageIngester (BLIP2 stub already
     # подменён на уровне модуля — но реальный контракт caption_provider —
     # это async-callable, который мы передаём как lambda).
@@ -293,10 +304,7 @@ async def test_image_caption_pipeline_e2e(
     # сравнивает chunk.metadata["tenant_id"] == effective_tenant.
     fake_image = _make_fake_png()
     result = await multimodal_service.ingest_document(
-        fake_image,
-        collection="e2e_images",
-        mime="image/png",
-        tenant_id="e2e",
+        fake_image, collection="e2e_images", mime="image/png", tenant_id="e2e"
     )
 
     assert len(result.chunks) == 1, "ImageIngester должен вернуть ровно 1 chunk"
@@ -313,7 +321,7 @@ async def test_image_caption_pipeline_e2e(
 
     # Step 4: semantic search "cat" → top-K должен содержать cat-chunk.
     hits = await multimodal_service.search(
-        "cat", collection="e2e_images", top_k=3, tenant_id="e2e",
+        "cat", collection="e2e_images", top_k=3, tenant_id="e2e"
     )
     assert len(hits) >= 1
     top = hits[0]
@@ -327,9 +335,7 @@ async def test_image_caption_pipeline_e2e(
         if h.chunk.metadata.get("caption")
     )
     response = stub_litellm.completion(
-        messages=[
-            {"role": "user", "content": f"Query: cat\nContext:\n{context}"},
-        ],
+        messages=[{"role": "user", "content": f"Query: cat\nContext:\n{context}"}]
     )
     answer = response["choices"][0]["message"]["content"]
 
@@ -337,9 +343,7 @@ async def test_image_caption_pipeline_e2e(
         f"LLM answer должен reference 'cat', got: {answer!r}"
     )
     assert StubLiteLLM.last_messages is not None
-    context_blob = " ".join(
-        m.get("content", "") for m in StubLiteLLM.last_messages
-    )
+    context_blob = " ".join(m.get("content", "") for m in StubLiteLLM.last_messages)
     assert STUB_CAT_CAPTION in context_blob, (
         "LLM prompt должен содержать retrieved caption в context"
     )
@@ -365,9 +369,7 @@ async def test_audio_transcript_pipeline_e2e(
     """
     # Step A: service.transcribe_audio (использует WhisperSTT stub).
     fake_audio = _make_fake_wav()
-    transcript = await multimodal_service.transcribe_audio(
-        fake_audio, suffix=".wav",
-    )
+    transcript = await multimodal_service.transcribe_audio(fake_audio, suffix=".wav")
     assert transcript == STUB_AUDIO_TRANSCRIPT
 
     # Step B: добавляем audio chunk через _collections напрямую
@@ -397,7 +399,7 @@ async def test_audio_transcript_pipeline_e2e(
 
     # Step C: search "hello" → audio chunk.
     hits = await multimodal_service.search(
-        "hello", collection="e2e_audio", top_k=3, tenant_id="e2e",
+        "hello", collection="e2e_audio", top_k=3, tenant_id="e2e"
     )
     assert len(hits) >= 1
     assert hits[0].chunk.kind == "audio"
@@ -435,7 +437,4 @@ async def test_public_api_exports_complete() -> None:
     doc = ChunkDoc(chunk_id="t", kind="text", content="hi")
     assert doc.chunk_id == "t"
     assert isinstance(IngestResult(document_id="x", chunks=[]).chunks, list)
-    assert isinstance(
-        SearchResult(chunk=doc, score=0.5).score,
-        float,
-    )
+    assert isinstance(SearchResult(chunk=doc, score=0.5).score, float)

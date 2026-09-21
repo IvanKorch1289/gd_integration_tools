@@ -2,9 +2,10 @@
 
 T3 coverage sprint cycle 9: TelegramStatusProcessor (health-check через getMe).
 """
+
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -159,7 +160,9 @@ async def test_process_custom_result_property(monkeypatch: pytest.MonkeyPatch) -
 
 
 @pytest.mark.asyncio
-async def test_process_custom_exception_property(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_process_custom_exception_property(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     proc = TelegramStatusProcessor(result_property="custom_profile")
     ex, captured = _make_exchange()
 

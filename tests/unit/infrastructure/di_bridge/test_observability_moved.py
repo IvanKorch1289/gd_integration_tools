@@ -14,8 +14,6 @@ import importlib
 import sys
 from pathlib import Path
 
-import pytest
-
 
 class TestObservabilityBridgeMoved:
     """Verify observability_bridge relocated to infrastructure layer."""
@@ -37,9 +35,7 @@ class TestObservabilityBridgeMoved:
 
     def test_new_location_importable(self) -> None:
         """New observability module imports успешно."""
-        sys.modules.pop(
-            "src.backend.infrastructure.di_bridge.observability", None
-        )
+        sys.modules.pop("src.backend.infrastructure.di_bridge.observability", None)
         module = importlib.import_module(
             "src.backend.infrastructure.di_bridge.observability"
         )
@@ -75,16 +71,12 @@ class TestInfrastructureLocatorMigrated:
             "src/backend/core/di/providers/infrastructure_locator.py"
         ).read_text(encoding="utf-8")
         assert (
-            "from src.backend.infrastructure.di_bridge.observability import"
-            in text
+            "from src.backend.infrastructure.di_bridge.observability import" in text
         ), (
             "infrastructure_locator должна import из new location "
             "(S41 W1 Item 3 migration)"
         )
-        assert (
-            "from src.backend.core.di.providers.observability_bridge"
-            not in text
-        ), (
+        assert "from src.backend.core.di.providers.observability_bridge" not in text, (
             "Old observability_bridge import path НЕ должен быть в "
             "infrastructure_locator (S41 W1 Item 3 migration)"
         )
@@ -95,14 +87,10 @@ class TestAllowlistReduction:
 
     def test_observability_bridge_entries_removed(self) -> None:
         """4 observability_bridge entries removed from allowlist."""
-        text = Path("tools/check_layers_allowlist.txt").read_text(
-            encoding="utf-8"
-        )
+        text = Path("tools/check_layers_allowlist.txt").read_text(encoding="utf-8")
         # Verify NO entries with `observability_bridge` source path
         for line in text.splitlines():
             if line.startswith("#") or not line.strip():
                 continue
             if "observability_bridge" in line:
-                assert False, (
-                    f"observability_bridge entry still in allowlist: {line}"
-                )
+                assert False, f"observability_bridge entry still in allowlist: {line}"

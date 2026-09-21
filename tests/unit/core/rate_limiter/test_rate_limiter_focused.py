@@ -50,9 +50,7 @@ class TestRateLimiterSync:
         assert rl.available_tokens == 10.0
 
     def test_init_partial_tokens(self) -> None:
-        rl = RateLimiter(
-            RateLimiterConfig(max_tokens=10, initial_tokens=3)
-        )
+        rl = RateLimiter(RateLimiterConfig(max_tokens=10, initial_tokens=3))
         assert rl.available_tokens == 3.0
 
     def test_try_acquire_decrements(self) -> None:
@@ -87,16 +85,12 @@ class TestRateLimiterSync:
         assert rl.available_tokens == 5.0
 
     def test_try_acquire_custom_cost(self) -> None:
-        rl = RateLimiter(
-            RateLimiterConfig(max_tokens=10, initial_tokens=10)
-        )
+        rl = RateLimiter(RateLimiterConfig(max_tokens=10, initial_tokens=10))
         assert rl.try_acquire(cost=3.0) is True
         assert rl.available_tokens == 7.0
 
     def test_try_acquire_insufficient_tokens(self) -> None:
-        rl = RateLimiter(
-            RateLimiterConfig(max_tokens=10, initial_tokens=2)
-        )
+        rl = RateLimiter(RateLimiterConfig(max_tokens=10, initial_tokens=2))
         assert rl.try_acquire(cost=5.0) is False
 
     def test_reset(self) -> None:
@@ -118,9 +112,7 @@ class TestRateLimiterSyncAcquire:
 
     def test_acquire_with_timeout_fails(self) -> None:
         rl = RateLimiter(
-            RateLimiterConfig(
-                max_tokens=1, initial_tokens=0, refill_rate=0.0001
-            )
+            RateLimiterConfig(max_tokens=1, initial_tokens=0, refill_rate=0.0001)
         )
         # Acquire 1 token (refill needs 10000s, so this is only via reset).
         # We don't acquire; just verify timeout works on empty bucket.
@@ -131,9 +123,7 @@ class TestRateLimiterSyncAcquire:
 
     def test_acquire_eventually_succeeds(self) -> None:
         rl = RateLimiter(
-            RateLimiterConfig(
-                max_tokens=1, initial_tokens=0, refill_rate=10.0
-            )
+            RateLimiterConfig(max_tokens=1, initial_tokens=0, refill_rate=10.0)
         )
         # Should refill within 0.5s.
         start = time.monotonic()
@@ -148,9 +138,7 @@ class TestAsyncRateLimiter:
         assert arl.available_tokens == 5.0
 
     async def test_try_acquire_decrements(self) -> None:
-        arl = AsyncRateLimiter(
-            RateLimiterConfig(max_tokens=5, initial_tokens=5)
-        )
+        arl = AsyncRateLimiter(RateLimiterConfig(max_tokens=5, initial_tokens=5))
         assert await arl.try_acquire() is True
         assert arl.available_tokens == 4.0
 
@@ -162,17 +150,13 @@ class TestAsyncRateLimiter:
 
     async def test_acquire_eventually(self) -> None:
         arl = AsyncRateLimiter(
-            RateLimiterConfig(
-                max_tokens=1, initial_tokens=0, refill_rate=20.0
-            )
+            RateLimiterConfig(max_tokens=1, initial_tokens=0, refill_rate=20.0)
         )
         assert await arl.acquire(timeout=0.5) is True
 
     async def test_acquire_timeout(self) -> None:
         arl = AsyncRateLimiter(
-            RateLimiterConfig(
-                max_tokens=1, initial_tokens=0, refill_rate=0.001
-            )
+            RateLimiterConfig(max_tokens=1, initial_tokens=0, refill_rate=0.001)
         )
         # First acquire to consume the (empty) bucket — no token.
         # Now try with timeout.
@@ -191,10 +175,7 @@ class TestGetRateLimiter:
         assert rl1 is not rl2
 
     def test_with_config(self) -> None:
-        rl = get_rate_limiter(
-            "configured",
-            RateLimiterConfig(max_tokens=20),
-        )
+        rl = get_rate_limiter("configured", RateLimiterConfig(max_tokens=20))
         assert rl.available_tokens == 20.0
 
 
@@ -216,13 +197,12 @@ class TestRealisticExample:
     def test_protect_skb_api(self) -> None:
         """Token bucket for SKB API: 10 requests per second burst."""
         skb_limiter = get_rate_limiter(
-            "skb_api",
-            RateLimiterConfig(max_tokens=10, refill_rate=2.0),
+            "skb_api", RateLimiterConfig(max_tokens=10, refill_rate=2.0)
         )
 
         # Burst: 10 calls succeed immediately.
         for i in range(10):
-            assert skb_limiter.try_acquire() is True, f"Call {i+1} should pass"
+            assert skb_limiter.try_acquire() is True, f"Call {i + 1} should pass"
 
         # 11th call fails (bucket empty).
         assert skb_limiter.try_acquire() is False

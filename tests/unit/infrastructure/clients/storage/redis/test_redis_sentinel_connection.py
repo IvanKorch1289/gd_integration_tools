@@ -92,7 +92,9 @@ def test_sentinel_mode_uses_sentinel_master_for() -> None:
     # Sentinel was instantiated with sentinel_nodes endpoints
     mock_sentinel_cls.assert_called_once()
     call_kwargs = mock_sentinel_cls.call_args.kwargs
-    sentinel_endpoints = call_kwargs.get("sentinel_endpoints") or mock_sentinel_cls.call_args.args[0]
+    sentinel_endpoints = (
+        call_kwargs.get("sentinel_endpoints") or mock_sentinel_cls.call_args.args[0]
+    )
     assert sentinel_endpoints == [("sentinel-0", 26379)]
 
     # master_for called with service_name + db
@@ -118,17 +120,13 @@ def test_sentinel_mode_passes_service_name() -> None:
 
         client._build_client("cache")
 
-    service_name = mock_sentinel_instance.master_for.call_args.kwargs[
-        "service_name"
-    ]
+    service_name = mock_sentinel_instance.master_for.call_args.kwargs["service_name"]
     assert service_name == "gd-mobile-redis"
 
 
 def test_sentinel_mode_passes_sentinel_password() -> None:
     """sentinel_password passed to Sentinel constructor (not master_for)."""
-    settings = _make_settings(
-        sentinel_mode=True, sentinel_password="sentinel-secret"
-    )
+    settings = _make_settings(sentinel_mode=True, sentinel_password="sentinel-secret")
     client = _build(settings)
 
     with patch("redis.asyncio.sentinel.Sentinel") as mock_sentinel_cls:

@@ -37,7 +37,7 @@ def test_adapter_available_is_false_without_presidio() -> None:
     adapter = PresidioSanitizerAdapter()
     # Если presidio установлен в окружении — пропускаем; иначе available=False.
     try:
-        import presidio_analyzer
+        import presidio_analyzer  # noqa: F401 — availability probe (try/except ImportError guard)
     except ImportError:
         assert adapter.available is False
 
@@ -86,7 +86,7 @@ async def test_async_sanitize_raises_when_presidio_unavailable() -> None:
     from src.backend.services.ai.pii.presidio_analyzer import PresidioSanitizerAdapter
 
     try:
-        import presidio_analyzer
+        import presidio_analyzer  # noqa: F401 — availability probe (try/except ImportError guard)
     except ImportError:
         adapter = PresidioSanitizerAdapter()
         with pytest.raises(RuntimeError, match="Presidio"):
@@ -110,7 +110,7 @@ def test_di_provider_uses_legacy_when_flag_off(monkeypatch: pytest.MonkeyPatch) 
     from src.backend.core.di import providers
 
     monkeypatch.setattr(
-        features.feature_flags, "presidio_pii_enabled", False, raising=True,
+        features.feature_flags, "presidio_pii_enabled", False, raising=True
     )
     # Сбросить override от предыдущих тестов
     providers.ai._overrides.pop("ai_sanitizer", None)
@@ -126,7 +126,7 @@ def test_di_provider_uses_presidio_adapter_when_flag_on(
     from src.backend.core.di import providers
 
     monkeypatch.setattr(
-        features.feature_flags, "presidio_pii_enabled", True, raising=True,
+        features.feature_flags, "presidio_pii_enabled", True, raising=True
     )
     providers.ai._overrides.pop("ai_sanitizer", None)
     sanitizer = providers.get_ai_sanitizer_provider()

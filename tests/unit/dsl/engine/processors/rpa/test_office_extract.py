@@ -3,6 +3,7 @@ class TestOfficeExtractProcessor:
         from src.backend.dsl.engine.processors.rpa.office_extract import (
             OfficeExtractProcessor,
         )
+
         proc = OfficeExtractProcessor()
         assert proc is not None
 
@@ -11,6 +12,7 @@ class TestOfficeExtractProcessor:
         from src.backend.dsl.engine.processors.rpa.office_extract import (
             OfficeExtractProcessor,
         )
+
         proc = OfficeExtractProcessor()
         # Mock bytes
         result = proc.extract(b"PK\\x03\\x04random docx content")
@@ -21,6 +23,7 @@ class TestOfficeExtractProcessor:
         """Создаёт минимальный валидный .docx zip с word/document.xml."""
         import io
         import zipfile
+
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w") as z:
             z.writestr("word/document.xml", "<doc/>")
@@ -30,6 +33,7 @@ class TestOfficeExtractProcessor:
         """Создаёт минимальный валидный .xlsx zip с xl/workbook.xml."""
         import io
         import zipfile
+
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w") as z:
             z.writestr("xl/workbook.xml", "<workbook/>")
@@ -40,6 +44,7 @@ class TestOfficeExtractProcessor:
         from src.backend.dsl.engine.processors.rpa.office_extract import (
             OfficeExtractProcessor,
         )
+
         proc = OfficeExtractProcessor()
         # .docx = wordprocessingml.document
         assert proc.detect_format(self._make_minimal_docx()) == "docx"

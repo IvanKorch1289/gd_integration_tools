@@ -77,8 +77,7 @@ class TestRegisterPath:
     def test_register_basic(self) -> None:
         m = CanonicalMap()
         m.register_path(
-            path="src/backend/core/idempotency",
-            responsibility="Idempotency Service",
+            path="src/backend/core/idempotency", responsibility="Idempotency Service"
         )
         assert m.size() == 1
         assert m.get_path("src/backend/core/idempotency") is not None
@@ -168,8 +167,7 @@ class TestCheckImport:
             )
         )
         violations = m.check_import(
-            "extensions.my_plugin.x",
-            "src.backend.infrastructure.foo",
+            "extensions.my_plugin.x", "src.backend.infrastructure.foo"
         )
         assert len(violations) == 1
         assert "forbidden" in violations[0]
@@ -300,23 +298,29 @@ class TestRealisticExample:
         )
 
         # Layers.
-        m.add_layer(LayerRule(
-            name="core",
-            allowed_imports=["core", "infrastructure"],
-            forbidden_imports=["extensions", "services"],
-        ))
-        m.add_layer(LayerRule(
-            name="extensions",
-            allowed_imports=["core"],
-            forbidden_imports=["infrastructure"],
-        ))
+        m.add_layer(
+            LayerRule(
+                name="core",
+                allowed_imports=["core", "infrastructure"],
+                forbidden_imports=["extensions", "services"],
+            )
+        )
+        m.add_layer(
+            LayerRule(
+                name="extensions",
+                allowed_imports=["core"],
+                forbidden_imports=["infrastructure"],
+            )
+        )
 
         # Rule: extensions → infrastructure is forbidden.
-        m.add_rule(ImportRule(
-            pattern="^src\\.backend\\.extensions\\..*",
-            forbidden_imports=["^src\\.backend\\.infrastructure\\..*"],
-            reason="extensions must use core facades",
-        ))
+        m.add_rule(
+            ImportRule(
+                pattern="^src\\.backend\\.extensions\\..*",
+                forbidden_imports=["^src\\.backend\\.infrastructure\\..*"],
+                reason="extensions must use core facades",
+            )
+        )
 
         # Lookup.
         idempotency = m.get_path("src/backend/core/idempotency")
@@ -328,5 +332,7 @@ class TestRealisticExample:
         assert len(core_modules) == 3
 
         # Check violation.
-        violations = m.check_import("src.backend.extensions.my.x", "src.backend.infrastructure.foo")
+        violations = m.check_import(
+            "src.backend.extensions.my.x", "src.backend.infrastructure.foo"
+        )
         assert len(violations) == 1

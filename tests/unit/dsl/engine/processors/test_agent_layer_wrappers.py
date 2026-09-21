@@ -5,6 +5,7 @@ Coverage:
 - RAG search DSL (wraps HybridRAGSearch.search)
 - Prompt registry DSL (wraps PromptRegistry.get)
 """
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -20,7 +21,7 @@ def _bypass_auth() -> None:
     )
 
     LangGraphAgentProcessor.auth_check = AsyncMock(  # type: ignore[method-assign]
-        return_value=True,
+        return_value=True
     )
 
 
@@ -30,6 +31,7 @@ class TestLangGraphAgentDSL:
         from src.backend.dsl.engine.processors.agent_dsl.langgraph_agent import (
             LangGraphAgentProcessor,
         )
+
         p = LangGraphAgentProcessor(query="What is 2+2?", to="body.answer")
         assert p.query == "What is 2+2?"
         assert p.target == "body.answer"
@@ -40,6 +42,7 @@ class TestLangGraphAgentDSL:
         from src.backend.dsl.engine.processors.agent_dsl.langgraph_agent import (
             LangGraphAgentProcessor,
         )
+
         p = LangGraphAgentProcessor(query="test", to="body.answer")
         ex = MagicMock()
         ex.in_message.body = {}
@@ -58,6 +61,7 @@ class TestRAGSearchDSL:
     @pytest.mark.asyncio
     async def test_processor_instantiates(self) -> None:
         from src.backend.dsl.engine.processors.ai.rag_search import RAGSearchProcessor
+
         p = RAGSearchProcessor(query="test", namespace="docs", to="body.docs")
         assert p.query == "test"
         assert p.namespace == "docs"
@@ -65,6 +69,7 @@ class TestRAGSearchDSL:
     @pytest.mark.asyncio
     async def test_search_calls_hybrid_rag(self) -> None:
         from src.backend.dsl.engine.processors.ai.rag_search import RAGSearchProcessor
+
         p = RAGSearchProcessor(query="test", namespace="docs", to="body.docs")
         ex = MagicMock()
         ex.in_message.body = {}
@@ -87,6 +92,7 @@ class TestPromptRegistryDSL:
         from src.backend.dsl.engine.processors.ai.prompt_registry_dsl import (
             PromptGetProcessor,
         )
+
         p = PromptGetProcessor(name="osint_report", to="body.prompt")
         assert p.prompt_name == "osint_report"
         assert p.target == "body.prompt"
@@ -96,6 +102,7 @@ class TestPromptRegistryDSL:
         from src.backend.dsl.engine.processors.ai.prompt_registry_dsl import (
             PromptGetProcessor,
         )
+
         p = PromptGetProcessor(name="test_prompt", to="body.prompt")
         ex = MagicMock()
         ex.in_message.body = {}

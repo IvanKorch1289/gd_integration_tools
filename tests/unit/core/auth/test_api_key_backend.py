@@ -49,11 +49,7 @@ class TestAPIKeyAuthArgon2:
     def auth(self) -> APIKeyAuth:
         # OWASP 2026 lower-bound (faster test): 32MB, time_cost=1.
         # Production default — 64MB, time_cost=2 (см. docstring).
-        return APIKeyAuth(
-            time_cost=1,
-            memory_cost=32768,
-            parallelism=1,
-        )
+        return APIKeyAuth(time_cost=1, memory_cost=32768, parallelism=1)
 
     def test_hash_key_returns_argon2_phc(self, auth: APIKeyAuth) -> None:
         h = auth.hash_key("my-secret-key-12345")
@@ -77,16 +73,9 @@ class TestAPIKeyAuthArgon2:
         h = auth.hash_key("secret-A")
         assert auth.verify("secret-B", h) is False
 
-    @pytest.mark.parametrize(
-        "bad_hash",
-        [
-            "$argon2id$corrupt$params",
-            "garbage",
-            "",
-        ],
-    )
+    @pytest.mark.parametrize("bad_hash", ["$argon2id$corrupt$params", "garbage", ""])
     def test_verify_corrupt_hash_returns_false(
-        self, auth: APIKeyAuth, bad_hash: str,
+        self, auth: APIKeyAuth, bad_hash: str
     ) -> None:
         """Malformed stored hash → False (no exception propagates)."""
         assert auth.verify("any-key", bad_hash) is False
@@ -155,9 +144,7 @@ class TestNeedsArgon2Upgrade:
 
     def test_weak_argon2_needs_upgrade(self) -> None:
         # Слабее baseline (time_cost=1, parallelism=1, memory=64MB OK).
-        weak = PasswordHasher(time_cost=1, memory_cost=8192, parallelism=1).hash(
-            "x",
-        )
+        weak = PasswordHasher(time_cost=1, memory_cost=8192, parallelism=1).hash("x")
         assert needs_argon2_upgrade(weak) is True
 
     def test_argon2id_default_does_not_need_upgrade(self) -> None:

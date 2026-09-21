@@ -17,9 +17,6 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-import pytest
-
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ALLOWLIST_FILE = REPO_ROOT / "tools" / "check_layers_allowlist.txt"
 
@@ -79,9 +76,7 @@ class TestLayerViolationsCountReduction:
     def test_target_baseline_documented(self) -> None:
         """Roadmap target должен быть в MULTI_SPRINT_2026-08-17.md."""
         roadmap = REPO_ROOT / "docs" / "audit" / "MULTI_SPRINT_2026-08-17.md"
-        assert roadmap.exists(), (
-            f"Roadmap file not found: {roadmap}"
-        )
+        assert roadmap.exists(), f"Roadmap file not found: {roadmap}"
 
         content = roadmap.read_text()
         # Sprint 4 target: 167 → 140
@@ -119,9 +114,7 @@ class TestAllowlistFormat:
     def test_allowlist_entry_count_reasonable(self) -> None:
         """Allowlist shouldn't grow without bound — sanity check."""
         lines = ALLOWLIST_FILE.read_text().splitlines()
-        entry_count = sum(
-            1 for line in lines if line and not line.startswith("#")
-        )
+        entry_count = sum(1 for line in lines if line and not line.startswith("#"))
         assert 50 <= entry_count <= 250, (
             f"Allowlist entry count {entry_count} вне ожидаемого "
             f"диапазона 50-250. Investigate baseline drift."

@@ -1,6 +1,5 @@
 """Unit tests for src.backend.main entrypoint."""
 
-
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -21,7 +20,9 @@ def test_mount_mcp_http_skipped_on_import_error() -> None:
     # ``_mount_mcp_http`` does ``from src.backend.core.config.ai_stack import mcp_settings``
     # inside the function body, so ``src.backend.main.mcp_settings`` is not
     # an importable attribute. Patch the source module instead.
-    with patch("src.backend.core.config.ai_stack.mcp_settings", side_effect=ImportError):
+    with patch(
+        "src.backend.core.config.ai_stack.mcp_settings", side_effect=ImportError
+    ):
         main._mount_mcp_http()
 
 
@@ -31,7 +32,7 @@ def test_mount_mcp_http_mounts_when_enabled() -> None:
         mock_settings.http_enabled = True
         mock_settings.bind_path = "/mcp"
         with patch(
-            "src.backend.entrypoints.mcp.http_server.create_mcp_http_app",
+            "src.backend.entrypoints.mcp.http_server.create_mcp_http_app"
         ) as mock_create:
             mock_app = MagicMock()
             mock_create.return_value = mock_app

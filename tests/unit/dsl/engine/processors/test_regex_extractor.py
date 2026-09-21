@@ -1,6 +1,5 @@
 """Unit tests for RegexExtractorProcessor."""
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -60,7 +59,7 @@ class TestRegexExtractorProcessor:
     async def test_process_all_mode(self) -> None:
         with (
             patch.object(
-                RegexExtractorProcessor, "_resolve_source", return_value="a1 b2 a3",
+                RegexExtractorProcessor, "_resolve_source", return_value="a1 b2 a3"
             ),
             patch(
                 "src.backend.core.config.features.feature_flags.proc_regex_extractor",
@@ -76,7 +75,7 @@ class TestRegexExtractorProcessor:
     async def test_process_first_mode(self) -> None:
         with (
             patch.object(
-                RegexExtractorProcessor, "_resolve_source", return_value="a1 b2",
+                RegexExtractorProcessor, "_resolve_source", return_value="a1 b2"
             ),
             patch(
                 "src.backend.core.config.features.feature_flags.proc_regex_extractor",
@@ -92,7 +91,7 @@ class TestRegexExtractorProcessor:
     async def test_process_first_named_mode(self) -> None:
         with (
             patch.object(
-                RegexExtractorProcessor, "_resolve_source", return_value="order_123",
+                RegexExtractorProcessor, "_resolve_source", return_value="order_123"
             ),
             patch(
                 "src.backend.core.config.features.feature_flags.proc_regex_extractor",
@@ -108,7 +107,7 @@ class TestRegexExtractorProcessor:
     async def test_process_groups_mode(self) -> None:
         with (
             patch.object(
-                RegexExtractorProcessor, "_resolve_source", return_value="order_123",
+                RegexExtractorProcessor, "_resolve_source", return_value="order_123"
             ),
             patch(
                 "src.backend.core.config.features.feature_flags.proc_regex_extractor",
@@ -123,7 +122,7 @@ class TestRegexExtractorProcessor:
     @pytest.mark.asyncio
     async def test_process_feature_flag_off(self) -> None:
         with patch(
-            "src.backend.core.config.features.feature_flags.proc_regex_extractor", False,
+            "src.backend.core.config.features.feature_flags.proc_regex_extractor", False
         ):
             proc = RegexExtractorProcessor(r".*")
             ex = _ex({})
@@ -136,7 +135,7 @@ class TestRegexExtractorProcessor:
 
     def test_to_spec_full(self) -> None:
         proc = RegexExtractorProcessor(
-            r"hello", source="body.x", to="body.y", mode="first", flags=2,
+            r"hello", source="body.x", to="body.y", mode="first", flags=2
         )
         spec = proc.to_spec()
         assert spec["regex_extractor"] == {

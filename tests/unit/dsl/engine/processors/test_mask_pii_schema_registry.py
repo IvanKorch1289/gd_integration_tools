@@ -5,7 +5,6 @@ ProcessorRegistry и попадает в Schema Registry через
 :func:`populate_from_processor_registry`.
 """
 
-
 from __future__ import annotations
 
 # Принудительно импортируем модуль — auto-registry @processor.

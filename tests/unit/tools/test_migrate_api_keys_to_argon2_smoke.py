@@ -32,9 +32,7 @@ class TestMigrationDryRunSafe:
     """Tests that dry-run mode NEVER calls SET on Redis."""
 
     @pytest.mark.asyncio
-    async def test_legacy_to_argon2_path_dry_run_no_set(
-        self, tmp_path: Path,
-    ) -> None:
+    async def test_legacy_to_argon2_path_dry_run_no_set(self, tmp_path: Path) -> None:
         """Legacy SHA → would-upgrade: НЕ пишем в Redis (dry-run)."""
         import hashlib
 
@@ -43,11 +41,7 @@ class TestMigrationDryRunSafe:
 
         conn = MagicMock()
         stored = json.dumps(
-            {
-                "client_id": "c_dry",
-                "key_hash": legacy_sha,
-                "hash_algo": "sha256",
-            },
+            {"client_id": "c_dry", "key_hash": legacy_sha, "hash_algo": "sha256"}
         ).encode()
         conn.get = AsyncMock(return_value=stored)
         conn.set = AsyncMock()
@@ -56,7 +50,7 @@ class TestMigrationDryRunSafe:
         keys_map = {"c_dry": raw_key}
         stats = mig.MigrationStats()
         await mig._process_one(
-            conn, "apikey:c_dry", keys_map, dry_run=True, stats=stats,
+            conn, "apikey:c_dry", keys_map, dry_run=True, stats=stats
         )
 
         assert stats.upgraded == 1  # dry-run count
@@ -74,7 +68,7 @@ class TestMigrationCorruptJSONTolerance:
 
         stats = mig.MigrationStats()
         await mig._process_one(
-            conn, "apikey:bad", keys_map={}, dry_run=True, stats=stats,
+            conn, "apikey:bad", keys_map={}, dry_run=True, stats=stats
         )
 
         assert stats.failed_other == 1
@@ -138,9 +132,7 @@ class TestMigrationMaxFailures:
         async def _get(key: str) -> bytes:
             idx = call_idx["i"]
             call_idx["i"] += 1
-            return json.dumps(
-                {"client_id": f"c{idx}", "key_hash": legacy_sha},
-            ).encode()
+            return json.dumps({"client_id": f"c{idx}", "key_hash": legacy_sha}).encode()
 
         conn = MagicMock()
         conn.get = AsyncMock(side_effect=_get)
@@ -150,9 +142,7 @@ class TestMigrationMaxFailures:
         stats = mig.MigrationStats()
         aborted = False
         for redis_key in redis_keys:
-            await mig._process_one(
-                conn, redis_key, keys_map, dry_run=True, stats=stats,
-            )
+            await mig._process_one(conn, redis_key, keys_map, dry_run=True, stats=stats)
             if (stats.failed_verify + stats.failed_other) >= 2:
                 aborted = True
                 break
@@ -184,7 +174,7 @@ class TestMigrationLoadKeysFileEdgeCases:
             "\n"
             ":empty_client_id\n"
             "valid_b:\n"  # empty raw_key
-            "valid_c:gd_ccc\n",
+            "valid_c:gd_ccc\n"
         )
         result = mig._load_keys_file(path)
         # valid_a + valid_c должны попасть. valid_b пропущен (empty raw).

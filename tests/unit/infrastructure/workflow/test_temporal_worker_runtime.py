@@ -4,7 +4,6 @@
 SDK может отсутствовать в test env (lazy-import pattern).
 """
 
-
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -69,7 +68,7 @@ class TestTemporalWorkerRuntimeCreation:
             },
         ):
             await runtime.start(
-                client=client, task_queue="test-queue", workflow_classes=[wf_cls],
+                client=client, task_queue="test-queue", workflow_classes=[wf_cls]
             )
 
         assert runtime.is_running is True
@@ -94,11 +93,7 @@ class TestTemporalWorkerRuntimeCreation:
                 "temporalio.opentelemetry": MagicMock(),
             },
         ):
-            await runtime.start(
-                client=MagicMock(),
-                task_queue="q",
-                workflow_classes=[],
-            )
+            await runtime.start(client=MagicMock(), task_queue="q", workflow_classes=[])
 
         assert runtime.is_running is True
         kwargs = fake_worker_mod.Worker.call_args.kwargs
@@ -170,8 +165,7 @@ class TestStartTemporalWorkerRuntimeFeatureFlag:
         fake_flags.workflow_use_temporal = False
 
         with patch(
-            "src.backend.core.config.features.FeatureFlags",
-            return_value=fake_flags,
+            "src.backend.core.config.features.FeatureFlags", return_value=fake_flags
         ):
             await mod.start_temporal_worker_runtime()
 
@@ -195,18 +189,21 @@ class TestStartTemporalWorkerRuntimeFeatureFlag:
         fake_flags = MagicMock()
         fake_flags.workflow_use_temporal = True
 
-        with patch(
-            "src.backend.core.config.features.FeatureFlags",
-            return_value=fake_flags,
-        ), patch(
-            "src.backend.infrastructure.workflow.temporal_client.TemporalClientFactory",
-            return_value=fake_factory,
-        ), patch.dict(
-            "sys.modules",
-            {
-                "temporalio.worker": fake_worker_mod,
-                "temporalio.opentelemetry": MagicMock(),
-            },
+        with (
+            patch(
+                "src.backend.core.config.features.FeatureFlags", return_value=fake_flags
+            ),
+            patch(
+                "src.backend.infrastructure.workflow.temporal_client.TemporalClientFactory",
+                return_value=fake_factory,
+            ),
+            patch.dict(
+                "sys.modules",
+                {
+                    "temporalio.worker": fake_worker_mod,
+                    "temporalio.opentelemetry": MagicMock(),
+                },
+            ),
         ):
             await mod.start_temporal_worker_runtime()
 
@@ -255,21 +252,25 @@ class TestTemporalWorkerPoolProductionWire:
         pool_instance.register_worker = AsyncMock()
         pool_instance.shutdown = AsyncMock()
 
-        with patch(
-            "src.backend.core.config.features.FeatureFlags",
-            return_value=fake_flags,
-        ), patch(
-            "src.backend.infrastructure.workflow.temporal_client.TemporalClientFactory",
-            return_value=fake_factory,
-        ), patch(
-            "src.backend.infrastructure.workflow.temporal_client.TemporalWorkerPool",
-            return_value=pool_instance,
-        ), patch.dict(
-            "sys.modules",
-            {
-                "temporalio.worker": fake_worker_mod,
-                "temporalio.opentelemetry": MagicMock(),
-            },
+        with (
+            patch(
+                "src.backend.core.config.features.FeatureFlags", return_value=fake_flags
+            ),
+            patch(
+                "src.backend.infrastructure.workflow.temporal_client.TemporalClientFactory",
+                return_value=fake_factory,
+            ),
+            patch(
+                "src.backend.infrastructure.workflow.temporal_client.TemporalWorkerPool",
+                return_value=pool_instance,
+            ),
+            patch.dict(
+                "sys.modules",
+                {
+                    "temporalio.worker": fake_worker_mod,
+                    "temporalio.opentelemetry": MagicMock(),
+                },
+            ),
         ):
             await mod.start_temporal_worker_runtime()
 

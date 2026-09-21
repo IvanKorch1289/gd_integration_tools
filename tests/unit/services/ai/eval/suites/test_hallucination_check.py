@@ -13,7 +13,6 @@ fabrication detection metric that could lead to silent hallucinations
 in production.
 """
 
-
 from __future__ import annotations
 
 import pytest
@@ -123,12 +122,7 @@ class TestHallucinationCheckSuite:
             hallucination_check_suite,
         )
 
-        sample = {
-            "id": "test",
-            "context": "",
-            "question": "?",
-            "expected": "",
-        }
+        sample = {"id": "test", "context": "", "question": "?", "expected": ""}
         output = "любой текст с токенами"
 
         scores = hallucination_check_suite.score(sample, output)

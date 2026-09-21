@@ -81,8 +81,10 @@ class TestEmitAdminAction:
         audit.set_audit_callback(cb)
         try:
             audit.emit_admin_action(
-                actor="bob", action="session.list",
-                resource="sessions", outcome="denied",
+                actor="bob",
+                action="session.list",
+                resource="sessions",
+                outcome="denied",
             )
         finally:
             audit.set_audit_callback(None)
@@ -102,8 +104,11 @@ class TestEmitAdminAction:
         audit.set_audit_callback(cb)
         try:
             audit.emit_admin_action(
-                actor="carol", action="x", resource="y",
-                outcome="allowed", correlation_id="abc-123",
+                actor="carol",
+                action="x",
+                resource="y",
+                outcome="allowed",
+                correlation_id="abc-123",
             )
         finally:
             audit.set_audit_callback(None)
@@ -115,8 +120,7 @@ class TestEmitAdminAction:
         audit.set_audit_callback(None)
         # Should not raise — only logger.debug emission
         audit.emit_admin_action(
-            actor="system", action="startup", resource="app",
-            outcome="allowed",
+            actor="system", action="startup", resource="app", outcome="allowed"
         )
 
     def test_emit_callback_exception_swallowed(self) -> None:
@@ -127,9 +131,7 @@ class TestEmitAdminAction:
 
         audit.set_audit_callback(bad_cb)
         # Must not raise — emit_admin_action catches Exception internally
-        audit.emit_admin_action(
-            actor="x", action="y", resource="z", outcome="allowed",
-        )
+        audit.emit_admin_action(actor="x", action="y", resource="z", outcome="allowed")
         audit.set_audit_callback(None)
 
 

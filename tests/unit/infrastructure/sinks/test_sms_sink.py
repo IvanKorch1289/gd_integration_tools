@@ -34,7 +34,7 @@ class TestSmsSinkConstruction:
     def test_extract_dict_payload(self) -> None:
         s = SmsSink(sink_id="t", provider="smsru", default_to="+7000")
         to, body, sender = s._extract_payload(
-            {"to": "+7111", "body": "hi", "from": "X"},
+            {"to": "+7111", "body": "hi", "from": "X"}
         )
         assert to == "+7111"
         assert body == "hi"
@@ -68,7 +68,6 @@ class TestSmsSinkConstruction:
                 sink, "hello"
             )
 
-
         factory.assert_called_once()
         client.post.assert_awaited_once()
         assert result.ok is True
@@ -76,12 +75,15 @@ class TestSmsSinkConstruction:
     @pytest.mark.asyncio
     async def test_send_returns_error_when_waf_blocks(self) -> None:
         sink = SmsSink(sink_id="t", provider="smsru", api_id="x", default_to="+7000")
-        with patch(
-            "src.backend.infrastructure.sinks.sms_sink.OutboundHttpClient",
-            side_effect=RuntimeError("WAF blocked"),
-        ), patch(
-            "src.backend.core.security.connector_auth.require_capability",
-            lambda *args, **kwargs: lambda func: func,
+        with (
+            patch(
+                "src.backend.infrastructure.sinks.sms_sink.OutboundHttpClient",
+                side_effect=RuntimeError("WAF blocked"),
+            ),
+            patch(
+                "src.backend.core.security.connector_auth.require_capability",
+                lambda *args, **kwargs: lambda func: func,
+            ),
         ):
             result = await sink.send.__wrapped__.__wrapped__.__wrapped__(sink, "hello")
 

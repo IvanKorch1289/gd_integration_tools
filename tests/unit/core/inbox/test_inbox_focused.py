@@ -9,25 +9,13 @@ import asyncio
 
 import pytest
 
-from src.backend.core.inbox import (
-    InboxService,
-    InMemoryInboxStore,
-    get_inbox_service,
-)
+from src.backend.core.inbox import InboxService, InMemoryInboxStore, get_inbox_service
 from src.backend.core.inbox.service import (
     InboxConflict,
     InboxOutcome,
-    InboxResult,
     reset_inbox_service,
 )
-from src.backend.core.inbox.store.base import (
-    InboxEntry,
-    InboxState,
-    InboxStore,
-)
-from src.backend.core.inbox.store.in_memory import (
-    InMemoryInboxStore as InMemoryAlias,
-)
+from src.backend.core.inbox.store.base import InboxEntry, InboxState, InboxStore
 
 
 @pytest.fixture(autouse=True)
@@ -41,11 +29,7 @@ class TestInboxEntry:
 
     def test_init_defaults(self) -> None:
         """Defaults: attempts=0, last_error=None, etc."""
-        e = InboxEntry(
-            consumer_id="c1",
-            message_id="m1",
-            state=InboxState.RECEIVED,
-        )
+        e = InboxEntry(consumer_id="c1", message_id="m1", state=InboxState.RECEIVED)
         assert e.consumer_id == "c1"
         assert e.message_id == "m1"
         assert e.state == InboxState.RECEIVED
@@ -311,9 +295,7 @@ class TestProcessFirstCall:
         async def handler(payload, ctx):
             raise ValueError("boom")
 
-        result = await inbox.process(
-            consumer_id="c1", message_id="m1", handler=handler
-        )
+        result = await inbox.process(consumer_id="c1", message_id="m1", handler=handler)
         assert result.outcome == InboxOutcome.FAILED
         assert result.entry is not None
         assert result.entry.state == InboxState.FAILED
@@ -332,9 +314,7 @@ class TestProcessFirstCall:
             raise ValueError("boom")
 
         # Не raise — caller сам обрабатывает через result.outcome.
-        result = await inbox.process(
-            consumer_id="c1", message_id="m1", handler=handler
-        )
+        result = await inbox.process(consumer_id="c1", message_id="m1", handler=handler)
         assert result.outcome == InboxOutcome.FAILED
         assert "boom" in (result.entry.last_error or "")
 
@@ -352,12 +332,8 @@ class TestProcessReplay:
             call_count += 1
             return f"r-{call_count}"
 
-        r1 = await inbox.process(
-            consumer_id="c1", message_id="m1", handler=handler
-        )
-        r2 = await inbox.process(
-            consumer_id="c1", message_id="m1", handler=handler
-        )
+        r1 = await inbox.process(consumer_id="c1", message_id="m1", handler=handler)
+        r2 = await inbox.process(consumer_id="c1", message_id="m1", handler=handler)
         assert r1.outcome == InboxOutcome.COMMITTED
         assert r2.outcome == InboxOutcome.DEDUPLICATED
         assert call_count == 1
@@ -382,14 +358,10 @@ class TestProcessRetry:
                 raise ValueError("first attempt fails")
             return "ok"
 
-        r1 = await inbox.process(
-            consumer_id="c1", message_id="m1", handler=handler
-        )
+        r1 = await inbox.process(consumer_id="c1", message_id="m1", handler=handler)
         assert r1.outcome == InboxOutcome.FAILED
 
-        r2 = await inbox.process(
-            consumer_id="c1", message_id="m1", handler=handler
-        )
+        r2 = await inbox.process(consumer_id="c1", message_id="m1", handler=handler)
         assert r2.outcome == InboxOutcome.COMMITTED
         assert r2.result == "ok"
         assert attempt == 2
@@ -466,23 +438,16 @@ class TestProcessLockedPath:
 
         # Mock store возвращает RECEIVED для try_claim (concurrent).
         pre_entry = InboxEntry(
-            consumer_id="c1",
-            message_id="m1",
-            state=InboxState.RECEIVED,
-            attempts=1,
+            consumer_id="c1", message_id="m1", state=InboxState.RECEIVED, attempts=1
         )
         mock_store = MagicMock(spec=InboxStore)
-        mock_store.try_claim = AsyncMock(
-            return_value=(InboxState.RECEIVED, pre_entry)
-        )
+        mock_store.try_claim = AsyncMock(return_value=(InboxState.RECEIVED, pre_entry))
         inbox = InboxService(store=mock_store)
 
         async def handler(payload, ctx):
             return "never called"
 
-        result = await inbox.process(
-            consumer_id="c1", message_id="m1", handler=handler
-        )
+        result = await inbox.process(consumer_id="c1", message_id="m1", handler=handler)
         assert result.outcome == InboxOutcome.LOCKED
         assert result.attempts == 1
         assert result.entry is pre_entry

@@ -10,7 +10,6 @@ guarantees any new symbols added to core/api/__init__.py work
 and don't break the existing migration pattern.
 """
 
-
 from __future__ import annotations
 
 import os
@@ -43,9 +42,7 @@ class TestFacadeContractCycle59:
             "emit_audit_safe",
         ]
         for sym in required:
-            assert hasattr(src.backend.core.api, sym), (
-                f"Missing from facade: {sym}"
-            )
+            assert hasattr(src.backend.core.api, sym), f"Missing from facade: {sym}"
 
     def test_facade_handles_missing_dependencies_gracefully(self):
         """Facade must work even if some underlying providers fail to import.
@@ -145,11 +142,10 @@ class TestFacadeContractCycle59:
                     src_line = node.lineno
                     func_depth = 0
                     for parent_node in ast.walk(tree):
-                        if isinstance(parent_node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                            if (
-                                parent_node.lineno <= src_line
-                                <= parent_node.end_lineno
-                            ):
+                        if isinstance(
+                            parent_node, (ast.FunctionDef, ast.AsyncFunctionDef)
+                        ):
+                            if parent_node.lineno <= src_line <= parent_node.end_lineno:
                                 func_depth += 1
                     # If in __getattr__ function, it's OK.
                     # Otherwise — violation.
@@ -218,15 +214,15 @@ class TestFacadeLayerBoundariesCycle59:
                         if isinstance(node, ast.ImportFrom):
                             mod = node.module or ""
                             if mod.startswith(
-                                ("src.backend.services.", "src.backend.infrastructure."),
+                                ("src.backend.services.", "src.backend.infrastructure.")
                             ):
                                 violations.append((f_path, mod))
-                except (SyntaxError, UnicodeDecodeError):
+                except SyntaxError, UnicodeDecodeError:
                     continue
 
         # These should match the allowlist exactly (3 known violations).
         if len(violations) > 3:
             pytest.fail(
                 f"Found {len(violations)} extensions violations (> 3 known). "
-                f"New violations: {violations}",
+                f"New violations: {violations}"
             )

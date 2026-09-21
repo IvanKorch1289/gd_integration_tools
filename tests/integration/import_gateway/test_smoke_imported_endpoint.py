@@ -11,7 +11,6 @@
 Проверяет интеграцию с настоящей kw-only сигнатурой реестра, без fake-shim'ов.
 """
 
-
 from __future__ import annotations
 
 from collections.abc import Iterator
@@ -64,7 +63,7 @@ async def test_imported_openapi_endpoint_is_registered_and_dispatchable() -> Non
         ActionCommandSchema(
             action="connector.petstore.listPets",
             payload={"action": "connector.petstore.listPets", "limit": 10},
-        ),
+        )
     )
     assert response["status"] == "stub"
     assert response["operation_id"].endswith("listPets")
@@ -90,7 +89,7 @@ async def test_imported_endpoint_dispatch_handles_post_with_body() -> None:
         ActionCommandSchema(
             action="connector.petstore.createPet",
             payload={"action": "connector.petstore.createPet", **body},
-        ),
+        )
     )
     assert response["status"] == "stub"
     assert response["method"].upper() == "POST"

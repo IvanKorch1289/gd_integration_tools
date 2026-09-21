@@ -57,7 +57,7 @@ def _downstream_must_not_be_called() -> AsyncMock:
 
     async def downstream(scope, receive, send):  # pragma: no cover - guarded
         raise AssertionError(
-            "downstream app must NOT be called when SAML impersonation is rejected",
+            "downstream app must NOT be called when SAML impersonation is rejected"
         )
 
     return AsyncMock(side_effect=downstream)
@@ -116,18 +116,18 @@ async def test_no_credentials_returns_401_with_json_detail() -> None:
     mw = AuthRequiredMiddleware(app=_downstream_must_not_be_called())
     send = AsyncMock()
 
-    await mw(
-        _make_scope("GET", "/api/v1/protected"),
-        AsyncMock(),
-        send,
-    )
+    await mw(_make_scope("GET", "/api/v1/protected"), AsyncMock(), send)
 
     start = _start_message(send)
     assert start is not None
     assert start["status"] == 401
     # Body — JSON с detail (auth_required использует JSONResponse).
     body_msg = next(
-        (c.args[0] for c in send.await_args_list if c.args[0]["type"] == "http.response.body"),
+        (
+            c.args[0]
+            for c in send.await_args_list
+            if c.args[0]["type"] == "http.response.body"
+        ),
         None,
     )
     assert body_msg is not None
@@ -168,7 +168,7 @@ async def test_jwt_passes_through_saml_fail_closed() -> None:
             b64(b'{"alg":"none"}'),
             b64(b'{"sub":"alice","iss":"test"}'),
             b"signature-not-validated-here",
-        ],
+        ]
     )
 
     await mw(

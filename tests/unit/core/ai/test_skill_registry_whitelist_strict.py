@@ -11,7 +11,6 @@
 новыми тестами на S177 #5 enforcement.
 """
 
-
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -47,9 +46,7 @@ class TestWhitelistStrictEnforcement:
         feature_flags.call_function_whitelist_strict = False
         try:
             reg = SkillRegistry()
-            reg._skills["s1"] = SkillSpec(
-                id="s1", version="1", handler="any.module:fn",
-            )
+            reg._skills["s1"] = SkillSpec(id="s1", version="1", handler="any.module:fn")
             fake_mod = MagicMock()
             fake_mod.fn = MagicMock(return_value="legacy_ok")
             with patch("importlib.import_module", return_value=fake_mod):
@@ -74,7 +71,7 @@ class TestWhitelistStrictEnforcement:
         """strict=True + whitelist glob-pattern → sub-modules разрешены."""
         reg = SkillRegistry()
         reg._skills["s1"] = SkillSpec(
-            id="s1", version="1", handler="extensions.credit.sub:fn",
+            id="s1", version="1", handler="extensions.credit.sub:fn"
         )
         fake_mod = MagicMock()
         fake_mod.fn = MagicMock(return_value="glob_ok")
@@ -86,9 +83,7 @@ class TestWhitelistStrictEnforcement:
     async def test_strict_with_whitelist_denies_non_whitelisted(self) -> None:
         """strict=True + whitelist → не-listed module → PermissionError."""
         reg = SkillRegistry()
-        reg._skills["s1"] = SkillSpec(
-            id="s1", version="1", handler="evil.module:fn",
-        )
+        reg._skills["s1"] = SkillSpec(id="s1", version="1", handler="evil.module:fn")
         # import НЕ должен вызваться.
         with patch("importlib.import_module") as mock_imp:
             with pytest.raises(PermissionError, match="not in whitelist"):
@@ -108,7 +103,7 @@ class TestWhitelistStrictEnforcement:
         """Error message включает skill_id для debugging."""
         reg = SkillRegistry()
         reg._skills["my_skill"] = SkillSpec(
-            id="my_skill", version="1", handler="mod:fn",
+            id="my_skill", version="1", handler="mod:fn"
         )
         with pytest.raises(PermissionError, match="my_skill"):
             await reg.invoke("my_skill")

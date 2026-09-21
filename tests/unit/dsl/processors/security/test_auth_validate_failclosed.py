@@ -10,7 +10,6 @@ Pure ASGI runtime assertions:
 4. ``process()`` с недоступным реестром → exchange.stopped + error (fail-closed).
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -57,7 +56,7 @@ class TestAuthValidateFailClosed:
     """D-AUDIT-04: pure ASGI runtime — fail-closed при недоступности реестра."""
 
     def test_load_verifiers_raises_when_verifiers_is_none(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """_VERIFIERS=None в core.auth.auth_selector → raise AuthenticationProviderUnavailableError.
 
@@ -75,7 +74,7 @@ class TestAuthValidateFailClosed:
             _load_verifiers()
 
     def test_load_verifiers_raises_when_module_import_fails(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """import_module('core.auth.auth_selector') → ImportError → raise.
 
@@ -88,20 +87,24 @@ class TestAuthValidateFailClosed:
         # Меняем константу пути на несуществующий модуль
         import src.backend.dsl.engine.processors.security as security_mod
 
-        monkeypatch.setattr(security_mod, "_VERIFIERS_MODULE", "nonexistent.module.that.does.not.exist")
+        monkeypatch.setattr(
+            security_mod, "_VERIFIERS_MODULE", "nonexistent.module.that.does.not.exist"
+        )
 
         with pytest.raises(AuthenticationProviderUnavailableError):
             security_mod._load_verifiers()
 
     @pytest.mark.asyncio
     async def test_process_stops_exchange_on_provider_unavailable(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """_load_verifiers → AuthenticationProviderUnavailableError → exchange.stopped."""
         # Подменяем константу на несуществующий модуль → ImportError → AuthenticationProviderUnavailableError
         import src.backend.dsl.engine.processors.security as security_mod
 
-        monkeypatch.setattr(security_mod, "_VERIFIERS_MODULE", "nonexistent.module.that.does.not.exist")
+        monkeypatch.setattr(
+            security_mod, "_VERIFIERS_MODULE", "nonexistent.module.that.does.not.exist"
+        )
 
         proc = AuthValidateProcessor(["jwt"], required=True)
         exchange = _ex({})
@@ -110,4 +113,7 @@ class TestAuthValidateFailClosed:
 
         assert exchange.stopped
         assert exchange.error is not None
-        assert "provider" in exchange.error.lower() or "unavailable" in exchange.error.lower()
+        assert (
+            "provider" in exchange.error.lower()
+            or "unavailable" in exchange.error.lower()
+        )

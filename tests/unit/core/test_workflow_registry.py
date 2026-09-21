@@ -169,10 +169,7 @@ class TestWorkflowRegistryStaticMethods:
 
     def test_extract_name_uses_temporal_marker_when_present(self) -> None:
         """``_extract_name`` предпочитает ``defn.name`` из temporal marker."""
-        cls = _make_workflow_class(
-            "ClassName",
-            with_temporal_marker=True,
-        )
+        cls = _make_workflow_class("ClassName", with_temporal_marker=True)
         # marker.name = "ClassName" (мы проставляем в _make_workflow_class)
         assert WorkflowRegistry._extract_name(cls) == "ClassName"
 

@@ -7,7 +7,6 @@ PASS даже при cost explosion (banking context).
 Фикс: raise GuardrailValueTypeError при non-numeric value.
 """
 
-
 from __future__ import annotations
 
 import pytest
@@ -27,10 +26,7 @@ def _make_decl(
     on_exceed: str = "fail",
 ) -> GuardrailDeclaration:
     return GuardrailDeclaration(
-        rule=rule,
-        threshold=threshold,
-        target=target,
-        on_exceed=on_exceed,
+        rule=rule, threshold=threshold, target=target, on_exceed=on_exceed
     )
 
 

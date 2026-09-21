@@ -1,6 +1,5 @@
 """Unit-тесты WebhookSignatureProcessor — Wave [wave:s5/k3-w2-processor-pack-2]."""
 
-
 from __future__ import annotations
 
 import base64

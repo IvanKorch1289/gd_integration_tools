@@ -44,7 +44,10 @@ class TestAdDirectoryClientFacadeAllExports:
     def test_module_docstring_present(self) -> None:
         """Module docstring описывает S67 W4 decomp."""
         assert ad_directory_client.__doc__ is not None
-        assert "S67 W4" in ad_directory_client.__doc__ or "AD" in ad_directory_client.__doc__
+        assert (
+            "S67 W4" in ad_directory_client.__doc__
+            or "AD" in ad_directory_client.__doc__
+        )
 
 
 @pytest.mark.unit

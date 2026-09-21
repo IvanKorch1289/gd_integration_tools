@@ -2,6 +2,7 @@
 
 T3 coverage sprint cycle 12: TelegramTypingProcessor (chat-action: typing).
 """
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -116,7 +117,9 @@ async def test_process_sends_chat_action(monkeypatch: pytest.MonkeyPatch) -> Non
 
 
 @pytest.mark.asyncio
-async def test_process_skips_when_chat_id_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_process_skips_when_chat_id_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     proc = TelegramTypingProcessor()
     ex, captured = _make_exchange()
 
@@ -155,7 +158,9 @@ async def test_process_client_none_skips(monkeypatch: pytest.MonkeyPatch) -> Non
 
 
 @pytest.mark.asyncio
-async def test_process_exception_silently_logged(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_process_exception_silently_logged(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Exception in send_chat_action is logged but does NOT raise (no fail property)."""
     proc = TelegramTypingProcessor()
     ex, captured = _make_exchange(properties={"chat_id": "123"})

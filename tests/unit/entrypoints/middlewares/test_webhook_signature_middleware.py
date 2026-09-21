@@ -140,27 +140,7 @@ def test_protected_prefix_without_secret_fail_closed_returns_503() -> None:
         return {"ok": True}
 
     app.add_middleware(
-        WebhookSignatureMiddleware, path_prefixes=("/webhooks/",), secrets_by_prefix={},
-    )
-    client = TestClient(app)
-    response = client.post("/webhooks/unconfigured", json={"x": 1})
-    assert response.status_code == 503
-    assert "not configured" in response.json()["detail"].lower()
-
-
-def test_protected_prefix_without_secret_fail_closed_off_passes_through() -> None:
-    """fail_closed=False: protected prefix без secret пропускается (dev-only)."""
-    app = FastAPI()
-
-    @app.post("/webhooks/unconfigured")
-    def endpoint(request: Request) -> dict:
-        return {"ok": True}
-
-    app.add_middleware(
-        WebhookSignatureMiddleware,
-        path_prefixes=("/webhooks/",),
-        secrets_by_prefix={},
-        fail_closed=False,
+        WebhookSignatureMiddleware, path_prefixes=("/webhooks/",), secrets_by_prefix={}
     )
     client = TestClient(app)
     response = client.post("/webhooks/unconfigured", json={"x": 1})

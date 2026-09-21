@@ -52,10 +52,7 @@ class _DummyConnector(BaseConnector):
         }
 
     async def health_check(self) -> ConnectorHealth:
-        return ConnectorHealth(
-            status=ConnectorStatus.HEALTHY,
-            latency_ms=10.0,
-        )
+        return ConnectorHealth(status=ConnectorStatus.HEALTHY, latency_ms=10.0)
 
     async def test_connection(self, config: dict) -> bool:
         return "url" in config
@@ -232,10 +229,7 @@ class TestRegistryRegister:
         class _NoNameConnector(BaseConnector):
             def metadata(self) -> ConnectorMetadata:
                 return ConnectorMetadata(
-                    name="",
-                    version="1.0",
-                    category="x",
-                    auth_model=AuthModel.NONE,
+                    name="", version="1.0", category="x", auth_model=AuthModel.NONE
                 )
 
             def config_schema(self) -> dict:
@@ -395,7 +389,9 @@ class TestRealisticExample:
 
     async def test_full_lifecycle(self) -> None:
         r = get_connector_registry()
-        c = _DummyConnector(name="http-api", category="http", auth_model=AuthModel.API_KEY)
+        c = _DummyConnector(
+            name="http-api", category="http", auth_model=AuthModel.API_KEY
+        )
         r.register(c)
 
         # Lookup + health check.

@@ -34,14 +34,9 @@ def _fake_processor_spec(name: str) -> SimpleNamespace:
 @pytest.mark.asyncio
 async def test_populate_from_processor_registry() -> None:
     reg = ServiceSchemaRegistry()
-    with patch(
-        "src.backend.core.api.extensions.get_processor_registry"
-    ) as mock_get:
+    with patch("src.backend.core.api.extensions.get_processor_registry") as mock_get:
         mock_get.return_value.list_specs = MagicMock(
-            return_value=[
-                _fake_processor_spec("alpha"),
-                _fake_processor_spec("beta"),
-            ]
+            return_value=[_fake_processor_spec("alpha"), _fake_processor_spec("beta")]
         )
         count = populator.populate_from_processor_registry(reg)
     assert count == 2
@@ -87,8 +82,7 @@ async def test_populate_from_actions_with_specs() -> None:
         ),
     )
     with patch(
-        "src.backend.core.api.extensions.action_handler_registry",
-        action_registry,
+        "src.backend.core.api.extensions.action_handler_registry", action_registry
     ):
         count = populator.populate_from_actions(reg)
     assert count == 2
@@ -116,8 +110,7 @@ async def test_populate_from_actions_registry_without_get() -> None:
         list_actions=lambda: ["x.act"]
     )  # get отсутствует -> getattr-ветка lambda _: None -> meta пустой
     with patch(
-        "src.backend.core.api.extensions.action_handler_registry",
-        action_registry,
+        "src.backend.core.api.extensions.action_handler_registry", action_registry
     ):
         count = populator.populate_from_actions(reg)
     assert count == 1
@@ -145,7 +138,9 @@ async def test_populate_from_manifests_with_plugin_entries(
     import sys
 
     fake_module = SimpleNamespace(get_plugin_registry=lambda: plugin_registry)
-    monkeypatch.setitem(sys.modules, "src.backend.core.plugin_runtime.registry", fake_module)
+    monkeypatch.setitem(
+        sys.modules, "src.backend.core.plugin_runtime.registry", fake_module
+    )
     count = populator.populate_from_manifests(reg)
     assert count == 2
     names = {e.name for e in reg.list_kind(SchemaKind.PLUGIN)}
@@ -164,7 +159,9 @@ async def test_populate_from_manifests_plugin_registry_down(
         def get_plugin_registry(self) -> object:
             raise RuntimeError("not initialized")
 
-    monkeypatch.setitem(sys.modules, "src.backend.core.plugin_runtime.registry", _BadModule())
+    monkeypatch.setitem(
+        sys.modules, "src.backend.core.plugin_runtime.registry", _BadModule()
+    )
     assert populator.populate_from_manifests(reg) == 0
 
 
@@ -176,9 +173,10 @@ async def test_populate_from_manifests_without_list_plugins(
 
     reg = ServiceSchemaRegistry()
     fake_module = SimpleNamespace(get_plugin_registry=lambda: SimpleNamespace())
-    monkeypatch.setitem(sys.modules, "src.backend.core.plugin_runtime.registry", fake_module)
+    monkeypatch.setitem(
+        sys.modules, "src.backend.core.plugin_runtime.registry", fake_module
+    )
     assert populator.populate_from_manifests(reg) == 0
-
 
 
 # ── guard-ветки (fallback-пути) ─────────────────────────────────────
@@ -253,9 +251,7 @@ def test_register_validates_invalid_spec_schema_raises() -> None:
 
     reg = ServiceSchemaRegistry(strict_validation=True)
     entry = SchemaEntry(
-        kind=SchemaKind.PROCESSOR,
-        name="broken.schema",
-        spec_schema={"type": 123},
+        kind=SchemaKind.PROCESSOR, name="broken.schema", spec_schema={"type": 123}
     )
     with pytest.raises(ValueError, match="Invalid JSON-Schema"):
         reg.register(entry)

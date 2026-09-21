@@ -20,17 +20,12 @@ class TestPolicyFacadeAllExports:
     """``__all__`` audit + class identity."""
 
     @pytest.mark.parametrize(
-        "symbol_name",
-        ["CasbinAdapter", "OPAClient", "PolicyDecision"],
+        "symbol_name", ["CasbinAdapter", "OPAClient", "PolicyDecision"]
     )
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(policy, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
-        assert symbol_name in policy.__all__, (
-            f"{symbol_name} not declared in __all__"
-        )
+        assert hasattr(policy, symbol_name), f"Missing export: {symbol_name}"
+        assert symbol_name in policy.__all__, f"{symbol_name} not declared in __all__"
 
     def test_all_declared_count(self) -> None:
         """``__all__`` содержит 3 символа."""

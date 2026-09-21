@@ -17,7 +17,6 @@ K3 S19 W3: проверяет, что canonical dispatch path (``DslService.disp
     .venv/bin/python -m pytest tests/unit/dsl/service/test_dispatch_authz.py -q
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -150,10 +149,13 @@ class TestDispatchAuthzEnforcement:
         route_registry.register(pipeline)
 
         ctx = ExecutionContext(principal="guest", permissions=())
-        with patch(
-            "src.backend.services.routes.route_authz.check_route_permission",
-            new=AsyncMock(return_value=(False, "missing_permissions:role:admin")),
-        ), pytest.raises(RoutePermissionDeniedError) as exc_info:
+        with (
+            patch(
+                "src.backend.services.routes.route_authz.check_route_permission",
+                new=AsyncMock(return_value=(False, "missing_permissions:role:admin")),
+            ),
+            pytest.raises(RoutePermissionDeniedError) as exc_info,
+        ):
             await DslService().dispatch("r1", body={}, context=ctx)
 
         err = exc_info.value
@@ -170,10 +172,13 @@ class TestDispatchAuthzEnforcement:
         # Резолвер возвращает None — gateway не зарегистрирован.
         # check_route_permission вернёт (False, "authorization_gateway_not_registered").
         ctx = ExecutionContext(principal="admin", permissions=("role:admin",))
-        with patch(
-            "src.backend.services.routes.route_authz._resolve_authz_gateway",
-            return_value=None,
-        ), pytest.raises(RoutePermissionDeniedError) as exc_info:
+        with (
+            patch(
+                "src.backend.services.routes.route_authz._resolve_authz_gateway",
+                return_value=None,
+            ),
+            pytest.raises(RoutePermissionDeniedError) as exc_info,
+        ):
             await DslService().dispatch("r1", body={}, context=ctx)
 
         assert "authorization_gateway_not_registered" in exc_info.value.reason
@@ -204,8 +209,8 @@ class TestDispatchAuthzEnforcement:
                 "src.backend.core.security.authorization_gateway",
                 fromlist=["AuthorizationReason"],
             ).AuthorizationReason(
-                source="permission", outcome="allow", detail="flag_off",
-            ),
+                source="permission", outcome="allow", detail="flag_off"
+            )
         )
 
         authz_instance = MagicMock()
@@ -217,10 +222,10 @@ class TestDispatchAuthzEnforcement:
                         "src.backend.core.security.authorization_gateway",
                         fromlist=["AuthorizationReason"],
                     ).AuthorizationReason(
-                        source="permission", outcome="allow", detail="flag_off",
-                    ),
+                        source="permission", outcome="allow", detail="flag_off"
+                    )
                 ],
-            ),
+            )
         )
 
         with patch(
@@ -236,7 +241,7 @@ class TestDispatchAuthzEnforcement:
                     return_value=allow_step,
                 ):
                     exchange = await DslService().dispatch(
-                        "r1", body={"x": 1}, context=ctx,
+                        "r1", body={"x": 1}, context=ctx
                     )
 
         assert exchange.error is None

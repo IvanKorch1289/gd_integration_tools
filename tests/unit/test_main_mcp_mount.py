@@ -20,12 +20,12 @@ Cycle 216 added: mount location verification (app_factory, not main).
 from __future__ import annotations
 
 import ast
-import inspect
 
 
 def _get_main_source() -> str:
     """Читает main.py source без triggering импорт."""
     import src.backend.main
+
     with open(src.backend.main.__file__, encoding="utf-8") as f:
         return f.read()
 
@@ -33,6 +33,7 @@ def _get_main_source() -> str:
 def _get_app_factory_source() -> str:
     """Читает app_factory.py source без triggering импорт."""
     import src.backend.plugins.composition.app_factory
+
     with open(
         src.backend.plugins.composition.app_factory.__file__, encoding="utf-8"
     ) as f:
@@ -67,9 +68,7 @@ def test_mount_mcp_http_in_app_factory() -> None:
 
     # 2. Function takes 'app' parameter
     params = [arg.arg for arg in fn.args.args]
-    assert "app" in params, (
-        f"_mount_mcp_http must take 'app' parameter, got: {params}"
-    )
+    assert "app" in params, f"_mount_mcp_http must take 'app' parameter, got: {params}"
 
     # 3. Called from _configure_application_components
     af_src = _get_app_factory_source()
@@ -110,4 +109,3 @@ def test_mount_mcp_http_in_app_factory() -> None:
         "(cycle 215/216: granian не выполняет main.py module body, "
         "только импортирует атрибут `app`)"
     )
-

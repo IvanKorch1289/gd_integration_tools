@@ -10,7 +10,6 @@ Auth context устанавливается downstream (auth_selector пишет
 вычисляется ВНУТРИ send-wrapper, а не в __call__.
 """
 
-
 from __future__ import annotations
 
 from unittest.mock import AsyncMock
@@ -23,9 +22,7 @@ from src.backend.entrypoints.middlewares.auth_method_header import (
 
 
 def _make_scope(
-    method: str = "GET",
-    path: str = "/",
-    state: dict | None = None,
+    method: str = "GET", path: str = "/", state: dict | None = None
 ) -> dict:
     """ASGI HTTP scope для тестов."""
     return {
@@ -54,7 +51,7 @@ async def test_emits_header_when_enabled_and_auth_context_set() -> None:
     async def downstream(scope, receive, send):
         # Auth middleware имитирует установку state['auth'].
         scope.setdefault("state", {})["auth"] = type(
-            "AuthCtx", (), {"method": type("M", (), {"value": "jwt"})()},
+            "AuthCtx", (), {"method": type("M", (), {"value": "jwt"})()}
         )()
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"ok"})
@@ -75,7 +72,7 @@ async def test_no_header_when_disabled_default() -> None:
 
     async def downstream(scope, receive, send):
         scope.setdefault("state", {})["auth"] = type(
-            "AuthCtx", (), {"method": type("M", (), {"value": "jwt"})()},
+            "AuthCtx", (), {"method": type("M", (), {"value": "jwt"})()}
         )()
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"ok"})
@@ -115,7 +112,7 @@ async def test_header_value_uses_method_value_attr() -> None:
 
     async def downstream(scope, receive, send):
         scope.setdefault("state", {})["auth"] = type(
-            "AuthCtx", (), {"method": type("M", (), {"value": "api_key"})()},
+            "AuthCtx", (), {"method": type("M", (), {"value": "api_key"})()}
         )()
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"ok"})
@@ -136,7 +133,7 @@ async def test_custom_header_name() -> None:
 
     async def downstream(scope, receive, send):
         scope.setdefault("state", {})["auth"] = type(
-            "AuthCtx", (), {"method": type("M", (), {"value": "jwt"})()},
+            "AuthCtx", (), {"method": type("M", (), {"value": "jwt"})()}
         )()
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"ok"})
@@ -176,7 +173,7 @@ async def test_preserves_body_chunks_unchanged() -> None:
 
     async def downstream(scope, receive, send):
         scope.setdefault("state", {})["auth"] = type(
-            "AuthCtx", (), {"method": type("M", (), {"value": "jwt"})()},
+            "AuthCtx", (), {"method": type("M", (), {"value": "jwt"})()}
         )()
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"chunk-1"})
@@ -188,7 +185,8 @@ async def test_preserves_body_chunks_unchanged() -> None:
     await mw(_make_scope(), AsyncMock(), send)
 
     body_msgs = [
-        c.args[0] for c in send.await_args_list
+        c.args[0]
+        for c in send.await_args_list
         if c.args[0]["type"] == "http.response.body"
     ]
     assert len(body_msgs) == 2

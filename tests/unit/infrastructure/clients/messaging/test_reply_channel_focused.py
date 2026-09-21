@@ -48,9 +48,7 @@ def reply_channel(event_bus_no_redis: EventBus) -> ReplyChannel:
 class TestReplyChannelInit:
     """``__init__`` + singleton bookkeeping."""
 
-    def test_init_starts_empty(
-        self, event_bus_no_redis: EventBus
-    ) -> None:
+    def test_init_starts_empty(self, event_bus_no_redis: EventBus) -> None:
         """``__init__`` создаёт пустые pending/lock/subscribed."""
         rc = ReplyChannel(event_bus_no_redis)
         assert rc._bus is event_bus_no_redis
@@ -77,9 +75,7 @@ class TestReplyChannelRequest:
         # timeout=0.05s чтобы не тянуть 30s.
         with pytest.raises(ReplyTimeoutError) as exc_info:
             await reply_channel.request(
-                target_channel="events.tests",
-                payload={"q": "hello"},
-                timeout=0.05,
+                target_channel="events.tests", payload={"q": "hello"}, timeout=0.05
             )
         # Сообщение содержит correlation_id и timeout.
         assert "0.05" in str(exc_info.value) or "timeout" in str(exc_info.value).lower()
@@ -88,12 +84,11 @@ class TestReplyChannelRequest:
         self, reply_channel: ReplyChannel
     ) -> None:
         """``request()`` резолвится после matching ``deliver()``."""
+
         # Запускаем request в фоне с коротким timeout.
         async def _run_request() -> dict[str, Any]:
             return await reply_channel.request(
-                target_channel="events.tests",
-                payload={"q": "test"},
-                timeout=2.0,
+                target_channel="events.tests", payload={"q": "test"}, timeout=2.0
             )
 
         request_task = asyncio.create_task(_run_request())
@@ -135,9 +130,7 @@ class TestReplyChannelRequest:
         # pending содержит ровно наш cid.
         assert cid in reply_channel._pending
 
-        await reply_channel.deliver(
-            {"correlation_id": cid, "payload": {"ok": True}}
-        )
+        await reply_channel.deliver({"correlation_id": cid, "payload": {"ok": True}})
         result = await asyncio.wait_for(request_task, timeout=1.0)
         assert result == {"ok": True}
 

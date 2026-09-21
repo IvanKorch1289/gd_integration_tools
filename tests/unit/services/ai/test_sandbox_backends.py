@@ -36,6 +36,7 @@ def _ensure_dev_env(monkeypatch: pytest.MonkeyPatch) -> None:
     # Разрешаем in-process для dev-legacy-тестов (DeprecationWarning path).
     try:
         from src.backend.core.config.features import feature_flags
+
         monkeypatch.setattr(feature_flags, "ai_in_process_sandbox_disabled", False)
     except Exception:
         # feature_flags может не быть в test-env; пропускаем.
@@ -52,9 +53,7 @@ class TestInProcessAgentSandboxDeprecation:
             warnings.simplefilter("always")
             InProcessAgentSandbox()
 
-        deprecation = [
-            w for w in caught if issubclass(w.category, DeprecationWarning)
-        ]
+        deprecation = [w for w in caught if issubclass(w.category, DeprecationWarning)]
         assert len(deprecation) >= 1
         msg = str(deprecation[0].message)
         # M5 ARC-008 messages — relevant keywords.
@@ -67,12 +66,12 @@ class TestInProcessAgentSandboxDeprecation:
             warnings.simplefilter("always")
             InProcessAgentSandbox()
 
-        assert any(
-            "ProcessPool" in str(w.message) for w in caught
-        ), "deprecation warning should suggest ProcessPool alternative"
+        assert any("ProcessPool" in str(w.message) for w in caught), (
+            "deprecation warning should suggest ProcessPool alternative"
+        )
 
     def test_in_process_hard_gate_in_production(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """При ``GD_INTEGRATION_PRODUCTION=1`` → in-process raise.
 
@@ -123,7 +122,7 @@ class TestInProcessAgentSandboxFeatureFlagGate:
     """
 
     def test_in_process_blocked_when_feature_flag_enabled(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """ai_in_process_sandbox_disabled=True (default) → RuntimeError.
 
@@ -133,14 +132,12 @@ class TestInProcessAgentSandboxFeatureFlagGate:
         from src.backend.core.config.features import feature_flags
         from src.backend.services.ai.agent_sandbox import InProcessAgentSandbox
 
-        monkeypatch.setattr(
-            feature_flags, "ai_in_process_sandbox_disabled", True,
-        )
+        monkeypatch.setattr(feature_flags, "ai_in_process_sandbox_disabled", True)
         with pytest.raises(RuntimeError, match="blocked by feature_flags"):
             InProcessAgentSandbox()
 
     def test_in_process_allowed_when_feature_flag_explicitly_disabled(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """ai_in_process_sandbox_disabled=False (explicit opt-out) → DeprecationWarning.
 
@@ -150,20 +147,18 @@ class TestInProcessAgentSandboxFeatureFlagGate:
         from src.backend.core.config.features import feature_flags
         from src.backend.services.ai.agent_sandbox import InProcessAgentSandbox
 
-        monkeypatch.setattr(
-            feature_flags, "ai_in_process_sandbox_disabled", False,
-        )
+        monkeypatch.setattr(feature_flags, "ai_in_process_sandbox_disabled", False)
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
             sandbox = InProcessAgentSandbox()
 
         assert sandbox is not None
-        assert any(
-            issubclass(w.category, DeprecationWarning) for w in caught
-        ), "explicit opt-out должен по-прежнему emit DeprecationWarning"
+        assert any(issubclass(w.category, DeprecationWarning) for w in caught), (
+            "explicit opt-out должен по-прежнему emit DeprecationWarning"
+        )
 
     def test_in_process_blocked_when_feature_flags_module_unavailable(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Если feature_flags module не импортируется — fail-closed.
 
@@ -190,7 +185,7 @@ class TestInProcessAgentSandboxFeatureFlagGate:
         # monkeypatch.setitem гарантирует rollback на teardown,
         # даже если assert упадёт посередине.
         monkeypatch.setitem(
-            sys.modules, "src.backend.core.config.features", _BrokenModule(),
+            sys.modules, "src.backend.core.config.features", _BrokenModule()
         )
 
         from src.backend.services.ai import agent_sandbox as _mod
@@ -202,6 +197,7 @@ class TestInProcessAgentSandboxFeatureFlagGate:
 
         with pytest.raises(RuntimeError, match="module unavailable"):
             _mod.InProcessAgentSandbox()
+
 
 class TestE2BAgentSandbox:
     """M5 ARC-008 — E2B backend config + lifecycle."""
@@ -228,9 +224,7 @@ class TestE2BAgentSandbox:
         assert backend.api_key_configured is True
 
     @pytest.mark.asyncio
-    async def test_e2b_run_react_raises_config_error_without_key(
-        self,
-    ) -> None:
+    async def test_e2b_run_react_raises_config_error_without_key(self) -> None:
         from src.backend.services.ai.agent_sandbox import (
             AgentSandboxConfigError,
             E2BAgentSandbox,
@@ -249,9 +243,7 @@ class TestE2BAgentSandbox:
                 )
 
     @pytest.mark.asyncio
-    async def test_e2b_run_react_raises_import_error_if_dep_missing(
-        self,
-    ) -> None:
+    async def test_e2b_run_react_raises_import_error_if_dep_missing(self) -> None:
         """Если e2b_code_interpreter недоступен — config-error."""
         from src.backend.services.ai.agent_sandbox import (
             AgentSandboxConfigError,
@@ -268,15 +260,13 @@ class TestE2BAgentSandbox:
 
         def fake_import(name: str, *args: object, **kwargs: object) -> object:
             if name == "e2b_code_interpreter" or name.startswith(
-                "e2b_code_interpreter.",
+                "e2b_code_interpreter."
             ):
                 raise ImportError("simulated missing e2b_code_interpreter")
             return real_import(name, *args, **kwargs)
 
         with patch.object(_builtins, "__import__", side_effect=fake_import):
-            with pytest.raises(
-                AgentSandboxConfigError, match="e2b-code-interpreter",
-            ):
+            with pytest.raises(AgentSandboxConfigError, match="e2b-code-interpreter"):
                 await backend.run_react(
                     prompt="hi",
                     tool_actions=[],
@@ -411,7 +401,7 @@ class TestSelectorWarnOnMissingE2BKey:
     """
 
     def test_e2b_select_without_key_emits_warning(
-        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture,
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
     ) -> None:
         """select(e2b) без ctor-key и без E2B_API_KEY env → warning."""
 
@@ -424,12 +414,12 @@ class TestSelectorWarnOnMissingE2BKey:
 
         with caplog.at_level(logging.WARNING):
             sel.select(kind="e2b")
-        assert any(
-            "e2b backend selected" in r.message for r in caplog.records
-        ), "selector должен emit warning при e2b без API key"
+        assert any("e2b backend selected" in r.message for r in caplog.records), (
+            "selector должен emit warning при e2b без API key"
+        )
 
     def test_e2b_select_with_key_no_warning(
-        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture,
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
     ) -> None:
         """select(e2b) c key → без warning (OK path)."""
 
@@ -442,6 +432,4 @@ class TestSelectorWarnOnMissingE2BKey:
 
         with caplog.at_level(logging.WARNING):
             sel.select(kind="e2b")
-        assert not any(
-            "e2b backend selected" in r.message for r in caplog.records
-        )
+        assert not any("e2b backend selected" in r.message for r in caplog.records)

@@ -5,6 +5,7 @@ Periodic check + auto-rotation certs via Vault.
 - _check_expiring() — list expiring + rotate
 - record_rotation в Prometheus exporter
 """
+
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -18,6 +19,7 @@ class TestCertRotationWatcher:
         from src.backend.infrastructure.security.cert_store.rotation_watcher import (
             CertRotationWatcher,
         )
+
         watcher = CertRotationWatcher(
             cert_store=MagicMock(),
             check_interval_seconds=60.0,
@@ -30,6 +32,7 @@ class TestCertRotationWatcher:
         from src.backend.infrastructure.security.cert_store.rotation_watcher import (
             CertRotationWatcher,
         )
+
         watcher = CertRotationWatcher(cert_store=MagicMock())
         assert watcher._check_interval_seconds == 3600.0
         assert watcher._rotation_threshold_days == 30
@@ -39,6 +42,7 @@ class TestCertRotationWatcher:
         from src.backend.infrastructure.security.cert_store.rotation_watcher import (
             CertRotationWatcher,
         )
+
         watcher = CertRotationWatcher(cert_store=MagicMock())
         assert watcher._task is None
 
@@ -48,14 +52,12 @@ class TestCertRotationWatcher:
         from src.backend.infrastructure.security.cert_store.rotation_watcher import (
             CertRotationWatcher,
         )
+
         mock_store = MagicMock()
         mock_entry = MagicMock()
         mock_entry.expires_at = datetime.now(UTC)
         mock_entry.service_id = "skb_api"
         mock_store._backend.list_expiring = AsyncMock(return_value=[mock_entry])
-        watcher = CertRotationWatcher(
-            cert_store=mock_store,
-            rotation_threshold_days=30,
-        )
+        watcher = CertRotationWatcher(cert_store=mock_store, rotation_threshold_days=30)
         count = await watcher._check_expiring()
         assert count == 1

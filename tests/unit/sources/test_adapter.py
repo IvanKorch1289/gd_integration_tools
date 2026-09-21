@@ -1,6 +1,5 @@
 """W23 — SourceToInvokerAdapter."""
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -34,7 +33,7 @@ class _StubInvoker:
 
 def _event(event_id: str = "e1") -> SourceEvent:
     return SourceEvent(
-        source_id="src1", kind=SourceKind.WEBHOOK, payload={"k": "v"}, event_id=event_id,
+        source_id="src1", kind=SourceKind.WEBHOOK, payload={"k": "v"}, event_id=event_id
     )
 
 

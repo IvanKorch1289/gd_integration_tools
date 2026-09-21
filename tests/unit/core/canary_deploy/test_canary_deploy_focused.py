@@ -71,16 +71,16 @@ class TestControllerInit:
 class TestRegisterConfig:
     def test_register_and_get(self) -> None:
         c = CanaryController()
-        c.register(CanaryConfig(
-            route_id="r1", canary_version="v2", baseline_version="v1",
-        ))
+        c.register(
+            CanaryConfig(route_id="r1", canary_version="v2", baseline_version="v1")
+        )
         assert c.get("r1") is not None
 
     def test_unregister(self) -> None:
         c = CanaryController()
-        c.register(CanaryConfig(
-            route_id="r1", canary_version="v2", baseline_version="v1",
-        ))
+        c.register(
+            CanaryConfig(route_id="r1", canary_version="v2", baseline_version="v1")
+        )
         c.unregister("r1")
         assert c.get("r1") is None
 
@@ -98,26 +98,38 @@ class TestGetSplitNoConfig:
 class TestGetSplitWithConfig:
     def test_zero_percent_baseline(self) -> None:
         c = CanaryController()
-        c.register(CanaryConfig(
-            route_id="r1", canary_version="v2", baseline_version="v1",
-            canary_percent=0,
-        ))
+        c.register(
+            CanaryConfig(
+                route_id="r1",
+                canary_version="v2",
+                baseline_version="v1",
+                canary_percent=0,
+            )
+        )
         assert c.get_split("r1", tenant_id="t1") == TrafficSplit.BASELINE
 
     def test_hundred_percent_canary(self) -> None:
         c = CanaryController()
-        c.register(CanaryConfig(
-            route_id="r1", canary_version="v2", baseline_version="v1",
-            canary_percent=100,
-        ))
+        c.register(
+            CanaryConfig(
+                route_id="r1",
+                canary_version="v2",
+                baseline_version="v1",
+                canary_percent=100,
+            )
+        )
         assert c.get_split("r1", tenant_id="t1") == TrafficSplit.CANARY
 
     def test_sticky_by_tenant(self) -> None:
         c = CanaryController()
-        c.register(CanaryConfig(
-            route_id="r1", canary_version="v2", baseline_version="v1",
-            canary_percent=50,
-        ))
+        c.register(
+            CanaryConfig(
+                route_id="r1",
+                canary_version="v2",
+                baseline_version="v1",
+                canary_percent=50,
+            )
+        )
         # Same tenant → same split.
         s1 = c.get_split("r1", tenant_id="t1")
         s2 = c.get_split("r1", tenant_id="t1")
@@ -125,34 +137,35 @@ class TestGetSplitWithConfig:
 
     def test_different_tenants_different_splits(self) -> None:
         c = CanaryController()
-        c.register(CanaryConfig(
-            route_id="r1", canary_version="v2", baseline_version="v1",
-            canary_percent=50,
-        ))
+        c.register(
+            CanaryConfig(
+                route_id="r1",
+                canary_version="v2",
+                baseline_version="v1",
+                canary_percent=50,
+            )
+        )
         # Many tenants → some canary, some baseline.
         results = {
-            t: c.get_split("r1", tenant_id=t)
-            for t in (f"t{i}" for i in range(20))
+            t: c.get_split("r1", tenant_id=t) for t in (f"t{i}" for i in range(20))
         }
-        canary_count = sum(
-            1 for v in results.values() if v == TrafficSplit.CANARY
-        )
+        canary_count = sum(1 for v in results.values() if v == TrafficSplit.CANARY)
         # Approximately 50% (allow 5-15 range).
         assert 5 <= canary_count <= 15
 
     def test_distribution_matches_percent(self) -> None:
         c = CanaryController()
-        c.register(CanaryConfig(
-            route_id="r1", canary_version="v2", baseline_version="v1",
-            canary_percent=25,
-        ))
-        # 25% canary over 100 tenants.
-        results = [
-            c.get_split("r1", tenant_id=f"t{i}") for i in range(100)
-        ]
-        canary_count = sum(
-            1 for v in results if v == TrafficSplit.CANARY
+        c.register(
+            CanaryConfig(
+                route_id="r1",
+                canary_version="v2",
+                baseline_version="v1",
+                canary_percent=25,
+            )
         )
+        # 25% canary over 100 tenants.
+        results = [c.get_split("r1", tenant_id=f"t{i}") for i in range(100)]
+        canary_count = sum(1 for v in results if v == TrafficSplit.CANARY)
         # Approximately 25 (allow 15-35).
         assert 15 <= canary_count <= 35
 
@@ -172,9 +185,9 @@ class TestEvaluateNoConfig:
 class TestEvaluateSampleSize:
     def test_small_sample_extend(self) -> None:
         c = CanaryController()
-        c.register(CanaryConfig(
-            route_id="r1", canary_version="v2", baseline_version="v1",
-        ))
+        c.register(
+            CanaryConfig(route_id="r1", canary_version="v2", baseline_version="v1")
+        )
         verdict = c.evaluate(
             "r1",
             canary_metrics=MetricsSnapshot(sample_size=50),
@@ -184,13 +197,17 @@ class TestEvaluateSampleSize:
 
     def test_sufficient_sample_evaluates(self) -> None:
         c = CanaryController()
-        c.register(CanaryConfig(
-            route_id="r1", canary_version="v2", baseline_version="v1",
-        ))
+        c.register(
+            CanaryConfig(route_id="r1", canary_version="v2", baseline_version="v1")
+        )
         verdict = c.evaluate(
             "r1",
-            canary_metrics=MetricsSnapshot(sample_size=200, latency_p99_ms=100, error_rate=0.001),
-            baseline_metrics=MetricsSnapshot(sample_size=200, latency_p99_ms=100, error_rate=0.001),
+            canary_metrics=MetricsSnapshot(
+                sample_size=200, latency_p99_ms=100, error_rate=0.001
+            ),
+            baseline_metrics=MetricsSnapshot(
+                sample_size=200, latency_p99_ms=100, error_rate=0.001
+            ),
         )
         # Equal metrics → promote.
         assert verdict.decision == CanaryDecision.PROMOTE
@@ -199,10 +216,14 @@ class TestEvaluateSampleSize:
 class TestEvaluateLatency:
     def test_latency_increase_rollback(self) -> None:
         c = CanaryController()
-        c.register(CanaryConfig(
-            route_id="r1", canary_version="v2", baseline_version="v1",
-            max_latency_increase_pct=20.0,
-        ))
+        c.register(
+            CanaryConfig(
+                route_id="r1",
+                canary_version="v2",
+                baseline_version="v1",
+                max_latency_increase_pct=20.0,
+            )
+        )
         verdict = c.evaluate(
             "r1",
             canary_metrics=MetricsSnapshot(
@@ -218,10 +239,14 @@ class TestEvaluateLatency:
 
     def test_latency_within_threshold_promote(self) -> None:
         c = CanaryController()
-        c.register(CanaryConfig(
-            route_id="r1", canary_version="v2", baseline_version="v1",
-            max_latency_increase_pct=20.0,
-        ))
+        c.register(
+            CanaryConfig(
+                route_id="r1",
+                canary_version="v2",
+                baseline_version="v1",
+                max_latency_increase_pct=20.0,
+            )
+        )
         verdict = c.evaluate(
             "r1",
             canary_metrics=MetricsSnapshot(
@@ -236,9 +261,9 @@ class TestEvaluateLatency:
 
     def test_zero_baseline_latency(self) -> None:
         c = CanaryController()
-        c.register(CanaryConfig(
-            route_id="r1", canary_version="v2", baseline_version="v1",
-        ))
+        c.register(
+            CanaryConfig(route_id="r1", canary_version="v2", baseline_version="v1")
+        )
         # Baseline latency 0 → delta 0.
         verdict = c.evaluate(
             "r1",
@@ -251,10 +276,14 @@ class TestEvaluateLatency:
 class TestEvaluateErrorRate:
     def test_error_rate_increase_rollback(self) -> None:
         c = CanaryController()
-        c.register(CanaryConfig(
-            route_id="r1", canary_version="v2", baseline_version="v1",
-            max_error_rate_increase=0.01,
-        ))
+        c.register(
+            CanaryConfig(
+                route_id="r1",
+                canary_version="v2",
+                baseline_version="v1",
+                max_error_rate_increase=0.01,
+            )
+        )
         verdict = c.evaluate(
             "r1",
             canary_metrics=MetricsSnapshot(
@@ -270,10 +299,14 @@ class TestEvaluateErrorRate:
 
     def test_error_rate_within_threshold_promote(self) -> None:
         c = CanaryController()
-        c.register(CanaryConfig(
-            route_id="r1", canary_version="v2", baseline_version="v1",
-            max_error_rate_increase=0.01,
-        ))
+        c.register(
+            CanaryConfig(
+                route_id="r1",
+                canary_version="v2",
+                baseline_version="v1",
+                max_error_rate_increase=0.01,
+            )
+        )
         verdict = c.evaluate(
             "r1",
             canary_metrics=MetricsSnapshot(
@@ -290,9 +323,9 @@ class TestEvaluateErrorRate:
 class TestClear:
     def test_clear(self) -> None:
         c = CanaryController()
-        c.register(CanaryConfig(
-            route_id="r1", canary_version="v2", baseline_version="v1",
-        ))
+        c.register(
+            CanaryConfig(route_id="r1", canary_version="v2", baseline_version="v1")
+        )
         c.clear()
         assert c.configs == []
 
@@ -322,23 +355,23 @@ class TestRealisticExample:
 
     def test_payment_route_canary(self) -> None:
         controller = get_canary_controller()
-        controller.register(CanaryConfig(
-            route_id="order-create",
-            canary_version="v1.2.3",
-            baseline_version="v1.2.2",
-            canary_percent=25.0,
-            max_latency_increase_pct=15.0,
-            max_error_rate_increase=0.005,
-        ))
+        controller.register(
+            CanaryConfig(
+                route_id="order-create",
+                canary_version="v1.2.3",
+                baseline_version="v1.2.2",
+                canary_percent=25.0,
+                max_latency_increase_pct=15.0,
+                max_error_rate_increase=0.005,
+            )
+        )
 
         # Step 1: split traffic — 25% canary, 75% baseline.
         splits = {
             t: controller.get_split("order-create", tenant_id=t)
             for t in (f"tenant-{i}" for i in range(40))
         }
-        canary_count = sum(
-            1 for v in splits.values() if v == TrafficSplit.CANARY
-        )
+        canary_count = sum(1 for v in splits.values() if v == TrafficSplit.CANARY)
         assert 5 <= canary_count <= 15  # ~25% over 40 tenants
 
         # Step 2: collect metrics, evaluate.
@@ -346,10 +379,10 @@ class TestRealisticExample:
         verdict = controller.evaluate(
             "order-create",
             canary_metrics=MetricsSnapshot(
-                sample_size=500, latency_p99_ms=105, error_rate=0.004,
+                sample_size=500, latency_p99_ms=105, error_rate=0.004
             ),
             baseline_metrics=MetricsSnapshot(
-                sample_size=500, latency_p99_ms=100, error_rate=0.002,
+                sample_size=500, latency_p99_ms=100, error_rate=0.002
             ),
         )
         # Latency +5% (under 15%), error +0.2% (under 0.5%) → promote.
@@ -359,10 +392,10 @@ class TestRealisticExample:
         bad_verdict = controller.evaluate(
             "order-create",
             canary_metrics=MetricsSnapshot(
-                sample_size=500, latency_p99_ms=200, error_rate=0.002,
+                sample_size=500, latency_p99_ms=200, error_rate=0.002
             ),
             baseline_metrics=MetricsSnapshot(
-                sample_size=500, latency_p99_ms=100, error_rate=0.002,
+                sample_size=500, latency_p99_ms=100, error_rate=0.002
             ),
         )
         # Latency +100% → rollback.

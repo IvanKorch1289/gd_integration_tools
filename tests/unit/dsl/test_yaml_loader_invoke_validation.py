@@ -5,7 +5,6 @@
 допустимых значений), а не голый ``'foo' is not a valid InvocationMode``.
 """
 
-
 from __future__ import annotations
 
 import pytest

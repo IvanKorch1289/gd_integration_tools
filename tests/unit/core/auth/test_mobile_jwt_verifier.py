@@ -194,9 +194,7 @@ async def test_verifier_requires_non_empty_issuer_whitelist() -> None:
     backend = _make_mock_backend(VALID_CLAIMS)
     with pytest.raises(ValueError, match="issuer_whitelist"):
         MobileJwtVerifier(
-            backend=backend,
-            issuer_whitelist=[],
-            audience="gd-mobile-api",
+            backend=backend, issuer_whitelist=[], audience="gd-mobile-api"
         )
 
 
@@ -207,9 +205,7 @@ async def test_verifier_requires_non_empty_audience() -> None:
     backend = _make_mock_backend(VALID_CLAIMS)
     with pytest.raises(ValueError, match="audience"):
         MobileJwtVerifier(
-            backend=backend,
-            issuer_whitelist=["gd-mobile-test"],
-            audience="",
+            backend=backend, issuer_whitelist=["gd-mobile-test"], audience=""
         )
 
 

@@ -25,7 +25,6 @@ PLAN.md V16.1 §3 Sprint 6 DSL/Workflow row: «Banking-процессоры unit
 ``test_rpa_banking.py``.
 """
 
-
 from __future__ import annotations
 
 import pytest
@@ -70,7 +69,7 @@ class TestKycAmlVerifyProcessor:
         assert proc.name == "kyc_aml:kz"
 
     async def test_process_sets_action_and_jurisdiction_properties(
-        self, exchange: Exchange, context: ExecutionContext,
+        self, exchange: Exchange, context: ExecutionContext
     ) -> None:
         proc = KycAmlVerifyProcessor(jurisdiction="by")
         await proc.process(exchange, context)
@@ -101,7 +100,7 @@ class TestAntiFraudScoreProcessor:
         assert proc.name == "antifraud_llm:gpt-4"
 
     async def test_process_sets_model_and_action(
-        self, exchange: Exchange, context: ExecutionContext,
+        self, exchange: Exchange, context: ExecutionContext
     ) -> None:
         proc = AntiFraudScoreProcessor(model="claude-3.5")
         await proc.process(exchange, context)
@@ -131,7 +130,7 @@ class TestCreditScoringRagProcessor:
         assert proc.name == "credit_rag:sme"
 
     async def test_process_sets_product_and_action(
-        self, exchange: Exchange, context: ExecutionContext,
+        self, exchange: Exchange, context: ExecutionContext
     ) -> None:
         proc = CreditScoringRagProcessor(product="corporate")
         await proc.process(exchange, context)
@@ -161,7 +160,7 @@ class TestCustomerChatbotProcessor:
         assert proc.name == "chatbot:telegram"
 
     async def test_process_sets_channel_and_action(
-        self, exchange: Exchange, context: ExecutionContext,
+        self, exchange: Exchange, context: ExecutionContext
     ) -> None:
         proc = CustomerChatbotProcessor(channel="whatsapp")
         await proc.process(exchange, context)
@@ -185,7 +184,7 @@ class TestAppealProcessorAI:
         assert proc.name == "appeal_ai"
 
     async def test_process_sets_only_action(
-        self, exchange: Exchange, context: ExecutionContext,
+        self, exchange: Exchange, context: ExecutionContext
     ) -> None:
         proc = AppealProcessorAI()
         await proc.process(exchange, context)
@@ -212,7 +211,7 @@ class TestTransactionCategorizerProcessor:
         assert proc.name == "tx_cat:merchant"
 
     async def test_process_sets_taxonomy_and_action(
-        self, exchange: Exchange, context: ExecutionContext,
+        self, exchange: Exchange, context: ExecutionContext
     ) -> None:
         proc = TransactionCategorizerProcessor(taxonomy="custom_v2")
         await proc.process(exchange, context)
@@ -242,7 +241,7 @@ class TestFinDocOcrLlmProcessor:
         assert proc.name == "findoc_ocr:contract"
 
     async def test_process_sets_doc_type_and_action(
-        self, exchange: Exchange, context: ExecutionContext,
+        self, exchange: Exchange, context: ExecutionContext
     ) -> None:
         proc = FinDocOcrLlmProcessor(doc_type="statement")
         await proc.process(exchange, context)
@@ -273,7 +272,7 @@ class TestFinDocOcrLlmProcessor:
     ],
 )
 async def test_all_ai_banking_processors_set_banking_action(
-    proc_factory, expected_action: str, exchange: Exchange, context: ExecutionContext,
+    proc_factory, expected_action: str, exchange: Exchange, context: ExecutionContext
 ) -> None:
     """Все 7 AI-banking процессоров обязаны записать ``banking_action``.
 
@@ -299,7 +298,7 @@ async def test_all_ai_banking_processors_set_banking_action(
     ],
 )
 def test_all_ai_banking_processors_to_spec_returns_single_key_dict(
-    proc_factory, spec_key: str,
+    proc_factory, spec_key: str
 ) -> None:
     """Каждый процессор сериализуется как ``{spec_key: {...}}`` — round-trip контракт."""
     spec = proc_factory().to_spec()

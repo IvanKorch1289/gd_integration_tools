@@ -142,11 +142,13 @@ class TestCoreDomainModelsPackage:
         assert (
             "OrderKind"
             in __import__(
-                "src.backend.core.domain.models", fromlist=["__all__"],
+                "src.backend.core.domain.models", fromlist=["__all__"]
             ).__all__
         )
 
-    @pytest.mark.skip(reason="S171 V11: orders переехал в extensions/core_entities/orders/domain/models")
+    @pytest.mark.skip(
+        reason="S171 V11: orders переехал в extensions/core_entities/orders/domain/models"
+    )
     def test_orders_in_canonical_package(self) -> None:
         """S106 W3 (D5 B2b): Order moved to core.domain.models."""
         from src.backend.core.domain.models import Order
@@ -157,7 +159,7 @@ class TestCoreDomainModelsPackage:
         assert (
             "Order"
             in __import__(
-                "src.backend.core.domain.models", fromlist=["__all__"],
+                "src.backend.core.domain.models", fromlist=["__all__"]
             ).__all__
         )
 
@@ -170,7 +172,9 @@ class TestCoreDomainModelsPackage:
         assert hasattr(OrderKind, "orders")
         # FK constraint name in Order points to orderkinds.id
         fk_columns = [col for col in Order.__table__.c if col.foreign_keys]
-        fk_targets = {next(iter(col.foreign_keys)).target_fullname for col in fk_columns}
+        fk_targets = {
+            next(iter(col.foreign_keys)).target_fullname for col in fk_columns
+        }
         assert any("orderkinds" in t for t in fk_targets), (
             f"FK→orderkinds missing: {fk_targets}"
         )

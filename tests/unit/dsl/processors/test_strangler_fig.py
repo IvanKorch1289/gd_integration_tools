@@ -1,6 +1,5 @@
 """Unit tests for StranglerFigProcessor (v21 §2.3)."""
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -122,7 +121,7 @@ async def test_split_0_all_old() -> None:
         return "new"
 
     proc = StranglerFigProcessor(
-        old_handler=old_h, new_handler=new_h, traffic_split_pct=0.0,
+        old_handler=old_h, new_handler=new_h, traffic_split_pct=0.0
     )
     for i in range(10):
         ex = _ex(body={"i": i})
@@ -150,7 +149,7 @@ async def test_split_100_all_new() -> None:
         return "new"
 
     proc = StranglerFigProcessor(
-        old_handler=old_h, new_handler=new_h, traffic_split_pct=100.0,
+        old_handler=old_h, new_handler=new_h, traffic_split_pct=100.0
     )
     for i in range(5):
         ex = _ex(body={"i": i})
@@ -261,7 +260,7 @@ async def test_rollback_forces_old() -> None:
         return "new"
 
     proc = StranglerFigProcessor(
-        old_handler=old_h, new_handler=new_h, traffic_split_pct=100.0,
+        old_handler=old_h, new_handler=new_h, traffic_split_pct=100.0
     )
     for i in range(5):
         ex = _ex(body={"i": i})
@@ -287,7 +286,7 @@ async def test_manual_rollback_via_processor() -> None:
         return "new"
 
     proc = StranglerFigProcessor(
-        old_handler=old_h, new_handler=new_h, traffic_split_pct=100.0,
+        old_handler=old_h, new_handler=new_h, traffic_split_pct=100.0
     )
     proc.trigger_rollback("manual test")
     assert get_strangler_stats().rollbacks_triggered == 1

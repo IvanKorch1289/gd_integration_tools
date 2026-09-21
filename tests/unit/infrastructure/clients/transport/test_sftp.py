@@ -57,7 +57,7 @@ def test_resolve_known_hosts_prod_without_path_raises(
 
 
 def test_resolve_known_hosts_returns_path_when_configured(
-    monkeypatch: pytest.MonkeyPatch, tmp_path,
+    monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
     """Если путь задан — _resolve_known_hosts() возвращает его строкой."""
     known_hosts_file = tmp_path / "known_hosts"

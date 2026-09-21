@@ -6,6 +6,7 @@
 - CLI: --write применяет изменения, default dry-run нет
 - Idempotency: повторный run не удаляет больше entries
 """
+
 from __future__ import annotations
 
 import subprocess
@@ -16,7 +17,8 @@ from tools.check_docstrings_prune import find_stale_entries, parse_entry
 
 PRUNER_PATH = (
     Path(__file__).resolve().parent.parent.parent.parent
-    / "tools" / "check_docstrings_prune.py"
+    / "tools"
+    / "check_docstrings_prune.py"
 )
 
 
@@ -50,11 +52,9 @@ class TestFindStaleEntries:
     def test_deleted_file_classified(self, tmp_path: Path) -> None:
         """Entry для несуществующего path → deleted."""
         # tmp_path создаст пустую директорию, никаких файлов.
-        allowlist = {
-            f"{tmp_path}/never_existed.py:42:0 MyClass",
-        }
+        allowlist = {f"{tmp_path}/never_existed.py:42:0 MyClass"}
         keep, deleted, obsolete = find_stale_entries(
-            allowlist, [tmp_path], enable_module_check=False,
+            allowlist, [tmp_path], enable_module_check=False
         )
         assert deleted == allowlist
         assert keep == set()
@@ -68,10 +68,10 @@ class TestFindStaleEntries:
             encoding="utf-8",
         )
         allowlist = {
-            f"{target}:3:0 my_func",  # line 3 has ``def my_func``, but it has docstring
+            f"{target}:3:0 my_func"  # line 3 has ``def my_func``, but it has docstring
         }
         keep, deleted, obsolete = find_stale_entries(
-            allowlist, [tmp_path], enable_module_check=False,
+            allowlist, [tmp_path], enable_module_check=False
         )
         assert obsolete == allowlist
         assert keep == set()
@@ -85,10 +85,10 @@ class TestFindStaleEntries:
             encoding="utf-8",
         )
         allowlist = {
-            f"{target}:3:0 my_func",  # line 3 has ``def my_func``, missing docstring
+            f"{target}:3:0 my_func"  # line 3 has ``def my_func``, missing docstring
         }
         keep, deleted, obsolete = find_stale_entries(
-            allowlist, [tmp_path], enable_module_check=False,
+            allowlist, [tmp_path], enable_module_check=False
         )
         assert keep == allowlist
         assert deleted == set()
@@ -112,7 +112,7 @@ class TestFindStaleEntries:
             f"{tmp_path}/nonexistent.py:1:0 Ghost",  # deleted
         }
         keep, deleted, obsolete = find_stale_entries(
-            allowlist, [tmp_path], enable_module_check=False,
+            allowlist, [tmp_path], enable_module_check=False
         )
         assert f"{active}:3:0 f" in keep
         assert f"{documented}:3:0 f" in obsolete
@@ -136,8 +136,10 @@ class TestPruneCLI:
         """Несуществующий allowlist → exit 2."""
         proc = subprocess.run(
             [
-                sys.executable, str(PRUNER_PATH),
-                "--allowlist", str(tmp_path / "no_such.txt"),
+                sys.executable,
+                str(PRUNER_PATH),
+                "--allowlist",
+                str(tmp_path / "no_such.txt"),
                 str(tmp_path),
             ],
             capture_output=True,
@@ -154,15 +156,14 @@ class TestPruneCLI:
             encoding="utf-8",
         )
         allowlist = tmp_path / "al.txt"
-        original_content = (
-            "# Header\n"
-            f"{target}:3:0 f\n"
-        )
+        original_content = f"# Header\n{target}:3:0 f\n"
         allowlist.write_text(original_content, encoding="utf-8")
         proc = subprocess.run(
             [
-                sys.executable, str(PRUNER_PATH),
-                "--allowlist", str(allowlist),
+                sys.executable,
+                str(PRUNER_PATH),
+                "--allowlist",
+                str(allowlist),
                 str(tmp_path),
             ],
             capture_output=True,
@@ -181,14 +182,13 @@ class TestPruneCLI:
             encoding="utf-8",
         )
         allowlist = tmp_path / "al.txt"
-        allowlist.write_text(
-            f"# Header\n{target}:3:0 f\n",
-            encoding="utf-8",
-        )
+        allowlist.write_text(f"# Header\n{target}:3:0 f\n", encoding="utf-8")
         proc = subprocess.run(
             [
-                sys.executable, str(PRUNER_PATH),
-                "--allowlist", str(allowlist),
+                sys.executable,
+                str(PRUNER_PATH),
+                "--allowlist",
+                str(allowlist),
                 "--write",
                 str(tmp_path),
             ],
@@ -216,8 +216,10 @@ class TestPruneCLI:
         )
         proc = subprocess.run(
             [
-                sys.executable, str(PRUNER_PATH),
-                "--allowlist", str(allowlist),
+                sys.executable,
+                str(PRUNER_PATH),
+                "--allowlist",
+                str(allowlist),
                 "--write",
                 str(tmp_path),
             ],

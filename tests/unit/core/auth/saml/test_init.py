@@ -42,9 +42,7 @@ class TestSamlFacadeAllExports:
     )
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(auth_saml, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
+        assert hasattr(auth_saml, symbol_name), f"Missing export: {symbol_name}"
         assert symbol_name in auth_saml.__all__, (
             f"{symbol_name} not declared in __all__"
         )

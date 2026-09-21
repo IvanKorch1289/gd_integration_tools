@@ -8,7 +8,6 @@ Cycle 47: pure ASGI rewrite — middleware использует scope['state']
 вместо request.state для pure ASGI compatibility.
 """
 
-
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, patch
@@ -28,6 +27,7 @@ def _downstream_ok():
     async def downstream(scope, receive, send):
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"ok"})
+
     return downstream
 
 
@@ -49,6 +49,7 @@ def _make_scope(
 def _make_receive():
     async def receive():
         return {"type": "http.request", "body": b"", "more_body": False}
+
     return receive
 
 
@@ -89,11 +90,7 @@ class TestAPIKeyMiddlewareDedup:
 
         send = AsyncMock()
         # Без X-API-Key header → 401 (no-raise, через send).
-        await middleware(
-            _make_scope(),
-            _make_receive(),
-            send,
-        )
+        await middleware(_make_scope(), _make_receive(), send)
 
         start = _start_message(send)
         assert start is not None
@@ -119,9 +116,7 @@ class TestAPIKeyMiddlewarePureASGI:
 
         send = AsyncMock()
         await middleware(
-            {"type": "websocket", "path": "/ws", "headers": []},
-            AsyncMock(),
-            send,
+            {"type": "websocket", "path": "/ws", "headers": []}, AsyncMock(), send
         )
 
         msgs = [c.args[0] for c in send.await_args_list]
@@ -138,14 +133,11 @@ class TestAPIKeyMiddlewarePureASGI:
         # Excluded pattern: /health/*
 
         from re import compile
+
         middleware.compiled_patterns = [compile("/health")]
 
         send = AsyncMock()
-        await middleware(
-            _make_scope(path="/health/liveness"),
-            _make_receive(),
-            send,
-        )
+        await middleware(_make_scope(path="/health/liveness"), _make_receive(), send)
 
         start = _start_message(send)
         assert start is not None
@@ -166,11 +158,7 @@ class TestAPIKeyMiddlewarePureASGI:
         middleware.compiled_patterns = []
 
         send = AsyncMock()
-        await middleware(
-            _make_scope(),
-            _make_receive(),
-            send,
-        )
+        await middleware(_make_scope(), _make_receive(), send)
 
         start = _start_message(send)
         assert start is not None
@@ -188,16 +176,14 @@ class TestAPIKeyMiddlewarePureASGI:
 
         # Mock settings.secure.api_key to known value.
         with patch(
-            "src.backend.entrypoints.middlewares.api_key.settings",
+            "src.backend.entrypoints.middlewares.api_key.settings"
         ) as mock_settings:
             mock_settings.secure.api_key = "secret-key-123"
             mock_settings.secure.routes_without_api_key = []
 
             send = AsyncMock()
             await middleware(
-                _make_scope(
-                    headers=[(b"x-api-key", b"secret-key-123")],
-                ),
+                _make_scope(headers=[(b"x-api-key", b"secret-key-123")]),
                 _make_receive(),
                 send,
             )
@@ -221,16 +207,14 @@ class TestAPIKeyMiddlewarePureASGI:
         middleware.compiled_patterns = []
 
         with patch(
-            "src.backend.entrypoints.middlewares.api_key.settings",
+            "src.backend.entrypoints.middlewares.api_key.settings"
         ) as mock_settings:
             mock_settings.secure.api_key = "correct-key"
             mock_settings.secure.routes_without_api_key = []
 
             send = AsyncMock()
             await middleware(
-                _make_scope(
-                    headers=[(b"x-api-key", b"wrong-key")],
-                ),
+                _make_scope(headers=[(b"x-api-key", b"wrong-key")]),
                 _make_receive(),
                 send,
             )
@@ -254,11 +238,7 @@ class TestAPIKeyMiddlewarePureASGI:
         middleware.compiled_patterns = []
 
         send = AsyncMock()
-        await middleware(
-            _make_scope(),
-            _make_receive(),
-            send,
-        )
+        await middleware(_make_scope(), _make_receive(), send)
 
         # 401 отправлен.
         start = _start_message(send)

@@ -48,8 +48,10 @@ class TestSeverity:
 class TestMigrationOperation:
     def test_defaults(self) -> None:
         op = MigrationOperation(
-            statement="SELECT 1", operation=OperationType.UNKNOWN,
-            severity=Severity.INFO, lock_type=LockType.NONE,
+            statement="SELECT 1",
+            operation=OperationType.UNKNOWN,
+            severity=Severity.INFO,
+            lock_type=LockType.NONE,
         )
         assert op.table == ""
         assert op.notes == []
@@ -223,9 +225,7 @@ class TestPreviewStringIndex:
 
     def test_unique_index(self) -> None:
         p = MigrationPreviewer()
-        report = p.preview_string(
-            "CREATE UNIQUE INDEX idx_users_id ON users(id);"
-        )
+        report = p.preview_string("CREATE UNIQUE INDEX idx_users_id ON users(id);")
         assert report.operations[0].operation == OperationType.CREATE_INDEX
 
     def test_drop_index_medium(self) -> None:
@@ -364,7 +364,6 @@ class TestRealisticExample:
         )
         # Drop table has warning note.
         drop_op = next(
-            op for op in report.operations
-            if op.operation == OperationType.DROP_TABLE
+            op for op in report.operations if op.operation == OperationType.DROP_TABLE
         )
         assert "PERMANENT" in drop_op.notes[0]

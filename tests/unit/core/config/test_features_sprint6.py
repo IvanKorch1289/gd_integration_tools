@@ -28,7 +28,6 @@ SPRINT6_FIELD_NAMES = (
     "codeclone_fail_on_new",
     # K2 Resilience+Perf (6) — Round 7: structlog_batching_enabled удалён
     # K2 Resilience+Perf (6)
-
     "perf_gate_strict",
     "processor_health_checks_strict",
     "backpressure_streaming_enabled",

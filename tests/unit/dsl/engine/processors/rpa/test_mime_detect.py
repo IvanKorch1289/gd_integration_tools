@@ -3,6 +3,7 @@
 MIME-type detection по magic bytes (Ponytail YAGNI: stdlib only).
 Pattern (D276): thin wrapper.
 """
+
 from __future__ import annotations
 
 
@@ -11,6 +12,7 @@ class TestMimeDetectProcessor:
         from src.backend.dsl.engine.processors.rpa.mime_detect import (
             MimeDetectProcessor,
         )
+
         proc = MimeDetectProcessor()
         assert proc is not None
 
@@ -18,6 +20,7 @@ class TestMimeDetectProcessor:
         from src.backend.dsl.engine.processors.rpa.mime_detect import (
             MimeDetectProcessor,
         )
+
         proc = MimeDetectProcessor()
         mime = proc.detect(b"%PDF-1.4\n...")
         assert mime == "application/pdf"
@@ -26,6 +29,7 @@ class TestMimeDetectProcessor:
         from src.backend.dsl.engine.processors.rpa.mime_detect import (
             MimeDetectProcessor,
         )
+
         proc = MimeDetectProcessor()
         mime = proc.detect(b"\x89PNG\r\n\x1a\n...")
         assert mime == "image/png"
@@ -34,6 +38,7 @@ class TestMimeDetectProcessor:
         from src.backend.dsl.engine.processors.rpa.mime_detect import (
             MimeDetectProcessor,
         )
+
         proc = MimeDetectProcessor()
         mime = proc.detect(b"\xff\xd8\xff\xe0...")
         assert mime == "image/jpeg"
@@ -42,6 +47,7 @@ class TestMimeDetectProcessor:
         from src.backend.dsl.engine.processors.rpa.mime_detect import (
             MimeDetectProcessor,
         )
+
         proc = MimeDetectProcessor()
         # ZIP magic bytes (PK\x03\x04)
         mime = proc.detect(b"PK\x03\x04\x14\x00\x00\x00\x08\x00")
@@ -51,6 +57,7 @@ class TestMimeDetectProcessor:
         from src.backend.dsl.engine.processors.rpa.mime_detect import (
             MimeDetectProcessor,
         )
+
         proc = MimeDetectProcessor()
         mime = proc.detect(b"random data not matching any magic")
         assert mime == "application/octet-stream"

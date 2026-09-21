@@ -38,7 +38,7 @@ def _flags(monkeypatch: pytest.MonkeyPatch) -> None:
     from src.backend.core.config.security import secure_settings
 
     monkeypatch.setattr(
-        secure_settings, "jupyter_inline_content_enabled", True, raising=False,
+        secure_settings, "jupyter_inline_content_enabled", True, raising=False
     )
 
 
@@ -47,12 +47,9 @@ def _exec_ok() -> AsyncMock:
     svc.execute = AsyncMock(
         return_value={
             "outputs": [
-                {
-                    "cell_index": 0,
-                    "outputs": [{"output_type": "stream", "text": "ok"}],
-                },
-            ],
-        },
+                {"cell_index": 0, "outputs": [{"output_type": "stream", "text": "ok"}]}
+            ]
+        }
     )
     return svc
 
@@ -64,7 +61,7 @@ def _registry_with_validation() -> NotebookRegistry:
             name=NAME,
             path=f"{NAME}.ipynb",
             parameters_schema={"customer_id": {"type": "int"}},
-        ),
+        )
     )
     return reg
 
@@ -73,13 +70,13 @@ def _registry_with_validation() -> NotebookRegistry:
 
 
 @pytest.mark.asyncio
-async def test_gate_off_raises_not_enabled(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_gate_off_raises_not_enabled(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(feature_flags, "jupyter_hub_enabled", False, raising=False)
     with pytest.raises(JupyterHubNotEnabledError):
         await run_hub_notebook(
-            notebook_name=NAME, registry=NotebookRegistry(), execution_service=AsyncMock(),
+            notebook_name=NAME,
+            registry=NotebookRegistry(),
+            execution_service=AsyncMock(),
         )
 
 
@@ -94,7 +91,7 @@ async def test_parameter_error_raised() -> None:
             name=NAME,
             path=f"{NAME}.ipynb",
             parameters_schema={"customer_id": {"type": "int"}},
-        ),
+        )
     )
     svc = AsyncMock()
     with pytest.raises(NotebookParameterError):
@@ -118,15 +115,9 @@ async def test_execution_error_propagates() -> None:
     reg = NotebookRegistry()
     reg.register(NotebookSpec(name=NAME, path=f"{NAME}.ipynb"))
     svc = AsyncMock()
-    svc.execute = AsyncMock(
-        side_effect=JupyterExecutionError("papermill exploded"),
-    )
+    svc.execute = AsyncMock(side_effect=JupyterExecutionError("papermill exploded"))
     with pytest.raises(JupyterExecutionError):
-        await run_hub_notebook(
-            notebook_name=NAME,
-            registry=reg,
-            execution_service=svc,
-        )
+        await run_hub_notebook(notebook_name=NAME, registry=reg, execution_service=svc)
 
 
 # ── inline notebook: temp cleanup ───────────────────────────────────
@@ -154,13 +145,11 @@ async def test_inline_content_runs_and_cleans_temp_file() -> None:
 
 
 @pytest.mark.asyncio
-async def test_inline_content_disabled_raises(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_inline_content_disabled_raises(monkeypatch: pytest.MonkeyPatch) -> None:
     from src.backend.core.config.security import secure_settings
 
     monkeypatch.setattr(
-        secure_settings, "jupyter_inline_content_enabled", False, raising=False,
+        secure_settings, "jupyter_inline_content_enabled", False, raising=False
     )
     registry = NotebookRegistry()
     registry.register(NotebookSpec(name=NAME, path=f"{NAME}.ipynb"))
@@ -181,9 +170,7 @@ async def test_notebook_not_found() -> None:
     registry = NotebookRegistry()
     with pytest.raises(NotebookNotFoundError):
         await run_hub_notebook(
-            notebook_name="absent",
-            registry=registry,
-            execution_service=AsyncMock(),
+            notebook_name="absent", registry=registry, execution_service=AsyncMock()
         )
 
 
@@ -242,9 +229,7 @@ async def test_save_inline_dict_builds_temp_target(
 # ── _build_execution_service ────────────────────────────────────────
 
 
-def test_build_execution_service_import_error(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_build_execution_service_import_error(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "src.backend.core.di.providers.jupyter", None)
     with pytest.raises(HubRunError, match="provider not available"):
         _build_execution_service()
@@ -257,7 +242,7 @@ def test_build_execution_service_returns_provider_result(
     fake_module = MagicMock()
     fake_module.get_notebook_execution_service_provider.return_value = sentinel
     monkeypatch.setitem(
-        sys.modules, "src.backend.core.di.providers.jupyter", fake_module,
+        sys.modules, "src.backend.core.di.providers.jupyter", fake_module
     )
     assert _build_execution_service() is sentinel
 
@@ -309,16 +294,12 @@ async def test_inline_temp_cleanup_os_error_swallowed(
 
 
 @pytest.mark.asyncio
-async def test_gate_feature_flags_import_error(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_gate_feature_flags_import_error(monkeypatch: pytest.MonkeyPatch) -> None:
     """feature_flags недоступен -> except ImportError -> JupyterHubNotEnabledError."""
     monkeypatch.setitem(sys.modules, "src.backend.core.config.features", None)
     reg = NotebookRegistry()
     reg.register(NotebookSpec(name=NAME, path=f"{NAME}.ipynb"))
     with pytest.raises(JupyterHubNotEnabledError):
         await run_hub_notebook(
-            notebook_name=NAME,
-            registry=reg,
-            execution_service=AsyncMock(),
+            notebook_name=NAME, registry=reg, execution_service=AsyncMock()
         )

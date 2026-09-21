@@ -1,4 +1,5 @@
 """Tests for @with_retry decorator (Security Wave S4)."""
+
 from __future__ import annotations
 
 import pytest
@@ -54,11 +55,7 @@ async def test_retry_does_not_retry_on_unmatched_exception() -> None:
     """
     counter = {"n": 0}
 
-    @with_retry(
-        max_attempts=3,
-        initial_backoff=0.01,
-        retry_on=(ConnectionError,),
-    )
+    @with_retry(max_attempts=3, initial_backoff=0.01, retry_on=(ConnectionError,))
     async def value_error() -> None:
         counter["n"] += 1
         raise ValueError("nope")
@@ -93,11 +90,7 @@ async def test_retry_custom_retry_on() -> None:
     class MyTransientError(RuntimeError):
         pass
 
-    @with_retry(
-        max_attempts=3,
-        initial_backoff=0.01,
-        retry_on=(MyTransientError,),
-    )
+    @with_retry(max_attempts=3, initial_backoff=0.01, retry_on=(MyTransientError,))
     async def fn() -> str:
         counter["n"] += 1
         if counter["n"] < 2:
@@ -112,6 +105,7 @@ async def test_retry_custom_retry_on() -> None:
 @pytest.mark.unit
 async def test_retry_jitter_does_not_break_success() -> None:
     """Smoke-test: jitter=True не ломает успешный вызов."""
+
     @with_retry(max_attempts=5, jitter=True)
     async def call_me() -> str:
         return "ok"

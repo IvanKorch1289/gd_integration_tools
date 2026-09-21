@@ -43,9 +43,7 @@ class TestAiProvidersFacadeAllExports:
     )
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(ai_providers, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
+        assert hasattr(ai_providers, symbol_name), f"Missing export: {symbol_name}"
         assert symbol_name in ai_providers.__all__, (
             f"{symbol_name} not declared in __all__"
         )
@@ -57,7 +55,9 @@ class TestAiProvidersFacadeAllExports:
     def test_module_docstring_present(self) -> None:
         """Module docstring описывает AI providers (S68 W4 decomp)."""
         assert ai_providers.__doc__ is not None
-        assert "provider" in ai_providers.__doc__.lower() or "S68" in ai_providers.__doc__
+        assert (
+            "provider" in ai_providers.__doc__.lower() or "S68" in ai_providers.__doc__
+        )
 
 
 @pytest.mark.unit

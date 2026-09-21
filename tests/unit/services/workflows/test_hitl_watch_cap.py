@@ -8,7 +8,6 @@ saturation (DoS vector).
 превышении. Caller должен retry с backoff или escalate.
 """
 
-
 from __future__ import annotations
 
 import json
@@ -79,10 +78,7 @@ class TestHITLWatchCap:
 
         with pytest.raises(HITLWatchContentionError) as exc_info:
             await store._mark_resolved_transactional(
-                mock_client,
-                "test-signal",
-                action="approve",
-                resolved_by="user-1",
+                mock_client, "test-signal", action="approve", resolved_by="user-1"
             )
 
         # Error message содержит signal_id + retries info
@@ -112,10 +108,7 @@ class TestHITLWatchCap:
         store = RedisHitlSignalStore(redis_client=mock_client)
 
         result = await store._mark_resolved_transactional(
-            mock_client,
-            "test-signal",
-            action="approve",
-            resolved_by="user-1",
+            mock_client, "test-signal", action="approve", resolved_by="user-1"
         )
 
         assert result["resolved_at"] is not None

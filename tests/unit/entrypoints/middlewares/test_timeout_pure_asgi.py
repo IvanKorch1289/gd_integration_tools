@@ -1,6 +1,5 @@
 """Pure ASGI regression-тесты для TimeoutMiddleware (cycle 50)."""
 
-
 from __future__ import annotations
 
 import asyncio
@@ -37,6 +36,7 @@ def _downstream_ok():
 
 def _downstream_slow(seconds: float):
     """Downstream который sleep'ит seconds перед response."""
+
     async def downstream(scope, receive, send):
         await asyncio.sleep(seconds)
         await send({"type": "http.response.start", "status": 200, "headers": []})
@@ -59,6 +59,7 @@ def _make_scope(path: str = "/api") -> dict:
 def _make_receive():
     async def receive():
         return {"type": "http.request", "body": b"", "more_body": False}
+
     return receive
 
 
@@ -77,11 +78,7 @@ class TestTimeoutMiddlewarePureASGI:
         mw = TimeoutMiddleware(app=app)
 
         send = AsyncMock()
-        await mw(
-            {"type": "websocket", "path": "/ws", "headers": []},
-            AsyncMock(),
-            send,
-        )
+        await mw({"type": "websocket", "path": "/ws", "headers": []}, AsyncMock(), send)
 
         msgs = [c.args[0] for c in send.await_args_list]
         assert any(m["type"] == "websocket.accept" for m in msgs)
@@ -94,11 +91,7 @@ class TestTimeoutMiddlewarePureASGI:
         mw = TimeoutMiddleware(app=app)
 
         send = AsyncMock()
-        await mw(
-            _make_scope("/api"),
-            _make_receive(),
-            send,
-        )
+        await mw(_make_scope("/api"), _make_receive(), send)
 
         start = _start_message(send)
         assert start is not None
@@ -106,7 +99,7 @@ class TestTimeoutMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_global_timeout_exceeded_returns_408(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Downstream sleep > global timeout → 408 через send (no-raise)."""
         from src.backend.core.config.features import feature_flags
@@ -120,23 +113,20 @@ class TestTimeoutMiddlewarePureASGI:
         mw = TimeoutMiddleware(app=app)
 
         send = AsyncMock()
-        await mw(
-            _make_scope("/api"),
-            _make_receive(),
-            send,
-        )
+        await mw(_make_scope("/api"), _make_receive(), send)
 
         start = _start_message(send)
         assert start is not None
         assert start["status"] == 408
         body = _body_message(send)
         import json
+
         parsed = json.loads(body["body"].decode("utf-8"))
         assert "Превышено" in parsed["detail"]
 
     @pytest.mark.asyncio
     async def test_per_route_timeout_used_when_match(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """per_route_timeout_enabled=True + match → route-specific timeout."""
         from src.backend.core.config.features import feature_flags
@@ -151,11 +141,7 @@ class TestTimeoutMiddlewarePureASGI:
         mw = TimeoutMiddleware(app=app, route_timeouts={"/heavy": 0.05})
 
         send = AsyncMock()
-        await mw(
-            _make_scope("/heavy/process"),
-            _make_receive(),
-            send,
-        )
+        await mw(_make_scope("/heavy/process"), _make_receive(), send)
 
         # 408 от per-route timeout (0.05s).
         start = _start_message(send)
@@ -164,7 +150,7 @@ class TestTimeoutMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_per_route_no_match_uses_global(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """per_route_enabled=True + no match → global default."""
         from src.backend.core.config.features import feature_flags
@@ -179,11 +165,7 @@ class TestTimeoutMiddlewarePureASGI:
         mw = TimeoutMiddleware(app=app, route_timeouts={"/heavy": 0.05})
 
         send = AsyncMock()
-        await mw(
-            _make_scope("/api/users"),
-            _make_receive(),
-            send,
-        )
+        await mw(_make_scope("/api/users"), _make_receive(), send)
 
         # Global (5.0s) → 200 OK.
         start = _start_message(send)
@@ -191,9 +173,7 @@ class TestTimeoutMiddlewarePureASGI:
         assert start["status"] == 200
 
     @pytest.mark.asyncio
-    async def test_longest_prefix_wins(
-        self, monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
+    async def test_longest_prefix_wins(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """При overlapping prefixes — longest prefix match."""
         from src.backend.core.config.features import feature_flags
         from src.backend.core.config.settings import settings
@@ -205,16 +185,11 @@ class TestTimeoutMiddlewarePureASGI:
         app.side_effect = _downstream_slow(0.5)
         # /api = 5.0s (global too), /api/v1/heavy = 0.05s
         mw = TimeoutMiddleware(
-            app=app,
-            route_timeouts={"/api": 5.0, "/api/v1/heavy": 0.05},
+            app=app, route_timeouts={"/api": 5.0, "/api/v1/heavy": 0.05}
         )
 
         send = AsyncMock()
-        await mw(
-            _make_scope("/api/v1/heavy/process"),
-            _make_receive(),
-            send,
-        )
+        await mw(_make_scope("/api/v1/heavy/process"), _make_receive(), send)
 
         # Longest /api/v1/heavy (0.05s) wins → 408.
         start = _start_message(send)
@@ -223,7 +198,7 @@ class TestTimeoutMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_empty_registry_uses_global(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Empty registry → global default (даже при flag=ON)."""
         from src.backend.core.config.features import feature_flags
@@ -237,11 +212,7 @@ class TestTimeoutMiddlewarePureASGI:
         mw = TimeoutMiddleware(app=app, route_timeouts={})
 
         send = AsyncMock()
-        await mw(
-            _make_scope("/api"),
-            _make_receive(),
-            send,
-        )
+        await mw(_make_scope("/api"), _make_receive(), send)
 
         start = _start_message(send)
         assert start is not None
@@ -249,7 +220,7 @@ class TestTimeoutMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_none_registry_uses_global(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """None registry → global default."""
         from src.backend.core.config.features import feature_flags
@@ -263,11 +234,7 @@ class TestTimeoutMiddlewarePureASGI:
         mw = TimeoutMiddleware(app=app, route_timeouts=None)
 
         send = AsyncMock()
-        await mw(
-            _make_scope("/api"),
-            _make_receive(),
-            send,
-        )
+        await mw(_make_scope("/api"), _make_receive(), send)
 
         start = _start_message(send)
         assert start is not None
@@ -275,7 +242,7 @@ class TestTimeoutMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_disabled_flag_ignores_registry(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """per_route_timeout_enabled=False → registry ignored, global only."""
         from src.backend.core.config.features import feature_flags
@@ -290,11 +257,7 @@ class TestTimeoutMiddlewarePureASGI:
         mw = TimeoutMiddleware(app=app, route_timeouts={"/heavy": 0.05})
 
         send = AsyncMock()
-        await mw(
-            _make_scope("/heavy/process"),
-            _make_receive(),
-            send,
-        )
+        await mw(_make_scope("/heavy/process"), _make_receive(), send)
 
         # Global (5.0s) → 200 (registry не применён).
         start = _start_message(send)
@@ -321,11 +284,7 @@ class TestTimeoutMiddlewarePureASGI:
             mw = TimeoutMiddleware(app=app)
 
             send = AsyncMock()
-            await mw(
-                _make_scope("/api"),
-                _make_receive(),
-                send,
-            )
+            await mw(_make_scope("/api"), _make_receive(), send)
 
         # 408 — downstream coroutine cancelled, no exception propagated.
         start = _start_message(send)

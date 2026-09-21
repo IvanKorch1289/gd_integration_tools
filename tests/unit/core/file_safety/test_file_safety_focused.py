@@ -38,11 +38,7 @@ class TestComputeSha256:
 
 class TestFileManifest:
     def test_defaults(self) -> None:
-        m = FileManifest(
-            file_id="f1",
-            hash_sha256="abc",
-            size_bytes=100,
-        )
+        m = FileManifest(file_id="f1", hash_sha256="abc", size_bytes=100)
         assert m.filename == ""
         assert m.source == ""
         assert m.tenant_id == ""
@@ -170,9 +166,7 @@ class TestAtomicHandoffPromote:
         target_dir = tmp_path / "consumer"
 
         final = AtomicHandoff.promote(
-            staged_path=staged,
-            target_dir=target_dir,
-            target_filename="final.txt",
+            staged_path=staged, target_dir=target_dir, target_filename="final.txt"
         )
         assert final.exists()
         assert final.name == "final.txt"
@@ -185,17 +179,13 @@ class TestAtomicHandoffPromote:
         staged.write_bytes(b"x")
         target_dir = tmp_path / "consumer"
 
-        final = AtomicHandoff.promote(
-            staged_path=staged,
-            target_dir=target_dir,
-        )
+        final = AtomicHandoff.promote(staged_path=staged, target_dir=target_dir)
         assert final.name == "staged_name.txt"
 
     def test_promote_missing_raises(self, tmp_path) -> None:
         with pytest.raises(FileNotFoundError):
             AtomicHandoff.promote(
-                staged_path=tmp_path / "missing.txt",
-                target_dir=tmp_path / "out",
+                staged_path=tmp_path / "missing.txt", target_dir=tmp_path / "out"
             )
 
     def test_promote_creates_target_dir(self, tmp_path) -> None:
@@ -213,12 +203,16 @@ class TestAtomicHandoffVerifyChecksum:
         path = tmp_path / "f.txt"
         path.write_bytes(content)
         expected = compute_sha256(content)
-        assert AtomicHandoff.verify_checksum(path=path, expected_sha256=expected) is True
+        assert (
+            AtomicHandoff.verify_checksum(path=path, expected_sha256=expected) is True
+        )
 
     def test_verify_checksum_mismatch(self, tmp_path) -> None:
         path = tmp_path / "f.txt"
         path.write_bytes(b"test data")
-        assert AtomicHandoff.verify_checksum(path=path, expected_sha256="wrong") is False
+        assert (
+            AtomicHandoff.verify_checksum(path=path, expected_sha256="wrong") is False
+        )
 
 
 class TestSingleton:
@@ -274,9 +268,12 @@ class TestRealisticExample:
         assert not staged.exists()
 
         # 4. Verify checksum.
-        assert AtomicHandoff.verify_checksum(
-            path=final, expected_sha256=manifest.hash_sha256
-        ) is True
+        assert (
+            AtomicHandoff.verify_checksum(
+                path=final, expected_sha256=manifest.hash_sha256
+            )
+            is True
+        )
 
         # 5. Serialize manifest for downstream consumer.
         manifest_dict = manifest.to_dict()

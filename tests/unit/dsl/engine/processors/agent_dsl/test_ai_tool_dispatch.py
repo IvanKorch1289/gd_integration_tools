@@ -43,7 +43,7 @@ def test_ai_tool_dispatch_dsl_registers_processor() -> None:
     """``RouteBuilder.ai_tool_dispatch(...)`` — добавляет AIToolDispatchProcessor."""
     b = RouteBuilder("test", source="kafka:orders")
     result = b.ai_tool_dispatch(
-        available_tool_ids=["order.get", "order.list"], query="get order 123",
+        available_tool_ids=["order.get", "order.list"], query="get order 123"
     )
     assert isinstance(result, RouteBuilder)
     assert result is b
@@ -59,7 +59,7 @@ def test_ai_tool_dispatch_chainable_with_other_methods() -> None:
         RouteBuilder("test", source="kafka:orders")
         .set_property("user_query", "show my orders")
         .ai_tool_dispatch(
-            available_tool_ids=["order.list"], query_property="user_query",
+            available_tool_ids=["order.list"], query_property="user_query"
         )
         .audit(action="tool_dispatched")
     )
@@ -121,7 +121,7 @@ def test_ai_tool_dispatch_inherits_base_ai_processor() -> None:
 async def test_ai_tool_dispatch_skeleton_writes_scaffold_result() -> None:
     """S107 W4 real LLM-wiring: при LLM unavailable → reason='no_selection'."""
     p = AIToolDispatchProcessor(
-        available_tool_ids=["order.get", "order.list"], query="get order 123",
+        available_tool_ids=["order.get", "order.list"], query="get order 123"
     )
     ex = _ex()
     await p._run(ex, _ctx())
@@ -169,7 +169,7 @@ def test_ai_tool_dispatch_resolve_tools_includes_unavailable_as_false() -> None:
     ``available: True`` (scaffold-режим).
     """
     p = AIToolDispatchProcessor(
-        available_tool_ids=["definitely_not_a_real_tool_xyz"], query="x",
+        available_tool_ids=["definitely_not_a_real_tool_xyz"], query="x"
     )
     import json
 
@@ -214,7 +214,7 @@ def test_ai_tool_dispatch_to_dict_pipeline() -> None:
 def test_ai_tool_dispatch_omits_default_query_in_spec() -> None:
     """При использовании только query_property — ``query`` не в spec если None."""
     b = RouteBuilder("test", source="kafka:x").ai_tool_dispatch(
-        available_tool_ids=["a"], query_property="body.q",
+        available_tool_ids=["a"], query_property="body.q"
     )
     # Проверяем что processor правильно хранит None query
     p = b._processors[0]
@@ -424,7 +424,7 @@ def test_ai_tool_dispatch_build_selection_prompt_contains_tools() -> None:
     """_build_selection_prompt включает tools_desc + query + format instructions."""
     p = AIToolDispatchProcessor(available_tool_ids=["x"], query="my query")
     prompt = p._build_selection_prompt(
-        query="test query", tools_desc='[{"id": "x", "description": "test tool"}]',
+        query="test query", tools_desc='[{"id": "x", "description": "test tool"}]'
     )
     assert "test query" in prompt
     assert "test tool" in prompt

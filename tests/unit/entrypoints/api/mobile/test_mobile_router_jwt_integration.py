@@ -12,9 +12,8 @@ Verifies:
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
 
 
 def _build_client_with_flags(
@@ -45,7 +44,7 @@ def _build_client_with_flags(
 
     import sys
 
-    real_module = sys.modules.get("src.backend.core.config.features")
+    _real_module = sys.modules.get("src.backend.core.config.features")
     with patch.dict(
         "sys.modules",
         {
@@ -66,8 +65,7 @@ def test_profile_returns_401_when_mobile_jwt_off_and_no_demo() -> None:
         mobile_jwt_enabled=False, mobile_demo_auth_enabled=False
     ):
         response = client.get(
-            "/mobile/v1/profile",
-            headers={"Authorization": "Bearer anything"},
+            "/mobile/v1/profile", headers={"Authorization": "Bearer anything"}
         )
         assert response.status_code == 401
 
@@ -92,13 +90,10 @@ def test_profile_returns_401_when_jwt_verifier_unavailable() -> None:
     ):
         # When JWT is enabled but verifier cannot be constructed
         # (missing keys etc.), should return 401, NOT fall through to demo.
-        with patch(
-            "src.backend.core.auth.jwt_backend.JwtBackend"
-        ) as mock_backend:
+        with patch("src.backend.core.auth.jwt_backend.JwtBackend") as mock_backend:
             mock_backend.side_effect = Exception("No JWT keys configured")
             response = client.get(
-                "/mobile/v1/profile",
-                headers={"Authorization": "Bearer any.jwt.token"},
+                "/mobile/v1/profile", headers={"Authorization": "Bearer any.jwt.token"}
             )
             assert response.status_code == 401
             # Should mention verifier unavailable, not "demo auth disabled"
@@ -116,9 +111,7 @@ def test_profile_returns_401_with_invalid_jwt() -> None:
 
         with patch("src.backend.core.auth.jwt_backend.JwtBackend") as mock_cls:
             mock_backend = AsyncMock()
-            mock_backend.decode = AsyncMock(
-                side_effect=JwtVerificationError("expired")
-            )
+            mock_backend.decode = AsyncMock(side_effect=JwtVerificationError("expired"))
             mock_cls.return_value = mock_backend
 
             response = client.get(

@@ -147,16 +147,14 @@ class TestSLARegistryList:
 class TestEvaluateSLOAllHealthy:
     def test_all_healthy(self) -> None:
         slo = SLO(
-            tenant_id="t1", route_id="r1",
+            tenant_id="t1",
+            route_id="r1",
             latency_p99_ms=500,
             availability=0.999,
             error_rate=0.01,
         )
         result = evaluate_slo(
-            slo,
-            latency_p99_ms=300,
-            availability=0.9999,
-            error_rate=0.005,
+            slo, latency_p99_ms=300, availability=0.9999, error_rate=0.005
         )
         assert result.status == SLOStatus.HEALTHY
         assert len(result.breaches) == 0
@@ -250,9 +248,7 @@ class TestSLOCockpitRecord:
     def test_record_evaluate(self) -> None:
         c = SLOCockpit()
         c.registry.register(SLO(tenant_id="t1", route_id="r1"))
-        result = c.record(
-            tenant_id="t1", route_id="r1", latency_p99_ms=100
-        )
+        result = c.record(tenant_id="t1", route_id="r1", latency_p99_ms=100)
         assert result.status == SLOStatus.HEALTHY
 
 
@@ -284,10 +280,7 @@ class TestSLOCockpitReport:
 class TestSLOMeasurement:
     def test_init(self) -> None:
         m = SLOMeasurement(
-            timestamp=123.0,
-            tenant_id="t1",
-            route_id="r1",
-            latency_p99_ms=100,
+            timestamp=123.0, tenant_id="t1", route_id="r1", latency_p99_ms=100
         )
         assert m.tenant_id == "t1"
         assert m.timestamp == 123.0
@@ -317,15 +310,17 @@ class TestRealisticExample:
 
     def test_payment_api_breach_detection(self) -> None:
         c = get_sla_cockpit()
-        c.registry.register(SLO(
-            tenant_id="t1",
-            route_id="payment-process",
-            latency_p99_ms=500,
-            availability=0.999,
-            error_rate=0.01,
-            owner="team-payments",
-            description="Payment processing API",
-        ))
+        c.registry.register(
+            SLO(
+                tenant_id="t1",
+                route_id="payment-process",
+                latency_p99_ms=500,
+                availability=0.999,
+                error_rate=0.01,
+                owner="team-payments",
+                description="Payment processing API",
+            )
+        )
 
         # Healthy measurement.
         r1 = c.record(
@@ -347,8 +342,7 @@ class TestRealisticExample:
         )
         assert r2.status == SLOStatus.BREACH
         assert any(
-            b.dimension == "latency" and b.severity == "breach"
-            for b in r2.breaches
+            b.dimension == "latency" and b.severity == "breach" for b in r2.breaches
         )
 
         # Generate report.

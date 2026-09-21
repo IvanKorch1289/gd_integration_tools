@@ -24,9 +24,7 @@ from src.backend.dsl.engine.processors.eip.resilience import (
     FallbackChainProcessor,
     TimeoutProcessor,
 )
-from src.backend.dsl.engine.processors.eip.routing_slip import (
-    RoutingSlipProcessor,
-)
+from src.backend.dsl.engine.processors.eip.routing_slip import RoutingSlipProcessor
 from src.backend.dsl.registry.processor import ProcessorSpec, get_processor_registry
 
 # ── Sample EIP processors (cycle 38 batch — 5 files, 7 classes total) ──

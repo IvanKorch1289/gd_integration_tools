@@ -41,9 +41,7 @@ def _gateway_decl(builder: WorkflowBuilder) -> ActivityDeclaration:
 
 
 @pytest.mark.asyncio
-async def test_gateway_xor_first_match(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_gateway_xor_first_match(monkeypatch: pytest.MonkeyPatch) -> None:
     """XOR: первая ветка с истинным condition выполняется; остальные — нет.
 
     B-08/B-09 fix (cycle 33): exclusive-routing. Ветка с condition=None
@@ -53,7 +51,7 @@ async def test_gateway_xor_first_match(
     executed: list[str] = []
 
     async def fake_compile_activity_step(
-        decl: ActivityDeclaration, ctx: dict[str, Any],
+        decl: ActivityDeclaration, ctx: dict[str, Any]
     ) -> str:
         executed.append(decl.name)
         outputs = ctx.setdefault("_outputs", {})
@@ -65,25 +63,22 @@ async def test_gateway_xor_first_match(
 
     monkeypatch.setattr(sc, "compile_activity_step", fake_compile_activity_step)
 
-    builder = (
-        WorkflowBuilder("xor.flow")
-        .gateway_xor(
-            BranchSpec(
-                name="premium",
-                condition="flag_premium",
-                steps=[ActivityDeclaration(name="route.premium")],
-            ),
-            BranchSpec(
-                name="standard",
-                condition="flag_standard",
-                steps=[ActivityDeclaration(name="route.standard")],
-            ),
-            BranchSpec(
-                name="default",
-                condition=None,
-                steps=[ActivityDeclaration(name="route.default")],
-            ),
-        )
+    builder = WorkflowBuilder("xor.flow").gateway_xor(
+        BranchSpec(
+            name="premium",
+            condition="flag_premium",
+            steps=[ActivityDeclaration(name="route.premium")],
+        ),
+        BranchSpec(
+            name="standard",
+            condition="flag_standard",
+            steps=[ActivityDeclaration(name="route.standard")],
+        ),
+        BranchSpec(
+            name="default",
+            condition=None,
+            steps=[ActivityDeclaration(name="route.default")],
+        ),
     )
 
     decl = _gateway_decl(builder)
@@ -97,14 +92,12 @@ async def test_gateway_xor_first_match(
 
 
 @pytest.mark.asyncio
-async def test_gateway_xor_default_fallback(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_gateway_xor_default_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
     """XOR default: ни одна condition-ветка не matched → default-ветка побеждает."""
     executed: list[str] = []
 
     async def fake_compile_activity_step(
-        decl: ActivityDeclaration, ctx: dict[str, Any],
+        decl: ActivityDeclaration, ctx: dict[str, Any]
     ) -> str:
         executed.append(decl.name)
         return decl.name
@@ -139,9 +132,7 @@ async def test_gateway_xor_default_fallback(
 
 
 @pytest.mark.asyncio
-async def test_gateway_and_waits_all(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_gateway_and_waits_all(monkeypatch: pytest.MonkeyPatch) -> None:
     """AND: asyncio.gather — все ветки выполняются, join-all.
 
     B-08 fix (cycle 33): parallel fan-out через asyncio.gather.
@@ -150,7 +141,7 @@ async def test_gateway_and_waits_all(
     executed: list[str] = []
 
     async def fake_compile_activity_step(
-        decl: ActivityDeclaration, ctx: dict[str, Any],
+        decl: ActivityDeclaration, ctx: dict[str, Any]
     ) -> str:
         executed.append(decl.name)
         return decl.name
@@ -166,14 +157,10 @@ async def test_gateway_and_waits_all(
             steps=[ActivityDeclaration(name="notify.email")],
         ),
         BranchSpec(
-            name="sms",
-            condition=None,
-            steps=[ActivityDeclaration(name="notify.sms")],
+            name="sms", condition=None, steps=[ActivityDeclaration(name="notify.sms")]
         ),
         BranchSpec(
-            name="push",
-            condition=None,
-            steps=[ActivityDeclaration(name="notify.push")],
+            name="push", condition=None, steps=[ActivityDeclaration(name="notify.push")]
         ),
     )
 
@@ -193,9 +180,7 @@ async def test_gateway_and_waits_all(
 
 
 @pytest.mark.asyncio
-async def test_gateway_or_cancels_remaining(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_gateway_or_cancels_remaining(monkeypatch: pytest.MonkeyPatch) -> None:
     """OR: asyncio.wait(FIRST_COMPLETED) — первая ветка побеждает, остальные cancelled.
 
     B-09 fix (cycle 33): inclusive race. Cancel pending tasks через
@@ -205,7 +190,7 @@ async def test_gateway_or_cancels_remaining(
     cancel_observed: list[str] = []
 
     async def fake_compile_activity_step(
-        decl: ActivityDeclaration, ctx: dict[str, Any],
+        decl: ActivityDeclaration, ctx: dict[str, Any]
     ) -> str:
         executed.append(decl.name)
         if decl.name == "fast":
@@ -224,9 +209,7 @@ async def test_gateway_or_cancels_remaining(
 
     builder = WorkflowBuilder("or.flow").gateway_or(
         BranchSpec(
-            name="fast_path",
-            condition=None,
-            steps=[ActivityDeclaration(name="fast")],
+            name="fast_path", condition=None, steps=[ActivityDeclaration(name="fast")]
         ),
         BranchSpec(
             name="slow_path_1",
@@ -244,9 +227,7 @@ async def test_gateway_or_cancels_remaining(
     ctx: dict[str, Any] = {}
 
     # Запускаем compile_or с защитой от зависания в slow-ветках.
-    result = await asyncio.wait_for(
-        compile_or(decl, ctx), timeout=2.0,
-    )
+    result = await asyncio.wait_for(compile_or(decl, ctx), timeout=2.0)
 
     # Первая завершённая ветка — fast (activity result fake_compile returned).
     assert result == "fast"
@@ -263,11 +244,7 @@ async def test_gateway_or_cancels_remaining(
 def test_gateway_mixin_pushes_activity_declaration_with_gateway_arg() -> None:
     """Builder пушит ActivityDeclaration с args['gateway'] = GatewaySpec."""
     builder = WorkflowBuilder("smoke").gateway_xor(
-        BranchSpec(
-            name="a",
-            condition="flag",
-            steps=[ActivityDeclaration(name="do.a")],
-        ),
+        BranchSpec(name="a", condition="flag", steps=[ActivityDeclaration(name="do.a")])
     )
 
     assert len(builder._steps) == 1
@@ -285,18 +262,10 @@ def test_gateway_mixin_pushes_activity_declaration_with_gateway_arg() -> None:
 def test_gateway_mixin_and_and_or_set_correct_kind() -> None:
     """builder.gateway_and / gateway_or пушат step с kind=and / or."""
     and_builder = WorkflowBuilder("and.smoke").gateway_and(
-        BranchSpec(
-            name="x",
-            condition=None,
-            steps=[ActivityDeclaration(name="x.step")],
-        ),
+        BranchSpec(name="x", condition=None, steps=[ActivityDeclaration(name="x.step")])
     )
     or_builder = WorkflowBuilder("or.smoke").gateway_or(
-        BranchSpec(
-            name="y",
-            condition=None,
-            steps=[ActivityDeclaration(name="y.step")],
-        ),
+        BranchSpec(name="y", condition=None, steps=[ActivityDeclaration(name="y.step")])
     )
 
     assert and_builder._steps[0].args["gateway"].kind == "and"

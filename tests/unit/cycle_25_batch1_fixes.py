@@ -4,7 +4,6 @@ Self-contained — does NOT import modules with chain deps.
 Tests the LOGIC of each fix.
 """
 
-
 from __future__ import annotations
 
 
@@ -35,7 +34,9 @@ class TestSOAPSourceLastHash:
         # Iteration 1: callback fails → last_hash stays None
         body_hash_1 = "abc123"
         _process_iteration(body_hash_1)
-        assert last_hash is None, f"_last_hash must stay None on callback error, got {last_hash}"
+        assert last_hash is None, (
+            f"_last_hash must stay None on callback error, got {last_hash}"
+        )
 
         # Iteration 2: same body → changed=True, last_hash=None
         # Should retry (callback fails again → still None)
@@ -133,7 +134,7 @@ class TestCORSInvariant:
                 if "*" in self.cors_origins and self.cors_allow_credentials:
                     raise ValueError(
                         "CORS misconfiguration: wildcard origin '*' combined "
-                        "with credentials=True is forbidden.",
+                        "with credentials=True is forbidden."
                     )
 
         # Forbidden combination
@@ -181,6 +182,7 @@ class TestDocsIndexCaseMatch:
 
     def test_index_link_correct(self):
         import os
+
         # Verify the actual file exists at the referenced path
         assert os.path.exists("docs/adr/INDEX.md"), "INDEX.md must exist"
         assert not os.path.exists("docs/adr/index.md"), "lowercase must NOT exist"

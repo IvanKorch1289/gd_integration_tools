@@ -44,7 +44,9 @@ class TestRedisClusterBatchLimits:
         return adapter
 
     @pytest.mark.asyncio
-    async def test_mget_batch_under_limit_ok(self, adapter: RedisClusterAdapter) -> None:
+    async def test_mget_batch_under_limit_ok(
+        self, adapter: RedisClusterAdapter
+    ) -> None:
         """3 keys → OK."""
         keys = [f"key:{i}" for i in range(3)]
         await adapter.mget_batch(keys)
@@ -60,7 +62,9 @@ class TestRedisClusterBatchLimits:
         # Не вызывает ValueError
 
     @pytest.mark.asyncio
-    async def test_mget_batch_over_limit_raises(self, adapter: RedisClusterAdapter) -> None:
+    async def test_mget_batch_over_limit_raises(
+        self, adapter: RedisClusterAdapter
+    ) -> None:
         """``_MAX_MGET_BATCH + 1`` keys → ``ValueError``."""
         # Не создаём реальный список (lazy gen)
         keys = (f"key:{i}" for i in range(_MAX_MGET_BATCH + 1))
@@ -74,13 +78,17 @@ class TestRedisClusterBatchLimits:
         assert result == []
 
     @pytest.mark.asyncio
-    async def test_mset_batch_under_limit_ok(self, adapter: RedisClusterAdapter) -> None:
+    async def test_mset_batch_under_limit_ok(
+        self, adapter: RedisClusterAdapter
+    ) -> None:
         """3 items → OK."""
         mapping = {f"key:{i}": f"value:{i}" for i in range(3)}
         await adapter.mset_batch(mapping)
 
     @pytest.mark.asyncio
-    async def test_mset_batch_over_limit_raises(self, adapter: RedisClusterAdapter) -> None:
+    async def test_mset_batch_over_limit_raises(
+        self, adapter: RedisClusterAdapter
+    ) -> None:
         """``_MAX_MGET_BATCH + 1`` items → ``ValueError``."""
         mapping = {f"key:{i}": f"value:{i}" for i in range(_MAX_MGET_BATCH + 1)}
         with pytest.raises(ValueError, match="oversized mset_batch"):

@@ -87,11 +87,7 @@ class TestDBPoolMixin:
         class TestSettings(DBPoolMixin, BaseModel):
             pass
 
-        s = TestSettings(
-            pool_size=50,
-            pool_timeout_s=60.0,
-            max_overflow=20,
-        )
+        s = TestSettings(pool_size=50, pool_timeout_s=60.0, max_overflow=20)
         assert s.pool_size == 50
         assert s.pool_timeout_s == 60.0
         assert s.max_overflow == 20
@@ -126,8 +122,7 @@ class TestResilienceMixin:
             pass
 
         s = TestSettings(
-            circuit_breaker_max_failures=10,
-            circuit_breaker_reset_timeout=120.0,
+            circuit_breaker_max_failures=10, circuit_breaker_reset_timeout=120.0
         )
         assert s.circuit_breaker_max_failures == 10
         assert s.circuit_breaker_reset_timeout == 120.0
@@ -168,9 +163,7 @@ class TestMixinComposition:
             db_name: str = "testdb"
 
         s = DbSettings(
-            pool_size=30,
-            pool_timeout_s=45.0,
-            circuit_breaker_max_failures=7,
+            pool_size=30, pool_timeout_s=45.0, circuit_breaker_max_failures=7
         )
         assert s.db_name == "testdb"
         assert s.pool_size == 30
@@ -180,7 +173,7 @@ class TestMixinComposition:
         """Все 4 базовых миксина вместе."""
 
         class FullSettings(
-            ConnectionMixin, RetryMixin, LLMModelMixin, APIConnectionMixin, BaseModel,
+            ConnectionMixin, RetryMixin, LLMModelMixin, APIConnectionMixin, BaseModel
         ):
             pass
 

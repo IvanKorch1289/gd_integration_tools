@@ -11,7 +11,7 @@ Verifies:
 
 from __future__ import annotations
 
-import pytest
+from typing import Any
 
 
 def _build_client() -> Any:

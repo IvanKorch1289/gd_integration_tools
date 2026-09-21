@@ -73,7 +73,7 @@ class TestWebsocketEndpoint:
         websocket.receive_json.side_effect = WebSocketDisconnect()
         with patch.object(ws_handler.ws_manager, "connect", AsyncMock()):
             with patch.object(
-                ws_handler.ws_manager, "disconnect", MagicMock(),
+                ws_handler.ws_manager, "disconnect", MagicMock()
             ) as mock_dc:
                 await ws_handler.websocket_endpoint(websocket)
         mock_dc.assert_called_once()
@@ -86,7 +86,7 @@ class TestWebsocketEndpoint:
         ]
         with patch.object(ws_handler.ws_manager, "connect", AsyncMock()):
             with patch.object(
-                ws_handler.ws_manager, "send_json", AsyncMock(),
+                ws_handler.ws_manager, "send_json", AsyncMock()
             ) as mock_send:
                 await ws_handler.websocket_endpoint(websocket)
         mock_send.assert_awaited_once()
@@ -104,10 +104,10 @@ class TestWebsocketEndpoint:
         bridge.error_code = "action_not_found"
         with patch.object(ws_handler.ws_manager, "connect", AsyncMock()):
             with patch.object(
-                ws_handler, "dispatch_action_or_dsl", AsyncMock(return_value=bridge),
+                ws_handler, "dispatch_action_or_dsl", AsyncMock(return_value=bridge)
             ):
                 with patch.object(
-                    ws_handler.ws_manager, "send_json", AsyncMock(),
+                    ws_handler.ws_manager, "send_json", AsyncMock()
                 ) as mock_send:
                     await ws_handler.websocket_endpoint(websocket)
         calls = [
@@ -129,10 +129,10 @@ class TestWebsocketEndpoint:
         bridge.error = None
         with patch.object(ws_handler.ws_manager, "connect", AsyncMock()):
             with patch.object(
-                ws_handler, "dispatch_action_or_dsl", AsyncMock(return_value=bridge),
+                ws_handler, "dispatch_action_or_dsl", AsyncMock(return_value=bridge)
             ):
                 with patch.object(
-                    ws_handler.ws_manager, "send_json", AsyncMock(),
+                    ws_handler.ws_manager, "send_json", AsyncMock()
                 ) as mock_send:
                     await ws_handler.websocket_endpoint(websocket)
         calls = [
@@ -150,16 +150,14 @@ class TestWebsocketEndpoint:
             WebSocketDisconnect(),
         ]
         with patch.object(ws_handler.ws_manager, "connect", AsyncMock()):
-            with patch.object(
-                ws_handler.ws_manager, "connect", AsyncMock(),
-            ):
+            with patch.object(ws_handler.ws_manager, "connect", AsyncMock()):
                 with patch.object(
                     ws_handler,
                     "dispatch_action_or_dsl",
                     AsyncMock(side_effect=RuntimeError("boom")),
                 ):
                     with patch.object(
-                        ws_handler.ws_manager, "send_json", AsyncMock(),
+                        ws_handler.ws_manager, "send_json", AsyncMock()
                     ) as mock_send:
                         await ws_handler.websocket_endpoint(websocket)
         calls = [
@@ -212,12 +210,8 @@ class TestWebsocketEndpoint:
             with patch.object(
                 ws_handler, "dispatch_action_or_dsl", AsyncMock(return_value=bridge)
             ) as mock_dispatch:
-                with patch.object(
-                    ws_handler.ws_manager, "send_json", AsyncMock()
-                ):
-                    with patch.object(
-                        ws_handler.ws_manager, "disconnect", MagicMock()
-                    ):
+                with patch.object(ws_handler.ws_manager, "send_json", AsyncMock()):
+                    with patch.object(ws_handler.ws_manager, "disconnect", MagicMock()):
                         with patch.object(
                             ws_handler,
                             "_authenticate_handshake",
@@ -260,13 +254,9 @@ class TestWebsocketEndpoint:
         try:
             with patch.object(ws_handler.ws_manager, "connect", AsyncMock()):
                 with patch.object(
-                    ws_handler,
-                    "dispatch_action_or_dsl",
-                    AsyncMock(return_value=bridge),
+                    ws_handler, "dispatch_action_or_dsl", AsyncMock(return_value=bridge)
                 ) as mock_dispatch:
-                    with patch.object(
-                        ws_handler.ws_manager, "send_json", AsyncMock()
-                    ):
+                    with patch.object(ws_handler.ws_manager, "send_json", AsyncMock()):
                         with patch.object(
                             ws_handler.ws_manager, "disconnect", MagicMock()
                         ):
@@ -298,7 +288,9 @@ class TestWebsocketAuthGate:
 
         authenticator = MagicMock()
         authenticator.authenticate_via_facade = AsyncMock(side_effect=AssertionError)
-        with patch.object(ws_handler, "get_ws_authenticator", return_value=authenticator):
+        with patch.object(
+            ws_handler, "get_ws_authenticator", return_value=authenticator
+        ):
             await ws_handler.websocket_endpoint(ws)
 
         # Either accept was called and close with 1008 (success path) or accept failed.
@@ -322,9 +314,11 @@ class TestWebsocketAuthGate:
         # auth raising WSAuthError → close 1008.
         authenticator = MagicMock()
         authenticator.authenticate_via_facade = AsyncMock(
-            side_effect=WSAuthError("bad token"),
+            side_effect=WSAuthError("bad token")
         )
-        with patch.object(ws_handler, "get_ws_authenticator", return_value=authenticator):
+        with patch.object(
+            ws_handler, "get_ws_authenticator", return_value=authenticator
+        ):
             await ws_handler.websocket_endpoint(ws)
 
         ws.close.assert_awaited()

@@ -138,8 +138,7 @@ class TestProcessSandboxTimeout:
         )
         # Long sleep — should be killed by wall-time timeout (1.0s).
         result = s.run(
-            "import time; time.sleep(60); print('never')",
-            timeout_seconds=1.0,
+            "import time; time.sleep(60); print('never')", timeout_seconds=1.0
         )
         assert result.success is False
         assert result.timed_out is True
@@ -155,12 +154,7 @@ class TestProcessSandboxTimeout:
 class TestProcessSandboxMemoryLimit:
     def test_small_memory_limit_blocks_large_allocation(self) -> None:
         # 16 MB limit — allocating 64 MB array should OOM.
-        s = ProcessSandbox(
-            ProcessSandboxConfig(
-                max_memory_mb=16,
-                max_cpu_seconds=5,
-            )
-        )
+        s = ProcessSandbox(ProcessSandboxConfig(max_memory_mb=16, max_cpu_seconds=5))
         result = s.run("x = b' ' * (64 * 1024 * 1024); print('allocated')")
         # Either exception (MemoryError) or OOM kill.
         assert result.success is False
@@ -193,21 +187,20 @@ class TestApplyRlimits:
     def test_apply_rlimits_sets_as(self) -> None:
         """``_apply_rlimits`` should succeed with positive limits."""
         c = ProcessSandboxConfig(
-            max_memory_mb=128, max_cpu_seconds=5,
-            max_open_files=64, max_processes=32,
+            max_memory_mb=128, max_cpu_seconds=5, max_open_files=64, max_processes=32
         )
         # Should not raise. Use mock to avoid OOM-killing test process.
         from unittest.mock import patch
+
         with patch("src.backend.core.ai_sandbox.sandbox.resource"):
             _apply_rlimits(c)
 
     def test_apply_rlimits_can_be_called_repeatedly(self) -> None:
         """Multiple calls OK (idempotent)."""
         from unittest.mock import MagicMock, patch
+
         mock_resource = MagicMock()
-        with patch(
-            "src.backend.core.ai_sandbox.sandbox.resource", mock_resource
-        ):
+        with patch("src.backend.core.ai_sandbox.sandbox.resource", mock_resource):
             c = ProcessSandboxConfig()
             _apply_rlimits(c)
             _apply_rlimits(c)
@@ -217,13 +210,14 @@ class TestApplyRlimits:
     def test_apply_rlimits_calls_setrlimit(self) -> None:
         """``_apply_rlimits`` should invoke setrlimit с правильными values."""
         from unittest.mock import MagicMock, patch
+
         mock_resource = MagicMock()
-        with patch(
-            "src.backend.core.ai_sandbox.sandbox.resource", mock_resource
-        ):
+        with patch("src.backend.core.ai_sandbox.sandbox.resource", mock_resource):
             c = ProcessSandboxConfig(
-                max_memory_mb=128, max_cpu_seconds=5,
-                max_open_files=64, max_processes=32,
+                max_memory_mb=128,
+                max_cpu_seconds=5,
+                max_open_files=64,
+                max_processes=32,
             )
             _apply_rlimits(c)
         # At least AS, CPU, NOFILE setrlimit calls.
@@ -241,8 +235,13 @@ class TestProcessSandboxResult:
 
     def test_to_dict(self) -> None:
         r = ProcessSandboxResult(
-            success=False, exit_code=1, stdout="out", stderr="err",
-            duration_ms=100.0, error="boom", timed_out=True,
+            success=False,
+            exit_code=1,
+            stdout="out",
+            stderr="err",
+            duration_ms=100.0,
+            error="boom",
+            timed_out=True,
         )
         d = r.to_dict()
         assert d["success"] is False
@@ -258,9 +257,7 @@ class TestSingleton:
         assert s1 is s2
 
     def test_singleton_with_config(self) -> None:
-        s = get_process_sandbox(
-            ProcessSandboxConfig(max_memory_mb=512)
-        )
+        s = get_process_sandbox(ProcessSandboxConfig(max_memory_mb=512))
         assert s.config.max_memory_mb == 512
 
     def test_reset(self) -> None:
@@ -283,16 +280,12 @@ class TestRealisticExample:
     def test_agent_tool_execution(self) -> None:
         """Simulate: AI tool вычисляет сумму в subprocess."""
         sandbox = get_process_sandbox(
-            ProcessSandboxConfig(
-                max_memory_mb=128,
-                max_cpu_seconds=5,
-            )
+            ProcessSandboxConfig(max_memory_mb=128, max_cpu_seconds=5)
         )
 
         # Simulate tool body: compute hash of string.
         result = sandbox.run(
-            "import hashlib; "
-            "print(hashlib.sha256(b'hello world').hexdigest())"
+            "import hashlib; print(hashlib.sha256(b'hello world').hexdigest())"
         )
         assert result.success
         expected = "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"

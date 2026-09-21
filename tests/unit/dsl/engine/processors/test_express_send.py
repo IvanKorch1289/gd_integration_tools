@@ -4,6 +4,7 @@ T3 coverage sprint cycle 7: тесты для ``ExpressSendProcessor.__init__``,
 ``_normalize_btn`` (static helper), ``process()`` (BotxMessage construction +
 send_message call + metrics recording), ``to_spec``.
 """
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -171,17 +172,21 @@ async def test_process_sends_message_and_stores_sync_id() -> None:
     ex, captured = _make_exchange(properties={"group_chat_id": "chat-1"})
 
     fake_client = _FakeClient(sync_id="sync-XYZ")
-    with patch(
-        "src.backend.dsl.engine.processors.express.send.get_express_client",
-        return_value=fake_client,
-    ), patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(
-            BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.send.get_express_client",
+            return_value=fake_client,
         ),
-    ), patch(
-        "src.backend.dsl.engine.processors.express.send.resolve_value",
-        lambda exch, expr: "chat-1",
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(
+                BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+            ),
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.send.resolve_value",
+            lambda exch, expr: "chat-1",
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -201,17 +206,21 @@ async def test_process_sync_flag_passed() -> None:
     ex, _captured = _make_exchange(properties={"group_chat_id": "chat-1"})
 
     fake_client = _FakeClient()
-    with patch(
-        "src.backend.dsl.engine.processors.express.send.get_express_client",
-        return_value=fake_client,
-    ), patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(
-            BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.send.get_express_client",
+            return_value=fake_client,
         ),
-    ), patch(
-        "src.backend.dsl.engine.processors.express.send.resolve_value",
-        lambda exch, expr: "chat-1",
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(
+                BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+            ),
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.send.resolve_value",
+            lambda exch, expr: "chat-1",
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -223,14 +232,17 @@ async def test_process_skips_when_chat_id_missing() -> None:
     proc = ExpressSendProcessor(body="text")
     ex, captured = _make_exchange()
 
-    with patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(
-            BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+    with (
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(
+                BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+            ),
         ),
-    ), patch(
-        "src.backend.dsl.engine.processors.express.send.resolve_value",
-        return_value=None,
+        patch(
+            "src.backend.dsl.engine.processors.express.send.resolve_value",
+            return_value=None,
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -243,14 +255,17 @@ async def test_process_skips_when_text_empty() -> None:
     proc = ExpressSendProcessor(body="placeholder")  # init ok
     ex, captured = _make_exchange(properties={"group_chat_id": "chat-1"})
 
-    with patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(
-            BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+    with (
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(
+                BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+            ),
         ),
-    ), patch(
-        "src.backend.dsl.engine.processors.express.send.resolve_value",
-        lambda exch, expr: "chat-1" if expr == "body.group_chat_id" else None,
+        patch(
+            "src.backend.dsl.engine.processors.express.send.resolve_value",
+            lambda exch, expr: "chat-1" if expr == "body.group_chat_id" else None,
+        ),
     ):
         # Set body=None to force body_from=None path → resolve_value(None) → text empty
         proc._body = None
@@ -266,20 +281,24 @@ async def test_process_uses_body_from_when_body_none() -> None:
     ex, _captured = _make_exchange(properties={"text": "from-exchange"})
 
     fake_client = _FakeClient()
-    with patch(
-        "src.backend.dsl.engine.processors.express.send.get_express_client",
-        return_value=fake_client,
-    ), patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(
-            BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.send.get_express_client",
+            return_value=fake_client,
         ),
-    ), patch(
-        "src.backend.dsl.engine.processors.express.send.resolve_value",
-        lambda exch, expr: {
-            "body.group_chat_id": "chat-1",
-            "properties.text": "from-exchange",
-        }.get(expr),
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(
+                BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+            ),
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.send.resolve_value",
+            lambda exch, expr: {
+                "body.group_chat_id": "chat-1",
+                "properties.text": "from-exchange",
+            }.get(expr),
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -294,17 +313,21 @@ async def test_process_static_body_priority_over_body_from() -> None:
     ex, _captured = _make_exchange(properties={"text": "DYNAMIC"})
 
     fake_client = _FakeClient()
-    with patch(
-        "src.backend.dsl.engine.processors.express.send.get_express_client",
-        return_value=fake_client,
-    ), patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(
-            BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.send.get_express_client",
+            return_value=fake_client,
         ),
-    ), patch(
-        "src.backend.dsl.engine.processors.express.send.resolve_value",
-        lambda exch, expr: "chat-1",
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(
+                BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+            ),
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.send.resolve_value",
+            lambda exch, expr: "chat-1",
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -322,17 +345,21 @@ async def test_process_with_bubble_keyboard_builds_buttons() -> None:
     ex, _captured = _make_exchange(properties={"group_chat_id": "chat-1"})
 
     fake_client = _FakeClient()
-    with patch(
-        "src.backend.dsl.engine.processors.express.send.get_express_client",
-        return_value=fake_client,
-    ), patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(
-            BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.send.get_express_client",
+            return_value=fake_client,
         ),
-    ), patch(
-        "src.backend.dsl.engine.processors.express.send.resolve_value",
-        lambda exch, expr: "chat-1",
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(
+                BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+            ),
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.send.resolve_value",
+            lambda exch, expr: "chat-1",
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -350,17 +377,21 @@ async def test_process_client_none_skips_silently() -> None:
     proc = ExpressSendProcessor(body="text")
     ex, captured = _make_exchange(properties={"group_chat_id": "chat-1"})
 
-    with patch(
-        "src.backend.dsl.engine.processors.express.send.get_express_client",
-        return_value=None,
-    ), patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(
-            BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.send.get_express_client",
+            return_value=None,
         ),
-    ), patch(
-        "src.backend.dsl.engine.processors.express.send.resolve_value",
-        lambda exch, expr: "chat-1",
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(
+                BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+            ),
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.send.resolve_value",
+            lambda exch, expr: "chat-1",
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -380,20 +411,25 @@ async def test_process_exception_records_error() -> None:
     error_client.send_message = AsyncMock(side_effect=RuntimeError("BotX 502"))
 
     # Also stub metrics recording to avoid ProviderError
-    with patch(
-        "src.backend.dsl.engine.processors.express.send.get_express_client",
-        return_value=error_client,
-    ), patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(
-            BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.send.get_express_client",
+            return_value=error_client,
         ),
-    ), patch(
-        "src.backend.core.di.providers.cache.get_record_express_message_sent_provider",
-        side_effect=ImportError("metrics unavailable"),
-    ), patch(
-        "src.backend.dsl.engine.processors.express.send.resolve_value",
-        lambda exch, expr: "chat-1",
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(
+                BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+            ),
+        ),
+        patch(
+            "src.backend.core.di.providers.cache.get_record_express_message_sent_provider",
+            side_effect=ImportError("metrics unavailable"),
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.send.resolve_value",
+            lambda exch, expr: "chat-1",
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -412,20 +448,25 @@ async def test_process_success_records_metrics_ok() -> None:
     def _record_metrics(bot: str, status: str) -> None:
         metrics_calls.append((bot, status))
 
-    with patch(
-        "src.backend.dsl.engine.processors.express.send.get_express_client",
-        return_value=fake_client,
-    ), patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(
-            BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.send.get_express_client",
+            return_value=fake_client,
         ),
-    ), patch(
-        "src.backend.core.di.providers.cache.get_record_express_message_sent_provider",
-        return_value=_record_metrics,
-    ), patch(
-        "src.backend.dsl.engine.processors.express.send.resolve_value",
-        lambda exch, expr: "chat-1",
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(
+                BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+            ),
+        ),
+        patch(
+            "src.backend.core.di.providers.cache.get_record_express_message_sent_provider",
+            return_value=_record_metrics,
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.send.resolve_value",
+            lambda exch, expr: "chat-1",
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -448,20 +489,25 @@ async def test_process_failure_records_metrics_error() -> None:
     def _record_metrics(bot: str, status: str) -> None:
         metrics_calls.append((bot, status))
 
-    with patch(
-        "src.backend.dsl.engine.processors.express.send.get_express_client",
-        return_value=error_client,
-    ), patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(
-            BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.send.get_express_client",
+            return_value=error_client,
         ),
-    ), patch(
-        "src.backend.core.di.providers.cache.get_record_express_message_sent_provider",
-        return_value=_record_metrics,
-    ), patch(
-        "src.backend.dsl.engine.processors.express.send.resolve_value",
-        lambda exch, expr: "chat-1",
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(
+                BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+            ),
+        ),
+        patch(
+            "src.backend.core.di.providers.cache.get_record_express_message_sent_provider",
+            return_value=_record_metrics,
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.send.resolve_value",
+            lambda exch, expr: "chat-1",
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -475,20 +521,25 @@ async def test_process_metrics_provider_missing_does_not_break() -> None:
     ex, captured = _make_exchange(properties={"group_chat_id": "chat-1"})
 
     fake_client = _FakeClient(sync_id="sync-1")
-    with patch(
-        "src.backend.dsl.engine.processors.express.send.get_express_client",
-        return_value=fake_client,
-    ), patch(
-        "src.backend.core.di.providers.cache.get_express_bot_module_provider",
-        return_value=MagicMock(
-            BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.send.get_express_client",
+            return_value=fake_client,
         ),
-    ), patch(
-        "src.backend.core.di.providers.cache.get_record_express_message_sent_provider",
-        side_effect=ImportError("metrics unavailable"),
-    ), patch(
-        "src.backend.dsl.engine.processors.express.send.resolve_value",
-        lambda exch, expr: "chat-1",
+        patch(
+            "src.backend.core.di.providers.cache.get_express_bot_module_provider",
+            return_value=MagicMock(
+                BotxButton=_FakeBotxButton, BotxMessage=_FakeBotxMessage
+            ),
+        ),
+        patch(
+            "src.backend.core.di.providers.cache.get_record_express_message_sent_provider",
+            side_effect=ImportError("metrics unavailable"),
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.send.resolve_value",
+            lambda exch, expr: "chat-1",
+        ),
     ):
         # Should NOT raise — metrics fail is debugged internally
         await proc.process(ex, _ctx())

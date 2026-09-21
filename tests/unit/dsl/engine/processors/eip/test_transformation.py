@@ -4,7 +4,6 @@ Splitter, Normalizer, Sort.
 Паттерн: async tests, _ex fixture, моки для redis / s3 / jmespath.
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -52,7 +51,7 @@ def mock_redis(monkeypatch):
     client.set_if_not_exists = AsyncMock(return_value=True)
     client.get = AsyncMock(return_value=None)
     monkeypatch.setattr(
-        "src.backend.infrastructure.clients.storage.redis.redis_client", client,
+        "src.backend.infrastructure.clients.storage.redis.redis_client", client
     )
     return client
 
@@ -77,12 +76,12 @@ def _allow_claim_check_capability(monkeypatch):
     чтобы auth_check возвращал True. Реальный auth-gate покрыт тестами
     ниже (TestClaimCheckCapabilityGating).
     """
+
     async def _allow(*args, **kwargs):
         return True
 
     monkeypatch.setattr(
-        "src.backend.core.security.connector_auth.check_source_capability",
-        _allow,
+        "src.backend.core.security.connector_auth.check_source_capability", _allow
     )
 
 
@@ -195,9 +194,7 @@ async def test_claim_check_message_round_trip_redis(mock_redis) -> None:
     assert token.startswith("claim:")
 
     # mock: при retrieve вернём сериализованный original.
-    mock_redis.get.return_value = (
-        '{"order_id": 42, "items": [{"sku": "A", "qty": 3}]}'
-    )
+    mock_redis.get.return_value = '{"order_id": 42, "items": [{"sku": "A", "qty": 3}]}'
 
     # 2. retrieve
     ret_proc = ClaimCheckProcessor(mode="retrieve")
@@ -267,8 +264,7 @@ async def test_claim_check_auth_denied_short_circuits(monkeypatch, mock_redis) -
     monkeypatch.setattr(check_source_capability, "__call__", _deny, raising=False)
     # Patch at the call site used by BaseProcessor.auth_check.
     monkeypatch.setattr(
-        "src.backend.core.security.connector_auth.check_source_capability",
-        _deny,
+        "src.backend.core.security.connector_auth.check_source_capability", _deny
     )
 
     proc = ClaimCheckProcessor(mode="store", store="redis")
@@ -282,18 +278,21 @@ async def test_claim_check_auth_denied_short_circuits(monkeypatch, mock_redis) -
 
 
 @pytest.mark.asyncio
-async def test_claim_check_capability_invoked_with_mode(monkeypatch, mock_redis) -> None:
+async def test_claim_check_capability_invoked_with_mode(
+    monkeypatch, mock_redis
+) -> None:
     """auth_check вызывается с action=self._mode (store/retrieve)."""
     captured: dict[str, str] = {}
 
-    async def _capture(capability, *, action="read", principal="anonymous", extra_ctx=None):
+    async def _capture(
+        capability, *, action="read", principal="anonymous", extra_ctx=None
+    ):
         captured["capability"] = capability
         captured["action"] = action
         return True
 
     monkeypatch.setattr(
-        "src.backend.core.security.connector_auth.check_source_capability",
-        _capture,
+        "src.backend.core.security.connector_auth.check_source_capability", _capture
     )
 
     proc = ClaimCheckProcessor(mode="store")
@@ -309,18 +308,19 @@ async def test_claim_check_capability_invoked_with_mode(monkeypatch, mock_redis)
 
 @pytest.mark.asyncio
 async def test_claim_check_capability_uses_tenant_from_exchange(
-    monkeypatch, mock_redis,
+    monkeypatch, mock_redis
 ) -> None:
     """tenant_id из exchange.meta пробрасывается в capability-check context."""
     captured_extra: dict[str, Any] = {}
 
-    async def _capture(capability, *, action="read", principal="anonymous", extra_ctx=None):
+    async def _capture(
+        capability, *, action="read", principal="anonymous", extra_ctx=None
+    ):
         captured_extra.update(extra_ctx or {})
         return True
 
     monkeypatch.setattr(
-        "src.backend.core.security.connector_auth.check_source_capability",
-        _capture,
+        "src.backend.core.security.connector_auth.check_source_capability", _capture
     )
 
     proc = ClaimCheckProcessor(mode="store")

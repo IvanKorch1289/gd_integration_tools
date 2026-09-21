@@ -37,13 +37,13 @@ class TestExecute:
         with patch(
             "src.backend.core.net.migration_helper.make_http_client",
             return_value=MagicMock(
-                __aenter__=AsyncMock(return_value=mock_http), __aexit__=AsyncMock(),
+                __aenter__=AsyncMock(return_value=mock_http), __aexit__=AsyncMock()
             ),
         ):
             result = await client.execute("click", {"x": 1})
         assert result == {"ok": True}
         mock_http.post.assert_awaited_once_with(
-            "http://w/rpa/click", json={"x": 1}, headers={"X-API-Key": "k"},
+            "http://w/rpa/click", json={"x": 1}, headers={"X-API-Key": "k"}
         )
 
     async def test_unsupported_action(self) -> None:
@@ -57,13 +57,16 @@ class TestExecute:
         client = DesktopRpaClient("http://w")
         mock_http = AsyncMock()
         mock_http.post = AsyncMock(side_effect=httpx.HTTPError("net"))
-        with patch(
-            "src.backend.core.net.migration_helper.make_http_client",
-            return_value=MagicMock(
-                __aenter__=AsyncMock(return_value=mock_http),
-                __aexit__=AsyncMock(return_value=None),
+        with (
+            patch(
+                "src.backend.core.net.migration_helper.make_http_client",
+                return_value=MagicMock(
+                    __aenter__=AsyncMock(return_value=mock_http),
+                    __aexit__=AsyncMock(return_value=None),
+                ),
             ),
-        ), pytest.raises(DesktopRpaError, match="transport error"):
+            pytest.raises(DesktopRpaError, match="transport error"),
+        ):
             await client.execute("click", {})
 
     async def test_503(self) -> None:
@@ -72,12 +75,15 @@ class TestExecute:
         mock_resp.status_code = 503
         mock_http = AsyncMock()
         mock_http.post = AsyncMock(return_value=mock_resp)
-        with patch(
-            "src.backend.core.net.migration_helper.make_http_client",
-            return_value=MagicMock(
-                __aenter__=AsyncMock(return_value=mock_http), __aexit__=AsyncMock(),
+        with (
+            patch(
+                "src.backend.core.net.migration_helper.make_http_client",
+                return_value=MagicMock(
+                    __aenter__=AsyncMock(return_value=mock_http), __aexit__=AsyncMock()
+                ),
             ),
-        ), pytest.raises(DesktopRpaError, match="503"):
+            pytest.raises(DesktopRpaError, match="503"),
+        ):
             await client.execute("click", {})
 
     async def test_400(self) -> None:
@@ -87,12 +93,15 @@ class TestExecute:
         mock_resp.text = "bad request"
         mock_http = AsyncMock()
         mock_http.post = AsyncMock(return_value=mock_resp)
-        with patch(
-            "src.backend.core.net.migration_helper.make_http_client",
-            return_value=MagicMock(
-                __aenter__=AsyncMock(return_value=mock_http), __aexit__=AsyncMock(),
+        with (
+            patch(
+                "src.backend.core.net.migration_helper.make_http_client",
+                return_value=MagicMock(
+                    __aenter__=AsyncMock(return_value=mock_http), __aexit__=AsyncMock()
+                ),
             ),
-        ), pytest.raises(DesktopRpaError, match="400"):
+            pytest.raises(DesktopRpaError, match="400"),
+        ):
             await client.execute("click", {})
 
     async def test_no_api_key(self) -> None:
@@ -105,7 +114,7 @@ class TestExecute:
         with patch(
             "src.backend.core.net.migration_helper.make_http_client",
             return_value=MagicMock(
-                __aenter__=AsyncMock(return_value=mock_http), __aexit__=AsyncMock(),
+                __aenter__=AsyncMock(return_value=mock_http), __aexit__=AsyncMock()
             ),
         ):
             await client.execute("type", {"text": "hi"})

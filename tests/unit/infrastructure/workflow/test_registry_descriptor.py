@@ -83,9 +83,7 @@ def _stub_import_chain() -> Iterable[None]:
     """
     with pytest.MonkeyPatch.context() as mp:
         mp.setitem(
-            sys.modules,
-            "src.backend.core.utils.metrics_registry",
-            _make_metrics_stub(),
+            sys.modules, "src.backend.core.utils.metrics_registry", _make_metrics_stub()
         )
         # Stub-пакет infrastructure.workflow: Python при импорте submodule
         # registry выполняет __init__.py — заменяем на пустышку.
@@ -118,17 +116,11 @@ def _import_registry() -> tuple[type, type, object]:
     while not (project_root / "src").exists():
         project_root = project_root.parent
     registry_path = (
-        project_root
-        / "src"
-        / "backend"
-        / "infrastructure"
-        / "workflow"
-        / "registry.py"
+        project_root / "src" / "backend" / "infrastructure" / "workflow" / "registry.py"
     )
 
     spec = importlib.util.spec_from_file_location(
-        "_workflow_registry_isolated",
-        registry_path,
+        "_workflow_registry_isolated", registry_path
     )
     if spec is None or spec.loader is None:
         msg = f"Cannot load registry module from {registry_path}"
@@ -204,7 +196,9 @@ class TestWorkflowRegistryRegister:
         d = WorkflowDescriptor(name="orders.skb_flow")
         self.registry.register(d, route_id="workflow:orders.skb_flow")
         assert self.registry.get("orders.skb_flow") is d
-        assert self.registry.get_route_id("orders.skb_flow") == "workflow:orders.skb_flow"
+        assert (
+            self.registry.get_route_id("orders.skb_flow") == "workflow:orders.skb_flow"
+        )
 
     def test_register_empty_name_raises_value_error(self) -> None:
         """``descriptor.name=''`` → ValueError (name validation)."""
@@ -322,8 +316,7 @@ class TestWorkflowRegistryLookup:
         # Регистрируем 3 descriptor'а в неупорядоченном порядке.
         for name in ["Charlie", "Alpha", "Bravo"]:
             self.registry.register(
-                WorkflowDescriptor(name=name),
-                route_id=f"route:{name}",
+                WorkflowDescriptor(name=name), route_id=f"route:{name}"
             )
 
     def test_get_returns_descriptor(self) -> None:
@@ -374,10 +367,7 @@ class TestWorkflowRegistryClear:
         WorkflowDescriptor, WorkflowRegistry, _ = _import_registry()
         self.registry = WorkflowRegistry()
         for name in ["A", "B", "C"]:
-            self.registry.register(
-                WorkflowDescriptor(name=name),
-                route_id=f"r:{name}",
-            )
+            self.registry.register(WorkflowDescriptor(name=name), route_id=f"r:{name}")
 
     def test_clear_removes_all(self) -> None:
         """``clear()`` очищает ``_descriptors``/``_route_ids``/``_specs``."""
@@ -408,8 +398,7 @@ class TestWorkflowRegistryThreadSafety:
         def register_one(i: int) -> None:
             try:
                 registry.register(
-                    WorkflowDescriptor(name=f"w_{i}"),
-                    route_id=f"route_{i}",
+                    WorkflowDescriptor(name=f"w_{i}"), route_id=f"route_{i}"
                 )
             except Exception as exc:  # noqa: BLE001 — safety net
                 errors.append(exc)

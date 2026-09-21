@@ -153,9 +153,10 @@ def guard() -> None:
         violations = check_file(path)
         # Ровно одно нарушение — на строке с legacy except (line 8).
         code_violations = [
-            v for v in violations
+            v
+            for v in violations
             if v.line >= 6  # исключаем docstring (line 1), который
-                            # случайно может триггернуть regex
+            # случайно может триггернуть regex
         ]
         assert len(code_violations) == 1, (
             f"Expected 1 violation via SyntaxError-fallback, got {violations}"

@@ -10,8 +10,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 
 class TestSearchBridgeMoved:
     """search_bridge → infrastructure/di_bridge/search.py."""
@@ -20,8 +18,7 @@ class TestSearchBridgeMoved:
         """`src/backend/infrastructure/di_bridge/search.py` exists."""
         new_path = Path("src/backend/infrastructure/di_bridge/search.py")
         assert new_path.exists(), (
-            f"Search bridge должен быть moved to {new_path} "
-            f"(S41 W1 Item 6)"
+            f"Search bridge должен быть moved to {new_path} (S41 W1 Item 6)"
         )
 
     def test_old_location_removed(self) -> None:
@@ -34,20 +31,12 @@ class TestSearchBridgeMoved:
         text = Path(
             "src/backend/core/di/providers/infrastructure_locator.py"
         ).read_text(encoding="utf-8")
-        assert (
-            "from src.backend.infrastructure.di_bridge.search import"
-            in text
-        )
-        assert (
-            "from src.backend.core.di.providers.search_bridge"
-            not in text
-        )
+        assert "from src.backend.infrastructure.di_bridge.search import" in text
+        assert "from src.backend.core.di.providers.search_bridge" not in text
 
     def test_search_bridge_entries_removed(self) -> None:
         """2 search_bridge entries removed from allowlist."""
-        text = Path("tools/check_layers_allowlist.txt").read_text(
-            encoding="utf-8"
-        )
+        text = Path("tools/check_layers_allowlist.txt").read_text(encoding="utf-8")
         for line in text.splitlines():
             if line.startswith("#") or not line.strip():
                 continue
@@ -73,20 +62,12 @@ class TestHealthBridgeMoved:
         text = Path(
             "src/backend/core/di/providers/infrastructure_locator.py"
         ).read_text(encoding="utf-8")
-        assert (
-            "from src.backend.infrastructure.di_bridge.health import"
-            in text
-        )
-        assert (
-            "from src.backend.core.di.providers.health_bridge"
-            not in text
-        )
+        assert "from src.backend.infrastructure.di_bridge.health import" in text
+        assert "from src.backend.core.di.providers.health_bridge" not in text
 
     def test_health_bridge_entries_removed(self) -> None:
         """3 health_bridge entries removed from allowlist."""
-        text = Path("tools/check_layers_allowlist.txt").read_text(
-            encoding="utf-8"
-        )
+        text = Path("tools/check_layers_allowlist.txt").read_text(encoding="utf-8")
         for line in text.splitlines():
             if line.startswith("#") or not line.strip():
                 continue

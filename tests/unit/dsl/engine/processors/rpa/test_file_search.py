@@ -3,6 +3,7 @@
 Поиск подстроки/regex в файлах с фильтром по path glob.
 Pattern (D272, Ponytail): thin wrapper.
 """
+
 from __future__ import annotations
 
 import tempfile
@@ -14,6 +15,7 @@ class TestFileSearchProcessor:
         from src.backend.dsl.engine.processors.rpa.file_search import (
             FileSearchProcessor,
         )
+
         proc = FileSearchProcessor(path_pattern="**/*.py", pattern="import")
         assert proc.path_pattern == "**/*.py"
         assert proc.pattern == "import"
@@ -23,6 +25,7 @@ class TestFileSearchProcessor:
         from src.backend.dsl.engine.processors.rpa.file_search import (
             FileSearchProcessor,
         )
+
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             (tmp_path / "a.py").write_text("import os\nimport sys\n")
@@ -37,6 +40,7 @@ class TestFileSearchProcessor:
         from src.backend.dsl.engine.processors.rpa.file_search import (
             FileSearchProcessor,
         )
+
         with tempfile.TemporaryDirectory() as tmp:
             (Path(tmp) / "test.py").write_text("foo = 42\nbar = 100\n")
             proc = FileSearchProcessor(path_pattern="**/*.py", pattern=r"\b\w+ = \d+\b")

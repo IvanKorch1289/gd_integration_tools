@@ -9,7 +9,6 @@ isolation bypass (banking context critical, cross-tenant data leak).
 ADR-045 §opens).
 """
 
-
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
@@ -27,7 +26,9 @@ def _make_client(namespace: str = "tenant-a") -> MagicMock:
     client = MagicMock()
     client.namespace = namespace
     client.start_workflow = AsyncMock(
-        return_value=MagicMock(result_run_id="run-123", first_execution_run_id="run-456"),
+        return_value=MagicMock(
+            result_run_id="run-123", first_execution_run_id="run-456"
+        )
     )
     return client
 

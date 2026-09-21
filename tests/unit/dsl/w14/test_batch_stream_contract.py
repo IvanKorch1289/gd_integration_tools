@@ -12,7 +12,6 @@ Note: ``BatchCapable`` Protocol (W14.2 opt-in) был удалён как YAGNI 
 или явная проверка ``exchange.in_message.data_kind``).
 """
 
-
 from __future__ import annotations
 
 from typing import Any

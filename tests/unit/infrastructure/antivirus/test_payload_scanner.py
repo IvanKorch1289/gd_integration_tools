@@ -1,6 +1,5 @@
 """Тесты ClamAVPayloadScanner (Sprint 16 Wave 6, B-3 finale)."""
 
-
 from __future__ import annotations
 
 import pytest
@@ -17,7 +16,7 @@ class _CleanBackend(AntivirusBackend):
 
     async def scan_bytes(self, payload: bytes) -> AntivirusScanResult:
         return AntivirusScanResult(
-            clean=True, signature=None, backend=self.name, latency_ms=1.0,
+            clean=True, signature=None, backend=self.name, latency_ms=1.0
         )
 
 

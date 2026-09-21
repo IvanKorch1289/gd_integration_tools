@@ -212,7 +212,10 @@ def test_cluster_mode_and_sentinel_mode_mutually_exclusive() -> None:
             sentinel_nodes=["sentinel-0:26379"],
             sentinel_service_name="gd-mobile-redis",
         )
-    assert "взаимоисключающ" in str(exc_info.value).lower() or "mutually" in str(exc_info.value).lower()
+    assert (
+        "взаимоисключающ" in str(exc_info.value).lower()
+        or "mutually" in str(exc_info.value).lower()
+    )
 
 
 # ── Production-ready configuration example ─────────────────────────

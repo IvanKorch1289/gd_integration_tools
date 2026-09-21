@@ -20,7 +20,6 @@
   production нужны SecretRef-маркеры (см. W28 секрет-note в audit.md).
 """
 
-
 from __future__ import annotations
 
 import pytest
@@ -156,7 +155,7 @@ def test_w30_rpa_pipeline_full_chain() -> None:
 def test_shell_allowed_commands_emitted_sorted() -> None:
     """``shell.allowed_commands`` хранится как set — to_spec отдаёт sorted list."""
     builder = RouteBuilder.from_("rt.shell", source="test:rt").shell(
-        command="ls", allowed_commands=["wc", "cat", "ls"],
+        command="ls", allowed_commands=["wc", "cat", "ls"]
     )
     spec = builder.build().to_dict()
     proc = spec["processors"][0]
@@ -173,7 +172,7 @@ def test_pdf_merge_no_args() -> None:
 def test_image_resize_format_uppercased() -> None:
     """``image_resize`` нормализует output_format к UPPERCASE."""
     builder = RouteBuilder.from_("rt.img", source="test:rt").image_resize(
-        width=100, output_format="jpeg",
+        width=100, output_format="jpeg"
     )
     spec = builder.build().to_dict()
     proc = spec["processors"][0]

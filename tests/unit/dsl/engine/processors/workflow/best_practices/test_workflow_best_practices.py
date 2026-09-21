@@ -1,4 +1,5 @@
 """TDD: WorkflowContinueAsNewProcessor + WorkflowClaimCheckProcessor."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
@@ -14,12 +15,12 @@ def _allow_workflow_capability(monkeypatch):
     чтобы auth_check возвращал True. Реальный auth-gate покрыт тестами
     ниже (TestWorkflowCapabilityGating).
     """
+
     async def _allow(*args, **kwargs):
         return True
 
     monkeypatch.setattr(
-        "src.backend.core.security.connector_auth.check_source_capability",
-        _allow,
+        "src.backend.core.security.connector_auth.check_source_capability", _allow
     )
 
 
@@ -28,9 +29,8 @@ class TestWorkflowContinueAsNewProcessor:
         from src.backend.dsl.engine.processors.workflow.best_practices.continue_as_new import (
             WorkflowContinueAsNewProcessor,
         )
-        p = WorkflowContinueAsNewProcessor(
-            same_workflow_id=True, same_input=True,
-        )
+
+        p = WorkflowContinueAsNewProcessor(same_workflow_id=True, same_input=True)
         assert p.same_workflow_id is True
 
     @pytest.mark.asyncio
@@ -38,6 +38,7 @@ class TestWorkflowContinueAsNewProcessor:
         from src.backend.dsl.engine.processors.workflow.best_practices.continue_as_new import (
             WorkflowContinueAsNewProcessor,
         )
+
         p = WorkflowContinueAsNewProcessor(same_workflow_id=True)
         ex = MagicMock()
         ex.in_message = MagicMock()
@@ -56,6 +57,7 @@ class TestWorkflowClaimCheckProcessor:
         from src.backend.dsl.engine.processors.workflow.best_practices.claim_check import (
             WorkflowClaimCheckProcessor,
         )
+
         p = WorkflowClaimCheckProcessor(
             source_property="body.payload",
             max_size_bytes=100,
@@ -87,7 +89,7 @@ class TestWorkflowClaimCheckProcessor:
         import types
 
         fake_module = types.ModuleType(
-            "src.backend.infrastructure.clients.storage.s3_pool",
+            "src.backend.infrastructure.clients.storage.s3_pool"
         )
         fake_module.get_s3_client = _fake_get_s3_client
         import sys
@@ -122,7 +124,7 @@ class TestWorkflowClaimCheckRedisBackend:
         import types
 
         fake_module = types.ModuleType(
-            "src.backend.infrastructure.clients.storage.redis",
+            "src.backend.infrastructure.clients.storage.redis"
         )
         fake_module.redis_client = fake_client
         monkeypatch.setitem(sys.modules, fake_module.__name__, fake_module)
@@ -185,10 +187,7 @@ class TestWorkflowClaimCheckRedisBackend:
 
         self._install_redis_fake(monkeypatch, _FakeRedisClient())
 
-        p = WorkflowClaimCheckProcessor(
-            storage_backend="redis",
-            ttl_seconds=300,
-        )
+        p = WorkflowClaimCheckProcessor(storage_backend="redis", ttl_seconds=300)
         await p._store_redis("k1", b"payload-bytes")
         loaded = await p.load_payload("k1")
         assert loaded == b"payload-bytes"
@@ -222,7 +221,7 @@ class TestWorkflowClaimCheckS3Backend:
             return fake_client_factory()
 
         fake_module = types.ModuleType(
-            "src.backend.infrastructure.clients.storage.s3_pool",
+            "src.backend.infrastructure.clients.storage.s3_pool"
         )
         fake_module.get_s3_client = _factory
         monkeypatch.setitem(sys.modules, fake_module.__name__, fake_module)
@@ -312,18 +311,18 @@ class TestWorkflowCapabilityGating:
         from src.backend.dsl.engine.processors.workflow.best_practices.claim_check import (
             WorkflowClaimCheckProcessor,
         )
+
         assert (
             WorkflowClaimCheckProcessor.required_capability
             == "workflow.claim_check.store"
         )
-        assert (
-            WorkflowClaimCheckProcessor.audit_event == "workflow.claim_check.stored"
-        )
+        assert WorkflowClaimCheckProcessor.audit_event == "workflow.claim_check.stored"
 
     def test_workflow_continue_as_new_class_declares_required_capability(self) -> None:
         from src.backend.dsl.engine.processors.workflow.best_practices.continue_as_new import (
             WorkflowContinueAsNewProcessor,
         )
+
         assert (
             WorkflowContinueAsNewProcessor.required_capability
             == "workflow.continue_as_new.request"
@@ -335,15 +334,15 @@ class TestWorkflowCapabilityGating:
 
     @pytest.mark.asyncio
     async def test_workflow_claim_check_auth_denied_skips_storage(
-        self, monkeypatch,
+        self, monkeypatch
     ) -> None:
         """Denied capability → process() возвращается без payload token."""
+
         async def _deny(*args, **kwargs):
             return False
 
         monkeypatch.setattr(
-            "src.backend.core.security.connector_auth.check_source_capability",
-            _deny,
+            "src.backend.core.security.connector_auth.check_source_capability", _deny
         )
 
         from src.backend.dsl.engine.processors.workflow.best_practices.claim_check import (

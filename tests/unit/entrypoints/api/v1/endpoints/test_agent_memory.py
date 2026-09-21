@@ -102,10 +102,7 @@ async def test_service_tenant_a_cannot_read_tenant_b_session() -> None:
     service = AgentMemoryService(client_factory=mongo.factory)
 
     await service.add_message(
-        "shared",
-        role="user",
-        content="tenant-b-secret",
-        tenant_id="tenant_b",
+        "shared", role="user", content="tenant-b-secret", tenant_id="tenant_b"
     )
 
     assert await service.get_conversation("shared", tenant_id="tenant_a") == []
@@ -152,9 +149,7 @@ def test_rest_tenant_a_cannot_read_tenant_b_session(
     assert [item["content"] for item in tenant_b.json()["items"]] == ["tenant-b-secret"]
 
 
-def test_rest_missing_tenant_header_rejected(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_rest_missing_tenant_header_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
     """POST без X-Tenant-ID → 403 (cycle-8/D-AUDIT-807: fail-CLOSED)."""
     mongo = _FakeMongoClient()
     service = AgentMemoryService(client_factory=mongo.factory)

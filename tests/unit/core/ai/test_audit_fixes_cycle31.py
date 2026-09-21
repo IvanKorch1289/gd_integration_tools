@@ -101,7 +101,9 @@ class TestInProcessAgentSandboxAudit:
     ``event_type=`` / ``payload=`` kwargs that raised TypeError silently.
     """
 
-    def test_construction_emits_audit_event(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_construction_emits_audit_event(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """InProcessAgentSandbox construction should emit audit event."""
         # Ensure NOT in production mode
         monkeypatch.delenv("GD_INTEGRATION_PRODUCTION", raising=False)
@@ -110,6 +112,7 @@ class TestInProcessAgentSandboxAudit:
         captured: list[dict] = []
         real_emit = None
         import src.backend.core.audit.facade as facade_mod
+
         real_emit = getattr(facade_mod, "emit_audit_safe", None)
 
         def spy_emit(*args: object, **kwargs: object) -> None:
@@ -126,9 +129,7 @@ class TestInProcessAgentSandboxAudit:
         from src.backend.core.config.features import feature_flags
 
         original_flag = feature_flags.ai_in_process_sandbox_disabled
-        monkeypatch.setattr(
-            feature_flags, "ai_in_process_sandbox_disabled", False,
-        )
+        monkeypatch.setattr(feature_flags, "ai_in_process_sandbox_disabled", False)
 
         import warnings
 
@@ -145,8 +146,7 @@ class TestInProcessAgentSandboxAudit:
         # At least one audit event should have been emitted with CORRECT signature
         assert captured, "No audit events captured"
         zero_isolation_events = [
-            kw for kw in captured
-            if "zero_isolation" in str(kw.get("event", ""))
+            kw for kw in captured if "zero_isolation" in str(kw.get("event", ""))
         ]
         assert zero_isolation_events, (
             f"Expected zero_isolation audit event, got: {captured}"
@@ -184,7 +184,7 @@ class TestSkillRegistryWhitelistDelegation:
         from src.backend.core.ai.skill_registry import SkillRegistry
 
         SkillRegistry._validate_module_whitelist(
-            "extensions.credit.fn", ["extensions.credit.fn"], "skill1",
+            "extensions.credit.fn", ["extensions.credit.fn"], "skill1"
         )  # should not raise
 
     def test_prefix_glob_allowed(self) -> None:
@@ -192,7 +192,7 @@ class TestSkillRegistryWhitelistDelegation:
         from src.backend.core.ai.skill_registry import SkillRegistry
 
         SkillRegistry._validate_module_whitelist(
-            "extensions.credit.fn", ["extensions.credit.*"], "skill1",
+            "extensions.credit.fn", ["extensions.credit.*"], "skill1"
         )  # should not raise
 
     def test_module_not_in_whitelist_raises(self) -> None:
@@ -201,7 +201,7 @@ class TestSkillRegistryWhitelistDelegation:
 
         with pytest.raises(PermissionError, match="not in whitelist"):
             SkillRegistry._validate_module_whitelist(
-                "extensions.osint.fn", ["extensions.credit.*"], "skill1",
+                "extensions.osint.fn", ["extensions.credit.*"], "skill1"
             )
 
     def test_uses_shared_utilility(self) -> None:
@@ -334,7 +334,7 @@ class TestInProcessAgentSandboxFeatureFlag:
                 InProcessAgentSandbox()
 
     def test_construction_blocked_via_feature_flag_override(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Even when operator sets flag to False, the env gate still blocks
         in production mode. Need both flag=True AND env=False to allow.

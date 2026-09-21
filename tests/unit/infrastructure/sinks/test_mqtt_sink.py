@@ -1,6 +1,5 @@
 """Sprint 3 — unit-тесты MqttSink (V16.1 P1)."""
 
-
 from __future__ import annotations
 
 import sys
@@ -30,7 +29,7 @@ class _FakeMqttClient:
         return None
 
     async def publish(
-        self, topic: str, payload: Any, qos: int = 0, retain: bool = False,
+        self, topic: str, payload: Any, qos: int = 0, retain: bool = False
     ) -> None:
         type(self).last_publish = (topic, payload, qos, retain)
 
@@ -75,7 +74,7 @@ async def test_send_dict_serializes_via_orjson(fake_aiomqtt: types.ModuleType) -
 @pytest.mark.asyncio
 async def test_send_bytes_passthrough(fake_aiomqtt: types.ModuleType) -> None:
     sink = MqttSink(
-        sink_id="m2", broker_host="broker.local", topic="gd/raw", retain=True,
+        sink_id="m2", broker_host="broker.local", topic="gd/raw", retain=True
     )
     with patched_auth_allow():
         await sink.send(b"raw-bytes")
@@ -161,7 +160,7 @@ def test_factory_builds_mqtt_sink() -> None:
             "broker_port": 1883,
             "topic": "gd/alerts",
             "qos": 1,
-        },
+        }
     )
     assert isinstance(sink, MqttSink)
     assert sink.sink_id == "alerts.mqtt"

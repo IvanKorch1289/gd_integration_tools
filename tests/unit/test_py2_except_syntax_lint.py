@@ -32,7 +32,7 @@ def _scan_for_py2_except(path: Path) -> list[tuple[int, str]]:
     """
     try:
         text = path.read_text(encoding="utf-8")
-    except (UnicodeDecodeError, OSError):
+    except UnicodeDecodeError, OSError:
         return []
     try:
         tree = ast.parse(text)
@@ -86,7 +86,7 @@ def test_no_py2_except_syntax_in_src_backend() -> None:
 
     if offenders:
         msg_lines = [
-            "Py2 except syntax (except X, Y:) found — semantically broken in Py3.14:",
+            "Py2 except syntax (except X, Y:) found — semantically broken in Py3.14:"
         ]
         for path, line_no, line in offenders[:20]:
             rel = path.relative_to(REPO_ROOT)
@@ -94,8 +94,7 @@ def test_no_py2_except_syntax_in_src_backend() -> None:
         if len(offenders) > 20:
             msg_lines.append(f"  ... and {len(offenders) - 20} more")
         msg_lines.append(
-            "\nFix: change `except X, Y:` to `except (X, Y):` "
-            "(Python 3 tuple form)."
+            "\nFix: change `except X, Y:` to `except (X, Y):` (Python 3 tuple form)."
         )
         pytest.fail("\n".join(msg_lines))
 
@@ -111,9 +110,7 @@ def test_no_py2_except_syntax_in_tests() -> None:
         for line_no, line in _scan_for_py2_except(path):
             offenders.append((path, line_no, line))
     if offenders:
-        msg_lines = [
-            "Py2 except syntax in tests/ — same fix:",
-        ]
+        msg_lines = ["Py2 except syntax in tests/ — same fix:"]
         for path, line_no, line in offenders[:20]:
             rel = path.relative_to(REPO_ROOT)
             msg_lines.append(f"  {rel}:{line_no}: {line}")

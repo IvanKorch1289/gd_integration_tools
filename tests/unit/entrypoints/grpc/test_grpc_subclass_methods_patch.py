@@ -98,8 +98,13 @@ class TestOrderSubclassMethodsPatched:
 
         # Все 7 OrderGRPCServicer methods (sync) — patch works
         for method_name in [
-            "CreateOrder", "GetOrderResult", "GetOrder", "DeleteOrder",
-            "CreateSKBOrder", "GetFileAndJson", "SendOrderData",
+            "CreateOrder",
+            "GetOrderResult",
+            "GetOrder",
+            "DeleteOrder",
+            "CreateSKBOrder",
+            "GetFileAndJson",
+            "SendOrderData",
         ]:
             method = getattr(OrderGRPCServicer, method_name, None)
             assert method is not None, f"{method_name} missing from OrderGRPCServicer"

@@ -15,7 +15,9 @@ import pytest
 from src.backend.infrastructure.cdc.poll_backend import PollCDCBackend
 
 
-async def _collect_events(backend: PollCDCBackend, tables: list[str], max_events: int) -> list:
+async def _collect_events(
+    backend: PollCDCBackend, tables: list[str], max_events: int
+) -> list:
     """Collect up to max_events from backend, then stop."""
     events = []
     try:
@@ -52,15 +54,11 @@ async def test_poll_backend_with_sql_executor_yields_events() -> None:
         return []
 
     backend = PollCDCBackend(
-        profile="test_profile",
-        interval_s=0,
-        table="users",
-        sql_executor=fake_executor,
+        profile="test_profile", interval_s=0, table="users", sql_executor=fake_executor
     )
 
     events = await asyncio.wait_for(
-        _collect_events(backend, tables=["users"], max_events=2),
-        timeout=2.0,
+        _collect_events(backend, tables=["users"], max_events=2), timeout=2.0
     )
 
     assert len(events) == 2
@@ -88,15 +86,11 @@ async def test_poll_backend_advances_cursor() -> None:
         return []
 
     backend = PollCDCBackend(
-        profile="test",
-        interval_s=0,
-        table="t",
-        sql_executor=fake_executor,
+        profile="test", interval_s=0, table="t", sql_executor=fake_executor
     )
 
     events = await asyncio.wait_for(
-        _collect_events(backend, tables=["t"], max_events=2),
-        timeout=2.0,
+        _collect_events(backend, tables=["t"], max_events=2), timeout=2.0
     )
 
     # Find event with id=2 и check its cursor
@@ -119,15 +113,11 @@ async def test_poll_backend_executor_error_returns_empty() -> None:
         return [{"id": 99, "updated_at": "2026-08-19T10:02:00Z"}]
 
     backend = PollCDCBackend(
-        profile="test",
-        interval_s=0,
-        table="t",
-        sql_executor=failing_executor,
+        profile="test", interval_s=0, table="t", sql_executor=failing_executor
     )
 
     events = await asyncio.wait_for(
-        _collect_events(backend, tables=["t"], max_events=1),
-        timeout=2.0,
+        _collect_events(backend, tables=["t"], max_events=1), timeout=2.0
     )
 
     # First call failed (handled gracefully), second returned 1 row

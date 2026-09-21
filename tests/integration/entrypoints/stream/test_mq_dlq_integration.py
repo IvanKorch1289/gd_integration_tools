@@ -67,13 +67,13 @@ def integration_fixture() -> Any:
         mock_settings.queue.get_queue_name.return_value = "dsl-actions"
         with (
             patch(
-                "src.backend.services.execution.invoker._deserialize_request",
+                "src.backend.services.execution.invoker._deserialize_request"
             ) as mock_deser,
             patch(
-                "src.backend.services.execution.invoker.get_invoker",
+                "src.backend.services.execution.invoker.get_invoker"
             ) as mock_get_invoker,
             patch(
-                "src.backend.entrypoints.stream.subscribers.action_handler_registry",
+                "src.backend.entrypoints.stream.subscribers.action_handler_registry"
             ) as mock_registry,
         ):
             import src.backend.entrypoints.stream.invoker_subscribers as invoker_mod
@@ -103,9 +103,11 @@ class TestSubscribersFanoutDLQIntegration:
 
     @pytest.mark.asyncio
     async def test_redis_invalid_body_writes_to_both_writers(
-        self, integration_fixture: Any,
+        self, integration_fixture: Any
     ) -> None:
-        redis_handler = integration_fixture["subscribers_module"].handle_universal_redis_action
+        redis_handler = integration_fixture[
+            "subscribers_module"
+        ].handle_universal_redis_action
         registry = integration_fixture["registry"]
         registry.dispatch = AsyncMock()
 
@@ -123,9 +125,11 @@ class TestSubscribersFanoutDLQIntegration:
 
     @pytest.mark.asyncio
     async def test_rabbit_dispatch_exception_writes_to_both_writers(
-        self, integration_fixture: Any,
+        self, integration_fixture: Any
     ) -> None:
-        rabbit_handler = integration_fixture["subscribers_module"].handle_universal_rabbit_action
+        rabbit_handler = integration_fixture[
+            "subscribers_module"
+        ].handle_universal_rabbit_action
         registry = integration_fixture["registry"]
         registry.dispatch = AsyncMock(side_effect=ValueError("dispatch failed"))
 
@@ -147,7 +151,7 @@ class TestInvokerSubscribersFanoutDLQIntegration:
 
     @pytest.mark.asyncio
     async def test_redis_invalid_body_writes_to_both_writers(
-        self, integration_fixture: Any,
+        self, integration_fixture: Any
     ) -> None:
         handler = integration_fixture["invoker_module"].handle_redis_invocation
         integration_fixture["deserialize"].side_effect = ValueError("bad body")
@@ -166,7 +170,7 @@ class TestInvokerSubscribersFanoutDLQIntegration:
 
     @pytest.mark.asyncio
     async def test_rabbit_invoker_raises_writes_to_both_writers(
-        self, integration_fixture: Any,
+        self, integration_fixture: Any
     ) -> None:
         handler = integration_fixture["invoker_module"].handle_rabbit_invocation
         fake_request = MagicMock()
@@ -199,10 +203,10 @@ class TestEnvelopeStructureIntegration:
     """cycle-5/D-AUDIT-504: structure envelope соответствует :class:`DLQEnvelope`."""
 
     @pytest.mark.asyncio
-    async def test_envelope_has_required_fields(
-        self, integration_fixture: Any,
-    ) -> None:
-        redis_handler = integration_fixture["subscribers_module"].handle_universal_redis_action
+    async def test_envelope_has_required_fields(self, integration_fixture: Any) -> None:
+        redis_handler = integration_fixture[
+            "subscribers_module"
+        ].handle_universal_redis_action
         registry = integration_fixture["registry"]
         registry.dispatch = AsyncMock(side_effect=RuntimeError("dispatch boom"))
 

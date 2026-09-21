@@ -42,8 +42,13 @@ def _install_protobuf_stubs() -> None:
                 return None
 
             _order_methods = (
-                "CreateOrder", "GetOrderResult", "GetOrder", "DeleteOrder",
-                "CreateSKBOrder", "GetFileAndJson", "SendOrderData",
+                "CreateOrder",
+                "GetOrderResult",
+                "GetOrder",
+                "DeleteOrder",
+                "CreateSKBOrder",
+                "GetFileAndJson",
+                "SendOrderData",
             )
 
             # PB2 messages (used by add_*_to_server imports в grpc_server).
@@ -67,9 +72,7 @@ def _install_protobuf_stubs() -> None:
                     {m: _stub_method for m in _order_methods},
                 )
                 mod.OrderServiceStub = type(
-                    "OrderServiceStub",
-                    (),
-                    {m: _stub_method for m in _order_methods},
+                    "OrderServiceStub", (), {m: _stub_method for m in _order_methods}
                 )
 
             # add_*_to_server functions (callable import).
@@ -190,17 +193,19 @@ def test_order_service_servicer_methods_have_streaming_attrs(
     from src.backend.entrypoints.grpc.protobuf import orders_pb2_grpc
 
     order_methods = (
-        "CreateOrder", "GetOrderResult", "GetOrder", "DeleteOrder",
-        "CreateSKBOrder", "GetFileAndJson", "SendOrderData",
+        "CreateOrder",
+        "GetOrderResult",
+        "GetOrder",
+        "DeleteOrder",
+        "CreateSKBOrder",
+        "GetFileAndJson",
+        "SendOrderData",
     )
     for method_name in order_methods:
         method = getattr(orders_pb2_grpc.OrderServiceServicer, method_name)
-        assert method is not None, (
-            f"OrderServiceServicer.{method_name} missing"
-        )
+        assert method is not None, f"OrderServiceServicer.{method_name} missing"
         assert getattr(method, "request_streaming", "MISSING") is False, (
-            f"OrderServiceServicer.{method_name}.request_streaming "
-            "not patched to False"
+            f"OrderServiceServicer.{method_name}.request_streaming not patched to False"
         )
         assert getattr(method, "response_streaming", "MISSING") is False, (
             f"OrderServiceServicer.{method_name}.response_streaming "
@@ -209,9 +214,7 @@ def test_order_service_servicer_methods_have_streaming_attrs(
 
 
 @pytest.mark.unit
-def test_order_service_stub_methods_have_streaming_attrs(
-    grpc_server_module,
-) -> None:
+def test_order_service_stub_methods_have_streaming_attrs(grpc_server_module) -> None:
     """OrderServiceStub 7 RPC methods (per orders.proto) receive
     request_streaming/response_streaming=False after _patch_rpc_methods().
 
@@ -222,21 +225,22 @@ def test_order_service_stub_methods_have_streaming_attrs(
     from src.backend.entrypoints.grpc.protobuf import orders_pb2_grpc
 
     order_methods = (
-        "CreateOrder", "GetOrderResult", "GetOrder", "DeleteOrder",
-        "CreateSKBOrder", "GetFileAndJson", "SendOrderData",
+        "CreateOrder",
+        "GetOrderResult",
+        "GetOrder",
+        "DeleteOrder",
+        "CreateSKBOrder",
+        "GetFileAndJson",
+        "SendOrderData",
     )
     for method_name in order_methods:
         method = getattr(orders_pb2_grpc.OrderServiceStub, method_name)
-        assert method is not None, (
-            f"OrderServiceStub.{method_name} missing"
-        )
+        assert method is not None, f"OrderServiceStub.{method_name} missing"
         assert getattr(method, "request_streaming", "MISSING") is False, (
-            f"OrderServiceStub.{method_name}.request_streaming "
-            "not patched to False"
+            f"OrderServiceStub.{method_name}.request_streaming not patched to False"
         )
         assert getattr(method, "response_streaming", "MISSING") is False, (
-            f"OrderServiceStub.{method_name}.response_streaming "
-            "not patched to False"
+            f"OrderServiceStub.{method_name}.response_streaming not patched to False"
         )
 
 
@@ -251,22 +255,23 @@ def test_order_grpc_servicer_subclass_methods_have_streaming_attrs(
     request_streaming/response_streaming на override methods.
     """
     order_methods = (
-        "CreateOrder", "GetOrderResult", "GetOrder", "DeleteOrder",
-        "CreateSKBOrder", "GetFileAndJson", "SendOrderData",
+        "CreateOrder",
+        "GetOrderResult",
+        "GetOrder",
+        "DeleteOrder",
+        "CreateSKBOrder",
+        "GetFileAndJson",
+        "SendOrderData",
     )
     subclass = grpc_server_module.OrderGRPCServicer
     for method_name in order_methods:
         method = getattr(subclass, method_name, None)
-        assert method is not None, (
-            f"OrderGRPCServicer.{method_name} missing"
-        )
+        assert method is not None, f"OrderGRPCServicer.{method_name} missing"
         assert getattr(method, "request_streaming", "MISSING") is False, (
-            f"OrderGRPCServicer.{method_name}.request_streaming "
-            "not patched to False"
+            f"OrderGRPCServicer.{method_name}.request_streaming not patched to False"
         )
         assert getattr(method, "response_streaming", "MISSING") is False, (
-            f"OrderGRPCServicer.{method_name}.response_streaming "
-            "not patched to False"
+            f"OrderGRPCServicer.{method_name}.response_streaming not patched to False"
         )
 
 
@@ -277,12 +282,12 @@ def test_order_grpc_servicer_subclass_methods_have_streaming_attrs(
 @hyp_settings(
     max_examples=50,
     suppress_health_check=[
-        __import__("hypothesis").HealthCheck.function_scoped_fixture,
+        __import__("hypothesis").HealthCheck.function_scoped_fixture
     ],
 )
 @pytest.mark.unit
 def test_safe_error_base_error_preserves_message_property(
-    grpc_server_module, message: str,
+    grpc_server_module, message: str
 ) -> None:
     """For any string message, _safe_error returns it unchanged for BaseError.
 

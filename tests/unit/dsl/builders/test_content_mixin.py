@@ -47,9 +47,7 @@ def _run(coro):
 
 
 def _make_exchange(body=None) -> Exchange:
-    return Exchange(
-        in_message=Message(body=body or {}),
-    )
+    return Exchange(in_message=Message(body=body or {}))
 
 
 # ─── content_enrich() (only remaining EIP mixin method) ──────────────
@@ -72,7 +70,9 @@ class TestContentEnrich:
         _run(b._processors[-1].process(ex, context=MagicMock()))
         assert ex.properties["f"] == 42
 
-    def test_content_enrich_unknown_strategy_raises(self, builder: RouteBuilder) -> None:
+    def test_content_enrich_unknown_strategy_raises(
+        self, builder: RouteBuilder
+    ) -> None:
         b = builder.content_enrich(strategy="mongodb", field="x", source="ignored")
         ex = _make_exchange(body={})
         with pytest.raises(ValueError, match="unknown enrich strategy"):
@@ -80,7 +80,7 @@ class TestContentEnrich:
 
     def test_content_enrich_field_name_defaults(self, builder: RouteBuilder) -> None:
         b = builder.content_enrich(
-            strategy="static", field="enrichment", value={"x": 1},
+            strategy="static", field="enrichment", value={"x": 1}
         )
         last = b._processors[-1]
         assert last.field == "enrichment"
@@ -94,7 +94,7 @@ class TestMRORoutingResolution:
     """Verify EIPContentMixin doesn't shadow the working ContentMixin methods."""
 
     def test_wire_tap_resolves_to_content_mixin_implementation(
-        self, builder: RouteBuilder,
+        self, builder: RouteBuilder
     ) -> None:
         """Cycle 45: wire_tap() must use the working ContentMixin version.
 
@@ -108,7 +108,7 @@ class TestMRORoutingResolution:
         assert isinstance(last, WireTapProcessor)
 
     def test_multicast_resolves_to_content_mixin_implementation(
-        self, builder: RouteBuilder,
+        self, builder: RouteBuilder
     ) -> None:
         """Cycle 45: multicast() must use the working ContentMixin version."""
         from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -119,7 +119,7 @@ class TestMRORoutingResolution:
         assert isinstance(last, MulticastProcessor)
 
     def test_recipient_list_resolves_to_content_mixin_implementation(
-        self, builder: RouteBuilder,
+        self, builder: RouteBuilder
     ) -> None:
         """Cycle 45: recipient_list() must use the working ContentMixin version."""
         b = builder.recipient_list(recipients_expression=lambda exch: ["a", "b"])

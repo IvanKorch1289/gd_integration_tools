@@ -214,7 +214,7 @@ async def test_l3_set_serialization_preserves_chunks() -> None:
     """Сохранение/восстановление илиjson сохраняет точную структуру."""
     cache, redis = _make_cache()
     chunks = [
-        {"document": "ctx", "score": 0.95, "metadata": {"doc_id": "d1", "chunk_idx": 0}},
+        {"document": "ctx", "score": 0.95, "metadata": {"doc_id": "d1", "chunk_idx": 0}}
     ]
     await cache.set("Q", chunks, tenant="bank_a", namespace="ns")
     # Прочитать прямо из Redis (bypass API) — payload должен быть orjson.
@@ -250,8 +250,12 @@ async def test_l3_namespace_partition_per_tenant() -> None:
     await cache.set("Q", [{"document": "ns1"}], tenant="bank_a", namespace="ns1")
     await cache.set("Q", [{"document": "ns2"}], tenant="bank_a", namespace="ns2")
 
-    assert await cache.get("Q", tenant="bank_a", namespace="ns1") == [{"document": "ns1"}]
-    assert await cache.get("Q", tenant="bank_a", namespace="ns2") == [{"document": "ns2"}]
+    assert await cache.get("Q", tenant="bank_a", namespace="ns1") == [
+        {"document": "ns1"}
+    ]
+    assert await cache.get("Q", tenant="bank_a", namespace="ns2") == [
+        {"document": "ns2"}
+    ]
 
 
 # === L3RetrievalCache: flush =====================================
@@ -281,7 +285,9 @@ async def test_three_tier_lookup_chunks_passes_tenant_to_l3() -> None:
     l3.get = AsyncMock(return_value=[{"document": "c"}])
     l3.set = AsyncMock()
     l3.flush = AsyncMock(return_value=0)
-    cache = ThreeTierRagCache(l3=l3, l1_enabled=False, l2_enabled=False, l3_enabled=True)
+    cache = ThreeTierRagCache(
+        l3=l3, l1_enabled=False, l2_enabled=False, l3_enabled=True
+    )
     chunks, tier = await cache.lookup_chunks("Q", tenant="bank_a", namespace="ns")
     assert tier == "l3"
     assert chunks == [{"document": "c"}]
@@ -294,10 +300,12 @@ async def test_three_tier_store_chunks_passes_tenant_to_l3() -> None:
     l3 = AsyncMock()
     l3.set = AsyncMock()
     l3.flush = AsyncMock(return_value=0)
-    cache = ThreeTierRagCache(l3=l3, l1_enabled=False, l2_enabled=False, l3_enabled=True)
+    cache = ThreeTierRagCache(
+        l3=l3, l1_enabled=False, l2_enabled=False, l3_enabled=True
+    )
     await cache.store_chunks("Q", [{"document": "c"}], tenant="bank_a", namespace="ns")
     l3.set.assert_awaited_once_with(
-        "Q", [{"document": "c"}], tenant="bank_a", namespace="ns",
+        "Q", [{"document": "c"}], tenant="bank_a", namespace="ns"
     )
 
 
@@ -308,7 +316,9 @@ async def test_three_tier_lookup_chunks_backward_compat_without_tenant() -> None
     l3.get = AsyncMock(return_value=None)
     l3.set = AsyncMock()
     l3.flush = AsyncMock(return_value=0)
-    cache = ThreeTierRagCache(l3=l3, l1_enabled=False, l2_enabled=False, l3_enabled=True)
+    cache = ThreeTierRagCache(
+        l3=l3, l1_enabled=False, l2_enabled=False, l3_enabled=True
+    )
     chunks, tier = await cache.lookup_chunks("Q", namespace="legacy-ns")
     assert chunks is None
     assert tier is None
@@ -321,10 +331,12 @@ async def test_three_tier_store_chunks_backward_compat_without_tenant() -> None:
     l3 = AsyncMock()
     l3.set = AsyncMock()
     l3.flush = AsyncMock(return_value=0)
-    cache = ThreeTierRagCache(l3=l3, l1_enabled=False, l2_enabled=False, l3_enabled=True)
+    cache = ThreeTierRagCache(
+        l3=l3, l1_enabled=False, l2_enabled=False, l3_enabled=True
+    )
     await cache.store_chunks("Q", [{"document": "c"}], namespace="legacy-ns")
     l3.set.assert_awaited_once_with(
-        "Q", [{"document": "c"}], tenant=None, namespace="legacy-ns",
+        "Q", [{"document": "c"}], tenant=None, namespace="legacy-ns"
     )
 
 
@@ -335,7 +347,9 @@ async def test_three_tier_lookup_chunks_disabled_returns_none() -> None:
     l3.get = AsyncMock()
     l3.set = AsyncMock()
     l3.flush = AsyncMock(return_value=0)
-    cache = ThreeTierRagCache(l3=l3, l1_enabled=False, l2_enabled=False, l3_enabled=False)
+    cache = ThreeTierRagCache(
+        l3=l3, l1_enabled=False, l2_enabled=False, l3_enabled=False
+    )
     chunks, tier = await cache.lookup_chunks("Q", tenant="bank_a", namespace="ns")
     assert chunks is None
     assert tier is None

@@ -23,7 +23,6 @@ wrong role»:
     .venv/bin/python -m pytest tests/unit/dsl/service/test_dispatch_authz_entrypoints.py -q
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -59,9 +58,7 @@ def _make_pipeline(route_id: str, security: tuple[str, ...] | None) -> Pipeline:
 
 def _ok_exchange(body: Any = None) -> Exchange[Any]:
     """Создаёт ``Exchange`` со статусом COMPLETED."""
-    exchange = Exchange(
-        in_message=Message(body=body or {"x": 1}, headers={}),
-    )
+    exchange = Exchange(in_message=Message(body=body or {"x": 1}, headers={}))
     exchange.out_message = Message(body=body or {"x": 1}, headers={})
     exchange.status = ExchangeStatus.completed
     return exchange
@@ -185,9 +182,7 @@ class TestHttpBridgeAuthContextPropagation:
             from src.backend.entrypoints._action_bridge import _dispatch_dsl
 
             bridge = await _dispatch_dsl(
-                dsl_route_id="r1",
-                payload={"k": "v"},
-                headers=None,
+                dsl_route_id="r1", payload={"k": "v"}, headers=None
             )
 
         assert bridge.success is False
@@ -223,13 +218,16 @@ class TestHttpBridgeAuthContextPropagation:
         pipeline = _make_pipeline("r1", security=("role:admin",))
         route_registry.register(pipeline)
 
-        with patch(
-            "src.backend.services.routes.route_authz.check_route_permission",
-            new=AsyncMock(return_value=(True, "allowed")),
-        ), patch(
-            "src.backend.dsl.service.facade.DslService.dispatch",
-            new=AsyncMock(return_value=_ok_exchange()),
-        ) as mock_dispatch:
+        with (
+            patch(
+                "src.backend.services.routes.route_authz.check_route_permission",
+                new=AsyncMock(return_value=(True, "allowed")),
+            ),
+            patch(
+                "src.backend.dsl.service.facade.DslService.dispatch",
+                new=AsyncMock(return_value=_ok_exchange()),
+            ) as mock_dispatch,
+        ):
             from src.backend.entrypoints._action_bridge import _dispatch_dsl
 
             await _dispatch_dsl(
@@ -280,26 +278,29 @@ class TestSoapHandlerAuthContextPropagation:
         captured_context: dict[str, Any] = {}
 
         async def fake_dispatch(
-            *, route_id: str, body: Any, headers: Any, context: Any,
+            *, route_id: str, body: Any, headers: Any, context: Any
         ) -> Any:
             captured_context["principal"] = context.principal
             captured_context["permissions"] = context.permissions
             captured_context["route_id"] = context.route_id
             return _ok_exchange(body)
 
-        with patch.object(
-            soap_handler.action_handler_registry,
-            "is_registered",
-            return_value=False,
-        ), patch(
-            "src.backend.entrypoints.soap.soap_handler.get_dsl_service",
-        ) as mock_get_dsl:
+        with (
+            patch.object(
+                soap_handler.action_handler_registry,
+                "is_registered",
+                return_value=False,
+            ),
+            patch(
+                "src.backend.entrypoints.soap.soap_handler.get_dsl_service"
+            ) as mock_get_dsl,
+        ):
             mock_dsl = MagicMock()
             mock_dsl.dispatch = AsyncMock(side_effect=fake_dispatch)
             mock_get_dsl.return_value = mock_dsl
 
             with patch.object(
-                soap_handler, "_build_soap_response", return_value="<ok/>",
+                soap_handler, "_build_soap_response", return_value="<ok/>"
             ):
                 response = await soap_handler.handle_soap_request(mock_request)
 
@@ -330,15 +331,17 @@ class TestSoapHandlerAuthContextPropagation:
         pipeline = _make_pipeline("soap.adminOp", security=("role:admin",))
         route_registry.register(pipeline)
 
-        with patch.object(
-            soap_handler.action_handler_registry,
-            "is_registered",
-            return_value=False,
-        ), patch(
-            "src.backend.services.routes.route_authz.check_route_permission",
-            new=AsyncMock(return_value=(False, "missing_permissions:role:admin")),
-        ) as mock_check, patch.object(
-            soap_handler, "_build_soap_fault", return_value="<fault/>",
+        with (
+            patch.object(
+                soap_handler.action_handler_registry,
+                "is_registered",
+                return_value=False,
+            ),
+            patch(
+                "src.backend.services.routes.route_authz.check_route_permission",
+                new=AsyncMock(return_value=(False, "missing_permissions:role:admin")),
+            ) as mock_check,
+            patch.object(soap_handler, "_build_soap_fault", return_value="<fault/>"),
         ):
             response = await soap_handler.handle_soap_request(mock_request)
 
@@ -362,14 +365,14 @@ class TestGraphQlDispatchAuthContextPropagation:
         captured_context: dict[str, Any] = {}
 
         async def fake_dispatch(
-            *, route_id: str, body: Any, headers: Any, context: Any,
+            *, route_id: str, body: Any, headers: Any, context: Any
         ) -> Any:
             captured_context["principal"] = context.principal
             captured_context["permissions"] = context.permissions
             return _ok_exchange(body)
 
         with patch(
-            "src.backend.entrypoints.graphql.schema.get_dsl_service",
+            "src.backend.entrypoints.graphql.schema.get_dsl_service"
         ) as mock_get_dsl:
             mock_dsl = MagicMock()
             mock_dsl.dispatch = AsyncMock(side_effect=fake_dispatch)
@@ -399,7 +402,7 @@ class TestGraphQlDispatchAuthContextPropagation:
             new=AsyncMock(return_value=(False, "missing_permissions:role:admin")),
         ) as mock_check:
             result = await graphql_schema._dispatch_dsl(
-                "r1", {"k": "v"}, principal="", permissions=(),
+                "r1", {"k": "v"}, principal="", permissions=()
             )
 
         assert result.status == "failed"
@@ -481,9 +484,7 @@ class TestExtractUserPermissionsHelper:
         from src.backend.core.auth.auth_context_helpers import extract_user_permissions
 
         auth = AuthContext(
-            method=AuthMethod.JWT,
-            principal="bob",
-            metadata={"scope": "a b c"},
+            method=AuthMethod.JWT, principal="bob", metadata={"scope": "a b c"}
         )
         assert extract_user_permissions(auth) == ("scope:a", "scope:b", "scope:c")
 

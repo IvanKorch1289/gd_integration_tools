@@ -36,7 +36,6 @@ DSL-fallback (Tier 3) — не применим к MCP: MCP tools зарегис
       tests/unit/entrypoints/mcp/test_mcp_no_dsl_principal_propagation.py -v
 """
 
-
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -76,13 +75,12 @@ class TestMcpAuthBypassDesign:
 
         mcp.tool = fake_tool_decorator
 
-        with patch.object(
-            helpers,
-            "_action_input_schema_json",
-            return_value=None,
-        ), patch(
-            "src.backend.core.api.extensions.action_handler_registry",
-        ) as mock_registry:
+        with (
+            patch.object(helpers, "_action_input_schema_json", return_value=None),
+            patch(
+                "src.backend.core.api.extensions.action_handler_registry"
+            ) as mock_registry,
+        ):
             mock_registry.is_registered = MagicMock(return_value=False)
 
             # Should register tool without raising — function body
@@ -135,6 +133,7 @@ class TestMcpToolAuthzBypass:
         """Disallowed tool → ``_check_mcp_tool_authz`` returns reason →
         tool returns error-envelope (no dispatch).
         """
+
         # Build fake tool fn.
         async def fake_handler() -> str:
             return "ok"
@@ -151,7 +150,7 @@ class TestMcpToolAuthzBypass:
         mcp.tool = fake_tool_dec
 
         decorator_factory = helpers._authz_manual_tool(
-            mcp, name="disallowed.tool", description="forbidden",
+            mcp, name="disallowed.tool", description="forbidden"
         )
         wrapped_fn = decorator_factory(fake_handler)
 
@@ -190,9 +189,7 @@ class TestMcpAuthMiddlewareBlocksAnonymous:
             captured.append(message)
 
         async def fake_app(
-            scope: dict[str, object],
-            receive: object,
-            send: object,
+            scope: dict[str, object], receive: object, send: object
         ) -> None:
             # Should NOT be called when auth fails.
             captured.append({"type": "downstream_called"})
@@ -213,10 +210,6 @@ class TestMcpAuthMiddlewareBlocksAnonymous:
         await middleware(scope, empty_receive, fake_send)
 
         # Verify 401 response (not downstream).
-        assert any(
-            msg.get("status") == 401 for msg in captured if "status" in msg
-        )
+        assert any(msg.get("status") == 401 for msg in captured if "status" in msg)
         # Downstream NOT called.
-        assert not any(
-            msg.get("type") == "downstream_called" for msg in captured
-        )
+        assert not any(msg.get("type") == "downstream_called" for msg in captured)

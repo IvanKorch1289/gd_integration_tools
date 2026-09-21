@@ -20,7 +20,6 @@ temporalio SDK опционален (extra dep ``uv sync --extra workflow``); е
 объёме.
 """
 
-
 from __future__ import annotations
 
 import importlib
@@ -175,7 +174,7 @@ def test_register_uses_decorator_name_when_present() -> None:
 
 def _has_temporalio() -> bool:
     try:
-        import temporalio
+        import temporalio  # noqa: F401 — availability probe (try/except ImportError guard)
 
         return True
     except ImportError:
@@ -218,7 +217,7 @@ class _RecordingReplayer:
             registered = {cls.__name__ for cls in self.workflows}
             if wf_name and wf_name not in registered:
                 raise Exception(  # noqa: BLE001 — test stub
-                    f"simulated WorkflowNonDeterminism: '{wf_name}' not in {sorted(registered)}",
+                    f"simulated WorkflowNonDeterminism: '{wf_name}' not in {sorted(registered)}"
                 )
         self.replay_calls.append(b"ok")
 
@@ -244,7 +243,8 @@ def backend() -> Any:
 
     fake_client = object()
     return TemporalWorkflowBackend(
-        client=fake_client, default_task_queue="t1",  # type: ignore[abstract]
+        client=fake_client,
+        default_task_queue="t1",  # type: ignore[abstract]
     )
 
 
@@ -256,8 +256,7 @@ def backend() -> Any:
 )
 @pytest.mark.asyncio
 async def test_replay_uses_registry_for_named_workflow(
-    backend: Any,
-    patch_replayer: type[_RecordingReplayer],
+    backend: Any, patch_replayer: type[_RecordingReplayer]
 ) -> None:
     """B-10 fix: replay(workflow_name="X") → Replayer([registry.get("X")])."""
     workflow_registry.register(_RealWorkflowStub)
@@ -278,8 +277,7 @@ async def test_replay_uses_registry_for_named_workflow(
 @_temporalio_required
 @pytest.mark.asyncio
 async def test_replay_unknown_name_raises_keyerror(
-    backend: Any,
-    patch_replayer: type[_RecordingReplayer],
+    backend: Any, patch_replayer: type[_RecordingReplayer]
 ) -> None:
     """B-10 fix: unknown workflow_name → ``KeyError`` (раньше — silent cast)."""
     history = b"{}"
@@ -295,8 +293,7 @@ async def test_replay_unknown_name_raises_keyerror(
 )
 @pytest.mark.asyncio
 async def test_replay_empty_name_uses_all_registered(
-    backend: Any,
-    patch_replayer: type[_RecordingReplayer],
+    backend: Any, patch_replayer: type[_RecordingReplayer]
 ) -> None:
     """``workflow_name=""`` → broadcast на все зарегистрированные классы."""
     workflow_registry.register(_RealWorkflowStub)
@@ -316,8 +313,7 @@ async def test_replay_empty_name_uses_all_registered(
 )
 @pytest.mark.asyncio
 async def test_replay_detects_workflow_non_determinism(
-    backend: Any,
-    patch_replayer: type[_RecordingReplayer],
+    backend: Any, patch_replayer: type[_RecordingReplayer]
 ) -> None:
     """Если workflow в history не совпадает с зарегистрированным —
     Replayer бросает nondeterminism error (наш stub эмулирует через
@@ -342,8 +338,7 @@ async def test_replay_detects_workflow_non_determinism(
 )
 @pytest.mark.asyncio
 async def test_replay_does_not_use_str_cast(
-    backend: Any,
-    patch_replayer: type[_RecordingReplayer],
+    backend: Any, patch_replayer: type[_RecordingReplayer]
 ) -> None:
     """B-10 fix: явно проверяем что ``workflows=[<str>]`` НЕ передаётся в Replayer.
 

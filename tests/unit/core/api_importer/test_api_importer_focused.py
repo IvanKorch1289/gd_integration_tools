@@ -42,11 +42,7 @@ SAMPLE_OPENAPI = {
                 "summary": "Create order",
                 "tags": ["orders"],
                 "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {"type": "object"}
-                        }
-                    }
+                    "content": {"application/json": {"schema": {"type": "object"}}}
                 },
                 "responses": {"201": {"description": "Created"}},
             },
@@ -70,10 +66,7 @@ SAMPLE_OPENAPI = {
 
 SAMPLE_SWAGGER = {
     "swagger": "2.0",
-    "info": {
-        "title": "Legacy API",
-        "version": "0.1.0",
-    },
+    "info": {"title": "Legacy API", "version": "0.1.0"},
     "host": "api.legacy.com",
     "basePath": "/v1",
     "schemes": ["https"],
@@ -132,7 +125,8 @@ class TestImportOpenAPIPaths:
     def test_operation_summary(self) -> None:
         api = import_openapi(SAMPLE_OPENAPI)
         list_op = next(
-            op for path in api.paths
+            op
+            for path in api.paths
             for op in path.operations
             if op.operation_id == "listOrders"
         )
@@ -141,7 +135,8 @@ class TestImportOpenAPIPaths:
     def test_operation_parameters(self) -> None:
         api = import_openapi(SAMPLE_OPENAPI)
         list_op = next(
-            op for path in api.paths
+            op
+            for path in api.paths
             for op in path.operations
             if op.operation_id == "listOrders"
         )
@@ -151,14 +146,17 @@ class TestImportOpenAPIPaths:
     def test_operation_request_body(self) -> None:
         api = import_openapi(SAMPLE_OPENAPI)
         create_op = next(
-            op for path in api.paths
+            op
+            for path in api.paths
             for op in path.operations
             if op.operation_id == "createOrder"
         )
         assert "content" in create_op.request_body
 
     def test_empty_paths(self) -> None:
-        api = import_openapi({"info": {"title": "Empty", "version": "1.0"}, "paths": {}})
+        api = import_openapi(
+            {"info": {"title": "Empty", "version": "1.0"}, "paths": {}}
+        )
         assert len(api.paths) == 0
         assert api.operation_count() == 0
 
@@ -327,9 +325,7 @@ class TestRealisticExample:
                         "summary": "Create a pet",
                         "requestBody": {
                             "content": {
-                                "application/json": {
-                                    "schema": {"type": "object"}
-                                }
+                                "application/json": {"schema": {"type": "object"}}
                             }
                         },
                         "responses": {"201": {"description": "Created"}},
@@ -350,7 +346,11 @@ class TestRealisticExample:
 
         # 2. Generate connector draft.
         connector = generate_connector_draft(api, name="petstore")
-        assert connector.operation_count() == 3 if hasattr(connector, "operation_count") else True
+        assert (
+            connector.operation_count() == 3
+            if hasattr(connector, "operation_count")
+            else True
+        )
         assert len(connector.operations) == 3
 
         # 3. Generate route draft.

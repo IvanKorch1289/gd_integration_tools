@@ -9,7 +9,6 @@
       feature_enabled.
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -193,7 +192,7 @@ class TestPerRouteOverride:
 
 class TestFeatureFlagDefaultOff:
     async def test_pass_through_when_flag_off(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setattr(feature_flags, "multi_tenant_rate_limit_enabled", False)
         # feature_enabled=None → читает flag через default

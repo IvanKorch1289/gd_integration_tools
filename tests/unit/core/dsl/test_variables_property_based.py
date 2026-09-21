@@ -13,6 +13,8 @@ Tests invariants of DSLVariableStore:
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
@@ -84,7 +86,11 @@ async def test_tenant_scope_isolation(
 
 
 @given(
-    key=st.text(min_size=1, max_size=20, alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Nd"))),
+    key=st.text(
+        min_size=1,
+        max_size=20,
+        alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Nd")),
+    ),
     value=st.integers(min_value=-1_000_000, max_value=1_000_000),
 )
 @settings(max_examples=10, deadline=None)
@@ -98,7 +104,11 @@ async def test_integer_roundtrip(key: str, value: int) -> None:
 
 
 @given(
-    key=st.text(min_size=1, max_size=20, alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Nd"))),
+    key=st.text(
+        min_size=1,
+        max_size=20,
+        alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Nd")),
+    )
 )
 @settings(max_examples=10, deadline=None)
 async def test_unknown_key_returns_none(key: str) -> None:

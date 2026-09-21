@@ -1,4 +1,5 @@
 """Tests for RetryPolicyHelper (S171 M5 proposals)."""
+
 from __future__ import annotations
 
 import pytest
@@ -9,6 +10,7 @@ class TestRetryPolicyHelper:
     async def test_retry_succeeds_on_second_attempt(self) -> None:
         """Retry succeeds if coro eventually returns."""
         from src.backend.core.resilience.retry import retry_async
+
         attempts = {"count": 0}
 
         async def flaky():
@@ -41,11 +43,7 @@ class TestRetryPolicyHelper:
             raise ValueError("not retryable")
 
         with pytest.raises(ValueError):
-            await retry_async(
-                bad,
-                max_attempts=3,
-                retryable=(ConnectionError, OSError),
-            )
+            await retry_async(bad, max_attempts=3, retryable=(ConnectionError, OSError))
 
     @pytest.mark.asyncio
     async def test_retry_with_args_and_kwargs(self) -> None:
@@ -55,7 +53,9 @@ class TestRetryPolicyHelper:
         async def with_args(a, b=10):
             return a + b
 
-        result = await retry_async(with_args, max_attempts=2, args=(5,), kwargs={"b": 7})
+        result = await retry_async(
+            with_args, max_attempts=2, args=(5,), kwargs={"b": 7}
+        )
         assert result == 12
 
     @pytest.mark.asyncio

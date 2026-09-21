@@ -22,18 +22,11 @@ from src.backend.services import workflow
 class TestWorkflowFacadeAllExports:
     """``__all__`` audit + __getattr__ lazy resolution."""
 
-    @pytest.mark.parametrize(
-        "symbol_name",
-        ["WorkflowDescriptor", "workflow_registry"],
-    )
+    @pytest.mark.parametrize("symbol_name", ["WorkflowDescriptor", "workflow_registry"])
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(workflow, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
-        assert symbol_name in workflow.__all__, (
-            f"{symbol_name} not declared in __all__"
-        )
+        assert hasattr(workflow, symbol_name), f"Missing export: {symbol_name}"
+        assert symbol_name in workflow.__all__, f"{symbol_name} not declared in __all__"
 
     def test_all_declared_count(self) -> None:
         """``__all__`` содержит 2 символа."""

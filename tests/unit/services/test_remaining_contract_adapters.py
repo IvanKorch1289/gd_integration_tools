@@ -14,9 +14,12 @@ from src.backend.services.workflows.hitl_signal_store_redis import RedisHitlSign
 
 @pytest.mark.unit
 def test_observability_log_event_does_not_swallow_body_error() -> None:
-    with patch(
-        "src.backend.core.observability.logging_helpers.log_audit_event_lite",
-    ) as log_event, pytest.raises(ValueError, match="body failed"):
+    with (
+        patch(
+            "src.backend.core.observability.logging_helpers.log_audit_event_lite"
+        ) as log_event,
+        pytest.raises(ValueError, match="body failed"),
+    ):
         with ObservabilityFacade().log_event("orders.failed", order_id="42"):
             raise ValueError("body failed")
 
@@ -25,9 +28,12 @@ def test_observability_log_event_does_not_swallow_body_error() -> None:
 
 @pytest.mark.unit
 def test_capability_subset_adapter_returns_true_after_void_contract() -> None:
-    assert CapabilityFacade().check_subsets(
-        route="route-1", route_caps=[], plugin_caps_by_name={},
-    ) is True
+    assert (
+        CapabilityFacade().check_subsets(
+            route="route-1", route_caps=[], plugin_caps_by_name={}
+        )
+        is True
+    )
 
 
 @pytest.mark.unit
@@ -56,8 +62,5 @@ async def test_hitl_transaction_does_not_retry_non_watch_errors() -> None:
 
     with pytest.raises(ConnectionError, match="redis down"):
         await store._mark_resolved_transactional(
-            client,
-            "signal-1",
-            action="approve",
-            resolved_by="operator-1",
+            client, "signal-1", action="approve", resolved_by="operator-1"
         )

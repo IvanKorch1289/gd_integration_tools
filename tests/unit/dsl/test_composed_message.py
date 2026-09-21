@@ -8,7 +8,6 @@
 * sync и async splitter / aggregator поддерживаются.
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -66,7 +65,7 @@ def _aggregate_sum(parts: list[Exchange[Any]]) -> Exchange[Any]:
 async def test_composed_split_one_sub_processor() -> None:
     """split + 1 sub-processor: каждая часть удваивается, затем сумма."""
     proc = ComposedMessageProcessor(
-        splitter=_split_list, processors=[_DoubleProcessor()], aggregator=_aggregate_sum,
+        splitter=_split_list, processors=[_DoubleProcessor()], aggregator=_aggregate_sum
     )
     ex = Exchange(in_message=Message(body=[1, 2, 3], headers={}))
     await proc.process(ex, _ctx())
@@ -132,7 +131,7 @@ async def test_composed_splitter_error_marks_exchange_failed() -> None:
         raise RuntimeError("split boom")
 
     proc = ComposedMessageProcessor(
-        splitter=_bad_split, processors=[], aggregator=_aggregate_sum,
+        splitter=_bad_split, processors=[], aggregator=_aggregate_sum
     )
     ex = Exchange(in_message=Message(body=None, headers={}))
     await proc.process(ex, _ctx())
@@ -156,6 +155,6 @@ async def test_composed_splitter_returns_non_list_fails() -> None:
 def test_composed_to_spec_returns_none() -> None:
     """ComposedMessage не сериализуется (callable splitter/aggregator)."""
     proc = ComposedMessageProcessor(
-        splitter=_split_list, processors=[_DoubleProcessor()], aggregator=_aggregate_sum,
+        splitter=_split_list, processors=[_DoubleProcessor()], aggregator=_aggregate_sum
     )
     assert proc.to_spec() is None

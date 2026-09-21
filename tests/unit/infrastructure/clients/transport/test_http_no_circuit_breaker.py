@@ -72,9 +72,7 @@ class TestHttpClientDeadCodeRemoved:
         против такого регресса.
         """
         src = _http_init_source()
-        assert (
-            "self.circuit_breaker = get_breaker_registry()" in src
-        ), (
+        assert "self.circuit_breaker = get_breaker_registry()" in src, (
             "HttpClient must wire self.circuit_breaker через canonical "
             "core.resilience.breaker (S140-W5+ pattern). If вы reverted к "
             "dead-code, RequestMixin сломается."

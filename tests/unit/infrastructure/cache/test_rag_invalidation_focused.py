@@ -23,8 +23,7 @@ def _mock_client(publish_return: int = 1) -> tuple[MagicMock, list[bytes]]:
     client = MagicMock()
     conn = MagicMock()
     conn.publish = AsyncMock(
-        side_effect=lambda channel, payload: published.append(payload)
-        or publish_return
+        side_effect=lambda channel, payload: published.append(payload) or publish_return
     )
 
     async def _execute(db: str, fn: Any) -> int:

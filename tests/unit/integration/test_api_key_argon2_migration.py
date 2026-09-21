@@ -59,7 +59,7 @@ class _FakeApiKeyInfo:
     def get(self, key: str, default: object = None) -> object:  # type: ignore[override]
         try:
             return self.__getitem__(key)
-        except (AttributeError, KeyError):
+        except AttributeError, KeyError:
             return default
 
 
@@ -71,9 +71,7 @@ class _FakeManager:
     """
 
     def __init__(
-        self,
-        stored_hashes: dict[str, str],
-        raw_to_client: dict[str, str],
+        self, stored_hashes: dict[str, str], raw_to_client: dict[str, str]
     ) -> None:
         # Map raw → (client_id, stored_hash).
         self._raw_to_entry: dict[str, tuple[str, str]] = {}
@@ -90,11 +88,7 @@ class _FakeManager:
         client_id, stored_hash = self._raw_to_entry[raw_key]
         if not self._auth.verify(raw_key, stored_hash):
             return None
-        return _FakeApiKeyInfo(
-            client_id=client_id,
-            hash_=stored_hash,
-            is_active=True,
-        )
+        return _FakeApiKeyInfo(client_id=client_id, hash_=stored_hash, is_active=True)
 
 
 def _legacy_sha256_hash(raw: str) -> str:
@@ -138,21 +132,21 @@ class TestAPIKeyManagerArgon2DualVerify:
 
     @pytest.mark.asyncio
     async def test_legacy_sha_hash_validates_via_dual_verify(
-        self, raw_key: str, legacy_stored_hash: str,
+        self, raw_key: str, legacy_stored_hash: str
     ) -> None:
         auth = APIKeyAuth(allow_legacy_sha256=True)
         assert auth.verify(raw_key, legacy_stored_hash) is True
 
     @pytest.mark.asyncio
     async def test_argon2_hash_validates_via_primary_path(
-        self, raw_key: str, argon2_stored_hash: str,
+        self, raw_key: str, argon2_stored_hash: str
     ) -> None:
         auth = APIKeyAuth()
         assert auth.verify(raw_key, argon2_stored_hash) is True
 
     @pytest.mark.asyncio
     async def test_legacy_disabled_blocks_sha_only(
-        self, raw_key: str, legacy_stored_hash: str,
+        self, raw_key: str, legacy_stored_hash: str
     ) -> None:
         auth = APIKeyAuth(allow_legacy_sha256=False)
         assert auth.verify(raw_key, legacy_stored_hash) is False
@@ -174,8 +168,7 @@ class TestWSAuthenticateViaFacade:
         raw = "gd_secret_token_for_ws_auth_test"
         legacy_sha = _legacy_sha256_hash(raw)
         manager = _FakeManager(
-            stored_hashes={"service_a": legacy_sha},
-            raw_to_client={raw: "service_a"},
+            stored_hashes={"service_a": legacy_sha}, raw_to_client={raw: "service_a"}
         )
 
         with patch(
@@ -206,9 +199,7 @@ class TestWSAuthenticateViaFacade:
             return_value=manager,
         ):
             auth = WSAuthenticator()
-            cred = WSCredential(
-                token=wrong_raw, method="api_key", source="subprotocol",
-            )
+            cred = WSCredential(token=wrong_raw, method="api_key", source="subprotocol")
             with pytest.raises(Exception):
                 # WSAuthError или generic — оба OK.
                 await auth.authenticate_via_facade(cred)

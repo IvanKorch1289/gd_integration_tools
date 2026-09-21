@@ -60,43 +60,32 @@ class TestBuildDdlStatements:
 
     def test_returns_three_statements(self) -> None:
         plan = mig.build_ddl_statements(
-            table_source="dlq_events",
-            table_new="dlq_events_new",
-            database="analytics",
+            table_source="dlq_events", table_new="dlq_events_new", database="analytics"
         )
         assert len(plan.statements) == 3
 
     def test_create_new_has_partition_by(self) -> None:
         plan = mig.build_ddl_statements(
-            table_source="dlq_events",
-            table_new="dlq_events_new",
-            database="analytics",
+            table_source="dlq_events", table_new="dlq_events_new", database="analytics"
         )
         assert "PARTITION BY toYYYYMM(created_at)" in plan.create_new_sql
 
     def test_copy_sql_selects_from_source(self) -> None:
         plan = mig.build_ddl_statements(
-            table_source="dlq_events",
-            table_new="dlq_events_new",
-            database="analytics",
+            table_source="dlq_events", table_new="dlq_events_new", database="analytics"
         )
         assert "INSERT INTO analytics.dlq_events_new" in plan.copy_sql
         assert "SELECT * FROM analytics.dlq_events" in plan.copy_sql
 
     def test_rename_atomic_swap(self) -> None:
         plan = mig.build_ddl_statements(
-            table_source="dlq_events",
-            table_new="dlq_events_new",
-            database="analytics",
+            table_source="dlq_events", table_new="dlq_events_new", database="analytics"
         )
         assert (
             "RENAME TABLE analytics.dlq_events TO analytics.dlq_events_old"
             in plan.rename_sql
         )
-        assert (
-            ", analytics.dlq_events_new TO analytics.dlq_events"
-            in plan.rename_sql
-        )
+        assert ", analytics.dlq_events_new TO analytics.dlq_events" in plan.rename_sql
 
     def test_replicated_cluster_adds_on_cluster(self) -> None:
         plan = mig.build_ddl_statements(
@@ -123,89 +112,58 @@ class TestRunMigrationDryRun:
     """Dry-run: ни одного вызова client.command (STRICT)."""
 
     def test_dry_run_does_not_invoke_client(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         client = MagicMock()
         client.command = MagicMock(return_value=None)
 
         args = mig.parse_args(
-            [
-                "--database",
-                "analytics",
-                "--stats-out",
-                str(tmp_path / "stats.json"),
-            ],
+            ["--database", "analytics", "--stats-out", str(tmp_path / "stats.json")]
         )
         plan = mig.build_ddl_statements(
-            table_source="dlq_events",
-            table_new="dlq_events_new",
-            database="analytics",
+            table_source="dlq_events", table_new="dlq_events_new", database="analytics"
         )
 
         exit_code = mig.run_migration(
-            args,
-            client_factory=lambda **_: client,
-            plan=plan,
+            args, client_factory=lambda **_: client, plan=plan
         )
 
         assert exit_code == 0
         # STRICT: ни одного DDL call.
         client.command.assert_not_called()
 
-    def test_dry_run_via_no_confirm_flag(
-        self,
-        tmp_path: Path,
-    ) -> None:
+    def test_dry_run_via_no_confirm_flag(self, tmp_path: Path) -> None:
         """Default mode (no --confirm) = dry-run."""
 
         client = MagicMock()
         client.command = MagicMock(return_value=None)
 
         args = mig.parse_args(
-            [
-                "--dry-run",
-                "--stats-out",
-                str(tmp_path / "stats.json"),
-            ],
+            ["--dry-run", "--stats-out", str(tmp_path / "stats.json")]
         )
         # Аргумент --dry-run в CLI уже включён по умолчанию;
         # проверяем, что confirm=False → dry-run.
         assert args.confirm is False
 
         plan = mig.build_ddl_statements(
-            table_source="dlq_events",
-            table_new="dlq_events_new",
-            database="default",
+            table_source="dlq_events", table_new="dlq_events_new", database="default"
         )
         exit_code = mig.run_migration(
-            args,
-            client_factory=lambda **_: client,
-            plan=plan,
+            args, client_factory=lambda **_: client, plan=plan
         )
         assert exit_code == 0
         client.command.assert_not_called()
 
-    def test_dry_run_writes_stats_with_plan(
-        self,
-        tmp_path: Path,
-    ) -> None:
+    def test_dry_run_writes_stats_with_plan(self, tmp_path: Path) -> None:
         client = MagicMock()
         client.command = MagicMock(return_value=None)
         stats_path = tmp_path / "dry_stats.json"
         args = mig.parse_args(["--stats-out", str(stats_path)])
         plan = mig.build_ddl_statements(
-            table_source="dlq_events",
-            table_new="dlq_events_new",
-            database="analytics",
+            table_source="dlq_events", table_new="dlq_events_new", database="analytics"
         )
 
-        mig.run_migration(
-            args,
-            client_factory=lambda **_: client,
-            plan=plan,
-        )
+        mig.run_migration(args, client_factory=lambda **_: client, plan=plan)
 
         assert stats_path.exists()
         payload = json.loads(stats_path.read_text())
@@ -217,10 +175,7 @@ class TestRunMigrationDryRun:
 class TestRunMigrationConfirm:
     """Confirm mode: каждый DDL-шаг вызывается ровно один раз."""
 
-    def test_confirm_invokes_each_ddl_once(
-        self,
-        tmp_path: Path,
-    ) -> None:
+    def test_confirm_invokes_each_ddl_once(self, tmp_path: Path) -> None:
         client = MagicMock()
         client.command = MagicMock(return_value=None)
         client.close = MagicMock(return_value=None)
@@ -232,18 +187,14 @@ class TestRunMigrationConfirm:
                 "analytics",
                 "--stats-out",
                 str(tmp_path / "confirm_stats.json"),
-            ],
+            ]
         )
         plan = mig.build_ddl_statements(
-            table_source="dlq_events",
-            table_new="dlq_events_new",
-            database="analytics",
+            table_source="dlq_events", table_new="dlq_events_new", database="analytics"
         )
 
         exit_code = mig.run_migration(
-            args,
-            client_factory=lambda **_: client,
-            plan=plan,
+            args, client_factory=lambda **_: client, plan=plan
         )
 
         assert exit_code == 0
@@ -265,63 +216,38 @@ class TestRunMigrationConfirm:
         third_call = client.command.call_args_list[2]
         assert "RENAME TABLE" in third_call.args[0]
         assert "analytics.dlq_events TO analytics.dlq_events_old" in third_call.args[0]
-        assert (
-            "analytics.dlq_events_new TO analytics.dlq_events"
-            in third_call.args[0]
-        )
+        assert "analytics.dlq_events_new TO analytics.dlq_events" in third_call.args[0]
 
-    def test_confirm_does_not_drop_old_table(
-        self,
-        tmp_path: Path,
-    ) -> None:
+    def test_confirm_does_not_drop_old_table(self, tmp_path: Path) -> None:
         """DROP TABLE оставлен на ручное выполнение — НЕ вызывается."""
 
         client = MagicMock()
         client.command = MagicMock(return_value=None)
 
         args = mig.parse_args(
-            [
-                "--confirm",
-                "--stats-out",
-                str(tmp_path / "no_drop.json"),
-            ],
+            ["--confirm", "--stats-out", str(tmp_path / "no_drop.json")]
         )
         plan = mig.build_ddl_statements(
-            table_source="dlq_events",
-            table_new="dlq_events_new",
-            database="default",
+            table_source="dlq_events", table_new="dlq_events_new", database="default"
         )
 
-        mig.run_migration(
-            args,
-            client_factory=lambda **_: client,
-            plan=plan,
-        )
+        mig.run_migration(args, client_factory=lambda **_: client, plan=plan)
 
         # Ни один из вызовов не должен содержать DROP TABLE.
         for call in client.command.call_args_list:
             sql = call.args[0]
             assert "DROP TABLE" not in sql.upper()
 
-    def test_confirm_writes_stats_with_executed(
-        self,
-        tmp_path: Path,
-    ) -> None:
+    def test_confirm_writes_stats_with_executed(self, tmp_path: Path) -> None:
         client = MagicMock()
         client.command = MagicMock(return_value=None)
         stats_path = tmp_path / "confirm_executed.json"
         args = mig.parse_args(["--confirm", "--stats-out", str(stats_path)])
         plan = mig.build_ddl_statements(
-            table_source="dlq_events",
-            table_new="dlq_events_new",
-            database="analytics",
+            table_source="dlq_events", table_new="dlq_events_new", database="analytics"
         )
 
-        mig.run_migration(
-            args,
-            client_factory=lambda **_: client,
-            plan=plan,
-        )
+        mig.run_migration(args, client_factory=lambda **_: client, plan=plan)
 
         payload = json.loads(stats_path.read_text())
         assert payload["mode"] == "confirm"
@@ -329,9 +255,7 @@ class TestRunMigrationConfirm:
         assert payload["completed_at"] is not None
 
     def test_env_confirm_enables_write_mode(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """CONFIRM=1 env var → equivalent to --confirm."""
 
@@ -345,50 +269,35 @@ class TestRunMigrationConfirm:
                 "analytics",
                 "--stats-out",
                 str(tmp_path / "env_confirm.json"),
-            ],
+            ]
         )
         # CLI без --confirm, но env должен включить write mode.
         assert args.confirm is False
         plan = mig.build_ddl_statements(
-            table_source="dlq_events",
-            table_new="dlq_events_new",
-            database="analytics",
+            table_source="dlq_events", table_new="dlq_events_new", database="analytics"
         )
 
         exit_code = mig.run_migration(
-            args,
-            client_factory=lambda **_: client,
-            plan=plan,
+            args, client_factory=lambda **_: client, plan=plan
         )
 
         assert exit_code == 0
         assert client.command.call_count == 3
 
-    def test_ddl_failure_returns_exit_one(
-        self,
-        tmp_path: Path,
-    ) -> None:
+    def test_ddl_failure_returns_exit_one(self, tmp_path: Path) -> None:
         client = MagicMock()
         client.command = MagicMock(side_effect=RuntimeError("boom"))
         client.close = MagicMock(return_value=None)
 
         args = mig.parse_args(
-            [
-                "--confirm",
-                "--stats-out",
-                str(tmp_path / "failure.json"),
-            ],
+            ["--confirm", "--stats-out", str(tmp_path / "failure.json")]
         )
         plan = mig.build_ddl_statements(
-            table_source="dlq_events",
-            table_new="dlq_events_new",
-            database="default",
+            table_source="dlq_events", table_new="dlq_events_new", database="default"
         )
 
         exit_code = mig.run_migration(
-            args,
-            client_factory=lambda **_: client,
-            plan=plan,
+            args, client_factory=lambda **_: client, plan=plan
         )
 
         assert exit_code == 1
@@ -423,12 +332,10 @@ class TestPlanInjection:
         )
 
         args = mig.parse_args(
-            ["--confirm", "--stats-out", str(tmp_path / "custom.json")],
+            ["--confirm", "--stats-out", str(tmp_path / "custom.json")]
         )
         exit_code = mig.run_migration(
-            args,
-            client_factory=lambda **_: client,
-            plan=custom_plan,
+            args, client_factory=lambda **_: client, plan=custom_plan
         )
         assert exit_code == 0
         assert client.command.call_count == 3

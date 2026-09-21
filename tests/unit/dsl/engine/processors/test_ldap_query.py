@@ -1,6 +1,5 @@
 """Unit tests for LdapQueryProcessor."""
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -37,7 +36,7 @@ class TestLdapQueryProcessor:
 
     def test_apply_target_properties(self) -> None:
         proc = LdapQueryProcessor(
-            "ldap://host", "dc=example", "(obj=person)", to="properties.users",
+            "ldap://host", "dc=example", "(obj=person)", to="properties.users"
         )
         ex = _ex({})
         proc._apply_target(ex, [{"cn": "Alice"}])
@@ -46,7 +45,7 @@ class TestLdapQueryProcessor:
     @pytest.mark.asyncio
     async def test_process_feature_flag_off(self) -> None:
         with patch(
-            "src.backend.core.config.features.feature_flags.proc_ldap_query", False,
+            "src.backend.core.config.features.feature_flags.proc_ldap_query", False
         ):
             proc = LdapQueryProcessor("ldap://host", "dc=example", "(obj=person)")
             ex = _ex({})
@@ -57,7 +56,7 @@ class TestLdapQueryProcessor:
     async def test_process_import_error(self) -> None:
         with (
             patch(
-                "src.backend.core.config.features.feature_flags.proc_ldap_query", True,
+                "src.backend.core.config.features.feature_flags.proc_ldap_query", True
             ),
             patch.object(LdapQueryProcessor, "_search_sync", side_effect=ImportError),
         ):
@@ -71,10 +70,10 @@ class TestLdapQueryProcessor:
     async def test_process_success(self) -> None:
         with (
             patch(
-                "src.backend.core.config.features.feature_flags.proc_ldap_query", True,
+                "src.backend.core.config.features.feature_flags.proc_ldap_query", True
             ),
             patch.object(
-                LdapQueryProcessor, "_search_sync", return_value=[{"cn": "Alice"}],
+                LdapQueryProcessor, "_search_sync", return_value=[{"cn": "Alice"}]
             ),
         ):
             proc = LdapQueryProcessor("ldap://host", "dc=example", "(obj=person)")
@@ -90,7 +89,7 @@ class TestLdapQueryProcessor:
                 "server": "ldap://host",
                 "search_base": "dc=example",
                 "search_filter": "(obj=person)",
-            },
+            }
         }
 
     def test_to_spec_full(self) -> None:

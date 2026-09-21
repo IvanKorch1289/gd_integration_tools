@@ -26,7 +26,9 @@ class TestShellExecProcessor:
         exchange.in_message.body = "hello"
         exchange.set_property = MagicMock()
 
-        with patch("asyncio.create_subprocess_exec", new_callable=AsyncMock) as mock_proc:
+        with patch(
+            "asyncio.create_subprocess_exec", new_callable=AsyncMock
+        ) as mock_proc:
             mock_process = MagicMock()
             mock_process.communicate = AsyncMock(return_value=(b"hello\n", b""))
             mock_process.returncode = 0
@@ -47,9 +49,7 @@ class TestEmailComposeProcessor:
         from src.backend.infrastructure.clients.transport import smtp as smtp_mod
 
         processor = EmailComposeProcessor(
-            to="test@example.com",
-            subject="Test",
-            body_template="Hello {name}",
+            to="test@example.com", subject="Test", body_template="Hello {name}"
         )
         processor.auth_check = AsyncMock(return_value=True)
         exchange = MagicMock(spec=Exchange)

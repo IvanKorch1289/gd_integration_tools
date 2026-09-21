@@ -1,6 +1,5 @@
 """Unit-тесты workflow dryrun — Wave [wave:s5/k3-w10-workflow-dryrun]."""
 
-
 from __future__ import annotations
 
 from src.backend.dsl.workflow.dryrun import run_workflow_dryrun

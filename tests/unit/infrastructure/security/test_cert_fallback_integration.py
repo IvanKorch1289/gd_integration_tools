@@ -7,6 +7,7 @@ CertStoreSettings.fallback_enabled=True → from_settings автоматичес
 
 Pattern (D252, D237 TDD): RED → GREEN → review.
 """
+
 from __future__ import annotations
 
 from unittest.mock import patch
@@ -17,9 +18,10 @@ class TestCertStoreFromSettingsFallback:
         """По умолчанию fallback_enabled=False → plain backend."""
         from src.backend.core.config.cert_store import CertStoreSettings
         from src.backend.infrastructure.security.cert_store.store import CertStore
+
         settings = CertStoreSettings(fallback_enabled=False)
         with patch(
-            "src.backend.infrastructure.security.cert_store.store.PostgresCertBackend",
+            "src.backend.infrastructure.security.cert_store.store.PostgresCertBackend"
         ) as mock_pg:
             CertStore.from_settings(settings)
             mock_pg.assert_called_once()
@@ -28,12 +30,10 @@ class TestCertStoreFromSettingsFallback:
         """fallback_enabled=True → backend wrapped в FallbackCertBackend."""
         from src.backend.core.config.cert_store import CertStoreSettings
         from src.backend.infrastructure.security.cert_store.store import CertStore
-        settings = CertStoreSettings(
-            fallback_enabled=True,
-            backend="postgres",
-        )
+
+        settings = CertStoreSettings(fallback_enabled=True, backend="postgres")
         with patch(
-            "src.backend.infrastructure.security.cert_store.store.PostgresCertBackend",
+            "src.backend.infrastructure.security.cert_store.store.PostgresCertBackend"
         ):
             CertStore.from_settings(settings)
             # Не проверяем mock — нужно проверить, что store._backend wrapped

@@ -84,7 +84,7 @@ def _make_saga(calls: list[str]) -> SagaLRAProcessor:
                 ),
             ),
             SagaStep(forward=_FnProcessor("C", calls, fail=True), compensate=None),
-        ],
+        ]
     )
 
 
@@ -140,7 +140,7 @@ async def test_cancelled_error_in_compensation_propagates() -> None:
                 compensate=_RaisingProcessor("comp_A", calls, asyncio.CancelledError()),
             ),
             SagaStep(forward=_FnProcessor("B", calls, fail=True), compensate=None),
-        ],
+        ]
     )
     with pytest.raises(asyncio.CancelledError):
         await saga.process(_exchange(), _ctx())

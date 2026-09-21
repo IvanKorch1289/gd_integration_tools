@@ -22,14 +22,11 @@ class TestNotificationsFacadeAllExports:
     """``__all__`` audit + class/function identity."""
 
     @pytest.mark.parametrize(
-        "symbol_name",
-        ["AppriseNotificationService", "get_notification_service"],
+        "symbol_name", ["AppriseNotificationService", "get_notification_service"]
     )
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(notifications, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
+        assert hasattr(notifications, symbol_name), f"Missing export: {symbol_name}"
         assert symbol_name in notifications.__all__, (
             f"{symbol_name} not declared in __all__"
         )
@@ -41,7 +38,9 @@ class TestNotificationsFacadeAllExports:
     def test_module_docstring_present(self) -> None:
         """Module docstring описывает Apprise multi-channel уведомления."""
         assert notifications.__doc__ is not None
-        assert "Apprise" in notifications.__doc__ or "уведомлен" in notifications.__doc__
+        assert (
+            "Apprise" in notifications.__doc__ or "уведомлен" in notifications.__doc__
+        )
 
 
 @pytest.mark.unit

@@ -7,6 +7,7 @@ LSP provider для автодополнения DSL. Каждый step имее
 
 M14.3 audit: работает, 23 step + 12 route completions.
 """
+
 from __future__ import annotations
 
 
@@ -20,7 +21,9 @@ class TestSchemaCompletion:
             label, detail, insert_text = entry
             assert isinstance(label, str) and label, f"label пустой: {entry}"
             assert isinstance(detail, str) and detail, f"detail пустой: {entry}"
-            assert isinstance(insert_text, str) and insert_text, f"insert_text пустой: {entry}"
+            assert isinstance(insert_text, str) and insert_text, (
+                f"insert_text пустой: {entry}"
+            )
 
     def test_route_completions_have_required_fields(self) -> None:
         from tools.dsl_lsp.schema_completion import ROUTE_COMPLETIONS
@@ -36,4 +39,6 @@ class TestSchemaCompletion:
             snippet = get_step_snippet(label)
             if snippet:
                 # YAML формат — содержит `key: value`
-                assert isinstance(snippet, dict) and "properties" in snippet, f'snippet "{label}" not JSON-Schema: {snippet}'
+                assert isinstance(snippet, dict) and "properties" in snippet, (
+                    f'snippet "{label}" not JSON-Schema: {snippet}'
+                )

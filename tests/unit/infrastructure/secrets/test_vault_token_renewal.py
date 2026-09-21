@@ -19,7 +19,9 @@ from src.backend.infrastructure.secrets import vault_client as _mod
 class _MockToken:
     """Standalone mock token — Python doesn't allow referencing nested classes."""
 
-    def __init__(self, ttl: int, renewable: bool, raise_on_lookup: bool = False) -> None:
+    def __init__(
+        self, ttl: int, renewable: bool, raise_on_lookup: bool = False
+    ) -> None:
         self._ttl = ttl
         self._renewable = renewable
         self._raise_on_lookup = raise_on_lookup

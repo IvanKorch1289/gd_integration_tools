@@ -48,10 +48,7 @@ class TestPermissionStepNoRequired:
     async def test_no_required_permissions_returns_allow(self) -> None:
         decider = PermissionMixin.permission_step(())
         result = await decider(
-            principal="user-1",
-            resource="test",
-            action="read",
-            ctx={"permissions": ()},
+            principal="user-1", resource="test", action="read", ctx={"permissions": ()}
         )
         assert isinstance(result, AuthorizationReason)
         assert result.outcome == "allow"
@@ -158,9 +155,7 @@ class TestPermissionStepAllowed:
 
     @pytest.mark.asyncio
     async def test_all_required_permissions_present_returns_allow(self) -> None:
-        decider = PermissionMixin.permission_step(
-            ("role:admin", "scope:credit.read"),
-        )
+        decider = PermissionMixin.permission_step(("role:admin", "scope:credit.read"))
 
         mock_service = MagicMock()
         mock_service.is_enabled.return_value = True
@@ -187,9 +182,7 @@ class TestPermissionStepDenied:
     @pytest.mark.asyncio
     async def test_missing_some_permissions_returns_deny(self) -> None:
         """Some required permissions are missing → deny with detail."""
-        decider = PermissionMixin.permission_step(
-            ("role:admin", "scope:credit.read"),
-        )
+        decider = PermissionMixin.permission_step(("role:admin", "scope:credit.read"))
 
         mock_service = MagicMock()
         mock_service.is_enabled.return_value = True
@@ -211,9 +204,7 @@ class TestPermissionStepDenied:
 
     @pytest.mark.asyncio
     async def test_all_permissions_missing_returns_deny(self) -> None:
-        decider = PermissionMixin.permission_step(
-            ("role:admin", "scope:credit.read"),
-        )
+        decider = PermissionMixin.permission_step(("role:admin", "scope:credit.read"))
 
         mock_service = MagicMock()
         mock_service.is_enabled.return_value = True
@@ -262,7 +253,7 @@ class TestPermissionStepIntegration:
     async def test_mixed_prefixes(self) -> None:
         """Mixed role: и scope: prefixes — все required present → allow."""
         decider = PermissionMixin.permission_step(
-            ("role:user", "scope:read.public", "scope:read.private"),
+            ("role:user", "scope:read.public", "scope:read.private")
         )
 
         mock_service = MagicMock()
@@ -282,7 +273,7 @@ class TestPermissionStepIntegration:
                         "scope:read.public",
                         "scope:read.private",
                         "scope:write",
-                    ),
+                    )
                 },
             )
 

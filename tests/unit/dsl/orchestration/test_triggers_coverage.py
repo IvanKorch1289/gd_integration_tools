@@ -35,9 +35,7 @@ def _mock_dsl_service() -> AsyncMock:
 async def test_interval_trigger_dispatch_loop_and_stop() -> None:
     """Loop dispatch'ит с интервалом; stop останавливает и завершает task."""
     svc = _mock_dsl_service()
-    trigger = IntervalTrigger(
-        "t1", "route-1", interval_s=0.05, start_immediately=True
-    )
+    trigger = IntervalTrigger("t1", "route-1", interval_s=0.05, start_immediately=True)
     with patch("src.backend.dsl.service.get_dsl_service", return_value=svc):
         await trigger.start()
         await asyncio.sleep(0.15)
@@ -55,7 +53,9 @@ async def test_interval_trigger_dispatch_loop_and_stop() -> None:
 async def test_interval_trigger_idempotent_start() -> None:
     """Повторный start без stop — задача не пересоздаётся (152-156)."""
     trigger = IntervalTrigger("t1", "route-1", interval_s=10)
-    with patch("src.backend.dsl.service.get_dsl_service", return_value=_mock_dsl_service()):
+    with patch(
+        "src.backend.dsl.service.get_dsl_service", return_value=_mock_dsl_service()
+    ):
         await trigger.start()
         first_task = trigger._task
         await trigger.start()
@@ -73,9 +73,7 @@ async def test_interval_trigger_payload_callable() -> None:
         return {"n": len(calls)}
 
     svc = _mock_dsl_service()
-    trigger = IntervalTrigger(
-        "t1", "route-1", interval_s=0.05, payload=payload_factory
-    )
+    trigger = IntervalTrigger("t1", "route-1", interval_s=0.05, payload=payload_factory)
     with patch("src.backend.dsl.service.get_dsl_service", return_value=svc):
         await trigger.start()
         await asyncio.sleep(0.12)
@@ -122,7 +120,7 @@ async def test_cron_trigger_loop_dispatch_and_stop() -> None:
     fake_aps = MagicMock()
     import datetime as _dt
 
-    now = _dt.datetime.now(_dt.UTC)
+    _now = _dt.datetime.now(_dt.UTC)
     fake_aps.get_next_fire_time = MagicMock(
         side_effect=lambda a, b: b + _dt.timedelta(seconds=0.02)
     )
@@ -139,7 +137,9 @@ async def test_cron_trigger_loop_dispatch_and_stop() -> None:
 @pytest.mark.asyncio
 async def test_cron_trigger_idempotent_start() -> None:
     trigger = CronTrigger("c1", "route-1", "*/5 * * * *")
-    with patch("src.backend.dsl.service.get_dsl_service", return_value=_mock_dsl_service()):
+    with patch(
+        "src.backend.dsl.service.get_dsl_service", return_value=_mock_dsl_service()
+    ):
         await trigger.start()
         first = trigger._task
         await trigger.start()
@@ -158,7 +158,9 @@ def _fake_app() -> tuple[SimpleNamespace, list[object]]:
             SimpleNamespace(path=path, endpoint=handler, name=name, methods=methods)
         )
 
-    app = SimpleNamespace(add_api_route=add_api_route, router=SimpleNamespace(routes=routes))
+    app = SimpleNamespace(
+        add_api_route=add_api_route, router=SimpleNamespace(routes=routes)
+    )
     return app, routes
 
 
@@ -197,9 +199,7 @@ async def test_webhook_handler_dispatches_and_reports_error() -> None:
 async def test_webhook_start_without_app_defers() -> None:
     """Нет app и get_app недоступен -> defer без исключения (380-395)."""
     trigger = WebhookTrigger("wh1", "route-1", "/webhooks/orders", app=None)
-    with patch.dict(
-        "sys.modules", {"src.backend.entrypoints.api.app": None}
-    ):
+    with patch.dict("sys.modules", {"src.backend.entrypoints.api.app": None}):
         await trigger.start()
     assert trigger._route_added is False
 
@@ -351,7 +351,7 @@ async def test_cron_trigger_dispatch_failure_swallowed() -> None:
     svc.dispatch = AsyncMock(side_effect=RuntimeError("backend down"))
     trigger = CronTrigger("c1", "route-1", "* * * * *")
     fake_aps = MagicMock()
-    now = _dt.datetime.now(_dt.UTC)
+    _now = _dt.datetime.now(_dt.UTC)
     fake_aps.get_next_fire_time = MagicMock(
         side_effect=lambda a, b: b + _dt.timedelta(seconds=0.01)
     )
@@ -369,7 +369,9 @@ async def test_cron_trigger_dispatch_failure_swallowed() -> None:
 @pytest.mark.asyncio
 async def test_webhook_stop_router_error_swallowed() -> None:
     app, routes = _fake_app()
-    app.router = SimpleNamespace(routes=property(lambda self: (_ for _ in ()).throw(AttributeError("boom"))))
+    app.router = SimpleNamespace(
+        routes=property(lambda self: (_ for _ in ()).throw(AttributeError("boom")))
+    )
     trigger = WebhookTrigger("wh1", "route-1", "/webhooks/orders", app=app)
     await trigger.start()
     await trigger.stop()  # AttributeError глотается (445-451)

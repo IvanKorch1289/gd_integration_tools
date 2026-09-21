@@ -26,7 +26,7 @@ class TestAdminRole:
 class TestAdminAuthorizationError:
     def test_attributes(self) -> None:
         exc = AdminAuthorizationError(
-            required=(AdminRole.OPERATOR,), actual=frozenset({AdminRole.READ_ONLY}),
+            required=(AdminRole.OPERATOR,), actual=frozenset({AdminRole.READ_ONLY})
         )
         assert exc.status_code == 403
         detail = exc.detail
@@ -49,13 +49,13 @@ class TestExtractAdminRoles:
 
     def test_list(self) -> None:
         ctx = AuthContext(
-            AuthMethod.JWT, "u1", {"admin_roles": ["operator", "read_only"]},
+            AuthMethod.JWT, "u1", {"admin_roles": ["operator", "read_only"]}
         )
         assert extract_admin_roles(ctx) == {AdminRole.OPERATOR, AdminRole.READ_ONLY}
 
     def test_invalid_values_skipped(self) -> None:
         ctx = AuthContext(
-            AuthMethod.JWT, "u1", {"admin_roles": ["super_admin", "bogus"]},
+            AuthMethod.JWT, "u1", {"admin_roles": ["super_admin", "bogus"]}
         )
         assert extract_admin_roles(ctx) == {AdminRole.SUPER_ADMIN}
 
@@ -72,11 +72,12 @@ class TestRequireAdmin:
         # auth_context. MagicMock auto-creates attributes → getattr returns
         # MagicMock, not None, breaking fallback chain. Use SimpleNamespace.
         from types import SimpleNamespace
+
         request = MagicMock()
         request.state = SimpleNamespace(
             auth_context=AuthContext(
-                AuthMethod.JWT, "u1", {"admin_roles": ["operator"]},
-            ),
+                AuthMethod.JWT, "u1", {"admin_roles": ["operator"]}
+            )
         )
         ctx = await dep(request)
         assert ctx.principal == "u1"
@@ -85,11 +86,12 @@ class TestRequireAdmin:
     async def test_super_admin_implicit(self) -> None:
         dep = require_admin((AdminRole.OPERATOR,))
         from types import SimpleNamespace
+
         request = MagicMock()
         request.state = SimpleNamespace(
             auth_context=AuthContext(
-                AuthMethod.JWT, "u1", {"admin_roles": ["super_admin"]},
-            ),
+                AuthMethod.JWT, "u1", {"admin_roles": ["super_admin"]}
+            )
         )
         ctx = await dep(request)
         assert ctx is not None
@@ -107,7 +109,7 @@ class TestRequireAdmin:
         dep = require_admin((AdminRole.OPERATOR,))
         request = MagicMock()
         request.state.auth_context = AuthContext(
-            AuthMethod.JWT, "u1", {"admin_roles": ["read_only"]},
+            AuthMethod.JWT, "u1", {"admin_roles": ["read_only"]}
         )
         with pytest.raises(AdminAuthorizationError):
             await dep(request)

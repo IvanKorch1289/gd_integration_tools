@@ -25,16 +25,16 @@ class TestJupyterFacadeAllExports:
 
     @pytest.mark.parametrize(
         "symbol_name",
-        ["JupyterExecutionError", "NotebookExecutionService", "get_notebook_execution_service"],
+        [
+            "JupyterExecutionError",
+            "NotebookExecutionService",
+            "get_notebook_execution_service",
+        ],
     )
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(jupyter, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
-        assert symbol_name in jupyter.__all__, (
-            f"{symbol_name} not declared in __all__"
-        )
+        assert hasattr(jupyter, symbol_name), f"Missing export: {symbol_name}"
+        assert symbol_name in jupyter.__all__, f"{symbol_name} not declared in __all__"
 
     def test_all_declared_count(self) -> None:
         """``__all__`` содержит 3 символа."""

@@ -6,7 +6,6 @@
 Source: src/backend/entrypoints/middlewares/exception_handler.py
 """
 
-
 from __future__ import annotations
 
 import json
@@ -36,10 +35,7 @@ def _body_message(send: AsyncMock):
     return None
 
 
-def _make_scope(
-    path: str = "/path",
-    state: dict | None = None,
-) -> dict:
+def _make_scope(path: str = "/path", state: dict | None = None) -> dict:
     return {
         "type": "http",
         "method": "GET",
@@ -73,11 +69,7 @@ class TestExceptionHandlerEnvelopeCycle33:
         middleware = ExceptionHandlerMiddleware(app)
 
         send = AsyncMock()
-        await middleware(
-            _make_scope("/api/v1/foo"),
-            _make_receive(),
-            send,
-        )
+        await middleware(_make_scope("/api/v1/foo"), _make_receive(), send)
 
         start = _start_message(send)
         assert start is not None

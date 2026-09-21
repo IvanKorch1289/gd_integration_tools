@@ -4,6 +4,7 @@ T3 coverage sprint cycle 8: тесты для ``ExpressSendFileProcessor.__init_
 (validation), ``_load_file_bytes`` (S3 → property fallback), ``process()``
 (upload + send_message), ``to_spec``.
 """
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -51,13 +52,17 @@ def test_init_requires_file_name() -> None:
 
 
 def test_init_s3_path() -> None:
-    proc = ExpressSendFileProcessor(s3_key_from="properties.s3_key", file_name="doc.pdf")
+    proc = ExpressSendFileProcessor(
+        s3_key_from="properties.s3_key", file_name="doc.pdf"
+    )
     assert proc._s3_key_from == "properties.s3_key"
     assert proc._file_name == "doc.pdf"
 
 
 def test_init_property_path() -> None:
-    proc = ExpressSendFileProcessor(file_data_property="raw", file_name_from="body.name")
+    proc = ExpressSendFileProcessor(
+        file_data_property="raw", file_name_from="body.name"
+    )
     assert proc._file_data_property == "raw"
     assert proc._file_name_from == "body.name"
 
@@ -105,9 +110,15 @@ class _FakeClient:
         self, file_data: bytes, file_name: str, group_chat_id: str
     ) -> dict:
         self.upload_calls.append(
-            {"file_data": file_data, "file_name": file_name, "group_chat_id": group_chat_id}
+            {
+                "file_data": file_data,
+                "file_name": file_name,
+                "group_chat_id": group_chat_id,
+            }
         )
-        return {"result": {"file_id": "f-1", "filename": file_name, "size": len(file_data)}}
+        return {
+            "result": {"file_id": "f-1", "filename": file_name, "size": len(file_data)}
+        }
 
     async def send_message(self, msg: object) -> str:
         self.send_calls.append(msg)
@@ -133,26 +144,33 @@ async def _patch_send_file_deps(
     )
 
     if s3_error:
+
         async def _failing_s3(key: str) -> bytes | None:
             raise s3_error
 
-        s3_factory = lambda: MagicMock(get_object_bytes=_failing_s3)
+        def s3_factory() -> MagicMock:
+            return MagicMock(get_object_bytes=_failing_s3)
     else:
+
         async def _ok_s3(key: str) -> bytes | None:
             return s3_bytes
 
-        s3_factory = lambda: MagicMock(get_object_bytes=_ok_s3)
+        def s3_factory() -> MagicMock:
+            return MagicMock(get_object_bytes=_ok_s3)
 
     monkeypatch.setattr(
-        "src.backend.core.di.providers.cache.get_s3_client_provider",
-        lambda: s3_factory,
+        "src.backend.core.di.providers.cache.get_s3_client_provider", lambda: s3_factory
     )
     return client
 
 
 @pytest.mark.asyncio
-async def test_process_s3_path_uploads_and_sends(monkeypatch: pytest.MonkeyPatch) -> None:
-    proc = ExpressSendFileProcessor(s3_key_from="properties.s3_key", file_name="doc.pdf")
+async def test_process_s3_path_uploads_and_sends(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    proc = ExpressSendFileProcessor(
+        s3_key_from="properties.s3_key", file_name="doc.pdf"
+    )
     ex, captured = _make_exchange(properties={"s3_key": "s3/path/doc.pdf"})
 
     client = await _patch_send_file_deps(monkeypatch, s3_bytes=b"%PDF-1.4 fake")
@@ -174,7 +192,9 @@ async def test_process_s3_path_uploads_and_sends(monkeypatch: pytest.MonkeyPatch
 
 
 @pytest.mark.asyncio
-async def test_process_property_path_when_no_s3(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_process_property_path_when_no_s3(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Только file_data_property (no s3_key_from) → load from property."""
     proc = ExpressSendFileProcessor(
         file_data_property="raw_bytes", file_name_from="body.fname"
@@ -199,11 +219,11 @@ async def test_process_property_path_when_no_s3(monkeypatch: pytest.MonkeyPatch)
 
 
 @pytest.mark.asyncio
-async def test_process_property_str_encoded_to_bytes(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_process_property_str_encoded_to_bytes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """str значение property → encode utf-8."""
-    proc = ExpressSendFileProcessor(
-        file_data_property="raw", file_name="x.txt"
-    )
+    proc = ExpressSendFileProcessor(file_data_property="raw", file_name="x.txt")
     ex, _captured = _make_exchange(properties={"raw": "hello string"})
 
     client = await _patch_send_file_deps(monkeypatch)
@@ -221,9 +241,7 @@ async def test_process_property_str_encoded_to_bytes(monkeypatch: pytest.MonkeyP
 async def test_process_s3_fallback_to_property(monkeypatch: pytest.MonkeyPatch) -> None:
     """Если S3 returns None → fallback на file_data_property."""
     proc = ExpressSendFileProcessor(
-        s3_key_from="properties.s3_key",
-        file_data_property="raw",
-        file_name="f",
+        s3_key_from="properties.s3_key", file_data_property="raw", file_name="f"
     )
     ex, _captured = _make_exchange(properties={"raw": b"fallback"})
 
@@ -242,7 +260,9 @@ async def test_process_s3_fallback_to_property(monkeypatch: pytest.MonkeyPatch) 
 
 
 @pytest.mark.asyncio
-async def test_process_skips_when_chat_id_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_process_skips_when_chat_id_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     proc = ExpressSendFileProcessor(file_data_property="raw", file_name="f.txt")
     ex, captured = _make_exchange()
 
@@ -258,11 +278,11 @@ async def test_process_skips_when_chat_id_missing(monkeypatch: pytest.MonkeyPatc
 
 
 @pytest.mark.asyncio
-async def test_process_skips_when_no_file_bytes(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_process_skips_when_no_file_bytes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Нет S3, нет property bytes → fail."""
-    proc = ExpressSendFileProcessor(
-        s3_key_from="properties.s3_key", file_name="f.txt"
-    )
+    proc = ExpressSendFileProcessor(s3_key_from="properties.s3_key", file_name="f.txt")
     ex, captured = _make_exchange()
 
     await _patch_send_file_deps(monkeypatch, s3_bytes=None)
@@ -277,10 +297,11 @@ async def test_process_skips_when_no_file_bytes(monkeypatch: pytest.MonkeyPatch)
 
 
 @pytest.mark.asyncio
-async def test_process_skips_when_file_name_empty(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_process_skips_when_file_name_empty(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     proc = ExpressSendFileProcessor(
-        file_data_property="raw",
-        file_name_from="body.fname",
+        file_data_property="raw", file_name_from="body.fname"
     )
     ex, captured = _make_exchange(properties={"raw": b"data"})
 
@@ -344,7 +365,9 @@ async def test_process_exception_records_error(monkeypatch: pytest.MonkeyPatch) 
 
 
 @pytest.mark.asyncio
-async def test_process_s3_error_propagates_to_error_property(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_process_s3_error_propagates_to_error_property(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """S3 raises → propagates up to caller (no internal catch).
 
     NOTE: source _load_file_bytes() doesn't catch S3 exceptions — they
@@ -352,11 +375,15 @@ async def test_process_s3_error_propagates_to_error_property(monkeypatch: pytest
     (atomic commits, no source fix in coverage cycle), this test was
     REMOVED — the propagation is documented in inline-comment.
     """
-    pytest.skip("S3 error propagation not handled in source _load_file_bytes — documented as known issue")
+    pytest.skip(
+        "S3 error propagation not handled in source _load_file_bytes — documented as known issue"
+    )
 
 
 @pytest.mark.asyncio
-async def test_process_body_fallback_to_file_name(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_process_body_fallback_to_file_name(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Если body=None и body_from=None — используется file_name как caption."""
     proc = ExpressSendFileProcessor(file_data_property="raw", file_name="caption.txt")
     ex, _captured = _make_exchange(properties={"raw": b"x"})

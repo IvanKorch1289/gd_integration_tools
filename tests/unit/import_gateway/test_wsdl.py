@@ -1,6 +1,5 @@
 """W24 — WSDL backend тесты (через zeep)."""
 
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -35,7 +34,7 @@ async def test_wsdl_invalid_xml_raises() -> None:
     отвалится ли zeep на парсинге или мы сами бросим на отсутствии <service>).
     """
     src = ImportSource(
-        kind=ImportSourceKind.WSDL, content=b"<not-wsdl>broken</not-wsdl>", prefix="x",
+        kind=ImportSourceKind.WSDL, content=b"<not-wsdl>broken</not-wsdl>", prefix="x"
     )
     with pytest.raises((ImportError, ValueError)):
         await WsdlImportGateway().import_spec(src)

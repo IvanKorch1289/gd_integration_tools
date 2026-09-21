@@ -65,7 +65,8 @@ def test_before_with_tracer_creates_span() -> None:
     tracer.start_span.return_value = span
     ex = _exchange()
     with patch(
-        "src.backend.infrastructure.observability.tracing.get_tracer", return_value=tracer
+        "src.backend.infrastructure.observability.tracing.get_tracer",
+        return_value=tracer,
     ):
         _run(mw.before("proc1", ex, _context()))
     assert len(mw._spans) == 1

@@ -11,7 +11,6 @@ Cycle 36: middleware переписан с BaseHTTPMiddleware на pure ASGI.
 пойманы.
 """
 
-
 from __future__ import annotations
 
 from unittest.mock import AsyncMock
@@ -27,12 +26,7 @@ def _make_scope(
     headers: list[tuple[bytes, bytes]] | None = None,
 ) -> dict:
     """ASGI HTTP scope для тестов."""
-    return {
-        "type": "http",
-        "method": method,
-        "path": path,
-        "headers": headers or [],
-    }
+    return {"type": "http", "method": method, "path": path, "headers": headers or []}
 
 
 def _captured_start_headers(send: AsyncMock) -> dict[bytes, bytes]:
@@ -78,9 +72,7 @@ async def test_preserves_incoming_request_id() -> None:
     mw = RequestIDMiddleware(app)
     send = AsyncMock()
     await mw(
-        _make_scope(headers=[(b"x-request-id", b"client-req-123")]),
-        AsyncMock(),
-        send,
+        _make_scope(headers=[(b"x-request-id", b"client-req-123")]), AsyncMock(), send
     )
 
     headers = _captured_start_headers(send)
@@ -149,7 +141,7 @@ async def test_overrides_existing_response_headers() -> None:
                     (b"x-request-id", b"downstream-stale-id"),
                     (b"content-type", b"application/json"),
                 ],
-            },
+            }
         )
         await send({"type": "http.response.body", "body": b"ok"})
 
@@ -175,9 +167,7 @@ async def test_preserves_body_chunks_unchanged() -> None:
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"chunk-1"})
         await send({"type": "http.response.body", "body": b"chunk-2"})
-        await send(
-            {"type": "http.response.body", "body": b"", "more_body": False},
-        )
+        await send({"type": "http.response.body", "body": b"", "more_body": False})
 
     app.side_effect = downstream
     mw = RequestIDMiddleware(app)
@@ -186,7 +176,8 @@ async def test_preserves_body_chunks_unchanged() -> None:
 
     # Извлекаем body messages в порядке.
     body_msgs = [
-        c.args[0] for c in send.await_args_list
+        c.args[0]
+        for c in send.await_args_list
         if c.args[0]["type"] == "http.response.body"
     ]
     assert len(body_msgs) == 3
@@ -206,11 +197,7 @@ async def test_passes_through_non_http_scope() -> None:
     app.side_effect = downstream
     mw = RequestIDMiddleware(app)
     send = AsyncMock()
-    await mw(
-        {"type": "websocket", "path": "/ws", "headers": []},
-        AsyncMock(),
-        send,
-    )
+    await mw({"type": "websocket", "path": "/ws", "headers": []}, AsyncMock(), send)
     # Downstream получил scope БЕЗ модификации state.
     app.assert_awaited_once()
     scope_arg = app.await_args.args[0]

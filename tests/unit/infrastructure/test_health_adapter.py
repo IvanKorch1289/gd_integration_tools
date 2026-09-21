@@ -1,4 +1,5 @@
 """Tests for HealthAdapter."""
+
 from __future__ import annotations
 
 import pytest
@@ -11,6 +12,7 @@ async def test_adapter_wraps_health_bool_ok() -> None:
     class LegacySource:
         async def health(self) -> bool:
             return True
+
     adapter = HealthAdapter(name="legacy_src", target=LegacySource())
     result = await adapter.health(mode="fast")
     assert result.status == "ok"
@@ -22,6 +24,7 @@ async def test_adapter_wraps_health_bool_failed() -> None:
     class LegacySource:
         async def health(self) -> bool:
             return False
+
     adapter = HealthAdapter(name="legacy_src", target=LegacySource())
     result = await adapter.health(mode="fast")
     assert result.status == "failed"
@@ -32,6 +35,7 @@ async def test_adapter_wraps_healthcheck_method() -> None:
     class LegacyStorage:
         async def healthcheck(self) -> bool:
             return True
+
     adapter = HealthAdapter(name="legacy_storage", target=LegacyStorage())
     result = await adapter.health(mode="deep")
     assert result.status == "ok"
@@ -42,6 +46,7 @@ async def test_adapter_wraps_healthcheck_method() -> None:
 async def test_adapter_no_health_method() -> None:
     class NoHealth:
         pass
+
     adapter = HealthAdapter(name="no_health", target=NoHealth())
     result = await adapter.health(mode="fast")
     assert result.status == "failed"
@@ -53,6 +58,7 @@ async def test_adapter_wraps_exception() -> None:
     class BrokenSource:
         async def health(self) -> bool:
             raise ConnectionError("DNS failed")
+
     adapter = HealthAdapter(name="broken", target=BrokenSource())
     result = await adapter.health(mode="fast")
     assert result.status == "failed"

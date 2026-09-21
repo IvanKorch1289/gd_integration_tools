@@ -25,15 +25,10 @@ from src.backend.core.config.base import (
 class TestConfigBaseFacadeAllExports:
     """``__all__`` audit + class/singleton identity."""
 
-    @pytest.mark.parametrize(
-        "symbol_name",
-        ["AppBaseSettings", "SchedulerSettings"],
-    )
+    @pytest.mark.parametrize("symbol_name", ["AppBaseSettings", "SchedulerSettings"])
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(config_base, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
+        assert hasattr(config_base, symbol_name), f"Missing export: {symbol_name}"
         assert symbol_name in config_base.__all__, (
             f"{symbol_name} not declared in __all__"
         )

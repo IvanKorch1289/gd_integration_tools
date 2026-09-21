@@ -8,7 +8,6 @@ Full composition migration is deferred (multi-week work), but the
 Protocol surface is now testable.
 """
 
-
 from __future__ import annotations
 
 
@@ -53,8 +52,7 @@ class TestRouteBuilderProtocols:
         # Check docs mention the migration path
         import inspect
 
-        from src.backend.dsl.builders.base import RouteBuilder
-        from src.backend.dsl.builders.base import _protocols
+        from src.backend.dsl.builders.base import RouteBuilder, _protocols
 
         # S3-3 (M2-#21): миграционный комментарий переехал в _protocols.
         source = inspect.getsource(_protocols) + inspect.getsource(

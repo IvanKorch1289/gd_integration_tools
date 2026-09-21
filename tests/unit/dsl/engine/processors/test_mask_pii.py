@@ -9,8 +9,6 @@
 * регистрация в ProcessorRegistry.
 """
 
-
-
 from __future__ import annotations
 
 from types import SimpleNamespace
@@ -116,7 +114,7 @@ async def test_query_no_request_is_noop() -> None:
 async def test_fields_whitelist_masks_only_selected() -> None:
     proc = MaskPiiProcessor(targets=["body"], fields=["email"])
     exchange = _ex(
-        body={"email": "a@x.io", "phone": "+7 999 1234567", "note": "ничего секретного"},
+        body={"email": "a@x.io", "phone": "+7 999 1234567", "note": "ничего секретного"}
     )
     await proc.process(exchange, AsyncMock())
     body = exchange.in_message.body
@@ -132,7 +130,7 @@ async def test_fields_whitelist_masks_only_selected() -> None:
 @pytest.mark.asyncio
 async def test_custom_patterns_replace_defaults() -> None:
     proc = MaskPiiProcessor(
-        targets=["body"], patterns=[r"secret_\d+"], replacement="<hidden>",
+        targets=["body"], patterns=[r"secret_\d+"], replacement="<hidden>"
     )
     exchange = _ex(body={"key": "secret_42 и email=a@b.c"})
     await proc.process(exchange, AsyncMock())
@@ -176,10 +174,7 @@ def test_data_masking_processor_nested_dict_masking() -> None:
     # ``patterns`` принимает ключи из _DEFAULT_PATTERNS (не regex strings).
     proc = DataMaskingProcessor(patterns=["inn"], replacement="***")
     nested = {
-        "outer": {
-            "inner_inn": "ИНН 1234567890",
-            "deep": {"other_inn": "987654321012"},
-        },
+        "outer": {"inner_inn": "ИНН 1234567890", "deep": {"other_inn": "987654321012"}},
         "sibling": "no inn here",
     }
     result = proc._mask_value(nested)
@@ -195,11 +190,7 @@ def test_data_masking_processor_list_of_dicts_masking() -> None:
     from src.backend.dsl.engine.processors.business import DataMaskingProcessor
 
     proc = DataMaskingProcessor(patterns=["inn"], replacement="***")
-    data = [
-        {"a": "ИНН 1111111111"},
-        {"a": "ИНН 2222222222"},
-        {"other": "no inn"},
-    ]
+    data = [{"a": "ИНН 1111111111"}, {"a": "ИНН 2222222222"}, {"other": "no inn"}]
     result = proc._mask_value(data)
     assert result[0]["a"] == "ИНН ***"
     assert result[1]["a"] == "ИНН ***"
@@ -248,7 +239,7 @@ def test_allowed_targets_is_frozenset() -> None:
 async def test_multi_target_body_and_headers() -> None:
     proc = MaskPiiProcessor(targets=["body", "headers"])
     exchange = _ex(
-        body={"email": "u@x.io"}, headers={"X-Email": "h@x.io", "X-Trace": "tid-1"},
+        body={"email": "u@x.io"}, headers={"X-Email": "h@x.io", "X-Trace": "tid-1"}
     )
     await proc.process(exchange, AsyncMock())
     assert exchange.in_message.body["email"] == "***"
@@ -278,7 +269,7 @@ def test_to_spec_full() -> None:
             "replacement": "<X>",
             "fields": ["email"],
             "patterns": [r"\d+"],
-        },
+        }
     }
 
 

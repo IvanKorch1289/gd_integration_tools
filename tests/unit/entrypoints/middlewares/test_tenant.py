@@ -17,19 +17,21 @@ class TestTenantMiddleware:
         return TenantMiddleware(AsyncMock(), default_tenant="default")
 
     def _make_downstream(
-        self, tenant_id_to_set: str | None = None, *, with_state_tenant: str | None = None,
+        self,
+        tenant_id_to_set: str | None = None,
+        *,
+        with_state_tenant: str | None = None,
     ):
         """Создаёт downstream app, возвращающий 200 + empty body.
 
         Опционально устанавливает ``state['tenant_id']`` (имитация auth
         middleware, который мог установить tenant_id раньше).
         """
+
         async def downstream(scope, receive, send):
             if with_state_tenant is not None:
                 scope.setdefault("state", {})["tenant_id"] = with_state_tenant
-            await send(
-                {"type": "http.response.start", "status": 200, "headers": []},
-            )
+            await send({"type": "http.response.start", "status": 200, "headers": []})
             await send({"type": "http.response.body", "body": b"ok"})
 
         return downstream
@@ -62,10 +64,7 @@ class TestTenantMiddleware:
                     "type": "http",
                     "method": "GET",
                     "path": "/api",
-                    "headers": [
-                        (b"host", b"test"),
-                        (b"x-tenant-id", b"tenant-42"),
-                    ],
+                    "headers": [(b"host", b"test"), (b"x-tenant-id", b"tenant-42")],
                 },
                 AsyncMock(),
                 send,
@@ -81,6 +80,7 @@ class TestTenantMiddleware:
         from src.backend.entrypoints.middlewares.tenant import TenantMiddleware
 
         app = AsyncMock()
+
         # Downstream устанавливает state['tenant_id'] (как auth middleware).
         async def downstream(scope, receive, send):
             scope.setdefault("state", {})["tenant_id"] = "state-tenant"
@@ -147,6 +147,7 @@ class TestTenantMiddleware:
         from src.backend.entrypoints.middlewares.tenant import TenantMiddleware
 
         app = AsyncMock()
+
         # Downstream устанавливает state['tenant_id'] (НО header должен выиграть).
         async def downstream(scope, receive, send):
             scope.setdefault("state", {})["tenant_id"] = "state-tenant"
@@ -167,10 +168,7 @@ class TestTenantMiddleware:
                     "type": "http",
                     "method": "GET",
                     "path": "/api",
-                    "headers": [
-                        (b"host", b"test"),
-                        (b"x-tenant-id", b"header-tenant"),
-                    ],
+                    "headers": [(b"host", b"test"), (b"x-tenant-id", b"header-tenant")],
                 },
                 AsyncMock(),
                 send,

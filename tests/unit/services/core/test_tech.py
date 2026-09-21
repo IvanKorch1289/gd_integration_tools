@@ -63,7 +63,7 @@ async def test_get_langfuse_link(service: TechService) -> None:
             mock_settings.app.langfuse_url = "http://lf"
             await service.get_langfuse_link()
             mock_gen.assert_called_once_with(
-                "http://lf", "LangFuse — LLM Observability",
+                "http://lf", "LangFuse — LLM Observability"
             )
 
 
@@ -74,7 +74,7 @@ async def test_get_langgraph_link(service: TechService) -> None:
             mock_settings.app.langgraph_url = "http://lg"
             await service.get_langgraph_link()
             mock_gen.assert_called_once_with(
-                "http://lg", "LangGraph Studio — AI Agents",
+                "http://lg", "LangGraph Studio — AI Agents"
             )
 
 
@@ -94,7 +94,9 @@ def aggregator_override():
 
 
 @pytest.mark.asyncio
-async def test_check_database_healthy(service: TechService, aggregator_override) -> None:
+async def test_check_database_healthy(
+    service: TechService, aggregator_override
+) -> None:
     aggregator_override.check_single = AsyncMock(
         return_value={"name": "db_main", "status": "ok", "latency_ms": 1.0}
     )
@@ -159,7 +161,7 @@ async def test_check_all_services_maps_statuses(
 @pytest.mark.asyncio
 async def test_get_degradation_snapshot(service: TechService) -> None:
     with patch(
-        "src.backend.core.resilience.graceful_degradation.get_graceful_degradation_registry",
+        "src.backend.core.resilience.graceful_degradation.get_graceful_degradation_registry"
     ) as mock_reg:
         mock_reg.return_value.snapshot.return_value = {"feature": {"state": "ok"}}
         result = await service.get_degradation_snapshot()
@@ -192,15 +194,15 @@ def _polars_available() -> bool:
     """Безопасная проверка доступности polars (может быть partial import)."""
     try:
         import importlib.util
+
         spec = importlib.util.find_spec("polars")
         return spec is not None
-    except (ValueError, ModuleNotFoundError, AttributeError):
+    except ValueError, ModuleNotFoundError, AttributeError:
         return False
 
 
 @pytest.mark.skipif(
-    not _polars_available(),
-    reason="polars not installed (defer to integration env)",
+    not _polars_available(), reason="polars not installed (defer to integration env)"
 )
 @pytest.mark.asyncio
 async def test_upload_excel_for_mass_create(service: TechService) -> None:
@@ -225,12 +227,15 @@ async def test_upload_excel_for_mass_create(service: TechService) -> None:
     fake_service.request_schema = FakeSchema
     fake_service.get_or_add.return_value = {"id": 1}
 
-    with patch(
-        "src.backend.services.core.tech.get_service_for_model",
-        return_value=fake_service,
-    ), patch(
-        "polars.read_excel",
-        return_value=pl.DataFrame({"name": ["A"], "amount": [10]}),
+    with (
+        patch(
+            "src.backend.services.core.tech.get_service_for_model",
+            return_value=fake_service,
+        ),
+        patch(
+            "polars.read_excel",
+            return_value=pl.DataFrame({"name": ["A"], "amount": [10]}),
+        ),
     ):
         result = await service.upload_excel_for_mass_create(
             b"",

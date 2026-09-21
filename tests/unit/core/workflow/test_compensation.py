@@ -42,10 +42,7 @@ class TestCompensateWorkflowRequest:
 
     def test_minimal_required_fields(self) -> None:
         """workflow_id and reason are required; everything else defaults."""
-        req = CompensateWorkflowRequest(
-            workflow_id="wf-123",
-            reason="step_3_failed",
-        )
+        req = CompensateWorkflowRequest(workflow_id="wf-123", reason="step_3_failed")
         assert req.workflow_id == "wf-123"
         assert req.reason == "step_3_failed"
         assert req.compensation_steps == []  # default empty list
@@ -95,13 +92,13 @@ class TestCompensateWorkflowRequest:
         """
         # Forward order (caller mistake)
         req1 = CompensateWorkflowRequest(
-            workflow_id="wf", reason="r", compensation_steps=["step1", "step2"],
+            workflow_id="wf", reason="r", compensation_steps=["step1", "step2"]
         )
         assert req1.compensation_steps == ["step1", "step2"]
 
         # Reverse order (correct usage)
         req2 = CompensateWorkflowRequest(
-            workflow_id="wf", reason="r", compensation_steps=["step2", "step1"],
+            workflow_id="wf", reason="r", compensation_steps=["step2", "step1"]
         )
         assert req2.compensation_steps == ["step2", "step1"]
 

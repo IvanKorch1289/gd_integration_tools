@@ -21,7 +21,6 @@ from typing import Any
 
 import pytest
 
-
 # All 22 Protocol class names added in cycle 244 (20 new) + 2 pre-existing.
 # Categorized: INSTANCE protocols describe RouteBuilder methods (isinstance check
 # against RouteBuilder should pass). MODULE protocols describe static helpers or
@@ -51,10 +50,7 @@ INSTANCE_PROTOCOLS = (
 )
 
 # Module-/mixin-level contracts — not satisfied by RouteBuilder directly.
-MODULE_PROTOCOLS = (
-    "_RouteProcessorSteps",
-    "_RouteCollectionProtocol",
-)
+MODULE_PROTOCOLS = ("_RouteProcessorSteps", "_RouteCollectionProtocol")
 
 CYCLE_244_PROTOCOLS = INSTANCE_PROTOCOLS + MODULE_PROTOCOLS
 
@@ -163,7 +159,8 @@ def test_protocol_count_meets_sprint45_target() -> None:
     protocol_classes = [
         name
         for name in dir(base)
-        if name.startswith("_Route") and name.endswith("Protocol")
+        if name.startswith("_Route")
+        and name.endswith("Protocol")
         or name in {"_RouteCore", "_RouteProcessorSteps"}
     ]
     assert len(protocol_classes) >= 20, (

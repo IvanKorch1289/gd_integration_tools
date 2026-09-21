@@ -3,6 +3,7 @@
 Encoding detection по BOM + UTF-8 validation (Ponytail YAGNI: stdlib only).
 Pattern (D277): thin wrapper.
 """
+
 from __future__ import annotations
 
 
@@ -11,6 +12,7 @@ class TestEncodingDetectProcessor:
         from src.backend.dsl.engine.processors.rpa.encoding_detect import (
             EncodingDetectProcessor,
         )
+
         proc = EncodingDetectProcessor()
         assert proc is not None
 
@@ -18,6 +20,7 @@ class TestEncodingDetectProcessor:
         from src.backend.dsl.engine.processors.rpa.encoding_detect import (
             EncodingDetectProcessor,
         )
+
         proc = EncodingDetectProcessor()
         enc = proc.detect(b"\xef\xbb\xbfHello, world!")
         assert enc == "utf-8-sig"
@@ -26,6 +29,7 @@ class TestEncodingDetectProcessor:
         from src.backend.dsl.engine.processors.rpa.encoding_detect import (
             EncodingDetectProcessor,
         )
+
         proc = EncodingDetectProcessor()
         enc = proc.detect(b"\xff\xfeH\x00e\x00l\x00l\x00o\x00")
         assert enc == "utf-16-le"
@@ -34,6 +38,7 @@ class TestEncodingDetectProcessor:
         from src.backend.dsl.engine.processors.rpa.encoding_detect import (
             EncodingDetectProcessor,
         )
+
         proc = EncodingDetectProcessor()
         enc = proc.detect(b"\xfe\xff\x00H\x00e\x00l\x00l\x00o\x00")
         assert enc == "utf-16-be"
@@ -42,6 +47,7 @@ class TestEncodingDetectProcessor:
         from src.backend.dsl.engine.processors.rpa.encoding_detect import (
             EncodingDetectProcessor,
         )
+
         proc = EncodingDetectProcessor()
         # Валидный UTF-8 без BOM
         enc = proc.detect("Hello, мир!".encode())
@@ -51,6 +57,7 @@ class TestEncodingDetectProcessor:
         from src.backend.dsl.engine.processors.rpa.encoding_detect import (
             EncodingDetectProcessor,
         )
+
         proc = EncodingDetectProcessor()
         # Байты которые невалидны в UTF-8
         enc = proc.detect(bytes([0xC0, 0xC1, 0xF5, 0xF6]))
@@ -61,6 +68,7 @@ class TestEncodingDetectProcessor:
         from src.backend.dsl.engine.processors.rpa.encoding_detect import (
             EncodingDetectProcessor,
         )
+
         proc = EncodingDetectProcessor()
         enc = proc.detect(b"")
         assert enc == "utf-8"  # default для пустого файла

@@ -108,13 +108,13 @@ class TestInvoke:
         """S2 fix: whitelist с exact match — module разрешён."""
         reg = SkillRegistry()
         reg._skills["s1"] = SkillSpec(
-            id="s1", version="1", handler="extensions.credit:fn",
+            id="s1", version="1", handler="extensions.credit:fn"
         )
         fake_mod = MagicMock()
         fake_mod.fn = MagicMock(return_value=42)
         with patch("importlib.import_module", return_value=fake_mod):
             result = await reg.invoke(
-                "s1", whitelist={"extensions.credit", "other.module"},
+                "s1", whitelist={"extensions.credit", "other.module"}
             )
         assert result == 42
 
@@ -122,22 +122,18 @@ class TestInvoke:
         """S2 fix: whitelist с glob-паттерном ``prefix.*`` — module разрешён."""
         reg = SkillRegistry()
         reg._skills["s1"] = SkillSpec(
-            id="s1", version="1", handler="extensions.credit.sub:fn",
+            id="s1", version="1", handler="extensions.credit.sub:fn"
         )
         fake_mod = MagicMock()
         fake_mod.fn = MagicMock(return_value=42)
         with patch("importlib.import_module", return_value=fake_mod):
-            result = await reg.invoke(
-                "s1", whitelist={"extensions.credit.*"},
-            )
+            result = await reg.invoke("s1", whitelist={"extensions.credit.*"})
         assert result == 42
 
     async def test_whitelist_denied(self) -> None:
         """S2 fix: module не в whitelist — PermissionError, без import."""
         reg = SkillRegistry()
-        reg._skills["s1"] = SkillSpec(
-            id="s1", version="1", handler="os.system:rm",
-        )
+        reg._skills["s1"] = SkillSpec(id="s1", version="1", handler="os.system:rm")
         # import НЕ должен вызываться — guard срабатывает раньше
         with patch("importlib.import_module") as mock_imp:
             with pytest.raises(PermissionError, match="not in whitelist"):
@@ -154,9 +150,7 @@ class TestInvoke:
         """
 
         reg = SkillRegistry()
-        reg._skills["s1"] = SkillSpec(
-            id="s1", version="1", handler="any.module:fn",
-        )
+        reg._skills["s1"] = SkillSpec(id="s1", version="1", handler="any.module:fn")
         with pytest.raises(PermissionError, match="whitelist required"):
             # feature_flags.call_function_whitelist_strict=True default → PermissionError.
             await reg.invoke("s1")
@@ -169,9 +163,7 @@ class TestInvoke:
         feature_flags.call_function_whitelist_strict = False
         try:
             reg = SkillRegistry()
-            reg._skills["s1"] = SkillSpec(
-                id="s1", version="1", handler="any.module:fn",
-            )
+            reg._skills["s1"] = SkillSpec(id="s1", version="1", handler="any.module:fn")
             fake_mod = MagicMock()
             fake_mod.fn = MagicMock(return_value="ok")
             with patch("importlib.import_module", return_value=fake_mod):

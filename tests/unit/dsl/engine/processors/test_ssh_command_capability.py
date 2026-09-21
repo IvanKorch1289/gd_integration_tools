@@ -24,17 +24,13 @@ class TestSshCommandCapabilityParity:
 
     def test_required_capability_classvar(self) -> None:
         """``SshCommandProcessor.required_capability = 'rpa.shell.exec'``."""
-        assert (
-            SshCommandProcessor.required_capability == "rpa.shell.exec"
-        ), (
+        assert SshCommandProcessor.required_capability == "rpa.shell.exec", (
             f"Expected 'rpa.shell.exec', got {SshCommandProcessor.required_capability!r}"
         )
 
     def test_audit_event_classvar(self) -> None:
         """``SshCommandProcessor.audit_event = 'rpa.shell.exec'``."""
-        assert (
-            SshCommandProcessor.audit_event == "rpa.shell.exec"
-        ), (
+        assert SshCommandProcessor.audit_event == "rpa.shell.exec", (
             f"Expected 'rpa.shell.exec', got {SshCommandProcessor.audit_event!r}"
         )
 

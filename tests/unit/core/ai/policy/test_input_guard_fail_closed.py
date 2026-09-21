@@ -30,7 +30,7 @@ async def test_provider_failure_fail_closed_by_default() -> None:
     ref = GuardRef(name="lakera:strict", on_block="warn")
 
     with patch(
-        "src.backend.services.ai.guardrails.lakera_client.LakeraClient",
+        "src.backend.services.ai.guardrails.lakera_client.LakeraClient"
     ) as mock_cls:
         mock_client = MagicMock()
         mock_client.screen = AsyncMock(side_effect=RuntimeError("network timeout"))
@@ -51,12 +51,12 @@ async def test_provider_failure_with_fail_open_warns() -> None:
 
     with (
         patch(
-            "src.backend.services.ai.guardrails.lakera_client.LakeraClient",
+            "src.backend.services.ai.guardrails.lakera_client.LakeraClient"
         ) as mock_cls,
         patch(
             # Patch at LOOKUP location, not source location (import shadows
             # the source name in destination module's namespace).
-            "src.backend.core.ai.policy.enforcer.input_guard_mixin.emit_audit_safe",
+            "src.backend.core.ai.policy.enforcer.input_guard_mixin.emit_audit_safe"
         ) as mock_audit,
     ):
         mock_client = MagicMock()
@@ -94,7 +94,7 @@ async def test_flagged_input_blocks_even_with_fail_open() -> None:
     ref = GuardRef(name="lakera:strict", on_block="fail", fail_open=True)
 
     with patch(
-        "src.backend.services.ai.guardrails.lakera_client.LakeraClient",
+        "src.backend.services.ai.guardrails.lakera_client.LakeraClient"
     ) as mock_cls:
         mock_result = MagicMock()
         mock_result.flagged = True
@@ -115,7 +115,7 @@ async def test_successful_guard_returns_passed() -> None:
     ref = GuardRef(name="lakera:strict", on_block="fail")
 
     with patch(
-        "src.backend.services.ai.guardrails.lakera_client.LakeraClient",
+        "src.backend.services.ai.guardrails.lakera_client.LakeraClient"
     ) as mock_cls:
         mock_result = MagicMock()
         mock_result.flagged = False
@@ -148,4 +148,6 @@ async def test_no_api_key_fail_closed(monkeypatch: pytest.MonkeyPatch) -> None:
         await enforcer._guard_input_lakera("malicious", ref, "fail")
 
     # Должно подняться GuardrailViolationError (fail-closed)
-    assert "guard_provider_unavailable" in str(exc_info.value) or "LAKERA_API_KEY" in str(exc_info.value)
+    assert "guard_provider_unavailable" in str(
+        exc_info.value
+    ) or "LAKERA_API_KEY" in str(exc_info.value)

@@ -17,11 +17,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from tools.pip_audit_gate import (
-    _CANONICAL_ALLOWLIST,
-    _load_allowlist,
-    IGNORED_VULNS,
-)
+from tools.pip_audit_gate import _CANONICAL_ALLOWLIST, IGNORED_VULNS, _load_allowlist
 
 
 def test_canonical_allowlist_exists() -> None:

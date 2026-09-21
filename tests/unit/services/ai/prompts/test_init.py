@@ -24,17 +24,12 @@ class TestPromptsFacadeAllExports:
     """``__all__`` audit + class/callable identity."""
 
     @pytest.mark.parametrize(
-        "symbol_name",
-        ["LangfusePromptStorage", "PromptEntry", "get_prompt_storage"],
+        "symbol_name", ["LangfusePromptStorage", "PromptEntry", "get_prompt_storage"]
     )
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(prompts, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
-        assert symbol_name in prompts.__all__, (
-            f"{symbol_name} not declared in __all__"
-        )
+        assert hasattr(prompts, symbol_name), f"Missing export: {symbol_name}"
+        assert symbol_name in prompts.__all__, f"{symbol_name} not declared in __all__"
 
     def test_all_declared_count(self) -> None:
         """``__all__`` содержит 3 символа."""

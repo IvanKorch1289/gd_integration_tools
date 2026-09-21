@@ -60,9 +60,7 @@ def test_set_correlation_context_all_three() -> None:
     from src.backend.core.observability import correlation
 
     correlation.set_correlation_context(
-        correlation_id="cid-123",
-        request_id="req-456",
-        tenant_id="tenant-789",
+        correlation_id="cid-123", request_id="req-456", tenant_id="tenant-789"
     )
     assert correlation.get_correlation_id() == "cid-123"
     assert correlation.get_request_id() == "req-456"

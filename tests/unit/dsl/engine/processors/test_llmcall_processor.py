@@ -67,11 +67,15 @@ class TestLLMCallProcessor:
             "model": "gpt-4-0613",
         }
 
-        with patch(
-            "src.backend.core.config.features.feature_flags", _mock_flags(enforce=False),
-        ), patch(
-            "src.backend.services.ai.ai_agent.get_ai_agent_service",
-            return_value=mock_agent,
+        with (
+            patch(
+                "src.backend.core.config.features.feature_flags",
+                _mock_flags(enforce=False),
+            ),
+            patch(
+                "src.backend.services.ai.ai_agent.get_ai_agent_service",
+                return_value=mock_agent,
+            ),
         ):
             await proc.process(exchange, _Context())
 
@@ -99,11 +103,15 @@ class TestLLMCallProcessor:
         mock_agent = AsyncMock()
         mock_agent.chat.return_value = "ok"
 
-        with patch(
-            "src.backend.core.config.features.feature_flags", _mock_flags(enforce=False),
-        ), patch(
-            "src.backend.services.ai.ai_agent.get_ai_agent_service",
-            return_value=mock_agent,
+        with (
+            patch(
+                "src.backend.core.config.features.feature_flags",
+                _mock_flags(enforce=False),
+            ),
+            patch(
+                "src.backend.services.ai.ai_agent.get_ai_agent_service",
+                return_value=mock_agent,
+            ),
         ):
             await proc.process(exchange, _Context())
 
@@ -119,11 +127,15 @@ class TestLLMCallProcessor:
         mock_agent = AsyncMock()
         mock_agent.chat.side_effect = RuntimeError("rate limit 429")
 
-        with patch(
-            "src.backend.core.config.features.feature_flags", _mock_flags(enforce=False),
-        ), patch(
-            "src.backend.services.ai.ai_agent.get_ai_agent_service",
-            return_value=mock_agent,
+        with (
+            patch(
+                "src.backend.core.config.features.feature_flags",
+                _mock_flags(enforce=False),
+            ),
+            patch(
+                "src.backend.services.ai.ai_agent.get_ai_agent_service",
+                return_value=mock_agent,
+            ),
         ):
             await proc.process(exchange, _Context())
 
@@ -138,16 +150,20 @@ class TestLLMCallProcessor:
         mock_agent = AsyncMock()
         mock_agent.chat.side_effect = TimeoutError("timeout")
 
-        with patch(
-            "src.backend.core.config.features.feature_flags", _mock_flags(enforce=False),
-        ), patch(
-            "src.backend.services.ai.ai_agent.get_ai_agent_service",
-            return_value=mock_agent,
+        with (
+            patch(
+                "src.backend.core.config.features.feature_flags",
+                _mock_flags(enforce=False),
+            ),
+            patch(
+                "src.backend.services.ai.ai_agent.get_ai_agent_service",
+                return_value=mock_agent,
+            ),
         ):
             await proc.process(exchange, _Context())
 
         assert "LLM call failed after 2 attempts" in exchange.properties.get(
-            "_error", "",
+            "_error", ""
         )
         assert mock_agent.chat.await_count == 2
 
@@ -167,9 +183,13 @@ class TestLLMCallProcessor:
                 raise ImportError("no module")
             return real_import(name, *args, **kwargs)
 
-        with patch(
-            "src.backend.core.config.features.feature_flags", _mock_flags(enforce=False),
-        ), patch.dict("sys.modules", {}, clear=False):
+        with (
+            patch(
+                "src.backend.core.config.features.feature_flags",
+                _mock_flags(enforce=False),
+            ),
+            patch.dict("sys.modules", {}, clear=False),
+        ):
             for k in list(sys.modules.keys()):
                 if k == "src.backend.services.ai.ai_agent":
                     del sys.modules[k]
@@ -190,9 +210,13 @@ class TestLLMCallProcessor:
         mock_response.tokens_completion = 50
         mock_response.model_used = "gpt-4-0613"
 
-        with patch(
-            "src.backend.core.config.features.feature_flags", _mock_flags(enforce=True),
-        ), patch("src.backend.core.ai.gateway.AIGateway") as MockGW:
+        with (
+            patch(
+                "src.backend.core.config.features.feature_flags",
+                _mock_flags(enforce=True),
+            ),
+            patch("src.backend.core.ai.gateway.AIGateway") as MockGW,
+        ):
             MockGW.return_value.invoke = AsyncMock(return_value=mock_response)
             await proc.process(exchange, _Context())
 

@@ -21,6 +21,7 @@ from src.backend.entrypoints.api.mobile import router as mobile_router
 @pytest.mark.asyncio
 async def test_demo_auth_disabled_returns_401(monkeypatch: pytest.MonkeyPatch) -> None:
     """Production (flag OFF) — 401 на любой mobile:* токен."""
+
     # Мокаем feature_flags так, чтобы mobile_demo_auth_enabled = False
     class _Flags:
         mobile_demo_auth_enabled = False
@@ -56,6 +57,7 @@ async def test_demo_auth_enabled_accepts_mobile_token(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """dev_light (flag ON) — mobile:<user>:<token> принимается, user_id возвращается."""
+
     class _Flags:
         mobile_demo_auth_enabled = True
 
@@ -72,6 +74,7 @@ async def test_demo_auth_enabled_malformed_returns_401(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """dev_light (flag ON), но token не формата mobile:<user>:<token> → 401."""
+
     class _Flags:
         mobile_demo_auth_enabled = True
 
@@ -89,6 +92,7 @@ async def test_feature_flags_unavailable_fails_closed(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Если feature_flags module недоступен (ImportError) → fail-CLOSED."""
+
     def _raise(*args: object, **kwargs: object) -> object:
         raise ImportError("simulated missing feature_flags")
 

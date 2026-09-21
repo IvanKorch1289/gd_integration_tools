@@ -64,7 +64,7 @@ class _TrackingDictRedis:
         return self._data.get(key)
 
     async def set(
-        self, key: str, value: bytes, *, ex: int | None = None, **_: Any,
+        self, key: str, value: bytes, *, ex: int | None = None, **_: Any
     ) -> bool:
         self._data[key] = value
         self.set_calls.append((key, value, ex))
@@ -103,7 +103,7 @@ def fake_redis() -> Any:
 
 @pytest.fixture
 def token_registry(
-    fake_redis: Any, key_provider: StaticAESGCMKeyProvider,
+    fake_redis: Any, key_provider: StaticAESGCMKeyProvider
 ) -> RedisTokenRegistry:
     return RedisTokenRegistry(redis_client=fake_redis, key_provider=key_provider)
 
@@ -117,7 +117,7 @@ def audit_service() -> AsyncMock:
 
 @pytest.fixture
 def tokenizer(
-    token_registry: RedisTokenRegistry, audit_service: AsyncMock,
+    token_registry: RedisTokenRegistry, audit_service: AsyncMock
 ) -> PIITokenizer:
     return PIITokenizer(
         token_registry=token_registry,
@@ -151,10 +151,7 @@ async def test_mask_reversible_persists_token_map_to_redis_with_tenant_key(
     text = "Иванов И.И., ИНН 7707083893, тел. +7-999-123-45-67."
 
     _masked, token_map = await tokenizer.mask_reversible(
-        text,
-        policy_banking,
-        tenant_id="credit_premium",
-        correlation_id="req-abc-123",
+        text, policy_banking, tenant_id="credit_premium", correlation_id="req-abc-123"
     )
 
     # TokenMap в памяти всё равно возвращается (backward-compat):
@@ -173,18 +170,13 @@ async def test_mask_reversible_persists_token_map_to_redis_with_tenant_key(
 
 @pytest.mark.asyncio
 async def test_mask_reversible_ttl_propagated_to_redis(
-    tokenizer: PIITokenizer,
-    fake_redis: Any,
-    policy_banking: PIIPolicy,
+    tokenizer: PIITokenizer, fake_redis: Any, policy_banking: PIIPolicy
 ) -> None:
     """TTL = policy.ttl_s пробрасывается в Redis.set(ex=...)."""
     text = "Иванов И.И."
 
     await tokenizer.mask_reversible(
-        text,
-        policy_banking,
-        tenant_id="t1",
-        correlation_id="c1",
+        text, policy_banking, tenant_id="t1", correlation_id="c1"
     )
 
     # Ищем запись в fake_redis (DictRedis.set_calls):
@@ -200,7 +192,7 @@ async def test_mask_reversible_ttl_propagated_to_redis(
 
 @pytest.mark.asyncio
 async def test_mask_reversible_without_tenant_id_keeps_token_map_in_memory(
-    tokenizer: PIITokenizer, fake_redis: Any, policy_banking: PIIPolicy,
+    tokenizer: PIITokenizer, fake_redis: Any, policy_banking: PIIPolicy
 ) -> None:
     """Без tenant_id/correlation_id — TokenMap НЕ персистится (no Redis write)."""
     text = "Иванов И.И."
@@ -222,7 +214,7 @@ async def test_mask_reversible_without_tenant_id_keeps_token_map_in_memory(
 @_XFAIL_FEATURES
 @pytest.mark.asyncio
 async def test_mask_reversible_persist_false_opt_out_keeps_in_memory(
-    tokenizer: PIITokenizer, fake_redis: Any, policy_banking: PIIPolicy,
+    tokenizer: PIITokenizer, fake_redis: Any, policy_banking: PIIPolicy
 ) -> None:
     """persist_to_redis=False — opt-out от Redis-персистенции."""
     text = "Иванов И.И."
@@ -245,14 +237,11 @@ async def test_mask_reversible_persist_false_opt_out_keeps_in_memory(
 @_XFAIL_FEATURES
 @pytest.mark.asyncio
 async def test_mask_reversible_audit_marks_persisted_flag(
-    tokenizer: PIITokenizer, audit_service: AsyncMock, policy_banking: PIIPolicy,
+    tokenizer: PIITokenizer, audit_service: AsyncMock, policy_banking: PIIPolicy
 ) -> None:
     """Audit-event для mask содержит ``persisted=True`` при успешной persist."""
     await tokenizer.mask_reversible(
-        "Иванов И.И.",
-        policy_banking,
-        tenant_id="t1",
-        correlation_id="c1",
+        "Иванов И.И.", policy_banking, tenant_id="t1", correlation_id="c1"
     )
     mask_calls = [
         c.kwargs
@@ -266,7 +255,7 @@ async def test_mask_reversible_audit_marks_persisted_flag(
 @_XFAIL_FEATURES
 @pytest.mark.asyncio
 async def test_mask_reversible_audit_persisted_false_without_ids(
-    tokenizer: PIITokenizer, audit_service: AsyncMock, policy_banking: PIIPolicy,
+    tokenizer: PIITokenizer, audit_service: AsyncMock, policy_banking: PIIPolicy
 ) -> None:
     """Audit-event ``persisted=False`` когда tenant_id/correlation_id отсутствуют."""
     await tokenizer.mask_reversible("Иванов И.И.", policy_banking)
@@ -285,21 +274,18 @@ async def test_mask_reversible_audit_persisted_false_without_ids(
 @_XFAIL_FEATURES
 @pytest.mark.asyncio
 async def test_unmask_by_key_restores_text_from_redis(
-    tokenizer: PIITokenizer, policy_banking: PIIPolicy,
+    tokenizer: PIITokenizer, policy_banking: PIIPolicy
 ) -> None:
     """unmask_by_key восстанавливает текст через Redis-retrieved TokenMap."""
     text = "Иванов И.И., ИНН 7707083893, тел. +7-999-123-45-67."
 
     masked, _ = await tokenizer.mask_reversible(
-        text,
-        policy_banking,
-        tenant_id="credit_premium",
-        correlation_id="req-xyz-789",
+        text, policy_banking, tenant_id="credit_premium", correlation_id="req-xyz-789"
     )
 
     # Симулируем "другой процесс" — тот же tokenizer, тот же Redis:
     unmasked = await tokenizer.unmask_by_key(
-        masked, tenant_id="credit_premium", correlation_id="req-xyz-789",
+        masked, tenant_id="credit_premium", correlation_id="req-xyz-789"
     )
     assert unmasked == text
 
@@ -307,7 +293,7 @@ async def test_unmask_by_key_restores_text_from_redis(
 @_XFAIL_FEATURES
 @pytest.mark.asyncio
 async def test_unmask_by_key_with_missing_key_returns_input_and_emits_failure(
-    tokenizer: PIITokenizer, audit_service: AsyncMock, policy_banking: PIIPolicy,
+    tokenizer: PIITokenizer, audit_service: AsyncMock, policy_banking: PIIPolicy
 ) -> None:
     """При miss в Redis — masked_text возвращается + audit outcome=failure."""
     unmasked = await tokenizer.unmask_by_key(
@@ -343,24 +329,19 @@ async def test_unmask_by_key_without_registry_raises_runtime_error(
     )
     with pytest.raises(RuntimeError, match="token_registry"):
         await tokenizer.unmask_by_key(
-            "<PERSON_a8f3> привет",
-            tenant_id="t",
-            correlation_id="c",
+            "<PERSON_a8f3> привет", tenant_id="t", correlation_id="c"
         )
 
 
 @_XFAIL_FEATURES
 @pytest.mark.asyncio
 async def test_unmask_by_key_emits_audit_with_restored_count(
-    tokenizer: PIITokenizer, audit_service: AsyncMock, policy_banking: PIIPolicy,
+    tokenizer: PIITokenizer, audit_service: AsyncMock, policy_banking: PIIPolicy
 ) -> None:
     """Успешный unmask_by_key эмитит audit с tokens_restored > 0."""
     text = "Иванов И.И., ИНН 7707083893."
     masked, _ = await tokenizer.mask_reversible(
-        text,
-        policy_banking,
-        tenant_id="t1",
-        correlation_id="c1",
+        text, policy_banking, tenant_id="t1", correlation_id="c1"
     )
     audit_service.emit.reset_mock()
 
@@ -387,9 +368,7 @@ class _StubCapabilityGate:
         self.allow = allow
         self.calls: list[tuple[str, str, str | None]] = []
 
-    def check(
-        self, plugin: str, capability: str, requested_scope: str | None,
-    ) -> None:
+    def check(self, plugin: str, capability: str, requested_scope: str | None) -> None:
         self.calls.append((plugin, capability, requested_scope))
         if not self.allow:
             from src.backend.core.security.capabilities.errors import (
@@ -429,7 +408,7 @@ async def test_mask_reversible_require_capability_calls_gate_when_provided(
     )
 
     assert gate.calls == [
-        ("core.pii_tokenizer", "pii.tokenize.reversible.banking", "banking"),
+        ("core.pii_tokenizer", "pii.tokenize.reversible.banking", "banking")
     ]
 
 
@@ -490,8 +469,7 @@ async def test_mask_reversible_capability_denied_propagates_error(
 @_XFAIL_FEATURES
 @pytest.mark.asyncio
 async def test_mask_reversible_without_capability_gate_runs_without_check(
-    tokenizer: PIITokenizer,
-    policy_banking: PIIPolicy,
+    tokenizer: PIITokenizer, policy_banking: PIIPolicy
 ) -> None:
     """capability_gate=None + require_capability=True → no-op (backward-compat)."""
     # tokenizer уже создан без capability_gate (фикстура tokenizer).
@@ -521,10 +499,7 @@ async def test_unmask_by_key_require_capability_calls_gate(
         capability_gate=gate,
     )
     masked, _ = await tokenizer.mask_reversible(
-        "Иванов И.И.",
-        policy_banking,
-        tenant_id="t1",
-        correlation_id="c1",
+        "Иванов И.И.", policy_banking, tenant_id="t1", correlation_id="c1"
     )
     gate.calls.clear()
 
@@ -537,7 +512,7 @@ async def test_unmask_by_key_require_capability_calls_gate(
     )
 
     assert gate.calls == [
-        ("core.pii_tokenizer", "pii.tokenize.reversible.banking", "banking"),
+        ("core.pii_tokenizer", "pii.tokenize.reversible.banking", "banking")
     ]
 
 
@@ -562,7 +537,9 @@ async def test_mask_reversible_redis_failure_does_not_break_main_flow(
         async def delete(self, key: str) -> int:
             return 0
 
-    registry = RedisTokenRegistry(redis_client=_BrokenRedis(), key_provider=key_provider)
+    registry = RedisTokenRegistry(
+        redis_client=_BrokenRedis(), key_provider=key_provider
+    )
     tokenizer = PIITokenizer(
         token_registry=registry,
         audit=audit_service,
@@ -570,10 +547,7 @@ async def test_mask_reversible_redis_failure_does_not_break_main_flow(
     )
 
     masked, token_map = await tokenizer.mask_reversible(
-        "Иванов И.И.",
-        policy_banking,
-        tenant_id="t1",
-        correlation_id="c1",
+        "Иванов И.И.", policy_banking, tenant_id="t1", correlation_id="c1"
     )
 
     assert masked  # Основной flow не сломан
@@ -594,14 +568,11 @@ async def test_mask_reversible_redis_failure_does_not_break_main_flow(
 @_XFAIL_FEATURES
 @pytest.mark.asyncio
 async def test_mask_reversible_empty_text_with_persistence_does_not_break(
-    tokenizer: PIITokenizer, fake_redis: Any, policy_banking: PIIPolicy,
+    tokenizer: PIITokenizer, fake_redis: Any, policy_banking: PIIPolicy
 ) -> None:
     """Пустой текст + tenant_id/correlation_id → пустой TokenMap + Redis persist."""
     masked, token_map = await tokenizer.mask_reversible(
-        "",
-        policy_banking,
-        tenant_id="t1",
-        correlation_id="c1",
+        "", policy_banking, tenant_id="t1", correlation_id="c1"
     )
     assert masked == ""
     assert not token_map.tokens

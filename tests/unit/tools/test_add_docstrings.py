@@ -13,6 +13,7 @@ Honest scope: 4 теста достаточно для smoke coverage. Полн�
 ``add_docstrings_to_file`` — multi-sprint (см. tools/add_docstrings.py
 docstring про 1840 violations = S46 W1 honest scope).
 """
+
 from __future__ import annotations
 
 import subprocess
@@ -134,8 +135,10 @@ class TestAddDocstringsCLI:
         target.write_text("class Foo:\n    pass\n", encoding="utf-8")
         proc = subprocess.run(
             [
-                sys.executable, str(CHECKER_PATH),
-                "--summary", "Test summary.",
+                sys.executable,
+                str(CHECKER_PATH),
+                "--summary",
+                "Test summary.",
                 "--dry-run",
                 str(target),
             ],

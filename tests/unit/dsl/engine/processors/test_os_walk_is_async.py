@@ -35,9 +35,7 @@ from src.backend.dsl.engine.processors.file_watch import FileWatchProcessor
 
 def _make_exchange() -> Exchange:
     """Создать пустой Exchange для тестов process()."""
-    return Exchange(
-        in_message=Message(body=None, headers={}), properties={},
-    )
+    return Exchange(in_message=Message(body=None, headers={}), properties={})
 
 
 def _create_deep_tree(root: str, depth: int = 5, files_per_dir: int = 30) -> int:
@@ -68,7 +66,7 @@ class TestOsWalkIsAsync:
             assert total >= 100, f"Expected large tree, got {total} files"
 
             proc = FileWatchProcessor(
-                directory=tmpdir, pattern="*.csv", include_subdirs=True,
+                directory=tmpdir, pattern="*.csv", include_subdirs=True
             )
             exchange = _make_exchange()
 
@@ -94,9 +92,7 @@ class TestOsWalkIsAsync:
                 await heartbeat_task
 
             # Scan succeeded.
-            assert exchange.status.value != "failed", (
-                f"Scan failed: {exchange.error}"
-            )
+            assert exchange.status.value != "failed", f"Scan failed: {exchange.error}"
             matched = exchange.properties.get("matched_files", [])
             assert len(matched) == total, (
                 f"Expected {total} matched, got {len(matched)}"
@@ -113,7 +109,7 @@ class TestOsWalkIsAsync:
             _create_deep_tree(tmpdir, depth=3, files_per_dir=20)
 
             proc = FileWatchProcessor(
-                directory=tmpdir, pattern="*", include_subdirs=True,
+                directory=tmpdir, pattern="*", include_subdirs=True
             )
             exchange = _make_exchange()
 
@@ -131,7 +127,7 @@ class TestOsWalkIsAsync:
             _create_deep_tree(tmpdir, depth=4, files_per_dir=20)
 
             proc = FileWatchProcessor(
-                directory=tmpdir, pattern="*.csv", include_subdirs=True,
+                directory=tmpdir, pattern="*.csv", include_subdirs=True
             )
             exchange = _make_exchange()
 

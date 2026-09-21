@@ -167,7 +167,7 @@ class TestInfrastructureFacadeGetattr:
             from src.backend.core.di.providers import infrastructure_facade
 
         hints = inspect.get_annotations(
-            infrastructure_facade.__getattr__, eval_str=False,
+            infrastructure_facade.__getattr__, eval_str=False
         )
         assert hints["return"] == "Any", (
             f"infrastructure_facade.__getattr__ — generic re-export shim, "
@@ -214,7 +214,7 @@ class TestTop10StaticAnnotations:
     @pytest.mark.unit
     @pytest.mark.parametrize("provider_name", list(TOP10_PROVIDERS))
     def test_provider_present_in_type_checking(
-        self, type_checking_annotations: dict[str, str], provider_name: str,
+        self, type_checking_annotations: dict[str, str], provider_name: str
     ) -> None:
         """Каждый top-10 provider объявлен в ``if TYPE_CHECKING:`` блоке."""
         assert provider_name in type_checking_annotations, (
@@ -224,7 +224,7 @@ class TestTop10StaticAnnotations:
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
-        ("provider_name", "expected_type"), list(EXPECTED_STATIC_TYPES.items()),
+        ("provider_name", "expected_type"), list(EXPECTED_STATIC_TYPES.items())
     )
     def test_provider_static_type_narrowed(
         self,
@@ -240,7 +240,7 @@ class TestTop10StaticAnnotations:
 
     @pytest.mark.unit
     def test_no_any_in_static_annotations_for_static_narrowable(
-        self, type_checking_annotations: dict[str, str],
+        self, type_checking_annotations: dict[str, str]
     ) -> None:
         """Static-narrowable top-10 не должны быть ``Callable[[], Any]``.
 
@@ -299,9 +299,7 @@ class TestTop10RuntimeBehavior:
         """
         from src.backend.core.observability import correlation
 
-        hints = inspect.get_annotations(
-            correlation.get_correlation_id, eval_str=False,
-        )
+        hints = inspect.get_annotations(correlation.get_correlation_id, eval_str=False)
         assert hints["return"] == "str", (
             f"observability_bridge.get_correlation_id narrowed с Any; "
             f"получили {hints['return']!r}"
@@ -315,7 +313,7 @@ class TestTop10RuntimeBehavior:
             from src.backend.core.di.providers import infrastructure_locator
 
         hints = inspect.get_annotations(
-            infrastructure_locator.get_event_bus_facade_provider, eval_str=False,
+            infrastructure_locator.get_event_bus_facade_provider, eval_str=False
         )
         assert hints["return"] == "EventBusFacade", (
             f"get_event_bus_facade_provider narrowed с Any; "

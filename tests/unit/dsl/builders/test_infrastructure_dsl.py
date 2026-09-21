@@ -182,10 +182,7 @@ class TestKeptMongoMethods:
 class TestKeptSFTPMethods:
     def test_sftp_get(self, builder: RouteBuilder) -> None:
         builder.sftp_get(
-            "host.example.com",
-            "/remote/path",
-            username="user",
-            key_file="/path/to/key",
+            "host.example.com", "/remote/path", username="user", key_file="/path/to/key"
         )
         proc = builder._processors[-1]
         assert isinstance(proc, SftpGetProcessor)
@@ -194,10 +191,7 @@ class TestKeptSFTPMethods:
 
     def test_sftp_put(self, builder: RouteBuilder) -> None:
         builder.sftp_put(
-            "host.example.com",
-            "/remote/path",
-            body_from="body",
-            username="user",
+            "host.example.com", "/remote/path", body_from="body", username="user"
         )
         proc = builder._processors[-1]
         assert isinstance(proc, SftpPutProcessor)
@@ -225,8 +219,7 @@ class TestKeptStubsAuditWarning:
         try:
             proc = RedisSetProcessor(key="k", value="v")
             exchange = Exchange(
-                in_message=Message(body=None, headers={}),
-                properties={},
+                in_message=Message(body=None, headers={}), properties={}
             )
             await proc.process(exchange, context=None)
             assert any("redis_set" in msg for msg in captured), (
@@ -253,8 +246,7 @@ class TestKeptStubsAuditWarning:
         try:
             proc = SftpGetProcessor(host="h", remote_path="/p")
             exchange = Exchange(
-                in_message=Message(body=None, headers={}),
-                properties={},
+                in_message=Message(body=None, headers={}), properties={}
             )
             await proc.process(exchange, context=None)
             assert any("sftp_get" in msg for msg in captured)

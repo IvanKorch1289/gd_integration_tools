@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import asyncio
 
-import pytest
-
 from src.backend.core.observability_v2 import (
     CorrelationPropagator,
     SemanticContext,
@@ -161,8 +159,8 @@ class TestContextVars:
 class TestAsyncIsolation:
     async def test_async_isolation(self) -> None:
         """Context isolated между concurrent tasks (через contextvars)."""
-        c1 = SemanticContext(correlation_id="cid-1")
-        c2 = SemanticContext(correlation_id="cid-2")
+        _c1 = SemanticContext(correlation_id="cid-1")
+        _c2 = SemanticContext(correlation_id="cid-2")
 
         async def task(token_cid: str, expected: str) -> str:
             c = SemanticContext(correlation_id=token_cid)
@@ -173,10 +171,7 @@ class TestAsyncIsolation:
             finally:
                 reset_current_context(token)
 
-        results = await asyncio.gather(
-            task("cid-1", "cid-1"),
-            task("cid-2", "cid-2"),
-        )
+        results = await asyncio.gather(task("cid-1", "cid-1"), task("cid-2", "cid-2"))
         assert results == ["cid-1", "cid-2"]
 
 

@@ -6,6 +6,7 @@ Codifies:
 3. Acceleration libs in use (orjson, uvloop, httpx)
 4. No sync wrappers around async libs in hot paths
 """
+
 from __future__ import annotations
 
 import ast
@@ -51,8 +52,11 @@ def test_connection_pools_configured():
     """base.yml must declare at least 3 connection pool sizes."""
     base = Path("config_profiles/base.yml").read_text()
     pool_lines = [
-        line for line in base.split("\n")
-        if re.search(r"pool_size|max_connections|max_pool_size|connection_pool_size", line)
+        line
+        for line in base.split("\n")
+        if re.search(
+            r"pool_size|max_connections|max_pool_size|connection_pool_size", line
+        )
     ]
     assert len(pool_lines) >= 3, f"Only {len(pool_lines)} pool configs found"
 

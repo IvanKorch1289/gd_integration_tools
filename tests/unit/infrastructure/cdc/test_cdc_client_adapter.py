@@ -1,6 +1,5 @@
 """Тесты CDCClientAdapter (Wave 5)."""
 
-
 from __future__ import annotations
 
 import asyncio
@@ -59,7 +58,7 @@ async def test_adapter_subscribe_yields_events() -> None:
                     "profile": "pg",
                     "new": {"name": "Alice"},
                     "old": {"name": "Bob"},
-                },
+                }
             )
 
     producer_task = asyncio.create_task(_producer())

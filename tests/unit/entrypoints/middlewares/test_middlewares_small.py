@@ -1,6 +1,5 @@
 """Unit tests for small middleware modules."""
 
-
 from __future__ import annotations
 
 from unittest.mock import AsyncMock
@@ -31,7 +30,7 @@ async def test_auth_method_header_with_method() -> None:
     async def downstream(scope, receive, send):
         # Downstream выставляет auth context в scope['state'].
         scope["state"] = {
-            "auth": type("AuthCtx", (), {"method": type("M", (), {"value": "jwt"})()})(),
+            "auth": type("AuthCtx", (), {"method": type("M", (), {"value": "jwt"})()})()
         }
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"ok"})
@@ -39,10 +38,14 @@ async def test_auth_method_header_with_method() -> None:
     app.side_effect = downstream
     mw = AuthMethodHeaderMiddleware(app, enabled=True)
     send = AsyncMock()
-    await mw({"type": "http", "method": "GET", "path": "/", "headers": []}, AsyncMock(), send)
+    await mw(
+        {"type": "http", "method": "GET", "path": "/", "headers": []}, AsyncMock(), send
+    )
 
     start_msg = next(
-        c.args[0] for c in send.await_args_list if c.args[0]["type"] == "http.response.start"
+        c.args[0]
+        for c in send.await_args_list
+        if c.args[0]["type"] == "http.response.start"
     )
     headers = dict(start_msg["headers"])
     assert headers[b"x-auth-method"] == b"jwt"
@@ -60,10 +63,14 @@ async def test_auth_method_header_no_auth() -> None:
     app.side_effect = downstream
     mw = AuthMethodHeaderMiddleware(app)  # enabled=False default
     send = AsyncMock()
-    await mw({"type": "http", "method": "GET", "path": "/", "headers": []}, AsyncMock(), send)
+    await mw(
+        {"type": "http", "method": "GET", "path": "/", "headers": []}, AsyncMock(), send
+    )
 
     start_msg = next(
-        c.args[0] for c in send.await_args_list if c.args[0]["type"] == "http.response.start"
+        c.args[0]
+        for c in send.await_args_list
+        if c.args[0]["type"] == "http.response.start"
     )
     headers = dict(start_msg["headers"])
     assert b"x-auth-method" not in headers
@@ -95,12 +102,14 @@ async def test_blocked_routes_blocked() -> None:
         )
 
         start_msg = next(
-            c.args[0] for c in send.await_args_list
+            c.args[0]
+            for c in send.await_args_list
             if c.args[0]["type"] == "http.response.start"
         )
         assert start_msg["status"] == 403
         body_msg = next(
-            c.args[0] for c in send.await_args_list
+            c.args[0]
+            for c in send.await_args_list
             if c.args[0]["type"] == "http.response.body"
         )
         import json
@@ -129,7 +138,8 @@ async def test_blocked_routes_allowed() -> None:
     )
 
     start_msg = next(
-        c.args[0] for c in send.await_args_list
+        c.args[0]
+        for c in send.await_args_list
         if c.args[0]["type"] == "http.response.start"
     )
     assert start_msg["status"] == 200
@@ -162,7 +172,8 @@ async def test_blocked_routes_glob_pattern() -> None:
         )
 
         start_msg = next(
-            c.args[0] for c in send.await_args_list
+            c.args[0]
+            for c in send.await_args_list
             if c.args[0]["type"] == "http.response.start"
         )
         assert start_msg["status"] == 403
@@ -201,14 +212,14 @@ async def test_request_id_generates_ids() -> None:
     mw = RequestIDMiddleware(app)
     send = AsyncMock()
     await mw(
-        {"type": "http", "method": "GET", "path": "/", "headers": []},
-        AsyncMock(),
-        send,
+        {"type": "http", "method": "GET", "path": "/", "headers": []}, AsyncMock(), send
     )
 
     # Find http.response.start message.
     start_msg = next(
-        c.args[0] for c in send.await_args_list if c.args[0]["type"] == "http.response.start"
+        c.args[0]
+        for c in send.await_args_list
+        if c.args[0]["type"] == "http.response.start"
     )
     headers = dict(start_msg["headers"])
     assert b"x-request-id" in headers
@@ -243,7 +254,9 @@ async def test_request_id_preserves_existing() -> None:
     )
 
     start_msg = next(
-        c.args[0] for c in send.await_args_list if c.args[0]["type"] == "http.response.start"
+        c.args[0]
+        for c in send.await_args_list
+        if c.args[0]["type"] == "http.response.start"
     )
     headers = dict(start_msg["headers"])
     assert headers[b"x-request-id"] == b"req-123"
@@ -266,9 +279,13 @@ async def test_security_headers() -> None:
     app.side_effect = downstream
     mw = SecurityHeadersMiddleware(app)
     send = AsyncMock()
-    await mw({"type": "http", "method": "GET", "path": "/", "headers": []}, AsyncMock(), send)
+    await mw(
+        {"type": "http", "method": "GET", "path": "/", "headers": []}, AsyncMock(), send
+    )
     captured = next(
-        c.args[0] for c in send.await_args_list if c.args[0]["type"] == "http.response.start"
+        c.args[0]
+        for c in send.await_args_list
+        if c.args[0]["type"] == "http.response.start"
     )
     headers = dict(captured.get("headers", []))
     assert headers[b"x-frame-options"] == b"DENY"

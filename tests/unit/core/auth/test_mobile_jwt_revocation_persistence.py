@@ -212,9 +212,7 @@ class TestBuildVerifierWithProtections:
             pass
 
         verifier = build_verifier_with_protections(
-            backend=_FakeBackend(),
-            issuer_whitelist=["test"],
-            audience="test",
+            backend=_FakeBackend(), issuer_whitelist=["test"], audience="test"
         )
         assert isinstance(verifier, MobileJwtVerifier)
 
@@ -239,6 +237,7 @@ class TestBuildVerifierWithProtections:
 
 # Sanity check: RevocationRecord is frozen dataclass (immutable)
 
+
 @pytest.mark.unit
 class TestRevocationRecord:
     """``RevocationRecord`` — frozen dataclass."""
@@ -260,6 +259,7 @@ class TestRevocationRecord:
 
 
 # Sanity check: RevocationError is Exception subclass
+
 
 def test_revocation_error_is_exception() -> None:
     """``RevocationError`` — Exception subclass."""

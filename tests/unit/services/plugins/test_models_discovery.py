@@ -18,12 +18,7 @@ import pytest
 from src.backend.services.plugins.loader import load_plugin_manifests_for_migrations
 
 
-def _write_plugin(
-    root: Path,
-    *,
-    name: str,
-    manifest_body: str | None = None,
-) -> Path:
+def _write_plugin(root: Path, *, name: str, manifest_body: str | None = None) -> Path:
     """Создать минимальный ``extensions/<name>/plugin.toml``."""
     pkg = root / name
     pkg.mkdir(parents=True, exist_ok=True)
@@ -35,7 +30,7 @@ def _write_plugin(
         requires_core = ">=0.2,<0.3"
         entry_class = "ext.{name}.Plugin"
         models_module = ["ext.{name}.domain.models"]
-        """,
+        """
     )
     (pkg / "plugin.toml").write_text(body, encoding="utf-8")
     return pkg / "plugin.toml"
@@ -92,7 +87,7 @@ class TestLoadPluginManifestsForMigrations:
                 version = "1.0.0"
                 requires_core = ">=0.2,<0.3"
                 entry_class = "ext.schemas_only.Entry"
-                """,
+                """
             ),
         )
         results = load_plugin_manifests_for_migrations(tmp_path)

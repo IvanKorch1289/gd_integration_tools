@@ -1,4 +1,5 @@
 """Tests for updated Source/Sink health protocol signature."""
+
 from __future__ import annotations
 
 import pytest

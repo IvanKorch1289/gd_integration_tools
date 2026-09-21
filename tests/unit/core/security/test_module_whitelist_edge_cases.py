@@ -25,17 +25,13 @@ class TestValidateModuleWhitelistGlob:
 
     def test_glob_prefix_match(self) -> None:
         validate_module_whitelist(
-            "src.backend.foo.bar.baz",
-            whitelist=["src.backend.foo.*"],
-            context="test",
+            "src.backend.foo.bar.baz", whitelist=["src.backend.foo.*"], context="test"
         )
 
     def test_glob_prefix_no_match(self) -> None:
         with pytest.raises(PermissionError):
             validate_module_whitelist(
-                "src.backend.other.x",
-                whitelist=["src.backend.foo.*"],
-                context="test",
+                "src.backend.other.x", whitelist=["src.backend.foo.*"], context="test"
             )
 
     def test_glob_prefix_does_not_match_sibling(self) -> None:
@@ -45,9 +41,7 @@ class TestValidateModuleWhitelistGlob:
         """
         with pytest.raises(PermissionError):
             validate_module_whitelist(
-                "src.backend.foobar.x",
-                whitelist=["src.backend.foo.*"],
-                context="test",
+                "src.backend.foobar.x", whitelist=["src.backend.foo.*"], context="test"
             )
 
     def test_multiple_globs(self) -> None:
@@ -60,9 +54,7 @@ class TestValidateModuleWhitelistGlob:
     def test_exact_match_takes_priority(self) -> None:
         """Exact match (without ``.*``) — direct equality check."""
         validate_module_whitelist(
-            "src.backend.foo",
-            whitelist=["src.backend.foo"],
-            context="test",
+            "src.backend.foo", whitelist=["src.backend.foo"], context="test"
         )
 
 
@@ -73,9 +65,7 @@ class TestValidateModuleWhitelistEmpty:
         """Default empty_mode='error' + default empty_error=PermissionError."""
         with pytest.raises(PermissionError, match="empty whitelist"):
             validate_module_whitelist(
-                "any.module",
-                whitelist=[],
-                context="test_default",
+                "any.module", whitelist=[], context="test_default"
             )
 
     def test_empty_list_with_value_error(self) -> None:
@@ -91,20 +81,13 @@ class TestValidateModuleWhitelistEmpty:
         """``empty_mode='allow'`` — explicit dev fallback (preserved)."""
         # Should NOT raise
         validate_module_whitelist(
-            "any.module",
-            whitelist=[],
-            context="test_allow",
-            empty_mode="allow",
+            "any.module", whitelist=[], context="test_allow", empty_mode="allow"
         )
 
     def test_none_whitelist_treated_as_empty(self) -> None:
         """None → empty set → fail-closed (Sprint 215+ ponytail fix)."""
         with pytest.raises(PermissionError):
-            validate_module_whitelist(
-                "any.module",
-                whitelist=None,
-                context="test_none",
-            )
+            validate_module_whitelist("any.module", whitelist=None, context="test_none")
 
     def test_custom_empty_message(self) -> None:
         custom_msg = "Custom empty whitelist message"
@@ -147,20 +130,11 @@ class TestValidateModuleWhitelistRejectsNonWhitelisted:
 
     @pytest.mark.parametrize(
         "module_name",
-        [
-            "subprocess",
-            "os.system",
-            "pickle.loads",
-            "eval",
-            "exec",
-            "__import__",
-        ],
+        ["subprocess", "os.system", "pickle.loads", "eval", "exec", "__import__"],
     )
     def test_dangerous_module_rejected(self, module_name: str) -> None:
         """Critical security check: dangerous builtins/modules rejected."""
         with pytest.raises(PermissionError):
             validate_module_whitelist(
-                module_name,
-                whitelist=["src.backend.safe.*"],
-                context="security_test",
+                module_name, whitelist=["src.backend.safe.*"], context="security_test"
             )

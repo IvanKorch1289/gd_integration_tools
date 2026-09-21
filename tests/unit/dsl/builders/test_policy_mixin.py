@@ -1,6 +1,5 @@
 """Unit-тесты PolicyMixin chainable API — Wave [wave:s5/k3-w7-policy-chainable]."""
 
-
 from __future__ import annotations
 
 from unittest.mock import AsyncMock
@@ -67,7 +66,7 @@ async def test_resilience_coordinator_register_attempted() -> None:
     from src.backend.dsl.engine.exchange import Exchange, Message
 
     proc = PolicyMarkerProcessor(
-        policy_name="rate_limit", params={"rate": 10}, enabled=True,
+        policy_name="rate_limit", params={"rate": 10}, enabled=True
     )
     ex = Exchange(in_message=Message(body={}, headers={}))
     await proc.process(ex, AsyncMock())

@@ -13,7 +13,6 @@ windowed aggregations. Без тестов — гарантии поведени
 только на type hints и docstring.
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -30,9 +29,7 @@ def _make_exchange() -> Exchange[Any]:
 
     Exchange — pydantic BaseModel, конструктор принимает fields напрямую.
     """
-    return Exchange(
-        in_message=Message(body={"id": 1, "value": "test"}),
-    )
+    return Exchange(in_message=Message(body={"id": 1, "value": "test"}))
 
 
 def _make_state() -> WatermarkState:
@@ -60,7 +57,7 @@ async def test_side_output_policy_marks_and_returns_true() -> None:
     state = _make_state()
 
     result = await apply_late_policy(
-        exchange, state=state, policy=LatePolicy.SIDE_OUTPUT,
+        exchange, state=state, policy=LatePolicy.SIDE_OUTPUT
     )
 
     assert result is True, "SIDE_OUTPUT должен сигнализировать 'продолжать'"
@@ -74,9 +71,7 @@ async def test_reprocess_policy_marks_and_returns_true() -> None:
     exchange = _make_exchange()
     state = _make_state()
 
-    result = await apply_late_policy(
-        exchange, state=state, policy=LatePolicy.REPROCESS,
-    )
+    result = await apply_late_policy(exchange, state=state, policy=LatePolicy.REPROCESS)
 
     assert result is True
     assert exchange.properties.get("_late_reprocess") is True
@@ -94,10 +89,7 @@ async def test_side_output_calls_callback_with_exchange() -> None:
         captured.append(ex)
 
     result = await apply_late_policy(
-        exchange,
-        state=state,
-        policy=LatePolicy.SIDE_OUTPUT,
-        side_output=side_sink,
+        exchange, state=state, policy=LatePolicy.SIDE_OUTPUT, side_output=side_sink
     )
 
     assert result is True
@@ -117,10 +109,7 @@ async def test_side_output_handles_callback_failure_gracefully() -> None:
     # Должен НЕ raise — ошибка логируется, но apply_late_policy
     # возвращает True (exchange продолжается).
     result = await apply_late_policy(
-        exchange,
-        state=state,
-        policy=LatePolicy.SIDE_OUTPUT,
-        side_output=broken_sink,
+        exchange, state=state, policy=LatePolicy.SIDE_OUTPUT, side_output=broken_sink
     )
     assert result is True
     assert exchange.properties.get("_late_routed") is True
@@ -138,10 +127,7 @@ async def test_side_output_handles_sync_callback() -> None:
         call_count += 1
 
     result = await apply_late_policy(
-        exchange,
-        state=state,
-        policy=LatePolicy.SIDE_OUTPUT,
-        side_output=sync_sink,
+        exchange, state=state, policy=LatePolicy.SIDE_OUTPUT, side_output=sync_sink
     )
 
     assert result is True
@@ -173,10 +159,7 @@ async def test_drop_does_not_call_side_output() -> None:
         call_count += 1
 
     await apply_late_policy(
-        exchange,
-        state=state,
-        policy=LatePolicy.DROP,
-        side_output=side_sink,
+        exchange, state=state, policy=LatePolicy.DROP, side_output=side_sink
     )
 
     assert call_count == 0, "DROP не должен дёргать side_output"

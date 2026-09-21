@@ -176,20 +176,14 @@ class TestValidateContract:
 
     def test_missing_owner(self) -> None:
         c = RouteContract(
-            route_id="r1",
-            side_effects=["read_only"],
-            timeout_seconds=10.0,
-            owner="",
+            route_id="r1", side_effects=["read_only"], timeout_seconds=10.0, owner=""
         )
         errors = validate_contract(c)
         assert any("owner" in e for e in errors)
 
     def test_empty_side_effects(self) -> None:
         c = RouteContract(
-            route_id="r1",
-            side_effects=[],
-            timeout_seconds=10.0,
-            owner="team-x",
+            route_id="r1", side_effects=[], timeout_seconds=10.0, owner="team-x"
         )
         errors = validate_contract(c)
         assert any("side_effects" in e for e in errors)
@@ -259,12 +253,7 @@ class TestValidateContract:
         assert any("max_attempts" in e for e in errors)
 
     def test_multiple_violations(self) -> None:
-        c = RouteContract(
-            route_id="",
-            side_effects=[],
-            timeout_seconds=0.0,
-            owner="",
-        )
+        c = RouteContract(route_id="", side_effects=[], timeout_seconds=0.0, owner="")
         errors = validate_contract(c)
         # At least 3 violations.
         assert len(errors) >= 3
@@ -318,18 +307,12 @@ class TestRegistry:
         r = RouteContractRegistry()
         r.register(
             RouteContract(
-                route_id="r1",
-                owner="x",
-                side_effects=["read_only"],
-                tags=["prod"],
+                route_id="r1", owner="x", side_effects=["read_only"], tags=["prod"]
             )
         )
         r.register(
             RouteContract(
-                route_id="r2",
-                owner="x",
-                side_effects=["read_only"],
-                tags=["staging"],
+                route_id="r2", owner="x", side_effects=["read_only"], tags=["staging"]
             )
         )
         prod = r.list_by_tag("prod")
@@ -383,10 +366,7 @@ class TestRealisticExample:
                     "customer_id": {"type": "string"},
                 },
             },
-            output_schema={
-                "type": "object",
-                "required": ["status", "order_id"],
-            },
+            output_schema={"type": "object", "required": ["status", "order_id"]},
             side_effects=["db_write"],
             timeout_seconds=15.0,
             retry_policy=RetryPolicy(
@@ -395,9 +375,7 @@ class TestRealisticExample:
                 initial_delay_seconds=2.0,
             ),
             idempotency_policy=IdempotencyPolicy(
-                key_field="order_id",
-                ttl_seconds=86400,
-                backend="redis",
+                key_field="order_id", ttl_seconds=86400, backend="redis"
             ),
             dlq_policy=DLQPolicy(topic="events.orders.dlq"),
             owner="team-payments",

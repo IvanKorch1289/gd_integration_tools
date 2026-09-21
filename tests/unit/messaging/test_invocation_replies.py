@@ -1,6 +1,5 @@
 """Unit-тесты для :class:`InvocationReplyChannel` backends (W22.3)."""
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -196,7 +195,7 @@ class _RecordingNotifier:
         self.calls: list[dict[str, Any]] = []
 
     async def send(
-        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any],
+        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any]
     ) -> None:
         self.calls.append(
             {
@@ -204,7 +203,7 @@ class _RecordingNotifier:
                 "subject": subject,
                 "body": body,
                 "metadata": metadata,
-            },
+            }
         )
 
 
@@ -291,7 +290,7 @@ class TestEmailReplyChannel:
                 status=InvocationStatus.OK,
                 mode=InvocationMode.ASYNC_API,
                 metadata={"email": "x@y.z"},
-            ),
+            )
         )
 
     async def test_fetch_always_returns_none(self) -> None:
@@ -442,7 +441,7 @@ class TestQueueReplyChannel:
             captured.append((topic, message))
 
         channel = QueueReplyChannel(
-            publisher=_publisher, default_topic="invocations.results",
+            publisher=_publisher, default_topic="invocations.results"
         )
         response = InvocationResponse(
             invocation_id="i-d",
@@ -470,5 +469,5 @@ class TestQueueReplyChannel:
                 status=InvocationStatus.OK,
                 mode=InvocationMode.ASYNC_API,
                 metadata={"queue_topic": "t1"},
-            ),
+            )
         )

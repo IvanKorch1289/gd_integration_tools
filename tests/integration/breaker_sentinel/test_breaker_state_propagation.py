@@ -32,8 +32,7 @@ pytestmark = pytest.mark.asyncio
 
 
 async def test_breaker_registry_with_sentinel_url_creates_shared_state(
-    requires_sentinel: None,
-    redis_sentinel_url: str,
+    requires_sentinel: None, redis_sentinel_url: str
 ) -> None:
     """BreakerRegistry(redis_url=sentinel_url) → multi-pod state via Redis."""
     from src.backend.core.resilience.breaker import BreakerRegistry
@@ -46,8 +45,7 @@ async def test_breaker_registry_with_sentinel_url_creates_shared_state(
 
 
 async def test_state_persistence_across_registry_restarts(
-    requires_sentinel: None,
-    redis_sentinel_url: str,
+    requires_sentinel: None, redis_sentinel_url: str
 ) -> None:
     """BreakerRegistry recreated after restart → state persists in Redis.
 
@@ -57,14 +55,12 @@ async def test_state_persistence_across_registry_restarts(
 
     registry1 = BreakerRegistry(redis_url=redis_sentinel_url)
     breaker1 = registry1.get_or_create(
-        "/api/v1/state-persistence-test",
-        BreakerSpec(failure_threshold=3),
+        "/api/v1/state-persistence-test", BreakerSpec(failure_threshold=3)
     )
 
     registry2 = BreakerRegistry(redis_url=redis_sentinel_url)
     breaker2 = registry2.get_or_create(
-        "/api/v1/state-persistence-test",
-        BreakerSpec(failure_threshold=3),
+        "/api/v1/state-persistence-test", BreakerSpec(failure_threshold=3)
     )
 
     # Different Python objects, but should share state via Redis backend
@@ -74,8 +70,7 @@ async def test_state_persistence_across_registry_restarts(
 
 
 async def test_different_routes_have_independent_state(
-    requires_sentinel: None,
-    redis_sentinel_url: str,
+    requires_sentinel: None, redis_sentinel_url: str
 ) -> None:
     """Different routes get different breakers (per-route isolation)."""
     from src.backend.core.resilience.breaker import BreakerRegistry, BreakerSpec
@@ -95,7 +90,9 @@ async def test_breaker_registry_sentinel_url_format_valid() -> None:
     Confirms the URL format used in production config is valid for redis-py
     Sentinel client (auto-discovers master via SENTINEL get-master-addr-by-name).
     """
-    sentinel_url = "redis://:redis-dev-password@localhost:26379,localhost:26380,localhost:26381/0"
+    sentinel_url = (
+        "redis://:redis-dev-password@localhost:26379,localhost:26380,localhost:26381/0"
+    )
 
     assert sentinel_url.startswith("redis://")
     assert "@" in sentinel_url
@@ -129,8 +126,7 @@ async def test_phase4_staging_runbook_prerequisites_documented() -> None:
 
 
 async def test_sentinel_stack_is_healthy(
-    requires_sentinel: None,
-    sentinel_config: dict[str, Any],
+    requires_sentinel: None, sentinel_config: dict[str, Any]
 ) -> None:
     """Basic Sentinel stack health check (smoke test).
 

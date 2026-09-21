@@ -20,15 +20,13 @@ import pytest
 otel_sdk = pytest.importorskip("opentelemetry.sdk.trace")
 trace_api = pytest.importorskip("opentelemetry.trace")
 in_memory_exporter_mod = pytest.importorskip(
-    "opentelemetry.sdk.trace.export.in_memory_span_exporter",
+    "opentelemetry.sdk.trace.export.in_memory_span_exporter"
 )
 
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
-    InMemorySpanExporter,
-)
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 from src.backend.infrastructure.observability.otel import configure_otel
 

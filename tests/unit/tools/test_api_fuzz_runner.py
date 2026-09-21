@@ -1,6 +1,5 @@
 """Sprint 6 K2 — тесты tools/api_fuzz_runner.py."""
 
-
 from __future__ import annotations
 
 import argparse

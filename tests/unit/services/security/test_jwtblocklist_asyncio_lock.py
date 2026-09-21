@@ -63,8 +63,7 @@ class TestInMemoryJWTBlacklistAsyncAPI:
         """Stress test: 50 concurrent revokes на 50 разных JTI."""
         bl = _InMemoryJwtBlacklist()
         tasks = [
-            bl.revoke(f"jti-{i}", expires_at=int(time.time()) + 3600)
-            for i in range(50)
+            bl.revoke(f"jti-{i}", expires_at=int(time.time()) + 3600) for i in range(50)
         ]
         await asyncio.gather(*tasks)
 

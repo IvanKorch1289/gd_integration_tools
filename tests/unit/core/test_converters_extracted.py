@@ -116,9 +116,7 @@ class TestTransferModelToSchema:
             name: str
             age: int
 
-        result = transfer_model_to_schema(
-            {"name": "Alice", "age": 30}, UserSchema,
-        )
+        result = transfer_model_to_schema({"name": "Alice", "age": 30}, UserSchema)
         assert result.name == "Alice"
         assert result.age == 30
 
@@ -133,7 +131,7 @@ class TestTransferModelToSchema:
 
         with pytest.raises(ValueError, match="Ошибка преобразования"):
             transfer_model_to_schema(
-                {"name": "Alice", "age": "not_a_number"}, UserSchema,
+                {"name": "Alice", "age": "not_a_number"}, UserSchema
             )
 
     def test_from_attributes_true(self) -> None:
@@ -150,9 +148,7 @@ class TestTransferModelToSchema:
             name = "Bob"
             age = 25
 
-        result = transfer_model_to_schema(
-            UserObj(), UserSchema, from_attributes=True,
-        )
+        result = transfer_model_to_schema(UserObj(), UserSchema, from_attributes=True)
         assert result.name == "Bob"
         assert result.age == 25
 

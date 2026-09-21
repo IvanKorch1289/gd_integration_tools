@@ -36,9 +36,7 @@ class TestCheckFeatureFlag:
             def mcp_gateway_namespaces_enabled(self) -> bool:
                 raise ImportError("nope")
 
-        with patch(
-            "src.backend.entrypoints.mcp.gateway.feature_flags", BadFlags(),
-        ):
+        with patch("src.backend.entrypoints.mcp.gateway.feature_flags", BadFlags()):
             assert _check_feature_flag() is False
 
 
@@ -56,38 +54,44 @@ class TestResolveAuthProvider:
         with patch(
             "src.backend.entrypoints.mcp.gateway.ai_stack",
             MagicMock(
-                mcp_settings=MagicMock(tool_authz_enabled=True, sso_issuer_url=None),
+                mcp_settings=MagicMock(tool_authz_enabled=True, sso_issuer_url=None)
             ),
         ):
             assert _resolve_auth_provider() is None
 
     def test_returns_verifier_when_configured(self) -> None:
         mock_verifier = MagicMock()
-        with patch(
-            "src.backend.entrypoints.mcp.gateway.ai_stack",
-            MagicMock(
-                mcp_settings=MagicMock(
-                    tool_authz_enabled=True, sso_issuer_url="https://sso.local",
+        with (
+            patch(
+                "src.backend.entrypoints.mcp.gateway.ai_stack",
+                MagicMock(
+                    mcp_settings=MagicMock(
+                        tool_authz_enabled=True, sso_issuer_url="https://sso.local"
+                    )
                 ),
             ),
-        ), patch(
-            "src.backend.entrypoints.mcp.gateway.JWTVerifier",
-            return_value=mock_verifier,
+            patch(
+                "src.backend.entrypoints.mcp.gateway.JWTVerifier",
+                return_value=mock_verifier,
+            ),
         ):
             result = _resolve_auth_provider()
         assert result is mock_verifier
 
     def test_returns_none_on_jwt_verifier_import_error(self) -> None:
-        with patch(
-            "src.backend.entrypoints.mcp.gateway.ai_stack",
-            MagicMock(
-                mcp_settings=MagicMock(
-                    tool_authz_enabled=True, sso_issuer_url="https://sso.local",
+        with (
+            patch(
+                "src.backend.entrypoints.mcp.gateway.ai_stack",
+                MagicMock(
+                    mcp_settings=MagicMock(
+                        tool_authz_enabled=True, sso_issuer_url="https://sso.local"
+                    )
                 ),
             ),
-        ), patch(
-            "src.backend.entrypoints.mcp.gateway.JWTVerifier",
-            side_effect=ImportError("nope"),
+            patch(
+                "src.backend.entrypoints.mcp.gateway.JWTVerifier",
+                side_effect=ImportError("nope"),
+            ),
         ):
             assert _resolve_auth_provider() is None
 
@@ -136,12 +140,15 @@ class TestMCPGateway:
         mock_namespace = MagicMock()
         mock_namespace.name = "credit"
 
-        with patch(
-            "src.backend.entrypoints.mcp.gateway.SkillRegistry",
-            return_value=mock_registry,
-        ), patch(
-            "src.backend.entrypoints.mcp.gateway.get_namespace_for_action",
-            return_value=mock_namespace,
+        with (
+            patch(
+                "src.backend.entrypoints.mcp.gateway.SkillRegistry",
+                return_value=mock_registry,
+            ),
+            patch(
+                "src.backend.entrypoints.mcp.gateway.get_namespace_for_action",
+                return_value=mock_namespace,
+            ),
         ):
             assert gw.auto_register_skills() == 2
 
@@ -150,8 +157,11 @@ class TestCreateMcpGateway:
     """Tests for create_mcp_gateway."""
 
     def test_returns_server(self) -> None:
-        with patch(
-            "src.backend.entrypoints.mcp.gateway._resolve_auth_provider",
-            return_value=None,
-        ), patch.object(MCPGateway, "create_server", return_value="server"):
+        with (
+            patch(
+                "src.backend.entrypoints.mcp.gateway._resolve_auth_provider",
+                return_value=None,
+            ),
+            patch.object(MCPGateway, "create_server", return_value="server"),
+        ):
             assert create_mcp_gateway() == "server"

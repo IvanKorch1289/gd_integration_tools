@@ -18,9 +18,7 @@ from src.backend.services.workflows.hitl_signal_store_redis import (
 
 
 def _make_signal(
-    signal_id: str = "sig-1",
-    tenant_id: str = "tenant-1",
-    workflow_id: str = "wf-1",
+    signal_id: str = "sig-1", tenant_id: str = "tenant-1", workflow_id: str = "wf-1"
 ) -> HitlPendingSignal:
     return HitlPendingSignal(
         signal_id=signal_id,
@@ -53,14 +51,13 @@ def mock_redis() -> MagicMock:
 @pytest.fixture
 def store(mock_redis: MagicMock) -> RedisHitlSignalStore:
     """Store with mocked redis."""
-    return RedisHitlSignalStore(
-        redis_client=mock_redis,
-        max_watch_retries=2,
-    )
+    return RedisHitlSignalStore(redis_client=mock_redis, max_watch_retries=2)
 
 
 @pytest.mark.asyncio
-async def test_put_writes_signal(store: RedisHitlSignalStore, mock_redis: MagicMock) -> None:
+async def test_put_writes_signal(
+    store: RedisHitlSignalStore, mock_redis: MagicMock
+) -> None:
     """put() вызывает hset с правильными полями."""
     sig = _make_signal()
     await store.put(sig)
@@ -78,7 +75,9 @@ async def test_get_returns_none_when_missing(store: RedisHitlSignalStore) -> Non
 
 
 @pytest.mark.asyncio
-async def test_get_returns_signal_when_present(store: RedisHitlSignalStore, mock_redis: MagicMock) -> None:
+async def test_get_returns_signal_when_present(
+    store: RedisHitlSignalStore, mock_redis: MagicMock
+) -> None:
     """get(signal_id) — hget возвращает JSON to_dict → HitlPendingSignal."""
     sig = _make_signal()
     mock_redis.hget = AsyncMock(return_value=json.dumps(sig.to_dict()))

@@ -25,9 +25,7 @@ import pytest
 
 
 def _make_middleware(
-    *,
-    use_breaker_registry: bool = False,
-    failure_threshold: int = 2,
+    *, use_breaker_registry: bool = False, failure_threshold: int = 2
 ) -> Any:
     """Create CircuitBreakerMiddleware with given config."""
     from src.backend.entrypoints.middlewares.circuit_breaker import (
@@ -38,8 +36,7 @@ def _make_middleware(
     return CircuitBreakerMiddleware(
         app=AsyncMock(),
         default_policy=BreakerPolicy(
-            failure_threshold=failure_threshold,
-            window_seconds=60.0,
+            failure_threshold=failure_threshold, window_seconds=60.0
         ),
         use_breaker_registry=use_breaker_registry,
     )
@@ -269,11 +266,7 @@ async def test_metric_label_uses_route_path() -> None:
             "src.backend.core.observability.metrics.record_circuit_breaker_state",
             recorder,
         ):
-            scope = {
-                "type": "http",
-                "path": "/api/v1/orders/create",
-                "method": "POST",
-            }
+            scope = {"type": "http", "path": "/api/v1/orders/create", "method": "POST"}
             receive = AsyncMock()
             send = AsyncMock()
 

@@ -15,7 +15,7 @@ from src.backend.services.workflows.hitl_signal_store_redis import RedisHitlSign
 
 
 def _make_signal(
-    signal_id: str = "sig-1", tenant_id: str = "tenant-1",
+    signal_id: str = "sig-1", tenant_id: str = "tenant-1"
 ) -> HitlPendingSignal:
     """Фабрика для тестов."""
     return HitlPendingSignal(
@@ -98,17 +98,13 @@ class TestRedisHitlSignalStore:
         await store.put(_make_signal("sig-1"))
         await store.mark_resolved("sig-1", action="approve", resolved_by="op-1")
         with pytest.raises(ValueError, match="already resolved"):
-            await store.mark_resolved(
-                "sig-1", action="reject", resolved_by="op-2",
-            )
+            await store.mark_resolved("sig-1", action="reject", resolved_by="op-2")
 
     async def test_mark_resolved_missing_raises(self) -> None:
         client = _FakeRedis()
         store = RedisHitlSignalStore(redis_client=client)
         with pytest.raises(KeyError, match="not found"):
-            await store.mark_resolved(
-                "missing", action="approve", resolved_by="op-1",
-            )
+            await store.mark_resolved("missing", action="approve", resolved_by="op-1")
 
     async def test_to_dict_from_dict_roundtrip(self) -> None:
         """HitlPendingSignal.from_dict ↔ to_dict roundtrip."""

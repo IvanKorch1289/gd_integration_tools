@@ -88,7 +88,7 @@ async def test_list_keys_missing_prefix_returns_empty(storage: LocalFSStorage) -
 
 
 async def test_presigned_url_returns_file_uri(
-    storage: LocalFSStorage, tmp_path: Path,
+    storage: LocalFSStorage, tmp_path: Path
 ) -> None:
     """``presigned_url`` возвращает ``file://`` URI на абсолютный путь."""
     await storage.upload("a.txt", b"x")
@@ -120,26 +120,20 @@ async def test_unsafe_key_empty_rejected(storage: LocalFSStorage) -> None:
 # ─── Cycle-16 (D-AUDIT-1601): tenant_root + slug validation ────────────
 
 
-async def test_tenant_root_returns_tenant_subdir(
-    storage: LocalFSStorage,
-) -> None:
+async def test_tenant_root_returns_tenant_subdir(storage: LocalFSStorage) -> None:
     """``tenant_root(tenant_id)`` создаёт ``<base>/tenants/<tenant_id>/``."""
     root = storage.tenant_root("acme_corp")
     assert root == storage._base / "tenants" / "acme_corp"
     assert root.parent.exists() or root.parent.parent.exists()
 
 
-async def test_tenant_root_system_uses_system_slug(
-    storage: LocalFSStorage,
-) -> None:
+async def test_tenant_root_system_uses_system_slug(storage: LocalFSStorage) -> None:
     """System uploads (tenant_id=None) → ``tenants/_system/`` (не bare base)."""
     root = storage.tenant_root(None)
     assert root == storage._base / "tenants" / "_system"
 
 
-async def test_tenant_root_unsafe_tenant_rejected(
-    storage: LocalFSStorage,
-) -> None:
+async def test_tenant_root_unsafe_tenant_rejected(storage: LocalFSStorage) -> None:
     """Unsafe tenant_id (path traversal) → ValueError."""
     for bad in ["../etc", "tenant/with/slash", "", "a" * 65, "tënant"]:
         with pytest.raises(ValueError, match="Небезопасный tenant_id"):
@@ -175,9 +169,7 @@ async def test_health_returns_metadata(storage: LocalFSStorage) -> None:
 
 
 @pytest.mark.asyncio
-async def test_upload_stream_writes_to_disk(
-    storage: LocalFSStorage,
-) -> None:
+async def test_upload_stream_writes_to_disk(storage: LocalFSStorage) -> None:
     """upload_stream бьёт большие chunk'и в файл и download читает их обратно."""
     chunks = [b"chunk-1-", b"chunk-2-", b"chunk-3-final"]
     await storage.upload_stream("stream/file.bin", chunks)

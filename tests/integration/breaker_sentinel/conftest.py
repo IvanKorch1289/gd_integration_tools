@@ -25,7 +25,7 @@ def _is_port_open(host: str, port: int) -> bool:
     try:
         with socket.create_connection((host, port), timeout=2):
             return True
-    except (ConnectionRefusedError, socket.timeout, OSError):
+    except ConnectionRefusedError, socket.timeout, OSError:
         return False
 
 
@@ -58,7 +58,9 @@ def sentinel_config() -> dict[str, Any]:
             sentinel_nodes.append((host, int(port)))
     return {
         "sentinel_nodes": sentinel_nodes,
-        "service_name": os.environ.get("REDIS_SENTINEL_SERVICE_NAME", "gd-mobile-redis"),
+        "service_name": os.environ.get(
+            "REDIS_SENTINEL_SERVICE_NAME", "gd-mobile-redis"
+        ),
         "password": os.environ.get("REDIS_PASSWORD", "redis-dev-password"),
     }
 

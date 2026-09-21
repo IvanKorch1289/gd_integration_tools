@@ -45,7 +45,7 @@ class BaselineUser(HttpUser):
         (B-04 hardening, 401) → цель переехала на публичный /health (liveness,
         та же полная middleware-цепочка, 200).
         """
-        with self.client.get("/health", name="health", catch_response=True,) as resp:
+        with self.client.get("/health", name="health", catch_response=True) as resp:
             if resp.status_code != 200:
                 resp.failure(f"unexpected status {resp.status_code}")
 

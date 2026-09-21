@@ -3,7 +3,6 @@
 Self-contained — does NOT import application modules.
 """
 
-
 from __future__ import annotations
 
 import os
@@ -19,7 +18,9 @@ class TestLayerCheckAllowlist:
             return
         r = subprocess.run(
             ["python3", "tools/check_layers.py"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         # Tool may exit 0 or 1; check no new violations
         output = r.stdout + r.stderr

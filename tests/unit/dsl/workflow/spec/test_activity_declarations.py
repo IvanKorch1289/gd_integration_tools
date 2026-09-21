@@ -9,6 +9,7 @@
 
 Coverage was 0% before Sprint 30.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -92,9 +93,7 @@ class TestPauseResumeDeclarations:
     """Pause/Resume — control flow for HITL (Human-in-the-Loop)."""
 
     def test_pause_default(self) -> None:
-        from src.backend.dsl.workflow.spec.activity_declarations import (
-            PauseDeclaration,
-        )
+        from src.backend.dsl.workflow.spec.activity_declarations import PauseDeclaration
 
         d = PauseDeclaration()
         assert d.type == "pause"
@@ -141,18 +140,14 @@ class TestSleepDeclaration:
     """Sleep — time-based wait in workflow."""
 
     def test_sleep_with_duration(self) -> None:
-        from src.backend.dsl.workflow.spec.activity_declarations import (
-            SleepDeclaration,
-        )
+        from src.backend.dsl.workflow.spec.activity_declarations import SleepDeclaration
 
         d = SleepDeclaration(duration_s=30.0)
         assert d.type == "sleep"
         assert d.duration_s == 30.0
 
     def test_sleep_must_be_positive(self) -> None:
-        from src.backend.dsl.workflow.spec.activity_declarations import (
-            SleepDeclaration,
-        )
+        from src.backend.dsl.workflow.spec.activity_declarations import SleepDeclaration
 
         with pytest.raises(ValidationError):
             SleepDeclaration(duration_s=0.0)

@@ -1,6 +1,5 @@
 """Тесты RPA процессоров (Wave 6)."""
 
-
 from __future__ import annotations
 
 import io

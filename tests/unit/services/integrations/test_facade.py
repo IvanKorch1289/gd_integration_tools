@@ -64,6 +64,7 @@ class TestIntegrationFacadeSendToSink:
         facade._sinks.get.return_value = sink
 
         captured: dict = {}
+
         async def _capture_cap(cap, *, context=None):
             captured["cap"] = cap
             return True

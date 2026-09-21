@@ -20,16 +20,15 @@ from src.backend.dsl.engine.processors.invoke_workflow import InvokeWorkflowProc
 
 def _make_processor(**overrides: Any) -> InvokeWorkflowProcessor:
     """Создать InvokeWorkflowProcessor для теста без protocol-маппинга."""
-    defaults: dict[str, Any] = {
-        "name": "orders.charge",
-        "version": ">=2.0,<3.0",
-    }
+    defaults: dict[str, Any] = {"name": "orders.charge", "version": ">=2.0,<3.0"}
     defaults.update(overrides)
     return InvokeWorkflowProcessor(**defaults)
 
 
 @pytest.mark.asyncio
-async def test_resolve_version_logs_warning_on_mismatch(caplog: pytest.LogCaptureFixture) -> None:
+async def test_resolve_version_logs_warning_on_mismatch(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """SemVer resolution failure → WARNING с workflow_name, spec и exc."""
     proc = _make_processor(version=">=99.0,<100.0")
 
@@ -38,10 +37,12 @@ async def test_resolve_version_logs_warning_on_mismatch(caplog: pytest.LogCaptur
     with patch(
         "src.backend.dsl.workflow.launcher.WorkflowLauncher.resolve",
         side_effect=__import__(
-            "src.backend.dsl.workflow.launcher", fromlist=["WorkflowResolutionError"],
+            "src.backend.dsl.workflow.launcher", fromlist=["WorkflowResolutionError"]
         ).WorkflowResolutionError(str(fake_exc)),
     ):
-        with caplog.at_level("WARNING", logger="src.backend.dsl.engine.processors.invoke_workflow"):
+        with caplog.at_level(
+            "WARNING", logger="src.backend.dsl.engine.processors.invoke_workflow"
+        ):
             result = await proc._resolve_workflow_version()
 
     # Fallback остался backward-compat (return original workflow_name).

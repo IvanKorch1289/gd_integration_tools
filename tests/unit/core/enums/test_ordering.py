@@ -41,6 +41,7 @@ def test_ordering_invalid_value() -> None:
 def test_ordering_dunder_all() -> None:
     """`__all__` = ('OrderingTypeChoices',)."""
     import src.backend.core.enums.ordering as mod
+
     assert mod.__all__ == ("OrderingTypeChoices",)
 
 

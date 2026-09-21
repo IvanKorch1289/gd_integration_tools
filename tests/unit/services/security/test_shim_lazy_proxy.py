@@ -10,8 +10,6 @@ Characterization test BEFORE refactor:
 
 from __future__ import annotations
 
-from unittest.mock import patch
-
 import pytest
 
 from src.backend.infrastructure.security import signatures as _infra_signatures
@@ -59,7 +57,6 @@ class TestServicesSecurityShimProxy:
         import-time access.
         """
         # After clear cache, re-import services.security
-        import importlib
         import sys
 
         # Save current module

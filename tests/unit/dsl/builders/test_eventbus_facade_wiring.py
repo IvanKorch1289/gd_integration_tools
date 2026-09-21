@@ -19,7 +19,6 @@
     * ``_make_eventbus_handler`` записывает события в exchange.properties.
 """
 
-
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
@@ -52,7 +51,9 @@ class _StubExchange:
 
 
 class TestResolveEventBusFacade:
-    def test_returns_none_when_no_di_provider(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_returns_none_when_no_di_provider(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Без DI-provider — fallback к None (dev_light / unit-tests)."""
         # Cycle 96 L10: use string-path patch (matches sibling test
         # test_publishes_via_facade_when_available pattern). Direct
@@ -92,7 +93,7 @@ class TestResolveEventBusFacade:
 class TestEventBusPublishProcessorFacadeWiring:
     @pytest.mark.asyncio
     async def test_publishes_via_facade_when_available(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """S173 M-2: EventBusFacade.publish вызывается с правильным event."""
         facade = MagicMock()
@@ -124,7 +125,7 @@ class TestEventBusPublishProcessorFacadeWiring:
 
     @pytest.mark.asyncio
     async def test_falls_back_on_facade_failure(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Если facade.publish raises — fallback к metadata ``_eventbus_published``.
 
@@ -154,7 +155,7 @@ class TestEventBusPublishProcessorFacadeWiring:
 
     @pytest.mark.asyncio
     async def test_no_op_when_flag_disabled(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """eventbus_dsl_enabled=False → no-op, facade НЕ вызывается."""
         facade = MagicMock()
@@ -180,7 +181,7 @@ class TestEventBusPublishProcessorFacadeWiring:
 class TestEventBusSubscribeProcessorFacadeWiring:
     @pytest.mark.asyncio
     async def test_subscribes_via_facade_when_available(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """S173 M-2: subscribe_with_lifecycle вызывается с handler."""
         facade = MagicMock()
@@ -194,7 +195,9 @@ class TestEventBusSubscribeProcessorFacadeWiring:
         original = feature_flags.eventbus_dsl_enabled
         feature_flags.eventbus_dsl_enabled = True
         try:
-            proc = EventBusSubscribeProcessor(topic_pattern="orders.*", ack_mode="manual")
+            proc = EventBusSubscribeProcessor(
+                topic_pattern="orders.*", ack_mode="manual"
+            )
             exchange = _StubExchange()
             await proc.process(exchange, context=None)
             # facade.subscribe_with_lifecycle вызван.
@@ -216,7 +219,7 @@ class TestEventBusSubscribeProcessorFacadeWiring:
 
     @pytest.mark.asyncio
     async def test_metadata_only_when_no_facade(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Без facade — только metadata-декларация (backward compat)."""
         monkeypatch.setattr(
@@ -244,10 +247,7 @@ class TestMakeEventBusHandler:
         """Handler записывает событие в ``exchange.properties['_eventbus_received']``."""
         exchange = _StubExchange()
         handler = _make_eventbus_handler(
-            exchange=exchange,
-            context=None,
-            topic_pattern="orders.*",
-            ack_mode="auto",
+            exchange=exchange, context=None, topic_pattern="orders.*", ack_mode="auto"
         )
         await handler({"order_id": 42, "amount": 100})
         assert "_eventbus_received" in exchange.properties
@@ -262,10 +262,7 @@ class TestMakeEventBusHandler:
         """Несколько events → accumulated list."""
         exchange = _StubExchange()
         handler = _make_eventbus_handler(
-            exchange=exchange,
-            context=None,
-            topic_pattern="orders.*",
-            ack_mode="auto",
+            exchange=exchange, context=None, topic_pattern="orders.*", ack_mode="auto"
         )
         await handler({"id": 1})
         await handler({"id": 2})

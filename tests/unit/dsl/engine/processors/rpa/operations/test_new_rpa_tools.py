@@ -7,6 +7,7 @@
 4. TerminalExecProcessor — async subprocess with timeout
 5. ImageConvertProcessor — pillow format conversion
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -29,6 +30,7 @@ class TestFileDeleteProcessor:
         from src.backend.dsl.engine.processors.rpa.operations.filedeleteprocessor import (
             FileDeleteProcessor,
         )
+
         allowed_dir = "/tmp/dsl"
         os.makedirs(allowed_dir, exist_ok=True)
         target_path = os.path.join(allowed_dir, "delete_me.txt")
@@ -53,6 +55,7 @@ class TestFileListProcessor:
         from src.backend.dsl.engine.processors.rpa.operations.filelistprocessor import (
             FileListProcessor,
         )
+
         (tmp_path / "a.txt").write_text("a")
         (tmp_path / "b.txt").write_text("b")
         (tmp_path / "c.log").write_text("c")
@@ -75,6 +78,7 @@ class TestFileWatchProcessor:
         from src.backend.dsl.engine.processors.rpa.operations.filewatchprocessor import (
             FileWatchProcessor,
         )
+
         p = FileWatchProcessor(directory="/tmp", pattern="*.txt", timeout=1.0)
         assert p.directory == "/tmp"
         assert p.pattern == "*.txt"
@@ -86,6 +90,7 @@ class TestFileWatchProcessor:
         from src.backend.dsl.engine.processors.rpa.operations.filewatchprocessor import (
             FileWatchProcessor,
         )
+
         p = FileWatchProcessor(directory=str(tmp_path), pattern="*.txt", timeout=0.1)
         p.auth_check = AsyncMock(return_value=True)
         ex = MagicMock()
@@ -95,9 +100,7 @@ class TestFileWatchProcessor:
         ex.set_error = MagicMock()
         ex.stop = MagicMock()
         # Mock Observer so we don't actually start threads
-        with patch(
-            "watchdog.observers.Observer",
-        ):
+        with patch("watchdog.observers.Observer"):
             await p.process(ex, MagicMock())
         # Even with timeout, returns changes list (empty)
         assert "changes" in ex.in_message.body
@@ -107,6 +110,7 @@ class TestTerminalExecProcessor:
     @pytest.mark.asyncio
     async def test_exec_runs_command(self) -> None:
         from src.backend.dsl.engine.processors.rpa.system import TerminalExecProcessor
+
         p = TerminalExecProcessor(command="echo hello", timeout=2.0, to="body.output")
         p.auth_check = AsyncMock(return_value=True)
         ex = MagicMock()
@@ -122,6 +126,7 @@ class TestTerminalExecProcessor:
     async def test_exec_timeout_raises(self) -> None:
         """subprocess timeout → raise TimeoutError."""
         from src.backend.dsl.engine.processors.rpa.system import TerminalExecProcessor
+
         p = TerminalExecProcessor(command="sleep 10", timeout=0.1)
         p.auth_check = AsyncMock(return_value=True)
         ex = MagicMock()

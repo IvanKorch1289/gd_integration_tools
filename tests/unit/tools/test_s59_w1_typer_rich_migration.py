@@ -26,7 +26,8 @@ runner = CliRunner()  # Click 8.3+: mix_stderr kwarg removed
 # Cycle 33: CHECKER_PATH для subprocess-based tests (typer→argparse миграция).
 CHECKER_PATH = (
     Path(__file__).resolve().parent.parent.parent.parent
-    / "tools" / "check_docstrings.py"
+    / "tools"
+    / "check_docstrings.py"
 )
 
 

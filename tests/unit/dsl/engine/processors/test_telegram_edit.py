@@ -2,6 +2,7 @@
 
 T3 coverage sprint cycle 11: TelegramEditProcessor (edit Telegram message).
 """
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -192,7 +193,9 @@ async def test_process_edits_message(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.asyncio
-async def test_process_skips_when_chat_id_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_process_skips_when_chat_id_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     proc = TelegramEditProcessor(body="text")
     ex, captured = _make_exchange(properties={"telegram_message_id": 1})
 
@@ -210,7 +213,9 @@ async def test_process_skips_when_chat_id_missing(monkeypatch: pytest.MonkeyPatc
 
 
 @pytest.mark.asyncio
-async def test_process_skips_when_message_id_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_process_skips_when_message_id_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     proc = TelegramEditProcessor(body="text")
     ex, captured = _make_exchange(properties={"chat_id": "123"})
 
@@ -228,7 +233,9 @@ async def test_process_skips_when_message_id_missing(monkeypatch: pytest.MonkeyP
 
 
 @pytest.mark.asyncio
-async def test_process_uses_body_from_when_static_none(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_process_uses_body_from_when_static_none(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     proc = TelegramEditProcessor(body_from="properties.text")
     ex, _captured = _make_exchange(
         properties={"chat_id": "123", "telegram_message_id": 1, "text": "dynamic"}
@@ -288,8 +295,7 @@ async def test_process_no_fields_skips_edit(monkeypatch: pytest.MonkeyPatch) -> 
 @pytest.mark.asyncio
 async def test_process_with_inline_keyboard(monkeypatch: pytest.MonkeyPatch) -> None:
     proc = TelegramEditProcessor(
-        body="text",
-        inline_keyboard=[[{"text": "btn1", "callback_data": "x"}]],
+        body="text", inline_keyboard=[[{"text": "btn1", "callback_data": "x"}]]
     )
     ex, _captured = _make_exchange(
         properties={"chat_id": "123", "telegram_message_id": 1}
@@ -338,7 +344,10 @@ async def test_process_client_none_skips(monkeypatch: pytest.MonkeyPatch) -> Non
     )
     with patch(
         "src.backend.dsl.engine.processors.telegram.edit.resolve_value",
-        lambda exch, expr: {"body.chat_id": "123", "properties.telegram_message_id": 1}.get(expr),
+        lambda exch, expr: {
+            "body.chat_id": "123",
+            "properties.telegram_message_id": 1,
+        }.get(expr),
     ):
         await proc.process(ex, _ctx())
 
@@ -368,7 +377,10 @@ async def test_process_exception_records_error(monkeypatch: pytest.MonkeyPatch) 
     )
     with patch(
         "src.backend.dsl.engine.processors.telegram.edit.resolve_value",
-        lambda exch, expr: {"body.chat_id": "123", "properties.telegram_message_id": 1}.get(expr),
+        lambda exch, expr: {
+            "body.chat_id": "123",
+            "properties.telegram_message_id": 1,
+        }.get(expr),
     ):
         await proc.process(ex, _ctx())
 
@@ -376,7 +388,9 @@ async def test_process_exception_records_error(monkeypatch: pytest.MonkeyPatch) 
 
 
 @pytest.mark.asyncio
-async def test_process_chat_id_message_id_coerced_to_str_int(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_process_chat_id_message_id_coerced_to_str_int(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """chat_id=str, message_id=int — coerced before passing to client."""
     proc = TelegramEditProcessor(body="text")
     ex, _captured = _make_exchange()

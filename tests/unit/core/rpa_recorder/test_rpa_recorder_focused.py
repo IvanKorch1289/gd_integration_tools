@@ -90,16 +90,16 @@ class TestParseRecordedActions:
         assert steps[0].args == {"url": "https://example.com"}
 
     def test_click(self) -> None:
-        actions = [RecordedAction(action="click", selector="#submit", timeout_seconds=3.0)]
+        actions = [
+            RecordedAction(action="click", selector="#submit", timeout_seconds=3.0)
+        ]
         steps = parse_recorded_actions(actions)
         assert steps[0].name == "step_0_click"
         assert steps[0].action == "browser.click"
         assert steps[0].args == {"selector": "#submit", "timeout": 3.0}
 
     def test_fill(self) -> None:
-        actions = [
-            RecordedAction(action="fill", selector="input#q", value="hello")
-        ]
+        actions = [RecordedAction(action="fill", selector="input#q", value="hello")]
         steps = parse_recorded_actions(actions)
         assert steps[0].action == "browser.fill"
         assert steps[0].args == {"selector": "input#q", "value": "hello"}
@@ -111,10 +111,9 @@ class TestParseRecordedActions:
         assert steps[0].args["selector"] == "button.send"
 
     def test_screenshot(self) -> None:
-        actions = [RecordedAction(
-            action="screenshot",
-            metadata={"path": "evidence.png"},
-        )]
+        actions = [
+            RecordedAction(action="screenshot", metadata={"path": "evidence.png"})
+        ]
         steps = parse_recorded_actions(actions)
         assert steps[0].action == "browser.screenshot"
         assert steps[0].args == {"path": "evidence.png"}
@@ -128,9 +127,7 @@ class TestParseRecordedActions:
         assert steps[0].args == {"selector": ".loaded", "timeout": 10.0}
 
     def test_extract(self) -> None:
-        actions = [
-            RecordedAction(action="extract", selector=".price", value="price")
-        ]
+        actions = [RecordedAction(action="extract", selector=".price", value="price")]
         steps = parse_recorded_actions(actions)
         assert steps[0].action == "browser.extract"
 
@@ -157,7 +154,9 @@ class TestParseRecordedActions:
         steps = parse_recorded_actions(actions)
         assert len(steps) == 3
         assert [s.name for s in steps] == [
-            "step_0_navigate", "step_1_fill", "step_2_click"
+            "step_0_navigate",
+            "step_1_fill",
+            "step_2_click",
         ]
 
 
@@ -213,17 +212,14 @@ class TestGenerateRouteDraft:
 
 class TestExportDSDLDraft:
     def test_export(self, tmp_path: Path) -> None:
-        files = {
-            "route.yaml": "content1",
-            "test_r1.py": "content2",
-        }
+        files = {"route.yaml": "content1", "test_r1.py": "content2"}
         written = export_dsl_draft(files, tmp_path / "extensions" / "r1")
         assert len(written) == 2
         assert (tmp_path / "extensions" / "r1" / "route.yaml").exists()
 
     def test_export_creates_nested_dirs(self, tmp_path: Path) -> None:
         files = {"deep/nested/file.txt": "x"}
-        written = export_dsl_draft(files, tmp_path / "out")
+        _written = export_dsl_draft(files, tmp_path / "out")
         assert (tmp_path / "out" / "deep" / "nested" / "file.txt").exists()
 
 
@@ -253,24 +249,28 @@ class TestRealisticExample:
     def test_search_flow_recording(self, tmp_path: Path) -> None:
         recorder = get_rpa_recorder()
         # Simulate Playwright recording:
-        recorder.add_action(RecordedAction(
-            action="navigate", url="https://search.example.com",
-        ))
-        recorder.add_action(RecordedAction(
-            action="fill", selector="input[name=q]", value="RPA integration",
-        ))
-        recorder.add_action(RecordedAction(
-            action="click", selector="button[type=submit]",
-        ))
-        recorder.add_action(RecordedAction(
-            action="wait", selector=".results", timeout_seconds=10.0,
-        ))
-        recorder.add_action(RecordedAction(
-            action="extract", selector=".result-count", value="total_count",
-        ))
-        recorder.add_action(RecordedAction(
-            action="assert", selector=".result-count", value="42",
-        ))
+        recorder.add_action(
+            RecordedAction(action="navigate", url="https://search.example.com")
+        )
+        recorder.add_action(
+            RecordedAction(
+                action="fill", selector="input[name=q]", value="RPA integration"
+            )
+        )
+        recorder.add_action(
+            RecordedAction(action="click", selector="button[type=submit]")
+        )
+        recorder.add_action(
+            RecordedAction(action="wait", selector=".results", timeout_seconds=10.0)
+        )
+        recorder.add_action(
+            RecordedAction(
+                action="extract", selector=".result-count", value="total_count"
+            )
+        )
+        recorder.add_action(
+            RecordedAction(action="assert", selector=".result-count", value="42")
+        )
 
         # Generate DSL draft.
         files = generate_route_draft(
@@ -279,7 +279,7 @@ class TestRealisticExample:
             base_url="https://search.example.com",
         )
         target = tmp_path / "extensions" / "search-flow"
-        written = export_dsl_draft(files, target)
+        _written = export_dsl_draft(files, target)
         assert (target / "route.yaml").exists()
         assert (target / "test_search-flow.py").exists()
 

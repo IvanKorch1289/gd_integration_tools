@@ -3,6 +3,7 @@
 This module defines capability-related exceptions used by the capability
 gate (P0-S4). Coverage was 0% before Sprint 30.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -70,6 +71,10 @@ class TestInheritance:
         # Can be raised and caught
         with pytest.raises(CapabilityDeniedError):
             raise CapabilityDeniedError(
-                plugin="x", capability="y", requested_scope="z",
-                declared_scope=None, tenant="t", correlation_id="c",
+                plugin="x",
+                capability="y",
+                requested_scope="z",
+                declared_scope=None,
+                tenant="t",
+                correlation_id="c",
             )

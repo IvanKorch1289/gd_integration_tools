@@ -7,6 +7,7 @@ kwarg — это отдельный метод ``workflow.upsert_search_attribut
 The fix splits the call: upsert SA first (defensive skip on empty), then
 ``workflow.continue_as_new(args["input"])`` with only the input payload.
 """
+
 from __future__ import annotations
 
 import sys
@@ -73,7 +74,7 @@ class TestContinueAsNewCycle37:
 
         # SA были переданы в upsert_search_attributes
         fake_workflow.upsert_search_attributes.assert_called_once_with(
-            {"env": "prod", "tenant_id": "t-1"},
+            {"env": "prod", "tenant_id": "t-1"}
         )
         # continue_as_new получил только input (НЕ search_attributes)
         fake_workflow.continue_as_new.assert_called_once_with({"step": 100})
@@ -86,8 +87,7 @@ class TestContinueAsNewCycle37:
     def test_perform_continue_no_search_attrs_skips_upsert(self) -> None:
         """Если search_attributes пустой — skip upsert, не вызывать вообще."""
         h, marker = _build_handler_with_marker(
-            search_attributes={},
-            body_snapshot={"step": 5},
+            search_attributes={}, body_snapshot={"step": 5}
         )
 
         fake_workflow = _install_fake_temporalio()
@@ -104,8 +104,7 @@ class TestContinueAsNewCycle37:
     def test_perform_continue_input_as_dict_passes_as_single_arg(self) -> None:
         """ВСЕГДА передаём input одним kwarg (без **kwargs), без TypeError."""
         h, marker = _build_handler_with_marker(
-            search_attributes={"k": "v"},
-            body_snapshot={"a": 1, "b": [1, 2]},
+            search_attributes={"k": "v"}, body_snapshot={"a": 1, "b": [1, 2]}
         )
 
         fake_workflow = _install_fake_temporalio()

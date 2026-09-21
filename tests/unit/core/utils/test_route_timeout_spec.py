@@ -11,7 +11,6 @@
     * PolicyChain.timeout(seconds=X, total=Y) — ValueError (mutually exclusive).
 """
 
-
 from __future__ import annotations
 
 from pathlib import Path

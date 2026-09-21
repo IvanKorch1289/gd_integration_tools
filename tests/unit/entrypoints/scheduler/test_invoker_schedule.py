@@ -64,7 +64,7 @@ class TestRegisterScheduledInvocation:
             return_value=mock_mgr,
         ):
             job_id = register_scheduled_invocation(
-                ScheduleSpec(action="health.heartbeat", cron="*/5 * * * *"),
+                ScheduleSpec(action="health.heartbeat", cron="*/5 * * * *")
             )
 
         assert job_id == "scheduled_invocation_health.heartbeat"
@@ -84,7 +84,7 @@ class TestRegisterScheduledInvocation:
             return_value=mock_mgr,
         ):
             job_id = register_scheduled_invocation(
-                ScheduleSpec(action="cache.warmup", interval_seconds=300),
+                ScheduleSpec(action="cache.warmup", interval_seconds=300)
             )
 
         assert job_id == "scheduled_invocation_cache.warmup"
@@ -101,7 +101,7 @@ class TestRegisterScheduledInvocation:
             return_value=mock_mgr,
         ):
             job_id = register_scheduled_invocation(
-                ScheduleSpec(action="a", cron="* * * * *", job_id="my_job"),
+                ScheduleSpec(action="a", cron="* * * * *", job_id="my_job")
             )
 
         assert job_id == "my_job"
@@ -124,7 +124,7 @@ class TestRegisterScheduledInvocations:
                 [
                     ScheduleSpec(action="a", cron="* * * * *"),
                     ScheduleSpec(action="b", interval_seconds=60),
-                ],
+                ]
             )
 
         assert len(job_ids) == 2
@@ -141,12 +141,15 @@ class TestRunScheduledInvocation:
         mock_dispatcher = AsyncMock()
         mock_dispatcher.dispatch.return_value = MagicMock(success=True)
 
-        with patch(
-            "src.backend.core.di.providers.get_action_dispatcher_provider",
-            return_value=mock_dispatcher,
-        ), patch(
-            "src.backend.core.di.contexts.make_dispatch_context",
-            return_value=MagicMock(),
+        with (
+            patch(
+                "src.backend.core.di.providers.get_action_dispatcher_provider",
+                return_value=mock_dispatcher,
+            ),
+            patch(
+                "src.backend.core.di.contexts.make_dispatch_context",
+                return_value=MagicMock(),
+            ),
         ):
             await _run_scheduled_invocation(spec)
 
@@ -159,12 +162,15 @@ class TestRunScheduledInvocation:
         mock_dispatcher = AsyncMock()
         mock_dispatcher.dispatch.return_value = MagicMock(success=True)
 
-        with patch(
-            "src.backend.core.di.providers.get_action_dispatcher_provider",
-            return_value=mock_dispatcher,
-        ), patch(
-            "src.backend.core.di.contexts.make_dispatch_context",
-            return_value=MagicMock(),
+        with (
+            patch(
+                "src.backend.core.di.providers.get_action_dispatcher_provider",
+                return_value=mock_dispatcher,
+            ),
+            patch(
+                "src.backend.core.di.contexts.make_dispatch_context",
+                return_value=MagicMock(),
+            ),
         ):
             await _run_scheduled_invocation(spec)
 
@@ -177,12 +183,15 @@ class TestRunScheduledInvocation:
         mock_dispatcher = AsyncMock()
         mock_dispatcher.dispatch.side_effect = RuntimeError("boom")
 
-        with patch(
-            "src.backend.core.di.providers.get_action_dispatcher_provider",
-            return_value=mock_dispatcher,
-        ), patch(
-            "src.backend.core.di.contexts.make_dispatch_context",
-            return_value=MagicMock(),
+        with (
+            patch(
+                "src.backend.core.di.providers.get_action_dispatcher_provider",
+                return_value=mock_dispatcher,
+            ),
+            patch(
+                "src.backend.core.di.contexts.make_dispatch_context",
+                return_value=MagicMock(),
+            ),
         ):
             # should not raise
             await _run_scheduled_invocation(spec)
@@ -194,12 +203,15 @@ class TestRunScheduledInvocation:
         mock_dispatcher = AsyncMock()
         mock_dispatcher.dispatch.return_value = MagicMock(success=True)
 
-        with patch(
-            "src.backend.core.di.providers.get_action_dispatcher_provider",
-            return_value=mock_dispatcher,
-        ), patch(
-            "src.backend.core.di.contexts.make_dispatch_context",
-            return_value=MagicMock(),
+        with (
+            patch(
+                "src.backend.core.di.providers.get_action_dispatcher_provider",
+                return_value=mock_dispatcher,
+            ),
+            patch(
+                "src.backend.core.di.contexts.make_dispatch_context",
+                return_value=MagicMock(),
+            ),
         ):
             await _run_scheduled_invocation(spec)
 

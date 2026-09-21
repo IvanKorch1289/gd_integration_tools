@@ -9,7 +9,6 @@ Middleware извлекает tenant_id из request и устанавливае
 если применимо).
 """
 
-
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -18,7 +17,7 @@ import pytest
 
 
 def _make_downstream(
-    state_tenant: str | None = None, response_tenant: str | None = None,
+    state_tenant: str | None = None, response_tenant: str | None = None
 ):
     """Создаёт downstream app, возвращающий 200 + optional tenant.
 
@@ -36,11 +35,7 @@ def _make_downstream(
         if response_tenant is not None:
             response_headers.append((b"x-tenant-id", response_tenant.encode("latin-1")))
         await send(
-            {
-                "type": "http.response.start",
-                "status": 200,
-                "headers": response_headers,
-            },
+            {"type": "http.response.start", "status": 200, "headers": response_headers}
         )
         await send({"type": "http.response.body", "body": b"ok"})
 
@@ -101,12 +96,7 @@ async def test_state_used_when_no_header() -> None:
         mw = TenantMiddleware(app, default_tenant="default")
         send = AsyncMock()
         await mw(
-            {
-                "type": "http",
-                "method": "GET",
-                "path": "/api",
-                "headers": [],
-            },
+            {"type": "http", "method": "GET", "path": "/api", "headers": []},
             AsyncMock(),
             send,
         )
@@ -130,12 +120,7 @@ async def test_default_used_when_no_header_no_state() -> None:
         mw = TenantMiddleware(app, default_tenant="default-tenant")
         send = AsyncMock()
         await mw(
-            {
-                "type": "http",
-                "method": "GET",
-                "path": "/api",
-                "headers": [],
-            },
+            {"type": "http", "method": "GET", "path": "/api", "headers": []},
             AsyncMock(),
             send,
         )
@@ -152,7 +137,7 @@ async def test_overrides_downstream_x_tenant_id_header() -> None:
     app = AsyncMock()
     # Downstream посылает свой X-Tenant-ID — мы должны перезаписать.
     app.side_effect = _make_downstream(
-        state_tenant="correct-tenant", response_tenant="stale-downstream-value",
+        state_tenant="correct-tenant", response_tenant="stale-downstream-value"
     )
 
     with patch(
@@ -162,12 +147,7 @@ async def test_overrides_downstream_x_tenant_id_header() -> None:
         mw = TenantMiddleware(app, default_tenant="default")
         send = AsyncMock()
         await mw(
-            {
-                "type": "http",
-                "method": "GET",
-                "path": "/api",
-                "headers": [],
-            },
+            {"type": "http", "method": "GET", "path": "/api", "headers": []},
             AsyncMock(),
             send,
         )
@@ -190,11 +170,7 @@ async def test_passes_through_non_http_scope() -> None:
     app.side_effect = downstream
     mw = TenantMiddleware(app, default_tenant="default")
     send = AsyncMock()
-    await mw(
-        {"type": "websocket", "path": "/ws", "headers": []},
-        AsyncMock(),
-        send,
-    )
+    await mw({"type": "websocket", "path": "/ws", "headers": []}, AsyncMock(), send)
 
     # websocket.accept прошёл без модификации.
     msg = send.await_args.args[0]
@@ -234,7 +210,8 @@ async def test_preserves_body_chunks_unchanged() -> None:
         )
 
     body_msgs = [
-        c.args[0] for c in send.await_args_list
+        c.args[0]
+        for c in send.await_args_list
         if c.args[0]["type"] == "http.response.body"
     ]
     assert len(body_msgs) == 2
@@ -258,12 +235,7 @@ async def test_correlation_context_setter_called_with_resolved_tenant() -> None:
         mw = TenantMiddleware(app, default_tenant="default")
         send = AsyncMock()
         await mw(
-            {
-                "type": "http",
-                "method": "GET",
-                "path": "/api",
-                "headers": [],
-            },
+            {"type": "http", "method": "GET", "path": "/api", "headers": []},
             AsyncMock(),
             send,
         )

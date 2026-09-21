@@ -6,7 +6,6 @@
 ``request.state`` и в ``structlog`` contextvars.
 """
 
-
 from __future__ import annotations
 
 import structlog
@@ -28,7 +27,7 @@ def test_tenant_middleware_propagates_header() -> None:
     async def probe(request: Request) -> dict[str, str | None]:
         captured["tenant_id"] = getattr(request.state, "tenant_id", None)
         captured["structlog_tenant"] = structlog.contextvars.get_contextvars().get(
-            "tenant_id",
+            "tenant_id"
         )
         return {"ok": "1"}
 

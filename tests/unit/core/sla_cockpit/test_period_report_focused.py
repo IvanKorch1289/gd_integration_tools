@@ -34,7 +34,7 @@ class TestSLOPeriodReport:
         from src.backend.core.sla_cockpit.evaluator import SLOPeriodReport
 
         r = SLOPeriodReport(
-            slo_id="t1:r1", slo_version="v1", start_time=0, end_time=100,
+            slo_id="t1:r1", slo_version="v1", start_time=0, end_time=100
         )
         assert r.evaluation_count == 0
         assert r.healthy_count == 0
@@ -48,7 +48,7 @@ class TestSLOPeriodReport:
         from src.backend.core.sla_cockpit.evaluator import SLOPeriodReport
 
         r = SLOPeriodReport(
-            slo_id="t1:r1", slo_version="v1", start_time=0, end_time=100,
+            slo_id="t1:r1", slo_version="v1", start_time=0, end_time=100
         )
         assert r.availability == 1.0  # default (no evals).
 
@@ -56,9 +56,16 @@ class TestSLOPeriodReport:
         from src.backend.core.sla_cockpit.evaluator import SLOPeriodReport
 
         r = SLOPeriodReport(
-            slo_id="t1:r1", slo_version="v1", start_time=0, end_time=100,
-            evaluation_count=10, healthy_count=8, at_risk_count=1, breach_count=1,
-            worst_latency_p99_ms=500.0, worst_error_rate=0.05,
+            slo_id="t1:r1",
+            slo_version="v1",
+            start_time=0,
+            end_time=100,
+            evaluation_count=10,
+            healthy_count=8,
+            at_risk_count=1,
+            breach_count=1,
+            worst_latency_p99_ms=500.0,
+            worst_error_rate=0.05,
         )
         d = r.to_dict()
         assert d["slo_id"] == "t1:r1"
@@ -71,10 +78,7 @@ class TestAggregateEvaluations:
     def test_empty_list(self) -> None:
         slo = SLO(tenant_id="t1", route_id="r1")
         r = aggregate_evaluations(
-            evaluations=[],
-            slo=slo,
-            start_time=0.0,
-            end_time=100.0,
+            evaluations=[], slo=slo, start_time=0.0, end_time=100.0
         )
         assert r.evaluation_count == 0
         assert r.healthy_count == 0
@@ -90,7 +94,7 @@ class TestAggregateEvaluations:
             _eval(status=SLOStatus.HEALTHY, latency=120, slo_ref=slo),
         ]
         r = aggregate_evaluations(
-            evaluations=evals, slo=slo, start_time=0.0, end_time=100.0,
+            evaluations=evals, slo=slo, start_time=0.0, end_time=100.0
         )
         assert r.evaluation_count == 3
         assert r.healthy_count == 3
@@ -107,7 +111,7 @@ class TestAggregateEvaluations:
             _eval(status=SLOStatus.UNKNOWN, slo_ref=slo),
         ]
         r = aggregate_evaluations(
-            evaluations=evals, slo=slo, start_time=0.0, end_time=100.0,
+            evaluations=evals, slo=slo, start_time=0.0, end_time=100.0
         )
         assert r.evaluation_count == 4
         assert r.healthy_count == 1
@@ -125,7 +129,7 @@ class TestAggregateEvaluations:
             _eval(status=SLOStatus.HEALTHY, latency=200, error_rate=0.005, slo_ref=slo),
         ]
         r = aggregate_evaluations(
-            evaluations=evals, slo=slo, start_time=0.0, end_time=100.0,
+            evaluations=evals, slo=slo, start_time=0.0, end_time=100.0
         )
         # Worst = max.
         assert r.worst_latency_p99_ms == 500.0
@@ -141,7 +145,7 @@ class TestAggregateEvaluations:
             _eval(status=SLOStatus.HEALTHY, slo_ref=slo1),
         ]
         r = aggregate_evaluations(
-            evaluations=evals, slo=slo1, start_time=0.0, end_time=100.0,
+            evaluations=evals, slo=slo1, start_time=0.0, end_time=100.0
         )
         # Only 2 counted (slo1).
         assert r.evaluation_count == 2
@@ -156,7 +160,7 @@ class TestAggregateEvaluations:
             _eval(status=SLOStatus.AT_RISK, slo_ref=slo),
         ]
         r = aggregate_evaluations(
-            evaluations=evals, slo=slo, start_time=0.0, end_time=100.0,
+            evaluations=evals, slo=slo, start_time=0.0, end_time=100.0
         )
         # 3 healthy / 4 total.
         assert abs(r.availability - 0.75) < 0.01
@@ -165,20 +169,15 @@ class TestAggregateEvaluations:
         """slo_id format: tenant_id:route_id."""
         slo = SLO(tenant_id="bank-t1", route_id="payment-process")
         evals = [
-            _eval(
-                status=SLOStatus.HEALTHY,
-                route_id="payment-process", slo_ref=slo,
-            )
+            _eval(status=SLOStatus.HEALTHY, route_id="payment-process", slo_ref=slo)
         ]
         r = aggregate_evaluations(
-            evaluations=evals, slo=slo, start_time=0.0, end_time=100.0,
+            evaluations=evals, slo=slo, start_time=0.0, end_time=100.0
         )
         assert r.slo_id == "bank-t1:payment-process"
 
     def test_empty_evaluations_no_crash(self) -> None:
         slo = SLO(tenant_id="t1", route_id="r1")
-        r = aggregate_evaluations(
-            evaluations=[], slo=slo, start_time=0, end_time=100,
-        )
+        r = aggregate_evaluations(evaluations=[], slo=slo, start_time=0, end_time=100)
         assert r.worst_latency_p99_ms == 0.0
         assert r.worst_error_rate == 0.0

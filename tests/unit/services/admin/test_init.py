@@ -20,17 +20,12 @@ class TestAdminFacadeAllExports:
     """``__all__`` audit + class/callable identity."""
 
     @pytest.mark.parametrize(
-        "symbol_name",
-        ["AdminService", "emit_admin_action", "register_admin"],
+        "symbol_name", ["AdminService", "emit_admin_action", "register_admin"]
     )
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(admin, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
-        assert symbol_name in admin.__all__, (
-            f"{symbol_name} not declared in __all__"
-        )
+        assert hasattr(admin, symbol_name), f"Missing export: {symbol_name}"
+        assert symbol_name in admin.__all__, f"{symbol_name} not declared in __all__"
 
     def test_all_declared_count(self) -> None:
         """``__all__`` содержит 3 символа."""

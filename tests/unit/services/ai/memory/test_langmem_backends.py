@@ -12,7 +12,6 @@ Cycle 69 invariant: tests catch regressions in memory backend
 factories that could lead to silent model_type mismatches.
 """
 
-
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -76,7 +75,9 @@ class TestResolveRepositoryCls:
         with patch.dict("sys.modules", {"advanced_alchemy.repository": None}):
             with patch(
                 "builtins.__import__",
-                side_effect=ImportError("No module named 'advanced_alchemy.repository'"),
+                side_effect=ImportError(
+                    "No module named 'advanced_alchemy.repository'"
+                ),
             ):
                 with pytest.raises(AdvancedAlchemyMissing, match="advanced-alchemy"):
                     _resolve_repository_cls()
@@ -95,7 +96,8 @@ class TestResolveRepositoryCls:
 
         # Only meaningful if advanced_alchemy is not installed.
         try:
-            import advanced_alchemy.repository
+            import advanced_alchemy.repository  # noqa: F401 — availability probe (try/except ImportError guard)
+
             pytest.skip("advanced_alchemy is installed in this env")
         except ImportError:
             with pytest.raises(AdvancedAlchemyMissing, match="advanced-alchemy"):
@@ -105,7 +107,9 @@ class TestResolveRepositoryCls:
 class TestGetEpisodicRepository:
     """get_episodic_repository factory."""
 
-    @pytest.mark.skip(reason="S44 W43: requires advanced_alchemy package; not in test env.")
+    @pytest.mark.skip(
+        reason="S44 W43: requires advanced_alchemy package; not in test env."
+    )
     def test_propagates_import_error(self) -> None:
         """get_episodic_repository raises AdvancedAlchemyMissing if no advanced_alchemy."""
         from src.backend.services.ai.memory.langmem.backends import (
@@ -116,7 +120,9 @@ class TestGetEpisodicRepository:
         with patch.dict("sys.modules", {"advanced_alchemy.repository": None}):
             with patch(
                 "builtins.__import__",
-                side_effect=ImportError("No module named 'advanced_alchemy.repository'"),
+                side_effect=ImportError(
+                    "No module named 'advanced_alchemy.repository'"
+                ),
             ):
                 with pytest.raises(AdvancedAlchemyMissing):
                     get_episodic_repository(MagicMock())
@@ -129,7 +135,8 @@ class TestGetEpisodicRepository:
         )
 
         try:
-            import advanced_alchemy.repository
+            import advanced_alchemy.repository  # noqa: F401 — availability probe (try/except ImportError guard)
+
             pytest.skip("advanced_alchemy installed")
         except ImportError:
             with pytest.raises(AdvancedAlchemyMissing):
@@ -143,7 +150,7 @@ class TestGetEpisodicRepository:
         )
 
         try:
-            import advanced_alchemy.repository
+            import advanced_alchemy.repository  # noqa: F401 — availability probe (try/except ImportError guard)
         except ImportError:
             pytest.skip("advanced_alchemy not installed")
 
@@ -155,7 +162,9 @@ class TestGetEpisodicRepository:
 class TestGetProceduralRepository:
     """get_procedural_repository factory."""
 
-    @pytest.mark.skip(reason="S44 W43: requires advanced_alchemy package; not in test env.")
+    @pytest.mark.skip(
+        reason="S44 W43: requires advanced_alchemy package; not in test env."
+    )
     def test_propagates_import_error(self) -> None:
         """get_procedural_repository raises AdvancedAlchemyMissing if no advanced_alchemy."""
         from src.backend.services.ai.memory.langmem.backends import (
@@ -166,7 +175,9 @@ class TestGetProceduralRepository:
         with patch.dict("sys.modules", {"advanced_alchemy.repository": None}):
             with patch(
                 "builtins.__import__",
-                side_effect=ImportError("No module named 'advanced_alchemy.repository'"),
+                side_effect=ImportError(
+                    "No module named 'advanced_alchemy.repository'"
+                ),
             ):
                 with pytest.raises(AdvancedAlchemyMissing):
                     get_procedural_repository(MagicMock())
@@ -179,7 +190,8 @@ class TestGetProceduralRepository:
         )
 
         try:
-            import advanced_alchemy.repository
+            import advanced_alchemy.repository  # noqa: F401 — availability probe (try/except ImportError guard)
+
             pytest.skip("advanced_alchemy installed")
         except ImportError:
             with pytest.raises(AdvancedAlchemyMissing):
@@ -193,7 +205,7 @@ class TestGetProceduralRepository:
         )
 
         try:
-            import advanced_alchemy.repository
+            import advanced_alchemy.repository  # noqa: F401 — availability probe (try/except ImportError guard)
         except ImportError:
             pytest.skip("advanced_alchemy not installed")
 

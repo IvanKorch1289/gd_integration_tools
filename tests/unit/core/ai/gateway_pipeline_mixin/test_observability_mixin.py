@@ -43,10 +43,7 @@ class _StubMixin:
 
 def _req_resp(cost_usd: float = 0.05) -> tuple[AIRequest, AIResponse]:
     req = AIRequest(
-        workflow_id="wf-1",
-        tenant_id="t-1",
-        correlation_id="corr-1",
-        prompt_inline="hi",
+        workflow_id="wf-1", tenant_id="t-1", correlation_id="corr-1", prompt_inline="hi"
     )
     resp = AIResponse(content="hello", model_used="stub", cost_usd=cost_usd)
     return req, resp

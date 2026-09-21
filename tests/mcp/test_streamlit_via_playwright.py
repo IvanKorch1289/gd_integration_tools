@@ -11,6 +11,7 @@ Run:
     PYTHONPATH=/home/user/.local/lib/python3.12/site-packages \
     /usr/bin/python3 tests/mcp/test_streamlit_via_playwright.py
 """
+
 """MCP-Playwright equivalent tests for M6 verification.
 
 Uses python playwright lib (same code path as @playwright/mcp).
@@ -59,9 +60,11 @@ def test_navigation_renders() -> bool:
 def test_spa_no_404s() -> bool:
     """No 404s on Streamlit internal assets (CSS/JS)."""
     failed = []
+
     def on_response(response):
         if response.status >= 400:
             failed.append((response.status, response.url))
+
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         try:
@@ -88,6 +91,7 @@ def test_page_screenshot() -> bool:
             page.wait_for_load_state("networkidle", timeout=15000)
             page.screenshot(path="/tmp/streamlit_main.png", full_page=True)
             import os
+
             size = os.path.getsize("/tmp/streamlit_main.png")
             return size > 1000
         finally:

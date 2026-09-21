@@ -92,12 +92,10 @@ async def test_scan_once_calls_list_compensating() -> None:
     fake_repo = _FakeRepo([saga])
 
     with patch(
-        "src.backend.infrastructure.workflow.saga_state.WorkflowStateRepository",
+        "src.backend.infrastructure.workflow.saga_state.WorkflowStateRepository"
     ) as MockRepo:
         MockRepo.return_value = fake_repo
-        worker = CompensatingDriverWorker(
-            session_factory=_make_session_factory_alt(),
-        )
+        worker = CompensatingDriverWorker(session_factory=_make_session_factory_alt())
         await worker._scan_once()
         assert fake_repo.list_calls == 1
 
@@ -110,12 +108,10 @@ async def test_scan_once_signals_rolled_back_for_each_stuck_saga() -> None:
     fake_repo = _FakeRepo([saga1, saga2])
 
     with patch(
-        "src.backend.infrastructure.workflow.saga_state.WorkflowStateRepository",
+        "src.backend.infrastructure.workflow.saga_state.WorkflowStateRepository"
     ) as MockRepo:
         MockRepo.return_value = fake_repo
-        worker = CompensatingDriverWorker(
-            session_factory=_make_session_factory_alt(),
-        )
+        worker = CompensatingDriverWorker(session_factory=_make_session_factory_alt())
         await worker._scan_once()
         assert len(fake_repo.signal_calls) == 2
         # Both should be rolled_back
@@ -130,12 +126,10 @@ async def test_scan_once_no_stuck_sagas_is_noop() -> None:
     fake_repo = _FakeRepo([])
 
     with patch(
-        "src.backend.infrastructure.workflow.saga_state.WorkflowStateRepository",
+        "src.backend.infrastructure.workflow.saga_state.WorkflowStateRepository"
     ) as MockRepo:
         MockRepo.return_value = fake_repo
-        worker = CompensatingDriverWorker(
-            session_factory=_make_session_factory_alt(),
-        )
+        worker = CompensatingDriverWorker(session_factory=_make_session_factory_alt())
         await worker._scan_once()
         assert fake_repo.list_calls == 1
         assert fake_repo.signal_calls == []
@@ -161,12 +155,10 @@ async def test_scan_once_handles_per_saga_exception() -> None:
     fake_repo.signal_event = signal_event_sometimes
 
     with patch(
-        "src.backend.infrastructure.workflow.saga_state.WorkflowStateRepository",
+        "src.backend.infrastructure.workflow.saga_state.WorkflowStateRepository"
     ) as MockRepo:
         MockRepo.return_value = fake_repo
-        worker = CompensatingDriverWorker(
-            session_factory=_make_session_factory_alt(),
-        )
+        worker = CompensatingDriverWorker(session_factory=_make_session_factory_alt())
         # Should NOT raise
         await worker._scan_once()
         # saga2 should have been called
@@ -179,7 +171,7 @@ async def test_start_and_stop_lifecycle() -> None:
     fake_repo = _FakeRepo([])
 
     with patch(
-        "src.backend.infrastructure.workflow.saga_state.WorkflowStateRepository",
+        "src.backend.infrastructure.workflow.saga_state.WorkflowStateRepository"
     ) as MockRepo:
         MockRepo.return_value = fake_repo
         worker = CompensatingDriverWorker(
@@ -198,8 +190,7 @@ async def test_start_and_stop_lifecycle() -> None:
 async def test_start_idempotent() -> None:
     """Calling start() twice does not spawn duplicate tasks."""
     worker = CompensatingDriverWorker(
-        session_factory=_make_session_factory_alt(),
-        interval_seconds=0.1,
+        session_factory=_make_session_factory_alt(), interval_seconds=0.1
     )
     await worker.start()
     first_task = worker._task

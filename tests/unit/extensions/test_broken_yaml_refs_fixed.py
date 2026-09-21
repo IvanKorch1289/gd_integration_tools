@@ -15,7 +15,6 @@ B-103 (P0): routes/test_route_w1/main.dsl.yaml аналогично.
 - test_route_w1/main.dsl.yaml: broken call_function step удалён аналогично.
 """
 
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -32,7 +31,13 @@ class TestBrokenYAMLRefsFixed:
     @pytest.fixture
     def credit_assessment_yaml(self) -> dict:
         """Загрузить credit_assessment.workflow.yaml как dict."""
-        path = _ROOT / "extensions" / "credit_pipeline" / "workflows" / "credit_assessment.workflow.yaml"
+        path = (
+            _ROOT
+            / "extensions"
+            / "credit_pipeline"
+            / "workflows"
+            / "credit_assessment.workflow.yaml"
+        )
         return yaml.safe_load(path.read_text(encoding="utf-8"))
 
     @pytest.fixture
@@ -48,7 +53,7 @@ class TestBrokenYAMLRefsFixed:
         return yaml.safe_load(path.read_text(encoding="utf-8"))
 
     def test_credit_assessment_fetch_uses_existing_function(
-        self, credit_assessment_yaml: dict,
+        self, credit_assessment_yaml: dict
     ) -> None:
         """fetch_skb_report и fetch_nbki_report используют реально существующую функцию.
 
@@ -72,7 +77,7 @@ class TestBrokenYAMLRefsFixed:
             )
 
     def test_credit_assessment_publish_uses_existing_function(
-        self, credit_assessment_yaml: dict,
+        self, credit_assessment_yaml: dict
     ) -> None:
         """publish_decision использует реально существующую функцию.
 
@@ -96,24 +101,24 @@ class TestBrokenYAMLRefsFixed:
         D-AUDIT-B-102 fix: broken extensions.hello_route.normalizer:apply_rules
         удалён (модуль не существует).
         """
-        yaml_text = (
-            _ROOT / "routes" / "hello_route" / "main.dsl.yaml"
-        ).read_text(encoding="utf-8")
+        yaml_text = (_ROOT / "routes" / "hello_route" / "main.dsl.yaml").read_text(
+            encoding="utf-8"
+        )
         assert "extensions.hello_route.normalizer" not in yaml_text, (
             "hello_route/main.dsl.yaml всё ещё ссылается на несуществующий normalizer"
         )
 
     def test_test_route_w1_no_broken_normalizer_ref(
-        self, test_route_w1_yaml: dict,
+        self, test_route_w1_yaml: dict
     ) -> None:
         """routes/test_route_w1/main.dsl.yaml НЕ содержит broken normalizer ref.
 
         D-AUDIT-B-103 fix: broken extensions.test_route_w1.normalizer:apply_rules
         удалён.
         """
-        yaml_text = (
-            _ROOT / "routes" / "test_route_w1" / "main.dsl.yaml"
-        ).read_text(encoding="utf-8")
+        yaml_text = (_ROOT / "routes" / "test_route_w1" / "main.dsl.yaml").read_text(
+            encoding="utf-8"
+        )
         assert "extensions.test_route_w1.normalizer" not in yaml_text, (
             "test_route_w1/main.dsl.yaml всё ещё ссылается на несуществующий normalizer"
         )

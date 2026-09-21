@@ -6,7 +6,6 @@
 ``self.app.state.invoker`` / ``self.app.state.reply_registry``.
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -139,7 +138,7 @@ class TestWebsocketInvocations:
                 invocation_id="i-ws-1",
                 status=InvocationStatus.ACCEPTED,
                 mode=InvocationMode.STREAMING,
-            ),
+            )
         )
         registry, _ = _registry_with_ws()
 
@@ -151,7 +150,7 @@ class TestWebsocketInvocations:
                     "payload": {"q": 1},
                     "mode": "streaming",
                     "invocation_id": "i-ws-1",
-                },
+                }
             ],
             invoker=invoker,
             registry=registry,
@@ -167,7 +166,7 @@ class TestWebsocketInvocations:
                 invocation_id="generated",
                 status=InvocationStatus.ACCEPTED,
                 mode=InvocationMode.STREAMING,
-            ),
+            )
         )
         registry, _ = _registry_with_ws()
 
@@ -187,7 +186,7 @@ class TestWebsocketInvocations:
         registry, _ = _registry_with_ws()
 
         ws = FakeWebSocket(
-            incoming=[{"type": "ping"}], invoker=invoker, registry=registry,
+            incoming=[{"type": "ping"}], invoker=invoker, registry=registry
         )
         await websocket_invocations(ws)
 
@@ -254,7 +253,7 @@ class TestWebsocketInvocations:
                 invocation_id="i-reg",
                 status=InvocationStatus.ACCEPTED,
                 mode=InvocationMode.STREAMING,
-            ),
+            )
         )
 
         ws = FakeWebSocket(
@@ -274,7 +273,7 @@ class TestWebsocketInvocations:
                 invocation_id="i-bye",
                 status=InvocationStatus.ACCEPTED,
                 mode=InvocationMode.STREAMING,
-            ),
+            )
         )
 
         ws = FakeWebSocket(
@@ -297,6 +296,6 @@ class TestWebsocketInvocations:
                 invocation_id="i-bye",
                 status=InvocationStatus.OK,
                 mode=InvocationMode.STREAMING,
-            ),
+            )
         )
         assert len(ws.sent) == before

@@ -4,7 +4,6 @@ Self-contained — does NOT import modules with chain deps.
 Tests the fix: dead field removed, no callers use it.
 """
 
-
 from __future__ import annotations
 
 import ast
@@ -40,7 +39,7 @@ class TestCheckpointIdRemoved:
         # Find compile_resume_step function
         start = content.find("async def compile_resume_step")
         end = content.find("\nasync def ", start + 1)
-        body = content[start:end] if end != -1 else content[start:start + 1000]
+        body = content[start:end] if end != -1 else content[start : start + 1000]
         assert "checkpoint_id" not in body, (
             "compile_resume_step still references checkpoint_id"
         )
@@ -60,7 +59,7 @@ class TestCheckpointIdRemoved:
                 return
         # If we reach here, signature still has checkpoint_id
         raise AssertionError(
-            "WorkflowBuilder.resume() still accepts checkpoint_id kwarg",
+            "WorkflowBuilder.resume() still accepts checkpoint_id kwarg"
         )
 
     def test_yaml_doc_updated(self):
@@ -88,11 +87,14 @@ class TestBackwardCompat:
         Skips this test file itself (which contains the pattern in regex).
         """
         import re
+
         results = []
         for root, _, files in os.walk("tests/"):
-            if "__pycache__" in root: continue
+            if "__pycache__" in root:
+                continue
             for f in files:
-                if not f.endswith(".py"): continue
+                if not f.endswith(".py"):
+                    continue
                 p = os.path.join(root, f)
                 if p.endswith("cycle_26_a2_checkid_removal.py"):
                     continue  # self-reference
@@ -102,21 +104,24 @@ class TestBackwardCompat:
                 content_no_docs = re.sub(r'"""[\s\S]*?"""', "", content)
                 if ".resume(checkpoint_id=" in content_no_docs:
                     results.append(p)
-        assert not results, (
-            f"Tests still use removed kwarg at runtime: {results}"
-        )
+        assert not results, f"Tests still use removed kwarg at runtime: {results}"
 
     def test_no_checkpoint_id_kwarg_in_dsl(self):
         """No DSL source should pass checkpoint_id=... to resume()."""
         results = []
         for root, _, files in os.walk("src/backend/dsl/"):
-            if "__pycache__" in root: continue
+            if "__pycache__" in root:
+                continue
             for f in files:
-                if not f.endswith(".py"): continue
+                if not f.endswith(".py"):
+                    continue
                 p = os.path.join(root, f)
                 with open(p) as fp:
                     content = fp.read()
-                if ".resume(checkpoint_id=" in content or 'resume(checkpoint_id="' in content:
+                if (
+                    ".resume(checkpoint_id=" in content
+                    or 'resume(checkpoint_id="' in content
+                ):
                     results.append(p)
         # Allow only the type stub itself (builder.pyi)
         results = [p for p in results if "builder.pyi" not in p]

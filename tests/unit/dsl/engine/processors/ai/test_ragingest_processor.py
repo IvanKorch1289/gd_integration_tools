@@ -17,7 +17,7 @@ class _Message:
 
 class _Exchange:
     def __init__(
-        self, body: Any = None, properties: dict[str, Any] | None = None,
+        self, body: Any = None, properties: dict[str, Any] | None = None
     ) -> None:
         self.in_message = _Message(body=body)
         self.properties: dict[str, Any] = properties or {}
@@ -47,9 +47,7 @@ class TestRagIngestProcessor:
         # helper через from-import внутри process(), что привязывает к
         # source module path.
         with (
-            patch(
-                "src.backend.services.ai.rag_service.get_rag_service",
-            ) as mock_get,
+            patch("src.backend.services.ai.rag_service.get_rag_service") as mock_get,
             patch(
                 "src.backend.services.ai.rag_ingest_service._maybe_mask_pii",
                 return_value=("document text", {"pii_masked": False}),
@@ -63,11 +61,7 @@ class TestRagIngestProcessor:
 
         mock_rag.ingest.assert_awaited_once_with(
             content="document text",
-            metadata={
-                "modal": "text",
-                "collection": "docs",
-                "pii_masked": False,
-            },
+            metadata={"modal": "text", "collection": "docs", "pii_masked": False},
             namespace="docs",
         )
         assert exchange.properties["ingest_doc_id"] == "doc-id-1"
@@ -79,9 +73,7 @@ class TestRagIngestProcessor:
         proc = RagIngestProcessor(source_property="doc", collection="c")
 
         with (
-            patch(
-                "src.backend.services.ai.rag_service.get_rag_service",
-            ) as mock_get,
+            patch("src.backend.services.ai.rag_service.get_rag_service") as mock_get,
             patch(
                 "src.backend.services.ai.rag_ingest_service._maybe_mask_pii",
                 return_value=("prop text", {"pii_masked": False}),
@@ -95,11 +87,7 @@ class TestRagIngestProcessor:
 
         mock_rag.ingest.assert_awaited_once_with(
             content="prop text",
-            metadata={
-                "modal": "text",
-                "collection": "c",
-                "pii_masked": False,
-            },
+            metadata={"modal": "text", "collection": "c", "pii_masked": False},
             namespace="c",
         )
         assert exchange.properties["ingest_doc_id"] == "id-2"
@@ -127,17 +115,12 @@ class TestRagIngestProcessor:
         proc = RagIngestProcessor(collection="sensitive")
 
         with (
-            patch(
-                "src.backend.services.ai.rag_service.get_rag_service",
-            ) as mock_get,
+            patch("src.backend.services.ai.rag_service.get_rag_service") as mock_get,
             patch(
                 "src.backend.services.ai.rag_ingest_service._maybe_mask_pii",
                 return_value=(
                     "<PERSON> SSN: <US_SSN>",
-                    {
-                        "pii_masked": True,
-                        "pii_masker_version": "TestSanitizer",
-                    },
+                    {"pii_masked": True, "pii_masker_version": "TestSanitizer"},
                 ),
             ),
         ):
@@ -165,9 +148,7 @@ class TestRagIngestProcessor:
         proc = RagIngestProcessor()
 
         with (
-            patch(
-                "src.backend.services.ai.rag_service.get_rag_service",
-            ) as mock_get,
+            patch("src.backend.services.ai.rag_service.get_rag_service") as mock_get,
             patch(
                 "src.backend.services.ai.rag_ingest_service._maybe_mask_pii",
                 side_effect=lambda txt: (txt, {"pii_masked": False}),
@@ -188,7 +169,7 @@ class TestRagIngestProcessor:
 
     def test_to_spec_custom(self) -> None:
         proc = RagIngestProcessor(
-            source_property="s", modal="image", collection="c", output_property="o",
+            source_property="s", modal="image", collection="c", output_property="o"
         )
         assert proc.to_spec() == {
             "rag_ingest": {
@@ -196,5 +177,5 @@ class TestRagIngestProcessor:
                 "modal": "image",
                 "collection": "c",
                 "output_property": "o",
-            },
+            }
         }

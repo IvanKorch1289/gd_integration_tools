@@ -1,6 +1,5 @@
 """W23 — операции SourceRegistry / SinkRegistry."""
 
-
 from __future__ import annotations
 
 import pytest

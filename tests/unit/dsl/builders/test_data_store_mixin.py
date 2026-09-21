@@ -16,7 +16,6 @@
     * get-or-create semantics.
 """
 
-
 from __future__ import annotations
 
 import threading

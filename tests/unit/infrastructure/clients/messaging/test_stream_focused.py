@@ -42,9 +42,7 @@ class TestStreamMessageInit:
     def test_init_with_headers(self) -> None:
         """``StreamMessage.headers`` сохраняет кастомный dict."""
         msg = StreamMessage(
-            raw_message=object(),
-            body=b"x",
-            headers={"x-trace": "abc", "x-user": "u1"},
+            raw_message=object(), body=b"x", headers={"x-trace": "abc", "x-user": "u1"}
         )
         assert msg.headers == {"x-trace": "abc", "x-user": "u1"}
 
@@ -57,16 +55,12 @@ class TestStreamMessageInit:
 
     def test_init_with_correlation_id(self) -> None:
         """``StreamMessage.correlation_id`` сохраняет переданный ID."""
-        msg = StreamMessage(
-            raw_message=object(), body=b"x", correlation_id="my-cid"
-        )
+        msg = StreamMessage(raw_message=object(), body=b"x", correlation_id="my-cid")
         assert msg.correlation_id == "my-cid"
 
     def test_init_with_message_id(self) -> None:
         """``StreamMessage.message_id`` сохраняет переданный ID."""
-        msg = StreamMessage(
-            raw_message=object(), body=b"x", message_id="my-mid"
-        )
+        msg = StreamMessage(raw_message=object(), body=b"x", message_id="my-mid")
         assert msg.message_id == "my-mid"
 
     def test_init_with_content_type(self) -> None:

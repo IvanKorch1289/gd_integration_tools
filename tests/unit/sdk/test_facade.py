@@ -65,11 +65,21 @@ class TestSdkFacade:
         from src.backend import sdk
 
         documented = {
-            "Exchange", "Pipeline", "get_service", "register_factory",
-            "app_state_singleton", "BaseError", "Clock",
-            "run_hub_notebook", "NotebookSpec", "NotebookRegistry",
+            "Exchange",
+            "Pipeline",
+            "get_service",
+            "register_factory",
+            "app_state_singleton",
+            "BaseError",
+            "Clock",
+            "run_hub_notebook",
+            "NotebookSpec",
+            "NotebookRegistry",
             "AgentToolPolicy",
-            "ConnectorRegistry", "get_provider", "register_provider",
+            "ConnectorRegistry",
+            "get_provider",
+            "register_provider",
         }
-        assert documented.issubset(set(sdk.__all__)), \
+        assert documented.issubset(set(sdk.__all__)), (
             f"missing from __all__: {documented - set(sdk.__all__)}"
+        )

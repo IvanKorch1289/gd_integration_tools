@@ -9,7 +9,6 @@
   хотя бы один из них должен быть указан.
 """
 
-
 from __future__ import annotations
 
 import os
@@ -31,10 +30,7 @@ class TestPatterns:
             open(os.path.join(tmpdir, "b.json"), "w").close()
             open(os.path.join(tmpdir, "c.txt"), "w").close()
 
-            proc = FileWatchProcessor(
-                directory=tmpdir,
-                patterns=("*.csv", "*.json"),
-            )
+            proc = FileWatchProcessor(directory=tmpdir, patterns=("*.csv", "*.json"))
             from src.backend.dsl.engine.exchange import Exchange, Message
 
             exchange = Exchange(in_message=Message(body=None, headers={}))
@@ -76,10 +72,7 @@ class TestDirectories:
             open(os.path.join(dir_a, "file1.csv"), "w").close()
             open(os.path.join(dir_b, "file2.csv"), "w").close()
 
-            proc = FileWatchProcessor(
-                directories=(dir_a, dir_b),
-                pattern="*.csv",
-            )
+            proc = FileWatchProcessor(directories=(dir_a, dir_b), pattern="*.csv")
             from src.backend.dsl.engine.exchange import Exchange, Message
 
             exchange = Exchange(in_message=Message(body=None, headers={}))
@@ -116,9 +109,7 @@ class TestMaxResults:
             for i in range(10):
                 open(os.path.join(tmpdir, f"f{i}.txt"), "w").close()
 
-            proc = FileWatchProcessor(
-                directory=tmpdir, pattern="*.txt", max_results=3,
-            )
+            proc = FileWatchProcessor(directory=tmpdir, pattern="*.txt", max_results=3)
             from src.backend.dsl.engine.exchange import Exchange, Message
 
             exchange = Exchange(in_message=Message(body=None, headers={}))
@@ -195,9 +186,7 @@ class TestExchangePropertyOverrides:
             for i in range(10):
                 open(os.path.join(tmpdir, f"f{i}.txt"), "w").close()
 
-            proc = FileWatchProcessor(
-                directory=tmpdir, pattern="*.txt", max_results=10,
-            )
+            proc = FileWatchProcessor(directory=tmpdir, pattern="*.txt", max_results=10)
             from src.backend.dsl.engine.exchange import Exchange, Message
 
             exchange = Exchange(
@@ -217,14 +206,16 @@ class TestValidation:
         """pattern + patterns → ValueError."""
         with pytest.raises(ValueError, match="pattern.*patterns|patterns.*pattern"):
             FileWatchProcessor(
-                directory="/tmp", pattern="*.csv", patterns=("*.csv", "*.json"),
+                directory="/tmp", pattern="*.csv", patterns=("*.csv", "*.json")
             )
 
     def test_directory_and_directories_mutually_exclusive(self) -> None:
         """directory + directories → ValueError."""
-        with pytest.raises(ValueError, match="directory.*directories|directories.*directory"):
+        with pytest.raises(
+            ValueError, match="directory.*directories|directories.*directory"
+        ):
             FileWatchProcessor(
-                directory="/a", directories=("/a", "/b"), pattern="*.csv",
+                directory="/a", directories=("/a", "/b"), pattern="*.csv"
             )
 
     def test_no_directory_raises(self) -> None:
@@ -245,13 +236,13 @@ class TestToSpec:
                 "directory": "/data",
                 "pattern": "*.csv",
                 "result_property": "matched_files",
-            },
+            }
         }
 
     def test_to_spec_multi_directory(self) -> None:
         """Multi-directory → new format."""
         proc = FileWatchProcessor(
-            directories=("/a", "/b"), pattern="*.csv", max_results=5,
+            directories=("/a", "/b"), pattern="*.csv", max_results=5
         )
         spec = proc.to_spec()
         assert spec == {
@@ -260,15 +251,13 @@ class TestToSpec:
                 "patterns": ["*.csv"],
                 "result_property": "matched_files",
                 "max_results": 5,
-            },
+            }
         }
 
     def test_to_spec_multi_pattern(self) -> None:
         """Multi-pattern → new format."""
         proc = FileWatchProcessor(
-            directory="/data",
-            patterns=("*.csv", "*.json"),
-            include_subdirs=True,
+            directory="/data", patterns=("*.csv", "*.json"), include_subdirs=True
         )
         spec = proc.to_spec()
         assert spec == {
@@ -277,10 +266,9 @@ class TestToSpec:
                 "patterns": ["*.csv", "*.json"],
                 "result_property": "matched_files",
                 "include_subdirs": True,
-            },
+            }
         }
 
 
 class MagicMockCtx:
     """Minimal stub for ExecutionContext (не используется в process())."""
-

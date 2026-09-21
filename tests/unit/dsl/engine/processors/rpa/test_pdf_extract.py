@@ -3,6 +3,7 @@
 Извлечение текста из PDF (pypdf).
 Pattern (D273, Ponytail): thin wrapper + skip если pypdf нет.
 """
+
 from __future__ import annotations
 
 
@@ -11,6 +12,7 @@ class TestPdfExtractProcessor:
         from src.backend.dsl.engine.processors.rpa.pdf_extract import (
             PdfExtractProcessor,
         )
+
         proc = PdfExtractProcessor()
         assert proc is not None
 
@@ -19,6 +21,7 @@ class TestPdfExtractProcessor:
         from src.backend.dsl.engine.processors.rpa.pdf_extract import (
             PdfExtractProcessor,
         )
+
         proc = PdfExtractProcessor()
         # Mock bytes
         result = proc.extract(b"%PDF-1.4\n%fake content")

@@ -8,7 +8,6 @@
 transform / dispatch_action / enrich / throttle / delay.
 """
 
-
 from __future__ import annotations
 
 import pytest

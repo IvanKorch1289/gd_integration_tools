@@ -166,9 +166,7 @@ async def test_consul_get_cache_miss_fetches(scope: _FakeScope) -> None:
 
     b = ConsulVariableBackend(host="h", port=8501)
 
-    with patch(
-        "src.backend.core.config.consul_config.ConsulConfigStore"
-    ) as MockStore:
+    with patch("src.backend.core.config.consul_config.ConsulConfigStore") as MockStore:
         instance = MockStore.return_value
         instance.get = MagicMock(return_value="v_from_consul")
         result = await b.get("k", scope)

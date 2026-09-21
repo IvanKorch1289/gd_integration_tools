@@ -33,7 +33,6 @@ composition root при misconfiguration. Реальный OPA/Casbin runtime co
 уже есть в ``test_opa_runtime_cycle37.py``.
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -82,7 +81,7 @@ def stub_constructors(monkeypatch: pytest.MonkeyPatch) -> dict[str, MagicMock]:
         lambda: _make_stub("api_key_manager"),
     )
     monkeypatch.setattr(
-        "src.backend.dsl.engine.tracer.ExecutionTracer", lambda: _make_stub("tracer"),
+        "src.backend.dsl.engine.tracer.ExecutionTracer", lambda: _make_stub("tracer")
     )
     monkeypatch.setattr(
         "src.backend.dsl.engine.plugin_registry.ProcessorPluginRegistry",
@@ -118,8 +117,7 @@ def stub_constructors(monkeypatch: pytest.MonkeyPatch) -> dict[str, MagicMock]:
         lambda: reply_reg,
     )
     monkeypatch.setattr(
-        "src.backend.services.execution.invoker.Invoker",
-        lambda: _make_stub("invoker"),
+        "src.backend.services.execution.invoker.Invoker", lambda: _make_stub("invoker")
     )
     monkeypatch.setattr(
         "src.backend.infrastructure.watermark.factory.create_watermark_store",
@@ -129,10 +127,7 @@ def stub_constructors(monkeypatch: pytest.MonkeyPatch) -> dict[str, MagicMock]:
 
 
 def _make_fake_settings(
-    *,
-    engine_enabled: bool,
-    opa_url: str = "",
-    casbin_model_path: str | None = None,
+    *, engine_enabled: bool, opa_url: str = "", casbin_model_path: str | None = None
 ) -> Any:
     """Создаёт duck-type settings для monkeypatch в ``policy_settings``."""
     return type(
@@ -155,9 +150,7 @@ class TestAuthPoliciesWiringCycle38:
     """B-20 fix (cycle 38): auth_policies fail-loud при engine_enabled=True."""
 
     def test_engine_enabled_with_both_urls_empty_raises(
-        self,
-        fresh_app: FastAPI,
-        monkeypatch: pytest.MonkeyPatch,
+        self, fresh_app: FastAPI, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """engine_enabled=True + ОБА URL пустые → raise ProductionWiringError.
 
@@ -166,9 +159,7 @@ class TestAuthPoliciesWiringCycle38:
         провалиться fail-loud, не silent skip.
         """
         fake_settings = _make_fake_settings(
-            engine_enabled=True,
-            opa_url="",
-            casbin_model_path=None,
+            engine_enabled=True, opa_url="", casbin_model_path=None
         )
         monkeypatch.setattr(
             "src.backend.core.config.services.policy.policy_settings",
@@ -197,9 +188,7 @@ class TestAuthPoliciesWiringCycle38:
         конфигурация — валидный путь, не должен fail-loud.
         """
         fake_settings = _make_fake_settings(
-            engine_enabled=True,
-            opa_url="http://opa:8181",
-            casbin_model_path=None,
+            engine_enabled=True, opa_url="http://opa:8181", casbin_model_path=None
         )
         monkeypatch.setattr(
             "src.backend.core.config.services.policy.policy_settings",
@@ -218,9 +207,7 @@ class TestAuthPoliciesWiringCycle38:
     ) -> None:
         """engine_enabled=True + только Casbin path → no raise (Casbin-only valid)."""
         fake_settings = _make_fake_settings(
-            engine_enabled=True,
-            opa_url="",
-            casbin_model_path="/etc/casbin/model.conf",
+            engine_enabled=True, opa_url="", casbin_model_path="/etc/casbin/model.conf"
         )
         monkeypatch.setattr(
             "src.backend.core.config.services.policy.policy_settings",
@@ -244,9 +231,7 @@ class TestAuthPoliciesWiringCycle38:
         policies tuple, capability check остаётся единственной защитой.
         """
         fake_settings = _make_fake_settings(
-            engine_enabled=False,
-            opa_url="",
-            casbin_model_path=None,
+            engine_enabled=False, opa_url="", casbin_model_path=None
         )
         monkeypatch.setattr(
             "src.backend.core.config.services.policy.policy_settings",

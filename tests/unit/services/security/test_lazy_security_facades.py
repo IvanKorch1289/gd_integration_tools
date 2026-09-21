@@ -7,7 +7,6 @@ that unknown names still raise ``AttributeError``.
 ponytail: self-contained, no Vault / Redis / DB.
 """
 
-
 from __future__ import annotations
 
 import pytest

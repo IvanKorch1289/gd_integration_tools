@@ -1,6 +1,5 @@
 """Pure ASGI tests для AIToolWhitelistMiddleware (cycle 46)."""
 
-
 from __future__ import annotations
 
 import json
@@ -31,6 +30,7 @@ def _body_message(send: AsyncMock) -> dict | None:
 
 def _downstream_ok(status_code: int = 200):
     """Downstream возвращающий OK (consumes body через receive)."""
+
     async def downstream(scope, receive, send):
         # Consume body (validates body re-injection).
         body_bytes = b""
@@ -42,7 +42,7 @@ def _downstream_ok(status_code: int = 200):
             body_bytes += msg.get("body", b"")
             more_body = msg.get("more_body", False)
         await send(
-            {"type": "http.response.start", "status": status_code, "headers": []},
+            {"type": "http.response.start", "status": status_code, "headers": []}
         )
         await send({"type": "http.response.body", "body": b"ok"})
 
@@ -68,8 +68,10 @@ def _make_scope(
 
 def _make_receive(body: bytes):
     """ASGI receive callable возвращающая body chunk."""
+
     async def receive():
         return {"type": "http.request", "body": body, "more_body": False}
+
     return receive
 
 
@@ -105,11 +107,7 @@ class TestAIToolWhitelistMiddlewarePureASGI:
         mw = AIToolWhitelistMiddleware(app=app)
 
         send = AsyncMock()
-        await mw(
-            _make_scope("POST", "/api/v1/users"),
-            _make_receive(b'{"x":1}'),
-            send,
-        )
+        await mw(_make_scope("POST", "/api/v1/users"), _make_receive(b'{"x":1}'), send)
 
         start = _start_message(send)
         assert start is not None
@@ -249,9 +247,7 @@ class TestAIToolWhitelistMiddlewarePureASGI:
         assert parsed["error"] == "missing_tenant"
 
     @pytest.mark.asyncio
-    async def test_tenant_id_from_auth_context_takes_precedence(
-        self,
-    ) -> None:
+    async def test_tenant_id_from_auth_context_takes_precedence(self) -> None:
         """tenant_id из auth context имеет приоритет над X-Tenant-ID header (S202)."""
         app = AsyncMock()
         app.side_effect = _downstream_ok()
@@ -271,11 +267,7 @@ class TestAIToolWhitelistMiddlewarePureASGI:
 
         send = AsyncMock()
         await mw(
-            _make_scope(
-                "POST",
-                "/api/v1/agent/tools/invoke",
-                state={"auth": auth_ctx},
-            ),
+            _make_scope("POST", "/api/v1/agent/tools/invoke", state={"auth": auth_ctx}),
             _make_receive(b'{"tool_name": "any"}'),
             send,
         )
@@ -301,11 +293,7 @@ class TestAIToolWhitelistMiddlewarePureASGI:
         scope = _make_scope("POST", "/api/v1/agent/tools/invoke")
         scope["headers"] = [(b"x-tenant-id", b"header-tenant")]
 
-        await mw(
-            scope,
-            _make_receive(b'{"tool_name": "any"}'),
-            send,
-        )
+        await mw(scope, _make_receive(b'{"tool_name": "any"}'), send)
 
         assert captured_tenant["tenant_id"] == "header-tenant"
 
@@ -379,11 +367,7 @@ class TestAIToolWhitelistMiddlewarePureASGI:
             "/api/v1/agent/tools/invoke",
             state={"auth": type("Auth", (), {"metadata": {"tenant_id": "tenant-A"}})()},
         )
-        await mw(
-            scope,
-            _make_receive(b'{"tool_name": "test_tool"}'),
-            send,
-        )
+        await mw(scope, _make_receive(b'{"tool_name": "test_tool"}'), send)
 
         # check был вызван с правильным tenant_id.
         assert check_calls == [("tenant-A", "test_tool")]
@@ -397,9 +381,7 @@ class TestAIToolWhitelistMiddlewarePureASGI:
             raise AssertionError("downstream НЕ должен быть вызван")
 
         app.side_effect = downstream
-        mw = AIToolWhitelistMiddleware(
-            app=app, on_tool_check=lambda t, n: False,
-        )
+        mw = AIToolWhitelistMiddleware(app=app, on_tool_check=lambda t, n: False)
 
         send = AsyncMock()
         await mw(

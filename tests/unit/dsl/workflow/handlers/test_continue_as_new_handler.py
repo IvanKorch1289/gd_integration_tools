@@ -6,6 +6,7 @@ Worker (или activity step) должен прочитать marker и вызв
 
 Pattern (Ponytail, D169): handler — тонкая обёртка, lazy temporalio import.
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
@@ -16,6 +17,7 @@ class TestContinueAsNewHandler:
         from src.backend.dsl.workflow.handlers.continue_as_new_handler import (
             ContinueAsNewHandler,
         )
+
         h = ContinueAsNewHandler()
         assert h is not None
 
@@ -23,6 +25,7 @@ class TestContinueAsNewHandler:
         from src.backend.dsl.workflow.handlers.continue_as_new_handler import (
             ContinueAsNewHandler,
         )
+
         h = ContinueAsNewHandler()
         exchange = MagicMock()
         exchange.in_message = MagicMock()
@@ -44,6 +47,7 @@ class TestContinueAsNewHandler:
         from src.backend.dsl.workflow.handlers.continue_as_new_handler import (
             ContinueAsNewHandler,
         )
+
         h = ContinueAsNewHandler()
         exchange = MagicMock()
         exchange.in_message = MagicMock()
@@ -54,6 +58,7 @@ class TestContinueAsNewHandler:
         from src.backend.dsl.workflow.handlers.continue_as_new_handler import (
             ContinueAsNewHandler,
         )
+
         h = ContinueAsNewHandler()
         exchange = MagicMock()
         exchange.in_message = MagicMock()
@@ -64,11 +69,12 @@ class TestContinueAsNewHandler:
         from src.backend.dsl.workflow.handlers.continue_as_new_handler import (
             ContinueAsNewHandler,
         )
+
         h = ContinueAsNewHandler()
         exchange = MagicMock()
         exchange.in_message = MagicMock()
         exchange.in_message.body = {
-            "continue_as_new_requested": {"requested": True, "same_workflow_id": True},
+            "continue_as_new_requested": {"requested": True, "same_workflow_id": True}
         }
         assert h.should_continue(exchange) is True
 
@@ -76,6 +82,7 @@ class TestContinueAsNewHandler:
         from src.backend.dsl.workflow.handlers.continue_as_new_handler import (
             ContinueAsNewHandler,
         )
+
         h = ContinueAsNewHandler()
         marker = {
             "requested": True,

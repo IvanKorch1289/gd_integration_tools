@@ -34,9 +34,7 @@ def test_tenant_mixin_has_column() -> None:
 
 def test_apply_tenant_filter_registers_listeners() -> None:
     session_factory = MagicMock()
-    with patch(
-        f"{CANONICAL}.event.listens_for",
-    ) as mock_listen:
+    with patch(f"{CANONICAL}.event.listens_for") as mock_listen:
         apply_tenant_filter(session_factory)
         assert mock_listen.call_count == 2
 
@@ -51,12 +49,9 @@ def test_filter_by_tenant_skips_non_select() -> None:
 
         return decorator
 
-    with patch(
-        f"{CANONICAL}.event.listens_for",
-        fake_listens_for,
-    ), patch(
-        f"{CANONICAL}.get_tenant_id",
-        return_value="t1",
+    with (
+        patch(f"{CANONICAL}.event.listens_for", fake_listens_for),
+        patch(f"{CANONICAL}.get_tenant_id", return_value="t1"),
     ):
         apply_tenant_filter(MagicMock())
 
@@ -75,12 +70,9 @@ def test_filter_by_tenant_no_tenant_returns() -> None:
 
         return decorator
 
-    with patch(
-        f"{CANONICAL}.event.listens_for",
-        fake_listens_for,
-    ), patch(
-        f"{CANONICAL}.get_tenant_id",
-        return_value=None,
+    with (
+        patch(f"{CANONICAL}.event.listens_for", fake_listens_for),
+        patch(f"{CANONICAL}.get_tenant_id", return_value=None),
     ):
         apply_tenant_filter(MagicMock())
 
@@ -100,12 +92,9 @@ def test_set_tenant_on_new_sets_when_empty() -> None:
 
         return decorator
 
-    with patch(
-        f"{CANONICAL}.event.listens_for",
-        fake_listens_for,
-    ), patch(
-        f"{CANONICAL}.get_tenant_id",
-        return_value="t1",
+    with (
+        patch(f"{CANONICAL}.event.listens_for", fake_listens_for),
+        patch(f"{CANONICAL}.get_tenant_id", return_value="t1"),
     ):
         apply_tenant_filter(MagicMock())
         obj = SimpleNamespace(tenant_id="")
@@ -124,12 +113,9 @@ def test_set_tenant_on_new_preserves_existing() -> None:
 
         return decorator
 
-    with patch(
-        f"{CANONICAL}.event.listens_for",
-        fake_listens_for,
-    ), patch(
-        f"{CANONICAL}.get_tenant_id",
-        return_value="t1",
+    with (
+        patch(f"{CANONICAL}.event.listens_for", fake_listens_for),
+        patch(f"{CANONICAL}.get_tenant_id", return_value="t1"),
     ):
         apply_tenant_filter(MagicMock())
         obj = SimpleNamespace(tenant_id="existing")

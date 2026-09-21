@@ -69,33 +69,32 @@ class TestRLSVerifyQueryMissingTenant:
     def test_query_with_where_but_no_tenant_denied(self) -> None:
         v = RLSVerifier()
         ctx = TenantContext(tenant_id="t1")
-        assert v.verify_query("SELECT id FROM users WHERE status = 'active'", ctx) is False
+        assert (
+            v.verify_query("SELECT id FROM users WHERE status = 'active'", ctx) is False
+        )
 
 
 class TestRLSVerifyQueryWithTenant:
     def test_query_with_tenant_filter_allowed(self) -> None:
         v = RLSVerifier()
         ctx = TenantContext(tenant_id="t1")
-        assert v.verify_query(
-            "SELECT id FROM users WHERE tenant_id = :tenant AND status = 'active'",
-            ctx,
-        ) is True
+        assert (
+            v.verify_query(
+                "SELECT id FROM users WHERE tenant_id = :tenant AND status = 'active'",
+                ctx,
+            )
+            is True
+        )
 
     def test_query_with_where_tenant_allowed(self) -> None:
         v = RLSVerifier()
         ctx = TenantContext(tenant_id="t1")
-        assert v.verify_query(
-            "SELECT * FROM orders WHERE tenant = 't1'",
-            ctx,
-        ) is True
+        assert v.verify_query("SELECT * FROM orders WHERE tenant = 't1'", ctx) is True
 
     def test_query_dollar_tenant_param(self) -> None:
         v = RLSVerifier()
         ctx = TenantContext(tenant_id="t1")
-        assert v.verify_query(
-            "SELECT * FROM x WHERE tenant_id = $1",
-            ctx,
-        ) is True
+        assert v.verify_query("SELECT * FROM x WHERE tenant_id = $1", ctx) is True
 
 
 class TestRLSVerifyAccess:
@@ -227,22 +226,26 @@ class TestCheckerMatrix:
 class TestCheckerResults:
     def test_results_accumulate(self) -> None:
         c = TenantIsolationChecker()
-        c.run_test(IsolationTestCase(
-            name="t1",
-            tenant_a=TenantContext(tenant_id="t1"),
-            tenant_b=TenantContext(tenant_id="t2"),
-            resource_loader=lambda ctx: {},
-        ))
+        c.run_test(
+            IsolationTestCase(
+                name="t1",
+                tenant_a=TenantContext(tenant_id="t1"),
+                tenant_b=TenantContext(tenant_id="t2"),
+                resource_loader=lambda ctx: {},
+            )
+        )
         assert len(c.results) == 1
 
     def test_clear(self) -> None:
         c = TenantIsolationChecker()
-        c.run_test(IsolationTestCase(
-            name="t1",
-            tenant_a=TenantContext(tenant_id="t1"),
-            tenant_b=TenantContext(tenant_id="t2"),
-            resource_loader=lambda ctx: {},
-        ))
+        c.run_test(
+            IsolationTestCase(
+                name="t1",
+                tenant_a=TenantContext(tenant_id="t1"),
+                tenant_b=TenantContext(tenant_id="t2"),
+                resource_loader=lambda ctx: {},
+            )
+        )
         c.clear()
         assert c.results == []
 
@@ -292,10 +295,6 @@ class TestRealisticExample:
             return tenant_a_orders if ctx.tenant_id == "t1" else tenant_b_orders
 
         results = checker.run_matrix(
-            [
-                TenantContext(tenant_id="t1"),
-                TenantContext(tenant_id="t2"),
-            ],
-            loader,
+            [TenantContext(tenant_id="t1"), TenantContext(tenant_id="t2")], loader
         )
         assert all(r.passed for r in results)

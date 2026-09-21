@@ -34,7 +34,7 @@ def _scan_for_legacy_except(root: Path) -> list[tuple[str, int, str]]:
             continue
         try:
             content = py_file.read_text(encoding="utf-8")
-        except (UnicodeDecodeError, OSError):
+        except UnicodeDecodeError, OSError:
             continue
         for m in PATTERN.finditer(content):
             line_no = content[: m.start()].count("\n") + 1
@@ -62,7 +62,7 @@ def test_no_legacy_except_a_b_in_src() -> None:
         pytest.fail(
             f"Found {len(findings)} legacy 'except A, B:' patterns in src/. "
             f"Run: python tools/fix_except_bug.py src/\n"
-            f"First 20:\n{msg}",
+            f"First 20:\n{msg}"
         )
 
 
@@ -81,12 +81,7 @@ def test_codemod_idempotent() -> None:
     # Используем ``sys.executable`` — full interpreter path обходит
     # S607 ("partial executable path"). Subprocess PATH не нужен.
     result = subprocess.run(
-        [
-            sys.executable,
-            "tools/fix_except_bug.py",
-            "--dry-run",
-            "src/",
-        ],
+        [sys.executable, "tools/fix_except_bug.py", "--dry-run", "src/"],
         capture_output=True,
         text=True,
         timeout=60,

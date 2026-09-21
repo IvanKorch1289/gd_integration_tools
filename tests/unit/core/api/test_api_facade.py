@@ -4,7 +4,6 @@ Self-contained — does NOT import deps that require chain infrastructure
 (Vault, FastAPI app, etc.). Tests facade re-exports + lazy loads.
 """
 
-
 from __future__ import annotations
 
 import os
@@ -22,6 +21,7 @@ class TestFacadeExists:
         with open("src/backend/core/api/__init__.py") as f:
             content = f.read()
         import ast
+
         ast.parse(content)
 
     def test_facade_has_explicit_all(self):
@@ -30,7 +30,7 @@ class TestFacadeExists:
             content = f.read()
         assert "__all__" in content
         # Must include 4 new categories per Master Prompt
-        all_section = content[content.find("__all__"):]
+        all_section = content[content.find("__all__") :]
         for required in [
             "get_scheduler_provider",  # DI providers
             "AIGateway",  # AI entry
@@ -78,11 +78,7 @@ class TestFacadeRuntime:
         import src.backend.core.api
 
         # Force lazy access — must work
-        for name in [
-            "get_scheduler_provider",
-            "get_redis_client_class",
-            "AIGateway",
-        ]:
+        for name in ["get_scheduler_provider", "get_redis_client_class", "AIGateway"]:
             obj = getattr(src.backend.core.api, name)
             assert obj is not None, f"Lazy load failed for: {name}"
 
@@ -92,10 +88,7 @@ class TestFacadeRuntime:
         import src.backend.core.api
 
         d = dir(src.backend.core.api)
-        for name in [
-            "get_scheduler_provider",
-            "AIGateway",
-        ]:
+        for name in ["get_scheduler_provider", "AIGateway"]:
             assert name in d, f"{name} missing from dir() — tab completion broken"
 
 

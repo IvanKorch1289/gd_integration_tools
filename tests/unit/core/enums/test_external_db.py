@@ -275,7 +275,9 @@ def test_object_choices_whitelist() -> None:
     """ExternalDBObjectChoices: whitelist содержит 4 объекта (демо)."""
     from src.backend.core.enums.external_db import ExternalDBObjectChoices
 
-    assert ExternalDBObjectChoices.ORACLE_EMPLOYEES_VIEW.value.object_name == "V_EMPLOYEES"
+    assert (
+        ExternalDBObjectChoices.ORACLE_EMPLOYEES_VIEW.value.object_name == "V_EMPLOYEES"
+    )
     assert (
         ExternalDBObjectChoices.ORACLE_REFRESH_EMPLOYEE_CACHE.value.oracle_package
         == "PKG_EMPLOYEES"

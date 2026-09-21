@@ -44,9 +44,7 @@ class TestEventModels:
 
     def test_order_event_with_payload(self) -> None:
         """``OrderEvent`` принимает произвольный payload dict."""
-        ev = OrderEvent(
-            order_id=1, action="completed", payload={"items": [1, 2, 3]}
-        )
+        ev = OrderEvent(order_id=1, action="completed", payload={"items": [1, 2, 3]})
         assert ev.payload == {"items": [1, 2, 3]}
 
     def test_order_event_missing_required(self) -> None:
@@ -58,9 +56,7 @@ class TestEventModels:
 
     def test_pipeline_event_minimal(self) -> None:
         """``PipelineEvent`` создаётся с минимальным набором полей."""
-        ev = PipelineEvent(
-            route_id="r-1", status="started", correlation_id="c-123"
-        )
+        ev = PipelineEvent(route_id="r-1", status="started", correlation_id="c-123")
         assert ev.route_id == "r-1"
         assert ev.status == "started"
         assert ev.correlation_id == "c-123"
@@ -69,10 +65,7 @@ class TestEventModels:
     def test_pipeline_event_with_duration(self) -> None:
         """``PipelineEvent.duration_ms`` опционально."""
         ev = PipelineEvent(
-            route_id="r-1",
-            status="completed",
-            correlation_id="c-1",
-            duration_ms=123.45,
+            route_id="r-1", status="completed", correlation_id="c-1", duration_ms=123.45
         )
         assert ev.duration_ms == 123.45
 
@@ -136,10 +129,7 @@ class TestEventModels:
     def test_generic_event_with_correlation_and_timestamp(self) -> None:
         """``GenericEvent`` с correlation_id и timestamp."""
         ev = GenericEvent(
-            topic="t",
-            payload={"x": 1},
-            correlation_id="cid-1",
-            timestamp=1234567890.0,
+            topic="t", payload={"x": 1}, correlation_id="cid-1", timestamp=1234567890.0
         )
         assert ev.correlation_id == "cid-1"
         assert ev.timestamp == 1234567890.0
@@ -226,9 +216,7 @@ class TestEventBusErrors:
         """``EventSchemaValidationError`` — наследник ``BaseError``."""
         from src.backend.core.errors import BaseError
 
-        err = EventSchemaValidationError(
-            channel="c", event_type="E", reason="r"
-        )
+        err = EventSchemaValidationError(channel="c", event_type="E", reason="r")
         assert isinstance(err, BaseError)
 
 

@@ -46,5 +46,9 @@ class TestEnrichProcessorEipReExport:
         """Parity с Aggregator EIP — оба discoverable в eip/ namespace."""
         from src.backend.dsl.engine.processors.eip import AggregatorProcessor
 
-        assert AggregatorProcessor.__module__.startswith("src.backend.dsl.engine.processors.eip")
-        assert EipEnrichProcessor.__module__.startswith("src.backend.dsl.engine.processors.")
+        assert AggregatorProcessor.__module__.startswith(
+            "src.backend.dsl.engine.processors.eip"
+        )
+        assert EipEnrichProcessor.__module__.startswith(
+            "src.backend.dsl.engine.processors."
+        )

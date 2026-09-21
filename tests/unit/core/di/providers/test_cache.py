@@ -36,7 +36,6 @@ class TestHealthAggregator:
         assert cache.get_health_aggregator_provider() is mock
 
 
-
 class TestAdminCacheStorage:
     def test_set_overrides(self) -> None:
         mock = MagicMock(name="custom_storage")

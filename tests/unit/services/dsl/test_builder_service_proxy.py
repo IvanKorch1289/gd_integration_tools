@@ -9,14 +9,14 @@ class TestBuilderServiceDSLExportsIdentity:
     """route_registry + YAMLStore identity preserved via lazy __getattr__."""
 
     def test_route_registry_identity(self) -> None:
-        from src.backend.services.dsl.builder_service import route_registry
         from src.backend.dsl.commands.registry import route_registry as _orig
+        from src.backend.services.dsl.builder_service import route_registry
 
         assert route_registry is _orig
 
     def test_yaml_store_class_identity(self) -> None:
-        from src.backend.services.dsl.builder_service import YAMLStore
         from src.backend.dsl.yaml_store import YAMLStore as _orig
+        from src.backend.services.dsl.builder_service import YAMLStore
 
         assert YAMLStore is _orig
 

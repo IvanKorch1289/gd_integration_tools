@@ -28,13 +28,17 @@ class TestResilienceFacadeAllExports:
 
     @pytest.mark.parametrize(
         "symbol_name",
-        ["rate_limiter", "unified_rate_limiter", "RateLimiter", "CircuitBreaker", "Bulkhead"],
+        [
+            "rate_limiter",
+            "unified_rate_limiter",
+            "RateLimiter",
+            "CircuitBreaker",
+            "Bulkhead",
+        ],
     )
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(resilience, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
+        assert hasattr(resilience, symbol_name), f"Missing export: {symbol_name}"
         assert symbol_name in resilience.__all__, (
             f"{symbol_name} not declared in __all__"
         )

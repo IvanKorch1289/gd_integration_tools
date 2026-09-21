@@ -38,7 +38,7 @@ def authed_admin_app():
     import src.backend.core.auth.auth_selector as sel
 
     original = sel.require_auth
-    sel.require_auth = lambda methods=None: (lambda request: None)
+    sel.require_auth = lambda methods=None: lambda request: None
 
     yield app
 

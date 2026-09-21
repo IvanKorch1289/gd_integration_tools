@@ -26,9 +26,7 @@ class _FakeSandbox:
 
     async def run_react(self, **kwargs: Any) -> AgentSandboxResult:
         self.calls.append(kwargs)
-        return AgentSandboxResult(
-            success=True, data={"response": "ok"}, backend="fake",
-        )
+        return AgentSandboxResult(success=True, data={"response": "ok"}, backend="fake")
 
     async def shutdown(self) -> None:
         return None
@@ -51,11 +49,13 @@ class TestAgentGraphToolPolicyWireUp:
     """S170 P0-7: AgentGraphProcessor._run_react фильтрует tools по политике."""
 
     async def test_all_tools_allowed_pass_through(
-        self, exchange: Exchange[Any], context: ExecutionContext,
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Если все tools разрешены — sandbox получает полный список."""
         policy = AgentToolPolicy(
-            agent_id="permissive", allowed_tools=["db.query", "http.get"], audit_all=False,
+            agent_id="permissive",
+            allowed_tools=["db.query", "http.get"],
+            audit_all=False,
         )
         register_factory(AgentToolPolicy, lambda: policy)
         try:
@@ -74,7 +74,7 @@ class TestAgentGraphToolPolicyWireUp:
             _reset_policy()
 
     async def test_denied_tools_filtered_out(
-        self, exchange: Exchange[Any], context: ExecutionContext,
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Denied tools отфильтровываются, остальные проходят."""
         policy = AgentToolPolicy(
@@ -96,19 +96,17 @@ class TestAgentGraphToolPolicyWireUp:
             await proc.process(exchange, context)
             assert len(fake.calls) == 1
             assert fake.calls[0]["tool_actions"] == ["db.query"]
-            assert "http.get" not in fake.calls[0]["tool_actions"]  # M2.1: http.get filtered out by policy
+            assert (
+                "http.get" not in fake.calls[0]["tool_actions"]
+            )  # M2.1: http.get filtered out by policy
         finally:
             _reset_policy()
 
     async def test_all_tools_denied_returns_error(
-        self, exchange: Exchange[Any], context: ExecutionContext,
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Если ВСЕ tools denied — return error, sandbox НЕ вызывается."""
-        policy = AgentToolPolicy(
-            agent_id="strict",
-            allowed_tools=[],
-            audit_all=False,
-        )
+        policy = AgentToolPolicy(agent_id="strict", allowed_tools=[], audit_all=False)
         register_factory(AgentToolPolicy, lambda: policy)
         try:
             fake = _FakeSandbox()
@@ -120,7 +118,9 @@ class TestAgentGraphToolPolicyWireUp:
                 name="test_proc",
             )
             await proc.process(exchange, context)
-            assert all(c.get("durable") is False for c in fake.calls)  # S171 M11 R2: filter check
+            assert all(
+                c.get("durable") is False for c in fake.calls
+            )  # S171 M11 R2: filter check
             result = exchange.get_property("agent_graph_result")
             assert result is not None
             assert "all tools denied" in result["error"]
@@ -129,7 +129,7 @@ class TestAgentGraphToolPolicyWireUp:
             _reset_policy()
 
     async def test_no_policy_registered_no_filtering(
-        self, exchange: Exchange[Any], context: ExecutionContext,
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Без registered policy — все tools БЛОКИРУЮТСЯ (fail-closed).
 
@@ -160,7 +160,7 @@ class TestAgentGraphToolPolicyWireUp:
             _reset_policy()
 
     async def test_no_policy_fail_open_via_env(
-        self, exchange: Exchange[Any], context: ExecutionContext,
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Opt-in fail-open через env AGENT_TOOL_POLICY_FAIL_OPEN=true."""
         import os
@@ -190,9 +190,8 @@ class TestAgentGraphToolPolicyWireUp:
                 os.environ["AGENT_TOOL_POLICY_FAIL_OPEN"] = old_value
             _reset_policy()
 
-
     async def test_default_audit_all_true_allows_tools(
-        self, exchange: Exchange[Any], context: ExecutionContext,
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Default audit_all=True: tools are allowed (AUDIT treated as allowed by is_allowed)."""
         from src.backend.core.svcs_registry import clear_registry, register_factory
@@ -200,7 +199,9 @@ class TestAgentGraphToolPolicyWireUp:
         clear_registry()
         register_factory(
             AgentToolPolicy,
-            lambda: AgentToolPolicy(agent_id="test", allowed_tools=["db.query"], audit_all=True),
+            lambda: AgentToolPolicy(
+                agent_id="test", allowed_tools=["db.query"], audit_all=True
+            ),
         )
         try:
             fake = _FakeSandbox()
@@ -225,6 +226,5 @@ def _reset_policy() -> None:
 
     clear_registry()
     register_factory(
-        AgentToolPolicy,
-        lambda: AgentToolPolicy(agent_id="default", audit_all=False),
+        AgentToolPolicy, lambda: AgentToolPolicy(agent_id="default", audit_all=False)
     )

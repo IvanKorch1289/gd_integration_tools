@@ -58,9 +58,7 @@ async def test_init_jwt_blacklist_idempotent() -> None:
     """Повторный init не пересоздаёт store (ready-флаг)."""
     facade = SecurityFacade()
     with patch.object(
-        facade,
-        "_create_jwt_blacklist",
-        new=AsyncMock(return_value=object()),
+        facade, "_create_jwt_blacklist", new=AsyncMock(return_value=object())
     ) as mock_create:
         await facade.init_jwt_blacklist()
         await facade.init_jwt_blacklist()
@@ -121,9 +119,7 @@ async def test_unblacklist_failure_returns_false() -> None:
 async def test_clear_blacklist_redis_scan_pagination() -> None:
     """Scan-цикл: две страницы (cursor 5 -> 0), delete по ключам страниц."""
     redis_like = _redis_like_mock()
-    redis_like._redis.scan = AsyncMock(
-        side_effect=[(5, [b"bl:a", b"bl:b"]), (0, [])]
-    )
+    redis_like._redis.scan = AsyncMock(side_effect=[(5, [b"bl:a", b"bl:b"]), (0, [])])
     facade = _facade_with_blacklist(redis_like)
     await facade.clear_blacklist()
     redis_like._redis.delete.assert_any_await(b"bl:a", b"bl:b")
@@ -206,9 +202,7 @@ async def test_get_secret_returns_value_and_default() -> None:
     facade = SecurityFacade()
     backend = AsyncMock()
     backend.get_secret = AsyncMock(side_effect=[None, "s3cret"])
-    with patch(
-        "src.backend.core.svcs_registry.get_service", return_value=backend
-    ):
+    with patch("src.backend.core.svcs_registry.get_service", return_value=backend):
         assert await facade.get_secret("k", default="fallback") == "fallback"
         assert await facade.get_secret("k") == "s3cret"
 
@@ -219,8 +213,7 @@ async def test_get_certificate_success_and_failure() -> None:
     store = AsyncMock()
     store.get = AsyncMock(return_value=b"-----BEGIN CERT")
     with patch(
-        "src.backend.services.security.cert_store_facade.CertStore",
-        return_value=store,
+        "src.backend.services.security.cert_store_facade.CertStore", return_value=store
     ):
         assert await facade.get_certificate("cert-1") == b"-----BEGIN CERT"
     with patch(
@@ -237,9 +230,7 @@ def test_verify_signature_delegates() -> None:
         "src.backend.infrastructure.security.signatures.verify_signature"
     ) as mock_verify:
         mock_verify.return_value = True
-        assert (
-            facade.verify_signature(b"payload", "sig", 1700000000, "secret") is True
-        )
+        assert facade.verify_signature(b"payload", "sig", 1700000000, "secret") is True
 
 
 @pytest.mark.asyncio
@@ -263,9 +254,7 @@ async def test_capability_assert_called_on_pii_operations() -> None:
         recorded.append((plugin, action, resource))
 
     facade = SecurityFacade(capability_check=capability_check, plugin="test_pl")
-    with patch(
-        "src.backend.core.security.pii_tokenizer.PIITokenizer"
-    ) as mock_tok:
+    with patch("src.backend.core.security.pii_tokenizer.PIITokenizer") as mock_tok:
         inst = AsyncMock()
         inst.mask_reversible = AsyncMock(return_value=("<T>", {}))
         mock_tok.return_value = inst

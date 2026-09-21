@@ -32,9 +32,7 @@ def mock_redis(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
     def _get_client() -> AsyncMock:
         return client
 
-    monkeypatch.setattr(
-        "src.backend.core.storage.redis.get_redis_client", _get_client
-    )
+    monkeypatch.setattr("src.backend.core.storage.redis.get_redis_client", _get_client)
     return client
 
 
@@ -54,7 +52,9 @@ async def test_revocation_revoke_persists_to_redis(mock_redis: AsyncMock) -> Non
     call_args = mock_redis.cache_set.await_args
     assert call_args.args[0] == "gd:mobile:revoked:jti-001"
     # TTL must be positive (we mocked time indirectly)
-    assert call_args.kwargs.get("expire", call_args.args[2] if len(call_args.args) > 2 else None)
+    assert call_args.kwargs.get(
+        "expire", call_args.args[2] if len(call_args.args) > 2 else None
+    )
 
 
 async def test_revocation_is_revoked_returns_true_when_key_exists(
@@ -128,9 +128,7 @@ async def test_rate_limiter_redis_error_fails_open(
     def _broken_get() -> None:
         raise ConnectionError("Redis down")
 
-    monkeypatch.setattr(
-        "src.backend.core.storage.redis.get_redis_client", _broken_get
-    )
+    monkeypatch.setattr("src.backend.core.storage.redis.get_redis_client", _broken_get)
     from src.backend.core.auth.mobile_jwt_redis import RedisRateLimiter
 
     limiter = RedisRateLimiter(max_requests=3, window_seconds=60)
@@ -174,14 +172,13 @@ async def test_revocation_fails_open_when_redis_unavailable(
     # M6-#3: fail-CLOSED enforced по умолчанию. Отключаем для legacy
     # fail-open теста через monkeypatch на feature_flags (конфиг уже загружен).
     from src.backend.core.config.features import feature_flags as _ff
+
     monkeypatch.setattr(_ff, "mobile_jwt_revoc_fail_closed", False)
 
     def _unavailable() -> None:
         return None  # get_redis_client returns None
 
-    monkeypatch.setattr(
-        "src.backend.core.storage.redis.get_redis_client", _unavailable
-    )
+    monkeypatch.setattr("src.backend.core.storage.redis.get_redis_client", _unavailable)
     from src.backend.core.auth.mobile_jwt_redis import RedisRevocationStore
 
     store = RedisRevocationStore()
@@ -196,9 +193,7 @@ async def test_revocation_revoke_silent_when_redis_unavailable(
     def _unavailable() -> None:
         return None
 
-    monkeypatch.setattr(
-        "src.backend.core.storage.redis.get_redis_client", _unavailable
-    )
+    monkeypatch.setattr("src.backend.core.storage.redis.get_redis_client", _unavailable)
     from src.backend.core.auth.mobile_jwt_redis import RedisRevocationStore
 
     store = RedisRevocationStore()

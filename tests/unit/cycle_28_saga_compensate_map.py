@@ -4,7 +4,6 @@ Self-contained — does NOT import Temporal/workflow compiler (chain deps).
 Tests the Pydantic model_validator on SagaDeclaration only.
 """
 
-
 from __future__ import annotations
 
 import os
@@ -34,7 +33,7 @@ class TestCompensateMapField:
         idx = content.find("class SagaDeclaration")
         assert idx != -1
         end = content.find("class ", idx + 1)
-        docstring_section = content[idx:end if end != -1 else idx + 1000]
+        docstring_section = content[idx : end if end != -1 else idx + 1000]
         assert "Phase 6" in docstring_section
 
 
@@ -69,7 +68,10 @@ class TestBackwardCompatibility:
         with open(path) as f:
             content = f.read()
         # compensate_map default is None
-        assert "compensate_map: dict[str, str] | None = Field(\n        default=None" in content
+        assert (
+            "compensate_map: dict[str, str] | None = Field(\n        default=None"
+            in content
+        )
 
     def test_compile_module_imports_cleanly(self):
         """step_compilers.py must not have broken imports."""
@@ -77,4 +79,5 @@ class TestBackwardCompatibility:
         assert os.path.exists(path)
         # No syntax errors
         import ast
+
         ast.parse(open(path).read())

@@ -6,6 +6,7 @@
 - Возвращает exit code != 0 если есть violations
 - Поддерживает --update-allowlist
 """
+
 from __future__ import annotations
 
 import subprocess
@@ -18,7 +19,8 @@ class TestCheckDocstrings:
         """check_docstrings запускается на directory."""
         result = subprocess.run(
             ["python", "tools/check_docstrings.py", "src/backend/core/utils"],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
             cwd="/home/user/dev/gd_integration_tools",
             timeout=30,
         )
@@ -27,13 +29,18 @@ class TestCheckDocstrings:
             f"unexpected exit code: {result.returncode}, stderr: {result.stderr}"
         )
 
-    @pytest.mark.skip(reason="M14.4: typer не установлен в dev env, check_docstrings требует его (M14 fix)")
-    @pytest.mark.skip(reason="M14.4: typer не установлен в dev env, check_docstrings требует его (M14 fix)")
+    @pytest.mark.skip(
+        reason="M14.4: typer не установлен в dev env, check_docstrings требует его (M14 fix)"
+    )
+    @pytest.mark.skip(
+        reason="M14.4: typer не установлен в dev env, check_docstrings требует его (M14 fix)"
+    )
     def test_detects_missing_docstrings(self) -> None:
         """check_docstrings находит отсутствующие docstring."""
         result = subprocess.run(
             ["python", "tools/check_docstrings.py", "src/backend/dsl"],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
             cwd="/home/user/dev/gd_integration_tools",
             timeout=60,
         )

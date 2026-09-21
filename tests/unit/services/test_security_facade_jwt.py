@@ -21,7 +21,9 @@ class TestJWTBlacklistFallback:
         """Redis доступен -> RedisJwtBlacklist (multi-worker safe)."""
         facade = SecurityFacade()
         with (
-            patch("src.backend.infrastructure.clients.storage.redis.get_redis_client") as mock_rc,
+            patch(
+                "src.backend.infrastructure.clients.storage.redis.get_redis_client"
+            ) as mock_rc,
             patch("src.backend.core.auth.jwt_blacklist.RedisJwtBlacklist") as mock_cls,
         ):
             mock_rc.return_value.get_client = AsyncMock(return_value=object())
@@ -52,9 +54,7 @@ class TestJWTBlacklistFallback:
         with (
             patch("src.backend.infrastructure.clients.storage.redis.get_redis_client"),
             patch("src.backend.core.auth.jwt_blacklist.RedisJwtBlacklist"),
-            patch.object(
-                facade, "_jwt_blacklist", mock_blacklist, create=True
-            ),
+            patch.object(facade, "_jwt_blacklist", mock_blacklist, create=True),
             patch.object(facade, "_jwt_blacklist_ready", True, create=True),
         ):
             assert await facade.blacklist_token("jti-test-1") is True

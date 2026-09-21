@@ -20,9 +20,8 @@ API for non-adapter callers).
 from __future__ import annotations
 
 import sys
+from typing import Any
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 
 def _make_middleware(
@@ -115,6 +114,7 @@ def test_get_state_legacy_path_when_disabled() -> None:
         BreakerState,
         RouteBreakerState,
     )
+
     assert isinstance(state, RouteBreakerState)
     assert state.state == BreakerState.CLOSED
 

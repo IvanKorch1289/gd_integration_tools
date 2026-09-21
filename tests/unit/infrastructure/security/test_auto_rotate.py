@@ -3,6 +3,7 @@
 При days_remaining <= 0 (cert expired) И auto_rotate=True —
 вызвать set() с renewal callback. По умолчанию False (D260 Ponytail YAGNI).
 """
+
 from __future__ import annotations
 
 from datetime import UTC
@@ -16,6 +17,7 @@ class TestAutoRotate:
         from src.backend.infrastructure.security.cert_store.rotation_watcher import (
             CertRotationWatcher,
         )
+
         watcher = CertRotationWatcher(cert_store=MagicMock())
         assert watcher._auto_rotate is False
 
@@ -23,6 +25,7 @@ class TestAutoRotate:
         from src.backend.infrastructure.security.cert_store.rotation_watcher import (
             CertRotationWatcher,
         )
+
         watcher = CertRotationWatcher(cert_store=MagicMock(), auto_rotate=True)
         assert watcher._auto_rotate is True
 
@@ -34,6 +37,7 @@ class TestAutoRotate:
         from src.backend.infrastructure.security.cert_store.rotation_watcher import (
             CertRotationWatcher,
         )
+
         mock_store = MagicMock()
         mock_entry = MagicMock()
         mock_entry.service_id = "skb_api"

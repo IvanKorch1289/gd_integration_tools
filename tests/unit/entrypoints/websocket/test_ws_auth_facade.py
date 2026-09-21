@@ -54,8 +54,7 @@ class TestExtractCredential:
 
     def test_subprotocol_priority_over_cookie(self) -> None:
         cred = extract_credential(
-            "jwt.sub_token",
-            cookies={WS_AUTH_COOKIE_NAME: "cookie_value"},
+            "jwt.sub_token", cookies={WS_AUTH_COOKIE_NAME: "cookie_value"}
         )
         assert cred is not None
         assert cred.source == "subprotocol"
@@ -68,19 +67,14 @@ class TestExtractCredential:
         assert cred.source == "cookie"
 
     def test_cookie_apikey_format(self) -> None:
-        cred = extract_credential(
-            None,
-            cookies={WS_AUTH_COOKIE_NAME: "sk_live_xyz"},
-        )
+        cred = extract_credential(None, cookies={WS_AUTH_COOKIE_NAME: "sk_live_xyz"})
         assert cred is not None
         assert cred.method == "api_key"
         assert cred.source == "cookie"
 
     def test_cookies_disabled_returns_none(self) -> None:
         cred = extract_credential(
-            None,
-            cookies={WS_AUTH_COOKIE_NAME: "abc"},
-            allow_cookies=False,
+            None, cookies={WS_AUTH_COOKIE_NAME: "abc"}, allow_cookies=False
         )
         assert cred is None
 
@@ -120,7 +114,7 @@ class TestWSAuthenticatorJWT:
 
     @pytest.mark.asyncio
     async def test_jwt_decode_is_awaited_before_claim_access(
-        self, authenticator: WSAuthenticator,
+        self, authenticator: WSAuthenticator
     ) -> None:
         """Async JwtBackend.decode is awaited before reading claims."""
 
@@ -135,11 +129,14 @@ class TestWSAuthenticatorJWT:
                     raw={"groups": ["ops"]},
                 )
 
-        with patch(
-            "src.backend.core.di.providers.auth.get_jwt_backend_provider",
-            return_value=_FakeBackend(),
-        ), patch.object(
-            authenticator, "_load_groups", new=AsyncMock(return_value={"ops"}),
+        with (
+            patch(
+                "src.backend.core.di.providers.auth.get_jwt_backend_provider",
+                return_value=_FakeBackend(),
+            ),
+            patch.object(
+                authenticator, "_load_groups", new=AsyncMock(return_value={"ops"})
+            ),
         ):
             session = await authenticator.authenticate_jwt("valid.token.value")
 
@@ -149,7 +146,7 @@ class TestWSAuthenticatorJWT:
 
     @pytest.mark.asyncio
     async def test_jwt_decode_failure_raises(
-        self, authenticator: WSAuthenticator,
+        self, authenticator: WSAuthenticator
     ) -> None:
         """Backend rejects malformed/expired token → WSAuthError."""
 
@@ -157,15 +154,18 @@ class TestWSAuthenticatorJWT:
             async def decode(self, token: str) -> JwtClaims:
                 raise RuntimeError("invalid signature")
 
-        with patch(
-            "src.backend.core.di.providers.auth.get_jwt_backend_provider",
-            return_value=_FakeBackend(),
-        ), pytest.raises(WSAuthError, match="JWT"):
+        with (
+            patch(
+                "src.backend.core.di.providers.auth.get_jwt_backend_provider",
+                return_value=_FakeBackend(),
+            ),
+            pytest.raises(WSAuthError, match="JWT"),
+        ):
             await authenticator.authenticate_jwt("malformed.token.here")
 
     @pytest.mark.asyncio
     async def test_jwt_backend_unavailable_raises(
-        self, authenticator: WSAuthenticator, monkeypatch: pytest.MonkeyPatch,
+        self, authenticator: WSAuthenticator, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Имитация отсутствующего joserfc / AuthError при ImportError."""
 
@@ -197,24 +197,18 @@ class TestWSAuthenticatorFacade:
         return WSAuthenticator()
 
     @pytest.mark.asyncio
-    async def test_routes_jwt_method(
-        self, authenticator: WSAuthenticator,
-    ) -> None:
+    async def test_routes_jwt_method(self, authenticator: WSAuthenticator) -> None:
         cred = WSCredential(token="dummy.jwt.token", method="jwt", source="subprotocol")
         # backend отсутствует → WSAuthError (test passes whichever backend raises).
         with pytest.raises(WSAuthError):
             await authenticator.authenticate_via_facade(cred)
 
     @pytest.mark.asyncio
-    async def test_routes_api_key_method(
-        self, authenticator: WSAuthenticator,
-    ) -> None:
+    async def test_routes_api_key_method(self, authenticator: WSAuthenticator) -> None:
         """api_key path — backward-compat через authenticate()."""
 
         cred = WSCredential(
-            token="Bearer valid-token",
-            method="api_key",
-            source="subprotocol",
+            token="Bearer valid-token", method="api_key", source="subprotocol"
         )
         mock_mgr = AsyncMock()
         mock_mgr.validate.return_value = {
@@ -232,13 +226,9 @@ class TestWSAuthenticatorFacade:
 
     @pytest.mark.asyncio
     async def test_routes_api_key_cookie_sets_auth_source(
-        self, authenticator: WSAuthenticator,
+        self, authenticator: WSAuthenticator
     ) -> None:
-        cred = WSCredential(
-            token="my-api-key",
-            method="api_key",
-            source="cookie",
-        )
+        cred = WSCredential(token="my-api-key", method="api_key", source="cookie")
         mock_mgr = AsyncMock()
         mock_mgr.validate.return_value = {
             "hash": "abc123",

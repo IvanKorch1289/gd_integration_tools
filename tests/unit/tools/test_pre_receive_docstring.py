@@ -66,7 +66,7 @@ def _git_env(repo: Path) -> dict[str, str]:
             "GIT_AUTHOR_EMAIL": "test@example.com",
             "GIT_COMMITTER_NAME": "Test",
             "GIT_COMMITTER_EMAIL": "test@example.com",
-        },
+        }
     )
     return env
 
@@ -121,7 +121,7 @@ def sandbox(tmp_path: Path) -> Iterator[dict[str, Path]]:
 
 
 def _run_hook(
-    workdir: Path, stdin_payload: str, *, cwd: Path | None = None,
+    workdir: Path, stdin_payload: str, *, cwd: Path | None = None
 ) -> subprocess.CompletedProcess[str]:
     """Запускает pre-receive hook с переданным STDIN.
 
@@ -149,13 +149,13 @@ def _make_bare_repo(tmp_path: Path) -> Path:
     bare = tmp_path / "remote.git"
     bare.mkdir()
     subprocess.run(
-        ["git", "init", "--bare"], cwd=str(bare), capture_output=True, check=True,
+        ["git", "init", "--bare"], cwd=str(bare), capture_output=True, check=True
     )
     return bare
 
 
 def _push_and_run_hook(
-    *, workdir: Path, bare: Path, refspec: str, expected_old: str, expected_new: str,
+    *, workdir: Path, bare: Path, refspec: str, expected_old: str, expected_new: str
 ) -> subprocess.CompletedProcess[str]:
     """Эмулирует pre-receive: формирует payload вручную и вызывает hook.
 
@@ -202,7 +202,7 @@ def test_hook_exists_and_executable() -> None:
 def test_hook_passes_bash_syntax() -> None:
     """``bash -n`` (no-op syntax check) не падает."""
     proc = subprocess.run(
-        ["bash", "-n", str(HOOK_PATH)], capture_output=True, text=True, check=False,
+        ["bash", "-n", str(HOOK_PATH)], capture_output=True, text=True, check=False
     )
     assert proc.returncode == 0, proc.stderr
 
@@ -247,11 +247,7 @@ def test_cli_allowlist_filters(tmp_path: Path) -> None:
     # (после module docstring).
     allowlist.write_text(f"{target}:3:4 public_function\n", encoding="utf-8")
     proc = subprocess.run(
-        [
-            sys.executable, str(CHECKER_PATH),
-            "--allowlist", str(allowlist),
-            str(target),
-        ],
+        [sys.executable, str(CHECKER_PATH), "--allowlist", str(allowlist), str(target)],
         capture_output=True,
         text=True,
         check=False,
@@ -281,12 +277,7 @@ def test_cli_module_level_off_by_default(tmp_path: Path) -> None:
     """
     target = tmp_path / "no_module_doc.py"
     # Module с non-trivial stmts, но без module docstring.
-    target.write_text(
-        "CONST_A = 1\n"
-        "CONST_B = 2\n"
-        "CONST_C = 3\n",
-        encoding="utf-8",
-    )
+    target.write_text("CONST_A = 1\nCONST_B = 2\nCONST_C = 3\n", encoding="utf-8")
     proc = subprocess.run(
         [sys.executable, str(CHECKER_PATH), str(target)],
         capture_output=True,
@@ -299,12 +290,7 @@ def test_cli_module_level_off_by_default(tmp_path: Path) -> None:
 def test_cli_module_level_flag_catches_missing(tmp_path: Path) -> None:
     """``--module-level`` → ловит module без docstring (exit 1)."""
     target = tmp_path / "no_module_doc.py"
-    target.write_text(
-        "CONST_A = 1\n"
-        "CONST_B = 2\n"
-        "CONST_C = 3\n",
-        encoding="utf-8",
-    )
+    target.write_text("CONST_A = 1\nCONST_B = 2\nCONST_C = 3\n", encoding="utf-8")
     proc = subprocess.run(
         [sys.executable, str(CHECKER_PATH), "--module-level", str(target)],
         capture_output=True,
@@ -322,9 +308,7 @@ def test_cli_module_level_skips_init_file(tmp_path: Path) -> None:
     """``--module-level`` skip'ает __init__.py (re-exports не требуют docstring)."""
     target = tmp_path / "__init__.py"
     target.write_text(
-        "from .foo import bar\n"
-        "from .baz import qux\n"
-        '__all__ = ("bar", "qux")\n',
+        'from .foo import bar\nfrom .baz import qux\n__all__ = ("bar", "qux")\n',
         encoding="utf-8",
     )
     proc = subprocess.run(

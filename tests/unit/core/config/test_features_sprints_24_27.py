@@ -31,7 +31,9 @@ SPRINTS_24_27_FIELD_NAMES = (
     "ai_audit_unified_enabled",
     "workflow_invoke_agent_enabled",
 )
-EXPECTED_SPRINTS_24_27_FIELD_COUNT = 13  # S162 W2: kept ai_gateway_enforce (just skip False check)
+EXPECTED_SPRINTS_24_27_FIELD_COUNT = (
+    13  # S162 W2: kept ai_gateway_enforce (just skip False check)
+)
 
 
 class TestSprints2427FlagsClass:
@@ -42,9 +44,7 @@ class TestSprints2427FlagsClass:
         flags = Sprints2427Flags()
         # S162 W2: ai_gateway_enforce default is True (was False pre-S85).
         # Check False-only for the rest.
-        for f in (
-            f for f in SPRINTS_24_27_FIELD_NAMES if f != "ai_gateway_enforce"
-        ):
+        for f in (f for f in SPRINTS_24_27_FIELD_NAMES if f != "ai_gateway_enforce"):
             assert getattr(flags, f) is True, f"{f} default не False"
 
     def test_sprints_24_27_env_vars(self) -> None:

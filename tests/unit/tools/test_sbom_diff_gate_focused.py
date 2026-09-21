@@ -19,11 +19,7 @@ from tools.checks.sbom_diff_gate import (
 
 def _write_sbom(path: Path, components: list[dict]) -> Path:
     """Helper: write CycloneDX-like SBOM file."""
-    data = {
-        "bomFormat": "CycloneDX",
-        "specVersion": "1.4",
-        "components": components,
-    }
+    data = {"bomFormat": "CycloneDX", "specVersion": "1.4", "components": components}
     path.write_text(json.dumps(data), encoding="utf-8")
     return path
 
@@ -87,13 +83,7 @@ class TestParseComponents:
         sbom = tmp_path / "test.cdx.json"
         _write_sbom(
             sbom,
-            [
-                {
-                    "name": "mystery",
-                    "version": "1.0",
-                    "purl": "pkg:pypi/mystery@1.0",
-                }
-            ],
+            [{"name": "mystery", "version": "1.0", "purl": "pkg:pypi/mystery@1.0"}],
         )
         components = _parse_components(sbom)
         assert components[0].licenses == []
@@ -113,9 +103,7 @@ class TestParseComponents:
 
 class TestDiffSBOMs:
     def test_no_changes(self) -> None:
-        comps = [
-            SBOMComponent(name="x", version="1.0", licenses=["MIT"])
-        ]
+        comps = [SBOMComponent(name="x", version="1.0", licenses=["MIT"])]
         diff = diff_sboms(current=comps, baseline=comps)
         assert diff.added == []
         assert diff.removed == []
@@ -127,9 +115,7 @@ class TestDiffSBOMs:
             SBOMComponent(name="x", version="1.0", licenses=["MIT"]),
             SBOMComponent(name="y", version="2.0", licenses=["MIT"]),
         ]
-        baseline = [
-            SBOMComponent(name="x", version="1.0", licenses=["MIT"]),
-        ]
+        baseline = [SBOMComponent(name="x", version="1.0", licenses=["MIT"])]
         diff = diff_sboms(current=current, baseline=baseline)
         assert len(diff.added) == 1
         assert diff.added[0].name == "y"
@@ -137,9 +123,7 @@ class TestDiffSBOMs:
         assert diff.delta_components == 1
 
     def test_removed_component(self) -> None:
-        current = [
-            SBOMComponent(name="x", version="1.0", licenses=["MIT"]),
-        ]
+        current = [SBOMComponent(name="x", version="1.0", licenses=["MIT"])]
         baseline = [
             SBOMComponent(name="x", version="1.0", licenses=["MIT"]),
             SBOMComponent(name="y", version="2.0", licenses=["MIT"]),
@@ -151,9 +135,7 @@ class TestDiffSBOMs:
         assert diff.delta_components == -1
 
     def test_license_violation_gpl(self) -> None:
-        current = [
-            SBOMComponent(name="evil", version="1.0", licenses=["GPL-3.0"]),
-        ]
+        current = [SBOMComponent(name="evil", version="1.0", licenses=["GPL-3.0"])]
         baseline: list[SBOMComponent] = []
         diff = diff_sboms(current=current, baseline=baseline)
         assert len(diff.license_violations) == 1
@@ -162,18 +144,14 @@ class TestDiffSBOMs:
         assert diff.has_violations is True
 
     def test_license_violation_agpl(self) -> None:
-        current = [
-            SBOMComponent(name="x", version="1.0", licenses=["AGPL-3.0"]),
-        ]
+        current = [SBOMComponent(name="x", version="1.0", licenses=["AGPL-3.0"])]
         diff = diff_sboms(current=current, baseline=[])
         assert len(diff.license_violations) == 1
         assert diff.has_violations is True
 
     def test_unknown_license_flagged(self) -> None:
         """unknown license попадает в отчёт; по умолчанию WARN (не fail)."""
-        current = [
-            SBOMComponent(name="x", version="1.0", licenses=[]),
-        ]
+        current = [SBOMComponent(name="x", version="1.0", licenses=[])]
         diff = diff_sboms(current=current, baseline=[])
         assert len(diff.unknown_licenses) == 1
         assert diff.unknown_licenses[0].name == "x"
@@ -181,9 +159,7 @@ class TestDiffSBOMs:
 
     def test_unknown_license_fails_in_strict_mode(self) -> None:
         """--fail-on-unknown: unknown license → has_violations."""
-        current = [
-            SBOMComponent(name="x", version="1.0", licenses=[]),
-        ]
+        current = [SBOMComponent(name="x", version="1.0", licenses=[])]
         diff = diff_sboms(current=current, baseline=[])
         diff.fail_on_unknown = True
         assert diff.has_violations is True
@@ -199,13 +175,9 @@ class TestDiffSBOMs:
 
     def test_custom_deny_list(self) -> None:
         """Custom deny list (e.g., JSON-license rejected)."""
-        current = [
-            SBOMComponent(name="x", version="1.0", licenses=["JSON"]),
-        ]
+        current = [SBOMComponent(name="x", version="1.0", licenses=["JSON"])]
         diff = diff_sboms(
-            current=current,
-            baseline=[],
-            deny_licenses=frozenset({"JSON"}),
+            current=current, baseline=[], deny_licenses=frozenset({"JSON"})
         )
         assert diff.has_violations
 
@@ -234,7 +206,7 @@ class TestDiffReport:
 
         diff = SBOMDiff(
             license_violations=[
-                ("GPL-3.0", SBOMComponent("evil", "1.0", licenses=["GPL-3.0"])),
+                ("GPL-3.0", SBOMComponent("evil", "1.0", licenses=["GPL-3.0"]))
             ],
             total_components=1,
         )
@@ -268,6 +240,7 @@ class TestCLI:
         baseline_path.write_text(current_path.read_text())
 
         import sys
+
         old_argv = sys.argv
         sys.argv = [
             "sbom_diff_gate",
@@ -304,6 +277,7 @@ class TestCLI:
         _write_sbom(baseline_path, [])
 
         import sys
+
         old_argv = sys.argv
         sys.argv = [
             "sbom_diff_gate",
@@ -325,7 +299,11 @@ class TestCLI:
         _write_sbom(
             current_path,
             [
-                {"name": f"x{i}", "version": "1.0", "licenses": [{"license": {"id": "MIT"}}]}
+                {
+                    "name": f"x{i}",
+                    "version": "1.0",
+                    "licenses": [{"license": {"id": "MIT"}}],
+                }
                 for i in range(10)
             ],
         )
@@ -333,6 +311,7 @@ class TestCLI:
         _write_sbom(baseline_path, [])
 
         import sys
+
         old_argv = sys.argv
         sys.argv = [
             "sbom_diff_gate",
@@ -353,6 +332,7 @@ class TestCLI:
     def test_cli_missing_sbom(self, tmp_path) -> None:
         """CLI returns 2 при missing current SBOM."""
         import sys
+
         old_argv = sys.argv
         sys.argv = [
             "sbom_diff_gate",
@@ -373,14 +353,13 @@ class TestCLI:
         current_path = tmp_path / "current.cdx.json"
         _write_sbom(
             current_path,
-            [
-                {"name": "x", "version": "1.0", "licenses": [{"license": {"id": "MIT"}}]}
-            ],
+            [{"name": "x", "version": "1.0", "licenses": [{"license": {"id": "MIT"}}]}],
         )
         baseline_path = tmp_path / "baseline.cdx.json"
         _write_sbom(baseline_path, [])
 
         import sys
+
         old_argv = sys.argv
         sys.argv = [
             "sbom_diff_gate",
@@ -403,13 +382,12 @@ class TestCLI:
         current_path = tmp_path / "current.cdx.json"
         _write_sbom(
             current_path,
-            [
-                {"name": "x", "version": "1.0", "licenses": [{"license": {"id": "MIT"}}]}
-            ],
+            [{"name": "x", "version": "1.0", "licenses": [{"license": {"id": "MIT"}}]}],
         )
         baseline_path = tmp_path / "missing_baseline.cdx.json"
 
         import sys
+
         old_argv = sys.argv
         sys.argv = [
             "sbom_diff_gate",
@@ -426,7 +404,9 @@ class TestCLI:
         # First run = empty baseline → no violations.
         assert exit_code == 0
         captured = capsys.readouterr()
-        assert "Baseline не найден" in captured.err or "first run" in captured.err.lower()
+        assert (
+            "Baseline не найден" in captured.err or "first run" in captured.err.lower()
+        )
 
 
 class TestRealisticExample:
@@ -435,7 +415,7 @@ class TestRealisticExample:
     def test_gpl_dependency_caught(self) -> None:
         """New dependency с GPL license caught by gate."""
         current = [
-            SBOMComponent(name="legacy-gpl-lib", version="1.0", licenses=["GPL-3.0"]),
+            SBOMComponent(name="legacy-gpl-lib", version="1.0", licenses=["GPL-3.0"])
         ]
         baseline: list[SBOMComponent] = []
         diff = diff_sboms(current=current, baseline=baseline)

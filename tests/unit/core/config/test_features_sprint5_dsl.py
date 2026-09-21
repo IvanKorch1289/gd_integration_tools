@@ -59,10 +59,14 @@ class TestSprint5DSLFlagsClass:
         # osint_agent_enabled, hello_route_enabled, test_route_w1_enabled.
         # S44 W45: these are not in the originally-tested default-True set.
         _DEFAULT_TRUE_FIELDS = tuple(
-            f for f in SPRINT5_DSL_FIELD_NAMES
-            if f not in {
-                "demo_routes_enabled", "external_health_proxy_enabled",
-                "osint_agent_enabled", "hello_route_enabled",
+            f
+            for f in SPRINT5_DSL_FIELD_NAMES
+            if f
+            not in {
+                "demo_routes_enabled",
+                "external_health_proxy_enabled",
+                "osint_agent_enabled",
+                "hello_route_enabled",
                 "test_route_w1_enabled",
             }
         )

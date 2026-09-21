@@ -5,7 +5,6 @@ HMAC-SHA256 signature verification для входящих webhooks
 ASGI — body буферизуется в middleware, re-injected для downstream.
 """
 
-
 from __future__ import annotations
 
 import time
@@ -207,7 +206,7 @@ class TestWebhookSignatureMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_protected_prefix_without_secret_returns_503(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """B-02 fix: path protected, но secret не сконфигурирован → 503 fail-closed.
 
@@ -221,9 +220,8 @@ class TestWebhookSignatureMiddlewarePureASGI:
         monkeypatch.delenv("WEBHOOK_ALLOW_MISSING_SECRET", raising=False)
 
         async def downstream(scope, receive, send):
-            raise AssertionError(
-                "downstream НЕ должен быть вызван при missing secret",
-            )
+            raise AssertionError("downstream НЕ должен быть вызван при missing secret")
+
     async def test_protected_prefix_without_secret_passes(self) -> None:
         """Path protected, но secret не сконфигурирован → fail-closed (503) по default.
 
@@ -246,12 +244,7 @@ class TestWebhookSignatureMiddlewarePureASGI:
                     "headers": [(b"content-type", b"application/json")],
                 }
             )
-            await send(
-                {
-                    "type": "http.response.body",
-                    "body": b'{"ok": true}',
-                }
-            )
+            await send({"type": "http.response.body", "body": b'{"ok": true}'})
 
         app = AsyncMock()
         app.side_effect = downstream

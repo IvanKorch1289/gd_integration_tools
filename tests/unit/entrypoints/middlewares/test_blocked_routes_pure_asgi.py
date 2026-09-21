@@ -6,7 +6,6 @@ Middleware блокирует запросы к путям, совпадающи
 BaseHTTPMiddleware версии).
 """
 
-
 from __future__ import annotations
 
 import json
@@ -174,11 +173,7 @@ async def test_passes_through_non_http_scope() -> None:
     app.side_effect = downstream
     mw = BlockedRoutesMiddleware(app)
     send = AsyncMock()
-    await mw(
-        {"type": "websocket", "path": "/ws", "headers": []},
-        AsyncMock(),
-        send,
-    )
+    await mw({"type": "websocket", "path": "/ws", "headers": []}, AsyncMock(), send)
 
     # websocket.accept прошёл без 403.
     msg = send.await_args.args[0]
@@ -200,7 +195,12 @@ async def test_does_not_call_downstream_when_blocked() -> None:
     try:
         send = AsyncMock()
         await mw(
-            {"type": "http", "method": "GET", "path": "/blocked-endpoint", "headers": []},
+            {
+                "type": "http",
+                "method": "GET",
+                "path": "/blocked-endpoint",
+                "headers": [],
+            },
             AsyncMock(),
             send,
         )

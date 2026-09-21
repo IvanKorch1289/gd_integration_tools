@@ -7,7 +7,6 @@
 Маркер ``requires_pg`` позволяет отфильтровать тест в среде без Docker.
 """
 
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -31,7 +30,7 @@ async def test_dsl_snapshot_round_trip_with_api_version_pg(
     from src.backend.core.domain.models.dsl_snapshot import DslSnapshot
 
     SessionLocal = async_sessionmaker(
-        pg_engine_with_alembic, class_=AsyncSession, expire_on_commit=False,
+        pg_engine_with_alembic, class_=AsyncSession, expire_on_commit=False
     )
 
     async with SessionLocal() as session:
@@ -46,7 +45,7 @@ async def test_dsl_snapshot_round_trip_with_api_version_pg(
 
         row = (
             await session.execute(
-                select(DslSnapshot).where(DslSnapshot.route_id == "rt.versioning.pg"),
+                select(DslSnapshot).where(DslSnapshot.route_id == "rt.versioning.pg")
             )
         ).scalar_one()
         assert row.api_version == "v2"

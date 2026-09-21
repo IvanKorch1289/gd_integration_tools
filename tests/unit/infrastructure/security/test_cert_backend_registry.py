@@ -8,6 +8,7 @@ register/unregister/get/list, like a plugin registry.
 
 Test: register custom backend → get returns instance.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -18,6 +19,7 @@ class TestCertBackendRegistry:
         from src.backend.infrastructure.security.cert_store.backend_registry import (
             CertBackendRegistry,
         )
+
         reg = CertBackendRegistry()
         assert reg is not None
 
@@ -29,21 +31,28 @@ class TestCertBackendRegistry:
         from src.backend.infrastructure.security.cert_store.backend_registry import (
             CertBackendRegistry,
         )
+
         reg = CertBackendRegistry()
 
         class MyCustomBackend(CertBackend):
             async def get(self, service_id):
                 return None
+
             async def set(self, service_id, pem):
                 pass
+
             async def save(self, service_id, pem, expires_at, *, description=None):
                 pass
+
             async def history(self, service_id):
                 return []
+
             async def list_expiring(self, before):
                 return []
+
             def list_all(self):
                 return []
+
             async def delete(self, service_id):
                 return True
 
@@ -58,21 +67,28 @@ class TestCertBackendRegistry:
         from src.backend.infrastructure.security.cert_store.backend_registry import (
             CertBackendRegistry,
         )
+
         reg = CertBackendRegistry()
 
         class MyBackend(CertBackend):
             async def get(self, service_id):
                 return None
+
             async def set(self, service_id, pem):
                 pass
+
             async def save(self, service_id, pem, expires_at, *, description=None):
                 pass
+
             async def history(self, service_id):
                 return []
+
             async def list_expiring(self, before):
                 return []
+
             def list_all(self):
                 return []
+
             async def delete(self, service_id):
                 return True
 
@@ -85,6 +101,7 @@ class TestCertBackendRegistry:
         from src.backend.infrastructure.security.cert_store.backend_registry import (
             CertBackendRegistry,
         )
+
         reg = CertBackendRegistry()
         with pytest.raises(KeyError):
             reg.get("nonexistent")
@@ -97,21 +114,28 @@ class TestCertBackendRegistry:
         from src.backend.infrastructure.security.cert_store.backend_registry import (
             CertBackendRegistry,
         )
+
         reg = CertBackendRegistry()
 
         class B(CertBackend):
             async def get(self, service_id):
                 return None
+
             async def set(self, service_id, pem):
                 pass
+
             async def save(self, service_id, pem, expires_at, *, description=None):
                 pass
+
             async def history(self, service_id):
                 return []
+
             async def list_expiring(self, before):
                 return []
+
             def list_all(self):
                 return []
+
             async def delete(self, service_id):
                 return True
 
@@ -129,21 +153,28 @@ class TestCertBackendRegistry:
         from src.backend.infrastructure.security.cert_store.backend_registry import (
             CertBackendRegistry,
         )
+
         reg = CertBackendRegistry()
 
         class B(CertBackend):
             async def get(self, service_id):
                 return None
+
             async def set(self, service_id, pem):
                 pass
+
             async def save(self, service_id, pem, expires_at, *, description=None):
                 pass
+
             async def history(self, service_id):
                 return []
+
             async def list_expiring(self, before):
                 return []
+
             def list_all(self):
                 return []
+
             async def delete(self, service_id):
                 return True
 

@@ -61,9 +61,7 @@ class TestComparisonRule:
             return True
 
         r = ComparisonRule(
-            type=ComparisonType.CUSTOM,
-            custom_fn=fn,
-            description="custom test",
+            type=ComparisonType.CUSTOM, custom_fn=fn, description="custom test"
         )
         assert r.custom_fn is fn
 
@@ -76,9 +74,7 @@ class TestShadowResult:
         assert r.error is None
 
     def test_to_dict(self) -> None:
-        r = ShadowResult(
-            route_id="r", version="v", output={"x": 1}, duration_ms=100
-        )
+        r = ShadowResult(route_id="r", version="v", output={"x": 1}, duration_ms=100)
         d = r.to_dict()
         assert d["route_id"] == "r"
         assert d["has_output"] is True
@@ -124,31 +120,17 @@ class TestShadowComparatorApproxEqual:
 class TestShadowComparatorSubset:
     def test_subset_pass(self) -> None:
         c = ShadowComparator()
-        b = ShadowResult(
-            route_id="r", version="v1", output={"a": 1, "b": 2, "c": 3}
-        )
-        s = ShadowResult(
-            route_id="r", version="v2", output={"a": 1, "b": 2}
-        )
-        rule = ComparisonRule(
-            type=ComparisonType.SUBSET,
-            required_fields=("a", "b"),
-        )
+        b = ShadowResult(route_id="r", version="v1", output={"a": 1, "b": 2, "c": 3})
+        s = ShadowResult(route_id="r", version="v2", output={"a": 1, "b": 2})
+        rule = ComparisonRule(type=ComparisonType.SUBSET, required_fields=("a", "b"))
         result = c.compare(b, s, rule)
         assert result.passed
 
     def test_subset_missing_field(self) -> None:
         c = ShadowComparator()
-        b = ShadowResult(
-            route_id="r", version="v1", output={"a": 1, "b": 2}
-        )
-        s = ShadowResult(
-            route_id="r", version="v2", output={"a": 1}
-        )
-        rule = ComparisonRule(
-            type=ComparisonType.SUBSET,
-            required_fields=("a", "b"),
-        )
+        b = ShadowResult(route_id="r", version="v1", output={"a": 1, "b": 2})
+        s = ShadowResult(route_id="r", version="v2", output={"a": 1})
+        rule = ComparisonRule(type=ComparisonType.SUBSET, required_fields=("a", "b"))
         # Shadow has 'a' but not 'b' (required).
         result = c.compare(b, s, rule)
         assert not result.passed
@@ -158,14 +140,8 @@ class TestShadowComparatorContains:
     def test_contains_pass(self) -> None:
         c = ShadowComparator()
         b = ShadowResult(route_id="r", version="v1", output={"a": 1})
-        s = ShadowResult(
-            route_id="r", version="v2",
-            output={"a": 1, "b": 2, "c": 3},
-        )
-        rule = ComparisonRule(
-            type=ComparisonType.CONTAINS,
-            required_fields=("a",),
-        )
+        s = ShadowResult(route_id="r", version="v2", output={"a": 1, "b": 2, "c": 3})
+        rule = ComparisonRule(type=ComparisonType.CONTAINS, required_fields=("a",))
         result = c.compare(b, s, rule)
         assert result.passed
 
@@ -175,10 +151,7 @@ class TestShadowComparatorCustom:
         c = ShadowComparator()
         b = ShadowResult(route_id="r", version="v1", output={"x": 1})
         s = ShadowResult(route_id="r", version="v2", output={"x": 1})
-        rule = ComparisonRule(
-            type=ComparisonType.CUSTOM,
-            custom_fn=lambda b, s: b == s,
-        )
+        rule = ComparisonRule(type=ComparisonType.CUSTOM, custom_fn=lambda b, s: b == s)
         result = c.compare(b, s, rule)
         assert result.passed
 
@@ -186,10 +159,7 @@ class TestShadowComparatorCustom:
         c = ShadowComparator()
         b = ShadowResult(route_id="r", version="v1", output=1)
         s = ShadowResult(route_id="r", version="v2", output=2)
-        rule = ComparisonRule(
-            type=ComparisonType.CUSTOM,
-            custom_fn=lambda b, s: b == s,
-        )
+        rule = ComparisonRule(type=ComparisonType.CUSTOM, custom_fn=lambda b, s: b == s)
         result = c.compare(b, s, rule)
         assert not result.passed
 
@@ -205,9 +175,7 @@ class TestShadowComparatorCustom:
 class TestShadowComparatorErrors:
     def test_baseline_error(self) -> None:
         c = ShadowComparator()
-        b = ShadowResult(
-            route_id="r", version="v1", error="boom"
-        )
+        b = ShadowResult(route_id="r", version="v1", error="boom")
         s = ShadowResult(route_id="r", version="v2", output={"x": 1})
         rule = ComparisonRule()
         result = c.compare(b, s, rule)
@@ -217,9 +185,7 @@ class TestShadowComparatorErrors:
     def test_shadow_error(self) -> None:
         c = ShadowComparator()
         b = ShadowResult(route_id="r", version="v1", output={"x": 1})
-        s = ShadowResult(
-            route_id="r", version="v2", error="boom"
-        )
+        s = ShadowResult(route_id="r", version="v2", error="boom")
         rule = ComparisonRule()
         result = c.compare(b, s, rule)
         assert not result.passed
@@ -268,9 +234,7 @@ class TestShadowRouterShouldMirror:
     def test_distribution_50_percent(self) -> None:
         r = ShadowRouter()
         r.set_mirror_percent("r1", 50.0)
-        results = [
-            r.should_mirror("r1", tenant_id=f"t{i}") for i in range(20)
-        ]
+        results = [r.should_mirror("r1", tenant_id=f"t{i}") for i in range(20)]
         mirror_count = sum(results)
         # Approximately 50% (allow 5-15 range).
         assert 5 <= mirror_count <= 15
@@ -278,9 +242,7 @@ class TestShadowRouterShouldMirror:
     def test_distribution_25_percent(self) -> None:
         r = ShadowRouter()
         r.set_mirror_percent("r1", 25.0)
-        results = [
-            r.should_mirror("r1", tenant_id=f"t{i}") for i in range(40)
-        ]
+        results = [r.should_mirror("r1", tenant_id=f"t{i}") for i in range(40)]
         mirror_count = sum(results)
         # Approximately 25% (allow 3-15, wider range for small sample).
         assert 3 <= mirror_count <= 15
@@ -404,9 +366,7 @@ class TestRealisticExample:
         approx_result = router.compare(
             baseline,
             shadow,
-            ComparisonRule(
-                type=ComparisonType.APPROX_EQUAL, tolerance=0.05
-            ),
+            ComparisonRule(type=ComparisonType.APPROX_EQUAL, tolerance=0.05),
         )
         assert approx_result.passed
 

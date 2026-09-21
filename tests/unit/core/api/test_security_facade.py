@@ -31,12 +31,8 @@ class TestSecurityFacadeAllExports:
     )
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(security, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
-        assert symbol_name in security.__all__, (
-            f"{symbol_name} not declared in __all__"
-        )
+        assert hasattr(security, symbol_name), f"Missing export: {symbol_name}"
+        assert symbol_name in security.__all__, f"{symbol_name} not declared in __all__"
 
     def test_all_declared_count(self) -> None:
         """``__all__`` содержит 5 символов."""

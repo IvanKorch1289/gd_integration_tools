@@ -73,9 +73,7 @@ def test_doc_path_validator_find_missing(tmp_path: Path) -> None:
     (tmp_path / "docs").mkdir()
 
     doc = tmp_path / "docs" / "x.md"
-    doc.write_text(
-        "`src/backend/ghost.py` and `extensions/phantom.py`"
-    )
+    doc.write_text("`src/backend/ghost.py` and `extensions/phantom.py`")
 
     validator = DocPathValidator(tmp_path)
     missing = validator.find_missing()

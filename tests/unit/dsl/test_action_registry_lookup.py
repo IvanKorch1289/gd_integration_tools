@@ -44,22 +44,16 @@ class TestActionHandlerRegistryLookup:
 
         return handler
 
-    def test_get_metadata_returns_none_for_unregistered(
-        self, registry,
-    ) -> None:
+    def test_get_metadata_returns_none_for_unregistered(self, registry) -> None:
         """get_metadata returns None for unregistered action."""
         from src.backend.core.interfaces.action_dispatcher import ActionMetadata
 
-        ActionMetadata(
-            action="nonexistent",
-            input_model=None,
-            output_model=None,
-        )
+        ActionMetadata(action="nonexistent", input_model=None, output_model=None)
         # Even with metadata in dict, get_metadata for unknown action returns None.
         assert registry.get_metadata("nonexistent") is None
 
     def test_register_with_metadata_then_get_metadata(
-        self, registry, sample_handler,
+        self, registry, sample_handler
     ) -> None:
         """register_with_metadata stores metadata, get_metadata retrieves it."""
         from src.backend.core.interfaces.action_dispatcher import ActionMetadata
@@ -79,7 +73,7 @@ class TestActionHandlerRegistryLookup:
             payload_model=None,
         )
         registry.register_with_metadata(
-            action="test.cycle61", handler=spec, metadata=metadata,
+            action="test.cycle61", handler=spec, metadata=metadata
         )
 
         retrieved = registry.get_metadata("test.cycle61")
@@ -90,16 +84,14 @@ class TestActionHandlerRegistryLookup:
         assert "http" in retrieved.transports
 
     def test_register_with_metadata_action_mismatch_raises(
-        self, registry, sample_handler,
+        self, registry, sample_handler
     ) -> None:
         """ValueError when metadata.action != action argument (cycle 133 invariant)."""
         from src.backend.core.interfaces.action_dispatcher import ActionMetadata
         from src.backend.dsl.commands.action_registry import ActionHandlerSpec
 
         metadata = ActionMetadata(
-            action="different.name",
-            input_model=None,
-            output_model=None,
+            action="different.name", input_model=None, output_model=None
         )
         spec = ActionHandlerSpec(
             action="other.name",
@@ -109,12 +101,10 @@ class TestActionHandlerRegistryLookup:
         )
         with pytest.raises(ValueError, match="metadata.action"):
             registry.register_with_metadata(
-                action="other.name", handler=spec, metadata=metadata,
+                action="other.name", handler=spec, metadata=metadata
             )
 
-    def test_list_metadata_sorted_by_action(
-        self, registry, sample_handler,
-    ) -> None:
+    def test_list_metadata_sorted_by_action(self, registry, sample_handler) -> None:
         """list_metadata returns sorted by action name."""
         from src.backend.core.interfaces.action_dispatcher import ActionMetadata
         from src.backend.dsl.commands.action_registry import ActionHandlerSpec
@@ -127,9 +117,7 @@ class TestActionHandlerRegistryLookup:
                 service_method="run",
                 payload_model=None,
             )
-            registry.register_with_metadata(
-                action=name, handler=spec, metadata=md,
-            )
+            registry.register_with_metadata(action=name, handler=spec, metadata=md)
 
         all_md = registry.list_metadata()
         names = [m.action for m in all_md]
@@ -138,7 +126,7 @@ class TestActionHandlerRegistryLookup:
         )
 
     def test_list_metadata_filtered_by_transport(
-        self, registry, sample_handler,
+        self, registry, sample_handler
     ) -> None:
         """list_metadata(transport=X) filters by transport membership."""
         from src.backend.core.interfaces.action_dispatcher import ActionMetadata
@@ -152,7 +140,7 @@ class TestActionHandlerRegistryLookup:
             ("d.mqtt", ("mqtt",)),
         ]:
             md = ActionMetadata(
-                action=name, input_model=None, output_model=None, transports=transports,
+                action=name, input_model=None, output_model=None, transports=transports
             )
             spec = ActionHandlerSpec(
                 action=name,
@@ -160,9 +148,7 @@ class TestActionHandlerRegistryLookup:
                 service_method="run",
                 payload_model=None,
             )
-            registry.register_with_metadata(
-                action=name, handler=spec, metadata=md,
-            )
+            registry.register_with_metadata(action=name, handler=spec, metadata=md)
 
         http_only = registry.list_metadata(transport="http")
         http_names = sorted(m.action for m in http_only)
@@ -176,9 +162,7 @@ class TestActionHandlerRegistryLookup:
         # No matches → empty tuple.
         assert registry.list_metadata(transport="unknown") == ()
 
-    def test_register_middleware_then_list_middleware(
-        self, registry,
-    ) -> None:
+    def test_register_middleware_then_list_middleware(self, registry) -> None:
         """register_middleware + list_middleware сохраняет порядок регистрации."""
         from src.backend.core.interfaces.action_dispatcher import ActionMiddleware
 
@@ -199,9 +183,7 @@ class TestActionHandlerRegistryLookup:
             f"Middleware chain order must be insertion order, got {chain}"
         )
 
-    def test_is_registered_true_for_registered(
-        self, registry, sample_handler,
-    ) -> None:
+    def test_is_registered_true_for_registered(self, registry, sample_handler) -> None:
         """is_registered returns True after register(), False otherwise."""
         registry.register(
             action="test.cycle61",
@@ -213,9 +195,7 @@ class TestActionHandlerRegistryLookup:
         assert registry.is_registered("test.cycle61") is True
         assert registry.is_registered("never.registered") is False
 
-    def test_list_actions_returns_sorted(
-        self, registry,
-    ) -> None:
+    def test_list_actions_returns_sorted(self, registry) -> None:
         """list_actions возвращает sorted tuple of action names."""
         for name in ("z", "a", "m"):
             registry.register(
@@ -227,9 +207,7 @@ class TestActionHandlerRegistryLookup:
 
         assert registry.list_actions() == ("a", "m", "z")
 
-    def test_clear_resets_registry(
-        self, registry, sample_handler,
-    ) -> None:
+    def test_clear_resets_registry(self, registry, sample_handler) -> None:
         """clear() removes handlers, metadata, middleware."""
         from src.backend.core.interfaces.action_dispatcher import ActionMetadata
         from src.backend.dsl.commands.action_registry import ActionHandlerSpec
@@ -249,7 +227,9 @@ class TestActionHandlerRegistryLookup:
         registry.register_with_metadata(
             action="test.b",
             handler=spec,
-            metadata=ActionMetadata(action="test.b", input_model=None, output_model=None),
+            metadata=ActionMetadata(
+                action="test.b", input_model=None, output_model=None
+            ),
         )
 
         assert len(registry.list_actions()) == 2
@@ -263,9 +243,7 @@ class TestActionHandlerRegistryLookup:
         # After clear, action is no longer registered.
         assert registry.is_registered("test.a") is False
 
-    def test_register_with_metadata_only_without_handler(
-        self, registry,
-    ) -> None:
+    def test_register_with_metadata_only_without_handler(self, registry) -> None:
         """register_with_metadata with handler=None — metadata-only registration.
 
         Use case: action handler registered separately via :meth:`register`,
@@ -274,13 +252,11 @@ class TestActionHandlerRegistryLookup:
         from src.backend.core.interfaces.action_dispatcher import ActionMetadata
 
         metadata = ActionMetadata(
-            action="metadata_only",
-            input_model=None,
-            output_model=None,
+            action="metadata_only", input_model=None, output_model=None
         )
         # handler=None — no handler stored, but metadata stored.
         registry.register_with_metadata(
-            action="metadata_only", handler=None, metadata=metadata,
+            action="metadata_only", handler=None, metadata=metadata
         )
 
         assert registry.get_metadata("metadata_only") is metadata

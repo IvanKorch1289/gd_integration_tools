@@ -20,7 +20,6 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
-from starlette import status
 
 from src.backend.core.errors import (
     AuthenticationError,
@@ -50,6 +49,7 @@ class TestBuildErrorEnvelope:
         # UUID генерируется автоматически.
         assert "error_id" in env
         import uuid as uuid_mod
+
         # error_id — валидный UUID.
         uuid_mod.UUID(env["error_id"])
         # correlation/request_id — None без scope.
@@ -77,10 +77,7 @@ class TestBuildErrorEnvelope:
 
     def test_with_full_scope(self) -> None:
         """``scope`` с обоими полями."""
-        scope = {
-            "state": {"correlation_id": "cid-1"},
-            "request_id": "rid-1",
-        }
+        scope = {"state": {"correlation_id": "cid-1"}, "request_id": "rid-1"}
         env = build_error_envelope(code="X", detail="y", scope=scope)
         assert env["correlation_id"] == "cid-1"
         assert env["request_id"] == "rid-1"
@@ -349,7 +346,9 @@ class TestErrorInheritance:
             RoutePermissionDeniedError,
         ]
         for cls in classes:
-            assert issubclass(cls, BaseError), f"{cls.__name__} should inherit BaseError"
+            assert issubclass(cls, BaseError), (
+                f"{cls.__name__} should inherit BaseError"
+            )
 
     def test_all_inherit_exception(self) -> None:
         """Все специализированные классы — подклассы Exception."""
@@ -367,7 +366,9 @@ class TestErrorInheritance:
             RoutePermissionDeniedError,
         ]
         for cls in classes:
-            assert issubclass(cls, Exception), f"{cls.__name__} should inherit Exception"
+            assert issubclass(cls, Exception), (
+                f"{cls.__name__} should inherit Exception"
+            )
 
 
 class TestModuleExports:

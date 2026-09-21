@@ -16,7 +16,6 @@
 cycle-1/B-04
 """
 
-
 from __future__ import annotations
 
 import inspect
@@ -43,9 +42,7 @@ class _SetBodyProcessor(BaseProcessor):
         super().__init__(name=name or f"set_body({marker})")
         self._marker = marker
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext,
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         exchange.out_message = Message(body={"marker": self._marker})
 
 
@@ -57,7 +54,9 @@ def _ctx() -> ExecutionContext:
     return ExecutionContext(route_id="multicast-b04-test")
 
 
-def _build_registry_with_routes(route_specs: dict[str, list[BaseProcessor]]) -> RouteRegistry:
+def _build_registry_with_routes(
+    route_specs: dict[str, list[BaseProcessor]],
+) -> RouteRegistry:
     """Строит реальный RouteRegistry с реальными Pipeline для каждого route_id.
 
     Args:
@@ -104,14 +103,11 @@ def test_execution_engine_constructs_without_args() -> None:
 async def test_multicast_routes_all_with_real_engine() -> None:
     """strategy=all + on_error=continue: реальный engine fan-out, все результаты собраны."""
     registry = _build_registry_with_routes(
-        {
-            "alpha": [_SetBodyProcessor("A")],
-            "beta": [_SetBodyProcessor("B")],
-        },
+        {"alpha": [_SetBodyProcessor("A")], "beta": [_SetBodyProcessor("B")]}
     )
 
     proc = MulticastRoutesProcessor(
-        route_ids=["alpha", "beta"], strategy="all", on_error="continue",
+        route_ids=["alpha", "beta"], strategy="all", on_error="continue"
     )
     ex = _exchange()
 
@@ -119,10 +115,7 @@ async def test_multicast_routes_all_with_real_engine() -> None:
         await proc.process(ex, _ctx())
 
     results = ex.properties.get("multicast_route_results", {})
-    assert results == {
-        "alpha": {"marker": "A"},
-        "beta": {"marker": "B"},
-    }
+    assert results == {"alpha": {"marker": "A"}, "beta": {"marker": "B"}}
     assert "multicast_route_errors" not in ex.properties
     assert ex.status != ExchangeStatus.failed
 
@@ -133,7 +126,7 @@ async def test_multicast_routes_unregistered_route_with_real_engine() -> None:
     registry = _build_registry_with_routes({"known": [_SetBodyProcessor("K")]})
 
     proc = MulticastRoutesProcessor(
-        route_ids=["known", "missing"], strategy="all", on_error="continue",
+        route_ids=["known", "missing"], strategy="all", on_error="continue"
     )
     ex = _exchange()
 
@@ -151,17 +144,16 @@ async def test_multicast_routes_unregistered_route_with_real_engine() -> None:
 @pytest.mark.asyncio
 async def test_multicast_routes_on_error_fail_with_real_engine() -> None:
     """on_error=fail: ошибка маршрута → exchange.fail + ранний return."""
+
     class _Boom(BaseProcessor):
         async def process(
-            self, exchange: Exchange[Any], context: ExecutionContext,
+            self, exchange: Exchange[Any], context: ExecutionContext
         ) -> None:
             raise RuntimeError("real-engine-boom")
 
     registry = _build_registry_with_routes({"bad": [_Boom()]})
 
-    proc = MulticastRoutesProcessor(
-        route_ids=["bad"], strategy="all", on_error="fail",
-    )
+    proc = MulticastRoutesProcessor(route_ids=["bad"], strategy="all", on_error="fail")
     ex = _exchange()
 
     with patch("src.backend.dsl.commands.registry.route_registry", registry):
@@ -187,7 +179,7 @@ async def test_multicast_routes_first_success_with_real_engine() -> None:
             self._marker = marker
 
         async def process(
-            self, exchange: Exchange[Any], context: ExecutionContext,
+            self, exchange: Exchange[Any], context: ExecutionContext
         ) -> None:
             await asyncio.sleep(0.05)
             exchange.out_message = Message(body={"marker": self._marker})
@@ -198,21 +190,18 @@ async def test_multicast_routes_first_success_with_real_engine() -> None:
             self._marker = marker
 
         async def process(
-            self, exchange: Exchange[Any], context: ExecutionContext,
+            self, exchange: Exchange[Any], context: ExecutionContext
         ) -> None:
             # fast отменяется pending — out_message не должен записаться.
             await asyncio.sleep(5.0)
             exchange.out_message = Message(body={"marker": self._marker})
 
     registry = _build_registry_with_routes(
-        {
-            "fast": [_FastProcessor("FAST")],
-            "slow": [_SlowProcessor("SLOW")],
-        },
+        {"fast": [_FastProcessor("FAST")], "slow": [_SlowProcessor("SLOW")]}
     )
 
     proc = MulticastRoutesProcessor(
-        route_ids=["fast", "slow"], strategy="first_success",
+        route_ids=["fast", "slow"], strategy="first_success"
     )
     ex = _exchange()
 

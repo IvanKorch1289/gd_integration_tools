@@ -50,7 +50,6 @@ class TestObservabilityFlagsClass:
         assert len(obs_names) == 3
 
 
-
 class TestObservabilityFlagsComposition:
     def test_feature_flags_inherits_observability_fields(self) -> None:
         assert hasattr(feature_flags, "tracing_baggage_strict")

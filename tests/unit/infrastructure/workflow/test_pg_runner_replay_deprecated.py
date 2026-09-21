@@ -95,6 +95,7 @@ class TestPgRunnerModuleExports:
         from src.backend.infrastructure.workflow.pg_runner_backend import (
             __all__ as module_all,
         )
+
         assert "PgRunnerWorkflowBackend" in module_all
 
     def test_replay_method_is_coroutine(self) -> None:
@@ -129,9 +130,7 @@ class TestPgRunnerRejectsFalseClaim:
         import asyncio
 
         try:
-            result = asyncio.run(
-                backend.replay(workflow_name="test", history=b""),
-            )
+            result = asyncio.run(backend.replay(workflow_name="test", history=b""))
             # Если дошли сюда — replay silently returned.
             pytest.fail(
                 f"replay() silently returned {result!r} — это silent no-op, "
@@ -157,12 +156,14 @@ class TestPgRunnerDeprecationWarning:
         # Просто проверяем что import работает без warning spam
         with warnings.catch_warnings(record=True) as warning_list:
             warnings.simplefilter("always")
-            from src.backend.infrastructure.workflow import pg_runner_backend  # noqa: F401
+            from src.backend.infrastructure.workflow import (
+                pg_runner_backend,  # noqa: F401
+            )
 
         # Импорт может emit warning (acceptable), но НЕ должен raise.
         # Если backend помечен deprecated на import — тест упадёт с warning.
         # Это OK — мы хотим явный signal.
-        deprecation_warnings = [
+        _deprecation_warnings = [
             w for w in warning_list if issubclass(w.category, DeprecationWarning)
         ]
         # Нет assertion на count — на усмотрение implementer.

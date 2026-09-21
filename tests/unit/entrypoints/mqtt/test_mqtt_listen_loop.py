@@ -77,9 +77,12 @@ async def test_listen_processes_messages_and_subscribes() -> None:
         _FakeMessage("gd/b", b'{"action":"z.w"}'),
     ]
 
-    with patch("aiomqtt.Client", _FakeClient), patch(
-        "src.backend.core.api.extensions.action_handler_registry"
-    ) as mock_registry:
+    with (
+        patch("aiomqtt.Client", _FakeClient),
+        patch(
+            "src.backend.core.api.extensions.action_handler_registry"
+        ) as mock_registry,
+    ):
         mock_registry.dispatch = AsyncMock()
         await handler._listen()
         # задачи созданы, но не обязаны были получить слот loop до выхода
@@ -105,9 +108,12 @@ async def test_listen_drops_oversized_payload() -> None:
         _FakeMessage("gd/ok", b'{"action":"a.b"}'),
     ]
 
-    with patch("aiomqtt.Client", _FakeClient), patch(
-        "src.backend.core.api.extensions.action_handler_registry"
-    ) as mock_registry:
+    with (
+        patch("aiomqtt.Client", _FakeClient),
+        patch(
+            "src.backend.core.api.extensions.action_handler_registry"
+        ) as mock_registry,
+    ):
         mock_registry.dispatch = AsyncMock()
         await handler._listen()
         await asyncio.gather(*handler._message_tasks, return_exceptions=True)
@@ -123,9 +129,12 @@ async def test_listen_exit_without_connection_error() -> None:
     _FakeClient.instances.clear()
     _FakeClient.current_msgs = []
 
-    with patch("aiomqtt.Client", _FakeClient), patch(
-        "src.backend.core.api.extensions.action_handler_registry"
-    ) as mock_registry:
+    with (
+        patch("aiomqtt.Client", _FakeClient),
+        patch(
+            "src.backend.core.api.extensions.action_handler_registry"
+        ) as mock_registry,
+    ):
         mock_registry.dispatch = AsyncMock()
         await handler._listen()
 
@@ -152,9 +161,7 @@ async def test_listen_bounded_wait_branch_deterministic(monkeypatch) -> None:
     """156-159: 4 сообщения, max=2, dispatch с gate -> peak ровно 2, всё dispatch."""
     import asyncio
 
-    handler = MqttHandler(
-        _settings(max_concurrent_messages=2, message_timeout=5.0)
-    )
+    handler = MqttHandler(_settings(max_concurrent_messages=2, message_timeout=5.0))
     handler._running = True
     _FakeClient.current_msgs = [
         _FakeMessage(f"gd/t{i}", b'{"action":"gated"}') for i in range(4)
@@ -170,7 +177,6 @@ async def test_listen_bounded_wait_branch_deterministic(monkeypatch) -> None:
         await gate_closed.wait()
         active["n"] -= 1
 
-
     async def probing(topic: str, payload: bytes | bytearray) -> None:
         await gated_dispatch(None)
 
@@ -181,9 +187,12 @@ async def test_listen_bounded_wait_branch_deterministic(monkeypatch) -> None:
         gate_closed.set()
 
     opener = asyncio.create_task(open_gate_later())
-    with patch("aiomqtt.Client", _FakeClient), patch(
-        "src.backend.core.api.extensions.action_handler_registry"
-    ) as mock_registry:
+    with (
+        patch("aiomqtt.Client", _FakeClient),
+        patch(
+            "src.backend.core.api.extensions.action_handler_registry"
+        ) as mock_registry,
+    ):
         mock_registry.dispatch = AsyncMock(side_effect=gated_dispatch)
         await handler._listen()
         await asyncio.gather(*handler._message_tasks, return_exceptions=True)
@@ -226,9 +235,11 @@ async def test_listen_reconnects_after_connection_error(
     registry_mock.dispatch = AsyncMock()
 
     try:
-        with patch("aiomqtt.Client", _FakeClient), patch(
-            "src.backend.core.api.extensions.action_handler_registry",
-            registry_mock,
+        with (
+            patch("aiomqtt.Client", _FakeClient),
+            patch(
+                "src.backend.core.api.extensions.action_handler_registry", registry_mock
+            ),
         ):
             await handler._listen()
             # задача сообщения могла не получить слот до выхода —

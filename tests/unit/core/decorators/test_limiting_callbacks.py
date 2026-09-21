@@ -1,6 +1,5 @@
 """Unit tests for rate-limit identifier/callback helpers."""
 
-
 from __future__ import annotations
 
 from unittest.mock import MagicMock

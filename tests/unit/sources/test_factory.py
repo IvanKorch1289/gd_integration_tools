@@ -1,6 +1,5 @@
 """W23 — фабрика build_source + SourceSpec."""
 
-
 from __future__ import annotations
 
 import pytest

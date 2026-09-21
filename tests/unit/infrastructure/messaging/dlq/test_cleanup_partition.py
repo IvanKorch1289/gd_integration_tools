@@ -33,8 +33,10 @@ def test_iso_to_yyyymm_helper() -> None:
 async def test_cleanup_run_uses_drop_partition() -> None:
     """``run()`` issues ``ALTER TABLE ... DROP PARTITION ID 'YYYYMM'``."""
     policy = DLQPolicy(
-        class_name="operational", retention_days=30,
-        max_replays=3, auto_archive_after_days=90,
+        class_name="operational",
+        retention_days=30,
+        max_replays=3,
+        auto_archive_after_days=90,
     )
     registry = DLQPolicyRegistry()
     registry.register(policy)
@@ -42,7 +44,9 @@ async def test_cleanup_run_uses_drop_partition() -> None:
     ch_client.execute = AsyncMock()
 
     fixed_clock = datetime(2026, 8, 5, 14, 30, 0, tzinfo=UTC)
-    job = DLQCleanupJob(ch_client=ch_client, registry=registry, clock=lambda: fixed_clock)
+    job = DLQCleanupJob(
+        ch_client=ch_client, registry=registry, clock=lambda: fixed_clock
+    )
 
     await job.run()
 
@@ -50,8 +54,7 @@ async def test_cleanup_run_uses_drop_partition() -> None:
     assert ch_client.execute.await_count >= 1
     all_sqls = [call.args[0] for call in ch_client.execute.await_args_list]
     assert any("ALTER TABLE" in s and "DROP PARTITION" in s for s in all_sqls), (
-        f"D-AUDIT-FIX-184-4: expected ALTER TABLE ... DROP PARTITION. "
-        f"Got: {all_sqls}"
+        f"D-AUDIT-FIX-184-4: expected ALTER TABLE ... DROP PARTITION. Got: {all_sqls}"
     )
     drop_sql = next(s for s in all_sqls if "DROP PARTITION" in s)
     # 2026-08-05 minus 30 days = 2026-07-06 → partition YYYYMM = 202607
@@ -65,8 +68,10 @@ async def test_cleanup_run_uses_drop_partition() -> None:
 async def test_cleanup_run_does_not_use_delete() -> None:
     """Post-fix: no DELETE statement is generated (P0 migration target)."""
     policy = DLQPolicy(
-        class_name="operational", retention_days=7,
-        max_replays=3, auto_archive_after_days=90,
+        class_name="operational",
+        retention_days=7,
+        max_replays=3,
+        auto_archive_after_days=90,
     )
     registry = DLQPolicyRegistry()
     registry.register(policy)
@@ -74,7 +79,9 @@ async def test_cleanup_run_does_not_use_delete() -> None:
     ch_client.execute = AsyncMock()
 
     fixed_clock = datetime(2026, 8, 5, 14, 30, 0, tzinfo=UTC)
-    job = DLQCleanupJob(ch_client=ch_client, registry=registry, clock=lambda: fixed_clock)
+    job = DLQCleanupJob(
+        ch_client=ch_client, registry=registry, clock=lambda: fixed_clock
+    )
 
     await job.run()
 

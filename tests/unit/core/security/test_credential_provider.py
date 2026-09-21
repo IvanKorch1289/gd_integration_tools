@@ -1,4 +1,5 @@
 """Tests for CredentialProvider."""
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock
@@ -37,8 +38,7 @@ async def test_resolve_vault_uses_registered_secrets_backend(
     backend = AsyncMock(spec=SecretsBackend)
     backend.get_secret.return_value = "vault-value"
     monkeypatch.setattr(
-        "src.backend.core.svcs_registry.get_service",
-        lambda _contract: backend,
+        "src.backend.core.svcs_registry.get_service", lambda _contract: backend
     )
     provider = CredentialProvider()
     provider.register_spec(CredentialSpec(name="vault", secret_ref="vault:kv/data"))
@@ -54,7 +54,7 @@ async def test_cache_hit(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("TEST_CACHE_KEY", "v1")
     provider = CredentialProvider()
     provider.register_spec(
-        CredentialSpec(name="c1", secret_ref="env:TEST_CACHE_KEY", ttl_seconds=60),
+        CredentialSpec(name="c1", secret_ref="env:TEST_CACHE_KEY", ttl_seconds=60)
     )
     c1 = await provider.get("c1")
     c2 = await provider.get("c1")
@@ -91,9 +91,7 @@ async def test_resolve_unsupported_ref_format_raises_value_error() -> None:
     (was silently returning {} → connectors connected with no auth).
     """
     provider = CredentialProvider()
-    provider.register_spec(
-        CredentialSpec(name="bad", secret_ref="file:/etc/passwd"),
-    )
+    provider.register_spec(CredentialSpec(name="bad", secret_ref="file:/etc/passwd"))
     with pytest.raises(ValueError, match="unsupported secret_ref format"):
         await provider.get("bad")
 
@@ -106,7 +104,7 @@ async def test_resolve_missing_env_var_raises_keyerror(
     monkeypatch.delenv("DEFINITELY_NOT_SET", raising=False)
     provider = CredentialProvider()
     provider.register_spec(
-        CredentialSpec(name="missing", secret_ref="env:DEFINITELY_NOT_SET"),
+        CredentialSpec(name="missing", secret_ref="env:DEFINITELY_NOT_SET")
     )
     with pytest.raises(KeyError, match="DEFINITELY_NOT_SET"):
         await provider.get("missing")
@@ -132,11 +130,7 @@ async def test_get_emits_audit_on_cache_miss_and_hit(
     monkeypatch.setenv("AUDIT_TEST_KEY", "secret-value")
     provider = CredentialProvider()
     provider.register_spec(
-        CredentialSpec(
-            name="audited",
-            secret_ref="env:AUDIT_TEST_KEY",
-            ttl_seconds=60,
-        ),
+        CredentialSpec(name="audited", secret_ref="env:AUDIT_TEST_KEY", ttl_seconds=60)
     )
 
     await provider.get("audited", actor="test-user")
@@ -200,7 +194,7 @@ async def test_get_emits_failure_audit_on_missing_env(
     monkeypatch.delenv("DEFINITELY_NOT_SET_2", raising=False)
     provider = CredentialProvider()
     provider.register_spec(
-        CredentialSpec(name="m2", secret_ref="env:DEFINITELY_NOT_SET_2"),
+        CredentialSpec(name="m2", secret_ref="env:DEFINITELY_NOT_SET_2")
     )
     with pytest.raises(KeyError, match="DEFINITELY_NOT_SET_2"):
         await provider.get("m2", actor="test-user")
@@ -231,12 +225,11 @@ async def test_resolve_vault_returns_none_raises_keyerror(
     backend = AsyncMock(spec=SecretsBackend)
     backend.get_secret.return_value = None
     monkeypatch.setattr(
-        "src.backend.core.svcs_registry.get_service",
-        lambda _contract: backend,
+        "src.backend.core.svcs_registry.get_service", lambda _contract: backend
     )
     provider = CredentialProvider()
     provider.register_spec(
-        CredentialSpec(name="none-vault", secret_ref="vault:secret/missing"),
+        CredentialSpec(name="none-vault", secret_ref="vault:secret/missing")
     )
     with pytest.raises(KeyError, match="Vault returned None"):
         await provider.get("none-vault")

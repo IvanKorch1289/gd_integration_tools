@@ -18,8 +18,6 @@ import importlib
 import sys
 from pathlib import Path
 
-import pytest
-
 
 class TestResilienceBridgeMoved:
     """Verify resilience_bridge relocated to infrastructure layer."""
@@ -41,9 +39,7 @@ class TestResilienceBridgeMoved:
 
     def test_new_location_importable(self) -> None:
         """New resilience module imports успешно."""
-        sys.modules.pop(
-            "src.backend.infrastructure.di_bridge.resilience", None
-        )
+        sys.modules.pop("src.backend.infrastructure.di_bridge.resilience", None)
         module = importlib.import_module(
             "src.backend.infrastructure.di_bridge.resilience"
         )
@@ -53,18 +49,14 @@ class TestResilienceBridgeMoved:
 
     def test_get_bulkhead_class_returns_callable(self) -> None:
         """get_bulkhead_class возвращает class (lazy-loaded)."""
-        from src.backend.infrastructure.di_bridge.resilience import (
-            get_bulkhead_class,
-        )
+        from src.backend.infrastructure.di_bridge.resilience import get_bulkhead_class
 
         result = get_bulkhead_class()
         assert result is not None
 
     def test_get_bulkhead_attr_returns_attribute(self) -> None:
         """get_bulkhead_attr(\"Bulkhead\") возвращает class."""
-        from src.backend.infrastructure.di_bridge.resilience import (
-            get_bulkhead_attr,
-        )
+        from src.backend.infrastructure.di_bridge.resilience import get_bulkhead_attr
 
         result = get_bulkhead_attr("Bulkhead")
         assert result is not None
@@ -78,17 +70,11 @@ class TestInfrastructureLocatorMigrated:
         text = Path(
             "src/backend/core/di/providers/infrastructure_locator.py"
         ).read_text(encoding="utf-8")
-        assert (
-            "from src.backend.infrastructure.di_bridge.resilience import"
-            in text
-        ), (
+        assert "from src.backend.infrastructure.di_bridge.resilience import" in text, (
             "infrastructure_locator должна import из new location "
             "(S40 W1 Item 4 migration)"
         )
-        assert (
-            "from src.backend.core.di.providers.resilience_bridge"
-            not in text
-        ), (
+        assert "from src.backend.core.di.providers.resilience_bridge" not in text, (
             "Old resilience_bridge import path НЕ должен быть в "
             "infrastructure_locator (S40 W1 Item 4 migration)"
         )
@@ -108,14 +94,10 @@ class TestAllowlistReduction:
 
     def test_resilience_bridge_entries_removed(self) -> None:
         """4 resilience_bridge entries removed from allowlist."""
-        text = Path("tools/check_layers_allowlist.txt").read_text(
-            encoding="utf-8"
-        )
+        text = Path("tools/check_layers_allowlist.txt").read_text(encoding="utf-8")
         # Verify NO entries with `resilience_bridge` source path
         for line in text.splitlines():
             if line.startswith("#") or not line.strip():
                 continue
             if "resilience_bridge" in line:
-                assert False, (
-                    f"resilience_bridge entry still in allowlist: {line}"
-                )
+                assert False, f"resilience_bridge entry still in allowlist: {line}"

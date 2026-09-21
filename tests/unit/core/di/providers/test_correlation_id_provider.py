@@ -7,6 +7,7 @@ Per D102 (single-source-of-truth through facade), infrastructure_facade
 ``<function get_correlation_id>`` вместо строки, что ломает audit_service.emit
 (test_emit_uses_correlation_id_from_contextvar).
 """
+
 from __future__ import annotations
 
 
@@ -16,6 +17,7 @@ class TestCorrelationIdProvider:
         from src.backend.core.di.providers.infrastructure_facade import (
             get_correlation_id,
         )
+
         result = get_correlation_id()
         assert isinstance(result, str), (
             f"facade должен возвращать str, получил {type(result).__name__}: {result!r}"
@@ -26,6 +28,7 @@ class TestCorrelationIdProvider:
         from src.backend.core.di.providers.infrastructure_facade import (
             get_correlation_id,
         )
+
         result = get_correlation_id()
         # Default в correlation_id_var — пустая строка
         assert result == ""
@@ -38,6 +41,7 @@ class TestCorrelationIdProvider:
         from src.backend.infrastructure.observability.correlation import (
             correlation_id_var,
         )
+
         token = correlation_id_var.set("corr-xyz")
         try:
             assert get_correlation_id() == "corr-xyz"

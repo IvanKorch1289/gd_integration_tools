@@ -50,6 +50,7 @@ def _install_protobuf_stubs() -> None:
             # (FileStream tests не тестируют patch).
             mod.OrderServiceServicer = type("Stub", (), {})
             mod.OrderServiceStub = type("Stub", (), {})
+
             # D-AUDIT-20201 (cycle 202): 7 RPC methods (per orders.proto)
             # на OrderServiceServicer/Stub classes. Use real `def` (not
             # MagicMock) so hasattr() returns False до patch.
@@ -57,8 +58,13 @@ def _install_protobuf_stubs() -> None:
                 return None
 
             for _m in (
-                "CreateOrder", "GetOrderResult", "GetOrder", "DeleteOrder",
-                "CreateSKBOrder", "GetFileAndJson", "SendOrderData",
+                "CreateOrder",
+                "GetOrderResult",
+                "GetOrder",
+                "DeleteOrder",
+                "CreateSKBOrder",
+                "GetFileAndJson",
+                "SendOrderData",
             ):
                 setattr(mod.OrderServiceServicer, _m, _stub_method)
                 setattr(mod.OrderServiceStub, _m, _stub_method)
@@ -157,7 +163,7 @@ class _MockStorage:
         return meta["data"][offset:]
 
     async def write(
-        self, file_id: int, filename: str, data: bytes, object_uuid: str,
+        self, file_id: int, filename: str, data: bytes, object_uuid: str
     ) -> None:
         self.files[file_id] = {
             "filename": filename,
@@ -387,10 +393,10 @@ class TestUploadFile:
 
         async def request_iter() -> Any:
             yield _upload_req(
-                file_id=1, filename="hello.txt", data=b"he", seq=0, last=False,
+                file_id=1, filename="hello.txt", data=b"he", seq=0, last=False
             )
             yield _upload_req(
-                file_id=1, filename="hello.txt", data=b"llo", seq=1, last=True,
+                file_id=1, filename="hello.txt", data=b"llo", seq=1, last=True
             )
 
         response = await servicer.UploadFile(request_iter(), context)
@@ -413,7 +419,7 @@ class TestUploadFile:
 
         async def request_iter() -> Any:
             yield _upload_req(
-                file_id=1, filename="empty.txt", data=b"", seq=0, last=True,
+                file_id=1, filename="empty.txt", data=b"", seq=0, last=True
             )
 
         response = await servicer.UploadFile(request_iter(), context)
@@ -442,7 +448,7 @@ class TestUploadFile:
 
         async def request_iter() -> Any:
             yield _upload_req(
-                file_id=1, filename="big.bin", data=b"x" * 100, seq=0, last=True,
+                file_id=1, filename="big.bin", data=b"x" * 100, seq=0, last=True
             )
 
         response = await servicer.UploadFile(request_iter(), context)

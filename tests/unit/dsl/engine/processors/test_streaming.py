@@ -5,7 +5,6 @@ ReplyTo, ExactlyOnce, DurableSubscriber, ChannelPurger, Sampling.
 Паттерн: async tests, _ex fixture, моки для broker / storage / clock.
 """
 
-
 from __future__ import annotations
 
 import asyncio
@@ -169,7 +168,7 @@ async def test_tumbling_window_flush_by_size() -> None:
 
     clock = FakeClock(start=0.0)
     proc = TumblingWindowProcessor(
-        sink=sink, size=2, interval_seconds=60.0, clock=clock,
+        sink=sink, size=2, interval_seconds=60.0, clock=clock
     )
     ctx = AsyncMock()
 
@@ -226,7 +225,7 @@ async def test_sliding_window_appends() -> None:
 
     clock = FakeClock(start=0.0)
     proc = SlidingWindowProcessor(
-        sink=sink, window_seconds=1.0, step_seconds=0.5, clock=clock,
+        sink=sink, window_seconds=1.0, step_seconds=0.5, clock=clock
     )
     ctx = AsyncMock()
 
@@ -275,7 +274,7 @@ async def test_group_by_key_groups() -> None:
 
     clock = FakeClock(start=0.0)
     proc = GroupByKeyProcessor(
-        sink=sink, key_path="type", window_seconds=0.01, clock=clock,
+        sink=sink, key_path="type", window_seconds=0.01, clock=clock
     )
     ctx = AsyncMock()
 
@@ -386,7 +385,7 @@ async def test_reply_to_success() -> None:
     await proc.process(e, None)  # type: ignore[arg-type]
 
     broker.publish.assert_awaited_once_with(
-        "q1", {"out": 2}, headers={"x-correlation-id": "c1"},
+        "q1", {"out": 2}, headers={"x-correlation-id": "c1"}
     )
 
 

@@ -20,7 +20,9 @@ class TestAuthFlagsClass:
 
     def test_auth_flags_instantiates(self) -> None:
         flags = AuthFlags()
-        assert flags.auth_mtls_client is False  # intentionally left OFF (see comment in auth.py)
+        assert (
+            flags.auth_mtls_client is False
+        )  # intentionally left OFF (see comment in auth.py)
 
     def test_auth_flags_has_env_prefix(self) -> None:
         # FEATURE_AUTH_MTLS_CLIENT=true → auth_mtls_client=True

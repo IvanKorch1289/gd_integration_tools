@@ -1,6 +1,5 @@
 """Unit-tests for HttpSink."""
 
-
 from __future__ import annotations
 
 import sys
@@ -24,7 +23,7 @@ class _FakeResponse:
 
 
 def _fake_client(
-    resp: _FakeResponse | None = None, side_effect: Exception | None = None,
+    resp: _FakeResponse | None = None, side_effect: Exception | None = None
 ) -> AsyncMock:
     client = AsyncMock()
     if side_effect is not None:
@@ -54,8 +53,10 @@ async def test_send_json_payload_success(monkeypatch: pytest.MonkeyPatch) -> Non
     resp = _FakeResponse(201, {"x-request-id": "req-42"})
     client = _fake_client(resp)
 
-    with patch("src.backend.core.net.OutboundHttpClient", return_value=client), \
-         patched_auth_allow():
+    with (
+        patch("src.backend.core.net.OutboundHttpClient", return_value=client),
+        patched_auth_allow(),
+    ):
         sink = HttpSink(
             sink_id="h1",
             url="http://api.test/notify",
@@ -80,8 +81,10 @@ async def test_send_bytes_payload() -> None:
     resp = _FakeResponse(200)
     client = _fake_client(resp)
 
-    with patch("src.backend.core.net.OutboundHttpClient", return_value=client), \
-         patched_auth_allow():
+    with (
+        patch("src.backend.core.net.OutboundHttpClient", return_value=client),
+        patched_auth_allow(),
+    ):
         sink = HttpSink(sink_id="h2", url="http://api.test/")
         result = await sink.send(b"raw")
 
@@ -95,8 +98,10 @@ async def test_send_4xx_returns_false() -> None:
     resp = _FakeResponse(404)
     client = _fake_client(resp)
 
-    with patch("src.backend.core.net.OutboundHttpClient", return_value=client), \
-         patched_auth_allow():
+    with (
+        patch("src.backend.core.net.OutboundHttpClient", return_value=client),
+        patched_auth_allow(),
+    ):
         sink = HttpSink(sink_id="h3", url="http://api.test/")
         result = await sink.send({})
 
@@ -109,8 +114,10 @@ async def test_send_5xx_returns_false() -> None:
     resp = _FakeResponse(503)
     client = _fake_client(resp)
 
-    with patch("src.backend.core.net.OutboundHttpClient", return_value=client), \
-         patched_auth_allow():
+    with (
+        patch("src.backend.core.net.OutboundHttpClient", return_value=client),
+        patched_auth_allow(),
+    ):
         sink = HttpSink(sink_id="h4", url="http://api.test/")
         result = await sink.send({})
 
@@ -122,8 +129,10 @@ async def test_send_5xx_returns_false() -> None:
 async def test_send_network_exception() -> None:
     client = _fake_client(side_effect=httpx.ConnectError("timeout"))
 
-    with patch("src.backend.core.net.OutboundHttpClient", return_value=client), \
-         patched_auth_allow():
+    with (
+        patch("src.backend.core.net.OutboundHttpClient", return_value=client),
+        patched_auth_allow(),
+    ):
         sink = HttpSink(sink_id="h5", url="http://api.test/")
         result = await sink.send({})
 
@@ -148,8 +157,10 @@ async def test_health_true_on_2xx() -> None:
     resp = _FakeResponse(200)
     client = _fake_client(resp)
 
-    with patch("src.backend.core.net.OutboundHttpClient", return_value=client), \
-         patched_auth_allow():
+    with (
+        patch("src.backend.core.net.OutboundHttpClient", return_value=client),
+        patched_auth_allow(),
+    ):
         sink = HttpSink(sink_id="h7", url="http://api.test/")
         result = await sink.health()
         assert result.status == "ok"
@@ -160,8 +171,10 @@ async def test_health_true_on_4xx() -> None:
     resp = _FakeResponse(405)
     client = _fake_client(resp)
 
-    with patch("src.backend.core.net.OutboundHttpClient", return_value=client), \
-         patched_auth_allow():
+    with (
+        patch("src.backend.core.net.OutboundHttpClient", return_value=client),
+        patched_auth_allow(),
+    ):
         sink = HttpSink(sink_id="h8", url="http://api.test/")
         result = await sink.health()
         assert result.status == "ok"
@@ -172,8 +185,10 @@ async def test_health_false_on_5xx() -> None:
     resp = _FakeResponse(502)
     client = _fake_client(resp)
 
-    with patch("src.backend.core.net.OutboundHttpClient", return_value=client), \
-         patched_auth_allow():
+    with (
+        patch("src.backend.core.net.OutboundHttpClient", return_value=client),
+        patched_auth_allow(),
+    ):
         sink = HttpSink(sink_id="h9", url="http://api.test/")
         result = await sink.health()
         assert result.status == "failed"
@@ -183,8 +198,10 @@ async def test_health_false_on_5xx() -> None:
 async def test_health_false_on_exception() -> None:
     client = _fake_client(side_effect=httpx.ConnectError("fail"))
 
-    with patch("src.backend.core.net.OutboundHttpClient", return_value=client), \
-         patched_auth_allow():
+    with (
+        patch("src.backend.core.net.OutboundHttpClient", return_value=client),
+        patched_auth_allow(),
+    ):
         sink = HttpSink(sink_id="h10", url="http://api.test/")
         result = await sink.health()
         assert result.status == "failed"

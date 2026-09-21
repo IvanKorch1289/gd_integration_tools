@@ -1,6 +1,5 @@
 """Unit-тесты DiskCacheBackend (S133 W4)."""
 
-
 from __future__ import annotations
 
 from pathlib import Path

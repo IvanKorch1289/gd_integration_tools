@@ -50,9 +50,7 @@ class TestMemoryAccessPolicy:
 
     def test_custom(self) -> None:
         p = MemoryAccessPolicy(
-            allowed_tenants=("t1", "t2"),
-            blocked_keys=("secret.*",),
-            read_only=True,
+            allowed_tenants=("t1", "t2"), blocked_keys=("secret.*",), read_only=True
         )
         assert "t1" in p.allowed_tenants
 
@@ -219,9 +217,7 @@ class TestTTL:
 
 class TestPolicyAllowedTenants:
     def test_tenant_not_allowed(self) -> None:
-        s = TenantMemoryStore(
-            MemoryAccessPolicy(allowed_tenants=("t1", "t2"))
-        )
+        s = TenantMemoryStore(MemoryAccessPolicy(allowed_tenants=("t1", "t2")))
         s.put("t1", "k1", "v1")
         # t3 not in allowlist → PermissionError.
         with pytest.raises(PermissionError):
@@ -230,25 +226,19 @@ class TestPolicyAllowedTenants:
             s.get("t3", "k1")
 
     def test_tenant_allowed(self) -> None:
-        s = TenantMemoryStore(
-            MemoryAccessPolicy(allowed_tenants=("t1",))
-        )
+        s = TenantMemoryStore(MemoryAccessPolicy(allowed_tenants=("t1",)))
         s.put("t1", "k1", "v1")
         assert s.get("t1", "k1") == "v1"
 
 
 class TestPolicyBlockedKeys:
     def test_blocked_key_on_put(self) -> None:
-        s = TenantMemoryStore(
-            MemoryAccessPolicy(blocked_keys=("secret.*",))
-        )
+        s = TenantMemoryStore(MemoryAccessPolicy(blocked_keys=("secret.*",)))
         with pytest.raises(PermissionError, match="blocked"):
             s.put("t1", "secret.token", "value")
 
     def test_blocked_key_on_get(self) -> None:
-        s = TenantMemoryStore(
-            MemoryAccessPolicy(blocked_keys=("secret.*",))
-        )
+        s = TenantMemoryStore(MemoryAccessPolicy(blocked_keys=("secret.*",)))
         s.put("t1", "normal.key", "v1")
         with pytest.raises(PermissionError):
             s.put("t1", "secret.token", "v1")

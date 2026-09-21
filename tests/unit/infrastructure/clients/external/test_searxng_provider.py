@@ -3,7 +3,6 @@
 Smoke-coverage для нового free SearXNG search-провайдера в WebSearchService chain.
 """
 
-
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -51,7 +50,7 @@ async def test_searxng_provider_search_returns_results() -> None:
                 "content": "Snippet 2",
                 "engine": "bing",
             },
-        ],
+        ]
     }
     mock_response.raise_for_status = MagicMock()
 
@@ -75,7 +74,7 @@ async def test_searxng_provider_respects_max_results() -> None:
 
     mock_response = MagicMock()
     mock_response.json.return_value = {
-        "results": [{"title": f"r{i}", "url": "", "content": ""} for i in range(20)],
+        "results": [{"title": f"r{i}", "url": "", "content": ""} for i in range(20)]
     }
     mock_response.raise_for_status = MagicMock()
 
@@ -100,7 +99,7 @@ async def test_searxng_provider_default_engines() -> None:
 async def test_searxng_provider_custom_engines() -> None:
     """Custom engines list передаётся в query params."""
     provider = SearXNGProvider(
-        base_url="http://searxng:8080", engines=["wikipedia", "yahoo"],
+        base_url="http://searxng:8080", engines=["wikipedia", "yahoo"]
     )
     assert provider._engines == ["wikipedia", "yahoo"]
 
@@ -112,7 +111,7 @@ async def test_searxng_deep_research_falls_back_to_search() -> None:
 
     mock_response = MagicMock()
     mock_response.json.return_value = {
-        "results": [{"title": "r", "url": "", "content": ""}],
+        "results": [{"title": "r", "url": "", "content": ""}]
     }
     mock_response.raise_for_status = MagicMock()
 

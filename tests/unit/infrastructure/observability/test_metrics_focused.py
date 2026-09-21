@@ -93,7 +93,9 @@ def test_record_ai_token_usage_prompt() -> None:
 
 def test_record_ai_token_usage_completion() -> None:
     """record_ai_token_usage kind=completion."""
-    record_ai_token_usage(provider="openai", model="gpt-4", kind="completion", tokens=200)
+    record_ai_token_usage(
+        provider="openai", model="gpt-4", kind="completion", tokens=200
+    )
 
 
 def test_record_ai_semantic_cache_hit() -> None:

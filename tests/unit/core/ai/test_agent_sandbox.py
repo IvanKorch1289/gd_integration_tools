@@ -6,7 +6,6 @@
     * shutdown идемпотентен.
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -43,6 +42,7 @@ async def test_in_process_delegates_to_build_and_run_agent(
 
     # Override new default-blocked flag for this test.
     import src.backend.core.config.features as _features_mod
+
     flags = _features_mod.feature_flags
     monkeypatch.setattr(flags, "ai_in_process_sandbox_disabled", False)
 
@@ -66,15 +66,14 @@ async def test_in_process_delegates_to_build_and_run_agent(
 
 
 @pytest.mark.asyncio
-async def test_in_process_reports_error(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_in_process_reports_error(monkeypatch: pytest.MonkeyPatch) -> None:
     """Если build_and_run_agent вернул error — success=False.
 
     S44 W20: override new fallback-blocked flag to exercise in-process path.
     """
     # Override new default-blocked flag for this test.
     import src.backend.core.config.features as _features_mod
+
     flags = _features_mod.feature_flags
     monkeypatch.setattr(flags, "ai_in_process_sandbox_disabled", False)
 

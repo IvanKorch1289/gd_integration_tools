@@ -31,7 +31,9 @@ from src.backend.infrastructure.database.tenant_filter import (
 )
 
 
-@pytest.mark.skip(reason="S107 W1: deprecated module; see core.tenancy.sqlalchemy_filter")
+@pytest.mark.skip(
+    reason="S107 W1: deprecated module; see core.tenancy.sqlalchemy_filter"
+)
 def test_apply_tenant_filter_idempotent() -> None:
     """apply_tenant_filter idempotent — повторний виклик не помилиться."""
     tf_module._INSTALLED = False
@@ -40,7 +42,9 @@ def test_apply_tenant_filter_idempotent() -> None:
     assert tf_module._INSTALLED is True
 
 
-@pytest.mark.skip(reason="S107 W1: deprecated module; see core.tenancy.sqlalchemy_filter")
+@pytest.mark.skip(
+    reason="S107 W1: deprecated module; see core.tenancy.sqlalchemy_filter"
+)
 def test_apply_tenant_filter_ignores_target() -> None:
     """apply_tenant_filter ігнорує target (backward compat API)."""
     tf_module._INSTALLED = False
@@ -91,7 +95,9 @@ def test_is_tenant_aware_tenant_mixin_subclass() -> None:
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="S107 W1: deprecated module; see core.tenancy.sqlalchemy_filter")
+@pytest.mark.skip(
+    reason="S107 W1: deprecated module; see core.tenancy.sqlalchemy_filter"
+)
 async def test_session_manager_wires_tenant_filter() -> None:
     """DatabaseSessionManager.__init__ викликає apply_tenant_filter."""
     from src.backend.infrastructure.database import session_manager as sm

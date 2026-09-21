@@ -26,7 +26,9 @@ import pytest
 # middleware) — но пакет не публикуется на PyPI (test infra debt).
 # ``pytest.importorskip`` пропускает весь файл если пакет недоступен,
 # без collection-time error. Это documented skip, не silent skip.
-pytest.importorskip("idempotency_header_middleware", reason="non-existent PyPI package, see S48 W11")
+pytest.importorskip(
+    "idempotency_header_middleware", reason="non-existent PyPI package, see S48 W11"
+)
 
 from src.backend.entrypoints.middlewares.idempotency import (
     RedisNxBackend,
@@ -44,7 +46,7 @@ class _BrokenRedis:
         raise self._exc
 
     async def set(
-        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False,
+        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False
     ) -> bool | None:
         raise self._exc
 
@@ -62,7 +64,7 @@ class _HealthyRedis:
         return self.store.get(key)
 
     async def set(
-        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False,
+        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False
     ) -> bool | None:
         if nx and key in self.store:
             return None
@@ -110,7 +112,9 @@ def proxy_broken_os() -> _LazyRedisProxy:
 
 
 @pytest.fixture
-def backend_broken_connection(proxy_broken_connection: _LazyRedisProxy) -> RedisNxBackend:
+def backend_broken_connection(
+    proxy_broken_connection: _LazyRedisProxy,
+) -> RedisNxBackend:
     """Backend с падающим Redis через ``_LazyRedisProxy`` (как в prod)."""
     return RedisNxBackend(proxy_broken_connection)
 
@@ -147,11 +151,7 @@ def switching_resolver() -> tuple[_LazyRedisProxy, _HealthyRedis, dict[str, bool
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "exc_factory",
-    [
-        _make_connection_error,
-        _make_timeout_error,
-        lambda: OSError("net"),
-    ],
+    [_make_connection_error, _make_timeout_error, lambda: OSError("net")],
     ids=["ConnectionError", "TimeoutError", "OSError"],
 )
 async def test_proxy_get_returns_none_on_redis_down(exc_factory: Any) -> None:
@@ -370,7 +370,7 @@ class _RaisingGetClient:
         raise TypeError("bug")
 
     async def set(
-        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False,
+        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False
     ) -> bool | None:
         return True
 
@@ -383,7 +383,7 @@ class _RaisingSetClient:
         return None
 
     async def set(
-        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False,
+        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False
     ) -> bool | None:
         raise RuntimeError("boom")
 
@@ -396,7 +396,7 @@ class _RaisingDeleteClient:
         return None
 
     async def set(
-        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False,
+        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False
     ) -> bool | None:
         return True
 

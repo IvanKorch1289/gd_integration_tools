@@ -83,7 +83,7 @@ class _OutboxStateMachine:
     published: list[int] = field(default_factory=list)
     dead_lettered: list[int] = field(default_factory=list)
     metrics: dict[str, int] = field(
-        default_factory=lambda: {"publish_count": 0, "dlq_count": 0, "retry_count": 0},
+        default_factory=lambda: {"publish_count": 0, "dlq_count": 0, "retry_count": 0}
     )
 
     def enqueue(self, tenant_id: str, payload: dict[str, object]) -> _OutboxEntry:
@@ -126,7 +126,9 @@ class TestOutboxSettingsDefaults:
 
     def test_defaults(self) -> None:
         s = OutboxSettings()
-        assert s.enabled is True  # default=True per code (S171 M9 sync)  # default-OFF feature flag
+        assert (
+            s.enabled is True
+        )  # default=True per code (S171 M9 sync)  # default-OFF feature flag
         assert s.poll_interval_seconds == 1.0
         assert s.batch_size == 100
         assert s.max_retries == 5
@@ -150,7 +152,9 @@ class TestOutboxSettingsDefaults:
         no-op, not a crash).
         """
         assert isinstance(outbox_settings, OutboxSettings)
-        assert outbox_settings.enabled is True  # default=True per code (S171 M9 sync)  # default-OFF feature flag
+        assert (
+            outbox_settings.enabled is True
+        )  # default=True per code (S171 M9 sync)  # default-OFF feature flag
         assert outbox_settings.batch_size == 100
 
     def test_all_fields_have_descriptions(self) -> None:
@@ -200,7 +204,7 @@ class TestOutboxSettingsBounds:
         ],
     )
     def test_boundary_values_accepted(
-        self, field_name: str, boundary_value: float,
+        self, field_name: str, boundary_value: float
     ) -> None:
         s = OutboxSettings(**{field_name: boundary_value})  # type: ignore[arg-type]
         assert getattr(s, field_name) == boundary_value
@@ -353,7 +357,7 @@ class TestBackoffCurve:
     """``retry_backoff_seconds * 2^(attempt-1)`` is the documented curve."""
 
     @pytest.mark.parametrize(
-        "attempt,expected", [(1, 2.0), (2, 4.0), (3, 8.0), (4, 16.0), (5, 32.0)],
+        "attempt,expected", [(1, 2.0), (2, 4.0), (3, 8.0), (4, 16.0), (5, 32.0)]
     )
     def test_default_backoff_curve(self, attempt: int, expected: float) -> None:
         s = OutboxSettings()  # retry_backoff_seconds=2.0

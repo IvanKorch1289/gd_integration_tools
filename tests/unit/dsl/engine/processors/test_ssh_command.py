@@ -40,8 +40,10 @@ def _auth_check_patcher(monkeypatch: pytest.MonkeyPatch) -> None:
     Существующие unit tests bypass auth_check (mock возвращает True).
     Реальные capability-тесты — test_ssh_command_capability.py.
     """
+
     async def fake_auth_check(*args: Any, **kwargs: Any) -> bool:
         return True
+
     monkeypatch.setattr(
         SshCommandProcessor, "auth_check", fake_auth_check, raising=False
     )
@@ -114,7 +116,7 @@ class TestSshCommandProcessor:
         устанавливает exchange в статус failed.
         """
         proc = SshCommandProcessor(
-            host="192.168.1.10", command="exit 1", continue_on_error=False,
+            host="192.168.1.10", command="exit 1", continue_on_error=False
         )
         exchange = _make_exchange()
 
@@ -169,7 +171,7 @@ class TestSshCommandProcessor:
     async def test_ssh_command_password_from_body(self) -> None:
         """Проверка извлечения пароля из body."""
         proc = SshCommandProcessor(
-            host="192.168.1.10", command="ls", password_from="body",
+            host="192.168.1.10", command="ls", password_from="body"
         )
         exchange = _make_exchange(body={"password": "secret123"})
 
@@ -194,7 +196,7 @@ class TestSshCommandProcessor:
     async def test_ssh_command_password_from_properties(self) -> None:
         """Проверка извлечения пароля из properties."""
         proc = SshCommandProcessor(
-            host="192.168.1.10", command="ls", password_from="properties",
+            host="192.168.1.10", command="ls", password_from="properties"
         )
         exchange = _make_exchange()
         exchange.set_property("password", "props_secret")
@@ -222,7 +224,7 @@ class TestSshCommandProcessor:
         не вызывает exchange.fail.
         """
         proc = SshCommandProcessor(
-            host="192.168.1.10", command="exit 1", continue_on_error=True,
+            host="192.168.1.10", command="exit 1", continue_on_error=True
         )
         exchange = _make_exchange()
 
@@ -266,5 +268,5 @@ class TestSshCommandProcessor:
                 "timeout": 60.0,
                 "result_property": "remote_result",
                 "continue_on_error": True,
-            },
+            }
         }

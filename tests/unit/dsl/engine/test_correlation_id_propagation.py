@@ -60,7 +60,7 @@ class TestCorrelationIdWithAsgiContext:
     def test_asgi_context_propagates(self) -> None:
         """When asgi_correlation_id context is set, factory returns its value."""
         try:
-            from asgi_correlation_id import CorrelationIdMiddleware
+            from asgi_correlation_id import CorrelationIdMiddleware  # noqa: F401
         except ImportError:
             import pytest
 

@@ -5,7 +5,6 @@ SumBy, MaxBy, MinBy, SortBy.
 Покрывают поведение (не сериализацию round-trip).
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -121,7 +120,7 @@ async def test_group_by_field() -> None:
             {"category": "A", "value": 1},
             {"category": "B", "value": 2},
             {"category": "A", "value": 3},
-        ],
+        ]
     )
     await proc.process(exchange, None)  # type: ignore[arg-type]
     assert exchange.out_message.body == {
@@ -240,7 +239,7 @@ async def test_unique_by_field() -> None:
             {"email": "a@x.com", "v": 1},
             {"email": "b@x.com", "v": 2},
             {"email": "a@x.com", "v": 3},
-        ],
+        ]
     )
     await proc.process(exchange, None)  # type: ignore[arg-type]
     assert exchange.out_message.body == [

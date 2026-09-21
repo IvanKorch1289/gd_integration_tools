@@ -50,7 +50,9 @@ def test_no_lazy_dsl_imports_in_resolvers() -> None:
     )
 
 
-@pytest.mark.skip(reason="R8 facade refactor: dsl imports via core.api.extensions, not top-level")
+@pytest.mark.skip(
+    reason="R8 facade refactor: dsl imports via core.api.extensions, not top-level"
+)
 def test_top_level_dsl_imports() -> None:
     """Top-level imports section содержит 4 canonical dsl modules.
 
@@ -67,8 +69,10 @@ def test_top_level_dsl_imports() -> None:
     # Top-level imports
     top_imports: list[str] = []
     for node in tree.body:
-        if isinstance(node, ast.ImportFrom) and node.module and node.module.startswith(
-            "src.backend.dsl",
+        if (
+            isinstance(node, ast.ImportFrom)
+            and node.module
+            and node.module.startswith("src.backend.dsl")
         ):
             top_imports.append(node.module)
 
@@ -95,4 +99,4 @@ def test_no_duplicate_dsl_imports() -> None:
     добавлен к top-level imports (для ``ExecutionContext.from_auth``).
     Ожидаем 5 уникальных dsl submodule imports.
     """
-    source = Path("src/backend/entrypoints/graphql/schema.py").read_text()
+    _source = Path("src/backend/entrypoints/graphql/schema.py").read_text()

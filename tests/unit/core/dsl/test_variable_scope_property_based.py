@@ -9,6 +9,8 @@ Tests invariants of VariableScope.parse():
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
@@ -27,7 +29,7 @@ def scope_class() -> Any:
         min_size=1,
         max_size=20,
         alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Nd")),
-    ),
+    )
 )
 @settings(max_examples=20, deadline=None)
 def test_tenant_scope_roundtrip(scope_class: Any, tenant_id: str) -> None:
@@ -44,7 +46,7 @@ def test_tenant_scope_roundtrip(scope_class: Any, tenant_id: str) -> None:
         min_size=1,
         max_size=20,
         alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Nd")),
-    ),
+    )
 )
 @settings(max_examples=20, deadline=None)
 def test_route_scope_roundtrip(scope_class: Any, route_id: str) -> None:

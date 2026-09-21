@@ -57,7 +57,7 @@ async def test_ingest_passthrough_when_flag_off(
     from src.backend.services.ai.rag_ingest_service import RagIngestService
 
     monkeypatch.setattr(
-        ai_stack.rag_ingest_settings, "pii_mask_on_ingest", False, raising=True,
+        ai_stack.rag_ingest_settings, "pii_mask_on_ingest", False, raising=True
     )
 
     rag_mock = AsyncMock()
@@ -81,7 +81,7 @@ async def test_ingest_masks_pii_when_flag_on(monkeypatch: pytest.MonkeyPatch) ->
     from src.backend.services.ai.rag_ingest_service import RagIngestService
 
     monkeypatch.setattr(
-        ai_stack.rag_ingest_settings, "pii_mask_on_ingest", True, raising=True,
+        ai_stack.rag_ingest_settings, "pii_mask_on_ingest", True, raising=True
     )
     providers.set_ai_sanitizer_provider(_StubSanitizer())
     try:
@@ -90,8 +90,7 @@ async def test_ingest_masks_pii_when_flag_on(monkeypatch: pytest.MonkeyPatch) ->
         svc = RagIngestService(rag_service=rag_mock)
 
         await svc.ingest(
-            [("file.txt", "ИНН 7707083893, договор 12345".encode())],
-            collection="ns",
+            [("file.txt", "ИНН 7707083893, договор 12345".encode())], collection="ns"
         )
         call = rag_mock.ingest.await_args
         assert call is not None
@@ -124,7 +123,7 @@ async def test_ingest_fail_closed_on_sanitizer_failure(
     from src.backend.services.ai.rag_ingest_service import RagIngestService
 
     monkeypatch.setattr(
-        ai_stack.rag_ingest_settings, "pii_mask_on_ingest", True, raising=True,
+        ai_stack.rag_ingest_settings, "pii_mask_on_ingest", True, raising=True
     )
     providers.set_ai_sanitizer_provider(_FailingSanitizer())
     try:
@@ -132,9 +131,7 @@ async def test_ingest_fail_closed_on_sanitizer_failure(
         rag_mock.ingest = AsyncMock(return_value="doc-1")
         svc = RagIngestService(rag_service=rag_mock)
 
-        result = await svc.ingest(
-            [("file.txt", b"some text")], collection="ns",
-        )
+        result = await svc.ingest([("file.txt", b"some text")], collection="ns")
         # Fail-CLOSED: rag.ingest НЕ вызван (raw PII не пишется).
         assert rag_mock.ingest.await_count == 0
         # Ошибка зафиксирована в errors для observability;

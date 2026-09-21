@@ -5,7 +5,6 @@
 отдельно через mock-класс с минимальной API-совместимостью.
 """
 
-
 from __future__ import annotations
 
 import json
@@ -128,7 +127,7 @@ async def test_protobuf_encode_decode_round_trip(
         return msg
 
     def _fake_message_to_dict(
-        msg: Any, *, preserving_proto_field_name: bool = False,
+        msg: Any, *, preserving_proto_field_name: bool = False
     ) -> dict[str, Any]:
         return {f.name: getattr(msg, f.name) for f in msg.DESCRIPTOR.fields}
 

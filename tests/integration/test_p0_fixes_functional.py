@@ -18,7 +18,9 @@ import os
 import sys
 
 # Ensure repo root on path (для extensions/ и testkit/ — не установлены как packages).
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_REPO_ROOT = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
@@ -118,7 +120,9 @@ def test_p0_s5_pii_sanitizers_fail_closed_in_production() -> bool:
         _sanitizer.sanitize_async = AsyncMock(side_effect=RuntimeError("presidio down"))
 
     req = AIRequest(
-        workflow_id="t", tenant_id="t", correlation_id="c",
+        workflow_id="t",
+        tenant_id="t",
+        correlation_id="c",
         prompt_inline="Contact alice@example.com",
     )
     try:
@@ -133,6 +137,7 @@ def test_p0_s5_pii_sanitizers_fail_closed_in_production() -> bool:
 def test_p0_d2_feature_flags_via_core_api() -> bool:
     """P0-D2: feature_flags доступен через src.backend.core.api."""
     from src.backend.core.api import feature_flags
+
     return feature_flags is not None and hasattr(feature_flags, "ai_policy_enforce")
 
 
@@ -174,7 +179,9 @@ def test_p1_w2_workflow_subprocess_actually_starts() -> bool:
     backend.start_child_workflow = AsyncMock(return_value=fake_handle)
 
     with (
-        patch.object(_factory, "create_workflow_backend", new=AsyncMock(return_value=backend)),
+        patch.object(
+            _factory, "create_workflow_backend", new=AsyncMock(return_value=backend)
+        ),
         patch.object(_app_state, "get_app_ref", return_value=mock_app),
     ):
         import asyncio
@@ -196,21 +203,30 @@ def test_p2_dc_empty_stubs_removed() -> bool:
     flow_control_legacy = (
         "src/backend/dsl/engine/processors/eip/flow_control/_legacy.py"
     )
-    patterns_legacy = (
-        "src/backend/dsl/engine/processors/patterns/_legacy.py"
+    patterns_legacy = "src/backend/dsl/engine/processors/patterns/_legacy.py"
+    return not os.path.exists(flow_control_legacy) and not os.path.exists(
+        patterns_legacy
     )
-    return not os.path.exists(flow_control_legacy) and not os.path.exists(patterns_legacy)
 
 
 def main() -> int:
     tests = [
-        ("P0-S1 IP restriction nested path", test_p0_s1_ip_restriction_matches_nested_api_path),
+        (
+            "P0-S1 IP restriction nested path",
+            test_p0_s1_ip_restriction_matches_nested_api_path,
+        ),
         ("P0-S2 Lakera fail-closed", test_p0_s2_lakera_fail_closed_without_api_key),
         ("P0-S3 nemo guards fail-closed", test_p0_s3_nemo_guards_fail_closed_when_fail),
         ("P0-S4 Capability gate fail-closed", test_p0_s4_capability_gate_fail_closed),
-        ("P0-S5 PII sanitizers fail-closed", test_p0_s5_pii_sanitizers_fail_closed_in_production),
+        (
+            "P0-S5 PII sanitizers fail-closed",
+            test_p0_s5_pii_sanitizers_fail_closed_in_production,
+        ),
         ("P0-D2 feature_flags via core.api", test_p0_d2_feature_flags_via_core_api),
-        ("P1-W1 ContinueAsNew dispatched", test_p1_w1_continue_as_new_dispatch_registered),
+        (
+            "P1-W1 ContinueAsNew dispatched",
+            test_p1_w1_continue_as_new_dispatch_registered,
+        ),
         # P1-W2 проверяется в unit test (test_workflow_subprocess.py) — здесь
         # standalone run ломается на extensions.core_entities импорт из-за
         # неполного sys.path в script-mode. См. unit test для полной проверки.

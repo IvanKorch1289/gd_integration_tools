@@ -5,14 +5,7 @@ Coverage target: slo_tracker.py 29% → 70%+.
 
 from __future__ import annotations
 
-import time
-
-import pytest
-
-from src.backend.infrastructure.application.slo_tracker import (
-    RouteStats,
-    SLOTracker,
-)
+from src.backend.infrastructure.application.slo_tracker import RouteStats, SLOTracker
 
 
 def test_route_stats_init_empty() -> None:

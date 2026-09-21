@@ -2,6 +2,7 @@
 
 T3 coverage sprint cycle 18: TelegramSendProcessor (Telegram message send).
 """
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
@@ -54,9 +55,7 @@ def test_init_defaults() -> None:
 
 
 def test_init_with_inline_keyboard() -> None:
-    proc = TelegramSendProcessor(
-        body="x", inline_keyboard=[[{"text": "btn"}]]
-    )
+    proc = TelegramSendProcessor(body="x", inline_keyboard=[[{"text": "btn"}]])
     assert proc._inline_keyboard == [[{"text": "btn"}]]
 
 
@@ -67,9 +66,7 @@ def test_init_with_reply_keyboard() -> None:
 
 def test_init_with_disable_flags() -> None:
     proc = TelegramSendProcessor(
-        body="x",
-        disable_notification=True,
-        disable_web_page_preview=True,
+        body="x", disable_notification=True, disable_web_page_preview=True
     )
     assert proc._disable_notification is True
     assert proc._disable_web_page_preview is True
@@ -102,9 +99,7 @@ def test_to_spec_with_body_from() -> None:
 
 def test_to_spec_with_keyboards() -> None:
     proc = TelegramSendProcessor(
-        body="x",
-        inline_keyboard=[[{"text": "btn"}]],
-        reply_keyboard=[["text1"]],
+        body="x", inline_keyboard=[[{"text": "btn"}]], reply_keyboard=[["text1"]]
     )
     spec = proc.to_spec()
     assert spec["telegram_send"]["inline_keyboard"] == [[{"text": "btn"}]]
@@ -193,7 +188,9 @@ async def test_process_sends_message(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.asyncio
-async def test_process_skips_when_chat_id_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_process_skips_when_chat_id_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     proc = TelegramSendProcessor(body="text")
     ex, captured = _make_exchange()
 
@@ -204,9 +201,9 @@ async def test_process_skips_when_chat_id_missing(monkeypatch: pytest.MonkeyPatc
     )
     with monkeypatch.context() as m:
         m.setattr(
-        "src.backend.dsl.engine.processors.telegram.send.resolve_value",
-        MagicMock(return_value=None),
-    )
+            "src.backend.dsl.engine.processors.telegram.send.resolve_value",
+            MagicMock(return_value=None),
+        )
         await proc.process(ex, _ctx())
 
     assert fake_client.send_calls == []
@@ -265,9 +262,7 @@ async def test_process_uses_body_from(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.asyncio
 async def test_process_static_body_priority(monkeypatch: pytest.MonkeyPatch) -> None:
     proc = TelegramSendProcessor(body="STATIC", body_from="properties.text")
-    ex, _captured = _make_exchange(
-        properties={"chat_id": "chat-1", "text": "DYNAMIC"}
-    )
+    ex, _captured = _make_exchange(properties={"chat_id": "chat-1", "text": "DYNAMIC"})
 
     fake_client = _FakeClient()
     monkeypatch.setattr(
@@ -290,8 +285,7 @@ async def test_process_static_body_priority(monkeypatch: pytest.MonkeyPatch) -> 
 @pytest.mark.asyncio
 async def test_process_with_inline_keyboard(monkeypatch: pytest.MonkeyPatch) -> None:
     proc = TelegramSendProcessor(
-        body="x",
-        inline_keyboard=[[{"text": "btn1", "url": "http://example.com"}]],
+        body="x", inline_keyboard=[[{"text": "btn1", "url": "http://example.com"}]]
     )
     ex, _captured = _make_exchange(properties={"chat_id": "chat-1"})
 
@@ -302,9 +296,9 @@ async def test_process_with_inline_keyboard(monkeypatch: pytest.MonkeyPatch) -> 
     )
     with monkeypatch.context() as m:
         m.setattr(
-        "src.backend.dsl.engine.processors.telegram.send.resolve_value",
-        MagicMock(return_value="chat-1"),
-    )
+            "src.backend.dsl.engine.processors.telegram.send.resolve_value",
+            MagicMock(return_value="chat-1"),
+        )
         await proc.process(ex, _ctx())
 
     msg = fake_client.send_calls[0]
@@ -325,9 +319,9 @@ async def test_process_client_none_skips(monkeypatch: pytest.MonkeyPatch) -> Non
     )
     with monkeypatch.context() as m:
         m.setattr(
-        "src.backend.dsl.engine.processors.telegram.send.resolve_value",
-        MagicMock(return_value="chat-1"),
-    )
+            "src.backend.dsl.engine.processors.telegram.send.resolve_value",
+            MagicMock(return_value="chat-1"),
+        )
         await proc.process(ex, _ctx())
 
     assert "telegram_message_id" not in captured
@@ -350,9 +344,9 @@ async def test_process_exception_records_error(monkeypatch: pytest.MonkeyPatch) 
     )
     with monkeypatch.context() as m:
         m.setattr(
-        "src.backend.dsl.engine.processors.telegram.send.resolve_value",
-        MagicMock(return_value="chat-1"),
-    )
+            "src.backend.dsl.engine.processors.telegram.send.resolve_value",
+            MagicMock(return_value="chat-1"),
+        )
         await proc.process(ex, _ctx())
 
     assert captured.get("telegram_message_id_error") == "Bot API 429"

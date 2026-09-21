@@ -11,7 +11,6 @@ MCP docs, IDE autocomplete, config validators):
 для backward-compatibility и consistency.
 """
 
-
 from __future__ import annotations
 
 import pytest

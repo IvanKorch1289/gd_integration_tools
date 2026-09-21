@@ -10,7 +10,6 @@ Tests используют minimal subclass CacheMixin с подменённым
 НЕ поднимают реальный Redis.
 """
 
-
 from __future__ import annotations
 
 from typing import Any

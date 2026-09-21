@@ -38,7 +38,11 @@ class TestReadCurrentCoverage:
     def test_valid_coverage_json(self, clean_baseline: Path) -> None:
         cov_file = clean_baseline / "coverage.json"
         cov_data = {
-            "totals": {"percent_covered": 75.5, "covered_lines": 100, "num_statements": 200}
+            "totals": {
+                "percent_covered": 75.5,
+                "covered_lines": 100,
+                "num_statements": 200,
+            }
         }
         cov_file.write_text(json.dumps(cov_data), encoding="utf-8")
         assert cb._read_current_coverage() == 75.5
@@ -49,9 +53,7 @@ class TestReadCurrentCoverage:
 
 
 class TestMain:
-    def test_report_only_no_coverage_data(
-        self, clean_baseline: Path
-    ) -> None:
+    def test_report_only_no_coverage_data(self, clean_baseline: Path) -> None:
         """Without coverage.json, exits 1 (no --report-only flag)."""
         from tools.checks.coverage_budget import cli as cb_cli
 
@@ -64,9 +66,7 @@ class TestMain:
         finally:
             sys.argv = original_argv
 
-    def test_pass_with_min_satisfied(
-        self, clean_baseline: Path
-    ) -> None:
+    def test_pass_with_min_satisfied(self, clean_baseline: Path) -> None:
         """Current ≥ min → returns 0 (or sys.exit 0 without --report-only)."""
         from tools.checks.coverage_budget import cli as cb_main
 
@@ -83,9 +83,7 @@ class TestMain:
         finally:
             sys.argv = original_argv
 
-    def test_fail_with_min_not_satisfied(
-        self, clean_baseline: Path
-    ) -> None:
+    def test_fail_with_min_not_satisfied(self, clean_baseline: Path) -> None:
         """Current < min → exit 1 (no --report-only)."""
         from tools.checks.coverage_budget import cli as cb_main
 
@@ -102,9 +100,7 @@ class TestMain:
         finally:
             sys.argv = original_argv
 
-    def test_update_baseline_ratchets_up(
-        self, clean_baseline: Path
-    ) -> None:
+    def test_update_baseline_ratchets_up(self, clean_baseline: Path) -> None:
         """--update-baseline succeeds when current > baseline."""
         from tools.checks.coverage_budget import cli as cb_main
 
@@ -123,9 +119,7 @@ class TestMain:
         finally:
             sys.argv = original_argv
 
-    def test_update_baseline_rejects_decrease(
-        self, clean_baseline: Path
-    ) -> None:
+    def test_update_baseline_rejects_decrease(self, clean_baseline: Path) -> None:
         """--update-baseline fails when current ≤ baseline (ratchet up only)."""
         from tools.checks.coverage_budget import cli as cb_main
 
@@ -143,9 +137,7 @@ class TestMain:
         finally:
             sys.argv = original_argv
 
-    def test_pass_with_baseline_from_file(
-        self, clean_baseline: Path
-    ) -> None:
+    def test_pass_with_baseline_from_file(self, clean_baseline: Path) -> None:
         """Uses stored baseline when --min not given."""
         from tools.checks.coverage_budget import cli as cb_main
 

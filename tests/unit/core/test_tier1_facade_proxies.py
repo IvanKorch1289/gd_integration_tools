@@ -44,7 +44,11 @@ class TestCoreServicesBaseServiceProxy:
     def test_module_imports(self) -> None:
         from src.backend.core.services.base_service import __all__
 
-        assert set(__all__) == {"BaseService", "create_service_class", "get_service_for_model"}
+        assert set(__all__) == {
+            "BaseService",
+            "create_service_class",
+            "get_service_for_model",
+        }
 
     def test_base_service_identity(self) -> None:
         from src.backend.core.services.base_service import BaseService

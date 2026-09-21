@@ -11,7 +11,6 @@ Production code:
 - src/backend/dsl/engine/processors/ldap_query.py
 """
 
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -27,7 +26,7 @@ class TestMCPDSLFileURIDeny:
         if tool_uri.startswith("file:"):
             raise ValueError(
                 "MCPToolProcessor: file:// transport denied (RCE surface); "
-                "use http(s):// only",
+                "use http(s):// only"
             )
 
     def test_file_uri_rejected(self):

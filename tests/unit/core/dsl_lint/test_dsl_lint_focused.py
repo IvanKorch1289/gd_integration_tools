@@ -29,9 +29,7 @@ class TestLintSeverity:
 class TestLintViolation:
     def test_init(self) -> None:
         v = LintViolation(
-            rule_id="L001",
-            severity=LintSeverity.ERROR,
-            message="missing timeout",
+            rule_id="L001", severity=LintSeverity.ERROR, message="missing timeout"
         )
         assert v.line is None
         assert v.column is None
@@ -61,8 +59,8 @@ class TestLintResult:
 
 class TestDSLLinterInit:
     def test_init(self) -> None:
-        l = DSLLinter()
-        assert l is not None
+        linter = DSLLinter()
+        assert linter is not None
 
 
 class TestLintRouteValid:
@@ -70,11 +68,7 @@ class TestLintRouteValid:
 
     def test_minimal_valid(self) -> None:
         linter = DSLLinter()
-        config = {
-            "id": "r1",
-            "owner": "team-x",
-            "contract": {"timeout_seconds": 30},
-        }
+        config = {"id": "r1", "owner": "team-x", "contract": {"timeout_seconds": 30}}
         result = linter.lint_route(config)
         assert result.has_errors is False
         assert result.violations == []
@@ -116,7 +110,10 @@ class TestLintMissingTimeout:
         linter = DSLLinter()
         config = {"id": "r1", "owner": "x", "contract": {"timeout_seconds": 0}}
         result = linter.lint_route(config)
-        assert any(v.rule_id == "L001" and "must be > 0" in v.message for v in result.violations)
+        assert any(
+            v.rule_id == "L001" and "must be > 0" in v.message
+            for v in result.violations
+        )
 
     def test_negative_timeout(self) -> None:
         linter = DSLLinter()
@@ -178,7 +175,10 @@ class TestLintDLQ:
             "contract": {"timeout_seconds": 30, "idempotency_key_field": "x"},
         }
         result = linter.lint_route(config)
-        assert any(v.rule_id == "L003" and v.severity == LintSeverity.WARNING for v in result.violations)
+        assert any(
+            v.rule_id == "L003" and v.severity == LintSeverity.WARNING
+            for v in result.violations
+        )
 
     def test_write_with_dlq_no_warning(self) -> None:
         linter = DSLLinter()
@@ -294,7 +294,9 @@ class TestSensitiveFieldsDetection:
 
     def test_description_keyword(self) -> None:
         linter = DSLLinter()
-        fields = linter._detect_sensitive_fields({"description": "Handle passport data"})
+        fields = linter._detect_sensitive_fields(
+            {"description": "Handle passport data"}
+        )
         assert "passport" in fields
 
 
@@ -335,10 +337,7 @@ class TestRealisticExample:
                 "dlq_topic": "events.orders.dlq",
                 "max_retries": 3,
             },
-            "security": {
-                "requires_permission": "orders.create",
-                "pii_policy": "mask",
-            },
+            "security": {"requires_permission": "orders.create", "pii_policy": "mask"},
         }
         result = linter.lint_route(config)
         # No errors expected.

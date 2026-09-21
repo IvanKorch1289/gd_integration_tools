@@ -94,10 +94,10 @@ def test_memory_spec_with_backends() -> None:
     """MemorySpec с конкретными backends."""
     memory = MemorySpec(
         short_term=BackendSpec(
-            backend="redis", namespace="credit:short:{tenant_id}", ttl=3600,
+            backend="redis", namespace="credit:short:{tenant_id}", ttl=3600
         ),
         long_term=BackendSpec(
-            backend="mem0+pgvector", namespace="credit:long:{tenant_id}",
+            backend="mem0+pgvector", namespace="credit:long:{tenant_id}"
         ),
     )
     assert memory.short_term is not None
@@ -177,9 +177,7 @@ class TestStrictExtraForbid:
             "tools": {"whitelist": [], "blacklist": []},
         }
         with pytest.raises(ValidationError):
-            AIPolicySpec.model_validate(
-                {**spec_kwargs, "unknown_typo_field": "oops"},
-            )
+            AIPolicySpec.model_validate({**spec_kwargs, "unknown_typo_field": "oops"})
 
     def test_unknown_field_in_budgetspec_rejected(self) -> None:
         """``BudgetSpec.cost`` (typo для ``max_cost_usd``) → reject."""
@@ -220,7 +218,7 @@ class TestCrossFieldConsistency:
                         "whitelist": ["allowed_a", "shared"],
                         "blacklist": ["denied", "shared"],
                     },
-                },
+                }
             )
 
     def test_tools_no_intersection_accepted(self) -> None:
@@ -236,11 +234,8 @@ class TestCrossFieldConsistency:
                 "model_router": {"primary": "gpt-4o-mini"},
                 "budget": {},
                 "audit": {},
-                "tools": {
-                    "whitelist": ["a", "b"],
-                    "blacklist": ["c", "d"],
-                },
-            },
+                "tools": {"whitelist": ["a", "b"], "blacklist": ["c", "d"]},
+            }
         )
         assert spec.tools.whitelist == ["a", "b"]
 
@@ -265,9 +260,7 @@ class TestCrossFieldConsistency:
         """``max_tokens_prompt < max_tokens_completion`` → reject."""
         from src.backend.core.ai.policy.spec import AIPolicySpec
 
-        with pytest.raises(
-            ValidationError, match="budget.inconsistent_tokens",
-        ):
+        with pytest.raises(ValidationError, match="budget.inconsistent_tokens"):
             AIPolicySpec.model_validate(
                 {
                     "name": "test",
@@ -281,5 +274,5 @@ class TestCrossFieldConsistency:
                     },
                     "audit": {},
                     "tools": {},
-                },
+                }
             )

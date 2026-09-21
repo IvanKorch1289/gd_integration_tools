@@ -10,7 +10,6 @@
 это доказывает, что PII-mask отрабатывает на single-doc пути endpoint'а.
 """
 
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -62,7 +61,7 @@ class _DigitSanitizer:
 def _enable_pii_flag(monkeypatch: pytest.MonkeyPatch) -> None:
     """Включает ``rag_ingest_settings.pii_mask_on_ingest`` + ставит stub sanitizer."""
     monkeypatch.setattr(
-        ai_stack.rag_ingest_settings, "pii_mask_on_ingest", True, raising=True,
+        ai_stack.rag_ingest_settings, "pii_mask_on_ingest", True, raising=True
     )
     providers.set_ai_sanitizer_provider(_DigitSanitizer())
 
@@ -70,7 +69,7 @@ def _enable_pii_flag(monkeypatch: pytest.MonkeyPatch) -> None:
 def _disable_pii_flag(monkeypatch: pytest.MonkeyPatch) -> None:
     """Выключает ``rag_ingest_settings.pii_mask_on_ingest``."""
     monkeypatch.setattr(
-        ai_stack.rag_ingest_settings, "pii_mask_on_ingest", False, raising=True,
+        ai_stack.rag_ingest_settings, "pii_mask_on_ingest", False, raising=True
     )
 
 
@@ -91,7 +90,7 @@ def _fake_upload_file(content: bytes, filename: str = "doc.txt") -> UploadFile:
 def _enable_rag(monkeypatch: pytest.MonkeyPatch) -> None:
     """Включает ``rag_settings.enabled`` (иначе facade бросит 503)."""
     monkeypatch.setattr(
-        ai_stack.rag_ingest_settings, "pii_mask_on_ingest", False, raising=True,
+        ai_stack.rag_ingest_settings, "pii_mask_on_ingest", False, raising=True
     )
     from src.backend.core.config import rag as rag_cfg
 
@@ -109,7 +108,7 @@ class TestIngestRoutesThroughRagIngestService:
     @pytest.mark.asyncio
     @_XFAIL_RAG_PII
     async def test_calls_ingest_text_not_rag_directly(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Facade вызывает RagIngestService.ingest_text, а не RAGService.ingest напрямую."""
         _enable_rag(monkeypatch)
@@ -131,7 +130,7 @@ class TestIngestRoutesThroughRagIngestService:
     @pytest.mark.asyncio
     @_XFAIL_RAG_PII
     async def test_ingest_masks_pii_when_flag_on(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """При включённом PII-флаге текст в RAGService уходит замаскированным.
 
@@ -146,10 +145,10 @@ class TestIngestRoutesThroughRagIngestService:
             ingest_svc = _build_real_ingest_svc(rag_service_mock)
 
             with patch.object(
-                rag_mod, "get_rag_ingest_service", return_value=ingest_svc,
+                rag_mod, "get_rag_ingest_service", return_value=ingest_svc
             ):
                 await rag_mod._FACADE.ingest(
-                    content="ИНН 7707083893, договор 12345", namespace="ns1",
+                    content="ИНН 7707083893, договор 12345", namespace="ns1"
                 )
 
             call = rag_service_mock.ingest.await_args
@@ -169,7 +168,7 @@ class TestIngestRoutesThroughRagIngestService:
     @pytest.mark.asyncio
     @_XFAIL_RAG_PII
     async def test_ingest_passthrough_when_flag_off(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """При выключенном PII-флаге текст идёт как есть (legacy behavior сохранён)."""
         _enable_rag(monkeypatch)
@@ -192,7 +191,7 @@ class TestIngestRoutesThroughRagIngestService:
     @pytest.mark.asyncio
     @_XFAIL_RAG_PII
     async def test_ingest_propagates_user_metadata(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """User metadata из request доходит до RAG.metadata."""
         _enable_rag(monkeypatch)
@@ -221,7 +220,7 @@ class TestUploadRoutesThroughRagIngestService:
     @pytest.mark.asyncio
     @_XFAIL_RAG_PII
     async def test_calls_ingest_text_not_rag_directly(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Facade.upload вызывает RagIngestService.ingest_text для текста из файла."""
         _enable_rag(monkeypatch)
@@ -250,7 +249,7 @@ class TestUploadRoutesThroughRagIngestService:
     @pytest.mark.asyncio
     @_XFAIL_RAG_PII
     async def test_upload_masks_pii_when_flag_on(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """При включённом PII-флаге текст из multipart-файла маскируется до RAG.
 
@@ -266,13 +265,13 @@ class TestUploadRoutesThroughRagIngestService:
             ingest_svc = _build_real_ingest_svc(rag_service_mock)
 
             file = _fake_upload_file(
-                b"User phone 79001234567 and card 1234567890123456", filename="leak.txt",
+                b"User phone 79001234567 and card 1234567890123456", filename="leak.txt"
             )
 
             with (
                 patch.object(rag_mod, "get_rag_service", return_value=rag_service_mock),
                 patch.object(
-                    rag_mod, "get_rag_ingest_service", return_value=ingest_svc,
+                    rag_mod, "get_rag_ingest_service", return_value=ingest_svc
                 ),
             ):
                 await rag_mod._FACADE.upload(file=file, namespace="docs")
@@ -296,7 +295,7 @@ class TestUploadRoutesThroughRagIngestService:
     @pytest.mark.asyncio
     @_XFAIL_RAG_PII
     async def test_upload_preserves_user_metadata(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """User metadata из form-data доходит до RAG.metadata без потерь."""
         _enable_rag(monkeypatch)

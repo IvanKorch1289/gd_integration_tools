@@ -12,7 +12,6 @@
     7. PIIMaskingResponseMiddleware доступен (S18 W5).
 """
 
-
 from __future__ import annotations
 
 from pathlib import Path

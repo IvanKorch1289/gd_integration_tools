@@ -60,9 +60,7 @@ class _StubBase:
 # ---------------------------------------------------------------------------
 
 try:
-    from src.backend.dsl.engine.processors.base import (
-        BaseProcessor as _BaseProcessor,
-    )
+    from src.backend.dsl.engine.processors.base import BaseProcessor as _BaseProcessor
 
     _HAVE_BASE_PROCESSOR = True
 except Exception:
@@ -120,7 +118,7 @@ class TestProcessorRegistryBasics:
 
 class TestProcessorRegistryConflict:
     def test_duplicate_fqn_without_replaces_raises(
-        self, fresh_registry: ProcessorRegistry,
+        self, fresh_registry: ProcessorRegistry
     ) -> None:
         a = ProcessorSpec(name="dup", namespace="core", cls=_DummyProcessor)
         b = ProcessorSpec(name="dup", namespace="core", cls=_DummyProcessor)
@@ -129,7 +127,7 @@ class TestProcessorRegistryConflict:
             fresh_registry.register(b)
 
     def test_replaces_overrides_existing(
-        self, fresh_registry: ProcessorRegistry,
+        self, fresh_registry: ProcessorRegistry
     ) -> None:
         original = ProcessorSpec(name="http", namespace="core", cls=_DummyProcessor)
         fresh_registry.register(original)
@@ -148,7 +146,7 @@ class TestProcessorRegistryConflict:
 
     def test_replaces_unknown_raises(self, fresh_registry: ProcessorRegistry) -> None:
         spec = ProcessorSpec(
-            name="x", namespace="plug", cls=_DummyProcessor, replaces="core:nope",
+            name="x", namespace="plug", cls=_DummyProcessor, replaces="core:nope"
         )
         with pytest.raises(ProcessorNotFoundError):
             fresh_registry.register(spec)
@@ -163,7 +161,7 @@ class TestProcessorRegistryUnregister:
         assert "ns:x" not in fresh_registry
 
     def test_unregister_unknown_is_noop(
-        self, fresh_registry: ProcessorRegistry,
+        self, fresh_registry: ProcessorRegistry
     ) -> None:
         # silent for hot-reload sanity
         fresh_registry.unregister("missing:thing")

@@ -29,6 +29,7 @@ try:
         reset_app_state,
         set_app_ref,
     )
+
     _IMPORT_OK = True
 except ImportError:  # pragma: no cover — pre-existing baseline guard
     _IMPORT_OK = False
@@ -90,13 +91,17 @@ class TestModuleFacade:
         set_app_ref("fake_app")  # type: ignore[arg-type]
         assert require_app_ref() == "fake_app"
 
-    def test_set_app_ref_warns_on_replace(self, caplog: pytest.LogCaptureFixture) -> None:
+    def test_set_app_ref_warns_on_replace(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
         set_app_ref("first")  # type: ignore[arg-type]
         with caplog.at_level("WARNING"):
             set_app_ref("second")  # type: ignore[arg-type]
         assert "set_app_ref вызван повторно" in caplog.text
 
-    def test_set_app_ref_allow_replace_no_warning(self, caplog: pytest.LogCaptureFixture) -> None:
+    def test_set_app_ref_allow_replace_no_warning(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
         set_app_ref("first")  # type: ignore[arg-type]
         with caplog.at_level("WARNING"):
             set_app_ref("second", allow_replace=True)  # type: ignore[arg-type]
@@ -139,13 +144,17 @@ class TestAppStateSingletonDecorator:
         def get_thing() -> str:
             """Test."""
 
-        with pytest.raises(RuntimeError, match="not in app.state and no factory provided"):
+        with pytest.raises(
+            RuntimeError, match="not in app.state and no factory provided"
+        ):
             get_thing()
 
     def test_decorator_factory_lazy_init(self) -> None:
         calls: list[int] = []
 
-        @app_state_singleton("not_in_state", factory=lambda: calls.append(1) or "created")
+        @app_state_singleton(
+            "not_in_state", factory=lambda: calls.append(1) or "created"
+        )
         def get_thing() -> str:
             """Test."""
 

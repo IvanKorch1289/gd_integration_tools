@@ -24,31 +24,27 @@ class TestOutboxMonitorShimProxy:
 
     def test_default_stuck_monitor_singleton_identity(self) -> None:
         """default_stuck_monitor — singleton, identity MUST be preserved."""
-        from src.backend.services.messaging.outbox_monitor import (
-            default_stuck_monitor,
-        )
         from src.backend.infrastructure.messaging.outbox.stuck_monitor import (
             default_stuck_monitor as _orig,
         )
+        from src.backend.services.messaging.outbox_monitor import default_stuck_monitor
 
         assert default_stuck_monitor is _orig
 
     def test_outbox_stuck_monitor_class_identity(self) -> None:
-        from src.backend.services.messaging.outbox_monitor import (
-            OutboxStuckMonitor,
-        )
         from src.backend.infrastructure.messaging.outbox.stuck_monitor import (
             OutboxStuckMonitor as _orig,
         )
+        from src.backend.services.messaging.outbox_monitor import OutboxStuckMonitor
 
         assert OutboxStuckMonitor is _orig
 
     def test_outbox_stuck_monitor_settings_class_identity(self) -> None:
-        from src.backend.services.messaging.outbox_monitor import (
-            OutboxStuckMonitorSettings,
-        )
         from src.backend.infrastructure.messaging.outbox.stuck_monitor import (
             OutboxStuckMonitorSettings as _orig,
+        )
+        from src.backend.services.messaging.outbox_monitor import (
+            OutboxStuckMonitorSettings,
         )
 
         assert OutboxStuckMonitorSettings is _orig

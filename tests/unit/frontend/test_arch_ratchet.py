@@ -22,7 +22,6 @@ Approved boundary:
 CI: enqueue через ``make arch-ratchet`` (см. ``make/quality.mk``).
 """
 
-
 from __future__ import annotations
 
 import os
@@ -32,10 +31,7 @@ import pytest
 
 # Approved facade boundary (P1 S172 W2).
 ALLOWED_FACADES: frozenset[str] = frozenset(
-    {
-        "src.backend.core.api",
-        "src.backend.core.frontend_facade",
-    },
+    {"src.backend.core.api", "src.backend.core.frontend_facade"}
 )
 
 # Top-level запрещённые слои (architectural layers).
@@ -81,7 +77,7 @@ class TestFrontendLayerBoundaryRatchet:
             for forbidden in FORBIDDEN_TOP_LEVELS:
                 pattern = re.compile(
                     rf"from {re.escape(forbidden)}(?:\b|\.)"
-                    rf"|import {re.escape(forbidden)}(?:\b|\.)",
+                    rf"|import {re.escape(forbidden)}(?:\b|\.)"
                 )
                 for m in pattern.finditer(content):
                     violations.append((p, m.group(0)))
@@ -106,9 +102,7 @@ class TestFrontendLayerBoundaryRatchet:
             with open(p) as fp:
                 content = fp.read()
             # Unified: catches both 'from src.backend.X' and 'import src.backend.X'.
-            matches = re.findall(
-                r"(?:from|import)\s+(src\.backend\.[\w\.]+)", content,
-            )
+            matches = re.findall(r"(?:from|import)\s+(src\.backend\.[\w\.]+)", content)
             for mod in matches:
                 if _is_allowed_facade(mod):
                     continue
@@ -141,9 +135,7 @@ class TestApiClientsBoundaryRatchet:
             with open(p) as fp:
                 content = fp.read()
             # Unified: catches both 'from' and 'import' styles.
-            matches = re.findall(
-                r"(?:from|import)\s+(src\.backend\.[\w\.]+)", content,
-            )
+            matches = re.findall(r"(?:from|import)\s+(src\.backend\.[\w\.]+)", content)
             for mod in matches:
                 if _is_allowed_facade(mod):
                     continue
@@ -171,7 +163,7 @@ class TestApiClientsBoundaryRatchet:
             for forbidden in FORBIDDEN_TOP_LEVELS:
                 pattern = re.compile(
                     rf"from {re.escape(forbidden)}(?:\b|\.)"
-                    rf"|import {re.escape(forbidden)}(?:\b|\.)",
+                    rf"|import {re.escape(forbidden)}(?:\b|\.)"
                 )
                 for m in pattern.finditer(content):
                     violations.append((p, m.group(0)))
@@ -210,6 +202,4 @@ class TestRatchetIntegrated:
         # Должен вызывать pytest с ratchet-тестами.
         assert "pytest" in content and (
             "test_layer_boundary" in content or "test_arch_ratchet" in content
-        ), (
-            "make/quality.mk 'arch-ratchet' не вызывает ratchet-тесты"
-        )
+        ), "make/quality.mk 'arch-ratchet' не вызывает ratchet-тесты"

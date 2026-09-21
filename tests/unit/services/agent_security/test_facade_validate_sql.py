@@ -43,7 +43,7 @@ def test_validate_sql_with_workflow_id_no_override_passes_through(
 
 
 def test_validate_sql_with_policy_override_raises_not_implemented(
-    facade: AgentSecurityFacade, caplog: pytest.LogCaptureFixture,
+    facade: AgentSecurityFacade, caplog: pytest.LogCaptureFixture
 ) -> None:
     """policy_override не должен silently дропаться → NotImplementedError.
 
@@ -69,9 +69,7 @@ def test_validate_sql_with_policy_override_raises_not_implemented(
     )
 
 
-def test_validate_sql_with_policy_override_blocks_dangerous_sql_via_facade() -> (
-    None
-):
+def test_validate_sql_with_policy_override_blocks_dangerous_sql_via_facade() -> None:
     """Без override DROP DATABASE блокируется через framework напрямую
     (sanity check, что facade passthrough работает).
     """

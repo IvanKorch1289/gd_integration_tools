@@ -8,7 +8,6 @@
 * отказ FakeClock.advance при отрицательном значении.
 """
 
-
 from __future__ import annotations
 
 import time as _time

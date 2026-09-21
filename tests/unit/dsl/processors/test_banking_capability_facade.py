@@ -38,7 +38,7 @@ class TestCheckCapabilityViaFacade:
         exchange = MagicMock()
 
         with patch(
-            "src.backend.services.capabilities.facade.get_capability_facade",
+            "src.backend.services.capabilities.facade.get_capability_facade"
         ) as mock_get:
             mock_facade = MagicMock()
             mock_facade.check_or_raise.return_value = True
@@ -56,16 +56,14 @@ class TestCheckCapabilityViaFacade:
         exchange = MagicMock()
 
         with patch(
-            "src.backend.services.capabilities.facade.get_capability_facade",
+            "src.backend.services.capabilities.facade.get_capability_facade"
         ) as mock_get:
             mock_facade = MagicMock()
-            mock_facade.check_or_raise.side_effect = (
-                CapabilityDeniedError(
-                    plugin="test",
-                    capability="ai.banking.test",
-                    requested_scope=None,
-                    declared_scope=None,
-                )
+            mock_facade.check_or_raise.side_effect = CapabilityDeniedError(
+                plugin="test",
+                capability="ai.banking.test",
+                requested_scope=None,
+                declared_scope=None,
             )
             mock_get.return_value = mock_facade
 
@@ -82,7 +80,7 @@ class TestCheckCapabilityViaFacade:
         exchange = MagicMock()
 
         with patch(
-            "src.backend.services.capabilities.facade.get_capability_facade",
+            "src.backend.services.capabilities.facade.get_capability_facade"
         ) as mock_get:
             mock_facade = MagicMock()
             mock_facade.check_or_raise.side_effect = RuntimeError("boom")
@@ -101,7 +99,7 @@ class TestCheckCapabilityViaFacade:
         exchange = MagicMock()
 
         with patch(
-            "src.backend.services.capabilities.facade.get_capability_facade",
+            "src.backend.services.capabilities.facade.get_capability_facade"
         ) as mock_get:
             mock_facade = MagicMock()
             mock_facade.check_or_raise.return_value = True
@@ -114,7 +112,10 @@ class TestCheckCapabilityViaFacade:
         # Cycle 134: production hardcodes full module path
         # "dsl.engine.processors.ai_banking.{class_name}" (S190 refactor
         # moved base.py there from ai_banking/ subpackage). Test updated.
-        assert "dsl.engine.processors.ai_banking._TestProcessor" in call_kwargs.kwargs["plugin"]
+        assert (
+            "dsl.engine.processors.ai_banking._TestProcessor"
+            in call_kwargs.kwargs["plugin"]
+        )
         assert call_kwargs.kwargs["capability"] == "ai.banking.test"
 
 
@@ -128,13 +129,11 @@ class TestIdentityMigration:
             KycAmlVerifyProcessor,
         )
 
-        processor = KycAmlVerifyProcessor(
-            jurisdiction="RU",
-        )
+        processor = KycAmlVerifyProcessor(jurisdiction="RU")
         exchange = MagicMock()
 
         with patch(
-            "src.backend.services.capabilities.facade.get_capability_facade",
+            "src.backend.services.capabilities.facade.get_capability_facade"
         ) as mock_get:
             mock_facade = MagicMock()
             mock_facade.check_or_raise.return_value = True

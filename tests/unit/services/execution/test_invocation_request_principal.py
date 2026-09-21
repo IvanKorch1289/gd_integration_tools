@@ -32,9 +32,7 @@ class TestInvocationRequestPrincipal:
     def test_with_principal(self) -> None:
         """``InvocationRequest(action='x', principal='alice', permissions=(...))``."""
         req = InvocationRequest(
-            action="x",
-            principal="alice",
-            permissions=("read:orders", "write:orders"),
+            action="x", principal="alice", permissions=("read:orders", "write:orders")
         )
         assert req.principal == "alice"
         assert req.permissions == ("read:orders", "write:orders")
@@ -42,9 +40,7 @@ class TestInvocationRequestPrincipal:
     def test_with_mode_and_principal(self) -> None:
         """``InvocationRequest`` с mode + principal комбинируется правильно."""
         req = InvocationRequest(
-            action="x",
-            mode=InvocationMode.BACKGROUND,
-            principal="carol",
+            action="x", mode=InvocationMode.BACKGROUND, principal="carol"
         )
         assert req.mode == InvocationMode.BACKGROUND
         assert req.principal == "carol"

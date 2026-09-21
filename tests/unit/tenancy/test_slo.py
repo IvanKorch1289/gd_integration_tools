@@ -8,7 +8,6 @@
 - to_log_dict() — structured log format
 """
 
-
 from __future__ import annotations
 
 import pytest
@@ -35,9 +34,7 @@ class TestTenantSLODefault:
     def test_custom_values(self) -> None:
         """Custom constructor принимает произвольные значения."""
         slo = TenantSLO(
-            latency_p99_ms=200.0,
-            availability_target=0.9999,
-            error_rate_target=0.001,
+            latency_p99_ms=200.0, availability_target=0.9999, error_rate_target=0.001
         )
         assert slo.latency_p99_ms == 200.0
         assert slo.availability_target == 0.9999
@@ -70,9 +67,7 @@ class TestEvaluateAllMetrics:
         """Все метрики within budget → within_slo=True."""
         slo = TenantSLO.default()
         eval_ = slo.evaluate(
-            latency_p99_ms=200.0,
-            availability=0.9995,
-            error_rate=0.005,
+            latency_p99_ms=200.0, availability=0.9995, error_rate=0.005
         )
         assert eval_.within_slo is True
         assert eval_.latency_ok is True
@@ -83,9 +78,7 @@ class TestEvaluateAllMetrics:
         """latency > budget → within_slo=False."""
         slo = TenantSLO.default()
         eval_ = slo.evaluate(
-            latency_p99_ms=600.0,
-            availability=0.9995,
-            error_rate=0.005,
+            latency_p99_ms=600.0, availability=0.9995, error_rate=0.005
         )
         assert eval_.within_slo is False
         assert eval_.latency_ok is False
@@ -151,9 +144,7 @@ class TestToLogDict:
         """Все slo.* keys присутствуют."""
         slo = TenantSLO.default()
         eval_ = slo.evaluate(
-            latency_p99_ms=200.0,
-            availability=0.9995,
-            error_rate=0.005,
+            latency_p99_ms=200.0, availability=0.9995, error_rate=0.005
         )
         log_dict = eval_.to_log_dict()
         expected_keys = {

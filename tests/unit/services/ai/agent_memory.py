@@ -105,9 +105,7 @@ async def test_add_message_without_tenant_id_raises_type_error() -> None:
     service, _ = _service()
     with pytest.raises(TypeError, match="tenant_id"):
         await service.add_message(  # type: ignore[call-arg]
-            "shared",
-            role="user",
-            content="hi",
+            "shared", role="user", content="hi"
         )
 
 
@@ -117,7 +115,7 @@ async def test_get_conversation_without_tenant_id_raises_type_error() -> None:
     service, _ = _service()
     with pytest.raises(TypeError, match="tenant_id"):
         await service.get_conversation(  # type: ignore[call-arg]
-            "shared",
+            "shared"
         )
 
 
@@ -126,10 +124,7 @@ async def test_add_message_persists_tenant_id_field() -> None:
     """Stored document содержит ``tenant_id`` (не только session_id)."""
     service, mongo = _service()
     await service.add_message(
-        "shared",
-        role="user",
-        content="hello",
-        tenant_id="tenant_b",
+        "shared", role="user", content="hello", tenant_id="tenant_b"
     )
     docs = mongo.documents["agent_memory_messages"]
     assert len(docs) == 1
@@ -143,16 +138,10 @@ async def test_get_conversation_filters_by_tenant_id() -> None:
     service, _ = _service()
 
     await service.add_message(
-        "shared",
-        role="user",
-        content="tenant-b-secret",
-        tenant_id="tenant_b",
+        "shared", role="user", content="tenant-b-secret", tenant_id="tenant_b"
     )
     await service.add_message(
-        "shared",
-        role="user",
-        content="tenant-a-public",
-        tenant_id="tenant_a",
+        "shared", role="user", content="tenant-a-public", tenant_id="tenant_a"
     )
 
     tenant_a = await service.get_conversation("shared", tenant_id="tenant_a")
@@ -167,10 +156,7 @@ async def test_get_conversation_projection_excludes_tenant_id() -> None:
     """Projection убирает ``tenant_id`` и ``session_id`` из результата."""
     service, _ = _service()
     await service.add_message(
-        "shared",
-        role="user",
-        content="hello",
-        tenant_id="tenant_a",
+        "shared", role="user", content="hello", tenant_id="tenant_a"
     )
     docs = await service.get_conversation("shared", tenant_id="tenant_a")
     assert docs == [{"role": "user", "content": "hello", "ts": docs[0]["ts"]}]

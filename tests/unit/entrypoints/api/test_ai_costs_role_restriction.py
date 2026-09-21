@@ -12,8 +12,6 @@ monitoring tools без write capability).
 
 from __future__ import annotations
 
-import pytest
-
 from src.backend.core.auth.admin_roles import AdminRole
 from src.backend.entrypoints.api.v1.endpoints import ai_costs
 

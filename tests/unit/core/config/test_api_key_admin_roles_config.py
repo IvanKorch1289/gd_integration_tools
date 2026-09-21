@@ -28,8 +28,7 @@ class TestSecureSettingsApiKeyAdminRoles:
     def test_field_exists(self) -> None:
         """``SecureSettings`` имеет поле ``api_key_admin_roles``."""
         assert "api_key_admin_roles" in SecureSettings.model_fields, (
-            "SecureSettings НЕ имеет поля api_key_admin_roles. "
-            "P0 cycle 7 не применён."
+            "SecureSettings НЕ имеет поля api_key_admin_roles. P0 cycle 7 не применён."
         )
 
     def test_default_value_via_model_construct(self) -> None:
@@ -81,9 +80,7 @@ class TestApiKeyAdminRolesValidator:
         )
         # Парсинг comma-separated string
         result = validator("super_admin,admin,operator")
-        assert result == ["super_admin", "admin", "operator"], (
-            f"Got {result!r}"
-        )
+        assert result == ["super_admin", "admin", "operator"], f"Got {result!r}"
         # Парсинг single string
         result = validator("super_admin")
         assert result == ["super_admin"], f"Got {result!r}"
@@ -113,11 +110,7 @@ class TestApiKeyMiddlewareUsesConfig:
         api_key_source = Path(
             "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/api_key.py"
         ).read_text()
-        assert (
-            '"admin_roles": ["operator", "super_admin"]'
-            not in api_key_source
-        ), (
+        assert '"admin_roles": ["operator", "super_admin"]' not in api_key_source, (
             "api_key.py всё ещё содержит hardcoded admin_roles list. "
             "P0 cycle 7 не применён."
         )
-

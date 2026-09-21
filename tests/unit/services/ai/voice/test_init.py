@@ -37,12 +37,8 @@ class TestVoiceFacadeAllExports:
     )
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(voice, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
-        assert symbol_name in voice.__all__, (
-            f"{symbol_name} not declared in __all__"
-        )
+        assert hasattr(voice, symbol_name), f"Missing export: {symbol_name}"
+        assert symbol_name in voice.__all__, f"{symbol_name} not declared in __all__"
 
     def test_all_declared_count(self) -> None:
         """``__all__`` содержит 5 символов."""
@@ -51,7 +47,9 @@ class TestVoiceFacadeAllExports:
     def test_module_docstring_present(self) -> None:
         """Module docstring описывает voice services (K4 S7 + V11.1)."""
         assert voice.__doc__ is not None
-        assert "Voice" in voice.__doc__ or "STT" in voice.__doc__ or "TTS" in voice.__doc__
+        assert (
+            "Voice" in voice.__doc__ or "STT" in voice.__doc__ or "TTS" in voice.__doc__
+        )
 
 
 @pytest.mark.unit

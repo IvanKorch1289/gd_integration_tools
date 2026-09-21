@@ -1,6 +1,5 @@
 """Unit tests for SSE handler."""
 
-
 from __future__ import annotations
 
 import asyncio
@@ -68,7 +67,7 @@ class TestSseStream:
         request.state = MagicMock()
         request.state.pii_streaming_policy = None
         with patch(
-            "src.backend.infrastructure.security.pii_streaming.stream_filter",
+            "src.backend.infrastructure.security.pii_streaming.stream_filter"
         ) as mock_filter:
 
             async def _empty():
@@ -122,7 +121,7 @@ class TestSseStream:
         request.state = MagicMock()
         request.state.pii_streaming_policy = None
         with patch(
-            "src.backend.infrastructure.security.pii_streaming.stream_filter",
+            "src.backend.infrastructure.security.pii_streaming.stream_filter"
         ) as mock_filter:
 
             async def _fake(*args: Any, **kwargs: Any) -> Any:
@@ -180,7 +179,7 @@ class TestSseInvoke:
             new_callable=AsyncMock,
         ) as mock_bridge:
             mock_bridge.return_value = MagicMock(
-                success=True, data={"result": 42}, error=None, error_code=None,
+                success=True, data={"result": 42}, error=None, error_code=None
             )
             resp = await sse_invoke(request, body)
         assert resp.media_type == "text/event-stream"
@@ -196,7 +195,7 @@ class TestSseInvoke:
             new_callable=AsyncMock,
         ) as mock_bridge:
             mock_bridge.return_value = MagicMock(
-                success=False, data=None, error="fail", error_code="err",
+                success=False, data=None, error="fail", error_code="err"
             )
             resp = await sse_invoke(request, body)
         assert resp.media_type == "text/event-stream"
@@ -230,7 +229,7 @@ class TestSseInvoke:
             new_callable=AsyncMock,
         ) as mock_bridge:
             mock_bridge.return_value = MagicMock(
-                success=True, data={}, error=None, error_code=None,
+                success=True, data={}, error=None, error_code=None
             )
             resp = await sse_invoke(request, body)
             # Итерируем body_iterator внутри with, чтобы мок был активен
@@ -252,7 +251,7 @@ class TestSseInvoke:
             new_callable=AsyncMock,
         ) as mock_bridge:
             mock_bridge.return_value = MagicMock(
-                success=True, data={"ok": True}, error=None, error_code=None,
+                success=True, data={"ok": True}, error=None, error_code=None
             )
             resp = await sse_invoke(request, body)
             chunks = [c async for c in resp.body_iterator]
@@ -274,7 +273,7 @@ class TestSseInvoke:
             new_callable=AsyncMock,
         ) as mock_bridge:
             mock_bridge.return_value = MagicMock(
-                success=False, data=None, error="fail", error_code="err_code",
+                success=False, data=None, error="fail", error_code="err_code"
             )
             resp = await sse_invoke(request, body)
             chunks = [c async for c in resp.body_iterator]
@@ -317,7 +316,7 @@ class TestSseInvoke:
             new_callable=AsyncMock,
         ) as mock_bridge:
             mock_bridge.return_value = MagicMock(
-                success=True, data={"created_at": now}, error=None, error_code=None,
+                success=True, data={"created_at": now}, error=None, error_code=None
             )
             resp = await sse_invoke(request, body)
             chunks = [c async for c in resp.body_iterator]
@@ -343,7 +342,7 @@ class TestSseInvoke:
             new_callable=AsyncMock,
         ) as mock_bridge:
             mock_bridge.return_value = MagicMock(
-                success=True, data={"status": Status.OK}, error=None, error_code=None,
+                success=True, data={"status": Status.OK}, error=None, error_code=None
             )
             resp = await sse_invoke(request, body)
             chunks = [c async for c in resp.body_iterator]

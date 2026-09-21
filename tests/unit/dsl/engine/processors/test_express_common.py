@@ -8,11 +8,10 @@ Test coverage:
 - ``resolve_value``: 4 namespaces (body, header, properties, result) + fallback
 - ``_host_from_url``: simple URL host extraction
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
-
-import pytest
 
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.express._common import (
@@ -155,7 +154,10 @@ def test_host_from_url_path_only() -> None:
 
 
 def test_host_from_url_subdomain() -> None:
-    assert _host_from_url("https://v1.api.staging.example.com/x") == "v1.api.staging.example.com"
+    assert (
+        _host_from_url("https://v1.api.staging.example.com/x")
+        == "v1.api.staging.example.com"
+    )
 
 
 def test_host_from_url_empty() -> None:

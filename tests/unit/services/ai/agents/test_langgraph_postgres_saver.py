@@ -31,7 +31,7 @@ async def test_get_returns_none_when_flag_disabled(
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(
-        feature_flags, "langgraph_postgres_checkpoint", False, raising=False,
+        feature_flags, "langgraph_postgres_checkpoint", False, raising=False
     )
     reset_langgraph_postgres_saver()
     saver = await get_langgraph_postgres_saver()
@@ -84,7 +84,7 @@ async def test_acquire_caches_saver(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "langchain_postgres", fake_pkg)
 
     wrapper = LangGraphPostgresSaverWrapper(
-        dsn="postgresql://test:test@localhost:5432/db", enabled=True,
+        dsn="postgresql://test:test@localhost:5432/db", enabled=True
     )
     s1 = await wrapper.acquire()
     s2 = await wrapper.acquire()

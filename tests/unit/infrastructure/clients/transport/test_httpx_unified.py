@@ -66,7 +66,7 @@ def test_build_cache_transport_custom_status_codes() -> None:
 def test_is_httpx_retries_available_returns_bool() -> None:
     """Lazy-import проверка для httpx_retries стабильна и возвращает bool."""
     try:
-        import httpx_retries
+        import httpx_retries  # noqa: F401 — availability probe (try/except ImportError guard)
 
         available = True
     except ImportError:

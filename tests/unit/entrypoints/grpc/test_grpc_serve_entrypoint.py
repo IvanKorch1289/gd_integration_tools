@@ -13,8 +13,6 @@ Verifies:
 
 from __future__ import annotations
 
-import pytest
-
 
 def test_patch_rpc_methods_call_is_at_module_level() -> None:
     """``_patch_rpc_methods()`` вызывается на module level (0 indent).
@@ -47,9 +45,7 @@ def test_patch_rpc_methods_call_is_at_module_level() -> None:
 
 def test_order_service_in_parent_class_method_map() -> None:
     """OrderServiceServicer + OrderServiceStub в parent_class_method_map."""
-    from src.backend.entrypoints.grpc.grpc_server import (
-        _patch_rpc_methods,
-    )
+    from src.backend.entrypoints.grpc.grpc_server import _patch_rpc_methods
 
     # Invoke patch function (idempotent — already patched, but safe)
     _patch_rpc_methods()
@@ -59,8 +55,13 @@ def test_order_service_in_parent_class_method_map() -> None:
     from src.backend.entrypoints.grpc.protobuf import orders_pb2_grpc
 
     expected_methods = (
-        "CreateOrder", "GetOrderResult", "GetOrder", "DeleteOrder",
-        "CreateSKBOrder", "GetFileAndJson", "SendOrderData",
+        "CreateOrder",
+        "GetOrderResult",
+        "GetOrder",
+        "DeleteOrder",
+        "CreateSKBOrder",
+        "GetFileAndJson",
+        "SendOrderData",
     )
     for method_name in expected_methods:
         method = getattr(orders_pb2_grpc.OrderServiceServicer, method_name)
@@ -74,8 +75,13 @@ def test_order_service_subclass_has_streaming_attrs() -> None:
     from src.backend.entrypoints.grpc.grpc_server.order import OrderGRPCServicer
 
     expected_methods = (
-        "CreateOrder", "GetOrderResult", "GetOrder", "DeleteOrder",
-        "CreateSKBOrder", "GetFileAndJson", "SendOrderData",
+        "CreateOrder",
+        "GetOrderResult",
+        "GetOrder",
+        "DeleteOrder",
+        "CreateSKBOrder",
+        "GetFileAndJson",
+        "SendOrderData",
     )
     for method_name in expected_methods:
         method = getattr(OrderGRPCServicer, method_name, None)
@@ -123,9 +129,7 @@ def test_grpc_serve_entrypoint_exit_guard() -> None:
                                 and func.value.id == "asyncio"
                                 and func.attr == "run"
                             ):
-                                if call.args and isinstance(
-                                    call.args[0], ast.Call
-                                ):
+                                if call.args and isinstance(call.args[0], ast.Call):
                                     inner = call.args[0].func
                                     if (
                                         isinstance(inner, ast.Name)
@@ -133,9 +137,7 @@ def test_grpc_serve_entrypoint_exit_guard() -> None:
                                     ):
                                         has_asyncio_run_serve = True
 
-    assert has_main_guard, (
-        "server.py: missing `if __name__ == \"__main__\":` block"
-    )
+    assert has_main_guard, 'server.py: missing `if __name__ == "__main__":` block'
     assert has_asyncio_run_serve, (
         "server.py: __main__ block must call `asyncio.run(serve())`"
     )

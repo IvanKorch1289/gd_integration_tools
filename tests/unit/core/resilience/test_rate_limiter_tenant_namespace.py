@@ -7,7 +7,6 @@
 - Fallback ``tenant:_default_`` если контекст не установлен.
 """
 
-
 from __future__ import annotations
 
 import asyncio
@@ -71,6 +70,7 @@ def fake_redis(monkeypatch: pytest.MonkeyPatch) -> _FakeRedis:
     # M6-#3: включить redis.enabled (guard в unified_rate_limiter
     # возвращает fail-open при enabled=False, не достигая fake_redis)
     from src.backend.core.config.settings import settings as _s
+
     monkeypatch.setattr(_s.redis, "enabled", True)
     yield fake
 

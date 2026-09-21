@@ -17,7 +17,6 @@ interop с audit_log/rpa_policy. До фикса audit_log получал ``anon
    (downstream не должен видеть ложный auth context).
 """
 
-
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, patch
@@ -93,16 +92,14 @@ class TestAPIKeyAuthStateWriteCycle34:
         middleware.compiled_patterns = []
 
         with patch(
-            "src.backend.entrypoints.middlewares.api_key.settings",
+            "src.backend.entrypoints.middlewares.api_key.settings"
         ) as mock_settings:
             mock_settings.secure.api_key = "secret-key-123"
             mock_settings.secure.routes_without_api_key = []
 
             send = AsyncMock()
             await middleware(
-                _make_scope(
-                    headers=[(b"x-api-key", b"secret-key-123")],
-                ),
+                _make_scope(headers=[(b"x-api-key", b"secret-key-123")]),
                 _make_receive(),
                 send,
             )
@@ -145,16 +142,14 @@ class TestAPIKeyAuthStateWriteCycle34:
         middleware.compiled_patterns = []
 
         with patch(
-            "src.backend.entrypoints.middlewares.api_key.settings",
+            "src.backend.entrypoints.middlewares.api_key.settings"
         ) as mock_settings:
             mock_settings.secure.api_key = "correct-key"
             mock_settings.secure.routes_without_api_key = []
 
             send = AsyncMock()
             await middleware(
-                _make_scope(
-                    headers=[(b"x-api-key", b"wrong-key")],
-                ),
+                _make_scope(headers=[(b"x-api-key", b"wrong-key")]),
                 _make_receive(),
                 send,
             )

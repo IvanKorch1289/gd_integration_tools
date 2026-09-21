@@ -2,6 +2,7 @@
 
 T3 coverage sprint cycle 14: TelegramMentionProcessor (inline mention fragment).
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
@@ -133,31 +134,35 @@ async def test_process_writes_inline_fragment(monkeypatch: pytest.MonkeyPatch) -
 
 
 @pytest.mark.asyncio
-async def test_process_skips_when_user_id_empty(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_process_skips_when_user_id_empty(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     proc = TelegramMentionProcessor(user_id_from="body.user_id")
     ex, captured = _make_exchange()
 
     with monkeypatch.context() as m:
         m.setattr(
-        "src.backend.dsl.engine.processors.telegram.mention.resolve_value",
-        MagicMock(return_value=None),
-    )
+            "src.backend.dsl.engine.processors.telegram.mention.resolve_value",
+            MagicMock(return_value=None),
+        )
         await proc.process(ex, _ctx())
 
     assert "telegram_mention" not in captured
 
 
 @pytest.mark.asyncio
-async def test_process_skips_when_user_id_not_int(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_process_skips_when_user_id_not_int(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Если user_id не парсится в int → skip."""
     proc = TelegramMentionProcessor(user_id_from="body.user_id")
     ex, captured = _make_exchange()
 
     with monkeypatch.context() as m:
         m.setattr(
-        "src.backend.dsl.engine.processors.telegram.mention.resolve_value",
-        MagicMock(return_value="not-a-number"),
-    )
+            "src.backend.dsl.engine.processors.telegram.mention.resolve_value",
+            MagicMock(return_value="not-a-number"),
+        )
         await proc.process(ex, _ctx())
 
     assert "telegram_mention" not in captured
@@ -190,9 +195,9 @@ async def test_process_display_name_fallback(monkeypatch: pytest.MonkeyPatch) ->
 
     with monkeypatch.context() as m:
         m.setattr(
-        "src.backend.dsl.engine.processors.telegram.mention.resolve_value",
-        MagicMock(return_value=999),
-    )
+            "src.backend.dsl.engine.processors.telegram.mention.resolve_value",
+            MagicMock(return_value=999),
+        )
         await proc.process(ex, _ctx())
 
     assert captured["telegram_mention"] == "[user_999](tg://user?id=999)"
@@ -201,9 +206,7 @@ async def test_process_display_name_fallback(monkeypatch: pytest.MonkeyPatch) ->
 @pytest.mark.asyncio
 async def test_process_html_format(monkeypatch: pytest.MonkeyPatch) -> None:
     proc = TelegramMentionProcessor(
-        user_id_from="body.user_id",
-        display_name_from="body.name",
-        parse_mode="HTML",
+        user_id_from="body.user_id", display_name_from="body.name", parse_mode="HTML"
     )
     ex, captured = _make_exchange(properties={"user_id": 7, "name": "Bob"})
 
@@ -214,22 +217,21 @@ async def test_process_html_format(monkeypatch: pytest.MonkeyPatch) -> None:
         )
         await proc.process(ex, _ctx())
 
-    assert (
-        captured["telegram_mention"]
-        == '<a href="tg://user?id=7">Bob</a>'
-    )
+    assert captured["telegram_mention"] == '<a href="tg://user?id=7">Bob</a>'
 
 
 @pytest.mark.asyncio
 async def test_process_append_concatenates(monkeypatch: pytest.MonkeyPatch) -> None:
     proc = TelegramMentionProcessor(
-        user_id_from="body.user_id",
-        display_name_from="body.name",
-        append=True,
+        user_id_from="body.user_id", display_name_from="body.name", append=True
     )
     existing_mention = "[First](tg://user?id=1)"
     ex, captured = _make_exchange(
-        properties={"user_id": 2, "name": "Second", "telegram_mention": existing_mention}
+        properties={
+            "user_id": 2,
+            "name": "Second",
+            "telegram_mention": existing_mention,
+        }
     )
 
     with monkeypatch.context() as m:
@@ -240,8 +242,7 @@ async def test_process_append_concatenates(monkeypatch: pytest.MonkeyPatch) -> N
         await proc.process(ex, _ctx())
 
     assert (
-        captured["telegram_mention"]
-        == f"{existing_mention} [Second](tg://user?id=2)"
+        captured["telegram_mention"] == f"{existing_mention} [Second](tg://user?id=2)"
     )
 
 
@@ -249,8 +250,7 @@ async def test_process_append_concatenates(monkeypatch: pytest.MonkeyPatch) -> N
 async def test_process_overwrite_default(monkeypatch: pytest.MonkeyPatch) -> None:
     """append=False (default) → перезаписывает property."""
     proc = TelegramMentionProcessor(
-        user_id_from="body.user_id",
-        display_name_from="body.name",
+        user_id_from="body.user_id", display_name_from="body.name"
     )
     ex, captured = _make_exchange(
         properties={"user_id": 1, "name": "Alice", "telegram_mention": "[OLD]"}
@@ -269,16 +269,15 @@ async def test_process_overwrite_default(monkeypatch: pytest.MonkeyPatch) -> Non
 @pytest.mark.asyncio
 async def test_process_custom_property_name(monkeypatch: pytest.MonkeyPatch) -> None:
     proc = TelegramMentionProcessor(
-        user_id_from="body.user_id",
-        property_name="custom_mention_field",
+        user_id_from="body.user_id", property_name="custom_mention_field"
     )
     ex, captured = _make_exchange(properties={"user_id": 11})
 
     with monkeypatch.context() as m:
         m.setattr(
-        "src.backend.dsl.engine.processors.telegram.mention.resolve_value",
-        MagicMock(return_value=11),
-    )
+            "src.backend.dsl.engine.processors.telegram.mention.resolve_value",
+            MagicMock(return_value=11),
+        )
         await proc.process(ex, _ctx())
 
     assert "custom_mention_field" in captured

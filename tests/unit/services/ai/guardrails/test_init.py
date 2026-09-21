@@ -33,9 +33,7 @@ class TestGuardrailsFacadeAllExports:
     )
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(guardrails, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
+        assert hasattr(guardrails, symbol_name), f"Missing export: {symbol_name}"
         assert symbol_name in guardrails.__all__, (
             f"{symbol_name} not declared in __all__"
         )
@@ -47,7 +45,9 @@ class TestGuardrailsFacadeAllExports:
     def test_module_docstring_present(self) -> None:
         """Module docstring описывает per-tenant guardrails clients."""
         assert guardrails.__doc__ is not None
-        assert "guardrail" in guardrails.__doc__.lower() or "Lakera" in guardrails.__doc__
+        assert (
+            "guardrail" in guardrails.__doc__.lower() or "Lakera" in guardrails.__doc__
+        )
 
 
 @pytest.mark.unit

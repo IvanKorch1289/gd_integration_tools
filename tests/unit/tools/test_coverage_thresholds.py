@@ -13,11 +13,16 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
-
 THRESHOLDS_FILE = Path(".baselines/coverage_thresholds.txt")
-EXPECTED_LAYERS = ["core", "infrastructure", "services", "entrypoints", "dsl", "workflows", "aggregate"]
+EXPECTED_LAYERS = [
+    "core",
+    "infrastructure",
+    "services",
+    "entrypoints",
+    "dsl",
+    "workflows",
+    "aggregate",
+]
 
 
 def test_thresholds_file_exists() -> None:
@@ -34,18 +39,14 @@ def test_thresholds_file_has_7_entries() -> None:
         for line in THRESHOLDS_FILE.read_text(encoding="utf-8").splitlines()
         if line.strip() and not line.startswith("#")
     ]
-    assert len(lines) == 7, (
-        f"Expected 7 entries, got {len(lines)}: {lines}"
-    )
+    assert len(lines) == 7, f"Expected 7 entries, got {len(lines)}: {lines}"
 
 
 def test_thresholds_have_all_expected_layers() -> None:
     """All 6 layers + aggregate present в thresholds file."""
     text = THRESHOLDS_FILE.read_text(encoding="utf-8")
     for layer in EXPECTED_LAYERS:
-        assert f"{layer}:" in text, (
-            f"Layer '{layer}' missing from {THRESHOLDS_FILE}"
-        )
+        assert f"{layer}:" in text, f"Layer '{layer}' missing from {THRESHOLDS_FILE}"
 
 
 def test_thresholds_are_valid_numbers() -> None:
@@ -55,9 +56,7 @@ def test_thresholds_are_valid_numbers() -> None:
         assert isinstance(value, int), (
             f"{layer}: threshold must be int, got {type(value).__name__}"
         )
-        assert 0 <= value <= 100, (
-            f"{layer}: threshold {value}% out of [0, 100] range"
-        )
+        assert 0 <= value <= 100, f"{layer}: threshold {value}% out of [0, 100] range"
 
 
 def test_aggregate_threshold_in_range() -> None:
@@ -75,9 +74,7 @@ def test_aggregate_threshold_in_range() -> None:
 def test_makefile_target_exists() -> None:
     """`make coverage-gate-per-layer` target exists в docs.mk."""
     text = Path("make/docs.mk").read_text(encoding="utf-8")
-    assert "coverage-gate-per-layer:" in text, (
-        "ADR-0285 §1.1 Makefile target missing"
-    )
+    assert "coverage-gate-per-layer:" in text, "ADR-0285 §1.1 Makefile target missing"
 
 
 def test_makefile_target_informational() -> None:

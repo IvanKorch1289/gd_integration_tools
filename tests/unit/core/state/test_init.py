@@ -20,17 +20,12 @@ class TestStateFacadeAllExports:
     """``__all__`` audit + identity."""
 
     @pytest.mark.parametrize(
-        "symbol_name",
-        ["blocked_routes", "disabled_feature_flags"],
+        "symbol_name", ["blocked_routes", "disabled_feature_flags"]
     )
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(state, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
-        assert symbol_name in state.__all__, (
-            f"{symbol_name} not declared in __all__"
-        )
+        assert hasattr(state, symbol_name), f"Missing export: {symbol_name}"
+        assert symbol_name in state.__all__, f"{symbol_name} not declared in __all__"
 
     def test_all_declared_count(self) -> None:
         """``__all__`` содержит 2 символа."""

@@ -59,17 +59,22 @@ class TestRequireCapabilityFailClosed:
 
         # Patch via sys.modules to simulate facade unavailable
         import sys
+
         original_module = sys.modules.pop(
-            "src.backend.services.authorization.facade", None,
+            "src.backend.services.authorization.facade", None
         )
-        sys.modules["src.backend.services.authorization.facade"] = None  # Force ImportError
+        sys.modules["src.backend.services.authorization.facade"] = (
+            None  # Force ImportError
+        )
         try:
             with pytest.raises(ConnectorAuthError, match="facade unavailable"):
                 await my_func()
         finally:
             # Restore
             if original_module is not None:
-                sys.modules["src.backend.services.authorization.facade"] = original_module
+                sys.modules["src.backend.services.authorization.facade"] = (
+                    original_module
+                )
             else:
                 sys.modules.pop("src.backend.services.authorization.facade", None)
 
@@ -130,7 +135,7 @@ class TestRequireCapabilityPolicyDecision:
 
         mock_facade = MagicMock()
         mock_facade.check_principal = AsyncMock(
-            side_effect=RuntimeError("backend unavailable"),
+            side_effect=RuntimeError("backend unavailable")
         )
 
         with patch(
@@ -156,10 +161,7 @@ class TestCheckSourceCapability:
             "src.backend.services.authorization.facade.get_authorization_facade",
             return_value=mock_facade,
         ):
-            result = await check_source_capability(
-                "source.read",
-                principal="user-1",
-            )
+            result = await check_source_capability("source.read", principal="user-1")
             assert result is True
 
     @pytest.mark.asyncio
@@ -174,29 +176,26 @@ class TestCheckSourceCapability:
             "src.backend.services.authorization.facade.get_authorization_facade",
             return_value=mock_facade,
         ):
-            result = await check_source_capability(
-                "source.read",
-                principal="user-1",
-            )
+            result = await check_source_capability("source.read", principal="user-1")
             assert result is False
 
     @pytest.mark.asyncio
     async def test_facade_unavailable_returns_false(self) -> None:
         """Fail-closed: facade unavailable → False (НЕ True)."""
         import sys
+
         original_module = sys.modules.pop(
-            "src.backend.services.authorization.facade", None,
+            "src.backend.services.authorization.facade", None
         )
         sys.modules["src.backend.services.authorization.facade"] = None
         try:
-            result = await check_source_capability(
-                "source.read",
-                principal="user-1",
-            )
+            result = await check_source_capability("source.read", principal="user-1")
             assert result is False
         finally:
             if original_module is not None:
-                sys.modules["src.backend.services.authorization.facade"] = original_module
+                sys.modules["src.backend.services.authorization.facade"] = (
+                    original_module
+                )
             else:
                 sys.modules.pop("src.backend.services.authorization.facade", None)
 
@@ -205,17 +204,14 @@ class TestCheckSourceCapability:
         """Fail-closed: facade exception → False (НЕ silent пропуск)."""
         mock_facade = MagicMock()
         mock_facade.check_principal = AsyncMock(
-            side_effect=RuntimeError("backend error"),
+            side_effect=RuntimeError("backend error")
         )
 
         with patch(
             "src.backend.services.authorization.facade.get_authorization_facade",
             return_value=mock_facade,
         ):
-            result = await check_source_capability(
-                "source.read",
-                principal="user-1",
-            )
+            result = await check_source_capability("source.read", principal="user-1")
             assert result is False
 
 
@@ -232,15 +228,11 @@ class TestTenantScopeResolvesTenantId:
     """
 
     @pytest.mark.asyncio
-    async def test_require_capability_resolves_tenant_id_from_context(
-        self,
-    ) -> None:
+    async def test_require_capability_resolves_tenant_id_from_context(self) -> None:
         """require_capability: tenant_id pulled from TenantContext (L93)."""
         from src.backend.core.tenancy import TenantContext
 
-        mock_ctx = TenantContext(
-            tenant_id="acme-corp", plan="enterprise", region="ru",
-        )
+        mock_ctx = TenantContext(tenant_id="acme-corp", plan="enterprise", region="ru")
         mock_decision = MagicMock()
         mock_decision.allowed = True
         mock_decision.reason = None
@@ -252,11 +244,9 @@ class TestTenantScopeResolvesTenantId:
                 "src.backend.services.authorization.facade.get_authorization_facade",
                 return_value=mock_facade,
             ),
-            patch(
-                "src.backend.core.tenancy.current_tenant",
-                return_value=mock_ctx,
-            ),
+            patch("src.backend.core.tenancy.current_tenant", return_value=mock_ctx),
         ):
+
             @require_capability("kafka.write", action="write", scope="tenant")
             async def my_func() -> str:
                 return "ok"
@@ -269,15 +259,11 @@ class TestTenantScopeResolvesTenantId:
         assert call_kwargs["context"]["tenant_id"] == "acme-corp"
 
     @pytest.mark.asyncio
-    async def test_check_source_capability_resolves_tenant_id(
-        self,
-    ) -> None:
+    async def test_check_source_capability_resolves_tenant_id(self) -> None:
         """check_source_capability: tenant_id pulled from TenantContext (L193)."""
         from src.backend.core.tenancy import TenantContext
 
-        mock_ctx = TenantContext(
-            tenant_id="globex-inc", plan="pro", region="us",
-        )
+        mock_ctx = TenantContext(tenant_id="globex-inc", plan="pro", region="us")
         mock_decision = MagicMock()
         mock_decision.allowed = True
         mock_decision.reason = None
@@ -289,15 +275,10 @@ class TestTenantScopeResolvesTenantId:
                 "src.backend.services.authorization.facade.get_authorization_facade",
                 return_value=mock_facade,
             ),
-            patch(
-                "src.backend.core.tenancy.current_tenant",
-                return_value=mock_ctx,
-            ),
+            patch("src.backend.core.tenancy.current_tenant", return_value=mock_ctx),
         ):
             result = await check_source_capability(
-                "kafka.read",
-                action="read",
-                principal="user-1",
+                "kafka.read", action="read", principal="user-1"
             )
             assert result is True
 

@@ -1,6 +1,5 @@
 """Unit-tests for FileSink."""
 
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -82,7 +81,7 @@ async def test_ensure_dir_false_does_not_create_parent(tmp_path: Path) -> None:
 
 @pytest.mark.asyncio
 async def test_send_handles_write_exception(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     target = tmp_path / "out.txt"
     sink = FileSink(sink_id="f6", path=str(target), mode="write")
@@ -107,7 +106,7 @@ async def test_health_true_when_writable(tmp_path: Path) -> None:
 
 @pytest.mark.asyncio
 async def test_health_false_when_not_writable(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     sink = FileSink(sink_id="f8", path=str(tmp_path / "out.txt"), ensure_dir=False)
     monkeypatch.setattr(Path, "is_dir", lambda self: False)

@@ -8,7 +8,6 @@ from src.backend.core.resilience.breaker import get_breaker_registry
 from src.backend.core.resilience.connector_breaker import CircuitOpen, with_breaker
 
 
-
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_decorator_passes_through_when_closed() -> None:

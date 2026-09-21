@@ -5,11 +5,7 @@ Coverage target: browser_pool.py 33% → 70%+.
 
 from __future__ import annotations
 
-import pytest
-
-from src.backend.services.rpa.browser_pool import (
-    PlaywrightBrowserPool,
-)
+from src.backend.services.rpa.browser_pool import PlaywrightBrowserPool
 
 
 def test_init_explicit_params() -> None:

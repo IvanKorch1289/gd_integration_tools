@@ -46,9 +46,7 @@ def test_breaker_registry_with_redis_url() -> None:
     """BreakerRegistry(redis_url=...) instantiates with Redis UOW."""
     from src.backend.core.resilience.breaker import BreakerRegistry
 
-    with patch(
-        "purgatory.AsyncRedisUnitOfWork"
-    ) as mock_uow_class:
+    with patch("purgatory.AsyncRedisUnitOfWork") as mock_uow_class:
         mock_uow = MagicMock()
         mock_uow_class.return_value = mock_uow
 
@@ -91,9 +89,7 @@ def test_get_breaker_registry_redis_url_creates_separate_singleton() -> None:
     # Clear cache to start fresh
     get_breaker_registry.cache_clear()
 
-    with patch(
-        "purgatory.AsyncRedisUnitOfWork"
-    ) as mock_uow_class:
+    with patch("purgatory.AsyncRedisUnitOfWork") as mock_uow_class:
         mock_uow = MagicMock()
         mock_uow_class.return_value = mock_uow
 
@@ -113,9 +109,7 @@ def test_get_breaker_registry_same_url_returns_same_singleton() -> None:
 
     get_breaker_registry.cache_clear()
 
-    with patch(
-        "purgatory.AsyncRedisUnitOfWork"
-    ) as mock_uow_class:
+    with patch("purgatory.AsyncRedisUnitOfWork") as mock_uow_class:
         mock_uow = MagicMock()
         mock_uow_class.return_value = mock_uow
 
@@ -131,9 +125,7 @@ def test_get_or_create_still_works_with_redis_url() -> None:
     """BreakerRegistry.get_or_create() works regardless of redis_url."""
     from src.backend.core.resilience.breaker import BreakerRegistry
 
-    with patch(
-        "purgatory.AsyncRedisUnitOfWork"
-    ) as mock_uow_class:
+    with patch("purgatory.AsyncRedisUnitOfWork") as mock_uow_class:
         mock_uow = MagicMock()
         mock_uow_class.return_value = mock_uow
 

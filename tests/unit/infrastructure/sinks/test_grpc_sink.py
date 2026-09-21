@@ -1,6 +1,5 @@
 """Unit-tests for GrpcSink."""
 
-
 from __future__ import annotations
 
 import sys
@@ -22,7 +21,7 @@ def fake_grpc(monkeypatch: pytest.MonkeyPatch) -> tuple[types.ModuleType, MagicM
     fake_aio = types.ModuleType("grpc.aio")
     fake_channel = MagicMock()
     fake_channel.unary_unary = MagicMock(
-        return_value=AsyncMock(return_value=b"response"),
+        return_value=AsyncMock(return_value=b"response")
     )
     fake_channel.close = AsyncMock()
     fake_channel.channel_ready = AsyncMock()
@@ -45,7 +44,7 @@ async def test_kind_is_grpc() -> None:
 async def test_send_bytes_payload(fake_grpc: tuple[Any, MagicMock]) -> None:
     _fake_mod, fake_channel = fake_grpc
     sink = GrpcSink(
-        sink_id="g1", target="localhost:50051", full_method="/svc/m", secure=False,
+        sink_id="g1", target="localhost:50051", full_method="/svc/m", secure=False
     )
     with patched_auth_allow():
         result = await sink.send(b"raw")
@@ -59,7 +58,7 @@ async def test_send_bytes_payload(fake_grpc: tuple[Any, MagicMock]) -> None:
 async def test_send_dict_payload_serializes(fake_grpc: tuple[Any, MagicMock]) -> None:
     _fake_mod, fake_channel = fake_grpc
     sink = GrpcSink(
-        sink_id="g2", target="localhost:50051", full_method="/svc/m", secure=True,
+        sink_id="g2", target="localhost:50051", full_method="/svc/m", secure=True
     )
     with patched_auth_allow():
         result = await sink.send({"k": "v"})
@@ -93,10 +92,10 @@ async def test_send_handles_channel_exception(fake_grpc: tuple[Any, MagicMock]) 
     """
     _fake_mod, fake_channel = fake_grpc
     fake_channel.unary_unary = MagicMock(
-        return_value=AsyncMock(side_effect=RuntimeError("boom")),
+        return_value=AsyncMock(side_effect=RuntimeError("boom"))
     )
     sink = GrpcSink(
-        sink_id="g4", target="localhost:50051", full_method="/svc/m", secure=False,
+        sink_id="g4", target="localhost:50051", full_method="/svc/m", secure=False
     )
     with patched_auth_allow():
         with pytest.raises(RuntimeError, match="boom"):

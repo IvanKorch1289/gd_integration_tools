@@ -1,6 +1,5 @@
 """Unit-тесты batch processors с моком ExternalDatabaseRegistry."""
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -36,7 +35,7 @@ def mock_bundle() -> MagicMock:
 @pytest.mark.asyncio
 async def test_batch_insert(mock_bundle: MagicMock) -> None:
     with patch(
-        "src.backend.dsl.engine.processors.batch._lazy_get_external_db_registry",
+        "src.backend.dsl.engine.processors.batch._lazy_get_external_db_registry"
     ) as mock_reg:
         mock_reg.return_value.return_value.get_bundle.return_value = mock_bundle
         proc = BatchInsertProcessor(table="orders", items=[{"id": 1}, {"id": 2}])
@@ -48,7 +47,7 @@ async def test_batch_insert(mock_bundle: MagicMock) -> None:
 @pytest.mark.asyncio
 async def test_batch_insert_from_body(mock_bundle: MagicMock) -> None:
     with patch(
-        "src.backend.dsl.engine.processors.batch._lazy_get_external_db_registry",
+        "src.backend.dsl.engine.processors.batch._lazy_get_external_db_registry"
     ) as mock_reg:
         mock_reg.return_value.return_value.get_bundle.return_value = mock_bundle
         proc = BatchInsertProcessor(table="orders")
@@ -68,7 +67,7 @@ async def test_batch_insert_empty(mock_bundle: MagicMock) -> None:
 @pytest.mark.asyncio
 async def test_batch_update(mock_bundle: MagicMock) -> None:
     with patch(
-        "src.backend.dsl.engine.processors.batch._lazy_get_external_db_registry",
+        "src.backend.dsl.engine.processors.batch._lazy_get_external_db_registry"
     ) as mock_reg:
         mock_reg.return_value.return_value.get_bundle.return_value = mock_bundle
         proc = BatchUpdateProcessor(table="orders", items=[{"id": 1, "status": "ok"}])
@@ -80,7 +79,7 @@ async def test_batch_update(mock_bundle: MagicMock) -> None:
 @pytest.mark.asyncio
 async def test_batch_delete(mock_bundle: MagicMock) -> None:
     with patch(
-        "src.backend.dsl.engine.processors.batch._lazy_get_external_db_registry",
+        "src.backend.dsl.engine.processors.batch._lazy_get_external_db_registry"
     ) as mock_reg:
         mock_reg.return_value.return_value.get_bundle.return_value = mock_bundle
         proc = BatchDeleteProcessor(table="orders", ids=[1, 2])
@@ -112,7 +111,7 @@ async def test_batch_insert_from_body_bad_column_sets_error() -> None:
 @pytest.mark.asyncio
 async def test_batch_update_bad_column_sets_error() -> None:
     proc = BatchUpdateProcessor(
-        table="orders", items=[{"id": 1, "status; DROP TABLE orders;--": "ok"}],
+        table="orders", items=[{"id": 1, "status; DROP TABLE orders;--": "ok"}]
     )
     exchange = _ex()
     await proc.process(exchange, None)  # type: ignore[arg-type]
@@ -124,7 +123,7 @@ async def test_batch_update_bad_column_sets_error() -> None:
 @pytest.mark.asyncio
 async def test_batch_update_bad_key_field_sets_error() -> None:
     proc = BatchUpdateProcessor(
-        table="orders", items=[{"id": 1}], key_field="id; DROP TABLE orders;--",
+        table="orders", items=[{"id": 1}], key_field="id; DROP TABLE orders;--"
     )
     exchange = _ex()
     await proc.process(exchange, None)  # type: ignore[arg-type]
@@ -136,7 +135,7 @@ async def test_batch_update_bad_key_field_sets_error() -> None:
 @pytest.mark.asyncio
 async def test_batch_delete_bad_key_field_sets_error() -> None:
     proc = BatchDeleteProcessor(
-        table="orders", ids=[1], key_field="id; DROP TABLE orders;--",
+        table="orders", ids=[1], key_field="id; DROP TABLE orders;--"
     )
     exchange = _ex()
     await proc.process(exchange, None)  # type: ignore[arg-type]

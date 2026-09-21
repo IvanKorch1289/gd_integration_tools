@@ -40,9 +40,7 @@ def mock_redis(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
     def _get_client() -> AsyncMock:
         return client
 
-    monkeypatch.setattr(
-        "src.backend.core.storage.redis.get_redis_client", _get_client
-    )
+    monkeypatch.setattr("src.backend.core.storage.redis.get_redis_client", _get_client)
     return client
 
 
@@ -85,9 +83,7 @@ async def test_is_valid_uses_correct_key(mock_redis: AsyncMock) -> None:
     )
 
 
-async def test_is_valid_fail_closed_on_redis_error(
-    mock_redis: AsyncMock,
-) -> None:
+async def test_is_valid_fail_closed_on_redis_error(mock_redis: AsyncMock) -> None:
     """is_valid: returns False (fail-CLOSED) on Redis error."""
     mock_redis.cache_get = AsyncMock(side_effect=ConnectionError("redis down"))
     from src.backend.entrypoints.api.mobile.refresh_token_store_redis import (
@@ -133,9 +129,7 @@ async def test_issue_rejects_invalid_args(mock_redis: AsyncMock) -> None:
 # ── issue_if_new (atomic NX) ────────────────────────────────────────
 
 
-async def test_issue_if_new_returns_true_on_first_use(
-    mock_redis: AsyncMock,
-) -> None:
+async def test_issue_if_new_returns_true_on_first_use(mock_redis: AsyncMock) -> None:
     """issue_if_new: True when Redis SET NX returns success (key didn't exist)."""
     mock_redis.execute = AsyncMock(return_value=True)  # SET NX success
     from src.backend.entrypoints.api.mobile.refresh_token_store_redis import (
@@ -159,9 +153,7 @@ async def test_issue_if_new_returns_false_on_reuse(mock_redis: AsyncMock) -> Non
     assert result is False
 
 
-async def test_issue_if_new_uses_atomic_set_nx_ex(
-    mock_redis: AsyncMock,
-) -> None:
+async def test_issue_if_new_uses_atomic_set_nx_ex(mock_redis: AsyncMock) -> None:
     """issue_if_new: invokes redis-py set() with nx=True, ex=ttl for atomicity."""
     from src.backend.entrypoints.api.mobile.refresh_token_store_redis import (
         RedisRefreshTokenStore,
@@ -201,9 +193,7 @@ async def test_issue_if_new_uses_atomic_set_nx_ex(
     assert call_args.kwargs.get("ex") == 7200
 
 
-async def test_issue_if_new_fail_closed_on_redis_error(
-    mock_redis: AsyncMock,
-) -> None:
+async def test_issue_if_new_fail_closed_on_redis_error(mock_redis: AsyncMock) -> None:
     """issue_if_new: returns False (fail-CLOSED) on Redis error."""
     mock_redis.execute = AsyncMock(side_effect=ConnectionError("redis down"))
     from src.backend.entrypoints.api.mobile.refresh_token_store_redis import (
@@ -227,22 +217,19 @@ async def test_revoke_deletes_key(mock_redis: AsyncMock) -> None:
     store = RedisRefreshTokenStore()
     await store.revoke("u1", "d1", "jti-A")
 
-    mock_redis.cache_delete.assert_awaited_once_with(
-        "gd:mobile:refresh:u1:d1:jti-A"
-    )
+    mock_redis.cache_delete.assert_awaited_once_with("gd:mobile:refresh:u1:d1:jti-A")
 
 
 async def test_revoke_logs_warning_on_redis_unavailable(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """revoke: graceful no-op when Redis unavailable (logs warning)."""
+
     # Patch get_redis_client to raise
     def _raise() -> None:
         raise ConnectionError("redis down")
 
-    monkeypatch.setattr(
-        "src.backend.core.storage.redis.get_redis_client", _raise
-    )
+    monkeypatch.setattr("src.backend.core.storage.redis.get_redis_client", _raise)
 
     from src.backend.entrypoints.api.mobile.refresh_token_store_redis import (
         RedisRefreshTokenStore,
@@ -289,9 +276,7 @@ async def test_full_rotation_cycle(mock_redis: AsyncMock) -> None:
     # 3. Revoke old token
     mock_redis.cache_get = AsyncMock(return_value=None)
     await store.revoke("u1", "d1", "jti-old")
-    mock_redis.cache_delete.assert_awaited_with(
-        "gd:mobile:refresh:u1:d1:jti-old"
-    )
+    mock_redis.cache_delete.assert_awaited_with("gd:mobile:refresh:u1:d1:jti-old")
 
     # 4. After revoke, key no longer valid (mock cache_get returns None)
     assert await store.is_valid("u1", "d1", "jti-old") is False

@@ -10,9 +10,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 
 def _build_client_with_flags(
-    *,
-    mobile_jwt_enabled: bool = False,
-    mobile_demo_auth_enabled: bool = True,
+    *, mobile_jwt_enabled: bool = False, mobile_demo_auth_enabled: bool = True
 ) -> Any:
     """Build TestClient with given feature flag configuration.
 
@@ -37,7 +35,9 @@ def _build_client_with_flags(
 
     mock_flags = MagicMock()
     mock_flags.mobile_jwt_enabled = mobile_jwt_enabled
-    mock_flags.mobile_jwt_protections_enabled = False  # C2: явная декларация (MagicMock автосоздаёт truthy)
+    mock_flags.mobile_jwt_protections_enabled = (
+        False  # C2: явная декларация (MagicMock автосоздаёт truthy)
+    )
     mock_flags.mobile_demo_auth_enabled = mobile_demo_auth_enabled
 
     with patch.dict(

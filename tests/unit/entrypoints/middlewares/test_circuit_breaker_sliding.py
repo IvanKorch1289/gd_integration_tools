@@ -24,9 +24,7 @@ def _make_middleware(
     """Helper для создания CB middleware."""
     app_mock = MagicMock()
     return CircuitBreakerMiddleware(
-        app_mock,
-        default_policy=default_policy,
-        route_policies=route_policies,
+        app_mock, default_policy=default_policy, route_policies=route_policies
     )
 
 
@@ -146,6 +144,7 @@ def test_use_sliding_window_breaker_parameter_removed() -> None:
     only accepts: app, default_policy, route_policies, use_breaker_registry.
     """
     import inspect as _inspect
+
     sig = _inspect.signature(CircuitBreakerMiddleware.__init__)
     assert "use_sliding_window_breaker" not in sig.parameters, (
         "use_sliding_window_breaker should be removed (S13 Phase 2c complete)"

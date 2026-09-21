@@ -3,6 +3,7 @@
 Fixes OOM risk in data_masking.py which buffers entire response body
 in memory for hash computation.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -15,6 +16,7 @@ class TestStreamingBodyHasher:
         from src.backend.entrypoints.middlewares._streaming_hash import (
             StreamingBodyHasher,
         )
+
         h = StreamingBodyHasher()
         assert h is not None
         assert h.finalize() == hashlib.sha256(b"").hexdigest()
@@ -23,6 +25,7 @@ class TestStreamingBodyHasher:
         from src.backend.entrypoints.middlewares._streaming_hash import (
             StreamingBodyHasher,
         )
+
         h = StreamingBodyHasher()
         h.update(b"hello ")
         h.update(b"world")
@@ -32,6 +35,7 @@ class TestStreamingBodyHasher:
         from src.backend.entrypoints.middlewares._streaming_hash import (
             StreamingBodyHasher,
         )
+
         h = StreamingBodyHasher()
         h.update(b"x" * 1000)
         result = h.finalize(prefix_len=16)
@@ -44,6 +48,7 @@ class TestStreamingBodyHasher:
         from src.backend.entrypoints.middlewares._streaming_hash import (
             StreamingBodyHasher,
         )
+
         h = StreamingBodyHasher()
         h.update(b"payload")
         etag = h.etag()

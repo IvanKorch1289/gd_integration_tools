@@ -1,6 +1,5 @@
 """Unit-тесты LLMModelPricing — Sprint 12 K4 W2."""
 
-
 from __future__ import annotations
 
 from decimal import Decimal

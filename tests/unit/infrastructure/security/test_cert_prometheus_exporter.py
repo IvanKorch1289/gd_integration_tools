@@ -7,6 +7,7 @@
 
 Pattern (D259, Ponytail): thin wrapper над prometheus_client.
 """
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
@@ -17,6 +18,7 @@ class TestCertPrometheusExporter:
         from src.backend.infrastructure.security.cert_store.prometheus_exporter import (
             CertPrometheusExporter,
         )
+
         exporter = CertPrometheusExporter()
         assert exporter is not None
 
@@ -25,6 +27,7 @@ class TestCertPrometheusExporter:
         from src.backend.infrastructure.security.cert_store.prometheus_exporter import (
             CertPrometheusExporter,
         )
+
         exporter = CertPrometheusExporter()
         # Метрики должны быть доступны
         assert exporter.cert_expired_total is not None
@@ -35,14 +38,14 @@ class TestCertPrometheusExporter:
         from src.backend.infrastructure.security.cert_store.prometheus_exporter import (
             CertPrometheusExporter,
         )
+
         exporter = CertPrometheusExporter()
         # Mock cert_store
         mock_store = MagicMock()
-        mock_store._backend.list_expiring = AsyncMock(
-            return_value=[],
-        )
+        mock_store._backend.list_expiring = AsyncMock(return_value=[])
         # Не должно падать
         import asyncio
+
         asyncio.run(exporter.update(mock_store, days=30))
 
     def test_export_returns_text(self) -> None:
@@ -50,6 +53,7 @@ class TestCertPrometheusExporter:
         from src.backend.infrastructure.security.cert_store.prometheus_exporter import (
             CertPrometheusExporter,
         )
+
         exporter = CertPrometheusExporter()
         text = exporter.export()
         # Должен содержать наши метрики

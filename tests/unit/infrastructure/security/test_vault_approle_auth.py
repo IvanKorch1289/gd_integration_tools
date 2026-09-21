@@ -1,4 +1,5 @@
 """TDD: VaultCertBackend AppRole auth (S171 M21, D255)."""
+
 from __future__ import annotations
 
 import sys as _sys
@@ -19,6 +20,7 @@ class TestVaultCertBackendAppRole:
         from src.backend.infrastructure.security.cert_store.backend_vault import (
             VaultCertBackend,
         )
+
         backend = VaultCertBackend(
             base_path="secret/certs",
             vault_url="https://vault.example.com",
@@ -32,6 +34,7 @@ class TestVaultCertBackendAppRole:
         from src.backend.infrastructure.security.cert_store.backend_vault import (
             VaultCertBackend,
         )
+
         backend = VaultCertBackend(
             base_path="secret/certs",
             vault_url="https://vault.example.com",
@@ -43,6 +46,7 @@ class TestVaultCertBackendAppRole:
         from src.backend.infrastructure.security.cert_store.backend_vault import (
             VaultCertBackend,
         )
+
         backend = VaultCertBackend(
             base_path="secret/certs",
             vault_url="https://vault",
@@ -52,7 +56,9 @@ class TestVaultCertBackendAppRole:
         # До первого вызова hvac.Client НЕ должен быть создан
         assert backend._client is None
 
-    @pytest.mark.skip(reason="D255: complex hvac mocking — covered by integration test, manual verification OK")
+    @pytest.mark.skip(
+        reason="D255: complex hvac mocking — covered by integration test, manual verification OK"
+    )
     def test_get_uses_approle(self) -> None:
         """get() через AppRole auth (D255)."""
         # hvac уже pre-mocked в начале файла
@@ -61,6 +67,7 @@ class TestVaultCertBackendAppRole:
         from src.backend.infrastructure.security.cert_store.backend_vault import (
             VaultCertBackend,
         )
+
         mock_client = MagicMock()
         mock_client.is_authenticated.return_value = True
         hvac.Client = MagicMock(return_value=mock_client)
@@ -79,8 +86,8 @@ class TestVaultCertBackendAppRole:
                     "description": "test",
                     "version": 1,
                     "uploaded_by": "admin",
-                },
-            },
+                }
+            }
         }
         mock_client.secrets.kv.v2.read_secret_version.return_value = mock_response
         entry = backend.get("skb_api")
@@ -96,6 +103,7 @@ class TestVaultCertBackendAppRole:
         from src.backend.infrastructure.security.cert_store.backend_vault import (
             VaultCertBackend,
         )
+
         backend = VaultCertBackend(
             base_path="secret/certs",
             vault_url="https://vault",

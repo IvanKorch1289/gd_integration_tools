@@ -6,6 +6,7 @@ Per M20 plan: GET /admin/certs/expiring?days=N → JSON список
 
 Pattern (D256, D237 TDD): RED → GREEN → review.
 """
+
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -15,6 +16,7 @@ class TestAdminCertsExpiring:
     def test_endpoint_exists(self) -> None:
         """GET /admin/certs/expiring должен быть зарегистрирован."""
         from src.backend.entrypoints.api.v1.endpoints.admin_certs import router
+
         assert router is not None
         # Проверить что endpoint зарегистрирован
         paths = [r.path for r in router.routes]
@@ -25,6 +27,7 @@ class TestAdminCertsExpiring:
         from src.backend.entrypoints.api.v1.endpoints.admin_certs import (
             EXPIRING_DEFAULT_DAYS,
         )
+
         assert EXPIRING_DEFAULT_DAYS == 30
 
     def test_response_format(self) -> None:
@@ -32,6 +35,7 @@ class TestAdminCertsExpiring:
         from src.backend.entrypoints.api.v1.endpoints.admin_certs import (
             CertExpiringItem,
         )
+
         item = CertExpiringItem(
             cert_id="skb_api",
             expires_at=datetime(2027, 1, 1, tzinfo=UTC),

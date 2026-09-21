@@ -25,10 +25,7 @@ def _reset() -> None:
 
 class TestErrorExplanation:
     def test_defaults(self) -> None:
-        e = ErrorExplanation(
-            exception_type="KeyError",
-            exception_message="missing",
-        )
+        e = ErrorExplanation(exception_type="KeyError", exception_message="missing")
         assert e.source_file == ""
         assert e.source_line == 0
         assert e.function_name == ""
@@ -51,9 +48,7 @@ class TestErrorExplanation:
 
     def test_to_dict(self) -> None:
         e = ErrorExplanation(
-            exception_type="ValueError",
-            exception_message="bad",
-            source_file="x.py",
+            exception_type="ValueError", exception_message="bad", source_file="x.py"
         )
         d = e.to_dict()
         assert d["exception_type"] == "ValueError"
@@ -63,9 +58,15 @@ class TestErrorExplanation:
 class TestExceptionHints:
     def test_known_types_have_hints(self) -> None:
         for exc_type in [
-            "KeyError", "ValueError", "TypeError", "AttributeError",
-            "ConnectionError", "TimeoutError", "ImportError",
-            "FileNotFoundError", "PermissionError",
+            "KeyError",
+            "ValueError",
+            "TypeError",
+            "AttributeError",
+            "ConnectionError",
+            "TimeoutError",
+            "ImportError",
+            "FileNotFoundError",
+            "PermissionError",
         ]:
             assert exc_type in _EXCEPTION_HINTS
             assert len(_EXCEPTION_HINTS[exc_type]) > 0
@@ -141,6 +142,7 @@ class TestExplainHints:
 
     def test_unknown_exception_generic_hints(self) -> None:
         e = ErrorExplainer()
+
         # Use a custom exception not in hints map.
         class CustomError(Exception):
             pass

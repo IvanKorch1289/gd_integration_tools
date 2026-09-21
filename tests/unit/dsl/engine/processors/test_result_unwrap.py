@@ -1,6 +1,5 @@
 """Unit-тесты ResultUnwrapProcessor — Wave [wave:s5/k3-w12-result-monad]."""
 
-
 from __future__ import annotations
 
 from typing import Any

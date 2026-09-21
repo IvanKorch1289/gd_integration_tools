@@ -55,9 +55,7 @@ class TestExecuteParallelTimeout:
         engine = ExecutionEngine(validate_before_execute=False)
         processors = [_FastProcessor("fast"), _HangingProcessor("hang")]
 
-        result = await engine.execute_parallel(
-            processors, body={"x": 1}, timeout=0.05,
-        )
+        result = await engine.execute_parallel(processors, body={"x": 1}, timeout=0.05)
 
         assert result.status == ExchangeStatus.failed
         # Fast должен успеть выполниться до того, как зависший убьётся по таймауту.
@@ -88,13 +86,9 @@ class TestExecuteParallelTimeout:
     async def test_short_timeout_fires_for_all_hanging(self) -> None:
         """Если ВСЕ процессоры зависают — все попадают в trace с TimeoutError."""
         engine = ExecutionEngine(validate_before_execute=False)
-        processors = [
-            _HangingProcessor(f"hang_{i}", sleep=2.0) for i in range(3)
-        ]
+        processors = [_HangingProcessor(f"hang_{i}", sleep=2.0) for i in range(3)]
 
-        result = await engine.execute_parallel(
-            processors, body={"x": 1}, timeout=0.05,
-        )
+        result = await engine.execute_parallel(processors, body={"x": 1}, timeout=0.05)
 
         assert result.status == ExchangeStatus.failed
         trace = result.properties.get("_trace", [])
@@ -106,13 +100,9 @@ class TestExecuteParallelTimeout:
     async def test_fast_processors_complete_under_timeout(self) -> None:
         """Быстрые процессоры успевают завершиться до таймаута."""
         engine = ExecutionEngine(validate_before_execute=False)
-        processors = [
-            _FastProcessor(f"fast_{i}", marker=f"m{i}") for i in range(5)
-        ]
+        processors = [_FastProcessor(f"fast_{i}", marker=f"m{i}") for i in range(5)]
 
-        result = await engine.execute_parallel(
-            processors, body={"x": 1}, timeout=1.0,
-        )
+        result = await engine.execute_parallel(processors, body={"x": 1}, timeout=1.0)
 
         assert result.status == ExchangeStatus.completed
         for i in range(5):

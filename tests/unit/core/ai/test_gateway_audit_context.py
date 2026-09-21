@@ -35,7 +35,7 @@ async def test_emit_requested_step() -> None:
     await ctx._emit("requested")
     event = audit.emit.await_args.args[0]
     assert event.event_type.value.endswith("requested") or "requested" in str(
-        event.event_type,
+        event.event_type
     )
     assert event.workflow_id == "wf-1"
     assert event.correlation_id == "corr-1"

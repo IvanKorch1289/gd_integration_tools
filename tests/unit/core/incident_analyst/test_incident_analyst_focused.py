@@ -95,10 +95,7 @@ class TestAnalystInit:
 class TestAnalyzeTimeoutError:
     def test_basic(self) -> None:
         a = IncidentAnalyst()
-        ctx = IncidentContext(
-            error_type="TimeoutError",
-            route_id="order-create",
-        )
+        ctx = IncidentContext(error_type="TimeoutError", route_id="order-create")
         report = a.analyze(ctx)
         assert "TimeoutError" in report.summary
         assert "order-create" in report.summary
@@ -179,14 +176,11 @@ class TestContextBoosts:
     def test_recent_deploy_boosts_code(self) -> None:
         a = IncidentAnalyst()
         ctx = IncidentContext(
-            error_type="OutOfMemoryError",
-            recent_deploys=["v1.2.3 at 2026-09-11 10:00"],
+            error_type="OutOfMemoryError", recent_deploys=["v1.2.3 at 2026-09-11 10:00"]
         )
         report = a.analyze(ctx)
         # Code hypothesis should be boosted.
-        code_h = next(
-            h for h in report.hypotheses if h.category == "code"
-        )
+        code_h = next(h for h in report.hypotheses if h.category == "code")
         assert code_h.confidence > 0.8  # boosted from 0.8
 
     def test_high_latency_boosts_infra(self) -> None:
@@ -202,8 +196,7 @@ class TestContextBoosts:
     def test_config_change_boosts_config(self) -> None:
         a = IncidentAnalyst()
         ctx = IncidentContext(
-            error_type="KeyError",
-            recent_config_changes=["env: TIMEOUT removed"],
+            error_type="KeyError", recent_config_changes=["env: TIMEOUT removed"]
         )
         report = a.analyze(ctx)
         # Top should be config.
@@ -256,10 +249,7 @@ class TestSeverityClassification:
 class TestHypothesisSorting:
     def test_sorted_by_confidence_desc(self) -> None:
         a = IncidentAnalyst()
-        ctx = IncidentContext(
-            error_type="OutOfMemoryError",
-            recent_deploys=["v1.2.3"],
-        )
+        ctx = IncidentContext(error_type="OutOfMemoryError", recent_deploys=["v1.2.3"])
         report = a.analyze(ctx)
         # Confidence should be descending.
         confidences = [h.confidence for h in report.hypotheses]
@@ -278,8 +268,7 @@ class TestEvidenceBuilding:
     def test_evidence_includes_deploys(self) -> None:
         a = IncidentAnalyst()
         ctx = IncidentContext(
-            error_type="X",
-            recent_deploys=["v1.2.3 at 10:00", "v1.2.2 at 09:00"],
+            error_type="X", recent_deploys=["v1.2.3 at 10:00", "v1.2.2 at 09:00"]
         )
         report = a.analyze(ctx)
         for h in report.hypotheses:
@@ -287,10 +276,7 @@ class TestEvidenceBuilding:
 
     def test_evidence_includes_latency(self) -> None:
         a = IncidentAnalyst()
-        ctx = IncidentContext(
-            error_type="X",
-            latency_p99_ms=5000.0,
-        )
+        ctx = IncidentContext(error_type="X", latency_p99_ms=5000.0)
         report = a.analyze(ctx)
         for h in report.hypotheses:
             assert any("P99 latency" in e for e in h.evidence)
@@ -300,9 +286,7 @@ class TestReportToDict:
     def test_export(self) -> None:
         a = IncidentAnalyst()
         ctx = IncidentContext(
-            error_type="TimeoutError",
-            trace_id="trace-abc",
-            route_id="r1",
+            error_type="TimeoutError", trace_id="trace-abc", route_id="r1"
         )
         report = a.analyze(ctx)
         d = report.to_dict()

@@ -5,6 +5,7 @@ New processors for infra categories that lacked DSL:
 - infra_mongodb_find: MongoDB document queries
 - infra_kafka_produce: Kafka message production
 """
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -18,6 +19,7 @@ class TestInfraClickHouseQueryProcessor:
         from src.backend.dsl.engine.processors.infra_clickhouse import (
             InfraClickHouseQueryProcessor,
         )
+
         p = InfraClickHouseQueryProcessor(sql="SELECT 1", to="body.result")
         assert p.sql == "SELECT 1"
 
@@ -26,7 +28,10 @@ class TestInfraClickHouseQueryProcessor:
         from src.backend.dsl.engine.processors.infra_clickhouse import (
             InfraClickHouseQueryProcessor,
         )
-        p = InfraClickHouseQueryProcessor(sql="SELECT count() FROM events", to="body.result")
+
+        p = InfraClickHouseQueryProcessor(
+            sql="SELECT count() FROM events", to="body.result"
+        )
         ex = MagicMock()
         body = {}
         ex.in_message.body = body
@@ -50,7 +55,10 @@ class TestInfraMongoDBFindProcessor:
         from src.backend.dsl.engine.processors.infra_mongodb import (
             InfraMongoDBFindProcessor,
         )
-        p = InfraMongoDBFindProcessor(collection="users", query={"active": True}, to="body.users")
+
+        p = InfraMongoDBFindProcessor(
+            collection="users", query={"active": True}, to="body.users"
+        )
         assert p.collection == "users"
         assert p.query == {"active": True}
 
@@ -59,7 +67,10 @@ class TestInfraMongoDBFindProcessor:
         from src.backend.dsl.engine.processors.infra_mongodb import (
             InfraMongoDBFindProcessor,
         )
-        p = InfraMongoDBFindProcessor(collection="users", query={"active": True}, to="body.users")
+
+        p = InfraMongoDBFindProcessor(
+            collection="users", query={"active": True}, to="body.users"
+        )
         ex = MagicMock()
         body = {}
         ex.in_message.body = body
@@ -85,6 +96,7 @@ class TestInfraKafkaProduceProcessor:
         from src.backend.dsl.engine.processors.infra_kafka import (
             InfraKafkaProduceProcessor,
         )
+
         p = InfraKafkaProduceProcessor(topic="orders", value={"order_id": 1})
         assert p.topic == "orders"
 
@@ -93,6 +105,7 @@ class TestInfraKafkaProduceProcessor:
         from src.backend.dsl.engine.processors.infra_kafka import (
             InfraKafkaProduceProcessor,
         )
+
         p = InfraKafkaProduceProcessor(topic="orders", value={"order_id": 1})
         ex = MagicMock()
         ctx = MagicMock()

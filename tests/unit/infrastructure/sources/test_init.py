@@ -24,17 +24,12 @@ class TestSourcesFacadeAllExports:
     """``__all__`` audit + class/callable identity."""
 
     @pytest.mark.parametrize(
-        "symbol_name",
-        ["FileEvent", "FileWatcherSource", "build_source"],
+        "symbol_name", ["FileEvent", "FileWatcherSource", "build_source"]
     )
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(sources, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
-        assert symbol_name in sources.__all__, (
-            f"{symbol_name} not declared in __all__"
-        )
+        assert hasattr(sources, symbol_name), f"Missing export: {symbol_name}"
+        assert symbol_name in sources.__all__, f"{symbol_name} not declared in __all__"
 
     def test_all_declared_count(self) -> None:
         """``__all__`` содержит 3 символа."""

@@ -54,9 +54,7 @@ def test_service_with_repo_gets_service_helper_bound_to_repo() -> None:
         pass
 
     fake_repo = _FakeRepo()
-    svc = _TestService(
-        repo=fake_repo, response_schema=None, request_schema=None,
-    )
+    svc = _TestService(repo=fake_repo, response_schema=None, request_schema=None)
     assert svc.helper is not None
     assert svc.helper.repo is fake_repo
 
@@ -74,6 +72,6 @@ def test_helper_attr_does_not_raise_attributeerror() -> None:
         svc = _TestService(repo=_FakeRepo(), response_schema=None, request_schema=None)
     except AttributeError as exc:
         raise AssertionError(
-            f"NEW-1 fix regressed: AttributeError raised on init: {exc}",
+            f"NEW-1 fix regressed: AttributeError raised on init: {exc}"
         ) from exc
     assert svc.helper is not None

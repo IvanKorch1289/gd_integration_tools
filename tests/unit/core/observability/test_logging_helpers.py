@@ -31,47 +31,48 @@ def captured_logs() -> tuple[logging.Logger, io.StringIO]:
 class TestLogWithContext:
     """Tests for :func:`log_with_context`."""
 
-    def test_basic_message(self, captured_logs: tuple[logging.Logger, io.StringIO]) -> None:
+    def test_basic_message(
+        self, captured_logs: tuple[logging.Logger, io.StringIO]
+    ) -> None:
         logger, buf = captured_logs
         log_with_context(logger, logging.INFO, "basic message")
         assert "basic message" in buf.getvalue()
 
     def test_correlation_id_added_to_extra(
-        self, captured_logs: tuple[logging.Logger, io.StringIO],
+        self, captured_logs: tuple[logging.Logger, io.StringIO]
     ) -> None:
         logger, buf = captured_logs
-        log_with_context(
-            logger, logging.INFO, "test",
-            correlation_id="corr-123",
-        )
+        log_with_context(logger, logging.INFO, "test", correlation_id="corr-123")
         # StreamHandler doesn't render extra — но records содержат.
         # Проверяем что log не падает и buffer not empty.
         assert "test" in buf.getvalue()
 
-    def test_tenant_and_workflow_id(self, captured_logs: tuple[logging.Logger, io.StringIO]) -> None:
+    def test_tenant_and_workflow_id(
+        self, captured_logs: tuple[logging.Logger, io.StringIO]
+    ) -> None:
         logger, buf = captured_logs
         log_with_context(
-            logger, logging.INFO, "test",
-            tenant_id="t-premium",
-            workflow_id="wf-abc",
+            logger, logging.INFO, "test", tenant_id="t-premium", workflow_id="wf-abc"
         )
         assert "test" in buf.getvalue()
 
-    def test_custom_fields(self, captured_logs: tuple[logging.Logger, io.StringIO]) -> None:
+    def test_custom_fields(
+        self, captured_logs: tuple[logging.Logger, io.StringIO]
+    ) -> None:
         logger, buf = captured_logs
         log_with_context(
-            logger, logging.INFO, "test",
-            custom_field_1="value_1",
-            custom_field_2=42,
+            logger, logging.INFO, "test", custom_field_1="value_1", custom_field_2=42
         )
         assert "test" in buf.getvalue()
 
     def test_all_fields_together(
-        self, captured_logs: tuple[logging.Logger, io.StringIO],
+        self, captured_logs: tuple[logging.Logger, io.StringIO]
     ) -> None:
         logger, buf = captured_logs
         log_with_context(
-            logger, logging.WARNING, "test message",
+            logger,
+            logging.WARNING,
+            "test message",
             correlation_id="corr-1",
             tenant_id="t-test",
             workflow_id="wf-test",
@@ -112,22 +113,18 @@ class TestLogAuditEventLite:
         handler = _LevelCapture(level=logging.DEBUG)
         logger.addHandler(handler)
 
-        log_audit_event_lite(
-            logger, severity=severity, event="test.event",
-        )
+        log_audit_event_lite(logger, severity=severity, event="test.event")
         assert captured_level[0] == expected_level
 
     def test_event_as_default_message(
-        self, captured_logs: tuple[logging.Logger, io.StringIO],
+        self, captured_logs: tuple[logging.Logger, io.StringIO]
     ) -> None:
         logger, buf = captured_logs
-        log_audit_event_lite(
-            logger, severity="info", event="cache.invalidate",
-        )
+        log_audit_event_lite(logger, severity="info", event="cache.invalidate")
         assert "cache.invalidate" in buf.getvalue()
 
     def test_custom_message_overrides_event(
-        self, captured_logs: tuple[logging.Logger, io.StringIO],
+        self, captured_logs: tuple[logging.Logger, io.StringIO]
     ) -> None:
         logger, buf = captured_logs
         log_audit_event_lite(
@@ -140,7 +137,7 @@ class TestLogAuditEventLite:
         assert "cache.invalidate" not in buf.getvalue()
 
     def test_audit_event_type_in_extra(
-        self, captured_logs: tuple[logging.Logger, io.StringIO],
+        self, captured_logs: tuple[logging.Logger, io.StringIO]
     ) -> None:
         """Audit-event type передаётся через structured ``extra``."""
         logger, _ = captured_logs
@@ -154,8 +151,11 @@ class TestLogAuditEventLite:
         logger.addHandler(handler)
 
         log_audit_event_lite(
-            logger, severity="info", event="test.event",
-            tenant_id="t-test", custom_field="value",
+            logger,
+            severity="info",
+            event="test.event",
+            tenant_id="t-test",
+            custom_field="value",
         )
         assert len(captured_records) == 1
         record = captured_records[0]

@@ -5,7 +5,6 @@
 - post-fix проходят (флаг + валидация диапазона).
 """
 
-
 from __future__ import annotations
 
 from unittest.mock import patch
@@ -26,8 +25,7 @@ def test_graceful_shutdown_default_emits_flag() -> None:
     cfg = GranianTuning()
 
     with patch(
-        "src.backend.core.config.features.feature_flags.granian_rsgi_mode_enabled",
-        True,
+        "src.backend.core.config.features.feature_flags.granian_rsgi_mode_enabled", True
     ):
         cmd = cfg.build_cli_command(app="src.main:app")
 
@@ -35,9 +33,7 @@ def test_graceful_shutdown_default_emits_flag() -> None:
         f"ожидался --workers-kill-timeout в CLI, получено: {cmd!r}"
     )
     idx = cmd.index("--workers-kill-timeout")
-    assert cmd[idx + 1] == "30", (
-        f"ожидалось значение 30, получено {cmd[idx + 1]!r}"
-    )
+    assert cmd[idx + 1] == "30", f"ожидалось значение 30, получено {cmd[idx + 1]!r}"
 
 
 def test_graceful_shutdown_explicit_value_emits_flag() -> None:
@@ -46,8 +42,7 @@ def test_graceful_shutdown_explicit_value_emits_flag() -> None:
     cfg = GranianTuning(granian_kill_timeout=300)
 
     with patch(
-        "src.backend.core.config.features.feature_flags.granian_rsgi_mode_enabled",
-        True,
+        "src.backend.core.config.features.feature_flags.granian_rsgi_mode_enabled", True
     ):
         cmd = cfg.build_cli_command(app="src.main:app")
 
@@ -55,9 +50,7 @@ def test_graceful_shutdown_explicit_value_emits_flag() -> None:
         f"ожидался --workers-kill-timeout в CLI, получено: {cmd!r}"
     )
     idx = cmd.index("--workers-kill-timeout")
-    assert cmd[idx + 1] == "300", (
-        f"ожидалось значение 300, получено {cmd[idx + 1]!r}"
-    )
+    assert cmd[idx + 1] == "300", f"ожидалось значение 300, получено {cmd[idx + 1]!r}"
 
 
 def test_graceful_shutdown_zero_omits_flag() -> None:
@@ -66,14 +59,12 @@ def test_graceful_shutdown_zero_omits_flag() -> None:
     cfg = GranianTuning(granian_kill_timeout=0)
 
     with patch(
-        "src.backend.core.config.features.feature_flags.granian_rsgi_mode_enabled",
-        True,
+        "src.backend.core.config.features.feature_flags.granian_rsgi_mode_enabled", True
     ):
         cmd = cfg.build_cli_command(app="src.main:app")
 
     assert "--workers-kill-timeout" not in cmd, (
-        f"--workers-kill-timeout НЕ должен эмититься при value=0, "
-        f"получено: {cmd!r}"
+        f"--workers-kill-timeout НЕ должен эмититься при value=0, получено: {cmd!r}"
     )
 
 
@@ -84,9 +75,9 @@ def test_graceful_shutdown_rejects_value_above_cap() -> None:
         GranianTuning(granian_kill_timeout=400)
 
     # Уточнение причины — должна упоминаться верхняя граница 300.
-    assert "300" in str(exc_info.value) or "less_than_equal" in str(
-        exc_info.value,
-    ), f"ожидалась ошибка про cap 300, получено: {exc_info.value!r}"
+    assert "300" in str(exc_info.value) or "less_than_equal" in str(exc_info.value), (
+        f"ожидалась ошибка про cap 300, получено: {exc_info.value!r}"
+    )
 
 
 def test_graceful_shutdown_rejects_negative() -> None:
@@ -95,9 +86,9 @@ def test_graceful_shutdown_rejects_negative() -> None:
     with pytest.raises(ValidationError) as exc_info:
         GranianTuning(granian_kill_timeout=-1)
 
-    assert "greater_than_equal" in str(exc_info.value) or "0" in str(
-        exc_info.value,
-    ), f"ожидалась ошибка про ge=0, получено: {exc_info.value!r}"
+    assert "greater_than_equal" in str(exc_info.value) or "0" in str(exc_info.value), (
+        f"ожидалась ошибка про ge=0, получено: {exc_info.value!r}"
+    )
 
 
 def test_graceful_shutdown_flag_positioned_before_app() -> None:
@@ -106,8 +97,7 @@ def test_graceful_shutdown_flag_positioned_before_app() -> None:
     cfg = GranianTuning(granian_kill_timeout=15)
 
     with patch(
-        "src.backend.core.config.features.feature_flags.granian_rsgi_mode_enabled",
-        True,
+        "src.backend.core.config.features.feature_flags.granian_rsgi_mode_enabled", True
     ):
         cmd = cfg.build_cli_command(app="src.main:app")
 

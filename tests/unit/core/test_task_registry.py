@@ -1,6 +1,5 @@
 """Unit-тесты ``TaskRegistry`` + ``Watchdog`` (V15 R-V15-11)."""
 
-
 from __future__ import annotations
 
 import asyncio

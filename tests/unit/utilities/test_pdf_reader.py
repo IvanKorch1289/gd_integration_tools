@@ -1,6 +1,5 @@
 """Unit-тесты PDF reader facade — ``[wave:s18/w0-goal-driven-sweep-5-pdf-facade]``."""
 
-
 from __future__ import annotations
 
 import sys
@@ -93,7 +92,7 @@ def test_pypdf_fallback(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None
 
 
 def test_both_unavailable_raises(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     """Оба backend'а отсутствуют → PdfReaderUnavailable."""
     pdf_file = tmp_path / "doc.pdf"

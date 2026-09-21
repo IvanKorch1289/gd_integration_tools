@@ -45,10 +45,7 @@ class TestNotificationHubDeprecation:
             import importlib
 
             importlib.reload(
-                __import__(
-                    "src.backend.services.ops.notification_hub",
-                    fromlist=["*"],
-                )
+                __import__("src.backend.services.ops.notification_hub", fromlist=["*"])
             )
 
         # Find DeprecationWarning mentioning notification_hub / IL2.2 / ADR-023
@@ -101,7 +98,9 @@ class TestNotificationHubDeprecation:
         # Per inline comment (line 65-72): 5 consumers — anomaly_detector,
         # scheduled_reports, registers_workflow (×2 refs), protocols, notify_actions.
         assert doc is not None
-        assert "5 consumers" in doc or "5 исторических" in doc or "consumer" in doc.lower()
+        assert (
+            "5 consumers" in doc or "5 исторических" in doc or "consumer" in doc.lower()
+        )
 
 
 @pytest.mark.unit
@@ -111,9 +110,7 @@ class TestNotificationHubLegacyContract:
     def test_notification_request_dataclass(self) -> None:
         """``NotificationRequest`` dataclass — backward-compat fields."""
         req = NotificationRequest(
-            subject="test",
-            message="test msg",
-            channel=Channel.EMAIL,
+            subject="test", message="test msg", channel=Channel.EMAIL
         )
         assert req.subject == "test"
         assert req.message == "test msg"

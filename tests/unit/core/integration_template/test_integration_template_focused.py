@@ -15,9 +15,7 @@ from src.backend.core.integration_template import (
     get_template_catalog,
     get_template_generator,
 )
-from src.backend.core.integration_template.catalog import (
-    reset_template_catalog,
-)
+from src.backend.core.integration_template.catalog import reset_template_catalog
 from src.backend.core.integration_template.generator import (
     GeneratedFile,
     reset_template_generator,
@@ -169,11 +167,10 @@ class TestGeneratorGenerate:
             files=[
                 TemplateFile(
                     path="route.toml",
-                    content="id = \"{{route_id}}\"\nowner = \"{{owner}}\"\n",
+                    content='id = "{{route_id}}"\nowner = "{{owner}}"\n',
                 ),
                 TemplateFile(
-                    path="README.md",
-                    content="# {{route_id}}\nOwner: {{owner}}\n",
+                    path="README.md", content="# {{route_id}}\nOwner: {{owner}}\n"
                 ),
             ],
         )
@@ -216,7 +213,7 @@ class TestGeneratorGenerate:
             variables=[],
             files=[TemplateFile(path="existing.txt", content="new")],
         )
-        result = gen.generate(
+        _result = gen.generate(
             template=template, variables={}, target_dir=tmp_path, overwrite=False
         )
         # Existing file unchanged.
@@ -233,7 +230,7 @@ class TestGeneratorGenerate:
             variables=[],
             files=[TemplateFile(path="existing.txt", content="new")],
         )
-        result = gen.generate(
+        _result = gen.generate(
             template=template, variables={}, target_dir=tmp_path, overwrite=True
         )
         assert existing.read_text() == "new"
@@ -247,9 +244,7 @@ class TestGeneratorGenerate:
             variables=[],
             files=[TemplateFile(path="subdir/nested/file.txt", content="data")],
         )
-        result = gen.generate(
-            template=template, variables={}, target_dir=tmp_path
-        )
+        _result = gen.generate(template=template, variables={}, target_dir=tmp_path)
         assert (tmp_path / "subdir" / "nested" / "file.txt").exists()
 
     def test_executable(self, tmp_path: Path) -> None:
@@ -259,23 +254,22 @@ class TestGeneratorGenerate:
             description="d",
             category="test",
             variables=[],
-            files=[TemplateFile(path="run.sh", content="#!/bin/sh\necho", executable=True)],
+            files=[
+                TemplateFile(path="run.sh", content="#!/bin/sh\necho", executable=True)
+            ],
         )
-        result = gen.generate(
-            template=template, variables={}, target_dir=tmp_path
-        )
+        _result = gen.generate(template=template, variables={}, target_dir=tmp_path)
         f = tmp_path / "run.sh"
         assert f.exists()
         # Executable bit set.
         import stat
+
         assert f.stat().st_mode & stat.S_IXUSR
 
 
 class TestGeneratedFile:
     def test_defaults(self) -> None:
-        f = GeneratedFile(
-            path="x", absolute_path="/abs/x", size_bytes=100
-        )
+        f = GeneratedFile(path="x", absolute_path="/abs/x", size_bytes=100)
         assert f.executable is False
 
 
@@ -330,12 +324,16 @@ class TestRealisticExample:
         assert len(result.files) == 3
 
         # Verify route.toml.
-        route_toml = (tmp_path / "extensions" / "order-create" / "route.toml").read_text()
+        route_toml = (
+            tmp_path / "extensions" / "order-create" / "route.toml"
+        ).read_text()
         assert "order-create" in route_toml
         assert "team-payments" in route_toml
         assert "https://api.example.com/orders" in route_toml
         assert "events.order-create.dlq" in route_toml
 
         # Verify test file.
-        test_file = (tmp_path / "extensions" / "order-create" / "test_order-create.py").read_text()
+        test_file = (
+            tmp_path / "extensions" / "order-create" / "test_order-create.py"
+        ).read_text()
         assert "order-create" in test_file

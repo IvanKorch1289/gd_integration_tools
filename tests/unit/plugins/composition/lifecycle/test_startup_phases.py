@@ -6,6 +6,7 @@ Verifies:
 * Phases are categorized in correct modules (observability/infrastructure/services)
 * Idempotent: re-importing doesn't cause issues
 """
+
 from __future__ import annotations
 
 import inspect
@@ -26,9 +27,7 @@ def test_startup_phases_count() -> None:
 
     Если добавляешь новую фазу, обнови этот test.
     """
-    assert len(STARTUP_PHASES) == 19, (
-        f"Expected 19 phases, got {len(STARTUP_PHASES)}"
-    )
+    assert len(STARTUP_PHASES) == 19, f"Expected 19 phases, got {len(STARTUP_PHASES)}"
 
 
 @pytest.mark.unit
@@ -40,10 +39,7 @@ def test_startup_phases_order_observability_first() -> None:
     """
     from src.backend.plugins.composition.lifecycle.startup_phases import observability
 
-    obs_count = sum(
-        1 for p in STARTUP_PHASES
-        if p.__module__ == observability.__name__
-    )
+    obs_count = sum(1 for p in STARTUP_PHASES if p.__module__ == observability.__name__)
     # First `obs_count` should all be observability
     for i in range(obs_count):
         assert STARTUP_PHASES[i].__module__ == observability.__name__, (
@@ -66,9 +62,7 @@ def test_startup_phases_order_infrastructure_second() -> None:
     )
 
     # Find boundaries dynamically
-    obs_count = sum(
-        1 for p in STARTUP_PHASES if p.__module__ == observability.__name__
-    )
+    obs_count = sum(1 for p in STARTUP_PHASES if p.__module__ == observability.__name__)
     infra_count = sum(
         1 for p in STARTUP_PHASES if p.__module__ == infrastructure.__name__
     )
@@ -79,9 +73,9 @@ def test_startup_phases_order_infrastructure_second() -> None:
         )
     # After infrastructure, should be different module (services)
     if obs_count + infra_count < len(STARTUP_PHASES):
-        assert STARTUP_PHASES[obs_count + infra_count].__module__ == services.__name__, (
-            f"Phase {obs_count + infra_count} should be services"
-        )
+        assert (
+            STARTUP_PHASES[obs_count + infra_count].__module__ == services.__name__
+        ), f"Phase {obs_count + infra_count} should be services"
 
 
 @pytest.mark.unit
@@ -94,15 +88,11 @@ def test_startup_phases_order_services_last() -> None:
     )
 
     # Compute boundaries
-    obs_count = sum(
-        1 for p in STARTUP_PHASES if p.__module__ == observability.__name__
-    )
+    obs_count = sum(1 for p in STARTUP_PHASES if p.__module__ == observability.__name__)
     infra_count = sum(
         1 for p in STARTUP_PHASES if p.__module__ == infrastructure.__name__
     )
-    services_count = sum(
-        1 for p in STARTUP_PHASES if p.__module__ == services.__name__
-    )
+    services_count = sum(1 for p in STARTUP_PHASES if p.__module__ == services.__name__)
 
     # All services should be at the end
     for i in range(obs_count + infra_count, len(STARTUP_PHASES)):
@@ -124,7 +114,9 @@ async def test_all_phases_accept_app_argument() -> None:
         sig = inspect.signature(phase)
         params = list(sig.parameters.keys())
         # First param должен быть app
-        assert params[0] == "app", f"Phase {i} ({phase.__name__}) first param should be 'app', got '{params[0]}'"
+        assert params[0] == "app", (
+            f"Phase {i} ({phase.__name__}) first param should be 'app', got '{params[0]}'"
+        )
         # Return type annotation: None (void) — но with PEP 563 string annotations,
         # sig.return_annotation is the string 'None', not the type None itself.
         assert sig.return_annotation in (None, "None"), (
@@ -162,4 +154,5 @@ def test_idempotent_import() -> None:
     from src.backend.plugins.composition.lifecycle.startup_phases import (
         STARTUP_PHASES as SP2,
     )
+
     assert STARTUP_PHASES is SP2, "Re-import returned different list"

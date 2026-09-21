@@ -71,7 +71,8 @@ async def test_canonical_mode_accepts_valid_signature() -> None:
         body = b'{"event": "x"}'
         sig, ts = sign_payload(body, SECRET)
         await source.verify_and_dispatch(
-            body, {"X-Signature": sig, "X-Timestamp": str(ts)},
+            body,
+            {"X-Signature": sig, "X-Timestamp": str(ts)},
             payload={"event": "x"},
             _principal="webhook-service",
         )
@@ -161,9 +162,7 @@ async def test_legacy_mode_no_timestamp_header_uses_body_hmac() -> None:
         body = b'{"event": "y"}'
         legacy_sig = _legacy_hmac_hex(body, SECRET)
         await source.verify_and_dispatch(
-            body,
-            {"X-Signature": legacy_sig},
-            _principal="webhook-service",
+            body, {"X-Signature": legacy_sig}, _principal="webhook-service"
         )
 
 

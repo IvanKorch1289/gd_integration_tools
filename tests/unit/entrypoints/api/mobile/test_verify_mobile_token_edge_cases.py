@@ -21,9 +21,7 @@ from unittest.mock import MagicMock, patch
 
 
 def _build_client_with_flags(
-    *,
-    mobile_demo_auth_enabled: bool = True,
-    mobile_jwt_enabled: bool = False,
+    *, mobile_demo_auth_enabled: bool = True, mobile_jwt_enabled: bool = False
 ) -> Any:
     """Build TestClient with given feature flag configuration.
 
@@ -60,8 +58,7 @@ def test_bearer_with_only_space_returns_401_invalid_format() -> None:
     """Authorization='Bearer ' (trailing space, empty token) → 401 invalid format."""
     for client, _ in _build_client_with_flags(mobile_demo_auth_enabled=True):
         response = client.get(
-            "/mobile/v1/profile",
-            headers={"Authorization": "Bearer "},
+            "/mobile/v1/profile", headers={"Authorization": "Bearer "}
         )
         assert response.status_code == 401
         # Token becomes empty after [7:] strips "Bearer " (7 chars)
@@ -73,10 +70,7 @@ def test_bearer_with_only_space_returns_401_invalid_format() -> None:
 def test_bearer_without_space_returns_401_missing_header() -> None:
     """Authorization='Bearer' (no space, no token) → 401 missing header."""
     for client, _ in _build_client_with_flags(mobile_demo_auth_enabled=True):
-        response = client.get(
-            "/mobile/v1/profile",
-            headers={"Authorization": "Bearer"},
-        )
+        response = client.get("/mobile/v1/profile", headers={"Authorization": "Bearer"})
         assert response.status_code == 401
         assert "Missing or invalid Authorization header" in response.json()["detail"]
 
@@ -111,7 +105,9 @@ def test_demo_disabled_blocks_demo_token_with_401() -> None:
         device_id = "11111111-2222-4333-8444-555555555555"
         response = client.get(
             "/mobile/v1/profile",
-            headers={"Authorization": f"Bearer mobile:user_{device_id[:8]}:tokendemo12345"},
+            headers={
+                "Authorization": f"Bearer mobile:user_{device_id[:8]}:tokendemo12345"
+            },
         )
         assert response.status_code == 401
         assert "Mobile auth disabled" in response.json()["detail"]
@@ -121,8 +117,7 @@ def test_authorization_with_only_bearer_prefix_and_tab() -> None:
     """Authorization='Bearer\\ttoken' (tab not space) → 401 missing header."""
     for client, _ in _build_client_with_flags(mobile_demo_auth_enabled=True):
         response = client.get(
-            "/mobile/v1/profile",
-            headers={"Authorization": "Bearer\ttoken"},
+            "/mobile/v1/profile", headers={"Authorization": "Bearer\ttoken"}
         )
         # Strict check: "Bearer\t" doesn't start with "Bearer " (tab vs space)
         assert response.status_code == 401

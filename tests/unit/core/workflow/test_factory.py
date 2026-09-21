@@ -35,7 +35,7 @@ class TestCreateWorkflowBackend:
         assert isinstance(backend, LiteTemporalBackend)
 
     async def test_auto_prod_falls_back_when_temporal_missing(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         # Имитируем RuntimeError при попытке connect (нет SDK).
         async def _broken_connect(**kwargs: object) -> object:
@@ -45,7 +45,7 @@ class TestCreateWorkflowBackend:
         import types
 
         fake_module = types.ModuleType(
-            "src.backend.infrastructure.workflow.temporal_backend",
+            "src.backend.infrastructure.workflow.temporal_backend"
         )
 
         class _Shim:

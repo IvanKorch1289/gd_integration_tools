@@ -15,8 +15,6 @@ import importlib
 import sys
 from pathlib import Path
 
-import pytest
-
 
 class TestCdcBridgeMoved:
     """Verify cdc_bridge relocated to infrastructure layer."""
@@ -39,9 +37,7 @@ class TestCdcBridgeMoved:
     def test_new_location_importable(self) -> None:
         """New cdc module imports успешно."""
         sys.modules.pop("src.backend.infrastructure.di_bridge.cdc", None)
-        module = importlib.import_module(
-            "src.backend.infrastructure.di_bridge.cdc"
-        )
+        module = importlib.import_module("src.backend.infrastructure.di_bridge.cdc")
         # Verify all 5 export functions still present (verified via grep)
         assert hasattr(module, "get_poll_cdc_backend_class")
         assert hasattr(module, "get_listen_notify_cdc_backend_class")
@@ -51,9 +47,7 @@ class TestCdcBridgeMoved:
 
     def test_get_poll_cdc_backend_class_callable(self) -> None:
         """get_poll_cdc_backend_class returns CDC backend class."""
-        from src.backend.infrastructure.di_bridge.cdc import (
-            get_poll_cdc_backend_class,
-        )
+        from src.backend.infrastructure.di_bridge.cdc import get_poll_cdc_backend_class
 
         cls = get_poll_cdc_backend_class()
         assert cls is not None
@@ -67,17 +61,11 @@ class TestInfrastructureLocatorMigrated:
         text = Path(
             "src/backend/core/di/providers/infrastructure_locator.py"
         ).read_text(encoding="utf-8")
-        assert (
-            "from src.backend.infrastructure.di_bridge.cdc import"
-            in text
-        ), (
+        assert "from src.backend.infrastructure.di_bridge.cdc import" in text, (
             "infrastructure_locator должна import из new location "
             "(Sprint 42 Item 1 migration)"
         )
-        assert (
-            "from src.backend.core.di.providers.cdc_bridge"
-            not in text
-        ), (
+        assert "from src.backend.core.di.providers.cdc_bridge" not in text, (
             "Old cdc_bridge import path НЕ должен быть в "
             "infrastructure_locator (Sprint 42 Item 1 migration)"
         )
@@ -88,13 +76,11 @@ class TestAllowlistReduction:
 
     def test_cdc_bridge_entries_removed(self) -> None:
         """3 cdc_bridge entries removed from allowlist (gap-agent estimated 4)."""
-        text = Path("tools/check_layers_allowlist.txt").read_text(
-            encoding="utf-8"
-        )
+        text = Path("tools/check_layers_allowlist.txt").read_text(encoding="utf-8")
         cdc_lines = [
-            line for line in text.splitlines()
-            if line.startswith("#") is False
-            and "cdc_bridge" in line
+            line
+            for line in text.splitlines()
+            if line.startswith("#") is False and "cdc_bridge" in line
         ]
         assert len(cdc_lines) == 0, (
             f"All cdc_bridge entries should be removed, found: {cdc_lines}"

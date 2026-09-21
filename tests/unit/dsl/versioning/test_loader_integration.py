@@ -1,6 +1,5 @@
 """W25.3 — load_pipeline_from_yaml автоматически мигрирует apiVersion."""
 
-
 from __future__ import annotations
 
 import yaml

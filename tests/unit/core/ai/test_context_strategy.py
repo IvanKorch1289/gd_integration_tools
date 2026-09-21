@@ -23,7 +23,9 @@ from src.backend.core.ai.context_strategy import (
 
 def _msg(idx: int) -> ContextMessage:
     """Helper: создать test message с idx в content."""
-    return ContextMessage(role="user" if idx % 2 == 0 else "assistant", content=f"message {idx}")
+    return ContextMessage(
+        role="user" if idx % 2 == 0 else "assistant", content=f"message {idx}"
+    )
 
 
 def _budget(limit: int = 1000) -> TokenBudget:

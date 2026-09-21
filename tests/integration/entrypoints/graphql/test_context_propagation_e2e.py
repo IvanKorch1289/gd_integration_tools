@@ -103,9 +103,11 @@ class TestSchemaSourceHasContextGetter:
                 and node.func.id == "GraphQLRouter"
             ):
                 for kw in node.keywords:
-                    if kw.arg == "context_getter" and isinstance(
-                        kw.value, ast.Name
-                    ) and kw.value.id == "_graphql_context_getter":
+                    if (
+                        kw.arg == "context_getter"
+                        and isinstance(kw.value, ast.Name)
+                        and kw.value.id == "_graphql_context_getter"
+                    ):
                         found = True
         assert found, (
             "schema.py: GraphQLRouter(...) НЕ передаёт context_getter="
@@ -143,7 +145,11 @@ class TestSchemaSourceHasContextGetter:
 
 def _run_async(coro):
     """Запустить coroutine синхронно (для тестов без pytest-asyncio)."""
-    return asyncio.get_event_loop().run_until_complete(coro) if False else asyncio.run(coro)
+    return (
+        asyncio.get_event_loop().run_until_complete(coro)
+        if False
+        else asyncio.run(coro)
+    )
 
 
 class TestContextGetterBehavior:
@@ -192,5 +198,3 @@ def test_extract_user_permissions_roundtrip() -> None:
     perms = extract_user_permissions(auth)
     assert "admin" in perms
     assert "operator" in perms
-
-

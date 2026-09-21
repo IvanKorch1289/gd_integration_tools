@@ -5,12 +5,14 @@ Temporal: нет native compensation — реализуем через signal + 
 
 Pattern (Ponytail, D173): тонкая обёртка над signal_workflow.
 """
+
 from __future__ import annotations
 
 
 class TestCompensateWorkflow:
     def test_instantiates(self) -> None:
         from src.backend.core.workflow.compensation import CompensateWorkflowRequest
+
         req = CompensateWorkflowRequest(
             workflow_id="wf-1",
             compensation_steps=["step_a", "step_b"],
@@ -21,10 +23,9 @@ class TestCompensateWorkflow:
 
     def test_request_serialization(self) -> None:
         from src.backend.core.workflow.compensation import CompensateWorkflowRequest
+
         req = CompensateWorkflowRequest(
-            workflow_id="wf-1",
-            compensation_steps=["step_a"],
-            reason="test",
+            workflow_id="wf-1", compensation_steps=["step_a"], reason="test"
         )
         # JSON-serializable
         d = req.model_dump()
@@ -38,5 +39,6 @@ class TestCompensateSignalName:
 
     def test_signal_name(self) -> None:
         from src.backend.core.workflow.compensation import COMPENSATE_SIGNAL
+
         # Stable contract: handlers должны слушать это имя
         assert COMPENSATE_SIGNAL == "_compensation_request"

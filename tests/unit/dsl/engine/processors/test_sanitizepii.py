@@ -1,6 +1,5 @@
 """Unit tests for SanitizePIIProcessor."""
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -21,11 +20,11 @@ def _ex(body: Any = None) -> Exchange[Any]:
 @pytest.mark.asyncio
 async def test_sanitize_str_body() -> None:
     with patch(
-        "src.backend.infrastructure.security.ai_sanitizer.get_ai_sanitizer",
+        "src.backend.infrastructure.security.ai_sanitizer.get_ai_sanitizer"
     ) as mock_get:
         sanitizer = AsyncMock()
         sanitizer.sanitize.return_value = MagicMock(
-            sanitized_text="hello [REDACTED]", replacements={"name": "[REDACTED]"},
+            sanitized_text="hello [REDACTED]", replacements={"name": "[REDACTED]"}
         )
         mock_get.return_value = sanitizer
 
@@ -41,11 +40,11 @@ async def test_sanitize_str_body() -> None:
 @pytest.mark.asyncio
 async def test_sanitize_non_str_body() -> None:
     with patch(
-        "src.backend.infrastructure.security.ai_sanitizer.get_ai_sanitizer",
+        "src.backend.infrastructure.security.ai_sanitizer.get_ai_sanitizer"
     ) as mock_get:
         sanitizer = AsyncMock()
         sanitizer.sanitize.return_value = MagicMock(
-            sanitized_text="42", replacements={},
+            sanitized_text="42", replacements={}
         )
         mock_get.return_value = sanitizer
 

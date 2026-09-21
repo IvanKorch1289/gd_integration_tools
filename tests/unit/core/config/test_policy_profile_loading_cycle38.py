@@ -10,7 +10,6 @@
 pydantic-модели (которые могут упасть из-за отсутствия секретов в worktree).
 """
 
-
 from __future__ import annotations
 
 from pathlib import Path

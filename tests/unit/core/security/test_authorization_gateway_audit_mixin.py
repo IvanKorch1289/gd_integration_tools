@@ -31,9 +31,7 @@ def _make_decision(
     return AuthorizationDecision(
         allowed=allowed,
         correlation_id=correlation_id,
-        reasons=(
-            AuthorizationReason(source="policy-A", outcome="allow", detail=None),
-        ),
+        reasons=(AuthorizationReason(source="policy-A", outcome="allow", detail=None),),
         principal="plugin-x",
         resource="test-resource",
         action="read",
@@ -100,6 +98,7 @@ def test_emit_audit_calls_callback_with_deny_payload() -> None:
 
 def test_emit_audit_swallows_callback_exceptions() -> None:
     """_emit_audit: when callback raises, exception is logged, not re-raised."""
+
     def failing_audit(payload: dict[str, Any]) -> None:
         raise RuntimeError("audit backend down")
 
@@ -123,7 +122,9 @@ def test_emit_audit_includes_reasons_chain() -> None:
         correlation_id="corr-multi",
         reasons=(
             AuthorizationReason(source="policy-X", outcome="allow"),
-            AuthorizationReason(source="policy-Y", outcome="deny", detail="unauthorized"),
+            AuthorizationReason(
+                source="policy-Y", outcome="deny", detail="unauthorized"
+            ),
             AuthorizationReason(source="policy-Z", outcome="deny", detail=None),
         ),
         principal="svc-1",
@@ -134,9 +135,13 @@ def test_emit_audit_includes_reasons_chain() -> None:
 
     assert len(captured[0]["reasons"]) == 3
     assert captured[0]["reasons"][0] == {
-        "source": "policy-X", "outcome": "allow", "detail": None,
+        "source": "policy-X",
+        "outcome": "allow",
+        "detail": None,
     }
     assert captured[0]["reasons"][1] == {
-        "source": "policy-Y", "outcome": "deny", "detail": "unauthorized",
+        "source": "policy-Y",
+        "outcome": "deny",
+        "detail": "unauthorized",
     }
     assert captured[0]["reasons"][2]["source"] == "policy-Z"

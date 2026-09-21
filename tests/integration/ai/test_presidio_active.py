@@ -40,7 +40,7 @@ def test_di_provider_returns_presidio_adapter_when_flag_on(
     from src.backend.core.di import providers
 
     monkeypatch.setattr(
-        features.feature_flags, "presidio_pii_enabled", True, raising=True,
+        features.feature_flags, "presidio_pii_enabled", True, raising=True
     )
     providers.ai._overrides.pop("ai_sanitizer", None)
     _reset_presidio_singleton()
@@ -57,7 +57,7 @@ def test_di_provider_returns_legacy_when_flag_off(
     from src.backend.core.di import providers
 
     monkeypatch.setattr(
-        features.feature_flags, "presidio_pii_enabled", False, raising=True,
+        features.feature_flags, "presidio_pii_enabled", False, raising=True
     )
     providers.ai._overrides.pop("ai_sanitizer", None)
 
@@ -143,7 +143,7 @@ def test_ai_agent_uses_presidio_when_flag_on(monkeypatch: pytest.MonkeyPatch) ->
     from src.backend.core.di import providers
 
     monkeypatch.setattr(
-        features.feature_flags, "presidio_pii_enabled", True, raising=True,
+        features.feature_flags, "presidio_pii_enabled", True, raising=True
     )
     providers.ai._overrides.pop("ai_sanitizer", None)
     _reset_presidio_singleton()

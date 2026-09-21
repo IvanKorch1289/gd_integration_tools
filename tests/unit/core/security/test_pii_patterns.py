@@ -31,7 +31,15 @@ class TestPiiPatternsAll:
     def test_all_exports(self) -> None:
         """6 patterns экспортируются через __all__."""
         from src.backend.core.security import pii_patterns
-        assert set(pii_patterns.__all__) == {"CARD", "EMAIL", "INN", "PHONE", "RU_PASSPORT", "SNILS"}
+
+        assert set(pii_patterns.__all__) == {
+            "CARD",
+            "EMAIL",
+            "INN",
+            "PHONE",
+            "RU_PASSPORT",
+            "SNILS",
+        }
 
     def test_all_are_compiled_regex(self) -> None:
         """Каждый pattern — compiled :class:`re.Pattern`."""

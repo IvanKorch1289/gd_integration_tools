@@ -7,7 +7,6 @@ in isolation by replicating the same logic.
 Production code: src/backend/infrastructure/sources/webhook.py
 """
 
-
 from __future__ import annotations
 
 import time

@@ -19,18 +19,36 @@ PROMOTED: list[tuple[str, str, str]] = [
     ("nullable_str", "src.backend.core.domain.models.base", "nullable_str"),
     ("BaseSchema", "src.backend.schemas.base", "BaseSchema"),
     ("BaseService", "src.backend.services.core.base", "BaseService"),
-    ("SQLAlchemyRepository", "src.backend.core.repositories.base", "SQLAlchemyRepository"),
+    (
+        "SQLAlchemyRepository",
+        "src.backend.core.repositories.base",
+        "SQLAlchemyRepository",
+    ),
     ("TenantMixin", "src.backend.core.tenancy.sqlalchemy_filter", "TenantMixin"),
-    ("main_session_manager", "src.backend.core.database.session", "main_session_manager"),
-    ("load_plugin_manifest", "src.backend.core.plugin_runtime.manifest", "load_plugin_manifest"),
+    (
+        "main_session_manager",
+        "src.backend.core.database.session",
+        "main_session_manager",
+    ),
+    (
+        "load_plugin_manifest",
+        "src.backend.core.plugin_runtime.manifest",
+        "load_plugin_manifest",
+    ),
     ("RetryPolicy", "src.backend.core.ai.retry_policy", "RetryPolicy"),
     ("validate_inn", "src.backend.dsl.helpers.banking", "validate_inn"),
-    ("get_feature_flag_service", "src.backend.core.feature_flags", "get_feature_flag_service"),
+    (
+        "get_feature_flag_service",
+        "src.backend.core.feature_flags",
+        "get_feature_flag_service",
+    ),
 ]
 
 
 @pytest.mark.parametrize("facade_name, original_module, original_name", PROMOTED)
-def test_facade_promoted_symbol_resolves(facade_name: str, original_module: str, original_name: str) -> None:
+def test_facade_promoted_symbol_resolves(
+    facade_name: str, original_module: str, original_name: str
+) -> None:
     """Promoted symbol доступен через core.api facade и identical к original."""
     import importlib
 

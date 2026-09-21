@@ -6,7 +6,6 @@ Critical properties verified:
     - Email edge-cases: RFC-compatible emails are masked
 """
 
-
 from __future__ import annotations
 
 from hypothesis import HealthCheck, given, settings
@@ -32,12 +31,11 @@ def test_mask_idempotent(text: str) -> None:
 @given(
     emails=st.lists(
         st.from_regex(
-            r"[a-z][a-z0-9_.+-]{0,30}@[a-z0-9-]+\.[a-z]{2,6}",
-            fullmatch=True,
+            r"[a-z][a-z0-9_.+-]{0,30}@[a-z0-9-]+\.[a-z]{2,6}", fullmatch=True
         ),
         min_size=0,
         max_size=5,
-    ),
+    )
 )
 def test_emails_are_masked(emails: list[str]) -> None:
     """All RFC-compatible emails in text are masked (no raw @ remains after masking)."""
@@ -62,7 +60,7 @@ def test_emails_are_masked(emails: list[str]) -> None:
         ),
         min_size=0,
         max_size=10,
-    ),
+    )
 )
 def test_mask_dict_no_mutation(data: dict) -> None:
     """mask_dict must not mutate the input dictionary."""

@@ -34,9 +34,7 @@ async def test_continue_as_new_dispatch_registered() -> None:
 async def test_continue_as_new_step_invokes_handler() -> None:
     """P1-W1: ``compile_continue_as_new_step`` вызывает ``handler.perform_continue``."""
     decl = ContinueAsNewDeclaration(
-        same_workflow_id=True,
-        same_input=True,
-        search_attributes={"priority": "high"},
+        same_workflow_id=True, same_input=True, search_attributes={"priority": "high"}
     )
     ctx = {"_input": {"foo": "bar"}, "_outputs": {}}
 
@@ -83,7 +81,7 @@ def test_continue_as_new_declaration_yaml_parse() -> None:
             "same_workflow_id": False,
             "same_input": True,
             "search_attributes": {"env": "prod"},
-        },
+        }
     )
     assert decl.same_workflow_id is False
     assert decl.same_input is True

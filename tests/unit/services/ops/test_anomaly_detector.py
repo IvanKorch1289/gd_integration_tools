@@ -6,7 +6,6 @@ metrics (queue depth, error rate, latency). Без тестов — измене
 z_threshold или window_size молча сломает detection в production.
 """
 
-
 from __future__ import annotations
 
 import statistics
@@ -150,6 +149,7 @@ def test_get_stats_for_observed_metric() -> None:
     values = [10.0, 20.0, 30.0]
     # Use sync internals to populate (avoid async).
     from collections import deque
+
     detector._series["m"] = deque(values, maxlen=100)
 
     stats = detector.get_stats("m")
@@ -164,6 +164,7 @@ def test_list_metrics_returns_observed_names() -> None:
     """list_metrics() возвращает имена всех observed metrics."""
     detector = AnomalyDetector()
     from collections import deque
+
     detector._series["a"] = deque([1.0])
     detector._series["b"] = deque([2.0])
     assert set(detector.list_metrics()) == {"a", "b"}

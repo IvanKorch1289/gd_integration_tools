@@ -27,8 +27,7 @@ async def test_sentinel_discovers_master(sentinel_config: dict[str, Any]) -> Non
     from redis.asyncio.sentinel import Sentinel
 
     sentinel = Sentinel(
-        sentinel_config["sentinel_nodes"],
-        password=sentinel_config["password"],
+        sentinel_config["sentinel_nodes"], password=sentinel_config["password"]
     )
     master_info = await sentinel.discover_master(sentinel_config["service_name"])
     assert master_info is not None
@@ -73,8 +72,7 @@ async def test_failover_reconnect(
 
     try:
         sentinel = Sentinel(
-            sentinel_config["sentinel_nodes"],
-            password=sentinel_config["password"],
+            sentinel_config["sentinel_nodes"], password=sentinel_config["password"]
         )
         old_master = await sentinel.discover_master(sentinel_config["service_name"])
         assert old_master is not None

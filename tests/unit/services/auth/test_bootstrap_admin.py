@@ -22,7 +22,9 @@ class TestPasswordPolicy:
         """Известный дефолт отклоняется и в dev, и в prod."""
         for profile in ("dev_light", "prod"):
             with pytest.raises(ValueError, match="известных дефолтных"):
-                _validate_password_policy("admin-default-password-change-me", profile=profile)
+                _validate_password_policy(
+                    "admin-default-password-change-me", profile=profile
+                )
 
     def test_short_password_rejected_in_prod(self) -> None:
         """prod: короткий пароль отклоняется."""
@@ -59,9 +61,7 @@ class TestReadPassword:
         with pytest.raises(ValueError, match="--password-stdin или --from-env"):
             read_password(password_stdin=False, from_env=None)
 
-    def test_empty_password_raises(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_empty_password_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Пустое значение env → ValueError."""
         monkeypatch.setenv("EMPTY_PW", "")
         with pytest.raises(ValueError, match="Пароль пуст"):

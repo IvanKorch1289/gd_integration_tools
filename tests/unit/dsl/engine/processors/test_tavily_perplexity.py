@@ -7,6 +7,7 @@ Pattern (D250, Ponytail): thin wrapper над capability-checked facade.
 Per Tavily docs: search_depth, max_results, include_answer, include_raw_content.
 Per Perplexity docs: model (sonar, sonar-pro), max_tokens, temperature.
 """
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -19,6 +20,7 @@ class TestTavilySearchProcessor:
         from src.backend.dsl.engine.providers_search.tavily_search import (
             TavilySearchProcessor,
         )
+
         proc = TavilySearchProcessor(query="test")
         assert proc.query == "test"
         assert proc.search_depth == "basic"
@@ -28,9 +30,8 @@ class TestTavilySearchProcessor:
         from src.backend.dsl.engine.providers_search.tavily_search import (
             TavilySearchProcessor,
         )
-        proc = TavilySearchProcessor(
-            query="x", search_depth="advanced", max_results=20,
-        )
+
+        proc = TavilySearchProcessor(query="x", search_depth="advanced", max_results=20)
         assert proc.search_depth == "advanced"
         assert proc.max_results == 20
 
@@ -40,9 +41,8 @@ class TestTavilySearchProcessor:
         from src.backend.dsl.engine.providers_search.tavily_search import (
             TavilySearchProcessor,
         )
-        proc = TavilySearchProcessor(
-            query="test", to="body.search",
-        )
+
+        proc = TavilySearchProcessor(query="test", to="body.search")
         ex = MagicMock()
         ex.in_message = MagicMock()
         ex.in_message.body = {"query": "AI news"}
@@ -53,14 +53,14 @@ class TestTavilySearchProcessor:
         mock_response = {
             "answer": "AI news 2026",
             "results": [
-                {"title": "Article 1", "url": "https://a.com", "content": "..."},
+                {"title": "Article 1", "url": "https://a.com", "content": "..."}
             ],
         }
         with patch(
-            "src.backend.dsl.engine.providers_search.tavily_search.get_tavily_provider_class",
+            "src.backend.dsl.engine.providers_search.tavily_search.get_tavily_provider_class"
         ) as mock_get:
             mock_get.return_value = lambda: AsyncMock(
-                search=AsyncMock(return_value=mock_response),
+                search=AsyncMock(return_value=mock_response)
             )
             await proc.process(ex, MagicMock())
         assert ex.set_property.called
@@ -71,6 +71,7 @@ class TestPerplexitySearchProcessor:
         from src.backend.dsl.engine.providers_search.perplexity_search import (
             PerplexitySearchProcessor,
         )
+
         proc = PerplexitySearchProcessor(query="test", model="sonar")
         assert proc.model == "sonar"
 
@@ -78,6 +79,7 @@ class TestPerplexitySearchProcessor:
         from src.backend.dsl.engine.providers_search.perplexity_search import (
             PerplexitySearchProcessor,
         )
+
         proc = PerplexitySearchProcessor(query="x")
         assert proc.model == "sonar-pro"
 
@@ -87,24 +89,20 @@ class TestPerplexitySearchProcessor:
         from src.backend.dsl.engine.providers_search.perplexity_search import (
             PerplexitySearchProcessor,
         )
-        proc = PerplexitySearchProcessor(
-            query="test", to="body.answer",
-        )
+
+        proc = PerplexitySearchProcessor(query="test", to="body.answer")
         ex = MagicMock()
         ex.in_message = MagicMock()
         ex.in_message.body = {"query": "x"}
         ex.set_property = MagicMock()
         ex.set_error = MagicMock()
         ex.stop = MagicMock()
-        mock_response = {
-            "answer": "Test answer",
-            "citations": ["https://source.com"],
-        }
+        mock_response = {"answer": "Test answer", "citations": ["https://source.com"]}
         with patch(
-            "src.backend.dsl.engine.providers_search.perplexity_search.get_perplexity_provider_class",
+            "src.backend.dsl.engine.providers_search.perplexity_search.get_perplexity_provider_class"
         ) as mock_get:
             mock_get.return_value = lambda: AsyncMock(
-                search=AsyncMock(return_value=mock_response),
+                search=AsyncMock(return_value=mock_response)
             )
             await proc.process(ex, MagicMock())
         assert ex.set_property.called

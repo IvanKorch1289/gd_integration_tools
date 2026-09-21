@@ -41,7 +41,9 @@ def policy() -> MagicMock:
     return p
 
 
-def _make_request(prompt_inline: str | None = None, prompt_ref: str | None = None) -> AIRequest:
+def _make_request(
+    prompt_inline: str | None = None, prompt_ref: str | None = None
+) -> AIRequest:
     """Helper: AIRequest requires workflow_id, tenant_id, correlation_id."""
     return AIRequest(
         workflow_id="test_wf",
@@ -57,7 +59,7 @@ class TestSanitizeInputEmpty:
 
     @pytest.mark.asyncio
     async def test_empty_prompt_returns_empty_string(
-        self, enforcer: _StubEnforcer, policy: MagicMock,
+        self, enforcer: _StubEnforcer, policy: MagicMock
     ) -> None:
         request = _make_request(prompt_inline="")
         result = await enforcer.sanitize_input(request, policy)
@@ -65,7 +67,7 @@ class TestSanitizeInputEmpty:
 
     @pytest.mark.asyncio
     async def test_no_tokenizer_returns_prompt_unchanged(
-        self, enforcer: _StubEnforcer, policy: MagicMock,
+        self, enforcer: _StubEnforcer, policy: MagicMock
     ) -> None:
         """Если _pii_tokenizer is None → prompt возвращается без изменений."""
         enforcer._pii_tokenizer = None
@@ -75,7 +77,7 @@ class TestSanitizeInputEmpty:
 
     @pytest.mark.asyncio
     async def test_prompt_with_only_prompt_ref(
-        self, enforcer: _StubEnforcer, policy: MagicMock,
+        self, enforcer: _StubEnforcer, policy: MagicMock
     ) -> None:
         """AIRequest с prompt_ref (вместо prompt_inline) — также работает."""
         request = _make_request(prompt_ref="reference prompt", prompt_inline=None)
@@ -89,7 +91,7 @@ class TestSanitizeInputNormal:
 
     @pytest.mark.asyncio
     async def test_normal_sanitize_replaces_pii(
-        self, enforcer: _StubEnforcer, policy: MagicMock,
+        self, enforcer: _StubEnforcer, policy: MagicMock
     ) -> None:
         """Нормальный PII → sanitized_text из tokenizer."""
 
@@ -103,9 +105,7 @@ class TestSanitizeInputNormal:
         request = _make_request(prompt_inline="user@example.com text")
         result = await enforcer.sanitize_input(request, policy)
         assert result == "[REDACTED] user text"
-        mock_tokenizer.assert_awaited_once_with(
-            "user@example.com text", language="ru",
-        )
+        mock_tokenizer.assert_awaited_once_with("user@example.com text", language="ru")
 
 
 class TestSanitizeInputException:
@@ -113,7 +113,9 @@ class TestSanitizeInputException:
 
     @pytest.mark.asyncio
     async def test_tokenizer_exception_fails_closed_in_production(
-        self, enforcer: _StubEnforcer, policy: MagicMock,
+        self,
+        enforcer: _StubEnforcer,
+        policy: MagicMock,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """P0-S5: tokenizer throws в production → propagate exception (fail-closed)."""
@@ -135,7 +137,9 @@ class TestSanitizeInputException:
 
     @pytest.mark.asyncio
     async def test_tokenizer_exception_failsoft_in_dev(
-        self, enforcer: _StubEnforcer, policy: MagicMock,
+        self,
+        enforcer: _StubEnforcer,
+        policy: MagicMock,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """P0-S5: dev (ai_policy_enforce=False) → fail-soft (return original)."""
@@ -161,7 +165,7 @@ class TestSanitizeOutputEmpty:
 
     @pytest.mark.asyncio
     async def test_empty_content_returns_response_unchanged(
-        self, enforcer: _StubEnforcer, policy: MagicMock,
+        self, enforcer: _StubEnforcer, policy: MagicMock
     ) -> None:
         response = AIResponse(content="", model_used="test")
         result = await enforcer.sanitize_output(response, policy)
@@ -169,7 +173,7 @@ class TestSanitizeOutputEmpty:
 
     @pytest.mark.asyncio
     async def test_no_tokenizer_returns_response_unchanged(
-        self, enforcer: _StubEnforcer, policy: MagicMock,
+        self, enforcer: _StubEnforcer, policy: MagicMock
     ) -> None:
         enforcer._pii_tokenizer = None
         response = AIResponse(content="LLM response text", model_used="test")
@@ -182,13 +186,15 @@ class TestSanitizeOutputNormal:
 
     @pytest.mark.asyncio
     async def test_normal_sanitize_replaces_pii_in_response(
-        self, enforcer: _StubEnforcer, policy: MagicMock,
+        self, enforcer: _StubEnforcer, policy: MagicMock
     ) -> None:
         """Normal path: PII → masked text + pii_detected=True."""
 
         mock_result = MagicMock()
         mock_result.sanitized_text = "[REDACTED] response"
-        mock_result.replacements = ["email@example.com"]  # non-empty → pii_detected=True
+        mock_result.replacements = [
+            "email@example.com"
+        ]  # non-empty → pii_detected=True
         mock_tokenizer = AsyncMock(return_value=mock_result)
         mock_pii_tokenizer = MagicMock()
         mock_pii_tokenizer.sanitize_async = mock_tokenizer
@@ -212,7 +218,7 @@ class TestSanitizeOutputNormal:
 
     @pytest.mark.asyncio
     async def test_no_pii_detected_when_no_replacements(
-        self, enforcer: _StubEnforcer, policy: MagicMock,
+        self, enforcer: _StubEnforcer, policy: MagicMock
     ) -> None:
         """Если replacements пуст → pii_detected=False."""
 
@@ -236,7 +242,9 @@ class TestSanitizeOutputException:
 
     @pytest.mark.asyncio
     async def test_tokenizer_exception_fails_closed_in_production(
-        self, enforcer: _StubEnforcer, policy: MagicMock,
+        self,
+        enforcer: _StubEnforcer,
+        policy: MagicMock,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """P0-S5: production → propagate exception (fail-closed)."""
@@ -261,7 +269,9 @@ class TestSanitizeOutputException:
 
     @pytest.mark.asyncio
     async def test_tokenizer_exception_failsoft_in_dev(
-        self, enforcer: _StubEnforcer, policy: MagicMock,
+        self,
+        enforcer: _StubEnforcer,
+        policy: MagicMock,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """P0-S5: dev → fail-soft (return original)."""

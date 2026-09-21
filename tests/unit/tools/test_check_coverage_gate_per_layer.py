@@ -18,31 +18,29 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
-from tools.check_coverage_gate import (
-    _parse_thresholds_file,
-    check_per_layer_thresholds,
-)
+from tools.check_coverage_gate import _parse_thresholds_file, check_per_layer_thresholds
 
 
 def test_parse_thresholds_file_returns_dict() -> None:
     """`_parse_thresholds_file` parses `coverage_thresholds.txt` → dict."""
-    thresholds = _parse_thresholds_file(
-        Path(".baselines/coverage_thresholds.txt")
-    )
+    thresholds = _parse_thresholds_file(Path(".baselines/coverage_thresholds.txt"))
     assert isinstance(thresholds, dict)
     # Verify required layers (per ADR-0285 §1.2: 6 layers + aggregate)
-    for layer in ["core", "infrastructure", "services", "entrypoints", "dsl",
-                  "workflows", "aggregate"]:
+    for layer in [
+        "core",
+        "infrastructure",
+        "services",
+        "entrypoints",
+        "dsl",
+        "workflows",
+        "aggregate",
+    ]:
         assert layer in thresholds, f"Layer '{layer}' missing from thresholds file"
 
 
 def test_parse_thresholds_skips_comments() -> None:
     """`_parse_thresholds_file` skips comment lines (`#`) и пустые строки."""
-    thresholds = _parse_thresholds_file(
-        Path(".baselines/coverage_thresholds.txt")
-    )
+    thresholds = _parse_thresholds_file(Path(".baselines/coverage_thresholds.txt"))
     # No '#' values, no empty values
     for k, v in thresholds.items():
         assert not k.startswith("#"), f"Comment line leaked: {k}"
@@ -66,8 +64,7 @@ def test_per_layer_subcommand_registered() -> None:
         timeout=10,
     )
     assert result.returncode == 0, (
-        f"`tools/check_coverage_gate.py per-layer --help` failed: "
-        f"{result.stderr}"
+        f"`tools/check_coverage_gate.py per-layer --help` failed: {result.stderr}"
     )
     assert "per-layer" in result.stdout.lower()
     assert "--thresholds" in result.stdout

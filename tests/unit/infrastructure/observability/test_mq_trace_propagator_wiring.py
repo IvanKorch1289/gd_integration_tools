@@ -31,7 +31,6 @@ Auth (``require_capability("dlq.write", ...)``) — bypass через
 monkeypatch на уровне facade.
 """
 
-
 from __future__ import annotations
 
 import ast
@@ -65,10 +64,7 @@ def _has_inject_import_or_call(source: str) -> bool:
         if isinstance(node, ast.ImportFrom) and node.module:
             if node.module.endswith("mq_trace_propagator"):
                 for alias in node.names:
-                    if alias.name in {
-                        "inject_into_headers",
-                        "extract_from_headers",
-                    }:
+                    if alias.name in {"inject_into_headers", "extract_from_headers"}:
                         return True
         elif isinstance(node, ast.Import):
             for alias in node.names:
@@ -131,7 +127,7 @@ def _resolve_relative(rel: str) -> Path:
     ],
 )
 def test_mq_writer_does_not_inject_w3c_tracecontext(
-    file_path: str, description: str,
+    file_path: str, description: str
 ) -> None:
     """S-L7-5 regression lock: файл НЕ вызывает ``inject_into_headers``.
 
@@ -184,8 +180,7 @@ def _dlq_write_allowed(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_decision.allowed = True
     fake_decision.reason = None
     monkeypatch.setattr(
-        "src.backend.services.authorization.facade"
-        ".AuthorizationFacade.check_principal",
+        "src.backend.services.authorization.facade.AuthorizationFacade.check_principal",
         AsyncMock(return_value=fake_decision),
     )
 

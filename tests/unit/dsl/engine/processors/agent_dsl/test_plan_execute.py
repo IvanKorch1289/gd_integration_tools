@@ -1,6 +1,5 @@
 """Unit-тесты PlanExecuteProcessor (S39 W2)."""
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -89,7 +88,7 @@ class TestPlanExecuteSuccess:
         )
 
         planner_resp = _mock_response(
-            structured={"steps": [{"id": "1", "description": "step1", "input": {}}]},
+            structured={"steps": [{"id": "1", "description": "step1", "input": {}}]}
         )
         executor_resp = _mock_response(content="done")
         verifier_resp = _mock_response(structured={"verdict": "ok"})
@@ -121,8 +120,8 @@ class TestPlanExecuteSuccess:
                 "steps": [
                     {"id": "1", "description": "a", "input": {}},
                     {"id": "2", "description": "b", "input": {}},
-                ],
-            },
+                ]
+            }
         )
         gateway = AsyncMock()
         gateway.invoke.side_effect = [
@@ -257,14 +256,14 @@ class TestPlanExecuteEdgeCases:
 class TestPlanExecuteToSpec:
     def test_to_spec_defaults(self) -> None:
         proc = PlanExecuteProcessor(
-            planner_workflow_id="p", executor_workflow_id="e", verifier_workflow_id="v",
+            planner_workflow_id="p", executor_workflow_id="e", verifier_workflow_id="v"
         )
         assert proc.to_spec() == {
             "plan_execute": {
                 "planner_workflow_id": "p",
                 "executor_workflow_id": "e",
                 "verifier_workflow_id": "v",
-            },
+            }
         }
 
     def test_to_spec_full(self) -> None:
@@ -288,7 +287,7 @@ class TestPlanExecuteToSpec:
 
 
 def _mock_response(
-    *, content: str = "", structured: dict[str, Any] | None = None,
+    *, content: str = "", structured: dict[str, Any] | None = None
 ) -> Any:
     """Минимальный mock AIResponse."""
     resp: Any = type("_Resp", (), {})()

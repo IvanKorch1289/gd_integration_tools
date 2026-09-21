@@ -51,17 +51,12 @@ class TestPollingConsumerPrincipalPropagation:
         self, mock_action_registry: dict[str, Any]
     ) -> None:
         """``context.principal='alice'`` → ``cmd.meta.principal='alice'``."""
-        proc = PollingConsumerProcessor(
-            source_action="test.action",
-            payload={"k": "v"},
-        )
+        proc = PollingConsumerProcessor(source_action="test.action", payload={"k": "v"})
         exchange = MagicMock()
         exchange.in_message.headers = {}
 
         context = ExecutionContext(
-            route_id="test_route",
-            principal="alice",
-            permissions=("read:orders",),
+            route_id="test_route", principal="alice", permissions=("read:orders",)
         )
 
         await proc.process(exchange, context)

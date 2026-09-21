@@ -46,6 +46,7 @@ def _start_headers(send_mock: AsyncMock) -> dict[bytes, bytes]:
 @pytest.mark.asyncio
 async def test_tenant_middleware_default_when_no_header() -> None:
     """Без X-Tenant-ID header → middleware использует 'default'."""
+
     async def downstream(scope, receive, send):
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"ok"})
@@ -68,6 +69,7 @@ async def test_tenant_middleware_default_when_no_header() -> None:
 @pytest.mark.asyncio
 async def test_tenant_middleware_uses_header() -> None:
     """С X-Tenant-ID header → middleware использует значение из header."""
+
     async def downstream(scope, receive, send):
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"ok"})
@@ -81,9 +83,7 @@ async def test_tenant_middleware_uses_header() -> None:
         return_value=MagicMock(),
     ):
         send = AsyncMock()
-        await middleware(
-            _make_scope({"X-Tenant-ID": "acme-corp"}), AsyncMock(), send,
-        )
+        await middleware(_make_scope({"X-Tenant-ID": "acme-corp"}), AsyncMock(), send)
 
     headers = _start_headers(send)
     assert headers.get(b"x-tenant-id") == b"acme-corp"
@@ -97,6 +97,7 @@ async def test_tenant_middleware_uses_state() -> None:
     state['tenant_id'] ПЕРЕД нашим send-wrapper, поэтому resolution
     в send-wrapper видит актуальное значение.
     """
+
     async def downstream(scope, receive, send):
         # Имитирует JWT auth middleware (должен быть INNER относительно tenant).
         scope.setdefault("state", {})["tenant_id"] = "from-jwt"

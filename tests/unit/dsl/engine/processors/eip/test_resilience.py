@@ -4,7 +4,6 @@ CircuitBreaker, Timeout.
 Паттерн: async tests, _ex fixture, моки для redis / breaker registry.
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -63,7 +62,7 @@ async def test_dead_letter_no_dlq_on_success() -> None:
     e = _ex(body=1)
 
     with patch(
-        "src.backend.infrastructure.clients.storage.redis.redis_client",
+        "src.backend.infrastructure.clients.storage.redis.redis_client"
     ) as mock_redis:
         await proc.process(e, ctx)
 
@@ -80,7 +79,7 @@ async def test_dead_letter_sends_to_dlq_on_failure() -> None:
     e = _ex(body={"id": 1})
 
     with patch(
-        "src.backend.infrastructure.clients.storage.redis.redis_client",
+        "src.backend.infrastructure.clients.storage.redis.redis_client"
     ) as mock_redis:
         mock_redis.add_to_stream = AsyncMock(return_value=None)
         await proc.process(e, ctx)
@@ -99,14 +98,12 @@ async def test_dead_letter_dlq_error_logged(tmp_path: Any) -> None:
     """
     failing = SetFailProcessor("boom")
     dlq_file = tmp_path / "dlq.jsonl"
-    proc = DeadLetterProcessor(
-        processors=[failing], dlq_path=str(dlq_file),
-    )
+    proc = DeadLetterProcessor(processors=[failing], dlq_path=str(dlq_file))
     ctx = AsyncMock()
     e = _ex(body=1)
 
     with patch(
-        "src.backend.infrastructure.clients.storage.redis.redis_client",
+        "src.backend.infrastructure.clients.storage.redis.redis_client"
     ) as mock_redis:
         mock_redis.add_to_stream.side_effect = RuntimeError("redis down")
         await proc.process(e, ctx)
@@ -124,7 +121,7 @@ async def test_dead_letter_max_retries_zero() -> None:
     e = _ex(body=1)
 
     with patch(
-        "src.backend.infrastructure.clients.storage.redis.redis_client",
+        "src.backend.infrastructure.clients.storage.redis.redis_client"
     ) as mock_redis:
         mock_redis.add_to_stream = AsyncMock(return_value=None)
         await proc.process(e, ctx)
@@ -353,7 +350,7 @@ async def test_timeout_exceeded_with_fallback() -> None:
     """Timeout с fallback → fallback выполняется."""
     fallback = DummyProcessor("fallback")
     proc = TimeoutProcessor(
-        processors=[SlowProcessor()], seconds=0.001, fallback_processors=[fallback],
+        processors=[SlowProcessor()], seconds=0.001, fallback_processors=[fallback]
     )
     ctx = AsyncMock()
     e = _ex(body=1)

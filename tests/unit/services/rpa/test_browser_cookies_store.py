@@ -25,7 +25,9 @@ def _fake_redis() -> AsyncMock:
 class TestInit:
     def test_bad_ttl(self) -> None:
         with pytest.raises(ValueError, match="ttl_seconds"):
-            BrowserCookieStore(_fake_redis(), ttl_seconds=0, fernet_key=_TEST_FERNET_KEY)
+            BrowserCookieStore(
+                _fake_redis(), ttl_seconds=0, fernet_key=_TEST_FERNET_KEY
+            )
 
     def test_invalid_fernet_key_raises(self) -> None:
         """Constructor rejects non-44-byte Fernet key."""
@@ -69,7 +71,7 @@ class TestSaveAndRestore:
         store = BrowserCookieStore(redis, fernet_key=_TEST_FERNET_KEY)
         cookies = [{"name": "sid", "value": "abc"}]
         await store.save_cookies(
-            tenant_id="t1", user_id="u1", domain="d1", cookies=cookies,
+            tenant_id="t1", user_id="u1", domain="d1", cookies=cookies
         )
         # Verify the stored value is encrypted (not plaintext JSON).
         assert len(stored) == 1
@@ -114,7 +116,7 @@ class TestSaveAndRestore:
         store = BrowserCookieStore(redis, fernet_key=_TEST_FERNET_KEY)
         with caplog.at_level("WARNING"):
             result = await store.restore_cookies(
-                tenant_id="t1", user_id="u1", domain="d1",
+                tenant_id="t1", user_id="u1", domain="d1"
             )
         assert result == []
         assert "decrypt failed" in caplog.text
@@ -125,7 +127,7 @@ class TestSaveAndRestore:
         store = BrowserCookieStore(redis, fernet_key=_TEST_FERNET_KEY)
         with caplog.at_level("WARNING"):
             result = await store.restore_cookies(
-                tenant_id="t1", user_id="u1", domain="d1",
+                tenant_id="t1", user_id="u1", domain="d1"
             )
         assert result == []
         assert "failed" in caplog.text
@@ -136,7 +138,7 @@ class TestSaveAndRestore:
         store = BrowserCookieStore(redis, fernet_key=_TEST_FERNET_KEY)
         with caplog.at_level("WARNING"):
             await store.save_cookies(
-                tenant_id="t1", user_id="u1", domain="d1", cookies=[{"x": 1}],
+                tenant_id="t1", user_id="u1", domain="d1", cookies=[{"x": 1}]
             )
         assert "failed" in caplog.text
 
@@ -174,24 +176,24 @@ class TestSaveAndRestore:
         redis.get = AsyncMock(side_effect=_get)
 
         store = BrowserCookieStore(redis, fernet_key=_TEST_FERNET_KEY)
-        cookies = [
-            {"name": "sid", "value": "abc"},
-            {"name": "csrf", "value": "xyz"},
-        ]
+        cookies = [{"name": "sid", "value": "abc"}, {"name": "csrf", "value": "xyz"}]
 
         # First save: stores
-        await store.save_cookies(tenant_id="t1", user_id="u1", domain="d1", cookies=cookies)
+        await store.save_cookies(
+            tenant_id="t1", user_id="u1", domain="d1", cookies=cookies
+        )
         assert len(stored) == 1
         first_write_count = redis.set.await_count
 
         # Same cookies, different order — dedup should still skip
         await store.save_cookies(
-            tenant_id="t1", user_id="u1", domain="d1",
-            cookies=list(reversed(cookies)),
+            tenant_id="t1", user_id="u1", domain="d1", cookies=list(reversed(cookies))
         )
         assert redis.set.await_count == first_write_count  # NO new write
 
         # Different cookie values — should write
         cookies[0]["value"] = "def"
-        await store.save_cookies(tenant_id="t1", user_id="u1", domain="d1", cookies=cookies)
+        await store.save_cookies(
+            tenant_id="t1", user_id="u1", domain="d1", cookies=cookies
+        )
         assert redis.set.await_count == first_write_count + 1

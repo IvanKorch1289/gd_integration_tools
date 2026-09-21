@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
-
 import pytest
 
 from src.backend.core.dlq_replay import (
@@ -14,10 +12,7 @@ from src.backend.core.dlq_replay import (
     classify_exception,
     get_dlq_replay,
 )
-from src.backend.core.dlq_replay.cockpit import (
-    ReplayCockpit,
-    reset_dlq_replay,
-)
+from src.backend.core.dlq_replay.cockpit import ReplayCockpit, reset_dlq_replay
 from src.backend.core.dlq_replay.store.base import DLQRecord
 
 
@@ -269,10 +264,7 @@ class TestSendToDLQ:
     async def test_send_to_dlq_creates_record(self) -> None:
         svc = DLQReplayService(store=InMemoryDLQStore())
         rec = await svc.send_to_dlq(
-            message={"x": 1},
-            error=ValueError("boom"),
-            consumer_id="c1",
-            topic="t1",
+            message={"x": 1}, error=ValueError("boom"), consumer_id="c1", topic="t1"
         )
         assert rec.record_id  # UUID
         assert rec.consumer_id == "c1"
@@ -286,11 +278,7 @@ class TestSendToDLQ:
     async def test_send_to_dlq_attempts(self) -> None:
         svc = DLQReplayService(store=InMemoryDLQStore())
         rec = await svc.send_to_dlq(
-            message={},
-            error=ValueError(),
-            consumer_id="c1",
-            topic="t1",
-            attempts=5,
+            message={}, error=ValueError(), consumer_id="c1", topic="t1", attempts=5
         )
         assert rec.attempts == 5
 
@@ -309,10 +297,7 @@ class TestSendToDLQ:
         """Failure class определяется по error type."""
         svc = DLQReplayService(store=InMemoryDLQStore())
         rec = await svc.send_to_dlq(
-            message={},
-            error=TimeoutError(),
-            consumer_id="c1",
-            topic="t1",
+            message={}, error=TimeoutError(), consumer_id="c1", topic="t1"
         )
         assert rec.failure_class == FailureClass.RETRYABLE
 
@@ -320,14 +305,20 @@ class TestSendToDLQ:
 class TestListDLQ:
     async def test_list_all(self) -> None:
         svc = DLQReplayService(store=InMemoryDLQStore())
-        await svc.send_to_dlq(message={}, error=ValueError(), consumer_id="c1", topic="t1")
+        await svc.send_to_dlq(
+            message={}, error=ValueError(), consumer_id="c1", topic="t1"
+        )
         records = await svc.list_dlq()
         assert len(records) == 1
 
     async def test_list_with_filters(self) -> None:
         svc = DLQReplayService(store=InMemoryDLQStore())
-        await svc.send_to_dlq(message={}, error=ValueError(), consumer_id="c1", topic="t1")
-        await svc.send_to_dlq(message={}, error=TimeoutError(), consumer_id="c2", topic="t2")
+        await svc.send_to_dlq(
+            message={}, error=ValueError(), consumer_id="c1", topic="t1"
+        )
+        await svc.send_to_dlq(
+            message={}, error=TimeoutError(), consumer_id="c2", topic="t2"
+        )
 
         c1 = await svc.list_dlq(consumer_id="c1")
         assert len(c1) == 1

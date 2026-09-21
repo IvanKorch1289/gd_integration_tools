@@ -13,7 +13,6 @@
 [FakeOutbox] + асинхронные list/deque pending-источники + мок deliverer'а.
 """
 
-
 from __future__ import annotations
 
 import asyncio

@@ -12,9 +12,7 @@ from src.backend.infrastructure.observability.nats_metrics import record_consume
 
 def test_record_consumer_info_basic() -> None:
     """record_consumer_info с basic dict."""
-    record_consumer_info(
-        info={"consumer": "c1", "queue": "q1", "delivered": 10}
-    )
+    record_consumer_info(info={"consumer": "c1", "queue": "q1", "delivered": 10})
 
 
 def test_record_consumer_info_empty() -> None:

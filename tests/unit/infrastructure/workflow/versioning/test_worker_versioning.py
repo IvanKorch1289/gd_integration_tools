@@ -6,6 +6,7 @@ Per https://docs.temporal.io/production-deployment/worker-deployments/worker-ver
 
 Pattern (Ponytail, D172): тонкая обёртка над temporalio SDK.
 """
+
 from __future__ import annotations
 
 
@@ -14,9 +15,9 @@ class TestWorkerVersioningHelper:
         from src.backend.infrastructure.workflow.versioning.worker_versioning import (
             WorkerVersioningHelper,
         )
+
         helper = WorkerVersioningHelper(
-            deployment_name="gd-integration-tools",
-            build_id="1.0.0",
+            deployment_name="gd-integration-tools", build_id="1.0.0"
         )
         assert helper.deployment_name == "gd-integration-tools"
         assert helper.build_id == "1.0.0"
@@ -26,19 +27,17 @@ class TestWorkerVersioningHelper:
         from src.backend.infrastructure.workflow.versioning.worker_versioning import (
             WorkerVersioningHelper,
         )
-        helper = WorkerVersioningHelper(
-            deployment_name="gd", build_id="1.0.0",
-        )
+
+        helper = WorkerVersioningHelper(deployment_name="gd", build_id="1.0.0")
         assert helper.use_versioning is False
 
     def test_enable_versioning(self) -> None:
         from src.backend.infrastructure.workflow.versioning.worker_versioning import (
             WorkerVersioningHelper,
         )
+
         helper = WorkerVersioningHelper(
-            deployment_name="gd",
-            build_id="1.0.0",
-            use_versioning=True,
+            deployment_name="gd", build_id="1.0.0", use_versioning=True
         )
         assert helper.use_versioning is True
 
@@ -47,8 +46,9 @@ class TestWorkerVersioningHelper:
         from src.backend.infrastructure.workflow.versioning.worker_versioning import (
             WorkerVersioningHelper,
         )
+
         helper = WorkerVersioningHelper(
-            deployment_name="gd-prod", build_id="v1.0.0", use_versioning=True,
+            deployment_name="gd-prod", build_id="v1.0.0", use_versioning=True
         )
         kwargs = helper.build_worker_kwargs()
         assert "deployment_options" in kwargs or "build_id" in kwargs
@@ -58,6 +58,7 @@ class TestWorkerVersioningHelper:
         from src.backend.infrastructure.workflow.versioning.worker_versioning import (
             parse_build_id,
         )
+
         # Semver
         assert parse_build_id("1.2.3") == ("semver", "1.2.3")
         # Git SHA (7-40 hex)
@@ -74,18 +75,17 @@ class TestVersioningPolicy:
         from src.backend.infrastructure.workflow.versioning.worker_versioning import (
             VersioningPolicy,
         )
-        policy = VersioningPolicy(
-            deployment_name="gd",
-            build_id="1.0.0",
-        )
+
+        policy = VersioningPolicy(deployment_name="gd", build_id="1.0.0")
         assert policy.deployment_name == "gd"
 
     def test_ramp_percentage(self) -> None:
         from src.backend.infrastructure.workflow.versioning.worker_versioning import (
             VersioningPolicy,
         )
+
         policy = VersioningPolicy(
-            deployment_name="gd", build_id="1.0.0", ramp_percentage=25,
+            deployment_name="gd", build_id="1.0.0", ramp_percentage=25
         )
         assert policy.ramp_percentage == 25
 
@@ -93,5 +93,6 @@ class TestVersioningPolicy:
         from src.backend.infrastructure.workflow.versioning.worker_versioning import (
             VersioningPolicy,
         )
+
         policy = VersioningPolicy(deployment_name="gd", build_id="1.0.0")
         assert policy.ramp_percentage == 100  # default: 100% на этой версии

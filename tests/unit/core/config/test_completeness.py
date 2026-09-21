@@ -1,4 +1,5 @@
 """Config completeness test (Sprint 170 M2 Phase 5)."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -15,8 +16,15 @@ def test_base_yml_exists():
 def test_critical_env_vars_documented():
     """Critical env vars must be in .env.example."""
     env_example = Path(".env.example").read_text()
-    critical = ["APP_ENV", "ENVIRONMENT", "JUPYTER_BACKEND", "AUDIT_SECRET_KEY",
-                "DSL_YAML_STORE_DIR", "E2B_API_KEY", "SEARXNG_BASE_URL"]
+    critical = [
+        "APP_ENV",
+        "ENVIRONMENT",
+        "JUPYTER_BACKEND",
+        "AUDIT_SECRET_KEY",
+        "DSL_YAML_STORE_DIR",
+        "E2B_API_KEY",
+        "SEARXNG_BASE_URL",
+    ]
     missing = [v for v in critical if v not in env_example]
     assert not missing, f"Missing in .env.example: {missing}"
 

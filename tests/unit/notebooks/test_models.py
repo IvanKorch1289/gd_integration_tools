@@ -9,7 +9,6 @@
 - игнорирование неизвестных полей (``ConfigDict(extra="ignore")``).
 """
 
-
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -77,7 +76,7 @@ def test_notebook_version_required_fields() -> None:
 def test_notebook_version_with_summary() -> None:
     """Поле summary опционально и сохраняется."""
     v = NotebookVersion(
-        version=2, content="updated", changed_by="bob", summary="fix typo",
+        version=2, content="updated", changed_by="bob", summary="fix typo"
     )
     assert v.summary == "fix typo"
 

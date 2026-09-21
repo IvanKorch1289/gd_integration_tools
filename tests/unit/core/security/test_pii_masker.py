@@ -9,8 +9,6 @@
 * стабильность ``default_masker`` singleton.
 """
 
-
-
 from __future__ import annotations
 
 import re
@@ -104,7 +102,7 @@ def test_mask_dict_list_of_dicts() -> None:
         "users": [
             {"email": "a@x.io", "name": "Анна"},
             {"email": "b@y.io", "name": "Борис"},
-        ],
+        ]
     }
     masked = masker.mask_dict(data)
     assert masked["users"][0]["email"] == "***"

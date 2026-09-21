@@ -6,7 +6,6 @@
     * to_spec сериализует isolated.
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -60,7 +59,7 @@ class _FakeSandbox:
                 "tool_actions": tool_actions,
                 "model": model,
                 "session_id": session_id,
-            },
+            }
         )
         return AgentSandboxResult(
             success=True,
@@ -74,7 +73,7 @@ class _FakeSandbox:
 
 @pytest.mark.skip(
     reason="Requires LangGraph dep (not installed in CI); the actual call path "
-    "is covered by integration tests against a live LangGraph runtime.",
+    "is covered by integration tests against a live LangGraph runtime."
 )
 @pytest.mark.asyncio
 async def test_react_in_process(monkeypatch: pytest.MonkeyPatch) -> None:

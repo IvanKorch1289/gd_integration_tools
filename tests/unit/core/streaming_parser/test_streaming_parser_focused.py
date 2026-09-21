@@ -28,13 +28,7 @@ def _reset():
 def sample_csv(tmp_path: Path) -> Path:
     """Create sample CSV file."""
     p = tmp_path / "sample.csv"
-    p.write_text(
-        "id,name,age\n"
-        "1,Alice,30\n"
-        "2,Bob,25\n"
-        "3,Charlie,35\n",
-        encoding="utf-8",
-    )
+    p.write_text("id,name,age\n1,Alice,30\n2,Bob,25\n3,Charlie,35\n", encoding="utf-8")
     return p
 
 
@@ -43,11 +37,13 @@ def sample_json(tmp_path: Path) -> Path:
     """Create sample JSON array file."""
     p = tmp_path / "sample.json"
     p.write_text(
-        json.dumps([
-            {"id": 1, "name": "Alice", "tags": ["admin", "user"]},
-            {"id": 2, "name": "Bob", "tags": ["user"]},
-            {"id": 3, "name": "Charlie", "tags": ["guest"]},
-        ]),
+        json.dumps(
+            [
+                {"id": 1, "name": "Alice", "tags": ["admin", "user"]},
+                {"id": 2, "name": "Bob", "tags": ["user"]},
+                {"id": 3, "name": "Charlie", "tags": ["guest"]},
+            ]
+        ),
         encoding="utf-8",
     )
     return p
@@ -191,10 +187,7 @@ class TestStreamingJSONParserFile:
     def test_nested_array_unwrapped(self, tmp_path: Path) -> None:
         """If top-level is single array, unwrap and yield each item."""
         p = tmp_path / "nested.json"
-        p.write_text(
-            json.dumps([{"a": 1}, {"a": 2}, {"a": 3}]),
-            encoding="utf-8",
-        )
+        p.write_text(json.dumps([{"a": 1}, {"a": 2}, {"a": 3}]), encoding="utf-8")
         records = list(StreamingJSONParser().parse_file(p))
         assert len(records) == 3
         assert records[0].data == {"a": 1}
@@ -210,10 +203,7 @@ class TestStreamingJSONParserFile:
 
     def test_skips_non_dict_items(self, tmp_path: Path) -> None:
         p = tmp_path / "mixed.json"
-        p.write_text(
-            json.dumps([{"a": 1}, "string", 42, {"b": 2}]),
-            encoding="utf-8",
-        )
+        p.write_text(json.dumps([{"a": 1}, "string", 42, {"b": 2}]), encoding="utf-8")
         records = list(StreamingJSONParser().parse_file(p))
         # Only dicts.
         assert len(records) == 2
@@ -329,9 +319,7 @@ class TestRealisticExample:
 class TestStreamingCSVGzip:
     """Sprint 175+ P1.4: gzip auto-detection для CSV."""
 
-    def test_gzip_csv_detected_by_extension(
-        self, tmp_path: Path
-    ) -> None:
+    def test_gzip_csv_detected_by_extension(self, tmp_path: Path) -> None:
         """CSV.gz files auto-detected and decompressed on-the-fly."""
         import gzip
 
@@ -354,16 +342,12 @@ class TestStreamingCSVGzip:
     def test_plain_csv_works(self, tmp_path: Path) -> None:
         """Plain CSV (no .gz) still works."""
         csv_path = tmp_path / "data.csv"
-        csv_path.write_text(
-            "id,name\n1,Alice\n2,Bob\n", encoding="utf-8"
-        )
+        csv_path.write_text("id,name\n1,Alice\n2,Bob\n", encoding="utf-8")
         parser = StreamingCSVParser()
         records = list(parser.parse_file(csv_path))
         assert len(records) == 2
 
-    def test_gzip_with_max_rows(
-        self, tmp_path: Path
-    ) -> None:
+    def test_gzip_with_max_rows(self, tmp_path: Path) -> None:
         import gzip
 
         gz_path = tmp_path / "data.csv.gz"

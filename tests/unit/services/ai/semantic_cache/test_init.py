@@ -38,9 +38,7 @@ class TestSemanticCacheFacadeAllExports:
     )
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(semantic_cache, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
+        assert hasattr(semantic_cache, symbol_name), f"Missing export: {symbol_name}"
         assert symbol_name in semantic_cache.__all__, (
             f"{symbol_name} not declared in __all__"
         )
@@ -52,7 +50,10 @@ class TestSemanticCacheFacadeAllExports:
     def test_module_docstring_present(self) -> None:
         """Module docstring описывает semantic cache (S67 W3 decomp)."""
         assert semantic_cache.__doc__ is not None
-        assert "Semantic" in semantic_cache.__doc__ or "cache" in semantic_cache.__doc__.lower()
+        assert (
+            "Semantic" in semantic_cache.__doc__
+            or "cache" in semantic_cache.__doc__.lower()
+        )
 
 
 @pytest.mark.unit

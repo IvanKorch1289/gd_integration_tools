@@ -67,17 +67,10 @@ class FakePaymentConnector(BaseConnector):
     def operations(self) -> list:
         from src.backend.core.connectors import OperationSchema
 
-        return [
-            OperationSchema(
-                name="createPayment",
-                description="Create payment",
-            )
-        ]
+        return [OperationSchema(name="createPayment", description="Create payment")]
 
     @track_cost(
-        ResourceType.EXTERNAL_API,
-        cost_per_unit=0.05,
-        tenant_id_arg="tenant_id",
+        ResourceType.EXTERNAL_API, cost_per_unit=0.05, tenant_id_arg="tenant_id"
     )
     async def create_payment(self, tenant_id: str, amount: float) -> dict:
         self.call_count += 1
@@ -227,10 +220,7 @@ class TestCombinedFlow:
         """Concurrent calls from same tenant track correctly."""
         connector = FakePaymentConnector()
         await asyncio.gather(
-            *[
-                connector.create_payment("tenant-x", float(i))
-                for i in range(10)
-            ]
+            *[connector.create_payment("tenant-x", float(i)) for i in range(10)]
         )
         records = get_cost_registry().list_records()
         assert len(records) == 10

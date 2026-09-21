@@ -8,13 +8,13 @@ from pathlib import Path
 import pytest
 
 from tools.checks.contract_diff_gate import (
-    _diff_action_matrix,
-    _diff_asyncapi_channels,
-    _diff_mcp_tools,
     ContractBreakingChange,
     ContractDiff,
+    _diff_action_matrix,
+    _diff_asyncapi_channels,
     _diff_graphql,
     _diff_grpc,
+    _diff_mcp_tools,
     _diff_rest,
     _load_json,
     diff_contracts,
@@ -68,10 +68,20 @@ class TestRestDiff:
                 "/users": {
                     "get": {
                         "requestBody": {
-                            "content": {"application/json": {"schema": {"required": []}}}
+                            "content": {
+                                "application/json": {"schema": {"required": []}}
+                            }
                         },
                         "responses": {
-                            "200": {"content": {"application/json": {"schema": {"properties": {"id": {"type": "integer"}}}}}}
+                            "200": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "properties": {"id": {"type": "integer"}}
+                                        }
+                                    }
+                                }
+                            }
                         },
                     }
                 }
@@ -105,7 +115,9 @@ class TestRestDiff:
         }
         current_op = {
             "requestBody": {
-                "content": {"application/json": {"schema": {"required": ["name", "email"]}}}
+                "content": {
+                    "application/json": {"schema": {"required": ["name", "email"]}}
+                }
             },
             "responses": {"200": {"content": {"application/json": {"schema": {}}}}},
         }
@@ -120,7 +132,11 @@ class TestRestDiff:
             "requestBody": {"content": {"application/json": {"schema": {}}}},
             "responses": {
                 "200": {
-                    "content": {"application/json": {"schema": {"properties": {"id": {}, "email": {}}}}}
+                    "content": {
+                        "application/json": {
+                            "schema": {"properties": {"id": {}, "email": {}}}
+                        }
+                    }
                 }
             },
         }
@@ -128,7 +144,9 @@ class TestRestDiff:
             "requestBody": {"content": {"application/json": {"schema": {}}}},
             "responses": {
                 "200": {
-                    "content": {"application/json": {"schema": {"properties": {"id": {}}}}}
+                    "content": {
+                        "application/json": {"schema": {"properties": {"id": {}}}}
+                    }
                 }
             },
         }
@@ -164,11 +182,7 @@ class TestGraphqlDiff:
             }
         }
         current = {
-            "__schema": {
-                "types": [
-                    {"name": "User", "fields": [{"name": "id"}]},
-                ]
-            }
+            "__schema": {"types": [{"name": "User", "fields": [{"name": "id"}]}]}
         }
         breaking, _ = _diff_graphql(current, baseline)
         assert any(c.change_type == "type_removed" for c in breaking)
@@ -178,16 +192,12 @@ class TestGraphqlDiff:
         baseline = {
             "__schema": {
                 "types": [
-                    {"name": "User", "fields": [{"name": "id"}, {"name": "email"}]},
+                    {"name": "User", "fields": [{"name": "id"}, {"name": "email"}]}
                 ]
             }
         }
         current = {
-            "__schema": {
-                "types": [
-                    {"name": "User", "fields": [{"name": "id"}]},
-                ]
-            }
+            "__schema": {"types": [{"name": "User", "fields": [{"name": "id"}]}]}
         }
         breaking, _ = _diff_graphql(current, baseline)
         assert any(c.change_type == "field_removed" for c in breaking)
@@ -195,11 +205,7 @@ class TestGraphqlDiff:
 
     def test_introspection_types_skipped(self) -> None:
         baseline = {
-            "__schema": {
-                "types": [
-                    {"name": "__Schema", "fields": [{"name": "types"}]},
-                ]
-            }
+            "__schema": {"types": [{"name": "__Schema", "fields": [{"name": "types"}]}]}
         }
         current = {"__schema": {"types": []}}
         # __Schema is introspection — should NOT be flagged.
@@ -211,11 +217,7 @@ class TestGrpcDiff:
     """Tests для _diff_grpc() — gRPC proto JSON breaking changes."""
 
     def test_no_changes(self) -> None:
-        spec = {
-            "services": [
-                {"name": "UserService", "methods": [{"name": "GetUser"}]},
-            ]
-        }
+        spec = {"services": [{"name": "UserService", "methods": [{"name": "GetUser"}]}]}
         breaking, _ = _diff_grpc(spec, spec)
         assert breaking == []
 
@@ -227,9 +229,7 @@ class TestGrpcDiff:
             ]
         }
         current = {
-            "services": [
-                {"name": "UserService", "methods": [{"name": "GetUser"}]},
-            ]
+            "services": [{"name": "UserService", "methods": [{"name": "GetUser"}]}]
         }
         breaking, _ = _diff_grpc(current, baseline)
         assert any(c.change_type == "service_removed" for c in breaking)
@@ -245,9 +245,7 @@ class TestGrpcDiff:
             ]
         }
         current = {
-            "services": [
-                {"name": "UserService", "methods": [{"name": "GetUser"}]},
-            ]
+            "services": [{"name": "UserService", "methods": [{"name": "GetUser"}]}]
         }
         breaking, _ = _diff_grpc(current, baseline)
         assert any(c.change_type == "method_removed" for c in breaking)
@@ -281,8 +279,7 @@ class TestDiffContracts:
     def test_no_baseline_no_breaking(self, contracts_dir, baseline_dir) -> None:
         """Empty baseline → no breaking changes."""
         _write_json(
-            contracts_dir / "rest_openapi.json",
-            {"paths": {"/users": {"get": {}}}},
+            contracts_dir / "rest_openapi.json", {"paths": {"/users": {"get": {}}}}
         )
         diff = diff_contracts(current_dir=contracts_dir, baseline_dir=baseline_dir)
         assert diff.total_breaking == 0
@@ -308,15 +305,14 @@ class TestCLI:
         contracts_dir.mkdir()
         baseline_dir.mkdir()
         _write_json(
-            contracts_dir / "rest_openapi.json",
-            {"paths": {"/users": {"get": {}}}},
+            contracts_dir / "rest_openapi.json", {"paths": {"/users": {"get": {}}}}
         )
         _write_json(
-            baseline_dir / "rest_openapi.json",
-            {"paths": {"/users": {"get": {}}}},
+            baseline_dir / "rest_openapi.json", {"paths": {"/users": {"get": {}}}}
         )
 
         import sys
+
         old_argv = sys.argv
         sys.argv = [
             "contract_diff_gate",
@@ -342,15 +338,12 @@ class TestCLI:
         contracts_dir.mkdir()
         baseline_dir.mkdir()
         _write_json(
-            baseline_dir / "rest_openapi.json",
-            {"paths": {"/users": {"delete": {}}}},
+            baseline_dir / "rest_openapi.json", {"paths": {"/users": {"delete": {}}}}
         )
-        _write_json(
-            contracts_dir / "rest_openapi.json",
-            {"paths": {}},
-        )
+        _write_json(contracts_dir / "rest_openapi.json", {"paths": {}})
 
         import sys
+
         old_argv = sys.argv
         sys.argv = [
             "contract_diff_gate",
@@ -370,6 +363,7 @@ class TestCLI:
     def test_cli_missing_current(self, tmp_path) -> None:
         """Missing current dir → exit 2."""
         import sys
+
         old_argv = sys.argv
         sys.argv = [
             "contract_diff_gate",
@@ -390,12 +384,10 @@ class TestCLI:
         contracts_dir = tmp_path / "contracts"
         contracts_dir.mkdir()
         baseline = tmp_path / "missing_baseline"
-        _write_json(
-            contracts_dir / "rest_openapi.json",
-            {"paths": {}},
-        )
+        _write_json(contracts_dir / "rest_openapi.json", {"paths": {}})
 
         import sys
+
         old_argv = sys.argv
         sys.argv = [
             "contract_diff_gate",
@@ -422,15 +414,12 @@ class TestCLI:
         contracts_dir.mkdir()
         baseline_dir.mkdir()
         _write_json(
-            contracts_dir / "rest_openapi.json",
-            {"paths": {"/users": {"get": {}}}},
+            contracts_dir / "rest_openapi.json", {"paths": {"/users": {"get": {}}}}
         )
-        _write_json(
-            baseline_dir / "rest_openapi.json",
-            {"paths": {}},
-        )
+        _write_json(baseline_dir / "rest_openapi.json", {"paths": {}})
 
         import sys
+
         old_argv = sys.argv
         sys.argv = [
             "contract_diff_gate",
@@ -447,9 +436,7 @@ class TestCLI:
             sys.argv = old_argv
 
         # Baseline should now equal current.
-        baseline_rest = json.loads(
-            (baseline_dir / "rest_openapi.json").read_text()
-        )
+        baseline_rest = json.loads((baseline_dir / "rest_openapi.json").read_text())
         assert baseline_rest == {"paths": {"/users": {"get": {}}}}
 
 
@@ -468,8 +455,7 @@ class TestRealisticExample:
             {"paths": {"/users": {"get": {}}, "/users/{id}": {"delete": {}}}},
         )
         _write_json(
-            contracts_dir / "rest_openapi.json",
-            {"paths": {"/users": {"get": {}}}},
+            contracts_dir / "rest_openapi.json", {"paths": {"/users": {"get": {}}}}
         )
 
         # GraphQL: remove type.
@@ -478,8 +464,7 @@ class TestRealisticExample:
             {"__schema": {"types": [{"name": "User", "fields": [{"name": "id"}]}]}},
         )
         _write_json(
-            contracts_dir / "graphql_introspection.json",
-            {"__schema": {"types": []}},
+            contracts_dir / "graphql_introspection.json", {"__schema": {"types": []}}
         )
 
         # gRPC: remove service.
@@ -487,10 +472,7 @@ class TestRealisticExample:
             baseline_dir / "grpc_proto.json",
             {"services": [{"name": "UserService", "methods": [{"name": "GetUser"}]}]},
         )
-        _write_json(
-            contracts_dir / "grpc_proto.json",
-            {"services": []},
-        )
+        _write_json(contracts_dir / "grpc_proto.json", {"services": []})
 
         diff = diff_contracts(current_dir=contracts_dir, baseline_dir=baseline_dir)
 
@@ -511,7 +493,7 @@ class TestActionMatrix:
             "actions": {
                 "a.list": {"rest": True, "soap": True},
                 "b.add": {"rest": True, "soap": False},
-            },
+            }
         }
         breaking, nb = _diff_action_matrix(current, baseline)
         assert len(breaking) == 1
@@ -537,7 +519,5 @@ class TestActionMatrix:
         assert any(c.change_type == "channel_removed" for c in breaking)
 
     def test_mcp_tool_removed(self) -> None:
-        breaking = _diff_mcp_tools(
-            {"tools": ["t1"]}, {"tools": ["t1", "t2"]}
-        )
+        breaking = _diff_mcp_tools({"tools": ["t1"]}, {"tools": ["t1", "t2"]})
         assert any("t2" in c.description for c in breaking)

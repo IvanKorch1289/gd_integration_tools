@@ -30,9 +30,7 @@ async def test_remember_episode_soft_noop_when_disabled() -> None:
     Soft no-op contract (canonical): возвращает пустой entry без raise.
     """
     svc = LangMemService(enabled=False)
-    entry = await svc.remember_episode(
-        agent_id="a1", content="hi", metadata={},
-    )
+    entry = await svc.remember_episode(agent_id="a1", content="hi", metadata={})
     assert entry is not None
     assert entry.content == ""  # empty content (no-op)
     assert entry.kind == "episodic"
@@ -45,9 +43,7 @@ async def test_remember_fact_soft_noop_when_disabled() -> None:
     remember_fact signature: (agent_id, content, embedding) — NO metadata.
     """
     svc = LangMemService(enabled=False)
-    entry = await svc.remember_fact(
-        agent_id="a1", content="fact", embedding=[0.1] * 4,
-    )
+    entry = await svc.remember_fact(agent_id="a1", content="fact", embedding=[0.1] * 4)
     assert entry is not None
     assert entry.content == ""  # empty content (no-op)
 
@@ -60,7 +56,7 @@ async def test_remember_episode_works_when_enabled() -> None:
     """
     svc = LangMemService(enabled=True, use_inmemory=True)
     entry = await svc.remember_episode(
-        agent_id="a1", content="interaction X", metadata={"role": "user"},
+        agent_id="a1", content="interaction X", metadata={"role": "user"}
     )
     assert entry is not None
     assert entry.content == "interaction X"
@@ -78,9 +74,7 @@ async def test_recall_returns_empty_when_disabled() -> None:
 async def test_recall_returns_entries_after_remember() -> None:
     """Round-trip test: remember_episode then recall returns the entry."""
     svc = LangMemService(enabled=True, use_inmemory=True)
-    await svc.remember_episode(
-        agent_id="a1", content="event 1", metadata={},
-    )
+    await svc.remember_episode(agent_id="a1", content="event 1", metadata={})
     result = await svc.recall(agent_id="a1", kind="episodic")
     assert len(result) == 1
     assert result[0].content == "event 1"

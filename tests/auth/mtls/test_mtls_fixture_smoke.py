@@ -22,9 +22,7 @@ from src.backend.core.auth.mtls_backend import (
     MtlsConfig,
     default_cryptography_parser,
 )
-from testkit.mtls_fixtures import (
-    CertChain,
-)
+from testkit.mtls_fixtures import CertChain
 
 
 class _FakeRequest:
@@ -45,9 +43,7 @@ class _FakeRequest:
 
 
 def test_cert_generation_produces_valid_pem(
-    ca_cert: CertChain,
-    server_cert_chain: CertChain,
-    client_cert_chain: CertChain,
+    ca_cert: CertChain, server_cert_chain: CertChain, client_cert_chain: CertChain
 ) -> None:
     """CA/server/client cert'ы содержат корректные PEM-blocks и fingerprint."""
     for chain in (ca_cert, server_cert_chain, client_cert_chain):
@@ -64,9 +60,7 @@ def test_cert_generation_produces_valid_pem(
     assert ca_cert.fingerprint_sha256 != client_cert_chain.fingerprint_sha256
 
 
-def test_mtls_backend_accepts_client_cert(
-    client_cert_chain: CertChain,
-) -> None:
+def test_mtls_backend_accepts_client_cert(client_cert_chain: CertChain) -> None:
     """:class:`MtlsBackend` парсит client cert и возвращает principal.
 
     Подтверждает, что :func:`default_cryptography_parser` корректно
@@ -80,7 +74,7 @@ def test_mtls_backend_accepts_client_cert(
 
     backend = MtlsBackend(config=MtlsConfig(), cert_parser=parser)
     request = _FakeRequest(
-        {"X-Client-Cert": client_cert_chain.cert_pem.decode("utf-8")},
+        {"X-Client-Cert": client_cert_chain.cert_pem.decode("utf-8")}
     )
 
     result = backend.verify(request)

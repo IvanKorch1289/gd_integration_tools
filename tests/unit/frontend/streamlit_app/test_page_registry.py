@@ -29,9 +29,7 @@ from src.frontend.streamlit_app.shared.page_registry import (
 
 def test_registry_has_71_pages() -> None:
     """PAGE_METADATA должна содержать все 71 pages (S172: Home переехал в entry-point; S175: +90_Реестр_Маршрутов, +91_Операционные_Затраты)."""
-    assert len(PAGE_METADATA) == 71, (
-        f"Expected 71 pages, got {len(PAGE_METADATA)}"
-    )
+    assert len(PAGE_METADATA) == 71, f"Expected 71 pages, got {len(PAGE_METADATA)}"
 
 
 def test_registry_keys_match_filesystem() -> None:
@@ -80,9 +78,7 @@ def test_titles_are_russian() -> None:
             russian_count += 1
 
     # Should be most pages (some product names are English)
-    assert russian_count >= 60, (
-        f"Expected >=60 Russian titles, got {russian_count}"
-    )
+    assert russian_count >= 60, f"Expected >=60 Russian titles, got {russian_count}"
 
 
 def test_get_page_metadata_known() -> None:

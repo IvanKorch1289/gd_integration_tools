@@ -3,6 +3,7 @@
 T3 coverage sprint cycle 5: тесты для ``ExpressEditProcessor.__init__``
 (validation/deps) и ``process()`` (HTTP edit через client).
 """
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -61,9 +62,7 @@ def test_init_with_body_from() -> None:
 
 def test_init_with_bubble_keyboard_status() -> None:
     proc = ExpressEditProcessor(
-        bubble=[[{"text": "btn"}]],
-        keyboard=[[{"text": "kb"}]],
-        status="ok",
+        bubble=[[{"text": "btn"}]], keyboard=[[{"text": "kb"}]], status="ok"
     )
     assert proc._bubble == [[{"text": "btn"}]]
     assert proc._keyboard == [[{"text": "kb"}]]
@@ -74,7 +73,10 @@ def test_to_spec_minimal() -> None:
     proc = ExpressEditProcessor()
     spec = proc.to_spec()
     assert spec == {
-        "express_edit": {"bot": "main_bot", "sync_id_from": "properties.express_sync_id"}
+        "express_edit": {
+            "bot": "main_bot",
+            "sync_id_from": "properties.express_sync_id",
+        }
     }
 
 
@@ -144,12 +146,15 @@ async def test_process_static_body_sends_edit() -> None:
     ex, _captured = _make_exchange(properties={"express_sync_id": "sync-123"})
 
     fake_client = _FakeClient()
-    with patch(
-        "src.backend.dsl.engine.processors.express.edit.get_express_client",
-        return_value=fake_client,
-    ), patch(
-        "src.backend.dsl.engine.processors.express.edit.resolve_value",
-        lambda exch, expr: "sync-123",
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.edit.get_express_client",
+            return_value=fake_client,
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.edit.resolve_value",
+            lambda exch, expr: "sync-123",
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -166,12 +171,15 @@ async def test_process_body_from_falls_back_when_static_none() -> None:
     ex, _captured = _make_exchange(properties={"express_sync_id": "sync-1"})
 
     fake_client = _FakeClient()
-    with patch(
-        "src.backend.dsl.engine.processors.express.edit.get_express_client",
-        return_value=fake_client,
-    ), patch(
-        "src.backend.dsl.engine.processors.express.edit.resolve_value",
-        lambda exch, expr: "resolved text" if expr == "body.new_text" else "sync-1",
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.edit.get_express_client",
+            return_value=fake_client,
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.edit.resolve_value",
+            lambda exch, expr: "resolved text" if expr == "body.new_text" else "sync-1",
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -186,12 +194,15 @@ async def test_process_body_static_takes_priority_over_body_from() -> None:
     ex, _captured = _make_exchange(properties={"express_sync_id": "sync-1"})
 
     fake_client = _FakeClient()
-    with patch(
-        "src.backend.dsl.engine.processors.express.edit.get_express_client",
-        return_value=fake_client,
-    ), patch(
-        "src.backend.dsl.engine.processors.express.edit.resolve_value",
-        lambda exch, expr: "DYNAMIC_VALUE_SHOULD_NOT_APPEAR",
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.edit.get_express_client",
+            return_value=fake_client,
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.edit.resolve_value",
+            lambda exch, expr: "DYNAMIC_VALUE_SHOULD_NOT_APPEAR",
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -208,12 +219,15 @@ async def test_process_body_from_none_value_skipped() -> None:
     ex, _captured = _make_exchange(properties={"express_sync_id": "sync-1"})
 
     fake_client = _FakeClient()
-    with patch(
-        "src.backend.dsl.engine.processors.express.edit.get_express_client",
-        return_value=fake_client,
-    ), patch(
-        "src.backend.dsl.engine.processors.express.edit.resolve_value",
-        lambda exch, expr: None if expr == "body.maybe" else "sync-1",
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.edit.get_express_client",
+            return_value=fake_client,
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.edit.resolve_value",
+            lambda exch, expr: None if expr == "body.maybe" else "sync-1",
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -225,19 +239,20 @@ async def test_process_body_from_none_value_skipped() -> None:
 @pytest.mark.asyncio
 async def test_process_bubble_keyboard_status_passed_through() -> None:
     proc = ExpressEditProcessor(
-        bubble=[[{"text": "btn1"}]],
-        keyboard=[[{"text": "kb"}]],
-        status="ok",
+        bubble=[[{"text": "btn1"}]], keyboard=[[{"text": "kb"}]], status="ok"
     )
     ex, _captured = _make_exchange(properties={"express_sync_id": "sync-1"})
 
     fake_client = _FakeClient()
-    with patch(
-        "src.backend.dsl.engine.processors.express.edit.get_express_client",
-        return_value=fake_client,
-    ), patch(
-        "src.backend.dsl.engine.processors.express.edit.resolve_value",
-        lambda exch, expr: "sync-1",
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.edit.get_express_client",
+            return_value=fake_client,
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.edit.resolve_value",
+            lambda exch, expr: "sync-1",
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -256,12 +271,15 @@ async def test_process_no_fields_skips_edit() -> None:
     ex, _captured = _make_exchange(properties={"express_sync_id": "sync-1"})
 
     fake_client = _FakeClient()
-    with patch(
-        "src.backend.dsl.engine.processors.express.edit.get_express_client",
-        return_value=fake_client,
-    ), patch(
-        "src.backend.dsl.engine.processors.express.edit.resolve_value",
-        lambda exch, expr: "sync-1",
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.edit.get_express_client",
+            return_value=fake_client,
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.edit.resolve_value",
+            lambda exch, expr: "sync-1",
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -274,12 +292,15 @@ async def test_process_client_none_skips() -> None:
     proc = ExpressEditProcessor(body="text")
     ex, _captured = _make_exchange(properties={"express_sync_id": "sync-1"})
 
-    with patch(
-        "src.backend.dsl.engine.processors.express.edit.get_express_client",
-        return_value=None,
-    ), patch(
-        "src.backend.dsl.engine.processors.express.edit.resolve_value",
-        lambda exch, expr: "sync-1",
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.edit.get_express_client",
+            return_value=None,
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.edit.resolve_value",
+            lambda exch, expr: "sync-1",
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -297,12 +318,15 @@ async def test_process_client_exception_records_error() -> None:
     error_client.__aexit__ = AsyncMock(return_value=None)
     error_client.edit_message = AsyncMock(side_effect=RuntimeError("API failure"))
 
-    with patch(
-        "src.backend.dsl.engine.processors.express.edit.get_express_client",
-        return_value=error_client,
-    ), patch(
-        "src.backend.dsl.engine.processors.express.edit.resolve_value",
-        lambda exch, expr: "sync-1",
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.edit.get_express_client",
+            return_value=error_client,
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.edit.resolve_value",
+            lambda exch, expr: "sync-1",
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -316,12 +340,15 @@ async def test_process_sync_id_passed_as_string() -> None:
     ex, _captured = _make_exchange(properties={"express_sync_id": "sync-1"})
 
     fake_client = _FakeClient()
-    with patch(
-        "src.backend.dsl.engine.processors.express.edit.get_express_client",
-        return_value=fake_client,
-    ), patch(
-        "src.backend.dsl.engine.processors.express.edit.resolve_value",
-        lambda exch, expr: 12345 if expr == "properties.express_sync_id" else None,
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.edit.get_express_client",
+            return_value=fake_client,
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.edit.resolve_value",
+            lambda exch, expr: 12345 if expr == "properties.express_sync_id" else None,
+        ),
     ):
         await proc.process(ex, _ctx())
 
@@ -337,12 +364,15 @@ async def test_process_empty_bubble_clears_buttons() -> None:
     ex, _captured = _make_exchange(properties={"express_sync_id": "sync-1"})
 
     fake_client = _FakeClient()
-    with patch(
-        "src.backend.dsl.engine.processors.express.edit.get_express_client",
-        return_value=fake_client,
-    ), patch(
-        "src.backend.dsl.engine.processors.express.edit.resolve_value",
-        lambda exch, expr: "sync-1",
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.express.edit.get_express_client",
+            return_value=fake_client,
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.express.edit.resolve_value",
+            lambda exch, expr: "sync-1",
+        ),
     ):
         await proc.process(ex, _ctx())
 

@@ -1,6 +1,5 @@
 """Unit tests for BaseEntrypoint and dispatch_action."""
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -52,7 +51,7 @@ async def test_dispatch_action_extra_meta() -> None:
     with patch("src.backend.entrypoints.base.action_handler_registry") as mock_reg:
         mock_reg.dispatch = AsyncMock(return_value={})
         await dispatch_action(
-            action="test", source="rest", extra_meta={"custom": "val"},
+            action="test", source="rest", extra_meta={"custom": "val"}
         )
         call_args = mock_reg.dispatch.call_args[0][0]
         assert call_args.action == "test"

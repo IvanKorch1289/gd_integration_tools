@@ -37,7 +37,7 @@ class TestRabbitDLQWriter:
     @pytest.mark.unit
     @pytest.mark.asyncio
     async def test_write_default_exchange(
-        self, channel: MagicMock, envelope: DLQEnvelope,
+        self, channel: MagicMock, envelope: DLQEnvelope
     ) -> None:
         writer = RabbitDLQWriter(channel=channel)
         with patched_auth_allow():
@@ -54,7 +54,7 @@ class TestRabbitDLQWriter:
     @pytest.mark.unit
     @pytest.mark.asyncio
     async def test_write_named_exchange(
-        self, channel: MagicMock, envelope: DLQEnvelope,
+        self, channel: MagicMock, envelope: DLQEnvelope
     ) -> None:
         writer = RabbitDLQWriter(channel=channel, exchange_name="dlx")
         with patched_auth_allow():
@@ -65,7 +65,7 @@ class TestRabbitDLQWriter:
     @pytest.mark.unit
     @pytest.mark.asyncio
     async def test_write_propagates_exception(
-        self, channel: MagicMock, envelope: DLQEnvelope,
+        self, channel: MagicMock, envelope: DLQEnvelope
     ) -> None:
         channel.default_exchange.publish.side_effect = RuntimeError("rabbit down")
         writer = RabbitDLQWriter(channel=channel)

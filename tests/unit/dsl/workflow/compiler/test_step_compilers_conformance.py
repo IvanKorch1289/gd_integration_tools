@@ -10,6 +10,7 @@ contract is preserved:
 
 This prevents the "step added but not registered" failure class.
 """
+
 from __future__ import annotations
 
 import inspect
@@ -35,6 +36,7 @@ def test_dispatch_size_matches_union() -> None:
     # WorkflowStep — Annotated[Union, Field(discriminator=...)]
     # Извлекаем Union args (2nd element of Annotated)
     import typing
+
     args = typing.get_args(WorkflowStep)
     union = args[0]  # the Union
     union_size = len(typing.get_args(union)) if hasattr(union, "__args__") else 1
@@ -48,6 +50,7 @@ def test_dispatch_size_matches_union() -> None:
 def test_dispatch_entries_match_union() -> None:
     """Every WorkflowStep type has a compiler в _STEP_DISPATCH."""
     import typing
+
     args = typing.get_args(WorkflowStep)
     union = typing.get_args(args[0]) if hasattr(args[0], "__args__") else (args[0],)
 
@@ -75,6 +78,7 @@ def test_dispatch_lookup_by_class() -> None:
     """dispatch_step_compile uses type(step) lookup, не isinstance."""
     # Create a mock that matches the step type exactly
     from src.backend.dsl.workflow.spec.activity_declarations import ActivityDeclaration
+
     fake_step = ActivityDeclaration(name="test")
     compiler = _STEP_DISPATCH[type(fake_step)]
     assert compiler is not None
@@ -83,6 +87,7 @@ def test_dispatch_lookup_by_class() -> None:
 @pytest.mark.unit
 async def test_dispatch_step_compile_unknown_type_raises() -> None:
     """Unknown step type должен raise TypeError (Ponytail fail-loud)."""
+
     # Use a non-WorkflowStep object as the "step" — type lookup will fail
     class NotAStep:
         pass

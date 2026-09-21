@@ -31,9 +31,7 @@ def _build_app_with_middleware() -> FastAPI:
 
     @app.get("/docs")
     def docs() -> PlainTextResponse:
-        return PlainTextResponse(
-            "<html><body>Swagger UI</body></html>",
-        )
+        return PlainTextResponse("<html><body>Swagger UI</body></html>")
 
     @app.get("/docs/oauth2-redirect")
     def oauth2_redirect() -> PlainTextResponse:
@@ -56,9 +54,7 @@ def _build_app_with_middleware() -> FastAPI:
         return PlainTextResponse("x" * 1000)
 
     app.add_middleware(
-        GZipCompressionExcludingMiddleware,
-        minimum_size=500,
-        compresslevel=6,
+        GZipCompressionExcludingMiddleware, minimum_size=500, compresslevel=6
     )
     return app
 
@@ -114,7 +110,7 @@ def test_metrics_path_passes_through() -> None:
 @pytest.mark.skip(
     reason="S44 W31: starlette 1.3.1 testclient + httpx 0.28+ incompatibility "
     "(AttributeError: 'str' object has no attribute 'decode'). Pre-existing "
-    "infrastructure issue. Fix: pin httpx<0.28 or upgrade starlette>=0.40.",
+    "infrastructure issue. Fix: pin httpx<0.28 or upgrade starlette>=0.40."
 )
 def test_non_excluded_path_compressed_when_large() -> None:
     """/api/v1/large (1000 bytes > minimum_size=500) → compressed."""
@@ -139,7 +135,7 @@ def test_non_excluded_path_not_compressed_when_small() -> None:
 
 @pytest.mark.skip(
     reason="S44 W31: starlette 1.3.1 testclient + httpx 0.28+ incompatibility. "
-    "Pre-existing infrastructure issue.",
+    "Pre-existing infrastructure issue."
 )
 def test_no_gzip_accept_encoding_passes_through() -> None:
     """Client без Accept-Encoding: gzip → pass through без compression."""
@@ -153,7 +149,7 @@ def test_no_gzip_accept_encoding_passes_through() -> None:
 
 @pytest.mark.skip(
     reason="S44 W31: starlette 1.3.1 testclient + httpx 0.28+ incompatibility. "
-    "Pre-existing infrastructure issue.",
+    "Pre-existing infrastructure issue."
 )
 def test_excluded_paths_dont_have_content_length_mismatch() -> None:
     """/api/v1/large (non-excluded) при Accept-Encoding без gzip → pass through

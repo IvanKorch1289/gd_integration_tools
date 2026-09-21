@@ -9,21 +9,21 @@ class TestActionDispatcherDSLExportsIdentity:
     """ActionHandlerRegistry + action_handler_registry identity preserved."""
 
     def test_action_handler_registry_identity(self) -> None:
-        from src.backend.services.execution.action_dispatcher import (
-            action_handler_registry,
-        )
         from src.backend.dsl.commands.action_registry import (
             action_handler_registry as _orig,
+        )
+        from src.backend.services.execution.action_dispatcher import (
+            action_handler_registry,
         )
 
         assert action_handler_registry is _orig
 
     def test_action_handler_registry_class_identity(self) -> None:
-        from src.backend.services.execution.action_dispatcher import (
-            ActionHandlerRegistry,
-        )
         from src.backend.dsl.commands.action_registry import (
             ActionHandlerRegistry as _orig,
+        )
+        from src.backend.services.execution.action_dispatcher import (
+            ActionHandlerRegistry,
         )
 
         assert ActionHandlerRegistry is _orig

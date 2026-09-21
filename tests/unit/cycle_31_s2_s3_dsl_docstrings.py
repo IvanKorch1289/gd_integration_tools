@@ -4,7 +4,6 @@ Per next-sprint plan S3: docstring coverage 70% → 80%.
 Tests measure current coverage and document the baseline.
 """
 
-
 from __future__ import annotations
 
 import ast
@@ -35,7 +34,9 @@ class TestDSLProcessorDocstrings:
                     with_doc += 1
         # At least 60% of processor files have module docstring
         ratio = with_doc / total if total else 0
-        assert ratio >= 0.6, f"Only {with_doc}/{total} ({ratio:.0%}) have module docstrings"
+        assert ratio >= 0.6, (
+            f"Only {with_doc}/{total} ({ratio:.0%}) have module docstrings"
+        )
 
 
 class TestWorkflowProcessorStructure:
@@ -49,8 +50,11 @@ class TestWorkflowProcessorStructure:
         path = "src/backend/dsl/engine/processors/workflow/__init__.py"
         with open(path) as f:
             content = f.read()
-        for cls in ["CancelWorkflowProcessor", "InvokeWorkflowProcessor",
-                    "SubWorkflowProcessor"]:
+        for cls in [
+            "CancelWorkflowProcessor",
+            "InvokeWorkflowProcessor",
+            "SubWorkflowProcessor",
+        ]:
             assert cls in content, f"Missing re-export: {cls}"
 
     def test_db_subdir_still_exists(self):

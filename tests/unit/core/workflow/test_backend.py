@@ -77,7 +77,7 @@ class TestWorkflowResult:
 
     def test_failed_with_failure(self) -> None:
         r = WorkflowResult(
-            status="failed", output={}, failure={"type": "RuntimeError", "message": "x"},
+            status="failed", output={}, failure={"type": "RuntimeError", "message": "x"}
         )
         assert r.status == "failed"
         assert r.failure is not None
@@ -100,7 +100,7 @@ class TestWorkflowStatus:
     """WorkflowStatus — alias для str."""
 
     def test_is_str(self) -> None:
-        assert WorkflowStatus == str  # type: ignore[misc]
+        assert WorkflowStatus is str  # type: ignore[misc]
 
 
 class _FakeBackend:
@@ -119,7 +119,7 @@ class _FakeBackend:
         return WorkflowHandle(workflow_id="w", run_id="r", namespace="n")
 
     async def signal_workflow(
-        self, *, handle: WorkflowHandle, signal_name: str, payload: dict[str, Any],
+        self, *, handle: WorkflowHandle, signal_name: str, payload: dict[str, Any]
     ) -> None:
         pass
 
@@ -136,7 +136,7 @@ class _FakeBackend:
         pass
 
     async def await_completion(
-        self, *, handle: WorkflowHandle, timeout: timedelta | None = None,
+        self, *, handle: WorkflowHandle, timeout: timedelta | None = None
     ) -> WorkflowResult:
         return WorkflowResult(status="completed")
 

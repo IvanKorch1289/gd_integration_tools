@@ -1,4 +1,5 @@
 """Unit tests for M2 SQL validation gates in ExternalDatabaseFacade."""
+
 from __future__ import annotations
 
 from src.backend.infrastructure.database.external_database_facade import (

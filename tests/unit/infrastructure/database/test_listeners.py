@@ -10,7 +10,6 @@ listener'а держится только на docstring; SQL telemetry regressi
 не будут пойманы тестами.
 """
 
-
 from __future__ import annotations
 
 import logging
@@ -73,23 +72,27 @@ def captured_handlers() -> list[tuple[str, object]]:
     handlers: list[tuple[str, object]] = []
 
     def fake_listens_for(
-        target: object, identifier: str, *args: object, **kw: object,
+        target: object, identifier: str, *args: object, **kw: object
     ) -> object:
         if args and callable(args[0]):
             # Direct form: event.listens_for(target, identifier, fn)
             handlers.append((identifier, args[0]))
             return lambda: None
+
         # Decorator form: event.listens_for(target, identifier) returns decorator
         def decorator(fn: object) -> object:
             handlers.append((identifier, fn))
             return fn
+
         return decorator
 
     with patch("sqlalchemy.event.listens_for", side_effect=fake_listens_for):
         yield handlers
 
 
-def test_listener_registers_three_handlers(captured_handlers: list[tuple[str, object]]) -> None:
+def test_listener_registers_three_handlers(
+    captured_handlers: list[tuple[str, object]],
+) -> None:
     """DatabaseListener регистрирует 3 SQLAlchemy event listeners."""
     engine = _make_async_engine()
     DatabaseListener(async_engine=engine, db_name="test_db", slow_query_threshold=0.5)
@@ -100,11 +103,13 @@ def test_listener_registers_three_handlers(captured_handlers: list[tuple[str, ob
     assert "handle_error" in event_names
 
 
-def test_listener_stores_attributes_correctly(captured_handlers: list[tuple[str, object]]) -> None:
+def test_listener_stores_attributes_correctly(
+    captured_handlers: list[tuple[str, object]],
+) -> None:
     """DatabaseListener.__init__ сохраняет config в instance attrs."""
     engine = _make_async_engine()
     listener = DatabaseListener(
-        async_engine=engine, db_name="pg_prod", slow_query_threshold=1.5,
+        async_engine=engine, db_name="pg_prod", slow_query_threshold=1.5
     )
 
     assert listener.async_engine is engine
@@ -114,8 +119,7 @@ def test_listener_stores_attributes_correctly(captured_handlers: list[tuple[str,
 
 
 def test_after_cursor_logs_debug_for_fast_queries(
-    captured_handlers: list[tuple[str, object]],
-    caplog: pytest.LogCaptureFixture,
+    captured_handlers: list[tuple[str, object]], caplog: pytest.LogCaptureFixture
 ) -> None:
     """after_cursor_execute логирует SQL query на DEBUG если duration < threshold."""
     engine = _make_async_engine()
@@ -149,8 +153,7 @@ def test_after_cursor_logs_debug_for_fast_queries(
 
 
 def test_after_cursor_logs_warning_for_slow_queries(
-    captured_handlers: list[tuple[str, object]],
-    caplog: pytest.LogCaptureFixture,
+    captured_handlers: list[tuple[str, object]], caplog: pytest.LogCaptureFixture
 ) -> None:
     """after_cursor_execute логирует WARNING если duration >= threshold."""
     engine = _make_async_engine()
@@ -173,9 +176,7 @@ def test_after_cursor_logs_warning_for_slow_queries(
             executemany=False,
         )
 
-    warn_records = [
-        r for r in caplog.records if "Slow SQL query detected" in r.message
-    ]
+    warn_records = [r for r in caplog.records if "Slow SQL query detected" in r.message]
     assert len(warn_records) == 1
     record = warn_records[0]
     assert record.levelno == logging.WARNING
@@ -183,8 +184,7 @@ def test_after_cursor_logs_warning_for_slow_queries(
 
 
 def test_after_cursor_skips_when_no_start_time(
-    captured_handlers: list[tuple[str, object]],
-    caplog: pytest.LogCaptureFixture,
+    captured_handlers: list[tuple[str, object]], caplog: pytest.LogCaptureFixture
 ) -> None:
     """after_cursor_execute не логирует если context._query_start_time не set."""
     engine = _make_async_engine()
@@ -212,8 +212,7 @@ def test_after_cursor_skips_when_no_start_time(
 
 
 def test_handle_error_logs_error_without_query_parameters(
-    captured_handlers: list[tuple[str, object]],
-    caplog: pytest.LogCaptureFixture,
+    captured_handlers: list[tuple[str, object]], caplog: pytest.LogCaptureFixture
 ) -> None:
     """handle_error логирует DB error, но НЕ параметры запроса (PII-safe).
 
@@ -224,12 +223,10 @@ def test_handle_error_logs_error_without_query_parameters(
     engine = _make_async_engine()
     DatabaseListener(async_engine=engine, db_name="pg_prod", slow_query_threshold=0.5)
 
-    error_handler = next(
-        fn for name, fn in captured_handlers if name == "handle_error"
-    )
+    error_handler = next(fn for name, fn in captured_handlers if name == "handle_error")
 
     ctx = _make_context(
-        is_disconnect=True, statement="INSERT INTO users (ssn) VALUES (?)",
+        is_disconnect=True, statement="INSERT INTO users (ssn) VALUES (?)"
     )
 
     with caplog.at_level(logging.ERROR, logger="database"):
@@ -255,9 +252,7 @@ def test_handle_error_truncates_long_statements(
     engine = _make_async_engine()
     DatabaseListener(async_engine=engine, db_name="db1", slow_query_threshold=0.5)
 
-    error_handler = next(
-        fn for name, fn in captured_handlers if name == "handle_error"
-    )
+    error_handler = next(fn for name, fn in captured_handlers if name == "handle_error")
 
     long_stmt = "SELECT * FROM t WHERE x = '" + "a" * 1000 + "'"
     ctx = _make_context(statement=long_stmt)
@@ -266,7 +261,7 @@ def test_handle_error_truncates_long_statements(
 
     # Verify truncation via MockDbLogger.
     DatabaseListener(
-        async_engine=_make_async_engine(), db_name="db2", slow_query_threshold=0.5,
+        async_engine=_make_async_engine(), db_name="db2", slow_query_threshold=0.5
     ).logger
     # Свежий listener → re-register handlers; используем последний listener.
     # Просто вызываем handler на новом listener и проверяем.
@@ -280,9 +275,7 @@ def test_handle_error_handles_none_statement(
     engine = _make_async_engine()
     DatabaseListener(async_engine=engine, db_name="db1", slow_query_threshold=0.5)
 
-    error_handler = next(
-        fn for name, fn in captured_handlers if name == "handle_error"
-    )
+    error_handler = next(fn for name, fn in captured_handlers if name == "handle_error")
 
     ctx = _make_context(statement=None)
 

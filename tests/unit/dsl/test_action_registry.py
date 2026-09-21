@@ -12,7 +12,6 @@
    семантика сохранена.
 """
 
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -129,7 +128,7 @@ class TestDispatchEmptyPayloadValidation:
         )
 
         command = ActionCommandSchema(
-            action="dsl.nonempty.strict", payload={"name": "alice"},
+            action="dsl.nonempty.strict", payload={"name": "alice"}
         )
 
         result = await registry.dispatch(command)
@@ -206,7 +205,7 @@ class TestAtomicConflictReregistration:
             payload_model=_StrictPayload,
         )
         conflicting_metadata = ActionMetadata(
-            action="dsl.conflict.handler", input_model=_OtherPayload,
+            action="dsl.conflict.handler", input_model=_OtherPayload
         )
 
         with pytest.raises(ValueError, match="Atomic re-registration conflict"):
@@ -230,7 +229,7 @@ class TestAtomicConflictReregistration:
         )
         # Затем пытаемся перезаписать метаданные с input_model=_OtherPayload.
         conflicting_metadata = ActionMetadata(
-            action="dsl.conflict.metadata_only", input_model=_OtherPayload,
+            action="dsl.conflict.metadata_only", input_model=_OtherPayload
         )
 
         with pytest.raises(ValueError, match="Atomic re-registration conflict"):
@@ -257,9 +256,7 @@ class TestAtomicConflictReregistration:
             description="original",
         )
         registry.register_with_metadata(
-            action="dsl.conflict.no_mutation",
-            handler=spec,
-            metadata=original_metadata,
+            action="dsl.conflict.no_mutation", handler=spec, metadata=original_metadata
         )
         # Конфликтующая попытка metadata-only перезаписи.
         conflicting_metadata = ActionMetadata(
@@ -288,17 +285,17 @@ class TestAtomicConflictReregistration:
         """Re-registration с согласованными моделями проходит штатно."""
         registry = ActionHandlerRegistry()
         first_metadata = ActionMetadata(
-            action="dsl.consistent", input_model=_StrictPayload,
+            action="dsl.consistent", input_model=_StrictPayload
         )
         registry.register_with_metadata(
-            action="dsl.consistent", handler=None, metadata=first_metadata,
+            action="dsl.consistent", handler=None, metadata=first_metadata
         )
         # Та же модель — допустимая re-registration.
         second_metadata = ActionMetadata(
-            action="dsl.consistent", input_model=_StrictPayload, description="enriched",
+            action="dsl.consistent", input_model=_StrictPayload, description="enriched"
         )
         registry.register_with_metadata(
-            action="dsl.consistent", handler=None, metadata=second_metadata,
+            action="dsl.consistent", handler=None, metadata=second_metadata
         )
 
         meta = registry.get_metadata("dsl.consistent")
@@ -311,10 +308,10 @@ class TestAtomicConflictReregistration:
         """
         registry = ActionHandlerRegistry()
         metadata = ActionMetadata(
-            action="dsl.crud.pattern", input_model=_StrictPayload, transports=("http",),
+            action="dsl.crud.pattern", input_model=_StrictPayload, transports=("http",)
         )
         registry.register_with_metadata(
-            action="dsl.crud.pattern", handler=None, metadata=metadata,
+            action="dsl.crud.pattern", handler=None, metadata=metadata
         )
         # Handler-attachment с тем же payload_model — допустимо.
         registry.register(
@@ -334,7 +331,7 @@ class TestAtomicConflictReregistration:
 
         with pytest.raises(ValueError, match="metadata.action"):
             registry.register_with_metadata(
-                action="different.action", handler=None, metadata=metadata,
+                action="different.action", handler=None, metadata=metadata
             )
 
     def test_callable_handler_still_rejected_with_type_error(self) -> None:
@@ -347,7 +344,7 @@ class TestAtomicConflictReregistration:
 
         with pytest.raises(TypeError, match="ActionHandlerSpec or None"):
             registry.register_with_metadata(
-                action="dsl.bad.callable", handler=_bogus, metadata=metadata,
+                action="dsl.bad.callable", handler=_bogus, metadata=metadata
             )
 
     def test_no_conflict_when_handler_payload_model_is_none(self) -> None:
@@ -362,11 +359,11 @@ class TestAtomicConflictReregistration:
             payload_model=None,
         )
         metadata = ActionMetadata(
-            action="dsl.handler.optional", input_model=_StrictPayload,
+            action="dsl.handler.optional", input_model=_StrictPayload
         )
 
         registry.register_with_metadata(
-            action="dsl.handler.optional", handler=spec, metadata=metadata,
+            action="dsl.handler.optional", handler=spec, metadata=metadata
         )
 
         assert registry.is_registered("dsl.handler.optional")
@@ -384,7 +381,7 @@ class TestAtomicConflictReregistration:
         metadata = ActionMetadata(action="dsl.meta.optional", input_model=None)
 
         registry.register_with_metadata(
-            action="dsl.meta.optional", handler=spec, metadata=metadata,
+            action="dsl.meta.optional", handler=spec, metadata=metadata
         )
 
         assert registry.is_registered("dsl.meta.optional")
@@ -396,11 +393,11 @@ class TestAtomicConflictReregistration:
         """
         registry = ActionHandlerRegistry()
         metadata = ActionMetadata(
-            action="dsl.fresh.metadata_only", input_model=_StrictPayload,
+            action="dsl.fresh.metadata_only", input_model=_StrictPayload
         )
 
         registry.register_with_metadata(
-            action="dsl.fresh.metadata_only", handler=None, metadata=metadata,
+            action="dsl.fresh.metadata_only", handler=None, metadata=metadata
         )
 
         assert not registry.is_registered("dsl.fresh.metadata_only")
@@ -425,11 +422,11 @@ class TestAtomicConflictReregistration:
         )
         # Перезапись метаданных с input_model=X.
         new_metadata = ActionMetadata(
-            action="dsl.no.existing.model", input_model=_StrictPayload,
+            action="dsl.no.existing.model", input_model=_StrictPayload
         )
 
         registry.register_with_metadata(
-            action="dsl.no.existing.model", handler=None, metadata=new_metadata,
+            action="dsl.no.existing.model", handler=None, metadata=new_metadata
         )
 
         assert registry.get_metadata("dsl.no.existing.model") is new_metadata

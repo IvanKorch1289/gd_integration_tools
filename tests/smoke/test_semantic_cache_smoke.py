@@ -10,7 +10,6 @@
 в unit-тестах с fakeredis.
 """
 
-
 from __future__ import annotations
 
 from src.backend.infrastructure.ai.semantic_cache import SemanticCache

@@ -3,6 +3,7 @@
 T3 coverage sprint cycle 4: тесты для ``ExpressMentionProcessor.__init__``
 (validation) и ``process`` (mention creation per type).
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -75,9 +76,7 @@ def test_init_default_property_name() -> None:
 
 
 def test_init_custom_property_name() -> None:
-    proc = ExpressMentionProcessor(
-        mention_type="all", property_name="custom_mentions"
-    )
+    proc = ExpressMentionProcessor(mention_type="all", property_name="custom_mentions")
     assert proc._property_name == "custom_mentions"
 
 
@@ -113,13 +112,13 @@ class _FakeBotxMention:
 
 
 @pytest.mark.asyncio
-async def test_process_user_type_creates_mention(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_process_user_type_creates_mention(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     _patch_express_bot_module(monkeypatch, {"BotxMention": _FakeBotxMention})
     ex = _make_exchange(properties={"user_huid": "user-123"})
     proc = ExpressMentionProcessor(
-        mention_type="user",
-        target_from="body.user_huid",
-        mention_id="mention-abc",
+        mention_type="user", target_from="body.user_huid", mention_id="mention-abc"
     )
 
     with patch(
@@ -136,13 +135,13 @@ async def test_process_user_type_creates_mention(monkeypatch: pytest.MonkeyPatch
 
 
 @pytest.mark.asyncio
-async def test_process_chat_type_sets_group_chat_id(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_process_chat_type_sets_group_chat_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     _patch_express_bot_module(monkeypatch, {"BotxMention": _FakeBotxMention})
     ex = _make_exchange()
     proc = ExpressMentionProcessor(
-        mention_type="chat",
-        target_from="body.chat_id",
-        mention_id="m-chat",
+        mention_type="chat", target_from="body.chat_id", mention_id="m-chat"
     )
 
     with patch(
@@ -158,13 +157,13 @@ async def test_process_chat_type_sets_group_chat_id(monkeypatch: pytest.MonkeyPa
 
 
 @pytest.mark.asyncio
-async def test_process_channel_type_sets_group_chat_id(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_process_channel_type_sets_group_chat_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     _patch_express_bot_module(monkeypatch, {"BotxMention": _FakeBotxMention})
     ex = _make_exchange()
     proc = ExpressMentionProcessor(
-        mention_type="channel",
-        target_from="body.channel_id",
-        mention_id="m-ch",
+        mention_type="channel", target_from="body.channel_id", mention_id="m-ch"
     )
 
     with patch(
@@ -179,13 +178,13 @@ async def test_process_channel_type_sets_group_chat_id(monkeypatch: pytest.Monke
 
 
 @pytest.mark.asyncio
-async def test_process_contact_type_uses_user_huid(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_process_contact_type_uses_user_huid(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     _patch_express_bot_module(monkeypatch, {"BotxMention": _FakeBotxMention})
     ex = _make_exchange()
     proc = ExpressMentionProcessor(
-        mention_type="contact",
-        target_from="body.contact_id",
-        mention_id="m-ct",
+        mention_type="contact", target_from="body.contact_id", mention_id="m-ct"
     )
 
     with patch(
@@ -200,16 +199,12 @@ async def test_process_contact_type_uses_user_huid(monkeypatch: pytest.MonkeyPat
 
 
 @pytest.mark.asyncio
-async def test_process_skips_when_target_empty(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_process_skips_when_target_empty(monkeypatch: pytest.MonkeyPatch) -> None:
     """If resolve_value returns falsy for non-all type → no mention added."""
     _patch_express_bot_module(monkeypatch, {"BotxMention": _FakeBotxMention})
     ex = _make_exchange()
     proc = ExpressMentionProcessor(
-        mention_type="user",
-        target_from="body.user_huid",
-        mention_id="m",
+        mention_type="user", target_from="body.user_huid", mention_id="m"
     )
 
     with patch(
@@ -222,13 +217,13 @@ async def test_process_skips_when_target_empty(
 
 
 @pytest.mark.asyncio
-async def test_process_all_type_skips_target_lookup(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_process_all_type_skips_target_lookup(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """mention_type=all doesn't need target — generates mention без target check."""
     _patch_express_bot_module(monkeypatch, {"BotxMention": _FakeBotxMention})
     ex = _make_exchange()
-    proc = ExpressMentionProcessor(
-        mention_type="all", mention_id="m-all"
-    )
+    proc = ExpressMentionProcessor(mention_type="all", mention_id="m-all")
 
     with patch(
         "src.backend.dsl.engine.processors.express.mention.resolve_value"
@@ -254,9 +249,7 @@ async def test_process_appends_to_existing_bucket(
     )
     ex = _make_exchange(properties={"express_mentions": [existing_mention]})
     proc = ExpressMentionProcessor(
-        mention_type="user",
-        target_from="body.user_huid",
-        mention_id="m-new",
+        mention_type="user", target_from="body.user_huid", mention_id="m-new"
     )
 
     with patch(
@@ -272,13 +265,13 @@ async def test_process_appends_to_existing_bucket(
 
 
 @pytest.mark.asyncio
-async def test_process_non_list_existing_overwrites(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_process_non_list_existing_overwrites(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Non-list existing value is replaced (not appended) — defense against bad state."""
     _patch_express_bot_module(monkeypatch, {"BotxMention": _FakeBotxMention})
     ex = _make_exchange(properties={"express_mentions": "garbage-string"})
-    proc = ExpressMentionProcessor(
-        mention_type="all", mention_id="m"
-    )
+    proc = ExpressMentionProcessor(mention_type="all", mention_id="m")
 
     await proc.process(ex, _ctx())
 
@@ -295,9 +288,7 @@ async def test_process_generates_uuid_when_mention_id_none(
     _patch_express_bot_module(monkeypatch, {"BotxMention": _FakeBotxMention})
     ex = _make_exchange()
     proc = ExpressMentionProcessor(
-        mention_type="user",
-        target_from="body.user_huid",
-        mention_id=None,
+        mention_type="user", target_from="body.user_huid", mention_id=None
     )
 
     with patch(

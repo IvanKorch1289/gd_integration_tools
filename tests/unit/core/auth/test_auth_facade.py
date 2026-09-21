@@ -47,9 +47,7 @@ class TestAuthFacadeJWT:
         facade = AuthFacade()
 
         with patch.object(
-            facade.jwt,
-            "decode",
-            side_effect=Exception("invalid signature"),
+            facade.jwt, "decode", side_effect=Exception("invalid signature")
         ):
             result = await facade.verify_request("invalid.jwt.token", method="jwt")
 
@@ -60,17 +58,10 @@ class TestAuthFacadeJWT:
     async def test_verify_jwt_blacklisted(self) -> None:
         """Blacklisted JWT (jti в blacklist) → unauthenticated."""
         facade = AuthFacade()
-        mock_claims = {
-            "sub": "user:42",
-            "jti": "jti-blacklisted-123",
-        }
+        mock_claims = {"sub": "user:42", "jti": "jti-blacklisted-123"}
 
         with patch.object(facade.jwt, "decode", return_value=mock_claims):
-            with patch.object(
-                facade,
-                "_is_blacklisted",
-                return_value=True,
-            ):
+            with patch.object(facade, "_is_blacklisted", return_value=True):
                 result = await facade.verify_request("blacklisted.jwt", method="jwt")
 
         assert result.is_authenticated is False
@@ -144,10 +135,7 @@ class TestAuthFacadePermissions:
         facade = AuthFacade()
         from src.backend.core.auth.facade import AuthResult
 
-        auth = AuthResult(
-            is_authenticated=True,
-            capabilities=["ds.read", "ds.write"],
-        )
+        auth = AuthResult(is_authenticated=True, capabilities=["ds.read", "ds.write"])
         assert facade.check_permission(auth, "ds.read") is True
 
     def test_check_permission_no_match(self) -> None:
@@ -155,10 +143,7 @@ class TestAuthFacadePermissions:
         facade = AuthFacade()
         from src.backend.core.auth.facade import AuthResult
 
-        auth = AuthResult(
-            is_authenticated=True,
-            capabilities=["ds.read"],
-        )
+        auth = AuthResult(is_authenticated=True, capabilities=["ds.read"])
         assert facade.check_permission(auth, "ds.write") is False
 
 
@@ -194,7 +179,7 @@ class TestAuthFacadeHelpers:
         facade = AuthFacade()
 
         with patch(
-            "src.backend.services.security.facade.get_security_facade",
+            "src.backend.services.security.facade.get_security_facade"
         ) as mock_get_facade:
             mock_facade = MagicMock()
             mock_facade.is_token_blacklisted = AsyncMock(return_value=True)
@@ -233,9 +218,7 @@ class TestAuthFacadeTokenIssuance:
         facade = AuthFacade()
         mock_token = "eyJ.encoded.jwt"
         with patch.object(
-            facade.jwt,
-            "encode",
-            return_value=(mock_token, 3600),
+            facade.jwt, "encode", return_value=(mock_token, 3600)
         ) as mock_encode:
             token, expires = facade.issue_token(
                 subject="user:1",
@@ -264,11 +247,12 @@ class TestAuthFacadeTokenIssuance:
     def test_issue_token_wraps_jwt_errors(self) -> None:
         """issue_token wraps encode errors в RuntimeError."""
         facade = AuthFacade()
-        with patch.object(
-            facade.jwt,
-            "encode",
-            side_effect=ValueError("missing secret"),
-        ), pytest.raises(RuntimeError, match="issue_token failed"):
+        with (
+            patch.object(
+                facade.jwt, "encode", side_effect=ValueError("missing secret")
+            ),
+            pytest.raises(RuntimeError, match="issue_token failed"),
+        ):
             facade.issue_token(subject="user:1")
 
     @pytest.mark.asyncio
@@ -276,12 +260,13 @@ class TestAuthFacadeTokenIssuance:
         """revoke_token → SecurityFacade.blacklist_token."""
         facade = AuthFacade()
         with patch(
-            "src.backend.services.security.facade.get_security_facade",
+            "src.backend.services.security.facade.get_security_facade"
         ) as mock_get_facade:
             mock_sec_facade = MagicMock()
             mock_sec_facade.blacklist_token = MagicMock(
-                return_value=None,  # sync — could be sync or async
+                return_value=None  # sync — could be sync or async
             )
+
             # Make it return a coroutine to support await
             async def _awaitable_blacklist(jti: str) -> bool:
                 return True
@@ -303,10 +288,13 @@ class TestAuthFacadeTokenIssuance:
     async def test_revoke_token_propagates_errors(self) -> None:
         """revoke_token raises RuntimeError при ошибке SecurityFacade."""
         facade = AuthFacade()
-        with patch(
-            "src.backend.services.security.facade.get_security_facade",
-            side_effect=RuntimeError("redis down"),
-        ), pytest.raises(RuntimeError, match="revoke_token failed"):
+        with (
+            patch(
+                "src.backend.services.security.facade.get_security_facade",
+                side_effect=RuntimeError("redis down"),
+            ),
+            pytest.raises(RuntimeError, match="revoke_token failed"),
+        ):
             await facade.revoke_token("jti-1")
 
 
@@ -380,8 +368,7 @@ class TestAuthFacadeSAMLDevMode:
             MagicMock(saml_sp_initiated_enabled=True),
         ):
             result = await facade.verify_saml_assertion(
-                assertion_b64,
-                expected_issuer="https://idp.example.com",
+                assertion_b64, expected_issuer="https://idp.example.com"
             )
         assert result.is_authenticated is False
         assert result.metadata["error"] == "saml_issuer_mismatch"
@@ -411,9 +398,7 @@ class TestAuthFacadeLDAP:
             return_value=mock_client,
         ):
             result = await facade.verify_ldap_credentials(
-                "alice",
-                "secret",
-                tenant_id="tenant_a",
+                "alice", "secret", tenant_id="tenant_a"
             )
         assert result.is_authenticated is True
         assert result.subject == "alice"

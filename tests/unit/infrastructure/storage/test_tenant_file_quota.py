@@ -29,7 +29,7 @@ class TestQuotaConfig:
 
     def test_from_dict_custom(self) -> None:
         config = QuotaConfig.from_dict(
-            {"max_files": 5000, "max_bytes": 1024, "enabled": False},
+            {"max_files": 5000, "max_bytes": 1024, "enabled": False}
         )
         assert config.max_files == 5000
         assert config.max_bytes == 1024
@@ -74,8 +74,7 @@ class TestQuotaCheckNoRedis:
     async def test_quota_disabled_bypass(self) -> None:
         """Quota disabled → bypass."""
         mgr = TenantFileQuotaManager(
-            redis_client=None,
-            config=QuotaConfig(enabled=False),
+            redis_client=None, config=QuotaConfig(enabled=False)
         )
         result = await mgr.check_can_upload(tenant_id="acme", size_bytes=1024)
         assert result.allowed is True
@@ -130,10 +129,7 @@ class TestQuotaCheckResult:
 
     def test_to_dict_denied(self) -> None:
         result = QuotaCheckResult(
-            allowed=False,
-            reason="over limit",
-            current_files=100,
-            limit_files=50,
+            allowed=False, reason="over limit", current_files=100, limit_files=50
         )
         d = result.to_dict()
         assert d["allowed"] is False

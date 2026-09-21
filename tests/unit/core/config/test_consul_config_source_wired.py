@@ -6,7 +6,6 @@
 опциональный, активируется через ``CONSUL_ENABLED=true``.
 """
 
-
 from __future__ import annotations
 
 import inspect

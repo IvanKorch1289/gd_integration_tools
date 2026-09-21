@@ -10,9 +10,7 @@ from src.backend.infrastructure.clients.external.cdc.kafka_strategy import (
 
 def _make_subscription(active: bool = True) -> CDCSubscription:
     return CDCSubscription(
-        profile="oracle_prod",
-        tables=["orders", "customers"],
-        active=active,
+        profile="oracle_prod", tables=["orders", "customers"], active=active
     )
 
 
@@ -50,12 +48,7 @@ def test_parse_debezium_update() -> None:
 
 def test_parse_debezium_delete() -> None:
     strategy = _KafkaDebeziumStrategy()
-    payload = {
-        "op": "d",
-        "before": {"id": 1},
-        "after": None,
-        "ts_ms": 1700000000000,
-    }
+    payload = {"op": "d", "before": {"id": 1}, "after": None, "ts_ms": 1700000000000}
     event = strategy._parse_debezium_event(payload, table="orders", profile="prod")
     assert event is not None
     assert event.operation == "DELETE"

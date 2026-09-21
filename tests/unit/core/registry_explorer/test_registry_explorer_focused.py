@@ -121,12 +121,8 @@ class TestSearchRoutes:
 
     def test_search_multi_criteria(self) -> None:
         e = RegistryExplorer()
-        e.register_route(
-            RouteEntry(id="a", owner="x", tags=["prod"], tenant_id="t1")
-        )
-        e.register_route(
-            RouteEntry(id="b", owner="x", tags=["dev"], tenant_id="t1")
-        )
+        e.register_route(RouteEntry(id="a", owner="x", tags=["prod"], tenant_id="t1"))
+        e.register_route(RouteEntry(id="b", owner="x", tags=["dev"], tenant_id="t1"))
         result = e.search_routes(owner="x", tag="prod", tenant_id="t1")
         assert len(result) == 1
         assert result[0].id == "a"
@@ -154,9 +150,7 @@ class TestConnectorsCRUD:
 
     def test_list_by_tag(self) -> None:
         e = RegistryExplorer()
-        e.register_connector(
-            ConnectorEntry(name="skb", tags=["prod", "critical"])
-        )
+        e.register_connector(ConnectorEntry(name="skb", tags=["prod", "critical"]))
         e.register_connector(ConnectorEntry(name="dadata", tags=["prod"]))
         crit = e.list_connectors_by_tag("critical")
         assert len(crit) == 1
@@ -190,9 +184,9 @@ class TestSummary:
 class TestToDict:
     def test_export(self) -> None:
         e = RegistryExplorer()
-        e.register_route(RouteEntry(
-            id="r1", source="timer:60s", owner="team-x", tags=["prod"]
-        ))
+        e.register_route(
+            RouteEntry(id="r1", source="timer:60s", owner="team-x", tags=["prod"])
+        )
         e.register_connector(
             ConnectorEntry(name="skb", category="external", auth="oauth2")
         )
@@ -245,33 +239,45 @@ class TestRealisticExample:
     def test_streamlit_dashboard_data(self) -> None:
         explorer = get_registry_explorer()
         # Register sample routes.
-        explorer.register_route(RouteEntry(
-            id="order-create", source="timer:60s|api=skb",
-            owner="team-payments", timeout_seconds=30.0,
-            tags=["prod", "critical"],
-        ))
-        explorer.register_route(RouteEntry(
-            id="dadata-enrich", source="action:order-create",
-            owner="team-payments", timeout_seconds=5.0,
-            tags=["prod"],
-        ))
+        explorer.register_route(
+            RouteEntry(
+                id="order-create",
+                source="timer:60s|api=skb",
+                owner="team-payments",
+                timeout_seconds=30.0,
+                tags=["prod", "critical"],
+            )
+        )
+        explorer.register_route(
+            RouteEntry(
+                id="dadata-enrich",
+                source="action:order-create",
+                owner="team-payments",
+                timeout_seconds=5.0,
+                tags=["prod"],
+            )
+        )
         # Register connectors.
-        explorer.register_connector(ConnectorEntry(
-            name="skb", category="external", auth="oauth2",
-            base_url="https://skb.example.com/v1",
-        ))
-        explorer.register_connector(ConnectorEntry(
-            name="dadata", category="external", auth="api_key",
-        ))
+        explorer.register_connector(
+            ConnectorEntry(
+                name="skb",
+                category="external",
+                auth="oauth2",
+                base_url="https://skb.example.com/v1",
+            )
+        )
+        explorer.register_connector(
+            ConnectorEntry(name="dadata", category="external", auth="api_key")
+        )
         # Register actions.
-        explorer.register_action(ActionEntry(
-            name="orders.create", side_effect="write", owner="team-payments",
-        ))
+        explorer.register_action(
+            ActionEntry(
+                name="orders.create", side_effect="write", owner="team-payments"
+            )
+        )
 
         # Streamlit queries.
-        assert explorer.summary() == {
-            "routes": 2, "connectors": 2, "actions": 1,
-        }
+        assert explorer.summary() == {"routes": 2, "connectors": 2, "actions": 1}
         # Critical routes.
         crit = explorer.list_routes_by_tag("critical")
         assert len(crit) == 1

@@ -19,9 +19,7 @@ class TestAgentSecurityCheckProcessor:
     def test_processor_initialization(self) -> None:
         """Initialization with check type and value."""
         proc = AgentSecurityCheckProcessor(
-            check="prompt",
-            value="What is the weather?",
-            on_violation="block",
+            check="prompt", value="What is the weather?", on_violation="block"
         )
         assert proc._check == "prompt"
         assert proc._value == "What is the weather?"
@@ -46,9 +44,7 @@ class TestAgentSecurityCheckProcessor:
     async def test_safe_prompt_allowed(self) -> None:
         """Safe prompt → decision в exchange, не block."""
         proc = AgentSecurityCheckProcessor(
-            check="prompt",
-            value="What is the weather?",
-            on_violation="block",
+            check="prompt", value="What is the weather?", on_violation="block"
         )
 
         mock_decision = SecurityDecision(allowed=True, threat_level=ThreatLevel.NONE)
@@ -56,10 +52,7 @@ class TestAgentSecurityCheckProcessor:
         context = MagicMock()
 
         with patch.object(
-            proc,
-            "_call_validate",
-            return_value=mock_decision,
-            create=True,
+            proc, "_call_validate", return_value=mock_decision, create=True
         ):
             await proc.process(exchange, context)
 
@@ -84,10 +77,7 @@ class TestAgentSecurityCheckProcessor:
         context = MagicMock()
 
         with patch.object(
-            proc,
-            "_call_validate",
-            return_value=mock_decision,
-            create=True,
+            proc, "_call_validate", return_value=mock_decision, create=True
         ):
             await proc.process(exchange, context)
 
@@ -104,18 +94,13 @@ class TestAgentSecurityCheckProcessor:
         )
 
         mock_decision = SecurityDecision(
-            allowed=False,
-            threat_level=ThreatLevel.HIGH,
-            reason="prompt_injection",
+            allowed=False, threat_level=ThreatLevel.HIGH, reason="prompt_injection"
         )
         exchange = MagicMock(spec=Exchange)
         context = MagicMock()
 
         with patch.object(
-            proc,
-            "_call_validate",
-            return_value=mock_decision,
-            create=True,
+            proc, "_call_validate", return_value=mock_decision, create=True
         ):
             await proc.process(exchange, context)
 
@@ -126,9 +111,7 @@ class TestAgentSecurityCheckProcessor:
     async def test_dangerous_command_blocked(self) -> None:
         """Dangerous command блокируется."""
         proc = AgentSecurityCheckProcessor(
-            check="command",
-            value="rm -rf /",
-            on_violation="block",
+            check="command", value="rm -rf /", on_violation="block"
         )
 
         mock_decision = SecurityDecision(
@@ -140,10 +123,7 @@ class TestAgentSecurityCheckProcessor:
         context = MagicMock()
 
         with patch.object(
-            proc,
-            "_call_validate",
-            return_value=mock_decision,
-            create=True,
+            proc, "_call_validate", return_value=mock_decision, create=True
         ):
             await proc.process(exchange, context)
 
@@ -153,9 +133,7 @@ class TestAgentSecurityCheckProcessor:
     async def test_file_modification_blocked(self) -> None:
         """Forbidden file modification блокируется."""
         proc = AgentSecurityCheckProcessor(
-            check="file",
-            value="/etc/passwd",
-            on_violation="block",
+            check="file", value="/etc/passwd", on_violation="block"
         )
 
         mock_decision = SecurityDecision(
@@ -167,10 +145,7 @@ class TestAgentSecurityCheckProcessor:
         context = MagicMock()
 
         with patch.object(
-            proc,
-            "_call_validate",
-            return_value=mock_decision,
-            create=True,
+            proc, "_call_validate", return_value=mock_decision, create=True
         ):
             await proc.process(exchange, context)
 
@@ -180,9 +155,7 @@ class TestAgentSecurityCheckProcessor:
     async def test_sql_drop_database_blocked(self) -> None:
         """DROP DATABASE блокируется."""
         proc = AgentSecurityCheckProcessor(
-            check="sql",
-            value="DROP DATABASE production",
-            on_violation="block",
+            check="sql", value="DROP DATABASE production", on_violation="block"
         )
 
         mock_decision = SecurityDecision(
@@ -194,10 +167,7 @@ class TestAgentSecurityCheckProcessor:
         context = MagicMock()
 
         with patch.object(
-            proc,
-            "_call_validate",
-            return_value=mock_decision,
-            create=True,
+            proc, "_call_validate", return_value=mock_decision, create=True
         ):
             await proc.process(exchange, context)
 
@@ -207,9 +177,7 @@ class TestAgentSecurityCheckProcessor:
     async def test_exception_in_validation_handled(self) -> None:
         """Exception в validation → on_violation=block → fail."""
         proc = AgentSecurityCheckProcessor(
-            check="prompt",
-            value="test",
-            on_violation="block",
+            check="prompt", value="test", on_violation="block"
         )
 
         exchange = MagicMock(spec=Exchange)
@@ -229,9 +197,7 @@ class TestAgentSecurityCheckProcessor:
     async def test_exception_with_allow_continues(self) -> None:
         """Exception в validation при on_violation=allow → не fail."""
         proc = AgentSecurityCheckProcessor(
-            check="prompt",
-            value="test",
-            on_violation="allow",
+            check="prompt", value="test", on_violation="allow"
         )
 
         exchange = MagicMock(spec=Exchange)

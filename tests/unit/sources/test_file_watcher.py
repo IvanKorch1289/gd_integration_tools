@@ -1,6 +1,5 @@
 """W23.3 — FileWatcherSource (integration через tmp_path)."""
 
-
 from __future__ import annotations
 
 import asyncio
@@ -45,7 +44,7 @@ async def test_watcher_filters_by_pattern(tmp_path: Path) -> None:
         return str(path).endswith(".csv")
 
     src = FileWatcherSource(
-        "test_filter", tmp_path, debounce=0.05, watch_filter=filter_csv,
+        "test_filter", tmp_path, debounce=0.05, watch_filter=filter_csv
     )
     await src.start(cb)
     try:

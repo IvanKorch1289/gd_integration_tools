@@ -9,16 +9,16 @@ class TestAdminDSLExportsIdentity:
     """action_handler_registry + route_registry identity preserved."""
 
     def test_action_handler_registry_identity(self) -> None:
-        from src.backend.services.core.admin import action_handler_registry
         from src.backend.dsl.commands.action_registry import (
             action_handler_registry as _orig,
         )
+        from src.backend.services.core.admin import action_handler_registry
 
         assert action_handler_registry is _orig
 
     def test_route_registry_identity(self) -> None:
-        from src.backend.services.core.admin import route_registry
         from src.backend.dsl.commands.registry import route_registry as _orig
+        from src.backend.services.core.admin import route_registry
 
         assert route_registry is _orig
 

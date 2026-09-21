@@ -1,6 +1,5 @@
 """W24 — Postman backend тесты."""
 
-
 from __future__ import annotations
 
 from pathlib import Path

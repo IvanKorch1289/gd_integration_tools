@@ -4,7 +4,6 @@ Self-contained — does NOT import streamlit (heavy dep).
 Tests the manifest content and config function behavior.
 """
 
-
 from __future__ import annotations
 
 import os
@@ -20,6 +19,7 @@ class TestFrontendManifestUnregisteredPages:
             return
 
         import re
+
         pages_dir = "src/frontend/streamlit_app/pages"
         pages_fs = set()
         for f in os.listdir(pages_dir):
@@ -35,11 +35,13 @@ class TestFrontendManifestUnregisteredPages:
 
         unregistered = pages_fs - pages_manifest
         # Specific pages that we know were added in cycle 25
-        for p in ["31_DSL_Визуальный_редактор",
-                 "59_Отладчик_маршрутов",
-                 "86_Аудит_использования_DSL",
-                 "95_Покрытие_EIP",
-                 "96_Монитор_зависших_сообщений"]:
+        for p in [
+            "31_DSL_Визуальный_редактор",
+            "59_Отладчик_маршрутов",
+            "86_Аудит_использования_DSL",
+            "95_Покрытие_EIP",
+            "96_Монитор_зависших_сообщений",
+        ]:
             assert p not in unregistered, (
                 f"{p} should be registered in manifest but is missing"
             )
@@ -51,6 +53,7 @@ class TestGetAPIURLHelper:
     def test_helper_returns_env_value(self):
         # Simulate helper
         import os
+
         saved = os.environ.get("API_BASE_URL")
         try:
             os.environ["API_BASE_URL"] = "https://api.prod.example.com"
@@ -65,6 +68,7 @@ class TestGetAPIURLHelper:
 
     def test_helper_default_localhost(self):
         import os
+
         saved = os.environ.pop("API_BASE_URL", None)
         try:
             # Re-import after env change

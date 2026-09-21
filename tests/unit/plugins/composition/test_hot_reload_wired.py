@@ -11,7 +11,6 @@ production не вызывал ``watch()`` / ``start()``. Операторы н�
 - Callback: settings.reload() если доступен.
 """
 
-
 from __future__ import annotations
 
 from src.backend.plugins.composition.setup_infra import lifecycle

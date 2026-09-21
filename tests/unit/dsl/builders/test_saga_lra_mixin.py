@@ -4,7 +4,6 @@
 и передачу ``workflow_id`` / ``run_id``.
 """
 
-
 from __future__ import annotations
 
 from unittest.mock import MagicMock

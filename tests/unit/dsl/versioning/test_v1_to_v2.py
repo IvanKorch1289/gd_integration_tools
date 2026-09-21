@@ -1,6 +1,5 @@
 """W25.3 — Unit-тест V1ToV2Migration."""
 
-
 from __future__ import annotations
 
 from src.backend.dsl.versioning.migrations_v1_to_v2 import V1ToV2Migration

@@ -102,7 +102,7 @@ routes:
         assert snapshot["admin_ips"] == ["10.0.0.0/8"]
         assert snapshot["admin_routes"] == ["/admin/*"]
         assert snapshot["route_rules"]["/api/v1/auto/foo"]["allowed_ips"] == [
-            "127.0.0.1",
+            "127.0.0.1"
         ]
 
     def test_reload_from_missing_yaml(self, tmp_path) -> None:
@@ -124,10 +124,7 @@ routes:
         ``/api/v1/admin/foo`` — admin-эндпоинты становятся доступны с любого IP.
         """
         store = get_ip_restriction_store()
-        store.update_admin(
-            admin_ips={"192.168.1.1"},
-            admin_routes=["/admin/*"],
-        )
+        store.update_admin(admin_ips={"192.168.1.1"}, admin_routes=["/admin/*"])
         # Должно совпасть (это и есть баг)
         assert store.is_allowed("/api/v1/admin/users", "192.168.1.1") is True
         assert store.is_allowed("/api/v1/admin/users", "10.0.0.1") is False

@@ -7,6 +7,7 @@ Test quality audit found 14 issues — fixed in this commit:
 * P1: dead-code tautology removed (N/A in this file)
 * P2: docstring breakdown corrected
 """
+
 from __future__ import annotations
 
 import httpx
@@ -26,6 +27,7 @@ from tools.probe_smoke import (
 # TestProbeResultEvaluate
 # ----------------------------------------------------------------------------
 
+
 class TestProbeResultEvaluate:
     """ProbeResult.evaluate() — single-result pass/fail logic."""
 
@@ -40,12 +42,16 @@ class TestProbeResultEvaluate:
         assert r.passed is False
 
     def test_tuple_expected_match(self) -> None:
-        r = ProbeResult(name="x", method="POST", path="/x", expected=(401, 403), actual=403)
+        r = ProbeResult(
+            name="x", method="POST", path="/x", expected=(401, 403), actual=403
+        )
         r.evaluate()
         assert r.passed is True
 
     def test_tuple_expected_mismatch(self) -> None:
-        r = ProbeResult(name="x", method="POST", path="/x", expected=(401, 403), actual=500)
+        r = ProbeResult(
+            name="x", method="POST", path="/x", expected=(401, 403), actual=500
+        )
         r.evaluate()
         assert r.passed is False
 
@@ -73,15 +79,18 @@ class TestProbeResultEvaluate:
 # TestProbeGet / TestProbePost (NEW — P0 fix from audit)
 # ----------------------------------------------------------------------------
 
+
 class TestProbeGet:
     """probe_get() — actual HTTP layer test (P0 fix from audit)."""
 
     def test_probe_get_success(self) -> None:
         """probe_get captures actual=200 on successful response."""
+
         def handler(request: httpx.Request) -> httpx.Response:
             return httpx.Response(200, json={"status": "alive"})
 
         import tools.probe_smoke
+
         original = tools.probe_smoke.httpx.Client
         mock = httpx.Client(transport=httpx.MockTransport(handler))
         tools.probe_smoke.httpx.Client = lambda *a, **kw: mock
@@ -95,10 +104,12 @@ class TestProbeGet:
 
     def test_probe_get_5xx_captures_text_in_detail(self) -> None:
         """probe_get captures 5xx response text in detail."""
+
         def handler(request: httpx.Request) -> httpx.Response:
             return httpx.Response(500, text="Internal Server Error")
 
         import tools.probe_smoke
+
         original = tools.probe_smoke.httpx.Client
         mock = httpx.Client(transport=httpx.MockTransport(handler))
         tools.probe_smoke.httpx.Client = lambda *a, **kw: mock
@@ -113,10 +124,12 @@ class TestProbeGet:
 
     def test_probe_get_connection_error(self) -> None:
         """probe_get on connection error → actual=0, detail with exception."""
+
         def handler(request: httpx.Request) -> httpx.Response:
             raise httpx.ConnectError("Connection refused")
 
         import tools.probe_smoke
+
         original = tools.probe_smoke.httpx.Client
         mock = httpx.Client(transport=httpx.MockTransport(handler))
         tools.probe_smoke.httpx.Client = lambda *a, **kw: mock
@@ -135,10 +148,12 @@ class TestProbePost:
 
     def test_probe_post_sends_json_body(self) -> None:
         """probe_post sends JSON body and gets 401 response (expected)."""
+
         def handler(request: httpx.Request) -> httpx.Response:
             return httpx.Response(401, json={"detail": "Authentication required"})
 
         import tools.probe_smoke
+
         original = tools.probe_smoke.httpx.Client
         mock = httpx.Client(transport=httpx.MockTransport(handler))
         tools.probe_smoke.httpx.Client = lambda *a, **kw: mock
@@ -155,6 +170,7 @@ class TestProbePost:
 # TestProbeReport
 # ----------------------------------------------------------------------------
 
+
 class TestProbeReport:
     """ProbeReport — aggregate pass/fail counts."""
 
@@ -169,7 +185,9 @@ class TestProbeReport:
         r.results = [
             ProbeResult(name="a", method="GET", path="/a", expected=200, actual=200),
             ProbeResult(name="b", method="GET", path="/b", expected=200, actual=500),
-            ProbeResult(name="c", method="POST", path="/c", expected=(401, 403), actual=403),
+            ProbeResult(
+                name="c", method="POST", path="/c", expected=(401, 403), actual=403
+            ),
         ]
         for x in r.results:
             x.evaluate()
@@ -181,22 +199,33 @@ class TestProbeReport:
 # TestRunProbes (MOCKED — no real network)
 # ----------------------------------------------------------------------------
 
+
 class TestRunProbes:
     """run_probes() — full probe suite (with mock transport for unit isolation)."""
 
     def test_run_probes_with_all_2xx_returns_high_pass_rate(self) -> None:
         """Mock all endpoints to return 200 — pass rate should be high."""
+
         def handler(request: httpx.Request) -> httpx.Response:
             # K8s probes now return 200 (after P0-2 fix deployed)
-            if request.url.path in ("/healthz", "/readyz", "/livez", "/health", "/ready"):
+            if request.url.path in (
+                "/healthz",
+                "/readyz",
+                "/livez",
+                "/health",
+                "/ready",
+            ):
                 return httpx.Response(200, json={"status": "alive"})
             # Auth-required endpoints return 401 (fail-closed)
             return httpx.Response(401, json={"detail": "Authentication required"})
 
         import tools.probe_smoke
+
         original = tools.probe_smoke.httpx.Client
         transport = httpx.MockTransport(handler)
-        tools.probe_smoke.httpx.Client = lambda *args, **kwargs: httpx.Client(transport=transport)
+        tools.probe_smoke.httpx.Client = lambda *args, **kwargs: httpx.Client(
+            transport=transport
+        )
         try:
             r = run_probes("http://mock")
         finally:
@@ -214,20 +243,26 @@ class TestRunProbes:
         non_zero = sum(1 for p in r.results if p.actual != 0)
         if non_zero == 0:
             # Print diagnostics
-            print(f"DEBUG: all 0 — {[(p.path, p.actual, p.detail) for p in r.results[:3]]}")
+            print(
+                f"DEBUG: all 0 — {[(p.path, p.actual, p.detail) for p in r.results[:3]]}"
+            )
         # Some endpoints may not be perfectly mockable (K8s probes use POST, others GET).
         # Just verify the function ran and returned a ProbeReport.
         assert len(r.results) >= 20, f"Expected ≥20 probes, got {len(r.results)}"
 
     def test_run_probes_connection_refused_all_fail(self) -> None:
         """When all endpoints refuse connection, all probes fail (default behavior)."""
+
         def handler(request: httpx.Request) -> httpx.Response:
             raise httpx.ConnectError("Connection refused")
 
         import tools.probe_smoke
+
         original = tools.probe_smoke.httpx.Client
         transport = httpx.MockTransport(handler)
-        tools.probe_smoke.httpx.Client = lambda *args, **kwargs: httpx.Client(transport=transport)
+        tools.probe_smoke.httpx.Client = lambda *args, **kwargs: httpx.Client(
+            transport=transport
+        )
         try:
             r = run_probes("http://unreachable")
         finally:
@@ -243,15 +278,17 @@ class TestRunProbes:
 # TestMain (MOCKED exit code check)
 # ----------------------------------------------------------------------------
 
+
 class TestMain:
     """main() — CLI entry point (P0 fix: proper exit code check)."""
 
     def test_main_all_pass_returns_0(self) -> None:
         """If all probes pass, main() returns 0."""
         from unittest.mock import patch
+
         mock_report = ProbeReport(base_url="http://test")
         mock_report.results = [
-            ProbeResult(name="x", method="GET", path="/x", expected=200, actual=200),
+            ProbeResult(name="x", method="GET", path="/x", expected=200, actual=200)
         ]
         for p in mock_report.results:
             p.evaluate()
@@ -262,6 +299,7 @@ class TestMain:
     def test_main_some_fail_returns_1(self) -> None:
         """If any probe fails, main() returns 1."""
         from unittest.mock import patch
+
         mock_report = ProbeReport(base_url="http://test")
         mock_report.results = [
             ProbeResult(name="x", method="GET", path="/x", expected=200, actual=200),
@@ -276,6 +314,7 @@ class TestMain:
     def test_main_custom_url_forwarded(self) -> None:
         """main() forwards custom URL to run_probes."""
         from unittest.mock import patch
+
         mock_report = ProbeReport(base_url="http://custom:9000")
         with patch("tools.probe_smoke.run_probes", return_value=mock_report) as m:
             main(["http://custom:9000"])
@@ -284,6 +323,7 @@ class TestMain:
     def test_main_default_url_used_when_no_args(self) -> None:
         """main() with no args uses DEFAULT_BASE."""
         from unittest.mock import patch
+
         mock_report = ProbeReport(base_url=DEFAULT_BASE)
         with patch("tools.probe_smoke.run_probes", return_value=mock_report) as m:
             main([])
@@ -293,6 +333,7 @@ class TestMain:
 # ----------------------------------------------------------------------------
 # Constants
 # ----------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 def test_default_base_is_localhost_8000() -> None:
@@ -304,6 +345,7 @@ def test_default_base_is_localhost_8000() -> None:
 def test_default_base_is_valid_url() -> None:
     """DEFAULT_BASE — валидный HTTP URL с правильным портом."""
     from urllib.parse import urlparse
+
     parsed = urlparse(DEFAULT_BASE)
     assert parsed.scheme == "http"
     assert parsed.hostname == "localhost"

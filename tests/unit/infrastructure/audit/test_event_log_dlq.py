@@ -8,7 +8,6 @@
 * DLQ writer exception не пробрасывается (defense-in-depth).
 """
 
-
 from __future__ import annotations
 
 import sys
@@ -29,7 +28,7 @@ from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope
 def fresh_audit_log(monkeypatch: pytest.MonkeyPatch) -> AuditEventLog:
     """Return a fresh AuditEventLog instance and reset global singleton."""
     monkeypatch.setattr(
-        "src.backend.infrastructure.audit.event_log._audit_log", None, raising=False,
+        "src.backend.infrastructure.audit.event_log._audit_log", None, raising=False
     )
     return AuditEventLog(table="audit_events", batch_size=2)
 
@@ -44,7 +43,7 @@ def fake_clickhouse(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
     fake_mod = types.ModuleType("clickhouse_stub")
     fake_mod.get_clickhouse_client = lambda: fake_client
     monkeypatch.setitem(
-        sys.modules, "src.backend.infrastructure.clients.storage.clickhouse", fake_mod,
+        sys.modules, "src.backend.infrastructure.clients.storage.clickhouse", fake_mod
     )
     return fake_client
 
@@ -57,7 +56,7 @@ def fake_correlation(monkeypatch: pytest.MonkeyPatch) -> None:
         lambda: "cid-123",
     )
     monkeypatch.setattr(
-        "src.backend.infrastructure.audit.event_log.get_tenant_id", lambda: "tenant-42",
+        "src.backend.infrastructure.audit.event_log.get_tenant_id", lambda: "tenant-42"
     )
 
 
@@ -81,9 +80,7 @@ def _make_event(**overrides: Any) -> AuditEvent:
 
 @pytest.mark.asyncio
 async def test_flush_failure_routes_events_to_dlq(
-    fresh_audit_log: AuditEventLog,
-    fake_clickhouse: MagicMock,
-    fake_correlation: None,
+    fresh_audit_log: AuditEventLog, fake_clickhouse: MagicMock, fake_correlation: None
 ) -> None:
     """B-25 fix (cycle 1): ClickHouse-failure → DLQ-writer (silent-loss устранён).
 
@@ -107,9 +104,7 @@ async def test_flush_failure_routes_events_to_dlq(
 
 @pytest.mark.asyncio
 async def test_dlq_envelope_payload_mirrors_audit_event_fields(
-    fresh_audit_log: AuditEventLog,
-    fake_clickhouse: MagicMock,
-    fake_correlation: None,
+    fresh_audit_log: AuditEventLog, fake_clickhouse: MagicMock, fake_correlation: None
 ) -> None:
     """B-25 fix (cycle 1): DLQ envelope корректно сериализует AuditEvent.
 
@@ -168,9 +163,7 @@ async def test_dlq_envelope_payload_mirrors_audit_event_fields(
 
 @pytest.mark.asyncio
 async def test_production_no_dlq_writer_raises_runtime_error(
-    fresh_audit_log: AuditEventLog,
-    fake_clickhouse: MagicMock,
-    fake_correlation: None,
+    fresh_audit_log: AuditEventLog, fake_clickhouse: MagicMock, fake_correlation: None
 ) -> None:
     """B-25 fix (cycle 1): production без writer'а → fail-loud RuntimeError.
 
@@ -275,9 +268,7 @@ async def test_dlq_writer_failure_does_not_propagate(
 
 @pytest.mark.asyncio
 async def test_set_dlq_required_toggle(
-    fresh_audit_log: AuditEventLog,
-    fake_clickhouse: MagicMock,
-    fake_correlation: None,
+    fresh_audit_log: AuditEventLog, fake_clickhouse: MagicMock, fake_correlation: None
 ) -> None:
     """B-25 fix (cycle 1): set_dlq_required(False) отключает fail-loud guard."""
     fresh_audit_log.set_dlq_writer(None)
@@ -295,9 +286,7 @@ async def test_set_dlq_required_toggle(
 
 @pytest.mark.asyncio
 async def test_dlq_envelope_succeeds_through_async_batch_path(
-    fresh_audit_log: AuditEventLog,
-    fake_clickhouse: MagicMock,
-    fake_correlation: None,
+    fresh_audit_log: AuditEventLog, fake_clickhouse: MagicMock, fake_correlation: None
 ) -> None:
     """B-25 fix (cycle 1): end-to-end через ``emit()`` + ``stop()``.
 
@@ -317,6 +306,4 @@ async def test_dlq_envelope_succeeds_through_async_batch_path(
     await fresh_audit_log.stop()
 
     assert len(dlq.records) >= 1
-    assert all(
-        r.transport == "audit_event_log" for r in dlq.records
-    )
+    assert all(r.transport == "audit_event_log" for r in dlq.records)

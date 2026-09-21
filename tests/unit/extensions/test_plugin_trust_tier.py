@@ -26,8 +26,7 @@ def test_core_admin_has_trust_tier() -> None:
     content = _read_plugin_toml("core_admin")
     match = re.search(r'trust_tier\s*=\s*"([ABC])"', content)
     assert match is not None, (
-        "D-AUDIT-FIX-184-5: core_admin/plugin.toml missing trust_tier. "
-        "Got:\n" + content
+        "D-AUDIT-FIX-184-5: core_admin/plugin.toml missing trust_tier. Got:\n" + content
     )
 
 
@@ -36,8 +35,7 @@ def test_dadata_has_trust_tier() -> None:
     content = _read_plugin_toml("dadata")
     match = re.search(r'trust_tier\s*=\s*"([ABC])"', content)
     assert match is not None, (
-        "D-AUDIT-FIX-184-5: dadata/plugin.toml missing trust_tier. "
-        "Got:\n" + content
+        "D-AUDIT-FIX-184-5: dadata/plugin.toml missing trust_tier. Got:\n" + content
     )
 
 
@@ -46,8 +44,7 @@ def test_skb_has_trust_tier() -> None:
     content = _read_plugin_toml("skb")
     match = re.search(r'trust_tier\s*=\s*"([ABC])"', content)
     assert match is not None, (
-        "D-AUDIT-FIX-184-5: skb/plugin.toml missing trust_tier. "
-        "Got:\n" + content
+        "D-AUDIT-FIX-184-5: skb/plugin.toml missing trust_tier. Got:\n" + content
     )
 
 
@@ -62,6 +59,9 @@ def test_all_three_plugins_have_consistent_trust_tier() -> None:
         # Currently all set to "A" (audited). Re-test if tier changes.
         # (If changing to mixed tiers, update this assertion.)
         assert match.group(1) == "A", (
-            "D-AUDIT-FIX-184-5: " + name + " trust_tier is "
-            + match.group(1) + ", expected A. Update this test if intentional."
+            "D-AUDIT-FIX-184-5: "
+            + name
+            + " trust_tier is "
+            + match.group(1)
+            + ", expected A. Update this test if intentional."
         )

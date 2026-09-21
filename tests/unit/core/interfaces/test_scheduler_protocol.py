@@ -3,7 +3,6 @@
 Wave ``[wave:s18/w0-goal-driven-sweep-8-scheduler-backend-protocol]``.
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -48,7 +47,7 @@ class _FakeSchedulerManager:
                 "cron_expr": cron_expr,
                 "timezone": timezone,
                 "replace_existing": replace_existing,
-            },
+            }
         )
         return name
 

@@ -22,24 +22,24 @@ class TestQuotaTracker:
 
     @pytest.mark.asyncio
     async def test_consume_within_limit(
-        self, tracker: QuotaTracker, monkeypatch: pytest.MonkeyPatch,
+        self, tracker: QuotaTracker, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         raw = _make_raw()
         raw.incrby = AsyncMock(return_value=1)
         raw.expire = AsyncMock()
         monkeypatch.setattr(
             "src.backend.core.di.providers.infrastructure_facade.get_redis_client_factory",
-            lambda: (lambda: raw),
+            lambda: lambda: raw,
         )
         result = await tracker.consume(
-            "t1", "res", units=1, limit=10, period_seconds=60,
+            "t1", "res", units=1, limit=10, period_seconds=60
         )
         assert result["remaining"] == 9
         assert result["limit"] == 10
 
     @pytest.mark.asyncio
     async def test_exceed_raises(
-        self, tracker: QuotaTracker, monkeypatch: pytest.MonkeyPatch,
+        self, tracker: QuotaTracker, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         raw = _make_raw()
         raw.incrby = AsyncMock(return_value=11)
@@ -47,22 +47,22 @@ class TestQuotaTracker:
         # S31 Task 5: patch infrastructure_locator (canonical), not deprecated facade.
         monkeypatch.setattr(
             "src.backend.core.di.providers.infrastructure_locator.get_redis_client_factory",
-            lambda: (lambda: raw),
+            lambda: lambda: raw,
         )
         with pytest.raises(QuotaExceeded):
             await tracker.consume("t1", "res", units=1, limit=10, period_seconds=60)
 
     @pytest.mark.asyncio
     async def test_redis_fail_open(
-        self, tracker: QuotaTracker, monkeypatch: pytest.MonkeyPatch,
+        self, tracker: QuotaTracker, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         raw = _make_raw()
         raw.incrby = AsyncMock(side_effect=ConnectionError("boom"))
         monkeypatch.setattr(
             "src.backend.core.di.providers.infrastructure_facade.get_redis_client_factory",
-            lambda: (lambda: raw),
+            lambda: lambda: raw,
         )
         result = await tracker.consume(
-            "t1", "res", units=1, limit=10, period_seconds=60,
+            "t1", "res", units=1, limit=10, period_seconds=60
         )
         assert result["remaining"] == 9

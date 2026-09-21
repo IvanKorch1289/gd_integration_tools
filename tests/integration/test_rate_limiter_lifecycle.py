@@ -2,7 +2,6 @@
 (Sprint 1 V16 Single-Entry, Step 3.4).
 """
 
-
 from __future__ import annotations
 
 import asyncio
@@ -34,7 +33,7 @@ async def test_shutdown_pyrate_leaker_cancels_running_task() -> None:
     # Триггерим создание async-leak-task'а.
     await limiter.try_acquire_async("test-id")
     leaker = getattr(limiter, "_leaker", None) or getattr(
-        getattr(limiter, "bucket_factory", None), "_leaker", None,
+        getattr(limiter, "bucket_factory", None), "_leaker", None
     )
     leak_task = getattr(leaker, "aio_leak_task", None)
     if leak_task is None:

@@ -10,7 +10,6 @@
 * идемпотентность: повторная регистрация той же модели не дублирует.
 """
 
-
 from __future__ import annotations
 
 from typing import Optional
@@ -145,9 +144,9 @@ class TestRenderProtoFile:
                             name="List",
                             request_message="Empty",
                             response_message="Empty",
-                        ),
+                        )
                     ],
-                ),
+                )
             ],
         )
         text = render_proto_file(proto)

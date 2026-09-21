@@ -4,7 +4,6 @@ batch_insert, content_filter, content_transform, unique, flatten).
 Покрывают fluent-интерфейс, тип добавленного процессора и to_spec().
 """
 
-
 from __future__ import annotations
 
 from src.backend.dsl.builders.base import RouteBuilder
@@ -75,7 +74,7 @@ class TestJinjaTemplate:
                 "template_string": "Hello {{name}}",
                 "context_from": "body",
                 "result_property": "rendered",
-            },
+            }
         }
 
 
@@ -131,7 +130,7 @@ class TestBatchInsert:
         )
         spec = pipeline.processors[0].to_spec()
         assert spec == {
-            "batch_insert": {"table": "users", "items": None, "profile": "default"},
+            "batch_insert": {"table": "users", "items": None, "profile": "default"}
         }
 
 
@@ -155,6 +154,7 @@ class TestContentFilter:
     def test_predicate_set(self) -> None:
         def pred(e):
             return True
+
         pipeline = (
             RouteBuilder.from_("test.filter", source="internal:test")
             .content_filter(predicate=pred)

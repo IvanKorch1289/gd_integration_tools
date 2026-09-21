@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
-
 import pytest
 
 from src.backend.core.rpa_workflow import (
@@ -166,9 +164,7 @@ class TestWorkflowStart:
 
     async def test_start_with_metadata(self) -> None:
         wf = RPAWorkflow()
-        run = await wf.start(
-            workflow_id="w1", metadata={"initiator": "alice"}
-        )
+        run = await wf.start(workflow_id="w1", metadata={"initiator": "alice"})
         assert run.metadata == {"initiator": "alice"}
 
 
@@ -339,8 +335,7 @@ class TestRealisticExample:
         """Realistic: payment flow with HITL for MFA."""
         wf = get_rpa_workflow()
         run = await wf.start(
-            workflow_id="payment-flow",
-            metadata={"amount": 100, "currency": "USD"},
+            workflow_id="payment-flow", metadata={"amount": 100, "currency": "USD"}
         )
         # Step 1: navigate to payment page.
         await wf.run_step(run, "navigate_to_payment")

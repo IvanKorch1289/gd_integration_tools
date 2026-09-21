@@ -54,9 +54,11 @@ async def test_kafka_no_url_false(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.asyncio
-async def test_kafka_healthy(no_network: list[str], monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_kafka_healthy(
+    no_network: list[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
     fake_settings = SimpleNamespace(
-        queue=SimpleNamespace(schema_registry_url="http://sr:8081"),
+        queue=SimpleNamespace(schema_registry_url="http://sr:8081")
     )
     monkeypatch.setattr("src.backend.core.config.settings.settings", fake_settings)
     result = await _check_kafka_schema_registry()
@@ -75,11 +77,9 @@ async def test_temporal_no_host_false() -> None:
 
 @pytest.mark.asyncio
 async def test_temporal_tcp_ok_true(
-    no_network: list[str], monkeypatch: pytest.MonkeyPatch,
+    no_network: list[str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    fake_settings = SimpleNamespace(
-        workflow=SimpleNamespace(host="temporal:7233"),
-    )
+    fake_settings = SimpleNamespace(workflow=SimpleNamespace(host="temporal:7233"))
     monkeypatch.setattr("src.backend.core.config.settings.settings", fake_settings)
     result = await _check_temporal_server()
     assert result.ok is True

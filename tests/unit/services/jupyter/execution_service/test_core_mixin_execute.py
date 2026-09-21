@@ -73,7 +73,9 @@ async def test_execute_notebook_happy_path() -> None:
     upload, create_session, execute_cell = _patch_pipeline(svc, _server())
 
     results = await svc.execute_notebook(
-        "alice", "analysis.ipynb", _cells(),  # type: ignore[arg-type]
+        "alice",
+        "analysis.ipynb",
+        _cells(),  # type: ignore[arg-type]
     )
 
     assert [r["cell_index"] for r in results] == [0, 2]  # markdown пропущен
@@ -99,9 +101,9 @@ async def test_spawns_server_when_not_ready() -> None:
         patch.object(svc, "_execute_cell", execute_cell),
         patch.object(svc, "_wait_for_server", AsyncMock(return_value=_server())),
     ):
-        results = await svc.execute_notebook("alice", "a.ipynb", [
-            {"cell_type": "code", "source": "1"},
-        ])
+        results = await svc.execute_notebook(
+            "alice", "a.ipynb", [{"cell_type": "code", "source": "1"}]
+        )
 
     assert len(results) == 1
     hub.start_server.assert_awaited_once_with("alice")
@@ -121,20 +123,22 @@ async def test_no_server_url_raises() -> None:
         patch.object(svc, "_wait_for_server", AsyncMock(return_value=_server(url=""))),
         pytest.raises(JupyterExecutionError, match="Server URL unavailable"),
     ):
-        await svc.execute_notebook("alice", "a.ipynb", [
-            {"cell_type": "code", "source": "1"},
-        ])
+        await svc.execute_notebook(
+            "alice", "a.ipynb", [{"cell_type": "code", "source": "1"}]
+        )
 
 
 @pytest.mark.asyncio
 async def test_missing_kernel_id_raises() -> None:
     svc, hub = _service()
     hub.get_server = AsyncMock(return_value=_server())
-    upload, create_session, execute_cell = _patch_pipeline(svc, _server(), kernel_id=None)
+    upload, create_session, execute_cell = _patch_pipeline(
+        svc, _server(), kernel_id=None
+    )
 
     with pytest.raises(JupyterExecutionError, match="Kernel ID"):
-        await svc.execute_notebook("alice", "a.ipynb", [
-            {"cell_type": "code", "source": "1"},
-        ])
+        await svc.execute_notebook(
+            "alice", "a.ipynb", [{"cell_type": "code", "source": "1"}]
+        )
     upload.assert_awaited_once()
     execute_cell.assert_not_awaited()

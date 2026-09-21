@@ -8,10 +8,10 @@
 - сохранение ``_source_config`` для runtime registration
 - интеграция с SourceRegistry (если есть)
 """
+
 from __future__ import annotations
 
 import pytest
-
 
 
 def test_from_event_subscribe_minimal() -> None:
@@ -32,9 +32,7 @@ def test_from_event_subscribe_with_consumer_group() -> None:
     from src.backend.dsl.builders.base import RouteBuilder
 
     builder = RouteBuilder.from_event_subscribe(
-        "test.route",
-        "events.user_signup",
-        consumer_group="workers-1",
+        "test.route", "events.user_signup", consumer_group="workers-1"
     )
     assert builder._source_config["consumer_group"] == "workers-1"
 
@@ -47,9 +45,7 @@ def test_from_event_subscribe_with_filter() -> None:
         return isinstance(e, dict) and e.get("status") == "completed"
 
     builder = RouteBuilder.from_event_subscribe(
-        "test.route",
-        "events.orders",
-        filter=only_completed,
+        "test.route", "events.orders", filter=only_completed
     )
     assert builder._source_config["filter"] is only_completed
 
@@ -91,8 +87,13 @@ def test_from_event_subscribe_registers_mixin() -> None:
     # Все остальные source-методы тоже присутствуют (sanity-check
     # что mixin aggregation не сломан).
     for method in (
-        "from_cdc", "from_kafka", "from_rabbit", "from_webhook",
-        "from_schedule", "from_filewatcher", "from_sse",
+        "from_cdc",
+        "from_kafka",
+        "from_rabbit",
+        "from_webhook",
+        "from_schedule",
+        "from_filewatcher",
+        "from_sse",
     ):
         assert hasattr(SourcesMixin, method), (
             f"{method} missing from SourcesMixin (mixin regression)"
@@ -103,13 +104,9 @@ def test_from_event_subscribe_chains_with_dispatch_action() -> None:
     """Builder pattern: from_event_subscribe → dispatch_action → build."""
     from src.backend.dsl.builders.base import RouteBuilder
 
-    builder = (
-        RouteBuilder.from_event_subscribe(
-            "orders.notify",
-            "events.orders",
-        )
-        .dispatch_action("slack.post_message")
-    )
+    builder = RouteBuilder.from_event_subscribe(
+        "orders.notify", "events.orders"
+    ).dispatch_action("slack.post_message")
     assert builder.source == "event_subscribe:events.orders"
     # actions stored somewhere; build should not fail
     try:

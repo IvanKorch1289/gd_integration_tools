@@ -29,7 +29,10 @@ def test_channel_name_special_chars() -> None:
 
 def test_channel_name_with_uuid_tenant() -> None:
     """_channel_name с UUID-tenant."""
-    assert _channel_name("550e8400-e29b-41d4-a716-446655440000") == "hitl:resolved:550e8400-e29b-41d4-a716-446655440000"
+    assert (
+        _channel_name("550e8400-e29b-41d4-a716-446655440000")
+        == "hitl:resolved:550e8400-e29b-41d4-a716-446655440000"
+    )
 
 
 class _FakeRedisFactory:
@@ -166,12 +169,18 @@ async def test_publish_hitl_resolved_different_tenants() -> None:
         return_value=_FakeRedisFactory(mock_redis),
     ):
         await publish_hitl_resolved(
-            signal_id="s1", workflow_id="w1", tenant_id="t1",
-            action="approve", resolved_by="alice"
+            signal_id="s1",
+            workflow_id="w1",
+            tenant_id="t1",
+            action="approve",
+            resolved_by="alice",
         )
         await publish_hitl_resolved(
-            signal_id="s2", workflow_id="w2", tenant_id="t2",
-            action="approve", resolved_by="bob"
+            signal_id="s2",
+            workflow_id="w2",
+            tenant_id="t2",
+            action="approve",
+            resolved_by="bob",
         )
         assert mock_redis.publish.call_args_list[0].args[0] == "hitl:resolved:t1"
         assert mock_redis.publish.call_args_list[1].args[0] == "hitl:resolved:t2"
@@ -188,7 +197,10 @@ async def test_publish_hitl_resolved_awaited() -> None:
         return_value=_FakeRedisFactory(mock_redis),
     ):
         await publish_hitl_resolved(
-            signal_id="s1", workflow_id="w1", tenant_id="t1",
-            action="approve", resolved_by="alice"
+            signal_id="s1",
+            workflow_id="w1",
+            tenant_id="t1",
+            action="approve",
+            resolved_by="alice",
         )
         assert mock_redis.publish.await_count == 1

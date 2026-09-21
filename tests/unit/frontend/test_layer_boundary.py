@@ -12,7 +12,6 @@ Verifies:
 4. Core/api facade exists and re-exports from sdk
 """
 
-
 from __future__ import annotations
 
 import os
@@ -50,7 +49,8 @@ class TestFrontendNoUpperLayerImports:
                     content = fp.read()
                 # Strip docstrings/comments
                 lines = [
-                    line for line in content.split("\n")
+                    line
+                    for line in content.split("\n")
                     if not line.strip().startswith(("#", '"', "'", "*"))
                 ]
                 code = "\n".join(lines)
@@ -62,8 +62,7 @@ class TestFrontendNoUpperLayerImports:
     def test_no_upper_layer_imports(self):
         violations = self._scan_frontend()
         assert not violations, (
-            f"Frontend has {len(violations)} upper-layer imports: "
-            f"{violations[:5]}"
+            f"Frontend has {len(violations)} upper-layer imports: {violations[:5]}"
         )
 
     def test_frontend_uses_core_api_facade(self):
@@ -145,7 +144,7 @@ class TestBoundaryConsistency:
                     content = fp.read()
                 # Unified: catches both 'from' and 'import' styles.
                 matches = re.findall(
-                    r"(?:from|import)\s+(src\.backend\.[\w\.]+)", content,
+                    r"(?:from|import)\s+(src\.backend\.[\w\.]+)", content
                 )
                 for mod in matches:
                     if mod == "src.backend.core.api":
@@ -167,10 +166,7 @@ class TestApiClientsBoundaryRatchet:
     """Architecture ratchet (P1 S172 W2): api_clients/ imports only via approved facade."""
 
     ALLOWED_FACADES = frozenset(
-        {
-            "src.backend.core.api",
-            "src.backend.core.frontend_facade",
-        },
+        {"src.backend.core.api", "src.backend.core.frontend_facade"}
     )
 
     def test_api_clients_only_use_facade(self):
@@ -193,9 +189,7 @@ class TestApiClientsBoundaryRatchet:
             with open(p) as fp:
                 content = fp.read()
             # Unified: catches both 'from' and 'import' styles.
-            matches = re.findall(
-                r"(?:from|import)\s+(src\.backend\.[\w\.]+)", content,
-            )
+            matches = re.findall(r"(?:from|import)\s+(src\.backend\.[\w\.]+)", content)
             for mod in matches:
                 if mod in self.ALLOWED_FACADES:
                     continue
@@ -236,7 +230,7 @@ class TestApiClientsBoundaryRatchet:
                     pattern = re.compile(
                         rf"from {re.escape(forbidden_mod)}"
                         r"[\.\w]*|"
-                        rf"import {re.escape(forbidden_mod)}",
+                        rf"import {re.escape(forbidden_mod)}"
                     )
                     if pattern.search(content):
                         violations.append((p, forbidden_mod))

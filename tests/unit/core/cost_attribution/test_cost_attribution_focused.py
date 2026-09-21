@@ -340,9 +340,7 @@ class TestTrackCostDecorator:
 
     async def test_async_decorator_basic(self) -> None:
         @track_cost(
-            ResourceType.HTTP_REQUESTS,
-            cost_per_unit=0.001,
-            tenant_id_arg="tenant_id",
+            ResourceType.HTTP_REQUESTS, cost_per_unit=0.001, tenant_id_arg="tenant_id"
         )
         async def fetch(tenant_id: str) -> str:
             return f"data-for-{tenant_id}"
@@ -373,9 +371,7 @@ class TestTrackCostDecorator:
 
     def test_decorator_default_units(self) -> None:
         @track_cost(
-            ResourceType.HTTP_REQUESTS,
-            cost_per_unit=0.001,
-            tenant_id_arg="tenant_id",
+            ResourceType.HTTP_REQUESTS, cost_per_unit=0.001, tenant_id_arg="tenant_id"
         )
         def req(tenant_id: str) -> None:
             pass

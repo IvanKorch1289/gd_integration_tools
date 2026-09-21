@@ -18,9 +18,7 @@ class TestCliMain:
                 cli_main()
         assert exc_info.value.code == 2
 
-    def test_registry_explorers_writes_files(
-        self, tmp_path: Path
-    ) -> None:
+    def test_registry_explorers_writes_files(self, tmp_path: Path) -> None:
         out_dir = tmp_path / "docs"
         with patch.object(
             sys,
@@ -47,13 +45,7 @@ class TestCliMain:
         with patch.object(
             sys,
             "argv",
-            [
-                "docs_generator",
-                "generate",
-                "--sla-cockpit",
-                "--output",
-                str(out_dir),
-            ],
+            ["docs_generator", "generate", "--sla-cockpit", "--output", str(out_dir)],
         ):
             rc = cli_main()
         assert rc == 0
@@ -79,9 +71,7 @@ class TestCliMain:
     def test_no_section_fails(self, tmp_path: Path) -> None:
         out_dir = tmp_path / "out"
         with patch.object(
-            sys,
-            "argv",
-            ["docs_generator", "generate", "--output", str(out_dir)],
+            sys, "argv", ["docs_generator", "generate", "--output", str(out_dir)]
         ):
             with pytest.raises(SystemExit) as exc_info:
                 cli_main()

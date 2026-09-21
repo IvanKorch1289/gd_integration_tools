@@ -17,14 +17,15 @@ from tests.unit.entrypoints.api.mobile.test_mobile_router_jwt_integration import
     _build_client_with_flags,
 )
 
-_FACTORY_TARGET = "src.backend.core.auth.mobile_jwt_revocation.build_verifier_with_protections"
+_FACTORY_TARGET = (
+    "src.backend.core.auth.mobile_jwt_revocation.build_verifier_with_protections"
+)
 
 
 def test_protections_flag_on_builds_verifier_with_stores() -> None:
     """Флаг ON → factory вызывается с revocation_store и rate_limiter."""
     for client, _ in _build_client_with_flags(
-        mobile_jwt_enabled=True,
-        mobile_jwt_protections_enabled=True,
+        mobile_jwt_enabled=True, mobile_jwt_protections_enabled=True
     ):
         mock_ctx = SimpleNamespace(
             user_id="u1",
@@ -52,8 +53,7 @@ def test_protections_flag_on_builds_verifier_with_stores() -> None:
 def test_protections_flag_off_keeps_bare_verifier() -> None:
     """Флаг OFF → factory НЕ вызывается (bare MobileJwtVerifier путь)."""
     for client, _ in _build_client_with_flags(
-        mobile_jwt_enabled=True,
-        mobile_jwt_protections_enabled=False,
+        mobile_jwt_enabled=True, mobile_jwt_protections_enabled=False
     ):
         valid_claims = {
             "iss": "gd-mobile-prod",
@@ -97,9 +97,7 @@ async def _verify_with_limiter(limiter) -> None:
     inner = AsyncMock()
     inner.verify = AsyncMock(
         return_value=SimpleNamespace(
-            user_id="u",
-            device_id="11111111-2222-4333-8444-555555555555",
-            jti="j",
+            user_id="u", device_id="11111111-2222-4333-8444-555555555555", jti="j"
         )
     )
     wrapper = _WrappedMobileJwtVerifier(
@@ -133,9 +131,7 @@ async def test_rate_limit_allowed_passes() -> None:
     from src.backend.core.auth.mobile_jwt_revocation import _WrappedMobileJwtVerifier
 
     inner = AsyncMock()
-    ctx = SimpleNamespace(
-        user_id="u", device_id="d", jti="j"
-    )
+    ctx = SimpleNamespace(user_id="u", device_id="d", jti="j")
     inner.verify = AsyncMock(return_value=ctx)
     limiter = AsyncMock()
     limiter.check = AsyncMock(return_value=(True, 5))

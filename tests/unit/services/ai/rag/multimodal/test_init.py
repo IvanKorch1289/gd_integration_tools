@@ -50,9 +50,7 @@ class TestMultimodalFacadeAllExports:
     )
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(multimodal, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
+        assert hasattr(multimodal, symbol_name), f"Missing export: {symbol_name}"
         assert symbol_name in multimodal.__all__, (
             f"{symbol_name} not declared in __all__"
         )
@@ -64,7 +62,10 @@ class TestMultimodalFacadeAllExports:
     def test_module_docstring_present(self) -> None:
         """Module docstring описывает MultimodalRAG (K4 W1)."""
         assert multimodal.__doc__ is not None
-        assert "Multimodal" in multimodal.__doc__ or "multimodal" in multimodal.__doc__.lower()
+        assert (
+            "Multimodal" in multimodal.__doc__
+            or "multimodal" in multimodal.__doc__.lower()
+        )
 
 
 @pytest.mark.unit

@@ -10,7 +10,6 @@
     * GET /admin/cron/dashboard.
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -57,7 +56,7 @@ def scheduler_mock() -> Any:
             "next_run_time": "2026-05-20T12:00:00+00:00",
             "trigger": "cron[0 12 * * *]",
             "paused": False,
-        },
+        }
     ]
     manager.schedule_cron.return_value = "job-new"
     manager.pause_job.return_value = True
@@ -107,8 +106,7 @@ def test_schedule_invalid_callable_ref(client_app: TestClient) -> None:
 
 def test_list_jobs(client_app: TestClient, scheduler_mock: Any) -> None:
     with patch(
-        "src.backend.core.scheduler.get_scheduler_manager",
-        return_value=scheduler_mock,
+        "src.backend.core.scheduler.get_scheduler_manager", return_value=scheduler_mock
     ):
         response = client_app.get("/admin/cron/list")
     assert response.status_code == 200
@@ -119,8 +117,7 @@ def test_list_jobs(client_app: TestClient, scheduler_mock: Any) -> None:
 
 def test_pause_resume_cron_job(client_app: TestClient, scheduler_mock: Any) -> None:
     with patch(
-        "src.backend.core.scheduler.get_scheduler_manager",
-        return_value=scheduler_mock,
+        "src.backend.core.scheduler.get_scheduler_manager", return_value=scheduler_mock
     ):
         r1 = client_app.post("/admin/cron/job-1/pause")
         r2 = client_app.post("/admin/cron/job-1/resume")
@@ -131,12 +128,11 @@ def test_pause_resume_cron_job(client_app: TestClient, scheduler_mock: Any) -> N
 
 
 def test_pause_missing_job_returns_404(
-    client_app: TestClient, scheduler_mock: Any,
+    client_app: TestClient, scheduler_mock: Any
 ) -> None:
     scheduler_mock.pause_job.return_value = False
     with patch(
-        "src.backend.core.scheduler.get_scheduler_manager",
-        return_value=scheduler_mock,
+        "src.backend.core.scheduler.get_scheduler_manager", return_value=scheduler_mock
     ):
         response = client_app.post("/admin/cron/nonexistent/pause")
     assert response.status_code == 404
@@ -144,8 +140,7 @@ def test_pause_missing_job_returns_404(
 
 def test_run_now(client_app: TestClient, scheduler_mock: Any) -> None:
     with patch(
-        "src.backend.core.scheduler.get_scheduler_manager",
-        return_value=scheduler_mock,
+        "src.backend.core.scheduler.get_scheduler_manager", return_value=scheduler_mock
     ):
         response = client_app.post("/admin/cron/job-1/run-now")
     assert response.status_code == 200
@@ -154,8 +149,7 @@ def test_run_now(client_app: TestClient, scheduler_mock: Any) -> None:
 
 def test_dashboard_summary(client_app: TestClient, scheduler_mock: Any) -> None:
     with patch(
-        "src.backend.core.scheduler.get_scheduler_manager",
-        return_value=scheduler_mock,
+        "src.backend.core.scheduler.get_scheduler_manager", return_value=scheduler_mock
     ):
         response = client_app.get("/admin/cron/dashboard")
     assert response.status_code == 200

@@ -8,7 +8,6 @@
       имеют trust_tier = "A" (Tier-A migration verified).
 """
 
-
 from __future__ import annotations
 
 import tomllib

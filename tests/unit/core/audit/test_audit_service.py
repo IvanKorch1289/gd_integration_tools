@@ -47,7 +47,9 @@ def _stub_make_audit_event() -> Any:
     import sys
     import types
 
-    fake_module = types.ModuleType("src.backend.services.audit.clickhouse_audit_service")
+    fake_module = types.ModuleType(
+        "src.backend.services.audit.clickhouse_audit_service"
+    )
     fake_module.make_audit_event = lambda **kwargs: kwargs
     fake_module.get_audit_service = lambda: None
     with patch.dict(
@@ -135,7 +137,9 @@ class TestAuditServiceBackendResolution:
         service = AuditService()  # clickhouse_service=None
         # Достаём stub-модуль из sys.modules (см. _stub_make_audit_event fixture).
         _stub = sys.modules["src.backend.services.audit.clickhouse_audit_service"]
-        with patch.object(_stub, "get_audit_service", return_value=self.backend) as mock_get:
+        with patch.object(
+            _stub, "get_audit_service", return_value=self.backend
+        ) as mock_get:
             resolved = service._resolve_backend()
             assert resolved is self.backend
             assert mock_get.call_count == 1
@@ -146,7 +150,9 @@ class TestAuditServiceBackendResolution:
 
         service = AuditService()
         _stub = sys.modules["src.backend.services.audit.clickhouse_audit_service"]
-        with patch.object(_stub, "get_audit_service", return_value=self.backend) as mock_get:
+        with patch.object(
+            _stub, "get_audit_service", return_value=self.backend
+        ) as mock_get:
             service._resolve_backend()
             service._resolve_backend()
             assert mock_get.call_count == 1  # cached after first call
@@ -174,7 +180,9 @@ class TestAuditServiceContextFallback:
         ):
             await AuditService(clickhouse_service=_make_mock_backend()).emit(event="e")
 
-    def test_get_correlation_id_safe_returns_none_when_locator_imports_fail(self) -> None:
+    def test_get_correlation_id_safe_returns_none_when_locator_imports_fail(
+        self,
+    ) -> None:
         """Если import path недоступен → ``None`` (fail-closed)."""
         with patch.dict(
             "sys.modules",

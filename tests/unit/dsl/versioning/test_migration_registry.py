@@ -1,6 +1,5 @@
 """W25.3 — Unit-тесты MigrationRegistry: find_path / apply / circular paths."""
 
-
 from __future__ import annotations
 
 from typing import Any

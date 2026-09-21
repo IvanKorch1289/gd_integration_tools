@@ -23,7 +23,7 @@ class TestDiscoverServices:
         fake_dir = MagicMock()
         fake_dir.exists.return_value = False
         with patch(
-            "src.backend.entrypoints.grpc.auto_servicer._AUTO_PROTO_DIR", new=fake_dir,
+            "src.backend.entrypoints.grpc.auto_servicer._AUTO_PROTO_DIR", new=fake_dir
         ):
             assert _discover_services() == []
 
@@ -45,7 +45,7 @@ class TestDiscoverServices:
 
         fake_dir.__truediv__ = MagicMock(side_effect=_truediv)
         with patch(
-            "src.backend.entrypoints.grpc.auto_servicer._AUTO_PROTO_DIR", new=fake_dir,
+            "src.backend.entrypoints.grpc.auto_servicer._AUTO_PROTO_DIR", new=fake_dir
         ):
             result = _discover_services()
         assert result == ["orders"]
@@ -150,15 +150,19 @@ class TestBuildAutoServicers:
         mock_registry = MagicMock()
         mock_registry.list_metadata.return_value = [fake_meta]
 
-        with patch(
-            "src.backend.entrypoints.grpc.auto_servicer._discover_services",
-            return_value=["orders"],
-        ), patch(
-            "src.backend.entrypoints.grpc.auto_servicer._import_pair",
-            return_value=(fake_pb2, fake_pb2_grpc),
-        ), patch(
-            "src.backend.dsl.commands.action_registry.action_handler_registry",
-            mock_registry,
+        with (
+            patch(
+                "src.backend.entrypoints.grpc.auto_servicer._discover_services",
+                return_value=["orders"],
+            ),
+            patch(
+                "src.backend.entrypoints.grpc.auto_servicer._import_pair",
+                return_value=(fake_pb2, fake_pb2_grpc),
+            ),
+            patch(
+                "src.backend.dsl.commands.action_registry.action_handler_registry",
+                mock_registry,
+            ),
         ):
             bundles = build_auto_servicers()
         assert len(bundles) == 1

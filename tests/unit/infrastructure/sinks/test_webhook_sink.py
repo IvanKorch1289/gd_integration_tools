@@ -1,6 +1,5 @@
 """Unit-tests for WebhookSink."""
 
-
 from __future__ import annotations
 
 import hashlib
@@ -27,7 +26,7 @@ class _FakeResponse:
 
 
 def _fake_client(
-    resp: _FakeResponse | None = None, side_effect: Exception | None = None,
+    resp: _FakeResponse | None = None, side_effect: Exception | None = None
 ) -> AsyncMock:
     client = AsyncMock()
     if side_effect is not None:
@@ -53,8 +52,10 @@ async def test_send_post_success() -> None:
     resp = _FakeResponse(200, {"x-request-id": "req-99"})
     client = _fake_client(resp)
 
-    with patch("src.backend.core.net.OutboundHttpClient", return_value=client), \
-         patched_auth_allow():
+    with (
+        patch("src.backend.core.net.OutboundHttpClient", return_value=client),
+        patched_auth_allow(),
+    ):
         sink = WebhookSink(sink_id="w1", url="http://hook.test", event="user.created")
         result = await sink.send({"id": 1})
 
@@ -69,10 +70,12 @@ async def test_send_with_secret_signature() -> None:
     resp = _FakeResponse(204)
     client = _fake_client(resp)
 
-    with patch("src.backend.core.net.OutboundHttpClient", return_value=client), \
-         patched_auth_allow():
+    with (
+        patch("src.backend.core.net.OutboundHttpClient", return_value=client),
+        patched_auth_allow(),
+    ):
         sink = WebhookSink(
-            sink_id="w2", url="http://hook.test", event="pay", secret="shh",
+            sink_id="w2", url="http://hook.test", event="pay", secret="shh"
         )
         payload = {"amount": 100}
         result = await sink.send(payload)
@@ -92,8 +95,10 @@ async def test_send_5xx_raises_and_returns_error() -> None:
     resp = _FakeResponse(503)
     client = _fake_client(resp)
 
-    with patch("src.backend.core.net.OutboundHttpClient", return_value=client), \
-         patched_auth_allow():
+    with (
+        patch("src.backend.core.net.OutboundHttpClient", return_value=client),
+        patched_auth_allow(),
+    ):
         sink = WebhookSink(sink_id="w3", url="http://hook.test", event="evt")
         result = await sink.send({})
 
@@ -105,8 +110,10 @@ async def test_send_5xx_raises_and_returns_error() -> None:
 async def test_send_network_exception() -> None:
     client = _fake_client(side_effect=httpx.ConnectError("down"))
 
-    with patch("src.backend.core.net.OutboundHttpClient", return_value=client), \
-         patched_auth_allow():
+    with (
+        patch("src.backend.core.net.OutboundHttpClient", return_value=client),
+        patched_auth_allow(),
+    ):
         sink = WebhookSink(sink_id="w4", url="http://hook.test", event="evt")
         result = await sink.send({})
 
@@ -181,8 +188,10 @@ async def test_send_with_rpa_policy_enabled(monkeypatch: pytest.MonkeyPatch) -> 
     sink = WebhookSink(sink_id="w9", url="http://hook.test", event="evt")
     client = _fake_client(resp)
 
-    with patch("src.backend.core.net.OutboundHttpClient", return_value=client), \
-         patched_auth_allow():
+    with (
+        patch("src.backend.core.net.OutboundHttpClient", return_value=client),
+        patched_auth_allow(),
+    ):
         result = await sink.send({})
 
     # Since we injected the modules, the policy path may or may not be taken

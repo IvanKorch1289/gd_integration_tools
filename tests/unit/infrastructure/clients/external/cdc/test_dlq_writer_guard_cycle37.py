@@ -137,7 +137,7 @@ async def test_cdc_send_to_dlq_no_writer_required_raises_runtime_error() -> None
         raise RuntimeError("callback boom")
 
     sub = CDCSubscription(
-        profile="prod", tables=["orders"], strategy="polling", callback=bad_cb,
+        profile="prod", tables=["orders"], strategy="polling", callback=bad_cb
     )
     event = CDCEvent(
         operation="INSERT",
@@ -147,7 +147,9 @@ async def test_cdc_send_to_dlq_no_writer_required_raises_runtime_error() -> None
     )
 
     with pytest.raises(RuntimeError, match="DLQ writer not wired"):
-        await client._send_to_dlq(sub, event.to_dict(), RuntimeError("x"), stage="callback")
+        await client._send_to_dlq(
+            sub, event.to_dict(), RuntimeError("x"), stage="callback"
+        )
 
 
 @pytest.mark.unit
@@ -157,9 +159,7 @@ async def test_cdc_send_to_dlq_with_writer_writes_envelope() -> None:
     writer = _FakeDLQWriter()
     client = CDCClient(dlq_writer=writer)
 
-    sub = CDCSubscription(
-        profile="prod", tables=["orders"], strategy="polling",
-    )
+    sub = CDCSubscription(profile="prod", tables=["orders"], strategy="polling")
     event_dict = {
         "operation": "INSERT",
         "table": "orders",
@@ -169,9 +169,7 @@ async def test_cdc_send_to_dlq_with_writer_writes_envelope() -> None:
         "old": None,
     }
 
-    await client._send_to_dlq(
-        sub, event_dict, RuntimeError("boom"), stage="callback",
-    )
+    await client._send_to_dlq(sub, event_dict, RuntimeError("boom"), stage="callback")
 
     assert writer.write_calls == 1
     env = writer.envelopes[0]
@@ -187,9 +185,7 @@ async def test_cdc_send_to_dlq_no_writer_dev_returns_silently() -> None:
     """B-17: dev_light (``dlq_required=False``) preserves legacy log+drop."""
     client = CDCClient(dlq_required=False)  # no writer, dev mode
 
-    sub = CDCSubscription(
-        profile="dev", tables=["orders"], strategy="polling",
-    )
+    sub = CDCSubscription(profile="dev", tables=["orders"], strategy="polling")
     event_dict = {
         "operation": "INSERT",
         "table": "orders",
@@ -201,7 +197,7 @@ async def test_cdc_send_to_dlq_no_writer_dev_returns_silently() -> None:
 
     # Must NOT raise — log+drop legacy.
     await client._send_to_dlq(
-        sub, event_dict, RuntimeError("dev boom"), stage="callback",
+        sub, event_dict, RuntimeError("dev boom"), stage="callback"
     )
 
 
@@ -284,12 +280,15 @@ async def test_composition_root_wires_cdc_dlq_writer() -> None:
     fake_writer = _FakeDLQWriter()
     fake_factory = MagicMock(name="outbox_dlq_session_factory")
 
-    with patch(
-        "src.backend.infrastructure.messaging.dlq.inbox_writer.InboxDLQWriter",
-        return_value=fake_writer,
-    ), patch(
-        "src.backend.plugins.composition.lifecycle.outbox_setup._get_outbox_dlq_session_factory",
-        return_value=fake_factory,
+    with (
+        patch(
+            "src.backend.infrastructure.messaging.dlq.inbox_writer.InboxDLQWriter",
+            return_value=fake_writer,
+        ),
+        patch(
+            "src.backend.plugins.composition.lifecycle.outbox_setup._get_outbox_dlq_session_factory",
+            return_value=fake_factory,
+        ),
     ):
         try:
             di.register_app_state(app)
@@ -317,7 +316,7 @@ async def test_cdc_dispatch_with_writer_required_no_error() -> None:
         raise RuntimeError("callback boom")
 
     sub = CDCSubscription(
-        profile="prod", tables=["orders"], strategy="polling", callback=bad_cb,
+        profile="prod", tables=["orders"], strategy="polling", callback=bad_cb
     )
     event = CDCEvent(
         operation="INSERT",

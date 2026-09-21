@@ -1,4 +1,5 @@
 """Tests for BaseProcessor.set_result helper (M2)."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock

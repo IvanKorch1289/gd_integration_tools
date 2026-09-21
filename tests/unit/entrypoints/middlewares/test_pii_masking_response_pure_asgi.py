@@ -1,6 +1,5 @@
 """Pure ASGI regression-тесты для PIIMaskingResponseMiddleware (cycle 54)."""
 
-
 from __future__ import annotations
 
 import json
@@ -31,6 +30,7 @@ def _body_message(send: AsyncMock):
 
 def _downstream_json(body: bytes, status: int = 200):
     """Downstream возвращающий JSON response с заданным body."""
+
     async def downstream(scope, receive, send):
         await send(
             {
@@ -40,7 +40,7 @@ def _downstream_json(body: bytes, status: int = 200):
                     (b"content-type", b"application/json"),
                     (b"content-length", str(len(body)).encode("latin-1")),
                 ],
-            },
+            }
         )
         await send({"type": "http.response.body", "body": body})
 
@@ -48,9 +48,7 @@ def _downstream_json(body: bytes, status: int = 200):
 
 
 def _make_scope(
-    method: str = "GET",
-    path: str = "/api/users/me",
-    state: dict | None = None,
+    method: str = "GET", path: str = "/api/users/me", state: dict | None = None
 ) -> dict:
     return {
         "type": "http",
@@ -66,6 +64,7 @@ def _make_scope(
 def _make_receive():
     async def receive():
         return {"type": "http.request", "body": b"", "more_body": False}
+
     return receive
 
 
@@ -75,6 +74,7 @@ def _clear_pii_cache():
     from src.backend.entrypoints.middlewares.pii_masking_response import (
         PIIMaskingResponseMiddleware,
     )
+
     PIIMaskingResponseMiddleware._is_enabled.cache_clear()
     yield
     PIIMaskingResponseMiddleware._is_enabled.cache_clear()
@@ -85,7 +85,7 @@ class TestPIIMaskingResponseMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_disabled_flag_passes_through(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Flag=OFF → original response без модификации."""
         from src.backend.core.config.features import feature_flags
@@ -98,11 +98,7 @@ class TestPIIMaskingResponseMiddlewarePureASGI:
         mw = PIIMaskingResponseMiddleware(app=app)
 
         send = AsyncMock()
-        await mw(
-            _make_scope("GET", "/api/users"),
-            _make_receive(),
-            send,
-        )
+        await mw(_make_scope("GET", "/api/users"), _make_receive(), send)
 
         # Оригинальный body не модифицирован.
         body = _body_message(send)
@@ -110,7 +106,7 @@ class TestPIIMaskingResponseMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_passes_through_non_http_scope(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Non-HTTP scope (websocket) → no PII masking."""
         from src.backend.core.config.features import feature_flags
@@ -126,18 +122,14 @@ class TestPIIMaskingResponseMiddlewarePureASGI:
         mw = PIIMaskingResponseMiddleware(app=app)
 
         send = AsyncMock()
-        await mw(
-            {"type": "websocket", "path": "/ws", "headers": []},
-            AsyncMock(),
-            send,
-        )
+        await mw({"type": "websocket", "path": "/ws", "headers": []}, AsyncMock(), send)
 
         msgs = [c.args[0] for c in send.await_args_list]
         assert any(m["type"] == "websocket.accept" for m in msgs)
 
     @pytest.mark.asyncio
     async def test_path_does_not_match_passes_through(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Flag=ON но path не matches patterns → no masking."""
         from src.backend.core.config.features import feature_flags
@@ -148,7 +140,7 @@ class TestPIIMaskingResponseMiddlewarePureASGI:
         app = AsyncMock()
         app.side_effect = _downstream_json(original_body)
         mw = PIIMaskingResponseMiddleware(
-            app=app, path_patterns=[r"^/api/users(/.*)?$"],
+            app=app, path_patterns=[r"^/api/users(/.*)?$"]
         )
 
         send = AsyncMock()
@@ -164,7 +156,7 @@ class TestPIIMaskingResponseMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_email_masked_on_json_response(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """JSON response → email маскируется."""
         from src.backend.core.config.features import feature_flags
@@ -177,11 +169,7 @@ class TestPIIMaskingResponseMiddlewarePureASGI:
         mw = PIIMaskingResponseMiddleware(app=app)
 
         send = AsyncMock()
-        await mw(
-            _make_scope("GET", "/api/users"),
-            _make_receive(),
-            send,
-        )
+        await mw(_make_scope("GET", "/api/users"), _make_receive(), send)
 
         # Body МАСКИРОВАН.
         body = _body_message(send)
@@ -191,7 +179,7 @@ class TestPIIMaskingResponseMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_non_json_content_type_passes_through(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """text/plain → no masking (только application/json)."""
         from src.backend.core.config.features import feature_flags
@@ -205,20 +193,18 @@ class TestPIIMaskingResponseMiddlewarePureASGI:
                     "type": "http.response.start",
                     "status": 200,
                     "headers": [(b"content-type", b"text/plain")],
-                },
+                }
             )
-            await send({"type": "http.response.body", "body": b"contact: alice@example.com"})
+            await send(
+                {"type": "http.response.body", "body": b"contact: alice@example.com"}
+            )
 
         app = AsyncMock()
         app.side_effect = downstream
         mw = PIIMaskingResponseMiddleware(app=app)
 
         send = AsyncMock()
-        await mw(
-            _make_scope("GET", "/api/users"),
-            _make_receive(),
-            send,
-        )
+        await mw(_make_scope("GET", "/api/users"), _make_receive(), send)
 
         # text/plain не модифицирован.
         body = _body_message(send)
@@ -226,7 +212,7 @@ class TestPIIMaskingResponseMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_content_length_updated_after_masking(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Content-Length header обновляется после masking."""
         from src.backend.core.config.features import feature_flags
@@ -240,11 +226,7 @@ class TestPIIMaskingResponseMiddlewarePureASGI:
         mw = PIIMaskingResponseMiddleware(app=app)
 
         send = AsyncMock()
-        await mw(
-            _make_scope("GET", "/api/users"),
-            _make_receive(),
-            send,
-        )
+        await mw(_make_scope("GET", "/api/users"), _make_receive(), send)
 
         # Start message содержит обновлённый Content-Length.
         start = _start_message(send)
@@ -255,7 +237,7 @@ class TestPIIMaskingResponseMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_does_not_call_downstream_after_masking(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Cycle 54 invariant: после masking downstream НЕ вызывается повторно."""
         from src.backend.core.config.features import feature_flags
@@ -273,7 +255,7 @@ class TestPIIMaskingResponseMiddlewarePureASGI:
                     "type": "http.response.start",
                     "status": 200,
                     "headers": [(b"content-type", b"application/json")],
-                },
+                }
             )
             await send({"type": "http.response.body", "body": b'{"email": "a@b.com"}'})
 
@@ -282,11 +264,7 @@ class TestPIIMaskingResponseMiddlewarePureASGI:
         mw = PIIMaskingResponseMiddleware(app=app)
 
         send = AsyncMock()
-        await mw(
-            _make_scope("GET", "/api/users"),
-            _make_receive(),
-            send,
-        )
+        await mw(_make_scope("GET", "/api/users"), _make_receive(), send)
 
         # Downstream вызван ОДИН раз.
         assert call_count == 1
@@ -297,7 +275,7 @@ class TestPIIMaskingResponseMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_top_level_json_array_masked(
-        self, monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Top-level JSON array → все items рекурсивно маскируются."""
         from src.backend.core.config.features import feature_flags
@@ -312,11 +290,7 @@ class TestPIIMaskingResponseMiddlewarePureASGI:
         mw = PIIMaskingResponseMiddleware(app=app)
 
         send = AsyncMock()
-        await mw(
-            _make_scope("GET", "/api/items"),
-            _make_receive(),
-            send,
-        )
+        await mw(_make_scope("GET", "/api/items"), _make_receive(), send)
 
         body = _body_message(send)
         parsed = json.loads(body["body"].decode("utf-8"))

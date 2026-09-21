@@ -50,6 +50,4 @@ class TestEvalSuitesFacadeIdentity:
         for suite in suites.REFERENCE_SUITES:
             # Inspect AI Task objects have ``name`` + ``description`` attrs
             assert hasattr(suite, "name"), f"{suite!r} missing 'name'"
-            assert hasattr(suite, "description"), (
-                f"{suite!r} missing 'description'"
-            )
+            assert hasattr(suite, "description"), f"{suite!r} missing 'description'"

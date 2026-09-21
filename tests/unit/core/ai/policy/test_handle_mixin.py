@@ -107,7 +107,7 @@ class TestHandleGuardBlockWarn:
     def test_on_block_warn_does_not_create_task(self) -> None:
         enforcer = _StubEnforcer()
         with patch(
-            "src.backend.core.utils.task_registry.get_task_registry",
+            "src.backend.core.utils.task_registry.get_task_registry"
         ) as mock_get:
             enforcer._handle_guard_block(
                 guard_name="test_guard",
@@ -128,10 +128,7 @@ class TestPublishDLQNoWriter:
         enforcer._dlq_writer = None
 
         # DLQ module not available → skip via find_spec path
-        with patch(
-            "importlib.util.find_spec",
-            return_value=None,
-        ):
+        with patch("importlib.util.find_spec", return_value=None):
             # Should NOT raise, just log debug and return
             await enforcer._publish_dlq("guard", ["cat"], "content")
 
@@ -140,10 +137,7 @@ class TestPublishDLQNoWriter:
         enforcer = _StubEnforcer()
         enforcer._dlq_writer = None
 
-        with patch(
-            "importlib.util.find_spec",
-            return_value=None,
-        ):
+        with patch("importlib.util.find_spec", return_value=None):
             await enforcer._publish_dlq("guard", ["cat"], "content")
 
 
@@ -157,22 +151,18 @@ class TestPublishDLQWithWriter:
         mock_writer.write = AsyncMock()
         enforcer._dlq_writer = mock_writer
 
-        with patch(
-            "importlib.util.find_spec",
-        ) as mock_find, patch(
-            "src.backend.core.messaging.dlq.DLQEnvelope",
-        ) as mock_envelope_cls, patch(
-            "src.backend.core.messaging.dlq.DLQReason",
-        ) as mock_reason:
+        with (
+            patch("importlib.util.find_spec") as mock_find,
+            patch("src.backend.core.messaging.dlq.DLQEnvelope") as mock_envelope_cls,
+            patch("src.backend.core.messaging.dlq.DLQReason") as mock_reason,
+        ):
             mock_find.return_value = MagicMock()
             mock_envelope = MagicMock()
             mock_envelope_cls.return_value = mock_envelope
             mock_reason.UNEXPECTED = "UNEXPECTED"
 
             await enforcer._publish_dlq(
-                "test_guard",
-                ["category1", "category2"],
-                "blocked content here",
+                "test_guard", ["category1", "category2"], "blocked content here"
             )
 
         mock_writer.write.assert_awaited_once_with(mock_envelope)
@@ -185,12 +175,10 @@ class TestPublishDLQWithWriter:
         mock_writer.write = AsyncMock(side_effect=RuntimeError("DLQ down"))
         enforcer._dlq_writer = mock_writer
 
-        with patch(
-            "importlib.util.find_spec",
-        ) as mock_find, patch(
-            "src.backend.core.messaging.dlq.DLQEnvelope",
-        ), patch(
-            "src.backend.core.messaging.dlq.DLQReason",
+        with (
+            patch("importlib.util.find_spec") as mock_find,
+            patch("src.backend.core.messaging.dlq.DLQEnvelope"),
+            patch("src.backend.core.messaging.dlq.DLQReason"),
         ):
             mock_find.return_value = MagicMock()
             await enforcer._publish_dlq("guard", ["cat"], "content")
@@ -205,13 +193,11 @@ class TestPublishDLQWithWriter:
 
         long_content = "x" * 500
 
-        with patch(
-            "importlib.util.find_spec",
-        ) as mock_find, patch(
-            "src.backend.core.messaging.dlq.DLQEnvelope",
-        ) as mock_envelope_cls, patch(
-            "src.backend.core.messaging.dlq.DLQReason",
-        ) as mock_reason:
+        with (
+            patch("importlib.util.find_spec") as mock_find,
+            patch("src.backend.core.messaging.dlq.DLQEnvelope") as mock_envelope_cls,
+            patch("src.backend.core.messaging.dlq.DLQReason") as mock_reason,
+        ):
             mock_find.return_value = MagicMock()
             mock_envelope = MagicMock()
             mock_envelope_cls.return_value = mock_envelope

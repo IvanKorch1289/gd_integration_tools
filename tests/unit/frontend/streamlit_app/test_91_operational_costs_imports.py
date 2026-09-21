@@ -16,17 +16,33 @@ import importlib.util
 import sys
 from pathlib import Path
 from types import ModuleType
-from unittest.mock import MagicMock, patch
-
+from unittest.mock import MagicMock
 
 # Mock streamlit (full surface) BEFORE any imports.
 _streamlit_mock = ModuleType("streamlit")
 for attr in [
-    "set_page_config", "header", "metric", "divider", "subheader",
-    "info", "warning", "caption", "tabs", "button",
-    "rerun", "spinner", "dataframe", "json", "selectbox",
-    "text_input", "multiselect", "expander", "download_button",
-    "subheader", "bar_chart", "stop",
+    "set_page_config",
+    "header",
+    "metric",
+    "divider",
+    "subheader",
+    "info",
+    "warning",
+    "caption",
+    "tabs",
+    "button",
+    "rerun",
+    "spinner",
+    "dataframe",
+    "json",
+    "selectbox",
+    "text_input",
+    "multiselect",
+    "expander",
+    "download_button",
+    "subheader",
+    "bar_chart",
+    "stop",
 ]:
     setattr(_streamlit_mock, attr, MagicMock())
 
@@ -48,6 +64,7 @@ _streamlit_mock.columns = MagicMock(side_effect=_list_mock)
 def _passthrough_decorator(*_args, **_kwargs):
     def _decorator(fn):
         return fn
+
     return _decorator
 
 
@@ -79,6 +96,7 @@ def _read_source() -> str:
 
 def _parse_ast() -> object:
     import ast
+
     return ast.parse(_read_source())
 
 
@@ -89,11 +107,28 @@ def _build_streamlit_mock() -> ModuleType:
     """Fresh full-feature streamlit mock (для test isolation)."""
     st = ModuleType("streamlit")
     for attr in [
-        "set_page_config", "header", "metric", "divider", "subheader",
-        "info", "warning", "caption", "tabs", "button",
-        "rerun", "spinner", "dataframe", "json", "selectbox",
-        "text_input", "multiselect", "expander", "download_button",
-        "subheader", "bar_chart", "stop",
+        "set_page_config",
+        "header",
+        "metric",
+        "divider",
+        "subheader",
+        "info",
+        "warning",
+        "caption",
+        "tabs",
+        "button",
+        "rerun",
+        "spinner",
+        "dataframe",
+        "json",
+        "selectbox",
+        "text_input",
+        "multiselect",
+        "expander",
+        "download_button",
+        "subheader",
+        "bar_chart",
+        "stop",
     ]:
         setattr(st, attr, MagicMock())
     st.tabs = MagicMock(side_effect=_list_mock)
@@ -109,9 +144,7 @@ def _load_page_module() -> object:
     _load_counter += 1
     module_name = f"_operational_costs_page_{_load_counter}"
     sys.modules["streamlit"] = _build_streamlit_mock()
-    spec = importlib.util.spec_from_file_location(
-        module_name, _page_path()
-    )
+    spec = importlib.util.spec_from_file_location(module_name, _page_path())
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module
     spec.loader.exec_module(module)
@@ -193,10 +226,7 @@ def get_cost_registry_via_page() -> object:
 
 def test_cost_report_export() -> None:
     """CostReport to_dict() содержит summary + by_tenant + records."""
-    from src.backend.core.cost_attribution import (
-        CostReport,
-        ResourceType,
-    )
+    from src.backend.core.cost_attribution import CostReport, ResourceType
 
     records = [
         # Mock records.
@@ -218,16 +248,25 @@ def test_aggregation_by_tenant_via_registry() -> None:
     registry = get_cost_registry_via_page()
     registry.clear()
     registry.record(
-        tenant_id="t1", route_id="r1", resource_type=ResourceType.LLM_TOKENS,
-        units=100, cost_usd=0.01,
+        tenant_id="t1",
+        route_id="r1",
+        resource_type=ResourceType.LLM_TOKENS,
+        units=100,
+        cost_usd=0.01,
     )
     registry.record(
-        tenant_id="t1", route_id="r2", resource_type=ResourceType.HTTP_REQUESTS,
-        units=1, cost_usd=0.001,
+        tenant_id="t1",
+        route_id="r2",
+        resource_type=ResourceType.HTTP_REQUESTS,
+        units=1,
+        cost_usd=0.001,
     )
     registry.record(
-        tenant_id="t2", route_id="r1", resource_type=ResourceType.LLM_TOKENS,
-        units=200, cost_usd=0.02,
+        tenant_id="t2",
+        route_id="r1",
+        resource_type=ResourceType.LLM_TOKENS,
+        units=200,
+        cost_usd=0.02,
     )
 
     records = registry.list_records()

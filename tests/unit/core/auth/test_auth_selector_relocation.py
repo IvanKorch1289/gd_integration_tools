@@ -42,13 +42,16 @@ from src.backend.core.auth.auth_selector import verify_request
     ],
 )
 async def test_unverified_credentials_are_rejected(
-    method: AuthMethod,
-    headers: list[tuple[bytes, bytes]],
-    cookies: dict[str, str],
+    method: AuthMethod, headers: list[tuple[bytes, bytes]], cookies: dict[str, str]
 ) -> None:
     """Неподтверждённые Basic/SAML/mTLS данные не создают AuthContext."""
     cookie_headers = (
-        [(b"cookie", "; ".join(f"{key}={value}" for key, value in cookies.items()).encode())]
+        [
+            (
+                b"cookie",
+                "; ".join(f"{key}={value}" for key, value in cookies.items()).encode(),
+            )
+        ]
         if cookies
         else []
     )
@@ -97,7 +100,7 @@ def test_entrypoints_shim_is_deprecated() -> None:
         import importlib
 
         mod = importlib.import_module(
-            "src.backend.entrypoints.api.dependencies.auth_selector",
+            "src.backend.entrypoints.api.dependencies.auth_selector"
         )
         # Reload чтобы DeprecationWarning повторился
         with warnings.catch_warnings(record=True) as caught:

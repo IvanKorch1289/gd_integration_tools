@@ -16,17 +16,25 @@ import pytest
 pytestmark = [
     pytest.mark.unit,
     pytest.mark.skip(
-        reason="src.backend.services.secrets.facade не реализован (S48 W1 swarm audit)",
+        reason="src.backend.services.secrets.facade не реализован (S48 W1 swarm audit)"
     ),
 ]
 
 # Безусловный ранний-импорт — оставлен для статической проверки типов,
 # но pytestmark skip выше гарантирует, что ни одна test-функция не запустится.
 from src.backend.services.ai.llm import tgi_batch_client  # noqa: E402,F401
-from src.backend.services.ai.llm.tgi_batch_client import TgiBatchClient  # noqa: E402,F401
-from src.backend.services.ai.memory.langmem_service import LangMemService  # noqa: E402,F401
-from src.backend.services.observability.facade import ObservabilityFacade  # noqa: E402,F401
-from src.backend.services.workflows.hitl_pubsub import publish_hitl_resolved  # noqa: E402,F401
+from src.backend.services.ai.llm.tgi_batch_client import (
+    TgiBatchClient,  # noqa: E402,F401
+)
+from src.backend.services.ai.memory.langmem_service import (
+    LangMemService,  # noqa: E402,F401
+)
+from src.backend.services.observability.facade import (
+    ObservabilityFacade,  # noqa: E402,F401
+)
+from src.backend.services.workflows.hitl_pubsub import (
+    publish_hitl_resolved,  # noqa: E402,F401
+)
 
 
 class _Metric:
@@ -43,7 +51,7 @@ async def test_observability_records_counter_through_registry() -> None:
 
     with patch("src.backend.services.observability.facade.metrics_registry", registry):
         await ObservabilityFacade(plugin="orders").record_metric(
-            "orders_processed", 2.0, tags={"status": "ok"},
+            "orders_processed", 2.0, tags={"status": "ok"}
         )
 
     registry.counter.assert_called_once_with(
@@ -56,9 +64,12 @@ async def test_observability_records_counter_through_registry() -> None:
 
 
 def test_observability_log_event_uses_logging_helper_as_function() -> None:
-    with patch(
-        "src.backend.core.observability.logging_helpers.log_audit_event_lite",
-    ) as log_event, ObservabilityFacade().log_event("order.created", order_id="42"):
+    with (
+        patch(
+            "src.backend.core.observability.logging_helpers.log_audit_event_lite"
+        ) as log_event,
+        ObservabilityFacade().log_event("order.created", order_id="42"),
+    ):
         pass
 
     log_event.assert_called_once()
@@ -68,7 +79,7 @@ def test_observability_log_event_uses_logging_helper_as_function() -> None:
 async def test_secrets_facade_uses_async_backend_contract() -> None:
     backend = AsyncMock()
     backend.get_secret.return_value = "value"
-    facade = SecretsFacade(backend=backend)
+    facade = SecretsFacade(backend=backend)  # noqa: F821 — secrets.facade не реализован (S48 W1), см. test_facades.py importorskip
 
     assert await facade.get_secret("key") == "value"
     await facade.set_secret("key", "new-value")
@@ -98,7 +109,7 @@ async def test_tgi_completion_normalizes_generated_text_to_string() -> None:
 
     with patch.object(tgi_batch_client, "_get_tgi_breaker", return_value=_Breaker()):
         result = await TgiBatchClient(
-            base_url="http://tgi", http_client=client,
+            base_url="http://tgi", http_client=client
         )._single_completion("prompt", max_tokens=8, temperature=0.0)
 
     assert result == "123"

@@ -7,7 +7,6 @@ Cycle 64 invariant: tests catch regressions in episodic storage
 that could lead to silent conversation history corruption.
 """
 
-
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
@@ -67,9 +66,7 @@ def _make_mock_session_factory(rows: list[Any]) -> Any:
         async def execute(self, stmt):
             # stmt is a select() — return rows ordered.
             # Sort by occurred_at desc (default ordering).
-            sorted_rows = sorted(
-                self._rows, key=lambda r: r.occurred_at, reverse=True,
-            )
+            sorted_rows = sorted(self._rows, key=lambda r: r.occurred_at, reverse=True)
             # Apply limit.
             # Find limit() call result.
             limit_val = stmt._limit if hasattr(stmt, "_limit") else None
@@ -152,11 +149,7 @@ class TestEpisodicMemoryAdd:
         mem = EpisodicMemory(session_factory=factory)
 
         await mem.add(
-            session_id="s1",
-            role="user",
-            content="x",
-            tenant="acme",
-            meta=meta_dict,
+            session_id="s1", role="user", content="x", tenant="acme", meta=meta_dict
         )
 
         session = factory._args[0]
@@ -205,11 +198,13 @@ class TestEpisodicMemoryRecall:
         ts2 = datetime(2024, 1, 1, 11, 0, 0)
         rows = [
             LangMemEpisodic(
-                id=1, session_id="s1", role="user", content="first",
-                occurred_at=ts1,
+                id=1, session_id="s1", role="user", content="first", occurred_at=ts1
             ),
             LangMemEpisodic(
-                id=2, session_id="s1", role="assistant", content="second",
+                id=2,
+                session_id="s1",
+                role="assistant",
+                content="second",
                 occurred_at=ts2,
             ),
         ]
@@ -238,9 +233,15 @@ class TestEpisodicMemoryRecall:
         ts2 = datetime(2024, 1, 1, 11, 0, 0)
         ts3 = datetime(2024, 1, 1, 12, 0, 0)
         rows = [
-            LangMemEpisodic(id=1, session_id="s", role="u", content="oldest", occurred_at=ts1),
-            LangMemEpisodic(id=3, session_id="s", role="u", content="newest", occurred_at=ts3),
-            LangMemEpisodic(id=2, session_id="s", role="u", content="middle", occurred_at=ts2),
+            LangMemEpisodic(
+                id=1, session_id="s", role="u", content="oldest", occurred_at=ts1
+            ),
+            LangMemEpisodic(
+                id=3, session_id="s", role="u", content="newest", occurred_at=ts3
+            ),
+            LangMemEpisodic(
+                id=2, session_id="s", role="u", content="middle", occurred_at=ts2
+            ),
         ]
         factory = _make_mock_session_factory(rows)
         mem = EpisodicMemory(session_factory=factory)
@@ -259,7 +260,10 @@ class TestEpisodicMemoryRecall:
         # Create 5 episodes.
         rows = [
             LangMemEpisodic(
-                id=i, session_id="s", role="u", content=f"e{i}",
+                id=i,
+                session_id="s",
+                role="u",
+                content=f"e{i}",
                 occurred_at=datetime(2024, 1, 1, 10, i, 0),
             )
             for i in range(5)
@@ -283,7 +287,10 @@ class TestEpisodicMemoryRecall:
         # Create 25 episodes.
         rows = [
             LangMemEpisodic(
-                id=i, session_id="s", role="u", content=f"e{i}",
+                id=i,
+                session_id="s",
+                role="u",
+                content=f"e{i}",
                 occurred_at=datetime(2024, 1, 1, 10, 0, i),
             )
             for i in range(25)
@@ -303,7 +310,7 @@ class TestEpisodicMemoryRecall:
 
         ts = datetime(2024, 6, 15, 14, 30, 0)
         row = LangMemEpisodic(
-            id=1, session_id="s", role="u", content="test", occurred_at=ts,
+            id=1, session_id="s", role="u", content="test", occurred_at=ts
         )
         factory = _make_mock_session_factory([row])
         mem = EpisodicMemory(session_factory=factory)
@@ -323,7 +330,7 @@ class TestEpisodicMemoryRecall:
 
         # Row with None occurred_at.
         row = LangMemEpisodic(
-            id=1, session_id="s", role="u", content="test", occurred_at=None,
+            id=1, session_id="s", role="u", content="test", occurred_at=None
         )
         factory = _make_mock_session_factory([row])
         mem = EpisodicMemory(session_factory=factory)

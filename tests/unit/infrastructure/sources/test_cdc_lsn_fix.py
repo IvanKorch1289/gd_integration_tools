@@ -7,7 +7,6 @@ be swallowed before send_feedback call.
 Production code: src/backend/infrastructure/sources/cdc.py
 """
 
-
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock

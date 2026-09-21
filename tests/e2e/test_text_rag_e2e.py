@@ -28,7 +28,6 @@ Stub'ы подменяют **только внешние модели** (network
 ``-m 'not e2e'``).
 """
 
-
 from __future__ import annotations
 
 import sys
@@ -46,9 +45,22 @@ from src.backend.services.ai.rag_service import RAGService
 # Размерность выбрана минимальной, чтобы cosine-similarity была
 # тривиальной (один общий токен → 1.0).
 _TOKEN_VOCAB: tuple[str, ...] = (
-    "банк", "кредит", "платёж", "клиент", "счёт", "карта", "сбер",
-    "овердрафт", "ипотека", "депозит", "валюта", "ставка", "риск",
-    "скоринг", "фрод", "комплаенс",
+    "банк",
+    "кредит",
+    "платёж",
+    "клиент",
+    "счёт",
+    "карта",
+    "сбер",
+    "овердрафт",
+    "ипотека",
+    "депозит",
+    "валюта",
+    "ставка",
+    "риск",
+    "скоринг",
+    "фрод",
+    "комплаенс",
 )
 _TOKEN_INDEX: dict[str, int] = {tok: i for i, tok in enumerate(_TOKEN_VOCAB)}
 _DROP_TOKEN = "фрод"
@@ -104,7 +116,7 @@ class InMemoryVectorStore(BaseVectorStore):
     ) -> None:
         """Upsert vectors + documents + metadata (idempotent по id)."""
         for i, (chunk_id, embedding, document) in enumerate(
-            zip(ids, embeddings, documents),
+            zip(ids, embeddings, documents)
         ):
             metadata = (metadatas or [{}] * len(documents))[i] or {}
             self._items = [it for it in self._items if it["id"] != chunk_id]
@@ -114,7 +126,7 @@ class InMemoryVectorStore(BaseVectorStore):
                     "embedding": embedding,
                     "document": document,
                     "metadata": metadata,
-                },
+                }
             )
 
     async def query(
@@ -207,9 +219,9 @@ class StubLiteLLM:
                             "Согласно retrieved контексту, кредитная ставка "
                             "определяется скорингом клиента."
                         ),
-                    },
-                },
-            ],
+                    }
+                }
+            ]
         }
 
 
@@ -224,9 +236,7 @@ def stub_rerank(chunks: list[dict[str, Any]], top_k: int) -> list[dict[str, Any]
     Возвращает до ``top_k`` chunks.
     """
     filtered = [
-        c
-        for c in chunks
-        if _DROP_TOKEN not in (c.get("document") or "").lower()
+        c for c in chunks if _DROP_TOKEN not in (c.get("document") or "").lower()
     ]
     return filtered[:top_k]
 
@@ -291,8 +301,7 @@ _BANK_DOCUMENT = (
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_text_ingest_chunk_embed_pipeline(
-    vector_store: InMemoryVectorStore,
-    rag_service: RAGService,
+    vector_store: InMemoryVectorStore, rag_service: RAGService
 ) -> None:
     """text ingest → chunking (RecursiveChunker) → embedding (stub) → store.
 
@@ -309,12 +318,12 @@ async def test_text_ingest_chunk_embed_pipeline(
         * vector search «кредит» находит chunk с этим токеном.
     """
     doc_id = await rag_service.ingest(
-        _BANK_DOCUMENT, metadata={"source": "credit_policy.pdf"}, namespace="docs",
+        _BANK_DOCUMENT, metadata={"source": "credit_policy.pdf"}, namespace="docs"
     )
     assert len(doc_id) == 16, "doc_id должен быть sha256[:16]"
 
     all_chunks = await vector_store.query(
-        embedding=[0.0] * len(_TOKEN_VOCAB), top_k=100,
+        embedding=[0.0] * len(_TOKEN_VOCAB), top_k=100
     )
     assert len(all_chunks) >= 3, (
         f"RecursiveChunker должен разрезать на ≥3 chunks, got {len(all_chunks)}"
@@ -330,17 +339,16 @@ async def test_text_ingest_chunk_embed_pipeline(
     cred_emb = _token_overlap_vec("кредит")
     credit_hits = await vector_store.query(embedding=cred_emb, top_k=10)
     assert len(credit_hits) >= 1
-    assert any(
-        "кредит" in (h.get("document") or "").lower() for h in credit_hits
-    ), "vector search должен находить chunk с 'кредит'"
+    assert any("кредит" in (h.get("document") or "").lower() for h in credit_hits), (
+        "vector search должен находить chunk с 'кредит'"
+    )
 
 
 @pytest.mark.e2e
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_text_retrieval_rerank_llm_pipeline(
-    rag_service: RAGService,
-    stub_litellm: StubLiteLLM,
+    rag_service: RAGService, stub_litellm: StubLiteLLM
 ) -> None:
     """ingest → retrieval → rerank (drop fraud) → LLM stub.
 
@@ -359,9 +367,7 @@ async def test_text_retrieval_rerank_llm_pipeline(
     """
     await rag_service.ingest(_BANK_DOCUMENT, namespace="docs")
 
-    raw_chunks = await rag_service.search(
-        "кредит ставка", top_k=5, namespace="docs",
-    )
+    raw_chunks = await rag_service.search("кредит ставка", top_k=5, namespace="docs")
     assert len(raw_chunks) >= 1, "search должен вернуть ≥1 chunk"
 
     reranked = stub_rerank(raw_chunks, top_k=3)
@@ -373,8 +379,8 @@ async def test_text_retrieval_rerank_llm_pipeline(
     context = "\n\n".join(c.get("document", "") for c in reranked)
     response = stub_litellm.completion(
         messages=[
-            {"role": "user", "content": f"Вопрос: кредит ставка\nКонтекст:\n{context}"},
-        ],
+            {"role": "user", "content": f"Вопрос: кредит ставка\nКонтекст:\n{context}"}
+        ]
     )
     answer = response["choices"][0]["message"]["content"]
 
@@ -382,9 +388,7 @@ async def test_text_retrieval_rerank_llm_pipeline(
         f"LLM answer должен reference retrieved context, got: {answer!r}"
     )
     assert StubLiteLLM.last_messages is not None
-    context_blob = " ".join(
-        m.get("content", "") for m in StubLiteLLM.last_messages
-    )
+    context_blob = " ".join(m.get("content", "") for m in StubLiteLLM.last_messages)
     assert "кредит" in context_blob.lower(), (
         "LLM prompt должен содержать retrieved context"
     )
@@ -396,9 +400,7 @@ async def test_text_retrieval_rerank_llm_pipeline(
 @pytest.mark.e2e
 @pytest.mark.asyncio
 @pytest.mark.integration
-async def test_text_augment_prompt_includes_citations(
-    rag_service: RAGService,
-) -> None:
+async def test_text_augment_prompt_includes_citations(rag_service: RAGService) -> None:
     """``augment_prompt_with_citations`` возвращает prompt + структурированные citations.
 
     Pipeline:
@@ -412,13 +414,11 @@ async def test_text_augment_prompt_includes_citations(
         * каждый citation имеет score в [0..1] и source_doc='policy_v3.pdf'.
     """
     await rag_service.ingest(
-        _BANK_DOCUMENT,
-        metadata={"source": "policy_v3.pdf"},
-        namespace="docs",
+        _BANK_DOCUMENT, metadata={"source": "policy_v3.pdf"}, namespace="docs"
     )
 
     result = await rag_service.augment_prompt_with_citations(
-        query="условия кредита", system_prompt="", namespace="docs", top_k=3,
+        query="условия кредита", system_prompt="", namespace="docs", top_k=3
     )
 
     assert "Контекст из базы знаний" in result.prompt
@@ -434,9 +434,7 @@ async def test_text_augment_prompt_includes_citations(
 @pytest.mark.e2e
 @pytest.mark.asyncio
 @pytest.mark.integration
-async def test_namespace_filter_isolates_collections(
-    rag_service: RAGService,
-) -> None:
+async def test_namespace_filter_isolates_collections(rag_service: RAGService) -> None:
     """Namespace-фильтр изолирует коллекции: search 'docs' не видит 'other'.
 
     Pipeline:
@@ -461,9 +459,7 @@ async def test_namespace_filter_isolates_collections(
     )
 
     docs_hits = await rag_service.search("кредит", top_k=10, namespace="docs")
-    other_hits = await rag_service.search(
-        "ипотека", top_k=10, namespace="other",
-    )
+    other_hits = await rag_service.search("ипотека", top_k=10, namespace="other")
 
     assert len(docs_hits) >= 1
     assert all(
@@ -478,9 +474,7 @@ async def test_namespace_filter_isolates_collections(
 @pytest.mark.e2e
 @pytest.mark.asyncio
 @pytest.mark.integration
-async def test_delete_collection_clears_namespace(
-    rag_service: RAGService,
-) -> None:
+async def test_delete_collection_clears_namespace(rag_service: RAGService) -> None:
     """``delete_collection`` очищает namespace, count возвращается к 0.
 
     Pipeline:
@@ -494,7 +488,7 @@ async def test_delete_collection_clears_namespace(
         * count == 0 после удаления.
     """
     await rag_service.ingest(
-        _BANK_DOCUMENT, metadata={"source": "policy.pdf"}, namespace="docs",
+        _BANK_DOCUMENT, metadata={"source": "policy.pdf"}, namespace="docs"
     )
 
     before = await rag_service.count(collection="docs")

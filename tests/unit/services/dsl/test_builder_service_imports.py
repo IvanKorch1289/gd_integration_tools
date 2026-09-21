@@ -56,7 +56,7 @@ def _top_level_import_froms(tree: ast.Module) -> list[ast.ImportFrom]:
     reason="S44 W39: test encodes pre-Sprint-225/226 import structure. "
     "Sprint 225 converted top-level dsl imports to lazy __getattr__ proxy. "
     "Test asserts on deprecated structure — needs rewrite to verify proxy "
-    "pattern instead. Out of scope for atomic fix.",
+    "pattern instead. Out of scope for atomic fix."
 )
 def test_top_level_dsl_imports() -> None:
     """``route_registry`` + ``YAMLStore`` — оба в top-level first-party блоке.
@@ -131,11 +131,11 @@ def test_no_lazy_imports() -> None:
     lazy_imports: list[tuple[int, str]] = []
 
     def _walk_with_parents(
-        node: ast.AST, in_function: bool, parents: tuple[ast.AST, ...],
+        node: ast.AST, in_function: bool, parents: tuple[ast.AST, ...]
     ) -> None:
         for child in ast.iter_child_nodes(node):
             new_in_function = in_function or isinstance(
-                node, (ast.FunctionDef, ast.AsyncFunctionDef),
+                node, (ast.FunctionDef, ast.AsyncFunctionDef)
             )
             if (
                 new_in_function
@@ -159,7 +159,7 @@ def test_no_lazy_imports() -> None:
     reason="S44 W39: test encodes pre-Sprint-225/226 import structure. "
     "Sprint 225 converted top-level dsl imports to lazy __getattr__ proxy. "
     "Test asserts on deprecated structure — needs rewrite to verify proxy "
-    "pattern instead. Out of scope for atomic fix.",
+    "pattern instead. Out of scope for atomic fix."
 )
 def test_no_duplicate_imports() -> None:
     """Ровно 2 top-level + 1 TYPE_CHECKING dsl-импорта, без дубликатов.

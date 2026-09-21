@@ -7,7 +7,6 @@
 - EnforcedInvokeMixin / AIRequest / AIResponse re-export работают
 """
 
-
 from __future__ import annotations
 
 import importlib
@@ -78,12 +77,7 @@ class TestAIGatewaySplit:
         """AIGateway имеет ожидаемые public methods."""
         from src.backend.core.ai.gateway import AIGateway
 
-        for method_name in (
-            "get_policy",
-            "invoke",
-            "run_agent_code",
-            "attach_sandbox",
-        ):
+        for method_name in ("get_policy", "invoke", "run_agent_code", "attach_sandbox"):
             assert hasattr(AIGateway, method_name), (
                 f"AIGateway should have {method_name}"
             )
@@ -110,7 +104,7 @@ class TestAIGatewaySplit:
         ``gateway_orchestrator_mixin.py``.
         """
         canonical_mod = importlib.import_module(
-            "src.backend.core.ai.gateway_orchestrator_mixin",
+            "src.backend.core.ai.gateway_orchestrator_mixin"
         )
         assert hasattr(canonical_mod, "EnforcedInvokeMixin")
 

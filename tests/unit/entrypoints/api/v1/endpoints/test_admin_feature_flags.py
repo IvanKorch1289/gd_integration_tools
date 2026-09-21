@@ -1,6 +1,5 @@
 """Unit tests for admin feature-flags endpoints."""
 
-
 from __future__ import annotations
 
 import pytest

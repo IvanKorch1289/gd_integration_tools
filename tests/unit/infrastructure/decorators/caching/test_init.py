@@ -1,6 +1,5 @@
 """Unit tests for infrastructure.decorators.caching.__init__."""
 
-
 from __future__ import annotations
 
 from typing import Any

@@ -10,10 +10,10 @@ Verifies:
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 
 pytestmark = pytest.mark.asyncio
 
@@ -68,9 +68,16 @@ async def test_publish_works_without_propagator() -> None:
     # Simulate ImportError for the propagator
     import sys
 
-    with patch.dict(sys.modules, {"src.backend.infrastructure.observability.mq_trace_propagator": None}):
+    with patch.dict(
+        sys.modules,
+        {"src.backend.infrastructure.observability.mq_trace_propagator": None},
+    ):
         # Mock the import to raise ImportError
-        original_import = __builtins__.__import__ if hasattr(__builtins__, "__import__") else __import__
+        original_import = (
+            __builtins__.__import__
+            if hasattr(__builtins__, "__import__")
+            else __import__
+        )
 
         def mock_import(name, *args, **kwargs):
             if "mq_trace_propagator" in name:

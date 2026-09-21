@@ -126,7 +126,7 @@ def _make_lifespan_patches() -> list[Any]:
         ),
         patch("src.backend.plugins.composition.lifecycle.validate_cache_layers"),
         patch(
-            "src.backend.plugins.composition.lifecycle.bootstrap_resilience_coordinator",
+            "src.backend.plugins.composition.lifecycle.bootstrap_resilience_coordinator"
         ),
         patch("src.backend.plugins.composition.lifecycle.bootstrap_snapshot_job"),
         patch(
@@ -243,7 +243,9 @@ async def test_handle_v11_changes_plugin_toml_triggers_plugin_reload() -> None:
     app.state.plugin_loader = plugin_loader
     app.state.route_loader = route_loader
 
-    await lifecycle.plugin_loader.handle_v11_changes(app, {("change", "/x/y/plugin.toml")})
+    await lifecycle.plugin_loader.handle_v11_changes(
+        app, {("change", "/x/y/plugin.toml")}
+    )
 
     assert plugin_loader.discover_and_load.await_count == 1
     assert route_loader.unload_all.await_count == 0
@@ -260,7 +262,9 @@ async def test_handle_v11_changes_route_toml_triggers_route_reload() -> None:
     app.state.plugin_loader = plugin_loader
     app.state.route_loader = route_loader
 
-    await lifecycle.plugin_loader.handle_v11_changes(app, {("change", "/x/y/route.toml")})
+    await lifecycle.plugin_loader.handle_v11_changes(
+        app, {("change", "/x/y/route.toml")}
+    )
 
     assert route_loader.unload_all.await_count == 1
     assert route_loader.discover_and_load.await_count == 1
@@ -278,7 +282,9 @@ async def test_handle_v11_changes_dsl_yaml_triggers_route_reload() -> None:
     app.state.plugin_loader = plugin_loader
     app.state.route_loader = route_loader
 
-    await lifecycle.plugin_loader.handle_v11_changes(app, {("change", "/x/pipeline.dsl.yaml")})
+    await lifecycle.plugin_loader.handle_v11_changes(
+        app, {("change", "/x/pipeline.dsl.yaml")}
+    )
 
     assert route_loader.unload_all.await_count == 1
     assert plugin_loader.discover_and_load.await_count == 0
@@ -305,7 +311,9 @@ async def test_handle_v11_changes_no_loaders_does_not_crash() -> None:
     app = FastAPI()
     # Намеренно НЕ устанавливаем plugin_loader / route_loader.
 
-    await lifecycle.plugin_loader.handle_v11_changes(app, {("change", "/x/plugin.toml")})
+    await lifecycle.plugin_loader.handle_v11_changes(
+        app, {("change", "/x/plugin.toml")}
+    )
 
     # Если дошли сюда — тест пройден.
     assert True

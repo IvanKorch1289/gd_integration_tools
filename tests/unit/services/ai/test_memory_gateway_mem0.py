@@ -1,6 +1,5 @@
 """Тесты UnifiedMemoryGateway.recall_mem0 (Wave 4)."""
 
-
 from __future__ import annotations
 
 from unittest.mock import AsyncMock
@@ -23,11 +22,11 @@ async def test_recall_mem0_delegates_to_backend() -> None:
     """recall_mem0 делегирует в Mem0MemoryAdapter.recall."""
     mem0 = AsyncMock()
     mem0.recall.return_value = [
-        {"value": "fact1", "score": 0.9, "metadata": {"id": "1"}},
+        {"value": "fact1", "score": 0.9, "metadata": {"id": "1"}}
     ]
     gateway = UnifiedMemoryGateway(short_term=AsyncMock(), mem0=mem0)
     result = await gateway.recall_mem0(
-        tenant_id="t1", session_id="s1", query="hello", top_k=3,
+        tenant_id="t1", session_id="s1", query="hello", top_k=3
     )
     assert len(result) == 1
     assert result[0].content == "fact1"

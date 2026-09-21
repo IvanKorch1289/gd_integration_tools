@@ -87,10 +87,7 @@ SAMPLE_SPEC = {
                     "customer": {"$ref": "#/components/schemas/Customer"},
                 },
             },
-            "Customer": {
-                "type": "object",
-                "properties": {"name": {"type": "string"}},
-            },
+            "Customer": {"type": "object", "properties": {"name": {"type": "string"}}},
             "OrderList": {
                 "type": "array",
                 "items": {"$ref": "#/components/schemas/Order"},
@@ -172,9 +169,7 @@ class TestImportOpenAPIGraph:
 
     def test_deprecated_flag(self) -> None:
         g = import_openapi_graph(SAMPLE_SPEC)
-        admin_ep = next(
-            ep for ep in g.endpoints if ep.path == "/admin/orders"
-        )
+        admin_ep = next(ep for ep in g.endpoints if ep.path == "/admin/orders")
         assert admin_ep.deprecated is True
 
 
@@ -242,18 +237,15 @@ class TestValidateSecurity:
         g = import_openapi_graph(SAMPLE_SPEC)
         issues = validate_security(g)
         # GET /orders и GET /admin/orders не имеют security.
-        no_sec = [
-            i
-            for i in issues
-            if i.issue_type == "no_security"
-        ]
+        no_sec = [i for i in issues if i.issue_type == "no_security"]
         assert len(no_sec) >= 2
 
     def test_admin_endpoint_critical(self) -> None:
         g = import_openapi_graph(SAMPLE_SPEC)
         issues = validate_security(g)
         admin = next(
-            i for i in issues
+            i
+            for i in issues
             if i.location == "GET /admin/orders" and i.issue_type == "no_security"
         )
         assert admin.severity == SecuritySeverity.CRITICAL
@@ -261,9 +253,7 @@ class TestValidateSecurity:
     def test_deprecated_apikey_detected(self) -> None:
         g = import_openapi_graph(SAMPLE_SPEC)
         issues = validate_security(g)
-        apikey = [
-            i for i in issues if i.issue_type == "deprecated_apikey"
-        ]
+        apikey = [i for i in issues if i.issue_type == "deprecated_apikey"]
         assert len(apikey) == 1
         assert apikey[0].location == "security:apiKeyAuth"
 
@@ -277,9 +267,7 @@ class TestValidateSecurity:
     def test_deprecated_operation_detected(self) -> None:
         g = import_openapi_graph(SAMPLE_SPEC)
         issues = validate_security(g)
-        deprecated = [
-            i for i in issues if i.issue_type == "deprecated_operation"
-        ]
+        deprecated = [i for i in issues if i.issue_type == "deprecated_operation"]
         assert len(deprecated) == 1
         assert deprecated[0].location == "GET /admin/orders"
 
@@ -297,9 +285,7 @@ class TestValidateSecurity:
                 }
             },
             "components": {
-                "securitySchemes": {
-                    "bearerAuth": {"type": "http", "scheme": "bearer"},
-                }
+                "securitySchemes": {"bearerAuth": {"type": "http", "scheme": "bearer"}}
             },
         }
         g = import_openapi_graph(clean_spec)
@@ -358,9 +344,7 @@ class TestEndpointNode:
 
 class TestSecurityIssue:
     def test_defaults(self) -> None:
-        i = SecurityIssue(
-            issue_type="x", severity=SecuritySeverity.LOW, location="y"
-        )
+        i = SecurityIssue(issue_type="x", severity=SecuritySeverity.LOW, location="y")
         assert i.recommendation == ""
 
 
@@ -451,7 +435,7 @@ class TestRealisticExample:
                         "in": "header",
                         "name": "X-API-Key",
                         "description": "DEPRECATED — please use OAuth2 in production",
-                    },
+                    }
                 }
             },
         }
@@ -460,7 +444,8 @@ class TestRealisticExample:
 
         # Admin endpoint без security → CRITICAL.
         admin = [
-            i for i in issues
+            i
+            for i in issues
             if i.issue_type == "no_security" and i.location == "GET /admin/dump"
         ]
         assert len(admin) == 1

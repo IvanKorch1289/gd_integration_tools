@@ -7,7 +7,6 @@
   (``parents[4]``), а не на ``src/``.
 """
 
-
 from __future__ import annotations
 
 import tempfile

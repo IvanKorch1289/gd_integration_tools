@@ -164,9 +164,7 @@ async def test_revoke_family_then_new_issue_is_at_new_gen() -> None:
 # ── Demo path integration: reuse triggers family revocation ─────────
 
 
-VALID_DEMO_BASE = {
-    "device_id": "11111111-2222-4333-8444-555555555556",
-}
+VALID_DEMO_BASE = {"device_id": "11111111-2222-4333-8444-555555555556"}
 
 
 @asynccontextmanager
@@ -198,9 +196,7 @@ async def test_demo_reuse_triggers_family_revocation() -> None:
         device_id = VALID_DEMO_BASE["device_id"]
 
         # Step 1: login → store has jti-1
-        login_resp = await client.post(
-            f"/mobile/v1/auth/login?device_id={device_id}"
-        )
+        login_resp = await client.post(f"/mobile/v1/auth/login?device_id={device_id}")
         assert login_resp.status_code == 200
         refresh_token = login_resp.json()["refresh_token"]
         jti_1 = refresh_token.split(":", 2)[2]
@@ -236,9 +232,7 @@ async def test_demo_reuse_invalidates_all_current_gen_tokens() -> None:
         store = refresh_token_store.get_refresh_token_store()
 
         # Login + multiple refreshes (each rotates to new jti at same gen)
-        login_resp = await client.post(
-            f"/mobile/v1/auth/login?device_id={device_id}"
-        )
+        login_resp = await client.post(f"/mobile/v1/auth/login?device_id={device_id}")
         rt = login_resp.json()["refresh_token"]
         for _ in range(3):
             r = await client.post(
@@ -292,7 +286,9 @@ async def _jwt_client() -> AsyncIterator[Any]:
 
     mock_flags = MagicMock()
     mock_flags.mobile_jwt_enabled = True
-    mock_flags.mobile_jwt_protections_enabled = False  # C2: явная декларация (MagicMock автосоздаёт truthy)
+    mock_flags.mobile_jwt_protections_enabled = (
+        False  # C2: явная декларация (MagicMock автосоздаёт truthy)
+    )
     mock_flags.mobile_demo_auth_enabled = False
 
     with patch.dict(

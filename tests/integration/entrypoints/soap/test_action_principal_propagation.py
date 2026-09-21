@@ -98,9 +98,7 @@ def test_dispatch_action_default_principal_empty() -> None:
             "action_handler_registry",
             MagicMock(dispatch=AsyncMock(side_effect=fake_dispatch)),
         )
-        asyncio.run(
-            dispatch_action(action="test.action", payload={}, source="rest")
-        )
+        asyncio.run(dispatch_action(action="test.action", payload={}, source="rest"))
     finally:
         monkey.undo()
     assert captured["command"].meta.principal == "", (
@@ -118,9 +116,7 @@ def test_soap_dispatch_via_action_extracts_auth_principal(
     from src.backend.entrypoints.soap.soap_handler import _dispatch_via_action
 
     auth = AuthContext(
-        method=AuthMethod.JWT,
-        principal="bob",
-        metadata={"permissions": ["admin"]},
+        method=AuthMethod.JWT, principal="bob", metadata={"permissions": ["admin"]}
     )
 
     captured: dict = {}
@@ -132,9 +128,7 @@ def test_soap_dispatch_via_action_extracts_auth_principal(
     monkeypatch.setattr(
         "src.backend.entrypoints.base.dispatch_action", fake_dispatch_action
     )
-    asyncio.run(
-        _dispatch_via_action("test.soap_action", {"k": "v"}, auth=auth)
-    )
+    asyncio.run(_dispatch_via_action("test.soap_action", {"k": "v"}, auth=auth))
 
     assert captured.get("principal") == "bob", (
         f"SOAP _dispatch_via_action НЕ пробрасывает principal. "

@@ -25,11 +25,7 @@ def test_init_creates_manager() -> None:
 def test_register_alert_basic() -> None:
     """register_alert(condition=) создаёт alert в _alerts."""
     mgr = PrometheusAlertManager()
-    mgr.register_alert(
-        name="high_cpu",
-        condition="cpu_usage > 80",
-        severity="warning",
-    )
+    mgr.register_alert(name="high_cpu", condition="cpu_usage > 80", severity="warning")
     assert "high_cpu" in mgr._alerts
     assert mgr._alerts["high_cpu"]["condition"] == "cpu_usage > 80"
 
@@ -138,11 +134,7 @@ def test_severity_values() -> None:
     """register_alert принимает разные severity values."""
     mgr = PrometheusAlertManager()
     for sev in ("info", "warning", "critical"):
-        mgr.register_alert(
-            name=f"alert_{sev}",
-            condition="x > 1",
-            severity=sev,
-        )
+        mgr.register_alert(name=f"alert_{sev}", condition="x > 1", severity=sev)
     assert "alert_info" in mgr._alerts
     assert "alert_warning" in mgr._alerts
     assert "alert_critical" in mgr._alerts

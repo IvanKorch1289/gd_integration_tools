@@ -12,6 +12,7 @@ Requirements:
 - без Kafka
 - поддержка DBA_CDC_PUBLICATIONS / SCN tracking
 """
+
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -23,6 +24,7 @@ import pytest
 class TestOracleCDCSource:
     def test_instantiates(self) -> None:
         from src.backend.infrastructure.sources.cdc_oracle import OracleCDCSource
+
         source = OracleCDCSource(
             dsn="oracle://user:pass@host:1521/ORCLPDB1",
             schema="HR",
@@ -34,6 +36,7 @@ class TestOracleCDCSource:
 
     def test_instantiates_with_table_filter(self) -> None:
         from src.backend.infrastructure.sources.cdc_oracle import OracleCDCSource
+
         source = OracleCDCSource(
             dsn="oracle://x",
             schema="S",
@@ -51,6 +54,7 @@ class TestOracleCDCSourcePolling:
     async def test_poll_returns_new_changes(self) -> None:
         """При polling с последним SCN — возвращает новые rows."""
         from src.backend.infrastructure.sources.cdc_oracle import OracleCDCSource
+
         source = OracleCDCSource(
             dsn="oracle://x",
             schema="HR",
@@ -74,6 +78,7 @@ class TestOracleCDCSourceInDSL:
     def test_registers_in_source_registry(self) -> None:
         """Oracle CDC source регистрируется в SourceRegistry."""
         from src.backend.infrastructure.sources.cdc_oracle import OracleCDCSource
+
         assert OracleCDCSource is not None
         # SourceRegistry должен иметь метод register_oracle_cdc
         # (проверяем что source имеет нужные capabilities)
@@ -86,14 +91,7 @@ class TestOracleCDCSourceIdentifierValidation:
         assert _validate_oracle_table("HR.EMPLOYEES") == "HR.EMPLOYEES"
 
     @pytest.mark.parametrize(
-        "bad",
-        [
-            "HR;DROP--",
-            "1HR.TABLE",
-            "HR.EMPLOYEES; --",
-            "schema.table.col",
-            "",
-        ],
+        "bad", ["HR;DROP--", "1HR.TABLE", "HR.EMPLOYEES; --", "schema.table.col", ""]
     )
     def test_invalid_table_rejected(self, bad: str) -> None:
         from src.backend.infrastructure.sources.cdc_oracle import _validate_oracle_table
@@ -136,9 +134,7 @@ class TestOracleCDCSourceIdentifierValidation:
 
         with pytest.raises(ValueError):
             OracleCDCSource(
-                dsn="oracle://x",
-                schema="HR; DROP SCHEMA X; --",
-                tables=("EMPLOYEES",),
+                dsn="oracle://x", schema="HR; DROP SCHEMA X; --", tables=("EMPLOYEES",)
             )
 
     def test_table_name_validated_at_construction(self) -> None:
@@ -146,7 +142,5 @@ class TestOracleCDCSourceIdentifierValidation:
 
         with pytest.raises(ValueError):
             OracleCDCSource(
-                dsn="oracle://x",
-                schema="HR",
-                tables=("EMPLOYEES; DROP TABLE x; --",),
+                dsn="oracle://x", schema="HR", tables=("EMPLOYEES; DROP TABLE x; --",)
             )

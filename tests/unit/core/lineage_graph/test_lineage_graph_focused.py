@@ -60,9 +60,7 @@ class TestLineageNode:
 
 class TestLineageEdge:
     def test_init(self) -> None:
-        e = LineageEdge(
-            source="order-create", target="orders", kind=EdgeKind.WRITE
-        )
+        e = LineageEdge(source="order-create", target="orders", kind=EdgeKind.WRITE)
         assert e.description == ""
 
 
@@ -90,9 +88,7 @@ class TestAddNode:
 class TestAddEdge:
     def test_add_edge_creates_missing_nodes(self) -> None:
         g = LineageGraph()
-        g.add_edge(LineageEdge(
-            source="route-a", target="table-b", kind=EdgeKind.WRITE
-        ))
+        g.add_edge(LineageEdge(source="route-a", target="table-b", kind=EdgeKind.WRITE))
         assert g.size() == 2  # auto-created both nodes
         assert g.edge_count() == 1
 
@@ -131,12 +127,14 @@ class TestUpstream:
         g.add_node(LineageNode(id="orders", kind=NodeKind.TABLE))
         g.add_node(LineageNode(id="payment-api", kind=NodeKind.ROUTE))
         g.add_node(LineageNode(id="invoice-create", kind=NodeKind.ROUTE))
-        g.add_edge(LineageEdge(
-            source="invoice-create", target="payment-api", kind=EdgeKind.WRITE
-        ))
-        g.add_edge(LineageEdge(
-            source="payment-api", target="orders", kind=EdgeKind.WRITE
-        ))
+        g.add_edge(
+            LineageEdge(
+                source="invoice-create", target="payment-api", kind=EdgeKind.WRITE
+            )
+        )
+        g.add_edge(
+            LineageEdge(source="payment-api", target="orders", kind=EdgeKind.WRITE)
+        )
         upstream = g.upstream("orders")
         assert "payment-api" in upstream
         assert "invoice-create" in upstream
@@ -151,9 +149,9 @@ class TestUpstream:
         for i in range(5):
             g.add_node(LineageNode(id=f"n{i}", kind=NodeKind.TABLE))
         for i in range(4):
-            g.add_edge(LineageEdge(
-                source=f"n{i+1}", target=f"n{i}", kind=EdgeKind.WRITE
-            ))
+            g.add_edge(
+                LineageEdge(source=f"n{i + 1}", target=f"n{i}", kind=EdgeKind.WRITE)
+            )
         # From n0: depth 0 = n0, depth 1 = n1, depth 2 = n2.
         upstream_d2 = g.upstream("n0", max_depth=2)
         assert "n1" in upstream_d2
@@ -168,12 +166,12 @@ class TestDownstream:
         g.add_node(LineageNode(id="orders", kind=NodeKind.TABLE))
         g.add_node(LineageNode(id="reports-api", kind=NodeKind.ROUTE))
         g.add_node(LineageNode(id="dashboard", kind=NodeKind.ROUTE))
-        g.add_edge(LineageEdge(
-            source="orders", target="reports-api", kind=EdgeKind.READ
-        ))
-        g.add_edge(LineageEdge(
-            source="reports-api", target="dashboard", kind=EdgeKind.PUBLISH
-        ))
+        g.add_edge(
+            LineageEdge(source="orders", target="reports-api", kind=EdgeKind.READ)
+        )
+        g.add_edge(
+            LineageEdge(source="reports-api", target="dashboard", kind=EdgeKind.PUBLISH)
+        )
         downstream = g.downstream("orders")
         assert "reports-api" in downstream
         assert "dashboard" in downstream
@@ -274,18 +272,20 @@ class TestRealisticExample:
     def test_order_to_analytics_lineage(self) -> None:
         g = LineageGraph()
         # Layer 1: Source events.
-        g.add_node(LineageNode(
-            id="user-clicks", kind=NodeKind.SOURCE, owner="analytics"
-        ))
-        g.add_node(LineageNode(
-            id="order-create", kind=NodeKind.ROUTE, owner="team-payments"
-        ))
-        g.add_node(LineageNode(
-            id="skb-integration", kind=NodeKind.ROUTE, owner="team-skb"
-        ))
+        g.add_node(
+            LineageNode(id="user-clicks", kind=NodeKind.SOURCE, owner="analytics")
+        )
+        g.add_node(
+            LineageNode(id="order-create", kind=NodeKind.ROUTE, owner="team-payments")
+        )
+        g.add_node(
+            LineageNode(id="skb-integration", kind=NodeKind.ROUTE, owner="team-skb")
+        )
         # Layer 2: Tables.
         g.add_node(LineageNode(id="orders", kind=NodeKind.TABLE, owner="team-payments"))
-        g.add_node(LineageNode(id="order_events", kind=NodeKind.TABLE, owner="team-payments"))
+        g.add_node(
+            LineageNode(id="order_events", kind=NodeKind.TABLE, owner="team-payments")
+        )
         # Layer 3: Transforms.
         g.add_node(LineageNode(id="daily-revenue", kind=NodeKind.TRANSFORM))
         # Layer 4: Sinks.
@@ -293,27 +293,33 @@ class TestRealisticExample:
         g.add_node(LineageNode(id="tax-report", kind=NodeKind.SINK))
 
         # Edges.
-        g.add_edge(LineageEdge(
-            source="order-create", target="orders", kind=EdgeKind.WRITE
-        ))
-        g.add_edge(LineageEdge(
-            source="skb-integration", target="orders", kind=EdgeKind.WRITE
-        ))
-        g.add_edge(LineageEdge(
-            source="order-create", target="order_events", kind=EdgeKind.PUBLISH
-        ))
-        g.add_edge(LineageEdge(
-            source="user-clicks", target="daily-revenue", kind=EdgeKind.TRANSFORM
-        ))
-        g.add_edge(LineageEdge(
-            source="orders", target="daily-revenue", kind=EdgeKind.READ
-        ))
-        g.add_edge(LineageEdge(
-            source="daily-revenue", target="dashboard", kind=EdgeKind.PUBLISH
-        ))
-        g.add_edge(LineageEdge(
-            source="orders", target="tax-report", kind=EdgeKind.WRITE
-        ))
+        g.add_edge(
+            LineageEdge(source="order-create", target="orders", kind=EdgeKind.WRITE)
+        )
+        g.add_edge(
+            LineageEdge(source="skb-integration", target="orders", kind=EdgeKind.WRITE)
+        )
+        g.add_edge(
+            LineageEdge(
+                source="order-create", target="order_events", kind=EdgeKind.PUBLISH
+            )
+        )
+        g.add_edge(
+            LineageEdge(
+                source="user-clicks", target="daily-revenue", kind=EdgeKind.TRANSFORM
+            )
+        )
+        g.add_edge(
+            LineageEdge(source="orders", target="daily-revenue", kind=EdgeKind.READ)
+        )
+        g.add_edge(
+            LineageEdge(
+                source="daily-revenue", target="dashboard", kind=EdgeKind.PUBLISH
+            )
+        )
+        g.add_edge(
+            LineageEdge(source="orders", target="tax-report", kind=EdgeKind.WRITE)
+        )
 
         # What depends on `orders`? (blast radius analysis).
         downstream = g.downstream("orders")

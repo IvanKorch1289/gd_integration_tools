@@ -71,28 +71,24 @@ class TestMigrationReport:
         assert r.critical_count == 0
 
     def test_max_risk_critical(self) -> None:
-        r = MigrationReport(findings=[
-            Finding("a", risk=RiskLevel.CRITICAL),
-            Finding("b", risk=RiskLevel.LOW),
-        ])
+        r = MigrationReport(
+            findings=[
+                Finding("a", risk=RiskLevel.CRITICAL),
+                Finding("b", risk=RiskLevel.LOW),
+            ]
+        )
         assert r.max_risk == RiskLevel.CRITICAL
 
     def test_max_risk_high(self) -> None:
-        r = MigrationReport(findings=[
-            Finding("a", risk=RiskLevel.HIGH),
-        ])
+        r = MigrationReport(findings=[Finding("a", risk=RiskLevel.HIGH)])
         assert r.max_risk == RiskLevel.HIGH
 
     def test_max_risk_medium(self) -> None:
-        r = MigrationReport(findings=[
-            Finding("a", risk=RiskLevel.MEDIUM),
-        ])
+        r = MigrationReport(findings=[Finding("a", risk=RiskLevel.MEDIUM)])
         assert r.max_risk == RiskLevel.MEDIUM
 
     def test_max_risk_low(self) -> None:
-        r = MigrationReport(findings=[
-            Finding("a", risk=RiskLevel.LOW),
-        ])
+        r = MigrationReport(findings=[Finding("a", risk=RiskLevel.LOW)])
         assert r.max_risk == RiskLevel.LOW
 
     def test_to_dict(self) -> None:
@@ -128,10 +124,7 @@ class TestAnalyzeEmpty:
 
 class TestAnalyzeRiskyOps:
     def test_drop_table_critical(self, tmp_path: Path) -> None:
-        _write_migration(
-            tmp_path / "001_drop.py",
-            '    op.drop_table("legacy_data")',
-        )
+        _write_migration(tmp_path / "001_drop.py", '    op.drop_table("legacy_data")')
         gate = MigrationSafetyGate()
         report = gate.analyze_migration(tmp_path / "001_drop.py")
         assert report.critical_count == 1
@@ -140,8 +133,7 @@ class TestAnalyzeRiskyOps:
 
     def test_drop_column_high(self, tmp_path: Path) -> None:
         _write_migration(
-            tmp_path / "001_drop_col.py",
-            '    op.drop_column("table", "col")',
+            tmp_path / "001_drop_col.py", '    op.drop_column("table", "col")'
         )
         gate = MigrationSafetyGate()
         report = gate.analyze_migration(tmp_path / "001_drop_col.py")
@@ -160,15 +152,13 @@ class TestAnalyzeRiskyOps:
 
     def test_create_index_low(self, tmp_path: Path) -> None:
         _write_migration(
-            tmp_path / "001_idx.py",
-            '    op.create_index("ix_t", "orders", ["col"])',
+            tmp_path / "001_idx.py", '    op.create_index("ix_t", "orders", ["col"])'
         )
         gate = MigrationSafetyGate()
         report = gate.analyze_migration(tmp_path / "001_idx.py")
         # create_index is LOW; sensitive table escalates to HIGH.
         assert any(
-            f.risk == RiskLevel.HIGH and "orders" in f.table
-            for f in report.findings
+            f.risk == RiskLevel.HIGH and "orders" in f.table for f in report.findings
         )
 
     def test_alter_column_medium(self, tmp_path: Path) -> None:
@@ -191,8 +181,7 @@ class TestSensitiveTable:
         report = gate.analyze_migration(tmp_path / "001_orders.py")
         # add_column is LOW but escalated to HIGH for orders.
         assert any(
-            f.risk == RiskLevel.HIGH and f.table == "orders"
-            for f in report.findings
+            f.risk == RiskLevel.HIGH and f.table == "orders" for f in report.findings
         )
 
     def test_non_sensitive_table_low(self, tmp_path: Path) -> None:
@@ -209,14 +198,16 @@ class TestSensitiveTable:
 
 class TestRollbackDetection:
     def test_with_downgrade(self, tmp_path: Path) -> None:
-        _write_migration(tmp_path / "001.py", '    op.add_column("t", sa.Column("c", sa.String))')
+        _write_migration(
+            tmp_path / "001.py", '    op.add_column("t", sa.Column("c", sa.String))'
+        )
         gate = MigrationSafetyGate()
         report = gate.analyze_migration(tmp_path / "001.py")
         assert report.has_rollback is True
 
     def test_without_downgrade(self, tmp_path: Path) -> None:
         # Write migration without downgrade.
-        body = '    pass'
+        body = "    pass"
         full = f'''"""empty message
 
 Revision ID: test123
@@ -306,8 +297,7 @@ class TestRealisticExample:
 
     def test_dangerous_drop_migration_blocked(self, tmp_path: Path) -> None:
         _write_migration(
-            tmp_path / "002_drop_legacy.py",
-            '    op.drop_table("legacy_users")',
+            tmp_path / "002_drop_legacy.py", '    op.drop_table("legacy_users")'
         )
         gate = MigrationSafetyGate()
         report = gate.analyze_migration(tmp_path / "002_drop_legacy.py")

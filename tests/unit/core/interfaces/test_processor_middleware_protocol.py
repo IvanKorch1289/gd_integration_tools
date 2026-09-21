@@ -5,6 +5,7 @@ correctly implemented by both DSL and observability middlewares. This is an
 architectural test that prevents regressions of the Sprint 18 P1-14 refactor
 which moved ProcessorMiddleware from dsl.engine.middleware to core.interfaces.
 """
+
 from __future__ import annotations
 
 import inspect

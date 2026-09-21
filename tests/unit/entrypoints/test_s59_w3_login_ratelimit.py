@@ -54,7 +54,7 @@ def test_tarpit_delay_positive() -> None:
 
 
 def _build_request(
-    headers: dict[str, str] | None = None, client_host: str = "1.2.3.4",
+    headers: dict[str, str] | None = None, client_host: str = "1.2.3.4"
 ) -> Request:
     """Build minimal Request mock for _extract_client_ip testing."""
     from starlette.datastructures import Headers
@@ -98,12 +98,11 @@ async def test_check_ip_rate_limit_ok() -> None:
     """OK: limiter returns remaining > 0 → no exception."""
     mock_limiter = MagicMock()
     mock_limiter.check = AsyncMock(
-        return_value={"remaining": 3, "reset_at": 0, "limit": 5},
+        return_value={"remaining": 3, "reset_at": 0, "limit": 5}
     )
 
     with patch(
-        "src.backend.core.resilience.get_rate_limiter",
-        return_value=mock_limiter,
+        "src.backend.core.resilience.get_rate_limiter", return_value=mock_limiter
     ):
         req = _build_request(client_host="1.2.3.4")
         # Should not raise
@@ -118,12 +117,11 @@ async def test_check_ip_rate_limit_exceeded_raises_429() -> None:
 
     mock_limiter = MagicMock()
     mock_limiter.check = AsyncMock(
-        side_effect=RateLimitExceeded(limit=5, window=60, retry_after=42),
+        side_effect=RateLimitExceeded(limit=5, window=60, retry_after=42)
     )
 
     with patch(
-        "src.backend.core.resilience.get_rate_limiter",
-        return_value=mock_limiter,
+        "src.backend.core.resilience.get_rate_limiter", return_value=mock_limiter
     ):
         req = _build_request(client_host="9.9.9.9")
         with pytest.raises(LoginRateLimitExceeded) as exc_info:
@@ -139,8 +137,7 @@ async def test_check_ip_rate_limit_backend_unavailable_503() -> None:
     mock_limiter.check = AsyncMock(side_effect=RuntimeError("redis connection refused"))
 
     with patch(
-        "src.backend.core.resilience.get_rate_limiter",
-        return_value=mock_limiter,
+        "src.backend.core.resilience.get_rate_limiter", return_value=mock_limiter
     ):
         req = _build_request(client_host="5.5.5.5")
         from fastapi import HTTPException
@@ -163,12 +160,11 @@ async def test_check_username_rate_limit_ok() -> None:
     """OK case для username check."""
     mock_limiter = MagicMock()
     mock_limiter.check = AsyncMock(
-        return_value={"remaining": 2, "reset_at": 0, "limit": 3},
+        return_value={"remaining": 2, "reset_at": 0, "limit": 3}
     )
 
     with patch(
-        "src.backend.core.resilience.get_rate_limiter",
-        return_value=mock_limiter,
+        "src.backend.core.resilience.get_rate_limiter", return_value=mock_limiter
     ):
         await check_username_rate_limit("alice")
 
@@ -181,12 +177,11 @@ async def test_check_username_rate_limit_exceeded() -> None:
 
     mock_limiter = MagicMock()
     mock_limiter.check = AsyncMock(
-        side_effect=RateLimitExceeded(limit=3, window=300, retry_after=120),
+        side_effect=RateLimitExceeded(limit=3, window=300, retry_after=120)
     )
 
     with patch(
-        "src.backend.core.resilience.get_rate_limiter",
-        return_value=mock_limiter,
+        "src.backend.core.resilience.get_rate_limiter", return_value=mock_limiter
     ):
         with pytest.raises(LoginRateLimitExceeded) as exc_info:
             await check_username_rate_limit("bob")
@@ -271,7 +266,7 @@ async def test_tarpit_delays_response_on_exceeded(
 
     mock_limiter = MagicMock()
     mock_limiter.check = AsyncMock(
-        side_effect=RateLimitExceeded(limit=5, window=60, retry_after=1),
+        side_effect=RateLimitExceeded(limit=5, window=60, retry_after=1)
     )
 
     sleep_called: list[float] = []
@@ -287,8 +282,7 @@ async def test_tarpit_delays_response_on_exceeded(
     )
 
     with patch(
-        "src.backend.core.resilience.get_rate_limiter",
-        return_value=mock_limiter,
+        "src.backend.core.resilience.get_rate_limiter", return_value=mock_limiter
     ):
         req = _build_request(client_host="1.1.1.1")
         with pytest.raises(LoginRateLimitExceeded):

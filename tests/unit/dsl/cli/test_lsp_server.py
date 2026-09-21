@@ -10,7 +10,6 @@ Wave ``[wave:s6/k3-dsl-linter-lsp]``.
 * ``_publish_diagnostics`` вызывает linter и публикует diagnostics.
 """
 
-
 from __future__ import annotations
 
 import pytest
@@ -43,13 +42,13 @@ def test_create_server_with_pygls() -> None:
     # ``text_document_publish_diagnostics``. Совместимость с 1.x
     # через старое имя ``publish_diagnostics`` — fallback в коде.
     assert hasattr(server, "text_document_publish_diagnostics") or hasattr(
-        server, "publish_diagnostics",
+        server, "publish_diagnostics"
     )
 
 
 @pytest.mark.asyncio
 async def test_publish_diagnostics_calls_linter(
-    monkeypatch: pytest.MonkeyPatch, tmp_path,
+    monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
     """``_publish_diagnostics`` вызывает linter и публикует diagnostics."""
     pytest.importorskip("pygls")
@@ -153,7 +152,7 @@ def test_build_completion_list_unknown_file() -> None:
     from tools.dsl_lsp.schema_completion import ROUTE_COMPLETIONS, STEP_COMPLETIONS
 
     result = _build_completion_list(
-        "file:///project/readme.md", lsp_types, ROUTE_COMPLETIONS, STEP_COMPLETIONS,
+        "file:///project/readme.md", lsp_types, ROUTE_COMPLETIONS, STEP_COMPLETIONS
     )
     labels = {item.label for item in result.items}
     assert "from" in labels

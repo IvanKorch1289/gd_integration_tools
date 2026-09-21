@@ -48,8 +48,7 @@ async def test_email_send_per_recipient() -> None:
     smtp = AsyncMock()
     smtp.send_email = AsyncMock()
     with patch(
-        "src.backend.core.di.providers.get_smtp_client_provider",
-        return_value=smtp,
+        "src.backend.core.di.providers.get_smtp_client_provider", return_value=smtp
     ):
         assert await a.send(_msg(metadata={"content_type": "text/html"})) is True
     assert smtp.send_email.await_count == 2
@@ -62,8 +61,7 @@ async def test_email_send_failure_returns_false() -> None:
     smtp = AsyncMock()
     smtp.send_email = AsyncMock(side_effect=RuntimeError("smtp down"))
     with patch(
-        "src.backend.core.di.providers.get_smtp_client_provider",
-        return_value=smtp,
+        "src.backend.core.di.providers.get_smtp_client_provider", return_value=smtp
     ):
         assert await a.send(_msg()) is False
 
@@ -74,8 +72,7 @@ async def test_email_health_true_and_false() -> None:
     smtp_ok = AsyncMock()
     smtp_ok.test_connection = AsyncMock(return_value=True)
     with patch(
-        "src.backend.core.di.providers.get_smtp_client_provider",
-        return_value=smtp_ok,
+        "src.backend.core.di.providers.get_smtp_client_provider", return_value=smtp_ok
     ):
         assert await a.health() is True
 
@@ -102,8 +99,7 @@ async def test_express_send_per_recipient() -> None:
     client = AsyncMock()
     client.send_message = AsyncMock()
     with patch(
-        "src.backend.core.di.providers.get_express_client_provider",
-        return_value=client,
+        "src.backend.core.di.providers.get_express_client_provider", return_value=client
     ):
         assert await a.send(_msg()) is True
     assert client.send_message.await_count == 2
@@ -191,9 +187,7 @@ async def test_telegram_health_error_false(monkeypatch: pytest.MonkeyPatch) -> N
     a = TelegramNotificationAdapter(bot_token="t")
     client = AsyncMock()
     client.get = AsyncMock(side_effect=RuntimeError("net fail"))
-    with patch(
-        "src.backend.core.net.migration_helper.make_http_client"
-    ) as mock_ctx:
+    with patch("src.backend.core.net.migration_helper.make_http_client") as mock_ctx:
         mock_ctx.return_value.__aenter__ = AsyncMock(return_value=client)
         mock_ctx.return_value.__aexit__ = AsyncMock(return_value=False)
         assert await a.health() is False
@@ -217,9 +211,7 @@ async def test_webhook_send_posts_payload_per_url() -> None:
     resp = MagicMock()
     client.post = AsyncMock(return_value=resp)
 
-    with patch(
-        "src.backend.core.net.migration_helper.make_http_client"
-    ) as mock_ctx:
+    with patch("src.backend.core.net.migration_helper.make_http_client") as mock_ctx:
         mock_ctx.return_value.__aenter__ = AsyncMock(return_value=client)
         mock_ctx.return_value.__aexit__ = AsyncMock(return_value=False)
         assert await a.send(msg) is True

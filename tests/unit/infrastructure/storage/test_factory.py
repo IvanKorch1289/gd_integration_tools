@@ -61,7 +61,7 @@ def test_get_local_fs_storage_uses_settings_path(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "src.backend.core.config.settings.settings", _FakeSettings(), raising=False,
+        "src.backend.core.config.settings.settings", _FakeSettings(), raising=False
     )
     # reset lru_cache
     get_local_fs_storage.cache_clear()
@@ -74,7 +74,7 @@ def test_get_local_fs_storage_fallback_on_exception(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "src.backend.core.config.settings.settings", object(), raising=False,
+        "src.backend.core.config.settings.settings", object(), raising=False
     )
     get_local_fs_storage.cache_clear()
     storage = get_local_fs_storage()
@@ -84,7 +84,7 @@ def test_get_local_fs_storage_fallback_on_exception(
 
 def test_get_object_storage_local(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "src.backend.core.config.settings.settings", _FakeSettings(), raising=False,
+        "src.backend.core.config.settings.settings", _FakeSettings(), raising=False
     )
     get_object_storage.cache_clear()
     storage = get_object_storage()
@@ -92,7 +92,7 @@ def test_get_object_storage_local(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_get_object_storage_non_local_fallback_and_warns(
-    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture,
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     """S61 W1 regression: provider='s3' + missing aioboto3 → fallback на LocalFS.
 
@@ -111,7 +111,7 @@ def test_get_object_storage_non_local_fallback_and_warns(
 
     monkeypatch.setattr(builtins, "__import__", fake_import)
     monkeypatch.setattr(
-        "src.backend.core.config.settings.settings", _FakeSettingsS3(), raising=False,
+        "src.backend.core.config.settings.settings", _FakeSettingsS3(), raising=False
     )
     get_object_storage.cache_clear()
     with caplog.at_level("WARNING"):
@@ -142,7 +142,7 @@ class _FakeS3ObjectStorage:
 
 
 def test_get_object_storage_s3_returns_fallback_wrapper(
-    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture,
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     """S131 W1: provider='s3' + aioboto3 available → FallbackObjectStorage(S3, LocalFS).
 
@@ -159,7 +159,7 @@ def test_get_object_storage_s3_returns_fallback_wrapper(
     fake_s3.S3ObjectStorage = _FakeS3ObjectStorage  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "src.backend.infrastructure.storage.s3", fake_s3)
     monkeypatch.setattr(
-        "src.backend.core.config.settings.settings", _FakeSettingsS3(), raising=False,
+        "src.backend.core.config.settings.settings", _FakeSettingsS3(), raising=False
     )
     get_object_storage.cache_clear()
     get_local_fs_storage.cache_clear()
@@ -185,7 +185,7 @@ def test_get_object_storage_s3_returns_fallback_wrapper(
 
 
 def test_get_object_storage_s3_init_failure_returns_bare_local(
-    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture,
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     """S131 W1: provider='s3' + S3 init raises Exception → bare LocalFS (НЕ wrapper).
 
@@ -204,7 +204,7 @@ def test_get_object_storage_s3_init_failure_returns_bare_local(
     fake_s3.S3ObjectStorage = _BrokenS3ObjectStorage  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "src.backend.infrastructure.storage.s3", fake_s3)
     monkeypatch.setattr(
-        "src.backend.core.config.settings.settings", _FakeSettingsS3(), raising=False,
+        "src.backend.core.config.settings.settings", _FakeSettingsS3(), raising=False
     )
     get_object_storage.cache_clear()
     get_local_fs_storage.cache_clear()

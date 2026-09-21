@@ -20,7 +20,15 @@ from src.backend.infrastructure.workflow.executor import (
 def test_dispatch_has_7_kinds() -> None:
     """Sanity: all 7 declared kinds are registered."""
     assert len(_STEP_KIND_DISPATCH) == 7
-    expected = {"sequential", "branch", "loop", "for_each", "sub_flow", "wait", "compensate"}
+    expected = {
+        "sequential",
+        "branch",
+        "loop",
+        "for_each",
+        "sub_flow",
+        "wait",
+        "compensate",
+    }
     assert set(_STEP_KIND_DISPATCH.keys()) == expected
 
 
@@ -37,9 +45,7 @@ def test_compensate_handler_noop() -> None:
     class _ExecutorStub:
         pass
 
-    result = _STEP_KIND_DISPATCH["compensate"](
-        _ExecutorStub(), None, None, None,
-    )
+    result = _STEP_KIND_DISPATCH["compensate"](_ExecutorStub(), None, None, None)
     assert result.outcome == StepOutcome.CONTINUE
     assert result.events == []
 

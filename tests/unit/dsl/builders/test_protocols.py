@@ -130,8 +130,14 @@ def test_route_builder_conformant_all_8_categories() -> None:
 
     rb = RouteBuilder("test.protocols_conformance", source="timer:60s")
     categories = [
-        "ControlFlow", "EIP", "DataStore", "Transport",
-        "Infrastructure", "Resilience", "AIAgent", "Messaging",
+        "ControlFlow",
+        "EIP",
+        "DataStore",
+        "Transport",
+        "Infrastructure",
+        "Resilience",
+        "AIAgent",
+        "Messaging",
     ]
     for cat in categories:
         assert is_runtime_protocol_conformant(rb, cat), (

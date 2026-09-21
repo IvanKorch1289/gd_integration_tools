@@ -6,7 +6,6 @@ Verifies:
 3. No direct core→services imports remain in fixed files
 """
 
-
 from __future__ import annotations
 
 import os
@@ -91,8 +90,9 @@ class TestLdapClientFactoryMigration:
             content = f.read()
         # Module-level (not indented) direct import is forbidden
         import re
+
         direct_module_level = re.findall(
-            r"^from src\.backend\.services", content, re.MULTILINE,
+            r"^from src\.backend\.services", content, re.MULTILINE
         )
         assert len(direct_module_level) == 0, (
             f"Found {len(direct_module_level)} module-level services imports. "
@@ -111,8 +111,9 @@ class TestLdapClientFactoryMigration:
             content = f.read()
         # Module-level (no indent) services import is forbidden
         import re
+
         direct_module_level = re.findall(
-            r"^from src\.backend\.services", content, re.MULTILINE,
+            r"^from src\.backend\.services", content, re.MULTILINE
         )
         assert len(direct_module_level) == 0, (
             f"Found {len(direct_module_level)} module-level services imports. "
@@ -133,7 +134,8 @@ class TestNoCoreWorkflowBuilder:
             # No direct services/infrastructure imports
             direct = re.findall(
                 r"^from src\.backend\.(?:services|infrastructure)[^:]+import",
-                content, re.MULTILINE,
+                content,
+                re.MULTILINE,
             )
             assert not direct, f"Direct upper-layer imports: {direct}"
 
@@ -152,7 +154,7 @@ class TestLayerViolationsClosed:
         # and not at module level
         # Allow up to 1 direct import (the except fallback)
         direct = re.findall(
-            r"^from src\.backend\.services[^:]+import", content, re.MULTILINE,
+            r"^from src\.backend\.services[^:]+import", content, re.MULTILINE
         )
         # Should be 0 (in except block — line starts with spaces)
         assert len(direct) == 0, (
@@ -173,6 +175,7 @@ class TestLdapClientFactoryRuntimeSymbols:
         """AdServerConfig must be importable from services.auth.ad_directory_client."""
         try:
             from src.backend.services.auth.ad_directory_client import AdServerConfig
+
             # Has expected attributes (sanity check it's the right class)
             assert hasattr(AdServerConfig, "__init__")
         except ImportError:
@@ -197,6 +200,7 @@ class TestLdapClientFactoryRuntimeSymbols:
         # services.auth.ad_directory_client (would be layer violation).
         # The runtime import is inside a try/except block.
         import re
+
         # Match: try: ... from ... import ... (multi-line until except).
         # Accept either `from core.auth.ldap_contract import A, B` or
         # `from core.auth.ldap_contract import A\nfrom ... import B`.

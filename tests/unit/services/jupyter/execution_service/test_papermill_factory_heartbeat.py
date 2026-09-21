@@ -43,7 +43,7 @@ async def test_papermill_execute_with_params_requires_papermill(
 
     # Create a temp notebook (text mode для nbformat.write)
     with tempfile.NamedTemporaryFile(
-        suffix=".ipynb", delete=False, mode="w", encoding="utf-8",
+        suffix=".ipynb", delete=False, mode="w", encoding="utf-8"
     ) as f:
         from nbformat import v4 as nb_v4
 
@@ -66,7 +66,7 @@ async def test_papermill_execute_with_params_requires_papermill(
 
         with pytest.raises(JupyterExecutionError, match="papermill required"):
             await backend.execute_with_params(
-                notebook_path=nb_path, parameters={"x": 1},
+                notebook_path=nb_path, parameters={"x": 1}
             )
     finally:
         os.unlink(nb_path)
@@ -101,8 +101,8 @@ async def test_papermill_execute_with_params_happy_path() -> None:
         mock_pm = MagicMock()
         mock_pm.execute_notebook = MagicMock(
             side_effect=lambda **kwargs: _create_dummy_output(
-                kwargs.get("output_path", "/tmp/out.ipynb"),
-            ),
+                kwargs.get("output_path", "/tmp/out.ipynb")
+            )
         )
         # Mock exceptions submodule
         mock_exc_module = MagicMock()
@@ -118,7 +118,7 @@ async def test_papermill_execute_with_params_happy_path() -> None:
         try:
             backend = PapermillExecutionBackend(kernel_name="python3")
             result = await backend.execute_with_params(
-                notebook_path=nb_path, parameters={"x": 42},
+                notebook_path=nb_path, parameters={"x": 42}
             )
             assert result["parameters_injected"] == 1
             assert result["cells_executed"] >= 0
@@ -264,7 +264,7 @@ def test_factory_default_is_hub(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("JUPYTER_BACKEND", raising=False)
     factory = ExecutionBackendFactory()
     settings = JupyterHubSettings(
-        base_url="https://hub.example.com", api_token="test", default_kernel="python3",
+        base_url="https://hub.example.com", api_token="test", default_kernel="python3"
     )
     backend = factory.from_config(settings=settings)
     assert isinstance(backend, NotebookExecutionService)

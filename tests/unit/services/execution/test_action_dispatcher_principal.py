@@ -36,8 +36,7 @@ class TestDispatchContextPrincipal:
     def test_with_principal(self) -> None:
         """``DispatchContext(principal='alice', permissions=(...))``."""
         ctx = DispatchContext(
-            principal="alice",
-            permissions=("read:orders", "write:orders"),
+            principal="alice", permissions=("read:orders", "write:orders")
         )
         assert ctx.principal == "alice"
         assert ctx.permissions == ("read:orders", "write:orders")
@@ -57,6 +56,7 @@ class TestActionDispatcherPrincipalPropagation:
             async def fake_dispatch(command: ActionCommandSchema) -> dict:
                 captured["command"] = command
                 return {"result": "ok"}
+
             return fake_dispatch
 
         # Mock registry
@@ -66,18 +66,12 @@ class TestActionDispatcherPrincipalPropagation:
         dispatcher = DefaultActionDispatcher.__new__(DefaultActionDispatcher)
         dispatcher._registry = registry
 
-        ctx = DispatchContext(
-            principal="dave",
-            permissions=("admin",),
-        )
+        ctx = DispatchContext(principal="dave", permissions=("admin",))
 
         # _terminal_handler — bound method, call via dispatcher instance
         bound_method = DefaultActionDispatcher._terminal_handler
         await bound_method(
-            dispatcher,
-            action="test.action",
-            payload={"k": "v"},
-            context=ctx,
+            dispatcher, action="test.action", payload={"k": "v"}, context=ctx
         )
 
         cmd: ActionCommandSchema = captured["command"]

@@ -38,9 +38,7 @@ class TestRaisePiiFailClosed:
         """``raise_pii_fail_closed`` всегда raises PIIFailClosedError."""
         with pytest.raises(PIIFailClosedError) as caught:
             raise_pii_fail_closed(
-                source="test.source",
-                payload_size=42,
-                exc=RuntimeError("boom"),
+                source="test.source", payload_size=42, exc=RuntimeError("boom")
             )
         # Source propagated as args[0].
         assert caught.value.args[0] == "test.source"
@@ -49,22 +47,18 @@ class TestRaisePiiFailClosed:
         """``__cause__`` содержит оригинальное исключение (raise from exc)."""
         original = ValueError("original error")
         with pytest.raises(PIIFailClosedError) as caught:
-            raise_pii_fail_closed(
-                source="test.source", payload_size=10, exc=original,
-            )
+            raise_pii_fail_closed(source="test.source", payload_size=10, exc=original)
         assert caught.value.__cause__ is original
         assert isinstance(caught.value.__cause__, ValueError)
 
     def test_emits_audit_event(self) -> None:
         """Audit event ``pii.sanitizer_failure`` emitted через log_audit_event_lite."""
         with patch(
-            "src.backend.core.observability.logging_helpers.log_audit_event_lite",
+            "src.backend.core.observability.logging_helpers.log_audit_event_lite"
         ) as mock_audit:
             with pytest.raises(PIIFailClosedError):
                 raise_pii_fail_closed(
-                    source="audit.test",
-                    payload_size=100,
-                    exc=RuntimeError("boom"),
+                    source="audit.test", payload_size=100, exc=RuntimeError("boom")
                 )
             mock_audit.assert_called_once()
             kwargs = mock_audit.call_args.kwargs
@@ -76,14 +70,15 @@ class TestRaisePiiFailClosed:
 
     def test_audit_failure_does_not_mask_pii_failure(self) -> None:
         """Если audit emit падает — PIIFailClosedError всё равно поднимается."""
-        with patch(
-            "src.backend.core.observability.logging_helpers.log_audit_event_lite",
-            side_effect=RuntimeError("audit boom"),
-        ), pytest.raises(PIIFailClosedError):
+        with (
+            patch(
+                "src.backend.core.observability.logging_helpers.log_audit_event_lite",
+                side_effect=RuntimeError("audit boom"),
+            ),
+            pytest.raises(PIIFailClosedError),
+        ):
             raise_pii_fail_closed(
-                source="test.audit.fail",
-                payload_size=10,
-                exc=RuntimeError("original"),
+                source="test.audit.fail", payload_size=10, exc=RuntimeError("original")
             )
 
 

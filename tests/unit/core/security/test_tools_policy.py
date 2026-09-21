@@ -106,25 +106,19 @@ class TestEnforceToolPolicy:
         enforce_tool_policy("db.read", spec)
 
     def test_blocked_tool_raises_fail_mode(self) -> None:
-        spec = ToolsSpec(
-            whitelist=[],
-            blacklist=["fs.write"],
-            on_violation="fail",
-        )
+        spec = ToolsSpec(whitelist=[], blacklist=["fs.write"], on_violation="fail")
         with pytest.raises(ToolPolicyViolationError, match="fs.write"):
             enforce_tool_policy("fs.write", spec)
 
     def test_empty_spec_does_not_raise(self) -> None:
         """Empty whitelist + empty blacklist = no restriction (allow all)."""
-        spec = ToolsSpec(whitelist=[], blacklist=[], on_violation="fail", allow_all_tools=True)
+        spec = ToolsSpec(
+            whitelist=[], blacklist=[], on_violation="fail", allow_all_tools=True
+        )
         enforce_tool_policy("any.tool", spec)
 
     def test_failure_message_includes_spec_state(self) -> None:
-        spec = ToolsSpec(
-            whitelist=[],
-            blacklist=["danger.*"],
-            on_violation="fail",
-        )
+        spec = ToolsSpec(whitelist=[], blacklist=["danger.*"], on_violation="fail")
         with pytest.raises(ToolPolicyViolationError) as exc_info:
             enforce_tool_policy("danger.exec", spec)
         msg = str(exc_info.value)
@@ -141,10 +135,8 @@ class TestFilterToolsByPolicy:
         from src.backend.core.ai.policy.enforcer.tools_policy import (
             filter_tools_by_policy,
         )
-        result = filter_tools_by_policy(
-            ["db.read", "db.write", "fs.delete"],
-            spec,
-        )
+
+        result = filter_tools_by_policy(["db.read", "db.write", "fs.delete"], spec)
         assert "db.read" in result
         assert "db.write" in result
         assert "fs.delete" not in result

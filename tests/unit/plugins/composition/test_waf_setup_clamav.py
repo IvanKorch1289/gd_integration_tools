@@ -9,7 +9,6 @@
 модуль без cycle через ``plugins.composition.__init__``.
 """
 
-
 from __future__ import annotations
 
 from unittest.mock import patch

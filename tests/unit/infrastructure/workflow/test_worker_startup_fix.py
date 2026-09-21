@@ -37,7 +37,6 @@ def test_worker_bootstrap_calls_start_workflow_runtime() -> None:
     """
     import inspect
 
-    from src.backend.infrastructure.workflow import worker
     from src.backend.plugins.composition import workflow_setup
     from src.backend.plugins.composition.lifecycle.startup_phases import services
 
@@ -74,6 +73,7 @@ def test_docker_compose_has_feature_workflow_yaml_round_trip() -> None:
         compose_path = Path("docker-compose.yml")
     if not compose_path.exists():
         import pytest
+
         pytest.skip("docker-compose.yml not found")
 
     content = compose_path.read_text(encoding="utf-8")

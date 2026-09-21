@@ -108,9 +108,17 @@ def test_switch_idempotent_on_same_target():
     script = _setup_isolated_script()
     try:
         with tempfile.TemporaryDirectory() as tmp:
-            _run(script, ["switch", "green"], {"BLUE_GREEN_RELOAD_NGINX": "0"}, cwd=Path(tmp))
+            _run(
+                script,
+                ["switch", "green"],
+                {"BLUE_GREEN_RELOAD_NGINX": "0"},
+                cwd=Path(tmp),
+            )
             result = _run(
-                script, ["switch", "green"], {"BLUE_GREEN_RELOAD_NGINX": "0"}, cwd=Path(tmp),
+                script,
+                ["switch", "green"],
+                {"BLUE_GREEN_RELOAD_NGINX": "0"},
+                cwd=Path(tmp),
             )
             assert result.returncode == 0
             assert "already on green" in result.stderr
@@ -156,7 +164,9 @@ def test_switch_blue_then_green_state_progression():
                     cwd=Path(tmp),
                 )
                 assert result.returncode == 0
-                assert (script.parent.parent / ".blue_green.state").read_text() == target
+                assert (
+                    script.parent.parent / ".blue_green.state"
+                ).read_text() == target
     finally:
         (script.parent.parent / ".blue_green.state").unlink(missing_ok=True)
         shutil.rmtree(script.parent, ignore_errors=True)
@@ -171,7 +181,12 @@ def test_status_returns_active_stack():
             assert result.returncode == 0
             assert "active stack: blue" in result.stdout
 
-            _run(script, ["switch", "green"], {"BLUE_GREEN_RELOAD_NGINX": "0"}, cwd=Path(tmp))
+            _run(
+                script,
+                ["switch", "green"],
+                {"BLUE_GREEN_RELOAD_NGINX": "0"},
+                cwd=Path(tmp),
+            )
             result = _run(script, ["status"], {}, cwd=Path(tmp))
             assert result.returncode == 0
             assert "active stack: green" in result.stdout

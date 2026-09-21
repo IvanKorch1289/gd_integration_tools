@@ -1,6 +1,5 @@
 """Unit-тесты CdcPostgresLogicalSource — Wave [wave:s5/k3-w5-cdc-postgres]."""
 
-
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
@@ -93,7 +92,7 @@ async def test_full_mode_emits_snapshot_marker(monkeypatch: pytest.MonkeyPatch) 
     src = CdcPostgresLogicalSource("s1", "orders", dsn="postgres://x", mode="full")
     # Stub _inner.start, чтобы не подключаться к настоящему PG.
     monkeypatch.setattr(
-        "src.backend.infrastructure.sources.cdc.CDCSource.start", AsyncMock(),
+        "src.backend.infrastructure.sources.cdc.CDCSource.start", AsyncMock()
     )
     await src.start(on_event)
     assert any(e.payload.get("event") == "snapshot_started" for e in received)

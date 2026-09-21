@@ -81,7 +81,9 @@ def test_manual_authz_not_in_allowlist_denies() -> None:
     fake.tool_authz_enabled = True
     fake.tool_manual_allowlist = ["route_list"]
     with patch("src.backend.core.config.ai_stack.mcp_settings", fake, create=True):
-        assert _check_mcp_manual_tool_authz("route_execute") == "not_in_manual_allowlist"
+        assert (
+            _check_mcp_manual_tool_authz("route_execute") == "not_in_manual_allowlist"
+        )
         assert (
             _check_mcp_manual_tool_authz("pipeline_from_yaml")
             == "not_in_manual_allowlist"
@@ -141,9 +143,7 @@ class _RecordingMcp:
     def __init__(self) -> None:
         self.tools: dict[str, Any] = {}
 
-    def tool(
-        self, *, name: str, description: str,
-    ) -> Any:
+    def tool(self, *, name: str, description: str) -> Any:
         def decorator(fn: Any) -> Any:
             self.tools[name] = fn
             return fn

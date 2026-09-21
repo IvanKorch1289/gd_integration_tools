@@ -7,7 +7,6 @@ Cycle 65 invariant: tests catch regressions in procedural storage
 that could lead to silent SOP corruption в banking AI agents.
 """
 
-
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
@@ -33,6 +32,7 @@ def _make_mock_session_factory(rows: list[Any]) -> Any:
 
                 def all(self):
                     return self._rows
+
             return _FakeScalars(self._rows)
 
     class FakeSession:
@@ -57,7 +57,7 @@ def _make_mock_session_factory(rows: list[Any]) -> Any:
         async def execute(self, stmt):
             # Order by updated_at desc (default for Procedural).
             sorted_rows = sorted(
-                self._rows, key=lambda r: getattr(r, "updated_at", None), reverse=True,
+                self._rows, key=lambda r: getattr(r, "updated_at", None), reverse=True
             )
             limit_val = getattr(stmt, "_limit", None)
             if limit_val is not None:
@@ -209,11 +209,17 @@ class TestProceduralMemoryRecall:
 
         rows = [
             LangMemProcedural(
-                id=1, name="sop1", description="d1", steps={"a": 1},
+                id=1,
+                name="sop1",
+                description="d1",
+                steps={"a": 1},
                 updated_at="2024-01-01T10:00:00",
             ),
             LangMemProcedural(
-                id=2, name="sop2", description="d2", steps={"b": 2},
+                id=2,
+                name="sop2",
+                description="d2",
+                steps={"b": 2},
                 updated_at="2024-01-01T11:00:00",
             ),
         ]
@@ -236,15 +242,9 @@ class TestProceduralMemoryRecall:
         from src.backend.services.ai.memory.langmem.procedural import ProceduralMemory
 
         rows = [
-            LangMemProcedural(
-                id=1, name="oldest", updated_at="2024-01-01T10:00:00",
-            ),
-            LangMemProcedural(
-                id=3, name="newest", updated_at="2024-01-01T12:00:00",
-            ),
-            LangMemProcedural(
-                id=2, name="middle", updated_at="2024-01-01T11:00:00",
-            ),
+            LangMemProcedural(id=1, name="oldest", updated_at="2024-01-01T10:00:00"),
+            LangMemProcedural(id=3, name="newest", updated_at="2024-01-01T12:00:00"),
+            LangMemProcedural(id=2, name="middle", updated_at="2024-01-01T11:00:00"),
         ]
         factory = _make_mock_session_factory(rows)
         mem = ProceduralMemory(session_factory=factory)
@@ -261,9 +261,7 @@ class TestProceduralMemoryRecall:
         from src.backend.services.ai.memory.langmem.procedural import ProceduralMemory
 
         rows = [
-            LangMemProcedural(
-                id=i, name=f"sop{i}", updated_at=f"2024-01-01T10:0{i}:00",
-            )
+            LangMemProcedural(id=i, name=f"sop{i}", updated_at=f"2024-01-01T10:0{i}:00")
             for i in range(5)
         ]
         factory = _make_mock_session_factory(rows)
@@ -282,9 +280,7 @@ class TestProceduralMemoryRecall:
         from src.backend.services.ai.memory.langmem.procedural import ProceduralMemory
 
         rows = [
-            LangMemProcedural(
-                id=i, name=f"sop{i}", updated_at=f"2024-01-01T10:00:0{i}",
-            )
+            LangMemProcedural(id=i, name=f"sop{i}", updated_at=f"2024-01-01T10:00:0{i}")
             for i in range(25)
         ]
         factory = _make_mock_session_factory(rows)

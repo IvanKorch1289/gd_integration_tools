@@ -7,7 +7,6 @@ atexit / SIGTERM сокеты оставались открытыми → FD lea
 Новый метод ``close_sync()`` гарантирует закрытие из любого контекста.
 """
 
-
 from __future__ import annotations
 
 import socket

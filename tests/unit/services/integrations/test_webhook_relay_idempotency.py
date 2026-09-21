@@ -141,8 +141,7 @@ def test_dlq_remove_many_single_pass() -> None:
         return raw
 
     with patch(
-        "src.backend.services.integrations.webhook_relay._redis_raw",
-        _redis_raw,
+        "src.backend.services.integrations.webhook_relay._redis_raw", _redis_raw
     ):
         asyncio.run(relay._dlq_remove_many({e1.id}))
 

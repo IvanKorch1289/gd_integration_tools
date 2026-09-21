@@ -21,44 +21,44 @@ class TestBuilderFacadeDSLExportsIdentity:
     """All 10 DSL re-exports preserve symbol identity via lazy __getattr__."""
 
     def test_dry_run_route_identity(self) -> None:
-        from src.backend.services.dsl_portal.builder_facade import dry_run_route
         from src.backend.dsl.engine.dry_run import dry_run_route as _orig
+        from src.backend.services.dsl_portal.builder_facade import dry_run_route
 
         assert dry_run_route is _orig
 
     def test_waterfall_lines_identity(self) -> None:
-        from src.backend.services.dsl_portal.builder_facade import waterfall_lines
         from src.backend.dsl.engine.dry_run import waterfall_lines as _orig
+        from src.backend.services.dsl_portal.builder_facade import waterfall_lines
 
         assert waterfall_lines is _orig
 
     def test_execution_engine_identity(self) -> None:
-        from src.backend.services.dsl_portal.builder_facade import ExecutionEngine
         from src.backend.dsl.engine.execution_engine import ExecutionEngine as _orig
+        from src.backend.services.dsl_portal.builder_facade import ExecutionEngine
 
         assert ExecutionEngine is _orig
 
     def test_pipeline_identity(self) -> None:
-        from src.backend.services.dsl_portal.builder_facade import Pipeline
         from src.backend.dsl.engine.pipeline import Pipeline as _orig
+        from src.backend.services.dsl_portal.builder_facade import Pipeline
 
         assert Pipeline is _orig
 
     def test_get_tracer_identity(self) -> None:
-        from src.backend.services.dsl_portal.builder_facade import get_tracer
         from src.backend.dsl.engine.tracer import get_tracer as _orig
+        from src.backend.services.dsl_portal.builder_facade import get_tracer
 
         assert get_tracer is _orig
 
     def test_route_registry_identity(self) -> None:
-        from src.backend.services.dsl_portal.builder_facade import route_registry
         from src.backend.dsl.registry import route_registry as _orig
+        from src.backend.services.dsl_portal.builder_facade import route_registry
 
         assert route_registry is _orig
 
     def test_workflow_declaration_identity(self) -> None:
-        from src.backend.services.dsl_portal.builder_facade import WorkflowDeclaration
         from src.backend.dsl.workflow.spec import WorkflowDeclaration as _orig
+        from src.backend.services.dsl_portal.builder_facade import WorkflowDeclaration
 
         assert WorkflowDeclaration is _orig
 

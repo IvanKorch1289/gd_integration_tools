@@ -1,6 +1,5 @@
 """Unit-тесты JqProcessor — Wave [wave:s5/k3-w1-processor-pack-1]."""
 
-
 from __future__ import annotations
 
 from typing import Any

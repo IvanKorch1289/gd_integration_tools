@@ -2,12 +2,14 @@
 
 Pattern (D290, Ponytail): verify orjson is consistently used для hot paths.
 """
+
 from __future__ import annotations
 
 
 class TestOrjsonAdoption:
     def test_orjson_importable(self) -> None:
         import orjson
+
         assert orjson is not None
         # orjson.dumps/loads быстрее stdlib json на 3-5x
         data = {"key": "value", "list": [1, 2, 3]}
@@ -18,6 +20,7 @@ class TestOrjsonAdoption:
 
     def test_orjson_handles_unicode(self) -> None:
         import orjson
+
         data = {"message": "Привет, мир! 🌍"}
         s = orjson.dumps(data)
         parsed = orjson.loads(s)

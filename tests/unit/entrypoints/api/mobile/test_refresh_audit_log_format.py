@@ -56,7 +56,9 @@ async def _jwt_client_with_log_capture(
 
     mock_flags = MagicMock()
     mock_flags.mobile_jwt_enabled = True
-    mock_flags.mobile_jwt_protections_enabled = False  # C2: явная декларация (MagicMock автосоздаёт truthy)
+    mock_flags.mobile_jwt_protections_enabled = (
+        False  # C2: явная декларация (MagicMock автосоздаёт truthy)
+    )
     mock_flags.mobile_demo_auth_enabled = False
 
     with patch.dict(
@@ -95,7 +97,9 @@ async def test_demo_reuse_audit_log_format(caplog: pytest.LogCaptureFixture) -> 
     app.include_router(mobile_router)
 
     transport = ASGITransport(app=app)
-    with caplog.at_level(logging.WARNING, logger="src.backend.entrypoints.api.mobile.router"):
+    with caplog.at_level(
+        logging.WARNING, logger="src.backend.entrypoints.api.mobile.router"
+    ):
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             device_id = "11111111-2222-4333-8444-555555555558"
 
@@ -196,13 +200,17 @@ async def test_jwt_successful_refresh_log_format(
 
     mock_flags = MagicMock()
     mock_flags.mobile_jwt_enabled = True
-    mock_flags.mobile_jwt_protections_enabled = False  # C2: явная декларация (MagicMock автосоздаёт truthy)
+    mock_flags.mobile_jwt_protections_enabled = (
+        False  # C2: явная декларация (MagicMock автосоздаёт truthy)
+    )
     mock_flags.mobile_demo_auth_enabled = False
 
     device_id = VALID_JWT_BASE["device_id"]
     claims = {**VALID_JWT_BASE, "jti": "jti-success-test"}
 
-    with caplog.at_level(logging.INFO, logger="src.backend.entrypoints.api.mobile.router"):
+    with caplog.at_level(
+        logging.INFO, logger="src.backend.entrypoints.api.mobile.router"
+    ):
         with patch.dict(
             __import__("sys").modules,
             {
@@ -211,7 +219,9 @@ async def test_jwt_successful_refresh_log_format(
             },
         ):
             transport = ASGITransport(app=app)
-            async with AsyncClient(transport=transport, base_url="http://test") as client:
+            async with AsyncClient(
+                transport=transport, base_url="http://test"
+            ) as client:
                 with patch("src.backend.core.auth.jwt_backend.JwtBackend") as mock_cls:
                     mock_backend = AsyncMock()
                     mock_backend.decode = AsyncMock(return_value=claims)

@@ -10,7 +10,6 @@
     * RequestContext.current() == None после shutdown.
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -139,7 +138,7 @@ class TestRequestContextMiddleware:
     ],
 )
 async def test_header_case_insensitive(
-    header_name: bytes, header_value: bytes, expected: str,
+    header_name: bytes, header_value: bytes, expected: str
 ) -> None:
     """Заголовки case-insensitive."""
     app = _CapturingApp()

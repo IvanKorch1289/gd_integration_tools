@@ -69,10 +69,10 @@ def test_dsl_imports_top_level() -> None:
 
     # Проверяем, что dsl импорт идёт ДО frontend imports (sectioned)
     dsl_idx = top_section.find(
-        "from src.backend.core.frontend_facade import WorkflowDeclaration, to_mermaid",
+        "from src.backend.core.frontend_facade import WorkflowDeclaration, to_mermaid"
     )
     frontend_idx = top_section.find(
-        "from src.frontend.streamlit_app.api_clients import get_api_client",
+        "from src.frontend.streamlit_app.api_clients import get_api_client"
     )
     assert 0 <= dsl_idx < frontend_idx, (
         f"dsl imports должны быть ПЕРЕД frontend imports (got dsl={dsl_idx}, "
@@ -230,11 +230,12 @@ def test_top_level_imports_section_structure() -> None:
     assert "from __future__ import annotations" in joined
     assert "import streamlit as st" in joined
     # S180: facade consolidated to core.frontend_facade
-    assert "from src.backend.core.frontend_facade import WorkflowDeclaration, to_mermaid" in joined
-    assert "from src.frontend.streamlit_app.api_clients import get_api_client" in joined
     assert (
-        "from src.frontend.streamlit_app.shared.components import" in joined
+        "from src.backend.core.frontend_facade import WorkflowDeclaration, to_mermaid"
+        in joined
     )
+    assert "from src.frontend.streamlit_app.api_clients import get_api_client" in joined
+    assert "from src.frontend.streamlit_app.shared.components import" in joined
     # S173 W2-B/S173 W3: require_auth may be in a multi-line parent import —
     # check via AST unparse (handles continuation lines correctly).
     import ast as _ast
@@ -297,7 +298,7 @@ def test_workflow_declaration_model_validate_smoke() -> None:
     pytest.skip(
         "WorkflowDeclaration requires full dsl.workflow.spec module "
         "context (model_rebuild needed for WorkflowStep forward ref). "
-        "Out of S70 W2 scope (style cleanup, not behavioral test).",
+        "Out of S70 W2 scope (style cleanup, not behavioral test)."
     )
 
 

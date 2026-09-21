@@ -39,9 +39,7 @@ def _disable_lag_probe(monkeypatch: pytest.MonkeyPatch) -> None:
     """
     from src.backend.core.config.features import feature_flags
 
-    monkeypatch.setattr(
-        feature_flags, "multi_replica_failover", False, raising=False
-    )
+    monkeypatch.setattr(feature_flags, "multi_replica_failover", False, raising=False)
 
 
 class _FakeSessionMaker:
@@ -130,7 +128,7 @@ async def test_breaker_recovers_on_success() -> None:
     primary = _FakeSessionMaker("primary")
     replica = _FakeSessionMaker("replica")
     sm = SmartSessionManager(
-        primary_sessionmaker=primary, replica_sessionmaker=replica, failure_threshold=3,
+        primary_sessionmaker=primary, replica_sessionmaker=replica, failure_threshold=3
     )
     # 1 ошибка — счётчик 1, breaker всё ещё closed.
     with pytest.raises(RuntimeError):

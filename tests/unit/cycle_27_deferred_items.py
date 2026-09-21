@@ -9,7 +9,6 @@ Self-contained — does NOT import modules with chain deps (workflow.compiler
 uses Temporal). Tests via AST inspection + behavior simulation.
 """
 
-
 from __future__ import annotations
 
 import os
@@ -120,9 +119,11 @@ class TestBackwardCompatibility:
         """No test should be broken by added _version attribute."""
         # Only check for incompatible patterns (e.g., tuple unpacking expecting 5 attrs)
         for root, _, files in os.walk("src/backend/"):
-            if "__pycache__" in root: continue
+            if "__pycache__" in root:
+                continue
             for f in files:
-                if not f.endswith(".py"): continue
+                if not f.endswith(".py"):
+                    continue
                 p = os.path.join(root, f)
                 with open(p) as fp:
                     content = fp.read()

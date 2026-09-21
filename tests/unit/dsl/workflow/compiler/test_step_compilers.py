@@ -11,7 +11,7 @@ from __future__ import annotations
 import pytest
 
 pytest.importorskip(
-    "temporalio", reason="temporalio not installed — run: uv sync --extra workflow",
+    "temporalio", reason="temporalio not installed — run: uv sync --extra workflow"
 )
 
 import sys
@@ -46,13 +46,13 @@ from src.backend.dsl.workflow.spec import (
 
 
 def _make_fake_temporal(
-    *, execute_activity_return: Any = None, wait_condition_blocks: bool = False,
+    *, execute_activity_return: Any = None, wait_condition_blocks: bool = False
 ) -> tuple[SimpleNamespace, list[Any]]:
     """Сконструировать fake-модуль ``temporalio.workflow`` с записью вызовов."""
     recorder: list[Any] = []
 
     async def fake_execute_activity(
-        name: str, payload: Any = None, **kwargs: Any,
+        name: str, payload: Any = None, **kwargs: Any
     ) -> Any:
         recorder.append(
             {
@@ -60,7 +60,7 @@ def _make_fake_temporal(
                 "name": name,
                 "payload": payload,
                 "kwargs": kwargs,
-            },
+            }
         )
         return execute_activity_return
 
@@ -68,7 +68,7 @@ def _make_fake_temporal(
         recorder.append({"kind": "sleep", "duration": duration})
 
     async def fake_wait_condition(
-        predicate: Any, timeout: timedelta | None = None,
+        predicate: Any, timeout: timedelta | None = None
     ) -> None:
         recorder.append({"kind": "wait_condition", "timeout": timeout})
         if wait_condition_blocks and not predicate():
@@ -79,7 +79,7 @@ def _make_fake_temporal(
         sleep=fake_sleep,
         wait_condition=fake_wait_condition,
         logger=SimpleNamespace(
-            warning=lambda *a, **kw: recorder.append({"kind": "log_warn", "args": a}),
+            warning=lambda *a, **kw: recorder.append({"kind": "log_warn", "args": a})
         ),
     )
     return fake_workflow_module, recorder
@@ -109,7 +109,9 @@ def temporal_mock(monkeypatch: pytest.MonkeyPatch) -> tuple[SimpleNamespace, lis
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="S44 W44: importorskip fires per-file but not in batch context (test isolation issue with importlib mode + __getattr__ proxy in dsl). Tests pass individually.")
+@pytest.mark.skip(
+    reason="S44 W44: importorskip fires per-file but not in batch context (test isolation issue with importlib mode + __getattr__ proxy in dsl). Tests pass individually."
+)
 async def test_activity_step_executes_with_default_timeout(
     temporal_mock: tuple[SimpleNamespace, list[Any]],
 ) -> None:
@@ -126,7 +128,9 @@ async def test_activity_step_executes_with_default_timeout(
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="S44 W44: importorskip fires per-file but not in batch context (test isolation issue with importlib mode + __getattr__ proxy in dsl). Tests pass individually.")
+@pytest.mark.skip(
+    reason="S44 W44: importorskip fires per-file but not in batch context (test isolation issue with importlib mode + __getattr__ proxy in dsl). Tests pass individually."
+)
 async def test_activity_step_uses_explicit_timeout(
     temporal_mock: tuple[SimpleNamespace, list[Any]],
 ) -> None:
@@ -138,7 +142,9 @@ async def test_activity_step_uses_explicit_timeout(
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="S44 W44: importorskip fires per-file but not in batch context (test isolation issue with importlib mode + __getattr__ proxy in dsl). Tests pass individually.")
+@pytest.mark.skip(
+    reason="S44 W44: importorskip fires per-file but not in batch context (test isolation issue with importlib mode + __getattr__ proxy in dsl). Tests pass individually."
+)
 async def test_activity_step_writes_output_key(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_wf, _recorder = _make_fake_temporal(execute_activity_return={"id": 42})
     monkeypatch.setitem(
@@ -156,13 +162,15 @@ async def test_activity_step_writes_output_key(monkeypatch: pytest.MonkeyPatch) 
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="S44 W44: importorskip fires per-file but not in batch context (test isolation issue with importlib mode + __getattr__ proxy in dsl). Tests pass individually.")
+@pytest.mark.skip(
+    reason="S44 W44: importorskip fires per-file but not in batch context (test isolation issue with importlib mode + __getattr__ proxy in dsl). Tests pass individually."
+)
 async def test_activity_step_applies_retry_policy(
     temporal_mock: tuple[SimpleNamespace, list[Any]],
 ) -> None:
     _, recorder = temporal_mock
     policy = RetryPolicy(
-        max_attempts=5, initial_interval_s=2.0, backoff_coefficient=3.0,
+        max_attempts=5, initial_interval_s=2.0, backoff_coefficient=3.0
     )
     decl = ActivityDeclaration(name="x", retry_policy=policy)
     ctx = {"_default_timeout_s": 60.0, "_input": {}}
@@ -178,7 +186,9 @@ async def test_activity_step_applies_retry_policy(
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="S44 W44: importorskip fires per-file but not in batch context (test isolation issue with importlib mode + __getattr__ proxy in dsl). Tests pass individually.")
+@pytest.mark.skip(
+    reason="S44 W44: importorskip fires per-file but not in batch context (test isolation issue with importlib mode + __getattr__ proxy in dsl). Tests pass individually."
+)
 async def test_saga_step_all_forward_success_no_compensate(
     temporal_mock: tuple[SimpleNamespace, list[Any]],
 ) -> None:
@@ -310,7 +320,7 @@ async def test_sensor_step_timeout_raises(monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.setitem(sys.modules, "temporalio.common", _make_fake_common())
 
     decl = SensorDeclaration(
-        predicate="src.x:check", poll_interval_s=1.0, timeout_s=2.0,
+        predicate="src.x:check", poll_interval_s=1.0, timeout_s=2.0
     )
     ctx = {"_default_timeout_s": 30.0}
     with pytest.raises(TimeoutError):
@@ -321,7 +331,9 @@ async def test_sensor_step_timeout_raises(monkeypatch: pytest.MonkeyPatch) -> No
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="S44 W44: importorskip fires per-file but not in batch context (test isolation issue with importlib mode + __getattr__ proxy in dsl). Tests pass individually.")
+@pytest.mark.skip(
+    reason="S44 W44: importorskip fires per-file but not in batch context (test isolation issue with importlib mode + __getattr__ proxy in dsl). Tests pass individually."
+)
 async def test_dispatch_routes_each_step_type(
     temporal_mock: tuple[SimpleNamespace, list[Any]],
 ) -> None:
@@ -521,7 +533,7 @@ async def test_agent_invoke_resolves_dot_path_input(
     from src.backend.dsl.workflow.spec import AgentInvokeDeclaration
 
     decl = AgentInvokeDeclaration(
-        agent_id="credit_advisor", input_context="${body.user_query}", durable=False,
+        agent_id="credit_advisor", input_context="${body.user_query}", durable=False
     )
     ctx: dict[str, Any] = {
         "_default_timeout_s": 60.0,
@@ -558,5 +570,5 @@ async def test_agent_invoke_uses_decl_timeout(monkeypatch: pytest.MonkeyPatch) -
     await compile_agent_invoke_step(decl, ctx)
     activity_calls = [r for r in recorder if r["kind"] == "execute_activity"]
     assert activity_calls[0]["kwargs"]["start_to_close_timeout"] == timedelta(
-        seconds=15.0,
+        seconds=15.0
     )

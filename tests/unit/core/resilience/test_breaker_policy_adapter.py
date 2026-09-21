@@ -114,7 +114,7 @@ def test_record_success_closes_breaker_from_open() -> None:
 
     adapter, mock_breaker = _make_adapter_with_mock_breaker()
     mock_breaker._state = "open"
-    policy = BreakerPolicy()
+    _policy = BreakerPolicy()
 
     adapter.record_success("/test/route")
 
@@ -129,7 +129,7 @@ def test_record_success_resets_count_when_closed() -> None:
     adapter, mock_breaker = _make_adapter_with_mock_breaker()
     mock_breaker._state = "closed"
     mock_breaker._failures_count = 5
-    policy = BreakerPolicy()
+    _policy = BreakerPolicy()
 
     adapter.record_success("/test/route")
 

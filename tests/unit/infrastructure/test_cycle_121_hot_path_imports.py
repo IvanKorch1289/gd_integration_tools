@@ -14,6 +14,7 @@ Why these 9:
 If any of these fail to import, the app is broken at startup or
 at every request. This test catches the regression class.
 """
+
 from __future__ import annotations
 
 import pytest

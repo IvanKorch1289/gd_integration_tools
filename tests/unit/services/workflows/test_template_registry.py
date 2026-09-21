@@ -10,7 +10,6 @@
     * BGE-M3 fallback на rapidfuzz при ImportError.
 """
 
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -101,7 +100,7 @@ def test_load_handles_invalid_yaml(tmp_path: Path) -> None:
     valid_file = template_dir / "ok.workflow.yaml"
     valid_file.write_text(
         "name: ok\nversion: '1.0'\ndescription: 'tag1, tag2'\n"
-        "steps:\n  - type: activity\n    name: step1\n",
+        "steps:\n  - type: activity\n    name: step1\n"
     )
 
     registry = WorkflowTemplateRegistry(templates_dir=template_dir)

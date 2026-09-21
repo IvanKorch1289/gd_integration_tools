@@ -3,6 +3,7 @@
 Pattern (D289, Ponytail): PrometheusAlertManager интегрирован с D259 exporter
 и CertRotationWatcher. CI deploy rules.
 """
+
 from __future__ import annotations
 
 
@@ -12,6 +13,7 @@ class TestAlertIntegration:
         from src.backend.infrastructure.observability.prometheus_alerting import (
             PrometheusAlertManager,
         )
+
         mgr = PrometheusAlertManager()
         # D259 CertPrometheusExporter метрики
         assert "cert_expired_total" in mgr._alerts
@@ -22,6 +24,7 @@ class TestAlertIntegration:
         from src.backend.infrastructure.observability.prometheus_alerting import (
             PrometheusAlertManager,
         )
+
         mgr = PrometheusAlertManager()
         yaml = mgr.render_rules_yaml()
         # Каждое правило имеет `for: 5m`
@@ -32,6 +35,7 @@ class TestAlertIntegration:
         from src.backend.infrastructure.observability.prometheus_alerting import (
             PrometheusAlertManager,
         )
+
         mgr = PrometheusAlertManager()
         yaml = mgr.render_rules_yaml()
         assert "severity: warning" in yaml
@@ -45,6 +49,7 @@ class TestAlertIntegration:
         from src.backend.infrastructure.observability.prometheus_alerting import (
             PrometheusAlertManager,
         )
+
         mgr = PrometheusAlertManager()
         with tempfile.TemporaryDirectory() as tmp:
             rules_path = Path(tmp) / "alert_rules.yaml"

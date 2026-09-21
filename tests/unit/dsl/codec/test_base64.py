@@ -1,6 +1,5 @@
 """Unit tests for base64 codec helpers."""
 
-
 from __future__ import annotations
 
 from src.backend.dsl.codec.base64 import decode_base64, encode_base64

@@ -83,6 +83,10 @@ def test_replay_docstring_mentions_alternative_backends() -> None:
     has_poll = "PollCDCBackend" in docstring or "Polling" in docstring
     has_debezium = "DebeziumEventsCDCBackend" in docstring or "Debezium" in docstring
     has_stream_only = "live-stream" in docstring or "невозможен" in docstring
-    assert has_poll, f"Docstring должен упоминать PollCDCBackend/Polling, got: {docstring!r}"
+    assert has_poll, (
+        f"Docstring должен упоминать PollCDCBackend/Polling, got: {docstring!r}"
+    )
     assert has_debezium, f"Docstring должен упоминать Debezium, got: {docstring!r}"
-    assert has_stream_only, f"Docstring должен указывать live-stream limitation, got: {docstring!r}"
+    assert has_stream_only, (
+        f"Docstring должен указывать live-stream limitation, got: {docstring!r}"
+    )

@@ -1,6 +1,5 @@
 """Unit-тесты для blueprint loader (Wave [wave:s5/k3-w6-blueprints])."""
 
-
 from __future__ import annotations
 
 from pathlib import Path

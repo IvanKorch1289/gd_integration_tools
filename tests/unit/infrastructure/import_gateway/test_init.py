@@ -31,7 +31,9 @@ class TestImportGatewayFacadeAllExports:
     def test_module_docstring_present(self) -> None:
         """Module docstring описывает W24 import backends."""
         assert import_gateway.__doc__ is not None
-        assert "W24" in import_gateway.__doc__ or "ImportGateway" in import_gateway.__doc__
+        assert (
+            "W24" in import_gateway.__doc__ or "ImportGateway" in import_gateway.__doc__
+        )
 
 
 @pytest.mark.unit

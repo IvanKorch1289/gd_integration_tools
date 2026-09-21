@@ -40,10 +40,7 @@ async def test_llm_guard_engine_fails_closed() -> None:
     ref = GuardRef(name="llm_guard:safe_v3", on_block="fail")
 
     with pytest.raises(GuardrailViolationError, match="llm_guard_archived"):
-        await enforcer._guard_input_one(
-            prompt="test prompt",
-            ref=ref,
-        )
+        await enforcer._guard_input_one(prompt="test prompt", ref=ref)
 
 
 @pytest.mark.unit
@@ -53,10 +50,7 @@ async def test_llm_guard_engine_warn_mode_passes() -> None:
     enforcer = _StubEnforcer()
     ref = GuardRef(name="llm_guard:safe_v3", on_block="warn")
 
-    result = await enforcer._guard_input_one(
-        prompt="test prompt",
-        ref=ref,
-    )
+    result = await enforcer._guard_input_one(prompt="test prompt", ref=ref)
     assert result is not None
     assert result.verdict == "warned"
     assert "llm_guard_archived" in result.categories
@@ -70,10 +64,7 @@ async def test_rebuff_engine_fails_closed() -> None:
     ref = GuardRef(name="rebuff:pi", on_block="fail")
 
     with pytest.raises(GuardrailViolationError, match="rebuff_archived"):
-        await enforcer._guard_input_one(
-            prompt="test prompt",
-            ref=ref,
-        )
+        await enforcer._guard_input_one(prompt="test prompt", ref=ref)
 
 
 @pytest.mark.unit
@@ -83,10 +74,7 @@ async def test_rebuff_engine_warn_mode_passes() -> None:
     enforcer = _StubEnforcer()
     ref = GuardRef(name="rebuff:pi", on_block="warn")
 
-    result = await enforcer._guard_input_one(
-        prompt="test prompt",
-        ref=ref,
-    )
+    result = await enforcer._guard_input_one(prompt="test prompt", ref=ref)
     assert result is not None
     assert result.verdict == "warned"
     assert "rebuff_archived" in result.categories
@@ -102,10 +90,7 @@ async def test_unknown_engine_returns_none_skip_when_warn() -> None:
     enforcer = _StubEnforcer()
     ref = GuardRef(name="custom:engine", on_block="warn")
 
-    result = await enforcer._guard_input_one(
-        prompt="test prompt",
-        ref=ref,
-    )
+    result = await enforcer._guard_input_one(prompt="test prompt", ref=ref)
     # Unknown engine + warn → пропускается (None result)
     assert result is None
 
@@ -121,10 +106,7 @@ async def test_unknown_engine_fails_closed_when_fail() -> None:
     ref = GuardRef(name="custom:engine", on_block="fail")
 
     with pytest.raises(GuardrailViolationError, match="unknown_guard"):
-        await enforcer._guard_input_one(
-            prompt="test prompt",
-            ref=ref,
-        )
+        await enforcer._guard_input_one(prompt="test prompt", ref=ref)
 
 
 @pytest.mark.unit
@@ -134,10 +116,7 @@ async def test_nemo_engine_deferred_returns_none_when_warn() -> None:
     enforcer = _StubEnforcer()
     ref = GuardRef(name="nemo:colang:topics", on_block="warn")
 
-    result = await enforcer._guard_input_one(
-        prompt="test prompt",
-        ref=ref,
-    )
+    result = await enforcer._guard_input_one(prompt="test prompt", ref=ref)
     # nemo deferred + warn → None (per S172 audit F4.1)
     assert result is None
 
@@ -154,7 +133,4 @@ async def test_nemo_engine_fails_closed_when_fail() -> None:
     ref = GuardRef(name="nemo:colang:topics", on_block="fail")
 
     with pytest.raises(GuardrailViolationError, match="guard_provider_unavailable"):
-        await enforcer._guard_input_one(
-            prompt="test prompt",
-            ref=ref,
-        )
+        await enforcer._guard_input_one(prompt="test prompt", ref=ref)

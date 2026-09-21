@@ -1,6 +1,5 @@
 """Тесты bridge StdlibLoggingBackend → logging_service (Wave 2)."""
 
-
 from __future__ import annotations
 
 import logging

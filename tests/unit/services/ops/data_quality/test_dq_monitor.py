@@ -17,7 +17,9 @@ from src.backend.services.ops.data_quality import (
 
 
 def _rule(check: str, field: str = "value", **params: object) -> DQRule:
-    return DQRule(name=f"{check}_{field}", field=field, check=check, params=dict(params))
+    return DQRule(
+        name=f"{check}_{field}", field=field, check=check, params=dict(params)
+    )
 
 
 # ── check-правила (контракты ApplyMixin) ────────────────────────────
@@ -161,7 +163,7 @@ def test_remediate_null_default_and_range_clip() -> None:
         [
             _rule("not_null", field="name"),
             _rule("range", field="amount", min=0, max=100),
-        ],
+        ]
     )
     data = {"name": None, "amount": 250}
     result = m.remediate(data)

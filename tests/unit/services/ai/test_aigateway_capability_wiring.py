@@ -31,7 +31,7 @@ _SKIP_ADAPT_CAPABILITY = pytest.mark.skip(
         "S44 W43: 3-mock DI setup (policy_resolver + capability_gate + "
         "token_budget) still requires dedicated sprint. Removed strict=True "
         "from xfail (was failing on XPASS in current production)."
-    ),
+    )
 )
 _XFAIL_ADAPT_CAPABILITY = _SKIP_ADAPT_CAPABILITY
 
@@ -56,7 +56,7 @@ class _FakeLiteLLMGateway:
         **kwargs: Any,
     ) -> dict[str, Any]:
         self.calls.append(
-            {"messages": messages, "model": model, "stream": stream, **kwargs},
+            {"messages": messages, "model": model, "stream": stream, **kwargs}
         )
         return dict(self._payload)
 
@@ -121,7 +121,7 @@ def test_adapt_capability_gate_passes_3arg_signature() -> None:
     adapted.check("ext.credit", "ai.invoke.credit_check", "credit_check")
 
     gate.check.assert_called_once_with(
-        "ext.credit", "ai.invoke.credit_check", "credit_check",
+        "ext.credit", "ai.invoke.credit_check", "credit_check"
     )
 
 
@@ -162,7 +162,7 @@ async def test_aigateway_pipeline_calls_capability_with_full_signature(
     llm = _FakeLiteLLMGateway()
 
     gateway = AIGateway(
-        policy_resolver=None, capability_gate=adapted, sanitizer=None, llm_gateway=llm,
+        policy_resolver=None, capability_gate=adapted, sanitizer=None, llm_gateway=llm
     )
     request = AIRequest(
         workflow_id="credit_check",
@@ -211,7 +211,7 @@ async def test_aigateway_pipeline_propagates_capability_denied(
     llm = _FakeLiteLLMGateway()
 
     gateway = AIGateway(
-        policy_resolver=None, capability_gate=adapted, sanitizer=None, llm_gateway=llm,
+        policy_resolver=None, capability_gate=adapted, sanitizer=None, llm_gateway=llm
     )
     request = AIRequest(
         workflow_id="credit_check",

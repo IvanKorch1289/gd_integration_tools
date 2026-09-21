@@ -17,7 +17,6 @@ Wave ``[wave:s6/msgspec-benchmark]``. Цель — собрать заранее
 Отчёт сохраняется в ``vault/benchmark-2026-05-14-msgspec.md``.
 """
 
-
 from __future__ import annotations
 
 from typing import Any

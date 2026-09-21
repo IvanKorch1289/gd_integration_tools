@@ -1,6 +1,5 @@
 """Unit tests for HTTP utility helpers."""
 
-
 from __future__ import annotations
 
 from src.backend.core.net.http_utils import ensure_url_protocol, generate_link_page

@@ -66,19 +66,12 @@ class TestMcpAuthMiddlewareBlocksAnonymous:
             captured.append(message)
 
         async def fake_app(
-            scope: dict[str, object],
-            receive: object,
-            send: object,
+            scope: dict[str, object], receive: object, send: object
         ) -> None:
             captured.append({"type": "downstream_called"})
 
         middleware = McpAuthMiddleware(fake_app)
-        scope = {
-            "type": "http",
-            "headers": [],
-            "method": "POST",
-            "path": "/mcp/test",
-        }
+        scope = {"type": "http", "headers": [], "method": "POST", "path": "/mcp/test"}
 
         async def empty_receive() -> dict[str, object]:
             return {"type": "http.request", "body": b"", "more_body": False}
@@ -86,15 +79,11 @@ class TestMcpAuthMiddlewareBlocksAnonymous:
         await middleware(scope, empty_receive, fake_send)
 
         # 401 response sent.
-        assert any(
-            msg.get("status") == 401
-            for msg in captured
-            if "status" in msg
-        ), f"Expected 401, got: {captured}"
-        # Downstream NOT called (auth blocked).
-        assert not any(
-            msg.get("type") == "downstream_called" for msg in captured
+        assert any(msg.get("status") == 401 for msg in captured if "status" in msg), (
+            f"Expected 401, got: {captured}"
         )
+        # Downstream NOT called (auth blocked).
+        assert not any(msg.get("type") == "downstream_called" for msg in captured)
 
     @pytest.mark.asyncio
     async def test_lifespan_scope_passes_through(self) -> None:
@@ -107,9 +96,7 @@ class TestMcpAuthMiddlewareBlocksAnonymous:
             called.append(message)
 
         async def fake_app(
-            scope: dict[str, object],
-            receive: object,
-            send: object,
+            scope: dict[str, object], receive: object, send: object
         ) -> None:
             called.append("downstream")
 

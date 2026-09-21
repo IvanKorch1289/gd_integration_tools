@@ -24,7 +24,6 @@ principal/permissions из ``request.state.auth`` в
       tests/unit/entrypoints/sse/test_handler_auth_propagation.py -v
 """
 
-
 from __future__ import annotations
 
 from collections.abc import Generator
@@ -114,10 +113,7 @@ class TestSseAuthContextPropagation:
             captured["permissions"] = kwargs.get("permissions")
             captured["kwargs"] = kwargs
             return MagicMock(
-                success=True,
-                data={"ok": True},
-                error=None,
-                error_code=None,
+                success=True, data={"ok": True}, error=None, error_code=None
             )
 
         with patch(
@@ -147,9 +143,7 @@ class TestSseAuthContextPropagation:
         async def fake_bridge(**kwargs: Any) -> MagicMock:
             captured["principal"] = kwargs.get("principal")
             captured["permissions"] = kwargs.get("permissions")
-            return MagicMock(
-                success=True, data={}, error=None, error_code=None,
-            )
+            return MagicMock(success=True, data={}, error=None, error_code=None)
 
         with patch(
             "src.backend.entrypoints.sse.handler.dispatch_action_or_dsl",
@@ -159,10 +153,7 @@ class TestSseAuthContextPropagation:
             _ = [c async for c in response.body_iterator]
 
         assert captured["principal"] == "bob"
-        assert captured["permissions"] == (
-            "scope:credit.read",
-            "scope:credit.write",
-        )
+        assert captured["permissions"] == ("scope:credit.read", "scope:credit.write")
 
     @pytest.mark.asyncio
     async def test_no_auth_state_fails_closed_anonymous(self) -> None:
@@ -209,9 +200,7 @@ class TestSseAuthContextPropagation:
         """
         body = _InvokeRequest(action="r1", payload={"k": "v"})
         auth = AuthContext(
-            method=AuthMethod.API_KEY,
-            principal="guest",
-            metadata={"permissions": []},
+            method=AuthMethod.API_KEY, principal="guest", metadata={"permissions": []}
         )
         request = _make_request(auth)
         pipeline = _make_pipeline("r1", security=("role:admin",))
@@ -252,7 +241,7 @@ class TestSseAuthContextPropagation:
             new_callable=AsyncMock,
         ) as mock_bridge:
             mock_bridge.return_value = MagicMock(
-                success=True, data={"x": 1}, error=None, error_code=None,
+                success=True, data={"x": 1}, error=None, error_code=None
             )
             response = await sse_invoke(request, body)
             chunks = [c async for c in response.body_iterator]
@@ -278,9 +267,7 @@ class TestSseAuthContextPropagation:
 
         async def fake_bridge(**kwargs: Any) -> MagicMock:
             captured.update(kwargs)
-            return MagicMock(
-                success=True, data={}, error=None, error_code=None,
-            )
+            return MagicMock(success=True, data={}, error=None, error_code=None)
 
         with patch(
             "src.backend.entrypoints.sse.handler.dispatch_action_or_dsl",
@@ -305,20 +292,14 @@ class TestSseAuthContextEdgeCases:
     async def test_auth_with_no_metadata_yields_empty_permissions(self) -> None:
         """AuthContext без metadata → ``permissions=()`` (fail-closed)."""
         body = _InvokeRequest(action="r1", payload={"k": "v"})
-        auth = AuthContext(
-            method=AuthMethod.API_KEY,
-            principal="alice",
-            metadata=None,
-        )
+        auth = AuthContext(method=AuthMethod.API_KEY, principal="alice", metadata=None)
         request = _make_request(auth)
 
         captured: dict[str, Any] = {}
 
         async def fake_bridge(**kwargs: Any) -> MagicMock:
             captured.update(kwargs)
-            return MagicMock(
-                success=True, data={}, error=None, error_code=None,
-            )
+            return MagicMock(success=True, data={}, error=None, error_code=None)
 
         with patch(
             "src.backend.entrypoints.sse.handler.dispatch_action_or_dsl",
@@ -344,9 +325,7 @@ class TestSseAuthContextEdgeCases:
 
         async def fake_bridge(**kwargs: Any) -> MagicMock:
             captured.update(kwargs)
-            return MagicMock(
-                success=True, data={}, error=None, error_code=None,
-            )
+            return MagicMock(success=True, data={}, error=None, error_code=None)
 
         with patch(
             "src.backend.entrypoints.sse.handler.dispatch_action_or_dsl",
@@ -388,10 +367,10 @@ class TestSseAuthIntegrationNoAuth:
         app.include_router(sse_router)
 
         async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test",
+            transport=ASGITransport(app=app), base_url="http://test"
         ) as ac:
             response = await ac.post(
-                "/events/invoke", json={"action": "r1", "payload": {}},
+                "/events/invoke", json={"action": "r1", "payload": {}}
             )
 
         # require_auth dependency raises HTTPException(401) → 401 ответ.

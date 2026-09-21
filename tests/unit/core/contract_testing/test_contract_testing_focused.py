@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
-
 import pytest
 
 from src.backend.core.contract_testing import (
@@ -75,10 +73,7 @@ class TestSchemaValidator:
         assert errors == []
 
     def test_properties_type_check(self) -> None:
-        schema = {
-            "type": "object",
-            "properties": {"age": {"type": "integer"}},
-        }
+        schema = {"type": "object", "properties": {"age": {"type": "integer"}}}
         assert validate_against_schema({"age": 30}, schema) == []
         assert len(validate_against_schema({"age": "30"}, schema)) == 1
 
@@ -101,21 +96,32 @@ class TestSchemaValidator:
 
     def test_minLength(self) -> None:
         assert validate_against_schema("ab", {"type": "string", "minLength": 2}) == []
-        assert len(validate_against_schema("a", {"type": "string", "minLength": 2})) == 1
+        assert (
+            len(validate_against_schema("a", {"type": "string", "minLength": 2})) == 1
+        )
 
     def test_maxLength(self) -> None:
         assert validate_against_schema("abc", {"type": "string", "maxLength": 5}) == []
-        assert len(validate_against_schema("abcdef", {"type": "string", "maxLength": 5})) == 1
+        assert (
+            len(validate_against_schema("abcdef", {"type": "string", "maxLength": 5}))
+            == 1
+        )
 
     def test_pattern(self) -> None:
-        assert validate_against_schema(
-            "abc123", {"type": "string", "pattern": r"^[a-z0-9]+$"}
-        ) == []
-        assert len(
+        assert (
             validate_against_schema(
-                "ABC", {"type": "string", "pattern": r"^[a-z0-9]+$"}
+                "abc123", {"type": "string", "pattern": r"^[a-z0-9]+$"}
             )
-        ) == 1
+            == []
+        )
+        assert (
+            len(
+                validate_against_schema(
+                    "ABC", {"type": "string", "pattern": r"^[a-z0-9]+$"}
+                )
+            )
+            == 1
+        )
 
     def test_array_items(self) -> None:
         schema = {"type": "array", "items": {"type": "integer"}}
@@ -132,7 +138,7 @@ class TestSchemaValidator:
                     "type": "object",
                     "required": ["id"],
                     "properties": {"id": {"type": "string"}},
-                },
+                }
             },
         }
         assert validate_against_schema({"user": {"id": "u1"}}, schema) == []
@@ -202,10 +208,7 @@ class TestHarnessRun:
         tc = ContractTestCase(
             name="t1",
             input_payload={"x": 1},
-            expected_output_schema={
-                "type": "object",
-                "required": ["status"],
-            },
+            expected_output_schema={"type": "object", "required": ["status"]},
         )
         result = h.run(tc, route)
         assert result.passed is True
@@ -220,10 +223,7 @@ class TestHarnessRun:
         tc = ContractTestCase(
             name="t1",
             input_payload={},
-            expected_output_schema={
-                "type": "object",
-                "required": ["status"],
-            },
+            expected_output_schema={"type": "object", "required": ["status"]},
         )
         result = h.run(tc, route)
         assert result.passed is False
@@ -235,10 +235,7 @@ class TestHarnessRun:
         def route(payload):
             return {"id": "abc"}
 
-        tc = ContractTestCase(
-            name="t1",
-            expected_output={"id": "abc"},
-        )
+        tc = ContractTestCase(name="t1", expected_output={"id": "abc"})
         result = h.run(tc, route)
         assert result.passed is True
 
@@ -248,10 +245,7 @@ class TestHarnessRun:
         def route(payload):
             return {"id": "xyz"}
 
-        tc = ContractTestCase(
-            name="t1",
-            expected_output={"id": "abc"},
-        )
+        tc = ContractTestCase(name="t1", expected_output={"id": "abc"})
         result = h.run(tc, route)
         assert result.passed is False
         assert result.output_mismatch is True
@@ -262,11 +256,7 @@ class TestHarnessRun:
         def route(payload):
             raise ValueError("bad input")
 
-        tc = ContractTestCase(
-            name="t1",
-            expect_error=True,
-            error_type=ValueError,
-        )
+        tc = ContractTestCase(name="t1", expect_error=True, error_type=ValueError)
         result = h.run(tc, route)
         assert result.passed is True
         assert result.expected_error is True

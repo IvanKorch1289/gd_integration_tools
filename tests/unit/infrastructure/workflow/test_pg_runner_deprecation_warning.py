@@ -46,9 +46,7 @@ def handle() -> WorkflowHandle:
     import uuid
 
     return WorkflowHandle(
-        workflow_id="test_wf",
-        run_id=str(uuid.uuid4()),
-        namespace="default",
+        workflow_id="test_wf", run_id=str(uuid.uuid4()), namespace="default"
     )
 
 
@@ -67,11 +65,10 @@ class TestAwaitCompletionDeprecation:
             try:
                 asyncio.run(
                     asyncio.wait_for(
-                        backend.await_completion(handle=handle),
-                        timeout=1.0,
+                        backend.await_completion(handle=handle), timeout=1.0
                     )
                 )
-            except (KeyError, asyncio.TimeoutError):
+            except KeyError, asyncio.TimeoutError:
                 pass
 
 
@@ -88,9 +85,7 @@ class TestAwaitExternalSignalDeprecation:
         """
         import asyncio
 
-        with pytest.warns(
-            DeprecationWarning, match="await_external_signal deprecated"
-        ):
+        with pytest.warns(DeprecationWarning, match="await_external_signal deprecated"):
             try:
                 asyncio.run(
                     asyncio.wait_for(
@@ -102,6 +97,5 @@ class TestAwaitExternalSignalDeprecation:
                         timeout=1.0,
                     )
                 )
-            except (asyncio.TimeoutError, Exception):
+            except asyncio.TimeoutError, Exception:
                 pass
-

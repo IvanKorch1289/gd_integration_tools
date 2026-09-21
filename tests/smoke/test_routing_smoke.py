@@ -7,7 +7,6 @@
 end-to-end на уровне Python.
 """
 
-
 from __future__ import annotations
 
 from src.backend.dsl.builder import RouteBuilder

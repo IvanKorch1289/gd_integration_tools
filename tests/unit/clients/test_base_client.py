@@ -13,7 +13,6 @@
 и заменяется уже сконфигурированным транспортом.
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -64,7 +63,7 @@ def fake_settings() -> _FakeSettings:
 
 @pytest.fixture
 def client_with_mock(
-    fake_settings: _FakeSettings, monkeypatch: pytest.MonkeyPatch,
+    fake_settings: _FakeSettings, monkeypatch: pytest.MonkeyPatch
 ) -> tuple[BaseExternalAPIClient, AsyncMock]:
     """``BaseExternalAPIClient`` с подменённым ``self.client`` на AsyncMock.
 
@@ -73,7 +72,7 @@ def client_with_mock(
     client = BaseExternalAPIClient(settings=fake_settings, name="test_svc")
     mock_http = MagicMock()
     mock_http.make_request = AsyncMock(
-        return_value={"status_code": 200, "data": {"ok": True}},
+        return_value={"status_code": 200, "data": {"ok": True}}
     )
     client.client = mock_http
     return client, mock_http.make_request
@@ -95,7 +94,7 @@ def test_url_unknown_endpoint_returns_base(fake_settings: _FakeSettings) -> None
 def test_prod_url_takes_precedence_over_base_url() -> None:
     """Если есть prod_url — он приоритетнее base_url."""
     settings = _FakeSettings(
-        base_url="https://dev.test/", prod_url="https://prod.test/",
+        base_url="https://dev.test/", prod_url="https://prod.test/"
     )
     client = BaseExternalAPIClient(settings=settings)
     assert client.base_url == "https://prod.test/"
@@ -131,7 +130,7 @@ def test_headers_secret_str_api_key_unwrapped() -> None:
             return self._value
 
     client = BaseExternalAPIClient(
-        settings=_FakeSettings(api_key=_Secret("hidden")), name="t",
+        settings=_FakeSettings(api_key=_Secret("hidden")), name="t"
     )
     headers = client._headers(use_waf=False)
     assert headers["Authorization"] == "Bearer hidden"
@@ -141,7 +140,7 @@ def test_headers_extra_passthrough(fake_settings: _FakeSettings) -> None:
     """Custom headers через ``extra=`` пробрасываются и могут переопределять."""
     client = BaseExternalAPIClient(settings=fake_settings, name="t")
     headers = client._headers(
-        extra={"X-Trace-Id": "abc-123", "Content-Type": "text/plain"}, use_waf=False,
+        extra={"X-Trace-Id": "abc-123", "Content-Type": "text/plain"}, use_waf=False
     )
     assert headers["X-Trace-Id"] == "abc-123"
     assert headers["Content-Type"] == "text/plain"  # extra перезаписал default
@@ -172,7 +171,7 @@ async def test_request_delegates_to_http_client(
     """``_request`` вызывает ``client.make_request`` с правильными параметрами."""
     client, make_request = client_with_mock
     result = await client._request(
-        "GET", "https://api.test/v1/items", params={"q": "x"},
+        "GET", "https://api.test/v1/items", params={"q": "x"}
     )
     assert result == {"status_code": 200, "data": {"ok": True}}
 
@@ -347,7 +346,7 @@ async def test_http_client_circuit_breaker_resets_on_success(fast_retry: None) -
 
 
 async def test_http_client_circuit_breaker_opens_after_threshold(
-    fast_retry: None, monkeypatch: pytest.MonkeyPatch,
+    fast_retry: None, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """CB integration works: multiple failures don't crash the client."""
     from src.backend.core.config.settings import settings as app_settings
@@ -407,9 +406,7 @@ async def test_http_client_auth_token_sets_authorization(fast_retry: None) -> No
 
     try:
         await client.make_request(
-            method="GET",
-            url="http://x.test/p",
-            auth_token="my-token",
+            method="GET", url="http://x.test/p", auth_token="my-token"
         )
         assert captured.get("authorization") == "Bearer my-token"
     finally:

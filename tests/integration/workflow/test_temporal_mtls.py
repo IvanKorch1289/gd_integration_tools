@@ -3,7 +3,6 @@
 Тесты падают gracefully когда Vault/Temporal недоступны.
 """
 
-
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
@@ -26,11 +25,9 @@ def fake_vault_response() -> dict:
             "private_key": "-----BEGIN RSA PRIVATE KEY-----\nFAKE_KEY\n-----END RSA PRIVATE KEY-----",
             "issuing_ca": "-----BEGIN CERTIFICATE-----\nCA\n-----END CERTIFICATE-----",
             "ca_chain": ["-----BEGIN CERTIFICATE-----\nCA\n-----END CERTIFICATE-----"],
-            "expiration": int(
-                (datetime.now(UTC) + timedelta(hours=24)).timestamp(),
-            ),
+            "expiration": int((datetime.now(UTC) + timedelta(hours=24)).timestamp()),
             "serial_number": "abc:def",
-        },
+        }
     }
 
 

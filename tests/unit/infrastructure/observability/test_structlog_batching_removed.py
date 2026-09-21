@@ -28,7 +28,9 @@ _FORBIDDEN_IDS = (
     r"\bstructlog_batching_enabled\b",
 )
 
-_EXCLUDE_DIRS = frozenset({"__pycache__", ".venv", "venv", ".git", ".mypy_cache", ".ruff_cache"})
+_EXCLUDE_DIRS = frozenset(
+    {"__pycache__", ".venv", "venv", ".git", ".mypy_cache", ".ruff_cache"}
+)
 
 
 def _find_py_with_pattern(pattern: str, root: Path) -> list[Path]:
@@ -45,7 +47,7 @@ def _find_py_with_pattern(pattern: str, root: Path) -> list[Path]:
             continue
         try:
             text = path.read_text(encoding="utf-8")
-        except (UnicodeDecodeError, OSError):
+        except UnicodeDecodeError, OSError:
             continue
         if compiled.search(text):
             hits.append(path)
@@ -56,7 +58,11 @@ def test_module_and_legacy_test_deleted() -> None:
     """structlog_batching.py + test_structlog_batching.py удалены."""
     assert not (_SRC_BACKEND / "observability" / "structlog_batching.py").exists()
     assert not (
-        _REPO_ROOT / "tests" / "unit" / "infrastructure" / "observability"
+        _REPO_ROOT
+        / "tests"
+        / "unit"
+        / "infrastructure"
+        / "observability"
         / "test_structlog_batching.py"
     ).exists()
 

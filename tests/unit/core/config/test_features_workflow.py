@@ -54,7 +54,9 @@ class TestWorkflowFlagsComposition:
         assert hasattr(feature_flags, "workflow_orchestrator_enabled")
         # D-AUDIT-A11 fix (cycle 1): aligned with docstring "default-OFF"
         assert feature_flags.workflow_gateways_enabled is False
-        assert feature_flags.workflow_orchestrator_enabled is False  # default-OFF (S28 W4)
+        assert (
+            feature_flags.workflow_orchestrator_enabled is False
+        )  # default-OFF (S28 W4)
 
     def test_feature_flags_class_mro(self) -> None:
         from src.backend.core.config.features import FeatureFlags

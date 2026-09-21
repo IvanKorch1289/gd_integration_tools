@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
-
 import pytest
 
 from src.backend.core.outbox_verify import (
@@ -13,7 +11,6 @@ from src.backend.core.outbox_verify import (
 )
 from src.backend.core.outbox_verify.service import (
     OutboxPublishOutcome,
-    OutboxPublishResult,
     reset_outbox_publish_service,
 )
 from src.backend.core.outbox_verify.store.base import (
@@ -32,9 +29,7 @@ class TestOutboxPublishEntry:
     """``OutboxPublishEntry`` — dataclass basics."""
 
     def test_init_defaults(self) -> None:
-        e = OutboxPublishEntry(
-            event_id="e1", state=OutboxPublishState.PENDING
-        )
+        e = OutboxPublishEntry(event_id="e1", state=OutboxPublishState.PENDING)
         assert e.event_id == "e1"
         assert e.state == OutboxPublishState.PENDING
         assert e.broker is None
@@ -263,9 +258,7 @@ class TestInProgress:
         from unittest.mock import AsyncMock, MagicMock
 
         pre_entry = OutboxPublishEntry(
-            event_id="e1",
-            state=OutboxPublishState.PUBLISHING,
-            attempts=1,
+            event_id="e1", state=OutboxPublishState.PUBLISHING, attempts=1
         )
         mock_store = MagicMock(spec=OutboxPublishStore)
         mock_store.begin = AsyncMock(

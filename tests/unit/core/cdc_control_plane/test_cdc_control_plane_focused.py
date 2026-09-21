@@ -341,17 +341,13 @@ class TestRealisticExample:
 
         # Resume + replay from earlier offset (e.g., after data fix).
         plane.resume("orders_pub")
-        new_offset = plane.replay_from(
-            "orders_pub", offset=10000, to_offset=12000
-        )
+        new_offset = plane.replay_from("orders_pub", offset=10000, to_offset=12000)
         assert new_offset.value == 12000
 
         # Dashboard view.
         statuses = plane.list_statuses()
         assert len(statuses) == 2
-        orders_status = next(
-            s for s in statuses if s["name"] == "orders_pub"
-        )
+        orders_status = next(s for s in statuses if s["name"] == "orders_pub")
         assert orders_status["status"] == "active"
         assert orders_status["lag"]["bytes"] == 0  # replay reset lag.
 

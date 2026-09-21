@@ -6,6 +6,7 @@ The module lives under ``src/backend/dsl/engine/processors/security/``
 as a non-package directory (shadowed by ``security.py``), so we load
 it explicitly via :mod:`importlib` to avoid namespace collisions.
 """
+
 from __future__ import annotations
 
 import importlib.util
@@ -42,14 +43,7 @@ class TestEntityTypeValidator:
 
     @pytest.mark.parametrize(
         "bad",
-        [
-            "user; DROP TABLE x; --",
-            "1user",
-            "user-name",
-            "user.name",
-            "",
-            "user DDL",
-        ],
+        ["user; DROP TABLE x; --", "1user", "user-name", "user.name", "", "user DDL"],
     )
     def test_invalid_entity_type_rejected(self, bad: str) -> None:
         mod = _load_pii_erase_module()
@@ -68,9 +62,7 @@ class TestPiiEraseAnonymizeDbValidation:
         interpolated into a text() object passed to ``execute()``.
         """
         mod = _load_pii_erase_module()
-        proc = mod.PiiEraseProcessor(
-            scope="user; DROP TABLE x; --:1", hard_delete=True,
-        )
+        proc = mod.PiiEraseProcessor(scope="user; DROP TABLE x; --:1", hard_delete=True)
 
         executed: list[Any] = []
 

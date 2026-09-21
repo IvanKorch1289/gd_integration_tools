@@ -38,9 +38,7 @@ async def test_schedule_creates_and_returns_meta(
 
 
 @pytest.mark.asyncio
-async def test_list_reports_shapes_entries(
-    service: ScheduledReportsService,
-) -> None:
+async def test_list_reports_shapes_entries(service: ScheduledReportsService) -> None:
     await service.schedule("r1", "act.one")
     listing = await service.list_reports()
     assert len(listing["reports"]) == 1
@@ -61,9 +59,7 @@ async def test_run_now_success_dict_result_with_export_and_delivery(
     service: ScheduledReportsService,
 ) -> None:
     """dict-результат -> export csv + уведомление на delivery_to."""
-    await service.schedule(
-        "r1", "act.one", export_format="csv", delivery_to="ops@corp"
-    )
+    await service.schedule("r1", "act.one", export_format="csv", delivery_to="ops@corp")
     report_id = list(service._schedules)[0]
 
     mock_registry = AsyncMock()
@@ -120,9 +116,7 @@ async def test_run_now_list_result_none_format_skips_export(
 
 
 @pytest.mark.asyncio
-async def test_run_now_failure_records_error(
-    service: ScheduledReportsService,
-) -> None:
+async def test_run_now_failure_records_error(service: ScheduledReportsService) -> None:
     """Исключение dispatch -> status error + запись в history."""
     await service.schedule("r1", "act.one")
     report_id = list(service._schedules)[0]

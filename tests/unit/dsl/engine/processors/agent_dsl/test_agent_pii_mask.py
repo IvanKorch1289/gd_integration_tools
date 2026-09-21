@@ -5,6 +5,7 @@ Coverage:
 - AgentDictPIIMaskProcessor.for_actions — masks PII in action params
 - Edge cases: empty dict, missing path, non-dict body
 """
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -18,6 +19,7 @@ class TestAgentDictPIIMaskForTools:
         from src.backend.dsl.engine.processors.agent_dsl.agent_pii_mask import (
             AgentDictPIIMaskProcessor,
         )
+
         p = AgentDictPIIMaskProcessor.for_tools(scope="banking")
         ex = MagicMock()
         ex.in_message = MagicMock()
@@ -57,6 +59,7 @@ class TestAgentDictPIIMaskForTools:
         from src.backend.dsl.engine.processors.agent_dsl.agent_pii_mask import (
             AgentDictPIIMaskProcessor,
         )
+
         p = AgentDictPIIMaskProcessor.for_tools(scope="banking")
         assert p.required_capability == "pii.tokenize.reversible.agent_tools"
         assert p.audit_event == "ai.agent.pii.tool_mask"
@@ -68,6 +71,7 @@ class TestAgentDictPIIMaskForActions:
         from src.backend.dsl.engine.processors.agent_dsl.agent_pii_mask import (
             AgentDictPIIMaskProcessor,
         )
+
         p = AgentDictPIIMaskProcessor.for_actions(scope="banking")
         ex = MagicMock()
         ex.in_message = MagicMock()
@@ -107,6 +111,7 @@ class TestAgentDictPIIMaskForActions:
         from src.backend.dsl.engine.processors.agent_dsl.agent_pii_mask import (
             AgentDictPIIMaskProcessor,
         )
+
         p = AgentDictPIIMaskProcessor.for_actions(scope="banking")
         assert p.required_capability == "pii.tokenize.reversible.agent_actions"
         assert p.audit_event == "ai.agent.pii.action_mask"
@@ -119,6 +124,7 @@ class TestEdgeCases:
         from src.backend.dsl.engine.processors.agent_dsl.agent_pii_mask import (
             AgentDictPIIMaskProcessor,
         )
+
         p = AgentDictPIIMaskProcessor.for_tools(scope="banking")
         ex = MagicMock()
         ex.in_message = MagicMock()
@@ -145,8 +151,9 @@ class TestEdgeCases:
         from src.backend.dsl.engine.processors.agent_dsl.agent_pii_mask import (
             AgentDictPIIMaskProcessor,
         )
+
         p = AgentDictPIIMaskProcessor.for_tools(
-            scope="banking", source_property="body.nonexistent.args",
+            scope="banking", source_property="body.nonexistent.args"
         )
         ex = MagicMock()
         ex.in_message = MagicMock()
@@ -173,6 +180,7 @@ class TestEdgeCases:
         from src.backend.dsl.engine.processors.agent_dsl.agent_pii_mask import (
             AgentDictPIIMaskProcessor,
         )
+
         p = AgentDictPIIMaskProcessor.for_tools(scope="banking")
         ex = MagicMock()
         ex.in_message = MagicMock()
@@ -197,6 +205,7 @@ class TestEdgeCases:
         from src.backend.dsl.engine.processors.agent_dsl.agent_pii_mask import (
             AgentDictPIIMaskProcessor,
         )
+
         p = AgentDictPIIMaskProcessor.for_tools(scope="banking")
         ex = MagicMock()
         ex.in_message = MagicMock()
@@ -229,6 +238,7 @@ class TestRuntimeVerification:
         from src.backend.dsl.engine.processors.agent_dsl.agent_pii_mask import (
             AgentDictPIIMaskProcessor,
         )
+
         # Both classmethods produce correct instances
         tools = AgentDictPIIMaskProcessor.for_tools(scope="banking")
         actions = AgentDictPIIMaskProcessor.for_actions(scope="hr")
@@ -241,5 +251,6 @@ class TestRuntimeVerification:
         from src.backend.dsl.engine.processors.agent_dsl.agent_pii_mask import (
             AgentDictPIIMaskProcessor,
         )
+
         with pytest.raises(ValueError, match="scope обязателен"):
             AgentDictPIIMaskProcessor(scope="")

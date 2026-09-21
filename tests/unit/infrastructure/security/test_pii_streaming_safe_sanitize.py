@@ -33,7 +33,9 @@ async def test_safe_sanitize_returns_original_on_error(
     san = _FakeSanitizer(ValueError("spaCy model not loaded"))
     text = "my email is alice@example.com and SSN 123-45-6789"
 
-    with caplog.at_level("ERROR", logger="src.backend.infrastructure.security.pii_streaming"):
+    with caplog.at_level(
+        "ERROR", logger="src.backend.infrastructure.security.pii_streaming"
+    ):
         result = await _safe_sanitize(san, text, entities=("EMAIL", "SSN"))
 
     # backward-compat: original text возвращается (stream integrity)
@@ -77,7 +79,9 @@ async def test_safe_sanitize_catches_wide_exception_types(
     ]:
         san = _FakeSanitizer(exc)
         caplog.clear()
-        with caplog.at_level("ERROR", logger="src.backend.infrastructure.security.pii_streaming"):
+        with caplog.at_level(
+            "ERROR", logger="src.backend.infrastructure.security.pii_streaming"
+        ):
             result = await _safe_sanitize(san, "test chunk", entities=None)
         assert result == "test chunk"  # original text returned
         assert any("PII LEAK POSSIBLE" in r.message for r in caplog.records), (

@@ -88,9 +88,7 @@ class TestEngineIsAllowed:
         e = ToolPolicyEngine()
         e.register(
             ToolPolicy(
-                tool_name="x",
-                capability=ToolCapability.WRITE,
-                allowed_agents=["alice"],
+                tool_name="x", capability=ToolCapability.WRITE, allowed_agents=["alice"]
             )
         )
         assert e.is_allowed(tool="x", agent="alice") is True
@@ -100,9 +98,7 @@ class TestEngineIsAllowed:
         e = ToolPolicyEngine()
         e.register(
             ToolPolicy(
-                tool_name="x",
-                capability=ToolCapability.WRITE,
-                allowed_tenants=["t1"],
+                tool_name="x", capability=ToolCapability.WRITE, allowed_tenants=["t1"]
             )
         )
         assert e.is_allowed(tool="x", tenant="t1") is True
@@ -144,9 +140,7 @@ class TestEngineRequiresApproval:
 class TestEngineCapability:
     def test_capability_of(self) -> None:
         e = ToolPolicyEngine()
-        e.register(
-            ToolPolicy(tool_name="x", capability=ToolCapability.ADMIN)
-        )
+        e.register(ToolPolicy(tool_name="x", capability=ToolCapability.ADMIN))
         assert e.capability_of("x") == ToolCapability.ADMIN
 
     def test_capability_missing(self) -> None:
@@ -184,29 +178,26 @@ class TestExecutionRecord:
 
 class TestExecutionLedgerInit:
     def test_init_empty(self) -> None:
-        l = ExecutionLedger()
-        assert l.size() == 0
+        ledger = ExecutionLedger()
+        assert ledger.size() == 0
 
 
 class TestLedgerRecord:
     def test_record_basic(self) -> None:
-        l = ExecutionLedger()
-        rec = l.record(
-            agent="alice",
-            tenant_id="t1",
-            tool="db_read",
-            arguments={"table": "users"},
+        ledger = ExecutionLedger()
+        rec = ledger.record(
+            agent="alice", tenant_id="t1", tool="db_read", arguments={"table": "users"}
         )
         assert rec.execution_id
         assert rec.agent == "alice"
         assert rec.tenant_id == "t1"
         assert rec.tool == "db_read"
         assert rec.status == "success"
-        assert l.size() == 1
+        assert ledger.size() == 1
 
     def test_record_with_approval(self) -> None:
-        l = ExecutionLedger()
-        rec = l.record(
+        ledger = ExecutionLedger()
+        rec = ledger.record(
             agent="alice",
             tenant_id="t1",
             tool="db_write",
@@ -218,8 +209,8 @@ class TestLedgerRecord:
         assert rec.approval_record_id == "apr-1"
 
     def test_record_with_error(self) -> None:
-        l = ExecutionLedger()
-        rec = l.record(
+        ledger = ExecutionLedger()
+        rec = ledger.record(
             agent="alice",
             tenant_id="t1",
             tool="db_write",
@@ -233,25 +224,25 @@ class TestLedgerRecord:
 
 class TestLedgerList:
     def test_list_for_agent(self) -> None:
-        l = ExecutionLedger()
-        l.record(agent="alice", tenant_id="t1", tool="db_read", arguments={})
-        l.record(agent="alice", tenant_id="t1", tool="db_write", arguments={})
-        l.record(agent="bob", tenant_id="t1", tool="db_read", arguments={})
-        alice_records = l.list_for_agent("alice")
+        ledger = ExecutionLedger()
+        ledger.record(agent="alice", tenant_id="t1", tool="db_read", arguments={})
+        ledger.record(agent="alice", tenant_id="t1", tool="db_write", arguments={})
+        ledger.record(agent="bob", tenant_id="t1", tool="db_read", arguments={})
+        alice_records = ledger.list_for_agent("alice")
         assert len(alice_records) == 2
 
     def test_list_for_tenant(self) -> None:
-        l = ExecutionLedger()
-        l.record(agent="a", tenant_id="t1", tool="x", arguments={})
-        l.record(agent="b", tenant_id="t2", tool="x", arguments={})
-        t1 = l.list_for_tenant("t1")
+        ledger = ExecutionLedger()
+        ledger.record(agent="a", tenant_id="t1", tool="x", arguments={})
+        ledger.record(agent="b", tenant_id="t2", tool="x", arguments={})
+        t1 = ledger.list_for_tenant("t1")
         assert len(t1) == 1
 
     def test_list_for_tool(self) -> None:
-        l = ExecutionLedger()
-        l.record(agent="a", tenant_id="t1", tool="db_read", arguments={})
-        l.record(agent="a", tenant_id="t1", tool="db_write", arguments={})
-        reads = l.list_for_tool("db_read")
+        ledger = ExecutionLedger()
+        ledger.record(agent="a", tenant_id="t1", tool="db_read", arguments={})
+        ledger.record(agent="a", tenant_id="t1", tool="db_write", arguments={})
+        reads = ledger.list_for_tool("db_read")
         assert len(reads) == 1
 
 
@@ -301,16 +292,17 @@ class TestRealisticExample:
         ledger = get_execution_ledger()
 
         # 1. Policy check.
-        assert policy_engine.is_allowed(
-            tool="order_write", agent="alice", tenant="t1"
-        ) is True
+        assert (
+            policy_engine.is_allowed(tool="order_write", agent="alice", tenant="t1")
+            is True
+        )
         assert policy_engine.requires_approval("order_write") is True
 
         # 2. Approval gate (assume bob approves).
         approved = True
         if approved:
             # 3. Record execution.
-            rec = ledger.record(
+            _rec = ledger.record(
                 agent="alice",
                 tenant_id="t1",
                 tool="order_write",

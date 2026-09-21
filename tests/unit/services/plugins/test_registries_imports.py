@@ -23,10 +23,7 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from src.backend.services.plugins import (
-    ActionRegistryAdapter,
-    ProcessorRegistryAdapter,
-)
+from src.backend.services.plugins import ActionRegistryAdapter, ProcessorRegistryAdapter
 
 # ── Константы инварианта ──────────────────────────────────────────────
 
@@ -39,7 +36,7 @@ EXPECTED_DSL_MODULES: frozenset[str] = frozenset(
         "src.backend.dsl.commands.action_registry",
         "src.backend.dsl.engine.plugin_registry",
         "src.backend.dsl.engine.processors",
-    },
+    }
 )
 
 
@@ -215,7 +212,7 @@ class TestAdapterSmoke:
         # Проверяем, что тип ActionHandlerSpec доступен (нужен в runtime регистра).
         assert isinstance(
             ActionHandlerSpec(
-                action="x", service_getter=lambda: None, service_method="call",
+                action="x", service_getter=lambda: None, service_method="call"
             ),
             ActionHandlerSpec,
         )

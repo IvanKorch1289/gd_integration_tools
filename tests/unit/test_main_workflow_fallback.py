@@ -26,8 +26,7 @@ import pytest
 # (через entrypoints.middlewares.idempotency), но пакет не публикуется на PyPI.
 # ``pytest.importorskip`` пропускает весь файл при collection time.
 pytest.importorskip(
-    "idempotency_header_middleware",
-    reason="non-existent PyPI package, see S48 W11",
+    "idempotency_header_middleware", reason="non-existent PyPI package, see S48 W11"
 )
 
 from src.backend import main as main_module

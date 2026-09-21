@@ -33,13 +33,12 @@ class TestSagaIdempotencyKeys:
 
     def test_async_idempotency_concurrent_runs(self) -> None:
         """S93 M5-#6: concurrent saga steps — разные correlation_ids."""
+
         async def create_exchange(idx: int) -> Exchange:
             return Exchange()
 
         async def run_concurrent() -> list[str]:
-            return await asyncio.gather(
-                *(create_exchange(i) for i in range(10))
-            )
+            return await asyncio.gather(*(create_exchange(i) for i in range(10)))
 
         results = asyncio.run(run_concurrent())
         cids = [ex.meta.correlation_id for ex in results]

@@ -1,6 +1,5 @@
 """Unit-тесты saga_history — Sprint 12 K3 W6."""
 
-
 from __future__ import annotations
 
 import sys
@@ -142,7 +141,7 @@ async def test_get_saga_history_without_factory(
     records = await get_saga_history("wf-no-factory")
     assert records == []
     fake_ch_mod.get_async_client.assert_awaited_once_with(
-        host="ch-host", port=9000, database="analytics",
+        host="ch-host", port=9000, database="analytics"
     )
 
 

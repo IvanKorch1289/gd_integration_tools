@@ -9,6 +9,7 @@ User directive: "продумай fallback логику для SSL Cert, есл�
 недоступен (для настроек есть .env, а для сертификатов ничего нет)".
 +.env STRICTLY forbidden (per AGENTS.md permission rules).
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -25,6 +26,7 @@ class TestFileCertBackend:
         from src.backend.infrastructure.security.cert_store.backend_file import (
             FileCertBackend,
         )
+
         with tempfile.TemporaryDirectory() as tmp:
             backend = FileCertBackend(path=Path(tmp))
             assert backend.path == Path(tmp)
@@ -34,9 +36,12 @@ class TestFileCertBackend:
         from src.backend.infrastructure.security.cert_store.backend_file import (
             FileCertBackend,
         )
+
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
-            (tmp_path / "skb_api.pem").write_text("---BEGIN CERT---\nFAKE\n---END CERT---")
+            (tmp_path / "skb_api.pem").write_text(
+                "---BEGIN CERT---\nFAKE\n---END CERT---"
+            )
             backend = FileCertBackend(path=tmp_path)
             entry = await backend.get("skb_api")
             assert entry is not None
@@ -46,6 +51,7 @@ class TestFileCertBackend:
         from src.backend.infrastructure.security.cert_store.backend_file import (
             FileCertBackend,
         )
+
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             (tmp_path / "a.pem").write_text("---A---")
@@ -60,6 +66,7 @@ class TestFileCertBackend:
         from src.backend.infrastructure.security.cert_store.backend_file import (
             FileCertBackend,
         )
+
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             backend = FileCertBackend(path=tmp_path)
@@ -74,6 +81,7 @@ class TestEnvInlineCertBackend:
         from src.backend.infrastructure.security.cert_store.backend_env import (
             EnvInlineCertBackend,
         )
+
         backend = EnvInlineCertBackend()
         assert backend is not None
 
@@ -82,6 +90,7 @@ class TestEnvInlineCertBackend:
         from src.backend.infrastructure.security.cert_store.backend_env import (
             EnvInlineCertBackend,
         )
+
         with patch.dict(os.environ, {"CERT_INLINE_MYCERT": "---INLINE---"}):
             backend = EnvInlineCertBackend()
             entry = await backend.get("mycert")
@@ -93,6 +102,7 @@ class TestEnvInlineCertBackend:
         from src.backend.infrastructure.security.cert_store.backend_env import (
             EnvInlineCertBackend,
         )
+
         with patch.dict(os.environ, {}, clear=True):
             backend = EnvInlineCertBackend()
             entry = await backend.get("nonexistent")
@@ -108,6 +118,7 @@ class TestFallbackChain:
         from src.backend.infrastructure.security.cert_store.fallback import (
             FallbackCertBackend,
         )
+
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             (tmp_path / "skb_api.pem").write_text("---FROM FILE---")
@@ -115,7 +126,7 @@ class TestFallbackChain:
             failing_vault.get = AsyncMock(return_value=None)
             file_backend = FileCertBackend(path=tmp_path)
             fallback = FallbackCertBackend(
-                primary=failing_vault, secondary=file_backend,
+                primary=failing_vault, secondary=file_backend
             )
             result = await fallback.get("skb_api")
         assert result is not None
@@ -132,13 +143,12 @@ class TestFallbackChain:
         from src.backend.infrastructure.security.cert_store.fallback import (
             FallbackCertBackend,
         )
+
         with tempfile.TemporaryDirectory() as tmp:
             with patch.dict(os.environ, {"CERT_INLINE_FALLBACK": "---ENV---"}):
                 empty_file = FileCertBackend(path=Path(tmp))
                 empty_env = EnvInlineCertBackend()
-                fallback = FallbackCertBackend(
-                    primary=empty_file, secondary=empty_env,
-                )
+                fallback = FallbackCertBackend(primary=empty_file, secondary=empty_env)
                 result = await fallback.get("fallback")
         assert result is not None
         assert "ENV" in result.pem

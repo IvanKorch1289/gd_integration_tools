@@ -7,6 +7,7 @@ Coverage:
 - Non-temp paths are still allowed.
 - Outside ``rpa.*`` workflow scope the hook is a no-op.
 """
+
 from __future__ import annotations
 
 import tempfile

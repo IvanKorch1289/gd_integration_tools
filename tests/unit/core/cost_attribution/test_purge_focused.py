@@ -11,9 +11,7 @@ from src.backend.core.cost_attribution import (
     ResourceType,
     get_cost_registry,
 )
-from src.backend.core.cost_attribution.attribution import (
-    reset_cost_attribution,
-)
+from src.backend.core.cost_attribution.attribution import reset_cost_attribution
 
 
 @pytest.fixture(autouse=True)
@@ -34,16 +32,20 @@ class TestPurgeOlderThanBasic:
     def test_purge_removes_old_records(self) -> None:
         ca = CostAttribution()
         ca.record(
-            tenant_id="t1", route_id="r1",
+            tenant_id="t1",
+            route_id="r1",
             resource_type=ResourceType.LLM_TOKENS,
-            units=100, cost_usd=0.01,
+            units=100,
+            cost_usd=0.01,
         )
         # Manually set timestamp to past.
         ca._records[-1].timestamp = time.time() - 120
         ca.record(
-            tenant_id="t1", route_id="r1",
+            tenant_id="t1",
+            route_id="r1",
             resource_type=ResourceType.LLM_TOKENS,
-            units=100, cost_usd=0.01,
+            units=100,
+            cost_usd=0.01,
         )
         # New record has current timestamp.
         removed = ca.purge_older_than(seconds=60)
@@ -53,9 +55,11 @@ class TestPurgeOlderThanBasic:
     def test_purge_keeps_recent(self) -> None:
         ca = CostAttribution()
         ca.record(
-            tenant_id="t1", route_id="r1",
+            tenant_id="t1",
+            route_id="r1",
             resource_type=ResourceType.LLM_TOKENS,
-            units=100, cost_usd=0.01,
+            units=100,
+            cost_usd=0.01,
         )
         removed = ca.purge_older_than(seconds=60)
         assert removed == 0
@@ -65,9 +69,11 @@ class TestPurgeOlderThanBasic:
         ca = CostAttribution()
         for _ in range(3):
             ca.record(
-                tenant_id="t1", route_id="r1",
+                tenant_id="t1",
+                route_id="r1",
                 resource_type=ResourceType.LLM_TOKENS,
-                units=100, cost_usd=0.01,
+                units=100,
+                cost_usd=0.01,
             )
         # All records are "old".
         old_time = time.time() - 1000
@@ -82,18 +88,22 @@ class TestPurgeOlderThanBasic:
         # 2 old + 3 new.
         for _ in range(2):
             ca.record(
-                tenant_id="t1", route_id="r1",
+                tenant_id="t1",
+                route_id="r1",
                 resource_type=ResourceType.LLM_TOKENS,
-                units=100, cost_usd=0.01,
+                units=100,
+                cost_usd=0.01,
             )
         # Mark first 2 as old.
         for r in ca._records[:2]:
             r.timestamp = time.time() - 120
         for _ in range(3):
             ca.record(
-                tenant_id="t1", route_id="r1",
+                tenant_id="t1",
+                route_id="r1",
                 resource_type=ResourceType.LLM_TOKENS,
-                units=100, cost_usd=0.01,
+                units=100,
+                cost_usd=0.01,
             )
         removed = ca.purge_older_than(seconds=60)
         assert removed == 2
@@ -104,9 +114,11 @@ class TestPurgeOlderThanBasic:
         # Two records with known timestamps.
         for ts in [1000.0, 1000.0]:
             ca.record(
-                tenant_id="t1", route_id="r1",
+                tenant_id="t1",
+                route_id="r1",
                 resource_type=ResourceType.LLM_TOKENS,
-                units=100, cost_usd=0.01,
+                units=100,
+                cost_usd=0.01,
             )
             ca._records[-1].timestamp = ts
         # now=1100.0, seconds=60. threshold = 1100 - 60 = 1040.
@@ -117,9 +129,11 @@ class TestPurgeOlderThanBasic:
         # Two more records.
         for ts in [1000.0, 1000.0]:
             ca.record(
-                tenant_id="t1", route_id="r1",
+                tenant_id="t1",
+                route_id="r1",
                 resource_type=ResourceType.LLM_TOKENS,
-                units=100, cost_usd=0.01,
+                units=100,
+                cost_usd=0.01,
             )
             ca._records[-1].timestamp = ts
         # now=1050.0, seconds=60. threshold = 1050 - 60 = 990.
@@ -133,9 +147,11 @@ class TestPurgeEdgeCases:
         """seconds=0 → purge records with timestamp < now (effectively all)."""
         ca = CostAttribution()
         ca.record(
-            tenant_id="t1", route_id="r1",
+            tenant_id="t1",
+            route_id="r1",
             resource_type=ResourceType.LLM_TOKENS,
-            units=100, cost_usd=0.01,
+            units=100,
+            cost_usd=0.01,
         )
         # Record with timestamp slightly in past.
         ca._records[-1].timestamp = time.time() - 0.1
@@ -146,9 +162,11 @@ class TestPurgeEdgeCases:
         """seconds=-1 → purge all records older than now + 1 (always)."""
         ca = CostAttribution()
         ca.record(
-            tenant_id="t1", route_id="r1",
+            tenant_id="t1",
+            route_id="r1",
             resource_type=ResourceType.LLM_TOKENS,
-            units=100, cost_usd=0.01,
+            units=100,
+            cost_usd=0.01,
         )
         # All records are "in past" relative to now+1.
         removed = ca.purge_older_than(seconds=-1)
@@ -158,9 +176,11 @@ class TestPurgeEdgeCases:
         ca = CostAttribution()
         for _ in range(5):
             ca.record(
-                tenant_id="t1", route_id="r1",
+                tenant_id="t1",
+                route_id="r1",
                 resource_type=ResourceType.LLM_TOKENS,
-                units=100, cost_usd=0.01,
+                units=100,
+                cost_usd=0.01,
             )
         for r in ca._records:
             r.timestamp = time.time() - 100

@@ -1,6 +1,5 @@
 """Unit-тесты sequencing processors: Resequencer."""
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -20,7 +19,7 @@ def _ex(body: Any = None, headers: dict[str, Any] | None = None) -> Exchange[Any
 async def test_resequencer_emits_on_batch_size() -> None:
     """При достижении batch_size сообщения сортируются и выдаются."""
     proc = ResequencerProcessor(
-        correlation_key=lambda ex: "corr1", sequence_field="seq", batch_size=3,
+        correlation_key=lambda ex: "corr1", sequence_field="seq", batch_size=3
     )
     ctx = AsyncMock()
 
@@ -53,7 +52,7 @@ async def test_resequencer_uses_getattr() -> None:
             self.val = val
 
     proc = ResequencerProcessor(
-        correlation_key=lambda ex: "corr1", sequence_field="seq", batch_size=2,
+        correlation_key=lambda ex: "corr1", sequence_field="seq", batch_size=2
     )
     ctx = AsyncMock()
 

@@ -4,7 +4,6 @@
 across chunk boundaries.
 """
 
-
 from __future__ import annotations
 
 import pytest
@@ -25,7 +24,7 @@ async def test_stream_filter_passes_through_when_no_pii() -> None:
     """Без PII контент должен пройти без изменений (после flush буфера)."""
     chunks: list[str] = []
     async for chunk in stream_filter(
-        _stream("hello, ", "world ", "no email here"), PiiStreamPolicy(window_chars=8),
+        _stream("hello, ", "world ", "no email here"), PiiStreamPolicy(window_chars=8)
     ):
         chunks.append(chunk)
     result = "".join(chunks)

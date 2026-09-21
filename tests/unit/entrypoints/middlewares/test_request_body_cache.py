@@ -1,6 +1,5 @@
 """Unit tests for RequestBodyCacheMiddleware (cycle 52 pure ASGI)."""
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -57,6 +56,7 @@ def _make_scope(
 def _make_receive(body: bytes = b""):
     async def receive():
         return {"type": "http.request", "body": body, "more_body": False}
+
     return receive
 
 
@@ -69,7 +69,7 @@ class TestRequestBodyCacheMiddleware:
 
     @pytest.mark.asyncio
     async def test_bodyless_methods_skip(
-        self, middleware: RequestBodyCacheMiddleware,
+        self, middleware: RequestBodyCacheMiddleware
     ) -> None:
         """GET/HEAD/OPTIONS/DELETE/TRACE skip caching."""
         for method in ("GET", "HEAD", "OPTIONS", "DELETE", "TRACE"):
@@ -78,11 +78,7 @@ class TestRequestBodyCacheMiddleware:
             middleware.app = app
 
             send = AsyncMock()
-            await middleware(
-                _make_scope(method, "/path"),
-                _make_receive(b""),
-                send,
-            )
+            await middleware(_make_scope(method, "/path"), _make_receive(b""), send)
 
             # Нет body в scope state.
             scope = _make_scope(method, "/path")
@@ -90,7 +86,7 @@ class TestRequestBodyCacheMiddleware:
 
     @pytest.mark.asyncio
     async def test_content_length_too_large(
-        self, middleware: RequestBodyCacheMiddleware,
+        self, middleware: RequestBodyCacheMiddleware
     ) -> None:
         """Large Content-Length skips caching."""
         app = AsyncMock()
@@ -99,11 +95,7 @@ class TestRequestBodyCacheMiddleware:
 
         send = AsyncMock()
         await middleware(
-            _make_scope(
-                "POST",
-                "/path",
-                headers=[(b"content-length", b"2048")],
-            ),
+            _make_scope("POST", "/path", headers=[(b"content-length", b"2048")]),
             _make_receive(b"x" * 2048),
             send,
         )
@@ -117,7 +109,7 @@ class TestRequestBodyCacheMiddleware:
 
     @pytest.mark.asyncio
     async def test_normal_body_cached_and_replay_installed(
-        self, middleware: RequestBodyCacheMiddleware,
+        self, middleware: RequestBodyCacheMiddleware
     ) -> None:
         """Normal body cached в state['body'] + replay receive установлен."""
         app = AsyncMock()
@@ -141,11 +133,7 @@ class TestRequestBodyCacheMiddleware:
 
         send = AsyncMock()
         scope = _make_scope("POST", "/path")
-        await middleware(
-            scope,
-            _make_receive(b"hello"),
-            send,
-        )
+        await middleware(scope, _make_receive(b"hello"), send)
 
         # state['body'] кэширован.
         assert cached_body(scope) == b"hello"
@@ -159,7 +147,7 @@ class TestRequestBodyCacheMiddleware:
 
     @pytest.mark.asyncio
     async def test_body_exceeds_max_after_read(
-        self, middleware: RequestBodyCacheMiddleware,
+        self, middleware: RequestBodyCacheMiddleware
     ) -> None:
         """Body прочитан но > max: replay installed, NOT cached."""
         app = AsyncMock()
@@ -168,11 +156,7 @@ class TestRequestBodyCacheMiddleware:
 
         send = AsyncMock()
         scope = _make_scope("POST", "/path")
-        await middleware(
-            scope,
-            _make_receive(b"x" * 2048),
-            send,
-        )
+        await middleware(scope, _make_receive(b"x" * 2048), send)
 
         # Body > max → НЕ кэширован.
         assert cached_body(scope) is None
@@ -184,16 +168,14 @@ class TestRequestBodyCacheMiddleware:
 
     @pytest.mark.asyncio
     async def test_body_read_failure(
-        self, middleware: RequestBodyCacheMiddleware,
+        self, middleware: RequestBodyCacheMiddleware
     ) -> None:
         """Failure to read body passes through gracefully (cycle 52 invariant)."""
         app = AsyncMock()
 
         async def downstream(scope, receive, send):
             # НЕ consume body — receive() бросает, и мы просто return.
-            await send(
-                {"type": "http.response.start", "status": 200, "headers": []},
-            )
+            await send({"type": "http.response.start", "status": 200, "headers": []})
             await send({"type": "http.response.body", "body": b"ok"})
 
         app.side_effect = downstream
@@ -203,11 +185,7 @@ class TestRequestBodyCacheMiddleware:
             raise RuntimeError("recv error")
 
         send = AsyncMock()
-        await middleware(
-            _make_scope("POST", "/path"),
-            _bad_receive,
-            send,
-        )
+        await middleware(_make_scope("POST", "/path"), _bad_receive, send)
 
         # 200 от downstream (graceful fallback после receive error).
         start = _start_message(send)
@@ -215,33 +193,29 @@ class TestRequestBodyCacheMiddleware:
         assert start["status"] == 200
 
     def test_parse_content_length_valid(
-        self, middleware: RequestBodyCacheMiddleware,
+        self, middleware: RequestBodyCacheMiddleware
     ) -> None:
         """_parse_content_length returns int for valid header."""
-        scope = _make_scope(
-            "POST", "/path", headers=[(b"content-length", b"42")],
-        )
+        scope = _make_scope("POST", "/path", headers=[(b"content-length", b"42")])
         assert middleware._parse_content_length(scope) == 42
 
     def test_parse_content_length_missing(
-        self, middleware: RequestBodyCacheMiddleware,
+        self, middleware: RequestBodyCacheMiddleware
     ) -> None:
         """_parse_content_length returns None when header absent."""
         scope = _make_scope("POST", "/path", headers=[])
         assert middleware._parse_content_length(scope) is None
 
     def test_parse_content_length_invalid(
-        self, middleware: RequestBodyCacheMiddleware,
+        self, middleware: RequestBodyCacheMiddleware
     ) -> None:
         """_parse_content_length returns None for invalid value."""
-        scope = _make_scope(
-            "POST", "/path", headers=[(b"content-length", b"abc")],
-        )
+        scope = _make_scope("POST", "/path", headers=[(b"content-length", b"abc")])
         assert middleware._parse_content_length(scope) is None
 
     @pytest.mark.asyncio
     async def test_install_replay_receive(
-        self, middleware: RequestBodyCacheMiddleware,
+        self, middleware: RequestBodyCacheMiddleware
     ) -> None:
         """_install_replay_receive provides correct ASGI messages в scope."""
         scope = _make_scope("POST", "/path")
@@ -296,7 +270,7 @@ class TestRequestBodyCacheMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_passes_through_non_http_scope(
-        self, middleware: RequestBodyCacheMiddleware,
+        self, middleware: RequestBodyCacheMiddleware
     ) -> None:
         """Non-HTTP scope (websocket) пробрасывается без body caching."""
         app = AsyncMock()
@@ -309,9 +283,7 @@ class TestRequestBodyCacheMiddlewarePureASGI:
 
         send = AsyncMock()
         await middleware(
-            {"type": "websocket", "path": "/ws", "headers": []},
-            AsyncMock(),
-            send,
+            {"type": "websocket", "path": "/ws", "headers": []}, AsyncMock(), send
         )
 
         msgs = [c.args[0] for c in send.await_args_list]
@@ -319,7 +291,7 @@ class TestRequestBodyCacheMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_body_cached_in_state_dict(
-        self, middleware: RequestBodyCacheMiddleware,
+        self, middleware: RequestBodyCacheMiddleware
     ) -> None:
         """Cycle 52: cached body в state['body'] (не в request.state)."""
         app = AsyncMock()
@@ -328,18 +300,14 @@ class TestRequestBodyCacheMiddlewarePureASGI:
 
         send = AsyncMock()
         scope = _make_scope("POST", "/path")
-        await middleware(
-            scope,
-            _make_receive(b"hello"),
-            send,
-        )
+        await middleware(scope, _make_receive(b"hello"), send)
 
         # state['body'] кэширован.
         assert cached_body(scope) == b"hello"
 
     @pytest.mark.asyncio
     async def test_replay_receive_is_scope_receive_for_downstream(
-        self, middleware: RequestBodyCacheMiddleware,
+        self, middleware: RequestBodyCacheMiddleware
     ) -> None:
         """2026-08-14 fix (Task 4 unblock): scope['receive'] = replay_receive.
 
@@ -355,11 +323,7 @@ class TestRequestBodyCacheMiddlewarePureASGI:
         original_receive = _make_receive(b"hello")
         send = AsyncMock()
         scope = _make_scope("POST", "/path")
-        await middleware(
-            scope,
-            original_receive,
-            send,
-        )
+        await middleware(scope, original_receive, send)
 
         # 2026-08-14: scope["receive"] теперь replay_receive, не original.
         assert scope["receive"] is not original_receive
@@ -368,7 +332,7 @@ class TestRequestBodyCacheMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_downstream_app_receives_replay_receive(
-        self, middleware: RequestBodyCacheMiddleware,
+        self, middleware: RequestBodyCacheMiddleware
     ) -> None:
         """Downstream получает replay_receive как parameter (line 149 fix)."""
         received_receive = []
@@ -382,11 +346,7 @@ class TestRequestBodyCacheMiddlewarePureASGI:
 
         send = AsyncMock()
         scope = _make_scope("POST", "/path")
-        await middleware(
-            scope,
-            _make_receive(b"cached"),
-            send,
-        )
+        await middleware(scope, _make_receive(b"cached"), send)
 
         # Downstream получил replay_receive (тот же, что scope["receive"]).
         assert len(received_receive) == 1

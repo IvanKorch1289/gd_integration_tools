@@ -38,9 +38,7 @@ class TestModelRegistryFacadeAllExports:
     )
     def test_all_exports_accessible(self, symbol_name: str) -> None:
         """Каждый символ из ``__all__`` доступен через facade."""
-        assert hasattr(model_registry, symbol_name), (
-            f"Missing export: {symbol_name}"
-        )
+        assert hasattr(model_registry, symbol_name), f"Missing export: {symbol_name}"
         assert symbol_name in model_registry.__all__, (
             f"{symbol_name} not declared in __all__"
         )
@@ -52,7 +50,10 @@ class TestModelRegistryFacadeAllExports:
     def test_module_docstring_present(self) -> None:
         """Module docstring описывает AI Model Registry (MLflow + HF Hub)."""
         assert model_registry.__doc__ is not None
-        assert "Model" in model_registry.__doc__ or "registry" in model_registry.__doc__.lower()
+        assert (
+            "Model" in model_registry.__doc__
+            or "registry" in model_registry.__doc__.lower()
+        )
 
 
 @pytest.mark.unit

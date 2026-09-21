@@ -62,7 +62,7 @@ def _stub_broken_packages() -> None:
     module_level_stubs = {
         "src.backend.core.utils.task_registry.get_task_registry": MagicMock(),
         "src.backend.infrastructure.logging.factory.get_logger": MagicMock(
-            return_value=MagicMock(),
+            return_value=MagicMock()
         ),
     }
     for full_name, stub_obj in module_level_stubs.items():
@@ -104,7 +104,9 @@ def startup_module() -> ModuleType:
     _stub_broken_packages()
     # Pre-load outbox_setup.py (startup.py imports register_outbox_dispatcher from it).
     _outbox_setup = _load_isolated("outbox_setup.py")
-    sys.modules["src.backend.plugins.composition.lifecycle.outbox_setup"] = _outbox_setup
+    sys.modules["src.backend.plugins.composition.lifecycle.outbox_setup"] = (
+        _outbox_setup
+    )
     return _load_isolated("startup.py")
 
 
@@ -129,7 +131,7 @@ def lifespan_module(startup_module: ModuleType) -> ModuleType:
 
 
 def test_lifespan_reexports_startup_function(
-    lifespan_module: ModuleType, startup_module: ModuleType,
+    lifespan_module: ModuleType, startup_module: ModuleType
 ) -> None:
     """``lifespan._register_outbox_dispatcher`` ре-экспортируется из startup.
 

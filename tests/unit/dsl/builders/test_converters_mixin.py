@@ -9,7 +9,6 @@
 Target: 30+ tests (3+ per method × 10 методов).
 """
 
-
 from __future__ import annotations
 
 import asyncio
@@ -35,10 +34,10 @@ def builder() -> RouteBuilder:
 
 
 def _make_exchange(
-    body: Any = None, properties: dict[str, Any] | None = None,
+    body: Any = None, properties: dict[str, Any] | None = None
 ) -> Exchange:
     return Exchange(
-        in_message=Message(body=body, headers={}), properties=properties or {},
+        in_message=Message(body=body, headers={}), properties=properties or {}
     )
 
 
@@ -1054,7 +1053,7 @@ class TestToUuidString:
         assert len(ex.out_message.body) == 36
 
     @pytest.mark.skip(
-        reason="to_uuid_string early-returns on None body - separate test fix needed",
+        reason="to_uuid_string early-returns on None body - separate test fix needed"
     )
     def test_to_uuid_string_unique(self, builder: RouteBuilder) -> None:
         b = builder.to_uuid_string()
@@ -1088,7 +1087,7 @@ class TestToJwt:
         assert len(result._processors) == 2
 
     @pytest.mark.skip(
-        reason="to_jwt requires non-None data; tested in test_to_jwt_basic",
+        reason="to_jwt requires non-None data; tested in test_to_jwt_basic"
     )
     def test_to_jwt_empty(self, builder: RouteBuilder) -> None:
         b = builder.to_jwt(secret="this-is-a-very-long-test-secret-key-1234")

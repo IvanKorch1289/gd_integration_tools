@@ -30,9 +30,6 @@ from src.backend.infrastructure.cdc.debezium_events_backend import (
 from src.backend.infrastructure.cdc.listen_notify_backend import ListenNotifyCDCBackend
 from src.backend.infrastructure.cdc.poll_backend import PollCDCBackend
 
-
-
-
 # --- Paths ------------------------------------------------------------------
 
 
@@ -78,7 +75,7 @@ def test_debezium_exposes_full_lifecycle_methods() -> None:
         assert method is not None, f"DebeziumEventsCDCBackend.{method_name} missing"
         # subscribe/replay — async generators (yield); ack/close — coroutines.
         is_async = inspect.iscoroutinefunction(method) or inspect.isasyncgenfunction(
-            method,
+            method
         )
         assert is_async, (
             f"DebeziumEventsCDCBackend.{method_name} must be async "
@@ -112,7 +109,7 @@ def test_debezium_implements_parse_helper() -> None:
     # Unknown op → None (не-Дебезькиум payload)
     assert (
         parse_debezium_event(
-            {"op": "x", "source": {"table": "t"}}, kafka_offset=0, kafka_partition=0,
+            {"op": "x", "source": {"table": "t"}}, kafka_offset=0, kafka_partition=0
         )
         is None
     )
@@ -270,7 +267,7 @@ def test_architecture_no_stale_production_ready_for_poll_or_listen(
     """
     for fname in ("poll_backend.py", "listen_notify_backend.py"):
         row = next(
-            (ln for ln in architecture_cdc_section.splitlines() if fname in ln), None,
+            (ln for ln in architecture_cdc_section.splitlines() if fname in ln), None
         )
         assert row is not None, f"{fname} row missing"
         assert "production-ready" not in row, (
