@@ -80,6 +80,13 @@ jobs:
         # (например, dynamic exec, type comments).
         run: uv run python -m compileall -q src scripts tools
 
+      - name: Python-2 style except gate (check_python3_syntax)
+        # V22 §S17 DoD #2: запрет "except A, B:" без скобок. Под Python 3.14
+        # (PEP 758) это валидный tuple — compileall/gate его не ловит, поэтому
+        # отдельный стайл-гейт. Codemod: tools/codemods/fix_except_clause.py.
+        # Тот же таргет уже входит в make ci (make/prod.mk).
+        run: uv run python tools/checks/check_python3_syntax.py --root src/backend
+
       - name: isort check (best-effort)
         # isort может отсутствовать в окружении — не блокировать PR при этом.
         run: |
