@@ -44,7 +44,7 @@ def _resolve_event_bus_facade() -> Any:
         )
 
         return get_event_bus_facade_provider()
-    except ImportError, AttributeError, RuntimeError:
+    except (ImportError, AttributeError, RuntimeError):
         return None
 
 
