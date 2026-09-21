@@ -31,3 +31,7 @@ src/backend/entrypoints/websocket/ws_manager.py:62: unused variable 'action_pool
 src/backend/infrastructure/sources/telegram_webhook.py:147: unsatisfiable 'if' condition
 src/backend/plugins/composition/lifecycle/signals.py:60: unused variable 'signum'
 src/backend/services/storage/facade.py:85: unused variable 'multipart_threshold_bytes'
+# Аудит 2026-09-21 (CI lint restoration): параметры сохранены для контрактной
+# ясности сигнатуры, вызовы позиционные.
+src/backend/core/incident_analyst/analyst.py:433: unused variable 'hypothesis_title'
+src/backend/entrypoints/grpc/auto_servicer.py:277: unused variable 'input_type_name'
