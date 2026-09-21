@@ -122,7 +122,7 @@ def banking_transaction_hook(subject: str, context: dict[str, Any]) -> SecurityD
         )
         try:
             resolved = Path(file_path).resolve()
-        except OSError, ValueError:
+        except (OSError, ValueError):
             resolved = None
         if resolved is not None and any(
             str(resolved).startswith(p) for p in dangerous_paths
@@ -187,7 +187,7 @@ def rpa_browser_hook(subject: str, context: dict[str, Any]) -> SecurityDecision:
     if file_path:
         try:
             resolved = Path(file_path).resolve()
-        except OSError, ValueError:
+        except (OSError, ValueError):
             resolved = None
         if resolved is not None and any(
             resolved.is_relative_to(root) for root in _TEMP_ROOTS

@@ -74,7 +74,7 @@ async def run_cpu_bound[T](
         try:
             pickle.dumps(fn)
             picklable = True
-        except pickle.PicklingError, TypeError, AttributeError:
+        except (pickle.PicklingError, TypeError, AttributeError):
             picklable = False
         if not picklable:
             from src.backend.core.logging import get_logger
