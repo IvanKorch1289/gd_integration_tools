@@ -31,7 +31,7 @@ def _eval(
     e.status = status
     e.actual_latency_p99_ms = latency
     e.actual_error_rate = error_rate
-    e.tenant_slo = slo_ref if slo_ref is not None else MagicMock()
+    e.slo = slo_ref if slo_ref is not None else MagicMock()
     e.route_id = route_id
     return e
 
