@@ -267,3 +267,8 @@ src/backend/core/streaming_parser/parsers.py:230:0 get_json_parser
 src/backend/core/cost_attribution/attribution.py:212:0 generate_report
 src/backend/core/sla_cockpit/evaluator.py:245:0 period_seconds
 src/backend/core/sla_cockpit/evaluator.py:248:0 to_dict
+src/backend/core/rate_limiter/limiter.py:58:0 config
+src/backend/core/rate_limiter/limiter.py:128:0 config
+src/backend/core/rate_limiter/limiter.py:144:0 try_acquire
+src/backend/core/rate_limiter/limiter.py:174:0 available_tokens
+src/backend/core/rate_limiter/limiter.py:177:0 reset
