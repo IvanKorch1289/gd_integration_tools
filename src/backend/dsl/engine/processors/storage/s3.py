@@ -81,7 +81,7 @@ def _get_storage_facade(context: ExecutionContext) -> Any:
                     plugin=plugin,
                 )
             return facade
-    except (ImportError, AttributeError, KeyError):
+    except ImportError, AttributeError, KeyError:
         pass
 
     # Test fallback path — задокументированное layer violation.

@@ -114,7 +114,7 @@ class TenantMemoryStore:
         """Get value или default. No exception."""
         try:
             return self.get(tenant_id, key)
-        except (KeyError, PermissionError):
+        except KeyError, PermissionError:
             return default
 
     def delete(self, tenant_id: str, key: str) -> bool:
