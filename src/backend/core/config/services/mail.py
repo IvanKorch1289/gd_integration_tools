@@ -41,20 +41,21 @@ class MailSettings(BaseSettingsWithLoader):
         json_schema_extra={"example": True},
     )
     ca_bundle: Path | None = Field(
-        ...,
+        default=None,
         description="Путь к пользовательскому пакету CA сертификатов",
         json_schema_extra={"example": "/path/to/ca_bundle.crt"},
     )
 
     # Блок настроек аутентификации
     username: str = Field(
-        ...,
-        description="Имя пользователя для аутентификации SMTP",
+        default="",
+        description="Имя пользователя SMTP (пусто = без auth; консьюмеры "
+        "проверяют непустоту перед login)",
         json_schema_extra={"example": "user@example.com"},
     )
     password: str = Field(
-        ...,
-        description="Пароль для аутентификации SMTP",
+        default="",
+        description="Пароль SMTP (пусто = без auth)",
         json_schema_extra={"example": "securepassword123"},
     )
 
