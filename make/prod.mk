@@ -77,7 +77,7 @@ review-clones-diff:  ## Сравнить с baseline; fail при появлен
 check-grep-violations: check-env ## V22 §5: AST-aware fail-on запрещённые паттерны (8 правил)
 	$(UV_RUN) python tools/checks/check_grep_violations.py --root src/backend
 
-check-python3-syntax: check-env ## V22 §S17 DoD #2: запрет except A, B: без скобок (Python-2 стиль)
+check-python3-syntax: check-env ## ADR-0304: fail-closed AST-gate — каждый .py обязан разбираться
 	$(UV_RUN) python tools/checks/check_python3_syntax.py --root src/backend
 
 check-task-registry: check-env ## S17 K2 W3 (R-V15-11): orphan asyncio.create_task / ensure_future

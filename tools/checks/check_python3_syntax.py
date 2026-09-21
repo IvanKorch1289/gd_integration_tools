@@ -1,33 +1,26 @@
-"""CI-gate: запрет ``except A, B:`` без скобок (стиль Python 2).
+"""CI-gate: fail-closed проверка синтаксической разборимости ``*.py``.
 
 Контекст
 --------
-Python 3 интерпретирует ``except A, B:`` как ``except (A, B):`` — это **не**
-``SyntaxError``, но синтаксис идентичен Python-2-форме ``except A, B`` (где
-``B`` был биндингом). Двойственность маскирует ошибки code-review:
-читатель не отличает Python-2 «catch + bind» от Python-3 «catch tuple».
-PLAN.md V22 §S17 DoD #2 требует, чтобы такой стиль не встречался
-в репозитории. Codemod ``tools/codemods/fix_except_clause.py`` исправляет
-существующие случаи, а данный AST-gate предотвращает регрессии.
+Историческая версия этого гейта запрещала ``except A, B:`` без скобок
+(PLAN.md V22 §S17 DoD #2, стиль Python 2). **ADR-0304**: с PEP 758
+(Python 3.14, ``target-version = "py314"``) такая форма стала каноничной —
+``ruff format`` 0.16+ сам снимает скобки, поэтому прежнее правило
+вступало в бесконечный конфликт с блокирующим шагом format-check.
 
-Алгоритм
---------
-Обходит ``.py``-файлы под ``--root``, парсит каждый через ``ast.parse``
-и ищет ``ast.ExceptHandler`` с типом ``ast.Tuple``, у которого
-``col_offset`` указывает на токен после ``except`` (т.е. скобок нет).
-Поскольку ``ast`` не сохраняет факт «были ли скобки», используется
-сверка исходной строки: если первый non-space символ после
-``except`` — это ``(``, то скобки есть; иначе нарушение.
+Текущее правило: **каждый файл обязан разбираться ``ast.parse``**.
+Реальный Python-2 хазард (``except A, B as e:`` — биндинг вместо
+кортежа) — это ``SyntaxError`` и ловится здесь же, fail-closed.
+
+Выходные коды:
+    0 — все файлы разбираются;
+    1 — есть файлы с ``SyntaxError``.
 
 Использование
 -------------
 ::
 
     python tools/checks/check_python3_syntax.py [--root src/backend] [--json]
-
-Выходные коды:
-    0 — нарушений не найдено;
-    1 — есть строки в стиле ``except A, B:`` без скобок.
 """
 
 from __future__ import annotations
@@ -35,14 +28,23 @@ from __future__ import annotations
 import argparse
 import ast
 import json
-import re
 import sys
 from collections.abc import Iterator
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-RULE_EXCEPT_TUPLE_NO_PAREN = "except-tuple-no-paren"
 
+@dataclass(frozen=True, slots=True)
+class Violation:
+    """Файл, не разбирающийся ``ast.parse`` (fail-closed)."""
+
+    file: str
+    line: int
+    rule: str
+    message: str
+
+
+RULE_SYNTAX_PARSE_FAILED = "syntax-parse-failed"
 
 _SKIP_DIRS: frozenset[str] = frozenset(
     {
@@ -59,108 +61,34 @@ _SKIP_DIRS: frozenset[str] = frozenset(
     }
 )
 
-# После ``except`` (с возможными whitespace и backslash-переносами)
-# первый non-space символ должен быть ``(``. Любой другой → нарушение,
-# если AST-тип — ``Tuple``. Multi-line edge-case через backslash
-# (``except \\\n    (...)``) маловероятен, но возможен — поэтому
-# исходный сегмент сначала собирается по диапазону строк handler.lineno
-# .. handler.type.lineno и нормализуется (склейка backslash-переносов).
-_EXCEPT_PAREN_RE = re.compile(r"except\s*\(")
-_BACKSLASH_NEWLINE_RE = re.compile(r"\\\s*\n")
-
-
-@dataclass(frozen=True, slots=True)
-class Violation:
-    """Одно нарушение стиля ``except A, B:``.
-
-    Атрибуты:
-        file: путь к файлу (как строка для JSON-сериализации);
-        line: 1-based номер строки с ``except``;
-        rule: идентификатор правила;
-        message: человекочитаемое описание + ссылка на codemod.
-    """
-
-    file: str
-    line: int
-    rule: str
-    message: str
-
 
 def _is_python_2_style(source_lines: list[str], handler: ast.ExceptHandler) -> bool:
-    """Проверить, есть ли скобки вокруг tuple-эксепшена.
+    """Устарело: оставлено для совместимости импортов. Всегда ``False``.
 
-    Возвращает ``True``, если ``handler.type`` — это tuple **без**
-    круглых скобок. Используется regex по исходной строке вместо
-    проверки AST (``ast`` не различает обёрнутый и не-обёрнутый tuple).
-
-    Если ``except`` и сам tuple разнесены по строкам через backslash-
-    перенос (``except \\<NL> (A, B):``), исходный сегмент собирается
-    по диапазону строк ``handler.lineno .. handler.type.lineno`` и
-    backslash-переносы нормализуются в пробел перед regex-проверкой.
+    Раньше детектировал tuple-эксепшен без скобок; ADR-0304 отменил
+    правило — форма канонична под PEP 758 и производится ``ruff format``.
     """
-    if not isinstance(handler.type, ast.Tuple):
-        return False
-    lineno = handler.lineno
-    if lineno < 1 or lineno > len(source_lines):
-        return False
-    type_lineno = getattr(handler.type, "lineno", lineno)
-    upper = max(type_lineno, lineno)
-    segment = "\n".join(source_lines[lineno - 1 : upper])
-    normalized = _BACKSLASH_NEWLINE_RE.sub(" ", segment)
-    return _EXCEPT_PAREN_RE.search(normalized) is None
+    return False
 
 
 def check_file(path: Path) -> list[Violation]:
-    """Распарсить файл и вернуть найденные нарушения."""
+    """Проверить, что файл разбирается ``ast.parse`` (fail-closed)."""
     try:
         source = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError):
+    except OSError, UnicodeDecodeError:
         return []
-    source_lines = source.splitlines()
-    violations: list[Violation] = []
-
     try:
-        tree = ast.parse(source, filename=str(path))
-    except SyntaxError:
-        # Python 3.13+ превращает ``except A, B:`` в SyntaxError.
-        # Fallback: нормализуем backslash-переносы и ищем паттерн через regex.
-        normalized = _BACKSLASH_NEWLINE_RE.sub(" ", source)
-        for i, line in enumerate(normalized.splitlines(), start=1):
-            if re.search(
-                r"except\s+[A-Za-z_][A-Za-z0-9_.]*\s*,\s*[A-Za-z_][A-Za-z0-9_.]*\s*:",
-                line,
-            ):
-                violations.append(
-                    Violation(
-                        file=str(path),
-                        line=i,
-                        rule=RULE_EXCEPT_TUPLE_NO_PAREN,
-                        message=(
-                            "except A, B: без скобок (Python-2 стиль); "
-                            "оберните в кортеж: except (A, B):. Авто-фикс: "
-                            "python -m tools.codemods.fix_except_clause <path>"
-                        ),
-                    )
-                )
-        return violations
-
-    for node in ast.walk(tree):
-        if not isinstance(node, ast.ExceptHandler):
-            continue
-        if _is_python_2_style(source_lines, node):
-            violations.append(
-                Violation(
-                    file=str(path),
-                    line=node.lineno,
-                    rule=RULE_EXCEPT_TUPLE_NO_PAREN,
-                    message=(
-                        "except A, B: без скобок (Python-2 стиль); "
-                        "оберните в кортеж: except (A, B):. Авто-фикс: "
-                        "python -m tools.codemods.fix_except_clause <path>"
-                    ),
-                )
+        ast.parse(source, filename=str(path))
+    except SyntaxError as exc:
+        return [
+            Violation(
+                file=str(path),
+                line=exc.lineno or 0,
+                rule=RULE_SYNTAX_PARSE_FAILED,
+                message=f"SyntaxError: {exc.msg} — файл не разбирается AST",
             )
-    return violations
+        ]
+    return []
 
 
 def iter_python_files(root: Path) -> Iterator[Path]:
@@ -178,7 +106,7 @@ def iter_python_files(root: Path) -> Iterator[Path]:
 def main(argv: list[str] | None = None) -> int:
     """CLI: обойти ``--root`` и вывести нарушения; exit 1 если найдены."""
     parser = argparse.ArgumentParser(
-        description="AST-gate: запрет except A, B: без скобок (PLAN V22 §S17 DoD #2)"
+        description="Fail-closed AST-gate: каждый .py обязан разбираться (ADR-0304)"
     )
     parser.add_argument(
         "--root",
@@ -186,29 +114,20 @@ def main(argv: list[str] | None = None) -> int:
         default=Path("src/backend"),
         help="Директория или файл для проверки (default: src/backend)",
     )
-    parser.add_argument(
-        "--json",
-        action="store_true",
-        help="Вывод в JSON вместо человекочитаемого формата",
-    )
+    parser.add_argument("--json", action="store_true", help="JSON-вывод")
     args = parser.parse_args(argv)
 
-    all_violations: list[Violation] = []
+    violations: list[Violation] = []
     for path in iter_python_files(args.root):
-        all_violations.extend(check_file(path))
+        violations.extend(check_file(path))
 
     if args.json:
-        payload = [asdict(v) for v in all_violations]
-        print(json.dumps(payload, indent=2, ensure_ascii=False))
-    else:
-        for v in all_violations:
-            print(f"{v.file}:{v.line}: [{v.rule}] {v.message}")
-        if all_violations:
-            print(f"\n{len(all_violations)} violation(s) found.", file=sys.stderr)
-        else:
-            print("OK: no Python-2 style except clauses.")
+        print(json.dumps([asdict(v) for v in violations], ensure_ascii=False))
+    elif violations:
+        for v in violations:
+            print(f"{v.file}:{v.line}: [{v.rule}] {v.message}", file=sys.stderr)
 
-    return 1 if all_violations else 0
+    return 1 if violations else 0
 
 
 if __name__ == "__main__":

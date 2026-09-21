@@ -47,11 +47,11 @@ jobs:
         # терялся. Скоуп расширен: src extensions scripts tools tests.
         run: uv run python -m compileall -q src extensions scripts tools tests
 
-      - name: Python-2 style except gate (check_python3_syntax)
-        # V22 §S17 DoD #2: запрет "except A, B:" без скобок. Под Python 3.14
-        # (PEP 758) это валидный tuple — compileall/gate его не ловит, поэтому
-        # отдельный стайл-гейт. Codemod: tools/codemods/fix_except_clause.py.
-        # Тот же таргет уже входит в make ci (make/prod.mk).
+      - name: Fail-closed AST parse gate (check_python3_syntax)
+        # ADR-0304: каждый .py обязан разбираться ast.parse (ловит в т.ч.
+        # реальный py2-хазард "except A, B as e:" = SyntaxError).
+        # Форма "except A, B:" без скобок канонична (PEP 758, ruff format
+        # сам её производит) — прежний запрет снят как неисполнимый.
         run: uv run python tools/checks/check_python3_syntax.py --root src/backend
 
       - name: Ruff check (lint)

@@ -1,9 +1,8 @@
 """S73 W1 — TD-S64 / FINAL_REPORT_V2 P0-A closure: regression test для
 ``tools/fix_except_bug.py`` codemod.
 
-Гарантирует, что в ``src/`` НЕ осталось ``except A, B:`` (semantic bug,
-не syntax error в Python 3.14). Если новый код вводит такой pattern
-— этот тест fail'нет, сигнализируя о semantic bug.
+Гарантирует, что в ``src/`` НЕ осталось ``except A, B as e:``
+(биндинг без скобок — SyntaxError в Python 3.14, ADR-0304).
 """
 
 from __future__ import annotations
@@ -14,11 +13,11 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[3] / "src"
-# Match ``except X, Y, Z:`` (NOT in parens), X is upper-case identifier.
-# Исключает legitimate ``except X, e:`` (single-letter alias binding).
+# ADR-0304: ``except A, B:`` без скобок канонична (PEP 758, ruff format).
+# Реальный хазард — биндинг ``except A, B as e:`` (SyntaxError под 3.14).
 PATTERN = re.compile(
     r"^\s*except\s+[A-Z][a-zA-Z_]*(?:\.[A-Z][a-zA-Z_]+)*"
-    r"(?:\s*,\s*[A-Z][a-zA-Z_]*(?:\.[A-Z][a-zA-Z_]+)*)+\s*:",
+    r"(?:\s*,\s*[A-Z][a-zA-Z_]*(?:\.[A-Z][a-zA-Z_]+)*)+\s+as\s+",
     re.MULTILINE,
 )
 
