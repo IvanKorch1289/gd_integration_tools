@@ -298,6 +298,26 @@ def _is_in_type_checking_block(tree: ast.AST, target_lineno: int) -> bool:
     return False
 
 
+# Аудит 2026-09-21: файлы, не прошедшие AST-parse. Пропуск файла означал
+# «ложные 0 нарушений» на неполном графе импортов — gate обязан быть
+# fail-closed (см. _fail_on_parse_failures).
+_PARSE_FAILURES: list[str] = []
+
+
+def _fail_on_parse_failures() -> bool:
+    """Вернуть True и напечатать ошибку, если были непарсящиеся файлы."""
+    if not _PARSE_FAILURES:
+        return False
+    print(
+        f"[check_layers] FAIL-CLOSED: {len(_PARSE_FAILURES)} файл(ов) не удалось "
+        f"AST-распарсить, результат layer-check неполный (первые 5: "
+        f"{', '.join(_PARSE_FAILURES[:5])})"
+        + (" …" if len(_PARSE_FAILURES) > 5 else ""),
+        file=sys.stderr,
+    )
+    return True
+
+
 def _check_file(path: Path, root: Path) -> list[tuple[str, str, str]]:
     """Возвращает список нарушений вида (rel_path, importer_layer, imported)."""
     layer = _file_layer(path, root)
@@ -312,13 +332,13 @@ def _check_file(path: Path, root: Path) -> list[tuple[str, str, str]]:
     try:
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     except SyntaxError as e:
-        # R1.SYNTAX-WARN: emit warning to stderr so blind spot becomes
-        # visible. Do NOT fail CI here — file may be intentionally
-        # legacy/non-runnable, but layer-check cannot analyze it.
-        # Fix: resolve the SyntaxError separately (was: cdc/client.py:188 PEP 758).
+        # Fail-closed (аудит 2026-09-21, был R1.SYNTAX-WARN c пропуском):
+        # непарсящийся файл фиксируется в _PARSE_FAILURES, main() вернёт
+        # exit 3 вместо «ложных 0 нарушений».
+        _PARSE_FAILURES.append(path.as_posix())
         print(
-            f"[check_layers] WARNING: cannot AST-parse {path.as_posix()} ({e.msg} @ line {e.lineno}); "
-            f"layer check SKIPPED for this file",
+            f"[check_layers] cannot AST-parse {path.as_posix()} "
+            f"({e.msg} @ line {e.lineno})",
             file=sys.stderr,
         )
         return []
@@ -520,6 +540,9 @@ def main(argv: list[str] | None = None) -> int:
 
     keys = {_violation_key(v) for v in violations}
 
+    if _fail_on_parse_failures():
+        return 3
+
     if update:
         _save_allowlist(keys)
         print(f"Allowlist обновлён: {len(keys)} запис(и/ей) → {ALLOWLIST_PATH}")
@@ -530,6 +553,8 @@ def main(argv: list[str] | None = None) -> int:
         # Используем FULL repo scan (src/ + extensions/) для root-agnostic
         # pruning, т.к. allowlist содержит mixed entries из обоих roots.
         all_keys = _collect_all_violations()
+        if _fail_on_parse_failures():
+            return 3
         removed = _prune_allowlist(all_keys)
         print(f"Allowlist pruned: removed {removed} stale entries → {ALLOWLIST_PATH}")
         return 0
@@ -545,6 +570,9 @@ def main(argv: list[str] | None = None) -> int:
         stale = sorted(allowlist - all_violations)
     else:
         stale = []
+
+    if _fail_on_parse_failures():
+        return 3
 
     total_files = sum(1 for _ in root.rglob("*.py"))
     if not new_violations and not stale:
