@@ -30,6 +30,10 @@ __all__ = ("CachingDecorator",)
 # хранится в CacheEnvelope, MemoryBackend используется только как LRU-store.
 _MEMORY_BACKEND_GLOBAL_TTL = 10**9
 
+# TTL jitter (±10%): предотвращает массовое истечение ключей в один момент
+# (cache stampede). Внешний план P1 (2026-09-14).
+_TTL_JITTER_RATIO = 0.1
+
 
 class CachingDecorator:
     """Декоратор кэширования async-функций с multi-layer fallback.
@@ -59,6 +63,11 @@ class CachingDecorator:
         redis_cooldown_seconds: int = 10,
     ) -> None:
         self.expire = expire or settings.redis.cache_expire_seconds
+        # TTL jitter: ±10% от expire (cache stampede prevention, P1).
+        if self.expire and self.expire > 1:
+            jitter = int(self.expire * _TTL_JITTER_RATIO)
+            # S311: jitter для TTL — не crypto, random безопасен.
+            self.expire = max(1, self.expire + random.randint(-jitter, jitter))  # noqa: S311
         self.key_prefix = key_prefix or "cache"
         self.exclude_self = exclude_self
         self.renew_ttl = renew_ttl
