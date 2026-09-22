@@ -7,6 +7,7 @@ Wave 1.1: контракт для будущих ClamAV (unix socket / TCP) и H
 
 from __future__ import annotations
 
+import asyncio
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
@@ -26,6 +27,20 @@ class AntivirusScanResult:
     signature: str | None = None
     backend: str = ""
     latency_ms: float | None = None
+
+
+class AntivirusTimeoutError(asyncio.TimeoutError):
+    """Специализированная ошибка для AV-таймаутов.
+
+    Наследуется от :class:`asyncio.TimeoutError`, поэтому перехват
+    ``except TimeoutError`` остаётся работоспособным, но конкретный
+    exception type упрощает диагностику и метрики.
+    """
+
+    def __init__(self, message: str, *, backend: str = "unknown", timeout_s: float | None = None) -> None:
+        super().__init__(message)
+        self.backend = backend
+        self.timeout_s = timeout_s
 
 
 class AntivirusBackend(ABC):

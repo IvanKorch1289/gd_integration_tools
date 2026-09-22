@@ -51,6 +51,7 @@ from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.ai.skill_spec import SkillSpec  # S66 M2-#8 split
+from src.backend.core.async_utils.safe_wait import safe_wait_for
 from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -335,12 +336,10 @@ class SkillRegistry:
             )
 
         # Call — sync or async handler
-        import asyncio
-
         if inspect.iscoroutinefunction(fn):
             coro = fn(**kwargs)
             if timeout is not None and timeout > 0:
-                return await asyncio.wait_for(coro, timeout=timeout)
+                return await safe_wait_for(coro, timeout=timeout)
             return await coro
         return fn(**kwargs)
 

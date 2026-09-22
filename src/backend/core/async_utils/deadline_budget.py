@@ -234,7 +234,7 @@ class _DeadlineBudgetTimeoutCM:
         диагностики и метрик (path/original_timeout).
         """
         try:
-            result = await self._inner_cm.__aexit__(exc_type, exc_val, exc_tb)
+            await self._inner_cm.__aexit__(exc_type, exc_val, exc_tb)
         except asyncio.TimeoutError as e:
             raise DeadlineExpiredError(
                 f"deadline exceeded ({self._budget.original_timeout}s budget)",
@@ -247,4 +247,3 @@ class _DeadlineBudgetTimeoutCM:
                 f"deadline exceeded ({self._budget.original_timeout}s budget)",
                 original_timeout=self._budget.original_timeout,
             ) from exc_val
-        return result

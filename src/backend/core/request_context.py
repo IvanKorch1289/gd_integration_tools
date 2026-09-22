@@ -40,7 +40,10 @@ from __future__ import annotations
 
 from contextvars import ContextVar
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from src.backend.core.async_utils.deadline_budget import DeadlineBudget
 
 __all__ = (
     "REQUEST_CONTEXT_VAR",
@@ -66,6 +69,11 @@ class RequestContext:
         client_id: Идентификатор клиента (API key / mTLS CN).
         method: HTTP метод (``GET`` / ``POST`` / ...).
         path: Path запроса (без query).
+        deadline_budget: Optional deadline budget (ADR-0305). Устанавливается
+            middleware из ``X-Request-Timeout`` header (в секундах) или
+            из ``settings.secure.request_timeout`` (default). ``None``
+            означает «нет deadline propagation» (legacy / non-HTTP пути).
+            Подробнее см. ``core/async_utils/deadline_budget.py``.
 
     """
 
@@ -78,6 +86,7 @@ class RequestContext:
     tenant_id: str | None = None
     auth: dict[str, Any] | None = None
     client_id: str | None = None
+    deadline_budget: "DeadlineBudget | None" = None
 
     @classmethod
     def current(cls) -> RequestContext | None:
