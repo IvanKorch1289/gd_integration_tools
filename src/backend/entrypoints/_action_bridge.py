@@ -23,6 +23,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
+from src.backend.core.async_utils.safe_wait import safe_wait_for
+
 __all__ = ("BridgeResult", "dispatch_action_or_dsl", "is_dispatcher_enabled_for")
 
 
@@ -178,7 +180,7 @@ async def dispatch_action_or_dsl(
                 permissions=permissions,
             )
 
-        return await asyncio.wait_for(
+        bridge: BridgeResult = await safe_wait_for(
             _dispatch_dsl(
                 dsl_route_id=dsl_route_id,
                 payload=payload,
@@ -188,6 +190,7 @@ async def dispatch_action_or_dsl(
             ),
             timeout=float(action_timeout_s),
         )
+        return bridge
     except TimeoutError:
         return BridgeResult(
             success=False,

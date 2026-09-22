@@ -30,6 +30,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
 
+from src.backend.core.async_utils.safe_wait import safe_wait_for
 from src.backend.core.logging import get_logger
 
 __all__ = (
@@ -86,9 +87,9 @@ async def _http_get(url: str, timeout: float = 5.0) -> tuple[int, str]:
 
 async def _tcp_connect(host: str, port: int, timeout: float = 5.0) -> None:
     """Установить TCP-соединение и сразу закрыть."""
-    _, writer = await asyncio.wait_for(
-        asyncio.open_connection(host, port), timeout=timeout
-    )
+    _, writer = await safe_wait_for(
+        asyncio.open_connection(host, port), timeout=timeout, operation="_tcp_connect"
+    )  # type: ignore[misc]  # reraise=True гарантирует non-None
     writer.close()
     await writer.wait_closed()
 
@@ -252,8 +253,10 @@ async def _check_kafka_schema_registry() -> ProcessorHealthResult:
                 reason="schema_registry_url не настроен",
                 latency_ms=(time.monotonic() - start) * 1000,
             )
-        code, _ = await asyncio.wait_for(
-            _http_get(f"{registry_url.rstrip('/')}/subjects"), timeout=5.0
+        code, _ = await safe_wait_for(  # type: ignore[misc]  # reraise=True
+            _http_get(f"{registry_url.rstrip('/')}/subjects"),
+            timeout=5.0,
+            operation="kafka_schema_registry",
         )
         if code >= 300:
             return ProcessorHealthResult(
@@ -297,7 +300,9 @@ async def _check_temporal_server() -> ProcessorHealthResult:
             port = 7233
         else:
             port = int(port_str)
-        await asyncio.wait_for(_tcp_connect(host, port), timeout=5.0)
+        await safe_wait_for(
+            _tcp_connect(host, port), timeout=5.0, operation="temporal_server"
+        )
         return ProcessorHealthResult(
             processor_name="temporal_server",
             ok=True,
