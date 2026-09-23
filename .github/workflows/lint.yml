@@ -47,6 +47,13 @@ jobs:
         # терялся. Скоуп расширен: src extensions scripts tools tests.
         run: uv run python -m compileall -q src extensions scripts tools tests
 
+      - name: DSL stub drift gate (RouteBuilder/WorkflowBuilder .pyi vs runtime)
+        # W3 P0-5 (cycle 152): drift между runtime и рукописным .pyi привёл к
+        # 1739 лишних строк в base.pyi. После regen base.pyi 3476→1737 LOC.
+        # Этот gate блокирует merge при любом drift — regenerate через
+        # `make dsl-stubs` локально. См. ADR-0310.
+        run: uv run python tools/gen_dsl_stubs.py --check
+
       - name: Fail-closed AST parse gate (check_python3_syntax)
         # ADR-0304: каждый .py обязан разбираться ast.parse. Py2-pattern
         # ``except A, B:`` формально валиден на Py3.10+ (PEG-парсер

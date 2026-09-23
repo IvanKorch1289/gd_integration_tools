@@ -3937,3 +3937,46 @@ rg '_legacy' src/backend/dsl/engine/processors/eip/reliability/ -g '!*test*'
 - ✅ Тесты зелёные (16/16).
 - ✅ compileall + syntax check зелёные.
 - ⏭️ W3 P0-4 Phase 2B (bulk-DEPRECATE после telemetry) — отдельный wave.
+
+## W3 P0-5: RouteBuilder/WorkflowBuilder .pyi drift fix (2026-09-23, Sprint 12 cycle 152)
+
+MINIMAX W3 P0-5: drift между runtime и рукописным `.pyi` stub'ом.
+
+**Baseline**:
+- `src/backend/dsl/builders/base.pyi` = 3476 LOC (110 KB), 418 def
+- `src/backend/dsl/workflow/builder.pyi` = 303 LOC
+- Runtime `RouteBuilder` = 422 public methods (через `dir()`)
+- Drift в обоих stub'ах подтверждён `tools/gen_dsl_stubs.py --check`
+
+**Решение** (ADR-0310):
+
+1. **Регенерация**: `uv run python tools/gen_dsl_stubs.py` —
+   runtime introspection через `inspect.signature` + `typing.get_type_hints`.
+2. **Diff summary**:
+   - `base.pyi`: 3476 → 1737 LOC (**−1739**)
+   - `builder.pyi`: 303 → 156 LOC (**−147**)
+   - **Total: −1886 LOC** boilerplate устранено.
+3. **Runtime match**: 418 stub def vs 422 runtime public (4 dunder/edge cases).
+4. **CI enforcement**: `.github/workflows/lint.yml` дополнен blocking gate
+   `DSL stub drift gate` через `uv run python tools/gen_dsl_stubs.py --check`.
+   Запускается после `compileall`, до `Ruff` (per синтаксис-first pattern).
+
+**Verification (Python 3.14.4 + uv)**:
+
+```
+uv run python tools/gen_dsl_stubs.py --check  → exit 0 (drift устранён)
+uv run python tools/gen_dsl_stubs.py          → exit 0 (regen OK)
+
+# Files changed:
+src/backend/dsl/builders/base.pyi              -1739 LOC
+src/backend/dsl/workflow/builder.pyi           -147 LOC
+.github/workflows/lint.yml                     +12 LOC (CI gate)
+```
+
+**Cycle 152 итог (W3 P0-5)**:
+
+- ✅ .pyi drift устранён (−1886 LOC).
+- ✅ Stub auto-generated из runtime (нет ручного drift).
+- ✅ CI gate блокирует merge при drift.
+- ✅ ADR-0310 создан (103 ADRs total).
+- ⏭️ W4 P1-6 (aiocache research): ~681 LOC самописных cache-декораторов.

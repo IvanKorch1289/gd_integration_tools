@@ -1,5 +1,42 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W3 P0-5: .pyi drift fix + CI enforcement gate
+
+### refactor(dsl): RouteBuilder/WorkflowBuilder .pyi drift устранён (1886 LOC)
+
+MINIMAX W3 P0-5: устранён drift между runtime и рукописным `.pyi` stub'ом.
+
+**Что было**:
+- `src/backend/dsl/builders/base.pyi` = 3476 LOC (110 KB), 418 def — но
+  содержал ручной boilerplate, рассинхронизированный с runtime.
+- `src/backend/dsl/workflow/builder.pyi` = 303 LOC — аналогично.
+- `tools/gen_dsl_stubs.py` существовал, но не был подключён в CI.
+
+**Что сделано**:
+- `uv run python tools/gen_dsl_stubs.py` регенерировал оба stub'а через
+  runtime introspection (`inspect.signature` + `typing.get_type_hints`):
+    - `base.pyi`: 3476 → **1737 LOC** (−1739, 49% reduction)
+    - `builder.pyi`: 303 → **156 LOC** (−147, 48% reduction)
+    - **Total: −1886 LOC** boilerplate устранено.
+- Runtime `RouteBuilder` имеет 422 public methods; новый stub — 418 def
+  (4 dunder/edge cases, acceptable).
+- `.github/workflows/lint.yml`: добавлен blocking gate
+  `DSL stub drift gate (RouteBuilder/WorkflowBuilder .pyi vs runtime)`
+  через `uv run python tools/gen_dsl_stubs.py --check`. Любой будущий
+  drift заблокирует merge.
+
+### Verification
+
+```
+uv run python tools/gen_dsl_stubs.py --check  → exit 0 (drift устранён)
+uv run python tools/gen_dsl_stubs.py          → exit 0 (regen OK)
+.github/workflows/lint.yml                    → +12 LOC (new gate)
+```
+
+Refs: MINIMAX W3 P0-5, ADR-0310, cycle 152.
+
+---
+
 ## [Unreleased] — 2026-09-23 — W3 P0-4 Phase 2A: rename `_legacy.py` → `common.py`
 
 ### refactor(eip/reliability): misleading `_legacy.py` → `common.py` + dead-code cleanup
