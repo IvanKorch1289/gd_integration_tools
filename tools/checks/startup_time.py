@@ -52,12 +52,31 @@ def measure_import(module: str) -> float:
     Запускает изолированный python-процесс, чтобы не использовать
     cached модули родителя. Возвращает время импорта в секундах;
     ``float('inf')`` если subprocess failed.
+
+    Fix (cycle 158+ bug): subprocess stdout был загрязнён Vault
+    structlog output (hvac missing → repeated error logging при cold
+    import config loader). ``float(stdout.strip())`` падал с
+    ValueError → ``inf`` для всех 7 critical modules. Новый подход:
+
+    1. В subprocess: отключаем Vault source через env var +
+       перенаправляем structlog в stderr.
+    2. Marker-based extraction: subprocess prints
+       ``STARTUP_TIME_MARKER:<float>`` на last line, parent parses.
+    3. ``-X importtime`` НЕ используем — overhead parsingа в разы больше
+       самого import time и собьёт baseline.
     """
     script = (
-        "import time, sys\n"
+        "import time, sys, os\n"
+        # Disable Vault env-flag + suppress structlog (writes to stdout
+        # через ConsoleRenderer).
+        "os.environ.setdefault('SEC_VAULT_ENABLED', 'false')\n"
+        "os.environ.setdefault('STRUCTLOG_CONSOLE', 'stderr')\n"
         "start = time.monotonic()\n"
         f"import {module}\n"
-        "sys.stdout.write(f'{time.monotonic() - start:.4f}')\n"
+        "elapsed = time.monotonic() - start\n"
+        # Marker-based output to avoid stdout pollution from structlog/etc.
+        "sys.stdout.write(f'STARTUP_TIME_MARKER:{elapsed:.4f}\\n')\n"
+        "sys.stdout.flush()\n"
     )
     proc = subprocess.run(  # noqa: S603  # trusted argv (controlled by tool, shell=False default)
         [sys.executable, "-c", script], capture_output=True, text=True, timeout=30
@@ -65,9 +84,18 @@ def measure_import(module: str) -> float:
     if proc.returncode != 0:
         sys.stderr.write(f"ERROR importing {module}: {proc.stderr}\n")
         return float("inf")
+    # Marker-based extraction: find last line matching MARKER pattern.
+    marker_prefix = "STARTUP_TIME_MARKER:"
+    for line in proc.stdout.splitlines():
+        if line.startswith(marker_prefix):
+            try:
+                return float(line[len(marker_prefix):])
+            except ValueError:
+                continue
+    # Fallback: legacy behavior (if no marker found, try raw parse)
     try:
-        return float(proc.stdout.strip())
-    except ValueError:
+        return float(proc.stdout.strip().splitlines()[-1])
+    except (ValueError, IndexError):
         return float("inf")
 
 
