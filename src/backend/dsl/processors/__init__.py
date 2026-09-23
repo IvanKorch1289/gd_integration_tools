@@ -69,8 +69,21 @@ from src.backend.dsl.engine.processors.idp_pipeline_processor import (
     validate_result,
 )
 
-# SagaLRA остаётся legacy (другая реализация, Phase 2 ADR).
-from src.backend.dsl.processors.saga_lra_processor import SagaLRAProcessor
+# W2 P0-3 Phase 2: SagaLRAProcessor canonical — saga_lra_processor subpackage
+# (mixin-based, state machine с 5 states + SagaCompensationError/SagaLRAError).
+# Это ДРУГАЯ реализация, не дубликат current saga_lra.py (single-file).
+from src.backend.dsl.engine.processors.saga_lra_processor import (
+    SagaLRAProcessor,
+    SagaLRAError,
+    SagaCompensationError,
+    SagaState,
+    SagaStepTimeoutError,
+    STATE_RUNNING,
+    STATE_COMPLETED,
+    STATE_FAILED,
+    STATE_COMPENSATING,
+    STATE_COMPENSATED,
+)
 
 __all__ = (
     "BatchProcessor",
@@ -91,7 +104,16 @@ __all__ = (
     "QueryBus",
     "ReflectionLoopProcessor",
     "RouterSpecialistProcessor",
+    "STATE_COMPENSATED",
+    "STATE_COMPENSATING",
+    "STATE_COMPLETED",
+    "STATE_FAILED",
+    "STATE_RUNNING",
+    "SagaCompensationError",
+    "SagaLRAError",
     "SagaLRAProcessor",
+    "SagaState",
+    "SagaStepTimeoutError",
     "StranglerFigProcessor",
     "classify_document",
     "extract_fields",

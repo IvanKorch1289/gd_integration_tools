@@ -1,0 +1,96 @@
+"""SagaLRAProcessor package (S58 W2 decomp from saga_lra_processor.py 587 LOC).
+
+9 methods decomposed в 4 mixin files (3 small classes в state.py):
+- ``state.py``: SagaState, SagaLRAError, SagaCompensationError
+- ``core_mixin.py`` (3): __init__, _set_state, _invoke
+- ``lifecycle_mixin.py`` (2): _run_action, _run_compensation
+- ``serialization_mixin.py`` (2): _normalize_steps, _publish_result
+- ``execution_mixin.py`` (2): process (BIG 118 LOC), to_spec
+
+Backward-compat: ``from src.backend.dsl.engine.processors.saga_lra_processor import SagaLRAProcessor`` works.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING as TYPE_CHECKING
+
+if TYPE_CHECKING:
+    pass
+from typing import TYPE_CHECKING as TYPE_CHECKING
+
+from src.backend.core.logging import get_logger as get_logger
+
+if TYPE_CHECKING:
+    pass
+
+
+_lra_logger = get_logger("dsl.saga_lra_processor")
+
+# ── State machine constants ────────────────────────────────────────────
+
+#: Terminal success state.
+STATE_COMPLETED = "completed"
+#: Transient state during compensation.
+STATE_COMPENSATING = "compensating"
+#: All compensations ran successfully.
+STATE_COMPENSATED = "compensated"
+#: At least one compensation itself failed.
+STATE_FAILED = "failed"
+#: Active forward execution.
+STATE_RUNNING = "running"
+
+# All known states (used for validation).
+_VALID_STATES = frozenset(
+    {
+        STATE_RUNNING,
+        STATE_COMPLETED,
+        STATE_COMPENSATING,
+        STATE_COMPENSATED,
+        STATE_FAILED,
+    }
+)
+
+
+from src.backend.dsl.engine.processors.saga_lra_processor.core_mixin import (
+    CoreMixin,  # S58 W2: MRO
+    SagaStepTimeoutError,  # W2 P0-3 Phase 2: re-export
+)
+from src.backend.dsl.engine.processors.saga_lra_processor.execution_mixin import (
+    ExecutionMixin,  # S58 W2: MRO
+)
+from src.backend.dsl.engine.processors.saga_lra_processor.lifecycle_mixin import (
+    LifecycleMixin,  # S58 W2: MRO
+)
+from src.backend.dsl.engine.processors.saga_lra_processor.serialization_mixin import (
+    SerializationMixin,  # S58 W2: MRO
+)
+from src.backend.dsl.engine.processors.saga_lra_processor.state import (
+    SagaCompensationError,  # S58 W2: re-export
+    SagaLRAError,  # S58 W2: re-export
+    SagaState,  # S58 W2: re-export
+)
+
+__all__ = (
+    "STATE_COMPENSATED",
+    "STATE_COMPENSATING",
+    "STATE_COMPLETED",
+    "STATE_FAILED",
+    "STATE_RUNNING",
+    "SagaCompensationError",
+    "SagaLRAError",
+    "SagaLRAProcessor",
+    "SagaState",
+    "SagaStepTimeoutError",
+)
+
+
+class SagaLRAProcessor(CoreMixin, LifecycleMixin, SerializationMixin, ExecutionMixin):
+    """Saga LRA processor (4 mixins = 6 methods + 3 core)."""
+
+    # S159 W4: removed __slots__ = (). Python's __slots__ is silently
+    # ignored when any parent class in MRO has __dict__ (BaseProcessor
+    # has none, but the mixin chain introduces __dict__). This caused
+    # 'super().__init__(name=...)' to fail with AttributeError.
+    # Per Deep Research P2 (VERIFY > TRUST): the test contract requires
+    # self.name to be settable. Ponytail default: remove the silent
+    # trap instead of chasing parent __slots__ propagation.

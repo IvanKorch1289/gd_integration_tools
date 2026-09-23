@@ -1,5 +1,73 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W2 P0-3 Phase 2: SagaLRA Variant A — migrate legacy mixin-based subpackage
+
+### refactor(dsl): W2 P0-3 Phase 2 — SagaLRA canonical subpackage migration (Variant A)
+
+MINIMAX W2 P0-3 Phase 2 (cycle 152): SagaLRA — **другая реализация**
+(mixin-based, state machine с 5 states), не дубликат current saga_lra.py.
+Принят Variant A: migrate legacy subpackage в canonical location.
+
+**Decision matrix**:
+- Variant A (chosen): migrate legacy `saga_lra_processor/` → `engine.processors.saga_lra_processor/`
+  subpackage. Keep current `saga_lra.py` для production critical path.
+- Variant B (rejected): deprecate legacy → current. Ломает 37 pre-existing тестов.
+- Variant C (rejected): coexistence без migration. Не выполняет W2 P0-3 DoD.
+
+**Изменения**:
+
+* **canonical subpackage** (7 файлов, ~1100 LOC) в
+  `src/backend/dsl/engine/processors/saga_lra_processor/`:
+  - `core_mixin.py` (3): `__init__`, `_set_state`, `_invoke`,
+    `SagaStepTimeoutError(asyncio.TimeoutError)`, state constants.
+  - `execution_mixin.py` (2): `process`, `to_spec`.
+  - `lifecycle_mixin.py` (2): `_run_action`, `_run_compensation`.
+  - `serialization_mixin.py` (2): `_normalize_steps`, `_publish_result`.
+  - `state.py`: `SagaState`, `SagaLRAError`, `SagaCompensationError`.
+  - `_protocol.py`: `_SagaLRAProcessorProtocol`.
+  - `__init__.py`: `SagaLRAProcessor(CoreMixin, LifecycleMixin,
+    SerializationMixin, ExecutionMixin)` + 10 re-exports (states +
+    exceptions + SagaState + SagaStepTimeoutError).
+
+* **internal imports** в 6 файлах обновлены на canonical path.
+
+* **legacy shim** в `src/backend/dsl/processors/saga_lra_processor/__init__.py`
+  с `__getattr__` lazy proxy + DeprecationWarning.
+
+* **`src/backend/dsl/processors/__init__.py`** обновлён — SagaLRA через
+  canonical path + 10 names в `__all__`.
+
+* **current `saga_lra.py` НЕ изменён** — production critical path
+  (`dsl/builders/saga_lra.py`) сохранён. Deadline integration
+  из ADR-0308 (W2 prerequisite) сохранён.
+
+* **`tests/unit/dsl/processors/test_w2_p0_3_phase2_saga_lra.py`**
+  (новый, ~165 строк, 13 тестов): identity checks + MRO verification +
+  distinctness check + hub no-warning check.
+
+* **`docs/adr/0316-w2-p0-3-phase2-saga-lra-decision.md`** (новый, ~245 строк):
+  ADR с decision matrix + Variant A обоснование.
+
+* **`docs/adr/INDEX.md`**: ADR-0316 зарегистрирован (109 ADRs total).
+
+### Verification
+
+```
+compileall -q src/ extensions/ scripts/ tools/ tests/  → exit 0
+uv run python -m pytest tests/unit/dsl/processors/test_w2_p0_3_phase2_saga_lra.py
+  → 13 passed
+uv run python -m pytest tests/unit/dsl/processors/test_saga_lra_processor.py
+  → 37 passed (pre-existing, regression-clean)
+uv run python -m pytest tests/unit/dsl/processors/ -q
+  → 348 passed, 9 warnings
+ruff check --select F401,F841,F811,E9                   → All checks passed!
+```
+
+Refs: MINIMAX W2 P0-3, ADR-0313, ADR-0314, ADR-0315, ADR-0308, ADR-0316,
+cycle 152.
+
+---
+
 ## [Unreleased] — 2026-09-23 — W2 P0-3 Phase 1C: 2 subpackages migration (event_store + idp_pipeline_processor)
 
 ### refactor(dsl): 2 subpackages consolidated (W2 P0-3 Phase 1C)
