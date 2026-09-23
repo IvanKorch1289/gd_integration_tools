@@ -321,6 +321,20 @@ def _fail_on_parse_failures() -> bool:
 def _check_file(path: Path, root: Path) -> list[tuple[str, str, str]]:
     """Возвращает список нарушений вида (rel_path, importer_layer, imported)."""
     layer = _file_layer(path, root)
+    # Fail-closed (аудит 2026-09-21, post-fix): парсим AST ДО early return
+    # для layer=None/plugins. Раньше файлы вне known layers тихо возвращали
+    # [] без проверки синтаксиса — это маскировало регрессии (159-файловая
+    # except A, B: проблема была видна только через отдельный gate).
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    except SyntaxError as e:
+        _PARSE_FAILURES.append(path.as_posix())
+        print(
+            f"[check_layers] cannot AST-parse {path.as_posix()} "
+            f"({e.msg} @ line {e.lineno})",
+            file=sys.stderr,
+        )
+        return []
     if layer is None or layer == PLUGINS_LAYER:
         return []
     # S110 W1: test files inside extensions/ are allowed to import
@@ -328,19 +342,6 @@ def _check_file(path: Path, root: Path) -> list[tuple[str, str, str]]:
     # live in services/ for example). Production extension code still
     # must follow core-only rule.
     if layer == EXTENSIONS_LAYER and "/tests/" in str(path.as_posix()):
-        return []
-    try:
-        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-    except SyntaxError as e:
-        # Fail-closed (аудит 2026-09-21, был R1.SYNTAX-WARN c пропуском):
-        # непарсящийся файл фиксируется в _PARSE_FAILURES, main() вернёт
-        # exit 3 вместо «ложных 0 нарушений».
-        _PARSE_FAILURES.append(path.as_posix())
-        print(
-            f"[check_layers] cannot AST-parse {path.as_posix()} "
-            f"({e.msg} @ line {e.lineno})",
-            file=sys.stderr,
-        )
         return []
     violations: list[tuple[str, str, str]] = []
     rel = str(path.as_posix())
