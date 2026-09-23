@@ -4637,3 +4637,72 @@ xxx, placeholder, TODO, fixme (regex-list).
 **Решение**: стратегический анализ валиден для архитектурных улучшений,
 но **не для синтаксической регрессии** — её нет в текущем HEAD.
 
+
+---
+
+## W11 P0-3: Configuration matrix — required secrets & unknown vars (2026-09-23, cycle 157)
+
+**Задача**: расширить W11 P0-2 (ADR-0335) для закрытия оставшихся configuration
+matrix gaps из стратегического анализа:
+- Все обязательные prod-параметры заданы (no hidden fallback)
+- Required secrets в .env.example (bootstrap credentials)
+- Неизвестные переменные запрещены (typo detection)
+
+**Pre-existing bugs найдены и исправлены**:
+1. `CONFIG_DIR = PROJECT_ROOT / "src" / "core" / "config"` — не существует!
+   Правильный путь: `src/backend/core/config`. Tool находил 0 env vars.
+2. Class detection требовал `BaseSettings` в bases (99% Settings используют
+   inline `SettingsConfigDict(env_prefix=...)` без `BaseSettings`). Tool
+   пропускал почти все Settings-классы.
+
+**Реализация** (расширение существующего `tools/check_env_example.py`):
+- CONFIG_DIR path fix
+- Class detection расширен (env_prefix в model_config OR BaseSettings в bases)
+- Required field tracking: `Field(...)`, `Field(description=...)` без default
+- `--matrix` flag: required secrets missing → fail (exit 1)
+- `--json` flag: machine-readable output
+- Default mode: soft-warn (exit 0) для missing — convention: `.env.example`
+  хранит ТОЛЬКО секреты, остальное в `config_profiles/{profile}.yml`
+- `--strict` mode: hard-fail на missing
+
+**Результаты на текущем HEAD (`ee9444787`)**:
+- 958 env vars в Settings (вместо 0 до fix)
+- 56 documented в `.env.example`
+- 902 missing non-secret vars (warning, OK — они в YAML profiles)
+- 11 required SECRETS missing (FAIL-CLOSED — реальный gap!):
+  `CLICKHOUSE__PASSWORD`, `DADATA__API_KEY`, `ES__API_KEY`/`PASSWORD`,
+  `FS__ACCESS_KEY`, `MONGO__PASSWORD`, `RAG__EMBEDDING_API_KEY`/`QDRANT_API_KEY`,
+  `SEC__API_KEY`/`ROUTES_WITHOUT_API_KEY`, `SKB__API_KEY`
+
+**Tests**: `tests/unit/tools/test_w11_p0_3_check_env_example_matrix.py` — 29 tests:
+- TestConfigDirFix: 2 (CONFIG_DIR exists, contains settings)
+- TestClassDetection: 3 (env_prefix detection, BaseSettings back-compat, skip non-Settings)
+- TestRequiredFieldTracking: 3 (Field(...) required, Field(description) required, Field(default) optional)
+- TestCollectRequiredSecretEnvVars: 2 (real-repo finds, only secret-named)
+- TestRealRepoRegression: 2 (expected count > 500, env.example count > 30)
+- TestCliMatrix: 7 (--help, default exit 0, --strict exit 1, --matrix exit 1,
+  --json structure, --json default empty matrix, --json --strict extra vars)
+- TestIsSecretFieldName: 10 parameterized (5 secret + 5 non-secret)
+
+**Updated pre-existing test**:
+- `tests/unit/tools/test_w6_p1_8_phase3_check_env_example_typer.py::test_no_stdout_write`:
+  теперь разрешает `sys.stdout.write` если используется для JSON output
+  (machine-readable piping).
+
+**Gates**:
+- `compileall -q src/ extensions/ scripts/ tools/ tests/ testkit/` → exit 0
+- `python tools/checks/check_python3_syntax.py --root .` → exit 0
+- `ruff check tools/check_env_example.py tests/...` → All checks passed
+- `pytest` (Phase 3 + P0-3 matrix + P0-2 unsafe + Phase 10 scaffold) → 110/110 passed
+- `python tools/check_env_example.py --matrix` → exit 1 (11 required secrets missing)
+
+**ADR-0336** создан: configuration matrix pattern expansion path, обоснование
+soft-warn default (902 non-secrets в YAML — false positives при hard-fail).
+
+**Cycle 157 итог (W11 P0-3)**:
+- ✅ Закрыты ещё 3 configuration matrix gaps (required/unknown/deprecated-detection infrastructure).
+- ✅ Pre-existing bugs (CONFIG_DIR, class detection) исправлены — tool теперь полезен.
+- ✅ 11 реальных required-secrets gaps найдены (silent bootstrap fallback risk).
+- ⏭️ W11 P1+: расширение на config_profiles/*.yml validation (отдельный scope),
+  feature-dependencies matrix (требует registry features).
+
