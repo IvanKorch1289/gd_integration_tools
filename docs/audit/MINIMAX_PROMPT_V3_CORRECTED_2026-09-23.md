@@ -96,10 +96,20 @@ core.api, RouteBuilder fluent-API) не ломать без ADR; архитек�
 - **W8 — RouteBuilder композиция** (Protocol-контракты готовы), малыми шагами.
 - **W9 — god-objects + честные docs** (README/ARCHITECTURE ↔ факты).
 - **W10 — P3**: старт-тайм (<3s, lazy AI/RAG deps), профилирование
-  Exchange/Pipeline, orjson/msgspec на границах, EIP-полнота (Aggregator,
-  Resequencer, Splitter+aggregate, Wire Tap, Dead Letter Channel),
+  Exchange/Pipeline, orjson/msgspec на границах,
   Airflow-подобное (backfill/catchup, sensor-процессоры), OTEL-propagation
   сквозь Saga/Temporal, DX-scaffold (`make new-route` с cURL+браузер скелетом).
+- **EIP-полнота — ЗАКРЫТА (верифицировано 2026-09-23)**: каталог
+  `dsl/engine/processors/eip/` уже содержит Aggregator (`flow_control/aggregator`,
+  `aggregation.BatchAggregator`, collection-агрегаторы SumBy/MaxBy/MinBy/SortBy),
+  Resequencer (`sequencing.py`), Splitter (`transformation.py`),
+  Wire Tap (`flow_control/wire_tap.py`), Dead Letter + RedeliveryPolicy +
+  FallbackChain + CircuitBreaker (`resilience.py`, `reliability/`),
+  Idempotent Consumer, Claim Check, Content Enricher, Routing Slip,
+  Transactional Client + Process Manager (Saga), Delay/Throttler/Loop/
+  ForEach/OnCompletion, Multicast/ScatterGather/RecipientList/LoadBalancer/
+  DynamicRouter. Клейм v2 «добавить Aggregator/Resequencer/WireTap/DLC» —
+  не соответствует факту; перед добавлением новых EIP — сверять с каталогом.
 - **W0 (опционально, стиль)**: скобочная форма `except (A, B):` для
   Py<3.14-переносимости — ТОЛЬКО как осознанное решение (118+ файлов, шум в
   blame); инструмент: `tools/migrate_py2_except.py`; guard-тест и compileall

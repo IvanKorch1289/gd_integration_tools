@@ -1,5 +1,21 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — Docs integrity: честный ownership-wiring контракт + актуализация после W-волн
+
+### docs(security): ownership wiring — doc-vs-code разрыв устранён
+
+- `TenantResourceIsolationMiddleware` и `docs/middleware/MIDDLEWARE.md`
+  ссылались на несуществующую `verify_tenant_ownership`; теперь контракт
+  описан честно: checker = async (resource_id, tenant_id) -> bool поверх
+  реального tenant-scoped стора; per-route декоратор
+  `require_object_ownership` — S170-stub (KNOWN_ISSUES #2 уточнён).
+- CONTRIBUTING.md: `core/facades.py` задепрекейчен (ADR-0307) — каноническая
+  точка cross-layer доступа `core.api`.
+- `MINIMAX_PROMPT_V3_CORRECTED`: EIP-полнота верифицирована как ЗАКРЫТАЯ
+  (Aggregator/Resequencer/Splitter/WireTap/DLC/Redelivery/IdempotentConsumer
+  и др. присутствуют в `dsl/engine/processors/eip/`) — клейм v2 «добавить»
+  снят; W10 фокусируется на старт-тайм/профилировании/OTEL/DX.
+
 ## [Unreleased] — 2026-09-23 — W6 P1-8: argparse → typer+rich CLI pilot (import_wsdl.py)
 
 ### refactor(tools): W6 P1-8 pilot — import_wsdl.py мигрирован на typer+rich
@@ -6405,3 +6421,29 @@ Comprehensive multi-sprint implementation на audit findings (P0/P1).
 - **3 new Makefile targets**: `check-object-auth`, `check-privacy-lifecycle`, `audit-2026-09-22`
 - **8 new lint.yml CI steps**
 
+
+## [Unreleased] — 2026-09-23 — W6 P1-8 Phase 2: import_postman.py → typer (pattern validation)
+
+### refactor(tools): W6 P1-8 Phase 2 — import_postman.py → typer+rich (pattern validation)
+
+MINIMAX W6 P1-8 Phase 2 (cycle 152): второй pilot для pattern из ADR-0318.
+`tools/import_postman.py` (110 → 169 LOC) мигрирован argparse → typer+rich.
+Pattern воспроизводим.
+
+**Что сделано**:
+- **`tools/import_postman.py`** — `argparse.ArgumentParser` → `typer.Typer`
+  + `@app.callback(invoke_without_command=True)`. Backward-compat `main()`.
+- **`tests/unit/tools/test_w6_p1_8_import_postman_typer.py`** (новый, 7 тестов):
+  TestImportPostmanTyperMigration (4) + TestBackwardCompat (2) + TestImportsWork (1).
+
+### Verification
+
+```
+compileall -q tools/import_postman.py                                → exit 0
+uv run python tools/import_postman.py --help                         → typer-formatted help
+pytest tests/unit/tools/test_w6_p1_8_import_{wsdl,postman}_typer.py  → 15 passed
+ruff check --select F401,F841,F811,E9                                → All checks passed!
+```
+
+Refs: MINIMAX W6 P1-8, ADR-0084, ADR-0318 (Phase 1), ADR-0319 (Phase 2),
+cycle 152.
