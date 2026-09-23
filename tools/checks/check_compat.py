@@ -25,7 +25,12 @@ import sys
 from pathlib import Path
 
 from src.backend.core.plugin_runtime.compat_checker import check_compatibility
-from src.backend.services.plugins.manifest_toml import (
+
+# Canonical location для PluginManifest: src/backend/core/plugin_runtime/manifest_toml.py.
+# Раньше была попытка импорта из src.backend.services.plugins.manifest_toml — но
+# services/plugins/ directory не существует (plugin manifests живут в
+# core/plugin_runtime/, не в services/). S52+W decomp unified эти handlers.
+from src.backend.core.plugin_runtime.manifest_toml import (
     PluginManifest,
     PluginManifestError,
     load_plugin_manifest,
