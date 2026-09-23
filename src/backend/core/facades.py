@@ -15,16 +15,31 @@ Ponytail: minimum shim (4 LOC). Re-exports everything from canonical
 ``core.api``. Lazy ``__getattr__`` preserved (через wildcard + explicit
 ``__all__``/``__getattr__`` imports).
 
-NEVER use this module in new code. Use ``src.backend.core.api`` instead.
+DEPRECATED (MINIMAX W3 P0-4, cycle 152): import этого модуля эмитит
+``DeprecationWarning`` при загрузке. Removal запланирован на релиз
+после audit импортёров (target: cycle 156 / 1 релиз после telemetry).
+Для нового кода: ``from src.backend.core.api import X``.
 
 References:
 - ADR-0249 (capability-checked facades)
+- ADR-0307 (W3 P0-4 shim inventory + classification)
 - ``docs/PROJECT_PLAN.md`` V22-2 / V22-10
 - ``docs/PROJECT_RECOMMENDATIONS.md`` D102
 - ``docs/_build/.../PROJECT_FINAL_SUMMARY.md`` "D102/D187 (capability-checked facades)"
 """
 
 from __future__ import annotations
+
+import warnings as _warnings
+
+# Emit DeprecationWarning on import — encourages migration to core.api.
+# stacklevel=2 указывает на caller import site.
+_warnings.warn(
+    "src.backend.core.facades is deprecated; use src.backend.core.api instead. "
+    "See ADR-0307 (W3 P0-4 shim cleanup). Removal planned: cycle 156.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 from src.backend.core.api import *  # noqa: F401,F403 — backward-compat re-export
 from src.backend.core.api import (  # noqa: F401 — lazy attrs

@@ -3776,3 +3776,74 @@ rg 'except\s+[A-Z][A-Za-z0-9_.]*(,\s*[A-Z])' src tests tools -t py    → 0 matc
 - ✅ CI sync, README sync, ADR-0306 created.
 - ✅ CHANGELOG.md обновлён (cycle 152).
 - ⏭️ Next wave: W1 P0-1 CB consolidation (feature flag rollout), требует cURL verification.
+
+## W3 P0-4 Phase 1: shim inventory + classification (2026-09-23, Sprint 12 cycle 152)
+
+MINIMAX W3 P0-4 (shim cleanup) — Phase 1: inventory + ADR + safe-DEPRECATE кандидаты.
+
+**Измерение baseline**:
+
+* 65 файлов с `__getattr__` (в src, без pycache).
+* Из них **15 явных backward-compat shims** (с маркировкой "Backward-compat").
+* **7 Sprint 224 lazy proxies** (обоснованные — для layer-violation avoidance + lazy load).
+* **14 файлов** с упоминанием legacy/backward-compat (шире, false positives много).
+
+**Решение** (ADR-0307):
+
+4-критериальная classification scale:
+1. `sprint224-lazy-proxy` — НЕ ТРОГАТЬ (обоснованный).
+2. `backward-compat-shim` — keep до audit импортёров.
+3. `deprecation-candidate` — Safe для DeprecationWarning.
+4. `stable-facade` — current canonical API, несмотря на `__getattr__`.
+
+**Inventory 15 файлов с external importer count**:
+
+| Файл | Importer count | Action |
+|---|---|---|
+| `core/facades.py` | 1 | **Phase 1A: DEPRECATE ✓** |
+| `core/di/providers/infrastructure_facade.py` | 1 | already has DeprecationWarning |
+| `services/io/external_database/__init__.py` | 1 | Phase 1B: audit + DEPRECATE |
+| `dsl/engine/processors/eip/reliability/_legacy.py` | 5 | Phase 2A: rename (misleading name) |
+| `dsl/builders/base/__init__.py` | 76 | keep (RouteBuilder canonical) |
+| `core/resilience/breaker.py` | 48 | keep (V16 canonical CB target for W1 P0-1) |
+| `infrastructure/clients/storage/redis/__init__.py` | 25 | keep |
+| `infrastructure/database/database/__init__.py` | 16 | keep |
+| `infrastructure/clients/storage/s3_pool/__init__.py` | 6 | keep |
+| `infrastructure/repositories/base/__init__.py` | 4 | keep (cycle resolution) |
+| `core/interfaces/__init__.py` | 8 | keep |
+| `entrypoints/grpc/grpc_server/__init__.py` | 5 | keep |
+| `core/config/services/mqtt.py` | 5 | keep |
+| `core/api/messaging.py` | 3 | keep (ponytail fix) |
+| `infrastructure/decorators/caching/__init__.py` | 2 | keep |
+
+**Phase 1A (этот commit)**:
+
+* `src/backend/core/facades.py` — `warnings.warn(DeprecationWarning,
+  stacklevel=2)` на import. Docstring обновлён со ссылкой на ADR-0307.
+
+**Phase 2 roadmap** (отдельные коммиты):
+
+* 2A: rename `_legacy.py` → `reliability.py` (5 sibling imports, требует
+  ast-aware refactor для проверки monkey-patch / string-paths).
+* 2B: bulk-DEPRECATE после telemetry (cycle 153+ покажет actual usage).
+
+**Verification (Python 3.14.4)**:
+
+```
+python3.14 -W error::DeprecationWarning -c "import src.backend.core.facades"
+  → DeprecationWarning: src.backend.core.facades is deprecated;
+    use src.backend.core.api instead. See ADR-0307.
+
+python3.14 -m compileall -q src/ extensions/ scripts/ tools/ tests/  → exit 0
+python3.14 -m compileall -q src/backend/core/facades.py                → exit 0
+rg -l '__getattr__' src/backend -g '!__pycache__/*' | wc -l              → 65 (baseline)
+```
+
+**Cycle 152 итог (W3 P0-4 Phase 1)**:
+
+- ✅ 15 shim файлов классифицированы.
+- ✅ `core/facades.py` помечен deprecated.
+- ✅ ADR-0307 создан с classification table.
+- ✅ INDEX.md обновлён (100 ADRs).
+- ⏭️ Phase 2A (rename `_legacy.py`) — отдельный wave.
+- ⏭️ Phase 2B (bulk-DEPRECATE после telemetry) — отдельный wave.

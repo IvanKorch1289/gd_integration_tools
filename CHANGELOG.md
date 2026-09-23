@@ -1,5 +1,40 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W3 P0-4 Phase 1: shim inventory + classification
+
+### feat(quality): 15 backward-compat shims классифицированы, 1 DEPRECATE
+
+MINIMAX W3 P0-4 Phase 1A: полный inventory 15 backward-compat shim файлов
+в `src/backend/` (все с явной маркировкой "Backward-compat" в docstring).
+Каждый классифицирован по 4-критериальной шкале + external importer count:
+
+- **`src/backend/core/facades.py`** (1 importer) — `DeprecationWarning`
+  добавлен на import модуля, `stacklevel=2`. Docstring обновлён со ссылкой
+  на ADR-0307. Removal target: cycle 156.
+
+Остальные 14 файлов распределены: 13 keep (active packages / canonical
+facade / ponytail-fix), 1 already-deprecated (`infrastructure_facade.py`),
+1 rename-planned (`_legacy.py` → `reliability.py` в Phase 2A).
+
+- **`docs/adr/0307-w3-p0-4-shim-inventory-classification.md`** (новый, ~225 строк):
+  полная classification table + roadmap для Phase 2A (rename) и Phase 2B
+  (bulk-DEPRECATE после telemetry).
+- **`docs/adr/INDEX.md`**: ADR-0307 зарегистрирован (100 ADRs total).
+
+### Verification
+
+```
+python3.14 -W error::DeprecationWarning -c "import src.backend.core.facades"
+  → DeprecationWarning fires on import (verified)
+
+python3.14 -m compileall -q src/ extensions/ scripts/ tools/ tests/  → exit 0
+python3.14 -m compileall -q src/backend/core/facades.py                → exit 0
+```
+
+Refs: MINIMAX W3 (P0-4), ADR-0084, ADR-0249, ADR-0307, cycle 152.
+
+---
+
 ## [Unreleased] — 2026-09-23 — W0 P0-BLOCKER: миграция `except A, B:` → `except (A, B):`
 
 ### feat(quality): AST-based миграция Py2-синтаксиса except (MINIMAX W0)
