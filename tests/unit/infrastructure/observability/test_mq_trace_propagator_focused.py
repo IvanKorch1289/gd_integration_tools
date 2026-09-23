@@ -59,8 +59,20 @@ def test_inject_into_headers_empty() -> None:
 
 def test_inject_into_headers_existing() -> None:
     """inject_into_headers adds trace to existing headers."""
+    # Без активного span-контекста propagator инжектит пусто (no-op).
+    # Даём валидный NonRecordingSpan — проверяем реальный контракт.
+    from opentelemetry import trace
+    from opentelemetry.trace import NonRecordingSpan, SpanContext, TraceFlags
+
+    span_context = SpanContext(
+        trace_id=0x11111111111111111111111111111111,
+        span_id=0x2222222222222222,
+        is_remote=False,
+        trace_flags=TraceFlags(1),
+    )
     headers = {"X-Other": "value"}
-    inject_into_headers(headers)
+    with trace.use_span(NonRecordingSpan(span_context)):
+        inject_into_headers(headers)
     assert headers["X-Other"] == "value"
     assert len(headers) >= 2
 
