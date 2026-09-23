@@ -1,6 +1,6 @@
 # FEATURE_INVENTORY — Core module reachability registry
 
-> **Generated**: 2026-09-21T12:41:03Z
+> **Generated**: 2026-09-23T08:05:07Z
 > **Source**: `tools/checks/scan_isolated_modules.py --json`
 > **DO NOT EDIT MANUALLY** — auto-generated from real scan.
 
@@ -8,11 +8,11 @@
 
 ## Summary
 
-- **Total core/ modules**: 89
-- **🟢 WIRED** (≥1 production caller): 50
-- **🔴 ISOLATED** (zero production callers): 39
-- **Total src caller references**: 2462
-- **Total test caller references**: 1244
+- **Total core/ modules**: 91
+- **🟢 WIRED** (≥1 production caller): 51
+- **🔴 ISOLATED** (zero production callers): 40
+- **Total src caller references**: 2513
+- **Total test caller references**: 1281
 
 ---
 
@@ -35,21 +35,22 @@ Tests included for visibility but do **not** count as production usage.
 | `core.actions` | 2 | 6 | 🟢 WIRED | low usage — consider consolidating |
 | `core.ai` | 38 | 85 | 🟢 WIRED | production module |
 | `core.api` | 78 | 36 | 🟢 WIRED | production module |
+| `core.async_utils` | 26 | 19 | 🟢 WIRED | production module |
 | `core.auth` | 69 | 85 | 🟢 WIRED | production module |
 | `core.cache` | 3 | 2 | 🟢 WIRED | production module |
 | `core.cdc` | 7 | 10 | 🟢 WIRED | production module |
 | `core.cdc_control_plane` | 1 | 1 | 🟢 WIRED | low usage — consider consolidating |
 | `core.clients` | 3 | 0 | 🟢 WIRED | production module |
 | `core.clock` | 3 | 3 | 🟢 WIRED | production module |
-| `core.config` | 316 | 273 | 🟢 WIRED | production module |
+| `core.config` | 317 | 273 | 🟢 WIRED | production module |
 | `core.connectors` | 1 | 3 | 🟢 WIRED | low usage — consider consolidating |
 | `core.contract_testing` | 2 | 1 | 🟢 WIRED | low usage — consider consolidating |
 | `core.cost_attribution` | 1 | 4 | 🟢 WIRED | low usage — consider consolidating |
 | `core.decorators` | 4 | 1 | 🟢 WIRED | production module |
 | `core.di` | 248 | 103 | 🟢 WIRED | production module |
-| `core.domain` | 29 | 30 | 🟢 WIRED | production module |
+| `core.domain` | 30 | 30 | 🟢 WIRED | production module |
 | `core.enums` | 19 | 7 | 🟢 WIRED | production module |
-| `core.errors` | 31 | 17 | 🟢 WIRED | production module |
+| `core.errors` | 32 | 18 | 🟢 WIRED | production module |
 | `core.facades` | 1 | 1 | 🟢 WIRED | low usage — consider consolidating |
 | `core.feature_flags` | 9 | 12 | 🟢 WIRED | production module |
 | `core.frontend_facade` | 9 | 4 | 🟢 WIRED | production module |
@@ -67,17 +68,17 @@ Tests included for visibility but do **not** count as production usage.
 | `core.providers_registry` | 7 | 2 | 🟢 WIRED | production module |
 | `core.registry_explorer` | 3 | 4 | 🟢 WIRED | production module |
 | `core.repositories` | 1 | 4 | 🟢 WIRED | low usage — consider consolidating |
-| `core.request_context` | 5 | 3 | 🟢 WIRED | production module |
+| `core.request_context` | 26 | 19 | 🟢 WIRED | production module |
 | `core.resilience` | 78 | 53 | 🟢 WIRED | production module |
 | `core.scheduler` | 3 | 4 | 🟢 WIRED | production module |
 | `core.secrets_sources` | 1 | 1 | 🟢 WIRED | low usage — consider consolidating |
-| `core.security` | 74 | 84 | 🟢 WIRED | production module |
+| `core.security` | 75 | 84 | 🟢 WIRED | production module |
 | `core.serialization` | 14 | 2 | 🟢 WIRED | production module |
 | `core.sla_cockpit` | 1 | 2 | 🟢 WIRED | low usage — consider consolidating |
 | `core.state` | 5 | 3 | 🟢 WIRED | production module |
 | `core.storage` | 4 | 6 | 🟢 WIRED | production module |
 | `core.svcs_registry` | 17 | 14 | 🟢 WIRED | production module |
-| `core.tenancy` | 35 | 31 | 🟢 WIRED | production module |
+| `core.tenancy` | 35 | 32 | 🟢 WIRED | production module |
 | `core.types` | 84 | 21 | 🟢 WIRED | production module |
 | `core.utils` | 119 | 39 | 🟢 WIRED | production module |
 | `core.workflow` | 15 | 21 | 🟢 WIRED | production module |
@@ -108,6 +109,7 @@ Tests included for visibility but do **not** count as production usage.
 | `core.migration_safety` | 0 | 1 | 🔴 ISOLATED — needs decision | decision needed: wire / experimental / delete |
 | `core.observability_v2` | 0 | 1 | 🔴 ISOLATED — needs decision | decision needed: wire / experimental / delete |
 | `core.outbox_verify` | 0 | 1 | 🔴 ISOLATED — needs decision | decision needed: wire / experimental / delete |
+| `core.privacy` | 0 | 0 | 🔴 ISOLATED — needs decision | decision needed: wire / experimental / delete |
 | `core.rate_limiter` | 0 | 1 | 🔴 ISOLATED — needs decision | decision needed: wire / experimental / delete |
 | `core.retention_policy` | 0 | 1 | 🔴 ISOLATED — needs decision | decision needed: wire / experimental / delete |
 | `core.rls_verifier` | 0 | 1 | 🔴 ISOLATED — needs decision | decision needed: wire / experimental / delete |
