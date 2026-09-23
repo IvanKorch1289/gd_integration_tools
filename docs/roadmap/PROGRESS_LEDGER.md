@@ -4782,3 +4782,69 @@ soft-warn default (902 non-secrets в YAML — false positives при hard-fail)
 - ⏭️ Дальнейшие архитектурные gaps: privacy orchestrator, configuration profile matrix,
   feature dependencies, outbox state-machine tests, object-level authorization.
 
+
+---
+
+## W11 P1-1: Outbox state-machine crash matrix (2026-09-23, cycle 157)
+
+**Задача**: закрыть architectural gap "Outbox state-machine crash tests" из
+стратегического анализа 2026-09-22. Strategic analysis выявил 8 crash scenarios,
+Sprint 12 покрыл только 2 (commit OK publish FAIL, lease expired) через hypothesis.
+
+**Реализация**: narrative model-based tests в
+`tests/unit/infrastructure/test_w11_p1_1_outbox_crash_matrix.py` для 6 missing scenarios:
+- **#2 Publish OK, status update FAIL** → duplicate publish (consumer idempotency)
+- **#4 Два dispatcher конкурируют за запись** → atomic claim, only one wins
+- **#5 Consumer side-effect OK, ACK FAIL** → broker redelivers (consumer dedup)
+- **#6 Broker down extended** → no loss, no premature DLQ
+- **#7 Poison message после deploy** → DLQ → replay → SENT
+- **#8 Old consumer + new schema** → schema versioning + isolation
+
+**Формат**: narrative walk-through с явными crash points и проверяемыми
+invariants. Каждый тест — explicit шаги + assertions (читаемый, debuggable).
+
+**Simulation infrastructure** (in-memory mocks, НЕ production code):
+- `_Broker` — broker с возможностью отказа + tracking published/delivered
+- `_BrokerUnavailableError` — exception для unavailable broker
+- `_ConsumeResult` — success/failure + reason
+- `_OutboxRecord` — single row (state, attempts, lease_until, sent_at)
+- `_OutboxTable` — in-memory table с методами claim/mark_sent/mark_failed/
+  mark_stuck_if_expired/sweep_stuck/mark_dlq
+
+**Composite invariant test** (`test_no_loss_across_scenarios`):
+normal + crash + retry → all events eventually SENT (state machine корректен
+даже при composite failures).
+
+**Cross-cutting invariant** (`test_state_machine_uses_canonical_problem_category`):
+broker persistent fail → DomainProblem с UNAVAILABLE category (W11 P0-4 integration).
+
+**Tests**: `test_w11_p1_1_outbox_crash_matrix.py` — 13 tests в 7 test classes:
+- TestScenario2PublishOkStatusFail: 1 (duplicate publish documented + asserted)
+- TestScenario4TwoDispatchersCompete: 2 (only one winner + lease expiry allows B)
+- TestScenario5ConsumerAckFail: 2 (double delivery + consumer with idempotency dedup)
+- TestScenario6BrokerDownExtended: 2 (no loss + no premature DLQ)
+- TestScenario7PoisonMessageAfterDeploy: 2 (DLQ replay + max retries enforced)
+- TestScenario8SchemaVersioning: 2 (mismatch isolated + consumer v2 mixed)
+- TestStateMachineInvariants: 2 (composite no-loss + canonical problem category)
+
+**Crash matrix coverage**: 8/8 (после W11 P1-1) — все сценарии из strategic analysis доказаны.
+
+**Gates**:
+- `compileall -q src/ extensions/ scripts/ tools/ tests/ testkit/` → exit 0
+- `python tools/checks/check_python3_syntax.py --root .` → exit 0
+- `ruff check tests/unit/infrastructure/test_w11_p1_1_outbox_crash_matrix.py` → All checks passed
+- `pytest tests/unit/infrastructure/test_w11_p1_1_outbox_crash_matrix.py` → 13/13 passed
+- `pytest tests/unit/infrastructure/test_outbox_state_machine.py` → 8/8 passed (no regression)
+- `pytest` 6 test files (W11 P1-1 + outbox + W11 P0-4 + P0-3 + P0-2 + W6) → 197/197 passed
+
+**ADR-0338**: crash matrix pattern, narrative model-based testing vs property-based
+trade-offs (property-based для invariants, narrative для specific crash patterns).
+
+**Cycle 157 итог (W11 P1-1)**:
+- ✅ Закрыт architectural gap "Outbox state-machine crash matrix".
+- ✅ 6 missing scenarios доказаны с явными walk-through + assertions.
+- ✅ Composite invariant (no_loss_across_scenarios) проверен.
+- ✅ Cross-cutting integration с W11 P0-4 DomainProblem.
+- ⏭️ Дальнейшие gaps: privacy orchestrator, object-level authorization,
+  DLQ replay governance, configuration profile matrix.
+
