@@ -126,22 +126,21 @@
 | [ADR-0327](0327-w6-p1-8-phase8-check-docstrings-typer.md) | W6 P1-8 Phase 8: `tools/check_docstrings.py` argparse → typer | **Accepted** |
 | [ADR-0328](0328-w9-p2-13-phase3-privacy-delete-data-subject-split.md) | W9 P2-13 Phase 3: `core/privacy/delete_data_subject.py` → package split (god-module decomposition) | **Accepted** |
 | [ADR-0329](0329-w9-p2-13-phase4-services-ops-health-split.md) | W9 P2-13 Phase 4: `services/ops/health.py` (609 LOC) → package split | **Accepted** |
-| [ADR-0330](0330-w9-p2-13-phase5-services-ai-agent-sandbox-split.md) | W9 P2-13 Phase 5: `services/ai/agent_sandbox.py` (601 LOC) → package split (3 sandbox impls + selector) | **Accepted** |
-| [ADR-0331](0331-w9-p2-13-phase7-core-di-workflow-providers-split.md) | W9 P2-13 Phase 7: `core/di/providers/workflow.py` (602 LOC, 58 funcs) → package с 6 cohesion submodules (workflow_core/resilience/loggers/messaging/dlq/notifications) | **Accepted** |
-| [ADR-0332](0332-w6-p1-8-phase9-add-f401-multiline-noqa-typer.md) | W6 P1-8 Phase 9: tools/add_f401_multiline_noqa.py argparse → typer (9th tool, DRY-RUN safety) | **Accepted** |
-| [ADR-0333](0333-w6-p1-8-phase10-scaffold-typer.md) | W6 P1-8 Phase 10: tools/scaffold.py argparse subparsers → typer (10th tool, 3 subcommands) + structlog Py2 syntax fix | **Accepted** |
-| [ADR-0334](0334-factcheck-master-state-vs-claim.md) | Фактчек заявления о 176 SyntaxError в master (HEAD `180e75819`: 0 SyntaxError, 0 Py2-except; 67 коммитов работы от стартового SHA) | **Accepted** |
-| [ADR-0335](0335-w11-p0-2-config-unsafe-defaults-gate.md) | W11 P0-2: Configuration matrix gate — `tools/checks/check_unsafe_defaults.py` детектирует hardcoded placeholders и SecretStr code smell в Pydantic Settings (HIGH/MEDIUM/LOW) | **Accepted** |
-| [ADR-0336](0336-w11-p0-3-env-example-matrix-gate.md) | W11 P0-3: Configuration matrix — `check_env_example.py --matrix` детектирует required secrets без `.env.example` декларации; fix pre-existing bugs (CONFIG_DIR path + class detection) | **Accepted** |
-| [ADR-0337](0337-w11-p0-4-canonical-error-contract.md) | W11 P0-4: Canonical error contract — `DomainProblem` dataclass + 6 transport adapters (RFC 9457, GraphQL, gRPC, SOAP, MCP, DLQ); additive к существующему `BaseError` | **Accepted** |
-| [ADR-0338](0338-w11-p1-1-outbox-crash-matrix.md) | W11 P1-1: Outbox state-machine crash matrix — narrative model-based tests для 6 из 8 crash scenarios (publish OK status FAIL, 2 dispatchers compete, side-effect OK ACK fail, broker down extended, poison message, schema versioning) | **Accepted** |
-| [ADR-0339](0339-w11-p1-2-dlq-replay-governance.md) | W11 P1-2: DLQ replay governance — `DLQReplayGovernor` с 7-шаговым flow (inspect→classify→redact→dry-run→replay→verify→archive) + capability/rate-limit/audit/redactor hooks; PII auto-redaction (6 patterns); compliance audit trail | **Accepted** |
-| [ADR-0340](0340-w11-p2-1-audit-hash-chain.md) | W11 P2-1: Audit log integrity — `HashChainLedger` (append-only ledger + SHA-256 chain + canonical JSON + verify/verify_with_gaps + signed_checkpoint placeholder); tamper detection + restore verification | **Accepted** |
-| [ADR-0341](0341-w2-p1-2-legacy-processors-inventory.md) | W2 P1-2: Legacy DSL processors inventory tool — `tools/audit_legacy_processors.py` классифицирует 24 файла (16 REMOVABLE / 6 SEMANTIC_KEEP / 2 SHIMMED / 0 NEEDS_MIGRATION); `--strict` CI gate; module-level cache ~7s | **Accepted** |
-| [ADR-0342](0342-ai-policy-spec-s76-tool-policy-migration.md) | AIPolicySpec S76 schema migration — `ai_policies/agent_basic.policy.yaml` `tool_policy.{allow,deny,max_calls_per_run}` → `tools.{whitelist,blacklist,on_violation,allow_all_tools}`; `max_calls_per_run` lost (deferred); 3 alternatives considered | **Accepted** |
-| [ADR-0343](0343-pluginmanifest-schema-evolution-core-admin-dadata-skb.md) | PluginManifest schema evolution: 3 extensions (core_admin, dadata, skb) — nested `[plugin]/[dependencies]` tables → flat top-level fields + add `requires_core`; Pydantic 6 violations per file → 0; same pattern as ADR-0342; 3 alternatives considered | **Accepted** |
-| [ADR-0344](0344-sagalra-convergence-plan.md) | SagaLRA convergence plan per v4 §9: 3 saga implementations (engine/processors/saga_lra.py canonical, engine/processors/control_flow/saga.py canonical, processors/saga_lra_processor/* deprecation shim); status quo + telemetry phase + 3 deferred Phase 2 options; merge rejected (different concerns); 4 alternatives considered | **Accepted** |
+| [ADR-0330](0330-w9-p2-13-phase5-services-ai-agent-sandbox-split.md) | W9 P2-13 Phase 5: `services/ai/agent_sandbox.py` (601 LOC) → package split | **Accepted** |
+| [ADR-0331](0331-w9-p2-13-phase7-core-di-workflow-providers-split.md) | W9 P2-13 Phase 7: `core/di/providers/workflow.py` (602 LOC) → package split | **Accepted** |
+| [ADR-0333](0333-w6-p1-8-phase10-scaffold-typer.md) | W6 P1-8 Phase 10: `tools/scaffold.py` argparse → typer (subcommands) + structlog Py2 syntax fix | **Accepted** |
+| [ADR-0334](0334-factcheck-master-state-vs-claim.md) | Фактчек заявления о массовой синтаксической регрессии в master | Unknown |
+| [ADR-0335](0335-w11-p0-2-config-unsafe-defaults-gate.md) | Configuration matrix gate: unsafe secret defaults detector | Unknown |
+| [ADR-0336](0336-w11-p0-3-env-example-matrix-gate.md) | W11 P0-3: Configuration matrix — required secrets & unknown vars | Unknown |
+| [ADR-0337](0337-w11-p0-4-canonical-error-contract.md) | Canonical error contract (DomainProblem) | Unknown |
+| [ADR-0338](0338-w11-p1-1-outbox-crash-matrix.md) | Outbox state-machine crash matrix (model-based tests) | Unknown |
+| [ADR-0339](0339-w11-p1-2-dlq-replay-governance.md) | DLQ replay governance (7-step flow + capability + rate limit + audit) | Unknown |
+| [ADR-0340](0340-w11-p2-1-audit-hash-chain.md) | Audit log integrity (hash chain ledger) | Unknown |
+| [ADR-0341](0341-w2-p1-2-legacy-processors-inventory.md) | Legacy DSL processors inventory tool | Unknown |
+| [ADR-0342](0342-ai-policy-spec-s76-tool-policy-migration.md) | AIPolicySpec S76 tool_policy → tools migration | Unknown |
+| [ADR-0343](0343-pluginmanifest-schema-evolution-core-admin-dadata-skb.md) | PluginManifest schema migration: core_admin / dadata / skb | Unknown |
+| [ADR-0344](0344-sagalra-convergence-plan.md) | SagaLRA convergence plan (per v4 §9) | Unknown |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 
-**Total:** 137 ADRs.
+**Total:** 136 ADRs.
 
