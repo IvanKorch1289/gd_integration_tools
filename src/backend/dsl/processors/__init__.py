@@ -4,7 +4,7 @@ Domain-specific standalone processors (не engine-processors). Каждый
 процессор наследует :class:`BaseProcessor` из engine.processors и
 предоставляет fluent-цепочку через :mod:`builders.base`.
 
-W2 P0-3 (cycle 152): single-file processors мигрированы в
+W2 P0-3 (cycle 152): single-file + subpackage processors мигрированы в
 ``src.backend.dsl.engine.processors``. Этот модуль — re-export hub,
 импортирующий напрямую из canonical location (НЕ через legacy shim),
 чтобы избежать DeprecationWarning при импорте :mod:`dsl.processors`
@@ -23,7 +23,7 @@ Sprint 36+:
     (Redis + S3 composite, mode="store"/"retrieve"). Старый S38 W1 SLIM S3-only
     variant удалён в S63 W2 (dedup).
 
-Refs: ADR-0313 (W2 P0-3 Phase 1A pilot + Phase 1B roadmap).
+Refs: ADR-0313 (W2 P0-3 Phase 1A pilot), ADR-0314 (Phase 1B), ADR-0315 (Phase 1C).
 """
 
 from __future__ import annotations
@@ -45,17 +45,58 @@ from src.backend.dsl.engine.processors.router_specialist_processor import (
     RouterSpecialistProcessor,
 )
 from src.backend.dsl.engine.processors.strangler_fig import StranglerFigProcessor
-from src.backend.dsl.processors.saga_lra_processor import SagaLRAProcessor  # legacy другая реализация, Phase 2 ADR
+
+# W2 P0-3 Phase 1C: event_store/ и idp_pipeline_processor/ subpackages.
+# Re-export from canonical subpackage (НЕ через legacy shim).
+from src.backend.dsl.engine.processors.event_store import (
+    CQRSMixin,
+    CommandBus,
+    Event,
+    EventStore,
+    EventStoreProcessor,
+    EventStream,
+    InMemoryEventStore,
+    Projection,
+    QueryBus,
+    get_event_store,
+    reset_event_store,
+    set_event_store,
+)
+from src.backend.dsl.engine.processors.idp_pipeline_processor import (
+    IDPPipelineProcessor,
+    classify_document,
+    extract_fields,
+    validate_result,
+)
+
+# SagaLRA остаётся legacy (другая реализация, Phase 2 ADR).
+from src.backend.dsl.processors.saga_lra_processor import SagaLRAProcessor
 
 __all__ = (
     "BatchProcessor",
+    "CQRSMixin",
+    "CommandBus",
     "DataLineageProcessor",
+    "Event",
+    "EventStore",
+    "EventStoreProcessor",
+    "EventStream",
+    "IDPPipelineProcessor",
+    "InMemoryEventStore",
     "PlanExecuteMixin",
     "PlanExecuteProcessor",
     "PlanResult",
     "PlanStep",
+    "Projection",
+    "QueryBus",
     "ReflectionLoopProcessor",
     "RouterSpecialistProcessor",
     "SagaLRAProcessor",
     "StranglerFigProcessor",
+    "classify_document",
+    "extract_fields",
+    "get_event_store",
+    "reset_event_store",
+    "set_event_store",
+    "validate_result",
 )

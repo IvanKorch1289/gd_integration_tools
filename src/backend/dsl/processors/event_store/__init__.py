@@ -1,51 +1,53 @@
-"""Event store + CQRS package (S66 W1 decomp from event_store.py 468 LOC).
+"""Backward-compat shim — event_store subpackage переехал в :mod:`dsl.engine.processors.event_store`.
 
-9 classes + 3 funcs → 5 files (per-concern):
-- ``types.py``: EventStream, Event (2 data types)
-- ``store.py``: EventStore (ABC) + InMemoryEventStore (impl)
-- ``cqrs.py``: Projection, CommandBus, QueryBus, CQRSMixin (4 CQRS classes)
-- ``processor.py``: EventStoreProcessor (DSL integration)
-- ``helpers.py``: 3 module-level funcs (get/set/reset)
+W2 P0-3 Phase 1C (cycle 152, MINIMAX plan): canonical-реализация теперь живёт в
+``src.backend.dsl.engine.processors.event_store``. Этот модуль — re-export shim
+для backward-compat с использованием ``__getattr__`` lazy proxy pattern
+(проксирует любые классы/data-классы/функции из canonical subpackage).
 
-Backward-compat: ``from src.backend.dsl.processors.event_store import EventStore`` works.
+Migration::
+
+    # До:
+    from src.backend.dsl.processors.event_store import *
+
+    # После (canonical):
+    from src.backend.dsl.engine.processors.event_store import *
+
+DEPRECATED (MINIMAX W2 P0-3, cycle 152): импорт из
+``src.backend.dsl.processors.event_store`` emits ``DeprecationWarning``.
+Removal запланирован на cycle 156 (после telemetry audit).
+
+См. ADR-0313, ADR-0314, ADR-0315.
 """
 
 from __future__ import annotations
 
-from src.backend.dsl.processors.event_store.cqrs import (
-    CommandBus,  # S66 W1: re-export
-    CQRSMixin,  # S66 W1: re-export
-    Projection,  # S66 W1: re-export
-    QueryBus,  # S66 W1: re-export
-)
-from src.backend.dsl.processors.event_store.helpers import (
-    get_event_store,  # S66 W1: helper re-export
-    reset_event_store,  # S66 W1: helper re-export
-    set_event_store,  # S66 W1: helper re-export
-)
-from src.backend.dsl.processors.event_store.processor import (
-    EventStoreProcessor,  # S66 W1: re-export
-)
-from src.backend.dsl.processors.event_store.store import (
-    EventStore,  # S66 W1: re-export
-    InMemoryEventStore,  # S66 W1: re-export
-)
-from src.backend.dsl.processors.event_store.types import (
-    Event,  # S66 W1: re-export
-    EventStream,  # S66 W1: re-export
+import importlib as _importlib
+import warnings as _warnings
+from typing import Any as _Any
+
+_warnings.warn(
+    "src.backend.dsl.processors.event_store is deprecated; "
+    "import from src.backend.dsl.engine.processors.event_store instead. "
+    "See ADR-0313/0314/0315 (W2 P0-3 processor consolidation). Removal planned: cycle 156.",
+    DeprecationWarning,
+    stacklevel=2,
 )
 
-__all__ = (
-    "CQRSMixin",
-    "CommandBus",
-    "Event",
-    "EventStore",
-    "EventStoreProcessor",
-    "EventStream",
-    "InMemoryEventStore",
-    "Projection",
-    "QueryBus",
-    "get_event_store",
-    "reset_event_store",
-    "set_event_store",
-)
+_CANONICAL_MODULE = "src.backend.dsl.engine.processors.event_store"
+_canonical = None  # lazy
+
+
+def __getattr__(name: str) -> _Any:
+    """Lazy proxy: import canonical subpackage + return requested attribute."""
+    global _canonical
+    if _canonical is None:
+        _canonical = _importlib.import_module(_CANONICAL_MODULE)
+    return getattr(_canonical, name)
+
+
+def __dir__() -> list[str]:
+    """``dir()`` через canonical subpackage для tab-completion."""
+    if _canonical is None:
+        _canonical = _importlib.import_module(_CANONICAL_MODULE)
+    return dir(_canonical)

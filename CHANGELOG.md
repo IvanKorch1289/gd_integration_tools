@@ -1,5 +1,57 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W2 P0-3 Phase 1C: 2 subpackages migration (event_store + idp_pipeline_processor)
+
+### refactor(dsl): 2 subpackages consolidated (W2 P0-3 Phase 1C)
+
+MINIMAX W2 P0-3 Phase 1C (cycle 152): pattern из ADR-0314 (Phase 1B)
+применён к 2 subpackages.
+
+**Что мигрировано** (2 subpackages, 1232 LOC):
+
+* **canonical subpackages** (14 файлов):
+    - `event_store/` (6 файлов, 566 LOC) — EventStore, InMemoryEventStore,
+      EventStoreProcessor, Event, EventStream, CommandBus, QueryBus,
+      Projection, CQRSMixin + 3 helper functions.
+    - `idp_pipeline_processor/` (8 файлов, 666 LOC) — IDPPipelineProcessor
+      (mixin-based: PipelineMixin, RoutingMixin, SerializationMixin,
+      HelpersMixin) + classify_document, extract_fields, validate_result
+      + state, _protocol, helpers.
+
+* **legacy shim subpackages** (2 `__init__.py`) с `__getattr__` lazy proxy
+  pattern (проксирует любые классы/data-классы/функции из canonical).
+
+* **internal imports** в 12 скопированных файлах обновлены:
+  `from src.backend.dsl.processors.X import` →
+  `from src.backend.dsl.engine.processors.X import`.
+
+* **`dsl/processors/__init__.py`** обновлён: +13 re-exports из canonical
+  subpackages (event_store classes/helpers + idp_pipeline_processor
+  functions).
+
+* **`tests/unit/dsl/processors/test_w2_p0_3_phase1c_subpackages.py`**
+  (новый, ~155 строк, 16 тестов): TestEventStoreShim (10) +
+  TestIDPPipelineShim (4) + TestDslProcessorsReExportHubPhase1C (2).
+
+* **`docs/adr/0315-w2-p0-3-phase1c-event-store-idp-pipeline-subpackages.md`**
+  (новый, ~190 строк).
+
+* **`docs/adr/INDEX.md`**: ADR-0315 зарегистрирован (108 ADRs total).
+
+### Verification
+
+```
+compileall -q src/ extensions/ scripts/ tools/ tests/                                → exit 0
+uv run python -m pytest tests/unit/dsl/processors/test_w2_p0_3_phase1c_subpackages.py  → 16 passed
+uv run python -m pytest tests/unit/dsl/processors/test_event_store.py \
+                       tests/unit/dsl/processors/test_idp_pipeline_processor.py        → 58 passed (pre-existing)
+ruff check --select F401,F841,F811,E9                                                 → All checks passed!
+```
+
+Refs: MINIMAX W2 P0-3, ADR-0313 (Phase 1A), ADR-0314 (Phase 1B), ADR-0315, cycle 152.
+
+---
+
 ## [Unreleased] — 2026-09-23 — W2 P0-3 Phase 1B: 5 single-file processors migration
 
 ### refactor(dsl): 5 single-file processors consolidated (W2 P0-3 Phase 1B)

@@ -112,6 +112,7 @@
 | [ADR-0312](0312-w5-p1-7-structlog-default-circular-fix.md) | W5 P1-7: structlog default backend (factory auto-detect) + circular import fix (~800 call sites) | Accepted |
 | [ADR-0313](0313-w2-p0-3-batch-processor-migration-pilot.md) | W2 P0-3 Phase 1A: BatchProcessor migration pilot (canonical + shim + DeprecationWarning) | Accepted |
 | [ADR-0314](0314-w2-p0-3-phase1b-remaining-processors.md) | W2 P0-3 Phase 1B: 5 single-file processors migration (strangler_fig, data_lineage, plan_execute, reflection_loop, router_specialist) | Accepted |
+| [ADR-0315](0315-w2-p0-3-phase1c-event-store-idp-pipeline-subpackages.md) | W2 P0-3 Phase 1C: event_store + idp_pipeline_processor subpackages migration (1232 LOC consolidated) | Accepted |
 
-**Total:** 107 ADRs.
+**Total:** 108 ADRs.
 

@@ -1,120 +1,53 @@
-"""IDPPipelineProcessor package (S65 W4 decomp from idp_pipeline_processor.py 472 LOC).
+"""Backward-compat shim — idp_pipeline_processor subpackage переехал в :mod:`dsl.engine.processors.idp_pipeline_processor`.
 
-1 god-class (7 methods) + 2 small classes + 10 funcs → 4 mixins + state.py + helpers.py.
+W2 P0-3 Phase 1C (cycle 152, MINIMAX plan): canonical-реализация теперь живёт в
+``src.backend.dsl.engine.processors.idp_pipeline_processor``. Этот модуль — re-export shim
+для backward-compat с использованием ``__getattr__`` lazy proxy pattern
+(проксирует любые классы/data-классы/функции из canonical subpackage).
 
-Backward-compat: ``from src.backend.dsl.processors.idp_pipeline_processor import IDPPipelineProcessor`` works.
+Migration::
+
+    # До:
+    from src.backend.dsl.processors.idp_pipeline_processor import *
+
+    # После (canonical):
+    from src.backend.dsl.engine.processors.idp_pipeline_processor import *
+
+DEPRECATED (MINIMAX W2 P0-3, cycle 152): импорт из
+``src.backend.dsl.processors.idp_pipeline_processor`` emits ``DeprecationWarning``.
+Removal запланирован на cycle 156 (после telemetry audit).
+
+См. ADR-0313, ADR-0314, ADR-0315.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING as TYPE_CHECKING
+import importlib as _importlib
+import warnings as _warnings
+from typing import Any as _Any
 
-if TYPE_CHECKING:
-    pass
-from typing import TYPE_CHECKING as TYPE_CHECKING
-
-if TYPE_CHECKING:
-    pass
-
-# ─── Constants & defaults ──────────────────────────────────────────────
-
-_VALID_TYPES: frozenset[str] = frozenset({"invoice", "contract", "receipt", "other"})
-_DEFAULT_TYPE: str = "other"
-_DEFAULT_THRESHOLD: float = 0.8
-_STAGE_REACHED: str = "route"  # final stage label
-
-# Classification keyword map (case-insensitive).
-_CLASSIFY_KEYWORDS: dict[str, tuple[str, ...]] = {
-    "invoice": ("invoice", "bill to", "amount due", "invoice number"),
-    "contract": ("contract", "agreement", "party a", "party b", "whereas"),
-    "receipt": ("receipt", "paid", "thank you for your purchase", "subtotal"),
-}
-
-# Default extractors: dict[type] → list[(field_name, regex)].
-# Patterns are deliberately permissive to keep confidence ≥ threshold
-# on well-formed documents.
-
-from src.backend.dsl.processors.idp_pipeline_processor.helpers import (
-    DEFAULT_EXTRACTORS,  # S124 W2: restored constant (lost in S65 W4 decomp)
-    _coerce_to_text,  # S65 W4: helper re-export
-    _contract_extractors,  # S65 W4: helper re-export
-    _default_extractors_for,  # S65 W4: helper re-export
-    _invoice_extractors,  # S65 W4: helper re-export
-    _receipt_extractors,  # S65 W4: helper re-export
-    _rule_required_present,  # S65 W4: helper re-export
-    _rule_total_positive,  # S65 W4: helper re-export
-    classify_document,  # S65 W4: helper re-export
-    extract_fields,  # S65 W4: helper re-export
-    validate_result,  # S65 W4: helper re-export
-)
-from src.backend.dsl.processors.idp_pipeline_processor.helpers_mixin import (
-    HelpersMixin,  # S65 W4: MRO
-)
-from src.backend.dsl.processors.idp_pipeline_processor.pipeline_mixin import (
-    PipelineMixin,  # S65 W4: MRO
-)
-from src.backend.dsl.processors.idp_pipeline_processor.routing_mixin import (
-    RoutingMixin,  # S65 W4: MRO
-)
-from src.backend.dsl.processors.idp_pipeline_processor.serialization_mixin import (
-    SerializationMixin,  # S65 W4: MRO
-)
-from src.backend.dsl.processors.idp_pipeline_processor.state import (
-    IDPResult,  # S65 W4: re-export
-    _FieldPattern,  # S65 W4: re-export
+_warnings.warn(
+    "src.backend.dsl.processors.idp_pipeline_processor is deprecated; "
+    "import from src.backend.dsl.engine.processors.idp_pipeline_processor instead. "
+    "See ADR-0313/0314/0315 (W2 P0-3 processor consolidation). Removal planned: cycle 156.",
+    DeprecationWarning,
+    stacklevel=2,
 )
 
-__all__ = (
-    "DEFAULT_EXTRACTORS",
-    "IDPPipelineProcessor",
-    "IDPResult",
-    "_FieldPattern",
-    "_coerce_to_text",
-    "_contract_extractors",
-    "_default_extractors_for",
-    "_invoice_extractors",
-    "_receipt_extractors",
-    "_rule_required_present",
-    "_rule_total_positive",
-    "classify_document",
-    "extract_fields",
-    "validate_result",
-)
+_CANONICAL_MODULE = "src.backend.dsl.engine.processors.idp_pipeline_processor"
+_canonical = None  # lazy
 
 
-class IDPPipelineProcessor(
-    PipelineMixin, RoutingMixin, SerializationMixin, HelpersMixin
-):
-    """IDP pipeline processor (4 mixins = 6 methods + 1 core)."""
+def __getattr__(name: str) -> _Any:
+    """Lazy proxy: import canonical subpackage + return requested attribute."""
+    global _canonical
+    if _canonical is None:
+        _canonical = _importlib.import_module(_CANONICAL_MODULE)
+    return getattr(_canonical, name)
 
-    __slots__ = ()
 
-    def __init__(
-        self,
-        *,
-        doc_type: str = "auto",
-        confidence_threshold: float = _DEFAULT_THRESHOLD,
-        extractors: dict[str, list[str]] | None = None,
-        validators: list[str] | None = None,
-        hitl_property: str = "needs_hitl",
-        result_property: str = "idp_result",
-        name: str | None = None,
-    ) -> None:
-        if not 0.0 <= confidence_threshold <= 1.0:
-            raise ValueError(
-                f"confidence_threshold ∈ [0, 1], получено {confidence_threshold}"
-            )
-        if doc_type != "auto" and doc_type not in _VALID_TYPES:
-            raise ValueError(
-                f"doc_type ∈ auto|{sorted(_VALID_TYPES)}, получено {doc_type!r}"
-            )
-        super().__init__(name=name or "idp_pipeline")  # type: ignore[call-arg]
-        self._doc_type = doc_type
-        self._threshold = float(confidence_threshold)
-        # Shallow copy so callers cannot mutate our state.
-        self._extractors: dict[str, list[str]] | None = (
-            {k: list(v) for k, v in extractors.items()} if extractors else None
-        )
-        self._validators: list[str] | None = list(validators) if validators else None
-        self._hitl_property = hitl_property
-        self._result_property = result_property
+def __dir__() -> list[str]:
+    """``dir()`` через canonical subpackage для tab-completion."""
+    if _canonical is None:
+        _canonical = _importlib.import_module(_CANONICAL_MODULE)
+    return dir(_canonical)
