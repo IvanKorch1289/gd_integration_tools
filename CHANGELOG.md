@@ -1,5 +1,35 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W6 P1-8 Phase 6: tools/migrate_to_structlog.py argparse → typer (6th tool)
+
+### refactor(tools): migrate_to_structlog.py мигрирован argparse → typer+rich
+
+`tools/migrate_to_structlog.py` (S60 W2 codemod для W5 P1-7 structlog default
+migration, 282 LOC) — сам инструмент мигрирован на `typer` + `rich` по proven
+pattern ADR-0318/0319/0322/0323/0324. **6-й tool** подряд.
+
+**Что сделано**:
+- `argparse.ArgumentParser` → `typer.Typer` + `@app.callback(invoke_without_command=True)`.
+- Positional `paths` argument + `--dry-run` flag сохранены через `typer.Argument` / `typer.Option`.
+- `print(...)` → `_console.print("[green]CHANGE[/]: ...")` (rich color codes).
+- `print(..., file=sys.stderr)` → `_console.print("[red]ERROR[/]: ...")` (rich).
+- Backward-compat `main(argv=None)` через `CliRunner.invoke()` + `app()` fallback.
+- Removed unused `import sys`.
+
+**Pattern validation (6 tools)**: 3 trivial + 2 simple + 1 medium (positional
+args + flags). Все варианты argparse теперь covered.
+
+**Idempotency**: после W5 P1-7 migration script не находит новых изменений —
+`--dry-run` → exit 0, "0 changed". Zero-cost maintenance tool.
+
+**Tests**: `tests/unit/tools/test_w6_p1_8_phase6_migrate_to_structlog_typer.py` —
+8 focused tests.
+
+**Verification**: pytest 8 passed, ruff All checks passed, compileall exit 0.
+ADR-0325 (118 ADRs total).
+
+---
+
 ## [Unreleased] — 2026-09-23 — W6 P1-8 Phase 5: tools/s86_workflow_sandbox_guard.py argparse → typer (5th tool)
 
 ### refactor(tools): s86_workflow_sandbox_guard.py мигрирован argparse → typer+rich

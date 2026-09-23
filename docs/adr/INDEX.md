@@ -122,6 +122,7 @@
 | [ADR-0322](0322-w6-p1-8-phase3-check-env-example-typer.md) | W6 P1-8 Phase 3: tools/check_env_example.py мигрирован argparse → typer (3rd tool, 1-flag trivial) | Accepted |
 | [ADR-0323](0323-w6-p1-8-phase4-check-dsn-drivers-typer.md) | W6 P1-8 Phase 4: tools/check_dsn_drivers.py мигрирован argparse → typer (4th tool, 1-flag trivial) | Accepted |
 | [ADR-0324](0324-w6-p1-8-phase5-s86-workflow-sandbox-guard-typer.md) | W6 P1-8 Phase 5: tools/s86_workflow_sandbox_guard.py мигрирован argparse → typer (5th tool, 2-flag CI gate) | Accepted |
+| [ADR-0325](0325-w6-p1-8-phase6-migrate-to-structlog-typer.md) | W6 P1-8 Phase 6: tools/migrate_to_structlog.py мигрирован argparse → typer (6th tool, positional+flag, medium) | Accepted |
 
-**Total:** 117 ADRs.
+**Total:** 118 ADRs.
 

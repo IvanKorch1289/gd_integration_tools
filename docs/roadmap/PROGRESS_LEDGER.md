@@ -4226,3 +4226,42 @@ Pattern **proven на 5 tools**. Migration predictable, momentum very strong.
 - ✅ 8 focused tests (test_w6_p1_8_phase5_*_typer.py).
 - ✅ ADR-0324 создан (117 ADRs total).
 - ⏭️ Phase 6: ~3 more tools (migrate_to_structlog, check_docstrings, generate_adr_index) — cycle 156+.
+
+---
+
+## W6 P1-8 Phase 6: tools/migrate_to_structlog.py argparse → typer (2026-09-23, cycle 153)
+
+**Задача**: продолжить W6 P1-8 momentum (после Phase 1-5).
+
+**Решение** (ADR-0325):
+
+Мигрирован `tools/migrate_to_structlog.py` (S60 W2 codemod для W5 P1-7,
+282 → 314 LOC, +32). Positional `paths` argument + `--dry-run` flag сохранены.
+
+**Pattern validation (6 tools)**:
+
+| Tool | LOC (orig→new) | Args | Complexity |
+|---|---|---|---|
+| `import_wsdl.py` (Phase 1) | 90 → 132 | 4 flags | simple |
+| `import_postman.py` (Phase 2) | 110 → 169 | 4 flags | simple |
+| `check_env_example.py` (Phase 3) | 157 → 187 | 1 flag | trivial |
+| `check_dsn_drivers.py` (Phase 4) | 133 → 152 | 1 flag | trivial |
+| `s86_workflow_sandbox_guard.py` (Phase 5) | 143 → 178 | 2 flags | trivial |
+| `migrate_to_structlog.py` (Phase 6) | 282 → 314 | 1 arg + 1 flag | medium |
+
+Pattern **proven на 6 tools**. Все варианты argparse covered: positional args,
+boolean flags, path arguments.
+
+**Idempotency check**: после W5 P1-7 migration script уже не находит новых
+изменений — `--dry-run` → exit 0, "0 changed". Zero-cost maintenance tool.
+
+**Verification**:
+- `compileall -q tools/migrate_to_structlog.py` → exit 0
+- `pytest tests/unit/tools/test_w6_p1_8_phase6_*_typer.py` → 8 passed
+- `ruff check tools/migrate_to_structlog.py` → All checks passed
+
+**Cycle 153 итог (W6 P1-8 Phase 6)**:
+- ✅ 6-й tool мигрирован (migrate_to_structlog.py), medium complexity (positional+flag).
+- ✅ 8 focused tests.
+- ✅ ADR-0325 создан (118 ADRs total).
+- ⏭️ Phase 7: ~2 tools (check_docstrings 519 LOC, generate_adr_index) — cycle 156+.

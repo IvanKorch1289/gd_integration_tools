@@ -18,14 +18,19 @@ Handles:
 Idempotent: detects if file already has `from ...factory import get_logger` and skips.
 
 Usage: python3 tools/migrate_to_structlog.py [--dry-run] [path ...]
+
+MINIMAX W6 P1-8 Phase 6 (cycle 153): мигрирован с ``argparse`` на ``typer`` +
+``rich`` (libraries > custom, per ADR-0084). Сохранены: typer-native entry +
+legacy ``main()`` callback для backward-compat с pre-existing scripts.
 """
 
 from __future__ import annotations
 
-import argparse
 import re
-import sys
 from pathlib import Path
+
+import typer
+from rich.console import Console
 
 # Patterns
 RE_IMPORT_LOGGING = re.compile(
@@ -208,18 +213,54 @@ def process_file(path: Path, dry_run: bool = False) -> tuple[bool, str]:
     return True, f"migrated: aliases={list(aliases)}, beyond_getlogger={beyond}"
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "paths", nargs="*", default=["src/"], help="Paths to scan (default: src/)"
-    )
-    parser.add_argument(
-        "--dry-run", action="store_true", help="Print changes without writing files"
-    )
-    args = parser.parse_args()
+def main(argv: list[str] | None = None) -> int:
+    """Точка входа CLI (backward-compat shim для существующих скриптов).
 
+    Запускает typer app через typer.testing.CliRunner (для тестов)
+    или sys.argv (для CLI invocation). Возвращает exit code.
+    """
+    if argv is not None:
+        from typer.testing import CliRunner
+
+        runner = CliRunner()
+        result = runner.invoke(app, argv)
+        return result.exit_code
+    # CLI invocation: typer сам подхватит sys.argv[1:]
+    try:
+        app()
+    except SystemExit as exc:
+        return int(exc.code) if exc.code is not None else 0
+    return 0
+
+
+app = typer.Typer(
+    name="migrate-to-structlog",
+    help="S60 W2 codemod: migrate logging.getLogger() → factory.get_logger().",
+    add_completion=False,
+)
+_console = Console()
+
+
+@app.callback(invoke_without_command=True)
+def _main(
+    ctx: typer.Context,
+    paths: list[str] = typer.Argument(
+        None,
+        help="Paths to scan (default: src/).",
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Print changes without writing files.",
+    ),
+) -> None:
+    """S60 W2 codemod: migrate logging.getLogger() → factory.get_logger()."""
+    if ctx.invoked_subcommand is not None:
+        return
+
+    scan_paths = paths if paths else ["src/"]
     files: list[Path] = []
-    for p in args.paths:
+    for p in scan_paths:
         path = Path(p)
         if path.is_file():
             files.append(path)
@@ -261,22 +302,23 @@ def main() -> int:
             skipped_count += 1
             continue
         try:
-            changed, summary = process_file(f, dry_run=args.dry_run)
+            changed, summary = process_file(f, dry_run=dry_run)
             if changed:
                 changed_count += 1
-                if args.dry_run or True:
-                    print(f"  CHANGE: {f} ({summary})")
+                if dry_run or True:
+                    _console.print(f"  [green]CHANGE[/]: {f} ({summary})")
             else:
                 skipped_count += 1
         except Exception as e:
             error_count += 1
-            print(f"  ERROR: {f}: {e}", file=sys.stderr)
+            _console.print(f"  [red]ERROR[/]: {f}: {e}")
 
-    print(
+    _console.print(
         f"\nSummary: {changed_count} changed, {skipped_count} skipped, {error_count} errors"
     )
-    return 0 if error_count == 0 else 1
+    if error_count > 0:
+        raise typer.Exit(code=1)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())
