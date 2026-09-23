@@ -537,6 +537,9 @@ feature_flags = [
     "openfeature-sdk>=0.7,<1.0",
     "flagsmith>=3.5,<4.0",
 ]
+caching = [
+    "aiocache>=0.12.3",
+]
 
 [dependency-groups]
 dev = [

@@ -108,6 +108,7 @@
 | [ADR-0308](0308-w2-prereq-saga-lra-deadline-reapply.md) | W2 prerequisite: SagaLRA deadline integration re-apply (current branch) + SagaStepTimeoutError + 13 focused tests | Accepted |
 | [ADR-0309](0309-w3-p0-4-phase2a-reliability-rename.md) | W3 P0-4 Phase 2A: rename reliability/` `_legacy.py` → `common.py` (misleading-name fix, dead __getattr__ removed) | Accepted |
 | [ADR-0310](0310-w3-p0-5-pyi-drift-regeneration.md) | W3 P0-5: RouteBuilder/WorkflowBuilder .pyi drift fix (1886 LOC) + CI enforcement gate | Accepted |
+| [ADR-0311](0311-w4-p1-6-aiocache-evaluation-hybrid.md) | W4 P1-6: aiocache evaluation + HYBRID decision (sync=cachetools, simple async=aiocache opt-in, advanced=custom) | Accepted |
 
-**Total:** 103 ADRs.
+**Total:** 104 ADRs.
 

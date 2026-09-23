@@ -1,5 +1,60 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W4 P1-6: aiocache evaluation + HYBRID decision + opt-in pilot
+
+### feat(cache): aiocache evaluation + AiocacheMemoryBackend opt-in pilot (MINIMAX W4 P1-6)
+
+MINIMAX W4 P1-6: оценка `aiocache>=0.12.3` как замены ~681 LOC самописного
+кэша. Решение — HYBRID подход (sync=cachetools, simple async=aiocache opt-in,
+advanced=custom), не blind migration.
+
+**Что сделано**:
+
+* **`pyproject.toml`**: добавлен `aiocache>=0.12.3` в
+  `[project.optional-dependencies.caching]` (cycle 152). Активируется
+  через `uv sync --extra caching` или `pip install -e ".[caching]"`.
+
+* **`src/backend/infrastructure/cache/backends/aiocache_backend.py`** (новый,
+  ~165 LOC): `AiocacheMemoryBackend` — реализация `CacheBackend` ABC поверх
+  `aiocache.SimpleMemoryCache`. Lazy import + helpful ImportError. TTL
+  per-key через aiocache API. `delete_pattern` через fnmatch approximation
+  (documented limitation). `close()` через `aiocache.Cache.close()`.
+
+* **Не подключён в factory** — opt-in: пользователи импортируют
+  `AiocacheMemoryBackend` напрямую для тех use cases, где не нужен
+  custom CachingDecorator (envelope, SWR, pattern invalidation).
+
+### Feature parity (custom CachingDecorator vs aiocache)
+
+| Feature | Custom | aiocache |
+|---|---|---|
+| Memory / Redis / Memcached backend | ✅ | ✅ |
+| KeyDB / Disk backend | ✅ | ❌ |
+| `@cached` decorator + stampede | ✅ | ✅ |
+| **Stale-while-revalidate (SWR)** | ✅ | ❌ |
+| **Pattern invalidation** | ✅ | ❌ |
+| **Envelope (metadata + value)** | ✅ | ❌ |
+| Prometheus-метрики + Tenant-wrapper | ✅ | ❌ |
+
+**Decision**: aiocache НЕ покрывает ~30% функциональности custom
+CachingDecorator (критичные для RAG cache и multi-tenant defense-in-depth).
+HYBRID подход: cachetools (sync), aiocache (simple async opt-in),
+custom (advanced).
+
+### Verification
+
+```
+uv add --optional caching aiocache   → + aiocache==0.12.3
+uv run python -c "import aiocache"  → 0.12.3
+uv run python -c "<async @cached test>"  → OK (Python 3.14 compat)
+AiocacheMemoryBackend get/set/exists/delete_pattern test → All assertions passed
+compileall -q src/ extensions/ scripts/ tools/ tests/  → exit 0
+```
+
+Refs: MINIMAX W4 P1-6, ADR-0084, ADR-0311, cycle 152.
+
+---
+
 ## [Unreleased] — 2026-09-23 — W3 P0-5: .pyi drift fix + CI enforcement gate
 
 ### refactor(dsl): RouteBuilder/WorkflowBuilder .pyi drift устранён (1886 LOC)
