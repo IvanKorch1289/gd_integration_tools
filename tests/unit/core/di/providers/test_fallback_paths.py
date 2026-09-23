@@ -224,9 +224,9 @@ class TestWorkflowFallbackPaths:
     def test_get_scheduler_manager_falls_through(self) -> None:
         self._clear_overrides()
         mock_mod = MagicMock()
-        mock_mod.scheduler_manager = "scheduler_inst"
+        mock_mod.get_scheduler_manager = MagicMock(return_value="scheduler_inst")
         with patch(
-            "src.backend.core.di.providers.workflow.resolve_module",
+            "src.backend.core.di.providers.workflow._workflow_core.resolve_module",
             return_value=mock_mod,
         ):
             result = workflow.get_scheduler_manager_provider()
@@ -237,7 +237,7 @@ class TestWorkflowFallbackPaths:
         mock_mod = MagicMock()
         mock_mod.WorkflowEventStore = "WorkflowEventStore_class"
         with patch(
-            "src.backend.core.di.providers.workflow.resolve_module",
+            "src.backend.core.di.providers.workflow._workflow_core.resolve_module",
             return_value=mock_mod,
         ):
             result = workflow.get_workflow_event_store_provider()
@@ -248,7 +248,7 @@ class TestWorkflowFallbackPaths:
         mock_mod = MagicMock()
         mock_mod.get_resilience_coordinator = MagicMock(return_value="coordinator_inst")
         with patch(
-            "src.backend.core.di.providers.workflow.resolve_module",
+            "src.backend.core.di.providers.workflow._resilience.resolve_module",
             return_value=mock_mod,
         ):
             result = workflow.get_resilience_coordinator_provider()
@@ -259,7 +259,7 @@ class TestWorkflowFallbackPaths:
         mock_mod = MagicMock()
         mock_mod.get_rate_limiter = MagicMock(return_value="rate_limiter_inst")
         with patch(
-            "src.backend.core.di.providers.workflow.resolve_module",
+            "src.backend.core.di.providers.workflow._resilience.resolve_module",
             return_value=mock_mod,
         ):
             result = workflow.get_rate_limiter_provider()
@@ -270,7 +270,7 @@ class TestWorkflowFallbackPaths:
         mock_mod = MagicMock()
         mock_mod.app_logger = "app_logger_inst"
         with patch(
-            "src.backend.core.di.providers.workflow.resolve_module",
+            "src.backend.core.di.providers.workflow._loggers.resolve_module",
             return_value=mock_mod,
         ):
             result = workflow.get_app_logger_provider()

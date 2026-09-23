@@ -16,8 +16,10 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.di.module_registry import resolve_module
+from src.backend.core.di.providers.workflow._overrides_store import register
 
 _overrides: dict[str, Any] = {}
+register(_overrides)  # aggregate back-compat (providers.workflow._overrides)
 
 
 # ─────────────── Action bus + dispatcher (services.execution) ───────────────
@@ -122,7 +124,7 @@ def get_workflow_instance_model_provider() -> Any:
     """Получить ``WorkflowInstance`` ORM model."""
     if "workflow_instance_model" in _overrides:
         return _overrides["workflow_instance_model"]
-    module = resolve_module("workflow.models")
+    module = resolve_module("database.models.workflow_instance")
     return module.WorkflowInstance
 
 
@@ -130,7 +132,7 @@ def get_workflow_status_enum_provider() -> Any:
     """Получить ``WorkflowStatus`` enum."""
     if "workflow_status_enum" in _overrides:
         return _overrides["workflow_status_enum"]
-    module = resolve_module("workflow.models")
+    module = resolve_module("database.models.workflow_instance")
     return module.WorkflowStatus
 
 

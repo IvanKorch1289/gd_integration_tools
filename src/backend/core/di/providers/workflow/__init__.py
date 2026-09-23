@@ -153,6 +153,9 @@ from src.backend.core.di.providers.workflow._notifications import (
 from src.backend.core.di.providers.workflow._notifications import (
     set_workflow_factory_module_provider as set_workflow_factory_module_provider,
 )
+from src.backend.core.di.providers.workflow._overrides_store import (
+    _overrides as _overrides,
+)
 from src.backend.core.di.providers.workflow._resilience import (
     get_rate_limit_classes_provider as get_rate_limit_classes_provider,
 )

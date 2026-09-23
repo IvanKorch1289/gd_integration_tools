@@ -15,8 +15,10 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.di.module_registry import resolve_module
+from src.backend.core.di.providers.workflow._overrides_store import register
 
 _overrides: dict[str, Any] = {}
+register(_overrides)  # aggregate back-compat (providers.workflow._overrides)
 
 
 # ─────────────── Stream DLQ writer (cycle-5/D-AUDIT-504) ───────────────
