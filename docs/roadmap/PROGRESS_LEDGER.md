@@ -5040,3 +5040,78 @@ TestVerifyWithGaps). Теперь — **COMMITTED** (`9512ca65a`).
 - Retention lock: 7 лет (GDPR / financial regulation)
 - Dual control: critical operations → 2 operator approvals
 
+
+---
+
+## W11 evidence-based audit + Makefile integration (2026-09-23, cycle 157)
+
+**Triggered by**: v4 protocol §10 P0 step 1 ("Переснять baseline на
+актуальном HEAD").
+
+**Evidence (after W11 P0-2 through P2-1 commits)**:
+
+- 6452 tracked files, 4960 Python-файлов, 2378 в src/backend.
+- `python3.14 -m compileall -q src extensions scripts tools tests` → EXIT 0.
+- `python3.14 tools/checks/check_python3_syntax.py --root .` → EXIT 0.
+- `python3.12 tools/check_layers.py` → "Нарушений: 0 новых (файлов: 2532;
+  baseline: 22 legacy)" — EXIT 0.
+- `python3.12 tools/checks/check_canonical_errors.py` → "Protocols compliant: 5/5"
+  (REST, GraphQL, gRPC, SOAP, MCP) — EXIT 0.
+- W11 tests (6 test files): 247/247 passing.
+
+**Honest integration status** (per v4 §5 "presence != wiring"):
+
+| W11 Work | Wired into Makefile? | Used in production code? |
+|---|---|---|
+| ADR-0335 check_unsafe_defaults.py | ✅ `make check-unsafe-defaults` (new) | Standalone gate only |
+| ADR-0336 check_env_example --matrix | ✅ `make check-env-matrix` (new) | Standalone gate only |
+| ADR-0337 DomainProblem + 6 adapters | ✅ `make check-canonical-errors` (existing) | Defined, NOT yet called from transports |
+| ADR-0338 outbox crash matrix | ❌ no Makefile gate | Test-only (model-based) |
+| ADR-0339 DLQReplayGovernor | ❌ no Makefile gate | Defined, NOT yet called from DLQ handlers |
+| ADR-0340 HashChainLedger | ❌ no Makefile gate | Defined, NOT yet called from audit sinks |
+
+**Concrete improvement** (`dcb8ea23f`): wired 3 W11 tools into
+`make/security.mk`:
+
+- `check-unsafe-defaults`: HIGH severity placeholder detection → exit 1.
+- `check-env-matrix`: required secrets без .env.example → exit 1.
+- `check-canonical-errors`: 5/5 protocol error contracts → exit 0.
+
+**Verification**:
+- `make check-unsafe-defaults` → EXIT 0 (0 HIGH/MEDIUM, 19 LOW violations).
+- `make check-env-matrix` → EXIT 1 (11 required secrets missing — REAL gap).
+- `make check-canonical-errors` → EXIT 0.
+
+**Real gaps identified by `make check-env-matrix`** (fail-closed,
+требуют explicit fix):
+
+```
+CLICKHOUSE__PASSWORD     (CH production password)
+DADATA__API_KEY          (DaData.ru API key)
+ES__API_KEY              (Elasticsearch API key)
+ES__PASSWORD             (Elasticsearch password)
+FS__ACCESS_KEY           (S3 access key)
+MONGO__PASSWORD          (MongoDB password)
+RAG__EMBEDDING_API_KEY   (RAG embedding provider)
+RAG__QDRANT_API_KEY      (Qdrant API key)
+SEC__API_KEY             (Security API key)
+SEC__ROUTES_WITHOUT_API_KEY  (Routes without API key)
+SKB__API_KEY             (SKB API key)
+```
+
+Action required: либо add к `.env.example`, либо mark optional в Settings.
+
+**Remaining W11 work not yet wired**:
+
+- DLQReplayGovernor integration в DLQ handlers (W11 P1-2 → production).
+- HashChainLedger integration в audit sinks (W11 P2-1 → production).
+- DomainProblem transport adapters migration (W11 P0-4 → production).
+
+**Per v4 protocol**: эти integrations требуют:
+- Claim Ledger (доказательства использования)
+- Blast-radius analysis (импортёры, schemas, contracts)
+- cURL/browser verification (BLOCKED Docker)
+- ADR для каждой architectural развилки
+
+Поэтому в текущем turn integration оставлен как separate W12 tasks.
+
