@@ -102,18 +102,18 @@
 | [ADR-0249](0249a-s44-audit-followup-facades.md) | Sprint 44: Audit Follow-up — Facades + Migrations | Unknown |
 | [ADR-0250](0250-s45-audit-backlog-closure.md) | Sprint 45: Audit Backlog QW10 + S1 Closure | Unknown |
 | [ADR-0251](0251-s13-circuit-breaker-shared-state.md) | S13: Circuit Breaker Middleware → Shared State | Unknown |
-| [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | W1 P0-1: Circuit Breaker consolidation поверх purgatory (3→1 реализации, ~687 LOC reduction) | Draft |
-| [ADR-0306](0306-w0-py2-except-syntax-migration.md) | W0 P0-BLOCKER: миграция `except A, B:` → `except (A, B):` (177 файлов, 234 строки, AST-based tool + guard rewrite) | Accepted |
-| [ADR-0307](0307-w3-p0-4-shim-inventory-classification.md) | W3 P0-4 Phase 1: shim inventory + classification (15 backward-compat shims, 1 DeprecationWarning) | Accepted |
-| [ADR-0308](0308-w2-prereq-saga-lra-deadline-reapply.md) | W2 prerequisite: SagaLRA deadline integration re-apply (current branch) + SagaStepTimeoutError + 13 focused tests | Accepted |
-| [ADR-0309](0309-w3-p0-4-phase2a-reliability-rename.md) | W3 P0-4 Phase 2A: rename reliability/` `_legacy.py` → `common.py` (misleading-name fix, dead __getattr__ removed) | Accepted |
-| [ADR-0310](0310-w3-p0-5-pyi-drift-regeneration.md) | W3 P0-5: RouteBuilder/WorkflowBuilder .pyi drift fix (1886 LOC) + CI enforcement gate | Accepted |
-| [ADR-0311](0311-w4-p1-6-aiocache-evaluation-hybrid.md) | W4 P1-6: aiocache evaluation + HYBRID decision (sync=cachetools, simple async=aiocache opt-in, advanced=custom) | Accepted |
-| [ADR-0312](0312-w5-p1-7-structlog-default-circular-fix.md) | W5 P1-7: structlog default backend (factory auto-detect) + circular import fix (~800 call sites) | Accepted |
-| [ADR-0313](0313-w2-p0-3-batch-processor-migration-pilot.md) | W2 P0-3 Phase 1A: BatchProcessor migration pilot (canonical + shim + DeprecationWarning) | Accepted |
-| [ADR-0314](0314-w2-p0-3-phase1b-remaining-processors.md) | W2 P0-3 Phase 1B: 5 single-file processors migration (strangler_fig, data_lineage, plan_execute, reflection_loop, router_specialist) | Accepted |
-| [ADR-0315](0315-w2-p0-3-phase1c-event-store-idp-pipeline-subpackages.md) | W2 P0-3 Phase 1C: event_store + idp_pipeline_processor subpackages migration (1232 LOC consolidated) | Accepted |
-| [ADR-0316](0316-w2-p0-3-phase2-saga-lra-decision.md) | W2 P0-3 Phase 2: SagaLRA Variant A — migrate legacy mixin-based subpackage (canonical SagaLRAProcessor) | Accepted |
+| [ADR-0306](0306-w0-py2-except-syntax-migration.md) | W0 P0-BLOCKER: миграция `except A, B:` → `except (A, B):` | **Accepted** |
+| [ADR-0307](0307-w3-p0-4-shim-inventory-classification.md) | W3 P0-4: shim inventory + classification (MINIMAX Phase 1) | **Accepted** |
+| [ADR-0308](0308-w2-prereq-saga-lra-deadline-reapply.md) | W2 prerequisite: SagaLRA deadline integration re-apply (current branch) | **Accepted** |
+| [ADR-0309](0309-w3-p0-4-phase2a-reliability-rename.md) | W3 P0-4 Phase 2A: rename `_legacy.py` → `common.py` (reliability) | **Accepted** |
+| [ADR-0310](0310-w3-p0-5-pyi-drift-regeneration.md) | W3 P0-5: RouteBuilder/WorkflowBuilder `.pyi` drift fix + CI enforcement | **Accepted** |
+| [ADR-0311](0311-w4-p1-6-aiocache-evaluation-hybrid.md) | W4 P1-6: aiocache evaluation + HYBRID decision (sync=cachetools, simple async=aiocache opt-in, advanced=custom) | **Accepted** |
+| [ADR-0312](0312-w5-p1-7-structlog-default-circular-fix.md) | W5 P1-7: structlog как default backend (factory auto-detect + circular import fix) | **Accepted** |
+| [ADR-0313](0313-w2-p0-3-batch-processor-migration-pilot.md) | W2 P0-3 Phase 1A: BatchProcessor migration pilot (single-file processor consolidation) | **Accepted** |
+| [ADR-0314](0314-w2-p0-3-phase1b-remaining-processors.md) | W2 P0-3 Phase 1B: 5 single-file processors migration (strangler_fig, data_lineage, plan_execute, reflection_loop, router_specialist) | **Accepted** |
+| [ADR-0315](0315-w2-p0-3-phase1c-event-store-idp-pipeline-subpackages.md) | W2 P0-3 Phase 1C: event_store + idp_pipeline_processor subpackages migration | **Accepted** |
+| [ADR-0316](0316-w2-p0-3-phase2-saga-lra-decision.md) | W2 P0-3 Phase 2: SagaLRA — Variant A (migrate legacy mixin-based subpackage) + ADR | Unknown |
+| [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 
 **Total:** 109 ADRs.
 
