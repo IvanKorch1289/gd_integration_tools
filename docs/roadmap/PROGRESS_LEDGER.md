@@ -4456,3 +4456,49 @@ Per-submodule max **367 LOC** (vs 609 god-module). Все < 500 LOC threshold.
 - ⏭️ Phase 5: `services/ai/agent_sandbox.py` (601 LOC) — sandbox split.
 - ⏭️ Phase 6: `core/ai/skill_registry.py` (614 LOC) — skill registry split.
 - ⏭️ Phase 7: `core/di/providers/workflow.py` (602 LOC) — workflow split (если не уменьшится).
+
+---
+
+## W9 P2-13 Phase 5: services/ai/agent_sandbox god-module split (2026-09-23, cycle 153)
+
+**Задача**: `services/ai/agent_sandbox.py` (601 LOC) — top-5 god-module.
+3 sandbox implementations + selector + exceptions mixed.
+
+**Решение** (ADR-0330):
+
+Преобразован в `agent_sandbox/` package с 5 cohesion submodules. `agent_sandbox.py`
+стал **66 LOC thin re-export shim** (601 → 66, 89% reduction).
+
+**Submodule layout**:
+
+| Submodule | LOC | Содержимое |
+|---|---|---|
+| `_types.py` | 21 | AgentSandboxConfigError, AgentSandboxTimeoutError |
+| `_in_process.py` | 162 | InProcessAgentSandbox (DEPRECATED) + _sync_run_react helper |
+| `_process_pool.py` | 109 | ProcessPoolAgentSandbox (default-OFF-safe) |
+| `_e2b.py` | 207 | E2BAgentSandbox (cloud sandbox, opt-in) |
+| `_selector.py` | 137 | AgentSandboxSelector + resolve_agent_sandbox + singleton |
+
+Per-submodule max **207 LOC** (vs 601 god-module). Все < 500 LOC threshold.
+
+**Back-compat (W2 P0-3 SagaLRA Variant A pattern)**:
+- Shim `agent_sandbox.py` (file) re-exports все 8 публичных имён из package.
+- `services/ai/__init__.py` (public API) без изменений.
+
+**Verification**:
+- `compileall -q src/backend/services/ai/` → exit 0
+- `ruff check src/backend/services/ai/agent_sandbox*/` → All checks passed
+- `pytest tests/unit/services/ai/test_w9_p2_13_phase5_*_split.py` → 17 passed:
+  - 8 back-compat identity (shim is canonical — id(ShimX) == id(X))
+  - 5 submodule export (каждый submodule экспортирует expected names)
+  - 1 shim compliance (shim < 100 LOC)
+  - 1 submodule compliance (submodules < 500 LOC)
+  - 2 exception instantiation (ConfigError, TimeoutError)
+
+**Cycle 153 итог (W9 P2-13 Phase 5)**:
+- ✅ Top-5 god-module декомпозирован (601 → 5 cohesion submodules).
+- ✅ 17 focused tests.
+- ✅ ADR-0330 создан (123 ADRs total).
+- ⏭️ Phase 6: `core/ai/skill_registry.py` (614 LOC) — skill registry split.
+- ⏭️ Phase 7: `core/di/providers/workflow.py` (602 LOC) — workflow split.
+- ⏭️ Phase 8: `infrastructure/clients/storage/s3_pool/client.py` (625 LOC) — S3 pool split.

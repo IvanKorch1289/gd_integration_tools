@@ -1,5 +1,35 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W9 P2-13 Phase 5: services/ai/agent_sandbox god-module split (601 LOC → 5 submodules)
+
+### refactor(services/ai): agent_sandbox god-module → package with 5 cohesion submodules
+
+`src/backend/services/ai/agent_sandbox.py` (601 LOC, top-5 god-module) →
+`agent_sandbox/` package с 5 cohesion submodules:
+
+| Submodule | LOC | Содержимое |
+|---|---|---|
+| `_types.py` | 21 | `AgentSandboxConfigError`, `AgentSandboxTimeoutError` exceptions |
+| `_in_process.py` | 162 | `InProcessAgentSandbox` (DEPRECATED) + `_sync_run_react` helper |
+| `_process_pool.py` | 109 | `ProcessPoolAgentSandbox` (default-OFF-safe) |
+| `_e2b.py` | 207 | `E2BAgentSandbox` (cloud sandbox, opt-in) |
+| `_selector.py` | 137 | `AgentSandboxSelector` + `resolve_agent_sandbox` + singleton |
+
+`agent_sandbox.py` стал **66 LOC thin re-export shim** (601 → 66, 89%
+reduction). Per-submodule max 207 LOC (vs 601 god-module).
+
+**Back-compat**: `services.ai.agent_sandbox` public API без изменений. Все 8
+публичных имён доступны через обе entry points.
+
+**Tests**: `tests/unit/services/ai/test_w9_p2_13_phase5_agent_sandbox_split.py` —
+17 focused tests (8 back-compat identity + 5 submodule export + 1 shim
+compliance + 1 submodule compliance + 2 exception instantiation).
+
+**Verification**: pytest 17 passed, ruff All checks passed, compileall exit 0.
+ADR-0330 (123 ADRs total).
+
+---
+
 ## [Unreleased] — 2026-09-23 — W9 P2-13 Phase 4: services/ops/health god-module split (609 LOC → 4 submodules)
 
 ### refactor(services/ops): health god-module → package with 4 cohesion submodules

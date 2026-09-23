@@ -126,7 +126,8 @@
 | [ADR-0327](0327-w6-p1-8-phase8-check-docstrings-typer.md) | W6 P1-8 Phase 8: `tools/check_docstrings.py` argparse → typer | **Accepted** |
 | [ADR-0328](0328-w9-p2-13-phase3-privacy-delete-data-subject-split.md) | W9 P2-13 Phase 3: `core/privacy/delete_data_subject.py` → package split (god-module decomposition) | **Accepted** |
 | [ADR-0329](0329-w9-p2-13-phase4-services-ops-health-split.md) | W9 P2-13 Phase 4: `services/ops/health.py` (609 LOC) → package split | **Accepted** |
+| [ADR-0330](0330-w9-p2-13-phase5-services-ai-agent-sandbox-split.md) | W9 P2-13 Phase 5: `services/ai/agent_sandbox.py` (601 LOC) → package split (3 sandbox impls + selector) | **Accepted** |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 
-**Total:** 122 ADRs.
+**Total:** 123 ADRs.
 
