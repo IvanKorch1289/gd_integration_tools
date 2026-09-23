@@ -4549,3 +4549,91 @@ Per-submodule max **166 LOC** (vs 602 god-module). Все < 200 LOC threshold.
 - ✅ ADR-0331 создан (124 ADRs total).
 - ⏭️ Phase 8: `infrastructure/clients/storage/s3_pool/client.py` (625 LOC) — S3 pool split.
 - ⏭️ Phase 9: `core/security/pii_tokenizer.py` (565 LOC) — single class, harder split.
+
+---
+
+## W11 P0-2: Configuration matrix gate — unsafe secret defaults detector (2026-09-23, cycle 157)
+
+**Задача**: закрыть configuration matrix gap из стратегического анализа 2026-09-22 —
+"Secret не имеет небезопасного default".
+
+**Реализация**: `tools/checks/check_unsafe_defaults.py` — AST-based gate,
+сканирует Pydantic Settings в `src/backend/core/config/`:
+- **HIGH** (exit 1): SecretStr/SecretBytes с non-empty default; str поле с placeholder default
+- **MEDIUM** (warning, exit 0; --strict → exit 1): SecretStr с default=""
+- **LOW** (info, exit 0): str поле с default="" и именем как секрет
+
+Placeholder-паттерны: changeme, password, secret, admin, test, demo, your-..., <...>,
+xxx, placeholder, TODO, fixme (regex-list).
+
+**Verification на текущем HEAD (`a9a763561`)**:
+- 0 HIGH violations — нет hardcoded placeholders
+- 0 MEDIUM violations — нет SecretStr code smell
+- 19 LOW violations — рекомендации мигрировать на `SecretStr | None = None`:
+  InfluxDB token, BaseWebhookChannel signature_secret, 8× AI api_keys (Perplexity,
+  HuggingFace, OpenWebUI, OpenRouter, Nim, OpenAI, MiniMax, YandexGPT), Vault token,
+  DatabaseConnection password, ClickHouse password, AuthConfig api_key, JupyterHub
+  api_token, MailSettings password, FileStorageSettings access_key, LdapSettings
+  bind_password, MqttSettings password.
+
+**Tests**: `tests/unit/tools/test_w11_p0_2_check_unsafe_defaults.py` — 63 tests:
+- TyperMigration: 4 tests (app type, no argparse, JSON output via stdout, --help)
+- IsSecretFieldName: 13 parameterized cases (password, api_key, token, etc.)
+- IsPlaceholder: 18 parameterized cases (changeme, password, admin, your-key-here, ...)
+- ExtractStringValue: 5 tests (constant str, SecretStr call, None, other func)
+- ScanSettingsFile: 8 tests (HIGH SecretStr non-empty, MEDIUM SecretStr '', HIGH str placeholder, LOW str '', safe SecretStr None, safe required, NotSettings skip, non-secret field with placeholder ok)
+- ScanAllSettings: 2 tests (real-repo no HIGH regression guard, MEDIUM regression guard)
+- Cli: 4 tests (--json output, --strict, --help, exit codes)
+
+**Gates**:
+- `compileall -q src/ extensions/ scripts/ tools/ tests/ testkit/` → exit 0
+- `python tools/checks/check_python3_syntax.py --root .` → exit 0
+- `ruff check tools/checks/check_unsafe_defaults.py` → All checks passed
+- `pytest tests/unit/tools/test_w11_p0_2_check_unsafe_defaults.py` → 63/63 passed
+
+**ADR-0335**: configuration matrix gate pattern, expansion path (новые placeholder-паттерны
+и secret field names через frozen sets).
+
+**Cycle 157 итог (W11 P0-2)**:
+- ✅ Закрыт один из configuration matrix gaps (HIGH severity).
+- ✅ 19 LOW violations как известный backlog (incremental migration to SecretStr).
+- ✅ Tool готов к CI integration (`make config-matrix` или отдельный gate).
+- ⏭️ Дальнейшие configuration matrix gaps: required prod vars (no hidden fallback),
+  unknown vars (typo guard), deprecated vars (warning), feature dependencies.
+
+---
+
+## Factcheck: master state vs claim 2026-09-22 (cycle 157)
+
+**Контекст**: стратегический анализ от 22 сентября 2026 (timestamp 1790089356160)
+ссылается на commit `0f14a587d` от 22 сентября и утверждает 176 SyntaxError файлов,
+233 Py2 `except A, B:`, повреждённые критические пути (JWT/gRPC/SOAP/MCP/DSL/AI/skill).
+
+**Проверка на текущем HEAD (`a9a763561`, 33 коммита впереди `0f14a587d`)**:
+
+| Показатель | Утверждение | Реальность | Команда |
+|---|---|---|---|
+| SyntaxError файлов | 176 | **0** | `python tools/checks/check_python3_syntax.py --root .` (exit 0) |
+| Py2 `except A, B:` в коде | 233 | **0** | tokenize-masked regex на 5021 .py файлов |
+| `compileall` exit | ненулевой | **0** | `python -m compileall -q src/ extensions/ scripts/ tools/ tests/ testkit/` |
+| Critical paths damaged | да | компилируются | AST парсинг всех перечисленных модулей успешен |
+| Scope syntax-гейта | только `src/backend` | работает на `--root .` | `python tools/checks/check_python3_syntax.py --root .` |
+
+**Ключевые коммиты между `0f14a587d` и `a9a763561`**:
+- `38b4992e6` (W0 P0-BLOCKER): fix 234 Py2-except в 177 файлах
+- `3b41edeb4` → `a5ddf4dee` (W5 P1-7 → W6 Phase 6): structlog factory + Py2 fix
+- `180e75819` (W6 P1-8 Phase 10): scaffold.py typer + structlog_backend Py2 fix
+- W9 P2-13: 6 god-module splits (`_protocols.py`, cache, privacy, health, agent_sandbox, workflow)
+- `64933d516` (ADR-0334): документирование фактчека
+- `a9a763561` (W11 P0-2 / ADR-0335): configuration matrix gate
+
+**Стратегические gaps, оставшиеся релевантными** (per ADR-0334):
+- Object-level authorization (security P0, требует consumer audit)
+- Privacy lifecycle orchestrator (P0, частично реализуем без Docker)
+- Canonical error contract / ActionContract (P1, additive skeleton)
+- Outbox state-machine crash tests (P1, model-based с моками)
+- Cross-tenant live E2E / Secret rotation / Soak tests — **BLOCKED** Docker
+
+**Решение**: стратегический анализ валиден для архитектурных улучшений,
+но **не для синтаксической регрессии** — её нет в текущем HEAD.
+
