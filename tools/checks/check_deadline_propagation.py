@@ -242,6 +242,18 @@ def _iter_dsl_processor_files() -> list[Path]:
     )
 
 
+def _rel_path(path: Path) -> Path:
+    """Возвращает path relative to REPO_ROOT, fallback на абсолютный путь.
+
+    Используется в render_* для красивого вывода. Если файл вне репозитория
+    (например, в тестах с tmp_path), возвращает абсолютный путь.
+    """
+    try:
+        return path.relative_to(REPO_ROOT)
+    except ValueError:
+        return path
+
+
 def scan() -> list[ProcessorStatus]:
     """Сканирует все DSL processors, возвращает статусы."""
     return [classify_processor(p) for p in _iter_dsl_processor_files()]
@@ -274,7 +286,7 @@ def render_human(results: list[ProcessorStatus]) -> str:
     if by_verdict.get("legacy"):
         lines.append("--- LEGACY (wait_for/fanout без deadline_budget reference) ---")
         for r in by_verdict["legacy"]:
-            rel = r.file.relative_to(REPO_ROOT)
+            rel = _rel_path(r.file)
             reasons: list[str] = []
             if r.wait_for_calls:
                 reasons.append(f"{len(r.wait_for_calls)} asyncio.wait_for")
@@ -293,7 +305,7 @@ def render_human(results: list[ProcessorStatus]) -> str:
     if by_verdict.get("partial"):
         lines.append("--- PARTIAL (has deadline_refs, but no narrowing/admission_control) ---")
         for r in by_verdict["partial"]:
-            rel = r.file.relative_to(REPO_ROOT)
+            rel = _rel_path(r.file)
             for call in r.wait_for_calls:
                 lines.append(f"  {rel}:{call.line}  asyncio.wait_for(...)")
         lines.append("")
@@ -301,7 +313,7 @@ def render_human(results: list[ProcessorStatus]) -> str:
     if by_verdict.get("integrated"):
         lines.append("--- INTEGRATED ---")
         for r in by_verdict["integrated"]:
-            rel = r.file.relative_to(REPO_ROOT)
+            rel = _rel_path(r.file)
             indicators = []
             if r.has_narrowing:
                 indicators.append("narrowing")
@@ -333,7 +345,7 @@ def render_json(results: list[ProcessorStatus]) -> str:
         },
         "processors": [
             {
-                "file": str(r.file.relative_to(REPO_ROOT)),
+                "file": str(_rel_path(r.file)),
                 "verdict": r.verdict,
                 "wait_for_calls": [
                     {"line": c.line, "snippet": c.snippet} for c in r.wait_for_calls
