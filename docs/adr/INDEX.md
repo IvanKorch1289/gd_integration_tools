@@ -106,6 +106,7 @@
 | [ADR-0306](0306-w0-py2-except-syntax-migration.md) | W0 P0-BLOCKER: миграция `except A, B:` → `except (A, B):` (177 файлов, 234 строки, AST-based tool + guard rewrite) | Accepted |
 | [ADR-0307](0307-w3-p0-4-shim-inventory-classification.md) | W3 P0-4 Phase 1: shim inventory + classification (15 backward-compat shims, 1 DeprecationWarning) | Accepted |
 | [ADR-0308](0308-w2-prereq-saga-lra-deadline-reapply.md) | W2 prerequisite: SagaLRA deadline integration re-apply (current branch) + SagaStepTimeoutError + 13 focused tests | Accepted |
+| [ADR-0309](0309-w3-p0-4-phase2a-reliability-rename.md) | W3 P0-4 Phase 2A: rename reliability/` `_legacy.py` → `common.py` (misleading-name fix, dead __getattr__ removed) | Accepted |
 
-**Total:** 101 ADRs.
+**Total:** 102 ADRs.
 

@@ -7,7 +7,8 @@ Modules:
 - :mod:`message_expiration` — :class:`MessageExpirationProcessor`
 - :mod:`redelivery_policy` — :class:`RedeliveryPolicyProcessor`
 - :mod:`return_address` — :class:`ReturnAddressProcessor`
-- :mod:`_legacy` — backward-compat constants/types (S175 Phase 1)
+- :mod:`common` — header constants + type aliases (renamed from `_legacy` в
+  cycle 152: misleading имя — это shared module, не legacy)
 
 Public API:
 - Header constants: ``HEADER_CORRELATION_ID``, ``HEADER_MESSAGE_ID``,
@@ -18,7 +19,7 @@ Public API:
 
 from __future__ import annotations
 
-from src.backend.dsl.engine.processors.eip.reliability._legacy import (
+from src.backend.dsl.engine.processors.eip.reliability.common import (
     HEADER_CORRELATION_ID,
     HEADER_EXPIRATION,
     HEADER_MESSAGE_ID,

@@ -36,19 +36,30 @@ def _ctx() -> ExecutionContext:
     return ExecutionContext()
 
 
-def test_legacy_processor_exports_resolve_lazily() -> None:
-    """Legacy ``__all__`` names resolve to the split processor classes."""
-    from src.backend.dsl.engine.processors.eip.reliability import _legacy
+def test_common_module_exposes_constants_and_types() -> None:
+    """W3 P0-4 Phase 2A (cycle 152): shared module renamed from ``_legacy.py``
+    to ``common.py``. Old ``_legacy`` name was misleading — это не legacy,
+    это shared header constants + type aliases для reliability subpackage.
 
-    expected = {
-        "CorrelationIdentifierProcessor": CorrelationIdentifierProcessor,
-        "MessageExpirationProcessor": MessageExpirationProcessor,
-        "RedeliveryPolicyProcessor": RedeliveryPolicyProcessor,
-        "ReturnAddressProcessor": ReturnAddressProcessor,
+    Этот тест валидирует новое имя и его public API (header constants +
+    type aliases). Удалять ``__getattr__`` resolution больше не требуется —
+    processor-классы импортируются напрямую в ``__init__.py``.
+    """
+    from src.backend.dsl.engine.processors.eip.reliability import common
+
+    expected_constants = {
+        "HEADER_CORRELATION_ID",
+        "HEADER_MESSAGE_ID",
+        "HEADER_EXPIRATION",
+        "HEADER_REDELIVERED",
+        "HEADER_REDELIVERY_COUNT",
+        "HEADER_RETURN_ADDRESS",
     }
-    assert set(_legacy.__all__) == set(expected)
-    for name, processor in expected.items():
-        assert getattr(_legacy, name) is processor
+    expected_types = {"IdFactory", "ExpirationResolver", "RedeliveryAttempt"}
+    assert expected_constants | expected_types <= set(common.__all__)
+    # Constants имеют string values.
+    assert common.HEADER_CORRELATION_ID == "correlation_id"
+    assert common.HEADER_RETURN_ADDRESS == "return_address"
 
 
 # ── CorrelationIdentifierProcessor ──────────────────────────────────

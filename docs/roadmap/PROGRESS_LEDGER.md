@@ -3901,3 +3901,39 @@ ruff check ... --select F401,F841,F811,E9                             → All ch
 - ✅ W2 P0-3 (слияние процессоров) больше не blocked.
 - ✅ SagaStepTimeoutError доступен для downstream observability.
 - ⏭️ W2 P0-3 execution — следующий wave (требует cleanup dsl/processors/ + тесты).
+
+## W3 P0-4 Phase 2A: rename `_legacy.py` → `common.py` (2026-09-23, Sprint 12 cycle 152)
+
+MINIMAX W3 P0-4 Phase 2A: устранён misleading-name кандидат из ADR-0307.
+
+**Изменения**:
+
+* **Rename**: `git mv _legacy.py common.py` (shared-module naming).
+* **`common.py`** — docstring обновлён (shared nature явная), `__all__`
+  очищен (только constants + types), мёртвый `__getattr__` удалён (-25 LOC).
+* **5 импортёров обновлены**: `__init__.py` + 4 sibling-модулях
+  (correlation_identifier / message_expiration / redelivery_policy /
+  return_address).
+* **Test обновлён**: `test_legacy_processor_exports_resolve_lazily` →
+  `test_common_module_exposes_constants_and_types` (валидирует новый
+  public API common.py).
+
+**Verification (Python 3.14.4)**:
+
+```
+python3.14 -m pytest tests/unit/dsl/engine/processors/eip/test_s56_w3_eip_reliability.py -v
+  → 16 passed (включая новый test_common_module_exposes_constants_and_types)
+
+python3.14 -m compileall -q src/ extensions/ scripts/ tools/ tests/  → exit 0
+python3.14 tools/checks/check_python3_syntax.py --root src/backend    → exit 0
+rg '_legacy' src/backend/dsl/engine/processors/eip/reliability/ -g '!*test*'
+  → только docstring-упоминания (историческая справка), не активные импорты ✓
+```
+
+**Cycle 152 итог (W3 P0-4 Phase 2A)**:
+
+- ✅ Misleading name устранён.
+- ✅ Мёртвый код удалён (-25 LOC).
+- ✅ Тесты зелёные (16/16).
+- ✅ compileall + syntax check зелёные.
+- ⏭️ W3 P0-4 Phase 2B (bulk-DEPRECATE после telemetry) — отдельный wave.

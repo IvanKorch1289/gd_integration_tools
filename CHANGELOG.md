@@ -1,5 +1,53 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W3 P0-4 Phase 2A: rename `_legacy.py` → `common.py`
+
+### refactor(eip/reliability): misleading `_legacy.py` → `common.py` + dead-code cleanup
+
+MINIMAX W3 P0-4 Phase 2A: устранён misleading-name кандидат из ADR-0307.
+
+**Что было**: `src/backend/dsl/engine/processors/eip/reliability/_legacy.py`
+содержал header constants (JMS-style/Camel conventions: `HEADER_CORRELATION_ID`,
+`HEADER_MESSAGE_ID`, `HEADER_EXPIRATION`, `HEADER_REDELIVERED`,
+`HEADER_REDELIVERY_COUNT`, `HEADER_RETURN_ADDRESS`), type aliases (`IdFactory`,
+`ExpirationResolver`, `RedeliveryAttempt`) и dead-code `__getattr__` для
+backward-compat lazy resolution Processor-классов (которые уже
+импортируются напрямую в `__init__.py` после S175 Phase 2).
+
+* **Rename**: `git mv _legacy.py common.py` (shared-module naming convention).
+* **Cleanup common.py**: docstring обновлён (shared nature явная), `__all__`
+  очищен (только constants + types, без Processor-классов), мёртвый
+  `__getattr__` удалён (-25 LOC).
+* **Imports обновлены** в `__init__.py` + 4 sibling-модулях
+  (correlation_identifier / message_expiration / redelivery_policy /
+  return_address).
+* **Test обновлён**: `test_legacy_processor_exports_resolve_lazily` →
+  `test_common_module_exposes_constants_and_types` (проверяет что `common`
+  экспортирует constants + types, а не dead `__getattr__`).
+
+### Verification
+
+```
+python3.14 -m pytest tests/unit/dsl/engine/processors/eip/test_s56_w3_eip_reliability.py -v
+  → 16 passed (включая новый test_common_module_exposes_constants_and_types)
+
+python3.14 -m compileall -q src/ extensions/ scripts/ tools/ tests/  → exit 0
+python3.14 tools/checks/check_python3_syntax.py --root src/backend    → exit 0
+
+python3.14 -c "from src.backend.dsl.engine.processors.eip.reliability import (
+    HEADER_CORRELATION_ID, HEADER_MESSAGE_ID, HEADER_EXPIRATION,
+    HEADER_REDELIVERED, HEADER_REDELIVERY_COUNT, HEADER_RETURN_ADDRESS,
+    CorrelationIdentifierProcessor, MessageExpirationProcessor,
+    RedeliveryPolicyProcessor, ReturnAddressProcessor,
+    IdFactory, ExpirationResolver, RedeliveryAttempt,
+)"
+  → OK
+```
+
+Refs: MINIMAX W3 P0-4 Phase 2A, ADR-0307 (inventory), ADR-0309.
+
+---
+
 ## [Unreleased] — 2026-09-23 — W2 prerequisite: SagaLRA deadline integration re-apply (current branch)
 
 ### feat(deadline): ADR-0305 re-applied к current saga_lra.py (Critical Finding устранён)
