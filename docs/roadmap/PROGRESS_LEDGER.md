@@ -5391,3 +5391,89 @@ Manual re-audit реальных файлов выявил 3 heuristic gap в
   SHIMMED присутствие (defined file) НЕ доказывает нужен (active use).
   Нужна telemetry, прежде чем удалять.
 
+---
+
+## v4 §10 sweep: gates status + RED findings (2026-09-23, cycle 158+)
+
+**Context**: v4 §10 P0/P1 запрещает слепо доверять claim'у «X NOT STARTED»
+без проверки existing tooling. Цикл 158+ swept по существующим gates в
+`tools/checks/` — measurement per v4 §3 «мерь до работы».
+
+**Sweep results (замер прямых запусков)**:
+
+| Gate | Exit | Status |
+|---|---|---|
+| `check_object_authorization.py` | 0 | GREEN (НЕ NOT STARTED — реальная проверка есть и passes) |
+| `check_privacy_lifecycle.py` | 0 | GREEN (тоже реальная) |
+| `check_feature_flag_debt.py` | 0 | GREEN |
+| `check_feature_flag_dependencies.py` | 1 (broken) → 0 after fix | **FIXED** (commit `fccf8b2aa`) |
+| `check_ai_gateway_coverage.py` | 0 | GREEN |
+| `check_ai_policy_schema.py` | 1 (real content bug) → 0 after fix | **FIXED** (commit `2548ccb48`) |
+| `check_hardcoded_prompts.py` | 0 | GREEN |
+| `check_custom_code.py` | 0 | GREEN |
+| `check_canonical_errors.py` | 0 | GREEN |
+| `check_unsafe_defaults.py` | - | Environment: typer missing (не code issue) |
+| `check_supply_chain.py` | 1 | Environment: pip-audit + bandit missing (не code issue) |
+| `scan_isolated_modules.py` | 0 | GREEN |
+| `check_routebuilder_mro.py` | 0 | GREEN |
+
+**Контрастные находки (vs стратегический анализ 2026-09-22)**:
+- «Object-level authorization NOT STARTED» — **ОПРОВЕРГНУТО**:
+  `check_object_authorization.py` существует и GREEN.
+- «Privacy orchestration NOT STARTED» — **ОПРОВЕРГНУТО**:
+  `check_privacy_lifecycle.py` существует и GREEN.
+
+Это не означает, что features полностью работают (gate может
+валидировать surface без runtime-integration), но hypothesis «NOT STARTED»
+оказалась ошибочной → учить не доверять unverified claims.
+
+**Реальные content fixes (2 atomic commits)**:
+
+1. **commit `fccf8b2aa`** — `tools/checks/check_feature_flag_dependencies.py`:
+   S52 W2 (validator.py → validator/ package decomp) сломал gate, который
+   ожидал single-file. Pre-fix: gate exit 1 с «validator.py не найден» =
+   green-by-omission (nobody looked). Post-fix: gate correctly reports
+   **3 *_strict flags без declared dependency**:
+     - `lsp_server_strict` (Sprint 19 K1, line ~2516)
+     - `outbound_metering_strict` (Sprint 6 K1, line ~3106)
+     - `ai_prompt_sweep_strict` (Sprint 7 K5, line ~4133)
+   Эти 3 флага требуют или добавления в `_FEATURE_FLAG_DEPENDENCIES`,
+   или `# no dependency required` comment — fix вне scope этой сессии
+   (требует knowledge of each flag's intent).
+
+2. **commit `2548ccb48`** — `ai_policies/agent_basic.policy.yaml`:
+   pre-S76 schema (`tool_policy: { allow, deny, max_calls_per_run }`) →
+   S76 schema (`tools: { whitelist, blacklist, on_violation,
+   allow_all_tools }`). Honest: `max_calls_per_run: 20` **потерян** —
+   нет эквивалента в current ToolsSpec; deferred to separate ADR
+   (schema-extension + runtime enforcement).
+
+**ADR-0342** создан: AIPolicySpec S76 schema migration rationale +
+3 alternatives considered + explicit loss-of-functionality section +
+verification gates.
+
+**Что осталось (deferred, требует separate scope)**:
+- ❌ 3 undeclared *_strict flags — требует knowledge of intent per flag.
+- ❌ `max_calls_per_run` re-introduction — schema-extension ADR.
+- ❌ typer missing в venv (env-only issue, не code).
+- ❌ pip-audit + bandit missing (env-only issue).
+- ❌ Cross-extension sweep по ai_policies/*.policy.yaml (ничего не нашёл,
+  но thorough grep нужен).
+
+**Cycle 158+ honest status**:
+- +9 atomic commits total this session:
+  - W2 P1-2: `b0e804357`, `11a0dcec7`, `fee3d8f91`, `84e37e33e`,
+    `8f509099b`, `36acc9659`
+  - Broken gate fix: `fccf8b2aa`
+  - Schema migration: `2548ccb48`
+  - This ledger entry will become commit #9.
+- Tools inventory: 13 gates surveyed, 11 GREEN, 2 fixed (из RED-exit1),
+  2 env-blocked.
+- ADR count: 134 → 135.
+
+**Per v4 §10 P1 (one-shot fix per architectural fork)**:
+- Gate fix is NOT a one-shot (validator refactor было долгое время назад),
+  но это surface area для re-fix per refactoring-events; ADR-0342
+  документирует schema migration.
+- Both commits include honest limitations (3 undeclared flags, lost
+  max_calls_per_run) — не silent debt creation.
