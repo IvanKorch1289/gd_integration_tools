@@ -1,5 +1,41 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W7 P1-9: DI evaluation (dishka vs custom)
+
+### docs(di): W7 P1-9 DI evaluation — ADR-0317 (research + roadmap)
+
+MINIMAX W7 P1-9 (cycle 152): evaluation matrix для DI решений.
+**Decision**: HYBRID подход — keep `module_registry` для SINGLETON scope
+(он работает); add `dishka` в deps для future multi-scope features
+(SCOPED/TRANSIENT) через gradual migration.
+
+**Что не сделано (Phase 1 = research only)**:
+- Без code change в этом ADR.
+- `dishka` НЕ добавлен в `pyproject.toml` (Phase 2 wave).
+- `module_registry` НЕ изменён.
+
+**Что сделано**:
+- ADR-0317: research + decision matrix + roadmap (Phase 1/2/3 plan).
+
+### Alternatives matrix (per https://dishka.readthedocs.io/en/stable/alternatives.html)
+
+| Lib | Scopes | Async | Finalization | Concurrency-safe | Auto-wiring |
+|---|---|---|---|---|---|
+| **dishka** | ✅✅ | ✅ | ✅ | ✅ | ✅✅ |
+| di | ✅✅ | ✅ | ✅ | ❌ | ✅ |
+| FastAPI Depends | ✅❌ | ✅ | ✅ | ➖ | ✅ |
+| dependency-injector | ❌ | ❌ | ❌ | ❌ | ❌ |
+
+### Phase 2/3 roadmap (отдельные waves, ~cycle 156+)
+
+- **Phase 2**: реализация SCOPED/TRANSIENT scopes через dishka integration
+  (auto-injection + FromDishka[T]).
+- **Phase 3**: gradual migration `core/di/providers/*` → dishka providers.
+
+Refs: MINIMAX W7 P1-9, ADR-0084, dishka alternatives matrix, ADR-0317, cycle 152.
+
+---
+
 ## [Unreleased] — 2026-09-23 — W2 P0-3 Phase 2: SagaLRA Variant A — migrate legacy mixin-based subpackage
 
 ### refactor(dsl): W2 P0-3 Phase 2 — SagaLRA canonical subpackage migration (Variant A)
