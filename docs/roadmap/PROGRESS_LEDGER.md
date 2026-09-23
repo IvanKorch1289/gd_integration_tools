@@ -5727,3 +5727,82 @@ Sum (cold): **~5-6s** для импорта 4 critical модулей (budget 3s
 - P0 gaps (still open, documented): object auth runtime,
   privacy backends.
 - P2 candidate surfaced: startup-time perf (lazy load, hvac fallback).
+
+---
+
+## Startup-time measurement bug fix + perf regression discovery (cycle 158+, 2026-09-23)
+
+**Bug**: `tools/checks/startup_time.py` показывал `float('inf')` для всех
+critical modules — gate uninformative ≥ 6 недель (с Sprint 42 retro,
+Aug 31 2026).
+
+**Root cause** (commit 06b83cd49):
+- subprocess.run захватывал stdout от cold-import subprocess.
+- При cold import `src.backend.core.config.features`,
+  VaultConfigSettingsSource (hvac missing в venv) писал structlog
+  ConsoleRenderer output в stdout (~17 строк per import).
+- `float(stdout.strip())` падал с ValueError → `inf`.
+- Все 7 critical modules числились как `infs` — gate показывал FAIL с
+  unhelpful message.
+
+**Fix**: marker-based extraction
+- Subprocess script пишет elapsed как `STARTUP_TIME_MARKER:<float>` на
+  dedicated line (после import, отдельно от любого другого stdout output).
+- Parent gate парсит marker-prefix lines.
+- Дополнительно: `os.environ.setdefault('SEC_VAULT_ENABLED', 'false')` +
+  `STRUCTLOG_CONSOLE=stderr` для уменьшения stdout pollution
+  (existing config НЕ перезаписывается, только default).
+
+**Реальные числа после fix** (cold imports of 7 critical modules):
+
+| Module | Cold import |
+|---|---|
+| `core.config.features` | 1.719s |
+| `core.tenancy` | 1.333s |
+| `core.messaging` | 0.107s |
+| `dsl.registry.processor` | 1.443s |
+| `dsl.registry.lazy_processor` | 1.659s |
+| `services.routes.loader` | 1.381s |
+| `infrastructure.messaging.dlq` | 1.462s |
+| **TOTAL** | **9.104s** |
+| BASELINE (Aug 31 2026) | 1.304s |
+| REGRESSION LIMIT (baseline × 1.3) | 1.695s |
+
+**FAIL: total 9.1s > regression limit 1.7s → perf regression × 7x**.
+
+Это НЕ fix для perf (lazy load / hvac graceful — design decision вне
+scope одной сессии). Только measurement accuracy fix.
+
+**Hidden regression discovery** (per v4 §5 «presence != wiring»):
+- Sprint 42 retro (Aug 31) baseline 1.304s.
+- С тех пор много feature work (W5/W11/etc.) без измерения.
+- Gate был «broken» (showing FAIL с inf), но treated as broken-gate noise.
+- Реальный perf regression шла ≥ 6 недель silently.
+- После fix — впервые видим конкретные числа.
+
+**Что НЕ сделал** (deferred, requires design decision):
+- ❌ Не увеличивал baseline (нет improvement → no ratchet).
+- ❌ Не фиксил perf (lazy load / cache / hvac fallback).
+- ❌ Не смягчал MAX_TOTAL_STARTUP_SECONDS budget (architectural, не
+  inflation).
+- ❌ Не бампил MAX_STARTUP_SECONDS_PER_MODULE (1.659s < 3.0s limit —
+  per-module budget OK, только total budget превышен).
+
+**Per v4 §10 P2 perf candidates** (для next cycle):
+1. Lazy load `src.backend.core.config.features` (1.7s cold).
+2. Lazy load `src.backend.core.tenancy` (1.3s cold).
+3. Skip Vault config source если `hvac` не установлен.
+4. Cache `manifest.toml` parsing в `services.routes.loader`.
+
+**Honest measurement now**: gate работает. FAIL = real perf issue. Fix
+это perf, не gate.
+
+**Total cycle 158+ update**:
+- 14 atomic commits this session (vs 51 baseline = 65 ahead of c262f1ba0).
+- ADR count: 133 → 135.
+- v4 §10 progress:
+  - **DONE**: W2 P1-2, validator gate, AIPolicySpec S76 schema, startup_time
+    measurement fix.
+  - **P0/P1 stays open** (documented): object auth runtime, privacy backends.
+  - **P2 surfaced**: startup perf 9.1s (lazy load, hvac fallback, baseline
+    refresh после lazy load).
