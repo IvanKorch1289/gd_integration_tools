@@ -27,7 +27,11 @@ import sys
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[2]
-_VALIDATOR_PATH = _ROOT / "src/backend/core/config/validator.py"
+# S52 W2 (validator.py → validator/ package decomp): gate должен
+# читать все .py файлы в package, не только один файл. Константы
+# _FEATURE_FLAG_DEPENDENCIES* живут в validator/_helpers.py после decomp.
+_VALIDATOR_PATH = _ROOT / "src/backend/core/config/validator.py"  # legacy single-file (kept для back-compat)
+_VALIDATOR_PKG = _ROOT / "src/backend/core/config/validator"
 _FEATURES_FILE = _ROOT / "src/backend/core/config/features.py"
 _FEATURES_PKG = _ROOT / "src/backend/core/config/features"
 
@@ -125,10 +129,44 @@ def _check_no_dep_required_comments(features_src: str) -> set[str]:
     return {m.group(1) for m in pattern.finditer(features_src)}
 
 
+def _load_validator_source() -> str | None:
+    """Load validator source: legacy single-file или modern package.
+
+    Returns concatenated source text, или None если не найдено ничего.
+    Приоритет:
+    1. ``validator/`` package (S52 W2+) — все .py файлы concatenated.
+    2. ``validator.py`` single-file (legacy) — fallback.
+
+    Порядок чтения в package: ``__init__.py`` сначала, потом остальные.
+    Это гарантирует, что definitions видны до их использования в regex.
+    """
+    if _VALIDATOR_PKG.is_dir():
+        py_files = sorted(_VALIDATOR_PKG.glob("*.py"))
+        if not py_files:
+            return None
+        # __init__.py первым, потом остальные в alphabetical order.
+        ordered = sorted(
+            py_files, key=lambda p: (p.name != "__init__.py", p.name)
+        )
+        parts = []
+        for py_file in ordered:
+            parts.append(f"# === {py_file.relative_to(_ROOT)} ===\n{py_file.read_text()}")
+        return "\n".join(parts)
+
+    if _VALIDATOR_PATH.exists():
+        return _VALIDATOR_PATH.read_text()
+
+    return None
+
+
 def run_check(strict_mode: bool = False) -> int:
     """Основная проверка. Возвращает 0 если всё покрыто, 1 если нарушения."""
-    if not _VALIDATOR_PATH.exists():
-        print(f"[ERROR] validator.py не найден: {_VALIDATOR_PATH}", file=sys.stderr)
+    validator_src = _load_validator_source()
+    if validator_src is None:
+        print(
+            f"[ERROR] validator source не найден: ни {_VALIDATOR_PATH}, ни {_VALIDATOR_PKG}/",
+            file=sys.stderr,
+        )
         return 1
 
     features_result = _find_features_source()
@@ -140,7 +178,6 @@ def run_check(strict_mode: bool = False) -> int:
         return 1
 
     strict_flags, features_src = features_result
-    validator_src = _VALIDATOR_PATH.read_text()
 
     warning_deps, critical_deps = _parse_declared_dependencies(validator_src)
     no_dep_required = _check_no_dep_required_comments(features_src)
