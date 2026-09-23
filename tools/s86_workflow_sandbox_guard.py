@@ -20,14 +20,19 @@ Exit codes:
   0 — нет violations
   1 — найдены violations (CI gate fail)
   2 — internal error
+
+MINIMAX W6 P1-8 Phase 5 (cycle 153): мигрирован с ``argparse`` на ``typer`` +
+``rich`` (libraries > custom, per ADR-0084). Сохранены: typer-native entry +
+legacy ``main()`` callback для backward-compat с pre-existing scripts.
 """
 
 from __future__ import annotations
 
-import argparse
 import re
-import sys
 from pathlib import Path
+
+import typer
+from rich.console import Console
 
 # Workflow-safe APIs (allowed)
 SAFE_PATTERNS: tuple[re.Pattern[str], ...] = (
@@ -101,43 +106,81 @@ def scan_file(path: Path) -> list[tuple[int, str, str]]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="S86 workflow sandbox guard (Temporal CI gate)"
-    )
-    parser.add_argument(
-        "--path",
-        type=Path,
-        default=Path("src/backend/dsl/workflow/compiler"),
-        help="Directory to scan (default: src/backend/dsl/workflow/compiler)",
-    )
-    parser.add_argument("--verbose", action="store_true", help="Print scanned files")
-    args = parser.parse_args(argv)
+    """Точка входа CLI (backward-compat shim для существующих скриптов).
 
-    target = args.path
+    Запускает typer app через typer.testing.CliRunner (для тестов)
+    или sys.argv (для CLI invocation). Возвращает exit code.
+    """
+    if argv is not None:
+        from typer.testing import CliRunner
+
+        runner = CliRunner()
+        result = runner.invoke(app, argv)
+        return result.exit_code
+    # CLI invocation: typer сам подхватит sys.argv[1:]
+    try:
+        app()
+    except SystemExit as exc:
+        return int(exc.code) if exc.code is not None else 0
+    return 0
+
+
+app = typer.Typer(
+    name="s86-workflow-sandbox-guard",
+    help="S86 — Temporal sandbox guard (static analyzer).",
+    add_completion=False,
+)
+_console = Console()
+
+
+@app.callback(invoke_without_command=True)
+def _main(
+    ctx: typer.Context,
+    path: Path = typer.Option(
+        Path("src/backend/dsl/workflow/compiler"),
+        "--path",
+        help="Directory to scan (default: src/backend/dsl/workflow/compiler).",
+    ),
+    verbose: bool = typer.Option(
+        False,
+        "--verbose",
+        help="Print scanned files.",
+    ),
+) -> None:
+    """S86 workflow sandbox guard (Temporal CI gate)."""
+    if ctx.invoked_subcommand is not None:
+        return
+
+    target = path
     if not target.exists():
-        print(f"ERROR: {target} does not exist", file=sys.stderr)
-        return 2
+        _console.print(f"[red]ERROR: {target} does not exist[/]")
+        raise typer.Exit(code=2)
 
     all_violations: list[tuple[Path, int, str, str]] = []
     files_scanned = 0
     for py_file in sorted(target.rglob("*.py")):
         files_scanned += 1
-        if args.verbose:
-            print(f"  scanning {py_file}")
+        if verbose:
+            _console.print(f"  scanning {py_file}")
         for line_no, line, reason in scan_file(py_file):
             all_violations.append((py_file, line_no, line, reason))
 
     if not all_violations:
-        print(f"OK: scanned {files_scanned} files, 0 violations")
-        return 0
+        _console.print(
+            f"[green]OK: scanned {files_scanned} files, 0 violations[/]"
+        )
+        return
 
-    print(f"FAIL: scanned {files_scanned} files, {len(all_violations)} violations:")
-    for path, line_no, line, reason in all_violations:
-        rel = path.relative_to(Path.cwd()) if path.is_absolute() else path
-        print(f"  {rel}:{line_no}: {reason}")
-        print(f"    > {line}")
-    return 1
+    _console.print(
+        f"[red]FAIL: scanned {files_scanned} files, "
+        f"{len(all_violations)} violations:[/]"
+    )
+    for py_path, line_no, line, reason in all_violations:
+        rel = py_path.relative_to(Path.cwd()) if py_path.is_absolute() else py_path
+        _console.print(f"  {rel}:{line_no}: {reason}")
+        _console.print(f"    > {line}")
+    raise typer.Exit(code=1)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

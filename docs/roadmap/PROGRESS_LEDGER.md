@@ -4191,3 +4191,38 @@ Pattern **proven на 4 tools**. Все simple/trivial tools migration — predi
 - ✅ 7 focused tests (test_w6_p1_8_phase4_check_dsn_drivers_typer.py).
 - ✅ ADR-0323 создан (116 ADRs total).
 - ⏭️ Phase 5: medium complexity tools (~cycle 156+).
+
+---
+
+## W6 P1-8 Phase 5: tools/s86_workflow_sandbox_guard.py argparse → typer (2026-09-23, cycle 153)
+
+**Задача**: продолжить W6 P1-8 momentum (после Phase 1-4).
+
+**Решение** (ADR-0324):
+
+Мигрирован `tools/s86_workflow_sandbox_guard.py` (S86 Temporal sandbox
+static analyzer, 143 → 178 LOC, +35).
+
+**Pattern validation (5 tools)**:
+
+| Tool | LOC (orig→new) | Flags | Complexity |
+|---|---|---|---|
+| `import_wsdl.py` (Phase 1) | 90 → 132 | 4 | simple |
+| `import_postman.py` (Phase 2) | 110 → 169 | 4 | simple |
+| `check_env_example.py` (Phase 3) | 157 → 187 | 1 | trivial |
+| `check_dsn_drivers.py` (Phase 4) | 133 → 152 | 1 | trivial |
+| `s86_workflow_sandbox_guard.py` (Phase 5) | 143 → 178 | 2 | trivial |
+
+Pattern **proven на 5 tools**. Migration predictable, momentum very strong.
+
+**Verification**:
+- `compileall -q tools/s86_workflow_sandbox_guard.py` → exit 0
+- `pytest tests/unit/tools/test_w6_p1_8_phase5_s86_workflow_sandbox_guard_typer.py` → 8 passed
+- `ruff check tools/s86_workflow_sandbox_guard.py` → All checks passed
+- CLI: --help (typer), default (exit 0, no violations), --path nonexistent (exit 2), --verbose (exit 0)
+
+**Cycle 153 итог (W6 P1-8 Phase 5)**:
+- ✅ 5-й tool мигрирован (s86_workflow_sandbox_guard.py).
+- ✅ 8 focused tests (test_w6_p1_8_phase5_*_typer.py).
+- ✅ ADR-0324 создан (117 ADRs total).
+- ⏭️ Phase 6: ~3 more tools (migrate_to_structlog, check_docstrings, generate_adr_index) — cycle 156+.

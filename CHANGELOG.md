@@ -1,5 +1,29 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W6 P1-8 Phase 5: tools/s86_workflow_sandbox_guard.py argparse → typer (5th tool)
+
+### refactor(tools): s86_workflow_sandbox_guard.py мигрирован argparse → typer+rich
+
+`tools/s86_workflow_sandbox_guard.py` (S86 Temporal sandbox static analyzer,
+143 LOC) — мигрирован на `typer` + `rich` по proven pattern ADR-0318/0319/0322/0323.
+Это **5-й tool** подряд с одним и тем же pattern — momentum very strong.
+
+**Что сделано**:
+- `argparse.ArgumentParser` → `typer.Typer` + `@app.callback(invoke_without_command=True)`.
+- `print(..., file=sys.stderr)` → `_console.print("[red]ERROR: ...[/]")` (rich color codes).
+- 2 flags сохранены: `--path` (Path argument), `--verbose` (boolean flag).
+- Backward-compat `main(argv=None)` через `CliRunner.invoke()` + `app()` fallback.
+- Removed unused `import sys`.
+
+**Tests**: `tests/unit/tools/test_w6_p1_8_phase5_s86_workflow_sandbox_guard_typer.py` —
+8 focused tests (Typer instance, no argparse, --help formatted, backward-compat
+4 variants, module imports + SAFE/FORBIDDEN patterns exposed).
+
+**Verification**: pytest 8 passed, ruff All checks passed, compileall exit 0.
+ADR-0324 (117 ADRs total).
+
+---
+
 ## [Unreleased] — 2026-09-23 — W6 P1-8 Phase 4: tools/check_dsn_drivers.py argparse → typer (4th tool)
 
 ### refactor(tools): check_dsn_drivers.py мигрирован argparse → typer+rich
