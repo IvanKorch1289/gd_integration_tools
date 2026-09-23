@@ -105,6 +105,7 @@
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | W1 P0-1: Circuit Breaker consolidation поверх purgatory (3→1 реализации, ~687 LOC reduction) | Draft |
 | [ADR-0306](0306-w0-py2-except-syntax-migration.md) | W0 P0-BLOCKER: миграция `except A, B:` → `except (A, B):` (177 файлов, 234 строки, AST-based tool + guard rewrite) | Accepted |
 | [ADR-0307](0307-w3-p0-4-shim-inventory-classification.md) | W3 P0-4 Phase 1: shim inventory + classification (15 backward-compat shims, 1 DeprecationWarning) | Accepted |
+| [ADR-0308](0308-w2-prereq-saga-lra-deadline-reapply.md) | W2 prerequisite: SagaLRA deadline integration re-apply (current branch) + SagaStepTimeoutError + 13 focused tests | Accepted |
 
-**Total:** 100 ADRs.
+**Total:** 101 ADRs.
 

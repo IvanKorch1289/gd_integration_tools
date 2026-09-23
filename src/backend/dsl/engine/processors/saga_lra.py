@@ -6,6 +6,8 @@ and compensation tracking via :class:`WorkflowStateRepository`.
 
 from __future__ import annotations
 
+import asyncio
+import inspect
 import uuid
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -18,7 +20,22 @@ from src.backend.dsl.engine.processors.control_flow import SagaStep, _emit_saga_
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
 
-__all__ = ("SagaLRAProcessor",)
+__all__ = ("SagaLRAProcessor", "SagaStepTimeoutError")
+
+
+class SagaStepTimeoutError(RuntimeError):
+    """Raised when a saga step exceeds its effective deadline.
+
+    ADR-0305 (deadline propagation chain): saga LRA steps participate
+    in the deadline-narrowing contract — per-step timeout ``min(
+    configured_timeout, deadline_budget.remaining())``.
+    """
+
+    def __init__(self, message: str, *, step_name: str, kind: str, timeout_s: float) -> None:
+        super().__init__(message)
+        self.step_name = step_name
+        self.kind = kind  # "action" | "compensation"
+        self.timeout_s = timeout_s
 
 _lra_logger = get_logger("dsl.saga_lra")
 
@@ -195,7 +212,11 @@ class SagaLRAProcessor(BaseProcessor):
         for i in range(start_idx, len(self._steps)):
             step = self._steps[i]
             try:
-                await step.forward.process(exchange, context)
+                await self._run_step_with_deadline(
+                    step.forward, exchange, context,
+                    step_name=step.name or f"step_{i}",
+                    kind="action",
+                )
 
                 if exchange.status == ExchangeStatus.failed:
                     raise RuntimeError(exchange.error or f"Step {i} failed")
@@ -250,7 +271,11 @@ class SagaLRAProcessor(BaseProcessor):
                         try:
                             exchange.status = ExchangeStatus.processing
                             exchange.error = None
-                            await comp_step.compensate.process(exchange, context)
+                            await self._run_step_with_deadline(
+                                comp_step.compensate, exchange, context,
+                                step_name=comp_step.compensate.name or "compensation",
+                                kind="compensation",
+                            )
                         except Exception as comp_exc:
                             any_failed = True
                             _lra_logger.error(
@@ -349,7 +374,11 @@ class SagaLRAProcessor(BaseProcessor):
                         try:
                             exchange.status = ExchangeStatus.processing
                             exchange.error = None
-                            await comp_step.compensate.process(exchange, context)
+                            await self._run_step_with_deadline(
+                                comp_step.compensate, exchange, context,
+                                step_name=comp_step.compensate.name or "compensation",
+                                kind="compensation",
+                            )
                         except Exception as comp_exc:
                             any_failed = True
                             _lra_logger.error("Saga compensation failed: %s", comp_exc)
@@ -406,3 +435,71 @@ class SagaLRAProcessor(BaseProcessor):
                 "run_id": self._run_id,
             }
         }
+
+    async def _run_step_with_deadline(
+        self,
+        step: Any,
+        exchange: Exchange[Any],
+        context: ExecutionContext,
+        *,
+        step_name: str,
+        kind: str,
+    ) -> Any:
+        """Run a saga step with ADR-0305 deadline-budget narrowing.
+
+        Effective per-step timeout = ``min(None, deadline_budget.remaining())``
+        if upstream :class:`RequestContext` carries a deadline budget;
+        otherwise no timeout is applied (preserves pre-ADR-0305 behaviour).
+
+        Args:
+            step: Saga step processor (forward or compensate action).
+            exchange: Current exchange.
+            context: Execution context.
+            step_name: For logging/error messages.
+            kind: ``"action"```` or ``"compensation"```` for logging only.
+
+        Returns:
+            Result of ``step.process(exchange, context)``.
+
+        Raises:
+            SagaStepTimeoutError: If the deadline budget is already expired
+                or the effective timeout is exceeded.
+        """
+        result = step.process(exchange, context)
+        if not inspect.isawaitable(result):
+            return result
+        coro = result
+        # ADR-0305: narrow per-step timeout по оставшемуся DeadlineBudget,
+        # если он установлен upstream-middleware (HTTP request deadline).
+        effective_timeout: float | None = None
+        try:
+            from src.backend.core.request_context import RequestContext
+
+            ctx = RequestContext.current()
+            if ctx is not None and ctx.deadline_budget is not None:
+                remaining = ctx.deadline_budget.remaining()
+                if remaining <= 0.0:
+                    raise SagaStepTimeoutError(
+                        f"Saga '{step_name}' ({kind}) — deadline budget expired",
+                        step_name=step_name,
+                        kind=kind,
+                        timeout_s=0.0,
+                    )
+                effective_timeout = remaining
+        except SagaStepTimeoutError:
+            raise
+        except (ImportError, AttributeError, RuntimeError):
+            # Не ломаем saga-step, если RequestContext недоступен или
+            # deadline_budget отсутствует — fallback к unbounded wait.
+            pass
+        try:
+            if effective_timeout is not None:
+                coro = asyncio.wait_for(coro, timeout=effective_timeout)
+            return await coro
+        except (asyncio.TimeoutError, TimeoutError) as exc:
+            raise SagaStepTimeoutError(
+                f"Saga '{step_name}' ({kind}) exceeded {effective_timeout}s",
+                step_name=step_name,
+                kind=kind,
+                timeout_s=effective_timeout if effective_timeout is not None else 0.0,
+            ) from exc

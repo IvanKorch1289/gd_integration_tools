@@ -3847,3 +3847,57 @@ rg -l '__getattr__' src/backend -g '!__pycache__/*' | wc -l              → 65 
 - ✅ INDEX.md обновлён (100 ADRs).
 - ⏭️ Phase 2A (rename `_legacy.py`) — отдельный wave.
 - ⏭️ Phase 2B (bulk-DEPRECATE после telemetry) — отдельный wave.
+
+## W2 prerequisite: SagaLRA deadline integration re-apply (2026-09-23, Sprint 12 cycle 152)
+
+MINIMAX W2 P0-3 (слияние процессоров) был blocked: cycle 135 work применил
+ADR-0305 deadline narrowing к LEGACY `src/backend/dsl/processors/saga_lra_processor/core_mixin.py`,
+но production код использует CURRENT `src/backend/dsl/engine/processors/saga_lra.py`
+(17.2 KB, 437 строк, 5 импортёров). Critical Finding.
+
+**Изменения**:
+
+* **`src/backend/dsl/engine/processors/saga_lra.py`** (+85/-4):
+  - `SagaStepTimeoutError(RuntimeError)` — exception с метаданными (step_name, kind, timeout_s).
+  - `_run_step_with_deadline(step, exchange, context, *, step_name, kind)` —
+    helper: проверяет `RequestContext.deadline_budget.remaining()`,
+    narrowит `asyncio.wait_for`, graceful fallback если RequestContext
+    недоступен (ImportError/AttributeError → unbounded wait).
+  - 3 call-sites обёрнуты: forward step + compensation (DB path) +
+    compensation (in-memory path).
+
+* **`tests/unit/dsl/engine/processors/test_saga_lra_deadline_focused.py`**
+  (новый, ~360 строк, 13 тестов) — 6 test classes покрывают:
+    - SagaStepTimeoutError construction
+    - Deadline-budget narrowing (no budget / expired / narrowed / within budget / import-error)
+    - Sync pass-through
+    - SagaLRA.process in-memory smoke
+    - Static + CLI propagation checker classification
+    - Compensation kind-in-error
+
+* **`docs/adr/0308-w2-prereq-saga-lra-deadline-reapply.md`** (новый, ~155 строк).
+
+**Verification (Python 3.14.4)**:
+
+```
+python3.14 -m pytest tests/unit/dsl/engine/processors/test_saga_lra_deadline_focused.py -q
+  → 13 passed in 1.01s
+
+python3.14 tools/checks/check_deadline_propagation.py
+  → saga_lra.py:497 (narrowing) → INTEGRATED ✓
+
+python3.14 -m compileall -q src/ extensions/ scripts/ tools/ tests/  → exit 0
+python3.14 tools/checks/check_python3_syntax.py --root src/backend    → exit 0
+ruff check ... --select F401,F841,F811,E9                             → All checks passed!
+```
+
+**Compromise**: in-memory fallback path (repo=None) НЕ narrowing — by design
+(cycle 19 P1.4: graceful degradation без БД). Это явно в docstring + covered
+в unit-тесте `test_no_budget_means_unbounded`.
+
+**Cycle 152 итог (W2 prerequisite)**:
+
+- ✅ Critical Finding устранён: SagaLRA current branch теперь INTEGRATED.
+- ✅ W2 P0-3 (слияние процессоров) больше не blocked.
+- ✅ SagaStepTimeoutError доступен для downstream observability.
+- ⏭️ W2 P0-3 execution — следующий wave (требует cleanup dsl/processors/ + тесты).

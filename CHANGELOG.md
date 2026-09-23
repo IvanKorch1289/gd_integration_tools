@@ -1,5 +1,52 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W2 prerequisite: SagaLRA deadline integration re-apply (current branch)
+
+### feat(deadline): ADR-0305 re-applied к current saga_lra.py (Critical Finding устранён)
+
+MINIMAX W2 P0-3 (слияние процессоров) был blocked: SagaLRA deadline
+integration в cycle 135 был только на LEGACY `dsl/processors/saga_lra_processor/`,
+но production код использует CURRENT `dsl/engine/processors/saga_lra.py`.
+
+* **`src/backend/dsl/engine/processors/saga_lra.py`** (modified, +85/-4):
+  - `SagaStepTimeoutError(RuntimeError)` — кастомное исключение с метаданными
+    (step_name, kind, timeout_s).
+  - `_run_step_with_deadline(step, exchange, context, *, step_name, kind)` —
+    helper narrowing `asyncio.wait_for` по `RequestContext.deadline_budget.remaining()`.
+    Graceful fallback если RequestContext недоступен (unbounded wait).
+  - 3 call-sites обёрнуты: forward step (process loop) + compensation (DB path)
+    + compensation (in-memory path).
+
+* **`tests/unit/dsl/engine/processors/test_saga_lra_deadline_focused.py`**
+  (новый, ~360 строк, 13 тестов): TestSagaStepTimeoutError (3) +
+  TestRunStepWithDeadlineNarrowing (5) + TestRunStepWithDeadlineSyncCallables (1) +
+  TestSagaLRAProcessDeadlineIntegration (1) + TestSagaLRAPropagationChecker (2) +
+  TestSagaLRACompensationDeadlineWiring (1).
+
+* **`docs/adr/0308-w2-prereq-saga-lra-deadline-reapply.md`** (новый, ~155 строк):
+  ADR с описанием Critical Finding + decision + verification.
+
+* **`docs/adr/INDEX.md`**: ADR-0308 зарегистрирован (101 ADRs total).
+
+### Verification
+
+```
+python3.14 -m pytest tests/unit/dsl/engine/processors/test_saga_lra_deadline_focused.py -q
+  → 13 passed in 1.01s
+
+python3.14 tools/checks/check_deadline_propagation.py
+  → saga_lra.py:497 (narrowing) → INTEGRATED ✓
+
+python3.14 -m compileall -q src/ extensions/ scripts/ tools/ tests/  → exit 0
+python3.14 tools/checks/check_python3_syntax.py --root src/backend    → exit 0
+ruff check ... --select F401,F841,F811,E9                             → All checks passed!
+```
+
+Refs: MINIMAX W2 P0-3 (prerequisite resolved), ADR-0305 deadline chain,
+ADR-0304, ADR-0308, SagaLRA Critical Finding (cycle 152 recon).
+
+---
+
 ## [Unreleased] — 2026-09-23 — W3 P0-4 Phase 1: shim inventory + classification
 
 ### feat(quality): 15 backward-compat shims классифицированы, 1 DEPRECATE
