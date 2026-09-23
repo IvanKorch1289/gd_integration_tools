@@ -33,7 +33,6 @@ ROUTES_DIR = ROOT / "routes"
 
 # Round 11 fix: импортируем shared helper для синхронизации с pyproject.toml.
 # Аналогично Round 8 (plugin_wizard.py) — избегаем дублирования.
-from tools.wizards.plugin_wizard import _default_requires_core
 
 SOURCE_DESCRIPTIONS: dict[str, str] = {
     "http": "HTTP endpoint (REST/webhook-style)",

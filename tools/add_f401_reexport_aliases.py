@@ -23,7 +23,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import ast
 import logging
 from pathlib import Path
 

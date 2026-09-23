@@ -50,10 +50,7 @@ from pathlib import Path
 
 # Импортируем helpers из основного check_docstrings.py.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from tools.check_docstrings import (  # noqa: E402
-    load_allowlist,
-    scan_paths,
-)
+from tools.check_docstrings import load_allowlist, scan_paths  # noqa: E402
 
 
 def parse_entry(entry: str) -> tuple[str, int, str] | None:

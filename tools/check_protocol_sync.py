@@ -48,7 +48,6 @@ import argparse
 import ast
 import json
 import logging
-import sys
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -288,7 +287,7 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(summary, indent=2))
         return 0 if partial == 0 else 1
 
-    print(f"=== Protocol Coverage Sync Report (D-AUDIT-1505) ===")
+    print("=== Protocol Coverage Sync Report (D-AUDIT-1505) ===")
     print(f"Total actions: {total}")
     print(f"Full coverage (rest+graphql+grpc+mcp): {full_coverage}")
     print(f"Partial coverage: {partial}")
