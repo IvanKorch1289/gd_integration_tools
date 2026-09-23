@@ -85,7 +85,7 @@ class WebhookChunkedPublisher(_BasePublisher):
         # ADR-0305: narrow webhook timeout by remaining deadline budget.
         effective_timeout: float = self._timeout
         try:
-            from src.backend.core.async_utils.deadline_budget import (  # noqa: F401 — re-export
+            from src.backend.core.async_utils.deadline_budget import (
                 DeadlineExpiredError,
             )
             from src.backend.core.request_context import RequestContext

@@ -7,14 +7,14 @@ Wave 2.5: вводит ``LogSink``-стек поверх structlog.
 
 from __future__ import annotations
 
-from src.backend.infrastructure.logging.factory import (  # noqa: F401 — re-export
+from src.backend.infrastructure.logging.factory import (
     configure_logging,
     get_logger,
     init_log_sinks,
     shutdown_log_sinks,
     shutdown_logging,
 )
-from src.backend.infrastructure.logging.router import (  # noqa: F401 — re-export
+from src.backend.infrastructure.logging.router import (
     SinkRouter,
     build_sinks_for_profile,
     configure_router,

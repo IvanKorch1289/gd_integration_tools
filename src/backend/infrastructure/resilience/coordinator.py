@@ -35,14 +35,14 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-from src.backend.core.config.services.resilience import (  # noqa: F401 — re-export
+from src.backend.core.config.services.resilience import (
     BreakerProfile,
     FallbackPolicy,
     ResilienceSettings,
 )
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience import DegradationManager, degradation_manager
-from src.backend.core.resilience.breaker import (  # noqa: F401 — re-export
+from src.backend.core.resilience.breaker import (
     Breaker,
     BreakerRegistry,
     BreakerSpec,
@@ -370,7 +370,7 @@ class ResilienceCoordinator:
         ломало работу coordinator'а.
         """
         try:
-            from src.backend.infrastructure.observability.client_metrics import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.observability.client_metrics import (
                 record_degradation_mode,
             )
 

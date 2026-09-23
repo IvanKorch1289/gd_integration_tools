@@ -14,7 +14,7 @@ from src.backend.infrastructure.watermark.factory import create_watermark_store
 from src.backend.infrastructure.watermark.memory_store import MemoryWatermarkStore
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.watermark.postgres_store import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.watermark.postgres_store import (
         PostgresWatermarkStore,
     )
 
@@ -23,7 +23,7 @@ __all__ = ("MemoryWatermarkStore", "PostgresWatermarkStore", "create_watermark_s
 
 def __getattr__(name: str) -> Any:
     if name == "PostgresWatermarkStore":
-        from src.backend.infrastructure.watermark.postgres_store import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.watermark.postgres_store import (
             PostgresWatermarkStore as _PG,
         )
 

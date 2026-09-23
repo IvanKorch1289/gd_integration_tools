@@ -24,7 +24,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
-from src.backend.core.audit.schema.ai_invocation import (  # noqa: F401 — re-export
+from src.backend.core.audit.schema.ai_invocation import (
     AIInvocationEvent,
     AIInvocationEventType,
 )

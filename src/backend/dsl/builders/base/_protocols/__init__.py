@@ -39,35 +39,35 @@ one-liner, минимально-валидные сигнатуры (return Any 
 
 from __future__ import annotations
 
-from src.backend.dsl.builders.base._protocols._ai import (  # noqa: F401 — re-export
+from src.backend.dsl.builders.base._protocols._ai import (
     _RouteAIOpsProtocol as _RouteAIOpsProtocol,
     _RouteAgentProtocol as _RouteAgentProtocol,
     _RouteWorkflowOpsProtocol as _RouteWorkflowOpsProtocol,
 )
-from src.backend.dsl.builders.base._protocols._core import (  # noqa: F401 — re-export
+from src.backend.dsl.builders.base._protocols._core import (
     _RouteCore as _RouteCore,
     _RouteProcessorSteps as _RouteProcessorSteps,
     _shares_prefix as _shares_prefix,
 )
-from src.backend.dsl.builders.base._protocols._data import (  # noqa: F401 — re-export
+from src.backend.dsl.builders.base._protocols._data import (
     _RouteBatchDataProtocol as _RouteBatchDataProtocol,
     _RouteDbProtocol as _RouteDbProtocol,
     _RouteEntityCrudProtocol as _RouteEntityCrudProtocol,
     _RoutePersistenceProtocol as _RoutePersistenceProtocol,
     _RouteTemplateProtocol as _RouteTemplateProtocol,
 )
-from src.backend.dsl.builders.base._protocols._flow import (  # noqa: F401 — re-export
+from src.backend.dsl.builders.base._protocols._flow import (
     _RouteConcurrencyProtocol as _RouteConcurrencyProtocol,
     _RouteControlFlowProtocol as _RouteControlFlowProtocol,
     _RouteTimeResilienceProtocol as _RouteTimeResilienceProtocol,
 )
-from src.backend.dsl.builders.base._protocols._integration import (  # noqa: F401 — re-export
+from src.backend.dsl.builders.base._protocols._integration import (
     _RouteIntegrationCoreProtocol as _RouteIntegrationCoreProtocol,
     _RouteProxyProtocol as _RouteProxyProtocol,
     _RouteSinkProtocol as _RouteSinkProtocol,
     _RouteSourceProtocol as _RouteSourceProtocol,
 )
-from src.backend.dsl.builders.base._protocols._support import (  # noqa: F401 — re-export
+from src.backend.dsl.builders.base._protocols._support import (
     _RouteCollectionProtocol as _RouteCollectionProtocol,
     _RouteConfigProtocol as _RouteConfigProtocol,
     _RouteContentProtocol as _RouteContentProtocol,

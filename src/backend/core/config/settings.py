@@ -2,7 +2,7 @@ from functools import lru_cache
 
 from pydantic_settings import BaseSettings
 
-from src.backend.core.config.ai import (  # noqa: F401 — re-export
+from src.backend.core.config.ai import (
     AIProvidersSettings,
     NimSettings,
     OpenAISettings,
@@ -12,7 +12,7 @@ from src.backend.core.config.ai import (  # noqa: F401 — re-export
     openai_settings,
     openrouter_settings,
 )
-from src.backend.core.config.base import (  # noqa: F401 — re-export
+from src.backend.core.config.base import (
     AppBaseSettings,
     SchedulerSettings,
     app_base_settings,
@@ -20,17 +20,17 @@ from src.backend.core.config.base import (  # noqa: F401 — re-export
 )
 from src.backend.core.config.cert_store import CertStoreSettings, cert_store_settings
 from src.backend.core.config.clickhouse import ClickHouseSettings, clickhouse_settings
-from src.backend.core.config.database import (  # noqa: F401 — re-export
+from src.backend.core.config.database import (
     DatabaseConnectionSettings,
     db_connection_settings,
 )
 from src.backend.core.config.dsl import DSLSettings, dsl_settings
-from src.backend.core.config.elasticsearch import (  # noqa: F401 — re-export
+from src.backend.core.config.elasticsearch import (
     ElasticsearchSettings,
     elasticsearch_settings,
 )
 from src.backend.core.config.express import ExpressSettings, express_settings
-from src.backend.core.config.external_apis import (  # noqa: F401 — re-export
+from src.backend.core.config.external_apis import (
     AntivirusAPISettings,
     DadataAPISettings,
     SKBAPISettings,
@@ -38,24 +38,24 @@ from src.backend.core.config.external_apis import (  # noqa: F401 — re-export
     dadata_api_settings,
     skb_api_settings,
 )
-from src.backend.core.config.external_databases import (  # noqa: F401 — re-export
+from src.backend.core.config.external_databases import (
     ExternalDatabasesSettings,
     external_databases_settings,
 )
 from src.backend.core.config.http_base import HttpBaseSettings, http_base_settings
 from src.backend.core.config.influxdb import InfluxDBSettings, influxdb_settings
 from src.backend.core.config.lineage import LineageSettings, lineage_settings
-from src.backend.core.config.mongo import (  # noqa: F401 — re-export
+from src.backend.core.config.mongo import (
     MongoConnectionSettings,
     mongo_connection_settings,
 )
-from src.backend.core.config.plugin_loader import (  # noqa: F401 — re-export
+from src.backend.core.config.plugin_loader import (
     PluginLoaderSettings,
     plugin_loader_settings,
 )
 from src.backend.core.config.rag import RAGSettings, rag_settings
 from src.backend.core.config.security import SecureSettings, secure_settings
-from src.backend.core.config.services import (  # noqa: F401 — re-export
+from src.backend.core.config.services import (
     CacheSettings,
     FileStorageSettings,
     GRPCSettings,
@@ -83,7 +83,7 @@ from src.backend.core.config.services import (  # noqa: F401 — re-export
     tasks_settings,
     watermark_settings,
 )
-from src.backend.core.config.services.jupyter_hub import (  # noqa: F401 — re-export
+from src.backend.core.config.services.jupyter_hub import (
     JupyterHubSettings,
     jupyter_hub_settings,
 )

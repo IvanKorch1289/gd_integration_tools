@@ -16,7 +16,7 @@ import os
 from datetime import datetime
 
 from src.backend.core.logging import get_logger
-from src.backend.infrastructure.security.cert_store.backend_base import (  # noqa: F401 — re-export
+from src.backend.infrastructure.security.cert_store.backend_base import (
     CertBackend,
     CertEntry,
 )

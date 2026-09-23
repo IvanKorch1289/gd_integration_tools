@@ -5,13 +5,13 @@ from typing import Any
 from fastapi import APIRouter, Depends, File, Header, Request, UploadFile, status
 
 from extensions.core_entities.files.schemas.filter import FileFilter
-from extensions.core_entities.files.schemas.route import (  # noqa: F401 — re-export  # S168 W15-17 P2-10
+from extensions.core_entities.files.schemas.route import (  # S168 W15-17 P2-10
     FileSchemaIn,
     FileSchemaOut,
     FileVersionSchemaOut,
 )
 from src.backend.entrypoints.api.dependencies.auth import require_api_key
-from src.backend.entrypoints.api.generator.actions import (  # noqa: F401 — re-export
+from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
     CrudSpec,

@@ -25,18 +25,18 @@
 from __future__ import annotations
 
 from src.backend.services.ai.rag.multimodal._legacy import MultimodalEntry
-from src.backend.services.ai.rag.multimodal.embedders import (  # noqa: F401 — re-export
+from src.backend.services.ai.rag.multimodal.embedders import (
     CLIPEmbedder,
     ColpaliEmbedder,
     LazyImportError,
 )
 from src.backend.services.ai.rag.multimodal.image_ingester import ImageIngester
 from src.backend.services.ai.rag.multimodal.pdf_ingester import PDFIngester
-from src.backend.services.ai.rag.multimodal.service import (  # noqa: F401 — re-export
+from src.backend.services.ai.rag.multimodal.service import (
     MultimodalRAGService,
     get_multimodal_rag,
 )
-from src.backend.services.ai.rag.multimodal.types import (  # noqa: F401 — re-export
+from src.backend.services.ai.rag.multimodal.types import (
     ChunkDoc,
     IngestResult,
     SearchResult,

@@ -82,7 +82,7 @@ class DaskBackend:
             # install it explicitly. Narrow import-not-found suppression:
             # the module is lazy-loaded inside ``ensure_started`` and any
             # ImportError surfaces to the caller as a clear runtime error.
-            from dask.distributed import (  # noqa: F401 — re-export  # type: ignore[import-not-found]
+            from dask.distributed import (  # type: ignore[import-not-found]
                 Client,
                 LocalCluster,
             )

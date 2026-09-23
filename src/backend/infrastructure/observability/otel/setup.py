@@ -64,13 +64,13 @@ def configure_otel(
         from opentelemetry import propagate, trace
         from opentelemetry.sdk.resources import Resource
         from opentelemetry.sdk.trace import TracerProvider
-        from opentelemetry.sdk.trace.export import (  # noqa: F401 — re-export
+        from opentelemetry.sdk.trace.export import (
             BatchSpanProcessor,
             ConsoleSpanExporter,
             SimpleSpanProcessor,
             SpanExporter,
         )
-        from opentelemetry.trace.propagation.tracecontext import (  # noqa: F401 — re-export
+        from opentelemetry.trace.propagation.tracecontext import (
             TraceContextTextMapPropagator,
         )
     except ImportError as exc:
@@ -97,7 +97,7 @@ def configure_otel(
             span_exporter = ConsoleSpanExporter()
         else:
             try:
-                from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (  # noqa: F401 — re-export
+                from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
                     OTLPSpanExporter,
                 )
 
@@ -189,7 +189,7 @@ def setup_otel_metrics(
     try:
         from opentelemetry import metrics
         from opentelemetry.sdk.metrics import MeterProvider
-        from opentelemetry.sdk.metrics.export import (  # noqa: F401 — re-export
+        from opentelemetry.sdk.metrics.export import (
             ConsoleMetricExporter,
             MetricExporter,
             PeriodicExportingMetricReader,
@@ -213,7 +213,7 @@ def setup_otel_metrics(
     metric_exporter: MetricExporter
     if endpoint:
         try:
-            from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (  # noqa: F401 — re-export
+            from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
                 OTLPMetricExporter,
             )
 

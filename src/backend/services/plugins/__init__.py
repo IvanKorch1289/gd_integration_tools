@@ -14,7 +14,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.plugin_runtime.manifest_toml import (  # noqa: F401 — re-export  # S168 W15-17: yaml manifest.py superseded
+from src.backend.core.plugin_runtime.manifest_toml import (  # S168 W15-17: yaml manifest.py superseded
     PluginManifest,
     load_plugin_manifest,  # was load_manifest in old yaml manifest.py
 )
@@ -23,7 +23,7 @@ from src.backend.services.plugins.loader import PluginLoader, get_plugin_loader
 
 # Backward-compat alias (S168 W15-17 deprecation shim)
 load_manifest = load_plugin_manifest
-from src.backend.services.plugins.registries import (  # noqa: F401 — re-export
+from src.backend.services.plugins.registries import (
     ActionRegistryAdapter,
     ProcessorRegistryAdapter,
     RepositoryHookRegistry,

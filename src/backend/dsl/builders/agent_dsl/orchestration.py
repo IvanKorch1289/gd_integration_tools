@@ -64,7 +64,7 @@ class OrchestrationMixin:
             )
 
         """
-        from src.backend.dsl.engine.processors.agent_dsl.agent_run import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.agent_dsl.agent_run import (
             AgentRunProcessor,
         )
 
@@ -132,7 +132,7 @@ class OrchestrationMixin:
             )
 
         """
-        from src.backend.dsl.engine.processors.agent_dsl.agent_branch import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.agent_dsl.agent_branch import (
             AgentBranchProcessor,
         )
 
@@ -170,7 +170,7 @@ class OrchestrationMixin:
             )
 
         """
-        from src.backend.dsl.engine.processors.agent_dsl.agent_loop import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.agent_dsl.agent_loop import (
             AgentLoopProcessor,
         )
 
@@ -211,7 +211,7 @@ class OrchestrationMixin:
             )
 
         """
-        from src.backend.dsl.engine.processors.agent_dsl.agent_parallel import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.agent_dsl.agent_parallel import (
             AgentParallelProcessor,
         )
 
@@ -260,7 +260,7 @@ class OrchestrationMixin:
             )
 
         """
-        from src.backend.dsl.engine.processors.agent_dsl.plan_execute import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.agent_dsl.plan_execute import (
             PlanExecuteProcessor,
         )
 
@@ -316,7 +316,7 @@ class OrchestrationMixin:
             )
 
         """
-        from src.backend.dsl.engine.processors.agent_dsl.reflection_loop import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.agent_dsl.reflection_loop import (
             ReflectionLoopProcessor,
         )
 
@@ -364,7 +364,7 @@ class OrchestrationMixin:
             )
 
         """
-        from src.backend.dsl.engine.processors.hitl_approval import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.hitl_approval import (
             HitlApprovalProcessor,
         )
 

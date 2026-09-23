@@ -1,6 +1,6 @@
 """Embedding A/B migration (Sprint 11 K4 W8)."""
 
-from src.backend.services.ai.embeddings.ab_migration import (  # noqa: F401 — re-export
+from src.backend.services.ai.embeddings.ab_migration import (
     EmbeddingABRouter,
     EmbeddingMigrationStatus,
 )

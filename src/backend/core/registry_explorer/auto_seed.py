@@ -11,7 +11,7 @@ import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from src.backend.core.registry_explorer.explorer import (  # noqa: F401 — re-export
+from src.backend.core.registry_explorer.explorer import (
     ActionEntry,
     ConnectorEntry,
     RegistryExplorer,

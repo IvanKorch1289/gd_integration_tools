@@ -111,7 +111,7 @@ class DegradationMiddleware:
 
         # Lazy import — degradation_manager может быть тяжёлым
         # (DI dependencies), не грузим при импорте модуля.
-        from src.backend.core.resilience.degradation import (  # noqa: F401 — re-export
+        from src.backend.core.resilience.degradation import (
             DegradationMode,
             degradation_manager,
             mode_at_least,
@@ -189,7 +189,7 @@ class DegradationMiddleware:
     def _check_blocked_components() -> list[str]:
         """Возвращает список компонентов, которые блокируют writes."""
         try:
-            from src.backend.core.di.providers import (  # noqa: F401 — re-export
+            from src.backend.core.di.providers import (
                 get_resilience_coordinator_provider,
             )
 

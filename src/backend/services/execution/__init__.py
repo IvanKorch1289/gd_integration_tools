@@ -10,12 +10,12 @@
   sync/async-api/async-queue/deferred/background/streaming.
 """
 
-from src.backend.services.execution.action_dispatcher import (  # noqa: F401 — re-export
+from src.backend.services.execution.action_dispatcher import (
     DefaultActionDispatcher,
     get_action_dispatcher,
 )
 from src.backend.services.execution.invoker import InvocationMode, Invoker, get_invoker
-from src.backend.services.execution.middlewares import (  # noqa: F401 — re-export
+from src.backend.services.execution.middlewares import (
     AuditMiddleware,
     IdempotencyMiddleware,
     RateLimitMiddleware,

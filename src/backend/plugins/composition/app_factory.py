@@ -12,7 +12,7 @@ from src.backend.entrypoints.middlewares.setup_middlewares import setup_middlewa
 from src.backend.entrypoints.soap.soap_handler import soap_router
 from src.backend.entrypoints.sse.handler import sse_router
 from src.backend.entrypoints.webhook.handler import webhook_router
-from src.backend.entrypoints.webhook.sources_router import (  # noqa: F401 — re-export
+from src.backend.entrypoints.webhook.sources_router import (
     sources_router as webhook_sources_router,
 )
 from src.backend.entrypoints.websocket.ws_handler import ws_router
@@ -350,7 +350,7 @@ def _configure_auto_registered_actions(app: FastAPI) -> None:
     отсутствующих опциональных зависимостей (dev_light) — log + skip,
     стартап приложения не блокируем.
     """
-    from src.backend.entrypoints.api.generator.auto_register import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.generator.auto_register import (
         auto_register_unrouted_actions,
     )
 
@@ -382,7 +382,7 @@ def _configure_auto_registered_actions(app: FastAPI) -> None:
     # Streamlit вызывает /api/v1/orders/all/, /api/v1/orders/create/ и т.д.
     # Без алиасов → 100% UI страниц получают 404. Подключаем после auto-router.
     try:
-        from src.backend.entrypoints.api.generator.legacy_aliases import (  # noqa: F401 — re-export
+        from src.backend.entrypoints.api.generator.legacy_aliases import (
             register_legacy_aliases,
         )
 
@@ -405,7 +405,7 @@ def _configure_auto_graphql_schema(app: FastAPI) -> None:
     Любые ошибки сборки логгируются и не блокируют старт приложения.
     """
     try:
-        from src.backend.entrypoints.graphql.auto_schema import (  # noqa: F401 — re-export
+        from src.backend.entrypoints.graphql.auto_schema import (
             auto_register_strawberry_schema,
         )
 
@@ -453,7 +453,7 @@ def _configure_root_endpoint(app: FastAPI) -> None:
         """
         from fastapi.responses import JSONResponse
 
-        from src.backend.infrastructure.application.health_aggregator import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.application.health_aggregator import (
             get_health_aggregator,
         )
 

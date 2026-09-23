@@ -84,7 +84,7 @@ class NotifyMixin:
             result_property: Имя property для результата (``True``/``False``).
 
         """
-        from src.backend.dsl.engine.processors.notify.apprise_notify import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.notify.apprise_notify import (
             AppriseNotifyProcessor,
         )
 
@@ -124,7 +124,7 @@ class NotifyMixin:
         from src.backend.dsl.engine.processors.base import CallableProcessor
 
         async def _send_multi(exch: Exchange[Any], ctx: object) -> None:
-            from src.backend.services.notifications.apprise_service import (  # noqa: F401 — re-export
+            from src.backend.services.notifications.apprise_service import (
                 get_notification_service,
             )
 
@@ -222,7 +222,7 @@ class NotifyMixin:
             )
 
         """
-        from src.backend.dsl.engine.processors.email_trigger import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.email_trigger import (
             EmailTriggerProcessor,
         )
 

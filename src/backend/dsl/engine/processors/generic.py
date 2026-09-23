@@ -130,7 +130,7 @@ class BulkheadProcessor(BaseProcessor):
         # ADR-0305: narrow bulkhead timeout by remaining deadline budget.
         effective_timeout: float | None = self.timeout
         try:
-            from src.backend.core.async_utils.deadline_budget import (  # noqa: F401 — re-export
+            from src.backend.core.async_utils.deadline_budget import (
                 DeadlineExpiredError,
             )
             from src.backend.core.request_context import RequestContext

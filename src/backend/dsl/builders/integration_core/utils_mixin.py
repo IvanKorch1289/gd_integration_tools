@@ -57,7 +57,7 @@ class UtilsMixin:
             result_property: Имя property для результата.
 
         """
-        from src.backend.dsl.engine.processors.function_call import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.function_call import (
             CallFunctionProcessor,
         )
 
@@ -107,7 +107,7 @@ class UtilsMixin:
             source: ``out_body`` (default) | ``in_body``.
 
         """
-        from src.backend.dsl.engine.processors.validate_response import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.validate_response import (
             ResponseValidatorProcessor,
         )
 
@@ -134,7 +134,7 @@ class UtilsMixin:
             output_to: dotted-path для записи пути созданного файла.
 
         """
-        from src.backend.dsl.engine.processors.documents import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.documents import (
             RenderDocxParams,
             RenderDocxProcessor,
         )
@@ -168,7 +168,7 @@ class UtilsMixin:
                 добавление list[dict] как таблицы.
 
         """
-        from src.backend.dsl.engine.processors.documents import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.documents import (
             RenderXlsxParams,
             RenderXlsxProcessor,
         )
@@ -204,7 +204,7 @@ class UtilsMixin:
             default_decision: Значение, если ни одно правило не сработало.
 
         """
-        from src.backend.dsl.engine.processors.rule_engine import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.rule_engine import (
             EvaluateRulesParams,
             EvaluateRulesProcessor,
             Rule,
@@ -414,7 +414,7 @@ class UtilsMixin:
             >>> .send_via_sink("alerts.http", payload_from="body.alert")
 
         """
-        from src.backend.dsl.engine.processors.integration_send import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.integration_send import (
             IntegrationSendProcessor,
         )
 

@@ -98,7 +98,7 @@ class GuardrailsProcessor(BaseProcessor):
 
         if "lakera" in config.enabled_providers:
             try:
-                from src.backend.services.ai.guardrails.lakera_client import (  # noqa: F401 — re-export
+                from src.backend.services.ai.guardrails.lakera_client import (
                     LakeraClient,
                 )
 
@@ -140,7 +140,7 @@ class GuardrailsProcessor(BaseProcessor):
 
         if "nemo" in config.enabled_providers:
             try:
-                from src.backend.services.ai.guardrails.nemo_client import (  # noqa: F401 — re-export
+                from src.backend.services.ai.guardrails.nemo_client import (
                     get_nemo_guardrails_runtime,
                 )
 
@@ -190,7 +190,7 @@ class GuardrailsProcessor(BaseProcessor):
             return self._providers_config
         try:
             from src.backend.core.tenancy import current_tenant
-            from src.backend.services.ai.guardrails.tenant_config import (  # noqa: F401 — re-export
+            from src.backend.services.ai.guardrails.tenant_config import (
                 get_default_config,
             )
         except ImportError:

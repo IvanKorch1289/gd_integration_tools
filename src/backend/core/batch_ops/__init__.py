@@ -5,7 +5,7 @@
 
 Использование::
 
-    from src.backend.core.batch_ops import (  # noqa: F401 — re-export
+    from src.backend.core.batch_ops import (
         BatchConfig, batch_iter, batch_chunks, batch_limit_exceeded,
     )
 
@@ -22,7 +22,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.batch_ops.limiter import (  # noqa: F401 — re-export
+from src.backend.core.batch_ops.limiter import (
     BatchConfig,
     BatchOverflow,
     batch_chunks,

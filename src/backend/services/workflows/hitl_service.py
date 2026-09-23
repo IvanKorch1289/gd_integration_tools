@@ -32,7 +32,7 @@ from typing import Any
 
 from src.backend.core.logging import get_logger
 from src.backend.services.workflows.hitl_models import HitlAction, HitlPendingSignal
-from src.backend.services.workflows.hitl_signal_store import (  # noqa: F401 — re-export
+from src.backend.services.workflows.hitl_signal_store import (
     HitlSignalStore,
     InMemoryHitlSignalStore,
 )
@@ -221,7 +221,7 @@ class HitlService:
     ) -> None:
         """Audit-sink emit (best-effort, кроме скрытых багов)."""
         try:
-            from src.backend.services.audit.workflow_audit_sink import (  # noqa: F401 — re-export
+            from src.backend.services.audit.workflow_audit_sink import (
                 get_workflow_audit_sink,
             )
 

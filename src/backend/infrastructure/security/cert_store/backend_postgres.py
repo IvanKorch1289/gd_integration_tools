@@ -43,7 +43,7 @@ from sqlalchemy import CursorResult, select
 
 from src.backend.core.domain.models.cert import CertHistory, CertRecord
 from src.backend.infrastructure.database.session_manager import get_main_session_manager
-from src.backend.infrastructure.security.cert_store.models import (  # noqa: F401 — re-export
+from src.backend.infrastructure.security.cert_store.models import (
     CertEntry,
     _fingerprint,
 )

@@ -20,7 +20,7 @@ from src.backend.core.config.services.mqtt import MqttSettings
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
-from src.backend.dsl.engine.processors.sink_publish.generic import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.sink_publish.generic import (
     _OutSpec,
     _resolve_payload,
     _store_result,

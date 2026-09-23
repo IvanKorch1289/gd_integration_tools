@@ -30,7 +30,7 @@ async def phase_redis_cluster(app: FastAPI) -> None:  # noqa: ARG001
                 "REDIS_CLUSTER_ENABLED=true, но REDIS_CLUSTER_NODES пуст — пропуск"
             )
         else:
-            from src.backend.infrastructure.clients.storage.redis import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.clients.storage.redis import (
                 configure_redis_cluster,
             )
 
@@ -47,10 +47,10 @@ async def phase_redis_cluster(app: FastAPI) -> None:  # noqa: ARG001
 
 async def phase_setup_infra(app: FastAPI) -> None:  # noqa: ARG001
     """Starting infrastructure: DB pool, cache layers, protocol providers."""
-    from src.backend.plugins.composition.lifecycle.bootstrap import (  # noqa: F401 — re-export
+    from src.backend.plugins.composition.lifecycle.bootstrap import (
         validate_cache_layers,
     )
-    from src.backend.plugins.composition.lifecycle.protocols import (  # noqa: F401 — re-export
+    from src.backend.plugins.composition.lifecycle.protocols import (
         register_protocol_providers,
     )
     from src.backend.plugins.composition.setup_infra import starting

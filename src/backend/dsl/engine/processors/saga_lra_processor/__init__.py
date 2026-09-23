@@ -51,20 +51,20 @@ _VALID_STATES = frozenset(
 )
 
 
-from src.backend.dsl.engine.processors.saga_lra_processor.core_mixin import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.saga_lra_processor.core_mixin import (
     CoreMixin,  # S58 W2: MRO
     SagaStepTimeoutError,  # W2 P0-3 Phase 2: re-export
 )
-from src.backend.dsl.engine.processors.saga_lra_processor.execution_mixin import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.saga_lra_processor.execution_mixin import (
     ExecutionMixin,  # S58 W2: MRO
 )
-from src.backend.dsl.engine.processors.saga_lra_processor.lifecycle_mixin import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.saga_lra_processor.lifecycle_mixin import (
     LifecycleMixin,  # S58 W2: MRO
 )
-from src.backend.dsl.engine.processors.saga_lra_processor.serialization_mixin import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.saga_lra_processor.serialization_mixin import (
     SerializationMixin,  # S58 W2: MRO
 )
-from src.backend.dsl.engine.processors.saga_lra_processor.state import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.saga_lra_processor.state import (
     SagaCompensationError,  # S58 W2: re-export
     SagaLRAError,  # S58 W2: re-export
     SagaState,  # S58 W2: re-export

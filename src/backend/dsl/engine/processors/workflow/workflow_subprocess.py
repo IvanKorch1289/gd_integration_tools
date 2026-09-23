@@ -22,7 +22,7 @@ from src.backend.core.di.providers.cache import get_workflow_factory_module_prov
 from src.backend.core.logging import get_logger
 from src.backend.core.workflow.backend import WorkflowBackend as _WorkflowBackend
 from src.backend.dsl.engine.processors.base import BaseProcessor
-from src.backend.dsl.registry import (  # noqa: F401 — re-export
+from src.backend.dsl.registry import (
     processor,  # B-1 fix (cycle 1): registry integration
 )
 

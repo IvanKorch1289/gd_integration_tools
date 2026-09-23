@@ -6,7 +6,7 @@ from src.backend.core.security.authorization_gateway.state import AuthorizationD
 _logger = get_logger("core.security.authorization_gateway")
 
 
-from src.backend.core.security.authorization_gateway._protocol import (  # noqa: F401 — re-export
+from src.backend.core.security.authorization_gateway._protocol import (
     _AuthorizationGatewayProtocol,
 )
 

@@ -11,10 +11,10 @@ Migration path:
 
 from __future__ import annotations
 
-from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
+from src.backend.core.di.providers.infrastructure_locator import (
     get_redis_client_class as _get_redis_client_cls,
 )
-from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
+from src.backend.core.di.providers.infrastructure_locator import (
     get_redis_client_factory as _get_redis_client_fn,
 )
 

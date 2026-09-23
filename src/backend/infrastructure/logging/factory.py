@@ -39,7 +39,7 @@ _backend: BaseLoggerBackend | None = None
 def _create_backend(name: str) -> BaseLoggerBackend:
     if name == "structlog":
         try:
-            from src.backend.infrastructure.logging.structlog_backend import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.logging.structlog_backend import (
                 StructlogGraylogBackend,
             )
 
@@ -154,7 +154,7 @@ def init_log_sinks(profile: AppProfileChoices | None = None, **kwargs: Any) -> N
     (старые при этом НЕ закрываются — это ответственность вызывающего
     кода, обычно ``shutdown_log_sinks``).
     """
-    from src.backend.infrastructure.logging.router import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.logging.router import (
         build_sinks_for_profile,
         configure_router,
     )
@@ -172,7 +172,7 @@ async def shutdown_log_sinks() -> None:
 
     Если router ещё не инициализирован — no-op.
     """
-    from src.backend.infrastructure.logging.router import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.logging.router import (
         get_router,
         is_router_configured,
         reset_router,

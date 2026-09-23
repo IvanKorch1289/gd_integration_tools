@@ -170,7 +170,7 @@ class KafkaFacade:
             if headers is None:
                 headers = {}
             try:
-                from src.backend.infrastructure.observability.mq_trace_propagator import (  # noqa: F401 — re-export
+                from src.backend.infrastructure.observability.mq_trace_propagator import (
                     inject_into_headers,
                 )
 

@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING as TYPE_CHECKING
 
 from src.backend.core.di import app_state_singleton as app_state_singleton
 from src.backend.core.interfaces.vector_store import BaseVectorStore as BaseVectorStore
-from src.backend.services.ai.embedding_providers import (  # noqa: F401 — re-export
+from src.backend.services.ai.embedding_providers import (
     EmbeddingProvider,
     get_embedding_provider,
 )
@@ -26,16 +26,16 @@ from src.backend.services.ai.embedding_providers import (  # noqa: F401 — re-e
 if TYPE_CHECKING:  # pragma: no cover
     from src.backend.core.cache.rag import ThreeTierRagCache
 
-from src.backend.services.ai.rag_service.augment_mixin import (  # noqa: F401 — re-export
+from src.backend.services.ai.rag_service.augment_mixin import (
     AugmentMixin,  # S64 W4: MRO
 )
-from src.backend.services.ai.rag_service.collection_mixin import (  # noqa: F401 — re-export
+from src.backend.services.ai.rag_service.collection_mixin import (
     CollectionMixin,  # S64 W4: MRO
 )
-from src.backend.services.ai.rag_service.ingest_mixin import (  # noqa: F401 — re-export
+from src.backend.services.ai.rag_service.ingest_mixin import (
     IngestMixin,  # S64 W4: MRO as IngestMixin  # S64 W4: MRO
 )
-from src.backend.services.ai.rag_service.search_mixin import (  # noqa: F401 — re-export
+from src.backend.services.ai.rag_service.search_mixin import (
     SearchMixin,  # S64 W4: MRO
     _extract_source_id,  # S152 W2: re-export для tests
     _filter_by_embedding_version,  # S152 W1: re-export для tests
@@ -43,7 +43,7 @@ from src.backend.services.ai.rag_service.search_mixin import (  # noqa: F401 —
     _format_context_with_sources,  # S152 W2: re-export для tests
     _resolve_effective_tenant_id,  # S2.6: re-export для tests
 )
-from src.backend.services.ai.rag_service.state import (  # noqa: F401 — re-export
+from src.backend.services.ai.rag_service.state import (
     RAGCitation,  # S64 W4: re-export as RAGCitation  # S64 W4: re-export
 )
 from src.backend.services.ai.rag_types import AugmentResult, FreshnessLabel
@@ -71,7 +71,7 @@ def get_rag_service() -> RAGService:
     """
     # S133 W4: default store — memory-backed vector store для non-request
     # контекстов (tests / DSL без зарегистрированного app.state).
-    from src.backend.core.vector_store.memory import (  # noqa: F401 — re-export  # type: ignore[import-not-found,import-untyped]
+    from src.backend.core.vector_store.memory import (  # type: ignore[import-not-found,import-untyped]
         InMemoryVectorStore,
     )
 

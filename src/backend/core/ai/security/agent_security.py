@@ -14,7 +14,7 @@
 
 Импорт публичных символов сохранён без изменений:
 
-    from src.backend.core.ai.security.agent_security import (  # noqa: F401 — re-export
+    from src.backend.core.ai.security.agent_security import (
         AgentSecurityFramework,
         AgentSecurityPolicy,
         DangerousCommandDetector,
@@ -40,19 +40,19 @@ References:
 
 from __future__ import annotations
 
-from src.backend.core.ai.security.agent_security_detectors import (  # noqa: F401 — re-export
+from src.backend.core.ai.security.agent_security_detectors import (
     DangerousCommandDetector,
     PromptValidator,
 )
-from src.backend.core.ai.security.agent_security_framework import (  # noqa: F401 — re-export
+from src.backend.core.ai.security.agent_security_framework import (
     AgentSecurityFramework,
     get_agent_security_framework,
 )
-from src.backend.core.ai.security.agent_security_policy import (  # noqa: F401 — re-export
+from src.backend.core.ai.security.agent_security_policy import (
     AgentSecurityPolicy,
     FileModificationPolicy,
 )
-from src.backend.core.ai.security.agent_security_types import (  # noqa: F401 — re-export
+from src.backend.core.ai.security.agent_security_types import (
     SecurityDecision,
     SecurityHook,
     SecurityHookFn,

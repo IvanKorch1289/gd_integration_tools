@@ -41,7 +41,7 @@ router = APIRouter(dependencies=[_ADMIN_GUARD_READ])
 async def list_capabilities() -> dict[str, Any]:
     """Список всех известных capabilities."""
     try:
-        from src.backend.core.security.capabilities import (  # noqa: F401 — re-export
+        from src.backend.core.security.capabilities import (
             DEFAULT_CAPABILITY_CATALOG,
             build_default_vocabulary,
         )
@@ -138,7 +138,7 @@ async def get_capability_graph() -> dict[str, Any]:
         return {"nodes": [], "edges": []}
 
     try:
-        from src.backend.core.plugin_runtime.manifest_toml import (  # noqa: F401 — re-export
+        from src.backend.core.plugin_runtime.manifest_toml import (
             PluginManifestError,
             load_plugin_manifest,
         )

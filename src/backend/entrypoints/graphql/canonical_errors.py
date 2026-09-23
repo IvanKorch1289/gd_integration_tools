@@ -16,7 +16,7 @@ dict с обязательными полями:
 
 Использование в Strawberry/FastAPI GraphQL handler::
 
-    from src.backend.entrypoints.graphql.canonical_errors import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.graphql.canonical_errors import (
         format_graphql_error, install_canonical_formatter,
     )
 

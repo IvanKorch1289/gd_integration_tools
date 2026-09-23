@@ -275,7 +275,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         ) -> dict:
             """Автоматически добавляет correlation_id/request_id/tenant_id в каждый лог."""
             try:
-                from src.backend.infrastructure.observability.correlation import (  # noqa: F401 — re-export
+                from src.backend.infrastructure.observability.correlation import (
                     get_correlation_id,
                     get_request_id,
                     get_tenant_id,
@@ -316,7 +316,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         def _mask_pii_lazy(
             logger: Any, method_name: str, event_dict: dict[str, Any]
         ) -> dict[str, Any]:
-            from src.backend.infrastructure.observability.pii_filter import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.observability.pii_filter import (
                 mask_pii,
             )
 
@@ -401,7 +401,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         """
         # 1) sync-close GELF sinks (если router инициализирован)
         try:
-            from src.backend.infrastructure.logging.router import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.logging.router import (
                 get_router,
                 is_router_configured,
             )

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Self
 
 from src.backend.dsl.builders.base._protocol import _RouteBuilderProtocol
-from src.backend.dsl.engine.middleware import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.middleware import (
     ErrorNormalizerMiddleware,
     MetricsMiddleware,
     ProcessorMiddleware,

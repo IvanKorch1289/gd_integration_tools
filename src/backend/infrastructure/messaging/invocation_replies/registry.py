@@ -8,7 +8,7 @@ Singleton, в котором хранится по одному backend на :cl
 
 from __future__ import annotations
 
-from src.backend.core.interfaces.invocation_reply import (  # noqa: F401 — re-export
+from src.backend.core.interfaces.invocation_reply import (
     InvocationReplyChannel,
     ReplyChannelKind,
 )
@@ -56,19 +56,19 @@ def get_reply_channel_registry() -> ReplyChannelRegistry:
     """
     global _registry_singleton
     if _registry_singleton is None:
-        from src.backend.infrastructure.messaging.invocation_replies.email import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.messaging.invocation_replies.email import (
             EmailReplyChannel,
         )
-        from src.backend.infrastructure.messaging.invocation_replies.express import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.messaging.invocation_replies.express import (
             ExpressReplyChannel,
         )
-        from src.backend.infrastructure.messaging.invocation_replies.memory import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.messaging.invocation_replies.memory import (
             MemoryReplyChannel,
         )
-        from src.backend.infrastructure.messaging.invocation_replies.queue import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.messaging.invocation_replies.queue import (
             QueueReplyChannel,
         )
-        from src.backend.infrastructure.messaging.invocation_replies.ws import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.messaging.invocation_replies.ws import (
             WsReplyChannel,
         )
 

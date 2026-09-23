@@ -19,7 +19,7 @@
 
 Использование::
 
-    from src.backend.core.sla_cockpit import (  # noqa: F401 — re-export
+    from src.backend.core.sla_cockpit import (
         SLO, SLARegistry, SLOEvaluator, SLOStatus,
     )
 
@@ -50,14 +50,14 @@
 
 from __future__ import annotations
 
-from src.backend.core.sla_cockpit.cockpit import (  # noqa: F401 — re-export
+from src.backend.core.sla_cockpit.cockpit import (
     SLOCockpit,
     SLOMeasurement,
     SLOReport,
     SLOStatus,
     get_sla_cockpit,
 )
-from src.backend.core.sla_cockpit.evaluator import (  # noqa: F401 — re-export
+from src.backend.core.sla_cockpit.evaluator import (
     SLOBreachDetail,
     SLOEvaluation,
     SLOEvaluator,

@@ -14,7 +14,7 @@
 
 Использование в HTTP-вызовах::
 
-    from src.backend.core.async_utils.deadline_http_helper import (  # noqa: F401 — re-export
+    from src.backend.core.async_utils.deadline_http_helper import (
         http_timeout_from_deadline,
     )
 

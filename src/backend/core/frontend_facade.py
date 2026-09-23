@@ -11,19 +11,19 @@ from __future__ import annotations
 from src.backend.core.audit.facade import emit_audit_safe
 from src.backend.core.config.express import express_settings
 from src.backend.core.config.features import feature_flags
-from src.backend.core.di.providers import (  # noqa: F401 — re-export
+from src.backend.core.di.providers import (
     get_express_bot_client_factory_provider,
     get_express_botx_message_class_provider,
 )
 from src.backend.core.interfaces.import_gateway import ImportSource, ImportSourceKind
 from src.backend.core.logging import get_logger
-from src.backend.core.messaging import (  # noqa: F401 — re-export
+from src.backend.core.messaging import (
     FakeOutbox,
     OutboxBackend,
     OutboxEvent,
     OutboxEventStatus,
 )
-from src.backend.services.dsl_portal import (  # noqa: F401 — re-export
+from src.backend.services.dsl_portal import (
     Pipeline,
     WorkflowDeclaration,
     compute_step_diff,

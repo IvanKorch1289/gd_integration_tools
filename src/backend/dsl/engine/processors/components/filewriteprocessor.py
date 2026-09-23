@@ -52,7 +52,7 @@ class FileWriteProcessor(BaseProcessor):
         """
         import aiofiles
 
-        from src.backend.dsl.engine.processors._path_safety import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors._path_safety import (
             PathTraversalError,
             validate_path,
         )

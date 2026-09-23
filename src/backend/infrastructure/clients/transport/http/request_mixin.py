@@ -10,7 +10,7 @@ from logging import DEBUG
 from time import monotonic
 
 import httpx
-from tenacity import (  # noqa: F401 — re-export
+from tenacity import (
     before_sleep_log,
     retry,
     retry_if_exception,
@@ -19,7 +19,7 @@ from tenacity import (  # noqa: F401 — re-export
 )
 
 from src.backend.core.config.constants import consts
-from src.backend.infrastructure.clients.transport.http._protocol import (  # noqa: F401 — re-export
+from src.backend.infrastructure.clients.transport.http._protocol import (
     _HttpClientProtocol,
 )
 

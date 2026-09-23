@@ -472,7 +472,7 @@ async def get_dependency_graph() -> PluginDependencyGraph:
     if not extensions_dir.is_dir():
         return PluginDependencyGraph()
 
-    from src.backend.core.plugin_runtime.manifest_toml import (  # noqa: F401 — re-export
+    from src.backend.core.plugin_runtime.manifest_toml import (
         PluginManifestError,
         load_plugin_manifest,
     )

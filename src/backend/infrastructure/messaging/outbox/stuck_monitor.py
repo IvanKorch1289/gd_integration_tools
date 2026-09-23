@@ -19,7 +19,7 @@ Wave: ``[wave:s72/w2-stuck-monitor]``.
 
 Использование::
 
-    from src.backend.infrastructure.messaging.outbox.stuck_monitor import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.messaging.outbox.stuck_monitor import (
         start_outbox_stuck_monitor,
         stop_outbox_stuck_monitor,
     )
@@ -39,7 +39,7 @@ from dataclasses import dataclass
 
 from src.backend.core.logging import get_logger
 from src.backend.core.utils.task_registry import get_task_registry
-from src.backend.infrastructure.repositories.outbox import (  # noqa: F401 — re-export
+from src.backend.infrastructure.repositories.outbox import (
     count_stuck_pending,
     count_stuck_pending_by_transport,
 )

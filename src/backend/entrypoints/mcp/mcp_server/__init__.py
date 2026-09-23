@@ -19,7 +19,7 @@ from __future__ import annotations
 from typing import Any as Any
 
 from src.backend.core.logging import get_logger as get_logger
-from src.backend.entrypoints.mcp.mcp_server.helpers import (  # noqa: F401 — re-export
+from src.backend.entrypoints.mcp.mcp_server.helpers import (
     _action_input_schema_json,
     _authz_manual_tool,
     _check_mcp_manual_tool_authz,
@@ -28,12 +28,12 @@ from src.backend.entrypoints.mcp.mcp_server.helpers import (  # noqa: F401 — r
     _register_single_tool,
 )
 from src.backend.entrypoints.mcp.mcp_server.tools_convert import _register_convert_tools
-from src.backend.entrypoints.mcp.mcp_server.tools_document import (  # noqa: F401 — re-export
+from src.backend.entrypoints.mcp.mcp_server.tools_document import (
     _register_document_tools,
 )
 from src.backend.entrypoints.mcp.mcp_server.tools_route import _register_route_tools
 from src.backend.entrypoints.mcp.mcp_server.tools_system import _register_system_tools
-from src.backend.entrypoints.mcp.mcp_server.tools_template import (  # noqa: F401 — re-export
+from src.backend.entrypoints.mcp.mcp_server.tools_template import (
     _register_template_tools,
 )
 from src.backend.entrypoints.mcp.mcp_server.tools_yaml import _register_yaml_tools

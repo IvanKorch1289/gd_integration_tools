@@ -27,7 +27,7 @@ from dataclasses import asdict
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
-from src.backend.services.jupyter.hub_run_orchestrator import (  # noqa: F401 — re-export
+from src.backend.services.jupyter.hub_run_orchestrator import (
     HubRunError,
     HubRunResult,
     run_hub_notebook,

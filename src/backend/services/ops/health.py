@@ -8,12 +8,12 @@ thin re-export shim для backward-compat: ``from services.ops.health import X`
 Migration::
 
     # До (W9 P2-13 Phase 4 — still works через этот shim):
-    from src.backend.services.ops.health import (  # noqa: F401 — re-export
+    from src.backend.services.ops.health import (
         ProcessorHealthService, ProcessorHealthResult, get_processor_health_service,
     )
 
     # После (canonical, рекомендуется для нового кода):
-    from src.backend.services.ops.health import (  # noqa: F401 — re-export
+    from src.backend.services.ops.health import (
         ProcessorHealthService, ProcessorHealthResult, get_processor_health_service,
     )
     # Тот же путь — split прозрачен для consumers.
@@ -24,13 +24,13 @@ audit consumer migration).
 
 from __future__ import annotations
 
-from src.backend.services.ops.health import (  # noqa: F401 — re-export  # type: ignore[attr-defined]
+from src.backend.services.ops.health import (  # type: ignore[attr-defined]
     ProcessorHealthResult as ProcessorHealthResult,
 )
-from src.backend.services.ops.health import (  # noqa: F401 — re-export
+from src.backend.services.ops.health import (
     ProcessorHealthService as ProcessorHealthService,
 )
-from src.backend.services.ops.health import (  # noqa: F401 — re-export
+from src.backend.services.ops.health import (
     get_processor_health_service as get_processor_health_service,
 )
 

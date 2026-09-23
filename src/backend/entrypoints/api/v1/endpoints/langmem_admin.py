@@ -35,7 +35,7 @@ async def langmem_consolidate(
     batch_size: int = Query(default=50, ge=1, le=500),
 ) -> dict[str, Any]:
     """Запускает LLM-summarization consolidate()."""
-    from src.backend.services.ai.memory.langmem_service import (  # noqa: F401 — re-export
+    from src.backend.services.ai.memory.langmem_service import (
         LangMemDisabled,
         get_langmem_service,
     )
@@ -57,7 +57,7 @@ async def langmem_consolidate(
 @router.get("/langmem/stats", summary="Статистика памяти LangMem (D.6)")
 async def langmem_stats() -> dict[str, Any]:
     """Возвращает counts по episodic / procedural."""
-    from src.backend.services.ai.memory.langmem_service import (  # noqa: F401 — re-export
+    from src.backend.services.ai.memory.langmem_service import (
         LangMemDisabled,
         get_langmem_service,
     )

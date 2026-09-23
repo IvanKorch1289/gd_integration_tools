@@ -7,15 +7,15 @@ S203 W4 добавил :mod:`facade` — единый ``IntegrationFacade`` с c
 gating для extensions/agent'ов.
 """
 
-from src.backend.services.integrations.facade import (  # noqa: F401 — re-export
+from src.backend.services.integrations.facade import (
     IntegrationFacade,
     get_integration_facade,
 )
-from src.backend.services.integrations.import_service import (  # noqa: F401 — re-export
+from src.backend.services.integrations.import_service import (
     ImportService,
     get_import_service,
 )
-from src.backend.services.integrations.imported_action_service import (  # noqa: F401 — re-export
+from src.backend.services.integrations.imported_action_service import (
     EndpointMeta,
     ImportedActionService,
     get_imported_action_service,

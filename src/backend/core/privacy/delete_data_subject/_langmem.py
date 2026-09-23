@@ -15,7 +15,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 
-from src.backend.core.privacy.delete_data_subject._types import (  # noqa: F401 — re-export
+from src.backend.core.privacy.delete_data_subject._types import (
     AdapterResult,
     ErasureResultStatus,
     ErasureStrategy,
@@ -42,7 +42,7 @@ class LangMemErasureAdapter:
             try:
                 from sqlalchemy import delete  # type: ignore[import-not-found]
 
-                from src.backend.core.domain.models.langmem_models import (  # noqa: F401 — re-export  # type: ignore[import-not-found]
+                from src.backend.core.domain.models.langmem_models import (  # type: ignore[import-not-found]
                     LangMemEpisodic,
                     LangMemProcedural,
                 )

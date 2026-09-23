@@ -9,7 +9,7 @@
 ``infrastructure/`` (см. CLAUDE.md, layer policy).
 """
 
-from src.backend.services.dsl.builder_service import (  # noqa: F401 — re-export
+from src.backend.services.dsl.builder_service import (
     DSLBuilderService,
     SaveResult,
     get_dsl_builder_service,

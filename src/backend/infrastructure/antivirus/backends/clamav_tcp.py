@@ -10,12 +10,12 @@ import asyncio
 import struct
 import time
 
-from src.backend.core.interfaces.antivirus import (  # noqa: F401 — re-export
+from src.backend.core.interfaces.antivirus import (
     AntivirusBackend,
     AntivirusScanResult,
     AntivirusTimeoutError,
 )
-from src.backend.infrastructure.antivirus.backends.clamav_unix import (  # noqa: F401 — re-export
+from src.backend.infrastructure.antivirus.backends.clamav_unix import (
     _parse_clamav_response,
 )
 

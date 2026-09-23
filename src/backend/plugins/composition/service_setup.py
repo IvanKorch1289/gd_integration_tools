@@ -32,7 +32,7 @@ def register_default_action_middlewares() -> None:
     двойной регистрации при перезапуске lifespan в тестах.
     """
     from src.backend.dsl.commands.action_registry import action_handler_registry
-    from src.backend.services.execution.middlewares import (  # noqa: F401 — re-export
+    from src.backend.services.execution.middlewares import (
         AuditMiddleware,
         IdempotencyMiddleware,
         RateLimitMiddleware,
@@ -64,7 +64,7 @@ def register_secrets_backend() -> None:
     def _factory() -> SecretsBackend:
         match backend_kind:
             case "env":
-                from src.backend.infrastructure.security.env_secrets import (  # noqa: F401 — re-export
+                from src.backend.infrastructure.security.env_secrets import (
                     EnvSecretsBackend,
                 )
 
@@ -153,7 +153,7 @@ def _register_cache_facade() -> None:
 def _register_external_database_facade() -> None:
     """Регистрирует ``ExternalDatabaseFacade`` в svcs с capability-check."""
     from src.backend.core.svcs_registry import has_service, register_factory
-    from src.backend.infrastructure.database.external_database_facade import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.database.external_database_facade import (
         ExternalDatabaseFacade,
     )
 
@@ -187,7 +187,7 @@ def register_all_services() -> None:
     Импорты фабрик сервисов делаются lazy (внутри функции), чтобы
     избежать cycle-импортов и держать холодный старт быстрым.
     """
-    from extensions.core_entities.orderkinds.services.orderkinds import (  # noqa: F401 — re-export
+    from extensions.core_entities.orderkinds.services.orderkinds import (
         get_order_kind_service,
     )
     from extensions.core_entities.orders.services.orders import get_order_service

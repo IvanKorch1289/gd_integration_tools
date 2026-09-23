@@ -142,7 +142,7 @@ class SshCommandProcessor(BaseProcessor):
             return path
 
         # In dev_light we allow skip-verification (matches SFTP resolver).
-        from src.backend.core.config.profile import (  # noqa: F401 — re-export
+        from src.backend.core.config.profile import (
             AppProfileChoices,
             get_active_profile,
         )

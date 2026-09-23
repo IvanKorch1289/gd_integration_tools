@@ -9,7 +9,7 @@ Public API:
 
 from __future__ import annotations
 
-from src.backend.core.privacy.delete_data_subject import (  # noqa: F401 — re-export
+from src.backend.core.privacy.delete_data_subject import (
     AdapterResult,
     DeleteDataSubject,
     ErasureAdapter,

@@ -31,7 +31,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 from src.backend.core.logging import get_logger
-from src.backend.core.plugin_runtime.manifest_toml import (  # noqa: F401 — re-export
+from src.backend.core.plugin_runtime.manifest_toml import (
     PluginManifest,
     PluginManifestError,
     load_plugin_manifest,

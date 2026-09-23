@@ -128,8 +128,7 @@
 | [ADR-0329](0329-w9-p2-13-phase4-services-ops-health-split.md) | W9 P2-13 Phase 4: `services/ops/health.py` (609 LOC) → package split | **Accepted** |
 | [ADR-0330](0330-w9-p2-13-phase5-services-ai-agent-sandbox-split.md) | W9 P2-13 Phase 5: `services/ai/agent_sandbox.py` (601 LOC) → package split (3 sandbox impls + selector) | **Accepted** |
 | [ADR-0331](0331-w9-p2-13-phase7-core-di-workflow-providers-split.md) | W9 P2-13 Phase 7: `core/di/providers/workflow.py` (602 LOC, 58 funcs) → package с 6 cohesion submodules (workflow_core/resilience/loggers/messaging/dlq/notifications) | **Accepted** |
-| [ADR-0332](0332-w6-p1-8-phase9-add-f401-multiline-noqa-typer.md) | W6 P1-8 Phase 9: tools/add_f401_multiline_noqa.py argparse → typer (9th tool, 2-flag trivial) | **Accepted** |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 
-**Total:** 125 ADRs.
+**Total:** 124 ADRs.
 

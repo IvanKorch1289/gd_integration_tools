@@ -30,7 +30,7 @@ Tenant identity резолвится с тем же приоритетом, чт
 
 Usage::
 
-    from src.backend.entrypoints.middlewares.tenant_resource_isolation import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.middlewares.tenant_resource_isolation import (
         TenantResourceIsolationMiddleware,
     )
 

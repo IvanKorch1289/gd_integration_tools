@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from src.backend.core.auth.admin_roles import AdminRole, require_admin
-from src.backend.entrypoints.filewatcher.watcher_manager import (  # noqa: F401 — re-export
+from src.backend.entrypoints.filewatcher.watcher_manager import (
     WatcherSpec,
     watcher_manager,
 )

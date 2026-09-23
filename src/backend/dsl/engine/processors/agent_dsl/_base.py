@@ -203,7 +203,7 @@ class BaseAIProcessor(BaseProcessor):
     def _resolve_capability_gate() -> Any | None:
         """Lazy-резолв :class:`CapabilityGate` через DI singleton."""
         try:
-            from src.backend.core.security.capabilities.gate import (  # noqa: F401 — re-export  # type: ignore[attr-defined]
+            from src.backend.core.security.capabilities.gate import (  # type: ignore[attr-defined]
                 get_capability_gate,
             )
 
@@ -258,7 +258,7 @@ class BaseAIProcessor(BaseProcessor):
     def _resolve_audit_service() -> Any | None:
         """Lazy-резолв Unified :class:`AuditService` (S17/K3)."""
         try:
-            from src.backend.core.audit.facade.audit_service import (  # noqa: F401 — re-export
+            from src.backend.core.audit.facade.audit_service import (
                 get_unified_audit_service,
             )
 

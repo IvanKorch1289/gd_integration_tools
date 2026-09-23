@@ -46,7 +46,7 @@ class BankingScriptsMixin:
 
     def credit_scoring_rag(self, product: str = "retail") -> RouteBuilder:
         """Кредитный скоринг через RAG."""
-        from src.backend.dsl.engine.processors.ai_banking import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.ai_banking import (
             CreditScoringRagProcessor,
         )
 
@@ -56,7 +56,7 @@ class BankingScriptsMixin:
 
     def customer_chatbot(self, channel: str = "web") -> RouteBuilder:
         """Клиентский чат-бот (tool-use: balance, statement, faq, escalate)."""
-        from src.backend.dsl.engine.processors.ai_banking import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.ai_banking import (
             CustomerChatbotProcessor,
         )
 
@@ -72,7 +72,7 @@ class BankingScriptsMixin:
 
     def tx_categorize(self, taxonomy: str = "mcc") -> RouteBuilder:
         """Категоризация транзакций (MCC + merchant normalization)."""
-        from src.backend.dsl.engine.processors.ai_banking import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.ai_banking import (
             TransactionCategorizerProcessor,
         )
 
@@ -101,7 +101,7 @@ class BankingScriptsMixin:
         Результат пишется в exchange body как
         ``{"stdout", "stderr", "exit_code", "language"}``.
         """
-        from src.backend.dsl.engine.processors.script_runner import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.script_runner import (
             ScriptRunnerProcessor,
         )
 
@@ -124,7 +124,7 @@ class BankingScriptsMixin:
         allowed_languages: list[str] | None = None,
     ) -> RouteBuilder:
         """Выполнить inline Node.js-код (требует ``node`` в PATH)."""
-        from src.backend.dsl.engine.processors.script_runner import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.script_runner import (
             ScriptRunnerProcessor,
         )
 
@@ -147,7 +147,7 @@ class BankingScriptsMixin:
         allowed_languages: list[str] | None = None,
     ) -> RouteBuilder:
         """Выполнить inline Ruby-код (требует ``ruby`` в PATH)."""
-        from src.backend.dsl.engine.processors.script_runner import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.script_runner import (
             ScriptRunnerProcessor,
         )
 
@@ -170,7 +170,7 @@ class BankingScriptsMixin:
         allowed_languages: list[str] | None = None,
     ) -> RouteBuilder:
         """Выполнить shell-скрипт через ``/bin/sh`` (whitelist рекомендуется)."""
-        from src.backend.dsl.engine.processors.script_runner import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.script_runner import (
             ScriptRunnerProcessor,
         )
 

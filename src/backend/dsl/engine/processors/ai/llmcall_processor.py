@@ -256,7 +256,7 @@ class LLMCallProcessor(BaseProcessor):
         # GatewayRateLimited — non-retryable, обрабатывается отдельно.
         # S164 W1 (AI-R2): Circuit Breaker guard на _chat_with_retry —
         # repeated LLM failures не должны дойти до retry-loop (cost control).
-        from src.backend.core.resilience.breaker import (  # noqa: F401 — re-export
+        from src.backend.core.resilience.breaker import (
             BreakerSpec,
             get_breaker_registry,
         )

@@ -253,7 +253,7 @@ class DebeziumEventsCDCBackend(CDCSource):
             _logger.warning("ack() called before consumer started — cursor=%s", cursor)
             return
         try:
-            from aiokafka import (  # noqa: F401 — re-export  # type: ignore[import-not-found]
+            from aiokafka import (  # type: ignore[import-not-found]
                 OffsetAndMetadata,
                 TopicPartition,
             )

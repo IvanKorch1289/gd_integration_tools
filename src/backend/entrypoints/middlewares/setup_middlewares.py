@@ -43,54 +43,54 @@ def build_default_registry() -> MiddlewareRegistry:
     from src.backend.entrypoints.middlewares.api_key import APIKeyMiddleware
     from src.backend.entrypoints.middlewares.audit_log import AuditLogMiddleware
     from src.backend.entrypoints.middlewares.audit_replay import AuditReplayMiddleware
-    from src.backend.entrypoints.middlewares.auth_method_header import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.middlewares.auth_method_header import (
         AuthMethodHeaderMiddleware,
     )
     from src.backend.entrypoints.middlewares.auth_required import AuthRequiredMiddleware
-    from src.backend.entrypoints.middlewares.blocked_routes import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.middlewares.blocked_routes import (
         BlockedRoutesMiddleware,
     )
-    from src.backend.entrypoints.middlewares.brotli_compression import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.middlewares.brotli_compression import (
         BrotliCompressionMiddleware,
     )
-    from src.backend.entrypoints.middlewares.circuit_breaker import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.middlewares.circuit_breaker import (
         BreakerPolicy,
         CircuitBreakerMiddleware,  # S81 W2: restored
     )
     from src.backend.entrypoints.middlewares.correlation import CorrelationIdMiddleware
     from src.backend.entrypoints.middlewares.data_masking import DataMaskingMiddleware
     from src.backend.entrypoints.middlewares.degradation import DegradationMiddleware
-    from src.backend.entrypoints.middlewares.exception_handler import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.middlewares.exception_handler import (
         ExceptionHandlerMiddleware,
     )
-    from src.backend.entrypoints.middlewares.global_ratelimit import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.middlewares.global_ratelimit import (
         GlobalRateLimitMiddleware,
         build_rate_limit_checker,
     )
-    from src.backend.entrypoints.middlewares.idempotency import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.middlewares.idempotency import (
         IdempotencyHeaderMiddleware,
         build_idempotency_backend,
     )
     from src.backend.entrypoints.middlewares.otel_middleware import OtelMiddleware
     from src.backend.entrypoints.middlewares.registry import MiddlewareRegistry
-    from src.backend.entrypoints.middlewares.request_body_cache import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.middlewares.request_body_cache import (
         RequestBodyCacheMiddleware,
     )
-    from src.backend.entrypoints.middlewares.request_context import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.middlewares.request_context import (
         RequestContextMiddleware,
     )
     from src.backend.entrypoints.middlewares.request_id import RequestIDMiddleware
-    from src.backend.entrypoints.middlewares.request_log import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.middlewares.request_log import (
         InnerRequestLoggingMiddleware,
     )
-    from src.backend.entrypoints.middlewares.response_cache import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.middlewares.response_cache import (
         ResponseCacheMiddleware,
     )
-    from src.backend.entrypoints.middlewares.security_headers import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.middlewares.security_headers import (
         SecurityHeadersMiddleware,
     )
     from src.backend.entrypoints.middlewares.tenant import TenantMiddleware
-    from src.backend.entrypoints.middlewares.tenant_resource_isolation import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.middlewares.tenant_resource_isolation import (
         TenantResourceIsolationMiddleware,
     )
     from src.backend.entrypoints.middlewares.timeout import TimeoutMiddleware
@@ -192,7 +192,7 @@ def build_default_registry() -> MiddlewareRegistry:
     # middleware (pure ASGI + path exclusion) instead of FastAPI's
     # default GZipMiddleware (BaseHTTPMiddleware — incompatible с
     # project's pure ASGI chain на /docs, /redoc, /metrics).
-    from src.backend.entrypoints.middlewares.gzip_compression_excluding import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.middlewares.gzip_compression_excluding import (
         GZipCompressionExcludingMiddleware,
     )
 
@@ -214,7 +214,7 @@ def build_default_registry() -> MiddlewareRegistry:
     registry.register_builtin("auth_required", AuthRequiredMiddleware, order=620)
     # S183: AI tool whitelist enforcement (S-3 fix — Master Prompt §3.3).
     # Layer 3 — после auth, до DSL execution.
-    from src.backend.entrypoints.middlewares.ai_tool_whitelist import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.middlewares.ai_tool_whitelist import (
         AIToolWhitelistMiddleware,
     )
 
@@ -231,7 +231,7 @@ def build_default_registry() -> MiddlewareRegistry:
 
     registry.register_builtin("login_step_up", LoginStepUpMiddleware, order=650)
     # S183: WebSocket rate limit (registered after auth, Layer 3).
-    from src.backend.entrypoints.middlewares.ws_rate_limit import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.middlewares.ws_rate_limit import (
         WebSocketRateLimitMiddleware,
     )
 
@@ -240,7 +240,7 @@ def build_default_registry() -> MiddlewareRegistry:
     # V9 hotfix (S204 retro-audit C-NEW-3): пробрасываем secrets из settings —
     # раньше регистрация без kwargs оставляла self._secrets={}, что позволяло
     # каждому inbound-webhook проходить без проверки подписи.
-    from src.backend.entrypoints.middlewares.webhook_signature import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.middlewares.webhook_signature import (
         WebhookSignatureMiddleware,
     )
 
@@ -257,7 +257,7 @@ def build_default_registry() -> MiddlewareRegistry:
         order=680,
     )
     # S183: PII masking in response (Layer 3, after auth).
-    from src.backend.entrypoints.middlewares.pii_masking_response import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.middlewares.pii_masking_response import (
         PIIMaskingResponseMiddleware,
     )
 
@@ -310,7 +310,7 @@ def build_default_registry() -> MiddlewareRegistry:
     # LIFO: высокий order = первый на request). Pure-ASGI — BaseHTTPMiddleware
     # несовместим с chain'ом на /docs, /redoc, /metrics (см. gzip выше).
     # Drain дергается из plugins/composition/lifecycle/shutdown.py (step 0).
-    from src.backend.entrypoints.middlewares.graceful_shutdown import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.middlewares.graceful_shutdown import (
         GracefulShutdownMiddleware,
     )
 

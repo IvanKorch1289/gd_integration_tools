@@ -15,7 +15,7 @@ from src.backend.dsl.engine.processors.express._common import resolve_value
 
 if TYPE_CHECKING:
     # Реальный класс клиента (runtime — lazy через DI provider, см. ниже).
-    from src.backend.infrastructure.clients.external.telegram_bot import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.clients.external.telegram_bot import (
         TelegramBotClient,
     )
 

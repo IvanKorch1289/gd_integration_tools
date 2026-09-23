@@ -5,12 +5,12 @@ import uuid
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
 
-from src.backend.services.audit.clickhouse_audit_service.state import (  # noqa: F401 — re-export
+from src.backend.services.audit.clickhouse_audit_service.state import (
     AuditEvent,  # S68 W2: cross-import
 )
 
 if TYPE_CHECKING:
-    from src.backend.services.audit.clickhouse_audit_service.service import (  # noqa: F401 — re-export
+    from src.backend.services.audit.clickhouse_audit_service.service import (
         ClickHouseAuditService,
     )
 
@@ -90,7 +90,7 @@ def get_audit_service() -> ClickHouseAuditService:
 
     """
     # Late import: избегаем circular (service.py не импортирует helpers).
-    from src.backend.services.audit.clickhouse_audit_service.service import (  # noqa: F401 — re-export
+    from src.backend.services.audit.clickhouse_audit_service.service import (
         ClickHouseAuditService,
     )
 

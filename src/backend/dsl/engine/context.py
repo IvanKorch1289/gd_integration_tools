@@ -4,7 +4,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from src.backend.dsl.commands.registry import (  # noqa: F401 — re-export
+from src.backend.dsl.commands.registry import (
     ActionHandlerRegistry,
     action_handler_registry,
 )

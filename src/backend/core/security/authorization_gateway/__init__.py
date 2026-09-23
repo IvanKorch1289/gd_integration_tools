@@ -23,23 +23,23 @@ if TYPE_CHECKING:
 import uuid
 from collections.abc import Sequence as Sequence
 
-from src.backend.core.interfaces.capability_gateway import (  # noqa: F401 — re-export
+from src.backend.core.interfaces.capability_gateway import (
     CapabilityGatewayProtocol as CapabilityGatewayProtocol,
 )
 from src.backend.core.logging import get_logger as get_logger
-from src.backend.core.security.authorization_gateway.audit_mixin import (  # noqa: F401 — re-export
+from src.backend.core.security.authorization_gateway.audit_mixin import (
     AuditMixin,  # S60 W4: MRO
 )
-from src.backend.core.security.authorization_gateway.casbin_mixin import (  # noqa: F401 — re-export
+from src.backend.core.security.authorization_gateway.casbin_mixin import (
     CasbinMixin,  # S60 W4: MRO
 )
-from src.backend.core.security.authorization_gateway.opa_mixin import (  # noqa: F401 — re-export
+from src.backend.core.security.authorization_gateway.opa_mixin import (
     OpaMixin,  # S60 W4: MRO
 )
-from src.backend.core.security.authorization_gateway.permission_mixin import (  # noqa: F401 — re-export
+from src.backend.core.security.authorization_gateway.permission_mixin import (
     PermissionMixin,  # S60 W4: MRO
 )
-from src.backend.core.security.authorization_gateway.state import (  # noqa: F401 — re-export
+from src.backend.core.security.authorization_gateway.state import (
     AuditCallback,  # S60 W4: re-export
     AuthorizationDecision,  # S60 W4: re-export
     AuthorizationReason,  # S60 W4: re-export
@@ -376,7 +376,7 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
 
     def _casbin_check(self, subject: str, action: str, resource: str) -> bool | None:
         """Internal: try Casbin step if available."""
-        from src.backend.core.security.authorization_gateway.casbin_mixin import (  # noqa: F401 — re-export
+        from src.backend.core.security.authorization_gateway.casbin_mixin import (
             CasbinMixin,
         )
 

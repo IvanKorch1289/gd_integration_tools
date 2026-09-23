@@ -30,7 +30,7 @@
 
 Использование::
 
-    from src.backend.core.agent_governance import (  # noqa: F401 — re-export
+    from src.backend.core.agent_governance import (
         get_tool_policy_engine, get_execution_ledger,
     )
 
@@ -43,12 +43,12 @@
 
 from __future__ import annotations
 
-from src.backend.core.agent_governance.ledger import (  # noqa: F401 — re-export
+from src.backend.core.agent_governance.ledger import (
     ExecutionLedger,
     ExecutionRecord,
     get_execution_ledger,
 )
-from src.backend.core.agent_governance.policy import (  # noqa: F401 — re-export
+from src.backend.core.agent_governance.policy import (
     ToolCapability,
     ToolPolicy,
     ToolPolicyEngine,

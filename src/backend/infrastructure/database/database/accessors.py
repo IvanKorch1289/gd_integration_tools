@@ -4,15 +4,15 @@ from functools import lru_cache
 from typing import Any
 
 from src.backend.core.config.database import DatabaseConnectionSettings
-from src.backend.core.config.external_databases import (  # noqa: F401 — re-export
+from src.backend.core.config.external_databases import (
     ExternalDatabaseConnectionSettings,
 )
 from src.backend.core.config.settings import settings
 from src.backend.core.logging import get_logger
-from src.backend.infrastructure.database.database.initializer import (  # noqa: F401 — re-export
+from src.backend.infrastructure.database.database.initializer import (
     DatabaseInitializer,  # S67 W3: fix NameError (TD-pre-existing)
 )
-from src.backend.infrastructure.database.database.registry import (  # noqa: F401 — re-export
+from src.backend.infrastructure.database.database.registry import (
     ExternalDatabaseRegistry,  # S67 W3: fix NameError (TD-pre-existing)
 )
 
@@ -46,7 +46,7 @@ def get_smart_session_manager() -> Any:
     # database.__dict__, а не accessors.__dict__. Module-level lookup
     # гарантирует test isolation.
     from src.backend.infrastructure.database import database as _db_mod
-    from src.backend.infrastructure.database.smart_session_manager import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.database.smart_session_manager import (
         SmartSessionManager,
     )
 

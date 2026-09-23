@@ -27,7 +27,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Literal
 
-from sqlalchemy import (  # noqa: F401 — re-export
+from sqlalchemy import (
     BigInteger,
     DateTime,
     Index,

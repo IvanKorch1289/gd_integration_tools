@@ -11,7 +11,7 @@ async def check_all_services():
     """Проверяет статус всех сервисов через HealthAggregator.
     Если какой-либо сервис неактивен, отправляет уведомление по электронной почте через Redis Stream.
     """
-    from src.backend.infrastructure.application.health_aggregator import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.application.health_aggregator import (
         get_health_aggregator,
     )
 
@@ -24,7 +24,7 @@ async def check_all_services():
         is_all_active = result.get("status") == "ok"
 
         if not is_all_active:
-            from src.backend.infrastructure.clients.messaging.stream import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.clients.messaging.stream import (
                 get_stream_client,
             )
 

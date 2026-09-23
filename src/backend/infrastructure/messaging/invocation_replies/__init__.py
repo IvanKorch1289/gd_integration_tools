@@ -12,19 +12,19 @@
 
 from __future__ import annotations
 
-from src.backend.infrastructure.messaging.invocation_replies.email import (  # noqa: F401 — re-export
+from src.backend.infrastructure.messaging.invocation_replies.email import (
     EmailReplyChannel,
 )
-from src.backend.infrastructure.messaging.invocation_replies.express import (  # noqa: F401 — re-export
+from src.backend.infrastructure.messaging.invocation_replies.express import (
     ExpressReplyChannel,
 )
-from src.backend.infrastructure.messaging.invocation_replies.memory import (  # noqa: F401 — re-export
+from src.backend.infrastructure.messaging.invocation_replies.memory import (
     MemoryReplyChannel,
 )
-from src.backend.infrastructure.messaging.invocation_replies.queue import (  # noqa: F401 — re-export
+from src.backend.infrastructure.messaging.invocation_replies.queue import (
     QueueReplyChannel,
 )
-from src.backend.infrastructure.messaging.invocation_replies.registry import (  # noqa: F401 — re-export
+from src.backend.infrastructure.messaging.invocation_replies.registry import (
     ReplyChannelRegistry,
     get_reply_channel_registry,
 )

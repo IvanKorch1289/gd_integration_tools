@@ -9,7 +9,7 @@ producer pool в UnifiedPoolManager как LOGICAL pool с custom ping_fn.
 
 Использование::
 
-    from src.backend.infrastructure.messaging.kafka_pool_registration import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.messaging.kafka_pool_registration import (
         register_kafka_pool_if_available,
     )
 
@@ -21,7 +21,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.clients.unified_pool_manager import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.clients.unified_pool_manager import (
         UnifiedPoolManager,
     )
 
@@ -61,7 +61,7 @@ def register_kafka_pool_if_available(
 
     """
     try:
-        from src.backend.infrastructure.messaging.kafka_producer import (  # noqa: F401 — re-export  # type: ignore[import-not-found,import-untyped]
+        from src.backend.infrastructure.messaging.kafka_producer import (  # type: ignore[import-not-found,import-untyped]
             KafkaProducer,
         )
 

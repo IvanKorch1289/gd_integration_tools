@@ -38,7 +38,7 @@ def _auto_register_workflows_fallback() -> None:
     для случая, когда lifespan bootstrap пропустил PluginLoader init.
     """
     try:
-        from src.backend.plugins.composition.workflow_setup import (  # noqa: F401 — re-export
+        from src.backend.plugins.composition.workflow_setup import (
             _register_workflow_declarations_from_filesystem,
         )
 

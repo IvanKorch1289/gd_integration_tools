@@ -24,7 +24,7 @@
 
 Использование::
 
-    from src.backend.core.connectors import (  # noqa: F401 — re-export
+    from src.backend.core.connectors import (
         BaseConnector, ConnectorMetadata, ConnectorRegistry,
     )
 
@@ -45,7 +45,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.connectors.base import (  # noqa: F401 — re-export
+from src.backend.core.connectors.base import (
     AuthModel,
     BaseConnector,
     ConnectorHealth,
@@ -53,7 +53,7 @@ from src.backend.core.connectors.base import (  # noqa: F401 — re-export
     ConnectorStatus,
     OperationSchema,
 )
-from src.backend.core.connectors.registry import (  # noqa: F401 — re-export
+from src.backend.core.connectors.registry import (
     ConnectorRegistry,
     get_connector_registry,
     reset_connector_registry,

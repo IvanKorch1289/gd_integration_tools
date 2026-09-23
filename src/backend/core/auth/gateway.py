@@ -17,7 +17,7 @@ violation (``core/ → entrypoints/``).
 
 Использование в extensions::
 
-    from src.backend.core.auth.gateway import (  # noqa: F401 — re-export
+    from src.backend.core.auth.gateway import (
         AuthContext,
         AuthMethod,
         verify_request,
@@ -34,7 +34,7 @@ from collections.abc import Callable
 from typing import Any
 
 from src.backend.core.auth import AuthContext, AuthMethod
-from src.backend.core.auth.auth_selector import (  # noqa: F401 — re-export
+from src.backend.core.auth.auth_selector import (
     require_auth,
     set_default_auth,
     verify_request,

@@ -29,7 +29,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from src.backend.core.interfaces.action_dispatcher import (  # noqa: F401 — re-export
+from src.backend.core.interfaces.action_dispatcher import (
     ActionMetadata,
     ActionMiddleware,
 )

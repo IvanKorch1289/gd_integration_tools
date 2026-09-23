@@ -132,7 +132,7 @@ class CancelWorkflowProcessor(BaseProcessor):
         if self._backend_factory is not None:
             return await self._backend_factory()
         # S71 M2-#11 batch 6: DI provider вместо inline infrastructure import.
-        from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
+        from src.backend.core.di.providers.workflow import (
             get_workflow_backend_factory_provider,
         )
 
@@ -157,7 +157,7 @@ class CancelWorkflowProcessor(BaseProcessor):
         await backend.cancel_workflow(handle=handle)
 
         try:
-            from src.backend.services.audit.workflow_audit_sink import (  # noqa: F401 — re-export
+            from src.backend.services.audit.workflow_audit_sink import (
                 get_workflow_audit_sink,
             )
 

@@ -236,7 +236,7 @@ class HealthAggregator:
         if previous is None or previous == current:
             return
         try:
-            from src.backend.infrastructure.clients.messaging.event_bus import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.clients.messaging.event_bus import (
                 get_event_bus,
             )
             from src.backend.schemas.health_events import HealthTransitionEvent

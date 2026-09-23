@@ -27,7 +27,7 @@
 
 Использование::
 
-    from src.backend.core.route_simulation import (  # noqa: F401 — re-export
+    from src.backend.core.route_simulation import (
         RouteSimulator, MockConnector,
     )
 
@@ -42,7 +42,7 @@
 from __future__ import annotations
 
 from src.backend.core.route_simulation.mock import MockConnector, RecordedCall
-from src.backend.core.route_simulation.simulator import (  # noqa: F401 — re-export
+from src.backend.core.route_simulation.simulator import (
     RouteSimulator,
     SimulationResult,
     SimulationStep,

@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 from src.backend.core.di.providers import get_grpc_logger_provider
 from src.backend.entrypoints.base import dispatch_action
-from src.backend.entrypoints.grpc.correlation import (  # noqa: F401 — re-export
+from src.backend.entrypoints.grpc.correlation import (
     extract_correlation_id_from_grpc_context,
 )
 
@@ -56,7 +56,7 @@ class BaseGRPCServicer:
                 correlation_id = extracted
         if correlation_id:
             try:
-                from src.backend.core.observability.correlation import (  # noqa: F401 — re-export
+                from src.backend.core.observability.correlation import (
                     set_correlation_context,
                 )
 

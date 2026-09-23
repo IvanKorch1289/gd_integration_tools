@@ -23,7 +23,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, ClassVar
 
-from src.backend.core.dsl.expression_resolver import (  # noqa: F401 — re-export
+from src.backend.core.dsl.expression_resolver import (
     ExpressionResolutionError,
     ExpressionResolver,
 )

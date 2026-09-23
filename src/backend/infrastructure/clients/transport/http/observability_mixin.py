@@ -10,7 +10,7 @@ from time import monotonic
 
 import httpx
 
-from src.backend.infrastructure.clients.transport.http._protocol import (  # noqa: F401 — re-export
+from src.backend.infrastructure.clients.transport.http._protocol import (
     _HttpClientProtocol,
 )
 

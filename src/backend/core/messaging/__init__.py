@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.messaging.outbox import (  # noqa: F401 — re-export
+from src.backend.core.messaging.outbox import (
     FakeOutbox,
     OutboxBackend,
     OutboxEvent,

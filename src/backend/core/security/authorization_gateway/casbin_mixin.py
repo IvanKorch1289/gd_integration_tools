@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.backend.core.security.authorization_gateway.state import (  # noqa: F401 — re-export
+from src.backend.core.security.authorization_gateway.state import (
     AuthorizationReason,
     PolicyDecider,
 )

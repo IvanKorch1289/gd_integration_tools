@@ -17,7 +17,7 @@
 
 Использование::
 
-    from src.backend.core.streaming_parser import (  # noqa: F401 — re-export
+    from src.backend.core.streaming_parser import (
         StreamingCSVParser, StreamingJSONParser, ParsedRecord,
     )
 
@@ -33,7 +33,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.streaming_parser.parsers import (  # noqa: F401 — re-export
+from src.backend.core.streaming_parser.parsers import (
     ParsedRecord,
     StreamingCSVParser,
     StreamingJSONParser,

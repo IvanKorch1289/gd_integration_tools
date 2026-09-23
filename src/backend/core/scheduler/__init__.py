@@ -11,10 +11,10 @@ import via ADR-0284 ALLOWED matrix). 3 DI symbols preserved.
 
 from __future__ import annotations
 
-from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
+from src.backend.core.di.providers.infrastructure_locator import (
     get_scheduler_manager_class as _get_sm_cls,
 )
-from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
+from src.backend.core.di.providers.infrastructure_locator import (
     get_scheduler_manager_factory as _get_sm_fn,
 )
 

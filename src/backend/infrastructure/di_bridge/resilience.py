@@ -31,7 +31,7 @@ __all__ = (
 
 def get_profile_store_memory_class() -> Any:
     """Возвращает ``InMemoryResilienceProfileStore`` class."""
-    from src.backend.infrastructure.resilience.profile_store_memory import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.resilience.profile_store_memory import (
         InMemoryResilienceProfileStore,
     )
 
@@ -66,7 +66,7 @@ def get_bulkhead_attr(name: str) -> Any:
 
 def get_in_memory_resilience_profile_store_class() -> Any:
     """Возвращает ``resilience.profile_store_memory.InMemoryResilienceProfileStore`` class."""
-    from src.backend.infrastructure.resilience.profile_store_memory import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.resilience.profile_store_memory import (
         InMemoryResilienceProfileStore,
     )
 
@@ -94,7 +94,7 @@ def get_rate_limit_class() -> Any:
 
 def get_rate_limit_exceeded_class() -> Any:
     """Возвращает ``resilience.unified_rate_limiter.RateLimitExceeded``."""
-    from src.backend.infrastructure.resilience.unified_rate_limiter import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.resilience.unified_rate_limiter import (
         RateLimitExceeded,
     )
 
@@ -103,7 +103,7 @@ def get_rate_limit_exceeded_class() -> Any:
 
 def get_redis_rate_limiter_class() -> Any:
     """Возвращает ``resilience.unified_rate_limiter.RedisRateLimiter`` class."""
-    from src.backend.infrastructure.resilience.unified_rate_limiter import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.resilience.unified_rate_limiter import (
         RedisRateLimiter,
     )
 
@@ -112,7 +112,7 @@ def get_redis_rate_limiter_class() -> Any:
 
 def get_rate_limiter_factory() -> Any:
     """Возвращает ``resilience.unified_rate_limiter.get_rate_limiter`` factory."""
-    from src.backend.infrastructure.resilience.unified_rate_limiter import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.resilience.unified_rate_limiter import (
         get_rate_limiter,
     )
 

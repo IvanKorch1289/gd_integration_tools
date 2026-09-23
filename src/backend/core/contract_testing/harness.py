@@ -6,7 +6,7 @@ import logging
 import time
 from typing import Any, Awaitable, Callable, Union
 
-from src.backend.core.contract_testing.case import (  # noqa: F401 — re-export
+from src.backend.core.contract_testing.case import (
     CompatibilityTest,
     ContractTestCase,
     ContractTestResult,

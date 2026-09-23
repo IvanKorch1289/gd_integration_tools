@@ -10,7 +10,7 @@ from src.backend.core.errors import DatabaseError, NotFoundError
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
 from src.backend.core.tenancy.sqlalchemy_filter import apply_tenant_filter
-from src.backend.infrastructure.database.database import (  # noqa: F401 — re-export
+from src.backend.infrastructure.database.database import (
     get_db_initializer,
     get_external_db_registry,
 )

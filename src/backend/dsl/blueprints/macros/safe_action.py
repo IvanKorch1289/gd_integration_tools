@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from src.backend.dsl.builder import RouteBuilder
 from src.backend.dsl.engine.pipeline import Pipeline
-from src.backend.dsl.engine.processors import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors import (
     DeadLetterProcessor,
     DispatchActionProcessor,
     LogProcessor,

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from src.backend.core.di.providers.jupyter import (  # noqa: F401 — re-export
+from src.backend.core.di.providers.jupyter import (
     get_notebook_execution_service_provider,
 )
 from src.backend.core.logging import get_logger

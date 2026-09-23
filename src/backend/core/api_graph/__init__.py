@@ -19,7 +19,7 @@
 
 Использование::
 
-    from src.backend.core.api_graph import (  # noqa: F401 — re-export
+    from src.backend.core.api_graph import (
         import_openapi_graph, OpenAPIGraph, validate_security,
     )
 
@@ -34,7 +34,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.api_graph.graph import (  # noqa: F401 — re-export
+from src.backend.core.api_graph.graph import (
     EndpointNode,
     GraphEdge,
     GraphNode,

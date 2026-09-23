@@ -35,7 +35,7 @@ import asyncio
 from collections.abc import Sequence
 from typing import Any
 
-from src.backend.core.interfaces.notification import (  # noqa: F401 — re-export
+from src.backend.core.interfaces.notification import (
     NotificationAdapter,
     NotificationMessage,
 )

@@ -7,7 +7,7 @@ from typing import Any
 from src.backend.core.config.services.websocket import ws_settings
 from src.backend.core.logging import get_logger
 from src.backend.entrypoints.middlewares.per_protocol_ratelimit import ws_identifier
-from src.backend.services.resilience.rate_limiter import (  # noqa: F401 — re-export
+from src.backend.services.resilience.rate_limiter import (
     RateLimit,
     RateLimitExceeded,
     get_rate_limiter,

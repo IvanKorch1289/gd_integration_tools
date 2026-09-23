@@ -226,7 +226,7 @@ class VaultSecretRefresher:
     ) -> None:
         """Прокидывает ротацию в ConnectorRotator (lazy import)."""
         try:
-            from src.backend.infrastructure.secrets.connector_rotator import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.secrets.connector_rotator import (
                 get_connector_rotator,
             )
 

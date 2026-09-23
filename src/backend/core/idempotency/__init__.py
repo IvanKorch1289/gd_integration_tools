@@ -39,13 +39,13 @@
 
 from __future__ import annotations
 
-from src.backend.core.idempotency.backends.base import (  # noqa: F401 — re-export
+from src.backend.core.idempotency.backends.base import (
     IdempotencyBackend,
     IdempotencyEntry,
     IdempotencyOutcome,
 )
 from src.backend.core.idempotency.backends.in_memory import InMemoryIdempotencyBackend
-from src.backend.core.idempotency.service import (  # noqa: F401 — re-export
+from src.backend.core.idempotency.service import (
     IdempotencyService,
     get_idempotency_service,
 )

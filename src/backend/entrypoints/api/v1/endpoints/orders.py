@@ -13,7 +13,7 @@ Routes registered:
 from fastapi import APIRouter, Depends, status
 
 from extensions.core_entities.orders.schemas.filter import OrderFilter
-from extensions.core_entities.orders.schemas.route import (  # noqa: F401 — re-export  # S168 W15-17 P2-10
+from extensions.core_entities.orders.schemas.route import (  # S168 W15-17 P2-10
     OrderIdPathSchema,
     OrderSchemaIn,
     OrderSchemaOut,
@@ -23,12 +23,12 @@ from extensions.core_entities.orders.services.orders import get_order_service
 from src.backend.core.config.settings import settings
 from src.backend.core.enums.invocation import BrokerKind
 from src.backend.entrypoints.api.dependencies.auth import require_api_key
-from src.backend.entrypoints.api.generator.actions import (  # noqa: F401 — re-export
+from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
     CrudSpec,
 )
-from src.backend.entrypoints.api.generator.invocation import (  # noqa: F401 — re-export
+from src.backend.entrypoints.api.generator.invocation import (
     EventPublishSpec,
     InvocationSpec,
     build_http_command_meta,

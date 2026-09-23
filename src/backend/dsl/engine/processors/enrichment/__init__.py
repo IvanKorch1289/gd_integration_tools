@@ -12,21 +12,21 @@ Backward-compat: ``from src.backend.dsl.engine.processors.enrichment import GeoI
 
 from __future__ import annotations
 
-from src.backend.dsl.engine.processors.enrichment.compression import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.enrichment.compression import (
     CompressProcessor,  # S61 W2: re-export
     DecompressProcessor,  # S61 W2: re-export
 )
-from src.backend.dsl.engine.processors.enrichment.deadline import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.enrichment.deadline import (
     DeadlineProcessor,  # S61 W2: re-export
 )
-from src.backend.dsl.engine.processors.enrichment.geo_ip import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.enrichment.geo_ip import (
     GeoIpProcessor,  # S61 W2: re-export
 )
-from src.backend.dsl.engine.processors.enrichment.jwt import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.enrichment.jwt import (
     JwtSignProcessor,  # S61 W2: re-export
     JwtVerifyProcessor,  # S61 W2: re-export
 )
-from src.backend.dsl.engine.processors.enrichment.webhook import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.enrichment.webhook import (
     WebhookSignProcessor,  # S61 W2: re-export
     WebhookSignVerifyProcessor,  # S61 W2: re-export
 )

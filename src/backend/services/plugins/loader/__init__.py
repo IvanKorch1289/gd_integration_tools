@@ -16,7 +16,7 @@ from pathlib import Path as Path
 from typing import TYPE_CHECKING as TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.backend.core.interfaces.plugin import (  # noqa: F401 — re-export
+    from src.backend.core.interfaces.plugin import (
         ActionRegistryProtocol,
         ProcessorRegistryProtocol,
         RepositoryRegistryProtocol,
@@ -24,28 +24,28 @@ if TYPE_CHECKING:
     from src.backend.core.security.capabilities import CapabilityGate
 
 from src.backend.core.logging import get_logger as get_logger
-from src.backend.core.plugin_runtime.compat_checker import (  # noqa: F401 — re-export
+from src.backend.core.plugin_runtime.compat_checker import (
     CompatViolation,
     check_compatibility,
 )
-from src.backend.core.plugin_runtime.manifest_toml import (  # noqa: F401 — re-export  # S52 W3: needed for _load_one's compat_violations
+from src.backend.core.plugin_runtime.manifest_toml import (  # S52 W3: needed for _load_one's compat_violations
     PluginManifest,
     PluginManifestError,
     load_plugin_manifest,
 )
-from src.backend.services.plugins.loader.discovery import (  # noqa: F401 — re-export
+from src.backend.services.plugins.loader.discovery import (
     DiscoveryMixin,  # S52 W3: MRO
     LoadedPlugin,  # S52 W3: re-export для backward compat
     PluginInventoryConflictError,  # S52 W3: re-export для backward compat
 )
-from src.backend.services.plugins.loader.loading import (  # noqa: F401 — re-export
+from src.backend.services.plugins.loader.loading import (
     LoadingMixin,  # S52 W3: MRO as LoadingMixin  # S52 W3: MRO
 )
-from src.backend.services.plugins.loader.models_discovery import (  # noqa: F401 — re-export  # cycle-15: D-AUDIT-1502
+from src.backend.services.plugins.loader.models_discovery import (  # cycle-15: D-AUDIT-1502
     ManifestWithPath,
     load_plugin_manifests_for_migrations,
 )
-from src.backend.services.plugins.loader.validation import (  # noqa: F401 — re-export
+from src.backend.services.plugins.loader.validation import (
     ValidationMixin,  # S52 W3: MRO
 )
 

@@ -60,7 +60,7 @@ class InfraElasticsearchSearchProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """ES search: выполнить query и положить results в exchange."""
-        from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_elasticsearch_client_class,
         )
 
@@ -106,7 +106,7 @@ class InfraElasticsearchIndexProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """ES index: отправить document на indexing."""
-        from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_elasticsearch_client_class,
         )
 

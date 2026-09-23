@@ -25,7 +25,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING, Final
 
-from src.backend.core.security.capabilities.gate._protocol import (  # noqa: F401 — re-export
+from src.backend.core.security.capabilities.gate._protocol import (
     _CapabilityGateProtocol,
 )
 from src.backend.core.security.capabilities.models import CapabilityRef

@@ -11,7 +11,7 @@ imports (the SDK is ~15-20 MB and not loaded until first use).
 
 from __future__ import annotations
 
-from src.backend.infrastructure.workflow.versioning.worker_versioning import (  # noqa: F401 — re-export
+from src.backend.infrastructure.workflow.versioning.worker_versioning import (
     VersioningPolicy,
     WorkerVersioningHelper,
     parse_build_id,

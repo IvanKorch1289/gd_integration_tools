@@ -4,7 +4,7 @@ from __future__ import annotations
 
 __all__ = ("AIInvocationEvent", "AIInvocationEventType", "AIInvocationPayload")
 
-from src.backend.core.audit.schema.ai_invocation import (  # noqa: F401 — re-export
+from src.backend.core.audit.schema.ai_invocation import (
     AIInvocationEvent,
     AIInvocationEventType,
     AIInvocationPayload,

@@ -32,7 +32,7 @@ from __future__ import annotations
 
 # Cycle 47: import from canonical core location, not services.
 # This fixes core→services boundary violation (Layer 3 re-analyzer finding).
-from src.backend.core.plugin_runtime.manifest_toml import (  # noqa: F401 — re-export
+from src.backend.core.plugin_runtime.manifest_toml import (
     PluginCompatibility,
     PluginManifest,
     PluginManifestError,

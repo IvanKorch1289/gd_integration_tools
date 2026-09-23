@@ -22,7 +22,7 @@ Use cases (DSL pipelines):
 
 Использование::
 
-    from src.backend.dsl.engine.processors.eip.glom_ops import (  # noqa: F401 — re-export
+    from src.backend.dsl.engine.processors.eip.glom_ops import (
         GlomExtractProcessor,
         GlomTransformProcessor,
     )

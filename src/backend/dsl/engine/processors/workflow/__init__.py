@@ -11,13 +11,13 @@ Migration path:
 Future cycles will physically move the files here.
 """
 
-from src.backend.dsl.engine.processors.cancel_workflow import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.cancel_workflow import (
     CancelWorkflowProcessor as CancelWorkflowProcessor,
 )
-from src.backend.dsl.engine.processors.invoke_workflow import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.invoke_workflow import (
     InvokeWorkflowProcessor as InvokeWorkflowProcessor,
 )
-from src.backend.dsl.engine.processors.sub_workflow import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.sub_workflow import (
     SubWorkflowProcessor as SubWorkflowProcessor,
 )
 

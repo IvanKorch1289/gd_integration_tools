@@ -9,7 +9,7 @@ thin re-export shim, продолжает экспортировать все 11
 ``core/privacy/__init__.py`` (public API facade) без изменений.
 
 Public API:
-    from src.backend.core.privacy import (  # noqa: F401 — re-export
+    from src.backend.core.privacy import (
         DeleteDataSubject, ErasureAdapter,
         ErasureStrategy, ErasureResultStatus,
         PostgresErasureAdapter, RedisErasureAdapter,
@@ -32,40 +32,40 @@ Submodules:
 
 from __future__ import annotations
 
-from src.backend.core.privacy.delete_data_subject._langmem import (  # noqa: F401 — re-export
+from src.backend.core.privacy.delete_data_subject._langmem import (
     LangMemErasureAdapter as LangMemErasureAdapter,
 )
-from src.backend.core.privacy.delete_data_subject._orchestrator import (  # noqa: F401 — re-export
+from src.backend.core.privacy.delete_data_subject._orchestrator import (
     DeleteDataSubject as DeleteDataSubject,
 )
-from src.backend.core.privacy.delete_data_subject._postgres import (  # noqa: F401 — re-export
+from src.backend.core.privacy.delete_data_subject._postgres import (
     PostgresErasureAdapter as PostgresErasureAdapter,
 )
-from src.backend.core.privacy.delete_data_subject._qdrant import (  # noqa: F401 — re-export
+from src.backend.core.privacy.delete_data_subject._qdrant import (
     QdrantErasureAdapter as QdrantErasureAdapter,
 )
-from src.backend.core.privacy.delete_data_subject._redis import (  # noqa: F401 — re-export
+from src.backend.core.privacy.delete_data_subject._redis import (
     RedisErasureAdapter as RedisErasureAdapter,
 )
-from src.backend.core.privacy.delete_data_subject._s3 import (  # noqa: F401 — re-export
+from src.backend.core.privacy.delete_data_subject._s3 import (
     S3ErasureAdapter as S3ErasureAdapter,
 )
-from src.backend.core.privacy.delete_data_subject._tombstone import (  # noqa: F401 — re-export
+from src.backend.core.privacy.delete_data_subject._tombstone import (
     TombstonePublisher as TombstonePublisher,
 )
-from src.backend.core.privacy.delete_data_subject._types import (  # noqa: F401 — re-export
+from src.backend.core.privacy.delete_data_subject._types import (
     AdapterResult as AdapterResult,
 )
-from src.backend.core.privacy.delete_data_subject._types import (  # noqa: F401 — re-export
+from src.backend.core.privacy.delete_data_subject._types import (
     ErasureAdapter as ErasureAdapter,
 )
-from src.backend.core.privacy.delete_data_subject._types import (  # noqa: F401 — re-export
+from src.backend.core.privacy.delete_data_subject._types import (
     ErasureResultStatus as ErasureResultStatus,
 )
-from src.backend.core.privacy.delete_data_subject._types import (  # noqa: F401 — re-export
+from src.backend.core.privacy.delete_data_subject._types import (
     ErasureStrategy as ErasureStrategy,
 )
-from src.backend.core.privacy.delete_data_subject._types import (  # noqa: F401 — re-export
+from src.backend.core.privacy.delete_data_subject._types import (
     OrchestratorResult as OrchestratorResult,
 )
 

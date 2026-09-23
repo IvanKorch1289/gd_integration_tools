@@ -68,7 +68,7 @@ class ObservabilityMixin(_PipelineStepsProtocol):
         audit = self._audit_service
         if audit is None:
             try:
-                from src.backend.core.audit.facade.audit_service import (  # noqa: F401 — re-export
+                from src.backend.core.audit.facade.audit_service import (
                     get_unified_audit_service,
                 )
 

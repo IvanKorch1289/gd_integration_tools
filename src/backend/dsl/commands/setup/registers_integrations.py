@@ -231,7 +231,7 @@ def _register_agent_memory() -> None:
 
 def _register_web_search_perplexity_tavily() -> None:
 
-    from src.backend.infrastructure.clients.external.search_providers import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.clients.external.search_providers import (
         get_web_search_service,
     )
 

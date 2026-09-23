@@ -18,16 +18,16 @@ S45 QW10: AuditService + get_unified_audit_service теперь импортир
 
 from __future__ import annotations
 
-from src.backend.core.audit.facade.audit_service import (  # noqa: F401 — re-export
+from src.backend.core.audit.facade.audit_service import (
     AuditService,
     get_unified_audit_service,
 )
-from src.backend.services.audit.clickhouse_audit_service import (  # noqa: F401 — re-export
+from src.backend.services.audit.clickhouse_audit_service import (
     AuditEvent,
     ClickHouseAuditService,
     get_audit_service,
 )
-from src.backend.services.audit.workflow_audit_sink import (  # noqa: F401 — re-export
+from src.backend.services.audit.workflow_audit_sink import (
     WorkflowAuditSink,
     get_workflow_audit_sink,
     reset_workflow_audit_sink,

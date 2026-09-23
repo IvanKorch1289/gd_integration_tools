@@ -12,7 +12,7 @@ Capability-runtime-gate (опционально): если ``capability_check`` 
 ``get_secret(name)`` валидирует scope ``secrets.read.<name>`` через gate.
 """
 
-from src.backend.infrastructure.secrets.broker import (  # noqa: F401 — re-export
+from src.backend.infrastructure.secrets.broker import (
     SecretBroker,
     SecretBrokerImpl,
     SecretValue,

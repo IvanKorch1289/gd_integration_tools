@@ -16,7 +16,7 @@ Cycle-81 (D-AUDIT-8101): re-export :mod:`tenant_file_quota` API из
 * :func:`get_tenant_file_quota_manager` — DI singleton.
 """
 
-from src.backend.infrastructure.storage.tenant_file_quota import (  # noqa: F401 — re-export
+from src.backend.infrastructure.storage.tenant_file_quota import (
     DEFAULT_MAX_BYTES,
     DEFAULT_MAX_FILES,
     QuotaCheckResult,

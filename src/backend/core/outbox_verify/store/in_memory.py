@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import time
 
-from src.backend.core.outbox_verify.store.base import (  # noqa: F401 — re-export
+from src.backend.core.outbox_verify.store.base import (
     OutboxPublishEntry,
     OutboxPublishState,
     OutboxPublishStore,

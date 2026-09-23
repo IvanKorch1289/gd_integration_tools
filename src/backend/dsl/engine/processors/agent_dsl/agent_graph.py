@@ -179,7 +179,7 @@ class AgentGraphProcessor(BaseAIProcessor):
         if sandbox is not None:
             self._sandbox = sandbox
         elif isolated:
-            from src.backend.services.ai.agent_sandbox import (  # noqa: F401 — re-export
+            from src.backend.services.ai.agent_sandbox import (
                 get_process_pool_agent_sandbox,
             )
 
@@ -209,7 +209,7 @@ class AgentGraphProcessor(BaseAIProcessor):
     ) -> dict[str, Any]:
         """Execute multi-agent supervisor via existing MultiAgentSupervisor."""
         try:
-            from src.backend.services.ai.multi_agent.supervisor import (  # noqa: F401 — re-export
+            from src.backend.services.ai.multi_agent.supervisor import (
                 AgentSpec,
                 MultiAgentSupervisor,
             )
@@ -235,7 +235,7 @@ class AgentGraphProcessor(BaseAIProcessor):
 
             async def make_invoke(wf_id: str) -> Any:
                 """Create invoke callable that runs AgentRunProcessor."""
-                from src.backend.dsl.engine.processors.agent_dsl.agent_run import (  # noqa: F401 — re-export
+                from src.backend.dsl.engine.processors.agent_dsl.agent_run import (
                     AgentRunProcessor,
                 )
 

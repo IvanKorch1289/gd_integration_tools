@@ -74,7 +74,7 @@ class SensorProcessor(BaseProcessor):
         """Проверяет условие согласно mode (см. module docstring)."""
         effective_timeout = self._timeout_s
         try:
-            from src.backend.core.async_utils.deadline_budget import (  # noqa: F401 — re-export
+            from src.backend.core.async_utils.deadline_budget import (
                 DeadlineExpiredError,
             )
             from src.backend.core.request_context import RequestContext

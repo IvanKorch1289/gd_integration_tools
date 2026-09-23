@@ -17,7 +17,7 @@ Stream E.6 — экспорт AsyncAPI 3.0.0 спецификации через
 
 from __future__ import annotations
 
-from src.backend.entrypoints.asyncapi.exporter import (  # noqa: F401 — re-export
+from src.backend.entrypoints.asyncapi.exporter import (
     build_asyncapi_json,
     build_asyncapi_spec,
     build_asyncapi_yaml,

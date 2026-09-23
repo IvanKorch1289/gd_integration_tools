@@ -4,7 +4,7 @@ import re
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
-from src.backend.dsl.engine.processors.idp_pipeline_processor.state import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.idp_pipeline_processor.state import (
     IDPResult,
     _FieldPattern,
 )

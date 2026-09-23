@@ -13,7 +13,7 @@ implementation to core.
 
 Используйте ``src.backend.core.auth.gateway`` в новых расширениях::
 
-    from src.backend.core.auth.gateway import (  # noqa: F401 — re-export
+    from src.backend.core.auth.gateway import (
         AuthContext,
         AuthMethod,
         require_auth,
@@ -30,7 +30,7 @@ import warnings
 # Эти импорты идут ПОСЛЕ warnings, чтобы import-time message сработал.
 # S162 W5: removed _VERIFIERS from re-exports — private symbol
 # must not leak through backward-compat shim. Per S93 W3 pattern.
-from src.backend.core.auth.auth_selector import (  # noqa: F401 — re-export
+from src.backend.core.auth.auth_selector import (
     AuthContext,
     AuthMethod,
     require_auth,

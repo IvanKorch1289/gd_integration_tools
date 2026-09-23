@@ -37,7 +37,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from src.backend.core.ai.errors import GatewayUnavailable
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
-from src.backend.dsl.engine.processors.agent_dsl._timeouts import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.agent_dsl._timeouts import (
     DEFAULT_AGENT_TIMEOUT_S,
 )
 
@@ -342,7 +342,7 @@ class ReflectionLoopProcessor(BaseAIProcessor):
     def _resolve_gateway() -> Any | None:
         """Lazy-резолв AIGateway через DI."""
         try:
-            from src.backend.services.ai.gateway_adapter import (  # noqa: F401 — re-export  # type: ignore[attr-defined]
+            from src.backend.services.ai.gateway_adapter import (  # type: ignore[attr-defined]
                 get_ai_gateway,
             )
 

@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from src.backend.core.logging import get_logger
-from src.backend.core.security.capabilities import (  # noqa: F401 — re-export
+from src.backend.core.security.capabilities import (
     CapabilityError,
     CapabilityGate,
     CapabilityRef,
@@ -31,7 +31,7 @@ from src.backend.core.security.capabilities import (  # noqa: F401 — re-export
     check_capabilities_subset,
 )
 from src.backend.core.security.ip_restriction_store import get_ip_restriction_store
-from src.backend.services.routes.manifest_toml import (  # noqa: F401 — re-export
+from src.backend.services.routes.manifest_toml import (
     RouteManifest,
     RouteManifestError,
     load_route_manifest,

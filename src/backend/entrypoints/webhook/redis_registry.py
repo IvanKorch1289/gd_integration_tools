@@ -11,7 +11,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Any
 from uuid import uuid4
 
-from src.backend.core.di.providers import (  # noqa: F401 — re-export
+from src.backend.core.di.providers import (
     get_redis_hash_factory_provider,
     get_redis_pubsub_factory_provider,
 )

@@ -79,7 +79,7 @@ class ReplyChannel:
         """Возвращает singleton. На первый вызов обязателен ``event_bus``."""
         if cls._instance is None:
             if event_bus is None:
-                from src.backend.infrastructure.clients.messaging.event_bus import (  # noqa: F401 — re-export
+                from src.backend.infrastructure.clients.messaging.event_bus import (
                     get_event_bus,
                 )
 

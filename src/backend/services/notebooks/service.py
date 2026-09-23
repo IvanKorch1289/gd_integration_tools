@@ -12,7 +12,7 @@ from typing import Any
 from src.backend.core.di import app_state_singleton
 from src.backend.core.logging import get_logger
 from src.backend.services.notebooks.models import Notebook, NotebookVersion
-from src.backend.services.notebooks.repository import (  # noqa: F401 — re-export
+from src.backend.services.notebooks.repository import (
     InMemoryNotebookRepository,
     NotebookRepository,
 )

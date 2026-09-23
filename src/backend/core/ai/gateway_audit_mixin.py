@@ -67,7 +67,7 @@ class _AuditContext:
         self, step: str, *, pii_detected: bool = False, latency_ms: int = 0
     ) -> None:
         """Emit одно событие ``ai.invocation.{step}``."""
-        from src.backend.core.audit.schema.ai_invocation import (  # noqa: F401 — re-export
+        from src.backend.core.audit.schema.ai_invocation import (
             AIInvocationEvent,
             AIInvocationEventType,
         )
@@ -93,7 +93,7 @@ class _AuditContext:
 
     async def _emit_guard(self, step: str, gr: GuardResult) -> None:
         """Emit событие с guard result (guarded.input/output)."""
-        from src.backend.core.audit.schema.ai_invocation import (  # noqa: F401 — re-export
+        from src.backend.core.audit.schema.ai_invocation import (
             AIInvocationEvent,
             AIInvocationEventType,
         )
@@ -117,7 +117,7 @@ class _AuditContext:
 
     async def _emit_final(self, start_ms: int) -> None:
         """Emit завершающее событие: completed / denied / failed."""
-        from src.backend.core.audit.schema.ai_invocation import (  # noqa: F401 — re-export
+        from src.backend.core.audit.schema.ai_invocation import (
             AIInvocationEvent,
             AIInvocationEventType,
         )
@@ -180,7 +180,7 @@ async def _emit_wrapper(event: AIInvocationEvent, audit_service: Any = None) -> 
             return
     # fallback на глобальный singleton
     try:
-        from src.backend.core.audit.sinks.ai_unified_sink import (  # noqa: F401 — re-export
+        from src.backend.core.audit.sinks.ai_unified_sink import (
             emit_ai_invocation_event,
         )
 

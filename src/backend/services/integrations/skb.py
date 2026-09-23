@@ -13,7 +13,7 @@ import warnings
 from typing import Any
 from uuid import UUID
 
-from extensions.skb.services.waf_route import (  # noqa: F401 — re-export
+from extensions.skb.services.waf_route import (
     resolve_waf_route as _resolve_waf_route_impl,
 )
 from src.backend.core.config.settings import SKBAPISettings, settings

@@ -29,7 +29,7 @@ from typing import Any
 
 from src.backend.core.config.ai import markitdown_settings
 from src.backend.core.logging import get_logger
-from src.backend.services.ai.document_parsers._legacy import (  # noqa: F401 — re-export
+from src.backend.services.ai.document_parsers._legacy import (
     _parse_docx,
     _parse_pdf,
     _parse_text,

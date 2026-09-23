@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import warnings
 from functools import lru_cache
-from logging import (  # noqa: F401 — re-export
+from logging import (
     Filter,
     Formatter,
     Handler,
@@ -16,7 +16,7 @@ from socket import gethostname
 from typing import Any
 
 from src.backend.core.config.settings import LogStorageSettings, settings
-from src.backend.infrastructure.clients.external.logger import (  # noqa: F401 — re-export
+from src.backend.infrastructure.clients.external.logger import (
     GraylogHandler,
     get_graylog_handler,
 )

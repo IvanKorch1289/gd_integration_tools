@@ -279,7 +279,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.backend.core.contract_testing import (  # noqa: F401 — re-export
+from src.backend.core.contract_testing import (
     ContractTestCase,
     ContractTestHarness,
 )

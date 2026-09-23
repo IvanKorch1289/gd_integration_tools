@@ -4,45 +4,45 @@ Public API подпакета. Использовать как
 ``from src.backend.core.security.capabilities import CapabilityGate, CapabilityRef``.
 """
 
-from src.backend.core.security.capabilities.audit import (  # noqa: F401 — re-export
+from src.backend.core.security.capabilities.audit import (
     CapabilityAuditEvent,
     CapabilityAuditEventKind,
     log_capability_event,
 )
-from src.backend.core.security.capabilities.errors import (  # noqa: F401 — re-export
+from src.backend.core.security.capabilities.errors import (
     CapabilityDeniedError,
     CapabilityError,
     CapabilityNotFoundError,
     CapabilitySupersetError,
 )
-from src.backend.core.security.capabilities.gate import (  # noqa: F401 — re-export
+from src.backend.core.security.capabilities.gate import (
     AuditCallback,
     CapabilityGate,
     check_capabilities_subset,
 )
-from src.backend.core.security.capabilities.matchers import (  # noqa: F401 — re-export
+from src.backend.core.security.capabilities.matchers import (
     ExactAliasMatcher,
     GlobScopeMatcher,
     ScopeMatcher,
     SegmentedGlobMatcher,
     URISchemeMatcher,
 )
-from src.backend.core.security.capabilities.models import (  # noqa: F401 — re-export
+from src.backend.core.security.capabilities.models import (
     CAPABILITY_NAME_PATTERN,
     DEFAULT_CAPABILITY_CATALOG,
     CapabilityRef,
 )
-from src.backend.core.security.capabilities.policy import (  # noqa: F401 — re-export
+from src.backend.core.security.capabilities.policy import (
     CapabilityPolicy,
     CapabilityRule,
     PolicyDecision,
 )
-from src.backend.core.security.capabilities.tenant import (  # noqa: F401 — re-export
+from src.backend.core.security.capabilities.tenant import (
     SYSTEM_TENANT_ID,
     CapabilityTenant,
     TenantContext,
 )
-from src.backend.core.security.capabilities.vocabulary import (  # noqa: F401 — re-export
+from src.backend.core.security.capabilities.vocabulary import (
     CapabilityDef,
     CapabilityVocabulary,
     build_default_vocabulary,

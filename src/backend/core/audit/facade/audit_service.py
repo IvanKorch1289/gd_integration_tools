@@ -33,7 +33,7 @@ from typing import TYPE_CHECKING, Any, Literal
 from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
-    from src.backend.services.audit.clickhouse_audit_service import (  # noqa: F401 — re-export
+    from src.backend.services.audit.clickhouse_audit_service import (
         ClickHouseAuditService,
     )
 
@@ -122,7 +122,7 @@ class AuditService:
 
         try:
             backend = self._resolve_backend()
-            from src.backend.services.audit.clickhouse_audit_service import (  # noqa: F401 — re-export
+            from src.backend.services.audit.clickhouse_audit_service import (
                 make_audit_event,
             )
 
@@ -149,7 +149,7 @@ class AuditService:
     def _resolve_backend(self) -> ClickHouseAuditService:
         """Lazy-резолв backend'а — singleton ClickHouseAuditService."""
         if self._backend is None:
-            from src.backend.services.audit.clickhouse_audit_service import (  # noqa: F401 — re-export
+            from src.backend.services.audit.clickhouse_audit_service import (
                 get_audit_service,
             )
 
@@ -160,7 +160,7 @@ class AuditService:
 def _get_correlation_id_safe() -> str | None:
     """Возвращает correlation_id из contextvar или ``None`` при отсутствии."""
     try:
-        from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_correlation_id as _get_cid,
         )
 

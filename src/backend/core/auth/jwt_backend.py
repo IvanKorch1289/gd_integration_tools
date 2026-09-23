@@ -36,7 +36,7 @@ from src.backend.core.auth.jwt_backend_class import (  # noqa: E402,F401
     JwtBackend,
     JwtClaims,
 )
-from src.backend.core.auth.jwt_backend_helpers import (  # noqa: F401 — re-export
+from src.backend.core.auth.jwt_backend_helpers import (
     _ASYMMETRIC_ALGS,
     _SYMMETRIC_ALGS,
     JwtSecretStrengthReport,  # re-exported (S56 M2-#4: moved из jwt_backend)

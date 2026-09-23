@@ -8,7 +8,7 @@ from pydantic import Field, SecretStr, computed_field, model_validator
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
-from src.backend.core.config.external_databases.connection import (  # noqa: F401 — re-export
+from src.backend.core.config.external_databases.connection import (
     ExternalDatabaseConnectionSettings,
 )
 from src.backend.core.config.external_databases.item import ExternalDatabaseItemSettings

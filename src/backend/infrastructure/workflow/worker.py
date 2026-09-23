@@ -203,7 +203,7 @@ async def _readiness_check() -> bool:
     try:
         from sqlalchemy import text
 
-        from src.backend.infrastructure.database.session_manager import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.database.session_manager import (
             main_session_manager,
         )
 
@@ -245,7 +245,7 @@ async def _run_worker(
     и ждёт shutdown event. По shutdown — graceful drain: probes → 503,
     runner.stop() ждёт завершения активных executions, probes.stop().
     """
-    from src.backend.infrastructure.workflow.runner import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.workflow.runner import (
         DurableWorkflowRunner,
         RunnerConfig,
     )
@@ -319,7 +319,7 @@ async def _print_status() -> None:
     """Async-helper команды ``status``: печатает счётчики по статусам."""
     from sqlalchemy import func, select
 
-    from src.backend.core.domain.models.workflow_instance import (  # noqa: F401 — re-export
+    from src.backend.core.domain.models.workflow_instance import (
         WorkflowInstance,
         WorkflowStatus,
     )

@@ -4,7 +4,7 @@ import asyncio
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.workflow.executor._protocol import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.workflow.executor._protocol import (
         _DSLStepExecutorProtocol,
     )
 
@@ -12,7 +12,7 @@ from src.backend.core.domain.models.workflow_event import WorkflowEventType
 from src.backend.core.logging import get_logger
 from src.backend.infrastructure.workflow.executor.sequential_mixin import _run_processor
 from src.backend.infrastructure.workflow.executor.state import WorkflowStep
-from src.backend.infrastructure.workflow.pg_runner_internals import (  # noqa: F401 — re-export
+from src.backend.infrastructure.workflow.pg_runner_internals import (
     WorkflowInstanceRow,
     WorkflowState,
 )

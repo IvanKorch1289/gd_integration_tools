@@ -145,7 +145,7 @@ def create_server() -> Any:
         """
         # Lazy import schema_completion — tools/ может не быть в PYTHONPATH.
         try:
-            from tools.dsl_lsp.schema_completion import (  # noqa: F401 — re-export
+            from tools.dsl_lsp.schema_completion import (
                 ROUTE_COMPLETIONS,
                 STEP_COMPLETIONS,
             )
@@ -167,7 +167,7 @@ def create_server() -> Any:
         """Hover-описание поля под курсором (Tier 1 — статический lookup)."""
         # Lazy import schema_completion.
         try:
-            from tools.dsl_lsp.schema_completion import (  # noqa: F401 — re-export
+            from tools.dsl_lsp.schema_completion import (
                 ROUTE_COMPLETIONS,
                 STEP_COMPLETIONS,
             )

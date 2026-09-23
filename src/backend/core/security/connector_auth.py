@@ -68,7 +68,7 @@ def require_capability(
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
             # Lazy import — избежать циклических зависимостей (auth → core).
             try:
-                from src.backend.services.authorization.facade import (  # noqa: F401 — re-export
+                from src.backend.services.authorization.facade import (
                     get_authorization_facade,
                 )
             except Exception as exc:  # pragma: no cover — facade недоступен в test

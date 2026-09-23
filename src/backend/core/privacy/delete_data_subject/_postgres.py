@@ -14,7 +14,7 @@ import asyncio
 import time
 from collections.abc import Callable
 
-from src.backend.core.privacy.delete_data_subject._types import (  # noqa: F401 — re-export
+from src.backend.core.privacy.delete_data_subject._types import (
     AdapterResult,
     ErasureResultStatus,
     ErasureStrategy,

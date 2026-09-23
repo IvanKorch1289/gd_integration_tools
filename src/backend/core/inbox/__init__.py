@@ -49,7 +49,7 @@ Storage:
 
 from __future__ import annotations
 
-from src.backend.core.inbox.service import (  # noqa: F401 — re-export
+from src.backend.core.inbox.service import (
     InboxOutcome,
     InboxResult,
     InboxService,

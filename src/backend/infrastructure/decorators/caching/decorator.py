@@ -16,7 +16,7 @@ from src.backend.core.config.settings import settings
 from src.backend.core.logging import get_logger
 from src.backend.core.utils.cache_keys import build_cache_key
 from src.backend.infrastructure.cache.backends.memory import MemoryBackend
-from src.backend.infrastructure.clients.storage.redis import (  # noqa: F401 — re-export
+from src.backend.infrastructure.clients.storage.redis import (
     get_redis_client as redis_client,
 )
 from src.backend.infrastructure.decorators.caching.envelope import CacheEnvelope
@@ -248,7 +248,7 @@ class CachingDecorator:
                 )
                 # Stampede metric: lock acquisition timeout → function ran twice.
                 try:
-                    from src.backend.infrastructure.observability.metrics import (  # noqa: F401 — re-export
+                    from src.backend.infrastructure.observability.metrics import (
                         record_cache_lock_timeout,
                     )
 
@@ -262,7 +262,7 @@ class CachingDecorator:
                 if cached is not None:
                     # Stampede metric: this request waited for lock, found cached.
                     try:
-                        from src.backend.infrastructure.observability.metrics import (  # noqa: F401 — re-export
+                        from src.backend.infrastructure.observability.metrics import (
                             record_cache_coalesced,
                         )
 
@@ -285,7 +285,7 @@ class CachingDecorator:
                         )
                         # Stampede metric: stale-while-error served.
                         try:
-                            from src.backend.infrastructure.observability.metrics import (  # noqa: F401 — re-export
+                            from src.backend.infrastructure.observability.metrics import (
                                 record_cache_stale_served,
                             )
 

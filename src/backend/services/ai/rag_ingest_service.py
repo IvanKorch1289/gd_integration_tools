@@ -20,7 +20,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from src.backend.core.logging import get_logger
-from src.backend.services.ai.rag_ingest_store import (  # noqa: F401 — re-export
+from src.backend.services.ai.rag_ingest_store import (
     IngestStateStore,
     InMemoryIngestStateStore,
 )
@@ -292,7 +292,7 @@ def get_rag_ingest_service() -> RagIngestService:
     if _singleton is None:
         try:
             from src.backend.core.config.ai_stack import rag_ingest_settings
-            from src.backend.services.ai.rag_ingest_store import (  # noqa: F401 — re-export
+            from src.backend.services.ai.rag_ingest_store import (
                 build_ingest_state_store,
             )
 

@@ -19,15 +19,15 @@ from threading import Lock as Lock
 from typing import TYPE_CHECKING as TYPE_CHECKING
 from typing import Final as Final
 
-from src.backend.core.security.capabilities.errors import (  # noqa: F401 — re-export
+from src.backend.core.security.capabilities.errors import (
     CapabilityNotFoundError,
     CapabilitySupersetError,
 )
 from src.backend.core.security.capabilities.models import CapabilityRef as CapabilityRef
-from src.backend.core.security.capabilities.policy import (  # noqa: F401 — re-export
+from src.backend.core.security.capabilities.policy import (
     CapabilityPolicy as CapabilityPolicy,
 )
-from src.backend.core.security.capabilities.vocabulary import (  # noqa: F401 — re-export
+from src.backend.core.security.capabilities.vocabulary import (
     CapabilityVocabulary,
     build_default_vocabulary,  # S79 W2 fix: S54 W4 decomp forgot import
 )
@@ -35,19 +35,19 @@ from src.backend.core.security.capabilities.vocabulary import (  # noqa: F401 �
 if TYPE_CHECKING:
     pass
 
-from src.backend.core.security.capabilities.gate.audit_mixin import (  # noqa: F401 — re-export
+from src.backend.core.security.capabilities.gate.audit_mixin import (
     AuditMixin,  # S54 W4: MRO
 )
-from src.backend.core.security.capabilities.gate.cache_mixin import (  # noqa: F401 — re-export
+from src.backend.core.security.capabilities.gate.cache_mixin import (
     CacheMixin,  # S54 W4: MRO
 )
-from src.backend.core.security.capabilities.gate.check_mixin import (  # noqa: F401 — re-export
+from src.backend.core.security.capabilities.gate.check_mixin import (
     CheckMixin,  # S54 W4: MRO
 )
-from src.backend.core.security.capabilities.gate.check_tenant_mixin import (  # noqa: F401 — re-export
+from src.backend.core.security.capabilities.gate.check_tenant_mixin import (
     CheckTenantMixin,  # S54 M2-#7: MRO
 )
-from src.backend.core.security.capabilities.gate.declaration_mixin import (  # noqa: F401 — re-export
+from src.backend.core.security.capabilities.gate.declaration_mixin import (
     DeclarationMixin,  # S54 W4: MRO
 )
 

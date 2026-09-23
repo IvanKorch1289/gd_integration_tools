@@ -113,7 +113,7 @@ class LruMemoryCache:
     def _record_local_hit(self) -> None:
         """Updates local metrics snapshot for admin API."""
         try:
-            from src.backend.infrastructure.cache.metrics_collector import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.cache.metrics_collector import (
                 record_lru_hit,
             )
 
@@ -124,7 +124,7 @@ class LruMemoryCache:
     def _record_local_miss(self) -> None:
         """Updates local metrics snapshot for admin API."""
         try:
-            from src.backend.infrastructure.cache.metrics_collector import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.cache.metrics_collector import (
                 record_lru_miss,
             )
 

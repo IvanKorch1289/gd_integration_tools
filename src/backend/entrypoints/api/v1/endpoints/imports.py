@@ -90,7 +90,7 @@ async def _import_openapi(
     dry_run: bool = Form(default=False),
 ) -> dict[str, Any]:
     """Импортирует OpenAPI spec (file или URL) через W24 ImportGateway."""
-    from src.backend.core.interfaces.import_gateway import (  # noqa: F401 — re-export
+    from src.backend.core.interfaces.import_gateway import (
         ImportSource,
         ImportSourceKind,
     )
@@ -156,7 +156,7 @@ async def _import_postman(
     dry_run: bool = Form(default=False),
 ) -> dict[str, Any]:
     """Импортирует Postman-коллекцию через W24 ImportGateway."""
-    from src.backend.core.interfaces.import_gateway import (  # noqa: F401 — re-export
+    from src.backend.core.interfaces.import_gateway import (
         ImportSource,
         ImportSourceKind,
     )

@@ -34,7 +34,7 @@ def _wrap_backend(backend: AntivirusBackend) -> AntivirusCallable:
 
 def _build_clamav_unix() -> AntivirusCallable | None:
     try:
-        from src.backend.infrastructure.antivirus.backends.clamav_unix import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.antivirus.backends.clamav_unix import (
             ClamAVUnixBackend,
         )
     except ImportError:
@@ -44,7 +44,7 @@ def _build_clamav_unix() -> AntivirusCallable | None:
 
 def _build_clamav_tcp() -> AntivirusCallable | None:
     try:
-        from src.backend.infrastructure.antivirus.backends.clamav_tcp import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.antivirus.backends.clamav_tcp import (
             ClamAVTcpBackend,
         )
     except ImportError:
@@ -63,7 +63,7 @@ def _build_http_av() -> AntivirusCallable:
     """
 
     async def _http_scan(payload: bytes) -> AntivirusScanResult:
-        from src.backend.infrastructure.antivirus.backends.http import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.antivirus.backends.http import (
             HttpAntivirusBackend,
         )
         from src.backend.infrastructure.antivirus.service import get_antivirus_service

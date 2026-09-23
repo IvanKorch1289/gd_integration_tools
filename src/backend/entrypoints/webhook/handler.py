@@ -21,7 +21,7 @@ from pydantic import BaseModel, Field
 
 from src.backend.core.logging import get_logger
 from src.backend.entrypoints._action_bridge import dispatch_action_or_dsl
-from src.backend.entrypoints.webhook.registry import (  # noqa: F401 — re-export
+from src.backend.entrypoints.webhook.registry import (
     WebhookSubscription,
     webhook_registry,
 )
@@ -45,7 +45,7 @@ async def _check_rate_limit(
 ) -> None:
     """Применяет rate limit через RedisRateLimiter."""
     try:
-        from src.backend.core.di.providers import (  # noqa: F401 — re-export
+        from src.backend.core.di.providers import (
             get_rate_limit_classes_provider,
             get_rate_limiter_provider,
         )

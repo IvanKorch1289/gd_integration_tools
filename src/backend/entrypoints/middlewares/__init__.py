@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 # S91 M5-#2: graceful shutdown middleware export
-from src.backend.entrypoints.middlewares.graceful_shutdown import (  # noqa: F401 — re-export
+from src.backend.entrypoints.middlewares.graceful_shutdown import (
     GracefulShutdownMiddleware,
     get_in_flight_count,
 )

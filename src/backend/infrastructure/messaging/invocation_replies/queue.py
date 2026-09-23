@@ -20,7 +20,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import asdict
 from typing import Any, Literal, Protocol, runtime_checkable
 
-from src.backend.core.interfaces.invocation_reply import (  # noqa: F401 — re-export
+from src.backend.core.interfaces.invocation_reply import (
     InvocationReplyChannel,
     ReplyChannelKind,
 )
@@ -126,7 +126,7 @@ class QueueReplyChannel(InvocationReplyChannel):
         """
         backend = self._extract_backend(meta)
         try:
-            from src.backend.infrastructure.clients.messaging.stream import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.clients.messaging.stream import (
                 get_stream_client,
             )
 

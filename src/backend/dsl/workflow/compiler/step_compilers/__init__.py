@@ -29,7 +29,7 @@ from src.backend.dsl.workflow.compiler.step_compilers import (  # noqa: F401
     flow,
     governance,
 )
-from src.backend.dsl.workflow.compiler.step_compilers.activity import (  # noqa: F401 — re-export
+from src.backend.dsl.workflow.compiler.step_compilers.activity import (
     _RESUME_SIGNAL,  # noqa: F401 — backward-compat (used by emitter.py)
     compile_activity_step,
     compile_agent_invoke_step,
@@ -39,17 +39,17 @@ from src.backend.dsl.workflow.compiler.step_compilers.activity import (  # noqa:
     compile_signal_wait_step,
     compile_sleep_step,
 )
-from src.backend.dsl.workflow.compiler.step_compilers.flow import (  # noqa: F401 — re-export
+from src.backend.dsl.workflow.compiler.step_compilers.flow import (
     compile_checkpoint_step,
     compile_continue_as_new_step,
     compile_saga_step,
 )
-from src.backend.dsl.workflow.compiler.step_compilers.governance import (  # noqa: F401 — re-export
+from src.backend.dsl.workflow.compiler.step_compilers.governance import (
     compile_escalate_step,
     compile_guardrail_step,
     compile_reflect_step,
 )
-from src.backend.dsl.workflow.spec import (  # noqa: F401 — re-export
+from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,
     AgentInvokeDeclaration,
     CheckpointDeclaration,
@@ -68,7 +68,7 @@ from src.backend.dsl.workflow.spec import (  # noqa: F401 — re-export
 
 # Relative import (avoid Pyright false-positive on long absolute path within
 # the same package; runtime resolves both equivalently).
-from ..activity_bridge import (  # noqa: F401 — re-export
+from ..activity_bridge import (
     LANGGRAPH_CHECKPOINT_GET_ACTIVITY,
     LANGGRAPH_CHECKPOINT_PUT_ACTIVITY,
 )

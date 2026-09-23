@@ -14,7 +14,7 @@ from src.backend.services.jupyter.execution_service.errors import JupyterExecuti
 _logger = get_logger("services.jupyter.execution")
 
 
-from src.backend.services.jupyter.execution_service._protocol import (  # noqa: F401 — re-export
+from src.backend.services.jupyter.execution_service._protocol import (
     _NotebookExecutionProtocol,
 )
 

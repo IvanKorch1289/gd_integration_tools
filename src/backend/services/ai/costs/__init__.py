@@ -1,7 +1,7 @@
 """Сервисы cost-аналитики AI Stack (Wave D.5 + K4 S6 W3 dashboard)."""
 
 from src.backend.services.ai.costs.alerts import CostAlert, CostAlertService
-from src.backend.services.ai.costs.dashboard import (  # noqa: F401 — re-export
+from src.backend.services.ai.costs.dashboard import (
     AICostDashboard,
     CostByTenant,
     DashboardSnapshot,

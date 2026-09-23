@@ -43,7 +43,7 @@ async def _composite() -> Any:
 
     backends: dict[str, Any] = {}
     try:
-        from src.backend.services.ai.model_registry.mlflow_backend import (  # noqa: F401 — re-export
+        from src.backend.services.ai.model_registry.mlflow_backend import (
             MlflowModelRegistry,
         )
 
@@ -59,7 +59,7 @@ async def _composite() -> Any:
             extra={"error": str(mlflow_exc)},
         )
     try:
-        from src.backend.services.ai.model_registry.hf_hub_backend import (  # noqa: F401 — re-export
+        from src.backend.services.ai.model_registry.hf_hub_backend import (
             HuggingFaceModelRegistry,
         )
 

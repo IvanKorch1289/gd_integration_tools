@@ -43,7 +43,7 @@ RESILIENCE_COMPONENTS: Final[tuple[str, ...]] = (
 def _register_clickhouse(
     coordinator: ResilienceCoordinator, settings: ResilienceSettings
 ) -> None:
-    from src.backend.infrastructure.resilience.components.audit_chain import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.resilience.components.audit_chain import (
         build_audit_fallbacks,
         build_audit_primary,
     )
@@ -59,7 +59,7 @@ def _register_clickhouse(
 def _register_clamav(
     coordinator: ResilienceCoordinator, settings: ResilienceSettings
 ) -> None:
-    from src.backend.infrastructure.resilience.components.antivirus_chain import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.resilience.components.antivirus_chain import (
         build_antivirus_fallbacks,
         build_antivirus_primary,
     )
@@ -75,7 +75,7 @@ def _register_clamav(
 def _register_kafka(
     coordinator: ResilienceCoordinator, settings: ResilienceSettings
 ) -> None:
-    from src.backend.infrastructure.resilience.components.mq_chain import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.resilience.components.mq_chain import (
         build_mq_fallbacks,
         build_mq_primary,
     )
@@ -91,7 +91,7 @@ def _register_kafka(
 def _register_db_main(
     coordinator: ResilienceCoordinator, settings: ResilienceSettings
 ) -> None:
-    from src.backend.infrastructure.resilience.components.database_chain import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.resilience.components.database_chain import (
         build_database_fallbacks,
         build_database_primary,
     )
@@ -107,7 +107,7 @@ def _register_db_main(
 def _register_redis(
     coordinator: ResilienceCoordinator, settings: ResilienceSettings
 ) -> None:
-    from src.backend.infrastructure.resilience.components.cache_chain import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.resilience.components.cache_chain import (
         build_cache_fallbacks,
         build_cache_primary,
     )
@@ -123,7 +123,7 @@ def _register_redis(
 def _register_minio(
     coordinator: ResilienceCoordinator, settings: ResilienceSettings
 ) -> None:
-    from src.backend.infrastructure.resilience.components.object_storage_chain import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.resilience.components.object_storage_chain import (
         build_object_storage_fallbacks,
         build_object_storage_primary,
     )
@@ -139,7 +139,7 @@ def _register_minio(
 def _register_vault(
     coordinator: ResilienceCoordinator, settings: ResilienceSettings
 ) -> None:
-    from src.backend.infrastructure.resilience.components.secrets_chain import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.resilience.components.secrets_chain import (
         build_secrets_fallbacks,
         build_secrets_primary,
     )
@@ -155,7 +155,7 @@ def _register_vault(
 def _register_mongodb(
     coordinator: ResilienceCoordinator, settings: ResilienceSettings
 ) -> None:
-    from src.backend.infrastructure.resilience.components.mongo_chain import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.resilience.components.mongo_chain import (
         build_mongo_fallbacks,
         build_mongo_primary,
     )
@@ -171,7 +171,7 @@ def _register_mongodb(
 def _register_elasticsearch(
     coordinator: ResilienceCoordinator, settings: ResilienceSettings
 ) -> None:
-    from src.backend.infrastructure.resilience.components.search_chain import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.resilience.components.search_chain import (
         build_search_fallbacks,
         build_search_primary,
     )
@@ -187,7 +187,7 @@ def _register_elasticsearch(
 def _register_smtp(
     coordinator: ResilienceCoordinator, settings: ResilienceSettings
 ) -> None:
-    from src.backend.infrastructure.resilience.components.smtp_chain import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.resilience.components.smtp_chain import (
         build_smtp_fallbacks,
         build_smtp_primary,
     )
@@ -203,7 +203,7 @@ def _register_smtp(
 def _register_express(
     coordinator: ResilienceCoordinator, settings: ResilienceSettings
 ) -> None:
-    from src.backend.infrastructure.resilience.components.express_chain import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.resilience.components.express_chain import (
         build_express_fallbacks,
         build_express_primary,
     )

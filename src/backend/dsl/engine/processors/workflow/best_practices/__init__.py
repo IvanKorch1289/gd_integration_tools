@@ -13,10 +13,10 @@ Refs:
 
 from __future__ import annotations
 
-from src.backend.dsl.engine.processors.workflow.best_practices.claim_check import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.workflow.best_practices.claim_check import (
     WorkflowClaimCheckProcessor,
 )
-from src.backend.dsl.engine.processors.workflow.best_practices.continue_as_new import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.workflow.best_practices.continue_as_new import (
     WorkflowContinueAsNewProcessor,
 )
 

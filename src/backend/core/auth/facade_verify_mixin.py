@@ -57,7 +57,7 @@ class AuthVerifyMixin:
             ``is_authenticated=False``.
 
         """
-        from src.backend.core.auth.facade import (  # noqa: F401 — re-export
+        from src.backend.core.auth.facade import (
             logger,  # S64: lazy import для circular dep
         )
 
@@ -151,7 +151,7 @@ class AuthVerifyMixin:
             :class:`AuthResult` with ``is_authenticated`` status.
 
         """
-        from src.backend.core.auth.facade import (  # noqa: F401 — re-export
+        from src.backend.core.auth.facade import (
             logger,  # S64: lazy import для circular dep
         )
 

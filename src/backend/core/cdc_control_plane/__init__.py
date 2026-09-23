@@ -19,7 +19,7 @@
 
 Использование::
 
-    from src.backend.core.cdc_control_plane import (  # noqa: F401 — re-export
+    from src.backend.core.cdc_control_plane import (
         CDCControlPlane, get_cdc_control_plane,
     )
 
@@ -34,7 +34,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.cdc_control_plane.plane import (  # noqa: F401 — re-export
+from src.backend.core.cdc_control_plane.plane import (
     CDCControlPlane,
     CDCSlotStatus,
     Offset,

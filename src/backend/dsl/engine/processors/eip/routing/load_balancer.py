@@ -81,7 +81,7 @@ class LoadBalancerProcessor(BaseProcessor):
         """
         # ADR-0305: admission control для LoadBalancer (нет timeout для narrow).
         try:
-            from src.backend.core.async_utils.deadline_budget import (  # noqa: F401 — re-export
+            from src.backend.core.async_utils.deadline_budget import (
                 DeadlineExpiredError,
             )
             from src.backend.core.request_context import RequestContext

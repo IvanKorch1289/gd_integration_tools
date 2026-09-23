@@ -22,7 +22,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
-from src.backend.core.interfaces.action_dispatcher import (  # noqa: F401 — re-export
+from src.backend.core.interfaces.action_dispatcher import (
     ActionDispatcher,
     ActionError,
     ActionGatewayDispatcher,

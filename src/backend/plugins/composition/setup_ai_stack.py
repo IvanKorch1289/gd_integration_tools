@@ -18,7 +18,7 @@ __all__ = ("register_ai_stack_providers",)
 
 async def register_ai_stack_providers() -> None:
     """Регистрирует AI-2026 компоненты в providers_registry / app.state."""
-    from src.backend.core.config.ai_stack import (  # noqa: F401 — re-export
+    from src.backend.core.config.ai_stack import (
         bge_settings,
         langmem_settings,
         litellm_gateway_settings,
@@ -56,7 +56,7 @@ async def register_ai_stack_providers() -> None:
         l2_embedder: object | None = None
         if rag_cache_settings.l2_enabled:
             try:
-                from src.backend.infrastructure.clients.storage.vector_store import (  # noqa: F401 — re-export
+                from src.backend.infrastructure.clients.storage.vector_store import (
                     get_vector_store,
                 )
 
@@ -64,7 +64,7 @@ async def register_ai_stack_providers() -> None:
             except Exception as exc:
                 logger.debug("L2 qdrant client injection skipped: %s", exc)
             try:
-                from src.backend.services.ai.embedding_providers import (  # noqa: F401 — re-export
+                from src.backend.services.ai.embedding_providers import (
                     get_embedding_provider,
                 )
 
@@ -98,11 +98,11 @@ async def register_ai_stack_providers() -> None:
 
     if bge_settings.enabled:
         try:
-            from src.backend.services.ai.embedding_providers_bge import (  # noqa: F401 — re-export
+            from src.backend.services.ai.embedding_providers_bge import (
                 BGEM3EmbeddingProvider,
                 BGERerankerV2M3,
             )
-            from src.backend.services.ai.embedding_registry import (  # noqa: F401 — re-export
+            from src.backend.services.ai.embedding_registry import (
                 get_embedding_registry,
             )
 
@@ -175,12 +175,12 @@ async def register_ai_stack_providers() -> None:
         logger.debug("PIITokenizer registration skipped: %s", exc)
 
     try:
-        from src.backend.dsl.engine.processors.streaming_llm import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.streaming_llm import (
             TokenStreamLLMProcessor,
         )
 
         try:
-            from src.backend.dsl.engine.plugin_registry import (  # noqa: F401 — re-export
+            from src.backend.dsl.engine.plugin_registry import (
                 get_processor_plugin_registry,
             )
 

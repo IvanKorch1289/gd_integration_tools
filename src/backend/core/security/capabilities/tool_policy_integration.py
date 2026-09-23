@@ -45,7 +45,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
-from src.backend.core.ai.policy.enforcer.tools_policy import (  # noqa: F401 — re-export
+from src.backend.core.ai.policy.enforcer.tools_policy import (
     ToolPolicyViolationError,
     check_tool_allowed,
     enforce_tool_policy,

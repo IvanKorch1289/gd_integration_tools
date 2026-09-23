@@ -62,7 +62,7 @@ if TYPE_CHECKING:
     from src.backend.core.interfaces.storage import ObjectStorage
     from src.backend.core.messaging.eventbus.facade import EventBusFacade
     from src.backend.infrastructure.clients.storage.clickhouse import ClickHouseClient
-    from src.backend.infrastructure.clients.storage.elasticsearch import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.clients.storage.elasticsearch import (
         ElasticSearchClient,
     )
     from src.backend.infrastructure.clients.storage.mongodb import MongoDBClient
@@ -131,20 +131,20 @@ if TYPE_CHECKING:
     get_workflow_spec_class: Callable[[], Any]
     get_workflow_step_class: Callable[[], Any]
 
-from src.backend.infrastructure.di_bridge.cdc import (  # noqa: F401 — re-export
+from src.backend.infrastructure.di_bridge.cdc import (
     get_cdc_client_adapter_class,
     get_debezium_cdc_backend_class,
     get_debezium_events_cdc_backend_class,
     get_listen_notify_cdc_backend_class,
     get_poll_cdc_backend_class,
 )
-from src.backend.infrastructure.di_bridge.dlq import (  # noqa: F401 — re-export
+from src.backend.infrastructure.di_bridge.dlq import (
     get_dlq_base_module,
     get_dlq_envelope_class,
     get_dlq_reason_class,
     get_dlq_writer_class,
 )
-from src.backend.infrastructure.di_bridge.health import (  # noqa: F401 — re-export
+from src.backend.infrastructure.di_bridge.health import (
     get_health_check_factory,
     get_health_mode_class,
     get_health_result_class,
@@ -153,7 +153,7 @@ from src.backend.infrastructure.di_bridge.health import (  # noqa: F401 — re-e
     get_pool_health_monitor_class,
     get_pool_monitor_factory,
 )
-from src.backend.infrastructure.di_bridge.observability import (  # noqa: F401 — re-export
+from src.backend.infrastructure.di_bridge.observability import (
     get_client_metrics,
     get_client_metrics_module,
     get_correlation_id,
@@ -172,7 +172,7 @@ from src.backend.infrastructure.di_bridge.observability import (  # noqa: F401 �
     get_set_task_queue_depth,
     get_set_workers_active,
 )
-from src.backend.infrastructure.di_bridge.resilience import (  # noqa: F401 — re-export
+from src.backend.infrastructure.di_bridge.resilience import (
     get_bulkhead_attr,
     get_bulkhead_class,
     get_bulkhead_registry_class,
@@ -184,7 +184,7 @@ from src.backend.infrastructure.di_bridge.resilience import (  # noqa: F401 — 
     get_redis_rate_limiter_class,
     get_unified_rate_limiter_attr,
 )
-from src.backend.infrastructure.di_bridge.search import (  # noqa: F401 — re-export
+from src.backend.infrastructure.di_bridge.search import (
     get_base_search_provider_class,
     get_perplexity_provider_class,
     get_search_providers_module,

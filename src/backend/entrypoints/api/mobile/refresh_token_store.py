@@ -263,7 +263,7 @@ def get_refresh_token_store() -> RefreshTokenStore:
 
         if os.environ.get("REDIS_ENABLED", "").lower() == "true":
             # Lazy import to avoid hard dep on Redis client at module-load time
-            from src.backend.entrypoints.api.mobile.refresh_token_store_redis import (  # noqa: F401 — re-export
+            from src.backend.entrypoints.api.mobile.refresh_token_store_redis import (
                 RedisRefreshTokenStore,
             )
 

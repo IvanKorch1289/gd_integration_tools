@@ -18,7 +18,7 @@
 
 Использование::
 
-    from src.backend.core.migration_safety import (  # noqa: F401 — re-export
+    from src.backend.core.migration_safety import (
         MigrationSafetyGate, analyze_migration, RiskLevel,
     )
 
@@ -30,7 +30,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.migration_safety.gate import (  # noqa: F401 — re-export
+from src.backend.core.migration_safety.gate import (
     Finding,
     MigrationReport,
     MigrationSafetyGate,

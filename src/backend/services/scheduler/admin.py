@@ -9,7 +9,7 @@ proxy (ponytail: thin proxy). Устраняет layer-violation
 
 Использование::
 
-    from src.backend.services.scheduler.admin import (  # noqa: F401 — re-export
+    from src.backend.services.scheduler.admin import (
         SchedulerDLQStore, get_scheduler_dlq_store, get_scheduler_manager,
     )
 
@@ -21,11 +21,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.scheduler.dlq import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.scheduler.dlq import (
         SchedulerDLQStore,
         get_scheduler_dlq_store,
     )
-    from src.backend.infrastructure.scheduler.scheduler_manager import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.scheduler.scheduler_manager import (
         get_scheduler_manager,
     )
 

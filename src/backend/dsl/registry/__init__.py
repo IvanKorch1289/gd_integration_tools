@@ -15,16 +15,16 @@ from __future__ import annotations
 
 from src.backend.dsl.commands.registry import RouteRegistry as RouteRegistry
 from src.backend.dsl.commands.registry import route_registry as route_registry
-from src.backend.dsl.registry.errors import (  # noqa: F401 — re-export
+from src.backend.dsl.registry.errors import (
     CapabilityDeniedError,
     ProcessorConflictError,
     ProcessorNotFoundError,
     ProcessorRegistryError,
 )
-from src.backend.dsl.registry.json_schema_exporter import (  # noqa: F401 — re-export
+from src.backend.dsl.registry.json_schema_exporter import (
     export_processors_schema as export_processors_schema,
 )
-from src.backend.dsl.registry.processor import (  # noqa: F401 — re-export
+from src.backend.dsl.registry.processor import (
     ProcessorRegistry,
     ProcessorSpec,
     get_processor_registry,

@@ -1,6 +1,6 @@
 """Observability package (G3): correlation, metrics, tracing, PII filter."""
 
-from src.backend.infrastructure.observability.correlation import (  # noqa: F401 — re-export
+from src.backend.infrastructure.observability.correlation import (
     get_correlation_id,
     new_correlation_id,
     set_correlation_context,

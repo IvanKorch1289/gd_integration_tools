@@ -4,7 +4,7 @@ import ssl
 from typing import Any
 
 from sqlalchemy import Engine, create_engine, text
-from sqlalchemy.ext.asyncio import (  # noqa: F401 — re-export
+from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
     async_sessionmaker,
@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import (  # noqa: F401 — re-export
 from sqlalchemy.orm import sessionmaker
 
 from src.backend.core.config.database import DatabaseConnectionSettings
-from src.backend.core.config.external_databases import (  # noqa: F401 — re-export
+from src.backend.core.config.external_databases import (
     ExternalDatabaseConnectionSettings,
 )
 from src.backend.core.enums.database import DatabaseTypeChoices
@@ -65,7 +65,7 @@ class DatabaseInitializer:
         # Однократный вызов — внутренний guard _ASYNCPG_INSTRUMENTED защищает от
         # повторного instrument() при создании нескольких DatabaseInitializer.
         try:
-            from src.backend.infrastructure.observability.otel_auto import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.observability.otel_auto import (
                 instrument_asyncpg_if_enabled,
             )
 
@@ -104,7 +104,7 @@ class DatabaseInitializer:
         # S21 W1: RLS SET LOCAL app.tenant_id listener (default-OFF).
         # Активируется get_feature_flag_service().is_enabled("rls_postgres_enforce") + dialect=postgresql.
         try:
-            from src.backend.infrastructure.database.rls_listener import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.database.rls_listener import (
                 install_rls_tenant_listener,
             )
 

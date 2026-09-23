@@ -33,12 +33,12 @@ Public API:
 
 from __future__ import annotations
 
-from src.backend.dsl.workflow.compiler.activity_bridge import (  # noqa: F401 — re-export
+from src.backend.dsl.workflow.compiler.activity_bridge import (
     ActivityBridge,
     bridge_action_handler,
     get_activity_callables,
 )
-from src.backend.dsl.workflow.compiler.emitter import (  # noqa: F401 — re-export
+from src.backend.dsl.workflow.compiler.emitter import (
     CompiledWorkflow,
     compile_workflow,
     compile_workflows,

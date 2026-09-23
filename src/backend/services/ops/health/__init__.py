@@ -8,7 +8,7 @@ Back-compat: ``services/ops/health.py`` (singular, файл) → thin re-export 
 ``services/ops/__init__.py`` (public API facade) без изменений.
 
 Public API:
-    from src.backend.services.ops.health import (  # noqa: F401 — re-export
+    from src.backend.services.ops.health import (
         ProcessorHealthService, ProcessorHealthResult,
         get_processor_health_service,
     )
@@ -25,13 +25,13 @@ Endpoint: ``GET /health/processors`` — агрегированная матри
 
 from __future__ import annotations
 
-from src.backend.services.ops.health._service import (  # noqa: F401 — re-export
+from src.backend.services.ops.health._service import (
     ProcessorHealthService as ProcessorHealthService,
 )
-from src.backend.services.ops.health._service import (  # noqa: F401 — re-export
+from src.backend.services.ops.health._service import (
     get_processor_health_service as get_processor_health_service,
 )
-from src.backend.services.ops.health._types import (  # noqa: F401 — re-export
+from src.backend.services.ops.health._types import (
     ProcessorHealthResult as ProcessorHealthResult,
 )
 

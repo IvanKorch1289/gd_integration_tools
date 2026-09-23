@@ -29,10 +29,10 @@ from typing import Any
 
 from src.backend.core.logging import get_logger
 from src.backend.services.jupyter.execution_service import NotebookExecutionService
-from src.backend.services.jupyter.execution_service.errors import (  # noqa: F401 — re-export
+from src.backend.services.jupyter.execution_service.errors import (
     JupyterExecutionError as _JupyterExecutionError,
 )
-from src.backend.services.jupyter.notebook_registry import (  # noqa: F401 — re-export
+from src.backend.services.jupyter.notebook_registry import (
     NotebookRegistry,
     NotebookSpec,
     get_notebook_registry,
@@ -387,7 +387,7 @@ async def _save_inline_notebook(
 def _build_execution_service() -> NotebookExecutionService:
     """Lazy-resolve execution service через DI singleton."""
     try:
-        from src.backend.core.di.providers.jupyter import (  # noqa: F401 — re-export
+        from src.backend.core.di.providers.jupyter import (
             get_notebook_execution_service_provider,
         )
 

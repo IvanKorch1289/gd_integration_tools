@@ -29,7 +29,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
 from src.backend.core.interfaces.action_dispatcher import ActionMetadata
-from src.backend.entrypoints.api.generator.actions import (  # noqa: F401 — re-export
+from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
 )

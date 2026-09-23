@@ -63,7 +63,7 @@ class NotifyProcessor(BaseProcessor):
         """Выполняет отправку уведомления через NotificationGateway."""
         # S87 M2-#11 final batch: DI provider.
         # ruff: noqa: I001 (out-of-order import — local import for lazy init)
-        from src.backend.core.di.providers.cache import (  # noqa: F401 — re-export
+        from src.backend.core.di.providers.cache import (
             get_notifications_module_provider,
         )  # noqa: I001
 
@@ -114,6 +114,6 @@ class NotifyProcessor(BaseProcessor):
 
 
 # Импорт AppriseNotifyProcessor из подмодуля пакета
-from src.backend.dsl.engine.processors.notify.apprise_notify import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.notify.apprise_notify import (
     AppriseNotifyProcessor,
 )

@@ -22,7 +22,7 @@ import orjson
 from defusedxml import ElementTree as ET
 from fastapi import APIRouter, Depends, Request, Response
 
-from src.backend.core.api.extensions import (  # noqa: F401 — re-export
+from src.backend.core.api.extensions import (
     ExecutionContext,
     action_handler_registry,
     get_dsl_service,
@@ -30,7 +30,7 @@ from src.backend.core.api.extensions import (  # noqa: F401 — re-export
 from src.backend.core.auth.auth_selector import AuthMethod, require_auth
 from src.backend.core.di.dependencies import get_invoker_dep
 from src.backend.core.errors import BaseError
-from src.backend.core.interfaces.invoker import (  # noqa: F401 — re-export
+from src.backend.core.interfaces.invoker import (
     InvocationMode,
     InvocationRequest,
     InvocationStatus,

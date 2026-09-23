@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.backend.dsl.search.processor_search import (  # noqa: F401 — re-export
+from src.backend.dsl.search.processor_search import (
     ProcessorSearch,
     SearchResult,
     tokenize,

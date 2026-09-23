@@ -5,7 +5,7 @@
 обратно на in-memory хранилище при недоступности Langfuse.
 """
 
-from src.backend.services.ai.prompts.langfuse_storage import (  # noqa: F401 — re-export
+from src.backend.services.ai.prompts.langfuse_storage import (
     LangfusePromptStorage,
     PromptEntry,
     get_prompt_storage,

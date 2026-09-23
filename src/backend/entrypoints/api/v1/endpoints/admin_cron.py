@@ -218,7 +218,7 @@ async def validate_cron(request: CronValidationRequest) -> CronValidationRespons
     # Sprint 39 W1 (Phase B Item 7, ADR-0282 §3): inline-import от infrastructure
     # (после core/scheduler __getattr__ block removal). ALLOWED matrix
     # (ADR-0284) делает entrypoints→infrastructure legitimate cross-layer.
-    from src.backend.infrastructure.scheduler.cron_validator import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.scheduler.cron_validator import (
         validate_cron_expression,
     )
 

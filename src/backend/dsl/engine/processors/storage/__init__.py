@@ -14,7 +14,7 @@
 через :meth:`S3ObjectStorage._safe_key` (mirror LocalFSStorage).
 """
 
-from src.backend.dsl.engine.processors.storage.s3 import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.storage.s3 import (
     FromS3Processor,
     S3DeleteProcessor,
     S3ListProcessor,

@@ -16,7 +16,7 @@ transformation steps (compile-time DSL).
 
 Использование в DSL::
 
-    from src.backend.dsl.engine.processors.eip.pipes_and_filters import (  # noqa: F401 — re-export
+    from src.backend.dsl.engine.processors.eip.pipes_and_filters import (
         PipesAndFiltersProcessor,
     )
 

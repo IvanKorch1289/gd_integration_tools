@@ -21,7 +21,7 @@ from typing import Any, Literal
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from src.backend.core.security.capabilities import (  # noqa: F401 — re-export
+from src.backend.core.security.capabilities import (
     DEFAULT_CAPABILITY_CATALOG,
     CapabilityRef,
 )

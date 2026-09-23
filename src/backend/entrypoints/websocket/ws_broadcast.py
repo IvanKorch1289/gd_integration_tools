@@ -14,7 +14,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from src.backend.core.di.providers import (  # noqa: F401 — re-export
+from src.backend.core.di.providers import (
     get_redis_pubsub_factory_provider,
     get_redis_set_factory_provider,
 )

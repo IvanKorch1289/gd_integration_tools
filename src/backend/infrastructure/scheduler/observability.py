@@ -116,7 +116,7 @@ def attach_scheduler_metrics(scheduler: AsyncIOScheduler) -> None:
         )
         return
 
-    from apscheduler.events import (  # noqa: F401 — re-export
+    from apscheduler.events import (
         EVENT_JOB_ERROR,
         EVENT_JOB_EXECUTED,
         EVENT_JOB_MISSED,

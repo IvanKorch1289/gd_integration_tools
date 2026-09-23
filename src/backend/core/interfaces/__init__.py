@@ -39,7 +39,7 @@ from src.backend.core.interfaces.audit import AuditBackend, AuditRecord
 from src.backend.core.interfaces.cache import CacheBackend
 from src.backend.core.interfaces.doc_store import DocStoreBackend
 from src.backend.core.interfaces.metrics import MetricsBackend
-from src.backend.core.interfaces.notification import (  # noqa: F401 — re-export
+from src.backend.core.interfaces.notification import (
     NotificationAdapter,
     NotificationMessage,
 )
@@ -65,7 +65,7 @@ if TYPE_CHECKING:
     from src.backend.core.resilience.breaker import BreakerSpec as CircuitBreakerConfig
     from src.backend.core.resilience.breaker import BreakerState as CircuitState
     from src.backend.core.resilience.breaker import CircuitBreaker
-    from src.backend.core.resilience.breaker import (  # noqa: F401 — re-export
+    from src.backend.core.resilience.breaker import (
         CircuitOpen as CircuitBreakerOpenError,
     )
 
@@ -86,12 +86,12 @@ def __getattr__(name: str) -> Any:
 
     """
     if name in _CIRCUIT_BREAKER_REEXPORTS:
-        from src.backend.core.resilience.breaker import (  # noqa: F401 — re-export
+        from src.backend.core.resilience.breaker import (
             BreakerSpec as CircuitBreakerConfig,
         )
         from src.backend.core.resilience.breaker import BreakerState as CircuitState
         from src.backend.core.resilience.breaker import CircuitBreaker
-        from src.backend.core.resilience.breaker import (  # noqa: F401 — re-export
+        from src.backend.core.resilience.breaker import (
             CircuitOpen as CircuitBreakerOpenError,
         )
 
