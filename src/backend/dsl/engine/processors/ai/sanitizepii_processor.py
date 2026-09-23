@@ -23,10 +23,8 @@ class SanitizePIIProcessor(BaseProcessor):
         # S86 M2-#11 accelerated batch: DI provider.
         from src.backend.core.di.providers.cache import get_ai_sanitizer_provider
 
-        get_ai_sanitizer = get_ai_sanitizer_provider()
-
-        sanitizer = get_ai_sanitizer()
-        result = await sanitizer.sanitize(body)
+        sanitizer = get_ai_sanitizer_provider()  # instance (fix 2026-09-23)
+        result = sanitizer.sanitize_text(body)  # sync, → SanitizationResult
         exchange.set_property("_pii_original", exchange.in_message.body)
         exchange.set_property("_pii_mapping", result.replacements)
         exchange.in_message.set_body(result.sanitized_text)

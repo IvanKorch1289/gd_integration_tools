@@ -29,7 +29,7 @@ def get_action_bus_service_provider() -> Any:
     """Получить action bus service singleton (для прямых подписок)."""
     if "action_bus_service" in _overrides:
         return _overrides["action_bus_service"]
-    module = resolve_module("execution.action_bus")
+    module = resolve_module("external_apis.action_bus")
     return module.get_action_bus_service()
 
 
@@ -42,7 +42,7 @@ def get_action_dispatcher_provider() -> Any:
     """Получить ActionGatewayDispatcher singleton."""
     if "action_dispatcher" in _overrides:
         return _overrides["action_dispatcher"]
-    module = resolve_module("execution.action_dispatcher")
+    module = resolve_module("external_apis.action_dispatcher")
     return module.get_action_dispatcher()
 
 
@@ -58,7 +58,7 @@ def get_scheduler_manager_provider() -> Any:
     """Получить APScheduler manager singleton."""
     if "scheduler_manager" in _overrides:
         return _overrides["scheduler_manager"]
-    module = resolve_module("scheduler.manager")
+    module = resolve_module("scheduler.scheduler_manager")
     return module.get_scheduler_manager()
 
 
@@ -111,7 +111,7 @@ def get_workflow_main_session_provider() -> Any:
     """Получить main workflow session manager (DB session factory)."""
     if "workflow_main_session" in _overrides:
         return _overrides["workflow_main_session"]
-    module = resolve_module("workflow.session_manager")
+    module = resolve_module("database.session_manager")
     return module.get_main_session
 
 

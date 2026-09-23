@@ -35,6 +35,19 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.di.module_registry import resolve_module
+
+# Back-compat re-exports (W9 split; impl в ai/http/storage) — import-surface прежний
+from src.backend.core.di.providers.ai import (  # noqa: E402
+    get_ai_sanitizer_provider as get_ai_sanitizer_provider,
+)
+from src.backend.core.di.providers.http import (  # noqa: E402
+    get_smtp_client_provider as get_smtp_client_provider,
+    get_stream_client_provider as get_stream_client_provider,
+)
+from src.backend.core.di.providers.storage import (  # noqa: E402
+    get_object_storage_provider as get_object_storage_provider,
+)
+get_s3_storage_client_provider = get_object_storage_provider  # S3/MinIO/LocalFS singleton
 from src.backend.core.di.providers.ai import (
     get_token_registry_provider as get_token_registry_provider,
 )
@@ -263,7 +276,7 @@ def get_response_cache_provider() -> Any:
     """
     if "response_cache" in _overrides:
         return _overrides["response_cache"]
-    module = resolve_module("infrastructure.decorators.caching")
+    module = resolve_module("decorators.caching")
     return module.response_cache
 
 
@@ -282,7 +295,7 @@ def get_rag_cache_provider() -> Any:
     """
     if "rag_cache" in _overrides:
         return _overrides["rag_cache"]
-    module = resolve_module("rag.cache")
+    module = resolve_module("cache.rag.three_tier")
     return module.ThreeTierRagCache
 
 
@@ -321,13 +334,21 @@ def get_redis_client_provider() -> Any:
     """Возвращает high-level Redis client (singleton facade)."""
     if "redis_client" in _overrides:
         return _overrides["redis_client"]
-    module = resolve_module("clients.storage.redis_client")
-    return module.get_redis_client
+    module = resolve_module("clients.storage.redis")
+    return module.redis_client  # lazy module attr (back-compat, 2026-09-23)
 
 
 def set_redis_client_provider(client: Any) -> None:
     """Test-override для Redis client (S60+)."""
     _overrides["redis_client"] = client
+
+
+def get_s3_client_provider() -> Any:
+    r"""S3 client factory (S78/ R1; восстановлено 2026-09-23 после W9 split)."""
+    if "s3_client" in _overrides:
+        return _overrides["s3_client"]
+    module = resolve_module("clients.storage.s3_pool")
+    return module.get_s3_client  # factory, not instance
 
 
 def get_redis_stream_client_provider() -> Any:

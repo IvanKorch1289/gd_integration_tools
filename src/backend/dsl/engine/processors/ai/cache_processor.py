@@ -46,14 +46,14 @@ class CacheProcessor(BaseProcessor):
 
             redis_client = get_redis_client_provider()
 
-            cached = await redis_client.get(key)
+            cached = await redis_client.cache_get(key)
             if cached is not None:
                 exchange.set_out(
                     body=orjson.loads(cached), headers=dict(exchange.in_message.headers)
                 )
                 exchange.set_property("cached", True)
                 return
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             pass
 
         exchange.set_property("cached", False)

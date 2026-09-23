@@ -101,6 +101,7 @@ INFRA_MODULES: Final[dict[str, str]] = {
     "app.vault_refresher": f"{_INFRA}.application.vault_refresher",
     # ─── Cache / decorators ─────────────────────────────────────────
     "cache": f"{_INFRA}.cache",
+    "cache.rag.three_tier": f"{_INFRA}.cache.rag.three_tier",  # fix: rag_cache provider fallback (2026-09-23)
     "decorators.caching": f"{_INFRA}.decorators.caching",
     # ─── Monitoring ─────────────────────────────────────────────────
     # T7 вариант (a): tech.py перенацелен на app.health_aggregator;
