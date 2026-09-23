@@ -1,12 +1,14 @@
-# trust_tier: top-level (gate 33: tomllib видит только ключи вне [table]).
+# ADR-0343: PluginManifest schema evolution — flat top-level structure
+# для соответствия canonical PluginManifest schema
+# (src/backend/core/plugin_runtime/manifest_toml.py).
+# Миграция от nested [plugin]/[dependencies] tables к top-level scalars.
+
 # "A" = audited core plugin (pre-prod-check #33 / ADR-NEW-6).
 trust_tier = "A"
 # S168 W17 P2-10: core_admin extension manifest.
-[plugin]
 name = "core_admin"
 version = "1.0.0"
 description = "Cross-cutting admin schemas (cache, feature flags, route toggles) — S168 W17 P2-10"
 entry_class = "extensions.core_admin.schemas_only:SchemasOnlyEntry"
-
-[dependencies]
-# No hard deps — pure Pydantic schemas
+requires_core = ">=0.2.0"
+# No declarative dependencies (capabilities handled in code).

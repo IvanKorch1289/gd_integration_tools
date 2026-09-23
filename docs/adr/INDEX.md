@@ -139,7 +139,8 @@
 | [ADR-0340](0340-w11-p2-1-audit-hash-chain.md) | W11 P2-1: Audit log integrity — `HashChainLedger` (append-only ledger + SHA-256 chain + canonical JSON + verify/verify_with_gaps + signed_checkpoint placeholder); tamper detection + restore verification | **Accepted** |
 | [ADR-0341](0341-w2-p1-2-legacy-processors-inventory.md) | W2 P1-2: Legacy DSL processors inventory tool — `tools/audit_legacy_processors.py` классифицирует 24 файла (16 REMOVABLE / 6 SEMANTIC_KEEP / 2 SHIMMED / 0 NEEDS_MIGRATION); `--strict` CI gate; module-level cache ~7s | **Accepted** |
 | [ADR-0342](0342-ai-policy-spec-s76-tool-policy-migration.md) | AIPolicySpec S76 schema migration — `ai_policies/agent_basic.policy.yaml` `tool_policy.{allow,deny,max_calls_per_run}` → `tools.{whitelist,blacklist,on_violation,allow_all_tools}`; `max_calls_per_run` lost (deferred); 3 alternatives considered | **Accepted** |
+| [ADR-0343](0343-pluginmanifest-schema-evolution-core-admin-dadata-skb.md) | PluginManifest schema evolution: 3 extensions (core_admin, dadata, skb) — nested `[plugin]/[dependencies]` tables → flat top-level fields + add `requires_core`; Pydantic 6 violations per file → 0; same pattern as ADR-0342; 3 alternatives considered | **Accepted** |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 
-**Total:** 135 ADRs.
+**Total:** 136 ADRs.
 
