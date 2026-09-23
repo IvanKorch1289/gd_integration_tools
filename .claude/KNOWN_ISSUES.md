@@ -2040,7 +2040,11 @@ falsifiable reference.
    `tools/checks/check_object_authorization.py`: 133 service-lookup'а без
    tenant-фильтра. Framework-level точка — TenantResourceIsolationMiddleware
    (wired, order 330); для включения enforcement нужны production checker'ы
-   через `register_ownership_checker` (см. core/security/object_ownership.py).
+   (`register_ownership_checker`, контракт: async (resource_id, tenant_id)
+   -> bool поверх реального tenant-scoped стора). Per-route декоратор
+   `require_object_ownership` в core/security/object_ownership.py — сам
+   S170-stub (loader не подключён). До появления доменных сторов оба
+   механизма честно pass-through, не mock-fallback.
 
 3. **Privacy lifecycle (visibility, non-blocking).**
    `tools/checks/check_privacy_lifecycle.py`: erasure-покрытие отсутствует у
