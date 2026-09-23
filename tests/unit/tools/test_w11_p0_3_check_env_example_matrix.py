@@ -258,15 +258,24 @@ class TestCliMatrix:
         assert rc == 1
 
     def test_matrix_mode_fails_on_required_secret_missing(self) -> None:
-        """--matrix: exit 1 если есть required secrets missing."""
+        """--matrix: exit 1 если есть required secrets missing.
+
+        After bug fix in commit (env var naming rstrip("_")) + .env.example update
+        для SEC_ROUTES_WITHOUT_API_KEY, current real repo has 0 truly required
+        secrets missing. Test verifies the gate works correctly:
+        - Exit 0 when no required secrets missing (post-fix state).
+        """
         rc = main(["--matrix"])
-        # В реальном репо 11 required secrets missing → exit 1
-        assert rc == 1
+        # After fix: 0 required secrets missing → exit 0.
+        assert rc == 0, (
+            "Если rc=1, значит bug вернулся: либо env var naming bug, "
+            "либо .env.example не содержит documented required secret."
+        )
 
     def test_json_output(self) -> None:
-        """--json выводит structured JSON."""
+        """--json выводит structured JSON (exit 0 если no required missing)."""
         result = runner.invoke(app, ["--matrix", "--json"])
-        assert result.exit_code == 1  # есть missing
+        assert result.exit_code == 0  # нет required missing после fix
         data = json.loads(result.stdout)
         assert "total_expected" in data
         assert "total_documented" in data
@@ -274,7 +283,24 @@ class TestCliMatrix:
         assert "extra" in data
         assert "matrix_required_secrets_missing" in data
         assert isinstance(data["matrix_required_secrets_missing"], list)
-        assert len(data["matrix_required_secrets_missing"]) > 0
+        # Post-fix: 0 required secrets missing
+        assert len(data["matrix_required_secrets_missing"]) == 0
+
+    def test_matrix_mode_detects_missing_when_introduced(self) -> None:
+        """Regression test: --matrix должен exit 1 когда есть missing.
+
+        Использует monkeypatch для симуляции missing required secret.
+        """
+        original_collect = module.collect_required_secret_env_vars
+        module.collect_required_secret_env_vars = (
+            lambda: original_collect() | {"FAKE_REQUIRED_SECRET"}
+        )
+
+        try:
+            rc = main(["--matrix"])
+            assert rc == 1, "Gate должно exit 1 при наличии missing required secret"
+        finally:
+            module.collect_required_secret_env_vars = original_collect
 
     def test_json_output_default(self) -> None:
         """--json без --matrix: matrix_required_secrets_missing = []."""

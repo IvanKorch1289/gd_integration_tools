@@ -146,7 +146,7 @@ def collect_expected_env_vars() -> set[str]:
     for path in CONFIG_DIR.rglob("*.py"):
         for prefix, fields in _extract_env_prefixes_from_file(path):
             for field, _ in fields:
-                expected.add(f"{prefix}_{field}".upper())
+                expected.add(f"{prefix.rstrip('_')}_{field}".upper())
     return expected
 
 
@@ -160,7 +160,7 @@ def collect_required_secret_env_vars() -> set[str]:
         for prefix, fields in _extract_env_prefixes_from_file(path):
             for field, is_required in fields:
                 if is_required and _is_secret_field_name(field):
-                    expected.add(f"{prefix}_{field}".upper())
+                    expected.add(f"{prefix.rstrip('_')}_{field}".upper())
     return expected
 
 
