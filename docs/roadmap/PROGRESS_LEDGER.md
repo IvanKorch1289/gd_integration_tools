@@ -4406,3 +4406,53 @@ Per-submodule max **159 LOC** (vs 691 god-module). Все < 200 LOC threshold.
 - ⏭️ Phase 3B (deferred): adapter logic dedup, TombstonePublisher → Kafka.
 - ⏭️ Phase 4: следующие god-modules (services/ops/health.py 609, services/ai/agent_sandbox.py 601,
   core/ai/skill_registry.py 614, core/di/providers/workflow.py 602).
+
+---
+
+## W9 P2-13 Phase 4: services/ops/health god-module split (2026-09-23, cycle 153)
+
+**Задача**: `services/ops/health.py` (609 LOC) — top-4 god-module. 1 service
+class + 8 health checks + utilities mixed в одном файле.
+
+**Решение** (ADR-0329):
+
+Преобразован в `health/` package с 4 cohesion submodules. `health.py` стал
+**41 LOC thin re-export shim** (609 → 41, 93% reduction).
+
+**Submodule layout**:
+
+| Submodule | LOC | Содержимое |
+|---|---|---|
+| `_types.py` | 30 | ProcessorHealthResult dataclass |
+| `_http.py` | 47 | _http_get, _tcp_connect (low-level probes) |
+| `_service.py` | 204 | ProcessorHealthService + singleton |
+| `_checks.py` | 367 | 7 default processor checks (Kafka SR, Temporal, Vault, ClickHouse, Redis, NATS, Graylog) + _is_strict_mode |
+
+Per-submodule max **367 LOC** (vs 609 god-module). Все < 500 LOC threshold.
+`_checks.py` biggest — 7 checks cohesive (all per-service health probes),
+нельзя split further без потери cohesion.
+
+**Back-compat (W2 P0-3 SagaLRA Variant A pattern)**:
+- Shim `health.py` (file) re-exports все 3 публичных имён из package.
+- `services/ops/__init__.py` (public API) без изменений.
+- 7 default checks (Kafka SR, Temporal, Vault, ClickHouse, Redis cluster, NATS,
+  Graylog) автоматически регистрируются при `get_processor_health_service()`
+  через lazy import в `_service.py`.
+
+**Verification**:
+- `compileall -q src/backend/services/ops/` → exit 0
+- `ruff check src/backend/services/ops/` → All checks passed
+- `pytest tests/unit/services/ops/test_w9_p2_13_phase4_*_split.py` → 14 passed:
+  - 3 back-compat identity (shim is canonical)
+  - 4 submodule export (types, http, service, checks)
+  - 3 singleton behavior (returns service, same instance, 7 default checks registered)
+  - 2 shim/metadata compliance (shim < 100 LOC, submodules < 500 LOC)
+  - 2 dataclass smoke (construction, attribute access)
+
+**Cycle 153 итог (W9 P2-13 Phase 4)**:
+- ✅ Top-4 god-module декомпозирован (609 → 4 cohesion submodules).
+- ✅ 14 focused tests (back-compat + singleton + shim compliance).
+- ✅ ADR-0329 создан (122 ADRs total).
+- ⏭️ Phase 5: `services/ai/agent_sandbox.py` (601 LOC) — sandbox split.
+- ⏭️ Phase 6: `core/ai/skill_registry.py` (614 LOC) — skill registry split.
+- ⏭️ Phase 7: `core/di/providers/workflow.py` (602 LOC) — workflow split (если не уменьшится).

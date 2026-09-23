@@ -1,5 +1,35 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W9 P2-13 Phase 4: services/ops/health god-module split (609 LOC → 4 submodules)
+
+### refactor(services/ops): health god-module → package with 4 cohesion submodules
+
+`src/backend/services/ops/health.py` (609 LOC, top-4 god-module) →
+`health/` package с 4 cohesion submodules:
+
+| Submodule | LOC | Содержимое |
+|---|---|---|
+| `_types.py` | 30 | `ProcessorHealthResult` dataclass |
+| `_http.py` | 47 | `_http_get`, `_tcp_connect` low-level probes |
+| `_service.py` | 204 | `ProcessorHealthService`, `_is_strict_mode`, `get_processor_health_service` singleton |
+| `_checks.py` | 367 | 7 default processor checks (Kafka SR, Temporal, Vault, ClickHouse, Redis cluster, NATS, Graylog) |
+
+`health.py` стал **41 LOC thin re-export shim** (609 → 41, 93% reduction).
+Per-submodule max 367 LOC (vs 609 god-module).
+
+**Back-compat**: `services/ops.health` public API без изменений. Все 3 публичных
+имён (`ProcessorHealthService`, `ProcessorHealthResult`, `get_processor_health_service`)
+доступны через обе entry points.
+
+**Tests**: `tests/unit/services/ops/test_w9_p2_13_phase4_health_split.py` —
+14 focused tests (3 back-compat identity + 4 submodule export + 3 singleton
+behavior + 2 shim/metadata compliance + 2 dataclass smoke).
+
+**Verification**: pytest 14 passed, ruff All checks passed, compileall exit 0.
+ADR-0329 (122 ADRs total).
+
+---
+
 ## [Unreleased] — 2026-09-23 — W9 P2-13 Phase 3: privacy/delete_data_subject god-module split (691 LOC → 8 submodules)
 
 ### refactor(privacy): delete_data_subject god-module → package with 8 cohesion submodules
