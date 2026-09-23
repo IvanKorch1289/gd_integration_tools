@@ -1,5 +1,31 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W6 P1-8 Phase 3: tools/check_env_example.py argparse → typer (3rd tool)
+
+### refactor(tools): check_env_example.py мигрирован argparse → typer+rich
+
+`tools/check_env_example.py` (Wave F.9, проверка покрытия `.env.example`
+относительно Pydantic Settings, 157 LOC) — мигрирован на `typer` + `rich`
+по pattern ADR-0318 (Phase 1) / ADR-0319 (Phase 2). Это **3-й tool** подряд
+с одним и тем же proven pattern:
+- `import_wsdl.py` (90 LOC, 4 flags) — Phase 1
+- `import_postman.py` (110 LOC, 4 flags) — Phase 2
+- `check_env_example.py` (157 LOC, 1 flag) — Phase 3 (trivial)
+
+**Что сделано**:
+- `argparse.ArgumentParser` → `typer.Typer` + `@app.callback(invoke_without_command=True)`.
+- `print(..., file=sys.stderr)` → `_console.print("[red][check-env-example][/]...")`.
+- Backward-compat `main(argv=None)` через `CliRunner.invoke()` + `app()` fallback.
+- Removed unused `import sys` (заменён на rich.console).
+
+**Tests**: `tests/unit/tools/test_w6_p1_8_phase3_check_env_example_typer.py` —
+8 focused tests (Typer instance, no argparse, typer-formatted --help, backward-compat).
+
+**Verification**: pytest 8 passed, ruff All checks passed, compileall exit 0.
+ADR-0322 (115 ADRs total).
+
+---
+
 ## [Unreleased] — 2026-09-23 — W9 P2-13 Phase 2: `cache.py` god-module split (868 LOC → 7 domain files)
 
 ### refactor(di): cache.py providers decomposition — domain split + back-compat shim

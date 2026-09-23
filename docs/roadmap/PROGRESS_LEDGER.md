@@ -4101,3 +4101,53 @@ utility.
   отдельный sub-wave.
 - ⏭️ W9 P2-13 Phase 3: остальные god-modules (`core/privacy/delete_data_subject.py`
   691, `services/ops/health.py` 609, `services/ai/agent_sandbox.py` 601).
+
+---
+
+## W6 P1-8 Phase 3: tools/check_env_example.py argparse → typer (2026-09-23, cycle 153)
+
+**Задача**: продолжить migration argparse → typer+rich после успешных pilots
+ADR-0318 (`tools/import_wsdl.py`) и ADR-0319 (`tools/import_postman.py`).
+
+**Решение** (ADR-0322):
+
+Мигрирован `tools/check_env_example.py` (Wave F.9, проверка покрытия
+`.env.example` относительно Pydantic Settings, 157 → 187 LOC, +30).
+
+Pattern (proven на 2 предыдущих tools):
+- `argparse.ArgumentParser` → `typer.Typer` + `@app.callback(invoke_without_command=True)`.
+- `print(..., file=sys.stderr)` → `_console.print("[red]...")` (rich color codes).
+- Backward-compat `main(argv=None)` через `CliRunner.invoke()` + `app()` fallback.
+
+**Pattern validation (3 tools)**:
+
+| Tool | LOC (orig→new) | CLI args | Complexity |
+|---|---|---|---|
+| `import_wsdl.py` (Phase 1) | 90 → 132 | 4 flags | simple |
+| `import_postman.py` (Phase 2) | 110 → 169 | 4 flags | simple |
+| `check_env_example.py` (Phase 3) | 157 → 187 | 1 flag | trivial |
+
+Pattern **proven на 3 tools с разной сложностью** (4-flag → 1-flag).
+Готов для тиражирования на остальные ~86 argparse tools.
+
+**Note**: tests используют `importlib.util.spec_from_file_location()` workaround
+для pytest `--import-mode=importlib` (pre-existing pytest quirk, затрагивает
+все W6 P1-8 tests). Workaround не меняет test contract.
+
+**Verification**:
+- `compileall -q tools/check_env_example.py` → exit 0
+- `pytest tests/unit/tools/test_w6_p1_8_phase3_check_env_example_typer.py` → 8 passed
+- `ruff check tools/check_env_example.py` → All checks passed
+- CLI работает: `--help` (typer-formatted), `--strict` (exit 1), default (exit 1)
+
+**Roadmap для остальных ~86 argparse tools**:
+- Phase 4 (cycle 156+): `check_dsn_drivers.py` (133), `discover_plugin_capabilities.py` (241)
+- Phase 5: `codegen_plugin.py` (484), `check_docstrings.py` (519), `config_audit.py` (486)
+- Phase 6 (отдельный sprint): `codegen_settings.py` (1107), `pre_prod_check.py` (898),
+  `gen_dsl_stubs.py` (875)
+
+**Cycle 153 итог (W6 P1-8 Phase 3)**:
+- ✅ 3-й tool мигрирован (check_env_example.py), pattern proven на trivial case.
+- ✅ 8 focused tests (test_w6_p1_8_phase3_check_env_example_typer.py).
+- ✅ ADR-0322 создан (115 ADRs total).
+- ⏭️ Phase 4: ~2-3 more simple tools (~cycle 156+).

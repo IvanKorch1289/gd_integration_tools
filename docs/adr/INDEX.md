@@ -119,6 +119,7 @@
 | [ADR-0319](0319-w6-p1-8-phase2-import-postman-typer.md) | W6 P1-8 Phase 2: tools/import_postman.py мигрирован argparse → typer (pattern validation) | Accepted |
 | [ADR-0320](0320-w9-p2-13-routebuilder-protocols-god-module-split.md) | W9 P2-13: `_protocols.py` (1094 LOC, 21 Protocol) god-module → `_protocols/` package с 6 family sub-modules | Accepted |
 | [ADR-0321](0321-w9-p2-13-phase2-cache-providers-decomposition.md) | W9 P2-13 Phase 2: `cache.py` (868 LOC god-module, 26 concerns) → cache.py (~478 LOC) + observability.py + security.py + messaging.py + extended db/ai/http/workflow | Accepted |
+| [ADR-0322](0322-w6-p1-8-phase3-check-env-example-typer.md) | W6 P1-8 Phase 3: tools/check_env_example.py мигрирован argparse → typer (3rd tool, 1-flag trivial) | Accepted |
 
-**Total:** 114 ADRs.
+**Total:** 115 ADRs.
 

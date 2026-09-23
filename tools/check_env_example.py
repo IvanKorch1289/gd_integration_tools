@@ -16,18 +16,39 @@
 
   python tools/check_env_example.py
   python tools/check_env_example.py --strict
+
+MINIMAX W6 P1-8 Phase 3 (cycle 153): мигрирован с ``argparse`` на ``typer`` +
+``rich`` (libraries > custom, per ADR-0084). Сохранены: typer-native entry +
+legacy ``main()`` callback для backward-compat с pre-existing scripts.
 """
 
 from __future__ import annotations
 
-import argparse
 import ast
-import sys
 from pathlib import Path
+
+import typer
+from rich.console import Console
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CONFIG_DIR = PROJECT_ROOT / "src" / "core" / "config"
 ENV_EXAMPLE = PROJECT_ROOT / ".env.example"
+
+app = typer.Typer(
+    name="check-env-example",
+    help="Проверка покрытия .env.example относительно Pydantic Settings.",
+    add_completion=False,
+)
+_console = Console(stderr=True)
+
+
+def _base_name(node: ast.AST) -> str:
+    """Возвращает имя base-класса (без generic'ов и qualifiers)."""
+    if isinstance(node, ast.Name):
+        return node.id
+    if isinstance(node, ast.Attribute):
+        return node.attr
+    return ""
 
 
 def _extract_env_prefixes_from_file(path: Path) -> list[tuple[str, list[str]]]:
@@ -48,77 +69,71 @@ def _extract_env_prefixes_from_file(path: Path) -> list[tuple[str, list[str]]]:
         if not isinstance(node, ast.ClassDef):
             continue
         bases = {_base_name(b) for b in node.bases}
-        if not bases & {"BaseSettings", "BaseSettingsWithLoader"}:
+        if not ({"BaseSettings", "BaseSettingsWithLoader"} & bases):
             continue
 
-        env_prefix = ""
+        prefix = ""
         field_names: list[str] = []
         for item in node.body:
             if isinstance(item, ast.Assign):
-                if any(
-                    isinstance(t, ast.Name) and t.id == "model_config"
-                    for t in item.targets
-                ):
-                    env_prefix = _extract_env_prefix(item.value)
+                for tgt in item.targets:
+                    if (
+                        isinstance(tgt, ast.Name)
+                        and tgt.id == "model_config"
+                        and isinstance(item.value, ast.Call)
+                    ):
+                        for kw in item.value.keywords:
+                            if (
+                                kw.arg == "env_prefix"
+                                and isinstance(kw.value, ast.Constant)
+                                and isinstance(kw.value.value, str)
+                            ):
+                                prefix = kw.value.value
             elif isinstance(item, ast.AnnAssign) and isinstance(item.target, ast.Name):
-                fname = item.target.id
-                if not fname.startswith("_") and fname != "yaml_group":
-                    field_names.append(fname)
-        out.append((env_prefix, field_names))
+                field_names.append(item.target.id)
+
+        if prefix and field_names:
+            out.append((prefix, field_names))
+
     return out
 
 
-def _base_name(node: ast.expr) -> str:
-    if isinstance(node, ast.Name):
-        return node.id
-    if isinstance(node, ast.Attribute):
-        return node.attr
-    return ""
-
-
-def _extract_env_prefix(call: ast.expr) -> str:
-    if not isinstance(call, ast.Call):
-        return ""
-    for kw in call.keywords:
-        if kw.arg == "env_prefix" and isinstance(kw.value, ast.Constant):
-            return str(kw.value.value)
-    return ""
-
-
 def collect_expected_env_vars() -> set[str]:
-    """Собрать все ожидаемые env-переменные из Settings."""
+    """Собирает ожидаемые env-переменные из всех Pydantic Settings."""
     expected: set[str] = set()
     for path in CONFIG_DIR.rglob("*.py"):
         for prefix, fields in _extract_env_prefixes_from_file(path):
             for field in fields:
-                # Pydantic env case: <PREFIX><FIELD_UPPER>.
-                expected.add(f"{prefix}{field.upper()}")
+                expected.add(f"{prefix}_{field}".upper())
     return expected
 
 
 def collect_env_example_vars() -> set[str]:
-    """Парсит .env.example — собирает имена переменных."""
+    """Парсит ``.env.example`` и возвращает множество описанных переменных."""
     if not ENV_EXAMPLE.exists():
         return set()
-    out: set[str] = set()
-    for raw in ENV_EXAMPLE.read_text(encoding="utf-8").splitlines():
-        line = raw.strip()
-        if not line or line.startswith("#"):
+    documented: set[str] = set()
+    for line in ENV_EXAMPLE.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
             continue
-        if "=" in line:
-            out.add(line.split("=", 1)[0].strip())
-    return out
+        name = stripped.split("=", 1)[0].strip()
+        documented.add(name)
+    return documented
 
 
-def main(argv: list[str] | None = None) -> int:
-    """Точка входа CLI."""
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
+@app.callback(invoke_without_command=True)
+def _main(
+    ctx: typer.Context,
+    strict: bool = typer.Option(
+        False,
         "--strict",
-        action="store_true",
         help="Также fail при наличии лишних переменных в .env.example.",
-    )
-    args = parser.parse_args(argv)
+    ),
+) -> None:
+    """Wave F.9: проверка покрытия .env.example."""
+    if ctx.invoked_subcommand is not None:
+        return
 
     expected = collect_expected_env_vars()
     documented = collect_env_example_vars()
@@ -128,29 +143,45 @@ def main(argv: list[str] | None = None) -> int:
 
     rc = 0
     if missing:
-        print(
-            f"[check_env_example] {len(missing)} переменных Settings не описаны в .env.example:",
-            file=sys.stderr,
+        _console.print(
+            f"[red][check-env-example][/] {len(missing)} переменных Settings не описаны в .env.example:"
         )
         for v in missing:
-            print(f"  - {v}")
+            _console.print(f"  - {v}")
         rc = 1
     if extra:
-        msg = (
-            f"[check_env_example] {len(extra)} переменных в .env.example "
-            "не используются в Settings:"
+        _console.print(
+            f"[yellow][check-env-example][/] {len(extra)} переменных в .env.example не используются в Settings:"
         )
-        print(msg, file=sys.stderr)
         for v in extra:
-            print(f"  - {v}")
-        if args.strict:
+            _console.print(f"  - {v}")
+        if strict:
             rc = 1
     if rc == 0:
-        print(
-            f"[check_env_example] OK: {len(expected)} переменных, .env.example покрывает все.",
-            file=sys.stderr,
+        _console.print(
+            f"[green][check-env-example][/] OK: {len(expected)} переменных, .env.example покрывает все."
         )
-    return rc
+    raise typer.Exit(code=rc)
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Точка входа CLI (backward-compat shim).
+
+    Запускает typer app через typer.testing.CliRunner (для тестов)
+    или sys.argv (для CLI invocation). Возвращает exit code.
+    """
+    if argv is not None:
+        from typer.testing import CliRunner
+
+        runner = CliRunner()
+        result = runner.invoke(app, argv)
+        return result.exit_code
+    # CLI invocation: typer сам подхватит sys.argv[1:]
+    try:
+        app()
+    except SystemExit as exc:
+        return int(exc.code) if exc.code is not None else 0
+    return 0
 
 
 if __name__ == "__main__":
