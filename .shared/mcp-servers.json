@@ -67,6 +67,18 @@
         "-y",
         "@playwright/mcp"
       ]
+    },
+    "docker": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "docker-mcp"
+      ],
+      "env": {
+        "DOCKER_MCP_LOCAL": "true"
+      },
+      "_comment": "Аудит 2026-09-21: Docker MCP for container ops в Kimi Code сессии. Использует local Docker daemon. User должен быть в docker group (added via usermod)."
     }
   }
 }
