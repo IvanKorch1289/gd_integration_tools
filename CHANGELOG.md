@@ -1,5 +1,23 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W10 DX: `make new-route` scaffold с cURL smoke
+
+### feat(dx): scaffold лёгких маршрутов (V11.1a)
+
+`make new-route NAME=<snake_case>` →
+[`ops/scripts/new_route.py`](/home/user/dev/gd_integration_tools/ops/scripts/new_route.py)
+(typer, канон W6) создаёт `routes/<name>/`:
+
+- `route.toml` — валидный V11-манифест (capabilities/feature_flag/slo);
+- `main.dsl.yaml` — рабочий маршрут: feature-flag gate → validate_request →
+  echo-response (`${body}`), CHANGEME-плейсхолдеры помечены;
+- `README.md` — функциональный cURL smoke (позитив + flag-gate случай) и
+  браузерная проверка через Swagger UI «Try it out».
+
+Тесты: [`tests/unit/tools/test_new_route_scaffold.py`](/home/user/dev/gd_integration_tools/tests/unit/tools/test_new_route_scaffold.py)
+(5 focused: генерация в tmp_path через `--root`, tomllib-валидация манифеста,
+yaml-структура, отказ на не-snake_case и на существующую директорию).
+
 ## [Unreleased] — 2026-09-23 — W6 P1-8 Phase 8: tools/check_docstrings.py argparse → typer (8th tool)
 
 ### refactor(tools): check_docstrings.py мигрирован argparse → typer+rich

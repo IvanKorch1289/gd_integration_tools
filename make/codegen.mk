@@ -1,5 +1,11 @@
 ##@ Codegen Wave 5
-##@ Codegen Wave 5
+
+new-route: check-env ## Scaffold light route (V11.1a): routes/<NAME>/ + toml + yaml + cURL README (MINIMAX W10 DX)
+	@if [ -z "$(NAME)" ]; then \
+		echo "Использование: make new-route NAME=<snake_case>"; \
+		exit 2; \
+	fi
+	@$(UV_RUN) python ops/scripts/new_route.py "$(NAME)"
 
 new-service: check-env ## Scaffold service+repo+schema+action (NAME=plural DOMAIN=core [CRUD=1] [FIELDS='{"k":"str"}'])
 	@if [ -z "$(NAME)" ] || [ -z "$(DOMAIN)" ]; then \
