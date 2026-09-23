@@ -87,25 +87,18 @@ def _find_features_source() -> tuple[dict[str, int], str] | None:
 
 
 def _parse_declared_dependencies(validator_py: str) -> tuple[set[str], set[str]]:
-    """Парсит validator.py и возвращает множества declared dependencies."""
+    """Парсит validator.py и возвращает множества declared dependencies.
+
+    S52 W2 fix: regex сделан robust к type annotation между name и `=`,
+    плюс extraction всех quoted-keys внутри dict body (не только последнего).
+    """
     warning_deps = set()
     critical_deps = set()
 
-    # WARNING dict keys
-    warning_match = re.findall(
-        r'_FEATURE_FLAG_DEPENDENCIES\s*=\s*\{[^}]*"([^"]+)":', validator_py, re.DOTALL
+    warning_deps |= _extract_dict_keys(validator_py, "_FEATURE_FLAG_DEPENDENCIES")
+    critical_deps |= _extract_dict_keys(
+        validator_py, "_FEATURE_FLAG_DEPENDENCIES_CRITICAL"
     )
-    for key in warning_match:
-        warning_deps.add(key.strip())
-
-    # CRITICAL dict keys
-    critical_match = re.findall(
-        r'_FEATURE_FLAG_DEPENDENCIES_CRITICAL\s*=\s*\{[^}]*"([^"]+)":',
-        validator_py,
-        re.DOTALL,
-    )
-    for key in critical_match:
-        critical_deps.add(key.strip())
 
     # S45 W3 (TD-018): _FEATURE_FLAG_DEPENDENCIES_STRICT_AUTOMAP — bulk
     # mapping для *X_strict → X (naming convention). Каждый ключ в
@@ -119,6 +112,51 @@ def _parse_declared_dependencies(validator_py: str) -> tuple[set[str], set[str]]
                 warning_deps.add(key_match.strip())
 
     return warning_deps, critical_deps
+
+
+def _extract_dict_keys(source: str, dict_name: str) -> set[str]:
+    """Extract all quoted keys из dict literal named ``dict_name``.
+
+    Robust к type annotation между name и ``=``:
+        ``{dict_name}: Final[Mapping[...]] = { ... }``
+
+    Возвращает set строковых ключей. Игнорирует закомментированные ключи
+    (те, что начинаются с ``#`` и содержат ``"key":`` внутри комментария —
+    такие ключи выявляются по отсутствию ``, `` после ``:`` в реальной строке,
+    но мы упрощаем: regex ищет pattern ``"<key>":`` только в строках без
+    префикса ``#`` в текущей логической строке).
+    """
+    pattern = (
+        rf"{re.escape(dict_name)}\s*(?::[^=\n]+)?=\s*\{{"
+    )
+    match = re.search(pattern, source, re.DOTALL)
+    if not match:
+        return set()
+
+    # Find matching closing brace (для nested-безопасности, если бывают dict-inside-dict).
+    body_start = match.end()
+    depth = 1
+    i = body_start
+    while i < len(source) and depth > 0:
+        ch = source[i]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+        i += 1
+    if depth != 0:
+        return set()
+    body = source[body_start:i - 1]
+
+    # Извлекаем все строковые ключи, исключая строки в комментариях.
+    keys: set[str] = set()
+    for line in body.splitlines():
+        stripped = line.lstrip()
+        if stripped.startswith("#"):
+            continue  # комментарий — skip
+        for key_match in re.finditer(r'"([^"]+)"\s*:', line):
+            keys.add(key_match.group(1))
+    return keys
 
 
 def _check_no_dep_required_comments(features_src: str) -> set[str]:
