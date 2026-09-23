@@ -5951,3 +5951,15 @@ migration window + contract test» — ext-аналогия: менять schema
     - Plugin.toml schema migration (3 files, требует separate ADR)
     - Lazy-load perf (startup 9.1s vs 1.7s budget)
  \n\n**v4 §5 demonstrated (4 instances this session)**:\n1. Inventory tool: REMOVABLE classification wrong heuristic (16 → 0).\n2. Validator gate: regex bug (1/3 CRITICAL entries visible).\n3. startup_time gate: inf masking 7× perf regression ≥ 6 недель.\n4. check_compat gate: broken import (ModuleNotFoundError silently failing).
+## Регрессионный замер после DI-фиксов (2026-09-23, cycles 152+)
+
+Полные прогоны после 1bb04cc63 + f05d0d9ff:
+- tests/unit/dsl: **4690 passed / 26 failed** (было 4627/79 — DI-фиксы
+  закрыли 63 теста: module_registry ключи, compat-реэкспорты, CacheMixin API).
+- tests/unit/entrypoints: **1344 passed / 26 failed** (админ-audit/brotli —
+  pre-existing; admin_workflow_versioning — нужны auth-фикстуры;
+  grpc/mcp — pollution от cache-тестов без cleanup).
+- Остаток классифицирован в `.claude/KNOWN_ISSUES.md` (регрессия-замер):
+  mypy 54 (W9-сплиты), ruff format drift 210 файлов, Redis-блокированные
+  cache-тесты, saga/fanout (W11). Ни один остаток не является регрессией
+  DI-фиксов.

@@ -2075,3 +2075,31 @@ falsifiable reference.
    только на 3.14 (`requires-python=">=3.14,<3.15"`). Fact-check с командами:
    `docs/audit/FACTCHECK_MINIMAX_V2_2026-09-23.md`. Опциональная скобочная
    миграция для Py<3.14-переносимости: `tools/migrate_py2_except.py --check`.
+
+## Регрессия-замер после DI-фиксов (2026-09-23, HEAD 1bb04cc63/f05d0d9ff)
+
+Полные прогоны tests/unit/dsl (4690 passed / 26 failed) и
+tests/unit/entrypoints (1176+ passed / 26 failed). Весь остаток — не
+регрессия DI-фиксов, классифицирован:
+
+1. **mypy 0→54** — fallout W9-сплитов (storage/s3.py ×8, audit.py ×7,
+   jupyter mixins ×11, ingest/scan ×5, ...). Блокирующий гейт
+   `type-check-budget` (max 5) красный. Владелец: W9-волна.
+2. **ruff format drift: 210 файлов** (G3 FAIL в CURRENT_STATUS,
+   114 auto-fixable) — W9/W6 массовые правки без `make format`.
+   Владелец: W9/W6 волны; `make format` + ruff --fix закрывают.
+3. **11 cache/cachewrite unit-тестов (dsl/ai) + 7 grpc/mcp (entrypoints)** —
+   (а) тесты требуют живой Redis или AsyncMock-override провайдера
+   (сейчас получают MagicMock → "can't be awaited"); (б) их cache-тесты
+   пишут `_overrides["redis_client"]=mock` без cleanup → кросс-файловая
+   pollution (последующие suite'ы получают мок). Нужна autouse-fixture
+   очистки `_overrides` в их тестах + Redis/моки.
+4. **11 admin_audit/brotli (middlewares)** — pre-existing, подтверждено
+   прогоном на чистом HEAD.
+5. **8 admin_workflow_versioning (entrypoints)** — роутер получил
+   admin-auth dependency (харденинг), тесты не аутентифицируются →
+   нужны auth-фикстуры (не откатывать auth!).
+6. **4 saga_lra (DB-fixture) + 3 fanout_deadline (новая W11-волна)**
+   — зоны параллельной разработки.
+7. Docstrings: 250 missing / 48 файлов (exit 1), бейзлайн в AGENTS.md
+   актуализирован; рэтчет от 250 вниз.
