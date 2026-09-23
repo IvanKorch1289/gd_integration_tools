@@ -26,6 +26,7 @@ _TB = "bank_b"
 
 # ═══ TenantContext (ContextVar isolation) ═══════════════════════════════
 
+
 class TestTenantContext:
     def test_set_and_get(self) -> None:
         ctx = TenantContext(tenant_id=_TA)
@@ -34,6 +35,7 @@ class TestTenantContext:
         assert get_tenant_id() == _TA
         # cleanup
         from src.backend.core.tenancy import _current
+
         _current.set(None)
 
     def test_no_leak_sequential(self) -> None:
@@ -45,6 +47,7 @@ class TestTenantContext:
         assert get_tenant_id() == _TB
         assert get_tenant_id() != _TA
         from src.backend.core.tenancy import _current
+
         _current.set(None)
 
     @pytest.mark.asyncio
@@ -64,6 +67,7 @@ class TestTenantContext:
 
 # ═══ TenantCacheBackend (prefix isolation) ══════════════════════════════
 
+
 def _make_tenant_cache(tid: str) -> tuple[Any, list[str]]:
     """TenantCacheBackend с текущим tenant=tid. Возвращает (backend, keys)."""
     from src.backend.infrastructure.cache.tenant_wrapper import TenantCacheBackend
@@ -82,10 +86,7 @@ def _make_tenant_cache(tid: str) -> tuple[Any, list[str]]:
     inner.set = AsyncMock(side_effect=_set)
 
     ctx = TenantContext(tenant_id=tid)
-    backend = TenantCacheBackend(
-        inner,
-        tenant_provider=lambda: ctx,
-    )
+    backend = TenantCacheBackend(inner, tenant_provider=lambda: ctx)
     return backend, keys
 
 
@@ -106,6 +107,7 @@ class TestTenantCachePrefix:
 
 # ═══ DB row-level isolation (TenantMixin) ═══════════════════════════════
 
+
 class TestDBTenantIsolation:
     def test_tenant_column_not_nullable(self) -> None:
         from extensions.core_entities.users.domain.models import User
@@ -122,6 +124,7 @@ class TestDBTenantIsolation:
 
 
 # ═══ RAG invalidation isolation ═════════════════════════════════════════
+
 
 class TestRAGInvalidationIsolation:
     @pytest.mark.asyncio
