@@ -24,11 +24,7 @@ src/backend/core/rate_limiter/__init__.py  # self-reference only
 `src.backend.core.resilience`, **НЕ** из `src.backend.core.rate_limiter`:
 
 ```python
-from src.backend.core.resilience import (
-    RateLimit,
-    RateLimiter,
-    get_rate_limiter,
-)
+from src.backend.core.resilience import RateLimit, RateLimiter, get_rate_limiter
 ```
 
 Production rate limiter живёт в `src/backend/core/resilience/rate_limiter.py`,

@@ -37,7 +37,9 @@ class AntivirusTimeoutError(asyncio.TimeoutError):
     exception type упрощает диагностику и метрики.
     """
 
-    def __init__(self, message: str, *, backend: str = "unknown", timeout_s: float | None = None) -> None:
+    def __init__(
+        self, message: str, *, backend: str = "unknown", timeout_s: float | None = None
+    ) -> None:
         super().__init__(message)
         self.backend = backend
         self.timeout_s = timeout_s

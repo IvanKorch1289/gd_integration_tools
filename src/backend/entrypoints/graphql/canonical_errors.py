@@ -177,7 +177,9 @@ def install_canonical_formatter() -> None:
     """
     # graphql-core 3.2.x не экспортирует format_error — canonical formatter
     # работает через прямой вызов format_graphql_error() вместо monkey-patching.
-    logger.info("canonical_graphql_formatter: format_graphql_error доступен для прямого вызова")
+    logger.info(
+        "canonical_graphql_formatter: format_graphql_error доступен для прямого вызова"
+    )
 
 
 __all__ = ("ErrorCategory", "format_graphql_error", "install_canonical_formatter")

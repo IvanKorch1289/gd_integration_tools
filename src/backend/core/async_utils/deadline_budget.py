@@ -65,11 +65,7 @@ class DeadlineExpiredError(asyncio.TimeoutError):
     """
 
     def __init__(
-        self,
-        message: str,
-        *,
-        path: str = "",
-        original_timeout: float | None = None,
+        self, message: str, *, path: str = "", original_timeout: float | None = None
     ) -> None:
         super().__init__(message)
         self.path = path
@@ -120,7 +116,9 @@ class DeadlineBudget:
         Raises:
             DeadlineOverflowError: если ``timeout`` не положительный.
         """
-        if timeout <= 0 or timeout != timeout or math.isinf(timeout):  # reject 0/neg/NaN/inf
+        if (
+            timeout <= 0 or timeout != timeout or math.isinf(timeout)
+        ):  # reject 0/neg/NaN/inf
             raise DeadlineOverflowError(
                 f"timeout must be positive finite seconds, got {timeout!r}"
             )
@@ -208,11 +206,7 @@ class _DeadlineBudgetTimeoutCM:
     Используется как ``async with budget.asyncio_timeout():``.
     """
 
-    def __init__(
-        self,
-        inner_cm: asyncio.Timeout,
-        budget: DeadlineBudget,
-    ) -> None:
+    def __init__(self, inner_cm: asyncio.Timeout, budget: DeadlineBudget) -> None:
         self._inner_cm = inner_cm
         self._budget = budget
 
