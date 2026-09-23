@@ -1,5 +1,32 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W6 P1-8 Phase 7: tools/generate_adr_index.py argparse → typer (7th tool)
+
+### refactor(tools): generate_adr_index.py мигрирован argparse → typer+rich
+
+`tools/generate_adr_index.py` (Sprint 42 W3 ADR INDEX generator, 109 LOC) —
+мигрирован на `typer` + `rich` по proven pattern. **7-й tool** подряд.
+
+**Что сделано**:
+- `argparse.ArgumentParser` → `typer.Typer` + `@app.callback(invoke_without_command=True)`.
+- 2 flags сохранены: `--check` (CI gate), `--dry-run` (preview).
+- `print(..., file=sys.stderr)` → `_console.print("[red]...[/]")` (rich).
+- Backward-compat `main(argv=None)` через `CliRunner.invoke()` + `app()` fallback.
+- Removed unused `import sys`.
+
+**Pattern validation (7 tools)**: 4 trivial + 2 simple + 1 medium.
+
+**Side effect**: `python tools/generate_adr_index.py` регенерировал INDEX.md
+(118 → 119 ADRs total, формат обновлён: bold status, ADR-0305 sorted в конец).
+
+**Tests**: `tests/unit/tools/test_w6_p1_8_phase7_generate_adr_index_typer.py` —
+7 focused tests.
+
+**Verification**: pytest 7 passed, ruff All checks passed, compileall exit 0.
+ADR-0326 (119 ADRs total).
+
+---
+
 ## [Unreleased] — 2026-09-23 — W6 P1-8 Phase 6: tools/migrate_to_structlog.py argparse → typer (6th tool)
 
 ### refactor(tools): migrate_to_structlog.py мигрирован argparse → typer+rich

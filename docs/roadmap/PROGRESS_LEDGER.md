@@ -4265,3 +4265,49 @@ boolean flags, path arguments.
 - ✅ 8 focused tests.
 - ✅ ADR-0325 создан (118 ADRs total).
 - ⏭️ Phase 7: ~2 tools (check_docstrings 519 LOC, generate_adr_index) — cycle 156+.
+
+---
+
+## W6 P1-8 Phase 7: tools/generate_adr_index.py argparse → typer (2026-09-23, cycle 153)
+
+**Задача**: продолжить W6 P1-8 momentum (после Phase 1-6).
+
+**Решение** (ADR-0326):
+
+Мигрирован `tools/generate_adr_index.py` (Sprint 42 W3 ADR INDEX generator,
+109 → 137 LOC, +28). 2 flags сохранены (`--check` CI gate, `--dry-run` preview).
+
+**Pattern validation (7 tools)**:
+
+| Tool | LOC (orig→new) | Args | Complexity |
+|---|---|---|---|
+| `import_wsdl.py` (Phase 1) | 90 → 132 | 4 flags | simple |
+| `import_postman.py` (Phase 2) | 110 → 169 | 4 flags | simple |
+| `check_env_example.py` (Phase 3) | 157 → 187 | 1 flag | trivial |
+| `check_dsn_drivers.py` (Phase 4) | 133 → 152 | 1 flag | trivial |
+| `s86_workflow_sandbox_guard.py` (Phase 5) | 143 → 178 | 2 flags | trivial |
+| `migrate_to_structlog.py` (Phase 6) | 282 → 314 | 1 arg + 1 flag | medium |
+| `generate_adr_index.py` (Phase 7) | 109 → 137 | 2 flags | trivial |
+
+Pattern **proven на 7 tools** (4 trivial + 2 simple + 1 medium).
+
+**INDEX.md regeneration (side effect)**:
+`python tools/generate_adr_index.py` после миграции регенерировал `docs/adr/INDEX.md`:
+- 118 → 119 ADRs total (включая 6 новых из сессии)
+- Status field bold (`**Accepted**`)
+- ADR-0305 (Draft) sorted в конец
+- Cleaner titles (убраны излишние детали)
+
+**Verification**:
+- `compileall -q tools/generate_adr_index.py` → exit 0
+- `pytest tests/unit/tools/test_w6_p1_8_phase7_*_typer.py` → 7 passed
+- `ruff check tools/generate_adr_index.py` → All checks passed
+- `--check` → exit 0 (up to date после regen)
+
+**Cycle 153 итог (W6 P1-8 Phase 7)**:
+- ✅ 7-й tool мигрирован (generate_adr_index.py), trivial CI gate tool.
+- ✅ 7 focused tests.
+- ✅ ADR-0326 создан (119 ADRs total).
+- ✅ INDEX.md regenerated (118 → 119 ADRs).
+- ⏭️ Phase 8: ~3 more tools (check_docstrings 519 LOC, migrate_plugin_manifest,
+  scaffold) — cycle 156+.

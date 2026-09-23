@@ -4,14 +4,19 @@
 Сканирует ``docs/adr/*.md``, парсит номер ADR, название и статус,
 и записывает сводку в ``docs/adr/INDEX.md``. Может использоваться
 локально (``make adr-index``) или в CI (``.github/workflows/adr-sync.yml``).
+
+MINIMAX W6 P1-8 Phase 7 (cycle 153): мигрирован с ``argparse`` на ``typer`` +
+``rich`` (libraries > custom, per ADR-0084). Сохранены: typer-native entry +
+legacy ``main()`` callback для backward-compat с pre-existing scripts.
 """
 
 from __future__ import annotations
 
-import argparse
 import re
-import sys
 from pathlib import Path
+
+import typer
+from rich.console import Console
 
 ROOT = Path(__file__).resolve().parents[1]
 ADR_DIR = ROOT / "docs" / "adr"
@@ -67,42 +72,78 @@ def generate_index() -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Generate docs/adr/INDEX.md")
-    parser.add_argument(
+    """Точка входа CLI (backward-compat shim для существующих скриптов).
+
+    Запускает typer app через typer.testing.CliRunner (для тестов)
+    или sys.argv (для CLI invocation). Возвращает exit code.
+    """
+    if argv is not None:
+        from typer.testing import CliRunner
+
+        runner = CliRunner()
+        result = runner.invoke(app, argv)
+        return result.exit_code
+    # CLI invocation: typer сам подхватит sys.argv[1:]
+    try:
+        app()
+    except SystemExit as exc:
+        return int(exc.code) if exc.code is not None else 0
+    return 0
+
+
+app = typer.Typer(
+    name="generate-adr-index",
+    help="Generate docs/adr/INDEX.md from docs/adr/*.md.",
+    add_completion=False,
+)
+_console = Console()
+
+
+@app.callback(invoke_without_command=True)
+def _main(
+    ctx: typer.Context,
+    check: bool = typer.Option(
+        False,
         "--check",
-        action="store_true",
         help="Fail if INDEX.md is out of date (CI gate).",
-    )
-    parser.add_argument(
+    ),
+    dry_run: bool = typer.Option(
+        False,
         "--dry-run",
-        action="store_true",
         help="Print result to stdout instead of writing file.",
-    )
-    args = parser.parse_args(argv)
+    ),
+) -> None:
+    """Generate docs/adr/INDEX.md."""
+    if ctx.invoked_subcommand is not None:
+        return
 
     new_content = generate_index()
 
-    if args.dry_run:
-        sys.stdout.write(new_content)
-        return 0
+    if dry_run:
+        # raw stdout write для CI grep-ability
+        import sys
 
-    if args.check:
+        sys.stdout.write(new_content)
+        return
+
+    if check:
         if not INDEX_PATH.exists():
-            print(f"ADR INDEX missing: {INDEX_PATH}", file=sys.stderr)
-            return 1
+            _console.print(f"[red]ADR INDEX missing: {INDEX_PATH}[/]")
+            raise typer.Exit(code=1)
         current = INDEX_PATH.read_text(encoding="utf-8")
         if current != new_content:
-            print(
-                "ADR INDEX is out of date. Run: uv run python tools/generate_adr_index.py",
-                file=sys.stderr,
+            _console.print(
+                "[red]ADR INDEX is out of date. "
+                "Run: uv run python tools/generate_adr_index.py[/]"
             )
-            return 1
-        print("ADR INDEX is up to date.")
-        return 0
+            raise typer.Exit(code=1)
+        _console.print("[green]ADR INDEX is up to date.[/]")
+        return
 
     INDEX_PATH.write_text(new_content, encoding="utf-8")
-    print(f"Updated {INDEX_PATH} ({len(new_content)} chars)")
-    return 0
+    _console.print(
+        f"[green]Updated {INDEX_PATH} ({len(new_content)} chars)[/]"
+    )
 
 
 if __name__ == "__main__":
