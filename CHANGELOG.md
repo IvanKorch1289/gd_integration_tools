@@ -1,5 +1,61 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W2 P0-3 Phase 1A: BatchProcessor migration pilot
+
+### refactor(dsl): BatchProcessor migration pilot — canonical + shim (MINIMAX W2 P0-3)
+
+MINIMAX W2 P0-3 Phase 1A: pilot consolidation `dsl/processors/batch_processor`
+→ `dsl/engine/processors/batch_processor`. Legacy → re-export shim с
+DeprecationWarning. Pattern для Phase 1B (5 single-file + 3 subpackage).
+
+* **`src/backend/dsl/engine/processors/batch_processor.py`** (canonical, +153 LOC):
+  копия из legacy. Импорты внутри уже указывают на `dsl.engine.processors.base`.
+
+* **`src/backend/dsl/processors/batch_processor.py`** (shim, −153+37 LOC):
+  re-export `BatchProcessor` с `DeprecationWarning` (`stacklevel=2`,
+  ссылка на ADR-0313, removal planned cycle 156).
+
+* **`tests/unit/dsl/processors/test_w2_p0_3_batch_processor_migration.py`**
+  (новый, ~95 строк, 4 теста): TestBatchProcessorIdentity (2) +
+  TestLegacyDeprecationWarning (1) + TestBatchProcessorInstantiation (1).
+
+* **`docs/adr/0313-w2-p0-3-batch-processor-migration-pilot.md`** (новый, ~210 строк):
+  ADR с описанием strategy + Phase 1B/2/3 roadmap.
+
+* **`docs/adr/INDEX.md`**: ADR-0313 зарегистрирован (106 ADRs total).
+
+### Roadmap
+
+- Phase 1B (отдельные commits): strangler_fig, data_lineage,
+  plan_execute, reflection_loop, router_specialist, event_store/,
+  idp_pipeline_processor/.
+- Phase 2 (отдельный ADR): SagaLRA — **другая реализация** (mixin-based),
+  не дубликат. Variant A: migrate legacy; Variant B: deprecate legacy
+  force-migrate к current.
+- Phase 3 (cycle 156+): removal после telemetry audit.
+
+### Verification
+
+```
+Legacy path: from src.backend.dsl.processors.batch_processor import BatchProcessor
+Current path: from src.backend.dsl.engine.processors.batch_processor import BatchProcessor
+Identity: BP_legacy is BP_current  ✓ (один класс)
+DeprecationWarning: emits с ссылкой на ADR-0313 ✓
+
+uv run python -m pytest tests/unit/dsl/processors/test_w2_p0_3_batch_processor_migration.py
+  → 4 passed
+uv run python -m pytest tests/unit/dsl/processors/test_batch_processor.py
+  → 13 passed (pre-existing, regression-clean)
+
+compileall -q src/ extensions/ scripts/ tools/ tests/  → exit 0
+ruff check --select F401,F841,F811,E9                   → All checks passed!
+```
+
+Refs: MINIMAX W2 P0-3, ADR-0084, ADR-0308 (SagaLRA prerequisite),
+ADR-0313, cycle 152.
+
+---
+
 ## [Unreleased] — 2026-09-23 — W5 P1-7: structlog default backend + circular import fix
 
 ### feat(logging): factory auto-detect structlog default (~800 call sites) (MINIMAX W5 P1-7)

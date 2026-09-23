@@ -110,6 +110,7 @@
 | [ADR-0310](0310-w3-p0-5-pyi-drift-regeneration.md) | W3 P0-5: RouteBuilder/WorkflowBuilder .pyi drift fix (1886 LOC) + CI enforcement gate | Accepted |
 | [ADR-0311](0311-w4-p1-6-aiocache-evaluation-hybrid.md) | W4 P1-6: aiocache evaluation + HYBRID decision (sync=cachetools, simple async=aiocache opt-in, advanced=custom) | Accepted |
 | [ADR-0312](0312-w5-p1-7-structlog-default-circular-fix.md) | W5 P1-7: structlog default backend (factory auto-detect) + circular import fix (~800 call sites) | Accepted |
+| [ADR-0313](0313-w2-p0-3-batch-processor-migration-pilot.md) | W2 P0-3 Phase 1A: BatchProcessor migration pilot (canonical + shim + DeprecationWarning) | Accepted |
 
-**Total:** 105 ADRs.
+**Total:** 106 ADRs.
 
