@@ -84,17 +84,40 @@ def measure_import(module: str) -> float:
     if proc.returncode != 0:
         sys.stderr.write(f"ERROR importing {module}: {proc.stderr}\n")
         return float("inf")
-    # Marker-based extraction: find last line matching MARKER pattern.
-    marker_prefix = "STARTUP_TIME_MARKER:"
-    for line in proc.stdout.splitlines():
-        if line.startswith(marker_prefix):
+    return _extract_elapsed_from_stdout(proc.stdout)
+
+
+# Marker prefix константа — single source of truth.
+_MARKER_PREFIX = "STARTUP_TIME_MARKER:"
+
+
+def _extract_elapsed_from_stdout(stdout: str) -> float:
+    """Извлекает elapsed time из subprocess stdout.
+
+    Strategy (cycle 158+ measurement fix):
+    1. Primary: marker-based extraction — search for ``STARTUP_TIME_MARKER:<float>``
+       в stdout lines. Устойчив к stdout pollution (structlog, Vault logger, etc.).
+    2. Fallback: legacy behavior — ``float(stdout.strip().splitlines()[-1])``.
+    3. Failure: ``float('inf')`` если ничего parseable.
+
+    Extracted from ``measure_import`` to make it testable in isolation
+    (per v4 §10 P1: evidence требует testable surface).
+
+    Args:
+        stdout: raw subprocess stdout.
+
+    Returns:
+        Elapsed time в секундах (float), или ``float('inf')`` если can't parse.
+    """
+    for line in stdout.splitlines():
+        if line.startswith(_MARKER_PREFIX):
             try:
-                return float(line[len(marker_prefix):])
+                return float(line[len(_MARKER_PREFIX):])
             except ValueError:
                 continue
-    # Fallback: legacy behavior (if no marker found, try raw parse)
+    # Fallback: legacy behavior (subprocess without marker).
     try:
-        return float(proc.stdout.strip().splitlines()[-1])
+        return float(stdout.strip().splitlines()[-1])
     except (ValueError, IndexError):
         return float("inf")
 
