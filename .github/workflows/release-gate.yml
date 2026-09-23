@@ -1,0 +1,80 @@
+# Aggregate required-status CI job — release gate.
+#
+# Аудит 2026-09-21: required checks должны проходить на последнем commit SHA.
+# GitHub требует merge_group для merge queue.
+# Этот workflow агрегирует lint + test + type + security + contract + sbom + image + smoke
+# и падает с ясным сообщением, если хоть один upstream failed/skipped.
+
+name: release-gate
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  merge_group:
+
+# Без concurrency — release-gate это наблюдатель, не writer.
+concurrency:
+  group: release-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  aggregate:
+    name: aggregate-required-status
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Aggregate upstream checks
+        # S170 R-FIX (аудит 2026-09-21): все required jobs должны быть SUCCESS.
+        # GitHub API: checks API returns conclusion per check_run.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+          echo "Aggregating checks for SHA=${SHA}"
+
+          # Required upstream workflows.
+          REQUIRED=(
+            "lint"
+            "test"
+            "type"
+            "security"
+            "sbom"
+            "stubs-drift"
+            "build-and-deploy"
+          )
+
+          FAILED=()
+          for WORKFLOW in "${REQUIRED[@]}"; do
+            echo "--- ${WORKFLOW} ---"
+            # Get latest run for this workflow on this SHA.
+            RUN_JSON="$(gh api \
+              -H "Accept: application/vnd.github+json" \
+              "/repos/${REPO}/actions/runs?head_sha=${SHA}&workflow_id=${WORKFLOW}&per_page=1" \
+              2>/dev/null || echo '{"workflow_runs":[]}')"
+            CONCLUSION="$(echo "${RUN_JSON}" | jq -r '.workflow_runs[0].conclusion // "missing"')"
+            echo "  conclusion: ${CONCLUSION}"
+            if [[ "${CONCLUSION}" != "success" ]]; then
+              FAILED+=("${WORKFLOW}: ${CONCLUSION}")
+            fi
+          done
+
+          if [[ ${#FAILED[@]} -gt 0 ]]; then
+            echo ""
+            echo "❌ RELEASE GATE FAILED — upstream checks not green:"
+            for f in "${FAILED[@]}"; do
+              echo "  - ${f}"
+            done
+            echo ""
+            echo "Required: lint, test, type, security, sbom, stubs-drift, build-and-deploy"
+            exit 1
+          fi
+
+          echo "✅ All upstream checks green — release gate PASS"

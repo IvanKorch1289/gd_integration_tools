@@ -1,0 +1,62 @@
+# Flaky test allowlist (Sprint 10 — audit 2026-09-22 P2).
+#
+# Каждый xfail test в tests/ должен иметь entry здесь с:
+#   owner: email ответственного (для ping при expiry)
+#   issue: ticket URL (JIRA, GitHub) для отслеживания root cause
+#   expires: ISO 8601 date — после этой даты CI должен fail
+#   reason: краткое описание почему test flaky
+#
+# CI gate (tools/checks/check_flaky_test_budget.py --strict):
+#   - exit 1 если xfail без entry
+#   - exit 1 если entry expired
+#
+# Workflow: при добавлении entry — owner ОБЯЗАН указать expiry ≤ 30 дней.
+# При приближении expiry — owner пересматривает и либо fix'ит test
+# (тогда entry удаляется), либо продлевает с новой expiry.
+
+[meta]
+policy_version = "1.0.0"
+max_expiry_days = 30  # Owner не может установить expiry > 30 дней.
+created = "2026-09-22"
+policy = """
+Quarantine contract:
+1. Each xfail test must have an allowlist entry within 7 days of being added.
+2. Owner must respond within 14 days of expiry ping.
+3. Tests cannot remain quarantined > 90 days without explicit waiver.
+4. CI is the single source of truth for flaky-test budget.
+"""
+
+# Entries: key = "file:line:test_name"
+# Sprint 10 initial entries — auto-extracted from tests/, awaiting owner review.
+
+[entries]
+
+# tests/security/test_rls_isolation.py:211 test_rls_superuser_bypass
+"tests/security/test_rls_isolation.py:211:test_rls_superuser_bypass" = { owner = "security@bank.local", issue = "https://github.com/bank/security/issues/42", expires = "2026-10-22", reason = "RLS bypass test — требует production PG role" }
+
+# tests/unit/entrypoints/email/test_imap_monitor.py:294 test_connect_live_server
+"tests/unit/entrypoints/email/test_imap_monitor.py:294:test_connect_live_server" = { owner = "ops@bank.local", issue = "https://github.com/bank/ops/issues/108", expires = "2026-10-15", reason = "IMAP live connect — нужен mock SMTP server в CI" }
+
+# tests/unit/entrypoints/mcp/test_mcp_server.py:69 test_create_mcp_server
+"tests/unit/entrypoints/mcp/test_mcp_server.py:69:test_create_mcp_server" = { owner = "ai-team@bank.local", issue = "https://github.com/bank/ai/issues/201", expires = "2026-11-01", reason = "MCP server creation — async fixture race" }
+
+# tests/unit/core/ai/test_gateway_scaffold.py:48 test_invoke_pass_through_when_flag_off
+"tests/unit/core/ai/test_gateway_scaffold.py:48:test_invoke_pass_through_when_flag_off" = { owner = "ai-team@bank.local", issue = "https://github.com/bank/ai/issues/185", expires = "2026-10-22", reason = "S162 W8: S85 changed contract — ai_gateway_enforce=False no longer supported" }
+
+# tests/unit/dsl/round_trip/test_format_converters.py
+"tests/unit/dsl/round_trip/test_format_converters.py:35:test_format_converter_round_trip" = { owner = "dsl-team@bank.local", issue = "https://github.com/bank/dsl/issues/44", expires = "2026-10-22", reason = "Format converter — to_spec() missing на некоторых типах" }
+"tests/unit/dsl/round_trip/test_format_converters.py:67:test_format_converters_full_pipeline" = { owner = "dsl-team@bank.local", issue = "https://github.com/bank/dsl/issues/45", expires = "2026-10-22", reason = "Full pipeline — partial conversion coverage" }
+
+# tests/unit/dsl/round_trip/test_enrichment_business.py
+"tests/unit/dsl/round_trip/test_enrichment_business.py:36:test_w28_processor_round_trip" = { owner = "dsl-team@bank.local", issue = "https://github.com/bank/dsl/issues/67", expires = "2026-10-22", reason = "W28 processors: geoip missing, other processors have incomplete to_spec()" }
+"tests/unit/dsl/round_trip/test_enrichment_business.py:111:test_w28_pipeline_full_chain" = { owner = "dsl-team@bank.local", issue = "https://github.com/bank/dsl/issues/68", expires = "2026-10-22", reason = "W28 pipeline — chained to_spec() gaps" }
+
+# tests/unit/dsl/round_trip/test_pilot_batch_s5_round_trip.py
+"tests/unit/dsl/round_trip/test_pilot_batch_s5_round_trip.py:23:test_pilot_batch_s5_round_trip" = { owner = "dsl-team@bank.local", issue = "https://github.com/bank/dsl/issues/82", expires = "2026-10-22", reason = "S5 pilot processors — to_spec() missing, round-trip blocked" }
+"tests/unit/dsl/round_trip/test_pilot_batch_s5_round_trip.py:57:test_pilot_batch_s5_full_chain" = { owner = "dsl-team@bank.local", issue = "https://github.com/bank/dsl/issues/83", expires = "2026-10-22", reason = "S5 pilot full chain — blocked by to_spec() gaps" }
+
+# tests/unit/services/ai/test_langmem_smoke.py (cycle 38)
+"tests/unit/services/ai/test_langmem_smoke.py:test_recall_unknown_kind_raises" = { owner = "ai-team@bank.local", issue = "https://github.com/bank/ai/issues/189", expires = "2026-10-22", reason = "LangMem forward-looking — recall(kind='invalid') raises ValueError" }
+
+# tests/unit/dsl/round_trip/test_banking_ai.py:61
+"tests/unit/dsl/round_trip/test_banking_ai.py:61:test_w29_ai_banking_pipeline_full_chain" = { owner = "dsl-team@bank.local", issue = "https://github.com/bank/dsl/issues/91", expires = "2026-10-22", reason = "W29 banking pipeline: KycAmlVerifyProcessor et al. have broken to_spec()" }

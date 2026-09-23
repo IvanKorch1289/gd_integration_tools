@@ -1,0 +1,141 @@
+# Feature-flag registry (Sprint 11 — audit 2026-09-22 P2).
+# Auto-generated from src/ scan. Owner/expires — TODO.
+
+[meta]
+policy_version = "1.0.0"
+max_expiry_days = 90
+created = "2026-09-22"
+
+# Policy:
+# 1. Каждый flag должен иметь owner (team email) и expires date.
+# 2. Default expires = created + 30 days.
+# 3. CI gate (tools/checks/check_feature_flag_debt.py --strict):
+#    - exit 1 если flag без entry
+#    - exit 1 если entry expired
+# 4. Stale flags (>90 дней без activity) — блокируют release.
+
+[flags]
+"activity_capability_gate_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"adaptive_rag_strategy" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"add" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"admin_marketplace_endpoints" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"ai_agent_dsl_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"ai_audit_unified_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"ai_cost_dashboard_strict" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"ai_gateway_enforce" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"ai_in_process_sandbox_disabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"ai_model_registry_ui" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"ai_pii_tokenizer_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"ai_policy_enforce" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"ai_safety_capability_unify" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"ai_safety_panel_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"ai_workflow_activity_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"ai_workspace_ttl_cleanup" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"audit_clickhouse_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"audit_hmac_verify_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"auth_joserfc" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"backpressure_streaming_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"banking_ai_processors_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"browser_cookies_redis_persist" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"call_function_whitelist_strict" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"cdc_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"cdc_postgres_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"db_call_procedure_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"discard" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"distributed_rl_redis_cluster" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"dlq_unified_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"dsl_linter_strict" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"dsl_usage_audit_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"dspy_eval_pipeline_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"dspy_feedback_loop" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"email_imap_source" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"embedding_ab_migration" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"embedding_v2_traffic" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"eventbus_dsl_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"eventbus_facade" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"flagsmith" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"flagsmith_client" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"flagsmith_provider" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"frontend_action_bus_ui" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"frontend_workflow_logs_page" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"granian_rsgi_mode_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"guardrails_per_tenant" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"hitl_panel_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"inspect_ai_eval_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"jupyter_hub_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"langfuse_v3" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"langgraph_checkpoint_ui" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"langgraph_postgres_checkpoint" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"langmem_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"lsp_server_published" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"mcp_gateway_namespaces_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"mcp_tools_input_schema_strict" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"metering_per_host" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"metrics_registry_strict" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"mobile_jwt_revoc_fail_closed" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"multi_agent_supervisor_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"multi_replica_failover" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"multi_tenant_rate_limit_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"multimodal_rag_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"multipart_rag_ingest" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"nemo_guardrails_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"notification_dsl_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"openfeature" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"openfeature_provider" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"otel_asyncpg" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"plugin_semver_strict" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"policy_chainable_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"pool_health_monitor" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"pool_monitor_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"presidio_pii_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"proc_geo" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"proc_html_template" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"proc_jq" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"proc_jsonpath" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"proc_ldap_query" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"proc_pdf_template" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"proc_rate_convert" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"proc_regex_extractor" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"proc_unit_conversion" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"proc_webdav" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"proc_webhook_signature" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"proc_zip_archive" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"processor_health_checks_strict" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"prod_hot_reload_disable" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"prompt_lab_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"prompt_registry_gateway_wiring" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"prompt_registry_langfuse" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"py" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"rag_cache_l3_retrieval_invalidation" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"rag_pii_retrieval_mask" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"redis_broadcaster" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"reranking_pipeline_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"resilience_dashboard_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"result_unwrap_processor" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"rls_postgres_enforce" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"route_loader_hot_reload" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"routes_capability_gate_strict" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"rpa_ocr_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"rpa_resilience_wrapper_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"runtime_overrides" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"saml_ad_login_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"saml_sp_initiated_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"scheduler_backend" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"scheduler_dlq_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"service" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"service_toml_loader" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"tenant_cache_prefix_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"tenant_token_budget_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"token_budget_fail_closed" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"voice_image_gen_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"voice_stt_tts_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"waf_outbound_via_facade" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"web_search_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"webhook_resilience_policy_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"workflow_bpmn_import" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"workflow_dryrun_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"workflow_step_log_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"workflow_subprocess_require_parent" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"workflow_template_semantic_search" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"workflow_versioning_routes" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"workflow_yaml_round_trip" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }

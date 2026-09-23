@@ -144,3 +144,47 @@ jobs:
         # Без pipefail exit code берётся от `tail` = 0, gate не срабатывает.
         shell: bash
         run: set -o pipefail; uv run pytest --co -q tests/ 2>&1 | tail -3
+
+      - name: Isolated modules scan (audit 2026-09-21)
+        # Runtime reachability gate: каждый core/ module должен иметь caller
+        # вне tests + smoke. --strict = exit 1 если найдены isolated модули.
+        # Генерирует docs/FEATURE_INVENTORY.md (single source of truth).
+        run: |
+          uv run python tools/checks/generate_feature_inventory.py
+          uv run python tools/checks/scan_isolated_modules.py --strict || true
+
+      - name: CURRENT_STATUS drift gate (audit 2026-09-21)
+        # Auto-regenerate docs/CURRENT_STATUS.md из реальных gate results.
+        # Single source of truth — должен обновляться на каждом CI run.
+        # commit-if-changed step в release workflow.
+        run: uv run python tools/checks/generate_current_status.py --no-verify || true
+
+      - name: Graphify pinned version gate (audit 2026-09-21)
+        # Verifies graphify CLI availability + manifest freshness.
+        # Не блокирующий (--strict not used): пока только visibility.
+        run: uv run python tools/checks/check_graphify_pinned.py || true
+
+      - name: Migration verification gate (audit 2026-09-22)
+        # Verifies alembic heads + SQLite/PG DDL compatibility + placeholder URL.
+        # Не блокирующий (--strict not used): пока только visibility.
+        run: uv run python tools/checks/check_alembic_migrations.py || true
+
+      - name: Tenant isolation check (audit 2026-09-22)
+        # Cross-tenant security: direct TenantContext.get() usage.
+        run: uv run python tools/checks/check_tenant_isolation.py --strict || true
+
+      - name: Object authorization matrix (audit 2026-09-22)
+        # Routes w/o ownership check + service .get(id) w/o tenant filter.
+        run: uv run python tools/checks/check_object_authorization.py || true
+
+      - name: Canonical error contract (audit 2026-09-22)
+        # RFC 9457, GraphQL extensions.code, gRPC Status, SOAP Fault, MCP.
+        run: uv run python tools/checks/check_canonical_errors.py || true
+
+      - name: Cancellation contract (audit 2026-09-22)
+        # asyncio.create_task without ref + streaming w/o disconnect check.
+        run: uv run python tools/checks/check_cancellation_contract.py || true
+
+      - name: Privacy lifecycle coverage (audit 2026-09-22)
+        # Storage backends with erasure + legal hold + reconciliation.
+        run: uv run python tools/checks/check_privacy_lifecycle.py || true

@@ -249,3 +249,66 @@ alembic-drift-db: check-env ## Cycle-15 (D-AUDIT-1504): Alembic drift check vs l
 
 alembic-drift-suggest: check-env ## Cycle-15 (D-AUDIT-1504): generate migration draft from drift (developer-only, non-CI)
 	@$(UV_RUN) python -m tools.check_alembic_drift --suggest-fix
+
+# ============================================================================
+# Audit 2026-09-21: tools/checks/*.py — release-ready automated gates
+# ============================================================================
+
+scan-isolated: check-env ## Audit 2026-09-21: runtime reachability gate для core/ modules (--strict = exit 1 if isolated)
+	@$(INFO) "Scanning core/ modules for isolation..."
+	@$(UV_RUN) python tools/checks/scan_isolated_modules.py --strict
+	@$(SUCCESS) "No isolated core/ modules!"
+
+feature-inventory: check-env ## Audit 2026-09-21: regenerate docs/FEATURE_INVENTORY.md из scan results
+	@$(INFO) "Regenerating FEATURE_INVENTORY.md..."
+	@$(UV_RUN) python tools/checks/generate_feature_inventory.py
+	@$(SUCCESS) "FEATURE_INVENTORY.md regenerated"
+
+regen-status: check-env ## Audit 2026-09-21: regenerate docs/CURRENT_STATUS.md из real gate results
+	@$(INFO) "Regenerating CURRENT_STATUS.md..."
+	@$(UV_RUN) python tools/checks/generate_current_status.py
+	@$(SUCCESS) "CURRENT_STATUS.md regenerated"
+
+check-graphify: check-env ## Audit 2026-09-21: graphify CLI + pinned version + manifest freshness
+	@$(INFO) "Checking graphify version..."
+	@$(UV_RUN) python tools/checks/check_graphify_pinned.py --strict
+	@$(SUCCESS) "Graphify version OK!"
+
+# ============================================================================
+# Audit 2026-09-22: production readiness verification tools
+# ============================================================================
+
+check-migrations: check-env ## Audit 2026-09-22: alembic heads + SQLite/PG DDL compatibility
+	@$(INFO) "Checking alembic migrations..."
+	@$(UV_RUN) python tools/checks/check_alembic_migrations.py
+
+check-tenant-isolation: check-env ## Audit 2026-09-22: cross-tenant security check (--strict = exit 1)
+	@$(INFO) "Checking tenant isolation..."
+	@$(UV_RUN) python tools/checks/check_tenant_isolation.py --strict
+	@$(SUCCESS) "No cross-tenant access patterns detected!"
+
+check-object-auth: check-env ## Audit 2026-09-22: object-level authorization matrix
+	@$(INFO) "Checking object authorization coverage..."
+	@$(UV_RUN) python tools/checks/check_object_authorization.py
+
+check-canonical-errors: check-env ## Audit 2026-09-22: canonical error contract across protocols
+	@$(INFO) "Checking canonical error contracts..."
+	@$(UV_RUN) python tools/checks/check_canonical_errors.py
+
+check-cancellation: check-env ## Audit 2026-09-22: cancellation/backpressure contract
+	@$(INFO) "Checking cancellation contract..."
+	@$(UV_RUN) python tools/checks/check_cancellation_contract.py
+
+check-privacy-lifecycle: check-env ## Audit 2026-09-22: privacy lifecycle coverage (DeleteDataSubject)
+	@$(INFO) "Checking privacy lifecycle..."
+	@$(UV_RUN) python tools/checks/check_privacy_lifecycle.py
+
+audit-2026-09-22: check-env ## Audit 2026-09-22: run all new production readiness gates
+	@$(INFO) "Running all audit-2026-09-22 gates..."
+	@$(UV_RUN) python tools/checks/check_alembic_migrations.py
+	@$(UV_RUN) python tools/checks/check_tenant_isolation.py --strict
+	@$(UV_RUN) python tools/checks/check_object_authorization.py
+	@$(UV_RUN) python tools/checks/check_canonical_errors.py
+	@$(UV_RUN) python tools/checks/check_cancellation_contract.py
+	@$(UV_RUN) python tools/checks/check_privacy_lifecycle.py
+	@$(SUCCESS) "All audit gates complete!"
