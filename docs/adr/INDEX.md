@@ -123,7 +123,8 @@
 | [ADR-0324](0324-w6-p1-8-phase5-s86-workflow-sandbox-guard-typer.md) | W6 P1-8 Phase 5: `tools/s86_workflow_sandbox_guard.py` argparse → typer | **Accepted** |
 | [ADR-0325](0325-w6-p1-8-phase6-migrate-to-structlog-typer.md) | W6 P1-8 Phase 6: `tools/migrate_to_structlog.py` argparse → typer | **Accepted** |
 | [ADR-0326](0326-w6-p1-8-phase7-generate-adr-index-typer.md) | W6 P1-8 Phase 7: `tools/generate_adr_index.py` argparse → typer | **Accepted** |
+| [ADR-0327](0327-w6-p1-8-phase8-check-docstrings-typer.md) | W6 P1-8 Phase 8: `tools/check_docstrings.py` argparse → typer (8th tool, 5 flags + positional, pre-push gate) | **Accepted** |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 
-**Total:** 119 ADRs.
+**Total:** 120 ADRs.
 

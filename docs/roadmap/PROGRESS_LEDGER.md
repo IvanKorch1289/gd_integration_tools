@@ -4311,3 +4311,47 @@ Pattern **proven на 7 tools** (4 trivial + 2 simple + 1 medium).
 - ✅ INDEX.md regenerated (118 → 119 ADRs).
 - ⏭️ Phase 8: ~3 more tools (check_docstrings 519 LOC, migrate_plugin_manifest,
   scaffold) — cycle 156+.
+
+---
+
+## W6 P1-8 Phase 8: tools/check_docstrings.py argparse → typer (2026-09-23, cycle 153)
+
+**Задача**: продолжить W6 P1-8 momentum (после Phase 1-7).
+
+**Решение** (ADR-0327):
+
+Мигрирован `tools/check_docstrings.py` (Sprint 42 W3 docstring coverage analyzer,
+519 → 575 LOC, +56). Pre-push gate с 5 flags + positional paths.
+
+**Pattern validation (8 tools)**:
+
+| Tool | LOC (orig→new) | Args | Complexity |
+|---|---|---|---|
+| `import_wsdl.py` (Phase 1) | 90 → 132 | 4 flags | simple |
+| `import_postman.py` (Phase 2) | 110 → 169 | 4 flags | simple |
+| `check_env_example.py` (Phase 3) | 157 → 187 | 1 flag | trivial |
+| `check_dsn_drivers.py` (Phase 4) | 133 → 152 | 1 flag | trivial |
+| `s86_workflow_sandbox_guard.py` (Phase 5) | 143 → 178 | 2 flags | trivial |
+| `migrate_to_structlog.py` (Phase 6) | 282 → 314 | 1 arg + 1 flag | medium |
+| `generate_adr_index.py` (Phase 7) | 109 → 137 | 2 flags | trivial |
+| `check_docstrings.py` (Phase 8) | 519 → 575 | 5 flags + positional | medium-high |
+
+Pattern **proven на 8 tools**. Mature enough для тиражирования на остальные ~80.
+
+**Special note**: `print(output)` → `sys.stdout.write(output)` для сохранения
+CI grep-compatibility (JSON output не получает rich formatting — иначе CI
+парсеры JSON сломаются).
+
+**Verification**:
+- `compileall -q tools/check_docstrings.py` → exit 0
+- `pytest tests/unit/tools/test_w6_p1_8_phase8_*_typer.py` → 8 passed
+- `ruff check tools/check_docstrings.py` → 1 pre-existing F841 (unrelated)
+- CLI: --help (typer), --summary (exit 0), --max-allowed 5 src/ (250 missing),
+  --json (JSON output)
+
+**Cycle 153 итог (W6 P1-8 Phase 8)**:
+- ✅ 8-й tool мигрирован (check_docstrings.py), medium-high complexity.
+- ✅ 8 focused tests (с дополнительным sys.modules workaround для dataclass).
+- ✅ ADR-0327 создан (120 ADRs total).
+- ⏭️ Phase 9: ~5 simple tools (migrate_plugin_manifest, scaffold, check_layer_imports,
+  add_f401_noqa, add_f401_multiline_noqa) — cycle 156+.

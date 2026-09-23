@@ -4,17 +4,23 @@ Docstring coverage analyzer for Python codebases.
 
 Scans Python files for public functions/classes without docstrings.
 Supports --summary, --path, and --json output modes.
+
+MINIMAX W6 P1-8 Phase 8 (cycle 153): мигрирован с ``argparse`` на ``typer`` +
+``rich`` (libraries > custom, per ADR-0084). Сохранены: typer-native entry +
+legacy ``main()`` callback для backward-compat с pre-existing scripts.
 """
 
 from __future__ import annotations
 
-import argparse
 import ast
 import json
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterator
+
+import typer
+from rich.console import Console
 
 
 @dataclass
@@ -402,74 +408,88 @@ def load_allowlist(path: Path) -> set[str]:
     return entries
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description='Check for missing docstrings in Python code.',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog='''
-Examples:
-  %(prog)s src/                          # Scan src directory
-  %(prog)s src/backend/core/config/      # Scan specific directory
-  %(prog)s --summary src/                # Summary only
-  %(prog)s --json src/ > report.json     # JSON output
-  %(prog)s --allowlist tools/check_docstrings_allowlist.txt \\
-      src/backend/core                   # Skip allowlisted entries
-  %(prog)s --module-level src/backend/    # Also check module docstrings
-        ''',
-    )
-    parser.add_argument(
-        'paths',
-        nargs='*',
-        type=Path,
-        default=[Path('src')],
-        help='Paths to scan (default: src)',
-    )
-    parser.add_argument(
-        '--summary',
-        action='store_true',
-        help='Show only summary statistics',
-    )
-    parser.add_argument(
-        '--json',
-        action='store_true',
-        help='Output in JSON format',
-    )
-    parser.add_argument(
-        '--allowlist',
-        type=Path,
-        default=None,
-        help='Path to allowlist file (skip listed entries)',
-    )
-    parser.add_argument(
-        '--module-level',
-        action='store_true',
-        help='Also check module-level docstrings (default: OFF, opt-in)',
-    )
-    parser.add_argument(
-        '--max-allowed',
-        type=int,
-        default=None,
+def main(argv: list[str] | None = None) -> int:
+    """Точка входа CLI (backward-compat shim для существующих скриптов).
+
+    Запускает typer app через typer.testing.CliRunner (для тестов)
+    или sys.argv (для CLI invocation). Возвращает exit code.
+    """
+    if argv is not None:
+        from typer.testing import CliRunner
+
+        runner = CliRunner()
+        result = runner.invoke(app, argv)
+        return result.exit_code
+    # CLI invocation: typer сам подхватит sys.argv[1:]
+    try:
+        app()
+    except SystemExit as exc:
+        return int(exc.code) if exc.code is not None else 0
+    return 0
+
+
+app = typer.Typer(
+    name="check-docstrings",
+    help="Check for missing docstrings in Python code.",
+    add_completion=False,
+)
+_console = Console()
+
+
+@app.callback(invoke_without_command=True)
+def _main(
+    ctx: typer.Context,
+    paths: list[Path] = typer.Argument(
+        None,
+        help="Paths to scan (default: src).",
+    ),
+    summary: bool = typer.Option(
+        False,
+        "--summary",
+        help="Show only summary statistics.",
+    ),
+    json_format: bool = typer.Option(
+        False,
+        "--json",
+        help="Output in JSON format.",
+    ),
+    allowlist: Path | None = typer.Option(
+        None,
+        "--allowlist",
+        help="Path to allowlist file (skip listed entries).",
+    ),
+    module_level: bool = typer.Option(
+        False,
+        "--module-level",
+        help="Also check module-level docstrings (default: OFF, opt-in).",
+    ),
+    max_allowed: int | None = typer.Option(
+        None,
+        "--max-allowed",
         help=(
             "M10: fail only if total missing > N (ratchet). "
             "Use to enforce 'no new missing' without blocking the current "
             "954-missing baseline. Example: --max-allowed 954."
         ),
-    )
+    ),
+) -> None:
+    """Check for missing docstrings in Python code."""
+    if ctx.invoked_subcommand is not None:
+        return
 
-    args = parser.parse_args()
-
+    scan_paths_list = paths if paths else [Path("src")]
     all_stats, aggregate = scan_paths(
-        args.paths, enable_module_check=args.module_level,
+        scan_paths_list, enable_module_check=module_level,
     )
 
     # Filter out allowlisted entries
-    if args.allowlist is not None:
-        allowlist = load_allowlist(args.allowlist)
-        if allowlist:
+    if allowlist is not None:
+        allowlist_entries = load_allowlist(allowlist)
+        if allowlist_entries:
             # Index allowlist by (rel_path, lineno) → set of qualified_names
             # so we can match both ``MethodName`` and ``ClassName.MethodName``.
             allowlist_by_loc: dict[tuple[str, int], set[str]] = {}
-            for entry in allowlist:
+            for entry in allowlist_entries:
                 # entry: ``<rel_path>:<lineno>:<col> <qualified_name>``
                 # Split on first 3 colons, then whitespace separates col from name.
                 parts = entry.split(":", 2)
@@ -503,17 +523,21 @@ Examples:
     output = format_output(
         all_stats,
         aggregate,
-        json_format=args.json,
-        summary_only=args.summary,
+        json_format=json_format,
+        summary_only=summary,
     )
 
-    print(output)
+    # Output to stdout (raw print for CI/grep compatibility)
+    sys.stdout.write(output)
 
     # Exit code 1 if there are issues
-    if args.max_allowed is not None:
-        return 1 if aggregate.total_missing > args.max_allowed else 0
-    return 1 if aggregate.total_missing > 0 else 0
+    if aggregate.total_missing > 0:
+        if max_allowed is not None:
+            if aggregate.total_missing > max_allowed:
+                raise typer.Exit(code=1)
+        else:
+            raise typer.Exit(code=1)
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    raise SystemExit(main())

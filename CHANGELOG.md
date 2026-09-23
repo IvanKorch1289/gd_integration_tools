@@ -1,5 +1,31 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W6 P1-8 Phase 8: tools/check_docstrings.py argparse → typer (8th tool)
+
+### refactor(tools): check_docstrings.py мигрирован argparse → typer+rich
+
+`tools/check_docstrings.py` (Sprint 42 W3 docstring coverage analyzer,
+519 LOC, pre-push gate) — мигрирован на `typer` + `rich` по proven pattern.
+**8-й tool** подряд. Medium-high complexity (5 flags + positional args).
+
+**Что сделано**:
+- `argparse.ArgumentParser` → `typer.Typer` + `@app.callback(invoke_without_command=True)`.
+- 5 flags сохранены: `--summary`, `--json`, `--allowlist`, `--module-level`, `--max-allowed`.
+- Positional `paths` argument (with Path type validation) сохранён.
+- `print(output)` → `sys.stdout.write(output)` (CI grep-compatibility для
+  JSON/human-readable output).
+- Backward-compat `main(argv=None)` через `CliRunner.invoke()` + `app()` fallback.
+
+**Pattern validation (8 tools)**: 4 trivial + 2 simple + 2 medium.
+
+**Tests**: `tests/unit/tools/test_w6_p1_8_phase8_check_docstrings_typer.py` —
+8 focused tests (с дополнительным `sys.modules` workaround для dataclass).
+
+**Verification**: pytest 8 passed, ruff 1 pre-existing F841 (unrelated).
+ADR-0327 (120 ADRs total).
+
+---
+
 ## [Unreleased] — 2026-09-23 — W6 P1-8 Phase 7: tools/generate_adr_index.py argparse → typer (7th tool)
 
 ### refactor(tools): generate_adr_index.py мигрирован argparse → typer+rich
