@@ -5656,3 +5656,74 @@ git push origin master
 - Push-ready: ready for user `git push origin master`
 
 **Per v4 §2**: я не выполняю push. User executes when ready.
+
+---
+
+## Startup-time P2 finding (cycle 158+, 2026-09-23)
+
+**Context**: per v4 §10 P2 «startup profiling и lazy load тяжёлых
+AI/RAG/RPA deps» — concrete candidate. `tools/checks/startup_time.py`
+существует, но ранее не запускался в этой сессии.
+
+**Measurement (raw, прямой замер `python3.14 -X importtime`)**:
+
+| Module | Cold import time | % of 3.0s budget |
+|---|---|---|
+| `src.backend.core.config.features` | 1.89s | 63% |
+| `src.backend.core.tenancy` | 1.36s | 45% |
+| `src.backend.services.routes.loader` | 1.37s | 46% |
+| `src.backend.core.messaging` | 0.10s | 3% |
+
+Sum (cold): **~5-6s** для импорта 4 critical модулей (budget 3s total
+по gate).
+
+**Real-world perf debt**:
+- `config.features` импорт = 1.89s (cold) — большой из-за Pydantic
+  models + множество `Field(...)` declarations в 22+ feature flags.
+- `core.tenancy` импорт = 1.36s — indirect через `cachetools` +
+  `orjson` + large Pydantic models.
+- `services.routes.loader` = 1.37s — manifest.toml parsing + cachetools.
+- `hvac` (Vault adapter) не установлен в venv → каждый import
+  `_attempt` логирует error (видно в importtime output:
+  `Ошибка в VaultConfigSettingsSource: No module named 'hvac'`) — repeated.
+
+**`startup_time.py` gate также имеет measurement bug**:
+- Output показывает `infs` для всех modules вместо реальных microseconds.
+- Real measurement (direct `time.perf_counter`) даёт 1.5s для `config.features`.
+- Gate FAIL: «total infs > regression limit 1.695s (baseline 1.304s + 30%)».
+- Per v4 §5: gate «FAIL» по syntax (exit 1) НЕ equals real failure.
+  Это **false-alarm ** из-за measurement bug + real perf issue
+  превышающий budget.
+
+**Что это означает**:
+- Per-module budget (3.0s) — каждый module OK.
+- Total budget (3.0s) — превышен при cold start всех 4.
+- Baseline 1.304s — где-то измерено суммарно, но реальные модули
+  cold-import = ~5s total. Baseline устарел.
+
+**Implications для roadmap**:
+1. **P2 perf candidate**: lazy-load heavy config + AI/RAG modules.
+2. **hvac fallback**: Vault adapter должен skip gracefully when hvac
+   missing (silent degradation, не error logging per import).
+3. **gate measurement bug fix**: `infs` output → real numbers.
+
+**Что НЕ делал в этой сессии**:
+- ❌ Не исправлял perf (lazy loading — design decision вне scope).
+- ❌ Не исправлял hvac fallback (configuration/architecture).
+- ❌ Не исправлял startup_time.py measurement bug (дополнительный scope).
+- ❌ Не увеличивал baseline (это не ratchet делать без улучшения).
+
+**Honest status**:
+- 12 atomic commits this session DONE (cluster + gate fixes + push-recovery).
+- +1 P2 finding surfaced (startup time, deferred to separate cycle).
+- Все gates за исключением startup_time.py — green.
+- Push readiness: confirmed, user executes.
+
+**Total summary**:
+- 12 atomic commits this session (vs 51 baseline = 63 ahead of c262f1ba0).
+- ADR count: 133 → 135.
+- v4 §10 P0/P1 progress: W2 P1-2 done, validator gate fixed,
+  schema migration done.
+- P0 gaps (still open, documented): object auth runtime,
+  privacy backends.
+- P2 candidate surfaced: startup-time perf (lazy load, hvac fallback).
