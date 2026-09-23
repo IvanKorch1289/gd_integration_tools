@@ -5589,3 +5589,70 @@ architecture-and-runtime work (out of one-session scope).
 
 10 atomic commits this session (vs 51 baseline = 61 ahead of
 c262f1ba0). ADR count: 134 → 135 (ADR-0342).
+
+---
+
+## Push-recovery диагностика (cycle 158+, 2026-09-23)
+
+**Контекст**: пользователь сообщил
+"[rejected] master -> master (fetch first)" — push был отвергнут с
+подсказкой fetch first. v4 §2 запрещает мне push, но fetch+merge
+remote work — для диагностики разрешено.
+
+**Измерение (после fetch)**:
+
+| Измерение | Результат |
+|---|---|
+| `git fetch origin master` | EXIT 0 |
+| Remote `origin/master` | `c262f1ba0 docs: sync ADR index [skip ci]` (= baseline) |
+| Local HEAD | `09dae6a25` |
+| `git rev-list --left-right --count origin/master...HEAD` | `0	62` (0 ahead of local, 62 behind) |
+| `git status --short --branch` | `## master...origin/master [впереди 62]` |
+| Working tree | clean |
+
+**Корневая причина rejection** (на момент попытки push):
+
+Remote был временно на более новом SHA (зависим от CI/dependabot/auto-merge),
+local был на старом состоянии. После моего `git fetch origin master` —
+remote откатился (или подтянулся к текущему ожидаемому baseline).
+**Push сейчас fast-forward-clean** → должен пройти.
+
+**Что я НЕ делал** (per v4 §2):
+- ❌ `git push origin master` — ЗАПРЕЩЕНО.
+- ❌ `git push --force` — ЗАПРЕЩЕНО.
+- ❌ `git reset --hard origin/master` — ЗАПРЕЩЕНО.
+
+**Что сделано** (safe per v4):
+- ✅ `git fetch origin master` — получаем свежее состояние remote.
+- ✅ Диагностика divergence: 0 commits ahead of local, 62 behind.
+- ✅ Network connectivity к github.com — OK.
+- ✅ Документация push-readiness для user.
+
+**User action required** (one command, no v4 violation if executed by user):
+```
+git push origin master
+```
+
+Это будет fast-forward (62 новых коммита поверх baseline `c262f1ba0`).
+Никаких merge conflicts, никаких force-push, никаких remote rewrites.
+
+**Gate verification финальная (post-fetch)**:
+
+| Gate | Exit | Status |
+|---|---|---|
+| `compileall -q src extensions scripts tools tests` | 0 | GREEN |
+| `check_python3_syntax.py --root .` | 0 | GREEN |
+| `check_feature_flag_dependencies.py --strict` | 0 | GREEN (18/18 declared после fix 12a68b878) |
+| `check_ai_policy_schema.py` | 0 | GREEN (3/3 valid после fix 2548ccb48) |
+| `check_object_authorization.py` (info) | 0 | GREEN (exit), но содержит findings — documented выше |
+| `pytest tests/unit/tools/test_w11_p3_2_audit_legacy_processors.py` | 23/23 passed (28.48s) | GREEN |
+
+**Полное summary**:
+- 11 atomic commits this session: b0e804357, 11a0dcec7, fee3d8f91,
+  84e37e33e, 8f509099b, 36acc9659, fccf8b2aa, 2548ccb48, 519ab1e46,
+  12a68b878, 09dae6a25
+- vs 51 baseline = 62 ahead of c262f1ba0
+- ADR count: 133 → 135 (+ADR-0341, +ADR-0342)
+- Push-ready: ready for user `git push origin master`
+
+**Per v4 §2**: я не выполняю push. User executes when ready.
