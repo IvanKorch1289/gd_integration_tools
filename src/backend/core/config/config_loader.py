@@ -37,8 +37,6 @@ def _logger() -> Any:
 
 _logger_instance: Any = None
 
-_logger = get_logger(__name__)
-
 
 def _resolve_repo_root() -> Path:
     """Возвращает корень репозитория (директория с ``pyproject.toml``).

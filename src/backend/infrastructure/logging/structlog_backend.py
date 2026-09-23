@@ -196,11 +196,19 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         **_extra: Any,
     ) -> None:
         """Настраивает structlog + stdlib logging бэкенды."""
-        # Use settings defaults if not provided
-        from src.backend.core.config.services.logging import log_settings
+        # Use settings defaults if not provided.
+        # Lazy + failure-tolerant (fix circular import, 2026-09-23): при
+        # инициализации из config_loader → core.logging → structlog_backend
+        # пакет core.config.services ещё не импортирован (settings-классы
+        # наследуют недоинициализированный config_loader) → дефолты.
+        try:
+            from src.backend.core.config.services.logging import log_settings
 
-        if port is None:
-            port = log_settings.port
+            if port is None:
+                port = log_settings.port
+        except ImportError:
+            if port is None:
+                port = 514  # syslog UDP default; переопределяется настройками
         try:
             import structlog
         except ImportError as exc:
@@ -316,9 +324,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         def _mask_pii_lazy(
             logger: Any, method_name: str, event_dict: dict[str, Any]
         ) -> dict[str, Any]:
-            from src.backend.infrastructure.observability.pii_filter import (
-                mask_pii,
-            )
+            from src.backend.infrastructure.observability.pii_filter import mask_pii
 
             return mask_pii(logger, method_name, event_dict)
 

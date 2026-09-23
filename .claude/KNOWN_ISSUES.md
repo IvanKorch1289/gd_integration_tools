@@ -2050,10 +2050,16 @@ falsifiable reference.
    `tools/checks/check_privacy_lifecycle.py`: erasure-покрытие отсутствует у
    storage-бэкендов redis, s3, qdrant, ai_memory (DeleteDataSubject).
 
-4. **Alembic migrations vs SQLite (visibility, non-blocking).**
-   `tools/checks/check_alembic_migrations.py`: CONCURRENTLY в миграциях не
-   выполняется на SQLite (dev_light); нужен feature-detect или альтернативный
-   путь для dev-профиля.
+4. **Alembic migrations vs SQLite — RESOLVED (2026-09-23).**
+   Circular import в `core/config` (config_loader → core.logging →
+   structlog_backend → config.services) ломал `manage.py migrate`; fix —
+   ленивый логгер в config_loader + failure-tolerant settings в
+   structlog_backend.configure. SQLite-путь (dev_light) — create_all + seed
+   by design (versions/*.py не гоняются); JSONB в versions — только для PG.
+   Чекер `check_alembic_migrations.py` переписан на API-aware паттерны
+   (postgresql.JSONB / postgresql_concurrently= / postgresql_where=) —
+   false positives «CONCURRENTLY: 1» (комментарий) и prose-JSONB сняты.
+   Для не-sqlite профилей миграции требуют PG+Redis (distributed lock MI-1).
 
 5. **X-Tenant-ID header trust (pre-existing, Sprint 1 V16).**
    TenantMiddleware и TenantResourceIsolationMiddleware резолвят tenant с
