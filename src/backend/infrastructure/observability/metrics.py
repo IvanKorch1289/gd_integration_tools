@@ -92,6 +92,26 @@ _cache_hits_counter = metrics_registry.counter(
 _cache_misses_counter = metrics_registry.counter(
     "cache_misses_total", "Cache misses", labels=("backend", "key_prefix")
 )
+# Cache stampede protection (Sprint 12 — audit 2026-09-22 P1).
+# ``coalesced`` — concurrent requests на тот же key подождали lock вместо
+# параллельного исполнения underlying-функции (singleflight pattern).
+# ``stale_served`` — отдан stale value при ошибке refresh (stale-while-revalidate).
+# ``lock_timeout`` — захват lock превысил timeout; функция выполнена напрямую.
+_cache_coalesced_counter = metrics_registry.counter(
+    "cache_coalesced_total",
+    "Cache requests coalesced via singleflight lock (avoided duplicate backend call)",
+    labels=("backend",),
+)
+_cache_stale_served_counter = metrics_registry.counter(
+    "cache_stale_served_total",
+    "Cache stale values served on backend error (stale-while-error pattern)",
+    labels=("backend",),
+)
+_cache_lock_timeout_counter = metrics_registry.counter(
+    "cache_lock_timeout_total",
+    "Cache singleflight lock acquisition timeouts (function ran without coalescing)",
+    labels=("backend",),
+)
 
 # ── Express ─────────────────────────────────────────────────────────────
 _express_sent_counter = metrics_registry.counter(
@@ -199,6 +219,36 @@ def record_cache_hit(backend: str, key_prefix: str = "") -> None:
 def record_cache_miss(backend: str, key_prefix: str = "") -> None:
     """Инкрементирует счётчик cache MISS'ов по backend+key_prefix."""
     _cache_misses_counter.labels(backend=backend, key_prefix=key_prefix).inc()
+
+
+def record_cache_coalesced(backend: str = "memory") -> None:
+    """Инкрементирует счётчик singleflight coalesce'ов.
+
+    Вызывается когда concurrent request на тот же cache key подождал
+    завершения первого запроса вместо параллельного исполнения underlying-функции.
+    Помогает выявлять hot-key'и и оценивать эффективность singleflight pattern.
+    """
+    _cache_coalesced_counter.labels(backend=backend).inc()
+
+
+def record_cache_stale_served(backend: str = "memory") -> None:
+    """Инкрементирует счётчик stale-served значений.
+
+    Вызывается при возврате stale value после ошибки refresh
+    (stale-while-error pattern). Высокий rate = downstream нестабилен,
+    но cache смягчает impact.
+    """
+    _cache_stale_served_counter.labels(backend=backend).inc()
+
+
+def record_cache_lock_timeout(backend: str = "memory") -> None:
+    """Инкрементирует счётчик lock-acquisition timeout'ов.
+
+    Вызывается когда захват per-key lock превысил ``acquire_timeout``.
+    Это означает, что singleflight не сработал (deadlock или очень медленный
+    refresh) и функция выполнилась напрямую — потенциальный hot-key.
+    """
+    _cache_lock_timeout_counter.labels(backend=backend).inc()
 
 
 def record_express_message_sent(bot: str, status: str = "ok") -> None:

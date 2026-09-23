@@ -246,11 +246,29 @@ class CachingDecorator:
                 self.logger.warning(
                     "Таймаут захвата lock для key=%s, выполняю функцию напрямую", key
                 )
+                # Stampede metric: lock acquisition timeout → function ran twice.
+                try:
+                    from src.backend.infrastructure.observability.metrics import (
+                        record_cache_lock_timeout,
+                    )
+
+                    record_cache_lock_timeout(backend=self.key_prefix or "mixed")
+                except Exception:
+                    pass  # metrics must not break cache flow
                 return await func(*args, **kwargs)
 
             try:
                 cached = await self._get_cached_value(key)
                 if cached is not None:
+                    # Stampede metric: this request waited for lock, found cached.
+                    try:
+                        from src.backend.infrastructure.observability.metrics import (
+                            record_cache_coalesced,
+                        )
+
+                        record_cache_coalesced(backend=self.key_prefix or "mixed")
+                    except Exception:
+                        pass
                     return cached
 
                 try:
@@ -265,6 +283,17 @@ class CachingDecorator:
                             key,
                             str(exc),
                         )
+                        # Stampede metric: stale-while-error served.
+                        try:
+                            from src.backend.infrastructure.observability.metrics import (
+                                record_cache_stale_served,
+                            )
+
+                            record_cache_stale_served(
+                                backend=self.key_prefix or "mixed"
+                            )
+                        except Exception:
+                            pass
                         return stale
                     raise
 
