@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any, cast
 from src.backend.core.di.dependencies import get_watermark_store_optional
 from src.backend.core.interfaces.watermark_store import WatermarkStore
 from src.backend.dsl.builders.eip._base import EIPMixinBase
-from src.backend.dsl.engine.processors.streaming import (
+from src.backend.dsl.engine.processors.streaming import (  # noqa: F401 — re-export
     GroupByKeyProcessor,
     SessionWindowProcessor,
     SlidingWindowProcessor,
@@ -45,7 +45,7 @@ class StreamingEIPsMixin(EIPMixinBase):
             mode: Режим — ``first`` | ``last`` | ``unique``.
 
         """
-        from src.backend.dsl.engine.processors.eip.windowed_dedup import (
+        from src.backend.dsl.engine.processors.eip.windowed_dedup import (  # noqa: F401 — re-export
             WindowedDedupProcessor,
         )
 
@@ -102,7 +102,7 @@ class StreamingEIPsMixin(EIPMixinBase):
             inject_as: Имя exchange-свойства для инжекции батча.
 
         """
-        from src.backend.dsl.engine.processors.eip.windowed_dedup import (
+        from src.backend.dsl.engine.processors.eip.windowed_dedup import (  # noqa: F401 — re-export
             WindowedCollectProcessor,
         )
 

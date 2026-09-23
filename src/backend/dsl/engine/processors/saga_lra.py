@@ -315,7 +315,7 @@ class SagaLRAProcessor(BaseProcessor):
         try:
             sm = _lazy_get_smart_session_manager()()
             # S81 M2-#11 batch 16: DI provider вместо inline infrastructure import.
-            from src.backend.core.di.providers.workflow import (
+            from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
                 get_workflow_state_repository_provider,
             )
 

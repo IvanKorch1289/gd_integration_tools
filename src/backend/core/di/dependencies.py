@@ -26,7 +26,7 @@ from fastapi import Request, WebSocket
 from src.backend.core.di.app_state import _get_from_app_state, app_state_singleton
 
 if TYPE_CHECKING:
-    from src.backend.core.interfaces.invocation_reply import (
+    from src.backend.core.interfaces.invocation_reply import (  # noqa: F401 — re-export
         ReplyChannelRegistryProtocol,
     )
     from src.backend.core.interfaces.invoker import Invoker as InvokerProtocol
@@ -120,7 +120,7 @@ def get_resilience_profile_store() -> Any:
     """
     store = _get_from_app_state("resilience_profile_store")
     if store is None:
-        from src.backend.core.di.providers.infrastructure_locator import (
+        from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
             get_in_memory_resilience_profile_store_class as _get_imrps_cls,
         )
 

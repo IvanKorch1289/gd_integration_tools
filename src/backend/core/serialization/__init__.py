@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.serialization.msgspec_hotpath import (
+from src.backend.core.serialization.msgspec_hotpath import (  # noqa: F401 — re-export
     MSGSPEC_AVAILABLE,
     decode_json,
     encode_audit_event,

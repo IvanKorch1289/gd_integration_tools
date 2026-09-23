@@ -12,13 +12,13 @@ Backward-compat: ``from src.backend.dsl.commands.setup import register_action_ha
 
 from __future__ import annotations
 
-from src.backend.dsl.commands.setup.helpers import (
+from src.backend.dsl.commands.setup.helpers import (  # noqa: F401 — re-export
     _register_crud_actions,  # S66 W2: re-export
 )
-from src.backend.dsl.commands.setup.orchestrator import (
+from src.backend.dsl.commands.setup.orchestrator import (  # noqa: F401 — re-export
     register_action_handlers,  # S66 W2: re-export
 )
-from src.backend.dsl.commands.setup.registers_domains import (
+from src.backend.dsl.commands.setup.registers_domains import (  # noqa: F401 — re-export
     _register_admin,  # S66 W2: re-export
     _register_dadata,  # S66 W2: re-export
     _register_files,  # S66 W2: re-export
@@ -29,7 +29,7 @@ from src.backend.dsl.commands.setup.registers_domains import (
     _register_tech,  # S66 W2: re-export
     _register_users,  # ITER 15: DSL-2 fix
 )
-from src.backend.dsl.commands.setup.registers_integrations import (
+from src.backend.dsl.commands.setup.registers_integrations import (  # noqa: F401 — re-export
     _register_agent_memory,  # S66 W2: re-export
     _register_ai,  # S66 W2: re-export
     _register_analytics_clickhouse,  # S66 W2: re-export
@@ -39,7 +39,7 @@ from src.backend.dsl.commands.setup.registers_integrations import (
     _register_search_elasticsearch,  # S66 W2: re-export
     _register_web_search_perplexity_tavily,  # S66 W2: re-export
 )
-from src.backend.dsl.commands.setup.registers_workflow import (
+from src.backend.dsl.commands.setup.registers_workflow import (  # noqa: F401 — re-export
     _register_data_export_excel_csv_pdf,  # S66 W2: re-export
     _register_data_quality,  # S66 W2: re-export
     _register_importgateway_w24,  # S66 W2: re-export

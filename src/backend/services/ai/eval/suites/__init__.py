@@ -7,25 +7,25 @@ safety, context_recall, tool_use, multi_turn_coherence.
 
 from __future__ import annotations
 
-from src.backend.services.ai.eval.suites.context_recall import (
+from src.backend.services.ai.eval.suites.context_recall import (  # noqa: F401 — re-export
     context_recall_suite as context_recall_suite,
 )
-from src.backend.services.ai.eval.suites.hallucination_check import (
+from src.backend.services.ai.eval.suites.hallucination_check import (  # noqa: F401 — re-export
     hallucination_check_suite,
 )
-from src.backend.services.ai.eval.suites.instruction_following import (
+from src.backend.services.ai.eval.suites.instruction_following import (  # noqa: F401 — re-export
     instruction_following_suite,
 )
-from src.backend.services.ai.eval.suites.knowledge_qa import (
+from src.backend.services.ai.eval.suites.knowledge_qa import (  # noqa: F401 — re-export
     knowledge_qa_suite as knowledge_qa_suite,
 )
-from src.backend.services.ai.eval.suites.multi_turn_coherence import (
+from src.backend.services.ai.eval.suites.multi_turn_coherence import (  # noqa: F401 — re-export
     multi_turn_coherence_suite,
 )
-from src.backend.services.ai.eval.suites.safety_classifier import (
+from src.backend.services.ai.eval.suites.safety_classifier import (  # noqa: F401 — re-export
     safety_classifier_suite,
 )
-from src.backend.services.ai.eval.suites.tool_use import (
+from src.backend.services.ai.eval.suites.tool_use import (  # noqa: F401 — re-export
     tool_use_suite as tool_use_suite,
 )
 

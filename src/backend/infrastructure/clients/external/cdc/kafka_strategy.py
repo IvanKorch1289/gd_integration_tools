@@ -24,11 +24,11 @@ import orjson
 
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
-from src.backend.infrastructure.clients.external.cdc.events import (
+from src.backend.infrastructure.clients.external.cdc.events import (  # noqa: F401 — re-export
     CDCEvent,
     CDCSubscription,
 )
-from src.backend.infrastructure.clients.external.cdc.strategies import (
+from src.backend.infrastructure.clients.external.cdc.strategies import (  # noqa: F401 — re-export
     _CDCStrategy,  # S167 W1.1: enforce Protocol contract (ABC base)
 )
 
@@ -136,7 +136,7 @@ class _KafkaDebeziumStrategy(_CDCStrategy):
                             # graceful no-op if OTel/propagator not installed.
                             _trace_ctx = None
                             try:
-                                from src.backend.infrastructure.observability.mq_trace_propagator import (
+                                from src.backend.infrastructure.observability.mq_trace_propagator import (  # noqa: F401 — re-export
                                     extract_from_headers,
                                 )
 

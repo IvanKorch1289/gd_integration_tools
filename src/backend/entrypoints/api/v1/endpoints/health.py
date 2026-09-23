@@ -222,7 +222,7 @@ async def components_health(mode: str = "fast") -> JSONResponse:
     try:
         # Wave 6.5a: health_aggregator + resilience_components_report —
         # через DI providers (lazy importlib).
-        from src.backend.core.di.providers import (
+        from src.backend.core.di.providers import (  # noqa: F401 — re-export
             get_health_aggregator_provider,
             get_resilience_components_report_provider,
         )

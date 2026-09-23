@@ -53,7 +53,7 @@ logger = get_logger(__name__)
 
 
 if TYPE_CHECKING:
-    from src.backend.core.ai.gateway_pipeline_mixin import (
+    from src.backend.core.ai.gateway_pipeline_mixin import (  # noqa: F401 — re-export
         PipelineStepsMixin as _PipelineStepsMixin,
     )
 else:
@@ -111,7 +111,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
         # Для backward-compat с pre-S209 policies — явный opt-in allow_all_tools.
         if not whitelist and not blacklist:
             if not getattr(tools, "allow_all_tools", False):
-                from src.backend.core.ai.policy.enforcer.tools_policy import (
+                from src.backend.core.ai.policy.enforcer.tools_policy import (  # noqa: F401 — re-export
                     ToolPolicyViolationError,
                 )
 
@@ -121,7 +121,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                     f"Set tools.allow_all_tools=True to opt into allow-all behavior."
                 )
             return
-        from src.backend.core.ai.policy.enforcer.tools_policy import (
+        from src.backend.core.ai.policy.enforcer.tools_policy import (  # noqa: F401 — re-export
             ToolPolicyViolationError,
             enforce_tool_policy,
         )
@@ -220,12 +220,12 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 )
             return None
         try:
-            from src.backend.core.tenancy.budget_enforcer import (
+            from src.backend.core.tenancy.budget_enforcer import (  # noqa: F401 — re-export
                 enforce_pre_call,
                 render_429,
                 render_503,
             )
-            from src.backend.core.tenancy.token_budget import (
+            from src.backend.core.tenancy.token_budget import (  # noqa: F401 — re-export
                 BudgetBackendUnavailable,
                 BudgetEnforcementError,
                 BudgetExceeded,
@@ -313,12 +313,12 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
             )
             if actual_tokens <= 0:
                 return None
-            from src.backend.core.tenancy.budget_enforcer import (
+            from src.backend.core.tenancy.budget_enforcer import (  # noqa: F401 — re-export
                 enforce_post_call,
                 render_429,
                 render_503,
             )
-            from src.backend.core.tenancy.token_budget import (
+            from src.backend.core.tenancy.token_budget import (  # noqa: F401 — re-export
                 BudgetBackendUnavailable,
                 BudgetEnforcementError,
                 BudgetExceeded,

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 import httpx
 
 from src.backend.core.utils.task_registry import get_task_registry
-from src.backend.infrastructure.clients.transport.http._protocol import (
+from src.backend.infrastructure.clients.transport.http._protocol import (  # noqa: F401 — re-export
     _HttpClientProtocol,
 )
 

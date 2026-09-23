@@ -12,21 +12,21 @@ from inspect import isawaitable
 from typing import Any
 
 from src.backend.core.logging import get_logger
-from src.backend.infrastructure.workflow.temporal_worker_runtime import (
+from src.backend.infrastructure.workflow.temporal_worker_runtime import (  # noqa: F401 — re-export
     stop_temporal_worker_runtime,
 )
 from src.backend.plugins.composition.setup_infra.health import _register_health_checks
-from src.backend.plugins.composition.setup_infra.pools import (
+from src.backend.plugins.composition.setup_infra.pools import (  # noqa: F401 — re-export
     _clickhouse_enabled,
     _redis_enabled,
     _register_pools_in_unified_manager,
     _warmup_connection_pools,
 )
-from src.backend.plugins.composition.setup_infra.scheduler_leader import (
+from src.backend.plugins.composition.setup_infra.scheduler_leader import (  # noqa: F401 — re-export
     _start_scheduler_with_leader_election,
     _stop_scheduler_if_leader,
 )
-from src.backend.plugins.composition.setup_infra.workflow_audit import (
+from src.backend.plugins.composition.setup_infra.workflow_audit import (  # noqa: F401 — re-export
     _close_workflow_audit_sink,
     _init_workflow_audit_sink,
 )
@@ -47,7 +47,7 @@ def _register_default_degradation_features() -> None:
     admin-снимок ``/tech/degradation/snapshot`` сразу содержит ожидаемые
     feature-имена и operations dashboard не выглядит пустым.
     """
-    from src.backend.core.resilience.graceful_degradation import (
+    from src.backend.core.resilience.graceful_degradation import (  # noqa: F401 — re-export
         DegradationFeature,
         get_graceful_degradation_registry,
     )
@@ -141,7 +141,7 @@ async def _register_agent_security_workflow_hooks() -> None:
     """
     try:
         from src.backend.core.ai.security import get_agent_security_framework
-        from src.backend.core.ai.security.workflow_hooks import (
+        from src.backend.core.ai.security.workflow_hooks import (  # noqa: F401 — re-export
             register_all_workflow_hooks,
         )
 
@@ -163,7 +163,7 @@ async def _start_pool_monitors() -> None:
     S173: добавлено как critical fix после Infrastructure audit (start_monitors
     не вызывался → health monitors оставались незапущенными).
     """
-    from src.backend.infrastructure.clients.unified_pool_manager import (
+    from src.backend.infrastructure.clients.unified_pool_manager import (  # noqa: F401 — re-export
         get_unified_pool_manager,
     )
 
@@ -195,7 +195,7 @@ async def _build_temporal_activities() -> list[Any]:
 
     """
     try:
-        from src.backend.dsl.workflow.compiler.activity_bridge import (
+        from src.backend.dsl.workflow.compiler.activity_bridge import (  # noqa: F401 — re-export
             ActivityBridge,
             register_langgraph_checkpoint_activities,
         )
@@ -232,7 +232,7 @@ async def _start_temporal_worker_runtime_with_activities() -> None:
     ``workflow.execute_activity`` падало с
     ``ActivityNotRegisteredError``.
     """
-    from src.backend.infrastructure.workflow.temporal_worker_runtime import (
+    from src.backend.infrastructure.workflow.temporal_worker_runtime import (  # noqa: F401 — re-export
         start_temporal_worker_runtime,
     )
 

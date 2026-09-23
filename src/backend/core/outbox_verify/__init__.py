@@ -28,13 +28,13 @@
 
 from __future__ import annotations
 
-from src.backend.core.outbox_verify.service import (
+from src.backend.core.outbox_verify.service import (  # noqa: F401 — re-export
     OutboxPublishOutcome,
     OutboxPublishService,
     OutboxPublishState,
     get_outbox_publish_service,
 )
-from src.backend.core.outbox_verify.store.base import (
+from src.backend.core.outbox_verify.store.base import (  # noqa: F401 — re-export
     OutboxPublishEntry,
     OutboxPublishStore,
 )

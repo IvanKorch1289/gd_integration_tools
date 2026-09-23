@@ -22,11 +22,11 @@ from typing import Literal as Literal
 if TYPE_CHECKING:
     pass
 
-from src.backend.core.domain.models.workflow_event import (
+from src.backend.core.domain.models.workflow_event import (  # noqa: F401 — re-export
     WorkflowEventType as WorkflowEventType,
 )
 from src.backend.core.logging import get_logger as get_logger
-from src.backend.infrastructure.workflow.pg_runner_internals import (
+from src.backend.infrastructure.workflow.pg_runner_internals import (  # noqa: F401 — re-export
     WorkflowInstanceRow,
     WorkflowState,
 )
@@ -47,21 +47,21 @@ StepKind = Literal[
     "compensate",  # rollback chain (failure-only)
 ]
 
-from src.backend.infrastructure.workflow.executor.control_flow_mixin import (
+from src.backend.infrastructure.workflow.executor.control_flow_mixin import (  # noqa: F401 — re-export
     ControlFlowMixin,  # S61 W3: MRO
 )
-from src.backend.infrastructure.workflow.executor.eval_mixin import (
+from src.backend.infrastructure.workflow.executor.eval_mixin import (  # noqa: F401 — re-export
     EvalMixin,  # S61 W3: MRO
 )
-from src.backend.infrastructure.workflow.executor.sequential_mixin import (
+from src.backend.infrastructure.workflow.executor.sequential_mixin import (  # noqa: F401 — re-export
     SequentialMixin,  # S61 W3: MRO
 )
-from src.backend.infrastructure.workflow.executor.state import (
+from src.backend.infrastructure.workflow.executor.state import (  # noqa: F401 — re-export
     DurableWorkflowProcessor,  # S61 W3: re-export
     WorkflowSpec,  # S61 W3: re-export
     WorkflowStep,  # S61 W3: re-export
 )
-from src.backend.infrastructure.workflow.executor.sub_flow_mixin import (
+from src.backend.infrastructure.workflow.executor.sub_flow_mixin import (  # noqa: F401 — re-export
     SubFlowMixin,  # S61 W3: MRO
 )
 

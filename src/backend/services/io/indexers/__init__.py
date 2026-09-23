@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from src.backend.services.io.indexers.log_indexer import LogIndexer, get_log_indexer
-from src.backend.services.io.indexers.order_indexer import (
+from src.backend.services.io.indexers.order_indexer import (  # noqa: F401 — re-export
     OrderIndexer,
     get_order_indexer,
 )

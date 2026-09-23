@@ -8,7 +8,7 @@ Functions: _register_orders, _register_files, _register_skb_api, _register_dadat
 from __future__ import annotations
 
 from src.backend.dsl.commands.registry import ActionHandlerSpec, action_handler_registry
-from src.backend.dsl.commands.setup.helpers import (
+from src.backend.dsl.commands.setup.helpers import (  # noqa: F401 — re-export
     _register_crud_actions,  # S66 W2: cross-import
 )
 
@@ -73,7 +73,7 @@ def _register_files() -> None:
 
 
 def _register_skb_api() -> None:
-    from extensions.skb.schemas.route import (
+    from extensions.skb.schemas.route import (  # noqa: F401 — re-export
         APISKBOrderSchemaIn,
         SKBObjectsByAddressQuerySchema,
         SKBOrdersListQuerySchema,
@@ -210,7 +210,7 @@ def _register_admin() -> None:
 
 def _register_servicedsl_auto_register() -> None:
 
-    from src.backend.dsl.service_dsl import (
+    from src.backend.dsl.service_dsl import (  # noqa: F401 — re-export
         scan_and_register_actions,
         service_dsl_registry,
     )
@@ -238,7 +238,7 @@ def _register_users() -> None:
 
 def _register_orderkinds() -> None:
     """ITER 15 (Sprint 19) DSL-2 fix: register orderkinds CRUD actions."""
-    from extensions.core_entities.orderkinds.services.orderkinds import (
+    from extensions.core_entities.orderkinds.services.orderkinds import (  # noqa: F401 — re-export
         get_order_kind_service,
     )
 

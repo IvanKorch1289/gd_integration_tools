@@ -10,17 +10,17 @@ Backward-compat: ``from src.backend.services.execution.invoker import Invoker`` 
 
 from __future__ import annotations
 
-from src.backend.services.execution.invoker.helpers import (
+from src.backend.services.execution.invoker.helpers import (  # noqa: F401 — re-export
     _deserialize_request,  # S68 W3: helper re-export
     _is_async_iterator,  # S68 W3: helper re-export
     _run_deferred_job,  # S68 W3: helper re-export
     _serialize_request,  # S68 W3: helper re-export
     get_invoker,  # S68 W3: helper re-export
 )
-from src.backend.services.execution.invoker.invoker import (
+from src.backend.services.execution.invoker.invoker import (  # noqa: F401 — re-export
     Invoker,  # S68 W3: re-export as Invoker  # S68 W3: re-export
 )
-from src.backend.services.execution.invoker.types import (
+from src.backend.services.execution.invoker.types import (  # noqa: F401 — re-export
     InvocationMode,  # S68 W3: re-export
 )
 

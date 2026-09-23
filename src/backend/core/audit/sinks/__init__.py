@@ -4,7 +4,7 @@ from __future__ import annotations
 
 __all__ = ("UnifiedAISink", "emit_ai_invocation_event")
 
-from src.backend.core.audit.sinks.ai_unified_sink import (
+from src.backend.core.audit.sinks.ai_unified_sink import (  # noqa: F401 — re-export
     UnifiedAISink,
     emit_ai_invocation_event,
 )

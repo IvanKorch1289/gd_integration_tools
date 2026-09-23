@@ -228,7 +228,7 @@ class StepAuditMiddleware:
         effective_tenant_id = tenant_id
         if not effective_correlation_id or not effective_tenant_id:
             try:
-                from src.backend.infrastructure.observability.correlation import (
+                from src.backend.infrastructure.observability.correlation import (  # noqa: F401 — re-export
                     get_correlation_id,
                     get_tenant_id,
                 )

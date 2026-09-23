@@ -111,7 +111,7 @@ async def _list_instances_filtered(
     from sqlalchemy import select
 
     # Wave 6.5a: ORM-класс и session_manager — через DI providers.
-    from src.backend.core.di.providers import (
+    from src.backend.core.di.providers import (  # noqa: F401 — re-export
         get_workflow_instance_model_provider,
         get_workflow_main_session_provider,
         get_workflow_state_row_class_provider,

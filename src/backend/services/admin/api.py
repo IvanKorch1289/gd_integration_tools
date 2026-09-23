@@ -57,10 +57,10 @@ class AdminService:
         if self._authz is not None:
             return self._authz
         try:
-            from src.backend.core.security.authorization_gateway import (
+            from src.backend.core.security.authorization_gateway import (  # noqa: F401 — re-export
                 AuthorizationGateway,
             )
-            from src.backend.services.admin._capability_adapter import (
+            from src.backend.services.admin._capability_adapter import (  # noqa: F401 — re-export
                 FacadeCapabilityAdapter,
             )
 

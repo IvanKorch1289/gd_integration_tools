@@ -15,7 +15,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Protocol
 
 if TYPE_CHECKING:
-    from src.backend.core.resilience.degradation import (
+    from src.backend.core.resilience.degradation import (  # noqa: F401 — re-export
         DegradationMode,
         DegradationTransition,
     )

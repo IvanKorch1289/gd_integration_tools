@@ -33,7 +33,7 @@ from src.backend.core.api.extensions import get_dsl_service
 from src.backend.core.config.services.websocket import ws_settings
 from src.backend.core.logging import get_logger
 from src.backend.entrypoints._action_bridge import dispatch_action_or_dsl
-from src.backend.entrypoints.websocket.ws_auth import (
+from src.backend.entrypoints.websocket.ws_auth import (  # noqa: F401 — re-export
     WSAuthError,
     WSSession,
     extract_credential,

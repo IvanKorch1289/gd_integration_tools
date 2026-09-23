@@ -16,7 +16,7 @@ from collections.abc import Callable
 from typing import Any
 
 from src.backend.core.errors import ServiceError
-from src.backend.core.interfaces.notification import (
+from src.backend.core.interfaces.notification import (  # noqa: F401 — re-export
     NotificationAdapter,
     NotificationMessage,
 )

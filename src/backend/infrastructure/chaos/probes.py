@@ -195,7 +195,7 @@ class ChaosEngineering:
             yield
             return
 
-        from src.backend.infrastructure.clients.unified_pool_manager import (
+        from src.backend.infrastructure.clients.unified_pool_manager import (  # noqa: F401 — re-export
             get_unified_pool_manager,
         )
 
@@ -275,7 +275,7 @@ class ChaosEngineering:
             yield
             return
 
-        from src.backend.infrastructure.clients.unified_pool_manager import (
+        from src.backend.infrastructure.clients.unified_pool_manager import (  # noqa: F401 — re-export
             get_unified_pool_manager,
         )
 

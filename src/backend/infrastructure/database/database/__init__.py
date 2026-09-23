@@ -11,19 +11,19 @@ Backward-compat: ``from src.backend.infrastructure.database.database import Data
 
 from __future__ import annotations
 
-from src.backend.infrastructure.database.database.accessors import (
+from src.backend.infrastructure.database.database.accessors import (  # noqa: F401 — re-export
     __getattr__,  # S64 W3: accessor re-export
     get_db_initializer,  # S64 W3: accessor re-export
     get_external_db_registry,  # S64 W3: accessor re-export
     get_smart_session_manager,  # S64 W3: accessor re-export
 )
-from src.backend.infrastructure.database.database.bundle import (
+from src.backend.infrastructure.database.database.bundle import (  # noqa: F401 — re-export
     DatabaseBundle,  # S64 W3: re-export
 )
-from src.backend.infrastructure.database.database.initializer import (
+from src.backend.infrastructure.database.database.initializer import (  # noqa: F401 — re-export
     DatabaseInitializer,  # S64 W3: re-export
 )
-from src.backend.infrastructure.database.database.registry import (
+from src.backend.infrastructure.database.database.registry import (  # noqa: F401 — re-export
     ExternalDatabaseRegistry,  # S64 W3: re-export
 )
 

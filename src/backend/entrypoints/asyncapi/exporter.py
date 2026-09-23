@@ -48,7 +48,7 @@ def _collect_brokers() -> list[tuple[str, Any]]:
         # Sprint 36 W1 (Phase B Item 3, ADR-0282 §3): inline-import от
         # infrastructure (после stream_facade facade removal). ALLOWED matrix
         # (ADR-0284) делает entrypoints→infra legitimate cross-layer.
-        from src.backend.infrastructure.clients.messaging.stream import (
+        from src.backend.infrastructure.clients.messaging.stream import (  # noqa: F401 — re-export
             get_stream_client,
         )
 

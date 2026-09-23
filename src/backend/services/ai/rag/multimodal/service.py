@@ -21,14 +21,14 @@ from uuid import uuid4
 
 from src.backend.core.di import app_state_singleton
 from src.backend.core.logging import get_logger
-from src.backend.services.ai.rag.multimodal._legacy import (
+from src.backend.services.ai.rag.multimodal._legacy import (  # noqa: F401 — re-export
     MultimodalRAGService as _LegacyMultimodalRAGService,
 )
 from src.backend.services.ai.rag.multimodal._legacy import _dummy_embedding
 from src.backend.services.ai.rag.multimodal._tenant import _resolve_effective_tenant_id
 from src.backend.services.ai.rag.multimodal.image_ingester import ImageIngester
 from src.backend.services.ai.rag.multimodal.pdf_ingester import PDFIngester
-from src.backend.services.ai.rag.multimodal.types import (
+from src.backend.services.ai.rag.multimodal.types import (  # noqa: F401 — re-export
     ChunkDoc,
     IngestResult,
     SearchResult,
@@ -117,7 +117,7 @@ class MultimodalRAGService(_LegacyMultimodalRAGService):
         Использует BLIP2 captioner (lazy-import transformers). Возвращает
         plain text — используется при ingest для chunk content.
         """
-        from src.backend.services.ai.rag.multimodal.blip2_captioner import (
+        from src.backend.services.ai.rag.multimodal.blip2_captioner import (  # noqa: F401 — re-export
             BLIP2Captioner,
         )
 

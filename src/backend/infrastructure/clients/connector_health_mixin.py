@@ -17,7 +17,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.clients.base_connector import (
+    from src.backend.infrastructure.clients.base_connector import (  # noqa: F401 — re-export
         HealthMode,
         HealthResult,
     )

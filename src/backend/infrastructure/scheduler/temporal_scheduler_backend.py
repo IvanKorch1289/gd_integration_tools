@@ -66,7 +66,7 @@ class TemporalSchedulerBackend:
 
         """
         if client_factory is None:
-            from src.backend.infrastructure.workflow.temporal_client import (
+            from src.backend.infrastructure.workflow.temporal_client import (  # noqa: F401 — re-export
                 TemporalClientFactory,
             )
 

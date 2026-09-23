@@ -26,11 +26,11 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from src.backend.core.logging import get_logger
-from src.backend.core.security.activity_capability_guard import (
+from src.backend.core.security.activity_capability_guard import (  # noqa: F401 — re-export
     capability_guarded_activity,
 )
 from src.backend.dsl.commands.action_registry import action_handler_registry
-from src.backend.dsl.workflow.spec import (
+from src.backend.dsl.workflow.spec import (  # noqa: F401 — re-export
     ActivityDeclaration,
     AgentInvokeDeclaration,
     SagaDeclaration,
@@ -90,7 +90,7 @@ async def _langgraph_checkpoint_get_activity(thread_id: str) -> dict[str, Any] |
         "первый запуск, нет prior state".
 
     """
-    from src.backend.services.ai.agents.langgraph_postgres_saver import (
+    from src.backend.services.ai.agents.langgraph_postgres_saver import (  # noqa: F401 — re-export
         get_langgraph_postgres_saver,
     )
 
@@ -128,7 +128,7 @@ async def _langgraph_checkpoint_put_activity(state: dict[str, Any]) -> bool:
         ``True`` если checkpoint успешно записан, ``False`` иначе.
 
     """
-    from src.backend.services.ai.agents.langgraph_postgres_saver import (
+    from src.backend.services.ai.agents.langgraph_postgres_saver import (  # noqa: F401 — re-export
         get_langgraph_postgres_saver,
     )
 

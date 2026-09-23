@@ -341,7 +341,7 @@ class UnifiedPoolManager:
 
         # 2. PoolMonitor — SQLAlchemy-специфичные метрики
         try:
-            from src.backend.infrastructure.database.pool_monitor import (
+            from src.backend.infrastructure.database.pool_monitor import (  # noqa: F401 — re-export
                 get_pool_monitor as get_db_pool_monitor,
             )
 
@@ -365,7 +365,7 @@ class UnifiedPoolManager:
             logger.debug("UnifiedPoolManager: stop pool_health_monitor: %s", exc)
 
         try:
-            from src.backend.infrastructure.database.pool_monitor import (
+            from src.backend.infrastructure.database.pool_monitor import (  # noqa: F401 — re-export
                 get_pool_monitor as get_db_pool_monitor,
             )
 

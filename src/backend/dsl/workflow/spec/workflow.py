@@ -11,7 +11,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from src.backend.dsl.workflow.spec.activity_declarations import (
+from src.backend.dsl.workflow.spec.activity_declarations import (  # noqa: F401 — re-export
     ActivityDeclaration,
     PauseDeclaration,
     ResumeDeclaration,
@@ -19,7 +19,7 @@ from src.backend.dsl.workflow.spec.activity_declarations import (
     SignalWaitDeclaration,
     SleepDeclaration,
 )
-from src.backend.dsl.workflow.spec.advanced_declarations import (
+from src.backend.dsl.workflow.spec.advanced_declarations import (  # noqa: F401 — re-export
     AgentInvokeDeclaration,
     CheckpointDeclaration,
     ContinueAsNewDeclaration,  # Sprint 7 P0-1: wired (P1-W1 fix was incomplete — union missing)

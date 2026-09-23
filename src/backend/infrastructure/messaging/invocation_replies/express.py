@@ -17,7 +17,7 @@ import json
 from dataclasses import asdict
 from typing import Any, Protocol, runtime_checkable
 
-from src.backend.core.interfaces.invocation_reply import (
+from src.backend.core.interfaces.invocation_reply import (  # noqa: F401 — re-export
     InvocationReplyChannel,
     ReplyChannelKind,
 )
@@ -129,7 +129,7 @@ class ExpressReplyChannel(InvocationReplyChannel):
     def _lazy_notifier(self) -> ExpressNotifier | None:
         """Lazy-резолв :class:`ExpressAdapter`; ``None`` если Express отключён."""
         try:
-            from src.backend.infrastructure.notifications.adapters.express import (
+            from src.backend.infrastructure.notifications.adapters.express import (  # noqa: F401 — re-export
                 ExpressAdapter,
             )
 

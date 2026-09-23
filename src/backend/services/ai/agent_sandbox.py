@@ -9,7 +9,7 @@ god-module) → ``agent_sandbox/`` package с 5 cohesion submodules (см. ADR-0
 Migration::
 
     # До (W9 P2-13 Phase 5 — still works через этот shim):
-    from src.backend.services.ai.agent_sandbox import (
+    from src.backend.services.ai.agent_sandbox import (  # noqa: F401 — re-export
         InProcessAgentSandbox, ProcessPoolAgentSandbox, E2BAgentSandbox,
         AgentSandboxSelector, resolve_agent_sandbox,
         get_process_pool_agent_sandbox,
@@ -17,7 +17,7 @@ Migration::
     )
 
     # После (canonical, рекомендуется для нового кода):
-    from src.backend.services.ai.agent_sandbox import (
+    from src.backend.services.ai.agent_sandbox import (  # noqa: F401 — re-export
         InProcessAgentSandbox, ProcessPoolAgentSandbox, E2BAgentSandbox,
         AgentSandboxSelector, resolve_agent_sandbox,
         get_process_pool_agent_sandbox,
@@ -31,26 +31,26 @@ audit consumer migration).
 
 from __future__ import annotations
 
-from src.backend.services.ai.agent_sandbox import (  # type: ignore[attr-defined]
+from src.backend.services.ai.agent_sandbox import (  # noqa: F401 — re-export  # type: ignore[attr-defined]
     AgentSandboxConfigError as AgentSandboxConfigError,
 )
-from src.backend.services.ai.agent_sandbox import (
+from src.backend.services.ai.agent_sandbox import (  # noqa: F401 — re-export
     AgentSandboxSelector as AgentSandboxSelector,
 )
-from src.backend.services.ai.agent_sandbox import (
+from src.backend.services.ai.agent_sandbox import (  # noqa: F401 — re-export
     AgentSandboxTimeoutError as AgentSandboxTimeoutError,
 )
 from src.backend.services.ai.agent_sandbox import E2BAgentSandbox as E2BAgentSandbox
-from src.backend.services.ai.agent_sandbox import (
+from src.backend.services.ai.agent_sandbox import (  # noqa: F401 — re-export
     InProcessAgentSandbox as InProcessAgentSandbox,
 )
-from src.backend.services.ai.agent_sandbox import (
+from src.backend.services.ai.agent_sandbox import (  # noqa: F401 — re-export
     ProcessPoolAgentSandbox as ProcessPoolAgentSandbox,
 )
-from src.backend.services.ai.agent_sandbox import (
+from src.backend.services.ai.agent_sandbox import (  # noqa: F401 — re-export
     get_process_pool_agent_sandbox as get_process_pool_agent_sandbox,
 )
-from src.backend.services.ai.agent_sandbox import (
+from src.backend.services.ai.agent_sandbox import (  # noqa: F401 — re-export
     resolve_agent_sandbox as resolve_agent_sandbox,
 )
 

@@ -7,7 +7,7 @@ fallback-цепочкой. Sprint 1+ доводит до production: на это
 """
 
 from src.backend.services.ai.gateway.client import LiteLLMGateway, get_litellm_gateway
-from src.backend.services.ai.gateway.exceptions import (
+from src.backend.services.ai.gateway.exceptions import (  # noqa: F401 — re-export
     GatewayError,
     GatewayRateLimited,
     GatewayUnavailable,

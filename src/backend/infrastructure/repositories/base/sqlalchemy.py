@@ -5,7 +5,7 @@ from typing import Any, cast
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 from fastapi_pagination import Params
-from sqlalchemy import (
+from sqlalchemy import (  # noqa: F401 — re-export
     Insert,
     Result,
     Select,
@@ -24,7 +24,7 @@ from sqlalchemy_continuum import version_class
 from src.backend.core.domain.models.base import BaseModel
 from src.backend.core.errors import DatabaseError, NotFoundError
 from src.backend.infrastructure.database.session_manager import main_session_manager
-from src.backend.infrastructure.repositories.base.base import (
+from src.backend.infrastructure.repositories.base.base import (  # noqa: F401 — re-export
     AbstractRepository,  # S64 W2: cross-import
 )
 

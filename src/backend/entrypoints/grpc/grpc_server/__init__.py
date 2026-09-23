@@ -12,10 +12,10 @@ Backward-compat: ``from src.backend.entrypoints.grpc.grpc_server import OrderGRP
 
 from __future__ import annotations
 
-from src.backend.entrypoints.grpc.grpc_server._safe_error import (
+from src.backend.entrypoints.grpc.grpc_server._safe_error import (  # noqa: F401 — re-export
     _safe_error,  # S65 W3: top-level func re-export
 )
-from src.backend.entrypoints.grpc.grpc_server.base import (
+from src.backend.entrypoints.grpc.grpc_server.base import (  # noqa: F401 — re-export
     BaseGRPCServicer,  # S65 W3: re-export
 )
 
@@ -24,19 +24,19 @@ from src.backend.entrypoints.grpc.grpc_server.base import (
 # globals()["FileStreamGRPCServicer"]. Без этого импорта loop делает
 # KeyError → continue → никогда не patchит subclass methods →
 # 3 pre-existing test failures.
-from src.backend.entrypoints.grpc.grpc_server.file_stream import (
+from src.backend.entrypoints.grpc.grpc_server.file_stream import (  # noqa: F401 — re-export
     FileStreamGRPCServicer,  # S128 W3: re-export  # noqa: F401
 )
-from src.backend.entrypoints.grpc.grpc_server.interceptor import (
+from src.backend.entrypoints.grpc.grpc_server.interceptor import (  # noqa: F401 — re-export
     AuthInterceptor,  # S65 W3: re-export
 )
-from src.backend.entrypoints.grpc.grpc_server.invoker import (
+from src.backend.entrypoints.grpc.grpc_server.invoker import (  # noqa: F401 — re-export
     InvokerGRPCServicer,  # S65 W3: re-export
 )
-from src.backend.entrypoints.grpc.grpc_server.order import (
+from src.backend.entrypoints.grpc.grpc_server.order import (  # noqa: F401 — re-export
     OrderGRPCServicer,  # S65 W3: re-export
 )
-from src.backend.entrypoints.grpc.grpc_server.server import (
+from src.backend.entrypoints.grpc.grpc_server.server import (  # noqa: F401 — re-export
     _load_tls_credentials,  # S65 W3: top-level func re-export
     serve,  # S65 W3: top-level func re-export
 )
@@ -60,7 +60,7 @@ def _patch_rpc_methods() -> None:
     Stub (InvokerServiceStub.Invoke) — channel.unary_unary возвращает
     callable, gRPC проверяет request_streaming на stub method тоже.
     """
-    from src.backend.entrypoints.grpc.protobuf import (
+    from src.backend.entrypoints.grpc.protobuf import (  # noqa: F401 — re-export
         files_pb2_grpc,
         invoker_pb2_grpc,
         orders_pb2_grpc,
@@ -172,7 +172,7 @@ def _patch_rpc_methods() -> None:
     # Invoke/Read/Write callables AFTER they are assigned.
     # Auto-generated Stub class sets self.Invoke = channel.unary_unary(...)
     # in __init__ — we patch these callables post-assignment.
-    from src.backend.entrypoints.grpc.protobuf import (
+    from src.backend.entrypoints.grpc.protobuf import (  # noqa: F401 — re-export
         files_pb2_grpc,
         invoker_pb2_grpc,
         orders_pb2_grpc,

@@ -15,7 +15,7 @@ from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
-from src.backend.entrypoints.http3.asgi_bridge import (
+from src.backend.entrypoints.http3.asgi_bridge import (  # noqa: F401 — re-export
     HttpStreamHandler,
     build_http_scope,
 )

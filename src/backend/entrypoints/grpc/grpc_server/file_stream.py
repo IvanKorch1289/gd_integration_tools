@@ -26,7 +26,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from src.backend.entrypoints.grpc.grpc_server.base import BaseGRPCServicer
-from src.backend.entrypoints.grpc.protobuf.files_pb2_grpc import (  # S131 W2 (TD-026 cont. full wire-up)
+from src.backend.entrypoints.grpc.protobuf.files_pb2_grpc import (  # noqa: F401 — re-export  # S131 W2 (TD-026 cont. full wire-up)
     FileServiceServicer,
 )
 
@@ -106,7 +106,7 @@ class FileStreamGRPCServicer(BaseGRPCServicer, FileServiceServicer):
         """
         # Late import: files_pb2 regen-зависимый (модули protobuf — динамически
         # генерируются protoc; mypy не видит message-классы).
-        from src.backend.entrypoints.grpc.protobuf import (
+        from src.backend.entrypoints.grpc.protobuf import (  # noqa: F401 — re-export
             files_pb2,  # type: ignore[attr-defined]
         )
 
@@ -156,7 +156,7 @@ class FileStreamGRPCServicer(BaseGRPCServicer, FileServiceServicer):
             :class:`FileUploadResponse` с file_id, object_uuid, size, fingerprint.
 
         """
-        from src.backend.entrypoints.grpc.protobuf import (
+        from src.backend.entrypoints.grpc.protobuf import (  # noqa: F401 — re-export
             files_pb2,  # type: ignore[attr-defined]
         )
 

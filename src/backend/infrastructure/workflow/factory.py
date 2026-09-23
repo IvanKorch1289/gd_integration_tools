@@ -70,7 +70,7 @@ async def create_workflow_backend(
         return FakeWorkflowBackend()
 
     if resolved == "pg_runner":
-        from src.backend.infrastructure.workflow.pg_runner_backend import (
+        from src.backend.infrastructure.workflow.pg_runner_backend import (  # noqa: F401 — re-export
             PgRunnerWorkflowBackend,
         )
 
@@ -78,14 +78,14 @@ async def create_workflow_backend(
 
     if resolved == "lite_temporal":
         try:
-            from src.backend.infrastructure.workflow.lite_temporal_backend import (
+            from src.backend.infrastructure.workflow.lite_temporal_backend import (  # noqa: F401 — re-export
                 LiteTemporalBackend,
             )
         except ImportError as exc:
             _logger.warning(
                 "temporalio SDK unavailable (%s); falling back to pg_runner", exc
             )
-            from src.backend.infrastructure.workflow.pg_runner_backend import (
+            from src.backend.infrastructure.workflow.pg_runner_backend import (  # noqa: F401 — re-export
                 PgRunnerWorkflowBackend,
             )
 
@@ -97,7 +97,7 @@ async def create_workflow_backend(
 
     if resolved == "temporal":
         try:
-            from src.backend.infrastructure.workflow.temporal_backend import (
+            from src.backend.infrastructure.workflow.temporal_backend import (  # noqa: F401 — re-export
                 TemporalWorkflowBackend,
             )
 
@@ -110,7 +110,7 @@ async def create_workflow_backend(
             _logger.warning(
                 "Temporal SDK unavailable (%s); falling back to pg_runner", exc
             )
-            from src.backend.infrastructure.workflow.pg_runner_backend import (
+            from src.backend.infrastructure.workflow.pg_runner_backend import (  # noqa: F401 — re-export
                 PgRunnerWorkflowBackend,
             )
 

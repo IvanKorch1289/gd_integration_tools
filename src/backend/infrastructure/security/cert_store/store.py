@@ -6,16 +6,16 @@ Classes: CertStore.
 from __future__ import annotations
 
 from src.backend.infrastructure.security.cert_store.backend_base import CertBackend
-from src.backend.infrastructure.security.cert_store.backend_memory import (
+from src.backend.infrastructure.security.cert_store.backend_memory import (  # noqa: F401 — re-export
     MemoryCertBackend,
 )
-from src.backend.infrastructure.security.cert_store.backend_mongo import (
+from src.backend.infrastructure.security.cert_store.backend_mongo import (  # noqa: F401 — re-export
     MongoCertBackend,
 )
-from src.backend.infrastructure.security.cert_store.backend_postgres import (
+from src.backend.infrastructure.security.cert_store.backend_postgres import (  # noqa: F401 — re-export
     PostgresCertBackend,
 )
-from src.backend.infrastructure.security.cert_store.backend_vault import (
+from src.backend.infrastructure.security.cert_store.backend_vault import (  # noqa: F401 — re-export
     VaultCertBackend,
 )
 
@@ -93,7 +93,7 @@ class CertStore:
             case "memory":
                 backend = MemoryCertBackend()
             case "consul":
-                from src.backend.infrastructure.security.cert_store.backend_consul import (
+                from src.backend.infrastructure.security.cert_store.backend_consul import (  # noqa: F401 — re-export
                     ConsulCertBackend,
                 )
 

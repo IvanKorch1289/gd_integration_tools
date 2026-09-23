@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.services.core.base import (
+    from src.backend.services.core.base import (  # noqa: F401 — re-export
         BaseService,
         create_service_class,
         get_service_for_model,

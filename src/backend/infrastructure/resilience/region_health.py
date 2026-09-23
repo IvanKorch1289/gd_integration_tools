@@ -16,7 +16,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from src.backend.core.logging import get_logger
-from src.backend.infrastructure.resilience.region_routing import (
+from src.backend.infrastructure.resilience.region_routing import (  # noqa: F401 — re-export
     Region,
     RegionStatus,
     get_region_status,

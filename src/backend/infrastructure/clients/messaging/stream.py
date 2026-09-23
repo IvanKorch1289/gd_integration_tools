@@ -38,7 +38,7 @@ def _inject_correlation_id_headers(headers: dict[str, Any] | None) -> dict[str, 
     if "correlation_id" in result:
         return result
     try:
-        from src.backend.infrastructure.observability.correlation import (
+        from src.backend.infrastructure.observability.correlation import (  # noqa: F401 — re-export
             get_correlation_id,
         )
     except ImportError:
@@ -85,7 +85,7 @@ class StreamClient:
     """
 
     def __init__(self) -> None:
-        from src.backend.infrastructure.scheduler.scheduler_manager import (
+        from src.backend.infrastructure.scheduler.scheduler_manager import (  # noqa: F401 — re-export
             get_scheduler_manager,
         )
 

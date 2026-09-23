@@ -17,7 +17,7 @@ from typing import Any
 import orjson
 
 from src.backend.core.interfaces.import_gateway import ImportSource, ImportSourceKind
-from src.backend.core.models.connector_spec import (
+from src.backend.core.models.connector_spec import (  # noqa: F401 — re-export
     AuthSchemeKind,
     AuthSpec,
     ConnectorSpec,
@@ -63,7 +63,7 @@ class OpenAPIImportGateway:
         if version_str.startswith("3.1"):
             from openapi_pydantic.v3.v3_1 import OpenAPI as OpenAPIModel
         elif version_str.startswith("3.0") or not version_str:
-            from openapi_pydantic.v3.v3_0 import (  # type: ignore[assignment]
+            from openapi_pydantic.v3.v3_0 import (  # noqa: F401 — re-export  # type: ignore[assignment]
                 OpenAPI as OpenAPIModel,  # type: ignore[assignment]
             )
         else:

@@ -82,7 +82,7 @@ class RedisLockProcessor(BaseProcessor):
         """Приобретает Redis lock или fail'ит exchange."""
         try:
             # S76 M2-#11 batch 11: DI provider вместо inline infrastructure import.
-            from src.backend.core.di.providers.cache import (
+            from src.backend.core.di.providers.cache import (  # noqa: F401 — re-export
                 get_redis_lock_class_provider,
             )
 

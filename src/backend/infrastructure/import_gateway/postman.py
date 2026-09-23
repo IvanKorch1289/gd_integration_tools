@@ -19,7 +19,7 @@ import orjson
 
 from src.backend.core.interfaces.import_gateway import ImportSource, ImportSourceKind
 from src.backend.core.logging import get_logger
-from src.backend.core.models.connector_spec import (
+from src.backend.core.models.connector_spec import (  # noqa: F401 — re-export
     AuthSchemeKind,
     AuthSpec,
     ConnectorSpec,

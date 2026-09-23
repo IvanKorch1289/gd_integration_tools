@@ -23,7 +23,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from src.backend.core.interfaces.action_dispatcher import (
+from src.backend.core.interfaces.action_dispatcher import (  # noqa: F401 — re-export
     ActionGatewayDispatcher,
     DispatchContext,
 )

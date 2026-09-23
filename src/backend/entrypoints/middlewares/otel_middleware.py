@@ -86,7 +86,7 @@ class OtelMiddleware:
     def _load_propagator() -> Any:
         """Загружает W3C trace-context propagator или возвращает None."""
         try:
-            from opentelemetry.trace.propagation.tracecontext import (
+            from opentelemetry.trace.propagation.tracecontext import (  # noqa: F401 — re-export
                 TraceContextTextMapPropagator,
             )
 

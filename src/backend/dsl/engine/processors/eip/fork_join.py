@@ -78,7 +78,7 @@ class ForkJoinProcessor(BaseProcessor):
         # ADR-0305: narrow fork_join timeout by remaining deadline budget.
         effective_timeout: float | None = self._timeout_seconds
         try:
-            from src.backend.core.async_utils.deadline_budget import (
+            from src.backend.core.async_utils.deadline_budget import (  # noqa: F401 — re-export
                 DeadlineExpiredError,
             )
             from src.backend.core.request_context import RequestContext

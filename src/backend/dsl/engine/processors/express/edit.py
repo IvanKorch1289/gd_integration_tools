@@ -8,7 +8,7 @@ from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
-from src.backend.dsl.engine.processors.express._common import (
+from src.backend.dsl.engine.processors.express._common import (  # noqa: F401 — re-export
     get_express_client,
     resolve_value,
 )

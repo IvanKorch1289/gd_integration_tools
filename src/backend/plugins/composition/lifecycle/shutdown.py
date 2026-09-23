@@ -49,7 +49,7 @@ async def run_shutdown(app: FastAPI, task_registry: Any) -> None:
     Each subsystem is best-effort: log+continue on failure.
     """
     # Lazy imports (avoid pre-existing import-bugs in composition package).
-    from src.backend.plugins.composition.lifecycle.plugin_loader import (
+    from src.backend.plugins.composition.lifecycle.plugin_loader import (  # noqa: F401 — re-export
         shutdown_plugin_loaders,
     )
     from src.backend.plugins.composition.lifecycle.watchers import stop_dsl_yaml_watcher
@@ -60,7 +60,7 @@ async def run_shutdown(app: FastAPI, task_registry: Any) -> None:
     # In-flight запросы завершаются ДО остановки подсистем (когда им ещё
     # доступны DB/Redis), новые получают 503 от GracefulShutdownMiddleware.
     try:
-        from src.backend.entrypoints.middlewares.graceful_shutdown import (
+        from src.backend.entrypoints.middlewares.graceful_shutdown import (  # noqa: F401 — re-export
             get_graceful_shutdown,
         )
 
@@ -82,7 +82,7 @@ async def run_shutdown(app: FastAPI, task_registry: Any) -> None:
 
     # ── 2. OutboxStuckMonitor (S74 W1) ──
     try:
-        from src.backend.infrastructure.messaging.outbox.stuck_monitor import (
+        from src.backend.infrastructure.messaging.outbox.stuck_monitor import (  # noqa: F401 — re-export
             stop_outbox_stuck_monitor,
         )
 
@@ -110,7 +110,7 @@ async def run_shutdown(app: FastAPI, task_registry: Any) -> None:
     # Stop periodic verify-loop, чтобы ``TaskRegistry.shutdown_all`` (ниже)
     # не наткнулся на running task без явного reason. Idempotent.
     try:
-        from src.backend.infrastructure.observability.audit_verify_lifecycle import (
+        from src.backend.infrastructure.observability.audit_verify_lifecycle import (  # noqa: F401 — re-export
             stop_audit_verify,
         )
 

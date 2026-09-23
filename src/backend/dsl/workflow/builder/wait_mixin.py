@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Self
 
 from src.backend.dsl.workflow.builder._protocol import _WorkflowBuilderProtocol
-from src.backend.dsl.workflow.spec import (
+from src.backend.dsl.workflow.spec import (  # noqa: F401 — re-export
     SensorDeclaration,
     SignalWaitDeclaration,
     SleepDeclaration,

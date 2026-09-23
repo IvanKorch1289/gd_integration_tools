@@ -18,11 +18,11 @@ Wave: ``[wave:s8/k2-w2-outbox-dispatcher]``.
 
 from __future__ import annotations
 
-from src.backend.infrastructure.messaging.outbox.dispatcher import (
+from src.backend.infrastructure.messaging.outbox.dispatcher import (  # noqa: F401 — re-export
     DLQHandler,
     OutboxDispatcher,
 )
-from src.backend.infrastructure.messaging.outbox.repository import (
+from src.backend.infrastructure.messaging.outbox.repository import (  # noqa: F401 — re-export
     OutboxRepository,
     TransactionalOutboxEnqueuer,
 )

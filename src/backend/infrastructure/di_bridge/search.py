@@ -36,7 +36,7 @@ def get_search_providers_module() -> Any:
 
 def get_base_search_provider_class() -> Any:
     """Возвращает ``clients.external.search_providers.BaseSearchProvider`` class."""
-    from src.backend.infrastructure.clients.external.search_providers import (
+    from src.backend.infrastructure.clients.external.search_providers import (  # noqa: F401 — re-export
         BaseSearchProvider,
     )
 
@@ -45,7 +45,7 @@ def get_base_search_provider_class() -> Any:
 
 def get_perplexity_provider_class() -> Any:
     """Возвращает ``clients.external.search_providers.PerplexityProvider`` class."""
-    from src.backend.infrastructure.clients.external.search_providers import (
+    from src.backend.infrastructure.clients.external.search_providers import (  # noqa: F401 — re-export
         PerplexityProvider,
     )
 
@@ -54,7 +54,7 @@ def get_perplexity_provider_class() -> Any:
 
 def get_searxng_provider_class() -> Any:
     """Возвращает ``clients.external.search_providers.SearXNGProvider`` class."""
-    from src.backend.infrastructure.clients.external.search_providers import (
+    from src.backend.infrastructure.clients.external.search_providers import (  # noqa: F401 — re-export
         SearXNGProvider,
     )
 
@@ -63,7 +63,7 @@ def get_searxng_provider_class() -> Any:
 
 def get_tavily_provider_class() -> Any:
     """Возвращает ``clients.external.search_providers.TavilyProvider`` class."""
-    from src.backend.infrastructure.clients.external.search_providers import (
+    from src.backend.infrastructure.clients.external.search_providers import (  # noqa: F401 — re-export
         TavilyProvider,
     )
 
@@ -72,7 +72,7 @@ def get_tavily_provider_class() -> Any:
 
 def get_web_search_service_class() -> Any:
     """Возвращает ``clients.external.search_providers.WebSearchService`` class."""
-    from src.backend.infrastructure.clients.external.search_providers import (
+    from src.backend.infrastructure.clients.external.search_providers import (  # noqa: F401 — re-export
         WebSearchService,
     )
 
@@ -81,7 +81,7 @@ def get_web_search_service_class() -> Any:
 
 def get_web_search_service_factory() -> Any:
     """Возвращает ``clients.external.search_providers.get_web_search_service`` factory."""
-    from src.backend.infrastructure.clients.external.search_providers import (
+    from src.backend.infrastructure.clients.external.search_providers import (  # noqa: F401 — re-export
         get_web_search_service,
     )
 

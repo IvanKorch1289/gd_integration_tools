@@ -282,7 +282,7 @@ class PostgresVariableBackend:
             return None
         from sqlalchemy import select
 
-        from src.backend.core.di.providers.infrastructure_locator import (
+        from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
             get_dsl_variables_attr as _get_dsl_var_attr,
         )
 
@@ -314,7 +314,7 @@ class PostgresVariableBackend:
             return
         from sqlalchemy.dialects.postgresql import insert as pg_insert
 
-        from src.backend.core.di.providers.infrastructure_locator import (
+        from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
             get_dsl_variables_attr as _get_dsl_var_attr,
         )
 
@@ -344,7 +344,7 @@ class PostgresVariableBackend:
             return False
         from sqlalchemy import delete
 
-        from src.backend.core.di.providers.infrastructure_locator import (
+        from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
             get_dsl_variables_attr as _get_dsl_var_attr,
         )
 
@@ -363,7 +363,7 @@ class PostgresVariableBackend:
             return []
         from sqlalchemy import select
 
-        from src.backend.core.di.providers.infrastructure_locator import (
+        from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
             get_dsl_variables_attr as _get_dsl_var_attr,
         )
 

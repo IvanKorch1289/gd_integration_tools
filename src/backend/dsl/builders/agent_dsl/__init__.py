@@ -8,10 +8,10 @@ works через re-export ниже.
 
 from __future__ import annotations
 
-from src.backend.dsl.builders.agent_dsl.infra import (
+from src.backend.dsl.builders.agent_dsl.infra import (  # noqa: F401 — re-export
     InfraMixin,  # S51 W3: MRO composition
 )
-from src.backend.dsl.builders.agent_dsl.orchestration import (
+from src.backend.dsl.builders.agent_dsl.orchestration import (  # noqa: F401 — re-export
     OrchestrationMixin,  # S51 W3: MRO composition
 )
 

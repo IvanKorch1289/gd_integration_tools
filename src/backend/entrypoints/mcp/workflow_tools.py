@@ -184,7 +184,7 @@ async def _trigger_and_maybe_wait(
     from datetime import datetime
 
     from src.backend.core.api.extensions import action_handler_registry
-    from src.backend.core.di.providers import (
+    from src.backend.core.di.providers import (  # noqa: F401 — re-export
         get_workflow_state_store_provider,
         get_workflow_status_enum_provider,
     )
@@ -288,7 +288,7 @@ def _register_catalog_tools(mcp: Any) -> None:
         ),
     )
     async def workflow_list() -> str:
-        from src.backend.entrypoints.api.v1.endpoints.admin_workflows import (
+        from src.backend.entrypoints.api.v1.endpoints.admin_workflows import (  # noqa: F401 — re-export
             input_schema_json,
         )
 

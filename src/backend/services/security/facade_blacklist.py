@@ -114,7 +114,7 @@ class JwtBlacklistMixin:
         """
         try:
             from src.backend.core.auth.jwt_blacklist import RedisJwtBlacklist
-            from src.backend.infrastructure.clients.storage.redis import (
+            from src.backend.infrastructure.clients.storage.redis import (  # noqa: F401 — re-export
                 get_redis_client as _get_redis_client,
             )
 

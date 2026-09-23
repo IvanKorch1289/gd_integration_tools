@@ -20,10 +20,10 @@ from typing import Any
 from fastapi import APIRouter, Header, HTTPException, Query, status
 
 from src.backend.core.logging import get_logger
-from src.backend.entrypoints.api.mobile.refresh_token_store import (
+from src.backend.entrypoints.api.mobile.refresh_token_store import (  # noqa: F401 — re-export
     get_refresh_token_store,
 )
-from src.backend.entrypoints.api.mobile.schemas import (
+from src.backend.entrypoints.api.mobile.schemas import (  # noqa: F401 — re-export
     CompressedResponse,
     CursorPage,
     MobileNotification,
@@ -103,11 +103,11 @@ def _build_mobile_jwt_verifier() -> Any:
             backend=backend, issuer_whitelist=issuer_whitelist, audience=audience
         )
 
-    from src.backend.core.auth.mobile_jwt_redis import (
+    from src.backend.core.auth.mobile_jwt_redis import (  # noqa: F401 — re-export
         RedisRateLimiter,
         RedisRevocationStore,
     )
-    from src.backend.core.auth.mobile_jwt_revocation import (
+    from src.backend.core.auth.mobile_jwt_revocation import (  # noqa: F401 — re-export
         build_verifier_with_protections,
     )
 

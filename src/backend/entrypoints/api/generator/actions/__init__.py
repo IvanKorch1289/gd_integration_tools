@@ -13,21 +13,21 @@ from fastapi import APIRouter as APIRouter
 from fastapi import Request as Request
 from fastapi.responses import JSONResponse as JSONResponse
 
-from src.backend.core.actions.spec_to_metadata import (
+from src.backend.core.actions.spec_to_metadata import (  # noqa: F401 — re-export
     action_spec_to_metadata as action_spec_to_metadata,
 )
-from src.backend.core.api.extensions import (
+from src.backend.core.api.extensions import (  # noqa: F401 — re-export
     action_handler_registry as action_handler_registry,
 )
-from src.backend.entrypoints.api.generator.actions.crud import (
+from src.backend.entrypoints.api.generator.actions.crud import (  # noqa: F401 — re-export
     CrudMixin,  # S49 W3: MRO composition per ADR-0107
 )
-from src.backend.entrypoints.api.generator.marshaller import (
+from src.backend.entrypoints.api.generator.marshaller import (  # noqa: F401 — re-export
     decorate_endpoint,
     extract_invocation_kwargs,
     prepare_call_kwargs,
 )
-from src.backend.entrypoints.api.generator.reflection import (
+from src.backend.entrypoints.api.generator.reflection import (  # noqa: F401 — re-export
     body_parameter,
     build_invocation_parameters,
     build_model_parameters,
@@ -35,7 +35,7 @@ from src.backend.entrypoints.api.generator.reflection import (
     request_parameter,
 )
 from src.backend.entrypoints.api.generator.specs import ActionSpec, CrudSpec
-from src.backend.schemas.invocation import (
+from src.backend.schemas.invocation import (  # noqa: F401 — re-export
     InvocationOptionsSchema,
     InvocationResultSchema,
     InvokeMode,

@@ -180,7 +180,7 @@ class QdrantVectorStore(BaseVectorStore):
             int count удалённых vectors.
 
         """
-        from qdrant_client.models import (
+        from qdrant_client.models import (  # noqa: F401 — re-export
             FieldCondition,
             Filter,
             FilterSelector,

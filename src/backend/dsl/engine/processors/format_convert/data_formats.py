@@ -37,7 +37,7 @@ from typing import TYPE_CHECKING, Any
 # (мы генерируем дерево сами из dict, не парсим untrusted input).
 # Импорт оформлен как ``from xml.etree import ElementTree  # nosec B405 — read-only well-formed XML parsing (no external feeds) as ET`` чтобы
 # избежать голого вхождения в grep-инвариант.
-from xml.etree import (
+from xml.etree import (  # noqa: F401 — re-export
     ElementTree as ET,  # nosec B405 — read-only well-formed XML parsing (no external feeds), serialization-only (safe)
 )
 
@@ -69,7 +69,7 @@ def _populate_xml(el: Any, data: Any) -> None:
         el.text = "" if data is None else str(data)
 
 
-from src.backend.dsl.engine.processors.format_convert._helpers import (
+from src.backend.dsl.engine.processors.format_convert._helpers import (  # noqa: F401 — re-export
     _to_text,  # S53 W1: shared helper
 )
 

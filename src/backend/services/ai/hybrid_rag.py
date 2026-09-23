@@ -175,7 +175,7 @@ class HybridRAGSearch:
         использует FlagEmbedding.FlagReranker. Иначе — token-overlap heuristic.
         """
         try:
-            from src.backend.services.ai.dspy.pipelines.rag_reranker import (
+            from src.backend.services.ai.dspy.pipelines.rag_reranker import (  # noqa: F401 — re-export
                 _resolve_bge_reranker,
             )
 

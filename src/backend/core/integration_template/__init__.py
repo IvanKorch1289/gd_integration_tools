@@ -26,7 +26,7 @@
 
 Использование::
 
-    from src.backend.core.integration_template import (
+    from src.backend.core.integration_template import (  # noqa: F401 — re-export
         get_template_catalog, TemplateGenerator,
     )
 
@@ -43,13 +43,13 @@
 
 from __future__ import annotations
 
-from src.backend.core.integration_template.catalog import (
+from src.backend.core.integration_template.catalog import (  # noqa: F401 — re-export
     Template,
     TemplateCatalog,
     TemplateFile,
     get_template_catalog,
 )
-from src.backend.core.integration_template.generator import (
+from src.backend.core.integration_template.generator import (  # noqa: F401 — re-export
     GenerationResult,
     TemplateGenerator,
     get_template_generator,

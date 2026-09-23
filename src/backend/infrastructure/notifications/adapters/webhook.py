@@ -88,7 +88,7 @@ class WebhookAdapter:
 
         start = time.perf_counter()
         try:
-            from src.backend.infrastructure.clients.transport.http_upstream import (
+            from src.backend.infrastructure.clients.transport.http_upstream import (  # noqa: F401 — re-export
                 upstream_registry,
             )
 

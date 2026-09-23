@@ -31,7 +31,7 @@
 
 Использование::
 
-    from src.backend.core.contract_testing import (
+    from src.backend.core.contract_testing import (  # noqa: F401 — re-export
         ContractTestHarness, ContractTestCase,
     )
 
@@ -52,16 +52,16 @@
 
 from __future__ import annotations
 
-from src.backend.core.contract_testing.case import (
+from src.backend.core.contract_testing.case import (  # noqa: F401 — re-export
     CompatibilityTest,
     ContractTestCase,
     ContractTestResult,
 )
-from src.backend.core.contract_testing.harness import (
+from src.backend.core.contract_testing.harness import (  # noqa: F401 — re-export
     ContractTestHarness,
     get_contract_test_harness,
 )
-from src.backend.core.contract_testing.validator import (
+from src.backend.core.contract_testing.validator import (  # noqa: F401 — re-export
     SchemaValidationError,
     validate_against_schema,
 )

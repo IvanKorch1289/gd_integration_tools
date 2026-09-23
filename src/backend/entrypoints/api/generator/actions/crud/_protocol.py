@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from fastapi import APIRouter
     from pydantic import BaseModel
 
-    from src.backend.entrypoints.api.generator.specs import (
+    from src.backend.entrypoints.api.generator.specs import (  # noqa: F401 — re-export
         CrudSpec,
         HttpMethod,
         RouteDecorator,

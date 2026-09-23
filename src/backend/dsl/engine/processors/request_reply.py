@@ -105,7 +105,7 @@ class ReplyProcessor(BaseProcessor):
             exchange.fail("Missing reply_to or correlation_id for reply")
             return
 
-        from src.backend.core.di.providers.infrastructure_locator import (
+        from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
             get_event_bus_facade_provider,
         )
 

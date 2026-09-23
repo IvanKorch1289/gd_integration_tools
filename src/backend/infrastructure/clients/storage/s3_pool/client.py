@@ -14,7 +14,7 @@ from typing import Any, Literal, ParamSpec, TypeVar
 from src.backend.infrastructure.clients.storage.s3_pool.base import BaseS3Client
 
 try:
-    from botocore.exceptions import (  # type: ignore[import-not-found]
+    from botocore.exceptions import (  # noqa: F401 — re-export  # type: ignore[import-not-found]
         ClientError as BotoClientError,  # type: ignore[import-not-found]  # type: ignore  # type: ignore[unused-ignore]
     )
 except ImportError:  # botocore — опциональная зависимость dev_light

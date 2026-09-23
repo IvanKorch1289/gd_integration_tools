@@ -117,7 +117,7 @@ class AppriseNotifyProcessor(BaseProcessor):
         При успехе пишет ``True`` в ``result_property``.
         При неудаче — ``False``, exchange НЕ останавливается (fire-and-forget семантика).
         """
-        from src.backend.services.notifications.apprise_service import (
+        from src.backend.services.notifications.apprise_service import (  # noqa: F401 — re-export
             get_notification_service,
         )
 

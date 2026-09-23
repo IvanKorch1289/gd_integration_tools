@@ -51,7 +51,7 @@ from __future__ import annotations
 
 from src.backend.core.file_safety.atomic import AtomicHandoff
 from src.backend.core.file_safety.manifest import FileManifest, FileSafetyService
-from src.backend.core.file_safety.quarantine import (
+from src.backend.core.file_safety.quarantine import (  # noqa: F401 — re-export
     QuarantineDecision,
     QuarantinePolicy,
     QuarantineResult,

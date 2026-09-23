@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.antivirus.payload_scanner import (
+    from src.backend.infrastructure.antivirus.payload_scanner import (  # noqa: F401 — re-export
         ClamAVPayloadScanner,
     )
 
@@ -39,10 +39,10 @@ def build_clamav_scanner_if_enabled() -> ClamAVPayloadScanner | None:
         return None
 
     try:
-        from src.backend.infrastructure.antivirus.backends.clamav_tcp import (
+        from src.backend.infrastructure.antivirus.backends.clamav_tcp import (  # noqa: F401 — re-export
             ClamAVTcpBackend,
         )
-        from src.backend.infrastructure.antivirus.payload_scanner import (
+        from src.backend.infrastructure.antivirus.payload_scanner import (  # noqa: F401 — re-export
             ClamAVPayloadScanner,
         )
     except ImportError as exc:

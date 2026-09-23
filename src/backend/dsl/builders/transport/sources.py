@@ -45,7 +45,7 @@ class SourcesMixin(_RouteBuilderProtocol):
                 (список dict с ключами ``path``, ``name``, ``size``, ``mtime``).
 
         """
-        from src.backend.dsl.engine.processors.fs_directory_scan import (
+        from src.backend.dsl.engine.processors.fs_directory_scan import (  # noqa: F401 — re-export
             DirectoryScanProcessor,
         )
 
@@ -220,7 +220,7 @@ class SourcesMixin(_RouteBuilderProtocol):
             )
 
         """
-        from src.backend.dsl.engine.processors.sink_publish import (
+        from src.backend.dsl.engine.processors.sink_publish import (  # noqa: F401 — re-export
             GenericSinkPublishProcessor,
         )
 

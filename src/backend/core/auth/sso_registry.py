@@ -35,7 +35,7 @@ from typing import Any, Protocol
 
 from pydantic import ValidationError
 
-from src.backend.core.auth.sso_types import (
+from src.backend.core.auth.sso_types import (  # noqa: F401 — re-export
     GROUPS_TO_CAPABILITIES_KEY,
     GroupsToCapabilities,
     IdpConfig,

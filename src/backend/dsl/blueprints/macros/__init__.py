@@ -9,28 +9,28 @@ Backward-compat: ``from src.backend.dsl.blueprints.macros import etl_pipeline`` 
 
 from __future__ import annotations
 
-from src.backend.dsl.blueprints.macros.ai_qa_pipeline import (
+from src.backend.dsl.blueprints.macros.ai_qa_pipeline import (  # noqa: F401 — re-export
     ai_qa_pipeline,  # S68 W1: re-export
 )
-from src.backend.dsl.blueprints.macros.crud_with_audit import (
+from src.backend.dsl.blueprints.macros.crud_with_audit import (  # noqa: F401 — re-export
     crud_with_audit,  # S68 W1: re-export
 )
-from src.backend.dsl.blueprints.macros.etl_pipeline import (
+from src.backend.dsl.blueprints.macros.etl_pipeline import (  # noqa: F401 — re-export
     etl_pipeline,  # S68 W1: re-export
 )
-from src.backend.dsl.blueprints.macros.format_bridge import (
+from src.backend.dsl.blueprints.macros.format_bridge import (  # noqa: F401 — re-export
     format_bridge,  # S68 W1: re-export
 )
-from src.backend.dsl.blueprints.macros.polling_etl import (
+from src.backend.dsl.blueprints.macros.polling_etl import (  # noqa: F401 — re-export
     polling_etl,  # S68 W1: re-export
 )
-from src.backend.dsl.blueprints.macros.safe_action import (
+from src.backend.dsl.blueprints.macros.safe_action import (  # noqa: F401 — re-export
     safe_action,  # S68 W1: re-export
 )
-from src.backend.dsl.blueprints.macros.scrape_and_store import (
+from src.backend.dsl.blueprints.macros.scrape_and_store import (  # noqa: F401 — re-export
     scrape_and_store,  # S68 W1: re-export
 )
-from src.backend.dsl.blueprints.macros.webhook_relay import (
+from src.backend.dsl.blueprints.macros.webhook_relay import (  # noqa: F401 — re-export
     webhook_relay,  # S68 W1: re-export
 )
 

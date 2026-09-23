@@ -26,7 +26,7 @@ Security:
 
 API (S172 M3):
 
-    from src.backend.core.di.module_registry import (
+    from src.backend.core.di.module_registry import (  # noqa: F401 — re-export
         register_extension_module,
         unregister_extension_module,
         clear_extension_modules,
@@ -144,7 +144,7 @@ def register_extension_module(key: str, dotted_path: str) -> bool:
     Examples::
 
         # В extensions/my_plugin/plugin.py:
-        from src.backend.core.di.module_registry import (
+        from src.backend.core.di.module_registry import (  # noqa: F401 — re-export
             register_extension_module,
         )
 

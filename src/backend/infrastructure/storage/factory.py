@@ -59,7 +59,7 @@ def _enforce_local_fs_safe_in_prod() -> None:
     """
     try:
         from src.backend.core.config.settings import settings
-        from src.backend.core.config.validator._helpers import (
+        from src.backend.core.config.validator._helpers import (  # noqa: F401 — re-export
             PRODUCTION_ENV,
             ConfigSeverity,
             ConfigViolation,

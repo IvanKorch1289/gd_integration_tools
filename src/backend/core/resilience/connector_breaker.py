@@ -22,7 +22,7 @@ from collections.abc import Awaitable, Callable
 from functools import wraps
 from typing import ParamSpec, TypeVar
 
-from src.backend.core.resilience.breaker import (
+from src.backend.core.resilience.breaker import (  # noqa: F401 — re-export
     BreakerSpec,
     CircuitOpen,
     get_breaker_registry,

@@ -13,7 +13,7 @@
     возбуждает MissingBaggageError при отсутствии хотя бы одного.
 
 Использование:
-    from src.backend.core.observability.baggage import (
+    from src.backend.core.observability.baggage import (  # noqa: F401 — re-export
         set_baggage,
         get_baggage,
         with_baggage,

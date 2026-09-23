@@ -4,11 +4,11 @@ AuthN/AuthZ primitives: capability gates, policy resolver, OAuth, LDAP.
 Public API — на уровне подпакетов.
 """
 
-from src.backend.core.security.module_whitelist import (
+from src.backend.core.security.module_whitelist import (  # noqa: F401 — re-export
     EmptyWhitelistMode,
     validate_module_whitelist,
 )
-from src.backend.core.security.restricted_unpickler import (
+from src.backend.core.security.restricted_unpickler import (  # noqa: F401 — re-export
     DEFAULT_ALLOWLIST,
     RestrictedUnpickler,
     safe_loads,

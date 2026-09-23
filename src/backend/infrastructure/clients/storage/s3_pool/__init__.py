@@ -11,13 +11,13 @@ from __future__ import annotations
 
 from typing import Any as Any
 
-from src.backend.core.config.settings import (
+from src.backend.core.config.settings import (  # noqa: F401 — re-export
     settings,  # S71 W1 fix: S56 W3 decomp lost this import
 )
-from src.backend.infrastructure.clients.storage.s3_pool.base import (
+from src.backend.infrastructure.clients.storage.s3_pool.base import (  # noqa: F401 — re-export
     BaseS3Client,  # S56 W3: re-export
 )
-from src.backend.infrastructure.clients.storage.s3_pool.client import (
+from src.backend.infrastructure.clients.storage.s3_pool.client import (  # noqa: F401 — re-export
     S3Client,  # S56 W3: re-export
 )
 

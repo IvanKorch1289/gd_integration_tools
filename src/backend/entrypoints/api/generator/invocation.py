@@ -7,7 +7,7 @@ from typing import Any
 from fastapi import Request
 
 from src.backend.core.enums.invocation import BrokerKind
-from src.backend.schemas.invocation import (
+from src.backend.schemas.invocation import (  # noqa: F401 — re-export
     ActionCommandMetaSchema,
     InvocationOptionsSchema,
 )

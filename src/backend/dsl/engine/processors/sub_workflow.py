@@ -124,7 +124,7 @@ class SubWorkflowProcessor(BaseProcessor):
         if self._backend_factory is not None:
             return await self._backend_factory()
         # S69 M2-#11 batch 4: DI provider вместо inline infrastructure import.
-        from src.backend.core.di.providers.workflow import (
+        from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
             get_workflow_backend_factory_provider,
         )
 
@@ -132,7 +132,7 @@ class SubWorkflowProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Делегирует на :class:`InvokeWorkflowProcessor` (mode=async-api)."""
-        from src.backend.dsl.engine.processors.invoke_workflow import (
+        from src.backend.dsl.engine.processors.invoke_workflow import (  # noqa: F401 — re-export
             InvokeWorkflowProcessor,
         )
 

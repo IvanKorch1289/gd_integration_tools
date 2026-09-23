@@ -18,7 +18,7 @@ import time
 from collections.abc import Mapping
 from typing import Any
 
-from src.backend.core.interfaces.action_dispatcher import (
+from src.backend.core.interfaces.action_dispatcher import (  # noqa: F401 — re-export
     ActionResult,
     DispatchContext,
     MiddlewareNextHandler,

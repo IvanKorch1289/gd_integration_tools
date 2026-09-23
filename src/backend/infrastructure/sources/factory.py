@@ -55,7 +55,7 @@ def build_source(spec: SourceSpec) -> Source:
         case SourceKind.FILE_WATCHER:
             from pathlib import Path
 
-            from src.backend.infrastructure.sources.file_watcher import (
+            from src.backend.infrastructure.sources.file_watcher import (  # noqa: F401 — re-export
                 FileWatcherSource,
             )
 

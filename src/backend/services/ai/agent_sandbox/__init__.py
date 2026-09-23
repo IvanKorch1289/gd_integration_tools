@@ -8,7 +8,7 @@ Back-compat: ``services/ai/agent_sandbox.py`` (singular, файл) → thin re-e
 ``services/ai/__init__.py`` (public API facade) без изменений.
 
 Public API:
-    from src.backend.services.ai.agent_sandbox import (
+    from src.backend.services.ai.agent_sandbox import (  # noqa: F401 — re-export
         InProcessAgentSandbox, ProcessPoolAgentSandbox, E2BAgentSandbox,
         AgentSandboxSelector, resolve_agent_sandbox,
         get_process_pool_agent_sandbox,
@@ -25,28 +25,28 @@ Submodules:
 
 from __future__ import annotations
 
-from src.backend.services.ai.agent_sandbox._e2b import (
+from src.backend.services.ai.agent_sandbox._e2b import (  # noqa: F401 — re-export
     E2BAgentSandbox as E2BAgentSandbox,
 )
-from src.backend.services.ai.agent_sandbox._in_process import (
+from src.backend.services.ai.agent_sandbox._in_process import (  # noqa: F401 — re-export
     InProcessAgentSandbox as InProcessAgentSandbox,
 )
-from src.backend.services.ai.agent_sandbox._process_pool import (
+from src.backend.services.ai.agent_sandbox._process_pool import (  # noqa: F401 — re-export
     ProcessPoolAgentSandbox as ProcessPoolAgentSandbox,
 )
-from src.backend.services.ai.agent_sandbox._selector import (
+from src.backend.services.ai.agent_sandbox._selector import (  # noqa: F401 — re-export
     AgentSandboxSelector as AgentSandboxSelector,
 )
-from src.backend.services.ai.agent_sandbox._selector import (
+from src.backend.services.ai.agent_sandbox._selector import (  # noqa: F401 — re-export
     get_process_pool_agent_sandbox as get_process_pool_agent_sandbox,
 )
-from src.backend.services.ai.agent_sandbox._selector import (
+from src.backend.services.ai.agent_sandbox._selector import (  # noqa: F401 — re-export
     resolve_agent_sandbox as resolve_agent_sandbox,
 )
-from src.backend.services.ai.agent_sandbox._types import (
+from src.backend.services.ai.agent_sandbox._types import (  # noqa: F401 — re-export
     AgentSandboxConfigError as AgentSandboxConfigError,
 )
-from src.backend.services.ai.agent_sandbox._types import (
+from src.backend.services.ai.agent_sandbox._types import (  # noqa: F401 — re-export
     AgentSandboxTimeoutError as AgentSandboxTimeoutError,
 )
 

@@ -6,25 +6,25 @@
 отсутствия двойного кэширования (ADR-004) на старте.
 """
 
-from src.backend.infrastructure.cache.backends import (
+from src.backend.infrastructure.cache.backends import (  # noqa: F401 — re-export
     KeyDBBackend,
     MemoryBackend,
     RedisBackend,
 )
 from src.backend.infrastructure.cache.factory import create_cache_backend
-from src.backend.infrastructure.cache.invalidator import (
+from src.backend.infrastructure.cache.invalidator import (  # noqa: F401 — re-export
     CacheBackendProtocol,
     CacheInvalidator,
     InMemoryCacheBackend,
     get_cache_invalidator,
     set_cache_invalidator,
 )
-from src.backend.infrastructure.cache.tenant_wrapper import (
+from src.backend.infrastructure.cache.tenant_wrapper import (  # noqa: F401 — re-export
     DEFAULT_UNSCOPED_PREFIX,
     TenantCacheBackend,
 )
 from src.backend.infrastructure.cache.tiered import TieredCacheBackend
-from src.backend.infrastructure.cache.validator import (
+from src.backend.infrastructure.cache.validator import (  # noqa: F401 — re-export
     CacheConfigEntry,
     CacheConfigRegistry,
     CacheDuplicationError,

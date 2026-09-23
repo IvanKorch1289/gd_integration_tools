@@ -12,7 +12,7 @@
 
 API::
 
-    from src.backend.dsl.engine.step_trace import (
+    from src.backend.dsl.engine.step_trace import (  # noqa: F401 — re-export
         StepTrace, record_trace, traced_step,
     )
 

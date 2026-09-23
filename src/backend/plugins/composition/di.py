@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from fastapi import FastAPI
 
     from src.backend.core.interfaces.watermark_store import WatermarkStore
-    from src.backend.core.security.authorization_gateway import (
+    from src.backend.core.security.authorization_gateway import (  # noqa: F401 — re-export
         AuthorizationGateway,  # Cycle-19 (D-AUDIT-1907): forward-ref для get_authorization_gateway
     )
     from src.backend.dsl.engine.plugin_registry import ProcessorPluginRegistry
@@ -35,10 +35,10 @@ if TYPE_CHECKING:
     from src.backend.dsl.engine.versioning import PipelineVersionManager
     from src.backend.entrypoints.mqtt.mqtt_handler import MqttHandler
     from src.backend.infrastructure.application.slo_tracker import SLOTracker
-    from src.backend.infrastructure.application.vault_refresher import (
+    from src.backend.infrastructure.application.vault_refresher import (  # noqa: F401 — re-export
         VaultSecretRefresher,
     )
-    from src.backend.infrastructure.clients.external.langfuse_client import (
+    from src.backend.infrastructure.clients.external.langfuse_client import (  # noqa: F401 — re-export
         LangFuseClient,
     )
     from src.backend.infrastructure.database.pool_monitor import PoolMonitor
@@ -80,7 +80,7 @@ def register_app_state(app: FastAPI) -> None:
     from src.backend.dsl.engine.tracer import ExecutionTracer
     from src.backend.dsl.engine.versioning import PipelineVersionManager
     from src.backend.infrastructure.application.slo_tracker import SLOTracker
-    from src.backend.infrastructure.clients.external.langfuse_client import (
+    from src.backend.infrastructure.clients.external.langfuse_client import (  # noqa: F401 — re-export
         LangFuseClient,
     )
     from src.backend.infrastructure.database.pool_monitor import PoolMonitor
@@ -109,7 +109,7 @@ def register_app_state(app: FastAPI) -> None:
     # W22 техдолг: composition root для Invoker + ReplyChannelRegistry.
     # Concrete реализация регистрируется здесь, чтобы services/execution
     # и entrypoints зависели только от Protocol через core/di.dependencies.
-    from src.backend.infrastructure.messaging.invocation_replies import (
+    from src.backend.infrastructure.messaging.invocation_replies import (  # noqa: F401 — re-export
         get_reply_channel_registry,
     )
     from src.backend.services.execution.invoker import Invoker
@@ -117,7 +117,7 @@ def register_app_state(app: FastAPI) -> None:
     app.state.reply_registry = get_reply_channel_registry()
     app.state.invoker = Invoker()
 
-    from src.backend.infrastructure.application.vault_refresher import (
+    from src.backend.infrastructure.application.vault_refresher import (  # noqa: F401 — re-export
         VaultSecretRefresher,
     )
 
@@ -162,12 +162,12 @@ def register_app_state(app: FastAPI) -> None:
                     ),
                     missing=("policy.opa_url", "policy.casbin_model_path"),
                 )
-            from src.backend.core.security.authorization_gateway.policies import (
+            from src.backend.core.security.authorization_gateway.policies import (  # noqa: F401 — re-export
                 build_casbin_policy_decider,
                 build_opa_policy_decider,
             )
             from src.backend.infrastructure.policy.casbin_adapter import CasbinAdapter
-            from src.backend.infrastructure.policy.casbin_tenant_scoped import (
+            from src.backend.infrastructure.policy.casbin_tenant_scoped import (  # noqa: F401 — re-export
                 TenantScopedCasbin,
             )
             from src.backend.infrastructure.policy.opa.client import OPAClient
@@ -223,7 +223,7 @@ def register_app_state(app: FastAPI) -> None:
     # W14.5: durable WatermarkStore — выбор бэкенда (memory/postgres) по
     # ``WatermarkSettings``. PG-вариант берёт главный session_manager;
     # memory не требует БД и пригоден для dev_light/тестов.
-    from src.backend.core.config.services.watermark import (
+    from src.backend.core.config.services.watermark import (  # noqa: F401 — re-export
         watermark_settings as _watermark_settings,
     )
     from src.backend.infrastructure.database.session_manager import main_session_manager
@@ -249,7 +249,7 @@ def register_app_state(app: FastAPI) -> None:
     # session_factory, что и outbox DLQ handler.
     from src.backend.infrastructure.clients.external.cdc import get_cdc_client
     from src.backend.infrastructure.messaging.dlq.inbox_writer import InboxDLQWriter
-    from src.backend.plugins.composition.lifecycle.outbox_setup import (
+    from src.backend.plugins.composition.lifecycle.outbox_setup import (  # noqa: F401 — re-export
         _get_outbox_dlq_session_factory,
     )
 
@@ -259,7 +259,7 @@ def register_app_state(app: FastAPI) -> None:
     # mark_cdc_dlq_writer_wired вызывается автоматически из
     # ``set_dlq_writer`` для не-None writer, но делаем явный mark
     # для observability (счётчик в guard обновляется дважды, idempotent).
-    from src.backend.infrastructure.clients.external.cdc._dlq_writer_guard import (
+    from src.backend.infrastructure.clients.external.cdc._dlq_writer_guard import (  # noqa: F401 — re-export
         mark_cdc_dlq_writer_wired,
     )
 

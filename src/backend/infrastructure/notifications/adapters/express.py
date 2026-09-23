@@ -49,7 +49,7 @@ class ExpressAdapter:
             RuntimeError: Если Express отключён или BotX недоступен.
 
         """
-        from src.backend.infrastructure.clients.external.express_bot import (
+        from src.backend.infrastructure.clients.external.express_bot import (  # noqa: F401 — re-export
             BotxButton,
             BotxMention,
             BotxMessage,
@@ -81,7 +81,7 @@ class ExpressAdapter:
         # Previously: `from src.backend.dsl.engine.processors.express._common
         # import get_express_client` (1 cross-layer entry in allowlist).
         from src.backend.core.config.express import express_settings
-        from src.backend.infrastructure.clients.external.express_bot import (
+        from src.backend.infrastructure.clients.external.express_bot import (  # noqa: F401 — re-export
             BotConfig,
             ExpressBotClient,
         )

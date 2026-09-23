@@ -10,10 +10,10 @@ Backward-compat: ``from src.backend.dsl.engine.processors.eip.marshal import Mar
 
 from __future__ import annotations
 
-from src.backend.dsl.engine.processors.eip.marshal.base import (
+from src.backend.dsl.engine.processors.eip.marshal.base import (  # noqa: F401 — re-export
     DataFormat,  # S63 W3: re-export
 )
-from src.backend.dsl.engine.processors.eip.marshal.formats import (
+from src.backend.dsl.engine.processors.eip.marshal.formats import (  # noqa: F401 — re-export
     CsvDataFormat,  # S63 W3: re-export
     JsonDataFormat,  # S63 W3: re-export
     MessagePackDataFormat,  # S63 W3: re-export
@@ -23,7 +23,7 @@ from src.backend.dsl.engine.processors.eip.marshal.formats import (
     _json_default,  # S63 W3: helper re-export
     _xml_to_dict,  # S63 W3: helper re-export
 )
-from src.backend.dsl.engine.processors.eip.marshal.processors import (
+from src.backend.dsl.engine.processors.eip.marshal.processors import (  # noqa: F401 — re-export
     MarshalProcessor,  # S63 W3: re-export
     UnmarshalProcessor,  # S63 W3: re-export
 )

@@ -30,7 +30,7 @@
 
 Использование::
 
-    from src.backend.core.route_contract import (
+    from src.backend.core.route_contract import (  # noqa: F401 — re-export
         RouteContract, RetryPolicy, IdempotencyPolicy, DLQPolicy,
         validate_contract,
     )
@@ -51,14 +51,14 @@
 
 from __future__ import annotations
 
-from src.backend.core.route_contract.contract import (
+from src.backend.core.route_contract.contract import (  # noqa: F401 — re-export
     DLQPolicy,
     IdempotencyPolicy,
     RetryPolicy,
     RouteContract,
     validate_contract,
 )
-from src.backend.core.route_contract.registry import (
+from src.backend.core.route_contract.registry import (  # noqa: F401 — re-export
     RouteContractRegistry,
     get_route_contract_registry,
 )

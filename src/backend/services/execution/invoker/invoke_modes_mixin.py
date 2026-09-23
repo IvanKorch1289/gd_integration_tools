@@ -28,13 +28,13 @@ if TYPE_CHECKING:
 
 from src.backend.core.async_utils.safe_wait import safe_wait_for
 from src.backend.core.interfaces.invocation_reply import ReplyChannelKind
-from src.backend.core.interfaces.invoker import (
+from src.backend.core.interfaces.invoker import (  # noqa: F401 — re-export
     InvocationRequest,
     InvocationResponse,
     InvocationStatus,
 )
 from src.backend.core.logging import get_logger
-from src.backend.core.types.invocation_command import (
+from src.backend.core.types.invocation_command import (  # noqa: F401 — re-export
     ActionCommandMetaSchema,
     ActionCommandSchema,
 )

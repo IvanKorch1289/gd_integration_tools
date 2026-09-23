@@ -42,7 +42,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 from src.backend.core.logging import get_logger
-from src.backend.entrypoints.api.v1.dependencies.login_ratelimit import (
+from src.backend.entrypoints.api.v1.dependencies.login_ratelimit import (  # noqa: F401 — re-export
     check_ip_rate_limit,
     check_username_rate_limit,
 )

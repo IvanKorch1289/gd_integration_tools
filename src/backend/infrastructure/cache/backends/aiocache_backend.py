@@ -6,7 +6,7 @@ W4 P1-6 (cycle 152, MINIMAX plan):): opt-in backend для тех, кто хоч
 
 Использование:
 
-    from src.backend.infrastructure.cache.backends.aiocache_backend import (
+    from src.backend.infrastructure.cache.backends.aiocache_backend import (  # noqa: F401 — re-export
         AiocacheMemoryBackend,
     )
 

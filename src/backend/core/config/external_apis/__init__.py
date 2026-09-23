@@ -1,10 +1,10 @@
 """Конфиги внешних API-интеграций."""
 
-from src.backend.core.config.external_apis.antivirus import (
+from src.backend.core.config.external_apis.antivirus import (  # noqa: F401 — re-export
     AntivirusAPISettings,
     antivirus_api_settings,
 )
-from src.backend.core.config.external_apis.dadata import (
+from src.backend.core.config.external_apis.dadata import (  # noqa: F401 — re-export
     DadataAPISettings,
     dadata_api_settings,
 )

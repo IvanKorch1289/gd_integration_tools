@@ -220,7 +220,7 @@ class CircuitBreakerMiddleware:
     def _get_adapter(self) -> Any:
         """Lazy-init BreakerPolicyAdapter (when registry flag enabled)."""
         if self._adapter is None:
-            from src.backend.core.resilience.breaker_policy_adapter import (
+            from src.backend.core.resilience.breaker_policy_adapter import (  # noqa: F401 — re-export
                 BreakerPolicyAdapter,
             )
 

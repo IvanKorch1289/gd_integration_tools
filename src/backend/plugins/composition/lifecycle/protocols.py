@@ -37,7 +37,7 @@ async def register_protocol_providers() -> None:
 
     # LLM провайдеры (работают если есть env-переменные с ключами).
     try:
-        from src.backend.services.ai.ai_providers import (
+        from src.backend.services.ai.ai_providers import (  # noqa: F401 — re-export
             ClaudeProvider,
             GeminiProvider,
             OllamaProvider,
@@ -55,7 +55,7 @@ async def register_protocol_providers() -> None:
     # Позволяет бизнес-коду делать get_provider("exporter", "csv") и
     # подменять реализации (csv-по-другому, xlsx-через polars и т.п.).
     try:
-        from src.backend.services.io.export_service import (
+        from src.backend.services.io.export_service import (  # noqa: F401 — re-export
             CsvExporter,
             ExcelExporter,
             JsonExporter,
@@ -100,7 +100,7 @@ async def register_protocol_providers() -> None:
         app_logger.debug("ai_feedback ensure_indexes skipped: %s", exc)
 
     try:
-        from src.backend.infrastructure.repositories.connector_configs_mongo import (
+        from src.backend.infrastructure.repositories.connector_configs_mongo import (  # noqa: F401 — re-export
             get_connector_config_store,
         )
 
@@ -109,10 +109,10 @@ async def register_protocol_providers() -> None:
         app_logger.debug("connector_configs ensure_indexes skipped: %s", exc)
 
     try:
-        from src.backend.infrastructure.repositories.express_dialogs_mongo import (
+        from src.backend.infrastructure.repositories.express_dialogs_mongo import (  # noqa: F401 — re-export
             get_express_dialog_store,
         )
-        from src.backend.infrastructure.repositories.express_sessions_mongo import (
+        from src.backend.infrastructure.repositories.express_sessions_mongo import (  # noqa: F401 — re-export
             get_express_session_store,
         )
 
@@ -133,7 +133,7 @@ async def register_protocol_providers() -> None:
     # Wave 8.3: ensure 4 индексов для facets/aggregations API
     # (audit_logs / orders / documents / rag_chunks).
     try:
-        from src.backend.infrastructure.clients.storage.elasticsearch import (
+        from src.backend.infrastructure.clients.storage.elasticsearch import (  # noqa: F401 — re-export
             get_elasticsearch_client,
         )
 
@@ -145,10 +145,10 @@ async def register_protocol_providers() -> None:
 
     # Notification channels — каждый канал отдельно через адаптер.
     try:
-        from src.backend.infrastructure.notifications import (
+        from src.backend.infrastructure.notifications import (  # noqa: F401 — re-export
             get_gateway,  # Sprint 35 W1: removed `core.notifications` facade (ADR-0282 Phase B)
         )
-        from src.backend.services.ops.notification_adapters import (
+        from src.backend.services.ops.notification_adapters import (  # noqa: F401 — re-export
             EmailNotificationAdapter,
             ExpressNotificationAdapter,
             TelegramNotificationAdapter,
@@ -186,7 +186,7 @@ async def register_protocol_providers() -> None:
 
     # К4 MVP (Sprint S5): AI Stack 2026 single-hook регистрация.
     try:
-        from src.backend.plugins.composition.setup_ai_stack import (
+        from src.backend.plugins.composition.setup_ai_stack import (  # noqa: F401 — re-export
             register_ai_stack_providers,
         )
 

@@ -183,7 +183,7 @@ class SemanticCache:
                 # данными не оседали в vector store навсегда. Future queries
                 # тоже маскируются при lookup (round-trip consistency).
                 try:
-                    from src.backend.services.ai.rag_ingest_service import (
+                    from src.backend.services.ai.rag_ingest_service import (  # noqa: F401 — re-export
                         _maybe_mask_pii,
                     )
 

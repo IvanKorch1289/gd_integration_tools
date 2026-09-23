@@ -104,7 +104,7 @@ def init_otel(*, app: Any = None, service_name: str | None = None) -> bool:
 
     try:
         from opentelemetry import trace
-        from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+        from opentelemetry.exporter.otlp.proto.http.trace_exporter import (  # noqa: F401 — re-export
             OTLPSpanExporter,
         )
         from opentelemetry.sdk.resources import Resource

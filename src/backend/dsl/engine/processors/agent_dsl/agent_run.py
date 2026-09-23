@@ -38,7 +38,7 @@ from src.backend.core.ai.errors import GatewayUnavailable
 from src.backend.core.async_utils.safe_wait import safe_wait_for
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
-from src.backend.dsl.engine.processors.agent_dsl._timeouts import (
+from src.backend.dsl.engine.processors.agent_dsl._timeouts import (  # noqa: F401 — re-export
     DEFAULT_AGENT_TIMEOUT_S,
 )
 
@@ -156,7 +156,7 @@ class AgentRunProcessor(BaseAIProcessor):
         # ADR-0305: narrow agent_run timeout by remaining deadline budget.
         effective_timeout: float | None = self.timeout_s
         try:
-            from src.backend.core.async_utils.deadline_budget import (
+            from src.backend.core.async_utils.deadline_budget import (  # noqa: F401 — re-export
                 DeadlineExpiredError,
             )
             from src.backend.core.request_context import RequestContext
@@ -287,7 +287,7 @@ class AgentRunProcessor(BaseAIProcessor):
     def _resolve_gateway() -> Any | None:
         """Lazy-резолв :class:`AIGateway` через DI singleton."""
         try:
-            from src.backend.services.ai.gateway_adapter import (  # type: ignore[attr-defined]
+            from src.backend.services.ai.gateway_adapter import (  # noqa: F401 — re-export  # type: ignore[attr-defined]
                 get_ai_gateway,
             )
 

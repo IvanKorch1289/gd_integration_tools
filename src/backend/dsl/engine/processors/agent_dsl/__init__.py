@@ -35,59 +35,59 @@ Feature-flag
 
 from __future__ import annotations
 
-from src.backend.dsl.engine.processors.agent_dsl.agent_branch import (
+from src.backend.dsl.engine.processors.agent_dsl.agent_branch import (  # noqa: F401 — re-export
     AgentBranchProcessor,
 )
-from src.backend.dsl.engine.processors.agent_dsl.agent_graph import (
+from src.backend.dsl.engine.processors.agent_dsl.agent_graph import (  # noqa: F401 — re-export
     AgentGraphProcessor as AgentGraphProcessor,
 )
-from src.backend.dsl.engine.processors.agent_dsl.agent_loop import (
+from src.backend.dsl.engine.processors.agent_dsl.agent_loop import (  # noqa: F401 — re-export
     AgentLoopProcessor as AgentLoopProcessor,
 )
-from src.backend.dsl.engine.processors.agent_dsl.agent_parallel import (
+from src.backend.dsl.engine.processors.agent_dsl.agent_parallel import (  # noqa: F401 — re-export
     AgentParallelProcessor,
 )
-from src.backend.dsl.engine.processors.agent_dsl.agent_run import (
+from src.backend.dsl.engine.processors.agent_dsl.agent_run import (  # noqa: F401 — re-export
     AgentRunProcessor as AgentRunProcessor,
 )
 
 # S187: export agent_security_check processor
-from src.backend.dsl.engine.processors.agent_dsl.agent_security_check import (
+from src.backend.dsl.engine.processors.agent_dsl.agent_security_check import (  # noqa: F401 — re-export
     AgentSecurityCheckProcessor,
 )
-from src.backend.dsl.engine.processors.agent_dsl.ai_tool_dispatch import (
+from src.backend.dsl.engine.processors.agent_dsl.ai_tool_dispatch import (  # noqa: F401 — re-export
     AIToolDispatchProcessor,
 )
-from src.backend.dsl.engine.processors.agent_dsl.guardrails_apply import (
+from src.backend.dsl.engine.processors.agent_dsl.guardrails_apply import (  # noqa: F401 — re-export
     GuardrailsApplyProcessor,
 )
 
 # S202 fix: export LangGraphAgentProcessor (был orphaned — не в __all__)
-from src.backend.dsl.engine.processors.agent_dsl.langgraph_agent import (
+from src.backend.dsl.engine.processors.agent_dsl.langgraph_agent import (  # noqa: F401 — re-export
     LangGraphAgentProcessor,
 )
-from src.backend.dsl.engine.processors.agent_dsl.mcp_tool import (
+from src.backend.dsl.engine.processors.agent_dsl.mcp_tool import (  # noqa: F401 — re-export
     MCPToolProcessor as MCPToolProcessor,
 )
-from src.backend.dsl.engine.processors.agent_dsl.memory_recall import (
+from src.backend.dsl.engine.processors.agent_dsl.memory_recall import (  # noqa: F401 — re-export
     MemoryRecallProcessor,
 )
-from src.backend.dsl.engine.processors.agent_dsl.memory_store import (
+from src.backend.dsl.engine.processors.agent_dsl.memory_store import (  # noqa: F401 — re-export
     MemoryStoreProcessor,
 )
-from src.backend.dsl.engine.processors.agent_dsl.pii_mask import (
+from src.backend.dsl.engine.processors.agent_dsl.pii_mask import (  # noqa: F401 — re-export
     PIIMaskProcessor as PIIMaskProcessor,
 )
-from src.backend.dsl.engine.processors.agent_dsl.pii_unmask import (
+from src.backend.dsl.engine.processors.agent_dsl.pii_unmask import (  # noqa: F401 — re-export
     PIIUnmaskProcessor as PIIUnmaskProcessor,
 )
-from src.backend.dsl.engine.processors.agent_dsl.plan_execute import (
+from src.backend.dsl.engine.processors.agent_dsl.plan_execute import (  # noqa: F401 — re-export
     PlanExecuteProcessor,
 )
-from src.backend.dsl.engine.processors.agent_dsl.reflection_loop import (
+from src.backend.dsl.engine.processors.agent_dsl.reflection_loop import (  # noqa: F401 — re-export
     ReflectionLoopProcessor,
 )
-from src.backend.dsl.engine.processors.agent_dsl.skill_invoke import (
+from src.backend.dsl.engine.processors.agent_dsl.skill_invoke import (  # noqa: F401 — re-export
     SkillInvokeProcessor,
 )
 

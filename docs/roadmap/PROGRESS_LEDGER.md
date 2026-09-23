@@ -4547,5 +4547,36 @@ Per-submodule max **166 LOC** (vs 602 god-module). Все < 200 LOC threshold.
 - ✅ Top-6 god-module декомпозирован (602 → 6 cohesion submodules).
 - ✅ 18 focused tests (back-compat + per-domain isolation).
 - ✅ ADR-0331 создан (124 ADRs total).
-- ⏭️ Phase 8: `infrastructure/clients/storage/s3_pool/client.py` (625 LOC) — S3 pool split.
+- ⏭️ Phase 8: `infrastructure/clients/storage/s3_pool/client.py` (625 LOC) — S3 pool split (single class, deferred).
 - ⏭️ Phase 9: `core/security/pii_tokenizer.py` (565 LOC) — single class, harder split.
+
+---
+
+## W6 P1-8 Phase 9: tools/add_f401_multiline_noqa.py argparse → typer (2026-09-23, cycle 153)
+
+**Задача**: продолжить W6 P1-8 momentum (после Phase 1-8).
+
+**Решение** (ADR-0332):
+
+Мигрирован `tools/add_f401_multiline_noqa.py` (D-AUDIT-3024 cycle-49 F401
+silence для multi-line imports, 102 → 113 LOC, +11). 2 flags сохранены
+(`--root`, `--verbose`).
+
+**Pattern validation (9 tools)**:
+
+Pattern proven на 9 tools подряд (3 trivial + 2 simple + 1 medium +
+2 medium-high + 1 trivial). Все варианты argparse covered. Готов для
+тиражирования на остальные ~75 tools.
+
+**Verification**:
+- `compileall -q tools/add_f401_multiline_noqa.py` → exit 0
+- `pytest tests/unit/tools/test_w6_p1_8_phase9_*_typer.py` → 7 passed
+- `ruff check tools/add_f401_multiline_noqa.py` → 1 pre-existing F841 (unrelated)
+- CLI: --help (typer), --root (exit 0, no changes self)
+
+**Cycle 153 итог (W6 P1-8 Phase 9)**:
+- ✅ 9-й tool мигрирован (add_f401_multiline_noqa.py), trivial auto-fix tool.
+- ✅ 7 focused tests.
+- ✅ ADR-0332 создан (125 ADRs total).
+- ⏭️ Phase 10: ~5 more simple tools (migrate_plugin_manifest, scaffold,
+  check_layer_imports, add_f401_noqa) — cycle 156+.

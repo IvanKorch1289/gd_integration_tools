@@ -24,7 +24,7 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.config.services.outbox import outbox_settings
 from src.backend.core.logging import get_logger
-from src.backend.infrastructure.messaging.outbox.dispatcher import (
+from src.backend.infrastructure.messaging.outbox.dispatcher import (  # noqa: F401 — re-export
     DLQHandler,
     OutboxDispatcher,
 )

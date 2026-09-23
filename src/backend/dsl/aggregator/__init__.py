@@ -13,7 +13,7 @@ Use cases:
 
 Использование::
 
-    from src.backend.dsl.aggregator import (
+    from src.backend.dsl.aggregator import (  # noqa: F401 — re-export
         AggregatorConfig, CompletionStrategy, Message, aggregate,
     )
 
@@ -31,7 +31,7 @@ Use cases:
 
 from __future__ import annotations
 
-from src.backend.dsl.aggregator.aggregator import (
+from src.backend.dsl.aggregator.aggregator import (  # noqa: F401 — re-export
     AggregatedBatch,
     AggregatorConfig,
     CompletionStrategy,

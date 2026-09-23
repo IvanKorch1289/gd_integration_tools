@@ -4,7 +4,7 @@
 
 Использование::
 
-    from src.backend.services.lineage import (
+    from src.backend.services.lineage import (  # noqa: F401 — re-export
         OpenLineageHttpEmitter,
         set_lineage_emitter,
     )
@@ -36,7 +36,7 @@ from typing import Any
 import orjson
 
 from src.backend.core.logging import get_logger
-from src.backend.services.lineage.lineage_emitter import (
+from src.backend.services.lineage.lineage_emitter import (  # noqa: F401 — re-export
     InMemoryLineageEmitter,
     _iso_timestamp,
 )

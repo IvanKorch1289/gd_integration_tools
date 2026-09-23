@@ -17,7 +17,7 @@
 
 Использование::
 
-    from src.backend.core.canary_deploy import (
+    from src.backend.core.canary_deploy import (  # noqa: F401 — re-export
         CanaryController, CanaryConfig, TrafficSplit, get_canary_controller,
     )
 
@@ -44,7 +44,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.canary_deploy.controller import (
+from src.backend.core.canary_deploy.controller import (  # noqa: F401 — re-export
     CanaryConfig,
     CanaryController,
     CanaryDecision,

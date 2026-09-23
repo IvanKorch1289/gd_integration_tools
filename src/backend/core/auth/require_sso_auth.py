@@ -42,7 +42,7 @@ import inspect
 from collections.abc import Awaitable, Callable
 from typing import Any, TypeVar, cast
 
-from src.backend.core.auth.auth_context_helpers import (
+from src.backend.core.auth.auth_context_helpers import (  # noqa: F401 — re-export
     extract_tenant_id,
     extract_user_groups,
 )

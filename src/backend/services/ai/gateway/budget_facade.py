@@ -19,12 +19,12 @@ from typing import Any
 
 from src.backend.core.logging import get_logger
 from src.backend.core.tenancy.budget_enforcer import enforce_post_call, enforce_pre_call
-from src.backend.core.tenancy.token_budget import (
+from src.backend.core.tenancy.token_budget import (  # noqa: F401 — re-export
     BudgetEnforcementError,
     BudgetExceeded,
     TokenBudget,
 )
-from src.backend.services.ai.usage_meter import (
+from src.backend.services.ai.usage_meter import (  # noqa: F401 — re-export
     UsageStats,
     estimate_tokens,
     extract_usage,

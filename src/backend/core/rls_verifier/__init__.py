@@ -21,7 +21,7 @@
 
 Использование::
 
-    from src.backend.core.rls_verifier import (
+    from src.backend.core.rls_verifier import (  # noqa: F401 — re-export
         RLSVerifier, TenantContext, get_rls_verifier,
     )
 
@@ -35,7 +35,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.rls_verifier.verifier import (
+from src.backend.core.rls_verifier.verifier import (  # noqa: F401 — re-export
     IsolationTestCase,
     IsolationTestResult,
     RLSVerifier,

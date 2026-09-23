@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
 from src.backend.services.sources.adapter import SourceToInvokerAdapter
-from src.backend.services.sources.idempotency import (
+from src.backend.services.sources.idempotency import (  # noqa: F401 — re-export
     DedupeStore,
     MemoryDedupeStore,
     RedisDedupeStore,

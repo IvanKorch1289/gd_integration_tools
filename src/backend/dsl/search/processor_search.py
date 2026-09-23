@@ -11,7 +11,7 @@ score (intersection/jaccard) — точность ниже, но запрос о
 
 API::
 
-    from src.backend.dsl.search.processor_search import (
+    from src.backend.dsl.search.processor_search import (  # noqa: F401 — re-export
         ProcessorSearch, SearchResult,
     )
 

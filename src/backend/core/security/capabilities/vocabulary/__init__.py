@@ -10,13 +10,13 @@ Backward-compat: ``from src.backend.core.security.capabilities.vocabulary import
 
 from __future__ import annotations
 
-from src.backend.core.security.capabilities.vocabulary.defaults import (
+from src.backend.core.security.capabilities.vocabulary.defaults import (  # noqa: F401 — re-export
     build_default_vocabulary,  # S62 W2: re-export
 )
-from src.backend.core.security.capabilities.vocabulary.models import (
+from src.backend.core.security.capabilities.vocabulary.models import (  # noqa: F401 — re-export
     CapabilityDef,  # S62 W2: re-export
 )
-from src.backend.core.security.capabilities.vocabulary.vocabulary import (
+from src.backend.core.security.capabilities.vocabulary.vocabulary import (  # noqa: F401 — re-export
     CapabilityVocabulary,  # S62 W2: re-export
 )
 

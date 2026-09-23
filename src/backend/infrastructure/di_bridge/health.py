@@ -74,7 +74,7 @@ def get_infrastructure_client_class() -> Any:
 
 def get_health_check_factory() -> HealthCheckFactory:
     """Адаптировать canonical ``HealthAggregator.check_single`` к DSL factory."""
-    from src.backend.infrastructure.application.health_aggregator import (
+    from src.backend.infrastructure.application.health_aggregator import (  # noqa: F401 — re-export
         get_health_aggregator,
     )
 

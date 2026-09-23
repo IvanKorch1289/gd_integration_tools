@@ -23,7 +23,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from src.backend.core.auth.admin_roles import AdminRole, require_admin
-from src.backend.services.scheduler.admin import (
+from src.backend.services.scheduler.admin import (  # noqa: F401 — re-export
     SchedulerDLQStore,
     get_scheduler_dlq_store,
 )

@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING, Any, Literal
 import orjson as json
 
 from src.backend.core.logging import get_logger
-from src.backend.services.ai.model_registry.adapter import (
+from src.backend.services.ai.model_registry.adapter import (  # noqa: F401 — re-export
     ModelRecord,
     ModelRegistryAdapter,
 )

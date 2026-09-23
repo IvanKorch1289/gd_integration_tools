@@ -56,7 +56,7 @@ class FileDeleteProcessor(BaseProcessor):
         # Bug fix (cycle 33): Path-traversal guard before deletion.
         # Without this, a caller with capability ``rpa.file.delete`` could
         # delete arbitrary directories via ``../../etc`` payloads.
-        from src.backend.dsl.engine.processors._path_safety import (
+        from src.backend.dsl.engine.processors._path_safety import (  # noqa: F401 — re-export
             PathTraversalError,
             validate_path,
         )

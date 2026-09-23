@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
-from src.backend.dsl.engine.trace_storage import (  # Sprint 47 W1 (TD-026)
+from src.backend.dsl.engine.trace_storage import (  # noqa: F401 — re-export  # Sprint 47 W1 (TD-026)
     InMemoryTraceStorage,
     TraceStorage,
 )

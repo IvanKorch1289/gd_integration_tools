@@ -11,7 +11,7 @@ S36-W23: добавлены single entry points для объектного хр
 from __future__ import annotations
 
 # S36-W23: re-export DI providers для single entry point
-from src.backend.core.di.providers import (
+from src.backend.core.di.providers import (  # noqa: F401 — re-export
     get_object_storage_provider,
     get_storage_facade_provider,
     set_object_storage_provider,

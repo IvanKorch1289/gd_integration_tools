@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from src.backend.core.config.services.cache import RedisSettings
     from src.backend.core.config.settings import Settings
 
-from src.backend.core.config.validator._helpers import (  # S52 W2: shared definitions
+from src.backend.core.config.validator._helpers import (  # noqa: F401 — re-export  # S52 W2: shared definitions
     _FEATURE_FLAG_DEPENDENCIES,
     _FEATURE_FLAG_DEPENDENCIES_CRITICAL,
     ConfigSeverity,

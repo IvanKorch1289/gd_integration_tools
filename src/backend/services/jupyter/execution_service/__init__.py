@@ -20,36 +20,36 @@ if TYPE_CHECKING:
     pass
 
 from src.backend.core.clients.jupyter_hub import JupyterHubClient as JupyterHubClient
-from src.backend.core.config.services.jupyter_hub import (
+from src.backend.core.config.services.jupyter_hub import (  # noqa: F401 — re-export
     JupyterHubSettings as JupyterHubSettings,
 )
-from src.backend.services.jupyter.execution_service.backend import (
+from src.backend.services.jupyter.execution_service.backend import (  # noqa: F401 — re-export
     NbClientExecutionBackend,  # S60 W1: re-export
 )
-from src.backend.services.jupyter.execution_service.core_mixin import (
+from src.backend.services.jupyter.execution_service.core_mixin import (  # noqa: F401 — re-export
     CoreMixin,  # S60 W1: MRO
 )
-from src.backend.services.jupyter.execution_service.e2b_backend import (  # S75 W1
+from src.backend.services.jupyter.execution_service.e2b_backend import (  # noqa: F401 — re-export  # S75 W1
     E2BExecutionBackend,  # S75 W1: re-export
 )
-from src.backend.services.jupyter.execution_service.errors import (
+from src.backend.services.jupyter.execution_service.errors import (  # noqa: F401 — re-export
     JupyterExecutionError,  # S60 W1: re-export
 )
-from src.backend.services.jupyter.execution_service.factory import (  # S74 W2
+from src.backend.services.jupyter.execution_service.factory import (  # noqa: F401 — re-export  # S74 W2
     BackendKind,  # S74 W2: re-export
     ExecutionBackendFactory,  # S74 W2: re-export
 )
-from src.backend.services.jupyter.execution_service.io_mixin import (
+from src.backend.services.jupyter.execution_service.io_mixin import (  # noqa: F401 — re-export
     IOMixin,  # S60 W1: MRO
 )
-from src.backend.services.jupyter.execution_service.jupyter_mixin import (
+from src.backend.services.jupyter.execution_service.jupyter_mixin import (  # noqa: F401 — re-export
     JupyterBackendMixin,  # S60 W1: MRO
 )
-from src.backend.services.jupyter.execution_service.kernelspec import (  # S75 W3
+from src.backend.services.jupyter.execution_service.kernelspec import (  # noqa: F401 — re-export  # S75 W3
     DEFAULT_FALLBACK_SPECS,  # S75 W3: re-export
     KernelSpecDiscovery,  # S75 W3: re-export
 )
-from src.backend.services.jupyter.execution_service.papermill_backend import (  # S74 W1
+from src.backend.services.jupyter.execution_service.papermill_backend import (  # noqa: F401 — re-export  # S74 W1
     PapermillExecutionBackend,  # S74 W1: re-export
 )
 

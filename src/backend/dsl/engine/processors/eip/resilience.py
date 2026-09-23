@@ -366,7 +366,7 @@ class CircuitBreakerProcessor(BaseProcessor):
             context: Контекст выполнения маршрута.
 
         """
-        from src.backend.core.resilience.breaker import (
+        from src.backend.core.resilience.breaker import (  # noqa: F401 — re-export
             BreakerSpec,
             CircuitOpen,
             get_breaker_registry,
@@ -468,7 +468,7 @@ class TimeoutProcessor(BaseProcessor):
 
         effective_seconds: float = self._seconds
         try:
-            from src.backend.core.async_utils.deadline_budget import (
+            from src.backend.core.async_utils.deadline_budget import (  # noqa: F401 — re-export
                 DeadlineExpiredError,
             )
             from src.backend.core.request_context import RequestContext

@@ -18,7 +18,7 @@ from collections.abc import Awaitable, Callable
 
 from fastapi import FastAPI
 
-from src.backend.plugins.composition.lifecycle.startup_phases import (
+from src.backend.plugins.composition.lifecycle.startup_phases import (  # noqa: F401 — re-export
     infrastructure,
     observability,
     services,

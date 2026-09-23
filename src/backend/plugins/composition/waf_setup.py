@@ -48,7 +48,7 @@ def _build_waf_policy_from_settings() -> WafPolicy:
     ``WAF_CLAMAV_ENABLED``. См. модуль ``infrastructure.antivirus.setup``.
     """
     from src.backend.core.config.waf import waf_settings
-    from src.backend.infrastructure.antivirus.setup import (
+    from src.backend.infrastructure.antivirus.setup import (  # noqa: F401 — re-export
         build_clamav_scanner_if_enabled,
     )
 

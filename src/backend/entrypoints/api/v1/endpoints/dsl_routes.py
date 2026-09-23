@@ -30,7 +30,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel, Field
 
-from src.backend.core.api.extensions import (  # Sprint 44 W1
+from src.backend.core.api.extensions import (  # noqa: F401 — re-export  # Sprint 44 W1
     Pipeline,
     TraceEvent,
     YAMLStore,
@@ -39,7 +39,7 @@ from src.backend.core.api.extensions import (  # Sprint 44 W1
 )
 from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.core.logging import get_logger
-from src.backend.entrypoints.api.generator.actions import (
+from src.backend.entrypoints.api.generator.actions import (  # noqa: F401 — re-export
     ActionRouterBuilder,
     ActionSpec,
 )

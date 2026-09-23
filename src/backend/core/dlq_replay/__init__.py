@@ -36,14 +36,14 @@
 
 from __future__ import annotations
 
-from src.backend.core.dlq_replay.cockpit import (
+from src.backend.core.dlq_replay.cockpit import (  # noqa: F401 — re-export
     DLQRecord,
     DLQReplayService,
     FailureClass,
     ReplayCockpit,
     get_dlq_replay,
 )
-from src.backend.core.dlq_replay.failure_taxonomy import (
+from src.backend.core.dlq_replay.failure_taxonomy import (  # noqa: F401 — re-export
     FailureTaxonomy,
     classify_exception,
 )

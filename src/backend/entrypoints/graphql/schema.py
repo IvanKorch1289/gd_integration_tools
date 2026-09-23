@@ -25,7 +25,7 @@ from typing import Any
 
 from fastapi import Request
 
-from src.backend.core.api.extensions import (
+from src.backend.core.api.extensions import (  # noqa: F401 — re-export
     Exchange,
     ExchangeStatus,
     Message,

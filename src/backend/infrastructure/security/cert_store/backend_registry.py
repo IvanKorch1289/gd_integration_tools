@@ -33,10 +33,10 @@ class CertBackendRegistry:
     """Registry CertBackend implementations (D258).
 
     Использование (extension plugin):
-        from src.backend.infrastructure.security.cert_store.backend_registry import (
+        from src.backend.infrastructure.security.cert_store.backend_registry import (  # noqa: F401 — re-export
             get_cert_backend_registry,
         )
-        from src.backend.infrastructure.security.cert_store.backend_base import (
+        from src.backend.infrastructure.security.cert_store.backend_base import (  # noqa: F401 — re-export
             CertBackend,
         )
 
@@ -111,19 +111,19 @@ def get_cert_backend_registry() -> CertBackendRegistry:
 
 def _register_builtin_backends(reg: CertBackendRegistry) -> None:
     """Регистрация 5 built-in backends (lazy import, D258)."""
-    from src.backend.infrastructure.security.cert_store.backend_consul import (
+    from src.backend.infrastructure.security.cert_store.backend_consul import (  # noqa: F401 — re-export
         ConsulCertBackend,
     )
-    from src.backend.infrastructure.security.cert_store.backend_memory import (
+    from src.backend.infrastructure.security.cert_store.backend_memory import (  # noqa: F401 — re-export
         MemoryCertBackend,
     )
-    from src.backend.infrastructure.security.cert_store.backend_mongo import (
+    from src.backend.infrastructure.security.cert_store.backend_mongo import (  # noqa: F401 — re-export
         MongoCertBackend,
     )
-    from src.backend.infrastructure.security.cert_store.backend_postgres import (
+    from src.backend.infrastructure.security.cert_store.backend_postgres import (  # noqa: F401 — re-export
         PostgresCertBackend,
     )
-    from src.backend.infrastructure.security.cert_store.backend_vault import (
+    from src.backend.infrastructure.security.cert_store.backend_vault import (  # noqa: F401 — re-export
         VaultCertBackend,
     )
 

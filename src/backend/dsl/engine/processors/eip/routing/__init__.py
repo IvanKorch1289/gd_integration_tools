@@ -12,20 +12,20 @@ Backward-compat: ``from src.backend.dsl.engine.processors.eip.routing import Dyn
 
 from __future__ import annotations
 
-from src.backend.dsl.engine.processors.eip.routing.dynamic import (
+from src.backend.dsl.engine.processors.eip.routing.dynamic import (  # noqa: F401 — re-export
     DynamicRouterProcessor,  # S63 W2: re-export
 )
-from src.backend.dsl.engine.processors.eip.routing.load_balancer import (
+from src.backend.dsl.engine.processors.eip.routing.load_balancer import (  # noqa: F401 — re-export
     LoadBalancerProcessor,  # S63 W2: re-export
 )
-from src.backend.dsl.engine.processors.eip.routing.multicast import (
+from src.backend.dsl.engine.processors.eip.routing.multicast import (  # noqa: F401 — re-export
     MulticastProcessor,  # S63 W2: re-export
     MulticastRoutesProcessor,  # S63 W2: re-export
 )
-from src.backend.dsl.engine.processors.eip.routing.recipient_list import (
+from src.backend.dsl.engine.processors.eip.routing.recipient_list import (  # noqa: F401 — re-export
     RecipientListProcessor,  # S63 W2: re-export
 )
-from src.backend.dsl.engine.processors.eip.routing.scatter_gather import (
+from src.backend.dsl.engine.processors.eip.routing.scatter_gather import (  # noqa: F401 — re-export
     ScatterGatherProcessor,  # S63 W2: re-export
 )
 

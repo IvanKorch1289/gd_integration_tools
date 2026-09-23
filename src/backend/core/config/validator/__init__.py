@@ -19,19 +19,19 @@ if TYPE_CHECKING:
     from src.backend.core.config.settings import Settings
     from src.backend.core.config.waf import WafSettings
 
-from src.backend.core.config.validator._helpers import (  # S52 W2: shared definitions
+from src.backend.core.config.validator._helpers import (  # noqa: F401 — re-export  # S52 W2: shared definitions
     PRODUCTION_ENV,
     ConfigSeverity,
     ConfigViolation,
     ProductionConfigError,
 )
-from src.backend.core.config.validator.api_docs_checks import (
+from src.backend.core.config.validator.api_docs_checks import (  # noqa: F401 — re-export
     APIDocsChecksMixin,  # S52 W2: MRO
 )
-from src.backend.core.config.validator.infrastructure_checks import (
+from src.backend.core.config.validator.infrastructure_checks import (  # noqa: F401 — re-export
     InfrastructureChecksMixin,  # S52 W2: MRO
 )
-from src.backend.core.config.validator.security_checks import (
+from src.backend.core.config.validator.security_checks import (  # noqa: F401 — re-export
     SecurityChecksMixin,  # S52 W2: MRO
 )
 

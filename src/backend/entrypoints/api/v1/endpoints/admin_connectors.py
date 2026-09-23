@@ -21,7 +21,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from src.backend.core.auth.admin_roles import AdminRole, require_admin
-from src.backend.entrypoints.api.generator.actions import (
+from src.backend.entrypoints.api.generator.actions import (  # noqa: F401 — re-export
     ActionRouterBuilder,
     ActionSpec,
 )
@@ -95,7 +95,7 @@ class _AdminConnectorsFacade:
         """Hot-reload коннектора: переподключение к upstream + health-check."""
         # Wave 6.5a: registry + error class — через DI providers.
         try:
-            from src.backend.core.di.providers import (
+            from src.backend.core.di.providers import (  # noqa: F401 — re-export
                 get_connector_registry_errors_provider,
                 get_connector_registry_provider,
             )
@@ -159,7 +159,7 @@ class _AdminConnectorsFacade:
         reload_status: dict[str, Any] = {"attempted": False}
         try:
             # Wave 6.5a: registry + error class — через DI providers.
-            from src.backend.core.di.providers import (
+            from src.backend.core.di.providers import (  # noqa: F401 — re-export
                 get_connector_registry_errors_provider,
                 get_connector_registry_provider,
             )

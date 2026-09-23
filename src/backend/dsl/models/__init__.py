@@ -4,7 +4,7 @@
     * :mod:`agent_definition` — декларация AI-агента (S25-S27 AI Platform).
 """
 
-from src.backend.dsl.models.agent_definition import (
+from src.backend.dsl.models.agent_definition import (  # noqa: F401 — re-export
     AgentDefinition,
     MemoryLayerSpec,
     MemorySpec,

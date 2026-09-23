@@ -1,5 +1,30 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W6 P1-8 Phase 9: tools/add_f401_multiline_noqa.py argparse → typer (9th tool)
+
+### refactor(tools): add_f401_multiline_noqa.py мигрирован argparse → typer+rich
+
+`tools/add_f401_multiline_noqa.py` (D-AUDIT-3024 cycle-49 F401 silence для
+multi-line imports, 102 LOC) — мигрирован на `typer` + `rich` по proven pattern.
+**9-й tool** подряд.
+
+**Что сделано**:
+- `argparse.ArgumentParser` → `typer.Typer` + `@app.callback(invoke_without_command=True)`.
+- `print(...)` → `_console.print("[green]Updated[/] ...")` (rich color codes).
+- 2 flags сохранены: `--root`, `--verbose`.
+- Backward-compat `main(argv=None)` через `CliRunner.invoke()` + `app()` fallback.
+
+**Pattern validation (9 tools)**: pattern proven на разных complexity levels.
+Готов для тиражирования на остальные ~75 tools.
+
+**Tests**: `tests/unit/tools/test_w6_p1_8_phase9_add_f401_multiline_noqa_typer.py` —
+7 focused tests.
+
+**Verification**: pytest 7 passed, ruff 1 pre-existing F841 (unrelated),
+compileall exit 0. ADR-0332 (125 ADRs total).
+
+---
+
 ## [Unreleased] — 2026-09-23 — W9 P2-13 Phase 7: core/di/providers/workflow god-module split (602 LOC → 6 submodules)
 
 ### refactor(di): workflow providers god-module → package with 6 cohesion submodules

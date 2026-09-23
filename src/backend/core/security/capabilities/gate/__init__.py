@@ -19,15 +19,15 @@ from threading import Lock as Lock
 from typing import TYPE_CHECKING as TYPE_CHECKING
 from typing import Final as Final
 
-from src.backend.core.security.capabilities.errors import (
+from src.backend.core.security.capabilities.errors import (  # noqa: F401 — re-export
     CapabilityNotFoundError,
     CapabilitySupersetError,
 )
 from src.backend.core.security.capabilities.models import CapabilityRef as CapabilityRef
-from src.backend.core.security.capabilities.policy import (
+from src.backend.core.security.capabilities.policy import (  # noqa: F401 — re-export
     CapabilityPolicy as CapabilityPolicy,
 )
-from src.backend.core.security.capabilities.vocabulary import (
+from src.backend.core.security.capabilities.vocabulary import (  # noqa: F401 — re-export
     CapabilityVocabulary,
     build_default_vocabulary,  # S79 W2 fix: S54 W4 decomp forgot import
 )
@@ -35,19 +35,19 @@ from src.backend.core.security.capabilities.vocabulary import (
 if TYPE_CHECKING:
     pass
 
-from src.backend.core.security.capabilities.gate.audit_mixin import (
+from src.backend.core.security.capabilities.gate.audit_mixin import (  # noqa: F401 — re-export
     AuditMixin,  # S54 W4: MRO
 )
-from src.backend.core.security.capabilities.gate.cache_mixin import (
+from src.backend.core.security.capabilities.gate.cache_mixin import (  # noqa: F401 — re-export
     CacheMixin,  # S54 W4: MRO
 )
-from src.backend.core.security.capabilities.gate.check_mixin import (
+from src.backend.core.security.capabilities.gate.check_mixin import (  # noqa: F401 — re-export
     CheckMixin,  # S54 W4: MRO
 )
-from src.backend.core.security.capabilities.gate.check_tenant_mixin import (
+from src.backend.core.security.capabilities.gate.check_tenant_mixin import (  # noqa: F401 — re-export
     CheckTenantMixin,  # S54 M2-#7: MRO
 )
-from src.backend.core.security.capabilities.gate.declaration_mixin import (
+from src.backend.core.security.capabilities.gate.declaration_mixin import (  # noqa: F401 — re-export
     DeclarationMixin,  # S54 W4: MRO
 )
 

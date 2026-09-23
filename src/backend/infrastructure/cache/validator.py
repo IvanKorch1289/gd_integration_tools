@@ -16,7 +16,7 @@
 
 Пример::
 
-    from src.backend.infrastructure.cache.validator import (
+    from src.backend.infrastructure.cache.validator import (  # noqa: F401 — re-export
         CacheConfigRegistry, CacheLayerValidator, CacheDuplicationError,
     )
 

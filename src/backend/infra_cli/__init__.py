@@ -11,7 +11,7 @@ storage) в :class:`ConnectorRegistry` через :class:`HealthAdapter`,
     from src.backend.infra_cli.register import get_aggregator_with_registry  # noqa: F401 — re-export
 """
 
-from src.backend.infra_cli.register import (
+from src.backend.infra_cli.register import (  # noqa: F401 — re-export
     get_aggregator_with_registry,
     register_connector,
 )

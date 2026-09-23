@@ -24,7 +24,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.dsl_lint.linter import (
+from src.backend.core.dsl_lint.linter import (  # noqa: F401 — re-export
     DSLLinter,
     LintResult,
     LintSeverity,

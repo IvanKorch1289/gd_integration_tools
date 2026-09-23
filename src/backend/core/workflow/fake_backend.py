@@ -19,7 +19,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from src.backend.core.workflow.backend import (
+from src.backend.core.workflow.backend import (  # noqa: F401 — re-export
     WorkflowBackend,
     WorkflowHandle,
     WorkflowResult,

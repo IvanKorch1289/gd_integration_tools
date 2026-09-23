@@ -455,7 +455,7 @@ class LangMemService:
             )
         try:
             from src.backend.core.config.ai_stack import langmem_settings
-            from src.backend.services.ai.memory.langmem.consolidation import (
+            from src.backend.services.ai.memory.langmem.consolidation import (  # noqa: F401 — re-export
                 ConsolidationEngine,
             )
 

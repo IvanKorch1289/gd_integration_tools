@@ -19,7 +19,7 @@
 
 Использование::
 
-    from src.backend.core.data_quality import (
+    from src.backend.core.data_quality import (  # noqa: F401 — re-export
         DataQualityEngine, RuleSet, QualityRule, RuleKind,
     )
 
@@ -43,7 +43,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.data_quality.engine import (
+from src.backend.core.data_quality.engine import (  # noqa: F401 — re-export
     DataQualityEngine,
     QualityReport,
     QualityRule,

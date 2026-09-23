@@ -79,13 +79,17 @@ def _scan_sqlite_incompat_ddl() -> dict[str, list[tuple[str, int, str]]]:
     Returns dict {pattern: [(file, line, snippet), ...]}.
     """
     # Patterns that won't work on SQLite (used by dev_light).
+    # API-aware: матчатся только РЕАЛЬНЫЕ DDL-вызовы (postgresql.JSONB(),
+    # postgresql_concurrently=True, postgresql_where=...), а не слова в
+    # комментариях/docstrings — до фикса «CONCURRENTLY: 1» был
+    # комментарий «Concurrently=False» (false positive, audit 2026-09-23).
     patterns: dict[str, str] = {
-        "JSONB": r"\bJSONB\b",
-        "CONCURRENTLY": r"\bCONCURRENTLY\b",
-        "PARTIAL INDEX": r"(?i)\bpartial\s+index\b",
-        "BRIN": r"\bUSING\s+brin\b",
-        "GIST": r"\bUSING\s+gist\b",
-        "GIN": r"\bUSING\s+gin\b",
+        "JSONB": r"postgresql\.JSONB\b|\bsa\.JSONB\b",
+        "CONCURRENTLY": r"postgresql_concurrently\s*=\s*True",
+        "PARTIAL INDEX": r"postgresql_where\s*=",
+        "BRIN": r"postgresql_using\s*=\s*['\"]brin['\"]|\bUSING\s+brin\b",
+        "GIST": r"postgresql_using\s*=\s*['\"]gist['\"]|\bUSING\s+gist\b",
+        "GIN": r"postgresql_using\s*=\s*['\"]gin['\"]|\bUSING\s+gin\b",
         "UUID-OSSP": r"\buuid-ossp\b|\buuid_generate",
         "ARRAY literal": r"\bARRAY\s*\[",
         "tsvector": r"\btsvector\b",

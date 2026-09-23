@@ -73,7 +73,7 @@ class APIKeyManager:
 
         """
         try:
-            from src.backend.infrastructure.clients.storage.redis import (
+            from src.backend.infrastructure.clients.storage.redis import (  # noqa: F401 — re-export
                 get_redis_client as redis_client,
             )
 
@@ -149,7 +149,7 @@ class APIKeyManager:
         try:
             import orjson
 
-            from src.backend.infrastructure.clients.storage.redis import (
+            from src.backend.infrastructure.clients.storage.redis import (  # noqa: F401 — re-export
                 get_redis_client as redis_client,
             )
 
@@ -272,7 +272,7 @@ class APIKeyManager:
         try:
             import orjson
 
-            from src.backend.infrastructure.clients.storage.redis import (
+            from src.backend.infrastructure.clients.storage.redis import (  # noqa: F401 — re-export
                 get_redis_client as redis_client,
             )
 
@@ -321,7 +321,7 @@ class APIKeyManager:
         try:
             import orjson
 
-            from src.backend.infrastructure.clients.storage.redis import (
+            from src.backend.infrastructure.clients.storage.redis import (  # noqa: F401 — re-export
                 get_redis_client as redis_client,
             )
 
@@ -388,7 +388,7 @@ class APIKeyManager:
     async def revoke_client_key(self, client_id: str) -> bool:
         """Отзывает ключ клиента (немедленно, без grace period)."""
         try:
-            from src.backend.infrastructure.clients.storage.redis import (
+            from src.backend.infrastructure.clients.storage.redis import (  # noqa: F401 — re-export
                 get_redis_client as redis_client,
             )
 
@@ -412,7 +412,7 @@ class APIKeyManager:
         try:
             import orjson
 
-            from src.backend.infrastructure.clients.storage.redis import (
+            from src.backend.infrastructure.clients.storage.redis import (  # noqa: F401 — re-export
                 get_redis_client as redis_client,
             )
 
@@ -455,7 +455,7 @@ class APIKeyManager:
         try:
             import orjson
 
-            from src.backend.infrastructure.clients.storage.redis import (
+            from src.backend.infrastructure.clients.storage.redis import (  # noqa: F401 — re-export
                 get_redis_client as redis_client,
             )
 

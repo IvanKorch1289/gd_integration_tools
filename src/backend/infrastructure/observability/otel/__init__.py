@@ -19,7 +19,7 @@ default-off, чтобы не влиять на dev_light и CI без OTLP-эн�
 
 from __future__ import annotations
 
-from src.backend.infrastructure.observability.otel.setup import (
+from src.backend.infrastructure.observability.otel.setup import (  # noqa: F401 — re-export
     configure_otel,
     setup_otel_metrics,
     shutdown_otel_metrics,

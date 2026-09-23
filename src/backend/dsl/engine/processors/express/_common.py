@@ -41,13 +41,13 @@ async def log_outgoing_message(
         return
     try:
         # S87 M2-#11 final batch: DI provider.
-        from src.backend.core.di.providers.cache import (
+        from src.backend.core.di.providers.cache import (  # noqa: F401 — re-export
             get_express_dialogs_mongo_provider,
         )
 
         _express_dialogs_module = get_express_dialogs_mongo_provider()
         get_express_dialog_store = _express_dialogs_module.get_express_dialog_store
-        from src.backend.services.integrations.express.dialog_store import (
+        from src.backend.services.integrations.express.dialog_store import (  # noqa: F401 — re-export
             ExpressDialogStore,
         )
 

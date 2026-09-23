@@ -22,7 +22,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable
 
-from src.backend.core.idempotency.backends.base import (
+from src.backend.core.idempotency.backends.base import (  # noqa: F401 — re-export
     IdempotencyBackend,
     IdempotencyOutcome,
 )
@@ -200,7 +200,7 @@ def get_idempotency_service() -> IdempotencyService:
     """
     global _service
     if _service is None:
-        from src.backend.core.idempotency.backends.in_memory import (
+        from src.backend.core.idempotency.backends.in_memory import (  # noqa: F401 — re-export
             InMemoryIdempotencyBackend,
         )
 

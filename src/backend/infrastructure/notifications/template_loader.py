@@ -29,7 +29,7 @@ from pathlib import Path
 from typing import Any
 
 from src.backend.core.logging import get_logger
-from src.backend.infrastructure.notifications.templates import (
+from src.backend.infrastructure.notifications.templates import (  # noqa: F401 — re-export
     TemplateRegistry,
     get_template_registry,
 )

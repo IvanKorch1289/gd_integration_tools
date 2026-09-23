@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from src.backend.core.config.database import DatabaseConnectionSettings
-from src.backend.core.config.external_databases import (
+from src.backend.core.config.external_databases import (  # noqa: F401 — re-export
     ExternalDatabaseConnectionSettings,
 )
 from src.backend.core.errors import DatabaseError

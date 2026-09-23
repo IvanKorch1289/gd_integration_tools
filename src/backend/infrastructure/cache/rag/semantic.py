@@ -42,7 +42,7 @@ class L2SemanticRagCache:
         if self._client is not None:
             return self._client
         try:
-            from src.backend.infrastructure.clients.storage.vector_store import (
+            from src.backend.infrastructure.clients.storage.vector_store import (  # noqa: F401 — re-export
                 get_vector_store,
             )
 
@@ -56,7 +56,7 @@ class L2SemanticRagCache:
         if self._embedder is not None:
             return self._embedder
         try:
-            from src.backend.services.ai.embedding_providers import (
+            from src.backend.services.ai.embedding_providers import (  # noqa: F401 — re-export
                 get_embedding_provider,
             )
 

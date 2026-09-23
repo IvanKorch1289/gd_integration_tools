@@ -42,7 +42,7 @@ if TYPE_CHECKING:
 
     from redis.asyncio import Redis as AsyncRedis
 
-    from src.backend.core.feature_flags.runtime_overrides import (
+    from src.backend.core.feature_flags.runtime_overrides import (  # noqa: F401 — re-export
         FeatureFlagChange,
         RuntimeFeatureFlagOverrides,
     )

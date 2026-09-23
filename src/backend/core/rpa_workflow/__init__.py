@@ -18,7 +18,7 @@
 
 Использование::
 
-    from src.backend.core.rpa_workflow import (
+    from src.backend.core.rpa_workflow import (  # noqa: F401 — re-export
         get_rpa_workflow, SelectorChain,
     )
 
@@ -41,13 +41,13 @@
 
 from __future__ import annotations
 
-from src.backend.core.rpa_workflow.selector import (
+from src.backend.core.rpa_workflow.selector import (  # noqa: F401 — re-export
     Selector,
     SelectorChain,
     SelectorStrategy,
     SelectorType,
 )
-from src.backend.core.rpa_workflow.workflow import (
+from src.backend.core.rpa_workflow.workflow import (  # noqa: F401 — re-export
     Checkpoint,
     RPAState,
     RPAWorkflow,

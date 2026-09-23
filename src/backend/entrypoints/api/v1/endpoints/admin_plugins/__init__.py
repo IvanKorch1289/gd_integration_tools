@@ -10,7 +10,7 @@ Backward-compat: ``from src.backend.entrypoints.api.v1.endpoints.admin_plugins i
 
 from __future__ import annotations
 
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.endpoints import (
+from src.backend.entrypoints.api.v1.endpoints.admin_plugins.endpoints import (  # noqa: F401 — re-export
     diff_plugin_versions,  # S62 W1: re-export
     get_dependency_graph,  # S62 W1: re-export
     get_plugin_manifest,  # S62 W1: re-export
@@ -21,14 +21,14 @@ from src.backend.entrypoints.api.v1.endpoints.admin_plugins.endpoints import (
     scaffold_plugin_endpoint,  # S62 W1: re-export
     toggle_plugin,  # S62 W1: re-export
 )
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.helpers import (
+from src.backend.entrypoints.api.v1.endpoints.admin_plugins.helpers import (  # noqa: F401 — re-export
     _check_flag_enabled,  # S62 W1: re-export
     _get_plugin_registry,  # S62 W1: re-export
     _get_version_service,  # S62 W1: re-export
     _mock_manifest,  # S62 W1: re-export
     _mock_plugins,  # S62 W1: re-export
 )
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import (
+from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import (  # noqa: F401 — re-export
     PluginDependencyGraph,  # S62 W1: re-export
     PluginDiffResponse,  # S62 W1: re-export
     PluginManifest,  # S62 W1: re-export

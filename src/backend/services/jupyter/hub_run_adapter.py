@@ -25,7 +25,7 @@ from __future__ import annotations
 import base64
 from typing import Any
 
-from src.backend.services.jupyter.hub_run_orchestrator import (
+from src.backend.services.jupyter.hub_run_orchestrator import (  # noqa: F401 — re-export
     HubRunResult,
     run_hub_notebook,
 )

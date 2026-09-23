@@ -35,184 +35,184 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.di.module_registry import resolve_module
-from src.backend.core.di.providers.ai import (
+from src.backend.core.di.providers.ai import (  # noqa: F401 — re-export
     get_token_registry_provider as get_token_registry_provider,
 )
-from src.backend.core.di.providers.ai import (
+from src.backend.core.di.providers.ai import (  # noqa: F401 — re-export
     get_vector_store_provider as get_vector_store_provider,
 )
-from src.backend.core.di.providers.ai import (
+from src.backend.core.di.providers.ai import (  # noqa: F401 — re-export
     set_token_registry_provider as set_token_registry_provider,
 )
-from src.backend.core.di.providers.ai import (
+from src.backend.core.di.providers.ai import (  # noqa: F401 — re-export
     set_vector_store_provider as set_vector_store_provider,
 )
-from src.backend.core.di.providers.db import (
+from src.backend.core.di.providers.db import (  # noqa: F401 — re-export
     get_db_manager_provider as get_db_manager_provider,
 )
-from src.backend.core.di.providers.db import (
+from src.backend.core.di.providers.db import (  # noqa: F401 — re-export
     set_db_manager_provider as set_db_manager_provider,
 )
-from src.backend.core.di.providers.http import (
+from src.backend.core.di.providers.http import (  # noqa: F401 — re-export
     get_http_client_dependency_provider as get_http_client_dependency_provider,
 )
-from src.backend.core.di.providers.http import (
+from src.backend.core.di.providers.http import (  # noqa: F401 — re-export
     get_http_client_typed_provider as get_http_client_typed_provider,
 )
-from src.backend.core.di.providers.http import (
+from src.backend.core.di.providers.http import (  # noqa: F401 — re-export
     get_httpx_client_provider as get_httpx_client_provider,
 )
-from src.backend.core.di.providers.http import (
+from src.backend.core.di.providers.http import (  # noqa: F401 — re-export
     get_stream_provider as get_stream_provider,
 )
-from src.backend.core.di.providers.http import (
+from src.backend.core.di.providers.http import (  # noqa: F401 — re-export
     set_http_client_dependency_provider as set_http_client_dependency_provider,
 )
-from src.backend.core.di.providers.http import (
+from src.backend.core.di.providers.http import (  # noqa: F401 — re-export
     set_http_client_typed_provider as set_http_client_typed_provider,
 )
-from src.backend.core.di.providers.http import (
+from src.backend.core.di.providers.http import (  # noqa: F401 — re-export
     set_httpx_client_provider as set_httpx_client_provider,
 )
-from src.backend.core.di.providers.http import (
+from src.backend.core.di.providers.http import (  # noqa: F401 — re-export
     set_stream_provider as set_stream_provider,
 )
-from src.backend.core.di.providers.messaging import (
+from src.backend.core.di.providers.messaging import (  # noqa: F401 — re-export
     get_express_bot_module_provider as get_express_bot_module_provider,
 )
-from src.backend.core.di.providers.messaging import (
+from src.backend.core.di.providers.messaging import (  # noqa: F401 — re-export
     get_express_dialogs_mongo_provider as get_express_dialogs_mongo_provider,
 )
-from src.backend.core.di.providers.messaging import (
+from src.backend.core.di.providers.messaging import (  # noqa: F401 — re-export
     get_telegram_bot_provider as get_telegram_bot_provider,
 )
-from src.backend.core.di.providers.messaging import (
+from src.backend.core.di.providers.messaging import (  # noqa: F401 — re-export
     set_express_bot_module_provider as set_express_bot_module_provider,
 )
-from src.backend.core.di.providers.messaging import (
+from src.backend.core.di.providers.messaging import (  # noqa: F401 — re-export
     set_express_dialogs_mongo_provider as set_express_dialogs_mongo_provider,
 )
-from src.backend.core.di.providers.messaging import (
+from src.backend.core.di.providers.messaging import (  # noqa: F401 — re-export
     set_telegram_bot_provider as set_telegram_bot_provider,
 )
-from src.backend.core.di.providers.observability import (
+from src.backend.core.di.providers.observability import (  # noqa: F401 — re-export
     get_health_aggregator_provider as get_health_aggregator_provider,
 )
-from src.backend.core.di.providers.observability import (
+from src.backend.core.di.providers.observability import (  # noqa: F401 — re-export
     get_immutable_audit_store_class_provider as get_immutable_audit_store_class_provider,
 )
-from src.backend.core.di.providers.observability import (
+from src.backend.core.di.providers.observability import (  # noqa: F401 — re-export
     get_record_antivirus_scan_provider as get_record_antivirus_scan_provider,
 )
-from src.backend.core.di.providers.observability import (
+from src.backend.core.di.providers.observability import (  # noqa: F401 — re-export
     get_record_express_message_sent_provider as get_record_express_message_sent_provider,
 )
-from src.backend.core.di.providers.observability import (
+from src.backend.core.di.providers.observability import (  # noqa: F401 — re-export
     get_slo_tracker_provider as get_slo_tracker_provider,
 )
-from src.backend.core.di.providers.observability import (
+from src.backend.core.di.providers.observability import (  # noqa: F401 — re-export
     set_health_aggregator_provider as set_health_aggregator_provider,
 )
-from src.backend.core.di.providers.observability import (
+from src.backend.core.di.providers.observability import (  # noqa: F401 — re-export
     set_immutable_audit_store_class_provider as set_immutable_audit_store_class_provider,
 )
-from src.backend.core.di.providers.observability import (
+from src.backend.core.di.providers.observability import (  # noqa: F401 — re-export
     set_record_antivirus_scan_provider as set_record_antivirus_scan_provider,
 )
-from src.backend.core.di.providers.observability import (
+from src.backend.core.di.providers.observability import (  # noqa: F401 — re-export
     set_record_express_message_sent_provider as set_record_express_message_sent_provider,
 )
-from src.backend.core.di.providers.observability import (
+from src.backend.core.di.providers.observability import (  # noqa: F401 — re-export
     set_slo_tracker_provider as set_slo_tracker_provider,
 )
-from src.backend.core.di.providers.security import (
+from src.backend.core.di.providers.security import (  # noqa: F401 — re-export
     get_antivirus_backend_factory_provider as get_antivirus_backend_factory_provider,
 )
-from src.backend.core.di.providers.security import (
+from src.backend.core.di.providers.security import (  # noqa: F401 — re-export
     get_signature_builder_provider as get_signature_builder_provider,
 )
-from src.backend.core.di.providers.security import (
+from src.backend.core.di.providers.security import (  # noqa: F401 — re-export
     get_vault_backend_class_provider as get_vault_backend_class_provider,
 )
-from src.backend.core.di.providers.security import (
+from src.backend.core.di.providers.security import (  # noqa: F401 — re-export
     get_vault_config_class_provider as get_vault_config_class_provider,
 )
-from src.backend.core.di.providers.security import (
+from src.backend.core.di.providers.security import (  # noqa: F401 — re-export
     set_antivirus_backend_factory_provider as set_antivirus_backend_factory_provider,
 )
-from src.backend.core.di.providers.security import (
+from src.backend.core.di.providers.security import (  # noqa: F401 — re-export
     set_signature_builder_provider as set_signature_builder_provider,
 )
-from src.backend.core.di.providers.security import (
+from src.backend.core.di.providers.security import (  # noqa: F401 — re-export
     set_vault_backend_class_provider as set_vault_backend_class_provider,
 )
-from src.backend.core.di.providers.security import (
+from src.backend.core.di.providers.security import (  # noqa: F401 — re-export
     set_vault_config_class_provider as set_vault_config_class_provider,
 )
-from src.backend.core.di.providers.workflow import (
+from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
     get_di_bridge_dlq_module_provider as get_di_bridge_dlq_module_provider,
 )
-from src.backend.core.di.providers.workflow import (
+from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
     get_dlq_envelope_class_provider as get_dlq_envelope_class_provider,
 )
-from src.backend.core.di.providers.workflow import (
+from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
     get_dlq_memory_writer_module_provider as get_dlq_memory_writer_module_provider,
 )
-from src.backend.core.di.providers.workflow import (
+from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
     get_grpc_sink_class_provider as get_grpc_sink_class_provider,
 )
-from src.backend.core.di.providers.workflow import (
+from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
     get_mq_sink_class_provider as get_mq_sink_class_provider,
 )
-from src.backend.core.di.providers.workflow import (
+from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
     get_notifications_module_provider as get_notifications_module_provider,
 )
-from src.backend.core.di.providers.workflow import (
+from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
     get_reply_channel_class_provider as get_reply_channel_class_provider,
 )
-from src.backend.core.di.providers.workflow import (
+from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
     get_sink_factory_provider as get_sink_factory_provider,
 )
-from src.backend.core.di.providers.workflow import (
+from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
     get_soap_sink_class_provider as get_soap_sink_class_provider,
 )
-from src.backend.core.di.providers.workflow import (
+from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
     get_workflow_factory_module_provider as get_workflow_factory_module_provider,
 )
-from src.backend.core.di.providers.workflow import (
+from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
     get_ws_sink_class_provider as get_ws_sink_class_provider,
 )
-from src.backend.core.di.providers.workflow import (
+from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
     set_di_bridge_dlq_module_provider as set_di_bridge_dlq_module_provider,
 )
-from src.backend.core.di.providers.workflow import (
+from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
     set_dlq_envelope_class_provider as set_dlq_envelope_class_provider,
 )
-from src.backend.core.di.providers.workflow import (
+from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
     set_dlq_memory_writer_module_provider as set_dlq_memory_writer_module_provider,
 )
-from src.backend.core.di.providers.workflow import (
+from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
     set_grpc_sink_class_provider as set_grpc_sink_class_provider,
 )
-from src.backend.core.di.providers.workflow import (
+from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
     set_mq_sink_class_provider as set_mq_sink_class_provider,
 )
-from src.backend.core.di.providers.workflow import (
+from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
     set_notifications_module_provider as set_notifications_module_provider,
 )
-from src.backend.core.di.providers.workflow import (
+from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
     set_reply_channel_class_provider as set_reply_channel_class_provider,
 )
-from src.backend.core.di.providers.workflow import (
+from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
     set_sink_factory_provider as set_sink_factory_provider,
 )
-from src.backend.core.di.providers.workflow import (
+from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
     set_soap_sink_class_provider as set_soap_sink_class_provider,
 )
-from src.backend.core.di.providers.workflow import (
+from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
     set_workflow_factory_module_provider as set_workflow_factory_module_provider,
 )
-from src.backend.core.di.providers.workflow import (
+from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
     set_ws_sink_class_provider as set_ws_sink_class_provider,
 )
 

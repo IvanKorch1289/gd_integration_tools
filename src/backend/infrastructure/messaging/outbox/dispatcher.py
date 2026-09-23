@@ -31,7 +31,7 @@ from datetime import UTC, datetime
 from typing import Protocol, runtime_checkable
 
 from src.backend.core.logging import get_logger
-from src.backend.core.messaging.outbox import (
+from src.backend.core.messaging.outbox import (  # noqa: F401 — re-export
     OutboxBackend,
     OutboxEvent,
     OutboxEventStatus,

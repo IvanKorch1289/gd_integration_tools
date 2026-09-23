@@ -114,7 +114,7 @@ class MessageReplayService:
             }
 
         try:
-            from src.backend.core.types.invocation_command import (
+            from src.backend.core.types.invocation_command import (  # noqa: F401 — re-export
                 ActionCommandMetaSchema,
             )
             from src.backend.schemas.invocation import ActionCommandSchema

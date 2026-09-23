@@ -45,22 +45,22 @@ _IDENT_RE: Final = re.compile(
 _BIND_NAME_RE: Final = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
-from src.backend.services.io.external_database.build_mixin import (
+from src.backend.services.io.external_database.build_mixin import (  # noqa: F401 — re-export
     BuildMixin,  # S63 W4: MRO
 )
-from src.backend.services.io.external_database.core_mixin import (
+from src.backend.services.io.external_database.core_mixin import (  # noqa: F401 — re-export
     CoreMixin,  # S63 W4: MRO
 )
-from src.backend.services.io.external_database.dispatch_mixin import (
+from src.backend.services.io.external_database.dispatch_mixin import (  # noqa: F401 — re-export
     DispatchMixin,  # S63 W4: MRO
 )
-from src.backend.services.io.external_database.profile_mixin import (
+from src.backend.services.io.external_database.profile_mixin import (  # noqa: F401 — re-export
     ProfileMixin,  # S63 W4: MRO
 )
-from src.backend.services.io.external_database.state import (
+from src.backend.services.io.external_database.state import (  # noqa: F401 — re-export
     PreparedDBParameter,  # S63 W4: re-export
 )
-from src.backend.services.io.external_database.validation_mixin import (
+from src.backend.services.io.external_database.validation_mixin import (  # noqa: F401 — re-export
     ValidationMixin,  # S63 W4: MRO
 )
 

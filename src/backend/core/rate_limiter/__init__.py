@@ -10,7 +10,7 @@ async coordination. Без external deps.
 
 Использование::
 
-    from src.backend.core.rate_limiter import (
+    from src.backend.core.rate_limiter import (  # noqa: F401 — re-export
         RateLimiter, RateLimiterConfig, get_rate_limiter,
     )
 
@@ -31,7 +31,7 @@ async coordination. Без external deps.
 
 from __future__ import annotations
 
-from src.backend.core.rate_limiter.limiter import (
+from src.backend.core.rate_limiter.limiter import (  # noqa: F401 — re-export
     AsyncRateLimiter,
     RateLimiter,
     RateLimiterConfig,

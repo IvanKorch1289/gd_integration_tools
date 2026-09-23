@@ -87,7 +87,7 @@ class VaultSecretProcessor(BaseProcessor):
             return
         try:
             # S82 M2-#11 batch 17: DI providers вместо inline infrastructure imports.
-            from src.backend.core.di.providers.cache import (
+            from src.backend.core.di.providers.cache import (  # noqa: F401 — re-export
                 get_vault_backend_class_provider,
                 get_vault_config_class_provider,
             )

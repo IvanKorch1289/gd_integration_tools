@@ -15,11 +15,11 @@ from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.core.config.settings import settings
 from src.backend.core.di.providers import get_model_enum_provider
 from src.backend.core.enums.invocation import BrokerKind
-from src.backend.entrypoints.api.generator.actions import (
+from src.backend.entrypoints.api.generator.actions import (  # noqa: F401 — re-export
     ActionRouterBuilder,
     ActionSpec,
 )
-from src.backend.entrypoints.api.generator.invocation import (
+from src.backend.entrypoints.api.generator.invocation import (  # noqa: F401 — re-export
     EventPublishSpec,
     InvocationSpec,
     default_payload_factory,

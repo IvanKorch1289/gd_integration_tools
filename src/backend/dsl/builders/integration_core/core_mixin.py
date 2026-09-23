@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from src.backend.dsl.builders.base import RouteBuilder
 from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors import (
+from src.backend.dsl.engine.processors import (  # noqa: F401 — re-export
     DispatchActionProcessor,
     PipelineRefProcessor,
 )

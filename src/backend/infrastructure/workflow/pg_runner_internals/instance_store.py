@@ -14,16 +14,16 @@ from sqlalchemy import and_, or_, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.backend.core.domain.models.workflow_event import WorkflowEventType
-from src.backend.core.domain.models.workflow_instance import (
+from src.backend.core.domain.models.workflow_instance import (  # noqa: F401 — re-export
     WorkflowInstance,
     WorkflowStatus,
 )
 from src.backend.infrastructure.database.session_manager import main_session_manager
-from src.backend.infrastructure.workflow.pg_runner_internals.event_store import (
+from src.backend.infrastructure.workflow.pg_runner_internals.event_store import (  # noqa: F401 — re-export
     WorkflowEventStore,
     _advisory_lock_key,
 )
-from src.backend.infrastructure.workflow.pg_runner_internals.rows import (
+from src.backend.infrastructure.workflow.pg_runner_internals.rows import (  # noqa: F401 — re-export
     WorkflowInstanceRow,
 )
 

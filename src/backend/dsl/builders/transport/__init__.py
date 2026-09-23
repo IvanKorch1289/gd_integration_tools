@@ -12,11 +12,11 @@ from __future__ import annotations
 
 from typing import Self as Self
 
-from src.backend.dsl.builders.base._protocol import (
+from src.backend.dsl.builders.base._protocol import (  # noqa: F401 — re-export
     _RouteBuilderProtocol as _RouteBuilderProtocol,
 )
 from src.backend.dsl.builders.transport.external import ExternalMixin as ExternalMixin
-from src.backend.dsl.builders.transport.persistence import (
+from src.backend.dsl.builders.transport.persistence import (  # noqa: F401 — re-export
     PersistenceMixin as PersistenceMixin,
 )
 from src.backend.dsl.builders.transport.proxy import ProxyMixin as ProxyMixin

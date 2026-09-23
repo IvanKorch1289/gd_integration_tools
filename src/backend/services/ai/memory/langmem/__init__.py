@@ -6,7 +6,7 @@
   CRUD-операции поверх Postgres (Stream E.7 Sprint 8 K4 W2).
 """
 
-from src.backend.services.ai.memory.langmem.consolidation import (
+from src.backend.services.ai.memory.langmem.consolidation import (  # noqa: F401 — re-export
     ConsolidationEngine,
     ConsolidationReport,
 )

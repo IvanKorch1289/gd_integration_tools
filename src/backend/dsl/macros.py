@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import warnings
 
-from src.backend.dsl.blueprints.macros import (
+from src.backend.dsl.blueprints.macros import (  # noqa: F401 — re-export
     ai_qa_pipeline,
     crud_with_audit,
     etl_pipeline,

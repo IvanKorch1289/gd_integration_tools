@@ -39,7 +39,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
-from src.backend.infrastructure.security.cert_store.models import (
+from src.backend.infrastructure.security.cert_store.models import (  # noqa: F401 — re-export
     CertEntry,
     _fingerprint,
 )

@@ -59,7 +59,7 @@ class BLIP2Captioner:
         if self._model is not None:
             return
         try:
-            from transformers import (  # type: ignore[import-not-found]
+            from transformers import (  # noqa: F401 — re-export  # type: ignore[import-not-found]
                 AutoProcessor,
                 Blip2ForConditionalGeneration,
             )

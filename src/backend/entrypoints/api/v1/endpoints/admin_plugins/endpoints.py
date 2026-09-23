@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.entrypoints.api.v1.endpoints.admin_plugins import helpers
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import (
+from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import (  # noqa: F401 — re-export
     PluginDependencyGraph,
     PluginDiffResponse,
     PluginManifest,
@@ -236,7 +236,7 @@ async def get_dependency_graph() -> PluginDependencyGraph:
     if not extensions_dir.is_dir():
         return PluginDependencyGraph()
 
-    from src.backend.core.plugin_runtime.manifest_toml import (
+    from src.backend.core.plugin_runtime.manifest_toml import (  # noqa: F401 — re-export
         PluginManifestError,
         load_plugin_manifest,
     )

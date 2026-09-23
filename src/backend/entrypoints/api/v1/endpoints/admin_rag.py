@@ -28,7 +28,7 @@ _selector_instance: Any = None
 def _get_selector() -> Any:
     global _selector_instance
     if _selector_instance is None:
-        from src.backend.services.ai.rag.strategy_selector import (
+        from src.backend.services.ai.rag.strategy_selector import (  # noqa: F401 — re-export
             AdaptiveStrategySelector,
         )
 

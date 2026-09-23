@@ -27,42 +27,42 @@ Old path (still works через этот shim):
 """
 
 from src.backend.dsl.engine.processors.ai.cache_processor import CacheProcessor
-from src.backend.dsl.engine.processors.ai.cachewrite_processor import (
+from src.backend.dsl.engine.processors.ai.cachewrite_processor import (  # noqa: F401 — re-export
     CacheWriteProcessor,
 )
-from src.backend.dsl.engine.processors.ai.getfeedbackexamples_processor import (
+from src.backend.dsl.engine.processors.ai.getfeedbackexamples_processor import (  # noqa: F401 — re-export
     GetFeedbackExamplesProcessor,
 )
-from src.backend.dsl.engine.processors.ai.guardrails_processor import (
+from src.backend.dsl.engine.processors.ai.guardrails_processor import (  # noqa: F401 — re-export
     GuardrailsProcessor,
 )
 from src.backend.dsl.engine.processors.ai.llmcall_processor import LLMCallProcessor
-from src.backend.dsl.engine.processors.ai.llmfallback_processor import (
+from src.backend.dsl.engine.processors.ai.llmfallback_processor import (  # noqa: F401 — re-export
     LLMFallbackProcessor,
 )
 from src.backend.dsl.engine.processors.ai.llmparser_processor import LLMParserProcessor
-from src.backend.dsl.engine.processors.ai.promptcomposer_processor import (
+from src.backend.dsl.engine.processors.ai.promptcomposer_processor import (  # noqa: F401 — re-export
     PromptComposerProcessor,
 )
 from src.backend.dsl.engine.processors.ai.ragingest_processor import RagIngestProcessor
-from src.backend.dsl.engine.processors.ai.ragpiiredaction_processor import (
+from src.backend.dsl.engine.processors.ai.ragpiiredaction_processor import (  # noqa: F401 — re-export
     RagPIIRedactionProcessor,
 )
 from src.backend.dsl.engine.processors.ai.ragquery_processor import RagQueryProcessor
 from src.backend.dsl.engine.processors.ai.reranker import RerankerProcessor
-from src.backend.dsl.engine.processors.ai.restorepii_processor import (
+from src.backend.dsl.engine.processors.ai.restorepii_processor import (  # noqa: F401 — re-export
     RestorePIIProcessor,
 )
-from src.backend.dsl.engine.processors.ai.sanitizepii_processor import (
+from src.backend.dsl.engine.processors.ai.sanitizepii_processor import (  # noqa: F401 — re-export
     SanitizePIIProcessor,
 )
-from src.backend.dsl.engine.processors.ai.semanticrouter_processor import (
+from src.backend.dsl.engine.processors.ai.semanticrouter_processor import (  # noqa: F401 — re-export
     SemanticRouterProcessor,
 )
-from src.backend.dsl.engine.processors.ai.tokenbudget_processor import (
+from src.backend.dsl.engine.processors.ai.tokenbudget_processor import (  # noqa: F401 — re-export
     TokenBudgetProcessor,
 )
-from src.backend.dsl.engine.processors.ai.vectorsearch_processor import (
+from src.backend.dsl.engine.processors.ai.vectorsearch_processor import (  # noqa: F401 — re-export
     VectorSearchProcessor,
 )
 

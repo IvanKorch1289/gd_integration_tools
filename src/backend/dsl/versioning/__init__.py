@@ -7,7 +7,7 @@
 См. ``docs/reference/dsl/versioning.md`` и ADR-034.
 """
 
-from src.backend.dsl.versioning.migrations import (
+from src.backend.dsl.versioning.migrations import (  # noqa: F401 — re-export
     CURRENT_VERSION,
     DEFAULT_LEGACY_VERSION,
     DSLMigration,

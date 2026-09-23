@@ -7,7 +7,7 @@ Functions: get_streaming_controller.
 
 from __future__ import annotations
 
-from src.backend.core.resilience.backpressure.controller import (
+from src.backend.core.resilience.backpressure.controller import (  # noqa: F401 — re-export
     StreamingBackpressureController,
 )
 

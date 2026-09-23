@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from src.backend.core.security.capabilities.gate._protocol import (
+from src.backend.core.security.capabilities.gate._protocol import (  # noqa: F401 — re-export
     _CapabilityGateProtocol,
 )
 

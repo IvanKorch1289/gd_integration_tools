@@ -404,7 +404,7 @@ class DbCrudProcessor(BaseProcessor):
         )
 
         # 2. Execute via DatabaseQueryProcessor (reuses connection pool + retry)
-        from src.backend.dsl.engine.processors.components.databasequeryprocessor import (
+        from src.backend.dsl.engine.processors.components.databasequeryprocessor import (  # noqa: F401 — re-export
             DatabaseQueryProcessor,
         )
 

@@ -16,7 +16,7 @@ import json
 from dataclasses import asdict
 from typing import Any, Protocol, runtime_checkable
 
-from src.backend.core.interfaces.invocation_reply import (
+from src.backend.core.interfaces.invocation_reply import (  # noqa: F401 — re-export
     InvocationReplyChannel,
     ReplyChannelKind,
 )
@@ -137,7 +137,7 @@ class EmailReplyChannel(InvocationReplyChannel):
         """
         try:
             from src.backend.core.config.settings import settings
-            from src.backend.infrastructure.notifications.adapters.email import (
+            from src.backend.infrastructure.notifications.adapters.email import (  # noqa: F401 — re-export
                 EmailAdapter,
             )
 

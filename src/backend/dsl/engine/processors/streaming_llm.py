@@ -80,7 +80,7 @@ class TokenStreamLLMProcessor(BaseProcessor):
     def _ensure_publisher(self) -> Any:
         if self._publisher is not None:
             return self._publisher
-        from src.backend.dsl.engine.processors.streaming_llm_publishers import (
+        from src.backend.dsl.engine.processors.streaming_llm_publishers import (  # noqa: F401 — re-export
             SSEPublisher,
             WebhookChunkedPublisher,
             WSPublisher,

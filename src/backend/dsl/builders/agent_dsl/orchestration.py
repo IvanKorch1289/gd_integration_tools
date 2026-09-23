@@ -64,7 +64,7 @@ class OrchestrationMixin:
             )
 
         """
-        from src.backend.dsl.engine.processors.agent_dsl.agent_run import (
+        from src.backend.dsl.engine.processors.agent_dsl.agent_run import (  # noqa: F401 — re-export
             AgentRunProcessor,
         )
 
@@ -132,7 +132,7 @@ class OrchestrationMixin:
             )
 
         """
-        from src.backend.dsl.engine.processors.agent_dsl.agent_branch import (
+        from src.backend.dsl.engine.processors.agent_dsl.agent_branch import (  # noqa: F401 — re-export
             AgentBranchProcessor,
         )
 
@@ -170,7 +170,7 @@ class OrchestrationMixin:
             )
 
         """
-        from src.backend.dsl.engine.processors.agent_dsl.agent_loop import (
+        from src.backend.dsl.engine.processors.agent_dsl.agent_loop import (  # noqa: F401 — re-export
             AgentLoopProcessor,
         )
 
@@ -211,7 +211,7 @@ class OrchestrationMixin:
             )
 
         """
-        from src.backend.dsl.engine.processors.agent_dsl.agent_parallel import (
+        from src.backend.dsl.engine.processors.agent_dsl.agent_parallel import (  # noqa: F401 — re-export
             AgentParallelProcessor,
         )
 
@@ -260,7 +260,7 @@ class OrchestrationMixin:
             )
 
         """
-        from src.backend.dsl.engine.processors.agent_dsl.plan_execute import (
+        from src.backend.dsl.engine.processors.agent_dsl.plan_execute import (  # noqa: F401 — re-export
             PlanExecuteProcessor,
         )
 
@@ -316,7 +316,7 @@ class OrchestrationMixin:
             )
 
         """
-        from src.backend.dsl.engine.processors.agent_dsl.reflection_loop import (
+        from src.backend.dsl.engine.processors.agent_dsl.reflection_loop import (  # noqa: F401 — re-export
             ReflectionLoopProcessor,
         )
 
@@ -364,7 +364,7 @@ class OrchestrationMixin:
             )
 
         """
-        from src.backend.dsl.engine.processors.hitl_approval import (
+        from src.backend.dsl.engine.processors.hitl_approval import (  # noqa: F401 — re-export
             HitlApprovalProcessor,
         )
 

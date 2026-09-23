@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Any
 from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.resilience.bulkhead import (
+    from src.backend.infrastructure.resilience.bulkhead import (  # noqa: F401 — re-export
         Bulkhead,
         BulkheadRegistry,
     )
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 def __getattr__(name: str) -> Any:
     if not TYPE_CHECKING:
         if name in ("Bulkhead", "BulkheadRegistry"):
-            from src.backend.core.di.providers.infrastructure_locator import (
+            from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
                 get_bulkhead_attr as _get_bh_attr,
             )
 

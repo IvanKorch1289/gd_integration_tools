@@ -26,7 +26,7 @@ from src.backend.core.interfaces.source import EventCallback, SourceEvent, Sourc
 from src.backend.core.logging import get_logger
 from src.backend.core.security.connector_auth import require_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
-from src.backend.infrastructure.security.signatures import (
+from src.backend.infrastructure.security.signatures import (  # noqa: F401 — re-export
     DEFAULT_TIMESTAMP_WINDOW,
     verify_signature,
 )

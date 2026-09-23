@@ -26,7 +26,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.backend.core.domain.models.outbox import OutboxMessage
 from src.backend.infrastructure.database.session_manager import DatabaseSessionManager
-from src.backend.infrastructure.database.session_manager import (
+from src.backend.infrastructure.database.session_manager import (  # noqa: F401 — re-export
     main_session_manager as _main_session_manager_lookup,  # noqa: F401 — lazy accessor
 )
 

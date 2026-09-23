@@ -25,7 +25,7 @@ Public API:
 
 from src.backend.dsl.workflow.builder import SagaBuilder as SagaBuilder
 from src.backend.dsl.workflow.builder import WorkflowBuilder as WorkflowBuilder
-from src.backend.dsl.workflow.spec import (
+from src.backend.dsl.workflow.spec import (  # noqa: F401 — re-export
     ActivityDeclaration,
     PauseDeclaration,
     ResumeDeclaration,
@@ -37,7 +37,7 @@ from src.backend.dsl.workflow.spec import (
     WorkflowDeclaration,
     WorkflowStep,
 )
-from src.backend.dsl.workflow.yaml_io import (
+from src.backend.dsl.workflow.yaml_io import (  # noqa: F401 — re-export
     FeatureDisabledError,
     WorkflowDiff,
     diff,

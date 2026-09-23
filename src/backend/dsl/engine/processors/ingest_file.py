@@ -179,7 +179,7 @@ class IngestFileProcessor(BaseProcessor):
                 try:
                     # S78 M2-#11 batch 13: DI provider вместо inline infrastructure import.
                     # R1 fix (S95): provider returns factory function — call it.
-                    from src.backend.core.di.providers.cache import (
+                    from src.backend.core.di.providers.cache import (  # noqa: F401 — re-export
                         get_s3_client_provider,
                     )
 

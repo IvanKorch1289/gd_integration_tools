@@ -22,7 +22,7 @@ Backward-compat:
 from __future__ import annotations
 
 # Phase 1: re-export из legacy godfile (S175 — этот sprint)
-from src.backend.dsl.engine.processors.entity._legacy import (
+from src.backend.dsl.engine.processors.entity._legacy import (  # noqa: F401 — re-export
     _BaseEntityProcessor as _BaseEntityProcessor,
 )
 
@@ -30,19 +30,19 @@ from src.backend.dsl.engine.processors.entity._legacy import (
 # original entity.py). _resolve используется audit.py и другими
 # callers для namespace-path resolution.
 from src.backend.dsl.engine.processors.entity._resolve import _resolve as _resolve
-from src.backend.dsl.engine.processors.entity.create import (
+from src.backend.dsl.engine.processors.entity.create import (  # noqa: F401 — re-export
     EntityCreateProcessor as EntityCreateProcessor,
 )
-from src.backend.dsl.engine.processors.entity.delete import (
+from src.backend.dsl.engine.processors.entity.delete import (  # noqa: F401 — re-export
     EntityDeleteProcessor as EntityDeleteProcessor,
 )
-from src.backend.dsl.engine.processors.entity.get import (
+from src.backend.dsl.engine.processors.entity.get import (  # noqa: F401 — re-export
     EntityGetProcessor as EntityGetProcessor,
 )
-from src.backend.dsl.engine.processors.entity.list import (
+from src.backend.dsl.engine.processors.entity.list import (  # noqa: F401 — re-export
     EntityListProcessor as EntityListProcessor,
 )
-from src.backend.dsl.engine.processors.entity.update import (
+from src.backend.dsl.engine.processors.entity.update import (  # noqa: F401 — re-export
     EntityUpdateProcessor as EntityUpdateProcessor,
 )
 

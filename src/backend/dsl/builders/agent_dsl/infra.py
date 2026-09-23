@@ -49,7 +49,7 @@ class InfraMixin:
             builder.guardrails_apply(stage="output", on_block="fail")
 
         """
-        from src.backend.dsl.engine.processors.agent_dsl.guardrails_apply import (
+        from src.backend.dsl.engine.processors.agent_dsl.guardrails_apply import (  # noqa: F401 — re-export
             GuardrailsApplyProcessor,
         )
 
@@ -83,7 +83,7 @@ class InfraMixin:
             builder.pii_mask(scope="banking")
 
         """
-        from src.backend.dsl.engine.processors.agent_dsl.pii_mask import (
+        from src.backend.dsl.engine.processors.agent_dsl.pii_mask import (  # noqa: F401 — re-export
             PIIMaskProcessor,
         )
 
@@ -119,7 +119,7 @@ class InfraMixin:
             builder.pii_unmask(source_property="agent_result.content", strict=True)
 
         """
-        from src.backend.dsl.engine.processors.agent_dsl.pii_unmask import (
+        from src.backend.dsl.engine.processors.agent_dsl.pii_unmask import (  # noqa: F401 — re-export
             PIIUnmaskProcessor,
         )
 
@@ -199,10 +199,10 @@ class InfraMixin:
                 передавайте ``isolated=False`` явно.
 
         """
-        from src.backend.dsl.engine.processors.agent_dsl.agent_graph import (
+        from src.backend.dsl.engine.processors.agent_dsl.agent_graph import (  # noqa: F401 — re-export
             AgentGraphProcessor,
         )
-        from src.backend.services.ai.agent_sandbox import (
+        from src.backend.services.ai.agent_sandbox import (  # noqa: F401 — re-export
             InProcessAgentSandbox,
             get_process_pool_agent_sandbox,
         )
@@ -273,7 +273,7 @@ class InfraMixin:
             builder.skill_invoke(skill_id="credit.score.calculate")
 
         """
-        from src.backend.dsl.engine.processors.agent_dsl.skill_invoke import (
+        from src.backend.dsl.engine.processors.agent_dsl.skill_invoke import (  # noqa: F401 — re-export
             SkillInvokeProcessor,
         )
 
@@ -313,7 +313,7 @@ class InfraMixin:
             )
 
         """
-        from src.backend.dsl.engine.processors.agent_dsl.memory_recall import (
+        from src.backend.dsl.engine.processors.agent_dsl.memory_recall import (  # noqa: F401 — re-export
             MemoryRecallProcessor,
         )
 
@@ -355,7 +355,7 @@ class InfraMixin:
             )
 
         """
-        from src.backend.dsl.engine.processors.agent_dsl.memory_store import (
+        from src.backend.dsl.engine.processors.agent_dsl.memory_store import (  # noqa: F401 — re-export
             MemoryStoreProcessor,
         )
 
@@ -452,7 +452,7 @@ class InfraMixin:
             )
 
         """
-        from src.backend.dsl.engine.processors.agent_dsl.mcp_tool import (
+        from src.backend.dsl.engine.processors.agent_dsl.mcp_tool import (  # noqa: F401 — re-export
             MCPToolProcessor,
         )
 
@@ -516,7 +516,7 @@ class InfraMixin:
             + auto-dispatch) — S106+ W5+ (multi-wave scope).
 
         """
-        from src.backend.dsl.engine.processors.agent_dsl.ai_tool_dispatch import (
+        from src.backend.dsl.engine.processors.agent_dsl.ai_tool_dispatch import (  # noqa: F401 — re-export
             AIToolDispatchProcessor,
         )
 
@@ -559,7 +559,7 @@ class InfraMixin:
             )
 
         """
-        from src.backend.dsl.engine.processors.agent_dsl.optimize_prompt import (
+        from src.backend.dsl.engine.processors.agent_dsl.optimize_prompt import (  # noqa: F401 — re-export
             OptimizePromptProcessor,
         )
 

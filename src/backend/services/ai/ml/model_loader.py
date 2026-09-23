@@ -16,7 +16,7 @@ from pathlib import Path
 from threading import Lock
 from typing import Any
 
-from src.backend.core.interfaces.ml_model_loader import (
+from src.backend.core.interfaces.ml_model_loader import (  # noqa: F401 — re-export
     MLModelLoaderProtocol,
     MLModelType,
 )

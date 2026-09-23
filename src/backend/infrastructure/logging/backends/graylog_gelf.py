@@ -82,7 +82,7 @@ else:
 def _lazy_breaker_imports() -> None:
     global _CircuitOpen, _Breaker, _BreakerSpec, _get_breaker_registry_fn
     if _CircuitOpen is None:
-        from src.backend.core.resilience.breaker import (
+        from src.backend.core.resilience.breaker import (  # noqa: F401 — re-export
             Breaker,
             BreakerSpec,
             CircuitOpen,

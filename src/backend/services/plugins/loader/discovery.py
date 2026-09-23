@@ -19,7 +19,7 @@ from typing import Any
 
 from src.backend.core.interfaces.plugin import BasePlugin
 from src.backend.core.logging import get_logger
-from src.backend.core.plugin_runtime.dependency_resolver import (
+from src.backend.core.plugin_runtime.dependency_resolver import (  # noqa: F401 — re-export
     PluginDependencyCycleError,
     PluginGraphResolver,
 )

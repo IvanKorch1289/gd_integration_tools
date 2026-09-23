@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any, Protocol
 
-from src.backend.dsl.processors.saga_lra_processor.state import (
+from src.backend.dsl.processors.saga_lra_processor.state import (  # noqa: F401 — re-export
     SagaCallable,
     SagaStepSpec,
 )

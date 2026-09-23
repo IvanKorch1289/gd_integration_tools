@@ -15,55 +15,55 @@ import FileDeleteProcessor`` падал с ImportError. Все 8 missing доб�
 
 from __future__ import annotations
 
-from src.backend.dsl.engine.processors.rpa.operations.archiveprocessor import (
+from src.backend.dsl.engine.processors.rpa.operations.archiveprocessor import (  # noqa: F401 — re-export
     ArchiveProcessor,  # S65 W2: re-export
 )
-from src.backend.dsl.engine.processors.rpa.operations.csvreadprocessor import (
+from src.backend.dsl.engine.processors.rpa.operations.csvreadprocessor import (  # noqa: F401 — re-export
     CsvReadProcessor,  # S180 P0-5: S171 re-export
 )
-from src.backend.dsl.engine.processors.rpa.operations.csvwriteprocessor import (
+from src.backend.dsl.engine.processors.rpa.operations.csvwriteprocessor import (  # noqa: F401 — re-export
     CsvWriteProcessor,  # S180 P0-5: S171 re-export
 )
-from src.backend.dsl.engine.processors.rpa.operations.decryptprocessor import (
+from src.backend.dsl.engine.processors.rpa.operations.decryptprocessor import (  # noqa: F401 — re-export
     DecryptProcessor,  # S65 W2: re-export
 )
-from src.backend.dsl.engine.processors.rpa.operations.encryptprocessor import (
+from src.backend.dsl.engine.processors.rpa.operations.encryptprocessor import (  # noqa: F401 — re-export
     EncryptProcessor,  # S65 W2: re-export
 )
-from src.backend.dsl.engine.processors.rpa.operations.filedeleteprocessor import (
+from src.backend.dsl.engine.processors.rpa.operations.filedeleteprocessor import (  # noqa: F401 — re-export
     FileDeleteProcessor,  # S180 P0-5: S171 re-export
 )
-from src.backend.dsl.engine.processors.rpa.operations.filelistprocessor import (
+from src.backend.dsl.engine.processors.rpa.operations.filelistprocessor import (  # noqa: F401 — re-export
     FileListProcessor,  # S180 P0-5: S171 re-export
 )
-from src.backend.dsl.engine.processors.rpa.operations.filemoveprocessor import (
+from src.backend.dsl.engine.processors.rpa.operations.filemoveprocessor import (  # noqa: F401 — re-export
     FileMoveProcessor,  # S65 W2: re-export
 )
-from src.backend.dsl.engine.processors.rpa.operations.filewatchprocessor import (
+from src.backend.dsl.engine.processors.rpa.operations.filewatchprocessor import (  # noqa: F401 — re-export
     FileWatchProcessor,  # S180 P0-5: S171 re-export
 )
-from src.backend.dsl.engine.processors.rpa.operations.filtereddirectoryscanprocessor import (
+from src.backend.dsl.engine.processors.rpa.operations.filtereddirectoryscanprocessor import (  # noqa: F401 — re-export
     FilteredDirectoryScanProcessor,  # S180 P0-5: D166 re-export
 )
-from src.backend.dsl.engine.processors.rpa.operations.ftpuploadprocessor import (
+from src.backend.dsl.engine.processors.rpa.operations.ftpuploadprocessor import (  # noqa: F401 — re-export
     FtpUploadProcessor,  # S180 P0-5: S171 re-export
 )
-from src.backend.dsl.engine.processors.rpa.operations.hashprocessor import (
+from src.backend.dsl.engine.processors.rpa.operations.hashprocessor import (  # noqa: F401 — re-export
     HashProcessor,  # S65 W2: re-export
 )
-from src.backend.dsl.engine.processors.rpa.operations.httprequestprocessor import (
+from src.backend.dsl.engine.processors.rpa.operations.httprequestprocessor import (  # noqa: F401 — re-export
     HttpRequestProcessor,  # S180 P0-5: S171 re-export
 )
-from src.backend.dsl.engine.processors.rpa.operations.imageocrprocessor import (
+from src.backend.dsl.engine.processors.rpa.operations.imageocrprocessor import (  # noqa: F401 — re-export
     ImageOcrProcessor,  # S65 W2: re-export
 )
-from src.backend.dsl.engine.processors.rpa.operations.imageresizeprocessor import (
+from src.backend.dsl.engine.processors.rpa.operations.imageresizeprocessor import (  # noqa: F401 — re-export
     ImageResizeProcessor,  # S65 W2: re-export
 )
-from src.backend.dsl.engine.processors.rpa.operations.regexprocessor import (
+from src.backend.dsl.engine.processors.rpa.operations.regexprocessor import (  # noqa: F401 — re-export
     RegexProcessor,  # S65 W2: re-export
 )
-from src.backend.dsl.engine.processors.rpa.operations.templaterenderprocessor import (
+from src.backend.dsl.engine.processors.rpa.operations.templaterenderprocessor import (  # noqa: F401 — re-export
     TemplateRenderProcessor,  # S65 W2: re-export
 )
 

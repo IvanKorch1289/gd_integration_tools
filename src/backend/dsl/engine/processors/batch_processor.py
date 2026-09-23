@@ -29,7 +29,7 @@ _DEFAULT_PROVIDER: Callable[[], Any] | None = None
 def _default_session_provider() -> Callable[[], Any]:
     global _DEFAULT_PROVIDER
     if _DEFAULT_PROVIDER is None:
-        from src.backend.infrastructure.database.database import (
+        from src.backend.infrastructure.database.database import (  # noqa: F401 — re-export
             get_external_db_registry,
         )
 

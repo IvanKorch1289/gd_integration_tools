@@ -21,37 +21,37 @@ Backward-compat: ``from src.backend.dsl.builders.sources_mixin import SourcesMix
 
 from __future__ import annotations
 
-from src.backend.dsl.builders.sources_mixin.cdc_sources_mixin import (
+from src.backend.dsl.builders.sources_mixin.cdc_sources_mixin import (  # noqa: F401 — re-export
     CdcSourcesMixin,  # S57 W2: MRO
 )
-from src.backend.dsl.builders.sources_mixin.event_sources_mixin import (
+from src.backend.dsl.builders.sources_mixin.event_sources_mixin import (  # noqa: F401 — re-export
     EventSourcesMixin,  # FW2: generic EventBus subscription
 )
-from src.backend.dsl.builders.sources_mixin.external_sources_mixin import (
+from src.backend.dsl.builders.sources_mixin.external_sources_mixin import (  # noqa: F401 — re-export
     ExternalSourcesMixin,  # S132 W4: gRPC stream (TD-011 partial)
 )
-from src.backend.dsl.builders.sources_mixin.file_sources_mixin import (
+from src.backend.dsl.builders.sources_mixin.file_sources_mixin import (  # noqa: F401 — re-export
     FileSourcesMixin,  # S57 W2: MRO
 )
-from src.backend.dsl.builders.sources_mixin.http_sources_mixin import (
+from src.backend.dsl.builders.sources_mixin.http_sources_mixin import (  # noqa: F401 — re-export
     HttpSourcesMixin,  # S57 W2: MRO
 )
-from src.backend.dsl.builders.sources_mixin.messaging_sources_mixin import (
+from src.backend.dsl.builders.sources_mixin.messaging_sources_mixin import (  # noqa: F401 — re-export
     MessagingSourcesMixin,  # S57 W2: MRO
 )
-from src.backend.dsl.builders.sources_mixin.schedule_sources_mixin import (
+from src.backend.dsl.builders.sources_mixin.schedule_sources_mixin import (  # noqa: F401 — re-export
     ScheduleSourcesMixin,  # S57 W2: MRO
 )
-from src.backend.dsl.builders.sources_mixin.sse_sources_mixin import (
+from src.backend.dsl.builders.sources_mixin.sse_sources_mixin import (  # noqa: F401 — re-export
     StreamingSSEMixin,  # S94 W4: SSE
 )
-from src.backend.dsl.builders.sources_mixin.streaming_sources_mixin import (
+from src.backend.dsl.builders.sources_mixin.streaming_sources_mixin import (  # noqa: F401 — re-export
     StreamingSourcesMixin,  # S57 W2: MRO
 )
-from src.backend.dsl.builders.sources_mixin.telegram_sources_mixin import (
+from src.backend.dsl.builders.sources_mixin.telegram_sources_mixin import (  # noqa: F401 — re-export
     TelegramSourcesMixin,  # S97 W4: Telegram Bot webhook
 )
-from src.backend.dsl.builders.sources_mixin.webhook_sources_mixin import (
+from src.backend.dsl.builders.sources_mixin.webhook_sources_mixin import (  # noqa: F401 — re-export
     WebhookSourcesMixin,  # S57 W2: MRO
 )
 

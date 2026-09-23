@@ -198,7 +198,7 @@ class ClickHouseInsertProcessor(_InfraOp):
         self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """S182: реальный ClickHouse INSERT через DI facade."""
-        from src.backend.infrastructure.clients.storage.clickhouse import (
+        from src.backend.infrastructure.clients.storage.clickhouse import (  # noqa: F401 — re-export
             MAX_INSERT_ROWS,
             get_clickhouse_client,
         )
@@ -278,7 +278,7 @@ class ElasticsearchIndexProcessor(_InfraOp):
         self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """S182: реальный Elasticsearch INDEX через DI facade."""
-        from src.backend.infrastructure.clients.storage.elasticsearch import (
+        from src.backend.infrastructure.clients.storage.elasticsearch import (  # noqa: F401 — re-export
             get_elasticsearch_client,
         )
 
@@ -299,7 +299,7 @@ class ElasticsearchSearchProcessor(_InfraOp):
         self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """S182: реальный Elasticsearch SEARCH через DI facade."""
-        from src.backend.infrastructure.clients.storage.elasticsearch import (
+        from src.backend.infrastructure.clients.storage.elasticsearch import (  # noqa: F401 — re-export
             get_elasticsearch_client,
         )
 
@@ -337,7 +337,7 @@ def _get_real_s3_delete_processor() -> type:
     Previously :class:`S3DeleteProcessor` был phantom stub. Теперь
     rewire к :class:`src.backend.dsl.engine.processors.storage.s3.S3DeleteProcessor`.
     """
-    from src.backend.dsl.engine.processors.storage.s3 import (
+    from src.backend.dsl.engine.processors.storage.s3 import (  # noqa: F401 — re-export
         S3DeleteProcessor as _RealS3Delete,
     )
 
@@ -346,7 +346,7 @@ def _get_real_s3_delete_processor() -> type:
 
 def _get_real_s3_list_processor() -> type:
     """Lazy import real S3ListProcessor (S181 I-3.1)."""
-    from src.backend.dsl.engine.processors.storage.s3 import (
+    from src.backend.dsl.engine.processors.storage.s3 import (  # noqa: F401 — re-export
         S3ListProcessor as _RealS3List,
     )
 
@@ -355,7 +355,7 @@ def _get_real_s3_list_processor() -> type:
 
 def _get_real_s3_presign_processor() -> type:
     """Lazy import real S3PresignProcessor (S181 I-3.1)."""
-    from src.backend.dsl.engine.processors.storage.s3 import (
+    from src.backend.dsl.engine.processors.storage.s3 import (  # noqa: F401 — re-export
         S3PresignProcessor as _RealS3Presign,
     )
 

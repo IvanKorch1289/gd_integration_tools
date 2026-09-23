@@ -16,7 +16,7 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from src.backend.core.privacy.delete_data_subject._types import (
+from src.backend.core.privacy.delete_data_subject._types import (  # noqa: F401 — re-export
     AdapterResult,
     ErasureResultStatus,
     ErasureStrategy,

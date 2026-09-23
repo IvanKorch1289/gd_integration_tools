@@ -17,7 +17,7 @@ implementation в core (избежание downward layer violation:
 
 Использование в extensions::
 
-    from src.backend.core.auth.gateway import (
+    from src.backend.core.auth.gateway import (  # noqa: F401 — re-export
         AuthContext,
         AuthMethod,
         verify_request,

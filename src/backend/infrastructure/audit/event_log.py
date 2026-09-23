@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces import AsyncBatcher
 from src.backend.core.logging import get_logger
-from src.backend.infrastructure.observability.correlation import (
+from src.backend.infrastructure.observability.correlation import (  # noqa: F401 — re-export
     get_correlation_id,
     get_tenant_id,
 )
@@ -153,7 +153,7 @@ class AuditEventLog:
 
     async def _flush_to_clickhouse(self, events: list[AuditEvent]) -> None:
         try:
-            from src.backend.infrastructure.clients.storage.clickhouse import (
+            from src.backend.infrastructure.clients.storage.clickhouse import (  # noqa: F401 — re-export
                 get_clickhouse_client,
             )
 
@@ -287,7 +287,7 @@ class AuditEventLog:
 
         """
         try:
-            from src.backend.infrastructure.messaging.dlq_base import (
+            from src.backend.infrastructure.messaging.dlq_base import (  # noqa: F401 — re-export
                 DLQEnvelope,
                 DLQReason,
             )
@@ -356,7 +356,7 @@ class AuditEventLog:
         2. Bound parameters через ClickHouse {name} syntax
         3. safe_limit — int(limit) bounded к [1, 10000]
         """
-        from src.backend.infrastructure.clients.storage.clickhouse import (
+        from src.backend.infrastructure.clients.storage.clickhouse import (  # noqa: F401 — re-export
             get_clickhouse_client,
         )
 

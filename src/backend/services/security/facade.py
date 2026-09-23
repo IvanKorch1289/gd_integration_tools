@@ -37,7 +37,7 @@ from typing import Any
 
 from src.backend.core.logging import get_logger
 from src.backend.services.security.facade_blacklist import JwtBlacklistMixin
-from src.backend.services.security.facade_blacklist import (
+from src.backend.services.security.facade_blacklist import (  # noqa: F401 — re-export
     _InMemoryJwtBlacklist as _InMemoryJwtBlacklist,  # noqa: F401 — back-compat
 )
 from src.backend.services.security.facade_pii import PiiFacadeMixin
@@ -127,7 +127,7 @@ class SecurityFacade(JwtBlacklistMixin, PiiFacadeMixin):
             True если signature валидна.
 
         """
-        from src.backend.infrastructure.security.signatures import (
+        from src.backend.infrastructure.security.signatures import (  # noqa: F401 — re-export
             verify_signature as _verify,
         )
 

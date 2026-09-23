@@ -11,7 +11,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.audit.sinks.ai_unified_sink import (
+from src.backend.core.audit.sinks.ai_unified_sink import (  # noqa: F401 — re-export
     UnifiedAISink,
     register_emit_ai_invocation_event,
 )
@@ -51,14 +51,14 @@ def _create_emit_ai_invocation_event() -> None:
 
         if enabled:
             try:
-                from src.backend.core.audit.facade.audit_service import (
+                from src.backend.core.audit.facade.audit_service import (  # noqa: F401 — re-export
                     get_unified_audit_service,
                 )
 
                 audit = get_unified_audit_service()
                 langfuse = None
                 try:
-                    from src.backend.services.ai.gateway.langfuse_callback_v3 import (
+                    from src.backend.services.ai.gateway.langfuse_callback_v3 import (  # noqa: F401 — re-export
                         LangFuseCallbackV3,
                     )
 

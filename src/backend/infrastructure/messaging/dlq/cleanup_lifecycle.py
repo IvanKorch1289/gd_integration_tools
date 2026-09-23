@@ -15,7 +15,7 @@ FIX-H1-DLQ-CLEANUP) в background asyncio-задачу через
 
 Использование::
 
-    from src.backend.infrastructure.messaging.dlq.cleanup_lifecycle import (
+    from src.backend.infrastructure.messaging.dlq.cleanup_lifecycle import (  # noqa: F401 — re-export
         start_dlq_cleanup,
         stop_dlq_cleanup,
     )

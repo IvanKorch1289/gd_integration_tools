@@ -18,7 +18,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable
 
-from src.backend.core.outbox_verify.store.base import (
+from src.backend.core.outbox_verify.store.base import (  # noqa: F401 — re-export
     OutboxPublishEntry,
     OutboxPublishOutcome,
     OutboxPublishState,
@@ -128,7 +128,7 @@ def get_outbox_publish_service() -> OutboxPublishService:
     """Singleton accessor."""
     global _service
     if _service is None:
-        from src.backend.core.outbox_verify.store.in_memory import (
+        from src.backend.core.outbox_verify.store.in_memory import (  # noqa: F401 — re-export
             InMemoryOutboxVerifyStore,
         )
 

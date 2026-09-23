@@ -76,7 +76,7 @@ class SystemOpsMixin:
         self, host: str, port: int = 23, action: str = "query"
     ) -> RouteBuilder:
         """IBM 3270 терминал-эмулятор (мейнфрейм)."""
-        from src.backend.dsl.engine.processors.rpa_banking import (
+        from src.backend.dsl.engine.processors.rpa_banking import (  # noqa: F401 — re-export
             TerminalEmulator3270Processor,
         )
 
@@ -113,7 +113,7 @@ class SystemOpsMixin:
 
     def keystroke_replay(self, script_name: str) -> RouteBuilder:
         """Воспроизведение записанного сценария клавиатуры/мыши."""
-        from src.backend.dsl.engine.processors.rpa_banking import (
+        from src.backend.dsl.engine.processors.rpa_banking import (  # noqa: F401 — re-export
             KeystrokeReplayProcessor,
         )
 
