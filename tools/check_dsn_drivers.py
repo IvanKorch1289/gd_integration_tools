@@ -23,14 +23,19 @@ bootstrap/CI.
 
 Exit code 0 — все drivers available;
 Exit code 1 — хотя бы один type requires missing driver.
+
+MINIMAX W6 P1-8 Phase 4 (cycle 153): мигрирован с ``argparse`` на ``typer`` +
+``rich`` (libraries > custom, per ADR-0084). Сохранены: typer-native entry +
+legacy ``main()`` callback для backward-compat с pre-existing scripts.
 """
 
 from __future__ import annotations
 
-import argparse
 import importlib
-import sys
 from typing import NamedTuple
+
+import typer
+from rich.console import Console
 
 # S106 W7: маппинг DSN type → (sync_driver, async_driver) modules.
 # Должно mirror то, что ``DatabaseConnectionSettings.dsn()`` использует
@@ -110,24 +115,55 @@ def render_human(results: list[DriverCheckResult]) -> str:
     return "\n".join(lines)
 
 
-def main() -> int:
-    """Точка входа: human-readable или CI mode."""
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--ci",
-        action="store_true",
-        help="Exit code 1 on missing drivers (for CI gates).",
-    )
-    args = parser.parse_args()
+def main(argv: list[str] | None = None) -> int:
+    """Точка входа CLI (backward-compat shim для существующих скриптов).
 
-    results = check_all_drivers()
-    print(render_human(results))
+    Запускает typer app через typer.testing.CliRunner (для тестов)
+    или sys.argv (для CLI invocation). Возвращает exit code.
+    """
+    if argv is not None:
+        from typer.testing import CliRunner
 
-    if args.ci:
-        missing = [r for r in results if not r.sync_available or not r.async_available]
-        return 1 if missing else 0
+        runner = CliRunner()
+        result = runner.invoke(app, argv)
+        return result.exit_code
+    # CLI invocation: typer сам подхватит sys.argv[1:]
+    try:
+        app()
+    except SystemExit as exc:
+        return int(exc.code) if exc.code is not None else 0
     return 0
 
 
+app = typer.Typer(
+    name="check-dsn-drivers",
+    help="DSN driver availability check (sync + async).",
+    add_completion=False,
+)
+_console = Console()
+
+
+@app.callback(invoke_without_command=True)
+def _main(
+    ctx: typer.Context,
+    ci: bool = typer.Option(
+        False,
+        "--ci",
+        help="Exit code 1 on missing drivers (for CI gates).",
+    ),
+) -> None:
+    """Точка входа: human-readable или CI mode."""
+    if ctx.invoked_subcommand is not None:
+        return
+
+    results = check_all_drivers()
+    _console.print(render_human(results))
+
+    if ci:
+        missing = [r for r in results if not r.sync_available or not r.async_available]
+        if missing:
+            raise typer.Exit(code=1)
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

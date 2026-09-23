@@ -1,5 +1,28 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W6 P1-8 Phase 4: tools/check_dsn_drivers.py argparse → typer (4th tool)
+
+### refactor(tools): check_dsn_drivers.py мигрирован argparse → typer+rich
+
+`tools/check_dsn_drivers.py` (S106 W7, DSN driver availability check,
+133 LOC) — мигрирован на `typer` + `rich` по proven pattern ADR-0318/0319/0322.
+Это **4-й tool** подряд с одним и тем же pattern — momentum confirmed.
+
+**Что сделано**:
+- `argparse.ArgumentParser` → `typer.Typer` + `@app.callback(invoke_without_command=True)`.
+- `print(render_human(...))` → `_console.print(...)` (rich).
+- Backward-compat `main(argv=None)` через `CliRunner.invoke()` + `app()` fallback.
+- Removed unused `import sys`.
+
+**Tests**: `tests/unit/tools/test_w6_p1_8_phase4_check_dsn_drivers_typer.py` —
+7 focused tests (Typer instance, no argparse, typer-formatted --help,
+backward-compat, DSN_DRIVER_MAP exposed).
+
+**Verification**: pytest 7 passed, ruff All checks passed, compileall exit 0.
+ADR-0323 (116 ADRs total).
+
+---
+
 ## [Unreleased] — 2026-09-23 — W6 P1-8 Phase 3: tools/check_env_example.py argparse → typer (3rd tool)
 
 ### refactor(tools): check_env_example.py мигрирован argparse → typer+rich

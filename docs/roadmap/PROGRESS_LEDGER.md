@@ -4151,3 +4151,43 @@ Pattern **proven на 3 tools с разной сложностью** (4-flag →
 - ✅ 8 focused tests (test_w6_p1_8_phase3_check_env_example_typer.py).
 - ✅ ADR-0322 создан (115 ADRs total).
 - ⏭️ Phase 4: ~2-3 more simple tools (~cycle 156+).
+
+---
+
+## W6 P1-8 Phase 4: tools/check_dsn_drivers.py argparse → typer (2026-09-23, cycle 153)
+
+**Задача**: продолжить migration argparse → typer+rich momentum (после
+ADR-0318/0319/0322).
+
+**Решение** (ADR-0323):
+
+Мигрирован `tools/check_dsn_drivers.py` (S106 W7, DSN driver availability,
+133 → 152 LOC, +19).
+
+**Pattern validation (4 tools)**:
+
+| Tool | LOC (orig→new) | Flags | Complexity |
+|---|---|---|---|
+| `import_wsdl.py` (Phase 1) | 90 → 132 | 4 | simple |
+| `import_postman.py` (Phase 2) | 110 → 169 | 4 | simple |
+| `check_env_example.py` (Phase 3) | 157 → 187 | 1 | trivial |
+| `check_dsn_drivers.py` (Phase 4) | 133 → 152 | 1 | trivial |
+
+Pattern **proven на 4 tools**. Все simple/trivial tools migration — predictable.
+
+**Verification**:
+- `compileall -q tools/check_dsn_drivers.py` → exit 0
+- `pytest tests/unit/tools/test_w6_p1_8_phase4_check_dsn_drivers_typer.py` → 7 passed
+- `ruff check tools/check_dsn_drivers.py` → All checks passed
+
+**Roadmap для остальных ~84 argparse tools**:
+- Phase 5 (cycle 156+): `discover_plugin_capabilities.py` (241), `codegen_plugin.py` (484),
+  `check_docstrings.py` (519)
+- Phase 6 (отдельный sprint): `codegen_settings.py` (1107), `pre_prod_check.py` (898),
+  `gen_dsl_stubs.py` (875)
+
+**Cycle 153 итог (W6 P1-8 Phase 4)**:
+- ✅ 4-й tool мигрирован (check_dsn_drivers.py).
+- ✅ 7 focused tests (test_w6_p1_8_phase4_check_dsn_drivers_typer.py).
+- ✅ ADR-0323 создан (116 ADRs total).
+- ⏭️ Phase 5: medium complexity tools (~cycle 156+).
