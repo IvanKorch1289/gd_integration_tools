@@ -1,5 +1,32 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W9 P2-13: `_protocols.py` god-module split (1094 LOC → 6 family sub-modules)
+
+### refactor(dsl): RouteBuilder Protocol-контракты — god-module decomposition
+
+`src/backend/dsl/builders/base/_protocols.py` (1094 LOC, top-1 god-module в
+`src/backend/`) — преобразован в `_protocols/` package с 6 family sub-modules
+по доменам (ADR-0320):
+
+- `_core.py` (foundational: `_RouteProcessorSteps`, `_RouteCore`, `_shares_prefix`)
+- `_data.py` (entity CRUD / batch / SQL / persistence / templates)
+- `_flow.py` (control-flow / concurrency / time-resilience)
+- `_integration.py` (proxy / sinks / sources / dispatch)
+- `_ai.py` (LLM/RAG / Temporal / agent DSL)
+- `_support.py` (converters / EIP content / collection / security / config)
+
+`__init__.py` re-экспортирует все 22 имени — back-compat полностью сохранён:
+`base/__init__.py` работает без изменений, `cycle_31_s6_routebuilder` test
+(4 passed) использует `inspect.getsource(_protocols)` через package `__init__.py`.
+
+### chore(stubs): W3 P0-5 maintenance — pre-existing .pyi drift regen
+
+В процессе W9 verification обнаружен pre-existing drift (от W2 P0-3 canonical
+paths + Python 3.10+ UnionType syntax): `gen_dsl_stubs.py --check` exit 1.
+Регенерировано 222 insertions / 218 deletions в `base.pyi` + `workflow/builder.pyi`.
+
+---
+
 ## [Unreleased] — 2026-09-23 — Docs integrity: честный ownership-wiring контракт + актуализация после W-волн
 
 ### docs(security): ownership wiring — doc-vs-code разрыв устранён

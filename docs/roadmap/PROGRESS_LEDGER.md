@@ -3980,3 +3980,57 @@ src/backend/dsl/workflow/builder.pyi           -147 LOC
 - ✅ CI gate блокирует merge при drift.
 - ✅ ADR-0310 создан (103 ADRs total).
 - ⏭️ W4 P1-6 (aiocache research): ~681 LOC самописных cache-декораторов.
+
+---
+
+## W9 P2-13: `_protocols.py` god-module → `_protocols/` package split (2026-09-23, Sprint 12 cycle 153)
+
+**Задача**: V15 forbidden pattern «God-modules (>500 LOC) — split на семейные
+модули». Top-1 god-module в `src/backend` — `dsl/builders/base/_protocols.py`
+(1094 LOC, 21 Protocol + helper). Логически уже разделён на 21 cohesive
+протоколов, физически — один файл.
+
+**Решение** (ADR-0320):
+
+Преобразовать `_protocols.py` → `_protocols/` package с 6 family sub-modules:
+
+| Submodule | LOC | Семейство |
+|---|---|---|
+| `_core.py` | ~80 | foundational contracts (`_RouteProcessorSteps`, `_RouteCore`, `_shares_prefix`) |
+| `_data.py` | ~250 | entity CRUD / batch / SQL / persistence / templates |
+| `_flow.py` | ~180 | control-flow / concurrency / time-resilience |
+| `_integration.py` | ~310 | proxy / sinks / sources / dispatch |
+| `_ai.py` | ~150 | LLM/RAG / Temporal / agent DSL |
+| `_support.py` | ~110 | converters / EIP content / collection / security / config |
+
+**Back-compat strategy**:
+- `_protocols/__init__.py` re-экспортирует все 22 имени.
+- `base/__init__.py` без изменений (package import работает прозрачно).
+- `tests/unit/cycle_31_s6_routebuilder.py` без изменений (imports через `base`,
+  `inspect.getsource(_protocols)` → новый `__init__.py`).
+- Сохранены строки «Migration path» + «CompositionRouteBuilder» в docstring
+  для существующего assert.
+
+**Verification**:
+- `pytest tests/unit/cycle_31_s6_routebuilder.py` → 4 passed.
+- `python -c "from src.backend.dsl.builders.base import _RouteCore, ..."`
+  → все 22 имени доступны, `__module__` корректно указывает на family.
+- `compileall -q src/` → exit 0.
+- `check_python3_syntax.py --root src/backend` → exit 0.
+- `check_deadline_propagation.py --strict` → exit 0.
+- `gen_dsl_stubs.py --check` → exit 0.
+- `ruff check --select F401,F841,F811,E9` → All checks passed.
+
+**Дополнительный maintenance commit** (W3 P0-5 .pyi regen):
+- Pre-existing drift (от W2 P0-3 canonical paths + Python 3.10+ UnionType)
+  обнаружен в процессе W9 verification → отдельный commit `chore(stubs)`:
+  222 insertions / 218 deletions.
+
+**Cycle 153 итог (W9 P2-13)**:
+- ✅ Top-1 god-module в src/backend декомпозирован (1094 → 6 family sub-modules).
+- ✅ Back-compat полностью сохранён (cycle_31 tests + base/__init__.py).
+- ✅ Pre-existing .pyi drift устранён maintenance commit.
+- ✅ ADR-0320 создан (113 ADRs total).
+- ⏭️ W9 P2-13 Phase 2: следующие god-modules (`core/di/providers/cache.py`
+  868, `core/privacy/delete_data_subject.py` 691, `services/ops/health.py`
+  609) — отдельные sub-waves.
