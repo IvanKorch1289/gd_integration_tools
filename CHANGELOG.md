@@ -1,5 +1,36 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W9 P2-13 Phase 7: core/di/providers/workflow god-module split (602 LOC → 6 submodules)
+
+### refactor(di): workflow providers god-module → package with 6 cohesion submodules
+
+`src/backend/core/di/providers/workflow.py` (602 LOC, top-6 god-module, 58 funcs)
+→ `workflow/` package с 6 cohesion submodules:
+
+| Submodule | LOC | Содержимое |
+|---|---|---|
+| `_workflow_core.py` | 166 | action_bus/dispatcher/scheduler/workflow stores/workflow_backend_factory/workflow_state_repository (19 funcs) |
+| `_resilience.py` | 75 | resilience_coordinator/components_report/rate_limiter/classes (5 funcs) |
+| `_loggers.py` | 80 | app_logger/correlation_setter/grpc_logger/stream_logger (5 funcs) |
+| `_messaging.py` | 115 | reply_channel_class/sink_factory/mq+ws+grpc+soap_sink_class (11 funcs) |
+| `_dlq.py` | 100 | stream_dlq_writer/di_bridge_dlq/dlq_memory_writer/dlq_envelope_class (7 funcs) |
+| `_notifications.py` | 57 | workflow_factory_module/notifications_module (4 funcs) |
+
+`workflow.py` стал **201 LOC thin re-export shim** (602 → 201, 67% reduction).
+Per-submodule max 166 LOC (vs 602 god-module). Все < 200 LOC threshold.
+
+**Back-compat**: `core.di.providers.workflow` public API без изменений. Все 58
+публичных funcs доступны через обе entry points.
+
+**Tests**: `tests/unit/core/di/providers/test_w9_p2_13_phase7_workflow_split.py` —
+18 focused tests (8 back-compat identity + 6 submodule export + 1 shim
+compliance + 1 submodule compliance + 2 per-domain _overrides isolation).
+
+**Verification**: pytest 18 passed, ruff All checks passed, compileall exit 0.
+ADR-0331 (124 ADRs total).
+
+---
+
 ## [Unreleased] — 2026-09-23 — W9 P2-13 Phase 5: services/ai/agent_sandbox god-module split (601 LOC → 5 submodules)
 
 ### refactor(services/ai): agent_sandbox god-module → package with 5 cohesion submodules

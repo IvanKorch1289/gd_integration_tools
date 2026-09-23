@@ -127,7 +127,8 @@
 | [ADR-0328](0328-w9-p2-13-phase3-privacy-delete-data-subject-split.md) | W9 P2-13 Phase 3: `core/privacy/delete_data_subject.py` → package split (god-module decomposition) | **Accepted** |
 | [ADR-0329](0329-w9-p2-13-phase4-services-ops-health-split.md) | W9 P2-13 Phase 4: `services/ops/health.py` (609 LOC) → package split | **Accepted** |
 | [ADR-0330](0330-w9-p2-13-phase5-services-ai-agent-sandbox-split.md) | W9 P2-13 Phase 5: `services/ai/agent_sandbox.py` (601 LOC) → package split (3 sandbox impls + selector) | **Accepted** |
+| [ADR-0331](0331-w9-p2-13-phase7-core-di-workflow-providers-split.md) | W9 P2-13 Phase 7: `core/di/providers/workflow.py` (602 LOC, 58 funcs) → package с 6 cohesion submodules (workflow_core/resilience/loggers/messaging/dlq/notifications) | **Accepted** |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 
-**Total:** 123 ADRs.
+**Total:** 124 ADRs.
 

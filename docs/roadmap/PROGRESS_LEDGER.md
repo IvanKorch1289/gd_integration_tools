@@ -4499,6 +4499,53 @@ Per-submodule max **207 LOC** (vs 601 god-module). Все < 500 LOC threshold.
 - ✅ Top-5 god-module декомпозирован (601 → 5 cohesion submodules).
 - ✅ 17 focused tests.
 - ✅ ADR-0330 создан (123 ADRs total).
-- ⏭️ Phase 6: `core/ai/skill_registry.py` (614 LOC) — skill registry split.
+- ⏭️ Phase 6: `core/ai/skill_registry.py` (614 LOC) — skill registry split (deferred: single class cohesion).
 - ⏭️ Phase 7: `core/di/providers/workflow.py` (602 LOC) — workflow split.
 - ⏭️ Phase 8: `infrastructure/clients/storage/s3_pool/client.py` (625 LOC) — S3 pool split.
+
+---
+
+## W9 P2-13 Phase 7: core/di/providers/workflow god-module split (2026-09-23, cycle 153)
+
+**Задача**: `core/di/providers/workflow.py` (602 LOC, 58 funcs) — top-6
+god-module. Workflow + resilience + loggers + messaging + DLQ + notifications
+mixed в одном файле.
+
+**Решение** (ADR-0331):
+
+Преобразован в `workflow/` package с 6 cohesion submodules. `workflow.py`
+стал **201 LOC thin re-export shim** (602 → 201, 67% reduction).
+
+**Submodule layout (per-domain isolation)**:
+
+| Submodule | LOC | Содержимое |
+|---|---|---|
+| `_workflow_core.py` | 166 | action_bus/dispatcher/scheduler/workflow stores/workflow_backend_factory/workflow_state_repository (19 funcs) |
+| `_resilience.py` | 75 | resilience_coordinator/components_report/rate_limiter/classes (5 funcs) |
+| `_loggers.py` | 80 | app_logger/correlation_setter/grpc_logger/stream_logger (5 funcs) |
+| `_messaging.py` | 115 | reply_channel_class/sink_factory/4 sink classes (11 funcs) |
+| `_dlq.py` | 100 | stream_dlq_writer + 3 DLQ providers (7 funcs) |
+| `_notifications.py` | 57 | workflow_factory_module/notifications_module (4 funcs) |
+
+Per-submodule max **166 LOC** (vs 602 god-module). Все < 200 LOC threshold.
+
+**Per-domain _overrides isolation сохранена** (per ADR-0321 pattern):
+Каждый submodule имеет свой `_overrides` dict. set через shim делегирует
+в proper domain (тестируется в `TestPerDomainOverrideIsolation`).
+
+**Verification**:
+- `compileall -q src/backend/core/di/providers/` → exit 0
+- `ruff check src/backend/core/di/providers/` → All checks passed
+- `pytest tests/unit/core/di/providers/test_w9_p2_13_phase7_*_split.py` → 18 passed:
+  - 8 back-compat identity (shim is canonical)
+  - 6 submodule export (каждый submodule экспортирует expected funcs)
+  - 1 shim compliance (shim < 250 LOC)
+  - 1 submodule compliance (submodules < 500 LOC)
+  - 2 per-domain _overrides isolation (set isolation, cross-domain separation)
+
+**Cycle 153 итог (W9 P2-13 Phase 7)**:
+- ✅ Top-6 god-module декомпозирован (602 → 6 cohesion submodules).
+- ✅ 18 focused tests (back-compat + per-domain isolation).
+- ✅ ADR-0331 создан (124 ADRs total).
+- ⏭️ Phase 8: `infrastructure/clients/storage/s3_pool/client.py` (625 LOC) — S3 pool split.
+- ⏭️ Phase 9: `core/security/pii_tokenizer.py` (565 LOC) — single class, harder split.
