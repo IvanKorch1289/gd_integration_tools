@@ -372,13 +372,13 @@ class TestErrorInheritance:
 
 
 class TestModuleExports:
-    """``__all__`` экспортирует 13 symbols."""
+    """``__all__`` экспортирует 15 symbols (W11 P0-4: +DomainProblem, +ProblemCategory)."""
 
     def test_all_count(self) -> None:
-        """13 symbols в ``__all__``."""
+        """15 symbols в ``__all__`` (13 legacy + DomainProblem + ProblemCategory)."""
         from src.backend.core import errors
 
-        assert len(errors.__all__) == 13
+        assert len(errors.__all__) == 15
 
     def test_all_callable_or_classes(self) -> None:
         """Все exports — классы или функции."""
