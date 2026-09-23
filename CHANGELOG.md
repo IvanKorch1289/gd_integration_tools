@@ -1,5 +1,57 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W9 P2-13 Phase 2: `cache.py` god-module split (868 LOC → 7 domain files)
+
+### refactor(di): cache.py providers decomposition — domain split + back-compat shim
+
+`src/backend/core/di/providers/cache.py` (868 LOC, 89 funcs в 26 concerns,
+top-2 god-module) → cache.py (~478 LOC, 8 canonical + 28 re-exports) +
+3 new domain files (observability.py, security.py, messaging.py) +
+4 extended (db.py, ai.py, http.py, workflow.py).
+
+**Audit дубликатов** (Phase 2 discovery): 4 пары функций с РАЗНОЙ логикой:
+- `get_object_storage_provider` — cache.py vs storage.py (разные `resolve_module`)
+- `get_ai_sanitizer_provider` — cache.py НЕ проверяет `PRESIDIO_PII_ENABLED`
+  feature flag → Presidio sanitizer НЕ активируется для consumers через cache.py
+- `get_smtp_client_provider`, `get_stream_client_provider` — cache.py vs http.py
+
+Дубликаты ломают test injection (per-domain `_overrides` isolation). Resolution
+требует factory-vs-instance API fix — отложено в **Phase 2B** (отдельный sub-wave).
+
+**Domain split**:
+
+| Из cache.py | Куда |
+|---|---|
+| 5 funcs (slo/health/audit/metrics) | `observability.py` (NEW) |
+| 4 funcs (signature/antivirus/vault) | `security.py` (NEW) |
+| 3 funcs (telegram/express bot) | `messaging.py` (NEW) |
+| 4 funcs (httpx/http_typed/dependency/stream) | `http.py` (extended) |
+| 11 funcs (sinks/reply_channel/DLQ/workflow_factory/notifications) | `workflow.py` (extended) |
+| 1 func (db_manager) | `db.py` (extended) |
+| 2 funcs (vector_store/token_registry) | `ai.py` (extended) |
+
+**Back-compat**: `from src.backend.core.di.providers.cache import get_X_provider`
+продолжает работать для всех 89 providers через thin re-export hub. Per-domain
+`_overrides` isolation сохранена.
+
+**Verification**: 663 passed (cycle_31 + dsl + di + W5 logging + deadline +
+py2 lint), 1 skipped (pre-existing baseline). ADR-0321 (114 ADRs total).
+
+### test(di): focused tests для W9 P2-13 Phase 2 — 36 tests
+
+`tests/unit/core/di/providers/test_w9_p2_13_phase2_cache_split.py`:
+- TestCacheCanonicalConcerns (6): cache-only providers остались inline в cache.py.
+- TestMovedProviders (13): misattributed providers в proper domains
+  (проверка `__module__` атрибута).
+- TestBackCompatOverideIsolation (4): re-exports делегируют в proper domain,
+  per-domain `_overrides` isolation.
+- TestTopLevelImports (8): top-level `from providers import X` работает,
+  submodules exposed.
+- TestDomainExportsCoherence (3): каждый domain module имеет полный `__all__`.
+- TestCacheShimReduction (2): cache.py < 500 LOC, 14-25 inline functions.
+
+---
+
 ## [Unreleased] — 2026-09-23 — W10: SensorProcessor (Airflow poke/reschedule)
 
 ### feat(dsl): Airflow-совместимый sensor-процессор

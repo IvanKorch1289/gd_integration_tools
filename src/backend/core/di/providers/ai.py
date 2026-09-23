@@ -433,7 +433,9 @@ __all__ = (
     "get_model_enum_provider",
     "get_pii_tokenizer_provider",
     "get_skill_registry",
+    "get_token_registry_provider",
     "get_vault_refresher_provider",
+    "get_vector_store_provider",
     "set_agent_security_framework_provider",
     "set_ai_gateway_provider",
     "set_ai_sanitizer_provider",
@@ -442,5 +444,44 @@ __all__ = (
     "set_llm_judge_metrics_provider",
     "set_model_enum_provider",
     "set_pii_tokenizer_provider",
+    "set_token_registry_provider",
     "set_vault_refresher_provider",
+    "set_vector_store_provider",
 )
+
+
+# ─── W9 P2-13 Phase 2: vector_store + token_registry (migrated from cache.py) ──────────
+
+
+def get_vector_store_provider() -> Any:
+    r"""Возвращает \`vector_store\` (PII vector storage).
+
+    S87 (legacy): lazy resolve для security/pii_erase.py.
+    W9 P2-13 Phase 2: перенесено из cache.py (misattributed) → ai.py (vector store = AI/ML concern).
+    """
+    if "vector_store" in _overrides:
+        return _overrides["vector_store"]
+    module = resolve_module("clients.storage.vector_store")
+    return module
+
+
+def set_vector_store_provider(store: Any) -> None:
+    """Test-override (S87+, W9 P2-13 Phase 2)."""
+    _overrides["vector_store"] = store
+
+
+def get_token_registry_provider() -> Any:
+    r"""Возвращает \`token_registry\` (card token storage).
+
+    S87 (legacy): lazy resolve для security/card_tokenize.py.
+    W9 P2-13 Phase 2: перенесено из cache.py → ai.py (token registry = AI/ML concern).
+    """
+    if "token_registry" in _overrides:
+        return _overrides["token_registry"]
+    module = resolve_module("security.token_registry")
+    return module
+
+
+def set_token_registry_provider(registry: Any) -> None:
+    """Test-override (S87+, W9 P2-13 Phase 2)."""
+    _overrides["token_registry"] = registry

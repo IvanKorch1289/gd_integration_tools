@@ -4034,3 +4034,70 @@ src/backend/dsl/workflow/builder.pyi           -147 LOC
 - ⏭️ W9 P2-13 Phase 2: следующие god-modules (`core/di/providers/cache.py`
   868, `core/privacy/delete_data_subject.py` 691, `services/ops/health.py`
   609) — отдельные sub-waves.
+
+---
+
+## W9 P2-13 Phase 2: `cache.py` god-module → domain split (2026-09-23, cycle 153)
+
+**Задача**: `core/di/providers/cache.py` (868 LOC, top-2 god-module) — содержит
+89 функций в 26 разных concern-категориях, хотя имя говорит только о cache.
+History: S38 P1.2c split providers → cache/db/http/ai/auth/workflow, но
+затем M2-#11 batch 7-19 misattributed новые providers обратно в cache.py.
+
+**Audit дубликатов** (Phase 2 discovery):
+- `get_object_storage_provider`: cache.py и storage.py (разные resolve_module пути)
+- `get_ai_sanitizer_provider`: cache.py и ai.py (cache.py не проверяет PRESIDIO_PII_ENABLED)
+- `get_smtp_client_provider`: cache.py и http.py
+- `get_stream_client_provider`: cache.py и http.py
+
+Дубликаты с РАЗНОЙ логикой → реальные runtime-баги (test injection broken,
+Presidio feature-flag bypass). Resolution требует factory-vs-instance API fix —
+отложено в Phase 2B (отдельный ADR).
+
+**Решение** (ADR-0321):
+
+Phase 2A — split на proper domains с back-compat re-exports:
+
+| Из cache.py | В новый/расширенный модуль |
+|---|---|
+| `slo_tracker`, `health_aggregator`, `immutable_audit_store_class`, `record_antivirus_scan`, `record_express_message_sent` (5 funcs) | **observability.py** (NEW, ~125 LOC) |
+| `signature_builder`, `antivirus_backend_factory`, `vault_backend_class`, `vault_config_class` (4 funcs) | **security.py** (NEW, ~110 LOC) |
+| `telegram_bot`, `express_bot_module`, `express_dialogs_mongo` (3 funcs) | **messaging.py** (NEW, ~85 LOC) |
+| `httpx_client`, `http_client_typed`, `http_client_dependency`, `stream` (4 funcs) | **http.py** (extended, 309 → 433 LOC) |
+| `reply_channel_class`, `sink_factory`, `mq_sink_class`, `ws_sink_class`, `grpc_sink_class`, `soap_sink_class` (6 funcs) | **workflow.py** (extended, 392 → 602 LOC) |
+| `di_bridge_dlq_module`, `dlq_memory_writer_module`, `dlq_envelope_class` (3 funcs) | **workflow.py** (DLQ = workflow concern) |
+| `db_manager` (1 func) | **db.py** (extended, 284 → 313 LOC) |
+| `vector_store`, `token_registry` (2 funcs) | **ai.py** (extended, 446 → 502 LOC) |
+| `workflow_factory_module`, `notifications_module` (2 funcs) | **workflow.py** (extended) |
+
+Итого: 28 functions перенесены, cache.py сократился с 868 LOC до ~478 LOC
+(45% reduction). Осталось 8 canonical cache functions + 28 re-exports +
+utility.
+
+**Back-compat strategy**:
+- `cache.py` стал thin re-export hub: `from .observability import ...` style.
+- Все 142 import sites через `cache.py` продолжают работать.
+- Per-domain `_overrides` isolation сохранена: set через cache.py делегирует
+  в proper domain, get через cache.py тоже делегирует — override isolation
+  testable.
+
+**Verification**:
+- `compileall -q src/` → exit 0
+- `check_python3_syntax --root src/backend` → exit 0
+- `ruff check src/backend/core/di/` → All checks passed!
+- `pytest tests/unit/core/di/providers/` → 147 + 36 (W9 focused) = 183 passed
+- `pytest tests/unit/dsl/processors/test_pii_erase.py` → passed (раньше fail из-за
+  отсутствующего `get_dlq_envelope_class_provider` в cache.py)
+- `pytest tests/unit/cycle_31_s6_routebuilder.py + dsl/ + di/ + ...` → 663 passed
+
+**Cycle 153 итог (W9 P2-13 Phase 2)**:
+- ✅ Top-2 god-module декомпозирован (868 → 7 domain files).
+- ✅ Все 142 cache.py import sites продолжают работать без изменений.
+- ✅ Per-domain `_overrides` isolation сохранена (тестируется в
+  `test_w9_p2_13_phase2_cache_split.py::TestBackCompatOverideIsolation`).
+- ✅ ADR-0321 создан (114 ADRs total).
+- ⏭️ W9 P2-13 Phase 2B: 4 дубликата (object_storage, ai_sanitizer,
+  smtp_client, stream_client) требуют factory-vs-instance API fix —
+  отдельный sub-wave.
+- ⏭️ W9 P2-13 Phase 3: остальные god-modules (`core/privacy/delete_data_subject.py`
+  691, `services/ops/health.py` 609, `services/ai/agent_sandbox.py` 601).

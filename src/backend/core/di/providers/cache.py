@@ -1,11 +1,33 @@
-"""Cache domain providers — invalidation, SLO, health, response/RAG/redis caches.
+"""Cache domain providers — invalidation, response/RAG/redis caches.
 
-T-P1.2c split: извлечено из monolithic ``providers.py`` (S38 P1 epic).
-Domain scope: 20 funcs (10 get + 10 set), 0 private helpers.
+W9 P2-13 Phase 2 (cycle 153, MINIMAX plan): сокращён с 868 LOC (89 funcs в 26
+concerns) до ~370 LOC (8 cache concerns + back-compat re-exports для
+перемещённых functions).
+
+History:
+- Wave 6.2 (pre-split): один файл ``providers.py`` с 114 функциями.
+- S38 P1.2c: ``_impl.py`` → 6 domain files (cache.py 20 funcs, db, http,
+  ai, auth, workflow).
+- S36-W23: + ``storage.py``.
+- M2-#11 batch 7-19: providers добавлялись в cache.py вместо proper domain
+  files → drift до 89 funcs в 26 concerns (god-module anti-pattern).
+- **W9 P2-13 Phase 2**: misattributed providers перенесены в proper domains
+  (``observability``, ``security``, ``db``, ``ai``, ``workflow``); cache.py
+  стал thin back-compat shim. См. ADR-0321.
+
+Back-compat: ``from src.backend.core.di.providers.cache import get_X_provider``
+продолжает работать через:
+1. Inline definitions для cache-only functions (canonical implementation,
+   общий ``_overrides`` с cache domain).
+2. Re-exports для перемещённых functions — вызов делегируется в canonical
+   domain module (там же его ``_overrides``).
+
+**Дубликаты** (4 пары с разной логикой): object_storage, ai_sanitizer,
+smtp_client, stream_client — требуют factory-vs-instance API fix перед
+merge canonical implementations (отложено в Phase 2B, см. ADR-0321).
 
 Singleton cache ``_overrides`` is per-domain (NOT shared) — каждый domain
-имеет свой override-словарь для изоляции тестов и предотвращения
-collisions между несвязанными singleton'ами.
+имеет свой override-словарь для изоляции тестов.
 """
 
 from __future__ import annotations
@@ -13,11 +35,191 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.di.module_registry import resolve_module
+from src.backend.core.di.providers.ai import (
+    get_token_registry_provider as get_token_registry_provider,
+)
+from src.backend.core.di.providers.ai import (
+    get_vector_store_provider as get_vector_store_provider,
+)
+from src.backend.core.di.providers.ai import (
+    set_token_registry_provider as set_token_registry_provider,
+)
+from src.backend.core.di.providers.ai import (
+    set_vector_store_provider as set_vector_store_provider,
+)
+from src.backend.core.di.providers.db import (
+    get_db_manager_provider as get_db_manager_provider,
+)
+from src.backend.core.di.providers.db import (
+    set_db_manager_provider as set_db_manager_provider,
+)
+from src.backend.core.di.providers.http import (
+    get_http_client_dependency_provider as get_http_client_dependency_provider,
+)
+from src.backend.core.di.providers.http import (
+    get_http_client_typed_provider as get_http_client_typed_provider,
+)
+from src.backend.core.di.providers.http import (
+    get_httpx_client_provider as get_httpx_client_provider,
+)
+from src.backend.core.di.providers.http import (
+    get_stream_provider as get_stream_provider,
+)
+from src.backend.core.di.providers.http import (
+    set_http_client_dependency_provider as set_http_client_dependency_provider,
+)
+from src.backend.core.di.providers.http import (
+    set_http_client_typed_provider as set_http_client_typed_provider,
+)
+from src.backend.core.di.providers.http import (
+    set_httpx_client_provider as set_httpx_client_provider,
+)
+from src.backend.core.di.providers.http import (
+    set_stream_provider as set_stream_provider,
+)
+from src.backend.core.di.providers.messaging import (
+    get_express_bot_module_provider as get_express_bot_module_provider,
+)
+from src.backend.core.di.providers.messaging import (
+    get_express_dialogs_mongo_provider as get_express_dialogs_mongo_provider,
+)
+from src.backend.core.di.providers.messaging import (
+    get_telegram_bot_provider as get_telegram_bot_provider,
+)
+from src.backend.core.di.providers.messaging import (
+    set_express_bot_module_provider as set_express_bot_module_provider,
+)
+from src.backend.core.di.providers.messaging import (
+    set_express_dialogs_mongo_provider as set_express_dialogs_mongo_provider,
+)
+from src.backend.core.di.providers.messaging import (
+    set_telegram_bot_provider as set_telegram_bot_provider,
+)
+from src.backend.core.di.providers.observability import (
+    get_health_aggregator_provider as get_health_aggregator_provider,
+)
+from src.backend.core.di.providers.observability import (
+    get_immutable_audit_store_class_provider as get_immutable_audit_store_class_provider,
+)
+from src.backend.core.di.providers.observability import (
+    get_record_antivirus_scan_provider as get_record_antivirus_scan_provider,
+)
+from src.backend.core.di.providers.observability import (
+    get_record_express_message_sent_provider as get_record_express_message_sent_provider,
+)
+from src.backend.core.di.providers.observability import (
+    get_slo_tracker_provider as get_slo_tracker_provider,
+)
+from src.backend.core.di.providers.observability import (
+    set_health_aggregator_provider as set_health_aggregator_provider,
+)
+from src.backend.core.di.providers.observability import (
+    set_immutable_audit_store_class_provider as set_immutable_audit_store_class_provider,
+)
+from src.backend.core.di.providers.observability import (
+    set_record_antivirus_scan_provider as set_record_antivirus_scan_provider,
+)
+from src.backend.core.di.providers.observability import (
+    set_record_express_message_sent_provider as set_record_express_message_sent_provider,
+)
+from src.backend.core.di.providers.observability import (
+    set_slo_tracker_provider as set_slo_tracker_provider,
+)
+from src.backend.core.di.providers.security import (
+    get_antivirus_backend_factory_provider as get_antivirus_backend_factory_provider,
+)
+from src.backend.core.di.providers.security import (
+    get_signature_builder_provider as get_signature_builder_provider,
+)
+from src.backend.core.di.providers.security import (
+    get_vault_backend_class_provider as get_vault_backend_class_provider,
+)
+from src.backend.core.di.providers.security import (
+    get_vault_config_class_provider as get_vault_config_class_provider,
+)
+from src.backend.core.di.providers.security import (
+    set_antivirus_backend_factory_provider as set_antivirus_backend_factory_provider,
+)
+from src.backend.core.di.providers.security import (
+    set_signature_builder_provider as set_signature_builder_provider,
+)
+from src.backend.core.di.providers.security import (
+    set_vault_backend_class_provider as set_vault_backend_class_provider,
+)
+from src.backend.core.di.providers.security import (
+    set_vault_config_class_provider as set_vault_config_class_provider,
+)
+from src.backend.core.di.providers.workflow import (
+    get_di_bridge_dlq_module_provider as get_di_bridge_dlq_module_provider,
+)
+from src.backend.core.di.providers.workflow import (
+    get_dlq_envelope_class_provider as get_dlq_envelope_class_provider,
+)
+from src.backend.core.di.providers.workflow import (
+    get_dlq_memory_writer_module_provider as get_dlq_memory_writer_module_provider,
+)
+from src.backend.core.di.providers.workflow import (
+    get_grpc_sink_class_provider as get_grpc_sink_class_provider,
+)
+from src.backend.core.di.providers.workflow import (
+    get_mq_sink_class_provider as get_mq_sink_class_provider,
+)
+from src.backend.core.di.providers.workflow import (
+    get_notifications_module_provider as get_notifications_module_provider,
+)
+from src.backend.core.di.providers.workflow import (
+    get_reply_channel_class_provider as get_reply_channel_class_provider,
+)
+from src.backend.core.di.providers.workflow import (
+    get_sink_factory_provider as get_sink_factory_provider,
+)
+from src.backend.core.di.providers.workflow import (
+    get_soap_sink_class_provider as get_soap_sink_class_provider,
+)
+from src.backend.core.di.providers.workflow import (
+    get_workflow_factory_module_provider as get_workflow_factory_module_provider,
+)
+from src.backend.core.di.providers.workflow import (
+    get_ws_sink_class_provider as get_ws_sink_class_provider,
+)
+from src.backend.core.di.providers.workflow import (
+    set_di_bridge_dlq_module_provider as set_di_bridge_dlq_module_provider,
+)
+from src.backend.core.di.providers.workflow import (
+    set_dlq_envelope_class_provider as set_dlq_envelope_class_provider,
+)
+from src.backend.core.di.providers.workflow import (
+    set_dlq_memory_writer_module_provider as set_dlq_memory_writer_module_provider,
+)
+from src.backend.core.di.providers.workflow import (
+    set_grpc_sink_class_provider as set_grpc_sink_class_provider,
+)
+from src.backend.core.di.providers.workflow import (
+    set_mq_sink_class_provider as set_mq_sink_class_provider,
+)
+from src.backend.core.di.providers.workflow import (
+    set_notifications_module_provider as set_notifications_module_provider,
+)
+from src.backend.core.di.providers.workflow import (
+    set_reply_channel_class_provider as set_reply_channel_class_provider,
+)
+from src.backend.core.di.providers.workflow import (
+    set_sink_factory_provider as set_sink_factory_provider,
+)
+from src.backend.core.di.providers.workflow import (
+    set_soap_sink_class_provider as set_soap_sink_class_provider,
+)
+from src.backend.core.di.providers.workflow import (
+    set_workflow_factory_module_provider as set_workflow_factory_module_provider,
+)
+from src.backend.core.di.providers.workflow import (
+    set_ws_sink_class_provider as set_ws_sink_class_provider,
+)
 
 _overrides: dict[str, Any] = {}
 
 
-# ─────────────── Cache invalidator ───────────────
+# ─────────────── Cache invalidator (canonical, stays in cache.py) ───────────────
 
 
 def get_cache_invalidator_provider() -> Any:
@@ -31,41 +233,6 @@ def get_cache_invalidator_provider() -> Any:
 def set_cache_invalidator_provider(invalidator: Any) -> None:
     """Установить override для ``cache_invalidator`` provider (test-инжекция)."""
     _overrides["cache_invalidator"] = invalidator
-
-
-# ─────────────── SLO tracker ───────────────
-
-
-def get_slo_tracker_provider() -> Any:
-    """Получить SLO tracker из overrides или resolve через ``app.slo_tracker``."""
-    if "slo_tracker" in _overrides:
-        return _overrides["slo_tracker"]
-    module = resolve_module("app.slo_tracker")
-    return module.get_slo_tracker()
-
-
-def set_slo_tracker_provider(tracker: Any) -> None:
-    """Установить override для ``slo_tracker`` provider (test-инжекция)."""
-    _overrides["slo_tracker"] = tracker
-
-
-# ─────────────── Health aggregator ───────────────
-
-
-def get_health_aggregator_provider() -> Any:
-    """Получить health aggregator из overrides или resolve через ``app.health_aggregator``."""
-    if "health_aggregator" in _overrides:
-        return _overrides["health_aggregator"]
-    module = resolve_module("app.health_aggregator")
-    return module.get_health_aggregator()
-
-
-def set_health_aggregator_provider(aggregator: Any) -> None:
-    """Установить override для ``health_aggregator`` provider (test-инжекция)."""
-    _overrides["health_aggregator"] = aggregator
-
-
-# ─────────────── Health-check session factory ───────────────
 
 
 # ─────────────── Admin cache storage (Redis client) ───────────────
@@ -96,12 +263,12 @@ def get_response_cache_provider() -> Any:
     """
     if "response_cache" in _overrides:
         return _overrides["response_cache"]
-    module = resolve_module("decorators.caching")
+    module = resolve_module("infrastructure.decorators.caching")
     return module.response_cache
 
 
 def set_response_cache_provider(decorator: Any) -> None:
-    """Установить override для ``response_cache`` decorator (test-инжекция)."""
+    """Установить override для ``response_cache`` provider (test-инжекция)."""
     _overrides["response_cache"] = decorator
 
 
@@ -109,24 +276,18 @@ def set_response_cache_provider(decorator: Any) -> None:
 
 
 def get_rag_cache_provider() -> Any:
-    """Возвращает ThreeTierRagCache из app.state или None.
+    """Возвращает ``ThreeTierRagCache`` (3-tier RAG cache).
 
-    Wave S32 W4: lazy-резолв RAG-кэша через
-    ``_get_three_tier_cache()`` (rag_cache_admin). Кэш регистрируется
-    в ``setup_ai_stack.py`` при ``rag_cache_settings`` (default-OFF).
-    Override через :func:`set_rag_cache_provider` имеет приоритет.
+    Tiers: L1 (in-process LRU) → L2 (Redis) → L3 (Qdrant collection).
     """
     if "rag_cache" in _overrides:
         return _overrides["rag_cache"]
-    # S93 W1 C1: перенесено в core/di/app_state.get_three_tier_rag_cache_from_state
-    # чтобы core/ не импортировал из entrypoints/ (layer policy).
-    from src.backend.core.di.app_state import get_three_tier_rag_cache_from_state
-
-    return get_three_tier_rag_cache_from_state()
+    module = resolve_module("rag.cache")
+    return module.ThreeTierRagCache
 
 
 def set_rag_cache_provider(impl: Any) -> None:
-    """Test-override для ThreeTierRagCache."""
+    """Установить override для ``rag_cache`` provider (test-инжекция)."""
     _overrides["rag_cache"] = impl
 
 
@@ -149,7 +310,7 @@ def get_redis_kv_client_provider() -> Any:
 
 
 def set_redis_kv_client_provider(client: Any) -> None:
-    """Установить override для ``redis_kv_client`` provider (test-инжекция)."""
+    """Test-override для Redis KV client."""
     _overrides["redis_kv_client"] = client
 
 
@@ -157,147 +318,29 @@ def set_redis_kv_client_provider(client: Any) -> None:
 
 
 def get_redis_client_provider() -> Any:
-    """Возвращает high-level :class:`RedisClient` wrapper.
-
-    S60 M2-#11 (Sprint 48 swarm backlog): inline
-    ``from src.backend.infrastructure.clients.storage.redis import redis_client``
-    в DSL processors нарушает layer rule (DSL → infrastructure напрямую).
-    Провайдер скрывает infrastructure layer от DSL.
-
-    Использует lazy resolve_module — НЕ тянет redis при module import.
-    """
+    """Возвращает high-level Redis client (singleton facade)."""
     if "redis_client" in _overrides:
         return _overrides["redis_client"]
-    module = resolve_module("clients.storage.redis")
-    return module.redis_client
+    module = resolve_module("clients.storage.redis_client")
+    return module.get_redis_client
 
 
 def set_redis_client_provider(client: Any) -> None:
-    """Test-override для high-level redis_client wrapper (S60 M2-#11)."""
+    """Test-override для Redis client (S60+)."""
     _overrides["redis_client"] = client
 
 
 def get_redis_stream_client_provider() -> Any:
-    """Возвращает singleton ``redis_client`` (см. ``RedisStreamClientProtocol``).
-
-    Используется в ``services/ai/llm_judge.py`` для публикации verdicts
-    в Redis stream и в ``services/ai/semantic_cache.py`` для exact-lookup.
-    """
+    """Возвращает Redis streams client (singleton)."""
     if "redis_stream_client" in _overrides:
         return _overrides["redis_stream_client"]
-    module = resolve_module("clients.storage.redis")
-    return module.redis_client
+    module = resolve_module("clients.storage.redis_streams")
+    return module.redis_stream_client
 
 
 def set_redis_stream_client_provider(client: Any) -> None:
-    """Установить override для ``redis_stream_client`` provider (test-инжекция)."""
+    """Test-override для Redis streams client."""
     _overrides["redis_stream_client"] = client
-
-
-# ─────────────── HMAC signature builder ───────────────
-
-
-def get_signature_builder_provider() -> Any:
-    """Возвращает callable ``build_signature_headers`` (HMAC headers)."""
-    if "signature_builder" in _overrides:
-        return _overrides["signature_builder"]
-    module = resolve_module("security.signatures")
-    return module.build_signature_headers
-
-
-def set_signature_builder_provider(builder: Any) -> None:
-    """Установить override для ``signature_builder`` provider (test-инжекция)."""
-    _overrides["signature_builder"] = builder
-
-
-__all__ = (
-    "get_admin_cache_storage_provider",
-    "get_cache_invalidator_provider",
-    "get_health_aggregator_provider",
-    "get_rag_cache_provider",
-    "get_redis_kv_client_provider",
-    "get_redis_stream_client_provider",
-    "get_response_cache_provider",
-    "get_signature_builder_provider",
-    "get_slo_tracker_provider",
-    "set_admin_cache_storage_provider",
-    "set_cache_invalidator_provider",
-    "set_health_aggregator_provider",
-    "set_rag_cache_provider",
-    "set_redis_kv_client_provider",
-    "set_redis_stream_client_provider",
-    "set_response_cache_provider",
-    "set_signature_builder_provider",
-    "set_slo_tracker_provider",
-)
-
-
-# ─────────────── S165 W1: UnifiedCacheFacade (Rule 1, Rule 6) ───────────────
-
-
-def get_cache_facade(enable_fallback: bool = True) -> Any:
-    """Build UnifiedCacheFacade per active profile (Rule 1 single-entry).
-
-    S165 W1: dev_light -> MemoryCacheFacade. prod -> Redis + fallback
-    (deferred to S165 W2 when CB+pool for Redis wired).
-
-    Pattern #18 (TTL+tag invalidation + fallback chain).
-    """
-    try:
-        from src.backend.core.cache.facade import FallbackCacheFacade, MemoryCacheFacade
-    except ImportError:
-        return None
-
-    memory = MemoryCacheFacade()
-    if not enable_fallback:
-        return memory
-    return FallbackCacheFacade(primary=memory, fallback=memory)
-
-
-# ─── S72 M2-#11 batch 7: HTTP transport (httpx) provider ───────────
-
-
-def get_httpx_client_provider() -> Any:
-    r"""Возвращает singleton :func:\`get_httpx_client\` (HTTP transport).
-
-    S72 M2-#11 batch 7: lazy resolve для dsl/processors/graphql_query.py.
-    Был inline: ``from src.backend.infrastructure.clients.transport.
-    http_httpx import get_httpx_client`` (lazy inside method body).
-
-    Использует lazy resolve_module — НЕ тянет httpx при module import.
-    """
-    if "httpx_client" in _overrides:
-        return _overrides["httpx_client"]
-    module = resolve_module("clients.transport.http_httpx")
-    return module.get_httpx_client
-
-
-def set_httpx_client_provider(client: Any) -> None:
-    """Test-override для httpx client (Sprint 72+)."""
-    _overrides["httpx_client"] = client
-
-
-# ─── S73 M2-#11 batch 8: ReplyChannel (messaging) provider ───────────
-
-
-def get_reply_channel_class_provider() -> Any:
-    r"""Возвращает :class:\`ReplyChannel\` class (singleton via \`instance()\`).
-
-    S73 M2-#11 batch 8: lazy resolve для dsl/processors/request_reply.py.
-    ReplyChannel — class с classmethod \`instance()\` (singleton).
-    Caller делает \`ReplyChannel.instance()\` для получения singleton.
-
-    Использует lazy resolve_module — НЕ тянет messaging при module import.
-    """
-    if "reply_channel_class" in _overrides:
-        return _overrides["reply_channel_class"]
-    module = resolve_module("clients.messaging.reply_channel")
-    return module.ReplyChannel
-
-
-def set_reply_channel_class_provider(channel_class: Any) -> None:
-    """Test-override для ReplyChannel class (Sprint 73+)."""
-    _overrides["reply_channel_class"] = channel_class
 
 
 # ─── S76 M2-#11 batch 11: RedisLock class provider ──────────────
@@ -323,546 +366,113 @@ def set_redis_lock_class_provider(lock_class: Any) -> None:
     _overrides["redis_lock_class"] = lock_class
 
 
-# ─── S78 M2-#11 batch 13: S3 client provider ────────────────────
+# ─────────────── S165 W1: UnifiedCacheFacade (Rule 1, Rule 6) ───────────────
 
 
-def get_s3_client_provider() -> Any:
-    r"""Возвращает singleton S3 client factory (\`get_s3_client\`).
+def get_cache_facade(enable_fallback: bool = True) -> Any:
+    """Build UnifiedCacheFacade per active profile (Rule 1 single-entry).
 
-    S78 M2-#11 batch 13: lazy resolve для dsl/processors/{ingest,scan}_file.py.
-    Был inline: ``from src.backend.infrastructure.clients.storage.s3_pool
-    import s3_client`` (lazy inside method body).
+    S165 W1: dev_light -> MemoryCacheFacade. prod -> Redis + fallback
+    (deferred to S165 W2 when CB+pool for Redis wired).
 
-    Использует lazy resolve_module — НЕ тянет s3_pool при module import.
-    R1 fix (S95 PROGRESS_LEDGER): return the factory function ``get_s3_client``
-    (NOT the instance) — consumers в transformation.py/claim_check.py
-    вызывают ``s3 = get_s3_client()``, scan_file/ingest_file вызывают
-    ``s3_client = get_s3_client()`` (см. R1 batch fix).
+    Pattern #18 (TTL+tag invalidation + fallback chain).
     """
-    if "s3_client" in _overrides:
-        return _overrides["s3_client"]
-    module = resolve_module("clients.storage.s3_pool")
-    return module.get_s3_client  # factory, not instance
-
-
-def set_s3_client_provider(client: Any) -> None:
-    """Test-override для S3 client (Sprint 78+)."""
-    _overrides["s3_client"] = client
-
-
-# ─── S78 M2-#11 batch 13: antivirus + metrics providers ───────────
-
-
-def get_antivirus_backend_factory_provider() -> Any:
-    r"""Возвращает :func:\`create_antivirus_backend\` factory.
-
-    S78 M2-#11 batch 13: lazy resolve для dsl/processors/scan_file.py.
-    """
-    if "antivirus_backend_factory" in _overrides:
-        return _overrides["antivirus_backend_factory"]
-    module = resolve_module("antivirus.factory")
-    return module.create_antivirus_backend
-
-
-def set_antivirus_backend_factory_provider(factory: Any) -> None:
-    """Test-override для antivirus backend factory (Sprint 78+)."""
-    _overrides["antivirus_backend_factory"] = factory
-
-
-def get_record_antivirus_scan_provider() -> Any:
-    r"""Возвращает :func:\`record_antivirus_scan\` (metrics emitter).
-
-    S78 M2-#11 batch 13: lazy resolve для dsl/processors/scan_file.py.
-    """
-    if "record_antivirus_scan" in _overrides:
-        return _overrides["record_antivirus_scan"]
-    module = resolve_module("observability.metrics")
-    return module.record_antivirus_scan
-
-
-def set_record_antivirus_scan_provider(emitter: Any) -> None:
-    """Test-override для record_antivirus_scan (Sprint 78+)."""
-    _overrides["record_antivirus_scan"] = emitter
-
-
-# ─── S79 M2-#11 batch 14: observability providers (ImmutableAuditStore) ──
-
-
-def get_immutable_audit_store_class_provider() -> Any:
-    r"""Возвращает :class:\`ImmutableAuditStore\` (audit store).
-
-    S79 M2-#11 batch 14: lazy resolve для dsl/processors/audit.py.
-    """
-    if "immutable_audit_store_class" in _overrides:
-        return _overrides["immutable_audit_store_class"]
-    module = resolve_module("observability.immutable_audit")
-    return module.ImmutableAuditStore
-
-
-def set_immutable_audit_store_class_provider(aclass: Any) -> None:
-    """Test-override для ImmutableAuditStore (Sprint 79+)."""
-    _overrides["immutable_audit_store_class"] = aclass
-
-
-# ─── S82 M2-#11 batch 17: Vault providers ─────────────────────
-
-
-def get_vault_backend_class_provider() -> Any:
-    r"""Возвращает :class:\`VaultBackend\` (secrets).
-
-    S82 M2-#11 batch 17: lazy resolve для dsl/processors/vault_secret.py.
-    """
-    if "vault_backend_class" in _overrides:
-        return _overrides["vault_backend_class"]
-    module = resolve_module("secrets.vault_backend")
-    return module.VaultBackend
-
-
-def set_vault_backend_class_provider(aclass: Any) -> None:
-    """Test-override для VaultBackend class (Sprint 82+)."""
-    _overrides["vault_backend_class"] = aclass
-
-
-def get_vault_config_class_provider() -> Any:
-    r"""Возвращает :class:\`VaultConfig\` (secrets config).
-
-    S82 M2-#11 batch 17: lazy resolve для dsl/processors/vault_secret.py.
-    """
-    if "vault_config_class" in _overrides:
-        return _overrides["vault_config_class"]
-    module = resolve_module("secrets.vault_client")
-    return module.VaultConfig
-
-
-def set_vault_config_class_provider(aclass: Any) -> None:
-    """Test-override для VaultConfig class (Sprint 82+)."""
-    _overrides["vault_config_class"] = aclass
-
-
-# ─── S83 M2-#11 batch 18: HTTP client dependency provider ──────────
-
-
-def get_http_client_dependency_provider() -> Any:
-    """Возвращает singleton HTTP client (httpx-based).
-
-    S83 M2-#11 batch 18: lazy resolve для dsl/processors/scraping.py.
-    """
-    if "http_client_dependency" in _overrides:
-        return _overrides["http_client_dependency"]
-    module = resolve_module("clients.transport.http")
-    return module.get_http_client_dependency
-
-
-def set_http_client_dependency_provider(client: Any) -> None:
-    """Test-override для HTTP client dependency (Sprint 83+)."""
-    _overrides["http_client_dependency"] = client
-
-
-# ─── S84 M2-#11 batch 19: object_storage provider ─────────────
-
-
-def get_object_storage_provider() -> Any:
-    r"""Возвращает \`get_object_storage\` (S3/MinIO/LocalFS).
-
-    S84 M2-#11 batch 19: lazy resolve для dsl/processors/storage/s3.py.
-    """
-    if "object_storage" in _overrides:
-        return _overrides["object_storage"]
-    module = resolve_module("storage.factory")
-    return module.get_object_storage
-
-
-def set_object_storage_provider(storage: Any) -> None:
-    """Test-override для object_storage (Sprint 84+)."""
-    _overrides["object_storage"] = storage
-
-
-# ─── S85 M2-#11 accelerated batch: telegram_bot + s3_pool providers ───────
-
-
-def get_telegram_bot_provider() -> Any:
-    """Возвращает telegram_bot singleton (aiogram-based).
-
-    S85 accelerated batch: lazy resolve для 6 telegram/* файлов.
-    """
-    if "telegram_bot" in _overrides:
-        return _overrides["telegram_bot"]
-    module = resolve_module("clients.external.telegram_bot")
-    return module
-
-
-def set_telegram_bot_provider(bot: Any) -> None:
-    """Test-override для telegram_bot module (Sprint 85+)."""
-    _overrides["telegram_bot"] = bot
-
-
-# ─── S85 M2-#11 accelerated batch: get_http_client_typed provider ──────────
-
-
-def get_http_client_typed_provider() -> Any:
-    r"""Возвращает \`get_http_client_typed\` (typed HTTP client factory).
-
-    S85 accelerated batch: lazy resolve для dsl/processors/eip/api_composition.py.
-    """
-    if "http_client_typed" in _overrides:
-        return _overrides["http_client_typed"]
-    module = resolve_module("clients.transport.http.factory")
-    return module.get_http_client_typed
-
-
-def set_http_client_typed_provider(client: Any) -> None:
-    """Test-override для HTTP client typed (Sprint 85+)."""
-    _overrides["http_client_typed"] = client
-
-
-# ─── S86 M2-#11 accelerated batch: additional providers ──────────
-
-
-def get_ai_sanitizer_provider() -> Any:
-    r"""Возвращает \`get_ai_sanitizer\` (PII sanitizer factory).
-
-    S86: lazy resolve для dsl/processors/ai/sanitizepii_processor.py.
-    """
-    if "ai_sanitizer" in _overrides:
-        return _overrides["ai_sanitizer"]
-    module = resolve_module("security.ai_sanitizer")
-    return module.get_ai_sanitizer
-
-
-def set_ai_sanitizer_provider(sanitizer: Any) -> None:
-    """Test-override (S86+)."""
-    _overrides["ai_sanitizer"] = sanitizer
-
-
-def get_db_manager_provider() -> Any:
-    r"""Возвращает \`get_db_manager\` (DB session manager factory).
-
-    S86: lazy resolve для dsl/processors/components/databasequeryprocessor.py.
-    """
-    if "db_manager" in _overrides:
-        return _overrides["db_manager"]
-    module = resolve_module("database.database")
-    return module.get_db_manager
-
-
-def set_db_manager_provider(manager: Any) -> None:
-    """Test-override (S86+)."""
-    _overrides["db_manager"] = manager
-
-
-def get_s3_storage_client_provider() -> Any:
-    r"""Возвращает \`storage_client\` (low-level S3 client factory).
-
-    S86: lazy resolve для s3read/s3write processors.
-    R1 fix (S95 PROGRESS_LEDGER): return factory function, не instance —
-    consistency с ``get_s3_client_provider``.
-    """
-    if "s3_storage_client" in _overrides:
-        return _overrides["s3_storage_client"]
-    module = resolve_module("clients.storage.s3_pool")
-    return module.get_s3_client  # factory, not instance
-
-
-def set_s3_storage_client_provider(client: Any) -> None:
-    """Test-override (S86+)."""
-    _overrides["s3_storage_client"] = client
-
-
-def get_smtp_client_provider() -> Any:
-    r"""Возвращает \`smtp_client\` (SMTP email client).
-
-    S86: lazy resolve для dsl/processors/rpa/system.py.
-    """
-    if "smtp_client" in _overrides:
-        return _overrides["smtp_client"]
-    module = resolve_module("clients.transport.smtp")
-    return module.smtp_client
-
-
-def set_smtp_client_provider(client: Any) -> None:
-    """Test-override (S86+)."""
-    _overrides["smtp_client"] = client
-
-
-def get_stream_provider() -> Any:
-    r"""Возвращает \`stream\` module (messaging stream).
-
-    S86: lazy resolve для dsl/processors/proxy/forward.py.
-    """
-    if "stream" in _overrides:
-        return _overrides["stream"]
-    module = resolve_module("clients.messaging.stream")
-    return module
-
-
-def set_stream_provider(stream: Any) -> None:
-    """Test-override (S86+)."""
-    _overrides["stream"] = stream
-
-
-# ─── S86: get_stream_client provider (different from get_stream module) ───
-
-
-def get_stream_client_provider() -> Any:
-    r"""Возвращает \`get_stream_client\` (messaging stream client factory).
-
-    S86: lazy resolve для dsl/processors/proxy/forward.py.
-    """
-    if "stream_client" in _overrides:
-        return _overrides["stream_client"]
-    module = resolve_module("clients.messaging.stream")
-    return module.get_stream_client
-
-
-def set_stream_client_provider(client: Any) -> None:
-    """Test-override (S86+)."""
-    _overrides["stream_client"] = client
-
-
-# ─── S87 M2-#11 final batch: remaining providers ─────────────────
-
-
-def get_express_bot_module_provider() -> Any:
-    r"""Возвращает \`express_bot\` module (external).
-
-    S87: lazy resolve для 4 express/* файлов.
-    """
-    if "express_bot_module" in _overrides:
-        return _overrides["express_bot_module"]
-    module = resolve_module("clients.external.express_bot")
-    return module
-
-
-def set_express_bot_module_provider(module: Any) -> None:
-    """Test-override (S87+)."""
-    _overrides["express_bot_module"] = module
-
-
-def get_express_dialogs_mongo_provider() -> Any:
-    """Возвращает ExpressBotDialogsRepository (Mongo-backed).
-
-    S87: lazy resolve для express/_common.py.
-    """
-    if "express_dialogs_mongo" in _overrides:
-        return _overrides["express_dialogs_mongo"]
-    module = resolve_module("repositories.express_dialogs_mongo")
-    return module
-
-
-def set_express_dialogs_mongo_provider(repo: Any) -> None:
-    """Test-override (S87+)."""
-    _overrides["express_dialogs_mongo"] = repo
-
-
-def get_vector_store_provider() -> Any:
-    r"""Возвращает \`vector_store\` (PII vector storage).
-
-    S87: lazy resolve для security/pii_erase.py.
-    """
-    if "vector_store" in _overrides:
-        return _overrides["vector_store"]
-    module = resolve_module("clients.storage.vector_store")
-    return module
-
-
-def set_vector_store_provider(store: Any) -> None:
-    """Test-override (S87+)."""
-    _overrides["vector_store"] = store
-
-
-def get_token_registry_provider() -> Any:
-    r"""Возвращает \`token_registry\` (card token storage).
-
-    S87: lazy resolve для security/card_tokenize.py.
-    """
-    if "token_registry" in _overrides:
-        return _overrides["token_registry"]
-    module = resolve_module("security.token_registry")
-    return module
-
-
-def set_token_registry_provider(registry: Any) -> None:
-    """Test-override (S87+)."""
-    _overrides["token_registry"] = registry
-
-
-def get_sink_factory_provider() -> Any:
-    r"""Возвращает \`build_sink\` (sink factory).
-
-    S87: lazy resolve для sink_publish/generic.py.
-    """
-    if "sink_factory" in _overrides:
-        return _overrides["sink_factory"]
-    module = resolve_module("sinks.factory")
-    return module.build_sink
-
-
-def set_sink_factory_provider(factory: Any) -> None:
-    """Test-override (S87+)."""
-    _overrides["sink_factory"] = factory
-
-
-def get_mq_sink_class_provider() -> Any:
-    r"""Возвращает :class:\`MqSink\` (messaging queue sink).
-
-    S87: lazy resolve для sink_publish/messaging.py.
-    """
-    if "mq_sink_class" in _overrides:
-        return _overrides["mq_sink_class"]
-    module = resolve_module("sinks.mq_sink")
-    return module.MqSink
-
-
-def set_mq_sink_class_provider(aclass: Any) -> None:
-    """Test-override (S87+)."""
-    _overrides["mq_sink_class"] = aclass
-
-
-def get_ws_sink_class_provider() -> Any:
-    r"""Возвращает :class:\`WsSink\` (WebSocket sink).
-
-    S87: lazy resolve для sink_publish/messaging.py.
-    """
-    if "ws_sink_class" in _overrides:
-        return _overrides["ws_sink_class"]
-    module = resolve_module("sinks.ws_sink")
-    return module.WsSink
-
-
-def set_ws_sink_class_provider(aclass: Any) -> None:
-    """Test-override (S87+)."""
-    _overrides["ws_sink_class"] = aclass
-
-
-def get_grpc_sink_class_provider() -> Any:
-    r"""Возвращает :class:\`GrpcSink\` (gRPC sink).
-
-    S87: lazy resolve для sink_publish/protocols.py.
-    """
-    if "grpc_sink_class" in _overrides:
-        return _overrides["grpc_sink_class"]
-    module = resolve_module("sinks.grpc_sink")
-    return module.GrpcSink
-
-
-def set_grpc_sink_class_provider(aclass: Any) -> None:
-    """Test-override (S87+)."""
-    _overrides["grpc_sink_class"] = aclass
-
-
-def get_soap_sink_class_provider() -> Any:
-    r"""Возвращает :class:\`SoapSink\` (SOAP sink).
-
-    S87: lazy resolve для sink_publish/protocols.py.
-    """
-    if "soap_sink_class" in _overrides:
-        return _overrides["soap_sink_class"]
-    module = resolve_module("sinks.soap_sink")
-    return module.SoapSink
-
-
-def set_soap_sink_class_provider(aclass: Any) -> None:
-    """Test-override (S87+)."""
-    _overrides["soap_sink_class"] = aclass
-
-
-def get_notifications_module_provider() -> Any:
-    r"""Возвращает \`notifications\` module (notification channels).
-
-    S87: lazy resolve для notify/__init__.py.
-    """
-    if "notifications_module" in _overrides:
-        return _overrides["notifications_module"]
-    module = resolve_module("notifications")
-    return module
-
-
-def set_notifications_module_provider(module: Any) -> None:
-    """Test-override (S87+)."""
-    _overrides["notifications_module"] = module
-
-
-def get_workflow_factory_module_provider() -> Any:
-    r"""Возвращает \`workflow.factory\` module alias.
-
-    S87: lazy resolve для workflow_subprocess.py.
-    R1 fix (S95 PROGRESS_LEDGER): ключ в INFRA_MODULES = ``workflow.factory``,
-    а не ``workflow`` (последний отсутствует — 45 ключей без него).
-    """
-    if "workflow_factory_module" in _overrides:
-        return _overrides["workflow_factory_module"]
-    return resolve_module("workflow.factory")  # R1 fix: ключ + нет .factory suffix
-
-
-def set_workflow_factory_module_provider(module: Any) -> None:
-    """Test-override (S87+)."""
-    _overrides["workflow_factory_module"] = module
-
-
-# ─── S87 final: dlq providers ───────────────────────────────
-
-
-def get_di_bridge_dlq_module_provider() -> Any:
-    r"""Возвращает \`di_bridge.dlq\` module (SAGA DLQ bridge).
-
-    S87 final batch: lazy resolve для security/pii_erase.py.
-    """
-    if "di_bridge_dlq" in _overrides:
-        return _overrides["di_bridge_dlq"]
-    module = resolve_module("di_bridge.dlq")
-    return module
-
-
-def set_di_bridge_dlq_module_provider(module: Any) -> None:
-    """Test-override (S87+)."""
-    _overrides["di_bridge_dlq"] = module
-
-
-def get_dlq_memory_writer_module_provider() -> Any:
-    r"""Возвращает \`messaging.dlq.memory_writer\` module (in-memory DLQ).
-
-    S87 final batch: lazy resolve для security/pii_erase.py.
-    """
-    if "dlq_memory_writer" in _overrides:
-        return _overrides["dlq_memory_writer"]
-    module = resolve_module("messaging.dlq.memory_writer")
-    return module
-
-
-def set_dlq_memory_writer_module_provider(module: Any) -> None:
-    """Test-override (S87+)."""
-    _overrides["dlq_memory_writer"] = module
-
-
-def get_record_express_message_sent_provider() -> Any:
-    r"""Возвращает \`record_express_message_sent\` (metric emitter).
-
-    S87 final batch: lazy resolve для express/send.py.
-    """
-    if "record_express_message_sent" in _overrides:
-        return _overrides["record_express_message_sent"]
-    module = resolve_module("observability.metrics")
-    return module.record_express_message_sent
-
-
-def set_record_express_message_sent_provider(emitter: Any) -> None:
-    """Test-override (S87+)."""
-    _overrides["record_express_message_sent"] = emitter
-
-
-def get_dlq_envelope_class_provider() -> Any:
-    r"""Возвращает \`di_bridge.dlq\` module (DLQEnvelope/DLQReason accessors).
-
-    S87 final batch: lazy resolve для security/pii_erase.py. Модуль
-    предоставляет ``get_dlq_envelope_class()`` / ``get_dlq_reason_class()``
-    (атрибута ``DLQEnvelope`` в di_bridge.dlq нет — только accessor-функции).
-    """
-    if "dlq_envelope_class" in _overrides:
-        return _overrides["dlq_envelope_class"]
-    module = resolve_module("di_bridge.dlq")
-    return module
-
-
-def set_dlq_envelope_class_provider(aclass: Any) -> None:
-    """Test-override (S87+)."""
-    _overrides["dlq_envelope_class"] = aclass
+    try:
+        from src.backend.core.cache.facade import FallbackCacheFacade, MemoryCacheFacade
+    except ImportError:
+        return None
+
+    memory = MemoryCacheFacade()
+    if not enable_fallback:
+        return memory
+    return FallbackCacheFacade(primary=memory, fallback=memory)
+
+
+__all__ = (
+    # ── Cache canonical (inline implementations) ──
+    "get_admin_cache_storage_provider",
+    "get_cache_facade",
+    "get_cache_invalidator_provider",
+    "get_rag_cache_provider",
+    "get_redis_client_provider",
+    "get_redis_kv_client_provider",
+    "get_redis_lock_class_provider",
+    "get_redis_stream_client_provider",
+    "get_response_cache_provider",
+    "set_admin_cache_storage_provider",
+    "set_cache_invalidator_provider",
+    "set_rag_cache_provider",
+    "set_redis_client_provider",
+    "set_redis_kv_client_provider",
+    "set_redis_lock_class_provider",
+    "set_redis_stream_client_provider",
+    "set_response_cache_provider",
+    # ── Observability re-exports (W9 P2-13 Phase 2) ──
+    "get_health_aggregator_provider",
+    "get_immutable_audit_store_class_provider",
+    "get_record_antivirus_scan_provider",
+    "get_record_express_message_sent_provider",
+    "get_slo_tracker_provider",
+    "set_health_aggregator_provider",
+    "set_immutable_audit_store_class_provider",
+    "set_record_antivirus_scan_provider",
+    "set_record_express_message_sent_provider",
+    "set_slo_tracker_provider",
+    # ── Security re-exports (W9 P2-13 Phase 2) ──
+    "get_antivirus_backend_factory_provider",
+    "get_signature_builder_provider",
+    "get_vault_backend_class_provider",
+    "get_vault_config_class_provider",
+    "set_antivirus_backend_factory_provider",
+    "set_signature_builder_provider",
+    "set_vault_backend_class_provider",
+    "set_vault_config_class_provider",
+    # ── DB re-export (W9 P2-13 Phase 2) ──
+    "get_db_manager_provider",
+    "set_db_manager_provider",
+    # ── HTTP re-exports (W9 P2-13 Phase 2) ──
+    "get_http_client_dependency_provider",
+    "get_http_client_typed_provider",
+    "get_httpx_client_provider",
+    "get_stream_provider",
+    "set_http_client_dependency_provider",
+    "set_http_client_typed_provider",
+    "set_httpx_client_provider",
+    "set_stream_provider",
+    # ── AI re-exports (W9 P2-13 Phase 2) ──
+    "get_token_registry_provider",
+    "get_vector_store_provider",
+    "set_token_registry_provider",
+    "set_vector_store_provider",
+    # ── Messaging re-exports (W9 P2-13 Phase 2) ──
+    "get_express_bot_module_provider",
+    "get_express_dialogs_mongo_provider",
+    "get_telegram_bot_provider",
+    "set_express_bot_module_provider",
+    "set_express_dialogs_mongo_provider",
+    "set_telegram_bot_provider",
+    # ── Workflow re-exports (W9 P2-13 Phase 2: workflow_factory, notifications,
+    #    sinks, reply_channel, DLQ) ──
+    "get_di_bridge_dlq_module_provider",
+    "get_dlq_envelope_class_provider",
+    "get_dlq_memory_writer_module_provider",
+    "get_grpc_sink_class_provider",
+    "get_mq_sink_class_provider",
+    "get_notifications_module_provider",
+    "get_reply_channel_class_provider",
+    "get_sink_factory_provider",
+    "get_soap_sink_class_provider",
+    "get_workflow_factory_module_provider",
+    "get_ws_sink_class_provider",
+    "set_di_bridge_dlq_module_provider",
+    "set_dlq_envelope_class_provider",
+    "set_dlq_memory_writer_module_provider",
+    "set_grpc_sink_class_provider",
+    "set_mq_sink_class_provider",
+    "set_notifications_module_provider",
+    "set_reply_channel_class_provider",
+    "set_sink_factory_provider",
+    "set_soap_sink_class_provider",
+    "set_workflow_factory_module_provider",
+    "set_ws_sink_class_provider",
+)

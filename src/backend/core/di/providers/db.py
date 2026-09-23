@@ -145,16 +145,29 @@ __all__ = (
     "get_connector_config_store_provider",
     "get_connector_registry_errors_provider",
     "get_connector_registry_provider",
+    "get_db_initializer_provider",
+    "get_db_manager_provider",
+    "get_dask_backend_provider",
+    "get_external_db_registry_provider",
     "get_file_repo_provider",
+    "get_main_session_manager_provider",
     "get_mongo_client_provider",
+    "get_outbox_writer_provider",
     "get_s3_service_provider",
+    "get_smart_session_manager_provider",
     "set_cdc_client_provider",
     "set_clickhouse_client_provider",
     "set_connector_config_store_provider",
     "set_connector_registry_provider",
+    "set_db_initializer_provider",
+    "set_db_manager_provider",
+    "set_dask_backend_provider",
     "set_file_repo_provider",
+    "set_main_session_manager_provider",
     "set_mongo_client_provider",
+    "set_outbox_writer_provider",
     "set_s3_service_provider",
+    "set_smart_session_manager_provider",
 )
 
 
@@ -282,3 +295,23 @@ def get_smart_session_manager_provider() -> Any:
 def set_smart_session_manager_provider(manager: Any) -> None:
     """Test-override для smart_session_manager (Sprint 81+)."""
     _overrides["smart_session_manager"] = manager
+
+
+# ─── W9 P2-13 Phase 2: db_manager (migrated from cache.py) ──────────
+
+
+def get_db_manager_provider() -> Any:
+    r"""Возвращает \`get_db_manager\` (DB session manager factory).
+
+    S86 (legacy): lazy resolve для dsl/processors/components/databasequeryprocessor.py.
+    W9 P2-13 Phase 2: перенесено из cache.py (misattributed).
+    """
+    if "db_manager" in _overrides:
+        return _overrides["db_manager"]
+    module = resolve_module("database.database")
+    return module.get_db_manager
+
+
+def set_db_manager_provider(manager: Any) -> None:
+    """Test-override (S86+, W9 P2-13 Phase 2)."""
+    _overrides["db_manager"] = manager

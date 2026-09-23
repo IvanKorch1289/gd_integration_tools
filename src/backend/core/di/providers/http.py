@@ -283,7 +283,10 @@ __all__ = (
     "get_express_metrics_recorder_provider",
     "get_express_session_store_provider",
     "get_external_session_manager_provider",
+    "get_http_client_dependency_provider",
     "get_http_client_provider",
+    "get_http_client_typed_provider",
+    "get_httpx_client_provider",
     "get_import_gateway_factory_provider",
     "get_redis_cursor_factory_provider",
     "get_redis_hash_factory_provider",
@@ -291,6 +294,7 @@ __all__ = (
     "get_redis_set_factory_provider",
     "get_smtp_client_provider",
     "get_stream_client_provider",
+    "get_stream_provider",
     "set_browser_client_provider",
     "set_express_bot_client_factory_provider",
     "set_express_client_provider",
@@ -298,7 +302,10 @@ __all__ = (
     "set_express_metrics_recorder_provider",
     "set_express_session_store_provider",
     "set_external_session_manager_provider",
+    "set_http_client_dependency_provider",
     "set_http_client_provider",
+    "set_http_client_typed_provider",
+    "set_httpx_client_provider",
     "set_import_gateway_factory_provider",
     "set_redis_cursor_factory_provider",
     "set_redis_hash_factory_provider",
@@ -306,4 +313,76 @@ __all__ = (
     "set_redis_set_factory_provider",
     "set_smtp_client_provider",
     "set_stream_client_provider",
+    "set_stream_provider",
 )
+
+
+# ─── W9 P2-13 Phase 2: HTTP transport providers (migrated from cache.py) ──────────
+
+
+def get_httpx_client_provider() -> Any:
+    r"""Возвращает singleton :func:\`get_httpx_client\` (HTTP transport).
+
+    S72 M2-#11 batch 7: lazy resolve для dsl/processors/graphql_query.py.
+    W9 P2-13 Phase 2: перенесено из cache.py → http.py (HTTP concern).
+    """
+    if "httpx_client" in _overrides:
+        return _overrides["httpx_client"]
+    module = resolve_module("clients.transport.http_httpx")
+    return module.get_httpx_client
+
+
+def set_httpx_client_provider(client: Any) -> None:
+    """Test-override для httpx client (Sprint 72+, W9 P2-13 Phase 2)."""
+    _overrides["httpx_client"] = client
+
+
+def get_http_client_dependency_provider() -> Any:
+    """Возвращает singleton HTTP client (httpx-based).
+
+    S83 M2-#11 batch 18: lazy resolve для dsl/processors/scraping.py.
+    W9 P2-13 Phase 2: перенесено из cache.py → http.py.
+    """
+    if "http_client_dependency" in _overrides:
+        return _overrides["http_client_dependency"]
+    module = resolve_module("clients.transport.http")
+    return module.get_http_client_dependency
+
+
+def set_http_client_dependency_provider(client: Any) -> None:
+    """Test-override для HTTP client dependency (Sprint 83+, W9 P2-13 Phase 2)."""
+    _overrides["http_client_dependency"] = client
+
+
+def get_http_client_typed_provider() -> Any:
+    r"""Возвращает \`get_http_client_typed\` (typed HTTP client factory).
+
+    S85 accelerated batch: lazy resolve для dsl/processors/eip/api_composition.py.
+    W9 P2-13 Phase 2: перенесено из cache.py → http.py.
+    """
+    if "http_client_typed" in _overrides:
+        return _overrides["http_client_typed"]
+    module = resolve_module("clients.transport.http.factory")
+    return module.get_http_client_typed
+
+
+def set_http_client_typed_provider(client: Any) -> None:
+    """Test-override для HTTP client typed (Sprint 85+, W9 P2-13 Phase 2)."""
+    _overrides["http_client_typed"] = client
+
+
+def get_stream_provider() -> Any:
+    r"""Возвращает \`stream\` module (messaging stream).
+
+    S86 (legacy): lazy resolve для dsl/processors/proxy/forward.py.
+    W9 P2-13 Phase 2: перенесено из cache.py → http.py (streaming = HTTP concern).
+    """
+    if "stream" in _overrides:
+        return _overrides["stream"]
+    module = resolve_module("clients.messaging.stream")
+    return module
+
+
+def set_stream_provider(stream: Any) -> None:
+    """Test-override (S86+, W9 P2-13 Phase 2)."""
+    _overrides["stream"] = stream

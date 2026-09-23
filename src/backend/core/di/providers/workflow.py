@@ -320,6 +320,7 @@ __all__ = (
     "get_app_logger_provider",
     "get_correlation_context_setter_provider",
     "get_grpc_logger_provider",
+    "get_notifications_module_provider",
     "get_rate_limit_classes_provider",
     "get_rate_limiter_provider",
     "get_resilience_components_report_provider",
@@ -327,9 +328,12 @@ __all__ = (
     "get_scheduler_manager_provider",
     "get_stream_dlq_writer_provider",
     "get_stream_logger_provider",
+    "get_workflow_backend_factory_provider",
     "get_workflow_event_store_provider",
+    "get_workflow_factory_module_provider",
     "get_workflow_instance_model_provider",
     "get_workflow_main_session_provider",
+    "get_workflow_state_repository_provider",
     "get_workflow_state_row_class_provider",
     "get_workflow_state_store_provider",
     "get_workflow_status_enum_provider",
@@ -338,14 +342,18 @@ __all__ = (
     "set_app_logger_provider",
     "set_correlation_context_setter_provider",
     "set_grpc_logger_provider",
+    "set_notifications_module_provider",
     "set_rate_limiter_provider",
     "set_resilience_components_report_provider",
     "set_resilience_coordinator_provider",
     "set_scheduler_manager_provider",
     "set_stream_dlq_writer_provider",
     "set_stream_logger_provider",
+    "set_workflow_backend_factory_provider",
     "set_workflow_event_store_provider",
+    "set_workflow_factory_module_provider",
     "set_workflow_main_session_provider",
+    "set_workflow_state_repository_provider",
     "set_workflow_state_store_provider",
 )
 
@@ -390,3 +398,205 @@ def get_workflow_state_repository_provider() -> Any:
 def set_workflow_state_repository_provider(repo: Any) -> None:
     """Test-override для WorkflowStateRepository (Sprint 81+)."""
     _overrides["workflow_state_repository"] = repo
+
+
+# ─── W9 P2-13 Phase 2: workflow_factory_module + notifications_module ──────────
+
+
+def get_workflow_factory_module_provider() -> Any:
+    r"""Возвращает \`workflow.factory\` module alias.
+
+    S87 (legacy): lazy resolve для workflow_subprocess.py.
+    R1 fix (S95 PROGRESS_LEDGER): ключ в INFRA_MODULES = ``workflow.factory``,
+    а не ``workflow`` (последний отсутствует — 45 ключей без него).
+    W9 P2-13 Phase 2: перенесено из cache.py → workflow.py (canonical).
+    """
+    if "workflow_factory_module" in _overrides:
+        return _overrides["workflow_factory_module"]
+    return resolve_module("workflow.factory")  # R1 fix: ключ + нет .factory suffix
+
+
+def set_workflow_factory_module_provider(module: Any) -> None:
+    """Test-override (S87+, W9 P2-13 Phase 2)."""
+    _overrides["workflow_factory_module"] = module
+
+
+def get_notifications_module_provider() -> Any:
+    r"""Возвращает \`notifications\` module (notification channels).
+
+    S87 (legacy): lazy resolve для notify/__init__.py.
+    W9 P2-13 Phase 2: перенесено из cache.py → workflow.py (notifications = workflow concern).
+    """
+    if "notifications_module" in _overrides:
+        return _overrides["notifications_module"]
+    module = resolve_module("notifications")
+    return module
+
+
+def set_notifications_module_provider(module: Any) -> None:
+    """Test-override (S87+, W9 P2-13 Phase 2)."""
+    _overrides["notifications_module"] = module
+
+
+# ─── W9 P2-13 Phase 2: sinks + DLQ + reply_channel providers (migrated from cache.py) ──────────
+
+
+def get_reply_channel_class_provider() -> Any:
+    r"""Возвращает :class:\`ReplyChannel\` class (singleton via \`instance()\`).
+
+    S73 M2-#11 batch 8: lazy resolve для dsl/processors/request_reply.py.
+    ReplyChannel — class с classmethod \`instance()\` (singleton).
+    Caller делает \`ReplyChannel.instance()\` для получения singleton.
+
+    W9 P2-13 Phase 2: перенесено из cache.py → workflow.py (messaging = workflow).
+    """
+    if "reply_channel_class" in _overrides:
+        return _overrides["reply_channel_class"]
+    module = resolve_module("clients.messaging.reply_channel")
+    return module.ReplyChannel
+
+
+def set_reply_channel_class_provider(channel_class: Any) -> None:
+    """Test-override для ReplyChannel class (Sprint 73+, W9 P2-13 Phase 2)."""
+    _overrides["reply_channel_class"] = channel_class
+
+
+def get_sink_factory_provider() -> Any:
+    r"""Возвращает \`build_sink\` (sink factory).
+
+    S87 (legacy): lazy resolve для sink_publish/generic.py.
+    W9 P2-13 Phase 2: перенесено из cache.py → workflow.py.
+    """
+    if "sink_factory" in _overrides:
+        return _overrides["sink_factory"]
+    module = resolve_module("sinks.factory")
+    return module.build_sink
+
+
+def set_sink_factory_provider(factory: Any) -> None:
+    """Test-override (S87+, W9 P2-13 Phase 2)."""
+    _overrides["sink_factory"] = factory
+
+
+def get_mq_sink_class_provider() -> Any:
+    r"""Возвращает :class:\`MqSink\` (messaging queue sink).
+
+    S87 (legacy): lazy resolve для sink_publish/messaging.py.
+    W9 P2-13 Phase 2: перенесено из cache.py → workflow.py.
+    """
+    if "mq_sink_class" in _overrides:
+        return _overrides["mq_sink_class"]
+    module = resolve_module("sinks.mq_sink")
+    return module.MqSink
+
+
+def set_mq_sink_class_provider(aclass: Any) -> None:
+    """Test-override (S87+, W9 P2-13 Phase 2)."""
+    _overrides["mq_sink_class"] = aclass
+
+
+def get_ws_sink_class_provider() -> Any:
+    r"""Возвращает :class:\`WsSink\` (WebSocket sink).
+
+    S87 (legacy): lazy resolve для sink_publish/messaging.py.
+    W9 P2-13 Phase 2: перенесено из cache.py → workflow.py.
+    """
+    if "ws_sink_class" in _overrides:
+        return _overrides["ws_sink_class"]
+    module = resolve_module("sinks.ws_sink")
+    return module.WsSink
+
+
+def set_ws_sink_class_provider(aclass: Any) -> None:
+    """Test-override (S87+, W9 P2-13 Phase 2)."""
+    _overrides["ws_sink_class"] = aclass
+
+
+def get_grpc_sink_class_provider() -> Any:
+    r"""Возвращает :class:\`GrpcSink\` (gRPC sink).
+
+    S87 (legacy): lazy resolve для sink_publish/protocols.py.
+    W9 P2-13 Phase 2: перенесено из cache.py → workflow.py.
+    """
+    if "grpc_sink_class" in _overrides:
+        return _overrides["grpc_sink_class"]
+    module = resolve_module("sinks.grpc_sink")
+    return module.GrpcSink
+
+
+def set_grpc_sink_class_provider(aclass: Any) -> None:
+    """Test-override (S87+, W9 P2-13 Phase 2)."""
+    _overrides["grpc_sink_class"] = aclass
+
+
+def get_soap_sink_class_provider() -> Any:
+    r"""Возвращает :class:\`SoapSink\` (SOAP sink).
+
+    S87 (legacy): lazy resolve для sink_publish/protocols.py.
+    W9 P2-13 Phase 2: перенесено из cache.py → workflow.py.
+    """
+    if "soap_sink_class" in _overrides:
+        return _overrides["soap_sink_class"]
+    module = resolve_module("sinks.soap_sink")
+    return module.SoapSink
+
+
+def set_soap_sink_class_provider(aclass: Any) -> None:
+    """Test-override (S87+, W9 P2-13 Phase 2)."""
+    _overrides["soap_sink_class"] = aclass
+
+
+# ─── W9 P2-13 Phase 2: DLQ providers (migrated from cache.py) ──────────
+
+
+def get_di_bridge_dlq_module_provider() -> Any:
+    r"""Возвращает \`di_bridge.dlq\` module (SAGA DLQ bridge).
+
+    S87 final batch (legacy): lazy resolve для security/pii_erase.py.
+    W9 P2-13 Phase 2: перенесено из cache.py → workflow.py.
+    """
+    if "di_bridge_dlq" in _overrides:
+        return _overrides["di_bridge_dlq"]
+    module = resolve_module("di_bridge.dlq")
+    return module
+
+
+def set_di_bridge_dlq_module_provider(module: Any) -> None:
+    """Test-override (S87+, W9 P2-13 Phase 2)."""
+    _overrides["di_bridge_dlq"] = module
+
+
+def get_dlq_memory_writer_module_provider() -> Any:
+    r"""Возвращает \`messaging.dlq.memory_writer\` module (in-memory DLQ).
+
+    S87 final batch (legacy): lazy resolve для security/pii_erase.py.
+    W9 P2-13 Phase 2: перенесено из cache.py → workflow.py.
+    """
+    if "dlq_memory_writer" in _overrides:
+        return _overrides["dlq_memory_writer"]
+    module = resolve_module("messaging.dlq.memory_writer")
+    return module
+
+
+def set_dlq_memory_writer_module_provider(module: Any) -> None:
+    """Test-override (S87+, W9 P2-13 Phase 2)."""
+    _overrides["dlq_memory_writer"] = module
+
+
+def get_dlq_envelope_class_provider() -> Any:
+    r"""Возвращает \`di_bridge.dlq\` module (DLQEnvelope/DLQReason accessors).
+
+    S87 final batch (legacy): lazy resolve для security/pii_erase.py. Модуль
+    предоставляет ``get_dlq_envelope_class()`` / ``get_dlq_reason_class()``
+    (атрибута ``DLQEnvelope`` в di_bridge.dlq нет — только accessor-функции).
+    W9 P2-13 Phase 2: перенесено из cache.py → workflow.py.
+    """
+    if "dlq_envelope_class" in _overrides:
+        return _overrides["dlq_envelope_class"]
+    module = resolve_module("di_bridge.dlq")
+    return module
+
+
+def set_dlq_envelope_class_provider(aclass: Any) -> None:
+    """Test-override (S87+, W9 P2-13 Phase 2)."""
+    _overrides["dlq_envelope_class"] = aclass
