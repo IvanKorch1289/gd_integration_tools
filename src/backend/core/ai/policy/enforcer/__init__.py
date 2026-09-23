@@ -29,19 +29,19 @@ if TYPE_CHECKING:
 
     from src.backend.core.ai.policy.spec import ToolsSpec  # S76 W3
     from src.backend.core.messaging.dlq import DLQWriter
-from src.backend.core.ai.policy.enforcer.handle_mixin import (  # noqa: F401 — re-export
+from src.backend.core.ai.policy.enforcer.handle_mixin import (
     HandleMixin,  # S67 W2: MRO as HandleMixin  # S67 W2: MRO
 )
-from src.backend.core.ai.policy.enforcer.input_guard_mixin import (  # noqa: F401 — re-export
+from src.backend.core.ai.policy.enforcer.input_guard_mixin import (
     InputGuardMixin,  # S67 W2: MRO
 )
-from src.backend.core.ai.policy.enforcer.output_guard_mixin import (  # noqa: F401 — re-export
+from src.backend.core.ai.policy.enforcer.output_guard_mixin import (
     OutputGuardMixin,  # S67 W2: MRO
 )
-from src.backend.core.ai.policy.enforcer.sanitize_mixin import (  # noqa: F401 — re-export
+from src.backend.core.ai.policy.enforcer.sanitize_mixin import (
     SanitizeMixin,  # S67 W2: MRO
 )
-from src.backend.core.ai.policy.enforcer.tools_policy import (  # noqa: F401 — re-export  # S76 W3
+from src.backend.core.ai.policy.enforcer.tools_policy import (  # S76 W3
     ToolPolicyViolationError,  # S76 W3: re-export
     check_tool_allowed,  # S76 W3: re-export
     enforce_tool_policy,  # S76 W3: re-export

@@ -11,11 +11,11 @@ Wave: ``[wave:s8/k4-model-registry]``. Public API:
 
 from __future__ import annotations
 
-from src.backend.services.ai.model_registry.adapter import (  # noqa: F401 — re-export
+from src.backend.services.ai.model_registry.adapter import (
     ModelRecord,
     ModelRegistryAdapter,
 )
-from src.backend.services.ai.model_registry.hf_hub_backend import (  # noqa: F401 — re-export
+from src.backend.services.ai.model_registry.hf_hub_backend import (
     HuggingFaceModelRegistry,
 )
 from src.backend.services.ai.model_registry.local_fs_backend import LocalFSModelRegistry

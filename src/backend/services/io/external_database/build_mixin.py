@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 import re
 from typing import Final
 
-from src.backend.core.enums.external_db import (  # noqa: F401 — re-export
+from src.backend.core.enums.external_db import (
     ExternalDBObjectMeta,
     ExternalDBParameterMeta,
     ExternalDBParameterModeChoices,
@@ -34,7 +34,7 @@ _IDENT_RE: Final = re.compile(
 _BIND_NAME_RE: Final = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
-from src.backend.services.io.external_database._protocol import (  # noqa: F401 — re-export
+from src.backend.services.io.external_database._protocol import (
     _ExternalDatabaseProtocol,
 )
 

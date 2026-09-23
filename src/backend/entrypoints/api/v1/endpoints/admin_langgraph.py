@@ -38,7 +38,7 @@ def _guard_enabled() -> None:
 
 async def _inspector() -> Any:
     from src.backend.services.ai.agents.checkpoint_inspector import CheckpointInspector
-    from src.backend.services.ai.agents.langgraph_postgres_saver import (  # noqa: F401 — re-export
+    from src.backend.services.ai.agents.langgraph_postgres_saver import (
         get_langgraph_postgres_saver,
     )
 

@@ -19,7 +19,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from src.backend.core.privacy.delete_data_subject._tombstone import TombstonePublisher
-from src.backend.core.privacy.delete_data_subject._types import (  # noqa: F401 — re-export
+from src.backend.core.privacy.delete_data_subject._types import (
     AdapterResult,
     ErasureAdapter,
     ErasureResultStatus,

@@ -86,7 +86,7 @@ class TelegramAdapter:
             httpx.HTTPStatusError: При HTTP-ошибке Bot API.
 
         """
-        from src.backend.infrastructure.clients.external.telegram_bot import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.clients.external.telegram_bot import (
             TelegramBotClient,
             TelegramButton,
             TelegramMessage,
@@ -156,7 +156,7 @@ class TelegramAdapter:
 
     def _build_config(self) -> Any:
         """Собирает ``TelegramBotConfig`` из callable-провайдера или settings."""
-        from src.backend.infrastructure.clients.external.telegram_bot import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.clients.external.telegram_bot import (
             TelegramBotConfig,
         )
 

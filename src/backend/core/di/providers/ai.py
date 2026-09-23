@@ -50,7 +50,7 @@ def _build_ai_gateway_singleton() -> AIGateway:
     """Внутренний builder для :func:`get_ai_gateway_provider` (мемоизация)."""
     from src.backend.core.ai import AIGateway
     from src.backend.core.config.settings import settings as app_settings
-    from src.backend.core.security.capabilities import (  # noqa: F401 — re-export
+    from src.backend.core.security.capabilities import (
         CapabilityGate,
         build_default_vocabulary,
     )
@@ -81,7 +81,7 @@ def _build_ai_gateway_singleton() -> AIGateway:
 
     token_budget: object | None = None
     try:
-        from src.backend.core.tenancy.token_budget import (  # noqa: F401 — re-export
+        from src.backend.core.tenancy.token_budget import (
             BudgetPeriod,
             InMemoryTokenBudgetBackend,
             TokenBudget,
@@ -204,10 +204,10 @@ def _resolve_pii_token_registry() -> Any:
     Для production AES-GCM ключ читается из env ``PII_AES_KEY_V{version}``
     (base64 → 32 raw bytes). Vault-источник — carry-over в S25 closure.
     """
-    from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
+    from src.backend.core.di.providers.infrastructure_locator import (
         get_env_aesgcm_key_provider_class as _get_eakp_cls,
     )
-    from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
+    from src.backend.core.di.providers.infrastructure_locator import (
         get_redis_token_registry_class as _get_rtr_cls,
     )
 
@@ -225,7 +225,7 @@ def _resolve_pii_token_registry() -> Any:
 def _resolve_unified_audit_service() -> Any | None:
     """Lazy-резолв :class:`AuditService` (S17/K3); ``None`` при недоступности."""
     try:
-        from src.backend.core.audit.facade.audit_service import (  # noqa: F401 — re-export
+        from src.backend.core.audit.facade.audit_service import (
             get_unified_audit_service,
         )
 
@@ -362,7 +362,7 @@ def get_llm_guard_runtime_provider() -> Any:
     try:
         # ponytail: LlamaGuardRuntime объявлен canonical, но llamaguard.py
         # submodule не реализован — ImportError ловится ниже (→ None).
-        from src.backend.core.ai.guardrails import (  # noqa: F401 — re-export  # type: ignore[attr-defined]
+        from src.backend.core.ai.guardrails import (  # type: ignore[attr-defined]
             LlamaGuardRuntime,
         )
 

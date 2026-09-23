@@ -119,7 +119,7 @@ class CapabilityFacade:
 
         """
         try:
-            from src.backend.core.security.capabilities import (  # noqa: F401 — re-export
+            from src.backend.core.security.capabilities import (
                 CapabilityRef,
                 build_default_vocabulary,
                 check_capabilities_subset,

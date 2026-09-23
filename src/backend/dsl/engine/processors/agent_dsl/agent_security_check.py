@@ -141,7 +141,7 @@ class AgentSecurityCheckProcessor(BaseProcessor):
             self._value = self._value[:100_000]
 
         try:
-            from src.backend.services.agent_security.facade import (  # noqa: F401 — re-export
+            from src.backend.services.agent_security.facade import (
                 get_agent_security_facade,
             )
 

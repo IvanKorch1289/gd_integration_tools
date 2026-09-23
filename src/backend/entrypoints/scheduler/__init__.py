@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-from src.backend.entrypoints.scheduler.invoker_schedule import (  # noqa: F401 — re-export
+from src.backend.entrypoints.scheduler.invoker_schedule import (
     ScheduleSpec,
     register_scheduled_invocation,
     register_scheduled_invocations,

@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.logging import get_logger
-from src.backend.infrastructure.cache.rag.metrics import (  # noqa: F401 — re-export
+from src.backend.infrastructure.cache.rag.metrics import (
     get_metrics_snapshot as get_rag_metrics_snapshot,
 )
 
@@ -26,7 +26,7 @@ def _ensure_lru_metrics() -> None:
     """Lazy-initialize LRU metrics counters."""
     global _lru_snapshot
     try:
-        from src.backend.infrastructure.cache.lru_cache import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.cache.lru_cache import (
             _metric_hits,
             _metric_misses,
         )

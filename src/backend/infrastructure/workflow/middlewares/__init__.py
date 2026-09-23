@@ -7,7 +7,7 @@ Wave ``[wave:s5/k3-w11-step-log-clickhouse]``.
 * в дальнейшем: TracingMiddleware (OTel custom span attrs).
 """
 
-from src.backend.infrastructure.workflow.middlewares.step_audit import (  # noqa: F401 — re-export
+from src.backend.infrastructure.workflow.middlewares.step_audit import (
     PG_CLICKHOUSE_WORKFLOW_STEP_LOG_DDL,
     StepAuditEvent,
     StepAuditMiddleware,

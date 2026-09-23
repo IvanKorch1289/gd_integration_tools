@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from src.backend.core.interfaces.middleware import (  # noqa: F401 — re-export
+from src.backend.core.interfaces.middleware import (
     ProcessorMiddleware,  # Sprint 18 P1-14
 )
 from src.backend.infrastructure.observability.correlation import get_correlation_id

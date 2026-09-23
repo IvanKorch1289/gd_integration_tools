@@ -4,7 +4,7 @@ from fastapi import HTTPException, Request
 
 from src.backend.core.config.settings import settings
 from src.backend.core.di.app_state import app_state_singleton
-from src.backend.core.di.providers import (  # noqa: F401 — re-export
+from src.backend.core.di.providers import (
     get_admin_cache_storage_provider,
     get_slo_tracker_provider,
 )

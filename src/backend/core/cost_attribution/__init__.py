@@ -33,7 +33,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.cost_attribution.attribution import (  # noqa: F401 — re-export
+from src.backend.core.cost_attribution.attribution import (
     CostAttribution,
     CostRecord,
     CostReport,

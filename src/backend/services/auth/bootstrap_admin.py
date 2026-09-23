@@ -99,7 +99,7 @@ def bootstrap_admin_user(
         import sqlalchemy as sa
 
         from extensions.core_entities.users.domain.models import User
-        from src.backend.infrastructure.database.session_manager import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.database.session_manager import (
             main_session_manager,
         )
 

@@ -24,11 +24,11 @@ from fastapi_limiter.depends import RateLimiter as RateLimitDependency
 from fastapi_limiter.depends import WebSocketRateLimiter
 
 from src.backend.core.config.security import secure_settings
-from src.backend.core.decorators.limiting_callbacks import (  # noqa: F401 — re-export
+from src.backend.core.decorators.limiting_callbacks import (
     default_callback,
     default_identifier,
 )
-from src.backend.services.resilience.rate_limiter import (  # noqa: F401 — re-export
+from src.backend.services.resilience.rate_limiter import (
     RateLimit,
     RateLimitExceeded,
     get_rate_limiter,

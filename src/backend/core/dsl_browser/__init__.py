@@ -2,7 +2,7 @@
 
 Использование::
 
-    from src.backend.core.dsl_browser import (  # noqa: F401 — re-export
+    from src.backend.core.dsl_browser import (
         BrowserDSL, BrowserConfig, SemanticAction, SelectorStrategy, StepResult,
     )
 
@@ -16,7 +16,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.dsl_browser.dsl import (  # noqa: F401 — re-export
+from src.backend.core.dsl_browser.dsl import (
     BrowserConfig,
     BrowserDSL,
     PlaywrightPageProtocol,

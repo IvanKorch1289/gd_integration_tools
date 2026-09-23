@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 
 from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.core.logging import get_logger
-from src.backend.entrypoints.api.generator.actions import (  # noqa: F401 — re-export
+from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
 )
@@ -230,7 +230,7 @@ class _DSLConsoleFacade:
         body = body or {}
         try:
             from src.backend.core.api.extensions import ExecutionEngine
-            from src.backend.services.dsl_portal.builder_facade import (  # noqa: F401 — re-export
+            from src.backend.services.dsl_portal.builder_facade import (
                 get_route_pipeline,
             )
 

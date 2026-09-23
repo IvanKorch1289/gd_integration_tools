@@ -20,7 +20,7 @@ custom ping callable (model list query как liveness check).
 **Use case** (FINAL_REPORT_V2 P1 #6):
 ```python
 from src.backend.services.ai.gateway.client import LiteLLMGateway
-from src.backend.services.ai.gateway.pool_registration import (  # noqa: F401 — re-export
+from src.backend.services.ai.gateway.pool_registration import (
     register_litellm_pool,
 )
 
@@ -43,7 +43,7 @@ from src.backend.core.clients.pool_health import get_pool_monitor
 from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
-    from src.backend.core.clients.pool_health import (  # noqa: F401 — re-export
+    from src.backend.core.clients.pool_health import (
         PoolHealthMonitor,  # S80 W4: TYPE_CHECKING for testability
     )
     from src.backend.services.ai.gateway.client import LiteLLMGateway

@@ -18,7 +18,7 @@
 
 Использование::
 
-    from src.backend.core.migration_preview import (  # noqa: F401 — re-export
+    from src.backend.core.migration_preview import (
         MigrationPreviewer, MigrationPreviewReport, OperationType,
         LockType, get_migration_previewer,
     )
@@ -31,7 +31,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.migration_preview.preview import (  # noqa: F401 — re-export
+from src.backend.core.migration_preview.preview import (
     LockType,
     MigrationOperation,
     MigrationPreviewer,

@@ -2,7 +2,7 @@
 
 Публичный re-export::
 
-    from src.backend.dsl.engine.processors.express import (  # noqa: F401 — re-export
+    from src.backend.dsl.engine.processors.express import (
         ExpressSendProcessor,
         ExpressReplyProcessor,
         ExpressEditProcessor,

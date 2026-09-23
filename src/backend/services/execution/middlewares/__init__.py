@@ -20,10 +20,10 @@
 """
 
 from src.backend.services.execution.middlewares.audit_middleware import AuditMiddleware
-from src.backend.services.execution.middlewares.idempotency_middleware import (  # noqa: F401 — re-export
+from src.backend.services.execution.middlewares.idempotency_middleware import (
     IdempotencyMiddleware,
 )
-from src.backend.services.execution.middlewares.rate_limit_middleware import (  # noqa: F401 — re-export
+from src.backend.services.execution.middlewares.rate_limit_middleware import (
     RateLimitMiddleware,
 )
 

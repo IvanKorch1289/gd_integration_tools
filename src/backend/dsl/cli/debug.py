@@ -39,7 +39,7 @@ def validate_route(route_file: str, format: str) -> None:
     ROUTE_FILE: Path to the route YAML file.
     """
     try:
-        from src.backend.dsl.yaml_loader import (  # noqa: F401 — re-export  # type: ignore[attr-defined]
+        from src.backend.dsl.yaml_loader import (  # type: ignore[attr-defined]
             YamlRouteLoader,
         )
 
@@ -76,10 +76,10 @@ def dry_run(
     ROUTE_FILE: Path to the route YAML file.
     """
     try:
-        from src.backend.dsl.engine.dry_run import (  # noqa: F401 — re-export  # type: ignore[attr-defined]
+        from src.backend.dsl.engine.dry_run import (  # type: ignore[attr-defined]
             DryRunner,
         )
-        from src.backend.dsl.yaml_loader import (  # noqa: F401 — re-export  # type: ignore[attr-defined]
+        from src.backend.dsl.yaml_loader import (  # type: ignore[attr-defined]
             YamlRouteLoader,
         )
 
@@ -159,7 +159,7 @@ def trace_pipeline(pipeline_file: str, output: str | None) -> None:
     PIPELINE_FILE: Path to pipeline JSON/YAML definition.
     """
     try:
-        from src.backend.dsl.yaml_loader import (  # noqa: F401 — re-export  # type: ignore[attr-defined]
+        from src.backend.dsl.yaml_loader import (  # type: ignore[attr-defined]
             YamlRouteLoader,
         )
 

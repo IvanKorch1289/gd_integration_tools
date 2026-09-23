@@ -37,7 +37,7 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass
 
 from src.backend.core.logging import get_logger
-from src.backend.infrastructure.security.presidio_sanitizer import (  # noqa: F401 — re-export
+from src.backend.infrastructure.security.presidio_sanitizer import (
     PresidioSanitizer,
     get_presidio_sanitizer,
 )

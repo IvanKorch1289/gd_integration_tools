@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.backend.services.schema_registry.registry import (  # noqa: F401 — re-export
+from src.backend.services.schema_registry.registry import (
     SchemaEntry,
     SchemaKind,
     ServiceSchemaRegistry,
@@ -25,7 +25,7 @@ def register_default_event_schemas(registry: ServiceSchemaRegistry) -> int:
         int: Количество зарегистрированных entries.
 
     """
-    from src.backend.core.messaging.event_bus import (  # noqa: F401 — re-export
+    from src.backend.core.messaging.event_bus import (
         FlagEvent,
         OrderEvent,
         PipelineEvent,

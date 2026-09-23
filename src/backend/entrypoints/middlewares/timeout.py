@@ -112,7 +112,7 @@ class TimeoutMiddleware:
                         "Deadline budget expired before request processing: %s", path
                     )
                     try:
-                        from src.backend.infrastructure.observability.metrics import (  # noqa: F401 — re-export
+                        from src.backend.infrastructure.observability.metrics import (
                             record_deadline_budget_expired_at_entry,
                             record_deadline_budget_remaining,
                         )
@@ -128,7 +128,7 @@ class TimeoutMiddleware:
                 timeout_seconds = min(timeout_seconds, remaining)
                 # Record remaining budget for observability (histogram).
                 try:
-                    from src.backend.infrastructure.observability.metrics import (  # noqa: F401 — re-export
+                    from src.backend.infrastructure.observability.metrics import (
                         record_deadline_budget_remaining,
                     )
 

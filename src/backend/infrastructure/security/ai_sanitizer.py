@@ -173,7 +173,7 @@ class AIDataSanitizer:
 
         if result.audit_events:
             try:
-                from src.backend.infrastructure.clients.storage.redis import (  # noqa: F401 — re-export
+                from src.backend.infrastructure.clients.storage.redis import (
                     redis_client,  # S71 W1 fix
                 )
 

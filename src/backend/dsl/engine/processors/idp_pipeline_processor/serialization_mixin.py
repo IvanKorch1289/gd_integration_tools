@@ -29,7 +29,7 @@ _CLASSIFY_KEYWORDS: dict[str, tuple[str, ...]] = {
 # on well-formed documents.
 
 
-from src.backend.dsl.engine.processors.idp_pipeline_processor._protocol import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.idp_pipeline_processor._protocol import (
     _IDPPipelineProtocol,
 )
 

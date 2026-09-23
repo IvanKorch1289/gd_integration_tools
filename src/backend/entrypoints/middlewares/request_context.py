@@ -29,7 +29,7 @@ import logging
 import uuid
 from typing import Any
 
-from src.backend.core.request_context import (  # noqa: F401 — re-export
+from src.backend.core.request_context import (
     RequestContext,
     bind_request_context,
     clear_request_context,

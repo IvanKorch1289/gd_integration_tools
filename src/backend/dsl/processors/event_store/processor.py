@@ -25,7 +25,7 @@ _log = get_logger(__name__)
 
 # ── Event dataclass ─────────────────────────────────────────────────────
 
-from src.backend.dsl.processors.event_store.types import (  # noqa: F401 — re-export
+from src.backend.dsl.processors.event_store.types import (
     EventStream,  # S66 W1: cross-import
 )
 

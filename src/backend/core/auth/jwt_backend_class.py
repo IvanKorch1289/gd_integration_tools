@@ -20,7 +20,7 @@ from joserfc.jwk import ECKey, OctKey, RSAKey
 
 from src.backend.core.auth import AuthContext, AuthMethod
 from src.backend.core.auth.jwks_cache import JwksCache
-from src.backend.core.auth.jwt_backend_helpers import (  # noqa: F401 — re-export
+from src.backend.core.auth.jwt_backend_helpers import (
     _ASYMMETRIC_ALGS,
     _SYMMETRIC_ALGS,
     JwtVerificationError,

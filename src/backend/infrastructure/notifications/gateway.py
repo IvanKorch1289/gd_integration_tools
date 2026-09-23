@@ -30,12 +30,12 @@ from dataclasses import dataclass, field
 from typing import Any, Literal
 
 from src.backend.core.logging import get_logger
-from src.backend.infrastructure.notifications.priority import (  # noqa: F401 — re-export
+from src.backend.infrastructure.notifications.priority import (
     NotificationBacklogError,
     Priority,
     PriorityRouter,
 )
-from src.backend.infrastructure.notifications.templates import (  # noqa: F401 — re-export
+from src.backend.infrastructure.notifications.templates import (
     TemplateRegistry,
     get_template_registry,
 )

@@ -286,7 +286,7 @@ class CardTokenizeProcessor(BaseProcessor):
     ) -> None:
         """Emit audit event для tokenization."""
         try:
-            from src.backend.core.observability.logging_helpers import (  # noqa: F401 — re-export
+            from src.backend.core.observability.logging_helpers import (
                 log_audit_event_lite,
             )
 

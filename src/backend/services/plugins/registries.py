@@ -25,7 +25,7 @@ from src.backend.core.logging import get_logger
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Iterable
 
-    from src.backend.dsl.commands.action_registry import (  # noqa: F401 — re-export
+    from src.backend.dsl.commands.action_registry import (
         ActionHandlerRegistry,
         ActionHandlerSpec,
     )

@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.codec.json import canonical_json_bytes
 from src.backend.core.logging import get_logger
-from src.backend.core.workflow.backend import (  # noqa: F401 — re-export
+from src.backend.core.workflow.backend import (
     WorkflowBackend,
     WorkflowHandle,
     WorkflowResult,
@@ -49,7 +49,7 @@ def build_temporal_data_converter() -> Any:
     без пробелов).
     """
     from temporalio.api.common.v1 import Payload
-    from temporalio.converter import (  # noqa: F401 — re-export
+    from temporalio.converter import (
         CompositePayloadConverter,
         DataConverter,
         EncodingPayloadConverter,

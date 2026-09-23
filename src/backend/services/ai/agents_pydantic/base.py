@@ -223,7 +223,7 @@ class BasePydanticAgent[ResultT: BaseModel]:
         if self._retry_config is None:
             return await agent.run(user_input, deps=deps)
 
-        from tenacity import (  # noqa: F401 — re-export
+        from tenacity import (
             AsyncRetrying,
             RetryError,
             retry_if_exception,

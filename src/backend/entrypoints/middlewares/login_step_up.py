@@ -139,7 +139,7 @@ def _default_rate_limit_factory() -> RateLimitChecker:
     Использует существующую фабрику из :mod:`global_ratelimit`,
     которая автоматически выбирает Redis (prod) или Fake (dev/test).
     """
-    from src.backend.entrypoints.middlewares.global_ratelimit import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.middlewares.global_ratelimit import (
         FakeRateLimitChecker,
         build_rate_limit_checker,
     )

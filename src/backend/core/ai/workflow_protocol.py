@@ -19,7 +19,7 @@ Pattern
     # В DSL-слое (было: прямой импорт infrastructure.workflow.registry)
     from typing import TYPE_CHECKING
     if TYPE_CHECKING:
-        from src.backend.core.ai.workflow_protocol import (  # noqa: F401 — re-export
+        from src.backend.core.ai.workflow_protocol import (
             WorkflowDescriptorProtocol,
             WorkflowRegistryProtocol,
         )

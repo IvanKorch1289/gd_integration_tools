@@ -8,7 +8,7 @@
 
 .. code-block:: python
 
-    from src.backend.entrypoints.scheduler import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.scheduler import (
         ScheduleSpec, register_scheduled_invocation,
     )
 

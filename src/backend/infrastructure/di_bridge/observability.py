@@ -47,7 +47,7 @@ def get_correlation_id() -> str:
     S171 M12 R4 #3 fix: ранее возвращалась function <get_correlation_id>,
     что ломало audit_service.emit (test_emit_uses_correlation_id_from_contextvar).
     """
-    from src.backend.infrastructure.observability.correlation import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.observability.correlation import (
         get_correlation_id as _get_cid,
     )
 
@@ -114,7 +114,7 @@ def get_prometheus_temporal_exporter_factory() -> Any:
 
 def get_record_scale_event() -> Any:
     """Возвращает ``observability.prometheus_temporal_exporter.record_scale_event``."""
-    from src.backend.infrastructure.observability.prometheus_temporal_exporter import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.observability.prometheus_temporal_exporter import (
         record_scale_event,
     )
 
@@ -123,7 +123,7 @@ def get_record_scale_event() -> Any:
 
 def get_set_task_queue_depth() -> Any:
     """Возвращает ``observability.prometheus_temporal_exporter.set_task_queue_depth``."""
-    from src.backend.infrastructure.observability.prometheus_temporal_exporter import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.observability.prometheus_temporal_exporter import (
         set_task_queue_depth,
     )
 
@@ -132,7 +132,7 @@ def get_set_task_queue_depth() -> Any:
 
 def get_set_workers_active() -> Any:
     """Возвращает ``observability.prometheus_temporal_exporter.set_workers_active``."""
-    from src.backend.infrastructure.observability.prometheus_temporal_exporter import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.observability.prometheus_temporal_exporter import (
         set_workers_active,
     )
 

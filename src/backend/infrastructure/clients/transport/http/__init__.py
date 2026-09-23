@@ -27,24 +27,24 @@ import httpx
 
 from src.backend.core.config.settings import settings as settings
 from src.backend.core.logging import get_logger as get_logger
-from src.backend.infrastructure.clients.transport.http.base import (  # noqa: F401 — re-export
+from src.backend.infrastructure.clients.transport.http.base import (
     BaseHttpClient,  # S61 W4: re-export
     FilePart,  # S61 W4: re-export
 )
-from src.backend.infrastructure.clients.transport.http.factory import (  # noqa: F401 — re-export
+from src.backend.infrastructure.clients.transport.http.factory import (
     get_http_client,  # S61 W4: re-export
     get_http_client_dependency,  # S61 W4: re-export
 )
-from src.backend.infrastructure.clients.transport.http.observability_mixin import (  # noqa: F401 — re-export
+from src.backend.infrastructure.clients.transport.http.observability_mixin import (
     ObservabilityMixin,  # S61 W4: MRO
 )
-from src.backend.infrastructure.clients.transport.http.prep_mixin import (  # noqa: F401 — re-export
+from src.backend.infrastructure.clients.transport.http.prep_mixin import (
     PrepMixin,  # S61 W4: MRO
 )
-from src.backend.infrastructure.clients.transport.http.request_mixin import (  # noqa: F401 — re-export
+from src.backend.infrastructure.clients.transport.http.request_mixin import (
     RequestMixin,  # S61 W4: MRO
 )
-from src.backend.infrastructure.clients.transport.http.session_mixin import (  # noqa: F401 — re-export
+from src.backend.infrastructure.clients.transport.http.session_mixin import (
     SessionMixin,  # S61 W4: MRO
 )
 
@@ -98,7 +98,7 @@ class HttpClient(SessionMixin, PrepMixin, RequestMixin, ObservabilityMixin):
             "average_response_time": 0.0,
         }
 
-        from src.backend.core.resilience.breaker import (  # noqa: F401 — re-export
+        from src.backend.core.resilience.breaker import (
             BreakerSpec,
             get_breaker_registry,
         )

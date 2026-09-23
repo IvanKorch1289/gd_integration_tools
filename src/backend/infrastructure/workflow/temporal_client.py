@@ -123,7 +123,7 @@ class TemporalClientFactory:
         from temporalio.client import Client
         from temporalio.service import TLSConfig
 
-        from src.backend.infrastructure.workflow.temporal_backend import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.workflow.temporal_backend import (
             build_temporal_data_converter,
         )
 
@@ -277,7 +277,7 @@ class TemporalWorkerPool:
             # Worker Versioning (S171 M10 P0, D172): kwargs из helper.
             # При use_versioning=False (default) — backward-compat: kwargs пустые.
             # S180 P0-4: use_versioning теперь пробрасывается из factory.
-            from src.backend.infrastructure.workflow.versioning.worker_versioning import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.workflow.versioning.worker_versioning import (
                 WorkerVersioningHelper,
             )
 

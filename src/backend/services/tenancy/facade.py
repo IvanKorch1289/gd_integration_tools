@@ -124,7 +124,7 @@ class TenantFacade:
         # cycle-4/D-AUDIT-100 — kwargs re-fix: CapabilityTenant(id, principal),
         # not CapabilityTenant(tenant_id, principal_id). При None principal —
         # fallback на SYSTEM_TENANT_ID ("system code без явного principal").
-        from src.backend.core.security.capabilities.tenant import (  # noqa: F401 — re-export
+        from src.backend.core.security.capabilities.tenant import (
             SYSTEM_TENANT_ID,
             CapabilityTenant,
         )

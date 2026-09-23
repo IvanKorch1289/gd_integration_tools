@@ -128,7 +128,7 @@ class PIIFacade:
     def _emit_audit(self, event: str, payload: str) -> None:
         """S191 fix: emit PII audit event для compliance tracking."""
         try:
-            from src.backend.core.observability.logging_helpers import (  # noqa: F401 — re-export
+            from src.backend.core.observability.logging_helpers import (
                 log_audit_event_lite,
             )
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from re import sub
 
-from pydantic import (  # noqa: F401 — re-export
+from pydantic import (
     BaseModel,
     ConfigDict,
     Field,

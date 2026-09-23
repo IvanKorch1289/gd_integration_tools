@@ -27,13 +27,13 @@ Backwards compatibility:
 
 from __future__ import annotations
 
-from src.backend.dsl.blueprints._python_blueprints import (  # noqa: F401 — re-export
+from src.backend.dsl.blueprints._python_blueprints import (
     api_normalize_persist_webhook,
     cdc_enrich_publish,
     file_watch_parse_validate_action,
     request_response_with_compensation,
 )
-from src.backend.dsl.blueprints.macros import (  # noqa: F401 — re-export
+from src.backend.dsl.blueprints.macros import (
     ai_qa_pipeline,
     crud_with_audit,
     etl_pipeline,

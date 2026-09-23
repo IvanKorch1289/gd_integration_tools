@@ -30,7 +30,7 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from src.backend.core.logging import get_logger
-from src.backend.infrastructure.resilience.unified_rate_limiter import (  # noqa: F401 — re-export
+from src.backend.infrastructure.resilience.unified_rate_limiter import (
     RateLimit,
     RateLimitExceeded,
     get_rate_limiter,

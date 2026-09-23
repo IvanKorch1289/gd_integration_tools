@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Any
 from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
-    from src.backend.services.ai.agent_sandbox._process_pool import (  # noqa: F401 — re-export
+    from src.backend.services.ai.agent_sandbox._process_pool import (
         ProcessPoolAgentSandbox,
     )
 
@@ -50,7 +50,7 @@ class AgentSandboxSelector:
     def select(self, kind: str | None = None) -> Any:
         """Возвращает singleton sandbox instance по kind."""
         from src.backend.services.ai.agent_sandbox._e2b import E2BAgentSandbox
-        from src.backend.services.ai.agent_sandbox._in_process import (  # noqa: F401 — re-export
+        from src.backend.services.ai.agent_sandbox._in_process import (
             InProcessAgentSandbox,
         )
 
@@ -129,7 +129,7 @@ def get_process_pool_agent_sandbox() -> "ProcessPoolAgentSandbox":
     """Singleton process-pool sandbox (lazy)."""
     global _process_pool_sandbox
     if _process_pool_sandbox is None:
-        from src.backend.services.ai.agent_sandbox._process_pool import (  # noqa: F401 — re-export
+        from src.backend.services.ai.agent_sandbox._process_pool import (
             ProcessPoolAgentSandbox,
         )
 

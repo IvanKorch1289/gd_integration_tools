@@ -9,7 +9,7 @@ from typing import Any
 from aiosmtplib import SMTP, SMTPAuthenticationError, SMTPException
 
 from src.backend.core.config.settings import MailSettings, settings
-from src.backend.core.resilience.breaker import (  # noqa: F401 — re-export
+from src.backend.core.resilience.breaker import (
     BreakerSpec,
     CircuitOpen,
     get_breaker_registry,

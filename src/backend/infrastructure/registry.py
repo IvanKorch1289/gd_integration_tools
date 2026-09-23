@@ -33,7 +33,7 @@ from typing import TYPE_CHECKING, Final
 from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.clients.base_connector import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.clients.base_connector import (
         HealthMode,
         HealthResult,
         InfrastructureClient,
@@ -222,7 +222,7 @@ class ConnectorRegistry:
         for name, result in zip(names, results, strict=True):
             if isinstance(result, Exception):
                 # Импорт-поздний чтобы избежать циклов.
-                from src.backend.infrastructure.clients.base_connector import (  # noqa: F401 — re-export
+                from src.backend.infrastructure.clients.base_connector import (
                     HealthResult as _HR,
                 )
 

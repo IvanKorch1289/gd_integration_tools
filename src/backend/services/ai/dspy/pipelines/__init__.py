@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from src.backend.services.ai.dspy.pipelines.credit_scoring import (  # noqa: F401 — re-export
+from src.backend.services.ai.dspy.pipelines.credit_scoring import (
     credit_scoring_pipeline,
 )
-from src.backend.services.ai.dspy.pipelines.document_parser import (  # noqa: F401 — re-export
+from src.backend.services.ai.dspy.pipelines.document_parser import (
     document_parser_pipeline,
 )
-from src.backend.services.ai.dspy.pipelines.rag_reranker import (  # noqa: F401 — re-export
+from src.backend.services.ai.dspy.pipelines.rag_reranker import (
     rag_reranker_pipeline as rag_reranker_pipeline,
 )
 

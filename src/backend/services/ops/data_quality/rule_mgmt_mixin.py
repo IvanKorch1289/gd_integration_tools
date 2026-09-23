@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.services.ops.data_quality import (  # noqa: F401 — re-export
+    from src.backend.services.ops.data_quality import (
         DQRemediationResult,
         DQRule,
         DQViolation,

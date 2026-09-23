@@ -202,7 +202,7 @@ class ClickHouseAuditService:
                 # Lazy import для layer-clean (services → infrastructure).
                 # Sprint 40 W1 Item 6: DLQEnvelope/DLQReason live в
                 # infrastructure.messaging.dlq_base, NOT в core.api.messaging.
-                from src.backend.infrastructure.messaging.dlq_base import (  # noqa: F401 — re-export
+                from src.backend.infrastructure.messaging.dlq_base import (
                     DLQEnvelope,
                     DLQReason,
                 )

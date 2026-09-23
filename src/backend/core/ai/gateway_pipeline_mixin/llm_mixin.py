@@ -191,7 +191,7 @@ class LlmInvocationMixin(_PipelineStepsProtocol):
             and hasattr(policy, "model_router")
             and policy.model_router is not None
         ):
-            from src.backend.core.ai.pydantic_ai_client import (  # noqa: F401 — re-export
+            from src.backend.core.ai.pydantic_ai_client import (
                 LLMDependencies,
                 PydanticAIClient,
             )
@@ -234,10 +234,10 @@ class LlmInvocationMixin(_PipelineStepsProtocol):
         # S127 W4 (TD-022): inject Anthropic prompt cache_control
         # для cacheable моделей (50-90% token savings на повторных
         # вызовах с идентичным prompt).
-        from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_inject_openai_prompt_cache as _get_iopc,
         )
-        from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_inject_prompt_cache as _get_ipc,
         )
 

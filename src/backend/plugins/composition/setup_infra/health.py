@@ -45,7 +45,7 @@ async def _register_health_checks() -> None:
     Aggregator exposes unified /health endpoint for K8s probes.
     """
     try:
-        from src.backend.infrastructure.application.health_aggregator import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.application.health_aggregator import (
             get_health_aggregator,
         )
     except ImportError:

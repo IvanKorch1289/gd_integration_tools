@@ -143,7 +143,7 @@ class ParallelProcessor(BaseProcessor):
         # ADR-0305: compute branch-level timeout budget.
         branch_timeout: float | None = None
         try:
-            from src.backend.core.async_utils.deadline_budget import (  # noqa: F401 — re-export
+            from src.backend.core.async_utils.deadline_budget import (
                 DeadlineExpiredError,
             )
             from src.backend.core.request_context import RequestContext

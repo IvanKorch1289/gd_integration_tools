@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from src.backend.services.schema_registry.registry import (  # noqa: F401 — re-export
+from src.backend.services.schema_registry.registry import (
     SchemaEntry,
     SchemaKind,
     ServiceSchemaRegistry,
@@ -160,7 +160,7 @@ def populate_from_manifests(registry: ServiceSchemaRegistry | None = None) -> in
     """
     reg = registry or get_schema_registry()
     try:
-        from src.backend.core.plugin_runtime.registry import (  # noqa: F401 — re-export  # type: ignore[import-not-found,import-untyped]  # optional plugin-runtime, ImportError fallback
+        from src.backend.core.plugin_runtime.registry import (  # type: ignore[import-not-found,import-untyped]  # optional plugin-runtime, ImportError fallback
             get_plugin_registry,  # type: ignore[import-not-found]
         )
     except ImportError:

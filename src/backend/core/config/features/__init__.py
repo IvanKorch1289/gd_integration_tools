@@ -60,7 +60,7 @@ from typing import Literal as Literal
 from pydantic import Field as Field
 from pydantic_settings import SettingsConfigDict as SettingsConfigDict
 
-from src.backend.core.config.config_loader import (  # noqa: F401 — re-export
+from src.backend.core.config.config_loader import (
     BaseSettingsWithLoader as BaseSettingsWithLoader,
 )
 from src.backend.core.config.features.ai import AIFlags as AIFlags
@@ -68,41 +68,41 @@ from src.backend.core.config.features.ai_rag import AIRAGFlags as AIRAGFlags
 from src.backend.core.config.features.auth import AuthFlags as AuthFlags
 from src.backend.core.config.features.billing import BillingFlags as BillingFlags
 from src.backend.core.config.features.dsl import DSLFlags as DSLFlags
-from src.backend.core.config.features.experimental import (  # noqa: F401 — re-export
+from src.backend.core.config.features.experimental import (
     ExperimentalFlags as ExperimentalFlags,
 )
-from src.backend.core.config.features.infrastructure import (  # noqa: F401 — re-export
+from src.backend.core.config.features.infrastructure import (
     InfrastructureFlags as InfrastructureFlags,
 )
 from src.backend.core.config.features.net import NetFlags as NetFlags
-from src.backend.core.config.features.observability import (  # noqa: F401 — re-export
+from src.backend.core.config.features.observability import (
     ObservabilityFlags as ObservabilityFlags,
 )
 from src.backend.core.config.features.plugins import PluginsFlags as PluginsFlags
-from src.backend.core.config.features.resilience import (  # noqa: F401 — re-export
+from src.backend.core.config.features.resilience import (
     ResilienceFlags as ResilienceFlags,
 )
 from src.backend.core.config.features.security import SecurityFlags as SecurityFlags
 from src.backend.core.config.features.sprint5 import Sprint5Flags as Sprint5Flags
-from src.backend.core.config.features.sprint5_dsl import (  # noqa: F401 — re-export
+from src.backend.core.config.features.sprint5_dsl import (
     Sprint5DSLFlags as Sprint5DSLFlags,
 )
 from src.backend.core.config.features.sprint5_k2 import Sprint5K2Flags as Sprint5K2Flags
 from src.backend.core.config.features.sprint6 import Sprint6Flags as Sprint6Flags
 from src.backend.core.config.features.sprint7 import Sprint7Flags as Sprint7Flags
-from src.backend.core.config.features.sprint19_ai import (  # noqa: F401 — re-export
+from src.backend.core.config.features.sprint19_ai import (
     Sprint19AIFlags as Sprint19AIFlags,
 )
-from src.backend.core.config.features.sprint19_dx import (  # noqa: F401 — re-export
+from src.backend.core.config.features.sprint19_dx import (
     Sprint19DXFlags as Sprint19DXFlags,
 )
-from src.backend.core.config.features.sprints_15_17 import (  # noqa: F401 — re-export
+from src.backend.core.config.features.sprints_15_17 import (
     Sprints1517Flags as Sprints1517Flags,
 )
-from src.backend.core.config.features.sprints_18_21 import (  # noqa: F401 — re-export
+from src.backend.core.config.features.sprints_18_21 import (
     Sprints1821Flags as Sprints1821Flags,
 )
-from src.backend.core.config.features.sprints_24_27 import (  # noqa: F401 — re-export
+from src.backend.core.config.features.sprints_24_27 import (
     Sprints2427Flags as Sprints2427Flags,
 )
 from src.backend.core.config.features.workflow import WorkflowFlags as WorkflowFlags

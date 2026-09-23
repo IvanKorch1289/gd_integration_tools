@@ -12,7 +12,7 @@ from typing import Any
 from src.backend.core.di import app_state_singleton
 from src.backend.core.logging import get_logger
 from src.backend.core.models.express import ExpressDialog, ExpressMessage
-from src.backend.infrastructure.clients.storage.mongodb import (  # noqa: F401 — re-export
+from src.backend.infrastructure.clients.storage.mongodb import (
     MongoDBClient,
     get_mongo_client,
 )

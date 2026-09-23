@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.invocation_reply import ReplyChannelKind
-from src.backend.core.interfaces.invoker import (  # noqa: F401 — re-export
+from src.backend.core.interfaces.invoker import (
     InvocationMode,
     InvocationRequest,
     InvocationResponse,

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.state.runtime import disabled_feature_flags
-from src.backend.dsl.commands.action_registry import (  # noqa: F401 — re-export
+from src.backend.dsl.commands.action_registry import (
     ActionHandlerRegistry,
     ActionHandlerSpec,
     action_handler_registry,

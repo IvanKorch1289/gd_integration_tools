@@ -13,28 +13,28 @@ from enum import StrEnum as StrEnum
 from typing import Any as Any
 
 from src.backend.core.auth.api_key_backend import APIKeyAuth
-from src.backend.core.auth.auth_context_helpers import (  # noqa: F401 — re-export
+from src.backend.core.auth.auth_context_helpers import (
     extract_tenant_id,
     extract_user_groups,
 )
-from src.backend.core.auth.mtls_backend import (  # noqa: F401 — re-export
+from src.backend.core.auth.mtls_backend import (
     MtlsBackend,
     MtlsConfig,
     MtlsVerificationError,
     ParsedClientCert,
 )
-from src.backend.core.auth.require_sso_auth import (  # noqa: F401 — re-export
+from src.backend.core.auth.require_sso_auth import (
     RequireSsoAuthError,
     require_sso_auth,
     require_sso_capability,
 )
-from src.backend.core.auth.saml_backend import (  # noqa: F401 — re-export
+from src.backend.core.auth.saml_backend import (
     SamlAuthResult,
     SamlBackend,
     SamlConfig,
     SamlError,
 )
-from src.backend.core.auth.sso_registry import (  # noqa: F401 — re-export
+from src.backend.core.auth.sso_registry import (
     HvacVaultClient,
     SsoRegistry,
     SsoRegistryError,

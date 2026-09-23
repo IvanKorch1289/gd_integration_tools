@@ -10,7 +10,7 @@ Cost tracking: через :mod:`services.ai.metrics.AgentMetricsService`
 (record_cost) — best-effort, не ломает вызов.
 """
 
-from src.backend.services.ai.image_generation.litellm_image import (  # noqa: F401 — re-export
+from src.backend.services.ai.image_generation.litellm_image import (
     ImageGenerationUnavailable,
     ImageResult,
     LiteLLMImageGenerationService,

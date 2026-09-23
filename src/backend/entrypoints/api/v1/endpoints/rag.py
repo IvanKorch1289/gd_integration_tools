@@ -22,7 +22,7 @@ from pydantic import BaseModel, Field
 
 from src.backend.core.config.rag import rag_settings
 from src.backend.core.logging import get_logger
-from src.backend.entrypoints.api.generator.actions import (  # noqa: F401 — re-export
+from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
 )
@@ -224,7 +224,7 @@ class _RAGFacade:
         → log warning + skip mask (raw text уходит в vector store).
         """
         from src.backend.core.config import ai_stack
-        from src.backend.core.policy.pii_fail_closed import (  # noqa: F401 — re-export
+        from src.backend.core.policy.pii_fail_closed import (
             PIIFailClosedError,
             raise_pii_fail_closed,
         )

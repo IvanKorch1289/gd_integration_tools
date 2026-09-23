@@ -5,11 +5,11 @@ from typing import Any
 from fastapi.responses import StreamingResponse
 
 from src.backend.infrastructure.clients.storage.s3_pool import BaseS3Client, s3_client
-from src.backend.infrastructure.decorators.caching import (  # noqa: F401 — re-export
+from src.backend.infrastructure.decorators.caching import (
     existence_cache,
     metadata_cache,
 )
-from src.backend.infrastructure.external_apis._base64_codec import (  # noqa: F401 — re-export
+from src.backend.infrastructure.external_apis._base64_codec import (
     decode_base64,
     encode_base64,
 )

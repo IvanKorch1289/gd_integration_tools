@@ -13,22 +13,22 @@ Backward-compat: ``from src.backend.services.ai.ai_providers import ClaudeProvid
 
 from __future__ import annotations
 
-from src.backend.services.ai.ai_providers.claude import (  # noqa: F401 — re-export
+from src.backend.services.ai.ai_providers.claude import (
     ClaudeProvider,  # S68 W4: re-export
 )
-from src.backend.services.ai.ai_providers.gemini import (  # noqa: F401 — re-export
+from src.backend.services.ai.ai_providers.gemini import (
     GeminiProvider,  # S68 W4: re-export
 )
-from src.backend.services.ai.ai_providers.helpers import (  # noqa: F401 — re-export
+from src.backend.services.ai.ai_providers.helpers import (
     register_extended_providers,  # S68 W4: helper re-export
 )
-from src.backend.services.ai.ai_providers.ollama import (  # noqa: F401 — re-export
+from src.backend.services.ai.ai_providers.ollama import (
     OllamaProvider,  # S68 W4: re-export
 )
-from src.backend.services.ai.ai_providers.openai import (  # noqa: F401 — re-export
+from src.backend.services.ai.ai_providers.openai import (
     OpenAIProvider,  # S68 W4: re-export
 )
-from src.backend.services.ai.ai_providers.russian import (  # noqa: F401 — re-export
+from src.backend.services.ai.ai_providers.russian import (
     GigaChatProvider,  # FW4
     SaluteSpeechProvider,  # FW4
     YandexGPTProvider,  # FW4

@@ -45,7 +45,7 @@ class SinksMixin:
         строит :class:`~src.backend.infrastructure.sinks.email_sink.EmailSink`
         через :func:`build_sink`.
         """
-        from src.backend.dsl.engine.processors.sink_publish import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.sink_publish import (
             GenericSinkPublishProcessor,
         )
 
@@ -94,7 +94,7 @@ class SinksMixin:
             ensure_dir: Создавать parent dir если отсутствует.
 
         """
-        from src.backend.dsl.engine.processors.sink_publish import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.sink_publish import (
             GenericSinkPublishProcessor,
         )
 
@@ -168,7 +168,7 @@ class SinksMixin:
         :class:`~src.backend.infrastructure.sinks.http_sink.HttpSink` для
         полной Sink-симметрии (один обобщённый ``sink_publish`` step).
         """
-        from src.backend.dsl.engine.processors.sink_publish import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.sink_publish import (
             GenericSinkPublishProcessor,
         )
 
@@ -238,7 +238,7 @@ class SinksMixin:
         См. :class:`MqttPublishProcessor` и
         :class:`~src.backend.infrastructure.sinks.mqtt_sink.MqttSink`.
         """
-        from src.backend.core.config.services.mqtt import (  # noqa: F401 — re-export
+        from src.backend.core.config.services.mqtt import (
             mqtt_settings as _mqtt_settings,
         )
 
@@ -274,7 +274,7 @@ class SinksMixin:
         См. :class:`~src.backend.infrastructure.sinks.s3_sink.S3Sink`
         (Sprint 3 W1 K3, GAP-03 symmetry).
         """
-        from src.backend.dsl.engine.processors.sink_publish import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.sink_publish import (
             GenericSinkPublishProcessor,
         )
 
@@ -338,7 +338,7 @@ class SinksMixin:
 
         См. :class:`~src.backend.infrastructure.sinks.webhook_sink.WebhookSink`.
         """
-        from src.backend.dsl.engine.processors.sink_publish import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.sink_publish import (
             GenericSinkPublishProcessor,
         )
 

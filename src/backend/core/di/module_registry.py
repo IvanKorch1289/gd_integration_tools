@@ -45,7 +45,7 @@ from enum import Enum
 from types import ModuleType
 from typing import Final
 
-from src.backend.core.di.module_registry_extensions import (  # noqa: F401 — re-export
+from src.backend.core.di.module_registry_extensions import (
     ExtensionRegistrationError,
     clear_extension_modules,
     is_extension_path,

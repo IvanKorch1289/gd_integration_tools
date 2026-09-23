@@ -14,153 +14,153 @@ def get_v1_routers() -> APIRouter:
         Единый ``APIRouter`` со всеми v1-маршрутами, готовый к ``app.include_router``.
 
     """
-    from src.backend.entrypoints.api.v1.endpoints.actions_inventory import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.actions_inventory import (
         router as actions_inventory_router,
     )
     from src.backend.entrypoints.api.v1.endpoints.admin import router as admin_router
-    from src.backend.entrypoints.api.v1.endpoints.admin_actions import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.admin_actions import (
         router as admin_actions_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_audit_replay import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.admin_audit_replay import (
         router as admin_audit_replay_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_capabilities import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.admin_capabilities import (
         router as admin_capabilities_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_certs import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.admin_certs import (
         router as admin_certs_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_connectors import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.admin_connectors import (
         router as admin_connectors_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_cron import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.admin_cron import (
         router as admin_cron_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_feature_flags import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.admin_feature_flags import (
         router as admin_feature_flags_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_feedback import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.admin_feedback import (
         router as admin_feedback_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_ip_restriction import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.admin_ip_restriction import (
         router as admin_ip_restriction_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_langgraph import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.admin_langgraph import (
         router as admin_langgraph_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_model_registry import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.admin_model_registry import (
         router as admin_model_registry_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_parallelism import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.admin_parallelism import (
         router as admin_parallelism_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_plugins import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.admin_plugins import (
         router as admin_plugins_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_rag import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.admin_rag import (
         router as admin_rag_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_resilience_profile import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.admin_resilience_profile import (
         router as admin_resilience_profile_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_scheduler_dlq import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.admin_scheduler_dlq import (
         router as admin_scheduler_dlq_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_schemas import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.admin_schemas import (
         router as admin_schemas_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_tenants import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.admin_tenants import (
         router as admin_tenants_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_workflow_audit import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.admin_workflow_audit import (
         router as admin_workflow_audit_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_workflow_cost import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.admin_workflow_cost import (
         router as admin_workflow_cost_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_workflow_templates import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.admin_workflow_templates import (
         router as admin_workflow_templates_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_workflow_versioning import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.admin_workflow_versioning import (
         router as admin_workflow_versioning_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_workflows import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.admin_workflows import (
         router as admin_workflows_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.agent_memory import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.agent_memory import (
         router as agent_memory_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.ai_agents import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.ai_agents import (
         router as ai_agents_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.ai_costs import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.ai_costs import (
         router as ai_costs_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.ai_feedback import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.ai_feedback import (
         router as ai_feedback_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.ai_stream import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.ai_stream import (
         router as ai_stream_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.ai_tools import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.ai_tools import (
         router as ai_tools_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.asyncapi import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.asyncapi import (
         router as asyncapi_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.auth_introspect import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.auth_introspect import (
         router as auth_introspect_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.auth_login import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.auth_login import (
         router as auth_login_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.auth_methods import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.auth_methods import (
         router as auth_methods_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.auth_saml import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.auth_saml import (
         router as auth_saml_router,
     )
     from src.backend.entrypoints.api.v1.endpoints.dadata import router as dadata_router
-    from src.backend.entrypoints.api.v1.endpoints.dsl_console import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.dsl_console import (
         router as dsl_console_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.dsl_routes import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.dsl_routes import (
         router as dsl_routes_router,
     )
     from src.backend.entrypoints.api.v1.endpoints.files import router as files_router
     from src.backend.entrypoints.api.v1.endpoints.files import storage_router
     from src.backend.entrypoints.api.v1.endpoints.health import router as health_router
     from src.backend.entrypoints.api.v1.endpoints.hitl import router as hitl_router
-    from src.backend.entrypoints.api.v1.endpoints.imports import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.imports import (
         router as imports_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.invocations import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.invocations import (
         router as invocations_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.langmem_admin import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.langmem_admin import (
         router as langmem_admin_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.notebooks import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.notebooks import (
         router as notebooks_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.orderkinds import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.orderkinds import (
         router as orderkinds_router,
     )
     from src.backend.entrypoints.api.v1.endpoints.orders import router as orders_router
-    from src.backend.entrypoints.api.v1.endpoints.plugin_inventory import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.plugin_inventory import (
         plugins_router as v11_plugins_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.plugin_inventory import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.plugin_inventory import (
         routes_router as v11_routes_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.processors_catalog import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.processors_catalog import (
         router as processors_catalog_router,
     )
     from src.backend.entrypoints.api.v1.endpoints.rag import router as rag_router
-    from src.backend.entrypoints.api.v1.endpoints.rag_cache_admin import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.rag_cache_admin import (
         router as rag_cache_admin_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.rag_ingest import (  # noqa: F401 — re-export
+    from src.backend.entrypoints.api.v1.endpoints.rag_ingest import (
         router as rag_ingest_router,
     )
     from src.backend.entrypoints.api.v1.endpoints.search import router as search_router

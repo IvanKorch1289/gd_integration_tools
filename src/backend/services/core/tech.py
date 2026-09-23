@@ -188,7 +188,7 @@ class TechService:
         samples, error_rate}}`` — используется для admin-обзора и
         Prometheus exporter'ом (TBD R3).
         """
-        from src.backend.core.resilience.graceful_degradation import (  # noqa: F401 — re-export
+        from src.backend.core.resilience.graceful_degradation import (
             get_graceful_degradation_registry,
         )
 

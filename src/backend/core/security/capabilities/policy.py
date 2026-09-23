@@ -7,7 +7,7 @@ Policy-engine консультируется gate'ом **до** deny-прове�
 
 Использование::
 
-    from src.backend.core.security.capabilities.policy import (  # noqa: F401 — re-export
+    from src.backend.core.security.capabilities.policy import (
         CapabilityPolicy, CapabilityRule, PolicyDecision,
     )
 

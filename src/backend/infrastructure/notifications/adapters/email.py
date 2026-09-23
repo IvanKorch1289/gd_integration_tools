@@ -32,7 +32,7 @@ class EmailAdapter:
         """
         # Поздний импорт — SMTPClient может иметь тяжёлые зависимости.
         try:
-            from src.backend.infrastructure.clients.transport.smtp import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.clients.transport.smtp import (
                 get_smtp_client,
             )
         except ImportError as exc:
@@ -53,7 +53,7 @@ class EmailAdapter:
 
         start = time.perf_counter()
         try:
-            from src.backend.infrastructure.clients.transport.smtp import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.clients.transport.smtp import (
                 get_smtp_client,
             )
 

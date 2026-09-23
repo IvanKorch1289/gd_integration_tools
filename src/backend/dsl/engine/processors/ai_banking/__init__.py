@@ -10,16 +10,16 @@ KycAmlResult, KycAmlVerifyProcessor`` works через re-exports ниже.
 
 from __future__ import annotations
 
-from src.backend.dsl.engine.processors.ai_banking._base import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.ai_banking._base import (
     _BankingAIProcessor,  # S50 W3: base
 )
-from src.backend.dsl.engine.processors.ai_banking.credit import (  # noqa: F401 — re-export  # S50 W3: re-export
+from src.backend.dsl.engine.processors.ai_banking.credit import (  # S50 W3: re-export
     AppealProcessorAI,
     CreditScoringRagProcessor,
     CreditScoringResult,
     CustomerChatbotProcessor,
 )
-from src.backend.dsl.engine.processors.ai_banking.document import (  # noqa: F401 — re-export  # S50 W3: re-export
+from src.backend.dsl.engine.processors.ai_banking.document import (  # S50 W3: re-export
     DocumentClassifierProcessor,
     DocumentClassifierResult,
     FinDocOcrLlmProcessor,
@@ -27,21 +27,21 @@ from src.backend.dsl.engine.processors.ai_banking.document import (  # noqa: F40
     FrancotypingResult,
     TransactionCategorizerProcessor,
 )
-from src.backend.dsl.engine.processors.ai_banking.identity import (  # noqa: F401 — re-export  # S50 W3: re-export
+from src.backend.dsl.engine.processors.ai_banking.identity import (  # S50 W3: re-export
     AntiFraudResult,
     AntiFraudScoreProcessor,
     KycAmlResult,
     KycAmlVerifyProcessor,
 )
-from src.backend.dsl.engine.processors.ai_banking.loan import (  # noqa: F401 — re-export  # B3: migrated from S59
+from src.backend.dsl.engine.processors.ai_banking.loan import (  # B3: migrated from S59
     LoanEligibilityProcessor,
     LoanEligibilityResult,
 )
-from src.backend.dsl.engine.processors.ai_banking.risk import (  # noqa: F401 — re-export  # B3: migrated from S59
+from src.backend.dsl.engine.processors.ai_banking.risk import (  # B3: migrated from S59
     RiskAssessmentProcessor,
     RiskAssessmentResult,
 )
-from src.backend.dsl.engine.processors.ai_banking.segmentation import (  # noqa: F401 — re-export  # B3: migrated from S59
+from src.backend.dsl.engine.processors.ai_banking.segmentation import (  # B3: migrated from S59
     CustomerSegmentationProcessor,
     CustomerSegmentationResult,
 )

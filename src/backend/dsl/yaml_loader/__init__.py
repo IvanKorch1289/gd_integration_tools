@@ -11,21 +11,21 @@ Backward-compat: ``from src.backend.dsl.yaml_loader import load_pipeline_from_ya
 
 from __future__ import annotations
 
-from src.backend.dsl.yaml_loader.build import (  # noqa: F401 — re-export
+from src.backend.dsl.yaml_loader.build import (
     _apply_processor,  # S62 W4: re-export
     _build_pipeline,  # S62 W4: re-export
     _build_sub,  # S62 W4: re-export
     _is_allowed_processor,  # S62 W4: re-export
 )
-from src.backend.dsl.yaml_loader.control_flow import (  # noqa: F401 — re-export
+from src.backend.dsl.yaml_loader.control_flow import (
     _materialize_control_flow_params,  # S62 W4: re-export
 )
-from src.backend.dsl.yaml_loader.loaders import (  # noqa: F401 — re-export
+from src.backend.dsl.yaml_loader.loaders import (
     load_all_from_directory,  # S62 W4: re-export
     load_pipeline_from_file,  # S62 W4: re-export
     load_pipeline_from_yaml,  # S62 W4: re-export
 )
-from src.backend.dsl.yaml_loader.resolve import (  # noqa: F401 — re-export
+from src.backend.dsl.yaml_loader.resolve import (
     _is_route_composition_include_enabled,  # S62 W4: re-export
     _resolve_include_extends,  # S62 W4: re-export
 )

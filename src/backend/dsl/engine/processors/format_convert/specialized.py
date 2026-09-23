@@ -37,12 +37,12 @@ if TYPE_CHECKING:
 # от stdlib ``ET``: в этом модуле они не использовались.
 # defusedxml drop-in: см. data_formats.py для актуальных XML-операций.
 
-from src.backend.dsl.engine.processors.format_convert._helpers import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.format_convert._helpers import (
     _bdecode,
     _bencode,
     _to_text,
 )
-from src.backend.dsl.engine.processors.format_convert._protocol import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.format_convert._protocol import (
     _FormatConvertProtocol,
 )
 

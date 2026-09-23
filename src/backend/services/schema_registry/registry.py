@@ -134,7 +134,7 @@ class ServiceSchemaRegistry:
         """
         view = getattr(self, "_schema_view", None)
         if view is None:
-            from src.backend.services.schema_registry.typed_adapter import (  # noqa: F401 — re-export
+            from src.backend.services.schema_registry.typed_adapter import (
                 SchemaTypedAdapter,
             )
 

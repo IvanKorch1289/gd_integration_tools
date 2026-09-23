@@ -25,7 +25,7 @@
 
 Использование::
 
-    from src.backend.core.observability_v2 import (  # noqa: F401 — re-export
+    from src.backend.core.observability_v2 import (
         SemanticContext, get_current_context, set_current_context,
     )
 
@@ -43,13 +43,13 @@
 
 from __future__ import annotations
 
-from src.backend.core.observability_v2.context import (  # noqa: F401 — re-export
+from src.backend.core.observability_v2.context import (
     SemanticContext,
     get_current_context,
     reset_current_context,
     set_current_context,
 )
-from src.backend.core.observability_v2.propagator import (  # noqa: F401 — re-export
+from src.backend.core.observability_v2.propagator import (
     CorrelationPropagator,
     TraceContextCarrier,
 )

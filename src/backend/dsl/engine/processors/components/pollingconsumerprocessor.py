@@ -43,7 +43,7 @@ class PollingConsumerProcessor(BaseProcessor):
         principal/permissions → Tier-1/2 actions с permission checks теряли
         auth context (parity с cycle 24 fix для DispatchActionProcessor).
         """
-        from src.backend.schemas.invocation import (  # noqa: F401 — re-export
+        from src.backend.schemas.invocation import (
             ActionCommandMetaSchema,
             ActionCommandSchema,
         )

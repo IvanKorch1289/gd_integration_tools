@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from src.backend.dsl.engine.processors.llm_structured._protocol import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.llm_structured._protocol import (
     _LLMStructuredProcessorProtocol,
 )
 
@@ -68,7 +68,7 @@ class ResolveMixin(_LLMStructuredProcessorProtocol):
 
         # 2) Имя класса — поиск в ServiceSchemaRegistry meta.
         try:
-            from src.backend.services.schema_registry import (  # noqa: F401 — re-export
+            from src.backend.services.schema_registry import (
                 SchemaKind,
                 get_schema_registry,
             )

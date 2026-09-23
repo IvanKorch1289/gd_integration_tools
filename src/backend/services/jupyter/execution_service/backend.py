@@ -35,7 +35,7 @@ class NbClientExecutionBackend:
                 "Install: uv sync --extra jupyter"
             ) from exc
 
-        from src.backend.services.jupyter.execution_service import (  # noqa: F401 — re-export
+        from src.backend.services.jupyter.execution_service import (
             NotebookExecutionService,
         )
 

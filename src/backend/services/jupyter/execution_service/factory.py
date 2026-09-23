@@ -104,7 +104,7 @@ class ExecutionBackendFactory:
             return override
 
         if kind == BackendKind.HUB:
-            from src.backend.services.jupyter.execution_service import (  # noqa: F401 — re-export
+            from src.backend.services.jupyter.execution_service import (
                 NotebookExecutionService,
             )
 
@@ -114,13 +114,13 @@ class ExecutionBackendFactory:
                 )
             return NotebookExecutionService(settings)
         if kind == BackendKind.PAPERMILL:
-            from src.backend.services.jupyter.execution_service import (  # noqa: F401 — re-export
+            from src.backend.services.jupyter.execution_service import (
                 PapermillExecutionBackend,
             )
 
             return PapermillExecutionBackend(**kwargs)
         if kind == BackendKind.NBCLIENT:
-            from src.backend.services.jupyter.execution_service import (  # noqa: F401 — re-export
+            from src.backend.services.jupyter.execution_service import (
                 NbClientExecutionBackend,
             )
 
@@ -128,7 +128,7 @@ class ExecutionBackendFactory:
         if kind == BackendKind.E2B:
             # S75 W2: E2BExecutionBackend integration (was NotImplementedError
             # в S74 W2 stub). e2b_code_interpreter opt-in dep ([ai] extra).
-            from src.backend.services.jupyter.execution_service import (  # noqa: F401 — re-export
+            from src.backend.services.jupyter.execution_service import (
                 E2BExecutionBackend,
             )
 

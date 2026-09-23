@@ -14,13 +14,13 @@ from uuid import UUID
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.backend.core.domain.models.workflow_event import (  # noqa: F401 — re-export
+from src.backend.core.domain.models.workflow_event import (
     WorkflowEvent,
     WorkflowEventType,
 )
 from src.backend.core.domain.models.workflow_instance import WorkflowInstance
 from src.backend.infrastructure.database.session_manager import main_session_manager
-from src.backend.infrastructure.workflow.pg_runner_internals.rows import (  # noqa: F401 — re-export
+from src.backend.infrastructure.workflow.pg_runner_internals.rows import (
     WorkflowEventRow,
 )
 

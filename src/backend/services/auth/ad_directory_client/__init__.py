@@ -9,10 +9,10 @@ Backward-compat: ``from src.backend.services.auth.ad_directory_client import AdD
 
 from __future__ import annotations
 
-from src.backend.services.auth.ad_directory_client.client import (  # noqa: F401 — re-export
+from src.backend.services.auth.ad_directory_client.client import (
     AdDirectoryClient,  # S67 W4: re-export
 )
-from src.backend.services.auth.ad_directory_client.state import (  # noqa: F401 — re-export
+from src.backend.services.auth.ad_directory_client.state import (
     AdAuthError,  # S67 W4: re-export
     AdSearchEntry,  # S67 W4: re-export
     AdServerConfig,  # S67 W4: re-export

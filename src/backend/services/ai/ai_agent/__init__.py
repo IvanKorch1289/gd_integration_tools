@@ -17,31 +17,31 @@ from __future__ import annotations
 from typing import TYPE_CHECKING as TYPE_CHECKING
 from typing import Any as Any
 
-from src.backend.core.di.providers.ai import (  # noqa: F401 — re-export
+from src.backend.core.di.providers.ai import (
     get_ai_sanitizer_provider as get_ai_sanitizer_provider,
 )
 
 if TYPE_CHECKING:
     from src.backend.core.di.providers.ai import get_ai_sanitizer_provider
     from src.backend.core.di.providers.http import get_http_client_provider
-    from src.backend.core.interfaces.ai_clients import (  # noqa: F401 — re-export
+    from src.backend.core.interfaces.ai_clients import (
         AISanitizerProtocol,
         HttpClientProtocol,
     )
 
-from src.backend.services.ai.ai_agent.agent_orchestration_mixin import (  # noqa: F401 — re-export
+from src.backend.services.ai.ai_agent.agent_orchestration_mixin import (
     AgentOrchestrationMixin,  # S54 W2: MRO
 )
-from src.backend.services.ai.ai_agent.http_providers_mixin import (  # noqa: F401 — re-export
+from src.backend.services.ai.ai_agent.http_providers_mixin import (
     HttpProvidersMixin,  # S54 W2: MRO
 )
-from src.backend.services.ai.ai_agent.policy_mixin import (  # noqa: F401 — re-export
+from src.backend.services.ai.ai_agent.policy_mixin import (
     PolicyMixin,  # S54 W2: MRO as PolicyMixin  # S54 W2: MRO
 )
-from src.backend.services.ai.ai_agent.rag_mixin import (  # noqa: F401 — re-export
+from src.backend.services.ai.ai_agent.rag_mixin import (
     RagMixin,  # S54 W2: MRO as RagMixin  # S54 W2: MRO
 )
-from src.backend.services.ai.ai_agent.web_methods_mixin import (  # noqa: F401 — re-export
+from src.backend.services.ai.ai_agent.web_methods_mixin import (
     WebMethodsMixin,  # S54 W2: MRO
 )
 
@@ -65,7 +65,7 @@ class AIAgentService(
     _agent_redis: Any
 
     def __init__(self) -> None:
-        from src.backend.core.config.ai import (  # noqa: F401 — re-export
+        from src.backend.core.config.ai import (
             AIProvidersSettings,
             HuggingFaceSettings,
             OpenWebUISettings,

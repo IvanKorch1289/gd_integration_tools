@@ -334,7 +334,7 @@ class TokenBudget:
             if effective_fail_mode == "closed":
                 # Cycle 36: raise typed exception so callers can distinguish
                 # from BudgetExceeded (which signals hard_limit breach).
-                from src.backend.core.tenancy.token_budget import (  # noqa: F401 — re-export
+                from src.backend.core.tenancy.token_budget import (
                     BudgetBackendUnavailable,
                 )
 

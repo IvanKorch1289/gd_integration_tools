@@ -128,7 +128,7 @@ def _register_db_pool_in_unified_monitor() -> None:
     Безопасна при отключённом feature-flag (monitor.start() — no-op).
     """
     try:
-        from src.backend.infrastructure.clients.pool_health import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.clients.pool_health import (
             get_pool_monitor as get_unified_monitor,
         )
         from src.backend.infrastructure.database.database import get_db_initializer

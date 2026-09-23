@@ -27,16 +27,16 @@ backend-selection factory без жёсткой зависимости от exte
 
 from __future__ import annotations
 
-from src.backend.core.feature_flags.flagsmith_client import (  # noqa: F401 — re-export
+from src.backend.core.feature_flags.flagsmith_client import (
     FlagsmithClient,
     FlagsmithFlag,
     FlagsmithUnavailableError,
 )
-from src.backend.core.feature_flags.flagsmith_provider import (  # noqa: F401 — re-export
+from src.backend.core.feature_flags.flagsmith_provider import (
     FlagsmithProvider,
     is_external_provider_enabled,
 )
-from src.backend.core.feature_flags.openfeature_provider import (  # noqa: F401 — re-export
+from src.backend.core.feature_flags.openfeature_provider import (
     EvaluationContext,
     FlagsmithBackend,
     InMemoryProvider,
@@ -45,7 +45,7 @@ from src.backend.core.feature_flags.openfeature_provider import (  # noqa: F401 
     get_openfeature_backend,
     is_flagsmith_backend_enabled,
 )
-from src.backend.core.feature_flags.service import (  # noqa: F401 — re-export
+from src.backend.core.feature_flags.service import (
     FeatureFlagService,
     get_feature_flag_service,
 )

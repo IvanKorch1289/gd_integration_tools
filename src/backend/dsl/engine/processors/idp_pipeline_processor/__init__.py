@@ -34,7 +34,7 @@ _CLASSIFY_KEYWORDS: dict[str, tuple[str, ...]] = {
 # Patterns are deliberately permissive to keep confidence ≥ threshold
 # on well-formed documents.
 
-from src.backend.dsl.engine.processors.idp_pipeline_processor.helpers import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.idp_pipeline_processor.helpers import (
     DEFAULT_EXTRACTORS,  # S124 W2: restored constant (lost in S65 W4 decomp)
     _coerce_to_text,  # S65 W4: helper re-export
     _contract_extractors,  # S65 W4: helper re-export
@@ -47,19 +47,19 @@ from src.backend.dsl.engine.processors.idp_pipeline_processor.helpers import (  
     extract_fields,  # S65 W4: helper re-export
     validate_result,  # S65 W4: helper re-export
 )
-from src.backend.dsl.engine.processors.idp_pipeline_processor.helpers_mixin import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.idp_pipeline_processor.helpers_mixin import (
     HelpersMixin,  # S65 W4: MRO
 )
-from src.backend.dsl.engine.processors.idp_pipeline_processor.pipeline_mixin import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.idp_pipeline_processor.pipeline_mixin import (
     PipelineMixin,  # S65 W4: MRO
 )
-from src.backend.dsl.engine.processors.idp_pipeline_processor.routing_mixin import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.idp_pipeline_processor.routing_mixin import (
     RoutingMixin,  # S65 W4: MRO
 )
-from src.backend.dsl.engine.processors.idp_pipeline_processor.serialization_mixin import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.idp_pipeline_processor.serialization_mixin import (
     SerializationMixin,  # S65 W4: MRO
 )
-from src.backend.dsl.engine.processors.idp_pipeline_processor.state import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.idp_pipeline_processor.state import (
     IDPResult,  # S65 W4: re-export
     _FieldPattern,  # S65 W4: re-export
 )

@@ -9,10 +9,10 @@ Backward-compat: from src.backend.core.config.base import AppBaseSettings works.
 
 from __future__ import annotations
 
-from src.backend.core.config.base.app_base import (  # noqa: F401 — re-export
+from src.backend.core.config.base.app_base import (
     AppBaseSettings,  # S65 W3: re-export as AppBaseSettings  # S65 W3: re-export
 )
-from src.backend.core.config.base.scheduler import (  # noqa: F401 — re-export
+from src.backend.core.config.base.scheduler import (
     SchedulerSettings,  # S65 W3: re-export
 )
 

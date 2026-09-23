@@ -89,7 +89,7 @@ class RagQueryProcessor(BaseProcessor):
             from src.backend.core.config.features import feature_flags
 
             if feature_flags.adaptive_rag_strategy:
-                from src.backend.services.ai.rag.strategy_selector import (  # noqa: F401 — re-export
+                from src.backend.services.ai.rag.strategy_selector import (
                     AdaptiveStrategySelector,
                 )
 

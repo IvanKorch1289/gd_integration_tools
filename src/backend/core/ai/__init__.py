@@ -27,7 +27,7 @@
   ``tools/checks/check_ai_gateway_coverage.py``).
 """
 
-from src.backend.core.ai.errors import (  # noqa: F401 — re-export
+from src.backend.core.ai.errors import (
     GuardrailViolationError,
     GuardResult,
     WorkspaceQuotaExceededError,

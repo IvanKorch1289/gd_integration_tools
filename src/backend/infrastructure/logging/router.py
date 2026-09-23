@@ -29,7 +29,7 @@ from typing import Any
 
 from src.backend.core.config.profile import AppProfileChoices, get_active_profile
 from src.backend.core.interfaces.log_sink import LogSink
-from src.backend.infrastructure.logging.backends import (  # noqa: F401 — re-export
+from src.backend.infrastructure.logging.backends import (
     ConsoleJsonLogSink,
     DiskRotatingLogSink,
     GraylogGelfLogSink,
@@ -209,7 +209,7 @@ def configure_router(
             use_batching = active in (AppProfileChoices.staging, AppProfileChoices.prod)
 
         if use_batching:
-            from src.backend.infrastructure.logging.batching_router import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.logging.batching_router import (
                 BatchingSinkRouter,
             )
 

@@ -9,7 +9,7 @@
 
 API::
 
-    from src.backend.core.serialization.msgspec_hotpath import (  # noqa: F401 — re-export
+    from src.backend.core.serialization.msgspec_hotpath import (
         encode_json, decode_json, hash_cache_key, encode_ws_frame,
     )
 

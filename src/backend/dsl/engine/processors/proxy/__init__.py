@@ -2,7 +2,7 @@
 
 Публичный re-export:
 
-    from src.backend.dsl.engine.processors.proxy import (  # noqa: F401 — re-export
+    from src.backend.dsl.engine.processors.proxy import (
         ExposeProxyProcessor,
         ForwardToProcessor,
         HeaderMapPolicy,
@@ -12,11 +12,11 @@
 
 from __future__ import annotations
 
-from src.backend.dsl.engine.processors.proxy.expose import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.proxy.expose import (
     ExposeProxyProcessor,
     ProxyInboundSpec,
 )
-from src.backend.dsl.engine.processors.proxy.forward import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.proxy.forward import (
     ForwardToProcessor,
     ProxyOutboundSpec,
 )

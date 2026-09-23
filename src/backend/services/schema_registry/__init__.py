@@ -20,20 +20,20 @@ from __future__ import annotations
 from src.backend.services.schema_registry.exporter_asyncapi import export_asyncapi
 from src.backend.services.schema_registry.exporter_jsonschema import export_jsonschema
 from src.backend.services.schema_registry.exporter_openapi import export_openapi
-from src.backend.services.schema_registry.populator import (  # noqa: F401 — re-export
+from src.backend.services.schema_registry.populator import (
     populate_from_actions,
     populate_from_manifests,
     populate_from_processor_registry,
     populate_from_routes,
 )
-from src.backend.services.schema_registry.registry import (  # noqa: F401 — re-export
+from src.backend.services.schema_registry.registry import (
     CURRENT_SNAPSHOT_VERSION,
     SchemaEntry,
     SchemaKind,
     ServiceSchemaRegistry,
     get_schema_registry,
 )
-from src.backend.services.schema_registry.typed_adapter import (  # noqa: F401 — re-export
+from src.backend.services.schema_registry.typed_adapter import (
     SchemaEntryView,
     SchemaTypedAdapter,
     SnapshotView,

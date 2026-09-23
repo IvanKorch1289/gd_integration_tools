@@ -20,7 +20,7 @@ import asyncio
 import time
 from typing import Any
 
-from src.backend.core.idempotency.backends.base import (  # noqa: F401 — re-export
+from src.backend.core.idempotency.backends.base import (
     IdempotencyBackend,
     IdempotencyEntry,
     IdempotencyOutcome,

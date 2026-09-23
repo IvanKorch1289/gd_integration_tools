@@ -6,7 +6,7 @@
 
 Использование::
 
-    from src.backend.services.ai.multi_agent import (  # noqa: F401 — re-export
+    from src.backend.services.ai.multi_agent import (
         MultiAgentSupervisor,
         AgentSpec,
         get_credit_pipeline_supervisor,
@@ -28,7 +28,7 @@
 
 from __future__ import annotations
 
-from src.backend.services.ai.multi_agent.supervisor import (  # noqa: F401 — re-export
+from src.backend.services.ai.multi_agent.supervisor import (
     AgentSpec,
     MultiAgentSupervisor,
     MultiAgentSupervisorUnavailable,

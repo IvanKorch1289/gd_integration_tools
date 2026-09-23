@@ -31,12 +31,12 @@ if TYPE_CHECKING:
     from src.backend.dsl.engine.pipeline import Pipeline
     from src.backend.dsl.engine.tracer import get_tracer
     from src.backend.dsl.workflow.spec import WorkflowDeclaration
-    from src.backend.dsl.workflow.visualize import (  # noqa: F401 — re-export
+    from src.backend.dsl.workflow.visualize import (
         compute_step_diff,
         to_graphviz,
         to_mermaid,
     )
-    from src.backend.dsl.workflow.yaml_io import (  # noqa: F401 — re-export
+    from src.backend.dsl.workflow.yaml_io import (
         load_all_workflows_from_directory,
         load_workflow_from_file,
         load_workflow_from_yaml,
@@ -226,7 +226,7 @@ def get_import_service() -> Any:
 
 def get_dsl_builder_service() -> Any:
     """S6 fix: facade для ``services.dsl.builder_service``."""
-    from src.backend.services.dsl.builder_service import (  # noqa: F401 — re-export
+    from src.backend.services.dsl.builder_service import (
         get_dsl_builder_service as _get_dsl_builder_service,
     )
 

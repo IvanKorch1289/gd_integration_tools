@@ -125,7 +125,7 @@ class RedisRateLimiter:
             pass  # конфиг недоступен — обычный путь (fail-open в except ниже)
 
         try:
-            from src.backend.infrastructure.clients.storage.redis import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.clients.storage.redis import (
                 get_redis_client as redis_client,
             )
         except ImportError:

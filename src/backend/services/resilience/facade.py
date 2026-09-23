@@ -87,7 +87,7 @@ class ResilienceFacade:
         """
         self._assert("resilience.rate_limit", identifier)
         try:
-            from src.backend.core.resilience import (  # noqa: F401 — re-export
+            from src.backend.core.resilience import (
                 RateLimit,
                 RateLimiter,
                 get_rate_limiter,
@@ -183,10 +183,10 @@ class ResilienceFacade:
         """
         self._assert("resilience.bulkhead", name)
         try:
-            from src.backend.core.resilience.backpressure.bulkhead import (  # noqa: F401 — re-export
+            from src.backend.core.resilience.backpressure.bulkhead import (
                 AdaptiveBulkhead,
             )
-            from src.backend.core.resilience.bulkhead_registry import (  # noqa: F401 — re-export
+            from src.backend.core.resilience.bulkhead_registry import (
                 get_bulkhead_registry,
             )
 

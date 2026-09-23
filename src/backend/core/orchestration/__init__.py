@@ -7,7 +7,7 @@ Default backend — Temporal (через `WorkflowFacade`); pg-runner — fallba
 
 from src.backend.core.orchestration.saga import SagaPrimitive, SagaResult, SagaStep
 from src.backend.core.orchestration.sensor import Sensor, SensorTrigger
-from src.backend.core.orchestration.temporal_activity_adapter import (  # noqa: F401 — re-export
+from src.backend.core.orchestration.temporal_activity_adapter import (
     TemporalActivityWrapper,
     wrap_as_temporal_activity,
 )

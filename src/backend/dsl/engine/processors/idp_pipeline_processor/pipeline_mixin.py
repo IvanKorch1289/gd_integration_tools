@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from src.backend.dsl.engine.processors.base import handle_processor_error
-from src.backend.dsl.engine.processors.idp_pipeline_processor.helpers import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.idp_pipeline_processor.helpers import (
     _coerce_to_text,
     classify_document,
     extract_fields,
@@ -35,7 +35,7 @@ _CLASSIFY_KEYWORDS: dict[str, tuple[str, ...]] = {
 # on well-formed documents.
 
 
-from src.backend.dsl.engine.processors.idp_pipeline_processor._protocol import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.idp_pipeline_processor._protocol import (
     _IDPPipelineProtocol,
 )
 

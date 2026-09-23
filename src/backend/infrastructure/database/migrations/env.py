@@ -136,7 +136,7 @@ async def run_async_migrations() -> None:
             # Reference seed (orderkinds) выполняется и на sqlite:
             # versions/*.py здесь не гоняются. Привилегированные учётки —
             # только через manage.py bootstrap-admin (P0).
-            from src.backend.infrastructure.database.migrations.seed_data import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.database.migrations.seed_data import (
                 apply_reference_seed,
             )
 
@@ -146,7 +146,7 @@ async def run_async_migrations() -> None:
 
     # MI-1: distributed lock для Alembic — избегаем race condition при старте N инстансов
     try:
-        from src.backend.infrastructure.clients.storage.redis_lock import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.clients.storage.redis_lock import (
             distributed_lock,
         )
 

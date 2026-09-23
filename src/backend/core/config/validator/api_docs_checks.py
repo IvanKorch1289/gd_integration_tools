@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from src.backend.core.config.base import AppBaseSettings
     from src.backend.core.config.security import SecureSettings
 
-from src.backend.core.config.validator._helpers import (  # noqa: F401 — re-export  # S52 W2: shared definitions
+from src.backend.core.config.validator._helpers import (  # S52 W2: shared definitions
     ConfigSeverity,
     ConfigViolation,
 )

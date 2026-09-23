@@ -34,7 +34,7 @@ from typing import TYPE_CHECKING, Literal
 
 from src.backend.core.security.connector_auth import check_source_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
-from src.backend.infrastructure.security.connector_rate_limiter import (  # noqa: F401 — re-export
+from src.backend.infrastructure.security.connector_rate_limiter import (
     get_connector_rate_limiter,
 )
 

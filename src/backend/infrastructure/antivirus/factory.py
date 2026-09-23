@@ -58,10 +58,10 @@ def create_antivirus_backend() -> AntivirusBackend:
     Порядок: ClamAV unix → ClamAV TCP → HTTP-сервис. Hash-кэш оборачивается
     отдельно вызывающей стороной (см. ``AntivirusHashCache``).
     """
-    from src.backend.infrastructure.antivirus.backends.clamav_tcp import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.antivirus.backends.clamav_tcp import (
         ClamAVTcpBackend,
     )
-    from src.backend.infrastructure.antivirus.backends.clamav_unix import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.antivirus.backends.clamav_unix import (
         ClamAVUnixBackend,
     )
     from src.backend.infrastructure.antivirus.backends.http import HttpAntivirusBackend

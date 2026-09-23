@@ -162,7 +162,7 @@ class AuditClickhouseProcessor(BaseProcessor):
             context: Контекст выполнения с конфигурацией и зависимостями.
 
         """
-        from src.backend.services.audit.clickhouse_audit_service import (  # noqa: F401 — re-export
+        from src.backend.services.audit.clickhouse_audit_service import (
             AuditEvent,
             get_audit_service,
         )

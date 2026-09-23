@@ -160,7 +160,7 @@ class BaseExternalAPIClient:
         total = connect + read
         if host and endpoint:
             try:
-                from src.backend.core.resilience.adaptive_timeout import (  # noqa: F401 — re-export
+                from src.backend.core.resilience.adaptive_timeout import (
                     get_adaptive_timeout_policy,
                 )
 
@@ -186,7 +186,7 @@ class BaseExternalAPIClient:
         Исключения подавляются — статистика не должна мешать запросу.
         """
         try:
-            from src.backend.core.resilience.adaptive_timeout import (  # noqa: F401 — re-export
+            from src.backend.core.resilience.adaptive_timeout import (
                 get_adaptive_timeout_policy,
             )
 

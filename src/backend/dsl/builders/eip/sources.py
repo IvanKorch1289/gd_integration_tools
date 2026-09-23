@@ -103,7 +103,7 @@ class SourcesEIPsMixin(EIPMixinBase):
             payload: static dict для payload.
 
         """
-        from src.backend.dsl.orchestration.triggers import (  # noqa: F401 — re-export
+        from src.backend.dsl.orchestration.triggers import (
             IntervalTrigger,
             get_trigger_registry,
         )
@@ -142,7 +142,7 @@ class SourcesEIPsMixin(EIPMixinBase):
             builder.from_cron("*/5 * * * *", timezone_name="Europe/Moscow")
 
         """
-        from src.backend.dsl.orchestration.triggers import (  # noqa: F401 — re-export
+        from src.backend.dsl.orchestration.triggers import (
             CronTrigger,
             get_trigger_registry,
         )
@@ -163,7 +163,7 @@ class SourcesEIPsMixin(EIPMixinBase):
         Регистрирует FastAPI route на ``path``. При вызове (любой JSON body)
         → dsl_service.dispatch(route_id, body, headers).
         """
-        from src.backend.dsl.orchestration.triggers import (  # noqa: F401 — re-export
+        from src.backend.dsl.orchestration.triggers import (
             WebhookTrigger,
             get_trigger_registry,
         )
@@ -192,7 +192,7 @@ class SourcesEIPsMixin(EIPMixinBase):
         """
         from src.backend.core.orchestration.airflow_sensors import FileSensor
         from src.backend.core.orchestration.sensor import SensorTrigger
-        from src.backend.dsl.orchestration.triggers import (  # noqa: F401 — re-export
+        from src.backend.dsl.orchestration.triggers import (
             FileSensorTaskWrapper as _FileSensorWrapper,
         )
         from src.backend.dsl.orchestration.triggers import get_trigger_registry
@@ -254,7 +254,7 @@ class SourcesEIPsMixin(EIPMixinBase):
         """
         from src.backend.core.orchestration.airflow_sensors import SqlSensor
         from src.backend.core.orchestration.sensor import SensorTrigger
-        from src.backend.dsl.orchestration.triggers import (  # noqa: F401 — re-export
+        from src.backend.dsl.orchestration.triggers import (
             FileSensorTaskWrapper as _FileSensorWrapper,
         )
         from src.backend.dsl.orchestration.triggers import get_trigger_registry
@@ -313,7 +313,7 @@ class SourcesEIPsMixin(EIPMixinBase):
         """
         from src.backend.core.orchestration.airflow_sensors import HttpSensor
         from src.backend.core.orchestration.sensor import SensorTrigger
-        from src.backend.dsl.orchestration.triggers import (  # noqa: F401 — re-export
+        from src.backend.dsl.orchestration.triggers import (
             FileSensorTaskWrapper as _FileSensorWrapper,
         )
         from src.backend.dsl.orchestration.triggers import get_trigger_registry
@@ -379,7 +379,7 @@ class SourcesEIPsMixin(EIPMixinBase):
         """
         from src.backend.core.orchestration.airflow_sensors import S3Sensor
         from src.backend.core.orchestration.sensor import SensorTrigger
-        from src.backend.dsl.orchestration.triggers import (  # noqa: F401 — re-export
+        from src.backend.dsl.orchestration.triggers import (
             FileSensorTaskWrapper as _FileSensorWrapper,
         )
         from src.backend.dsl.orchestration.triggers import get_trigger_registry

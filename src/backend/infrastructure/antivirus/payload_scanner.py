@@ -52,10 +52,10 @@ class ClamAVPayloadScanner:
 
     Использование::
 
-        from src.backend.infrastructure.antivirus.backends.clamav_tcp import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.antivirus.backends.clamav_tcp import (
             ClamAVTcpBackend,
         )
-        from src.backend.infrastructure.antivirus.payload_scanner import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.antivirus.payload_scanner import (
             ClamAVPayloadScanner,
         )
         from src.backend.core.net.waf import WafPolicy

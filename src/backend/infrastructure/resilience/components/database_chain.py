@@ -86,7 +86,7 @@ def _check_snapshot_freshness() -> None:
     """
     try:
         from src.backend.core.config.settings import settings
-        from src.backend.infrastructure.resilience.snapshot_job import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.resilience.snapshot_job import (
             get_snapshot_age_seconds,
             is_snapshot_fresh,
         )

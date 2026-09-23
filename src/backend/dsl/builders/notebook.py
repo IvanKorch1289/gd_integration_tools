@@ -70,7 +70,7 @@ class NotebookMixin:
             ``RouteBuilder`` для chaining.
 
         """
-        from src.backend.dsl.engine.processors.notebook_execute import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.notebook_execute import (
             NotebookExecuteProcessor,
         )
 
@@ -102,7 +102,7 @@ class NotebookMixin:
             ``RouteBuilder`` для chaining.
 
         """
-        from src.backend.dsl.engine.processors.notebook_export import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.notebook_export import (
             NotebookExportProcessor,
         )
 

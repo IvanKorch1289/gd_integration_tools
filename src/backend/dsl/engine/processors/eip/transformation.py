@@ -255,7 +255,7 @@ class ClaimCheckProcessor(BaseProcessor):
                 token = f"s3claim:{uuid.uuid4()}"
                 try:
                     # S85 M2-#11 accelerated batch: DI provider вместо inline infrastructure import.
-                    from src.backend.core.di.providers.cache import (  # noqa: F401 — re-export
+                    from src.backend.core.di.providers.cache import (
                         get_s3_client_provider,
                     )
 
@@ -272,7 +272,7 @@ class ClaimCheckProcessor(BaseProcessor):
                 token = f"claim:{uuid.uuid4()}"
                 try:
                     # S85 M2-#11 accelerated batch: DI provider (S60 added get_redis_client_provider).
-                    from src.backend.core.di.providers.cache import (  # noqa: F401 — re-export
+                    from src.backend.core.di.providers.cache import (
                         get_redis_client_provider,
                     )
 
@@ -304,7 +304,7 @@ class ClaimCheckProcessor(BaseProcessor):
             try:
                 if isinstance(token, str) and token.startswith("s3claim:"):
                     # S85 M2-#11 accelerated batch: DI provider вместо inline infrastructure import.
-                    from src.backend.core.di.providers.cache import (  # noqa: F401 — re-export
+                    from src.backend.core.di.providers.cache import (
                         get_s3_client_provider,
                     )
 
@@ -318,7 +318,7 @@ class ClaimCheckProcessor(BaseProcessor):
                     restored = orjson.loads(raw_bytes)
                 else:
                     # S85 M2-#11 accelerated batch: DI provider (S60 added get_redis_client_provider).
-                    from src.backend.core.di.providers.cache import (  # noqa: F401 — re-export
+                    from src.backend.core.di.providers.cache import (
                         get_redis_client_provider,
                     )
 

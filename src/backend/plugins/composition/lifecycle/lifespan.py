@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     pass
 
 # Re-export for backward compat (S64 W3 cutover test references this).
-from src.backend.plugins.composition.lifecycle.startup import (  # noqa: F401 — re-export
+from src.backend.plugins.composition.lifecycle.startup import (
     _register_outbox_dispatcher,
 )
 
@@ -67,7 +67,7 @@ async def lifespan(app: FastAPI):  # type: ignore[no-untyped-def]
 
     # Install SIGTERM/SIGINT handlers (graceful shutdown hook).
     # No-op в test env (PYTEST_CURRENT_TEST set).
-    from src.backend.plugins.composition.lifecycle.signals import (  # noqa: F401 — re-export
+    from src.backend.plugins.composition.lifecycle.signals import (
         install_signal_handlers,
     )
 

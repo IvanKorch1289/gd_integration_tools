@@ -17,10 +17,10 @@ if TYPE_CHECKING:
 
 from src.backend.core.di.providers import get_grpc_logger_provider
 from src.backend.entrypoints.grpc.grpc_server._safe_error import _safe_error
-from src.backend.entrypoints.grpc.protobuf.invoker_pb2 import (  # noqa: F401 — re-export  # type: ignore
+from src.backend.entrypoints.grpc.protobuf.invoker_pb2 import (  # type: ignore
     InvokeResponse as InvokerInvokeResponse,
 )
-from src.backend.entrypoints.grpc.protobuf.invoker_pb2_grpc import (  # noqa: F401 — re-export
+from src.backend.entrypoints.grpc.protobuf.invoker_pb2_grpc import (
     InvokerServiceServicer,
 )
 
@@ -65,7 +65,7 @@ class InvokerGRPCServicer(InvokerServiceServicer):
             ``InvokerInvokeResponse`` с status, result_json, error.
 
         """
-        from src.backend.core.interfaces.invoker import (  # noqa: F401 — re-export
+        from src.backend.core.interfaces.invoker import (
             InvocationMode,
             InvocationRequest,
             InvocationStatus,

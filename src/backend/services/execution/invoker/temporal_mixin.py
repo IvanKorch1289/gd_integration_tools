@@ -27,11 +27,11 @@ if TYPE_CHECKING:
 """
 
 
-from src.backend.core.interfaces.invocation_reply import (  # noqa: F401 — re-export
+from src.backend.core.interfaces.invocation_reply import (
     InvocationReplyChannel,
     ReplyChannelKind,
 )
-from src.backend.core.interfaces.invoker import (  # noqa: F401 — re-export
+from src.backend.core.interfaces.invoker import (
     InvocationRequest,
     InvocationResponse,
     InvocationStatus,
@@ -86,7 +86,7 @@ class TemporalMixin:
         Reply-channel публикация остаётся синхронной — full-blown
         Temporal workflow с durable replay добавится в Sprint 6.
         """
-        from src.backend.core.orchestration.temporal_activity_adapter import (  # noqa: F401 — re-export
+        from src.backend.core.orchestration.temporal_activity_adapter import (
             wrap_as_temporal_activity,
         )
 

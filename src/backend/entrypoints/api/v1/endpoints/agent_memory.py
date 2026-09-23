@@ -25,11 +25,11 @@ from fastapi import APIRouter, HTTPException, status
 
 from src.backend.core.request_context import RequestContext
 from src.backend.core.tenancy import current_tenant
-from src.backend.entrypoints.api.generator.actions import (  # noqa: F401 — re-export
+from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
 )
-from src.backend.schemas.agent_memory import (  # noqa: F401 — re-export
+from src.backend.schemas.agent_memory import (
     FactCreate,
     FactKeyPath,
     FactRead,

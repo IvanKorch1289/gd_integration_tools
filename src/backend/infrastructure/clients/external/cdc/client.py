@@ -13,17 +13,17 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
 from src.backend.core.utils.task_registry import get_task_registry
-from src.backend.infrastructure.clients.external.cdc._dlq_writer_guard import (  # noqa: F401 — re-export
+from src.backend.infrastructure.clients.external.cdc._dlq_writer_guard import (
     mark_cdc_dlq_writer_wired,  # B-17 fix (cycle 37): fail-loud DLQ wiring
 )
-from src.backend.infrastructure.clients.external.cdc.events import (  # noqa: F401 — re-export
+from src.backend.infrastructure.clients.external.cdc.events import (
     CDCEvent,  # S60 W2: cross-import
     CDCSubscription,  # S60 W2: cross-import
 )
-from src.backend.infrastructure.clients.external.cdc.kafka_strategy import (  # noqa: F401 — re-export
+from src.backend.infrastructure.clients.external.cdc.kafka_strategy import (
     _KafkaDebeziumStrategy,  # S166 W1: cross-import (S167 W1.1 wired)
 )
-from src.backend.infrastructure.clients.external.cdc.strategies import (  # noqa: F401 — re-export
+from src.backend.infrastructure.clients.external.cdc.strategies import (
     _CDCStrategy,  # S60 W2: cross-import
     _ListenNotifyStrategy,  # S60 W2: cross-import
     _LogMinerStrategy,  # S60 W2: cross-import
@@ -226,7 +226,7 @@ class CDCClient:
                 await self._send_to_dlq(sub, event_dict, exc, stage="callback")
 
         if sub.target_action:
-            from src.backend.core.types.invocation_command import (  # noqa: F401 — re-export
+            from src.backend.core.types.invocation_command import (
                 ActionCommandMetaSchema,
             )
             from src.backend.dsl.commands.registry import action_handler_registry
@@ -293,7 +293,7 @@ class CDCClient:
             return
 
         try:
-            from src.backend.infrastructure.messaging.dlq_base import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.messaging.dlq_base import (
                 DLQEnvelope,
                 DLQReason,
             )

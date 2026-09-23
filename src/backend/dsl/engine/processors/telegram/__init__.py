@@ -2,7 +2,7 @@
 
 Публичный re-export::
 
-    from src.backend.dsl.engine.processors.telegram import (  # noqa: F401 — re-export
+    from src.backend.dsl.engine.processors.telegram import (
         TelegramSendProcessor,
         TelegramReplyProcessor,
         TelegramEditProcessor,
@@ -19,7 +19,7 @@ from src.backend.dsl.engine.processors.telegram.edit import TelegramEditProcesso
 from src.backend.dsl.engine.processors.telegram.mention import TelegramMentionProcessor
 from src.backend.dsl.engine.processors.telegram.reply import TelegramReplyProcessor
 from src.backend.dsl.engine.processors.telegram.send import TelegramSendProcessor
-from src.backend.dsl.engine.processors.telegram.send_file import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.telegram.send_file import (
     TelegramSendFileProcessor,
 )
 from src.backend.dsl.engine.processors.telegram.status import TelegramStatusProcessor

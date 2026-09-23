@@ -39,7 +39,7 @@ def _get_outbox_dlq_session_factory() -> Any:
         под signature ``InboxDLQWriter(session_factory=...)``.
 
     """
-    from src.backend.infrastructure.database.session_manager import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.database.session_manager import (
         get_main_session_manager,
     )
 
@@ -85,7 +85,7 @@ async def register_outbox_dispatcher(app: FastAPI) -> None:
             from uuid import uuid4
 
             from src.backend.core.messaging.outbox import FakeOutbox, OutboxEvent
-            from src.backend.infrastructure.messaging.outbox.lifecycle import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.messaging.outbox.lifecycle import (
                 start_outbox_dispatcher,
             )
             from src.backend.infrastructure.repositories import outbox as outbox_repo
@@ -175,7 +175,7 @@ async def register_outbox_dispatcher(app: FastAPI) -> None:
             )
         else:
             # Legacy APScheduler worker (default, backwards-compat).
-            from src.backend.infrastructure.workflow.outbox_worker import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.workflow.outbox_worker import (
                 start_outbox_worker,
             )
 

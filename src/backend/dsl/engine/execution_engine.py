@@ -6,7 +6,7 @@ from src.backend.core.logging import get_logger
 from src.backend.core.state.runtime import disabled_feature_flags
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from src.backend.dsl.engine.middleware import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.middleware import (
     ErrorNormalizerMiddleware,
     MetricsMiddleware,
     MiddlewareChain,
@@ -225,7 +225,7 @@ class ExecutionEngine:
                 exchange.status = ExchangeStatus.completed
 
         try:
-            from src.backend.infrastructure.application.slo_tracker import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.application.slo_tracker import (
                 get_slo_tracker,
             )
 

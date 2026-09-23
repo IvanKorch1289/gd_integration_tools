@@ -31,7 +31,7 @@ from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
     # Use core-owned protocol for type checking (no core→services import).
-    from src.backend.core.auth.ldap_contract import (  # noqa: F401 — re-export
+    from src.backend.core.auth.ldap_contract import (
         AdDirectoryClientProtocol as AdDirectoryClient,
     )
 

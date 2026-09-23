@@ -16,7 +16,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.clients.storage.clickhouse_admin_client import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.clients.storage.clickhouse_admin_client import (
         AdminClickHouseClient,
         get_admin_clickhouse_client,
     )

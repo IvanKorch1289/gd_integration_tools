@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from src.backend.core.security.capabilities.errors import CapabilityNotFoundError
 from src.backend.core.security.capabilities.models import CapabilityRef
-from src.backend.core.security.capabilities.vocabulary.models import (  # noqa: F401 — re-export
+from src.backend.core.security.capabilities.vocabulary.models import (
     CapabilityDef,  # S62 W2: cross-import
 )
 

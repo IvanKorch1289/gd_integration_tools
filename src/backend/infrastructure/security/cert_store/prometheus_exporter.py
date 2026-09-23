@@ -40,7 +40,7 @@ class CertPrometheusExporter:
 
     def __init__(self) -> None:
         try:
-            from prometheus_client import (  # noqa: F401 — re-export
+            from prometheus_client import (
                 CollectorRegistry,
                 Counter,
                 Gauge,

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import sessionmaker
 
 from src.backend.core.config.database import DatabaseConnectionSettings
-from src.backend.core.config.external_databases import (  # noqa: F401 — re-export
+from src.backend.core.config.external_databases import (
     ExternalDatabaseConnectionSettings,
 )
 from src.backend.core.logging import get_logger

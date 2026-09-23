@@ -13,7 +13,7 @@ Auth: ``X-API-Key`` (см. ``common_dependencies``).
 from fastapi import APIRouter, Depends
 
 from extensions.core_entities.users.schemas.filter import UserFilter
-from extensions.core_entities.users.schemas.route import (  # noqa: F401 — re-export  # S168 W15-17 P2-10
+from extensions.core_entities.users.schemas.route import (  # S168 W15-17 P2-10
     UserSchemaIn,
     UserSchemaOut,
     UserVersionSchemaOut,

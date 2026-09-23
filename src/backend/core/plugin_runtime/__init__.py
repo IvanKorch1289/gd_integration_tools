@@ -13,17 +13,17 @@
 
 from __future__ import annotations
 
-from src.backend.core.plugin_runtime.dependency_resolver import (  # noqa: F401 — re-export
+from src.backend.core.plugin_runtime.dependency_resolver import (
     PluginDependencyCycleError,
     PluginGraphResolver,
 )
-from src.backend.core.plugin_runtime.hot_swap import (  # noqa: F401 — re-export
+from src.backend.core.plugin_runtime.hot_swap import (
     HotSwapError,
     HotSwapResult,
     PluginLoaderProtocol,
     hot_swap,
 )
-from src.backend.core.plugin_runtime.semver_checker import (  # noqa: F401 — re-export
+from src.backend.core.plugin_runtime.semver_checker import (
     SemverCheckResult,
     check_plugin_semver,
     is_compatible,

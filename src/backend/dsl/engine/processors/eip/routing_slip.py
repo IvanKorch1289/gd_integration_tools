@@ -8,7 +8,7 @@ names, через которые message должен пройти. Порядо
 
 Использование в DSL::
 
-    from src.backend.dsl.engine.processors.eip.routing_slip import (  # noqa: F401 — re-export
+    from src.backend.dsl.engine.processors.eip.routing_slip import (
         RoutingSlipProcessor,
     )
 

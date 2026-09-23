@@ -17,7 +17,7 @@
 
 Usage::
 
-    from src.backend.core.rpa_recorder import (  # noqa: F401 — re-export
+    from src.backend.core.rpa_recorder import (
         RPARecorder, RecordedAction, generate_route_draft,
     )
 
@@ -33,7 +33,7 @@ Usage::
 
 from __future__ import annotations
 
-from src.backend.core.rpa_recorder.recorder import (  # noqa: F401 — re-export
+from src.backend.core.rpa_recorder.recorder import (
     DSLStep,
     RecordedAction,
     RecorderActionType,

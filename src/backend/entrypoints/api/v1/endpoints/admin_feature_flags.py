@@ -22,11 +22,11 @@ from pydantic import BaseModel, Field
 
 from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.core.config.features import feature_flags
-from src.backend.core.feature_flags.openfeature_provider import (  # noqa: F401 — re-export
+from src.backend.core.feature_flags.openfeature_provider import (
     FlagsmithBackend,
     get_openfeature_backend,
 )
-from src.backend.core.feature_flags.runtime_overrides import (  # noqa: F401 — re-export
+from src.backend.core.feature_flags.runtime_overrides import (
     FeatureFlagChange,
     get_runtime_overrides,
 )

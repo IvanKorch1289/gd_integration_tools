@@ -39,7 +39,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.route_test_dsl.spec import (  # noqa: F401 — re-export
+from src.backend.core.route_test_dsl.spec import (
     AssertionResult,
     ExpectationType,
     RouteTest,

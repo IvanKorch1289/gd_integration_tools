@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
-from src.backend.dsl.engine.processors.llm_structured._protocol import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.llm_structured._protocol import (
     _LLMStructuredProcessorProtocol,
 )
 

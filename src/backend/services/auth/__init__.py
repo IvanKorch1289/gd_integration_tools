@@ -22,7 +22,7 @@ Capability:
 
 from __future__ import annotations
 
-from src.backend.services.auth.ad_directory_client import (  # noqa: F401 — re-export
+from src.backend.services.auth.ad_directory_client import (
     AdAuthError,
     AdDirectoryClient,
     AdSearchEntry,

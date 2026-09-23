@@ -18,7 +18,7 @@
 
 Использование::
 
-    from src.backend.core.tenant_memory import (  # noqa: F401 — re-export
+    from src.backend.core.tenant_memory import (
         TenantMemoryStore, MemoryEntry, get_memory_store,
     )
 
@@ -31,7 +31,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.tenant_memory.store import (  # noqa: F401 — re-export
+from src.backend.core.tenant_memory.store import (
     MemoryAccessPolicy,
     MemoryEntry,
     TenantMemoryStore,

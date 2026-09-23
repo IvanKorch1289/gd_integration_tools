@@ -15,7 +15,7 @@ import asyncio
 import time
 from typing import Any
 
-from src.backend.core.privacy.delete_data_subject._types import (  # noqa: F401 — re-export
+from src.backend.core.privacy.delete_data_subject._types import (
     AdapterResult,
     ErasureResultStatus,
     ErasureStrategy,

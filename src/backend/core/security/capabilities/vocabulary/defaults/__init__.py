@@ -11,13 +11,13 @@ build_default_vocabulary остаётся composition root.
 
 from __future__ import annotations
 
-from src.backend.core.security.capabilities.vocabulary.defaults import (  # noqa: F401 — re-export
+from src.backend.core.security.capabilities.vocabulary.defaults import (
     ai_platform,
     ai_rag,
     ai_safety,
     base,
 )
-from src.backend.core.security.capabilities.vocabulary.vocabulary import (  # noqa: F401 — re-export
+from src.backend.core.security.capabilities.vocabulary.vocabulary import (
     CapabilityVocabulary,
 )
 

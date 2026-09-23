@@ -138,7 +138,7 @@ def _build_rpc_method(action_id: str) -> Callable[..., Any]:
     Контракт: метод принимает ``request`` (protobuf message) и ``context``
     (gRPC ServicerContext), возвращает ``response`` (protobuf message).
     """
-    from google.protobuf.json_format import (  # noqa: F401 — re-export  # type: ignore[import-untyped]
+    from google.protobuf.json_format import (  # type: ignore[import-untyped]
         MessageToDict,
         ParseDict,
     )

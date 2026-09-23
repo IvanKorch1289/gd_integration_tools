@@ -25,7 +25,7 @@ from typing import Any
 from src.backend.core.di import app_state_singleton
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors import BaseProcessor
-from src.backend.dsl.registry import (  # noqa: F401 — re-export
+from src.backend.dsl.registry import (
     ProcessorNotFoundError,
     ProcessorSpec,
     get_processor_registry,

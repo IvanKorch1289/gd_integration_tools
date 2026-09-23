@@ -23,7 +23,7 @@ import logging
 from collections.abc import Callable, Mapping
 from typing import Any
 
-from src.backend.core.interfaces.action_dispatcher import (  # noqa: F401 — re-export
+from src.backend.core.interfaces.action_dispatcher import (
     ActionError,
     ActionResult,
     DispatchContext,
@@ -31,7 +31,7 @@ from src.backend.core.interfaces.action_dispatcher import (  # noqa: F401 — re
 )
 
 logger = logging.getLogger(__name__)
-from src.backend.core.api.extensions import (  # noqa: F401 — re-export
+from src.backend.core.api.extensions import (
     ActionHandlerRegistry,
     action_handler_registry,
 )

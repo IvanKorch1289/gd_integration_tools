@@ -16,12 +16,12 @@ from datetime import UTC, datetime
 from typing import Any
 
 from src.backend.core.logging import get_logger
-from src.backend.infrastructure.clients.external.cdc.events import (  # noqa: F401 — re-export
+from src.backend.infrastructure.clients.external.cdc.events import (
     CDCEvent,  # S60 W2: cross-import
     CDCSubscription,  # S60 W2: cross-import
 )
 from src.backend.infrastructure.database.database.initializer import DatabaseInitializer
-from src.backend.infrastructure.database.database.registry import (  # noqa: F401 — re-export
+from src.backend.infrastructure.database.database.registry import (
     ExternalDatabaseRegistry,
 )
 
@@ -58,7 +58,7 @@ class _PollingStrategy(_CDCStrategy):
     async def _get_cursor(self, key: str, default: datetime) -> datetime:
         """Загружает cursor из Redis (или возвращает default при недоступности)."""
         try:
-            from src.backend.infrastructure.clients.storage.redis_coordinator import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.clients.storage.redis_coordinator import (
                 RedisCursor,
             )
 
@@ -71,7 +71,7 @@ class _PollingStrategy(_CDCStrategy):
     async def _advance_cursor(self, key: str, new_value: datetime) -> None:
         """Atomic advance cursor через Redis CAS."""
         try:
-            from src.backend.infrastructure.clients.storage.redis_coordinator import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.clients.storage.redis_coordinator import (
                 RedisCursor,
             )
 
@@ -100,7 +100,7 @@ class _PollingStrategy(_CDCStrategy):
         try:
             from sqlalchemy import text
 
-            from src.backend.infrastructure.database.database.accessors import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.database.database.accessors import (
                 get_external_db_registry,
             )
         except ImportError:
@@ -204,7 +204,7 @@ class _ListenNotifyStrategy(_CDCStrategy):
             import asyncpg
             import orjson
 
-            from src.backend.core.config.external_databases.registry import (  # noqa: F401 — re-export
+            from src.backend.core.config.external_databases.registry import (
                 external_databases_settings,
             )
         except ImportError:
@@ -305,7 +305,7 @@ class _LogMinerStrategy(_CDCStrategy):
         try:
             from sqlalchemy import text
 
-            from src.backend.infrastructure.database.database.accessors import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.database.database.accessors import (
                 get_external_db_registry,
             )
         except ImportError:

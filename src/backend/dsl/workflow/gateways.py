@@ -18,7 +18,7 @@ PLAN V17 [wave:s3/workflow-gateways], K3 W4.
 
 Пример::
 
-    from src.backend.dsl.workflow.gateways import (  # noqa: F401 — re-export
+    from src.backend.dsl.workflow.gateways import (
         BranchSpec,
         GatewaySpec,
         process_gateway,

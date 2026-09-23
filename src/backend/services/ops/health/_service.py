@@ -181,7 +181,7 @@ def get_processor_health_service() -> ProcessorHealthService:
     """
     global _service_instance
     if _service_instance is None:
-        from src.backend.services.ops.health._checks import (  # noqa: F401 — re-export
+        from src.backend.services.ops.health._checks import (
             _check_clickhouse,
             _check_graylog,
             _check_kafka_schema_registry,

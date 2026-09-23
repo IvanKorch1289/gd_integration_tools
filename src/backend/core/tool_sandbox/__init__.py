@@ -19,7 +19,7 @@
 
 Использование::
 
-    from src.backend.core.tool_sandbox import (  # noqa: F401 — re-export
+    from src.backend.core.tool_sandbox import (
         ToolSandbox, SandboxConfig, SandboxedTool, ToolPolicyViolation,
     )
 
@@ -41,7 +41,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.tool_sandbox.sandbox import (  # noqa: F401 — re-export
+from src.backend.core.tool_sandbox.sandbox import (
     SandboxConfig,
     SandboxedTool,
     SandboxMode,

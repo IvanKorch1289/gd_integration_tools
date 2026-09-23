@@ -35,7 +35,7 @@ class ProxyMixin:
                 политики inbound-headers.
 
         """
-        from src.backend.dsl.engine.processors.proxy import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.proxy import (
             ExposeProxyProcessor,
             HeaderMapPolicy,
         )
@@ -58,7 +58,7 @@ class ProxyMixin:
         timeout: float = 30.0,
     ) -> RouteBuilder:
         """Переслать текущее сообщение в backend без трансформаций."""
-        from src.backend.dsl.engine.processors.proxy import (  # noqa: F401 — re-export
+        from src.backend.dsl.engine.processors.proxy import (
             ForwardToProcessor,
             HeaderMapPolicy,
         )

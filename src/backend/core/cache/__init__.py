@@ -3,7 +3,7 @@
 Canonical entry point for the cache capability in core/.
 Extensions and SDK consumers should import from this module:
 
-    from src.backend.core.cache import (  # noqa: F401 — re-export
+    from src.backend.core.cache import (
         UnifiedCacheFacade,            # ABC
         MemoryCacheFacade,             # in-memory impl (dev_light / tests)
         FallbackCacheFacade,           # primary -> fallback chain (Rule 6)
@@ -24,7 +24,7 @@ via the ``UnifiedCacheFacade`` Protocol (Rule 1).
 
 from __future__ import annotations
 
-from src.backend.core.cache.facade import (  # noqa: F401 — re-export
+from src.backend.core.cache.facade import (
     CacheError,
     CacheInvalidationPolicy,
     FallbackCacheFacade,

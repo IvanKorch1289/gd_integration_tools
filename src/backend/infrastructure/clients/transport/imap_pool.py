@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from aioimaplib import IMAP4_SSL
 
 from src.backend.core.config.pooling import DEFAULT_POOLING_PROFILE, PoolingProfile
-from src.backend.infrastructure.clients.base_connector import (  # noqa: F401 — re-export
+from src.backend.infrastructure.clients.base_connector import (
     HealthResult,
     InfrastructureClient,
 )

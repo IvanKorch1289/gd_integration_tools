@@ -18,7 +18,7 @@ from datetime import UTC, datetime
 from src.backend.core.di import app_state_singleton
 from src.backend.core.logging import get_logger
 from src.backend.services.ai.feedback.models import AIFeedbackDoc
-from src.backend.services.ai.feedback.repository import (  # noqa: F401 — re-export
+from src.backend.services.ai.feedback.repository import (
     FeedbackRepository,
     get_feedback_repository,
 )

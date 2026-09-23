@@ -11,7 +11,7 @@ import threading
 from typing import TYPE_CHECKING, Protocol
 
 from src.backend.core.logging import get_logger
-from src.backend.dsl.engine.processors.event_store.types import (  # noqa: F401 — re-export  # S66 W1: cross-import
+from src.backend.dsl.engine.processors.event_store.types import (  # S66 W1: cross-import
     Event,
     EventStream,
 )

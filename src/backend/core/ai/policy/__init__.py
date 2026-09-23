@@ -26,12 +26,12 @@
 """
 
 from src.backend.core.ai.policy.enforcer import AIPolicyEnforcer
-from src.backend.core.ai.policy.resolver import (  # noqa: F401 — re-export
+from src.backend.core.ai.policy.resolver import (
     PolicyLoadError,
     PolicyNotResolvedError,
     PolicyResolver,
 )
-from src.backend.core.ai.policy.spec import (  # noqa: F401 — re-export
+from src.backend.core.ai.policy.spec import (
     AIPolicySpec,
     AuditSpec,
     BackendSpec,

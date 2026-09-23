@@ -49,7 +49,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from src.backend.core.errors import build_error_envelope
 from src.backend.core.logging import get_logger
-from src.backend.core.observability.metrics import (  # noqa: F401 — re-export
+from src.backend.core.observability.metrics import (
     webhook_signature_missing_secret_total,
 )
 from src.backend.services.security import DEFAULT_TIMESTAMP_WINDOW, verify_signature

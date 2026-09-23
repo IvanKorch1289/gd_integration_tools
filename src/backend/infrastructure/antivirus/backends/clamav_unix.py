@@ -20,7 +20,7 @@ import struct
 import time
 from pathlib import Path
 
-from src.backend.core.interfaces.antivirus import (  # noqa: F401 — re-export
+from src.backend.core.interfaces.antivirus import (
     AntivirusBackend,
     AntivirusScanResult,
     AntivirusTimeoutError,

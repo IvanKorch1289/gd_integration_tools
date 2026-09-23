@@ -20,13 +20,13 @@ instance — нет дубликатов в ``CollectorRegistry``.
 
 from __future__ import annotations
 
-from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
+from src.backend.core.di.providers.infrastructure_locator import (
     get_default_labels_attr as _get_default_labels,
 )
-from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
+from src.backend.core.di.providers.infrastructure_locator import (
     get_metrics_registry_class as _get_metrics_registry_cls,
 )
-from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
+from src.backend.core.di.providers.infrastructure_locator import (
     get_metrics_registry_factory as _get_metrics_registry_fn,
 )
 

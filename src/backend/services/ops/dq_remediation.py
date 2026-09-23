@@ -13,7 +13,7 @@ Extension для ``services/ops/data_quality.py``. Каждый remediator — �
 
 Usage::
 
-    from src.backend.services.ops.dq_remediation import (  # noqa: F401 — re-export
+    from src.backend.services.ops.dq_remediation import (
         NullDefaultRemediator,
         RangeClipRemediator,
         CompositeRemediator,

@@ -19,7 +19,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.workflow.registry import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.workflow.registry import (
         WorkflowDescriptor,
         workflow_registry,
     )

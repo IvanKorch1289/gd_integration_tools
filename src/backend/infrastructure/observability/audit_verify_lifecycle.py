@@ -17,7 +17,7 @@ HMAC-цепочке ``audit_log_immutable`` и детектирует tampering 
 
 Использование::
 
-    from src.backend.infrastructure.observability.audit_verify_lifecycle import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.observability.audit_verify_lifecycle import (
         start_audit_verify,
         stop_audit_verify,
         try_start_default,
@@ -29,7 +29,7 @@ HMAC-цепочке ``audit_log_immutable`` и детектирует tampering 
 
 В startup hook (best-effort)::
 
-    from src.backend.infrastructure.observability.audit_verify_lifecycle import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.observability.audit_verify_lifecycle import (
         try_start_default,
     )
 
@@ -47,7 +47,7 @@ from src.backend.core.utils.task_registry import get_task_registry
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from src.backend.infrastructure.observability.immutable_audit import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.observability.immutable_audit import (
         ImmutableAuditStore,
     )
 
@@ -224,7 +224,7 @@ async def try_start_default(
     """
     try:
         from src.backend.core.config.features import feature_flags
-        from src.backend.infrastructure.observability.immutable_audit import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.observability.immutable_audit import (
             ImmutableAuditStore,
         )
 

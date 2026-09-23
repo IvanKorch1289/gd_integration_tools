@@ -34,7 +34,7 @@ class APSchedulerBackend:
 
         """
         if manager is None:
-            from src.backend.infrastructure.scheduler.scheduler_manager import (  # noqa: F401 — re-export
+            from src.backend.infrastructure.scheduler.scheduler_manager import (
                 get_scheduler_manager,
             )
 

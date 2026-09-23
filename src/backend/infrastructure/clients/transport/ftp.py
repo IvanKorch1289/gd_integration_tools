@@ -21,7 +21,7 @@ from typing import Any
 #   ftp → breaker → core.logging → infrastructure.logging → core.interfaces → breaker.
 # Тот же pattern в smtp.py:12-17.
 from src.backend.core.logging import get_logger
-from src.backend.core.resilience.breaker import (  # noqa: F401 — re-export
+from src.backend.core.resilience.breaker import (
     BreakerSpec,
     CircuitOpen,
     get_breaker_registry,

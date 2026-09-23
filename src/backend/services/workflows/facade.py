@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
 from src.backend.core.security.capabilities import CapabilityGate
-from src.backend.core.workflow.backend import (  # noqa: F401 — re-export
+from src.backend.core.workflow.backend import (
     WorkflowBackend,
     WorkflowHandle,
     WorkflowResult,

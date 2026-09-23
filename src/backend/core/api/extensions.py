@@ -20,7 +20,7 @@ from src.backend.dsl.analysis.parallelism_analyzer import ParallelismAnalyzer
 from src.backend.dsl.builders.base import RouteBuilder
 
 # Action registry (8 violations → 0)
-from src.backend.dsl.commands.action_registry import (  # noqa: F401 — re-export
+from src.backend.dsl.commands.action_registry import (
     ActionCommandSchema,
     ActionHandlerRegistry,
     ActionHandlerSpec,
@@ -51,7 +51,7 @@ from src.backend.dsl.registry.processor import ProcessorRegistry, get_processor_
 from src.backend.dsl.service.facade import DslService, get_dsl_service
 
 # Workflow builder (3+ violations → 0)
-from src.backend.dsl.workflow.builder import (  # noqa: F401 — re-export
+from src.backend.dsl.workflow.builder import (
     ActivityDeclaration,
     RetryPolicy,
     SagaBuilder,

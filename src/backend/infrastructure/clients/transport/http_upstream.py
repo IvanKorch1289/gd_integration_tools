@@ -32,12 +32,12 @@ if TYPE_CHECKING:
     import httpx  # только для type-hints; runtime-импорт в `start()`.
 
 from src.backend.core.config.pooling import DEFAULT_POOLING_PROFILE, PoolingProfile
-from src.backend.infrastructure.clients.base_connector import (  # noqa: F401 — re-export
+from src.backend.infrastructure.clients.base_connector import (
     HealthResult,
     InfrastructureClient,
 )
 from src.backend.infrastructure.observability.client_metrics import ClientMetricsMixin
-from src.backend.infrastructure.resilience.client_breaker import (  # noqa: F401 — re-export
+from src.backend.infrastructure.resilience.client_breaker import (
     CircuitOpen,
     ClientCircuitBreaker,
 )

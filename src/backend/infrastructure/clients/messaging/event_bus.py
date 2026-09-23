@@ -319,7 +319,7 @@ class EventBus:
         Делегирует в :class:`ReplyChannel` — вся логика future-ов
         и subscription-ов живёт там.
         """
-        from src.backend.infrastructure.clients.messaging.reply_channel import (  # noqa: F401 — re-export
+        from src.backend.infrastructure.clients.messaging.reply_channel import (
             ReplyChannel,
         )
 

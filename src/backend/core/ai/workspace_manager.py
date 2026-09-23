@@ -24,7 +24,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from src.backend.core.ai.errors import (  # noqa: F401 — re-export
+from src.backend.core.ai.errors import (
     WorkspaceQuotaExceededError,
     WorkspaceTTLExpiredError,
 )

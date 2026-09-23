@@ -11,7 +11,7 @@ Backward-compat: ``from src.backend.dsl.workflow.spec import WorkflowDeclaration
 
 from __future__ import annotations
 
-from src.backend.dsl.workflow.spec.activity_declarations import (  # noqa: F401 — re-export
+from src.backend.dsl.workflow.spec.activity_declarations import (
     ActivityDeclaration,  # S56 W1: re-export
     PauseDeclaration,  # S56 W1: re-export
     ResumeDeclaration,  # S56 W1: re-export
@@ -19,7 +19,7 @@ from src.backend.dsl.workflow.spec.activity_declarations import (  # noqa: F401 
     SignalWaitDeclaration,  # S56 W1: re-export
     SleepDeclaration,  # S56 W1: re-export
 )
-from src.backend.dsl.workflow.spec.advanced_declarations import (  # noqa: F401 — re-export
+from src.backend.dsl.workflow.spec.advanced_declarations import (
     AgentInvokeDeclaration,  # S56 W1: re-export
     CheckpointDeclaration,  # S56 W1: re-export
     ContinueAsNewDeclaration,  # P1-W1 fix (audit 2026-08-18)
@@ -28,12 +28,12 @@ from src.backend.dsl.workflow.spec.advanced_declarations import (  # noqa: F401 
     ReflectDeclaration,  # S56 W1: re-export
     SensorDeclaration,  # S56 W1: re-export
 )
-from src.backend.dsl.workflow.spec.policies import (  # noqa: F401 — re-export
+from src.backend.dsl.workflow.spec.policies import (
     MemoryScope,  # S56 W1: re-export
     RetryPolicy,  # S56 W1: re-export
     SlaPolicy,  # S56 W1: re-export
 )
-from src.backend.dsl.workflow.spec.workflow import (  # noqa: F401 — re-export
+from src.backend.dsl.workflow.spec.workflow import (
     WorkflowDeclaration,  # S56 W1: re-export
     WorkflowStep,  # S56 W1: re-export
 )

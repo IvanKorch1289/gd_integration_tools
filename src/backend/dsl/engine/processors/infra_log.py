@@ -70,7 +70,7 @@ class InfraLogWriteProcessor(BaseProcessor):
             процессор stateless и не модифицирует exchange.
 
         """
-        from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_logger_factory as _get_logger_factory_fn,
         )
 

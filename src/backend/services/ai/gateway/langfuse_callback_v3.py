@@ -161,7 +161,7 @@ def _maybe_anonymize_v3(
     if not langfuse_settings.sanitize_traces:
         return input_messages, output_text, span_metadata
 
-    from src.backend.services.ai.gateway.langfuse_pii_callback import (  # noqa: F401 — re-export
+    from src.backend.services.ai.gateway.langfuse_pii_callback import (
         anonymize_trace_payload,
     )
 

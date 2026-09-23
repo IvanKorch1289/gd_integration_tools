@@ -140,7 +140,7 @@ class InMemoryProvider:
         if flag_key in self._overrides:
             return bool(self._overrides[flag_key])
 
-        from src.backend.core.feature_flags.runtime_overrides import (  # noqa: F401 — re-export
+        from src.backend.core.feature_flags.runtime_overrides import (
             get_runtime_overrides,
         )
 
@@ -251,7 +251,7 @@ class FlagsmithBackend:
         """Boolean: Flagsmith → fallback → default."""
         try:
             provider = self._get_provider()
-            from src.backend.core.feature_flags.flagsmith_provider import (  # noqa: F401 — re-export
+            from src.backend.core.feature_flags.flagsmith_provider import (
                 EvaluationContext as _ProviderCtx,
             )
 
@@ -278,7 +278,7 @@ class FlagsmithBackend:
         """String: Flagsmith → fallback → default."""
         try:
             provider = self._get_provider()
-            from src.backend.core.feature_flags.flagsmith_provider import (  # noqa: F401 — re-export
+            from src.backend.core.feature_flags.flagsmith_provider import (
                 EvaluationContext as _ProviderCtx,
             )
 
@@ -304,7 +304,7 @@ class FlagsmithBackend:
         """Integer: Flagsmith → fallback → default."""
         try:
             provider = self._get_provider()
-            from src.backend.core.feature_flags.flagsmith_provider import (  # noqa: F401 — re-export
+            from src.backend.core.feature_flags.flagsmith_provider import (
                 EvaluationContext as _ProviderCtx,
             )
 
@@ -330,7 +330,7 @@ class FlagsmithBackend:
         """Object: Flagsmith → fallback → default."""
         try:
             provider = self._get_provider()
-            from src.backend.core.feature_flags.flagsmith_provider import (  # noqa: F401 — re-export
+            from src.backend.core.feature_flags.flagsmith_provider import (
                 EvaluationContext as _ProviderCtx,
             )
 

@@ -257,14 +257,14 @@ class MCPClientRegistry:
             # Try to get from secrets backend
             broker: SecretsBackend | None = None
             try:
-                from src.backend.infrastructure.security.vault_secrets import (  # noqa: F401 — re-export
+                from src.backend.infrastructure.security.vault_secrets import (
                     VaultSecretsBackend,
                 )
 
                 broker = VaultSecretsBackend()  # type: ignore[call-arg]  # R2.MYPY: VaultSecretsBackend requires addr from settings
             except Exception as _:
                 try:
-                    from src.backend.infrastructure.security.env_secrets import (  # noqa: F401 — re-export
+                    from src.backend.infrastructure.security.env_secrets import (
                         EnvSecretsBackend,
                     )
 

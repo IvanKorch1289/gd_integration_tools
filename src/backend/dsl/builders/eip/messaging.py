@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any, cast
 from src.backend.dsl.builders.eip._base import EIPMixinBase
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors import BaseProcessor
-from src.backend.dsl.engine.processors.streaming import (  # noqa: F401 — re-export
+from src.backend.dsl.engine.processors.streaming import (
     ChannelPurgerProcessor,
     DurableSubscriberProcessor,
     ExactlyOnceProcessor,

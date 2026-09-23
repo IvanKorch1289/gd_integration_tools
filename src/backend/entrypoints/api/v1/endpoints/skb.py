@@ -2,7 +2,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Response
 
-from extensions.skb.schemas.route import (  # noqa: F401 — re-export  # S168 W15-17 P2-10
+from extensions.skb.schemas.route import (  # S168 W15-17 P2-10
     APISKBOrderSchemaIn,
     SKBObjectsByAddressQuerySchema,
     SKBOrdersListQuerySchema,
@@ -10,7 +10,7 @@ from extensions.skb.schemas.route import (  # noqa: F401 — re-export  # S168 W
 )
 from src.backend.core.enums.skb import ResponseTypeChoices
 from src.backend.entrypoints.api.dependencies.auth import require_api_key
-from src.backend.entrypoints.api.generator.actions import (  # noqa: F401 — re-export
+from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
 )

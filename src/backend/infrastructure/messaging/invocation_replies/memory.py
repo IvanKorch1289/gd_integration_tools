@@ -16,7 +16,7 @@ from collections import OrderedDict
 from time import monotonic
 from typing import NamedTuple
 
-from src.backend.core.interfaces.invocation_reply import (  # noqa: F401 — re-export
+from src.backend.core.interfaces.invocation_reply import (
     InvocationReplyChannel,
     ReplyChannelKind,
 )

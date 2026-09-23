@@ -21,12 +21,12 @@ Public API:
 
 from __future__ import annotations
 
-from src.backend.services.ai.eval.inspect_runner import (  # noqa: F401 — re-export
+from src.backend.services.ai.eval.inspect_runner import (
     InspectRunner,
     SuiteResult,
     SuiteSummary,
 )
-from src.backend.services.ai.eval.ragas_evaluator import (  # noqa: F401 — re-export
+from src.backend.services.ai.eval.ragas_evaluator import (
     DEFAULT_THRESHOLDS,
     RAGASEvaluator,
     RAGASMetric,

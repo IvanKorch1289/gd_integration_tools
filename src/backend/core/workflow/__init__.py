@@ -14,7 +14,7 @@ to direct ``infrastructure.workflow.factory`` import).
 
 from __future__ import annotations
 
-from src.backend.core.workflow.backend import (  # noqa: F401 — re-export
+from src.backend.core.workflow.backend import (
     WorkflowBackend,
     WorkflowHandle,
     WorkflowResult,

@@ -12,25 +12,25 @@ Backward-compat: ``from src.backend.dsl.codec.format_converters import AvroEncod
 
 from __future__ import annotations
 
-from src.backend.dsl.codec.format_converters.avro import (  # noqa: F401 — re-export
+from src.backend.dsl.codec.format_converters.avro import (
     AvroDecodeProcessor,  # S58 W3: re-export
     AvroEncodeProcessor,  # S58 W3: re-export
 )
-from src.backend.dsl.codec.format_converters.jsonlines import (  # noqa: F401 — re-export
+from src.backend.dsl.codec.format_converters.jsonlines import (
     JsonLinesDecodeProcessor,  # S58 W3: re-export
     JsonLinesEncodeProcessor,  # S58 W3: re-export
 )
-from src.backend.dsl.codec.format_converters.markdown import (  # noqa: F401 — re-export
+from src.backend.dsl.codec.format_converters.markdown import (
     HtmlToMarkdownProcessor,  # S58 W3: re-export
     MarkdownToHtmlProcessor,  # S58 W3: re-export
     _simple_html_to_markdown,  # S58 W3: helper re-export
 )
-from src.backend.dsl.codec.format_converters.protobuf import (  # noqa: F401 — re-export
+from src.backend.dsl.codec.format_converters.protobuf import (
     ProtobufDecodeProcessor,  # S58 W3: re-export
     ProtobufEncodeProcessor,  # S58 W3: re-export
     _resolve_protobuf_class,  # S58 W3: helper re-export
 )
-from src.backend.dsl.codec.format_converters.toml import (  # noqa: F401 — re-export
+from src.backend.dsl.codec.format_converters.toml import (
     TomlDecodeProcessor,  # S58 W3: re-export
     TomlEncodeProcessor,  # S58 W3: re-export
     _toml_encode,  # S58 W3: helper re-export

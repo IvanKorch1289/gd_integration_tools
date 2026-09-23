@@ -7,7 +7,7 @@
 
 Использование::
 
-    from src.backend.core.security.capabilities.tenant import (  # noqa: F401 — re-export
+    from src.backend.core.security.capabilities.tenant import (
         CapabilityTenant, TenantContext,
     )
 

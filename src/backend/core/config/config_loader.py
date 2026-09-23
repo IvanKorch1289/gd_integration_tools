@@ -5,7 +5,7 @@ from typing import Any, ClassVar
 
 from dotenv import load_dotenv
 from pydantic.fields import FieldInfo
-from pydantic_settings import (  # noqa: F401 — re-export
+from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
     SettingsConfigDict,

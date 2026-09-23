@@ -34,11 +34,11 @@ backward-compat shim'ы (re-export).
 
 from __future__ import annotations
 
-from src.backend.core.resilience.adaptive_timeout import (  # noqa: F401 — re-export
+from src.backend.core.resilience.adaptive_timeout import (
     AdaptiveTimeoutConfig,
     AdaptiveTimeoutPolicy,
 )
-from src.backend.core.resilience.breaker import (  # noqa: F401 — re-export
+from src.backend.core.resilience.breaker import (
     Breaker,
     BreakerRegistry,
     BreakerSpec,
@@ -46,7 +46,7 @@ from src.backend.core.resilience.breaker import (  # noqa: F401 — re-export
     CircuitOpen,
     get_breaker_registry,
 )
-from src.backend.core.resilience.cache_decorators import (  # noqa: F401 — re-export
+from src.backend.core.resilience.cache_decorators import (
     cached,
     invalidate,
     multi_cached,
@@ -57,26 +57,26 @@ from src.backend.core.resilience.cache_decorators import (  # noqa: F401 — re-
 # обратный импорт ``from src.backend.core.resilience import DegradationManager``.
 # Если этот блок окажется НИЖЕ decorators, поднимется циклическая
 # ImportError (blocker b1 Sprint 17 W1).
-from src.backend.core.resilience.degradation import (  # noqa: F401 — re-export
+from src.backend.core.resilience.degradation import (
     ComponentState,
     DegradationManager,
     DegradationMode,
     degradation_manager,
 )
-from src.backend.core.resilience.graceful_degradation import (  # noqa: F401 — re-export
+from src.backend.core.resilience.graceful_degradation import (
     DegradationFeature,
     FeatureState,
     GracefulDegradationRegistry,
     get_graceful_degradation_registry,
 )
-from src.backend.core.resilience.rate_limiter import (  # noqa: F401 — re-export
+from src.backend.core.resilience.rate_limiter import (
     RateLimit,
     RateLimiter,
     RateLimitExceeded,
     RedisRateLimiter,
     get_rate_limiter,
 )
-from src.backend.core.resilience.retry import (  # noqa: F401 — re-export
+from src.backend.core.resilience.retry import (
     Retry,
     RetryPolicy,
     async_retry,
@@ -85,7 +85,7 @@ from src.backend.core.resilience.retry import (  # noqa: F401 — re-export
     retry_async,
     with_retry,
 )
-from src.backend.core.resilience.retry_budget import (  # noqa: F401 — re-export
+from src.backend.core.resilience.retry_budget import (
     RetryBudget,
     RetryBudgetExhausted,
     get_retry_budget,

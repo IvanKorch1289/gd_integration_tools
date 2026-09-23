@@ -26,7 +26,7 @@ logger = get_logger("core.redis_coordinator")
 
 def _get_raw_redis() -> Any:
     """Возвращает raw Redis client (обходит обёртки)."""
-    from src.backend.infrastructure.clients.storage.redis import (  # noqa: F401 — re-export
+    from src.backend.infrastructure.clients.storage.redis import (
         get_redis_client as redis_client,
     )
 
