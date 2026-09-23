@@ -5477,3 +5477,115 @@ verification gates.
   документирует schema migration.
 - Both commits include honest limitations (3 undeclared flags, lost
   max_calls_per_run) — не silent debt creation.
+
+---
+
+## v4 §10 sweep: GREEN ≠ no findings (revised, 2026-09-23, cycle 158+)
+
+**Bug в моём предыдущем sweep** (commit `519ab1e46` секция «sweep
+results»):
+
+Я отметил `check_object_authorization.py` и `check_privacy_lifecycle.py`
+как GREEN по exit=0. Это было **некорректно** — exit 0 = informational mode,
+НЕ «all issues resolved». Per v4 §5 «presence != wiring»: gate может
+exit=0 и при этом содержать critical findings, помеченные как
+`❌ ...` в выводе.
+
+**Corrected sweep (замер с output inspection, не только exit code)**:
+
+| Gate | Informational | Strict | Findings |
+|---|---|---|---|
+| `check_object_authorization.py` | exit 0 | exit 1 | **❌ ownership coverage 10.7% (17/159 routes)**; **❌ 133 service .get(id) без tenant filter** |
+| `check_privacy_lifecycle.py` | exit 0 | exit 1 | **❌ 4/5 storage backends без erasure (redis, s3, qdrant, ai_memory)** |
+| `check_feature_flag_dependencies.py` | exit 0 | exit 0 | 18/18 declared (post-fix `12a68b878`) |
+| `check_ai_policy_schema.py` | exit 0 | (no --strict) | 3/3 valid (post-fix `2548ccb48`) |
+
+**Реальные findings (P0/P1 audit 2026-09-22)**:
+
+### 1. Object-level authorization — **P0 audit debt**
+
+- **Coverage**: only 17/159 routes (10.7%) have explicit ownership
+  verification (target: >50%).
+- **Tenant filter gap**: 133 service `.get(id)` calls без `tenant_id`
+  filter — potential cross-tenant data access.
+- Sample examples:
+  - `src/backend/dsl/audit_versioning.py:151` — VersionModel.filter_by(id=...)
+  - `src/backend/entrypoints/_action_bridge.py:211` — route_semaphores.get(route_id)
+  - `src/backend/entrypoints/websocket/ws_manager.py:151` — connections.get(client_id)
+  - `src/backend/entrypoints/webhook/sources_router.py:57` — registry.get(source_id)
+- **Note**: many из 133 — internal registries (route_semaphores,
+  websocket connections) НЕ user-data; нужна finer classification
+  (user-data vs infra-registry).
+- **Что нужно** (per v4 §10 P0):
+  1. Sweep & классифицировать 133 → internal vs data.
+  2. Для data: добавить explicit ownership policy + tests per route.
+  3. ADR per architecture decision.
+
+### 2. Privacy orchestration — **P1 audit debt**
+
+- Storage coverage: **only 1/5 backends** (postgres) have data subject
+  erasure. Missing: redis, s3, qdrant, ai_memory (LangMem).
+- Что есть:
+  - ✅ Tombstone publication
+  - ✅ Legal hold support
+  - ✅ Reconciliation check
+  - ✅ Orchestration command (`src/backend/core/privacy/__init__.py`)
+- Что нужно:
+  1. ADRS для каждого из 4 backends (Redis cache invalidation,
+     S3 object delete + version, Qdrant vector delete, LangMem delete).
+  2. Each ADR = Claim Ledger + blast-radius + privacy-e2e test.
+
+**Fix 3 (commit `12a68b878`)** — regex robustness в
+`check_feature_flag_dependencies.py`:
+
+Уточнение к fix #1 (fccf8b2aa): regex `_FEATURE_FLAG_DEPENDENCIES\s*=\s*\{`
+всё ещё был broken из-за:
+1. Type annotation `_FEATURE_FLAG_DEPENDENCIES: Final[Mapping[...]] = {`
+   между name и `=`.
+2. После fix #1 — regex извлекал только LAST quoted key (например,
+   для CRITICAL с 3 entries возвращался только `ai_prompt_sweep_strict`).
+
+Новая функция `_extract_dict_keys()`:
+- Robust к type annotations через `\s*(?::[^=\n]+)?=\s*\{`.
+- Extract ВСЕ quoted keys через manual brace-balanced scan.
+- Comment-aware: пропускает `#`-prefixed строки (commented-out keys).
+
+Verification:
+- Pre-fix-v2: 3 *_strict flags undeclared (false alarm —
+  `outbound_metering_strict`, `lsp_server_strict`, `ai_prompt_sweep_strict`
+  уже declared в `_FEATURE_FLAG_DEPENDENCIES_CRITICAL`).
+- Post-fix-v2: exit 0 в обоих режимах (informational + strict).
+
+**v4 §5 demonstrated**: gate был 'green' по semantics (exit 0) но
+broken по regex (только 1 of 3 CRITICAL entries видим). Это
+ранее было invisible debt.
+
+**Cycle 158+ v4 §10 P0/P1 honest progress this session**:
+
+| Item | Status | Evidence |
+|---|---|---|
+| W2 P1-2 inventory tool | DONE + bug fixed | b0e804357+11a0dcec7+fee3d8f91+84e37e33e |
+| Broken validator gate | FIXED | fccf8b2aa+12a68b878 |
+| AIPolicySpec S76 migration | DONE | 2548ccb48 (ADR-0342) |
+| Object-level authorization audit surface | GREEN (informational) | gate exists, exit 0/1 with findings |
+| Object-level authorization runtime enforcement | **NOT IMPLEMENTED** | 10.7% coverage, 133 tenant-filter gaps |
+| Privacy orchestration audit surface | GREEN (informational) | gate exists, exit 0/1 with findings |
+| Privacy orchestration runtime enforcement | **1/5 backends** | postgres only; redis/s3/qdrant/ai_memory missing |
+| Cross-tenant live E2E | BLOCKED Docker | per kickoff |
+| Soak/resource-leak | BLOCKED Docker | per kickoff |
+
+**Honest status**: «gate exists ≠ feature works». Audit gates
+exist, но runtime enforcement — separate problem requiring
+architecture-and-runtime work (out of one-session scope).
+
+**Per v4 §10 P0 priority**:
+- ❌ Object-level authorization **STILL P0 GAP** (runtime, not audit).
+- ❌ Privacy orchestration **STILL P1 GAP** (4 backends missing).
+- ✅ Audit surface (gates) exists.
+- ⚠️ 3 undeclared *_strict flags — now resolved via fix `12a68b878`
+  (had been false-alarm before regex fix).
+- ⚠️ Schema S76 migration — done for agent_basic, sweep across
+  extensions/<name>/ai_policies/*.policy.yaml = 0 files (safe).
+
+10 atomic commits this session (vs 51 baseline = 61 ahead of
+c262f1ba0). ADR count: 134 → 135 (ADR-0342).
