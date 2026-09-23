@@ -10,7 +10,8 @@
         check-feature-flags check-team-ownership \
         verify-versions verify-pypi-versions verify-npm-versions \
         team-worktree team-worktree-list team-worktree-remove \
-        check-plugin-semver check-plugin-semver-strict
+        check-plugin-semver check-plugin-semver-strict \
+        check-unsafe-defaults check-env-matrix check-canonical-errors
 
 check-waf-coverage: ## К1 V15 R-V15-5 — все :external HTTP идут через OutboundHttpClient
 	@$(INFO) "Проверка WAF coverage (V15 R-V15-5)..."
@@ -214,6 +215,23 @@ check-team-ownership: ## К10 S2: validate .claude/team-ownership.toml syntax
 	@$(INFO) "Проверка team-ownership.toml..."
 	@.venv/bin/python tools/check_team_ownership.py
 	@$(SUCCESS) "team-ownership.toml OK (10 teams, ≥3 blockers)"
+
+##@ W11 — Configuration matrix + canonical error contract gates (ADR-0335/0336/0337)
+
+check-unsafe-defaults: ## W11 P0-2: Pydantic Settings без hardcoded placeholders (HIGH severity → exit 1)
+	@$(INFO) "Проверка unsafe secret defaults в Pydantic Settings (ADR-0335)..."
+	@$(UV_RUN) python tools/checks/check_unsafe_defaults.py
+	@$(SUCCESS) "no unsafe defaults detected"
+
+check-env-matrix: ## W11 P0-3: required secrets в .env.example (fail-closed на bootstrap-fallback risk, ADR-0336)
+	@$(INFO) "Проверка required secrets в .env.example (ADR-0336)..."
+	@$(UV_RUN) python tools/check_env_example.py --matrix
+	@$(SUCCESS) "all required secrets documented in .env.example"
+
+check-canonical-errors: ## W11 P0-4: canonical error contract (5/5 protocols compliant, ADR-0337)
+	@$(INFO) "Проверка canonical error contract для REST/GraphQL/gRPC/SOAP/MCP..."
+	@$(UV_RUN) python tools/checks/check_canonical_errors.py
+	@$(SUCCESS) "all protocols have canonical error contracts"
 
 ##@ К10 — Team worktree management (Sprint 2 on-demand)
 
