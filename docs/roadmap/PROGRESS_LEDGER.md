@@ -5003,3 +5003,40 @@ sync, поэтому theirs более comprehensive).
 **v4 push forbidden**: `git push` запрещён v4 protocol. User должен запушить сам
 после rebase.
 
+
+---
+
+## W11 P2-1: Audit log integrity hash chain — COMMITTED (2026-09-23, cycle 157)
+
+**Status update**: W11 P2-1 ранее был DEFERRED (3/32 tests fail в
+TestVerifyWithGaps). Теперь — **COMMITTED** (`9512ca65a`).
+
+**Fix**:
+1. Добавлен ``HashChainLedger.from_entries(entries)`` classmethod
+   (preserves original indexes для restore scenario).
+2. Tests обновлены с realistic semantics:
+   - backup/restore с lost entry → TAMPERED (chain breaks at next-after-gap).
+   - Manual reconstruction с valid hashes + non-contiguous → GAP_DETECTED
+     (через from_entries с валидным chain).
+3. ``from typing import Mapping`` → ``from collections.abc import Mapping``
+   (PEP 585, ruff F821).
+
+**Verification (after fix)**:
+- compileall → EXIT 0
+- check_python3_syntax → EXIT 0
+- ruff check → All checks passed
+- pytest 247/247 (W11 P2-1 + P1-2 + P1-1 + P0-4 + P0-3 + P0-2)
+- pytest test_w11_p2_1_audit_hash_chain: 33/33 passed
+
+**Cross-cutting integration** (per ADR-0340):
+- W11 P1-2 (DLQ replay governance) → каждое replay через HashChainLedger.append()
+- W11 P1-1 (outbox crash matrix) → poison messages → hash chain audit trail
+- V15 R-V15-1 (plugin contract) → plugin install → hash chain entry
+- V15 security constraints → secret rotation, route change → hash chain entry
+
+**Production deployment path** (documented в ADR-0340):
+- Persistent storage: ClickHouse + on-disk WAL
+- External signing: signed_checkpoint() → Vault Transit → Kafka append-only
+- Retention lock: 7 лет (GDPR / financial regulation)
+- Dual control: critical operations → 2 operator approvals
+
