@@ -1,5 +1,44 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W6 P1-8: argparse → typer+rich CLI pilot (import_wsdl.py)
+
+### refactor(tools): W6 P1-8 pilot — import_wsdl.py мигрирован на typer+rich
+
+MINIMAX W6 P1-8 (cycle 152): pilot migration argparse → typer+rich для
+`tools/import_wsdl.py` (90 → 132 LOC). Pattern для будущих migrations
+~90 argparse tools в проекте.
+
+**Что сделано**:
+
+* **`tools/import_wsdl.py`** — `argparse.ArgumentParser` → `typer.Typer`
+  + `@app.callback(invoke_without_command=True)`. `sys.stdout.write(...)`
+  → `_console.print(f"[bold cyan]...")`.
+* **Backward-compat**: `main(argv=None)` через `CliRunner.invoke()` +
+  `app()` для sys.argv fallback. Public API preserved: `app`, `main`,
+  `_collect_operations`.
+* **`tests/unit/tools/test_w6_p1_8_import_wsdl_typer.py`** (новый, 8 тестов):
+  app is typer instance, --help formatted, missing args, no argparse import,
+  backward-compat main() variants.
+
+### Verification
+
+```
+compileall -q tools/import_wsdl.py                                → exit 0
+uv run python tools/import_wsdl.py --help                         → typer-formatted help
+pytest tests/unit/tools/test_w6_p1_8_import_wsdl_typer.py         → 8 passed
+ruff check --select F401,F841,F811,E9                              → All checks passed!
+```
+
+### Recon note
+
+MINIMAX baseline "моно-manage.py (1838 LOC)" — не существует.
+`tools/cli.py` (392 LOC) уже typer+rich (Sprint 35). S62 W3 мигрировал
+8+ tools. W6 P1-8 — incremental continuation.
+
+Refs: MINIMAX W6 P1-8, ADR-0084, Sprint 62 W3, Sprint 35, ADR-0318, cycle 152.
+
+---
+
 ## [Unreleased] — 2026-09-23 — W7 P1-9: DI evaluation (dishka vs custom)
 
 ### docs(di): W7 P1-9 DI evaluation — ADR-0317 (research + roadmap)
