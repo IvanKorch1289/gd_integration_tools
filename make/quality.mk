@@ -299,6 +299,18 @@ check-cancellation: check-env ## Audit 2026-09-22: cancellation/backpressure con
 	@$(INFO) "Checking cancellation contract..."
 	@$(UV_RUN) python tools/checks/check_cancellation_contract.py
 
+check-deadline-propagation: check-env ## Sprint 12 (ADR-0305): deadline propagation completeness (human-readable)
+	@$(INFO) "Checking deadline propagation (ADR-0305)..."
+	@$(UV_RUN) python tools/checks/check_deadline_propagation.py
+
+check-deadline-propagation-strict: check-env ## Sprint 12 (ADR-0305): blocking gate (exit 1 при LEGACY/PARTIAL)
+	@$(INFO) "Checking deadline propagation (ADR-0305) — strict..."
+	@$(UV_RUN) python tools/checks/check_deadline_propagation.py --strict
+
+check-deadline-propagation-json: check-env ## Sprint 12 (ADR-0305): machine-readable JSON для CI integration
+	@$(INFO) "Checking deadline propagation (ADR-0305) — JSON..."
+	@$(UV_RUN) python tools/checks/check_deadline_propagation.py --json
+
 check-privacy-lifecycle: check-env ## Audit 2026-09-22: privacy lifecycle coverage (DeleteDataSubject)
 	@$(INFO) "Checking privacy lifecycle..."
 	@$(UV_RUN) python tools/checks/check_privacy_lifecycle.py
@@ -311,4 +323,5 @@ audit-2026-09-22: check-env ## Audit 2026-09-22: run all new production readines
 	@$(UV_RUN) python tools/checks/check_canonical_errors.py
 	@$(UV_RUN) python tools/checks/check_cancellation_contract.py
 	@$(UV_RUN) python tools/checks/check_privacy_lifecycle.py
+	@$(UV_RUN) python tools/checks/check_deadline_propagation.py --strict
 	@$(SUCCESS) "All audit gates complete!"

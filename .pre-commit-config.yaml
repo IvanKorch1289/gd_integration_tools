@@ -20,6 +20,18 @@ repos:
         types: [python]
         pass_filenames: false
 
+      # Sprint 12 (ADR-0305): deadline propagation completeness gate.
+      # Защищает от regression: если кто-то добавляет ``asyncio.wait_for`` или
+      # fanout pattern (asyncio.gather, subprocess) в новый DSL processor без
+      # admission_control / narrowing — pre-commit блокирует commit.
+      - id: check-deadline-propagation
+        name: "ADR-0305: deadline propagation completeness (blocking gate)"
+        entry: uv run python tools/checks/check_deadline_propagation.py --strict
+        language: system
+        types: [python]
+        pass_filenames: false
+        stages: [pre-push]
+
       # S113 W4 — auto-prune stale allowlist entries on pre-push (CI gate).
       # Complement к S112 W1 --prune-allowlist flag: запускает prune
       # и warn'ит если stale entries > 0. Не блокирует push (т.к. prune
