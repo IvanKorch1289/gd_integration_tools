@@ -1,5 +1,65 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W2 P0-3 Phase 1B: 5 single-file processors migration
+
+### refactor(dsl): 5 single-file processors consolidated (W2 P0-3 Phase 1B)
+
+MINIMAX W2 P0-3 Phase 1B (cycle 152): pattern из ADR-0313 (Phase 1A) применён
+к остальным 5 single-file процессорам.
+
+**Что мигрировано** (5 файлов × 2 места = 10 файлов изменено):
+
+* **canonical copies** (1521 LOC):
+    - `strangler_fig.py` (341) — StranglerFigProcessor, RouteTarget,
+      MigrationMixin, StranglerFigStats, StranglerFigRollback
+    - `data_lineage.py` (315) — DataLineageProcessor, LineageNode,
+      LineageEvent, LineageNodeType, DataLineageMixin
+    - `plan_execute_processor.py` (287) — PlanExecuteProcessor,
+      PlanExecuteMixin, PlanStep, PlanResult
+    - `reflection_loop_processor.py` (233) — ReflectionLoopProcessor,
+      ReflectionLoopMixin, ReflectionResult
+    - `router_specialist_processor.py` (345) — RouterSpecialistProcessor,
+      RouterSpecialistMixin, SpecialistAgent, RoutingDecision
+
+* **legacy shims** (5 файлов) с `__getattr__` lazy proxy pattern (новый
+  generic pattern — проксирует любые классы из canonical автоматически,
+  не нужно обновлять shim при добавлении нового класса в canonical).
+
+* **`src/backend/dsl/processors/__init__.py`** обновлён — импортирует напрямую
+  из canonical location (НЕ через legacy shim), чтобы downstream tooling
+  (`from dsl.processors import X`) не получал DeprecationWarning.
+
+* **`src/backend/dsl/processors/batch_processor.py`** (Phase 1A) обновлён
+  до того же `__getattr__` pattern для consistency.
+
+* **`tests/unit/dsl/processors/test_w2_p0_3_phase1b_remaining_processors.py`**
+  (новый, ~150 строк, 17 тестов): TestStranglerFigShim (3) + TestDataLineageShim
+  (3) + TestPlanExecuteShim (4) + TestReflectionLoopShim (3) +
+  TestRouterSpecialistShim (2) + TestDslProcessorsReExportHub (2).
+
+* **`docs/adr/0314-w2-p0-3-phase1b-remaining-processors.md`** (новый, ~205 строк):
+  ADR с описанием `__getattr__` lazy proxy pattern.
+
+### Pre-existing tests regression-clean
+
+```
+uv run python -m pytest \
+  tests/unit/dsl/processors/test_strangler_fig.py \
+  tests/unit/dsl/processors/test_data_lineage.py \
+  tests/unit/dsl/processors/test_plan_execute_processor.py \
+  tests/unit/dsl/processors/test_reflection_loop_processor.py \
+  tests/unit/dsl/processors/test_router_specialist_processor.py \
+  tests/unit/dsl/processors/test_batch_processor.py \
+  tests/unit/dsl/processors/test_w2_p0_3_batch_processor_migration.py \
+  tests/unit/dsl/processors/test_w2_p0_3_phase1b_remaining_processors.py \
+  -q
+  → 150 passed, 6 warnings (все DeprecationWarning — ожидаемые)
+```
+
+Refs: MINIMAX W2 P0-3, ADR-0313 (Phase 1A), ADR-0314 (Phase 1B), cycle 152.
+
+---
+
 ## [Unreleased] — 2026-09-23 — W2 P0-3 Phase 1A: BatchProcessor migration pilot
 
 ### refactor(dsl): BatchProcessor migration pilot — canonical + shim (MINIMAX W2 P0-3)

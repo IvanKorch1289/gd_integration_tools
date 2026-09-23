@@ -111,6 +111,7 @@
 | [ADR-0311](0311-w4-p1-6-aiocache-evaluation-hybrid.md) | W4 P1-6: aiocache evaluation + HYBRID decision (sync=cachetools, simple async=aiocache opt-in, advanced=custom) | Accepted |
 | [ADR-0312](0312-w5-p1-7-structlog-default-circular-fix.md) | W5 P1-7: structlog default backend (factory auto-detect) + circular import fix (~800 call sites) | Accepted |
 | [ADR-0313](0313-w2-p0-3-batch-processor-migration-pilot.md) | W2 P0-3 Phase 1A: BatchProcessor migration pilot (canonical + shim + DeprecationWarning) | Accepted |
+| [ADR-0314](0314-w2-p0-3-phase1b-remaining-processors.md) | W2 P0-3 Phase 1B: 5 single-file processors migration (strangler_fig, data_lineage, plan_execute, reflection_loop, router_specialist) | Accepted |
 
-**Total:** 106 ADRs.
+**Total:** 107 ADRs.
 
