@@ -9,14 +9,19 @@
 Генерируемые файлы содержат русские docstring'и, базовую структуру и
 ``# TODO`` для мест, где разработчик должен дописать логику. Опция
 ``--dry-run`` показывает содержимое без записи.
+
+MINIMAX W6 P1-8 Phase 10 (cycle 153): мигрирован с ``argparse`` на ``typer`` +
+``rich`` (libraries > custom, per ADR-0084). Сохранены: 3 subcommands
+(processor/service/route) + ``--dry-run`` safety flag.
 """
 
 from __future__ import annotations
 
-import argparse
-import sys
 from pathlib import Path
 from textwrap import dedent
+
+import typer
+from rich.console import Console
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "src"
@@ -131,77 +136,127 @@ def route_template(route_id: str, source: str) -> str:
 # ──────────────────── CLI ────────────────────
 
 
-def cmd_processor(args: argparse.Namespace) -> None:
-    """Создаёт файл процессора в ``src/backend/dsl/engine/processors/<module>.py``."""
-    module = args.module or "custom"
-    class_name = args.name
-    path = SRC / "backend" / "dsl" / "engine" / "processors" / f"{module}.py"
-    code = processor_template(class_name)
-    _emit(path, code, args.dry_run)
-
-
-def cmd_service(args: argparse.Namespace) -> None:
-    """Создаёт файл сервиса в ``src/services/<group>/<name>.py``."""
-    group = args.group or "core"
-    class_name = args.name
-    filename = class_name.lower() + ".py"
-    path = SRC / "backend" / "services" / group / filename
-    code = service_template(class_name)
-    _emit(path, code, args.dry_run)
-
-
-def cmd_route(args: argparse.Namespace) -> None:
-    """Создаёт файл маршрута в ``src/backend/dsl/routes/<name>.py``."""
-    # Используем route_id в имени файла: "invoices.sync" → "invoices_sync.py"
-    safe_name = args.name.replace(".", "_")
-    path = SRC / "backend" / "dsl" / "routes" / f"{safe_name}.py"
-    code = route_template(args.name, args.source or "internal:manual")
-    _emit(path, code, args.dry_run)
+app = typer.Typer(
+    name="scaffold",
+    help="Scaffold для новых компонентов (Processor / Service / Route).",
+    no_args_is_help=True,
+    add_completion=False,
+)
+_console = Console()
 
 
 def _emit(path: Path, code: str, dry_run: bool) -> None:
     """Пишет файл или печатает содержимое при ``dry_run``."""
     if dry_run:
-        print(f"# DRY-RUN: would create {path}")
+        _console.print(f"[yellow]# DRY-RUN: would create {path}[/]")
+        # Plain print для сохранить content readable без rich markup.
         print(code)
         return
 
     if path.exists():
-        print(f"ERROR: файл уже существует: {path}")
-        sys.exit(1)
+        _console.print(f"[red]ERROR: файл уже существует: {path}[/]")
+        raise typer.Exit(code=1)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(code, encoding="utf-8")
-    print(f"Created: {path}")
+    _console.print(f"[green]Created:[/] {path}")
 
 
-def main() -> None:
-    """Точка входа CLI."""
-    parser = argparse.ArgumentParser(description="Scaffold для новых компонентов")
-    sub = parser.add_subparsers(dest="command", required=True)
+@app.command(name="processor", help="Создать новый DSL-процессор")
+def cmd_processor(
+    name: str = typer.Option(
+        ...,
+        "--name",
+        help="Имя класса (без Processor-суффикса).",
+    ),
+    module: str | None = typer.Option(
+        None,
+        "--module",
+        help="Имя файла в processors/ (default: custom).",
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Показать содержимое без записи.",
+    ),
+) -> None:
+    """Создаёт файл процессора в ``src/backend/dsl/engine/processors/<module>.py``."""
+    module_name = module or "custom"
+    path = SRC / "backend" / "dsl" / "engine" / "processors" / f"{module_name}.py"
+    code = processor_template(name)
+    _emit(path, code, dry_run)
 
-    p = sub.add_parser("processor", help="Создать новый DSL-процессор")
-    p.add_argument("--name", required=True, help="Имя класса (без Processor-суффикса)")
-    p.add_argument("--module", help="Имя файла в processors/ (default: custom)")
-    p.add_argument("--dry-run", action="store_true")
-    p.set_defaults(func=cmd_processor)
 
-    s = sub.add_parser("service", help="Создать новый сервис")
-    s.add_argument("--name", required=True, help="Имя класса (без Service-суффикса)")
-    s.add_argument(
-        "--group", choices=["ai", "ops", "integrations", "io", "core"], help="Подпакет"
-    )
-    s.add_argument("--dry-run", action="store_true")
-    s.set_defaults(func=cmd_service)
+@app.command(name="service", help="Создать новый сервис")
+def cmd_service(
+    name: str = typer.Option(
+        ...,
+        "--name",
+        help="Имя класса (без Service-суффикса).",
+    ),
+    group: str | None = typer.Option(
+        None,
+        "--group",
+        help="Подпакет: ai / ops / integrations / io / core (default: core).",
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Показать содержимое без записи.",
+    ),
+) -> None:
+    """Создаёт файл сервиса в ``src/services/<group>/<name>.py``."""
+    group_name = group or "core"
+    filename = name.lower() + ".py"
+    path = SRC / "backend" / "services" / group_name / filename
+    code = service_template(name)
+    _emit(path, code, dry_run)
 
-    r = sub.add_parser("route", help="Создать новый DSL-маршрут")
-    r.add_argument("--name", required=True, help="route_id (e.g., invoices.sync)")
-    r.add_argument("--source", help="Источник (default: internal:manual)")
-    r.add_argument("--dry-run", action="store_true")
-    r.set_defaults(func=cmd_route)
 
-    args = parser.parse_args()
-    args.func(args)
+@app.command(name="route", help="Создать новый DSL-маршрут")
+def cmd_route(
+    name: str = typer.Option(
+        ...,
+        "--name",
+        help="route_id (e.g., invoices.sync).",
+    ),
+    source: str | None = typer.Option(
+        None,
+        "--source",
+        help="Источник (default: internal:manual).",
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Показать содержимое без записи.",
+    ),
+) -> None:
+    """Создаёт файл маршрута в ``src/backend/dsl/routes/<name>.py``."""
+    # Используем route_id в имени файла: "invoices.sync" → "invoices_sync.py"
+    safe_name = name.replace(".", "_")
+    path = SRC / "backend" / "dsl" / "routes" / f"{safe_name}.py"
+    code = route_template(name, source or "internal:manual")
+    _emit(path, code, dry_run)
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Точка входа CLI (backward-compat shim для существующих скриптов).
+
+    Запускает typer app через typer.testing.CliRunner (для тестов)
+    или sys.argv (для CLI invocation). Возвращает exit code.
+    """
+    if argv is not None:
+        from typer.testing import CliRunner
+
+        runner = CliRunner()
+        result = runner.invoke(app, argv)
+        return result.exit_code
+    # CLI invocation: typer сам подхватит sys.argv[1:]
+    try:
+        app()
+    except SystemExit as exc:
+        return int(exc.code) if exc.code is not None else 0
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
