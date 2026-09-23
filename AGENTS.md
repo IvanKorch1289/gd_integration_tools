@@ -312,7 +312,7 @@ Kimi Code автоматически подхватывает:
 Gate: `make check-docstrings MAX_ALLOWED=0` → exit 0.
 
 > **Drift (2026-09-23, re-verified)**: на актуальном HEAD гейт НЕ зелёный —
-> `python tools/check_docstrings.py` → **250 missing в 46 файлах** (exit 1).
+> `python tools/check_docstrings.py` → **250 missing в 48 файлах** (exit 1).
 > Claim «baseline 0» исторический (FW7-series), не текущий. Режим
 > восстановления: `make check-docstrings-ratchet` c `MAX_ALLOWED=<текущий>`,
 > затем ступенчатое снижение. Не заявлять «0» без прогона команды.
