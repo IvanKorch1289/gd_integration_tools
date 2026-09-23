@@ -4355,3 +4355,54 @@ CI grep-compatibility (JSON output не получает rich formatting — и�
 - ✅ ADR-0327 создан (120 ADRs total).
 - ⏭️ Phase 9: ~5 simple tools (migrate_plugin_manifest, scaffold, check_layer_imports,
   add_f401_noqa, add_f401_multiline_noqa) — cycle 156+.
+
+---
+
+## W9 P2-13 Phase 3: core/privacy/delete_data_subject god-module split (2026-09-23, cycle 153)
+
+**Задача**: `core/privacy/delete_data_subject.py` (691 LOC, 11 классов) —
+top-3 god-module в src/backend. V15 forbidden pattern «God-modules (>500
+LOC) — split на семейные модули».
+
+**Решение** (ADR-0328):
+
+Преобразован в `delete_data_subject/` package с 8 cohesion submodules
+(types + 5 storage adapters + tombstone + orchestrator). `delete_data_subject.py`
+стал **56 LOC thin re-export shim** (691 → 56, 92% reduction).
+
+**Submodule layout**:
+
+| Submodule | LOC | Содержимое |
+|---|---|---|
+| `_types.py` | 80 | ErasureStrategy, ErasureResultStatus, AdapterResult, OrchestratorResult, ErasureAdapter (Protocol) |
+| `_postgres.py` | 62 | PostgresErasureAdapter (stub) |
+| `_redis.py` | 102 | RedisErasureAdapter (SCAN + UNLINK) |
+| `_s3.py` | 117 | S3ErasureAdapter (delete objects + versions) |
+| `_qdrant.py` | 122 | QdrantErasureAdapter (delete vectors) |
+| `_langmem.py` | 94 | LangMemErasureAdapter (delete episodic + procedural) |
+| `_tombstone.py` | 39 | TombstonePublisher |
+| `_orchestrator.py` | 159 | DeleteDataSubject (main) |
+
+Per-submodule max **159 LOC** (vs 691 god-module). Все < 200 LOC threshold.
+
+**Back-compat (W2 P0-3 SagaLRA Variant A pattern, ADR-0316)**:
+- Shim `delete_data_subject.py` (file) re-exports все 12 имён из package.
+- `core.privacy.__init__.py` (public API) без изменений.
+- Все imports через `core.privacy.delete_data_subject` continue to work.
+
+**Verification**:
+- `compileall -q src/backend/core/privacy/` → exit 0
+- `ruff check src/backend/core/privacy/` → All checks passed
+- `pytest tests/unit/core/privacy/test_w9_p2_13_phase3_*_split.py` → 28 passed:
+  - 12 back-compat identity tests (shim is canonical)
+  - 8 submodule export tests
+  - 5 protocol conformance tests (все 5 адаптеров реализуют ErasureAdapter)
+  - 3 metadata tests (shim < 100 LOC, submodules < 500 LOC)
+
+**Cycle 153 итог (W9 P2-13 Phase 3)**:
+- ✅ Top-3 god-module декомпозирован (691 → 8 cohesion submodules).
+- ✅ 28 focused tests (back-compat + protocol + metadata).
+- ✅ ADR-0328 создан (121 ADRs total).
+- ⏭️ Phase 3B (deferred): adapter logic dedup, TombstonePublisher → Kafka.
+- ⏭️ Phase 4: следующие god-modules (services/ops/health.py 609, services/ai/agent_sandbox.py 601,
+  core/ai/skill_registry.py 614, core/di/providers/workflow.py 602).

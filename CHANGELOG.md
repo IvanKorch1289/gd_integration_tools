@@ -1,5 +1,38 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W9 P2-13 Phase 3: privacy/delete_data_subject god-module split (691 LOC → 8 submodules)
+
+### refactor(privacy): delete_data_subject god-module → package with 8 cohesion submodules
+
+`src/backend/core/privacy/delete_data_subject.py` (691 LOC, top-3 god-module)
+→ `delete_data_subject/` package с 8 cohesion-focused submodules:
+
+| Submodule | LOC | Содержимое |
+|---|---|---|
+| `_types.py` | 80 | ErasureStrategy, ErasureResultStatus, AdapterResult, OrchestratorResult, ErasureAdapter |
+| `_postgres.py` | 62 | PostgresErasureAdapter |
+| `_redis.py` | 102 | RedisErasureAdapter (SCAN + UNLINK) |
+| `_s3.py` | 117 | S3ErasureAdapter (delete objects + versions) |
+| `_qdrant.py` | 122 | QdrantErasureAdapter (delete vectors) |
+| `_langmem.py` | 94 | LangMemErasureAdapter (delete episodic + procedural) |
+| `_tombstone.py` | 39 | TombstonePublisher |
+| `_orchestrator.py` | 159 | DeleteDataSubject (main) |
+
+`delete_data_subject.py` стал **56 LOC thin re-export shim** (691 → 56, 92%
+reduction). Per-submodule max 159 LOC (vs 691 god-module).
+
+**Back-compat**: `core.privacy` public API без изменений. Все 12 публичных
+имён (11 originals + `AdapterResult`) доступны через обе entry points:
+`from core.privacy import X` и `from core.privacy.delete_data_subject import X`.
+
+**Tests**: `tests/unit/core/privacy/test_w9_p2_13_phase3_delete_data_subject_split.py` —
+28 focused tests (12 back-compat + 8 submodule + 5 protocol + 3 metadata).
+
+**Verification**: pytest 28 passed, ruff All checks passed, compileall exit 0.
+ADR-0328 (121 ADRs total).
+
+---
+
 ## [Unreleased] — 2026-09-23 — W10 DX: `make new-route` scaffold с cURL smoke
 
 ### feat(dx): scaffold лёгких маршрутов (V11.1a)

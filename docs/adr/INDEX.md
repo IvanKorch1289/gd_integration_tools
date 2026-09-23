@@ -124,7 +124,8 @@
 | [ADR-0325](0325-w6-p1-8-phase6-migrate-to-structlog-typer.md) | W6 P1-8 Phase 6: `tools/migrate_to_structlog.py` argparse → typer | **Accepted** |
 | [ADR-0326](0326-w6-p1-8-phase7-generate-adr-index-typer.md) | W6 P1-8 Phase 7: `tools/generate_adr_index.py` argparse → typer | **Accepted** |
 | [ADR-0327](0327-w6-p1-8-phase8-check-docstrings-typer.md) | W6 P1-8 Phase 8: `tools/check_docstrings.py` argparse → typer (8th tool, 5 flags + positional, pre-push gate) | **Accepted** |
+| [ADR-0328](0328-w9-p2-13-phase3-privacy-delete-data-subject-split.md) | W9 P2-13 Phase 3: `core/privacy/delete_data_subject.py` (691 LOC god-module) → package с 8 cohesion submodules | **Accepted** |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 
-**Total:** 120 ADRs.
+**Total:** 121 ADRs.
 
