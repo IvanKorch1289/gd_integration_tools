@@ -74,6 +74,8 @@ cmd_run() {
     "${VENV_PY}" -m coverage run --branch --data-file="${COVERAGE_DATA}" \
         -m pytest -q -m unit \
         tests/unit/core/config tests/unit/dsl/builders tests/unit/core/resilience \
+        tests/unit/core/dsl_browser tests/unit/core/agent_eval \
+        tests/unit/core/idempotency tests/unit/core/tenancy \
         --no-header 2>&1 | tail -20 || {
             err "Базовый прогон unit-тестов провалился — fix tests before mutations"
             exit 1

@@ -1095,6 +1095,12 @@ markers = [
     "requires_toxiproxy: requires toxiproxy container",
     "unit: fast unit tests",
     "integration: integration tests",
+    # S183 W2 (аудит 2026-09-21): testcontainers smoke tests — нужны для
+    # проверки Docker/Podman доступа в CI. Без marker'а --strict-markers
+    # блокирует collection.
+    "testcontainers: testcontainers-based integration tests (PostgreSQL/Redis/Kafka)",
+    # Sprint 3 (audit 2026-09-22 P0): alembic upgrade на PostgreSQL testcontainer.
+    "postgres: PostgreSQL-specific integration tests (alembic upgrade verification)",
     "dspy_eval: DSPy optimizer evaluation tests",
     "pre_existing: known-failing tests in Cycle 36 baseline (excluded from new-regression gate, see docs/audit/AUDIT_2026-06-30.md). NOT a target for milestone fixes.",
     # S204 retro-audit B04: directory-based markers previously unregistered.
@@ -1235,6 +1241,21 @@ source_paths = [
     # mutation score покрывает role check, audit emission, fallback paths.
     "src/backend/core/ai/gateway_orchestrator_mixin.py",
     "src/backend/entrypoints/middlewares/rpa_policy.py",
+    # P3.17 (cycle 41, production-grade plan): +4 модуля — 6 → 10.
+    # dsl_browser: P4.18 typed Browser RPA DSL; selector chain + retry logic
+    # критичны для flakiness mitigation; mutation score покрывает
+    # build_selector() strategies, _execute_step retry/strategy ordering.
+    "src/backend/core/dsl_browser/__init__.py",
+    # agent_eval: Wave 3 (#22) AI agent eval harness; golden/injection/tool-use
+    # scorers; mutation score покрывает scoring branches, weighted_score formula.
+    "src/backend/core/agent_eval/__init__.py",
+    # idempotency: production-critical для preventing duplicate side effects;
+    # mutation score покрывает key derivation, cache hit/miss, TTL expiry.
+    "src/backend/core/idempotency/__init__.py",
+    # idempotency.service: основная бизнес-логика — IdempotencyService;
+    # mutation score покрывает state machine (PENDING→COMPLETED), error caching,
+    # fingerprint collision handling, retry-after-completion semantics.
+    "src/backend/core/idempotency/service.py",
 ]
 backup = false
 runner = "pytest"
@@ -1245,6 +1266,9 @@ pytest_add_cli_args_test_selection = [
     "tests/unit/dsl/builders",
     "tests/unit/core/resilience",
     "tests/unit/core/tenancy",
+    "tests/unit/core/dsl_browser",
+    "tests/unit/core/agent_eval",
+    "tests/unit/core/idempotency",
 ]
 # Отключаем testkit pytest-плагины: при запуске из mutants/ директория
 # mutants/src/ перекрывает editable-install src через sys.path, и импорт
