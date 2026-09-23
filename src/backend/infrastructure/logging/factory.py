@@ -105,10 +105,28 @@ def get_logger(name: str) -> LoggerProtocol:
     global _backend
 
     if _backend is None:
-        _backend = _create_backend("stdlib")
+        # W5 P1-7 (cycle 152, MINIMAX plan): fallback использует auto
+        # detection вместо явного stdlib — если structlog установлен
+        # (он есть в deps per ADR-0084), prefer structlog. Stdlib fallback
+        # остаётся только если structlog import fails. См. ADR-0312.
+        _backend = _create_backend(_detect_available_backend())
         _backend.configure()
 
     return _backend.get_logger(name)
+
+
+def _detect_available_backend() -> str:
+    """Return available backend name (structlog if installed, stdlib otherwise).
+
+    Sprint 60 W1 legacy default: stdlib.
+    W5 P1-7 (cycle 152) — switch to auto-detect: prefer structlog if available.
+    """
+    try:
+        import structlog  # noqa: F401 — availability check
+
+        return "structlog"
+    except ImportError:
+        return "stdlib"
 
 
 def shutdown_logging() -> None:

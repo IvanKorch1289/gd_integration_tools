@@ -1,5 +1,51 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W5 P1-7: structlog default backend + circular import fix
+
+### feat(logging): factory auto-detect structlog default (~800 call sites) (MINIMAX W5 P1-7)
+
+MINIMAX W5 P1-7: устранена discrepancy между `configure_logging(backend="structlog")`
+default (Sprint 60 W1) и cold-start `get_logger()` fallback (явный `"stdlib"`).
+~800 call sites теперь автоматически используют structlog без изменения их кода.
+
+**Что сделано**:
+
+* **`src/backend/infrastructure/logging/factory.py:get_logger()`** — fallback
+  изменён с `_create_backend("stdlib")` на auto-detect через новую
+  функцию `_detect_available_backend()`. Если structlog установлен (он в
+  deps per ADR-0084), prefer structlog. Stdlib fallback остаётся только
+  при ImportError.
+
+* **`src/backend/infrastructure/logging/structlog_backend.py:configure()`** —
+  circular import fix: eager imports `route_to_sinks` + `mask_pii` обёрнуты
+  в lazy-processor wrappers (`_route_to_sinks_lazy`, `_mask_pii_lazy`).
+  Разрывает deadlock: `core.interfaces.__init__:50` (get_logger) →
+  factory → structlog → router → core.interfaces.
+
+* **`tests/unit/infrastructure/logging/test_w5_p1_7_factory_default.py`**
+  (новый, 8 тестов): TestFactoryAutoDetectBackend (2) +
+  TestGetLoggerUsesStructlogByDefault (3) +
+  TestGetLoggerFallbackWhenStructlogUnavailable (1) +
+  TestStructlogBackendLazyImport (2).
+
+### Verification
+
+```
+uv run python -m pytest tests/unit/infrastructure/logging/ -q
+  → 52 passed, 1 skipped (psutil integration)
+
+uv run python -c "from src.backend.core.logging import get_logger; \
+                  log = get_logger('test'); log.info('msg', k='v')"
+  → JSON output: {'event': 'msg', 'k': 'v', 'logger': 'test', 'level': 'info', ...}
+
+compileall -q src/ extensions/ scripts/ tools/ tests/  → exit 0
+ruff check --select F401,F841,F811,E9                   → All checks passed!
+```
+
+Refs: MINIMAX W5 P1-7, ADR-0084, Sprint 60 W1, ADR-0312, cycle 152.
+
+---
+
 ## [Unreleased] — 2026-09-23 — W4 P1-6: aiocache evaluation + HYBRID decision + opt-in pilot
 
 ### feat(cache): aiocache evaluation + AiocacheMemoryBackend opt-in pilot (MINIMAX W4 P1-6)

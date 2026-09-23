@@ -300,8 +300,27 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         # его в свой транспорт. Если глобальный :class:`SinkRouter`
         # ещё не инициализирован, ``route_to_sinks`` работает как no-op
         # (см. :func:`is_router_configured`).
-        from src.backend.infrastructure.logging.router import route_to_sinks
-        from src.backend.infrastructure.observability.pii_filter import mask_pii
+        #
+        # W5 P1-7 (cycle 152, MINIMAX plan): import обёрнут в функцию
+        # ``_route_to_sinks_lazy`` для устранения circular import при
+        # cold-start (см. ADR-0312). ``route_to_sinks`` импортирует
+        # ``core.interfaces.log_sink`` → triggers ``get_logger(__name__)``
+        # → triggers ``configure()`` → deadlock.
+        def _route_to_sinks_lazy(
+            logger: Any, method_name: str, event_dict: dict[str, Any]
+        ) -> dict[str, Any]:
+            from src.backend.infrastructure.logging.router import route_to_sinks
+
+            return route_to_sinks(logger, method_name, event_dict)
+
+        def _mask_pii_lazy(
+            logger: Any, method_name: str, event_dict: dict[str, Any]
+        ) -> dict[str, Any]:
+            from src.backend.infrastructure.observability.pii_filter import (
+                mask_pii,
+            )
+
+            return mask_pii(logger, method_name, event_dict)
 
         shared_processors: list[Any] = [
             structlog.contextvars.merge_contextvars,
@@ -314,8 +333,8 @@ class StructlogGraylogBackend(BaseLoggerBackend):
             structlog.processors.UnicodeDecoder(),
             # V15 S1: PII redaction перед роутингом в backends.
             # Маскирует email/phone/passport/snils/inn/card во всём event_dict.
-            mask_pii,
-            route_to_sinks,
+            _mask_pii_lazy,
+            _route_to_sinks_lazy,
         ]
 
         if debug:
