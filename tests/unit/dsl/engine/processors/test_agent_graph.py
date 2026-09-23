@@ -106,8 +106,11 @@ async def test_react_in_process(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.asyncio
-async def test_react_isolated_uses_sandbox() -> None:
+async def test_react_isolated_uses_sandbox(monkeypatch: pytest.MonkeyPatch) -> None:
     """ReAct с фейковым sandbox не вызывает in-process build_and_run_agent."""
+    # M2.1 policy gate fail-closed: без зарегистрированной policy все tools
+    # фильтруются. Тест проверяет sandbox-boundary → включаем fail-open.
+    monkeypatch.setenv("AGENT_TOOL_POLICY_FAIL_OPEN", "true")
     fake = _FakeSandbox()
     proc = AgentGraphProcessor(
         graph_type="react",

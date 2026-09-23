@@ -55,8 +55,9 @@ Security:
     :class:`AgentToolPolicy` из DI. Если после фильтрации список пуст — sandbox
     НЕ вызывается, возвращается ``{"error": "all tools denied by AgentToolPolicy",
     "graph_type": "react"}`` (early-error). Defensive default: если policy
-    не зарегистрирована — ``tool_actions`` пропускаются без фильтрации
-    (backwards-compatible).
+    не зарегистрирована/недоступна — FAIL-CLOSED (все tools запрещены);
+    opt-out для dev/тестов: env ``AGENT_TOOL_POLICY_FAIL_OPEN=true``
+    (см. :meth:`_filter_tools_by_policy`).
 """
 
 from __future__ import annotations
