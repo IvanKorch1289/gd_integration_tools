@@ -4706,3 +4706,79 @@ soft-warn default (902 non-secrets в YAML — false positives при hard-fail)
 - ⏭️ W11 P1+: расширение на config_profiles/*.yml validation (отдельный scope),
   feature-dependencies matrix (требует registry features).
 
+
+---
+
+## W11 P0-4: Canonical error contract — DomainProblem + 6 transport adapters (2026-09-23, cycle 157)
+
+**Задача**: закрыть architectural gap "Canonical error contract" из
+стратегического анализа 2026-09-22.
+
+> Нужен объект уровня core: ``DomainProblem`` … Transport adapters должны
+> только преобразовывать его в RFC 9457, GraphQL extensions, gRPC Status,
+> SOAP Fault, MCP error или DLQ envelope.
+
+**Реализация** (additive к существующему `src/backend/core/errors.py`):
+- `ProblemCategory` enum: 8 canonical categories (значения совпадают с
+  `entrypoints/graphql/canonical_errors.py::ErrorCategory` для backward-compat)
+- `DomainProblem` frozen dataclass: code/category/title/retryable/status_code/
+  safe_details/correlation_id/cause + validation (SCREAMING_SNAKE_CASE, auto-derive status_code)
+- 6 transport adapters (pure dict, no side-effects):
+  - `to_rfc9457()` — RFC 9457 Problem Details
+  - `to_graphql_extensions()` — совместим с existing canonical_errors
+  - `to_grpc_status()` — (StatusCode, message, details-dict)
+  - `to_soap_fault()` — SOAP 1.1 Fault envelope
+  - `to_mcp_error()` — JSON-RPC 2.0 (MCP) error envelope
+  - `to_dlq_envelope()` — DLQ envelope для replay/audit
+- `is_retryable` property: explicit OR category default (UNAVAILABLE/RATE_LIMIT/INTERNAL → True)
+- Factory methods: `from_exception(exc)`, `from_base_error(exc, *, category=None, correlation_id="")`
+
+**Backward compat**:
+- Существующие классы (BaseError, NotFoundError и др.) и `build_error_envelope` работают без изменений
+- 13 → 15 symbols в `__all__` (добавлены DomainProblem, ProblemCategory)
+- existing `canonical_errors.py` в GraphQL остаётся — теперь consume'ит DomainProblem через `to_graphql_extensions`
+
+**Tests**: `tests/unit/core/test_w11_p0_4_domain_problem.py` — 74 tests в 13 test classes:
+- TestProblemCategory: 10 (8 categories + str inheritance + value validation)
+- TestDomainProblemConstruction: 9 (validation, auto-derive, frozen, mapping, empty code, lowercase/special chars, numbers, immutable, default values)
+- TestIsRetryable: 4 (explicit True/False + category defaults + override)
+- TestToRfc9457: 5 (minimal, instance, correlation_id, safe_details, cause excluded)
+- TestToGraphqlExtensions: 3 (minimal schema, correlation_id, details)
+- TestToGrpcStatus: 10 (tuple shape, 8 category→code mapping, details dict)
+- TestToSoapFault: 3 (4xx→Client, 5xx→Server, safe_details)
+- TestToMcpError: 10 (basic shape, 8 category→JSONRPC code mapping, full data)
+- TestToDlqEnvelope: 1 (full envelope)
+- TestFromException: 8 (NotFound/Auth/Authz/TenantContext/Wiring/unknown BaseError/generic Exception/no-correlation)
+- TestFromBaseError: 4 (default category, override, correlation, cause preserved)
+- TestBackwardCompat: 4 (existing imports, BaseError.to_dict, grpc_status_code, build_error_envelope)
+- TestRealWorldScenarios: 3 (full 6-transport pipeline, retryable wiring error, non-retryable validation)
+
+**Updated pre-existing test**:
+- `tests/unit/core/test_errors_focused.py::TestModuleExports::test_all_count`:
+  13 → 15 symbols (DomainProblem + ProblemCategory добавлены в `__all__`)
+
+**Gates**:
+- `compileall -q src/ extensions/ scripts/ tools/ tests/ testkit/` → exit 0
+- `python tools/checks/check_python3_syntax.py --root .` → exit 0
+- `ruff check src/backend/core/errors.py tests/unit/core/...` → All checks passed
+- `pytest tests/unit/core/test_w11_p0_4_domain_problem.py tests/unit/core/test_errors_focused.py` → 117/117 passed
+- Real-world smoke: `NotFoundError` → `DomainProblem.from_exception()` → 6 transports:
+  - RFC 9457: status=404, code=NOT_FOUND
+  - GraphQL: code=NOT_FOUND, status_code=404
+  - gRPC: code=5 (NOT_FOUND), message="Order not found"
+  - SOAP: faultcode=soap:Client (4xx), faultstring
+  - MCP: code=-32004 (NOT_FOUND JSON-RPC), message, data
+  - DLQ: full envelope (code/category/title/retryable/status_code/correlation_id)
+
+**ADR-0337** создан: canonical error contract pattern, alternatives (Pydantic/Marshmallow
+/msgspec/dataclass — отклонены), limitations (safe_details — user responsibility, нужен
+отдельный audit tool), future work (W11 P1+: audit safe_details на PII/credentials).
+
+**Cycle 157 итог (W11 P0-4)**:
+- ✅ Закрыт architectural gap "Canonical error contract".
+- ✅ 6 транспортов получают consistent error shape (drift prevention).
+- ✅ GraphQL backward-compat сохранён через extensions.code/category/retryable.
+- ✅ 74 новых tests + 1 обновлён (test_all_count).
+- ⏭️ Дальнейшие архитектурные gaps: privacy orchestrator, configuration profile matrix,
+  feature dependencies, outbox state-machine tests, object-level authorization.
+
