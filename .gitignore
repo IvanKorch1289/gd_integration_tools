@@ -223,3 +223,6 @@ artifacts/ragas/*.json
 
 .mypy_cache_strict/
 report/
+
+# Cosign local test keys (LOCAL ONLY — см. .cosign-test/README.md)
+.cosign-test/

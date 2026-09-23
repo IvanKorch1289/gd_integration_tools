@@ -1511,3 +1511,61 @@ PASSED: 26/37, WARN: 8, SKIPPED: 3, FAILED: 0
 ### P85: Итог
 
 KPI: **ГОТОВ К ПРОДУ С ОГОВОРКАМИ** — comprehensive coverage across all dimensions.
+
+## v41 update — Browser DSL + Mutation testing expansion (2026-09-12)
+
+### P86: 1 new module (P4.18: typed Browser RPA DSL)
+
+| # | Module | Tests | Coverage | Description |
+|---|---|---|---|---|
+| P4.18 | `core/dsl_browser` | 27 | 89% | Typed DSL wrapper для Playwright Page. `SemanticAction` (LOGIN/SUBMIT/...) + `SelectorStrategy` chain (TEST_ID→ARIA→ROLE→TEXT→CSS). Retry-on-failure + screenshot-on-error. `PlaywrightPageProtocol` (runtime_checkable) для testability без playwright dep. |
+
+Improvements от analyst-agent review:
+- **YAGNI**: removed `BrowserConfig.headless` (defined but never read)
+- **timing**: `time.time()` → `time.monotonic()` для duration measurements (robust to wall-clock changes)
+- **filename**: kept `time.time()` для `error_*` filename uniqueness (wall-clock intuitive)
+
+### P87: Mutation testing scope expansion (P3.17: 6 → 10 модулей)
+
+Добавлено в `[tool.mutmut] source_paths`:
+- `core/dsl_browser/__init__.py` (новый, security-critical selector chain)
+- `core/agent_eval/__init__.py` (Wave 3, AI eval harness)
+- `core/idempotency/__init__.py` (production-critical)
+- `core/idempotency/service.py` (основная бизнес-логика)
+
+`tools/run_mutation_tests.sh` coverage stage обновлён:
+- +3 test dirs (dsl_browser, agent_eval, idempotency)
+- +1 test dir (tenancy — consistency fix от analyst)
+
+Verification:
+```
+mutmut run → "10 files mutated, 0 ignored, 0 unmodified"
+```
+
+**Pre-existing blocker (NOT regression)**: `tools/run_mutation_tests.sh` wrapper
+использует mutmut 2.4.4 API (`--use-coverage`, `tests_dir` attribute), но
+установлен mutmut 3.7.0. `BadTestExecutionCommandsException` при `collect_stats`
+из-за изменения `mutmut.plugins.StatsCollector` API. Score gate не может быть
+измерен до обновления wrapper-скрипта (out of scope этой сессии).
+
+Standalone pytest с теми же args, что использует mutmut, проходит:
+```
+1534 passed, 11 skipped
+```
+
+### P88: Final pre-prod-check status (v41)
+
+```
+PASSED: 27/37, WARN: 8, SKIPPED: 2, FAILED: 0
+```
+(+1 PASSED от dsl_browser focused tests)
+
+### P89: Cumulative totals
+
+**49 production-модулей** в `core/` (was 48 + 1 new), **1807+ tests** (1780 prior + 27 new), average coverage 95%+.
+
+### P90: Итог
+
+KPI: **ГОТОВ К ПРОДУ С ОГОВОРКАМИ** — comprehensive coverage, +1 new module,
+mutation testing scope expanded 6→10. Pre-existing mutmut 3.7.0 runner
+incompatibility — recommend updating wrapper-скрипт в отдельном sprint.
