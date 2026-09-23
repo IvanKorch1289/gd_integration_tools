@@ -112,17 +112,45 @@ class FilteredDirectoryScanProcessor(BaseProcessor):
                 results.append(str(path))
             return sorted(results)
 
+        # ADR-0305: narrow directory_scan timeout by remaining deadline budget.
+        effective_timeout: float = self.timeout_seconds
+        try:
+            from src.backend.core.async_utils.deadline_budget import (
+                DeadlineExpiredError,
+            )
+            from src.backend.core.request_context import RequestContext
+
+            ctx = RequestContext.current()
+            if ctx is not None and ctx.deadline_budget is not None:
+                remaining = ctx.deadline_budget.remaining()
+                if remaining <= 0.0:
+                    _rpa_logger.warning(
+                        "directory_scan skipped: deadline budget exhausted dir=%s",
+                        self.directory,
+                    )
+                    files = []
+                    exchange.set_property(
+                        self.target, {"files": [], "deadline_exhausted": True}
+                    )
+                    return
+                effective_timeout = min(self.timeout_seconds, remaining)
+        except DeadlineExpiredError:
+            raise
+        except Exception:
+            # Не ломаем directory_scan при недоступности RequestContext.
+            pass
+
         # Timeout protection (P0-1 fix)
         try:
             files = await asyncio.wait_for(
-                asyncio.to_thread(_scan), timeout=self.timeout_seconds
+                asyncio.to_thread(_scan), timeout=effective_timeout
             )
         except TimeoutError:
             _rpa_logger.warning(
                 "directory_scan timeout dir=%s pattern=%s timeout=%.1fs",
                 self.directory,
                 self.pattern,
-                self.timeout_seconds,
+                effective_timeout,
             )
             files = []
         _rpa_logger.info(

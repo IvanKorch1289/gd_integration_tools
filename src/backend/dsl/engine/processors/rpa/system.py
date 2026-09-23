@@ -53,7 +53,11 @@ class ShellExecProcessor(BaseProcessor):
         self._timeout = timeout_seconds
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
+        """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline.
+
+        ADR-0305: ``timeout_seconds`` сужается через ``min(timeout_seconds, budget.remaining())``.
+        Admission control: budget expired → ``exchange.fail`` без запуска subprocess.
+        """
         if not await self.auth_check(exchange, action="execute"):
             return
         import asyncio
@@ -63,6 +67,31 @@ class ShellExecProcessor(BaseProcessor):
                 f"Command '{self._command}' not in whitelist: {self._allowed}"
             )
             return
+        # ADR-0305: narrow shell timeout by remaining deadline budget.
+        effective_timeout: float = self._timeout
+        try:
+            from src.backend.core.async_utils.deadline_budget import (
+                DeadlineExpiredError,
+            )
+            from src.backend.core.request_context import RequestContext
+
+            ctx = RequestContext.current()
+            if ctx is not None and ctx.deadline_budget is not None:
+                remaining = ctx.deadline_budget.remaining()
+                if remaining <= 0.0:
+                    # Deadline budget истёк — admission control: skip subprocess.
+                    exchange.fail(
+                        f"ShellProcessor skipped: deadline budget exhausted "
+                        f"(command={self._command})"
+                    )
+                    return
+                effective_timeout = min(self._timeout, remaining)
+        except DeadlineExpiredError:
+            raise
+        except Exception:
+            # Не ломаем shell при недоступности RequestContext.
+            pass
+
         try:
             proc = await asyncio.create_subprocess_exec(
                 self._command,
@@ -71,7 +100,7 @@ class ShellExecProcessor(BaseProcessor):
                 stderr=asyncio.subprocess.PIPE,
             )
             stdout, stderr = await asyncio.wait_for(
-                proc.communicate(), timeout=self._timeout
+                proc.communicate(), timeout=effective_timeout
             )
             exchange.set_out(
                 body={
@@ -187,7 +216,11 @@ class TerminalExecProcessor(BaseProcessor):
         self.shell = shell
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Метод process (см. signature)."""
+        """Метод process (см. signature).
+
+        ADR-0305: ``self.timeout`` сужается через ``min(timeout, budget.remaining())``.
+        Admission control: budget expired → ``exchange.fail`` без запуска subprocess.
+        """
         if not await self.auth_check(exchange, action="execute"):
             return
         # Bug fix (cycle 33): shell=False contract was ignored —
@@ -196,6 +229,29 @@ class TerminalExecProcessor(BaseProcessor):
         # See A1 in docs/audit/cycle33_report.md.
         # S102 P2-5: парсим argv заранее (нужен для masked logging).
         import shlex
+
+        # ADR-0305: narrow terminal timeout by remaining deadline budget.
+        effective_timeout: float = self.timeout
+        try:
+            from src.backend.core.async_utils.deadline_budget import (
+                DeadlineExpiredError,
+            )
+            from src.backend.core.request_context import RequestContext
+
+            ctx = RequestContext.current()
+            if ctx is not None and ctx.deadline_budget is not None:
+                remaining = ctx.deadline_budget.remaining()
+                if remaining <= 0.0:
+                    exchange.fail(
+                        "TerminalExecProcessor skipped: deadline budget exhausted"
+                    )
+                    return
+                effective_timeout = min(self.timeout, remaining)
+        except DeadlineExpiredError:
+            raise
+        except Exception:
+            # Не ломаем terminal при недоступности RequestContext.
+            pass
 
         argv = shlex.split(self.command)
         if not argv:
@@ -213,7 +269,7 @@ class TerminalExecProcessor(BaseProcessor):
             )
         try:
             stdout, stderr = await asyncio.wait_for(
-                proc.communicate(), timeout=self.timeout
+                proc.communicate(), timeout=effective_timeout
             )
         except TimeoutError:
             proc.kill()
@@ -231,7 +287,7 @@ class TerminalExecProcessor(BaseProcessor):
         _rpa_logger.info(
             "terminal_exec cmd=%s timeout=%.1fs exit=%d",
             argv[0],
-            self.timeout,
+            effective_timeout,
             proc.returncode,
         )
         self.set_result(exchange, self.target, output)

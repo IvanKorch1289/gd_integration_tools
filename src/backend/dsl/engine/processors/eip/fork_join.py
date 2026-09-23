@@ -17,6 +17,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
+from src.backend.core.async_utils.safe_wait import safe_wait_for
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -65,12 +66,42 @@ class ForkJoinProcessor(BaseProcessor):
         ветка упала — exchange переходит в ``failed``. Успешные результаты
         агрегируются (collect/merge/first/all) и записываются в body.
 
+        ADR-0305: ``timeout_seconds`` сужается через ``min(timeout, budget.remaining())``.
+        Admission control: budget expired → ``exchange.fail`` без запуска веток.
+
         Args:
             exchange: Текущий exchange; результаты — в свойстве
                 ``fork_join_results`` и ``in_message.body``.
             context: Контекст выполнения маршрута.
 
         """
+        # ADR-0305: narrow fork_join timeout by remaining deadline budget.
+        effective_timeout: float | None = self._timeout_seconds
+        try:
+            from src.backend.core.async_utils.deadline_budget import (
+                DeadlineExpiredError,
+            )
+            from src.backend.core.request_context import RequestContext
+
+            ctx = RequestContext.current()
+            if ctx is not None and ctx.deadline_budget is not None:
+                remaining = ctx.deadline_budget.remaining()
+                if remaining <= 0.0:
+                    # Deadline budget истёк — admission control: ни одна ветка не стартует.
+                    exchange.fail(
+                        f"ForkJoin skipped: deadline budget exhausted "
+                        f"({len(self._branches)} branches, "
+                        f"{ctx.deadline_budget.original_timeout}s total)"
+                    )
+                    return
+                if self._timeout_seconds is not None:
+                    effective_timeout = min(self._timeout_seconds, remaining)
+        except DeadlineExpiredError:
+            raise
+        except Exception:
+            # Не ломаем fork_join при недоступности RequestContext.
+            pass
+
         # Делегируем выполнение в ParallelProcessor (battle-tested).
         # Run inline — повторяет логику ParallelProcessor._run_branch,
         # но это OK: композиция > дублирование.
@@ -101,10 +132,10 @@ class ForkJoinProcessor(BaseProcessor):
                 results[name] = branch_ex.in_message.body
 
         tasks = [run_one(n, p) for n, p in self._branches.items()]
-        if self._timeout_seconds is not None:
-            await asyncio.wait_for(
+        if effective_timeout is not None:
+            await safe_wait_for(
                 asyncio.gather(*tasks, return_exceptions=False),
-                timeout=self._timeout_seconds,
+                timeout=effective_timeout,
             )
         else:
             await asyncio.gather(*tasks, return_exceptions=False)

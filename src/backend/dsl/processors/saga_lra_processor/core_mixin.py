@@ -15,6 +15,24 @@ from src.backend.dsl.processors.saga_lra_processor.state import (
     SagaStepSpec,
 )
 
+
+class SagaStepTimeoutError(asyncio.TimeoutError):
+    """Saga/LRA step exceeded configured per-step timeout.
+
+    Наследуется от :class:`asyncio.TimeoutError` для backward-compat,
+    но имеет конкретный type с метаданными шага для метрик и диагностики
+    Saga compensation flow.
+    """
+
+    def __init__(
+        self, message: str, *, step_name: str, kind: str, timeout_s: float
+    ) -> None:
+        super().__init__(message)
+        self.step_name = step_name
+        self.kind = kind
+        self.timeout_s = timeout_s
+
+
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
     from src.backend.dsl.engine.exchange import Exchange
@@ -142,7 +160,45 @@ class CoreMixin(_SagaLRAProcessorProtocol):
         result = fn(exchange, context)
         if inspect.isawaitable(result):
             coro = result
-            if self._per_step_timeout is not None:
-                coro = asyncio.wait_for(coro, timeout=self._per_step_timeout)
-            result = await coro
+            # ADR-0305: narrow per-step timeout по оставшемуся DeadlineBudget,
+            # если он установлен upstream-middleware (HTTP request deadline).
+            effective_timeout = self._per_step_timeout
+            try:
+                from src.backend.core.request_context import RequestContext
+
+                ctx = RequestContext.current()
+                if ctx is not None and ctx.deadline_budget is not None:
+                    remaining = ctx.deadline_budget.remaining()
+                    if remaining <= 0.0:
+                        raise SagaStepTimeoutError(
+                            f"Saga '{step_name}' ({kind}) — deadline budget expired",
+                            step_name=step_name,
+                            kind=kind,
+                            timeout_s=0.0,
+                        )
+                    if effective_timeout is None:
+                        effective_timeout = remaining
+                    else:
+                        effective_timeout = min(effective_timeout, remaining)
+            except SagaStepTimeoutError:
+                raise
+            except Exception:
+                # Не ломаем saga-step, если RequestContext недоступен.
+                pass
+
+            # ADR-0305: оборачиваем И обёртку, И выполнение в единый try —
+            # ``asyncio.wait_for`` поднимает TimeoutError на await, не на wrap.
+            try:
+                if effective_timeout is not None:
+                    coro = asyncio.wait_for(coro, timeout=effective_timeout)
+                result = await coro
+            except TimeoutError:
+                raise SagaStepTimeoutError(
+                    f"Saga '{step_name}' ({kind}) exceeded {effective_timeout}s",
+                    step_name=step_name,
+                    kind=kind,
+                    timeout_s=effective_timeout
+                    if effective_timeout is not None
+                    else 0.0,
+                )
         return result

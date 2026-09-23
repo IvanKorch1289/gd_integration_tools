@@ -26,8 +26,7 @@ if TYPE_CHECKING:
   adapter (Sprint 8 K2 W1: TaskIQ полностью удалён).
 """
 
-import asyncio
-
+from src.backend.core.async_utils.safe_wait import safe_wait_for
 from src.backend.core.interfaces.invocation_reply import ReplyChannelKind
 from src.backend.core.interfaces.invoker import (
     InvocationRequest,
@@ -80,7 +79,7 @@ class InvokeModesMixin:
             )
             context = self._build_context(request)
             if request.timeout is not None:
-                result: Any = await asyncio.wait_for(
+                result: Any = await safe_wait_for(
                     self._dispatch(command, context), timeout=request.timeout
                 )
             else:

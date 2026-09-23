@@ -51,11 +51,43 @@ class ScatterGatherProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет Scatter-Gather: параллельно рассылает сообщение во все маршруты и собирает результаты.
 
+        ADR-0305: при наличии ``RequestContext.deadline_budget`` используется
+        ``effective_timeout = min(self._timeout, deadline_remaining)`` —
+        общий timeout всего fan-out ограничен deadline'ом запроса.
+        Admission control: если budget истёк на входе — ``exchange.fail``
+        без запуска tasks (no work, no wait, no leak).
+
         Args:
             exchange: Текущий обмен с сообщением-источником.
             context: Контекст выполнения процессора.
 
         """
+        # ADR-0305: narrow scatter-gather timeout by remaining deadline budget.
+        effective_timeout: float = self._timeout
+        try:
+            from src.backend.core.async_utils.deadline_budget import (
+                DeadlineExpiredError,
+            )
+            from src.backend.core.request_context import RequestContext
+
+            ctx = RequestContext.current()
+            if ctx is not None and ctx.deadline_budget is not None:
+                remaining = ctx.deadline_budget.remaining()
+                if remaining <= 0.0:
+                    # Deadline budget истёк — admission control: fan-out не стартует.
+                    exchange.fail(
+                        f"Scatter-gather skipped: deadline budget exhausted "
+                        f"({len(self._route_ids)} routes, "
+                        f"{ctx.deadline_budget.original_timeout}s total)"
+                    )
+                    return
+                effective_timeout = min(self._timeout, remaining)
+        except DeadlineExpiredError:
+            raise
+        except Exception:
+            # Не ломаем scatter-gather при недоступности RequestContext.
+            pass
+
         tasks = [
             self._call_route(
                 rid, exchange.in_message.body, exchange.in_message.headers, context
@@ -65,10 +97,14 @@ class ScatterGatherProcessor(BaseProcessor):
 
         try:
             raw_results = await asyncio.wait_for(
-                asyncio.gather(*tasks, return_exceptions=True), timeout=self._timeout
+                asyncio.gather(*tasks, return_exceptions=True),
+                timeout=effective_timeout,
             )
         except TimeoutError:
-            exchange.fail(f"Scatter-gather timeout ({self._timeout}s)")
+            exchange.fail(
+                f"Scatter-gather timeout ({effective_timeout}s, "
+                f"{len(self._route_ids)} routes)"
+            )
             return
 
         results: dict[str, Any] = {}

@@ -189,7 +189,38 @@ class InvokeWorkflowProcessor(BaseProcessor):
             return self.workflow_name
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Стартует workflow и пишет результат/handle в ``exchange``."""
+        """Стартует workflow и пишет результат/handle в ``exchange``.
+
+        ADR-0305: для ``mode == "async-reply"`` ``reply_timeout_seconds``
+        сужается через ``min(reply_timeout, budget.remaining())`` и
+        admission control: если budget истёк на входе → ``exchange.fail``
+        без ``start_workflow`` (no work, no wait, no leak).
+        """
+        # ADR-0305: admission control + reply_timeout narrowing.
+        reply_timeout: float = self.reply_timeout_seconds
+        try:
+            from src.backend.core.async_utils.deadline_budget import (
+                DeadlineExpiredError,
+            )
+            from src.backend.core.request_context import RequestContext
+
+            ctx = RequestContext.current()
+            if ctx is not None and ctx.deadline_budget is not None:
+                remaining = ctx.deadline_budget.remaining()
+                if remaining <= 0.0:
+                    exchange.fail(
+                        f"InvokeWorkflow skipped: deadline budget exhausted "
+                        f"({self.workflow_name}, {self.mode})"
+                    )
+                    return
+                if self.mode == "async-reply":
+                    reply_timeout = min(self.reply_timeout_seconds, remaining)
+        except DeadlineExpiredError:
+            raise
+        except Exception:
+            # Не ломаем invoke_workflow при недоступности RequestContext.
+            pass
+
         if self.args is not None:
             payload = dict(self.args)
         else:
@@ -221,8 +252,7 @@ class InvokeWorkflowProcessor(BaseProcessor):
             # Sprint 8A K3 W11: fire-and-await с настраиваемым timeout.
             try:
                 result = await asyncio.wait_for(
-                    backend.await_completion(handle=handle),
-                    timeout=self.reply_timeout_seconds,
+                    backend.await_completion(handle=handle), timeout=reply_timeout
                 )
             except TimeoutError:
                 exchange.set_property(

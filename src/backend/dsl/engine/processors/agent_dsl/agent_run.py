@@ -35,6 +35,7 @@ import asyncio
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.ai.errors import GatewayUnavailable
+from src.backend.core.async_utils.safe_wait import safe_wait_for
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
 from src.backend.dsl.engine.processors.agent_dsl._timeouts import (
@@ -144,8 +145,39 @@ class AgentRunProcessor(BaseAIProcessor):
         return self.workflow_id
 
     async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Запускает Agent через AIGateway.
+
+        ADR-0305: ``timeout_s`` сужается через ``min(timeout_s, budget.remaining())``.
+        Admission control: budget expired → ``exchange.set_error`` без invoke.
+        """
         _ = context  # Зарезервировано для майбутнього use (correlation, tenant_id)
         from src.backend.core.ai.gateway import AIRequest
+
+        # ADR-0305: narrow agent_run timeout by remaining deadline budget.
+        effective_timeout: float | None = self.timeout_s
+        try:
+            from src.backend.core.async_utils.deadline_budget import (
+                DeadlineExpiredError,
+            )
+            from src.backend.core.request_context import RequestContext
+
+            ctx = RequestContext.current()
+            if ctx is not None and ctx.deadline_budget is not None:
+                remaining = ctx.deadline_budget.remaining()
+                if remaining <= 0.0:
+                    # Deadline budget истёк — admission control: skip AI invoke.
+                    exchange.set_error(
+                        f"{self.name}: deadline budget exhausted — AIGateway.invoke skipped"
+                    )
+                    exchange.stop()
+                    return
+                if self.timeout_s is not None:
+                    effective_timeout = min(self.timeout_s, remaining)
+        except DeadlineExpiredError:
+            raise
+        except Exception:
+            # Не ломаем agent_run при недоступности RequestContext.
+            pass
 
         gateway = self._resolve_gateway()
         if gateway is None:
@@ -169,11 +201,11 @@ class AgentRunProcessor(BaseAIProcessor):
                 response = await self._invoke_with_retry(gateway, request)
             else:
                 response = await asyncio.wait_for(
-                    gateway.invoke(request), timeout=self.timeout_s
+                    gateway.invoke(request), timeout=effective_timeout
                 )
         except TimeoutError:
             exchange.set_error(
-                f"{self.name}: timeout ({self.timeout_s}s) при вызове AIGateway.invoke"
+                f"{self.name}: timeout ({effective_timeout}s) при вызове AIGateway.invoke"
             )
             exchange.stop()
             return
@@ -211,9 +243,7 @@ class AgentRunProcessor(BaseAIProcessor):
         import tenacity
 
         async def _call() -> Any:
-            return await asyncio.wait_for(
-                gateway.invoke(request), timeout=self.timeout_s
-            )
+            return await safe_wait_for(gateway.invoke(request), timeout=self.timeout_s)
 
         retry = tenacity.AsyncRetrying(
             retry=tenacity.retry_if_exception_type(

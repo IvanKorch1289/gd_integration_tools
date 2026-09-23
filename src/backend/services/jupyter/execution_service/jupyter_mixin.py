@@ -10,6 +10,7 @@ import httpx
 # PERF-6.6 P10d: orjson alias — 3-5x faster JSON parse/serialize vs stdlib.
 import orjson as json
 
+from src.backend.core.async_utils.safe_wait import safe_wait_for
 from src.backend.core.logging import get_logger
 from src.backend.services.jupyter.execution_service.errors import JupyterExecutionError
 
@@ -199,7 +200,7 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
                             f"(no heartbeat response for "
                             f"{HEARTBEAT_TIMEOUT_S}s)"
                         )
-                    raw = await asyncio.wait_for(ws.recv(), timeout=5.0)
+                    raw = await safe_wait_for(ws.recv(), timeout=5.0)
                     # Update last_pong_time на любом message
                     # (sign of life, не только pong).
                     last_pong_time = time.monotonic()

@@ -9,6 +9,22 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, Any
 
+from src.backend.core.async_utils.safe_wait import safe_wait_for
+
+
+class WorkflowStepTimeoutError(asyncio.TimeoutError):
+    """Sequential executor step exceeded timeout.
+
+    Наследуется от :class:`asyncio.TimeoutError` для backward-compat
+    с ``except TimeoutError``, но имеет конкретный type для метрик
+    и диагностики.
+    """
+
+    def __init__(self, message: str, *, timeout_s: float) -> None:
+        super().__init__(message)
+        self.timeout_s = timeout_s
+
+
 if TYPE_CHECKING:
     from src.backend.infrastructure.workflow.executor._protocol import (
         _DSLStepExecutorProtocol,
@@ -73,14 +89,20 @@ async def _run_processor(
     upgrade path — мигрировать processors на native Exchange API.
     """
     if not _is_exchange_wrapping_enabled():
-        result = await asyncio.wait_for(proc(body), timeout=timeout)
+        try:
+            result = await asyncio.wait_for(proc(body), timeout=timeout)
+        except TimeoutError:
+            raise WorkflowStepTimeoutError(
+                f"Sequential executor step timed out after {timeout}s",
+                timeout_s=timeout,
+            )
         return result if isinstance(result, dict) else body
 
     # Exchange wrapping path
     from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
 
     exchange = Exchange(in_message=Message(body=body), status=ExchangeStatus.pending)
-    result = await asyncio.wait_for(proc(exchange), timeout=timeout)
+    result = await safe_wait_for(proc(exchange), timeout=timeout)
     if isinstance(result, Exchange):
         return (
             dict(result.in_message.body)

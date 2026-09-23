@@ -50,12 +50,39 @@ class RecipientListProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет Recipient List: отправляет сообщение всем получателям параллельно или последовательно.
 
+        ADR-0305: ``RecipientListProcessor`` не имеет собственного timeout —
+        только aggregator параллельных/последовательных вызовов route_ids.
+        Deadline integration: admission control на входе через
+        ``budget.is_expired()`` — expired → ``exchange.fail`` без fan-out.
+
         Args:
             exchange: Текущий обмен с сообщением-источником.
             context: Контекст выполнения процессора.
 
         """
         recipients = self._expr(exchange)
+
+        # ADR-0305: admission control для RecipientList (нет timeout для narrow).
+        try:
+            from src.backend.core.async_utils.deadline_budget import (
+                DeadlineExpiredError,
+            )
+            from src.backend.core.request_context import RequestContext
+
+            ctx = RequestContext.current()
+            if ctx is not None and ctx.deadline_budget is not None:
+                if ctx.deadline_budget.is_expired():
+                    exchange.fail(
+                        f"RecipientList skipped: deadline budget exhausted "
+                        f"({len(recipients)} recipients)"
+                    )
+                    return
+        except DeadlineExpiredError:
+            raise
+        except Exception:
+            # Не ломаем recipient-list при недоступности RequestContext.
+            pass
+
         if not recipients:
             return
 

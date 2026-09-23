@@ -18,6 +18,21 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, run_sub_processors
 
+
+class BulkheadTimeoutError(asyncio.TimeoutError):
+    """Bulkhead не освободил слот за отведённое время.
+
+    Наследуется от :class:`asyncio.TimeoutError` для backward-compat
+    с ``except TimeoutError``, но имеет конкретный type для диагностики
+    и метрик (bulkhead name, timeout).
+    """
+
+    def __init__(self, message: str, *, bulkhead: str, timeout_s: float) -> None:
+        super().__init__(message)
+        self.bulkhead = bulkhead
+        self.timeout_s = timeout_s
+
+
 __all__ = (
     "AbTestRouterProcessor",
     "BulkheadProcessor",
@@ -107,14 +122,53 @@ class BulkheadProcessor(BaseProcessor):
         return sem
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Обработать exchange: BulkheadProcessor processor."""
+        """Обработать exchange: BulkheadProcessor processor.
+
+        ADR-0305: ``self.timeout`` сужается через ``min(timeout, budget.remaining())``.
+        Admission control: budget expired → ``BulkheadTimeoutError`` без ожидания.
+        """
+        # ADR-0305: narrow bulkhead timeout by remaining deadline budget.
+        effective_timeout: float | None = self.timeout
+        try:
+            from src.backend.core.async_utils.deadline_budget import (
+                DeadlineExpiredError,
+            )
+            from src.backend.core.request_context import RequestContext
+
+            ctx = RequestContext.current()
+            if ctx is not None and ctx.deadline_budget is not None:
+                remaining = ctx.deadline_budget.remaining()
+                if remaining <= 0.0:
+                    # Deadline budget истёк — admission control: мгновенный BulkheadTimeoutError.
+                    raise BulkheadTimeoutError(
+                        f"Bulkhead '{self.bulkhead_name}' skipped: deadline budget exhausted",
+                        bulkhead=self.bulkhead_name,
+                        timeout_s=self.timeout,
+                    )
+                if self.timeout is not None:
+                    effective_timeout = min(self.timeout, remaining)
+        except DeadlineExpiredError:
+            raise
+        except BulkheadTimeoutError:
+            raise
+        except Exception:
+            # Не ломаем bulkhead при недоступности RequestContext.
+            pass
+
         sem = self._get_semaphore()
         if not self.wait and sem.locked():
             raise RuntimeError(f"Bulkhead '{self.bulkhead_name}' исчерпан")
 
         acquire = sem.acquire()
-        if self.timeout:
-            await asyncio.wait_for(acquire, timeout=self.timeout)
+        if effective_timeout:
+            try:
+                await asyncio.wait_for(acquire, timeout=effective_timeout)
+            except TimeoutError:
+                raise BulkheadTimeoutError(
+                    f"Bulkhead '{self.bulkhead_name}' не освободился за {effective_timeout}s",
+                    bulkhead=self.bulkhead_name,
+                    timeout_s=effective_timeout,
+                )
         else:
             await acquire
         try:

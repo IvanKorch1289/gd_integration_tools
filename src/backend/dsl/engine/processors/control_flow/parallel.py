@@ -84,6 +84,7 @@ class ParallelProcessor(BaseProcessor):
         body: Any,
         headers: dict[str, Any],
         context: ExecutionContext,
+        branch_timeout: float | None = None,
     ) -> tuple[str, Any, str | None]:
         branch_exchange = Exchange(in_message=Message(body=body, headers=dict(headers)))
         branch_exchange.status = ExchangeStatus.processing
@@ -95,7 +96,17 @@ class ParallelProcessor(BaseProcessor):
             ):
                 break
             try:
-                await proc.process(branch_exchange, context)
+                if branch_timeout is not None:
+                    await asyncio.wait_for(
+                        proc.process(branch_exchange, context), timeout=branch_timeout
+                    )
+                else:
+                    await proc.process(branch_exchange, context)
+            except TimeoutError:
+                branch_exchange.fail(
+                    f"branch '{branch_name}' exceeded branch_timeout={branch_timeout}s"
+                )
+                break
             except Exception as exc:
                 branch_exchange.fail(str(exc))
                 break
@@ -116,6 +127,11 @@ class ParallelProcessor(BaseProcessor):
         Каждая ветка получает копию exchange. Результаты — в свойстве
         ``parallel_results``, ошибки — в ``parallel_errors``.
 
+        ADR-0305: при наличии ``RequestContext.deadline_budget`` каждая ветка
+        получает sub-budget = ``budget.share(1 / N_branches)`` через
+        ``branch_timeout``. ``_run_branch`` заворачивает ``proc.process``
+        в ``asyncio.wait_for(branch_timeout)`` для bound на конкретную ветвь.
+
         Args:
             exchange: Текущий exchange; body+headers копируются в каждую ветку.
             context: Контекст выполнения маршрута.
@@ -124,8 +140,37 @@ class ParallelProcessor(BaseProcessor):
         body = exchange.in_message.body
         headers = exchange.in_message.headers
 
+        # ADR-0305: compute branch-level timeout budget.
+        branch_timeout: float | None = None
+        try:
+            from src.backend.core.async_utils.deadline_budget import (
+                DeadlineExpiredError,
+            )
+            from src.backend.core.request_context import RequestContext
+
+            ctx = RequestContext.current()
+            if ctx is not None and ctx.deadline_budget is not None:
+                n_branches = max(1, len(self._branches))
+                # share() округляет remaining / N до микросекунд; при малом
+                # remaining возможна нулевая доля → пропускаем (сразу 408).
+                branch_budget = ctx.deadline_budget.share(1.0 / n_branches)
+                remaining = branch_budget.remaining()
+                if remaining <= 0.0:
+                    # Deadline budget истёк — admission control: ни одна ветвь не стартует.
+                    exchange.fail(
+                        f"Parallel branches skipped: deadline budget exhausted "
+                        f"({n_branches} branches, {ctx.deadline_budget.original_timeout}s total)"
+                    )
+                    return
+                branch_timeout = remaining
+        except DeadlineExpiredError:
+            raise
+        except Exception:
+            # Не ломаем parallel при недоступности RequestContext.
+            pass
+
         tasks = [
-            self._run_branch(name, procs, body, headers, context)
+            self._run_branch(name, procs, body, headers, context, branch_timeout)
             for name, procs in self._branches.items()
         ]
 

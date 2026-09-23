@@ -72,7 +72,16 @@ class TimeoutMiddleware:
         )
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        """Обрабатывает запрос с per-route или global timeout.
+        """Обрабатывает запрос с per-route, deadline-budget или global timeout.
+
+        Приоритет (ADR-0305, deadline propagation):
+            1. ``RequestContext.deadline_budget.remaining()`` (если уже
+               создан middleware выше по цепочке — обычно RequestContextMiddleware).
+            2. Per-route timeout из ``route_timeouts`` registry (legacy S18 W6).
+            3. ``settings.secure.request_timeout`` (global fallback).
+
+        Минимальный из трёх используется: deadline-budget НЕ ДОЛЖЕН превышать
+        per-route limit, чтобы не снимать защиту, выставленную оператором.
 
         Args:
             scope: ASGI scope.
@@ -86,6 +95,51 @@ class TimeoutMiddleware:
 
         path = scope.get("path", "")
         timeout_seconds = self._resolve_timeout(path)
+
+        # ADR-0305: если upstream-middleware уже создал DeadlineBudget и
+        # request ещё в его рамках — сужаем timeout до remaining.
+        try:
+            from src.backend.core.request_context import RequestContext
+
+            ctx = RequestContext.current()
+            if ctx is not None and ctx.deadline_budget is not None:
+                remaining = ctx.deadline_budget.remaining()
+                path_prefix = self._normalize_path_prefix(path)
+                if remaining <= 0.0:
+                    # Deadline уже истёк — НЕ запускаем downstream, сразу 408.
+                    # Это и есть admission control: overload → контролируемый отказ.
+                    get_app_logger_provider().warning(
+                        "Deadline budget expired before request processing: %s", path
+                    )
+                    try:
+                        from src.backend.infrastructure.observability.metrics import (
+                            record_deadline_budget_expired_at_entry,
+                            record_deadline_budget_remaining,
+                        )
+
+                        record_deadline_budget_remaining(
+                            0.0, path_prefix=path_prefix, outcome="expired_at_entry"
+                        )
+                        record_deadline_budget_expired_at_entry(path_prefix)
+                    except Exception:
+                        pass  # metrics must not break request flow
+                    await self._send_408(send)
+                    return
+                timeout_seconds = min(timeout_seconds, remaining)
+                # Record remaining budget for observability (histogram).
+                try:
+                    from src.backend.infrastructure.observability.metrics import (
+                        record_deadline_budget_remaining,
+                    )
+
+                    record_deadline_budget_remaining(
+                        remaining, path_prefix=path_prefix, outcome="processed"
+                    )
+                except Exception:
+                    pass
+        except Exception:
+            # Не ломаем request, если RequestContext недоступен.
+            pass
 
         try:
             # Cycle 50 critical: wait_for обёрнут вокруг downstream.
@@ -110,6 +164,32 @@ class TimeoutMiddleware:
             if path.startswith(prefix):
                 return total
         return global_timeout
+
+    @staticmethod
+    def _normalize_path_prefix(path: str) -> str:
+        """Извлечь первый non-empty сегмент path для метрик (cardinality guard).
+
+        Examples:
+            ``/api/v1/orders`` → ``/api``
+            ``/api`` → ``/api``
+            ``/`` → ``/``
+            ``""`` → ``/``
+            ``api/v1/orders`` (no leading slash) → ``/api``
+
+        Используется как ``path_prefix`` label в Prometheus метриках
+        (deadline_budget_remaining_seconds, deadline_budget_expired_at_entry_total),
+        чтобы избежать high-cardinality explosion на динамических URL
+        (например, ``/api/v1/orders/{order_id}`` → все идут под ``/api``).
+        """
+        if not path:
+            return "/"
+        # Strip leading/trailing slashes, взять первый сегмент.
+        # ``"/api/v1/".strip("/")`` → ``"api/v1"``, ``split("/", 1)[0]`` → ``"api"``.
+        stripped = path.strip("/")
+        if not stripped:
+            return "/"
+        first_segment = stripped.split("/", 1)[0]
+        return "/" + first_segment
 
     @staticmethod
     def _is_per_route_enabled() -> bool:

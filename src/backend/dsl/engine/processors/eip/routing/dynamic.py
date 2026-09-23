@@ -36,7 +36,33 @@ class DynamicRouterProcessor(BaseProcessor):
         self._expr = route_expression
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Метод process (см. signature)."""
+        """Метод process (см. signature).
+
+        ADR-0305: ``DynamicRouterProcessor`` не имеет собственного timeout.
+        Deadline integration: admission control на входе через
+        ``budget.is_expired()`` — expired → ``exchange.fail`` без вычисления target.
+        """
+        # ADR-0305: admission control для DynamicRouter (нет timeout для narrow).
+        try:
+            from src.backend.core.async_utils.deadline_budget import (
+                DeadlineExpiredError,
+            )
+            from src.backend.core.request_context import RequestContext
+
+            ctx = RequestContext.current()
+            if ctx is not None and ctx.deadline_budget is not None:
+                if ctx.deadline_budget.is_expired():
+                    exchange.fail(
+                        f"DynamicRouter skipped: deadline budget exhausted "
+                        f"({ctx.deadline_budget.original_timeout}s total)"
+                    )
+                    return
+        except DeadlineExpiredError:
+            raise
+        except Exception:
+            # Не ломаем dynamic-router при недоступности RequestContext.
+            pass
+
         from src.backend.dsl.commands.registry import route_registry
         from src.backend.dsl.engine.processors.base import SubPipelineExecutor
 

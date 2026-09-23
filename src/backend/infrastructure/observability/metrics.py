@@ -113,6 +113,23 @@ _cache_lock_timeout_counter = metrics_registry.counter(
     labels=("backend",),
 )
 
+# ── Deadline propagation (ADR-0305, Sprint 12) ──────────────────────────
+# Histogram: сколько секунд оставалось в DeadlineBudget при входе в TimeoutMiddleware.
+# Низкие значения → admission control срабатывает (хорошо для overload).
+# Высокие значения → deadline почти не используется (можно сузить default timeout).
+_deadline_budget_remaining_histogram = metrics_registry.histogram(
+    "deadline_budget_remaining_seconds",
+    "DeadlineBudget.remaining() at the moment TimeoutMiddleware started processing",
+    labels=("path_prefix", "outcome"),  # outcome: processed | expired_at_entry
+    buckets=(0.001, 0.01, 0.1, 0.5, 1.0, 5.0, 10.0, 30.0, 60.0),
+)
+# Counter: запросы, отклонённые admission control (deadline уже истёк).
+_deadline_budget_expired_at_entry_counter = metrics_registry.counter(
+    "deadline_budget_expired_at_entry_total",
+    "Requests rejected by admission control (DeadlineBudget already expired at entry)",
+    labels=("path_prefix",),
+)
+
 # ── Express ─────────────────────────────────────────────────────────────
 _express_sent_counter = metrics_registry.counter(
     "express_messages_sent_total", "Express messages sent", labels=("bot", "status")
@@ -249,6 +266,30 @@ def record_cache_lock_timeout(backend: str = "memory") -> None:
     refresh) и функция выполнилась напрямую — потенциальный hot-key.
     """
     _cache_lock_timeout_counter.labels(backend=backend).inc()
+
+
+def record_deadline_budget_remaining(
+    remaining_seconds: float, *, path_prefix: str, outcome: str
+) -> None:
+    """Записать в histogram оставшееся время DeadlineBudget при входе в middleware.
+
+    Args:
+        remaining_seconds: ``DeadlineBudget.remaining()`` в секундах.
+        path_prefix: первый сегмент URL path (``/api/v1/orders`` → ``/api``).
+        outcome: ``processed`` (запрос пошёл в downstream) или
+            ``expired_at_entry`` (admission control — 408 без downstream).
+    """
+    # ``Histogram`` отбрасывает отрицательные значения в некоторых
+    # реализациях, поэтому клампим к 0 (минимум histogram bucket).
+    value = max(0.0, remaining_seconds)
+    _deadline_budget_remaining_histogram.labels(
+        path_prefix=path_prefix, outcome=outcome
+    ).observe(value)
+
+
+def record_deadline_budget_expired_at_entry(path_prefix: str) -> None:
+    """Инкрементировать admission control counter (deadline expired at entry)."""
+    _deadline_budget_expired_at_entry_counter.labels(path_prefix=path_prefix).inc()
 
 
 def record_express_message_sent(bot: str, status: str = "ok") -> None:

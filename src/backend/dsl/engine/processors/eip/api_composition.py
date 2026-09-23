@@ -268,14 +268,50 @@ class APICompositionProcessor(BaseProcessor):
         мержатся по стратегии (merge_dicts / list / custom / as-is) и пишутся
         в ``out_message``.
 
+        ADR-0305: ``timeout_seconds`` сужается через ``min(timeout, budget.remaining())``
+        ДО расчёта per_source_timeout — budget контролирует общий timeout composition.
+        Admission control: budget expired → ``exchange.fail`` без fetch (no HTTP calls).
+
         Args:
             exchange: Текущий exchange; результаты — в свойстве
                 ``composition_results``, ошибки — в ``composition_errors``.
             context: Контекст выполнения маршрута.
 
         """
-        tasks = [self._fetch_source(s) for s in self._sources]
-        raw_results = await asyncio.gather(*tasks, return_exceptions=True)
+        # ADR-0305: narrow composition timeout by remaining deadline budget.
+        effective_timeout: float = self._timeout
+        try:
+            from src.backend.core.async_utils.deadline_budget import (
+                DeadlineExpiredError,
+            )
+            from src.backend.core.request_context import RequestContext
+
+            ctx = RequestContext.current()
+            if ctx is not None and ctx.deadline_budget is not None:
+                remaining = ctx.deadline_budget.remaining()
+                if remaining <= 0.0:
+                    # Deadline budget истёк — admission control: composition не стартует.
+                    exchange.fail(
+                        f"APIComposition skipped: deadline budget exhausted "
+                        f"({len(self._sources)} sources, "
+                        f"{ctx.deadline_budget.original_timeout}s total)"
+                    )
+                    return
+                effective_timeout = min(self._timeout, remaining)
+        except DeadlineExpiredError:
+            raise
+        except Exception:
+            # Не ломаем api_composition при недоступности RequestContext.
+            pass
+
+        # Temporarily replace self._timeout с effective_timeout для per_source calc.
+        original_timeout = self._timeout
+        self._timeout = effective_timeout
+        try:
+            tasks = [self._fetch_source(s) for s in self._sources]
+            raw_results = await asyncio.gather(*tasks, return_exceptions=True)
+        finally:
+            self._timeout = original_timeout
 
         results: dict[str, Any] = {}
         errors: dict[str, str] = {}

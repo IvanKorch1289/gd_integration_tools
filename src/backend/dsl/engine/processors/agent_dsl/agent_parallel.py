@@ -114,7 +114,41 @@ class AgentParallelProcessor(BaseAIProcessor):
         self.continue_on_error = continue_on_error
 
     async def _run(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Запускает несколько AgentRun параллельно.
+
+        ADR-0305: ``timeout_s`` сужается через ``min(timeout_s, budget.remaining())``.
+        Admission control: budget expired → partial results с ``"error": "deadline_expired"``
+        без запуска agent run (best-effort: agents могут быть долгими).
+        """
         results: dict[str, Any] = {}
+
+        # ADR-0305: narrow agent_parallel timeout by remaining deadline budget.
+        effective_timeout: float | None = self.timeout_s
+        try:
+            from src.backend.core.async_utils.deadline_budget import (
+                DeadlineExpiredError,
+            )
+            from src.backend.core.request_context import RequestContext
+
+            ctx = RequestContext.current()
+            if ctx is not None and ctx.deadline_budget is not None:
+                remaining = ctx.deadline_budget.remaining()
+                if remaining <= 0.0:
+                    # Deadline budget истёк — admission control: мгновенный timeout для всех.
+                    _logger.warning(
+                        "%s: deadline budget exhausted — all agents skipped", self.name
+                    )
+                    for spec in self.agents:
+                        results.setdefault(spec["key"], {"error": "deadline_expired"})
+                    exchange.set_property(self.result_property, results)
+                    return
+                if self.timeout_s is not None:
+                    effective_timeout = min(self.timeout_s, remaining)
+        except DeadlineExpiredError:
+            raise
+        except Exception:
+            # Не ломаем agent_parallel при недоступности RequestContext.
+            pass
 
         async def _invoke_one(spec: dict[str, Any]) -> tuple[str, Any]:
             key = spec["key"]
@@ -149,15 +183,15 @@ class AgentParallelProcessor(BaseAIProcessor):
                 results[key] = value
 
         try:
-            if self.timeout_s is not None:
-                await asyncio.wait_for(_gather(), timeout=self.timeout_s)
+            if effective_timeout is not None:
+                await asyncio.wait_for(_gather(), timeout=effective_timeout)
             else:
                 await _gather()
         except TimeoutError:
             _logger.warning(
                 "%s: timeout_s=%.2f exceeded — partial results stored",
                 self.name,
-                self.timeout_s or 0.0,
+                effective_timeout or 0.0,
             )
             for spec in self.agents:
                 results.setdefault(spec["key"], {"error": "timeout"})

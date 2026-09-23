@@ -71,7 +71,35 @@ class MulticastProcessor(BaseProcessor):
         return index, result, branch_exchange.error
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Execute branches in parallel and aggregate results."""
+        """Execute branches in parallel and aggregate results.
+
+        ADR-0305: ``MulticastProcessor`` не имеет собственного timeout (в отличие
+        от ``MulticastRoutesProcessor`` и ``ScatterGatherProcessor``), но
+        admission control остаётся важен: если deadline уже истёк на входе —
+        ``exchange.fail`` без запуска веток (no work, no wait, no leak).
+        """
+        # ADR-0305: admission control для MulticastProcessor (нет timeout для narrow).
+        try:
+            from src.backend.core.async_utils.deadline_budget import (
+                DeadlineExpiredError,
+            )
+            from src.backend.core.request_context import RequestContext
+
+            ctx = RequestContext.current()
+            if ctx is not None and ctx.deadline_budget is not None:
+                if ctx.deadline_budget.is_expired():
+                    exchange.fail(
+                        f"Multicast skipped: deadline budget exhausted "
+                        f"({len(self._branches)} branches, "
+                        f"{ctx.deadline_budget.original_timeout}s total)"
+                    )
+                    return
+        except DeadlineExpiredError:
+            raise
+        except Exception:
+            # Не ломаем multicast при недоступности RequestContext.
+            pass
+
         body = exchange.in_message.body
         headers = exchange.in_message.headers
 
@@ -160,7 +188,12 @@ class MulticastRoutesProcessor(BaseProcessor):
         self._timeout = timeout
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Выполняет fan-out на зарегистрированные маршруты."""
+        """Выполняет fan-out на зарегистрированные маршруты.
+
+        ADR-0305: при наличии ``RequestContext.deadline_budget`` per-route
+        timeout сужается через ``effective_timeout = min(self._timeout, remaining)``.
+        Admission control: budget expired на входе → ``exchange.fail`` без fan-out.
+        """
         from src.backend.dsl.commands.registry import route_registry
         from src.backend.dsl.engine.execution_engine import ExecutionEngine
 
@@ -176,6 +209,32 @@ class MulticastRoutesProcessor(BaseProcessor):
         # верификации.
         engine = ExecutionEngine()  # D-AUDIT-14 fix (cycle 1)
 
+        # ADR-0305: narrow per-route timeout by remaining deadline budget.
+        effective_timeout: float = self._timeout
+        try:
+            from src.backend.core.async_utils.deadline_budget import (
+                DeadlineExpiredError,
+            )
+            from src.backend.core.request_context import RequestContext
+
+            ctx = RequestContext.current()
+            if ctx is not None and ctx.deadline_budget is not None:
+                remaining = ctx.deadline_budget.remaining()
+                if remaining <= 0.0:
+                    # Deadline budget истёк — admission control: fan-out не стартует.
+                    exchange.fail(
+                        f"Multicast routes skipped: deadline budget exhausted "
+                        f"({len(self._route_ids)} routes, "
+                        f"{ctx.deadline_budget.original_timeout}s total)"
+                    )
+                    return
+                effective_timeout = min(self._timeout, remaining)
+        except DeadlineExpiredError:
+            raise
+        except Exception:
+            # Не ломаем multicast при недоступности RequestContext.
+            pass
+
         async def _run_route(route_id: str) -> tuple[str, Any, str | None]:
             pipeline = route_registry.get_optional(route_id)
             if pipeline is None:
@@ -187,7 +246,7 @@ class MulticastRoutesProcessor(BaseProcessor):
             try:
                 await asyncio.wait_for(
                     engine.execute(pipeline, exchange=branch_exchange, context=context),
-                    timeout=self._timeout,
+                    timeout=effective_timeout,
                 )
             except TimeoutError:
                 return route_id, None, f"Таймаут маршрута {route_id!r}"

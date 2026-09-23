@@ -73,7 +73,33 @@ class LoadBalancerProcessor(BaseProcessor):
         return self._targets[0]
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Select a target and forward exchange via sub-pipeline executor."""
+        """Select a target and forward exchange via sub-pipeline executor.
+
+        ADR-0305: ``LoadBalancerProcessor`` не имеет собственного timeout.
+        Deadline integration: admission control на входе через
+        ``budget.is_expired()`` — expired → ``exchange.fail`` без выбора target.
+        """
+        # ADR-0305: admission control для LoadBalancer (нет timeout для narrow).
+        try:
+            from src.backend.core.async_utils.deadline_budget import (
+                DeadlineExpiredError,
+            )
+            from src.backend.core.request_context import RequestContext
+
+            ctx = RequestContext.current()
+            if ctx is not None and ctx.deadline_budget is not None:
+                if ctx.deadline_budget.is_expired():
+                    exchange.fail(
+                        f"LoadBalancer skipped: deadline budget exhausted "
+                        f"({len(self._targets)} targets)"
+                    )
+                    return
+        except DeadlineExpiredError:
+            raise
+        except Exception:
+            # Не ломаем load-balancer при недоступности RequestContext.
+            pass
+
         from src.backend.dsl.engine.processors.base import SubPipelineExecutor
 
         target = await self._select_target(exchange)

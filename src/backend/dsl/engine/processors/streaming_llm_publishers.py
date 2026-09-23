@@ -82,12 +82,36 @@ class WebhookChunkedPublisher(_BasePublisher):
             from src.backend.core.net import OutboundHttpClient
         except ImportError:
             return
+        # ADR-0305: narrow webhook timeout by remaining deadline budget.
+        effective_timeout: float = self._timeout
         try:
-            timeout = httpx.Timeout(self._timeout)
+            from src.backend.core.async_utils.deadline_budget import (
+                DeadlineExpiredError,
+            )
+            from src.backend.core.request_context import RequestContext
+
+            ctx = RequestContext.current()
+            if ctx is not None and ctx.deadline_budget is not None:
+                remaining = ctx.deadline_budget.remaining()
+                if remaining <= 0.0:
+                    # Deadline budget истёк — best-effort: skip silently (webhook — non-critical).
+                    logger.debug(
+                        "WebhookChunkedPublisher: deadline budget exhausted, skipping send"
+                    )
+                    return
+                effective_timeout = min(self._timeout, remaining)
+        except DeadlineExpiredError:
+            raise
+        except Exception:
+            # Не ломаем webhook publisher при недоступности RequestContext.
+            pass
+
+        try:
+            timeout = httpx.Timeout(effective_timeout)
             async with OutboundHttpClient(timeout=timeout) as client:
                 await asyncio.wait_for(
                     client.post(url, content=orjson.dumps(payload)),
-                    timeout=self._timeout,
+                    timeout=effective_timeout,
                 )
         except Exception as exc:
             logger.debug("WebhookChunkedPublisher: send failed: %s", exc)

@@ -25,6 +25,7 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
 from typing import Any
 
@@ -33,6 +34,8 @@ from src.backend.core.request_context import (
     bind_request_context,
     clear_request_context,
 )
+
+logger = logging.getLogger(__name__)
 
 __all__ = ("RequestContextMiddleware",)
 
@@ -59,6 +62,54 @@ def _otel_ids() -> tuple[str | None, str | None]:
         return f"{ctx.trace_id:032x}", f"{ctx.span_id:016x}"
     except Exception as _:
         return None, None
+
+
+def _resolve_deadline_timeout() -> float | None:
+    """Извлечь default timeout из settings для HTTP-requests.
+
+    Returns:
+        Timeout в секундах или None, если settings недоступны.
+    """
+    try:
+        from src.backend.core.config.settings import settings
+
+        secure = getattr(settings, "secure", None)
+        if secure is None:
+            return None
+        # ``request_timeout`` — наиболее вероятное поле (S18 W6 TimeoutMiddleware
+        # использует то же имя). Fallback для гипотетических альтернатив.
+        for attr in ("request_timeout", "default_request_timeout"):
+            value = getattr(secure, attr, None)
+            if isinstance(value, (int, float)) and value > 0:
+                return float(value)
+    except Exception:
+        # На старте (без конфигурации) — никакого default deadline.
+        pass
+    return None
+
+
+def _parse_deadline_header(value: str) -> float | None:
+    """Парсинг ``X-Request-Timeout`` header (секунды, float).
+
+    Возвращает ``None`` если header отсутствует, не парсится или
+    неположительный. Логирует WARNING для подозрительных значений —
+    помогает выявлять клиентов с некорректным timeout.
+
+    Args:
+        value: строковое значение header.
+
+    Returns:
+        Timeout в секундах или None.
+    """
+    try:
+        timeout = float(value)
+    except TypeError, ValueError:
+        logger.warning("X-Request-Timeout not parseable: %r", value)
+        return None
+    if timeout <= 0 or timeout != timeout:  # reject 0/negative/NaN
+        logger.warning("X-Request-Timeout non-positive or NaN: %r", value)
+        return None
+    return timeout
 
 
 class RequestContextMiddleware:
@@ -92,6 +143,29 @@ class RequestContextMiddleware:
             if isinstance(raw_client_id, str):
                 client_id = raw_client_id
 
+        # ADR-0305: deadline propagation. Priority:
+        # 1. ``X-Request-Timeout`` header (per-request override).
+        # 2. ``settings.secure.request_timeout`` (default).
+        # 3. ``None`` (legacy / non-configured — no deadline propagation).
+        deadline_budget: Any = None
+        try:
+            from src.backend.core.async_utils.deadline_budget import DeadlineBudget
+
+            header_value = _get_header(headers, b"x-request-timeout")
+            timeout_s: float | None = (
+                _parse_deadline_header(header_value)
+                if header_value is not None
+                else None
+            )
+            if timeout_s is None:
+                timeout_s = _resolve_deadline_timeout()
+            if timeout_s is not None:
+                deadline_budget = DeadlineBudget.from_timeout(timeout=timeout_s)
+        except Exception as _:
+            # Если DeadlineBudget/timeout parsing/import упал — продолжаем
+            # без deadline (graceful degradation, не ломаем request).
+            deadline_budget = None
+
         ctx = RequestContext(
             correlation_id=correlation_id,
             request_id=request_id,
@@ -102,6 +176,7 @@ class RequestContextMiddleware:
             tenant_id=tenant_id,
             auth=auth,
             client_id=client_id,
+            deadline_budget=deadline_budget,
         )
 
         # Backward-compat: scope["state"]["correlation_id"] (deprecated).

@@ -459,19 +459,46 @@ class TimeoutProcessor(BaseProcessor):
         self._fallback = fallback_processors or []
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Метод process (см. signature)."""
+        """Метод process (см. signature).
+
+        ADR-0305: ``self._seconds`` сужается через ``min(_seconds, budget.remaining())``.
+        Admission control: budget expired → ``exchange.fail`` без запуска sub-processors.
+        """
         from src.backend.dsl.engine.processors.base import run_sub_processors
+
+        effective_seconds: float = self._seconds
+        try:
+            from src.backend.core.async_utils.deadline_budget import (
+                DeadlineExpiredError,
+            )
+            from src.backend.core.request_context import RequestContext
+
+            ctx = RequestContext.current()
+            if ctx is not None and ctx.deadline_budget is not None:
+                remaining = ctx.deadline_budget.remaining()
+                if remaining <= 0.0:
+                    exchange.fail(
+                        f"TimeoutProcessor skipped: deadline budget exhausted "
+                        f"(timeout={self._seconds}s, fallback={len(self._fallback)})"
+                    )
+                    return
+                effective_seconds = min(self._seconds, remaining)
+        except DeadlineExpiredError:
+            raise
+        except Exception:
+            # Не ломаем timeout при недоступности RequestContext.
+            pass
 
         try:
             await asyncio.wait_for(
                 run_sub_processors(self._processors, exchange, context),
-                timeout=self._seconds,
+                timeout=effective_seconds,
             )
         except TimeoutError:
             exchange.set_property("timeout_exceeded", True)
-            exchange.set_property("timeout_limit_seconds", self._seconds)
+            exchange.set_property("timeout_limit_seconds", effective_seconds)
 
             if self._fallback:
                 await run_sub_processors(self._fallback, exchange, context)
             else:
-                exchange.fail(f"Timeout after {self._seconds}s")
+                exchange.fail(f"Timeout after {effective_seconds}s")

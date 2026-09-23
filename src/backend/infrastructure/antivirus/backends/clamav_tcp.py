@@ -10,7 +10,11 @@ import asyncio
 import struct
 import time
 
-from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
+from src.backend.core.interfaces.antivirus import (
+    AntivirusBackend,
+    AntivirusScanResult,
+    AntivirusTimeoutError,
+)
 from src.backend.infrastructure.antivirus.backends.clamav_unix import (
     _parse_clamav_response,
 )
@@ -46,7 +50,10 @@ class ClamAVTcpBackend(AntivirusBackend):
         try:
             writer.write(b"zPING\0")
             await writer.drain()
-            data = await asyncio.wait_for(reader.read(64), timeout=2.0)
+            try:
+                data = await asyncio.wait_for(reader.read(64), timeout=2.0)
+            except TimeoutError:
+                return False
             return b"PONG" in data
         finally:
             writer.close()
@@ -92,7 +99,16 @@ class ClamAVTcpBackend(AntivirusBackend):
             writer.write(struct.pack(">I", 0))
             await writer.drain()
 
-            response = await asyncio.wait_for(reader.read(4096), timeout=self._timeout)
+            try:
+                response = await asyncio.wait_for(
+                    reader.read(4096), timeout=self._timeout
+                )
+            except TimeoutError:
+                raise AntivirusTimeoutError(
+                    f"ClamAV TCP scan timeout after {self._timeout}s",
+                    backend=self.name,
+                    timeout_s=self._timeout,
+                )
         finally:
             writer.close()
             try:
