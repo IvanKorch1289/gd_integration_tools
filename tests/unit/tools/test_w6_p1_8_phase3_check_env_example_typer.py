@@ -47,9 +47,19 @@ class TestCheckEnvExampleTyperMigration:
         assert "ArgumentParser" not in source
 
     def test_no_stdout_write(self) -> None:
-        """sys.stdout.write не используется (заменено на rich.console.print)."""
+        """sys.stdout.write допустим только для JSON output (machine-readable).
+
+        W11 P0-3: --json использует sys.stdout.write для piping в jq;
+        human-readable output остаётся на rich.console (stderr).
+        """
         source = open(_TOOLS_PATH).read()
-        assert "sys.stdout.write" not in source
+        if "sys.stdout.write" in source:
+            # Допустимо только рядом с json.dumps (machine-readable output)
+            assert 'json.dumps' in source, (
+                "sys.stdout.write разрешён только в JSON-выводе, не в human output"
+            )
+        # Rich console должен быть stderr=True
+        assert "Console(stderr=True)" in source
 
     def test_typer_help_formatted(self) -> None:
         """--help возвращает typer-formatted help."""

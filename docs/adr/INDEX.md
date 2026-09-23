@@ -132,7 +132,8 @@
 | [ADR-0333](0333-w6-p1-8-phase10-scaffold-typer.md) | W6 P1-8 Phase 10: tools/scaffold.py argparse subparsers → typer (10th tool, 3 subcommands) + structlog Py2 syntax fix | **Accepted** |
 | [ADR-0334](0334-factcheck-master-state-vs-claim.md) | Фактчек заявления о 176 SyntaxError в master (HEAD `180e75819`: 0 SyntaxError, 0 Py2-except; 67 коммитов работы от стартового SHA) | **Accepted** |
 | [ADR-0335](0335-w11-p0-2-config-unsafe-defaults-gate.md) | W11 P0-2: Configuration matrix gate — `tools/checks/check_unsafe_defaults.py` детектирует hardcoded placeholders и SecretStr code smell в Pydantic Settings (HIGH/MEDIUM/LOW) | **Accepted** |
+| [ADR-0336](0336-w11-p0-3-env-example-matrix-gate.md) | W11 P0-3: Configuration matrix — `check_env_example.py --matrix` детектирует required secrets без `.env.example` декларации; fix pre-existing bugs (CONFIG_DIR path + class detection) | **Accepted** |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 
-**Total:** 128 ADRs.
+**Total:** 129 ADRs.
 
