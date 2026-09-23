@@ -121,13 +121,15 @@ class TestMovedProviders:
         )
 
     def test_sink_factory_in_workflow(self) -> None:
+        # W9 P2-13 Phase 7: split into workflow._messaging submodule.
         assert cache_mod.get_sink_factory_provider.__module__ == (
-            "src.backend.core.di.providers.workflow"
+            "src.backend.core.di.providers.workflow._messaging"
         )
 
     def test_dlq_envelope_in_workflow(self) -> None:
+        # W9 P2-13 Phase 7: split into workflow._dlq submodule.
         assert cache_mod.get_dlq_envelope_class_provider.__module__ == (
-            "src.backend.core.di.providers.workflow"
+            "src.backend.core.di.providers.workflow._dlq"
         )
 
 
