@@ -39,6 +39,7 @@ from src.backend.dsl.engine.processors.eip.flow_control import (
     ForEachProcessor,
     LoopProcessor,
     OnCompletionProcessor,
+    SensorProcessor,
     ThrottlerProcessor,
     WireTapProcessor,
 )
@@ -164,6 +165,7 @@ __all__ = (
     "RoutingSlipProcessor",
     "SamplingProcessor",
     "ScatterGatherProcessor",
+    "SensorProcessor",
     "SimpleRegistry",
     "SortByProcessor",
     "SortProcessor",

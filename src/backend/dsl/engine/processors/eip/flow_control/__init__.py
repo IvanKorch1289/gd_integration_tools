@@ -30,6 +30,9 @@ from src.backend.dsl.engine.processors.eip.flow_control.loop import (
 from src.backend.dsl.engine.processors.eip.flow_control.oncompletion import (
     OnCompletionProcessor,
 )
+from src.backend.dsl.engine.processors.eip.flow_control.sensor import (
+    SensorProcessor as SensorProcessor,
+)
 from src.backend.dsl.engine.processors.eip.flow_control.throttler import (
     ThrottlerProcessor,
 )
@@ -43,6 +46,7 @@ __all__ = (
     "ForEachProcessor",
     "LoopProcessor",
     "OnCompletionProcessor",
+    "SensorProcessor",
     "ThrottlerProcessor",
     "WireTapProcessor",
 )

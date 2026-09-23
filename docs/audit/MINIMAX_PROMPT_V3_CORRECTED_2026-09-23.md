@@ -97,7 +97,9 @@ core.api, RouteBuilder fluent-API) не ломать без ADR; архитек�
 - **W9 — god-objects + честные docs** (README/ARCHITECTURE ↔ факты).
 - **W10 — P3**: старт-тайм (<3s, lazy AI/RAG deps), профилирование
   Exchange/Pipeline, orjson/msgspec на границах,
-  Airflow-подобное (backfill/catchup, sensor-процессоры), OTEL-propagation
+  Airflow-подобное (backfill/catchup — ОСТАЁТСЯ; sensor-процессоры —
+  ГОТОВО: `SensorProcessor` poke/reschedule, ADR-0305-integrated,
+  `eip/flow_control/sensor.py`), OTEL-propagation
   сквозь Saga/Temporal, DX-scaffold (`make new-route` с cURL+браузер скелетом).
 - **EIP-полнота — ЗАКРЫТА (верифицировано 2026-09-23)**: каталог
   `dsl/engine/processors/eip/` уже содержит Aggregator (`flow_control/aggregator`,

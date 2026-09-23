@@ -1,5 +1,25 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W10: SensorProcessor (Airflow poke/reschedule)
+
+### feat(dsl): Airflow-совместимый sensor-процессор
+
+[`SensorProcessor`](/home/user/dev/gd_integration_tools/src/backend/dsl/engine/processors/eip/flow_control/sensor.py)
+(`eip/flow_control/`, экспорт через `flow_control` → `eip` → `processors`):
+
+- **poke**: одна проверка условия; not-ready → `exchange.fail`.
+- **reschedule**: поллинг с `interval_s`, ограниченный `timeout_s`
+  (между проверками — `await asyncio.sleep`, event loop не блокируется).
+- **ADR-0305**: admission control (истёкший budget → fail без единой
+  проверки), narrowing `timeout_s` → `budget.remaining()`,
+  `DeadlineExpiredError` пробрасывается, отсутствие RequestContext —
+  graceful degradation.
+- **Анти-infinite-loop**: reschedule без `timeout_s` и без budget → одна
+  проверка (fallback на poke-семантику).
+
+Тесты: [`tests/unit/dsl/engine/processors/eip/test_sensor.py`](/home/user/dev/gd_integration_tools/tests/unit/dsl/engine/processors/eip/test_sensor.py)
+(10 focused). Остаток W10-Airflow: backfill/catchup для scheduler-триггеров.
+
 ## [Unreleased] — 2026-09-23 — W9 P2-13: `_protocols.py` god-module split (1094 LOC → 6 family sub-modules)
 
 ### refactor(dsl): RouteBuilder Protocol-контракты — god-module decomposition
