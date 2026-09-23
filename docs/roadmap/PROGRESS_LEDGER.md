@@ -4933,3 +4933,73 @@ WORM audit storage, WAF-фасад integration).
 - ⏭️ Дальнейшие gaps: privacy orchestrator, object-level authorization,
   configuration profile matrix, feature dependencies, audit log integrity.
 
+
+---
+
+## W11 P2-1: Audit log integrity hash chain — DEFERRED (unverified, 2026-09-23, cycle 157)
+
+**Статус**: **DEFERRED** (evidence-first). Реализация создана в предыдущем turn
+(commit `8602b429b` уже в истории), но **3 из 32 tests падают** —
+`TestVerifyWithGaps` (test_gap_detected_when_indexes_not_contiguous,
+test_multiple_gaps_counted, test_restore_scenario_gap_detected).
+
+**Evidence** (после `git pull --rebase`):
+
+```
+tests/unit/infrastructure/audit/test_w11_p2_1_audit_hash_chain.py
+3 failed, 29 passed in 0.28s
+
+FAILED tests/unit/infrastructure/audit/test_w11_p2_1_audit_hash_chain.py::TestVerifyWithGaps::test_gap_detected_when_indexes_not_contiguous
+FAILED tests/unit/infrastructure/audit/test_w11_p2_1_audit_hash_chain.py::TestVerifyWithGaps::test_multiple_gaps_counted
+FAILED tests/unit/infrastructure/audit/test_w11_p2_1_audit_hash_chain.py::TestVerifyWithGaps::test_restore_scenario_gap_detected
+```
+
+**Root cause**: тесты вызывают `append({"i": 3}, timestamp=...)` ожидая
+entry с `index=3`, но `append()` всегда устанавливает `index = len(self._entries)`,
+поэтому создаются contiguous indexes (0, 1, 2, 3) — gap не существует.
+
+**Action**: оставить файлы untracked (`src/backend/infrastructure/audit/hash_chain.py`,
+`tests/unit/infrastructure/audit/test_w11_p2_1_audit_hash_chain.py`) до:
+1. Fix тестов: использовать manual `_entries` injection или добавить
+   `append_with_index(index, payload, ...)` метод для воспроизведения restore scenario.
+2. Re-run pytest: 32/32 passing required.
+3. ADR-0340 создан, но commit отложен до green tests.
+
+**Per v4 protocol**: «Не повторять уже сделанную волну без проверки текущего кода,
+git log, ADR и PROGRESS_LEDGER.md». Unverified work не коммитится.
+
+---
+
+## Git rebase: integrate origin's c262f1ba (2026-09-23, cycle 157)
+
+**Push rejection root cause analysis**:
+
+- Local HEAD (до rebase): `ebc7a1c6f` (2026-09-23 15:26:35 +0300)
+- Origin/master HEAD: `c262f1ba0` (2026-09-23 09:44:13 +0000)
+- Common ancestor: `dbd4c598a`
+- Divergence: local 44 commits ahead, origin 1 commit ahead (non-overlapping)
+- Push error: «Updates were rejected because the remote contains work that
+  you do not have locally» — возникает когда remote имеет commits, которых нет
+  локально, И local имеет commits, которых нет remote (non-fast-forward case).
+
+**Fix**: `git pull --rebase origin master` (разрешено v4 — `git pull` не listed в forbidden).
+
+**Conflict**: 1 conflict на `docs/adr/INDEX.md` (commit `0c50dbd08` re-applied
+на c262f1ba base). Resolution: `git checkout --theirs docs/adr/INDEX.md`
+(c262f1ba уже включает мои ADR entries 0317-0339 через github-actions bot
+sync, поэтому theirs более comprehensive).
+
+**After rebase**:
+
+- New local HEAD: `870e48f9d3559c94b9a97543a6b5410c91d96d27` (rebased content
+  identical to `ebc7a1c6f`, новый SHA из-за нового parent chain).
+- 44 коммита впереди origin — `git push` теперь fast-forward.
+- All commit SHAs changed due to rebase (parent chain updated). Старые SHAs
+  (например, `180e75819`) упомянутые в этом ledger выше — STALE, заменены
+  на новые SHA (например, `8c466449e` для того же W6 P1-8 Phase 10 commit).
+- compileall + check_python3_syntax: exit 0 (rebase чистый).
+- W11 tests (214 в test_w11_p0_2 through test_w11_p1_2): 214/214 passing.
+
+**v4 push forbidden**: `git push` запрещён v4 protocol. User должен запушить сам
+после rebase.
+
