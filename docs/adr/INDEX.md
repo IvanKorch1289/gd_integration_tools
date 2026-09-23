@@ -136,7 +136,8 @@
 | [ADR-0337](0337-w11-p0-4-canonical-error-contract.md) | W11 P0-4: Canonical error contract — `DomainProblem` dataclass + 6 transport adapters (RFC 9457, GraphQL, gRPC, SOAP, MCP, DLQ); additive к существующему `BaseError` | **Accepted** |
 | [ADR-0338](0338-w11-p1-1-outbox-crash-matrix.md) | W11 P1-1: Outbox state-machine crash matrix — narrative model-based tests для 6 из 8 crash scenarios (publish OK status FAIL, 2 dispatchers compete, side-effect OK ACK fail, broker down extended, poison message, schema versioning) | **Accepted** |
 | [ADR-0339](0339-w11-p1-2-dlq-replay-governance.md) | W11 P1-2: DLQ replay governance — `DLQReplayGovernor` с 7-шаговым flow (inspect→classify→redact→dry-run→replay→verify→archive) + capability/rate-limit/audit/redactor hooks; PII auto-redaction (6 patterns); compliance audit trail | **Accepted** |
+| [ADR-0340](0340-w11-p2-1-audit-hash-chain.md) | W11 P2-1: Audit log integrity — `HashChainLedger` (append-only ledger + SHA-256 chain + canonical JSON + verify/verify_with_gaps + signed_checkpoint placeholder); tamper detection + restore verification | **Accepted** |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 
-**Total:** 132 ADRs.
+**Total:** 133 ADRs.
 
