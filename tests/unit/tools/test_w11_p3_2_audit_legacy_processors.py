@@ -220,13 +220,8 @@ class TestClassify:
         )
 
     def test_needs_migration_with_importers(self) -> None:
-        """Изменено: реальный сценарий — `row` теперь делегирует в test_needs_migration_no_canonical.
-
-        Тест сохранён для регрессии контракта: no canonical + importers > 0 → NEEDS_MIGRATION.
-        Покрывается в test_needs_migration_no_canonical ниже.
-        """
-        # Заглушка-проверка инварианта: row без assert не нужен,
-        # поэтому явно прогоняем через _classify без сохранения.
+        """No canonical target + importers > 0 → NEEDS_MIGRATION."""
+        # Используем _classify явно, избегая self._row assignment warning.
         from tools.audit_legacy_processors import _classify as _cls
 
         row = self._row(
@@ -237,7 +232,7 @@ class TestClassify:
         assert _cls(row) == "NEEDS_MIGRATION"
 
     def test_needs_migration_no_canonical(self) -> None:
-        """No canonical target + > 0 importers → NEEDS_MIGRATION."""
+        """No canonical target + > 0 importers → NEEDS_MIGRATION (duplicate)."""
         row = self._row(
             file="src/backend/dsl/processors/some_legacy.py",
             importer_count=3,
@@ -253,6 +248,62 @@ class TestClassify:
             canonical_target="src.backend.dsl.engine.processors.special",
         )
         assert _classify(row) == "SEMANTIC_KEEP"
+
+
+class TestShimIntegration:
+    """Live integration tests: SHIM proxy работает correctly.
+
+    ADR-0313/0314 cycle 152: deprecation-shim emit DeprecationWarning + proxies
+    to canonical. Migration window до cycle 156 (после telemetry audit).
+    Тест проверяет runtime поведение shim → не ABI-only.
+    """
+
+    def test_batch_processor_shim_proxy_identity(self) -> None:
+        """SHIM returns same class object as canonical (proxy works)."""
+        import warnings
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            from src.backend.dsl.engine.processors import batch_processor as canonical
+            from src.backend.dsl.processors import batch_processor as shim
+
+            # DeprecationWarning должен быть испущен при импорте shim.
+            assert any(
+                issubclass(w.category, DeprecationWarning)
+                and "batch_processor" in str(w.message)
+                for w in caught
+            ), f"Expected DeprecationWarning, got {[str(w.message) for w in caught]}"
+
+            # Identity preserved: SHIM возвращает тот же класс object.
+            assert shim.BatchProcessor is canonical.BatchProcessor
+
+    def test_docstring_warns_cycle_156_removal(self) -> None:
+        """Deprecation message mentions cycle 156 (migration window).
+
+        Force re-import через importlib.reload — иначе Python кэширует модуль
+        после первого импорта и DeprecationWarning (top-level, fires once) не
+        срабатывает повторно в этом процессе.
+        """
+        import importlib
+        import warnings
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            import src.backend.dsl.processors.batch_processor as bp_module
+            importlib.reload(bp_module)
+
+        deprecations = [
+            str(w.message)
+            for w in caught
+            if issubclass(w.category, DeprecationWarning)
+        ]
+        assert any("cycle 156" in m for m in deprecations), (
+            f"Deprecation should mention cycle 156 (telemetry audit milestone), "
+            f"got: {deprecations}"
+        )
+        assert any("ADR-0313" in m or "ADR-0314" in m for m in deprecations), (
+            f"Deprecation should reference ADR-0313/0314, got: {deprecations}"
+        )
 
 
 class TestRealInventory:
