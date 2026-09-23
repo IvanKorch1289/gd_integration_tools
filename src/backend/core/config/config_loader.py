@@ -205,6 +205,36 @@ Vault выполняется N раз, поэтому 30+ одинаковых �
 """
 
 
+_HVAC_AVAILABLE: bool | None = None
+"""Cached result of ``_hvac_module_available()``. None = not checked yet.
+
+Cycle 158+ fix: pre-check ``hvac`` importability до ``from hvac import Client``.
+Если missing в venv → silent skip (no per-class log spam).
+"""
+
+
+def _hvac_module_available() -> bool:
+    """Check if ``hvac`` Python module is importable.
+
+    Cycle 158+ fix (`priority B из STARTUP_BOTTLENECK_INVESTIGATION_2026-09-23`):
+    ``hvac`` optional dependency — если missing в venv, VaultConfigSettingsSource
+    должен short-circuit silently (без log spam). 17+ Settings-классов ×
+    1 Vault attempt each = log flood + per-class hvac import attempt overhead.
+
+    :returns: True если ``hvac`` importable, иначе False (cached result).
+    """
+    import importlib.util
+
+    result = importlib.util.find_spec("hvac") is not None
+    # Кэшируем в module-level global (как ``_VAULT_UNREACHABLE``).
+    # ``global`` declaration должна быть ПЕРЕД любым use в функции, но
+    # module variable должна быть определена раньше функции (иначе Python
+    # считает assignment as local).
+    global _HVAC_AVAILABLE
+    _HVAC_AVAILABLE = result
+    return result
+
+
 class VaultConfigSettingsSource(FilteredSettingsSource):
     """Vault config loader with filtering.
 
@@ -229,6 +259,17 @@ class VaultConfigSettingsSource(FilteredSettingsSource):
             return {}
 
         if _VAULT_UNREACHABLE:
+            return {}
+
+        # Cycle 158+ fix: skip Vault если hvac модуль отсутствует.
+        # Раньше пытались ``from hvac import Client`` — ImportError поднимался,
+        # ловился ``except Exception`` в ``__call__``, error логировался per-class
+        # (17+ дубликатов при cold import 17 Settings-классов).
+        # Теперь: cached check + early return = silent degradation.
+        if _HVAC_AVAILABLE is False or (
+            _HVAC_AVAILABLE is None and not _hvac_module_available()
+        ):
+            _VAULT_UNREACHABLE = True
             return {}
 
         vault_addr = getenv("VAULT_ADDR")
