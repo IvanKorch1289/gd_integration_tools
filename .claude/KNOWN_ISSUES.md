@@ -2024,3 +2024,36 @@ falsifiable reference.
 
 См. полный verified-state отчёт:
 ``docs/audit/PRINCIPAL_RE_AUDIT_2026-08-27.md``.
+
+## Re-verification 2026-09-23 — tracked gaps (measured, not blocking)
+
+Источники: прогон tools/checks на HEAD 560a0aa6a + рабочее дерево.
+Все позиции измерены командами, не заявлены из отчётов.
+
+1. **Docstrings gate baseline drift.** Claim в AGENTS.md/quality.mk —
+   «baseline 0, MAX_ALLOWED=0 → exit 0»; фактически
+   `python tools/check_docstrings.py` → **250 missing / 46 файлов, exit 1**
+   (и на чистом HEAD). AGENTS.md помечен drift-заметкой. Восстановление —
+   ratchet от 250 вниз, не «объявить 0».
+
+2. **Object authorization (visibility, non-blocking).**
+   `tools/checks/check_object_authorization.py`: 133 service-lookup'а без
+   tenant-фильтра. Framework-level точка — TenantResourceIsolationMiddleware
+   (wired, order 330); для включения enforcement нужны production checker'ы
+   через `register_ownership_checker` (см. core/security/object_ownership.py).
+
+3. **Privacy lifecycle (visibility, non-blocking).**
+   `tools/checks/check_privacy_lifecycle.py`: erasure-покрытие отсутствует у
+   storage-бэкендов redis, s3, qdrant, ai_memory (DeleteDataSubject).
+
+4. **Alembic migrations vs SQLite (visibility, non-blocking).**
+   `tools/checks/check_alembic_migrations.py`: CONCURRENTLY в миграциях не
+   выполняется на SQLite (dev_light); нужен feature-detect или альтернативный
+   путь для dev-профиля.
+
+5. **X-Tenant-ID header trust (pre-existing, Sprint 1 V16).**
+   TenantMiddleware и TenantResourceIsolationMiddleware резолвят tenant с
+   приоритетом header > state — клиент, имеющий прямой доступ к API без
+   gateway, может подменить tenant-идентичность. Митигируется на границе
+   (gateway перезаписывает header из токена). Смена приоритета — отдельное
+   security-решение (не делать точечно).
