@@ -59,17 +59,31 @@ shimmed).
   - Docstring-only файлам (0 importers → корректно classify).
   - Файлам вне scope (warnings, не падает).
 
-## Текущий инвентарь (HEAD `b0e804357`)
+## Текущий инвентарь (HEAD `84e37e33e`, post-bug-fix)
 
 | Класс | Кол-во | Действие |
 |---|---|---|
-| REMOVABLE | 16 | Подготовка к W2 P0-3 (ADR per файл + migration window + contract test) |
-| SHIMMED | 2 | Runtime verification + ADR per файл |
+| REMOVABLE | **0** | — (нет orphan files) |
+| SHIMMED | **18** | 6 lazy-`__getattr__` proxy (ADR-0313/0314 cycle 152) + 2 known-shim + 10 in-package siblings |
 | SEMANTIC_KEEP | 6 | Сохранить (SagaLRA convergence plan) |
 | NEEDS_MIGRATION | 0 | — |
 
 **v4 baseline**: 28 файлов / 2496 LOC (ADR-0341 entry).
-**Current**: 24 файла / 2210 LOC. Drift documented в PROGRESS_LEDGER §W2 P1-2.
+**Pre-fix (b0e804357)**: 24 файла / 2210 LOC: 16 REMOVABLE + 6 SEMANTIC_KEEP + 2 SHIMMED.
+**Post-fix (84e37e33e)**: 24 файла / 2210 LOC: 0 REMOVABLE + 6 SEMANTIC_KEEP + 18 SHIMMED.
+
+**Bug fix history** (подробности см. PROGRESS_LEDGER §W2 P1-2 bug fix):
+- `fee3d8f91` — 3 новых детекции в `_detect_canonical_target()`:
+  `__getattr__` lazy proxy, docstring-deprecation-shim, `__module__` override.
+  + новая функция `_is_package_internal_sibling()`.
+- `84e37e33e` — regression coverage (+5 тестов): package-internal sibling,
+  SHIMMED-via-canonical-engine-processors-prefix, threshold checks, nonexistent
+  package guard, post-fix invariant (0 REMOVABLE).
+
+**Implication для W2 P0-3**: «process migration closure» переформулирован.
+Это не «remove orphan files», а «migrate SHIMMED → canonical after cycle 156
+telemetry audit». Удаление 18 SHIMMED-файлов требует ждать cycle 156 + ADR per
+файл + Claim Ledger + Docker runtime (последнее BLOCKED per kickoff).
 
 ## Альтернативы рассмотренные
 
@@ -114,8 +128,8 @@ shimmed).
 | `python3.14 -m compileall -q` | EXIT 0 |
 | `tools/checks/check_python3_syntax.py --root .` | EXIT 0 |
 | `ruff check` | All checks passed |
-| `pytest tests/unit/tools/test_w11_p3_2_audit_legacy_processors.py` | 16/16 passed (28.46s) |
-| Inventory scan (`python3.14 tools/audit_legacy_processors.py`) | 24 files / 2210 LOC за 7s |
+| `pytest tests/unit/tools/test_w11_p3_2_audit_legacy_processors.py` | **21/21 passed** (27.20s) |
+| Inventory scan (`python3.14 tools/audit_legacy_processors.py`) | 24 files / 2210 LOC за 7s (post-fix: 0 REMOVABLE) |
 
 ## Ссылки
 

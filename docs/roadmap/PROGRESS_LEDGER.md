@@ -5213,31 +5213,68 @@ v4 baseline (ADR-0341): 28/2496. Текущий: 24/2210. Drift documented.
 - ❌ Удаление SHIMMED — нужна runtime-верификация + ADR на каждый shim.
 - ❌ Migration saga_lra (SEMANTIC_KEEP) — отдельный convergence plan.
 
-**Tests** (`tests/unit/tools/test_w11_p3_2_audit_legacy_processors.py`, 16 тестов):
+**Tests** (`tests/unit/tools/test_w11_p3_2_audit_legacy_processors.py`, **21 тест**):
 - Module structure (argparse, JSON output, human-readable table)
 - Classification logic (REMOVABLE/SHIMMED/SEMANTIC_KEEP/NEEDS_MIGRATION)
-- Real inventory invariants (count 20-30, saga = SEMANTIC_KEEP, LOC 1500-3000)
+- **После fee3d8f91 bug fix**: SHIMMED-эвристики покрыты явно
+  (5 новых тестов: test_shimmed_via_canonical_engine_processors_prefix,
+   test_shimmed_via_package_internal_sibling,
+   test_is_package_internal_sibling_thresholds,
+   test_is_package_internal_sibling_nonexistent_package,
+   test_real_inventory_postfix_no_orphan_files)
+- Real inventory invariants (count 20-30, saga = SEMANTIC_KEEP, LOC 1500-3000,
+  post-fix: 0 REMOVABLE)
 - `--strict` CI gate behavior (exit 0/1 acceptable)
-- ✅ 16/16 passing (28.46s)
+- ✅ **21/21 passing** (27.20s)
 
 **Gates**:
 - `python3.14 -m compileall -q`: EXIT 0
 - `tools/checks/check_python3_syntax.py --root .`: EXIT 0
 - `ruff check tools/audit_legacy_processors.py tests/unit/tools/test_w11_p3_2_audit_legacy_processors.py`: All checks passed
-- `pytest tests/unit/tools/test_w11_p3_2_audit_legacy_processors.py`: 16/16 passed
+- `pytest tests/unit/tools/test_w11_p3_2_audit_legacy_processors.py`: **21/21** passed
 
 **Cycle 158 итог (W2 P1-2)**:
 - ✅ Inventory tool добавлен: `tools/audit_legacy_processors.py` (+536 LOC,
-  tool + test).
-- ✅ 16 REMOVABLE + 2 SHIMMED файлов идентифицированы для следующего шага.
+  tool + test) — commit `b0e804357`.
+- ✅ ADR-0341 создан, INDEX.md → 134 ADRs — commit `11a0dcec7`.
+- ✅ **Bug fix** (commit `fee3d8f91`): 3 новых детекции SHIMMED — `__getattr__`
+  proxy, docstring-deprecation, package-internal sibling.
+- ✅ **Regression coverage** (commit `84e37e33e`): +5 тестов защищают от
+  повторения бага.
 - ✅ SagaLRA SEMANTIC_KEEP per v4 §9 сохранён.
-- ✅ Honest: 0 удалений сделано в этой сессии; это inventory-only шаг.
+- ✅ Honest: **0 удалений сделано** в этой сессии; это inventory-only шаг.
+
+**Post-bug-fix inventory (HEAD `84e37e33e`)**:
+
+| Категория | Кол-во | Дельта vs pre-fix |
+|---|---|---|
+| REMOVABLE | **0** | −16 (фактически не было orphan files) |
+| SEMANTIC_KEEP | 6 | ±0 (saga_lra — без изменений) |
+| SHIMMED | 18 | +16 (lazy proxy + docstring-deprecation + in-package siblings) |
+| NEEDS_MIGRATION | 0 | ±0 |
+
+**Реальные паттерны (выявлены баг-фиксом)**:
+1. **Lazy `__getattr__` proxy** (ADR-0313/0314 cycle 152):
+   6 файлов (`batch_processor`, `data_lineage`, `plan_execute_processor`,
+   `reflection_loop_processor`, `router_specialist_processor`,
+   `strangler_fig`). Миграционное окно до cycle 156.
+2. **In-package siblings** (multi-file decomposition):
+   event_store/{cqrs,helpers,store,types}.py +
+   idp_pipeline_processor/{_protocol,helpers,helpers_mixin,routing_mixin,
+   serialization_mixin,state}.py = 10 файлов; импортируют друг друга через
+   `from .event_store.X` — части coherent пакета, не orphan.
+3. **Docstring-deprecation-shim**: те же 6 lazy-proxy + явный
+   `DEPRECATED (MINIMAX W2 P0-3, cycle 152)` docstring с
+   `Removal запланирован на cycle 156 (после telemetry audit)`.
 
 **Следующие шаги** (требуют user confirmation per v4 §3 + §10 P1):
-1. W2 P0-3 — process migration closure: ADR per REMOVABLE-файл + migration
-   window + contract test → удаление.
-2. SagaLRA convergence plan — отдельный ADR (v4 §9 deferred).
-3. SHIMMED удаление — runtime verification + ADR per файл.
+1. **SagaLRA convergence plan** — отдельный ADR (v4 §9 deferred).
+2. **SHIMMED removal (18 файлов)** — runtime verification + ADR per файл +
+   ждать cycle 156 (после telemetry audit per ADR-0313/0314).
+3. **W2 P0-3 «process migration closure»** — переформулирован: это не
+   «process deletions», а «process migration SHIMMED→canonical». Внешнее
+   удаление legacy-paths требует ADR per file с telemetry proof.
+4. ❌ Никаких слепых удалений без ADR + telemetry + Claim Ledger.
 
 ---
 
@@ -5287,4 +5324,70 @@ core 17 / frontend 12 / plugins 3 / tests+tools 17).
 - 0 удалений processor-файлов (W2 P1-2 — inventory, не deletion).
 - 2 untracked файла закоммичены.
 - v4 §3 «мерь до работы»: измерено, доказано, зафиксировано.
+
+---
+
+## W2 P1-2 bug fix: REMOVABLE→SHIMMED reclassification (2026-09-23, cycle 158+)
+
+**Context**: в commit `b0e804357` инструмент показывал 16 REMOVABLE файлов.
+Manual re-audit реальных файлов выявил 3 heuristic gap в
+`_detect_canonical_target` + `_classify`.
+
+**Bug**: оригинальная эвристика `_detect_canonical_target` ловила только:
+- Literal `from src.backend.dsl.engine.processors.X import Y` line.
+- `__module__` override в `__init__.py`.
+
+Она **пропускала**:
+- Lazy `__getattr__` proxy с `_CANONICAL_MODULE = "..."` constant (ADR-0313/0314).
+- Docstring-deprecation-shim с `DEPRECATED + canonical module` в docstring.
+
+Эвристика `_classify` **пропускала**:
+- In-package siblings — файлы, которые импортируют друг друга внутри
+  multi-file decomposition пакета (не orphan, просто cohesive пакет).
+
+**Fix** (commit `fee3d8f91`):
+- `_detect_canonical_target`: +2 приоритетных паттерна.
+- Новая функция `_is_package_internal_sibling()` для in-package detection.
+- Обновлённая `_classify()`: 3-tier приоритет.
+
+**Regression coverage** (commit `84e37e33e`):
+- +5 тестов, итого 21/21 passing.
+
+**Post-fix inventory (HEAD `84e37e33e`)**:
+
+| Категория | Pre-fix | Post-fix | Дельта |
+|---|---|---|---|
+| REMOVABLE | 16 | **0** | −16 |
+| SHIMMED | 2 | **18** | +16 |
+| SEMANTIC_KEEP | 6 | 6 | ±0 |
+| NEEDS_MIGRATION | 0 | 0 | ±0 |
+| **Итого** | 24 | 24 | ±0 |
+
+**Что это означает**: предыдущая «16 REMOVABLE» классификация была ложной.
+На самом деле **orphan files = 0**. Все legacy-процессоры — или SagaLRA,
+или SHIM (с явным migration window), или part of in-package decomposition.
+
+**Implication для W2 P0-3 (process migration closure)**:
+- Этот шаг был переформулирован: «remove orphan files» → «migrate SHIMMED to
+  canonical after cycle 156».
+- Удаление 18 SHIMMED-файлов требует (per v4 §10 P1):
+  - Ждать cycle 156 (после telemetry audit per ADR-0313/0314).
+  - ADR per файл с Claim Ledger + blast-radius.
+  - Runtime verification (BLOCKED Docker per kickoff).
+- SagaLRA convergence plan остаётся отдельным ADR (v4 §9 deferred).
+
+**Status per v4 §10 P1**:
+- ✅ Inventory tool fixed (fee3d8f91).
+- ✅ Regression coverage added (84e37e33e).
+- ⚠️ W2 P0-3 migration closure BLOCKED on:
+  - cycle 156 (telemetry audit).
+  - Docker runtime для cURL verification.
+
+**Cycle 158+ honest status**:
+- +4 atomic commits total this session: `b0e804357`, `11a0dcec7`,
+  `fee3d8f91`, `84e37e33e`.
+- Tools: 0 неиспользованных orphans; **0 слепых удалений** без ADR.
+- Самопроверка инварианта v4 §5 «presence != wiring»:
+  SHIMMED присутствие (defined file) НЕ доказывает нужен (active use).
+  Нужна telemetry, прежде чем удалять.
 
