@@ -13,9 +13,29 @@ from pydantic_settings import (
 
 from src.backend.core.config.constants import consts
 from src.backend.core.config.profile import get_active_profile
-from src.backend.core.logging import get_logger
 
 __all__ = ("BaseSettingsWithLoader",)
+
+
+def _logger() -> Any:
+    """Ленивый логгер (fix circular import, 2026-09-23).
+
+    Module-level ``get_logger(__name__)`` ломал ``manage.py migrate``:
+    config_loader → core.logging (lazy __getattr__) → infrastructure/logging
+    → structlog_backend.configure → core.config.services (настройки логов)
+    → services/cache.py → ещё инициализирующийся config_loader → ImportError.
+    config_loader — корень конфиг-пакета: импорты, транзитивно требующие
+    settings, в нём допустимы только внутри функций.
+    """
+    global _logger_instance
+    if _logger_instance is None:
+        from src.backend.core.logging import get_logger
+
+        _logger_instance = get_logger(__name__)
+    return _logger_instance
+
+
+_logger_instance: Any = None
 
 _logger = get_logger(__name__)
 
@@ -132,7 +152,7 @@ class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
     def _handle_error(self, error: Exception) -> None:
         """Handle errors during data loading."""
         # Cycle 72 L2: lazy import hoisted to module-level (no circular import).
-        _logger.error("Ошибка в %s: %s", self.__class__.__name__, error)
+        _logger().error("Ошибка в %s: %s", self.__class__.__name__, error)
 
 
 class YamlConfigSettingsLoader(FilteredSettingsSource):
@@ -244,7 +264,7 @@ class VaultConfigSettingsSource(FilteredSettingsSource):
     def _log_vault_unreachable(detail: str) -> None:
         """Один warning на процесс при недоступности Vault."""
         # Cycle 72 L2: lazy import hoisted to module-level.
-        _logger.warning(
+        _logger().warning(
             "Vault недоступен (%s) — secrets-источник пропущен. "
             "Установите vault.enabled=false или поднимите Vault, "
             "чтобы убрать это сообщение.",
@@ -304,7 +324,7 @@ class ConsulConfigSettingsSource(FilteredSettingsSource):
             # store type, ValueError — invalid prefix, KeyError — missing
             # expected key. Bare `except Exception` маскировал unrelated
             # runtime errors.
-            _logger.debug(
+            _logger().debug(
                 "config_loader.prefix_items_failed",
                 extra={"prefix": prefix, "error": str(items_exc)},
             )
