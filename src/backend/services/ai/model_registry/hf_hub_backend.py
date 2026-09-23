@@ -15,7 +15,7 @@ import asyncio
 from typing import Any, Literal
 
 from src.backend.core.logging import get_logger
-from src.backend.services.ai.model_registry.adapter import (
+from src.backend.services.ai.model_registry.adapter import (  # noqa: F401 — re-export
     ModelRecord,
     ModelRegistryAdapter,
 )

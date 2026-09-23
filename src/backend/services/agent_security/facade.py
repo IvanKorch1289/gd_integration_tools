@@ -9,7 +9,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any
 
-from src.backend.core.ai.security import (
+from src.backend.core.ai.security import (  # noqa: F401 — re-export
     AgentSecurityFramework,
     SecurityDecision,
     SecurityHook,

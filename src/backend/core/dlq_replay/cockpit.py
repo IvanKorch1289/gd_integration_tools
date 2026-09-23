@@ -20,7 +20,7 @@ import time
 import uuid
 from typing import Any, Awaitable, Callable
 
-from src.backend.core.dlq_replay.failure_taxonomy import (
+from src.backend.core.dlq_replay.failure_taxonomy import (  # noqa: F401 — re-export
     FailureClass,
     FailureTaxonomy,
     classify_exception,

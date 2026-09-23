@@ -19,11 +19,11 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any
 
-from src.backend.core.ai.security.agent_security_detectors import (
+from src.backend.core.ai.security.agent_security_detectors import (  # noqa: F401 — re-export
     DangerousCommandDetector,
 )
 from src.backend.core.ai.security.agent_security_policy import AgentSecurityPolicy
-from src.backend.core.ai.security.agent_security_types import (
+from src.backend.core.ai.security.agent_security_types import (  # noqa: F401 — re-export
     SecurityDecision,
     SecurityHook,
     ThreatLevel,

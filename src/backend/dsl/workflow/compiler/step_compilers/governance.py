@@ -13,7 +13,7 @@ from datetime import timedelta
 from typing import Any
 
 from src.backend.core.logging import get_logger
-from src.backend.dsl.workflow.spec import (
+from src.backend.dsl.workflow.spec import (  # noqa: F401 — re-export
     EscalateDeclaration,
     GuardrailDeclaration,
     ReflectDeclaration,
@@ -117,7 +117,7 @@ async def compile_guardrail_step(
     if not isinstance(raw_value, (int, float)):
         # S44 W34: function-local import to avoid circular import
         # (step_compilers.__init__ → emitter → step_compilers).
-        from src.backend.dsl.workflow.compiler.step_compilers import (
+        from src.backend.dsl.workflow.compiler.step_compilers import (  # noqa: F401 — re-export
             GuardrailValueTypeError as _GuardrailValueTypeError,
         )
 

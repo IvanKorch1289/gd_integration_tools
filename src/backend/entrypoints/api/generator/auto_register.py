@@ -45,7 +45,7 @@ from typing import Any
 from fastapi import FastAPI, Request
 from fastapi.encoders import jsonable_encoder
 
-from src.backend.core.api.extensions import (
+from src.backend.core.api.extensions import (  # noqa: F401 — re-export
     ActionHandlerRegistry,
     action_handler_registry,
 )

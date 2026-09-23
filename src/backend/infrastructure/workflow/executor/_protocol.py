@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Protocol
 
 if TYPE_CHECKING:
     from src.backend.infrastructure.workflow.executor.state import WorkflowStep
-    from src.backend.infrastructure.workflow.pg_runner_internals import (
+    from src.backend.infrastructure.workflow.pg_runner_internals import (  # noqa: F401 — re-export
         WorkflowInstanceRow,
         WorkflowState,
     )

@@ -19,20 +19,20 @@
 from __future__ import annotations
 
 from src.backend.services.ai.pii.recognizers._base import RegexPiiRecognizer
-from src.backend.services.ai.pii.recognizers.address_ru_recognizer import (
+from src.backend.services.ai.pii.recognizers.address_ru_recognizer import (  # noqa: F401 — re-export
     AddressRuRecognizer,
 )
-from src.backend.services.ai.pii.recognizers.bank_account_ru_recognizer import (
+from src.backend.services.ai.pii.recognizers.bank_account_ru_recognizer import (  # noqa: F401 — re-export
     BankAccountRuRecognizer,
 )
-from src.backend.services.ai.pii.recognizers.credit_case_recognizer import (
+from src.backend.services.ai.pii.recognizers.credit_case_recognizer import (  # noqa: F401 — re-export
     CreditCaseRecognizer,
 )
-from src.backend.services.ai.pii.recognizers.driver_license_ru_recognizer import (
+from src.backend.services.ai.pii.recognizers.driver_license_ru_recognizer import (  # noqa: F401 — re-export
     DriverLicenseRuRecognizer,
 )
 from src.backend.services.ai.pii.recognizers.inn_recognizer import InnRecognizer
-from src.backend.services.ai.pii.recognizers.passport_ru_recognizer import (
+from src.backend.services.ai.pii.recognizers.passport_ru_recognizer import (  # noqa: F401 — re-export
     PassportRuRecognizer,
 )
 from src.backend.services.ai.pii.recognizers.snils_recognizer import SnilsRecognizer

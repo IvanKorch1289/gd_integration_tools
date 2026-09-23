@@ -27,7 +27,7 @@ from src.backend.core.logging import get_logger
 # P0-S6 (audit 2026-08-19): defusedxml required dep (no stdlib fallback).
 # ``pickle`` and ``xml.etree.ElementTree`` are stdlib defaults but unsafe for
 # untrusted input — defusedxml для marshal и unmarshal paths.
-from src.backend.dsl.engine.processors.eip.marshal.base import (
+from src.backend.dsl.engine.processors.eip.marshal.base import (  # noqa: F401 — re-export
     DataFormat,  # S63 W3: cross-import
 )
 

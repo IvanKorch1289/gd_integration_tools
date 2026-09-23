@@ -18,7 +18,7 @@ fallback на pypdf/python-docx).
 
 from __future__ import annotations
 
-from src.backend.services.ai.document_parsers._orchestrator import (
+from src.backend.services.ai.document_parsers._orchestrator import (  # noqa: F401 — re-export
     SUPPORTED_MIME_TYPES,
     parse_document,
 )

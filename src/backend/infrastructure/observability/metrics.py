@@ -29,7 +29,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from src.backend.core.interfaces.middleware import (
+from src.backend.core.interfaces.middleware import (  # noqa: F401 — re-export
     ProcessorMiddleware,  # Sprint 18 P1-14
 )
 from src.backend.core.utils.metrics_registry import metrics_registry

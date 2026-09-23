@@ -15,7 +15,7 @@ not yet integrated). При ``BILLING_ENABLED=False`` (default) фасад
 
 from __future__ import annotations
 
-from src.backend.services.billing.no_op_billing import (
+from src.backend.services.billing.no_op_billing import (  # noqa: F401 — re-export
     BILLING_ENABLED,
     NoOpBillingFacade,
 )

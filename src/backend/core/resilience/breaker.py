@@ -268,7 +268,7 @@ class BreakerRegistry:
         При недоступности — silent pass.
         """
         try:
-            from src.backend.core.interfaces.observability import (
+            from src.backend.core.interfaces.observability import (  # noqa: F401 — re-export
                 CircuitBreakerMetricsRecorder,
             )
 
@@ -278,7 +278,7 @@ class BreakerRegistry:
                 # Import внутри функции — AST walker видит модуль,
                 # но это bridge pattern (protocol→impl в runtime).
                 try:
-                    from src.backend.core.di.providers.infrastructure_locator import (
+                    from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
                         get_client_metrics_module as _get_cm_mod_fn,
                     )
 

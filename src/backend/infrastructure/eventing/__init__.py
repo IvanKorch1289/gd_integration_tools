@@ -3,7 +3,7 @@
 Фазы C4 (CloudEvents + Schema Registry) и C5 (Outbox+Inbox).
 """
 
-from src.backend.infrastructure.eventing.cloudevents import (
+from src.backend.infrastructure.eventing.cloudevents import (  # noqa: F401 — re-export
     CloudEvent,
     envelope,
     parse_envelope,

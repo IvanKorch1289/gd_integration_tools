@@ -19,22 +19,22 @@ if TYPE_CHECKING:
     pass
 from pydantic import BaseModel as BaseModel
 
-from src.backend.core.api.extensions import (
+from src.backend.core.api.extensions import (  # noqa: F401 — re-export
     action_handler_registry as action_handler_registry,
 )
-from src.backend.core.interfaces.action_dispatcher import (
+from src.backend.core.interfaces.action_dispatcher import (  # noqa: F401 — re-export
     ActionMetadata as ActionMetadata,
 )
-from src.backend.entrypoints.api.generator.actions.crud.query_mixin import (
+from src.backend.entrypoints.api.generator.actions.crud.query_mixin import (  # noqa: F401 — re-export
     QueryMixin,  # S58 W1: MRO
 )
-from src.backend.entrypoints.api.generator.actions.crud.read_mixin import (
+from src.backend.entrypoints.api.generator.actions.crud.read_mixin import (  # noqa: F401 — re-export
     ReadMixin,  # S58 W1: MRO
 )
-from src.backend.entrypoints.api.generator.actions.crud.versioning_mixin import (
+from src.backend.entrypoints.api.generator.actions.crud.versioning_mixin import (  # noqa: F401 — re-export
     VersioningMixin,  # S58 W1: MRO
 )
-from src.backend.entrypoints.api.generator.actions.crud.write_mixin import (
+from src.backend.entrypoints.api.generator.actions.crud.write_mixin import (  # noqa: F401 — re-export
     WriteMixin,  # S58 W1: MRO
 )
 from src.backend.entrypoints.api.generator.specs import CrudSpec as CrudSpec

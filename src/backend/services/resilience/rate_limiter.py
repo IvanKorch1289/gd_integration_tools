@@ -9,7 +9,7 @@ proxy (ponytail: thin proxy). Устраняет layer-violation
 
 Использование::
 
-    from src.backend.services.resilience.rate_limiter import (
+    from src.backend.services.resilience.rate_limiter import (  # noqa: F401 — re-export
         RateLimit, RateLimitExceeded, get_rate_limiter,
     )
 
@@ -21,7 +21,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.resilience.unified_rate_limiter import (
+    from src.backend.infrastructure.resilience.unified_rate_limiter import (  # noqa: F401 — re-export
         RateLimit,
         RateLimitExceeded,
         get_rate_limiter,

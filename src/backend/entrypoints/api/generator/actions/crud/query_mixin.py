@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.entrypoints.api.generator.actions.crud._protocol import (
+    from src.backend.entrypoints.api.generator.actions.crud._protocol import (  # noqa: F401 — re-export
         _CrudMixinProtocol,
     )
     from src.backend.entrypoints.api.generator.specs import CrudSpec
@@ -15,7 +15,7 @@ from fastapi_filter import FilterDepends
 from fastapi_pagination import Params
 
 from src.backend.core.enums.ordering import OrderingTypeChoices
-from src.backend.entrypoints.api.generator.reflection import (
+from src.backend.entrypoints.api.generator.reflection import (  # noqa: F401 — re-export
     make_signature,
     query_parameter,
     request_parameter,

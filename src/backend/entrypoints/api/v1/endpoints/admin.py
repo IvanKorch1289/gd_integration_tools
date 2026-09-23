@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from extensions.core_admin.schemas.route import (
+from extensions.core_admin.schemas.route import (  # noqa: F401 — re-export
     AdminCacheInvalidatePatternSchema,
     AdminCacheInvalidateTableSchema,
     AdminCacheInvalidateTagsSchema,
@@ -10,7 +10,7 @@ from extensions.core_admin.schemas.route import (
     AdminToggleRouteQuerySchema,
 )
 from src.backend.core.auth.admin_roles import AdminRole, require_admin
-from src.backend.entrypoints.api.generator.actions import (
+from src.backend.entrypoints.api.generator.actions import (  # noqa: F401 — re-export
     ActionRouterBuilder,
     ActionSpec,
 )

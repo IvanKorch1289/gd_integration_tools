@@ -17,7 +17,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from src.backend.core.tenancy import TenantContext
-from src.backend.core.tenancy.token_budget import (
+from src.backend.core.tenancy.token_budget import (  # noqa: F401 — re-export
     BudgetBackendUnavailable,
     BudgetExceeded,
     BudgetSnapshot,

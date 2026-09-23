@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 from src.backend.dsl.builders.eip._base import EIPMixinBase
 from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors import (
+from src.backend.dsl.engine.processors import (  # noqa: F401 — re-export
     DynamicRouterProcessor,
     LoadBalancerProcessor,
     ScatterGatherProcessor,
@@ -32,7 +32,7 @@ class RoutingEIPsMixin(EIPMixinBase):
         Реализация была объявлена DEPRECATED alias'ом ``translate()`` без самой функции
         (DSL-4 audit cycle 242). Теперь convert() — полноценная реализация.
         """
-        from src.backend.dsl.engine.processors.eip.marshal.processors import (
+        from src.backend.dsl.engine.processors.eip.marshal.processors import (  # noqa: F401 — re-export
             MarshalProcessor,
         )
 
@@ -115,7 +115,7 @@ class RoutingEIPsMixin(EIPMixinBase):
             .routing_slip(steps=[], header="processing_pipeline")
 
         """
-        from src.backend.dsl.engine.processors.eip.routing_slip import (
+        from src.backend.dsl.engine.processors.eip.routing_slip import (  # noqa: F401 — re-export
             ProcessorRegistry,
             RoutingSlipProcessor,
         )
@@ -180,7 +180,7 @@ class RoutingEIPsMixin(EIPMixinBase):
                 (lambda ex: ex.in_message.body.get("country") == "ru", "ru_route"),
             ], default_endpoint="default")
         """
-        from src.backend.dsl.engine.processors.eip.filter_router_sampling import (
+        from src.backend.dsl.engine.processors.eip.filter_router_sampling import (  # noqa: F401 — re-export
             ContentBasedRouter as _CBR,
         )
 
@@ -215,7 +215,7 @@ class RoutingEIPsMixin(EIPMixinBase):
             # 5 per second
             .sampling(time_window_ms=1000, max_in_window=5)
         """
-        from src.backend.dsl.engine.processors.eip.filter_router_sampling import (
+        from src.backend.dsl.engine.processors.eip.filter_router_sampling import (  # noqa: F401 — re-export
             SamplingProcessor as _SP,
         )
 
@@ -270,7 +270,7 @@ class RoutingEIPsMixin(EIPMixinBase):
             timeout: Таймаут каждого маршрута в секундах.
 
         """
-        from src.backend.dsl.engine.processors.eip.routing import (
+        from src.backend.dsl.engine.processors.eip.routing import (  # noqa: F401 — re-export
             MulticastRoutesProcessor,
         )
 

@@ -5,7 +5,7 @@ Qdrant/Chroma vector stores в :class:`UnifiedPoolManager`.
 
 Использование::
 
-    from src.backend.infrastructure.storage.vector_pool_registration import (
+    from src.backend.infrastructure.storage.vector_pool_registration import (  # noqa: F401 — re-export
         register_vector_pool_if_available,
     )
 
@@ -18,7 +18,7 @@ from collections.abc import Awaitable
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.clients.unified_pool_manager import (
+    from src.backend.infrastructure.clients.unified_pool_manager import (  # noqa: F401 — re-export
         UnifiedPoolManager,
     )
 
@@ -35,7 +35,7 @@ def _async_ping(backend: str) -> Awaitable[bool]:
 
     async def _probe() -> bool:
         try:
-            from src.backend.infrastructure.clients.storage.vector_store import (
+            from src.backend.infrastructure.clients.storage.vector_store import (  # noqa: F401 — re-export
                 get_vector_store,
             )
 

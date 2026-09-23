@@ -151,7 +151,7 @@ class PresidioSanitizerAdapter:
         S24 W1: INN, СНИЛС, паспорт, кредитное дело (4).
         S28 W5: адрес, банковский счёт, водительское удостоверение (+3 = 7).
         """
-        from src.backend.services.ai.pii.recognizers import (
+        from src.backend.services.ai.pii.recognizers import (  # noqa: F401 — re-export
             AddressRuRecognizer,
             BankAccountRuRecognizer,
             CreditCaseRecognizer,

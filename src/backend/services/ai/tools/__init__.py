@@ -13,7 +13,7 @@ parameters, callable) и может быть использован LangChain/La
 
 from __future__ import annotations
 
-from src.backend.services.ai.tools.registry import (
+from src.backend.services.ai.tools.registry import (  # noqa: F401 — re-export
     AgentTool,
     ToolRegistry,
     agent_tool,

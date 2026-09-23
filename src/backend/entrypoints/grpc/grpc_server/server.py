@@ -8,19 +8,19 @@ if TYPE_CHECKING:
 
 from src.backend.core.config.settings import settings
 from src.backend.core.di.providers import get_grpc_logger_provider
-from src.backend.entrypoints.grpc.grpc_server.file_stream import (  # S131 W2 (TD-026 cont. full wire-up)
+from src.backend.entrypoints.grpc.grpc_server.file_stream import (  # noqa: F401 — re-export  # S131 W2 (TD-026 cont. full wire-up)
     FileStreamGRPCServicer,
 )
 from src.backend.entrypoints.grpc.grpc_server.interceptor import AuthInterceptor
 from src.backend.entrypoints.grpc.grpc_server.invoker import InvokerGRPCServicer
 from src.backend.entrypoints.grpc.grpc_server.order import OrderGRPCServicer
-from src.backend.entrypoints.grpc.protobuf.files_pb2_grpc import (  # S131 W2 (TD-026 cont. full wire-up)
+from src.backend.entrypoints.grpc.protobuf.files_pb2_grpc import (  # noqa: F401 — re-export  # S131 W2 (TD-026 cont. full wire-up)
     add_FileServiceServicer_to_server,
 )
-from src.backend.entrypoints.grpc.protobuf.invoker_pb2_grpc import (
+from src.backend.entrypoints.grpc.protobuf.invoker_pb2_grpc import (  # noqa: F401 — re-export
     add_InvokerServiceServicer_to_server,
 )
-from src.backend.entrypoints.grpc.protobuf.orders_pb2_grpc import (
+from src.backend.entrypoints.grpc.protobuf.orders_pb2_grpc import (  # noqa: F401 — re-export
     add_OrderServiceServicer_to_server,
 )
 
@@ -82,7 +82,7 @@ async def serve() -> None:
     # минимальный state (invoker + reply_registry) через set_app_ref:
     # геттеры core/di читают только контракт `.state.<attr>`.
     from src.backend.core.di.app_state import set_app_ref
-    from src.backend.infrastructure.messaging.invocation_replies import (
+    from src.backend.infrastructure.messaging.invocation_replies import (  # noqa: F401 — re-export
         get_reply_channel_registry,
     )
     from src.backend.services.execution.invoker import Invoker

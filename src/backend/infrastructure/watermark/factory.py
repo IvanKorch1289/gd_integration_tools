@@ -15,7 +15,7 @@ from src.backend.infrastructure.watermark.memory_store import MemoryWatermarkSto
 
 if TYPE_CHECKING:
     from src.backend.core.config.services.watermark import WatermarkSettings
-    from src.backend.infrastructure.database.session_manager import (
+    from src.backend.infrastructure.database.session_manager import (  # noqa: F401 — re-export
         DatabaseSessionManager,
     )
 
@@ -50,7 +50,7 @@ def create_watermark_store(
                     "PostgresWatermarkStore требует DatabaseSessionManager; "
                     "передайте main_session_manager в composition root."
                 )
-            from src.backend.infrastructure.watermark.postgres_store import (
+            from src.backend.infrastructure.watermark.postgres_store import (  # noqa: F401 — re-export
                 PostgresWatermarkStore,
             )
 

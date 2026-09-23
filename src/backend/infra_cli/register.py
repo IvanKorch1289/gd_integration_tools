@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.backend.infrastructure.application.health_aggregator import (
+from src.backend.infrastructure.application.health_aggregator import (  # noqa: F401 — re-export
     get_health_aggregator,
 )
 from src.backend.infrastructure.clients.health_adapter import HealthAdapter

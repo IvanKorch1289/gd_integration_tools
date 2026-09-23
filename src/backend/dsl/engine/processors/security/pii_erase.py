@@ -321,7 +321,7 @@ class PiiEraseProcessor(BaseProcessor):
             entity_type, entity_id = self._scope.split(":", 1)
             _validate_entity_type(entity_type)
             # S87 M2-#11 final batch: DI provider.
-            from src.backend.core.di.providers.db import (
+            from src.backend.core.di.providers.db import (  # noqa: F401 — re-export
                 get_main_session_manager_provider,
             )
 
@@ -379,7 +379,7 @@ class PiiEraseProcessor(BaseProcessor):
     ) -> str:
         """Emit audit event для erasure operation."""
         try:
-            from src.backend.core.observability.logging_helpers import (
+            from src.backend.core.observability.logging_helpers import (  # noqa: F401 — re-export
                 log_audit_event_lite,
             )
 
@@ -420,7 +420,7 @@ class PiiEraseProcessor(BaseProcessor):
         """
         try:
             # S87 M2-#11 final batch: DI provider.
-            from src.backend.core.di.providers.cache import (
+            from src.backend.core.di.providers.cache import (  # noqa: F401 — re-export
                 get_dlq_envelope_class_provider,
             )
 
@@ -439,7 +439,7 @@ class PiiEraseProcessor(BaseProcessor):
                 reason=DLQReason.UNEXPECTED,
             )
             # S87 M2-#11 final batch: DI provider.
-            from src.backend.core.di.providers.cache import (
+            from src.backend.core.di.providers.cache import (  # noqa: F401 — re-export
                 get_dlq_memory_writer_module_provider,
             )
 

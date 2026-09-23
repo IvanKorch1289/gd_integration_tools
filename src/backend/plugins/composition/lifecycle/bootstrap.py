@@ -35,7 +35,7 @@ def register_storage_singletons(app: FastAPI) -> None:
     ``app_state_singleton``; конкретный backend ставится здесь.
     """
     try:
-        from src.backend.infrastructure.repositories.ai_feedback_mongo import (
+        from src.backend.infrastructure.repositories.ai_feedback_mongo import (  # noqa: F401 — re-export
             MongoFeedbackRepository,
         )
 
@@ -44,7 +44,7 @@ def register_storage_singletons(app: FastAPI) -> None:
         app_logger.debug("MongoFeedbackRepository registration skipped: %s", exc)
 
     try:
-        from src.backend.infrastructure.repositories.notebooks_mongo import (
+        from src.backend.infrastructure.repositories.notebooks_mongo import (  # noqa: F401 — re-export
             MongoNotebookRepository,
         )
         from src.backend.services.notebooks.service import NotebookService
@@ -54,7 +54,7 @@ def register_storage_singletons(app: FastAPI) -> None:
         app_logger.debug("MongoNotebookRepository registration skipped: %s", exc)
 
     try:
-        from src.backend.infrastructure.clients.storage.vector_store import (
+        from src.backend.infrastructure.clients.storage.vector_store import (  # noqa: F401 — re-export
             get_vector_store,
         )
         from src.backend.services.ai.rag_service import RAGService
@@ -65,7 +65,7 @@ def register_storage_singletons(app: FastAPI) -> None:
         app_logger.debug("RAGService registration skipped: %s", exc)
 
     try:
-        from src.backend.infrastructure.clients.storage.elasticsearch import (
+        from src.backend.infrastructure.clients.storage.elasticsearch import (  # noqa: F401 — re-export
             get_elasticsearch_client,
         )
         from src.backend.services.io.search import SearchService
@@ -115,11 +115,11 @@ def bootstrap_snapshot_job(app: FastAPI) -> None:
             )
             return
 
-        from src.backend.infrastructure.resilience.snapshot_job import (
+        from src.backend.infrastructure.resilience.snapshot_job import (  # noqa: F401 — re-export
             register_snapshot_job,
             run_snapshot_now,
         )
-        from src.backend.infrastructure.scheduler.scheduler_manager import (
+        from src.backend.infrastructure.scheduler.scheduler_manager import (  # noqa: F401 — re-export
             scheduler_manager,
         )
 
@@ -147,16 +147,16 @@ def bootstrap_resilience_coordinator(app: FastAPI) -> None:
     """
     try:
         from src.backend.core.config.settings import settings as app_settings
-        from src.backend.infrastructure.application.health_aggregator import (
+        from src.backend.infrastructure.application.health_aggregator import (  # noqa: F401 — re-export
             get_health_aggregator,
         )
-        from src.backend.infrastructure.resilience.coordinator import (
+        from src.backend.infrastructure.resilience.coordinator import (  # noqa: F401 — re-export
             get_resilience_coordinator,
         )
-        from src.backend.infrastructure.resilience.health import (
+        from src.backend.infrastructure.resilience.health import (  # noqa: F401 — re-export
             register_resilience_health_checks,
         )
-        from src.backend.infrastructure.resilience.registration import (
+        from src.backend.infrastructure.resilience.registration import (  # noqa: F401 — re-export
             register_all_components,
         )
 

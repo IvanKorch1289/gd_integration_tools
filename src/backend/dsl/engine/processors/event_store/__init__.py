@@ -12,25 +12,25 @@ Backward-compat: ``from src.backend.dsl.engine.processors.event_store import Eve
 
 from __future__ import annotations
 
-from src.backend.dsl.engine.processors.event_store.cqrs import (
+from src.backend.dsl.engine.processors.event_store.cqrs import (  # noqa: F401 — re-export
     CommandBus,  # S66 W1: re-export
     CQRSMixin,  # S66 W1: re-export
     Projection,  # S66 W1: re-export
     QueryBus,  # S66 W1: re-export
 )
-from src.backend.dsl.engine.processors.event_store.helpers import (
+from src.backend.dsl.engine.processors.event_store.helpers import (  # noqa: F401 — re-export
     get_event_store,  # S66 W1: helper re-export
     reset_event_store,  # S66 W1: helper re-export
     set_event_store,  # S66 W1: helper re-export
 )
-from src.backend.dsl.engine.processors.event_store.processor import (
+from src.backend.dsl.engine.processors.event_store.processor import (  # noqa: F401 — re-export
     EventStoreProcessor,  # S66 W1: re-export
 )
-from src.backend.dsl.engine.processors.event_store.store import (
+from src.backend.dsl.engine.processors.event_store.store import (  # noqa: F401 — re-export
     EventStore,  # S66 W1: re-export
     InMemoryEventStore,  # S66 W1: re-export
 )
-from src.backend.dsl.engine.processors.event_store.types import (
+from src.backend.dsl.engine.processors.event_store.types import (  # noqa: F401 — re-export
     Event,  # S66 W1: re-export
     EventStream,  # S66 W1: re-export
 )

@@ -22,7 +22,7 @@ _logger = get_logger(__name__)
 import asyncio
 from typing import Any
 
-from src.backend.core.config.ai import (
+from src.backend.core.config.ai import (  # noqa: F401 — re-export
     gigachat_settings,
     salute_speech_settings,
     yandexgpt_settings,

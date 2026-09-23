@@ -36,7 +36,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import Any
 
-from src.backend.core.interfaces.ratelimit_gateway import (
+from src.backend.core.interfaces.ratelimit_gateway import (  # noqa: F401 — re-export
     RateLimitChecker,
     RateLimitConfig,
 )

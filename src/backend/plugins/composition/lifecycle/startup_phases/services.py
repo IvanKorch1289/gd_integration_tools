@@ -57,7 +57,7 @@ async def phase_ai_gateway_singleton(app: FastAPI) -> None:
     """
 
     try:
-        from src.backend.plugins.composition.workflow_setup import (  # type: ignore[attr-defined]
+        from src.backend.plugins.composition.workflow_setup import (  # noqa: F401 — re-export  # type: ignore[attr-defined]
             register_ai_gateway_singleton,  # ponytail: deliberate placeholder; see inline comment
         )
 
@@ -75,7 +75,7 @@ async def phase_dsl_commands(app: FastAPI) -> None:  # noqa: ARG001
     """DSL commands/routes — registers action handlers + routes."""
 
     try:
-        from src.backend.plugins.composition.bootstrap import (  # type: ignore[import-not-found,import-untyped]  # optional
+        from src.backend.plugins.composition.bootstrap import (  # noqa: F401 — re-export  # type: ignore[import-not-found,import-untyped]  # optional
             register_dsl_commands,  # type: ignore[import-not-found]  # optional
         )
 
@@ -92,7 +92,7 @@ async def phase_dsl_commands(app: FastAPI) -> None:  # noqa: ARG001
 async def phase_watchers(app: FastAPI) -> None:
     """DSL YAML watcher — hot-reload route definitions."""
 
-    from src.backend.plugins.composition.lifecycle.watchers import (
+    from src.backend.plugins.composition.lifecycle.watchers import (  # noqa: F401 — re-export
         start_dsl_yaml_watcher,
     )
 
@@ -118,7 +118,7 @@ async def phase_plugin_loader(app: FastAPI) -> None:
 async def phase_v11_loaders(app: FastAPI) -> None:
     """V11 loaders + hot reload."""
 
-    from src.backend.plugins.composition.lifecycle.plugin_loader import (
+    from src.backend.plugins.composition.lifecycle.plugin_loader import (  # noqa: F401 — re-export
         bootstrap_v11_plugin_loader,
         bootstrap_v11_route_loader,
         start_v11_hot_reload,
@@ -134,7 +134,7 @@ async def phase_v11_loaders(app: FastAPI) -> None:
 async def phase_outbox_dispatcher(app: FastAPI) -> None:
     """Outbox dispatcher + stuck monitor (feature-flag-gated)."""
 
-    from src.backend.plugins.composition.lifecycle.startup import (
+    from src.backend.plugins.composition.lifecycle.startup import (  # noqa: F401 — re-export
         _register_outbox_dispatcher,
     )
 
@@ -142,7 +142,7 @@ async def phase_outbox_dispatcher(app: FastAPI) -> None:
 
     try:
         from src.backend.core.config.features import feature_flags
-        from src.backend.infrastructure.messaging.outbox.stuck_monitor import (
+        from src.backend.infrastructure.messaging.outbox.stuck_monitor import (  # noqa: F401 — re-export
             start_outbox_stuck_monitor,
         )
 
@@ -173,7 +173,7 @@ async def phase_workflow_runtime(app: FastAPI) -> None:
     """Workflow runtime startup."""
 
     try:
-        from src.backend.plugins.composition.workflow_setup import (
+        from src.backend.plugins.composition.workflow_setup import (  # noqa: F401 — re-export
             start_workflow_runtime,
         )
 
@@ -187,7 +187,7 @@ async def phase_schema_registry(app: FastAPI) -> None:  # noqa: ARG001
     """ServiceSchemaRegistry populate (Wave S1/DSL Foundation, Step 6)."""
 
     try:
-        from src.backend.services.schema_registry import (
+        from src.backend.services.schema_registry import (  # noqa: F401 — re-export
             get_schema_registry,
             populate_from_actions,
             populate_from_manifests,
@@ -217,10 +217,10 @@ async def phase_feature_flag_broadcaster(app: FastAPI) -> None:  # noqa: ARG001
     """FeatureFlag broadcaster (Sprint 17 K5 W1, D9) — multi-replica."""
 
     try:
-        from src.backend.core.feature_flags.redis_broadcaster import (
+        from src.backend.core.feature_flags.redis_broadcaster import (  # noqa: F401 — re-export
             maybe_start_broadcaster,
         )
-        from src.backend.core.feature_flags.runtime_overrides import (
+        from src.backend.core.feature_flags.runtime_overrides import (  # noqa: F401 — re-export
             get_runtime_overrides,
         )
         from src.backend.infrastructure.clients.storage.redis import get_redis_client

@@ -23,7 +23,7 @@
 
 Использование::
 
-    from src.backend.core.canonical_map import (
+    from src.backend.core.canonical_map import (  # noqa: F401 — re-export
         CanonicalMap, ImportRule, LayerRule,
         get_canonical_map,
     )
@@ -46,7 +46,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.canonical_map.map import (
+from src.backend.core.canonical_map.map import (  # noqa: F401 — re-export
     CanonicalMap,
     ImportRule,
     LayerRule,

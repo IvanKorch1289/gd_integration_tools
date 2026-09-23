@@ -13,7 +13,7 @@ from typing import Any
 from fastapi import HTTPException, status
 
 from src.backend.core.logging import get_logger
-from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import (
+from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import (  # noqa: F401 — re-export
     PluginManifest,
     PluginSummary,
 )

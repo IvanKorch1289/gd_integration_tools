@@ -26,21 +26,21 @@ Apache Airflow Sensor: https://airflow.apache.org/docs/apache-airflow/stable/cor
 from __future__ import annotations
 
 from src.backend.dsl.builders.eip.core import CoreEIPsMixin as CoreEIPsMixin
-from src.backend.dsl.builders.eip.messaging import (
+from src.backend.dsl.builders.eip.messaging import (  # noqa: F401 — re-export
     MessagingEIPsMixin as MessagingEIPsMixin,
 )
-from src.backend.dsl.builders.eip.messengers import (
+from src.backend.dsl.builders.eip.messengers import (  # noqa: F401 — re-export
     MessengersEIPsMixin as MessengersEIPsMixin,
 )
-from src.backend.dsl.builders.eip.protocols import (
+from src.backend.dsl.builders.eip.protocols import (  # noqa: F401 — re-export
     ProtocolsEIPsMixin as ProtocolsEIPsMixin,
 )
 from src.backend.dsl.builders.eip.routing import RoutingEIPsMixin as RoutingEIPsMixin
 from src.backend.dsl.builders.eip.sources import SourcesEIPsMixin as SourcesEIPsMixin
-from src.backend.dsl.builders.eip.streaming import (
+from src.backend.dsl.builders.eip.streaming import (  # noqa: F401 — re-export
     StreamingEIPsMixin as StreamingEIPsMixin,
 )
-from src.backend.dsl.builders.eip.transformation import (
+from src.backend.dsl.builders.eip.transformation import (  # noqa: F401 — re-export
     TransformationEIPsMixin as TransformationEIPsMixin,
 )
 

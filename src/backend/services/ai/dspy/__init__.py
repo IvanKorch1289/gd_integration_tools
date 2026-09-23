@@ -18,7 +18,7 @@
 
 from __future__ import annotations
 
-from src.backend.services.ai.dspy.optimizer import (
+from src.backend.services.ai.dspy.optimizer import (  # noqa: F401 — re-export
     BaselineDataset,
     CompileReport,
     DSPyOptimizer,

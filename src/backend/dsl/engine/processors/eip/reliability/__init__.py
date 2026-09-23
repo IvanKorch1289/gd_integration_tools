@@ -19,7 +19,7 @@ Public API:
 
 from __future__ import annotations
 
-from src.backend.dsl.engine.processors.eip.reliability.common import (
+from src.backend.dsl.engine.processors.eip.reliability.common import (  # noqa: F401 — re-export
     HEADER_CORRELATION_ID,
     HEADER_EXPIRATION,
     HEADER_MESSAGE_ID,
@@ -30,16 +30,16 @@ from src.backend.dsl.engine.processors.eip.reliability.common import (
     IdFactory,
     RedeliveryAttempt,
 )
-from src.backend.dsl.engine.processors.eip.reliability.correlation_identifier import (
+from src.backend.dsl.engine.processors.eip.reliability.correlation_identifier import (  # noqa: F401 — re-export
     CorrelationIdentifierProcessor,
 )
-from src.backend.dsl.engine.processors.eip.reliability.message_expiration import (
+from src.backend.dsl.engine.processors.eip.reliability.message_expiration import (  # noqa: F401 — re-export
     MessageExpirationProcessor,
 )
-from src.backend.dsl.engine.processors.eip.reliability.redelivery_policy import (
+from src.backend.dsl.engine.processors.eip.reliability.redelivery_policy import (  # noqa: F401 — re-export
     RedeliveryPolicyProcessor,
 )
-from src.backend.dsl.engine.processors.eip.reliability.return_address import (
+from src.backend.dsl.engine.processors.eip.reliability.return_address import (  # noqa: F401 — re-export
     ReturnAddressProcessor,
 )
 

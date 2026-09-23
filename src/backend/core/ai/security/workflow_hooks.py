@@ -12,7 +12,7 @@ Hooks:
 
 Использование::
 
-    from src.backend.core.ai.security.workflow_hooks import (
+    from src.backend.core.ai.security.workflow_hooks import (  # noqa: F401 — re-export
         register_banking_transaction_hook,
     )
 

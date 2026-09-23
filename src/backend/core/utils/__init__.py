@@ -14,12 +14,12 @@
 - ``watchdog`` — deadline-эскалация для long-running async-задач.
 """
 
-from src.backend.core.utils.async_helpers import (
+from src.backend.core.utils.async_helpers import (  # noqa: F401 — re-export
     AsyncChunkIterator,
     async_chunk_iterator,
 )
 from src.backend.core.utils.cache_keys import build_cache_key
-from src.backend.core.utils.datetime_utils import (
+from src.backend.core.utils.datetime_utils import (  # noqa: F401 — re-export
     ensure_utc,
     humanize_delta,
     parse_dt,
@@ -27,13 +27,13 @@ from src.backend.core.utils.datetime_utils import (
 )
 from src.backend.core.utils.json_utils import dumps_bytes, dumps_str, loads
 from src.backend.core.utils.metrics_registry import MetricsRegistry, metrics_registry
-from src.backend.core.utils.redis_fallback import (
+from src.backend.core.utils.redis_fallback import (  # noqa: F401 — re-export
     FallbackCache,
     RedisErrorCategory,
     RedisLike,
 )
 from src.backend.core.utils.route_timeout import RouteTimeoutSpec
-from src.backend.core.utils.task_registry import (
+from src.backend.core.utils.task_registry import (  # noqa: F401 — re-export
     TaskRegistry,
     get_task_registry,
     reset_task_registry,

@@ -5,7 +5,7 @@ from typing import Any, Literal
 from redis.asyncio import Redis
 
 from src.backend.core.logging import get_logger
-from src.backend.infrastructure.clients.storage.redis._protocol import (
+from src.backend.infrastructure.clients.storage.redis._protocol import (  # noqa: F401 — re-export
     _RedisClientProtocol,
 )
 

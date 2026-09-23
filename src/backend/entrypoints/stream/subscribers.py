@@ -6,7 +6,7 @@ from faststream.rabbit.fastapi import RabbitMessage
 from faststream.redis.fastapi import Redis, RedisChannelMessage
 
 from src.backend.core.config.settings import settings
-from src.backend.core.di.providers import (
+from src.backend.core.di.providers import (  # noqa: F401 — re-export
     get_stream_client_provider,
     get_stream_logger_provider,
 )

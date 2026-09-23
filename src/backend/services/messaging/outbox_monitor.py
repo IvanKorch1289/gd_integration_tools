@@ -23,7 +23,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.messaging.outbox.stuck_monitor import (
+    from src.backend.infrastructure.messaging.outbox.stuck_monitor import (  # noqa: F401 — re-export
         OutboxStuckMonitor,
         OutboxStuckMonitorSettings,
         default_stuck_monitor,

@@ -8,7 +8,7 @@ ADR-NEW-20 + AGENTS.md: skill whitelist enforcement для AI agent tools.
 
 Использование::
 
-    from src.backend.entrypoints.middlewares.ai_tool_whitelist import (
+    from src.backend.entrypoints.middlewares.ai_tool_whitelist import (  # noqa: F401 — re-export
         AIToolWhitelistMiddleware,
     )
 

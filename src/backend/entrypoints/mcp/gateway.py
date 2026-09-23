@@ -166,7 +166,7 @@ class MCPGateway:
             mcp: Экземпляр FastMCP.
 
         """
-        from src.backend.entrypoints.mcp.namespaces import (
+        from src.backend.entrypoints.mcp.namespaces import (  # noqa: F401 — re-export
             analytics_mcp,
             credit_mcp,
             system_mcp,
@@ -201,7 +201,7 @@ class MCPGateway:
 
         """
         try:
-            from src.backend.entrypoints.mcp.workflow_tools import (
+            from src.backend.entrypoints.mcp.workflow_tools import (  # noqa: F401 — re-export
                 register_workflow_tools,
             )
 

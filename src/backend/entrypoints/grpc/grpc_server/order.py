@@ -13,13 +13,13 @@ if TYPE_CHECKING:
 
 from src.backend.core.di.providers import get_grpc_logger_provider
 from src.backend.entrypoints.grpc.grpc_server._safe_error import _safe_error
-from src.backend.entrypoints.grpc.grpc_server.base import (
+from src.backend.entrypoints.grpc.grpc_server.base import (  # noqa: F401 — re-export
     BaseGRPCServicer,  # S65 W3: cross-import
 )
-from src.backend.entrypoints.grpc.protobuf.orders_pb2 import (  # type: ignore
+from src.backend.entrypoints.grpc.protobuf.orders_pb2 import (  # noqa: F401 — re-export  # type: ignore
     DeleteResponse as OrderDeleteResponse,
 )
-from src.backend.entrypoints.grpc.protobuf.orders_pb2 import (  # type: ignore[attr-defined]
+from src.backend.entrypoints.grpc.protobuf.orders_pb2 import (  # noqa: F401 — re-export  # type: ignore[attr-defined]
     OrderDetailResponse,
     OrderResponse,
 )

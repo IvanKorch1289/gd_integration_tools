@@ -9,7 +9,7 @@ from __future__ import annotations
 
 # Re-exports infrastructure.messaging (3+ services → infrastructure.messaging violations)
 from src.backend.infrastructure.messaging import dlq_base, outbox
-from src.backend.infrastructure.messaging.outbox.stuck_monitor import (
+from src.backend.infrastructure.messaging.outbox.stuck_monitor import (  # noqa: F401 — re-export
     OutboxStuckMonitor as OutboxMonitor,
 )
 
@@ -25,7 +25,7 @@ def __getattr__(name: str) -> object:  # type: ignore[misc]
     if name == "KafkaProducer":
         # kafka_pool_registration only registers; реальный KafkaProducer class
         # в kafka_producer module (lazy импорт сохраняет optional aiokafka dep).
-        from src.backend.infrastructure.messaging.kafka_producer import (  # type: ignore[import-not-found]  # Kafka SDK optional — ImportError fallback ниже
+        from src.backend.infrastructure.messaging.kafka_producer import (  # noqa: F401 — re-export  # type: ignore[import-not-found]  # Kafka SDK optional — ImportError fallback ниже
             KafkaProducer,  # type: ignore[attr-defined]
         )
 

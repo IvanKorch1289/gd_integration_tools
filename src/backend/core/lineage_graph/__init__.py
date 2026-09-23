@@ -18,7 +18,7 @@
 
 Использование::
 
-    from src.backend.core.lineage_graph import (
+    from src.backend.core.lineage_graph import (  # noqa: F401 — re-export
         LineageNode, LineageEdge, NodeKind, EdgeKind,
         get_lineage_graph,
     )
@@ -37,7 +37,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.lineage_graph.graph import (
+from src.backend.core.lineage_graph.graph import (  # noqa: F401 — re-export
     EdgeKind,
     LineageEdge,
     LineageGraph,

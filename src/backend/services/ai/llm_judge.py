@@ -187,7 +187,7 @@ class LLMJudge:
         """Публикует scores в Prometheus + Redis для dashboard."""
         # Wave 6.3: метрики и Redis-клиент — через core/di.providers,
         # без прямого импорта infrastructure/*.
-        from src.backend.core.di.providers import (
+        from src.backend.core.di.providers import (  # noqa: F401 — re-export
             get_llm_judge_metrics_provider,
             get_redis_stream_client_provider,
         )

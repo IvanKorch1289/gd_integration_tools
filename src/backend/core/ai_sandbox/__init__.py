@@ -23,7 +23,7 @@
 
 Использование::
 
-    from src.backend.core.ai_sandbox import (
+    from src.backend.core.ai_sandbox import (  # noqa: F401 — re-export
         ProcessSandbox, ProcessSandboxConfig, get_process_sandbox,
     )
 
@@ -44,7 +44,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.ai_sandbox.sandbox import (
+from src.backend.core.ai_sandbox.sandbox import (  # noqa: F401 — re-export
     ProcessSandbox,
     ProcessSandboxConfig,
     ProcessSandboxResult,

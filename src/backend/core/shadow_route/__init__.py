@@ -16,7 +16,7 @@
 
 Использование::
 
-    from src.backend.core.shadow_route import (
+    from src.backend.core.shadow_route import (  # noqa: F401 — re-export
         ShadowRouter, ShadowResult, ComparisonRule, ComparisonType,
         get_shadow_router,
     )
@@ -36,7 +36,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.shadow_route.comparator import (
+from src.backend.core.shadow_route.comparator import (  # noqa: F401 — re-export
     ComparisonOutcome,
     ComparisonRule,
     ComparisonType,

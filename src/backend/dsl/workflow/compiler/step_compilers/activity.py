@@ -19,7 +19,7 @@ from src.backend.dsl.workflow.compiler.gateways import (  # noqa: E402
 from src.backend.dsl.workflow.compiler.step_compilers._retry import (  # noqa: F401
     _build_retry_policy,
 )
-from src.backend.dsl.workflow.spec import (
+from src.backend.dsl.workflow.spec import (  # noqa: F401 — re-export
     ActivityDeclaration,
     AgentInvokeDeclaration,
     PauseDeclaration,
@@ -204,7 +204,7 @@ async def compile_sensor_step(decl: SensorDeclaration, ctx: dict[str, Any]) -> A
     if decl.timeout_s is None:
         # S44 W35: function-local import to avoid circular import
         # (same pattern as W34 governance.py fix).
-        from src.backend.dsl.workflow.compiler.step_compilers import (
+        from src.backend.dsl.workflow.compiler.step_compilers import (  # noqa: F401 — re-export
             SensorTimeoutRequiredError as _SensorTimeoutRequiredError,
         )
 
@@ -213,7 +213,7 @@ async def compile_sensor_step(decl: SensorDeclaration, ctx: dict[str, Any]) -> A
             f"(D-A8-10 cycle 1 — default-OFF, иначе infinite polling)."
         )
     if decl.poll_interval_s <= 0:
-        from src.backend.dsl.workflow.compiler.step_compilers import (
+        from src.backend.dsl.workflow.compiler.step_compilers import (  # noqa: F401 — re-export
             SensorPollIntervalError as _SensorPollIntervalError,
         )
 
@@ -222,10 +222,10 @@ async def compile_sensor_step(decl: SensorDeclaration, ctx: dict[str, Any]) -> A
             f"must be > 0 (D-A8-10 cycle 1 — иначе tight loop DoS)."
         )
     # S44 W35: function-local imports to avoid circular import
-    from src.backend.dsl.workflow.compiler.step_compilers import (
+    from src.backend.dsl.workflow.compiler.step_compilers import (  # noqa: F401 — re-export
         _SENSOR_MAX_ITERATIONS_DEFAULT as _MAX_ITER,
     )
-    from src.backend.dsl.workflow.compiler.step_compilers import (
+    from src.backend.dsl.workflow.compiler.step_compilers import (  # noqa: F401 — re-export
         SensorMaxIterationsError as _SensorMaxIterationsError,
     )
 
@@ -324,13 +324,13 @@ async def compile_agent_invoke_step(
 
         # S44 W36: function-local imports to avoid circular import
         # (same pattern as W34 governance.py, W35 sensor polling).
-        from src.backend.dsl.workflow.compiler.step_compilers import (
+        from src.backend.dsl.workflow.compiler.step_compilers import (  # noqa: F401 — re-export
             LANGGRAPH_CHECKPOINT_GET_ACTIVITY as _GET_ACT,
         )
-        from src.backend.dsl.workflow.compiler.step_compilers import (
+        from src.backend.dsl.workflow.compiler.step_compilers import (  # noqa: F401 — re-export
             LANGGRAPH_CHECKPOINT_PUT_ACTIVITY as _PUT_ACT,
         )
-        from src.backend.dsl.workflow.compiler.step_compilers import (
+        from src.backend.dsl.workflow.compiler.step_compilers import (  # noqa: F401 — re-export
             LANGGRAPH_CHECKPOINT_TIMEOUT_S as _TIMEOUT_S,
         )
 

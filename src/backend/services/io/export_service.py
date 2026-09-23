@@ -180,7 +180,7 @@ class PdfExporter:
             from reportlab.lib import colors
             from reportlab.lib.pagesizes import A4, landscape
             from reportlab.lib.styles import getSampleStyleSheet
-            from reportlab.platypus import (
+            from reportlab.platypus import (  # noqa: F401 — re-export
                 Paragraph,
                 SimpleDocTemplate,
                 Spacer,

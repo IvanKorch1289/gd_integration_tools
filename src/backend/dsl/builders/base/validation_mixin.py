@@ -33,7 +33,7 @@ business-helpers (tenant_scope/cost_tracker/outbox/mask/compliance_labels),
 """
 
 
-from src.backend.dsl.engine.processors import (
+from src.backend.dsl.engine.processors import (  # noqa: F401 — re-export
     LogProcessor,
     SetPropertyProcessor,
     ValidateProcessor,

@@ -32,10 +32,10 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Final
 
 from src.backend.core.security.capabilities.errors import CapabilityDeniedError
-from src.backend.core.security.capabilities.gate._protocol import (
+from src.backend.core.security.capabilities.gate._protocol import (  # noqa: F401 — re-export
     _CapabilityGateProtocol,
 )
-from src.backend.core.security.capabilities.gate.check_tenant_mixin import (
+from src.backend.core.security.capabilities.gate.check_tenant_mixin import (  # noqa: F401 — re-export
     CheckTenantMixin,
 )
 from src.backend.core.security.capabilities.tenant import SYSTEM_TENANT_ID

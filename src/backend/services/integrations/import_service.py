@@ -198,7 +198,7 @@ class ImportService:
         if self._connector_store is not None:
             return self._connector_store
         try:
-            from src.backend.core.di.providers import (
+            from src.backend.core.di.providers import (  # noqa: F401 — re-export
                 get_connector_config_store_provider,
             )
 
@@ -249,7 +249,7 @@ class ImportService:
         if registry is None or not hasattr(registry, "register"):
             return registered
 
-        from src.backend.services.integrations.imported_action_service import (
+        from src.backend.services.integrations.imported_action_service import (  # noqa: F401 — re-export
             get_imported_action_service,
         )
 

@@ -1,6 +1,6 @@
 """Apache Camel EIP processors — re-export from submodules."""
 
-from src.backend.dsl.engine.processors.eip.collection import (
+from src.backend.dsl.engine.processors.eip.collection import (  # noqa: F401 — re-export
     CollectProcessor,
     DiffProcessor,
     FindAllProcessor,
@@ -15,25 +15,25 @@ from src.backend.dsl.engine.processors.eip.collection import (
     SumByProcessor,
     UniqueProcessor,
 )
-from src.backend.dsl.engine.processors.eip.content_enricher import (
+from src.backend.dsl.engine.processors.eip.content_enricher import (  # noqa: F401 — re-export
     EnrichProcessor as EnrichProcessor,
 )
-from src.backend.dsl.engine.processors.eip.dict_ops import (
+from src.backend.dsl.engine.processors.eip.dict_ops import (  # noqa: F401 — re-export
     PydashGetProcessor,
     PydashMergeProcessor,
     PydashOmitProcessor,
     PydashPickProcessor,
     PydashSetProcessor,
 )
-from src.backend.dsl.engine.processors.eip.event_message import (
+from src.backend.dsl.engine.processors.eip.event_message import (  # noqa: F401 — re-export
     EventMessageEnvelope,
     EventMessageProcessor,
 )
-from src.backend.dsl.engine.processors.eip.filter_router_sampling import (
+from src.backend.dsl.engine.processors.eip.filter_router_sampling import (  # noqa: F401 — re-export
     ContentBasedRouter,
     SamplingProcessor,
 )
-from src.backend.dsl.engine.processors.eip.flow_control import (
+from src.backend.dsl.engine.processors.eip.flow_control import (  # noqa: F401 — re-export
     AggregatorProcessor,
     DelayProcessor,
     ForEachProcessor,
@@ -44,15 +44,15 @@ from src.backend.dsl.engine.processors.eip.flow_control import (
     WireTapProcessor,
 )
 from src.backend.dsl.engine.processors.eip.fork_join import ForkJoinProcessor
-from src.backend.dsl.engine.processors.eip.glom_ops import (
+from src.backend.dsl.engine.processors.eip.glom_ops import (  # noqa: F401 — re-export
     GlomExtractProcessor,
     GlomFlattenProcessor,
     GlomTransformProcessor,
 )
-from src.backend.dsl.engine.processors.eip.idempotency import (
+from src.backend.dsl.engine.processors.eip.idempotency import (  # noqa: F401 — re-export
     IdempotentConsumerProcessor,
 )
-from src.backend.dsl.engine.processors.eip.marshal import (
+from src.backend.dsl.engine.processors.eip.marshal import (  # noqa: F401 — re-export
     CsvDataFormat,
     DataFormat,
     JsonDataFormat,
@@ -62,22 +62,22 @@ from src.backend.dsl.engine.processors.eip.marshal import (
     UnmarshalProcessor,
     XmlDataFormat,
 )
-from src.backend.dsl.engine.processors.eip.pipes_and_filters import (
+from src.backend.dsl.engine.processors.eip.pipes_and_filters import (  # noqa: F401 — re-export
     PipesAndFiltersProcessor,
 )
-from src.backend.dsl.engine.processors.eip.reliability import (
+from src.backend.dsl.engine.processors.eip.reliability import (  # noqa: F401 — re-export
     CorrelationIdentifierProcessor,
     MessageExpirationProcessor,
     RedeliveryPolicyProcessor,
     ReturnAddressProcessor,
 )
-from src.backend.dsl.engine.processors.eip.resilience import (
+from src.backend.dsl.engine.processors.eip.resilience import (  # noqa: F401 — re-export
     CircuitBreakerProcessor,
     DeadLetterProcessor,
     FallbackChainProcessor,
     TimeoutProcessor,
 )
-from src.backend.dsl.engine.processors.eip.routing import (
+from src.backend.dsl.engine.processors.eip.routing import (  # noqa: F401 — re-export
     DynamicRouterProcessor,
     LoadBalancerProcessor,
     MulticastProcessor,
@@ -85,24 +85,24 @@ from src.backend.dsl.engine.processors.eip.routing import (
     RecipientListProcessor,
     ScatterGatherProcessor,
 )
-from src.backend.dsl.engine.processors.eip.routing_slip import (
+from src.backend.dsl.engine.processors.eip.routing_slip import (  # noqa: F401 — re-export
     ProcessorRegistry,
     RoutingSlipProcessor,
     SimpleRegistry,
 )
 from src.backend.dsl.engine.processors.eip.sequencing import ResequencerProcessor
-from src.backend.dsl.engine.processors.eip.transactional import (
+from src.backend.dsl.engine.processors.eip.transactional import (  # noqa: F401 — re-export
     ProcessManagerProcessor,
     TransactionalClientProcessor,
 )
-from src.backend.dsl.engine.processors.eip.transformation import (
+from src.backend.dsl.engine.processors.eip.transformation import (  # noqa: F401 — re-export
     ClaimCheckProcessor,
     MessageTranslatorProcessor,
     NormalizerProcessor,
     SortProcessor,
     SplitterProcessor,
 )
-from src.backend.dsl.engine.processors.eip.windowed_dedup import (
+from src.backend.dsl.engine.processors.eip.windowed_dedup import (  # noqa: F401 — re-export
     WindowedCollectProcessor,
     WindowedDedupProcessor,
 )

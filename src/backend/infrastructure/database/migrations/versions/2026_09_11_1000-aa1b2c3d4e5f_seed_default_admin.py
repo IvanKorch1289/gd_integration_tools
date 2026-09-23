@@ -13,7 +13,7 @@ from typing import Sequence, Union
 
 from alembic import op
 
-from src.backend.infrastructure.database.migrations.seed_data import (
+from src.backend.infrastructure.database.migrations.seed_data import (  # noqa: F401 — re-export
     apply_reference_seed,
     remove_reference_seed,
 )

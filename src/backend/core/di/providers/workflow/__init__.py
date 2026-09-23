@@ -8,7 +8,7 @@ Back-compat: ``core/di/providers/workflow.py`` (singular, файл) → thin re-
 ``core/di/providers/__init__.py`` (public API) без изменений.
 
 Public API (all 58 funcs доступны через обе entry points):
-    from src.backend.core.di.providers.workflow import (
+    from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
         get_action_bus_service_provider, set_action_bus_service_provider,
         get_action_dispatcher_provider, set_action_dispatcher_provider,
         get_scheduler_manager_provider, set_scheduler_manager_provider,
@@ -57,177 +57,177 @@ Submodules:
 
 from __future__ import annotations
 
-from src.backend.core.di.providers.workflow._dlq import (
+from src.backend.core.di.providers.workflow._dlq import (  # noqa: F401 — re-export
     get_di_bridge_dlq_module_provider as get_di_bridge_dlq_module_provider,
 )
-from src.backend.core.di.providers.workflow._dlq import (
+from src.backend.core.di.providers.workflow._dlq import (  # noqa: F401 — re-export
     get_dlq_envelope_class_provider as get_dlq_envelope_class_provider,
 )
-from src.backend.core.di.providers.workflow._dlq import (
+from src.backend.core.di.providers.workflow._dlq import (  # noqa: F401 — re-export
     get_dlq_memory_writer_module_provider as get_dlq_memory_writer_module_provider,
 )
-from src.backend.core.di.providers.workflow._dlq import (
+from src.backend.core.di.providers.workflow._dlq import (  # noqa: F401 — re-export
     get_stream_dlq_writer_provider as get_stream_dlq_writer_provider,
 )
-from src.backend.core.di.providers.workflow._dlq import (
+from src.backend.core.di.providers.workflow._dlq import (  # noqa: F401 — re-export
     set_di_bridge_dlq_module_provider as set_di_bridge_dlq_module_provider,
 )
-from src.backend.core.di.providers.workflow._dlq import (
+from src.backend.core.di.providers.workflow._dlq import (  # noqa: F401 — re-export
     set_dlq_envelope_class_provider as set_dlq_envelope_class_provider,
 )
-from src.backend.core.di.providers.workflow._dlq import (
+from src.backend.core.di.providers.workflow._dlq import (  # noqa: F401 — re-export
     set_dlq_memory_writer_module_provider as set_dlq_memory_writer_module_provider,
 )
-from src.backend.core.di.providers.workflow._dlq import (
+from src.backend.core.di.providers.workflow._dlq import (  # noqa: F401 — re-export
     set_stream_dlq_writer_provider as set_stream_dlq_writer_provider,
 )
-from src.backend.core.di.providers.workflow._loggers import (
+from src.backend.core.di.providers.workflow._loggers import (  # noqa: F401 — re-export
     get_app_logger_provider as get_app_logger_provider,
 )
-from src.backend.core.di.providers.workflow._loggers import (
+from src.backend.core.di.providers.workflow._loggers import (  # noqa: F401 — re-export
     get_correlation_context_setter_provider as get_correlation_context_setter_provider,
 )
-from src.backend.core.di.providers.workflow._loggers import (
+from src.backend.core.di.providers.workflow._loggers import (  # noqa: F401 — re-export
     get_grpc_logger_provider as get_grpc_logger_provider,
 )
-from src.backend.core.di.providers.workflow._loggers import (
+from src.backend.core.di.providers.workflow._loggers import (  # noqa: F401 — re-export
     get_stream_logger_provider as get_stream_logger_provider,
 )
-from src.backend.core.di.providers.workflow._loggers import (
+from src.backend.core.di.providers.workflow._loggers import (  # noqa: F401 — re-export
     set_app_logger_provider as set_app_logger_provider,
 )
-from src.backend.core.di.providers.workflow._loggers import (
+from src.backend.core.di.providers.workflow._loggers import (  # noqa: F401 — re-export
     set_correlation_context_setter_provider as set_correlation_context_setter_provider,
 )
-from src.backend.core.di.providers.workflow._loggers import (
+from src.backend.core.di.providers.workflow._loggers import (  # noqa: F401 — re-export
     set_grpc_logger_provider as set_grpc_logger_provider,
 )
-from src.backend.core.di.providers.workflow._loggers import (
+from src.backend.core.di.providers.workflow._loggers import (  # noqa: F401 — re-export
     set_stream_logger_provider as set_stream_logger_provider,
 )
-from src.backend.core.di.providers.workflow._messaging import (
+from src.backend.core.di.providers.workflow._messaging import (  # noqa: F401 — re-export
     get_grpc_sink_class_provider as get_grpc_sink_class_provider,
 )
-from src.backend.core.di.providers.workflow._messaging import (
+from src.backend.core.di.providers.workflow._messaging import (  # noqa: F401 — re-export
     get_mq_sink_class_provider as get_mq_sink_class_provider,
 )
-from src.backend.core.di.providers.workflow._messaging import (
+from src.backend.core.di.providers.workflow._messaging import (  # noqa: F401 — re-export
     get_reply_channel_class_provider as get_reply_channel_class_provider,
 )
-from src.backend.core.di.providers.workflow._messaging import (
+from src.backend.core.di.providers.workflow._messaging import (  # noqa: F401 — re-export
     get_sink_factory_provider as get_sink_factory_provider,
 )
-from src.backend.core.di.providers.workflow._messaging import (
+from src.backend.core.di.providers.workflow._messaging import (  # noqa: F401 — re-export
     get_soap_sink_class_provider as get_soap_sink_class_provider,
 )
-from src.backend.core.di.providers.workflow._messaging import (
+from src.backend.core.di.providers.workflow._messaging import (  # noqa: F401 — re-export
     get_ws_sink_class_provider as get_ws_sink_class_provider,
 )
-from src.backend.core.di.providers.workflow._messaging import (
+from src.backend.core.di.providers.workflow._messaging import (  # noqa: F401 — re-export
     set_grpc_sink_class_provider as set_grpc_sink_class_provider,
 )
-from src.backend.core.di.providers.workflow._messaging import (
+from src.backend.core.di.providers.workflow._messaging import (  # noqa: F401 — re-export
     set_mq_sink_class_provider as set_mq_sink_class_provider,
 )
-from src.backend.core.di.providers.workflow._messaging import (
+from src.backend.core.di.providers.workflow._messaging import (  # noqa: F401 — re-export
     set_reply_channel_class_provider as set_reply_channel_class_provider,
 )
-from src.backend.core.di.providers.workflow._messaging import (
+from src.backend.core.di.providers.workflow._messaging import (  # noqa: F401 — re-export
     set_sink_factory_provider as set_sink_factory_provider,
 )
-from src.backend.core.di.providers.workflow._messaging import (
+from src.backend.core.di.providers.workflow._messaging import (  # noqa: F401 — re-export
     set_soap_sink_class_provider as set_soap_sink_class_provider,
 )
-from src.backend.core.di.providers.workflow._messaging import (
+from src.backend.core.di.providers.workflow._messaging import (  # noqa: F401 — re-export
     set_ws_sink_class_provider as set_ws_sink_class_provider,
 )
-from src.backend.core.di.providers.workflow._notifications import (
+from src.backend.core.di.providers.workflow._notifications import (  # noqa: F401 — re-export
     get_notifications_module_provider as get_notifications_module_provider,
 )
-from src.backend.core.di.providers.workflow._notifications import (
+from src.backend.core.di.providers.workflow._notifications import (  # noqa: F401 — re-export
     get_workflow_factory_module_provider as get_workflow_factory_module_provider,
 )
-from src.backend.core.di.providers.workflow._notifications import (
+from src.backend.core.di.providers.workflow._notifications import (  # noqa: F401 — re-export
     set_notifications_module_provider as set_notifications_module_provider,
 )
-from src.backend.core.di.providers.workflow._notifications import (
+from src.backend.core.di.providers.workflow._notifications import (  # noqa: F401 — re-export
     set_workflow_factory_module_provider as set_workflow_factory_module_provider,
 )
-from src.backend.core.di.providers.workflow._resilience import (
+from src.backend.core.di.providers.workflow._resilience import (  # noqa: F401 — re-export
     get_rate_limit_classes_provider as get_rate_limit_classes_provider,
 )
-from src.backend.core.di.providers.workflow._resilience import (
+from src.backend.core.di.providers.workflow._resilience import (  # noqa: F401 — re-export
     get_rate_limiter_provider as get_rate_limiter_provider,
 )
-from src.backend.core.di.providers.workflow._resilience import (
+from src.backend.core.di.providers.workflow._resilience import (  # noqa: F401 — re-export
     get_resilience_components_report_provider as get_resilience_components_report_provider,
 )
-from src.backend.core.di.providers.workflow._resilience import (
+from src.backend.core.di.providers.workflow._resilience import (  # noqa: F401 — re-export
     get_resilience_coordinator_provider as get_resilience_coordinator_provider,
 )
-from src.backend.core.di.providers.workflow._resilience import (
+from src.backend.core.di.providers.workflow._resilience import (  # noqa: F401 — re-export
     set_rate_limiter_provider as set_rate_limiter_provider,
 )
-from src.backend.core.di.providers.workflow._resilience import (
+from src.backend.core.di.providers.workflow._resilience import (  # noqa: F401 — re-export
     set_resilience_components_report_provider as set_resilience_components_report_provider,
 )
-from src.backend.core.di.providers.workflow._resilience import (
+from src.backend.core.di.providers.workflow._resilience import (  # noqa: F401 — re-export
     set_resilience_coordinator_provider as set_resilience_coordinator_provider,
 )
-from src.backend.core.di.providers.workflow._workflow_core import (
+from src.backend.core.di.providers.workflow._workflow_core import (  # noqa: F401 — re-export
     get_action_bus_service_provider as get_action_bus_service_provider,
 )
-from src.backend.core.di.providers.workflow._workflow_core import (
+from src.backend.core.di.providers.workflow._workflow_core import (  # noqa: F401 — re-export
     get_action_dispatcher_provider as get_action_dispatcher_provider,
 )
-from src.backend.core.di.providers.workflow._workflow_core import (
+from src.backend.core.di.providers.workflow._workflow_core import (  # noqa: F401 — re-export
     get_scheduler_manager_provider as get_scheduler_manager_provider,
 )
-from src.backend.core.di.providers.workflow._workflow_core import (
+from src.backend.core.di.providers.workflow._workflow_core import (  # noqa: F401 — re-export
     get_workflow_backend_factory_provider as get_workflow_backend_factory_provider,
 )
-from src.backend.core.di.providers.workflow._workflow_core import (
+from src.backend.core.di.providers.workflow._workflow_core import (  # noqa: F401 — re-export
     get_workflow_event_store_provider as get_workflow_event_store_provider,
 )
-from src.backend.core.di.providers.workflow._workflow_core import (
+from src.backend.core.di.providers.workflow._workflow_core import (  # noqa: F401 — re-export
     get_workflow_instance_model_provider as get_workflow_instance_model_provider,
 )
-from src.backend.core.di.providers.workflow._workflow_core import (
+from src.backend.core.di.providers.workflow._workflow_core import (  # noqa: F401 — re-export
     get_workflow_main_session_provider as get_workflow_main_session_provider,
 )
-from src.backend.core.di.providers.workflow._workflow_core import (
+from src.backend.core.di.providers.workflow._workflow_core import (  # noqa: F401 — re-export
     get_workflow_state_repository_provider as get_workflow_state_repository_provider,
 )
-from src.backend.core.di.providers.workflow._workflow_core import (
+from src.backend.core.di.providers.workflow._workflow_core import (  # noqa: F401 — re-export
     get_workflow_state_row_class_provider as get_workflow_state_row_class_provider,
 )
-from src.backend.core.di.providers.workflow._workflow_core import (
+from src.backend.core.di.providers.workflow._workflow_core import (  # noqa: F401 — re-export
     get_workflow_state_store_provider as get_workflow_state_store_provider,
 )
-from src.backend.core.di.providers.workflow._workflow_core import (
+from src.backend.core.di.providers.workflow._workflow_core import (  # noqa: F401 — re-export
     get_workflow_status_enum_provider as get_workflow_status_enum_provider,
 )
-from src.backend.core.di.providers.workflow._workflow_core import (
+from src.backend.core.di.providers.workflow._workflow_core import (  # noqa: F401 — re-export
     set_action_bus_service_provider as set_action_bus_service_provider,
 )
-from src.backend.core.di.providers.workflow._workflow_core import (
+from src.backend.core.di.providers.workflow._workflow_core import (  # noqa: F401 — re-export
     set_action_dispatcher_provider as set_action_dispatcher_provider,
 )
-from src.backend.core.di.providers.workflow._workflow_core import (
+from src.backend.core.di.providers.workflow._workflow_core import (  # noqa: F401 — re-export
     set_scheduler_manager_provider as set_scheduler_manager_provider,
 )
-from src.backend.core.di.providers.workflow._workflow_core import (
+from src.backend.core.di.providers.workflow._workflow_core import (  # noqa: F401 — re-export
     set_workflow_backend_factory_provider as set_workflow_backend_factory_provider,
 )
-from src.backend.core.di.providers.workflow._workflow_core import (
+from src.backend.core.di.providers.workflow._workflow_core import (  # noqa: F401 — re-export
     set_workflow_event_store_provider as set_workflow_event_store_provider,
 )
-from src.backend.core.di.providers.workflow._workflow_core import (
+from src.backend.core.di.providers.workflow._workflow_core import (  # noqa: F401 — re-export
     set_workflow_main_session_provider as set_workflow_main_session_provider,
 )
-from src.backend.core.di.providers.workflow._workflow_core import (
+from src.backend.core.di.providers.workflow._workflow_core import (  # noqa: F401 — re-export
     set_workflow_state_repository_provider as set_workflow_state_repository_provider,
 )
-from src.backend.core.di.providers.workflow._workflow_core import (
+from src.backend.core.di.providers.workflow._workflow_core import (  # noqa: F401 — re-export
     set_workflow_state_store_provider as set_workflow_state_store_provider,
 )

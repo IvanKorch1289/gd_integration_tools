@@ -2,7 +2,7 @@
 
 IL2.2 (ADR-023). Публичный API:
 
-    from src.backend.infrastructure.notifications import (
+    from src.backend.infrastructure.notifications import (  # noqa: F401 — re-export
         NotificationGateway,
         TemplateRegistry,
         get_gateway,
@@ -18,13 +18,13 @@ IL2.2 (ADR-023). Публичный API:
     )
 """
 
-from src.backend.infrastructure.notifications.gateway import (
+from src.backend.infrastructure.notifications.gateway import (  # noqa: F401 — re-export
     NotificationGateway,
     SendResult,
     get_gateway,
 )
 from src.backend.infrastructure.notifications.priority import Priority, PriorityRouter
-from src.backend.infrastructure.notifications.templates import (
+from src.backend.infrastructure.notifications.templates import (  # noqa: F401 — re-export
     TemplateRegistry,
     get_template_registry,
 )

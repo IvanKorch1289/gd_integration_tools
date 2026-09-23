@@ -11,13 +11,13 @@ from datetime import timedelta
 from typing import Any
 
 from src.backend.core.logging import get_logger
-from src.backend.dsl.workflow.compiler.step_compilers._retry import (
+from src.backend.dsl.workflow.compiler.step_compilers._retry import (  # noqa: F401 — re-export
     _build_retry_policy,  # noqa: F401
 )
-from src.backend.dsl.workflow.compiler.step_compilers.activity import (
+from src.backend.dsl.workflow.compiler.step_compilers.activity import (  # noqa: F401 — re-export
     compile_activity_step,
 )
-from src.backend.dsl.workflow.spec import (
+from src.backend.dsl.workflow.spec import (  # noqa: F401 — re-export
     CheckpointDeclaration,
     ContinueAsNewDeclaration,
     SagaDeclaration,
@@ -195,7 +195,7 @@ async def compile_continue_as_new_step(
         ImportError: Если temporalio не установлен.
 
     """
-    from src.backend.dsl.workflow.handlers.continue_as_new_handler import (
+    from src.backend.dsl.workflow.handlers.continue_as_new_handler import (  # noqa: F401 — re-export
         ContinueAsNewHandler,
     )
 

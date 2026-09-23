@@ -104,7 +104,7 @@ def __getattr__(name: str):  # type: ignore[no-untyped-def]
 
         return get_scheduler_provider
     if name == "SchedulerManager":
-        from src.backend.infrastructure.scheduler.scheduler_manager import (
+        from src.backend.infrastructure.scheduler.scheduler_manager import (  # noqa: F401 — re-export
             SchedulerManager,
         )
 

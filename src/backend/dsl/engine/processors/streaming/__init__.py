@@ -11,21 +11,21 @@ Backward-compat: ``from src.backend.dsl.engine.processors.streaming import X`` w
 
 from __future__ import annotations
 
-from src.backend.dsl.engine.processors.streaming.message_meta import (  # S53 W2
+from src.backend.dsl.engine.processors.streaming.message_meta import (  # noqa: F401 — re-export  # S53 W2
     CorrelationIdProcessor,
     MessageExpirationProcessor,
     SchemaRegistryValidator,
 )
-from src.backend.dsl.engine.processors.streaming.operations import (  # S53 W2
+from src.backend.dsl.engine.processors.streaming.operations import (  # noqa: F401 — re-export  # S53 W2
     ChannelPurgerProcessor,
     SamplingProcessor,
 )
-from src.backend.dsl.engine.processors.streaming.reliability import (  # S53 W2
+from src.backend.dsl.engine.processors.streaming.reliability import (  # noqa: F401 — re-export  # S53 W2
     DurableSubscriberProcessor,
     ExactlyOnceProcessor,
     ReplyToProcessor,
 )
-from src.backend.dsl.engine.processors.streaming.windows import (  # S53 W2
+from src.backend.dsl.engine.processors.streaming.windows import (  # noqa: F401 — re-export  # S53 W2
     GroupByKeyProcessor,
     SessionWindowProcessor,
     SlidingWindowProcessor,

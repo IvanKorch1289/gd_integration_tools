@@ -10,28 +10,28 @@ stable, but cross-layer access now goes через core/ facade.
 
 from __future__ import annotations
 
-from src.backend.core.di.providers.infrastructure_locator import (
+from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
     get_event_bus_class as _get_event_bus_cls,
 )
-from src.backend.core.di.providers.infrastructure_locator import (
+from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
     get_event_bus_factory as _get_event_bus_fn,
 )
-from src.backend.core.di.providers.infrastructure_locator import (
+from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
     get_event_schema_validation_error_class as _get_event_sve_cls,
 )
-from src.backend.core.di.providers.infrastructure_locator import (
+from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
     get_flag_event_class as _get_flag_event_cls,
 )
-from src.backend.core.di.providers.infrastructure_locator import (
+from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
     get_generic_event_class as _get_generic_event_cls,
 )
-from src.backend.core.di.providers.infrastructure_locator import (
+from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
     get_order_event_class as _get_order_event_cls,
 )
-from src.backend.core.di.providers.infrastructure_locator import (
+from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
     get_pipeline_event_class as _get_pipeline_event_cls,
 )
-from src.backend.core.di.providers.infrastructure_locator import (
+from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
     get_route_event_class as _get_route_event_cls,
 )
 

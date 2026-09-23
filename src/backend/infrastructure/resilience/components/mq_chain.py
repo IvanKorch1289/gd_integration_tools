@@ -50,7 +50,7 @@ _memory_broker_singleton = None
 def _get_memory_broker():
     global _memory_broker_singleton
     if _memory_broker_singleton is None:
-        from src.backend.infrastructure.clients.messaging.memory_broker import (
+        from src.backend.infrastructure.clients.messaging.memory_broker import (  # noqa: F401 — re-export
             InMemoryMessageBroker,
         )
 

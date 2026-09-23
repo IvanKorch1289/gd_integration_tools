@@ -24,10 +24,10 @@ async def _init_workflow_audit_sink() -> None:
     """
     from pathlib import Path
 
-    from src.backend.infrastructure.clients.storage.clickhouse_bulk_writer import (
+    from src.backend.infrastructure.clients.storage.clickhouse_bulk_writer import (  # noqa: F401 — re-export
         ClickHouseBulkWriter,
     )
-    from src.backend.services.audit.workflow_audit_sink import (
+    from src.backend.services.audit.workflow_audit_sink import (  # noqa: F401 — re-export
         WorkflowAuditSink,
         set_workflow_audit_sink,
     )
@@ -52,7 +52,7 @@ async def _init_workflow_audit_sink() -> None:
 
 async def _close_workflow_audit_sink() -> None:
     """Graceful shutdown sink: финальный flush + остановка writer'а."""
-    from src.backend.services.audit.workflow_audit_sink import (
+    from src.backend.services.audit.workflow_audit_sink import (  # noqa: F401 — re-export
         get_workflow_audit_sink,
         reset_workflow_audit_sink,
     )

@@ -9,7 +9,7 @@
 Использование:
     .. code-block:: python
 
-        from src.backend.core.tenancy.feature_flag_scope import (
+        from src.backend.core.tenancy.feature_flag_scope import (  # noqa: F401 — re-export
             TenantFeatureFlagResolver,
         )
 
@@ -158,7 +158,7 @@ class TenantFeatureFlagResolver:
     def _external_enabled(self) -> bool:
         """Проверяет глобальный flag ``openfeature_external``."""
         try:
-            from src.backend.core.feature_flags.flagsmith_provider import (
+            from src.backend.core.feature_flags.flagsmith_provider import (  # noqa: F401 — re-export
                 is_external_provider_enabled,
             )
 

@@ -8,7 +8,7 @@ S66 W3: lifespan -> lifespan.py.
 
 from __future__ import annotations
 
-from src.backend.plugins.composition.lifecycle import (
+from src.backend.plugins.composition.lifecycle import (  # noqa: F401 — re-export
     bootstrap,
     plugin_loader,  # S168 W15-17: renamed from v11.py → plugin_loader.py
     protocols,
@@ -18,13 +18,13 @@ from src.backend.plugins.composition.lifecycle import (
     watchers,
 )
 from src.backend.plugins.composition.lifecycle import lifespan as lifespan_module
-from src.backend.plugins.composition.lifecycle.bootstrap import (
+from src.backend.plugins.composition.lifecycle.bootstrap import (  # noqa: F401 — re-export
     bootstrap_resilience_coordinator,
     bootstrap_snapshot_job,
     register_storage_singletons,
     validate_cache_layers,
 )
-from src.backend.plugins.composition.lifecycle.lifespan import (
+from src.backend.plugins.composition.lifecycle.lifespan import (  # noqa: F401 — re-export
     get_task_registry,
     lifespan,
 )

@@ -19,7 +19,7 @@
 
 Использование::
 
-    from src.backend.core.incident_analyst import (
+    from src.backend.core.incident_analyst import (  # noqa: F401 — re-export
         IncidentAnalyst, IncidentContext, get_incident_analyst,
     )
 
@@ -39,7 +39,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.incident_analyst.analyst import (
+from src.backend.core.incident_analyst.analyst import (  # noqa: F401 — re-export
     Hypothesis,
     IncidentAnalyst,
     IncidentContext,

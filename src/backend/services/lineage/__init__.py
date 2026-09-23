@@ -3,7 +3,7 @@
 v21 §2.1: Data Lineage / Provenance (EU AI Act, RAG provenance, OpenLineage).
 """
 
-from src.backend.services.lineage.lineage_emitter import (
+from src.backend.services.lineage.lineage_emitter import (  # noqa: F401 — re-export
     InMemoryLineageEmitter,
     LineageEmitterCallable,
     LineageEmitterProtocol,
@@ -11,7 +11,7 @@ from src.backend.services.lineage.lineage_emitter import (
     reset_lineage_emitter,
     set_lineage_emitter,
 )
-from src.backend.services.lineage.lineage_http_emitter import (
+from src.backend.services.lineage.lineage_http_emitter import (  # noqa: F401 — re-export
     OpenLineageHttpConfig,
     OpenLineageHttpEmitter,
 )

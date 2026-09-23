@@ -19,7 +19,7 @@
 
 Использование::
 
-    from src.backend.core.registry_explorer import (
+    from src.backend.core.registry_explorer import (  # noqa: F401 — re-export
         RegistryExplorer, RouteEntry, get_registry_explorer,
     )
 
@@ -37,13 +37,13 @@
 
 from __future__ import annotations
 
-from src.backend.core.registry_explorer.auto_seed import (
+from src.backend.core.registry_explorer.auto_seed import (  # noqa: F401 — re-export
     StreamlitPageRegistry,
     auto_seed_from_project,
     get_page_registry,
     reset_page_registry,
 )
-from src.backend.core.registry_explorer.explorer import (
+from src.backend.core.registry_explorer.explorer import (  # noqa: F401 — re-export
     ActionEntry,
     ConnectorEntry,
     RegistryExplorer,

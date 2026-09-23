@@ -53,7 +53,7 @@ from src.backend.core.di.providers import storage as storage
 from src.backend.core.di.providers import workflow as workflow
 
 # --- ai.py (14) ---
-from src.backend.core.di.providers.ai import (
+from src.backend.core.di.providers.ai import (  # noqa: F401 — re-export
     get_ai_sanitizer_provider,
     get_antivirus_service_provider,
     get_llm_guard_runtime_provider,
@@ -75,7 +75,7 @@ from src.backend.core.di.providers.ai import (
 )
 
 # --- auth.py (6) ---
-from src.backend.core.di.providers.auth import (
+from src.backend.core.di.providers.auth import (  # noqa: F401 — re-export
     get_api_key_manager_provider,
     get_jwks_cache_provider,
     get_jwt_backend_provider,
@@ -90,7 +90,7 @@ from src.backend.core.di.providers.auth import (
 # --- cache.py (8 canonical + 24 re-exports from observability/security/db/ai/workflow) ---
 # Re-exports handled via cache.py's own `from .X import ...` aliases (см. cache.py).
 # Import only the canonical cache-only functions to avoid double-import noise:
-from src.backend.core.di.providers.cache import (
+from src.backend.core.di.providers.cache import (  # noqa: F401 — re-export
     get_admin_cache_storage_provider,
     get_cache_invalidator_provider,
     get_rag_cache_provider,
@@ -106,7 +106,7 @@ from src.backend.core.di.providers.cache import (
 )
 
 # --- db.py (16 funcs) ---
-from src.backend.core.di.providers.db import (
+from src.backend.core.di.providers.db import (  # noqa: F401 — re-export
     get_cdc_client_provider,
     get_clickhouse_client_provider,
     get_connector_config_store_provider,
@@ -127,7 +127,7 @@ from src.backend.core.di.providers.db import (
 )
 
 # --- http.py (35) ---
-from src.backend.core.di.providers.http import (
+from src.backend.core.di.providers.http import (  # noqa: F401 — re-export
     get_browser_client_provider,
     get_express_bot_client_factory_provider,
     get_express_botx_message_class_provider,
@@ -170,7 +170,7 @@ from src.backend.core.di.providers.http import (
 )
 
 # --- messaging.py (3, W9 P2-13 Phase 2) ---
-from src.backend.core.di.providers.messaging import (
+from src.backend.core.di.providers.messaging import (  # noqa: F401 — re-export
     get_express_bot_module_provider,
     get_express_dialogs_mongo_provider,
     get_telegram_bot_provider,
@@ -180,7 +180,7 @@ from src.backend.core.di.providers.messaging import (
 )
 
 # --- observability.py (5 funcs, W9 P2-13 Phase 2) ---
-from src.backend.core.di.providers.observability import (
+from src.backend.core.di.providers.observability import (  # noqa: F401 — re-export
     get_health_aggregator_provider,
     get_immutable_audit_store_class_provider,
     get_record_antivirus_scan_provider,
@@ -194,7 +194,7 @@ from src.backend.core.di.providers.observability import (
 )
 
 # --- security.py (4 funcs, W9 P2-13 Phase 2) ---
-from src.backend.core.di.providers.security import (
+from src.backend.core.di.providers.security import (  # noqa: F401 — re-export
     get_antivirus_backend_factory_provider,
     get_signature_builder_provider,
     get_vault_backend_class_provider,
@@ -206,7 +206,7 @@ from src.backend.core.di.providers.security import (
 )
 
 # --- storage.py (3, S36-W23) ---
-from src.backend.core.di.providers.storage import (
+from src.backend.core.di.providers.storage import (  # noqa: F401 — re-export
     get_object_storage_provider,
     get_storage_facade_provider,
     set_object_storage_provider,
@@ -214,7 +214,7 @@ from src.backend.core.di.providers.storage import (
 )
 
 # --- workflow.py (45 funcs) ---
-from src.backend.core.di.providers.workflow import (
+from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
     get_action_bus_service_provider,
     get_action_dispatcher_provider,
     get_app_logger_provider,

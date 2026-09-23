@@ -170,7 +170,7 @@ class SLOTracker:
         """Записывает результат выполнения маршрута + экспорт в Prometheus."""
         self._stats[route_id].record(latency_ms, is_error)
         try:
-            from src.backend.infrastructure.observability.metrics import (
+            from src.backend.infrastructure.observability.metrics import (  # noqa: F401 — re-export
                 record_pipeline_execution,
             )
 

@@ -15,7 +15,7 @@ config validation, MCP gateway documentation).
 
 **Use case** (FINAL_REPORT_V2 P0-C):
 ```python
-from src.backend.core.ai.policy.jsonschema_export import (
+from src.backend.core.ai.policy.jsonschema_export import (  # noqa: F401 — re-export
     export_aipolicy_json_schema,
 )
 

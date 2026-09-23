@@ -18,11 +18,11 @@ from contextlib import asynccontextmanager
 from typing import Any, Literal
 
 from src.backend.core.config.settings import settings
-from src.backend.infrastructure.clients.transport.http import (
+from src.backend.infrastructure.clients.transport.http import (  # noqa: F401 — re-export
     HttpClient,
     get_http_client_dependency,
 )
-from src.backend.infrastructure.external_apis.s3 import (
+from src.backend.infrastructure.external_apis.s3 import (  # noqa: F401 — re-export
     S3Service,
     get_s3_service_dependency,
 )

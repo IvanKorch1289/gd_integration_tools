@@ -81,7 +81,7 @@ class NotificationsFacade:
         """Lazy-получить AppriseService (если доступен)."""
         if self._apprise_service is None:
             try:
-                from src.backend.services.notifications.apprise_service import (
+                from src.backend.services.notifications.apprise_service import (  # noqa: F401 — re-export
                     get_notification_service,
                 )
 

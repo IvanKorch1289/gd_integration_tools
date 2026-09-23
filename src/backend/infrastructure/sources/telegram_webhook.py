@@ -7,7 +7,7 @@ Telegram updates через Bot API webhook (HTTPS endpoint).
 
 Использование::
 
-    from src.backend.infrastructure.sources.telegram_webhook import (
+    from src.backend.infrastructure.sources.telegram_webhook import (  # noqa: F401 — re-export
         TelegramWebhookSource,
         TelegramUpdate,
     )

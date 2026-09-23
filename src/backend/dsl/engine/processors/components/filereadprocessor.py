@@ -37,7 +37,7 @@ class FileReadProcessor(BaseProcessor):
         """Читает файл с диска (текстовый или бинарный) с проверкой path-traversal и записывает содержимое в exchange."""
         import aiofiles
 
-        from src.backend.dsl.engine.processors._path_safety import (
+        from src.backend.dsl.engine.processors._path_safety import (  # noqa: F401 — re-export
             PathTraversalError,
             validate_path,
         )

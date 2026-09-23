@@ -40,7 +40,7 @@ class InfraRedisGetProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
-        from src.backend.core.di.providers.infrastructure_locator import (
+        from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — re-export
             get_redis_client_class,
         )
 

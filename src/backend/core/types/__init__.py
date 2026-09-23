@@ -4,7 +4,7 @@
 Перенесены из ``schemas/`` для устранения зависимости core → schemas.
 """
 
-from src.backend.core.types.invocation_command import (
+from src.backend.core.types.invocation_command import (  # noqa: F401 — re-export
     ActionCommandMetaSchema,
     ActionCommandSchema,
     InvocationOptionsSchema,

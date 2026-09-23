@@ -23,7 +23,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from src.backend.core.auth.quotas_protocol import (
+from src.backend.core.auth.quotas_protocol import (  # noqa: F401 — re-export
     QuotaCheckResult,
     QuotasBackend,
     QuotaUsage,
@@ -149,7 +149,7 @@ async def _emit_quota_check_skipped(
     if tokens is not None:
         details["tokens"] = tokens
     try:
-        from src.backend.core.audit.facade.audit_service import (
+        from src.backend.core.audit.facade.audit_service import (  # noqa: F401 — re-export
             get_unified_audit_service,
         )
 

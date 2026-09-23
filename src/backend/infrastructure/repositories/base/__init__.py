@@ -11,13 +11,13 @@ from typing import TYPE_CHECKING as TYPE_CHECKING
 from typing import Any as Any
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.repositories.base.base import (
+    from src.backend.infrastructure.repositories.base.base import (  # noqa: F401 — re-export
         AbstractRepository as AbstractRepository,
     )
-    from src.backend.infrastructure.repositories.base.factory import (
+    from src.backend.infrastructure.repositories.base.factory import (  # noqa: F401 — re-export
         get_repository_for_model as get_repository_for_model,
     )
-    from src.backend.infrastructure.repositories.base.sqlalchemy import (
+    from src.backend.infrastructure.repositories.base.sqlalchemy import (  # noqa: F401 — re-export
         SQLAlchemyRepository as SQLAlchemyRepository,
     )
 
@@ -30,13 +30,13 @@ def __getattr__(name: str) -> Any:
 
         return AbstractRepository
     if name == "SQLAlchemyRepository":
-        from src.backend.infrastructure.repositories.base.sqlalchemy import (
+        from src.backend.infrastructure.repositories.base.sqlalchemy import (  # noqa: F401 — re-export
             SQLAlchemyRepository,
         )
 
         return SQLAlchemyRepository
     if name == "get_repository_for_model":
-        from src.backend.infrastructure.repositories.base.factory import (
+        from src.backend.infrastructure.repositories.base.factory import (  # noqa: F401 — re-export
             get_repository_for_model,
         )
 

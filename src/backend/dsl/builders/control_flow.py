@@ -13,7 +13,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors import (
+from src.backend.dsl.engine.processors import (  # noqa: F401 — re-export
     BaseProcessor,
     ChoiceBranch,
     ChoiceProcessor,
@@ -32,7 +32,7 @@ from src.backend.dsl.engine.processors import (
     ThrottlerProcessor,
     TryCatchProcessor,
 )
-from src.backend.dsl.engine.processors.streaming import (
+from src.backend.dsl.engine.processors.streaming import (  # noqa: F401 — re-export
     CorrelationIdProcessor,
     MessageExpirationProcessor,
 )

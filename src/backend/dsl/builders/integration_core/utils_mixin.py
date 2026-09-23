@@ -57,7 +57,7 @@ class UtilsMixin:
             result_property: Имя property для результата.
 
         """
-        from src.backend.dsl.engine.processors.function_call import (
+        from src.backend.dsl.engine.processors.function_call import (  # noqa: F401 — re-export
             CallFunctionProcessor,
         )
 
@@ -107,7 +107,7 @@ class UtilsMixin:
             source: ``out_body`` (default) | ``in_body``.
 
         """
-        from src.backend.dsl.engine.processors.validate_response import (
+        from src.backend.dsl.engine.processors.validate_response import (  # noqa: F401 — re-export
             ResponseValidatorProcessor,
         )
 
@@ -134,7 +134,7 @@ class UtilsMixin:
             output_to: dotted-path для записи пути созданного файла.
 
         """
-        from src.backend.dsl.engine.processors.documents import (
+        from src.backend.dsl.engine.processors.documents import (  # noqa: F401 — re-export
             RenderDocxParams,
             RenderDocxProcessor,
         )
@@ -168,7 +168,7 @@ class UtilsMixin:
                 добавление list[dict] как таблицы.
 
         """
-        from src.backend.dsl.engine.processors.documents import (
+        from src.backend.dsl.engine.processors.documents import (  # noqa: F401 — re-export
             RenderXlsxParams,
             RenderXlsxProcessor,
         )
@@ -204,7 +204,7 @@ class UtilsMixin:
             default_decision: Значение, если ни одно правило не сработало.
 
         """
-        from src.backend.dsl.engine.processors.rule_engine import (
+        from src.backend.dsl.engine.processors.rule_engine import (  # noqa: F401 — re-export
             EvaluateRulesParams,
             EvaluateRulesProcessor,
             Rule,
@@ -414,7 +414,7 @@ class UtilsMixin:
             >>> .send_via_sink("alerts.http", payload_from="body.alert")
 
         """
-        from src.backend.dsl.engine.processors.integration_send import (
+        from src.backend.dsl.engine.processors.integration_send import (  # noqa: F401 — re-export
             IntegrationSendProcessor,
         )
 

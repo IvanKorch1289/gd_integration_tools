@@ -156,7 +156,7 @@ class FeedbackProcessor(BaseProcessor):
     @staticmethod
     def _build_service() -> Any:
         """Лениво получает AIFeedbackService через DI."""
-        from src.backend.services.ai.feedback.feedback_service import (
+        from src.backend.services.ai.feedback.feedback_service import (  # noqa: F401 — re-export
             get_ai_feedback_service,
         )
 

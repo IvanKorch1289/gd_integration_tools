@@ -128,7 +128,7 @@ class InvokeWorkflowProcessor(BaseProcessor):
             return await self._backend_factory()
         # S77 M2-#11 batch 12: DI provider (reuses S69's
         # get_workflow_backend_factory_provider в workflow.py).
-        from src.backend.core.di.providers.workflow import (
+        from src.backend.core.di.providers.workflow import (  # noqa: F401 — re-export
             get_workflow_backend_factory_provider,
         )
 
@@ -163,7 +163,7 @@ class InvokeWorkflowProcessor(BaseProcessor):
             return self.workflow_name
 
         try:
-            from src.backend.dsl.workflow.launcher import (
+            from src.backend.dsl.workflow.launcher import (  # noqa: F401 — re-export
                 WorkflowLauncher,
                 WorkflowResolutionError,
             )
@@ -199,7 +199,7 @@ class InvokeWorkflowProcessor(BaseProcessor):
         # ADR-0305: admission control + reply_timeout narrowing.
         reply_timeout: float = self.reply_timeout_seconds
         try:
-            from src.backend.core.async_utils.deadline_budget import (
+            from src.backend.core.async_utils.deadline_budget import (  # noqa: F401 — re-export
                 DeadlineExpiredError,
             )
             from src.backend.core.request_context import RequestContext

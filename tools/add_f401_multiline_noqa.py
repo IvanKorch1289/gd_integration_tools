@@ -20,13 +20,23 @@ Pattern:
 
 Usage:
     python tools/add_f401_multiline_noqa.py [--root src/backend]
+
+MINIMAX W6 P1-8 Phase 9 (cycle 153): мигрирован с ``argparse`` на ``typer`` +
+``rich`` (libraries > custom, per ADR-0084). Сохранены: typer-native entry +
+legacy ``main()`` callback для backward-compat с pre-existing scripts.
+
+WARNING: tool имеет known issue — regex matches lines в docstrings (NOT
+только real imports). Перед production use добавить AST-based detection
+(см. ADR-0332 roadmap Phase 10).
 """
 
 from __future__ import annotations
 
-import argparse
 import logging
 from pathlib import Path
+
+import typer
+from rich.console import Console
 
 _logger = logging.getLogger(__name__)
 
@@ -74,17 +84,55 @@ def _process_file(path: Path) -> tuple[int, str]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        prog="add_f401_multiline_noqa",
-        description="Silence F401 in multi-line parenthesized imports (D-AUDIT-3024 cycle-49)",
-    )
-    parser.add_argument("--root", default="src/backend", help="Root dir to walk")
-    parser.add_argument("--verbose", action="store_true")
-    args = parser.parse_args(argv)
-    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
+    """Точка входа CLI (backward-compat shim для существующих скриптов).
 
-    root = Path(args.root)
-    files = list(root.rglob("*.py"))
+    Запускает typer app через typer.testing.CliRunner (для тестов)
+    или sys.argv (для CLI invocation). Возвращает exit code.
+    """
+    if argv is not None:
+        from typer.testing import CliRunner
+
+        runner = CliRunner()
+        result = runner.invoke(app, argv)
+        return result.exit_code
+    # CLI invocation: typer сам подхватит sys.argv[1:]
+    try:
+        app()
+    except SystemExit as exc:
+        return int(exc.code) if exc.code is not None else 0
+    return 0
+
+
+app = typer.Typer(
+    name="add-f401-multiline-noqa",
+    help="Silence F401 in multi-line parenthesized imports (D-AUDIT-3024 cycle-49).",
+    add_completion=False,
+)
+_console = Console()
+
+
+@app.callback(invoke_without_command=True)
+def _main(
+    ctx: typer.Context,
+    root: str = typer.Option(
+        "src/backend",
+        "--root",
+        help="Root dir to walk.",
+    ),
+    verbose: bool = typer.Option(
+        False,
+        "--verbose",
+        help="Enable DEBUG logging.",
+    ),
+) -> None:
+    """Silence F401 in multi-line parenthesized imports."""
+    if ctx.invoked_subcommand is not None:
+        return
+
+    logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO)
+
+    root_path = Path(root)
+    files = list(root_path.rglob("*.py"))
     total_changes = 0
     for f in files:
         if "__pycache__" in f.parts:
@@ -93,9 +141,8 @@ def main(argv: list[str] | None = None) -> int:
         if changes > 0:
             f.write_text(new_content, encoding="utf-8")
             total_changes += changes
-            _logger.info("Updated %s (+%d)", f, changes)
-    print(f"Total changes: {total_changes}")
-    return 0
+            _console.print(f"  [green]Updated[/] {f} (+{changes})")
+    _console.print(f"\n[bold]Total changes: {total_changes}[/]")
 
 
 if __name__ == "__main__":

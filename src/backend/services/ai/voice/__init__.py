@@ -14,7 +14,7 @@ Capabilities (V11.1): ``voice.stt.<provider>``, ``voice.tts.<provider>``.
 """
 
 from src.backend.services.ai.voice.coqui_tts import CoquiTTSService, TTSResult
-from src.backend.services.ai.voice.whisper_stt import (
+from src.backend.services.ai.voice.whisper_stt import (  # noqa: F401 — re-export
     STTResult,
     VoiceServiceUnavailable,
     WhisperSTTService,

@@ -45,7 +45,7 @@ from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from src.backend.dsl.registry.errors import (
+from src.backend.dsl.registry.errors import (  # noqa: F401 — re-export
     ProcessorConflictError,
     ProcessorNotFoundError,
 )

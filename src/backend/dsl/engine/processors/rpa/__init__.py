@@ -9,14 +9,14 @@ works через re-exports ниже.
 
 from __future__ import annotations
 
-from src.backend.dsl.engine.processors.rpa.documents import (  # S50 W4: re-export
+from src.backend.dsl.engine.processors.rpa.documents import (  # noqa: F401 — re-export  # S50 W4: re-export
     ExcelReadProcessor,
     PdfMergeProcessor,
     PdfReadProcessor,
     WordReadProcessor,
     WordWriteProcessor,
 )
-from src.backend.dsl.engine.processors.rpa.operations import (  # S50 W4: re-export
+from src.backend.dsl.engine.processors.rpa.operations import (  # noqa: F401 — re-export  # S50 W4: re-export
     ArchiveProcessor,
     DecryptProcessor,
     EncryptProcessor,
@@ -27,7 +27,7 @@ from src.backend.dsl.engine.processors.rpa.operations import (  # S50 W4: re-exp
     RegexProcessor,
     TemplateRenderProcessor,
 )
-from src.backend.dsl.engine.processors.rpa.system import (  # S50 W4: re-export
+from src.backend.dsl.engine.processors.rpa.system import (  # noqa: F401 — re-export  # S50 W4: re-export
     EmailComposeProcessor,
     ShellExecProcessor,
 )

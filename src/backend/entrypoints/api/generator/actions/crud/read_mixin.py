@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Sequence
 
-    from src.backend.entrypoints.api.generator.actions.crud._protocol import (
+    from src.backend.entrypoints.api.generator.actions.crud._protocol import (  # noqa: F401 — re-export
         _CrudMixinProtocol,
     )
-    from src.backend.entrypoints.api.generator.specs import (
+    from src.backend.entrypoints.api.generator.specs import (  # noqa: F401 — re-export
         CrudSpec,
         HttpMethod,
         RouteDecorator,
@@ -19,7 +19,7 @@ from fastapi_pagination import Params
 
 from src.backend.core.enums.ordering import OrderingTypeChoices
 from src.backend.entrypoints.api.generator.marshaller import decorate_endpoint
-from src.backend.entrypoints.api.generator.reflection import (
+from src.backend.entrypoints.api.generator.reflection import (  # noqa: F401 — re-export
     make_signature,
     path_parameter,
     query_parameter,

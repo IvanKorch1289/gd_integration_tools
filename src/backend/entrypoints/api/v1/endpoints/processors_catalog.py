@@ -21,7 +21,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from src.backend.entrypoints.api.generator.actions import (
+from src.backend.entrypoints.api.generator.actions import (  # noqa: F401 — re-export
     ActionRouterBuilder,
     ActionSpec,
 )

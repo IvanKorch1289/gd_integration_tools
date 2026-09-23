@@ -26,7 +26,7 @@ from src.backend.core.ai.gateway.gateway import AIGateway
 from src.backend.core.ai.gateway_models import AIRequest, AIResponse
 
 # Backward-compat re-export из orchestrator subpackage
-from src.backend.core.ai.gateway_orchestrator_mixin import (
+from src.backend.core.ai.gateway_orchestrator_mixin import (  # noqa: F401 — re-export
     EnforcedInvokeMixin as EnforcedInvokeMixin,
 )
 

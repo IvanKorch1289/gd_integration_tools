@@ -47,19 +47,19 @@ if TYPE_CHECKING:
     pass
 
 
-from src.backend.core.ai.gateway_pipeline_mixin.input_mixin import (
+from src.backend.core.ai.gateway_pipeline_mixin.input_mixin import (  # noqa: F401 — re-export
     InputMixin,  # S56 W2: MRO
 )
-from src.backend.core.ai.gateway_pipeline_mixin.llm_mixin import (
+from src.backend.core.ai.gateway_pipeline_mixin.llm_mixin import (  # noqa: F401 — re-export
     LlmInvocationMixin,  # S56 W2: MRO
 )
-from src.backend.core.ai.gateway_pipeline_mixin.observability_mixin import (
+from src.backend.core.ai.gateway_pipeline_mixin.observability_mixin import (  # noqa: F401 — re-export
     ObservabilityMixin,  # S56 W2: MRO
 )
-from src.backend.core.ai.gateway_pipeline_mixin.output_mixin import (
+from src.backend.core.ai.gateway_pipeline_mixin.output_mixin import (  # noqa: F401 — re-export
     OutputMixin,  # S56 W2: MRO
 )
-from src.backend.core.ai.gateway_pipeline_mixin.policy_mixin import (
+from src.backend.core.ai.gateway_pipeline_mixin.policy_mixin import (  # noqa: F401 — re-export
     PolicyMixin,  # S56 W2: MRO
 )
 

@@ -11,25 +11,25 @@ Backward-compat: ``from src.backend.dsl.engine.processors.eip.collection import 
 
 from __future__ import annotations
 
-from src.backend.dsl.engine.processors.eip.collection.aggregators import (
+from src.backend.dsl.engine.processors.eip.collection.aggregators import (  # noqa: F401 — re-export
     MaxByProcessor,  # S57 W3: re-export
     MinByProcessor,  # S57 W3: re-export
     SortByProcessor,  # S57 W3: re-export
     SumByProcessor,  # S57 W3: re-export
 )
-from src.backend.dsl.engine.processors.eip.collection.collect import (
+from src.backend.dsl.engine.processors.eip.collection.collect import (  # noqa: F401 — re-export
     CollectProcessor,  # S57 W3: re-export
     FindAllProcessor,  # S57 W3: re-export
     GroupByProcessor,  # S57 W3: re-export
     _resolve_field,  # S57 W3: re-export
 )
-from src.backend.dsl.engine.processors.eip.collection.partition import (
+from src.backend.dsl.engine.processors.eip.collection.partition import (  # noqa: F401 — re-export
     FlattenProcessor,  # S57 W3: re-export
     OrElseProcessor,  # S57 W3: re-export
     PartitionProcessor,  # S57 W3: re-export
     UniqueProcessor,  # S57 W3: re-export
 )
-from src.backend.dsl.engine.processors.eip.collection.set_ops import (
+from src.backend.dsl.engine.processors.eip.collection.set_ops import (  # noqa: F401 — re-export
     DiffProcessor,  # S57 W3: re-export
     IntersectProcessor,  # S57 W3: re-export
 )

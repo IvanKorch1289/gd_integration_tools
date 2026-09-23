@@ -289,7 +289,7 @@ class PolicyMarkerProcessor:
 
         # Интеграция с ResilienceCoordinator (опционально)
         try:
-            from src.backend.infrastructure.resilience.coordinator import (
+            from src.backend.infrastructure.resilience.coordinator import (  # noqa: F401 — re-export
                 ResilienceCoordinator,
             )
 

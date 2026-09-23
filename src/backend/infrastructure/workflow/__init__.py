@@ -15,7 +15,7 @@ Public re-exports (``__init__``) сохранены для импортёров 
 * :class:`WorkflowState` — materialized state + replay (fold events).
 """
 
-from src.backend.infrastructure.workflow.pg_runner_internals import (
+from src.backend.infrastructure.workflow.pg_runner_internals import (  # noqa: F401 — re-export
     WorkflowEventRow,
     WorkflowEventStore,
     WorkflowInstanceRow,

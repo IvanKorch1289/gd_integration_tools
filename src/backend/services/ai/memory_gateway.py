@@ -24,13 +24,13 @@ from collections.abc import Mapping
 from typing import Any
 
 from src.backend.core.di.app_state import app_state_singleton
-from src.backend.core.interfaces.agent_memory import (
+from src.backend.core.interfaces.agent_memory import (  # noqa: F401 — re-export
     AgentMemoryGateway,
     MemoryFact,
     MemoryMessage,
 )
 from src.backend.core.logging import get_logger
-from src.backend.services.ai.embedding_providers import (
+from src.backend.services.ai.embedding_providers import (  # noqa: F401 — re-export
     EmbeddingProvider,
     get_embedding_provider,
 )

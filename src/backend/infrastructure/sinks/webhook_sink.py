@@ -96,7 +96,7 @@ class WebhookSink(Sink):
 
         try:
             from src.backend.core.config.features import feature_flags
-            from src.backend.core.resilience.rpa_policy import (
+            from src.backend.core.resilience.rpa_policy import (  # noqa: F401 — re-export
                 RPACallExhausted,
                 get_rpa_policy,
             )

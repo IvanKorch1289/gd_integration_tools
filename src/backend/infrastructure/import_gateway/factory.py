@@ -25,13 +25,13 @@ def build_import_gateway(kind: ImportSourceKind) -> ImportGateway:
     """
     match kind:
         case ImportSourceKind.POSTMAN:
-            from src.backend.infrastructure.import_gateway.postman import (
+            from src.backend.infrastructure.import_gateway.postman import (  # noqa: F401 — re-export
                 PostmanImportGateway,
             )
 
             return PostmanImportGateway()
         case ImportSourceKind.OPENAPI:
-            from src.backend.infrastructure.import_gateway.openapi import (
+            from src.backend.infrastructure.import_gateway.openapi import (  # noqa: F401 — re-export
                 OpenAPIImportGateway,
             )
 

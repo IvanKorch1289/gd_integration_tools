@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from src.backend.core.config.ai import markitdown_settings
-from src.backend.services.ai.document_parsers._network import (
+from src.backend.services.ai.document_parsers._network import (  # noqa: F401 — re-export
     markitdown_network_disabled,
 )
 

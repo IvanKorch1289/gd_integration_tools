@@ -14,7 +14,7 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING
 
-from src.backend.core.ai.security.agent_security_types import (
+from src.backend.core.ai.security.agent_security_types import (  # noqa: F401 — re-export
     _DANGEROUS_SHELL_PATTERNS,
     _DANGEROUS_SQL_PATTERNS,
     _FORBIDDEN_FILE_PATTERNS,

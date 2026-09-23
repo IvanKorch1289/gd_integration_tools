@@ -27,7 +27,7 @@ from redis.asyncio import Redis as Redis
 from src.backend.core.config.settings import RedisSettings as RedisSettings
 from src.backend.core.config.settings import settings as settings
 from src.backend.core.logging import get_logger as get_logger
-from src.backend.infrastructure.resilience.client_breaker import (
+from src.backend.infrastructure.resilience.client_breaker import (  # noqa: F401 — re-export
     ClientCircuitBreaker as ClientCircuitBreaker,
 )
 
@@ -37,19 +37,19 @@ redis_logger = get_logger("redis")
 RedisKind = Literal["cache", "queue", "limits"]
 
 
-from src.backend.infrastructure.clients.storage.redis._protocol import (
+from src.backend.infrastructure.clients.storage.redis._protocol import (  # noqa: F401 — re-export
     _RedisClientProtocol,  # S146 W1: re-export для test imports
 )
-from src.backend.infrastructure.clients.storage.redis.cache_mixin import (
+from src.backend.infrastructure.clients.storage.redis.cache_mixin import (  # noqa: F401 — re-export
     CacheMixin,  # S59 W3: MRO
 )
-from src.backend.infrastructure.clients.storage.redis.connection_mixin import (
+from src.backend.infrastructure.clients.storage.redis.connection_mixin import (  # noqa: F401 — re-export
     ConnectionMixin,  # S59 W3: MRO
 )
-from src.backend.infrastructure.clients.storage.redis.helpers_mixin import (
+from src.backend.infrastructure.clients.storage.redis.helpers_mixin import (  # noqa: F401 — re-export
     HelpersMixin,  # S59 W3: MRO
 )
-from src.backend.infrastructure.clients.storage.redis.stream_mixin import (
+from src.backend.infrastructure.clients.storage.redis.stream_mixin import (  # noqa: F401 — re-export
     StreamMixin,  # S59 W3: MRO
 )
 

@@ -11,7 +11,7 @@ from typing import Any
 
 from src.backend.core.logging import get_logger
 from src.backend.core.models.notebooks import Notebook, NotebookVersion
-from src.backend.infrastructure.clients.storage.mongodb import (
+from src.backend.infrastructure.clients.storage.mongodb import (  # noqa: F401 — re-export
     MongoDBClient,
     get_mongo_client,
 )

@@ -44,7 +44,7 @@ async def _log_incoming(payload: dict[str, Any], *, sync_id: str) -> None:
     Best-effort — Mongo-сбой не должен срывать обработку команды.
     """
     try:
-        from src.backend.core.di.providers import (
+        from src.backend.core.di.providers import (  # noqa: F401 — re-export
             get_express_dialog_store_provider,
             get_express_session_store_provider,
         )

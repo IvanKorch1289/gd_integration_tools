@@ -28,7 +28,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.error_explainer.explainer import (
+from src.backend.core.error_explainer.explainer import (  # noqa: F401 — re-export
     ErrorExplainer,
     ErrorExplanation,
     explain_error,

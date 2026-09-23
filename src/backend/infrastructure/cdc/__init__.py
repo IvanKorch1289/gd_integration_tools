@@ -18,7 +18,7 @@ Backends:
 ``feature_flags.cdc_enabled`` (default-OFF).
 """
 
-from src.backend.infrastructure.cdc.debezium_events_backend import (
+from src.backend.infrastructure.cdc.debezium_events_backend import (  # noqa: F401 — re-export
     DebeziumEventsCDCBackend,
 )
 from src.backend.infrastructure.cdc.listen_notify_backend import ListenNotifyCDCBackend

@@ -11,7 +11,7 @@ from typing import Final
 from pydantic import BaseModel
 
 from src.backend.core.di.providers import get_external_session_manager_provider
-from src.backend.core.enums.external_db import (
+from src.backend.core.enums.external_db import (  # noqa: F401 — re-export
     ExternalDBObjectChoices,
     ExternalDBObjectMeta,
     ExternalDBObjectTypeChoices,
@@ -38,7 +38,7 @@ _IDENT_RE: Final = re.compile(
 _BIND_NAME_RE: Final = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
-from src.backend.services.io.external_database._protocol import (
+from src.backend.services.io.external_database._protocol import (  # noqa: F401 — re-export
     _ExternalDatabaseProtocol,
 )
 

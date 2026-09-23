@@ -27,7 +27,7 @@ from typing import Any
 
 from pydantic import TypeAdapter
 
-from src.backend.services.schema_registry.registry import (
+from src.backend.services.schema_registry.registry import (  # noqa: F401 — re-export
     CURRENT_SNAPSHOT_VERSION,
     SchemaEntry,
     SchemaKind,

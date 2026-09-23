@@ -24,7 +24,7 @@
 Использование:
     .. code-block:: python
 
-        from src.backend.core.security.activity_capability_guard import (
+        from src.backend.core.security.activity_capability_guard import (  # noqa: F401 — re-export
             capability_guarded_activity,
         )
 

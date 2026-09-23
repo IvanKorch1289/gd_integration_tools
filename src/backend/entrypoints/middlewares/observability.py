@@ -12,7 +12,7 @@ Architecture (Ponytail, D142): facade-pattern, не breaking change.
 
 Usage::
 
-    from src.backend.entrypoints.middlewares.observability import (
+    from src.backend.entrypoints.middlewares.observability import (  # noqa: F401 — re-export
         ObservabilityMiddleware, ObservabilityConfig,
     )
 

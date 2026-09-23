@@ -23,7 +23,7 @@ from typing import Any
 
 from src.backend.core.ai.agent_sandbox_protocol import AgentSandboxResult
 from src.backend.core.logging import get_logger
-from src.backend.services.ai.agent_sandbox._types import (
+from src.backend.services.ai.agent_sandbox._types import (  # noqa: F401 — re-export
     AgentSandboxConfigError,
     AgentSandboxTimeoutError,
 )
@@ -103,7 +103,7 @@ class E2BAgentSandbox:
 
         # Lazy import of e2b_code_interpreter (opt-in dep, ~5MB).
         try:
-            from e2b_code_interpreter import (
+            from e2b_code_interpreter import (  # noqa: F401 — re-export
                 Sandbox as _E2BSandbox,  # type: ignore[import-not-found]
             )
         except ImportError as exc:

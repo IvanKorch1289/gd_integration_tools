@@ -23,7 +23,7 @@ from contextlib import asynccontextmanager as asynccontextmanager
 
 from src.backend.core.errors import NotFoundError as NotFoundError
 from src.backend.core.errors import ServiceError as ServiceError
-from src.backend.core.utils.converters import (
+from src.backend.core.utils.converters import (  # noqa: F401 — re-export
     transfer_model_to_schema as transfer_model_to_schema,
 )
 from src.backend.schemas.base import BaseSchema as BaseSchema
@@ -35,18 +35,18 @@ def _is_orm_model(instance: Any) -> bool:
     return hasattr(cls, "__tablename__") and hasattr(cls, "__table__")
 
 
-from src.backend.services.core.base.cache_mixin import (
+from src.backend.services.core.base.cache_mixin import (  # noqa: F401 — re-export
     CacheMixin,  # S61 W1: MRO as CacheMixin  # S61 W1: MRO
 )
-from src.backend.services.core.base.crud_mixin import (
+from src.backend.services.core.base.crud_mixin import (  # noqa: F401 — re-export
     CrudMixin,  # S61 W1: MRO as CrudMixin  # S61 W1: MRO
 )
-from src.backend.services.core.base.helpers import (
+from src.backend.services.core.base.helpers import (  # noqa: F401 — re-export
     _is_orm_model,  # S61 W1: re-export
     create_service_class,  # S61 W1: re-export
     get_service_for_model,  # S61 W1: re-export
 )
-from src.backend.services.core.base.versioning_mixin import (
+from src.backend.services.core.base.versioning_mixin import (  # noqa: F401 — re-export
     VersioningMixin,  # S61 W1: MRO
 )
 

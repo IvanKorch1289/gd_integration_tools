@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from src.backend.core.security.capabilities.matchers import GlobScopeMatcher
 from src.backend.core.security.capabilities.vocabulary.models import CapabilityDef
-from src.backend.core.security.capabilities.vocabulary.vocabulary import (
+from src.backend.core.security.capabilities.vocabulary.vocabulary import (  # noqa: F401 — re-export
     CapabilityVocabulary,
 )
 

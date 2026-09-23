@@ -36,7 +36,7 @@ async def _express_send(payload: dict[str, Any]) -> None:
 
 async def _smtp_send(payload: dict[str, Any]) -> None:
     """Fallback 1: SMTP — переиспользует smtp_chain primary."""
-    from src.backend.infrastructure.resilience.components.smtp_chain import (
+    from src.backend.infrastructure.resilience.components.smtp_chain import (  # noqa: F401 — re-export
         build_smtp_primary,
     )
 

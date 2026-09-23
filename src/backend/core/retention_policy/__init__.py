@@ -17,7 +17,7 @@
 
 Использование::
 
-    from src.backend.core.retention_policy import (
+    from src.backend.core.retention_policy import (  # noqa: F401 — re-export
         RetentionEngine, RetentionPolicy, RetentionAction,
     )
 
@@ -37,7 +37,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.retention_policy.engine import (
+from src.backend.core.retention_policy.engine import (  # noqa: F401 — re-export
     LegalHold,
     RetentionAction,
     RetentionEngine,

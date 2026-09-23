@@ -8,7 +8,7 @@ Public API:
 
 from __future__ import annotations
 
-from src.backend.services.integrations.rule_engine.registry import (
+from src.backend.services.integrations.rule_engine.registry import (  # noqa: F401 — re-export
     RuleEngineRegistry,
     RulesetCacheEntry,
 )

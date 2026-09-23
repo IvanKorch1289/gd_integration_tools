@@ -115,7 +115,7 @@ class CompensatingDriverWorker:
         """Single scan: list_compensating → re-inject as rolled_back."""
         async with self._session_factory() as session:  # type: AsyncSession
             repo = self._session_factory.__class__.__module__  # placeholder
-            from src.backend.infrastructure.workflow.saga_state import (
+            from src.backend.infrastructure.workflow.saga_state import (  # noqa: F401 — re-export
                 WorkflowStateRepository,
             )
 

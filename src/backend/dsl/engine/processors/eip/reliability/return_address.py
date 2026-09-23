@@ -15,7 +15,7 @@ from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
-from src.backend.dsl.engine.processors.eip.reliability.common import (
+from src.backend.dsl.engine.processors.eip.reliability.common import (  # noqa: F401 — re-export
     HEADER_RETURN_ADDRESS,
 )
 

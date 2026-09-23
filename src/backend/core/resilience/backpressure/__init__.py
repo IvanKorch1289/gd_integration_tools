@@ -12,19 +12,19 @@ Backward-compat: ``from src.backend.core.resilience.backpressure import Streamin
 
 from __future__ import annotations
 
-from src.backend.core.resilience.backpressure.bulkhead import (
+from src.backend.core.resilience.backpressure.bulkhead import (  # noqa: F401 — re-export
     AdaptiveBulkhead,  # S67 W1: re-export
 )
-from src.backend.core.resilience.backpressure.controller import (
+from src.backend.core.resilience.backpressure.controller import (  # noqa: F401 — re-export
     StreamingBackpressureController,  # S67 W1: re-export
 )
-from src.backend.core.resilience.backpressure.helpers import (
+from src.backend.core.resilience.backpressure.helpers import (  # noqa: F401 — re-export
     get_streaming_controller,  # S67 W1: helper re-export
 )
-from src.backend.core.resilience.backpressure.stream_reader import (
+from src.backend.core.resilience.backpressure.stream_reader import (  # noqa: F401 — re-export
     AdaptiveStreamReader,  # S67 W1: re-export
 )
-from src.backend.core.resilience.backpressure.types import (
+from src.backend.core.resilience.backpressure.types import (  # noqa: F401 — re-export
     BackpressureState,  # S67 W1: re-export
     ConsumerControlProtocol,  # S67 W1: re-export
 )

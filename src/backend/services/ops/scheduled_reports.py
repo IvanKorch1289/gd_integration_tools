@@ -129,7 +129,7 @@ class ScheduledReportsService:
             # LOAD_GLOBAL не вызывает module __getattr__) -> каждый
             # run_now падал с NameError.
             from src.backend.core.api.extensions import action_handler_registry
-            from src.backend.core.types.invocation_command import (
+            from src.backend.core.types.invocation_command import (  # noqa: F401 — re-export
                 ActionCommandMetaSchema,
             )
             from src.backend.schemas.invocation import ActionCommandSchema
@@ -172,7 +172,7 @@ class ScheduledReportsService:
                 export_result = await export_method(rows=data)
 
             if report.delivery_to and export_result:
-                from src.backend.services.ops.notification_hub import (
+                from src.backend.services.ops.notification_hub import (  # noqa: F401 — re-export
                     get_notification_hub,
                 )
 

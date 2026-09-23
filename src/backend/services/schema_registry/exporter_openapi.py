@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from src.backend.services.schema_registry.registry import (
+from src.backend.services.schema_registry.registry import (  # noqa: F401 — re-export
     SchemaEntry,
     SchemaKind,
     ServiceSchemaRegistry,

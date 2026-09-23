@@ -33,7 +33,7 @@ def get_poll_cdc_backend_class() -> Any:
 
 def get_listen_notify_cdc_backend_class() -> Any:
     """Возвращает ``cdc.listen_notify_backend.ListenNotifyCDCBackend`` class."""
-    from src.backend.infrastructure.cdc.listen_notify_backend import (
+    from src.backend.infrastructure.cdc.listen_notify_backend import (  # noqa: F401 — re-export
         ListenNotifyCDCBackend,
     )
 
@@ -42,7 +42,7 @@ def get_listen_notify_cdc_backend_class() -> Any:
 
 def get_debezium_cdc_backend_class() -> Any:
     """Возвращает ``cdc.debezium_events_backend.DebeziumEventsCDCBackend`` class."""
-    from src.backend.infrastructure.cdc.debezium_events_backend import (
+    from src.backend.infrastructure.cdc.debezium_events_backend import (  # noqa: F401 — re-export
         DebeziumEventsCDCBackend,
     )
 
@@ -58,7 +58,7 @@ def get_cdc_client_adapter_class() -> Any:
 
 def get_debezium_events_cdc_backend_class() -> Any:
     """Возвращает ``cdc.debezium_events_backend.DebeziumEventsCDCBackend`` class."""
-    from src.backend.infrastructure.cdc.debezium_events_backend import (
+    from src.backend.infrastructure.cdc.debezium_events_backend import (  # noqa: F401 — re-export
         DebeziumEventsCDCBackend,
     )
 

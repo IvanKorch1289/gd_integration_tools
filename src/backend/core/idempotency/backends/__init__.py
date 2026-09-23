@@ -1,6 +1,6 @@
 """Backends for IdempotencyService — pluggable storage for idempotency entries."""
 
-from src.backend.core.idempotency.backends.base import (
+from src.backend.core.idempotency.backends.base import (  # noqa: F401 — re-export
     IdempotencyBackend,
     IdempotencyEntry,
     IdempotencyOutcome,

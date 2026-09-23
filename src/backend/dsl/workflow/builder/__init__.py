@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 from typing import TYPE_CHECKING as TYPE_CHECKING
 from typing import Self as Self
 
-from src.backend.dsl.workflow.spec import (
+from src.backend.dsl.workflow.spec import (  # noqa: F401 — re-export
     ActivityDeclaration,
     RetryPolicy,
     SagaDeclaration,
@@ -39,22 +39,22 @@ from src.backend.dsl.workflow.spec import (
 if TYPE_CHECKING:
     pass
 
-from src.backend.dsl.workflow.builder.ai_mixin import (
+from src.backend.dsl.workflow.builder.ai_mixin import (  # noqa: F401 — re-export
     AiAgentMixin,  # S58 W4: MRO as AiAgentMixin  # S58 W4: MRO
 )
-from src.backend.dsl.workflow.builder.gateway_mixin import (
+from src.backend.dsl.workflow.builder.gateway_mixin import (  # noqa: F401 — re-export
     GatewayMixin,  # cycle 33 restore: BPMN gateway DSL (P0 #8 + #9)
 )
-from src.backend.dsl.workflow.builder.lifecycle_mixin import (
+from src.backend.dsl.workflow.builder.lifecycle_mixin import (  # noqa: F401 — re-export
     LifecycleMixin,  # S58 W4: MRO
 )
-from src.backend.dsl.workflow.builder.sla_mixin import (
+from src.backend.dsl.workflow.builder.sla_mixin import (  # noqa: F401 — re-export
     SlaMixin,  # S58 W4: MRO as SlaMixin  # S58 W4: MRO
 )
-from src.backend.dsl.workflow.builder.wait_mixin import (
+from src.backend.dsl.workflow.builder.wait_mixin import (  # noqa: F401 — re-export
     WaitMixin,  # S58 W4: MRO as WaitMixin  # S58 W4: MRO
 )
-from src.backend.dsl.workflow.builder.workflow_mixin import (
+from src.backend.dsl.workflow.builder.workflow_mixin import (  # noqa: F401 — re-export
     WorkflowMixin,  # S58 W4: MRO as WorkflowMixin  # S58 W4: MRO
 )
 

@@ -14,29 +14,29 @@ Backward-compat: ``from src.backend.infrastructure.security.cert_store import Ce
 
 from __future__ import annotations
 
-from src.backend.core.config.cert_store import (
+from src.backend.core.config.cert_store import (  # noqa: F401 — re-export
     cert_store_settings as cert_store_settings,
 )
-from src.backend.infrastructure.security.cert_store.backend_base import (
+from src.backend.infrastructure.security.cert_store.backend_base import (  # noqa: F401 — re-export
     CertBackend,  # S55 W1: re-export
 )
-from src.backend.infrastructure.security.cert_store.backend_memory import (
+from src.backend.infrastructure.security.cert_store.backend_memory import (  # noqa: F401 — re-export
     MemoryCertBackend,  # S55 W1: re-export
 )
-from src.backend.infrastructure.security.cert_store.backend_mongo import (
+from src.backend.infrastructure.security.cert_store.backend_mongo import (  # noqa: F401 — re-export
     MongoCertBackend,  # S55 W1: re-export
 )
-from src.backend.infrastructure.security.cert_store.backend_postgres import (
+from src.backend.infrastructure.security.cert_store.backend_postgres import (  # noqa: F401 — re-export
     PostgresCertBackend,  # S55 W1: re-export
 )
-from src.backend.infrastructure.security.cert_store.backend_vault import (
+from src.backend.infrastructure.security.cert_store.backend_vault import (  # noqa: F401 — re-export
     VaultCertBackend,  # S55 W1: re-export
 )
-from src.backend.infrastructure.security.cert_store.models import (
+from src.backend.infrastructure.security.cert_store.models import (  # noqa: F401 — re-export
     CertEntry,  # S55 W1: re-export
     _fingerprint,  # S55 W1: re-export
 )
-from src.backend.infrastructure.security.cert_store.store import (
+from src.backend.infrastructure.security.cert_store.store import (  # noqa: F401 — re-export
     CertStore,  # S55 W1: re-export
 )
 
@@ -62,6 +62,6 @@ def create_cert_store() -> CertStore:
 
 
 # S171 M16: file watcher для cert hot-reload (D245)
-from src.backend.infrastructure.security.cert_store.hot_reload import (
+from src.backend.infrastructure.security.cert_store.hot_reload import (  # noqa: F401 — re-export
     CertFileWatcher as CertFileWatcher,
 )

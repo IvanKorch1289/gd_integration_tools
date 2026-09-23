@@ -31,7 +31,7 @@ from src.backend.services.execution.invoker.helpers import _run_deferred_job
 from datetime import UTC, datetime, timedelta
 
 from src.backend.core.interfaces.invocation_reply import ReplyChannelKind
-from src.backend.core.interfaces.invoker import (
+from src.backend.core.interfaces.invoker import (  # noqa: F401 — re-export
     InvocationRequest,
     InvocationResponse,
     InvocationStatus,

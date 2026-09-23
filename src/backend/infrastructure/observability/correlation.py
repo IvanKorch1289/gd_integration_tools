@@ -16,7 +16,7 @@ For tests, verify: tests/unit/core/observability/test_correlation.py
 from __future__ import annotations
 
 # re-exports are intentional
-from src.backend.core.observability.correlation import (
+from src.backend.core.observability.correlation import (  # noqa: F401 — re-export
     correlation_id_var,
     get_correlation_id,
     get_request_id,

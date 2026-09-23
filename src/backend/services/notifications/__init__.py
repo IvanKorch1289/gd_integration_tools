@@ -5,7 +5,7 @@
     get_notification_service    — singleton-геттер.
 """
 
-from src.backend.services.notifications.apprise_service import (
+from src.backend.services.notifications.apprise_service import (  # noqa: F401 — re-export
     AppriseNotificationService,
     get_notification_service,
 )

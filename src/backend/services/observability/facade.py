@@ -83,7 +83,7 @@ class ObservabilityFacade:
 
         """
         try:
-            from src.backend.core.observability.correlation import (
+            from src.backend.core.observability.correlation import (  # noqa: F401 — re-export
                 start_span as _start_span,
             )
 
@@ -101,7 +101,7 @@ class ObservabilityFacade:
 
         """
         try:
-            from src.backend.core.observability.correlation import (
+            from src.backend.core.observability.correlation import (  # noqa: F401 — re-export
                 set_correlation_id as _set_cid,
             )
 
@@ -117,7 +117,7 @@ class ObservabilityFacade:
 
         """
         try:
-            from src.backend.core.observability.correlation import (
+            from src.backend.core.observability.correlation import (  # noqa: F401 — re-export
                 get_correlation_id as _get_cid,
             )
 
@@ -147,7 +147,7 @@ class ObservabilityFacade:
 
         """
         try:
-            from src.backend.core.observability.logging_helpers import (
+            from src.backend.core.observability.logging_helpers import (  # noqa: F401 — re-export
                 log_audit_event_lite,
             )
 

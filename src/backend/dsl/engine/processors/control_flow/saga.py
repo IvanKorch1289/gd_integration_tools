@@ -182,7 +182,7 @@ async def _emit_saga_audit(
     должно ломать основной saga-flow.
     """
     try:
-        from src.backend.services.audit.workflow_audit_sink import (
+        from src.backend.services.audit.workflow_audit_sink import (  # noqa: F401 — re-export
             get_workflow_audit_sink,
         )
 

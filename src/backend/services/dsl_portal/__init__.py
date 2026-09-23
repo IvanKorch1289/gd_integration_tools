@@ -14,7 +14,7 @@ backend-services-only, см. ``tools/check_layers.py`` R3.10d).
 
 Из frontend нужно импортировать **только** этот модуль:
 
-    from src.backend.services.dsl_portal import (
+    from src.backend.services.dsl_portal import (  # noqa: F401 — re-export
         Pipeline, load_pipeline_from_yaml,
         list_route_ids, get_route_pipeline,
         execute_route, list_audit_records,
@@ -26,7 +26,7 @@ backend-services-only, см. ``tools/check_layers.py`` R3.10d).
 
 from __future__ import annotations
 
-from src.backend.services.dsl_portal.builder_facade import (
+from src.backend.services.dsl_portal.builder_facade import (  # noqa: F401 — re-export
     Pipeline,
     WorkflowDeclaration,
     compute_step_diff,

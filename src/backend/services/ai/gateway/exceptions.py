@@ -6,7 +6,7 @@ Canonical location: core.ai.errors
 
 from __future__ import annotations
 
-from src.backend.core.ai.errors import (
+from src.backend.core.ai.errors import (  # noqa: F401 — re-export
     GatewayError,
     GatewayRateLimited,
     GatewayUnavailable,

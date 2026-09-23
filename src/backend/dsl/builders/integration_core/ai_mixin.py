@@ -51,7 +51,7 @@ class AiOpsMixin:
             name: Имя процессора в трейсах/метриках.
 
         """
-        from src.backend.dsl.engine.processors.llm_structured import (
+        from src.backend.dsl.engine.processors.llm_structured import (  # noqa: F401 — re-export
             LLMStructuredProcessor,
         )
 

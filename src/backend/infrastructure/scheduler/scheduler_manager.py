@@ -5,7 +5,7 @@ from typing import Any
 from src.backend.core.config.constants import consts
 from src.backend.core.config.settings import settings
 from src.backend.core.logging import get_logger
-from src.backend.infrastructure.scheduler.scheduled_tasks import (
+from src.backend.infrastructure.scheduler.scheduled_tasks import (  # noqa: F401 — re-export
     check_all_services,
     consolidate_idle_sessions,
 )
@@ -85,7 +85,7 @@ class SchedulerManager:
         self.scheduler.start()
 
         try:
-            from src.backend.infrastructure.scheduler.observability import (
+            from src.backend.infrastructure.scheduler.observability import (  # noqa: F401 — re-export
                 attach_scheduler_metrics,
                 report_jobstore_type,
             )

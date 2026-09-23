@@ -13,7 +13,7 @@ from typing import Any
 
 from src.backend.core.logging import get_logger
 from src.backend.infrastructure.clients.storage.clickhouse import get_clickhouse_client
-from src.backend.infrastructure.clients.storage.elasticsearch import (
+from src.backend.infrastructure.clients.storage.elasticsearch import (  # noqa: F401 — re-export
     get_elasticsearch_client,
 )
 from src.backend.infrastructure.clients.storage.mongodb import get_mongo_client
@@ -31,7 +31,7 @@ async def _register_pools_in_unified_manager() -> None:
     all backend pools.
     """
     try:
-        from src.backend.infrastructure.clients.unified_pool_manager import (
+        from src.backend.infrastructure.clients.unified_pool_manager import (  # noqa: F401 — re-export
             get_unified_pool_manager,
         )
     except ImportError:
@@ -148,7 +148,7 @@ async def _register_pools_in_unified_manager() -> None:
 
     # S181: IMAP pool registration.
     try:
-        from src.backend.infrastructure.clients.transport.imap_pool import (
+        from src.backend.infrastructure.clients.transport.imap_pool import (  # noqa: F401 — re-export
             ImapConnectionPool,
         )
 
@@ -163,7 +163,7 @@ async def _register_pools_in_unified_manager() -> None:
 
     # S181: NATS pool registration.
     try:
-        from src.backend.infrastructure.clients.transport.nats_pool import (
+        from src.backend.infrastructure.clients.transport.nats_pool import (  # noqa: F401 — re-export
             NatsConnectionPool,
         )
 
@@ -202,7 +202,7 @@ async def _register_pools_in_unified_manager() -> None:
 
         if feature_flags.ai_gateway_enforce:
             from src.backend.services.ai.gateway.client import get_litellm_gateway
-            from src.backend.services.ai.gateway.pool_registration import (
+            from src.backend.services.ai.gateway.pool_registration import (  # noqa: F401 — re-export
                 register_litellm_pool,
             )
 
@@ -225,7 +225,7 @@ async def _register_pools_in_unified_manager() -> None:
     # Регистрирует Kafka producer pool если доступен (через FastStream/aiokafka).
     # Pool registered как LOGICAL pool с custom ping_fn для liveness check.
     try:
-        from src.backend.infrastructure.messaging.kafka_pool_registration import (
+        from src.backend.infrastructure.messaging.kafka_pool_registration import (  # noqa: F401 — re-export
             register_kafka_pool_if_available,
         )
 
@@ -258,7 +258,7 @@ async def _register_pools_in_unified_manager() -> None:
 
     # JupyterHub
     try:
-        from src.backend.infrastructure.clients.external.jupyter_hub import (
+        from src.backend.infrastructure.clients.external.jupyter_hub import (  # noqa: F401 — re-export
             JupyterHubClient,
         )
 
@@ -294,7 +294,7 @@ async def _register_pools_in_unified_manager() -> None:
 
     # Vault
     try:
-        from src.backend.infrastructure.security.vault_secrets import (
+        from src.backend.infrastructure.security.vault_secrets import (  # noqa: F401 — re-export
             VaultSecretsBackend,
         )
 
@@ -310,7 +310,7 @@ async def _register_pools_in_unified_manager() -> None:
 
     # SearchProviders (Perplexity/Tavily/SearXNG)
     try:
-        from src.backend.infrastructure.clients.external.search_providers import (
+        from src.backend.infrastructure.clients.external.search_providers import (  # noqa: F401 — re-export
             WebSearchService,
         )
 

@@ -11,47 +11,47 @@ per-class files (not from ai_processors.py).
 # FraudDetectionProcessor≈AntiFraudScoreProcessor (S50 kept).
 # Per-class AI processors (extracted from ai_processors.py, ADR-0102)
 from src.backend.dsl.engine.processors.ai.cache_processor import CacheProcessor
-from src.backend.dsl.engine.processors.ai.cachewrite_processor import (
+from src.backend.dsl.engine.processors.ai.cachewrite_processor import (  # noqa: F401 — re-export
     CacheWriteProcessor,
 )
-from src.backend.dsl.engine.processors.ai.getfeedbackexamples_processor import (
+from src.backend.dsl.engine.processors.ai.getfeedbackexamples_processor import (  # noqa: F401 — re-export
     GetFeedbackExamplesProcessor,
 )
-from src.backend.dsl.engine.processors.ai.guardrails_processor import (
+from src.backend.dsl.engine.processors.ai.guardrails_processor import (  # noqa: F401 — re-export
     GuardrailsProcessor,
 )
 from src.backend.dsl.engine.processors.ai.llmcall_processor import LLMCallProcessor
-from src.backend.dsl.engine.processors.ai.llmfallback_processor import (
+from src.backend.dsl.engine.processors.ai.llmfallback_processor import (  # noqa: F401 — re-export
     LLMFallbackProcessor,
 )
 from src.backend.dsl.engine.processors.ai.llmparser_processor import LLMParserProcessor
-from src.backend.dsl.engine.processors.ai.promptcomposer_processor import (
+from src.backend.dsl.engine.processors.ai.promptcomposer_processor import (  # noqa: F401 — re-export
     PromptComposerProcessor,
 )
 from src.backend.dsl.engine.processors.ai.ragingest_processor import RagIngestProcessor
-from src.backend.dsl.engine.processors.ai.ragpiiredaction_processor import (
+from src.backend.dsl.engine.processors.ai.ragpiiredaction_processor import (  # noqa: F401 — re-export
     RagPIIRedactionProcessor,
 )
 from src.backend.dsl.engine.processors.ai.ragquery_processor import RagQueryProcessor
 
 # Reranker processor (separately added in sibling split)
 from src.backend.dsl.engine.processors.ai.reranker import RerankerProcessor
-from src.backend.dsl.engine.processors.ai.restorepii_processor import (
+from src.backend.dsl.engine.processors.ai.restorepii_processor import (  # noqa: F401 — re-export
     RestorePIIProcessor,
 )
-from src.backend.dsl.engine.processors.ai.sanitizepii_processor import (
+from src.backend.dsl.engine.processors.ai.sanitizepii_processor import (  # noqa: F401 — re-export
     SanitizePIIProcessor,
 )
-from src.backend.dsl.engine.processors.ai.semanticrouter_processor import (
+from src.backend.dsl.engine.processors.ai.semanticrouter_processor import (  # noqa: F401 — re-export
     SemanticRouterProcessor,
 )
-from src.backend.dsl.engine.processors.ai.tokenbudget_processor import (
+from src.backend.dsl.engine.processors.ai.tokenbudget_processor import (  # noqa: F401 — re-export
     TokenBudgetProcessor,
 )
-from src.backend.dsl.engine.processors.ai.vectorsearch_processor import (
+from src.backend.dsl.engine.processors.ai.vectorsearch_processor import (  # noqa: F401 — re-export
     VectorSearchProcessor,
 )
-from src.backend.dsl.engine.processors.ai_banking import (
+from src.backend.dsl.engine.processors.ai_banking import (  # noqa: F401 — re-export
     CustomerSegmentationProcessor,
     LoanEligibilityProcessor,
     RiskAssessmentProcessor,

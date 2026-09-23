@@ -50,7 +50,7 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
     from pydantic_ai.usage import RequestUsage as _RequestUsage
 
     try:
-        from pydantic_ai.tools import (
+        from pydantic_ai.tools import (  # noqa: F401 — re-export
             AbstractNativeTool as _AbstractNativeTool,  # type: ignore[attr-defined]
         )
     except ImportError:  # pragma: no cover — version-specific

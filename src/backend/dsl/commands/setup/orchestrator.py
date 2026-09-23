@@ -7,7 +7,7 @@ Functions: register_action_handlers.
 
 from __future__ import annotations
 
-from src.backend.dsl.commands.setup.registers_domains import (
+from src.backend.dsl.commands.setup.registers_domains import (  # noqa: F401 — re-export
     _register_admin,  # S66 W2: orchestrator cross-import
     _register_dadata,  # S66 W2: orchestrator cross-import
     _register_files,  # S66 W2: orchestrator cross-import
@@ -18,7 +18,7 @@ from src.backend.dsl.commands.setup.registers_domains import (
     _register_tech,  # S66 W2: orchestrator cross-import
     _register_users,  # ITER 15: DSL-2 fix
 )
-from src.backend.dsl.commands.setup.registers_integrations import (
+from src.backend.dsl.commands.setup.registers_integrations import (  # noqa: F401 — re-export
     _register_agent_memory,  # S66 W2: orchestrator cross-import
     _register_ai,  # S66 W2: orchestrator cross-import
     _register_analytics_clickhouse,  # S66 W2: orchestrator cross-import
@@ -28,7 +28,7 @@ from src.backend.dsl.commands.setup.registers_integrations import (
     _register_search_elasticsearch,  # S66 W2: orchestrator cross-import
     _register_web_search_perplexity_tavily,  # S66 W2: orchestrator cross-import
 )
-from src.backend.dsl.commands.setup.registers_workflow import (
+from src.backend.dsl.commands.setup.registers_workflow import (  # noqa: F401 — re-export
     _register_data_export_excel_csv_pdf,  # S66 W2: orchestrator cross-import
     _register_data_quality,  # S66 W2: orchestrator cross-import
     _register_importgateway_w24,  # S66 W2: orchestrator cross-import

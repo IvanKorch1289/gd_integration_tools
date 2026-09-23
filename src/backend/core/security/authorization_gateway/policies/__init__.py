@@ -6,7 +6,7 @@
 
 Пример::
 
-    from src.backend.core.security.authorization_gateway.policies import (
+    from src.backend.core.security.authorization_gateway.policies import (  # noqa: F401 — re-export
         build_opa_policy_decider,
     )
 
@@ -21,11 +21,11 @@
 
 from __future__ import annotations
 
-from src.backend.core.security.authorization_gateway.policies.casbin_policy_decider import (
+from src.backend.core.security.authorization_gateway.policies.casbin_policy_decider import (  # noqa: F401 — re-export
     CasbinPolicyDecider,
     build_casbin_policy_decider,
 )
-from src.backend.core.security.authorization_gateway.policies.opa_policy_decider import (
+from src.backend.core.security.authorization_gateway.policies.opa_policy_decider import (  # noqa: F401 — re-export
     OPAPolicyDecider,
     build_opa_policy_decider,
 )

@@ -5,7 +5,7 @@
 примера: ``EchoAgent`` и ``RagAnsweringAgent``.
 """
 
-from src.backend.services.ai.agents_pydantic.base import (
+from src.backend.services.ai.agents_pydantic.base import (  # noqa: F401 — re-export
     BasePydanticAgent,
     PydanticAIUnavailable,
 )

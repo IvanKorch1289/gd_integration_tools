@@ -32,23 +32,23 @@ from __future__ import annotations
 # чтобы избежать DeprecationWarning на каждом import :mod:`dsl.processors`.
 from src.backend.dsl.engine.processors.batch_processor import BatchProcessor
 from src.backend.dsl.engine.processors.data_lineage import DataLineageProcessor
-from src.backend.dsl.engine.processors.plan_execute_processor import (
+from src.backend.dsl.engine.processors.plan_execute_processor import (  # noqa: F401 — re-export
     PlanExecuteMixin,
     PlanExecuteProcessor,
     PlanResult,
     PlanStep,
 )
-from src.backend.dsl.engine.processors.reflection_loop_processor import (
+from src.backend.dsl.engine.processors.reflection_loop_processor import (  # noqa: F401 — re-export
     ReflectionLoopProcessor,
 )
-from src.backend.dsl.engine.processors.router_specialist_processor import (
+from src.backend.dsl.engine.processors.router_specialist_processor import (  # noqa: F401 — re-export
     RouterSpecialistProcessor,
 )
 from src.backend.dsl.engine.processors.strangler_fig import StranglerFigProcessor
 
 # W2 P0-3 Phase 1C: event_store/ и idp_pipeline_processor/ subpackages.
 # Re-export from canonical subpackage (НЕ через legacy shim).
-from src.backend.dsl.engine.processors.event_store import (
+from src.backend.dsl.engine.processors.event_store import (  # noqa: F401 — re-export
     CQRSMixin,
     CommandBus,
     Event,
@@ -62,7 +62,7 @@ from src.backend.dsl.engine.processors.event_store import (
     reset_event_store,
     set_event_store,
 )
-from src.backend.dsl.engine.processors.idp_pipeline_processor import (
+from src.backend.dsl.engine.processors.idp_pipeline_processor import (  # noqa: F401 — re-export
     IDPPipelineProcessor,
     classify_document,
     extract_fields,
@@ -72,7 +72,7 @@ from src.backend.dsl.engine.processors.idp_pipeline_processor import (
 # W2 P0-3 Phase 2: SagaLRAProcessor canonical — saga_lra_processor subpackage
 # (mixin-based, state machine с 5 states + SagaCompensationError/SagaLRAError).
 # Это ДРУГАЯ реализация, не дубликат current saga_lra.py (single-file).
-from src.backend.dsl.engine.processors.saga_lra_processor import (
+from src.backend.dsl.engine.processors.saga_lra_processor import (  # noqa: F401 — re-export
     SagaLRAProcessor,
     SagaLRAError,
     SagaCompensationError,

@@ -141,7 +141,7 @@ class PolicyMixin(_PipelineStepsProtocol):
                     "AIGateway: capability check for %s failed: %s", capability, exc
                 )
         except Exception as exc:
-            from src.backend.core.security.capabilities.errors import (
+            from src.backend.core.security.capabilities.errors import (  # noqa: F401 — re-export
                 CapabilityDeniedError as _CapabilityDeniedError,
             )
 
@@ -196,7 +196,7 @@ class PolicyMixin(_PipelineStepsProtocol):
                 Exception
             ):  # pragma: no cover  # nosec B110 — audit must never block main flow
                 pass
-            from src.backend.core.security.capabilities.errors import (
+            from src.backend.core.security.capabilities.errors import (  # noqa: F401 — re-export
                 CapabilityDeniedError,
             )
 

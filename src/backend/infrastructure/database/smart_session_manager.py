@@ -124,7 +124,7 @@ class SmartSessionManager:
             # FW6.1: перешли с CircuitBreakerSpec (DEPRECATED shim) на
             # канонический BreakerSpec. Поля идентичны для нашего use-case.
             from src.backend.core.resilience.breaker import BreakerSpec
-            from src.backend.core.resilience.circuit_breaker import (
+            from src.backend.core.resilience.circuit_breaker import (  # noqa: F401 — re-export
                 ReplicaFailoverBreaker,
             )
 

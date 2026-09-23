@@ -12,7 +12,7 @@ import importlib
 from src.backend.core.interfaces.plugin import BasePlugin, PluginContext
 from src.backend.core.logging import get_logger
 from src.backend.core.plugin_runtime.compat_checker import CompatViolation
-from src.backend.core.plugin_runtime.manifest_toml import (
+from src.backend.core.plugin_runtime.manifest_toml import (  # noqa: F401 — re-export
     PluginManifest,
     PluginManifestError,
     load_plugin_manifest,

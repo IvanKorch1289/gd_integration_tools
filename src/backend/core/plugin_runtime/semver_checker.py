@@ -8,7 +8,7 @@
     - режим strict управляется feature_flag.plugin_semver_strict (default-OFF).
 
 Использование:
-    from src.backend.core.plugin_runtime.semver_checker import (
+    from src.backend.core.plugin_runtime.semver_checker import (  # noqa: F401 — re-export
         check_plugin_semver,
         is_compatible,
         SemverCheckResult,

@@ -53,7 +53,7 @@ async def bootstrap_v11_plugin_loader(app: FastAPI) -> None:
         from src.backend.dsl.commands.action_registry import action_handler_registry
         from src.backend.dsl.engine.plugin_registry import get_processor_plugin_registry
         from src.backend.services.plugins.loader import PluginLoader
-        from src.backend.services.plugins.registries import (
+        from src.backend.services.plugins.registries import (  # noqa: F401 — re-export
             ActionRegistryAdapter,
             ProcessorRegistryAdapter,
             get_repository_hook_registry,

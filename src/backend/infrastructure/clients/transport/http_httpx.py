@@ -21,7 +21,7 @@ from collections.abc import Mapping
 from typing import Any
 
 import httpx
-from tenacity import (
+from tenacity import (  # noqa: F401 — re-export
     RetryError,
     before_sleep_log,
     retry,
@@ -34,19 +34,19 @@ from tenacity import (
 from src.backend.core.codec.json import json_dumps
 from src.backend.core.config.settings import settings
 from src.backend.core.logging import get_logger
-from src.backend.core.resilience.breaker import (
+from src.backend.core.resilience.breaker import (  # noqa: F401 — re-export
     Breaker,
     BreakerSpec,
     CircuitOpen,
     get_breaker_registry,
 )
-from src.backend.infrastructure.clients.transport.httpx_cache_adapter import (
+from src.backend.infrastructure.clients.transport.httpx_cache_adapter import (  # noqa: F401 — re-export
     build_cache_transport,
     is_hishel_available,
 )
 from src.backend.infrastructure.resilience.bulkhead import registry as bulkhead_registry
 from src.backend.infrastructure.resilience.time_limiter import TimeLimiter
-from src.backend.infrastructure.resilience.unified_rate_limiter import (
+from src.backend.infrastructure.resilience.unified_rate_limiter import (  # noqa: F401 — re-export
     RateLimitExceeded,
     ResourceRateLimiter,
 )

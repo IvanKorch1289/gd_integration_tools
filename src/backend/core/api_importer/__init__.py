@@ -17,7 +17,7 @@
 
 Использование::
 
-    from src.backend.core.api_importer import (
+    from src.backend.core.api_importer import (  # noqa: F401 — re-export
         APIImporter, import_openapi, generate_route_draft,
     )
 
@@ -30,7 +30,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.api_importer.importer import (
+from src.backend.core.api_importer.importer import (  # noqa: F401 — re-export
     APIImporter,
     ConnectorDraft,
     ImportedAPI,

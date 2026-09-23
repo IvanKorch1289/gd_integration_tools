@@ -10,7 +10,7 @@ Backward-compat: ``from src.backend.services.audit.clickhouse_audit_service impo
 
 from __future__ import annotations
 
-from src.backend.services.audit.clickhouse_audit_service.helpers import (
+from src.backend.services.audit.clickhouse_audit_service.helpers import (  # noqa: F401 — re-export
     _make_default_event_id,  # S68 W2: helper re-export
     _make_default_timestamp,  # S68 W2: helper re-export
     _service_instance,  # S140 W5: re-export for test singleton reset
@@ -18,10 +18,10 @@ from src.backend.services.audit.clickhouse_audit_service.helpers import (
     get_audit_service,  # S68 W2: helper re-export
     make_audit_event,  # S68 W2: helper re-export
 )
-from src.backend.services.audit.clickhouse_audit_service.service import (
+from src.backend.services.audit.clickhouse_audit_service.service import (  # noqa: F401 — re-export
     ClickHouseAuditService,  # S68 W2: re-export
 )
-from src.backend.services.audit.clickhouse_audit_service.state import (
+from src.backend.services.audit.clickhouse_audit_service.state import (  # noqa: F401 — re-export
     AuditEvent,  # S68 W2: re-export
 )
 

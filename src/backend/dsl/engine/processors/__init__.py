@@ -6,7 +6,7 @@
 
 from src.backend.dsl.engine.processors.agent_dsl.agent_graph import AgentGraphProcessor
 from src.backend.dsl.engine.processors.agent_dsl.mcp_tool import MCPToolProcessor
-from src.backend.dsl.engine.processors.ai import (
+from src.backend.dsl.engine.processors.ai import (  # noqa: F401 — re-export
     CacheProcessor,
     CacheWriteProcessor,
     GetFeedbackExamplesProcessor,
@@ -24,7 +24,7 @@ from src.backend.dsl.engine.processors.ai import (
     TokenBudgetProcessor,
     VectorSearchProcessor,
 )
-from src.backend.dsl.engine.processors.ai_banking import (
+from src.backend.dsl.engine.processors.ai_banking import (  # noqa: F401 — re-export
     AntiFraudScoreProcessor,
     AppealProcessorAI,
     CreditScoringRagProcessor,
@@ -38,17 +38,17 @@ from src.backend.dsl.engine.processors.ai_banking import (
 )
 from src.backend.dsl.engine.processors.ai_rpa import AIRpaProcessor
 from src.backend.dsl.engine.processors.audit import AuditProcessor
-from src.backend.dsl.engine.processors.base import (
+from src.backend.dsl.engine.processors.base import (  # noqa: F401 — re-export
     BaseProcessor,
     CallableProcessor,
     ProcessorCallable,
 )
-from src.backend.dsl.engine.processors.batch import (
+from src.backend.dsl.engine.processors.batch import (  # noqa: F401 — re-export
     BatchDeleteProcessor,
     BatchInsertProcessor,
     BatchUpdateProcessor,
 )
-from src.backend.dsl.engine.processors.business import (
+from src.backend.dsl.engine.processors.business import (  # noqa: F401 — re-export
     ComplianceLabelProcessor,
     CostTrackerProcessor,
     DataMaskingProcessor,
@@ -58,7 +58,7 @@ from src.backend.dsl.engine.processors.business import (
 )
 from src.backend.dsl.engine.processors.cancel_workflow import CancelWorkflowProcessor
 from src.backend.dsl.engine.processors.cdc_capture import CDCCaptureProcessor
-from src.backend.dsl.engine.processors.components import (
+from src.backend.dsl.engine.processors.components import (  # noqa: F401 — re-export
     DatabaseQueryProcessor,
     FileReadProcessor,
     FileWriteProcessor,
@@ -69,7 +69,7 @@ from src.backend.dsl.engine.processors.components import (
     TimerProcessor,
 )
 from src.backend.dsl.engine.processors.composed_message import ComposedMessageProcessor
-from src.backend.dsl.engine.processors.control_flow import (
+from src.backend.dsl.engine.processors.control_flow import (  # noqa: F401 — re-export
     ChoiceBranch,
     ChoiceProcessor,
     ParallelProcessor,
@@ -80,7 +80,7 @@ from src.backend.dsl.engine.processors.control_flow import (
     TryCatchProcessor,
 )
 from src.backend.dsl.engine.processors.converters import ConvertProcessor
-from src.backend.dsl.engine.processors.core import (
+from src.backend.dsl.engine.processors.core import (  # noqa: F401 — re-export
     DispatchActionProcessor,
     EnrichProcessor,
     FilterProcessor,
@@ -90,19 +90,19 @@ from src.backend.dsl.engine.processors.core import (
     TransformProcessor,
     ValidateProcessor,
 )
-from src.backend.dsl.engine.processors.data_store import (
+from src.backend.dsl.engine.processors.data_store import (  # noqa: F401 — re-export
     DataStoreDeleteProcessor,
     DataStoreGetProcessor,
     DataStoreSetProcessor,
 )
 from src.backend.dsl.engine.processors.db_query_external import ExternalDbQueryProcessor
-from src.backend.dsl.engine.processors.documents import (
+from src.backend.dsl.engine.processors.documents import (  # noqa: F401 — re-export
     RenderDocxParams,
     RenderDocxProcessor,
     RenderXlsxParams,
     RenderXlsxProcessor,
 )
-from src.backend.dsl.engine.processors.eip import (
+from src.backend.dsl.engine.processors.eip import (  # noqa: F401 — re-export
     AggregatorProcessor,
     CircuitBreakerProcessor,
     ClaimCheckProcessor,
@@ -129,7 +129,7 @@ from src.backend.dsl.engine.processors.eip import (
     WireTapProcessor,
 )
 from src.backend.dsl.engine.processors.email_trigger import EmailTriggerProcessor
-from src.backend.dsl.engine.processors.entity import (
+from src.backend.dsl.engine.processors.entity import (  # noqa: F401 — re-export
     EntityCreateProcessor,
     EntityDeleteProcessor,
     EntityGetProcessor,
@@ -138,7 +138,7 @@ from src.backend.dsl.engine.processors.entity import (
 )
 from src.backend.dsl.engine.processors.export import ExportProcessor
 from src.backend.dsl.engine.processors.external import CDCProcessor
-from src.backend.dsl.engine.processors.generic import (
+from src.backend.dsl.engine.processors.generic import (  # noqa: F401 — re-export
     AbTestRouterProcessor,
     BulkheadProcessor,
     FeatureFlagGuardProcessor,
@@ -150,7 +150,7 @@ from src.backend.dsl.engine.processors.generic import (
 from src.backend.dsl.engine.processors.graphql_query import GraphQLQueryProcessor
 from src.backend.dsl.engine.processors.hitl_approval import HitlApprovalProcessor
 from src.backend.dsl.engine.processors.ingest_file import IngestFileProcessor
-from src.backend.dsl.engine.processors.integration import (
+from src.backend.dsl.engine.processors.integration import (  # noqa: F401 — re-export
     EventPublishProcessor,
     MemoryLoadProcessor,
     MemorySaveProcessor,
@@ -159,7 +159,7 @@ from src.backend.dsl.engine.processors.invoke import InvokeProcessor
 from src.backend.dsl.engine.processors.invoke_workflow import InvokeWorkflowProcessor
 from src.backend.dsl.engine.processors.ml_predict import MLPredictProcessor
 from src.backend.dsl.engine.processors.notify import NotifyProcessor
-from src.backend.dsl.engine.processors.patterns import (
+from src.backend.dsl.engine.processors.patterns import (  # noqa: F401 — re-export
     BatchWindowProcessor,
     DebounceProcessor,
     DeduplicateProcessor,
@@ -167,7 +167,7 @@ from src.backend.dsl.engine.processors.patterns import (
     MergeProcessor,
     SwitchProcessor,
 )
-from src.backend.dsl.engine.processors.rpa import (
+from src.backend.dsl.engine.processors.rpa import (  # noqa: F401 — re-export
     ArchiveProcessor,
     DecryptProcessor,
     EmailComposeProcessor,
@@ -185,7 +185,7 @@ from src.backend.dsl.engine.processors.rpa import (
     WordReadProcessor,
     WordWriteProcessor,
 )
-from src.backend.dsl.engine.processors.rpa_banking import (
+from src.backend.dsl.engine.processors.rpa_banking import (  # noqa: F401 — re-export
     AppiumMobileProcessor,
     CitrixSessionProcessor,
     EmailDrivenProcessor,
@@ -196,7 +196,7 @@ from src.backend.dsl.engine.processors.rpa_banking import (
 # P4 (cycle 15, production-grade plan): импорт из rpa_browser.py
 # вместо legacy web.py. rpa_browser.py — canonical Playwright-based
 # implementation с capability-gate + audit events; web.py — dead duplicate.
-from src.backend.dsl.engine.processors.rpa_browser import (
+from src.backend.dsl.engine.processors.rpa_browser import (  # noqa: F401 — re-export
     ClickProcessor,
     ExtractProcessor,
     FillProcessor,
@@ -204,21 +204,21 @@ from src.backend.dsl.engine.processors.rpa_browser import (
     ScreenshotProcessor,
     WaitForProcessor,
 )
-from src.backend.dsl.engine.processors.rule_engine import (
+from src.backend.dsl.engine.processors.rule_engine import (  # noqa: F401 — re-export
     EvaluateRulesParams,
     EvaluateRulesProcessor,
     Rule,
 )
 from src.backend.dsl.engine.processors.saga_lra import SagaLRAProcessor
 from src.backend.dsl.engine.processors.scan_file import ScanFileProcessor
-from src.backend.dsl.engine.processors.scraping import (
+from src.backend.dsl.engine.processors.scraping import (  # noqa: F401 — re-export
     ApiProxyProcessor,
     PaginateProcessor,
     ScrapeProcessor,
 )
 from src.backend.dsl.engine.processors.security import AuthValidateProcessor
 from src.backend.dsl.engine.processors.ssh_command import SshCommandProcessor
-from src.backend.dsl.engine.processors.streaming import (
+from src.backend.dsl.engine.processors.streaming import (  # noqa: F401 — re-export
     ChannelPurgerProcessor,
     CorrelationIdProcessor,
     DurableSubscriberProcessor,
@@ -233,15 +233,15 @@ from src.backend.dsl.engine.processors.streaming import (
     TumblingWindowProcessor,
 )
 from src.backend.dsl.engine.processors.sub_workflow import SubWorkflowProcessor
-from src.backend.dsl.engine.processors.template_engine import (
+from src.backend.dsl.engine.processors.template_engine import (  # noqa: F401 — re-export
     RenderTemplateFileProcessor,
     RenderTemplateProcessor,
 )
-from src.backend.dsl.engine.processors.vault_secret import (
+from src.backend.dsl.engine.processors.vault_secret import (  # noqa: F401 — re-export
     VaultReadResult,
     VaultSecretProcessor,
 )
-from src.backend.dsl.engine.processors.web import (
+from src.backend.dsl.engine.processors.web import (  # noqa: F401 — re-export
     FillFormProcessor,
     RunScenarioProcessor,
 )

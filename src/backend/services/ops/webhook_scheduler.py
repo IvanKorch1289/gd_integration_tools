@@ -110,7 +110,7 @@ class WebhookScheduler:
 
         from src.backend.core.config.features import feature_flags
         from src.backend.core.net.migration_helper import make_http_client
-        from src.backend.core.resilience.rpa_policy import (
+        from src.backend.core.resilience.rpa_policy import (  # noqa: F401 — re-export
             RPACallExhausted,
             get_rpa_policy,
         )

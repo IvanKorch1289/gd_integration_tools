@@ -10,7 +10,7 @@ proxy (ponytail: thin proxy). Устраняет layer-violation
 
 Использование::
 
-    from src.backend.services.cache.metrics import (
+    from src.backend.services.cache.metrics import (  # noqa: F401 — re-export
         get_cache_metrics_snapshot, get_metrics_snapshot,
     )
 
@@ -22,7 +22,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.core.api.cache import (
+    from src.backend.core.api.cache import (  # noqa: F401 — re-export
         get_cache_metrics_snapshot,
         get_metrics_snapshot,
     )

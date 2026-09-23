@@ -4,7 +4,7 @@
     * :mod:`agent_loader` — YAML-парсер :class:`AgentDefinition`.
 """
 
-from src.backend.dsl.loaders.agent_loader import (
+from src.backend.dsl.loaders.agent_loader import (  # noqa: F401 — re-export
     AgentDefinitionLoadError,
     load_agent_yaml,
     load_agent_yaml_file,

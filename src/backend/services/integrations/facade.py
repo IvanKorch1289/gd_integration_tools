@@ -28,7 +28,7 @@ from src.backend.core.di import app_state_singleton
 from src.backend.core.interfaces.sink import SinkResult
 from src.backend.core.logging import get_logger
 from src.backend.core.security.capabilities.errors import CapabilityDeniedError
-from src.backend.services.sources.registry import (
+from src.backend.services.sources.registry import (  # noqa: F401 — re-export
     SinkRegistry,
     SourceRegistry,
     get_sink_registry,
@@ -83,7 +83,7 @@ class IntegrationFacade:
 
         """
         try:
-            from src.backend.services.authorization.facade import (
+            from src.backend.services.authorization.facade import (  # noqa: F401 — re-export
                 get_authorization_facade,
             )
 

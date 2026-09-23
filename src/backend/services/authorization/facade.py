@@ -72,7 +72,7 @@ class AuthorizationFacade:
     def gateway(self) -> Any:
         """Lazy accessor для AuthorizationGateway."""
         if self._gateway is None:
-            from src.backend.core.security.authorization_gateway import (
+            from src.backend.core.security.authorization_gateway import (  # noqa: F401 — re-export
                 AuthorizationGateway,
             )
 
@@ -388,7 +388,7 @@ class AuthorizationFacade:
     ) -> AuthDecision:
         """Capability check через CapabilityFacade."""
         try:
-            from src.backend.services.capabilities.facade import (
+            from src.backend.services.capabilities.facade import (  # noqa: F401 — re-export
                 CapabilityFacade,
                 get_capability_facade,
             )
@@ -472,7 +472,7 @@ class AuthorizationFacade:
     ) -> None:
         """Emit authorization decision audit event."""
         try:
-            from src.backend.core.observability.logging_helpers import (
+            from src.backend.core.observability.logging_helpers import (  # noqa: F401 — re-export
                 log_audit_event_lite,
             )
 

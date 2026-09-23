@@ -11,11 +11,11 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from src.backend.core.domain.models.workflow_event import (
+from src.backend.core.domain.models.workflow_event import (  # noqa: F401 — re-export
     WorkflowEvent,
     WorkflowEventType,
 )
-from src.backend.core.domain.models.workflow_instance import (
+from src.backend.core.domain.models.workflow_instance import (  # noqa: F401 — re-export
     WorkflowInstance,
     WorkflowStatus,
 )

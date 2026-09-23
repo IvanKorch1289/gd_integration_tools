@@ -18,7 +18,7 @@
 
 Использование::
 
-    from src.backend.core.agent_eval import (
+    from src.backend.core.agent_eval import (  # noqa: F401 — re-export
         AgentEvalHarness, GoldenTask, InjectionTest, EvalHarnessRunner,
     )
 
@@ -46,7 +46,7 @@
 
 from __future__ import annotations
 
-from src.backend.core.agent_eval.harness import (
+from src.backend.core.agent_eval.harness import (  # noqa: F401 — re-export
     AgentEvalHarness,
     EvalReport,
     EvalTaskResult,

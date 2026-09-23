@@ -18,7 +18,7 @@
 
 Использование::
 
-    from src.backend.core.dsl_browser import (
+    from src.backend.core.dsl_browser import (  # noqa: F401 — re-export
         BrowserDSL, BrowserConfig, SemanticAction,
     )
 

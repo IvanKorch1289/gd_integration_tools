@@ -11,7 +11,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors import (
+from src.backend.dsl.engine.processors import (  # noqa: F401 — re-export
     BaseProcessor,
     EnrichProcessor,
     FilterProcessor,

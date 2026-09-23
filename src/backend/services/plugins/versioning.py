@@ -39,7 +39,7 @@ from src.backend.core.logging import get_logger
 from tools.plugin_migration_diff import MigrationDiffer
 
 if TYPE_CHECKING:
-    from src.backend.core.plugin_runtime.hot_swap import (
+    from src.backend.core.plugin_runtime.hot_swap import (  # noqa: F401 — re-export
         HotSwapResult,
         PluginLoaderProtocol,
     )

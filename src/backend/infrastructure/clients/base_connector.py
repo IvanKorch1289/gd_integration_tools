@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal
 
 from src.backend.core.config.pooling import DEFAULT_POOLING_PROFILE, PoolingProfile
-from src.backend.infrastructure.clients.connector_health_mixin import (
+from src.backend.infrastructure.clients.connector_health_mixin import (  # noqa: F401 — re-export
     ConnectorHealthMixin,
 )
 

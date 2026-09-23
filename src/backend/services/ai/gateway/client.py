@@ -18,7 +18,7 @@ from typing import Any
 from src.backend.core.ai.errors import GatewayRateLimited, GatewayUnavailable
 from src.backend.core.di.app_state import app_state_singleton
 from src.backend.core.logging import get_logger
-from src.backend.services.ai.gateway.callbacks import (
+from src.backend.services.ai.gateway.callbacks import (  # noqa: F401 — re-export
     CostTrackingCallback,
     FallbackTrackingCallback,
 )
@@ -136,7 +136,7 @@ class LiteLLMGateway:
         if not langfuse_settings.enabled:
             return self._cost_callback
         try:
-            from src.backend.services.ai.gateway.langfuse_callback_v3 import (
+            from src.backend.services.ai.gateway.langfuse_callback_v3 import (  # noqa: F401 — re-export
                 get_langfuse_callback,
             )
 
@@ -177,7 +177,7 @@ class LiteLLMGateway:
             params.setdefault("fallbacks", self._fallbacks)
 
         # S164 W1 (AI-R4): Circuit Breaker per gateway instance.
-        from src.backend.core.resilience.breaker import (
+        from src.backend.core.resilience.breaker import (  # noqa: F401 — re-export
             BreakerSpec,
             get_breaker_registry,
         )

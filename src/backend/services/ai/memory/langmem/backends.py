@@ -34,7 +34,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from advanced_alchemy.repository import SQLAlchemyAsyncRepository
 
-    from src.backend.core.domain.models.langmem_models import (
+    from src.backend.core.domain.models.langmem_models import (  # noqa: F401 — re-export
         LangMemEpisodic,
         LangMemProcedural,
     )

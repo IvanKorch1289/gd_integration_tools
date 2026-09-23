@@ -101,7 +101,7 @@ async def _start_scheduler_with_leader_election() -> None:
             "heartbeat_seconds": _SCHEDULER_LEADER_HEARTBEAT_S,
         },
     )
-    from src.backend.infrastructure.scheduler.scheduler_manager import (
+    from src.backend.infrastructure.scheduler.scheduler_manager import (  # noqa: F401 — re-export
         get_scheduler_manager,
     )
 
@@ -201,7 +201,7 @@ async def _stop_scheduler_if_leader() -> None:
 
     # 3. Leader path: stop scheduler + release lock.
     app_logger.info("Scheduler leader election: stopping scheduler (was leader).")
-    from src.backend.infrastructure.scheduler.scheduler_manager import (
+    from src.backend.infrastructure.scheduler.scheduler_manager import (  # noqa: F401 — re-export
         get_scheduler_manager,
     )
 

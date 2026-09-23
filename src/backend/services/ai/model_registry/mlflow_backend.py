@@ -11,7 +11,7 @@ import asyncio
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Literal, cast
 
-from src.backend.services.ai.model_registry.adapter import (
+from src.backend.services.ai.model_registry.adapter import (  # noqa: F401 — re-export
     ModelRecord,
     ModelRegistryAdapter,
 )

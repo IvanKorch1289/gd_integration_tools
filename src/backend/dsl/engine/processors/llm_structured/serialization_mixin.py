@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from src.backend.dsl.engine.processors.llm_structured._protocol import (
+from src.backend.dsl.engine.processors.llm_structured._protocol import (  # noqa: F401 — re-export
     _LLMStructuredProcessorProtocol,
 )
 

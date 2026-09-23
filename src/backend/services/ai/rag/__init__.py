@@ -2,29 +2,29 @@
 
 from __future__ import annotations
 
-from src.backend.services.ai.rag.classifier import (
+from src.backend.services.ai.rag.classifier import (  # noqa: F401 — re-export
     AccuracyBenchmarkResult,
     ClassifierResult,
     QueryClassifier,
     benchmark_accuracy,
 )
 from src.backend.services.ai.rag.dense_retriever import DenseResult, DenseRetriever
-from src.backend.services.ai.rag.hybrid_retriever import (
+from src.backend.services.ai.rag.hybrid_retriever import (  # noqa: F401 — re-export
     HybridResult,
     HybridRetriever,
     rrf_merge,
 )
-from src.backend.services.ai.rag.hyde_retriever import (
+from src.backend.services.ai.rag.hyde_retriever import (  # noqa: F401 — re-export
     HyDEConfig,
     HyDEResult,
     HyDERetriever,
 )
-from src.backend.services.ai.rag.multi_query_retriever import (
+from src.backend.services.ai.rag.multi_query_retriever import (  # noqa: F401 — re-export
     MultiQueryConfig,
     MultiQueryResult,
     MultiQueryRetriever,
 )
-from src.backend.services.ai.rag.strategy_selector import (
+from src.backend.services.ai.rag.strategy_selector import (  # noqa: F401 — re-export
     STRATEGIES,
     AdaptiveStrategySelector,
     StrategyDecision,

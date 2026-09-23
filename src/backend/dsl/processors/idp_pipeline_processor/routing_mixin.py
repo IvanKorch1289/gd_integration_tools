@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.backend.dsl.processors.idp_pipeline_processor._protocol import (
+from src.backend.dsl.processors.idp_pipeline_processor._protocol import (  # noqa: F401 — re-export
     _IDPPipelineProtocol,
 )
 from src.backend.dsl.processors.idp_pipeline_processor.state import IDPResult

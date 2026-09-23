@@ -12,21 +12,21 @@ from src.backend.core.di.contexts import DispatchContext
 from src.backend.core.di.dependencies import get_reply_registry_singleton
 from src.backend.core.interfaces.action_dispatcher import ActionDispatcher
 from src.backend.core.interfaces.invocation_reply import ReplyChannelRegistryProtocol
-from src.backend.core.interfaces.invoker import (
+from src.backend.core.interfaces.invoker import (  # noqa: F401 — re-export
     InvocationMode,
     InvocationRequest,
     InvocationResponse,
 )
 from src.backend.core.types.invocation_command import ActionCommandSchema
 from src.backend.services.execution.action_dispatcher import get_action_dispatcher
-from src.backend.services.execution.invoker.deferred_mixin import (
+from src.backend.services.execution.invoker.deferred_mixin import (  # noqa: F401 — re-export
     DeferredMixin,  # S54 W3: MRO
 )
-from src.backend.services.execution.invoker.invoke_modes_mixin import (
+from src.backend.services.execution.invoker.invoke_modes_mixin import (  # noqa: F401 — re-export
     InvokeModesMixin,  # S54 W3: MRO
 )
 from src.backend.services.execution.invoker.run_mixin import RunMixin  # S54 W3: MRO
-from src.backend.services.execution.invoker.temporal_mixin import (
+from src.backend.services.execution.invoker.temporal_mixin import (  # noqa: F401 — re-export
     TemporalMixin,  # S54 W3: MRO
 )
 

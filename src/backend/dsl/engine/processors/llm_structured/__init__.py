@@ -28,16 +28,16 @@ _DEFAULT_TEMPERATURE: float = 0.0
 _DEFAULT_RETRY: int = 3
 
 
-from src.backend.dsl.engine.processors.llm_structured.metrics_mixin import (
+from src.backend.dsl.engine.processors.llm_structured.metrics_mixin import (  # noqa: F401 — re-export
     MetricsMixin,  # S65 W2: MRO
 )
-from src.backend.dsl.engine.processors.llm_structured.process_mixin import (
+from src.backend.dsl.engine.processors.llm_structured.process_mixin import (  # noqa: F401 — re-export
     ProcessMixin,  # S65 W2: MRO
 )
-from src.backend.dsl.engine.processors.llm_structured.resolve_mixin import (
+from src.backend.dsl.engine.processors.llm_structured.resolve_mixin import (  # noqa: F401 — re-export
     ResolveMixin,  # S65 W2: MRO
 )
-from src.backend.dsl.engine.processors.llm_structured.serialization_mixin import (
+from src.backend.dsl.engine.processors.llm_structured.serialization_mixin import (  # noqa: F401 — re-export
     SerializationMixin,  # S65 W2: MRO
 )
 

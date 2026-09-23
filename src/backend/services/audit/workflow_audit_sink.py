@@ -20,7 +20,7 @@
 
 Использование::
 
-    from src.backend.services.audit.workflow_audit_sink import (
+    from src.backend.services.audit.workflow_audit_sink import (  # noqa: F401 — re-export
         WorkflowAuditSink,
     )
 

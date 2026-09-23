@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.backend.core.di.providers import (
+from src.backend.core.di.providers import (  # noqa: F401 — re-export
     get_health_aggregator_provider,
     get_slo_tracker_provider,
 )

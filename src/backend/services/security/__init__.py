@@ -22,7 +22,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.security.signatures import (
+    from src.backend.infrastructure.security.signatures import (  # noqa: F401 — re-export
         DEFAULT_TIMESTAMP_WINDOW,
         verify_signature,
     )

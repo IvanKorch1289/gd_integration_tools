@@ -64,7 +64,7 @@ class RecipientListProcessor(BaseProcessor):
 
         # ADR-0305: admission control для RecipientList (нет timeout для narrow).
         try:
-            from src.backend.core.async_utils.deadline_budget import (
+            from src.backend.core.async_utils.deadline_budget import (  # noqa: F401 — re-export
                 DeadlineExpiredError,
             )
             from src.backend.core.request_context import RequestContext

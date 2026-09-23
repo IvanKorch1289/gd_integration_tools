@@ -111,7 +111,7 @@ async def _check_rate_limit(
         (False, retry_after) если exceeded.
 
     """
-    from src.backend.core.resilience import (
+    from src.backend.core.resilience import (  # noqa: F401 — re-export
         RateLimit,
         RateLimitExceeded,
         get_rate_limiter,

@@ -39,7 +39,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field, replace
 from typing import Any, ParamSpec, TypeVar
 
-from tenacity import (
+from tenacity import (  # noqa: F401 — re-export
     AsyncRetrying,
     RetryCallState,
     RetryError,

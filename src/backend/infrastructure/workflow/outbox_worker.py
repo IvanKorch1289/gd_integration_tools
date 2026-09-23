@@ -53,7 +53,7 @@ async def _publish(
 
     match protocol:
         case "kafka":
-            from src.backend.infrastructure.clients.messaging.stream import (
+            from src.backend.infrastructure.clients.messaging.stream import (  # noqa: F401 — re-export
                 get_stream_client,
             )
 
@@ -61,13 +61,13 @@ async def _publish(
                 topic=dest, message=payload, headers=headers
             )
         case "rabbit":
-            from src.backend.infrastructure.clients.messaging.stream import (
+            from src.backend.infrastructure.clients.messaging.stream import (  # noqa: F401 — re-export
                 get_stream_client,
             )
 
             await get_stream_client().publish_to_rabbit(queue=dest, message=payload)
         case "redis":
-            from src.backend.infrastructure.clients.messaging.stream import (
+            from src.backend.infrastructure.clients.messaging.stream import (  # noqa: F401 — re-export
                 get_stream_client,
             )
 

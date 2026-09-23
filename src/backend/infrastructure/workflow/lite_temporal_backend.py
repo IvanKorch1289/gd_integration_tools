@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
-from src.backend.infrastructure.workflow.temporal_backend import (
+from src.backend.infrastructure.workflow.temporal_backend import (  # noqa: F401 — re-export
     TemporalWorkflowBackend,
     build_temporal_data_converter,
 )

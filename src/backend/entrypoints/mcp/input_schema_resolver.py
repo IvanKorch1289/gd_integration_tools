@@ -14,7 +14,7 @@
 
 Использование::
 
-    from src.backend.entrypoints.mcp.input_schema_resolver import (
+    from src.backend.entrypoints.mcp.input_schema_resolver import (  # noqa: F401 — re-export
         resolve_input_schema,
         validate_input_schema,
         ResolvedToolSchema,

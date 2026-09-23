@@ -37,7 +37,7 @@ from src.backend.core.logging import get_logger
 # не нарушать layer policy (entrypoints → infrastructure запрещено).
 # Runtime-доступ к классам — через core.di.providers (lazy importlib).
 from src.backend.entrypoints.api.v1.endpoints.admin_workflows import helpers
-from src.backend.schemas.workflow import (
+from src.backend.schemas.workflow import (  # noqa: F401 — re-export
     WorkflowEventSchemaOut,
     WorkflowInstanceDetailSchemaOut,
     WorkflowInstanceRef,

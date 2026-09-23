@@ -4,7 +4,7 @@
 
 Публичный API::
 
-    from src.backend.infrastructure.resilience import (
+    from src.backend.infrastructure.resilience import (  # noqa: F401 — re-export
         Bulkhead,
         TimeLimiter,
         RetryBudget,
@@ -16,13 +16,13 @@
 
 from src.backend.core.resilience.retry_budget import RetryBudget
 from src.backend.infrastructure.resilience.bulkhead import Bulkhead, BulkheadRegistry
-from src.backend.infrastructure.resilience.health import (
+from src.backend.infrastructure.resilience.health import (  # noqa: F401 — re-export
     build_resilience_health_check,
     register_resilience_health_checks,
     resilience_components_report,
 )
 from src.backend.infrastructure.resilience.time_limiter import TimeLimiter
-from src.backend.infrastructure.resilience.unified_rate_limiter import (
+from src.backend.infrastructure.resilience.unified_rate_limiter import (  # noqa: F401 — re-export
     RateLimiterPolicy,
     ResourceRateLimiter,
 )

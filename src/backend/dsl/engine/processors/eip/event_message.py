@@ -11,7 +11,7 @@ metadata headers: ``event_type``, ``event_id``, ``event_timestamp``,
 
 Использование::
 
-    from src.backend.dsl.engine.processors.eip.event_message import (
+    from src.backend.dsl.engine.processors.eip.event_message import (  # noqa: F401 — re-export
         EventMessageProcessor,
     )
 

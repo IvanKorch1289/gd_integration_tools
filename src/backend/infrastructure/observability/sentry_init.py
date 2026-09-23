@@ -91,7 +91,7 @@ def _scrub_pii(event: dict[str, Any], hint: Any) -> dict[str, Any] | None:
     Опциональный fallback на Presidio активируется через env
     ``PII_PRESIDIO_ENABLED=true`` (для углублённой детекции в проде).
     """
-    from src.backend.infrastructure.observability.pii_filter import (
+    from src.backend.infrastructure.observability.pii_filter import (  # noqa: F401 — re-export
         redact_for_observability,
     )
 
@@ -140,7 +140,7 @@ def _scrub_with_presidio(event: dict[str, Any]) -> None:
     окружении функция тихо ничего не делает.
     """
     try:
-        from src.backend.infrastructure.security.presidio_sanitizer import (
+        from src.backend.infrastructure.security.presidio_sanitizer import (  # noqa: F401 — re-export
             get_presidio_sanitizer,
         )
 

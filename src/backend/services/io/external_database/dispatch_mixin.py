@@ -15,7 +15,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.backend.core.enums.database import DatabaseTypeChoices
-from src.backend.core.enums.external_db import (
+from src.backend.core.enums.external_db import (  # noqa: F401 — re-export
     ExternalDBObjectMeta,
     ExternalDBObjectTypeChoices,
 )
@@ -41,7 +41,7 @@ _IDENT_RE: Final = re.compile(
 _BIND_NAME_RE: Final = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
-from src.backend.services.io.external_database._protocol import (
+from src.backend.services.io.external_database._protocol import (  # noqa: F401 — re-export
     _ExternalDatabaseProtocol,
 )
 

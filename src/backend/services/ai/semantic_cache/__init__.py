@@ -10,15 +10,15 @@ Backward-compat: ``from src.backend.services.ai.semantic_cache import SemanticCa
 
 from __future__ import annotations
 
-from src.backend.services.ai.semantic_cache.helpers import (
+from src.backend.services.ai.semantic_cache.helpers import (  # noqa: F401 — re-export
     get_l3_retrieval_cache,  # S67 W3: helper re-export
     get_semantic_cache,  # S67 W3: helper re-export
 )
-from src.backend.services.ai.semantic_cache.l3_cache import (
+from src.backend.services.ai.semantic_cache.l3_cache import (  # noqa: F401 — re-export
     RAG_CACHE_INVALIDATE_CHANNEL,  # S124 W2: re-export for test_l3_retrieval
     L3RetrievalGraphCache,  # S67 W3: re-export
 )
-from src.backend.services.ai.semantic_cache.semantic_cache import (
+from src.backend.services.ai.semantic_cache.semantic_cache import (  # noqa: F401 — re-export
     SemanticCache,  # S67 W3: re-export
 )
 

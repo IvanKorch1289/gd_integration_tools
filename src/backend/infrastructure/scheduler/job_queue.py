@@ -35,7 +35,7 @@ class JobQueue:
     def _ensure_scheduler(self) -> Any:
         """Получает scheduler из менеджера."""
         if self._scheduler is None:
-            from src.backend.infrastructure.scheduler.scheduler_manager import (
+            from src.backend.infrastructure.scheduler.scheduler_manager import (  # noqa: F401 — re-export
                 scheduler_manager,
             )
 

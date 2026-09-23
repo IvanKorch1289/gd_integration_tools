@@ -17,7 +17,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable
 
-from src.backend.core.inbox.store.base import (
+from src.backend.core.inbox.store.base import (  # noqa: F401 — re-export
     InboxEntry,
     InboxOutcome,
     InboxState,

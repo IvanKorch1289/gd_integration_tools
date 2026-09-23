@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
-from src.backend.dsl.registry import (
+from src.backend.dsl.registry import (  # noqa: F401 — re-export
     processor,  # B-1 fix (cycle 1): registry integration
 )
 

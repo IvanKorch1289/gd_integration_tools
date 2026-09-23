@@ -54,7 +54,7 @@ class WorkflowOpsMixin:
                 "workflow_id": ..., "timeout_seconds": ...}``.
 
         """
-        from src.backend.dsl.engine.processors.invoke_workflow import (
+        from src.backend.dsl.engine.processors.invoke_workflow import (  # noqa: F401 — re-export
             InvokeWorkflowProcessor,
         )
 
@@ -91,7 +91,7 @@ class WorkflowOpsMixin:
                 (``{"cancelled": True, "workflow_id": ..., "reason": ...}``).
 
         """
-        from src.backend.dsl.engine.processors.cancel_workflow import (
+        from src.backend.dsl.engine.processors.cancel_workflow import (  # noqa: F401 — re-export
             CancelWorkflowProcessor,
         )
 
@@ -263,7 +263,7 @@ class WorkflowOpsMixin:
         Temporal Schedule client, multi-wave scope).
 
         """
-        from src.backend.dsl.engine.processors.cron_schedule import (
+        from src.backend.dsl.engine.processors.cron_schedule import (  # noqa: F401 — re-export
             CronScheduleProcessor,
         )
 

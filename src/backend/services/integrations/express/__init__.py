@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from src.backend.services.integrations.express.dialog_store import (
+from src.backend.services.integrations.express.dialog_store import (  # noqa: F401 — re-export
     ExpressDialog,
     ExpressDialogStore,
     ExpressMessage,
 )
-from src.backend.services.integrations.express.session_store import (
+from src.backend.services.integrations.express.session_store import (  # noqa: F401 — re-export
     ExpressSession,
     ExpressSessionStore,
 )

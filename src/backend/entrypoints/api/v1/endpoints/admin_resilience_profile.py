@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field
 
 from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.core.di.dependencies import get_resilience_profile_store
-from src.backend.core.resilience.resilience_profile import (
+from src.backend.core.resilience.resilience_profile import (  # noqa: F401 — re-export
     BulkheadPolicy,
     CircuitBreakerPolicy,
     RateLimitPolicy,

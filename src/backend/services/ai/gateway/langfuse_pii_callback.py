@@ -127,7 +127,7 @@ class LangfusePIICallback:
 
     Использование:
 
-        from src.backend.services.ai.gateway.langfuse_pii_callback import (
+        from src.backend.services.ai.gateway.langfuse_pii_callback import (  # noqa: F401 — re-export
             LangfusePIICallback,
         )
 
