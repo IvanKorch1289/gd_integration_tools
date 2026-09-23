@@ -81,7 +81,7 @@ class HttpRequestProcessor(BaseProcessor):
 
         try:
             data = response.json()
-        except json.JSONDecodeError, ValueError:
+        except (json.JSONDecodeError, ValueError):
             data = response.text
 
         _rpa_logger.info(

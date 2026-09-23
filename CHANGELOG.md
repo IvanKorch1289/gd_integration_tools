@@ -1,5 +1,43 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — W0 P0-BLOCKER: миграция `except A, B:` → `except (A, B):`
+
+### feat(quality): AST-based миграция Py2-синтаксиса except (MINIMAX W0)
+
+Устранён регрессивный долг совместимости: 233 строки Python-2 паттерна
+`except A, B:` (запятая вместо скобок) в 177 файлах мигрированы в канонический
+Py3 form `except (A, B):`.
+
+- **`tools/migrate_py2_except.py`** — новый AST-based миграционный инструмент:
+  line-splice с compile()-проверкой, идемпотентный, fail-closed на syntax errors.
+- **`tests/unit/test_py2_except_syntax_lint.py`** — guard переписан с
+  AST-attribute detection (молчит на Py3.10+) на source-line analysis.
+  Теперь корректно ловит regression: FAIL на Py2-pattern, PASS после миграции.
+- **177 файлов мигрированы**: src/backend (147), src/frontend (12), tests (16),
+  tools (1). Семантика идентична (Py3.10+ PEG трактует `except A, B:` как
+  кортеж `except (A, B):` с `name=None`); миграция добавляет явные скобки и
+  совместимость с Py3.9-.
+- **README.md:664** синхронизирован: `compileall src/backend/` exit 0
+  подтверждён + короткая справка о миграции.
+- **.github/workflows/lint.yml:51-54** — убран неверный комментарий про
+  PEP 758 (PEP 758 разрешает `except*`, не `except A, B:`). Новый комментарий
+  явно говорит, что Py2-pattern запрещён policy проекта.
+- **ADR-0306** создан: W0 closure documentation.
+
+### Verification
+
+```
+python3.14 -m compileall -q src/ extensions/ scripts/ tools/ tests/  → exit 0
+python3.14 tools/checks/check_python3_syntax.py --root src/backend    → exit 0
+python3.14 tools/checks/check_python3_syntax.py --root tests         → exit 0
+python3.14 tools/checks/check_python3_syntax.py --root tools         → exit 0
+python3.14 -m pytest tests/unit/test_py2_except_syntax_lint.py -q    → 2 passed
+```
+
+Refs: MINIMAX W0 (P0-BLOCKER), S260 re-audit, ADR-0084, ADR-0304, ADR-0306.
+
+---
+
 ## [Unreleased] — 2026-09-23 — Tenant Resource Isolation: enforcement + wiring
 
 ### feat(security): framework-level ownership check завершён и подключён

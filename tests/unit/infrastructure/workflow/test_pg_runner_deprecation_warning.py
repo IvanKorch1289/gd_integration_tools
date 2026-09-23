@@ -68,7 +68,7 @@ class TestAwaitCompletionDeprecation:
                         backend.await_completion(handle=handle), timeout=1.0
                     )
                 )
-            except KeyError, asyncio.TimeoutError:
+            except (KeyError, asyncio.TimeoutError):
                 pass
 
 
@@ -97,5 +97,5 @@ class TestAwaitExternalSignalDeprecation:
                         timeout=1.0,
                     )
                 )
-            except asyncio.TimeoutError, Exception:
+            except (asyncio.TimeoutError, Exception):
                 pass

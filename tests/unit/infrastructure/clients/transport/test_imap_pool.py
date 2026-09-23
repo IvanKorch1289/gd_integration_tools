@@ -15,7 +15,7 @@ try:
     from src.backend.infrastructure.clients.transport.imap_pool import ImapPool
 
     HAS_IMAP_POOL = True
-except ImportError, ModuleNotFoundError, AttributeError:
+except (ImportError, ModuleNotFoundError, AttributeError):
     HAS_IMAP_POOL = False
 
 

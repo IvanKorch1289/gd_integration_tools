@@ -75,7 +75,7 @@ def check_file(path: Path) -> list[Violation]:
     """Проверить, что файл разбирается ``ast.parse`` (fail-closed)."""
     try:
         source = path.read_text(encoding="utf-8")
-    except OSError, UnicodeDecodeError:
+    except (OSError, UnicodeDecodeError):
         return []
     try:
         ast.parse(source, filename=str(path))

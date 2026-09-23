@@ -70,7 +70,7 @@ def render_canvas_tab(client) -> None:  # type: ignore[no-untyped-def]
         routes = []
         try:
             routes = client.list_dsl_routes()
-        except ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError:
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError):
             # cycle-9/D-AUDIT-1045: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —

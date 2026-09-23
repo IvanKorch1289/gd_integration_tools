@@ -55,7 +55,7 @@ try:
     from src.frontend.streamlit_app.utils.api_client import (  # type: ignore[import-not-found,import-untyped]  # optional API-клиент, ImportError fallback ниже
         api_get,  # type: ignore[import-not-found]
     )
-except ImportError, AttributeError, ModuleNotFoundError:
+except (ImportError, AttributeError, ModuleNotFoundError):
     # cycle-9/D-AUDIT-1046: narrow exceptions + observability.
     # ImportError — api_client module missing, AttributeError — name
     # API change, ModuleNotFoundError — module path broken.

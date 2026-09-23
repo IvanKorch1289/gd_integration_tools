@@ -661,7 +661,7 @@ route = (
 
 | Check | Result | Notes |
 |---|---|---|
-| `compileall src/backend/` | exit 0 | |
+| `compileall src/backend/` | exit 0 | W0 (cycle 152) мигрировал 234 строки `except A, B:` → `except (A, B):` в 177 файлах (Py2-архаизм, явный tuple form); guard `tests/unit/test_py2_except_syntax_lint.py` обновлён (source-line detection вместо AST-`name`-attr, который молчит на Py3.10+). |
 | Layer violations | 7 NEW + 136 baseline | После P0/P1 фиксов net debt может быть больше из-за lazy proxies |
 | Tests (P0/P1 fix scope) | 67/67 PASS | ip_restriction_store, input_guard, sanitize_mixin, capability_gate, compile_continue_as_new, workflow_subprocess |
 | Architecture (P1-#1 facade) | PARTIAL | Extensions не мигрированы на `core.api` (P1-L1 OPEN) |

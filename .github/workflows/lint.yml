@@ -48,10 +48,11 @@ jobs:
         run: uv run python -m compileall -q src extensions scripts tools tests
 
       - name: Fail-closed AST parse gate (check_python3_syntax)
-        # ADR-0304: каждый .py обязан разбираться ast.parse (ловит в т.ч.
-        # реальный py2-хазард "except A, B as e:" = SyntaxError).
-        # Форма "except A, B:" без скобок канонична (PEP 758, ruff format
-        # сам её производит) — прежний запрет снят как неисполнимый.
+        # ADR-0304: каждый .py обязан разбираться ast.parse. Py2-pattern
+        # ``except A, B:`` формально валиден на Py3.10+ (PEG-парсер
+        # трактует как ``except (A, B):``), но ЗАПРЕЩЁН policy проекта
+        # (явный tuple form). Регрессия ловится в
+        # tests/unit/test_py2_except_syntax_lint.py (source-line detection).
         run: uv run python tools/checks/check_python3_syntax.py --root src/backend
 
       - name: Ruff check (lint)

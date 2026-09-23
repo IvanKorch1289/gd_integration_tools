@@ -217,7 +217,7 @@ class TestFacadeLayerBoundariesCycle59:
                                 ("src.backend.services.", "src.backend.infrastructure.")
                             ):
                                 violations.append((f_path, mod))
-                except SyntaxError, UnicodeDecodeError:
+                except (SyntaxError, UnicodeDecodeError):
                     continue
 
         # These should match the allowlist exactly (3 known violations).

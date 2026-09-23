@@ -10,6 +10,13 @@ S260 re-audit fix: 16 файлов имели ``except X, Y:`` который в
 если находит ``ast.ExceptHandler`` с ``handler`` НЕ tuple-формой.
 Использование AST вместо regex исключает ложные срабатывания на
 string literals (test fixtures, docstrings).
+
+Note: S260 audit (cycle 152) показал, что detection через
+``ast.ExceptHandler.name is not None`` молчит на Py3.10+ (PEG-парсер
+обрабатывает ``except A, B:`` как кортеж без ``as``, ``name=None``).
+Detection переписан на source-line analysis: ищем строки вида
+``except X, Y:`` (запятая без скобок, без ``as``). Семантика ловли
+типов на Py3.10+ идентична, но синтаксис архаичен и ломает Py3.9-.
 """
 
 from __future__ import annotations
@@ -25,14 +32,26 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 def _scan_for_py2_except(path: Path) -> list[tuple[int, str]]:
     """Return list of (line_no, source_line) for any Py2-style except in path.
 
-    Py2 pattern: ``except A, B:`` — in Py3 this silently parses as
-    ``except A as B:`` (catches only first type). Detection: AST shows
-    ExceptHandler with ``name`` set + single-type handler + source line
-    contains a comma between the type and the name.
+    Py2 pattern: ``except A, B:`` — компилируется на Py3.10+ (PEG-парсер
+    трактует как ``except (A, B):`` кортеж без ``as``), но семантически
+    сломан/архаичен: ловит несколько типов как кортеж без явных скобок.
+    Канонический Py3 синтаксис: ``except (A, B):`` — explicit tuple.
+
+    Detection: line-source based (не AST-attribute ``name``, потому что на
+    Py3.10+ ``except A, B:`` имеет ``name=None``, и AST-detection молчит).
+    Эвристика:
+
+    1. Строка начинается с ``except`` (после whitespace).
+    2. Между ``except`` и ``:`` есть запятая.
+    3. Скобки в этом сегменте несбалансированы (т.е. это не ``except (A, B):``).
+    4. Нет ``as`` (т.е. не ``except A as B:`` — это валидный Py3 синтаксис).
+
+    Миграция ``except A, B:`` → ``except (A, B):`` сохраняет Py3.10+ семантику
+    (кортеж, name=None) и убирает Py2-архаизм + ломает совместимость с Py3.9-.
     """
     try:
         text = path.read_text(encoding="utf-8")
-    except UnicodeDecodeError, OSError:
+    except (UnicodeDecodeError, OSError):
         return []
     try:
         tree = ast.parse(text)
@@ -43,29 +62,49 @@ def _scan_for_py2_except(path: Path) -> list[tuple[int, str]]:
         return [(e.lineno or 0, f"SYNTAX ERROR: {e.msg} — файл не парсится AST")]
     lines = text.splitlines()
     offenders: list[tuple[int, str]] = []
+    # Walk ExceptHandler nodes — для каждого проверяем source-line
+    # (Py3.10+ PEG делает ``except A, B:`` AST-эквивалентом ``except (A, B):``,
+    # поэтому привязка только к AST-attribute ``name`` молчит на Py2-pattern).
     for node in ast.walk(tree):
         if not isinstance(node, ast.ExceptHandler):
             continue
-        # Must have an as-binding (``except X as Y:``) to be a candidate.
-        as_name = getattr(node, "name", None)
-        if not as_name:
+        line_no = getattr(node, "lineno", None)
+        if not line_no or line_no > len(lines):
             continue
-        # Inspect source line — if it contains a comma between type and `as`
-        # (without being inside a tuple), it's Py2 syntax.
-        line_text = lines[node.lineno - 1] if node.lineno <= len(lines) else ""
+        line_text = lines[line_no - 1]
         # Strip comments
         code_part = line_text.split("#", 1)[0]
-        # Look for pattern: `except X, Y` (comma before as-binding)
-        if "except " in code_part and "," in code_part and " as " in code_part:
-            # Check that the comma appears between `except` and `as`
-            except_idx = code_part.index("except ")
-            as_idx = code_part.index(" as ", except_idx)
-            segment = code_part[except_idx:as_idx]
-            if "," in segment:
-                # Make sure it's not a tuple like (A, B)
-                if "(" not in segment or segment.count("(") != segment.count(")"):
-                    # Has comma but unbalanced parens → likely Py2 syntax
-                    offenders.append((node.lineno, line_text.strip()))
+        stripped = code_part.lstrip()
+        if not stripped.startswith("except"):
+            continue
+        # Найти двоеточие после ``except`` (исключая ``:=`` walrus).
+        idx = len("except")
+        colon_idx = None
+        while idx < len(code_part):
+            ch = code_part[idx]
+            if ch == ":":
+                if idx + 1 < len(code_part) and code_part[idx + 1] == "=":
+                    idx += 2
+                    continue
+                colon_idx = idx
+                break
+            idx += 1
+        if colon_idx is None:
+            continue
+        segment = code_part[
+            code_part.index("except") + len("except") : colon_idx
+        ]
+        if "," not in segment:
+            continue
+        if " as " in segment:
+            continue  # это ``except A as B`` — валидный Py3 синтаксис
+        open_p = segment.count("(")
+        close_p = segment.count(")")
+        if open_p == close_p and open_p > 0:
+            continue  # это ``except (A, B):`` — валидный кортеж
+        if open_p > close_p:
+            continue  # неполный кортеж — другой gate
+        offenders.append((line_no, line_text.strip()))
     return offenders
 
 

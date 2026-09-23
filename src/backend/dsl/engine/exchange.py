@@ -34,7 +34,7 @@ def _make_correlation_id() -> str:
         asgi_value = asgi_cid.get("")
         if asgi_value:
             return asgi_value
-    except ImportError, LookupError, AttributeError:
+    except (ImportError, LookupError, AttributeError):
         # No asgi_correlation_id context (offline/test) — fallback to UUIDv4
         pass
     return str(uuid.uuid4())

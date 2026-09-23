@@ -157,7 +157,7 @@ class FlagsmithClient:
             return
         try:
             await self._client.aclose()
-        except OSError, RuntimeError, AttributeError:
+        except (OSError, RuntimeError, AttributeError):
             _logger.exception("FlagsmithClient close failed")
         self._client = None
 
