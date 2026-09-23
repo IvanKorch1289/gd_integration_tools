@@ -140,7 +140,8 @@
 | [ADR-0341](0341-w2-p1-2-legacy-processors-inventory.md) | W2 P1-2: Legacy DSL processors inventory tool — `tools/audit_legacy_processors.py` классифицирует 24 файла (16 REMOVABLE / 6 SEMANTIC_KEEP / 2 SHIMMED / 0 NEEDS_MIGRATION); `--strict` CI gate; module-level cache ~7s | **Accepted** |
 | [ADR-0342](0342-ai-policy-spec-s76-tool-policy-migration.md) | AIPolicySpec S76 schema migration — `ai_policies/agent_basic.policy.yaml` `tool_policy.{allow,deny,max_calls_per_run}` → `tools.{whitelist,blacklist,on_violation,allow_all_tools}`; `max_calls_per_run` lost (deferred); 3 alternatives considered | **Accepted** |
 | [ADR-0343](0343-pluginmanifest-schema-evolution-core-admin-dadata-skb.md) | PluginManifest schema evolution: 3 extensions (core_admin, dadata, skb) — nested `[plugin]/[dependencies]` tables → flat top-level fields + add `requires_core`; Pydantic 6 violations per file → 0; same pattern as ADR-0342; 3 alternatives considered | **Accepted** |
+| [ADR-0344](0344-sagalra-convergence-plan.md) | SagaLRA convergence plan per v4 §9: 3 saga implementations (engine/processors/saga_lra.py canonical, engine/processors/control_flow/saga.py canonical, processors/saga_lra_processor/* deprecation shim); status quo + telemetry phase + 3 deferred Phase 2 options; merge rejected (different concerns); 4 alternatives considered | **Accepted** |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 
-**Total:** 136 ADRs.
+**Total:** 137 ADRs.
 
