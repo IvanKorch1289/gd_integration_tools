@@ -116,13 +116,58 @@ def _count_loc(path: Path) -> int:
 
 
 def _detect_canonical_target(path: Path) -> str:
-    """Detect canonical re-export pattern (e.g., `from ...engine.processors.X import ...`)."""
+    """Detect canonical re-export pattern (3 patterns, prioritised).
+
+    Приоритеты:
+    1. Lazy `__getattr__` proxy → canonical module via importlib.
+       (Образец: single-file shim  из ADR-0313/0314 cycle 152).
+    2. Docstring-Deprecation + canonical reference → deprecation shim с
+       migration window (DEPRECATED + Removal запланирован/Removal gate).
+    3. Literal `from ...engine.processors.X import ...` line.
+    4. `__module__` override в __init__.py.
+
+    Returns canonical module path, или "(no canonical re-export)".
+    """
     content = _read_cached(path)
-    for line in content.splitlines():
+    lines = content.splitlines()
+
+    # Pattern 1: __getattr__ lazy proxy with hardcoded canonical module.
+    # Ищем `_CANONICAL_MODULE = "src.backend.dsl.engine.processors.X"` после строки imports.
+    if "def __getattr__" in content:
+        for line in lines:
+            m = re.search(r'_CANONICAL_MODULE\s*=\s*["\']([^"\']+)["\']', line)
+            if m:
+                return m.group(1)
+
+    # Pattern 2: docstring-only deprecation shim (DEPRECATED + canonical path).
+    # ADR-0313/0314 cycle 152: docstring содержит
+    #   - "DEPRECATED"
+    #   - "Removal запланирован" / "Removal planned"
+    #   - canonical module path (`src.backend.dsl.engine.processors.X`).
+    if path.name == "__init__.py":
+        # Skip — __init__.py не деprecation-shim by definition.
+        pass
+    else:
+        head = "\n".join(lines[:60])
+        if "DEPRECATED" in head and re.search(
+            r"src\.backend\.dsl\.engine\.processors\.\w+", head
+        ):
+            # Extract canonical target from docstring.
+            m = re.search(
+                r"src\.backend\.dsl\.engine\.processors\.(\w+)", head
+            )
+            if m:
+                return f"src.backend.dsl.engine.processors.{m.group(1)} (docstring-deprecation-shim, ADR-0313/0314)"
+
+    # Pattern 3: literal import-from-canonical line.
+    for line in lines:
         if re.match(r"^from src\.backend\.dsl\.engine\.processors", line):
             return line.split(" import ")[0].replace("from ", "").strip()
+
+    # Pattern 4: __module__ override in __init__.py.
     if "__module__" in content and "engine.processors" in content:
         return "(__module__ override → engine.processors)"
+
     return "(no canonical re-export)"
 
 
@@ -171,16 +216,64 @@ def _has_deprecation_warning(path: Path) -> bool:
 
 
 def _classify(row: LegacyProcessorRow) -> str:
-    """Classify status per v4 §10 P1."""
+    """Classify status per v4 §10 P1.
+
+    Приоритеты (от высшего к низшему):
+    1. `saga_lra_processor/*` → SEMANTIC_KEEP per v4 §9 convergence plan.
+    2. Canonical re-export (lazy `__getattr__` proxy, docstring-deprecation-shim,
+       literal import-from-canonical, `__module__` override) → SHIMMED.
+       Per ADR-0313/0314 cycle 152: deprecation-shim имеет migration window;
+       removal gated.
+    3. Package-internal sibling (legacy file внутри директории с `__init__.py`):
+       SHIMMED (= часть multi-file decomposition; не orphan, даже если 0
+       external importers).
+    4. Importer count > 0 (external) AND no canonical → NEEDS_MIGRATION.
+    5. Importer count == 0 AND no canonical AND not package-internal → REMOVABLE.
+    """
     if "saga_lra" in row.file:
         return "SEMANTIC_KEEP"
     if row.canonical_target.startswith("src.backend.dsl.engine.processors"):
         return "SHIMMED"
-    if row.canonical_target != "(no canonical re-export)":
-        return "NEEDS_MIGRATION"
+    if row.module_name and _is_package_internal_sibling(row.module_name):
+        return "SHIMMED"
     if row.importer_count == 0:
         return "REMOVABLE"
     return "NEEDS_MIGRATION"
+
+
+def _is_package_internal_sibling(module_name: str) -> bool:
+    """Detect legacy file в multi-file decomposition пакете.
+
+    Пример: `dsl.processors.event_store.cqrs` — sibling внутри
+    `event_store/` пакета (есть `event_store/__init__.py`). Другие siblings
+    того же пакета его импортируют → не orphan code.
+
+    Сигнатура module_name зависит от вызывающего:
+    - `_module_name_from_path()` → `dsl.processors.batch_processor` (4 parts).
+    - При полном Python-path (через `__module__` fallback) → 6+ parts.
+
+    Эвристика: если module_name имеет ≥4 точек (5+ частей) И родительская
+    директория существует с `__init__.py` → package-internal sibling.
+
+    Для single-file processor (`dsl.processors.batch_processor` = 4 parts,
+    `dsl/processors/batch_processor.py`) — parent_dir это `dsl/processors/`
+    который имеет `__init__.py`. Это NOT what we want: single-file на top
+    level не package-internal sibling в другой sub-package. Поэтому требуем
+    ≥5 parts → есть sub-package path (X.Y.Z.W = 4 dots).
+    """
+    parts = module_name.split(".")
+    # `dsl.processors.batch_processor` = 3 parts (single-file top-level).
+    # `dsl.processors.event_store.cqrs` = 4 parts (in-package sub-module).
+    if len(parts) < 4:
+        return False
+    # Check sub-package's __init__.py exists.
+    parent_dir = (
+        PROJECT_ROOT
+        / "src"
+        / "backend"
+        / Path(*parts[:-1])
+    )
+    return (parent_dir / "__init__.py").exists()
 
 
 def build_inventory() -> list[LegacyProcessorRow]:
