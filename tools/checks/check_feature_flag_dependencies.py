@@ -188,7 +188,14 @@ def _load_validator_source() -> str | None:
         )
         parts = []
         for py_file in ordered:
-            parts.append(f"# === {py_file.relative_to(_ROOT)} ===\n{py_file.read_text()}")
+            # Robust: relative_to(_ROOT) может fail если файл вне _ROOT
+            # (например в /tmp/ для tests). Fallback на absolute path.
+            try:
+                rel = py_file.relative_to(_ROOT)
+                marker = f"=== {rel} ==="
+            except ValueError:
+                marker = f"=== {py_file} ==="
+            parts.append(f"# {marker}\n{py_file.read_text()}")
         return "\n".join(parts)
 
     if _VALIDATOR_PATH.exists():
