@@ -25,6 +25,9 @@ Submodules:
 
 from __future__ import annotations
 
+from src.backend.core.ai.agent_sandbox_protocol import (
+    AgentSandboxResult as AgentSandboxResult,
+)
 from src.backend.services.ai.agent_sandbox._e2b import (
     E2BAgentSandbox as E2BAgentSandbox,
 )
@@ -52,6 +55,7 @@ from src.backend.services.ai.agent_sandbox._types import (
 
 __all__ = (
     "AgentSandboxConfigError",
+    "AgentSandboxResult",
     "AgentSandboxSelector",
     "AgentSandboxTimeoutError",
     "E2BAgentSandbox",
