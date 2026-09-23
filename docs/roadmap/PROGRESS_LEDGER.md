@@ -5806,3 +5806,74 @@ scope одной сессии). Только measurement accuracy fix.
   - **P0/P1 stays open** (documented): object auth runtime, privacy backends.
   - **P2 surfaced**: startup perf 9.1s (lazy load, hvac fallback, baseline
     refresh после lazy load).
+
+---
+
+## check_compat.py broken gate + plugin.toml schema drift (cycle 158+, 2026-09-23)
+
+**Fix** (commit `cc6806bd6`):
+
+Ещё один broken-gate reference (third this session):
+- `check_compat.py` импортировал из `src.backend.services.plugins.manifest_toml`
+- Этот путь не существует (services/plugins/ directory не существует).
+- Canonical location: `src/backend/core/plugin_runtime/manifest_toml.py`.
+- Module rename/migration в plugin_runtime decomp не обновил эту зависимость.
+- Per v4 §5 «presence != wiring»: gate был «broken» showing `exit 1
+  ModuleNotFoundError`, treated as broken-gate noise.
+
+Fix: import path migration. После fix: `4 плагин(ов) совместимы`, exit 0.
+
+**Side finding** (new, documented NOT in this commit):
+
+`check_compat.py` теперь работает и обнаруживает **3 plugin.toml с
+schema drift**:
+
+```
+[ERROR] extensions/core_admin/plugin.toml: Manifest validation failed
+[ERROR] extensions/dadata/plugin.toml: Manifest validation failed
+[ERROR] extensions/skb/plugin.toml: Manifest validation failed
+```
+
+Каждый файл имеет structure:
+```toml
+trust_tier = "A"
+[plugin]
+name = "..."
+version = "..."
+entry_class = "..."
+[dependencies]
+...
+```
+
+Но `PluginManifest` schema (canonical core/plugin_runtime) ожидает
+top-level fields (`name`, `version`, `requires_core`, `entry_class`)
+и не допускает nested `[plugin]` / `[dependencies]` tables.
+
+Pydantic failures per file:
+- `name`, `version`, `requires_core`, `entry_class` — **Field required**.
+- `plugin`, `dependencies` — **Extra inputs not permitted**.
+
+**Тот же паттерн** что и `agent_basic.policy.yaml` (ADR-0342 fixed),
+но SCOPE больше — 3 файла, не 1. Требует:
+1. Отдельный ADR для PluginManifest schema evolution decision
+   (extend schema для nested tables ИЛИ migrate 3 files to top-level).
+2. Blast-radius analysis: больше ли extensions также используют
+   nested tables (вне 3 здесь упомянутых)?
+3. Миграция __всех__ extensions consistent schema.
+
+**Deferred** per v4 §10 P1 («удалять shim только после 0 importers +
+migration window + contract test» — ext-аналогия: менять schema
+только после ADR + blast-radius + migration plan).
+
+**Honest status**:
+- 16 atomic commits this session (vs 51 baseline = 67 ahead of c262f1ba0).
+- ADR count: 133 → 135.
+- v4 §10 progress (FINAL state cycle 158+):
+  - **DONE**: W2 P1-2, validator gate, AIPolicySpec S76 schema,
+    startup_time measurement fix, **check_compat gate fix**.
+  - **Still open** (documented, deferred per scope):
+    - Object auth runtime (10.7% coverage, 133 tenant-filter gaps)
+    - Privacy backends (4/5 missing erasure)
+    - Plugin.toml schema migration (3 files, требует separate ADR)
+    - Lazy-load perf (startup 9.1s vs 1.7s budget)
+ \n\n**v4 §5 demonstrated (4 instances this session)**:\n1. Inventory tool: REMOVABLE classification wrong heuristic (16 → 0).\n2. Validator gate: regex bug (1/3 CRITICAL entries visible).\n3. startup_time gate: inf masking 7× perf regression ≥ 6 недель.\n4. check_compat gate: broken import (ModuleNotFoundError silently failing).
