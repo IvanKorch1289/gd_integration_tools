@@ -5115,3 +5115,63 @@ Action required: либо add к `.env.example`, либо mark optional в Setti
 
 Поэтому в текущем turn integration оставлен как separate W12 tasks.
 
+
+---
+
+## W1 P0-1 Circuit Breaker rollout — evidence audit, BLOCKED on runtime (2026-09-23, cycle 157)
+
+**Per v4 §10 P1**: "Проверить ADR-0305 и все импортеры. Доказать registry path
+на runtime с feature flag ON и OFF."
+
+**Evidence (current HEAD `0118d9b2c`)**:
+
+- **4 circuit breaker implementations** identified (per ADR-0305 + session audit):
+  - `core/resilience/breaker.py` (336 LOC) — **canonical** purgatory wrapper
+    (Breaker, BreakerLike, CircuitOpen, BreakerRegistry, BreakerSpec, BreakerState).
+  - `core/resilience/circuit_breaker.py` (252 LOC) — **facade** with 2 specialized:
+    SlidingWindowBreaker + ReplicaFailoverBreaker.
+  - `core/resilience/breaker_policy_adapter.py` (180 LOC) — **bridge adapter**
+    (middleware → BreakerRegistry).
+  - `infrastructure/resilience/client_breaker.py` (90 LOC) — **per-client CB**
+    wrapper (RedisClient, FastStream brokers, HttpUpstream).
+
+- **Feature flag** (`circuit_breaker_use_registry`):
+  - Location: `src/backend/core/config/features/resilience.py:107`.
+  - Default: `False` (gradual rollout per ADR-0268 §1 Phase 2b).
+  - Read in middleware: `entrypoints/middlewares/circuit_breaker.py:216`.
+
+- **Importer audit** (per ADR-0305):
+  - `infrastructure/database/smart_session_manager.py` — CB import.
+  - `core/observability/metrics.py` — middleware CB import.
+  - `core/resilience/breaker_policy_adapter.py` — middleware re-export.
+  - `entrypoints/middlewares/setup_middlewares.py` — registers middleware.
+
+- **Unit tests**: 300 passed, 3 skipped (pre-existing skip markers,
+  not failures). Coverage: `tests/unit/core/resilience/`,
+  `tests/unit/entrypoints/middlewares/test_circuit_breaker*.py`,
+  `tests/unit/infrastructure/test_connector_breaker.py`,
+  `tests/unit/infrastructure/clients/transport/test_smtp_canonical_breaker.py`,
+  `tests/unit/infrastructure/clients/transport/test_http_no_circuit_breaker.py`.
+
+**Status per v4 §10 P1**: **BLOCKED on runtime verification**.
+
+Reason: per v4 §12 cURL verification requires Docker runtime.
+Per kickoff context: Docker socket blocked.
+
+**Что нужно для unlock**:
+- Docker access (compose dev-light OR staging profile).
+- Запуск с `CIRCUIT_BREAKER_USE_REGISTRY=true` → cURL → verify path.
+- Запуск с default (flag=False) → cURL → verify legacy path.
+- Comparison: error rate, latency, breaker state transitions.
+
+**Per v4 §9**: "W1/circuit breaker: ADR-0305 всё ещё Draft, rollout через
+circuit_breaker_use_registry не завершён. Это ближайшая незакрытая
+архитектурная волна, но сначала проверь текущий flag default, профиль,
+adapter, middleware path, метрики и integration tests."
+
+Что сделано в этой сессии:
+- ✅ flag default проверен: False (gradual rollout).
+- ✅ adapter state: BreakerPolicyAdapter 180 LOC, 24+ tests passing.
+- ⚠️ integration tests: unit tests passing (300/300), но e2e/runtime
+  verification BLOCKED per Docker constraint.
+
