@@ -150,12 +150,74 @@ class TestClassify:
         assert _classify(row) == "SHIMMED"
 
     def test_removable_zero_importers_no_canonical(self) -> None:
+        """0 importers + no canonical + single-file → REMOVABLE.
+
+        Note: realistic `strangler_fig.py` is now SHIMMED (docstring-deprecation).
+        Этот тест проверяет classifier-purity: искусственный single-file orphan
+        без canonical target должен быть REMOVABLE.
+        """
         row = self._row(
-            file="src/backend/dsl/processors/strangler_fig.py",
+            file="src/backend/dsl/processors/orphan_legacy.py",
             importer_count=0,
             canonical_target="(no canonical re-export)",
         )
         assert _classify(row) == "REMOVABLE"
+
+    def test_shimmed_via_canonical_engine_processors_prefix(self) -> None:
+        """canonical target = 'src.backend.dsl.engine.processors.X' → SHIMMED."""
+        row = self._row(
+            file="src/backend/dsl/processors/event_store/processor.py",
+            importer_count=0,
+            canonical_target="src.backend.dsl.engine.processors.base",
+        )
+        assert _classify(row) == "SHIMMED"
+
+    def test_shimmed_via_package_internal_sibling(self) -> None:
+        """Package-internal sibling без canonical target → SHIMMED.
+
+        Real-world example: `dsl.processors.event_store.cqrs` импортирует
+        from .event_store.store — это НЕ orphan, это часть multi-file
+        decomposition. Even with 0 external importers → SHIMMED.
+        """
+        from tools.audit_legacy_processors import _is_package_internal_sibling
+
+        # Сначала проверим, что модуль реально in-package:
+        mn = "dsl.processors.event_store.cqrs"
+        assert _is_package_internal_sibling(mn), (
+            f"fixture failure: {mn} should be detected as package-internal sibling"
+        )
+        row = self._row(
+            file="src/backend/dsl/processors/event_store/cqrs.py",
+            importer_count=0,
+            canonical_target="(no canonical re-export)",
+            module_name=mn,
+        )
+        assert _classify(row) == "SHIMMED"
+
+    def test_is_package_internal_sibling_thresholds(self) -> None:
+        """Threshold check: single-file top-level ≠ package-internal."""
+        from tools.audit_legacy_processors import _is_package_internal_sibling
+
+        # Single-file top-level (3 parts) → False
+        assert _is_package_internal_sibling("dsl.processors.batch_processor") is False
+        # In-package sub-module (4 parts) → True (event_store has __init__.py)
+        assert _is_package_internal_sibling("dsl.processors.event_store.cqrs") is True
+        # In-package sub-module другого пакета (4 parts) → True
+        assert (
+            _is_package_internal_sibling(
+                "dsl.processors.idp_pipeline_processor.state"
+            )
+            is True
+        )
+
+    def test_is_package_internal_sibling_nonexistent_package(self) -> None:
+        """Несуществующий sub-package → False (heuristic защита)."""
+        from tools.audit_legacy_processors import _is_package_internal_sibling
+
+        # Если sub-package не существует — False (не пытаемся догадаться).
+        assert (
+            _is_package_internal_sibling("dsl.processors.nonexistent.foo") is False
+        )
 
     def test_needs_migration_with_importers(self) -> None:
         """Изменено: реальный сценарий — `row` теперь делегирует в test_needs_migration_no_canonical.
@@ -215,6 +277,23 @@ class TestRealInventory:
         # v4 baseline: 28 files / 2496 LOC. Current: 24 files / 2210 LOC.
         # Drift acceptable.
         assert 1500 <= total_loc <= 3000
+
+    def test_real_inventory_postfix_no_orphan_files(self, real_inventory: list) -> None:
+        """Post-W2 P1-2 bug fix: 0 truely-orphan files в реальном inventory.
+
+        Все legacy файлы теперь классифицируются как:
+          - SEMANTIC_KEEP (saga_lra) — preserve per v4 §9.
+          - SHIMMED (docstring-deprecation или package-internal) — migration window.
+
+        Per v4 §10 P1: '0 importers + migration_window_elapsed → REMOVABLE'.
+        Migration window ещё не истёк (cycle 156 не достигнут), поэтому
+        SHIMMED правомерно. 0 REMOVABLE — это не сбой; это честный результат.
+        """
+        rows = real_inventory
+        removable = [r for r in rows if r.status == "REMOVABLE"]
+        assert removable == [], (
+            f"Unexpected REMOVABLE files (нужен re-audit): {[(r.file, r.importer_count) for r in removable]}"
+        )
 
 
 class TestStrictMode:
