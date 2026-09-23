@@ -59,15 +59,23 @@ budget:
   max_cost_usd: 0.5
   ttl_s: 1800
 
-# Tool policy: explicit whitelist (deny-by-default).
-tool_policy:
-  allow:
+# Tool policy: S76 W1 schema (formerly tool_policy.{allow,deny}).
+# `tools: ToolsSpec` ожидает whitelist/blacklist вместо allow/deny для
+# консистентности с security terminology. ADR-0342 фиксирует миграцию.
+#
+# NOTE: pre-S76 имел `max_calls_per_run: 20` поле, которое НЕ сохранилось
+# в S76 schema — требует отдельного ADR для schema-extension (см. ADR-0342
+# "Что НЕ покрыто" секция). Если runtime-лимит важен — отдельная задача
+# для следующего цикла.
+tools:
+  whitelist:
     - "core.actions.echo"
     - "core.actions.http_get"
-  deny:
+  blacklist:
     - "core.actions.file_write"
     - "core.actions.shell_exec"
-  max_calls_per_run: 20
+  on_violation: "fail"
+  allow_all_tools: false  # explicit deny-by-default per S209 fail-closed
 
 audit:
   extra_attrs:
