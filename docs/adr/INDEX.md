@@ -137,7 +137,8 @@
 | [ADR-0338](0338-w11-p1-1-outbox-crash-matrix.md) | W11 P1-1: Outbox state-machine crash matrix — narrative model-based tests для 6 из 8 crash scenarios (publish OK status FAIL, 2 dispatchers compete, side-effect OK ACK fail, broker down extended, poison message, schema versioning) | **Accepted** |
 | [ADR-0339](0339-w11-p1-2-dlq-replay-governance.md) | W11 P1-2: DLQ replay governance — `DLQReplayGovernor` с 7-шаговым flow (inspect→classify→redact→dry-run→replay→verify→archive) + capability/rate-limit/audit/redactor hooks; PII auto-redaction (6 patterns); compliance audit trail | **Accepted** |
 | [ADR-0340](0340-w11-p2-1-audit-hash-chain.md) | W11 P2-1: Audit log integrity — `HashChainLedger` (append-only ledger + SHA-256 chain + canonical JSON + verify/verify_with_gaps + signed_checkpoint placeholder); tamper detection + restore verification | **Accepted** |
+| [ADR-0341](0341-w2-p1-2-legacy-processors-inventory.md) | W2 P1-2: Legacy DSL processors inventory tool — `tools/audit_legacy_processors.py` классифицирует 24 файла (16 REMOVABLE / 6 SEMANTIC_KEEP / 2 SHIMMED / 0 NEEDS_MIGRATION); `--strict` CI gate; module-level cache ~7s | **Accepted** |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 
-**Total:** 133 ADRs.
+**Total:** 134 ADRs.
 

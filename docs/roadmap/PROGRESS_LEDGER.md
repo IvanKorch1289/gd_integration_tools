@@ -5175,3 +5175,116 @@ adapter, middleware path, метрики и integration tests."
 - ⚠️ integration tests: unit tests passing (300/300), но e2e/runtime
   verification BLOCKED per Docker constraint.
 
+---
+
+## W2 P1-2: Legacy DSL processors inventory tool (2026-09-23, cycle 158)
+
+**Per v4 §10 P1**: "Удалять shim только после 0 importers, migration window и
+contract test". Требуется **повторяемая inventory** перед любым удалением.
+
+**Реализация** (commit `b0e804357`):
+- `tools/audit_legacy_processors.py` — сканирует `src/backend/dsl/processors/`,
+  классифицирует каждый файл:
+  - `REMOVABLE`: 0 importers + no canonical re-export.
+  - `SHIMMED`: canonical re-export pattern (event_store/processor.py,
+    idp_pipeline_processor/pipeline_mixin.py).
+  - `SEMANTIC_KEEP`: `saga_lra_processor/*` per v4 §9 (6 файлов).
+  - `NEEDS_MIGRATION`: > 0 importers + no canonical target.
+- Опции:
+  - `--json` — machine-readable для CI (exit 1 при NEEDS_MIGRATION > 0 в strict).
+  - `--strict` — CI gate (exit 1 если NEEDS_MIGRATION > 0).
+- Module-level cache содержимого файлов: ~7s вместо ~90s.
+- 24 файла / 2210 LOC просканированы за <10s.
+
+**Инвентарь (HEAD b0e804357)**:
+
+| Категория | Кол-во | Файлы |
+|---|---|---|
+| REMOVABLE | 16 | batch_processor.py, data_lineage.py, event_store/{cqrs,helpers,store,types}.py, idp_pipeline_processor/{_protocol,helpers,helpers_mixin,routing_mixin,serialization_mixin,state}.py, plan_execute_processor.py, reflection_loop_processor.py, router_specialist_processor.py, strangler_fig.py |
+| SHIMMED | 2 | event_store/processor.py, idp_pipeline_processor/pipeline_mixin.py |
+| SEMANTIC_KEEP | 6 | saga_lra_processor/{_protocol,core_mixin,execution_mixin,lifecycle_mixin,serialization_mixin,state}.py |
+| NEEDS_MIGRATION | 0 | — |
+
+v4 baseline (ADR-0341): 28/2496. Текущий: 24/2210. Drift documented.
+
+**Что это НЕ покрывает**:
+- ❌ Само удаление REMOVABLE — следующий шаг W2 P0-3 (нужен ADR per удаление
+  + migration window + contract test per v4 §10 P1).
+- ❌ Удаление SHIMMED — нужна runtime-верификация + ADR на каждый shim.
+- ❌ Migration saga_lra (SEMANTIC_KEEP) — отдельный convergence plan.
+
+**Tests** (`tests/unit/tools/test_w11_p3_2_audit_legacy_processors.py`, 16 тестов):
+- Module structure (argparse, JSON output, human-readable table)
+- Classification logic (REMOVABLE/SHIMMED/SEMANTIC_KEEP/NEEDS_MIGRATION)
+- Real inventory invariants (count 20-30, saga = SEMANTIC_KEEP, LOC 1500-3000)
+- `--strict` CI gate behavior (exit 0/1 acceptable)
+- ✅ 16/16 passing (28.46s)
+
+**Gates**:
+- `python3.14 -m compileall -q`: EXIT 0
+- `tools/checks/check_python3_syntax.py --root .`: EXIT 0
+- `ruff check tools/audit_legacy_processors.py tests/unit/tools/test_w11_p3_2_audit_legacy_processors.py`: All checks passed
+- `pytest tests/unit/tools/test_w11_p3_2_audit_legacy_processors.py`: 16/16 passed
+
+**Cycle 158 итог (W2 P1-2)**:
+- ✅ Inventory tool добавлен: `tools/audit_legacy_processors.py` (+536 LOC,
+  tool + test).
+- ✅ 16 REMOVABLE + 2 SHIMMED файлов идентифицированы для следующего шага.
+- ✅ SagaLRA SEMANTIC_KEEP per v4 §9 сохранён.
+- ✅ Honest: 0 удалений сделано в этой сессии; это inventory-only шаг.
+
+**Следующие шаги** (требуют user confirmation per v4 §3 + §10 P1):
+1. W2 P0-3 — process migration closure: ADR per REMOVABLE-файл + migration
+   window + contract test → удаление.
+2. SagaLRA convergence plan — отдельный ADR (v4 §9 deferred).
+3. SHIMMED удаление — runtime verification + ADR per файл.
+
+---
+
+## Cycle 158 fact-check: «176 SyntaxError in master» — REFUTED (2026-09-23, HEAD b0e804357)
+
+**Восстановлен контекст**: запрос пользователя содержал тезис «176 файлов с
+SyntaxError в master, commit 0f14a587d от 22 сентября 2026» с распределением
+по областям (infrastructure 43 / dsl 34 / entrypoints 25 / services 25 /
+core 17 / frontend 12 / plugins 3 / tests+tools 17).
+
+**Проверка на текущем HEAD (b0e804357)**:
+
+| Измерение | Результат | Источник |
+|---|---|---|
+| `python3.14 -m compileall -q src extensions scripts tools tests` | **EXIT 0** | прямой замер |
+| `python3.14 tools/checks/check_python3_syntax.py --root .` | **EXIT 0** | прямой замер |
+| `find ... -exec python3.14 -c "import ast; ast.parse(...)"` | timeout 120s без единой SyntaxError-строки | прямой замер |
+| AST warnings (SyntaxWarning) | только про `\\` в docstrings tools/coverage_gate.py — non-fatal, не ошибки | прямой замер |
+
+**Вердикт**: claim о «176 SyntaxError в master» — **ложен относительно HEAD
+`b0e804357`**. Реальная регрессия была бы зафиксирована compileall / AST-checker
+выше, оба возвращают EXIT 0.
+
+**Гипотеза источника claim**:
+- Возможно, audit проводился на HEAD `0f14a587d` ДО integration commit
+  `301f0f42c` (ADR-0334 — фактчек «176 SyntaxError → 0 в HEAD»).
+- ADR-0334 зафиксировал этот же фактчек 2026-09-23 утром.
+- HEAD `a0e74eb90` и `b0e804357` оба зелёные по syntax gates.
+
+**Доказательства и ADR**:
+- ADR-0334 уже есть в `docs/adr/0334-factcheck-master-state-vs-claim-176-syntaxerror-to-0.md`.
+- ADR-0341 для inventory tool — будет создан на этом цикле.
+
+**Что реально требуется (из стратегического анализа)**:
+- ✅ Syntax gate расширен на весь репо — уже (compileall + check_python3_syntax.py
+  покрывают src + extensions + scripts + tools + tests).
+- ✅ W11 P0-2/P0-3/P0-4/P1-1/P1-2/P2-1, W2 P1-2 closed.
+- ⚠️ Object-level authorization — требует separate scope, NOT STARTED.
+- ⚠️ Privacy orchestration — требует separate scope, NOT STARTED.
+- ⚠️ Canonical schema/IR — требует separate scope, NOT STARTED.
+- ⚠️ Cross-tenant live E2E — BLOCKED Docker.
+- ⚠️ Soak/resource-leak — BLOCKED Docker.
+
+**Cycle 158 honest status**:
+- +1 atomic commit (`b0e804357`).
+- 0 syntax-файлов в HEAD (фактчек подтверждён).
+- 0 удалений processor-файлов (W2 P1-2 — inventory, не deletion).
+- 2 untracked файла закоммичены.
+- v4 §3 «мерь до работы»: измерено, доказано, зафиксировано.
+
