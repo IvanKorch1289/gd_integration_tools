@@ -106,9 +106,7 @@ class TestBulkheadDeadline:
         token = _bind_ctx(budget)
         try:
             ex = _make_exchange()
-            proc = BulkheadProcessor(
-                "test-bh", 10, [_Noop()], wait=True, timeout=10.0
-            )
+            proc = BulkheadProcessor("test-bh", 10, [_Noop()], wait=True, timeout=10.0)
             with pytest.raises(BulkheadTimeoutError):
                 await proc.process(ex, ExecutionContext())
         finally:
@@ -168,9 +166,7 @@ class TestBulkheadDeadline:
         token = _bind_ctx(boom_budget)
         try:
             ex = _make_exchange()
-            proc = BulkheadProcessor(
-                "t", 10, [_Noop()], wait=True, timeout=5.0
-            )
+            proc = BulkheadProcessor("t", 10, [_Noop()], wait=True, timeout=5.0)
             # BoomBudget.remaining() raises DeadlineExpiredError →
             # except DeadlineExpiredError: raise → пробрасывается.
             with pytest.raises(DeadlineExpiredError):
@@ -414,7 +410,9 @@ class TestShellProcessorDeadline:
         token = _bind_ctx(budget)
         try:
             ex = _make_exchange()
-            proc = ShellExecProcessor(command="echo", args=["hello"], timeout_seconds=10.0)
+            proc = ShellExecProcessor(
+                command="echo", args=["hello"], timeout_seconds=10.0
+            )
             proc.auth_check = lambda ex, action: _async_true()  # type: ignore[assignment]
             await proc.process(ex, ExecutionContext())
             assert ex.error is not None
