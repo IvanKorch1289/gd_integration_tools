@@ -1,4 +1,4 @@
-"""Wave 5.3 — CLI: Postman v2.1 collection → actions.
+"""Wave 5.3 → MINIMAX W6 P1-8 Phase 2 — CLI: Postman v2.1 collection → actions.
 
 Минимальный парсер Postman v2.1 collection: рекурсивно обходит ``items``,
 извлекает ``request.method``, ``request.url.path`` и ``name`` →
@@ -7,18 +7,32 @@
 Запуск::
 
     uv run python tools/import_postman.py --file collection.json --connector myapi [--write]
+    uv run python tools/import_postman.py --help  # auto-generated typer help
+
+MINIMAX W6 P1-8 Phase 2 (cycle 152): мигрирован с ``argparse`` на
+``typer`` + ``rich`` (libraries > custom, per ADR-0084). Pattern из
+ADR-0318 (Phase 1 pilot для import_wsdl.py).
 """
 
 from __future__ import annotations
 
-import argparse
 import json
 import re
-import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
+
+import typer
+from rich.console import Console
 
 ROOT = Path(__file__).resolve().parents[1]
+
+app = typer.Typer(
+    name="import-postman",
+    help="Postman v2.1 → actions (Wave 5.3).",
+    no_args_is_help=True,
+    add_completion=False,
+)
+_console = Console()
 
 
 def _flatten_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -64,45 +78,80 @@ def _collect_requests(collection: dict[str, Any]) -> list[dict[str, Any]]:
     return out
 
 
-def main(argv: list[str] | None = None) -> int:
-    """Точка входа CLI."""
-    parser = argparse.ArgumentParser(description="Postman v2.1 → actions.")
-    parser.add_argument("--file", required=True, help="Postman collection (.json)")
-    parser.add_argument("--connector", required=True)
-    parser.add_argument("--write", action="store_true")
-    parser.add_argument(
-        "--output-dir", default=str(ROOT / "src" / "dsl" / "commands" / "imported")
-    )
-    args = parser.parse_args(argv)
+@app.callback(invoke_without_command=True)
+def _main_callback(
+    ctx: typer.Context,
+    file: Optional[str] = typer.Option(None, "--file", help="Postman collection (.json)"),
+    connector: Optional[str] = typer.Option(None, "--connector", help="Имя коннектора"),
+    write: bool = typer.Option(False, "--write", help="Записать generated actions"),
+    output_dir: str = typer.Option(
+        str(ROOT / "src" / "dsl" / "commands" / "imported"),
+        "--output-dir",
+        help="Директория для сгенерированных action-файлов",
+    ),
+) -> None:
+    """Postman v2.1 → actions: извлекает requests и (опционально) генерирует файлы."""
+    if ctx.invoked_subcommand is not None:
+        return  # nested subcommand handle itself
+    if file is None or connector is None:
+        _console.print(
+            "[bold red]Error:[/] --file и --connector обязательны для импорта."
+        )
+        raise typer.Exit(code=2)
+    _run_postman_import(file=file, connector=connector, write=write, output_dir=output_dir)
 
-    collection = json.loads(Path(args.file).read_text(encoding="utf-8"))
+
+def _run_postman_import(
+    file: str, connector: str, write: bool, output_dir: str
+) -> None:
+    """Внутренняя функция: extract Postman requests + optional codegen."""
+    collection = json.loads(Path(file).read_text(encoding="utf-8"))
     requests = _collect_requests(collection)
-    sys.stdout.write(
-        f"[import-postman] {args.connector}: {len(requests)} requests discovered\n"
+    _console.print(
+        f"[bold cyan][import-postman][/] {connector}: {len(requests)} requests discovered"
     )
     for r in requests[:5]:
-        sys.stdout.write(
-            f"  • {r['method']} {r['path']} → {args.connector}.{r['operation_id']}\n"
+        _console.print(
+            f"  • {r['method']} {r['path']} → {connector}.{r['operation_id']}"
         )
     if len(requests) > 5:
-        sys.stdout.write(f"  ... и ещё {len(requests) - 5}\n")
+        _console.print(f"  ... и ещё {len(requests) - 5}")
 
-    if args.write:
+    if write:
         from tools.codegen_engine import CodegenEngine
         from tools.import_swagger import _render_actions_module
 
         eng = CodegenEngine()
-        target = Path(args.output_dir) / f"{args.connector}_actions.py"
+        target = Path(output_dir) / f"{connector}_actions.py"
         target.parent.mkdir(parents=True, exist_ok=True)
         init_path = target.parent / "__init__.py"
         if not init_path.exists():
             init_path.write_text(
                 '"""Auto-generated actions modules (Wave 5.3)."""\n', encoding="utf-8"
             )
-        code = _render_actions_module(args.connector, requests)
+        code = _render_actions_module(connector, requests)
         eng.write(target, code, overwrite=True)
-        sys.stdout.write(f"[import-postman] wrote {target.relative_to(ROOT)}\n")
+        _console.print(
+            f"[bold green][import-postman][/] wrote {target.relative_to(ROOT)}"
+        )
 
+
+def main(argv: Optional[list[str]] = None) -> int:
+    """Точка входа CLI (backward-compat shim для существующих скриптов).
+
+    Использует typer.testing.CliRunner (для тестов с явным argv) или
+    app() (для CLI invocation через sys.argv).
+    """
+    if argv is not None:
+        from typer.testing import CliRunner
+
+        runner = CliRunner()
+        result = runner.invoke(app, argv)
+        return result.exit_code
+    try:
+        app()
+    except SystemExit as exc:
+        return int(exc.code) if exc.code is not None else 0
     return 0
 
 

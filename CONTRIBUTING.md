@@ -14,10 +14,9 @@
 - **80% декларативно / 20% Python**: бизнес-логика — в YAML/TOML DSL,
   Python — только для интеграций. `manage.py` регистрирует action через
   `call_function('module:fn')` без обёрток.
-- **Thin facades**: каноническая точка входа для cross-layer доступа —
-  `core.api` (`src/backend/core/api/__init__.py`). `core/facades.py` —
-  backward-compat shim, задепрекейчен (ADR-0307), не используйте в новом коде.
-  Не импортируйте `infrastructure/*` из `services/*` напрямую.
+- **Thin facades**: фасады в `core/facades.py` (D160) — единственная
+  точка входа для cross-layer доступа. Не импортируйте `infrastructure/*`
+  из `services/*` напрямую.
 - **Ponytail/YAGNI**: минимальный fix, deletion > addition, boring > clever.
   Каждый коммит — атомарный с regression тестами.
 
@@ -56,8 +55,7 @@ src/
 │   │   ├── resilience/    # tenacity + purgatory facades (D160)
 │   │   ├── dsl/           # DSL variables
 │   │   ├── security/      # PII, vault, sandbox
-│   │   ├── api/           # canonical cross-layer facade (ADR-0307)
-│   │   └── facades.py     # DEPRECATED shim → используйте core/api
+│   │   └── facades.py     # 17 thin facades (D160 consolidation)
 │   ├── services/          # business logic
 │   │   ├── ai/            # agents, RAG, multi-agent
 │   │   ├── workflow/      # Temporal glue

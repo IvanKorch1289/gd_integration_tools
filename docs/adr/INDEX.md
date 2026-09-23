@@ -116,6 +116,7 @@
 | [ADR-0316](0316-w2-p0-3-phase2-saga-lra-decision.md) | W2 P0-3 Phase 2: SagaLRA Variant A — migrate legacy mixin-based subpackage (canonical SagaLRAProcessor) | Accepted |
 | [ADR-0317](0317-w7-p1-9-di-evaluation-dishka-vs-custom.md) | W7 P1-9: DI evaluation — dishka vs самописный module_registry (research + Phase 1/2/3 plan) | Accepted |
 | [ADR-0318](0318-w6-p1-8-pilot-argparse-to-typer.md) | W6 P1-8: typer+rich CLI migration pilot (tools/import_wsdl.py) — pattern для ~90 argparse tools | Accepted |
+| [ADR-0319](0319-w6-p1-8-phase2-import-postman-typer.md) | W6 P1-8 Phase 2: tools/import_postman.py мигрирован argparse → typer (pattern validation) | Accepted |
 
-**Total:** 111 ADRs.
+**Total:** 112 ADRs.
 
