@@ -35,8 +35,14 @@ Usage::
     )
 
     app.add_middleware(TenantResourceIsolationMiddleware)
-    # production wiring (per resource_type):
-    # middleware.register_ownership_checker("order", verify_tenant_ownership)
+    # production wiring (per resource_type) — checker = async (resource_id,
+    # tenant_id) -> bool, подкреплённый реальным tenant-scoped стором:
+    # middleware.register_ownership_checker("order", my_order_ownership_checker)
+
+    Note (S170): per-route декоратор
+    ``core.security.object_ownership.require_object_ownership`` и этот
+    middleware образуют единый контракт ownership; production loader'ы
+    ресурсов подключаются при появлении tenant-scoped доменных сторов.
 """
 
 from __future__ import annotations
@@ -135,11 +141,9 @@ class TenantResourceIsolationMiddleware:
         Для "ресурс не найден" checker может вернуть ``False`` или raise
         :class:`~src.backend.core.errors.NotFoundError` (рендерится канонически).
 
-        Production wiring::
-            from src.backend.core.security.object_ownership import (
-                verify_tenant_ownership,
-            )
-            middleware.register_ownership_checker("order", verify_tenant_ownership)
+        Checker обязан опираться на реальный tenant-scoped стор (БД/фасад),
+        а не на client-supplied данные: tenant_id сюда приходит после
+        резолва идентичности (header → state), ресурс — по resource_id.
         """
         self._checkers[resource_type] = checker
 

@@ -27,11 +27,17 @@ Fail-closed: нет tenant-идентичности (`X-Tenant-ID` header → `s
 `TenantMiddleware`) или ownership checker вернул `False` → 403;
 `BaseError` из checker'а рендерится канонически (NotFoundError → 404).
 Без зарегистрированных checker'ов — pass-through; включение per
-resource_type:
+resource_type (checker = async `(resource_id, tenant_id) -> bool`,
+опирающийся на реальный tenant-scoped стор):
 
 ```python
-middleware.register_ownership_checker("order", verify_tenant_ownership)
+middleware.register_ownership_checker("order", my_order_ownership_checker)
 ```
+
+Note: per-route декоратор
+`core.security.object_ownership.require_object_ownership` — комплементарный
+механизм; его loader-интеграция (S170) и production checker'ы подключаются
+при появлении tenant-scoped доменных сторов.
 
 См. `.claude/KNOWN_ISSUES.md` (#2 object authorization, #5 header trust).
 
