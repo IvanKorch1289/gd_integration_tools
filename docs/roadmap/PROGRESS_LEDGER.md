@@ -5393,6 +5393,80 @@ Manual re-audit реальных файлов выявил 3 heuristic gap в
 
 ---
 
+## PluginManifest schema migration — 3 extensions (cycle 158+, 2026-09-23)
+
+**Fix** (commit `8f5bdf744`, ADR-0343):
+
+Discovered через fixed gate (`check_compat.py` после `cc6806bd6`):
+3 extension manifests имели schema drift — nested `[plugin]` +
+`[dependencies]` tables vs canonical `PluginManifest` top-level scalars.
+
+**Affected files**:
+- `extensions/core_admin/plugin.toml`
+- `extensions/dadata/plugin.toml`
+- `extensions/skb/plugin.toml`
+
+**Миграция** (per ADR-0343):
+- `[plugin]` table → top-level scalars (name, version, description,
+  entry_class).
+- `[dependencies]` table (пустой) → удалён (отсутствие = no deps).
+- Добавлен `requires_core = ">=0.2.0"` (отсутствовал в nested form).
+- `trust_tier`, `description` оставлены top-level (already scalars).
+
+**Same pattern что `agent_basic.policy.yaml`** (ADR-0342),
+но scope > 1 файл → отдельный ADR.
+
+**3 alternatives рассмотрены в ADR-0343**:
+1. Extend schema для nested tables — отвергнуто (convention drift).
+2. Backward-compat shim — отвергнуто (v4 §10 P1 debt-creation).
+3. Migrate files (выбрано) — flat top-level matches Cargo/npm convention.
+
+**Verification (final cycle 158+ sweep)**:
+
+| Gate | Exit | Status |
+|---|---|---|
+| `compileall -q` | 0 | GREEN |
+| `check_python3_syntax.py --root .` | 0 | GREEN |
+| `check_feature_flag_dependencies.py --strict` | 0 | GREEN (18/18) |
+| `check_ai_policy_schema.py` | 0 | GREEN (3/3) |
+| `check_compat.py` | 0 | **GREEN (7 plugins compatible, 0 errors)** |
+| `pytest tests/unit/tools/test_w11_p3_2_audit_legacy_processors.py` | 23/23 (28.25s) | GREEN |
+
+**Honest final state cycle 158+**:
+- 18 atomic commits this session (vs 51 baseline = 69 ahead of c262f1ba0).
+- ADR count: 133 → 136 (+ADR-0341, +ADR-0342, +ADR-0343).
+- v4 §10 progress (final):
+  - **DONE**: W2 P1-2, validator gate, AIPolicySpec S76 schema,
+    startup_time measurement fix, check_compat gate fix,
+    **PluginManifest migration 3 extensions**.
+  - **Still open** (deferred per scope):
+    - Object authorization runtime (10.7% coverage, 133 tenant-filter gaps)
+    - Privacy backends (4/5 missing erasure)
+    - Lazy-load startup perf (9.1s vs 1.7s budget)
+    - hvac graceful fallback (silent degradation)
+
+**v4 §5 demonstrated (5 instances this session)**:
+1. Inventory tool: REMOVABLE classification wrong (16 → 0).
+2. Validator gate: regex bug (1/3 CRITICAL entries visible).
+3. startup_time gate: inf masking 7× perf regression ≥ 6 недель.
+4. check_compat gate: broken import (ModuleNotFoundError silently failing).
+5. **PluginManifest schema drift in 3 extensions silently failing** (до fix).
+
+**Push pending per v4 §2**: user executes `git push origin master`
+(69 commits ahead of `c262f1ba0`, fast-forward clean).
+
+**Per v4 §10 priority order** (final state):
+- P0 evidence/security: object auth runtime STILL P0 GAP (10.7% coverage).
+  Privacy runtime STILL P1 GAP (4/5 backends).
+- P1 Circuit Breaker rollout: evidence done, BLOCKED Docker.
+- P1 processor migration closure: Inventory + bug fix done.
+- **P1 Plugin/cli/schema**: ✅ PluginManifest migration done.
+  CLI decompose manage.py — NOT STARTED. Dishka spike — NOT STARTED.
+- P2 RouteBuilder: NOT STARTED.
+- P2 Performance: 1 finding surfaced (startup 9.1s).
+
+---
+
 ## v4 §10 sweep: gates status + RED findings (2026-09-23, cycle 158+)
 
 **Context**: v4 §10 P0/P1 запрещает слепо доверять claim'у «X NOT STARTED»
