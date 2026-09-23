@@ -134,7 +134,8 @@
 | [ADR-0335](0335-w11-p0-2-config-unsafe-defaults-gate.md) | W11 P0-2: Configuration matrix gate — `tools/checks/check_unsafe_defaults.py` детектирует hardcoded placeholders и SecretStr code smell в Pydantic Settings (HIGH/MEDIUM/LOW) | **Accepted** |
 | [ADR-0336](0336-w11-p0-3-env-example-matrix-gate.md) | W11 P0-3: Configuration matrix — `check_env_example.py --matrix` детектирует required secrets без `.env.example` декларации; fix pre-existing bugs (CONFIG_DIR path + class detection) | **Accepted** |
 | [ADR-0337](0337-w11-p0-4-canonical-error-contract.md) | W11 P0-4: Canonical error contract — `DomainProblem` dataclass + 6 transport adapters (RFC 9457, GraphQL, gRPC, SOAP, MCP, DLQ); additive к существующему `BaseError` | **Accepted** |
+| [ADR-0338](0338-w11-p1-1-outbox-crash-matrix.md) | W11 P1-1: Outbox state-machine crash matrix — narrative model-based tests для 6 из 8 crash scenarios (publish OK status FAIL, 2 dispatchers compete, side-effect OK ACK fail, broker down extended, poison message, schema versioning) | **Accepted** |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 
-**Total:** 130 ADRs.
+**Total:** 131 ADRs.
 
