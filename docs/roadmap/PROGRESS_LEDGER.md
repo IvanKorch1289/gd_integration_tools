@@ -4848,3 +4848,88 @@ trade-offs (property-based для invariants, narrative для specific crash pa
 - ⏭️ Дальнейшие gaps: privacy orchestrator, object-level authorization,
   DLQ replay governance, configuration profile matrix.
 
+
+---
+
+## W11 P1-2: DLQ replay governance — 7-step flow + governance hooks (2026-09-23, cycle 157)
+
+**Задача**: закрыть architectural gap "DLQ replay governance" из стратегического
+анализа 2026-09-22: 7-шаговый flow inspect → classify → redact → dry-run →
+replay → verify → archive + governance (capability + rate limit + audit).
+
+**Реализация**: `src/backend/services/ops/dlq_replay_governance.py` —
+`DLQReplayGovernor` class:
+
+**7-шаговый flow** (per strategic analysis):
+1. `inspect(envelope)` → read-only snapshot для UI/admin
+2. `classify(envelope)` → auto-categorization (PII/FINANCIAL/INTERNAL/CONFIDENTIAL)
+3. `redact(envelope)` → strip PII из payload (regex-based, recursive для dict/list)
+4. `replay(dry_run=True)` → preview без side-effects (no executor, no capability check)
+5. `replay(dry_run=False)` → real replay (capability + rate limit + audit)
+6. `verify(replay_id)` → check audit log
+7. `archive(envelope)` → cold storage (audit entry)
+
+**Governance hooks** (DI через constructor):
+- `capability_check: (cap, operator) -> bool`
+- `rate_limit`: sliding window per minute (default 10/min)
+- `audit_writer: (ReplayAuditEntry) -> None`
+- `redactor`: custom payload redactor (default: regex-based)
+- `replay_executor`: actual broker.publish callback
+
+**PII auto-detection** (6 regex patterns):
+- email, phone_ru, card_number, passport, inn, snils
+- + dlq_class='financial' marker
+
+**Fail-closed exceptions**:
+- `CapabilityDeniedError(capability, operator_id)` — нет прав на `dlq.replay`
+- `RateLimitExceededError(limit, window_seconds, operator_id)` — sliding window
+- `ValueError` — empty reason (operator обязан объяснить)
+
+**Audit trail compliance**:
+`replay_id` (UUID) + `original_event_id` + `operator_id` + `reason` +
+`correlation_id` + `timestamp` + `dry_run` + `success` + `metadata`
+
+**Backward compat**:
+- Не трогает `DLQEnvelope`/`DLQReason`/`DLQWriter` Protocol
+- Не заменяет `message_replay.py` (inbound replay, другая concern)
+- Standalone модуль — DI не требуется
+
+**Tests**: 35 в `test_w11_p1_2_dlq_replay_governance.py` (9 test classes):
+- TestInspect (3): snapshot, payload_size, None
+- TestClassify (7): card→FINANCIAL, email/phone/inn→PII, no-PII→INTERNAL,
+  dlq_class override, capability_denied special case
+- TestRedact (6): email/card replacement, dict recursive, JSON string recursive,
+  no-redaction, custom redactor
+- TestReplayDryRun (3): dry_run flag, capability skipped, rate limit skipped
+- TestReplayReal (8): executor call, empty reason ValueError, capability denied/allowed,
+  rate limit, executor exception, audit trail, PII before executor
+- TestVerify (2): successful replay, nonexistent
+- TestArchive (2): UUID, audit entry
+- TestAuditTrailCompliance (3): mandatory fields, event_id from metadata, fallback
+- TestEndToEndFlow (1): full 7-step flow с PII payload
+
+**Cross-cutting integration**:
+- W11 P0-4 (`DomainProblem.to_dlq_envelope`) → `DLQReplayGovernor.consume`
+- W11 P1-1 (outbox crash matrix) → poison messages archived → manual replay
+- V15 R-V15-5 (WAF strict) → outbound replay через WAF-фасад (separate concern)
+
+**Gates**:
+- `compileall -q src/ extensions/ scripts/ tools/ tests/ testkit/` → exit 0
+- `python tools/checks/check_python3_syntax.py --root .` → exit 0
+- `ruff check src/backend/services/ops/dlq_replay_governance.py tests/...` → All checks passed
+- `pytest tests/unit/services/ops/test_w11_p1_2_dlq_replay_governance.py` → 35/35 passed
+- `pytest` 6 test files (W11 P1-2 + P0-4 + P1-1 + P0-3 + P0-2 + W6) → 224/224 passed
+
+**ADR-0339** создан: DLQ replay governance pattern, alternatives (Temporal workflow,
+XState, message_replay extension — отклонены), limitations (in-memory rate limit,
+basic PII patterns), production deployment path (Redis-based rate limit,
+WORM audit storage, WAF-фасад integration).
+
+**Cycle 157 итог (W11 P1-2)**:
+- ✅ Закрыт architectural gap "DLQ replay governance".
+- ✅ 7-шаговый flow с governance hooks (capability + rate limit + audit + redactor).
+- ✅ 35 tests покрывают все шаги + exceptions + audit trail + end-to-end.
+- ✅ Cross-cutting integration с W11 P0-4 + W11 P1-1.
+- ⏭️ Дальнейшие gaps: privacy orchestrator, object-level authorization,
+  configuration profile matrix, feature dependencies, audit log integrity.
+
