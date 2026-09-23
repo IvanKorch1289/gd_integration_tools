@@ -16,9 +16,24 @@ at `src/backend/dsl/engine/middleware.py`.
 | Layer | Range | Purpose |
 |-------|-------|---------|
 | 1 — early exit | 0-249 | Blocked routes, admin IP allowlist, blocked auth methods |
-| 2 — request mgmt | 250-499 | Correlation ID, request context, request body cache, idempotency, timeout |
+| 2 — request mgmt | 250-499 | Correlation ID, request context, tenant resource isolation (330), request body cache, idempotency, timeout |
 | 3 — body/auth | 500-749 | Auth required, API key, data masking, PII response, request body cache, response cache, circuit breaker, rate limits |
 | 4 — logging/metrics | 750-999 | Audit log, admin audit, OTel, Prometheus, request log |
+
+**`TenantResourceIsolationMiddleware` (order 330, audit 2026-09-22 P0)** —
+framework-level ownership check для resource-style URL
+(`/api/v{N}/{orders,users,files,tenants,accounts,documents}/{id}`).
+Fail-closed: нет tenant-идентичности (`X-Tenant-ID` header → `state`, как в
+`TenantMiddleware`) или ownership checker вернул `False` → 403;
+`BaseError` из checker'а рендерится канонически (NotFoundError → 404).
+Без зарегистрированных checker'ов — pass-through; включение per
+resource_type:
+
+```python
+middleware.register_ownership_checker("order", verify_tenant_ownership)
+```
+
+См. `.claude/KNOWN_ISSUES.md` (#2 object authorization, #5 header trust).
 
 ### DSL middleware (per-route via `RouteBuilder`)
 

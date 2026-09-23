@@ -90,6 +90,9 @@ def build_default_registry() -> MiddlewareRegistry:
         SecurityHeadersMiddleware,
     )
     from src.backend.entrypoints.middlewares.tenant import TenantMiddleware
+    from src.backend.entrypoints.middlewares.tenant_resource_isolation import (
+        TenantResourceIsolationMiddleware,
+    )
     from src.backend.entrypoints.middlewares.timeout import TimeoutMiddleware
 
     registry = MiddlewareRegistry()
@@ -148,6 +151,13 @@ def build_default_registry() -> MiddlewareRegistry:
     registry.register_builtin("tenant", TenantMiddleware, order=300)
     # S17 ADR-NEW-3: unified RequestContext snapshot (после tenant).
     registry.register_builtin("request_context", RequestContextMiddleware, order=320)
+    # Sprint 5 (audit 2026-09-22 P0): framework-level ownership check.
+    # Без зарегистрированных checker'ов — pass-through (zero-cost); checker'ы
+    # подключаются через register_ownership_checker в production wiring.
+    # Порядок: после tenant (300) — tenant-идентичность уже в scope/state.
+    registry.register_builtin(
+        "tenant_resource_isolation", TenantResourceIsolationMiddleware, order=330
+    )
     # Sprint 0 #12 + V5: Idempotency-Key для POST/PATCH (Redis backend).
     registry.register_builtin(
         "idempotency",

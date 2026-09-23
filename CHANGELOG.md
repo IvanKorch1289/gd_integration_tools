@@ -1,5 +1,36 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-09-23 — Tenant Resource Isolation: enforcement + wiring
+
+### feat(security): framework-level ownership check завершён и подключён
+
+`TenantResourceIsolationMiddleware`
+([`src/backend/entrypoints/middlewares/tenant_resource_isolation.py`](/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/tenant_resource_isolation.py))
+больше не stub:
+
+- Ownership checker вызывается для resource-style URL (GET/PUT/PATCH/DELETE
+  по `DEFAULT_PATTERNS`: orders/users/files/tenants/accounts/documents).
+- **Fail-closed**: нет tenant-идентичности (header `X-Tenant-ID` →
+  `state['tenant_id']`, приоритет как у `TenantMiddleware`) или checker
+  вернул `False` → 403; `BaseError` из checker'а рендерится канонически
+  (`to_dict()`, status_code ошибки — например, `NotFoundError` → 404).
+- Без зарегистрированных checker'ов — pass-through (zero-cost): wiring
+  глобальный, checker'ы подключаются постепенно через
+  `register_ownership_checker(resource_type, checker)`.
+
+Wiring: `setup_middlewares` registry, order **330** (после `tenant`=300,
+`request_context`=320). Тесты:
+[`tests/unit/entrypoints/middlewares/test_tenant_resource_isolation.py`](/home/user/dev/gd_integration_tools/tests/unit/entrypoints/middlewares/test_tenant_resource_isolation.py)
+(14 focused: pass-through ветки, fail-closed, canonical 404, priority
+header/state, patterns).
+
+### fix/test: сопутствующее
+
+- `test_mq_trace_propagator_focused::test_inject_into_headers_existing` —
+  валидный span-контекст (`NonRecordingSpan`): без активного span OTel
+  propagator инжектит пусто, тест детерминированно падал на HEAD.
+- `.gitignore`: `.cosign-test/` (локальные cosign-ключи — LOCAL ONLY).
+
 ## [Unreleased] — Cycle 140 (2026-09-22) — Layer 2 (P0 Deadline Propagation Chain Extended)
 
 ### Cycle 140 L2: ADR-0305 — все DSL processors интегрированы + checker + focused tests
@@ -42,6 +73,55 @@ Deadline chain применён к 9 LEGACY DSL processors:
 - Тесты deadline-focused: **197 passed** в 28.06s (cycle 134 baseline → +170).
 - Coverage async_utils: **100%** (123 stmts, 18 branches, 0 miss).
 - Coverage routing/: **96%** (482 stmts, 130 branches, 12 miss).
+
+## [Unreleased] — Cycle 148 (2026-09-22) — Layer 2 (P0 Deadline Propagation Chain Coverage Ratchet)
+
+### Cycle 141-148 — coverage ratchet + CI integration + checker hardening
+
+#### Cycle 148: streaming_llm_publishers.py coverage 49% → 79%
+[`test_streaming_llm_publishers_coverage_focused.py`](/home/user/dev/gd_integration_tools/tests/unit/dsl/engine/processors/test_streaming_llm_publishers_coverage_focused.py)
+— 17 focused tests для всех 3 publishers (SSE, WS, Webhook) + abstract base class.
+
+#### Cycle 147: invoke_workflow.py coverage 26% → 78%
+[`test_invoke_workflow_coverage_focused.py`](/home/user/dev/gd_integration_tools/tests/unit/dsl/engine/processors/test_invoke_workflow_coverage_focused.py)
+— 12 focused tests для __init__ validation, _resolve_backend paths,
+process() modes (async-api, async-reply), backend errors, to_spec() round-trip.
+
+#### Cycle 146: parallel.py coverage 62% → 92%
+[`test_parallel_coverage_focused.py`](/home/user/dev/gd_integration_tools/tests/unit/dsl/engine/processors/control_flow/test_parallel_coverage_focused.py)
+— 9 focused tests для PipelineRefProcessor, strategy="first",
+error paths, to_spec() serialization.
+
+#### Cycle 145: focused tests для 5 fanout processors cycle 142
+[`test_fanout_deadline_focused.py`](/home/user/dev/gd_integration_tools/tests/unit/dsl/engine/processors/test_fanout_deadline_focused.py)
+— 16 focused tests для ForkJoin, APIComposition, DurableSubscriber,
+SemanticRouter + BoomBudget propagation + graceful degradation.
+
+#### Cycle 144: focused tests для check_deadline_propagation checker
+[`test_check_deadline_propagation.py`](/home/user/dev/gd_integration_tools/tests/unit/tools/test_check_deadline_propagation.py)
+— 30 focused tests для статического анализатора (100% public API).
+Добавлен `_rel_path()` helper в checker для graceful rendering.
+
+#### Cycle 143: CI integration
+- `make/quality.mk` — добавлены 3 targets:
+  `make check-deadline-propagation[-strict|-json]`.
+- `audit-2026-09-22` расширен — теперь 7 audit gates включая deadline propagation.
+- `.pre-commit-config.yaml` — hook `check-deadline-propagation` на stage `pre-push`.
+
+#### Cycle 142: 5 fanout LEGACY integrated
+[`check_deadline_propagation.py`](/home/user/dev/gd_integration_tools/tools/checks/check_deadline_propagation.py)
+расширен fanout pattern detection (asyncio.gather, subprocess, _run_branch,
+SubPipelineExecutor.execute_route). Применена ADR-0305 к:
+- `ai/semanticrouter_processor.py`
+- `eip/api_composition.py`
+- `eip/fork_join.py`
+- `streaming/reliability.py` (DurableSubscriberProcessor)
+
+**Финальная статистика cycle 148**:
+- INTEGRATED DSL processors: **18/18** (100%, 0 LEGACY, 0 PARTIAL)
+- Deadline-focused tests: **230+ passing**
+- Coverage ratchet total: parallel 62→92%, invoke_workflow 26→78%,
+  streaming_llm_publishers 49→79%, resilience 31→92%
 
 ## [Unreleased] — Cycle 135 (2026-09-22) — Layer 2 (P0 Deadline Propagation Chain)
 
