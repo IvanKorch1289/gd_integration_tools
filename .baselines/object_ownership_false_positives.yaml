@@ -71,3 +71,17 @@ allowlist:
     owner: gd_integration_tools/dsl
     review_date: "2027-03-24"
     added_at: "2026-09-24"
+
+  - file: src/backend/infrastructure/clients/storage/sqlite_search.py
+    line: 96
+    reason: >
+      ``d.get(id_field)`` в ``bulk_index()`` — извлечение значения из local
+      Python dict по configurable field name. ``d`` — это dict literal
+      из ``documents: list[dict[str, Any]]`` parameter (per-call), ``id_field``
+      — string variable (column name, not user-id). НЕ database lookup,
+      НЕ persistence — pure local dict.get. v6 W3.1 classification
+      (sqlite_search.py:96 as USER_DATA) был misclassification; runtime
+      analysis shows no tenant context concern.
+    owner: gd_integration_tools/infrastructure
+    review_date: "2027-03-24"
+    added_at: "2026-09-24"
