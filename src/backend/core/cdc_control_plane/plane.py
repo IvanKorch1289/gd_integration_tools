@@ -65,6 +65,7 @@ class Offset:
 
     @classmethod
     def now(cls, value: int = 0) -> "Offset":
+        """Создать Offset из значения (конструктор-хелпер)."""
         return cls(value=value, timestamp=time.time())
 
 
@@ -148,6 +149,7 @@ class CDCControlPlane:
         return self._slots.get(name)
 
     def slot_count(self) -> int:
+        """Количество активных replication slot'ов."""
         return len(self._slots)
 
     # ─── State management ──────────────────────────────────
@@ -211,6 +213,7 @@ class CDCControlPlane:
         return slot.offset
 
     def get_offset(self, name: str) -> Offset | None:
+        """Получить offset по имени slot'а; ``None`` если нет."""
         slot = self._slots.get(name)
         if slot is None:
             return None
@@ -303,6 +306,7 @@ _plane: CDCControlPlane | None = None
 
 
 def get_cdc_control_plane() -> CDCControlPlane:
+    """Singleton-доступ к общей ``CDCControlPlane``."""
     global _plane
     if _plane is None:
         _plane = CDCControlPlane()
@@ -310,5 +314,6 @@ def get_cdc_control_plane() -> CDCControlPlane:
 
 
 def reset_cdc_control_plane() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _plane
     _plane = None

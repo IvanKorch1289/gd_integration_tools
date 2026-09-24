@@ -95,6 +95,7 @@ class ToolSandbox:
 
     @property
     def config(self) -> SandboxConfig:
+        """Конфигурация песочницы (timeouts/limits)."""
         return self._config
 
     def configure(self, **kwargs: Any) -> None:
@@ -167,9 +168,11 @@ class ToolSandbox:
         return result
 
     def history(self) -> list[SandboxResult]:
+        """История результатов исполнения инструментов."""
         return list(self._executions)
 
     def clear_history(self) -> None:
+        """Очистить историю результатов (для тестов)."""
         self._executions.clear()
 
 
@@ -186,5 +189,6 @@ def get_default_sandbox() -> ToolSandbox:
 
 
 def reset_default_sandbox() -> None:
+    """Сбросить default-sandbox singleton."""
     global _default_sandbox
     _default_sandbox = None

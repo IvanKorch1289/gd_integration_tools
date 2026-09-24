@@ -63,15 +63,19 @@ class RPARecorder:
         self._actions: list[RecordedAction] = []
 
     def add_action(self, action: RecordedAction) -> None:
+        """Добавить записанное действие в историю сессии."""
         self._actions.append(action)
 
     def actions(self) -> list[RecordedAction]:
+        """Все записанные действия (порядок записи)."""
         return list(self._actions)
 
     def size(self) -> int:
+        """Количество записанных действий."""
         return len(self._actions)
 
     def clear(self) -> None:
+        """Очистить историю записи (новая сессия)."""
         self._actions.clear()
 
 
@@ -235,6 +239,7 @@ _recorder: RPARecorder | None = None
 
 
 def get_rpa_recorder() -> RPARecorder:
+    """Singleton-доступ к общему ``RPARecorder``."""
     global _recorder
     if _recorder is None:
         _recorder = RPARecorder()
@@ -242,5 +247,6 @@ def get_rpa_recorder() -> RPARecorder:
 
 
 def reset_rpa_recorder() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _recorder
     _recorder = None
