@@ -6,11 +6,12 @@
 ADR фиксирует **3 варианта** для P0 fix (cross-tenant exposure)
 и **запрашивает user choice** между ними перед implementation.
 
-### Cycle 158+ implementation progress (2026-09-24)
+### Cycle 158+ implementation progress (2026-09-24, post v5 prompt)
 
-Per v4 §6 8-gate audit + per v4 §3 evidence-first:
+Per v4 §6 8-gate audit + per v4 §3 evidence-first + v5 prompt directive
+"ADR-0345 Option A до конца":
 
-**Closed via Option A** (per-call enforcement, 4 of 7 confirmed gaps):
+**Closed via Option A** (per-call enforcement, **5 of 6** confirmed real gaps):
 
 | Commit | Fix | Files | LOC | Contract tests |
 |---|---|---|---|---|
@@ -18,15 +19,25 @@ Per v4 §6 8-gate audit + per v4 §3 evidence-first:
 | `5eefd22f4` | AIFeedbackService.get | 3 | ~17 | 6 |
 | `4e086ff0c` | NotebookService.get | 3 | ~12 | 5 |
 | `b78609426` | MongoNotebookRepository.get | 1 | ~15 | 3 |
-| **TOTAL** | **4 of 7 P0 gaps** | **12** | **~64** | **19** |
+| `ef8240eab` | object_ownership decorator | 1 | ~95 | 9 |
+| **TOTAL** | **5 of 6 P0 real gaps** | **13** | **~159** | **28** |
 
-**Remaining** (per cycle 158+ scope discipline + v4 §11 "stop for review"):
-1. `audit_versioning.py:151` — CONDITIONAL (depends on parent model tenant-scope coverage).
-2. `object_ownership.py` decorator stub — CRITICAL severity (full decorator implementation requires DB session mechanism, design decision).
-3. (Implicit) Audit-versioning parent models classification — requires model coverage survey.
+**Re-verification per audit "Всегда перепроверяй"** (2026-09-24):
+- `audit_versioning.py:151` (`Versioning.get_version`) was originally listed as
+  CONDITIONAL gap in cycle 158+ addendum v2.
+- **Re-investigation**: 0 production callers (only 3 self-references inside
+  `audit_versioning.py` itself).
+- Per audit + v4 §3 evidence-first — **NOT a real cross-tenant gap** (library
+  internal utility, no production exposure path).
+- Per v4 §10 P1 "0 importers" criterion: 0 importers = safe to leave as-is.
+- **Original 7-gaps count was overestimated — actual real = 6.**
+
+**Remaining** (per cycle 158+ scope discipline + v4 §11):
+1. (Implicit) Audit-versioning parent models classification — required per
+   addendum v2 to confirm no exposure via parent model.
 
 **ADR-0345 stays "DRAFT"** per v4 §6 until:
-- ✅ All 7 gaps closed (NOT yet — 3 remain).
+- ✅ All real gaps closed (5 of 6 — 1 implicit remaining).
 - ✅ Per-option 8-gate assessment finalized.
 - ✅ User ratification per kickoff "не использовать ask_user без необходимости" inverse.
 
