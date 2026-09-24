@@ -24,6 +24,9 @@ from dataclasses import dataclass
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.infrastructure.workflow.temporal_interceptors import (
+    build_temporal_interceptors,
+)
 
 __all__ = (
     "ActivityHeartbeatMonitor",
@@ -142,21 +145,10 @@ class TemporalClientFactory:
             "temporal.client.connecting",
             extra={"namespace": namespace, "target": self._target},
         )
-        interceptors: list[Any] = []
-        try:
-            from temporalio.opentelemetry import OpenTelemetryTracingInterceptor
-
-            interceptors.append(OpenTelemetryTracingInterceptor())
-            _logger.debug("temporal.otel.interceptor.enabled")
-        except ImportError:
-            # TD-013: surface silent no-op — operators need to know OTel
-            # spans не эмитятся, иначе observability gap невидим.
-            _logger.warning(
-                "temporal.otel.interceptor.unavailable",
-                extra={
-                    "hint": "pip install 'temporalio[opentelemetry]' для OTel-трейсов Temporal"
-                },
-            )
+        # Per v6 W2: единая фабрика interceptors (canonical SDK 1.33 path).
+        # Ранее — hardcoded import ``temporalio.opentelemetry
+        # OpenTelemetryTracingInterceptor`` (НЕ существует в SDK 1.33).
+        interceptors = build_temporal_interceptors()
 
         return await Client.connect(
             self._target,
@@ -311,7 +303,7 @@ class TemporalWorkerPool:
             for tq, worker in list(self._workers.items()):
                 try:
                     await worker.shutdown()
-                except (RuntimeError, OSError, AttributeError):
+                except RuntimeError, OSError, AttributeError:
                     _logger.exception(
                         "temporal.worker.shutdown_failed", extra={"task_queue": tq}
                     )
