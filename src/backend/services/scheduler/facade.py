@@ -25,10 +25,16 @@ class SchedulerFacade:
     """
 
     def __init__(
-        self, *, capability_check: Any | None = None, plugin: str = "extension"
+        self,
+        *,
+        capability_check: Any | None = None,
+        plugin: str = "extension",
+        session_factory: Any | None = None,
     ) -> None:
         self._check = capability_check
         self._plugin = plugin
+        self._session_factory = session_factory
+        self._run_history_store: Any | None = None
 
     def _assert(self, action: str, resource: str) -> None:
         if self._check is not None:
@@ -72,3 +78,23 @@ class SchedulerFacade:
         except Exception as exc:
             _logger.warning("Failed to remove job %s: %s", job_id, exc)
             raise ServiceError(f"Failed to remove job: {exc}") from exc
+
+
+    def get_run_history_store(self) -> Any:
+        """RunHistoryStore для backfill/catchup (ADR-0346, P3-13 wiring).
+
+        Ленивая инициализация: session_factory из app-конфигурации при
+        первом вызове. Capability-check: ``scheduler.run_history``.
+        """
+        self._assert("run_history", "scheduler")
+
+        from src.backend.services.scheduler.run_history import RunHistoryStore
+
+        if self._session_factory is None:
+            raise ServiceError(
+                "session_factory not configured — передайте async_sessionmaker "
+                "в SchedulerFacade(session_factory=...) при создании"
+            )
+        if self._run_history_store is None:
+            self._run_history_store = RunHistoryStore(self._session_factory)
+        return self._run_history_store
