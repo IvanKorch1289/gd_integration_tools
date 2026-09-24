@@ -24,7 +24,11 @@ class SanitizePIIProcessor(BaseProcessor):
         from src.backend.core.di.providers.cache import get_ai_sanitizer_provider
 
         sanitizer = get_ai_sanitizer_provider()  # instance (fix 2026-09-23)
-        result = sanitizer.sanitize_text(body)  # sync, → SanitizationResult
+        # Adapter (Presidio) — sync sanitize_text; legacy — async sanitize.
+        if hasattr(sanitizer, "sanitize_text"):
+            result = sanitizer.sanitize_text(body)
+        else:
+            result = await sanitizer.sanitize(body)
         exchange.set_property("_pii_original", exchange.in_message.body)
         exchange.set_property("_pii_mapping", result.replacements)
         exchange.in_message.set_body(result.sanitized_text)

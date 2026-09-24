@@ -19,12 +19,20 @@ def _ex(body: Any = None) -> Exchange[Any]:
 
 @pytest.mark.asyncio
 async def test_sanitize_str_body() -> None:
-    with patch(
-        "src.backend.infrastructure.security.ai_sanitizer.get_ai_sanitizer"
-    ) as mock_get:
-        sanitizer = AsyncMock()
-        sanitizer.sanitize.return_value = MagicMock(
-            sanitized_text="hello [REDACTED]", replacements={"name": "[REDACTED]"}
+    with (
+        patch(
+            "src.backend.infrastructure.security.ai_sanitizer.get_ai_sanitizer"
+        ) as mock_get,
+        patch(
+            "src.backend.core.config.features.feature_flags.presidio_pii_enabled",
+            False,
+        ),
+    ):
+        sanitizer = MagicMock()
+        sanitizer.sanitize_text = MagicMock(
+            return_value=MagicMock(
+                sanitized_text="hello [REDACTED]", replacements={"name": "[REDACTED]"}
+            )
         )
         mock_get.return_value = sanitizer
 
