@@ -141,7 +141,9 @@ def grpc_serve(
         None, "--socket", help="Unix socket path (override grpc.socket_path)"
     ),
     max_workers: int | None = typer.Option(
-        None, "--max-workers", help="ThreadPoolExecutor size (override grpc.max_workers)"
+        None,
+        "--max-workers",
+        help="ThreadPoolExecutor size (override grpc.max_workers)",
     ),
 ) -> None:
     """Запуск standalone gRPC-сервера на Unix socket (D-AUDIT-20801).
@@ -176,6 +178,7 @@ def settings_default(field: str) -> str:
     """Возвращает default value для path из settings (для echo в cli)."""
     try:
         from src.backend.core.config.settings import settings as _s
+
         parts = field.split(".")
         obj = _s
         for p in parts:
@@ -205,7 +208,11 @@ def run_frontend(port: int = typer.Option(8501, help="Streamlit port")):
         venv_python = Path(sys.executable)
     env = os.environ.copy()
     existing = env.get("PYTHONPATH", "")
-    paths_str = [str(project_root), *existing.split(os.pathsep)] if existing else [str(project_root)]
+    paths_str = (
+        [str(project_root), *existing.split(os.pathsep)]
+        if existing
+        else [str(project_root)]
+    )
     env["PYTHONPATH"] = os.pathsep.join(dict.fromkeys(paths_str))
 
     cmd = [
@@ -262,7 +269,11 @@ def run_all(
         frontend_env = os.environ.copy()
         project_root = Path.cwd().resolve()
         existing = frontend_env.get("PYTHONPATH", "")
-        paths_str = [str(project_root), *existing.split(os.pathsep)] if existing else [str(project_root)]
+        paths_str = (
+            [str(project_root), *existing.split(os.pathsep)]
+            if existing
+            else [str(project_root)]
+        )
         frontend_env["PYTHONPATH"] = os.pathsep.join(dict.fromkeys(paths_str))
 
         frontend = subprocess.Popen(  # noqa: S603  # CLI developer tool: фиксированный sys.executable + literal args
@@ -440,28 +451,19 @@ def validate_profile(
         typer.echo("[OK] strict-mode не применяет prod-инварианты для dev")
 
 
+# P1 CLI decomposition (v4 §10 P1, 2026-09-24): импорт функций из
+# ``src/backend/cli/info.py`` и регистрация как top-level команд через
+# ``app.command()(fn)`` — preserves CLI contract (python manage.py routes
+# по-прежнему работает на top-level). Typer читает docstring из функции.
+from src.backend.cli.info import actions as _actions
+from src.backend.cli.info import routes as _routes
+from src.backend.cli.info import services as _services
+
+
 @app.command()
 def routes():
     """Список зарегистрированных DSL routes."""
-    _bootstrap()
-    from src.backend.dsl.commands.registry import route_registry
-
-    route_ids = route_registry.list_routes()
-    for route_id in route_ids:
-        pipeline = route_registry.get(route_id)
-        if pipeline is None:
-            continue
-        flag = f" [FF:{pipeline.feature_flag}]" if pipeline.feature_flag else ""
-        procs = len(pipeline.processors)
-        route_name = typer.style(pipeline.route_id, fg=typer.colors.CYAN, bold=True)
-        procs_str = typer.style(f"({procs} processors)", fg=typer.colors.GREEN)
-        flag_str = typer.style(flag, fg=typer.colors.YELLOW) if flag else ""
-        typer.echo(f"  {route_name:<40} {procs_str}{flag_str}")
-
-    total_str = typer.style(
-        f"Total: {len(route_ids)} routes", fg=typer.colors.BLUE, bold=True
-    )
-    typer.echo(f"\n{total_str}")
+    _routes()
 
 
 @app.command()
@@ -481,49 +483,13 @@ def actions(
     завершает процесс с кодом 1 при наличии неявного ``action_id``
     (Wave B — переход к обязательной декларации).
     """
-    _bootstrap()
-    from src.backend.dsl.commands.registry import action_handler_registry
-    from src.backend.entrypoints.api.generator.specs import audit_action_specs
-
-    action_list = sorted(action_handler_registry.list_actions())
-    for action in action_list:
-        typer.echo(f"  {action}")
-
-    typer.echo(f"\nTotal: {len(action_list)} actions")
-
-    explicit, inferred = audit_action_specs()
-    typer.echo(f"\nActionSpec audit: explicit={len(explicit)} inferred={len(inferred)}")
-
-    if inferred:
-        typer.echo("\nInferred action_id (Wave B fallback):")
-        for spec in sorted(inferred, key=lambda s: (s.path, s.method)):
-            typer.echo(
-                f"  - {spec.method:<7} {spec.path:<60} "
-                f"action_id={spec.action_id!r} (tier={spec.tier}, name={spec.name!r})"
-            )
-
-    if strict and inferred:
-        typer.echo(
-            "\n[strict] FAIL: указанные ActionSpec не содержат явного action_id.",
-            err=True,
-        )
-        raise typer.Exit(code=1)
+    _actions(strict=strict)
 
 
 @app.command()
 def services():
     """Список зарегистрированных сервисов."""
-    _bootstrap()
-    from src.backend.core.svcs_registry import list_services
-
-    names = sorted(list_services())
-    for name in names:
-        typer.echo(f"  {typer.style(name, fg=typer.colors.GREEN)}")
-
-    total_str = typer.style(
-        f"Total: {len(names)} services", fg=typer.colors.BLUE, bold=True
-    )
-    typer.echo(f"\n{total_str}")
+    _services()
 
 
 @app.command()
@@ -1245,31 +1211,15 @@ def validate(route_id: str):
 
 
 def _bootstrap():
-    """Минимальная инициализация для introspection команд."""
-    from src.backend.dsl.commands.setup import register_action_handlers
-    from src.backend.dsl.routes import register_dsl_routes
-    from src.backend.plugins.composition.service_setup import register_all_services
+    """Минимальная инициализация для introspection команд.
 
-    register_all_services()
-    register_action_handlers()
-    register_dsl_routes()
+    P1 CLI decomposition (v4 §10 P1, 2026-09-24): re-export из
+    ``src.backend.cli._bootstrap`` для sharing между manage.py командами
+    (``health``, ``diagnose``) и sub-app Typer группами (``info``).
+    """
+    from src.backend.cli._bootstrap import bootstrap
 
-    # Wave 1.1 (Roadmap V10): импорт v1 routers триггерит регистрацию
-    # Tier 1 CRUD-actions через ``ActionRouterBuilder`` (в дополнение к
-    # ручным action handlers выше). Без этого ``manage.py actions`` не
-    # отображал бы CRUD-action_id (``orders.list``/``orders.create`` и т.п.).
-    try:
-        from src.backend.entrypoints.api.v1.routers import get_v1_routers
-
-        get_v1_routers()
-    except Exception as exc:  # noqa: BLE001, S110
-        # Introspection не должна падать из-за опциональных зависимостей
-        # (например, vault/graypy/мини-профилей). Логируем на DEBUG.
-        import logging
-
-        logging.getLogger("manage").debug(
-            "get_v1_routers пропущен в bootstrap: %s", exc
-        )
+    bootstrap()
 
 
 workflow_app = typer.Typer(help="Workflow DSL management (Sprint 4).")
