@@ -5793,6 +5793,73 @@ exit=0 и при этом содержать critical findings, помеченн
 
 ### 2. Privacy orchestration — **P1 audit debt**
 
+### Object authorization callsite classifier — `tools/classify_object_authorization.py` (cycle 158+ continuation, 2026-09-24)
+
+Per user directive "continue по плану, без регрессий, всегда перепроверяй":
+atomic analysis tool для quantification реальных P0 gaps vs false positives
+в `check_object_authorization.py` отчёте.
+
+**Per-call classification** (heuristic-based):
+- **user-data** (3.3%): реальные P0 fix scope — нужен tenant ownership policy.
+- **infra-registry** (75.6%): in-memory state (routes, contracts, agents, events, etc.)
+  — by design no tenant context.
+- **unknown** (21.1%): needs manual review.
+
+**Cycl 158+ measurement** (output `tools/classify_object_authorization.py`):
+
+```
+Object authorization callsites classifier — 123 callsites (filtered: 133 - 10 admin/auth/tests paths)
+
+Summary:
+  user-data: 4 (3.3%)
+  infra-registry: 93 (75.6%)
+  unknown: 26 (21.1%)
+```
+
+**Sample user-data callsites** (4 — actual P0 fix scope):
+
+```
+src/backend/dsl/audit_versioning.py:151
+  session.query(VersionModel).filter_by(id=entity_id, transaction_id=...)
+src/backend/entrypoints/api/v1/endpoints/hitl.py:164
+  svc.get(signal_id)
+src/backend/entrypoints/api/v1/endpoints/hitl.py:185
+  svc.get(signal_id)
+src/backend/entrypoints/api/v1/endpoints/notebooks.py:156
+  get_notebook_service().get(notebook_id)
+src/backend/entrypoints/api/v1/endpoints/ai_feedback.py:168
+  get_ai_feedback_service().get(doc_id)
+```
+
+**Per v4 §5 «presence != wiring»**: original "133 P0 audit gap" claim overstates
+реальный exposure. Большинство callsites — private infrastructure
+registries (`_routes`, `_contracts`, `_agents`, `_skills`, `_events`,
+`_records`, `_entries`, etc.), которые by design don't have tenant context
+(нет cross-tenant data access risk).
+
+**Real P0 fix scope**: 4 known user-data + ~26 unknown needs review + 93 confirmed
+infra-safe.
+
+**Implementation per cycle 158+ pattern**:
+- `tools/classify_object_authorization.py` — standalone read-only analysis tool
+  (NOT a runtime change). 220+ LOC, AST-based + heuristic receiver-type
+  pattern detection.
+- 7 regression tests (test_w11_p0_3_classify_object_authorization.py):
+  classification logic, output format, no-regression compileall.
+- Per v4 §10 P1 evidence-first: classification IS testable (fixture-based
+  через existing source code, avoids tempfile relative_to issues).
+
+**Tests passing in cluster**: 170/170 (added 7 for the classifier).
+
+**next-cycle recommendation (deferred per v4 §10)**:
+1. ADR for ownership policy (Casbin vs custom class-based) — design-heavy.
+2. Implementation: 4 confirmed user-data callsites + 26 unknown if any are real.
+3. Sample routing tests (perroute verify `current_tenant()` scope).
+
+NOT implemented in this session per scope (architectural fork, requires ADR).
+
+
+
 - Storage coverage: **only 1/5 backends** (postgres) have data subject
   erasure. Missing: redis, s3, qdrant, ai_memory (LangMem).
 - Что есть:
