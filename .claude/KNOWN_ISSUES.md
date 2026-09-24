@@ -2108,3 +2108,16 @@ tests/unit/entrypoints (1176+ passed / 26 failed). Весь остаток — �
    — зоны параллельной разработки.
 7. Docstrings: 250 missing / 48 файлов (exit 1), бейзлайн в AGENTS.md
    актуализирован; рэтчет от 250 вниз.
+
+## Дополнение (2026-09-24, после pollution-фикстуры)
+
+- `tests/unit/conftest.py`: autouse snapshot/restore `_overrides`
+  (cache/ai/http/storage/workflow провайдеры) — кросс-файловая pollution
+  от cache-моков устранена на уровне инфраструктуры тестов.
+- Остаток dsl: **6 failed** — fanout_deadline ×3 (W11 in-flight) +
+  test_hitl_approval ×3 (fallout свежего tenant-фильтра HitlService,
+  ADR-0345 — тестам нужна tenant-фикстура в волне владельца).
+- grpc subclass ×2-3: order-зависимый flake (ai suite → grpc subclass;
+  standalone — зелёные), repro: `pytest tests/unit/dsl/engine/processors/ai
+  tests/unit/entrypoints/grpc/test_grpc_subclass_methods_patch.py`.
+  Владелец: infra/grpc волна.

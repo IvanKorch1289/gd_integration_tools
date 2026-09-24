@@ -161,3 +161,33 @@ def pytest_collectstart(collector: pytest.Collector) -> None:
     ``__init__.py``.
     """
     _cleanup_polluted_modules()
+
+
+# ── DI overrides: snapshot/restore после каждого теста (fix 2026-09-24) ──
+# Cache/privacy-тесты пишут ``providers.cache._overrides["redis_client"] = mock``
+# напрямую; без cleanup мок утекает в следующие suite'ы ("MagicMock can't be
+# awaited" в grpc/mcp/eip при combined-прогоне). Snapshot/restore сохраняет
+# и намеренные session-scope override'ы, и изоляцию.
+import pytest as _pytest
+
+
+@_pytest.fixture(autouse=True)
+def _restore_di_overrides():
+    from src.backend.core.di.providers import cache as _cache
+    from src.backend.core.di.providers import ai as _ai
+    from src.backend.core.di.providers import http as _http
+    from src.backend.core.di.providers import storage as _storage
+    from src.backend.core.di.providers import workflow as _workflow
+
+    modules = (_cache, _ai, _http, _storage, _workflow)
+    snapshot: dict[int, dict] = {}
+    for m in modules:
+        ov = getattr(m, "_overrides", None)
+        if isinstance(ov, dict):
+            snapshot[id(ov)] = dict(ov)
+    yield
+    for m in modules:
+        ov = getattr(m, "_overrides", None)
+        if isinstance(ov, dict) and id(ov) in snapshot:
+            ov.clear()
+            ov.update(snapshot[id(ov)])
