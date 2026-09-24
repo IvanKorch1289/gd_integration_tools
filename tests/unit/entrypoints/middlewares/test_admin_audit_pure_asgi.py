@@ -10,6 +10,24 @@ import pytest
 from src.backend.entrypoints.middlewares.admin_audit import AdminAuditMiddleware
 
 
+def _audit_fields(record: logging.LogRecord) -> dict[str, Any]:
+    """W5: structlog-пайплайн рендерит audit-поля в JSON-строку сообщения
+    (под ключом ``extra``). Возвращает плоский словарь полей аудита.
+    """
+    import ast
+
+    try:
+        payload = ast.literal_eval(record.getMessage())
+    except Exception:
+        payload = {}
+    if isinstance(payload, dict):
+        extra = payload.get("extra")
+        if isinstance(extra, dict):
+            return extra
+        return payload
+    return {k: v for k, v in record.__dict__.items() if not k.startswith("_")}
+
+
 def _start_message(send: AsyncMock):
     for call in send.await_args_list:
         msg = call.args[0]
@@ -146,7 +164,7 @@ class TestAdminAuditMiddlewarePureASGI:
 
         records = [r for r in caplog.records if r.name == "audit_log.admin"]
         assert records, "PUT /api/v1/admin/* должен emit audit"
-        rec = records[0]
+        rec = SimpleNamespace(**_audit_fields(records[0]))
         assert rec.actor_principal == "admin-42"
         assert "super_admin" in rec.actor_admin_roles
         assert rec.endpoint == "/api/v1/admin/users/1"
@@ -179,7 +197,7 @@ class TestAdminAuditMiddlewarePureASGI:
 
         records = [r for r in caplog.records if r.name == "audit_log.admin"]
         assert records
-        assert records[0].method == "DELETE"
+        assert _audit_fields(records[0])["method"] == "DELETE"
 
     @pytest.mark.asyncio
     async def test_tech_path_emits_audit(
@@ -210,7 +228,7 @@ class TestAdminAuditMiddlewarePureASGI:
 
         records = [r for r in caplog.records if r.name == "audit_log.admin"]
         assert records
-        assert records[0].endpoint == "/tech/feature-flags/refresh"
+        assert _audit_fields(records[0])["endpoint"] == "/tech/feature-flags/refresh"
 
     @pytest.mark.asyncio
     async def test_anonymous_principal_when_no_auth_context(
@@ -231,8 +249,8 @@ class TestAdminAuditMiddlewarePureASGI:
 
         records = [r for r in caplog.records if r.name == "audit_log.admin"]
         assert records
-        assert records[0].actor_principal == "anonymous"
-        assert records[0].actor_admin_roles == []
+        assert _audit_fields(records[0])["actor_principal"] == "anonymous"
+        assert _audit_fields(records[0])["actor_admin_roles"] == []
 
     @pytest.mark.asyncio
     async def test_response_status_captured(
@@ -261,7 +279,7 @@ class TestAdminAuditMiddlewarePureASGI:
 
         records = [r for r in caplog.records if r.name == "audit_log.admin"]
         assert records
-        assert records[0].status_code == 403
+        assert _audit_fields(records[0])["status_code"] == 403
 
     @pytest.mark.asyncio
     async def test_payload_hash_computed_for_body(
@@ -295,7 +313,7 @@ class TestAdminAuditMiddlewarePureASGI:
 
         records = [r for r in caplog.records if r.name == "audit_log.admin"]
         assert records
-        assert records[0].payload_hash == payload_hash(body)
+        assert _audit_fields(records[0])["payload_hash"] == payload_hash(body)
 
     @pytest.mark.asyncio
     async def test_downstream_consumes_replayed_body(
@@ -369,4 +387,4 @@ class TestAdminAuditMiddlewarePureASGI:
         records = [r for r in caplog.records if r.name == "audit_log.admin"]
         assert records
         # payload_hash из cached body, не из receive.
-        assert records[0].payload_hash == payload_hash(b"cached-body")
+        assert _audit_fields(records[0])["payload_hash"] == payload_hash(b"cached-body")

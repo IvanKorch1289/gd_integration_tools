@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -11,6 +12,24 @@ from fastapi.testclient import TestClient
 
 from src.backend.core.auth import AuthContext, AuthMethod
 from src.backend.entrypoints.middlewares.admin_audit import AdminAuditMiddleware
+
+
+def _audit_fields(record: logging.LogRecord) -> dict[str, Any]:
+    """W5: structlog-пайплайн рендерит audit-поля в repr-строку сообщения
+    (под ключом ``extra``). Возвращает плоский словарь полей аудита.
+    """
+    import ast
+
+    try:
+        payload = ast.literal_eval(record.getMessage())
+    except Exception:
+        return {k: v for k, v in record.__dict__.items() if not k.startswith("_")}
+    if isinstance(payload, dict):
+        extra = payload.get("extra")
+        if isinstance(extra, dict):
+            return extra
+        return payload
+    return {}
 
 
 def _make_app_with_ctx(ctx: AuthContext | None) -> FastAPI:
@@ -67,7 +86,7 @@ def test_patch_admin_path_emits_audit(caplog_audit: pytest.LogCaptureFixture) ->
     assert r.status_code == 200
     records = [rec for rec in caplog_audit.records if rec.name == "audit_log.admin"]
     assert records, "ожидаем хотя бы одну запись в audit_log.admin"
-    rec = records[0]
+    rec = SimpleNamespace(**_audit_fields(records[0]))
     assert rec.actor_principal == "admin-1"
     assert "operator" in rec.actor_admin_roles
     assert rec.endpoint == "/tech/degradation/level"
@@ -107,8 +126,9 @@ def test_post_admin_path_emits_audit(caplog_audit: pytest.LogCaptureFixture) -> 
     assert r.status_code == 200
     records = [rec for rec in caplog_audit.records if rec.name == "audit_log.admin"]
     assert records
-    assert records[0].endpoint == "/api/v1/admin/resilience-profiles/foo"
-    assert "super_admin" in records[0].actor_admin_roles
+    rec = SimpleNamespace(**_audit_fields(records[0]))
+    assert rec.endpoint == "/api/v1/admin/resilience-profiles/foo"
+    assert "super_admin" in rec.actor_admin_roles
 
 
 def test_non_admin_path_skipped(caplog_audit: pytest.LogCaptureFixture) -> None:
@@ -130,5 +150,6 @@ def test_anonymous_principal_when_ctx_absent(
     assert r.status_code == 200
     records = [rec for rec in caplog_audit.records if rec.name == "audit_log.admin"]
     assert records
-    assert records[0].actor_principal == "anonymous"
-    assert records[0].actor_admin_roles == []
+    rec = SimpleNamespace(**_audit_fields(records[0]))
+    assert rec.actor_principal == "anonymous"
+    assert rec.actor_admin_roles == []

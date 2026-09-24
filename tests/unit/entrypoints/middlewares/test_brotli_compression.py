@@ -144,6 +144,15 @@ class TestBrotliCompressionMiddleware:
 
     def test_try_import_brotli_none_when_missing(self) -> None:
         """_try_import_brotli returns None when brotli is not installed."""
-        with patch("builtins.__import__", side_effect=ImportError("no module")):
+        import builtins
+
+        real_import = builtins.__import__
+
+        def _no_brotli(name, *args, **kwargs):
+            if name == "brotli":
+                raise ImportError("no module")
+            return real_import(name, *args, **kwargs)
+
+        with patch("builtins.__import__", side_effect=_no_brotli):
             result = BrotliCompressionMiddleware._try_import_brotli()
         assert result is None
