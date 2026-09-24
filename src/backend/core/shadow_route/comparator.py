@@ -52,6 +52,7 @@ class ShadowResult:
     timestamp: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
+        """Сериализация результата сравнения (shadow vs main)."""
         return {
             "route_id": self.route_id,
             "version": self.version,
@@ -169,6 +170,7 @@ class ShadowRouter:
         self._mirror_pct[route_id] = percent
 
     def get_mirror_percent(self, route_id: str) -> float:
+        """Процент зеркалирования трафика для маршрута."""
         return self._mirror_pct.get(route_id, 0.0)
 
     # ─── Mirror decision (sticky by tenant) ───────────
@@ -330,6 +332,7 @@ _router: ShadowRouter | None = None
 
 
 def get_shadow_router() -> ShadowRouter:
+    """Singleton-доступ к общему ``ShadowRouter``."""
     global _router
     if _router is None:
         _router = ShadowRouter()
@@ -337,5 +340,6 @@ def get_shadow_router() -> ShadowRouter:
 
 
 def reset_shadow_router() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _router
     _router = None

@@ -166,9 +166,11 @@ class TenantIsolationChecker:
 
     @property
     def results(self) -> list[IsolationTestResult]:
+        """Результаты isolation-тестов RLS-политик."""
         return list(self._results)
 
     def clear(self) -> None:
+        """Очистить результаты (для повторного прогона)."""
         self._results.clear()
 
 
@@ -176,6 +178,7 @@ _verifier: RLSVerifier | None = None
 
 
 def get_rls_verifier() -> RLSVerifier:
+    """Singleton-доступ к общему ``RLSVerifier``."""
     global _verifier
     if _verifier is None:
         _verifier = RLSVerifier()
@@ -183,5 +186,6 @@ def get_rls_verifier() -> RLSVerifier:
 
 
 def reset_rls_verifier() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _verifier
     _verifier = None

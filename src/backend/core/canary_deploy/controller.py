@@ -86,15 +86,19 @@ class CanaryController:
 
     @property
     def configs(self) -> list[CanaryConfig]:
+        """Все canary-конфигурации (порядок регистрации)."""
         return list(self._configs.values())
 
     def register(self, config: CanaryConfig) -> None:
+        """Зарегистрировать/заменить canary-конфиг по route_id."""
         self._configs[config.route_id] = config
 
     def unregister(self, route_id: str) -> None:
+        """Снять canary с маршрута (unregister)."""
         self._configs.pop(route_id, None)
 
     def get(self, route_id: str) -> CanaryConfig | None:
+        """Получить canary-конфиг маршрута; ``None`` если нет."""
         return self._configs.get(route_id)
 
     # ─── Traffic split ────────────────────────────────────

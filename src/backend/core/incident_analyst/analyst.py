@@ -84,11 +84,13 @@ class IncidentReport:
 
     @property
     def top_hypothesis(self) -> Hypothesis | None:
+        """Гипотеза с максимальным score (или ``None``)."""
         if not self.hypotheses:
             return None
         return max(self.hypotheses, key=lambda h: h.confidence)
 
     def to_dict(self) -> dict[str, Any]:
+        """Сериализация анализа инцидента (гипотезы/evidence)."""
         return {
             "summary": self.summary,
             "severity": self.severity,
@@ -492,6 +494,7 @@ _analyst: IncidentAnalyst | None = None
 
 
 def get_incident_analyst() -> IncidentAnalyst:
+    """Singleton-доступ к общему ``IncidentAnalyst``."""
     global _analyst
     if _analyst is None:
         _analyst = IncidentAnalyst()
@@ -499,5 +502,6 @@ def get_incident_analyst() -> IncidentAnalyst:
 
 
 def reset_incident_analyst() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _analyst
     _analyst = None
