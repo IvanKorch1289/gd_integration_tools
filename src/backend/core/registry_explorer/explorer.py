@@ -70,18 +70,23 @@ class RegistryExplorer:
     # ─── Routes ───────────────────────────────────────────
 
     def register_route(self, route: RouteEntry) -> None:
+        """Добавить/заменить маршрут по ``route.id``."""
         self._routes[route.id] = route
 
     def find_route(self, route_id: str) -> RouteEntry | None:
+        """Найти маршрут по id; ``None`` если отсутствует."""
         return self._routes.get(route_id)
 
     def list_routes(self) -> list[RouteEntry]:
+        """Все зарегистрированные маршруты (порядок вставки)."""
         return list(self._routes.values())
 
     def list_routes_by_owner(self, owner: str) -> list[RouteEntry]:
+        """Маршруты конкретного владельца (точное совпадение)."""
         return [r for r in self._routes.values() if r.owner == owner]
 
     def list_routes_by_tag(self, tag: str) -> list[RouteEntry]:
+        """Маршруты, содержащие ``tag`` в списке тегов."""
         return [r for r in self._routes.values() if tag in r.tags]
 
     def search_routes(
@@ -102,40 +107,51 @@ class RegistryExplorer:
         return result
 
     def route_count(self) -> int:
+        """Количество зарегистрированных маршрутов."""
         return len(self._routes)
 
     # ─── Connectors ────────────────────────────────────────
 
     def register_connector(self, connector: ConnectorEntry) -> None:
+        """Добавить/заменить коннектор по ``connector.name``."""
         self._connectors[connector.name] = connector
 
     def find_connector(self, name: str) -> ConnectorEntry | None:
+        """Найти коннектор по имени; ``None`` если отсутствует."""
         return self._connectors.get(name)
 
     def list_connectors(self) -> list[ConnectorEntry]:
+        """Все зарегистрированные коннекторы."""
         return list(self._connectors.values())
 
     def list_connectors_by_category(self, category: str) -> list[ConnectorEntry]:
+        """Коннекторы категории (http/soap/db/queue/external)."""
         return [c for c in self._connectors.values() if c.category == category]
 
     def list_connectors_by_tag(self, tag: str) -> list[ConnectorEntry]:
+        """Коннекторы, содержащие ``tag`` в списке тегов."""
         return [c for c in self._connectors.values() if tag in c.tags]
 
     def connector_count(self) -> int:
+        """Количество зарегистрированных коннекторов."""
         return len(self._connectors)
 
     # ─── Actions ──────────────────────────────────────────
 
     def register_action(self, action: ActionEntry) -> None:
+        """Добавить/заменить action по ``action.name``."""
         self._actions[action.name] = action
 
     def find_action(self, name: str) -> ActionEntry | None:
+        """Найти action по имени; ``None`` если отсутствует."""
         return self._actions.get(name)
 
     def list_actions(self) -> list[ActionEntry]:
+        """Все зарегистрированные actions."""
         return list(self._actions.values())
 
     def action_count(self) -> int:
+        """Количество зарегистрированных actions."""
         return len(self._actions)
 
     # ─── Bulk / Export ────────────────────────────────────
@@ -191,6 +207,7 @@ class RegistryExplorer:
         }
 
     def clear(self) -> None:
+        """Полный сброс всех трёх реестров (для тестов/reload)."""
         self._routes.clear()
         self._connectors.clear()
         self._actions.clear()
@@ -200,6 +217,7 @@ _explorer: RegistryExplorer | None = None
 
 
 def get_registry_explorer() -> RegistryExplorer:
+    """Singleton-доступ к общему ``RegistryExplorer``."""
     global _explorer
     if _explorer is None:
         _explorer = RegistryExplorer()
@@ -207,5 +225,6 @@ def get_registry_explorer() -> RegistryExplorer:
 
 
 def reset_registry_explorer() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _explorer
     _explorer = None
