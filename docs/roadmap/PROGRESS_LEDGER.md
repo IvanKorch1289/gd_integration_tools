@@ -5566,6 +5566,76 @@ Per `STARTUP_BOTTLENECK_INVESTIGATION_2026-09-23.md` — the 62% reduction addre
 
 Estimated remaining savings: **1.3-1.7s** (если A и C реализованы).
 
+### Option A applied: dlq lazy `__getattr__` proxy (commit `aafc6218d`, 2026-09-24)
+
+Per follow-up на `DLQ_REGRESSION_2026-09-24.md`, applied **Option A** к
+`src/backend/infrastructure/messaging/dlq/__init__.py`.
+
+**Per-module final results** (startup_time.py):
+
+| Module | Pre-cycle-158+ | Post-Option-A | Δ |
+|---|---|---|---|
+| `core.config.features` (hvac B) | 1.719s | 0.638s | **-63%** |
+| `infrastructure.messaging.dlq` (lazy A) | 10.697s | **0.004s** | **-99.96%** |
+| **TOTAL** | **9.104s** | **6.430s** | **-29.4%** |
+
+**Implementation**: PEP 562 lazy module attribute, `_LAZY_MAP` для sibling
+modules (`dlq_base`) vs relative submodules (`*.writer`).
+
+**Blast-radius** (grep survey before fix):
+- 10 production imports `from dlq import …` — **ALL in tests** (0 in src/).
+- 21 submodule-direct imports в production.
+- Safe: zero production imports use lazy-broken pattern.
+
+**Tests** (10 new tests в `tests/unit/infrastructure/messaging/test_dlq_lazy_init.py`):
+- TestLazyInitProxy × 4: lazy resolution, caching, AttributeError, sys.modules.
+- TestBackwardCompat × 5: identity preservation для всех `__all__` entries.
+- TestColdImportPerformance × 1: subprocess < 100ms.
+
+**dlq combined tests**: 22/22 passed (10 lazy + 12 existing dlq tests).
+
+### Option C surface — НЕ реализовано
+
+Per STARTUP_BOTTLENECK Option C (mixin 17 → 3 BaseSettings):
+- Big architectural change.
+- Blast radius: all feature flag consumers.
+- Estimated saving: ~0.5s дополнительно.
+- **Status**: deferred (out of one-session scope, требует ADR).
+
+### Tenancy root-cause discovery (cycle 158+ continuation, post-Option-A)
+
+Per follow-up investigation after dlq fix:
+
+`core.tenancy` второй-largest module (1.326s). Per-submodule cold imports
+8 submodules каждый ~1.5s (sum ~12.5s с учётом shared dep caching).
+557 modules loaded transitive при cold import `tenancy.quotas`.
+
+**Root bottleneck**: `core.logging` alone = **1.4s** cold import. 80% of
+tenant-aware submodules транзитивно импортируют logging → каждый
+тащит 1.4s overhead.
+
+**Tenancy Option A** (lazy proxy): saves ~2.9s cold start (quotas + slo
+в `__init__.py`), но **не решает основной 1.4s/core.logging problem**.
+
+**Recompute для next cycle**:
+1. **`core.logging` lazy load** (biggest single win): ~1.4s × N submodules.
+2. **`core.tenancy` Option A**: ~2.9s.
+3. **`core.config.features` Option C**: ~0.5s.
+
+Estimated **post-full-Priority-B**: 6.430s → ~3-4s.
+
+### Per goal checkpoint assessment
+
+- **Completion proven**: ❌ NO (P0/P1 gaps остаются).
+- **Blocked threshold met**: ❌ NO (concrete measurable progress this turn — Option A applied).
+- **Goal update via heartbeat**: ❌ NO.
+
+**Decision**: Goal remains **active**.
+
+**Cycle 158+ total (HEAD `aafc6218d`)**: 30 atomic commits, 4 ADRs, 64 tests.
+
+Push pending per v4 §2 — user executes `git push origin master`.
+
 ### Per v4 §6 Gate допуска улучшения — все 8 ворот прошли
 
 | Ворота | Статус |
