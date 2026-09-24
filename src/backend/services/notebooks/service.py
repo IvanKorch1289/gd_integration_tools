@@ -69,17 +69,28 @@ class NotebookService:
         _trigger_rag_index(notebook)
         return notebook
 
-    async def get(self, notebook_id: str) -> Notebook | None:
+    async def get(
+        self, notebook_id: str, *, tenant_id: str | None = None
+    ) -> Notebook | None:
         """Get notebook by ID.
 
         Args:
             notebook_id: Notebook ID.
+            tenant_id: Optional tenant filter — fail-closed per ADR-0345.
+                Если None — резолвится через ``get_tenant_id()``.
 
         Returns:
-            Notebook or None if not found.
+            Notebook or None if not found OR tenant mismatch.
 
         """
-        return await self._repo.get(notebook_id)
+        from src.backend.core.tenancy import get_tenant_id
+
+        effective_tenant = (
+            tenant_id if tenant_id is not None else get_tenant_id()
+        )
+        if effective_tenant == "":
+            return await self._repo.get(notebook_id, tenant_id=None)
+        return await self._repo.get(notebook_id, tenant_id=effective_tenant)
 
     async def get_version(
         self, notebook_id: str, version: int

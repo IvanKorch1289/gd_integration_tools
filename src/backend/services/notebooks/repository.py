@@ -35,14 +35,18 @@ class NotebookRepository(Protocol):
         """
         ...
 
-    async def get(self, notebook_id: str) -> Notebook | None:
+    async def get(
+        self, notebook_id: str, *, tenant_id: str | None = None
+    ) -> Notebook | None:
         """Get notebook by ID.
 
         Args:
             notebook_id: Notebook ID.
+            tenant_id: Optional tenant filter — fail-closed per ADR-0345.
+                Compares against ``notebook.metadata["tenant_id"]``.
 
         Returns:
-            Notebook or None if not found.
+            Notebook or None if not found OR tenant mismatch.
 
         """
         ...
@@ -148,19 +152,30 @@ class InMemoryNotebookRepository:
             self._docs[notebook.id] = notebook.model_copy(deep=True)
             return self._docs[notebook.id]
 
-    async def get(self, notebook_id: str) -> Notebook | None:
+    async def get(
+        self, notebook_id: str, *, tenant_id: str | None = None
+    ) -> Notebook | None:
         """Get notebook by ID.
 
         Args:
             notebook_id: Notebook ID.
+            tenant_id: Optional tenant filter — fail-closed per ADR-0345.
+                Compares against ``notebook.metadata["tenant_id"]`` (Notebook
+                has no typed tenant_id field; uses ``metadata`` dict).
 
         Returns:
-            Notebook (deep copy) or None if not found.
+            Notebook (deep copy) or None if not found OR tenant mismatch.
 
         """
         async with self._lock:
             doc = self._docs.get(notebook_id)
-            return doc.model_copy(deep=True) if doc else None
+            if doc is None:
+                return None
+            if tenant_id is not None:
+                doc_tenant = doc.metadata.get("tenant_id", "")
+                if doc_tenant != tenant_id:
+                    return None
+            return doc.model_copy(deep=True)
 
     async def append_version(
         self,
