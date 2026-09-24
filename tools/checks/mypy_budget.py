@@ -4,14 +4,13 @@
 ``MAX_MYPY_ERRORS`` или сохранённого ratcheting baseline. С ``--ratchet``
 обновляет ``.baselines/mypy.json`` только новым меньшим значением.
 
-Запуск:
+Per v6 W1: различает 4 exit codes:
 
-.. code-block:: bash
-
-    python tools/checks/mypy_budget.py --max 30
-    # exit 0 — ok (errors <= max и baseline)
-    # exit 1 — превышен budget или baseline
-    # exit 2 — mypy не вернул валидный результат
+- ``0`` — OK (errors <= max и baseline).
+- ``1`` — type errors (errors > max или errors > baseline).
+- ``2`` — tool failure (mypy crashed: segfault, exception, invalid result).
+- ``3`` — environment failure (subprocess не запустился: python missing,
+  mypy не установлен, sys.executable неверный).
 
 Idea: budget уменьшается со временем (S9: 30, S10: 25, S11: 15, S12: 0).
 """
@@ -33,7 +32,11 @@ ERROR_RE = re.compile(r"^[^:]+:\d+:\s*(?:\d+:\s*)?error:", re.MULTILINE)
 
 
 def run_mypy() -> tuple[int, str]:
-    """Запускает mypy и возвращает (exit_code, combined_stdout_stderr)."""
+    """Запускает mypy и возвращает (exit_code, combined_stdout_stderr).
+
+    Raises ``FileNotFoundError`` если sys.executable или ``-m mypy`` entry
+    недоступны (env failure — caller обрабатывает отдельно).
+    """
     proc = subprocess.run(
         [
             sys.executable,
@@ -67,7 +70,7 @@ def load_baseline() -> int | None:
         return None
     try:
         return int(json.loads(BASELINE_FILE.read_text()).get("errors"))
-    except (ValueError, KeyError):
+    except ValueError, KeyError:
         return None
 
 
@@ -77,7 +80,7 @@ def save_baseline(errors: int) -> None:
     )
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--max", type=int, default=30, help="абсолютный budget (default 30)"
@@ -87,18 +90,29 @@ def main() -> int:
         action="store_true",
         help="обновить baseline если errors уменьшились",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     print("Running mypy...")
-    code, output = run_mypy()
+    try:
+        code, output = run_mypy()
+    except FileNotFoundError as exc:
+        # Environment failure: python executable или mypy module missing.
+        print(f"ENV FAILURE: mypy subprocess не запустился: {exc}", file=sys.stderr)
+        return 3
+    except OSError as exc:
+        # Other environment failure (permission denied, no shell, etc.).
+        print(f"ENV FAILURE: subprocess OSError: {exc}", file=sys.stderr)
+        return 3
+
     errors = count_errors(output)
     baseline = load_baseline()
 
     print(f"mypy errors: {errors} (max={args.max}, baseline={baseline})")
 
     if code not in (0, 1) or (code == 1 and errors == 0):
+        # Tool failure: mypy crashed без валидного результата.
         print(
-            f"ERROR: mypy exited with code {code} without a valid result",
+            f"TOOL FAILURE: mypy exited with code {code} without a valid result",
             file=sys.stderr,
         )
         return 2
