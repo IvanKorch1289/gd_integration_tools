@@ -181,6 +181,7 @@ _generator: DocsGenerator | None = None
 
 
 def get_docs_generator() -> DocsGenerator:
+    """Singleton-доступ к общему ``DocsGenerator``."""
     global _generator
     if _generator is None:
         _generator = DocsGenerator()
@@ -188,6 +189,7 @@ def get_docs_generator() -> DocsGenerator:
 
 
 def reset_docs_generator() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _generator
     _generator = None
 

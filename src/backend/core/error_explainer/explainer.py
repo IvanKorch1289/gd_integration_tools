@@ -89,6 +89,7 @@ class ErrorExplanation:
         return f"{self.exception_type}: {self.exception_message} at {loc}"
 
     def to_dict(self) -> dict[str, Any]:
+        """Сериализация объяснения ошибки (причина/шаги)."""
         return {
             "exception_type": self.exception_type,
             "exception_message": self.exception_message,
@@ -227,6 +228,7 @@ _explainer: ErrorExplainer | None = None
 
 
 def get_error_explainer() -> ErrorExplainer:
+    """Singleton-доступ к общему ``ErrorExplainer``."""
     global _explainer
     if _explainer is None:
         _explainer = ErrorExplainer()
@@ -234,5 +236,6 @@ def get_error_explainer() -> ErrorExplainer:
 
 
 def reset_error_explainer() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _explainer
     _explainer = None

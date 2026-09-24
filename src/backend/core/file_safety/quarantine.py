@@ -76,5 +76,6 @@ def _set_file_safety_service(svc: FileSafetyService | None) -> None:
 
 
 def reset_file_safety_service() -> None:
+    """Сбросить singleton file-safety сервиса (для тестов)."""
     global _service
     _service = None

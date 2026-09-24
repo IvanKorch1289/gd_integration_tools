@@ -48,6 +48,7 @@ class ParsedRecord:
         return key in self.data
 
     def get(self, key: str, default: Any = None) -> Any:
+        """Получить значение по ключу или ``default``."""
         return self.data.get(key, default)
 
 

@@ -37,6 +37,7 @@ class LangMemErasureAdapter:
         strategy: ErasureStrategy,
         correlation_id: str,
     ) -> AdapterResult:
+        """Execute memory erasure в LangMem (AI memory)."""
         start = time.monotonic()
         try:
             try:

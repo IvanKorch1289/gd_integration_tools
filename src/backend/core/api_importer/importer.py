@@ -71,6 +71,7 @@ class ImportedAPI:
     source_format: str = ""  # "openapi3" | "swagger2"
 
     def operation_count(self) -> int:
+        """Количество импортированных операций из спецификации."""
         return sum(len(p.operations) for p in self.paths)
 
 

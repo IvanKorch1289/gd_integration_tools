@@ -86,10 +86,12 @@ class CorrelationPropagator:
 
     @staticmethod
     def inject_to_headers(context: SemanticContext) -> dict[str, str]:
+        """Инжектировать SemanticContext в HTTP-заголовки."""
         return TraceContextCarrier.inject(context)
 
     @staticmethod
     def extract_from_headers(headers: dict[str, str]) -> SemanticContext:
+        """Извлечь SemanticContext из HTTP-заголовков."""
         return TraceContextCarrier.extract(headers)
 
     @staticmethod

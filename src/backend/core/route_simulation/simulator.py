@@ -77,6 +77,7 @@ class RouteSimulator:
         self._connectors[name] = connector
 
     def get_connector(self, name: str) -> MockConnector | None:
+        """Получить mock-коннектор по имени; ``None`` если нет."""
         return self._connectors.get(name)
 
     def add_step(self, name: str, step_fn: SimStepFn) -> None:
@@ -150,6 +151,7 @@ _simulator: RouteSimulator | None = None
 
 
 def get_route_simulator() -> RouteSimulator:
+    """Singleton-доступ к общему ``RouteSimulator``."""
     global _simulator
     if _simulator is None:
         _simulator = RouteSimulator()
@@ -157,5 +159,6 @@ def get_route_simulator() -> RouteSimulator:
 
 
 def reset_route_simulator() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _simulator
     _simulator = None

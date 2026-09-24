@@ -71,10 +71,12 @@ class RouteTestResult:
 
     @property
     def failed_count(self) -> int:
+        """Число упавших проверок в прогоне."""
         return sum(1 for a in self.assertions if not a.passed)
 
     @property
     def passed_count(self) -> int:
+        """Число пройденных проверок в прогоне."""
         return sum(1 for a in self.assertions if a.passed)
 
 

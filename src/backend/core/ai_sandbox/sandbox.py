@@ -86,6 +86,7 @@ class ProcessSandboxResult:
     oom_killed: bool = False
 
     def to_dict(self) -> dict[str, Any]:
+        """Сериализация конфигурации/результата песочницы."""
         return {
             "success": self.success,
             "exit_code": self.exit_code,
@@ -143,6 +144,7 @@ class ProcessSandbox:
 
     @property
     def config(self) -> ProcessSandboxConfig:
+        """Конфигурация process-sandbox (timeouts/limits)."""
         return self._config
 
     def update_config(self, **kwargs: Any) -> None:
@@ -266,7 +268,7 @@ class ProcessSandbox:
                 if line.startswith("__exit__:"):
                     try:
                         exit_code = int(line.split(":", 1)[1])
-                    except (ValueError, IndexError):
+                    except ValueError, IndexError:
                         pass
             success = exit_code == 0 and not oom
             return ProcessSandboxResult(

@@ -69,7 +69,8 @@ class PostgresErasureAdapter:
                 )
 
             effective_tenant = (
-                explicit_tenant_id if explicit_tenant_id is not None
+                explicit_tenant_id
+                if explicit_tenant_id is not None
                 else get_tenant_id()
             )
 

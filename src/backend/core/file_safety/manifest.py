@@ -43,6 +43,7 @@ class FileManifest:
     attributes: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        """Сериализация манифеста стейджинга (для аудита)."""
         return {
             "file_id": self.file_id,
             "hash_sha256": self.hash_sha256,
@@ -76,6 +77,7 @@ class FileSafetyService:
 
     @property
     def staging_dir(self) -> Path:
+        """Каталог стейджинга из манифеста."""
         return self._staging_dir
 
     def create_manifest(

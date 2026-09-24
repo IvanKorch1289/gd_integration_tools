@@ -63,6 +63,7 @@ class OrchestratorResult:
 
     @property
     def total_records(self) -> int:
+        """Сумма records_affected по всем adapter-results."""
         return sum(r.records_affected for r in self.adapter_results)
 
 
@@ -77,4 +78,6 @@ class ErasureAdapter(Protocol):
         subject_type: str,
         strategy: ErasureStrategy,
         correlation_id: str,
-    ) -> AdapterResult: ...
+    ) -> AdapterResult:
+        """Выполнить erasure субъекта в домене адаптера."""
+        ...

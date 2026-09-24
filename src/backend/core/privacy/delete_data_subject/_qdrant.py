@@ -44,6 +44,7 @@ class QdrantErasureAdapter:
         strategy: ErasureStrategy,
         correlation_id: str,
     ) -> AdapterResult:
+        """Execute subject-scoped vector erasure в Qdrant."""
         start = time.monotonic()
         try:
             try:

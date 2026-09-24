@@ -109,6 +109,7 @@ class ContractTestHarness:
         return list(self._results)
 
     def clear_history(self) -> None:
+        """Очистить историю прогонов контрактов (для тестов)."""
         self._results.clear()
 
     def _invoke(self, route_fn: RouteFn, payload: Any) -> Any:
@@ -142,6 +143,7 @@ _harness: ContractTestHarness | None = None
 
 
 def get_contract_test_harness() -> ContractTestHarness:
+    """Singleton-доступ к общему ``ContractTestHarness``."""
     global _harness
     if _harness is None:
         _harness = ContractTestHarness()
@@ -149,5 +151,6 @@ def get_contract_test_harness() -> ContractTestHarness:
 
 
 def reset_contract_test_harness() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _harness
     _harness = None
