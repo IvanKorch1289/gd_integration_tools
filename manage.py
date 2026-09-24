@@ -919,127 +919,15 @@ app.add_typer(plugin_app, name="plugin")
 
 # ────────────── AI Eval (K4 Sprint 6 Wave 1) ──────────────
 
+# P1 CLI decomposition W10 (v4 §10 P1, 2026-09-24): ai-eval sub-app
+# (2 commands: nightly/suite, ~68 LOC) + completions sub-app (1 command:
+# install, ~40 LOC) переехали в src/backend/cli/{ai_eval,completions}.py.
+# Typer sub-app pattern consistent с W5/W6/W8/W9.
+from src.backend.cli.ai_eval import ai_eval_app
+from src.backend.cli.completions import completions_app
 
-ai_eval_app = typer.Typer(help="AI eval framework (Inspect AI nightly suites).")
 app.add_typer(ai_eval_app, name="ai-eval")
-
-
-@ai_eval_app.command("nightly")
-def ai_eval_nightly(
-    artifacts_dir: Path = typer.Option(
-        Path("artifacts/inspect-ai"),
-        "--artifacts-dir",
-        help="Каталог для JSON+Markdown отчётов nightly run.",
-    ),
-) -> None:
-    """K4 S6 W1: запуск всех reference Inspect AI suite + report.
-
-    Активируется feature_flag ``inspect_ai_eval_enabled`` (default-OFF).
-    При отсутствии ``inspect-ai`` SDK (extra ``ai``) скип gracefully.
-    """
-    from src.backend.services.ai.eval import InspectRunner
-
-    runner = InspectRunner(artifacts_dir=artifacts_dir)
-    if not runner.is_enabled():
-        typer.echo(
-            typer.style(
-                "InspectRunner disabled (FEATURE_INSPECT_AI_EVAL_ENABLED=false). "
-                "Включите feature-flag для запуска.",
-                fg=typer.colors.YELLOW,
-            )
-        )
-        raise typer.Exit(code=0)
-
-    summary = runner.run_all(write_artifacts=True)
-    typer.echo(typer.style(f"Suites: {len(summary.suites)}", fg=typer.colors.CYAN))
-    typer.echo(
-        typer.style(f"Total samples: {summary.total_samples}", fg=typer.colors.CYAN)
-    )
-    if summary.failed:
-        typer.echo(typer.style(f"Failed: {summary.failed}", fg=typer.colors.RED))
-        raise typer.Exit(code=1)
-    typer.echo(typer.style("OK", fg=typer.colors.GREEN))
-
-
-@ai_eval_app.command("suite")
-def ai_eval_suite(
-    suite_name: str = typer.Argument(
-        ..., help="Имя suite (knowledge_qa, safety_classifier, ...)."
-    ),
-    artifacts_dir: Path = typer.Option(
-        Path("artifacts/inspect-ai"), "--artifacts-dir", help="Каталог для отчётов."
-    ),
-) -> None:
-    """K4 S6 W1: запуск одного suite по имени.
-
-    Полезно для локальной отладки добавленного suite.
-    """
-    from src.backend.services.ai.eval import REFERENCE_SUITES, InspectRunner
-
-    suite = next((s for s in REFERENCE_SUITES if s.name == suite_name), None)
-    if suite is None:
-        typer.echo(
-            typer.style(
-                f"Suite '{suite_name}' не найден. Доступные: "
-                + ", ".join(s.name for s in REFERENCE_SUITES),
-                fg=typer.colors.RED,
-            ),
-            err=True,
-        )
-        raise typer.Exit(code=2)
-
-    runner = InspectRunner(artifacts_dir=artifacts_dir, suites=[suite])
-    summary = runner.run_all(write_artifacts=True)
-    typer.echo(summary.to_markdown())
-
-
-# ────────────── Shell Completions ──────────────
-
-
-completions_app = typer.Typer(help="Install shell completions for gd-tools CLI")
 app.add_typer(completions_app, name="completions")
-
-
-@completions_app.command("install")
-def completions_install(
-    shell: str = typer.Option(
-        ..., "--shell", "-s", help="Shell type: bash | zsh | fish | powershell"
-    ),
-) -> None:
-    """Install shell completions for gd-tools CLI.
-
-    Example:
-        python manage.py completions install --shell bash
-        python manage.py completions install --shell zsh
-    """
-    from typer import completion
-    from typer import main as typer_main
-
-    valid_shells = {"bash", "zsh", "fish", "powershell", "pwsh"}
-    if shell not in valid_shells:
-        typer.echo(
-            f"Shell '{shell}' not supported. Valid options: {', '.join(sorted(valid_shells))}",
-            err=True,
-        )
-        raise typer.Exit(code=1)
-
-    # Get the underlying Click command and install completions
-    click_cmd = typer_main.get_command(app)
-    prog_name = click_cmd.info_name or "gd-tools"
-    complete_var = f"_{prog_name.replace('-', '_').upper()}_COMPLETE"
-
-    try:
-        installed_shell, installed_path = completion.install(
-            shell=shell, prog_name=prog_name, complete_var=complete_var
-        )
-        typer.secho(
-            f"{installed_shell} completion installed in {installed_path}",
-            fg=typer.colors.GREEN,
-        )
-        typer.echo("Completion will take effect once you restart the terminal")
-    except Exception as exc:
-        typer.echo(f"Failed to install completions: {exc}", err=True)
-        raise typer.Exit(code=1)
 
 
 if __name__ == "__main__":
