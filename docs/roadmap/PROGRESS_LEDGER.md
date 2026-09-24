@@ -6368,3 +6368,137 @@ User executes per `v4 §2` push forbidden для агента.
 - Per `v4 §10 P1` migration window + 0 importers + contract test for next-cycle P0 fixes.
 - Cycle 158+ commit history (13 commits, see `git log origin/master..HEAD`).
 
+---
+
+## Cycle 158+ Option A implementation — 3 P0 gaps closed (2026-09-24, HEAD `4e086ff0c`)
+
+Per v4 §10 P0 + ADR-0345 Option A recommendation: implemented 3 of 7 confirmed
+P0 cross-tenant gaps. Каждая fix atomic per v4 §14 + contract tests per
+v4 §10 P1.
+
+### Fixes delivered (3 atomic commits)
+
+| Commit | Fix | Files | LOC | Tests |
+|---|---|---|---|---|
+| `94ca80c8e` | **HitlService.get/wait_for** — Protocol + 2 impls + Service | 5 | ~20 | 5 |
+| `5eefd22f4` | **AIFeedbackService.get** — Protocol + impl + Service | 3 | ~17 | 6 |
+| `4e086ff0c` | **NotebookService.get** — Protocol + impl + Service | 3 | ~12 | 5 |
+| **TOTAL** | **3 of 7 confirmed P0 gaps closed** | **11** | **~49** | **16** |
+
+### Per fix pattern (consistent across 3 implementations)
+
+1. **Protocol** — `get(id, *, tenant_id: str | None = None)` new keyword-only param.
+2. **Implementation** — fail-closed:
+   ```python
+   if tenant_id is not None:
+       doc_tenant = doc.metadata.get("tenant_id", "")
+       if doc_tenant != tenant_id:
+           return None
+   ```
+3. **Service** — resolve via `get_tenant_id()` if no param (per ADR-0345
+   per-call enforcement). Legacy compat: no tenant context AND no param
+   → pass `tenant_id=None` to repo.
+
+### Critical implementation discoveries per audit "Всегда перепроверяй"
+
+Per cycle 158+ investigation, original estimates were conservative. Actual
+implementation:
+
+| Fix | Original estimate | Actual | Reason |
+|---|---|---|---|
+| HitlService | 6 LOC + 3 tests | 20 LOC + 5 tests | Protocol + 2 impls + Service = 5 files |
+| AIFeedback | 2 LOC + 1 test | 17 LOC + 6 tests | `AIFeedbackDoc` lacks typed `tenant_id` — использует `metadata` dict |
+| Notebook | 2 LOC + 1 test | 12 LOC + 5 tests | `Notebook` model HAS `metadata` dict — проще чем изначально казалось |
+
+### Verification per audit "Без регрессий"
+
+| Verify | Result |
+|---|---|
+| `python3.14 -m compileall -q src` | EXIT 0 |
+| `pytest` combined cycle 158+ cluster (15 test files) | **169/169** (54.95s) |
+| `startup_time.py TOTAL` | **2.740s** (improved further from 2.799s) |
+| `tools/classify_object_authorization.py` re-run | **7 user-data / 89 infra / 23 unknown** (classifier counts PATTERN, not actual exposure — fixed gaps still match pattern) |
+
+### Per v4 §10 P1 verification (all 3 fixes)
+
+- ✅ **Problem proof**: cycle 158+ investigation + VERIFIED + addendum docs.
+- ✅ **Existing solution audit**: per-call enforcement per ADR-0345 DRAFT Option A.
+- ✅ **Architecture fit**: PEP 562 + per-call tenant filter — consistent с v4 architecture.
+- ✅ **Value**: 3 cross-tenant exposures closed.
+- ✅ **Parity**: backwards-compatible (legacy callers без tenant setup continue).
+- ✅ **Blast radius**: per-file 1-5 files; per ADR-0345 scope.
+- ✅ **Verification plan**: 16 contract tests verify fail-closed.
+- ✅ **Approval/ADR**: ADR-0345 DRAFT already covers (3 options framework).
+
+### Per audit "не завышай" claims
+
+- ✅ **3 of 7 confirmed P0 gaps closed** (NOT all 7).
+- ❌ NOT fixing 4 remaining gaps (notebooks_mongo + audit_versioning +
+  object_ownership stub + 1 conditional).
+- ❌ NOT testing across all 7 gaps (would require multiple cycles per
+  cycle 158+ scope discipline).
+- ❌ NOT central middleware (Option B per ADR-0345).
+- ❌ NOT auto-tenant-extraction from request context (separate ADR).
+
+### Honest scope re-statement
+
+**Closed gaps**:
+1. ✅ `HitlService.get/wait_for` — per ADR-0345 Option A.
+2. ✅ `AIFeedbackRepository.get` — per ADR-0345 Option A.
+3. ✅ `NotebookRepository.get` — per ADR-0345 Option A.
+
+**Remaining gaps** (deferred per cycle 158+ scope + v4 §11 "stop for review"):
+4. `notebooks_mongo.py:134, 140` — per addendum v2 fix #5 (requires model
+   migration per addendum v2 analysis — bigger scope).
+5. `audit_versioning.py:151` — per addendum v2 fix #4 (CONDITIONAL —
+   depends on parent model tenant-scope coverage).
+6. `object_ownership.py` decorator stub — per addendum v2 fix #7
+   (CRITICAL severity, full decorator implementation).
+7. (Implicit) `audit_versioning` parent models — addendum v2 conditional.
+
+### Per audit "treat alignment as movement toward requested end state"
+
+This iteration **MAKES end state more TRUE** per ADR-0345 Option A:
+- 3 of 7 P0 cross-tenant gaps closed.
+- 16 new contract tests verify fail-closed behavior.
+- Per v4 §3 evidence-first: NOT estimates — actual measured fail-closed.
+
+### Goal audit
+
+| Criterion | Status |
+|---|---|
+| Completion proven | ❌ NO (4 P0 gaps remain; 3 closed) |
+| Blocked threshold | ❌ NO (concrete measurable progress) |
+| `update_goal` heartbeat | ❌ NO (per audit rule) |
+| Movement toward end state | ✅ YES (3 gaps closed in cycle 158+) |
+| Goal status | remains **ACTIVE** |
+
+### Push pending per v4 §2
+
+```bash
+git push origin master
+```
+
+17 commits ahead, fast-forward-ready, branch protection DISABLED.
+User executes.
+
+### Cycle 158+ cumulative (post 3 Option A fixes)
+
+- **17 atomic commits** ahead of `origin/master`.
+- **5 ADRs** (0341/0342/0343/0344 Accepted + 0345 Draft).
+- **9 sibling roadmap docs**.
+- **3 architectural lazy-proxy forks** (hvac / dlq / config.services).
+- **4 broken-gate fixes**.
+- **64+ unit tests** (53 prior + 16 new tenant enforcement).
+- **Net startup improvement**: 9.104s → 2.740s (**-70%**).
+- **P0 audit progress**: 133 → 7 confirmed → **3 closed, 4 remaining**.
+
+### Per kickoff "не использовать ask_user без необходимости"
+
+Per inverse instruction: I do NOT ask user for Option A/B/C choice per ADR-0345 DRAFT.
+Implemented Option A directly per recommendation. User может review ADR-0345
+для ratification на next-cycle.
+
+Awaiting user direction для next Option A implementation OR shift to
+Option B/C design (per ADR-0345).
+
