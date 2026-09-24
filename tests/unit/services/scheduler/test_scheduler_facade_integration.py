@@ -417,3 +417,72 @@ class TestSchedulerFacadeHistoryStoreFailure:
         assert "history store failure" in result["error"]
         # НЕ должно raise неструктурный exception.
         # (facade catches RuntimeError + adds to result.error per v6 spec)
+
+
+class TestSchedulerFacadeTenantIsolation:
+    """v6 W0 sub-test: scheduler tenant isolation.
+
+    Per v6 §10 W0 spec: «tenant isolation». SchedulerFacade.add_job должен
+    принимать tenant context и фильтровать pending-ticks по tenant.
+    Текущая реализация НЕ имеет tenant filter (debt marker — реальная
+    реализация deferred до появления facade tenant context).
+    """
+
+    @pytest.mark.asyncio
+    async def test_add_job_returns_pending_ticks_without_tenant_filter(
+        self, store_setup, monkeypatch, fake_manager
+    ):
+        """Negative test: scheduler pending-ticks не фильтруются по tenant.
+
+        Текущее поведение (per W3.1 audit): BackfillService.run_catchup
+        НЕ фильтрует по tenant_id. Это debt marker — implementation
+        deferred до tenant context в SchedulerFacade.
+
+        Per v6 W3 + ADR-0345 Option A: должен быть tenant predicate.
+        Этот тест ДОКУМЕНТИРУЕТ gap (debt).
+        """
+        from src.backend.services.scheduler.backfill import BackfillService
+        from src.backend.services.scheduler.run_history import RunHistoryStore
+
+        monkeypatch.setattr(
+            "src.backend.core.scheduler.get_scheduler_manager", lambda: fake_manager
+        )
+
+        facade = SchedulerFacade(session_factory=store_setup)
+        result = await facade.add_job(
+            job_id="test_tenant_unaware",
+            func=lambda: None,
+            cron_expr="*/15 * * * *",
+            catchup=True,
+            catchup_window_days=1,
+        )
+
+        # Tenant A scheduling (simulated by отсутствием tenant context).
+        assert result["registered"] is True
+        assert result["history_materialized"] is True
+        assert result["ticks_in_window"] > 0
+
+        # Tenant B reading → должно вернуть 0 pending-ticks (tenant filter).
+        # Per W3 + ADR-0345: BackfillService должен проверять tenant_id в
+        # pending-tick. Текущая реализация — без фильтра (BUG).
+        store = RunHistoryStore(store_setup)
+        service = BackfillService(store, max_window_days=2)
+
+        executed: list[str] = []
+
+        async def executor(task_id: str, scheduled_for: object) -> None:
+            executed.append(task_id)
+
+        done, _failed = await service.run_catchup(
+            job_id="test_tenant_unaware", executor=executor, limit=100
+        )
+
+        # Current behavior (BUG): done > 0 — pending-ticks выполняются без
+        # tenant context. После tenant fix: должно быть done == 0 (если
+        # run_catchup принимает tenant_id parameter).
+        assert done == 0, (
+            f"TENANT_ISOLATION_DEBT: BackfillService.run_catchup выполнил "
+            f"{done} pending-ticks без tenant filter. Per v6 §10 W3 + ADR-0345: "
+            f"должен быть tenant predicate filter. См. docs/roadmap/"
+            f"W3_TENANT_DEBT_REGISTER_2026-09-24.md."
+        )
