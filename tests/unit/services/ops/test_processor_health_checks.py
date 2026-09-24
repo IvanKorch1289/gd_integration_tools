@@ -11,8 +11,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.backend.services.ops import health as health_mod
-from src.backend.services.ops.health import (
+from src.backend.services.ops.health import _checks as checks_mod
+from src.backend.services.ops.health import _http as http_mod
+from src.backend.services.ops.health._checks import (
     _check_clickhouse,
     _check_graylog,
     _check_kafka_schema_registry,
@@ -35,8 +36,12 @@ def no_network(monkeypatch: pytest.MonkeyPatch) -> list[str]:
     async def fake_tcp(host: str, port: int, timeout: float = 5.0) -> None:
         calls.append(f"tcp:{host}:{port}")
 
-    monkeypatch.setattr(health_mod, "_http_get", fake_http)
-    monkeypatch.setattr(health_mod, "_tcp_connect", fake_tcp)
+    # Патчим и в source (_http), и в уже-импортировавшем у себя ссылку _checks —
+    # оба пути нужны, т.к. _checks.py делает `from ._http import _http_get`.
+    monkeypatch.setattr(http_mod, "_http_get", fake_http)
+    monkeypatch.setattr(http_mod, "_tcp_connect", fake_tcp)
+    monkeypatch.setattr(checks_mod, "_http_get", fake_http)
+    monkeypatch.setattr(checks_mod, "_tcp_connect", fake_tcp)
     return calls
 
 
@@ -129,7 +134,10 @@ async def test_nats_not_configured_ok_true() -> None:
 
 
 @pytest.mark.asyncio
-async def test_graylog_not_configured_ok_true() -> None:
+async def test_graylog_not_configured_ok_true(monkeypatch: pytest.MonkeyPatch) -> None:
+    """settings.logging.host пустой -> ok=True 'not configured'."""
+    fake_settings = SimpleNamespace(logging=SimpleNamespace(host="", base_url=""))
+    monkeypatch.setattr("src.backend.core.config.settings.settings", fake_settings)
     result = await _check_graylog()
     assert result.ok is True
     assert "not configured" in result.reason
