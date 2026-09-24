@@ -44,10 +44,37 @@ class S3ErasureAdapter:
         subject_type: str,
         strategy: ErasureStrategy,
         correlation_id: str,
+        *,
+        tenant_id: str | None = None,
     ) -> AdapterResult:
-        """Execute S3 erasure: list + delete objects + versions matching subject_id."""
+        """Execute S3 erasure: list + delete objects + versions matching subject_id.
+
+        Per ADR-0345 Option A: tenant-scoped via ``Prefix="tenants/{tenant_id}/..."``
+        hierarchical naming (no schema change required). ``tenant_id`` resolves via
+        TenantContext if not provided.
+        """
         start = time.monotonic()
         try:
+            # ADR-0345: tenant resolution FIRST (security-критичный, fail-closed).
+            # Security check before any I/O attempt — даже до aioboto3 import.
+            resolved_tenant_id: str | None = tenant_id
+            if resolved_tenant_id is None:
+                try:
+                    from src.backend.core.tenancy import get_tenant_id
+
+                    resolved_tenant_id = get_tenant_id()
+                except Exception:
+                    pass
+
+            if not resolved_tenant_id:
+                duration = (time.monotonic() - start) * 1000
+                return AdapterResult(
+                    adapter_name=self.name,
+                    status=ErasureResultStatus.FAILED,
+                    duration_ms=duration,
+                    error="tenant_id required for S3 erasure (ADR-0345 fail-closed)",
+                )
+
             try:
                 from aioboto3 import Session  # type: ignore[import-not-found]
             except ImportError:
@@ -60,8 +87,9 @@ class S3ErasureAdapter:
 
             session = Session()
             async with session.client("s3") as s3:
-                # List objects matching subject prefix.
-                prefix = f"{subject_type}/{subject_id}/"
+                # List objects matching tenant+subject prefix.
+                # Per ADR-0345: tenants/{tenant_id}/{subject_type}/{subject_id}/
+                prefix = f"tenants/{resolved_tenant_id}/{subject_type}/{subject_id}/"
                 paginator = s3.get_paginator("list_objects_v2")
                 keys_to_delete: list[dict[str, str]] = []
                 async for page in paginator.paginate(

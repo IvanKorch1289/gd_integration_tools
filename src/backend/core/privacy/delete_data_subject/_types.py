@@ -68,7 +68,12 @@ class OrchestratorResult:
 
 
 class ErasureAdapter(Protocol):
-    """Protocol для всех erasure adapters."""
+    """Protocol для всех erasure adapters.
+
+    Per ADR-0345 Option A: tenant-aware per-call enforcement.
+    ``tenant_id`` keyword-only — explicit override caller-facing.
+    Adapters обязаны apply tenant filter when ``tenant_id`` provided.
+    """
 
     name: str
 
@@ -78,6 +83,21 @@ class ErasureAdapter(Protocol):
         subject_type: str,
         strategy: ErasureStrategy,
         correlation_id: str,
+        *,
+        tenant_id: str | None = None,
     ) -> AdapterResult:
-        """Выполнить erasure субъекта в домене адаптера."""
+        """Выполнить erasure субъекта в домене адаптера.
+
+        Args:
+            subject_id: stable internal identity (e.g., "user:42").
+            subject_type: тип субъекта ("user", "tenant", etc.).
+            strategy: hard_delete или anonymize.
+            correlation_id: request correlation id.
+            tenant_id: tenant scope filter. None → adapter resolves via
+                ``current_tenant()`` from TenantContext (per ADR-0345).
+                Per-call override: caller can pass explicit value.
+
+        Returns:
+            AdapterResult с per-adapter results.
+        """
         ...

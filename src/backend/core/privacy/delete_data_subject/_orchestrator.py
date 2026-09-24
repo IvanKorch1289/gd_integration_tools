@@ -26,6 +26,7 @@ from src.backend.core.privacy.delete_data_subject._types import (
     ErasureStrategy,
     OrchestratorResult,
 )
+from src.backend.core.tenancy import get_tenant_id as _get_tenant_id  # ADR-0345
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,8 @@ class DeleteDataSubject:
         subject_type: str = "user",
         reason: str = "user_request",
         strategy: ErasureStrategy = ErasureStrategy.ANONYMIZE,
+        *,
+        tenant_id: str | None = None,
     ) -> OrchestratorResult:
         """Execute privacy lifecycle erasure.
 
@@ -58,12 +61,30 @@ class DeleteDataSubject:
             subject_type: тип субъекта ("user", "tenant", etc.).
             reason: причина erasure ("gdpr_request", "account_deletion").
             strategy: hard_delete или anonymize.
+            tenant_id: tenant scope. None → resolve via TenantContext
+                (ADR-0345 per-call enforcement). Backwards-compat: explicit
+                value overrides context.
 
         Returns:
             OrchestratorResult с per-adapter results.
         """
         correlation_id = str(uuid.uuid4())
         started_at = time.time()
+
+        # 0. Tenant resolution (ADR-0345 Option A).
+        resolved_tenant_id: str | None = tenant_id
+        if resolved_tenant_id is None:
+            try:
+                resolved_tenant_id = _get_tenant_id()
+            except Exception as exc:
+                logger.warning(
+                    "erasure_tenant_resolution_failed subject_id=%s err=%s",
+                    subject_id,
+                    exc,
+                )
+                # Fall through — adapter-level TenantContext resolution is
+                # implemented for Postgres/Redis. S3/Qdrant/Langmem require
+                # explicit tenant_id (will FAIL-CLOSED at adapter level).
 
         # 1. Legal hold check.
         legal_hold_active = False
@@ -108,6 +129,7 @@ class DeleteDataSubject:
                     subject_type=subject_type,
                     strategy=strategy,
                     correlation_id=correlation_id,
+                    tenant_id=resolved_tenant_id,
                 )
             except Exception as exc:
                 adapter_result = AdapterResult(

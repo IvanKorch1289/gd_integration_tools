@@ -36,8 +36,20 @@ class LangMemErasureAdapter:
         subject_type: str,
         strategy: ErasureStrategy,
         correlation_id: str,
+        *,
+        tenant_id: str | None = None,
     ) -> AdapterResult:
-        """Execute memory erasure в LangMem (AI memory)."""
+        """Execute memory erasure в LangMem (AI memory).
+
+        Per ADR-0345 Option A: tenant-aware. ``tenant_id`` resolves via
+        TenantContext if not provided. Schema requirement: LangMem models
+        must have ``tenant_id`` column (migration deferred — separate wave).
+        Without ``tenant_id`` column, filter is no-op (logs warning for
+        forensic trail) — same risk as cross-tenant erasure without filter.
+        """
+        import logging
+
+        logger = logging.getLogger(__name__)
         start = time.monotonic()
         try:
             try:
@@ -55,6 +67,26 @@ class LangMemErasureAdapter:
                     error=f"langmem models not available: {exc}",
                 )
 
+            # ADR-0345: tenant resolution (per-call OR context).
+            resolved_tenant_id: str | None = tenant_id
+            if resolved_tenant_id is None:
+                try:
+                    from src.backend.core.tenancy import get_tenant_id
+
+                    resolved_tenant_id = get_tenant_id()
+                except Exception:
+                    pass
+
+            # Schema check: does LangMem model have tenant_id column?
+            has_tenant_col = hasattr(LangMemEpisodic, "tenant_id")
+            if resolved_tenant_id and not has_tenant_col:
+                logger.warning(
+                    "langmem_tenant_filter_unavailable "
+                    "subject_id=%s tenant_id=%s — model missing tenant_id column",
+                    subject_id,
+                    resolved_tenant_id,
+                )
+
             session_factory = self._session_factory
             if session_factory is None:
                 # Без session factory — SKIPPED (нужна production wiring).
@@ -67,12 +99,17 @@ class LangMemErasureAdapter:
 
             async with session_factory() as session:
                 # Delete episodic + procedural memory для subject.
-                epi_q = delete(LangMemEpisodic).where(
-                    LangMemEpisodic.subject_id == subject_id
-                )
-                proc_q = delete(LangMemProcedural).where(
-                    LangMemProcedural.subject_id == subject_id
-                )
+                epi_conditions = [LangMemEpisodic.subject_id == subject_id]
+                proc_conditions = [LangMemProcedural.subject_id == subject_id]
+                if resolved_tenant_id and has_tenant_col:
+                    epi_conditions.append(
+                        LangMemEpisodic.tenant_id == resolved_tenant_id
+                    )
+                    proc_conditions.append(
+                        LangMemProcedural.tenant_id == resolved_tenant_id
+                    )
+                epi_q = delete(LangMemEpisodic).where(*epi_conditions)
+                proc_q = delete(LangMemProcedural).where(*proc_conditions)
                 epi_result = await session.execute(epi_q)
                 proc_result = await session.execute(proc_q)
                 await session.commit()
