@@ -29,6 +29,7 @@ class SagaStep:
 
     forward: BaseProcessor
     compensate: BaseProcessor | None = None
+    name: str | None = None  # читается resume-путём saga_lra (fix 2026-09-24)
 
 
 class SagaProcessor(BaseProcessor):
