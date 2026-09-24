@@ -57,14 +57,20 @@ class FeedbackRepository(Protocol):
         """
         ...
 
-    async def get(self, doc_id: str) -> AIFeedbackDoc | None:
+    async def get(
+        self, doc_id: str, *, tenant_id: str | None = None
+    ) -> AIFeedbackDoc | None:
         """Возвращает документ по идентификатору.
 
         Args:
             doc_id: Уникальный идентификатор документа.
+            tenant_id: Optional tenant filter — fail-closed per ADR-0345.
+                Compares against ``doc.metadata["tenant_id"]`` (Pydantic
+                ``AIFeedbackDoc`` has no typed tenant_id field; uses
+                ``metadata`` dict per W6.6 design).
 
         Returns:
-            Документ либо ``None``, если не найден.
+            Документ либо ``None``, если не найден OR tenant mismatch.
 
         """
         ...
@@ -167,19 +173,28 @@ class InMemoryFeedbackRepository:
             self._docs[doc.id] = doc.model_copy(deep=True)
             return self._docs[doc.id]
 
-    async def get(self, doc_id: str) -> AIFeedbackDoc | None:
+    async def get(
+        self, doc_id: str, *, tenant_id: str | None = None
+    ) -> AIFeedbackDoc | None:
         """Возвращает документ по id или ``None``.
 
         Args:
             doc_id: Идентификатор документа.
+            tenant_id: Optional tenant filter — fail-closed per ADR-0345.
 
         Returns:
-            Копия документа либо ``None``.
+            Копия документа либо ``None``, если не найден OR tenant mismatch.
 
         """
         async with self._lock:
             doc = self._docs.get(doc_id)
-            return doc.model_copy(deep=True) if doc else None
+            if doc is None:
+                return None
+            if tenant_id is not None:
+                doc_tenant = doc.metadata.get("tenant_id", "")
+                if doc_tenant != tenant_id:
+                    return None
+            return doc.model_copy(deep=True)
 
     async def update(self, doc: AIFeedbackDoc) -> AIFeedbackDoc:
         """Обновляет документ.

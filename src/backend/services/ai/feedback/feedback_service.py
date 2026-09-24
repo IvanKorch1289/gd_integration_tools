@@ -226,17 +226,28 @@ class AIFeedbackService:
             offset=max(offset, 0),
         )
 
-    async def get(self, doc_id: str) -> AIFeedbackDoc | None:
+    async def get(
+        self, doc_id: str, *, tenant_id: str | None = None
+    ) -> AIFeedbackDoc | None:
         """Возвращает документ по id или ``None``.
 
         Args:
             doc_id: Идентификатор документа.
+            tenant_id: Optional tenant filter — fail-closed per ADR-0345.
+                Если None — резолвится через ``get_tenant_id()``.
 
         Returns:
-            Документ либо ``None``.
+            Документ либо ``None``, если не найден OR tenant mismatch.
 
         """
-        return await self._repo.get(doc_id)
+        from src.backend.core.tenancy import get_tenant_id
+
+        effective_tenant = (
+            tenant_id if tenant_id is not None else get_tenant_id()
+        )
+        if effective_tenant == "":
+            return await self._repo.get(doc_id, tenant_id=None)
+        return await self._repo.get(doc_id, tenant_id=effective_tenant)
 
     async def mark_indexed(self, doc_id: str, rag_doc_id: str) -> AIFeedbackDoc:
         """Пометить ответ как проиндексированный в RAG.
