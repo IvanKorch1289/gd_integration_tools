@@ -42,7 +42,8 @@ from __future__ import annotations
 import importlib
 import importlib.util
 from enum import Enum
-from typing import Any, Final
+from types import ModuleType
+from typing import Final
 
 from src.backend.core.di.module_registry_extensions import (
     ExtensionRegistrationError,
@@ -255,7 +256,7 @@ def get_module_scope(key: str) -> Scope:
     return MODULE_SCOPES.get(key, Scope.SINGLETON)
 
 
-def resolve_module(key: str) -> Any:
+def resolve_module(key: str) -> ModuleType:
     """Резолвит infrastructure-модуль по ключу.
 
     Resolution order (S172 M3 — ARC-006):
@@ -319,7 +320,7 @@ def resolve_module(key: str) -> Any:
         ) from exc
 
 
-def _resolve_singleton(key: str) -> Any:
+def _resolve_singleton(key: str) -> ModuleType:
     """Резолвит модуль через стандартный import (singleton semantic)."""
     try:
         dotted_path = INFRA_MODULES[key]
@@ -350,7 +351,7 @@ def validate_modules() -> dict[str, str]:
     for key, dotted_path in INFRA_MODULES.items():
         try:
             spec = importlib.util.find_spec(dotted_path)
-        except ImportError, ModuleNotFoundError, ValueError:
+        except (ImportError, ModuleNotFoundError, ValueError):
             # Родительский пакет может бросать ImportError из-за
             # отсутствующих в окружении тяжёлых зависимостей
             # (psycopg2, faststream и т.п.). Считаем такой случай
