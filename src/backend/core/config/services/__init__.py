@@ -15,7 +15,6 @@ from __future__ import annotations
 import importlib as _importlib
 from typing import Any as _Any
 
-
 # Per-submodule symbols (single source of truth для lazy proxy).
 # Map: submodule_name → list of public symbols.
 _PUBLICS: dict[str, list[str]] = {

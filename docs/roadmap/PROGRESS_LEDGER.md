@@ -6514,3 +6514,15 @@ Implemented Option A directly per recommendation. User может review ADR-034
 Awaiting user direction для next Option A implementation OR shift to
 Option B/C design (per ADR-0345).
 
+
+### Docstrings-рэтчет ФИНАЛ (2026-09-24): 250→0 — гейт exit 0
+
+Шаги: registry_explorer +19 (360a57e6b) → лидеры +55 (237a1e1a7) →
+route_contract +9 (ed7fc0bd3) → integration/api_graph +20 (95c964a0d) →
+lineage/canonical/agent_gov/dlq +37 (0f499fc6d) → dsl_browser +7
+(e65013834) → rpa_workflow/outbox_verify +13 (d0f59a947) → шестёрка
+лидеров +33 (237caf1e9) → rpa_recorder/cdc/tool_sandbox +15 (70ba88203)
+→ canary/shadow/rls/incident +16 (61ef6a4bb) → финал 26 в 14 файлах
+(647b081be). Всего +250 docstrings, 12 коммитов. Тесты затронутых
+модулей — 355 passed. AGENTS.md drift-заметка обновлена на
+«восстановлен, exit 0».

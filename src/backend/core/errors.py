@@ -358,11 +358,7 @@ _CATEGORY_TO_STATUS: Mapping[ProblemCategory, int] = {
 
 # Категории, которые можно retry-ить на transport-уровне (backoff с jitter).
 _RETRYABLE_CATEGORIES: frozenset[ProblemCategory] = frozenset(
-    {
-        ProblemCategory.UNAVAILABLE,
-        ProblemCategory.RATE_LIMIT,
-        ProblemCategory.INTERNAL,
-    }
+    {ProblemCategory.UNAVAILABLE, ProblemCategory.RATE_LIMIT, ProblemCategory.INTERNAL}
 )
 
 # HTTP → gRPC status code (расширение существующего _HTTP_TO_GRPC_STATUS).
@@ -440,9 +436,7 @@ class DomainProblem:
             )
         # Auto-derive status_code если 0
         if self.status_code == 0:
-            object.__setattr__(
-                self, "status_code", _CATEGORY_TO_STATUS[self.category]
-            )
+            object.__setattr__(self, "status_code", _CATEGORY_TO_STATUS[self.category])
 
     @property
     def is_retryable(self) -> bool:
@@ -539,11 +533,7 @@ class DomainProblem:
             Dict с ``faultcode``, ``faultstring``, ``detail`` для
             ``<soap:Fault>`` элемента.
         """
-        fault_code = (
-            "soap:Client"
-            if self.status_code < 500
-            else "soap:Server"
-        )
+        fault_code = "soap:Client" if self.status_code < 500 else "soap:Server"
         result: dict[str, Any] = {
             "faultcode": fault_code,
             "faultstring": self.title,
@@ -598,11 +588,7 @@ class DomainProblem:
                     if self.correlation_id
                     else {}
                 ),
-                **(
-                    {"details": dict(self.safe_details)}
-                    if self.safe_details
-                    else {}
-                ),
+                **({"details": dict(self.safe_details)} if self.safe_details else {}),
             },
         }
 
@@ -632,10 +618,7 @@ class DomainProblem:
 
     @classmethod
     def from_exception(
-        cls,
-        exc: BaseException,
-        *,
-        correlation_id: str = "",
+        cls, exc: BaseException, *, correlation_id: str = ""
     ) -> "DomainProblem":
         """Строит DomainProblem из произвольного исключения.
 
@@ -649,8 +632,7 @@ class DomainProblem:
             category = _status_to_category(exc.status_code)
             return cls(
                 code=_BASE_ERROR_TO_CODE.get(
-                    type(exc).__name__,
-                    type(exc).__name__.upper().replace("ERROR", ""),
+                    type(exc).__name__, type(exc).__name__.upper().replace("ERROR", "")
                 ),
                 category=category,
                 title=exc.message or type(exc).__name__,
@@ -689,8 +671,7 @@ class DomainProblem:
         cat = category or _status_to_category(exc.status_code)
         return cls(
             code=_BASE_ERROR_TO_CODE.get(
-                type(exc).__name__,
-                type(exc).__name__.upper().replace("ERROR", ""),
+                type(exc).__name__, type(exc).__name__.upper().replace("ERROR", "")
             ),
             category=cat,
             title=exc.message or type(exc).__name__,
@@ -733,5 +714,9 @@ def _status_to_category(status_code: int) -> ProblemCategory:
     if status_code == status.HTTP_429_TOO_MANY_REQUESTS:
         return ProblemCategory.RATE_LIMIT
     if status_code >= 500:
-        return ProblemCategory.UNAVAILABLE if status_code == 503 else ProblemCategory.INTERNAL
+        return (
+            ProblemCategory.UNAVAILABLE
+            if status_code == 503
+            else ProblemCategory.INTERNAL
+        )
     return ProblemCategory.INTERNAL

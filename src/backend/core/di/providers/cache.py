@@ -42,12 +42,17 @@ from src.backend.core.di.providers.ai import (  # noqa: E402
 )
 from src.backend.core.di.providers.http import (  # noqa: E402
     get_smtp_client_provider as get_smtp_client_provider,
+)
+from src.backend.core.di.providers.http import (
     get_stream_client_provider as get_stream_client_provider,
 )
 from src.backend.core.di.providers.storage import (  # noqa: E402
     get_object_storage_provider as get_object_storage_provider,
 )
-get_s3_storage_client_provider = get_object_storage_provider  # S3/MinIO/LocalFS singleton
+
+get_s3_storage_client_provider = (
+    get_object_storage_provider  # S3/MinIO/LocalFS singleton
+)
 from src.backend.core.di.providers.ai import (
     get_token_registry_provider as get_token_registry_provider,
 )
