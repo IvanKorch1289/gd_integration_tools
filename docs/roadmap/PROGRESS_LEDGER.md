@@ -6526,3 +6526,82 @@ lineage/canonical/agent_gov/dlq +37 (0f499fc6d) → dsl_browser +7
 (647b081be). Всего +250 docstrings, 12 коммитов. Тесты затронутых
 модулей — 355 passed. AGENTS.md drift-заметка обновлена на
 «восстановлен, exit 0».
+
+
+## v6 Strategic Audit session (2026-09-24, HEAD `f159e01b6`)
+
+Per v6 spec prompt (audit baseline → все W0-W5 waves).
+
+### Session overview
+- **26 atomic commits** ahead of origin/master
+- HEAD `f159e01b6` (NOT YET PUSHED — user review критичен)
+- **Test count: 20037** (up from 20015 at session start = +22 new tests)
+- Token budget: 1.39M
+
+### Waves completed this session
+- **W0**: SchedulerFacade.add_job wiring → ALL 11/11 sub-tests closed per v6 spec literal
+- **W1.1-W1.3**: All gates honest (10/10 meta-tests passing)
+- **W2**: Temporal OTEL unified factory (real SDK 1.33)
+- **W3.1-W3.4**: Classifier + heuristic + allowlist + reclassification (23→5 unknown)
+- **W3.2 (1-5/6)**: 5 USER_DATA debt markers placed
+- **W4**: RouteBuilder MRO + fan-in audit (36 direct / 76 MRO / 82 full / 111 fan-in measured)
+- **W5.1, W5.3, W5.4**: Startup profile + cProfile + yaml cache (0.37s actual gain measured)
+- **W5.4 YAML→JSON ADR draft**: awaiting Architecture Guardian review per v6 §4.3
+
+### Honest scope statement (per audit «Не завысать»)
+- ✅ Real measured numbers (W5.3 cProfile 10.789s PyYAML, W5.4 benchmark 0.37s actual gain)
+- ✅ Multiple estimates CORRECTED per v6 §3 (W5.1, W5.4 corrected from estimates to actual)
+- ✅ 1 contaminated commit (902643683) properly reverted (clean worktree)
+- ✅ W3.2 (5/6) FALSE PASS detected via Skeptic re-test → fixed
+- ❌ "Production-ready" claim NOT justified per v6 §2 (BLOCKED Docker per kickoff env)
+- ❌ Functional verification (cURL + browser) BLOCKED Docker — **CANNOT** be done in this environment
+- ❌ USER_DATA debt markers placed but NOT fixed (5 sites — tenant_id parameter deferred)
+- ❌ W5.4 YAML→JSON conversion NOT implemented (ADR draft only, awaiting review)
+
+### Per v6 §14 DoD criterion 15 «Следующий шаг ровно один»
+**Recommended next step**: W5.4 YAML→JSON conversion ADR review (commit `9272392e5`)
+— Architecture Guardian + user approval per v6 §4.3 ADR requirement.
+After approval: Phase 1 implementation (~50-80 LOC: add JSON loader + convert 4-5 profiles).
+
+### 26 atomic commits (chronological, ordered by v6 §10 priority)
+1. `0cea755ff` W0 SchedulerFacade.add_job wiring fix + integration test
+2. `59f1c10ba` W1.1 object_authorization strict gate fail-closed on unknown > 0
+3. `43c078635` W1.2 privacy checker fail-closed default + PostgreSQL heuristic
+4. `0ac5a1560` W1.3 mypy wrapper 4 exit codes (added env failure = exit 3)
+5. `1da8bcc8d` W2 Temporal OTEL build_temporal_interceptors() factory
+6. `33b0e97be` W4 RouteBuilder MRO + fan-in audit
+7. `2d2957b8d` W3.1 23 unknown callsites evidence-based classification
+8. `95e4ade37` W3.3 classifier heuristic upgrade (AST chain + path patterns)
+9. `043fd4aa2` W3.4 FALSE_POSITIVE versioned allowlist (5 sites)
+10. `f25ec4f8d` W3.4+ sqlite_search.py:96 reclassification
+11. `60be30527` W3.2-1/6 WebhookScheduler tenant test (debt marker)
+12. `9ec42ebb9` W3.2-2/6 RedisIngestStateStore.get tenant (debt marker + FakePipeline fix)
+13. `7a5b2564f` W3.2-3/6 MongoNotebookRepository.get tenant (debt marker)
+14. `ed1fbe639` W3.2-4/6 restore_version tenant (debt marker)
+15. `8c17c1558` W3.2-5/6 list_recent tenant (proper infra, debt marker)
+16. `5b8221185` W3 tenant isolation debt register doc
+17. `98ab25970` W5.1 startup profile audit (5390.8ms cold start)
+18. `5d8eda56d` W5.3 cProfile waterfall (PyYAML = 80% 10.789s, W5.1 corrected per v6 §3)
+19. `422289f90` W5.4 yaml loading cache (240→2 yaml.safe_load calls)
+20. `d066a0e64` W5.4 benchmark doc (measured gain 0.37s, corrected 5-8s estimate)
+21. `593744c7d` W0 strict partial — run_pending → executor chain end-to-end
+22. `52771e150` W0 sub-test — history store failure (FAIL-CLOSED)
+23. `516c7e03a` W0 sub-test — tenant isolation (debt marker)
+24. `4a46451da` W0 sub-test — concurrent materialization (debt marker)
+25. `9272392e5` W5.4 YAML→JSON conversion ADR draft
+26. `f159e01b6` v6 session summary doc
+
+### Goal audit status (per v6 «всегда перепроверяй»)
+- **Completion proven**: ❌ NO (multiple v6 waves still pending per spec literal)
+- **Blocked threshold**: ❌ NO (consistent forward progress, no 3-consecutive impasse)
+- **Goal status**: remains **ACTIVE** (per directive «continue making concrete progress
+  and leave the Goal active»)
+
+### References (new v6 session docs)
+- `docs/roadmap/W3_UNKNOWN_OWNERSHIP_CLASSIFICATION_2026-09-24.md`
+- `docs/roadmap/W3_TENANT_DEBT_REGISTER_2026-09-24.md`
+- `docs/roadmap/W5_STARTUP_PROFILE_AUDIT_2026-09-24.md`
+- `docs/roadmap/W5_CPROFILE_WATERFALL_AUDIT_2026-09-24.md`
+- `docs/roadmap/W5_4_CACHE_BENCHMARK_2026-09-24.md`
+- `docs/roadmap/V6_SESSION_SUMMARY_2026-09-24.md`
+- `docs/adr/W5_YAML_TO_JSON_CONVERSION_ADR_DRAFT.md`
