@@ -79,16 +79,31 @@ class MongoNotebookRepository:
         await self._client().insert_one(_COLLECTION, _notebook_to_doc(notebook))
         return notebook
 
-    async def get(self, notebook_id: str) -> Notebook | None:
+    async def get(
+        self, notebook_id: str, *, tenant_id: str | None = None
+    ) -> Notebook | None:
         """Get notebook by ID.
 
         Args:
             notebook_id: Notebook ID.
+            tenant_id: Optional tenant filter — fail-closed per ADR-0345.
+                Compares against ``notebook.metadata["tenant_id"]`` (Notebook
+                has no typed tenant_id; uses ``metadata`` dict).
 
         Returns:
-            Notebook or None if not found.
+            Notebook or None if not found OR tenant mismatch.
 
         """
+        if tenant_id is not None:
+            doc = await self._client().find_one(
+                _COLLECTION, {"_id": notebook_id}
+            )
+            if doc is None:
+                return None
+            notebook = _doc_to_notebook(doc)
+            if notebook.metadata.get("tenant_id", "") != tenant_id:
+                return None
+            return notebook
         doc = await self._client().find_one(_COLLECTION, {"_id": notebook_id})
         return _doc_to_notebook(doc) if doc else None
 
