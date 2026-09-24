@@ -6,10 +6,15 @@ mypy видел ``self._settings``, ``self._hub``, ``self._execute_cell`` и т.
 
 from __future__ import annotations
 
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
-from src.backend.core.clients.jupyter_hub import JupyterHubClient
 from src.backend.core.config.services.jupyter_hub import JupyterHubSettings
+
+if TYPE_CHECKING:
+    # Runtime: lazy locator в core/clients/jupyter_hub.py (mypy не видит
+    # класс за __getattr__-фабрикой). Type-checking: реальный класс из
+    # infrastructure — layering не нарушается (импорт только для mypy).
+    from src.backend.infrastructure.clients.external.jupyter_hub import JupyterHubClient
 
 
 class _NotebookExecutionProtocol(Protocol):

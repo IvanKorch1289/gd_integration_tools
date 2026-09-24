@@ -24,7 +24,8 @@ from src.backend.services.ai.embedding_providers import (
 )
 
 if TYPE_CHECKING:  # pragma: no cover
-    from src.backend.core.cache.rag import ThreeTierRagCache
+    # Реальный класс: core/cache/rag — lazy __getattr__ (mypy не видит).
+    from src.backend.infrastructure.cache.rag.three_tier import ThreeTierRagCache
 
 from src.backend.services.ai.rag_service.augment_mixin import (
     AugmentMixin,  # S64 W4: MRO
