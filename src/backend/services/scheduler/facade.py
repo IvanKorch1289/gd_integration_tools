@@ -58,9 +58,51 @@ class SchedulerFacade:
 
             manager = get_scheduler_manager()
             manager.add_job(job_id=job_id, func=func, trigger=trigger, **trigger_kwargs)
+
+            # ADR-0346 P3-13: catchup — materialize run-history для cron-job'а
+            # (opt-in: catchup=True в trigger_kwargs; окно ограничено конфигом).
+            if trigger == "cron" and trigger_kwargs.get("catchup"):
+                self._materialize_catchup(job_id, trigger_kwargs)
         except Exception as exc:
             _logger.warning("Failed to add job %s: %s", job_id, exc)
             raise ServiceError(f"Failed to add job: {exc}") from exc
+
+    def _materialize_catchup(self, job_id: str, trigger_kwargs: dict[str, Any]) -> None:
+        """Материализовать run-history за catchup-окно (best-effort).
+
+        ADR-0346: ошибка materialize НЕ срывает регистрацию job'а
+        (история — вспомогательный контур), но логируется.
+        """
+        try:
+            from datetime import datetime, timedelta, timezone
+
+            from apscheduler.triggers.cron import CronTrigger
+
+            from src.backend.services.scheduler.backfill import BackfillService
+
+            trigger = CronTrigger(
+                **{k: v for k, v in trigger_kwargs.items() if k != "catchup"}
+            )
+            window_days = int(trigger_kwargs.get("catchup_window_days", 1))
+            now = datetime.now(tz=timezone.utc)
+            service = BackfillService(
+                self.get_run_history_store(), max_window_days=max(window_days, 1)
+            )
+            report = service.materialize_window(
+                job_id=job_id,
+                trigger=trigger,
+                date_from=now - timedelta(days=window_days),
+                date_to=now,
+                catchup=True,
+            )
+            _logger.info(
+                "catchup materialized job_id=%s ticks=%d pending=%d",
+                job_id,
+                report.ticks_in_window,
+                report.materialized,
+            )
+        except Exception as exc:  # ADR-0346: best-effort, не срывает add_job
+            _logger.warning("catchup materialize failed job_id=%s: %s", job_id, exc)
 
     def remove_job(self, job_id: str) -> None:
         """Удалить задачу из планировщика.
@@ -79,7 +121,6 @@ class SchedulerFacade:
             _logger.warning("Failed to remove job %s: %s", job_id, exc)
             raise ServiceError(f"Failed to remove job: {exc}") from exc
 
-
     def get_run_history_store(self) -> Any:
         """RunHistoryStore для backfill/catchup (ADR-0346, P3-13 wiring).
 
@@ -88,13 +129,13 @@ class SchedulerFacade:
         """
         self._assert("run_history", "scheduler")
 
-        from src.backend.services.scheduler.run_history import RunHistoryStore
-
         if self._session_factory is None:
             raise ServiceError(
                 "session_factory not configured — передайте async_sessionmaker "
                 "в SchedulerFacade(session_factory=...) при создании"
             )
         if self._run_history_store is None:
+            from src.backend.services.scheduler.run_history import RunHistoryStore
+
             self._run_history_store = RunHistoryStore(self._session_factory)
         return self._run_history_store
