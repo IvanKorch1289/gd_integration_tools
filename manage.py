@@ -492,54 +492,24 @@ def services():
     _services()
 
 
+# P1 CLI decomposition W3 (v4 §10 P1, 2026-09-24): импорт функций из
+# ``src/backend/cli/health.py`` и регистрация как top-level команд через
+# ``app.command()(fn)`` — preserves CLI contract (python manage.py health
+# по-прежнему работает на top-level).
+from src.backend.cli.health import breakers as _breakers
+from src.backend.cli.health import health as _health
+
+
 @app.command()
 def health():
     """Проверка здоровья всех компонентов."""
-    import asyncio
-
-    _bootstrap()
-
-    async def _check():
-        checks = {}
-        try:
-            from src.backend.infrastructure.clients.storage.redis import redis_client
-
-            checks["redis"] = await redis_client.check_connection()
-        except Exception:
-            checks["redis"] = False
-
-        try:
-            from src.backend.infrastructure.database.database import db_initializer
-
-            checks["database"] = await db_initializer.check_connection()
-        except Exception:
-            checks["database"] = False
-
-        return checks
-
-    results = asyncio.run(_check())
-    for name, ok in results.items():
-        status = (
-            typer.style("OK", fg=typer.colors.GREEN)
-            if ok
-            else typer.style("FAIL", fg=typer.colors.RED)
-        )
-        typer.echo(f"  {name:<20} {status}")
+    _health()
 
 
 @app.command()
 def breakers():
     """Состояние circuit breakers."""
-    from src.backend.infrastructure.clients.external.circuit_breakers import (
-        breaker_registry,
-    )
-
-    for info in breaker_registry.get_all_status():
-        state = info["state"]
-        color = typer.colors.GREEN if state == "closed" else typer.colors.RED
-        typer.echo(
-            f"  {info['name']:<20} {typer.style(state, fg=color)} (failures: {info['failure_count']})"
-        )
+    _breakers()
 
 
 @app.command()
