@@ -75,14 +75,17 @@ class MigrationReport:
 
     @property
     def critical_count(self) -> int:
+        """Число находок уровня critical."""
         return sum(1 for f in self.findings if f.risk == RiskLevel.CRITICAL)
 
     @property
     def high_count(self) -> int:
+        """Число находок уровня high."""
         return sum(1 for f in self.findings if f.risk == RiskLevel.HIGH)
 
     @property
     def max_risk(self) -> RiskLevel:
+        """Максимальный уровень риска среди находок."""
         if self.critical_count > 0:
             return RiskLevel.CRITICAL
         if self.high_count > 0:
@@ -92,6 +95,7 @@ class MigrationReport:
         return RiskLevel.LOW
 
     def to_dict(self) -> dict[str, Any]:
+        """Сериализация результата safety-гейта."""
         return {
             "migration_file": self.migration_file,
             "findings": [
@@ -290,6 +294,7 @@ _gate: MigrationSafetyGate | None = None
 
 
 def get_safety_gate() -> MigrationSafetyGate:
+    """Singleton-доступ к общему ``MigrationSafetyGate``."""
     global _gate
     if _gate is None:
         _gate = MigrationSafetyGate()
@@ -297,5 +302,6 @@ def get_safety_gate() -> MigrationSafetyGate:
 
 
 def reset_safety_gate() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _gate
     _gate = None

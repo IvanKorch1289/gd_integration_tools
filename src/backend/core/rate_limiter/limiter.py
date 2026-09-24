@@ -56,6 +56,7 @@ class RateLimiter:
 
     @property
     def config(self) -> RateLimiterConfig:
+        """Конфигурация лимитера (rates/burst)."""
         return self._config
 
     def _refill(self) -> None:
@@ -126,6 +127,7 @@ class AsyncRateLimiter:
 
     @property
     def config(self) -> RateLimiterConfig:
+        """Конфигурация конкретного лимитера."""
         return self._config
 
     async def _refill(self) -> None:
@@ -142,6 +144,7 @@ class AsyncRateLimiter:
             self._event.set()
 
     async def try_acquire(self, cost: float = 1.0) -> bool:
+        """Попытка получить токены; False при нехватке (cost учитывается)."""
         async with self._lock:
             await self._refill()
             if self._tokens >= cost:
@@ -172,9 +175,11 @@ class AsyncRateLimiter:
 
     @property
     def available_tokens(self) -> float:
+        """Доступно токенов прямо сейчас."""
         return self._tokens  # Approximate; without lock for sync read.
 
     def reset(self) -> None:
+        """Сбросить состояние buckets (для тестов)."""
         self._tokens = float(self._config.initial_tokens or 0)
         self._last_refill = 0.0
         self._event.set()

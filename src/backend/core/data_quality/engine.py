@@ -94,9 +94,11 @@ class QualityReport:
 
     @property
     def pass_rate(self) -> float:
+        """Доля пройденных проверок качества: passed/total."""
         return self.passed / self.total if self.total > 0 else 1.0
 
     def to_dict(self) -> dict[str, Any]:
+        """Сериализация отчёта качества данных."""
         return {
             "record_type": self.record_type,
             "total": self.total,
@@ -341,9 +343,11 @@ class DataQualityEngine:
         return list(self._quarantine)
 
     def clear_quarantine(self) -> None:
+        """Очистить карантин забракованных записей."""
         self._quarantine.clear()
 
     def quarantine_size(self) -> int:
+        """Количество записей в карантине."""
         return len(self._quarantine)
 
 
@@ -351,6 +355,7 @@ _engine: DataQualityEngine | None = None
 
 
 def get_data_quality_engine() -> DataQualityEngine:
+    """Singleton-доступ к общему ``DataQualityEngine``."""
     global _engine
     if _engine is None:
         _engine = DataQualityEngine()
@@ -358,5 +363,6 @@ def get_data_quality_engine() -> DataQualityEngine:
 
 
 def reset_data_quality_engine() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _engine
     _engine = None

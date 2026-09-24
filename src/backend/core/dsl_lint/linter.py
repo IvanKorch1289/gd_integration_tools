@@ -39,14 +39,17 @@ class LintResult:
 
     @property
     def has_errors(self) -> bool:
+        """Есть ли ошибки уровня error в результатах линта."""
         return any(v.severity == LintSeverity.ERROR for v in self.violations)
 
     @property
     def error_count(self) -> int:
+        """Количество ошибок (error)."""
         return sum(1 for v in self.violations if v.severity == LintSeverity.ERROR)
 
     @property
     def warning_count(self) -> int:
+        """Количество предупреждений (warning)."""
         return sum(1 for v in self.violations if v.severity == LintSeverity.WARNING)
 
 
@@ -217,6 +220,7 @@ _linter: DSLLinter | None = None
 
 
 def get_dsl_linter() -> DSLLinter:
+    """Singleton-доступ к общему ``DSLLinter``."""
     global _linter
     if _linter is None:
         _linter = DSLLinter()
@@ -224,5 +228,6 @@ def get_dsl_linter() -> DSLLinter:
 
 
 def reset_dsl_linter() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _linter
     _linter = None

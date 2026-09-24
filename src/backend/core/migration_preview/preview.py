@@ -125,14 +125,17 @@ class MigrationPreviewReport:
 
     @property
     def critical_count(self) -> int:
+        """Число находок уровня critical."""
         return sum(1 for o in self.operations if o.severity == Severity.CRITICAL)
 
     @property
     def high_count(self) -> int:
+        """Число находок уровня high."""
         return sum(1 for o in self.operations if o.severity == Severity.HIGH)
 
     @property
     def total(self) -> int:
+        """Всего находок превью миграции."""
         return len(self.operations)
 
     @property
@@ -141,6 +144,7 @@ class MigrationPreviewReport:
         return self.critical_count == 0 and self.high_count == 0
 
     def to_dict(self) -> dict[str, Any]:
+        """Сериализация превью (находки + счётчики)."""
         return {
             "file_path": self.file_path,
             "total_operations": self.total,
@@ -326,6 +330,7 @@ _previewer: MigrationPreviewer | None = None
 
 
 def get_migration_previewer() -> MigrationPreviewer:
+    """Singleton-доступ к общему ``MigrationPreviewer``."""
     global _previewer
     if _previewer is None:
         _previewer = MigrationPreviewer()
@@ -333,5 +338,6 @@ def get_migration_previewer() -> MigrationPreviewer:
 
 
 def reset_migration_previewer() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _previewer
     _previewer = None

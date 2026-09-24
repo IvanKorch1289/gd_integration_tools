@@ -27,6 +27,7 @@ class MemoryEntry:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def is_expired(self, now: float | None = None) -> bool:
+        """Истёк ли срок жизни записи на момент ``now``."""
         if self.expires_at is None:
             return False
         current = now if now is not None else time.time()
@@ -60,9 +61,11 @@ class TenantMemoryStore:
 
     @property
     def policy(self) -> MemoryAccessPolicy:
+        """Политика доступа к памяти тенанта."""
         return self._policy
 
     def set_policy(self, policy: MemoryAccessPolicy) -> None:
+        """Установить политику доступа к памяти."""
         self._policy = policy
 
     # ─── CRUD ─────────────────────────────────────────────
@@ -114,7 +117,7 @@ class TenantMemoryStore:
         """Get value или default. No exception."""
         try:
             return self.get(tenant_id, key)
-        except (KeyError, PermissionError):
+        except KeyError, PermissionError:
             return default
 
     def delete(self, tenant_id: str, key: str) -> bool:
@@ -226,6 +229,7 @@ _store: TenantMemoryStore | None = None
 
 
 def get_memory_store() -> TenantMemoryStore:
+    """Singleton-доступ к общему ``TenantMemoryStore``."""
     global _store
     if _store is None:
         _store = TenantMemoryStore()
@@ -233,5 +237,6 @@ def get_memory_store() -> TenantMemoryStore:
 
 
 def reset_memory_store() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _store
     _store = None
