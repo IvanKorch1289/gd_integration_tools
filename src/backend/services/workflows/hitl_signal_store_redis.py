@@ -132,14 +132,17 @@ class RedisHitlSignalStore:
         client = await self._get_client()
         await client.hset(_HASH_KEY, signal.signal_id, json.dumps(signal.to_dict()))
 
-    async def get(self, signal_id: str) -> HitlPendingSignal | None:
+    async def get(
+        self, signal_id: str, *, tenant_id: str | None = None
+    ) -> HitlPendingSignal | None:
         """Получить signal по ID.
 
         Args:
             signal_id: Signal identifier.
+            tenant_id: Optional tenant filter — fail-closed per ADR-0345.
 
         Returns:
-            Signal или None если не найден.
+            Signal или None если не найден OR tenant mismatch.
 
         """
         from src.backend.services.workflows.hitl_service import HitlPendingSignal
@@ -150,12 +153,16 @@ class RedisHitlSignalStore:
             return None
         try:
             data = json.loads(raw)
-            return HitlPendingSignal.from_dict(data)
+            signal = HitlPendingSignal.from_dict(data)
         except (json.JSONDecodeError, KeyError, TypeError) as exc:
             _logger.warning(
                 "RedisHitlSignalStore.get failed for signal_id=%s: %s", signal_id, exc
             )
             return None
+
+        if tenant_id is not None and signal.tenant_id != tenant_id:
+            return None
+        return signal
 
     async def list_pending(
         self, *, tenant_id: str | None = None
@@ -178,7 +185,7 @@ class RedisHitlSignalStore:
             try:
                 data = json.loads(raw)
                 sig = HitlPendingSignal.from_dict(data)
-            except (json.JSONDecodeError, KeyError, TypeError):
+            except json.JSONDecodeError, KeyError, TypeError:
                 continue
             if sig.is_resolved:
                 continue
@@ -300,26 +307,36 @@ class RedisHitlSignalStore:
                     return data
                 except asyncio.CancelledError:
                     raise
-                except (KeyError, TypeError, ValueError):
+                except KeyError, TypeError, ValueError:
                     raise
                 except WatchError:
                     # WATCH conflict → retry the compare-and-set transaction.
                     continue
 
-    async def wait_for(self, signal_id: str, timeout: float | None = None) -> bool:
+    async def wait_for(
+        self,
+        signal_id: str,
+        *,
+        timeout: float | None = None,
+        tenant_id: str | None = None,
+    ) -> bool:
         """Ждать разрешения signal через Redis pub/sub (multi-instance).
 
         Args:
             signal_id: Signal identifier.
             timeout: Optional timeout (seconds).
+            tenant_id: Optional tenant filter — fail-closed per ADR-0345.
 
         Returns:
-            True если resolved, False при timeout.
+            True если resolved, False при timeout OR tenant mismatch.
 
         """
         client = await self._get_client()
         # Сначала проверяем текущее состояние (resolved до подписки).
-        existing = await self.get(signal_id)
+        # Fail-closed: tenant check BEFORE waiting.
+        existing = await self.get(signal_id, tenant_id=tenant_id)
+        if existing is None and tenant_id is not None:
+            return False  # tenant mismatch или not found — don't wait
         if existing is not None and existing.is_resolved:
             return True
         # Subscribe на ВСЕ tenant channels (pattern subscribe), фильтруем
@@ -350,7 +367,7 @@ class RedisHitlSignalStore:
                     continue
                 try:
                     payload = json.loads(msg.get("data") or "{}")
-                except (TypeError, json.JSONDecodeError):
+                except TypeError, json.JSONDecodeError:
                     continue
                 if payload.get("signal_id") == signal_id:
                     return True

@@ -96,30 +96,58 @@ class HitlService:
         """
         return await self._store.list_pending(tenant_id=tenant_id)
 
-    async def get(self, signal_id: str) -> HitlPendingSignal | None:
+    async def get(
+        self, signal_id: str, *, tenant_id: str | None = None
+    ) -> HitlPendingSignal | None:
         """Get signal by ID.
 
         Args:
             signal_id: Signal identifier.
+            tenant_id: Optional tenant filter — fail-closed: returns None
+                if signal.tenant_id differs from provided tenant_id.
+                If ``tenant_id is None``, falls through to current_tenant_id()
+                (per ADR-0345 Option A: per-call enforcement).
 
         Returns:
-            Signal if found, None otherwise.
+            Signal if found AND tenant matches, None otherwise.
 
         """
-        return await self._store.get(signal_id)
+        from src.backend.core.tenancy import get_tenant_id
 
-    async def wait_for(self, signal_id: str, timeout: float | None = None) -> bool:
+        effective_tenant = (
+            tenant_id if tenant_id is not None else get_tenant_id()
+        )
+        # Legacy behavior: no tenant context → no filter.
+        # Per v4 §10 P1 backwards-compat: existing callers without
+        # tenant setup still work.
+        if effective_tenant == "":
+            return await self._store.get(signal_id, tenant_id=None)
+        return await self._store.get(signal_id, tenant_id=effective_tenant)
+
+    async def wait_for(
+        self,
+        signal_id: str,
+        *,
+        timeout: float | None = None,
+        tenant_id: str | None = None,
+    ) -> bool:
         """Wait for signal resolution.
 
         Args:
             signal_id: Signal identifier.
             timeout: Optional timeout in seconds.
+            tenant_id: Optional tenant filter — fail-closed per ADR-0345.
 
         Returns:
             True if resolved, False if timeout.
 
         """
-        return await self._store.wait_for(signal_id, timeout=timeout)
+        from src.backend.core.tenancy import get_tenant_id
+
+        effective_tenant = tenant_id if tenant_id is not None else get_tenant_id()
+        return await self._store.wait_for(
+            signal_id, timeout=timeout, tenant_id=effective_tenant
+        )
 
     async def resolve(
         self,

@@ -255,11 +255,16 @@ class HitlApprovalProcessor(BaseProcessor):
         timeout_at = time.time() + self._timeout
         remaining = max(0.0, timeout_at - time.time())
 
-        resolved = await self._hitl_service.wait_for(signal_id, timeout=remaining)
+        resolved = await self._hitl_service.wait_for(
+            signal_id, timeout=remaining
+        )
         if not resolved:
             _logger.warning("HITL timeout: signal_id=%s", signal_id)
             return None
 
+        # Per ADR-0345 Option A: per-call tenant enforcement.
+        # ``HitlService`` internally resolves tenant via ``get_tenant_id()``
+        # if not explicitly passed; legacy behavior preserved.
         signal = await self._hitl_service.get(signal_id)
         if signal is None:
             _logger.warning("HITL signal not found: %s", signal_id)

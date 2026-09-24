@@ -30,14 +30,19 @@ class HitlSignalStore(Protocol):
         """
         ...
 
-    async def get(self, signal_id: str) -> HitlPendingSignal | None:
+    async def get(
+        self, signal_id: str, *, tenant_id: str | None = None
+    ) -> HitlPendingSignal | None:
         """Get signal by ID.
 
         Args:
             signal_id: Signal identifier.
+            tenant_id: Optional tenant filter — if provided AND signal.tenant_id
+                differs, returns ``None`` (not signal). This is **fail-closed**
+                security behavior: legacy callers without tenant_id pass through.
 
         Returns:
-            Signal if found, None otherwise.
+            Signal if found AND tenant matches, None otherwise.
 
         """
         ...
@@ -72,15 +77,22 @@ class HitlSignalStore(Protocol):
         """
         ...
 
-    async def wait_for(self, signal_id: str, timeout: float | None = None) -> bool:
+    async def wait_for(
+        self,
+        signal_id: str,
+        *,
+        timeout: float | None = None,
+        tenant_id: str | None = None,
+    ) -> bool:
         """Wait for signal resolution.
 
         Args:
             signal_id: Signal identifier.
             timeout: Optional timeout in seconds.
+            tenant_id: Optional tenant filter — fail-closed per ADR-0345.
 
         Returns:
-            True if resolved, False if timeout.
+            True if resolved, False if timeout OR tenant mismatch.
 
         """
         ...
@@ -105,18 +117,27 @@ class InMemoryHitlSignalStore:
             self._store[signal.signal_id] = signal
             self._events.setdefault(signal.signal_id, asyncio.Event())
 
-    async def get(self, signal_id: str) -> HitlPendingSignal | None:
+    async def get(
+        self, signal_id: str, *, tenant_id: str | None = None
+    ) -> HitlPendingSignal | None:
         """Get signal by ID.
 
         Args:
             signal_id: Signal identifier.
+            tenant_id: Optional tenant filter — fail-closed: if signal.tenant_id
+                differs от provided tenant_id, returns None.
 
         Returns:
-            Signal if found, None otherwise.
+            Signal if found AND tenant matches, None otherwise.
 
         """
         async with self._lock:
-            return self._store.get(signal_id)
+            signal = self._store.get(signal_id)
+            if signal is None:
+                return None
+            if tenant_id is not None and signal.tenant_id != tenant_id:
+                return None
+            return signal
 
     async def list_pending(
         self, *, tenant_id: str | None = None
@@ -171,17 +192,33 @@ class InMemoryHitlSignalStore:
             event.set()
         return signal
 
-    async def wait_for(self, signal_id: str, timeout: float | None = None) -> bool:
+    async def wait_for(
+        self,
+        signal_id: str,
+        *,
+        timeout: float | None = None,
+        tenant_id: str | None = None,
+    ) -> bool:
         """Ждёт разрешения signal'а без polling.
 
         ponytail: event-driven wakeup вместо busy-wait. Для multi-instance
         production нужен Redis pub/sub — пока in-memory.
+
+        Per ADR-0345 Option A: fail-closed tenant check. If tenant_id
+        provided AND signal.tenant_id differs → return False immediately
+        (don't wait for event).
         """
         async with self._lock:
             event = self._events.setdefault(signal_id, asyncio.Event())
             signal = self._store.get(signal_id)
             if signal is not None and signal.is_resolved:
+                if tenant_id is not None and signal.tenant_id != tenant_id:
+                    return False
                 return True
+            # Not resolved yet — check tenant before waiting.
+            if tenant_id is not None:
+                if signal is None or signal.tenant_id != tenant_id:
+                    return False
         try:
             await asyncio.wait_for(event.wait(), timeout=timeout)
         except TimeoutError:
