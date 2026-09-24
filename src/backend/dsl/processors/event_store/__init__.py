@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import importlib as _importlib
 import warnings as _warnings
+from types import ModuleType
 from typing import Any as _Any
 
 _warnings.warn(
@@ -35,7 +36,7 @@ _warnings.warn(
 )
 
 _CANONICAL_MODULE = "src.backend.dsl.engine.processors.event_store"
-_canonical = None  # lazy
+_canonical: ModuleType | None = None  # lazy
 
 
 def __getattr__(name: str) -> _Any:
@@ -47,7 +48,10 @@ def __getattr__(name: str) -> _Any:
 
 
 def __dir__() -> list[str]:
-    """``dir()`` через canonical subpackage для tab-completion."""
-    if _canonical is None:
-        _canonical = _importlib.import_module(_CANONICAL_MODULE)
-    return dir(_canonical)
+    """``dir()`` через canonical module для tab-completion и introspection."""
+    module = (
+        _canonical
+        if _canonical is not None
+        else _importlib.import_module(_CANONICAL_MODULE)
+    )
+    return dir(module)

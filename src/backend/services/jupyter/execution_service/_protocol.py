@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import Any, Protocol
 
-from src.backend.core.clients.jupyter_hub import JupyterHubClient
 from src.backend.core.config.services.jupyter_hub import JupyterHubSettings
 
 
@@ -16,7 +15,7 @@ class _NotebookExecutionProtocol(Protocol):
     """Общий контракт для CoreMixin / IOMixin / JupyterBackendMixin."""
 
     _settings: JupyterHubSettings
-    _hub: JupyterHubClient
+    _hub: Any  # JupyterHubClient (lazy module attr — mypy не видит __getattr__)
 
     async def execute_notebook(
         self,

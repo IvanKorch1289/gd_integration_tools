@@ -11,7 +11,7 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.entity._legacy import _BaseEntityProcessor
 
-from ._resolve import _resolve
+from ._resolve_helper import _resolve
 
 __all__ = ("EntityListProcessor",)
 

@@ -15,6 +15,7 @@ Backward-compat: ``from src.backend.services.ai.rag_service import RAGService`` 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING as TYPE_CHECKING
+from typing import Any as Any
 
 from src.backend.core.di import app_state_singleton as app_state_singleton
 from src.backend.core.interfaces.vector_store import BaseVectorStore as BaseVectorStore
@@ -24,7 +25,9 @@ from src.backend.services.ai.embedding_providers import (
 )
 
 if TYPE_CHECKING:  # pragma: no cover
-    from src.backend.core.cache.rag import ThreeTierRagCache
+    from src.backend.core.cache.rag import (
+        ThreeTierRagCache,  # noqa: F401 — тип в докстрингах
+    )
 
 from src.backend.services.ai.rag_service.augment_mixin import (
     AugmentMixin,  # S64 W4: MRO
@@ -87,7 +90,7 @@ class RAGService(IngestMixin, SearchMixin, AugmentMixin, CollectionMixin):
         self,
         store: BaseVectorStore,
         embedder: EmbeddingProvider | None = None,
-        cache: ThreeTierRagCache | None = None,
+        cache: Any = None,  # ThreeTierRagCache | None (lazy attr — mypy не видит __getattr__)
     ) -> None:
         self._store = store
         self._embedder = embedder or get_embedding_provider()

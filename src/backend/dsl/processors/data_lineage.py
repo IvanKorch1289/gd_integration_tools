@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import importlib as _importlib
 import warnings as _warnings
+from types import ModuleType
 from typing import Any as _Any
 
 _warnings.warn(
@@ -35,7 +36,7 @@ _warnings.warn(
 )
 
 _CANONICAL_MODULE = "src.backend.dsl.engine.processors.data_lineage"
-_canonical = None  # lazy
+_canonical: ModuleType | None = None  # lazy
 
 
 def __getattr__(name: str) -> _Any:
@@ -53,6 +54,9 @@ def __getattr__(name: str) -> _Any:
 
 def __dir__() -> list[str]:
     """``dir()`` через canonical module для tab-completion и introspection."""
-    if _canonical is None:
-        _canonical = _importlib.import_module(_CANONICAL_MODULE)
-    return dir(_canonical)
+    module = (
+        _canonical
+        if _canonical is not None
+        else _importlib.import_module(_CANONICAL_MODULE)
+    )
+    return dir(module)  # делегирование: тот же lazy-import путь

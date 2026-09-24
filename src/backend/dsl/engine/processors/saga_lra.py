@@ -31,11 +31,14 @@ class SagaStepTimeoutError(RuntimeError):
     configured_timeout, deadline_budget.remaining())``.
     """
 
-    def __init__(self, message: str, *, step_name: str, kind: str, timeout_s: float) -> None:
+    def __init__(
+        self, message: str, *, step_name: str, kind: str, timeout_s: float
+    ) -> None:
         super().__init__(message)
         self.step_name = step_name
         self.kind = kind  # "action" | "compensation"
         self.timeout_s = timeout_s
+
 
 _lra_logger = get_logger("dsl.saga_lra")
 
@@ -213,7 +216,9 @@ class SagaLRAProcessor(BaseProcessor):
             step = self._steps[i]
             try:
                 await self._run_step_with_deadline(
-                    step.forward, exchange, context,
+                    step.forward,
+                    exchange,
+                    context,
                     step_name=step.name or f"step_{i}",
                     kind="action",
                 )
@@ -272,7 +277,9 @@ class SagaLRAProcessor(BaseProcessor):
                             exchange.status = ExchangeStatus.processing
                             exchange.error = None
                             await self._run_step_with_deadline(
-                                comp_step.compensate, exchange, context,
+                                comp_step.compensate,
+                                exchange,
+                                context,
                                 step_name=comp_step.compensate.name or "compensation",
                                 kind="compensation",
                             )
@@ -375,7 +382,9 @@ class SagaLRAProcessor(BaseProcessor):
                             exchange.status = ExchangeStatus.processing
                             exchange.error = None
                             await self._run_step_with_deadline(
-                                comp_step.compensate, exchange, context,
+                                comp_step.compensate,
+                                exchange,
+                                context,
                                 step_name=comp_step.compensate.name or "compensation",
                                 kind="compensation",
                             )
@@ -488,7 +497,7 @@ class SagaLRAProcessor(BaseProcessor):
                 effective_timeout = remaining
         except SagaStepTimeoutError:
             raise
-        except (ImportError, AttributeError, RuntimeError):
+        except ImportError, AttributeError, RuntimeError:
             # Не ломаем saga-step, если RequestContext недоступен или
             # deadline_budget отсутствует — fallback к unbounded wait.
             pass
