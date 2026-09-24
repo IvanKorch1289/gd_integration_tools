@@ -2046,9 +2046,14 @@ falsifiable reference.
    S170-stub (loader не подключён). До появления доменных сторов оба
    механизма честно pass-through, не mock-fallback.
 
-3. **Privacy lifecycle (visibility, non-blocking).**
-   `tools/checks/check_privacy_lifecycle.py`: erasure-покрытие отсутствует у
-   storage-бэкендов redis, s3, qdrant, ai_memory (DeleteDataSubject).
+3. **Privacy lifecycle — УТОЧНЕНО (2026-09-24).**
+   Erasure-адаптеры redis/s3/qdrant/ai_memory СУЩЕСТВУЮТ в
+   `core/privacy/delete_data_subject/` (W9 Phase 3); гейт искал их в
+   infrastructure/* — false negatives устранены, чекер наведён на адаптеры
+   (4/5 covered). Остатки: (а) postgresql-адаптер — stub (Sprint 4+);
+   (б) адаптеры не tenant-aware (subject_id без TenantContext) — дизайн
+   tenant-scoping под privacy-ADR (PRIVACY_REDIS_INVESTIGATION_2026-09-24);
+   (в) контракт-тесты redis добавлены (5, FakeRedis).
 
 4. **Alembic migrations vs SQLite — RESOLVED (2026-09-23).**
    Circular import в `core/config` (config_loader → core.logging →

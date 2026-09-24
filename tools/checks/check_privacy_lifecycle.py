@@ -59,84 +59,69 @@ def _check_storage_coverage() -> dict[str, dict[str, object]]:
         "evidence": "pii_erase.py has DELETE/anonymize logic",
     }
 
-    # Redis — search for cache invalidation patterns.
-    redis_files = []
-    for py in (SRC_ROOT / "src/backend/infrastructure/cache").rglob("*.py"):
-        if "__pycache__" in py.parts:
-            continue
-        redis_files.append(py)
-    redis_invalidate = False
-    for f in redis_files:
-        try:
-            content = f.read_text(encoding="utf-8", errors="ignore")
-        except OSError:
-            continue
-        if "delete" in content.lower() and "subject" in content.lower():
-            redis_invalidate = True
-            break
-    backends["redis"] = {
-        "covered": redis_invalidate,
-        "evidence": "no subject-specific cache invalidation"
-        if not redis_invalidate
-        else "found",
-    }
-
-    # S3 — search for object deletion patterns.
-    s3_files = []
-    for py in (SRC_ROOT / "src/backend/infrastructure/storage").rglob("*.py"):
-        if "__pycache__" in py.parts:
-            continue
-        s3_files.append(py)
-    s3_delete = False
-    for f in s3_files:
-        try:
-            content = f.read_text(encoding="utf-8", errors="ignore")
-        except OSError:
-            continue
-        if "delete_object" in content.lower() or "delete_objects" in content.lower():
-            s3_delete = True
-            break
-    backends["s3"] = {"covered": s3_delete, "evidence": "no delete_object API used"}
-
-    # Qdrant — vector store.
-    qdrant_dir = SRC_ROOT / "src/backend/infrastructure/vectorstore"
-    qdrant_erase = False
-    if qdrant_dir.exists():
-        for py in qdrant_dir.rglob("*.py"):
-            if "__pycache__" in py.parts:
-                continue
+    # Erasure-адаптеры (W9 Phase 3): core/privacy/delete_data_subject/.
+    # Гейт до фикса искал в infrastructure/* и давал false negatives —
+    # см. PRIVACY_BACKENDS_INVESTIGATION_2026-09-24.
+    adapters_dir = SRC_ROOT / "backend/core/privacy/delete_data_subject"
+    adapter_content: dict[str, str] = {}
+    if adapters_dir.exists():
+        for py in adapters_dir.glob("_*.py"):
             try:
-                content = py.read_text(encoding="utf-8", errors="ignore")
+                adapter_content[py.name] = py.read_text(
+                    encoding="utf-8", errors="ignore"
+                )
             except OSError:
                 continue
-            if "delete" in content.lower() and (
-                "filter" in content.lower() or "subject_id" in content.lower()
-            ):
-                qdrant_erase = True
-                break
-    backends["qdrant"] = {
-        "covered": qdrant_erase,
-        "evidence": "no subject-specific vector delete",
+
+    def _adapter_has(fname: str, *markers: str) -> bool:
+        content = adapter_content.get(fname, "")
+        low = content.lower()
+        return all(m.lower() in low for m in markers)
+
+    # Redis: SCAN + UNLINK по subject-ключам.
+    backends["redis"] = {
+        "covered": _adapter_has("_redis.py", "scan", "unlink", "subject_id"),
+        "evidence": "adapter _redis.py: SCAN+UNLINK subject keys"
+        if "_redis.py" in adapter_content
+        else "adapter missing",
     }
 
-    # AI memory (LangMem).
-    ai_memory_files = list((SRC_ROOT / "src/backend/core/domain/models").rglob("*.py"))
-    ai_memory_erase = False
-    for f in ai_memory_files:
-        if "__pycache__" in f.parts:
-            continue
-        try:
-            content = f.read_text(encoding="utf-8", errors="ignore")
-        except OSError:
-            continue
-        if "langmem" in f.name.lower() and "delete" in content.lower():
-            ai_memory_erase = True
-            break
+    # S3: delete/purge объектов субъекта.
+    backends["s3"] = {
+        "covered": _adapter_has("_s3.py", "subject_id", "delete"),
+        "evidence": "adapter _s3.py: subject delete"
+        if _adapter_has("_s3.py", "subject_id", "delete")
+        else "no delete in adapter",
+    }
+
+    # Qdrant: subject-scoped vector delete.
+    backends["qdrant"] = {
+        "covered": _adapter_has("_qdrant.py", "subject_id")
+        and (
+            "delete" in adapter_content.get("_qdrant.py", "").lower()
+            or "filter" in adapter_content.get("_qdrant.py", "").lower()
+        ),
+        "evidence": "adapter _qdrant.py: subject-scoped vector delete"
+        if _adapter_has("_qdrant.py", "subject_id")
+        else "no subject-scoped vector delete",
+    }
+
+    # AI memory (LangMem adapter).
     backends["ai_memory"] = {
-        "covered": ai_memory_erase,
-        "evidence": "LangMem models have delete logic"
-        if ai_memory_erase
-        else "no LangMem delete",
+        "covered": _adapter_has("_langmem.py", "subject_id", "delete")
+        or _adapter_has("_langmem.py", "subject_id", "memory"),
+        "evidence": "adapter _langmem.py present"
+        if "_langmem.py" in adapter_content
+        else "no LangMem adapter",
+    }
+
+    # PostgreSQL: stub-статус честно отражаем (real DELETE — Sprint 4+).
+    pg_stub = _adapter_has("_postgres.py", "stub") or _adapter_has(
+        "_postgres.py", "sleep(0)"
+    )
+    backends["postgresql"] = {
+        "covered": not pg_stub and "_postgres.py" in adapter_content,
+        "evidence": "adapter _postgres.py is a stub (Sprint 4+)" if pg_stub else "adapter present",
     }
 
     return backends
