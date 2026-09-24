@@ -64,6 +64,44 @@ _REPO_ROOT: Path = _resolve_repo_root()
 load_dotenv(_REPO_ROOT / ".env")
 
 
+# v6 W5.4 — module-level cache для base + overlay yaml reads.
+# Per W5.3 cProfile waterfall (commit 5d8eda56d):
+# yaml.safe_load = 10.789s (77% of startup). 240 calls (17 Settings classes × 2 yamls).
+# Без cache каждый Settings класс перечитывает base.yml + profile overlay.
+# С cache: 2 вызова (один на файл) вместо 240 — ожидаемый gain ~5-8s.
+# Per v6 §10 W5 «Lazy import применять только при доказанном выигрыше»:
+# cache invalidation при смене профиля runtime → перечитываем.
+_BASE_YAML_CACHE: dict[str, dict[str, Any]] = {}
+_OVERLAY_YAML_CACHE: dict[str, dict[str, Any]] = {}
+
+
+def _read_base_yaml_cached(profiles_dir: Path) -> dict[str, Any]:
+    """Cache для base.yml — перечитываем только при cache miss.
+
+    Key = profiles_dir.as_posix(). Base.yml обычно НЕ меняется runtime →
+    cache валиден пока процесс живёт. При смене profile через env
+    профильный overlay перечитывается (отдельный cache key).
+    """
+    key = profiles_dir.as_posix()
+    if key not in _BASE_YAML_CACHE:
+        base_path = profiles_dir / "base.yml"
+        _BASE_YAML_CACHE[key] = _read_yaml(base_path)
+    return _BASE_YAML_CACHE[key]
+
+
+def _read_overlay_yaml_cached(profiles_dir: Path, profile_name: str) -> dict[str, Any]:
+    """Cache для {profile}.yml overlay.
+
+    Key = (profiles_dir, profile_name). При смене profile через env
+    (get_active_profile() возвращает новое имя) → cache miss → перечитываем.
+    """
+    key = f"{profiles_dir.as_posix()}::{profile_name}"
+    if key not in _OVERLAY_YAML_CACHE:
+        overlay_path = profiles_dir / f"{profile_name}.yml"
+        _OVERLAY_YAML_CACHE[key] = _read_yaml(overlay_path)
+    return _OVERLAY_YAML_CACHE[key]
+
+
 def _deep_merge(base: dict[str, Any], overlay: dict[str, Any]) -> dict[str, Any]:
     """Рекурсивно сливает ``overlay`` поверх ``base``, не мутируя исходники."""
     merged: dict[str, Any] = dict(base)
@@ -192,7 +230,12 @@ class YamlConfigSettingsLoader(FilteredSettingsSource):
                     f"Config not found: {path}. "
                     "Ожидается base.yml + {profile}.yml в config_profiles/."
                 )
-        return _deep_merge(_read_yaml(base_path), _read_yaml(overlay_path))
+        # v6 W5.4 — use cached readers (per W5.3 cProfile waterfall):
+        # 240 yaml.safe_load calls → 2 (один на base, один на overlay).
+        return _deep_merge(
+            _read_base_yaml_cached(self.profiles_dir),
+            _read_overlay_yaml_cached(self.profiles_dir, profile.value),
+        )
 
 
 _VAULT_UNREACHABLE: bool = False
