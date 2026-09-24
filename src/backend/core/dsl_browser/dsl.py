@@ -158,15 +158,20 @@ class PlaywrightPageProtocol(Protocol):
     - Не зависеть от playwright в runtime (lazy import).
     """
 
-    async def goto(self, url: str, **kwargs: Any) -> Any: ...
+    async def goto(self, url: str, **kwargs: Any) -> Any:
+        """Перейти по ``url`` (navigate)."""
 
-    async def click(self, selector: str, **kwargs: Any) -> None: ...
+    async def click(self, selector: str, **kwargs: Any) -> None:
+        """Кликнуть по элементу ``selector``."""
 
-    async def fill(self, selector: str, value: str, **kwargs: Any) -> None: ...
+    async def fill(self, selector: str, value: str, **kwargs: Any) -> None:
+        """Заполнить поле ``selector`` значением ``value``."""
 
-    async def wait_for_selector(self, selector: str, **kwargs: Any) -> Any: ...
+    async def wait_for_selector(self, selector: str, **kwargs: Any) -> Any:
+        """Дождаться видимости элемента по selector."""
 
-    async def screenshot(self, path: str | None = None, **kwargs: Any) -> bytes: ...
+    async def screenshot(self, path: str | None = None, **kwargs: Any) -> bytes:
+        """Сделать скриншот; вернуть bytes."""
 
 
 class BrowserDSL:
@@ -201,10 +206,12 @@ class BrowserDSL:
 
     @property
     def page(self) -> Any:
+        """Конфигурация браузера (retries/timeout/screenshot_dir)."""
         return self._page
 
     @property
     def config(self) -> BrowserConfig:
+        """Текущая страница (Playwright Page / protocol-объект)."""
         return self._config
 
     def history(self) -> tuple[StepResult, ...]:
