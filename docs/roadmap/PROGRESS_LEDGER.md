@@ -6370,13 +6370,21 @@ User executes per `v4 §2` push forbidden для агента.
 
 ---
 
-## Cycle 158+ Option A implementation — 3 P0 gaps closed (2026-09-24, HEAD `4e086ff0c`)
+## Cycle 158+ Option A implementation — 4 P0 gaps closed (2026-09-24, HEAD `b78609426`)
 
-Per v4 §10 P0 + ADR-0345 Option A recommendation: implemented 3 of 7 confirmed
+Per v4 §10 P0 + ADR-0345 Option A recommendation: implemented 4 of 7 confirmed
 P0 cross-tenant gaps. Каждая fix atomic per v4 §14 + contract tests per
 v4 §10 P1.
 
-### Fixes delivered (3 atomic commits)
+### Fixes delivered (4 atomic commits)
+
+| Commit | Fix | Files | LOC | Tests |
+|---|---|---|---|---|
+| `94ca80c8e` | **HitlService.get/wait_for** — Protocol + 2 impls + Service | 5 | ~20 | 5 |
+| `5eefd22f4` | **AIFeedbackService.get** — Protocol + impl + Service | 3 | ~17 | 6 |
+| `4e086ff0c` | **NotebookService.get** — Protocol + impl + Service | 3 | ~12 | 5 |
+| `b78609426` | **MongoNotebookRepository.get** — Mongo repo | 1 | ~15 | 3 |
+| **TOTAL** | **4 of 7 confirmed P0 gaps closed** | **12** | **~64** | **19** |
 
 | Commit | Fix | Files | LOC | Tests |
 |---|---|---|---|---|
@@ -6459,15 +6467,15 @@ implementation:
 ### Per audit "treat alignment as movement toward requested end state"
 
 This iteration **MAKES end state more TRUE** per ADR-0345 Option A:
-- 3 of 7 P0 cross-tenant gaps closed.
-- 16 new contract tests verify fail-closed behavior.
+- 4 of 7 P0 cross-tenant gaps closed.
+- 19 new contract tests verify fail-closed behavior.
 - Per v4 §3 evidence-first: NOT estimates — actual measured fail-closed.
 
 ### Goal audit
 
 | Criterion | Status |
 |---|---|
-| Completion proven | ❌ NO (4 P0 gaps remain; 3 closed) |
+| Completion proven | ❌ NO (3 P0 gaps remain; 4 closed) |
 | Blocked threshold | ❌ NO (concrete measurable progress) |
 | `update_goal` heartbeat | ❌ NO (per audit rule) |
 | Movement toward end state | ✅ YES (3 gaps closed in cycle 158+) |
