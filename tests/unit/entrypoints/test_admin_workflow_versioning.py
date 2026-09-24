@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 
+from src.backend.core.auth import AuthContext, AuthMethod
 from src.backend.dsl.workflow.versioning import WorkflowVersion, get_global_registry
 from src.backend.entrypoints.api.v1.endpoints.admin_workflow_versioning import router
 
@@ -14,6 +15,18 @@ from src.backend.entrypoints.api.v1.endpoints.admin_workflow_versioning import r
 def client() -> TestClient:
     app = FastAPI()
     app.include_router(router)
+
+    # S202: router защищён require_admin — тестовая идичность SUPER_ADMIN
+    # через request.state.auth (тот же канал, что AuthRequiredMiddleware).
+    @app.middleware("http")
+    async def _fake_admin_auth(request: Request, call_next):
+        request.state.auth = AuthContext(
+            method=AuthMethod.API_KEY,
+            principal="test-admin",
+            metadata={"admin_roles": ["super_admin"]},
+        )
+        return await call_next(request)
+
     return TestClient(app)
 
 

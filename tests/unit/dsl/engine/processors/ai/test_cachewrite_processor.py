@@ -44,10 +44,10 @@ class TestCacheWriteProcessor:
         with patch(
             "src.backend.infrastructure.clients.storage.redis.redis_client"
         ) as mock_redis:
-            mock_redis.set_if_not_exists = AsyncMock()
+            mock_redis.cache_set = AsyncMock()
             await proc.process(exchange, _Context())
 
-        mock_redis.set_if_not_exists.assert_not_called()
+        mock_redis.cache_set.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_writes_on_cache_miss(self) -> None:
@@ -59,13 +59,13 @@ class TestCacheWriteProcessor:
         with patch(
             "src.backend.infrastructure.clients.storage.redis.redis_client"
         ) as mock_redis:
-            mock_redis.set_if_not_exists = AsyncMock()
+            mock_redis.cache_set = AsyncMock()
             await proc.process(exchange, _Context())
 
-        mock_redis.set_if_not_exists.assert_called_once()
-        call = mock_redis.set_if_not_exists.call_args
+        mock_redis.cache_set.assert_called_once()
+        call = mock_redis.cache_set.call_args
         assert call.kwargs["key"] == "dsl:cache:my-key"
-        assert call.kwargs["ttl"] == 1800
+        assert call.kwargs["expire"] == 1800
         assert '"data":"value"' in call.kwargs["value"]
 
     @pytest.mark.asyncio
@@ -79,10 +79,10 @@ class TestCacheWriteProcessor:
         with patch(
             "src.backend.infrastructure.clients.storage.redis.redis_client"
         ) as mock_redis:
-            mock_redis.set_if_not_exists = AsyncMock()
+            mock_redis.cache_set = AsyncMock()
             await proc.process(exchange, _Context())
 
-        call = mock_redis.set_if_not_exists.call_args
+        call = mock_redis.cache_set.call_args
         assert "out-body" in str(call.kwargs["value"])
 
     @pytest.mark.asyncio
@@ -94,10 +94,10 @@ class TestCacheWriteProcessor:
         with patch(
             "src.backend.infrastructure.clients.storage.redis.redis_client"
         ) as mock_redis:
-            mock_redis.set_if_not_exists = AsyncMock()
+            mock_redis.cache_set = AsyncMock()
             await proc.process(exchange, _Context())
 
-        call = mock_redis.set_if_not_exists.call_args
+        call = mock_redis.cache_set.call_args
         assert call.kwargs["key"] == "dsl:cache:fallback-key"
 
     @pytest.mark.asyncio
@@ -109,7 +109,7 @@ class TestCacheWriteProcessor:
         with patch(
             "src.backend.infrastructure.clients.storage.redis.redis_client"
         ) as mock_redis:
-            mock_redis.set_if_not_exists = AsyncMock(
+            mock_redis.cache_set = AsyncMock(
                 side_effect=ConnectionError("down")
             )
             await proc.process(exchange, _Context())
@@ -123,5 +123,5 @@ class TestCacheWriteProcessor:
         with patch(
             "src.backend.infrastructure.clients.storage.redis.redis_client"
         ) as mock_redis:
-            mock_redis.set_if_not_exists = AsyncMock(side_effect=TimeoutError("slow"))
+            mock_redis.cache_set = AsyncMock(side_effect=TimeoutError("slow"))
             await proc.process(exchange, _Context())

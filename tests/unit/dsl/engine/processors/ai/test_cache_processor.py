@@ -46,7 +46,7 @@ class TestCacheProcessor:
         with patch(
             "src.backend.infrastructure.clients.storage.redis.redis_client"
         ) as mock_redis:
-            mock_redis.get = AsyncMock(return_value=None)
+            mock_redis.cache_get = AsyncMock(return_value=None)
             await proc.process(exchange, _Context())
 
         assert exchange.properties["_cache_key"] == "dsl:cache:my-key"
@@ -62,7 +62,7 @@ class TestCacheProcessor:
         with patch(
             "src.backend.infrastructure.clients.storage.redis.redis_client"
         ) as mock_redis:
-            mock_redis.get = AsyncMock(return_value=b'{"result": "cached"}')
+            mock_redis.cache_get = AsyncMock(return_value=b'{"result": "cached"}')
             await proc.process(exchange, _Context())
 
         assert exchange.properties["cached"] is True
@@ -78,7 +78,7 @@ class TestCacheProcessor:
         with patch(
             "src.backend.infrastructure.clients.storage.redis.redis_client"
         ) as mock_redis:
-            mock_redis.get = AsyncMock(return_value=None)
+            mock_redis.cache_get = AsyncMock(return_value=None)
             await proc.process(exchange, _Context())
 
         assert exchange.properties["cached"] is False
@@ -92,7 +92,7 @@ class TestCacheProcessor:
         with patch(
             "src.backend.infrastructure.clients.storage.redis.redis_client"
         ) as mock_redis:
-            mock_redis.get = AsyncMock(side_effect=ConnectionError("down"))
+            mock_redis.cache_get = AsyncMock(side_effect=ConnectionError("down"))
             await proc.process(exchange, _Context())
 
         assert exchange.properties["cached"] is False
@@ -105,7 +105,7 @@ class TestCacheProcessor:
         with patch(
             "src.backend.infrastructure.clients.storage.redis.redis_client"
         ) as mock_redis:
-            mock_redis.get = AsyncMock(side_effect=TimeoutError("slow"))
+            mock_redis.cache_get = AsyncMock(side_effect=TimeoutError("slow"))
             await proc.process(exchange, _Context())
 
         assert exchange.properties["cached"] is False
@@ -118,7 +118,7 @@ class TestCacheProcessor:
         with patch(
             "src.backend.infrastructure.clients.storage.redis.redis_client"
         ) as mock_redis:
-            mock_redis.get = AsyncMock(side_effect=OSError("os err"))
+            mock_redis.cache_get = AsyncMock(side_effect=OSError("os err"))
             await proc.process(exchange, _Context())
 
         assert exchange.properties["cached"] is False

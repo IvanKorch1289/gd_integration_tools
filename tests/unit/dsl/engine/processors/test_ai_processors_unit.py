@@ -249,7 +249,7 @@ class TestCacheProcessor:
         with patch(
             "src.backend.infrastructure.clients.storage.redis.redis_client"
         ) as mock_redis:
-            mock_redis.get = AsyncMock(return_value=None)
+            mock_redis.cache_get = AsyncMock(return_value=None)
 
             await processor.process(exchange, _Context())
 
@@ -271,7 +271,7 @@ class TestCacheProcessor:
         with patch(
             "src.backend.infrastructure.clients.storage.redis.redis_client"
         ) as mock_redis:
-            mock_redis.get = AsyncMock(return_value=b'{"result": "from_cache"}')
+            mock_redis.cache_get = AsyncMock(return_value=b'{"result": "from_cache"}')
 
             await processor.process(exchange, _Context())
 
@@ -291,7 +291,7 @@ class TestCacheProcessor:
         with patch(
             "src.backend.infrastructure.clients.storage.redis.redis_client"
         ) as mock_redis:
-            mock_redis.get = AsyncMock(return_value=None)
+            mock_redis.cache_get = AsyncMock(return_value=None)
 
             await processor.process(exchange, _Context())
 
@@ -306,7 +306,7 @@ class TestCacheProcessor:
         with patch(
             "src.backend.infrastructure.clients.storage.redis.redis_client"
         ) as mock_redis:
-            mock_redis.get = AsyncMock(side_effect=ConnectionError("no redis"))
+            mock_redis.cache_get = AsyncMock(side_effect=ConnectionError("no redis"))
 
             await processor.process(exchange, _Context())
 
@@ -332,11 +332,11 @@ class TestCacheWriteProcessor:
         with patch(
             "src.backend.infrastructure.clients.storage.redis.redis_client"
         ) as mock_redis:
-            mock_redis.set_if_not_exists = AsyncMock()
+            mock_redis.cache_set = AsyncMock()
 
             await processor.process(exchange, _Context())
 
-        mock_redis.set_if_not_exists.assert_not_called()
+        mock_redis.cache_set.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_writes_to_redis_on_cache_miss(self) -> None:
@@ -353,14 +353,14 @@ class TestCacheWriteProcessor:
         with patch(
             "src.backend.infrastructure.clients.storage.redis.redis_client"
         ) as mock_redis:
-            mock_redis.set_if_not_exists = AsyncMock()
+            mock_redis.cache_set = AsyncMock()
 
             await processor.process(exchange, _Context())
 
-        mock_redis.set_if_not_exists.assert_called_once()
-        call = mock_redis.set_if_not_exists.call_args
+        mock_redis.cache_set.assert_called_once()
+        call = mock_redis.cache_set.call_args
         assert call.kwargs["key"] == "dsl:cache:my-key"
-        assert call.kwargs["ttl"] == 3600
+        assert call.kwargs["expire"] == 3600
 
     @pytest.mark.asyncio
     async def test_uses_out_message_body_when_available(self) -> None:
@@ -376,11 +376,11 @@ class TestCacheWriteProcessor:
         with patch(
             "src.backend.infrastructure.clients.storage.redis.redis_client"
         ) as mock_redis:
-            mock_redis.set_if_not_exists = AsyncMock()
+            mock_redis.cache_set = AsyncMock()
 
             await processor.process(exchange, _Context())
 
-        call = mock_redis.set_if_not_exists.call_args
+        call = mock_redis.cache_set.call_args
         assert "out-body" in str(call.kwargs["value"])
 
     @pytest.mark.asyncio
@@ -395,7 +395,7 @@ class TestCacheWriteProcessor:
         with patch(
             "src.backend.infrastructure.clients.storage.redis.redis_client"
         ) as mock_redis:
-            mock_redis.set_if_not_exists = AsyncMock(
+            mock_redis.cache_set = AsyncMock(
                 side_effect=ConnectionError("redis down")
             )
 
