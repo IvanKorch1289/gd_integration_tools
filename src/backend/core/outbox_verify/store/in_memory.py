@@ -22,6 +22,7 @@ class InMemoryOutboxVerifyStore(OutboxPublishStore):
     async def begin(
         self, event_id: str
     ) -> tuple[OutboxPublishState, OutboxPublishEntry | None]:
+        """Начать публикацию: вернуть (state, entry) по event_id."""
         async with self._lock:
             existing = self._entries.get(event_id)
             if existing is not None:
@@ -37,6 +38,7 @@ class InMemoryOutboxVerifyStore(OutboxPublishStore):
             return OutboxPublishState.PENDING, None
 
     async def confirm(self, event_id: str, broker: str, broker_offset: str) -> None:
+        """Подтвердить публикацию (broker + offset зафиксированы)."""
         async with self._lock:
             entry = self._entries.get(event_id)
             if entry is not None:
@@ -47,6 +49,7 @@ class InMemoryOutboxVerifyStore(OutboxPublishStore):
                 entry.last_error = None
 
     async def fail(self, event_id: str, error: str) -> None:
+        """Отметить публикацию как неудавшуюся с ошибкой."""
         async with self._lock:
             entry = self._entries.get(event_id)
             if entry is not None:
@@ -55,12 +58,15 @@ class InMemoryOutboxVerifyStore(OutboxPublishStore):
                 entry.attempts += 1
 
     async def get(self, event_id: str) -> OutboxPublishEntry | None:
+        """Получить entry по event_id; ``None`` если отсутствует."""
         async with self._lock:
             return self._entries.get(event_id)
 
     async def close(self) -> None:
+        """Освободить ресурсы хранилища (no-op для in-memory)."""
         async with self._lock:
             self._entries.clear()
 
     def size(self) -> int:
+        """Количество записей в хранилище."""
         return len(self._entries)

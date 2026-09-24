@@ -52,6 +52,7 @@ class OutboxPublishService:
 
     @property
     def store(self) -> OutboxPublishStore:
+        """Outbox-publish store, привязанный к сервису."""
         return self._store
 
     async def publish_with_verification(

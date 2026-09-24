@@ -138,15 +138,19 @@ class RPAWorkflow:
         run.completed_at = time.time()
 
     def get(self, run_id: str) -> WorkflowRun | None:
+        """Получить прогон по run_id; ``None`` если отсутствует."""
         return self._runs.get(run_id)
 
     def list_all(self) -> list[WorkflowRun]:
+        """Все прогоны RPA-workflow (порядок вставки)."""
         return list(self._runs.values())
 
     def list_by_workflow(self, workflow_id: str) -> list[WorkflowRun]:
+        """Прогоны конкретного workflow_id."""
         return [r for r in self._runs.values() if r.workflow_id == workflow_id]
 
     def list_by_state(self, state: RPAState) -> list[WorkflowRun]:
+        """Прогоны в конкретном состоянии (running/succeeded/...)."""
         return [r for r in self._runs.values() if r.state == state]
 
 
@@ -154,6 +158,7 @@ _wf: RPAWorkflow | None = None
 
 
 def get_rpa_workflow() -> RPAWorkflow:
+    """Singleton-доступ к общему ``RPAWorkflow``."""
     global _wf
     if _wf is None:
         _wf = RPAWorkflow()
@@ -161,5 +166,6 @@ def get_rpa_workflow() -> RPAWorkflow:
 
 
 def reset_rpa_workflow() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _wf
     _wf = None
