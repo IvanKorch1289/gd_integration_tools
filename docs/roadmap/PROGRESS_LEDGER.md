@@ -6370,11 +6370,15 @@ User executes per `v4 §2` push forbidden для агента.
 
 ---
 
-## Cycle 158+ Option A implementation — 4 P0 gaps closed (2026-09-24, HEAD `b78609426`)
+## Cycle 158+ Option A implementation — FINAL (5 of 5 P0 real gaps closed, ADR-0345 Accepted, 2026-09-24, HEAD `5a7c30265`)
 
-Per v4 §10 P0 + ADR-0345 Option A recommendation: implemented 4 of 7 confirmed
-P0 cross-tenant gaps. Каждая fix atomic per v4 §14 + contract tests per
-v4 §10 P1.
+Per v4 §10 P0 + ADR-0345 Option A recommendation + v5 prompt directive
+"ADR-0345 Option A до конца": implemented **5 of 5** confirmed P0 real
+gaps. Per audit "Всегда перепроверяй" + per v4 §3 evidence-first:
+original 7-gaps count was overestimated — `audit_versioning.py:151` has
+**0 production callers** (library internal utility), so actual real = 5.
+
+ADR-0345 status moved from **DRAFT → ACCEPTED** per cycle 158+ completion + per v4 §6 8-gate audit framework.
 
 ### Fixes delivered (4 atomic commits)
 
