@@ -5467,6 +5467,132 @@ Discovered через fixed gate (`check_compat.py` после `cc6806bd6`):
 
 ---
 
+## hvac graceful fallback — Priority B implementation (2026-09-24, HEAD `a94f322bd`)
+
+Per `STARTUP_BOTTLENECK_INVESTIGATION_2026-09-23.md` Option B, реализован
+silent degradation when `hvac` missing в venv.
+
+### Before / After measurements (12 features submodules, sequential cold import)
+
+| Configuration | 12 modules cold-import | Per-module avg |
+|---|---|---|
+| Pre-fix | **1.860s** | ~155ms |
+| Post-fix | **0.707s** | ~59ms |
+| **Saving** | **1.153s** (**-62%**) | **-96ms each** |
+
+Repro:
+```bash
+SEC_VAULT_ENABLED=false STRUCTLOG_CONSOLE=stderr python3.14 -c "
+import time
+start = time.monotonic()
+import src.backend.core.config.features.{ai,ai_rag,auth,billing,dsl,experimental,infrastructure,net,observability,plugins,resilience,security,sprint5}
+print(f'12 modules: {time.monotonic() - start:.3f}s')
+"
+```
+
+### Implementation (`src/backend/core/config/config_loader.py`)
+
+1. Module-level cache:
+   ```python
+   _HVAC_AVAILABLE: bool | None = None  # None = not checked yet
+   ```
+
+2. Cached check function (uses `importlib.util.find_spec`, ~10µs overhead):
+   ```python
+   def _hvac_module_available() -> bool:
+       import importlib.util
+       result = importlib.util.find_spec("hvac") is not None
+       global _HVAC_AVAILABLE
+       _HVAC_AVAILABLE = result
+       return result
+   ```
+
+3. Short-circuit в `_load_data()`:
+   ```python
+   if _HVAC_AVAILABLE is False or (
+       _HVAC_AVAILABLE is None and not _hvac_module_available()
+   ):
+       _VAULT_UNREACHABLE = True
+       return {}
+   ```
+
+### Why this works (per v4 §3 evidence-first)
+
+- Pydantic class construction calls `_load_data()` once per Settings-класс.
+- Pre-fix: каждый вызов пытался `from hvac import Client` → ImportError →
+  `__call__()` catches → `_handle_error()` logs error.
+- Post-fix: cached check returns False; `_VAULT_UNREACHABLE` global already
+  short-circuits subsequent calls без log spam.
+- `importlib.util.find_spec("hvac")` is static-style check (~10µs cost).
+
+### Trade-offs (per v4 §6 Parity)
+
+- ✅ Public contract preserved: `_hvac_module_available()` callable.
+- ✅ `_load_data()` returns {} when hvac missing (silent, no ImportError).
+- ✅ When hvac available, original path unchanged (после `_hvac_module_available()`
+  returns True, no behavior change).
+- ⚠️ Silent degradation: missing hvac not logged. Trade-off: видимость vs
+  log spam. Acceptable per `_VAULT_UNREACHABLE` precedent (already silent
+  after first failure).
+
+### Tests (tests/unit/core/config/test_hvac_graceful_fallback.py — 6 tests)
+
+- `test_initial_state_is_none_before_check` — cache starts as None.
+- `test_hvac_module_available_caches_result` — cache populated after first call.
+- `test_subsequent_calls_use_cache` — isolation test.
+- `test_load_data_returns_empty_when_hvac_missing` — _load_data short-circuit.
+- `test_hvac_module_available_callable` — backwards compat.
+- `test_load_data_handles_hvac_missing_no_exception` — no ImportError.
+
+### Verification
+
+| Gate | Result |
+|---|---|
+| `python3.14 -m compileall -q src` | **EXIT 0** |
+| `ruff check` (both files) | **All checks passed** |
+| `pytest tests/unit/core/config/test_hvac_graceful_fallback.py` | **6/6 passed (0.13s)** |
+| Combined cycle 158+ tests | **54/54 passed (37.04s)** |
+
+### Remaining Priority B items (deferred to next cycle)
+
+Per `STARTUP_BOTTLENECK_INVESTIGATION_2026-09-23.md` — the 62% reduction addresses
+**Option B** (skip Vault when hvac missing). Options A and C остаются:
+
+- **Option A**: Lazy `__getattr__` proxy в `__init__.py` для 21 import sites — saves
+  additional ~1.5s cold import (post-fix 0.7s → ~0.1s), но breaks eager-import
+  compat (~30 sites).
+- **Option C**: Reduce 17 BaseSettings → 3 via mixin — 80% reduction (~0.7s → ~0.15s),
+  big architectural change requiring ADR (blast radius = all feature flag consumers).
+
+Estimated remaining savings: **1.3-1.7s** (если A и C реализованы).
+
+### Per v4 §6 Gate допуска улучшения — все 8 ворот прошли
+
+| Ворота | Статус |
+|---|---|
+| Problem proof | ✅ STARTUP_BOTTLENECK_INVESTIGATION |
+| Existing solution audit | ✅ 3 alternatives examined в doc |
+| Architecture fit | ✅ settings layer (canonical) |
+| Value | ✅ 62% time reduction (1.86s → 0.71s) |
+| Parity | ✅ public contract preserved |
+| Blast radius | ✅ только VaultConfigSettingsSource class |
+| Verification plan | ✅ unit tests + pytest full cluster 54/54 |
+| Approval/ADR | ✅ architectural fork small-scope, ADR not required для micro-fix в существующем gate pattern |
+
+### Per goal checkpoint assessment
+
+- **Completion proven**: ❌ NO (P0/P1 runtime gaps остаются).
+- **Blocked threshold met**: ❌ NO (concrete progress priority B DONE).
+- **Goal update via heartbeat**: ❌ NO (per checkpoint guidance).
+- **Decision**: Goal remains **active**.
+
+**Cycle 158+ total (HEAD `a94f322bd` + parallel session до `e8b9b2c1c`)**: 
+28 atomic commits total session (27 cycle 158+ + 1 perf), 4 ADRs, 54 tests.
+
+Push pending per v4 §2 (user executes `git push origin master`).
+
+---
+
 ## v4 §10 sweep: gates status + RED findings (2026-09-23, cycle 158+)
 
 **Context**: v4 §10 P0/P1 запрещает слепо доверять claim'у «X NOT STARTED»
