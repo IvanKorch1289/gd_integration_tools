@@ -135,6 +135,49 @@ class Callsite:
     reason: str
 
 
+# v6 W3.4: FALSE_POSITIVE allowlist (.baselines/object_ownership_false_positives.yaml).
+# Каждый entry классифицируется как FALSE_POSITIVE вместо UNKNOWN, что
+# разблокирует strict gate (UNKNOWN всегда блокирует per v6).
+FALSE_POSITIVE_ALLOWLIST: dict[tuple[str, int], dict[str, str]] = {}
+
+
+def _load_false_positive_allowlist() -> dict[tuple[str, int], dict[str, str]]:
+    """Load FALSE_POSITIVE allowlist из ``.baselines/...yaml``.
+
+    Per v6 W3.4: «Исключения хранятся в versioned allowlist с owner,
+    причиной и сроком пересмотра».
+    """
+    import logging
+
+    import yaml  # type: ignore[import-not-found]  # PyYAML optional.
+
+    logger = logging.getLogger(__name__)
+
+    allowlist_path = (
+        Path(__file__).resolve().parents[1]
+        / ".baselines"
+        / "object_ownership_false_positives.yaml"
+    )
+    if not allowlist_path.exists():
+        return {}
+
+    try:
+        data = yaml.safe_load(allowlist_path.read_text(encoding="utf-8")) or {}
+    except (yaml.YAMLError, OSError) as exc:  # pragma: no cover — defensive.
+        logger.warning(
+            "object_authorization.allowlist.load_failed: %s path=%s",
+            exc,
+            allowlist_path,
+        )
+        return {}
+
+    entries: dict[tuple[str, int], dict[str, str]] = {}
+    for entry in data.get("allowlist", []):
+        key = (entry["file"], int(entry["line"]))
+        entries[key] = entry
+    return entries
+
+
 def _classify_callsite(py: Path, node: ast.Call) -> Callsite | None:
     """Classify single AST Call node.
 
@@ -358,7 +401,15 @@ PATH_INFRA_REGISTRY_PATTERNS: tuple[str, ...] = (
 
 def collect_all_callsites() -> list[Callsite]:
     """Scan all .py in src/backend (excluding tests/auth/admin) per
-    ``check_object_authorization.py`` baseline logic."""
+    ``check_object_authorization.py`` baseline logic.
+
+    v6 W3.4: После _classify_callsite, scan allowlist: matching
+    (file, line) → override type to FALSE_POSITIVE with allowlist reason.
+    """
+    # Lazy-load allowlist per call (single YAML load, simple data).
+    if not FALSE_POSITIVE_ALLOWLIST:
+        FALSE_POSITIVE_ALLOWLIST.update(_load_false_positive_allowlist())
+
     out: list[Callsite] = []
     for py in SRC_ROOT.rglob("*.py"):
         if "__pycache__" in py.parts:
@@ -373,6 +424,23 @@ def collect_all_callsites() -> list[Callsite]:
             if isinstance(node, ast.Call):
                 cs = _classify_callsite(py, node)
                 if cs is not None:
+                    # v6 W3.4: allowlist override → FALSE_POSITIVE.
+                    rel_path = str(py.relative_to(PROJECT_ROOT))
+                    key = (rel_path, cs.line)
+                    entry = FALSE_POSITIVE_ALLOWLIST.get(key)
+                    if entry is not None:
+                        cs = Callsite(
+                            file=cs.file,
+                            line=cs.line,
+                            receiver_type="false-positive",
+                            detection_pattern="allowlist",
+                            snippet=cs.snippet,
+                            reason=(
+                                f"allowlist: {entry.get('reason', '').strip()} "
+                                f"(owner={entry.get('owner', 'n/a')}, "
+                                f"review={entry.get('review_date', 'n/a')})"
+                            ),
+                        )
                     out.append(cs)
     return out
 

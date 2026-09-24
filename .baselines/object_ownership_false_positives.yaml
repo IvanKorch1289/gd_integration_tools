@@ -1,0 +1,73 @@
+# Object Authorization Classifier — FALSE_POSITIVE Allowlist (v6 W3.4)
+#
+# Per v6 spec: «Исключения хранятся в versioned allowlist с owner, причиной
+# и сроком пересмотра. FALSE_POSITIVE: файл, строка и аргументированное
+# объяснение».
+#
+# Файл загружается tools/classify_object_authorization.py через
+# _load_false_positive_allowlist() — каждый entry классифицируется
+# как FALSE_POSITIVE вместо UNKNOWN. Строгий gate (--strict) пропускает
+# такие callsites (per v6: UNKNOWN всегда блокирует; FALSE_POSITIVE —
+# документированное исключение).
+#
+# Format:
+#   - file: relative путь от project root
+#   - line: 1-based line number
+#   - reason: human-readable объяснение почему НЕ user-data
+#   - owner: владелец кода (team или отдельный contributor)
+#   - review_date: ISO дата следующего пересмотра (max +6 months)
+#   - added_at: ISO дата добавления
+#
+# v6 W3.4 (2026-09-24): initial allowlist for 5 FALSE_POSITIVE sites
+# из docs/roadmap/W3_UNKNOWN_OWNERSHIP_CLASSIFICATION_2026-09-24.md.
+
+allowlist:
+  - file: src/backend/core/security/object_ownership.py
+    line: 142
+    reason: >
+      Dynamic introspection of kwargs by parameter name. ``id_param`` is
+      a string variable (parameter name from class introspection), NOT a
+      user-supplied identifier. kwargs.get() здесь используется для
+      извлечения значения параметра по его имени — нет tenant context
+      concern.
+    owner: gd_integration_tools/security
+    review_date: "2027-03-24"
+    added_at: "2026-09-24"
+
+  - file: src/backend/dsl/workflow/visualize.py
+    line: 218
+    reason: >
+      Workflow visualization color lookup. ``color_map.get(identity)`` —
+      map workflow_id/identity → visualization color (UI-only).
+      Compile-time constant, NOT persistent user data, no tenant needed.
+    owner: gd_integration_tools/dsl
+    review_date: "2027-03-24"
+    added_at: "2026-09-24"
+
+  - file: src/backend/dsl/workflow/bpmn_importer.py
+    line: 340
+    reason: >
+      BPMN XML element lookup в local dict ``elements`` — парсинг XML,
+      НЕ persistence. ``elements.get(node_id)`` возвращает in-memory
+      BPMN element, нет user-data concern.
+    owner: gd_integration_tools/dsl
+    review_date: "2027-03-24"
+    added_at: "2026-09-24"
+
+  - file: src/backend/dsl/workflow/bpmn_importer.py
+    line: 393
+    reason: >
+      Same as line 340 — BPMN local dict ``elements`` lookup для
+      sequence flow target (workflow build-time, no persistence).
+    owner: gd_integration_tools/dsl
+    review_date: "2027-03-24"
+    added_at: "2026-09-24"
+
+  - file: src/backend/dsl/workflow/compiler/step_compilers/flow.py
+    line: 155
+    reason: >
+      Workflow step compilation — local ``outputs.get(sid)`` dict для
+      tracking step outputs в compile-time. НЕ persistent, no user data.
+    owner: gd_integration_tools/dsl
+    review_date: "2027-03-24"
+    added_at: "2026-09-24"
