@@ -512,6 +512,13 @@ def breakers():
     _breakers()
 
 
+# P1 CLI decomposition W4 (v4 §10 P1, 2026-09-24): импорт функции из
+# ``src/backend/cli/diagnose.py`` и регистрация как top-level команды через
+# ``app.command()(fn)`` — preserves CLI contract (python manage.py diagnose
+# по-прежнему работает на top-level).
+from src.backend.cli.diagnose import diagnose as _diagnose
+
+
 @app.command()
 def diagnose(
     json_output: bool = typer.Option(
@@ -528,125 +535,7 @@ def diagnose(
     actions count, feature flags status, Python/version info.
     Use --json for machine-readable output.
     """
-    import asyncio
-    import json as _json
-    import platform
-    import sys
-
-    _bootstrap()
-
-    async def _check_async():
-        checks = {}
-        try:
-            from src.backend.infrastructure.clients.storage.redis import redis_client
-
-            checks["redis"] = await redis_client.check_connection()
-        except Exception:
-            checks["redis"] = False
-
-        try:
-            from src.backend.infrastructure.database.database import db_initializer
-
-            checks["database"] = await db_initializer.check_connection()
-        except Exception:
-            checks["database"] = False
-
-        return checks
-
-    # Gather all diagnostics synchronously where possible
-    diagnostics = {
-        "version": {"python": sys.version, "platform": platform.platform()},
-        "health": asyncio.run(_check_async()),
-        "breakers": [],
-        "services": [],
-        "routes_count": 0,
-        "actions_count": 0,
-        "feature_flags": {},
-    }
-
-    # Circuit breakers
-    try:
-        from src.backend.infrastructure.clients.external.circuit_breakers import (
-            breaker_registry,
-        )
-
-        diagnostics["breakers"] = breaker_registry.get_all_status()
-    except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)
-        pass
-
-    # Services
-    try:
-        from src.backend.core.svcs_registry import list_services
-
-        diagnostics["services"] = sorted(list_services())
-    except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)
-        pass
-
-    # Routes count
-    try:
-        from src.backend.dsl.route.loader import RouteLoader
-
-        routes = RouteLoader.load_all()
-        diagnostics["routes_count"] = len(routes)
-        if verbose:
-            diagnostics["routes"] = [
-                {"name": r.name, "source": r.source} for r in routes
-            ]
-    except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)
-        pass
-
-    # Actions count
-    try:
-        from src.backend.core.actions import ActionHandlerRegistry
-
-        diagnostics["actions_count"] = len(ActionHandlerRegistry.get_all_actions())
-    except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)
-        pass
-
-    # Feature flags
-    try:
-        from src.backend.core.config.features import feature_flags
-
-        flags = feature_flags.model_dump()
-        if not verbose:
-            # In non-verbose mode, only show flags that are ON
-            flags = {k: v for k, v in flags.items() if v}
-        diagnostics["feature_flags"] = flags
-    except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)
-        pass
-
-    if json_output:
-        typer.echo(_json.dumps(diagnostics, indent=2, default=str))
-    else:
-        # Human-readable summary
-        typer.echo("=== GD Integration Tools Diagnostic Report ===")
-        typer.echo(f"Python: {sys.version.split()[0]}")
-        typer.echo(f"Platform: {platform.platform()}")
-        typer.echo("")
-        typer.echo("Health:")
-        for name, ok in diagnostics["health"].items():
-            status = (
-                typer.style("OK", fg=typer.colors.GREEN)
-                if ok
-                else typer.style("FAIL", fg=typer.colors.RED)
-            )
-            typer.echo(f"  {name:<20} {status}")
-        typer.echo("")
-        typer.echo(f"Circuit Breakers: {len(diagnostics['breakers'])}")
-        for b in diagnostics["breakers"]:
-            state = b["state"]
-            color = typer.colors.GREEN if state == "closed" else typer.colors.RED
-            typer.echo(f"  {b['name']:<30} {typer.style(state, fg=color)}")
-        typer.echo("")
-        typer.echo(f"Services: {len(diagnostics['services'])}")
-        typer.echo(f"Routes: {diagnostics['routes_count']}")
-        typer.echo(f"Actions: {diagnostics['actions_count']}")
-        typer.echo(f"Feature Flags (ON): {len(diagnostics['feature_flags'])}")
-        if verbose and diagnostics.get("routes"):
-            typer.echo("")
-            typer.echo("Routes:")
-            for r in diagnostics["routes"]:
-                typer.echo(f"  {r['name']} ({r['source']})")
+    _diagnose(json_output=json_output, verbose=verbose)
 
 
 # ────────────── Scaffolding ──────────────
