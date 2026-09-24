@@ -178,6 +178,69 @@ Per cycle 158+ evidence: ADR-0345 scope should be updated to include:
 
 **Total updated fix estimate**: 12-15 LOC + 5-6 cross-tenant tests (vs prior 6-10 LOC + 3-4 tests).
 
+## 5.1 Notebook model analysis (CRITICAL scope re-evaluation)
+
+Per audit "Всегда перепроверяй": re-investigated `Notebook` Pydantic model
+после addendum publication — **Notebook HAS NO `tenant_id` field**.
+
+**Source** (`src/backend/core/models/notebooks.py`):
+```python
+class Notebook(BaseModel):
+    """Документ заметки с историей версий и мягким удалением."""
+    
+    model_config = ConfigDict(extra="ignore")
+    
+    id: str = Field(default_factory=lambda: uuid4().hex)
+    title: str
+    tags: list[str] = Field(default_factory=list)
+    latest_version: int = 0
+    created_by: str
+    created_at: datetime = Field(default_factory=_utc_now)
+    updated_at: datetime = Field(default_factory=_utc_now)
+    is_deleted: bool = False
+    versions: list[NotebookVersion] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+```
+
+**Implication**: Adding `tenant_id` filter to Mongo queries requires:
+1. Add `tenant_id: str` field to `Notebook` model.
+2. Migration of EXISTING notebooks (default value needed, e.g., `"default"`).
+3. Update ALL write paths (`create`, `update`, etc.) to set `tenant_id`.
+4. Add filter to read paths.
+
+**Honest scope re-evaluation per audit**:
+- ❌ **NOT** 1-2 LOC fix (was initial claim in section 5).
+- ✅ Migration required (model change + data migration + multiple writers).
+- ✅ Per v4 §10 P1 — needs **migration window + contract test + 0 importers audit**.
+- ✅ **Bigger architectural change** than originally estimated.
+
+**Updated fix list** (revised):
+
+| Priority | Fix | LOC | Severity | Notes |
+|---|---|---|---|---|
+| 1 | `HitlService.get()` + `wait_for()` + `resolve()` add `tenant_id` parameter | ~6 LOC + 3 tests | HIGH | `HitlPendingSignal` HAS `tenant_id` field — backwards-compat |
+| 2 | `HitlSignalStore` Protocol + 2 impls (Redis, InMemory) add `tenant_id` parameter | ~10 LOC + 2 tests | HIGH | Layer below service |
+| 3 | `hitl_approval.py:263` caller update to pass `current_tenant_id()` | ~2 LOC + 1 test | HIGH | Per audit "Всегда перепроверяй" — caller change required |
+| 4 | `Notebook` model: add `tenant_id` column + migration + writer updates | ~15 LOC + 5 tests | CRITICAL+ | **NEW: model schema change** |
+| 5 | `notebooks_mongo.py:get()` filter by tenant | ~2 LOC | HIGH | Depends on #4 |
+| 6 | `AIFeedbackRepository.get()` filter by tenant | ~2 LOC + 1 test | MEDIUM | `AIFeedbackDoc` model has tenant_id |
+| 7 | `object_ownership.py` decorator implementation | ~15 LOC + 4 tests | CRITICAL | Decorator stub → real implementation |
+
+**Total updated LOC**: ~50 LOC + 16 tests (vs prior 12-15 LOC estimate).
+
+**Architectural impact**:
+- 7 separate commits per fix (per atomic commit principle).
+- Migration window required for fix #4 (Notebook model).
+- Contract test required per v4 §10 P1.
+
+Per cycle 158+ discipline (3 architectural forks already done) + audit "не повторять уже сделанную волну": **NOT** all 7 fixes should be in one cycle. Recommended split per next cycle:
+- **Cycle 159**: fixes #1, #2, #3 (HITL stack) — atomic, ~20 LOC + 6 tests.
+- **Cycle 160**: fixes #6 (AIFeedback) — small, atomic.
+- **Cycle 161**: fix #4 + #5 (Notebook model + Mongo) — model migration, bigger.
+- **Cycle 162**: fix #7 (object_ownership decorator) — security-critical, separate.
+
+Each cycle per v4 §10 P1 migration window per individual fix.
+
 ## 6. What I delivered this iteration (per audit "Всегда перепроверяй")
 
 - ✅ Manual re-inspection of 24 unknown callsites (sampled).
