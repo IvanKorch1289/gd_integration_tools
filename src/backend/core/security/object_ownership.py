@@ -41,6 +41,8 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
+from src.backend.core.errors import AuthorizationError, NotFoundError
+
 # S170 stub (audit 2026-09-22 P0): get_logger deferred до integration с TenantContext.
 logger = logging.getLogger(__name__)
 
@@ -50,18 +52,26 @@ def require_object_ownership(
     id_param: str = "id",
     tenant_field: str = "tenant_id",
     raise_on_mismatch: bool = True,
+    session_factory: Callable[[], Any] | None = None,
+    explicit_tenant_id: str | None = None,
 ) -> Callable:
     """Decorator для автоматической проверки object-level ownership.
+
+    Per ADR-0345 Option A: fail-closed per-call enforcement.
 
     Args:
         resource_model: ORM model class (e.g., ``Order``).
         id_param: имя path/query parameter с resource_id.
         tenant_field: имя поля на model для tenant_id (default: "tenant_id").
         raise_on_mismatch: True → raise ``AuthorizationError``. False → return None.
+        session_factory: Optional session factory для DB access. Если None —
+            legacy stub behavior (logs only, no fail-closed).
+        explicit_tenant_id: Tenant_id текущего вызывающего. Если None —
+            legacy stub behavior.
 
     Raises:
         NotFoundError: resource не найден.
-        AuthorizationError: tenant_id resource ≠ tenant_id caller.
+        AuthorizationError: tenant_id mismatch.
     """
 
     def decorator(func: Callable) -> Callable:
@@ -73,6 +83,8 @@ def require_object_ownership(
                 tenant_field=tenant_field,
                 kwargs=kwargs,
                 raise_on_mismatch=raise_on_mismatch,
+                session_factory=session_factory,
+                explicit_tenant_id=explicit_tenant_id,
             )
             return await func(*args, **kwargs)
 
@@ -87,6 +99,8 @@ def require_object_ownership(
                     tenant_field=tenant_field,
                     kwargs=kwargs,
                     raise_on_mismatch=raise_on_mismatch,
+                    session_factory=session_factory,
+                    explicit_tenant_id=explicit_tenant_id,
                 )
             )
             return func(*args, **kwargs)
@@ -106,15 +120,24 @@ async def _verify_ownership(
     tenant_field: str,
     kwargs: dict[str, Any],
     raise_on_mismatch: bool,
+    session_factory: Callable[[], Any] | None = None,
+    explicit_tenant_id: str | None = None,
 ) -> None:
     """Verify that resource.tenant_id matches caller's tenant_id.
 
-    Implementation note: this is a stub — production wiring requires
-    integration with TenantContext (see Sprint 1 follow-up).
+    Per ADR-0345 Option A: fail-closed per-call enforcement.
+
+    Behavior matrix:
+    - session_factory provided + explicit_tenant_id provided:
+      Full fail-closed: load resource, compare tenant_field value
+      against explicit_tenant_id; raise AuthorizationError on mismatch.
+    - Either missing: legacy stub behavior (log only) — backwards-compat
+      для existing callers without session infrastructure.
 
     Raises:
-        NotFoundError: resource не найден.
-        AuthorizationError: tenant_id mismatch.
+        NotFoundError: resource не найден (fail-closed path only).
+        AuthorizationError: tenant_id mismatch (fail-closed path only).
+        ValueError: missing required param `id_param` (always).
     """
     resource_id = kwargs.get(id_param)
     if resource_id is None:
@@ -123,19 +146,65 @@ async def _verify_ownership(
             f"in function signature"
         )
 
-    # Production implementation would:
-    # 1. Get current tenant from TenantContext.
-    # 2. Load resource by id.
-    # 3. Compare resource.tenant_id to current_tenant_id.
-    # 4. Raise on mismatch.
+    # Legacy fallback (backwards-compat): no session_factory OR no explicit_tenant_id.
+    if session_factory is None or explicit_tenant_id is None:
+        logger.debug(
+            "ownership_check_stub",
+            resource_model=getattr(resource_model, "__name__", str(resource_model)),
+            resource_id=resource_id,
+            tenant_field=tenant_field,
+            reason="missing session_factory OR explicit_tenant_id",
+        )
+        return
 
-    # Stub — реальная интеграция в следующих коммитах.
+    # Fail-closed path: load resource + compare tenant.
+    try:
+        session = session_factory()
+        # Resource lookup. Use ``get`` if available, else ``query().filter_by``.
+        resource = None
+        get_attr = getattr(resource_model, "get", None)
+        if get_attr is not None:
+            resource = session.get(resource_model, resource_id)
+        else:
+            resource = (
+                session.query(resource_model)
+                .filter_by(id=resource_id)
+                .first()
+            )
+    except Exception as exc:
+        # Per audit + ADR-0345: fail-closed on unexpected errors.
+        raise AuthorizationError(
+            message=(
+                f"Failed to load {resource_model.__name__}(id={resource_id}): {exc}"
+            )
+        ) from exc
+
+    if resource is None:
+        raise NotFoundError(
+            message=f"{resource_model.__name__} with id={resource_id} not found"
+        )
+
+    resource_tenant_id = getattr(resource, tenant_field, None)
+    if resource_tenant_id != explicit_tenant_id:
+        if raise_on_mismatch:
+            raise AuthorizationError(
+                message=(
+                    f"Tenant mismatch: resource.tenant_id={resource_tenant_id!r} "
+                    f"!= caller.tenant_id={explicit_tenant_id!r}"
+                )
+            )
+        # raise_on_mismatch=False — caller handles None return.
+        return
+
     logger.debug(
-        "ownership_check_stub",
+        "ownership_check_pass",
         resource_model=getattr(resource_model, "__name__", str(resource_model)),
         resource_id=resource_id,
-        tenant_field=tenant_field,
+        tenant_id=explicit_tenant_id,
     )
+
+
+__all__ = ("require_object_ownership",)
 
 
 __all__ = ("require_object_ownership",)
