@@ -186,13 +186,19 @@ def _classify_callsite(py: Path, node: ast.Call) -> Callsite | None:
 
     # ORM/Django-style patterns via receiver AST inspection.
     # Heuristic: receiver contains "Model", "Repository", "Query", OR
-    # is a service getter like ``get_xxx_service()``.
+    # is a service getter like ``get_xxx_service()``, OR bare matches
+    # common service-locator names (``svc``, ``api_svc``, ``service``).
     # NB: regex trailing ``\b`` removed — ``()`` followed by ``.`` produces
     # non-word/non-word boundary, classic regex pitfall.
+    # NB2: receiver_str includes the ``.get`` suffix (e.g. ``svc.get``)
+    # — exact-match ``receiver_str == "svc"`` doesn't work. Use bare-strip.
+    bare_receiver = receiver_str.removesuffix(".get")
     if (
         re.search(r"\b(Model|Repository|Query|Manager)\b", receiver_str)
         or re.search(r"\bget_\w+_service\(\)", receiver_str)
-        or receiver_str == "svc"
+        or bare_receiver in {"svc", "service"}
+        or bare_receiver.endswith("_svc")
+        or bare_receiver.endswith("service")
     ):
         return Callsite(
             file=file,

@@ -18,8 +18,6 @@ import importlib.util
 import sys
 from pathlib import Path
 
-import pytest
-
 
 def _load_module():
     spec = importlib.util.spec_from_file_location(
@@ -74,6 +72,29 @@ class TestClassification:
         )
         assert target.detection_pattern == "orm-query"
         assert target.file.endswith(".py")
+
+    def test_svc_get_classified_user_data(self) -> None:
+        """``svc.get(signal_id)`` → user-data (service-locator pattern).
+
+        Regression test для bug найденного в cycle 158+ post-fix:
+        ``receiver_str == "svc"`` не работало когда unparse дает ``"svc.get"``.
+        Fix: bare extraction ``removesuffix(".get")`` + endswith ``service``.
+        """
+        targets = [
+            r for r in mod.collect_all_callsites()
+            if r.receiver_type == "user-data"
+            and "svc.get" in r.snippet
+        ]
+        assert len(targets) >= 1, (
+            "Expected at least one ``svc.get(...)`` callsite classified as "
+            "user-data (svc = service locator convention). "
+            "Pre-fix bug: receiver_str=='svc' missed 'svc.get'."
+        )
+        for t in targets:
+            assert t.detection_pattern == "service-getter"
+            assert "hitl.py" in t.file, (
+                f"Expected hitl.py: {t.snippet!r}"
+            )
 
     def test_self_routes_classified_infra_registry(self) -> None:
         """self._routes.get → infra-registry (private-plural-collection)."""
