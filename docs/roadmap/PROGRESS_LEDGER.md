@@ -6226,3 +6226,11 @@ migration window + contract test» — ext-аналогия: менять schema
   mypy 54 (W9-сплиты), ruff format drift 210 файлов, Redis-блокированные
   cache-тесты, saga/fanout (W11). Ни один остаток не является регрессией
   DI-фиксов.
+
+### Дополнение (2026-09-24): после test-hygiene фиксов f4c64d77c + 779f21cd7
+- tests/unit/dsl: **4713 passed / 3 failed** (остаток — fanout_deadline ×3,
+  активная W11-волна параллельной сессии).
+- cache/cachewrite/ai_processors_unit/sanitizepii — зелёные (моки на
+  CacheMixin API, dual-dispatch sanitize_text/sanitize, presidio-флаг
+  в legacy-тесте).
+- admin_workflow_versioning — 8 passed (fake-admin-auth фикстура).
