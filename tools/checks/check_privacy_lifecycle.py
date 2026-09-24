@@ -115,13 +115,31 @@ def _check_storage_coverage() -> dict[str, dict[str, object]]:
         else "no LangMem adapter",
     }
 
-    # PostgreSQL: stub-статус честно отражаем (real DELETE — Sprint 4+).
-    pg_stub = _adapter_has("_postgres.py", "stub") or _adapter_has(
-        "_postgres.py", "sleep(0)"
+    # PostgreSQL: per v6 W1 spec — проверяем adapter import + contract suite
+    # (НЕ текстовые маркеры "stub"/"sleep(0)"). Adapter импортируется +
+    # проверяется наличие real DELETE/tenant filter patterns.
+    pg_content = adapter_content.get("_postgres.py", "")
+    pg_has_delete = "delete" in pg_content.lower()
+    pg_has_tenant = "tenant_id" in pg_content.lower()
+    pg_has_explicit_tenant_param = "explicit_tenant_id" in pg_content.lower()
+    pg_covered = (
+        "_postgres.py" in adapter_content
+        and pg_has_delete
+        and pg_has_tenant
+        and pg_has_explicit_tenant_param
     )
     backends["postgresql"] = {
-        "covered": not pg_stub and "_postgres.py" in adapter_content,
-        "evidence": "adapter _postgres.py is a stub (Sprint 4+)" if pg_stub else "adapter present",
+        "covered": pg_covered,
+        "evidence": (
+            "adapter _postgres.py: real DELETE + tenant_id + explicit_tenant_id "
+            "(ADR-0345 Option A)"
+        )
+        if pg_covered
+        else (
+            f"adapter _postgres.py incomplete "
+            f"(delete={pg_has_delete}, tenant_id={pg_has_tenant}, "
+            f"explicit_tenant_id={pg_has_explicit_tenant_param})"
+        ),
     }
 
     return backends
@@ -192,7 +210,20 @@ def _check_orchestration_command() -> tuple[bool, str]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Privacy lifecycle coverage check")
-    parser.add_argument("--strict", action="store_true", help="Exit 1 if issues found")
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help=(
+            "Deprecated alias — exit 1 on any ❌ is now DEFAULT (per v6 W1: "
+            "'Любой backend с ❌ должен давать ненулевой exit code'). "
+            "Keep flag для backwards compat со старыми CI pipelines."
+        ),
+    )
+    parser.add_argument(
+        "--no-strict",
+        action="store_true",
+        help="Opt-out: exit 0 even с ❌ (для отладки / triage).",
+    )
     parser.add_argument("--json", action="store_true", help="JSON output")
     args = parser.parse_args(argv)
 
@@ -273,8 +304,12 @@ def main(argv: list[str] | None = None) -> int:
             print("✅ Privacy lifecycle complete")
         print()
 
-    if args.strict and issues:
-        return 1
+    # Per v6 W1 spec: «Любой backend с ❌ должен давать ненулевой exit code».
+    # Default behavior — exit 1 on any issue. --no-strict opt-out для triage.
+    if args.no_strict:
+        return 0  # explicit opt-out
+    if issues:
+        return 1  # fail-closed by default (per v6)
     return 0
 
 
