@@ -371,3 +371,49 @@ class TestSchedulerFacadePendingExecution:
         )
 
         # Scheduler shutdown handled в fake_manager fixture teardown.
+
+
+class TestSchedulerFacadeHistoryStoreFailure:
+    """v6 W0 sub-test: history store failure → catchup error captured."""
+
+    @pytest.mark.asyncio
+    async def test_catchup_with_broken_store_returns_error(
+        self, store_setup, monkeypatch, fake_manager
+    ):
+        """Если history store возвращает ошибку → catchup error, registration OK.
+
+        Per v6 §10 W0 spec: «history store failure → pending execution
+        success/failure/retry». Pending-tick registration прошла, но catchup
+        failed — НЕ должно падать с неструктурным exception.
+        """
+        monkeypatch.setattr(
+            "src.backend.core.scheduler.get_scheduler_manager", lambda: fake_manager
+        )
+
+        # Подменяем RunHistoryStore.materialize чтобы он бросал exception.
+        from src.backend.services.scheduler import run_history
+
+        async def broken_materialize(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+            raise RuntimeError("simulated history store failure")
+
+        monkeypatch.setattr(
+            run_history.RunHistoryStore, "materialize", broken_materialize
+        )
+
+        facade = SchedulerFacade(session_factory=store_setup)
+        result = await facade.add_job(
+            job_id="test_store_failure",
+            func=lambda: None,
+            cron_expr="0 * * * *",
+            catchup=True,
+            catchup_window_days=1,
+        )
+
+        # Registration прошла, catchup error в result.error.
+        assert result["registered"] is True
+        assert result["history_materialized"] is False
+        assert result["catchup_scheduled"] is False
+        assert result["error"] is not None
+        assert "history store failure" in result["error"]
+        # НЕ должно raise неструктурный exception.
+        # (facade catches RuntimeError + adds to result.error per v6 spec)
