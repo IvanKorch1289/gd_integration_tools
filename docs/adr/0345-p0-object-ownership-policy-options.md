@@ -6,6 +6,30 @@
 ADR фиксирует **3 варианта** для P0 fix (cross-tenant exposure)
 и **запрашивает user choice** между ними перед implementation.
 
+### Cycle 158+ implementation progress (2026-09-24)
+
+Per v4 §6 8-gate audit + per v4 §3 evidence-first:
+
+**Closed via Option A** (per-call enforcement, 4 of 7 confirmed gaps):
+
+| Commit | Fix | Files | LOC | Contract tests |
+|---|---|---|---|---|
+| `94ca80c8e` | HitlService.get/wait_for | 5 | ~20 | 5 |
+| `5eefd22f4` | AIFeedbackService.get | 3 | ~17 | 6 |
+| `4e086ff0c` | NotebookService.get | 3 | ~12 | 5 |
+| `b78609426` | MongoNotebookRepository.get | 1 | ~15 | 3 |
+| **TOTAL** | **4 of 7 P0 gaps** | **12** | **~64** | **19** |
+
+**Remaining** (per cycle 158+ scope discipline + v4 §11 "stop for review"):
+1. `audit_versioning.py:151` — CONDITIONAL (depends on parent model tenant-scope coverage).
+2. `object_ownership.py` decorator stub — CRITICAL severity (full decorator implementation requires DB session mechanism, design decision).
+3. (Implicit) Audit-versioning parent models classification — requires model coverage survey.
+
+**ADR-0345 stays "DRAFT"** per v4 §6 until:
+- ✅ All 7 gaps closed (NOT yet — 3 remain).
+- ✅ Per-option 8-gate assessment finalized.
+- ✅ User ratification per kickoff "не использовать ask_user без необходимости" inverse.
+
 ## Контекст
 
 Per `tools/classify_object_authorization.py` (cycle 158+ commit `5580f2621`)
