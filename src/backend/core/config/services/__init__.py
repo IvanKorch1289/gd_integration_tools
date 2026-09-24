@@ -1,50 +1,131 @@
-from src.backend.core.config.services.cache import (
-    CacheSettings,
-    RedisSettings,
-    cache_settings,
-    redis_settings,
-)
-from src.backend.core.config.services.graphql import (  # S163 W13
-    GraphQLSettings,
-    graphql_settings,
-)
-from src.backend.core.config.services.invoker import InvokerSettings, invoker_settings
-from src.backend.core.config.services.jupyter_hub import (
-    JupyterHubSettings,
-    jupyter_hub_settings,
-)
-from src.backend.core.config.services.llm import LLMSettings, llm_settings  # S164 W2
-from src.backend.core.config.services.logging import LogStorageSettings, log_settings
-from src.backend.core.config.services.mail import MailSettings, mail_settings
-from src.backend.core.config.services.queue import (
-    GRPCSettings,
-    QueueSettings,
-    TasksSettings,
-    grpc_settings,
-    queue_settings,
-    tasks_settings,
-)
-from src.backend.core.config.services.resilience import (
-    BreakerProfile,
-    FallbackPolicy,
-    ResilienceSettings,
-    resilience_settings,
-)
-from src.backend.core.config.services.rpa import RPASettings, rpa_settings  # S164 W4
-from src.backend.core.config.services.sms import SMSSettings, sms_settings
-from src.backend.core.config.services.snapshot import (
-    SnapshotSettings,
-    snapshot_settings,
-)
-from src.backend.core.config.services.storage import FileStorageSettings, fs_settings
-from src.backend.core.config.services.watermark import (
-    WatermarkSettings,
-    watermark_settings,
-)
-from src.backend.core.config.services.websocket import (  # S163 W13
-    WSSettings,
-    ws_settings,
-)
+"""Per-service settings singletons (PEP 562 lazy facade).
+
+Public API: каждый ``Settings``-класс и singleton-instance (e.g.,
+``CacheSettings``, ``cache_settings``) доступен через attribute access.
+Сохранена обратная совместимость для всех 38 public symbols через
+``__all__``.
+
+Cycle 158+ fix: lazy ``__getattr__`` proxy (per STARTUP_BOTTLENECK Option A).
+Original design eagerly импортировал 15 submodules + 38 symbols, что costило
+~1.374s cold-import time. После fix — ~0.01s.
+"""
+
+from __future__ import annotations
+
+import importlib as _importlib
+from typing import Any as _Any
+
+
+# Per-submodule symbols (single source of truth для lazy proxy).
+# Map: submodule_name → list of public symbols.
+_PUBLICS: dict[str, list[str]] = {
+    "cache": [
+        "CacheSettings",
+        "RedisSettings",
+        "cache_settings",
+        "redis_settings",
+    ],
+    "graphql": [  # S163 W13
+        "GraphQLSettings",
+        "graphql_settings",
+    ],
+    "invoker": [
+        "InvokerSettings",
+        "invoker_settings",
+    ],
+    "jupyter_hub": [
+        "JupyterHubSettings",
+        "jupyter_hub_settings",
+    ],
+    "llm": [  # S164 W2
+        "LLMSettings",
+        "llm_settings",
+    ],
+    "logging": [
+        "LogStorageSettings",
+        "log_settings",
+    ],
+    "mail": [
+        "MailSettings",
+        "mail_settings",
+    ],
+    "queue": [
+        "GRPCSettings",
+        "QueueSettings",
+        "TasksSettings",
+        "grpc_settings",
+        "queue_settings",
+        "tasks_settings",
+    ],
+    "resilience": [
+        "BreakerProfile",
+        "FallbackPolicy",
+        "ResilienceSettings",
+        "resilience_settings",
+    ],
+    "rpa": [  # S164 W4
+        "RPASettings",
+        "rpa_settings",
+    ],
+    "sms": [
+        "SMSSettings",
+        "sms_settings",
+    ],
+    "snapshot": [
+        "SnapshotSettings",
+        "snapshot_settings",
+    ],
+    "storage": [
+        "FileStorageSettings",
+        "fs_settings",
+    ],
+    "watermark": [
+        "WatermarkSettings",
+        "watermark_settings",
+    ],
+    "websocket": [  # S163 W13
+        "WSSettings",
+        "ws_settings",
+    ],
+}
+
+
+# Inverse map: name → submodule (для быстрого __getattr__ resolution).
+_LAZY_MAP: dict[str, str] = {
+    sym: submodule
+    for submodule, syms in _PUBLICS.items()
+    for sym in syms
+}
+
+
+_cached: dict[str, _Any] = {}
+"""Cache resolved attributes для subsequent ``__getattr__`` lookups
+в пределах одного процесса (avoid repeated import cost)."""
+
+
+def __getattr__(name: str) -> _Any:  # PEP 562 lazy module attribute.
+    """Lazy import — load submodule когда name впервые requested.
+
+    Saves ~1.36s в ``startup_time.py`` cold-import (per
+    CONFIG_SERVICES_BOTTLENECK_2026-09-24.md investigation).
+    """
+    if name in _LAZY_MAP:
+        submodule_name = _LAZY_MAP[name]
+        module = _importlib.import_module(
+            f".{submodule_name}", __name__
+        )
+        value = getattr(module, name)
+        _cached[name] = value
+        return value
+    raise AttributeError(
+        f"module {__name__!r} has no attribute {name!r}"
+    )
+
+
+def __dir__() -> list[str]:
+    """``dir()`` через lazy proxy + cached для tab-completion support."""
+    return sorted(set(__all__) | set(_cached.keys()))
+
 
 __all__ = (
     "BreakerProfile",
