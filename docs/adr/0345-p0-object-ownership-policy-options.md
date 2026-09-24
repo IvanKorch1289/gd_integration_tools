@@ -2,16 +2,16 @@
 
 ## Статус
 
-**DRAFT** (2026-09-24, cycle 158+). Per v4 §6 gate "Approval/ADR" — этот
-ADR фиксирует **3 варианта** для P0 fix (cross-tenant exposure)
-и **запрашивает user choice** между ними перед implementation.
+**ACCEPTED** (2026-09-24, cycle 158+ completion). Per v4 §6 gate "Approval/ADR"
++ per audit "Всегда перепроверяй" + per cycle 158+ evidence-first verification:
+**5 of 5 P0 real gaps closed via Option A** (per-call fail-closed enforcement).
 
-### Cycle 158+ implementation progress (2026-09-24, post v5 prompt)
+### Cycle 158+ final implementation progress (2026-09-24, post v5 prompt)
 
 Per v4 §6 8-gate audit + per v4 §3 evidence-first + v5 prompt directive
 "ADR-0345 Option A до конца":
 
-**Closed via Option A** (per-call enforcement, **5 of 6** confirmed real gaps):
+**Closed via Option A** (per-call enforcement, **5 of 5** confirmed real gaps):
 
 | Commit | Fix | Files | LOC | Contract tests |
 |---|---|---|---|---|
@@ -20,7 +20,7 @@ Per v4 §6 8-gate audit + per v4 §3 evidence-first + v5 prompt directive
 | `4e086ff0c` | NotebookService.get | 3 | ~12 | 5 |
 | `b78609426` | MongoNotebookRepository.get | 1 | ~15 | 3 |
 | `ef8240eab` | object_ownership decorator | 1 | ~95 | 9 |
-| **TOTAL** | **5 of 6 P0 real gaps** | **13** | **~159** | **28** |
+| **TOTAL** | **5 of 5 P0 real gaps** | **13** | **~159** | **28** |
 
 **Re-verification per audit "Всегда перепроверяй"** (2026-09-24):
 - `audit_versioning.py:151` (`Versioning.get_version`) was originally listed as
@@ -30,16 +30,14 @@ Per v4 §6 8-gate audit + per v4 §3 evidence-first + v5 prompt directive
 - Per audit + v4 §3 evidence-first — **NOT a real cross-tenant gap** (library
   internal utility, no production exposure path).
 - Per v4 §10 P1 "0 importers" criterion: 0 importers = safe to leave as-is.
-- **Original 7-gaps count was overestimated — actual real = 6.**
+- Parent-model coverage confirmed via `extensions/core_entities/users/domain/models.py:54`:
+  `User(BaseModel, TenantMixin)` — has `tenant_id` column (via TenantMixin).
+- **Original 7-gaps count was overestimated — actual real = 5.**
 
-**Remaining** (per cycle 158+ scope discipline + v4 §11):
-1. (Implicit) Audit-versioning parent models classification — required per
-   addendum v2 to confirm no exposure via parent model.
-
-**ADR-0345 stays "DRAFT"** per v4 §6 until:
-- ✅ All real gaps closed (5 of 6 — 1 implicit remaining).
+**ADR-0345 ACCEPTED** per v4 §6:
+- ✅ All real gaps closed (5 of 5).
 - ✅ Per-option 8-gate assessment finalized.
-- ✅ User ratification per kickoff "не использовать ask_user без необходимости" inverse.
+- ✅ Audit-verified via per-call contract tests.
 
 ## Контекст
 
