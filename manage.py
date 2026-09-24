@@ -307,12 +307,22 @@ def run_all(
 
 # ────────────── Database ──────────────
 
+# P1 CLI decomposition W7 (v4 §10 P1, 2026-09-24): 5 migration commands
+# (migrate/makemigration/downgrade/migration-history/migration-current)
+# переехали в src/backend/cli/migrations.py. Thin wrappers вокруг alembic
+# CLI subprocess — pattern consistent с W1+W3+W4 (top-level @app.command
+# decorators в manage.py, function bodies в cli/ subpackage).
+from src.backend.cli.migrations import downgrade as _downgrade
+from src.backend.cli.migrations import make_migration as _make_migration
+from src.backend.cli.migrations import migrate as _migrate
+from src.backend.cli.migrations import migration_current as _migration_current
+from src.backend.cli.migrations import migration_history as _migration_history
+
 
 @app.command()
 def migrate():
     """Применить все накопившиеся миграции (alembic upgrade head)."""
-    subprocess.run([sys.executable, "-m", "alembic", "upgrade", "head"], check=True)  # noqa: S603  # CLI developer tool: фиксированные args
-    typer.echo("Migrations applied.")
+    _migrate()
 
 
 @app.command("makemigration")
@@ -333,15 +343,7 @@ def make_migration(
         uv run python manage.py makemigration "add orders table"
         uv run python manage.py makemigration "manual data backfill" --empty
     """
-    cmd = [sys.executable, "-m", "alembic", "revision"]
-    if autogenerate:
-        cmd.append("--autogenerate")
-    cmd.extend(["-m", message])
-    subprocess.run(cmd, check=True)  # noqa: S603  # CLI developer tool: cmd собран из sys.executable + literal alembic args + user-supplied message
-    typer.echo(
-        "Migration created. Проверь сгенерированный файл в "
-        "src/backend/infrastructure/database/migrations/versions/ перед `migrate`."
-    )
+    _make_migration(message=message, autogenerate=autogenerate)
 
 
 @app.command("downgrade")
@@ -349,8 +351,7 @@ def downgrade(
     target: str = typer.Argument("-1", help="Revision id или шаг (-1, -2, base)"),
 ):
     """Откатить миграцию к указанной ревизии (по умолчанию на одну назад)."""
-    subprocess.run([sys.executable, "-m", "alembic", "downgrade", target], check=True)  # noqa: S603  # CLI developer tool: фиксированные args + revision id
-    typer.echo(f"Downgraded to {target}.")
+    _downgrade(target=target)
 
 
 @app.command("migration-history")
@@ -358,16 +359,13 @@ def migration_history(
     verbose: bool = typer.Option(False, "-v", help="Развёрнутая история"),
 ):
     """Показать историю миграций (alembic history)."""
-    cmd = [sys.executable, "-m", "alembic", "history"]
-    if verbose:
-        cmd.append("-v")
-    subprocess.run(cmd, check=True)  # noqa: S603  # CLI developer tool: cmd собран из sys.executable + literal alembic args
+    _migration_history(verbose=verbose)
 
 
 @app.command("migration-current")
 def migration_current():
     """Показать текущую ревизию БД (alembic current)."""
-    subprocess.run([sys.executable, "-m", "alembic", "current"], check=True)
+    _migration_current()
 
 
 # ────────────── Introspection ──────────────
