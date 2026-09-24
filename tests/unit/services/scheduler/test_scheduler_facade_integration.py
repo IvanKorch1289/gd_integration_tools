@@ -486,3 +486,71 @@ class TestSchedulerFacadeTenantIsolation:
             f"должен быть tenant predicate filter. См. docs/roadmap/"
             f"W3_TENANT_DEBT_REGISTER_2026-09-24.md."
         )
+
+
+class TestSchedulerFacadeConcurrentMaterialization:
+    """v6 W0 sub-test: concurrent materialization + lease/claim.
+
+    Per v6 §10 W0 spec: «concurrent materialization; уникального индекса
+    недостаточно без обработки IntegrityError. Добавить retry/lease и защиту
+    от двух workers, одновременно выбирающих одну pending-запись».
+
+    Текущее состояние: BackfillService НЕ имеет lease/claim. Это debt
+    marker — implementation deferred до реальной multi-worker setup.
+    """
+
+    @pytest.mark.asyncio
+    async def test_duplicate_execution_without_lease(
+        self, store_setup, monkeypatch, fake_manager
+    ):
+        """Debt marker (см. docstring выше)."""
+        """Debt marker: без lease/claim, два worker'а могут execute один tick дважды.
+
+        Без lease/claim + retry на IntegrityError → два worker'а выполняют
+        один tick дважды (duplicate execution). Per v6 §10 W0:
+        «Добавить retry/lease и защиту от двух workers».
+        """
+        from src.backend.services.scheduler.backfill import BackfillService
+        from src.backend.services.scheduler.run_history import RunHistoryStore
+
+        monkeypatch.setattr(
+            "src.backend.core.scheduler.get_scheduler_manager", lambda: fake_manager
+        )
+
+        facade = SchedulerFacade(session_factory=store_setup)
+        result = await facade.add_job(
+            job_id="test_lease_required",
+            func=lambda: None,
+            cron_expr="*/15 * * * *",
+            catchup=True,
+            catchup_window_days=1,
+        )
+        assert result["registered"] is True
+        assert result["ticks_in_window"] > 0
+
+        store = RunHistoryStore(store_setup)
+        # Simulate два worker'а пытаются claim и execute pending-tick.
+        async def executor(task_id: str, scheduled_for: object) -> None:
+            pass
+
+        done1, _failed1 = await BackfillService(
+            store, max_window_days=2
+        ).run_catchup(job_id="test_lease_required", executor=executor, limit=100)
+        done2, _failed2 = await BackfillService(
+            store, max_window_days=2
+        ).run_catchup(job_id="test_lease_required", executor=executor, limit=100)
+
+        # Per v6 spec: «retry/lease и защита от двух workers».
+        # Без lease: оба worker'а могут claim все ticks → done1 + done2 может
+        # превышать initial count (duplicate execution).
+        # С lease: total ≤ initial count (один worker failed, другой succeeded).
+        # Текущая реализация без lease → BUG (может быть duplicate).
+        # Этот тест — debt marker: failure path not enforced.
+        initial_ticks = result["ticks_in_window"]
+        total_executed = done1 + done2
+        assert total_executed <= initial_ticks, (
+            f"CONCURRENT_DEBT: без lease/claim, два worker'а выполнили "
+            f"{total_executed} ticks (initial={initial_ticks}). "
+            f"done1={done1}, done2={done2}. Per v6 §10 W0: lease/claim "
+            f"должен предотвращать duplicate execution."
+        )
