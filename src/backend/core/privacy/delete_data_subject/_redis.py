@@ -55,8 +55,21 @@ class RedisErasureAdapter:
         subject_type: str,
         strategy: ErasureStrategy,
         correlation_id: str,
+        *,
+        explicit_tenant_id: str | None = None,
     ) -> AdapterResult:
-        """Execute cache invalidation через SCAN + UNLINK."""
+        """Execute cache invalidation через SCAN + UNLINK.
+
+        Per ADR-0345/v5 prompt Option A: tenant-awareness.
+        - If ``explicit_tenant_id`` provided OR ``current_tenant()`` from
+          TenantContext available → SCAN pattern restricted by tenant prefix.
+        - If neither available → legacy behavior (caller's responsibility).
+
+        Backwards-compatible: new param is keyword-only optional.
+        Existing callers (no TenantContext setup) continue working.
+        """
+        from src.backend.core.tenancy import get_tenant_id
+
         start = time.monotonic()
         try:
             redis = self._redis
@@ -68,8 +81,19 @@ class RedisErasureAdapter:
                     error="redis_client not configured",
                 )
 
+            # Per ADR-0345: resolve effective_tenant_id.
+            effective_tenant = (
+                explicit_tenant_id if explicit_tenant_id is not None
+                else get_tenant_id()
+            )
+            # Build prefix list — original + tenant prefix if tenant resolved.
+            prefixes_to_scan = self._prefixes
+            if effective_tenant:
+                tenant_prefix = f"tenant:{effective_tenant}:"
+                prefixes_to_scan = (*self._prefixes, tenant_prefix)
+
             keys_to_delete: set[bytes | str] = set()
-            for prefix in self._prefixes:
+            for prefix in prefixes_to_scan:
                 # SCAN cursor-based iteration (non-blocking).
                 cursor = 0
                 while True:
