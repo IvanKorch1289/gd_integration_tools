@@ -153,11 +153,27 @@ class TemporalWorkflowBackend(WorkflowBackend):
                 "temporalio SDK not installed. Install via `uv sync --extra workflow`."
             ) from exc
 
+        # P3-12 (OTEL_PROPAGATION_INVENTORY §3.1): TracingInterceptor
+        # прокидывает trace-context в workflow/activity headers — трейсы
+        # шагов связаны с входным trace. Lazy + graceful: без otel — без
+        # interceptor (Temporal продолжает работать).
+        interceptors: list[Any] = []
+        try:
+            from opentelemetry import trace as ot_trace
+            from temporalio.contrib.opentelemetry import TracingInterceptor
+
+            interceptors.append(
+                TracingInterceptor(tracer=ot_trace.get_tracer("temporal.client"))
+            )
+        except ImportError:
+            pass
+
         client = await Client.connect(
             target,
             namespace=namespace,
             api_key=api_key,
             data_converter=build_temporal_data_converter(),
+            interceptors=interceptors,
         )
         return cls(client=client, default_task_queue=default_task_queue)
 
