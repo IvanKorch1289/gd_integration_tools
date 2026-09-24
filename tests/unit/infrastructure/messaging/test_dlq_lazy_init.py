@@ -38,24 +38,38 @@ class TestLazyInitProxy:
         Pre-fix поведение: ``from .fanout_writer import FanoutDLQWriter``
         etc. срабатывают instantly. Post-fix: lazy proxy — zero-cost
         до первого attribute access.
-        """
-        # Import fresh.
-        _reload_dlq()
 
-        # Submodule writers не должны быть in sys.modules после import.
-        # (мы проверяем что proxy не triggered eager imports).
-        writer_names = [
-            "src.backend.infrastructure.messaging.dlq.fanout_writer",
-            "src.backend.infrastructure.messaging.dlq.kafka_writer",
-            "src.backend.infrastructure.messaging.dlq.rabbit_writer",
-            "src.backend.infrastructure.messaging.dlq.nats_writer",
-            "src.backend.infrastructure.messaging.dlq.inbox_writer",
-            "src.backend.infrastructure.messaging.dlq.memory_writer",
-        ]
-        not_loaded = [n for n in writer_names if n not in sys.modules]
-        assert len(not_loaded) >= 5, (
-            f"Expected ≥5 writer submodules NOT loaded после ``import dlq``: "
-            f"already loaded: {[n for n in writer_names if n in sys.modules]}"
+        Per v4 §3 evidence-first: subprocess-based isolation (NOT
+        sys.modules state share) для устойчивости к test ordering.
+        """
+        import subprocess
+        import sys as _sys
+
+        # Fresh subprocess — гарантирует isolated sys.modules state.
+        result = subprocess.run(
+            [_sys.executable, "-c", (
+                "import sys; "
+                "import src.backend.infrastructure.messaging.dlq; "
+                "writer_names = ["
+                "'src.backend.infrastructure.messaging.dlq.fanout_writer', "
+                "'src.backend.infrastructure.messaging.dlq.kafka_writer', "
+                "'src.backend.infrastructure.messaging.dlq.rabbit_writer', "
+                "'src.backend.infrastructure.messaging.dlq.nats_writer', "
+                "'src.backend.infrastructure.messaging.dlq.inbox_writer', "
+                "'src.backend.infrastructure.messaging.dlq.memory_writer'"
+                "]; "
+                "loaded = [n for n in writer_names if n in sys.modules]; "
+                "print(len(loaded))"
+            )],
+            capture_output=True, text=True, timeout=15,
+            check=True,
+        )
+        loaded_count = int(result.stdout.strip())
+
+        # Pre-fix: 6 loaded (eager). Post-fix: 0 loaded (lazy).
+        assert loaded_count == 0, (
+            f"Expected 0 writer submodules loaded после ``import dlq`` "
+            f"(fresh subprocess); got {loaded_count}"
         )
 
     def test_attribute_access_triggers_lazy_import(self) -> None:
@@ -115,6 +129,7 @@ class TestBackwardCompat:
         from src.backend.infrastructure.messaging.dlq_base import (
             DLQEnvelope as DirectDLQEnvelope,
         )
+
         assert dlq.DLQEnvelope is DirectDLQEnvelope, (
             "Lazy proxy must return same class object как прямой import"
         )
@@ -125,6 +140,7 @@ class TestBackwardCompat:
         from src.backend.infrastructure.messaging.dlq_base import (
             DLQReason as DirectDLQReason,
         )
+
         assert dlq.DLQReason is DirectDLQReason
 
     def test_dlq_writer_protocol_via_lazy(self) -> None:
@@ -133,6 +149,7 @@ class TestBackwardCompat:
         from src.backend.infrastructure.messaging.dlq_base import (
             DLQWriter as DirectDLQWriter,
         )
+
         assert dlq.DLQWriter is DirectDLQWriter
 
     def test_inmemory_dlq_writer_via_lazy(self) -> None:
@@ -141,6 +158,7 @@ class TestBackwardCompat:
         from src.backend.infrastructure.messaging.dlq.memory_writer import (
             InMemoryDLQWriter as DirectInMemoryDLQWriter,
         )
+
         assert dlq.InMemoryDLQWriter is DirectInMemoryDLQWriter
 
     def test_all_exports_resolvable(self) -> None:
@@ -164,12 +182,18 @@ class TestColdImportPerformance:
         import sys as _sys
 
         result = subprocess.run(
-            [_sys.executable, "-c", (
-                "import time; start = time.monotonic(); "
-                "import src.backend.infrastructure.messaging.dlq; "
-                "print(f'{time.monotonic() - start:.4f}')"
-            )],
-            capture_output=True, text=True, timeout=30,
+            [
+                _sys.executable,
+                "-c",
+                (
+                    "import time; start = time.monotonic(); "
+                    "import src.backend.infrastructure.messaging.dlq; "
+                    "print(f'{time.monotonic() - start:.4f}')"
+                ),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
             check=True,
         )
         elapsed = float(result.stdout.strip())
