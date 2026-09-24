@@ -140,7 +140,7 @@
 | [ADR-0342](0342-ai-policy-spec-s76-tool-policy-migration.md) | AIPolicySpec S76 tool_policy → tools migration | Unknown |
 | [ADR-0343](0343-pluginmanifest-schema-evolution-core-admin-dadata-skb.md) | PluginManifest schema migration: core_admin / dadata / skb | Unknown |
 | [ADR-0344](0344-sagalra-convergence-plan.md) | SagaLRA convergence plan (per v4 §9) | Unknown |
-| [ADR-0345](0345-p0-object-ownership-policy-options.md) | Object-Level Authorization ownership policy per cycle 158+: DRAFT с 3 options (per-call A / global policy B / hybrid C); 4 confirmed P0 gaps (HitlService.get, NotebookRepo.get, AIFeedbackRepo.get, audit_versioning); per-option 8-gate assessment; user choice required | **Draft** |
+| [ADR-0345](0345-p0-object-ownership-policy-options.md) | Object-Level Authorization: ownership policy (P0 audit response) | Unknown |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 
 **Total:** 137 ADRs.
