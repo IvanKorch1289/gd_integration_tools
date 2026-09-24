@@ -33,6 +33,7 @@ TABLE = "scheduler_run_history"
 
 
 def upgrade() -> None:
+    """Создать scheduler_run_history + индексы (SQLite/PG-совместимо)."""
     op.create_table(
         TABLE,
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
@@ -56,6 +57,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Удалить scheduler_run_history и её индексы."""
     op.drop_index("ix_scheduler_run_history_tenant_id", table_name=TABLE)
     op.drop_index("ix_scheduler_run_history_status", table_name=TABLE)
     op.drop_index("ix_scheduler_run_history_job_id", table_name=TABLE)
