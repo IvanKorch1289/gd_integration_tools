@@ -9,9 +9,29 @@ from __future__ import annotations
 import asyncio
 import inspect
 import uuid
+from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
+
+
+@contextmanager
+def _step_span(step_name: str, kind: str):
+    """OTEL span шага саги (P3-12): lazy + graceful, шаг не ломается."""
+    try:
+        from opentelemetry import trace
+
+        cm = trace.get_tracer("dsl.saga_lra").start_as_current_span(
+            "saga.step", attributes={"saga.step": step_name, "saga.kind": kind}
+        )
+    except Exception:
+        from contextlib import nullcontext
+
+        cm = nullcontext()
+    with cm:
+        yield
+
+
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -31,11 +51,14 @@ class SagaStepTimeoutError(RuntimeError):
     configured_timeout, deadline_budget.remaining())``.
     """
 
-    def __init__(self, message: str, *, step_name: str, kind: str, timeout_s: float) -> None:
+    def __init__(
+        self, message: str, *, step_name: str, kind: str, timeout_s: float
+    ) -> None:
         super().__init__(message)
         self.step_name = step_name
         self.kind = kind  # "action" | "compensation"
         self.timeout_s = timeout_s
+
 
 _lra_logger = get_logger("dsl.saga_lra")
 
@@ -213,7 +236,9 @@ class SagaLRAProcessor(BaseProcessor):
             step = self._steps[i]
             try:
                 await self._run_step_with_deadline(
-                    step.forward, exchange, context,
+                    step.forward,
+                    exchange,
+                    context,
                     step_name=step.name or f"step_{i}",
                     kind="action",
                 )
@@ -272,7 +297,9 @@ class SagaLRAProcessor(BaseProcessor):
                             exchange.status = ExchangeStatus.processing
                             exchange.error = None
                             await self._run_step_with_deadline(
-                                comp_step.compensate, exchange, context,
+                                comp_step.compensate,
+                                exchange,
+                                context,
                                 step_name=comp_step.compensate.name or "compensation",
                                 kind="compensation",
                             )
@@ -375,7 +402,9 @@ class SagaLRAProcessor(BaseProcessor):
                             exchange.status = ExchangeStatus.processing
                             exchange.error = None
                             await self._run_step_with_deadline(
-                                comp_step.compensate, exchange, context,
+                                comp_step.compensate,
+                                exchange,
+                                context,
                                 step_name=comp_step.compensate.name or "compensation",
                                 kind="compensation",
                             )
@@ -488,14 +517,16 @@ class SagaLRAProcessor(BaseProcessor):
                 effective_timeout = remaining
         except SagaStepTimeoutError:
             raise
-        except (ImportError, AttributeError, RuntimeError):
+        except ImportError, AttributeError, RuntimeError:
             # Не ломаем saga-step, если RequestContext недоступен или
             # deadline_budget отсутствует — fallback к unbounded wait.
             pass
         try:
-            if effective_timeout is not None:
-                coro = asyncio.wait_for(coro, timeout=effective_timeout)
-            return await coro
+            # P3-12: span шага живёт на всё выполнение (включая wait_for).
+            with _step_span(step_name, kind):
+                if effective_timeout is not None:
+                    coro = asyncio.wait_for(coro, timeout=effective_timeout)
+                return await coro
         except (asyncio.TimeoutError, TimeoutError) as exc:
             raise SagaStepTimeoutError(
                 f"Saga '{step_name}' ({kind}) exceeded {effective_timeout}s",
