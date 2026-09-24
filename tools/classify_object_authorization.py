@@ -36,7 +36,10 @@ SRC_ROOT = PROJECT_ROOT / "src" / "backend"
 # Receiver pattern detection — classifies CALL TARGET (not call site).
 # User-data receiver: ORM / DB / cross-tenant cache.
 USER_DATA_RECEIVER_PATTERNS = [
-    (r"\.(get|filter_by|query)\(.*\b(?:tenant_id|user_id|org_id)\b", "filter-by-tenant"),
+    (
+        r"\.(get|filter_by|query)\(.*\b(?:tenant_id|user_id|org_id)\b",
+        "filter-by-tenant",
+    ),
     (r"\.filter\(", "sqlalchemy-filter"),
     (r"\.query\(.*Model\b", "orm-query"),
     (r"\bsession\.", "db-session"),
@@ -68,22 +71,22 @@ INFRA_REGISTRY_NAMES = (
     "_pending",
     "_completed",
     # Graph/state infrastructure.
-    "_nodes",          # graph nodes registry
-    "_edges",          # graph edges registry
-    "_configs",        # canary/route configs
-    "_policies",        # policy registry
+    "_nodes",  # graph nodes registry
+    "_edges",  # graph edges registry
+    "_configs",  # canary/route configs
+    "_policies",  # policy registry
     # Stream/connection handlers.
-    "_handlers",        # stream/connection handlers
-    "_by_action",       # action-keyed lookup
+    "_handlers",  # stream/connection handlers
+    "_by_action",  # action-keyed lookup
     # Generic names.
-    "registry",         # generic registry-like names
-    "store",            # in-memory store
-    "templates",        # template registry (compile-time constants)
-    "_templates",       # private template registry
-    "lookup",           # lookup tables
-    "dedup",            # dedup tables
-    "lock",             # locks registry
-    "shadow",           # shadow copies
+    "registry",  # generic registry-like names
+    "store",  # in-memory store
+    "templates",  # template registry (compile-time constants)
+    "_templates",  # private template registry
+    "lookup",  # lookup tables
+    "dedup",  # dedup tables
+    "lock",  # locks registry
+    "shadow",  # shadow copies
     "_shadow",
     "dedup_",
     "by_id",
@@ -130,10 +133,7 @@ def _classify_callsite(py: Path, node: ast.Call) -> Callsite | None:
     file = str(py.relative_to(PROJECT_ROOT))
 
     # Apply existing exclusion rules (per check_object_authorization.py).
-    if (
-        "tenant" in src
-        or "TenantContext" in src
-    ):
+    if "tenant" in src or "TenantContext" in src:
         return None
     rel_path = str(py)
     if any(p in rel_path for p in _SKIP_PATH_PATTERNS):
@@ -225,15 +225,15 @@ def _classify_callsite(py: Path, node: ast.Call) -> Callsite | None:
     bare = receiver_str
     for prefix in ("self.", "self._"):
         if bare.startswith(prefix):
-            bare = bare[len(prefix):]
+            bare = bare[len(prefix) :]
             break
     # User-data: receiver contains tenant/entity identifiers or DB patterns.
     USER_DATA_NAMES = (
-        "service",       # 99% of user-data service locators
-        "repo",          # 99% repo pattern
+        "service",  # 99% of user-data service locators
+        "repo",  # 99% repo pattern
         "repository",
-        "notebook",      # ai/notebooks domain
-        "feedback",      # ai/feedback domain
+        "notebook",  # ai/notebooks domain
+        "feedback",  # ai/feedback domain
         "feedback_service",
         "notebook_service",
         "doc",
@@ -315,26 +315,18 @@ def render_table(rows: list[Callsite], top: int | None) -> str:
         n = by_type.get(t, 0)
         lines.append(f"  {t}: {n} ({pct.get(t, '0.0%')})")
     lines.append("")
-    lines.append(
-        "Sample (first {}):".format(
-            "all" if top is None else top,
-        )
-    )
-    lines.append(
-        f"{'File':<60} {'Line':>5}  {'Type':<14}  {'Snippet':<40}"
-    )
+    lines.append("Sample (first {}):".format("all" if top is None else top))
+    lines.append(f"{'File':<60} {'Line':>5}  {'Type':<14}  {'Snippet':<40}")
     lines.append("-" * 130)
     for r in rows if top is None else rows[:top]:
         snip = r.snippet[:38] + "..." if len(r.snippet) > 40 else r.snippet
-        lines.append(
-            f"{r.file:<60} {r.line:>5}  {r.receiver_type:<14}  {snip:<40}"
-        )
+        lines.append(f"{r.file:<60} {r.line:>5}  {r.receiver_type:<14}  {snip:<40}")
     return "\n".join(lines) + "\n"
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Classify object authorization callsites",
+        description="Classify object authorization callsites"
     )
     parser.add_argument(
         "--top",
@@ -350,7 +342,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--strict",
         action="store_true",
-        help="Exit 1 if unknown ratio exceeds 20 percent (CI gate).",
+        help=(
+            "Exit 1 if any unknown callsite present (CI gate per v6 W1). "
+            "Per v6: UNKNOWN всегда блокирует strict gate; USER_DATA без "
+            "ownership check — отдельная wave."
+        ),
     )
     args = parser.parse_args(argv)
 
@@ -368,12 +364,23 @@ def main(argv: list[str] | None = None) -> int:
         sys.stdout.write(render_table(rows, top))
 
     if args.strict:
+        # Per v6 W1: UNKNOWN всегда блокирует strict gate. Раньше был
+        # threshold 20% — слишком lenient, скрывал 23 unknown callsites.
         n_unknown = sum(1 for r in rows if r.receiver_type == "unknown")
-        if rows and n_unknown / len(rows) > 0.20:
+        n_user_data = sum(1 for r in rows if r.receiver_type == "user-data")
+        if n_unknown > 0:
             sys.stderr.write(
-                f"\nunknown ratio {n_unknown}/{len(rows)} > 20%\n"
+                f"\nv6 W1 strict gate FAILED: {n_unknown} unknown callsites "
+                f"(of {len(rows)} total; {n_user_data} user-data). "
+                f"All UNKNOWN требует ручной классификации или "
+                f"FALSE_POSITIVE allowlist entry.\n"
             )
             return 1
+        # Optional info line при success — counts для transparency.
+        sys.stderr.write(
+            f"\nv6 W1 strict gate OK: {n_user_data} user-data, "
+            f"{n_unknown} unknown, {len(rows)} total.\n"
+        )
     return 0
 
 
