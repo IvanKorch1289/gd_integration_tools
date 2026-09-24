@@ -90,6 +90,18 @@ INFRA_REGISTRY_NAMES = (
     "_shadow",
     "dedup_",
     "by_id",
+    # v6 W3.3 heuristic upgrade per audit docs/roadmap/
+    # W3_UNKNOWN_OWNERSHIP_CLASSIFICATION_2026-09-24.md:
+    # cert_store backends → _services (Vault/Env/Consul/File backend registry).
+    "_services",
+    # integrations/facade → _sources / _sinks (NOT user data — connection metadata).
+    # NB: name variants needed — `self.sinks.get` chain содержит `sinks`
+    # (без underscore) после strip `self.` prefix.
+    "_sources",
+    "_sinks",
+    "sources",
+    "sinks",
+    "backends",
 )
 
 # Generator expressions for pattern-based detection:
@@ -149,15 +161,44 @@ def _classify_callsite(py: Path, node: ast.Call) -> Callsite | None:
     # Try to determine receiver type via heuristic on `node.func`.
     receiver_str = ast.unparse(node.func) if hasattr(node, "func") else src
 
-    # Infra-registry receiver? Match by-name suffix.
-    if any(name in receiver_str for name in INFRA_REGISTRY_NAMES):
+    # v6 W3.3: extract full attribute chain для корректного INFRA detection.
+    # Пример: receiver `self._services.get` → attribute_chain = ['self', '_services'].
+    # Без этого `self.get` не матчит `_services` pattern (только receiver_str).
+    attribute_chain = (
+        _extract_attribute_chain(node.func) if hasattr(node, "func") else []
+    )
+    chain_str = ".".join(attribute_chain)
+
+    # Infra-registry receiver? Match by-name suffix в attribute chain.
+    # Совпадение в любом сегменте цепочки (e.g., self._services, _services, services).
+    if any(name in receiver_str or name in chain_str for name in INFRA_REGISTRY_NAMES):
         return Callsite(
             file=file,
             line=line_no,
             receiver_type="infra-registry",
             detection_pattern="infra-name-suffix",
             snippet=src[:120],
-            reason=f"receiver '{receiver_str}' matches infra-registry name pattern; no tenant needed",
+            reason=(
+                f"receiver '{receiver_str}' (chain: '{chain_str}') matches "
+                f"infra-registry name pattern; no tenant needed"
+            ),
+        )
+
+    # v6 W3.3: path-based INFRA detection для cert_store/* — class-level
+    # `self._services` registry невидим в AST (chain = ['self', 'get']),
+    # но file path — strong signal. Per audit doc раздел 2.2.
+    rel_path = str(py)
+    if any(p in rel_path for p in PATH_INFRA_REGISTRY_PATTERNS):
+        return Callsite(
+            file=file,
+            line=line_no,
+            receiver_type="infra-registry",
+            detection_pattern="path-infra-registry",
+            snippet=src[:120],
+            reason=(
+                f"file '{rel_path}' in PATH_INFRA_REGISTRY_PATTERNS; "
+                f"backend registry lookup (self._services), no tenant needed"
+            ),
         )
 
     # Pattern-based infra-detection.
@@ -274,6 +315,45 @@ def _classify_callsite(py: Path, node: ast.Call) -> Callsite | None:
         snippet=src[:120],
         reason="no classifier rule matched; needs manual review",
     )
+
+
+def _extract_attribute_chain(node: ast.AST) -> list[str]:
+    """Extract attribute chain from ast.Call.func as list of names.
+
+    Примеры:
+    - ``self.get`` → ['self', 'get']
+    - ``self._services.get`` → ['self', '_services', 'get']
+    - ``svc.get`` → ['svc', 'get']
+    - ``manager.scheduler.add_job`` → ['manager', 'scheduler', 'add_job']
+
+    Используется для расширения INFRA detection: receiver `self.get`
+    не содержит `_services`, но chain `self._services.get` содержит.
+    """
+    chain: list[str] = []
+    current: ast.AST | None = node
+    while current is not None:
+        if isinstance(current, ast.Attribute):
+            chain.append(current.attr)
+            current = current.value
+        elif isinstance(current, ast.Name):
+            chain.append(current.id)
+            break
+        else:
+            break
+    return list(reversed(chain))
+
+
+# v6 W3.3 path-based INFRA_REGISTRY patterns. Used when AST-level heuristics
+# insufficient (e.g., ``self.get(service_id)`` в cert_store — receiver
+# type невидим без class-level analysis).
+PATH_INFRA_REGISTRY_PATTERNS: tuple[str, ...] = (
+    # cert_store/* — backend registry lookups by service_id/agent_id.
+    # Per audit docs/roadmap/W3_UNKNOWN_OWNERSHIP_CLASSIFICATION_2026-09-24.md:
+    # backend_vault.py, backend_env.py, backend_registry.py, fallback.py,
+    # backend_consul.py, backend_file.py — все содержат `self._services`
+    # registry (class-level attribute, AST-невидим).
+    "/infrastructure/security/cert_store/",
+)
 
 
 def collect_all_callsites() -> list[Callsite]:
