@@ -46,6 +46,7 @@ class SLO:
     description: str = ""
 
     def to_dict(self) -> dict[str, Any]:
+        """Сериализация SLO-определения."""
         return {
             "tenant_id": self.tenant_id,
             "route_id": self.route_id,
@@ -90,17 +91,21 @@ class SLARegistry:
         return None
 
     def list_all(self) -> list[SLO]:
+        """Все SLO в реестре (порядок вставки)."""
         return list(self._slo.values())
 
     def list_by_tenant(self, tenant_id: str) -> list[SLO]:
+        """SLO конкретного тенанта."""
         return [
             slo for (tid, _), slo in self._slo.items() if tid == tenant_id or tid == "*"
         ]
 
     def size(self) -> int:
+        """Количество SLO в реестре."""
         return len(self._slo)
 
     def clear(self) -> None:
+        """Полный сброс реестра (для тестов/reload)."""
         self._slo.clear()
 
 
@@ -108,6 +113,7 @@ _registry: SLARegistry | None = None
 
 
 def get_sla_registry() -> SLARegistry:
+    """Singleton-доступ к общему ``SLARegistry``."""
     global _registry
     if _registry is None:
         _registry = SLARegistry()
@@ -115,5 +121,6 @@ def get_sla_registry() -> SLARegistry:
 
 
 def reset_sla_registry() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _registry
     _registry = None

@@ -77,20 +77,25 @@ class RetentionEngine:
     # ─── Policy registration ──────────────────────────
 
     def register(self, policy: RetentionPolicy) -> None:
+        """Зарегистрировать/заменить политику хранения по ``data_type``."""
         self._policies[policy.data_type] = policy
 
     def get(self, data_type: str) -> RetentionPolicy | None:
+        """Политика для типа данных; ``None`` если не задана."""
         return self._policies.get(data_type)
 
     def list_policies(self) -> list[RetentionPolicy]:
+        """Все зарегистрированные политики."""
         return list(self._policies.values())
 
     def policy_count(self) -> int:
+        """Количество политик."""
         return len(self._policies)
 
     # ─── Legal hold management ─────────────────────────
 
     def add_hold(self, hold: LegalHold) -> None:
+        """Добавить legal hold (блокирует удаление типа данных)."""
         self._holds.append(hold)
 
     def remove_hold(self, data_type: str, reason: str) -> int:
@@ -104,9 +109,11 @@ class RetentionEngine:
         return before - len(self._holds)
 
     def list_holds(self) -> list[LegalHold]:
+        """Все активные legal hold'ы."""
         return list(self._holds)
 
     def holds_for_type(self, data_type: str) -> list[LegalHold]:
+        """Legal hold'ы для конкретного типа данных."""
         return [h for h in self._holds if h.data_type == data_type]
 
     def has_active_hold(self, data_type: str, now: datetime | None = None) -> bool:
@@ -192,6 +199,7 @@ class RetentionEngine:
         return verdict
 
     def clear(self) -> None:
+        """Полный сброс движка (для тестов/reload)."""
         self._policies.clear()
         self._holds.clear()
 
@@ -200,6 +208,7 @@ _engine: RetentionEngine | None = None
 
 
 def get_retention_engine() -> RetentionEngine:
+    """Singleton-доступ к общему ``RetentionEngine``."""
     global _engine
     if _engine is None:
         _engine = RetentionEngine()
@@ -207,6 +216,7 @@ def get_retention_engine() -> RetentionEngine:
 
 
 def reset_retention_engine() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _engine
     _engine = None
 

@@ -35,25 +35,31 @@ class SLOReport:
 
     @property
     def total_slos(self) -> int:
+        """Всего SLO в срезе."""
         return len(self.evaluations)
 
     @property
     def breach_count(self) -> int:
+        """Число SLO в статусе breach."""
         return sum(1 for e in self.evaluations if e.status == SLOStatus.BREACH)
 
     @property
     def at_risk_count(self) -> int:
+        """Число SLO в зоне риска (at_risk)."""
         return sum(1 for e in self.evaluations if e.status == SLOStatus.AT_RISK)
 
     @property
     def healthy_count(self) -> int:
+        """Число здоровых SLO."""
         return sum(1 for e in self.evaluations if e.status == SLOStatus.HEALTHY)
 
     @property
     def unknown_count(self) -> int:
+        """Число SLO с неизвестным статусом (нет данных)."""
         return sum(1 for e in self.evaluations if e.status == SLOStatus.UNKNOWN)
 
     def to_dict(self) -> dict[str, Any]:
+        """Сериализация сводки для UI dashboard."""
         return {
             "timestamp": self.timestamp,
             "total_slos": self.total_slos,
@@ -114,10 +120,12 @@ class SLOCockpit:
         return SLOReport(timestamp=time.time(), evaluations=evaluations)
 
     def clear_history(self) -> None:
+        """Очистка истории срезов (для тестов/reload)."""
         self._evaluator.clear_history()
 
     @property
     def registry(self) -> Any:
+        """Доступ к SLA-реестру, на котором построен cockpit."""
         return self._registry
 
 
@@ -125,6 +133,7 @@ _cockpit: SLOCockpit | None = None
 
 
 def get_sla_cockpit() -> SLOCockpit:
+    """Singleton-доступ к общему ``SLOCockpit``."""
     global _cockpit
     if _cockpit is None:
         _cockpit = SLOCockpit()
@@ -132,5 +141,6 @@ def get_sla_cockpit() -> SLOCockpit:
 
 
 def reset_sla_cockpit() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _cockpit
     _cockpit = None

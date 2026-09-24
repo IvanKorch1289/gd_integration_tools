@@ -57,6 +57,7 @@ class CostRecord:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        """Сериализация записи затрат (для экспорта/дашборда)."""
         return {
             "timestamp": self.timestamp,
             "tenant_id": self.tenant_id,
@@ -79,25 +80,30 @@ class CostReport:
 
     @property
     def total_cost_usd(self) -> float:
+        """Суммарная стоимость в USD по всем записям."""
         return sum(r.cost_usd for r in self.records)
 
     @property
     def total_units(self) -> float:
+        """Суммарное количество единиц (tokens/requests) по записям."""
         return sum(r.units for r in self.records)
 
     def by_tenant(self) -> dict[str, float]:
+        """Стоимость, сгруппированная по tenant_id."""
         result: dict[str, float] = {}
         for r in self.records:
             result[r.tenant_id] = result.get(r.tenant_id, 0.0) + r.cost_usd
         return result
 
     def by_route(self) -> dict[str, float]:
+        """Стоимость, сгруппированная по route_id."""
         result: dict[str, float] = {}
         for r in self.records:
             result[r.route_id] = result.get(r.route_id, 0.0) + r.cost_usd
         return result
 
     def by_resource(self) -> dict[str, float]:
+        """Стоимость, сгруппированная по ресурсу (model/provider)."""
         result: dict[str, float] = {}
         for r in self.records:
             key = r.resource_type.value
@@ -105,6 +111,7 @@ class CostReport:
         return result
 
     def by_agent(self) -> dict[str, float]:
+        """Стоимость, сгруппированная по агенту."""
         result: dict[str, float] = {}
         for r in self.records:
             agent = r.agent or "(no-agent)"
@@ -120,6 +127,7 @@ class CostReport:
         return sorted(pairs.items(), key=lambda x: x[1], reverse=True)[:limit]
 
     def to_dict(self) -> dict[str, Any]:
+        """Сериализация агрегата (срезы by_* + итоги)."""
         return {
             "timestamp": self.timestamp,
             "total_cost_usd": self.total_cost_usd,
@@ -166,18 +174,23 @@ class CostAttribution:
         return rec
 
     def list_records(self) -> list[CostRecord]:
+        """Все записи затрат (порядок вставки)."""
         return list(self._records)
 
     def list_for_tenant(self, tenant_id: str) -> list[CostRecord]:
+        """Записи затрат конкретного тенанта."""
         return [r for r in self._records if r.tenant_id == tenant_id]
 
     def list_for_route(self, route_id: str) -> list[CostRecord]:
+        """Записи затрат конкретного маршрута."""
         return [r for r in self._records if r.route_id == route_id]
 
     def size(self) -> int:
+        """Количество записей в хранилище."""
         return len(self._records)
 
     def clear(self) -> None:
+        """Полный сброс хранилища (для тестов/reload)."""
         self._records.clear()
 
     def purge_older_than(self, seconds: float, now: float | None = None) -> int:

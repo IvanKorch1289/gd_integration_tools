@@ -106,9 +106,11 @@ class EvalReport:
 
     @property
     def pass_rate(self) -> float:
+        """Доля пройденных тестов: passed/total; 1.0 при пустом наборе."""
         return self.passed / self.total if self.total > 0 else 1.0
 
     def to_dict(self) -> dict[str, Any]:
+        """Сериализация отчёта для UI/экспорта."""
         return {
             "agent_name": self.agent_name,
             "total": self.total,
@@ -142,27 +144,36 @@ class AgentEvalHarness:
 
     @property
     def agent_name(self) -> str:
+        """Имя оцениваемого агента."""
         return self._agent_name
 
     def add_golden(self, task: GoldenTask) -> None:
+        """Добавить golden-задачу (эталонное поведение) в набор."""
+        """Добавить golden-задачу (эталонный ответ) в набор."""
         self._golden.append(task)
 
     def add_injection(self, test: InjectionTest) -> None:
+        """Добавить prompt-injection тест в набор."""
         self._injection.append(test)
 
     def add_tool_use(self, test: ToolUseTest) -> None:
+        """Добавить tool-use тест (проверка вызова инструментов)."""
         self._tool_use.append(test)
 
     def golden_count(self) -> int:
+        """Количество golden-задач."""
         return len(self._golden)
 
     def injection_count(self) -> int:
+        """Количество injection-тестов."""
         return len(self._injection)
 
     def tool_use_count(self) -> int:
+        """Количество tool-use тестов."""
         return len(self._tool_use)
 
     def total_tests(self) -> int:
+        """Суммарное число всех тестов набора."""
         return self.golden_count() + self.injection_count() + self.tool_use_count()
 
     async def run(self, agent_fn: AgentFn) -> EvalReport:

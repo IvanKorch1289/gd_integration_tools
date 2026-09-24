@@ -24,6 +24,7 @@ class SLOBreachDetail:
 
     @property
     def is_breach(self) -> bool:
+        """Нарушение уровня breach (severity == 'breach')."""
         return self.severity == "breach"
 
 
@@ -42,6 +43,7 @@ class SLOEvaluation:
 
     @property
     def has_breach(self) -> bool:
+        """Есть хотя бы одно нарушение SLA в выборке."""
         return self.status == SLOStatus.BREACH
 
 
@@ -203,6 +205,7 @@ class SLOEvaluator:
         return history[:limit] if limit else history
 
     def clear_history(self) -> None:
+        """Очистка истории вычислений (для тестов/reload)."""
         self._history.clear()
 
 
@@ -243,9 +246,11 @@ class SLOPeriodReport:
 
     @property
     def period_seconds(self) -> float:
+        """Длительность периода оценки в секундах (>= 0)."""
         return max(0.0, self.end_time - self.start_time)
 
     def to_dict(self) -> dict:
+        """Сериализация результата оценки для cockpit/UI."""
         return {
             "slo_id": self.slo_id,
             "slo_version": self.slo_version,
