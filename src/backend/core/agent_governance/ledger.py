@@ -37,6 +37,7 @@ class ExecutionRecord:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        """Сериализация записи исполнения (для аудита/экспорта)."""
         return {
             "execution_id": self.execution_id,
             "agent": self.agent,
@@ -98,15 +99,19 @@ class ExecutionLedger:
         return rec
 
     def list_for_agent(self, agent: str) -> list[ExecutionRecord]:
+        """Записи исполнений конкретного агента."""
         return [r for r in self._records if r.agent == agent]
 
     def list_for_tenant(self, tenant_id: str) -> list[ExecutionRecord]:
+        """Записи исполнений конкретного тенанта."""
         return [r for r in self._records if r.tenant_id == tenant_id]
 
     def list_for_tool(self, tool: str) -> list[ExecutionRecord]:
+        """Записи исполнений с конкретным инструментом."""
         return [r for r in self._records if r.tool == tool]
 
     def size(self) -> int:
+        """Количество записей в ledger."""
         return len(self._records)
 
 
@@ -114,6 +119,7 @@ _ledger: ExecutionLedger | None = None
 
 
 def get_execution_ledger() -> ExecutionLedger:
+    """Singleton-доступ к общему ``ExecutionLedger``."""
     global _ledger
     if _ledger is None:
         _ledger = ExecutionLedger()
@@ -121,5 +127,6 @@ def get_execution_ledger() -> ExecutionLedger:
 
 
 def reset_execution_ledger() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _ledger
     _ledger = None

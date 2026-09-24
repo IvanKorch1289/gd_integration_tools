@@ -96,6 +96,7 @@ class CanonicalMap:
         return result
 
     def get_layer(self, name: str) -> LayerRule | None:
+        """Правило канонизации для слоя; ``None`` если не задано."""
         return self._layers.get(name)
 
     def check_import(self, source_module: str, target_module: str) -> list[str]:
@@ -161,15 +162,19 @@ class CanonicalMap:
         return violations
 
     def size(self) -> int:
+        """Количество канонических путей в карте."""
         return len(self._paths)
 
     def rule_count(self) -> int:
+        """Количество правил канонизации."""
         return len(self._import_rules)
 
     def layer_count(self) -> int:
+        """Количество известных слоёв."""
         return len(self._layers)
 
     def clear(self) -> None:
+        """Полный сброс карты (для тестов/reload)."""
         self._paths.clear()
         self._import_rules.clear()
         self._layers.clear()
@@ -179,6 +184,7 @@ _map: CanonicalMap | None = None
 
 
 def get_canonical_map() -> CanonicalMap:
+    """Singleton-доступ к общей ``CanonicalMap``."""
     global _map
     if _map is None:
         _map = CanonicalMap()
@@ -186,5 +192,6 @@ def get_canonical_map() -> CanonicalMap:
 
 
 def reset_canonical_map() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _map
     _map = None

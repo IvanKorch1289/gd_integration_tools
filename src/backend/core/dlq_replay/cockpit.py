@@ -53,10 +53,12 @@ class DLQReplayService:
 
     @property
     def store(self) -> DLQStore:
+        """DLQ-хранилище, привязанное к cockpit."""
         return self._store
 
     @property
     def taxonomy(self) -> FailureTaxonomy:
+        """Таксономия причин отказов для группировки."""
         return self._taxonomy
 
     async def send_to_dlq(

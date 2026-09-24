@@ -40,6 +40,7 @@ class ToolPolicyEngine:
         self._policies: dict[str, ToolPolicy] = {}
 
     def register(self, policy: ToolPolicy) -> None:
+        """Зарегистрировать/заменить политику инструмента."""
         if policy.tool_name in self._policies:
             logger.warning(
                 "ToolPolicyEngine: overwriting policy tool_name=%s", policy.tool_name
@@ -47,6 +48,7 @@ class ToolPolicyEngine:
         self._policies[policy.tool_name] = policy
 
     def get(self, tool_name: str) -> ToolPolicy | None:
+        """Политика для инструмента; ``None`` если не задана."""
         return self._policies.get(tool_name)
 
     def is_allowed(
@@ -68,10 +70,12 @@ class ToolPolicyEngine:
         return True
 
     def requires_approval(self, tool: str) -> bool:
+        """Требует ли инструмент ручного одобрения (approval)."""
         policy = self._policies.get(tool)
         return policy.requires_approval if policy else False
 
     def capability_of(self, tool: str) -> ToolCapability | None:
+        """Capability инструмента; ``None`` вне политик."""
         policy = self._policies.get(tool)
         return policy.capability if policy else None
 
@@ -80,6 +84,7 @@ _engine: ToolPolicyEngine | None = None
 
 
 def get_tool_policy_engine() -> ToolPolicyEngine:
+    """Singleton-доступ к общему ``ToolPolicyEngine``."""
     global _engine
     if _engine is None:
         _engine = ToolPolicyEngine()
@@ -87,5 +92,6 @@ def get_tool_policy_engine() -> ToolPolicyEngine:
 
 
 def reset_tool_policy_engine() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _engine
     _engine = None

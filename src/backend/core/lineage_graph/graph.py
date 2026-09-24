@@ -115,18 +115,23 @@ class LineageGraph:
         self._backward[edge.target].append((edge.source, edge.kind))
 
     def get_node(self, node_id: str) -> LineageNode | None:
+        """Найти узел lineage по id; ``None`` если отсутствует."""
         return self._nodes.get(node_id)
 
     def list_nodes(self) -> list[LineageNode]:
+        """Все узлы lineage-графа (порядок вставки)."""
         return list(self._nodes.values())
 
     def size(self) -> int:
+        """Количество узлов графа."""
         return len(self._nodes)
 
     def edge_count(self) -> int:
+        """Количество рёбер (data-flow связей)."""
         return sum(len(v) for v in self._forward.values())
 
     def clear(self) -> None:
+        """Полный сброс графа (для тестов/reload)."""
         self._nodes.clear()
         self._forward.clear()
         self._backward.clear()
@@ -249,6 +254,7 @@ class LineageGraph:
         return cycles
 
     def to_dict(self) -> dict[str, Any]:
+        """Экспорт подграфа (узлы/рёбра) в dict для UI/дашборда."""
         return {
             "nodes": [
                 {
@@ -272,6 +278,7 @@ _graph: LineageGraph | None = None
 
 
 def get_lineage_graph() -> LineageGraph:
+    """Singleton-доступ к общему ``LineageGraph``."""
     global _graph
     if _graph is None:
         _graph = LineageGraph()
@@ -279,5 +286,6 @@ def get_lineage_graph() -> LineageGraph:
 
 
 def reset_lineage_graph() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _graph
     _graph = None
