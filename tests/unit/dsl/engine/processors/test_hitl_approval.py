@@ -14,6 +14,7 @@ from typing import Any
 
 import pytest
 
+from src.backend.core.tenancy import TenantContext, set_tenant
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, Message
 from src.backend.dsl.engine.processors.hitl_approval import HitlApprovalProcessor
@@ -36,8 +37,18 @@ def _context(route_id: str = "route-1") -> ExecutionContext:
     return ExecutionContext(route_id=route_id)
 
 
+
+@pytest.fixture
+def _default_tenant():
+    """TenantContext 'default' — совпадает с fallback процессора."""
+    ctx = TenantContext(tenant_id="default")
+    set_tenant(ctx)
+    yield ctx
+    set_tenant(None)
+
+
 @pytest.mark.asyncio
-async def test_approve_sets_hitl_approval_property() -> None:
+async def test_approve_sets_hitl_approval_property(_default_tenant: TenantContext) -> None:
     """Оператор approve → в properties попадает решение."""
     store = InMemoryHitlSignalStore()
     svc = HitlService(store=store)
@@ -67,7 +78,7 @@ async def test_approve_sets_hitl_approval_property() -> None:
 
 
 @pytest.mark.asyncio
-async def test_reject_fails_exchange() -> None:
+async def test_reject_fails_exchange(_default_tenant: TenantContext) -> None:
     """Оператор reject → exchange помечается failed."""
     store = InMemoryHitlSignalStore()
     svc = HitlService(store=store)
@@ -111,7 +122,7 @@ async def test_timeout_fails_exchange() -> None:
 
 
 @pytest.mark.asyncio
-async def test_request_info_then_approve() -> None:
+async def test_request_info_then_approve(_default_tenant: TenantContext) -> None:
     """request_info → повторная регистрация → approve."""
     store = InMemoryHitlSignalStore()
     svc = HitlService(store=store)

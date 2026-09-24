@@ -132,6 +132,22 @@ class DurableSubscriberProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
+        # ADR-0305/P3-12: admission control + graceful degradation.
+        try:
+            from src.backend.core.async_utils.deadline_budget import (
+                DeadlineExpiredError,
+            )
+            from src.backend.core.request_context import RequestContext
+
+            _req = RequestContext.current()
+            if _req is not None and _req.deadline_budget is not None:
+                if _req.deadline_budget.is_expired():
+                    exchange.fail("Durable publish skipped: deadline budget exhausted")
+                    return
+        except DeadlineExpiredError:
+            raise
+        except Exception:
+            pass
         body = exchange.in_message.body
         headers = dict(exchange.in_message.headers)
         results = await asyncio.gather(
