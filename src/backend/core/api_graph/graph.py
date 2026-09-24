@@ -119,27 +119,34 @@ class OpenAPIGraph:
 
     @property
     def nodes(self) -> list[GraphNode]:
+        """Все узлы графа API."""
         return list(self._nodes.values())
 
     @property
     def edges(self) -> list[GraphEdge]:
+        """Все рёбра (связи endpoint→action)."""
         return list(self._edges)
 
     @property
     def endpoints(self) -> list[EndpointNode]:
+        """Узлы-эндпоинты (входные точки API)."""
         return list(self._endpoints)
 
     @property
     def spec(self) -> dict[str, Any]:
+        """JSON-спецификация графа (для экспорта/UI)."""
         return self._spec
 
     def get_node(self, node_id: str) -> GraphNode | None:
+        """Найти узел по id; ``None`` если отсутствует."""
         return self._nodes.get(node_id)
 
     def add_node(self, node: GraphNode) -> None:
+        """Добавить/заменить узел по ``node.id``."""
         self._nodes[node.id] = node
 
     def add_edge(self, edge: GraphEdge) -> None:
+        """Добавить ребро связи между узлами."""
         self._edges.append(edge)
 
     def schema_references(self, schema_name: str) -> list[str]:
@@ -206,6 +213,7 @@ class OpenAPIGraph:
         return cycles
 
     def to_dict(self) -> dict[str, Any]:
+        """Полный экспорт графа (nodes/edges/summary)."""
         return {
             "node_count": len(self._nodes),
             "edge_count": len(self._edges),
@@ -226,6 +234,7 @@ class OpenAPIGraph:
         }
 
     def clear(self) -> None:
+        """Полный сброс графа (для тестов/reload)."""
         self._nodes.clear()
         self._edges.clear()
         self._endpoints.clear()

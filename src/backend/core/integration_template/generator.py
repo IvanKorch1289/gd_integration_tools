@@ -136,6 +136,7 @@ _generator: TemplateGenerator | None = None
 
 
 def get_template_generator() -> TemplateGenerator:
+    """Singleton-доступ к общему ``TemplateGenerator``."""
     global _generator
     if _generator is None:
         _generator = TemplateGenerator()
@@ -143,5 +144,6 @@ def get_template_generator() -> TemplateGenerator:
 
 
 def reset_template_generator() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _generator
     _generator = None

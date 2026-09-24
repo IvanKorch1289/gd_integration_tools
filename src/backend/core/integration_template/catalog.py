@@ -38,6 +38,7 @@ class TemplateCatalog:
         self._templates: dict[str, Template] = {}
 
     def register(self, template: Template) -> None:
+        """Добавить/заменить шаблон интеграции по имени."""
         if template.name in self._templates:
             logger.warning(
                 "TemplateCatalog: overwriting template name=%s", template.name
@@ -45,21 +46,27 @@ class TemplateCatalog:
         self._templates[template.name] = template
 
     def get(self, name: str) -> Template | None:
+        """Найти шаблон по имени; ``None`` если отсутствует."""
         return self._templates.get(name)
 
     def list_all(self) -> list[Template]:
+        """Все шаблоны каталога (порядок вставки)."""
         return list(self._templates.values())
 
     def list_by_category(self, category: str) -> list[Template]:
+        """Шаблоны конкретной категории."""
         return [t for t in self._templates.values() if t.category == category]
 
     def list_by_tag(self, tag: str) -> list[Template]:
+        """Шаблоны, содержащие ``tag`` в списке тегов."""
         return [t for t in self._templates.values() if tag in t.tags]
 
     def size(self) -> int:
+        """Количество шаблонов в каталоге."""
         return len(self._templates)
 
     def clear(self) -> None:
+        """Полный сброс каталога (для тестов/reload)."""
         self._templates.clear()
 
 
@@ -67,6 +74,7 @@ _catalog: TemplateCatalog | None = None
 
 
 def get_template_catalog() -> TemplateCatalog:
+    """Singleton-доступ к общему ``TemplateCatalog``."""
     global _catalog
     if _catalog is None:
         _catalog = TemplateCatalog()
@@ -75,6 +83,7 @@ def get_template_catalog() -> TemplateCatalog:
 
 
 def reset_template_catalog() -> None:
+    """Сбросить singleton (следующий ``get_`` создаст новый)."""
     global _catalog
     _catalog = None
 
