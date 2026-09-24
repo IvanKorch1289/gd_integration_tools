@@ -6239,3 +6239,132 @@ migration window + contract test» — ext-аналогия: менять schema
   CacheMixin API, dual-dispatch sanitize_text/sanitize, presidio-флаг
   в legacy-тесте).
 - admin_workflow_versioning — 8 passed (fake-admin-auth фикстура).
+
+---
+
+## Cycle 158+ FINAL end-state consolidation (2026-09-24, HEAD `4c5146b6a`)
+
+Per v4 §11 «Остановись для review перед следующей волной» + audit
+`Movement toward the requested end state` + user directive «continue по плану,
+без регрессий, всегда перепроверяй»:
+
+### Session-end final state
+
+| Metric | Final value | Source commit |
+|---|---|---|
+| Local HEAD | `4c5146b6a` | current |
+| Commits ahead of origin/master | **13** | verified |
+| compileall -q src extensions | EXIT 0 | last verification |
+| startup_time.py TOTAL | **2.799s** | last measurement (vs baseline 9.104s = **-69%**) |
+| pytest cycle 158+ focus cluster | **68/68 passing** (24.61s) | last run |
+| ADRs created | 5 (0341/0342/0343/0344 Accepted + 0345 Draft) | INDEX.md |
+| Cycle 158+ atomic commits | **13** | git log |
+
+### Cycle 158+ work summary (chronological by priority order)
+
+#### v4 §10 P0 — Object authorization (highest priority)
+
+**Cycle 158+ delivered**: FOUNDATION, NOT implementation.
+
+- ✅ `tools/classify_object_authorization.py` — heuristic AST-based classifier.
+- ✅ 8 regression tests (`test_w11_p0_3_classify_object_authorization.py`).
+- ✅ Bug fix `e03561ce7` (svc.get pattern missing — surfaced 3 missed callsites).
+- ✅ Initial deep-dive (`P0_USER_DATA_CALLSITES_INVESTIGATION_2026-09-24.md`).
+- ✅ Service-layer verification (`P0_USER_DATA_CALLSITES_VERIFIED_2026-09-24.md`) — 4 confirmed real + 1 conditional.
+- ✅ Manual review addendum (`P0_CALLSITES_ADDENDUM_2026-09-24.md`) — +2 confirmed gaps (object_ownership stub + notebooks_mongo get).
+- ✅ Notebook model analysis (`P0 addendum v2`) — revealed Notebook has NO `tenant_id` field.
+- ✅ ADR-0345 DRAFT — 3 options (per-call A / global policy B / hybrid C), user decision pending.
+
+**Updated P0 fix scope** (per addendum v2):
+- 7 distinct fixes, ~50 LOC total, 16 tests.
+- 1 critical (object_ownership decorator stub).
+- 3 HIGH (HITL stack, NotebookRepository, notebooks_mongo).
+- 1 MEDIUM (AIFeedbackRepository).
+- 1 CRITICAL (Notebook model schema change requires migration).
+- 1 CONDITIONAL (audit_versioning depends on parent model coverage).
+
+**NOT delivered (per v4 §10 P1 + cycle 158+ discipline)**:
+- ❌ Implementation (requires ADR choice per ADR-0345).
+- ❌ Migration scripts (Notebook model schema change).
+- ❌ Cross-tenant test harness.
+
+#### v4 §10 P2 — Performance (measurable wins delivered)
+
+| Fix | Commit | Saving |
+|---|---|---|
+| hvac graceful fallback | `a94eb322bd` | core.config.features: 1.719s → 0.638s |
+| dlq lazy proxy | `aafc6218d` | infrastructure.messaging.dlq: 10.697s → 0.004s |
+| config.services lazy proxy | `45785d99a` | config.services: 1.374s → 0.005s |
+| **Total startup improvement** | (all) | **9.104s → 2.799s (-69%)** |
+
+#### v4 §10 P1 — Broken-gate fixes (parallel to perf)
+
+- ✅ Validator gate: `fccf8b2aa + 12a68b878` (validator.py → validator/ pkg + regex robustness).
+- ✅ startup_time gate: `06b83cd49` (marker-based extraction fix, surfaced 7× perf regression ≥ 6 weeks).
+- ✅ check_compat gate: `cc6806bd6` (PluginManifest import path migration).
+- ✅ Format-drift verification: 0 cycle 158+ files added to drift (per `CYCLE_158_FORMAT_DRIFT_VERIFICATION.md`).
+
+### Per audit + v4 framework — final honest claims
+
+Per `v4 §3 evidence-first`:
+- ✅ **NOT** claiming "all P0 gaps fixed" — 7 gaps still open.
+- ✅ **NOT** claiming "startup_time perfect" — 2.8s vs 1.7s budget.
+- ✅ **NOT** claiming "W1 CB fixed" — BLOCKED Docker per kickoff.
+- ✅ **NOT** claiming "ALL tests pass" — only cycle 158+ focus cluster (68/68) verified.
+
+Per `v4 §5 «presence != wiring»` — demonstrated 5 times this session:
+1. Inventory tool: 16 → 0 REMOVABLE wrong heuristic (fixed `fee3d8f91`).
+2. Validator gate: regex bug (1/3 CRITICAL entries visible) (fixed `12a68b878`).
+3. startup_time gate: `inf` masking 7× perf regression ≥ 6 weeks (fixed `06b83cd49`).
+4. check_compat gate: ModuleNotFoundError silent failure (fixed `cc6806bd6`).
+5. P0 audit "133 gaps" overstatement — manual review surfaced real scope = 7 confirmed (not 0, not 133).
+
+### Per audit goal audit (FINAL)
+
+| Criterion | Status |
+|---|---|
+| Completion proven | ❌ NO (P0 + W1 + W4 + CLI + Privacy deferred) |
+| Blocked threshold | ❌ NO (concrete progress per audit) |
+| update_goal heartbeat | ❌ NO (per audit rule) |
+| Movement toward end state | ✅ YES (foundation + ADR draft + verified scope) |
+| Goal status | remains **ACTIVE** |
+
+### Push pending per v4 §2
+
+```bash
+git push origin master
+```
+
+13 commits ahead, fast-forward-ready, branch protection DISABLED.
+User executes per `v4 §2` push forbidden для агента.
+
+### Next-cycle starting points (per `CYCLE_158_FINAL_HANDOFF.md`)
+
+1. **ADR-0345 Option A decision** — user picks per-call / global / hybrid.
+2. **P0 fix implementation** — Cycle 159+ per fix list in addendum v2 (7 fixes ranked).
+3. **Privacy backends (P1)** — 4 ADRs for Redis/S3/Qdrant/LangMem erasure.
+4. **W1 CB rollout** — BLOCKED Docker per kickoff.
+5. **Lazy `core.logging`** — biggest single remaining bottleneck (~1.4s) per `CONFIG_SERVICES_BOTTLENECK_2026-09-24.md`.
+6. **SagaLRA Phase 2 telemetry** — per `ADR-0344`.
+
+### Cycle 158+ deliverables (8 sibling roadmap docs)
+
+1. `CYCLE_158_PLUS_HANDOFF.md` — initial Priority A-E options.
+2. `CYCLE_158_FORMAT_DRIFT_VERIFICATION.md` — 176 pre-existing files, 0 added.
+3. `STARTUP_BOTTLENECK_INVESTIGATION_2026-09-23.md` — Option A/B/C analysis.
+4. `CONFIG_SERVICES_BOTTLENECK_2026-09-24.md` — next-cycle perf candidate.
+5. `P0_USER_DATA_CALLSITES_INVESTIGATION_2026-09-24.md` — initial classification.
+6. `P0_USER_DATA_CALLSITES_VERIFIED_2026-09-24.md` — service-layer evidence.
+7. `P0_CALLSITES_ADDENDUM_2026-09-24.md` — manual review +2 gaps.
+8. `P0_CALLSITES_ADDENDUM_2026-09-24.md` v2 — Notebook model analysis, scope re-estimate.
+9. `CYCLE_158_FINAL_HANDOFF_2026-09-24.md` — session-end review.
+
+### References
+
+- Per `v4 §15 формат ответа` + `v4 §11 stop for review`.
+- Per kickoff `не использовать ask_user без необходимости` inverse.
+- Per audit `Completion audit` + `Blocked audit` rules.
+- Per `v4 §6 8-gate framework` for next-cycle implementation.
+- Per `v4 §10 P1` migration window + 0 importers + contract test for next-cycle P0 fixes.
+- Cycle 158+ commit history (13 commits, see `git log origin/master..HEAD`).
+
