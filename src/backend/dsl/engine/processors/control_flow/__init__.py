@@ -26,10 +26,10 @@ from src.backend.dsl.engine.processors.control_flow.parallel import (
     PipelineRefProcessor,  # S55 W2: re-export
 )
 from src.backend.dsl.engine.processors.control_flow.saga import (
-    SagaProcessor,  # S55 W2: re-export
-    SagaStep,  # S55 W2: re-export
-    _emit_saga_audit,  # S55 W2: re-export
-    _serialize_sub,  # S55 W2: re-export
+    SagaProcessor,
+    SagaStep,
+    _emit_saga_audit,
+    _serialize_sub,
 )
 
 __all__ = (
