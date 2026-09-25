@@ -12,7 +12,7 @@ Per v4 §10 P0 audit:
 Usage::
     python tools/classify_object_authorization.py --top 30
     python tools/classify_object_authorization.py --json
-    python tools/classify_object_authorization.py --strict  # exit 1 на unknown > threshold
+    python tools/classify_object_authorization.py --strict  # exit 1 на any unknown > 0
 
 Per v4 §10 P1 evidence-first measurement: 133 callsites → classified
 final set informs next-cycle P0 fix ADR scope.

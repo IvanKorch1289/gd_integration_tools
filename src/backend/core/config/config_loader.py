@@ -68,7 +68,9 @@ load_dotenv(_REPO_ROOT / ".env")
 # Per W5.3 cProfile waterfall (commit 5d8eda56d):
 # yaml.safe_load = 10.789s (77% of startup). 240 calls (17 Settings classes × 2 yamls).
 # Без cache каждый Settings класс перечитывает base.yml + profile overlay.
-# С cache: 2 вызова (один на файл) вместо 240 — ожидаемый gain ~5-8s.
+# С cache: 2 вызова (один на файл) вместо 240.
+# Per W5.4 benchmark doc (commit d066a0e64): actual measured gain = 0.37s
+# (NOT 5-8s as original estimate — corrected after W5.4 benchmark).
 # Per v6 §10 W5 «Lazy import применять только при доказанном выигрыше»:
 # cache invalidation при смене профиля runtime → перечитываем.
 _BASE_YAML_CACHE: dict[str, dict[str, Any]] = {}
