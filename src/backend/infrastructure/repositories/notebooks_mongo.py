@@ -95,9 +95,7 @@ class MongoNotebookRepository:
 
         """
         if tenant_id is not None:
-            doc = await self._client().find_one(
-                _COLLECTION, {"_id": notebook_id}
-            )
+            doc = await self._client().find_one(_COLLECTION, {"_id": notebook_id})
             if doc is None:
                 return None
             notebook = _doc_to_notebook(doc)

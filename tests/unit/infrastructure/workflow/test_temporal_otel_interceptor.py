@@ -9,7 +9,6 @@ Temporal server — integration-тир; здесь фиксируется wiring
 
 from __future__ import annotations
 
-from datetime import timedelta
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 

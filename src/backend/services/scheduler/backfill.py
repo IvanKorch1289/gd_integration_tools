@@ -75,10 +75,7 @@ class BackfillService:
     """Materialize + исполнение пропущенных запусков (ADR-0346)."""
 
     def __init__(
-        self,
-        store: RunHistoryStore,
-        *,
-        max_window_days: int = DEFAULT_MAX_WINDOW_DAYS,
+        self, store: RunHistoryStore, *, max_window_days: int = DEFAULT_MAX_WINDOW_DAYS
     ) -> None:
         """Инициализация.
 
@@ -122,7 +119,6 @@ class BackfillService:
             )
 
         ticks = compute_missed_ticks(trigger, date_from, date_to)
-        now = datetime.now(tz=date_from.tzinfo or date_to.tzinfo)
         materialize_status = STATUS_PENDING if catchup else STATUS_MISSED
 
         created = await self._store.materialize(
@@ -136,11 +132,7 @@ class BackfillService:
         )
 
     async def run_catchup(
-        self,
-        *,
-        job_id: str,
-        executor: Any,
-        limit: int = 100,
+        self, *, job_id: str, executor: Any, limit: int = 100
     ) -> tuple[int, int]:
         """Исполнить pending-тики (catchup) через executor.
 

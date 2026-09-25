@@ -15,7 +15,9 @@ from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 from src.backend.dsl.engine.processors.event_store.helpers import get_event_store
 from src.backend.dsl.engine.processors.event_store.store import EventStore
-from src.backend.dsl.engine.processors.event_store.types import Event  # S66 W1: cross-import
+from src.backend.dsl.engine.processors.event_store.types import (
+    Event,
+)  # S66 W1: cross-import
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext

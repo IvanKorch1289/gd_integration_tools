@@ -23,7 +23,10 @@ import typer
 from typer.testing import CliRunner
 
 _TOOLS_PATH = (
-    Path(__file__).resolve().parents[3] / "tools" / "checks" / "check_unsafe_defaults.py"
+    Path(__file__).resolve().parents[3]
+    / "tools"
+    / "checks"
+    / "check_unsafe_defaults.py"
 )
 _spec = importlib.util.spec_from_file_location(
     "tools.checks.check_unsafe_defaults", _TOOLS_PATH
@@ -59,7 +62,7 @@ class TestTyperMigration:
         # sys.stdout.write допустим ТОЛЬКО для JSON output
         if "sys.stdout.write" in source:
             # Проверяем что он находится рядом с json.dumps (для machine-readable output)
-            assert 'json.dumps' in source, (
+            assert "json.dumps" in source, (
                 "sys.stdout.write разрешён только в JSON-выводе, не в human-readable output"
             )
         # Rich console должен быть stderr=True (для human output)

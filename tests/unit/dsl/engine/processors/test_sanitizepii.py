@@ -24,8 +24,7 @@ async def test_sanitize_str_body() -> None:
             "src.backend.infrastructure.security.ai_sanitizer.get_ai_sanitizer"
         ) as mock_get,
         patch(
-            "src.backend.core.config.features.feature_flags.presidio_pii_enabled",
-            False,
+            "src.backend.core.config.features.feature_flags.presidio_pii_enabled", False
         ),
     ):
         sanitizer = MagicMock()

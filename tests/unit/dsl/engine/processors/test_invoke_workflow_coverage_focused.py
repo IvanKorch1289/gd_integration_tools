@@ -38,10 +38,7 @@ class TestInvokeWorkflowInit:
     def test_invalid_mode_raises_value_error(self) -> None:
         """Невалидный mode → ValueError с описанием allowed modes."""
         with pytest.raises(ValueError, match="mode='bogus' не поддерживается"):
-            InvokeWorkflowProcessor(
-                name="wf1",
-                mode="bogus",
-            )
+            InvokeWorkflowProcessor(name="wf1", mode="bogus")
 
     def test_async_api_mode_default(self) -> None:
         """Default mode = 'async-api'."""

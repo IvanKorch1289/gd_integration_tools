@@ -34,12 +34,7 @@ class ProcessPoolAgentSandbox:
 
     """
 
-    def __init__(
-        self,
-        *,
-        max_workers: int = 1,
-        max_wall_time_s: float = 600.0,
-    ) -> None:
+    def __init__(self, *, max_workers: int = 1, max_wall_time_s: float = 600.0) -> None:
         # lazy-create executor (heavy resource).
         self._executor: ProcessPoolExecutor | None = None
         self._max_workers = max_workers
@@ -63,7 +58,9 @@ class ProcessPoolAgentSandbox:
         max_wall_time_s: float | None = None,
     ) -> AgentSandboxResult:
         """Run agent в process-pool worker (sync, wrapped в to_thread)."""
-        wall_time = max_wall_time_s if max_wall_time_s is not None else self._max_wall_time_s
+        wall_time = (
+            max_wall_time_s if max_wall_time_s is not None else self._max_wall_time_s
+        )
         loop = asyncio.get_running_loop()
 
         try:

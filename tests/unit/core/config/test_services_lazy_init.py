@@ -44,20 +44,25 @@ class TestLazyImportProxy:
         import sys as _sys
 
         result = subprocess.run(
-            [_sys.executable, "-c", (
-                "import time; start = time.monotonic(); "
-                "import src.backend.core.config.services; "
-                "print(f'{time.monotonic() - start:.4f}')"
-            )],
-            capture_output=True, text=True, timeout=30,
+            [
+                _sys.executable,
+                "-c",
+                (
+                    "import time; start = time.monotonic(); "
+                    "import src.backend.core.config.services; "
+                    "print(f'{time.monotonic() - start:.4f}')"
+                ),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
             check=True,
         )
         elapsed = float(result.stdout.strip())
 
         # Pre-fix: 1.374s. Post-fix target: <50ms.
         assert elapsed < 0.05, (
-            f"config.services cold import should be <50ms post-fix; "
-            f"got {elapsed:.3f}s"
+            f"config.services cold import should be <50ms post-fix; got {elapsed:.3f}s"
         )
 
     def test_attribute_access_triggers_lazy_import(self) -> None:
@@ -93,32 +98,58 @@ class TestLazyImportProxy:
         """``dir()`` proxy exposes ``__all__`` names."""
         services = _reload()
         for name in services.__all__:
-            assert name in dir(services), (
-                f"dir() should include {name!r} from __all__"
-            )
+            assert name in dir(services), f"dir() should include {name!r} from __all__"
 
 
 class TestBackwardCompat:
     """Public contract preserved per v4 §6 «Parity»."""
 
-    @pytest.mark.parametrize("name", [
-        # Settings classes (10)
-        "CacheSettings", "RedisSettings", "GraphQLSettings",
-        "InvokerSettings", "JupyterHubSettings", "LLMSettings",
-        "LogStorageSettings", "MailSettings", "QueueSettings",
-        "RPASettings", "ResilienceSettings", "SMSSettings",
-        "SnapshotSettings", "FileStorageSettings", "WatermarkSettings",
-        "WSSettings", "TasksSettings", "GRPCSettings",
-        # Policy structs (2)
-        "BreakerProfile", "FallbackPolicy",
-        # Singletons (18)
-        "cache_settings", "redis_settings", "graphql_settings",
-        "invoker_settings", "jupyter_hub_settings", "llm_settings",
-        "log_settings", "mail_settings", "queue_settings",
-        "grpc_settings", "tasks_settings", "rpa_settings",
-        "resilience_settings", "sms_settings", "snapshot_settings",
-        "fs_settings", "watermark_settings", "ws_settings",
-    ])
+    @pytest.mark.parametrize(
+        "name",
+        [
+            # Settings classes (10)
+            "CacheSettings",
+            "RedisSettings",
+            "GraphQLSettings",
+            "InvokerSettings",
+            "JupyterHubSettings",
+            "LLMSettings",
+            "LogStorageSettings",
+            "MailSettings",
+            "QueueSettings",
+            "RPASettings",
+            "ResilienceSettings",
+            "SMSSettings",
+            "SnapshotSettings",
+            "FileStorageSettings",
+            "WatermarkSettings",
+            "WSSettings",
+            "TasksSettings",
+            "GRPCSettings",
+            # Policy structs (2)
+            "BreakerProfile",
+            "FallbackPolicy",
+            # Singletons (18)
+            "cache_settings",
+            "redis_settings",
+            "graphql_settings",
+            "invoker_settings",
+            "jupyter_hub_settings",
+            "llm_settings",
+            "log_settings",
+            "mail_settings",
+            "queue_settings",
+            "grpc_settings",
+            "tasks_settings",
+            "rpa_settings",
+            "resilience_settings",
+            "sms_settings",
+            "snapshot_settings",
+            "fs_settings",
+            "watermark_settings",
+            "ws_settings",
+        ],
+    )
     def test_all_exports_resolvable(self, name: str) -> None:
         """All 38 ``__all__`` entries resolvable via ``__getattr__``."""
         services = _reload()

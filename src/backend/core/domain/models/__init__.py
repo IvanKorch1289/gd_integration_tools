@@ -45,12 +45,12 @@ from src.backend.core.domain.models.langmem_models import (
     LangMemProcedural,
 )
 from src.backend.core.domain.models.outbox import OutboxMessage
-from src.backend.core.domain.models.scheduler_run_history import (
-    SchedulerRunHistory as SchedulerRunHistory,
-)
 from src.backend.core.domain.models.rule_engine import (
     RuleEngineBase,
     RuleEngineRulesetORM,
+)
+from src.backend.core.domain.models.scheduler_run_history import (
+    SchedulerRunHistory as SchedulerRunHistory,
 )
 from src.backend.core.domain.models.workflow_event import (
     WorkflowEvent,

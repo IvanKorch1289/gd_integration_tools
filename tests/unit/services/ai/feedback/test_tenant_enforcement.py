@@ -20,20 +20,14 @@ from src.backend.services.ai.feedback.repository import InMemoryFeedbackReposito
 
 
 def _make_doc(
-    doc_id: str = "d-1",
-    tenant: str | None = "t-a",
-    agent: str = "agent-1",
+    doc_id: str = "d-1", tenant: str | None = "t-a", agent: str = "agent-1"
 ) -> AIFeedbackDoc:
     """Build test AIFeedbackDoc with tenant_id в metadata."""
     metadata: dict = {"agent_id": agent}
     if tenant is not None:
         metadata["tenant_id"] = tenant
     return AIFeedbackDoc(
-        id=doc_id,
-        query="test",
-        response="response",
-        agent_id=agent,
-        metadata=metadata,
+        id=doc_id, query="test", response="response", agent_id=agent, metadata=metadata
     )
 
 
@@ -57,9 +51,7 @@ class TestAIFeedbackTenantEnforcement:
 
         # Cross-tenant access blocked.
         got_cross = await repo.get("d-1", tenant_id="t-b")
-        assert got_cross is None, (
-            "Cross-tenant access must be blocked (fail-closed)."
-        )
+        assert got_cross is None, "Cross-tenant access must be blocked (fail-closed)."
 
     @pytest.mark.asyncio
     async def test_repo_get_legacy_passes_through(self) -> None:
@@ -142,6 +134,7 @@ class TestAIFeedbackTenantEnforcement:
         # Reset any prior context.
         try:
             from src.backend.core.tenancy import _current
+
             _current.set(None)
         except Exception:
             pass

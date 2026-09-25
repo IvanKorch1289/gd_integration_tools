@@ -92,7 +92,9 @@ class TestSafety:
     def test_dry_run_does_not_create_files(self) -> None:
         """--dry-run должен только печатать, без записи на диск."""
         # Проверяем что файл НЕ создаётся.
-        test_path = Path("src/backend/dsl/engine/processors/scaffold_test_dry_run_marker.py")
+        test_path = Path(
+            "src/backend/dsl/engine/processors/scaffold_test_dry_run_marker.py"
+        )
         assert not test_path.exists(), (
             f"Pre-condition: {test_path} should not exist before test"
         )
@@ -110,9 +112,7 @@ class TestSafety:
         )
         assert result.exit_code == 0
         # DRY-RUN не должен создать файл.
-        assert not test_path.exists(), (
-            f"DRY-RUN created file {test_path} (should NOT)"
-        )
+        assert not test_path.exists(), f"DRY-RUN created file {test_path} (should NOT)"
 
 
 class TestImportsWork:

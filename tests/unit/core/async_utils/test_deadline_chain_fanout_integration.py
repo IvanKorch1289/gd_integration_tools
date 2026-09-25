@@ -55,9 +55,7 @@ class _MarkerProc:
         self.sleep = sleep
         self.called = False
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         self.called = True
         if self.sleep > 0.0:
             await asyncio.sleep(self.sleep)
@@ -130,9 +128,7 @@ class TestChainForkJoin:
             ex = _make_exchange()
             m = _M()
             proc = ForkJoinProcessor(
-                branches={"a": [m]},
-                aggregation="collect",
-                timeout_seconds=10.0,
+                branches={"a": [m]}, aggregation="collect", timeout_seconds=10.0
             )
             await proc.process(ex, ExecutionContext())
             assert m.called is False
@@ -169,10 +165,7 @@ class TestChainScatterGather:
         token = _bind_ctx(budget)
         try:
             ex = _make_exchange()
-            proc = ScatterGatherProcessor(
-                ["r1", "r2", "r3"],
-                timeout_seconds=2.0,
-            )
+            proc = ScatterGatherProcessor(["r1", "r2", "r3"], timeout_seconds=2.0)
             await proc.process(ex, ExecutionContext())
             assert ex.error is None
             results = ex.get_property("scatter_results")
@@ -206,10 +199,7 @@ class TestChainScatterGather:
         token = _bind_ctx(budget)
         try:
             ex = _make_exchange()
-            proc = ScatterGatherProcessor(
-                ["r1", "r2"],
-                timeout_seconds=10.0,
-            )
+            proc = ScatterGatherProcessor(["r1", "r2"], timeout_seconds=10.0)
             await proc.process(ex, ExecutionContext())
             assert route_calls == []
             assert ex.error is not None
@@ -238,6 +228,7 @@ class TestChainMulticast:
         cmd_registry_mod = sys.modules.get("src.backend.dsl.commands.registry")
         if cmd_registry_mod is None:  # pragma: no cover
             import src.backend.dsl.commands.registry as cmd_registry_mod
+
             cmd_registry_mod = sys.modules["src.backend.dsl.commands.registry"]
 
         class _FakeRegistry:
@@ -247,6 +238,7 @@ class TestChainMulticast:
         monkeypatch.setattr(cmd_registry_mod, "route_registry", _FakeRegistry())
 
         import types
+
         fake_engine_mod = types.ModuleType("src.backend.dsl.engine.execution_engine")
 
         class _FakeEngine:
@@ -267,17 +259,17 @@ class TestChainMulticast:
         try:
             ex = _make_exchange()
             proc = MulticastRoutesProcessor(
-                ["r1", "r2"],
-                strategy="all",
-                on_error="continue",
-                timeout=2.0,
+                ["r1", "r2"], strategy="all", on_error="continue", timeout=2.0
             )
             await proc.process(ex, ExecutionContext())
             # Multicast может fail на strategy="all" с on_error="continue"
             # (любая ошибка → exchange.fail), но если routes отрабатывают — OK.
             results = ex.get_property("multicast_route_results")
             # Либо results есть (успех), либо errors (частичный).
-            assert results is not None or ex.get_property("multicast_route_errors") is not None
+            assert (
+                results is not None
+                or ex.get_property("multicast_route_errors") is not None
+            )
         finally:
             clear_request_context(token)
 
@@ -377,10 +369,7 @@ class TestChainSequentialComposition:
         try:
             ex = _make_exchange()
             m1, m2 = _M(), _M()
-            proc = ParallelProcessor(
-                branches={"a": [m1], "b": [m2]},
-                strategy="all",
-            )
+            proc = ParallelProcessor(branches={"a": [m1], "b": [m2]}, strategy="all")
             await proc.process(ex, ExecutionContext())
 
             # Каждая ветка ждала 0.05s; parallel branch_budget = remaining / N = remaining / 2.
@@ -417,10 +406,7 @@ class TestChainSequentialComposition:
         try:
             ex = _make_exchange()
             m = _M()
-            proc = ParallelProcessor(
-                branches={"a": [m]},
-                strategy="all",
-            )
+            proc = ParallelProcessor(branches={"a": [m]}, strategy="all")
             await proc.process(ex, ExecutionContext())
             assert m.called is False
             assert ex.error is not None

@@ -14,20 +14,23 @@ import pytest
 
 from src.backend.services.ai.agent_sandbox import (
     AgentSandboxConfigError as ShimConfigError,
-    AgentSandboxSelector as ShimSelector,
+)
+from src.backend.services.ai.agent_sandbox import AgentSandboxSelector as ShimSelector
+from src.backend.services.ai.agent_sandbox import (
     AgentSandboxTimeoutError as ShimTimeoutError,
-    E2BAgentSandbox as ShimE2B,
-    InProcessAgentSandbox as ShimInProcess,
+)
+from src.backend.services.ai.agent_sandbox import E2BAgentSandbox as ShimE2B
+from src.backend.services.ai.agent_sandbox import InProcessAgentSandbox as ShimInProcess
+from src.backend.services.ai.agent_sandbox import (
     ProcessPoolAgentSandbox as ShimProcessPool,
+)
+from src.backend.services.ai.agent_sandbox import (
     get_process_pool_agent_sandbox as ShimGetProcessPool,
-    resolve_agent_sandbox as ShimResolve,
 )
-from src.backend.services.ai.agent_sandbox._e2b import (
-    E2BAgentSandbox as CanonicalE2B,
-)
+from src.backend.services.ai.agent_sandbox import resolve_agent_sandbox as ShimResolve
+from src.backend.services.ai.agent_sandbox._e2b import E2BAgentSandbox as CanonicalE2B
 from src.backend.services.ai.agent_sandbox._in_process import (
     InProcessAgentSandbox as CanonicalInProcess,
-    _sync_run_react,
 )
 from src.backend.services.ai.agent_sandbox._process_pool import (
     ProcessPoolAgentSandbox as CanonicalProcessPool,
@@ -62,7 +65,11 @@ class TestBackCompatIdentity:
             (ShimE2B, CanonicalE2B, "E2BAgentSandbox"),
             (ShimSelector, CanonicalSelector, "AgentSandboxSelector"),
             (ShimResolve, CanonicalResolve, "resolve_agent_sandbox"),
-            (ShimGetProcessPool, CanonicalGetProcessPool, "get_process_pool_agent_sandbox"),
+            (
+                ShimGetProcessPool,
+                CanonicalGetProcessPool,
+                "get_process_pool_agent_sandbox",
+            ),
         ],
     )
     def test_shim_returns_canonical(self, shim, canonical, name: str) -> None:

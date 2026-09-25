@@ -55,7 +55,9 @@ class TestProblemCategory:
             (ProblemCategory.INTERNAL, "internal"),
         ],
     )
-    def test_category_value(self, category: ProblemCategory, expected_value: str) -> None:
+    def test_category_value(
+        self, category: ProblemCategory, expected_value: str
+    ) -> None:
         """Значения совпадают с GraphQL canonical_errors.ErrorCategory для compat."""
         assert category.value == expected_value
 
@@ -71,9 +73,7 @@ class TestDomainProblemConstruction:
     def test_minimal_construction(self) -> None:
         """Минимум: code, category, title."""
         p = DomainProblem(
-            code="X_NOT_FOUND",
-            category=ProblemCategory.NOT_FOUND,
-            title="X not found",
+            code="X_NOT_FOUND", category=ProblemCategory.NOT_FOUND, title="X not found"
         )
         assert p.code == "X_NOT_FOUND"
         assert p.category == ProblemCategory.NOT_FOUND
@@ -87,9 +87,7 @@ class TestDomainProblemConstruction:
     def test_status_code_auto_derived(self) -> None:
         """status_code == 0 → автодеривация из category."""
         p = DomainProblem(
-            code="X_NOT_FOUND",
-            category=ProblemCategory.NOT_FOUND,
-            title="X not found",
+            code="X_NOT_FOUND", category=ProblemCategory.NOT_FOUND, title="X not found"
         )
         assert p.status_code == status.HTTP_404_NOT_FOUND
 
@@ -106,45 +104,33 @@ class TestDomainProblemConstruction:
     def test_empty_code_raises(self) -> None:
         """Пустой code → ValueError."""
         with pytest.raises(ValueError, match="code обязателен"):
-            DomainProblem(
-                code="",
-                category=ProblemCategory.NOT_FOUND,
-                title="X",
-            )
+            DomainProblem(code="", category=ProblemCategory.NOT_FOUND, title="X")
 
     def test_lowercase_code_raises(self) -> None:
         """Non-SCREAMING_SNAKE_CASE code → ValueError."""
         with pytest.raises(ValueError, match="SCREAMING_SNAKE_CASE"):
             DomainProblem(
-                code="order_not_found",
-                category=ProblemCategory.NOT_FOUND,
-                title="X",
+                code="order_not_found", category=ProblemCategory.NOT_FOUND, title="X"
             )
 
     def test_code_with_special_chars_raises(self) -> None:
         """Code с special chars → ValueError."""
         with pytest.raises(ValueError, match="SCREAMING_SNAKE_CASE"):
             DomainProblem(
-                code="ORDER-NOT-FOUND",
-                category=ProblemCategory.NOT_FOUND,
-                title="X",
+                code="ORDER-NOT-FOUND", category=ProblemCategory.NOT_FOUND, title="X"
             )
 
     def test_code_with_numbers_ok(self) -> None:
         """Code с цифрами — допустимо (e.g., ``HTTP_404``)."""
         p = DomainProblem(
-            code="HTTP_404_TEST",
-            category=ProblemCategory.NOT_FOUND,
-            title="Test",
+            code="HTTP_404_TEST", category=ProblemCategory.NOT_FOUND, title="Test"
         )
         assert p.code == "HTTP_404_TEST"
 
     def test_frozen_instance_immutable(self) -> None:
         """DomainProblem — frozen dataclass, attrs immutable."""
         p = DomainProblem(
-            code="X_NOT_FOUND",
-            category=ProblemCategory.NOT_FOUND,
-            title="X",
+            code="X_NOT_FOUND", category=ProblemCategory.NOT_FOUND, title="X"
         )
         with pytest.raises(Exception):  # FrozenInstanceError
             p.code = "OTHER"  # type: ignore[misc]
@@ -166,10 +152,7 @@ class TestIsRetryable:
 
     def test_explicit_retryable_true(self) -> None:
         p = DomainProblem(
-            code="X",
-            category=ProblemCategory.NOT_FOUND,
-            title="X",
-            retryable=True,
+            code="X", category=ProblemCategory.NOT_FOUND, title="X", retryable=True
         )
         assert p.is_retryable is True
 
@@ -211,9 +194,7 @@ class TestToRfc9457:
 
     def test_minimal(self) -> None:
         p = DomainProblem(
-            code="X_NOT_FOUND",
-            category=ProblemCategory.NOT_FOUND,
-            title="X not found",
+            code="X_NOT_FOUND", category=ProblemCategory.NOT_FOUND, title="X not found"
         )
         result = p.to_rfc9457()
         assert result["type"] == "https://errors.gd-integration-tools/not_found"
@@ -228,11 +209,7 @@ class TestToRfc9457:
         assert "details" not in result
 
     def test_with_instance(self) -> None:
-        p = DomainProblem(
-            code="X",
-            category=ProblemCategory.NOT_FOUND,
-            title="X",
-        )
+        p = DomainProblem(code="X", category=ProblemCategory.NOT_FOUND, title="X")
         result = p.to_rfc9457(instance="/orders/123")
         assert result["instance"] == "/orders/123"
 
@@ -308,9 +285,7 @@ class TestToGrpcStatus:
 
     def test_returns_tuple(self) -> None:
         p = DomainProblem(
-            code="X_NOT_FOUND",
-            category=ProblemCategory.NOT_FOUND,
-            title="X",
+            code="X_NOT_FOUND", category=ProblemCategory.NOT_FOUND, title="X"
         )
         result = p.to_grpc_status()
         assert isinstance(result, tuple)
@@ -360,9 +335,7 @@ class TestToSoapFault:
     def test_client_fault_4xx(self) -> None:
         """4xx → soap:Client."""
         p = DomainProblem(
-            code="X_NOT_FOUND",
-            category=ProblemCategory.NOT_FOUND,
-            title="X not found",
+            code="X_NOT_FOUND", category=ProblemCategory.NOT_FOUND, title="X not found"
         )
         result = p.to_soap_fault()
         assert result["faultcode"] == "soap:Client"
@@ -396,9 +369,7 @@ class TestToMcpError:
 
     def test_basic_shape(self) -> None:
         p = DomainProblem(
-            code="X_NOT_FOUND",
-            category=ProblemCategory.NOT_FOUND,
-            title="X not found",
+            code="X_NOT_FOUND", category=ProblemCategory.NOT_FOUND, title="X not found"
         )
         result = p.to_mcp_error()
         assert "code" in result
@@ -563,6 +534,7 @@ class TestBackwardCompat:
     def test_existing_imports_work(self) -> None:
         """Все существующие классы доступны из core.errors."""
         from src.backend.core.errors import BaseError, build_error_envelope
+
         # Sanity — все классы импортируются
         assert BaseError is not None
         assert build_error_envelope is not None

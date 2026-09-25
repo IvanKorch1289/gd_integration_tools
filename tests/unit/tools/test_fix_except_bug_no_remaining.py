@@ -33,7 +33,7 @@ def _scan_for_legacy_except(root: Path) -> list[tuple[str, int, str]]:
             continue
         try:
             content = py_file.read_text(encoding="utf-8")
-        except (UnicodeDecodeError, OSError):
+        except UnicodeDecodeError, OSError:
             continue
         for m in PATTERN.finditer(content):
             line_no = content[: m.start()].count("\n") + 1

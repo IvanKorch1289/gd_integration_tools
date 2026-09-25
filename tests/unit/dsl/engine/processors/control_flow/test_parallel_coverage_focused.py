@@ -40,9 +40,7 @@ class _SetBodyProc(BaseProcessor):
         super().__init__(name=name or f"set_body:{marker}")
         self._marker = marker
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         exchange.in_message.body = {"marker": self._marker}
 
 
@@ -53,9 +51,7 @@ class _SleepProc(BaseProcessor):
         super().__init__(name=name or f"sleep:{seconds}")
         self._seconds = seconds
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         await asyncio_sleep(self._seconds)
 
 
@@ -73,9 +69,7 @@ class _RaisingProc(BaseProcessor):
         super().__init__(name="raising")
         self._exc = exc
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         raise self._exc
 
 
@@ -221,16 +215,16 @@ class TestParallelErrorPaths:
         )
         try:
             parallel = ParallelProcessor(
-                branches={
-                    "slow": [_SleepProc(2.0, name="slow")],
-                },
-                strategy="all",
+                branches={"slow": [_SleepProc(2.0, name="slow")]}, strategy="all"
             )
             ex = _make_exchange()
             await parallel.process(ex, ExecutionContext())
             errors = ex.get_property("parallel_errors") or {}
             assert "slow" in errors
-            assert "timeout" in errors["slow"].lower() or "branch" in errors["slow"].lower()
+            assert (
+                "timeout" in errors["slow"].lower()
+                or "branch" in errors["slow"].lower()
+            )
         finally:
             clear_request_context(token)
 
@@ -262,10 +256,7 @@ class TestParallelToSpec:
         если хоть один child non-serializable, весь pipeline = None.
         """
         parallel = ParallelProcessor(
-            branches={
-                "a": [_SetBodyProc("a")],
-                "b": [_SetBodyProc("b")],
-            },
+            branches={"a": [_SetBodyProc("a")], "b": [_SetBodyProc("b")]},
             strategy="all",
         )
         spec = parallel.to_spec()
@@ -287,12 +278,7 @@ class TestParallelToSpec:
             ) -> None:
                 pass
 
-        parallel = ParallelProcessor(
-            branches={
-                "a": [_Serializable()],
-            },
-            strategy="all",
-        )
+        parallel = ParallelProcessor(branches={"a": [_Serializable()]}, strategy="all")
         spec = parallel.to_spec()
         assert spec is not None
         assert "parallel" in spec

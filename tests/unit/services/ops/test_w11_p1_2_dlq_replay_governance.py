@@ -139,8 +139,7 @@ class TestClassify:
     def test_capability_denied_is_internal_safe(self) -> None:
         """capability_denied reason → CONFIDENTIAL без redaction."""
         env = _make_envelope(
-            payload={"auth": "secret"},
-            reason=DLQReason.CAPABILITY_DENIED,
+            payload={"auth": "secret"}, reason=DLQReason.CAPABILITY_DENIED
         )
         governor = DLQReplayGovernor()
         cls = governor.classify(env)
@@ -221,9 +220,7 @@ class TestReplayDryRun:
             return True
 
         governor = DLQReplayGovernor(replay_executor=executor)
-        result = governor.replay(
-            env, dry_run=True, operator_id="alice", reason="test"
-        )
+        result = governor.replay(env, dry_run=True, operator_id="alice", reason="test")
         assert result.step == ReplayStep.DRY_RUN
         assert result.dry_run is True
         # Executor NOT called in dry-run.
@@ -238,9 +235,7 @@ class TestReplayDryRun:
 
         governor = DLQReplayGovernor(capability_check=cap_check)
         # Should NOT raise даже если capability denied.
-        result = governor.replay(
-            env, dry_run=True, operator_id="alice", reason="test"
-        )
+        result = governor.replay(env, dry_run=True, operator_id="alice", reason="test")
         assert result.success is True
 
     def test_dry_run_skips_rate_limit(self) -> None:
@@ -268,9 +263,7 @@ class TestReplayReal:
             return True
 
         governor = DLQReplayGovernor(replay_executor=executor)
-        result = governor.replay(
-            env, dry_run=False, operator_id="alice", reason="test"
-        )
+        result = governor.replay(env, dry_run=False, operator_id="alice", reason="test")
         assert result.step == ReplayStep.REPLAY
         assert result.dry_run is False
         assert result.success is True
@@ -292,9 +285,7 @@ class TestReplayReal:
 
         governor = DLQReplayGovernor(capability_check=cap_check)
         with pytest.raises(CapabilityDeniedError) as exc_info:
-            governor.replay(
-                env, dry_run=False, operator_id="alice", reason="test"
-            )
+            governor.replay(env, dry_run=False, operator_id="alice", reason="test")
         assert exc_info.value.capability == "dlq.replay"
         assert exc_info.value.operator_id == "alice"
 
@@ -305,9 +296,7 @@ class TestReplayReal:
             return True
 
         governor = DLQReplayGovernor(capability_check=cap_check)
-        result = governor.replay(
-            env, dry_run=False, operator_id="alice", reason="test"
-        )
+        result = governor.replay(env, dry_run=False, operator_id="alice", reason="test")
         assert result.success is True
 
     def test_rate_limit_exceeded_raises(self) -> None:
@@ -331,9 +320,7 @@ class TestReplayReal:
             raise RuntimeError("broker down")
 
         governor = DLQReplayGovernor(replay_executor=executor)
-        result = governor.replay(
-            env, dry_run=False, operator_id="alice", reason="test"
-        )
+        result = governor.replay(env, dry_run=False, operator_id="alice", reason="test")
         assert result.success is False
         assert "broker down" in result.metadata.get("executor_error", "")
 
@@ -358,9 +345,7 @@ class TestReplayReal:
 
     def test_pii_redacted_before_executor_called(self) -> None:
         """Redaction происходит ДО вызова executor."""
-        env = _make_envelope(
-            payload={"email": "alice@example.com", "order_id": "123"}
-        )
+        env = _make_envelope(payload={"email": "alice@example.com", "order_id": "123"})
         executor_received = []
 
         def executor(payload: object) -> bool:
@@ -368,9 +353,7 @@ class TestReplayReal:
             return True
 
         governor = DLQReplayGovernor(replay_executor=executor)
-        result = governor.replay(
-            env, dry_run=False, operator_id="alice", reason="test"
-        )
+        result = governor.replay(env, dry_run=False, operator_id="alice", reason="test")
         assert result.success is True
         assert len(executor_received) == 1
         # Executor получил REDACTED payload.
@@ -385,9 +368,7 @@ class TestVerify:
     def test_verify_successful_replay(self) -> None:
         env = _make_envelope()
         governor = DLQReplayGovernor()
-        result = governor.replay(
-            env, dry_run=False, operator_id="alice", reason="test"
-        )
+        result = governor.replay(env, dry_run=False, operator_id="alice", reason="test")
         assert governor.verify(result.replay_id, success=True) is True
         assert governor.verify(result.replay_id, success=False) is False
 
@@ -445,9 +426,7 @@ class TestAuditTrailCompliance:
         """Если в metadata есть event_id → используется как original_event_id."""
         env = _make_envelope(metadata={"event_id": "evt-original-42"})
         governor = DLQReplayGovernor()
-        governor.replay(
-            env, dry_run=False, operator_id="alice", reason="test"
-        )
+        governor.replay(env, dry_run=False, operator_id="alice", reason="test")
         entry = governor.get_audit_log()[0]
         assert entry.original_event_id == "evt-original-42"
 
@@ -455,9 +434,7 @@ class TestAuditTrailCompliance:
         """Без metadata.event_id → fallback на dlq_id."""
         env = _make_envelope(metadata={})
         governor = DLQReplayGovernor()
-        governor.replay(
-            env, dry_run=False, operator_id="alice", reason="test"
-        )
+        governor.replay(env, dry_run=False, operator_id="alice", reason="test")
         entry = governor.get_audit_log()[0]
         assert entry.original_event_id == env.dlq_id
 

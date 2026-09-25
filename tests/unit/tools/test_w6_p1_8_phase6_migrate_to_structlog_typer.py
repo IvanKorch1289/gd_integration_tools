@@ -20,9 +20,7 @@ import typer
 from typer.testing import CliRunner
 
 # Workaround для pytest --import-mode=importlib.
-_TOOLS_PATH = (
-    Path(__file__).resolve().parents[3] / "tools" / "migrate_to_structlog.py"
-)
+_TOOLS_PATH = Path(__file__).resolve().parents[3] / "tools" / "migrate_to_structlog.py"
 _spec = importlib.util.spec_from_file_location(
     "tools.migrate_to_structlog", _TOOLS_PATH
 )

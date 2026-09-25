@@ -51,9 +51,7 @@ class TestHitlTenantEnforcement:
 
         # Cross-tenant access via explicit tenant_id returns None.
         got_cross = await svc.get("s-1", tenant_id="t-b")
-        assert got_cross is None, (
-            "Cross-tenant access must be blocked (fail-closed)."
-        )
+        assert got_cross is None, "Cross-tenant access must be blocked (fail-closed)."
 
     async def test_get_passes_through_when_tenant_matches(self) -> None:
         """Same tenant_id returns signal."""
@@ -105,9 +103,7 @@ class TestHitlTenantEnforcement:
 
         # Cross-tenant direct store call.
         got_cross = await store.get("s-1", tenant_id="t-b")
-        assert got_cross is None, (
-            "Direct store.get() cross-tenant must be blocked."
-        )
+        assert got_cross is None, "Direct store.get() cross-tenant must be blocked."
 
         # Without tenant_id (legacy): passes through (backwards-compat).
         got_legacy = await store.get("s-1")

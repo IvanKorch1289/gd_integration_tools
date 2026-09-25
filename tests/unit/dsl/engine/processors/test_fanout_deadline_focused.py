@@ -57,14 +57,12 @@ class _BoomBudget(DeadlineBudget):
 
     def is_expired(self, *, now: float | None = None) -> bool:
         raise DeadlineExpiredError(
-            "forced for test",
-            original_timeout=self.original_timeout,
+            "forced for test", original_timeout=self.original_timeout
         )
 
     def remaining(self, *, now: float | None = None) -> float:
         raise DeadlineExpiredError(
-            "forced for test",
-            original_timeout=self.original_timeout,
+            "forced for test", original_timeout=self.original_timeout
         )
 
 
@@ -81,9 +79,7 @@ class _MarkerProc:
         self.sleep = sleep
         self.called = False
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         self.called = True
         if self.sleep > 0.0:
             await asyncio.sleep(self.sleep)
@@ -233,9 +229,7 @@ class TestAPICompositionDeadline:
         token = _bind_ctx(budget)
         try:
             ex = _make_exchange()
-            sources = [
-                APISource(name="s1", url="http://test/api1", method="GET"),
-            ]
+            sources = [APISource(name="s1", url="http://test/api1", method="GET")]
             proc = APICompositionProcessor(
                 sources=sources,
                 merge_strategy=MergeStrategy.MERGE_DICTS,
@@ -263,9 +257,7 @@ class TestAPICompositionDeadline:
         token = _bind_ctx(budget)
         try:
             ex = _make_exchange()
-            sources = [
-                APISource(name="s1", url="http://test/api1", method="GET"),
-            ]
+            sources = [APISource(name="s1", url="http://test/api1", method="GET")]
             proc = APICompositionProcessor(
                 sources=sources,
                 merge_strategy=MergeStrategy.MERGE_DICTS,
@@ -360,9 +352,7 @@ class TestDurableSubscriberDeadline:
         token = _bind_ctx(budget)
         try:
             ex = _make_exchange()
-            proc = DurableSubscriberProcessor(
-                broker=broker, subscribers=["s1", "s2"]
-            )
+            proc = DurableSubscriberProcessor(broker=broker, subscribers=["s1", "s2"])
             await proc.process(ex, ExecutionContext())
             assert set(broker.calls) == {"s1", "s2"}
         finally:
@@ -384,9 +374,7 @@ class TestDurableSubscriberDeadline:
 
         broker = _MockBroker()
         ex = _make_exchange()
-        proc = DurableSubscriberProcessor(
-            broker=broker, subscribers=["s1", "s2"]
-        )
+        proc = DurableSubscriberProcessor(broker=broker, subscribers=["s1", "s2"])
         await proc.process(ex, ExecutionContext())
         assert set(broker.calls) == {"s1", "s2"}
 
@@ -412,8 +400,7 @@ class TestSemanticRouterDeadline:
         try:
             ex = _make_exchange()
             proc = SemanticRouterProcessor(
-                intents={"foo": "route.foo"},
-                default_route="route.default",
+                intents={"foo": "route.foo"}, default_route="route.default"
             )
             await proc.process(ex, ExecutionContext())
             assert ex.error is not None
@@ -434,8 +421,7 @@ class TestSemanticRouterDeadline:
             ex = _make_exchange()
             ex.in_message.body = {}  # пустой body → пустой query
             proc = SemanticRouterProcessor(
-                intents={"foo": "route.foo"},
-                default_route="route.default",
+                intents={"foo": "route.foo"}, default_route="route.default"
             )
             # Семантический router не имеет async-mode mocking, проверяем
             # что admission control НЕ сработал и processor не упал на deadline.
@@ -533,9 +519,7 @@ class TestFanoutBoomBudgetPropagation:
         token = _bind_ctx(boom)
         try:
             ex = _make_exchange()
-            proc = DurableSubscriberProcessor(
-                broker=_MockBroker(), subscribers=["s1"]
-            )
+            proc = DurableSubscriberProcessor(broker=_MockBroker(), subscribers=["s1"])
             with pytest.raises(DeadlineExpiredError):
                 await proc.process(ex, ExecutionContext())
         finally:
@@ -560,7 +544,9 @@ class TestFanoutGracefulDegradation:
         def boom():
             raise RuntimeError("context broken")
 
-        monkeypatch.setattr(ctx_mod, "RequestContext", types.SimpleNamespace(current=boom))
+        monkeypatch.setattr(
+            ctx_mod, "RequestContext", types.SimpleNamespace(current=boom)
+        )
 
         from src.backend.dsl.engine.processors.base import BaseProcessor
         from src.backend.dsl.engine.processors.eip.fork_join import ForkJoinProcessor

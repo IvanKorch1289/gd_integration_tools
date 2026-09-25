@@ -57,7 +57,9 @@ class TestFindWaitForCalls:
 
     def test_finds_single_wait_for(self, tmp_path: Path) -> None:
         path = _write(
-            tmp_path, "p.py", "import asyncio\nawait asyncio.wait_for(coro, timeout=10.0)\n"
+            tmp_path,
+            "p.py",
+            "import asyncio\nawait asyncio.wait_for(coro, timeout=10.0)\n",
         )
         calls = _find_wait_for_calls(path)
         assert len(calls) == 1
@@ -79,9 +81,7 @@ class TestFindWaitForCalls:
 
     def test_ignores_non_asyncio_wait_for(self, tmp_path: Path) -> None:
         """``my.wait_for`` НЕ должен считаться ``asyncio.wait_for``."""
-        path = _write(
-            tmp_path, "p.py", "import my\nmy.wait_for(coro, timeout=10.0)\n"
-        )
+        path = _write(tmp_path, "p.py", "import my\nmy.wait_for(coro, timeout=10.0)\n")
         assert _find_wait_for_calls(path) == []
 
     def test_handles_syntax_error_gracefully(self, tmp_path: Path) -> None:
@@ -124,11 +124,7 @@ class TestFileHasAdmissionControl:
     """``_file_has_admission_control`` — эвристика для admission блока."""
 
     def test_no_request_context_returns_false(self, tmp_path: Path) -> None:
-        path = _write(
-            tmp_path,
-            "p.py",
-            "if budget.is_expired():\n    pass\n",
-        )
+        path = _write(tmp_path, "p.py", "if budget.is_expired():\n    pass\n")
         assert not _file_has_admission_control(path)
 
     def test_is_expired_with_request_context(self, tmp_path: Path) -> None:
@@ -168,9 +164,7 @@ class TestFileHasNarrowing:
 
     def test_min_with_timeout_and_remaining(self, tmp_path: Path) -> None:
         path = _write(
-            tmp_path,
-            "p.py",
-            "effective_timeout = min(self._timeout, remaining)\n",
+            tmp_path, "p.py", "effective_timeout = min(self._timeout, remaining)\n"
         )
         assert _file_has_narrowing(path)
 
@@ -192,9 +186,7 @@ class TestFileHasNarrowing:
 
     def test_no_narrowing_pattern(self, tmp_path: Path) -> None:
         path = _write(
-            tmp_path,
-            "p.py",
-            "await asyncio.wait_for(coro, timeout=self.timeout)\n",
+            tmp_path, "p.py", "await asyncio.wait_for(coro, timeout=self.timeout)\n"
         )
         assert not _file_has_narrowing(path)
 
@@ -281,7 +273,9 @@ class TestClassifyProcessor:
         assert result.has_fanout is True
         assert "asyncio.gather" in result.fanout_patterns
 
-    def test_partial_when_deadline_refs_without_integration(self, tmp_path: Path) -> None:
+    def test_partial_when_deadline_refs_without_integration(
+        self, tmp_path: Path
+    ) -> None:
         """Если файл ссылается на deadline_budget, но не narrowing/admission."""
         path = _write(
             tmp_path,
@@ -523,11 +517,7 @@ class TestEdgeCasesEmptyFile:
 
     def test_only_imports(self, tmp_path: Path) -> None:
         """File только с imports → no-pattern."""
-        path = _write(
-            tmp_path,
-            "p.py",
-            "import asyncio\nfrom typing import Any\n",
-        )
+        path = _write(tmp_path, "p.py", "import asyncio\nfrom typing import Any\n")
         result = classify_processor(path)
         assert result.verdict == "no-pattern"
 

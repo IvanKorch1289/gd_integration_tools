@@ -9,8 +9,6 @@
 
 from __future__ import annotations
 
-from typing import get_type_hints
-
 import pytest
 
 from src.backend.core.privacy import (
@@ -30,45 +28,39 @@ from src.backend.core.privacy import (
 from src.backend.core.privacy import delete_data_subject as dds_package
 from src.backend.core.privacy.delete_data_subject import (
     AdapterResult as ShimAdapterResult,
+)
+from src.backend.core.privacy.delete_data_subject import (
     DeleteDataSubject as ShimDeleteDataSubject,
+)
+from src.backend.core.privacy.delete_data_subject import (
     ErasureAdapter as ShimErasureAdapter,
+)
+from src.backend.core.privacy.delete_data_subject import (
     ErasureResultStatus as ShimErasureResultStatus,
+)
+from src.backend.core.privacy.delete_data_subject import (
     ErasureStrategy as ShimErasureStrategy,
+)
+from src.backend.core.privacy.delete_data_subject import (
     LangMemErasureAdapter as ShimLangMemErasureAdapter,
+)
+from src.backend.core.privacy.delete_data_subject import (
     OrchestratorResult as ShimOrchestratorResult,
+)
+from src.backend.core.privacy.delete_data_subject import (
     PostgresErasureAdapter as ShimPostgresErasureAdapter,
+)
+from src.backend.core.privacy.delete_data_subject import (
     QdrantErasureAdapter as ShimQdrantErasureAdapter,
+)
+from src.backend.core.privacy.delete_data_subject import (
     RedisErasureAdapter as ShimRedisErasureAdapter,
+)
+from src.backend.core.privacy.delete_data_subject import (
     S3ErasureAdapter as ShimS3ErasureAdapter,
+)
+from src.backend.core.privacy.delete_data_subject import (
     TombstonePublisher as ShimTombstonePublisher,
-)
-from src.backend.core.privacy.delete_data_subject._langmem import (
-    LangMemErasureAdapter as LangMemFromSubmodule,
-)
-from src.backend.core.privacy.delete_data_subject._orchestrator import (
-    DeleteDataSubject as DeleteDataSubjectFromSubmodule,
-)
-from src.backend.core.privacy.delete_data_subject._postgres import (
-    PostgresErasureAdapter as PostgresFromSubmodule,
-)
-from src.backend.core.privacy.delete_data_subject._qdrant import (
-    QdrantErasureAdapter as QdrantFromSubmodule,
-)
-from src.backend.core.privacy.delete_data_subject._redis import (
-    RedisErasureAdapter as RedisFromSubmodule,
-)
-from src.backend.core.privacy.delete_data_subject._s3 import (
-    S3ErasureAdapter as S3FromSubmodule,
-)
-from src.backend.core.privacy.delete_data_subject._tombstone import (
-    TombstonePublisher as TombstoneFromSubmodule,
-)
-from src.backend.core.privacy.delete_data_subject._types import (
-    AdapterResult as TypesAdapterResult,
-    ErasureAdapter as TypesErasureAdapter,
-    ErasureResultStatus as TypesErasureResultStatus,
-    ErasureStrategy as TypesErasureStrategy,
-    OrchestratorResult as TypesOrchestratorResult,
 )
 
 
@@ -85,16 +77,18 @@ class TestBackCompatImports:
             (ShimErasureStrategy, ErasureStrategy, "ErasureStrategy"),
             (ShimLangMemErasureAdapter, LangMemErasureAdapter, "LangMemErasureAdapter"),
             (ShimOrchestratorResult, OrchestratorResult, "OrchestratorResult"),
-            (ShimPostgresErasureAdapter, PostgresErasureAdapter, "PostgresErasureAdapter"),
+            (
+                ShimPostgresErasureAdapter,
+                PostgresErasureAdapter,
+                "PostgresErasureAdapter",
+            ),
             (ShimQdrantErasureAdapter, QdrantErasureAdapter, "QdrantErasureAdapter"),
             (ShimRedisErasureAdapter, RedisErasureAdapter, "RedisErasureAdapter"),
             (ShimS3ErasureAdapter, S3ErasureAdapter, "S3ErasureAdapter"),
             (ShimTombstonePublisher, TombstonePublisher, "TombstonePublisher"),
         ],
     )
-    def test_shim_returns_same_class(
-        self, shim_obj, canonical_obj, name: str
-    ) -> None:
+    def test_shim_returns_same_class(self, shim_obj, canonical_obj, name: str) -> None:
         """Shim импортирует тот же class (id-equal)."""
         assert shim_obj is canonical_obj, (
             f"{name}: shim identity {shim_obj.__name__}@{id(shim_obj)} != "

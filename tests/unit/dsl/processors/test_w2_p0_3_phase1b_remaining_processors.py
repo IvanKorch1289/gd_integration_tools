@@ -7,6 +7,7 @@ reflection_loop_processor, router_specialist_processor — каждый мигр
 Все shim'ы используют ``__getattr__`` lazy import для проксирования
 любых классов (mixin, enum, dataclass) из canonical module.
 """
+
 from __future__ import annotations
 
 import warnings
@@ -16,20 +17,27 @@ class TestStranglerFigShim:
     """strangler_fig.py: legacy shim → dsl.engine.processors.strangler_fig."""
 
     def test_identity_for_strangler_fig_processor(self) -> None:
-        from src.backend.dsl.processors.strangler_fig import StranglerFigProcessor
         from src.backend.dsl.engine.processors.strangler_fig import (
             StranglerFigProcessor as Canonical,
         )
+        from src.backend.dsl.processors.strangler_fig import StranglerFigProcessor
+
         assert StranglerFigProcessor is Canonical
 
     def test_identity_for_route_target(self) -> None:
+        from src.backend.dsl.engine.processors.strangler_fig import (
+            RouteTarget as Canonical,
+        )
         from src.backend.dsl.processors.strangler_fig import RouteTarget
-        from src.backend.dsl.engine.processors.strangler_fig import RouteTarget as Canonical
+
         assert RouteTarget is Canonical
 
     def test_identity_for_strangler_fig_mixin(self) -> None:
+        from src.backend.dsl.engine.processors.strangler_fig import (
+            MigrationMixin as Canonical,
+        )
         from src.backend.dsl.processors.strangler_fig import MigrationMixin
-        from src.backend.dsl.engine.processors.strangler_fig import MigrationMixin as Canonical
+
         assert MigrationMixin is Canonical
 
 
@@ -37,22 +45,27 @@ class TestDataLineageShim:
     """data_lineage.py: legacy shim → dsl.engine.processors.data_lineage."""
 
     def test_identity_for_data_lineage_processor(self) -> None:
-        from src.backend.dsl.processors.data_lineage import DataLineageProcessor
         from src.backend.dsl.engine.processors.data_lineage import (
             DataLineageProcessor as Canonical,
         )
+        from src.backend.dsl.processors.data_lineage import DataLineageProcessor
+
         assert DataLineageProcessor is Canonical
 
     def test_identity_for_lineage_node(self) -> None:
+        from src.backend.dsl.engine.processors.data_lineage import (
+            LineageNode as Canonical,
+        )
         from src.backend.dsl.processors.data_lineage import LineageNode
-        from src.backend.dsl.engine.processors.data_lineage import LineageNode as Canonical
+
         assert LineageNode is Canonical
 
     def test_identity_for_lineage_event(self) -> None:
-        from src.backend.dsl.processors.data_lineage import LineageEvent
         from src.backend.dsl.engine.processors.data_lineage import (
             LineageEvent as Canonical,
         )
+        from src.backend.dsl.processors.data_lineage import LineageEvent
+
         assert LineageEvent is Canonical
 
 
@@ -60,31 +73,37 @@ class TestPlanExecuteShim:
     """plan_execute_processor.py: legacy shim → canonical."""
 
     def test_identity_for_plan_execute_processor(self) -> None:
-        from src.backend.dsl.processors.plan_execute_processor import PlanExecuteProcessor
         from src.backend.dsl.engine.processors.plan_execute_processor import (
             PlanExecuteProcessor as Canonical,
         )
+        from src.backend.dsl.processors.plan_execute_processor import (
+            PlanExecuteProcessor,
+        )
+
         assert PlanExecuteProcessor is Canonical
 
     def test_identity_for_plan_step(self) -> None:
-        from src.backend.dsl.processors.plan_execute_processor import PlanStep
         from src.backend.dsl.engine.processors.plan_execute_processor import (
             PlanStep as Canonical,
         )
+        from src.backend.dsl.processors.plan_execute_processor import PlanStep
+
         assert PlanStep is Canonical
 
     def test_identity_for_plan_result(self) -> None:
-        from src.backend.dsl.processors.plan_execute_processor import PlanResult
         from src.backend.dsl.engine.processors.plan_execute_processor import (
             PlanResult as Canonical,
         )
+        from src.backend.dsl.processors.plan_execute_processor import PlanResult
+
         assert PlanResult is Canonical
 
     def test_identity_for_plan_execute_mixin(self) -> None:
-        from src.backend.dsl.processors.plan_execute_processor import PlanExecuteMixin
         from src.backend.dsl.engine.processors.plan_execute_processor import (
             PlanExecuteMixin as Canonical,
         )
+        from src.backend.dsl.processors.plan_execute_processor import PlanExecuteMixin
+
         assert PlanExecuteMixin is Canonical
 
 
@@ -92,30 +111,33 @@ class TestReflectionLoopShim:
     """reflection_loop_processor.py: legacy shim → canonical."""
 
     def test_identity_for_reflection_loop_processor(self) -> None:
-        from src.backend.dsl.processors.reflection_loop_processor import (
-            ReflectionLoopProcessor,
-        )
         from src.backend.dsl.engine.processors.reflection_loop_processor import (
             ReflectionLoopProcessor as Canonical,
         )
+        from src.backend.dsl.processors.reflection_loop_processor import (
+            ReflectionLoopProcessor,
+        )
+
         assert ReflectionLoopProcessor is Canonical
 
     def test_identity_for_reflection_result(self) -> None:
-        from src.backend.dsl.processors.reflection_loop_processor import (
-            ReflectionResult,
-        )
         from src.backend.dsl.engine.processors.reflection_loop_processor import (
             ReflectionResult as Canonical,
         )
+        from src.backend.dsl.processors.reflection_loop_processor import (
+            ReflectionResult,
+        )
+
         assert ReflectionResult is Canonical
 
     def test_identity_for_reflection_loop_mixin(self) -> None:
-        from src.backend.dsl.processors.reflection_loop_processor import (
-            ReflectionLoopMixin,
-        )
         from src.backend.dsl.engine.processors.reflection_loop_processor import (
             ReflectionLoopMixin as Canonical,
         )
+        from src.backend.dsl.processors.reflection_loop_processor import (
+            ReflectionLoopMixin,
+        )
+
         assert ReflectionLoopMixin is Canonical
 
 
@@ -123,21 +145,23 @@ class TestRouterSpecialistShim:
     """router_specialist_processor.py: legacy shim → canonical."""
 
     def test_identity_for_router_specialist_processor(self) -> None:
-        from src.backend.dsl.processors.router_specialist_processor import (
-            RouterSpecialistProcessor,
-        )
         from src.backend.dsl.engine.processors.router_specialist_processor import (
             RouterSpecialistProcessor as Canonical,
         )
+        from src.backend.dsl.processors.router_specialist_processor import (
+            RouterSpecialistProcessor,
+        )
+
         assert RouterSpecialistProcessor is Canonical
 
     def test_identity_for_specialist_agent(self) -> None:
-        from src.backend.dsl.processors.router_specialist_processor import (
-            SpecialistAgent,
-        )
         from src.backend.dsl.engine.processors.router_specialist_processor import (
             SpecialistAgent as Canonical,
         )
+        from src.backend.dsl.processors.router_specialist_processor import (
+            SpecialistAgent,
+        )
+
         assert SpecialistAgent is Canonical
 
 
@@ -162,7 +186,8 @@ class TestDslProcessorsReExportHub:
                 StranglerFigProcessor,
             )
         deprecations = [
-            x for x in w
+            x
+            for x in w
             if issubclass(x.category, DeprecationWarning)
             and "W2 P0-3 processor consolidation" in str(x.message)
         ]
@@ -189,4 +214,5 @@ class TestDslProcessorsReExportHub:
         from src.backend.dsl.processors.saga_lra_processor import (
             SagaLRAProcessor as Legacy,
         )
+
         assert SagaLRAProcessor is Legacy

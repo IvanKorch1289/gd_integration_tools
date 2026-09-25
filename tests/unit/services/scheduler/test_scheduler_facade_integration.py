@@ -529,16 +529,17 @@ class TestSchedulerFacadeConcurrentMaterialization:
         assert result["ticks_in_window"] > 0
 
         store = RunHistoryStore(store_setup)
+
         # Simulate два worker'а пытаются claim и execute pending-tick.
         async def executor(task_id: str, scheduled_for: object) -> None:
             pass
 
-        done1, _failed1 = await BackfillService(
-            store, max_window_days=2
-        ).run_catchup(job_id="test_lease_required", executor=executor, limit=100)
-        done2, _failed2 = await BackfillService(
-            store, max_window_days=2
-        ).run_catchup(job_id="test_lease_required", executor=executor, limit=100)
+        done1, _failed1 = await BackfillService(store, max_window_days=2).run_catchup(
+            job_id="test_lease_required", executor=executor, limit=100
+        )
+        done2, _failed2 = await BackfillService(store, max_window_days=2).run_catchup(
+            job_id="test_lease_required", executor=executor, limit=100
+        )
 
         # Per v6 spec: «retry/lease и защита от двух workers».
         # Без lease: оба worker'а могут claim все ticks → done1 + done2 может

@@ -60,6 +60,7 @@ class TestModuleImports:
     def test_main_help(self) -> None:
         """--help prints usage and exits (argparse convention)."""
         import pytest
+
         # argparse вызывает parser.exit() при --help → SystemExit(0).
         with pytest.raises(SystemExit) as exc_info:
             main(["--help"])
@@ -204,9 +205,7 @@ class TestClassify:
         assert _is_package_internal_sibling("dsl.processors.event_store.cqrs") is True
         # In-package sub-module другого пакета (4 parts) → True
         assert (
-            _is_package_internal_sibling(
-                "dsl.processors.idp_pipeline_processor.state"
-            )
+            _is_package_internal_sibling("dsl.processors.idp_pipeline_processor.state")
             is True
         )
 
@@ -215,9 +214,7 @@ class TestClassify:
         from tools.audit_legacy_processors import _is_package_internal_sibling
 
         # Если sub-package не существует — False (не пытаемся догадаться).
-        assert (
-            _is_package_internal_sibling("dsl.processors.nonexistent.foo") is False
-        )
+        assert _is_package_internal_sibling("dsl.processors.nonexistent.foo") is False
 
     def test_needs_migration_with_importers(self) -> None:
         """No canonical target + importers > 0 → NEEDS_MIGRATION."""
@@ -290,12 +287,11 @@ class TestShimIntegration:
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
             import src.backend.dsl.processors.batch_processor as bp_module
+
             importlib.reload(bp_module)
 
         deprecations = [
-            str(w.message)
-            for w in caught
-            if issubclass(w.category, DeprecationWarning)
+            str(w.message) for w in caught if issubclass(w.category, DeprecationWarning)
         ]
         assert any("cycle 156" in m for m in deprecations), (
             f"Deprecation should mention cycle 156 (telemetry audit milestone), "
@@ -316,11 +312,15 @@ class TestRealInventory:
         assert all(r.status == "SEMANTIC_KEEP" for r in saga_files)
         assert len(saga_files) >= 5
 
-    def test_real_inventory_classifications_consistent(self, real_inventory: list) -> None:
+    def test_real_inventory_classifications_consistent(
+        self, real_inventory: list
+    ) -> None:
         rows = real_inventory
         valid_statuses = {"REMOVABLE", "NEEDS_MIGRATION", "SEMANTIC_KEEP", "SHIMMED"}
         for r in rows:
-            assert r.status in valid_statuses, f"{r.file} has invalid status {r.status!r}"
+            assert r.status in valid_statuses, (
+                f"{r.file} has invalid status {r.status!r}"
+            )
 
     def test_real_inventory_total_loc(self, real_inventory: list) -> None:
         rows = real_inventory

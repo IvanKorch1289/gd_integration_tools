@@ -20,9 +20,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from src.backend.core.errors import AuthorizationError, NotFoundError
-from src.backend.core.security.object_ownership import (
-    _verify_ownership,
-)
+from src.backend.core.security.object_ownership import _verify_ownership
 
 
 def _make_model_class(name: str = "TestModel") -> type:
@@ -98,9 +96,7 @@ class TestRequireObjectOwnership:
         """
         model = _make_model_class()
         session = MagicMock()
-        session.get.return_value = _make_resource(
-            resource_id=42, tenant="t-a"
-        )
+        session.get.return_value = _make_resource(resource_id=42, tenant="t-a")
 
         with pytest.raises(AuthorizationError, match="Tenant mismatch"):
             await _verify_ownership(
@@ -117,9 +113,7 @@ class TestRequireObjectOwnership:
         """Same tenant_id → pass (no exception)."""
         model = _make_model_class()
         session = MagicMock()
-        session.get.return_value = _make_resource(
-            resource_id=42, tenant="t-a"
-        )
+        session.get.return_value = _make_resource(resource_id=42, tenant="t-a")
 
         # Should NOT raise.
         await _verify_ownership(
@@ -196,9 +190,7 @@ class TestRequireObjectOwnership:
         """``raise_on_mismatch=False`` → no raise, caller handles via return."""
         model = _make_model_class()
         session = MagicMock()
-        session.get.return_value = _make_resource(
-            resource_id=42, tenant="t-a"
-        )
+        session.get.return_value = _make_resource(resource_id=42, tenant="t-a")
 
         # Should NOT raise even with mismatched tenants.
         await _verify_ownership(

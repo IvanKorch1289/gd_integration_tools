@@ -29,7 +29,6 @@ from __future__ import annotations
 import importlib as _importlib
 from typing import Any as _Any
 
-
 _LAZY_MAP: dict[str, str] = {
     # dlq_base is SIBLING module (не submodule of dlq/):
     # src/backend/infrastructure/messaging/dlq_base.py.

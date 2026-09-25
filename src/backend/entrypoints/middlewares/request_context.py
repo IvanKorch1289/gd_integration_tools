@@ -103,7 +103,7 @@ def _parse_deadline_header(value: str) -> float | None:
     """
     try:
         timeout = float(value)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         logger.warning("X-Request-Timeout not parseable: %r", value)
         return None
     if timeout <= 0 or timeout != timeout:  # reject 0/negative/NaN

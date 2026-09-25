@@ -13,9 +13,24 @@ from src.backend.core.ai.retry_policy import RetryPolicy
 
 from src.backend.dsl.workflow.gateways import BranchSpec
 
-from src.backend.dsl.workflow.spec.activity_declarations import ActivityDeclaration, PauseDeclaration, ResumeDeclaration, SagaDeclaration, SignalWaitDeclaration, SleepDeclaration
+from src.backend.dsl.workflow.spec.activity_declarations import (
+    ActivityDeclaration,
+    PauseDeclaration,
+    ResumeDeclaration,
+    SagaDeclaration,
+    SignalWaitDeclaration,
+    SleepDeclaration,
+)
 
-from src.backend.dsl.workflow.spec.advanced_declarations import AgentInvokeDeclaration, CheckpointDeclaration, ContinueAsNewDeclaration, EscalateDeclaration, GuardrailDeclaration, ReflectDeclaration, SensorDeclaration
+from src.backend.dsl.workflow.spec.advanced_declarations import (
+    AgentInvokeDeclaration,
+    CheckpointDeclaration,
+    ContinueAsNewDeclaration,
+    EscalateDeclaration,
+    GuardrailDeclaration,
+    ReflectDeclaration,
+    SensorDeclaration,
+)
 
 from src.backend.dsl.workflow.spec.policies import MemoryScope
 
@@ -27,11 +42,16 @@ from src.backend.dsl.workflow.builder._protocol import WorkflowStep
 
 from src.backend.dsl.workflow.builder.sla_mixin import Self
 
-
-
 class WorkflowBuilder:
-
-    def activity(self, name: str, *, args: UnionType[dict[str, Any], None] = ..., timeout_s: UnionType[float, None] = ..., retry_policy: UnionType[RetryPolicy, None] = ..., output_key: UnionType[str, None] = ...) -> Self:
+    def activity(
+        self,
+        name: str,
+        *,
+        args: UnionType[dict[str, Any], None] = ...,
+        timeout_s: UnionType[float, None] = ...,
+        retry_policy: UnionType[RetryPolicy, None] = ...,
+        output_key: UnionType[str, None] = ...,
+    ) -> Self:
         """Добавить atomic activity-шаг в цепочку."""
         ...
 
@@ -39,7 +59,14 @@ class WorkflowBuilder:
         """Собрать и провалидировать :class:`WorkflowDeclaration`."""
         ...
 
-    def checkpoint(self, *, checkpoint_id: UnionType[str, None] = ..., include_steps: tuple[str, Ellipsis] = ..., metadata: UnionType[dict[str, Any], None] = ..., output_key: UnionType[str, None] = ...) -> Self:
+    def checkpoint(
+        self,
+        *,
+        checkpoint_id: UnionType[str, None] = ...,
+        include_steps: tuple[str, Ellipsis] = ...,
+        metadata: UnionType[dict[str, Any], None] = ...,
+        output_key: UnionType[str, None] = ...,
+    ) -> Self:
         """Добавить checkpoint-шаг для workflow state persistence (S28 W3)."""
         ...
 
@@ -55,7 +82,14 @@ class WorkflowBuilder:
         """Установить человекочитаемое описание workflow."""
         ...
 
-    def escalate(self, *, to_agent: UnionType[str, None] = ..., to_model: UnionType[str, None] = ..., reason: UnionType[str, None] = ..., output_key: UnionType[str, None] = ...) -> Self:
+    def escalate(
+        self,
+        *,
+        to_agent: UnionType[str, None] = ...,
+        to_model: UnionType[str, None] = ...,
+        reason: UnionType[str, None] = ...,
+        output_key: UnionType[str, None] = ...,
+    ) -> Self:
         """Добавить escalate-шаг для переключения на другого агента/модель (S28 W3)."""
         ...
 
@@ -71,15 +105,44 @@ class WorkflowBuilder:
         """B-08/B-09 fix (cycle 33): добавить XOR (exclusive) gateway."""
         ...
 
-    def guardrail(self, rule: str, threshold: float, *, on_exceed: str = ..., target: UnionType[str, None] = ..., output_key: UnionType[str, None] = ...) -> Self:
+    def guardrail(
+        self,
+        rule: str,
+        threshold: float,
+        *,
+        on_exceed: str = ...,
+        target: UnionType[str, None] = ...,
+        output_key: UnionType[str, None] = ...,
+    ) -> Self:
         """Добавить guardrail-шаг для лимитов доступа (S28 W3)."""
         ...
 
-    def human_approval(self, name: str, *, approvers_group: str, timeout_s: float = ..., output_key: UnionType[str, None] = ...) -> Self:
+    def human_approval(
+        self,
+        name: str,
+        *,
+        approvers_group: str,
+        timeout_s: float = ...,
+        output_key: UnionType[str, None] = ...,
+    ) -> Self:
         """HITL (Human-In-The-Loop) approval step (S168 W10 P1-3)."""
         ...
 
-    def invoke_agent(self, agent_id: str, *, input_context: UnionType[str, None] = ..., durable: bool = ..., output_key: UnionType[str, None] = ..., max_turns: int = ..., timeout_s: UnionType[float, None] = ..., memory_scope: MemoryScope | None = ..., write_episode: bool = ..., namespace_template: UnionType[str, None] = ..., inject_memory: bool = ..., recall_on: UnionType[str, None] = ...) -> Self:
+    def invoke_agent(
+        self,
+        agent_id: str,
+        *,
+        input_context: UnionType[str, None] = ...,
+        durable: bool = ...,
+        output_key: UnionType[str, None] = ...,
+        max_turns: int = ...,
+        timeout_s: UnionType[float, None] = ...,
+        memory_scope: MemoryScope | None = ...,
+        write_episode: bool = ...,
+        namespace_template: UnionType[str, None] = ...,
+        inject_memory: bool = ...,
+        recall_on: UnionType[str, None] = ...,
+    ) -> Self:
         """Добавить AI-агент как шаг workflow (S27 W6, S28 W2, R-V15-9)."""
         ...
 
@@ -87,7 +150,16 @@ class WorkflowBuilder:
         """Добавить pause-шаг для приостановки workflow (S35 GAP-DSL-2)."""
         ...
 
-    def reflect(self, *, trigger: UnionType[str, None] = ..., source_step: UnionType[str, None] = ..., memory_writes: UnionType[list[str], None] = ..., consolidation_policy: str = ..., async_mode: bool = ..., output_key: UnionType[str, None] = ...) -> Self:
+    def reflect(
+        self,
+        *,
+        trigger: UnionType[str, None] = ...,
+        source_step: UnionType[str, None] = ...,
+        memory_writes: UnionType[list[str], None] = ...,
+        consolidation_policy: str = ...,
+        async_mode: bool = ...,
+        output_key: UnionType[str, None] = ...,
+    ) -> Self:
         """Добавить reflect-шаг для procedural memory update (S28 W3)."""
         ...
 
@@ -99,11 +171,25 @@ class WorkflowBuilder:
         """Открыть саб-builder для saga-шага."""
         ...
 
-    def sensor(self, predicate: str, *, poll_interval_s: float = ..., timeout_s: UnionType[float, None] = ...) -> Self:
+    def sensor(
+        self,
+        predicate: str,
+        *,
+        poll_interval_s: float = ...,
+        timeout_s: UnionType[float, None] = ...,
+    ) -> Self:
         """Добавить periodic-sensor (Airflow-style poll-предикат)."""
         ...
 
-    def sla(self, *, soft_limit_seconds: float, hard_limit_seconds: float, escalation_email: UnionType[str, None] = ..., escalation_slack: UnionType[str, None] = ..., breach_action: str = ...) -> Self:
+    def sla(
+        self,
+        *,
+        soft_limit_seconds: float,
+        hard_limit_seconds: float,
+        escalation_email: UnionType[str, None] = ...,
+        escalation_slack: UnionType[str, None] = ...,
+        breach_action: str = ...,
+    ) -> Self:
         """Установить SLA-политику workflow (Sprint 9 K3 W10)."""
         ...
 
@@ -111,7 +197,27 @@ class WorkflowBuilder:
         """Добавить durable-sleep (Temporal-friendly)."""
         ...
 
-    def then(self, step: Annotated[UnionType[ActivityDeclaration, SagaDeclaration, SignalWaitDeclaration, SleepDeclaration, PauseDeclaration, ResumeDeclaration, SensorDeclaration, AgentInvokeDeclaration, ReflectDeclaration, CheckpointDeclaration, GuardrailDeclaration, EscalateDeclaration, ContinueAsNewDeclaration], FieldInfo(annotation=NoneType, required=True, discriminator='type')]) -> Self:
+    def then(
+        self,
+        step: Annotated[
+            UnionType[
+                ActivityDeclaration,
+                SagaDeclaration,
+                SignalWaitDeclaration,
+                SleepDeclaration,
+                PauseDeclaration,
+                ResumeDeclaration,
+                SensorDeclaration,
+                AgentInvokeDeclaration,
+                ReflectDeclaration,
+                CheckpointDeclaration,
+                GuardrailDeclaration,
+                EscalateDeclaration,
+                ContinueAsNewDeclaration,
+            ],
+            FieldInfo(annotation=NoneType, required=True, discriminator="type"),
+        ],
+    ) -> Self:
         """D-AUDIT-A8-06 fix (cycle 1): добавить произвольный WorkflowStep в pipeline."""
         ...
 
@@ -119,10 +225,15 @@ class WorkflowBuilder:
         """Установить semver-версию workflow (например, ``"2.1"``)."""
         ...
 
-    def wait_for_signal(self, signal_name: str, *, timeout_s: UnionType[float, None] = ..., output_key: UnionType[str, None] = ...) -> Self:
+    def wait_for_signal(
+        self,
+        signal_name: str,
+        *,
+        timeout_s: UnionType[float, None] = ...,
+        output_key: UnionType[str, None] = ...,
+    ) -> Self:
         """Добавить durable-ожидание внешнего сигнала (HITL)."""
         ...
-
 
 class SagaBuilder:
     """Саб-builder saga-шага. Аккумулирует forward/compensate цепочки.

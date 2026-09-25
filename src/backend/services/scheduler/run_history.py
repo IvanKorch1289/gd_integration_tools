@@ -26,10 +26,7 @@ STATUS_MISSED = "missed"
 class RunHistoryStore:
     """Хранилище run-history: materialize / pending / статусные переходы."""
 
-    def __init__(
-        self,
-        session_factory: Callable[[], Any],
-    ) -> None:
+    def __init__(self, session_factory: Callable[[], Any]) -> None:
         """Инициализация.
 
         Args:

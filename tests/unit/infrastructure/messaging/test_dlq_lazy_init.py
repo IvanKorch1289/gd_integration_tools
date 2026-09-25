@@ -47,21 +47,27 @@ class TestLazyInitProxy:
 
         # Fresh subprocess — гарантирует isolated sys.modules state.
         result = subprocess.run(
-            [_sys.executable, "-c", (
-                "import sys; "
-                "import src.backend.infrastructure.messaging.dlq; "
-                "writer_names = ["
-                "'src.backend.infrastructure.messaging.dlq.fanout_writer', "
-                "'src.backend.infrastructure.messaging.dlq.kafka_writer', "
-                "'src.backend.infrastructure.messaging.dlq.rabbit_writer', "
-                "'src.backend.infrastructure.messaging.dlq.nats_writer', "
-                "'src.backend.infrastructure.messaging.dlq.inbox_writer', "
-                "'src.backend.infrastructure.messaging.dlq.memory_writer'"
-                "]; "
-                "loaded = [n for n in writer_names if n in sys.modules]; "
-                "print(len(loaded))"
-            )],
-            capture_output=True, text=True, timeout=15,
+            [
+                _sys.executable,
+                "-c",
+                (
+                    "import sys; "
+                    "import src.backend.infrastructure.messaging.dlq; "
+                    "writer_names = ["
+                    "'src.backend.infrastructure.messaging.dlq.fanout_writer', "
+                    "'src.backend.infrastructure.messaging.dlq.kafka_writer', "
+                    "'src.backend.infrastructure.messaging.dlq.rabbit_writer', "
+                    "'src.backend.infrastructure.messaging.dlq.nats_writer', "
+                    "'src.backend.infrastructure.messaging.dlq.inbox_writer', "
+                    "'src.backend.infrastructure.messaging.dlq.memory_writer'"
+                    "]; "
+                    "loaded = [n for n in writer_names if n in sys.modules]; "
+                    "print(len(loaded))"
+                ),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=15,
             check=True,
         )
         loaded_count = int(result.stdout.strip())

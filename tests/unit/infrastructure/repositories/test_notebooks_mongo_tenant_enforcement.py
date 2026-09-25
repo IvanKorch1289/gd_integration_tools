@@ -91,7 +91,9 @@ class TestMongoNotebookRepositoryTenantEnforcement:
         )
 
     @pytest.mark.asyncio
-    async def test_get_handles_missing_tenant_in_doc(self, mock_pydantic_settings) -> None:
+    async def test_get_handles_missing_tenant_in_doc(
+        self, mock_pydantic_settings
+    ) -> None:
         """Doc without tenant_id в metadata + explicit filter → None (fail-closed)."""
         from src.backend.infrastructure.repositories.notebooks_mongo import (
             MongoNotebookRepository,

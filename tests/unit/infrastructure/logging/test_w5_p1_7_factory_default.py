@@ -4,6 +4,7 @@ Verifies that :func:`infrastructure.logging.factory.get_logger` (cold-start
 fallback) prefers :class:`StructlogGraylogBackend` over StdlibLogger when
 structlog is installed (default in this project per ADR-0084).
 """
+
 from __future__ import annotations
 
 from unittest.mock import patch
@@ -41,13 +42,13 @@ class TestFactoryAutoDetectBackend:
         def _import_block_structlog(
             name: str, *args: object, **kwargs: object
         ) -> object:
-            if name =="structlog":
+            if name == "structlog":
                 raise ImportError("simulated structlog unavailability")
             return real_import(name, *args, **kwargs)
 
         with patch.object(builtins, "__import__", side_effect=_import_block_structlog):
             backend = factory._detect_available_backend()
-        assert backend =="stdlib"
+        assert backend == "stdlib"
 
 
 class TestGetLoggerUsesStructlogByDefault:
@@ -57,7 +58,10 @@ class TestGetLoggerUsesStructlogByDefault:
         """First call to get_logger (without configure_logging) должен вернуть StructlogLogger."""
         log = factory.get_logger("test.w5_p1_7.cold_start")
         assert isinstance(log, StructlogLogger)
-        assert type(log).__module__ == "src.backend.infrastructure.logging.structlog_backend"
+        assert (
+            type(log).__module__
+            == "src.backend.infrastructure.logging.structlog_backend"
+        )
 
     def test_get_logger_kwargs_api_works(self) -> None:
         """structlog kwargs API (``logger.info('msg', key=val)``) работает."""
@@ -83,7 +87,7 @@ class TestGetLoggerFallbackWhenStructlogUnavailable:
         def _import_block_structlog(
             name: str, *args: object, **kwargs: object
         ) -> object:
-            if name =="structlog":
+            if name == "structlog":
                 raise ImportError("simulated")
             return real_import(name, *args, **kwargs)
 
@@ -91,6 +95,7 @@ class TestGetLoggerFallbackWhenStructlogUnavailable:
             log = factory.get_logger("test.w5_p1_7.fallback")
         # Stdlib backend — ``StdlibLogger`` wrapper над ``logging.Logger``.
         from src.backend.infrastructure.logging.stdlib_backend import StdlibLogger
+
         assert isinstance(log, StdlibLogger)
 
 

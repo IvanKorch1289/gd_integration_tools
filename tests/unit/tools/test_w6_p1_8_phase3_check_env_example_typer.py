@@ -55,7 +55,7 @@ class TestCheckEnvExampleTyperMigration:
         source = open(_TOOLS_PATH).read()
         if "sys.stdout.write" in source:
             # Допустимо только рядом с json.dumps (machine-readable output)
-            assert 'json.dumps' in source, (
+            assert "json.dumps" in source, (
                 "sys.stdout.write разрешён только в JSON-выводе, не в human output"
             )
         # Rich console должен быть stderr=True

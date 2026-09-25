@@ -114,9 +114,7 @@ class HitlService:
         """
         from src.backend.core.tenancy import get_tenant_id
 
-        effective_tenant = (
-            tenant_id if tenant_id is not None else get_tenant_id()
-        )
+        effective_tenant = tenant_id if tenant_id is not None else get_tenant_id()
         # Legacy behavior: no tenant context → no filter.
         # Per v4 §10 P1 backwards-compat: existing callers without
         # tenant setup still work.

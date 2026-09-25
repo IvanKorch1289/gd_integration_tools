@@ -19,10 +19,7 @@ from src.backend.services.notebooks.repository import InMemoryNotebookRepository
 from src.backend.services.notebooks.service import NotebookService
 
 
-def _make_notebook(
-    notebook_id: str = "nb-1",
-    tenant: str | None = "t-a",
-) -> Notebook:
+def _make_notebook(notebook_id: str = "nb-1", tenant: str | None = "t-a") -> Notebook:
     """Build test Notebook with tenant_id в metadata."""
     metadata: dict = {}
     if tenant is not None:
@@ -56,9 +53,7 @@ class TestNotebookTenantEnforcement:
 
         # Cross-tenant access blocked.
         got_cross = await repo.get("nb-1", tenant_id="t-b")
-        assert got_cross is None, (
-            "Cross-tenant access must be blocked (fail-closed)."
-        )
+        assert got_cross is None, "Cross-tenant access must be blocked (fail-closed)."
 
     @pytest.mark.asyncio
     async def test_repo_get_legacy_passes_through(self) -> None:
@@ -99,6 +94,7 @@ class TestNotebookTenantEnforcement:
         from src.backend.services.notebooks.repository import (
             InMemoryNotebookRepository as InMemRepo,
         )
+
         repo = InMemRepo()
         await repo.create(_make_notebook(notebook_id="nb-1", tenant="t-a"))
         svc = NotebookService(repository=repo)
@@ -122,6 +118,7 @@ class TestNotebookTenantEnforcement:
         """
         # Reset any prior context (best-effort).
         from src.backend.core.tenancy import _current
+
         try:
             _current.set(None)
         except Exception:

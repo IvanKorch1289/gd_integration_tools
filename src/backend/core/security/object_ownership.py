@@ -166,11 +166,7 @@ async def _verify_ownership(
         if get_attr is not None:
             resource = session.get(resource_model, resource_id)
         else:
-            resource = (
-                session.query(resource_model)
-                .filter_by(id=resource_id)
-                .first()
-            )
+            resource = session.query(resource_model).filter_by(id=resource_id).first()
     except Exception as exc:
         # Per audit + ADR-0345: fail-closed on unexpected errors.
         raise AuthorizationError(

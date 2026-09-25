@@ -19,11 +19,13 @@ NOT @app.command() decorated здесь — manage.py imports + decorates для
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import typer
 
-from src.backend.cli._bootstrap import bootstrap
+from src.backend.cli._bootstrap import (
+    bootstrap,  # type: ignore[import-not-found,attr-defined]
+)
 
 if TYPE_CHECKING:
     pass
@@ -54,14 +56,18 @@ def diagnose(
     async def _check_async() -> dict[str, bool]:
         checks: dict[str, bool] = {}
         try:
-            from src.backend.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import (
+                redis_client,  # type: ignore[import-not-found,attr-defined]
+            )
 
             checks["redis"] = await redis_client.check_connection()
         except Exception:
             checks["redis"] = False
 
         try:
-            from src.backend.infrastructure.database.database import db_initializer
+            from src.backend.infrastructure.database.database import (
+                db_initializer,  # type: ignore[import-not-found,attr-defined]
+            )
 
             checks["database"] = await db_initializer.check_connection()
         except Exception:
@@ -70,7 +76,7 @@ def diagnose(
         return checks
 
     # Gather all diagnostics synchronously where possible
-    diagnostics = {
+    diagnostics: dict[str, Any] = {
         "version": {"python": sys.version, "platform": platform.platform()},
         "health": asyncio.run(_check_async()),
         "breakers": [],
@@ -92,7 +98,9 @@ def diagnose(
 
     # Services
     try:
-        from src.backend.core.svcs_registry import list_services
+        from src.backend.core.svcs_registry import (
+            list_services,  # type: ignore[import-not-found,attr-defined]
+        )
 
         diagnostics["services"] = sorted(list_services())
     except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)
@@ -100,7 +108,7 @@ def diagnose(
 
     # Routes count
     try:
-        from src.backend.dsl.route.loader import (
+        from src.backend.dsl.route.loader import (  # type: ignore[import-not-found,attr-defined]
             RouteLoader,  # type: ignore[import-not-found]
         )
 
@@ -115,7 +123,7 @@ def diagnose(
 
     # Actions count
     try:
-        from src.backend.core.actions import (
+        from src.backend.core.actions import (  # type: ignore[import-not-found,attr-defined]
             ActionHandlerRegistry,  # type: ignore[attr-defined]
         )
 
@@ -125,7 +133,9 @@ def diagnose(
 
     # Feature flags
     try:
-        from src.backend.core.config.features import feature_flags
+        from src.backend.core.config.features import (
+            feature_flags,  # type: ignore[import-not-found,attr-defined]
+        )
 
         flags = feature_flags.model_dump()
         if not verbose:
@@ -144,7 +154,7 @@ def diagnose(
         typer.echo(f"Platform: {platform.platform()}")
         typer.echo("")
         typer.echo("Health:")
-        for name, ok in diagnostics["health"].items():
+        for name, ok in diagnostics["health"].items():  # type: ignore[attr-defined]
             status = (
                 typer.style("OK", fg=typer.colors.GREEN)
                 if ok
@@ -153,7 +163,7 @@ def diagnose(
             typer.echo(f"  {name:<20} {status}")
         typer.echo("")
         typer.echo(f"Circuit Breakers: {len(diagnostics['breakers'])}")
-        for b in diagnostics["breakers"]:
+        for b in diagnostics["breakers"]:  # type: ignore[attr-defined]
             state = b["state"]
             color = typer.colors.GREEN if state == "closed" else typer.colors.RED
             typer.echo(f"  {b['name']:<30} {typer.style(state, fg=color)}")

@@ -13,14 +13,11 @@ Per v4 §3 evidence-first: NOT estimates, ACTUAL behavior verified.
 
 from __future__ import annotations
 
-import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.backend.core.privacy.delete_data_subject._redis import (
-    RedisErasureAdapter,
-)
+from src.backend.core.privacy.delete_data_subject._redis import RedisErasureAdapter
 from src.backend.core.privacy.delete_data_subject._types import (
     ErasureResultStatus,
     ErasureStrategy,
@@ -38,6 +35,7 @@ class TestRedisTenantEnforcement:
         setup continue working (no breaking change).
         """
         from src.backend.core.tenancy import _current
+
         try:
             _current.set(None)
         except Exception:
@@ -45,9 +43,11 @@ class TestRedisTenantEnforcement:
 
         redis_mock = MagicMock()
         scan_calls_log: list = []
+
         async def _scan_log(cursor: int = 0, match: str = "", count: int = 100):
             scan_calls_log.append(match)
             return (0, [])
+
         redis_mock.scan = AsyncMock(side_effect=_scan_log)
         redis_mock.unlink = AsyncMock(return_value=0)
 

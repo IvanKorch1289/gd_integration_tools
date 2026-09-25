@@ -59,7 +59,7 @@ class _FakeApiKeyInfo:
     def get(self, key: str, default: object = None) -> object:  # type: ignore[override]
         try:
             return self.__getitem__(key)
-        except (AttributeError, KeyError):
+        except AttributeError, KeyError:
             return default
 
 

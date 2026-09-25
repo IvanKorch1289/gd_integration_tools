@@ -60,6 +60,6 @@ class TestRuleEngineFacadeIdentity:
         try:
             reg = RuleEngineRegistry()
             assert reg is not None
-        except (TypeError, AttributeError):
+        except TypeError, AttributeError:
             # Если требует обязательных args, проверяем только type identity.
             assert RuleEngineRegistry is not None

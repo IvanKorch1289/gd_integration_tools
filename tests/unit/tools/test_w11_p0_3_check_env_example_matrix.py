@@ -22,9 +22,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-_TOOLS_PATH = (
-    Path(__file__).resolve().parents[3] / "tools" / "check_env_example.py"
-)
+_TOOLS_PATH = Path(__file__).resolve().parents[3] / "tools" / "check_env_example.py"
 _spec = importlib.util.spec_from_file_location("tools.check_env_example", _TOOLS_PATH)
 module = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(module)
@@ -207,9 +205,17 @@ class TestCollectRequiredSecretEnvVars:
         # (lowercase, т.к. имена полей после upper() содержат secret-pattern
         # в виде password/api_key/etc.)
         secret_keywords = {
-            "password", "secret", "api_key", "apikey",
-            "token", "auth_token", "api_token", "access_key",
-            "client_secret", "private_key", "bind_password",
+            "password",
+            "secret",
+            "api_key",
+            "apikey",
+            "token",
+            "auth_token",
+            "api_token",
+            "access_key",
+            "client_secret",
+            "private_key",
+            "bind_password",
         }
         for v in required_secrets:
             # Проверяем что хотя бы одно secret-keyword в lowercase-имени
@@ -232,9 +238,7 @@ class TestRealRepoRegression:
     def test_env_example_vars_count(self) -> None:
         """В .env.example должно быть 30+ vars."""
         documented = collect_env_example_vars()
-        assert len(documented) > 30, (
-            f"Только {len(documented)} vars в .env.example"
-        )
+        assert len(documented) > 30, f"Только {len(documented)} vars в .env.example"
 
 
 class TestCliMatrix:
@@ -292,8 +296,8 @@ class TestCliMatrix:
         Использует monkeypatch для симуляции missing required secret.
         """
         original_collect = module.collect_required_secret_env_vars
-        module.collect_required_secret_env_vars = (
-            lambda: original_collect() | {"FAKE_REQUIRED_SECRET"}
+        module.collect_required_secret_env_vars = lambda: (
+            original_collect() | {"FAKE_REQUIRED_SECRET"}
         )
 
         try:
@@ -321,8 +325,7 @@ class TestIsSecretFieldName:
     """Эвристика секретного имени (общая с check_unsafe_defaults)."""
 
     @pytest.mark.parametrize(
-        "name",
-        ["password", "api_key", "token", "auth_token", "signature_secret"],
+        "name", ["password", "api_key", "token", "auth_token", "signature_secret"]
     )
     def test_secret_detected(self, name: str) -> None:
         assert _is_secret_field_name(name) is True

@@ -40,38 +40,70 @@ one-liner, минимально-валидные сигнатуры (return Any 
 from __future__ import annotations
 
 from src.backend.dsl.builders.base._protocols._ai import (
-    _RouteAIOpsProtocol as _RouteAIOpsProtocol,
     _RouteAgentProtocol as _RouteAgentProtocol,
+)
+from src.backend.dsl.builders.base._protocols._ai import (
+    _RouteAIOpsProtocol as _RouteAIOpsProtocol,
+)
+from src.backend.dsl.builders.base._protocols._ai import (
     _RouteWorkflowOpsProtocol as _RouteWorkflowOpsProtocol,
 )
+from src.backend.dsl.builders.base._protocols._core import _RouteCore as _RouteCore
 from src.backend.dsl.builders.base._protocols._core import (
-    _RouteCore as _RouteCore,
     _RouteProcessorSteps as _RouteProcessorSteps,
+)
+from src.backend.dsl.builders.base._protocols._core import (
     _shares_prefix as _shares_prefix,
 )
 from src.backend.dsl.builders.base._protocols._data import (
     _RouteBatchDataProtocol as _RouteBatchDataProtocol,
+)
+from src.backend.dsl.builders.base._protocols._data import (
     _RouteDbProtocol as _RouteDbProtocol,
+)
+from src.backend.dsl.builders.base._protocols._data import (
     _RouteEntityCrudProtocol as _RouteEntityCrudProtocol,
+)
+from src.backend.dsl.builders.base._protocols._data import (
     _RoutePersistenceProtocol as _RoutePersistenceProtocol,
+)
+from src.backend.dsl.builders.base._protocols._data import (
     _RouteTemplateProtocol as _RouteTemplateProtocol,
 )
 from src.backend.dsl.builders.base._protocols._flow import (
     _RouteConcurrencyProtocol as _RouteConcurrencyProtocol,
+)
+from src.backend.dsl.builders.base._protocols._flow import (
     _RouteControlFlowProtocol as _RouteControlFlowProtocol,
+)
+from src.backend.dsl.builders.base._protocols._flow import (
     _RouteTimeResilienceProtocol as _RouteTimeResilienceProtocol,
 )
 from src.backend.dsl.builders.base._protocols._integration import (
     _RouteIntegrationCoreProtocol as _RouteIntegrationCoreProtocol,
+)
+from src.backend.dsl.builders.base._protocols._integration import (
     _RouteProxyProtocol as _RouteProxyProtocol,
+)
+from src.backend.dsl.builders.base._protocols._integration import (
     _RouteSinkProtocol as _RouteSinkProtocol,
+)
+from src.backend.dsl.builders.base._protocols._integration import (
     _RouteSourceProtocol as _RouteSourceProtocol,
 )
 from src.backend.dsl.builders.base._protocols._support import (
     _RouteCollectionProtocol as _RouteCollectionProtocol,
+)
+from src.backend.dsl.builders.base._protocols._support import (
     _RouteConfigProtocol as _RouteConfigProtocol,
+)
+from src.backend.dsl.builders.base._protocols._support import (
     _RouteContentProtocol as _RouteContentProtocol,
+)
+from src.backend.dsl.builders.base._protocols._support import (
     _RouteConverterProtocol as _RouteConverterProtocol,
+)
+from src.backend.dsl.builders.base._protocols._support import (
     _RouteSecurityProtocol as _RouteSecurityProtocol,
 )
 

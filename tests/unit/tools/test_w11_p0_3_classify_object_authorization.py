@@ -47,9 +47,7 @@ class TestClassification:
             if isinstance(node, mod.ast.Call):
                 # Function signature: _classify_callsite(py, node).
                 # line_no extracted from node.lineno automatically.
-                cs = mod._classify_callsite(
-                    type("FakePy", (), {"parts": ()})(), node,
-                )
+                cs = mod._classify_callsite(type("FakePy", (), {"parts": ()})(), node)
                 if cs is not None:
                     return cs.receiver_type
         return "skipped"
@@ -62,9 +60,11 @@ class TestClassification:
         """
         # Use existing src file with session.query(.*Model).filter_by(id=).
         target = next(
-            (r for r in mod.collect_all_callsites()
-             if r.receiver_type == "user-data"
-             and "session.query" in r.snippet),
+            (
+                r
+                for r in mod.collect_all_callsites()
+                if r.receiver_type == "user-data" and "session.query" in r.snippet
+            ),
             None,
         )
         assert target is not None, (
@@ -81,9 +81,9 @@ class TestClassification:
         Fix: bare extraction ``removesuffix(".get")`` + endswith ``service``.
         """
         targets = [
-            r for r in mod.collect_all_callsites()
-            if r.receiver_type == "user-data"
-            and "svc.get" in r.snippet
+            r
+            for r in mod.collect_all_callsites()
+            if r.receiver_type == "user-data" and "svc.get" in r.snippet
         ]
         assert len(targets) >= 1, (
             "Expected at least one ``svc.get(...)`` callsite classified as "
@@ -92,23 +92,25 @@ class TestClassification:
         )
         for t in targets:
             assert t.detection_pattern == "service-getter"
-            assert "hitl.py" in t.file, (
-                f"Expected hitl.py: {t.snippet!r}"
-            )
+            assert "hitl.py" in t.file, f"Expected hitl.py: {t.snippet!r}"
 
     def test_self_routes_classified_infra_registry(self) -> None:
         """self._routes.get → infra-registry (private-plural-collection)."""
         target = next(
-            (r for r in mod.collect_all_callsites()
-             if r.receiver_type == "infra-registry"
-             and "self._routes" in r.snippet),
+            (
+                r
+                for r in mod.collect_all_callsites()
+                if r.receiver_type == "infra-registry" and "self._routes" in r.snippet
+            ),
             None,
         )
         assert target is not None, (
             "Expected at least one infra-registry callsite с self._routes в реальном src/"
         )
-        assert "private-plural-collection" in target.detection_pattern or \
-               "infra-name-suffix" in target.detection_pattern
+        assert (
+            "private-plural-collection" in target.detection_pattern
+            or "infra-name-suffix" in target.detection_pattern
+        )
 
 
 class TestOutputFormat:
@@ -167,6 +169,8 @@ class TestNoRegression:
 
         result = subprocess.run(
             ["python3.14", "-m", "compileall", "-q", "tools"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         assert result.returncode == 0

@@ -7,17 +7,13 @@ run_pending done/failed учёт, окно-лимиты, compute_missed_ticks.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
-from typing import Any
+from datetime import datetime, timezone
 
 import pytest
 from apscheduler.triggers.cron import CronTrigger
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from src.backend.core.domain.models.base import mapper_registry
-from src.backend.core.domain.models.scheduler_run_history import (
-    SchedulerRunHistory,
-)
 from src.backend.services.scheduler.backfill import (
     BackfillService,
     compute_missed_ticks,
@@ -45,6 +41,7 @@ async def store() -> RunHistoryStore:
         from src.backend.core.domain.models.scheduler_run_history import (
             SchedulerRunHistory,
         )
+
         await conn.execute(
             text(
                 'CREATE TABLE IF NOT EXISTS "transaction" ('
@@ -109,8 +106,7 @@ async def service(store: RunHistoryStore) -> BackfillService:
 
 @pytest.mark.asyncio
 async def test_materialize_catchup_pending(
-    service: BackfillService,
-    store: RunHistoryStore,
+    service: BackfillService, store: RunHistoryStore
 ) -> None:
     """catchup=True → тики materialize как pending (к исполнению)."""
     report = await service.materialize_window(
@@ -130,8 +126,7 @@ async def test_materialize_catchup_pending(
 
 @pytest.mark.asyncio
 async def test_materialize_no_catchup_missed(
-    service: BackfillService,
-    store: RunHistoryStore,
+    service: BackfillService, store: RunHistoryStore
 ) -> None:
     """catchup=False → статус missed (учёт без исполнения)."""
     report = await service.materialize_window(
@@ -148,8 +143,7 @@ async def test_materialize_no_catchup_missed(
 
 @pytest.mark.asyncio
 async def test_materialize_idempotent(
-    service: BackfillService,
-    store: RunHistoryStore,
+    service: BackfillService, store: RunHistoryStore
 ) -> None:
     """Повторный materialize того же окна не создаёт дублей."""
     window = dict(
@@ -166,9 +160,7 @@ async def test_materialize_idempotent(
 
 
 @pytest.mark.asyncio
-async def test_materialize_window_too_big_rejected(
-    service: BackfillService,
-) -> None:
+async def test_materialize_window_too_big_rejected(service: BackfillService) -> None:
     """Окно больше max_window_days → ValueError."""
     with pytest.raises(ValueError, match="Окно больше"):
         await service.materialize_window(
@@ -184,8 +176,7 @@ async def test_materialize_window_too_big_rejected(
 
 @pytest.mark.asyncio
 async def test_run_pending_executes_and_marks_done(
-    service: BackfillService,
-    store: RunHistoryStore,
+    service: BackfillService, store: RunHistoryStore
 ) -> None:
     """Catchup: pending-тики исполняются по порядку → done."""
     executed: list[datetime] = []
@@ -200,9 +191,7 @@ async def test_run_pending_executes_and_marks_done(
         date_to=datetime(2026, 9, 24, 12, 59, tzinfo=UTC),
         catchup=True,
     )
-    done, failed = await service.run_catchup(
-        job_id="job-run", executor=executor
-    )
+    done, failed = await service.run_catchup(job_id="job-run", executor=executor)
     assert (done, failed) == (4, 0)
     assert len(executed) == 4
     assert executed == sorted(executed)  # хронологический порядок
@@ -211,8 +200,7 @@ async def test_run_pending_executes_and_marks_done(
 
 @pytest.mark.asyncio
 async def test_run_pending_executor_failure_marked_failed(
-    service: BackfillService,
-    store: RunHistoryStore,
+    service: BackfillService, store: RunHistoryStore
 ) -> None:
     """Падение executor'а на тике → failed учтён, остальные исполнены."""
 

@@ -51,7 +51,7 @@ def _scan_for_py2_except(path: Path) -> list[tuple[int, str]]:
     """
     try:
         text = path.read_text(encoding="utf-8")
-    except (UnicodeDecodeError, OSError):
+    except UnicodeDecodeError, OSError:
         return []
     try:
         tree = ast.parse(text)
@@ -91,9 +91,7 @@ def _scan_for_py2_except(path: Path) -> list[tuple[int, str]]:
             idx += 1
         if colon_idx is None:
             continue
-        segment = code_part[
-            code_part.index("except") + len("except") : colon_idx
-        ]
+        segment = code_part[code_part.index("except") + len("except") : colon_idx]
         if "," not in segment:
             continue
         if " as " in segment:

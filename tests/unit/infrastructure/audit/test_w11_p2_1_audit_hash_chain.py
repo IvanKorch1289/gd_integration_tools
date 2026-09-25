@@ -63,9 +63,7 @@ class TestAppend:
 
     def test_custom_metadata(self) -> None:
         ledger = HashChainLedger()
-        entry = ledger.append(
-            {"event": "login"}, metadata={"operator_id": "alice"}
-        )
+        entry = ledger.append({"event": "login"}, metadata={"operator_id": "alice"})
         assert entry.metadata == {"operator_id": "alice"}
 
 
@@ -273,9 +271,7 @@ class TestVerifyWithGaps:
             source.append({"i": i}, timestamp=1000.0 + i)
 
         # Skip indexes 1 and 4.
-        restored_entries = [
-            e for e in source.get_entries() if e.index not in {1, 4}
-        ]
+        restored_entries = [e for e in source.get_entries() if e.index not in {1, 4}]
         ledger = HashChainLedger.from_entries(restored_entries)
 
         result = ledger.verify_with_gaps()
@@ -300,25 +296,41 @@ class TestVerifyWithGaps:
         # Manually construct entries with non-contiguous indexes from scratch.
         ts0, ts1, ts3, ts4 = 1000.0, 2000.0, 4000.0, 5000.0
         e0 = HashChainEntry(
-            index=0, timestamp=ts0, payload={"i": 0},
+            index=0,
+            timestamp=ts0,
+            payload={"i": 0},
             prev_hash=_GENESIS_HASH,
-            current_hash=_compute_hash(0, ts0, _canonical_json({"i": 0}), _GENESIS_HASH),
+            current_hash=_compute_hash(
+                0, ts0, _canonical_json({"i": 0}), _GENESIS_HASH
+            ),
         )
         e1 = HashChainEntry(
-            index=1, timestamp=ts1, payload={"i": 1},
+            index=1,
+            timestamp=ts1,
+            payload={"i": 1},
             prev_hash=e0.current_hash,
-            current_hash=_compute_hash(1, ts1, _canonical_json({"i": 1}), e0.current_hash),
+            current_hash=_compute_hash(
+                1, ts1, _canonical_json({"i": 1}), e0.current_hash
+            ),
         )
         # Skip index 2.
         e3 = HashChainEntry(
-            index=3, timestamp=ts3, payload={"i": 3},
+            index=3,
+            timestamp=ts3,
+            payload={"i": 3},
             prev_hash=e1.current_hash,  # link to e1 (skipping index 2)
-            current_hash=_compute_hash(3, ts3, _canonical_json({"i": 3}), e1.current_hash),
+            current_hash=_compute_hash(
+                3, ts3, _canonical_json({"i": 3}), e1.current_hash
+            ),
         )
         e4 = HashChainEntry(
-            index=4, timestamp=ts4, payload={"i": 4},
+            index=4,
+            timestamp=ts4,
+            payload={"i": 4},
             prev_hash=e3.current_hash,
-            current_hash=_compute_hash(4, ts4, _canonical_json({"i": 4}), e3.current_hash),
+            current_hash=_compute_hash(
+                4, ts4, _canonical_json({"i": 4}), e3.current_hash
+            ),
         )
 
         ledger = HashChainLedger.from_entries([e0, e1, e3, e4])
@@ -449,7 +461,7 @@ class TestEndToEndScenarios:
                 "original_event_id": "evt-456",
                 "operator_id": "alice",
                 "reason": "ops-incident-42",
-            },
+            }
         )
         result = ledger.verify_with_gaps()
         assert result.is_valid is True

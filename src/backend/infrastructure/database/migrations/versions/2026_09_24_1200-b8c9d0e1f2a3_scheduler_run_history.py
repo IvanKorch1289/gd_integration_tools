@@ -49,9 +49,7 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(), nullable=False),
         sa.UniqueConstraint("job_id", "scheduled_for", name="uq_run_history_job_tick"),
     )
-    op.create_index(
-        "ix_scheduler_run_history_job_id", TABLE, ["job_id"]
-    )
+    op.create_index("ix_scheduler_run_history_job_id", TABLE, ["job_id"])
     op.create_index("ix_scheduler_run_history_status", TABLE, ["status"])
     op.create_index("ix_scheduler_run_history_tenant_id", TABLE, ["tenant_id"])
 

@@ -206,9 +206,7 @@ class HashChainLedger:
             ValueError: Если payload не сериализуется в JSON.
         """
         index = len(self._entries)
-        prev_hash = (
-            self._entries[-1].current_hash if self._entries else _GENESIS_HASH
-        )
+        prev_hash = self._entries[-1].current_hash if self._entries else _GENESIS_HASH
         ts = timestamp if timestamp is not None else time.time()
         canonical = _canonical_json(payload)
         current_hash = _compute_hash(index, ts, canonical, prev_hash)
@@ -257,9 +255,7 @@ class HashChainLedger:
         """
         if not self._entries:
             return ChainVerificationResult(
-                status=IntegrityStatus.VALID,
-                is_valid=True,
-                entries_checked=0,
+                status=IntegrityStatus.VALID, is_valid=True, entries_checked=0
             )
 
         # Genesis check.
@@ -367,7 +363,9 @@ class HashChainLedger:
             Dict с current_head_hash, entry_count, timestamp.
         """
         return {
-            "head_hash": self._entries[-1].current_hash if self._entries else _GENESIS_HASH,
+            "head_hash": self._entries[-1].current_hash
+            if self._entries
+            else _GENESIS_HASH,
             "entry_count": len(self._entries),
             "timestamp": time.time(),
         }
@@ -399,7 +397,9 @@ def _canonical_json(payload: Any) -> str:
         ) from exc
 
 
-def _compute_hash(index: int, timestamp: float, canonical_payload: str, prev_hash: str) -> str:
+def _compute_hash(
+    index: int, timestamp: float, canonical_payload: str, prev_hash: str
+) -> str:
     """SHA-256 hash от canonical representation.
 
     Args:

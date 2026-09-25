@@ -18,6 +18,7 @@ narrowing к current branch `src/backend/dsl/engine/processors/saga_lra.py`
 7. Deadline propagation checker: saga_lra.py детектится как INTEGRATED
    (narrowing present).
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -34,7 +35,6 @@ from src.backend.dsl.engine.processors.saga_lra import (
     SagaLRAProcessor,
     SagaStepTimeoutError,
 )
-
 
 # ---------------------------------------------------------------------------
 # 1. SagaStepTimeoutError: construction + attributes
@@ -113,12 +113,10 @@ class TestRunStepWithDeadlineNarrowing:
         exchange = Exchange(body="x")
         # Без RequestContext — helper должен просто await coro без wait_for.
         with patch(
-            "src.backend.core.request_context.RequestContext.current",
-            return_value=None,
+            "src.backend.core.request_context.RequestContext.current", return_value=None
         ):
             result = await proc._run_step_with_deadline(
-                _StubStep(), exchange, context=None,
-                step_name="noop", kind="action",
+                _StubStep(), exchange, context=None, step_name="noop", kind="action"
             )
         assert result == "ok"
 
@@ -151,8 +149,11 @@ class TestRunStepWithDeadlineNarrowing:
         ):
             with pytest.raises(SagaStepTimeoutError) as ei:
                 await proc._run_step_with_deadline(
-                    stub_step, exchange, context=None,
-                    step_name="late_step", kind="action",
+                    stub_step,
+                    exchange,
+                    context=None,
+                    step_name="late_step",
+                    kind="action",
                 )
         assert ei.value.step_name == "late_step"
         assert ei.value.kind == "action"
@@ -184,8 +185,7 @@ class TestRunStepWithDeadlineNarrowing:
             t0 = time.monotonic()
             with pytest.raises(SagaStepTimeoutError) as ei:
                 await proc._run_step_with_deadline(
-                    _SlowStep(), exchange, context=None,
-                    step_name="slow", kind="action",
+                    _SlowStep(), exchange, context=None, step_name="slow", kind="action"
                 )
             elapsed = time.monotonic() - t0
         assert ei.value.timeout_s == pytest.approx(0.05, abs=1e-3)
@@ -214,8 +214,7 @@ class TestRunStepWithDeadlineNarrowing:
             return_value=_StubCtx(),
         ):
             result = await proc._run_step_with_deadline(
-                _FastStep(), exchange, context=None,
-                step_name="fast", kind="action",
+                _FastStep(), exchange, context=None, step_name="fast", kind="action"
             )
         assert result == "fast_result"
 
@@ -243,8 +242,7 @@ class TestRunStepWithDeadlineNarrowing:
 
         with patch.object(builtins, "__import__", side_effect=_import):
             result = await proc._run_step_with_deadline(
-                _FastStep(), exchange, context=None,
-                step_name="ok", kind="action",
+                _FastStep(), exchange, context=None, step_name="ok", kind="action"
             )
         assert result == "ok"
 
@@ -263,12 +261,10 @@ class TestRunStepWithDeadlineSyncCallables:
         proc = _make_processor_with_steps([])
         # Without budget — sync pass-through.
         with patch(
-            "src.backend.core.request_context.RequestContext.current",
-            return_value=None,
+            "src.backend.core.request_context.RequestContext.current", return_value=None
         ):
             result = await proc._run_step_with_deadline(
-                _SyncStep(), exchange, context=None,
-                step_name="sync", kind="action",
+                _SyncStep(), exchange, context=None, step_name="sync", kind="action"
             )
         assert result is exchange  # _sync_pass_through вернул сам exchange
 
@@ -309,6 +305,7 @@ class TestSagaLRAProcessDeadlineIntegration:
             async def _coro() -> Any:
                 await asyncio.sleep(0.01)
                 return "ok"
+
             return _coro()
 
         fast_step = _make_saga_step("fast_step", _quick_action)
@@ -318,8 +315,7 @@ class TestSagaLRAProcessDeadlineIntegration:
         context.route_id = "test_route"
 
         with patch(
-            "src.backend.core.request_context.RequestContext.current",
-            return_value=None,
+            "src.backend.core.request_context.RequestContext.current", return_value=None
         ):
             with patch.object(proc, "_get_repo", return_value=None):
                 await proc.process(exchange, context)
@@ -364,7 +360,8 @@ class TestSagaLRAPropagationChecker:
         repo_root = Path(__file__).resolve().parents[5]
         result = subprocess.run(
             ["python3.14", "tools/checks/check_deadline_propagation.py", "--strict"],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
             cwd=str(repo_root),
         )
         # saga_lra должен быть в INTEGRATED-секции stdout (даже если exit != 0).
@@ -419,8 +416,11 @@ class TestSagaLRACompensationDeadlineWiring:
         ):
             with pytest.raises(SagaStepTimeoutError) as ei:
                 await proc._run_step_with_deadline(
-                    _SlowCompensation(), exchange, context=None,
-                    step_name="compensate_order", kind="compensation",
+                    _SlowCompensation(),
+                    exchange,
+                    context=None,
+                    step_name="compensate_order",
+                    kind="compensation",
                 )
         assert ei.value.kind == "compensation"
         assert ei.value.step_name == "compensate_order"

@@ -8,7 +8,10 @@ from src.backend.core.logging import get_logger
 if TYPE_CHECKING:
     pass
 
-from src.backend.dsl.engine.processors.event_store.store import EventStore, InMemoryEventStore
+from src.backend.dsl.engine.processors.event_store.store import (
+    EventStore,
+    InMemoryEventStore,
+)
 
 _log = get_logger(__name__)
 

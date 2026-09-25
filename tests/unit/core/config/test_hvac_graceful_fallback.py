@@ -128,8 +128,7 @@ class TestVaultConfigSettingsSourceHvacFallback:
 
         # Expected: {} (no Vault data; silent return).
         assert result == {}, (
-            f"Expected {{}} (empty Vault data) when hvac missing; "
-            f"got {result!r}"
+            f"Expected {{}} (empty Vault data) when hvac missing; got {result!r}"
         )
 
         # Post-condition: _VAULT_UNREACHABLE = True (cache for next call).
@@ -170,8 +169,7 @@ class TestBackwardsCompatibility:
             result = source._load_data()
         except ImportError as exc:
             pytest.fail(
-                f"_load_data() should NOT raise ImportError post-fix; "
-                f"got {exc!r}"
+                f"_load_data() should NOT raise ImportError post-fix; got {exc!r}"
             )
 
         assert result == {}

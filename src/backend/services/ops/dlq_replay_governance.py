@@ -177,7 +177,10 @@ class ReplayAuditEntry:
 # PII patterns для auto-redaction (базовый набор; расширяется per-deployment).
 _PII_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("email", re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.-]+\b")),
-    ("phone_ru", re.compile(r"\+7[\s\-]?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}\b")),
+    (
+        "phone_ru",
+        re.compile(r"\+7[\s\-]?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}\b"),
+    ),
     ("card_number", re.compile(r"\b(?:\d[ -]?){13,16}\d\b")),
     ("passport", re.compile(r"\b\d{4}[\s\-]\d{6}\b")),  # require separator
     ("inn", re.compile(r"\b\d{10,12}\b")),  # ИНН 10/12 digits
@@ -346,7 +349,7 @@ class DLQReplayGovernor:
 
                 try:
                     return self._redact_recursive(json.loads(payload))
-                except (json.JSONDecodeError, ValueError):
+                except json.JSONDecodeError, ValueError:
                     pass  # fall through to flat redaction
             # Flat string redaction.
             text = payload
@@ -426,23 +429,22 @@ class DLQReplayGovernor:
         if self._capability_check is not None and not dry_run:
             cap = "dlq.replay"
             if not self._capability_check(cap, operator_id):
-                raise _CapabilityDeniedError(
-                    capability=cap, operator_id=operator_id
-                )
+                raise _CapabilityDeniedError(capability=cap, operator_id=operator_id)
 
         # 2. Rate limit check.
         rate_ok, remaining = self._check_rate_limit(now)
         metadata["rate_limit_remaining"] = remaining
         if not rate_ok and not dry_run:
             raise _RateLimitExceededError(
-                limit=self._rate_limit,
-                window_seconds=60,
-                operator_id=operator_id,
+                limit=self._rate_limit, window_seconds=60, operator_id=operator_id
             )
 
         # 3. Redaction (always done, even in dry-run, для visibility).
         redacted = self.redact(envelope)
-        if envelope.original_payload is not None and redacted != envelope.original_payload:
+        if (
+            envelope.original_payload is not None
+            and redacted != envelope.original_payload
+        ):
             metadata["redacted"] = True
 
         # 4. Replay execution (only if not dry_run AND executor configured).
@@ -565,9 +567,7 @@ class _CapabilityDeniedError(Exception):
 class _RateLimitExceededError(Exception):
     """Rate limit превышен (sliding window)."""
 
-    def __init__(
-        self, *, limit: int, window_seconds: int, operator_id: str
-    ) -> None:
+    def __init__(self, *, limit: int, window_seconds: int, operator_id: str) -> None:
         self.limit = limit
         self.window_seconds = window_seconds
         self.operator_id = operator_id

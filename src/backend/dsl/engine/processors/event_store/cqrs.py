@@ -12,7 +12,10 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.event_store.processor import EventStoreProcessor
-from src.backend.dsl.engine.processors.event_store.store import EventStore, InMemoryEventStore
+from src.backend.dsl.engine.processors.event_store.store import (
+    EventStore,
+    InMemoryEventStore,
+)
 from src.backend.dsl.engine.processors.event_store.types import (  # S66 W1: cross-import
     Event,
     EventStream,

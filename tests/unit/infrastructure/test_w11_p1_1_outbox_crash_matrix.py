@@ -47,7 +47,8 @@ class _Broker:
         self.published.append(event_id)
 
     def consume(
-        self, event_id: str,
+        self,
+        event_id: str,
         consumer_schema_version: int = 1,
         event_schema_version: int = 1,
     ) -> "ConsumeResult":
@@ -65,7 +66,6 @@ class _Broker:
 
 class BrokerUnavailableError(Exception):
     """Broker temporarily unavailable (network, partition, etc.)."""
-
 
 
 # Use simple class instead of dataclass for portability
@@ -301,13 +301,17 @@ class TestScenario5ConsumerAckFail:
         broker = _Broker()
 
         # First delivery → consumer processes.
-        result_1 = broker.consume("evt-1", consumer_schema_version=1, event_schema_version=1)
+        result_1 = broker.consume(
+            "evt-1", consumer_schema_version=1, event_schema_version=1
+        )
         assert result_1.success is True
         # Side effect 1 happens (e.g., charge credit card).
         side_effects_count = 1
 
         # ACK fails (network). Broker redelivers.
-        result_2 = broker.consume("evt-1", consumer_schema_version=1, event_schema_version=1)
+        result_2 = broker.consume(
+            "evt-1", consumer_schema_version=1, event_schema_version=1
+        )
         assert result_2.success is True
         side_effects_count += 1  # Side effect 2 happens (DUPLICATE!)
 
@@ -463,7 +467,9 @@ class TestScenario7PoisonMessageAfterDeploy:
             if table.claim("evt-1", now=attempt * 10.0, lease_ttl=5.0):
                 broker.publish("evt-1")
                 consume_result = broker.consume(
-                    "evt-1", consumer_schema_version=consumer_version, event_schema_version=2
+                    "evt-1",
+                    consumer_schema_version=consumer_version,
+                    event_schema_version=2,
                 )
                 if not consume_result.success:
                     # Consumer fails.
@@ -541,8 +547,8 @@ class TestScenario8SchemaVersioning:
         """Schema mismatch event isolated, doesn't crash consumer pipeline."""
         broker = _Broker()
         events = [
-            ("evt-old-schema", 1),   # v1 — old consumer OK
-            ("evt-new-schema", 2),   # v2 — old consumer fails
+            ("evt-old-schema", 1),  # v1 — old consumer OK
+            ("evt-new-schema", 2),  # v2 — old consumer fails
             ("evt-another-old", 1),  # v1 — old consumer OK
         ]
         consumer_version = 1
@@ -550,7 +556,11 @@ class TestScenario8SchemaVersioning:
         results = []
         for event_id, schema_version in events:
             broker.publish(event_id)
-            result = broker.consume(event_id, consumer_schema_version=consumer_version, event_schema_version=schema_version)
+            result = broker.consume(
+                event_id,
+                consumer_schema_version=consumer_version,
+                event_schema_version=schema_version,
+            )
             results.append((event_id, result.success, result.reason))
 
         # Old schema events processed OK.
@@ -569,15 +579,16 @@ class TestScenario8SchemaVersioning:
     def test_consumer_v2_processes_mixed_versions(self) -> None:
         """Consumer v2 (after deploy) обрабатывает оба schema versions."""
         broker = _Broker()
-        events = [
-            ("evt-v1", 1),
-            ("evt-v2", 2),
-        ]
+        events = [("evt-v1", 1), ("evt-v2", 2)]
         consumer_version = 2  # deployed v2
 
         for event_id, schema_version in events:
             broker.publish(event_id)
-            result = broker.consume(event_id, consumer_schema_version=consumer_version, event_schema_version=schema_version)
+            result = broker.consume(
+                event_id,
+                consumer_schema_version=consumer_version,
+                event_schema_version=schema_version,
+            )
             assert result.success is True, (
                 f"Consumer v{consumer_version} должен обрабатывать v{schema_version}"
             )

@@ -37,7 +37,6 @@ def _context(route_id: str = "route-1") -> ExecutionContext:
     return ExecutionContext(route_id=route_id)
 
 
-
 @pytest.fixture
 def _default_tenant():
     """TenantContext 'default' — совпадает с fallback процессора."""
@@ -48,7 +47,9 @@ def _default_tenant():
 
 
 @pytest.mark.asyncio
-async def test_approve_sets_hitl_approval_property(_default_tenant: TenantContext) -> None:
+async def test_approve_sets_hitl_approval_property(
+    _default_tenant: TenantContext,
+) -> None:
     """Оператор approve → в properties попадает решение."""
     store = InMemoryHitlSignalStore()
     svc = HitlService(store=store)

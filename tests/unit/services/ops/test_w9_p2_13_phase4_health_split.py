@@ -14,14 +14,15 @@ from pathlib import Path
 
 import pytest
 
-from src.backend.services.ops import health as health_module
+from src.backend.services.ops.health import ProcessorHealthResult as ShimResult
+from src.backend.services.ops.health import ProcessorHealthService as ShimService
 from src.backend.services.ops.health import (
-    ProcessorHealthResult as ShimResult,
-    ProcessorHealthService as ShimService,
     get_processor_health_service as ShimGetService,
 )
 from src.backend.services.ops.health._service import (
     ProcessorHealthService as CanonicalService,
+)
+from src.backend.services.ops.health._service import (
     get_processor_health_service as CanonicalGetService,
 )
 from src.backend.services.ops.health._types import (
@@ -145,10 +146,7 @@ class TestProcessorHealthResultDataclass:
     def test_dataclass_construction(self) -> None:
         """Constructor с required args работает."""
         result = ShimResult(
-            processor_name="test",
-            ok=True,
-            reason="healthy",
-            latency_ms=12.5,
+            processor_name="test", ok=True, reason="healthy", latency_ms=12.5
         )
         assert result.processor_name == "test"
         assert result.ok is True

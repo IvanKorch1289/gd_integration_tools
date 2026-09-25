@@ -9,12 +9,12 @@ Validation:
 3. main([--help]) backward-compat через CliRunner.
 4. main() без args → graceful no-op.
 """
+
 from __future__ import annotations
 
 from typer.testing import CliRunner
 
 from tools.import_wsdl import app, main
-
 
 runner = CliRunner()
 
@@ -48,6 +48,7 @@ class TestImportWsdlTyperMigration:
     def test_no_argparse_import(self) -> None:
         """В import_wsdl.py НЕ должно быть import argparse (миграция полная)."""
         import tools.import_wsdl as module
+
         source = open(module.__file__, encoding="utf-8").read()
         assert "import argparse" not in source
         assert "ArgumentParser" not in source
@@ -69,6 +70,7 @@ class TestBackwardCompat:
     def test_main_no_argv_returns_0(self) -> None:
         """main() без argv — sys.argv-based CLI invocation, exit 0."""
         import sys
+
         original_argv = sys.argv
         try:
             sys.argv = ["import_wsdl.py", "--help"]
@@ -84,6 +86,7 @@ class TestImportsWork:
     def test_module_imports(self) -> None:
         """import tools.import_wsdl не raises."""
         import tools.import_wsdl  # noqa: F401
+
         assert hasattr(tools.import_wsdl, "app")
         assert hasattr(tools.import_wsdl, "main")
         assert hasattr(tools.import_wsdl, "_collect_operations")

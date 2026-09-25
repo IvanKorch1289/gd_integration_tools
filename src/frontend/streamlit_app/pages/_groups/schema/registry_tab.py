@@ -109,7 +109,7 @@ def render_registry_tab() -> None:
         from src.backend.core.api import feature_flags as _ff
 
         _FLAG_ENABLED = _ff.frontend_schema_registry_ui
-    except (ImportError, AttributeError, RuntimeError):
+    except ImportError, AttributeError, RuntimeError:
         # cycle-9/D-AUDIT-1040: narrow exceptions + observability.
         # ImportError — features module missing, AttributeError — API
         # change, RuntimeError — feature_flags unavailable.

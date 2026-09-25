@@ -109,9 +109,7 @@ class TestCacheWriteProcessor:
         with patch(
             "src.backend.infrastructure.clients.storage.redis.redis_client"
         ) as mock_redis:
-            mock_redis.cache_set = AsyncMock(
-                side_effect=ConnectionError("down")
-            )
+            mock_redis.cache_set = AsyncMock(side_effect=ConnectionError("down"))
             await proc.process(exchange, _Context())
 
     @pytest.mark.asyncio

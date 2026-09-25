@@ -197,7 +197,7 @@ def _polars_available() -> bool:
 
         spec = importlib.util.find_spec("polars")
         return spec is not None
-    except (ValueError, ModuleNotFoundError, AttributeError):
+    except ValueError, ModuleNotFoundError, AttributeError:
         return False
 
 

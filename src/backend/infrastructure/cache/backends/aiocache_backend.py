@@ -49,7 +49,7 @@ def _ensure_aiocache_available() -> None:
     except ImportError as e:
         raise AiocacheBackendImportError(
             "aiocache is required for AiocacheMemoryBackend. "
-            "Install via `pip install -e \".[caching]\"` "
+            'Install via `pip install -e ".[caching]"` '
             "or `uv sync --extra caching`."
         ) from e
 
@@ -81,10 +81,7 @@ class AiocacheMemoryBackend(CacheBackend):
 
         self._default_ttl = default_ttl
         self._maxsize = maxsize
-        self._cache: Cache = Cache(
-            cache_class=SimpleMemoryCache,
-            ttl=default_ttl,
-        )
+        self._cache: Cache = Cache(cache_class=SimpleMemoryCache, ttl=default_ttl)
 
     async def get(self, key: str) -> bytes | None:
         """Get cached value by key.
@@ -107,9 +104,7 @@ class AiocacheMemoryBackend(CacheBackend):
 
         return pickle.dumps(value)
 
-    async def set(
-        self, key: str, value: bytes, ttl: int | None = None
-    ) -> None:
+    async def set(self, key: str, value: bytes, ttl: int | None = None) -> None:
         """Store value with TTL.
 
         Args:
@@ -118,9 +113,7 @@ class AiocacheMemoryBackend(CacheBackend):
             ttl: TTL в seconds, или ``None`` для ``default_ttl``.
         """
         await self._cache.set(
-            key,
-            value,
-            ttl=ttl if ttl is not None else self._default_ttl,
+            key, value, ttl=ttl if ttl is not None else self._default_ttl
         )
 
     async def delete(self, *keys: str) -> None:
@@ -147,8 +140,7 @@ class AiocacheMemoryBackend(CacheBackend):
 
         cache_dict = getattr(self._cache, "_cache", {})
         keys_to_delete = [
-            key for key in list(cache_dict.keys())
-            if fnmatch.fnmatchcase(key, pattern)
+            key for key in list(cache_dict.keys()) if fnmatch.fnmatchcase(key, pattern)
         ]
         if keys_to_delete:
             await self.delete(*keys_to_delete)

@@ -93,7 +93,7 @@ def ai_eval_suite(
         )
         raise typer.Exit(code=2)
 
-    runner = InspectRunner(artifacts_dir=artifacts_dir, suites=[suite])
+    runner = InspectRunner(artifacts_dir=artifacts_dir, suites=[suite])  # type: ignore[list-item]
     summary = runner.run_all(write_artifacts=True)
     typer.echo(summary.to_markdown())
 

@@ -13,15 +13,28 @@ from pathlib import Path
 
 import pytest
 
-from src.backend.core.di.providers import workflow as workflow_pkg
 from src.backend.core.di.providers.workflow import (
     get_action_bus_service_provider as ShimActionBus,
+)
+from src.backend.core.di.providers.workflow import (
     get_action_dispatcher_provider as ShimDispatcher,
-    get_resilience_coordinator_provider as ShimResilience,
+)
+from src.backend.core.di.providers.workflow import (
     get_app_logger_provider as ShimAppLogger,
-    get_stream_dlq_writer_provider as ShimStreamDlq,
+)
+from src.backend.core.di.providers.workflow import (
     get_reply_channel_class_provider as ShimReplyChannel,
+)
+from src.backend.core.di.providers.workflow import (
+    get_resilience_coordinator_provider as ShimResilience,
+)
+from src.backend.core.di.providers.workflow import (
+    get_stream_dlq_writer_provider as ShimStreamDlq,
+)
+from src.backend.core.di.providers.workflow import (
     get_workflow_factory_module_provider as ShimWorkflowFactory,
+)
+from src.backend.core.di.providers.workflow import (
     set_action_bus_service_provider as SetActionBus,
 )
 from src.backend.core.di.providers.workflow._dlq import (
@@ -41,7 +54,11 @@ from src.backend.core.di.providers.workflow._resilience import (
 )
 from src.backend.core.di.providers.workflow._workflow_core import (
     get_action_bus_service_provider as CanonicalActionBus,
+)
+from src.backend.core.di.providers.workflow._workflow_core import (
     get_action_dispatcher_provider as CanonicalDispatcher,
+)
+from src.backend.core.di.providers.workflow._workflow_core import (
     set_action_bus_service_provider as CanonicalSetActionBus,
 )
 
@@ -54,11 +71,23 @@ class TestBackCompatIdentity:
         [
             (ShimActionBus, CanonicalActionBus, "get_action_bus_service_provider"),
             (ShimDispatcher, CanonicalDispatcher, "get_action_dispatcher_provider"),
-            (ShimResilience, CanonicalResilience, "get_resilience_coordinator_provider"),
+            (
+                ShimResilience,
+                CanonicalResilience,
+                "get_resilience_coordinator_provider",
+            ),
             (ShimAppLogger, CanonicalAppLogger, "get_app_logger_provider"),
             (ShimStreamDlq, CanonicalStreamDlq, "get_stream_dlq_writer_provider"),
-            (ShimReplyChannel, CanonicalReplyChannel, "get_reply_channel_class_provider"),
-            (ShimWorkflowFactory, CanonicalWorkflowFactory, "get_workflow_factory_module_provider"),
+            (
+                ShimReplyChannel,
+                CanonicalReplyChannel,
+                "get_reply_channel_class_provider",
+            ),
+            (
+                ShimWorkflowFactory,
+                CanonicalWorkflowFactory,
+                "get_workflow_factory_module_provider",
+            ),
             (SetActionBus, CanonicalSetActionBus, "set_action_bus_service_provider"),
         ],
     )
@@ -98,7 +127,8 @@ class TestSubmoduleExports:
             "set_workflow_state_repository_provider",
         }
         actual = {
-            n for n in dir(_workflow_core)
+            n
+            for n in dir(_workflow_core)
             if not n.startswith("_") and callable(getattr(_workflow_core, n))
         }
         assert expected.issubset(actual), (
@@ -119,7 +149,8 @@ class TestSubmoduleExports:
             "get_rate_limit_classes_provider",
         }
         actual = {
-            n for n in dir(_resilience)
+            n
+            for n in dir(_resilience)
             if not n.startswith("_") and callable(getattr(_resilience, n))
         }
         assert expected.issubset(actual)
@@ -139,7 +170,8 @@ class TestSubmoduleExports:
             "set_stream_logger_provider",
         }
         actual = {
-            n for n in dir(_loggers)
+            n
+            for n in dir(_loggers)
             if not n.startswith("_") and callable(getattr(_loggers, n))
         }
         assert expected.issubset(actual)
@@ -163,7 +195,8 @@ class TestSubmoduleExports:
             "set_soap_sink_class_provider",
         }
         actual = {
-            n for n in dir(_messaging)
+            n
+            for n in dir(_messaging)
             if not n.startswith("_") and callable(getattr(_messaging, n))
         }
         assert expected.issubset(actual)
@@ -183,8 +216,7 @@ class TestSubmoduleExports:
             "set_dlq_envelope_class_provider",
         }
         actual = {
-            n for n in dir(_dlq)
-            if not n.startswith("_") and callable(getattr(_dlq, n))
+            n for n in dir(_dlq) if not n.startswith("_") and callable(getattr(_dlq, n))
         }
         assert expected.issubset(actual)
 
@@ -199,7 +231,8 @@ class TestSubmoduleExports:
             "set_notifications_module_provider",
         }
         actual = {
-            n for n in dir(_notifications)
+            n
+            for n in dir(_notifications)
             if not n.startswith("_") and callable(getattr(_notifications, n))
         }
         assert expected.issubset(actual)
@@ -235,22 +268,13 @@ class TestPerDomainOverrideIsolation:
         """set_action_bus через shim записывает в _workflow_core._overrides."""
         sentinel = object()
         SetActionBus(sentinel)
-        from src.backend.core.di.providers.workflow._workflow_core import (
-            _overrides,
-        )
+        from src.backend.core.di.providers.workflow._workflow_core import _overrides
 
         assert _overrides.get("action_bus_service") is sentinel
 
     def test_per_domain_separation(self) -> None:
         """Разные domain submodules имеют РАЗНЫЕ _overrides dict."""
-        from src.backend.core.di.providers.workflow import (
-            _dlq,
-            _loggers,
-            _messaging,
-            _notifications,
-            _resilience,
-            _workflow_core,
-        )
+        from src.backend.core.di.providers.workflow import _dlq, _workflow_core
 
         # Установить same key в разных submodules.
         sentinel_a = object()

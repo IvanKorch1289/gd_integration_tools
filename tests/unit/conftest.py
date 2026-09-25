@@ -173,8 +173,8 @@ import pytest as _pytest
 
 @_pytest.fixture(autouse=True)
 def _restore_di_overrides():
-    from src.backend.core.di.providers import cache as _cache
     from src.backend.core.di.providers import ai as _ai
+    from src.backend.core.di.providers import cache as _cache
     from src.backend.core.di.providers import http as _http
     from src.backend.core.di.providers import storage as _storage
     from src.backend.core.di.providers import workflow as _workflow

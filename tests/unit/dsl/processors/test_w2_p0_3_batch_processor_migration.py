@@ -11,16 +11,18 @@ Note:
   event_store, idp_pipeline) будут мигрированы в Phase 1B/C отдельными
   коммитами (см. ADR-0313 roadmap).
 """
+
 from __future__ import annotations
 
 import warnings
 
+from src.backend.dsl.engine.processors.batch_processor import (
+    BatchProcessor as CurrentBatchProcessor,
+)
+
 # Импорт через LEGACY path триггерит DeprecationWarning.
 from src.backend.dsl.processors.batch_processor import (
     BatchProcessor as LegacyBatchProcessor,
-)
-from src.backend.dsl.engine.processors.batch_processor import (
-    BatchProcessor as CurrentBatchProcessor,
 )
 
 
@@ -51,12 +53,11 @@ class TestLegacyDeprecationWarning:
             import importlib
 
             importlib.reload(
-                importlib.import_module(
-                    "src.backend.dsl.processors.batch_processor"
-                )
+                importlib.import_module("src.backend.dsl.processors.batch_processor")
             )
         deprecation_warnings = [
-            x for x in w
+            x
+            for x in w
             if issubclass(x.category, DeprecationWarning)
             and "batch_processor" in str(x.message)
         ]

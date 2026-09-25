@@ -16,14 +16,11 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 from src.backend.core.di import providers as providers_pkg
-from src.backend.core.di.providers import ai as ai_mod
 from src.backend.core.di.providers import cache as cache_mod
 from src.backend.core.di.providers import db as db_mod
-from src.backend.core.di.providers import http as http_mod
 from src.backend.core.di.providers import messaging as messaging_mod
 from src.backend.core.di.providers import observability as observability_mod
 from src.backend.core.di.providers import security as security_mod
-from src.backend.core.di.providers import workflow as workflow_mod
 
 
 class TestCacheCanonicalConcerns:
@@ -257,8 +254,7 @@ class TestCacheShimReduction:
         funcs = [
             node.name
             for node in ast.walk(tree)
-            if isinstance(node, ast.FunctionDef)
-            and not node.name.startswith("__")
+            if isinstance(node, ast.FunctionDef) and not node.name.startswith("__")
         ]
         # ~17 inline funcs (8 cache canonical get_/set_ pairs + get_cache_facade)
         assert 14 <= len(funcs) <= 25, (

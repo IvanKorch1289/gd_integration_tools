@@ -19,12 +19,8 @@ import typer
 from typer.testing import CliRunner
 
 # Workaround для pytest --import-mode=importlib.
-_TOOLS_PATH = (
-    Path(__file__).resolve().parents[3] / "tools" / "generate_adr_index.py"
-)
-_spec = importlib.util.spec_from_file_location(
-    "tools.generate_adr_index", _TOOLS_PATH
-)
+_TOOLS_PATH = Path(__file__).resolve().parents[3] / "tools" / "generate_adr_index.py"
+_spec = importlib.util.spec_from_file_location("tools.generate_adr_index", _TOOLS_PATH)
 module = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(module)
 app = module.app

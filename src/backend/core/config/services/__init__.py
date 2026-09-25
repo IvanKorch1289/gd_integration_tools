@@ -18,36 +18,19 @@ from typing import Any as _Any
 # Per-submodule symbols (single source of truth для lazy proxy).
 # Map: submodule_name → list of public symbols.
 _PUBLICS: dict[str, list[str]] = {
-    "cache": [
-        "CacheSettings",
-        "RedisSettings",
-        "cache_settings",
-        "redis_settings",
-    ],
+    "cache": ["CacheSettings", "RedisSettings", "cache_settings", "redis_settings"],
     "graphql": [  # S163 W13
         "GraphQLSettings",
         "graphql_settings",
     ],
-    "invoker": [
-        "InvokerSettings",
-        "invoker_settings",
-    ],
-    "jupyter_hub": [
-        "JupyterHubSettings",
-        "jupyter_hub_settings",
-    ],
+    "invoker": ["InvokerSettings", "invoker_settings"],
+    "jupyter_hub": ["JupyterHubSettings", "jupyter_hub_settings"],
     "llm": [  # S164 W2
         "LLMSettings",
         "llm_settings",
     ],
-    "logging": [
-        "LogStorageSettings",
-        "log_settings",
-    ],
-    "mail": [
-        "MailSettings",
-        "mail_settings",
-    ],
+    "logging": ["LogStorageSettings", "log_settings"],
+    "mail": ["MailSettings", "mail_settings"],
     "queue": [
         "GRPCSettings",
         "QueueSettings",
@@ -66,22 +49,10 @@ _PUBLICS: dict[str, list[str]] = {
         "RPASettings",
         "rpa_settings",
     ],
-    "sms": [
-        "SMSSettings",
-        "sms_settings",
-    ],
-    "snapshot": [
-        "SnapshotSettings",
-        "snapshot_settings",
-    ],
-    "storage": [
-        "FileStorageSettings",
-        "fs_settings",
-    ],
-    "watermark": [
-        "WatermarkSettings",
-        "watermark_settings",
-    ],
+    "sms": ["SMSSettings", "sms_settings"],
+    "snapshot": ["SnapshotSettings", "snapshot_settings"],
+    "storage": ["FileStorageSettings", "fs_settings"],
+    "watermark": ["WatermarkSettings", "watermark_settings"],
     "websocket": [  # S163 W13
         "WSSettings",
         "ws_settings",
@@ -91,9 +62,7 @@ _PUBLICS: dict[str, list[str]] = {
 
 # Inverse map: name → submodule (для быстрого __getattr__ resolution).
 _LAZY_MAP: dict[str, str] = {
-    sym: submodule
-    for submodule, syms in _PUBLICS.items()
-    for sym in syms
+    sym: submodule for submodule, syms in _PUBLICS.items() for sym in syms
 }
 
 
@@ -110,15 +79,11 @@ def __getattr__(name: str) -> _Any:  # PEP 562 lazy module attribute.
     """
     if name in _LAZY_MAP:
         submodule_name = _LAZY_MAP[name]
-        module = _importlib.import_module(
-            f".{submodule_name}", __name__
-        )
+        module = _importlib.import_module(f".{submodule_name}", __name__)
         value = getattr(module, name)
         _cached[name] = value
         return value
-    raise AttributeError(
-        f"module {__name__!r} has no attribute {name!r}"
-    )
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def __dir__() -> list[str]:

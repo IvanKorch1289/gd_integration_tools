@@ -395,9 +395,7 @@ class TestCacheWriteProcessor:
         with patch(
             "src.backend.infrastructure.clients.storage.redis.redis_client"
         ) as mock_redis:
-            mock_redis.cache_set = AsyncMock(
-                side_effect=ConnectionError("redis down")
-            )
+            mock_redis.cache_set = AsyncMock(side_effect=ConnectionError("redis down"))
 
             # Should not raise
             await processor.process(exchange, _Context())

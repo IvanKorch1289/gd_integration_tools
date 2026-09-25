@@ -76,10 +76,7 @@ _SUBPROCESS_SCRIPT_VALID = (
 )
 
 # Тот же скрипт, но БЕЗ маркера (legacy behavior fallthrough).
-_SUBPROCESS_SCRIPT_NO_MARKER = (
-    "import sys\n"
-    "sys.stdout.write('1.2345')\n"
-)
+_SUBPROCESS_SCRIPT_NO_MARKER = "import sys\nsys.stdout.write('1.2345')\n"
 
 # Скрипт с НЕвалидным маркером (для fallback testing).
 _SUBPROCESS_SCRIPT_BAD_MARKER = (
@@ -95,17 +92,21 @@ def test_measure_import_extracts_marker_from_polluted_stdout() -> None:
     Post-fix: marker-based extraction находит STARTUP_TIME_MARKER в stdout
     даже если другие строки присутствуют.
     """
-    proc = type("P", (), {
-        "returncode": 0,
-        "stdout": _SUBPROCESS_SCRIPT_VALID.replace(
-            "sys.stdout.write('noise-line-1\\n')  # загрязнение от structlog/side effects\n"
-            "sys.stdout.write('noise-line-2\\n')\n"
-            "sys.stdout.write('STARTUP_TIME_MARKER:1.2345\\n')\n"
-            "sys.stdout.flush()\n",
-            "noise-line-1\nnoise-line-2\nSTARTUP_TIME_MARKER:1.2345\n",
-        ),
-        "stderr": "",
-    })()
+    proc = type(
+        "P",
+        (),
+        {
+            "returncode": 0,
+            "stdout": _SUBPROCESS_SCRIPT_VALID.replace(
+                "sys.stdout.write('noise-line-1\\n')  # загрязнение от structlog/side effects\n"
+                "sys.stdout.write('noise-line-2\\n')\n"
+                "sys.stdout.write('STARTUP_TIME_MARKER:1.2345\\n')\n"
+                "sys.stdout.flush()\n",
+                "noise-line-1\nnoise-line-2\nSTARTUP_TIME_MARKER:1.2345\n",
+            ),
+            "stderr": "",
+        },
+    )()
 
     elapsed = mod._extract_elapsed_from_stdout(proc.stdout)
     assert elapsed == pytest.approx(1.2345, rel=1e-4)
@@ -115,11 +116,7 @@ def test_measure_import_fallback_when_no_marker() -> None:
     """Fallback: если STARTUP_TIME_MARKER отсутствует, использовать legacy
     float(last_line) parsing.
     """
-    proc = type("P", (), {
-        "returncode": 0,
-        "stdout": "1.2345",
-        "stderr": "",
-    })()
+    proc = type("P", (), {"returncode": 0, "stdout": "1.2345", "stderr": ""})()
     elapsed = mod._extract_elapsed_from_stdout(proc.stdout)
     assert elapsed == pytest.approx(1.2345, rel=1e-4)
 
@@ -129,22 +126,30 @@ def test_measure_import_returns_inf_when_no_parseable_value() -> None:
     Pre-fix bug давал inf по другому path (structlog noise); post-fix
     inf только когда реально ничего нельзя распарсить.
     """
-    proc = type("P", (), {
-        "returncode": 0,
-        "stdout": "completely invalid garbage content\nno numbers here",
-        "stderr": "",
-    })()
+    proc = type(
+        "P",
+        (),
+        {
+            "returncode": 0,
+            "stdout": "completely invalid garbage content\nno numbers here",
+            "stderr": "",
+        },
+    )()
     elapsed = mod._extract_elapsed_from_stdout(proc.stdout)
     assert elapsed == float("inf")
 
 
 def test_measure_import_returns_inf_on_subprocess_failure() -> None:
     """Subprocess вернул non-zero → inf (legacy semantic)."""
-    proc = type("P", (), {
-        "returncode": 1,
-        "stdout": "",
-        "stderr": "ModuleNotFoundError: No module named 'fake_module'",
-    })()
+    proc = type(
+        "P",
+        (),
+        {
+            "returncode": 1,
+            "stdout": "",
+            "stderr": "ModuleNotFoundError: No module named 'fake_module'",
+        },
+    )()
     elapsed = mod._extract_elapsed_from_stdout(proc.stdout)
     elapsed = float("inf") if proc.returncode != 0 else elapsed
     assert elapsed == float("inf")
@@ -152,11 +157,15 @@ def test_measure_import_returns_inf_on_subprocess_failure() -> None:
 
 def test_measure_import_finds_marker_in_middle_of_lines() -> None:
     """Marker может быть в любой позиции stdout, не только в конце."""
-    proc = type("P", (), {
-        "returncode": 0,
-        "stdout": "trailing noise\nSTARTUP_TIME_MARKER:0.9876\nmore trailing",
-        "stderr": "",
-    })()
+    proc = type(
+        "P",
+        (),
+        {
+            "returncode": 0,
+            "stdout": "trailing noise\nSTARTUP_TIME_MARKER:0.9876\nmore trailing",
+            "stderr": "",
+        },
+    )()
     elapsed = mod._extract_elapsed_from_stdout(proc.stdout)
     assert elapsed == pytest.approx(0.9876, rel=1e-4)
 

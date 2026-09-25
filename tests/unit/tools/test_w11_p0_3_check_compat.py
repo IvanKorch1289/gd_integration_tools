@@ -91,7 +91,7 @@ def test_load_plugin_manifest_rejects_nested_tables() -> None:
     # Source with nested [plugin] table → PluginManifest rejects.
     bad_toml = (
         'trust_tier = "A"\n'
-        '[plugin]\n'
+        "[plugin]\n"
         'name = "nested_attempt"\n'
         'version = "1.0.0"\n'
         'requires_core = ">=0.2.0"\n'

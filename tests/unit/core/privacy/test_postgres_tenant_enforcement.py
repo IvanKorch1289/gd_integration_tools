@@ -12,7 +12,6 @@ Per v4 §3 evidence-first: NOT estimates, ACTUAL behavior verified.
 
 from __future__ import annotations
 
-import asyncio
 from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, MagicMock
 
@@ -22,11 +21,9 @@ from src.backend.core.privacy.delete_data_subject._postgres import (
     PostgresErasureAdapter,
 )
 from src.backend.core.privacy.delete_data_subject._types import (
-    AdapterResult,
     ErasureResultStatus,
     ErasureStrategy,
 )
-
 
 # Tests in this module require ``PiiErasureRecord`` model class to exist
 # in dev env. The Postgres implementation itself does NOT depend on this
@@ -43,12 +40,15 @@ try:
     from src.backend.core.domain.models.privacy_models import (  # type: ignore[import-not-found]
         PiiErasureRecord,
     )
+
     _PII_MODEL_AVAILABLE = True
 except ImportError:
     _PII_MODEL_AVAILABLE = False
 
 
-@pytest.mark.skipif(not _PII_MODEL_AVAILABLE, reason="PiiErasureRecord model unavailable in dev env")
+@pytest.mark.skipif(
+    not _PII_MODEL_AVAILABLE, reason="PiiErasureRecord model unavailable in dev env"
+)
 @pytest.mark.asyncio
 class TestPostgresTenantEnforcement:
     """Per ADR-0345 Option A: tenant-awareness per-call enforcement.
@@ -73,9 +73,7 @@ class TestPostgresTenantEnforcement:
     def _build_session_mock(self, rowcount: int = 5) -> MagicMock:
         """Build session mock + extract execute call args."""
         session_mock = MagicMock()
-        session_mock.execute = AsyncMock(
-            return_value=MagicMock(rowcount=rowcount)
-        )
+        session_mock.execute = AsyncMock(return_value=MagicMock(rowcount=rowcount))
         session_mock.commit = AsyncMock()
         return session_mock
 
@@ -176,6 +174,7 @@ class TestPostgresTenantEnforcement:
         setup continue working (subject_id only filter).
         """
         from src.backend.core.tenancy import _current
+
         try:
             _current.set(None)
         except Exception:

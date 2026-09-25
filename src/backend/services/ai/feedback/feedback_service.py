@@ -242,9 +242,7 @@ class AIFeedbackService:
         """
         from src.backend.core.tenancy import get_tenant_id
 
-        effective_tenant = (
-            tenant_id if tenant_id is not None else get_tenant_id()
-        )
+        effective_tenant = tenant_id if tenant_id is not None else get_tenant_id()
         if effective_tenant == "":
             return await self._repo.get(doc_id, tenant_id=None)
         return await self._repo.get(doc_id, tenant_id=effective_tenant)

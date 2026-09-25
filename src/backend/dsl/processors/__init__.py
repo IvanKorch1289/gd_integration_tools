@@ -32,25 +32,12 @@ from __future__ import annotations
 # чтобы избежать DeprecationWarning на каждом import :mod:`dsl.processors`.
 from src.backend.dsl.engine.processors.batch_processor import BatchProcessor
 from src.backend.dsl.engine.processors.data_lineage import DataLineageProcessor
-from src.backend.dsl.engine.processors.plan_execute_processor import (
-    PlanExecuteMixin,
-    PlanExecuteProcessor,
-    PlanResult,
-    PlanStep,
-)
-from src.backend.dsl.engine.processors.reflection_loop_processor import (
-    ReflectionLoopProcessor,
-)
-from src.backend.dsl.engine.processors.router_specialist_processor import (
-    RouterSpecialistProcessor,
-)
-from src.backend.dsl.engine.processors.strangler_fig import StranglerFigProcessor
 
 # W2 P0-3 Phase 1C: event_store/ и idp_pipeline_processor/ subpackages.
 # Re-export from canonical subpackage (НЕ через legacy shim).
 from src.backend.dsl.engine.processors.event_store import (
-    CQRSMixin,
     CommandBus,
+    CQRSMixin,
     Event,
     EventStore,
     EventStoreProcessor,
@@ -68,22 +55,35 @@ from src.backend.dsl.engine.processors.idp_pipeline_processor import (
     extract_fields,
     validate_result,
 )
+from src.backend.dsl.engine.processors.plan_execute_processor import (
+    PlanExecuteMixin,
+    PlanExecuteProcessor,
+    PlanResult,
+    PlanStep,
+)
+from src.backend.dsl.engine.processors.reflection_loop_processor import (
+    ReflectionLoopProcessor,
+)
+from src.backend.dsl.engine.processors.router_specialist_processor import (
+    RouterSpecialistProcessor,
+)
 
 # W2 P0-3 Phase 2: SagaLRAProcessor canonical — saga_lra_processor subpackage
 # (mixin-based, state machine с 5 states + SagaCompensationError/SagaLRAError).
 # Это ДРУГАЯ реализация, не дубликат current saga_lra.py (single-file).
 from src.backend.dsl.engine.processors.saga_lra_processor import (
-    SagaLRAProcessor,
-    SagaLRAError,
-    SagaCompensationError,
-    SagaState,
-    SagaStepTimeoutError,
-    STATE_RUNNING,
+    STATE_COMPENSATED,
+    STATE_COMPENSATING,
     STATE_COMPLETED,
     STATE_FAILED,
-    STATE_COMPENSATING,
-    STATE_COMPENSATED,
+    STATE_RUNNING,
+    SagaCompensationError,
+    SagaLRAError,
+    SagaLRAProcessor,
+    SagaState,
+    SagaStepTimeoutError,
 )
+from src.backend.dsl.engine.processors.strangler_fig import StranglerFigProcessor
 
 __all__ = (
     "BatchProcessor",

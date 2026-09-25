@@ -4,12 +4,12 @@ Cycle 152 (MINIMAX W6 P1-8 Phase 2): второй pilot ( после import_wsdl
 Pattern повторяется — тот же `app.callback(invoke_without_command=True)`
 + `CliRunner` для тестов + `app()` для CLI invocation.
 """
+
 from __future__ import annotations
 
 from typer.testing import CliRunner
 
 from tools.import_postman import app, main
-
 
 runner = CliRunner()
 
@@ -71,6 +71,7 @@ class TestImportsWork:
     def test_module_imports(self) -> None:
         """import tools.import_postman не raises."""
         import tools.import_postman  # noqa: F401
+
         assert hasattr(tools.import_postman, "app")
         assert hasattr(tools.import_postman, "main")
         assert hasattr(tools.import_postman, "_flatten_items")
