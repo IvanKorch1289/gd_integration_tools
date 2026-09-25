@@ -24,7 +24,7 @@ def _make_workflow_class(
     Args:
         name: ``__name__`` класса.
         is_workflow: Проставить ``_is_workflow=True`` fallback flag.
-        with_temporal_marker: Проставить ``__temporal_workflow_definition__``
+        with_temporal_marker: Проставить ``__temporal_workflow_definition``
             marker (имитация temporalio ``@workflow.defn``).
 
     Returns:
@@ -36,9 +36,9 @@ def _make_workflow_class(
         cls._is_workflow = True  # type: ignore[attr-defined]
     if with_temporal_marker:
         # Имитация: ``@workflow.defn(name=...)`` decorator проставляет
-        # ``__temporal_workflow_definition__`` с атрибутом ``name``.
+        # ``__temporal_workflow_definition`` с атрибутом ``name``.
         marker = type("_Defn", (), {"name": name})()
-        cls.__temporal_workflow_definition__ = marker  # type: ignore[attr-defined]
+        cls.__temporal_workflow_definition = marker  # type: ignore[attr-defined]
     return cls
 
 

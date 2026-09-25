@@ -31,7 +31,7 @@ __all__ = ("WorkflowRegistry", "workflow_registry")
 # Marker attribute that temporalio.workflow.defn decorator sets on the class.
 # Reference: temporalio.workflow._defn — wraps the class with a
 # _WorkflowDefinition bound under this name.
-_TEMPORAL_DEFN_MARKER = "__temporal_workflow_definition__"
+_TEMPORAL_DEFN_MARKER = "__temporal_workflow_definition"
 
 # Private fallback sentinel for unit-tests / synthetic fixtures that
 # cannot easily invoke the real temporalio decorator without a running
