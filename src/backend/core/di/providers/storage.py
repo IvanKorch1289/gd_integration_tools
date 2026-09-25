@@ -78,6 +78,14 @@ def set_storage_facade_provider(facade: Any) -> None:
     _overrides["storage_facade"] = facade
 
 
+def get_s3_client_provider() -> Any:
+    """S3 client factory (S78/R1; из cache.py при W9 LOC-fix 2026-09-25)."""
+    from src.backend.core.di.module_registry import resolve_module
+
+    module = resolve_module("clients.storage.s3_pool")
+    return module.get_s3_client  # factory, not instance
+
+
 __all__ = (
     "get_object_storage_provider",
     "get_storage_facade_provider",
