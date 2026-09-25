@@ -2947,6 +2947,66 @@ sources-cdc = [
 sources-mq-nats = [
     { name = "faststream", extra = ["nats"], marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 ]
+test-ai = [
+    { name = "aiosqlite", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "hypothesis", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "pytest", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "pytest-asyncio", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+]
+test-all = [
+    { name = "aiosqlite", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "httpx", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "hypothesis", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "patchright", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "playwright", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "pytest", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "pytest-asyncio", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "pytest-cov", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "pytest-xdist", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "respx", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "sqlalchemy", extra = ["asyncio"], marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "temporalio", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+]
+test-api = [
+    { name = "aiosqlite", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "httpx", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "pytest", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "pytest-asyncio", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+]
+test-core = [
+    { name = "aiosqlite", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "pytest", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "pytest-asyncio", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "respx", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+]
+test-frontend = [
+    { name = "playwright", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "pytest", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "pytest-asyncio", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+]
+test-messaging = [
+    { name = "aiosqlite", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "pytest", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "pytest-asyncio", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+]
+test-rpa = [
+    { name = "patchright", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "playwright", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "pytest", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "pytest-asyncio", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+]
+test-scheduler = [
+    { name = "aiosqlite", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "pytest", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "pytest-asyncio", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "sqlalchemy", extra = ["asyncio"], marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+]
+test-workflow = [
+    { name = "aiosqlite", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "pytest", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "pytest-asyncio", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "temporalio", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+]
 testkit = [
     { name = "respx", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "temporalio", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
@@ -3012,6 +3072,13 @@ requires-dist = [
     { name = "aioquic", marker = "extra == 'http3'", specifier = ">=1.1.0,<2.0.0" },
     { name = "aiosmtplib", specifier = ">=5.1.1,<6.0.0" },
     { name = "aiosqlite", marker = "extra == 'dev-light'", specifier = ">=0.20.0,<1.0.0" },
+    { name = "aiosqlite", marker = "extra == 'test-ai'", specifier = ">=0.20.0,<1.0.0" },
+    { name = "aiosqlite", marker = "extra == 'test-all'", specifier = ">=0.20.0,<1.0.0" },
+    { name = "aiosqlite", marker = "extra == 'test-api'", specifier = ">=0.20.0,<1.0.0" },
+    { name = "aiosqlite", marker = "extra == 'test-core'", specifier = ">=0.20.0,<1.0.0" },
+    { name = "aiosqlite", marker = "extra == 'test-messaging'", specifier = ">=0.20.0,<1.0.0" },
+    { name = "aiosqlite", marker = "extra == 'test-scheduler'", specifier = ">=0.20.0,<1.0.0" },
+    { name = "aiosqlite", marker = "extra == 'test-workflow'", specifier = ">=0.20.0,<1.0.0" },
     { name = "alembic", specifier = ">=1.13.3,<2.0.0" },
     { name = "altair", marker = "extra == 'frontend'", specifier = ">=5.0.0,<6.0.0" },
     { name = "apscheduler", specifier = ">=3.11.0,<4.0.0" },
@@ -3058,10 +3125,14 @@ requires-dist = [
     { name = "grpc-interceptor", specifier = ">=0.15.4,<1.0.0" },
     { name = "grpcio", specifier = ">=1.70.0,<2.0.0" },
     { name = "hishel", specifier = ">=0.0.30,<1.0" },
+    { name = "httpx", marker = "extra == 'test-all'", specifier = ">=0.27.0" },
+    { name = "httpx", marker = "extra == 'test-api'", specifier = ">=0.27.0" },
     { name = "httpx", extras = ["http2"], specifier = ">=0.28.0,<1.0.0" },
     { name = "httpx-retries", specifier = ">=0.4,<1.0" },
     { name = "huggingface-hub", marker = "extra == 'ai-model-registry'", specifier = ">=0.27,<2" },
     { name = "hvac", specifier = ">=2.3.0,<3.0.0" },
+    { name = "hypothesis", marker = "extra == 'test-ai'", specifier = ">=6.0.0" },
+    { name = "hypothesis", marker = "extra == 'test-all'", specifier = ">=6.0.0" },
     { name = "icalendar", marker = "extra == 'dsl-extras'", specifier = ">=5.0.0,<8.0.0" },
     { name = "inspect-ai", marker = "extra == 'ai'", specifier = ">=0.3" },
     { name = "instructor", marker = "extra == 'ai-2026'", specifier = ">=1.7.0,<2.0.0" },
@@ -3110,12 +3181,17 @@ requires-dist = [
     { name = "papermill", marker = "extra == 'jupyter'", specifier = ">=2.6.0" },
     { name = "passlib", specifier = ">=1.7.4,<2.0.0" },
     { name = "patchright", marker = "extra == 'rpa'", specifier = ">=1.40.0,<2.0" },
+    { name = "patchright", marker = "extra == 'test-all'", specifier = ">=1.40.0,<2.0" },
+    { name = "patchright", marker = "extra == 'test-rpa'", specifier = ">=1.40.0,<2.0" },
     { name = "pendulum", specifier = ">=3.2.0,<4.0.0" },
     { name = "pillow", marker = "extra == 'multimodal-rag'", specifier = ">=10.0.0,<13.0.0" },
     { name = "pillow", marker = "extra == 'rpa-windows'", specifier = ">=12.3.0,<13.0" },
     { name = "pint", marker = "extra == 'dsl-extras'", specifier = ">=0.24.0,<1.0.0" },
     { name = "pip-audit", marker = "extra == 'security'", specifier = ">=2.7,<3" },
     { name = "playwright", marker = "extra == 'rpa'", specifier = ">=1.48.0" },
+    { name = "playwright", marker = "extra == 'test-all'", specifier = ">=1.48.0" },
+    { name = "playwright", marker = "extra == 'test-frontend'", specifier = ">=1.48.0" },
+    { name = "playwright", marker = "extra == 'test-rpa'", specifier = ">=1.48.0" },
     { name = "plotly", marker = "extra == 'frontend'", specifier = ">=5.18.0,<6.0.0" },
     { name = "polars", marker = "extra == 'analytics'", specifier = ">=1.20.0,<2.0.0" },
     { name = "presidio-analyzer", specifier = ">=2.2.362,<3.0.0" },
@@ -3137,7 +3213,27 @@ requires-dist = [
     { name = "pypdf", specifier = ">=6.14.2,<7.0" },
     { name = "pypdfium2", marker = "extra == 'multimodal-rag'", specifier = ">=4.30.0,<5.0.0" },
     { name = "pytesseract", marker = "extra == 'rpa-ocr'", specifier = ">=0.3.10,<1.0" },
+    { name = "pytest", marker = "extra == 'test-ai'", specifier = ">=9.0.0,<10.0.0" },
+    { name = "pytest", marker = "extra == 'test-all'", specifier = ">=9.0.0,<10.0.0" },
+    { name = "pytest", marker = "extra == 'test-api'", specifier = ">=9.0.0,<10.0.0" },
+    { name = "pytest", marker = "extra == 'test-core'", specifier = ">=9.0.0,<10.0.0" },
+    { name = "pytest", marker = "extra == 'test-frontend'", specifier = ">=9.0.0,<10.0.0" },
+    { name = "pytest", marker = "extra == 'test-messaging'", specifier = ">=9.0.0,<10.0.0" },
+    { name = "pytest", marker = "extra == 'test-rpa'", specifier = ">=9.0.0,<10.0.0" },
+    { name = "pytest", marker = "extra == 'test-scheduler'", specifier = ">=9.0.0,<10.0.0" },
+    { name = "pytest", marker = "extra == 'test-workflow'", specifier = ">=9.0.0,<10.0.0" },
+    { name = "pytest-asyncio", marker = "extra == 'test-ai'", specifier = ">=1.0.0,<2.0.0" },
+    { name = "pytest-asyncio", marker = "extra == 'test-all'", specifier = ">=1.0.0,<2.0.0" },
+    { name = "pytest-asyncio", marker = "extra == 'test-api'", specifier = ">=1.0.0,<2.0.0" },
+    { name = "pytest-asyncio", marker = "extra == 'test-core'", specifier = ">=1.0.0,<2.0.0" },
+    { name = "pytest-asyncio", marker = "extra == 'test-frontend'", specifier = ">=1.0.0,<2.0.0" },
+    { name = "pytest-asyncio", marker = "extra == 'test-messaging'", specifier = ">=1.0.0,<2.0.0" },
+    { name = "pytest-asyncio", marker = "extra == 'test-rpa'", specifier = ">=1.0.0,<2.0.0" },
+    { name = "pytest-asyncio", marker = "extra == 'test-scheduler'", specifier = ">=1.0.0,<2.0.0" },
+    { name = "pytest-asyncio", marker = "extra == 'test-workflow'", specifier = ">=1.0.0,<2.0.0" },
     { name = "pytest-benchmark", marker = "extra == 'perf'", specifier = ">=5,<6" },
+    { name = "pytest-cov", marker = "extra == 'test-all'", specifier = ">=6.0.0,<7.0.0" },
+    { name = "pytest-xdist", marker = "extra == 'test-all'", specifier = ">=3.8.0" },
     { name = "python-docx", specifier = ">=1.1,<2.0" },
     { name = "python-dotenv", specifier = ">=1.0.1,<2.0.0" },
     { name = "python-multipart", specifier = ">=0.0.18" },
@@ -3149,6 +3245,8 @@ requires-dist = [
     { name = "rank-bm25", marker = "extra == 'rag'", specifier = ">=0.2.2,<1.0.0" },
     { name = "redis", specifier = ">=5.0.0,<6.0.0" },
     { name = "reportlab", marker = "extra == 'dsl-extras-2'", specifier = ">=4.0.0,<6.0.0" },
+    { name = "respx", marker = "extra == 'test-all'", specifier = ">=0.22,<1" },
+    { name = "respx", marker = "extra == 'test-core'", specifier = ">=0.22,<1" },
     { name = "respx", marker = "extra == 'testkit'", specifier = ">=0.22,<1" },
     { name = "result", marker = "extra == 'result-monad'", specifier = ">=0.17.0,<1.0.0" },
     { name = "rich", marker = "extra == 'security'", specifier = ">=14.0.0,<16.0.0" },
@@ -3157,6 +3255,8 @@ requires-dist = [
     { name = "spacy", marker = "extra == 'ai-safety'", specifier = ">=3.8.13,<4.0.0" },
     { name = "sqladmin", specifier = ">=0.25.1,<1.0.0" },
     { name = "sqlalchemy", specifier = ">=2.0.41,<3.0.0" },
+    { name = "sqlalchemy", extras = ["asyncio"], marker = "extra == 'test-all'", specifier = ">=2.0.0,<3.0.0" },
+    { name = "sqlalchemy", extras = ["asyncio"], marker = "extra == 'test-scheduler'", specifier = ">=2.0.0,<3.0.0" },
     { name = "sqlalchemy-continuum", specifier = ">=1.5.2,<2.0.0" },
     { name = "sqlalchemy-utils", specifier = ">=0.41.2,<1.0.0" },
     { name = "standardwebhooks", marker = "extra == 'dsl-extras-2'", specifier = ">=1.0.0,<2.0.0" },
@@ -3168,6 +3268,8 @@ requires-dist = [
     { name = "streamlit-autorefresh", marker = "extra == 'frontend'", specifier = ">=1.0.0,<2.0.0" },
     { name = "structlog", specifier = ">=24.4.0,<27.0.0" },
     { name = "tavily-python", marker = "extra == 'search-providers'", specifier = ">=0.5.0,<1.0.0" },
+    { name = "temporalio", marker = "extra == 'test-all'", specifier = ">=1.27.0,<2.0.0" },
+    { name = "temporalio", marker = "extra == 'test-workflow'", specifier = ">=1.27.0,<2.0.0" },
     { name = "temporalio", marker = "extra == 'testkit'", specifier = ">=1.27.0,<2.0.0" },
     { name = "temporalio", marker = "extra == 'workflow'", specifier = ">=1.27.0,<2.0.0" },
     { name = "tenacity", specifier = ">=9.0.0,<10.0.0" },
@@ -3184,7 +3286,7 @@ requires-dist = [
     { name = "xmltodict", specifier = ">=0.14.0,<2.0.0" },
     { name = "zeep", specifier = ">=4.3.3,<5.0.0" },
 ]
-provides-extras = ["ai", "security", "db-drivers", "ai-safety", "redteam", "ai-eval", "auth-saml", "mcp", "rpa", "jupyter", "rpa-ocr", "rpa-windows", "http3", "dsl-extras", "analytics", "rag", "ai-2026", "ai-model-registry", "workflow", "dev-light", "sources-cdc", "sources-mq-nats", "lsp", "perf", "testkit", "docs", "docs-ru", "dsl-extras-2", "dsl-extras-3", "result-monad", "search-providers", "compression", "frontend", "doc-templates", "ai-memory", "multimodal-rag", "feature-flags", "caching"]
+provides-extras = ["ai", "security", "db-drivers", "ai-safety", "redteam", "ai-eval", "auth-saml", "mcp", "rpa", "jupyter", "rpa-ocr", "rpa-windows", "http3", "dsl-extras", "analytics", "rag", "ai-2026", "ai-model-registry", "workflow", "test-core", "test-api", "test-scheduler", "test-workflow", "test-messaging", "test-ai", "test-frontend", "test-rpa", "test-all", "dev-light", "sources-cdc", "sources-mq-nats", "lsp", "perf", "testkit", "docs", "docs-ru", "dsl-extras-2", "dsl-extras-3", "result-monad", "search-providers", "compression", "frontend", "doc-templates", "ai-memory", "multimodal-rag", "feature-flags", "caching"]
 
 [package.metadata.requires-dev]
 dev = [

@@ -74,12 +74,7 @@ class RunHistoryStoreProtocol(Protocol):
         """Обновить статус тика (running/done/failed/dead)."""
 
     async def run_pending(
-        self,
-        job_id: str,
-        executor: Any,
-        *,
-        limit: int = 100,
-        attempts: int = 1,
+        self, job_id: str, executor: Any, *, limit: int = 100, attempts: int = 1
     ) -> int:
         """Исполнить pending тики через executor (claim → run → mark).
 

@@ -116,9 +116,7 @@ class WebhookScheduler:
             )
         return bool(deleted)
 
-    async def list_scheduled(
-        self, *, tenant_id: str = ""
-    ) -> list[dict[str, Any]]:
+    async def list_scheduled(self, *, tenant_id: str = "") -> list[dict[str, Any]]:
         """Возвращает список запланированных webhooks для tenant.
 
         Tenant isolation: фильтрует только по namespace указанного tenant.

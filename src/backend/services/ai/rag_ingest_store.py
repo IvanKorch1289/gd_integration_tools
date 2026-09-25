@@ -120,9 +120,7 @@ class InMemoryIngestStateStore:
                 return
             entry.update(fields)
 
-    async def get(
-        self, task_id: str, *, tenant_id: str = ""
-    ) -> dict[str, Any] | None:
+    async def get(self, task_id: str, *, tenant_id: str = "") -> dict[str, Any] | None:
         """Get task by ID (tenant-scoped, fail-closed per ADR-0345).
 
         Args:
@@ -247,9 +245,7 @@ class RedisIngestStateStore:
         except Exception as exc:
             logger.debug("RedisIngestStateStore.update failed: %s", exc)
 
-    async def get(
-        self, task_id: str, *, tenant_id: str = ""
-    ) -> dict[str, Any] | None:
+    async def get(self, task_id: str, *, tenant_id: str = "") -> dict[str, Any] | None:
         """Get task from Redis (tenant-scoped, fail-closed per ADR-0345).
 
         Args:

@@ -38,9 +38,7 @@ def _human_report(report_dict: dict) -> str:
     ]
     for t in report_dict["tests"]:
         status = "✅" if t["passed"] else "❌"
-        lines.append(
-            f"  {status} {t['test_name']:<20} {t['duration_ms']:.1f}ms"
-        )
+        lines.append(f"  {status} {t['test_name']:<20} {t['duration_ms']:.1f}ms")
         if t["error"]:
             lines.append(f"        error: {t['error']}")
         for k, v in t["details"].items():
@@ -70,8 +68,7 @@ def _build_demo_manifest(plugin_name: str) -> ConnectorManifest:
         base=base,
         endpoint=f"https://api.{plugin_name}.example.com/v1",
         auth=AuthConfig(
-            type=ConnectorAuthType.API_KEY,
-            secret_ref=f"vault://{plugin_name}/api_key",
+            type=ConnectorAuthType.API_KEY, secret_ref=f"vault://{plugin_name}/api_key"
         ),
         operations=(f"{plugin_name}.list", f"{plugin_name}.get"),
     )
@@ -95,19 +92,13 @@ def main(argv: list[str] | None = None) -> int:
 
     cert = sub.add_parser("certify", help="Run certification matrix на connector'е")
     cert.add_argument(
-        "plugin_name",
-        type=str,
-        help="Имя plugin'а (например 'dadata', 'skb').",
+        "plugin_name", type=str, help="Имя plugin'а (например 'dadata', 'skb')."
     )
     cert.add_argument(
-        "--json",
-        action="store_true",
-        help="Machine-readable JSON output.",
+        "--json", action="store_true", help="Machine-readable JSON output."
     )
     cert.add_argument(
-        "--strict",
-        action="store_true",
-        help="Exit 1 если overall_passed=False.",
+        "--strict", action="store_true", help="Exit 1 если overall_passed=False."
     )
 
     args = parser.parse_args(argv)
@@ -131,8 +122,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.strict and not out["overall_passed"]:
         sys.stderr.write(
-            "\nFAILED: certification matrix has failures. "
-            "Use --json для details.\n"
+            "\nFAILED: certification matrix has failures. Use --json для details.\n"
         )
         return 1
     return 0

@@ -28,12 +28,7 @@ from typing import Any
 
 import yaml
 
-__all__ = (
-    "RouteExplanation",
-    "StepExplanation",
-    "SideEffect",
-    "explain_route",
-)
+__all__ = ("RouteExplanation", "StepExplanation", "SideEffect", "explain_route")
 
 
 # === Side-effect catalog (subset of processors from src/backend/dsl/engine/processors) ===
@@ -190,7 +185,9 @@ class RouteExplanation:
             "route_dir": self.route_dir,
             "manifest": self.manifest,
             "steps": [s.to_dict() for s in self.steps],
-            "side_effects_aggregate": [se.to_dict() for se in self.side_effects_aggregate],
+            "side_effects_aggregate": [
+                se.to_dict() for se in self.side_effects_aggregate
+            ],
             "capabilities_required": sorted(set(self.capabilities_required)),
             "capabilities_declared": sorted(set(self.capabilities_declared)),
             "capabilities_missing": sorted(set(self.capabilities_missing)),

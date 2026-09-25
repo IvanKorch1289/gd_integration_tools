@@ -86,7 +86,11 @@ class AuthConfig(BaseModel):
         # Per security best practice: secrets должны быть dotted-path в vault://...
         if v is None:
             return None
-        if not (v.startswith("vault://") or v.startswith("env://") or v.startswith("file://")):
+        if not (
+            v.startswith("vault://")
+            or v.startswith("env://")
+            or v.startswith("file://")
+        ):
             raise ValueError(
                 f"secret_ref должен начинаться с vault://, env:// или file://. Got: {v!r}"
             )
@@ -207,9 +211,4 @@ class ConnectorManifest(BaseModel):
         Returns:
             Полный :class:`ConnectorManifest`.
         """
-        return cls(
-            base=base,
-            endpoint=endpoint,
-            auth=auth or AuthConfig(),
-            **kwargs,
-        )
+        return cls(base=base, endpoint=endpoint, auth=auth or AuthConfig(), **kwargs)

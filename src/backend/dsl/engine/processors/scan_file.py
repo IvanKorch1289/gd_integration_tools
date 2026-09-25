@@ -140,7 +140,7 @@ class ScanFileProcessor(BaseProcessor):
                 try:
                     # S78 M2-#11 batch 13: DI provider вместо inline infrastructure import.
                     # R1 fix (S95): provider returns factory function — call it.
-                    from src.backend.core.di.providers.security import (
+                    from src.backend.core.di.providers.storage import (
                         get_s3_client_provider,
                     )
 

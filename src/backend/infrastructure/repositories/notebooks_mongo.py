@@ -79,9 +79,7 @@ class MongoNotebookRepository:
         await self._client().insert_one(_COLLECTION, _notebook_to_doc(notebook))
         return notebook
 
-    async def get(
-        self, notebook_id: str, *, tenant_id: str
-    ) -> Notebook | None:
+    async def get(self, notebook_id: str, *, tenant_id: str) -> Notebook | None:
         """Get notebook by ID (tenant-scoped, fail-closed per ADR-0345).
 
         Args:

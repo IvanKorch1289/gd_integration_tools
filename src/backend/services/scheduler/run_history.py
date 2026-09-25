@@ -110,7 +110,7 @@ class RunHistoryStore:
                 try:
                     await session.commit()
                     created += 1
-                except (IntegrityError, OperationalError):
+                except IntegrityError, OperationalError:
                     # UNIQUE constraint failed — concurrent worker уже
                     # вставил этот тик. Skip (idempotent).
                     await session.rollback()
@@ -248,10 +248,7 @@ class RunHistoryStore:
                     SchedulerRunHistory.lease_owner == owner,
                 )
                 .values(
-                    status=new_status,
-                    lease_owner=None,
-                    lease_until=None,
-                    error=error,
+                    status=new_status, lease_owner=None, lease_until=None, error=error
                 )
                 .execution_options(synchronize_session=False)
             )
@@ -384,8 +381,6 @@ class RunHistoryStore:
                 failed += 1
             else:
                 # Атомарный release claim → done.
-                await self.complete_claim(
-                    job_id, tick, owner, status=STATUS_DONE
-                )
+                await self.complete_claim(job_id, tick, owner, status=STATUS_DONE)
                 done += 1
         return done, failed

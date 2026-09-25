@@ -30,11 +30,7 @@ from typing import Any
 
 from src.backend.core.connector.manifest import ConnectorManifest, DataClassification
 
-__all__ = (
-    "CertificationReport",
-    "TestResult",
-    "certify_connector",
-)
+__all__ = ("CertificationReport", "TestResult", "certify_connector")
 
 
 @dataclass(slots=True, frozen=True)
@@ -169,9 +165,7 @@ async def _test_rate_limit(manifest: ConnectorManifest) -> TestResult:
                 "max_retries": manifest.rate_limits.max_retries,
                 "backoff_strategy": manifest.rate_limits.backoff_strategy,
             },
-            error=(
-                None if passed else "rps или max_retries=0 — 429 not handled"
-            ),
+            error=(None if passed else "rps или max_retries=0 — 429 not handled"),
         )
     except Exception as exc:
         return TestResult(
@@ -283,7 +277,8 @@ async def _test_replay_idempotency(manifest: ConnectorManifest) -> TestResult:
         # Если есть write operations (``create``/``update``/``delete``),
         # connector ДОЛЖЕН иметь idempotency support.
         write_ops = [
-            op for op in manifest.operations
+            op
+            for op in manifest.operations
             if any(w in op.lower() for w in ("create", "update", "delete", "write"))
         ]
         # Per spec: idempotency assumed для connector'ов с write ops.
@@ -302,7 +297,9 @@ async def _test_replay_idempotency(manifest: ConnectorManifest) -> TestResult:
                     "expected": "max_retries >= 1 для retry safety на write ops",
                 },
                 error=(
-                    None if passed else "write ops без retries — replay может corrupt data"
+                    None
+                    if passed
+                    else "write ops без retries — replay может corrupt data"
                 ),
             )
         # Read-only connector — replay безопасен по умолчанию.

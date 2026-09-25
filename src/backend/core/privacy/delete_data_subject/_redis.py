@@ -82,11 +82,7 @@ class RedisErasureAdapter:
                 )
 
             # Per ADR-0345: resolve effective_tenant_id.
-            effective_tenant = (
-                tenant_id
-                if tenant_id is not None
-                else get_tenant_id()
-            )
+            effective_tenant = tenant_id if tenant_id is not None else get_tenant_id()
             # Build prefix list — original + tenant prefix if tenant resolved.
             prefixes_to_scan = self._prefixes
             if effective_tenant:

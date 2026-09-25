@@ -32,8 +32,16 @@ def _print_human(explanation_dict: dict) -> str:
         f"Steps ({len(explanation_dict['steps'])}):",
     ]
     for step in explanation_dict["steps"]:
-        retry_info = f" [retry: {step['retry']['attempts']}x {step['retry']['backoff']}]" if step["retry"] else ""
-        caps_str = ", ".join(step["capabilities_required"]) if step["capabilities_required"] else "—"
+        retry_info = (
+            f" [retry: {step['retry']['attempts']}x {step['retry']['backoff']}]"
+            if step["retry"]
+            else ""
+        )
+        caps_str = (
+            ", ".join(step["capabilities_required"])
+            if step["capabilities_required"]
+            else "—"
+        )
         lines.append(
             f"  [{step['index']:>2}] {step['step_type']:<20} "
             f"caps=[{caps_str}] est={step['estimated_duration_ms']}ms{retry_info}"
@@ -88,14 +96,10 @@ def main(argv: list[str] | None = None) -> int:
         )
     )
     parser.add_argument(
-        "route_dir",
-        type=Path,
-        help="Каталог route (содержит route.toml + *.dsl.yaml).",
+        "route_dir", type=Path, help="Каталог route (содержит route.toml + *.dsl.yaml)."
     )
     parser.add_argument(
-        "--json",
-        action="store_true",
-        help="Machine-readable JSON output.",
+        "--json", action="store_true", help="Machine-readable JSON output."
     )
     parser.add_argument(
         "--strict",

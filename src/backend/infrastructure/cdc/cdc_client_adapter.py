@@ -105,7 +105,7 @@ class CDCClientAdapter(CDCSource):
         # behavior (ERROR log + drop). See ``_enqueue_or_dlq``.
         self._dlq_writer = dlq_writer
 
-    async def subscribe(  # type: ignore[override]
+    async def subscribe(  # type: ignore[override,misc]
         self, *, tables: list[str], start_cursor: CDCCursor | None = None
     ) -> AsyncIterator[CDCEvent]:
         """Подписаться на CDC-события через CDCClient.
@@ -169,7 +169,7 @@ class CDCClientAdapter(CDCSource):
         """
         logger.debug("CDCClientAdapter ack: %s", cursor.value)
 
-    async def replay(  # type: ignore[override]
+    async def replay(  # type: ignore[override,misc]
         self, *, start_cursor: CDCCursor, end_cursor: CDCCursor | None = None
     ) -> AsyncIterator[CDCEvent]:
         """Replay не поддерживается CDCClient напрямую.
