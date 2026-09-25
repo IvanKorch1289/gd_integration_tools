@@ -159,7 +159,7 @@ async def _patch_send_file_deps(
             return MagicMock(get_object_bytes=_ok_s3)
 
     monkeypatch.setattr(
-        "src.backend.core.di.providers.cache.get_s3_client_provider", lambda: s3_factory
+        "src.backend.core.di.providers.storage.get_s3_client_provider", lambda: s3_factory
     )
     return client
 
