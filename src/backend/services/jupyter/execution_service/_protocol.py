@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     # Runtime: lazy locator в core/clients/jupyter_hub.py (mypy не видит
     # класс за __getattr__-фабрикой). Type-checking: реальный класс из
     # infrastructure — layering не нарушается (импорт только для mypy).
-    from src.backend.infrastructure.clients.external.jupyter_hub import JupyterHubClient
+    pass
 
 
 class _NotebookExecutionProtocol(Protocol):
