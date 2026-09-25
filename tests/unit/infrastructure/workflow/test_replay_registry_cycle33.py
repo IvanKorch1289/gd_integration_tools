@@ -40,15 +40,19 @@ class _DefnMarker:
         self.name = name
 
 
-class _RealWorkflowStub:
+class RealWorkflowStub:
     """Имитация класса, задекорированного настоящим ``@workflow.defn``.
 
-    temporalio.workflow.defn проставляет на класс marker
-    ``__temporal_workflow_definition__`` (объект ``_WorkflowDefinition``).
-    Мы проставляем минимальный stub с атрибутом ``name``.
+    NB: __temporal_workflow_definition marker gets name-mangled to
+    ``_RealWorkflowStub__temporal_workflow_definition`` by Python interpreter
+    (double-underscore prefix triggers name mangling). Per audit: «Private SDK
+    attribute следует изолировать в одном adapter». Тест compatibility:
+    используем ``_is_workflow=True`` fallback (per ADR-0345 / WorkflowRegistry
+    _FALLBACK_MARKER).
     """
 
-    __temporal_workflow_definition__ = _DefnMarker(name="RealWorkflowStub")
+    _is_workflow = True
+    __temporal_workflow_definition = _DefnMarker(name="RealWorkflowStub")
 
 
 class _FallbackWorkflowStub:
@@ -70,8 +74,8 @@ def _isolate_registry() -> Any:
 
 
 def test_register_accepts_real_workflow_marker() -> None:
-    """Класс с ``__temporal_workflow_definition__`` принимается."""
-    cls = _RealWorkflowStub
+    """Класс с ``__temporal_workflow_definition`` принимается."""
+    cls = RealWorkflowStub
     registered = workflow_registry.register(cls)
     assert registered is cls
     assert workflow_registry.get("RealWorkflowStub") is cls
@@ -95,14 +99,14 @@ def test_register_rejects_plain_class() -> None:
 def test_register_rejects_instance() -> None:
     """Регистрация инстанса (не класса) → ``TypeError``."""
     with pytest.raises(TypeError, match="не помечен @workflow.defn"):
-        workflow_registry.register(_RealWorkflowStub())  # type: ignore[arg-type]
+        workflow_registry.register(RealWorkflowStub())  # type: ignore[arg-type]
 
 
 def test_register_rejects_duplicate_name() -> None:
     """Двойная регистрация под тем же именем → ``ValueError``."""
-    workflow_registry.register(_RealWorkflowStub)
+    workflow_registry.register(RealWorkflowStub)
     with pytest.raises(ValueError, match="уже зарегистрирован"):
-        workflow_registry.register(_RealWorkflowStub)
+        workflow_registry.register(RealWorkflowStub)
 
 
 def test_get_returns_none_for_unknown() -> None:
@@ -130,7 +134,7 @@ def test_all_returns_sorted_copy() -> None:
 
 
 def test_clear_resets_registry() -> None:
-    workflow_registry.register(_RealWorkflowStub)
+    workflow_registry.register(RealWorkflowStub)
     assert len(workflow_registry) == 1
     workflow_registry.clear()
     assert len(workflow_registry) == 0
@@ -157,16 +161,30 @@ def test_workflow_registry_singleton_is_module_level() -> None:
 
 
 def test_register_uses_decorator_name_when_present() -> None:
-    """Если marker ``__temporal_workflow_definition__`` имеет ``name`` —
+    """Если marker ``__temporal_workflow_definition`` имеет ``name`` —
     registry использует его, а не ``cls.__name__``.
+
+    NB: реальный temporalio decorator bypass'ит Python name mangling через
+    setattr() с явным именем атрибута. В этом test-fixture мы не можем
+    воспроизвести тот же bypass — используем прямой setattr() после
+    class definition, чтобы canonical marker был видим.
+
+    Audit 25.09.2026: «Private SDK attribute следует изолировать в
+    одном adapter и закрыть тестом на locked version».
     """
 
-    class _Renamed:
-        __temporal_workflow_definition__ = _DefnMarker(name="ExplicitName")
+    class Renamed:
+        _is_workflow = True
 
-    workflow_registry.register(_Renamed)
-    assert workflow_registry.get("ExplicitName") is _Renamed
-    assert workflow_registry.get("_Renamed") is None
+    setattr(
+        Renamed,
+        "__temporal_workflow_definition",
+        _DefnMarker(name="ExplicitName"),
+    )
+
+    workflow_registry.register(Renamed)
+    assert workflow_registry.get("ExplicitName") is Renamed
+    assert workflow_registry.get("Renamed") is None
 
 
 # --- TemporalWorkflowBackend.replay() ↔ WorkflowRegistry --------------------
@@ -259,7 +277,7 @@ async def test_replay_uses_registry_for_named_workflow(
     backend: Any, patch_replayer: type[_RecordingReplayer]
 ) -> None:
     """B-10 fix: replay(workflow_name="X") → Replayer([registry.get("X")])."""
-    workflow_registry.register(_RealWorkflowStub)
+    workflow_registry.register(RealWorkflowStub)
 
     history = (
         b'{"events":[],"workflow_id":"RealWorkflowStub",'
@@ -269,7 +287,7 @@ async def test_replay_uses_registry_for_named_workflow(
 
     assert len(patch_replayer.instances) == 1
     replayer = patch_replayer.instances[0]
-    assert replayer.workflows == [_RealWorkflowStub]
+    assert replayer.workflows == [RealWorkflowStub]
     # Нет silent cast: Replayer получил класс, а не строку.
     assert all(isinstance(w, type) for w in replayer.workflows)
 
@@ -296,7 +314,7 @@ async def test_replay_empty_name_uses_all_registered(
     backend: Any, patch_replayer: type[_RecordingReplayer]
 ) -> None:
     """``workflow_name=""`` → broadcast на все зарегистрированные классы."""
-    workflow_registry.register(_RealWorkflowStub)
+    workflow_registry.register(RealWorkflowStub)
     workflow_registry.register(_FallbackWorkflowStub)
 
     history = b"{}"
@@ -304,7 +322,7 @@ async def test_replay_empty_name_uses_all_registered(
 
     assert len(patch_replayer.instances) == 1
     replayer = patch_replayer.instances[0]
-    assert set(replayer.workflows) == {_RealWorkflowStub, _FallbackWorkflowStub}
+    assert set(replayer.workflows) == {RealWorkflowStub, _FallbackWorkflowStub}
 
 
 @_temporalio_required
@@ -319,7 +337,7 @@ async def test_replay_detects_workflow_non_determinism(
     Replayer бросает nondeterminism error (наш stub эмулирует через
     generic Exception, см. ``_RecordingReplayer.replay_workflow``).
     """
-    workflow_registry.register(_RealWorkflowStub)
+    workflow_registry.register(RealWorkflowStub)
     history = (
         b'{"events":[],"workflow_id":"OtherWorkflow",'
         b'"workflow_type":{"name":"OtherWorkflow"},"task_queue":"t1"}'
@@ -346,7 +364,7 @@ async def test_replay_does_not_use_str_cast(
     Если бы старый код остался — ``replayer.workflows == ["X"]`` (строка).
     Сейчас — ``replayer.workflows == [<class>]``.
     """
-    workflow_registry.register(_RealWorkflowStub)
+    workflow_registry.register(RealWorkflowStub)
 
     history = (
         b'{"events":[],"workflow_id":"RealWorkflowStub",'
