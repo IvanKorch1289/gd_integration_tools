@@ -296,12 +296,12 @@
   },
   {
     "file": "src/backend/infrastructure/repositories/notebooks_mongo.py",
-    "line": 110,
+    "line": 108,
     "qualified_name": "MongoNotebookRepository.append_version"
   },
   {
     "file": "src/backend/infrastructure/repositories/notebooks_mongo.py",
-    "line": 161,
+    "line": 159,
     "qualified_name": "MongoNotebookRepository.restore_version"
   },
   {
