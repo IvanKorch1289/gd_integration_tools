@@ -31,6 +31,7 @@ backward compat callers.
 from __future__ import annotations
 
 import asyncio
+import inspect
 from datetime import datetime, timedelta
 from datetime import timezone as _tz
 from typing import Any
@@ -228,6 +229,37 @@ class SchedulerFacade:
             ticks_in_window=0,
             error=None,
         )
+
+    async def run_pending(self, job_id: str, *, limit: int = 100) -> tuple[int, int]:
+        """Execute pending ticks для catchup-job (v6 W0 execution step).
+
+        Args:
+            job_id: Идентификатор job'а.
+            limit: Максимум исполнений за вызов (backpressure).
+
+        Returns:
+            (done, failed) — счётчики исполненных и упавших тиков.
+
+        Raises:
+            ServiceError: если job не зарегистрирован через add_job.
+        """
+        self._assert("scheduler.run_pending", job_id)
+
+        func = self._job_funcs.get(job_id)
+        if func is None:
+            raise ServiceError(
+                f"Job {job_id!r} не зарегистрирован через add_job — "
+                "нет executor для pending-тиков"
+            )
+
+        store = self.get_run_history_store()
+
+        async def _executor(tick: Any) -> None:
+            result = func()
+            if inspect.isawaitable(result):
+                await result
+
+        return await store.run_pending(job_id, _executor, limit=limit)
 
     def remove_job(self, job_id: str) -> None:
         """Удалить задачу из планировщика.
