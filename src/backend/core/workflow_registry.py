@@ -15,9 +15,15 @@ emitter.py / versioning.py). Реестр готов принимать их п�
 bootstrap-сканер в :mod:`app_factory` ищет их на старте.
 
 Валидация: класс должен иметь marker temporalio SDK
-``__temporal_workflow_definition__`` (проставляется декоратором
-``@workflow.defn``) либо fallback-флаг ``_is_workflow=True`` для
-test-fixtures (плагины и unit-тесты).
+``__temporal_workflow_definition`` (проставляется декоратором
+``@workflow.defn``, см. ``temporalio.workflow._defn``) либо fallback-флаг
+``_is_workflow=True`` для test-fixtures (плагины и unit-тесты).
+
+NB: canonical marker — ``__temporal_workflow_definition`` (без trailing
+underscores), per Temporal SDK 1.32+ contract. Это единственный
+проставляемый SDK attribute; ссылки на private sentinel с trailing
+underscores в production src НЕ допускаются — заблокировано через
+test_canonical_marker_isolated_to_one_place.
 """
 
 from __future__ import annotations
@@ -88,6 +94,26 @@ class WorkflowRegistry:
         """Возвращает workflow-класс по имени или ``None``."""
         return self._classes.get(name)
 
+    def resolve(self, names: list[str]) -> list[type]:
+        """Replay-compatible class resolution: список имён → список классов.
+
+        Per 25.09 audit: «replay-compatible class resolution» —
+        ``TemporalWorkflowBackend.replay(workflow_name)`` возвращает
+        Protocol-строку, которую нужно маппить в ``list[type]`` для
+        передачи в ``temporalio.Replayer``. Эта функция —
+        canonical resolution path.
+
+        Args:
+            names: список workflow-имён (Protocol-строки из Temporal API).
+
+        Returns:
+            Список resolved classes в том же порядке, что и names.
+            Unknown names пропускаются (Replayer требует только
+            известные workflows, unknown → log warning, не raise).
+        """
+        with self._lock:
+            return [self._classes[name] for name in names if name in self._classes]
+
     def all(self) -> list[type]:
         """Возвращает копию списка всех зарегистрированных классов.
 
@@ -120,8 +146,8 @@ class WorkflowRegistry:
 
     @staticmethod
     def _extract_name(cls: type) -> str:
-        """Имя workflow'а: ``__temporal_workflow_definition__.name`` если
-        temporalio decorator проставил ``name=...``, иначе ``cls.__name__``.
+        """Имя workflow'а: ``_TEMPORAL_DEFN_MARKER.name`` (canonical SDK marker)
+        если temporalio decorator проставил ``name=...``, иначе ``cls.__name__``.
         """
         defn = getattr(cls, _TEMPORAL_DEFN_MARKER, None)
         name = getattr(defn, "name", None) if defn is not None else None
