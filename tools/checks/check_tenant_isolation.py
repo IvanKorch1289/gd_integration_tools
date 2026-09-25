@@ -9,15 +9,20 @@ Scans src/ for:
 4. **Missing RLS markers** — ORM models без ``__table_args__`` containing
    RLS policy hints.
 
+v6 W3.5 (25.09 audit): versioned allowlist в
+``.baselines/tenant_isolation_allowlist.yaml`` filter'ит known
+false positives (infrastructure/system callsites). Unclassified findings
+→ gate FAIL per audit W3.5.
+
 Использование::
 
     python tools/checks/check_tenant_isolation.py              # human-readable
-    python tools/checks/check_tenant_isolation.py --strict    # exit 1 if issues
+    python tools/checks/check_tenant_isolation.py --strict    # exit 1 if UNCLASSIFIED issues
     python tools/checks/check_tenant_isolation.py --json      # machine output
 
 Exit codes:
-    0 — все проверки OK
-    1 — найдены issues (--strict)
+    0 — все проверки OK (или все findings классифицированы)
+    1 — найдены UNCLASSIFIED findings (--strict)
 """
 
 from __future__ import annotations
@@ -29,20 +34,91 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC_ROOT = REPO_ROOT / "src"
+ALLOWLIST_PATH = (
+    REPO_ROOT / ".baselines" / "tenant_isolation_allowlist.yaml"
+)
+
+
+def _load_tenant_allowlist() -> set[tuple[str, int]]:
+    """Load ``.baselines/tenant_isolation_allowlist.yaml`` → set of (file, line) tuples.
+
+    Per audit W3.5 (25.09): versioned allowlist с owner, reason, review_date.
+    Каждый entry классифицирует callsite как FALSE_POSITIVE (system infra,
+    не user-data) и НЕ должен проходить через ``--strict`` gate.
+
+    Returns:
+        Set of ``(relative_file_path, line_number)`` для matching against
+        findings. Если файл указан без конкретных line → wildcard match
+        (все lines этого файла).
+
+    Per audit W3: «Запретить новые optional tenant parameters AST-gate'ом.
+    Каждый entry здесь — явный documented exception с review_date.
+    НЕ добавлять entries для user-data API callsites без ADR».
+    """
+    allowed: set[tuple[str, int]] = set()
+
+    if not ALLOWLIST_PATH.is_file():
+        return allowed
+
+    try:
+        import yaml  # type: ignore[import-untyped]
+    except ImportError:
+        return allowed
+
+    try:
+        with ALLOWLIST_PATH.open(encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+    except (OSError, yaml.YAMLError) as exc:  # type: ignore[misc]
+        print(f"warning: failed to load tenant allowlist: {exc}", file=sys.stderr)
+        return allowed
+
+    for entry in data.get("allowlist", []) or []:
+        file = entry.get("file")
+        if not file:
+            continue
+        line = entry.get("line")
+        if line is None:
+            # Wildcard match: все lines этого файла.
+            allowed.add((file, 0))
+        else:
+            allowed.add((file, int(line)))
+
+    return allowed
+
+
+def _is_finding_allowlisted(
+    file: str, line: int, allowlist: set[tuple[str, int]]
+) -> bool:
+    """Check if (file, line) matches allowlist (including wildcards)."""
+    if (file, line) in allowlist:
+        return True
+    if (file, 0) in allowlist:  # wildcard match (any line in file)
+        return True
+    return False
 
 
 def _is_query_node(node: ast.AST) -> bool:
-    """True если node похож на ORM query construction."""
-    src = ast.unparse(node)
+    """True если node похож на ORM query construction.
+
+    v6 W3.5 fix: более точный detection — проверяем что node — это
+    Call expression, не вся функция (которая содержала бы любые
+    patterns внутри). Раньше ast.unparse на FunctionDef node возвращал
+    ВСЁ тело функции, и если в любом statement было ``objects.get``,
+    флагалась ВСЯ функция (977 false positives из 1966).
+    """
+    # Must be a Call expression, не FunctionDef/ClassDef/etc.
+    if not isinstance(node, ast.Call):
+        return False
+    src = ast.unparse(node.func) if hasattr(node, "func") else ast.unparse(node)
     query_patterns = [
-        "select(",
-        "filter(",
-        "where(",
+        "select",
+        "filter",
+        "where",
         "Session",
         "session.execute",
         "session.scalar",
         "session.scalars",
-        ".query(",
+        ".query",
         "objects.filter",
         "objects.get",
         "objects.all",
@@ -238,39 +314,100 @@ def main(argv: list[str] | None = None) -> int:
     notes.append(f"Direct TenantContext.get() usages: {len(direct_get_findings)}")
     notes.append(f"ORM models without tenant_id column: {len(no_tenant_id_findings)}")
 
-    # Issues only for high-confidence findings (cross-tenant access patterns).
-    if direct_get_findings:
+    # v6 W3.5: load versioned allowlist и filter known false positives.
+    # Per audit W3.5: «Tenant gate должен работать по versioned allowlist
+    # и падать на unclassified findings».
+    allowlist = _load_tenant_allowlist()
+
+    def _filter_allowlisted(
+        findings: list[dict[str, object]],
+    ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+        """Split findings into (allowlisted, unclassified).
+
+        Returns:
+            (allowlisted, unclassified) — unclassified entries НЕ
+            классифицированы в .baselines/tenant_isolation_allowlist.yaml
+            → должны быть адрессованы (либо fix, либо allowlist entry с
+            owner/reason/review_date).
+        """
+        allowlisted: list[dict[str, object]] = []
+        unclassified: list[dict[str, object]] = []
+        for f in findings:
+            if _is_finding_allowlisted(str(f["file"]), int(f["line"]), allowlist):
+                allowlisted.append(f)
+            else:
+                unclassified.append(f)
+        return allowlisted, unclassified
+
+    missing_filter_allowlisted, missing_filter_unclassified = _filter_allowlisted(
+        missing_filter_findings
+    )
+    direct_get_allowlisted, direct_get_unclassified = _filter_allowlisted(
+        direct_get_findings
+    )
+    no_tenant_id_allowlisted, no_tenant_id_unclassified = _filter_allowlisted(
+        no_tenant_id_findings
+    )
+
+    notes.append(f"Allowlisted (false positives): {len(missing_filter_allowlisted)}")
+    notes.append(f"Unclassified (need attention): {len(missing_filter_unclassified)}")
+
+    # v6 W3 gate integrity: --strict fails только на UNCLASSIFIED findings.
+    # Allowlisted findings классифицированы (system infra) → не failures.
+    if direct_get_unclassified:
         issues.append(
-            f"Direct TenantContext.get() found in {len(direct_get_findings)} places — "
-            "bypasses async context cleanup. Use 'with TenantContext(...)' instead."
+            f"Direct TenantContext.get() (unclassified): {len(direct_get_unclassified)} "
+            "— bypasses async context cleanup. Use 'with TenantContext(...)' instead. "
+            "Document in allowlist или fix per audit W3.5."
+        )
+    if missing_filter_unclassified:
+        issues.append(
+            f"Missing tenant filter (unclassified): {len(missing_filter_unclassified)} — "
+            "user-data API callsites без tenant predicate и НЕ классифицированы "
+            "в .baselines/tenant_isolation_allowlist.yaml. Per ADR-0345 Option A "
+            "ВСЕ user-data callsites должны быть либо fixed (tenant filter), либо "
+            "явно allowlist'нуты с owner/reason/review_date."
+        )
+    if no_tenant_id_unclassified:
+        issues.append(
+            f"ORM models without tenant_id (unclassified): {len(no_tenant_id_unclassified)} — "
+            "per ADR-0345 все ORM models с user-data должны иметь tenant_id column. "
+            "Document в allowlist или fix per audit W3.5."
         )
 
-    # v6 W3 gate integrity fix: --strict MUST fail when findings exist.
-    # Previously --strict только catches ``direct_get_findings``, но
-    # missing_filter and no_tenant_id также являются real gaps —
-    # audit показывает ``exit 0 при 1966 candidates и 6 models`` это DISPUTED.
-    # Теперь --strict fails при любом non-zero findings count.
-    if missing_filter_findings:
-        issues.append(
-            f"Missing tenant filter candidates: {len(missing_filter_findings)} — "
-            "user-data API callsites без tenant predicate. Per ADR-0345 Option A "
-            "ВСЕ user-data callsites должны иметь tenant filter (--strict)."
-        )
-    if no_tenant_id_findings:
-        issues.append(
-            f"ORM models without tenant_id column: {len(no_tenant_id_findings)} — "
-            "per ADR-0345 все ORM models с user-data должны иметь tenant_id column."
-        )
+    # Diagnostic info: total findings vs allowlisted.
+    total_findings = (
+        len(missing_filter_findings)
+        + len(direct_get_findings)
+        + len(no_tenant_id_findings)
+    )
+    total_allowlisted = (
+        len(missing_filter_allowlisted)
+        + len(direct_get_allowlisted)
+        + len(no_tenant_id_allowlisted)
+    )
+    notes.append(
+        f"Total findings: {total_findings}; "
+        f"allowlisted: {total_allowlisted} ({total_allowlisted * 100 // max(total_findings, 1)}%); "
+        f"unclassified: {total_findings - total_allowlisted}"
+    )
 
     # Report.
     result = {
         "files_scanned": files_scanned,
-        "missing_tenant_filter_candidates": missing_filter_findings[:20],
-        "direct_TenantContext_get": direct_get_findings[:20],
-        "orm_models_no_tenant_id": no_tenant_id_findings[:20],
+        "missing_tenant_filter_candidates": missing_filter_unclassified[:20],
+        "direct_TenantContext_get": direct_get_unclassified[:20],
+        "orm_models_no_tenant_id": no_tenant_id_unclassified[:20],
         "total_missing_filter": len(missing_filter_findings),
         "total_direct_get": len(direct_get_findings),
         "total_no_tenant_id": len(no_tenant_id_findings),
+        "total_missing_filter_allowlisted": len(missing_filter_allowlisted),
+        "total_missing_filter_unclassified": len(missing_filter_unclassified),
+        "total_no_tenant_id_allowlisted": len(no_tenant_id_allowlisted),
+        "total_no_tenant_id_unclassified": len(no_tenant_id_unclassified),
+        "allowlist_path": str(ALLOWLIST_PATH.relative_to(REPO_ROOT))
+        if ALLOWLIST_PATH.is_file()
+        else None,
         "issues": issues,
         "notes": notes,
     }
@@ -279,28 +416,33 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(result, indent=2))
     else:
         print(f"{'=' * 60}")
-        print("Tenant Isolation Check (P0 audit 2026-09-22)")
+        print("Tenant Isolation Check (P0 audit 2026-09-22 + W3.5 allowlist)")
         print(f"{'=' * 60}")
         print()
         for n in notes:
             print(f"  ℹ️  {n}")
         print()
-        if direct_get_findings:
-            print(f"Direct TenantContext.get() ({len(direct_get_findings)}):")
-            for f in direct_get_findings[:5]:
+        if direct_get_unclassified:
+            print(f"Direct TenantContext.get() UNCLASSIFIED ({len(direct_get_unclassified)}):")
+            for f in direct_get_unclassified[:5]:
                 print(f"  - {f['file']}:{f['line']}: {f['snippet'][:60]}")
             print()
-        if no_tenant_id_findings:
-            print(f"ORM models w/o tenant_id ({len(no_tenant_id_findings)}):")
-            for f in no_tenant_id_findings[:5]:
+        if no_tenant_id_unclassified:
+            print(f"ORM models w/o tenant_id UNCLASSIFIED ({len(no_tenant_id_unclassified)}):")
+            for f in no_tenant_id_unclassified[:5]:
+                print(f"  - {f['file']}:{f['line']}: {f['snippet'][:60]}")
+            print()
+        if missing_filter_unclassified:
+            print(f"Missing tenant filter UNCLASSIFIED ({len(missing_filter_unclassified)}):")
+            for f in missing_filter_unclassified[:5]:
                 print(f"  - {f['file']}:{f['line']}: {f['snippet'][:60]}")
             print()
         if issues:
-            print("Issues:")
+            print("Issues (--strict FAIL):")
             for i in issues:
                 print(f"  ❌ {i}")
         else:
-            print("✅ All critical checks passed")
+            print("✅ All findings classified (allowlist covers system infra)")
         print()
 
     if args.strict and issues:
