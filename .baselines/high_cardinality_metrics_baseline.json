@@ -648,30 +648,6 @@
     "severity": "WARNING"
   },
   {
-    "file": "src/backend/infrastructure/database/pool_warmup.py",
-    "full_call": "_WARMUP_DURATION.labels(pool=pool, tenant_id=tenant_label)",
-    "label": "tenant_id",
-    "line": 92,
-    "reason": "label 'tenant_id' is high-cardinality (per-tenant/per-user/per-request). Per audit W9: «Запретить tenant_id, user_id, raw route parameters как Prometheus labels. Их можно помещать в traces/logs с policy-controlled hashing».",
-    "severity": "FORBIDDEN"
-  },
-  {
-    "file": "src/backend/infrastructure/database/pool_warmup.py",
-    "full_call": "_WARMUP_FAILURES.labels(pool=pool, tenant_id=tenant_label)",
-    "label": "tenant_id",
-    "line": 108,
-    "reason": "label 'tenant_id' is high-cardinality (per-tenant/per-user/per-request). Per audit W9: «Запретить tenant_id, user_id, raw route parameters как Prometheus labels. Их можно помещать в traces/logs с policy-controlled hashing».",
-    "severity": "FORBIDDEN"
-  },
-  {
-    "file": "src/backend/infrastructure/database/pool_warmup.py",
-    "full_call": "_POOL_RECONNECTS.labels(pool=pool, tenant_id=tenant_label)",
-    "label": "tenant_id",
-    "line": 123,
-    "reason": "label 'tenant_id' is high-cardinality (per-tenant/per-user/per-request). Per audit W9: «Запретить tenant_id, user_id, raw route parameters как Prometheus labels. Их можно помещать в traces/logs с policy-controlled hashing».",
-    "severity": "FORBIDDEN"
-  },
-  {
     "file": "src/backend/infrastructure/security/cert_store/prometheus_exporter.py",
     "full_call": "self.cert_expiring_days.labels(cert_id=sid)",
     "label": "cert_id",
@@ -873,25 +849,9 @@
   },
   {
     "file": "src/backend/services/workflows/sla_alerting.py",
-    "full_call": "_sla_counter.labels(workflow_id=workflow_id, tenant_id=tenant_id or '', level=level.value)",
-    "label": "workflow_id",
-    "line": 176,
-    "reason": "label 'workflow_id' is high-cardinality (per-tenant/per-user/per-request). Per audit W9: «Запретить tenant_id, user_id, raw route parameters как Prometheus labels. Их можно помещать в traces/logs с policy-controlled hashing».",
-    "severity": "FORBIDDEN"
-  },
-  {
-    "file": "src/backend/services/workflows/sla_alerting.py",
-    "full_call": "_sla_counter.labels(workflow_id=workflow_id, tenant_id=tenant_id or '', level=level.value)",
-    "label": "tenant_id",
-    "line": 176,
-    "reason": "label 'tenant_id' is high-cardinality (per-tenant/per-user/per-request). Per audit W9: «Запретить tenant_id, user_id, raw route parameters как Prometheus labels. Их можно помещать в traces/logs с policy-controlled hashing».",
-    "severity": "FORBIDDEN"
-  },
-  {
-    "file": "src/backend/services/workflows/sla_alerting.py",
-    "full_call": "_sla_counter.labels(workflow_id=workflow_id, tenant_id=tenant_id or '', level=level.value)",
+    "full_call": "_sla_counter.labels(level=level.value)",
     "label": "level",
-    "line": 176,
+    "line": 179,
     "reason": "label 'level' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },

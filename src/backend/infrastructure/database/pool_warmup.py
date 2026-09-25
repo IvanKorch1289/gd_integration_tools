@@ -68,16 +68,21 @@ try:  # pragma: no cover - prometheus_client optional
     from prometheus_client import Counter as _PromCounter
     from prometheus_client import Histogram as _PromHistogram
 
+    # Per audit 25.09.2026 W9: «Запретить tenant_id, user_id, raw route
+    # parameters как Prometheus labels. Их можно помещать в traces/logs с
+    # policy-controlled hashing». tenant_id moved to structured logging
+    # (logger.extra) — НЕ используется как metric label (per-pool
+    # cardinality bounded by ~3 pools, vs per-tenant unbounded).
     _WARMUP_DURATION = _PromHistogram(
         "pool_warmup_duration_ms",
         "Pool warmup duration in milliseconds",
-        ("pool", "tenant_id"),
+        ("pool",),
     )
     _WARMUP_FAILURES = _PromCounter(
-        "pool_warmup_failures_total", "Pool warmup failures", ("pool", "tenant_id")
+        "pool_warmup_failures_total", "Pool warmup failures", ("pool",)
     )
     _POOL_RECONNECTS = _PromCounter(
-        "pool_reconnects_total", "Pool reconnect events", ("pool", "tenant_id")
+        "pool_reconnects_total", "Pool reconnect events", ("pool",)
     )
 except Exception as _:
     _WARMUP_DURATION = None  # type: ignore[assignment,unused-ignore]
@@ -89,9 +94,7 @@ def _record_warmup(pool: str, duration_ms: float, success: bool) -> None:
     tenant_label = _current_tenant_label()
     if _WARMUP_DURATION is not None:
         try:
-            _WARMUP_DURATION.labels(pool=pool, tenant_id=tenant_label).observe(
-                duration_ms
-            )
+            _WARMUP_DURATION.labels(pool=pool).observe(duration_ms)
         except (AttributeError, TypeError, ValueError) as observe_exc:
             # cycle-9/D-AUDIT-930: narrow exceptions + observability.
             # AttributeError — histogram API change, TypeError — invalid
@@ -101,18 +104,26 @@ def _record_warmup(pool: str, duration_ms: float, success: bool) -> None:
 
             logging.getLogger(__name__).debug(
                 "pool_warmup.observe_failed",
-                extra={"pool": pool, "error": str(observe_exc)},
+                extra={
+                    "pool": pool,
+                    "tenant_id": tenant_label,  # logged, NOT metric label
+                    "error": str(observe_exc),
+                },
             )
     if not success and _WARMUP_FAILURES is not None:
         try:
-            _WARMUP_FAILURES.labels(pool=pool, tenant_id=tenant_label).inc()
+            _WARMUP_FAILURES.labels(pool=pool).inc()
         except (AttributeError, TypeError, ValueError) as inc_exc:
             # cycle-9/D-AUDIT-930: см. выше — тот же narrow для counter inc.
             import logging
 
             logging.getLogger(__name__).debug(
                 "pool_warmup.counter_inc_failed",
-                extra={"pool": pool, "error": str(inc_exc)},
+                extra={
+                    "pool": pool,
+                    "tenant_id": tenant_label,  # logged, NOT metric label
+                    "error": str(inc_exc),
+                },
             )
 
 
@@ -120,14 +131,18 @@ def _record_reconnect(pool: str) -> None:
     tenant_label = _current_tenant_label()
     if _POOL_RECONNECTS is not None:
         try:
-            _POOL_RECONNECTS.labels(pool=pool, tenant_id=tenant_label).inc()
+            _POOL_RECONNECTS.labels(pool=pool).inc()
         except (AttributeError, TypeError, ValueError) as reconnect_exc:
             # cycle-9/D-AUDIT-930: см. выше — тот же narrow для reconnect counter.
             import logging
 
             logging.getLogger(__name__).debug(
                 "pool_warmup.reconnect_counter_failed",
-                extra={"pool": pool, "error": str(reconnect_exc)},
+                extra={
+                    "pool": pool,
+                    "tenant_id": tenant_label,  # logged, NOT metric label
+                    "error": str(reconnect_exc),
+                },
             )
 
 

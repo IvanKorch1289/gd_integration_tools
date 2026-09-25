@@ -70,27 +70,31 @@ def test_strict_gate_passes_when_no_drift() -> None:
     )
 
 
-def test_baseline_file_exists_and_has_forbidden_findings() -> None:
-    """Baseline файл содержит FORBIDDEN labels для existing usages."""
+def test_baseline_file_exists() -> None:
+    """Baseline файл существует (или ранее был пустым — все FORBIDDEN fixed)."""
     assert BASELINE_PATH.is_file(), f"Baseline отсутствует: {BASELINE_PATH}"
     data = json.loads(BASELINE_PATH.read_text(encoding="utf-8"))
+    # Per audit W9: после fix pool_warmup.py + sla_alerting.py ВСЕ FORBIDDEN
+    # tenant_id labels были удалены → baseline МОЖЕТ быть пустым (0 findings).
     forbidden = [f for f in data if f.get("severity") == "FORBIDDEN"]
-    assert len(forbidden) > 0, (
-        f"Baseline должен содержать хотя бы один FORBIDDEN finding "
-        f"(production uses tenant_id в metrics). Got 0."
-    )
+    assert isinstance(forbidden, list)
+    # Если 0 — это success (все high-cardinality labels fixed per audit W9).
+    # Если >0 — verify each has proper reason/owner structure.
+    for f in forbidden:
+        assert "file" in f and "label" in f
 
 
-def test_existing_tenant_id_in_pool_warmup_is_flagged() -> None:
+def test_existing_tenant_id_in_pool_warmup_is_clean() -> None:
     """Production code ``src/backend/infrastructure/database/pool_warmup.py``
-    использует ``tenant_id`` as label — должен быть в baseline как FORBIDDEN."""
+    БОЛЬШЕ НЕ использует ``tenant_id`` as label (audit W9 fix)."""
     data = json.loads(BASELINE_PATH.read_text(encoding="utf-8"))
     pool_warmup_findings = [
         f for f in data
         if "pool_warmup" in f["file"] and f.get("severity") == "FORBIDDEN"
     ]
-    assert len(pool_warmup_findings) >= 1, (
-        f"pool_warmup.py должен flag'ить tenant_id labels. "
+    assert pool_warmup_findings == [], (
+        f"pool_warmup.py должен НЕ flag'ить tenant_id labels "
+        f"(audit W9 fix перенёс в structured logging). "
         f"Found: {pool_warmup_findings}"
     )
 

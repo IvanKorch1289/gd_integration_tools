@@ -163,24 +163,31 @@ def _emit_sla_metric(
         try:
             from src.backend.core.observability.metrics import metrics_registry
 
+            # Per audit 25.09.2026 W9: «Запретить tenant_id, workflow_id как
+            # Prometheus labels. Их можно помещать в traces/logs с
+            # policy-controlled hashing». Cardinality bounded by level only.
             _sla_counter = metrics_registry.counter(
                 "workflow_sla_compliance_total",
                 "SLA evaluations per workflow (level=none/soft/hard)",
-                labels=("workflow_id", "tenant_id", "level"),
+                labels=("level",),
             )
         except ImportError, ValueError:
             _sla_counter = False  # sentinel: do not retry
 
     if _sla_counter and _sla_counter is not False:
         try:
-            _sla_counter.labels(  # type: ignore[union-attr]  # R2.MYPY: _sla_counter Literal[True]|Any
-                workflow_id=workflow_id, tenant_id=tenant_id or "", level=level.value
+            _sla_counter.labels(  # type: ignore[union-attr]
+                level=level.value
             ).inc()
         except Exception as exc:
             _logger.debug(
                 "sla.counter_inc_failed: %s",
                 exc,
-                extra={"workflow_id": workflow_id, "level": level.value},
+                extra={
+                    "workflow_id": workflow_id,
+                    "tenant_id": tenant_id or "",
+                    "level": level.value,
+                },
             )
 
 
