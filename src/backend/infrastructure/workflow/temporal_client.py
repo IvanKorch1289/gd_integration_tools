@@ -251,20 +251,10 @@ class TemporalWorkerPool:
                     extra={"task_queue": task_queue},
                 )
                 return
-            interceptors: list[Any] = []
-            try:
-                from temporalio.opentelemetry import OpenTelemetryTracingInterceptor
-
-                interceptors.append(OpenTelemetryTracingInterceptor())
-            except ImportError:
-                # TD-013: surface silent no-op (worker side).
-                _logger.warning(
-                    "temporal.otel.interceptor.unavailable",
-                    extra={
-                        "task_queue": task_queue,
-                        "hint": "pip install 'temporalio[opentelemetry]' для OTel-трейсов",
-                    },
-                )
+            # Per v6 W2: единая фабрика interceptors (canonical SDK 1.33 path).
+            # Ранее — hardcoded import ``temporalio.opentelemetry
+            # OpenTelemetryTracingInterceptor`` (НЕ существует в SDK 1.33).
+            interceptors = build_temporal_interceptors()
 
             # Worker Versioning (S171 M10 P0, D172): kwargs из helper.
             # При use_versioning=False (default) — backward-compat: kwargs пустые.

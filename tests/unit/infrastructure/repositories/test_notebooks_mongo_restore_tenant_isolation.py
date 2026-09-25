@@ -1,18 +1,15 @@
-"""v6 W3.2 contract test (4/6) — NotebooksMongoRepository.restore_version tenant isolation.
+"""v6 W3.2 contract test (4/6) — NotebooksMongoRepository tenant isolation.
 
 Per v6 §10 W3 spec: «Для каждого USER_DATA callsite — negative
 cross-tenant test».
 
-MongoNotebookRepository.restore_version() в src/backend/infrastructure/
-repositories/notebooks_mongo.py:153 (restore_version → get) был
-классифицирован как USER_DATA в W3.1 — нет tenant filter на MongoDB
-lookup.
-
-Этот тест ДОКУМЕНТИРУЕТ gap (debt) — не fix. Per v6 §3: «расхождение
-runtime != architecture фиксируй как debt».
+После 25.09 audit fix MongoNotebookRepository.restore_version() и
+append_version() принимают ``tenant_id`` (keyword-only) и фильтруют
+по ``notebook.metadata["tenant_id"]``. Cross-tenant restore/append
+возвращает ``None`` без side-effects (ADR-0345 Option A).
 
 NB: separate file от test_notebooks_mongo_tenant_isolation.py — отдельный
-callsite (restore_version vs append_version path). Uses same _FakeAsyncIOMotorClient.
+callsite (restore_version vs append_version path).
 """
 
 from __future__ import annotations
@@ -89,9 +86,9 @@ def fake_mongo_with_tenant_a_data():
     return {
         "nb-restore-1": {
             "_id": "nb-restore-1",
-            "tenant_id": "tenant_A",
             "title": "Tenant A Restore Notebook",
             "created_by": "tenant_A_user",
+            "metadata": {"tenant_id": "tenant_A"},
             "versions": [
                 {
                     "version": 1,
@@ -117,29 +114,63 @@ def repo(fake_mongo_with_tenant_a_data):
 
 
 @pytest.mark.asyncio
-async def test_restore_version_does_not_filter_by_tenant(repo):
-    """Per W3.1 classification: MongoNotebookRepository.restore_version НЕ фильтрует по tenant.
-
-    Tenant A notebook → tenant B caller пытается restore version →
-    должен fail per ADR-0345, но current code возвращает notebook без
-    tenant check (BUG).
-
-    Per v6 W3.2: SHOULD return None (tenant filter). Current behavior:
-    proceed with restore (BUG). Negative test FAILS until tenant fix.
-    """
-    # Simulate tenant B caller attempting to restore version of tenant A's
-    # notebook. Per v6 W3.2: SHOULD return None (no permission to access
-    # other tenant's notebook). Current behavior (BUG): proceeds with restore.
+async def test_restore_version_cross_tenant_returns_none(repo):
+    """Tenant B пытается restore tenant A's notebook → None (ADR-0345)."""
+    # Tenant B caller attempting to restore version of tenant A's notebook.
     result = await repo.restore_version(
-        notebook_id="nb-restore-1", version=1, changed_by="tenant_B_user"
+        notebook_id="nb-restore-1",
+        version=1,
+        changed_by="tenant_B_user",
+        tenant_id="tenant_B",
+    )
+    assert result is None, (
+        f"TENANT_ISOLATION_FAILED: restore_version cross-tenant returned "
+        f"{result} instead of None. Tenant B restored tenant_A's notebook!"
     )
 
-    # Current behavior (BUG): restore succeeds (returns new notebook).
-    # After tenant-isolation fix: should return None (no cross-tenant access).
-    assert result is None, (
-        f"TENANT_ISOLATION_DEBT: MongoNotebookRepository.restore_version "
-        f"allowed tenant_B to restore tenant_A's notebook without tenant "
-        f"filter. result={result}. Per v6 §10 W3 + ADR-0345 Option A: "
-        f"должен быть tenant predicate filter. See docs/roadmap/"
-        f"W3_UNKNOWN_OWNERSHIP_CLASSIFICATION_2026-09-24.md раздел 2.1."
+
+@pytest.mark.asyncio
+async def test_restore_version_own_tenant_succeeds(repo):
+    """Tenant A успешно restore свой notebook (positive test).
+
+    fake mongo update_one не мутирует in-memory dict, поэтому проверяем
+    только что: tenant-filtered get() возвращает notebook (без ошибки
+    tenant mismatch). Версия инкремент — отдельный сценарий (требует
+    реальной mongo с поддержкой $push в update_one).
+    """
+    result = await repo.restore_version(
+        notebook_id="nb-restore-1",
+        version=1,
+        changed_by="tenant_A_user",
+        tenant_id="tenant_A",
     )
+    assert result is not None
+    assert result.metadata.get("tenant_id") == "tenant_A"
+
+
+@pytest.mark.asyncio
+async def test_append_version_cross_tenant_returns_none(repo):
+    """Tenant B пытается append version в tenant A's notebook → None."""
+    result = await repo.append_version(
+        notebook_id="nb-restore-1",
+        content="hostile content",
+        changed_by="tenant_B_user",
+        tenant_id="tenant_B",
+    )
+    assert result is None, (
+        f"TENANT_ISOLATION_FAILED: append_version cross-tenant returned "
+        f"{result} instead of None."
+    )
+
+
+@pytest.mark.asyncio
+async def test_append_version_own_tenant_succeeds(repo):
+    """Tenant A успешно append новую версию в свой notebook (positive test)."""
+    result = await repo.append_version(
+        notebook_id="nb-restore-1",
+        content="new content",
+        changed_by="tenant_A_user",
+        tenant_id="tenant_A",
+    )
+    assert result is not None
+    assert result.metadata.get("tenant_id") == "tenant_A"

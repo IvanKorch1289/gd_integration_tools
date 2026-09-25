@@ -85,7 +85,7 @@ class ScanFileProcessor(BaseProcessor):
 
         try:
             # S78 M2-#11 batch 13: DI provider вместо inline infrastructure import.
-            from src.backend.core.di.providers.cache import (
+            from src.backend.core.di.providers.security import (
                 get_antivirus_backend_factory_provider,
             )
 
@@ -140,7 +140,7 @@ class ScanFileProcessor(BaseProcessor):
                 try:
                     # S78 M2-#11 batch 13: DI provider вместо inline infrastructure import.
                     # R1 fix (S95): provider returns factory function — call it.
-                    from src.backend.core.di.providers.cache import (
+                    from src.backend.core.di.providers.security import (
                         get_s3_client_provider,
                     )
 
@@ -171,7 +171,7 @@ class ScanFileProcessor(BaseProcessor):
         """
         try:
             # S78 M2-#11 batch 13: DI provider вместо inline infrastructure import.
-            from src.backend.core.di.providers.cache import (
+            from src.backend.core.di.providers.observability import (
                 get_record_antivirus_scan_provider,
             )
 

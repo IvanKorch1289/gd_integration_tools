@@ -46,12 +46,12 @@ class PostgresErasureAdapter:
         strategy: ErasureStrategy,
         correlation_id: str,
         *,
-        explicit_tenant_id: str | None = None,
+        tenant_id: str | None = None,
     ) -> AdapterResult:
         """Execute erasure в PostgreSQL с tenant-awareness.
 
         Per ADR-0345 Option A: fail-closed via ``current_tenant()`` from
-        TenantContext OR explicit_tenant_id parameter. Deletes rows where
+        TenantContext OR ``tenant_id`` parameter. Deletes rows where
         BOTH subject_id matches AND tenant_id matches (fail-closed).
         """
         from src.backend.core.tenancy import get_tenant_id
@@ -69,8 +69,8 @@ class PostgresErasureAdapter:
                 )
 
             effective_tenant = (
-                explicit_tenant_id
-                if explicit_tenant_id is not None
+                tenant_id
+                if tenant_id is not None
                 else get_tenant_id()
             )
 

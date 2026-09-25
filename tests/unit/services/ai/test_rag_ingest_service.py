@@ -16,7 +16,9 @@ async def test_ingest_inline_processes_all_files() -> None:
     service = RagIngestService(rag_service=rag, deferred=False)
 
     result = await service.ingest(
-        files=[("a.txt", b"hello"), ("b.txt", b"world")], collection="docs"
+        files=[("a.txt", b"hello"), ("b.txt", b"world")],
+        collection="docs",
+        tenant_id="tenant_test",
     )
     assert result["status"] == "completed"
     assert result["doc_ids"] == ["doc1", "doc2"]
@@ -30,7 +32,9 @@ async def test_ingest_records_errors() -> None:
     rag.ingest = AsyncMock(side_effect=[RuntimeError("boom"), "doc-ok"])
     service = RagIngestService(rag_service=rag, deferred=False)
 
-    result = await service.ingest(files=[("bad.txt", b"x"), ("good.txt", b"y")])
+    result = await service.ingest(
+        files=[("bad.txt", b"x"), ("good.txt", b"y")], tenant_id="tenant_test"
+    )
     assert result["status"] == "completed_with_errors"
     assert result["doc_ids"] == ["doc-ok"]
     assert result["errors"][0]["file"] == "bad.txt"
@@ -41,15 +45,15 @@ async def test_status_returns_state() -> None:
     rag = type("R", (), {})()
     rag.ingest = AsyncMock(return_value="d")
     service = RagIngestService(rag_service=rag, deferred=False)
-    started = await service.ingest(files=[("a.txt", b"x")])
-    state = await service.status(started["task_id"])
+    started = await service.ingest(files=[("a.txt", b"x")], tenant_id="tenant_test")
+    state = await service.status(started["task_id"], tenant_id="tenant_test")
     assert state is not None and state["status"] == "completed"
 
 
 @pytest.mark.asyncio
 async def test_status_returns_none_for_unknown_id() -> None:
     service = RagIngestService(rag_service=object())
-    assert await service.status("missing") is None
+    assert await service.status("missing", tenant_id="tenant_test") is None
 
 
 @pytest.mark.asyncio
@@ -73,9 +77,9 @@ async def test_list_recent_returns_newest_first() -> None:
     rag = type("R", (), {})()
     rag.ingest = AsyncMock(return_value="d")
     service = RagIngestService(rag_service=rag, deferred=False)
-    await service.ingest(files=[("a.txt", b"x")])
-    await service.ingest(files=[("b.txt", b"y")])
-    recent = await service.list_recent(limit=10)
+    await service.ingest(files=[("a.txt", b"x")], tenant_id="tenant_test")
+    await service.ingest(files=[("b.txt", b"y")], tenant_id="tenant_test")
+    recent = await service.list_recent(limit=10, tenant_id="tenant_test")
     assert len(recent) == 2
     assert recent[0]["status"] == "completed"
 

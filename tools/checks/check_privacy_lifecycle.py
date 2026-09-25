@@ -118,27 +118,31 @@ def _check_storage_coverage() -> dict[str, dict[str, object]]:
     # PostgreSQL: per v6 W1 spec — проверяем adapter import + contract suite
     # (НЕ текстовые маркеры "stub"/"sleep(0)"). Adapter импортируется +
     # проверяется наличие real DELETE/tenant filter patterns.
+    # 25.09: rename ``explicit_tenant_id`` → ``tenant_id`` для consistency
+    # с ErasureAdapter Protocol. Backward-compat: text check accepts оба имени.
     pg_content = adapter_content.get("_postgres.py", "")
     pg_has_delete = "delete" in pg_content.lower()
     pg_has_tenant = "tenant_id" in pg_content.lower()
-    pg_has_explicit_tenant_param = "explicit_tenant_id" in pg_content.lower()
+    pg_has_tenant_param = (
+        "tenant_id: str | none" in pg_content.lower()
+        or "tenant_id: str" in pg_content.lower()
+    )
     pg_covered = (
         "_postgres.py" in adapter_content
         and pg_has_delete
         and pg_has_tenant
-        and pg_has_explicit_tenant_param
+        and pg_has_tenant_param
     )
     backends["postgresql"] = {
         "covered": pg_covered,
         "evidence": (
-            "adapter _postgres.py: real DELETE + tenant_id + explicit_tenant_id "
-            "(ADR-0345 Option A)"
+            "adapter _postgres.py: real DELETE + tenant_id (ADR-0345 Option A)"
         )
         if pg_covered
         else (
             f"adapter _postgres.py incomplete "
             f"(delete={pg_has_delete}, tenant_id={pg_has_tenant}, "
-            f"explicit_tenant_id={pg_has_explicit_tenant_param})"
+            f"tenant_id_param={pg_has_tenant_param})"
         ),
     }
 

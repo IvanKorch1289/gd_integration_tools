@@ -64,7 +64,7 @@ class TestTemporalWorkerRuntimeCreation:
             "sys.modules",
             {
                 "temporalio.worker": fake_worker_mod,
-                "temporalio.opentelemetry": MagicMock(),
+                "temporalio.contrib.opentelemetry": MagicMock(),
             },
         ):
             await runtime.start(
@@ -90,7 +90,7 @@ class TestTemporalWorkerRuntimeCreation:
             "sys.modules",
             {
                 "temporalio.worker": fake_worker_mod,
-                "temporalio.opentelemetry": MagicMock(),
+                "temporalio.contrib.opentelemetry": MagicMock(),
             },
         ):
             await runtime.start(client=MagicMock(), task_queue="q", workflow_classes=[])
@@ -111,7 +111,7 @@ class TestTemporalWorkerRuntimeCreation:
             "sys.modules",
             {
                 "temporalio.worker": fake_worker_mod,
-                "temporalio.opentelemetry": MagicMock(),
+                "temporalio.contrib.opentelemetry": MagicMock(),
             },
         ):
             await runtime.start(client=MagicMock(), task_queue="q")
@@ -145,7 +145,7 @@ class TestTemporalWorkerRuntimeCreation:
             "sys.modules",
             {
                 "temporalio.worker": fake_worker_mod,
-                "temporalio.opentelemetry": MagicMock(),
+                "temporalio.contrib.opentelemetry": MagicMock(),
             },
         ):
             await runtime.start(client=MagicMock(), task_queue="q")
@@ -201,7 +201,7 @@ class TestStartTemporalWorkerRuntimeFeatureFlag:
                 "sys.modules",
                 {
                     "temporalio.worker": fake_worker_mod,
-                    "temporalio.opentelemetry": MagicMock(),
+                    "temporalio.contrib.opentelemetry": MagicMock(),
                 },
             ),
         ):
@@ -268,7 +268,7 @@ class TestTemporalWorkerPoolProductionWire:
                 "sys.modules",
                 {
                     "temporalio.worker": fake_worker_mod,
-                    "temporalio.opentelemetry": MagicMock(),
+                    "temporalio.contrib.opentelemetry": MagicMock(),
                 },
             ),
         ):
@@ -323,7 +323,7 @@ class TestTemporalWorkerPoolProductionWire:
             "sys.modules",
             {
                 "temporalio.worker": fake_worker_mod,
-                "temporalio.opentelemetry": MagicMock(),
+                "temporalio.contrib.opentelemetry": MagicMock(),
             },
         ):
             await runtime.start(client=MagicMock(), task_queue="q")

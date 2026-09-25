@@ -245,6 +245,23 @@ def main(argv: list[str] | None = None) -> int:
             "bypasses async context cleanup. Use 'with TenantContext(...)' instead."
         )
 
+    # v6 W3 gate integrity fix: --strict MUST fail when findings exist.
+    # Previously --strict только catches ``direct_get_findings``, но
+    # missing_filter and no_tenant_id также являются real gaps —
+    # audit показывает ``exit 0 при 1966 candidates и 6 models`` это DISPUTED.
+    # Теперь --strict fails при любом non-zero findings count.
+    if missing_filter_findings:
+        issues.append(
+            f"Missing tenant filter candidates: {len(missing_filter_findings)} — "
+            "user-data API callsites без tenant predicate. Per ADR-0345 Option A "
+            "ВСЕ user-data callsites должны иметь tenant filter (--strict)."
+        )
+    if no_tenant_id_findings:
+        issues.append(
+            f"ORM models without tenant_id column: {len(no_tenant_id_findings)} — "
+            "per ADR-0345 все ORM models с user-data должны иметь tenant_id column."
+        )
+
     # Report.
     result = {
         "files_scanned": files_scanned,

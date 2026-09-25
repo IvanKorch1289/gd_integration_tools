@@ -45,7 +45,7 @@ class AiocacheBackendImportError(ImportError):
 def _ensure_aiocache_available() -> None:
     """Check that aiocache is installed; raise helpful error if not."""
     try:
-        import aiocache  # noqa: F401
+        import aiocache  # type: ignore[import-untyped]  # noqa: F401
     except ImportError as e:
         raise AiocacheBackendImportError(
             "aiocache is required for AiocacheMemoryBackend. "
@@ -76,8 +76,10 @@ class AiocacheMemoryBackend(CacheBackend):
 
     def __init__(self, maxsize: int = 1000, default_ttl: int = 3600) -> None:
         _ensure_aiocache_available()
-        from aiocache import Cache  # noqa: WPS433 — lazy after check
-        from aiocache.backends.memory import SimpleMemoryCache  # noqa: WPS433
+        from aiocache import Cache  # type: ignore[import-untyped]  # noqa: WPS433
+        from aiocache.backends.memory import (
+            SimpleMemoryCache,  # type: ignore[import-untyped]  # noqa: WPS433
+        )
 
         self._default_ttl = default_ttl
         self._maxsize = maxsize

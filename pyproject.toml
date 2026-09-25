@@ -377,6 +377,98 @@ ai-model-registry = [
 workflow = [
     "temporalio>=1.27.0,<2.0.0",
 ]
+
+# === V15 / 25.09 audit: test dependency profiles split ===
+# Per v6 §10 + 25.09 audit: «Узкие scheduler-тесты в минимальном venv потянули
+# domain models → extensions → core.api → SDK → DSL processors → Prometheus.
+# Это подтверждает высокий import coupling и отсутствие изолированного scheduler
+# test profile».
+#
+# Per очерёдность #8: «Разделить test dependency profiles (core / api /
+# scheduler / workflow / messaging / ai / frontend / rpa / test-*)».
+#
+# Каждый test-* extra устанавливает только pytest + dev utilities + minimal
+# deps для соответствующего test scope. Это даёт:
+#   - Быстрый feedback loop: ``uv sync --extra test-core`` → меньше deps
+#     → быстрее resolve / install;
+#   - Изоляция test environments: ``scheduler`` тесты НЕ тянут AI/RPA deps;
+#   - CI матрица: каждая job может устанавливать только свой extra.
+#
+# Принцип: минимальные deps, помеченные как ``# test deps`` комментарием.
+# Production deps не дублируются — наследуются из [project.dependencies].
+test-core = [
+    # Базовый test runner + dev utilities для unit-тестов core/* модулей
+    # (interceptors, protocols, logging, errors, etc.).
+    # НЕ включает pytest-asyncio/pytest-cov/etc. — они в [dependency-groups].dev.
+    "pytest>=9.0.0,<10.0.0",
+    "pytest-asyncio>=1.0.0,<2.0.0",
+    "aiosqlite>=0.20.0,<1.0.0",
+    "respx>=0.22,<1",
+]
+test-api = [
+    # FastAPI/Starlette test fixtures + httpx для endpoint tests.
+    "pytest>=9.0.0,<10.0.0",
+    "pytest-asyncio>=1.0.0,<2.0.0",
+    "httpx>=0.27.0",
+    "aiosqlite>=0.20.0,<1.0.0",
+]
+test-scheduler = [
+    # APScheduler + aiosqlite для scheduler/claim/lease tests.
+    "pytest>=9.0.0,<10.0.0",
+    "pytest-asyncio>=1.0.0,<2.0.0",
+    "aiosqlite>=0.20.0,<1.0.0",
+    # Continuum использует ``transaction`` table — нужны SQLAlchemy primitives.
+    "sqlalchemy[asyncio]>=2.0.0,<3.0.0",
+]
+test-workflow = [
+    # temporalio + APScheduler для workflow integration tests.
+    "pytest>=9.0.0,<10.0.0",
+    "pytest-asyncio>=1.0.0,<2.0.0",
+    "temporalio>=1.27.0,<2.0.0",
+    "aiosqlite>=0.20.0,<1.0.0",
+]
+test-messaging = [
+    # FastStream + aiokafka (mockable) для messaging tests.
+    "pytest>=9.0.0,<10.0.0",
+    "pytest-asyncio>=1.0.0,<2.0.0",
+    "aiosqlite>=0.20.0,<1.0.0",
+]
+test-ai = [
+    # AI tests требуют light LLM deps (mocked, не реальные API keys).
+    "pytest>=9.0.0,<10.0.0",
+    "pytest-asyncio>=1.0.0,<2.0.0",
+    "aiosqlite>=0.20.0,<1.0.0",
+    "hypothesis>=6.0.0",
+]
+test-frontend = [
+    # Streamlit + playwright для UI tests (selective).
+    "pytest>=9.0.0,<10.0.0",
+    "pytest-asyncio>=1.0.0,<2.0.0",
+    "playwright>=1.48.0",
+]
+test-rpa = [
+    # RPA tests — patchright + playwright (anti-detection).
+    "pytest>=9.0.0,<10.0.0",
+    "pytest-asyncio>=1.0.0,<2.0.0",
+    "patchright>=1.40.0,<2.0",
+    "playwright>=1.48.0",
+]
+test-all = [
+    # Meta-extra для CI: устанавливает все test-* deps сразу.
+    # Используется в ``make ci`` для comprehensive test run.
+    "pytest>=9.0.0,<10.0.0",
+    "pytest-asyncio>=1.0.0,<2.0.0",
+    "pytest-cov>=6.0.0,<7.0.0",
+    "pytest-xdist>=3.8.0",
+    "aiosqlite>=0.20.0,<1.0.0",
+    "respx>=0.22,<1",
+    "httpx>=0.27.0",
+    "sqlalchemy[asyncio]>=2.0.0,<3.0.0",
+    "temporalio>=1.27.0,<2.0.0",
+    "hypothesis>=6.0.0",
+    "playwright>=1.48.0",
+    "patchright>=1.40.0,<2.0",
+]
 dev-light = [
     "aiosqlite>=0.20.0,<1.0.0",
     # D-AUDIT-20803 fix (cycle 209): fastmcp в dev-light extra включён

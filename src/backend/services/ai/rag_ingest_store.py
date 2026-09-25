@@ -58,27 +58,29 @@ class IngestStateStore(Protocol):
         """
         ...
 
-    async def get(self, task_id: str) -> dict[str, Any] | None:
-        """Get task by ID.
+    async def get(self, task_id: str, *, tenant_id: str = "") -> dict[str, Any] | None:
+        """Get task by ID (tenant-scoped, fail-closed per ADR-0345).
 
         Args:
             task_id: Task identifier.
+            tenant_id: REQUIRED tenant identifier. Empty → None.
 
         Returns:
-            Task data or None if not found.
-
+            Task data or None if not found, tenant mismatch, or empty tenant.
         """
         ...
 
-    async def list_recent(self, limit: int = 50) -> list[dict[str, Any]]:
-        """List recent tasks.
+    async def list_recent(
+        self, limit: int = 50, *, tenant_id: str = ""
+    ) -> list[dict[str, Any]]:
+        """List recent tasks (tenant-scoped).
 
         Args:
             limit: Maximum number of tasks.
+            tenant_id: REQUIRED tenant identifier. Empty → [].
 
         Returns:
-            List of recent task data.
-
+            List of recent task data filtered by tenant_id.
         """
         ...
 
@@ -96,7 +98,8 @@ class InMemoryIngestStateStore:
 
         Args:
             task_id: Task identifier.
-            payload: Initial task data.
+            payload: Initial task data (должен включать ``tenant_id`` поле
+                для tenant-scoped get/list_recent).
 
         """
         async with self._lock:
@@ -117,31 +120,51 @@ class InMemoryIngestStateStore:
                 return
             entry.update(fields)
 
-    async def get(self, task_id: str) -> dict[str, Any] | None:
-        """Get task by ID.
+    async def get(
+        self, task_id: str, *, tenant_id: str = ""
+    ) -> dict[str, Any] | None:
+        """Get task by ID (tenant-scoped, fail-closed per ADR-0345).
 
         Args:
             task_id: Task identifier.
+            tenant_id: REQUIRED tenant identifier. Empty → None.
 
         Returns:
-            Task data or None if not found.
-
+            Task data or None if not found, tenant mismatch, or empty tenant.
         """
+        if not tenant_id:
+            return None
         entry = self._tasks.get(task_id)
-        return dict(entry) if entry is not None else None
+        if entry is None:
+            return None
+        if entry.get("tenant_id", "") != tenant_id:
+            return None
+        return dict(entry)
 
-    async def list_recent(self, limit: int = 50) -> list[dict[str, Any]]:
-        """List recent tasks.
+    async def list_recent(
+        self, limit: int = 50, *, tenant_id: str = ""
+    ) -> list[dict[str, Any]]:
+        """List recent tasks (tenant-scoped).
 
         Args:
             limit: Maximum number of tasks.
+            tenant_id: REQUIRED tenant identifier. Empty → [].
 
         Returns:
-            List of recent task data.
-
+            List of recent task data filtered by tenant_id.
         """
+        if not tenant_id:
+            return []
         recent_ids = list(reversed(self._order))[: max(int(limit), 0)]
-        return [dict(self._tasks[tid]) for tid in recent_ids if tid in self._tasks]
+        out: list[dict[str, Any]] = []
+        for tid in recent_ids:
+            entry = self._tasks.get(tid)
+            if entry is None:
+                continue
+            if entry.get("tenant_id", "") != tenant_id:
+                continue
+            out.append(dict(entry))
+        return out
 
 
 class RedisIngestStateStore:
@@ -211,7 +234,7 @@ class RedisIngestStateStore:
             **fields: Fields to update.
 
         """
-        snapshot = await self.get(task_id)
+        snapshot = await self.get(task_id, tenant_id=fields.get("tenant_id", ""))
         if snapshot is None:
             snapshot = dict(fields)
         else:
@@ -224,16 +247,20 @@ class RedisIngestStateStore:
         except Exception as exc:
             logger.debug("RedisIngestStateStore.update failed: %s", exc)
 
-    async def get(self, task_id: str) -> dict[str, Any] | None:
-        """Get task from Redis.
+    async def get(
+        self, task_id: str, *, tenant_id: str = ""
+    ) -> dict[str, Any] | None:
+        """Get task from Redis (tenant-scoped, fail-closed per ADR-0345).
 
         Args:
             task_id: Task identifier.
+            tenant_id: REQUIRED tenant identifier. Empty → None.
 
         Returns:
-            Task data or None if not found.
-
+            Task data or None if not found, tenant mismatch, or empty tenant.
         """
+        if not tenant_id:
+            return None
         client = self._ensure_client()
         try:
             raw = await client.cache_get(self._task_key(task_id))
@@ -244,21 +271,29 @@ class RedisIngestStateStore:
             return None
         try:
             data = orjson.loads(raw)
-            return data if isinstance(data, dict) else None
         except Exception as exc:
             logger.debug("RedisIngestStateStore decode failed: %s", exc)
             return None
+        if not isinstance(data, dict):
+            return None
+        if data.get("tenant_id", "") != tenant_id:
+            return None
+        return data
 
-    async def list_recent(self, limit: int = 50) -> list[dict[str, Any]]:
-        """List recent tasks from Redis.
+    async def list_recent(
+        self, limit: int = 50, *, tenant_id: str = ""
+    ) -> list[dict[str, Any]]:
+        """List recent tasks from Redis (tenant-scoped).
 
         Args:
             limit: Maximum number of tasks.
+            tenant_id: REQUIRED tenant identifier. Empty → [].
 
         Returns:
-            List of recent task data.
-
+            List of recent task data filtered by tenant_id.
         """
+        if not tenant_id:
+            return []
         client = self._ensure_client()
         limit = max(int(limit), 0)
         try:
@@ -273,7 +308,7 @@ class RedisIngestStateStore:
             return []
         out: list[dict[str, Any]] = []
         for tid in ids:
-            snap = await self.get(tid)
+            snap = await self.get(tid, tenant_id=tenant_id)
             if snap is not None:
                 snap.setdefault("task_id", tid)
                 out.append(snap)

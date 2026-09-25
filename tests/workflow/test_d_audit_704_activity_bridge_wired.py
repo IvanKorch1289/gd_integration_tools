@@ -252,7 +252,7 @@ class TestStartTemporalWorkerRuntimeActivitiesParam:
                 "sys.modules",
                 {
                     "temporalio.worker": fake_worker_mod,
-                    "temporalio.opentelemetry": MagicMock(),
+                    "temporalio.contrib.opentelemetry": MagicMock(),
                 },
             ),
         ):
@@ -293,7 +293,7 @@ class TestStartTemporalWorkerRuntimeActivitiesParam:
                 "sys.modules",
                 {
                     "temporalio.worker": fake_worker_mod,
-                    "temporalio.opentelemetry": MagicMock(),
+                    "temporalio.contrib.opentelemetry": MagicMock(),
                 },
             ),
         ):

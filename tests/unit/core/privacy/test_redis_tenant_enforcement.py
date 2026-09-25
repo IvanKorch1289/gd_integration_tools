@@ -5,7 +5,7 @@ contract tests verify fail-closed behavior в ``RedisErasureAdapter``.
 
 Cycle 158+ Privacy investigation (commit ca9fa600c) found that
 ``RedisErasureAdapter`` uses ``subject_id`` only (NO ``current_tenant()``).
-Per ADR-0345/v5 prompt Option A: added ``explicit_tenant_id`` parameter +
+Per ADR-0345/v5 prompt Option A: added ``tenant_id`` parameter +
 ``get_tenant_id()`` fallback для tenant-awareness.
 
 Per v4 §3 evidence-first: NOT estimates, ACTUAL behavior verified.
@@ -81,7 +81,7 @@ class TestRedisTenantEnforcement:
             subject_type="user",
             strategy=ErasureStrategy.ANONYMIZE,
             correlation_id="test",
-            explicit_tenant_id="t-a",
+            tenant_id="t-a",
         )
 
         # SCAN was called with EXTRA tenant prefix.
@@ -136,7 +136,7 @@ class TestRedisTenantEnforcement:
             subject_type="user",
             strategy=ErasureStrategy.ANONYMIZE,
             correlation_id="test",
-            explicit_tenant_id="t-b",
+            tenant_id="t-b",
         )
 
         scan_calls = redis_mock.scan.call_args_list

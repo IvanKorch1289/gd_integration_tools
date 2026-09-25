@@ -214,7 +214,7 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
 
         """
         # S87 M2-#11 final batch: DI provider.
-        from src.backend.core.di.providers.cache import get_s3_client_provider
+        from src.backend.core.di.providers.storage import get_s3_client_provider
 
         get_s3_client = get_s3_client_provider()
 
@@ -265,7 +265,7 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
     async def _load_s3(self, claim_id: str) -> bytes | None:
         """Чтение payload из S3/MinIO."""
         # S87 M2-#11 final batch: DI provider.
-        from src.backend.core.di.providers.cache import get_s3_client_provider
+        from src.backend.core.di.providers.storage import get_s3_client_provider
 
         get_s3_client = get_s3_client_provider()
 

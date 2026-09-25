@@ -119,8 +119,12 @@ class _StubRedisIngestStore:
         self._fake_redis = fake_redis
         self._tenant_id = tenant_id
 
-    async def list_recent(self, limit: int = 50) -> list[dict[str, Any]]:
-        """Copy real logic для теста (минимальный stand-in)."""
+    async def list_recent(
+        self, limit: int = 50, *, tenant_id: str = ""
+    ) -> list[dict[str, Any]]:
+        """Copy real logic для теста (минимальный stand-in, tenant-scoped)."""
+        if not tenant_id:
+            return []
         client = self._fake_redis
         try:
 
@@ -132,15 +136,19 @@ class _StubRedisIngestStore:
         except Exception:
             return []
         out: list[dict[str, Any]] = []
+        import orjson
+
         for tid in ids:
             snap = await self._fake_redis.cache_get(f"rag:ingest:task:{tid}")
-            if snap is not None:
-                import orjson
-
-                snap = orjson.loads(snap) if isinstance(snap, bytes) else snap
-                if isinstance(snap, dict):
-                    snap.setdefault("task_id", tid)
-                    out.append(snap)
+            if snap is None:
+                continue
+            snap = orjson.loads(snap) if isinstance(snap, bytes) else snap
+            if not isinstance(snap, dict):
+                continue
+            if snap.get("tenant_id", "") != tenant_id:
+                continue
+            snap.setdefault("task_id", tid)
+            out.append(snap)
         return out
 
 
@@ -161,24 +169,24 @@ def fake_redis_with_tenant_a_tasks():
 
 
 @pytest.mark.asyncio
-async def test_list_recent_does_not_filter_by_tenant(fake_redis_with_tenant_a_tasks):
-    """Per W3.1 classification: list_recent НЕ фильтрует по tenant.
-
-    Standalone verification (uv run python -c ...) confirmed REAL BUG.
-    Этот тест использует _StubRedisIngestStore с правильной инфраструктурой
-    (zrevrange + pipeline + cache_get) — verifies debt marker correctly placed.
-    """
+async def test_list_recent_cross_tenant_returns_empty(fake_redis_with_tenant_a_tasks):
+    """Tenant B list_recent → [] (не видит tenant A tasks, ADR-0345)."""
     store = _StubRedisIngestStore(fake_redis_with_tenant_a_tasks)
 
-    # Simulate tenant B caller пытается прочитать tenant_A's tasks.
-    # Per v6 W3.2: SHOULD return [] (tenant filter).
-    # Current behavior (BUG): returns tenant_A's tasks.
-    result = await store.list_recent(limit=10)
-
+    # Tenant B list_recent с явным tenant_id → должен вернуть [].
+    result = await store.list_recent(limit=10, tenant_id="tenant_B")
     assert result == [], (
-        f"TENANT_ISOLATION_DEBT: RedisIngestStateStore.list_recent returned "
-        f"tasks from tenant A without tenant filter. result={result}. "
-        f"Per v6 §10 W3 + ADR-0345 Option A: должен быть tenant predicate "
-        f"filter. See docs/roadmap/W3_UNKNOWN_OWNERSHIP_CLASSIFICATION_2026-09-24.md "
-        f"раздел 2.1."
+        f"TENANT_ISOLATION_FAILED: list_recent cross-tenant returned "
+        f"{result} instead of []."
+    )
+
+
+@pytest.mark.asyncio
+async def test_list_recent_empty_tenant_returns_empty(fake_redis_with_tenant_a_tasks):
+    """Empty tenant_id → [] (fail-closed per ADR-0345)."""
+    store = _StubRedisIngestStore(fake_redis_with_tenant_a_tasks)
+    result = await store.list_recent(limit=10, tenant_id="")
+    assert result == [], (
+        f"FAIL_CLOSED_VIOLATION: list_recent with empty tenant returned "
+        f"{result} instead of []."
     )

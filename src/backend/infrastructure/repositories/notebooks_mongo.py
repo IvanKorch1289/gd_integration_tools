@@ -80,30 +80,32 @@ class MongoNotebookRepository:
         return notebook
 
     async def get(
-        self, notebook_id: str, *, tenant_id: str | None = None
+        self, notebook_id: str, *, tenant_id: str
     ) -> Notebook | None:
-        """Get notebook by ID.
+        """Get notebook by ID (tenant-scoped, fail-closed per ADR-0345).
 
         Args:
             notebook_id: Notebook ID.
-            tenant_id: Optional tenant filter — fail-closed per ADR-0345.
-                Compares against ``notebook.metadata["tenant_id"]`` (Notebook
-                has no typed tenant_id; uses ``metadata`` dict).
+            tenant_id: REQUIRED tenant identifier. Compares against
+                ``notebook.metadata["tenant_id"]`` (Notebook has no typed
+                tenant_id; uses ``metadata`` dict). Пустая строка → отказ
+                (NOT match anything — fail-closed).
 
         Returns:
-            Notebook or None if not found OR tenant mismatch.
+            Notebook or None if not found OR tenant mismatch OR tenant_id
+            is empty.
 
         """
-        if tenant_id is not None:
-            doc = await self._client().find_one(_COLLECTION, {"_id": notebook_id})
-            if doc is None:
-                return None
-            notebook = _doc_to_notebook(doc)
-            if notebook.metadata.get("tenant_id", "") != tenant_id:
-                return None
-            return notebook
+        if not tenant_id:
+            # Fail-closed: пустой tenant → НЕ возвращаем ничего.
+            return None
         doc = await self._client().find_one(_COLLECTION, {"_id": notebook_id})
-        return _doc_to_notebook(doc) if doc else None
+        if doc is None:
+            return None
+        notebook = _doc_to_notebook(doc)
+        if notebook.metadata.get("tenant_id", "") != tenant_id:
+            return None
+        return notebook
 
     async def append_version(
         self,
@@ -111,6 +113,8 @@ class MongoNotebookRepository:
         content: str,
         changed_by: str,
         summary: str | None = None,
+        *,
+        tenant_id: str | None = None,
     ) -> Notebook | None:
         """Append a new version to notebook.
 
@@ -119,9 +123,12 @@ class MongoNotebookRepository:
             content: Version content.
             changed_by: Author name.
             summary: Optional version summary.
+            tenant_id: Optional tenant filter — fail-closed per ADR-0345.
+                Compares against ``notebook.metadata["tenant_id"]``. Cross-tenant
+                append возвращает ``None`` без side-effects.
 
         Returns:
-            Updated notebook or None if not found.
+            Updated notebook or None if not found OR tenant mismatch.
 
         """
         client = self._client()
@@ -130,6 +137,11 @@ class MongoNotebookRepository:
         )
         if existing is None:
             return None
+        # v6 W3: tenant filter — сравнить с metadata до мутации.
+        if tenant_id is not None:
+            notebook = _doc_to_notebook(existing)
+            if notebook.metadata.get("tenant_id", "") != tenant_id:
+                return None
         new_version = int(existing.get("latest_version", 0)) + 1
         version_payload = NotebookVersion(
             version=new_version, content=content, changed_by=changed_by, summary=summary
@@ -144,20 +156,40 @@ class MongoNotebookRepository:
                 },
             },
         )
-        return await self.get(notebook_id)
+        return await self.get(notebook_id, tenant_id=tenant_id)
 
     async def restore_version(
-        self, notebook_id: str, version: int, changed_by: str
+        self,
+        notebook_id: str,
+        version: int,
+        changed_by: str,
+        *,
+        tenant_id: str | None = None,
     ) -> Notebook | None:
-        """Метод restore_version (см. signature)."""
-        existing = await self.get(notebook_id)
+        """Restore notebook to previous version.
+
+        Args:
+            notebook_id: Notebook ID.
+            version: Version number to restore.
+            changed_by: Author name.
+            tenant_id: Optional tenant filter — fail-closed per ADR-0345.
+                Cross-tenant restore возвращает ``None``.
+
+        Returns:
+            Updated notebook or None if not found / deleted / tenant mismatch.
+        """
+        existing = await self.get(notebook_id, tenant_id=tenant_id)
         if existing is None or existing.is_deleted:
             return None
         target = next((v for v in existing.versions if v.version == version), None)
         if target is None:
             return None
         return await self.append_version(
-            notebook_id, target.content, changed_by, summary=f"restore from v{version}"
+            notebook_id,
+            target.content,
+            changed_by,
+            summary=f"restore from v{version}",
+            tenant_id=tenant_id,
         )
 
     async def list_all(

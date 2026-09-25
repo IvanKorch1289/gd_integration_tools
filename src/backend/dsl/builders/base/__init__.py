@@ -86,13 +86,13 @@ from src.backend.dsl.builders.template_engine_mixin import (
 from src.backend.dsl.builders.variable_mixin import VariableMixin as VariableMixin
 from src.backend.dsl.engine.pipeline import Pipeline as Pipeline
 from src.backend.dsl.engine.processors import BaseProcessor as BaseProcessor
-from src.backend.dsl.processors.plan_execute_processor import (
+from src.backend.dsl.engine.processors.plan_execute_processor import (
     PlanExecuteMixin as PlanExecuteMixin,
 )
-from src.backend.dsl.processors.reflection_loop_processor import (
+from src.backend.dsl.engine.processors.reflection_loop_processor import (
     ReflectionLoopMixin as ReflectionLoopMixin,
 )
-from src.backend.dsl.processors.router_specialist_processor import (
+from src.backend.dsl.engine.processors.router_specialist_processor import (
     RouterSpecialistMixin as RouterSpecialistMixin,
 )
 

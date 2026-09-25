@@ -7,6 +7,11 @@ Gate MUST exit non-zero при любом unknown callsite (не threshold 20% �
 Regression guard: тест запускает script как subprocess + проверяет exit
 code + stderr message. Если кто-то ослабит strict gate (revert на 20%
 threshold) — тест упадёт.
+
+v6 W3.5 update: PATH_USER_DATA_PATTERNS теперь классифицирует
+``self.get(id)`` в notebooks_mongo.py / rag_ingest_store.py /
+webhook_scheduler.py как user-data (НЕ unknown) → gate PASSES.
+Все 5 бывших unknown callsites получили path-based USER_DATA detection.
 """
 
 from __future__ import annotations
@@ -29,37 +34,97 @@ def _run_strict() -> subprocess.CompletedProcess[str]:
     )
 
 
-def test_strict_gate_fails_on_unknown_callsites() -> None:
-    """v6 W1: gate exits 1 если any unknown > 0.
+def test_strict_gate_passes_when_all_classified() -> None:
+    """v6 W1+W3.5: gate PASSES когда все callsites классифицированы (0 unknown).
 
-    На текущий момент в проекте 23 unknown callsites — gate ДОЛЖЕН
-    падать (ранее был threshold 20% — gate проходил с exit 0).
+    Per v6 W3.5: PATH_USER_DATA_PATTERNS extension reclassifies 5 former
+    UNKNOWN callsites в notebooks_mongo.py / rag_ingest_store.py /
+    webhook_scheduler.py как user-data. Gate должен проходить.
     """
     result = _run_strict()
 
-    assert result.returncode != 0, (
-        f"strict gate PASSED but should FAIL per v6 W1 (unknown > 0). "
+    assert result.returncode == 0, (
+        f"strict gate FAILED (exit={result.returncode}) but должен PASS "
+        f"после v6 W3.5 path-based classification. "
         f"stdout tail:\n{result.stdout[-500:]}\n"
         f"stderr:\n{result.stderr[-500:]}"
     )
 
-    # Stderr должен содержать explicit FAILURE message + unknown count.
-    assert "FAILED" in result.stderr, (
-        f"strict gate failed (exit={result.returncode}) but stderr "
-        f"missing FAILED message:\n{result.stderr[-500:]}"
-    )
-    assert "unknown callsites" in result.stderr, (
-        f"strict gate failed but stderr missing unknown count:\n{result.stderr[-500:]}"
+    # stderr содержит OK message (v6 W1 strict gate OK format).
+    assert "strict gate OK" in result.stderr, (
+        f"strict gate passed but stderr missing 'strict gate OK' message:\n"
+        f"stderr:\n{result.stderr[-500:]}"
     )
 
-    # Парсим число unknown callsites для sanity-check (должно быть > 0).
-    match = re.search(r"(\d+) unknown callsites", result.stderr)
+    # Парсим число unknown callsites для sanity-check (должно быть 0).
+    match = re.search(r"unknown:\s+(\d+)", result.stdout)
+    assert match is not None, f"cannot parse unknown count: {result.stdout}"
+    n_unknown = int(match.group(1))
+    assert n_unknown == 0, (
+        f"strict gate passed but parsed {n_unknown} unknown callsites — "
+        f"PATH_USER_DATA_PATTERNS regression. stdout:\n{result.stdout[-500:]}"
+    )
+
+    # Также проверяем, что user-data >= 9 (после 25.09 audit).
+    # Pre-25.09: 14 (9 baseline + 5 path-based для notebooks/rag/webhook).
+    # Post-25.09: webhook/notebooks/RAG все resolved через actual tenant filter,
+    # → user-data count снизился до 9. PATH_USER_DATA_PATTERNS остаётся
+    # как safety-net для re-classification.
+    match_ud = re.search(r"user-data:\s+(\d+)", result.stdout)
+    assert match_ud is not None, f"cannot parse user-data count: {result.stdout}"
+    n_user_data = int(match_ud.group(1))
+    assert n_user_data >= 9, (
+        f"expected user-data >= 9, got {n_user_data} — "
+        f"PATH_USER_DATA_PATTERNS regression. stdout:\n{result.stdout[-500:]}"
+    )
+
+
+def test_path_user_data_patterns_is_optional_safety_net() -> None:
+    """v6 W3.5 + 25.09 audit: PATH_USER_DATA_PATTERNS — safety-net, не критичный.
+
+    После 25.09 audit fix WebhookScheduler / MongoNotebookRepository /
+    RAG ingest store — все 5 callsites теперь classified корректно через
+    actual tenant filter (не через path-based heuristic). Удаление
+    PATH_USER_DATA_PATTERNS не должно ломать gate.
+
+    Этот тест документирует, что safety-net можно безопасно удалить в
+    будущем (W4 cleanup), но оставлен на случай новых user-data paths.
+    """
+    code = """
+import sys
+sys.path.insert(0, 'tools')
+import classify_object_authorization as c
+# Monkeypatch: пустые паттерны → проверяем что gate всё ещё PASSES.
+c.PATH_USER_DATA_PATTERNS = ()
+callsites = c.collect_all_callsites()
+unknowns = [cs for cs in callsites if cs.receiver_type == 'unknown']
+print(f'unknown={len(unknowns)}', file=sys.stderr)
+sys.exit(1 if unknowns else 0)
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        cwd=PROJECT_ROOT,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+
+    # После 25.09 fix: removing PATH_USER_DATA_PATTERNS НЕ должно ломать gate.
+    # 5 бывших path-based callsites теперь resolved через actual tenant_id в коде.
+    assert result.returncode == 0, (
+        f"PATH_USER_DATA_PATTERNS safety-net теперь redundant (0 unknown "
+        f"без паттернов после 25.09 tenant-id hard-code). "
+        f"stderr:\n{result.stderr[-500:]}"
+    )
+
+    # Парсим unknown count — должен быть 0 (все resolved).
+    match = re.search(r"unknown=(\d+)", result.stderr)
     assert match is not None, f"cannot parse unknown count: {result.stderr}"
     n_unknown = int(match.group(1))
-    assert n_unknown > 0, (
-        f"strict gate failed but parsed 0 unknown callsites — "
-        f"either regex bug или actual state изменился. stderr:\n"
-        f"{result.stderr[-500:]}"
+    assert n_unknown == 0, (
+        f"expected 0 unknown without PATH_USER_DATA_PATTERNS "
+        f"(all resolved via 25.09 tenant-id hard-code), "
+        f"got {n_unknown}. stderr:\n{result.stderr[-500:]}"
     )
 
 

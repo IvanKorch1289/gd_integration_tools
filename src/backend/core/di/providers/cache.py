@@ -348,14 +348,6 @@ def set_redis_client_provider(client: Any) -> None:
     _overrides["redis_client"] = client
 
 
-def get_s3_client_provider() -> Any:
-    r"""S3 client factory (S78/ R1; восстановлено 2026-09-23 после W9 split)."""
-    if "s3_client" in _overrides:
-        return _overrides["s3_client"]
-    module = resolve_module("clients.storage.s3_pool")
-    return module.get_s3_client  # factory, not instance
-
-
 def get_redis_stream_client_provider() -> Any:
     """Возвращает Redis streams client (singleton)."""
     if "redis_stream_client" in _overrides:

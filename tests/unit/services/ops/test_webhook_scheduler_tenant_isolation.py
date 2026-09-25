@@ -1,17 +1,20 @@
-"""v6 W3.2 contract test — WebhookScheduler tenant isolation (negative).
+"""v6 W3.2 contract test — WebhookScheduler tenant isolation.
 
 Per v6 §10 W3 spec: «Для каждого USER_DATA callsite — negative
 cross-tenant test. Erasure PASS только если данные tenant A исчезли,
 tenant B сохранились».
 
-WebhookScheduler.get() в src/backend/services/ops/webhook_scheduler.py:94
-был классифицирован как USER_DATA в W3.1 — нет tenant filter
-на Redis lookup. Per ADR-0345 Option A требуется tenant predicate.
+WebhookScheduler.get() в src/backend/services/ops/webhook_scheduler.py
+классифицирован как USER_DATA в W3.1 — после 25.09 audit fix
+реализована tenant isolation (ADR-0345 Option A): Redis keys
+namespaced per tenant, ``get``/``cancel``/``list_scheduled``/
+``execute_webhook`` требуют ``tenant_id`` и фильтруют по namespace.
 
-Этот тест ДОКУМЕНТИРУЕТ gap (как debt) — не fix.
-Negative test FAILING = current code lacks tenant isolation (real P0).
-Per v6 §3: «расхождение runtime != architecture фиксируй как debt,
-а не «исправляй» молча».
+Контрактные тесты:
+- Tenant A schedule — tenant A видит, tenant B НЕ видит (cross-tenant).
+- Tenant B schedule — tenant B видит, tenant A НЕ видит.
+- list_scheduled фильтрует по tenant.
+- cancel cross-tenant → False (не удаляет чужой schedule).
 """
 
 from __future__ import annotations
@@ -63,43 +66,120 @@ def scheduler(fake_redis_kv, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_get_returns_none_for_unrelated_schedule(scheduler, fake_redis_kv):
-    """Sanity: get(unknown_id) returns None.
-
-    Baseline — поведение корректное когда schedule не существует.
-    """
-    result = await scheduler.get("nonexistent")
+    """Sanity: get(unknown_id) returns None."""
+    result = await scheduler.get("nonexistent", tenant_id="tenant_a")
     assert result is None
 
 
 @pytest.mark.asyncio
-async def test_get_returns_schedule_without_tenant_context(scheduler):
-    """Per W3.1 classification: WebhookScheduler.get НЕ фильтрует по tenant.
-
-    Этот тест документирует существующее поведение: schedule создан
-    с schedule_id доступен любому caller'у (НЕ tenant-scoped).
-
-    Per v6 W3.2: negative cross-tenant test ДОЛЖЕН провалиться —
-    чтобы зафиксировать debt для будущего fix.
-    """
+async def test_cross_tenant_get_returns_none(scheduler):
+    """Tenant A schedule — tenant B get() возвращает None (negative test)."""
     # Tenant A schedules webhook.
     schedule_id = await scheduler.schedule(
         url="https://example.com/webhook",
         payload={"event": "order.created"},
         cron="0 * * * *",
+        tenant_id="tenant_a",
     )
 
-    # Simulate tenant B context (different caller) attempting to read
-    # tenant A's webhook. Per v6 W3.2: SHOULD return None (tenant filter).
-    # Current behavior (BUG): returns the schedule regardless of caller.
-    result = await scheduler.get(schedule_id)
+    # Tenant A видит свой schedule.
+    own = await scheduler.get(schedule_id, tenant_id="tenant_a")
+    assert own is not None
+    assert own["id"] == schedule_id
+    assert own["tenant_id"] == "tenant_a"
 
-    # Current (incorrect) behavior: returns schedule.
-    # After tenant-isolation fix: should be None (tenant filter).
-    # This test asserts the DESIRED behavior — will FAIL until fix.
-    assert result is None, (
-        f"TENANT_ISOLATION_DEBT: WebhookScheduler.get(schedule_id) returned "
-        f"schedule from tenant A without tenant filter. schedule_id={schedule_id}, "
-        f"result={result}. Per v6 §10 W3 + ADR-0345 Option A: должен быть "
-        f"tenant predicate filter. See docs/roadmap/W3_UNKNOWN_OWNERSHIP_"
-        f"CLASSIFICATION_2026-09-24.md раздел 2.1."
+    # Tenant B НЕ видит tenant A's schedule.
+    cross = await scheduler.get(schedule_id, tenant_id="tenant_b")
+    assert cross is None, (
+        f"TENANT_ISOLATION_FAILED: WebhookScheduler.get cross-tenant "
+        f"returned {cross} instead of None. schedule_id={schedule_id}"
+    )
+
+
+@pytest.mark.asyncio
+async def test_list_scheduled_filters_by_tenant(scheduler):
+    """list_scheduled возвращает только schedules своего tenant."""
+    sid_a = await scheduler.schedule(
+        url="https://a.example.com",
+        payload={"x": 1},
+        cron="0 * * * *",
+        tenant_id="tenant_a",
+    )
+    sid_b = await scheduler.schedule(
+        url="https://b.example.com",
+        payload={"x": 2},
+        cron="0 * * * *",
+        tenant_id="tenant_b",
+    )
+
+    list_a = await scheduler.list_scheduled(tenant_id="tenant_a")
+    list_b = await scheduler.list_scheduled(tenant_id="tenant_b")
+
+    ids_a = [t["id"] for t in list_a]
+    ids_b = [t["id"] for t in list_b]
+
+    assert sid_a in ids_a
+    assert sid_a not in ids_b
+    assert sid_b in ids_b
+    assert sid_b not in ids_a
+
+
+@pytest.mark.asyncio
+async def test_cross_tenant_cancel_returns_false(scheduler):
+    """Tenant B cancel tenant A's schedule → False (не удаляет чужой)."""
+    sid = await scheduler.schedule(
+        url="https://a.example.com",
+        payload={"x": 1},
+        cron="0 * * * *",
+        tenant_id="tenant_a",
+    )
+
+    # Tenant B пытается отменить tenant A's schedule.
+    cancelled = await scheduler.cancel(sid, tenant_id="tenant_b")
+    assert cancelled is False
+
+    # Tenant A всё ещё видит свой schedule.
+    still = await scheduler.get(sid, tenant_id="tenant_a")
+    assert still is not None
+    assert still["id"] == sid
+
+    # Tenant A успешно отменяет свой schedule.
+    cancelled_own = await scheduler.cancel(sid, tenant_id="tenant_a")
+    assert cancelled_own is True
+
+    gone = await scheduler.get(sid, tenant_id="tenant_a")
+    assert gone is None
+
+
+@pytest.mark.asyncio
+async def test_execute_webhook_cross_tenant_returns_not_found(scheduler):
+    """execute_webhook cross-tenant → {"error": "not_found"} (не выполняет чужой)."""
+    sid = await scheduler.schedule(
+        url="https://a.example.com/webhook",
+        payload={"x": 1},
+        cron="0 * * * *",
+        tenant_id="tenant_a",
+    )
+
+    # Tenant B пытается выполнить tenant A's webhook.
+    result = await scheduler.execute_webhook(sid, tenant_id="tenant_b")
+    assert result == {"error": "not_found"}, (
+        f"TENANT_ISOLATION_FAILED: execute_webhook cross-tenant returned "
+        f"{result} instead of not_found. Tenant B смог execute чужой webhook!"
+    )
+
+
+@pytest.mark.asyncio
+async def test_redis_key_includes_tenant_id(scheduler, fake_redis_kv):
+    """Redis key содержит tenant_id в namespace (audit trail)."""
+    sid = await scheduler.schedule(
+        url="https://example.com",
+        payload={"x": 1},
+        cron="0 * * * *",
+        tenant_id="acme_corp",
+    )
+    expected_key = "webhook:scheduled:acme_corp:" + sid
+    assert expected_key in fake_redis_kv._store, (
+        f"TENANT_NAMESPACE_FAILED: expected key {expected_key!r} not found "
+        f"in Redis. Found keys: {list(fake_redis_kv._store.keys())}"
     )

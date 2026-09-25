@@ -200,12 +200,20 @@ def _count_importers(path: Path, all_py_files: list[Path]) -> int:
 
 
 def _module_name_from_path(path: Path) -> str:
-    """`src/backend/dsl/processors/event_store/cqrs.py` → `src.backend.dsl.processors.event_store.cqrs`."""
+    """`src/backend/dsl/processors/event_store/cqrs.py` → `src.backend.dsl.processors.event_store.cqrs`.
+
+    v6 W4 fix: используем ``path.resolve()`` чтобы избежать ValueError когда
+    caller передаёт relative path (например из cwd != PROJECT_ROOT).
+    Pre-fix: импорт ``from src.backend.dsl.processors.X`` всегда возвращал 0
+    importers потому что patterns искали ``src.backend.dsl.processors.X``
+    а module_name при relative path возвращал ``dsl.processors.X``.
+    """
     try:
-        rel = path.relative_to(PROJECT_ROOT / "src" / "backend")
+        abs_path = path.resolve() if not path.is_absolute() else path
+        rel = abs_path.relative_to(PROJECT_ROOT / "src" / "backend")
     except ValueError:
         return ""
-    parts = list(rel.parts[:-1]) + [rel.stem]
+    parts = ["src", "backend"] + list(rel.parts[:-1]) + [rel.stem]
     return ".".join(parts)
 
 

@@ -153,7 +153,7 @@ class ExpressSendFileProcessor(BaseProcessor):
             key = resolve_value(exchange, self._s3_key_from)
             if key:
                 # S87 M2-#11 final batch: DI provider (S78 added).
-                from src.backend.core.di.providers.cache import get_s3_client_provider
+                from src.backend.core.di.providers.storage import get_s3_client_provider
 
                 s3_client = get_s3_client_provider()()
 

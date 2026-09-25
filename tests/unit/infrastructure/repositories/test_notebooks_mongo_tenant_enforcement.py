@@ -66,8 +66,14 @@ class TestMongoNotebookRepositoryTenantEnforcement:
         )
 
     @pytest.mark.asyncio
-    async def test_get_legacy_passes_through(self, mock_pydantic_settings) -> None:
-        """Legacy ``get(notebook_id)`` without tenant_id — backwards-compat."""
+    async def test_get_legacy_fails_closed_without_tenant(
+        self, mock_pydantic_settings
+    ) -> None:
+        """v6 W3 (25.09 audit): ``get(notebook_id)`` без tenant_id → None.
+
+        Per ADR-0345 fail-closed: user-data API запрещает None/пустой tenant.
+        Legacy-compat обратная дверь закрыта.
+        """
         from src.backend.infrastructure.repositories.notebooks_mongo import (
             MongoNotebookRepository,
         )
@@ -84,17 +90,19 @@ class TestMongoNotebookRepositoryTenantEnforcement:
             }
         )
 
-        # Without tenant_id: passes through (legacy compat).
-        got_legacy = await repo.get("nb-1")
-        assert got_legacy is not None, (
-            "Legacy get() without tenant_id must continue working."
+        # Without tenant_id: FAIL-CLOSED → None (не возвращаем данные).
+        got_no_tenant = await repo.get("nb-1", tenant_id="")
+        assert got_no_tenant is None, (
+            "FAIL_CLOSED_VIOLATION: get() with empty tenant_id returned "
+            "data instead of None. Per ADR-0345: user-data API must reject "
+            "empty tenant."
         )
 
     @pytest.mark.asyncio
     async def test_get_handles_missing_tenant_in_doc(
         self, mock_pydantic_settings
     ) -> None:
-        """Doc without tenant_id в metadata + explicit filter → None (fail-closed)."""
+        """Doc без tenant_id в metadata + explicit filter → None (fail-closed)."""
         from src.backend.infrastructure.repositories.notebooks_mongo import (
             MongoNotebookRepository,
         )
@@ -115,6 +123,6 @@ class TestMongoNotebookRepositoryTenantEnforcement:
         got_filtered = await repo.get("nb-1", tenant_id="t-a")
         assert got_filtered is None
 
-        # Without explicit tenant_id → passes through (legacy compat).
-        got_legacy = await repo.get("nb-1")
-        assert got_legacy is not None
+        # Empty tenant_id → also fail-closed (per ADR-0345).
+        got_empty = await repo.get("nb-1", tenant_id="")
+        assert got_empty is None

@@ -123,9 +123,21 @@ class RagIngestService:
         )
 
     async def ingest(
-        self, files: list[tuple[str, bytes]], *, collection: str = "default"
+        self,
+        files: list[tuple[str, bytes]],
+        *,
+        collection: str = "default",
+        tenant_id: str = "",
     ) -> dict[str, Any]:
-        """Запускает ingest. Возвращает task_id + start-метку."""
+        """Запускает ingest. Возвращает task_id + start-метку.
+
+        Args:
+            files: Список файлов (filename, content_bytes).
+            collection: Namespace для embeddings.
+            tenant_id: REQUIRED tenant identifier (ADR-0345 fail-closed).
+                Empty → ingest создаётся, но ``status``/``list_recent``
+                вернут None/[] для cross-tenant access.
+        """
         task_id = str(uuid.uuid4())
         payload = {
             "task_id": task_id,
@@ -135,6 +147,7 @@ class RagIngestService:
             "doc_ids": [],
             "errors": [],
             "collection": collection,
+            "tenant_id": tenant_id,
             "chunker_fingerprint": _chunker_fingerprint(),
             "started_at": datetime.now(UTC).isoformat(),
         }
@@ -148,7 +161,7 @@ class RagIngestService:
         else:
             await coroutine
 
-        snapshot = await self._store.get(task_id)
+        snapshot = await self._store.get(task_id, tenant_id=tenant_id)
         return snapshot or payload
 
     async def _run(
@@ -192,13 +205,17 @@ class RagIngestService:
             task_id, status=state["status"], finished_at=state["finished_at"]
         )
 
-    async def status(self, task_id: str) -> dict[str, Any] | None:
-        """Async-снимок состояния задачи (D.2)."""
-        return await self._store.get(task_id)
+    async def status(
+        self, task_id: str, *, tenant_id: str = ""
+    ) -> dict[str, Any] | None:
+        """Async-снимок состояния задачи (D.2, tenant-scoped)."""
+        return await self._store.get(task_id, tenant_id=tenant_id)
 
-    async def list_recent(self, limit: int = 50) -> list[dict[str, Any]]:
-        """Последние ``limit`` задач (D.2)."""
-        return await self._store.list_recent(limit=limit)
+    async def list_recent(
+        self, limit: int = 50, *, tenant_id: str = ""
+    ) -> list[dict[str, Any]]:
+        """Последние ``limit`` задач (D.2, tenant-scoped)."""
+        return await self._store.list_recent(limit=limit, tenant_id=tenant_id)
 
 
 def _resolve_embedding_provenance() -> dict[str, Any]:
