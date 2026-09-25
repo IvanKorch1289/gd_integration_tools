@@ -54,7 +54,16 @@ def __getattr__(name: str) -> _Any:
 
 def __dir__() -> list[str]:
     """``dir()`` через canonical module для tab-completion и introspection."""
+<<<<<<< Updated upstream
     global _canonical
     if _canonical is None:
         _canonical = _importlib.import_module(_CANONICAL_MODULE)
     return dir(_canonical)
+=======
+    module = (
+        _canonical
+        if _canonical is not None
+        else _importlib.import_module(_CANONICAL_MODULE)
+    )
+    return dir(module)  # делегирование: тот же lazy-import путь
+>>>>>>> Stashed changes

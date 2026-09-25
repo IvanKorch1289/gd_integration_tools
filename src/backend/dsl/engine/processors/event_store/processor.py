@@ -16,8 +16,13 @@ from src.backend.dsl.engine.processors.base import BaseProcessor, handle_process
 from src.backend.dsl.engine.processors.event_store.helpers import get_event_store
 from src.backend.dsl.engine.processors.event_store.store import EventStore
 from src.backend.dsl.engine.processors.event_store.types import (
+<<<<<<< Updated upstream
     Event,
 )  # S66 W1: cross-import
+=======
+    Event,  # S66 W1: cross-import
+)
+>>>>>>> Stashed changes
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext

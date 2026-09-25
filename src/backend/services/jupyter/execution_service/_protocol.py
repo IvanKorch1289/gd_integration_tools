@@ -21,7 +21,7 @@ class _NotebookExecutionProtocol(Protocol):
     """Общий контракт для CoreMixin / IOMixin / JupyterBackendMixin."""
 
     _settings: JupyterHubSettings
-    _hub: JupyterHubClient
+    _hub: Any  # JupyterHubClient (lazy module attr — mypy не видит __getattr__)
 
     async def execute_notebook(
         self,

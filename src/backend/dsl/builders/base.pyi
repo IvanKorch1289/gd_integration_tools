@@ -31,9 +31,15 @@ from src.backend.dsl.engine.processors.control_flow.choice import ChoiceBranch
 
 from src.backend.dsl.engine.processors.control_flow.saga import SagaStep
 
-from src.backend.dsl.engine.processors.plan_execute_processor import PlanResult, PlanStep
+from src.backend.dsl.engine.processors.plan_execute_processor import (
+    PlanResult,
+    PlanStep,
+)
 
-from src.backend.dsl.engine.processors.router_specialist_processor import RoutingDecision, SpecialistAgent
+from src.backend.dsl.engine.processors.router_specialist_processor import (
+    RoutingDecision,
+    SpecialistAgent,
+)
 
 from src.backend.dsl.builders.base.fluent_mixin import ProcessorCallable
 
@@ -59,14 +65,19 @@ from src.backend.dsl.engine.processors.reflection_loop_processor import Generato
 
 from src.backend.dsl.engine.processors.router_specialist_processor import LLMRouterFn
 
-
-
 class RouteBuilder:
-
-    def ab_test(self, variant_a: list[BaseProcessor], variant_b: list[BaseProcessor], *, split_percent: int = ..., key_fn: Callable[[Exchange[Any]], str] | None = ...) -> Self:
+    def ab_test(
+        self,
+        variant_a: list[BaseProcessor],
+        variant_b: list[BaseProcessor],
+        *,
+        split_percent: int = ...,
+        key_fn: Callable[[Exchange[Any]], str] | None = ...,
+    ) -> Self:
         """Стабильная маршрутизация X% трафика на вариант B."""
         ...
 
+<<<<<<< Updated upstream
     def agent_branch(self, *, source_property: str, branches: dict[str, list[BaseProcessor]], default: Union[list[BaseProcessor], None] = ...) -> RouteBuilder:
         """Verdict-based routing по ``agent_result`` (S27 W1)."""
         ...
@@ -84,13 +95,82 @@ class RouteBuilder:
         ...
 
     def agent_run(self, *, workflow_id: str, prompt_ref: Union[str, None] = ..., prompt_inline: Union[str, None] = ..., policy_ref: Union[str, None] = ..., context_property: Union[str, None] = ..., result_property: str = ..., timeout_s: float = ..., max_retries: int = ...) -> RouteBuilder:
+=======
+    def agent_branch(
+        self,
+        *,
+        source_property: str,
+        branches: dict[str, list[BaseProcessor]],
+        default: UnionType[list[BaseProcessor], None] = ...,
+    ) -> RouteBuilder:
+        """Verdict-based routing по ``agent_result`` (S27 W1)."""
+        ...
+
+    def agent_graph(
+        self,
+        *,
+        graph_type: str,
+        model: str = ...,
+        agents: UnionType[list[dict[str, Any]], None] = ...,
+        prompt_inline: UnionType[str, None] = ...,
+        tool_actions: UnionType[list[str], None] = ...,
+        max_handoffs: int = ...,
+        result_property: str = ...,
+        isolated: bool = ...,
+    ) -> RouteBuilder:
+        """LangGraph execution as DSL step (S28 W4)."""
+        ...
+
+    def agent_loop(
+        self,
+        *,
+        processors: list[BaseProcessor],
+        max_iterations: int = ...,
+        stop_condition_property: UnionType[str, None] = ...,
+        budget_cost_usd: UnionType[float, None] = ...,
+        budget_tokens: UnionType[int, None] = ...,
+    ) -> RouteBuilder:
+        """Циклическое выполнение вложенного pipeline (S27 W1)."""
+        ...
+
+    def agent_parallel(
+        self,
+        *,
+        agents: list[dict[str, Any]],
+        result_property: str = ...,
+        timeout_s: UnionType[float, None] = ...,
+        continue_on_error: bool = ...,
+    ) -> RouteBuilder:
+        """Параллельный fan-out агентов через :class:`asyncio.TaskGroup` (S27 W1)."""
+        ...
+
+    def agent_run(
+        self,
+        *,
+        workflow_id: str,
+        prompt_ref: UnionType[str, None] = ...,
+        prompt_inline: UnionType[str, None] = ...,
+        policy_ref: UnionType[str, None] = ...,
+        context_property: UnionType[str, None] = ...,
+        result_property: str = ...,
+        timeout_s: float = ...,
+        max_retries: int = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Вызов :class:`AIGateway.invoke` по ``workflow_id`` (S27 W1)."""
         ...
 
-    def aggregate(self, correlation_key: Callable[[Exchange[Any]], str], *, batch_size: int = ..., timeout_seconds: float = ...) -> RouteBuilder:
+    def aggregate(
+        self,
+        correlation_key: Callable[[Exchange[Any]], str],
+        *,
+        batch_size: int = ...,
+        timeout_seconds: float = ...,
+    ) -> RouteBuilder:
         """Aggregator: собирает N Exchange по correlation_key в batch."""
         ...
 
+<<<<<<< Updated upstream
     def ai_invoke(self, *, workflow_id: str, prompt_ref: Union[str, None] = ..., prompt_inline: Union[str, None] = ..., policy_ref: Union[str, None] = ..., context_property: Union[str, None] = ..., result_property: str = ...) -> RouteBuilder:
         """Алиас :meth:`agent_run` — для семантически нагруженных мест"""
         ...
@@ -108,6 +188,68 @@ class RouteBuilder:
         ...
 
     def ai_tool_dispatch(self, *, available_tool_ids: list[str], query: Union[str, None] = ..., query_property: Union[str, None] = ..., result_property: str = ..., model: str = ..., temperature: float = ...) -> RouteBuilder:
+=======
+    def ai_invoke(
+        self,
+        *,
+        workflow_id: str,
+        prompt_ref: UnionType[str, None] = ...,
+        prompt_inline: UnionType[str, None] = ...,
+        policy_ref: UnionType[str, None] = ...,
+        context_property: UnionType[str, None] = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+        """Алиас :meth:`agent_run` — для семантически нагруженных мест"""
+        ...
+
+    def ai_memory_recall(
+        self,
+        *,
+        namespace: str,
+        query: UnionType[str, None] = ...,
+        query_property: UnionType[str, None] = ...,
+        k: int = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+        """RAG-style retrieval из :class:`MemoryProtocol` (S27 W3, ADR-NEW-18)."""
+        ...
+
+    def ai_memory_store(
+        self,
+        *,
+        namespace: str,
+        key: UnionType[str, None] = ...,
+        key_property: UnionType[str, None] = ...,
+        value_property: str = ...,
+        ttl_s: UnionType[int, None] = ...,
+    ) -> RouteBuilder:
+        """Запись в :class:`MemoryProtocol` (S27 W3, ADR-NEW-18)."""
+        ...
+
+    def ai_rpa(
+        self,
+        *,
+        task: str,
+        ui_context: UnionType[dict[str, Any], None] = ...,
+        action_property: str = ...,
+        model: str = ...,
+        temperature: float = ...,
+        to: str = ...,
+    ) -> RouteBuilder:
+        """AI-driven RPA action selection via LLM (S28 W5, wave:s8/k3-rpa-ai-decide)."""
+        ...
+
+    def ai_tool_dispatch(
+        self,
+        *,
+        available_tool_ids: list[str],
+        query: UnionType[str, None] = ...,
+        query_property: UnionType[str, None] = ...,
+        result_property: str = ...,
+        model: str = ...,
+        temperature: float = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """LLM-orchestrated dispatch к одному tool из whitelist (S106 W4 / TD-009)."""
         ...
 
@@ -115,7 +257,9 @@ class RouteBuilder:
         """LLM-скоринг антифрода (поверх детерминистических правил)."""
         ...
 
-    def api_proxy(self, base_url: str, *, method: str = ..., path: str = ..., timeout: float = ...) -> RouteBuilder:
+    def api_proxy(
+        self, base_url: str, *, method: str = ..., path: str = ..., timeout: float = ...
+    ) -> RouteBuilder:
         """Прозрачный API proxy с request/response трансформацией."""
         ...
 
@@ -123,7 +267,9 @@ class RouteBuilder:
         """Автоматическая обработка клиентских обращений."""
         ...
 
-    def appium_mobile(self, platform: str, app_package: str, operation: str) -> RouteBuilder:
+    def appium_mobile(
+        self, platform: str, app_package: str, operation: str
+    ) -> RouteBuilder:
         """Appium автоматизация мобильных приложений (android/ios)."""
         ...
 
@@ -131,6 +277,7 @@ class RouteBuilder:
         """Создать или распаковать архив (ZIP/TAR)."""
         ...
 
+<<<<<<< Updated upstream
     def audit(self, *, action: Union[str, None] = ..., action_from: Union[str, None] = ..., actor: str = ..., actor_from: Union[str, None] = ..., resource_from: Union[str, None] = ..., outcome: str = ..., outcome_from: Union[str, None] = ..., metadata_from: Union[str, None] = ..., tenant_id_from: Union[str, None] = ..., correlation_id_from: Union[str, None] = ..., result_property: str = ...) -> RouteBuilder:
         """Записать событие в immutable audit log (Wave 5.1)."""
         ...
@@ -152,6 +299,75 @@ class RouteBuilder:
         ...
 
     def batch_update(self, table: str, items: Union[list[dict[str, Any]], None] = ..., *, key_field: str = ..., profile: str = ...) -> RouteBuilder:
+=======
+    def audit(
+        self,
+        *,
+        action: UnionType[str, None] = ...,
+        action_from: UnionType[str, None] = ...,
+        actor: str = ...,
+        actor_from: UnionType[str, None] = ...,
+        resource_from: UnionType[str, None] = ...,
+        outcome: str = ...,
+        outcome_from: UnionType[str, None] = ...,
+        metadata_from: UnionType[str, None] = ...,
+        tenant_id_from: UnionType[str, None] = ...,
+        correlation_id_from: UnionType[str, None] = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+        """Записать событие в immutable audit log (Wave 5.1)."""
+        ...
+
+    def auth(
+        self,
+        methods: UnionType[list[str], str] = ...,
+        *,
+        result_property: str = ...,
+        required: bool = ...,
+    ) -> RouteBuilder:
+        """Проверяет авторизацию запроса (Wave 8.1)."""
+        ...
+
+    def batch(
+        self,
+        *,
+        size: int = ...,
+        timeout_ms: int = ...,
+        group_by: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+        """Накопление сообщений в окно с flush по N ИЛИ по таймауту."""
+        ...
+
+    def batch_delete(
+        self,
+        table: str,
+        ids: UnionType[list[Any], None] = ...,
+        *,
+        key_field: str = ...,
+        profile: str = ...,
+    ) -> RouteBuilder:
+        """Batch DELETE через SQLAlchemy core."""
+        ...
+
+    def batch_insert(
+        self,
+        table: str,
+        items: UnionType[list[dict[str, Any]], None] = ...,
+        *,
+        profile: str = ...,
+    ) -> RouteBuilder:
+        """Batch INSERT через SQLAlchemy core."""
+        ...
+
+    def batch_update(
+        self,
+        table: str,
+        items: UnionType[list[dict[str, Any]], None] = ...,
+        *,
+        key_field: str = ...,
+        profile: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Batch UPDATE через SQLAlchemy core."""
         ...
 
@@ -163,27 +379,62 @@ class RouteBuilder:
         """Собирает Pipeline из накопленных процессоров."""
         ...
 
+<<<<<<< Updated upstream
     def bulkhead(self, name: str, limit: int, processors: list[BaseProcessor], *, wait: bool = ..., timeout: Union[float, None] = ...) -> Self:
+=======
+    def bulkhead(
+        self,
+        name: str,
+        limit: int,
+        processors: list[BaseProcessor],
+        *,
+        wait: bool = ...,
+        timeout: UnionType[float, None] = ...,
+    ) -> Self:
+>>>>>>> Stashed changes
         """Ограничивает concurrency на ветку — защита провайдера от перегрузки."""
         ...
 
-    def cache(self, key_fn: Callable[[Exchange[Any]], str], *, ttl: int = ...) -> RouteBuilder:
+    def cache(
+        self, key_fn: Callable[[Exchange[Any]], str], *, ttl: int = ...
+    ) -> RouteBuilder:
         """Redis-кеш: проверяет наличие по ключу, пропускает если есть."""
         ...
 
-    def cache_write(self, key_fn: Callable[[Exchange[Any]], str], *, ttl: int = ...) -> RouteBuilder:
+    def cache_write(
+        self, key_fn: Callable[[Exchange[Any]], str], *, ttl: int = ...
+    ) -> RouteBuilder:
         """Redis-кеш: записывает результат после обработки."""
         ...
 
+<<<<<<< Updated upstream
     def call_function(self, ref: str, *, payload_from: str = ..., result_property: str = ..., inject: Union[list[str], None] = ...) -> RouteBuilder:
         """Вызов Python-функции ``module:fn`` (R-V15-6, V21 security)."""
         ...
 
     def call_llm(self, provider: Union[str, None] = ..., model: Union[str, None] = ...) -> RouteBuilder:
+=======
+    def call_function(
+        self,
+        ref: str,
+        *,
+        payload_from: str = ...,
+        result_property: str = ...,
+        inject: UnionType[list[str], None] = ...,
+    ) -> RouteBuilder:
+        """Вызов Python-функции ``module:fn`` (R-V15-6, V21 security)."""
+        ...
+
+    def call_llm(
+        self, provider: UnionType[str, None] = ..., model: UnionType[str, None] = ...
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """LLM chat-completion через ai_agent сервис (с PII-маскировкой)."""
         ...
 
-    def call_llm_with_fallback(self, providers: list[str], *, model: str = ...) -> RouteBuilder:
+    def call_llm_with_fallback(
+        self, providers: list[str], *, model: str = ...
+    ) -> RouteBuilder:
         """LLM с fallback-цепочкой провайдеров."""
         ...
 
@@ -191,10 +442,18 @@ class RouteBuilder:
         """Отменить pending deferral (clear ``_deferred`` slot)."""
         ...
 
-    def cancel_workflow(self, workflow_id: str, *, reason: str = ..., namespace: str = ..., result_property: str = ...) -> RouteBuilder:
+    def cancel_workflow(
+        self,
+        workflow_id: str,
+        *,
+        reason: str = ...,
+        namespace: str = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
         """Отмена workflow по ``workflow_id`` (Sprint 12 K3 W7)."""
         ...
 
+<<<<<<< Updated upstream
     def cdc_transform(self, *, operations: Union[list[str], None] = ..., project: Union[list[str], None] = ..., include_old: bool = ..., include_new: bool = ..., timestamp_field: str = ..., drop_unknown: bool = ...) -> RouteBuilder:
         """CDC event normalization + filtering + projection."""
         ...
@@ -204,6 +463,39 @@ class RouteBuilder:
         ...
 
     def circuit_breaker(self, processors: list[BaseProcessor], *, failure_threshold: int = ..., recovery_timeout: float = ..., fallback_processors: Union[list[BaseProcessor], None] = ..., breaker_name: Union[str, None] = ...) -> RouteBuilder:
+=======
+    def cdc_transform(
+        self,
+        *,
+        operations: UnionType[list[str], None] = ...,
+        project: UnionType[list[str], None] = ...,
+        include_old: bool = ...,
+        include_new: bool = ...,
+        timestamp_field: str = ...,
+        drop_unknown: bool = ...,
+    ) -> RouteBuilder:
+        """CDC event normalization + filtering + projection."""
+        ...
+
+    def choice(
+        self,
+        when: list[ChoiceBranch]
+        | list[tuple[Callable[[Exchange[Any]], bool], list[BaseProcessor]]],
+        otherwise: UnionType[list[BaseProcessor], None] = ...,
+    ) -> RouteBuilder:
+        """When/Otherwise: ветвление по JMESPath-веткам или предикатам."""
+        ...
+
+    def circuit_breaker(
+        self,
+        processors: list[BaseProcessor],
+        *,
+        failure_threshold: int = ...,
+        recovery_timeout: float = ...,
+        fallback_processors: UnionType[list[BaseProcessor], None] = ...,
+        breaker_name: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Circuit Breaker: fail-fast при повторных ошибках (CLOSED/OPEN/HALF_OPEN)."""
         ...
 
@@ -211,7 +503,9 @@ class RouteBuilder:
         """Citrix/RDP-сессия (launch/click/type/screenshot/close)."""
         ...
 
-    def claim_check_in(self, *, store: str = ..., ttl_seconds: int = ..., threshold_bytes: int = ...) -> RouteBuilder:
+    def claim_check_in(
+        self, *, store: str = ..., ttl_seconds: int = ..., threshold_bytes: int = ...
+    ) -> RouteBuilder:
         """Claim Check (store): сохраняет body в Redis/S3, body → {_claim_token: ...}."""
         ...
 
@@ -223,11 +517,22 @@ class RouteBuilder:
         """Клик по CSS-селектору."""
         ...
 
-    def clickhouse_insert(self, table: str, *, batch_size: int = ..., rows_from: str = ...) -> RouteBuilder:
+    def clickhouse_insert(
+        self, table: str, *, batch_size: int = ..., rows_from: str = ...
+    ) -> RouteBuilder:
         """Batch INSERT в ClickHouse ``table`` из exchange body."""
         ...
 
+<<<<<<< Updated upstream
     def collect(self, *, field: Union[str, None] = ..., key_fn: Callable[[Any], Any] | None = ...) -> RouteBuilder:
+=======
+    def collect(
+        self,
+        *,
+        field: UnionType[str, None] = ...,
+        key_fn: Callable[[Any], Any] | None = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Извлекает поле из каждого объекта коллекции в body."""
         ...
 
@@ -235,11 +540,18 @@ class RouteBuilder:
         """Compliance-метки на Exchange (PII/PCI/FIN/GDPR)."""
         ...
 
-    def compose_prompt(self, template: str, context_property: str = ...) -> RouteBuilder:
+    def compose_prompt(
+        self, template: str, context_property: str = ...
+    ) -> RouteBuilder:
         """Построение промпта из шаблона + контекста из properties."""
         ...
 
-    def composed_message(self, splitter: Callable[[Exchange[Any]], Any], processors: list[BaseProcessor], aggregator: Callable[[list[Exchange[Any]]], Any]) -> RouteBuilder:
+    def composed_message(
+        self,
+        splitter: Callable[[Exchange[Any]], Any],
+        processors: list[BaseProcessor],
+        aggregator: Callable[[list[Exchange[Any]]], Any],
+    ) -> RouteBuilder:
         """Composed Message Processor: split → per-part → aggregate."""
         ...
 
@@ -247,15 +559,38 @@ class RouteBuilder:
         """Сжатие body (gzip/brotli/zstd)."""
         ...
 
+<<<<<<< Updated upstream
     def content_based_router(self, routes: list[tuple[Callable[[Exchange[Any]], bool], str]], *, default_endpoint: Union[str, None] = ...) -> RouteBuilder:
         """Content-Based Router EIP: route по predicate."""
         ...
 
     def content_enrich(self, *, strategy: str = ..., field: str = ..., source: Union[str, None] = ..., value: Any = ..., name: Union[str, None] = ...) -> RouteBuilder:
+=======
+    def content_based_router(
+        self,
+        routes: list[tuple[Callable[[Exchange[Any]], bool], str]],
+        *,
+        default_endpoint: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+        """Content-Based Router EIP: route по predicate."""
+        ...
+
+    def content_enrich(
+        self,
+        *,
+        strategy: str = ...,
+        field: str = ...,
+        source: UnionType[str, None] = ...,
+        value: Any = ...,
+        name: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Content Enricher EIP — http/static/function strategies."""
         ...
 
-    def content_filter(self, predicate: Callable[[Exchange[Any]], bool]) -> RouteBuilder:
+    def content_filter(
+        self, predicate: Callable[[Exchange[Any]], bool]
+    ) -> RouteBuilder:
         """Alias для :meth:`filter` — фильтрует Exchange, останавливает если False."""
         ...
 
@@ -279,27 +614,67 @@ class RouteBuilder:
         """Кредитный скоринг через RAG."""
         ...
 
+<<<<<<< Updated upstream
     def cron_schedule(self, name: str, *, cron_expr: str, workflow_name: str, workflow_args: Union[dict[str, Any], None] = ..., namespace: str = ..., task_queue: str = ..., result_property: str = ..., timezone: str = ...) -> RouteBuilder:
+=======
+    def cron_schedule(
+        self,
+        name: str,
+        *,
+        cron_expr: str,
+        workflow_name: str,
+        workflow_args: UnionType[dict[str, Any], None] = ...,
+        namespace: str = ...,
+        task_queue: str = ...,
+        result_property: str = ...,
+        timezone: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """S103 W2 — DSL-шаг ``cron_schedule``: запуск workflow по cron-расписанию."""
         ...
 
-    def crud_create(self, entity: str, *, payload_from: str = ..., result_property: str = ...) -> RouteBuilder:
+    def crud_create(
+        self, entity: str, *, payload_from: str = ..., result_property: str = ...
+    ) -> RouteBuilder:
         """Алиас к :meth:`entity_create` (R-V15-12 / 80/20 YAML)."""
         ...
 
-    def crud_delete(self, entity: str, *, id_from: str = ..., result_property: str = ...) -> RouteBuilder:
+    def crud_delete(
+        self, entity: str, *, id_from: str = ..., result_property: str = ...
+    ) -> RouteBuilder:
         """Алиас к :meth:`entity_delete` (R-V15-12)."""
         ...
 
+<<<<<<< Updated upstream
     def crud_list(self, entity: str, *, filters_from: Union[str, None] = ..., page: Union[int, None] = ..., size: Union[int, None] = ..., result_property: str = ...) -> RouteBuilder:
+=======
+    def crud_list(
+        self,
+        entity: str,
+        *,
+        filters_from: UnionType[str, None] = ...,
+        page: UnionType[int, None] = ...,
+        size: UnionType[int, None] = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Алиас к :meth:`entity_list` (R-V15-12)."""
         ...
 
-    def crud_read(self, entity: str, *, id_from: str = ..., result_property: str = ...) -> RouteBuilder:
+    def crud_read(
+        self, entity: str, *, id_from: str = ..., result_property: str = ...
+    ) -> RouteBuilder:
         """Алиас к :meth:`entity_get` (R-V15-12)."""
         ...
 
-    def crud_update(self, entity: str, *, id_from: str = ..., payload_from: str = ..., result_property: str = ...) -> RouteBuilder:
+    def crud_update(
+        self,
+        entity: str,
+        *,
+        id_from: str = ...,
+        payload_from: str = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
         """Алиас к :meth:`entity_update` (R-V15-12)."""
         ...
 
@@ -315,7 +690,9 @@ class RouteBuilder:
         """Удаляет ключ из in-memory store Exchange."""
         ...
 
-    def data_store_get(self, key: str, *, default: Any = ..., result_property: str = ...) -> RouteBuilder:
+    def data_store_get(
+        self, key: str, *, default: Any = ..., result_property: str = ...
+    ) -> RouteBuilder:
         """Читает значение из in-memory store Exchange."""
         ...
 
@@ -323,15 +700,28 @@ class RouteBuilder:
         """Сохраняет значение в in-memory store Exchange."""
         ...
 
-    def db_call_procedure(self, profile: str, name: str, *, schema: str = ..., params_from: str = ..., result_property: str = ..., dialect: str = ...) -> RouteBuilder:
+    def db_call_procedure(
+        self,
+        profile: str,
+        name: str,
+        *,
+        schema: str = ...,
+        params_from: str = ...,
+        result_property: str = ...,
+        dialect: str = ...,
+    ) -> RouteBuilder:
         """K3 S5 W8 — вызвать stored procedure через ExternalDatabaseRegistry."""
         ...
 
-    def db_delete(self, table: str, where: dict[str, Any], *, result_property: str = ...) -> RouteBuilder:
+    def db_delete(
+        self, table: str, where: dict[str, Any], *, result_property: str = ...
+    ) -> RouteBuilder:
         """Safe DELETE с explicit WHERE (S95 W1)."""
         ...
 
-    def db_insert(self, table: str, data: dict[str, Any], *, result_property: str = ...) -> RouteBuilder:
+    def db_insert(
+        self, table: str, data: dict[str, Any], *, result_property: str = ...
+    ) -> RouteBuilder:
         """Safe INSERT через parameterized SQL (S95 W1)."""
         ...
 
@@ -339,23 +729,50 @@ class RouteBuilder:
         """SQL-запрос через SQLAlchemy (с валидацией: DDL/multi-statement запрещены)."""
         ...
 
-    def db_query_external(self, profile: str, sql: str, *, params_from: str = ..., result_property: str = ..., fetch: str = ..., commit: bool = ...) -> RouteBuilder:
+    def db_query_external(
+        self,
+        profile: str,
+        sql: str,
+        *,
+        params_from: str = ...,
+        result_property: str = ...,
+        fetch: str = ...,
+        commit: bool = ...,
+    ) -> RouteBuilder:
         """Выполняет произвольный SQL во внешней БД по profile-имени."""
         ...
 
-    def db_update(self, table: str, data: dict[str, Any], where: dict[str, Any], *, result_property: str = ...) -> RouteBuilder:
+    def db_update(
+        self,
+        table: str,
+        data: dict[str, Any],
+        where: dict[str, Any],
+        *,
+        result_property: str = ...,
+    ) -> RouteBuilder:
         """Safe UPDATE через parameterized SQL."""
         ...
 
-    def db_upsert(self, table: str, data: dict[str, Any], conflict_keys: list[str], *, result_property: str = ...) -> RouteBuilder:
+    def db_upsert(
+        self,
+        table: str,
+        data: dict[str, Any],
+        conflict_keys: list[str],
+        *,
+        result_property: str = ...,
+    ) -> RouteBuilder:
         """Safe UPSERT (INSERT ... ON CONFLICT DO UPDATE, PostgreSQL)."""
         ...
 
-    def dead_letter(self, processors: list[BaseProcessor], *, dlq_stream: str = ...) -> RouteBuilder:
+    def dead_letter(
+        self, processors: list[BaseProcessor], *, dlq_stream: str = ...
+    ) -> RouteBuilder:
         """Dead Letter Channel: при ошибке — отправка в Redis stream."""
         ...
 
-    def deadline(self, *, timeout_seconds: float = ..., fail_on_exceed: bool = ...) -> RouteBuilder:
+    def deadline(
+        self, *, timeout_seconds: float = ..., fail_on_exceed: bool = ...
+    ) -> RouteBuilder:
         """Установка дedline pipeline; downstream проверяет _deadline_at."""
         ...
 
@@ -379,7 +796,16 @@ class RouteBuilder:
         """Defer execution до указанного момента (Airflow-style ``sla``)."""
         ...
 
+<<<<<<< Updated upstream
     def delay(self, delay_ms: Union[int, None] = ..., *, scheduled_time_fn: Callable[[Exchange[Any]], float] | None = ...) -> RouteBuilder:
+=======
+    def delay(
+        self,
+        delay_ms: UnionType[int, None] = ...,
+        *,
+        scheduled_time_fn: Callable[[Exchange[Any]], float] | None = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Delay: задержка на N миллисекунд или до timestamp."""
         ...
 
@@ -391,19 +817,53 @@ class RouteBuilder:
         """Разность body с другим списком."""
         ...
 
-    def directory_scan(self, path: str, pattern: str = ..., *, recursive: bool = ..., max_files: int = ..., sort_by: str = ..., result_property: str = ...) -> Self:
+    def directory_scan(
+        self,
+        path: str,
+        pattern: str = ...,
+        *,
+        recursive: bool = ...,
+        max_files: int = ...,
+        sort_by: str = ...,
+        result_property: str = ...,
+    ) -> Self:
         """Сканирует директорию и возвращает список файлов, подходящих под glob."""
         ...
 
-    def dispatch_action(self, action: str, *, payload_factory: Callable[[Exchange[Any]], dict[str, Any]] | None = ..., result_property: str = ...) -> RouteBuilder:
+    def dispatch_action(
+        self,
+        action: str,
+        *,
+        payload_factory: Callable[[Exchange[Any]], dict[str, Any]] | None = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
         """Вызывает зарегистрированный action (Service Activator)."""
         ...
 
+<<<<<<< Updated upstream
     def do_try(self, try_processors: list[BaseProcessor], catch_processors: Union[list[BaseProcessor], None] = ..., finally_processors: Union[list[BaseProcessor], None] = ...) -> RouteBuilder:
         """Try/Catch/Finally: exception handling в pipeline."""
         ...
 
     def duckdb_query(self, sql: str, *, sources: Union[dict[str, str], None] = ..., persistent_path: Union[str, None] = ...) -> RouteBuilder:
+=======
+    def do_try(
+        self,
+        try_processors: list[BaseProcessor],
+        catch_processors: UnionType[list[BaseProcessor], None] = ...,
+        finally_processors: UnionType[list[BaseProcessor], None] = ...,
+    ) -> RouteBuilder:
+        """Try/Catch/Finally: exception handling в pipeline."""
+        ...
+
+    def duckdb_query(
+        self,
+        sql: str,
+        *,
+        sources: UnionType[dict[str, str], None] = ...,
+        persistent_path: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """DuckDB analytical SQL over body + lookup tables."""
         ...
 
@@ -411,7 +871,9 @@ class RouteBuilder:
         """Durable Subscriber: fan-out к persistent-подписчикам."""
         ...
 
-    def dynamic_route(self, route_expression: Callable[[Exchange[Any]], str]) -> RouteBuilder:
+    def dynamic_route(
+        self, route_expression: Callable[[Exchange[Any]], str]
+    ) -> RouteBuilder:
         """Dynamic Router: runtime-вычисление route_id."""
         ...
 
@@ -419,7 +881,16 @@ class RouteBuilder:
         """Compose + отправка email через SMTP."""
         ...
 
+<<<<<<< Updated upstream
     def email_driven(self, mailbox: str = ..., subject_filter: Union[str, None] = ..., extract: str = ...) -> RouteBuilder:
+=======
+    def email_driven(
+        self,
+        mailbox: str = ...,
+        subject_filter: UnionType[str, None] = ...,
+        extract: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """IMAP → structured data pipeline."""
         ...
 
@@ -427,31 +898,70 @@ class RouteBuilder:
         """Шифрование тела сообщения (AES-GCM)."""
         ...
 
-    def enrich(self, action: str, *, payload_factory: Callable[[Exchange[Any]], dict[str, Any]] | None = ..., result_property: str = ...) -> RouteBuilder:
+    def enrich(
+        self,
+        action: str,
+        *,
+        payload_factory: Callable[[Exchange[Any]], dict[str, Any]] | None = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
         """Enrich: вызывает action и сохраняет результат в property."""
         ...
 
-    def entity_create(self, *, entity: str, payload_from: str = ..., result_property: str = ...) -> RouteBuilder:
+    def entity_create(
+        self, *, entity: str, payload_from: str = ..., result_property: str = ...
+    ) -> RouteBuilder:
         """Создать сущность через action ``<entity>.create``."""
         ...
 
-    def entity_delete(self, *, entity: str, id_from: str = ..., result_property: str = ...) -> RouteBuilder:
+    def entity_delete(
+        self, *, entity: str, id_from: str = ..., result_property: str = ...
+    ) -> RouteBuilder:
         """Удалить сущность через action ``<entity>.delete``."""
         ...
 
-    def entity_get(self, *, entity: str, id_from: str = ..., result_property: str = ...) -> RouteBuilder:
+    def entity_get(
+        self, *, entity: str, id_from: str = ..., result_property: str = ...
+    ) -> RouteBuilder:
         """Прочитать сущность через action ``<entity>.get``."""
         ...
 
+<<<<<<< Updated upstream
     def entity_list(self, *, entity: str, filters_from: Union[str, None] = ..., page: Union[int, None] = ..., size: Union[int, None] = ..., page_from: Union[str, None] = ..., size_from: Union[str, None] = ..., result_property: str = ...) -> RouteBuilder:
+=======
+    def entity_list(
+        self,
+        *,
+        entity: str,
+        filters_from: UnionType[str, None] = ...,
+        page: UnionType[int, None] = ...,
+        size: UnionType[int, None] = ...,
+        page_from: UnionType[str, None] = ...,
+        size_from: UnionType[str, None] = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Получить страницу сущностей через action ``<entity>.list``."""
         ...
 
-    def entity_update(self, *, entity: str, id_from: str = ..., payload_from: str = ..., result_property: str = ...) -> RouteBuilder:
+    def entity_update(
+        self,
+        *,
+        entity: str,
+        id_from: str = ...,
+        payload_from: str = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
         """Обновить сущность через action ``<entity>.update``."""
         ...
 
+<<<<<<< Updated upstream
     def es_index(self, index: str, *, doc_id_from: Union[str, None] = ...) -> RouteBuilder:
+=======
+    def es_index(
+        self, index: str, *, doc_id_from: UnionType[str, None] = ...
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Индексирует документ из body в ES ``index``."""
         ...
 
@@ -459,11 +969,29 @@ class RouteBuilder:
         """Поиск в ES; hits в ``exchange.properties["_es_hits"]``."""
         ...
 
+<<<<<<< Updated upstream
     def evaluate_rules(self, *, rules: list[Any], context_from: Union[str, None] = ..., decision_to: str = ..., default_decision: str = ...) -> RouteBuilder:
+=======
+    def evaluate_rules(
+        self,
+        *,
+        rules: list[Any],
+        context_from: UnionType[str, None] = ...,
+        decision_to: str = ...,
+        default_decision: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """First-match-wins rule engine поверх SimpleEval."""
         ...
 
-    def exactly_once(self, storage: Any, *, id_header: str = ..., ttl_seconds: int = ..., namespace: str = ...) -> RouteBuilder:
+    def exactly_once(
+        self,
+        storage: Any,
+        *,
+        id_header: str = ...,
+        ttl_seconds: int = ...,
+        namespace: str = ...,
+    ) -> RouteBuilder:
         """Exactly-once: dedup через storage по message-id."""
         ...
 
@@ -471,14 +999,31 @@ class RouteBuilder:
         """Читать Excel файл в list[dict]."""
         ...
 
+<<<<<<< Updated upstream
     def execute_dml(self, operation: str, table: str, *, dialect: str = ..., data: Union[dict[str, Any], None] = ..., where: Union[dict[str, Any], None] = ..., conflict_keys: Union[list[str], None] = ..., result_property: str = ...) -> RouteBuilder:
+=======
+    def execute_dml(
+        self,
+        operation: str,
+        table: str,
+        *,
+        dialect: str = ...,
+        data: UnionType[dict[str, Any], None] = ...,
+        where: UnionType[dict[str, Any], None] = ...,
+        conflict_keys: UnionType[list[str], None] = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Unified DML вызов с явным dialect (P3 unified DML)."""
         ...
 
-    def expire(self, ttl_seconds: float, *, header_name: str = ..., drop_action: str = ...) -> RouteBuilder:
+    def expire(
+        self, ttl_seconds: float, *, header_name: str = ..., drop_action: str = ...
+    ) -> RouteBuilder:
         """Message Expiration: отбрасывает сообщения старше ``ttl_seconds``."""
         ...
 
+<<<<<<< Updated upstream
     def expose_proxy(self, src: str, *, methods: Union[list[str], None] = ..., header_map: Union[dict[str, Any], None] = ...) -> RouteBuilder:
         """Объявить роут как прокси-вход."""
         ...
@@ -500,18 +1045,109 @@ class RouteBuilder:
         ...
 
     def express_send_file(self, *, bot: str = ..., chat_id_from: str = ..., s3_key_from: Union[str, None] = ..., file_data_property: Union[str, None] = ..., file_name: Union[str, None] = ..., file_name_from: Union[str, None] = ..., body: Union[str, None] = ..., body_from: Union[str, None] = ..., result_property: str = ...) -> RouteBuilder:
+=======
+    def expose_proxy(
+        self,
+        src: str,
+        *,
+        methods: UnionType[list[str], None] = ...,
+        header_map: UnionType[dict[str, Any], None] = ...,
+    ) -> RouteBuilder:
+        """Объявить роут как прокси-вход."""
+        ...
+
+    def express_edit(
+        self,
+        sync_id_from: str = ...,
+        *,
+        bot: str = ...,
+        body: UnionType[str, None] = ...,
+        body_from: UnionType[str, None] = ...,
+        bubble: UnionType[list[list[dict[str, Any]]], None] = ...,
+        keyboard: UnionType[list[list[dict[str, Any]]], None] = ...,
+        status: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+        """Редактировать ранее отправленное Express сообщение."""
+        ...
+
+    def express_mention(
+        self,
+        *,
+        mention_type: str = ...,
+        target_from: UnionType[str, None] = ...,
+        mention_id: UnionType[str, None] = ...,
+        name_from: UnionType[str, None] = ...,
+        property_name: str = ...,
+    ) -> RouteBuilder:
+        """Добавить упоминание (user/chat/channel/contact/all) в exchange-property."""
+        ...
+
+    def express_reply(
+        self,
+        body_from: UnionType[str, None] = ...,
+        *,
+        bot: str = ...,
+        source_sync_id_from: str = ...,
+        chat_id_from: str = ...,
+        body: UnionType[str, None] = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+        """Ответить на исходное сообщение Express (reply-thread)."""
+        ...
+
+    def express_send(
+        self,
+        body: UnionType[str, None] = ...,
+        *,
+        bot: str = ...,
+        chat_id_from: str = ...,
+        body_from: UnionType[str, None] = ...,
+        bubble: UnionType[list[list[dict[str, Any]]], None] = ...,
+        keyboard: UnionType[list[list[dict[str, Any]]], None] = ...,
+        status: str = ...,
+        silent_response: bool = ...,
+        sync: bool = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+        """Отправить сообщение в Express чат через BotX API."""
+        ...
+
+    def express_send_file(
+        self,
+        *,
+        bot: str = ...,
+        chat_id_from: str = ...,
+        s3_key_from: UnionType[str, None] = ...,
+        file_data_property: UnionType[str, None] = ...,
+        file_name: UnionType[str, None] = ...,
+        file_name_from: UnionType[str, None] = ...,
+        body: UnionType[str, None] = ...,
+        body_from: UnionType[str, None] = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Отправить файл (S3/LocalFS или exchange-property) в Express чат."""
         ...
 
-    def express_status(self, *, bot: str = ..., sync_id_from: str = ..., result_property: str = ...) -> RouteBuilder:
+    def express_status(
+        self, *, bot: str = ..., sync_id_from: str = ..., result_property: str = ...
+    ) -> RouteBuilder:
         """Запросить статус доставки сообщения по sync_id."""
         ...
 
-    def express_typing(self, action: str = ..., *, bot: str = ..., chat_id_from: str = ...) -> RouteBuilder:
+    def express_typing(
+        self, action: str = ..., *, bot: str = ..., chat_id_from: str = ...
+    ) -> RouteBuilder:
         """Отправить/остановить индикатор набора в Express чате."""
         ...
 
+<<<<<<< Updated upstream
     def extract(self, selector: str, url: Union[str, None] = ..., output_property: str = ...) -> RouteBuilder:
+=======
+    def extract(
+        self, selector: str, url: UnionType[str, None] = ..., output_property: str = ...
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Извлечение текста по CSS-селектору."""
         ...
 
@@ -527,15 +1163,40 @@ class RouteBuilder:
         """Привязывает маршрут к feature flag (можно отключить без рестарта)."""
         ...
 
-    def feature_flag_branch(self, flag: str, processors: list[BaseProcessor], *, resolver: Callable[[str], bool] | None = ...) -> Self:
+    def feature_flag_branch(
+        self,
+        flag: str,
+        processors: list[BaseProcessor],
+        *,
+        resolver: Callable[[str], bool] | None = ...,
+    ) -> Self:
         """Выполняет ветку процессоров только при включённом feature flag."""
         ...
 
+<<<<<<< Updated upstream
     def file_move(self, src: Union[str, None] = ..., dst: Union[str, None] = ..., *, mode: str = ...) -> RouteBuilder:
         """Копировать или переместить файл."""
         ...
 
     def fill_form(self, url: str, fields: Union[dict, None] = ..., submit: Union[str, None] = ...) -> RouteBuilder:
+=======
+    def file_move(
+        self,
+        src: UnionType[str, None] = ...,
+        dst: UnionType[str, None] = ...,
+        *,
+        mode: str = ...,
+    ) -> RouteBuilder:
+        """Копировать или переместить файл."""
+        ...
+
+    def fill_form(
+        self,
+        url: str,
+        fields: UnionType[dict, None] = ...,
+        submit: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Заполнение формы по полям + опциональный submit."""
         ...
 
@@ -543,7 +1204,16 @@ class RouteBuilder:
         """Фильтрует Exchange — останавливает, если predicate=False."""
         ...
 
+<<<<<<< Updated upstream
     def find_all(self, *, predicate: Callable[[Any], bool] | None = ..., condition: Union[str, None] = ...) -> RouteBuilder:
+=======
+    def find_all(
+        self,
+        *,
+        predicate: Callable[[Any], bool] | None = ...,
+        condition: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Фильтрует коллекцию в body по условию."""
         ...
 
@@ -555,10 +1225,18 @@ class RouteBuilder:
         """Расплющивает nested lists в body."""
         ...
 
-    def for_each(self, items_path: str, processors: list[BaseProcessor], *, copy_exchange: bool = ..., max_iterations: int = ...) -> RouteBuilder:
+    def for_each(
+        self,
+        items_path: str,
+        processors: list[BaseProcessor],
+        *,
+        copy_exchange: bool = ...,
+        max_iterations: int = ...,
+    ) -> RouteBuilder:
         """For-Each — iterate over a collection, executing sub-processors for each item."""
         ...
 
+<<<<<<< Updated upstream
     def fork_join(self, branches: dict[str, list[BaseProcessor]], *, aggregation: str = ..., timeout_seconds: Union[float, None] = ...) -> RouteBuilder:
         """Fork-Join pattern: explicit join semantics поверх ``parallel``."""
         ...
@@ -568,6 +1246,33 @@ class RouteBuilder:
         ...
 
     def from_(cls: Any, route_id: str, source: str, *, description: Union[str, None] = ...) -> RouteBuilder:
+=======
+    def fork_join(
+        self,
+        branches: dict[str, list[BaseProcessor]],
+        *,
+        aggregation: str = ...,
+        timeout_seconds: UnionType[float, None] = ...,
+    ) -> RouteBuilder:
+        """Fork-Join pattern: explicit join semantics поверх ``parallel``."""
+        ...
+
+    def forward_to(
+        self,
+        dst: str,
+        *,
+        pass_headers: bool = ...,
+        header_map: UnionType[dict[str, Any], None] = ...,
+        rewrite_path: UnionType[str, None] = ...,
+        timeout: float = ...,
+    ) -> RouteBuilder:
+        """Переслать текущее сообщение в backend без трансформаций."""
+        ...
+
+    def from_(
+        cls: Any, route_id: str, source: str, *, description: UnionType[str, None] = ...
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Точка входа: создаёт новый RouteBuilder."""
         ...
 
@@ -579,6 +1284,7 @@ class RouteBuilder:
         """Parse bencoded bytes → Python object (no external deps)."""
         ...
 
+<<<<<<< Updated upstream
     def from_cdc(cls: Any, route_id: str, table: str, *, dsn: str = ..., slot_name: str = ..., publication_names: Union[list[str], None] = ..., plugin: str = ..., **kwargs: Any) -> RouteBuilder:
         """Создаёт маршрут с источником CDC (PostgreSQL logical replication)."""
         ...
@@ -588,14 +1294,70 @@ class RouteBuilder:
         ...
 
     def from_cdc_logical(cls: Any, route_id: str, table: str, *, dsn: str, mode: str = ..., slot_name: Union[str, None] = ..., publication: Union[str, None] = ..., plugin: str = ..., **kwargs: Any) -> RouteBuilder:
+=======
+    def from_cdc(
+        cls: Any,
+        route_id: str,
+        table: str,
+        *,
+        dsn: str = ...,
+        slot_name: str = ...,
+        publication_names: UnionType[list[str], None] = ...,
+        plugin: str = ...,
+        **kwargs: Any,
+    ) -> RouteBuilder:
+        """Создаёт маршрут с источником CDC (PostgreSQL logical replication)."""
+        ...
+
+    def from_cdc_capture(
+        cls: Any,
+        route_id: str,
+        profile: str,
+        tables: list[str],
+        *,
+        strategy: str = ...,
+        interval: float = ...,
+        timestamp_column: str = ...,
+        batch_size: int = ...,
+        channel: UnionType[str, None] = ...,
+        **kwargs: Any,
+    ) -> RouteBuilder:
+        """Создаёт маршрут с источником CDC Capture."""
+        ...
+
+    def from_cdc_logical(
+        cls: Any,
+        route_id: str,
+        table: str,
+        *,
+        dsn: str,
+        mode: str = ...,
+        slot_name: UnionType[str, None] = ...,
+        publication: UnionType[str, None] = ...,
+        plugin: str = ...,
+        **kwargs: Any,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """K3 S5 W5 — расширенный CDC через :class:`CdcPostgresLogicalSource`."""
         ...
 
-    def from_cdc_registry(cls: Any, route_id: str, backend: str, **kwargs: Any) -> RouteBuilder:
+    def from_cdc_registry(
+        cls: Any, route_id: str, backend: str, **kwargs: Any
+    ) -> RouteBuilder:
         """S101 W1 — создать маршрут с CDC-source через :func:`get_cdc_source`."""
         ...
 
+<<<<<<< Updated upstream
     def from_cron(self, cron_expr: str, *, timezone_name: str = ..., payload: Union[dict[str, Any], None] = ...) -> RouteBuilder:
+=======
+    def from_cron(
+        self,
+        cron_expr: str,
+        *,
+        timezone_name: str = ...,
+        payload: UnionType[dict[str, Any], None] = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Camel-style ``from(\"cron:*/5 * * * *\")`` — cron periodic trigger (S168 W10 P1-2)."""
         ...
 
@@ -603,11 +1365,33 @@ class RouteBuilder:
         """Parse CSV → ``list[dict]``."""
         ...
 
+<<<<<<< Updated upstream
     def from_event_subscribe(cls: Any, route_id: str, channel: str, *, consumer_group: Union[str, None] = ..., filter: Callable[[Any], bool] | None = ..., **kwargs: Any) -> RouteBuilder:
         """Создаёт маршрут с источником EventBus (Redis pub/sub)."""
         ...
 
     def from_eventbus(self, topic_pattern: str, *, ack_mode: str = ..., name: Union[str, None] = ...) -> RouteBuilder:
+=======
+    def from_event_subscribe(
+        cls: Any,
+        route_id: str,
+        channel: str,
+        *,
+        consumer_group: UnionType[str, None] = ...,
+        filter: Callable[[Any], bool] | None = ...,
+        **kwargs: Any,
+    ) -> RouteBuilder:
+        """Создаёт маршрут с источником EventBus (Redis pub/sub)."""
+        ...
+
+    def from_eventbus(
+        self,
+        topic_pattern: str,
+        *,
+        ack_mode: str = ...,
+        name: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Subscribe маршрут на EventBus topic_pattern (V22 NEW)."""
         ...
 
@@ -615,6 +1399,7 @@ class RouteBuilder:
         """Parse Excel bytes → ``list[dict]`` (openpyxl)."""
         ...
 
+<<<<<<< Updated upstream
     def from_file(self, path: str, *, pattern: Union[str, None] = ..., recursive: bool = ..., poll_interval_s: float = ...) -> RouteBuilder:
         """Camel-style ``from(\"file:directory?pattern=*\")`` — file sensor trigger."""
         ...
@@ -636,6 +1421,81 @@ class RouteBuilder:
         ...
 
     def from_imap(cls: Any, route_id: str, host: str, port: int, user: str, password: str, *, folder: str = ..., subject_filter: Union[str, None] = ..., from_filter: Union[str, None] = ..., **kwargs: Any) -> RouteBuilder:
+=======
+    def from_file(
+        self,
+        path: str,
+        *,
+        pattern: UnionType[str, None] = ...,
+        recursive: bool = ...,
+        poll_interval_s: float = ...,
+    ) -> RouteBuilder:
+        """Camel-style ``from(\"file:directory?pattern=*\")`` — file sensor trigger."""
+        ...
+
+    def from_filewatcher(
+        cls: Any,
+        route_id: str,
+        path: str | Path | None = ...,
+        *,
+        paths: str | Path | list[str | Path] | None = ...,
+        recursive: bool = ...,
+        glob_include: UnionType[list[str], str, None] = ...,
+        glob_exclude: UnionType[list[str], str, None] = ...,
+        batch_size: UnionType[int, None] = ...,
+        batch_window: UnionType[float, None] = ...,
+        **kwargs: Any,
+    ) -> RouteBuilder:
+        """Создаёт маршрут с источником FileWatcher (watchfiles.awatch)."""
+        ...
+
+    def from_grpc_stream(
+        cls: Any,
+        route_id: str,
+        target: str,
+        stub_module: str,
+        stub_class: str,
+        method: str,
+        request_module: str,
+        request_class: str,
+        request_kwargs: UnionType[dict[str, Any], None] = ...,
+        **kwargs: Any,
+    ) -> RouteBuilder:
+        """GRPC server-streaming source. See GrpcSource in infrastructure.sources.grpc."""
+        ...
+
+    def from_html_unescape(
+        self, html_string: UnionType[str, None] = ...
+    ) -> RouteBuilder:
+        """HTML-unescape string (entities → ``<>&"'`` chars)."""
+        ...
+
+    def from_http(
+        self,
+        url: str,
+        *,
+        expected_status: int = ...,
+        method: str = ...,
+        body_match: UnionType[str, None] = ...,
+        poll_interval_s: float = ...,
+    ) -> RouteBuilder:
+        """Camel-style ``from(\"http:url\")`` — HTTP sensor trigger."""
+        ...
+
+    def from_imap(
+        cls: Any,
+        route_id: str,
+        host: str,
+        port: int,
+        user: str,
+        password: str,
+        *,
+        folder: str = ...,
+        subject_filter: UnionType[str, None] = ...,
+        from_filter: UnionType[str, None] = ...,
+        **kwargs: Any,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Фабричный метод: маршрут с источником IMAP IDLE (K3 W5)."""
         ...
 
@@ -643,7 +1503,17 @@ class RouteBuilder:
         """Parse INI → ``dict`` (stdlib ``configparser``)."""
         ...
 
+<<<<<<< Updated upstream
     def from_interval(self, interval_s: float, *, start_immediately: bool = ..., payload: Union[dict[str, Any], None] = ...) -> RouteBuilder:
+=======
+    def from_interval(
+        self,
+        interval_s: float,
+        *,
+        start_immediately: bool = ...,
+        payload: UnionType[dict[str, Any], None] = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Camel-style ``from(\"timer:foo?period=...\")`` — periodic trigger."""
         ...
 
@@ -651,11 +1521,28 @@ class RouteBuilder:
         """Parse JSON string → ``dict``/``list`` в ``out_message.body``."""
         ...
 
+<<<<<<< Updated upstream
     def from_jwt(self, jwt_string: Union[str, None] = ..., *, secret: str, algorithm: str = ...) -> RouteBuilder:
+=======
+    def from_jwt(
+        self,
+        jwt_string: UnionType[str, None] = ...,
+        *,
+        secret: str,
+        algorithm: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Decode JWT ``str`` → claims ``dict`` (verify HS* signature via joserfc)."""
         ...
 
-    def from_kafka(cls: Any, route_id: str, topic: str, bootstrap_servers: str, group_id: str, **kwargs: Any) -> RouteBuilder:
+    def from_kafka(
+        cls: Any,
+        route_id: str,
+        topic: str,
+        bootstrap_servers: str,
+        group_id: str,
+        **kwargs: Any,
+    ) -> RouteBuilder:
         """Создаёт маршрут с источником Apache Kafka."""
         ...
 
@@ -663,11 +1550,27 @@ class RouteBuilder:
         """Parse markdown → ``dict`` (extracts ``# heading`` → content)."""
         ...
 
+<<<<<<< Updated upstream
     def from_mongo(cls: Any, route_id: str, connection_url: str, database: str, collection: str = ..., *, full_document_lookup: bool = ..., pipeline: Union[list[dict[str, Any]], None] = ..., description: Union[str, None] = ...) -> Self:
+=======
+    def from_mongo(
+        cls: Any,
+        route_id: str,
+        connection_url: str,
+        database: str,
+        collection: str = ...,
+        *,
+        full_document_lookup: bool = ...,
+        pipeline: UnionType[list[dict[str, Any]], None] = ...,
+        description: UnionType[str, None] = ...,
+    ) -> Self:
+>>>>>>> Stashed changes
         """Точка входа: маршрут из MongoDB change-streams — S106 W4."""
         ...
 
-    def from_mqtt(cls: Any, route_id: str, topic: str, broker_url: str, **kwargs: Any) -> RouteBuilder:
+    def from_mqtt(
+        cls: Any, route_id: str, topic: str, broker_url: str, **kwargs: Any
+    ) -> RouteBuilder:
         """Создаёт маршрут с источником MQTT."""
         ...
 
@@ -675,11 +1578,35 @@ class RouteBuilder:
         """Parse msgpack → ``dict``/``list`` (fallback: ``pickle``)."""
         ...
 
+<<<<<<< Updated upstream
     def from_nats(cls: Any, route_id: str, subject: str, *, nats_url: str = ..., description: Union[str, None] = ...) -> Self:
         """Точка входа: маршрут из NATS core (sub, без JetStream) — S106 W4."""
         ...
 
     def from_nats_js(cls: Any, route_id: str, subject: str, stream: str, durable: str, *, nats_url: str = ..., description: Union[str, None] = ...) -> Self:
+=======
+    def from_nats(
+        cls: Any,
+        route_id: str,
+        subject: str,
+        *,
+        nats_url: str = ...,
+        description: UnionType[str, None] = ...,
+    ) -> Self:
+        """Точка входа: маршрут из NATS core (sub, без JetStream) — S106 W4."""
+        ...
+
+    def from_nats_js(
+        cls: Any,
+        route_id: str,
+        subject: str,
+        stream: str,
+        durable: str,
+        *,
+        nats_url: str = ...,
+        description: UnionType[str, None] = ...,
+    ) -> Self:
+>>>>>>> Stashed changes
         """Точка входа: маршрут из NATS JetStream durable consumer."""
         ...
 
@@ -687,30 +1614,65 @@ class RouteBuilder:
         """Parse parquet → ``list[dict]`` (pyarrow)."""
         ...
 
+<<<<<<< Updated upstream
     def from_protobuf_like(self, pb_bytes: Union[bytes, None] = ...) -> RouteBuilder:
+=======
+    def from_protobuf_like(
+        self, pb_bytes: UnionType[bytes, None] = ...
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Decode base64-encoded JSON ``bytes`` → ``dict`` (inverse of to_protobuf_like)."""
         ...
 
-    def from_rabbit(cls: Any, route_id: str, queue: str, url: str, **kwargs: Any) -> RouteBuilder:
+    def from_rabbit(
+        cls: Any, route_id: str, queue: str, url: str, **kwargs: Any
+    ) -> RouteBuilder:
         """Создаёт маршрут с источником RabbitMQ."""
         ...
 
-    def from_redis_streams(cls: Any, route_id: str, stream: str, consumer_group: str, **kwargs: Any) -> RouteBuilder:
+    def from_redis_streams(
+        cls: Any, route_id: str, stream: str, consumer_group: str, **kwargs: Any
+    ) -> RouteBuilder:
         """Создаёт маршрут с источником Redis Streams."""
         ...
 
+<<<<<<< Updated upstream
     def from_registered_source(cls: Any, route_id: str, source_id: str, *, description: Union[str, None] = ...) -> RouteBuilder:
         """Точка входа W23: маршрут запитывается от зарегистрированного Source."""
         ...
 
     def from_s3(self, bucket: str, key: str, *, region: str = ..., endpoint_url: Union[str, None] = ..., poll_interval_s: float = ...) -> RouteBuilder:
+=======
+    def from_registered_source(
+        cls: Any,
+        route_id: str,
+        source_id: str,
+        *,
+        description: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+        """Точка входа W23: маршрут запитывается от зарегистрированного Source."""
+        ...
+
+    def from_s3(
+        self,
+        bucket: str,
+        key: str,
+        *,
+        region: str = ...,
+        endpoint_url: UnionType[str, None] = ...,
+        poll_interval_s: float = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Camel-style ``from(\"aws-s3:bucket/key\")`` — S3 sensor trigger."""
         ...
 
-    def from_schedule(cls: Any, route_id: str, cron_expr: str, **kwargs: Any) -> RouteBuilder:
+    def from_schedule(
+        cls: Any, route_id: str, cron_expr: str, **kwargs: Any
+    ) -> RouteBuilder:
         """Создаёт маршрут с источником cron-расписания."""
         ...
 
+<<<<<<< Updated upstream
     def from_sql(self, dsn: str, query: str, *, predicate: Union[str, None] = ..., poll_interval_s: float = ...) -> RouteBuilder:
         """Camel-style ``from(\"sql:...\")`` — SQL sensor trigger."""
         ...
@@ -724,6 +1686,58 @@ class RouteBuilder:
         ...
 
     def from_telegram(cls: type[_T], route_id: str, bot_token: str, *, secret_token: Union[str, None] = ..., allowed_updates: Union[tuple[str, Ellipsis], None] = ..., offset: int = ...) -> _T:
+=======
+    def from_sql(
+        self,
+        dsn: str,
+        query: str,
+        *,
+        predicate: UnionType[str, None] = ...,
+        poll_interval_s: float = ...,
+    ) -> RouteBuilder:
+        """Camel-style ``from(\"sql:...\")`` — SQL sensor trigger."""
+        ...
+
+    def from_sse(
+        cls: type[_T],
+        route_id: str,
+        url: str,
+        *,
+        headers: UnionType[dict[str, str], None] = ...,
+        event_type: UnionType[str, None] = ...,
+        last_event_id: UnionType[str, None] = ...,
+        heartbeat_timeout_s: float = ...,
+        reconnect_max_retries: UnionType[int, None] = ...,
+        parse_json: bool = ...,
+    ) -> _T:
+        """SSE consumer: регистрирует маршрут с SSE-источником."""
+        ...
+
+    def from_sse_multi(
+        cls: type[_T],
+        route_id: str,
+        urls: list[str],
+        *,
+        merge_strategy: str = ...,
+        headers: UnionType[dict[str, str], None] = ...,
+        event_type: UnionType[str, None] = ...,
+        heartbeat_timeout_s: float = ...,
+        reconnect_max_retries: UnionType[int, None] = ...,
+        parse_json: bool = ...,
+    ) -> _T:
+        """S96 W4: multi-stream SSE consumer — subscribe N URLs параллельно."""
+        ...
+
+    def from_telegram(
+        cls: type[_T],
+        route_id: str,
+        bot_token: str,
+        *,
+        secret_token: UnionType[str, None] = ...,
+        allowed_updates: UnionType[tuple[str, Ellipsis], None] = ...,
+        offset: int = ...,
+    ) -> _T:
+>>>>>>> Stashed changes
         """Telegram Bot webhook: регистрирует маршрут с Telegram-источником."""
         ...
 
@@ -735,7 +1749,24 @@ class RouteBuilder:
         """Parse URL-encoded string → ``dict`` (multi-value → ``list``)."""
         ...
 
+<<<<<<< Updated upstream
     def from_webdav(cls: Any, route_id: str, url: str, *, watch_path: str = ..., poll_interval_seconds: int = ..., file_pattern: str = ..., username: Union[str, None] = ..., password: Union[str, None] = ..., processed_marker_path: Union[str, None] = ..., marker_dedup: bool = ..., description: Union[str, None] = ...) -> Self:
+=======
+    def from_webdav(
+        cls: Any,
+        route_id: str,
+        url: str,
+        *,
+        watch_path: str = ...,
+        poll_interval_seconds: int = ...,
+        file_pattern: str = ...,
+        username: UnionType[str, None] = ...,
+        password: UnionType[str, None] = ...,
+        processed_marker_path: UnionType[str, None] = ...,
+        marker_dedup: bool = ...,
+        description: UnionType[str, None] = ...,
+    ) -> Self:
+>>>>>>> Stashed changes
         """Точка входа: WebDAV polling-источник (S13 K3 W2, INF-2.8)."""
         ...
 
@@ -751,11 +1782,36 @@ class RouteBuilder:
         """Parse YAML → ``dict``/``list``."""
         ...
 
+<<<<<<< Updated upstream
     def geo(self, mode: str, *, address: Union[str, None] = ..., point_a: Union[tuple[float, float], None] = ..., point_b: Union[tuple[float, float], None] = ..., to: str = ...) -> RouteBuilder:
         """Geocoding, reverse geocoding, or distance calculation."""
         ...
 
     def get_feedback_examples(self, *, query_from: str = ..., agent_id: Union[str, None] = ..., positive_k: int = ..., negative_k: int = ..., min_similarity: float = ..., inject_as: str = ...) -> RouteBuilder:
+=======
+    def geo(
+        self,
+        mode: str,
+        *,
+        address: UnionType[str, None] = ...,
+        point_a: UnionType[tuple[float, float], None] = ...,
+        point_b: UnionType[tuple[float, float], None] = ...,
+        to: str = ...,
+    ) -> RouteBuilder:
+        """Geocoding, reverse geocoding, or distance calculation."""
+        ...
+
+    def get_feedback_examples(
+        self,
+        *,
+        query_from: str = ...,
+        agent_id: UnionType[str, None] = ...,
+        positive_k: int = ...,
+        negative_k: int = ...,
+        min_similarity: float = ...,
+        inject_as: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Few-shot примеры из AI Feedback RAG."""
         ...
 
@@ -763,27 +1819,81 @@ class RouteBuilder:
         """Читает route-level override (используется processors/handlers)."""
         ...
 
-    def get_setting(self, path: str, *, to: str = ..., default: Any = ...) -> RouteBuilder:
+    def get_setting(
+        self, path: str, *, to: str = ..., default: Any = ...
+    ) -> RouteBuilder:
         """Чтение настройки из application config (R-V15-17)."""
         ...
 
+<<<<<<< Updated upstream
     def graphql_query(self, endpoint: str, query: str, *, variables: Union[dict[str, Any], None] = ..., operation_name: Union[str, None] = ..., headers: Union[dict[str, str], None] = ..., auth_token: Union[str, None] = ..., auth_header: str = ..., timeout: float = ..., result_property: Union[str, None] = ...) -> RouteBuilder:
         """GraphQL query/mutation executor."""
         ...
 
     def group_by(self, *, field: Union[str, None] = ..., key_fn: Callable[[Any], Any] | None = ...) -> RouteBuilder:
+=======
+    def graphql_query(
+        self,
+        endpoint: str,
+        query: str,
+        *,
+        variables: UnionType[dict[str, Any], None] = ...,
+        operation_name: UnionType[str, None] = ...,
+        headers: UnionType[dict[str, str], None] = ...,
+        auth_token: UnionType[str, None] = ...,
+        auth_header: str = ...,
+        timeout: float = ...,
+        result_property: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+        """GraphQL query/mutation executor."""
+        ...
+
+    def group_by(
+        self,
+        *,
+        field: UnionType[str, None] = ...,
+        key_fn: Callable[[Any], Any] | None = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Группирует коллекцию в body по полю."""
         ...
 
-    def group_by_key(self, key_path: str, sink: Callable[[dict[Any, list[Any]]], Any], *, window_seconds: float = ...) -> RouteBuilder:
+    def group_by_key(
+        self,
+        key_path: str,
+        sink: Callable[[dict[Any, list[Any]]], Any],
+        *,
+        window_seconds: float = ...,
+    ) -> RouteBuilder:
         """Группировка по ключу (jmespath) в пределах окна."""
         ...
 
+<<<<<<< Updated upstream
     def guardrails(self, *, max_length: int = ..., blocked_patterns: Union[list[str], None] = ..., required_fields: Union[list[str], None] = ...) -> RouteBuilder:
         """Проверка LLM output на безопасность (длина, blocklist, required fields)."""
         ...
 
     def guardrails_apply(self, *, stage: str = ..., source_property: Union[str, None] = ..., on_block: str = ..., categories: Union[list[str], None] = ...) -> RouteBuilder:
+=======
+    def guardrails(
+        self,
+        *,
+        max_length: int = ...,
+        blocked_patterns: UnionType[list[str], None] = ...,
+        required_fields: UnionType[list[str], None] = ...,
+    ) -> RouteBuilder:
+        """Проверка LLM output на безопасность (длина, blocklist, required fields)."""
+        ...
+
+    def guardrails_apply(
+        self,
+        *,
+        stage: str = ...,
+        source_property: UnionType[str, None] = ...,
+        on_block: str = ...,
+        categories: UnionType[list[str], None] = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Content safety через LLM Guard (S27 W2)."""
         ...
 
@@ -791,27 +1901,75 @@ class RouteBuilder:
         """Хеширование тела сообщения."""
         ...
 
+<<<<<<< Updated upstream
     def hitl_approval(self, hitl_service: Any, *, title: str, description: str = ..., approvers: Union[list[str], None] = ..., timeout_seconds: float = ..., payload_path: Union[str, None] = ..., request_info_processors: Union[list[BaseProcessor], None] = ...) -> RouteBuilder:
+=======
+    def hitl_approval(
+        self,
+        hitl_service: Any,
+        *,
+        title: str,
+        description: str = ...,
+        approvers: UnionType[list[str], None] = ...,
+        timeout_seconds: float = ...,
+        payload_path: UnionType[str, None] = ...,
+        request_info_processors: UnionType[list[BaseProcessor], None] = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """HITL-approval: приостанавливает pipeline, ожидает approve/reject от оператора."""
         ...
 
-    def html_template(self, template: str, *, to: str = ..., context_from: str = ..., autoescape: bool = ...) -> RouteBuilder:
+    def html_template(
+        self,
+        template: str,
+        *,
+        to: str = ...,
+        context_from: str = ...,
+        autoescape: bool = ...,
+    ) -> RouteBuilder:
         """Render Jinja2 HTML template (async DSL processor)."""
         ...
 
+<<<<<<< Updated upstream
     def http_call(self, url: str, *, method: str = ..., headers: Union[dict[str, str], None] = ..., auth_token: Union[str, None] = ..., timeout: float = ..., result_property: Union[str, None] = ...) -> RouteBuilder:
+=======
+    def http_call(
+        self,
+        url: str,
+        *,
+        method: str = ...,
+        headers: UnionType[dict[str, str], None] = ...,
+        auth_token: UnionType[str, None] = ...,
+        timeout: float = ...,
+        result_property: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """HTTP client: GET/POST/PUT/DELETE с таймаутом и headers."""
         ...
 
-    def ics_calendar(self, mode: str, *, source: str = ..., to: str = ...) -> RouteBuilder:
+    def ics_calendar(
+        self, mode: str, *, source: str = ..., to: str = ...
+    ) -> RouteBuilder:
         """Parse/render iCalendar (RFC 5545) data."""
         ...
 
-    def idempotent(self, key_expression: Callable[[Exchange[Any]], str], *, ttl_seconds: int = ...) -> RouteBuilder:
+    def idempotent(
+        self, key_expression: Callable[[Exchange[Any]], str], *, ttl_seconds: int = ...
+    ) -> RouteBuilder:
         """Идемпотентный consumer: дедупликация через Redis SET NX EX."""
         ...
 
+<<<<<<< Updated upstream
     def image_resize(self, *, width: Union[int, None] = ..., height: Union[int, None] = ..., output_format: str = ...) -> RouteBuilder:
+=======
+    def image_resize(
+        self,
+        *,
+        width: UnionType[int, None] = ...,
+        height: UnionType[int, None] = ...,
+        output_format: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Изменить размер изображения."""
         ...
 
@@ -819,7 +1977,18 @@ class RouteBuilder:
         """Включает все процессоры из другого Pipeline (композиция)."""
         ...
 
+<<<<<<< Updated upstream
     def ingest_file(self, *, file_path: Union[str, None] = ..., file_path_from: Union[str, None] = ..., content_type: Union[str, None] = ..., chunk_size: int = ...) -> RouteBuilder:
+=======
+    def ingest_file(
+        self,
+        *,
+        file_path: UnionType[str, None] = ...,
+        file_path_from: UnionType[str, None] = ...,
+        content_type: UnionType[str, None] = ...,
+        chunk_size: int = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Ingest file into exchange for processing."""
         ...
 
@@ -827,6 +1996,7 @@ class RouteBuilder:
         """Пересечение body с другим списком."""
         ...
 
+<<<<<<< Updated upstream
     def invoke(self, action: str, *, mode: str = ..., payload_factory: Callable[[Exchange[Any]], dict[str, Any]] | None = ..., reply_channel: Union[str, None] = ..., result_property: str = ..., invocation_id_property: str = ..., timeout: Union[float, None] = ..., correlation_id: Union[str, None] = ...) -> RouteBuilder:
         """Вызывает action через :class:`Invoker` (W22) с заданным режимом."""
         ...
@@ -836,18 +2006,73 @@ class RouteBuilder:
         ...
 
     def ip_restriction(self, allowed_ips: Union[set[str], list[str], tuple[str, Ellipsis]], *, path_pattern: Union[str, None] = ..., enabled: bool = ...) -> Self:
+=======
+    def invoke(
+        self,
+        action: str,
+        *,
+        mode: str = ...,
+        payload_factory: Callable[[Exchange[Any]], dict[str, Any]] | None = ...,
+        reply_channel: UnionType[str, None] = ...,
+        result_property: str = ...,
+        invocation_id_property: str = ...,
+        timeout: UnionType[float, None] = ...,
+        correlation_id: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+        """Вызывает action через :class:`Invoker` (W22) с заданным режимом."""
+        ...
+
+    def invoke_workflow(
+        self,
+        name: str,
+        *,
+        mode: str = ...,
+        args: UnionType[dict[str, Any], None] = ...,
+        namespace: str = ...,
+        task_queue: str = ...,
+        result_property: str = ...,
+        invocation_id_property: str = ...,
+        reply_timeout_seconds: float = ...,
+        version: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+        """Запуск Workflow (Temporal/LiteTemporal/PgRunner) — R-V15-7 / R-V15-9."""
+        ...
+
+    def ip_restriction(
+        self,
+        allowed_ips: UnionType[set[str], list[str], tuple[str, Ellipsis]],
+        *,
+        path_pattern: UnionType[str, None] = ...,
+        enabled: bool = ...,
+    ) -> Self:
+>>>>>>> Stashed changes
         """Ограничивает доступ к маршруту по IP/CIDR."""
         ...
 
-    def jdbc_query(self, sql: str, profile: str, *, params_from: str = ..., result_property: str = ...) -> RouteBuilder:
+    def jdbc_query(
+        self,
+        sql: str,
+        profile: str,
+        *,
+        params_from: str = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
         """Execute arbitrary SQL against an external JDBC-compatible database profile."""
         ...
 
-    def jinja_template(self, template_string: str, *, context_from: str = ..., result_property: str = ...) -> RouteBuilder:
+    def jinja_template(
+        self,
+        template_string: str,
+        *,
+        context_from: str = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
         """Рендерит Jinja2-шаблон из строки."""
         ...
 
-    def jinja_template_file(self, path: str, *, context_from: str = ..., result_property: str = ...) -> RouteBuilder:
+    def jinja_template_file(
+        self, path: str, *, context_from: str = ..., result_property: str = ...
+    ) -> RouteBuilder:
         """Рендерит Jinja2-шаблон из файла."""
         ...
 
@@ -855,15 +2080,35 @@ class RouteBuilder:
         """JMESPath query via jq processor."""
         ...
 
-    def jsonpath(self, expr: str, *, to: str = ..., mode: str = ..., default: Any = ...) -> RouteBuilder:
+    def jsonpath(
+        self, expr: str, *, to: str = ..., mode: str = ..., default: Any = ...
+    ) -> RouteBuilder:
         """Extract values via JSONPath expression."""
         ...
 
+<<<<<<< Updated upstream
     def jwt_sign(self, *, secret_key: str, algorithm: str = ..., expires_in_seconds: Union[int, None] = ..., output_property: str = ...) -> RouteBuilder:
+=======
+    def jwt_sign(
+        self,
+        *,
+        secret_key: str,
+        algorithm: str = ...,
+        expires_in_seconds: UnionType[int, None] = ...,
+        output_property: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Подпись payload как JWT-токен (PyJWT)."""
         ...
 
-    def jwt_verify(self, *, secret_key: str, algorithm: str = ..., header: str = ..., output_property: str = ...) -> RouteBuilder:
+    def jwt_verify(
+        self,
+        *,
+        secret_key: str,
+        algorithm: str = ...,
+        header: str = ...,
+        output_property: str = ...,
+    ) -> RouteBuilder:
         """Проверка JWT из заголовка; claims → property или fail."""
         ...
 
@@ -875,7 +2120,23 @@ class RouteBuilder:
         """KYC/AML верификация клиента."""
         ...
 
+<<<<<<< Updated upstream
     def ldap_query(self, server: str, base_dn: str, filter: str = ..., *, attributes: Union[list[str], None] = ..., username: Union[str, None] = ..., password: Union[str, None] = ..., use_ssl: bool = ..., timeout: float = ..., result_property: str = ...) -> RouteBuilder:
+=======
+    def ldap_query(
+        self,
+        server: str,
+        base_dn: str,
+        filter: str = ...,
+        *,
+        attributes: UnionType[list[str], None] = ...,
+        username: UnionType[str, None] = ...,
+        password: UnionType[str, None] = ...,
+        use_ssl: bool = ...,
+        timeout: float = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """LDAP query executor."""
         ...
 
@@ -883,6 +2144,7 @@ class RouteBuilder:
         """Записывает шаг в `_lineage` property (data governance)."""
         ...
 
+<<<<<<< Updated upstream
     def llm_fallback(self, *, models: Union[list[str], None] = ..., fallback_strategy: str = ..., max_retries: int = ..., result_property: str = ...) -> RouteBuilder:
         """LLM call with automatic fallback across models."""
         ...
@@ -892,6 +2154,42 @@ class RouteBuilder:
         ...
 
     def load_balance(self, targets: list[str], *, strategy: str = ..., weights: Union[list[float], None] = ..., sticky_header: Union[str, None] = ...) -> RouteBuilder:
+=======
+    def llm_fallback(
+        self,
+        *,
+        models: UnionType[list[str], None] = ...,
+        fallback_strategy: str = ...,
+        max_retries: int = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+        """LLM call with automatic fallback across models."""
+        ...
+
+    def llm_structured(
+        self,
+        *,
+        model: str,
+        output_schema: Any,
+        prompt: str,
+        retry: int = ...,
+        temperature: float = ...,
+        cost_budget_usd: UnionType[float, None] = ...,
+        to: str = ...,
+        name: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+        """LLM-вызов с гарантированным Pydantic-объектом."""
+        ...
+
+    def load_balance(
+        self,
+        targets: list[str],
+        *,
+        strategy: str = ...,
+        weights: UnionType[list[float], None] = ...,
+        sticky_header: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Load Balancer: round_robin/random/weighted/sticky распределение."""
         ...
 
@@ -903,10 +2201,13 @@ class RouteBuilder:
         """Логирование текущего состояния Exchange (для отладки)."""
         ...
 
-    def lookup(self, key_from: str, *, target: str, result_property: str = ...) -> RouteBuilder:
+    def lookup(
+        self, key_from: str, *, target: str, result_property: str = ...
+    ) -> RouteBuilder:
         """Chainable lookup DSL method (S168 W10 P1-1, per master prompt)."""
         ...
 
+<<<<<<< Updated upstream
     def loop(self, processors: list[BaseProcessor], *, count: Union[int, None] = ..., until: Callable[[Exchange[Any]], bool] | None = ..., max_iterations: int = ...) -> RouteBuilder:
         """Loop — execute sub-processors N times or until condition."""
         ...
@@ -916,6 +2217,33 @@ class RouteBuilder:
         ...
 
     def mask_pii(self, *, targets: list[str], fields: Union[list[str], None] = ..., replacement: str = ..., patterns: Union[list[str], None] = ...) -> RouteBuilder:
+=======
+    def loop(
+        self,
+        processors: list[BaseProcessor],
+        *,
+        count: UnionType[int, None] = ...,
+        until: Callable[[Exchange[Any]], bool] | None = ...,
+        max_iterations: int = ...,
+    ) -> RouteBuilder:
+        """Loop — execute sub-processors N times or until condition."""
+        ...
+
+    def mask(
+        self, *, patterns: UnionType[list[str], None] = ..., replacement: str = ...
+    ) -> Self:
+        """Маскирование PII/PCI в body (ИНН/СНИЛС/карта/email/телефон)."""
+        ...
+
+    def mask_pii(
+        self,
+        *,
+        targets: list[str],
+        fields: UnionType[list[str], None] = ...,
+        replacement: str = ...,
+        patterns: UnionType[list[str], None] = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Маскировка PII в request/response (Sprint 8A K1 W4)."""
         ...
 
@@ -923,15 +2251,21 @@ class RouteBuilder:
         """Максимум по полю элементов коллекции."""
         ...
 
-    def mcp_tool(self, uri: str, tool: str, *, result_property: str = ...) -> RouteBuilder:
+    def mcp_tool(
+        self, uri: str, tool: str, *, result_property: str = ...
+    ) -> RouteBuilder:
         """Вызов внешнего MCP tool."""
         ...
 
-    def merge(self, source_property: str, *, target_property: str = ..., strategy: str = ...) -> RouteBuilder:
+    def merge(
+        self, source_property: str, *, target_property: str = ..., strategy: str = ...
+    ) -> RouteBuilder:
         """Chainable merge DSL method (S168 W10 P1-1, per master prompt)."""
         ...
 
-    def middleware(self, middleware: str | ProcessorMiddleware | dict[str, Any], **kwargs: Any) -> Self:
+    def middleware(
+        self, middleware: str | ProcessorMiddleware | dict[str, Any], **kwargs: Any
+    ) -> Self:
         """Добавляет middleware в pipeline (per-route override)."""
         ...
 
@@ -939,23 +2273,52 @@ class RouteBuilder:
         """Минимум по полю элементов коллекции."""
         ...
 
+<<<<<<< Updated upstream
     def ml_predict(self, model: str, *, input_field: str = ..., output_property: str = ..., model_type: Union[str, None] = ..., name: Union[str, None] = ...) -> RouteBuilder:
+=======
+    def ml_predict(
+        self,
+        model: str,
+        *,
+        input_field: str = ...,
+        output_property: str = ...,
+        model_type: UnionType[str, None] = ...,
+        name: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Выполняет ML-инференс через локальный filesystem model registry."""
         ...
 
-    def mongo_find(self, collection: str, query: dict, *, to_property: str = ...) -> RouteBuilder:
+    def mongo_find(
+        self, collection: str, query: dict, *, to_property: str = ...
+    ) -> RouteBuilder:
         """FIND документов в Mongo; результат в ``exchange.properties[to_property]``."""
         ...
 
-    def mongo_insert(self, collection: str, *, document_from: str = ...) -> RouteBuilder:
+    def mongo_insert(
+        self, collection: str, *, document_from: str = ...
+    ) -> RouteBuilder:
         """INSERT документа в Mongo ``collection``."""
         ...
 
-    def multicast(self, branches: list[list[BaseProcessor]], *, strategy: str = ..., stop_on_error: bool = ...) -> RouteBuilder:
+    def multicast(
+        self,
+        branches: list[list[BaseProcessor]],
+        *,
+        strategy: str = ...,
+        stop_on_error: bool = ...,
+    ) -> RouteBuilder:
         """Multicast: fan-out на flat list процессор-групп + aggregation."""
         ...
 
-    def multicast_routes(self, route_ids: list[str], *, strategy: str = ..., on_error: str = ..., timeout: float = ...) -> RouteBuilder:
+    def multicast_routes(
+        self,
+        route_ids: list[str],
+        *,
+        strategy: str = ...,
+        on_error: str = ...,
+        timeout: float = ...,
+    ) -> RouteBuilder:
         """Fan-out на зарегистрированные DSL-маршруты по route_id."""
         ...
 
@@ -967,6 +2330,7 @@ class RouteBuilder:
         """Normalizer: автоопределение формата (XML/CSV/YAML/JSON) → canonical dict."""
         ...
 
+<<<<<<< Updated upstream
     def notebook_dsl(self, notebook_path: str, *, parameters: Union[dict[str, Any], None] = ..., output_format: Union[str, None] = ..., user_name: str = ..., timeout_seconds: Union[float, None] = ...) -> RouteBuilder:
         """Выполнить локальный Jupyter notebook с параметрами через JupyterHub."""
         ...
@@ -980,18 +2344,92 @@ class RouteBuilder:
         ...
 
     def notify(self, channel: str = ..., *, template_key: str = ..., recipient: Union[str, None] = ..., priority: str = ..., locale: str = ..., context_property: Union[str, None] = ..., result_property: str = ...) -> RouteBuilder:
+=======
+    def notebook_dsl(
+        self,
+        notebook_path: str,
+        *,
+        parameters: UnionType[dict[str, Any], None] = ...,
+        output_format: UnionType[str, None] = ...,
+        user_name: str = ...,
+        timeout_seconds: UnionType[float, None] = ...,
+    ) -> RouteBuilder:
+        """Выполнить локальный Jupyter notebook с параметрами через JupyterHub."""
+        ...
+
+    def notebook_execute(
+        self,
+        user_name: str,
+        notebook_path: str,
+        *,
+        timeout_seconds: UnionType[float, None] = ...,
+    ) -> RouteBuilder:
+        """Выполнить Jupyter notebook через JupyterHub."""
+        ...
+
+    def notebook_export(
+        self,
+        user_name: str,
+        notebook_path: str,
+        *,
+        fmt: str = ...,
+        timeout_seconds: UnionType[float, None] = ...,
+    ) -> RouteBuilder:
+        """Экспортировать Jupyter notebook в HTML/PDF/Python."""
+        ...
+
+    def notify(
+        self,
+        channel: str = ...,
+        *,
+        template_key: str = ...,
+        recipient: UnionType[str, None] = ...,
+        priority: str = ...,
+        locale: str = ...,
+        context_property: UnionType[str, None] = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Отправка уведомления через NotificationGateway (Wave 8.3)."""
         ...
 
-    def notify_apprise(self, channel: str, title: str, body: str, *, body_format: str = ..., result_property: str = ...) -> RouteBuilder:
+    def notify_apprise(
+        self,
+        channel: str,
+        title: str,
+        body: str,
+        *,
+        body_format: str = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
         """Отправка уведомления через Apprise (S3 K3 W1, 100+ backends)."""
         ...
 
+<<<<<<< Updated upstream
     def notify_cascade(self, *, adapters: Union[list[Any], None] = ..., adapter_names: Union[list[str], None] = ..., recipient_path: str = ..., subject: str = ..., body_path: str = ...) -> RouteBuilder:
+=======
+    def notify_cascade(
+        self,
+        *,
+        adapters: UnionType[list[Any], None] = ...,
+        adapter_names: UnionType[list[str], None] = ...,
+        recipient_path: str = ...,
+        subject: str = ...,
+        body_path: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Fire-and-forget cascade notification with fallback channels."""
         ...
 
-    def notify_multi(self, channels: list[str], title: str, body: str, *, body_format: str = ..., result_property: str = ...) -> RouteBuilder:
+    def notify_multi(
+        self,
+        channels: list[str],
+        title: str,
+        body: str,
+        *,
+        body_format: str = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
         """Отправка уведомления в несколько Apprise-каналов одновременно (S3 K3 W1)."""
         ...
 
@@ -999,15 +2437,42 @@ class RouteBuilder:
         """OCR — оптическое распознавание текста из изображений/PDF."""
         ...
 
-    def on_completion(self, processors: list[BaseProcessor], *, on_success_only: bool = ..., on_failure_only: bool = ...) -> RouteBuilder:
+    def on_completion(
+        self,
+        processors: list[BaseProcessor],
+        *,
+        on_success_only: bool = ...,
+        on_failure_only: bool = ...,
+    ) -> RouteBuilder:
         """OnCompletion — запуск callback после окончания pipeline (как finally)."""
         ...
 
+<<<<<<< Updated upstream
     def on_error(self, *, action: Union[str, None] = ..., processors: Union[list[BaseProcessor], None] = ..., dlq_stream: str = ...) -> RouteBuilder:
         """Глобальный error handler для pipeline — оборачивает ВСЕ накопленные процессоры."""
         ...
 
     def optimize_prompt(self, *, prompt_name: str = ..., tenant_id: Union[str, None] = ..., limit: int = ..., result_property: str = ...) -> RouteBuilder:
+=======
+    def on_error(
+        self,
+        *,
+        action: UnionType[str, None] = ...,
+        processors: UnionType[list[BaseProcessor], None] = ...,
+        dlq_stream: str = ...,
+    ) -> RouteBuilder:
+        """Глобальный error handler для pipeline — оборачивает ВСЕ накопленные процессоры."""
+        ...
+
+    def optimize_prompt(
+        self,
+        *,
+        prompt_name: str = ...,
+        tenant_id: UnionType[str, None] = ...,
+        limit: int = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Запустить DSPy prompt optimization по собранному feedback."""
         ...
 
@@ -1019,11 +2484,24 @@ class RouteBuilder:
         """Transactional Outbox: запись события в outbox-таблицу."""
         ...
 
+<<<<<<< Updated upstream
     def paginate(self, *, next_selector: str = ..., item_selector: Union[str, None] = ..., max_pages: int = ..., start_url: Union[str, None] = ...) -> RouteBuilder:
+=======
+    def paginate(
+        self,
+        *,
+        next_selector: str = ...,
+        item_selector: UnionType[str, None] = ...,
+        max_pages: int = ...,
+        start_url: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Multi-page crawling с защитой от циклов и лимитом страниц."""
         ...
 
-    def parallel(self, branches: dict[str, list[BaseProcessor]], *, strategy: str = ...) -> RouteBuilder:
+    def parallel(
+        self, branches: dict[str, list[BaseProcessor]], *, strategy: str = ...
+    ) -> RouteBuilder:
         """Параллельное выполнение именованных веток. strategy: all|first."""
         ...
 
@@ -1031,7 +2509,16 @@ class RouteBuilder:
         """Парсинг LLM-ответа в Pydantic-модель (с попыткой извлечь JSON)."""
         ...
 
+<<<<<<< Updated upstream
     def partition(self, *, field: Union[str, None] = ..., predicate: Callable[[Any], bool] | None = ...) -> RouteBuilder:
+=======
+    def partition(
+        self,
+        *,
+        field: UnionType[str, None] = ...,
+        predicate: Callable[[Any], bool] | None = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Разбивает коллекцию на два списка: подходящие и нет."""
         ...
 
@@ -1043,27 +2530,85 @@ class RouteBuilder:
         """Извлечь текст и таблицы из PDF."""
         ...
 
-    def pdf_template(self, template: str, *, to: str = ..., page_size: str = ..., font_size: int = ...) -> RouteBuilder:
+    def pdf_template(
+        self,
+        template: str,
+        *,
+        to: str = ...,
+        page_size: str = ...,
+        font_size: int = ...,
+    ) -> RouteBuilder:
         """Generate PDF from Jinja2 template via ReportLab."""
         ...
 
+<<<<<<< Updated upstream
     def pii_mask(self, *, scope: str, source_property: str = ..., target_property: Union[str, None] = ..., language: str = ...) -> RouteBuilder:
         """Reversible PII tokenization через PIITokenizer (S27 W2, ADR-NEW-21)."""
         ...
 
     def pii_unmask(self, *, source_property: str = ..., target_property: Union[str, None] = ..., token_map_property: str = ..., scope: str = ..., strict: bool = ...) -> RouteBuilder:
+=======
+    def pii_mask(
+        self,
+        *,
+        scope: str,
+        source_property: str = ...,
+        target_property: UnionType[str, None] = ...,
+        language: str = ...,
+    ) -> RouteBuilder:
+        """Reversible PII tokenization через PIITokenizer (S27 W2, ADR-NEW-21)."""
+        ...
+
+    def pii_unmask(
+        self,
+        *,
+        source_property: str = ...,
+        target_property: UnionType[str, None] = ...,
+        token_map_property: str = ...,
+        scope: str = ...,
+        strict: bool = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Восстановить PII по ``token_map`` от ``pii_mask`` (S27 W2)."""
         ...
 
-    def plan_execute(self, *, planner_workflow_id: str, executor_workflow_id: str, verifier_workflow_id: str, max_replans: int = ..., plan_output_property: str = ..., result_property: str = ..., timeout_s: float = ...) -> RouteBuilder:
+    def plan_execute(
+        self,
+        *,
+        planner_workflow_id: str,
+        executor_workflow_id: str,
+        verifier_workflow_id: str,
+        max_replans: int = ...,
+        plan_output_property: str = ...,
+        result_property: str = ...,
+        timeout_s: float = ...,
+    ) -> RouteBuilder:
         """Plan-and-Execute agentic pattern с verification + replan (S39 W2)."""
         ...
 
-    def plan_execute_with_callbacks(self, *, planner: PlannerFn, executor: ExecutorFn, verifier: VerifierFn | None = ..., max_steps: int = ..., max_replans: int = ...) -> RouteBuilder:
+    def plan_execute_with_callbacks(
+        self,
+        *,
+        planner: PlannerFn,
+        executor: ExecutorFn,
+        verifier: VerifierFn | None = ...,
+        max_steps: int = ...,
+        max_replans: int = ...,
+    ) -> RouteBuilder:
         """Добавить :class:`PlanExecuteProcessor` в pipeline."""
         ...
 
+<<<<<<< Updated upstream
     def poll(self, source_action: str, *, payload: Union[dict[str, Any], None] = ..., result_property: str = ...) -> Self:
+=======
+    def poll(
+        self,
+        source_action: str,
+        *,
+        payload: UnionType[dict[str, Any], None] = ...,
+        result_property: str = ...,
+    ) -> Self:
+>>>>>>> Stashed changes
         """Periodically вызывает action, результат → body."""
         ...
 
@@ -1075,7 +2620,13 @@ class RouteBuilder:
         """Добавляет произвольный процессор в pipeline."""
         ...
 
+<<<<<<< Updated upstream
     def process_fn(self, func: ProcessorCallable, *, name: Union[str, None] = ...) -> Self:
+=======
+    def process_fn(
+        self, func: ProcessorCallable, *, name: UnionType[str, None] = ...
+    ) -> Self:
+>>>>>>> Stashed changes
         """Добавляет обычную функцию или coroutine как процессор."""
         ...
 
@@ -1083,7 +2634,21 @@ class RouteBuilder:
         """Привязывает маршрут к конкретному протоколу (REST/SOAP/gRPC/...)."""
         ...
 
+<<<<<<< Updated upstream
     def proxy(self, src: str, dst: str, *, methods: Union[list[str], None] = ..., pass_headers: bool = ..., header_map: Union[dict[str, Any], None] = ..., rewrite_path: Union[str, None] = ..., timeout: float = ...) -> RouteBuilder:
+=======
+    def proxy(
+        self,
+        src: str,
+        dst: str,
+        *,
+        methods: UnionType[list[str], None] = ...,
+        pass_headers: bool = ...,
+        header_map: UnionType[dict[str, Any], None] = ...,
+        rewrite_path: UnionType[str, None] = ...,
+        timeout: float = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Сокращение: ``expose_proxy(src) → forward_to(dst)``."""
         ...
 
@@ -1091,10 +2656,13 @@ class RouteBuilder:
         """Публикация события через EventBus."""
         ...
 
-    def purge_channel(self, broker: Any, channel: str, *, dry_run: bool = ...) -> RouteBuilder:
+    def purge_channel(
+        self, broker: Any, channel: str, *, dry_run: bool = ...
+    ) -> RouteBuilder:
         """Очистка очереди/стрима (admin-операция)."""
         ...
 
+<<<<<<< Updated upstream
     def rag_ingest(self, *, collection: str = ..., source_property: Union[str, None] = ..., modal: str = ..., output_property: str = ...) -> RouteBuilder:
         """RAG ingest: добавление документа из body/property в vector store (S11 K3 W2)."""
         ...
@@ -1112,14 +2680,76 @@ class RouteBuilder:
         ...
 
     def read_s3(self, bucket: Union[str, None] = ..., key: Union[str, None] = ...) -> RouteBuilder:
+=======
+    def rag_ingest(
+        self,
+        *,
+        collection: str = ...,
+        source_property: UnionType[str, None] = ...,
+        modal: str = ...,
+        output_property: str = ...,
+    ) -> RouteBuilder:
+        """RAG ingest: добавление документа из body/property в vector store (S11 K3 W2)."""
+        ...
+
+    def rag_query(
+        self,
+        *,
+        query_field: str = ...,
+        top_k: int = ...,
+        namespace: UnionType[str, None] = ...,
+        strategy: str = ...,
+        max_staleness_hours: UnionType[float, None] = ...,
+        system_prompt: str = ...,
+        output_property: str = ...,
+    ) -> RouteBuilder:
+        """RAG query с выбором стратегии retrieval (S11 K3 W3)."""
+        ...
+
+    def rag_search(
+        self,
+        query_field: str = ...,
+        top_k: int = ...,
+        namespace: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+        """RAG vector search: top-K ближайших документов по семантике."""
+        ...
+
+    def read_file(
+        self, path: UnionType[str, None] = ..., *, binary: bool = ...
+    ) -> RouteBuilder:
+        """Чтение локального файла в body (text или bytes)."""
+        ...
+
+    def read_s3(
+        self, bucket: UnionType[str, None] = ..., key: UnionType[str, None] = ...
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Загрузка объекта из S3."""
         ...
 
-    def recipient_list(self, recipients_expression: Callable[[Exchange[Any]], list[str]], *, parallel: bool = ...) -> RouteBuilder:
+    def recipient_list(
+        self,
+        recipients_expression: Callable[[Exchange[Any]], list[str]],
+        *,
+        parallel: bool = ...,
+    ) -> RouteBuilder:
         """Recipient List: динамический fan-out на список маршрутов."""
         ...
 
+<<<<<<< Updated upstream
     def redirect(self, target_url: Union[str, None] = ..., *, status_code: int = ..., url_source: Union[str, None] = ..., source_key: Union[str, None] = ..., allowed_hosts: Union[list[str], None] = ...) -> RouteBuilder:
+=======
+    def redirect(
+        self,
+        target_url: UnionType[str, None] = ...,
+        *,
+        status_code: int = ...,
+        url_source: UnionType[str, None] = ...,
+        source_key: UnionType[str, None] = ...,
+        allowed_hosts: UnionType[list[str], None] = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Добавляет HTTP-redirect в маршрут."""
         ...
 
@@ -1127,27 +2757,75 @@ class RouteBuilder:
         """``DEL key`` в Redis."""
         ...
 
+<<<<<<< Updated upstream
     def redis_set(self, key: str, value: str, *, ttl_seconds: Union[int, None] = ...) -> RouteBuilder:
+=======
+    def redis_set(
+        self, key: str, value: str, *, ttl_seconds: UnionType[int, None] = ...
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """``SET key value [EX ttl]`` в Redis. ``ttl_seconds=None`` = бессрочно."""
         ...
 
-    def reflection_loop(self, *, generator: GeneratorFn, critic: CriticFn, max_refinements: int = ..., score_threshold: float = ...) -> RouteBuilder:
+    def reflection_loop(
+        self,
+        *,
+        generator: GeneratorFn,
+        critic: CriticFn,
+        max_refinements: int = ...,
+        score_threshold: float = ...,
+    ) -> RouteBuilder:
         """Добавить :class:`ReflectionLoopProcessor` в pipeline."""
         ...
 
+<<<<<<< Updated upstream
     def reflection_loop_workflow(self, *, generator_workflow_id: str, reflector_workflow_id: str, refiner_workflow_id: Union[str, None] = ..., max_iterations: int = ..., stop_verdict: str = ..., result_property: str = ..., history_property: Union[str, None] = ..., timeout_s: float = ...) -> RouteBuilder:
+=======
+    def reflection_loop_workflow(
+        self,
+        *,
+        generator_workflow_id: str,
+        reflector_workflow_id: str,
+        refiner_workflow_id: UnionType[str, None] = ...,
+        max_iterations: int = ...,
+        stop_verdict: str = ...,
+        result_property: str = ...,
+        history_property: UnionType[str, None] = ...,
+        timeout_s: float = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Generate → Reflect → Refine agentic pattern via workflows (S39 W3)."""
         ...
 
-    def regex(self, pattern: str, *, action: str = ..., replacement: str = ...) -> RouteBuilder:
+    def regex(
+        self, pattern: str, *, action: str = ..., replacement: str = ...
+    ) -> RouteBuilder:
         """Извлечь или заменить текст по регулярному выражению."""
         ...
 
-    def regex_extract(self, pattern: str, *, source: str = ..., to: str = ..., mode: str = ..., flags: int = ...) -> RouteBuilder:
+    def regex_extract(
+        self,
+        pattern: str,
+        *,
+        source: str = ...,
+        to: str = ...,
+        mode: str = ...,
+        flags: int = ...,
+    ) -> RouteBuilder:
         """Extract values via regex pattern."""
         ...
 
+<<<<<<< Updated upstream
     def region_routing(self, primary: str, fallback: Union[str, None] = ..., *, health_check_interval: float = ...) -> RouteBuilder:
+=======
+    def region_routing(
+        self,
+        primary: str,
+        fallback: UnionType[str, None] = ...,
+        *,
+        health_check_interval: float = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Region routing с health-check based failover."""
         ...
 
@@ -1155,19 +2833,38 @@ class RouteBuilder:
         """Register custom Jinja2 filter (chainable)."""
         ...
 
-    def render_document(self, template_path: PathLike, output_path: PathLike, context: Context | None = ...) -> int:
+    def render_document(
+        self,
+        template_path: PathLike,
+        output_path: PathLike,
+        context: Context | None = ...,
+    ) -> int:
         """Render template file → output file. Returns bytes written."""
         ...
 
+<<<<<<< Updated upstream
     def render_docx(self, *, template: str, context_from: Union[str, None] = ..., output_to: str = ...) -> RouteBuilder:
+=======
+    def render_docx(
+        self,
+        *,
+        template: str,
+        context_from: UnionType[str, None] = ...,
+        output_to: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Рендерит шаблон ``.docx`` со встроенными плейсхолдерами ``{{key}}``."""
         ...
 
-    def render_email(self, subject_template: str, body_template: str, context: Context | None = ...) -> tuple[str, str]:
+    def render_email(
+        self, subject_template: str, body_template: str, context: Context | None = ...
+    ) -> tuple[str, str]:
         """Render email subject + body. Returns ``(subject, body)`` tuple."""
         ...
 
-    def render_file(self, template_path: PathLike, context: Context | None = ...) -> str:
+    def render_file(
+        self, template_path: PathLike, context: Context | None = ...
+    ) -> str:
         """Render Jinja2 template из файла (str | Path)."""
         ...
 
@@ -1175,19 +2872,54 @@ class RouteBuilder:
         """Рендеринг Jinja2-шаблона."""
         ...
 
+<<<<<<< Updated upstream
     def render_xlsx(self, *, template: Union[str, None] = ..., context_from: Union[str, None] = ..., output_to: str = ..., mode: str = ...) -> RouteBuilder:
         """Рендерит ``.xlsx`` (``replace`` placeholders или ``append_table``)."""
         ...
 
     def reply(self, reply_channel: Union[str, None] = ..., payload: Any = ..., *, correlation_id: Union[str, None] = ...) -> RouteBuilder:
+=======
+    def render_xlsx(
+        self,
+        *,
+        template: UnionType[str, None] = ...,
+        context_from: UnionType[str, None] = ...,
+        output_to: str = ...,
+        mode: str = ...,
+    ) -> RouteBuilder:
+        """Рендерит ``.xlsx`` (``replace`` placeholders или ``append_table``)."""
+        ...
+
+    def reply(
+        self,
+        reply_channel: UnionType[str, None] = ...,
+        payload: Any = ...,
+        *,
+        correlation_id: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Публикует reply в ``reply_channel`` (reply_to)."""
         ...
 
-    def reply_to(self, broker: Any, *, reply_to_header: str = ..., correlation_header: str = ...) -> RouteBuilder:
+    def reply_to(
+        self, broker: Any, *, reply_to_header: str = ..., correlation_header: str = ...
+    ) -> RouteBuilder:
         """Return Address: публикует ответ в очередь из reply-to заголовка."""
         ...
 
+<<<<<<< Updated upstream
     def request(self, target_channel: str, payload: Any = ..., *, timeout: float = ..., correlation_id: Union[str, None] = ..., result_property: str = ...) -> RouteBuilder:
+=======
+    def request(
+        self,
+        target_channel: str,
+        payload: Any = ...,
+        *,
+        timeout: float = ...,
+        correlation_id: UnionType[str, None] = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Отправляет запрос в ``target_channel`` и ждёт reply."""
         ...
 
@@ -1207,11 +2939,25 @@ class RouteBuilder:
         """DX-2: валидирует присутствие header. Fail route если отсутствует."""
         ...
 
-    def rerank(self, *, query_from: str = ..., documents_from: str = ..., top_k: int = ..., result_property: str = ...) -> RouteBuilder:
+    def rerank(
+        self,
+        *,
+        query_from: str = ...,
+        documents_from: str = ...,
+        top_k: int = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
         """Rerank documents by relevance to query."""
         ...
 
-    def resequence(self, correlation_key: Callable[[Exchange[Any]], str], *, sequence_field: str = ..., batch_size: int = ..., timeout_seconds: float = ...) -> RouteBuilder:
+    def resequence(
+        self,
+        correlation_key: Callable[[Exchange[Any]], str],
+        *,
+        sequence_field: str = ...,
+        batch_size: int = ...,
+        timeout_seconds: float = ...,
+    ) -> RouteBuilder:
         """Resequencer: восстановление порядка сообщений по sequence_field."""
         ...
 
@@ -1219,19 +2965,50 @@ class RouteBuilder:
         """Восстановление PII в ответе после LLM."""
         ...
 
-    def result_unwrap(self, *, source: str = ..., to: str = ..., to_err: str = ..., on_err: str = ...) -> RouteBuilder:
+    def result_unwrap(
+        self, *, source: str = ..., to: str = ..., to_err: str = ..., on_err: str = ...
+    ) -> RouteBuilder:
         """Unwrap Rust-style Result monad (Ok/Err)."""
         ...
 
-    def retry(self, processors: list[BaseProcessor], *, max_attempts: int = ..., delay_seconds: float = ..., backoff: str = ...) -> RouteBuilder:
+    def retry(
+        self,
+        processors: list[BaseProcessor],
+        *,
+        max_attempts: int = ...,
+        delay_seconds: float = ...,
+        backoff: str = ...,
+    ) -> RouteBuilder:
         """Retry с backoff: повторяет процессоры при ошибке. backoff: fixed|exponential."""
         ...
 
+<<<<<<< Updated upstream
     def router_specialist(self, *, llm_router: LLMRouterFn, specialists: list[SpecialistAgent], fallback_specialist: Union[str, None] = ..., min_confidence: float = ...) -> RouteBuilder:
         """Добавить :class:`RouterSpecialistProcessor` в pipeline."""
         ...
 
     def routing_slip(self, steps: Callable[[Exchange[Any]], Any] | list[str], *, header: Union[str, None] = ..., strict: bool = ..., max_steps: int = ...) -> RouteBuilder:
+=======
+    def router_specialist(
+        self,
+        *,
+        llm_router: LLMRouterFn,
+        specialists: list[SpecialistAgent],
+        fallback_specialist: UnionType[str, None] = ...,
+        min_confidence: float = ...,
+    ) -> RouteBuilder:
+        """Добавить :class:`RouterSpecialistProcessor` в pipeline."""
+        ...
+
+    def routing_slip(
+        self,
+        steps: Callable[[Exchange[Any]], Any] | list[str],
+        *,
+        header: UnionType[str, None] = ...,
+        strict: bool = ...,
+        max_steps: int = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Routing Slip EIP: динамическая цепочка processors per-message."""
         ...
 
@@ -1239,7 +3016,13 @@ class RouteBuilder:
         """Browser click по CSS/XPath селектору (Cycle 15 / P4-A)."""
         ...
 
+<<<<<<< Updated upstream
     def rpa_extract(self, *, selector: str, attribute: Union[str, None] = ...) -> RouteBuilder:
+=======
+    def rpa_extract(
+        self, *, selector: str, attribute: UnionType[str, None] = ...
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Browser extract text/attribute (Cycle 15 / P4-A)."""
         ...
 
@@ -1251,7 +3034,13 @@ class RouteBuilder:
         """Browser navigate через Playwright (Cycle 15 / P4-A)."""
         ...
 
+<<<<<<< Updated upstream
     def rpa_screenshot(self, *, full_page: bool = ..., path: Union[str, None] = ...) -> RouteBuilder:
+=======
+    def rpa_screenshot(
+        self, *, full_page: bool = ..., path: UnionType[str, None] = ...
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Browser screenshot (Cycle 15 / P4-A)."""
         ...
 
@@ -1263,7 +3052,17 @@ class RouteBuilder:
         """Saga-паттерн: последовательные шаги с компенсацией при ошибке."""
         ...
 
+<<<<<<< Updated upstream
     def saga_lra(self, steps: list[SagaStep], *, workflow_id: Union[str, None] = ..., run_id: Union[str, None] = ...) -> RouteBuilder:
+=======
+    def saga_lra(
+        self,
+        steps: list[SagaStep],
+        *,
+        workflow_id: UnionType[str, None] = ...,
+        run_id: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Saga LRA: долгоживущая сага с persistent checkpoints."""
         ...
 
@@ -1271,7 +3070,19 @@ class RouteBuilder:
         """Вероятностный сэмплинг (A/B, canary, debug-sampling)."""
         ...
 
+<<<<<<< Updated upstream
     def sampling(self, *, rate: Union[int, None] = ..., fraction: Union[float, None] = ..., time_window_ms: Union[int, None] = ..., max_in_window: Union[int, None] = ..., seed: Union[int, None] = ...) -> RouteBuilder:
+=======
+    def sampling(
+        self,
+        *,
+        rate: UnionType[int, None] = ...,
+        fraction: UnionType[float, None] = ...,
+        time_window_ms: UnionType[int, None] = ...,
+        max_in_window: UnionType[int, None] = ...,
+        seed: UnionType[int, None] = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Sampling EIP: probabilistic subset of messages."""
         ...
 
@@ -1283,11 +3094,28 @@ class RouteBuilder:
         """Сохранение результата в AgentMemory."""
         ...
 
+<<<<<<< Updated upstream
     def scan_file(self, *, s3_key_from: Union[str, None] = ..., data_property: Union[str, None] = ..., on_threat: str = ..., result_property: str = ...) -> RouteBuilder:
+=======
+    def scan_file(
+        self,
+        *,
+        s3_key_from: UnionType[str, None] = ...,
+        data_property: UnionType[str, None] = ...,
+        on_threat: str = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Сканировать файл AV-бэкендом (Wave 2.4)."""
         ...
 
-    def scatter_gather(self, route_ids: list[str], *, aggregation: str = ..., timeout_seconds: float = ...) -> RouteBuilder:
+    def scatter_gather(
+        self,
+        route_ids: list[str],
+        *,
+        aggregation: str = ...,
+        timeout_seconds: float = ...,
+    ) -> RouteBuilder:
         """Scatter-Gather: fan-out на N маршрутов + сборка результатов."""
         ...
 
@@ -1299,7 +3127,17 @@ class RouteBuilder:
         """Валидация body по JSON Schema (Draft 2020-12)."""
         ...
 
+<<<<<<< Updated upstream
     def scrape_url(self, url: Union[str, None] = ..., *, selectors: Union[dict[str, str], None] = ..., output_property: str = ...) -> RouteBuilder:
+=======
+    def scrape_url(
+        self,
+        url: UnionType[str, None] = ...,
+        *,
+        selectors: UnionType[dict[str, str], None] = ...,
+        output_property: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Извлечение данных с URL через CSS-селекторы (с SSRF-защитой)."""
         ...
 
@@ -1307,6 +3145,7 @@ class RouteBuilder:
         """Скриншот страницы как bytes."""
         ...
 
+<<<<<<< Updated upstream
     def script_node(self, code: str, *, timeout_seconds: float = ..., env: Union[dict[str, str], None] = ..., allowed_languages: Union[list[str], None] = ...) -> RouteBuilder:
         """Выполнить inline Node.js-код (требует ``node`` в PATH)."""
         ...
@@ -1324,14 +3163,77 @@ class RouteBuilder:
         ...
 
     def semantic_route(self, intents: dict[str, str], *, default_route: Union[str, None] = ..., query_field: str = ..., threshold: float = ..., namespace: str = ...) -> RouteBuilder:
+=======
+    def script_node(
+        self,
+        code: str,
+        *,
+        timeout_seconds: float = ...,
+        env: UnionType[dict[str, str], None] = ...,
+        allowed_languages: UnionType[list[str], None] = ...,
+    ) -> RouteBuilder:
+        """Выполнить inline Node.js-код (требует ``node`` в PATH)."""
+        ...
+
+    def script_python(
+        self,
+        code: str,
+        *,
+        timeout_seconds: float = ...,
+        env: UnionType[dict[str, str], None] = ...,
+        allowed_languages: UnionType[list[str], None] = ...,
+    ) -> RouteBuilder:
+        """Выполнить inline Python-код через текущий интерпретатор."""
+        ...
+
+    def script_ruby(
+        self,
+        code: str,
+        *,
+        timeout_seconds: float = ...,
+        env: UnionType[dict[str, str], None] = ...,
+        allowed_languages: UnionType[list[str], None] = ...,
+    ) -> RouteBuilder:
+        """Выполнить inline Ruby-код (требует ``ruby`` в PATH)."""
+        ...
+
+    def script_shell(
+        self,
+        code: str,
+        *,
+        timeout_seconds: float = ...,
+        env: UnionType[dict[str, str], None] = ...,
+        allowed_languages: UnionType[list[str], None] = ...,
+    ) -> RouteBuilder:
+        """Выполнить shell-скрипт через ``/bin/sh`` (whitelist рекомендуется)."""
+        ...
+
+    def semantic_route(
+        self,
+        intents: dict[str, str],
+        *,
+        default_route: UnionType[str, None] = ...,
+        query_field: str = ...,
+        threshold: float = ...,
+        namespace: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Semantic routing — RAG-based intent detection → выбор маршрута."""
         ...
 
-    def send_via_sink(self, sink_id: str, *, payload_from: str = ..., result_property: str = ...) -> RouteBuilder:
+    def send_via_sink(
+        self, sink_id: str, *, payload_from: str = ..., result_property: str = ...
+    ) -> RouteBuilder:
         """Отправить payload через зарегистрированный Sink (capability-gated)."""
         ...
 
-    def session_window(self, sink: Callable[[list[Any]], Any], *, gap_seconds: float = ..., watermark_store: WatermarkStore | None = ...) -> RouteBuilder:
+    def session_window(
+        self,
+        sink: Callable[[list[Any]], Any],
+        *,
+        gap_seconds: float = ...,
+        watermark_store: WatermarkStore | None = ...,
+    ) -> RouteBuilder:
         """Streaming session-окно (закрывается по паузе)."""
         ...
 
@@ -1343,11 +3245,40 @@ class RouteBuilder:
         """Устанавливает runtime-свойство Exchange."""
         ...
 
+<<<<<<< Updated upstream
     def sftp_get(self, host: str, remote_path: str, *, username: Union[str, None] = ..., password_from: str = ..., key_file: Union[str, None] = ..., timeout: float = ..., result_property: str = ...) -> RouteBuilder:
         """S104 W1 — GET файла с SFTP-сервера."""
         ...
 
     def sftp_put(self, host: str, remote_path: str, *, body_from: str = ..., username: Union[str, None] = ..., password_from: str = ..., key_file: Union[str, None] = ..., timeout: float = ..., result_property: str = ...) -> RouteBuilder:
+=======
+    def sftp_get(
+        self,
+        host: str,
+        remote_path: str,
+        *,
+        username: UnionType[str, None] = ...,
+        password_from: str = ...,
+        key_file: UnionType[str, None] = ...,
+        timeout: float = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+        """S104 W1 — GET файла с SFTP-сервера."""
+        ...
+
+    def sftp_put(
+        self,
+        host: str,
+        remote_path: str,
+        *,
+        body_from: str = ...,
+        username: UnionType[str, None] = ...,
+        password_from: str = ...,
+        key_file: UnionType[str, None] = ...,
+        timeout: float = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """S104 W1 — PUT файла на SFTP-сервер."""
         ...
 
@@ -1355,6 +3286,7 @@ class RouteBuilder:
         """Исполняет вложенную ветку в shadow-режиме (без side effects)."""
         ...
 
+<<<<<<< Updated upstream
     def shell(self, command: str, *, args: Union[list[str], None] = ..., allowed_commands: Union[list[str], None] = ..., timeout_seconds: float = ...) -> RouteBuilder:
         """Выполнить shell-команду."""
         ...
@@ -1400,14 +3332,189 @@ class RouteBuilder:
         ...
 
     def skill_invoke(self, *, skill_id: str, params_property: Union[str, None] = ..., result_property: str = ...) -> RouteBuilder:
+=======
+    def shell(
+        self,
+        command: str,
+        *,
+        args: UnionType[list[str], None] = ...,
+        allowed_commands: UnionType[list[str], None] = ...,
+        timeout_seconds: float = ...,
+    ) -> RouteBuilder:
+        """Выполнить shell-команду."""
+        ...
+
+    def sink_email(
+        self,
+        *,
+        host: str,
+        from_addr: str,
+        port: int = ...,
+        username: UnionType[str, None] = ...,
+        password: UnionType[str, None] = ...,
+        use_tls: bool = ...,
+        start_tls: bool = ...,
+        default_to: UnionType[str, None] = ...,
+        default_subject: str = ...,
+        payload_property: UnionType[str, None] = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+        """Camel-style fluent для SMTP-публикации (Sprint 3 W1 K3)."""
+        ...
+
+    def sink_file(
+        self,
+        *,
+        path: str,
+        mode: str = ...,
+        encoding: str = ...,
+        ensure_dir: bool = ...,
+        payload_property: UnionType[str, None] = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+        """Camel-style fluent для записи в local FS (append / write)."""
+        ...
+
+    def sink_grpc(
+        self,
+        *,
+        target: str,
+        full_method: str,
+        secure: bool = ...,
+        timeout: float = ...,
+        payload_property: UnionType[str, None] = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+        """Camel-style fluent для gRPC unary-вызова (Sprint 3 W1 K3)."""
+        ...
+
+    def sink_http(
+        self,
+        *,
+        url: str,
+        method: str = ...,
+        headers: UnionType[dict[str, str], None] = ...,
+        timeout: float = ...,
+        payload_property: UnionType[str, None] = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+        """Camel-style fluent для REST POST/PUT/PATCH/DELETE через Sink."""
+        ...
+
+    def sink_mq(
+        self,
+        *,
+        broker: str,
+        url: str,
+        topic: str,
+        extra: UnionType[dict[str, Any], None] = ...,
+        payload_property: UnionType[str, None] = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+        """Camel-style fluent для публикации в Kafka/RabbitMQ/Redis-Streams/NATS."""
+        ...
+
+    def sink_mqtt(
+        self,
+        *,
+        host: str,
+        topic: str,
+        port: UnionType[int, None] = ...,
+        qos: int = ...,
+        retain: bool = ...,
+        username: UnionType[str, None] = ...,
+        password: UnionType[str, None] = ...,
+        payload_property: UnionType[str, None] = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+        """Camel-style fluent для публикации в MQTT-брокер."""
+        ...
+
+    def sink_s3(
+        self,
+        *,
+        bucket: str,
+        key: str,
+        content_type: str = ...,
+        payload_property: UnionType[str, None] = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+        """Camel-style fluent для выгрузки payload в S3/MinIO."""
+        ...
+
+    def sink_soap(
+        self,
+        *,
+        wsdl_url: str,
+        operation: str,
+        service_name: UnionType[str, None] = ...,
+        port_name: UnionType[str, None] = ...,
+        timeout: float = ...,
+        payload_property: UnionType[str, None] = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+        """Camel-style fluent для SOAP/WSDL-вызова (Sprint 3 W1 K3)."""
+        ...
+
+    def sink_webhook(
+        self,
+        *,
+        url: str,
+        event: str,
+        secret: UnionType[str, None] = ...,
+        timeout: float = ...,
+        extra_headers: UnionType[dict[str, str], None] = ...,
+        payload_property: UnionType[str, None] = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+        """Camel-style fluent для outbound webhook с HMAC-подписью."""
+        ...
+
+    def sink_ws(
+        self,
+        *,
+        url: str,
+        extra_headers: UnionType[dict[str, str], None] = ...,
+        timeout: float = ...,
+        payload_property: UnionType[str, None] = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+        """Camel-style fluent для outbound WebSocket publish."""
+        ...
+
+    def skill_invoke(
+        self,
+        *,
+        skill_id: str,
+        params_property: UnionType[str, None] = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Вызов AI skill через :class:`SkillRegistry.invoke` (S27 W3, ADR-NEW-22)."""
         ...
 
-    def sliding_window(self, sink: Callable[[list[Any]], Any], *, window_seconds: float = ..., step_seconds: float = ..., watermark_store: WatermarkStore | None = ...) -> RouteBuilder:
+    def sliding_window(
+        self,
+        sink: Callable[[list[Any]], Any],
+        *,
+        window_seconds: float = ...,
+        step_seconds: float = ...,
+        watermark_store: WatermarkStore | None = ...,
+    ) -> RouteBuilder:
         """Streaming sliding-окно с перекрытием."""
         ...
 
+<<<<<<< Updated upstream
     def sort(self, *, key_fn: Callable[[Any], Any] | None = ..., key_field: Union[str, None] = ..., reverse: bool = ...) -> RouteBuilder:
+=======
+    def sort(
+        self,
+        *,
+        key_fn: Callable[[Any], Any] | None = ...,
+        key_field: UnionType[str, None] = ...,
+        reverse: bool = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Sort — сортировка list body по функции ключа или имени поля."""
         ...
 
@@ -1419,6 +3526,7 @@ class RouteBuilder:
         """Splitter: разбиение массива на отдельные Exchange по JMESPath."""
         ...
 
+<<<<<<< Updated upstream
     def sse_source(self, url: str, event_types: Union[list[str], None] = ...) -> RouteBuilder:
         """Source-процессор для Server-Sent Events."""
         ...
@@ -1428,10 +3536,56 @@ class RouteBuilder:
         ...
 
     def ssh_exec(self, host: str, command: str, *, username: Union[str, None] = ..., password_from: str = ..., key_file: Union[str, None] = ..., timeout: float = ..., result_property: str = ..., continue_on_error: bool = ...) -> RouteBuilder:
+=======
+    def sse_source(
+        self, url: str, event_types: UnionType[list[str], None] = ...
+    ) -> RouteBuilder:
+        """Source-процессор для Server-Sent Events."""
+        ...
+
+    def ssh_command(
+        self,
+        host: str,
+        command: str,
+        *,
+        username: UnionType[str, None] = ...,
+        password_from: str = ...,
+        key_file: UnionType[str, None] = ...,
+        timeout: float = ...,
+        result_property: str = ...,
+        continue_on_error: bool = ...,
+    ) -> RouteBuilder:
+        """SSH remote command execution (Sprint 35)."""
+        ...
+
+    def ssh_exec(
+        self,
+        host: str,
+        command: str,
+        *,
+        username: UnionType[str, None] = ...,
+        password_from: str = ...,
+        key_file: UnionType[str, None] = ...,
+        timeout: float = ...,
+        result_property: str = ...,
+        continue_on_error: bool = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Выполняет remote-команду через SSH (asyncssh)."""
         ...
 
-    def sub_workflow(self, name: str, args: dict[str, Any], *, namespace: str = ..., task_queue: str = ..., sub_workflow_id_property: str = ..., result_property: str = ..., parent_workflow_id_property: str = ..., parent_correlation_id_property: str = ...) -> RouteBuilder:
+    def sub_workflow(
+        self,
+        name: str,
+        args: dict[str, Any],
+        *,
+        namespace: str = ...,
+        task_queue: str = ...,
+        sub_workflow_id_property: str = ...,
+        result_property: str = ...,
+        parent_workflow_id_property: str = ...,
+        parent_correlation_id_property: str = ...,
+    ) -> RouteBuilder:
         """Запуск sub-workflow (fire-and-forget) — S106 W3 / TD-006."""
         ...
 
@@ -1439,10 +3593,13 @@ class RouteBuilder:
         """Сумма по полю элементов коллекции."""
         ...
 
-    def supervisor(self, *, max_restarts: int = ..., timeout: float = ..., backoff: float = ...) -> RouteBuilder:
+    def supervisor(
+        self, *, max_restarts: int = ..., timeout: float = ..., backoff: float = ...
+    ) -> RouteBuilder:
         """Supervisor pattern для fault-tolerant execution."""
         ...
 
+<<<<<<< Updated upstream
     def switch(self, field: str, cases: dict[str, list[BaseProcessor]], *, default: Union[list[BaseProcessor], None] = ...) -> RouteBuilder:
         """n8n Switch — case/match роутинг по значению поля."""
         ...
@@ -1464,26 +3621,128 @@ class RouteBuilder:
         ...
 
     def telegram_send_file(self, *, bot: str = ..., chat_id_from: str = ..., s3_key_from: Union[str, None] = ..., file_data_property: Union[str, None] = ..., file_name: Union[str, None] = ..., file_name_from: Union[str, None] = ..., body: Union[str, None] = ..., body_from: Union[str, None] = ..., parse_mode: str = ..., disable_notification: bool = ..., result_property: str = ...) -> RouteBuilder:
+=======
+    def switch(
+        self,
+        field: str,
+        cases: dict[str, list[BaseProcessor]],
+        *,
+        default: UnionType[list[BaseProcessor], None] = ...,
+    ) -> RouteBuilder:
+        """n8n Switch — case/match роутинг по значению поля."""
+        ...
+
+    def telegram_edit(
+        self,
+        message_id_from: str = ...,
+        *,
+        bot: str = ...,
+        chat_id_from: str = ...,
+        body: UnionType[str, None] = ...,
+        body_from: UnionType[str, None] = ...,
+        parse_mode: str = ...,
+        inline_keyboard: UnionType[list[list[dict[str, Any]]], None] = ...,
+    ) -> RouteBuilder:
+        """Редактировать ранее отправленное Telegram-сообщение."""
+        ...
+
+    def telegram_mention(
+        self,
+        *,
+        user_id_from: str,
+        display_name_from: UnionType[str, None] = ...,
+        parse_mode: str = ...,
+        property_name: str = ...,
+        append: bool = ...,
+    ) -> RouteBuilder:
+        """Создать фрагмент-упоминание пользователя для вставки в текст."""
+        ...
+
+    def telegram_reply(
+        self,
+        body_from: UnionType[str, None] = ...,
+        *,
+        bot: str = ...,
+        source_message_id_from: str = ...,
+        chat_id_from: str = ...,
+        body: UnionType[str, None] = ...,
+        parse_mode: str = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+        """Ответить на сообщение Telegram (reply_to_message_id)."""
+        ...
+
+    def telegram_send(
+        self,
+        body: UnionType[str, None] = ...,
+        *,
+        bot: str = ...,
+        chat_id_from: str = ...,
+        body_from: UnionType[str, None] = ...,
+        parse_mode: str = ...,
+        inline_keyboard: UnionType[list[list[dict[str, Any]]], None] = ...,
+        reply_keyboard: UnionType[list[list[str]], None] = ...,
+        disable_notification: bool = ...,
+        disable_web_page_preview: bool = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+        """Отправить сообщение в Telegram чат через Bot API."""
+        ...
+
+    def telegram_send_file(
+        self,
+        *,
+        bot: str = ...,
+        chat_id_from: str = ...,
+        s3_key_from: UnionType[str, None] = ...,
+        file_data_property: UnionType[str, None] = ...,
+        file_name: UnionType[str, None] = ...,
+        file_name_from: UnionType[str, None] = ...,
+        body: UnionType[str, None] = ...,
+        body_from: UnionType[str, None] = ...,
+        parse_mode: str = ...,
+        disable_notification: bool = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Отправить файл (документ) в Telegram чат."""
         ...
 
-    def telegram_status(self, *, bot: str = ..., result_property: str = ...) -> RouteBuilder:
+    def telegram_status(
+        self, *, bot: str = ..., result_property: str = ...
+    ) -> RouteBuilder:
         """Запросить профиль бота (getMe) — health-check Telegram."""
         ...
 
-    def telegram_typing(self, action: str = ..., *, bot: str = ..., chat_id_from: str = ...) -> RouteBuilder:
+    def telegram_typing(
+        self, action: str = ..., *, bot: str = ..., chat_id_from: str = ...
+    ) -> RouteBuilder:
         """Отправить chat-action (typing / upload_photo / …) в Telegram."""
         ...
 
-    def template_render_str(self, template_str: str, context: Context | None = ...) -> str:
+    def template_render_str(
+        self, template_str: str, context: Context | None = ...
+    ) -> str:
         """Render Jinja2 template из строки. Returns rendered string."""
         ...
 
+<<<<<<< Updated upstream
     def tenant_scope(self, *, header: str = ..., body_path: Union[str, None] = ..., required: bool = ...) -> Self:
+=======
+    def tenant_scope(
+        self,
+        *,
+        header: str = ...,
+        body_path: UnionType[str, None] = ...,
+        required: bool = ...,
+    ) -> Self:
+>>>>>>> Stashed changes
         """Multi-tenancy scope: tenant_id из заголовка/body в Exchange."""
         ...
 
-    def terminal_3270(self, host: str, port: int = ..., action: str = ...) -> RouteBuilder:
+    def terminal_3270(
+        self, host: str, port: int = ..., action: str = ...
+    ) -> RouteBuilder:
         """IBM 3270 терминал-эмулятор (мейнфрейм)."""
         ...
 
@@ -1491,11 +3750,31 @@ class RouteBuilder:
         """Throttler: rate-limit N сообщений/сек (token bucket)."""
         ...
 
+<<<<<<< Updated upstream
     def timeout(self, processors: list[BaseProcessor], *, seconds: float = ..., fallback_processors: Union[list[BaseProcessor], None] = ...) -> RouteBuilder:
         """Timeout — wrap sub-processors with a time limit."""
         ...
 
     def timer(self, *, interval_seconds: Union[float, None] = ..., cron: Union[str, None] = ..., max_fires: Union[int, None] = ...) -> Self:
+=======
+    def timeout(
+        self,
+        processors: list[BaseProcessor],
+        *,
+        seconds: float = ...,
+        fallback_processors: UnionType[list[BaseProcessor], None] = ...,
+    ) -> RouteBuilder:
+        """Timeout — wrap sub-processors with a time limit."""
+        ...
+
+    def timer(
+        self,
+        *,
+        interval_seconds: UnionType[float, None] = ...,
+        cron: UnionType[str, None] = ...,
+        max_fires: UnionType[int, None] = ...,
+    ) -> Self:
+>>>>>>> Stashed changes
         """Scheduled event source: интервал или cron-выражение."""
         ...
 
@@ -1503,7 +3782,13 @@ class RouteBuilder:
         """Алиас для process() — fluent naming."""
         ...
 
+<<<<<<< Updated upstream
     def to_avro_like(self, schema: Union[dict[str, Any], None] = ...) -> RouteBuilder:
+=======
+    def to_avro_like(
+        self, schema: UnionType[dict[str, Any], None] = ...
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Convert ``dict`` → JSON ``str`` c обёрткой ``{"schema": ..., "data": ...}``."""
         ...
 
@@ -1523,7 +3808,13 @@ class RouteBuilder:
         """Convert ``list[dict]`` → CSV string."""
         ...
 
+<<<<<<< Updated upstream
     def to_eventbus(self, topic: str, *, payload_ref: str = ..., name: Union[str, None] = ...) -> RouteBuilder:
+=======
+    def to_eventbus(
+        self, topic: str, *, payload_ref: str = ..., name: UnionType[str, None] = ...
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Publish текущий exchange в EventBus topic (V22 NEW)."""
         ...
 
@@ -1543,7 +3834,17 @@ class RouteBuilder:
         """Serialize ``exchange.body`` → JSON string в ``out_message.body``."""
         ...
 
+<<<<<<< Updated upstream
     def to_jwt(self, *, secret: str, algorithm: str = ..., claims: Union[dict[str, Any], None] = ...) -> RouteBuilder:
+=======
+    def to_jwt(
+        self,
+        *,
+        secret: str,
+        algorithm: str = ...,
+        claims: UnionType[dict[str, Any], None] = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Encode ``exchange.body`` (dict) → JWT string (HS256 default)."""
         ...
 
@@ -1555,7 +3856,19 @@ class RouteBuilder:
         """Convert ``dict``/``list`` → msgpack bytes (fallback: ``pickle``)."""
         ...
 
+<<<<<<< Updated upstream
     def to_nats_js(self, subject: str, *, nats_url: str = ..., headers: Union[dict[str, str], None] = ..., payload_property: Union[str, None] = ..., result_property: str = ...) -> Self:
+=======
+    def to_nats_js(
+        self,
+        subject: str,
+        *,
+        nats_url: str = ...,
+        headers: UnionType[dict[str, str], None] = ...,
+        payload_property: UnionType[str, None] = ...,
+        result_property: str = ...,
+    ) -> Self:
+>>>>>>> Stashed changes
         """Публикует payload в NATS JetStream (Sink step)."""
         ...
 
@@ -1607,7 +3920,14 @@ class RouteBuilder:
         """Настройки транспорта (endpoint, timeout, retry_count, options)."""
         ...
 
-    def tumbling_window(self, sink: Callable[[list[Any]], Any], *, size: int = ..., interval_seconds: float = ..., watermark_store: WatermarkStore | None = ...) -> RouteBuilder:
+    def tumbling_window(
+        self,
+        sink: Callable[[list[Any]], Any],
+        *,
+        size: int = ...,
+        interval_seconds: float = ...,
+        watermark_store: WatermarkStore | None = ...,
+    ) -> RouteBuilder:
         """Streaming tumbling-окно фиксированного размера."""
         ...
 
@@ -1615,7 +3935,16 @@ class RouteBuilder:
         """Категоризация транзакций (MCC + merchant normalization)."""
         ...
 
+<<<<<<< Updated upstream
     def unique(self, *, field: Union[str, None] = ..., key_fn: Callable[[Any], Any] | None = ...) -> RouteBuilder:
+=======
+    def unique(
+        self,
+        *,
+        field: UnionType[str, None] = ...,
+        key_fn: Callable[[Any], Any] | None = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Уникальные элементы коллекции."""
         ...
 
@@ -1623,51 +3952,149 @@ class RouteBuilder:
         """Pydantic-валидация body; при ошибке Exchange останавливается."""
         ...
 
+<<<<<<< Updated upstream
     def validate_response(self, *, schema: Union[type, str, None] = ..., on_error: str = ..., source: str = ...) -> RouteBuilder:
+=======
+    def validate_response(
+        self,
+        *,
+        schema: UnionType[type, str, None] = ...,
+        on_error: str = ...,
+        source: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Pydantic-валидация response_body (R-V15-18)."""
         ...
 
-    def validate_schema(self, subject: str, *, schema_loader: Any = ...) -> RouteBuilder:
+    def validate_schema(
+        self, subject: str, *, schema_loader: Any = ...
+    ) -> RouteBuilder:
         """Валидация по схеме из реестра (JSON Schema / Avro / Protobuf)."""
         ...
 
+<<<<<<< Updated upstream
     def variable(self, key: str, *, default: Union[str, None] = ..., scope: str = ..., name: Union[str, None] = ...) -> RouteBuilder:
         """Inline variable resolution shortcut."""
         ...
 
     def variable_resolve(self, *, scope: str = ..., fail_on_unresolved: bool = ..., name: Union[str, None] = ...) -> RouteBuilder:
+=======
+    def variable(
+        self,
+        key: str,
+        *,
+        default: UnionType[str, None] = ...,
+        scope: str = ...,
+        name: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+        """Inline variable resolution shortcut."""
+        ...
+
+    def variable_resolve(
+        self,
+        *,
+        scope: str = ...,
+        fail_on_unresolved: bool = ...,
+        name: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Resolve all ``${var('key')}`` expressions in exchange.body."""
         ...
 
-    def wait_for_selector(self, selector: str, *, timeout_s: float = ...) -> RouteBuilder:
+    def wait_for_selector(
+        self, selector: str, *, timeout_s: float = ...
+    ) -> RouteBuilder:
         """Ждать появления элемента на странице (P3 gap closure)."""
         ...
 
-    def watch_files(self, directory: str, *, pattern: str = ..., result_property: str = ..., include_subdirs: bool = ...) -> RouteBuilder:
+    def watch_files(
+        self,
+        directory: str,
+        *,
+        pattern: str = ...,
+        result_property: str = ...,
+        include_subdirs: bool = ...,
+    ) -> RouteBuilder:
         """Scan directory for files matching pattern."""
         ...
 
+<<<<<<< Updated upstream
     def web_search(self, engine: str = ..., *, query: Union[str, None] = ..., query_source: Union[str, None] = ..., max_results: int = ..., to: str = ..., deep_research: bool = ...) -> RouteBuilder:
         """K3 S5 W9 — web-поиск через WebSearchService (Tavily/Perplexity/SearXNG)."""
         ...
 
     def webdav(self, url: str, *, username: Union[str, None] = ..., password: Union[str, None] = ..., mode: str = ..., remote_path: str = ..., source: str = ..., to: str = ...) -> RouteBuilder:
+=======
+    def web_search(
+        self,
+        engine: str = ...,
+        *,
+        query: UnionType[str, None] = ...,
+        query_source: UnionType[str, None] = ...,
+        max_results: int = ...,
+        to: str = ...,
+        deep_research: bool = ...,
+    ) -> RouteBuilder:
+        """K3 S5 W9 — web-поиск через WebSearchService (Tavily/Perplexity/SearXNG)."""
+        ...
+
+    def webdav(
+        self,
+        url: str,
+        *,
+        username: UnionType[str, None] = ...,
+        password: UnionType[str, None] = ...,
+        mode: str = ...,
+        remote_path: str = ...,
+        source: str = ...,
+        to: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """WebDAV upload/download/list/delete via webdav4."""
         ...
 
-    def webhook_sign(self, *, secret: str, header: str = ..., algorithm: str = ...) -> RouteBuilder:
+    def webhook_sign(
+        self, *, secret: str, header: str = ..., algorithm: str = ...
+    ) -> RouteBuilder:
         """HMAC-подпись outgoing webhook'а."""
         ...
 
+<<<<<<< Updated upstream
     def webhook_verify(self, *, secret: str, header: str = ..., algorithm: str = ..., prefix: Union[str, None] = ..., on_mismatch: str = ...) -> RouteBuilder:
+=======
+    def webhook_verify(
+        self,
+        *,
+        secret: str,
+        header: str = ...,
+        algorithm: str = ...,
+        prefix: UnionType[str, None] = ...,
+        on_mismatch: str = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
         """Верификация HMAC-подписи входящего webhook'а (timing-safe)."""
         ...
 
-    def windowed_collect(self, key_from: str, dedup_by: str, *, window_seconds: int = ..., dedup_mode: str = ..., inject_as: str = ...) -> RouteBuilder:
+    def windowed_collect(
+        self,
+        key_from: str,
+        dedup_by: str,
+        *,
+        window_seconds: int = ...,
+        dedup_mode: str = ...,
+        inject_as: str = ...,
+    ) -> RouteBuilder:
         """Накопление и батч-дедупликация сообщений в окне."""
         ...
 
-    def windowed_dedup(self, key_from: str, *, key_prefix: str = ..., window_seconds: int = ..., mode: str = ...) -> RouteBuilder:
+    def windowed_dedup(
+        self,
+        key_from: str,
+        *,
+        key_prefix: str = ...,
+        window_seconds: int = ...,
+        mode: str = ...,
+    ) -> RouteBuilder:
         """Дедупликация в скользящем окне с Redis-персистентностью."""
         ...
 
@@ -1675,15 +4102,29 @@ class RouteBuilder:
         """Wire Tap: копия Exchange в побочный канал без влияния на основной поток."""
         ...
 
+<<<<<<< Updated upstream
     def with_auth(self, *, token: Union[str, None] = ..., api_key: Union[str, None] = ..., mtls_cert: Union[str, None] = ...) -> Self:
+=======
+    def with_auth(
+        self,
+        *,
+        token: UnionType[str, None] = ...,
+        api_key: UnionType[str, None] = ...,
+        mtls_cert: UnionType[str, None] = ...,
+    ) -> Self:
+>>>>>>> Stashed changes
         """Переопределяет auth для предыдущего step."""
         ...
 
-    def with_circuit_breaker(self, name: str, *, failure_threshold: int = ..., recovery_timeout: float = ...) -> Self:
+    def with_circuit_breaker(
+        self, name: str, *, failure_threshold: int = ..., recovery_timeout: float = ...
+    ) -> Self:
         """Переопределяет Circuit Breaker для предыдущего step (S168 W10 P1-4)."""
         ...
 
-    def with_connection_pool(self, min_size: int = ..., max_size: int = ..., timeout: float = ...) -> Self:
+    def with_connection_pool(
+        self, min_size: int = ..., max_size: int = ..., timeout: float = ...
+    ) -> Self:
         """Route-level override: connection pool settings для всех транспортов."""
         ...
 
@@ -1703,11 +4144,19 @@ class RouteBuilder:
         """Route-level override: pool size для всех транспортов в route."""
         ...
 
-    def with_reconnection(self, max_attempts: int = ..., delay: float = ..., backoff: float = ...) -> Self:
+    def with_reconnection(
+        self, max_attempts: int = ..., delay: float = ..., backoff: float = ...
+    ) -> Self:
         """Route-level override: reconnection policy для всех транспортов."""
         ...
 
+<<<<<<< Updated upstream
     def with_retries(self, max_attempts: int, *, backoff: Union[str, float, None] = ...) -> Self:
+=======
+    def with_retries(
+        self, max_attempts: int, *, backoff: UnionType[str, float, None] = ...
+    ) -> Self:
+>>>>>>> Stashed changes
         """Переопределяет количество попыток retry для предыдущего step."""
         ...
 
@@ -1723,6 +4172,7 @@ class RouteBuilder:
         """Генерировать .docx документ из текста."""
         ...
 
+<<<<<<< Updated upstream
     def write_file(self, path: Union[str, None] = ..., *, format: str = ...) -> RouteBuilder:
         """Запись body в файл. format: auto|json|csv|text."""
         ...
@@ -1732,6 +4182,31 @@ class RouteBuilder:
         ...
 
     def zip_archive(self, *, action: str = ..., files_from: Union[str, None] = ..., archive_to: str = ..., password: Union[str, None] = ...) -> RouteBuilder:
-        """Create/extract ZIP archives."""
+=======
+    def write_file(
+        self, path: UnionType[str, None] = ..., *, format: str = ...
+    ) -> RouteBuilder:
+        """Запись body в файл. format: auto|json|csv|text."""
         ...
 
+    def write_s3(
+        self,
+        bucket: UnionType[str, None] = ...,
+        key: UnionType[str, None] = ...,
+        *,
+        content_type: str = ...,
+    ) -> RouteBuilder:
+        """Выгрузка body в S3."""
+        ...
+
+    def zip_archive(
+        self,
+        *,
+        action: str = ...,
+        files_from: UnionType[str, None] = ...,
+        archive_to: str = ...,
+        password: UnionType[str, None] = ...,
+    ) -> RouteBuilder:
+>>>>>>> Stashed changes
+        """Create/extract ZIP archives."""
+        ...

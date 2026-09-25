@@ -29,7 +29,11 @@ class SagaStep:
 
     forward: BaseProcessor
     compensate: BaseProcessor | None = None
+<<<<<<< Updated upstream
     name: str | None = None  # читается resume-путём saga_lra (fix 2026-09-24)
+=======
+    name: str | None = None  # читается resume-путём saga_lra (fix mypy 2026-09-23)
+>>>>>>> Stashed changes
 
 
 class SagaProcessor(BaseProcessor):

@@ -53,8 +53,18 @@ def __getattr__(name: str) -> _Any:
 
 
 def __dir__() -> list[str]:
+<<<<<<< Updated upstream
     """``dir()`` через canonical subpackage для tab-completion."""
     global _canonical
     if _canonical is None:
         _canonical = _importlib.import_module(_CANONICAL_MODULE)
     return dir(_canonical)
+=======
+    """``dir()`` через canonical module для tab-completion и introspection."""
+    module = (
+        _canonical
+        if _canonical is not None
+        else _importlib.import_module(_CANONICAL_MODULE)
+    )
+    return dir(module)
+>>>>>>> Stashed changes
