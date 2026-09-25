@@ -64,7 +64,7 @@ def completions_install(
         )
         raise typer.Exit(code=1)
     click_cmd = typer_main.get_command(_manage_mod.app)
-    prog_name = click_cmd.info_name or "gd-tools"
+    prog_name = click_cmd.info_name or "gd-tools"  # type: ignore[attr-defined]
     complete_var = f"_{prog_name.replace('-', '_').upper()}_COMPLETE"
 
     try:

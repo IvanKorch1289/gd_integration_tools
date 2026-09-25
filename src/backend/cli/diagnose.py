@@ -82,11 +82,11 @@ def diagnose(
 
     # Circuit breakers
     try:
-        from src.backend.infrastructure.clients.external.circuit_breakers import (
+        from src.backend.infrastructure.clients.external.circuit_breakers import (  # type: ignore[import-not-found]
             breaker_registry,
         )
 
-        diagnostics["breakers"] = breaker_registry.get_all_status()
+        diagnostics["breakers"] = breaker_registry.get_all_status()  # type: ignore[attr-defined]
     except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)
         pass
 
@@ -100,7 +100,9 @@ def diagnose(
 
     # Routes count
     try:
-        from src.backend.dsl.route.loader import RouteLoader
+        from src.backend.dsl.route.loader import (
+            RouteLoader,  # type: ignore[import-not-found]
+        )
 
         routes = RouteLoader.load_all()
         diagnostics["routes_count"] = len(routes)
@@ -113,7 +115,9 @@ def diagnose(
 
     # Actions count
     try:
-        from src.backend.core.actions import ActionHandlerRegistry
+        from src.backend.core.actions import (
+            ActionHandlerRegistry,  # type: ignore[attr-defined]
+        )
 
         diagnostics["actions_count"] = len(ActionHandlerRegistry.get_all_actions())
     except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)

@@ -67,7 +67,7 @@ def health() -> None:
 
 def breakers() -> None:
     """Состояние circuit breakers."""
-    from src.backend.infrastructure.clients.external.circuit_breakers import (
+    from src.backend.infrastructure.clients.external.circuit_breakers import (  # type: ignore[import-not-found]
         breaker_registry,
     )
 
