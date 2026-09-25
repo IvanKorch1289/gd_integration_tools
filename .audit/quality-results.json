@@ -1,0 +1,173 @@
+{
+  "audit": "GD Integration Tools 25.09.2026",
+  "head": "bb775cd32",
+  "timestamp": "2026-09-25T10:49:52.275311+00:00",
+  "overall_status": "FAIL",
+  "status_counts": {
+    "PASS": 9,
+    "FAIL": 1
+  },
+  "gate_count": 10,
+  "gates": [
+    {
+      "gate": "compileall",
+      "command": "/home/user/dev/gd_integration_tools/.venv/bin/python -m compileall -q src/backend",
+      "exit_code": 0,
+      "duration_seconds": 0.088,
+      "head": "bb775cd32",
+      "tool_version": "python Python 3.14.0",
+      "status": "PASS",
+      "counts": {},
+      "artifact_hash": "sha256:e3b0c44298fc1c14",
+      "message": null,
+      "stdout_tail": "",
+      "stderr_tail": "",
+      "timestamp": "2026-09-25T10:48:27.751687+00:00"
+    },
+    {
+      "gate": "check_layers",
+      "command": "/home/user/dev/gd_integration_tools/.venv/bin/python tools/check_layers.py",
+      "exit_code": 0,
+      "duration_seconds": 24.19,
+      "head": "bb775cd32",
+      "tool_version": null,
+      "status": "PASS",
+      "counts": {},
+      "artifact_hash": "sha256:275455fd4cdbc807",
+      "message": null,
+      "stdout_tail": "Нарушений: 0 новых  (файлов: 2556; baseline: 22 legacy)\n",
+      "stderr_tail": "",
+      "timestamp": "2026-09-25T10:48:51.942682+00:00"
+    },
+    {
+      "gate": "check_docstrings",
+      "command": "/home/user/dev/gd_integration_tools/.venv/bin/python tools/check_docstrings.py",
+      "exit_code": 0,
+      "duration_seconds": 1.374,
+      "head": "bb775cd32",
+      "tool_version": null,
+      "status": "PASS",
+      "counts": {
+        "missing_docstrings": 0
+      },
+      "artifact_hash": "sha256:763d4b6d50e7a4f8",
+      "message": null,
+      "stdout_tail": "Total: 0 missing docstrings in 0 files\nFiles scanned: 2556",
+      "stderr_tail": "",
+      "timestamp": "2026-09-25T10:48:53.317739+00:00"
+    },
+    {
+      "gate": "classify_object_authorization",
+      "command": "/home/user/dev/gd_integration_tools/.venv/bin/python tools/classify_object_authorization.py --strict",
+      "exit_code": 0,
+      "duration_seconds": 3.483,
+      "head": "bb775cd32",
+      "tool_version": null,
+      "status": "PASS",
+      "counts": {
+        "unknown_callsites": 0,
+        "user_data_callsites": 9
+      },
+      "artifact_hash": "sha256:b3ed825ce76b0c8c",
+      "message": null,
+      "stdout_tail": "             102  infra-registry  self._configs.get(route_id)             \nsrc/backend/core/canary_deploy/controller.py                   111  infra-registry  self._configs.get(route_id)             \n",
+      "stderr_tail": "\nv6 W1 strict gate OK: 9 user-data, 0 unknown, 116 total.\n",
+      "timestamp": "2026-09-25T10:48:56.802047+00:00"
+    },
+    {
+      "gate": "check_tenant_isolation",
+      "command": "/home/user/dev/gd_integration_tools/.venv/bin/python tools/checks/check_tenant_isolation.py --strict",
+      "exit_code": 1,
+      "duration_seconds": 2.786,
+      "head": "bb775cd32",
+      "tool_version": null,
+      "status": "FAIL",
+      "counts": {
+        "allowlisted": 333,
+        "unclassified": 225
+      },
+      "artifact_hash": "sha256:dcb017f4cb00eed6",
+      "message": null,
+      "stdout_tail": "ссифицированы в .baselines/tenant_isolation_allowlist.yaml. Per ADR-0345 Option A ВСЕ user-data callsites должны быть либо fixed (tenant filter), либо явно allowlist'нуты с owner/reason/review_date.\n\n",
+      "stderr_tail": "",
+      "timestamp": "2026-09-25T10:48:59.589416+00:00"
+    },
+    {
+      "gate": "check_privacy_lifecycle",
+      "command": "/home/user/dev/gd_integration_tools/.venv/bin/python tools/checks/check_privacy_lifecycle.py --strict",
+      "exit_code": 0,
+      "duration_seconds": 0.145,
+      "head": "bb775cd32",
+      "tool_version": null,
+      "status": "PASS",
+      "counts": {},
+      "artifact_hash": "sha256:a13875ecce33fcfb",
+      "message": null,
+      "stdout_tail": "adapter _langmem.py present\n  Tombstone publication: ✅\n  Legal hold support: ✅\n  Reconciliation check: ✅\n  Orchestration command: ✅ src/backend/core/privacy/__init__.py\n\n✅ Privacy lifecycle complete\n\n",
+      "stderr_tail": "",
+      "timestamp": "2026-09-25T10:48:59.735505+00:00"
+    },
+    {
+      "gate": "check_dsl_processors_imports",
+      "command": "/home/user/dev/gd_integration_tools/.venv/bin/python tools/checks/check_dsl_processors_imports.py --strict",
+      "exit_code": 0,
+      "duration_seconds": 2.146,
+      "head": "bb775cd32",
+      "tool_version": null,
+      "status": "PASS",
+      "counts": {},
+      "artifact_hash": "sha256:5fa102479909735f",
+      "message": null,
+      "stdout_tail": "✅ AST-gate: no new imports of legacy src.backend.dsl.processors outside allowlist.\n\n",
+      "stderr_tail": "",
+      "timestamp": "2026-09-25T10:49:01.882918+00:00"
+    },
+    {
+      "gate": "verify_test_profiles",
+      "command": "/home/user/dev/gd_integration_tools/.venv/bin/python tools/checks/verify_test_profiles.py --strict",
+      "exit_code": 0,
+      "duration_seconds": 0.043,
+      "head": "bb775cd32",
+      "tool_version": null,
+      "status": "PASS",
+      "counts": {},
+      "artifact_hash": "sha256:eb5a62cb66857b88",
+      "message": null,
+      "stdout_tail": "4 deps\n  test-core              4 deps\n  test-frontend          3 deps\n  test-messaging         3 deps\n  test-rpa               4 deps\n  test-scheduler         4 deps\n  test-workflow          4 deps\n\n",
+      "stderr_tail": "",
+      "timestamp": "2026-09-25T10:49:01.928917+00:00"
+    },
+    {
+      "gate": "mypy_budget",
+      "command": "/home/user/dev/gd_integration_tools/.venv/bin/python tools/checks/mypy_budget.py --max 5",
+      "exit_code": 0,
+      "duration_seconds": 50.322,
+      "head": "bb775cd32",
+      "tool_version": "python Python 3.14.0",
+      "status": "PASS",
+      "counts": {
+        "mypy_errors": 5
+      },
+      "artifact_hash": "sha256:4ac1b1409a3575e6",
+      "message": null,
+      "stdout_tail": "Running mypy...\nmypy errors: 5 (max=5, baseline=30)\nOK\n",
+      "stderr_tail": "",
+      "timestamp": "2026-09-25T10:49:52.253563+00:00"
+    },
+    {
+      "gate": "ruff",
+      "command": "ruff check src/backend",
+      "exit_code": 0,
+      "duration_seconds": 0.018,
+      "head": "bb775cd32",
+      "tool_version": "ruff 0.16.5",
+      "status": "PASS",
+      "counts": {},
+      "artifact_hash": "sha256:82b3e6a6c090a576",
+      "message": null,
+      "stdout_tail": "All checks passed!\n",
+      "stderr_tail": "",
+      "timestamp": "2026-09-25T10:49:52.274141+00:00"
+    }
+  ]
+}
