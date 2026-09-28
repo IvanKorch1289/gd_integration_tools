@@ -97,8 +97,7 @@ def test_simulate_no_wall_clock_dependency(tmp_path: Path) -> None:
 
     f = tmp_path / "demo.yaml"
     f.write_text(
-        "route_id: demo\nsteps:\n  - call_function: { ref: m:f }\n",
-        encoding="utf-8",
+        "route_id: demo\nsteps:\n  - call_function: { ref: m:f }\n", encoding="utf-8"
     )
     cmd = [
         sys.executable,

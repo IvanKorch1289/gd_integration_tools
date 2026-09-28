@@ -20,9 +20,7 @@ import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-BASELINE_PATH = (
-    PROJECT_ROOT / ".baselines" / "high_cardinality_metrics_baseline.json"
-)
+BASELINE_PATH = PROJECT_ROOT / ".baselines" / "high_cardinality_metrics_baseline.json"
 
 
 def _run_gate(args: list[str]) -> subprocess.CompletedProcess[str]:
@@ -89,7 +87,8 @@ def test_existing_tenant_id_in_pool_warmup_is_clean() -> None:
     БОЛЬШЕ НЕ использует ``tenant_id`` as label (audit W9 fix)."""
     data = json.loads(BASELINE_PATH.read_text(encoding="utf-8"))
     pool_warmup_findings = [
-        f for f in data
+        f
+        for f in data
         if "pool_warmup" in f["file"] and f.get("severity") == "FORBIDDEN"
     ]
     assert pool_warmup_findings == [], (

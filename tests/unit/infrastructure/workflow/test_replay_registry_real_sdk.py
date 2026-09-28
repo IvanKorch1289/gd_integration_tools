@@ -32,18 +32,12 @@ try:
     importlib.invalidate_caches()
     temporalio_workflow = importlib.import_module("temporalio.workflow")
     workflow_decorator = (
-        temporalio_workflow.defn
-        if hasattr(temporalio_workflow, "defn")
-        else None
+        temporalio_workflow.defn if hasattr(temporalio_workflow, "defn") else None
     )
-except (ImportError, AttributeError):
+except ImportError, AttributeError:
     workflow_decorator = None
 
-from src.backend.core.workflow_registry import (
-    WorkflowRegistry,
-    workflow_registry,
-    _TEMPORAL_DEFN_MARKER,
-)
+from src.backend.core.workflow_registry import _TEMPORAL_DEFN_MARKER, WorkflowRegistry
 
 
 @pytest.fixture()
@@ -67,7 +61,7 @@ try:
     else:
         _t_defn = None
         _t_run = None
-except (ImportError, AttributeError):
+except ImportError, AttributeError:
     temporalio_workflow = None
     _t_defn = None
     _t_run = None
@@ -114,6 +108,7 @@ else:
 
 # === Tests ===
 
+
 def test_temporal_sdk_locked_version_is_1_32() -> None:
     """Per audit: «закрыть тестом на locked version» — temporalio 1.32.0.
 
@@ -145,7 +140,9 @@ def test_canonical_marker_name_matches_sdk_contract() -> None:
     )
 
 
-def test_register_real_workflow_class_extracts_name(fresh_registry: WorkflowRegistry) -> None:
+def test_register_real_workflow_class_extracts_name(
+    fresh_registry: WorkflowRegistry,
+) -> None:
     """Регистрация с реальным @workflow.defn классом извлекает custom name."""
     fresh_registry.register(RealWorkflowStub)
 
@@ -165,6 +162,7 @@ def test_register_real_workflow_rejects_non_workflow_class(
     fresh_registry: WorkflowRegistry,
 ) -> None:
     """Non-workflow class (нет marker) → register fails."""
+
     class NotAWorkflow:
         pass
 
@@ -207,7 +205,13 @@ def test_canonical_marker_isolated_to_one_place() -> None:
     import subprocess
 
     result = subprocess.run(
-        ["grep", "-r", "__temporal_workflow_definition__", "src/backend/", "--include=*.py"],
+        [
+            "grep",
+            "-r",
+            "__temporal_workflow_definition__",
+            "src/backend/",
+            "--include=*.py",
+        ],
         capture_output=True,
         text=True,
         timeout=30,
@@ -220,8 +224,7 @@ def test_canonical_marker_isolated_to_one_place() -> None:
         non_test_files = [
             line
             for line in result.stdout.split("\n")
-            if "test_replay_registry_cycle33" not in line
-            and line.strip()
+            if "test_replay_registry_cycle33" not in line and line.strip()
         ]
         assert not non_test_files, (
             f"__temporal_workflow_definition__ (с trailing __) — WRONG marker. "

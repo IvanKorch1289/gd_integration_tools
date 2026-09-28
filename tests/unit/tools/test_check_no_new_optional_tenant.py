@@ -18,9 +18,7 @@ import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-BASELINE_PATH = (
-    PROJECT_ROOT / ".baselines" / "optional_tenant_baseline.json"
-)
+BASELINE_PATH = PROJECT_ROOT / ".baselines" / "optional_tenant_baseline.json"
 
 
 def _run_gate(args: list[str]) -> subprocess.CompletedProcess[str]:

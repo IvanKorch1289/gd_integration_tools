@@ -17,20 +17,14 @@ from pathlib import Path
 
 import pytest
 
-from src.backend.core.connector.certify import (
-    CertificationReport,
-    TestResult,
-    certify_connector,
-)
+from src.backend.core.connector.certify import CertificationReport, certify_connector
 from src.backend.core.connector.manifest import (
     AuthConfig,
     ConnectorAuthType,
     ConnectorManifest,
-    PaginationConfig,
     RateLimitConfig,
 )
 from src.backend.core.plugin_runtime.manifest_toml import PluginManifest
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
@@ -47,8 +41,7 @@ def demo_manifest() -> ConnectorManifest:
         base=base,
         endpoint="https://suggestions.dadata.ru/api/v2",
         auth=AuthConfig(
-            type=ConnectorAuthType.API_KEY,
-            secret_ref="vault://dadata/api_key",
+            type=ConnectorAuthType.API_KEY, secret_ref="vault://dadata/api_key"
         ),
         operations=("dadata.list", "dadata.get"),
     )
@@ -65,7 +58,9 @@ def write_ops_manifest() -> ConnectorManifest:
     return ConnectorManifest.from_plugin_manifest(
         base=base,
         endpoint="https://api.invoice.example.com/v1",
-        auth=AuthConfig(type=ConnectorAuthType.OAUTH2, secret_ref="vault://invoice/oauth"),
+        auth=AuthConfig(
+            type=ConnectorAuthType.OAUTH2, secret_ref="vault://invoice/oauth"
+        ),
         operations=("invoice.list", "invoice.create", "invoice.update"),
         rate_limits=RateLimitConfig(requests_per_second=5.0, max_retries=3),
     )
@@ -132,7 +127,9 @@ def test_operations_dotted_name_validation() -> None:
 
 
 @pytest.mark.asyncio
-async def test_certify_passed_for_valid_manifest(demo_manifest: ConnectorManifest) -> None:
+async def test_certify_passed_for_valid_manifest(
+    demo_manifest: ConnectorManifest,
+) -> None:
     """Valid manifest → all 5 tests passed → overall_passed=True."""
     report = await certify_connector(demo_manifest)
     assert isinstance(report, CertificationReport)
@@ -140,11 +137,19 @@ async def test_certify_passed_for_valid_manifest(demo_manifest: ConnectorManifes
     assert len(report.tests) == 5
     assert report.overall_passed is True
     test_names = {t.test_name for t in report.tests}
-    assert test_names == {"timeout", "rate_limit_429", "5xx_handling", "schema_drift", "replay_idempotency"}
+    assert test_names == {
+        "timeout",
+        "rate_limit_429",
+        "5xx_handling",
+        "schema_drift",
+        "replay_idempotency",
+    }
 
 
 @pytest.mark.asyncio
-async def test_certify_fails_for_broken_manifest(broken_manifest: ConnectorManifest) -> None:
+async def test_certify_fails_for_broken_manifest(
+    broken_manifest: ConnectorManifest,
+) -> None:
     """Broken manifest (no ops, no retries) → some tests fail."""
     report = await certify_connector(broken_manifest)
     assert report.overall_passed is False
@@ -179,17 +184,19 @@ async def test_replay_test_requires_retries_for_write_ops(
 @pytest.mark.asyncio
 async def test_test_result_has_required_fields() -> None:
     """TestResult содержит все обязательные поля."""
-    report_dict = (await certify_connector(
-        ConnectorManifest.from_plugin_manifest(
-            base=PluginManifest(
-                name="t",
-                version="1.0.0",
-                requires_core=">=0.20,<0.21",
-                entry_class="t.entry:Entry",
-            ),
-            endpoint="https://t.example.com/v1",
+    report_dict = (
+        await certify_connector(
+            ConnectorManifest.from_plugin_manifest(
+                base=PluginManifest(
+                    name="t",
+                    version="1.0.0",
+                    requires_core=">=0.20,<0.21",
+                    entry_class="t.entry:Entry",
+                ),
+                endpoint="https://t.example.com/v1",
+            )
         )
-    )).to_dict()
+    ).to_dict()
     for t in report_dict["tests"]:
         assert "test_name" in t
         assert "passed" in t
@@ -201,13 +208,7 @@ async def test_test_result_has_required_fields() -> None:
 def test_cli_certify_human_output(demo_manifest: ConnectorManifest) -> None:
     """CLI выводит human-readable summary."""
     result = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "src.backend.core.connector.cli",
-            "certify",
-            "dadata",
-        ],
+        [sys.executable, "-m", "src.backend.core.connector.cli", "certify", "dadata"],
         capture_output=True,
         text=True,
         timeout=30,

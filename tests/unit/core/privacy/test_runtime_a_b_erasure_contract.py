@@ -24,9 +24,7 @@ from typing import Any
 
 import pytest
 
-from src.backend.core.privacy.delete_data_subject._orchestrator import (
-    DeleteDataSubject,
-)
+from src.backend.core.privacy.delete_data_subject._orchestrator import DeleteDataSubject
 from src.backend.core.privacy.delete_data_subject._redis import RedisErasureAdapter
 from src.backend.core.privacy.delete_data_subject._tombstone import TombstonePublisher
 from src.backend.core.privacy.delete_data_subject._types import (
@@ -132,7 +130,7 @@ async def test_erasure_removes_only_target_tenant_data() -> None:
             f"tenant:tenant_B:session:{subject_b}": b'{"token":"xyz"}',
             # unrelated keys (no subject_id substring → не подпадают):
             "config:system": b"value",
-            f"tenant:tenant_A:user:user:other_user:99": b'{"name":"Carol"}',
+            "tenant:tenant_A:user:user:other_user:99": b'{"name":"Carol"}',
         }
     )
 
@@ -167,7 +165,7 @@ async def test_erasure_removes_only_target_tenant_data() -> None:
     # unrelated keys тоже сохранены:
     assert "config:system" in fake_redis.store
     # other_user (different subject) тоже сохранён.
-    assert f"tenant:tenant_A:user:user:other_user:99" in fake_redis.store
+    assert "tenant:tenant_A:user:user:other_user:99" in fake_redis.store
 
     # Tombstone записан с правильным subject_id + adapter results.
     assert len(tombstone.published) == 1
@@ -184,11 +182,7 @@ async def test_erasure_removes_only_target_tenant_data() -> None:
 async def test_erasure_tombstone_failure_marks_result_not_published() -> None:
     """Contract: tombstone publish failure → result.tombstone_published = False,
     но остальные adapters могут быть SUCCESS (partial success)."""
-    fake_redis = _FakeRedis(
-        store={
-            "tenant:tenant_A:user:user:99": b"data",
-        }
-    )
+    fake_redis = _FakeRedis(store={"tenant:tenant_A:user:user:99": b"data"})
 
     class _FailingTombstone(TombstonePublisher):
         async def publish(
@@ -206,9 +200,7 @@ async def test_erasure_tombstone_failure_marks_result_not_published() -> None:
     )
 
     result = await orchestrator.execute(
-        subject_id="user:99",
-        tenant_id="tenant_A",
-        strategy=ErasureStrategy.HARD_DELETE,
+        subject_id="user:99", tenant_id="tenant_A", strategy=ErasureStrategy.HARD_DELETE
     )
 
     # Adapter succeeded, tombstone failed → partial success.
@@ -224,11 +216,7 @@ async def test_erasure_skipped_when_legal_hold_active() -> None:
 
     Per privacy audit: legal hold blocks erasure без снятия.
     """
-    fake_redis = _FakeRedis(
-        store={
-            "user:tenant_A:user:77": b"protected",
-        }
-    )
+    fake_redis = _FakeRedis(store={"user:tenant_A:user:77": b"protected"})
     tombstone = _RecordingTombstone()
 
     def _on_hold(subject_id: str) -> bool:
@@ -241,9 +229,7 @@ async def test_erasure_skipped_when_legal_hold_active() -> None:
     )
 
     result = await orchestrator.execute(
-        subject_id="user:77",
-        tenant_id="tenant_A",
-        strategy=ErasureStrategy.HARD_DELETE,
+        subject_id="user:77", tenant_id="tenant_A", strategy=ErasureStrategy.HARD_DELETE
     )
 
     assert result.legal_hold_active is True
@@ -262,11 +248,7 @@ async def test_erasure_with_no_matching_keys_zero_affected() -> None:
 
     Important: НЕ raise exception — runtime contract допускает empty erasure.
     """
-    fake_redis = _FakeRedis(
-        store={
-            "user:tenant_A:other_user": b"data",
-        }
-    )
+    fake_redis = _FakeRedis(store={"user:tenant_A:other_user": b"data"})
     tombstone = _RecordingTombstone()
     orchestrator = DeleteDataSubject(
         adapters=[RedisErasureAdapter(redis_client=fake_redis)],
@@ -293,6 +275,7 @@ async def test_erasure_redis_adapter_failure_propagates_as_failed() -> None:
 
     Per ADR-0345: fail-closed — failed adapter blocks orchestrator success.
     """
+
     class _BrokenRedis:
         async def scan(self, **kwargs: Any) -> Any:
             raise ConnectionError("redis offline")
@@ -307,9 +290,7 @@ async def test_erasure_redis_adapter_failure_propagates_as_failed() -> None:
     )
 
     result = await orchestrator.execute(
-        subject_id="user:42",
-        tenant_id="tenant_A",
-        strategy=ErasureStrategy.HARD_DELETE,
+        subject_id="user:42", tenant_id="tenant_A", strategy=ErasureStrategy.HARD_DELETE
     )
 
     assert result.success is False

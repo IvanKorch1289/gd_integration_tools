@@ -113,8 +113,7 @@ async def test_get_cross_tenant_returns_none(repo):
     # Tenant B пытается прочитать tenant A's notebook.
     result = await repo.get("nb-123", tenant_id="tenant_B")
     assert result is None, (
-        f"TENANT_ISOLATION_FAILED: cross-tenant get returned {result} "
-        f"instead of None."
+        f"TENANT_ISOLATION_FAILED: cross-tenant get returned {result} instead of None."
     )
 
 

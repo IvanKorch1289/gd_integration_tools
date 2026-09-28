@@ -48,9 +48,7 @@ def test_strict_gate_honest_on_unclassified_findings() -> None:
 
 def test_allowlist_yaml_exists_and_has_entries() -> None:
     """Allowlist файл существует и содержит versioned entries с owner/reason/review_date."""
-    allowlist_path = (
-        PROJECT_ROOT / ".baselines" / "tenant_isolation_allowlist.yaml"
-    )
+    allowlist_path = PROJECT_ROOT / ".baselines" / "tenant_isolation_allowlist.yaml"
     assert allowlist_path.is_file(), (
         f"Allowlist файл отсутствует: {allowlist_path}. "
         f"Per audit W3.5: 'Tenant gate должен работать по versioned allowlist'."
@@ -112,7 +110,10 @@ def test_orm_models_allowlisted() -> None:
     unclassified_orm = data["total_no_tenant_id_unclassified"]
     # Допустимо иметь unclassified ORM models — gate их flag'ит как issues.
     # Но BaseModel (абстрактный) должен быть allowlisted.
-    assert data["total_no_tenant_id"] == data["total_no_tenant_id_allowlisted"] + unclassified_orm
+    assert (
+        data["total_no_tenant_id"]
+        == data["total_no_tenant_id_allowlisted"] + unclassified_orm
+    )
 
 
 def test_strict_gate_help_documents_v6_w35() -> None:

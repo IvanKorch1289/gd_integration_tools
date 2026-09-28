@@ -18,12 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from src.backend.dsl.cli.explanation import (
-    RouteExplanation,
-    SideEffect,
-    StepExplanation,
-    explain_route,
-)
+from src.backend.dsl.cli.explanation import RouteExplanation, explain_route
 
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
 
@@ -62,9 +57,7 @@ def test_explain_route_extracts_capabilities(hello_route_dir: Path) -> None:
     assert explanation.capabilities_missing == ()
 
 
-def test_explain_route_identifies_missing_capabilities(
-    health_route_dir: Path,
-) -> None:
+def test_explain_route_identifies_missing_capabilities(health_route_dir: Path) -> None:
     """Missing capabilities вычисляются как required - declared."""
     explanation = explain_route(health_route_dir)
     # health_proxy_demo has empty capabilities declared.
@@ -72,7 +65,9 @@ def test_explain_route_identifies_missing_capabilities(
     assert explanation.capabilities_declared == ()
     assert "net.outbound" in explanation.capabilities_missing
     # Issue message mentions missing capabilities.
-    assert any("MISSING" in issue or "не объявлены" in issue for issue in explanation.issues)
+    assert any(
+        "MISSING" in issue or "не объявлены" in issue for issue in explanation.issues
+    )
 
 
 def test_explain_route_aggregates_side_effects(hello_route_dir: Path) -> None:
@@ -87,9 +82,7 @@ def test_explain_route_aggregates_side_effects(hello_route_dir: Path) -> None:
 def test_explain_route_extracts_retry_policy(hello_route_dir: Path) -> None:
     """Retry policy из policy.step извлекается с attempts + backoff."""
     explanation = explain_route(hello_route_dir)
-    policy_step = next(
-        s for s in explanation.steps if s.step_type == "policy"
-    )
+    policy_step = next(s for s in explanation.steps if s.step_type == "policy")
     assert policy_step.retry is not None
     assert policy_step.retry["attempts"] == 3
     assert policy_step.retry["backoff"] == "exponential"
@@ -110,7 +103,10 @@ def test_explain_route_timeout_overflow_warning(hello_route_dir: Path) -> None:
     explanation = explain_route(hello_route_dir)
     # hello_route has 1809ms total vs 5000ms timeout → no overflow.
     assert explanation.timeout_ms == 5000
-    assert not any("timeout" in issue.lower() and "risk" in issue.lower() for issue in explanation.issues)
+    assert not any(
+        "timeout" in issue.lower() and "risk" in issue.lower()
+        for issue in explanation.issues
+    )
 
 
 def test_explain_route_feature_flags(hello_route_dir: Path) -> None:
@@ -133,15 +129,12 @@ def test_explain_route_raises_on_missing_yaml(tmp_path: Path) -> None:
         explain_route(tmp_path)
 
 
-def test_explain_cli_human_output(hello_route_dir: Path, capsys: pytest.CaptureFixture) -> None:
+def test_explain_cli_human_output(
+    hello_route_dir: Path, capsys: pytest.CaptureFixture
+) -> None:
     """CLI выводит human-readable summary в stdout."""
     result = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "src.backend.dsl.cli.explain_cmd",
-            str(hello_route_dir),
-        ],
+        [sys.executable, "-m", "src.backend.dsl.cli.explain_cmd", str(hello_route_dir)],
         capture_output=True,
         text=True,
         timeout=30,
@@ -153,7 +146,9 @@ def test_explain_cli_human_output(hello_route_dir: Path, capsys: pytest.CaptureF
     assert "ai.llm" in result.stdout
 
 
-def test_explain_cli_json_output(hello_route_dir: Path, capsys: pytest.CaptureFixture) -> None:
+def test_explain_cli_json_output(
+    hello_route_dir: Path, capsys: pytest.CaptureFixture
+) -> None:
     """CLI --json outputs machine-readable JSON."""
     result = subprocess.run(
         [
@@ -175,9 +170,7 @@ def test_explain_cli_json_output(hello_route_dir: Path, capsys: pytest.CaptureFi
     assert "capabilities_missing" in data
 
 
-def test_explain_cli_strict_fails_on_missing_caps(
-    health_route_dir: Path,
-) -> None:
+def test_explain_cli_strict_fails_on_missing_caps(health_route_dir: Path) -> None:
     """CLI --strict exits 1 если capabilities missing."""
     result = subprocess.run(
         [
@@ -198,9 +191,7 @@ def test_explain_cli_strict_fails_on_missing_caps(
     assert "MISSING" in result.stdout or "missing" in result.stdout.lower()
 
 
-def test_explain_cli_strict_passes_when_clean(
-    hello_route_dir: Path,
-) -> None:
+def test_explain_cli_strict_passes_when_clean(hello_route_dir: Path) -> None:
     """CLI --strict exits 0 если all capabilities declared."""
     result = subprocess.run(
         [

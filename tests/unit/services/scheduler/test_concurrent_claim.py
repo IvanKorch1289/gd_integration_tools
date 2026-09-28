@@ -28,10 +28,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from src.backend.core.domain.models.base import BaseModel
-from src.backend.core.domain.models.scheduler_run_history import (
-    SchedulerRunHistory,
-)
+from src.backend.core.domain.models.scheduler_run_history import SchedulerRunHistory
 from src.backend.services.scheduler.run_history import (
     STATUS_DONE,
     STATUS_FAILED,
@@ -193,9 +190,7 @@ async def test_stale_lease_recovered_by_new_worker(store: RunHistoryStore) -> No
     """
     base = _now() - timedelta(hours=1)
     ticks = [base + timedelta(minutes=i) for i in range(3)]
-    await store.materialize(
-        job_id="job_stale", ticks=ticks, status=STATUS_PENDING
-    )
+    await store.materialize(job_id="job_stale", ticks=ticks, status=STATUS_PENDING)
 
     # Worker A claims with short lease (1 sec) — но не complete.
     claimed_a = await store.claim_pending(
@@ -236,18 +231,14 @@ async def test_attempts_increment_per_claim(store: RunHistoryStore) -> None:
     """Каждый claim инкрементирует attempts."""
     base = _now()
     ticks = [base + timedelta(minutes=i) for i in range(2)]
-    await store.materialize(
-        job_id="job_attempts", ticks=ticks, status=STATUS_PENDING
-    )
+    await store.materialize(job_id="job_attempts", ticks=ticks, status=STATUS_PENDING)
 
     # Worker A claims.
     claimed = await store.claim_pending("job_attempts", "worker_a", lease_seconds=60)
     assert len(claimed) == 2
     # Worker A completes — releases lease.
     for tick in claimed:
-        await store.complete_claim(
-            "job_attempts", tick, "worker_a", status=STATUS_DONE
-        )
+        await store.complete_claim("job_attempts", tick, "worker_a", status=STATUS_DONE)
 
     # Re-materialize SAME ticks — НЕ должны создать дубликаты (UNIQUE constraint).
     created = await store.materialize(
@@ -422,7 +413,9 @@ async def test_concurrent_materialize_idempotent(store: RunHistoryStore) -> None
 
 
 @pytest.mark.asyncio
-async def test_concurrent_materialize_preserves_unique_tick_count(store: RunHistoryStore) -> None:
+async def test_concurrent_materialize_preserves_unique_tick_count(
+    store: RunHistoryStore,
+) -> None:
     """Production simulation: serialize concurrent materialize на shared state.
 
     Per-tick IntegrityError handling гарантирует что даже если 2 workers

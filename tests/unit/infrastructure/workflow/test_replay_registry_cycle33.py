@@ -176,11 +176,7 @@ def test_register_uses_decorator_name_when_present() -> None:
     class Renamed:
         _is_workflow = True
 
-    setattr(
-        Renamed,
-        "__temporal_workflow_definition",
-        _DefnMarker(name="ExplicitName"),
-    )
+    setattr(Renamed, "__temporal_workflow_definition", _DefnMarker(name="ExplicitName"))
 
     workflow_registry.register(Renamed)
     assert workflow_registry.get("ExplicitName") is Renamed

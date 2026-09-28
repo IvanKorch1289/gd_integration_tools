@@ -16,15 +16,10 @@ Protocol и новый RunHistoryStoreProtocol; удалить service locator �
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import MagicMock
 
 import pytest
 
 from src.backend.services.scheduler.facade import SchedulerFacade
-from src.backend.services.scheduler.protocols import (
-    JobRegistrationResult,
-    RunHistoryStoreProtocol,
-)
 
 
 class _MockBackend:
@@ -80,12 +75,7 @@ class _MockHistoryStore:
         tenant_id: str | None = None,
     ) -> int:
         self.materialize_calls.append(
-            {
-                "job_id": job_id,
-                "ticks": ticks,
-                "status": status,
-                "tenant_id": tenant_id,
-            }
+            {"job_id": job_id, "ticks": ticks, "status": status, "tenant_id": tenant_id}
         )
         return self.created_count
 
@@ -110,9 +100,7 @@ async def test_add_job_uses_injected_backend() -> None:
     facade = SchedulerFacade(backend=backend, history_store=history_store)
 
     result = await facade.add_job(
-        job_id="my_job",
-        func=lambda: None,
-        cron_expr="0 * * * *",
+        job_id="my_job", func=lambda: None, cron_expr="0 * * * *"
     )
 
     # backend был вызван (НЕ service locator).
@@ -131,7 +119,6 @@ async def test_add_job_uses_injected_backend() -> None:
 @pytest.mark.asyncio
 async def test_add_job_with_catchup_uses_injected_history_store() -> None:
     """Injected history_store используется для catchup materialization."""
-    from datetime import datetime, timedelta
 
     backend = _MockBackend()
     # Inject mock store — BackfillService calls ``materialize(ticks, ...)``
@@ -227,9 +214,11 @@ def test_protocols_module_exports() -> None:
     assert hasattr(protocols, "RunHistoryStoreProtocol")
     assert hasattr(protocols, "JobRegistrationResult")
     # RunHistoryStoreProtocol — runtime_checkable Protocol
-    assert getattr(protocols.RunHistoryStoreProtocol, "_is_runtime_protocol", False) or hasattr(
-        protocols.RunHistoryStoreProtocol, "__call__"
-    ) or hasattr(protocols.RunHistoryStoreProtocol, "_is_protocol")
+    assert (
+        getattr(protocols.RunHistoryStoreProtocol, "_is_runtime_protocol", False)
+        or hasattr(protocols.RunHistoryStoreProtocol, "__call__")
+        or hasattr(protocols.RunHistoryStoreProtocol, "_is_protocol")
+    )
 
 
 def test_run_history_store_protocol_matches_concrete() -> None:
@@ -241,7 +230,13 @@ def test_run_history_store_protocol_matches_concrete() -> None:
     from src.backend.services.scheduler.run_history import RunHistoryStore
 
     # Method names check (structural match).
-    protocol_methods = {"materialize", "pending", "last_scheduled", "mark", "run_pending"}
+    protocol_methods = {
+        "materialize",
+        "pending",
+        "last_scheduled",
+        "mark",
+        "run_pending",
+    }
     concrete_methods = set(dir(RunHistoryStore))
     missing = protocol_methods - concrete_methods
     assert not missing, (

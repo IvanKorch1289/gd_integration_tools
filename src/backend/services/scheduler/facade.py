@@ -76,6 +76,7 @@ class SchedulerFacade:
         self._session_factory = session_factory
         self._backend = backend
         self._history_store = history_store
+        self._job_funcs: dict[str, Any] = {}
 
     def _assert(self, action: str, resource: str) -> None:
         if self._check is not None:

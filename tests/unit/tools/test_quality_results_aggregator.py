@@ -23,18 +23,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
 def _run_aggregator(args: list[str] | None = None) -> subprocess.CompletedProcess[str]:
-    cmd = [
-        sys.executable,
-        "tools/checks/quality_results_aggregator.py",
-    ]
+    cmd = [sys.executable, "tools/checks/quality_results_aggregator.py"]
     if args:
         cmd.extend(args)
     return subprocess.run(
-        cmd,
-        cwd=PROJECT_ROOT,
-        capture_output=True,
-        text=True,
-        timeout=300,
+        cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=300
     )
 
 
@@ -46,9 +39,7 @@ def test_aggregator_produces_machine_readable_json() -> None:
         f"Got {result.returncode}. stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
     )
     output_path = PROJECT_ROOT / ".audit" / "quality-results.json"
-    assert output_path.is_file(), (
-        f"quality-results.json не создан: {output_path}"
-    )
+    assert output_path.is_file(), f"quality-results.json не создан: {output_path}"
     data = json.loads(output_path.read_text(encoding="utf-8"))
     assert "audit" in data
     assert "head" in data
@@ -115,7 +106,9 @@ def test_aggregator_overall_status_logic() -> None:
     result = _run_aggregator()
     data = json.loads((PROJECT_ROOT / ".audit" / "quality-results.json").read_text())
     statuses = {g["status"] for g in data["gates"]}
-    expected_overall = "PASS" if statuses.issubset({"PASS", "NOT_APPLICABLE"}) else "FAIL"
+    expected_overall = (
+        "PASS" if statuses.issubset({"PASS", "NOT_APPLICABLE"}) else "FAIL"
+    )
     assert data["overall_status"] == expected_overall, (
         f"overall_status mismatch: got {data['overall_status']}, "
         f"expected {expected_overall}. statuses: {statuses}"
@@ -135,7 +128,6 @@ def test_aggregator_command_uses_venv_python() -> None:
     for g in data["gates"]:
         cmd = g["command"]
         # Команда содержит .venv/bin/python path или python3.14 fallback.
-        assert (
-            venv_python in cmd
-            or "python3.14" in cmd
-        ), f"Unexpected python interpreter: {cmd}"
+        assert venv_python in cmd or "python3.14" in cmd, (
+            f"Unexpected python interpreter: {cmd}"
+        )
