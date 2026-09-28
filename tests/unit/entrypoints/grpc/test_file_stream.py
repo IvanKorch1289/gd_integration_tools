@@ -74,8 +74,23 @@ def _install_protobuf_stubs() -> None:
             mod.FileUploadRequest = _make_msg_class("FileUploadRequest")
             mod.FileUploadResponse = _make_msg_class("FileUploadResponse")
             mod.DownloadFileRequest = _make_msg_class("DownloadFileRequest")
+
+            # S-isolation (2026-09-28): заглушка обязана повторять настоящий
+            # сгенерированный класс. Раньше FileServiceServicer был пустым
+            # ``type("Stub", (), {})``, и FileStreamGRPCServicer наследовался
+            # от него навсегда: DeleteFile/GetFile отсутствовали в базах, и
+            # соседние тесты падали с ``AttributeError: type object
+            # 'FileStreamGRPCServicer' has no attribute 'DeleteFile'``.
+            # Откат sys.modules здесь не помогает — класс уже создан.
+            # RPC-методы реального files.proto: DeleteFile, DownloadFile,
+            # GetFile, UploadFile; invoker.proto: Invoke.
             mod.FileServiceServicer = type("Stub", (), {})
             mod.FileServiceStub = type("Stub", (), {})
+            for _m in ("DeleteFile", "DownloadFile", "GetFile", "UploadFile"):
+                setattr(mod.FileServiceServicer, _m, _stub_method)
+                setattr(mod.FileServiceStub, _m, _stub_method)
+            setattr(mod.InvokerServiceServicer, "Invoke", _stub_method)
+            setattr(mod.InvokerServiceStub, "Invoke", _stub_method)
             mod.add_FileServiceServicer_to_server = MagicMock()
             sys.modules[name] = mod
 
