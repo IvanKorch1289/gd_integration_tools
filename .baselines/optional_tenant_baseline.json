@@ -1,615 +1,861 @@
 [
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/entrypoints/base.py",
     "line": 120,
     "qualified_name": "BaseEntrypoint.dispatch"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/entrypoints/base.py",
     "line": 40,
     "qualified_name": "dispatch_action"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/entrypoints/middlewares/per_protocol_ratelimit.py",
     "line": 112,
     "qualified_name": "grpc_call_identifier"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/entrypoints/stream/_dlq_helper.py",
     "line": 41,
     "qualified_name": "enqueue_mq_poison_message"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/entrypoints/api/v1/endpoints/hitl.py",
     "line": 104,
     "qualified_name": "list_pending"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/entrypoints/api/v1/endpoints/hitl.py",
     "line": 120,
     "qualified_name": "hitl_history"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/entrypoints/api/v1/endpoints/admin_resilience_profile.py",
     "line": 113,
     "qualified_name": "list_profiles"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/entrypoints/api/v1/endpoints/admin_resilience_profile.py",
     "line": 146,
     "qualified_name": "get_profile"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/entrypoints/api/v1/endpoints/admin_resilience_profile.py",
     "line": 191,
     "qualified_name": "upsert_profile"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/entrypoints/api/v1/endpoints/admin_resilience_profile.py",
     "line": 229,
     "qualified_name": "delete_profile"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/entrypoints/api/v1/endpoints/admin_feedback.py",
     "line": 89,
     "qualified_name": "labeled_count"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/observability/logging_helpers.py",
     "line": 42,
     "qualified_name": "log_with_context"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/observability/logging_helpers.py",
     "line": 88,
     "qualified_name": "log_audit_event_lite"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/observability/correlation.py",
     "line": 41,
     "qualified_name": "set_correlation_context"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/observability/baggage.py",
     "line": 105,
     "qualified_name": "set_baggage"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/observability/baggage.py",
     "line": 184,
     "qualified_name": "with_baggage"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/resilience/rpa_policy.py",
     "line": 166,
     "qualified_name": "RPACallPolicy.call"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/resilience/resilience_profile.py",
     "line": 117,
     "qualified_name": "ResilienceProfileStore.get"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/resilience/resilience_profile.py",
     "line": 132,
     "qualified_name": "ResilienceProfileStore.list"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/resilience/resilience_profile.py",
     "line": 144,
     "qualified_name": "ResilienceProfileStore.upsert"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/resilience/resilience_profile.py",
     "line": 159,
     "qualified_name": "ResilienceProfileStore.delete"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/tenancy/cache.py",
     "line": 32,
     "qualified_name": "build_tenant_key"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/canary_deploy/controller.py",
     "line": 106,
     "qualified_name": "CanaryController.get_split"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/auth/facade_verify_mixin.py",
     "line": 135,
     "qualified_name": "AuthVerifyMixin.verify_ldap_credentials"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/auth/facade_token_mixin.py",
     "line": 36,
     "qualified_name": "AuthTokenMixin.issue_token"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/registry_explorer/explorer.py",
     "line": 92,
     "qualified_name": "RegistryExplorer.search_routes"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/feature_flags/service.py",
     "line": 38,
     "qualified_name": "FeatureFlagService.is_enabled"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/feature_flags/service.py",
     "line": 53,
     "qualified_name": "FeatureFlagService.get_string"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/feature_flags/service.py",
     "line": 63,
     "qualified_name": "FeatureFlagService.get_int"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/feature_flags/service.py",
     "line": 79,
     "qualified_name": "FeatureFlagService.has_override"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/feature_flags/runtime_overrides.py",
     "line": 86,
     "qualified_name": "RuntimeFeatureFlagOverrides.get"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/feature_flags/runtime_overrides.py",
     "line": 107,
     "qualified_name": "RuntimeFeatureFlagOverrides.has_override"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/feature_flags/runtime_overrides.py",
     "line": 116,
     "qualified_name": "RuntimeFeatureFlagOverrides.set"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/feature_flags/runtime_overrides.py",
     "line": 160,
     "qualified_name": "RuntimeFeatureFlagOverrides.clear"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/serialization/msgspec_hotpath.py",
     "line": 103,
     "qualified_name": "encode_audit_event"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/shadow_route/comparator.py",
     "line": 178,
     "qualified_name": "ShadowRouter.should_mirror"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/messaging/outbox.py",
     "line": 111,
     "qualified_name": "OutboxBackend.list_dlq"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/messaging/outbox.py",
     "line": 199,
     "qualified_name": "FakeOutbox.list_dlq"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/interfaces/rule_engine.py",
     "line": 59,
     "qualified_name": "RuleEngineRepository.get"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/interfaces/rule_engine.py",
     "line": 69,
     "qualified_name": "RuleEngineRepository.list_active"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/interfaces/rule_engine.py",
     "line": 81,
     "qualified_name": "RuleEngineRepository.delete"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/security/pii_tokenizer.py",
     "line": 146,
     "qualified_name": "PIITokenizer.mask_reversible"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/di/contexts.py",
     "line": 23,
     "qualified_name": "make_dispatch_context"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/privacy/delete_data_subject/_orchestrator.py",
     "line": 48,
     "qualified_name": "DeleteDataSubject.execute"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/privacy/delete_data_subject/_qdrant.py",
     "line": 40,
     "qualified_name": "QdrantErasureAdapter.execute"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/privacy/delete_data_subject/_langmem.py",
     "line": 33,
     "qualified_name": "LangMemErasureAdapter.execute"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/privacy/delete_data_subject/_redis.py",
     "line": 52,
     "qualified_name": "RedisErasureAdapter.execute"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/privacy/delete_data_subject/_types.py",
     "line": 80,
     "qualified_name": "ErasureAdapter.execute"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/privacy/delete_data_subject/_s3.py",
     "line": 41,
     "qualified_name": "S3ErasureAdapter.execute"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/privacy/delete_data_subject/_postgres.py",
-    "line": 42,
+    "line": 113,
     "qualified_name": "PostgresErasureAdapter.execute"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/audit/facade/audit_service.py",
     "line": 68,
     "qualified_name": "AuditService.emit"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/core/ai/gateway/gateway.py",
     "line": 116,
     "qualified_name": "AIGateway.get_policy"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/dsl/builders/agent_dsl/infra.py",
     "line": 534,
     "qualified_name": "InfraMixin.optimize_prompt"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/infrastructure/observability/immutable_audit.py",
     "line": 181,
     "qualified_name": "ImmutableAuditStore.append"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/infrastructure/resilience/profile_store_memory.py",
     "line": 27,
     "qualified_name": "InMemoryResilienceProfileStore.get"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/infrastructure/resilience/profile_store_memory.py",
     "line": 47,
     "qualified_name": "InMemoryResilienceProfileStore.list"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/infrastructure/resilience/profile_store_memory.py",
     "line": 69,
     "qualified_name": "InMemoryResilienceProfileStore.upsert"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/infrastructure/resilience/profile_store_memory.py",
     "line": 86,
     "qualified_name": "InMemoryResilienceProfileStore.delete"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/infrastructure/workflow/saga_state.py",
     "line": 245,
     "qualified_name": "WorkflowStateRepository.list_compensating"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/infrastructure/repositories/notebooks_mongo.py",
     "line": 108,
     "qualified_name": "MongoNotebookRepository.append_version"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/infrastructure/repositories/notebooks_mongo.py",
     "line": 159,
     "qualified_name": "MongoNotebookRepository.restore_version"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/infrastructure/repositories/rule_engine_repository.py",
     "line": 62,
     "qualified_name": "SQLRuleEngineRepository.get"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/infrastructure/repositories/rule_engine_repository.py",
     "line": 87,
     "qualified_name": "SQLRuleEngineRepository.list_active"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/infrastructure/repositories/rule_engine_repository.py",
     "line": 131,
     "qualified_name": "SQLRuleEngineRepository.delete"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/infrastructure/policy/casbin_tenant_scoped.py",
     "line": 100,
     "qualified_name": "TenantScopedCasbin.enforce"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/infrastructure/workflow/pg_runner_internals/instance_store.py",
     "line": 44,
     "qualified_name": "WorkflowInstanceStore.create"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/infrastructure/workflow/pg_runner_internals/instance_store.py",
     "line": 92,
     "qualified_name": "WorkflowInstanceStore.list_pending"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/dsl_portal/builder_facade.py",
     "line": 154,
     "qualified_name": "get_ai_cost_snapshot"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/dsl_portal/builder_facade.py",
     "line": 207,
     "qualified_name": "get_saga_stats"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/guardrails_metrics.py",
     "line": 232,
     "qualified_name": "GuardrailsMetricsService.reset"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/agent_memory.py",
     "line": 113,
     "qualified_name": "AgentMemoryService.get_conversation"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/agent_memory.py",
     "line": 128,
     "qualified_name": "AgentMemoryService.add_message"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/agent_memory.py",
     "line": 172,
     "qualified_name": "AgentMemoryService.clear_conversation"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/agent_memory.py",
     "line": 182,
     "qualified_name": "AgentMemoryService.get_scratchpad"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/agent_memory.py",
     "line": 191,
     "qualified_name": "AgentMemoryService.set_scratchpad"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/agent_memory.py",
     "line": 208,
     "qualified_name": "AgentMemoryService.get_facts"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/agent_memory.py",
     "line": 222,
     "qualified_name": "AgentMemoryService.set_fact"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/agent_memory.py",
     "line": 245,
     "qualified_name": "AgentMemoryService.delete_fact"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/agent_memory.py",
     "line": 255,
     "qualified_name": "AgentMemoryService.load_memory"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/agent_memory.py",
     "line": 267,
     "qualified_name": "AgentMemoryService.save_memory"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/agent_memory.py",
     "line": 279,
     "qualified_name": "AgentMemoryService.session_exists"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/scheduler/backfill.py",
     "line": 89,
     "qualified_name": "BackfillService.materialize_window"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/scheduler/run_history.py",
     "line": 59,
     "qualified_name": "RunHistoryStore.materialize"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/scheduler/protocols.py",
     "line": 45,
     "qualified_name": "RunHistoryStoreProtocol.materialize"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/integrations/facade.py",
     "line": 101,
     "qualified_name": "IntegrationFacade.send_to_sink"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/notebooks/service.py",
     "line": 72,
     "qualified_name": "NotebookService.get"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/notebooks/repository.py",
     "line": 38,
     "qualified_name": "NotebookRepository.get"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/notebooks/repository.py",
     "line": 155,
     "qualified_name": "InMemoryNotebookRepository.get"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/workflows/hitl_history.py",
     "line": 85,
     "qualified_name": "HitlHistoryService.get_history"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/workflows/hitl_signal_store_redis.py",
     "line": 135,
     "qualified_name": "RedisHitlSignalStore.get"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/workflows/hitl_signal_store_redis.py",
     "line": 167,
     "qualified_name": "RedisHitlSignalStore.list_pending"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/workflows/hitl_signal_store_redis.py",
     "line": 316,
     "qualified_name": "RedisHitlSignalStore.wait_for"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/workflows/hitl_service.py",
     "line": 85,
     "qualified_name": "HitlService.list_pending"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/workflows/hitl_service.py",
     "line": 99,
     "qualified_name": "HitlService.get"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/workflows/hitl_service.py",
     "line": 125,
     "qualified_name": "HitlService.wait_for"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/workflows/sla_alerting.py",
     "line": 115,
     "qualified_name": "evaluate_sla"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/workflows/hitl_signal_store.py",
     "line": 33,
     "qualified_name": "HitlSignalStore.get"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/workflows/hitl_signal_store.py",
     "line": 50,
     "qualified_name": "HitlSignalStore.list_pending"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/workflows/hitl_signal_store.py",
     "line": 80,
     "qualified_name": "HitlSignalStore.wait_for"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/workflows/hitl_signal_store.py",
     "line": 120,
     "qualified_name": "InMemoryHitlSignalStore.get"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/workflows/hitl_signal_store.py",
     "line": 142,
     "qualified_name": "InMemoryHitlSignalStore.list_pending"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/workflows/hitl_signal_store.py",
     "line": 195,
     "qualified_name": "InMemoryHitlSignalStore.wait_for"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/workflows/saga_history.py",
     "line": 113,
     "qualified_name": "aggregate_saga_stats"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/audit/clickhouse_audit_service/helpers.py",
     "line": 44,
     "qualified_name": "make_audit_event"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/integrations/rule_engine/registry.py",
     "line": 93,
     "qualified_name": "RuleEngineRegistry.get_active"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/rag_service/search_mixin.py",
     "line": 182,
     "qualified_name": "SearchMixin.search"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/gateway/langfuse_pii_callback.py",
     "line": 31,
     "qualified_name": "anonymize_trace_payload"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/costs/dashboard.py",
     "line": 128,
     "qualified_name": "AICostDashboard.snapshot"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/feedback/dspy_dataset_builder.py",
     "line": 49,
     "qualified_name": "DSPyDatasetBuilder.build"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/feedback/repository.py",
     "line": 60,
     "qualified_name": "FeedbackRepository.get"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/feedback/repository.py",
     "line": 176,
     "qualified_name": "InMemoryFeedbackRepository.get"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/feedback/feedback_service.py",
     "line": 229,
     "qualified_name": "AIFeedbackService.get"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/dspy/feedback_trainer.py",
     "line": 53,
     "qualified_name": "FeedbackTrainer.train"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/dspy/feedback_trainer.py",
     "line": 133,
     "qualified_name": "DSPyFeedbackTrainer.optimize"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/ai_agent/agent_orchestration_mixin.py",
     "line": 36,
     "qualified_name": "AgentOrchestrationMixin.chat"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/rag/multimodal/service.py",
     "line": 144,
     "qualified_name": "MultimodalRAGService.ingest_document"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/rag/multimodal/service.py",
     "line": 213,
     "qualified_name": "MultimodalRAGService.search"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/rag/multimodal/_legacy.py",
     "line": 134,
     "qualified_name": "MultimodalRAGService.ingest_text"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/rag/multimodal/_legacy.py",
     "line": 171,
     "qualified_name": "MultimodalRAGService.ingest_image"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/rag/multimodal/_legacy.py",
     "line": 209,
     "qualified_name": "MultimodalRAGService.ingest_audio"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/rag/multimodal/_legacy.py",
     "line": 247,
     "qualified_name": "MultimodalRAGService.retrieve"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/rag/multimodal/pipeline.py",
     "line": 91,
     "qualified_name": "MultimodalPipeline.ingest"
   },
   {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/services/ai/rag/multimodal/pipeline.py",
     "line": 158,
     "qualified_name": "MultimodalPipeline.query"

@@ -285,6 +285,7 @@ check-migrations: check-env ## Audit 2026-09-22: alembic heads + SQLite/PG DDL c
 check-tenant-isolation: check-env ## Audit 2026-09-22: cross-tenant security check (--strict = exit 1)
 	@$(INFO) "Checking tenant isolation..."
 	@$(UV_RUN) python tools/checks/check_tenant_isolation.py --strict
+	@$(UV_RUN) python tools/checks/check_no_new_optional_tenant.py --strict
 	@$(SUCCESS) "No cross-tenant access patterns detected!"
 
 check-object-auth: check-env ## Audit 2026-09-22: object-level authorization matrix

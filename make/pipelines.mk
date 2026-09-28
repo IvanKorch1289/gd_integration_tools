@@ -29,6 +29,7 @@ ci: ## К1 V15 — composite CI gate (lint + type + tests + security + WAF stric
 	@$(MAKE) check-ai-safety
 	@$(MAKE) check-python3-syntax
 	@$(MAKE) check-task-registry
+	@$(MAKE) check-tenant-isolation
 	@$(MAKE) test-collection-check
 	@$(SUCCESS) "CI gate passed"
 
