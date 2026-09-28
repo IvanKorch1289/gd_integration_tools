@@ -35,13 +35,18 @@ Note:
 
 from __future__ import annotations
 
-import re
 import time
 import uuid
 from dataclasses import dataclass
 from typing import Any, ClassVar
 
 from src.backend.core.logging import get_logger
+from src.backend.core.privacy.pii_table import (
+    build_anonymize_sql,
+    build_delete_sql,
+    pii_table_for_subject,
+    validate_entity_type,
+)
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
@@ -51,23 +56,19 @@ __all__ = ("ErasureResult", "PiiEraseProcessor")
 
 _logger = get_logger("dsl.security.pii_erase")
 
-# Whitelist для entity_type в ``{entity_type}_pii`` table — только
-# [A-Za-z0-9_], начинается с буквы/_ (см. db_crud ``_IDENTIFIER_RE``).
-_ENTITY_TYPE_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
-
+# Whitelist для entity_type и построение ``{entity_type}_pii`` SQL живут в
+# ``core.privacy.pii_table`` (ADR-0347) — единственная реализация, общая с
+# ``core/privacy/delete_data_subject/_postgres.py``. Раньше regex был
+# продублирован здесь, что позволяло двум erasure-механизмам разойтись.
 def _validate_entity_type(entity_type: str) -> str:
     """Return ``entity_type`` если проходит whitelist, иначе raise.
 
     S608 mitigation: гарантирует, что ``entity_type`` подставляется в SQL
-    только как safe-identifier.
+    только как safe-identifier. Делегирует канонической реализации
+    :func:`src.backend.core.privacy.pii_table.validate_entity_type`.
     """
-    if not _ENTITY_TYPE_RE.fullmatch(entity_type):
-        raise ValueError(
-            f"pii_erase: invalid entity_type {entity_type!r} "
-            "(only [A-Za-z0-9_] allowed)"
-        )
-    return entity_type
+    return validate_entity_type(entity_type)
 
 
 @dataclass(slots=True, frozen=True)
@@ -318,8 +319,12 @@ class PiiEraseProcessor(BaseProcessor):
         try:
             if ":" not in self._scope:
                 return 0
-            entity_type, entity_id = self._scope.split(":", 1)
-            _validate_entity_type(entity_type)
+            entity_id = self._scope.split(":", 1)[1]
+            # Канонический primitive: валидирует entity_type (whitelist → нет
+            # S608-поверхности) и строит ``{entity_type}_pii`` SQL. Общий с
+            # PostgresErasureAdapter — две реализации erasure расходиться
+            # больше не могут (ADR-0347).
+            table = pii_table_for_subject(self._scope)
             # S87 M2-#11 final batch: DI provider.
             from src.backend.core.di.providers.db import (
                 get_main_session_manager_provider,
@@ -332,25 +337,12 @@ class PiiEraseProcessor(BaseProcessor):
             async with main_session_manager.get_session() as session:
                 from sqlalchemy import text
 
-                if self._hard_delete:
-                    # ``entity_type`` was validated above by
-                    # :func:`_validate_entity_type` (regex whitelist) → no
-                    # SQL injection surface; values still bind via
-                    # ``:entity_id``.
-                    sql = text(
-                        f"DELETE FROM {entity_type}_pii WHERE entity_id = :entity_id"
-                        # ``entity_type`` validated by regex whitelist; values bound.
-                    )
-                    result = await session.execute(sql, {"entity_id": entity_id})
-                else:
-                    sql = text(
-                        f"UPDATE {entity_type}_pii "
-                        f"SET name = NULL, email = NULL, phone = NULL, "
-                        f"anonymized_at = NOW() "
-                        f"WHERE entity_id = :entity_id"
-                        # Same whitelist as DELETE branch above.
-                    )
-                    result = await session.execute(sql, {"entity_id": entity_id})
+                sql = text(
+                    build_delete_sql(table)
+                    if self._hard_delete
+                    else build_anonymize_sql(table)
+                )
+                result = await session.execute(sql, {"entity_id": entity_id})
                 await session.commit()
                 return int(result.rowcount or 0)
         except Exception as exc:

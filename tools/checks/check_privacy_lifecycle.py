@@ -90,16 +90,59 @@ def _unresolvable_model_attrs(adapter_src: str, models: dict[str, type]) -> list
     return sorted(set(missing))
 
 
-def _behavioural_test_exists(test_rel: str, adapter_class: str) -> bool:
-    """Есть ли тест, который РЕАЛЬНО исполняет адаптер (не просто импортирует)."""
-    path = REPO_ROOT / test_rel
-    if not path.is_file():
-        return False
-    try:
-        content = path.read_text(encoding="utf-8", errors="ignore")
-    except OSError:
-        return False
-    return adapter_class in content and ".execute(" in content
+def _behavioural_test_exists(test_rels: str | list[str], adapter_class: str) -> bool:
+    """Есть ли тест, который РЕАЛЬНО исполняет адаптер (не просто импортирует).
+
+    Принимает один путь или список кандидатов: у части адаптеров контрактные
+    тесты разложены по нескольким файлам.
+
+    Args:
+        test_rels: Путь(и) относительно корня репозитория.
+        adapter_class: Класс адаптера, который должен исполняться.
+
+    Returns:
+        ``True``, если хотя бы один файл и содержит класс адаптера, и вызывает
+        ``.execute(...)`` — то есть реально прогоняет erasure-путь.
+
+    """
+    if isinstance(test_rels, str):
+        test_rels = [test_rels]
+    for rel in test_rels:
+        path = REPO_ROOT / rel
+        if not path.is_file():
+            continue
+        try:
+            content = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        if adapter_class in content and ".execute(" in content:
+            return True
+    return False
+
+
+# Behavioural contract tests, per backend (ADR-0347). Structural markers alone
+# are NOT coverage — an adapter that merely names the right words used to pass.
+_BEHAVIOURAL_TESTS: dict[str, list[str]] = {
+    "postgresql": [
+        # ADR-0347: прежний test_postgres_tenant_enforcement.py SKIP'ился
+        # (зависел от несуществующей privacy_models) и при этом кодил
+        # unscoped cross-tenant DELETE как «корректное» поведение.
+        # Заменён реально исполняемым контрактом на живой PII-таблице.
+        "tests/unit/core/privacy/test_postgres_erasure_canonical_path.py",
+    ],
+    "redis": ["tests/unit/core/privacy/test_redis_erasure_contract.py"],
+    "s3": ["tests/unit/core/privacy/test_w11_tenant_aware_erasure.py"],
+    "qdrant": ["tests/unit/core/privacy/test_w11_tenant_aware_erasure.py"],
+    "ai_memory": ["tests/unit/core/privacy/test_langmem_tenant_erasure_contract.py"],
+}
+
+_ADAPTER_CLASS: dict[str, str] = {
+    "postgresql": "PostgresErasureAdapter",
+    "redis": "RedisErasureAdapter",
+    "s3": "S3ErasureAdapter",
+    "qdrant": "QdrantErasureAdapter",
+    "ai_memory": "LangMemErasureAdapter",
+}
 
 
 def _check_storage_coverage() -> dict[str, dict[str, object]]:
@@ -198,11 +241,7 @@ def _check_storage_coverage() -> dict[str, dict[str, object]]:
             if _behavioural
             else "NO behavioural test — adapter never executed"
         )
-        + (
-            f"; UNRESOLVED attrs: {_missing}"
-            if _missing
-            else ""
-        ),
+        + (f"; UNRESOLVED attrs: {_missing}" if _missing else ""),
     }
 
     # PostgreSQL: per v6 W1 spec — проверяем adapter import + contract suite
@@ -235,6 +274,55 @@ def _check_storage_coverage() -> dict[str, dict[str, object]]:
             f"tenant_id_param={pg_has_tenant_param})"
         ),
     }
+
+    # ------------------------------------------------------------------
+    # ADR-0347: structural markers alone are NOT coverage.
+    # Every backend must additionally have a test that actually EXECUTES
+    # the adapter's execute() path, and must not reference ORM attributes
+    # that do not exist on the real models. Applied uniformly so the
+    # LangMem class of defect cannot hide behind a marker match.
+    # ------------------------------------------------------------------
+    _models_all = _load_orm_models()
+    if not _models_all:
+        for _name in backends:
+            backends[_name]["covered"] = False
+            backends[_name]["evidence"] = (
+                "UNVERIFIED: ORM models not importable — cannot resolve "
+                "adapter attribute references (fail-closed)"
+            )
+        return backends
+
+    for _name, _info in backends.items():
+        _cls = _ADAPTER_CLASS.get(_name)
+        if not _cls:
+            continue
+        _tests = _BEHAVIOURAL_TESTS.get(_name, [])
+        _behavioural = _behavioural_test_exists(_tests, _cls)
+        _src_key = {
+            "postgresql": "_postgres.py",
+            "redis": "_redis.py",
+            "s3": "_s3.py",
+            "qdrant": "_qdrant.py",
+            "ai_memory": "_langmem.py",
+        }[_name]
+        _missing = _unresolvable_model_attrs(
+            adapter_content.get(_src_key, ""), _models_all
+        )
+        _structural = bool(_info.get("covered"))
+        _info["structural_markers"] = _structural
+        _info["behavioural_test"] = _behavioural
+        _info["unresolvable_attrs"] = _missing
+        _info["covered"] = bool(_structural and _behavioural and not _missing)
+        _ev = str(_info.get("evidence", ""))
+        if not _behavioural:
+            _info["evidence"] = (
+                f"NO behavioural test — adapter never executed; structural "
+                f"markers present but insufficient. {_ev}"
+            )
+        elif _missing:
+            _info["evidence"] = f"UNRESOLVED attrs: {_missing}; {_ev}"
+        else:
+            _info["evidence"] = f"behavioural ({_tests[0]}) + {_ev}"
 
     return backends
 
