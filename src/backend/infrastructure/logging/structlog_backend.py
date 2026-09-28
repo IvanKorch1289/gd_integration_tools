@@ -336,6 +336,16 @@ class StructlogGraylogBackend(BaseLoggerBackend):
             structlog.stdlib.ExtraAdder(),
             structlog.processors.TimeStamper(fmt="iso"),
             structlog.processors.StackInfoRenderer(),
+            # Превращает ``exc_info`` (True / exception / sys.exc_info() tuple)
+            # в строковый ключ ``exception`` с отрендеренным traceback.
+            # Без этого процессора ``exc_info`` остаётся обычным ключом
+            # event_dict и рендерится как ``"exc_info": true`` — traceback
+            # теряется полностью (LogRecord.exc_info тоже пуст), т.е. ни
+            # ``logger.error(..., exc_info=True)``, ни ``logger.exception()``
+            # не дают стека в логах. Проверено runtime-репро на текущем HEAD.
+            # Размещён ДО ``_mask_pii_lazy`` — traceback проходит ту же
+            # PII-редакцию, что и остальные значения (V15 S1).
+            structlog.processors.format_exc_info,
             structlog.processors.UnicodeDecoder(),
             # V15 S1: PII redaction перед роутингом в backends.
             # Маскирует email/phone/passport/snils/inn/card во всём event_dict.
