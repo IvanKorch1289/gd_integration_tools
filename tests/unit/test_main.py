@@ -5,50 +5,61 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 from src.backend import main
+from src.backend.plugins.composition import app_factory
+
+# ``_mount_mcp_http`` переехал из ``src.backend.main`` в
+# ``src.backend.plugins.composition.app_factory`` (D-AUDIT-20807, cycle 216)
+# и теперь принимает FastAPI-приложение аргументом, а не берёт module-global.
+# Тесты ниже всё ещё обращались к ``main._mount_mcp_http`` и падали с
+# AttributeError: module 'src.backend.main' has no attribute '_mount_mcp_http'.
 
 
-@patch.object(main, "app", MagicMock())
 def test_mount_mcp_http_skipped_when_disabled() -> None:
+    mock_app = MagicMock()
     with patch("src.backend.core.config.ai_stack.mcp_settings") as mock_settings:
         mock_settings.http_enabled = False
-        main._mount_mcp_http()
+        app_factory._mount_mcp_http(mock_app)
+    mock_app.mount.assert_not_called()
 
 
-@patch.object(main, "app", MagicMock())
 def test_mount_mcp_http_skipped_on_import_error() -> None:
     # S146 W2: patch source location, not consumer.
     # ``_mount_mcp_http`` does ``from src.backend.core.config.ai_stack import mcp_settings``
-    # inside the function body, so ``src.backend.main.mcp_settings`` is not
+    # inside the function body, so ``app_factory.mcp_settings`` is not
     # an importable attribute. Patch the source module instead.
+    mock_app = MagicMock()
     with patch(
         "src.backend.core.config.ai_stack.mcp_settings", side_effect=ImportError
     ):
-        main._mount_mcp_http()
+        app_factory._mount_mcp_http(mock_app)
+    mock_app.mount.assert_not_called()
 
 
-@patch.object(main, "app", MagicMock())
 def test_mount_mcp_http_mounts_when_enabled() -> None:
+    mock_app = MagicMock()
+    mock_asgi = MagicMock()
     with patch("src.backend.core.config.ai_stack.mcp_settings") as mock_settings:
         mock_settings.http_enabled = True
         mock_settings.bind_path = "/mcp"
         with patch(
             "src.backend.entrypoints.mcp.http_server.create_mcp_http_app"
         ) as mock_create:
-            mock_app = MagicMock()
-            mock_create.return_value = mock_app
-            main._mount_mcp_http()
-            main.app.mount.assert_called_once_with("/mcp", mock_app)
+            # create_mcp_http_app() возвращает пару (asgi_app, lifespan).
+            mock_create.return_value = (mock_asgi, MagicMock())
+            app_factory._mount_mcp_http(mock_app)
+            mock_app.mount.assert_called_once_with("/mcp", mock_asgi)
 
 
-@patch.object(main, "app", MagicMock())
 def test_mount_mcp_http_logs_warning_on_exception() -> None:
+    mock_app = MagicMock()
     with patch("src.backend.core.config.ai_stack.mcp_settings") as mock_settings:
         mock_settings.http_enabled = True
         with patch(
             "src.backend.entrypoints.mcp.http_server.create_mcp_http_app",
             side_effect=RuntimeError("fail"),
         ):
-            main._mount_mcp_http()
+            app_factory._mount_mcp_http(mock_app)
+    mock_app.mount.assert_not_called()
 
 
 def test_run_uvicorn() -> None:
