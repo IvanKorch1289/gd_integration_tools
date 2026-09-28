@@ -1,0 +1,9 @@
+................................................FFFF.................... [ 67%]
+.....................x.............                                      [100%]
+=========================== short test summary info ============================
+FAILED tests/unit/entrypoints/mcp/test_http_server_auth_wrap.py::TestCreateMcpHttpAppReturnsWrappedPair::test_returns_tuple_of_two_elements
+FAILED tests/unit/entrypoints/mcp/test_http_server_auth_wrap.py::TestCreateMcpHttpAppReturnsWrappedPair::test_first_element_is_mcp_auth_middleware_instance
+FAILED tests/unit/entrypoints/mcp/test_http_server_auth_wrap.py::TestCreateMcpHttpAppReturnsWrappedPair::test_middleware_wraps_inner_app
+FAILED tests/unit/entrypoints/mcp/test_http_server_auth_wrap.py::TestCreateMcpHttpAppReturnsWrappedPair::test_second_element_is_lifespan_callable
+4 failed, 102 passed, 1 xfailed in 3.49s
+EXIT=1

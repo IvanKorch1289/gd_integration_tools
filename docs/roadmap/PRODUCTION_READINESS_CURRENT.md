@@ -90,7 +90,7 @@ wrong; an incomplete environment is never reported as `PASS`.
 | Migration apply / rollback | ENV_FAILURE | `alembic upgrade head` aborts in config load (`redis AuthenticationError`); no Redis/Vault here |
 | Privacy integration (PG/Redis/MinIO/Qdrant/LangMem) | NOT VERIFIED | backends not running |
 | Tooling test suite | **FAIL** | `tests/unit/tools/`: 10 failures, all reproduce on a clean `HEAD` worktree |
-| Unit test suite (per-directory) | **FAIL** | all 16 clusters under `tests/unit/entrypoints/` re-measured at `9227f6ded`: green except `mcp` (8 failed / 98 passed, 305 s) |
+| Unit test suite (per-directory) | **FAIL** | all 16 clusters under `tests/unit/entrypoints/` re-measured: green except `mcp`, which is down to 4 failures at `3fa6cd206` — all four are the missing `fastmcp` |
 | Unit test suite (whole-tree) | **FAIL** | reports failures that do not reproduce in isolation; gRPC half fixed at `9227f6ded`, frontend `shared/test_components.py` half still open |
 | HTTP / cURL matrix | PASS | `artifacts/release/98698dd51.../curl_matrix.txt`, 8 groups |
 | Route inventory | PASS | 414 paths / 443 operations, from the live `openapi.json` |
@@ -208,6 +208,35 @@ confirmed on a live instance, then fixed with a regression test.
 Browser verification on this SHA: `/docs` 200, Authorize button present and
 selectable, `/redoc` renders the security contract, **zero console errors**.
 Screenshots and the machine-readable report are in `artifacts/e2e/`.
+
+### Found by running the failing tests and reading what they assert
+
+`422b012b3`, `3fa6cd206`. Eleven failures across three files, and in every one
+the **production code was correct** — the tests still asserted contracts that
+had been deliberately replaced.
+
+- `_FakeMcp.http_app()` took no kwargs, but the code calls
+  `candidate(stateless_http=True, path="/")` (D-AUDIT-20812, a real
+  Starlette `Mount` 404 fix). The `TypeError` was swallowed by a broad
+  `except` and surfaced as a `RuntimeError` that looked like a FastMCP
+  problem. The real signature was checked against vendor docs, not guessed.
+- A test patched private `_verify_api_key`/`_verify_jwt` after S93 W3 had
+  moved the middleware to the public `verify_request()`.
+- `mock_row.status` was a `MagicMock` unrelated to the members of the
+  `terminal` set, so `row.status in terminal` was always false. With
+  `asyncio.sleep` mocked, the poll loop **hot-spun for the full 300 s
+  timeout** — that is where the 301.92 s went.
+- `_mount_mcp_http` had moved to `app_factory` and now takes the app as an
+  argument; the tests still called `main._mount_mcp_http()`.
+- Two smoke tests expected 200 from admin routers that the S202 audit fix had
+  put behind `require_admin`. **The guard was not weakened** — the tests now
+  inject an admin `AuthContext` through `request.state.auth`, the same
+  channel production uses — and two negative tests were added that did not
+  exist before, since the guard had no negative coverage.
+
+Result: MCP cluster `8 failed / 305.74 s` → `4 failed / 1.75 s`; combined
+affected set 15 failed → 4. The 87× speedup is itself evidence — it is the
+removed 300 s spin.
 ---
 
 ## Known open defects
@@ -249,12 +278,15 @@ Screenshots and the machine-readable report are in `artifacts/e2e/`.
 - Test isolation, frontend cluster — still open. The
   `shared/test_components.py` cluster fails only in combined runs. Needs
   fixtures, not test edits.
-- `tests/unit/entrypoints/mcp` has 8 pre-existing failures
-  (`test_http_server_auth_wrap.py` ×4, `test_http_transport.py` ×2,
-  `test_workflow_tools.py` ×2); measured `8 failed, 98 passed, 1 xfailed` in
-  305 s at `9227f6ded`. The run needs ~5 min, so short timeouts can make it
-  look like a hang — earlier notes here said it "cannot complete a run",
-  which this measurement corrects.
+- `tests/unit/entrypoints/mcp` is down to 4 failures at `3fa6cd206`
+  (`8 failed, 98 passed, 305.74 s` → `4 failed, 102 passed, 1.75 s`). All four
+  are `test_http_server_auth_wrap.py` and all four are **ENV_FAILURE**:
+  `ImportError: fastmcp is not installed`. `fastmcp>=3.2.4` is declared in the
+  `mcp` and `dev-light` extras and pinned at 4.0.3 in `uv.lock`, but the venv
+  does not contain it — it is stale against `make/setup.mk`'s
+  `uv sync --all-extras`. Deliberately **not** converted into a skip: these
+  tests guard that the MCP HTTP app is wrapped in auth middleware, and a skip
+  would hide exactly that.
 - 10 tooling-test failures (audit-deprecation ×4, SBOM ×2, scaffold, routebuilder
   MRO, codemod idempotency, plugin scaffold) — all reproduce at clean `HEAD`.
 - 123 optional `tenant_id` contracts remain tracked, not removed.

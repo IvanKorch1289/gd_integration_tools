@@ -1,10 +1,10 @@
 {
   "audit": "GD Integration Tools — current readiness status",
-  "head": "9227f6ded",
-  "timestamp": "2026-09-28T19:53:00+00:00",
+  "head": "3fa6cd206",
+  "timestamp": "2026-09-28T20:20:00+00:00",
   "status": "not_production_ready",
   "canonical_doc": "docs/roadmap/PRODUCTION_READINESS_CURRENT.md",
-  "per_sha_evidence": "artifacts/release/9227f6ded5a42b62b7ada6a0ca80496e1ffa73bf/EVIDENCE.md",
+  "per_sha_evidence": "artifacts/release/3fa6cd206afc0950722d325fefed28d20c2c0de5/EVIDENCE.md",
   "superseded_docs": [
     "docs/roadmap/PRODUCTION_READINESS.md (snapshot 2026-09-01)",
     "docs/roadmap/PRODUCTION_READINESS_FINAL.md (snapshot 2026-09-02)"
@@ -14,7 +14,7 @@
   "blocking": [
     "coverage ~52% vs 70% threshold (two independent measurements, 0.36 p.p. apart)",
     "gzip responses were invalid ASGI (str headers) so uvicorn dropped every response over 500 bytes with no reply; fixed in 2a347ee70, browsers could not load the spec at all",
-    "test suite is not isolation-safe: gRPC cluster fixed in 9227f6ded (stub now mirrors the real generated servicer); frontend shared/test_components.py cluster still fails only in combined runs",
+    "test suite is not isolation-safe: gRPC cluster fixed in 9227f6ded; frontend shared/test_components.py cluster still fails only in combined runs",
     "make ci does not execute tests — it ends at test-collection-check which runs pytest --co only",
     "no container image, SBOM or signature for this SHA",
     "10 tooling-test failures in tests/unit/tools/",
@@ -100,5 +100,8 @@
     "logs report environment=production while the dev_light profile sets app.environment=development; the line prefix says [development@...]",
     "the spec's security field describes the AuthRequiredMiddleware layer only; step-up, CSRF-cookie, mTLS and Express guards are not expressible in OpenAPI",
     "Swagger UI 5 renders only 14 of 443 operations past ~72 operations; bisected between 71 and 72, ruled out slow rendering, truncated download, specific requestBody, and the application itself (reproduced on a static server with no app and no CSP) — third-party limitation, not a service defect"
+  ],
+  "environment_notes": [
+    "MCP is not served in this environment: mcp_settings.http_enabled is False AND fastmcp is not importable. GET /mcp returns 401, but a control request to a nonexistent path returns a byte-identical 401/36-byte body, so that status proves nothing about the MCP route."
   ]
 }
