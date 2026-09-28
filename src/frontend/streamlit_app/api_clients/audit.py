@@ -11,7 +11,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.frontend.streamlit_app.api_clients.base import BaseAPIClient
+from src.frontend.streamlit_app.api_clients.base import (
+    CLIENT_SAFE_DEFAULT_ERRORS,
+    BaseAPIClient,
+)
 
 __all__ = ("AuditClient",)
 
@@ -38,13 +41,7 @@ class AuditClient(BaseAPIClient):
                 params={"count": count, "start_id": start_id},
             )
             return result if isinstance(result, list) else []
-        except (
-            ConnectionError,
-            TimeoutError,
-            RuntimeError,
-            ValueError,
-            TypeError,
-        ) as audit_exc:
+        except CLIENT_SAFE_DEFAULT_ERRORS as audit_exc:
             # cycle-9/D-AUDIT-pattern: narrow exceptions + observability.
             import logging
 

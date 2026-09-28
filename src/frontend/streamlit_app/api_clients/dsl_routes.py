@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.frontend.streamlit_app.api_clients.base import BaseAPIClient
+from src.frontend.streamlit_app.api_clients.base import (
+    CLIENT_SAFE_DEFAULT_ERRORS,
+    BaseAPIClient,
+)
 
 __all__ = ("DSLRoutesClient",)
 
@@ -21,13 +24,7 @@ class DSLRoutesClient(BaseAPIClient):
         try:
             result = self._request("GET", "/api/v1/admin/dsl-routes")
             return result if isinstance(result, list) else []
-        except (
-            ConnectionError,
-            TimeoutError,
-            RuntimeError,
-            ValueError,
-            TypeError,
-        ) as list_exc:
+        except CLIENT_SAFE_DEFAULT_ERRORS as list_exc:
             # cycle-9/D-AUDIT-1066: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
@@ -43,13 +40,7 @@ class DSLRoutesClient(BaseAPIClient):
         """GET /api/v1/admin/dsl-routes/{id} — yaml + spec + python."""
         try:
             return self._request("GET", f"/api/v1/admin/dsl-routes/{route_id}")
-        except (
-            ConnectionError,
-            TimeoutError,
-            RuntimeError,
-            ValueError,
-            TypeError,
-        ) as get_exc:
+        except CLIENT_SAFE_DEFAULT_ERRORS as get_exc:
             # cycle-9/D-AUDIT-1066: см. выше — mirror для get.
             import logging
 
@@ -76,13 +67,7 @@ class DSLRoutesClient(BaseAPIClient):
         try:
             self._request("DELETE", f"/api/v1/admin/dsl-routes/{route_id}")
             return True
-        except (
-            ConnectionError,
-            TimeoutError,
-            RuntimeError,
-            ValueError,
-            TypeError,
-        ) as del_exc:
+        except CLIENT_SAFE_DEFAULT_ERRORS as del_exc:
             # cycle-9/D-AUDIT-1071: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
@@ -101,13 +86,7 @@ class DSLRoutesClient(BaseAPIClient):
             return self._request(
                 "POST", "/api/v1/admin/dsl-routes/validate", json={"yaml": yaml_str}
             )
-        except (
-            ConnectionError,
-            TimeoutError,
-            RuntimeError,
-            ValueError,
-            TypeError,
-        ) as exc:
+        except CLIENT_SAFE_DEFAULT_ERRORS as exc:
             return {"valid": False, "error": str(exc)}
 
     def diff_dsl_route(self, route_id: str, yaml_str: str) -> dict[str, Any] | None:
@@ -118,13 +97,7 @@ class DSLRoutesClient(BaseAPIClient):
                 f"/api/v1/admin/dsl-routes/{route_id}/diff",
                 json={"yaml": yaml_str},
             )
-        except (
-            ConnectionError,
-            TimeoutError,
-            RuntimeError,
-            ValueError,
-            TypeError,
-        ) as diff_exc:
+        except CLIENT_SAFE_DEFAULT_ERRORS as diff_exc:
             # cycle-9/D-AUDIT-1071: см. выше — mirror для diff.
             import logging
 
@@ -149,13 +122,7 @@ class DSLRoutesClient(BaseAPIClient):
                 params={"limit": limit},
             )
             return result if isinstance(result, list) else []
-        except (
-            ConnectionError,
-            TimeoutError,
-            RuntimeError,
-            ValueError,
-            TypeError,
-        ) as traces_exc:
+        except CLIENT_SAFE_DEFAULT_ERRORS as traces_exc:
             # cycle-9/D-AUDIT-1071: см. выше — mirror для traces.
             import logging
 

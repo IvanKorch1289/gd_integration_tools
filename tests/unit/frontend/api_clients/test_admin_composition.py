@@ -136,7 +136,7 @@ class TestAdminClientAdminOnlyMethods:
             assert admin_client.get_ready() == {"status": "ok"}
 
     def test_get_ready_exception(self, admin_client: AdminClient) -> None:
-        with patch.object(admin_client, "get", side_effect=Exception("boom")):
+        with patch.object(admin_client, "get", side_effect=RuntimeError("boom")):
             result = admin_client.get_ready()
         assert result["status"] == "error"
         assert result["components"] == {}
@@ -146,7 +146,7 @@ class TestAdminClientAdminOnlyMethods:
             assert admin_client.get_capability_catalog() == {"vocabulary": ["x"]}
 
     def test_get_capability_catalog_exception(self, admin_client: AdminClient) -> None:
-        with patch.object(admin_client, "get", side_effect=Exception("boom")):
+        with patch.object(admin_client, "get", side_effect=RuntimeError("boom")):
             result = admin_client.get_capability_catalog()
         assert result["vocabulary"] == []
         assert "boom" in result["error"]
@@ -171,7 +171,7 @@ class TestAdminClientAdminOnlyMethods:
         )
 
     def test_get_processor_catalog_exception(self, admin_client: AdminClient) -> None:
-        with patch.object(admin_client, "get", side_effect=Exception("boom")):
+        with patch.object(admin_client, "get", side_effect=RuntimeError("boom")):
             result = admin_client.get_processor_catalog()
         assert result["items"] == []
         assert result["total"] == 0
@@ -202,7 +202,7 @@ class TestAdminClientAdminOnlyMethods:
         )
 
     def test_get_audit_events_exception(self, admin_client: AdminClient) -> None:
-        with patch.object(admin_client, "get", side_effect=Exception("boom")):
+        with patch.object(admin_client, "get", side_effect=RuntimeError("boom")):
             assert admin_client.get_audit_events() == []
 
     def test_get_dependency_graph_happy(self, admin_client: AdminClient) -> None:
@@ -212,7 +212,7 @@ class TestAdminClientAdminOnlyMethods:
             assert admin_client.get_dependency_graph() == {"nodes": ["a"], "edges": []}
 
     def test_get_dependency_graph_exception(self, admin_client: AdminClient) -> None:
-        with patch.object(admin_client, "get", side_effect=Exception("boom")):
+        with patch.object(admin_client, "get", side_effect=RuntimeError("boom")):
             result = admin_client.get_dependency_graph()
         assert result["nodes"] == []
         assert "boom" in result["error"]
@@ -222,7 +222,7 @@ class TestAdminClientAdminOnlyMethods:
             assert admin_client.get_capability_graph() == {"nodes": ["x"]}
 
     def test_get_capability_graph_exception(self, admin_client: AdminClient) -> None:
-        with patch.object(admin_client, "get", side_effect=Exception("boom")):
+        with patch.object(admin_client, "get", side_effect=RuntimeError("boom")):
             result = admin_client.get_capability_graph()
         assert result["nodes"] == []
         assert "boom" in result["error"]
@@ -268,7 +268,7 @@ class TestAdminClientAdminOnlyMethods:
         )
 
     def test_scaffold_plugin_exception(self, admin_client: AdminClient) -> None:
-        with patch.object(admin_client, "post", side_effect=Exception("boom")):
+        with patch.object(admin_client, "post", side_effect=RuntimeError("boom")):
             result = admin_client.scaffold_plugin("p1")
         assert result["name"] == "p1"
         assert result["created"] is False
@@ -285,7 +285,7 @@ class TestAdminClientAdminOnlyMethods:
         )
 
     def test_get_langgraph_sessions_exception(self, admin_client: AdminClient) -> None:
-        with patch.object(admin_client, "get", side_effect=Exception("boom")):
+        with patch.object(admin_client, "get", side_effect=RuntimeError("boom")):
             result = admin_client.get_langgraph_sessions()
         assert result["sessions"] == []
         assert result["count"] == 0

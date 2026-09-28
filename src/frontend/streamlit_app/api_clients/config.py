@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.frontend.streamlit_app.api_clients.base import BaseAPIClient
+from src.frontend.streamlit_app.api_clients.base import (
+    CLIENT_SAFE_DEFAULT_ERRORS,
+    BaseAPIClient,
+)
 
 __all__ = ("ConfigClient",)
 
@@ -16,13 +19,7 @@ class ConfigClient(BaseAPIClient):
         """Метод get_config (см. signature)."""
         try:
             return self._request("GET", "/api/v1/admin/config")
-        except (
-            ConnectionError,
-            TimeoutError,
-            RuntimeError,
-            ValueError,
-            TypeError,
-        ) as cfg_exc:
+        except CLIENT_SAFE_DEFAULT_ERRORS as cfg_exc:
             # cycle-9/D-AUDIT-1069: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
@@ -40,13 +37,7 @@ class ConfigClient(BaseAPIClient):
             return self._request(
                 "GET", "/api/v1/admin/trace-logs", params={"limit": limit}
             )
-        except (
-            ConnectionError,
-            TimeoutError,
-            RuntimeError,
-            ValueError,
-            TypeError,
-        ) as trace_exc:
+        except CLIENT_SAFE_DEFAULT_ERRORS as trace_exc:
             # cycle-9/D-AUDIT-1069: см. выше — mirror для trace-logs.
             import logging
 

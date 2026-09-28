@@ -35,7 +35,7 @@ class TestConfigClient:
         from src.frontend.streamlit_app.api_clients.config import ConfigClient
 
         c = ConfigClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             assert c.get_config() == {}
 
     def test_get_trace_logs_default_limit(self) -> None:
@@ -62,7 +62,7 @@ class TestConfigClient:
         from src.frontend.streamlit_app.api_clients.config import ConfigClient
 
         c = ConfigClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             assert c.get_trace_logs() == []
 
 
@@ -89,7 +89,7 @@ class TestInventoryClient:
         from src.frontend.streamlit_app.api_clients.inventory import InventoryClient
 
         c = InventoryClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             result = c.get_plugins_inventory()
         assert result["enabled"] is False
         assert result["plugins"] == []
@@ -110,7 +110,7 @@ class TestInventoryClient:
         from src.frontend.streamlit_app.api_clients.inventory import InventoryClient
 
         c = InventoryClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             result = c.get_routes_inventory()
         assert result["enabled"] is False
         assert result["routes"] == []
@@ -257,7 +257,7 @@ class TestMetricsClient:
         from src.frontend.streamlit_app.api_clients.metrics import MetricsClient
 
         c = MetricsClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             assert c.get_metrics() == {}
 
     def test_get_health_happy(self) -> None:
@@ -273,7 +273,7 @@ class TestMetricsClient:
         from src.frontend.streamlit_app.api_clients.metrics import MetricsClient
 
         c = MetricsClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             assert c.get_health() == {}
 
 
@@ -301,7 +301,7 @@ class TestTenantsClient:
         from src.frontend.streamlit_app.api_clients.tenants import TenantsClient
 
         c = TenantsClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             with pytest.raises(Exception, match="boom"):
                 c.get_tenants()
 
@@ -319,6 +319,6 @@ class TestTenantsClient:
         from src.frontend.streamlit_app.api_clients.tenants import TenantsClient
 
         c = TenantsClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             with pytest.raises(Exception, match="boom"):
                 c.get_tenant_detail("missing")

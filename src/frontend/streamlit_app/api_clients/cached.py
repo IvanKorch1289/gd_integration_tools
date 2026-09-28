@@ -20,7 +20,10 @@ from typing import Any
 
 import streamlit as st
 
-from src.frontend.streamlit_app.api_clients.base import BaseAPIClient
+from src.frontend.streamlit_app.api_clients.base import (
+    CLIENT_SAFE_DEFAULT_ERRORS,
+    BaseAPIClient,
+)
 
 # Cache TTLs — configurable via env, sensible defaults.
 # Production: set via STREAMLIT_CACHE_TTL_METRICS etc.
@@ -43,13 +46,7 @@ def cached_get_metrics() -> dict[str, Any]:
     client = BaseAPIClient()
     try:
         return client._request("GET", "/api/v1/admin/metrics")
-    except (
-        ConnectionError,
-        TimeoutError,
-        RuntimeError,
-        ValueError,
-        TypeError,
-    ) as metrics_exc:
+    except CLIENT_SAFE_DEFAULT_ERRORS as metrics_exc:
         # cycle-9/D-AUDIT-1048: narrow exceptions + observability.
         # ConnectionError/TimeoutError — server unreachable, RuntimeError
         # — API failure, ValueError — invalid response, TypeError — wrong.
@@ -70,13 +67,7 @@ def cached_get_health() -> dict[str, Any]:
     client = BaseAPIClient()
     try:
         return client._request("GET", "/api/v1/health/components")
-    except (
-        ConnectionError,
-        TimeoutError,
-        RuntimeError,
-        ValueError,
-        TypeError,
-    ) as health_exc:
+    except CLIENT_SAFE_DEFAULT_ERRORS as health_exc:
         # cycle-9/D-AUDIT-1049: narrow exceptions + observability (mirror
         # D-AUDIT-1048).
         import logging
@@ -98,13 +89,7 @@ def cached_get_orders(page: int = 1, size: int = 50) -> Any:
         return client._request(
             "GET", "/api/v1/orders/all/", params={"page": page, "size": size}
         )
-    except (
-        ConnectionError,
-        TimeoutError,
-        RuntimeError,
-        ValueError,
-        TypeError,
-    ) as orders_exc:
+    except CLIENT_SAFE_DEFAULT_ERRORS as orders_exc:
         # cycle-9/D-AUDIT-1064: narrow exceptions + observability.
         # ConnectionError/TimeoutError — server unreachable, RuntimeError
         # — API failure, ValueError — invalid response, TypeError — wrong.

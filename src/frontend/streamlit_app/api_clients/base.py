@@ -16,7 +16,27 @@ import streamlit as st
 
 from src.frontend.streamlit_app.config import get_api_base_url
 
-__all__ = ("BaseAPIClient", "get_base_client")
+__all__ = ("CLIENT_SAFE_DEFAULT_ERRORS", "BaseAPIClient", "get_base_client")
+
+# Ошибки, при которых клиент возвращает безопасный default вместо падения UI.
+#
+# httpx.HTTPError обязателен: ``_request`` пробрасывает именно эти исключения
+# (``httpx.ConnectError``/``TimeoutException``/``NetworkError`` после исчерпания
+# retry и ``httpx.HTTPStatusError`` на 5xx), и ни одно из них НЕ является
+# подклассом встроенных ``ConnectionError``/``TimeoutError``. Без этого пункта
+# контракт «показать пустое состояние вместо краша при недоступном API» не
+# работал для двух самых частых режимов отказа: бэкенд не в сети и 5xx.
+#
+# Хранится здесь, а не дублируется по 39 except-блокам в 10 клиентах, чтобы
+# список ошибок не разъезжался между методами.
+CLIENT_SAFE_DEFAULT_ERRORS: tuple[type[BaseException], ...] = (
+    ConnectionError,
+    TimeoutError,
+    RuntimeError,
+    ValueError,
+    TypeError,
+    httpx.HTTPError,
+)
 
 _BASE_URL = get_api_base_url()
 

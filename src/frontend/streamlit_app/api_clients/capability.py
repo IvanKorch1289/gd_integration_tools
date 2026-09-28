@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.frontend.streamlit_app.api_clients.base import BaseAPIClient
+from src.frontend.streamlit_app.api_clients.base import (
+    CLIENT_SAFE_DEFAULT_ERRORS,
+    BaseAPIClient,
+)
 
 __all__ = ("CapabilityClient",)
 
@@ -47,13 +50,7 @@ class CapabilityClient(BaseAPIClient):
             if isinstance(response, list):
                 return response
             return response.get("events", []) if isinstance(response, dict) else []
-        except (
-            ConnectionError,
-            TimeoutError,
-            RuntimeError,
-            ValueError,
-            TypeError,
-        ) as cap_exc:
+        except CLIENT_SAFE_DEFAULT_ERRORS as cap_exc:
             # cycle-9/D-AUDIT-1072: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —

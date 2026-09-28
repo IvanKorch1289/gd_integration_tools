@@ -16,7 +16,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.frontend.streamlit_app.api_clients.base import BaseAPIClient
+from src.frontend.streamlit_app.api_clients.base import (
+    CLIENT_SAFE_DEFAULT_ERRORS,
+    BaseAPIClient,
+)
 from src.frontend.streamlit_app.api_clients.config import ConfigClient
 from src.frontend.streamlit_app.api_clients.flags import FlagsClient
 from src.frontend.streamlit_app.api_clients.metrics import MetricsClient
@@ -102,13 +105,7 @@ class AdminClient(BaseAPIClient):
         """GET /ready — агрегированный health status всех подсистем."""
         try:
             return self.get("/ready")
-        except (
-            ConnectionError,
-            TimeoutError,
-            RuntimeError,
-            ValueError,
-            TypeError,
-        ) as ready_exc:
+        except CLIENT_SAFE_DEFAULT_ERRORS as ready_exc:
             # cycle-9/D-AUDIT-1073: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
@@ -124,13 +121,7 @@ class AdminClient(BaseAPIClient):
         """GET /api/v1/admin/capabilities."""
         try:
             return self.get("/api/v1/admin/capabilities")
-        except (
-            ConnectionError,
-            TimeoutError,
-            RuntimeError,
-            ValueError,
-            TypeError,
-        ) as exc:
+        except CLIENT_SAFE_DEFAULT_ERRORS as exc:
             # cycle-9/D-AUDIT-1073: см. выше — mirror для capability_catalog.
             import logging
 
@@ -149,13 +140,7 @@ class AdminClient(BaseAPIClient):
             params["namespace"] = namespace
         try:
             return self.get("/api/v1/dsl/processors/search", params=params)
-        except (
-            ConnectionError,
-            TimeoutError,
-            RuntimeError,
-            ValueError,
-            TypeError,
-        ) as exc:
+        except CLIENT_SAFE_DEFAULT_ERRORS as exc:
             # cycle-9/D-AUDIT-1073: см. выше — mirror для processor_catalog.
             import logging
 
@@ -179,13 +164,7 @@ class AdminClient(BaseAPIClient):
             if isinstance(response, list):
                 return response
             return response.get("events", []) if isinstance(response, dict) else []
-        except (
-            ConnectionError,
-            TimeoutError,
-            RuntimeError,
-            ValueError,
-            TypeError,
-        ) as audit_exc:
+        except CLIENT_SAFE_DEFAULT_ERRORS as audit_exc:
             # cycle-9/D-AUDIT-1073: см. выше — mirror для audit_events.
             import logging
 
@@ -244,3 +223,40 @@ class AdminClient(BaseAPIClient):
             )
         except Exception as exc:
             return {"sessions": [], "count": 0, "error": str(exc)}
+
+    def list_workflow_templates(self) -> list[Any]:
+        """GET /api/v1/admin/workflow-templates — список DSL-шаблонов.
+
+        Backend endpoint существует и смонтирован
+        (``entrypoints/api/v1/routers.py`` → ``admin_workflow_templates``),
+        но frontend-метод отсутствовал: контракт из cycle-208 покрывался
+        тестом, который падал с ``AttributeError``.
+
+        Returns:
+            Список шаблонов; ``[]`` при недоступности API или если ответ
+            не список (например, dict с ``error``).
+
+        """
+        try:
+            result = self.get("/api/v1/admin/workflow-templates")
+        except CLIENT_SAFE_DEFAULT_ERRORS as exc:
+            # cycle-9/D-AUDIT-1070: narrow exceptions + observability —
+            # тот же контракт, что у остальных методов этого клиента.
+            import logging
+
+            logging.getLogger(__name__).debug(
+                "streamlit_admin_client.workflow_templates_failed",
+                extra={"error": str(exc)},
+            )
+            return []
+        if not isinstance(result, list):
+            # Не-list ответ (dict с error, None и т.п.) — не пробрасываем
+            # в UI сырой payload.
+            import logging
+
+            logging.getLogger(__name__).debug(
+                "streamlit_admin_client.workflow_templates_unexpected_shape",
+                extra={"type": type(result).__name__},
+            )
+            return []
+        return result

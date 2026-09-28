@@ -39,7 +39,7 @@ class TestFlagsClient:
         from src.frontend.streamlit_app.api_clients.flags import FlagsClient
 
         c = FlagsClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             assert c.get_flags() == []
 
     def test_toggle_flag_happy_path(self) -> None:
@@ -64,7 +64,7 @@ class TestFlagsClient:
         from src.frontend.streamlit_app.api_clients.flags import FlagsClient
 
         c = FlagsClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             assert c.toggle_flag("my_flag", True) is False
 
     def test_list_overrides_happy_path(self) -> None:
@@ -79,7 +79,7 @@ class TestFlagsClient:
         from src.frontend.streamlit_app.api_clients.flags import FlagsClient
 
         c = FlagsClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             assert c.list_overrides() == {}
 
     def test_set_override_with_tenant(self) -> None:
@@ -108,7 +108,7 @@ class TestFlagsClient:
         from src.frontend.streamlit_app.api_clients.flags import FlagsClient
 
         c = FlagsClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             assert c.set_override("x", 1) is None
 
     def test_clear_override_with_tenant(self) -> None:
@@ -136,7 +136,7 @@ class TestFlagsClient:
         from src.frontend.streamlit_app.api_clients.flags import FlagsClient
 
         c = FlagsClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             assert c.clear_override("x") is None
 
 
@@ -307,7 +307,7 @@ class TestDSLRoutesClient:
         from src.frontend.streamlit_app.api_clients.dsl_routes import DSLRoutesClient
 
         c = DSLRoutesClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             assert c.list_dsl_routes() == []
 
     def test_get_dsl_route_happy_path(self) -> None:
@@ -323,7 +323,7 @@ class TestDSLRoutesClient:
         from src.frontend.streamlit_app.api_clients.dsl_routes import DSLRoutesClient
 
         c = DSLRoutesClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             assert c.get_dsl_route("missing") is None
 
     def test_create_dsl_route(self) -> None:
@@ -360,7 +360,7 @@ class TestDSLRoutesClient:
         from src.frontend.streamlit_app.api_clients.dsl_routes import DSLRoutesClient
 
         c = DSLRoutesClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             assert c.delete_dsl_route("missing") is False
 
     def test_validate_dsl_route_happy_path(self) -> None:
@@ -380,7 +380,7 @@ class TestDSLRoutesClient:
         from src.frontend.streamlit_app.api_clients.dsl_routes import DSLRoutesClient
 
         c = DSLRoutesClient()
-        with patch.object(c, "_request", side_effect=Exception("syntax error")):
+        with patch.object(c, "_request", side_effect=ValueError("syntax error")):
             result = c.validate_dsl_route("bad_yaml")
         assert result["valid"] is False
         assert "syntax error" in result["error"]
@@ -400,7 +400,7 @@ class TestDSLRoutesClient:
         from src.frontend.streamlit_app.api_clients.dsl_routes import DSLRoutesClient
 
         c = DSLRoutesClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             assert c.diff_dsl_route("r1", "x") is None
 
 
@@ -443,7 +443,7 @@ class TestRAGClient:
         from src.frontend.streamlit_app.api_clients.rag import RAGClient
 
         c = RAGClient()
-        with patch.object(c, "get", side_effect=Exception("boom")):
+        with patch.object(c, "get", side_effect=RuntimeError("boom")):
             assert c.get_stats() == {}
 
     def test_search_happy_path(self) -> None:
@@ -471,7 +471,7 @@ class TestRAGClient:
         from src.frontend.streamlit_app.api_clients.rag import RAGClient
 
         c = RAGClient()
-        with patch.object(c, "post", side_effect=Exception("boom")):
+        with patch.object(c, "post", side_effect=RuntimeError("boom")):
             assert c.search("q") == {}
 
     def test_upload_minimal(self) -> None:
@@ -508,7 +508,7 @@ class TestRAGClient:
         from src.frontend.streamlit_app.api_clients.rag import RAGClient
 
         c = RAGClient()
-        with patch.object(c, "_multipart_post", side_effect=Exception("boom")):
+        with patch.object(c, "_multipart_post", side_effect=RuntimeError("boom")):
             assert c.upload(b"x", "x.txt", "text/plain") == {}
 
     def test_augment_happy_path(self) -> None:
@@ -536,7 +536,7 @@ class TestRAGClient:
         from src.frontend.streamlit_app.api_clients.rag import RAGClient
 
         c = RAGClient()
-        with patch.object(c, "post", side_effect=Exception("boom")):
+        with patch.object(c, "post", side_effect=RuntimeError("boom")):
             assert c.augment("q") == {}
 
 
@@ -565,7 +565,7 @@ class TestK4APIClient:
         from src.frontend.streamlit_app.api_clients.k4 import K4APIClient
 
         c = K4APIClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             assert c.get_rag_cache_stats() == {}
 
     def test_flush_rag_cache_tier_no_tier(self) -> None:
@@ -591,7 +591,7 @@ class TestK4APIClient:
         from src.frontend.streamlit_app.api_clients.k4 import K4APIClient
 
         c = K4APIClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             assert c.flush_rag_cache_tier("l1") == {}
 
     def test_get_rag_invalidation_events_happy(self) -> None:
@@ -619,7 +619,7 @@ class TestK4APIClient:
         from src.frontend.streamlit_app.api_clients.k4 import K4APIClient
 
         c = K4APIClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             assert c.get_rag_invalidation_events() == []
 
     def test_litellm_gateway_stats_happy(self) -> None:
@@ -635,7 +635,7 @@ class TestK4APIClient:
         from src.frontend.streamlit_app.api_clients.k4 import K4APIClient
 
         c = K4APIClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             assert c.litellm_gateway_stats() == {}
 
     def test_list_embedding_providers_list(self) -> None:
@@ -672,7 +672,7 @@ class TestK4APIClient:
         from src.frontend.streamlit_app.api_clients.k4 import K4APIClient
 
         c = K4APIClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             assert c.list_embedding_providers() == []
 
     def test_rag_ingest_start_happy(self) -> None:
@@ -695,7 +695,7 @@ class TestK4APIClient:
         from src.frontend.streamlit_app.api_clients.k4 import K4APIClient
 
         c = K4APIClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             result = c.rag_ingest_start(files=[])
         assert result["task_id"] is None
         assert "boom" in result["error"]
@@ -713,7 +713,7 @@ class TestK4APIClient:
         from src.frontend.streamlit_app.api_clients.k4 import K4APIClient
 
         c = K4APIClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             assert c.rag_ingest_status("t1") == {}
 
     def test_rag_search_preview_happy(self) -> None:
@@ -731,7 +731,7 @@ class TestK4APIClient:
         from src.frontend.streamlit_app.api_clients.k4 import K4APIClient
 
         c = K4APIClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             assert c.rag_search_preview("q") == []
 
     def test_bulk_rag_ingest_happy(self) -> None:
@@ -752,7 +752,7 @@ class TestK4APIClient:
         from src.frontend.streamlit_app.api_clients.k4 import K4APIClient
 
         c = K4APIClient()
-        with patch.object(c, "_request", side_effect=Exception("boom")):
+        with patch.object(c, "_request", side_effect=RuntimeError("boom")):
             result = c.bulk_rag_ingest(documents=[])
         assert result["task_id"] is None
         assert "boom" in result["error"]

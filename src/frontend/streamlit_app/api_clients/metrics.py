@@ -8,7 +8,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.frontend.streamlit_app.api_clients.base import BaseAPIClient
+from src.frontend.streamlit_app.api_clients.base import (
+    CLIENT_SAFE_DEFAULT_ERRORS,
+    BaseAPIClient,
+)
 
 __all__ = ("MetricsClient",)
 
@@ -20,13 +23,7 @@ class MetricsClient(BaseAPIClient):
         """Метод get_metrics (см. signature)."""
         try:
             return self._request("GET", "/api/v1/admin/metrics")
-        except (
-            ConnectionError,
-            TimeoutError,
-            RuntimeError,
-            ValueError,
-            TypeError,
-        ) as metrics_exc:
+        except CLIENT_SAFE_DEFAULT_ERRORS as metrics_exc:
             # cycle-9/D-AUDIT-1065: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError — wrong.
@@ -42,13 +39,7 @@ class MetricsClient(BaseAPIClient):
         """Метод get_health (см. signature)."""
         try:
             return self._request("GET", "/api/v1/health/components")
-        except (
-            ConnectionError,
-            TimeoutError,
-            RuntimeError,
-            ValueError,
-            TypeError,
-        ) as health_exc:
+        except CLIENT_SAFE_DEFAULT_ERRORS as health_exc:
             # cycle-9/D-AUDIT-1065: см. выше — mirror для health.
             import logging
 

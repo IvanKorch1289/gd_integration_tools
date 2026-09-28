@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.frontend.streamlit_app.api_clients.base import BaseAPIClient
+from src.frontend.streamlit_app.api_clients.base import (
+    CLIENT_SAFE_DEFAULT_ERRORS,
+    BaseAPIClient,
+)
 
 __all__ = ("FlagsClient",)
 
@@ -16,13 +19,7 @@ class FlagsClient(BaseAPIClient):
         """Метод get_flags (см. signature)."""
         try:
             return self._request("GET", "/api/v1/admin/feature-flags")
-        except (
-            ConnectionError,
-            TimeoutError,
-            RuntimeError,
-            ValueError,
-            TypeError,
-        ) as flags_exc:
+        except CLIENT_SAFE_DEFAULT_ERRORS as flags_exc:
             # cycle-9/D-AUDIT-1070: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
@@ -43,13 +40,7 @@ class FlagsClient(BaseAPIClient):
                 json={"enabled": enabled},
             )
             return True
-        except (
-            ConnectionError,
-            TimeoutError,
-            RuntimeError,
-            ValueError,
-            TypeError,
-        ) as toggle_exc:
+        except CLIENT_SAFE_DEFAULT_ERRORS as toggle_exc:
             # cycle-9/D-AUDIT-1070: см. выше — mirror для toggle.
             import logging
 
@@ -67,13 +58,7 @@ class FlagsClient(BaseAPIClient):
         """
         try:
             return self._request("GET", "/api/v1/admin/feature-flags")
-        except (
-            ConnectionError,
-            TimeoutError,
-            RuntimeError,
-            ValueError,
-            TypeError,
-        ) as list_exc:
+        except CLIENT_SAFE_DEFAULT_ERRORS as list_exc:
             # cycle-9/D-AUDIT-1070: см. выше — mirror для list_overrides.
             import logging
 
@@ -93,13 +78,7 @@ class FlagsClient(BaseAPIClient):
                 f"/api/v1/admin/feature-flags/{flag}",
                 json={"value": value, "tenant_id": tenant_id, "actor": actor},
             )
-        except (
-            ConnectionError,
-            TimeoutError,
-            RuntimeError,
-            ValueError,
-            TypeError,
-        ) as set_exc:
+        except CLIENT_SAFE_DEFAULT_ERRORS as set_exc:
             # cycle-9/D-AUDIT-1070: см. выше — mirror для set_override.
             import logging
 
@@ -120,13 +99,7 @@ class FlagsClient(BaseAPIClient):
             return self._request(
                 "DELETE", f"/api/v1/admin/feature-flags/{flag}", params=params
             )
-        except (
-            ConnectionError,
-            TimeoutError,
-            RuntimeError,
-            ValueError,
-            TypeError,
-        ) as clear_exc:
+        except CLIENT_SAFE_DEFAULT_ERRORS as clear_exc:
             # cycle-9/D-AUDIT-1070: см. выше — mirror для clear_override.
             import logging
 
