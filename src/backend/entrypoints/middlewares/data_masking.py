@@ -42,7 +42,7 @@ from src.backend.core.security.pii_patterns import PHONE as _PHONE_RE
 
 _logger = get_logger(__name__)
 
-__all__ = ("DataMaskingMiddleware",)
+__all__ = ("DataMaskingMiddleware", "TOKEN_ISSUER_PATHS")
 
 _SENSITIVE_KEYS = frozenset(
     {
@@ -59,7 +59,16 @@ _SENSITIVE_KEYS = frozenset(
 
 # Prod-fix 2026-09-09 (M6-#3): ответ token-issuer'а — это сам токен;
 # маскирование здесь ломало контракт (клиент получал "***" вместо JWT).
-_TOKEN_ISSUER_PATHS = frozenset({"/api/v1/auth/login", "/api/v1/auth/step-up-request"})
+#
+# Канон для обоих response-маскеров: набор живёт здесь и импортируется
+# в pii_masking_response. До 2026-09-28 у того модуля был свой кортеж
+# ``("/api/v1/auth/login",)`` — step-up-request в него не попал, и
+# ``/api/v1/auth/step-up-request`` отдавал клиенту битый токен:
+# PII-регулярка Phone съедала цифровые серии внутри hex-подписи
+# (``...e48140c***e***``). На живом прогоне порча воспроизводилась
+# примерно в 20% выдач — логин у пользователей падал с
+# "step_up_token_required" при верном токене.
+TOKEN_ISSUER_PATHS = frozenset({"/api/v1/auth/login", "/api/v1/auth/step-up-request"})
 
 
 class DataMaskingMiddleware:
@@ -91,7 +100,7 @@ class DataMaskingMiddleware:
         # выдача access_token и есть назначение ответа; маскировка
         # превращала логин в бесполезный {"access_token": "***"}.
         path = scope.get("path", "")
-        if path in _TOKEN_ISSUER_PATHS:
+        if path in TOKEN_ISSUER_PATHS:
             await self.app(scope, receive, send)
             return
 

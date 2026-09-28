@@ -33,6 +33,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from src.backend.core.logging import get_logger
 from src.backend.core.security.pii_masker import default_masker
+from src.backend.entrypoints.middlewares.data_masking import TOKEN_ISSUER_PATHS
 
 __all__ = ("PIIMaskingResponseMiddleware",)
 
@@ -91,7 +92,12 @@ class PIIMaskingResponseMiddleware:
         # Prod-fix 2026-09-09 (M6-#3): token-issuer endpoints исключены —
         # выдача access_token и есть назначение ответа (PII-маска
         # превращала логин в {"access_token": "***"}).
-        if path in ("/api/v1/auth/login",):
+        #
+        # Набор берётся из data_masking (канон). Локальный кортеж
+        # ``("/api/v1/auth/login",)`` не содержал step-up-request, поэтому
+        # /api/v1/auth/step-up-request отдавал клиенту битый токен: PII-регулярка
+        # Phone съедала цифровые серии внутри hex-подписи токена.
+        if path in TOKEN_ISSUER_PATHS:
             await self.app(scope, receive, send)
             return
 

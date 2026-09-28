@@ -57,6 +57,14 @@ def _build_app(*, path_patterns: list[str] | None = None) -> FastAPI:
 
         return PlainTextResponse("contact: alice@example.com")
 
+    @app.post("/api/v1/auth/login")
+    async def auth_login(payload: dict) -> dict:
+        return payload
+
+    @app.post("/api/v1/auth/step-up-request")
+    async def auth_step_up(payload: dict) -> dict:
+        return payload
+
     return app
 
 
@@ -174,3 +182,47 @@ class TestDoDIntegration:
         parsed = json.loads(raw_body)
         parsed_via_orjson = orjson.loads(raw_body)
         assert parsed == parsed_via_orjson  # round-trip OK
+
+
+class TestTokenIssuerNotMasked:
+    """Token-issuer ответы не проходят через PII-маску.
+
+    Регрессия, найденная только на живом приложении: у этого модуля был
+    собственный кортеж ``("/api/v1/auth/login",)`` — ``step-up-request`` в
+    него не попал. Регулярка Phone съедала цифровые серии внутри hex-подписи
+    токена, и клиент получал ``...e48140c***e***`` вместо валидного токена.
+    На живом прогоне порча воспроизводилась примерно в 20% выдач.
+    """
+
+    @pytest.mark.parametrize(
+        "path", ["/api/v1/auth/login", "/api/v1/auth/step-up-request"]
+    )
+    def test_token_issuer_path_is_excluded(
+        self, path: str, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Обе выдающие токен точки исключены из маскирования."""
+        monkeypatch.setattr(feature_flags, "pii_response_middleware_enabled", True)
+        app = _build_app(path_patterns=[])  # пустой список = маскировать ВСЕ пути
+        client = TestClient(app)
+
+        # Hex-подпись с цифровой серией — именно её раньше разъедало Phone.
+        signature = "693bde88b89f33bbc4c90f93cdc6dc417e48140c9e123456789abcdef012345"
+        resp = client.post(path, json={"step_up_token": signature})
+        body = resp.content.decode("utf-8")
+
+        assert signature in body, "подпись токена не должна изменяться маской"
+        assert "***" not in body
+
+    def test_non_issuer_path_still_masked(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Исключение не ослабляет маскирование обычных путей."""
+        monkeypatch.setattr(feature_flags, "pii_response_middleware_enabled", True)
+        app = _build_app(path_patterns=[])
+        client = TestClient(app)
+
+        resp = client.get("/api/users/me")
+        body = resp.content.decode("utf-8")
+
+        assert "alice@example.com" not in body
+        assert "+7 (999) 123-45-67" not in body
