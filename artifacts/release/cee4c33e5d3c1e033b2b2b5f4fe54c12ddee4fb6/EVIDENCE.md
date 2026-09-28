@@ -4,9 +4,10 @@ Generated 2026-09-28. Every status below comes from a command actually run again
 this SHA in this environment. Statuses use
 `PASS | FAIL | ENV_FAILURE | TOOL_FAILURE | NOT_VERIFIED`.
 
-**Verdict: NOT production-ready.** One blocking FAIL (coverage far below the
-project's own bar) and one large unaddressed FAIL (206 failing unit tests).
-Nothing here is inferred from an earlier SHA.
+**Verdict: NOT production-ready.** Blocking: coverage is 17.75 points below the
+project's own bar, ~27 unit tests fail for real reasons, the test suite is not
+isolation-safe, and 12–14 pre-existing frontend layer violations keep the
+architecture gates red. Nothing here is inferred from an earlier SHA.
 
 ## Environment
 
@@ -62,33 +63,48 @@ the label is wrong.
 
 The measured run had 206 failing tests, so 52.25% is a lower bound.
 
-### 2. 206 failing unit tests (check 14)
+### 2. Failing unit tests (check 14) — corrected accounting
 
-`pytest tests/unit`: 19683 passed, 206 failed, 7 errors, 184 skipped.
+`pytest tests/unit`: 19683 passed, 206 failed, 7 errors.
 
-By directory:
+The 206 is **not** 206 broken tests. Running each directory on its own shows
+most of the failures are cross-test pollution: the suite is not
+isolation-safe, and tests that pass alone fail when neighbours run first.
 
-| Count | Area |
-|---:|---|
-| 36 | `tests/unit/frontend/api_clients` |
-| 24 | `tests/unit/infrastructure/repositories` |
-| 19 | `tests/unit/frontend/streamlit_app` |
-| 19 | `tests/unit/dsl/engine` |
-| 17 | `tests/unit/dsl/blueprints` |
-| 8 | `tests/unit/infrastructure/clients` |
-| 8 | `tests/unit/entrypoints/mcp` |
-| 5 | `tests/unit/services/ai` |
-| 4 | `tests/unit/core/config` |
-| 3 | `tests/unit/services/execution` |
-| 3 | `tests/unit/infrastructure/database` |
-| 3 | `tests/unit/entrypoints/grpc` |
-| 2 | `tests/unit/infrastructure/security` |
-| 2 | `tests/unit/dsl/agents` |
-| 2 | `tests/unit/core/interfaces` |
-| rest | scattered |
+| Directory | Combined run | Isolated | Verdict |
+|---|---:|---:|---|
+| `frontend/api_clients` | 36 | 36 | real — **fixed in 22be1cb13** |
+| `infrastructure/repositories` | 24 | **0** | pollution |
+| `frontend/streamlit_app` | 19 | 3 | 16 pollution, 3 real |
+| `dsl/engine` | 19 | **0** (2423 passed) | pollution |
+| `dsl/blueprints` | 17 | **0** (72 passed) | pollution |
+| `infrastructure/clients` | 8 | 2 | 6 pollution, 2 real |
+| `entrypoints/mcp` | 8 | did not finish in 20 min | pathological |
+| `services/ai` | 5 | 5 | real |
+| `core/config` | 4 | **0** (563 passed) | pollution |
+| `services/execution` | 3 | 3 | real |
+| `infrastructure/database` | 3 | 3 | real |
+| `entrypoints/grpc` | 3 | 3 | real |
+| `infrastructure/security` | 2 | **0** (121 passed) | pollution |
+| `dsl/agents` | 2 | **0** (3 passed) | pollution |
+| `core/interfaces` | 2 | **0** (200 passed) | pollution |
 
-These reproduce outside the full-suite run, so they are not artefacts of
-parallel scheduling or cross-test pollution. Not yet triaged individually.
+So after `22be1cb13` roughly **27 genuinely failing tests remain** (plus 8 in
+`entrypoints/mcp`, which could not be measured in isolation), and roughly 60
+of the original 206 are pollution artefacts. The tail (~51) has not been
+broken down per directory.
+
+Two separate problems, not one:
+
+- **Real failures** — still open, listed above.
+- **Test isolation** — the suite passes largely because it is usually run
+  per-directory, not as a whole. `frontend/streamlit_app` alone is 3 failed;
+  inside `tests/unit/frontend` it is 26. A full-suite run therefore reports
+  failures that do not exist in isolation, which undermines any "suite is
+  green" claim. The root cause has not been identified.
+- **`entrypoints/mcp`** did not complete a single-directory run in 20 minutes
+  and had to be killed. A test directory that cannot finish in isolation is
+  itself a defect.
 
 ### 3. Tooling test suite: 10 failures (check 16)
 
@@ -106,6 +122,21 @@ this release's changes:
 - `test_plugin_and_route_scaffolds.py::test_test_plug_plugin_module_resolves_base_plugin_via_core_interfaces`
 - `test_sbom_canonical_path.py` (2: legacy SBOM absent, canonical SBOM crypto currency)
 - `test_scaffold.py::TestScaffoldPaths::test_processor_path_includes_backend`
+
+### 4. Pre-existing frontend layer violations
+
+`tests/unit/frontend/test_layer_boundary.py`, `test_arch_ratchet.py` and
+`test_plugin_marketplace_helpers.py` fail **identically** (7 failed /
+14 passed) on a clean `HEAD` worktree and on the current tree — confirmed by
+running both. They assert zero frontend→upper-layer imports, but 12–14
+Streamlit pages import `src.backend.services` directly
+(`33_DSL_Шаблоны`, `23_AI_Учёт_затрат`, `19_Saga_Компенсации`, `63_Вики`,
+`96_Монитор_зависших_сообщений`, …), which `ARCHITECTURE.md` forbids
+("Frontend imports only the public API + REST via api_client.py").
+
+This is pre-existing debt, not a regression, and it is not counted among the
+`tools/` failures above. Note that `make check_layers` reports "0 new"
+violations, so the backend-side layer gate does not cover the frontend.
 
 ## Environment failures (not code defects)
 
@@ -142,14 +173,26 @@ themselves.
 - `993dfefcd` — optional-tenant gate identity no longer uses line numbers
 - `9be6d62f9` — duplicate `per-layer` command, backtick escapes, duplicate make target
 - `cee4c33e5` — measured coverage baseline 52.25%
+- `22be1cb13` — frontend clients: safe-default contract restored for httpx
+  errors (backend unreachable / 5xx), missing `list_workflow_templates` added;
+  `tests/unit/frontend/api_clients` 36 failed → 0
 
 ## What would make this production-ready
 
-1. Triage and fix the 206 failing unit tests.
-2. Either raise real coverage to 70% or formally lower the declared threshold —
-   the gap is currently ~18 points and cannot be closed by tooling.
-3. Run the full gate battery with infrastructure up (PostgreSQL, Redis, MinIO,
-   Qdrant, Vault) to clear checks 9 and the privacy integrations.
-4. Start the app and produce cURL + Playwright evidence, including
+1. Fix the ~27 real unit-test failures (`services/ai` 5, `streamlit_app` 3,
+   `services/execution` 3, `infrastructure/database` 3, `entrypoints/grpc` 3,
+   `infrastructure/clients` 2, `entrypoints/mcp` 8).
+2. Make the suite isolation-safe, or run per-directory by default. A full-suite
+   run currently reports failures that do not reproduce in isolation, so no
+   "suite is green" claim is possible.
+3. Investigate `tests/unit/entrypoints/mcp`, which cannot complete a
+   single-directory run.
+4. Remove the 12–14 frontend→`src.backend.services` imports so the frontend
+   architecture gates go green.
+5. Either raise real coverage to 70% or formally lower the declared threshold —
+   the gap is 17.75 points and cannot be closed by tooling.
+6. Run the full gate battery with infrastructure up (PostgreSQL, Redis, MinIO,
+   Qdrant, Vault) to clear check 9 and the privacy integrations.
+7. Start the app and produce cURL + Playwright evidence, including
    `artifacts/e2e/<sha>/`.
-5. Build the image, generate SBOM, sign, and re-run pre-prod-check to exit 0.
+8. Build the image, generate SBOM, sign, and re-run pre-prod-check to exit 0.
