@@ -1,6 +1,6 @@
-# ADR-0346 (DRAFT): Run-history store для backfill/catchup scheduler-триггеров
+# ADR-0346: Run-history store для backfill/catchup scheduler-триггеров
 
-- **Статус**: DRAFT
+- **Статус**: ACCEPTED (2026-09-24, архитектура согласована пользователем)
 - **Дата**: 2026-09-24
 - **Контекст**: V5 §4 P3-13 (backfill/catchup для scheduler-триггеров).
   Текущий `SchedulerFacade` (services/scheduler/facade.py, 74 LOC) — тонкая
@@ -36,13 +36,15 @@ Airflow-семантика требует:
 - ❌ Решает доставку события, но не «догоняющее исполнение» job'а;
   нужен поверх A. Отклонено как база, оставлено как дополнение.
 
-## Decision (DRAFT — к утверждению владельцем scheduler-домена)
+## Decision
 
 **A + C гибрид**: таблица `scheduler_run_history` (PK: job_id+scheduled_for;
 status: pending/running/missed/done/failed; tenant_id; correlation_id) +
 fan-out догоняющих запусков через существующий outbox (reuses W11 crash
-semantics). Catchup-флаг per-job в `route.toml`/job-опциях
-(`catchup: false` — дефолт для новых job'ов: не догонять ретроактивно).
+semantics). Catchup-флаг per-job — опция `SchedulerFacade.add_job`
+(`catchup: bool = False`, `catchup_window_days: int = 1`): дефолт false —
+не догонять ретроактивно; окно ограничено, materialize идёт через
+`BackfillService.compute_missed_ticks` (CronTrigger, runaway-guard).
 
 ## Consequences
 
@@ -58,6 +60,16 @@ semantics). Catchup-флаг per-job в `route.toml`/job-опциях
 
 ## Status of this ADR
 
-DRAFT — требует: (1) согласования владельца scheduler-домена, (2) решения
-per-job флаг storage (route.toml vs job-options), (3) оценки объёма
-догоняющих запусков при первом старте с catchup=true.
+ACCEPTED (архитектура согласована пользователем). Реализация в master:
+
+- `RunHistoryStore` + `BackfillService` (`compute_missed_ticks`,
+  `materialize_window`, `run_catchup`) — `services/scheduler/`;
+- миграция `b8c9d0e1f2a3` (таблица + 3 индекса, SQLite/PG);
+- `SchedulerFacade.add_job(catchup=...)` — materialize catchup-окна,
+  `run_pending` — исполнение pending-тиков (executor wired);
+- контракт-тесты: `tests/unit/services/scheduler/` (backfill,
+  facade integration, run_pending wiring).
+
+Осталось операционное: runtime-вызов `run_pending` из scheduler-loop
+(сейчас — по требованию через фасад) и оценка объёма догоняющих запусков
+при первом старте с catchup=true в production-профиле.
