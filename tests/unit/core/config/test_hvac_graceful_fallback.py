@@ -68,10 +68,15 @@ class TestHvacAvailabilityCache:
         # Post-condition: cache reflects result.
         assert cl._HVAC_AVAILABLE == result
         assert cl._HVAC_AVAILABLE is not None
-        # Consistency: cached result must match.
-        assert cl._HVAC_AVAILABLE is False, (
-            "Expected hvac=False (not installed в venv); "
-            "if hvac IS installed, package's required hvac → True."
+        # Consistency: cached result must match фактической установке hvac
+        # (тест изначально писался в venv без hvac; в окружениях с hvac
+        # контракт тот же — cache == find_spec).
+        import importlib.util
+
+        expected = importlib.util.find_spec("hvac") is not None
+        assert cl._HVAC_AVAILABLE is expected, (
+            f"cache={cl._HVAC_AVAILABLE}, а find_spec('hvac')={expected} — "
+            "кэш должен отражать реальную importability"
         )
 
     def test_subsequent_calls_use_cache(self) -> None:
@@ -93,7 +98,14 @@ class TestVaultConfigSettingsSourceHvacFallback:
         """Если hvac missing → _load_data() возвращает {} без log spam.
 
         Fix поведение: silent degradation вместо per-class errors.
+
+        Тест значим только в окружениях без hvac: fallback-путь
+        недостижим, когда hvac установлен (find_spec находит пакет).
         """
+        if importlib.util.find_spec("hvac") is not None:
+            pytest.skip(
+                "hvac installed — fallback-путь недостижим, негативный сценарий покрыт моками"
+            )
         cl = _reload_config_loader()
         # Verify precondition: hvac really missing.
         assert cl._hvac_module_available() is False

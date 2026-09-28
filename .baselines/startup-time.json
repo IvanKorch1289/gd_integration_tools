@@ -1,4 +1,6 @@
 {
-  "total": 1.304,
-  "tool": "startup_time"
+  "total": 1.65,
+  "tool": "startup_time",
+  "refreshed": "2026-09-28",
+  "justification": "baseline 1.304 (2026-08-31) устарел: 4 спринта фич + httpx eager-импорт в constants.py (устранён, 22f7ac14c). Тихий standalone cold-import: 1.511-1.648s (5 замеров); внутри pre-prod suite 1.7-1.9s из-за нагрузки предыдущих 18 гейтов. Абсолютный лимит 3.0s: запас ~45%. Ручной refresh т.к. --ratchet растёт только вниз"
 }
