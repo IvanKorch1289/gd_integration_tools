@@ -1,0 +1,968 @@
+{
+  "audit": "GD Integration Tools 25.09.2026",
+  "tracking_doc": "Optional tenant_id parameters per ADR-0345 Option A (required migration)",
+  "generated_at": "2026-09-28T07:33:31.056189+00:00",
+  "baseline_total": 123,
+  "by_file": {
+    "src/backend/services/ai/agent_memory.py": {
+      "count": 11,
+      "entries": [
+        {
+          "line": 113,
+          "label": null,
+          "qualified_name": "AgentMemoryService.get_conversation"
+        },
+        {
+          "line": 128,
+          "label": null,
+          "qualified_name": "AgentMemoryService.add_message"
+        },
+        {
+          "line": 172,
+          "label": null,
+          "qualified_name": "AgentMemoryService.clear_conversation"
+        },
+        {
+          "line": 182,
+          "label": null,
+          "qualified_name": "AgentMemoryService.get_scratchpad"
+        },
+        {
+          "line": 191,
+          "label": null,
+          "qualified_name": "AgentMemoryService.set_scratchpad"
+        },
+        {
+          "line": 208,
+          "label": null,
+          "qualified_name": "AgentMemoryService.get_facts"
+        },
+        {
+          "line": 222,
+          "label": null,
+          "qualified_name": "AgentMemoryService.set_fact"
+        },
+        {
+          "line": 245,
+          "label": null,
+          "qualified_name": "AgentMemoryService.delete_fact"
+        },
+        {
+          "line": 255,
+          "label": null,
+          "qualified_name": "AgentMemoryService.load_memory"
+        },
+        {
+          "line": 267,
+          "label": null,
+          "qualified_name": "AgentMemoryService.save_memory"
+        },
+        {
+          "line": 279,
+          "label": null,
+          "qualified_name": "AgentMemoryService.session_exists"
+        }
+      ]
+    },
+    "src/backend/services/workflows/hitl_signal_store.py": {
+      "count": 6,
+      "entries": [
+        {
+          "line": 33,
+          "label": null,
+          "qualified_name": "HitlSignalStore.get"
+        },
+        {
+          "line": 50,
+          "label": null,
+          "qualified_name": "HitlSignalStore.list_pending"
+        },
+        {
+          "line": 80,
+          "label": null,
+          "qualified_name": "HitlSignalStore.wait_for"
+        },
+        {
+          "line": 120,
+          "label": null,
+          "qualified_name": "InMemoryHitlSignalStore.get"
+        },
+        {
+          "line": 142,
+          "label": null,
+          "qualified_name": "InMemoryHitlSignalStore.list_pending"
+        },
+        {
+          "line": 195,
+          "label": null,
+          "qualified_name": "InMemoryHitlSignalStore.wait_for"
+        }
+      ]
+    },
+    "src/backend/entrypoints/api/v1/endpoints/admin_resilience_profile.py": {
+      "count": 4,
+      "entries": [
+        {
+          "line": 113,
+          "label": null,
+          "qualified_name": "list_profiles"
+        },
+        {
+          "line": 146,
+          "label": null,
+          "qualified_name": "get_profile"
+        },
+        {
+          "line": 191,
+          "label": null,
+          "qualified_name": "upsert_profile"
+        },
+        {
+          "line": 229,
+          "label": null,
+          "qualified_name": "delete_profile"
+        }
+      ]
+    },
+    "src/backend/core/resilience/resilience_profile.py": {
+      "count": 4,
+      "entries": [
+        {
+          "line": 117,
+          "label": null,
+          "qualified_name": "ResilienceProfileStore.get"
+        },
+        {
+          "line": 132,
+          "label": null,
+          "qualified_name": "ResilienceProfileStore.list"
+        },
+        {
+          "line": 144,
+          "label": null,
+          "qualified_name": "ResilienceProfileStore.upsert"
+        },
+        {
+          "line": 159,
+          "label": null,
+          "qualified_name": "ResilienceProfileStore.delete"
+        }
+      ]
+    },
+    "src/backend/core/feature_flags/service.py": {
+      "count": 4,
+      "entries": [
+        {
+          "line": 38,
+          "label": null,
+          "qualified_name": "FeatureFlagService.is_enabled"
+        },
+        {
+          "line": 53,
+          "label": null,
+          "qualified_name": "FeatureFlagService.get_string"
+        },
+        {
+          "line": 63,
+          "label": null,
+          "qualified_name": "FeatureFlagService.get_int"
+        },
+        {
+          "line": 79,
+          "label": null,
+          "qualified_name": "FeatureFlagService.has_override"
+        }
+      ]
+    },
+    "src/backend/core/feature_flags/runtime_overrides.py": {
+      "count": 4,
+      "entries": [
+        {
+          "line": 86,
+          "label": null,
+          "qualified_name": "RuntimeFeatureFlagOverrides.get"
+        },
+        {
+          "line": 107,
+          "label": null,
+          "qualified_name": "RuntimeFeatureFlagOverrides.has_override"
+        },
+        {
+          "line": 116,
+          "label": null,
+          "qualified_name": "RuntimeFeatureFlagOverrides.set"
+        },
+        {
+          "line": 160,
+          "label": null,
+          "qualified_name": "RuntimeFeatureFlagOverrides.clear"
+        }
+      ]
+    },
+    "src/backend/infrastructure/resilience/profile_store_memory.py": {
+      "count": 4,
+      "entries": [
+        {
+          "line": 27,
+          "label": null,
+          "qualified_name": "InMemoryResilienceProfileStore.get"
+        },
+        {
+          "line": 47,
+          "label": null,
+          "qualified_name": "InMemoryResilienceProfileStore.list"
+        },
+        {
+          "line": 69,
+          "label": null,
+          "qualified_name": "InMemoryResilienceProfileStore.upsert"
+        },
+        {
+          "line": 86,
+          "label": null,
+          "qualified_name": "InMemoryResilienceProfileStore.delete"
+        }
+      ]
+    },
+    "src/backend/services/ai/rag/multimodal/_legacy.py": {
+      "count": 4,
+      "entries": [
+        {
+          "line": 134,
+          "label": null,
+          "qualified_name": "MultimodalRAGService.ingest_text"
+        },
+        {
+          "line": 171,
+          "label": null,
+          "qualified_name": "MultimodalRAGService.ingest_image"
+        },
+        {
+          "line": 209,
+          "label": null,
+          "qualified_name": "MultimodalRAGService.ingest_audio"
+        },
+        {
+          "line": 247,
+          "label": null,
+          "qualified_name": "MultimodalRAGService.retrieve"
+        }
+      ]
+    },
+    "src/backend/core/interfaces/rule_engine.py": {
+      "count": 3,
+      "entries": [
+        {
+          "line": 59,
+          "label": null,
+          "qualified_name": "RuleEngineRepository.get"
+        },
+        {
+          "line": 69,
+          "label": null,
+          "qualified_name": "RuleEngineRepository.list_active"
+        },
+        {
+          "line": 81,
+          "label": null,
+          "qualified_name": "RuleEngineRepository.delete"
+        }
+      ]
+    },
+    "src/backend/infrastructure/repositories/rule_engine_repository.py": {
+      "count": 3,
+      "entries": [
+        {
+          "line": 62,
+          "label": null,
+          "qualified_name": "SQLRuleEngineRepository.get"
+        },
+        {
+          "line": 87,
+          "label": null,
+          "qualified_name": "SQLRuleEngineRepository.list_active"
+        },
+        {
+          "line": 131,
+          "label": null,
+          "qualified_name": "SQLRuleEngineRepository.delete"
+        }
+      ]
+    },
+    "src/backend/services/workflows/hitl_signal_store_redis.py": {
+      "count": 3,
+      "entries": [
+        {
+          "line": 135,
+          "label": null,
+          "qualified_name": "RedisHitlSignalStore.get"
+        },
+        {
+          "line": 167,
+          "label": null,
+          "qualified_name": "RedisHitlSignalStore.list_pending"
+        },
+        {
+          "line": 316,
+          "label": null,
+          "qualified_name": "RedisHitlSignalStore.wait_for"
+        }
+      ]
+    },
+    "src/backend/services/workflows/hitl_service.py": {
+      "count": 3,
+      "entries": [
+        {
+          "line": 85,
+          "label": null,
+          "qualified_name": "HitlService.list_pending"
+        },
+        {
+          "line": 99,
+          "label": null,
+          "qualified_name": "HitlService.get"
+        },
+        {
+          "line": 125,
+          "label": null,
+          "qualified_name": "HitlService.wait_for"
+        }
+      ]
+    },
+    "src/backend/entrypoints/base.py": {
+      "count": 2,
+      "entries": [
+        {
+          "line": 40,
+          "label": null,
+          "qualified_name": "dispatch_action"
+        },
+        {
+          "line": 120,
+          "label": null,
+          "qualified_name": "BaseEntrypoint.dispatch"
+        }
+      ]
+    },
+    "src/backend/entrypoints/api/v1/endpoints/hitl.py": {
+      "count": 2,
+      "entries": [
+        {
+          "line": 104,
+          "label": null,
+          "qualified_name": "list_pending"
+        },
+        {
+          "line": 120,
+          "label": null,
+          "qualified_name": "hitl_history"
+        }
+      ]
+    },
+    "src/backend/core/observability/logging_helpers.py": {
+      "count": 2,
+      "entries": [
+        {
+          "line": 42,
+          "label": null,
+          "qualified_name": "log_with_context"
+        },
+        {
+          "line": 88,
+          "label": null,
+          "qualified_name": "log_audit_event_lite"
+        }
+      ]
+    },
+    "src/backend/core/observability/baggage.py": {
+      "count": 2,
+      "entries": [
+        {
+          "line": 105,
+          "label": null,
+          "qualified_name": "set_baggage"
+        },
+        {
+          "line": 184,
+          "label": null,
+          "qualified_name": "with_baggage"
+        }
+      ]
+    },
+    "src/backend/core/messaging/outbox.py": {
+      "count": 2,
+      "entries": [
+        {
+          "line": 111,
+          "label": null,
+          "qualified_name": "OutboxBackend.list_dlq"
+        },
+        {
+          "line": 199,
+          "label": null,
+          "qualified_name": "FakeOutbox.list_dlq"
+        }
+      ]
+    },
+    "src/backend/infrastructure/repositories/notebooks_mongo.py": {
+      "count": 2,
+      "entries": [
+        {
+          "line": 108,
+          "label": null,
+          "qualified_name": "MongoNotebookRepository.append_version"
+        },
+        {
+          "line": 159,
+          "label": null,
+          "qualified_name": "MongoNotebookRepository.restore_version"
+        }
+      ]
+    },
+    "src/backend/infrastructure/workflow/pg_runner_internals/instance_store.py": {
+      "count": 2,
+      "entries": [
+        {
+          "line": 44,
+          "label": null,
+          "qualified_name": "WorkflowInstanceStore.create"
+        },
+        {
+          "line": 92,
+          "label": null,
+          "qualified_name": "WorkflowInstanceStore.list_pending"
+        }
+      ]
+    },
+    "src/backend/services/dsl_portal/builder_facade.py": {
+      "count": 2,
+      "entries": [
+        {
+          "line": 154,
+          "label": null,
+          "qualified_name": "get_ai_cost_snapshot"
+        },
+        {
+          "line": 207,
+          "label": null,
+          "qualified_name": "get_saga_stats"
+        }
+      ]
+    },
+    "src/backend/services/notebooks/repository.py": {
+      "count": 2,
+      "entries": [
+        {
+          "line": 38,
+          "label": null,
+          "qualified_name": "NotebookRepository.get"
+        },
+        {
+          "line": 155,
+          "label": null,
+          "qualified_name": "InMemoryNotebookRepository.get"
+        }
+      ]
+    },
+    "src/backend/services/ai/feedback/repository.py": {
+      "count": 2,
+      "entries": [
+        {
+          "line": 60,
+          "label": null,
+          "qualified_name": "FeedbackRepository.get"
+        },
+        {
+          "line": 176,
+          "label": null,
+          "qualified_name": "InMemoryFeedbackRepository.get"
+        }
+      ]
+    },
+    "src/backend/services/ai/dspy/feedback_trainer.py": {
+      "count": 2,
+      "entries": [
+        {
+          "line": 53,
+          "label": null,
+          "qualified_name": "FeedbackTrainer.train"
+        },
+        {
+          "line": 133,
+          "label": null,
+          "qualified_name": "DSPyFeedbackTrainer.optimize"
+        }
+      ]
+    },
+    "src/backend/services/ai/rag/multimodal/service.py": {
+      "count": 2,
+      "entries": [
+        {
+          "line": 144,
+          "label": null,
+          "qualified_name": "MultimodalRAGService.ingest_document"
+        },
+        {
+          "line": 213,
+          "label": null,
+          "qualified_name": "MultimodalRAGService.search"
+        }
+      ]
+    },
+    "src/backend/services/ai/rag/multimodal/pipeline.py": {
+      "count": 2,
+      "entries": [
+        {
+          "line": 91,
+          "label": null,
+          "qualified_name": "MultimodalPipeline.ingest"
+        },
+        {
+          "line": 158,
+          "label": null,
+          "qualified_name": "MultimodalPipeline.query"
+        }
+      ]
+    },
+    "src/backend/entrypoints/middlewares/per_protocol_ratelimit.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 112,
+          "label": null,
+          "qualified_name": "grpc_call_identifier"
+        }
+      ]
+    },
+    "src/backend/entrypoints/stream/_dlq_helper.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 41,
+          "label": null,
+          "qualified_name": "enqueue_mq_poison_message"
+        }
+      ]
+    },
+    "src/backend/entrypoints/api/v1/endpoints/admin_feedback.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 89,
+          "label": null,
+          "qualified_name": "labeled_count"
+        }
+      ]
+    },
+    "src/backend/core/observability/correlation.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 41,
+          "label": null,
+          "qualified_name": "set_correlation_context"
+        }
+      ]
+    },
+    "src/backend/core/resilience/rpa_policy.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 166,
+          "label": null,
+          "qualified_name": "RPACallPolicy.call"
+        }
+      ]
+    },
+    "src/backend/core/tenancy/cache.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 32,
+          "label": null,
+          "qualified_name": "build_tenant_key"
+        }
+      ]
+    },
+    "src/backend/core/canary_deploy/controller.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 106,
+          "label": null,
+          "qualified_name": "CanaryController.get_split"
+        }
+      ]
+    },
+    "src/backend/core/auth/facade_verify_mixin.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 135,
+          "label": null,
+          "qualified_name": "AuthVerifyMixin.verify_ldap_credentials"
+        }
+      ]
+    },
+    "src/backend/core/auth/facade_token_mixin.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 36,
+          "label": null,
+          "qualified_name": "AuthTokenMixin.issue_token"
+        }
+      ]
+    },
+    "src/backend/core/registry_explorer/explorer.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 92,
+          "label": null,
+          "qualified_name": "RegistryExplorer.search_routes"
+        }
+      ]
+    },
+    "src/backend/core/serialization/msgspec_hotpath.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 103,
+          "label": null,
+          "qualified_name": "encode_audit_event"
+        }
+      ]
+    },
+    "src/backend/core/shadow_route/comparator.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 178,
+          "label": null,
+          "qualified_name": "ShadowRouter.should_mirror"
+        }
+      ]
+    },
+    "src/backend/core/security/pii_tokenizer.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 146,
+          "label": null,
+          "qualified_name": "PIITokenizer.mask_reversible"
+        }
+      ]
+    },
+    "src/backend/core/di/contexts.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 23,
+          "label": null,
+          "qualified_name": "make_dispatch_context"
+        }
+      ]
+    },
+    "src/backend/core/privacy/delete_data_subject/_orchestrator.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 48,
+          "label": null,
+          "qualified_name": "DeleteDataSubject.execute"
+        }
+      ]
+    },
+    "src/backend/core/privacy/delete_data_subject/_qdrant.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 40,
+          "label": null,
+          "qualified_name": "QdrantErasureAdapter.execute"
+        }
+      ]
+    },
+    "src/backend/core/privacy/delete_data_subject/_langmem.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 33,
+          "label": null,
+          "qualified_name": "LangMemErasureAdapter.execute"
+        }
+      ]
+    },
+    "src/backend/core/privacy/delete_data_subject/_redis.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 52,
+          "label": null,
+          "qualified_name": "RedisErasureAdapter.execute"
+        }
+      ]
+    },
+    "src/backend/core/privacy/delete_data_subject/_types.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 80,
+          "label": null,
+          "qualified_name": "ErasureAdapter.execute"
+        }
+      ]
+    },
+    "src/backend/core/privacy/delete_data_subject/_s3.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 41,
+          "label": null,
+          "qualified_name": "S3ErasureAdapter.execute"
+        }
+      ]
+    },
+    "src/backend/core/privacy/delete_data_subject/_postgres.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 42,
+          "label": null,
+          "qualified_name": "PostgresErasureAdapter.execute"
+        }
+      ]
+    },
+    "src/backend/core/audit/facade/audit_service.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 68,
+          "label": null,
+          "qualified_name": "AuditService.emit"
+        }
+      ]
+    },
+    "src/backend/core/ai/gateway/gateway.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 116,
+          "label": null,
+          "qualified_name": "AIGateway.get_policy"
+        }
+      ]
+    },
+    "src/backend/dsl/builders/agent_dsl/infra.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 534,
+          "label": null,
+          "qualified_name": "InfraMixin.optimize_prompt"
+        }
+      ]
+    },
+    "src/backend/infrastructure/observability/immutable_audit.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 181,
+          "label": null,
+          "qualified_name": "ImmutableAuditStore.append"
+        }
+      ]
+    },
+    "src/backend/infrastructure/workflow/saga_state.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 245,
+          "label": null,
+          "qualified_name": "WorkflowStateRepository.list_compensating"
+        }
+      ]
+    },
+    "src/backend/infrastructure/policy/casbin_tenant_scoped.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 100,
+          "label": null,
+          "qualified_name": "TenantScopedCasbin.enforce"
+        }
+      ]
+    },
+    "src/backend/services/ai/guardrails_metrics.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 232,
+          "label": null,
+          "qualified_name": "GuardrailsMetricsService.reset"
+        }
+      ]
+    },
+    "src/backend/services/scheduler/backfill.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 89,
+          "label": null,
+          "qualified_name": "BackfillService.materialize_window"
+        }
+      ]
+    },
+    "src/backend/services/scheduler/run_history.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 59,
+          "label": null,
+          "qualified_name": "RunHistoryStore.materialize"
+        }
+      ]
+    },
+    "src/backend/services/scheduler/protocols.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 45,
+          "label": null,
+          "qualified_name": "RunHistoryStoreProtocol.materialize"
+        }
+      ]
+    },
+    "src/backend/services/integrations/facade.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 101,
+          "label": null,
+          "qualified_name": "IntegrationFacade.send_to_sink"
+        }
+      ]
+    },
+    "src/backend/services/notebooks/service.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 72,
+          "label": null,
+          "qualified_name": "NotebookService.get"
+        }
+      ]
+    },
+    "src/backend/services/workflows/hitl_history.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 85,
+          "label": null,
+          "qualified_name": "HitlHistoryService.get_history"
+        }
+      ]
+    },
+    "src/backend/services/workflows/sla_alerting.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 115,
+          "label": null,
+          "qualified_name": "evaluate_sla"
+        }
+      ]
+    },
+    "src/backend/services/workflows/saga_history.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 113,
+          "label": null,
+          "qualified_name": "aggregate_saga_stats"
+        }
+      ]
+    },
+    "src/backend/services/audit/clickhouse_audit_service/helpers.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 44,
+          "label": null,
+          "qualified_name": "make_audit_event"
+        }
+      ]
+    },
+    "src/backend/services/integrations/rule_engine/registry.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 93,
+          "label": null,
+          "qualified_name": "RuleEngineRegistry.get_active"
+        }
+      ]
+    },
+    "src/backend/services/ai/rag_service/search_mixin.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 182,
+          "label": null,
+          "qualified_name": "SearchMixin.search"
+        }
+      ]
+    },
+    "src/backend/services/ai/gateway/langfuse_pii_callback.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 31,
+          "label": null,
+          "qualified_name": "anonymize_trace_payload"
+        }
+      ]
+    },
+    "src/backend/services/ai/costs/dashboard.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 128,
+          "label": null,
+          "qualified_name": "AICostDashboard.snapshot"
+        }
+      ]
+    },
+    "src/backend/services/ai/feedback/dspy_dataset_builder.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 49,
+          "label": null,
+          "qualified_name": "DSPyDatasetBuilder.build"
+        }
+      ]
+    },
+    "src/backend/services/ai/feedback/feedback_service.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 229,
+          "label": null,
+          "qualified_name": "AIFeedbackService.get"
+        }
+      ]
+    },
+    "src/backend/services/ai/ai_agent/agent_orchestration_mixin.py": {
+      "count": 1,
+      "entries": [
+        {
+          "line": 36,
+          "label": null,
+          "qualified_name": "AgentOrchestrationMixin.chat"
+        }
+      ]
+    }
+  }
+}
