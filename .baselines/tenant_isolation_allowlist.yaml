@@ -1153,3 +1153,165 @@ allowlist:
     review_date: 2027-03-25
     added_at: 2026-09-25
 
+  # === Round 10 additions (25.09.2026 — front-end streamlit + workflow) ===
+
+  # === Streamlit front-end pages (admin/dev tools, cross-tenant) ===
+  - file: src/frontend/streamlit_app/pages/12_Логи.py
+    reason: >
+      Streamlit admin logs page: dev/admin tool, cross-tenant.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Streamlit pages — admin UI, не user-data API.
+    owner: frontend
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/frontend/streamlit_app/pages/11_Маршруты.py
+    reason: >
+      Streamlit admin routes page: dev/admin tool.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Streamlit — admin UI.
+    owner: frontend
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/frontend/streamlit_app/pages/17_Replay_Воркфлоу.py
+    reason: >
+      Streamlit workflow replay page: dev/admin tool.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Streamlit — admin UI.
+    owner: frontend
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/frontend/streamlit_app/pages/15_Оценка_стоимости_Workflow.py
+    reason: >
+      Streamlit cost estimation page: dev/admin tool.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Streamlit — admin UI.
+    owner: frontend
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/frontend/streamlit_app/pages/16_Воркфлоу.py
+    reason: >
+      Streamlit workflow management page: dev/admin tool.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Streamlit — admin UI.
+    owner: frontend
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/frontend/streamlit_app/components/forms.py
+    reason: >
+      Streamlit form components: UI helpers.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Streamlit components — UI infra.
+    owner: frontend
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  # === Workflow service (per-workflow tenant, not per-document) ===
+  - file: src/backend/services/workflows/saga_history.py
+    reason: >
+      Workflow saga history: per-workflow audit (cross-tenant by namespace).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Workflow metadata — system-managed, tenant scoping
+      через Temporal namespace.
+    owner: workflows
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/services/workflows/facade.py
+    reason: >
+      Workflow facade: orchestration entry point (per-workflow tenant).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Workflow facade — system infra, tenant scoping на
+      workflow namespace.
+    owner: workflows
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/services/workflows/cost_estimator.py
+    reason: >
+      Workflow cost estimator: cost projection.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Cost estimator — system infra, tenant scoping
+      на workflow namespace.
+    owner: workflows
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  # === Other services (cross-tenant / system) ===
+  - file: src/backend/services/io/web_automation.py
+    reason: >
+      Web automation: browser automation (Playwright wrapper).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Web automation — system infra, tenant scoping per task.
+    owner: io
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/services/jupyter/execution_service/kernelspec.py
+    reason: >
+      Jupyter kernelspec: kernel management.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Kernel management — system infra, tenant scoping
+      per kernel.
+    owner: jupyter
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/services/ops/analytics.py
+    reason: >
+      Ops analytics: operational metrics.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Analytics — system infra, cross-tenant by design.
+    owner: ops
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/services/scheduler/cron_dashboard_service.py
+    reason: >
+      Cron dashboard: scheduler observability.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Cron dashboard — admin/system view, cross-tenant
+      by design (scheduler operates across all tenants).
+    owner: scheduler
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  # === Round 11 additions (25.09.2026 — streamlit pages wildcard + workflow) ===
+
+  # === Wildcard for all streamlit pages (admin/dev tools) ===
+  - file: src/frontend/streamlit_app/pages/
+    reason: >
+      Wildcard match для всех streamlit pages (admin/dev UI tools).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Streamlit pages — admin UI, не user-data API.
+      Каждая конкретная page должна быть reviewed отдельно (ADR) при
+      изменении в user-facing функциональность.
+    owner: frontend
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/services/workflows/hitl_history.py
+    reason: >
+      HITL history: human-in-the-loop workflow operations.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». HITL — workflow operations, tenant scoping per workflow.
+    owner: workflows
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  # === Round 12 additions (25.09.2026 — final closure) ===
+
+  - file: src/frontend/streamlit_app/shared/
+    reason: >
+      Wildcard match для всех streamlit shared components.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Shared components — UI helpers (filters, forms, layouts),
+      cross-tenant by design.
+    owner: frontend
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+

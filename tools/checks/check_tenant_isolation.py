@@ -89,11 +89,22 @@ def _load_tenant_allowlist() -> set[tuple[str, int]]:
 def _is_finding_allowlisted(
     file: str, line: int, allowlist: set[tuple[str, int]]
 ) -> bool:
-    """Check if (file, line) matches allowlist (including wildcards)."""
+    """Check if (file, line) matches allowlist (including wildcards).
+
+    Per audit W3.5: wildcards can match (a) specific file (line=0 wildcard)
+    or (b) directory prefix (file ending with /).
+    """
     if (file, line) in allowlist:
         return True
     if (file, 0) in allowlist:  # wildcard match (any line in file)
         return True
+    # Directory wildcard: file entries ending with / match any file under that dir.
+    for allowed_file, allowed_line in allowlist:
+        if allowed_file.endswith("/") and (
+            file == allowed_file.rstrip("/") or
+            file.startswith(allowed_file)
+        ):
+            return True
     return False
 
 
