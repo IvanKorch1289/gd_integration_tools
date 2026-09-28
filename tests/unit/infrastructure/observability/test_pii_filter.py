@@ -72,3 +72,15 @@ def test_mask_pii_processor_signature() -> None:
     assert result["code"] == 200
     # Оригинал не изменён.
     assert event["email"] == "alice@example.com"
+
+
+def test_mask_pii_preserves_iso_timestamp() -> None:
+    """Поле ``timestamp`` лог-события не маскируется как телефон.
+
+    Регрессия: ``PHONE`` матчил ``2026-09-28`` внутри ISO-8601 timestamp,
+    и structlog-процессор отдавал ``<phone>T14:39:40Z`` — дата исчезала из
+    каждой записи, события нельзя было упорядочить по суткам.
+    """
+    event = {"event": "user.login", "timestamp": "2026-09-28T14:39:40.932079Z"}
+    result = mask_pii(None, "info", event)
+    assert result["timestamp"] == "2026-09-28T14:39:40.932079Z"

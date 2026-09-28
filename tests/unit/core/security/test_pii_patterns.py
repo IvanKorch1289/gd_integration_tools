@@ -127,6 +127,37 @@ class TestPhonePattern:
         """Короткий номер не матчится."""
         assert PHONE.search("12345") is None
 
+    def test_iso_date_does_not_match(self) -> None:
+        """ISO-8601 дата не телефон — иначе маскируется поле timestamp.
+
+        Регрессия: ``[\\d\\s()\\-]{8,}`` матчил ``2026-09-28``, и
+        ``_mask_pii`` рендерил timestamp как ``<phone>T14:39:40Z`` —
+        дата терялась в каждой структурированной записи.
+        """
+        assert PHONE.search("2026-09-28") is None
+
+    def test_iso_datetime_does_not_match(self) -> None:
+        """Полный ISO-8601 timestamp (date + ``T`` + время)."""
+        assert PHONE.search("2026-09-28T14:39:40.932079Z") is None
+
+    def test_iso_date_inside_text_does_not_match(self) -> None:
+        """Дата внутри произвольного текста / идентификатора."""
+        assert PHONE.search("user-2026-09-28 created") is None
+        assert PHONE.search("timestamp=2026-09-28T14:39:40Z") is None
+
+    def test_phone_after_iso_date_still_masked(self) -> None:
+        """Исключение даты не отключает маскирование телефона рядом с ней."""
+        assert PHONE.search("2026-09-28 +7 999 123-45-67") is not None
+
+    def test_ten_digits_joined_by_hyphen_still_masked(self) -> None:
+        """10 цифр через дефис — не дата, маскируется (fail-closed)."""
+        assert PHONE.search("1234-567890") is not None
+
+    def test_digits_continuing_after_date_still_masked(self) -> None:
+        """Продолжение числа после даты — не дата, маскируется (fail-closed)."""
+        assert PHONE.search("2026-09-2812") is not None
+        assert PHONE.search("2026-09-28-1234") is not None
+
 
 @pytest.mark.unit
 class TestCardPattern:
