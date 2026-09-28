@@ -1,4 +1,3 @@
-from asyncio import TimeoutError
 from dataclasses import dataclass, field
 from datetime import timedelta, timezone
 from pathlib import Path
@@ -8,7 +7,6 @@ from typing import Any
 # httpx, что покрывает все non-deprecated клиенты проекта. Сам httpx
 # импортируется лениво (см. Constants.__getattr__) — eager-импорт тянул
 # ~75ms в каждую startup-цепочку (гейт pre-prod #19 startup-time).
-
 # S168 W10 P1-14: per-domain extraction. CB + retry defaults
 # re-exported from _resilience_consts.py для backward-compat.
 from src.backend.core.config._resilience_consts import (
@@ -107,6 +105,36 @@ class Constants:
             "58000",
         }
     )
+
+    def __getattr__(self, name: str) -> Any:
+        """Ленивое разрешение констант, требующих тяжёлых импортов.
+
+        ``RETRY_EXCEPTIONS`` резолвит ``httpx`` при ПЕРВОМ доступе: eager-импорт
+        тянул ~75ms в каждую startup-цепочку (гейт pre-prod #19 startup-time).
+        ``__getattr__`` вызывается только когда обычный lookup не нашёл
+        атрибут, поэтому все остальные поля остаются бесплатными.
+
+        Единственный потребитель — ``transport/http/request_mixin.py``
+        (``_is_retryable_exception``).
+
+        Args:
+            name: Имя атрибута.
+
+        Returns:
+            Значение ленивой константы.
+
+        Raises:
+            AttributeError: Для любого другого имени — стандартное поведение.
+
+        """
+        if name == "RETRY_EXCEPTIONS":
+            import httpx
+
+            # TimeoutError — builtin (алиас asyncio.TimeoutError на 3.11+).
+            return (httpx.HTTPError, TimeoutError)
+        raise AttributeError(
+            f"{type(self).__name__!r} object has no attribute {name!r}"
+        )
 
 
 # Экземпляр конфигурации
