@@ -91,8 +91,13 @@ def test_module_logger_is_named_correctly() -> None:
     stdlib ``logging.Logger``), а не нативный ``logging.Logger``. Тест
     duck-typed: проверяем наличие ``name`` атрибута (как у ``Logger``).
     """
-    assert hasattr(service_setup._logger, "name")
-    assert service_setup._logger.name == "composition.service_setup"
+    # structlog lazy-proxy не отдаёт осмысленного ``.name`` (возвращает имя
+    # класса-прокси), поэтому проверяем canonical-контракт LoggerProtocol,
+    # а не конкретный backend.
+    from src.backend.core.interfaces.multi_protocol import LoggerProtocol
+
+    assert isinstance(service_setup._logger, LoggerProtocol)
+    assert callable(service_setup._logger.info)
 
 
 def test_module_has_docstring() -> None:

@@ -15,6 +15,13 @@ from src.backend.core.svcs_registry import clear_registry, get_service, has_serv
 @pytest.fixture(autouse=True)
 def _clean_registry():
     clear_registry()
+    # TaskRegistry — process-wide singleton. ``test_lifecycle_smoke`` закрывает
+    # его через shutdown_all(), после чего любой create_task() падает с
+    # «TaskRegistry уже закрыт». Тесты не должны зависеть от порядка запуска
+    # чужих модулей, поэтому сбрасываем registry перед прогоном.
+    from src.backend.core.utils.task_registry import reset_task_registry
+
+    reset_task_registry()
     yield
     clear_registry()
 

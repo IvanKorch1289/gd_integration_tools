@@ -79,16 +79,27 @@ def test_lifespan_swallows_sentry_init_failure() -> None:
     Минимальный smoke: симулируем raise внутри init_sentry и убеждаемся,
     что lifespan-блок ловит исключение через try/except и продолжает.
     """
-    from src.backend.plugins.composition import lifecycle as lifecycle_module
+    # Sentry init вынесен из ``lifespan`` в startup-phase
+    # ``phase_sentry_init`` (lifespan — тонкая обёртка над фазами).
+    # Проверяем реальный контракт: исключение внутри init_sentry
+    # глушится и НЕ пробрасывается наружу (fail-open для телеметрии,
+    # чтобы недоступный Sentry не ронял старт приложения).
+    import inspect
 
-    # Просто проверяем, что lifespan-функция доступна и содержит
-    # защитный try-блок вокруг init_sentry. Это контрактный smoke,
-    # без реального запуска FastAPI.
-    src = lifecycle_module.lifespan.__wrapped__.__code__.co_consts  # type: ignore[attr-defined]
-    code_repr = repr(src)
-    assert "init_sentry" in code_repr or "Sentry" in code_repr, (
-        "lifespan должен содержать вызов init_sentry"
+    from src.backend.plugins.composition.lifecycle.startup_phases.observability import (
+        phase_sentry_init,
     )
+
+    phase_src = inspect.getsource(phase_sentry_init)
+    assert "init_sentry" in phase_src, "phase_sentry_init обязан вызывать init_sentry"
+    assert "except Exception" in phase_src, (
+        "phase_sentry_init обязан глушить исключения Sentry-инициализации"
+    )
+
+    # И контракт поведения: при падении импорта sentry фаза не бросает.
+    import asyncio
+
+    asyncio.run(phase_sentry_init(None))  # type: ignore[arg-type]
 
 
 def test_secrets_backend_factory_dispatches_env(

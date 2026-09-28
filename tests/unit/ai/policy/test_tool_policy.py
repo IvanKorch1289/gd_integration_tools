@@ -137,7 +137,25 @@ class TestAgentToolPolicyRuntimeTracking:
 
 
 class TestAgentToolPolicyIntegration:
-    """Интеграция с svcs_registry DI."""
+    """Интеграция с svcs_registry DI.
+
+    Дефолтная регистрация выполняется один раз при импорте
+    ``src.backend.ai.policy``. Любой вызов ``clear_registry()`` (например,
+    teardown другого тестового модуля) стирает её безвозвратно, поэтому
+    fixture пере-регистрирует фабрику — тест не должен зависеть от
+    порядка выполнения чужих тестов.
+    """
+
+    @pytest.fixture(autouse=True)
+    def _registered_default_policy(self) -> None:
+        from src.backend.core.svcs_registry import get_service, register_factory
+
+        try:
+            get_service(AgentToolPolicy)
+        except KeyError:
+            register_factory(
+                AgentToolPolicy, lambda: AgentToolPolicy(agent_id="default")
+            )
 
     def test_di_factory_returns_default_policy(self) -> None:
         from src.backend.core.svcs_registry import get_service

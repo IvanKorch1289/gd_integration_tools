@@ -71,6 +71,8 @@ def test_audit_callback_receives_event(caplog: pytest.LogCaptureFixture) -> None
     """waf_audit_callback пишет outcome в logger ``waf.audit``."""
     from src.backend.plugins.composition.waf_setup import waf_audit_callback
 
+    # ``extra=`` уходит в structlog под ключом "extra", а не как атрибуты
+    # stdlib LogRecord — поэтому проверяем отрендеренное сообщение.
     caplog.set_level("INFO", logger="waf.audit")
     waf_audit_callback(
         {
@@ -82,9 +84,10 @@ def test_audit_callback_receives_event(caplog: pytest.LogCaptureFixture) -> None
             "reason": "allowed",
         }
     )
-    record = next(r for r in caplog.records if r.name == "waf.audit")
-    assert record.waf_outcome == "granted"
-    assert record.host == "example.com"
+    record = next(r for r in caplog.records if "waf.evaluate" in r.getMessage())
+    message = record.getMessage()
+    assert "'waf_outcome': 'granted'" in message
+    assert "'host': 'example.com'" in message
 
 
 def test_capability_denied_when_gate_present_without_declaration() -> None:

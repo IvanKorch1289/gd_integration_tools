@@ -24,6 +24,40 @@ import pytest
 
 from src.backend.plugins.composition import waf_setup
 
+
+@pytest.fixture()
+def captured_waf_events() -> Any:
+    """Перехватить structlog event_dict'ы модуля ``waf_setup``.
+
+    Проект по умолчанию использует structlog-backend, поэтому ``extra=``
+    не попадает в stdlib ``LogRecord`` как атрибуты. Прежние тесты вешали
+    stdlib-handler на logger ``waf.audit`` и ждали ``record.waf_outcome`` —
+    это контракт ``StdlibLogger``, которого в активной конфигурации нет.
+    Теперь проверяется реально произведённый event_dict.
+    """
+    structlog = pytest.importorskip("structlog")
+    captured: list[dict[str, Any]] = []
+    # Сохраняем проектную конфигурацию: reset_defaults() на teardown ломал бы
+    # structlog для последующих тестов, читающих логи (caplog/LogRecord).
+    saved_config = structlog.get_config()
+    saved_module_logger = waf_setup._logger
+
+    def _capture(_logger: Any, _method_name: str, event_dict: dict[str, Any]) -> str:
+        captured.append(event_dict)
+        return ""
+
+    structlog.configure(
+        processors=[_capture],
+        wrapper_class=structlog.BoundLogger,
+        cache_logger_on_first_use=False,
+    )
+    # Модуль держит lazy-proxy — пересоздаём logger после reconfigure.
+    waf_setup._logger = structlog.get_logger("waf.audit")
+    yield captured
+    structlog.configure(**saved_config)
+    waf_setup._logger = saved_module_logger
+
+
 # --------------------------------------------------------------------------- #
 # Fixtures
 # --------------------------------------------------------------------------- #
@@ -78,12 +112,18 @@ def test_waf_setup_module_all_contains_expected_symbols() -> None:
 
 
 def test_waf_setup_module_logger_is_named_waf_audit() -> None:
-    """Локальный логгер модуля использует ``waf.audit`` namespace."""
-    from src.backend.infrastructure.logging.stdlib_backend import StdlibLogger
+    """Локальный логгер модуля использует ``waf.audit`` namespace.
 
-    assert isinstance(waf_setup._logger, StdlibLogger)
-    assert waf_setup._logger.name == "waf.audit"
-    assert callable(waf_setup._logger.info)
+    Проверяется canonical-контракт ``LoggerProtocol``, а не конкретный backend:
+    активный backend — structlog, но dev-окружение может откатиться на
+    stdlib. Раньше тест жёстко требовал ``StdlibLogger`` и падал в конфигурации
+    по умолчанию.
+    """
+    from src.backend.core.interfaces.multi_protocol import LoggerProtocol
+
+    logger = waf_setup._logger
+    assert isinstance(logger, LoggerProtocol)
+    assert callable(logger.info)
 
 
 def test_waf_setup_module_has_docstring() -> None:
@@ -98,82 +138,59 @@ def test_waf_setup_module_has_docstring() -> None:
 # --------------------------------------------------------------------------- #
 
 
-def test_waf_audit_callback_emits_granted_outcome() -> None:
-    """``allowed=True`` → ``waf_outcome=granted`` в extra-полях log-записи."""
-    captured: list[logging.LogRecord] = []
-    handler = _ListHandler(captured)
-    waf_audit_logger = logging.getLogger("waf.audit")
-    waf_audit_logger.addHandler(handler)
-    waf_audit_logger.setLevel(logging.DEBUG)
-    try:
-        waf_setup.waf_audit_callback(
-            {
-                "allowed": True,
-                "plugin": "core",
-                "method": "GET",
-                "host": "example.com",
-                "url": "https://example.com/x",
-                "reason": "ok",
-            }
-        )
-    finally:
-        waf_audit_logger.removeHandler(handler)
+def test_waf_audit_callback_emits_granted_outcome(captured_waf_events: Any) -> None:
+    """``allowed=True`` → ``waf_outcome=granted`` в audit-event."""
+    waf_setup.waf_audit_callback(
+        {
+            "allowed": True,
+            "plugin": "core",
+            "method": "GET",
+            "host": "example.com",
+            "url": "https://example.com/x",
+            "reason": "ok",
+        }
+    )
 
-    assert len(captured) == 1
-    record = captured[0]
-    assert record.levelname == "INFO"
-    assert record.getMessage() == "waf.evaluate"
-    assert record.waf_outcome == "granted"
-    assert record.plugin == "core"
-    assert record.method == "GET"
-    assert record.host == "example.com"
-    assert record.url == "https://example.com/x"
-    assert record.reason == "ok"
+    assert len(captured_waf_events) == 1
+    event = captured_waf_events[0]
+    assert event["event"] == "waf.evaluate"
+    # StructlogLogger.info(msg, extra={...}) кладёт поля под ключом "extra".
+    extra = event["extra"]
+    assert extra["waf_outcome"] == "granted"
+    assert extra["plugin"] == "core"
+    assert extra["method"] == "GET"
+    assert extra["host"] == "example.com"
+    assert extra["url"] == "https://example.com/x"
+    assert extra["reason"] == "ok"
 
 
-def test_waf_audit_callback_emits_denied_outcome() -> None:
-    """``allowed=False`` → ``waf_outcome=denied`` в extra-полях log-записи."""
-    captured: list[logging.LogRecord] = []
-    handler = _ListHandler(captured)
-    waf_audit_logger = logging.getLogger("waf.audit")
-    waf_audit_logger.addHandler(handler)
-    waf_audit_logger.setLevel(logging.DEBUG)
-    try:
-        waf_setup.waf_audit_callback(
-            {
-                "allowed": False,
-                "plugin": "ext",
-                "method": "POST",
-                "host": "evil.com",
-                "url": "https://evil.com/y",
-                "reason": "deny-list match",
-            }
-        )
-    finally:
-        waf_audit_logger.removeHandler(handler)
+def test_waf_audit_callback_emits_denied_outcome(captured_waf_events: Any) -> None:
+    """``allowed=False`` → ``waf_outcome=denied`` в audit-event."""
+    waf_setup.waf_audit_callback(
+        {
+            "allowed": False,
+            "plugin": "ext",
+            "method": "POST",
+            "host": "evil.com",
+            "url": "https://evil.com/y",
+            "reason": "deny-list match",
+        }
+    )
 
-    assert len(captured) == 1
-    assert captured[0].waf_outcome == "denied"
-    assert captured[0].reason == "deny-list match"
+    assert len(captured_waf_events) == 1
+    assert captured_waf_events[0]["extra"]["waf_outcome"] == "denied"
+    assert captured_waf_events[0]["extra"]["reason"] == "deny-list match"
 
 
-def test_waf_audit_callback_handles_empty_event() -> None:
-    """Пустой event-dict → outcome=denied (default для ``.get('allowed')``)."""
-    captured: list[logging.LogRecord] = []
-    handler = _ListHandler(captured)
-    waf_audit_logger = logging.getLogger("waf.audit")
-    waf_audit_logger.addHandler(handler)
-    waf_audit_logger.setLevel(logging.DEBUG)
-    try:
-        waf_setup.waf_audit_callback({})
-    finally:
-        waf_audit_logger.removeHandler(handler)
+def test_waf_audit_callback_handles_empty_event(captured_waf_events: Any) -> None:
+    """Пустой event-dict → outcome=denied (fail-closed для ``.get('allowed')``)."""
+    waf_setup.waf_audit_callback({})
 
-    assert len(captured) == 1
-    assert captured[0].waf_outcome == "denied"
-    # missing-keys должны быть переданы как None в extra-полях.
-    assert captured[0].plugin is None
-    assert captured[0].host is None
+    assert len(captured_waf_events) == 1
+    assert captured_waf_events[0]["extra"]["waf_outcome"] == "denied"
+    # missing-keys должны быть переданы как None.
+    assert captured_waf_events[0]["extra"]["plugin"] is None
+    assert captured_waf_events[0]["extra"]["host"] is None
 
 
 def test_waf_audit_callback_handles_none_event() -> None:

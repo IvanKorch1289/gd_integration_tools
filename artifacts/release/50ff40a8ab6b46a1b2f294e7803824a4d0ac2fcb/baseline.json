@@ -1,0 +1,164 @@
+{
+  "audit": "W0 baseline + W1 make ci closure (Sprint 47 agent, clean HEAD, owner 84daeb508 verified)",
+  "head": "50ff40a8ab6b46a1b2f294e7803824a4d0ac2fcb",
+  "branch": "master",
+  "timestamp": "2026-09-28T08:51:10.778554+00:00",
+  "python": "3.14.0",
+  "worktree_clean": false,
+  "worktree_note": "20 dirty files — активный WIP владельца волны ADR-0345 (event_store cluster, tenant-enforcement tests, .pyi); гейты прошли поверх WIP",
+  "overall_status": "FAIL",
+  "status_counts": {
+    "PASS": 10,
+    "FAIL": 2
+  },
+  "gate_count": 12,
+  "gates": [
+    {
+      "gate": "compileall",
+      "command": ".venv/bin/python -m compileall -q src/backend",
+      "exit_code": 0,
+      "status": "PASS",
+      "duration_seconds": 0.09,
+      "stdout_tail": []
+    },
+    {
+      "gate": "check_layers",
+      "command": ".venv/bin/python tools/check_layers.py",
+      "exit_code": 0,
+      "status": "PASS",
+      "duration_seconds": 28.43,
+      "stdout_tail": [
+        "Нарушений: 0 новых  (файлов: 2557; baseline: 22 legacy)"
+      ]
+    },
+    {
+      "gate": "check_docstrings",
+      "command": ".venv/bin/python tools/check_docstrings.py",
+      "exit_code": 0,
+      "status": "PASS",
+      "duration_seconds": 1.75,
+      "stdout_tail": [
+        "Total: 0 missing docstrings in 0 files",
+        "Files scanned: 2557"
+      ]
+    },
+    {
+      "gate": "classify_object_auth",
+      "command": ".venv/bin/python tools/classify_object_authorization.py --strict",
+      "exit_code": 0,
+      "status": "PASS",
+      "duration_seconds": 3.89,
+      "stdout_tail": [
+        "src/backend/core/api_graph/graph.py                            142  infra-registry  self._nodes.get(node_id)                ",
+        "src/backend/core/canary_deploy/controller.py                   102  infra-registry  self._configs.get(route_id)             ",
+        "src/backend/core/canary_deploy/controller.py                   111  infra-registry  self._configs.get(route_id)             ",
+        "v6 W1 strict gate OK: 9 user-data, 0 unknown, 117 total."
+      ]
+    },
+    {
+      "gate": "check_tenant_isolation",
+      "command": ".venv/bin/python tools/checks/check_tenant_isolation.py --strict",
+      "exit_code": 0,
+      "status": "PASS",
+      "duration_seconds": 3.29,
+      "stdout_tail": [
+        "  ℹ️  Allowlisted (false positives): 552",
+        "  ℹ️  Unclassified (need attention): 0",
+        "  ℹ️  Total findings: 558; allowlisted: 558 (100%); unclassified: 0",
+        "✅ All findings classified (allowlist covers system infra)"
+      ]
+    },
+    {
+      "gate": "check_privacy_lifecycle",
+      "command": ".venv/bin/python tools/checks/check_privacy_lifecycle.py --strict",
+      "exit_code": 0,
+      "status": "PASS",
+      "duration_seconds": 0.16,
+      "stdout_tail": [
+        "  Legal hold support: ✅",
+        "  Reconciliation check: ✅",
+        "  Orchestration command: ✅ src/backend/core/privacy/__init__.py",
+        "✅ Privacy lifecycle complete"
+      ]
+    },
+    {
+      "gate": "check_no_new_optional_tenant",
+      "command": ".venv/bin/python tools/checks/check_no_new_optional_tenant.py",
+      "exit_code": 0,
+      "status": "PASS",
+      "duration_seconds": 2.01,
+      "stdout_tail": [
+        "Optional tenant_id AST gate (audit W0)",
+        "  Baseline: 123 параметров",
+        "  Current:  123 параметров",
+        "  ✅ No drift"
+      ]
+    },
+    {
+      "gate": "ruff_check",
+      "command": ".venv/bin/python -m ruff check src tests",
+      "exit_code": 1,
+      "status": "FAIL",
+      "duration_seconds": 0.09,
+      "stdout_tail": [
+        "93 |     phase_src = inspect.getsource(phase_sentry_init)",
+        "   |",
+        "Found 1 error.",
+        "[*] 1 fixable with the `--fix` option."
+      ]
+    },
+    {
+      "gate": "ruff_format_check",
+      "command": ".venv/bin/python -m ruff format --check src tests",
+      "exit_code": 1,
+      "status": "FAIL",
+      "duration_seconds": 0.08,
+      "stdout_tail": [
+        "55 +",
+        "56 | # --------------------------------------------------------------------------- #",
+        "   |",
+        "2 files would be reformatted, 4756 files already formatted"
+      ]
+    },
+    {
+      "gate": "mypy_budget",
+      "command": ".venv/bin/python tools/checks/mypy_budget.py --max 5",
+      "exit_code": 0,
+      "status": "PASS",
+      "duration_seconds": 59.15,
+      "stdout_tail": [
+        "Running mypy...",
+        "mypy errors: 0 (max=5, baseline=30)",
+        "OK"
+      ]
+    },
+    {
+      "gate": "make_ci_composite",
+      "command": "UV_NO_SYNC=1 make ci",
+      "exit_code": 0,
+      "status": "PASS",
+      "evidence_log": "make_ci_pass.log",
+      "per_gate": [
+        "Formatting check passed!",
+        "Strict lint passed!",
+        "Success: no issues found in 2580 source files",
+        "Strict dependency checks passed! (creosote: No unused dependencies found)",
+        "Secrets check completed!",
+        "WAF coverage OK: 0 violations",
+        "AI Safety checks passed (703 passed, 11 skipped, 1 xfailed)",
+        "check-python3-syntax: OK (make continued)",
+        "check-task-registry: OK (make continued)",
+        "Test collection OK",
+        "CI gate passed"
+      ]
+    },
+    {
+      "gate": "check_ai_safety_standalone",
+      "command": "UV_NO_SYNC=1 make check-ai-safety",
+      "exit_code": 0,
+      "status": "PASS",
+      "result": "703 passed, 11 skipped, 1 xfailed in 8.99s",
+      "evidence_log": "check_ai_safety_pass.log"
+    }
+  ]
+}
