@@ -70,21 +70,41 @@ class TestToDictMsgspec:
         в C-extension, минуя orjson's pure-Python default callback для
         ``__struct_fields__``. На синтетических 5-полевых структурах
         реальный speedup ~2.5x. S40 W8: подтверждаем v15 §7 target.
+
+        Устойчивость к шуму (измеренный факт: отношение стабильно ~0.33, т.е.
+        запас до порога 0.5 есть, но единичный замер мерцал):
+        раньше окно измерения было ~1.5ms — один scheduler slice вносил
+        десятки процентов ошибки, и тест периодически падал в полном прогоне,
+        проходя 3/3 изолированно. Поэтому:
+          * окно измерения увеличено до ~10-30ms (30k итераций);
+          * два пути чередуются, а не идут блоками, чтобы дрейф планировщика
+            попадал в оба замера одинаково;
+          * берётся минимум по прогонам — стандартная оценка для
+            микро-бенчмарков, отражающая чистое время без ожидания в
+            планировщике.
         """
         original = OrderStruct(id=42, symbol="MSFT", qty=10.0, price=300.0)
-        iterations = 5_000
+        iterations = 30_000
+        trials = 3
 
-        # msgspec path
-        t0 = time.perf_counter()
-        for _ in range(iterations):
-            es.to_dict_fast(original, use_msgspec=True)
-        t_msgspec = time.perf_counter() - t0
+        best_msgspec = float("inf")
+        best_orjson = float("inf")
+        for _ in range(trials):
+            for use_msgspec, bucket in (
+                (True, "msgspec"),
+                (False, "orjson"),
+            ):
+                t0 = time.perf_counter()
+                for _ in range(iterations):
+                    es.to_dict_fast(original, use_msgspec=use_msgspec)
+                elapsed = time.perf_counter() - t0
+                if bucket == "msgspec":
+                    best_msgspec = min(best_msgspec, elapsed)
+                else:
+                    best_orjson = min(best_orjson, elapsed)
 
-        # orjson path (принудительный fallback)
-        t0 = time.perf_counter()
-        for _ in range(iterations):
-            es.to_dict_fast(original, use_msgspec=False)
-        t_orjson = time.perf_counter() - t0
+        t_msgspec = best_msgspec
+        t_orjson = best_orjson
 
         # msgspec должен быть минимум в 2x быстрее orjson.
         # Если нет — regress в msgspec или шумное окружение.
