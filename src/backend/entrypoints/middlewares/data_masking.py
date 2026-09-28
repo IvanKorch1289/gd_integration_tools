@@ -29,12 +29,20 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 from src.backend.core.logging import get_logger
 
+# S219/S221: паттерны PII берутся из канонического single source of truth
+# (core.security.pii_patterns), а не дублируются здесь. Локальные копии
+# разъехались с каноном: приватный ``_PHONE_RE`` матчил ISO-8601 дату, и
+# ``/ready`` отдавал ``"timestamp":"+***0928T15:12:46.355395+00:00"`` —
+# дата в ответе readiness-эндпоинта была нечитаема.
+#
+# Формат вывода остаётся локальным (``a***b@host`` / ``+***1234``) —
+# здесь меняется только источник паттерна.
+from src.backend.core.security.pii_patterns import EMAIL as _EMAIL_RE
+from src.backend.core.security.pii_patterns import PHONE as _PHONE_RE
+
 _logger = get_logger(__name__)
 
 __all__ = ("DataMaskingMiddleware",)
-
-_EMAIL_RE = re.compile(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
-_PHONE_RE = re.compile(r"\+?\d[\d\s\-()]{8,}\d")
 
 _SENSITIVE_KEYS = frozenset(
     {

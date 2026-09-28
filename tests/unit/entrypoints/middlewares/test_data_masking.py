@@ -227,6 +227,36 @@ class TestDataMaskingMiddleware:
         parsed = json.loads(masked.decode("utf-8"))
         assert parsed["error"] == "response_masking_failed"
 
+    def test_iso_timestamp_not_masked_as_phone(
+        self, middleware: DataMaskingMiddleware
+    ) -> None:
+        """ISO-8601 timestamp не считается телефоном.
+
+        Регрессия, найденная на живом приложении: приватная копия
+        ``_PHONE_RE`` в этом модуле матчила дату, и ``/ready`` отдавал
+        ``"timestamp":"+***0928T15:12:46.355395+00:00"`` — дата в ответе
+        readiness-эндпоинта была нечитаема. Паттерн теперь берётся из
+        канонического ``core.security.pii_patterns``.
+        """
+        result = middleware._mask_value("2026-09-28T15:12:46.355395+00:00")
+        assert result == "2026-09-28T15:12:46.355395+00:00"
+
+    def test_real_phone_still_masked_by_middleware(
+        self, middleware: DataMaskingMiddleware
+    ) -> None:
+        """Переход на канонический паттерн не ослабил маскирование телефона."""
+        result = middleware._mask_value("call +7 999 123-45-67 now")
+        assert "9991234567" not in result
+        assert result == "call +***4567 now"
+
+    def test_real_email_still_masked_by_middleware(
+        self, middleware: DataMaskingMiddleware
+    ) -> None:
+        """Email продолжает маскироваться локальным форматом ``a***b@host``."""
+        result = middleware._mask_value("write to alice@example.com please")
+        assert "alice@example.com" not in result
+        assert result == "write to a***e@example.com please"
+
 
 class TestDataMaskingMiddlewarePureASGI:
     """Cycle 58: pure ASGI regression-тесты для DataMaskingMiddleware."""
