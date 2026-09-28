@@ -191,3 +191,16 @@ def _restore_di_overrides():
         if isinstance(ov, dict) and id(ov) in snapshot:
             ov.clear()
             ov.update(snapshot[id(ov)])
+
+
+# ── Workflow registry: cleanup после каждого теста (fix test pollution) ──
+# test_emitter/test_registry мутируют singleton workflow_registry._classes,
+# что утекает в последующие suite'ы (emitter → Temporal interceptor → privacy).
+@_pytest.fixture(autouse=True)
+def _restore_workflow_registry():
+    from src.backend.core.workflow_registry import workflow_registry as _wr
+
+    snapshot = dict(_wr._classes)
+    yield
+    _wr._classes.clear()
+    _wr._classes.update(snapshot)
