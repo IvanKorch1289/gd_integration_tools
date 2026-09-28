@@ -29,7 +29,10 @@ def _make_model_class(name: str = "TestModel") -> type:
     class _MockModel:
         # Marker attribute to indicate SQLAlchemy-style ``get`` is supported.
         # ``_verify_ownership`` checks ``getattr(model, 'get', None) is not None``.
-        get = lambda self, *args, **kwargs: None  # placeholder
+
+        def get(self, *args: object, **kwargs: object) -> None:
+            """Placeholder: ownership check only tests method presence."""
+            return None
 
     _MockModel.__name__ = name
     return _MockModel

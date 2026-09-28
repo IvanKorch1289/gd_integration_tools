@@ -164,6 +164,10 @@ async def test_claim_pending_uses_skip_locked_in_postgres(
     # На SQLite overlap возможен (нет row-lock); на PostgreSQL claimed_b == [].
     # Делаем test resilient: проверяем только что Worker A claim не "потерян"
     # (его lease_owner остался = worker_a для его тиков).
+    assert all(r.lease_owner != "worker_a" for r in claimed_b), (
+        f"Worker B не должен reclaim тики с неистёкшим lease Worker A: "
+        f"{[r.lease_owner for r in claimed_b]}"
+    )
     async with store._session_factory() as session:
         from sqlalchemy import select
 

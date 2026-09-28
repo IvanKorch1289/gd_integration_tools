@@ -48,7 +48,13 @@ T = TypeVar("T")
 _factories: dict[Hashable, Callable[[], Any]] = {}
 # Кеш синглтонов: factory вызывается один раз, результат кешируется.
 _singletons: dict[Hashable, Any] = {}
-_lock = threading.Lock()  # noqa: violation-check — sync register_factory/has_service/list_services/get_service/clear_registry
+# RLock, а не Lock: фабрика сервиса вправе разрешать свои зависимости через
+# вложенный get_service() (например, AIFsFacade → CapabilityGate). С обычным
+# threading.Lock вложенный вызов на том же потоке deadlock'ился — внешний
+# get_service() уже держит лок, пока выполняет factory(). RLock реентерабелен
+# для потока-владельца, поэтому вложенное разрешение зависимостей работает,
+# а взаимное исключение между разными потоками сохраняется.
+_lock = threading.RLock()  # noqa: violation-check — sync register_factory/has_service/list_services/get_service/clear_registry
 
 
 def register_factory(key: Hashable, factory: Callable[[], Any]) -> None:

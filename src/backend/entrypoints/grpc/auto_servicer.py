@@ -274,7 +274,6 @@ def _make_dispatch_behavior(
     bundle: Any,
     service: str,
     rpc_name: str,
-    input_type_name: str,
     output_type_name: str,
     servicer_fallback: Any,
 ) -> Any:
@@ -404,7 +403,6 @@ def register_auto_servicers(grpc_server: Any) -> int:
                 bundle=bundle,
                 service=bundle.service,
                 rpc_name=rpc_name,
-                input_type_name=method_desc.input_type.name,
                 output_type_name=method_desc.output_type.name,
                 servicer_fallback=getattr(servicer, rpc_name, None),
             )

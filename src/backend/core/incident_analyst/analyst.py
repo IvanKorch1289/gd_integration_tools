@@ -433,24 +433,34 @@ class IncidentAnalyst:
         return report
 
     def _build_evidence(self, ctx: IncidentContext, hypothesis_title: str) -> list[str]:
-        """Build evidence list для hypothesis из context."""
+        """Build evidence list для hypothesis из context.
+
+        Каждая строка префиксуется заголовком гипотезы: контекст incident'а
+        общий для всех гипотез, поэтому без префикса невозможно понять,
+        к какой гипотезе относится конкретный факт. Префикс также делает
+        параметр ``hypothesis_title`` значимым (иначе vulture считает его
+        мёртвым, а evidence-list идентичен для всех гипотез).
+        """
+        prefix = f"[{hypothesis_title}] "
         evidence: list[str] = []
         if ctx.recent_deploys:
-            evidence.append(f"Recent deploys: {', '.join(ctx.recent_deploys[:3])}")
+            evidence.append(
+                f"{prefix}Recent deploys: {', '.join(ctx.recent_deploys[:3])}"
+            )
         if ctx.recent_config_changes:
             evidence.append(
-                f"Config changes: {', '.join(ctx.recent_config_changes[:3])}"
+                f"{prefix}Config changes: {', '.join(ctx.recent_config_changes[:3])}"
             )
         if ctx.latency_p99_ms is not None and ctx.latency_p99_ms > 1000:
-            evidence.append(f"P99 latency: {ctx.latency_p99_ms}ms (degraded)")
+            evidence.append(f"{prefix}P99 latency: {ctx.latency_p99_ms}ms (degraded)")
         if ctx.error_rate is not None and ctx.error_rate > 0.05:
-            evidence.append(f"Error rate: {ctx.error_rate:.1%} (elevated)")
+            evidence.append(f"{prefix}Error rate: {ctx.error_rate:.1%} (elevated)")
         if ctx.dependencies:
-            evidence.append(f"Dependencies: {', '.join(ctx.dependencies)}")
+            evidence.append(f"{prefix}Dependencies: {', '.join(ctx.dependencies)}")
         if ctx.trace_id:
-            evidence.append(f"Trace ID: {ctx.trace_id}")
+            evidence.append(f"{prefix}Trace ID: {ctx.trace_id}")
         if not evidence:
-            evidence.append("No additional context available")
+            evidence.append(f"{prefix}No additional context available")
         return evidence
 
     def _apply_context_boosts(

@@ -18,29 +18,45 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
+
+import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
-def _run_aggregator(args: list[str] | None = None) -> subprocess.CompletedProcess[str]:
+@pytest.fixture(scope="module")
+def aggregator_result() -> dict[str, Any]:
+    """Один прогон aggregator на весь модуль.
+
+    Aggregator выполняет ~10 gates и занимает ~95 секунд. Раньше КАЖДЫЙ
+    тест модуля запускал его заново, из-за чего 6 тестов занимали ~10 минут
+    и не укладывались в разумный лимит. Результат детерминирован в рамках
+    одного прогона, поэтому одного запуска достаточно.
+
+    Exit code проверяется здесь же: иначе тесты читали бы STALE
+    ``quality-results.json`` от предыдущего прогона и проходили бы
+    при упавшем aggregator — ровно тот false-green, который audit W3 запрещает.
+    """
     cmd = [sys.executable, "tools/checks/quality_results_aggregator.py"]
-    if args:
-        cmd.extend(args)
-    return subprocess.run(
-        cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=300
+    result = subprocess.run(
+        cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=600
     )
-
-
-def test_aggregator_produces_machine_readable_json() -> None:
-    """Aggregator writes ``.audit/quality-results.json`` per audit W3 spec."""
-    result = _run_aggregator()
     assert result.returncode in (0, 1), (
         f"Aggregator должен exit 0 (все PASS) или 1 (есть FAIL). "
         f"Got {result.returncode}. stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
     )
     output_path = PROJECT_ROOT / ".audit" / "quality-results.json"
     assert output_path.is_file(), f"quality-results.json не создан: {output_path}"
-    data = json.loads(output_path.read_text(encoding="utf-8"))
+    data: dict[str, Any] = json.loads(output_path.read_text(encoding="utf-8"))
+    return data
+
+
+def test_aggregator_produces_machine_readable_json(
+    aggregator_result: dict[str, Any],
+) -> None:
+    """Aggregator writes ``.audit/quality-results.json`` per audit W3 spec."""
+    data = aggregator_result
     assert "audit" in data
     assert "head" in data
     assert "overall_status" in data
@@ -50,11 +66,12 @@ def test_aggregator_produces_machine_readable_json() -> None:
     assert isinstance(data["gates"], list)
 
 
-def test_aggregator_gate_records_have_audit_w3_schema() -> None:
+def test_aggregator_gate_records_have_audit_w3_schema(
+    aggregator_result: dict[str, Any],
+) -> None:
     """Каждый gate record имеет command, exit_code, duration, head, status,
     counts, artifact_hash, timestamp."""
-    result = _run_aggregator()
-    data = json.loads((PROJECT_ROOT / ".audit" / "quality-results.json").read_text())
+    data = aggregator_result
     audit_statuses = {"PASS", "FAIL", "TOOL_FAILURE", "ENV_FAILURE", "NOT_APPLICABLE"}
     for g in data["gates"]:
         assert "gate" in g
@@ -74,10 +91,11 @@ def test_aggregator_gate_records_have_audit_w3_schema() -> None:
             assert g["artifact_hash"].startswith("sha256:")
 
 
-def test_aggregator_counts_parsed_from_output() -> None:
+def test_aggregator_counts_parsed_from_output(
+    aggregator_result: dict[str, Any],
+) -> None:
     """Counts (user-data, missing tenant filter, etc.) parsed из output."""
-    result = _run_aggregator()
-    data = json.loads((PROJECT_ROOT / ".audit" / "quality-results.json").read_text())
+    data = aggregator_result
     # classifier_object_authorization должен report unknown_callsites и user_data_callsites.
     classifier_gate = next(
         g for g in data["gates"] if g["gate"] == "classify_object_authorization"
@@ -92,19 +110,17 @@ def test_aggregator_counts_parsed_from_output() -> None:
     )
 
 
-def test_aggregator_status_counts_aggregate() -> None:
+def test_aggregator_status_counts_aggregate(aggregator_result: dict[str, Any]) -> None:
     """status_counts содержит aggregate per status."""
-    result = _run_aggregator()
-    data = json.loads((PROJECT_ROOT / ".audit" / "quality-results.json").read_text())
+    data = aggregator_result
     total = sum(data["status_counts"].values())
     assert total == data["gate_count"]
     assert total == len(data["gates"])
 
 
-def test_aggregator_overall_status_logic() -> None:
+def test_aggregator_overall_status_logic(aggregator_result: dict[str, Any]) -> None:
     """overall_status = PASS если все gates PASS (или NOT_APPLICABLE)."""
-    result = _run_aggregator()
-    data = json.loads((PROJECT_ROOT / ".audit" / "quality-results.json").read_text())
+    data = aggregator_result
     statuses = {g["status"] for g in data["gates"]}
     expected_overall = (
         "PASS" if statuses.issubset({"PASS", "NOT_APPLICABLE"}) else "FAIL"
@@ -115,19 +131,33 @@ def test_aggregator_overall_status_logic() -> None:
     )
 
 
-def test_aggregator_command_uses_venv_python() -> None:
+def test_aggregator_command_uses_venv_python(aggregator_result: dict[str, Any]) -> None:
     """Aggregator использует .venv/bin/python для stability (full deps).
 
     Audit W3: «Неполное окружение означает UNKNOWN, а не PASS или FAIL».
     Aggregator должен detect venv python чтобы avoid spurious ENV_FAILURE
     когда системный python3.14 не имеет project deps.
+
+    Проверяются ТОЛЬКО gates, чья команда запускает python-интерпретатор.
+    Standalone-бинари (ruff, mypy) вызываются напрямую и не должны
+    подменяться на venv python — прежняя версия теста требовала python
+    в каждой команде и падала на ruff-гейтах.
     """
-    result = _run_aggregator()
-    data = json.loads((PROJECT_ROOT / ".audit" / "quality-results.json").read_text())
+    data = aggregator_result
     venv_python = str(PROJECT_ROOT / ".venv" / "bin" / "python")
+    python_gates = 0
     for g in data["gates"]:
+        # command хранится в JSON как строка (" ".join(...)).
         cmd = g["command"]
-        # Команда содержит .venv/bin/python path или python3.14 fallback.
+        exe = cmd.split()[0] if cmd.split() else ""
+        is_python = Path(exe).name.startswith("python") or exe == "python3.14"
+        if not is_python:
+            continue
+        python_gates += 1
         assert venv_python in cmd or "python3.14" in cmd, (
             f"Unexpected python interpreter: {cmd}"
         )
+    assert python_gates > 0, (
+        f"Не найдено ни одного python-гейта (проверено {len(data['gates'])} gate'ов) — "
+        f"тест невалиден"
+    )

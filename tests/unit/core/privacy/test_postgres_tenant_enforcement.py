@@ -12,6 +12,17 @@ Per v4 §3 evidence-first: NOT estimates, ACTUAL behavior verified.
 
 from __future__ import annotations
 
+# Tests in this module require ``PiiErasureRecord`` model class to exist
+# in dev env. The Postgres implementation itself does NOT depend on this
+# specific model — production wiring uses whichever PII table is configured
+# per subject_type. The implementation tests adapter behavior (fail-closed
+# tenant filter + parameter resolution); the SQLAlchemy statement
+# construction is verified via mock execute() call inspection.
+#
+# NOTE: These tests are SKIPPED if PiiErasureRecord is unavailable in
+# current dev env. Production-grade contract tests require real test
+# DB / migration cycle per cycle 158+ scope discipline.
+import importlib.util
 from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, MagicMock
 
@@ -25,25 +36,12 @@ from src.backend.core.privacy.delete_data_subject._types import (
     ErasureStrategy,
 )
 
-# Tests in this module require ``PiiErasureRecord`` model class to exist
-# in dev env. The Postgres implementation itself does NOT depend on this
-# specific model — production wiring uses whichever PII table is configured
-# per subject_type. The implementation tests adapter behavior (fail-closed
-# tenant filter + parameter resolution); the SQLAlchemy statement
-# construction is verified via mock execute() call inspection.
-#
-# NOTE: These tests are SKIPPED if PiiErasureRecord is unavailable in
-# current dev env. Production-grade contract tests require real test
-# DB / migration cycle per cycle 158+ scope discipline.
-
-try:
-    from src.backend.core.domain.models.privacy_models import (  # type: ignore[import-not-found]
-        PiiErasureRecord,
-    )
-
-    _PII_MODEL_AVAILABLE = True
-except ImportError:
-    _PII_MODEL_AVAILABLE = False
+_PII_MODEL_AVAILABLE = importlib.util.find_spec(
+    "src.backend.core.domain.models.privacy_models"
+) is not None and hasattr(
+    importlib.import_module("src.backend.core.domain.models.privacy_models"),
+    "PiiErasureRecord",
+)
 
 
 @pytest.mark.skipif(
@@ -162,6 +160,7 @@ class TestPostgresTenantEnforcement:
             correlation_id="test",
             explicit_tenant_id="t-b",
         )
+        assert result is not None, "execute() обязан вернуть результат erasure"
 
         whereclause = self._extract_whereclause(session_mock)
         assert "t-b" in whereclause
@@ -193,6 +192,7 @@ class TestPostgresTenantEnforcement:
             strategy=ErasureStrategy.ANONYMIZE,
             correlation_id="test",
         )
+        assert result is not None, "legacy path тоже обязан вернуть результат"
 
         whereclause = self._extract_whereclause(session_mock)
         assert "user:42" in whereclause

@@ -42,14 +42,6 @@ def test_resolve_route_path_missing_raises() -> None:
         mod._resolve_route_path("nonexistent_route_xyz")
 
 
-def test_main_runs_dry_run_on_file(tmp_path: Path, monkeypatch, capsys) -> None:
-    f = tmp_path / "demo.yaml"
-    f.write_text(
-        "route_id: demo\nsteps:\n  - call_function: { ref: m:f }\n", encoding="utf-8"
-    )
-    monkeypatch.chdir(tmp_path)
-
-
 def test_simulate_deterministic_for_same_seed(tmp_path: Path) -> None:
     """W6 audit: «gd route simulate — deterministic clock/UUID/random seed».
 

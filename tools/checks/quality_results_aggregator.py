@@ -295,18 +295,18 @@ def main(argv: list[str] | None = None) -> int:
     gates.append(
         _gate_result(
             gate="compileall",
-            command=["/home/user/dev/gd_integration_tools/.venv/bin/python", "-m", "compileall", "-q", "src/backend"],
+            command=[PYTHON_BIN, "-m", "compileall", "-q", "src/backend"],
             tool_version=f"python {_python_version()}",
         )
     )
 
     # 2. check_layers
-    gates.append(_gate_result(gate="check_layers", command=["/home/user/dev/gd_integration_tools/.venv/bin/python", "tools/check_layers.py"]))
+    gates.append(_gate_result(gate="check_layers", command=[PYTHON_BIN, "tools/check_layers.py"]))
 
     # 3. check_docstrings
     gates.append(
         _gate_result(
-            gate="check_docstrings", command=["/home/user/dev/gd_integration_tools/.venv/bin/python", "tools/check_docstrings.py"]
+            gate="check_docstrings", command=[PYTHON_BIN, "tools/check_docstrings.py"]
         )
     )
 
@@ -314,7 +314,7 @@ def main(argv: list[str] | None = None) -> int:
     gates.append(
         _gate_result(
             gate="classify_object_authorization",
-            command=["/home/user/dev/gd_integration_tools/.venv/bin/python", "tools/classify_object_authorization.py", "--strict"],
+            command=[PYTHON_BIN, "tools/classify_object_authorization.py", "--strict"],
         )
     )
 
@@ -322,7 +322,7 @@ def main(argv: list[str] | None = None) -> int:
     gates.append(
         _gate_result(
             gate="check_tenant_isolation",
-            command=["/home/user/dev/gd_integration_tools/.venv/bin/python", "tools/checks/check_tenant_isolation.py", "--strict"],
+            command=[PYTHON_BIN, "tools/checks/check_tenant_isolation.py", "--strict"],
         )
     )
 
@@ -330,7 +330,7 @@ def main(argv: list[str] | None = None) -> int:
     gates.append(
         _gate_result(
             gate="check_privacy_lifecycle",
-            command=["/home/user/dev/gd_integration_tools/.venv/bin/python", "tools/checks/check_privacy_lifecycle.py", "--strict"],
+            command=[PYTHON_BIN, "tools/checks/check_privacy_lifecycle.py", "--strict"],
         )
     )
 
@@ -338,7 +338,7 @@ def main(argv: list[str] | None = None) -> int:
     gates.append(
         _gate_result(
             gate="check_dsl_processors_imports",
-            command=["/home/user/dev/gd_integration_tools/.venv/bin/python", "tools/checks/check_dsl_processors_imports.py", "--strict"],
+            command=[PYTHON_BIN, "tools/checks/check_dsl_processors_imports.py", "--strict"],
         )
     )
 
@@ -346,7 +346,7 @@ def main(argv: list[str] | None = None) -> int:
     gates.append(
         _gate_result(
             gate="verify_test_profiles",
-            command=["/home/user/dev/gd_integration_tools/.venv/bin/python", "tools/checks/verify_test_profiles.py", "--strict"],
+            command=[PYTHON_BIN, "tools/checks/verify_test_profiles.py", "--strict"],
         )
     )
 
@@ -354,16 +354,28 @@ def main(argv: list[str] | None = None) -> int:
     gates.append(
         _gate_result(
             gate="mypy_budget",
-            command=["/home/user/dev/gd_integration_tools/.venv/bin/python", "tools/checks/mypy_budget.py", "--max", "5"],
+            command=[PYTHON_BIN, "tools/checks/mypy_budget.py", "--max", "5"],
             tool_version=f"python {_python_version()}",
         )
     )
 
-    # 10. ruff check
+    # 10. ruff check — scope must match what CI enforces (`make ci` → lint-strict
+    # runs `ruff check src tests`). Проверка только src/backend прятала 11
+    # реальных нарушений в tests/ от machine-readable артефакта.
     gates.append(
         _gate_result(
             gate="ruff",
-            command=["ruff", "check", "src/backend"],
+            command=["ruff", "check", "src", "tests"],
+            tool_version=_tool_version("ruff", ["ruff", "--version"]),
+        )
+    )
+
+    # 11. ruff format --check — отдельный gate: format drift не ловится
+    # `ruff check` и обязан быть виден в machine-readable артефакте.
+    gates.append(
+        _gate_result(
+            gate="ruff_format",
+            command=["ruff", "format", "--check", "src", "tests"],
             tool_version=_tool_version("ruff", ["ruff", "--version"]),
         )
     )
@@ -418,7 +430,7 @@ def main(argv: list[str] | None = None) -> int:
 def _python_version() -> str:
     try:
         result = subprocess.run(
-            ["/home/user/dev/gd_integration_tools/.venv/bin/python", "--version"], capture_output=True, text=True, timeout=10
+            [PYTHON_BIN, "--version"], capture_output=True, text=True, timeout=10
         )
         return result.stdout.strip() or result.stderr.strip()
     except Exception:

@@ -30,6 +30,7 @@ import importlib
 import inspect
 import logging
 import re
+import subprocess
 import sys
 import types
 import typing
@@ -840,6 +841,53 @@ def _build_fq_to_short(import_lines: list[str]) -> dict[str, str]:
 # -------------------------------------------------------------------
 # CLI entrypoint
 # -------------------------------------------------------------------
+def _format_with_ruff(content: str) -> str:
+    """Отформатировать stub через ``ruff format``.
+
+    Генерация и форматирование должны давать ОДИН и тот же результат,
+    иначе два gate'а противоречат друг другу:
+
+    * ``make format-check`` (``ruff format --check src``) требует, чтобы
+      ``.pyi`` был ruff-форматирован;
+    * ``make dsl-stubs-check`` требует байт-в-байт совпадения файла с
+      выводом генератора.
+
+    Если генератор писал бы неформатированный текст, то ``make format``
+    переписывал бы stub'ы, и следующий ``dsl-stubs-check`` падал бы
+    как drift. Поэтому формат применяется ВНУТРИ генератора — тогда оба
+    gate'а согласованы, а ``make format`` остаётся no-op на стабах.
+
+    Args:
+        content: Сырой отрендеренный stub.
+
+    Returns:
+        Ruff-форматированный stub. При недоступности ruff возвращается
+        исходный текст, чтобы генерация не падала в dev-окружении.
+    """
+    try:
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "ruff",
+                "format",
+                "--stdin-filename",
+                "stub.pyi",
+                "-",
+            ],
+            input=content,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return content
+    if result.returncode != 0 or not result.stdout:
+        return content
+    return result.stdout
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Generate .pyi stubs for RouteBuilder/WorkflowBuilder."
@@ -857,6 +905,8 @@ def main(argv: list[str] | None = None) -> int:
         content = generate_stub(module_name, class_name, output_path)
         # Append manual class blocks (preserved across regenerations)
         content = _append_manual_blocks(content, module_name)
+        # Format via ruff so `format-check` and `dsl-stubs-check` agree.
+        content = _format_with_ruff(content)
         if args.check:
             existing = (
                 output_path.read_text(encoding="utf-8") if output_path.is_file() else ""

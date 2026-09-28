@@ -39,7 +39,7 @@ pr: ## К1 V15 — composite PR gate (ci + docs)
 
 test-collection-check: ## Sanity gate — verify all tests collect without ImportError
 	@$(INFO) "Checking test collection (catches circular imports, missing modules)..."
-	set -o pipefail; $(UV_RUN) pytest --co -q tests/ 2>&1 | tail -3
+	@$(UV_RUN) bash -c 'set -o pipefail; pytest --co -q tests/ 2>&1 | tail -3'
 	@$(SUCCESS) "Test collection OK"
 
 check-strict-full: ## Clean caches and run all strict checks including mypy
