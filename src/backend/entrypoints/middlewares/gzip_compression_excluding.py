@@ -124,7 +124,26 @@ class GZipCompressionExcludingMiddleware:
                             headers["Content-Length"] = str(len(compressed))
                             headers.add_vary_header("Accept-Encoding")
                             new_start = dict(original_start)
-                            new_start["headers"] = list(headers.items())
+                            # ASGI requires (bytes, bytes) header pairs, but
+                            # MutableHeaders.items() yields (str, str). Sending
+                            # the str form makes uvicorn raise
+                            # "TypeError: cannot use a bytes pattern on a
+                            # string-like object" and drop the connection
+                            # without any response.
+                            #
+                            # Found on the live service: GET /openapi.json with
+                            # `Accept-Encoding: gzip` — i.e. what every browser
+                            # sends — returned an empty response (HTTP 000,
+                            # 0 bytes) for a 494 KB body, while the same request
+                            # without gzip returned 200. Any response body over
+                            # minimum_size was affected.
+                            new_start["headers"] = [
+                                (
+                                    k.encode("latin-1") if isinstance(k, str) else k,
+                                    v.encode("latin-1") if isinstance(v, str) else v,
+                                )
+                                for k, v in headers.items()
+                            ]
                             await send(new_start)
                             await send(
                                 {

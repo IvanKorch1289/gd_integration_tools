@@ -49,6 +49,60 @@ _SECURITY_HEADER_NAMES: frozenset[bytes] = frozenset(
     name for name, _ in _SECURITY_HEADERS
 )
 
+# Документация API требует отдельной CSP.
+#
+# Найдено браузерной проверкой (Playwright, HEAD bbadf108a): /docs и /redoc
+# отдавали HTTP 200, но страница оставалась пустой. Причина — тот же
+# ``default-src 'self'``: FastAPI подключает Swagger UI и ReDoc с
+# ``cdn.jsdelivr.net`` и выполняет inline-скрипты, поэтому браузер блокировал
+# и стили, и скрипты:
+#
+#   Loading the script 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/
+#   swagger-ui-bundle.js' violates ... "default-src 'self'". Blocked.
+#
+# Из-за этого интерактивная документация не работала — и именно поэтому
+# отсутствие securitySchemes в спецификации никого не насторожило: страницу
+# никто не видел.
+#
+# Послабление применяется ТОЛЬКО к публичным HTML-страницам документации.
+# JSON-ответы API, в том числе /openapi.json, сохраняют строгую политику.
+# Домен в allowlist — ровно тот, что подставляет FastAPI.
+_DOCS_PATH_PREFIXES: tuple[str, ...] = ("/docs", "/redoc")
+
+_DOCS_CSP: tuple[tuple[bytes, bytes], ...] = (
+    *(
+        (name, value)
+        for name, value in _SECURITY_HEADERS
+        if name != b"content-security-policy"
+    ),
+    (
+        b"content-security-policy",
+        # Origins сняты с реально отдаваемых /docs и /redoc, а не угаданы:
+        #   cdn.jsdelivr.net     — swagger-ui-dist@5 (js+css) и redoc standalone.js
+        #   fastapi.tiangolo.com — favicon, подставляемый FastAPI
+        #   fonts.googleapis.com — шрифты ReDoc
+        #   cdn.redoc.ly         — логотип ReDoc
+        #   blob:                — web-worker, который ReDoc поднимает для рендера
+        # Первый вариант политики запрещал worker-src и шрифты: консоль
+        # браузера показывала 3 нарушения CSP и ReDoc отображался не полностью.
+        b"default-src 'self'; "
+        b"script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net blob:; "
+        b"style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net "
+        b"https://fonts.googleapis.com; "
+        b"img-src 'self' data: https://fastapi.tiangolo.com https://cdn.redoc.ly; "
+        b"font-src 'self' data: https://fonts.gstatic.com; "
+        b"worker-src 'self' blob:; "
+        b"connect-src 'self'",
+    ),
+)
+
+
+def _headers_for(path: str) -> tuple[tuple[bytes, bytes], ...]:
+    """Возвращает набор security-заголовков для указанного пути."""
+    if any(path == p or path.startswith(f"{p}/") for p in _DOCS_PATH_PREFIXES):
+        return _DOCS_CSP
+    return _SECURITY_HEADERS
+
 
 class SecurityHeadersMiddleware:
     """Pure ASGI middleware для добавления HTTP-заголовков безопасности.
@@ -81,11 +135,11 @@ class SecurityHeadersMiddleware:
             await self.app(scope, receive, send)
             return
 
-        send_wrapper = _make_send_wrapper(send)
+        send_wrapper = _make_send_wrapper(send, scope)
         await self.app(scope, receive, send_wrapper)
 
 
-def _make_send_wrapper(send: Send) -> Send:
+def _make_send_wrapper(send: Send, scope: Scope) -> Send:
     """Создаёт обёртку вокруг ``send``, инжектирующую security-заголовки.
 
     Создаётся как :func:`callable` (а не :meth:`__call__` класса) для
@@ -93,8 +147,11 @@ def _make_send_wrapper(send: Send) -> Send:
     вместо объекта с bound-method. Иммутабельный capture ``_SECURITY_HEADERS``
     делает функцию безопасной для concurrent reuse на разных запросах.
     """
-    headers_to_inject: tuple[tuple[bytes, bytes], ...] = _SECURITY_HEADERS
-    names_to_override: frozenset[bytes] = _SECURITY_HEADER_NAMES
+    path: str = scope.get("path", "")
+    headers_to_inject: tuple[tuple[bytes, bytes], ...] = _headers_for(path)
+    names_to_override: frozenset[bytes] = frozenset(
+        name for name, _ in headers_to_inject
+    )
 
     async def send_wrapper(message: Message) -> None:
         if message["type"] == "http.response.start":
