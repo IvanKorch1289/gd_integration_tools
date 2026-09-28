@@ -174,6 +174,10 @@ class SchedulerFacade:
                 error=f"registration failed: {exc}",
             )
 
+        # Executor для run_pending (контракт docstring: pending-тики,
+        # материализованные catchup'ом, исполняются facade.run_pending).
+        self._job_funcs[registered_job_id or job_id] = func
+
         # 2. Catchup-materialization (только при catchup=True).
         #    Per v6: await + structured status, НЕ fire-and-forget.
         if catchup:
@@ -290,3 +294,5 @@ class SchedulerFacade:
         except Exception as exc:
             _logger.warning("Failed to remove job %s: %s", job_id, exc)
             raise ServiceError(f"Failed to remove job: {exc}") from exc
+        finally:
+            self._job_funcs.pop(job_id, None)
