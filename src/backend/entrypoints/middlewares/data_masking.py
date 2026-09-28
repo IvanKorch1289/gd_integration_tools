@@ -42,7 +42,12 @@ from src.backend.core.security.pii_patterns import PHONE as _PHONE_RE
 
 _logger = get_logger(__name__)
 
-__all__ = ("DataMaskingMiddleware", "TOKEN_ISSUER_PATHS")
+__all__ = (
+    "DOCUMENTATION_PATHS",
+    "DataMaskingMiddleware",
+    "MASKING_EXEMPT_PATHS",
+    "TOKEN_ISSUER_PATHS",
+)
 
 _SENSITIVE_KEYS = frozenset(
     {
@@ -69,6 +74,28 @@ _SENSITIVE_KEYS = frozenset(
 # примерно в 20% выдач — логин у пользователей падал с
 # "step_up_token_required" при верном токене.
 TOKEN_ISSUER_PATHS = frozenset({"/api/v1/auth/login", "/api/v1/auth/step-up-request"})
+
+# Документация API маскированию не подлежит.
+#
+# Найдено на живом сервисе: опубликованная спецификация содержала 16
+# значений, испорченных маскированием, — описания полей и summary
+# превращались в "***":
+#   'Семантический поиск'              -> '*** поиск'          (_RU_SURNAMES)
+#   'Логистический маршрут'            -> '*** маршрут'        (_RU_SURNAMES)
+#   'Stream ID записи (e.g. +7900...)' -> 'Stream ID ... ***'   (phone)
+#   Body_introspect...properties.token -> '***'                (маска по имени ключа)
+#
+# Спецификация собирается из аннотаций исходного кода: runtime-данных и
+# данных арендаторов в ней нет (проверено — все 414 путей статические,
+# определения DSL-маршрутов в OpenAPI не попадают). Маскирование здесь не
+# даёт выигрыша в приватности, но уничтожает контракт, который читают
+# разработчики и сгенерированные из спецификации клиенты.
+DOCUMENTATION_PATHS = frozenset(
+    {"/openapi.json", "/docs", "/redoc", "/docs/oauth2-redirect"}
+)
+
+#: Пути, исключённые из маскирования ответа обоими маскерами.
+MASKING_EXEMPT_PATHS = TOKEN_ISSUER_PATHS | DOCUMENTATION_PATHS
 
 
 class DataMaskingMiddleware:
@@ -100,7 +127,7 @@ class DataMaskingMiddleware:
         # выдача access_token и есть назначение ответа; маскировка
         # превращала логин в бесполезный {"access_token": "***"}.
         path = scope.get("path", "")
-        if path in TOKEN_ISSUER_PATHS:
+        if path in MASKING_EXEMPT_PATHS:
             await self.app(scope, receive, send)
             return
 

@@ -226,3 +226,39 @@ class TestTokenIssuerNotMasked:
 
         assert "alice@example.com" not in body
         assert "+7 (999) 123-45-67" not in body
+
+
+class TestDocumentationNotMasked:
+    """Спецификация API маскированию не подлежит.
+
+    Найдено на живом сервисе: в опубликованном openapi.json 16 значений
+    были испорчены — ``Семантический поиск`` → ``*** поиск`` (_RU_SURNAMES),
+    пример телефона в описании поля → ``***`` (phone), а описание поля
+    ``token`` → ``***`` (маска по имени ключа). Спецификация собирается из
+    аннотаций кода и runtime-данных не содержит, поэтому маскирование здесь
+    только уничтожает контракт.
+    """
+
+    @pytest.mark.parametrize(
+        "path", ["/openapi.json", "/docs", "/redoc", "/docs/oauth2-redirect"]
+    )
+    def test_documentation_path_is_excluded(
+        self, path: str, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Документация проходит без маскирования."""
+        monkeypatch.setattr(feature_flags, "pii_response_middleware_enabled", True)
+
+        # Отдельное минимальное приложение: у _build_app есть маршрут с
+        # response_class=None, из-за которого FastAPI не генерирует схему.
+        app = FastAPI()
+        app.add_middleware(PIIMaskingResponseMiddleware, path_patterns=[])
+
+        @app.get("/api/v1/thing", response_model=dict)
+        async def thing() -> dict:
+            return {"summary": "Семантический поиск +79000000000"}
+
+        client = TestClient(app)
+        served = client.get(path).content.decode("utf-8")
+
+        assert served, f"{path} вернул пустой ответ"
+        assert "***" not in served, f"{path}: документация не должна маскироваться"

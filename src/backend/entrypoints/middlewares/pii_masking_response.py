@@ -33,7 +33,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from src.backend.core.logging import get_logger
 from src.backend.core.security.pii_masker import default_masker
-from src.backend.entrypoints.middlewares.data_masking import TOKEN_ISSUER_PATHS
+from src.backend.entrypoints.middlewares.data_masking import MASKING_EXEMPT_PATHS
 
 __all__ = ("PIIMaskingResponseMiddleware",)
 
@@ -97,7 +97,7 @@ class PIIMaskingResponseMiddleware:
         # ``("/api/v1/auth/login",)`` не содержал step-up-request, поэтому
         # /api/v1/auth/step-up-request отдавал клиенту битый токен: PII-регулярка
         # Phone съедала цифровые серии внутри hex-подписи токена.
-        if path in TOKEN_ISSUER_PATHS:
+        if path in MASKING_EXEMPT_PATHS:
             await self.app(scope, receive, send)
             return
 

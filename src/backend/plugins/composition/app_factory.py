@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse, ORJSONResponse, Response
 
 from src.backend.core.config.settings import settings
 from src.backend.core.logging import get_logger
+from src.backend.entrypoints.api.openapi_security import apply_security_to_openapi
 from src.backend.entrypoints.api.v1.routers import get_v1_routers
 from src.backend.entrypoints.graphql.schema import graphql_router
 from src.backend.entrypoints.grpc.proto_viewer import proto_viewer_router
@@ -70,6 +71,12 @@ def create_app() -> FastAPI:
 
         # Настройка корневого эндпоинта
         _configure_root_endpoint(app)
+
+        # Схема OpenAPI должна описывать реально enforce'имый контракт
+        # аутентификации: guard живёт в pure-ASGI middleware и FastAPI сам
+        # его в схему не выводит. Вызывается последним, когда все маршруты
+        # уже зарегистрированы.
+        apply_security_to_openapi(app)
     except Exception as exc:
         error_msg = f"Ошибка конфигурации приложения: {exc!s}"
         raise RuntimeError(error_msg) from exc
