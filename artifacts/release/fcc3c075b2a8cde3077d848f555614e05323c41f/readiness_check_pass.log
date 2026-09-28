@@ -1,0 +1,7 @@
+make/quality.mk:295: предупреждение: переопределение способа для цели «check-canonical-errors»
+make/security.mk:232: предупреждение: старый способ для цели «check-canonical-errors» игнорируются
+[34mRunning anti-forget guards...[0m
+uv run python3 tools/check_fallback_matrix.py
+2026-09-28 11:58:23 [warning  ] Vault недоступен (HTTPConnectionPool(host='127.0.0.1', port=8200): Max retries exceeded with url: /v1/auth/token/lookup-self (Caused by NewConnectionError("HTTPConnection(host='127.0.0.1', port=8200): Failed to establish a new connection: [Errno 111] Connection refused"))) — secrets-источник пропущен. Установите vault.enabled=false или поднимите Vault, чтобы убрать это сообщение.
+OK: fallback matrix consistent (11 components, all chains non-empty)
+[32mAll guards passed![0m

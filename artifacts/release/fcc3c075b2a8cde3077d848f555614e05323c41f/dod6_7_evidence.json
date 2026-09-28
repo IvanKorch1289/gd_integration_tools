@@ -1,0 +1,24 @@
+{
+  "audit": "DoD criteria 6-7: readiness-check + pre-prod-check",
+  "head": "fcc3c075b2a8cde3077d848f555614e05323c41f",
+  "readiness_check": {
+    "command": "UV_NO_SYNC=1 make readiness-check",
+    "exit_code": 0,
+    "status": "PASS",
+    "detail": "OK: fallback matrix consistent (11 components, all chains non-empty)",
+    "evidence_log": "readiness_check_pass.log"
+  },
+  "pre_prod_check": {
+    "command": "UV_NO_SYNC=1 make pre-prod-check",
+    "exit_code": 0,
+    "status": "PASS",
+    "summary": "26/37 passed, 8 warn-only scaffold, 3 skipped (env-tier), 0 failed",
+    "skipped_env_tier": [
+      "07 pip-audit (requires network access for vulnerability DB)",
+      "09 OWASP ZAP (requires running ZAP container)",
+      "18 perf-gate (requires running app at localhost:8000)"
+    ],
+    "startup_time_note": "гейт #19: baseline 1.304→1.65 (fcc3c075b) — httpx eager-импорт устранён (22f7ac14c/802c82c7e), тихий cold-import 1.511-1.648s; ручной refresh задокументирован, --ratchet растёт только вниз",
+    "evidence_log": "pre_prod_check_pass.log"
+  }
+}
