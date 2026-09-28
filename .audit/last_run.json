@@ -1,35 +1,70 @@
 {
-  "audit": "GD Integration Tools 25.09.2026",
-  "head": "60fce532f4616659b4b2336bc5fc339e1a7f3056",
-  "timestamp": "2026-09-28T07:33:45.062904+00:00",
-  "status": "audit_complete_pending_post_audit_followup",
-  "waves_closed": [
-    "W0",
-    "W1",
-    "W2",
-    "W3",
-    "W3.5",
-    "W5",
-    "W6",
-    "W7",
-    "W8",
-    "W9"
+  "audit": "GD Integration Tools — current readiness status",
+  "head": "f681c4ed7",
+  "timestamp": "2026-09-28T14:20:00+00:00",
+  "status": "not_production_ready",
+  "canonical_doc": "docs/roadmap/PRODUCTION_READINESS_CURRENT.md",
+  "per_sha_evidence": "artifacts/release/cee4c33e5d3c1e033b2b2b5f4fe54c12ddee4fb6/EVIDENCE.md",
+  "superseded_docs": [
+    "docs/roadmap/PRODUCTION_READINESS.md (snapshot 2026-09-01)",
+    "docs/roadmap/PRODUCTION_READINESS_FINAL.md (snapshot 2026-09-02)"
   ],
-  "waves_partial": [
-    "W4"
+  "note": "head/timestamp describe the code state this status was derived from. Individual PASS results apply only to the SHA named in the canonical doc; they are not carried across commits.",
+  "blocking": [
+    "coverage 52.25% vs 70% threshold",
+    "test suite is not isolation-safe: whole-tree run reports failures that do not reproduce in isolation",
+    "no HTTP/cURL, Playwright or browser evidence for any current SHA (no application was started)",
+    "no container image, SBOM or signature for this SHA",
+    "exc_info=True through StructlogLogger attaches no traceback to the LogRecord"
   ],
-  "mandatory_commands_pass": 12,
-  "mandatory_commands_deferred": 3,
-  "deferred_reasons": {
-    "make_ci": "DEFERRED (deps-check-strict fails на pre-existing unused deps; требует cleanup)",
-    "Playwright": "DEFERRED (browser install required)",
-    "W4_runtime_isolation": "DEFERRED (test-* profiles created, CI matrix не настроен)"
+  "checks": {
+    "compileall": "PASS",
+    "docstrings": "PASS",
+    "layers_backend": "PASS_WITH_DEBT (0 new, 22 legacy)",
+    "layers_frontend": "FAIL (12-13 Streamlit pages imported src.backend.services; 6 fixed in f681c4ed7, remainder open; make check_layers does not cover frontend)",
+    "privacy_lifecycle_strict": "PASS",
+    "optional_tenant_strict": "PASS (123 = 123)",
+    "tenant_isolation_strict": "PASS_STATIC_ONLY (runtime isolation not verified)",
+    "object_authorization": "PASS",
+    "make_ci": "PASS (exit 0 at f681c4ed7)",
+    "make_readiness_check": "PASS (exit 0 at cee4c33e5)",
+    "make_pre_prod_check": "FAIL (exit 2; 25/37 PASS, 1 FAIL, 8 WARN, 3 SKIP; measured at cee4c33e5)",
+    "coverage_gate": "FAIL (52.25% < 70%)",
+    "alembic_heads_history": "PASS (single head, 25 linear revisions)",
+    "alembic_upgrade": "ENV_FAILURE (Redis AuthenticationError during config load)",
+    "tests_unit_per_directory": "FAIL (all clusters green in isolation except tests/unit/entrypoints/mcp, which cannot finish a run)",
+    "tests_unit_whole_tree": "FAIL (pollution: failures do not reproduce in isolation)",
+    "tests_unit_tools": "FAIL (10 failures, all reproduce on a clean HEAD worktree)",
+    "curl_matrix": "NOT_VERIFIED",
+    "playwright": "NOT_VERIFIED",
+    "container_image_sbom": "NOT_VERIFIED",
+    "privacy_integration": "NOT_VERIFIED (PG/Redis/MinIO/Qdrant not running)"
   },
-  "tenant_allowlist_coverage": "100% (558/558 classified; 0 unclassified)",
-  "test_collection": "20148 tests collected (no errors)",
+  "coverage": {
+    "percent": 52.25,
+    "measured_at_commit": "cee4c33e5",
+    "scope": "tests/unit (20162 of 20711 collected tests)",
+    "lines_covered": 62374,
+    "lines_valid": 119376,
+    "staleness": "A re-measurement at a later HEAD did NOT complete: pytest aborted in pytest_sessionfinish with OSError: cannot send (already closed?) and the run was cancelled, producing no coverage.xml. 52.25 is a lower bound; many tests fixed after cee4c33e5 now pass. Re-measure before quoting a number for HEAD."
+  },
+  "tenant_allowlist_coverage": "100% (558/558 classified; 0 unclassified) — static classification only",
   "optional_tenant_tracking": {
     "total_baseline": 123,
-    "tracking_file": ".audit/optional_tenant_tracking.json",
-    "migration_status": "tracked; per-file ADR required for refactor (post-audit sprint)"
-  }
+    "baseline_file": ".baselines/optional_tenant_baseline.json",
+    "gate": "tools/checks/check_no_new_optional_tenant.py --strict",
+    "gate_wired_into": "make check-tenant-isolation -> make ci",
+    "migration_status": "tracked; identity no longer includes line numbers; moved/changed/new/removed reported separately"
+  },
+  "fixed_this_cycle": [
+    "PostgreSQL erasure executed at all (was ModuleNotFoundError on every call)",
+    "cross-tenant leak in PostgresErasureAdapter (tenant probe degraded to unscoped)",
+    "coverage gate in CI measured nothing (flat CLI after Typer migration exited 2)",
+    "coverage baseline was 0, disabling drop-detection",
+    "optional-tenant gate keyed on line number (false-green by construction)",
+    "frontend safe-default contract dead for httpx ConnectError/HTTPStatusError",
+    "DSLBuilderService could never be constructed (NameError via broken PEP 562 proxy)",
+    "6 Streamlit pages moved to the sanctioned core.frontend_facade",
+    "17 stale tests repaired incl. an order-dependent security-gate test"
+  ]
 }

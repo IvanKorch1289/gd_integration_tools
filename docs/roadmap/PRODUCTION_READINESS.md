@@ -1,5 +1,18 @@
 # Production Readiness Roadmap — gd_integration_tools
 
+> ## ⚠️ SUPERSEDED — HISTORICAL SNAPSHOT, DO NOT READ AS CURRENT STATUS
+>
+> Это снимок от **2026-09-01** (Sprint 48–50). Он **не** описывает текущее
+> состояние репозитория.
+>
+> **Канонический источник текущего статуса:**
+> [`PRODUCTION_READINESS_CURRENT.md`](PRODUCTION_READINESS_CURRENT.md)
+> и per-SHA evidence в `artifacts/release/<sha>/EVIDENCE.md`.
+>
+> Этот файл сохранён как историческая запись и намеренно не переписывается.
+> Числа ниже (layer allowlist 37, tests 15862, coverage 60%, P0 4-7 OPEN)
+> относятся к состоянию на 2026-09-01 и **не переносятся** на текущий SHA.
+
 > **Generated**: 2026-08-31 (Sprint 48 W11), updated 2026-09-01 (Sprint 50 A — verified baseline)
 > **Source**: S48 swarm audit (10 доменных агентов, 29 atomic commits W1-W11) + S49 W1-W11 + Sprint 50 A reverification
 > **Owner**: координатор роя

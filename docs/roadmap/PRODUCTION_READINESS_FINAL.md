@@ -1,5 +1,18 @@
 # Production Readiness — FINAL Plan (M1 → M6)
 
+> ## ⚠️ SUPERSEDED — HISTORICAL SNAPSHOT, DO NOT READ AS CURRENT STATUS
+>
+> Это снимок от **2026-09-02** (Sprint 60+). Он **не** описывает текущее
+> состояние репозитория.
+>
+> **Канонический источник текущего статуса:**
+> [`PRODUCTION_READINESS_CURRENT.md`](PRODUCTION_READINESS_CURRENT.md)
+> и per-SHA evidence в `artifacts/release/<sha>/EVIDENCE.md`.
+>
+> Этот файл сохранён как историческая запись и намеренно не переписывается.
+> Числа ниже (tests 16921, coverage 30.8%, M1 22/22 CLOSED) относятся к
+> состоянию на 2026-09-02 и **не переносятся** на текущий SHA.
+
 > **Generated**: 2026-09-02 (Sprint 60+).
 > **Source of truth**: `docs/roadmap/BASELINE_2026-09-02.md` (machine-verified).
 > **Predecessor**: `docs/roadmap/PRODUCTION_READINESS.md` (M1-M4 partial, 22 P0 closed, M2 13/16, M3 STOPPED, M4 baseline 30.8%).
