@@ -153,10 +153,15 @@ def test_check_coverage_gate_help() -> None:
 
 
 def test_check_coverage_gate_missing_xml(tmp_path: Path) -> None:
-    """--coverage-xml на nonexistent → exit 2 (error)."""
+    """--coverage-xml на nonexistent → exit 2 (error).
+
+    Опции живут в subcommand ``main`` (typer-миграция S59 W1); вызов на
+    уровне ``app`` без subcommand — usage error (exit 2), что маскировало
+    остальные проверки.
+    """
     from tools.check_coverage_gate import app
 
-    result = runner.invoke(app, ["--coverage-xml", str(tmp_path / "no_such.xml")])
+    result = runner.invoke(app, ["main", "--coverage-xml", str(tmp_path / "no_such.xml")])
     assert result.exit_code == 2
 
 
@@ -174,6 +179,7 @@ def test_check_coverage_gate_pass(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
+            "main",
             "--coverage-xml",
             str(xml),
             "--threshold",
@@ -199,6 +205,7 @@ def test_check_coverage_gate_fail(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
+            "main",
             "--coverage-xml",
             str(xml),
             "--threshold",

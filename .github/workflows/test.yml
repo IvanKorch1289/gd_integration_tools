@@ -59,8 +59,13 @@ jobs:
         # S19 K2 W4 — coverage gate ratchet 70% → 75%.
         # coverage_percent из baseline задаёт ratchet; threshold 75 задан явно.
         # Любое падение coverage > 0.5% от baseline блокирует CI в --strict.
+        #
+        # ВАЖНО: `main` — обязательный subcommand. Инструмент мигрирован на
+        # typer (commands: main / per-layer); плоский вызов без `main`
+        # завершается с exit 2 (usage error), и гейт молча НЕ проверял
+        # coverage вообще. Канонический вызов — как в make/docs.mk.
         run: |
-          uv run python tools/check_coverage_gate.py \
+          uv run python tools/check_coverage_gate.py main \
               --coverage-xml coverage.xml \
               --baseline .baselines/coverage.json \
               --threshold 75 \

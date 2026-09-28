@@ -288,6 +288,10 @@ def main(
     if update_baseline:
         baseline_data["coverage_percent"] = current
         baseline_data["threshold"] = threshold
+        # S19 K2 W4: target_threshold — цель ratchet'а (70% → 75%). Записывается
+        # явно, чтобы baseline был самодостаточным: по нему видно, к какой
+        # отметке идёт проект, даже если threshold ещё не поднят.
+        baseline_data["target_threshold"] = _DEFAULT_THRESHOLD
         baseline_data.setdefault("notes", [])
         if current < _DEFAULT_THRESHOLD:
             todo = f"raise threshold from {threshold:.0f} to {_DEFAULT_THRESHOLD:.0f}"

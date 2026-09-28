@@ -24,6 +24,13 @@ import pytest
 TOOL_PATH = Path("tools/check_coverage_gate.py")
 BASELINE_PATH = Path(".baselines/coverage.json")
 
+# ``check_coverage_gate.py`` мигрирован на typer: CLI = subcommand ``main``
+# (второй — ``per-layer``). Плоский вызов ``script.py --threshold N`` больше
+# не существует: typer/click отвечает exit 2 (usage error), из-за чего эти
+# тесты падали, хотя сам инструмент был исправен. Канонический вызов —
+# как в make/docs.mk и .github/workflows/test.yml.
+CLI = "main"
+
 
 def _write_coverage_xml(path: Path, line_rate: float) -> None:
     """Создаёт минимальный cobertura coverage.xml с указанным line-rate."""
@@ -34,9 +41,9 @@ def _write_coverage_xml(path: Path, line_rate: float) -> None:
 
 
 def _run_gate(*args: str) -> subprocess.CompletedProcess:
-    """Запускает CLI gate с заданными аргументами."""
+    """Запускает CLI gate с заданными аргументами (через subcommand ``main``)."""
     return subprocess.run(
-        [sys.executable, str(TOOL_PATH), *args],
+        [sys.executable, str(TOOL_PATH), CLI, *args],
         capture_output=True,
         text=True,
         timeout=15,
