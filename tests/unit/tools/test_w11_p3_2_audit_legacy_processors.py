@@ -315,7 +315,15 @@ class TestRealInventory:
 
     def test_real_inventory_has_expected_files(self, real_inventory: list) -> None:
         rows = real_inventory
-        assert 20 <= len(rows) <= 30
+        # Floor re-baselined 2026-09-28 (W5 dead-code wave): 24 → 18 files after
+        # deleting 452 LOC of proven-dead duplicates of
+        # dsl/processors/idp_pipeline_processor/ (0 static callers, 0 dynamic
+        # imports, 0 registry/plugin/entry-point refs, legacy public surface is
+        # a strict subset of canonical). The floor previously BLOCKED deletion,
+        # which contradicts W7 ("Legacy allowlist можно только уменьшать").
+        # The meaningful regression guards are the ceiling (no re-growth) plus
+        # test_real_inventory_postfix_no_orphan_files (0 REMOVABLE).
+        assert 15 <= len(rows) <= 30
         saga_files = [r for r in rows if "saga_lra" in r.file]
         assert all(r.status == "SEMANTIC_KEEP" for r in saga_files)
         assert len(saga_files) >= 5
@@ -333,9 +341,11 @@ class TestRealInventory:
     def test_real_inventory_total_loc(self, real_inventory: list) -> None:
         rows = real_inventory
         total_loc = sum(r.loc for r in rows)
-        # v4 baseline: 28 files / 2496 LOC. Current: 24 files / 2210 LOC.
-        # Drift acceptable.
-        assert 1500 <= total_loc <= 3000
+        # v4 baseline: 28 files / 2496 LOC. Current: 18 files / 961 LOC.
+        # Floor re-baselined 2026-09-28 together with the dead-code deletion
+        # (was 1500 against an actual 1463 — already stale/failing at HEAD).
+        # Deletion ratchet: the ceiling stays at 3000 to catch re-growth.
+        assert 800 <= total_loc <= 3000
 
     def test_real_inventory_postfix_no_orphan_files(self, real_inventory: list) -> None:
         """Post-W2 P1-2 bug fix: 0 truely-orphan files в реальном inventory.
