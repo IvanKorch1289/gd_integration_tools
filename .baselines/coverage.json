@@ -1,1 +1,14 @@
-{"coverage_percent": 0, "updated": "2026-09-11", "note": "initial baseline"}
+{
+  "coverage_percent": 52.25,
+  "updated": "2026-09-28",
+  "note": "measured on tests/unit (20162 of 20711 tests); 62374/119376 lines; run had 206 failing tests so this is a lower bound",
+  "threshold": 70.0,
+  "target_threshold": 75.0,
+  "notes": [
+    "Previous value 0 (written by the removed orphan tools/checks/coverage_budget.py in eef33aa29) disabled drop-detection entirely: baseline - current can never exceed the 0.5% tolerance when baseline is 0.",
+    "coverage_percent 52.25 is far below threshold 70 — the gate now fails honestly. It did not detect this before because .github/workflows/test.yml invoked a flat CLI that no longer existed and exited 2 (usage error) without measuring anything."
+  ],
+  "next_wave_todo": [
+    "raise threshold from 70 to 75"
+  ]
+}
