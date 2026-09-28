@@ -1,0 +1,23 @@
+paths=414 operations=443
+operations_with_security_field=443 (100.0%)
+public_operations=5 guarded_operations=438
+declared securitySchemes=['bearerAuth', 'apiKeyAuth', 'basicAuth', 'samlSession']
+unresolved security references=0
+masking_artifacts('***')_in_served_spec=0
+
+public operations:
+  POST   /api/v1/auth/login
+  POST   /api/v1/auth/step-up-request
+  GET    /api/v1/auth/methods
+  GET    /health
+  GET    /ready
+
+top-level groups:
+  api/v1                         396
+  grpc/schema                    2
+  webhooks/subscriptions         2
+  api/admin                      1
+  soap                           1
+  soap/wsdl                      1
+  soap/invoke                    1
+  events/stream                  1

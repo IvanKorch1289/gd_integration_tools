@@ -1,10 +1,10 @@
 {
   "audit": "GD Integration Tools — current readiness status",
-  "head": "f013e7317",
-  "timestamp": "2026-09-28T15:30:00+00:00",
+  "head": "bbadf108a",
+  "timestamp": "2026-09-28T15:50:00+00:00",
   "status": "not_production_ready",
   "canonical_doc": "docs/roadmap/PRODUCTION_READINESS_CURRENT.md",
-  "per_sha_evidence": "artifacts/release/f013e73173154a979fbf8d900c97e65e8dbc5da2/EVIDENCE.md",
+  "per_sha_evidence": "artifacts/release/bbadf108a2bdefacf7673d9bb9b78c7147619b77/EVIDENCE.md",
   "superseded_docs": [
     "docs/roadmap/PRODUCTION_READINESS.md (snapshot 2026-09-01)",
     "docs/roadmap/PRODUCTION_READINESS_FINAL.md (snapshot 2026-09-02)"
@@ -14,10 +14,10 @@
   "blocking": [
     "coverage ~52% vs 70% threshold (two independent measurements, 0.36 p.p. apart)",
     "test suite is not isolation-safe: whole-tree run reports failures that do not reproduce in isolation",
-    "OpenAPI declares no authentication: securitySchemes empty, 0 of 443 operations carry a security field, so Swagger Authorize and Try-it-out cannot work",
     "make ci does not execute tests — it ends at test-collection-check which runs pytest --co only",
     "no container image, SBOM or signature for this SHA",
-    "10 tooling-test failures in tests/unit/tools/"
+    "10 tooling-test failures in tests/unit/tools/",
+    "per-operation auth probed on 12 of 443 endpoints; the rest verified only through the spec"
   ],
   "checks": {
     "compileall": "PASS",
@@ -29,7 +29,7 @@
     "tenant_isolation_strict": "PASS_STATIC",
     "tenant_isolation_runtime": "PASS_NEGATIVE (live: empty/null X-Tenant-Id -> 401, no data returned)",
     "object_authorization": "PASS",
-    "make_ci": "PASS (exit 0 at f013e7317) — caveat: does not execute tests",
+    "make_ci": "PASS (exit 0 at bbadf108a) — caveat: does not execute tests",
     "make_readiness_check": "PASS (exit 0 at cee4c33e5)",
     "make_pre_prod_check": "FAIL (exit 2; 25/37 PASS, 1 FAIL, 8 WARN, 3 SKIP; measured at cee4c33e5)",
     "coverage_gate": "FAIL (~52% < 70%; gate exits 2 as it should)",
@@ -42,11 +42,13 @@
     "unauthenticated_data_access": "PASS (12 endpoints -> 401/403, no payload returned)",
     "login_credential_enforcement": "PASS (2 wrong-password probes -> 401, identical message, no user enumeration)",
     "openapi_route_inventory": "PASS (414 paths, 443 operations)",
-    "openapi_auth_declaration": "FAIL (securitySchemes empty; 0/443 operations declare security)",
-    "curl_matrix": "PASS (artifacts/release/f013e7317.../curl_matrix.txt, 7 groups)",
-    "playwright": "NOT_VERIFIED (blocked: no auth scheme in the spec, so Try-it-out cannot authenticate)",
+    "openapi_auth_declaration": "PASS (443/443 operations declare security, 4 schemes, 0 unresolved refs, 0 mismatches with the runtime guard)",
+    "curl_matrix": "PASS (artifacts/release/bbadf108a.../curl_matrix.txt, 7 groups)",
+    "playwright": "NOT_VERIFIED (no longer blocked by the missing auth scheme, but not executed)",
     "container_image_sbom": "NOT_VERIFIED",
-    "privacy_integration": "NOT_VERIFIED (PG/Redis/MinIO/Qdrant not running)"
+    "privacy_integration": "NOT_VERIFIED (PG/Redis/MinIO/Qdrant not running)",
+    "openapi_integrity": "PASS (0 masking artifacts in the served spec; was 16)",
+    "per_operation_auth_runtime": "PARTIAL (12 endpoints probed -> 401/403; 431 verified only via spec)"
   },
   "coverage": {
     "percent": 51.89,
@@ -81,11 +83,14 @@
     "exc_info attached no traceback to the LogRecord — format_exc_info was missing from the structlog chain (e91fb91fe)",
     "every log timestamp lost its date — the PHONE pattern matched ISO-8601 dates (9a1987f49)",
     "DataMaskingMiddleware kept private copies of the PII patterns, bypassing core.security.pii_patterns; /ready answered +***0928T... (32ef4f246)",
-    "step-up tokens were returned corrupted (8 of 40 live) because PIIMaskingResponseMiddleware excluded only /api/v1/auth/login; 0 of 40 after (f013e7317)"
+    "step-up tokens were returned corrupted (8 of 40 live) because PIIMaskingResponseMiddleware excluded only /api/v1/auth/login; 0 of 40 after (f013e7317)",
+    "OpenAPI declared no authentication at all: securitySchemes empty and 0/443 operations carried security, because the guard is pure-ASGI middleware FastAPI does not emit (bbadf108a)",
+    "the published spec was silently corrupted in 16 places by both response maskers; documentation endpoints are now exempt, 16 artifacts -> 0 (bbadf108a)"
   ],
   "open_observations": [
     "POST /api/v1/auth/step-up-request issues a token with no credential check — not an authz bypass (login still verifies the password), it is a CSRF/session guard, and the token is not single-use",
-    "DataMaskingMiddleware masks by key name at any depth, so the legitimate deprecations.password field in /api/v1/auth/methods arrives as ***",
-    "logs report environment=production while the dev_light profile sets app.environment=development; the line prefix says [development@...]"
+    "pii_masker._RU_SURNAMES false-positives on ordinary Russian adjectives ending in -ский/-ова/-ин (Семантический -> ***); not narrowed, because narrowing would weaken the privacy surface",
+    "logs report environment=production while the dev_light profile sets app.environment=development; the line prefix says [development@...]",
+    "the spec's security field describes the AuthRequiredMiddleware layer only; step-up, CSRF-cookie, mTLS and Express guards are not expressible in OpenAPI"
   ]
 }

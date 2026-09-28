@@ -1,7 +1,7 @@
 # Production Readiness — CURRENT (canonical)
 
 > **This is the canonical current-status document for the repository.**
-> Generated 2026-09-28, last updated for SHA `f013e7317`.
+> Generated 2026-09-28, last updated for SHA `bbadf108a`.
 > It supersedes every earlier readiness snapshot.
 >
 > - Predecessor snapshots (kept as historical records, **do not read as current**):
@@ -24,22 +24,17 @@ Blocking items, in priority order:
    Two independent measurements agree within 0.36 p.p.
 2. **The test suite is not isolation-safe** — a full-suite run reports failures
    that do not reproduce in isolation, so no "suite is green" claim is possible.
-3. **The OpenAPI spec declares no authentication at all** — `securitySchemes`
-   is empty and none of the 443 operations carries a `security` field, although
-   auth is genuinely enforced at runtime. Swagger's Authorize button and "Try it
-   out" do not work, and generated clients ship without auth. This also blocks
-   the required browser verification.
-4. **`make ci` never runs the tests.** It ends at `test-collection-check`, which
+3. **`make ci` never runs the tests.** It ends at `test-collection-check`, which
    calls `pytest --co`. Exit 0 means "tests import", not "tests pass".
-5. **No release artifact for this SHA** — no container image, no SBOM, no
+4. **No release artifact for this SHA** — no container image, no SBOM, no
    signature.
-6. **Tooling suite is red** — 10 failures in `tests/unit/tools/` that reproduce
+5. **Tooling suite is red** — 10 failures in `tests/unit/tools/` that reproduce
    on a clean worktree.
 
 The `exc_info` traceback loss, the corrupted `timestamp` field and the step-up
-token corruption were all confirmed by running the application, and are
-**fixed** — see "What was fixed in this cycle".
-
+token corruption and the missing auth description in the OpenAPI spec were
+all confirmed by running the application, and are **fixed** — see
+"What was fixed in this cycle".
 ---
 
 ## Status by area
@@ -59,11 +54,12 @@ wrong; an incomplete environment is never reported as `PASS`.
 | Tenant isolation (static) | PASS | `check_tenant_isolation.py --strict` exit 0 |
 | Tenant isolation (runtime) | **FAIL (negative)** | live run at `f013e7317`: empty/`null` `X-Tenant-Id` → 401, no data returned |
 | Object authorization | PASS | 117 callsites, 0 unknown |
-| CI composite | PASS with caveat | `make ci` exit 0 at `f013e7317` — but it does not execute tests |
+| CI composite | PASS with caveat | `make ci` exit 0 at `bbadf108a` — but it does not execute tests |
 | Application starts and serves | PASS | live uvicorn, `dev_light` profile, `/health` → 200 |
 | Unauthenticated data access | PASS | 12 endpoints → 401/403, no payload returned |
 | Login credential enforcement | PASS | 2 wrong-password probes → 401, identical message (no user enumeration) |
-| OpenAPI auth declaration | **FAIL** | `securitySchemes` empty, 0/443 operations declare `security` |
+| OpenAPI auth declaration | PASS | 443/443 operations declare `security`, 4 schemes, 0 unresolved refs, 0 mismatches with the runtime guard (`bbadf108a`) |
+| OpenAPI integrity | PASS | 0 masking artifacts in the served spec (was 16) |
 | Readiness guards | PASS | `make readiness-check` exit 0 |
 | Pre-production | **FAIL** | `make pre-prod-check` exit 2 — 25/37 PASS, 1 FAIL (coverage), 8 WARN, 3 SKIP |
 | Coverage gate | **FAIL** | ~52% vs 70% threshold; gate correctly reports FAIL (exit 2) |
@@ -73,9 +69,10 @@ wrong; an incomplete environment is never reported as `PASS`.
 | Tooling test suite | **FAIL** | `tests/unit/tools/`: 10 failures, all reproduce on a clean `HEAD` worktree |
 | Unit test suite (per-directory) | **FAIL** | all clusters green in isolation except `tests/unit/entrypoints/mcp`, which cannot finish a run |
 | Unit test suite (whole-tree) | **FAIL** | reports failures that do not reproduce in isolation (test-isolation defect) |
-| HTTP / cURL matrix | PASS | `artifacts/release/f013e7317.../curl_matrix.txt`, 7 groups |
+| HTTP / cURL matrix | PASS | `artifacts/release/bbadf108a.../curl_matrix.txt`, 7 groups |
 | Route inventory | PASS | 414 paths / 443 operations, from the live `openapi.json` |
-| Browser / Playwright | NOT_VERIFIED | blocked: no auth scheme in the spec, so "Try it out" cannot authenticate |
+| Per-operation auth (runtime) | **PARTIAL** | 12 endpoints probed → 401/403; the other 431 verified only through the spec |
+| Browser / Playwright | NOT_VERIFIED | no longer blocked by the missing auth scheme, but still not executed |
 | Container image + SBOM | NOT VERIFIED | not built for this SHA |
 | Signature / cosign | NOT VERIFIED | no image to sign |
 
@@ -119,7 +116,7 @@ Commits `f9307dabd` … `f681c4ed7`, each verified with `make ci` exit 0.
 - 17 stale tests repaired, including two that had been failing forever and one
   order-dependent **security-gate** test that passed only sometimes.
 
-### Found by actually running the application (`e91fb91fe` … `f013e7317`)
+### Found by actually running the application (`e91fb91fe` … `bbadf108a`)
 
 These four were invisible to the test suite and to static gates; each was
 confirmed on a live instance, then fixed with a regression test.
@@ -142,14 +139,43 @@ confirmed on a live instance, then fixed with a regression test.
   401 for a token it had just issued. Measured **8 of 40** corrupt before
   the fix, **0 of 40** after.
 
+- **The OpenAPI spec described no authentication at all** (`bbadf108a`).
+  `components.securitySchemes` was empty and none of the 443 operations
+  carried a `security` field, because the guard lives in pure-ASGI
+  middleware that FastAPI does not emit. Swagger had no Authorize button,
+  "Try it out" could not pass a token, and generated clients shipped
+  without auth. The spec now declares the four credential schemes taken from
+  the same verifiers `verify_request` uses, and derives the public flag from
+  `is_path_public` — the same source the runtime guard uses. Measured on the
+  live service: **443/443** operations annotated, 0 unresolved references,
+  **0 mismatches** with the guard.
+- **The published spec was silently corrupted in 16 places.** Both response
+  maskers were rewriting field descriptions and summaries to `***`:
+  `Семантический поиск` → `*** поиск` (`_RU_SURNAMES` treats any Russian word
+  ending in `-ский` as a surname), a phone example in a description → `***`,
+  and the description of a field named `token` → `***` (masking by key name).
+  The spec is built from source annotations and carries no runtime or tenant
+  data — all 414 paths are static and DSL route definitions never reach
+  OpenAPI — so masking it bought no privacy and only destroyed the contract.
+  `/openapi.json`, `/docs`, `/redoc` and `/docs/oauth2-redirect` are now
+  exempt. **16 artifacts → 0** on the live service.
+
+  `_RU_SURNAMES` is deliberately **not** narrowed: narrowing it would weaken
+  the privacy surface. The new scheme descriptions are worded to avoid the
+  false positive, and two tests pin that.
+
 ---
 
 ## Known open defects
 
-- **The OpenAPI spec declares no auth.** `components.securitySchemes` is empty and
-  0 of 443 operations carry a `security` field, although auth is enforced at runtime.
-  Swagger has no Authorize button, "Try it out" cannot authenticate, and generated
-  clients ship without auth. This also blocks the required browser verification.
+- **Per-operation auth is probed on 12 of 443 endpoints.** The spec now states
+  the contract for all of them, but the runtime behaviour was only verified
+  on 12 paths. The other 431 are covered by the spec, not by observation.
+- **`_RU_SURNAMES` false-positives on ordinary Russian adjectives.** Any word
+  ending in `-ский` / `-ова` / `-ин` is masked as a surname, so
+  `Семантический`, `Логистический`, `Диагностический` become `***` in any
+  Russian text that passes through a response masker. Not narrowed here,
+  because narrowing weakens privacy; it needs a proper design decision.
 - **`make ci` does not execute tests** — `make/pipelines.mk:22` ends at
   `test-collection-check`, which runs `pytest --co` only.
 - `/api/v1/auth/step-up-request` issues a token with no credential check. Not an authz
