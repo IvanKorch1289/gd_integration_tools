@@ -56,15 +56,12 @@ async def test_auth_middleware_passes_with_api_key() -> None:
 
     fake_ctx = type("Ctx", (), {})()
 
-    with (
-        patch(
-            "src.backend.core.auth.auth_selector._verify_api_key",
-            AsyncMock(return_value=fake_ctx),
-        ),
-        patch(
-            "src.backend.core.auth.auth_selector._verify_jwt",
-            AsyncMock(return_value=None),
-        ),
+    # S93 W3: middleware вызывает публичный verify_request(), а не приватные
+    # _verify_api_key / _verify_jwt. Патчить нужно реально вызываемое: иначе
+    # настоящие verifier'ы отвергают фиктивный ключ и приходит 401.
+    with patch(
+        "src.backend.core.auth.auth_selector.verify_request",
+        AsyncMock(return_value=fake_ctx),
     ):
         middleware = auth_mod.McpAuthMiddleware(_passthrough)
         await middleware(scope, _receive, _send)
@@ -92,11 +89,23 @@ async def test_auth_middleware_passes_through_non_http() -> None:
 def test_resolve_http_app_prefers_modern_methods() -> None:
     from src.backend.entrypoints.mcp.http_server import _resolve_http_app
 
+    seen: dict[str, Any] = {}
+
     class _FakeMcp:
-        def http_app(self):
+        # Сигнатура повторяет настоящий FastMCP.http_app(), который принимает
+        # stateless_http и path. Раньше fake объявлял http_app(self) без
+        # kwargs, поэтому production-вызов candidate(stateless_http=True,
+        # path="/") (D-AUDIT-20812, cycle 218) падал с TypeError; исключение
+        # глоталось в _resolve_http_app, и тест падал с RuntimeError.
+        def http_app(self, *, stateless_http: bool = False, path: str = "/mcp"):
+            seen["stateless_http"] = stateless_http
+            seen["path"] = path
             return object()
 
     assert _resolve_http_app(_FakeMcp()) is not None
+    # D-AUDIT-20812: stateless + path="/" обязательны, иначе Starlette Mount
+    # re-root'ит путь в "/" и внутренний route отдаёт 404 (был реальный баг).
+    assert seen == {"stateless_http": True, "path": "/"}
 
 
 def test_resolve_http_app_falls_back_to_sse() -> None:

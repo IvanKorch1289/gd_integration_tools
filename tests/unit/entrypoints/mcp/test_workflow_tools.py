@@ -78,7 +78,12 @@ class TestRegisterWorkflowTools:
             ),
         ):
             register_workflow_tools(mock_mcp)
-        mock_mcp.tool.assert_not_called()
+        # Каталог-инструменты (workflow_list / workflow_status) регистрируются
+        # всегда — это не проверяемое поведение. Проверяем, что wf1 без
+        # route_id НЕ зарегистрирован. Прежний assert_not_called() стал ложным
+        # после появления _register_catalog_tools.
+        assert mock_mcp.tool.call_args_list
+        assert all("wf1" not in str(c) for c in mock_mcp.tool.call_args_list)
 
 
 class TestTriggerAndMaybeWait:
@@ -134,6 +139,13 @@ class TestTriggerAndMaybeWait:
         mock_status.succeeded = MagicMock(value="succeeded")
         mock_status.failed = MagicMock(value="failed")
         mock_status.cancelled = MagicMock(value="cancelled")
+        # Ссылка должна быть ТОТ ЖЕ объект, что лежит в terminal-наборе
+        # terminal = {succeeded, failed, cancelled}. Раньше mock_row.status был
+        # отдельным MagicMock, поэтому `row.status in terminal` всегда давало
+        # False: цикл polling'а не доходил до terminal-ветки, а крутился
+        # (asyncio.sleep замокан — sleep не спит) до wall-clock timeout в 300 с,
+        # после чего возвращался словарь без ключа "result" → KeyError.
+        mock_row.status = mock_status.succeeded
 
         with patch(
             "src.backend.core.di.providers.get_workflow_state_store_provider",
