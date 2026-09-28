@@ -90,10 +90,7 @@ class TestToDictMsgspec:
         best_msgspec = float("inf")
         best_orjson = float("inf")
         for _ in range(trials):
-            for use_msgspec, bucket in (
-                (True, "msgspec"),
-                (False, "orjson"),
-            ):
+            for use_msgspec, bucket in ((True, "msgspec"), (False, "orjson")):
                 t0 = time.perf_counter()
                 for _ in range(iterations):
                     es.to_dict_fast(original, use_msgspec=use_msgspec)

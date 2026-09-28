@@ -99,7 +99,9 @@ class TestProceduralMemoryAdd:
         factory = _make_mock_session_factory([])
         mem = ProceduralMemory(session_factory=factory)
 
-        result = await mem.add(name="kredit_check_v1")
+        result = await mem.add(
+            name="kredit_check_v1", tenant="tenant-a", subject_id="user:1"
+        )
 
         assert result == 1, f"Expected 1, got {result}"
 
@@ -111,7 +113,7 @@ class TestProceduralMemoryAdd:
         factory = _make_mock_session_factory([])
         mem = ProceduralMemory(session_factory=factory)
 
-        await mem.add(name="kredit_check_v1")
+        await mem.add(name="kredit_check_v1", tenant="tenant-a", subject_id="user:1")
 
         session = factory._args[0]
         assert len(session.added) == 1
@@ -132,6 +134,7 @@ class TestProceduralMemoryAdd:
             description="Кредитный скоринг SOP",
             steps=steps,
             tenant="acme",
+            subject_id="user:1",
         )
 
         session = factory._args[0]
@@ -143,19 +146,26 @@ class TestProceduralMemoryAdd:
 
     @pytest.mark.asyncio
     async def test_add_with_optional_fields_none(self) -> None:
-        """add() без optional fields — None values stored correctly."""
+        """add() без optional fields — None values stored correctly.
+
+        До ADR-0347 тест утверждал ``row.tenant is None``, т.е. закреплял
+        fail-open поведение (запись без тенанта). Теперь tenant обязателен,
+        поэтому проверяется именно он плюс реально-optional поля.
+        """
         from src.backend.services.ai.memory.langmem.procedural import ProceduralMemory
 
         factory = _make_mock_session_factory([])
         mem = ProceduralMemory(session_factory=factory)
 
-        await mem.add(name="minimal")
+        await mem.add(name="minimal", tenant="tenant-a", subject_id="user:1")
 
         session = factory._args[0]
         row = session.added[0]
         assert row.description is None
         assert row.steps is None
-        assert row.tenant is None
+        # Fail-closed: tenant и subject_id обязательны, а не None.
+        assert row.tenant == "tenant-a"
+        assert row.subject_id == "user:1"
 
     @pytest.mark.asyncio
     async def test_add_increments_id_across_calls(self) -> None:
@@ -165,9 +175,9 @@ class TestProceduralMemoryAdd:
         factory = _make_mock_session_factory([])
         mem = ProceduralMemory(session_factory=factory)
 
-        id1 = await mem.add(name="sop_1")
-        id2 = await mem.add(name="sop_2")
-        id3 = await mem.add(name="sop_3")
+        id1 = await mem.add(name="sop_1", tenant="tenant-a", subject_id="user:1")
+        id2 = await mem.add(name="sop_2", tenant="tenant-a", subject_id="user:1")
+        id3 = await mem.add(name="sop_3", tenant="tenant-a", subject_id="user:1")
 
         assert id1 == 1
         assert id2 == 2
@@ -181,7 +191,7 @@ class TestProceduralMemoryAdd:
         factory = _make_mock_session_factory([])
         mem = ProceduralMemory(session_factory=factory)
 
-        await mem.add(name="x")
+        await mem.add(name="x", tenant="tenant-a", subject_id="user:1")
 
         session = factory._args[0]
         assert session.committed, "Session should be committed after add()"
@@ -198,7 +208,7 @@ class TestProceduralMemoryRecall:
         factory = _make_mock_session_factory([])
         mem = ProceduralMemory(session_factory=factory)
 
-        result = await mem.recall()
+        result = await mem.recall(tenant="tenant-a")
         assert result == []
 
     @pytest.mark.asyncio
@@ -226,7 +236,7 @@ class TestProceduralMemoryRecall:
         factory = _make_mock_session_factory(rows)
         mem = ProceduralMemory(session_factory=factory)
 
-        result = await mem.recall()
+        result = await mem.recall(tenant="tenant-a")
 
         assert len(result) == 2
         for d in result:
@@ -249,7 +259,7 @@ class TestProceduralMemoryRecall:
         factory = _make_mock_session_factory(rows)
         mem = ProceduralMemory(session_factory=factory)
 
-        result = await mem.recall()
+        result = await mem.recall(tenant="tenant-a")
 
         # Ordered newest first.
         assert [d["name"] for d in result] == ["newest", "middle", "oldest"]
@@ -267,7 +277,7 @@ class TestProceduralMemoryRecall:
         factory = _make_mock_session_factory(rows)
         mem = ProceduralMemory(session_factory=factory)
 
-        result = await mem.recall(limit=3)
+        result = await mem.recall(tenant="tenant-a", limit=3)
 
         assert len(result) == 3
         # Newest 3 (ids 4, 3, 2 by updated_at desc).
@@ -286,7 +296,7 @@ class TestProceduralMemoryRecall:
         factory = _make_mock_session_factory(rows)
         mem = ProceduralMemory(session_factory=factory)
 
-        result = await mem.recall()
+        result = await mem.recall(tenant="tenant-a")
 
         # Default limit = 20.
         assert len(result) == 20

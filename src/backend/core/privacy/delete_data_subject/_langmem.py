@@ -77,8 +77,27 @@ class LangMemErasureAdapter:
                 except Exception:
                     pass
 
-            # Schema check: does LangMem model have tenant_id column?
+            # ADR-0347: модели получили subject_id (миграция e5f6a7b8c9d0),
+            # поэтому фильтр доступен. Проверка остаётся fail-closed: если
+            # колонки нет (сильно устаревшая БД без миграции) — SKIPPED с
+            # явной причиной, а НЕ молчаливое удаление по subject_id без
+            # tenant-скоупа.
+            has_subject_col = hasattr(LangMemEpisodic, "subject_id")
             has_tenant_col = hasattr(LangMemEpisodic, "tenant_id")
+            if not has_subject_col:
+                logger.warning(
+                    "langmem_subject_column_unavailable subject_id=%s — "
+                    "model missing subject_id column (миграция e5f6a7b8c9d0 не "
+                    "применена?); erasure пропускается, чтобы не удалить "
+                    "данные вне tenant-скоупа",
+                    subject_id,
+                )
+                return AdapterResult(
+                    adapter_name=self.name,
+                    status=ErasureResultStatus.SKIPPED,
+                    duration_ms=(time.monotonic() - start) * 1000,
+                    error="langmem model missing subject_id column",
+                )
             if resolved_tenant_id and not has_tenant_col:
                 logger.warning(
                     "langmem_tenant_filter_unavailable "
@@ -99,14 +118,15 @@ class LangMemErasureAdapter:
 
             async with session_factory() as session:
                 # Delete episodic + procedural memory для subject.
+                # ADR-0347: subject_id теперь существует; tenant-фильтр
+                # применяется по колонке ``tenant``, потому что именно так
+                # модели называют tenant-поле (tenant_id отсутствует).
                 epi_conditions = [LangMemEpisodic.subject_id == subject_id]
                 proc_conditions = [LangMemProcedural.subject_id == subject_id]
-                if resolved_tenant_id and has_tenant_col:
-                    epi_conditions.append(
-                        LangMemEpisodic.tenant_id == resolved_tenant_id
-                    )
+                if resolved_tenant_id:
+                    epi_conditions.append(LangMemEpisodic.tenant == resolved_tenant_id)
                     proc_conditions.append(
-                        LangMemProcedural.tenant_id == resolved_tenant_id
+                        LangMemProcedural.tenant == resolved_tenant_id
                     )
                 epi_q = delete(LangMemEpisodic).where(*epi_conditions)
                 proc_q = delete(LangMemProcedural).where(*proc_conditions)

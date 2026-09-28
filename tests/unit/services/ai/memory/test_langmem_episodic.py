@@ -109,7 +109,13 @@ class TestEpisodicMemoryAdd:
         factory = _make_mock_session_factory([])
         mem = EpisodicMemory(session_factory=factory)
 
-        result = await mem.add(session_id="s1", role="user", content="hi")
+        result = await mem.add(
+            session_id="s1",
+            role="user",
+            content="hi",
+            tenant="tenant-a",
+            subject_id="user:1",
+        )
 
         # Mock auto-increments: first row gets id=1.
         assert result == 1, f"Expected 1, got {result}"
@@ -123,7 +129,13 @@ class TestEpisodicMemoryAdd:
         factory = _make_mock_session_factory([])
         mem = EpisodicMemory(session_factory=factory)
 
-        await mem.add(session_id="abc", role="assistant", content="Hello!")
+        await mem.add(
+            session_id="abc",
+            role="assistant",
+            content="Hello!",
+            tenant="tenant-a",
+            subject_id="user:1",
+        )
 
         # Get the row that add() created and passed to session.add().
         assert len(factory._args) == 1
@@ -149,7 +161,12 @@ class TestEpisodicMemoryAdd:
         mem = EpisodicMemory(session_factory=factory)
 
         await mem.add(
-            session_id="s1", role="user", content="x", tenant="acme", meta=meta_dict
+            session_id="s1",
+            role="user",
+            content="x",
+            tenant="acme",
+            subject_id="user:1",
+            meta=meta_dict,
         )
 
         session = factory._args[0]
@@ -165,9 +182,27 @@ class TestEpisodicMemoryAdd:
         factory = _make_mock_session_factory([])
         mem = EpisodicMemory(session_factory=factory)
 
-        id1 = await mem.add(session_id="s", role="u", content="a")
-        id2 = await mem.add(session_id="s", role="u", content="b")
-        id3 = await mem.add(session_id="s", role="u", content="c")
+        id1 = await mem.add(
+            session_id="s",
+            role="u",
+            content="a",
+            tenant="tenant-a",
+            subject_id="user:1",
+        )
+        id2 = await mem.add(
+            session_id="s",
+            role="u",
+            content="b",
+            tenant="tenant-a",
+            subject_id="user:1",
+        )
+        id3 = await mem.add(
+            session_id="s",
+            role="u",
+            content="c",
+            tenant="tenant-a",
+            subject_id="user:1",
+        )
 
         assert id1 == 1
         assert id2 == 2
@@ -185,7 +220,7 @@ class TestEpisodicMemoryRecall:
         factory = _make_mock_session_factory([])
         mem = EpisodicMemory(session_factory=factory)
 
-        result = await mem.recall()
+        result = await mem.recall(tenant="tenant-a")
         assert result == []
 
     @pytest.mark.asyncio
@@ -211,7 +246,7 @@ class TestEpisodicMemoryRecall:
         factory = _make_mock_session_factory(rows)
         mem = EpisodicMemory(session_factory=factory)
 
-        result = await mem.recall()
+        result = await mem.recall(tenant="tenant-a")
 
         assert len(result) == 2
         # Each result is a dict with expected keys.
@@ -246,7 +281,7 @@ class TestEpisodicMemoryRecall:
         factory = _make_mock_session_factory(rows)
         mem = EpisodicMemory(session_factory=factory)
 
-        result = await mem.recall()
+        result = await mem.recall(tenant="tenant-a")
 
         # Ordered newest first.
         assert [d["content"] for d in result] == ["newest", "middle", "oldest"]
@@ -271,7 +306,7 @@ class TestEpisodicMemoryRecall:
         factory = _make_mock_session_factory(rows)
         mem = EpisodicMemory(session_factory=factory)
 
-        result = await mem.recall(limit=3)
+        result = await mem.recall(tenant="tenant-a", limit=3)
 
         # Max 3 episodes returned.
         assert len(result) == 3
@@ -298,7 +333,7 @@ class TestEpisodicMemoryRecall:
         factory = _make_mock_session_factory(rows)
         mem = EpisodicMemory(session_factory=factory)
 
-        result = await mem.recall()
+        result = await mem.recall(tenant="tenant-a")
         # Default limit = 20.
         assert len(result) == 20
 
@@ -315,7 +350,7 @@ class TestEpisodicMemoryRecall:
         factory = _make_mock_session_factory([row])
         mem = EpisodicMemory(session_factory=factory)
 
-        result = await mem.recall()
+        result = await mem.recall(tenant="tenant-a")
 
         assert result[0]["occurred_at"] is not None
         # ISO format: "2024-06-15T14:30:00+00:00" (UTC).
@@ -335,7 +370,7 @@ class TestEpisodicMemoryRecall:
         factory = _make_mock_session_factory([row])
         mem = EpisodicMemory(session_factory=factory)
 
-        result = await mem.recall()
+        result = await mem.recall(tenant="tenant-a")
 
         # occurred_at is None in result.
         assert result[0]["occurred_at"] is None

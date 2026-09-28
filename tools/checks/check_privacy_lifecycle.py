@@ -31,10 +31,75 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC_ROOT = REPO_ROOT / "src"
+
+
+# ---------------------------------------------------------------------------
+# Behavioural evidence (ADR-0347)
+# ---------------------------------------------------------------------------
+# Исторически "covered" определялся ПОИСКОМ СТРОК в исходнике адаптера
+# (``_adapter_has("...", "subject_id", "delete")``). Адаптер, который просто
+# УПОМИНАЕТ нужные слова, проходил как покрытый — именно так нерабочий
+# ``LangMemEpisodic.subject_id`` (колонки не существовало) годами
+# отчитывался как "✅ ai_memory covered".
+#
+# Теперь structural-маркеры — только предупреждение, а ``covered``
+# требует РЕАЛЬНОГО доказательства: тест, который исполняет execute()
+# адаптера, и разрешимость всех ORM-атрибутов, на которые адаптер ссылается.
+
+_MODEL_MODULE = "src.backend.core.domain.models"
+_ATTR_RE = re.compile(r"\b([A-Z][A-Za-z0-9_]*)\.([a-z_][a-z0-9_]*)")
+
+
+def _load_orm_models() -> dict[str, type]:
+    """Загрузить ORM-модели проекта (если импорт возможен)."""
+    try:
+        import importlib
+
+        mod = importlib.import_module(_MODEL_MODULE)
+    except Exception:
+        return {}
+    return {
+        name: obj
+        for name, obj in vars(mod).items()
+        if isinstance(obj, type) and hasattr(obj, "__table__")
+    }
+
+
+def _unresolvable_model_attrs(adapter_src: str, models: dict[str, type]) -> list[str]:
+    """Найти ``Model.attr``, которых нет на реальной модели.
+
+    Это ловит именно тот класс дефекта, который проскакивал по маркерам:
+    адаптер ссылается на несуществующую колонку/атрибут и падает в рантайме.
+    """
+    if not models:
+        return []
+    missing: list[str] = []
+    for model_name, attr in _ATTR_RE.findall(adapter_src):
+        model = models.get(model_name)
+        if model is None:
+            continue
+        if attr in {"metadata", "registry", "__table__", "__tablename__"}:
+            continue
+        if not hasattr(model, attr):
+            missing.append(f"{model_name}.{attr}")
+    return sorted(set(missing))
+
+
+def _behavioural_test_exists(test_rel: str, adapter_class: str) -> bool:
+    """Есть ли тест, который РЕАЛЬНО исполняет адаптер (не просто импортирует)."""
+    path = REPO_ROOT / test_rel
+    if not path.is_file():
+        return False
+    try:
+        content = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return False
+    return adapter_class in content and ".execute(" in content
 
 
 def _check_storage_coverage() -> dict[str, dict[str, object]]:
@@ -106,13 +171,38 @@ def _check_storage_coverage() -> dict[str, dict[str, object]]:
         else "no subject-scoped vector delete",
     }
 
-    # AI memory (LangMem adapter).
+    # AI memory (LangMem adapter) — ADR-0347: требуется behavioural evidence.
+    langmem_src = adapter_content.get("_langmem.py", "")
+    _models = _load_orm_models()
+    # Fail-closed: если модели не импортируются, проверить ссылки невозможно.
+    # Раньше (и в старой версии гейта) это молча превращалось в "проблем нет".
+    _models_loadable = bool(_models)
+    _missing = _unresolvable_model_attrs(langmem_src, _models)
+    if not _models_loadable:
+        _missing = ["<orm models not importable — cannot verify>"]
+    _structural = _adapter_has("_langmem.py", "subject_id", "delete") or _adapter_has(
+        "_langmem.py", "subject_id", "memory"
+    )
+    _behavioural = _behavioural_test_exists(
+        "tests/unit/core/privacy/test_langmem_tenant_erasure_contract.py",
+        "LangMemErasureAdapter",
+    )
     backends["ai_memory"] = {
-        "covered": _adapter_has("_langmem.py", "subject_id", "delete")
-        or _adapter_has("_langmem.py", "subject_id", "memory"),
-        "evidence": "adapter _langmem.py present"
-        if "_langmem.py" in adapter_content
-        else "no LangMem adapter",
+        "covered": bool(_behavioural and not _missing),
+        "structural_markers": bool(_structural),
+        "behavioural_test": bool(_behavioural),
+        "unresolvable_attrs": _missing,
+        "orm_models_loadable": _models_loadable,
+        "evidence": (
+            "behavioural: contract test executes LangMemErasureAdapter.execute()"
+            if _behavioural
+            else "NO behavioural test — adapter never executed"
+        )
+        + (
+            f"; UNRESOLVED attrs: {_missing}"
+            if _missing
+            else ""
+        ),
     }
 
     # PostgreSQL: per v6 W1 spec — проверяем adapter import + contract suite
