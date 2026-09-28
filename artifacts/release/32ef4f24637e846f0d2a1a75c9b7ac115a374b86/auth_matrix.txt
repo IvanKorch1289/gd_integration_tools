@@ -1,0 +1,11 @@
+# login enforcement — HEAD 32ef4f24637e846f0d2a1a75c9b7ac115a374b86
+step-up token acquired unauthenticated: YES (len=161)
+  -> step-up gate provides NO identity assurance; it is a CSRF/session guard.
+  -> decoded payload: {"ip":"127.0.0.1","exp":1790609386,"nonce":"5348481ea133402b8eaee6a148698523"}
+
+POST /api/v1/auth/login  body={"method":"password","username":"admin","password":"wrong-probe"}
+  -> 401  {"error": "step_up_token_required", "detail": "Valid X-Step-Up-Token required \u2014 obtain via POST /api/v1/auth/step-up-request"}
+POST /api/v1/auth/login  body={"method":"password","username":"no-such-user-probe","password":"x"}
+  -> 401  {"error": "step_up_token_required", "detail": "Valid X-Step-Up-Token required \u2014 obtain via POST /api/v1/auth/step-up-request"}
+POST /api/v1/auth/login  body={}
+  -> 401  {"error": "step_up_token_required", "detail": "Valid X-Step-Up-Token required \u2014 obtain via POST /api/v1/auth/step-up-request"}
