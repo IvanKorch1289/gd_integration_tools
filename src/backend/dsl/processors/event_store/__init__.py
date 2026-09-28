@@ -6,7 +6,6 @@ Legacy: ``dsl/processors/event_store/processor.py`` — EventStoreProcessor
 """
 
 from src.backend.dsl.engine.processors.event_store import *  # noqa: F401,F403
-
 from src.backend.dsl.processors.event_store.processor import (  # noqa: F401
     EventStoreProcessor as EventStoreProcessor,
 )

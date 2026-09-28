@@ -74,9 +74,7 @@ try:  # pragma: no cover - prometheus_client optional
     # (logger.extra) — НЕ используется как metric label (per-pool
     # cardinality bounded by ~3 pools, vs per-tenant unbounded).
     _WARMUP_DURATION = _PromHistogram(
-        "pool_warmup_duration_ms",
-        "Pool warmup duration in milliseconds",
-        ("pool",),
+        "pool_warmup_duration_ms", "Pool warmup duration in milliseconds", ("pool",)
     )
     _WARMUP_FAILURES = _PromCounter(
         "pool_warmup_failures_total", "Pool warmup failures", ("pool",)
