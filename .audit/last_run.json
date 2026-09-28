@@ -1,10 +1,10 @@
 {
   "audit": "GD Integration Tools — current readiness status",
-  "head": "98698dd51",
-  "timestamp": "2026-09-28T16:10:00+00:00",
+  "head": "9227f6ded",
+  "timestamp": "2026-09-28T19:53:00+00:00",
   "status": "not_production_ready",
   "canonical_doc": "docs/roadmap/PRODUCTION_READINESS_CURRENT.md",
-  "per_sha_evidence": "artifacts/release/98698dd51c8f7ce62a11fb5037e2c088cc5b20d6/EVIDENCE.md",
+  "per_sha_evidence": "artifacts/release/9227f6ded5a42b62b7ada6a0ca80496e1ffa73bf/EVIDENCE.md",
   "superseded_docs": [
     "docs/roadmap/PRODUCTION_READINESS.md (snapshot 2026-09-01)",
     "docs/roadmap/PRODUCTION_READINESS_FINAL.md (snapshot 2026-09-02)"
@@ -14,7 +14,7 @@
   "blocking": [
     "coverage ~52% vs 70% threshold (two independent measurements, 0.36 p.p. apart)",
     "gzip responses were invalid ASGI (str headers) so uvicorn dropped every response over 500 bytes with no reply; fixed in 2a347ee70, browsers could not load the spec at all",
-    "test suite is not isolation-safe: whole-tree run reports failures that do not reproduce in isolation",
+    "test suite is not isolation-safe: gRPC cluster fixed in 9227f6ded (stub now mirrors the real generated servicer); frontend shared/test_components.py cluster still fails only in combined runs",
     "make ci does not execute tests — it ends at test-collection-check which runs pytest --co only",
     "no container image, SBOM or signature for this SHA",
     "10 tooling-test failures in tests/unit/tools/",

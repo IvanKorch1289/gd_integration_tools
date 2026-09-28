@@ -38,8 +38,9 @@ Blocking items, in priority order:
 4. **Coverage is far below the project's own bar** — ~52% measured against a
    70% threshold. The gate reports this honestly instead of silently passing.
    Two independent measurements agree within 0.36 p.p.
-5. **The test suite is not isolation-safe** — a full-suite run reports failures
-   that do not reproduce in isolation, so no "suite is green" claim is possible.
+5. **The test suite is not isolation-safe** — the gRPC cluster is fixed
+   (`9227f6ded`), but the frontend `shared/test_components.py` cluster still
+   fails only in combined runs, so no "suite is green" claim is possible yet.
 6. **`make ci` never runs the tests.** It ends at `test-collection-check`, which
    calls `pytest --co`. Exit 0 means "tests import", not "tests pass".
 7. **No release artifact for this SHA** — no container image, no SBOM, no
@@ -89,8 +90,8 @@ wrong; an incomplete environment is never reported as `PASS`.
 | Migration apply / rollback | ENV_FAILURE | `alembic upgrade head` aborts in config load (`redis AuthenticationError`); no Redis/Vault here |
 | Privacy integration (PG/Redis/MinIO/Qdrant/LangMem) | NOT VERIFIED | backends not running |
 | Tooling test suite | **FAIL** | `tests/unit/tools/`: 10 failures, all reproduce on a clean `HEAD` worktree |
-| Unit test suite (per-directory) | **FAIL** | all clusters green in isolation except `tests/unit/entrypoints/mcp`, which cannot finish a run |
-| Unit test suite (whole-tree) | **FAIL** | reports failures that do not reproduce in isolation (test-isolation defect) |
+| Unit test suite (per-directory) | **FAIL** | all 16 clusters under `tests/unit/entrypoints/` re-measured at `9227f6ded`: green except `mcp` (8 failed / 98 passed, 305 s) |
+| Unit test suite (whole-tree) | **FAIL** | reports failures that do not reproduce in isolation; gRPC half fixed at `9227f6ded`, frontend `shared/test_components.py` half still open |
 | HTTP / cURL matrix | PASS | `artifacts/release/98698dd51.../curl_matrix.txt`, 8 groups |
 | Route inventory | PASS | 414 paths / 443 operations, from the live `openapi.json` |
 | gzip / ASGI response validity | PASS | `openapi.json` + gzip → 200 / 58 150 B with `content-encoding: gzip` (was 000 / 0 B) |
@@ -234,11 +235,26 @@ Screenshots and the machine-readable report are in `artifacts/e2e/`.
   `deprecations.password` field in `/api/v1/auth/methods` arrives as `"***"`.
 - Logs report `environment: 'production'` while the `dev_light` profile sets
   `app.environment: "development"`; the line prefix says `[development@...]`.
-- Test isolation: `tests/unit/entrypoints/grpc/test_file_stream.py` and
-  `test_grpc_server.py` replace protobuf module attributes without isolation,
-  breaking sibling tests. The frontend `shared/test_components.py` cluster fails
-  only in combined runs. Needs fixtures, not test edits.
-- `tests/unit/entrypoints/mcp` cannot complete a single-directory run.
+- Test isolation, gRPC cluster — **fixed at `9227f6ded`**.
+  `test_file_stream.py::_install_protobuf_stubs()` installs an empty
+  `FileServiceServicer = type("Stub", (), {})` at module level, and the servicer
+  imported under it inherits that base permanently: rolling back `sys.modules`
+  cannot help once the class object exists. The 4 RPCs of `files.proto`
+  (`DeleteFile`, `DownloadFile`, `GetFile`, `UploadFile`) and the 1 of
+  `invoker.proto` (`Invoke`) were missing from the MRO, so three tests in
+  *sibling* files failed. Those tests were correct; the stub was wrong.
+  Before `3 failed, 63 passed` (3 random seeds at HEAD) → after `66 passed`
+  (5 random seeds), and each of the 7 files also passes standalone.
+  Only the poisoning fixture changed; no assertion was edited.
+- Test isolation, frontend cluster — still open. The
+  `shared/test_components.py` cluster fails only in combined runs. Needs
+  fixtures, not test edits.
+- `tests/unit/entrypoints/mcp` has 8 pre-existing failures
+  (`test_http_server_auth_wrap.py` ×4, `test_http_transport.py` ×2,
+  `test_workflow_tools.py` ×2); measured `8 failed, 98 passed, 1 xfailed` in
+  305 s at `9227f6ded`. The run needs ~5 min, so short timeouts can make it
+  look like a hang — earlier notes here said it "cannot complete a run",
+  which this measurement corrects.
 - 10 tooling-test failures (audit-deprecation ×4, SBOM ×2, scaffold, routebuilder
   MRO, codemod idempotency, plugin scaffold) — all reproduce at clean `HEAD`.
 - 123 optional `tenant_id` contracts remain tracked, not removed.
