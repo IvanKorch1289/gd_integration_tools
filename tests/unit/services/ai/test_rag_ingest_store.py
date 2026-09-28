@@ -15,24 +15,46 @@ from src.backend.services.ai.rag_ingest_store import (
 
 @pytest.mark.asyncio
 async def test_inmemory_create_update_get_roundtrip() -> None:
+    """create → get → update → get, tenant-scoped (ADR-0345).
+
+    ``get``/``list_recent`` fail-closed: без ``tenant_id`` возвращают
+    None/[] (ADR-0345), а payload обязан содержать ``tenant_id``.
+    """
     store = InMemoryIngestStateStore()
-    await store.create("t1", {"task_id": "t1", "status": "running", "processed": 0})
-    snap = await store.get("t1")
+    await store.create(
+        "t1",
+        {"task_id": "t1", "status": "running", "processed": 0, "tenant_id": "acme"},
+    )
+    snap = await store.get("t1", tenant_id="acme")
     assert snap is not None and snap["status"] == "running"
 
     await store.update("t1", status="completed", processed=5)
-    snap2 = await store.get("t1")
+    snap2 = await store.get("t1", tenant_id="acme")
     assert snap2["status"] == "completed" and snap2["processed"] == 5
 
 
 @pytest.mark.asyncio
-async def test_inmemory_list_recent_returns_newest_first() -> None:
+async def test_inmemory_get_is_tenant_scoped_and_fails_closed() -> None:
+    """Чужой tenant и пустой tenant не получают данные (cross-tenant leak)."""
     store = InMemoryIngestStateStore()
-    await store.create("a", {"task_id": "a"})
-    await store.create("b", {"task_id": "b"})
-    await store.create("c", {"task_id": "c"})
-    items = await store.list_recent(limit=2)
+    await store.create("t1", {"task_id": "t1", "tenant_id": "acme"})
+
+    assert await store.get("t1", tenant_id="other") is None
+    assert await store.get("t1", tenant_id="") is None
+    assert await store.get("t1") is None
+
+
+@pytest.mark.asyncio
+async def test_inmemory_list_recent_returns_newest_first() -> None:
+    """list_recent: новые первыми, только своего tenant."""
+    store = InMemoryIngestStateStore()
+    for tid in ("a", "b", "c"):
+        await store.create(tid, {"task_id": tid, "tenant_id": "acme"})
+    items = await store.list_recent(limit=2, tenant_id="acme")
     assert [it["task_id"] for it in items] == ["c", "b"]
+    # Чужой tenant не видит ничего.
+    assert await store.list_recent(limit=2, tenant_id="other") == []
+    assert await store.list_recent(limit=2) == []
 
 
 @pytest.mark.asyncio

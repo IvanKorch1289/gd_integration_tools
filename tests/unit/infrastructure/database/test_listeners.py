@@ -12,6 +12,7 @@ listener'а держится только на docstring; SQL telemetry regressi
 
 from __future__ import annotations
 
+import ast
 import logging
 import time
 from unittest.mock import MagicMock, patch
@@ -118,6 +119,39 @@ def test_listener_stores_attributes_correctly(
     assert listener.logger is not None
 
 
+def _extra_of(record: logging.LogRecord) -> dict:
+    """Извлечь structlog-payload (``extra``) из записи caplog.
+
+    ``get_logger("database")`` возвращает StructlogLogger, который рендерит
+    весь event-dict в ``LogRecord.message`` как repr. Поэтому ``extra=...``
+    НЕ становится атрибутом LogRecord (``record.db_name`` не существует) —
+    payload лежит внутри ``message`` под ключом ``extra``.
+
+    ``ast.literal_eval(message)`` здесь не годится: при ``exc_info=`` в
+    event-dict попадает объект исключения (``RuntimeError('boom')``), а он не
+    разбирается literal_eval. Поэтому разбираем AST и literal-eval делаем
+    ТОЛЬКО для значения ключа ``extra`` — там только примитивы.
+    """
+    message = record.getMessage().strip()
+    if not message.startswith("{"):
+        return {}
+    try:
+        node = ast.parse(message, mode="eval").body
+    except ValueError, SyntaxError:
+        return {}
+    if not isinstance(node, ast.Dict):
+        return {}
+    for key, value in zip(node.keys, node.values):
+        if not (isinstance(key, ast.Constant) and key.value == "extra"):
+            continue
+        try:
+            extra = ast.literal_eval(value)
+        except ValueError, SyntaxError:
+            return {}
+        return extra if isinstance(extra, dict) else {}
+    return {}
+
+
 def test_after_cursor_logs_debug_for_fast_queries(
     captured_handlers: list[tuple[str, object]], caplog: pytest.LogCaptureFixture
 ) -> None:
@@ -148,8 +182,9 @@ def test_after_cursor_logs_debug_for_fast_queries(
     assert len(debug_records) == 1
     record = debug_records[0]
     assert record.levelno == logging.DEBUG
-    assert record.db_name == "db1"
-    assert record.executemany is False
+    extra = _extra_of(record)
+    assert extra.get("db_name") == "db1"
+    assert extra.get("executemany") is False
 
 
 def test_after_cursor_logs_warning_for_slow_queries(
@@ -180,7 +215,7 @@ def test_after_cursor_logs_warning_for_slow_queries(
     assert len(warn_records) == 1
     record = warn_records[0]
     assert record.levelno == logging.WARNING
-    assert record.duration_sec >= 0.001  # 1s
+    assert _extra_of(record).get("duration_sec", 0) >= 0.001  # 1s
 
 
 def test_after_cursor_skips_when_no_start_time(
@@ -237,12 +272,13 @@ def test_handle_error_logs_error_without_query_parameters(
     assert len(err_records) == 1
     record = err_records[0]
     assert record.levelno == logging.ERROR
-    assert record.is_disconnect is True
-    assert record.db_name == "pg_prod"
+    assert _extra_of(record).get("is_disconnect") is True
+    extra = _extra_of(record)
+    assert extra.get("db_name") == "pg_prod"
     # PII-safe: statement preview allowed, parameters НЕ logged.
-    assert "ssn" in record.statement_preview  # preview OK
-    # No 'parameters' attribute logged (defense-in-depth).
-    assert not hasattr(record, "parameters")
+    assert "ssn" in (extra.get("statement_preview") or "")  # preview OK
+    # No 'parameters' logged (defense-in-depth).
+    assert "parameters" not in extra
 
 
 def test_handle_error_truncates_long_statements(

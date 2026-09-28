@@ -47,6 +47,9 @@ async def test_episodic_add_writes_row() -> None:
         role="user",
         content="hi",
         tenant="acme",
+        # ADR-0345/ADR-0350: subject_id обязателен — без него запись не
+        # принадлежит ни одному субъекту и не может быть стёрта по запросу.
+        subject_id="user:1",
         meta={"source": "test"},
     )
     assert row_id == 1
@@ -64,6 +67,10 @@ async def test_procedural_add_writes_row() -> None:
         name="run-tests",
         description="запустить unit-тесты",
         steps={"1": "make lint", "2": "make test"},
+        # tenant + subject_id обязательны (ADR-0345): процедурная память
+        # привязана к субъекту, иначе её невозможно стереть по data-subject.
+        tenant="acme",
+        subject_id="user:1",
     )
     assert row_id == 1
     session.add.assert_called_once()

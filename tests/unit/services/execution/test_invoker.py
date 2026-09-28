@@ -301,21 +301,27 @@ class TestInvokerDeferred:
 
     @staticmethod
     def _patch_scheduler(monkeypatch: pytest.MonkeyPatch, stub_manager: Any) -> None:
-        """Подменяет ``scheduler_manager``-модуль в ``sys.modules``.
+        """Подменяет DI-провайдер scheduler manager.
 
-        Это нужно, потому что :meth:`Invoker._invoke_deferred` делает
-        импорт внутри функции — обычный ``monkeypatch.setattr`` на
-        реальный модуль попытается импортировать его (и упадёт без
-        ``psycopg2`` в dev_light). Stub в ``sys.modules`` перехватывает
-        импорт до запуска реального.
+        Deferred-путь импортирует ``get_scheduler_manager_provider`` из
+        ``src.backend.core.di.providers`` (W0: сервис не ходит напрямую в
+        ``manager.scheduler``). Поэтому подменять нужно сам провайдер.
+
+        Раньше здесь подменялся модуль
+        ``src.backend.infrastructure.scheduler.scheduler_manager`` в
+        ``sys.modules`` — после перехода на DI это перестало работать: по
+        дороге DI тянет ``get_scheduler_manager`` из того модуля, а в
+        stub-модуле такого символа не было, импорт падал, и
+        ``_invoke_deferred`` возвращал ERROR вместо ACCEPTED.
         """
-        import sys
-        import types
+        import src.backend.core.di.providers as providers_module
 
-        module_name = "src.backend.infrastructure.scheduler.scheduler_manager"
-        stub_module = types.ModuleType(module_name)
-        stub_module.scheduler_manager = stub_manager  # type: ignore[attr-defined]
-        monkeypatch.setitem(sys.modules, module_name, stub_module)
+        monkeypatch.setattr(
+            providers_module,
+            "get_scheduler_manager_provider",
+            lambda: stub_manager,
+            raising=True,
+        )
 
     async def test_delay_seconds_registers_job(
         self, monkeypatch: pytest.MonkeyPatch

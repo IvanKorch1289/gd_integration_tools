@@ -73,25 +73,54 @@ class TestInProcessAgentSandboxDeprecation:
     def test_in_process_hard_gate_in_production(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """При ``GD_INTEGRATION_PRODUCTION=1`` → in-process raise.
+        """Hard-gate включён → in-process raise.
 
-        Module-level ``_IN_PROCESS_PROD_BLOCKED`` cached на import time
-        → re-import модуля для проверки hard-gate.
+        ``_IN_PROCESS_PROD_BLOCKED`` — module-level флаг, вычисляемый на
+        import-time, поэтому он ПАТЧИТСЯ напрямую, а не через
+        ``importlib.reload``: reload пересоздаёт объект класса и ломает
+        identity-проверки в остальных тестах сессии (и именно этим был
+        сломан прежний вариант теста). Связка env→flag проверяется
+        отдельно в subprocess, где import-time и есть единственный
+        корректный момент для её проверки.
         """
-        monkeypatch.setenv("GD_INTEGRATION_PRODUCTION", "1")
-        import importlib
+        import src.backend.services.ai.agent_sandbox._in_process as _in_process_mod
+        from src.backend.services.ai.agent_sandbox import InProcessAgentSandbox
 
-        import src.backend.services.ai.agent_sandbox as _mod
+        monkeypatch.setattr(
+            _in_process_mod, "_IN_PROCESS_PROD_BLOCKED", True, raising=True
+        )
+        with pytest.raises(RuntimeError, match="forbidden in production"):
+            InProcessAgentSandbox()
 
-        importlib.reload(_mod)
-        try:
-            from src.backend.services.ai.agent_sandbox import InProcessAgentSandbox
+    def test_production_env_flips_import_time_gate(self) -> None:
+        """``GD_INTEGRATION_PRODUCTION=1`` реально включает флаг на import-time.
 
-            with pytest.raises(RuntimeError, match="forbidden in production"):
-                InProcessAgentSandbox()
-        finally:
-            monkeypatch.delenv("GD_INTEGRATION_PRODUCTION", raising=False)
-            importlib.reload(_mod)
+        Проверяется в subprocess, потому что флаг вычисляется при первом
+        импорте модуля и в текущем процессе уже зафиксирован.
+        """
+        import os
+        import subprocess
+        import sys
+
+        env = dict(os.environ, GD_INTEGRATION_PRODUCTION="1")
+        proc = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "import src.backend.services.ai.agent_sandbox._in_process as m;"
+                "print(m._IN_PROCESS_PROD_BLOCKED)",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            env=env,
+            check=False,
+        )
+        assert proc.returncode == 0, f"subprocess failed: {proc.stderr}"
+        assert proc.stdout.strip().splitlines()[-1] == "True", (
+            f"GD_INTEGRATION_PRODUCTION=1 обязан включать hard-gate. "
+            f"stdout={proc.stdout!r} stderr={proc.stderr!r}"
+        )
 
 
 class TestProcessPoolAgentSandboxUnchanged:
