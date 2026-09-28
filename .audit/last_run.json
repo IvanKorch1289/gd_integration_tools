@@ -1,7 +1,7 @@
 {
   "audit": "GD Integration Tools 25.09.2026",
   "head": "60fce532f4616659b4b2336bc5fc339e1a7f3056",
-  "timestamp": "2026-09-28T07:30:52.512049+00:00",
+  "timestamp": "2026-09-28T07:33:45.062904+00:00",
   "status": "audit_complete_pending_post_audit_followup",
   "waves_closed": [
     "W0",
@@ -21,10 +21,15 @@
   "mandatory_commands_pass": 12,
   "mandatory_commands_deferred": 3,
   "deferred_reasons": {
-    "make_ci": "DEFERRED (deps-check-strict fails \u043d\u0430 pre-existing unused deps; \u0442\u0440\u0435\u0431\u0443\u0435\u0442 cleanup)",
+    "make_ci": "DEFERRED (deps-check-strict fails на pre-existing unused deps; требует cleanup)",
     "Playwright": "DEFERRED (browser install required)",
-    "W4_runtime_isolation": "DEFERRED (test-* profiles created, CI matrix \u043d\u0435 \u043d\u0430\u0441\u0442\u0440\u043e\u0435\u043d)"
+    "W4_runtime_isolation": "DEFERRED (test-* profiles created, CI matrix не настроен)"
   },
   "tenant_allowlist_coverage": "100% (558/558 classified; 0 unclassified)",
-  "test_collection": "20148 tests collected (no errors)"
+  "test_collection": "20148 tests collected (no errors)",
+  "optional_tenant_tracking": {
+    "total_baseline": 123,
+    "tracking_file": ".audit/optional_tenant_tracking.json",
+    "migration_status": "tracked; per-file ADR required for refactor (post-audit sprint)"
+  }
 }
