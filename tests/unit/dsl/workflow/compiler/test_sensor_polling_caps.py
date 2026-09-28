@@ -13,34 +13,17 @@ poll_interval_s > 0 (defense-in-depth, BaseModel gt=0.0 уже проверяе�
 
 from __future__ import annotations
 
-import sys
-import types
 from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
 
-
-# Mock temporalio (не в test deps) — compile_sensor_step делает lazy import
-# внутри функции. Нужно зарегистрировать модуль в sys.modules до теста.
-class _MockTemporalioWorkflow:
-    """Stub для temporalio.workflow (вызовы execute_activity и sleep)."""
-
-    @staticmethod
-    async def execute_activity(*_args: Any, **_kwargs: Any) -> Any:
-        return None
-
-    @staticmethod
-    async def sleep(*_args: Any, **_kwargs: Any) -> None:
-        return None
-
-
-_mock_temporalio = types.ModuleType("temporalio")
-_mock_temporalio.workflow = _MockTemporalioWorkflow()
-sys.modules["temporalio"] = _mock_temporalio
-sys.modules["temporalio.workflow"] = _MockTemporalioWorkflow
-
-
+# Раньше здесь был stub ``sys.modules["temporalio.workflow"]``, который
+# подменял SDK на уровне модуля и НЕ восстанавливался. Из-за этого
+# ``tests/unit/dsl/workflow/compiler/test_registry.py`` падал (10 тестов),
+# когда оба файла выполнялись в одном прогоне: процесс навсегда терял
+# настоящий temporalio. Stub был не нужен — SDK 1.32.0 установлен, а сами
+# тесты патчат ``temporalio.workflow.execute_activity`` / ``sleep`` локально.
 from src.backend.dsl.workflow.compiler.step_compilers import (
     SensorMaxIterationsError,
     SensorTimeoutRequiredError,

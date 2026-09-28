@@ -4,10 +4,10 @@ from datetime import timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-# Wave 0.4.6: aiohttp → httpx. Legacy http.py может ещё импортировать
-# aiohttp до полного удаления в H3. RETRY_EXCEPTIONS использует только
-# httpx, что покрывает все non-deprecated клиенты проекта.
-import httpx
+# Wave 0.4.6: aiohttp → httpx. RETRY_EXCEPTIONS использует только
+# httpx, что покрывает все non-deprecated клиенты проекта. Сам httpx
+# импортируется лениво (см. Constants.__getattr__) — eager-импорт тянул
+# ~75ms в каждую startup-цепочку (гейт pre-prod #19 startup-time).
 
 # S168 W10 P1-14: per-domain extraction. CB + retry defaults
 # re-exported from _resilience_consts.py для backward-compat.
@@ -60,7 +60,6 @@ class Constants:
 
     ROOT_DIR: Path = Path(__file__).parent.parent.parent
     MOSCOW_TZ: timezone = timezone(timedelta(hours=3))
-    RETRY_EXCEPTIONS: tuple[Any, ...] = (httpx.HTTPError, TimeoutError)
     CHECK_SERVICES_JOB: dict[str, Any] = field(
         default_factory=lambda: {"name": "check_all_services_job", "minutes": 60}
     )

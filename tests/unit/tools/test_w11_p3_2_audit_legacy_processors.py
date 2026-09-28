@@ -257,12 +257,20 @@ class TestShimIntegration:
 
     def test_batch_processor_shim_proxy_identity(self) -> None:
         """SHIM returns same class object as canonical (proxy works)."""
+        import importlib
         import warnings
 
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
             from src.backend.dsl.engine.processors import batch_processor as canonical
             from src.backend.dsl.processors import batch_processor as shim
+
+            # Warning испускается на ПЕРВОМ импорте модуля. Если shim уже был
+            # импортирован ранее в этом процессе (например, другим тестом),
+            # обычный import не даст warning — нужен reload, как в
+            # test_docstring_warns_cycle_156_removal. Иначе тест падал бы
+            # в зависимости от порядка выполнения.
+            importlib.reload(shim)
 
             # DeprecationWarning должен быть испущен при импорте shim.
             assert any(

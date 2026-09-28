@@ -61,7 +61,10 @@ def _make_recorder_temporal(
         execute_activity=fake_execute_activity,
         sleep=fake_sleep,
         logger=SimpleNamespace(
-            warning=lambda *a, **kw: recorder.append(f"WARN::{a[0] if a else ''}")
+            warning=lambda *a, **kw: recorder.append(f"WARN::{a[0] if a else ''}"),
+            # production вызывает logger.error перед re-raise при
+            # strict_compensate=True (step_compilers/flow.py).
+            error=lambda *a, **kw: recorder.append(f"ERROR::{a[0] if a else ''}"),
         ),
     )
     return fake_workflow_module, recorder
@@ -312,15 +315,30 @@ async def test_saga_strict_compensate_raises_on_failure(
     )
     ctx: dict[str, Any] = {"_default_timeout_s": 60.0, "_input": {}}
 
-    with pytest.raises(RuntimeError, match="inventory.release"):
+    # strict_compensate=True: production (step_compilers/flow.py, Cycle 27
+    # W1+H2) пере-raises ИСХОДНУЮ ошибку forward-шага, а ошибки компенсации
+    # присоединяет как __cause__. Раньше тест ждал message="inventory.release",
+    # что соответствовало старому поведению «re-raise comp_exc».
+    with pytest.raises(RuntimeError, match="payments.charge") as exc_info:
         await compile_saga_step(decl, ctx)
 
-    activity_calls = [name for name in recorder if not name.startswith("WARN::")]
-    # compensate[0] (orders.cancel) does NOT run because strict raises immediately
-    # on compensate[1] failure
-    assert "orders.cancel" not in activity_calls
-    # But compensate[1] (inventory.release) was attempted before raising
+    # Ошибка компенсации обязана сохраниться в цепочке причин.
+    cause = exc_info.value.__cause__
+    assert cause is not None, "ошибка компенсации должна быть в __cause__"
+    assert "inventory.release" in str(cause)
+
+    activity_calls = [
+        name for name in recorder if not name.startswith(("WARN::", "ERROR::"))
+    ]
+    # Компенсация идёт в обратном порядке выполненных forward-шагов и при
+    # strict НЕ прерывается на первой ошибке: flow.py собирает ВСЕ
+    # comp_errors и re-raise делает в конце. Поэтому откатываются все три.
     assert "inventory.release" in activity_calls
+    assert "orders.cancel" in activity_calls
+    # Обратный порядок: payments.charge компенсируется раньше orders.create.
+    assert activity_calls.index("inventory.release") < activity_calls.index(
+        "orders.cancel"
+    )
 
 
 @pytest.mark.asyncio

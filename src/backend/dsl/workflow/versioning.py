@@ -355,6 +355,31 @@ def workflow_versioned(
     return decorator
 
 
+def _is_temporal_context_error(exc: BaseException) -> bool:
+    """Проверить, что исключение означает «вне workflow-контекста».
+
+    Temporal вне активного workflow бросает
+    ``_NotInWorkflowEventLoopError`` (подкласс ``TemporalError``), а не
+    ``RuntimeError``. Ранние версии SDK бросали ``RuntimeError``, поэтому
+    поддерживаются оба варианта. ``SystemExit``/``KeyboardInterrupt`` не
+    являются ``Exception`` и сюда не попадают — fail-fast сохраняется.
+
+    Args:
+        exc: Перехваченное исключение.
+
+    Returns:
+        ``True``, если это ошибка Temporal-контекста (soft-fail допустим).
+
+    """
+    if isinstance(exc, RuntimeError):
+        return True
+    try:
+        from temporalio.exceptions import TemporalError
+    except ImportError:  # pragma: no cover — SDK опционален в dev_light
+        return False
+    return isinstance(exc, TemporalError)
+
+
 def patched(patch_id: str) -> bool:
     """Lazy-обёртка над ``temporalio.workflow.patched(patch_id)``.
 
@@ -390,16 +415,26 @@ def patched(patch_id: str) -> bool:
 
     try:
         return bool(temporal_workflow.patched(patch_id))
-    except RuntimeError as exc:
+    except Exception as exc:  # noqa: BLE001 — см. комментарий ниже
         # D-AUDIT-14701 fix (cycle 147): narrow от bare
         # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt
         # + unexpected exceptions) до конкретного RuntimeError.
-        # Temporal raises RuntimeError when called outside workflow
-        # context (dryrun / unit tests). Soft-fail behavior сохранён
-        # (return False → legacy branch).
+        #
+        # Но на LOCKED SDK 1.32.0 вне workflow-контекста Temporal бросает
+        # ``temporalio.exceptions.TemporalError`` (точнее
+        # ``_NotInWorkflowEventLoopError``), а НЕ RuntimeError:
+        #     MRO: _NotInWorkflowEventLoopError -> TemporalError -> Exception
+        #     issubclass(..., RuntimeError) is False
+        # Поэтому ``except RuntimeError`` не срабатывал, и заявленный в
+        # docstring soft-fail (dev_light / dryrun / unit-тест) НЕ работал —
+        # исключение пробрасывалось наружу. Ловим TemporalError явно
+        # (публичный базовый класс SDK), сохраняя narrow-семантику: не
+        # SystemExit/KeyboardInterrupt, а только ошибки Temporal.
+        if not _is_temporal_context_error(exc):
+            raise
         logger.debug(
             "workflow.patched: temporal_workflow.patched raised "
-            "RuntimeError (likely called outside workflow context) "
+            "TemporalError (likely called outside workflow context) "
             "(exc_msg=%s) — returning False (legacy branch)",
             exc,
         )
