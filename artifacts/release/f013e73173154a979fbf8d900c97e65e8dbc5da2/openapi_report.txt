@@ -1,0 +1,18 @@
+openapi=3.1.0 title='FastAPI' version='0.1.0'
+paths=414 operations=443
+operations_with_security_field=0 (0.0%)
+declared securitySchemes=NONE
+
+top-level groups:
+  api/v1                         396
+  grpc/schema                    2
+  webhooks/subscriptions         2
+  api/admin                      1
+  soap                           1
+  soap/wsdl                      1
+  soap/invoke                    1
+  events/stream                  1
+  events/invoke                  1
+  webhooks/inbound               1
+  webhooks/sources               1
+  express/health                 1

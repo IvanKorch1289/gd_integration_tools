@@ -1,54 +1,66 @@
 {
   "audit": "GD Integration Tools — current readiness status",
-  "head": "f681c4ed7",
-  "timestamp": "2026-09-28T14:20:00+00:00",
+  "head": "f013e7317",
+  "timestamp": "2026-09-28T15:30:00+00:00",
   "status": "not_production_ready",
   "canonical_doc": "docs/roadmap/PRODUCTION_READINESS_CURRENT.md",
-  "per_sha_evidence": "artifacts/release/cee4c33e5d3c1e033b2b2b5f4fe54c12ddee4fb6/EVIDENCE.md",
+  "per_sha_evidence": "artifacts/release/f013e73173154a979fbf8d900c97e65e8dbc5da2/EVIDENCE.md",
   "superseded_docs": [
     "docs/roadmap/PRODUCTION_READINESS.md (snapshot 2026-09-01)",
     "docs/roadmap/PRODUCTION_READINESS_FINAL.md (snapshot 2026-09-02)"
   ],
   "note": "head/timestamp describe the code state this status was derived from. Individual PASS results apply only to the SHA named in the canonical doc; they are not carried across commits.",
+  "environment_warning": "Port 8000 in this environment is a container running /app started 2026-09-11. It answers 200 on /health and serves its own openapi.json, but it is not this SHA. All runtime evidence was taken from a local uvicorn instance on port 8011 started from the working tree.",
   "blocking": [
-    "coverage 52.25% vs 70% threshold",
+    "coverage ~52% vs 70% threshold (two independent measurements, 0.36 p.p. apart)",
     "test suite is not isolation-safe: whole-tree run reports failures that do not reproduce in isolation",
-    "no HTTP/cURL, Playwright or browser evidence for any current SHA (no application was started)",
+    "OpenAPI declares no authentication: securitySchemes empty, 0 of 443 operations carry a security field, so Swagger Authorize and Try-it-out cannot work",
+    "make ci does not execute tests — it ends at test-collection-check which runs pytest --co only",
     "no container image, SBOM or signature for this SHA",
-    "exc_info=True through StructlogLogger attaches no traceback to the LogRecord"
+    "10 tooling-test failures in tests/unit/tools/"
   ],
   "checks": {
     "compileall": "PASS",
-    "docstrings": "PASS",
+    "docstrings": "PASS (0 missing)",
     "layers_backend": "PASS_WITH_DEBT (0 new, 22 legacy)",
     "layers_frontend": "FAIL (12-13 Streamlit pages imported src.backend.services; 6 fixed in f681c4ed7, remainder open; make check_layers does not cover frontend)",
     "privacy_lifecycle_strict": "PASS",
     "optional_tenant_strict": "PASS (123 = 123)",
-    "tenant_isolation_strict": "PASS_STATIC_ONLY (runtime isolation not verified)",
+    "tenant_isolation_strict": "PASS_STATIC",
+    "tenant_isolation_runtime": "PASS_NEGATIVE (live: empty/null X-Tenant-Id -> 401, no data returned)",
     "object_authorization": "PASS",
-    "make_ci": "PASS (exit 0 at f681c4ed7)",
+    "make_ci": "PASS (exit 0 at f013e7317) — caveat: does not execute tests",
     "make_readiness_check": "PASS (exit 0 at cee4c33e5)",
     "make_pre_prod_check": "FAIL (exit 2; 25/37 PASS, 1 FAIL, 8 WARN, 3 SKIP; measured at cee4c33e5)",
-    "coverage_gate": "FAIL (52.25% < 70%)",
+    "coverage_gate": "FAIL (~52% < 70%; gate exits 2 as it should)",
     "alembic_heads_history": "PASS (single head, 25 linear revisions)",
     "alembic_upgrade": "ENV_FAILURE (Redis AuthenticationError during config load)",
     "tests_unit_per_directory": "FAIL (all clusters green in isolation except tests/unit/entrypoints/mcp, which cannot finish a run)",
     "tests_unit_whole_tree": "FAIL (pollution: failures do not reproduce in isolation)",
     "tests_unit_tools": "FAIL (10 failures, all reproduce on a clean HEAD worktree)",
-    "curl_matrix": "NOT_VERIFIED",
-    "playwright": "NOT_VERIFIED",
+    "app_starts_and_serves": "PASS (uvicorn, dev_light profile, /health -> 200)",
+    "unauthenticated_data_access": "PASS (12 endpoints -> 401/403, no payload returned)",
+    "login_credential_enforcement": "PASS (2 wrong-password probes -> 401, identical message, no user enumeration)",
+    "openapi_route_inventory": "PASS (414 paths, 443 operations)",
+    "openapi_auth_declaration": "FAIL (securitySchemes empty; 0/443 operations declare security)",
+    "curl_matrix": "PASS (artifacts/release/f013e7317.../curl_matrix.txt, 7 groups)",
+    "playwright": "NOT_VERIFIED (blocked: no auth scheme in the spec, so Try-it-out cannot authenticate)",
     "container_image_sbom": "NOT_VERIFIED",
     "privacy_integration": "NOT_VERIFIED (PG/Redis/MinIO/Qdrant not running)"
   },
   "coverage": {
-    "percent": 52.25,
-    "measured_at_commit": "cee4c33e5",
-    "scope": "tests/unit (20162 of 20711 collected tests)",
-    "lines_covered": 62374,
-    "lines_valid": 119376,
-    "staleness": "A re-measurement at a later HEAD did NOT complete: pytest aborted in pytest_sessionfinish with OSError: cannot send (already closed?) and the run was cancelled, producing no coverage.xml. 52.25 is a lower bound; many tests fixed after cee4c33e5 now pass. Re-measure before quoting a number for HEAD."
+    "percent": 51.89,
+    "percent_first_measurement": 52.25,
+    "threshold": 70,
+    "measured_at_commit": "f013e7317 (partial run) / cee4c33e5 (full run)",
+    "scope": "tests/unit with --cov=src/backend",
+    "spread_pct_points": 0.36,
+    "measurement_blocker": "Each pytest-xdist worker accumulates ~6 GB of coverage data under branch=True; the machine has 15 GB. The kernel OOM-killed workers (anon-rss 5.9-6.4 GB) at -n auto and at -n 4 alike. This is an environment limit, not a code defect.",
+    "measurement_blocker_correction": "Earlier revisions of this file attributed aborted runs to a repository defect (pytest aborting in pytest_sessionfinish with OSError: cannot send). The kernel log shows OOM-kill as the actual cause.",
+    "clean_figure_available": false,
+    "how_to_get_clean_figure": "Split the run per top-level package and combine, so no single worker exceeds available RAM."
   },
-  "tenant_allowlist_coverage": "100% (558/558 classified; 0 unclassified) — static classification only",
+  "tenant_allowlist_coverage": "100% (558/558 classified; 0 unclassified)",
   "optional_tenant_tracking": {
     "total_baseline": 123,
     "baseline_file": ".baselines/optional_tenant_baseline.json",
@@ -65,6 +77,15 @@
     "frontend safe-default contract dead for httpx ConnectError/HTTPStatusError",
     "DSLBuilderService could never be constructed (NameError via broken PEP 562 proxy)",
     "6 Streamlit pages moved to the sanctioned core.frontend_facade",
-    "17 stale tests repaired incl. an order-dependent security-gate test"
+    "17 stale tests repaired incl. an order-dependent security-gate test",
+    "exc_info attached no traceback to the LogRecord — format_exc_info was missing from the structlog chain (e91fb91fe)",
+    "every log timestamp lost its date — the PHONE pattern matched ISO-8601 dates (9a1987f49)",
+    "DataMaskingMiddleware kept private copies of the PII patterns, bypassing core.security.pii_patterns; /ready answered +***0928T... (32ef4f246)",
+    "step-up tokens were returned corrupted (8 of 40 live) because PIIMaskingResponseMiddleware excluded only /api/v1/auth/login; 0 of 40 after (f013e7317)"
+  ],
+  "open_observations": [
+    "POST /api/v1/auth/step-up-request issues a token with no credential check — not an authz bypass (login still verifies the password), it is a CSRF/session guard, and the token is not single-use",
+    "DataMaskingMiddleware masks by key name at any depth, so the legitimate deprecations.password field in /api/v1/auth/methods arrives as ***",
+    "logs report environment=production while the dev_light profile sets app.environment=development; the line prefix says [development@...]"
   ]
 }

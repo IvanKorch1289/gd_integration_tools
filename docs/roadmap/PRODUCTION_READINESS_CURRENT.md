@@ -1,7 +1,8 @@
 # Production Readiness — CURRENT (canonical)
 
 > **This is the canonical current-status document for the repository.**
-> Generated 2026-09-28. It supersedes every earlier readiness snapshot.
+> Generated 2026-09-28, last updated for SHA `f013e7317`.
+> It supersedes every earlier readiness snapshot.
 >
 > - Predecessor snapshots (kept as historical records, **do not read as current**):
 >   [`PRODUCTION_READINESS.md`](PRODUCTION_READINESS.md) (snapshot 2026-09-01),
@@ -18,18 +19,26 @@
 
 Blocking items, in priority order:
 
-1. **Coverage is far below the project's own bar** — 52.25% measured against a
-   70% threshold. The gate now reports this honestly instead of silently
-   passing.
+1. **Coverage is far below the project's own bar** — ~52% measured against a
+   70% threshold. The gate reports this honestly instead of silently passing.
+   Two independent measurements agree within 0.36 p.p.
 2. **The test suite is not isolation-safe** — a full-suite run reports failures
    that do not reproduce in isolation, so no "suite is green" claim is possible.
-3. **No HTTP-level evidence exists for any current SHA** — no cURL matrix, no
-   Playwright, no browser verification, because no application was ever started.
-4. **No release artifact for this SHA** — no container image, no SBOM, no
+3. **The OpenAPI spec declares no authentication at all** — `securitySchemes`
+   is empty and none of the 443 operations carries a `security` field, although
+   auth is genuinely enforced at runtime. Swagger's Authorize button and "Try it
+   out" do not work, and generated clients ship without auth. This also blocks
+   the required browser verification.
+4. **`make ci` never runs the tests.** It ends at `test-collection-check`, which
+   calls `pytest --co`. Exit 0 means "tests import", not "tests pass".
+5. **No release artifact for this SHA** — no container image, no SBOM, no
    signature.
-5. **Known observability defect** — `exc_info=True` through the project's
-   `StructlogLogger` attaches **no traceback** to the emitted `LogRecord`; the
-   flag only appears as a key in the rendered event dict.
+6. **Tooling suite is red** — 10 failures in `tests/unit/tools/` that reproduce
+   on a clean worktree.
+
+The `exc_info` traceback loss, the corrupted `timestamp` field and the step-up
+token corruption were all confirmed by running the application, and are
+**fixed** — see "What was fixed in this cycle".
 
 ---
 
@@ -48,22 +57,32 @@ wrong; an incomplete environment is never reported as `PASS`.
 | Privacy lifecycle gate | PASS | `check_privacy_lifecycle.py --strict` exit 0, 5/5 backends have executing contract tests |
 | Optional-tenant gate | PASS | `check_no_new_optional_tenant.py --strict` exit 0, 123 baseline = 123 current |
 | Tenant isolation (static) | PASS | `check_tenant_isolation.py --strict` exit 0 |
-| Tenant isolation (runtime) | **NOT VERIFIED** | static classification only; no cross-tenant runtime test against live backends |
+| Tenant isolation (runtime) | **FAIL (negative)** | live run at `f013e7317`: empty/`null` `X-Tenant-Id` → 401, no data returned |
 | Object authorization | PASS | 117 callsites, 0 unknown |
-| CI composite | PASS | `make ci` exit 0 at `f681c4ed7` |
+| CI composite | PASS with caveat | `make ci` exit 0 at `f013e7317` — but it does not execute tests |
+| Application starts and serves | PASS | live uvicorn, `dev_light` profile, `/health` → 200 |
+| Unauthenticated data access | PASS | 12 endpoints → 401/403, no payload returned |
+| Login credential enforcement | PASS | 2 wrong-password probes → 401, identical message (no user enumeration) |
+| OpenAPI auth declaration | **FAIL** | `securitySchemes` empty, 0/443 operations declare `security` |
 | Readiness guards | PASS | `make readiness-check` exit 0 |
 | Pre-production | **FAIL** | `make pre-prod-check` exit 2 — 25/37 PASS, 1 FAIL (coverage), 8 WARN, 3 SKIP |
-| Coverage gate | **FAIL** | 52.25% vs 70% threshold; gate correctly reports FAIL |
+| Coverage gate | **FAIL** | ~52% vs 70% threshold; gate correctly reports FAIL (exit 2) |
 | Migration chain integrity | PASS | `alembic heads` single head, `alembic history` 25 linear revisions |
 | Migration apply / rollback | ENV_FAILURE | `alembic upgrade head` aborts in config load (`redis AuthenticationError`); no Redis/Vault here |
 | Privacy integration (PG/Redis/MinIO/Qdrant/LangMem) | NOT VERIFIED | backends not running |
 | Tooling test suite | **FAIL** | `tests/unit/tools/`: 10 failures, all reproduce on a clean `HEAD` worktree |
 | Unit test suite (per-directory) | **FAIL** | all clusters green in isolation except `tests/unit/entrypoints/mcp`, which cannot finish a run |
 | Unit test suite (whole-tree) | **FAIL** | reports failures that do not reproduce in isolation (test-isolation defect) |
-| HTTP / cURL matrix | NOT VERIFIED | no application started |
-| Browser / Playwright | NOT_VERIFIED | no application started, no `artifacts/e2e/` for this SHA |
+| HTTP / cURL matrix | PASS | `artifacts/release/f013e7317.../curl_matrix.txt`, 7 groups |
+| Route inventory | PASS | 414 paths / 443 operations, from the live `openapi.json` |
+| Browser / Playwright | NOT_VERIFIED | blocked: no auth scheme in the spec, so "Try it out" cannot authenticate |
 | Container image + SBOM | NOT VERIFIED | not built for this SHA |
 | Signature / cosign | NOT VERIFIED | no image to sign |
+
+> **Port 8000 in this environment is a container running `/app`, started
+> 2026-09-11.** It answers 200 on `/health` and serves its own `openapi.json`.
+> It is not this SHA. All runtime evidence was taken from a local instance on
+> port 8011 started from the working tree.
 
 ---
 
@@ -100,12 +119,46 @@ Commits `f9307dabd` … `f681c4ed7`, each verified with `make ci` exit 0.
 - 17 stale tests repaired, including two that had been failing forever and one
   order-dependent **security-gate** test that passed only sometimes.
 
+### Found by actually running the application (`e91fb91fe` … `f013e7317`)
+
+These four were invisible to the test suite and to static gates; each was
+confirmed on a live instance, then fixed with a regression test.
+
+- **`exc_info` never attached a traceback** (`e91fb91fe`). The structlog
+  chain had no `format_exc_info`, so `exc_info=True` rendered as
+  `{"exc_info": true}` with no stack and an empty `LogRecord.exc_info` —
+  across 116 `exc_info` and 138 `.exception()` call sites. Placed before
+  `_mask_pii`, so tracebacks are PII-scrubbed too.
+- **Every log timestamp lost its date** (`9a1987f49`). `PHONE` matched an
+  ISO-8601 date: `2026-09-28T14:39:40Z` → `<phone>T14:39:40Z`. Events could
+  not be ordered by day. A narrow lookahead excludes only `19xx`/`20xx`
+  dates, with a trailing guard that keeps masking fail-closed.
+- **`DataMaskingMiddleware` kept private copies of the PII patterns**,
+  bypassing the declared single source of truth (`32ef4f246`). The copy had
+  drifted, so `/ready` answered `"timestamp":"+***0928T15:12:46.355395+00:00"`.
+- **Step-up tokens were returned to the client corrupted** (`f013e7317`).
+  `PIIMaskingResponseMiddleware` excluded only `/api/v1/auth/login`; the
+  phone pattern ate digit runs inside the hex signature, so login answered
+  401 for a token it had just issued. Measured **8 of 40** corrupt before
+  the fix, **0 of 40** after.
+
 ---
 
 ## Known open defects
 
-- `exc_info=True` via `StructlogLogger` produces no traceback on the `LogRecord`.
-  Observed on the webhook DLQ-remove error path; likely wider.
+- **The OpenAPI spec declares no auth.** `components.securitySchemes` is empty and
+  0 of 443 operations carry a `security` field, although auth is enforced at runtime.
+  Swagger has no Authorize button, "Try it out" cannot authenticate, and generated
+  clients ship without auth. This also blocks the required browser verification.
+- **`make ci` does not execute tests** — `make/pipelines.mk:22` ends at
+  `test-collection-check`, which runs `pytest --co` only.
+- `/api/v1/auth/step-up-request` issues a token with no credential check. Not an authz
+  bypass (login still verifies the password) — it is a CSRF/session guard, and the
+  token is not single-use.
+- `DataMaskingMiddleware` masks by key name at any depth, so the legitimate
+  `deprecations.password` field in `/api/v1/auth/methods` arrives as `"***"`.
+- Logs report `environment: 'production'` while the `dev_light` profile sets
+  `app.environment: "development"`; the line prefix says `[development@...]`.
 - Test isolation: `tests/unit/entrypoints/grpc/test_file_stream.py` and
   `test_grpc_server.py` replace protobuf module attributes without isolation,
   breaking sibling tests. The frontend `shared/test_components.py` cluster fails
@@ -120,13 +173,27 @@ Commits `f9307dabd` … `f681c4ed7`, each verified with `make ci` exit 0.
 
 ## Measurement notes and staleness
 
-- **Coverage 52.25%** was measured on `tests/unit` at commit `cee4c33e5`
-  (62374 / 119376 lines). A re-measurement at a later HEAD **did not complete**:
-  pytest aborted in `pytest_sessionfinish` with `OSError: cannot send (already
-  closed?)` and the run was cancelled, producing no `coverage.xml`. The 52.25%
-  figure is therefore a **lower bound** — many tests fixed after `cee4c33e5` now
-  pass — but no newer precise measurement exists. Do not quote a coverage number
-  for HEAD without re-running the measurement.
+- **Coverage ~52%, measured twice, ~18 p.p. below the 70% bar.**
+  - `52.25%` — full run on `tests/unit` at `cee4c33e5` (62374 / 119376 lines).
+  - `51.89%` — a later run on essentially this code, stopped at ~97% and
+    combined with `coverage combine`.
+  The 0.36 p.p. spread means the ~52% figure is stable, not a one-off.
+
+  **Correction of an earlier claim in this document.** The aborted runs were
+  previously attributed to a repository defect ("pytest aborts in
+  `pytest_sessionfinish` with `OSError: cannot send (already closed?)`").
+  The kernel log shows the real cause:
+
+  ```
+  kernel: Out of memory: Killed process 2155624 ([pytest-xdist r)
+          total-vm:10125828kB, anon-rss:6449748kB
+  ```
+
+  Each xdist worker accumulates **~6 GB** of coverage data on a 15 GB machine.
+  It reproduced identically at `-n auto` (10 workers on 4 CPUs) and at `-n 4`.
+  This is an **environment limit, not a code defect**. To get a clean number,
+  split the run per top-level package and combine, so no single worker exceeds
+  available RAM. Not done — so no clean single-run figure is quoted here.
 - `make pre-prod-check` figures come from `cee4c33e5`, before the frontend and
   test fixes. Its coverage check additionally now reports "coverage.xml not
   found" rather than a number, because the file is a build artifact that the
