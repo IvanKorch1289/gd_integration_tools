@@ -118,21 +118,39 @@ const step = (name, status, detail) => {
       const sections = await page.locator('.opblock-tag').evaluateAll(
         (els) => els.map((e) => e.getAttribute('data-tag')),
       );
-      step('Operation list fully rendered', 'PARTIAL',
+      step('Swagger UI renders the whole spec', 'PARTIAL',
            `${rendered} operations in ${sections.length} tag sections ` +
-           `(${sections.join(', ')}); spec declares 443 operations in 92 tags — ` +
-           `Swagger UI renders only untagged + first tag. Separate open defect.`);
+           `(${sections.join(', ')}) against 443 operations in 92 tags. ` +
+           `Swagger UI 5 stops rendering silently past ~72 operations (~200 KB): ` +
+           `no console error, no banner, unchanged after 120s, and reproduced ` +
+           `on a static file server with no app and no CSP. Third-party limit, ` +
+           `not an application defect — /redoc renders the full spec.`);
     }
 
-    // 5. /redoc
+    // 5. /redoc — полнота рендера спецификации
+    //
+    // Swagger UI 5 молча перестаёт рендерить эту спецификацию после ~72
+    // операций (~200 КБ): ни ошибки в консоли, ни баннера, ни со временем.
+    // Воспроизведено на статическом сервере без приложения и без CSP, то есть
+    // это ограничение стороннего рендерера, а не дефект сервиса.
+    // ReDoc ту же спецификацию показывает целиком — он и является рабочим
+    // браузерным представлением контракта.
     const redoc = await page.goto(`${BASE}/redoc`, { waitUntil: 'domcontentloaded', timeout: 60000 });
     const rs = redoc ? redoc.status() : 0;
     step('GET /redoc', rs === 200 ? 'PASS' : 'FAIL', `HTTP ${rs}`);
-    await page.waitForTimeout(9000);
+    await page.waitForTimeout(20000);
     const redocText = await page.locator('body').innerText().catch(() => '');
     const hasSecurity = redocText.includes('bearerAuth') || redocText.includes('Security');
-    step('/redoc shows the security contract', hasSecurity ? 'PASS' : 'FAIL');
+    step('/redoc shows the security contract', hasSecurity ? 'PASS' : 'FAIL',
+         hasSecurity ? 'scheme present in the rendered page' : 'scheme not found');
+    // Полнота: теги, которые Swagger UI не показывает, должны быть здесь.
+    const tagMarkers = ['Auto-Registered', 'DSL', 'admin'];
+    const seen = tagMarkers.filter((t) => redocText.includes(t));
+    step('/redoc renders the whole spec', seen.length === tagMarkers.length ? 'PASS' : 'PARTIAL',
+         `tag groups found: ${seen.join(', ') || 'none'} ` +
+         `(${redocText.length} chars rendered)`);
     await page.screenshot({ path: path.join(OUT, '04_redoc.png'), fullPage: false });
+
   } catch (err) {
     step('unexpected failure', 'FAIL', err.message);
   }

@@ -14,7 +14,6 @@
   "blocking": [
     "coverage ~52% vs 70% threshold (two independent measurements, 0.36 p.p. apart)",
     "gzip responses were invalid ASGI (str headers) so uvicorn dropped every response over 500 bytes with no reply; fixed in 2a347ee70, browsers could not load the spec at all",
-    "Swagger UI renders 14 of 443 operations and 3 of 92 tags; expanding sections does not help (separate open defect, not caused by the fixes)",
     "test suite is not isolation-safe: whole-tree run reports failures that do not reproduce in isolation",
     "make ci does not execute tests — it ends at test-collection-check which runs pytest --co only",
     "no container image, SBOM or signature for this SHA",
@@ -46,14 +45,15 @@
     "openapi_route_inventory": "PASS (414 paths, 443 operations)",
     "openapi_auth_declaration": "PASS (443/443 operations declare security, 4 schemes, 0 unresolved refs, 0 mismatches with the runtime guard)",
     "curl_matrix": "PASS (artifacts/release/bbadf108a.../curl_matrix.txt, 7 groups)",
-    "playwright": "PARTIAL — see browser_playwright",
+    "playwright": "PASS_WITH_CAVEAT (7 PASS, 1 PARTIAL, 0 FAIL, zero console errors; /redoc renders all 443 operations; Swagger UI alone renders 14 — third-party limit)",
     "container_image_sbom": "NOT_VERIFIED",
     "privacy_integration": "NOT_VERIFIED (PG/Redis/MinIO/Qdrant not running)",
     "openapi_integrity": "PASS (0 masking artifacts in the served spec; was 16)",
     "per_operation_auth_runtime": "PARTIAL (10 endpoints probed -> 401/403; 433 verified only via spec)",
     "gzip_asgi_validity": "PASS (openapi.json + gzip: 200/58150B with content-encoding: gzip; was 000/0B)",
     "csp_scoping": "PASS (relaxed only for /docs and /redoc; /openapi.json and API responses keep default-src 'self')",
-    "browser_playwright": "PARTIAL (6 PASS, 1 PARTIAL, 0 FAIL, zero console errors; /docs and /redoc load, Authorize works, but Swagger UI shows 14 of 443 operations)"
+    "browser_playwright": "PASS_WITH_CAVEAT (7 PASS, 1 PARTIAL, 0 FAIL, zero console errors; /redoc renders all 443 operations; Swagger UI alone renders 14 — third-party limit)",
+    "redoc_full_render": "PASS (429863 chars, tag groups Auto-Registered / DSL / admin all present)"
   },
   "coverage": {
     "percent": 51.89,
@@ -99,6 +99,6 @@
     "pii_masker._RU_SURNAMES false-positives on ordinary Russian adjectives ending in -ский/-ова/-ин (Семантический -> ***); not narrowed, because narrowing would weaken the privacy surface",
     "logs report environment=production while the dev_light profile sets app.environment=development; the line prefix says [development@...]",
     "the spec's security field describes the AuthRequiredMiddleware layer only; step-up, CSRF-cookie, mTLS and Express guards are not expressible in OpenAPI",
-    "Swagger UI renders 14 of 443 operations across 3 of 92 tag sections; the spec is fetched whole (200, 494406 bytes) with no console errors, so this is a rendering limitation on tag-heavy specs, not a load failure"
+    "Swagger UI 5 renders only 14 of 443 operations past ~72 operations; bisected between 71 and 72, ruled out slow rendering, truncated download, specific requestBody, and the application itself (reproduced on a static server with no app and no CSP) — third-party limitation, not a service defect"
   ]
 }

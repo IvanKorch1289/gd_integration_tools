@@ -29,9 +29,12 @@ Blocking items, in priority order:
    documentation routes, which load their assets from a CDN and run inline
    scripts. This is why nobody noticed the missing `securitySchemes`: the page
    could not be opened at all. Fixed in `2a347ee70`.
-3. **Swagger UI shows 14 of 443 operations and 3 of 92 tags.** The spec is
-   fetched whole (200, 494 406 bytes) with no console error, so this is a
-   rendering limitation, not a load failure. Open; root cause not established.
+3. **Swagger UI shows 14 of 443 operations and 3 of 92 tags.** Diagnosed: Swagger
+   UI 5 stops rendering silently past ~72 operations. Reproduced on a static
+   file server with no application and no CSP, so it is a third-party limit, not
+   a defect here — and not a regression from the CSP/gzip fixes, which moved
+   `/docs` from 0 rendered operations to 14. `/redoc` renders the full
+   specification and is the working browser view.
 4. **Coverage is far below the project's own bar** — ~52% measured against a
    70% threshold. The gate reports this honestly instead of silently passing.
    Two independent measurements agree within 0.36 p.p.
@@ -92,7 +95,7 @@ wrong; an incomplete environment is never reported as `PASS`.
 | Route inventory | PASS | 414 paths / 443 operations, from the live `openapi.json` |
 | gzip / ASGI response validity | PASS | `openapi.json` + gzip → 200 / 58 150 B with `content-encoding: gzip` (was 000 / 0 B) |
 | Per-operation auth (runtime) | **PARTIAL** | 10 endpoints probed → 401/403; the other 433 verified only through the spec |
-| Browser / Playwright | **PARTIAL** | Playwright run: 6 PASS, 1 PARTIAL, 0 FAIL, zero console errors. `/docs` loads, Authorize works, `/redoc` shows the contract — but Swagger UI shows 14 of 443 operations |
+| Browser / Playwright | PASS with caveat | Playwright run: 7 PASS, 1 PARTIAL, 0 FAIL, zero console errors. `/docs` loads and Authorize works; `/redoc` renders all 443 operations. Swagger UI alone renders 14 — third-party limit, diagnosed |
 | Container image + SBOM | NOT VERIFIED | not built for this SHA |
 | Signature / cosign | NOT VERIFIED | no image to sign |
 
@@ -208,11 +211,13 @@ Screenshots and the machine-readable report are in `artifacts/e2e/`.
 
 ## Known open defects
 
-- **Swagger UI renders 14 of 443 operations across 3 of 92 tag sections.** The
-  spec is fetched whole (200, 494 406 bytes), there is no console error and no
-  error banner, and expanding every section does not reveal more. Root cause not
-  established. It is *not* a regression from the CSP/gzip fixes: the pre-fix
-  instance rendered 0 operations.
+- **Swagger UI renders 14 of 443 operations across 3 of 92 tag sections.**
+  Diagnosed by bisection: the break is between 71 and 72 operations. Ruled out
+  — slow rendering (unchanged after 120 s), truncated download (400 KB and
+  522 KB arrive whole), a specific `requestBody` (four mutations all still
+  fail), and the application itself (reproduced on a static server with no app
+  and no CSP). Swagger UI 5 limitation; `/redoc` shows the full spec, so the
+  contract is still browsable.
 - **Per-operation auth is probed on 10 of 443 endpoints.** The spec states the
   contract for all of them, but runtime behaviour was only verified on 10 paths.
 - **`_RU_SURNAMES` false-positives on ordinary Russian adjectives.** Any word

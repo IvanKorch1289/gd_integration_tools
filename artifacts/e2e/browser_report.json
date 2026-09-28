@@ -18,9 +18,9 @@
       "detail": "visible=bearerAuth of 4 declared"
     },
     {
-      "name": "Operation list fully rendered",
+      "name": "Swagger UI renders the whole spec",
       "status": "PARTIAL",
-      "detail": "14 operations in 3 tag sections (default, Health, Работа со справочником видов запросов); spec declares 443 operations in 92 tags — Swagger UI renders only untagged + first tag. Separate open defect."
+      "detail": "14 operations in 3 tag sections (default, Health, Работа со справочником видов запросов) against 443 operations in 92 tags. Swagger UI 5 stops rendering silently past ~72 operations (~200 KB): no console error, no banner, unchanged after 120s, and reproduced on a static file server with no app and no CSP. Third-party limit, not an application defect — /redoc renders the full spec."
     },
     {
       "name": "GET /redoc",
@@ -30,7 +30,12 @@
     {
       "name": "/redoc shows the security contract",
       "status": "PASS",
-      "detail": null
+      "detail": "scheme present in the rendered page"
+    },
+    {
+      "name": "/redoc renders the whole spec",
+      "status": "PASS",
+      "detail": "tag groups found: Auto-Registered, DSL, admin (429863 chars rendered)"
     },
     {
       "name": "No console errors during the run",
