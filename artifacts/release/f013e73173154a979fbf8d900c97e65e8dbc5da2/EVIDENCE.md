@@ -184,7 +184,46 @@ top-level пакетам и объединить результаты, чтоб�
 
 ---
 
-## 6. Файлы evidence
+## 6. Skeptic pass — attempts to refute the four fixes
+
+Each fix was attacked against the live service after committing, not against
+the test that accompanies it.
+
+**1. "The `exc_info` fix only works in the test harness."**
+Refuted. The running application produced 4 real exceptions and every one of
+them carries a full stack in the log:
+
+```
+'exception': 'Traceback (most recent call last):\n  File "/home/user/dev/gd_integra…
+```
+
+Before the fix these same records would have rendered `"exc_info": true`.
+
+**2. "0/40 clean tokens was luck."**
+Refuted. Re-measured with n=100: **0 corrupted**. At the pre-fix rate of 20%,
+zero occurrences in 100 draws has probability ≈ 2×10⁻¹⁰.
+
+**3. "Tightening `PHONE` weakened PII masking."**
+Refuted on a 22-case corpus, 0 failures:
+
+| Direction | Cases | Failures |
+|---|---:|---:|
+| Must be masked (phones in RU/E.164 forms, date-prefixed phones, `1234-567890`, `2026-09-2812`, INN, passport, card, SNILS, email) | 16 | 0 |
+| Must be preserved (ISO dates, ISO timestamps, dates inside identifiers) | 6 | 0 |
+
+A date never suppresses a real number, because the trailing guard
+`(?![\d-])` keeps masking whenever digits continue past the date.
+
+**4. "Auth is fail-closed everywhere, not just on the 12 probed paths."**
+This one was **not** refuted, and is not claimed. The negative matrix covers
+12 endpoints. The other 431 operations were not individually probed, and the
+`security` field is absent from all of them in the spec — so per-operation
+auth cannot be confirmed from the specification. Recorded as an open item
+rather than as a pass.
+
+---
+
+## 7. Файлы evidence
 
 - `HEAD.txt` — SHA, к которому относится каждое утверждение.
 - `curl_matrix.txt` — сырой вывод cURL-проверок (7 групп).
