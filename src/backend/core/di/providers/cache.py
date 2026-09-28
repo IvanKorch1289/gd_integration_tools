@@ -49,6 +49,7 @@ from src.backend.core.di.providers.http import (
 from src.backend.core.di.providers.storage import (  # noqa: E402
     get_object_storage_provider as get_object_storage_provider,
 )
+from src.backend.core.di.providers.storage import get_s3_client_provider  # noqa: F401
 
 get_s3_storage_client_provider = (
     get_object_storage_provider  # S3/MinIO/LocalFS singleton
@@ -346,14 +347,6 @@ def get_redis_client_provider() -> Any:
 def set_redis_client_provider(client: Any) -> None:
     """Test-override для Redis client (S60+)."""
     _overrides["redis_client"] = client
-
-
-def get_s3_client_provider() -> Any:
-    r"""S3 client factory (S78/ R1; восстановлено 2026-09-25)."""
-    if "s3_client" in _overrides:
-        return _overrides["s3_client"]
-    module = resolve_module("clients.storage.s3_pool")
-    return module.get_s3_client  # factory, not instance
 
 
 def get_redis_stream_client_provider() -> Any:
