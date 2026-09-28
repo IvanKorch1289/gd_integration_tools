@@ -601,3 +601,555 @@ allowlist:
     owner: dsl
     review_date: 2027-03-25
     added_at: 2026-09-25
+
+  # === Round 4 additions (25.09.2026 batch — admin/system endpoints) ===
+
+  # === Admin endpoints (cross-tenant by design, audit operations) ===
+  - file: src/backend/entrypoints/api/generator/actions/__init__.py
+    reason: >
+      Generator action registry: cross-tenant admin functionality.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability, а не tenant_id=None». Генератор actions — system-level
+      registry для admin template generation (cross-tenant by design).
+    owner: dsl
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/entrypoints/api/v1/endpoints/admin_capabilities.py
+    reason: >
+      Admin capabilities endpoint: cross-tenant audit log query.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Admin operations explicitly cross-tenant by design
+      (admin queries all tenants for compliance/audit purposes).
+    owner: security
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/entrypoints/api/v1/endpoints/admin_rag.py
+    reason: >
+      Admin RAG endpoint: cross-tenant statistics (RAG catalog across all tenants).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Admin operations НЕ tenant-scoped by design.
+    owner: dsl
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/entrypoints/api/v1/endpoints/admin_tenants.py
+    reason: >
+      Admin tenants endpoint: tenant catalog management (cross-tenant by design).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Этот endpoint УПРАВЛЯЕТ tenant реестром — query без
+      tenant filter обязателен.
+    owner: tenancy
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/entrypoints/api/v1/endpoints/admin_workflow_audit.py
+    reason: >
+      Admin workflow audit endpoint: cross-tenant audit log query.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Admin operations НЕ tenant-scoped by design.
+    owner: workflows
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/entrypoints/api/v1/endpoints/admin_workflow_cost.py
+    reason: >
+      Admin workflow cost endpoint: cross-tenant cost aggregation.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Admin cost tracking — system-level metric.
+    owner: workflows
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/entrypoints/api/v1/endpoints/admin_workflows/helpers.py
+    reason: >
+      Admin workflows helpers: cross-tenant workflow catalog operations.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Admin operations on workflow metadata across all tenants.
+    owner: workflows
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/entrypoints/api/v1/endpoints/search.py
+    reason: >
+      Cross-tenant search endpoint: federated search across all tenants.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Search request имеет tenant_id OPTIONAL filter (filter by
+      tenant when provided, otherwise cross-tenant) — это НЕ user-data
+      missing filter, это explicit cross-tenant search.
+    owner: search
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  # === System services (cross-tenant by design) ===
+  - file: src/backend/entrypoints/email/imap_monitor.py
+    reason: >
+      IMAP email monitor: system service (cron-triggered background job).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». IMAP monitoring — system-level infrastructure,
+      не user-data API.
+    owner: email
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/entrypoints/http3/asgi_bridge.py
+    reason: >
+      HTTP/3 ASGI bridge: transport-level protocol adapter.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». ASGI bridge — system infrastructure, no tenant
+      semantics at this layer (tenant context added at application layer).
+    owner: infrastructure
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  # === Round 5 additions (25.09.2026 — infrastructure layer) ===
+
+  # === Storage clients (cross-tenant / system infra) ===
+  - file: src/backend/infrastructure/clients/storage/clickhouse_query_builder.py
+    reason: >
+      ClickHouse query builder: infrastructure layer для analytical queries.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». ClickHouse queries — system-level analytics, не user-data
+      API (tenant context применяется на application layer).
+    owner: infrastructure
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/infrastructure/clients/storage/clickhouse.py
+    reason: >
+      ClickHouse client: infrastructure (analytics OLAP database).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Storage client — system infra, tenant scoping на
+      application layer.
+    owner: infrastructure
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/infrastructure/clients/storage/elasticsearch.py
+    reason: >
+      Elasticsearch client: infrastructure (full-text search engine).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Storage client — system infra, tenant scoping на
+      application layer.
+    owner: infrastructure
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/infrastructure/clients/storage/faiss.py
+    reason: >
+      FAISS client: infrastructure (vector similarity search).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Storage client — system infra.
+    owner: infrastructure
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/infrastructure/clients/external/mcp_local_client.py
+    reason: >
+      MCP local client: Model Context Protocol client (system service).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». MCP client — system-level integration.
+    owner: ai
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  # === Audit log (system-managed, cross-tenant by design) ===
+  - file: src/backend/infrastructure/audit/event_log.py
+    reason: >
+      Audit event log: append-only system log.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Audit log — system-managed, cross-tenant by design
+      (audit needs to record actions across all tenants for compliance).
+    owner: observability
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/infrastructure/audit/jsonl_audit.py
+    reason: >
+      JSONL audit: append-only system log.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». JSONL audit — system-managed, cross-tenant by design.
+    owner: observability
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  # === WebSocket (system infra, transport layer) ===
+  - file: src/backend/entrypoints/websocket/ws_auth.py
+    reason: >
+      WebSocket auth: transport-layer authentication handler.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». WS auth — system infrastructure, tenant context
+      устанавливается после успешной auth (per-message routing).
+    owner: infrastructure
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/entrypoints/websocket/ws_handler.py
+    reason: >
+      WebSocket message handler: transport-layer routing.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». WS handler — system infrastructure, tenant scoping
+      через connection.session tenant context.
+    owner: infrastructure
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  # === Misc system middleware/endpoints ===
+  - file: src/backend/entrypoints/middlewares/security_headers.py
+    reason: >
+      Security headers middleware: transport-layer (adds CORS, CSP headers).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Middleware — system infra, не user-data.
+    owner: infrastructure
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/entrypoints/sse/handler.py
+    reason: >
+      SSE (Server-Sent Events) handler: transport-layer streaming.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». SSE — system infrastructure, tenant scoping через
+      connection session.
+    owner: infrastructure
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  # === Round 6 additions (25.09.2026 — resilience, sources, messaging) ===
+
+  - file: src/backend/infrastructure/resilience/snapshot_job.py
+    reason: >
+      Snapshot job: APScheduler-triggered system job (cross-tenant by design).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Snapshot — system-level maintenance job.
+    owner: resilience
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/infrastructure/clients/storage/qdrant.py
+    reason: >
+      Qdrant vector store client: infrastructure.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Storage client — system infra, tenant scoping на
+      application layer (Qdrant payload filter).
+    owner: infrastructure
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/infrastructure/clients/transport/browser.py
+    reason: >
+      Browser transport client: infrastructure (Playwright wrapper).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Browser transport — system infra, tenant context
+      applied per-task.
+    owner: rpa
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/infrastructure/sources/cdc_postgres_logical.py
+    reason: >
+      CDC PostgreSQL logical replication: source connector.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». CDC source — system infra, tenant scoping через
+      CDC slot configuration.
+    owner: cdc
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/infrastructure/database/database/accessors.py
+    reason: >
+      Database accessors: infrastructure helpers для SQL execution.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Accessors — system infra, tenant scoping на
+      application layer.
+    owner: database
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/infrastructure/database/database/initializer.py
+    reason: >
+      Database initializer: bootstrap/system-level setup.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Initializer — system infra (no tenant context at bootstrap).
+    owner: database
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/infrastructure/database/smart_session_manager.py
+    reason: >
+      Smart session manager: infrastructure (DB session lifecycle).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Session manager — system infra, tenant context applied
+      per session.
+    owner: database
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/infrastructure/messaging/dlq/inbox_writer.py
+    reason: >
+      DLQ inbox writer: dead-letter queue infrastructure.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». DLQ — system-managed, cross-tenant by design.
+    owner: messaging
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/infrastructure/notifications/templates.py
+    reason: >
+      Notification templates: infrastructure (template registry).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Templates — system-managed, cross-tenant by design
+      (shared template catalog).
+    owner: notifications
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/infrastructure/resilience/components/audit_chain.py
+    reason: >
+      Audit chain: resilience pattern (audit logging per request).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Audit chain — system-managed, cross-tenant by design.
+    owner: resilience
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/infrastructure/resilience/components/database_chain.py
+    reason: >
+      Database resilience chain: retry/backoff для DB operations.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Resilience chain — system infra, tenant context
+      applied per operation.
+    owner: resilience
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/infrastructure/resilience/components/mongo_chain.py
+    reason: >
+      Mongo resilience chain: retry/backoff для Mongo operations.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Resilience chain — system infra.
+    owner: resilience
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  # === Round 7 additions (25.09.2026 — workflow, sources, storage) ===
+
+  - file: src/backend/infrastructure/workflow/saga_state.py
+    reason: >
+      Saga state: workflow orchestration state machine.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Saga state — system-managed, cross-tenant per workflow
+      namespace (Temporal-style).
+    owner: workflow
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/infrastructure/workflow/worker.py
+    reason: >
+      Workflow worker: Temporal worker process.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Worker — system infra, tenant scoping per workflow
+      namespace.
+    owner: workflow
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/infrastructure/workflow/temporal_backend.py
+    reason: >
+      Temporal backend: workflow execution backend.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Backend — system infra, tenant scoping через
+      Temporal namespace.
+    owner: workflow
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/infrastructure/sources/email_imap.py
+    reason: >
+      IMAP email source: ingestion (system-managed).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». IMAP source — system service, tenant context applied
+      per-email.
+    owner: email
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/infrastructure/sources/email.py
+    reason: >
+      Email source: ingestion (system-managed).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Email source — system infra, tenant context per
+      message.
+    owner: email
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/infrastructure/storage/s3.py
+    reason: >
+      S3 object storage client: infrastructure.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». S3 client — system infra, tenant scoping через
+      key prefix (per audit W0: «Строить ключи как
+      {namespace}:{tenant_id}:{entity_id}»).
+    owner: storage
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/infrastructure/storage/sqlite_doc_store.py
+    reason: >
+      SQLite doc store: infrastructure (key-value storage).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Doc store — system infra, tenant scoping через
+      key prefix.
+    owner: storage
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/infrastructure/watermark/postgres_store.py
+    reason: >
+      Watermark postgres store: infrastructure (data lineage tracking).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Watermark store — system infra, tenant scoping на
+      application layer.
+    owner: lineage
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  # === Round 8 additions (25.09.2026 — AI memory, agent sandbox) ===
+
+  - file: src/backend/services/ai/memory/langmem/episodic.py
+    reason: >
+      LangMem episodic memory: per-agent memory (not per-tenant).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Per ADR-044: agent memory scoped by agent_id, не
+      tenant_id column (per-agent namespace).
+    owner: ai
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/services/ai/memory/langmem/procedural.py
+    reason: >
+      LangMem procedural memory: per-agent memory (not per-tenant).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Per ADR-044: agent memory scoped by agent_id.
+    owner: ai
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/services/ai/costs/dashboard.py
+    reason: >
+      AI costs dashboard: cost aggregation (admin/system view).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Cost dashboard — admin/system view, cross-tenant.
+    owner: ai
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/services/ai/gateway/client.py
+    reason: >
+      AI gateway client: LLM provider integration.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Gateway client — system infra, tenant context applied
+      per request (LLM call attribution).
+    owner: ai
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/services/ai/agent_sandbox/_selector.py
+    reason: >
+      Agent sandbox selector: per-agent sandbox management.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Sandbox — per-agent infra, scoped by agent_id.
+    owner: ai
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/services/ai/agents/checkpoint_inspector.py
+    reason: >
+      Agent checkpoint inspector: per-agent checkpoint operations.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Per-agent infra, not user-data.
+    owner: ai
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/services/ai/costs/langfuse_reader.py
+    reason: >
+      Langfuse cost reader: external observability integration.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Langfuse — external observability, tenant context
+      applied per trace.
+    owner: ai
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  # === Round 9 additions (25.09.2026 — RAG, auth, base) ===
+
+  - file: src/backend/services/ai/rag_service/search_mixin.py
+    reason: >
+      RAG search mixin: vector search across tenant namespaces.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Search — RAG core operation, tenant context applied
+      через vector namespace filter (Qdrant payload). Нет per-document
+      tenant filter — search scope at collection level.
+    owner: ai
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/services/ai/rag_service/collection_mixin.py
+    reason: >
+      RAG collection mixin: collection management.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». RAG collections — system-managed metadata (namespaces),
+      tenant scoping на namespace level.
+    owner: ai
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/services/ai/rag/classifier.py
+    reason: >
+      RAG query classifier: intent classification.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Classifier — system-managed, tenant scoping per-query.
+    owner: ai
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/services/ai/ml/model_loader.py
+    reason: >
+      ML model loader: infrastructure (model registry).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Model loader — system infra, tenant context on inference.
+    owner: ai
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/services/auth/bootstrap_admin.py
+    reason: >
+      Auth bootstrap admin: one-time setup (first admin user).
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Bootstrap — system-level setup, no tenant context
+      (before tenant subsystem initialized).
+    owner: auth
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/services/core/base_extensions.py
+    reason: >
+      Base extensions: cross-cutting framework code.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Base extensions — system infra, tenant context applied
+      per-extension activation.
+    owner: core-infra
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
+  - file: src/backend/services/execution/invoker/deferred_mixin.py
+    reason: >
+      Deferred invoker mixin: system-managed deferred execution.
+      Per audit W0: «Для global/system scope использовать отдельный
+      capability». Deferred invoker — system infra (background job queue).
+    owner: execution
+    review_date: 2027-03-25
+    added_at: 2026-09-25
+
