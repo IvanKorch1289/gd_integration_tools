@@ -1,0 +1,42 @@
+{
+  "base": "http://127.0.0.1:8011",
+  "executable": "/home/user/.cache/ms-playwright/chromium-1243/chrome-linux64/chrome",
+  "steps": [
+    {
+      "name": "GET /docs",
+      "status": "PASS",
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Authorize button present",
+      "status": "PASS",
+      "detail": "scheme selectable in Swagger UI"
+    },
+    {
+      "name": "Auth dialog offers a selectable scheme",
+      "status": "PASS",
+      "detail": "visible=bearerAuth of 4 declared"
+    },
+    {
+      "name": "Operation list fully rendered",
+      "status": "PARTIAL",
+      "detail": "14 operations in 3 tag sections (default, Health, Работа со справочником видов запросов); spec declares 443 operations in 92 tags — Swagger UI renders only untagged + first tag. Separate open defect."
+    },
+    {
+      "name": "GET /redoc",
+      "status": "PASS",
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "/redoc shows the security contract",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "No console errors during the run",
+      "status": "PASS",
+      "detail": "none"
+    }
+  ],
+  "consoleErrors": []
+}

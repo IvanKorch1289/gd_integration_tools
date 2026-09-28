@@ -1,10 +1,10 @@
 {
   "audit": "GD Integration Tools — current readiness status",
-  "head": "bbadf108a",
-  "timestamp": "2026-09-28T15:50:00+00:00",
+  "head": "98698dd51",
+  "timestamp": "2026-09-28T16:10:00+00:00",
   "status": "not_production_ready",
   "canonical_doc": "docs/roadmap/PRODUCTION_READINESS_CURRENT.md",
-  "per_sha_evidence": "artifacts/release/bbadf108a2bdefacf7673d9bb9b78c7147619b77/EVIDENCE.md",
+  "per_sha_evidence": "artifacts/release/98698dd51c8f7ce62a11fb5037e2c088cc5b20d6/EVIDENCE.md",
   "superseded_docs": [
     "docs/roadmap/PRODUCTION_READINESS.md (snapshot 2026-09-01)",
     "docs/roadmap/PRODUCTION_READINESS_FINAL.md (snapshot 2026-09-02)"
@@ -13,11 +13,13 @@
   "environment_warning": "Port 8000 in this environment is a container running /app started 2026-09-11. It answers 200 on /health and serves its own openapi.json, but it is not this SHA. All runtime evidence was taken from a local uvicorn instance on port 8011 started from the working tree.",
   "blocking": [
     "coverage ~52% vs 70% threshold (two independent measurements, 0.36 p.p. apart)",
+    "gzip responses were invalid ASGI (str headers) so uvicorn dropped every response over 500 bytes with no reply; fixed in 2a347ee70, browsers could not load the spec at all",
+    "Swagger UI renders 14 of 443 operations and 3 of 92 tags; expanding sections does not help (separate open defect, not caused by the fixes)",
     "test suite is not isolation-safe: whole-tree run reports failures that do not reproduce in isolation",
     "make ci does not execute tests — it ends at test-collection-check which runs pytest --co only",
     "no container image, SBOM or signature for this SHA",
     "10 tooling-test failures in tests/unit/tools/",
-    "per-operation auth probed on 12 of 443 endpoints; the rest verified only through the spec"
+    "per-operation auth probed on 10 of 443 endpoints; the rest verified only through the spec"
   ],
   "checks": {
     "compileall": "PASS",
@@ -29,7 +31,7 @@
     "tenant_isolation_strict": "PASS_STATIC",
     "tenant_isolation_runtime": "PASS_NEGATIVE (live: empty/null X-Tenant-Id -> 401, no data returned)",
     "object_authorization": "PASS",
-    "make_ci": "PASS (exit 0 at bbadf108a) — caveat: does not execute tests",
+    "make_ci": "PASS (exit 0 at 98698dd51) — caveat: does not execute tests",
     "make_readiness_check": "PASS (exit 0 at cee4c33e5)",
     "make_pre_prod_check": "FAIL (exit 2; 25/37 PASS, 1 FAIL, 8 WARN, 3 SKIP; measured at cee4c33e5)",
     "coverage_gate": "FAIL (~52% < 70%; gate exits 2 as it should)",
@@ -44,11 +46,14 @@
     "openapi_route_inventory": "PASS (414 paths, 443 operations)",
     "openapi_auth_declaration": "PASS (443/443 operations declare security, 4 schemes, 0 unresolved refs, 0 mismatches with the runtime guard)",
     "curl_matrix": "PASS (artifacts/release/bbadf108a.../curl_matrix.txt, 7 groups)",
-    "playwright": "NOT_VERIFIED (no longer blocked by the missing auth scheme, but not executed)",
+    "playwright": "PARTIAL — see browser_playwright",
     "container_image_sbom": "NOT_VERIFIED",
     "privacy_integration": "NOT_VERIFIED (PG/Redis/MinIO/Qdrant not running)",
     "openapi_integrity": "PASS (0 masking artifacts in the served spec; was 16)",
-    "per_operation_auth_runtime": "PARTIAL (12 endpoints probed -> 401/403; 431 verified only via spec)"
+    "per_operation_auth_runtime": "PARTIAL (10 endpoints probed -> 401/403; 433 verified only via spec)",
+    "gzip_asgi_validity": "PASS (openapi.json + gzip: 200/58150B with content-encoding: gzip; was 000/0B)",
+    "csp_scoping": "PASS (relaxed only for /docs and /redoc; /openapi.json and API responses keep default-src 'self')",
+    "browser_playwright": "PARTIAL (6 PASS, 1 PARTIAL, 0 FAIL, zero console errors; /docs and /redoc load, Authorize works, but Swagger UI shows 14 of 443 operations)"
   },
   "coverage": {
     "percent": 51.89,
@@ -85,12 +90,15 @@
     "DataMaskingMiddleware kept private copies of the PII patterns, bypassing core.security.pii_patterns; /ready answered +***0928T... (32ef4f246)",
     "step-up tokens were returned corrupted (8 of 40 live) because PIIMaskingResponseMiddleware excluded only /api/v1/auth/login; 0 of 40 after (f013e7317)",
     "OpenAPI declared no authentication at all: securitySchemes empty and 0/443 operations carried security, because the guard is pure-ASGI middleware FastAPI does not emit (bbadf108a)",
-    "the published spec was silently corrupted in 16 places by both response maskers; documentation endpoints are now exempt, 16 artifacts -> 0 (bbadf108a)"
+    "the published spec was silently corrupted in 16 places by both response maskers; documentation endpoints are now exempt, 16 artifacts -> 0 (bbadf108a)",
+    "gzip responses were rebuilt with str headers, so uvicorn raised 'TypeError: cannot use a bytes pattern on a string-like object' and closed the connection with no response for every body over 500 bytes (2a347ee70)",
+    "Content-Security-Policy default-src 'self' was applied to /docs and /redoc, blocking the CDN assets and inline scripts, so the documentation pages returned HTTP 200 with an empty page (2a347ee70)"
   ],
   "open_observations": [
     "POST /api/v1/auth/step-up-request issues a token with no credential check — not an authz bypass (login still verifies the password), it is a CSRF/session guard, and the token is not single-use",
     "pii_masker._RU_SURNAMES false-positives on ordinary Russian adjectives ending in -ский/-ова/-ин (Семантический -> ***); not narrowed, because narrowing would weaken the privacy surface",
     "logs report environment=production while the dev_light profile sets app.environment=development; the line prefix says [development@...]",
-    "the spec's security field describes the AuthRequiredMiddleware layer only; step-up, CSRF-cookie, mTLS and Express guards are not expressible in OpenAPI"
+    "the spec's security field describes the AuthRequiredMiddleware layer only; step-up, CSRF-cookie, mTLS and Express guards are not expressible in OpenAPI",
+    "Swagger UI renders 14 of 443 operations across 3 of 92 tag sections; the spec is fetched whole (200, 494406 bytes) with no console errors, so this is a rendering limitation on tag-heavy specs, not a load failure"
   ]
 }

@@ -1,0 +1,50 @@
+# Runtime evidence — HEAD 98698dd51c8f7ce62a11fb5037e2c088cc5b20d6
+# app: uvicorn from this working tree, APP_PROFILE=dev_light, port 8011
+# collected: 2026-09-28T19:04:58+03:00
+
+## 1. Base endpoints
+GET /health          -> 200
+GET /ready           -> 503
+GET /docs            -> 200
+GET /redoc           -> 200
+GET /openapi.json    -> 200
+
+## 2. Compression (regression 2a347ee70 — was 000/0 for every body >500B)
+  /openapi.json   gzip                     -> 200/58150B
+  /openapi.json   gzip, deflate, br, zstd  -> 200/58150B
+  /openapi.json   identity                 -> 200/494406B
+  /health         gzip                     -> 200/36B
+  /health         gzip, deflate, br, zstd  -> 200/36B
+  /health         identity                 -> 200/36B
+
+## 3. CSP scoping (regression 2a347ee70)
+  /docs              default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net blob:; styl
+  /redoc             default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net blob:; styl
+  /openapi.json      default-src 'self'
+  /api/v1/user/all/  default-src 'self'
+
+## 4. Unauthenticated access
+GET     /api/v1/user/all/              -> 401
+GET     /api/v1/order/all/             -> 401
+POST    /api/v1/user/create/           -> 403
+DELETE  /api/v1/user/delete/1          -> 403
+GET     /graphql                       -> 401
+GET     /soap                          -> 401
+GET     /webhooks                      -> 401
+GET     /grpc                          -> 401
+GET     /events                        -> 401
+GET     /api                           -> 401
+
+## 5. Empty tenant header
+  X-Tenant-Id:         -> 401
+  X-Tenant-ID: null    -> 401
+
+## 6. Login enforces credentials
+  -> 401  {"detail":"Invalid credentials"}
+  -> 401  {"detail":"Invalid credentials"}
+
+## 7. Step-up token integrity
+  corrupted: 0 / 40
+
+## 8. /ready timestamp readable
+{"status":"down","timestamp":"2026-09-28T16:04:59.742092+00:00","mode":"fast","components":{"redis":{"status":

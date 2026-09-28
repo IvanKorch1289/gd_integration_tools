@@ -1,7 +1,7 @@
 # Production Readiness — CURRENT (canonical)
 
 > **This is the canonical current-status document for the repository.**
-> Generated 2026-09-28, last updated for SHA `bbadf108a`.
+> Generated 2026-09-28, last updated for SHA `98698dd51`.
 > It supersedes every earlier readiness snapshot.
 >
 > - Predecessor snapshots (kept as historical records, **do not read as current**):
@@ -19,22 +19,40 @@
 
 Blocking items, in priority order:
 
-1. **Coverage is far below the project's own bar** — ~52% measured against a
+1. **Every gzip response was silently dropped.** The GZip middleware rebuilt
+   `http.response.start` with `str` headers, which ASGI forbids; uvicorn raised
+   `TypeError: cannot use a bytes pattern on a string-like object` and closed
+   the connection **with no response**. Any body over 500 bytes, to any client
+   offering gzip — that is, to every browser. Fixed in `2a347ee70`.
+2. **`/docs` and `/redoc` returned HTTP 200 with an empty page.** The project
+   `Content-Security-Policy` (`default-src 'self'`) was applied to the
+   documentation routes, which load their assets from a CDN and run inline
+   scripts. This is why nobody noticed the missing `securitySchemes`: the page
+   could not be opened at all. Fixed in `2a347ee70`.
+3. **Swagger UI shows 14 of 443 operations and 3 of 92 tags.** The spec is
+   fetched whole (200, 494 406 bytes) with no console error, so this is a
+   rendering limitation, not a load failure. Open; root cause not established.
+4. **Coverage is far below the project's own bar** — ~52% measured against a
    70% threshold. The gate reports this honestly instead of silently passing.
    Two independent measurements agree within 0.36 p.p.
-2. **The test suite is not isolation-safe** — a full-suite run reports failures
+5. **The test suite is not isolation-safe** — a full-suite run reports failures
    that do not reproduce in isolation, so no "suite is green" claim is possible.
-3. **`make ci` never runs the tests.** It ends at `test-collection-check`, which
+6. **`make ci` never runs the tests.** It ends at `test-collection-check`, which
    calls `pytest --co`. Exit 0 means "tests import", not "tests pass".
-4. **No release artifact for this SHA** — no container image, no SBOM, no
+7. **No release artifact for this SHA** — no container image, no SBOM, no
    signature.
-5. **Tooling suite is red** — 10 failures in `tests/unit/tools/` that reproduce
+8. **Tooling suite is red** — 10 failures in `tests/unit/tools/` that reproduce
    on a clean worktree.
+9. **Per-operation auth is only probed on 10 of 443 endpoints.** The spec now
+   declares the contract for all of them, but the runtime behaviour was
+   verified on 10 paths, not 443.
 
-The `exc_info` traceback loss, the corrupted `timestamp` field and the step-up
-token corruption and the missing auth description in the OpenAPI spec were
-all confirmed by running the application, and are **fixed** — see
-"What was fixed in this cycle".
+Every defect above that is marked *fixed* was found by **running the
+application**, not by the test suite: the traceback loss, the corrupted
+`timestamp` field, the step-up token corruption, the missing auth description
+in the OpenAPI spec, the dropped gzip responses and the blanked documentation
+pages. Static analysis and `curl` without `Accept-Encoding` saw none of them.
+
 ---
 
 ## Status by area
@@ -54,12 +72,13 @@ wrong; an incomplete environment is never reported as `PASS`.
 | Tenant isolation (static) | PASS | `check_tenant_isolation.py --strict` exit 0 |
 | Tenant isolation (runtime) | **FAIL (negative)** | live run at `f013e7317`: empty/`null` `X-Tenant-Id` → 401, no data returned |
 | Object authorization | PASS | 117 callsites, 0 unknown |
-| CI composite | PASS with caveat | `make ci` exit 0 at `bbadf108a` — but it does not execute tests |
+| CI composite | PASS with caveat | `make ci` exit 0 at `98698dd51` — but it does not execute tests |
 | Application starts and serves | PASS | live uvicorn, `dev_light` profile, `/health` → 200 |
 | Unauthenticated data access | PASS | 12 endpoints → 401/403, no payload returned |
 | Login credential enforcement | PASS | 2 wrong-password probes → 401, identical message (no user enumeration) |
 | OpenAPI auth declaration | PASS | 443/443 operations declare `security`, 4 schemes, 0 unresolved refs, 0 mismatches with the runtime guard (`bbadf108a`) |
 | OpenAPI integrity | PASS | 0 masking artifacts in the served spec (was 16) |
+| CSP scoping | PASS | relaxed only for `/docs` and `/redoc`; `/openapi.json` and API responses keep `default-src 'self'` |
 | Readiness guards | PASS | `make readiness-check` exit 0 |
 | Pre-production | **FAIL** | `make pre-prod-check` exit 2 — 25/37 PASS, 1 FAIL (coverage), 8 WARN, 3 SKIP |
 | Coverage gate | **FAIL** | ~52% vs 70% threshold; gate correctly reports FAIL (exit 2) |
@@ -69,10 +88,11 @@ wrong; an incomplete environment is never reported as `PASS`.
 | Tooling test suite | **FAIL** | `tests/unit/tools/`: 10 failures, all reproduce on a clean `HEAD` worktree |
 | Unit test suite (per-directory) | **FAIL** | all clusters green in isolation except `tests/unit/entrypoints/mcp`, which cannot finish a run |
 | Unit test suite (whole-tree) | **FAIL** | reports failures that do not reproduce in isolation (test-isolation defect) |
-| HTTP / cURL matrix | PASS | `artifacts/release/bbadf108a.../curl_matrix.txt`, 7 groups |
+| HTTP / cURL matrix | PASS | `artifacts/release/98698dd51.../curl_matrix.txt`, 8 groups |
 | Route inventory | PASS | 414 paths / 443 operations, from the live `openapi.json` |
-| Per-operation auth (runtime) | **PARTIAL** | 12 endpoints probed → 401/403; the other 431 verified only through the spec |
-| Browser / Playwright | NOT_VERIFIED | no longer blocked by the missing auth scheme, but still not executed |
+| gzip / ASGI response validity | PASS | `openapi.json` + gzip → 200 / 58 150 B with `content-encoding: gzip` (was 000 / 0 B) |
+| Per-operation auth (runtime) | **PARTIAL** | 10 endpoints probed → 401/403; the other 433 verified only through the spec |
+| Browser / Playwright | **PARTIAL** | Playwright run: 6 PASS, 1 PARTIAL, 0 FAIL, zero console errors. `/docs` loads, Authorize works, `/redoc` shows the contract — but Swagger UI shows 14 of 443 operations |
 | Container image + SBOM | NOT VERIFIED | not built for this SHA |
 | Signature / cosign | NOT VERIFIED | no image to sign |
 
@@ -116,7 +136,7 @@ Commits `f9307dabd` … `f681c4ed7`, each verified with `make ci` exit 0.
 - 17 stale tests repaired, including two that had been failing forever and one
   order-dependent **security-gate** test that passed only sometimes.
 
-### Found by actually running the application (`e91fb91fe` … `bbadf108a`)
+### Found by actually running the application (`e91fb91fe` … `2a347ee70`)
 
 These four were invisible to the test suite and to static gates; each was
 confirmed on a live instance, then fixed with a regression test.
@@ -164,13 +184,37 @@ confirmed on a live instance, then fixed with a regression test.
   the privacy surface. The new scheme descriptions are worded to avoid the
   false positive, and two tests pin that.
 
+- **Every gzip response was dropped with no reply** (`2a347ee70`). The GZip
+  middleware rebuilt `http.response.start` from `MutableHeaders.items()`, which
+  yields `(str, str)`, while ASGI requires `(bytes, bytes)`. Uvicorn raised
+  `TypeError: cannot use a bytes pattern on a string-like object` and closed the
+  connection without a response. Reproduced with plain curl:
+  `GET /openapi.json` with `Accept-Encoding: gzip` → **HTTP 000, 0 bytes**;
+  without gzip → 200 / 494 406 bytes. After the fix → 200 / 58 150 bytes with
+  `content-encoding: gzip`. Any body over 500 bytes was affected, to any client
+  offering gzip — that is, to every browser.
+- **`/docs` and `/redoc` served an empty page under HTTP 200** (`2a347ee70`).
+  The project CSP (`default-src 'self'`) was applied to the documentation
+  routes, which load assets from a CDN and run inline scripts. The console
+  showed five blocked loads. This is the reason the missing `securitySchemes`
+  went unnoticed for so long: the page could not be opened. The relaxation is
+  scoped to `/docs` and `/redoc` only; `/openapi.json` and every API response
+  keep `default-src 'self'`.
+
+Browser verification on this SHA: `/docs` 200, Authorize button present and
+selectable, `/redoc` renders the security contract, **zero console errors**.
+Screenshots and the machine-readable report are in `artifacts/e2e/`.
 ---
 
 ## Known open defects
 
-- **Per-operation auth is probed on 12 of 443 endpoints.** The spec now states
-  the contract for all of them, but the runtime behaviour was only verified
-  on 12 paths. The other 431 are covered by the spec, not by observation.
+- **Swagger UI renders 14 of 443 operations across 3 of 92 tag sections.** The
+  spec is fetched whole (200, 494 406 bytes), there is no console error and no
+  error banner, and expanding every section does not reveal more. Root cause not
+  established. It is *not* a regression from the CSP/gzip fixes: the pre-fix
+  instance rendered 0 operations.
+- **Per-operation auth is probed on 10 of 443 endpoints.** The spec states the
+  contract for all of them, but runtime behaviour was only verified on 10 paths.
 - **`_RU_SURNAMES` false-positives on ordinary Russian adjectives.** Any word
   ending in `-ский` / `-ова` / `-ин` is masked as a surname, so
   `Семантический`, `Логистический`, `Диагностический` become `***` in any
