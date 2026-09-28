@@ -141,8 +141,8 @@ def _parse_thresholds_file(path: Path) -> dict[str, int]:
 def _compute_layer_coverage(coverage_xml: Path, layer: str) -> float:
     """Вычисляет coverage для конкретного layer из coverage.xml.
 
-    Суммирует \`line-rate\` атрибуты для всех \`<class>\` элементов,
-    чей \`filename\` начинается с \`src/backend/<layer>/\`.
+    Суммирует `line-rate` атрибуты для всех `<class>` элементов,
+    чей `filename` начинается с `src/backend/<layer>/`.
 
     Args:
         coverage_xml: Путь к coverage.xml (cobertura формат).
@@ -179,7 +179,7 @@ def check_per_layer_thresholds(
 
     Per ADR-0285 §1.3 (Sprint 40 W1 implementation). Per-layer breakdown
     выводится через rich console. NOT wired to CI by default (ADR-0285 §2:
-    gradual rollout). Sprint 41 W1 (Item 5): добавлен \`strict\` param для
+    gradual rollout). Sprint 41 W1 (Item 5): добавлен `strict` param для
     Phase 2 CI enforcement.
 
     Args:
@@ -372,13 +372,13 @@ def per_layer(
     """Per-layer coverage threshold check (ADR-0285 §1.3).
 
     NOT wired to CI by default (ADR-0285 §2: gradual rollout).
-    Используйте \`--strict\` для CI enforcement (Phase 2 rollout).
+    Используйте `--strict` для CI enforcement (Phase 2 rollout).
 
     Локально:
-    \`\`\`bash
+    ```bash
     python tools/check_coverage_gate.py per-layer              # informational (Phase 1)
     python tools/check_coverage_gate.py per-layer --strict     # CI gate (Phase 2)
-    \`\`\`
+    ```
     """
     rc = check_per_layer_thresholds(Path(coverage_xml), Path(thresholds), strict=strict)
     raise typer.Exit(rc)
@@ -386,26 +386,6 @@ def per_layer(
 
 if __name__ == "__main__":
     app()
-
-
-@app.command("per-layer")
-def per_layer(
-    coverage_xml: str = typer.Option(
-        "coverage.xml", "--coverage-xml", help="Путь к coverage.xml (cobertura формат)."
-    ),
-    thresholds: str = typer.Option(
-        ".baselines/coverage_thresholds.txt",
-        "--thresholds",
-        help="Путь к thresholds-файлу (ADR-0285 §1.2).",
-    ),
-) -> None:
-    """Per-layer coverage threshold check (ADR-0285 §1.3).
-
-    NOT wired to CI (ADR-0285 §2: gradual rollout). Используйте локально:
-    `python tools/check_coverage_gate.py per-layer`.
-    """
-    rc = check_per_layer_thresholds(Path(coverage_xml), Path(thresholds), strict=strict)
-    raise typer.Exit(rc)
 
 
 if __name__ == "__main__":

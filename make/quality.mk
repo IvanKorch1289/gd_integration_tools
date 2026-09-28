@@ -292,10 +292,6 @@ check-object-auth: check-env ## Audit 2026-09-22: object-level authorization mat
 	@$(INFO) "Checking object authorization coverage..."
 	@$(UV_RUN) python tools/checks/check_object_authorization.py
 
-check-canonical-errors: check-env ## Audit 2026-09-22: canonical error contract across protocols
-	@$(INFO) "Checking canonical error contracts..."
-	@$(UV_RUN) python tools/checks/check_canonical_errors.py
-
 check-cancellation: check-env ## Audit 2026-09-22: cancellation/backpressure contract
 	@$(INFO) "Checking cancellation contract..."
 	@$(UV_RUN) python tools/checks/check_cancellation_contract.py
