@@ -45,7 +45,7 @@ def _fetch_stats(tenant: str, days: int) -> dict:
     # S170 CL-12-9/9: миграция с core.frontend_facade на services.dsl_portal
     # (canonical layer-compliant путь, re-exports get_saga_stats — ClickHouse
     # aggregate, no HTTP endpoint yet).
-    from src.backend.services.dsl_portal import get_saga_stats as aggregate_saga_stats
+    from src.backend.core.frontend_facade import get_saga_stats as aggregate_saga_stats
 
     to_dt = datetime.now(UTC)
     from_dt = to_dt - timedelta(days=days)

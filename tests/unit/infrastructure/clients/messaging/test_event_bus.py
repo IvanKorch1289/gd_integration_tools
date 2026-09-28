@@ -67,9 +67,14 @@ class TestEventSchemaValidationError:
         assert exc.channel == "ch"
         assert exc.event_type == "OrderEvent"
         assert exc.reason == "bad"
-        # BaseError принимает *_, поэтому message остаётся пустым —
-        # это особенность target-реализации, не баг теста.
-        assert exc.message == ""
+        # message заполняется осознанно (event_bus.py передаёт message=
+        # явным kw-arg, иначе BaseError оставляет его пустым) и должен
+        # содержать контекст для диагностики. Прежняя проверка на "" была
+        # написана до этого фикса и закрепляла бесполезное поведение.
+        assert exc.message != ""
+        assert "ch" in exc.message
+        assert "OrderEvent" in exc.message
+        assert "bad" in exc.message
 
 
 @pytest.mark.unit

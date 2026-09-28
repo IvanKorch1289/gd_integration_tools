@@ -14,7 +14,11 @@ from __future__ import annotations
 import polars as pl
 import streamlit as st
 
-from src.backend.core.cost_attribution import CostAttribution, get_cost_registry
+from src.backend.core.cost_attribution import (
+    CostAttribution,
+    CostRecord,
+    get_cost_registry,
+)
 from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
     setup_page,
@@ -41,7 +45,7 @@ def _format_currency(value: float) -> str:
 
 # ─── Summary metrics ───
 registry = _get_registry()
-records = registry.list_records()
+records: list[CostRecord] = registry.list_records()
 total_cost = sum(r.cost_usd for r in records)
 total_units = sum(r.units for r in records)
 

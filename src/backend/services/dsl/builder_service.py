@@ -14,41 +14,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from src.backend.core.config.settings import settings as app_settings
 from src.backend.core.logging import get_logger
+from src.backend.dsl.commands.registry import route_registry
+from src.backend.dsl.yaml_store import YAMLStore
 
 if TYPE_CHECKING:
-    from src.backend.core.api.extensions import YAMLStore
-    from src.backend.dsl.commands.registry import route_registry
     from src.backend.dsl.engine.pipeline import Pipeline
-
-# Sprint 225: 2 services → dsl imports converted to lazy __getattr__ proxy.
-# route_registry и YAMLStore — глобальные singleton-like objects
-# (registry и store instance), кэшируются в module globals при первом
-# lookup для function body access.
-_LAZY_MAP: dict[str, tuple[str, str]] = {
-    "route_registry": ("src.backend.dsl.commands.registry", "route_registry"),
-    "YAMLStore": ("src.backend.dsl.yaml_store", "YAMLStore"),
-}
-
-
-def __getattr__(name: str) -> Any:
-    """Lazy proxy: import DSL только при lookup атрибута.
-
-    Cache result в module globals — function bodies (которые
-    lookup в module __dict__ напрямую) находить cached symbols.
-    """
-    if name in _LAZY_MAP:
-        import importlib
-
-        mod_path, attr = _LAZY_MAP[name]
-        value = getattr(importlib.import_module(mod_path), attr)
-        globals()[name] = value  # cache for function body lookups
-        return value
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
 
 __all__ = ("DSLBuilderService", "SaveResult", "get_dsl_builder_service")
 

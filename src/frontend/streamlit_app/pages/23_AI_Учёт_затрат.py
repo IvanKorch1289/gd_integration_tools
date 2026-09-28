@@ -125,7 +125,7 @@ def _fallback_snapshot(window_hours: int) -> dict[str, Any]:
     try:
         # S170 CL-12-8/9: миграция с core.frontend_facade на services.dsl_portal
         # (canonical layer-compliant путь, re-exports get_ai_cost_snapshot).
-        from src.backend.services.dsl_portal import get_ai_cost_snapshot
+        from src.backend.core.frontend_facade import get_ai_cost_snapshot
 
         snapshot: object = get_ai_cost_snapshot(
             window_hours=window_hours,
