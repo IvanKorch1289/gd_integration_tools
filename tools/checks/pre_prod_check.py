@@ -154,16 +154,46 @@ def _check_warning(name: str, reason: str) -> CheckResult:
 
 
 def _check_config_validator() -> CheckResult:
-    """#21 ConfigValidator startup gate (S17 K-ARCH-1)."""
+    """#21 ConfigValidator startup gate (S17 K-ARCH-1).
+
+    Раньше проверка только искала файл ``src/backend/core/config/validator.py``.
+    После того как модуль стал пакетом, путь перестал существовать, и проверка
+    всегда уходила в ветку WARN «module not found» — то есть не проверяла
+    ничего, хотя объявляла CRITICAL-правило ``waf.strict_required_in_prod``.
+
+    Теперь валидатор действительно импортируется и прогоняется на текущей
+    конфигурации; наличие CRITICAL-нарушений валит гейт.
+    """
     start = time.monotonic()
-    script_path = ROOT / "src" / "backend" / "core" / "config" / "validator.py"
-    if not script_path.exists():
+    # Severity сравнивается без учёта регистра: ConfigSeverity — str-enum со
+    # значениями 'critical'/'warning'/'info' (нижний регистр), и сравнение с
+    # 'CRITICAL' молча даёт пустой список, т.е. гейт всегда зелёный.
+    code = (
+        "import sys; sys.path.insert(0, '.');"
+        "from src.backend.core.config.validator import validate_startup_config;"
+        "from src.backend.core.config.waf import WafSettings;"
+        "from src.backend.core.config.settings import settings;"
+        "v = validate_startup_config(settings, WafSettings(),"
+        " raise_on_critical_in_prod=False);"
+        "crit = [x.code for x in v if str(x.severity).lower() == 'critical'];"
+        "print('CRITICAL:', crit);"
+        "sys.exit(1 if crit else 0)"
+    )
+    try:
+        rc, stdout, stderr = _run_cmd([sys.executable, "-c", code])
+    except subprocess.TimeoutExpired:
         return CheckResult(
             name="config-validator",
             ok=False,
             duration_s=time.monotonic() - start,
-            warning=True,
-            skip_reason="ConfigValidator module not found (S17 K-ARCH-1 scaffold)",
+            error_msg="ConfigValidator не завершился за 600s",
+        )
+    if rc != 0:
+        return CheckResult(
+            name="config-validator",
+            ok=False,
+            duration_s=time.monotonic() - start,
+            error_msg=(stderr or stdout or "CRITICAL violations")[:200],
         )
     return CheckResult(
         name="config-validator", ok=True, duration_s=time.monotonic() - start
