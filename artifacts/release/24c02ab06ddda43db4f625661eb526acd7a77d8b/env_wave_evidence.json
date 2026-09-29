@@ -1,0 +1,58 @@
+{
+  "audit": "env-tier волна: окружение поднято, гейты пере-прогнаны",
+  "head": "24c02ab06ddda43db4f625661eb526acd7a77d8b (прогоны в окне 039dd9b71..24c02ab06, волна владельца активна)",
+  "environment_raised": [
+    "docker.sock ACL пользователю (setfacl)",
+    "playwright + системный google-chrome",
+    "cosign binary (sigstore)"
+  ],
+  "results": {
+    "pip_audit": {
+      "exit": 0,
+      "verdict": "pip-audit clean — pre-prod гейт #07 закрыт"
+    },
+    "sbom": {
+      "exit": 0,
+      "verdict": "No known vulnerabilities; dist/sbom/sbom.cdx.json — DoD-17"
+    },
+    "cosign": {
+      "exit": 0,
+      "verdict": "SBOM подписан, verify-blob Verified OK — DoD-18 механизм доказан; in-registry требует registry :5000 (нет)"
+    },
+    "testcontainers": {
+      "passed": 5,
+      "skipped": 3,
+      "verdict": "15 прошлых FAIL были docker-socket permission"
+    },
+    "browser_e2e": {
+      "verdict": "PASS на HEAD-app :8081: /docs + /redoc рендер, 0 console errors; скриншоты artifacts/e2e/039dd9b71/"
+    },
+    "old_image_finding": "образ gd-app-light (5 недель): CSP рвёт Swagger UI в браузере; в HEAD исправлено (security_headers.py, bbadf108a)",
+    "functional_8000": {
+      "health": "alive",
+      "docs": 200,
+      "redoc": 200,
+      "graphql_anonymous": "403 WAF fail-closed (корректно)",
+      "openapi_paths": 411
+    },
+    "perf_gate": {
+      "exit": 0,
+      "verdict": "warn-only: locust нет; замер по старому образу невалиден"
+    }
+  },
+  "integration_triage": {
+    "fixed": "eventbus handle+ServiceError (039dd9b71), 5/5",
+    "owner_domain": [
+      "tenant_middleware x2",
+      "mcp_tool_authz x2 (порядок deny-reason)",
+      "mq_redis_streams x2 (faststream W23.4)"
+    ]
+  },
+  "remaining_env_tier": [
+    "Temporal replay (инструмента нет — W4)",
+    "OWASP ZAP",
+    "k6/locust p95",
+    "backup/rollback drill",
+    "in-registry image signing"
+  ]
+}
