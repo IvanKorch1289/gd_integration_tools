@@ -1,32 +1,50 @@
-"""Smoke-тесты для Sphinx docs scaffold (К10 Sprint-2 Wave 5).
+"""Smoke-тесты для docs scaffold (К10 Sprint-2 Wave 5).
 
-Проверяют минимально необходимое присутствие файлов scaffold,
-не запуская sphinx-build (может быть недоступен в CI без доп. deps).
+Docs-конфигурация проекта — **mkdocs**, а не Sphinx: B2 (M10.2) перевёл
+сборку на mkdocs-material + mike и удалил sphinx/sphinx-multiversion из
+зависимостей (см. комментарий в ``pyproject.toml`` около ``mkdocs``-пинов).
+Поэтому тест проверяет ``mkdocs.yml``, а не ``docs/conf.py``: тот файл был
+удалён вместе с тулчейном, и его воссоздание означало бы возврат
+намеренно удалённого Sphinx.
+
+Diátaxis-проверки ниже не зависят от инструмента и остаются как есть.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
+import yaml
+
 # Корень проекта: поднимаемся на 4 уровня от tests/unit/docs/
 _PROJECT_ROOT = Path(__file__).parents[3]
 _DOCS_DIR = _PROJECT_ROOT / "docs"
+_MKDOCS_CONFIG = _PROJECT_ROOT / "mkdocs.yml"
 
 
-def test_conf_py_loadable() -> None:
-    """conf.py загружается без синтаксических ошибок.
+def test_mkdocs_config_parses() -> None:
+    """mkdocs.yml — канонический конфиг docs: парсится и объявляет проект.
 
-    Выполняет exec() содержимого conf.py в изолированном namespace.
-    Проверяет, что переменная project объявлена корректно.
+    Заменяет прежний smoke-тест Sphinx ``conf.py``, который падал после
+    удаления Sphinx. Проверяется то же свойство scaffold'а — конфиг
+    загружается и декларирует проект, — но для реально используемого
+    инструмента.
     """
-    conf_path = _DOCS_DIR / "conf.py"
-    assert conf_path.exists(), f"docs/conf.py не найден: {conf_path}"
+    assert _MKDOCS_CONFIG.exists(), f"mkdocs.yml не найден: {_MKDOCS_CONFIG}"
+    assert not (_DOCS_DIR / "conf.py").exists(), (
+        "docs/conf.py не должен появляться: Sphinx удалён в пользу mkdocs "
+        "(B2 / M10.2). Возврат файла означает возврат удалённого тулчейна."
+    )
 
-    namespace: dict = {}
-    exec(conf_path.read_text(encoding="utf-8"), namespace)
-
-    assert "project" in namespace, "conf.py не объявляет переменную 'project'"
-    assert namespace["project"] == "gd_integration_tools"
+    config = yaml.safe_load(_MKDOCS_CONFIG.read_text(encoding="utf-8"))
+    assert isinstance(config, dict), "mkdocs.yml должен быть YAML-маппингом"
+    assert config.get("site_name") == "gd_integration_tools", (
+        f"site_name в mkdocs.yml должен быть 'gd_integration_tools', "
+        f"получено {config.get('site_name')!r}"
+    )
+    assert config.get("docs_dir") == "docs", (
+        f"docs_dir должен указывать на docs/, получено {config.get('docs_dir')!r}"
+    )
 
 
 def test_index_md_exists() -> None:
