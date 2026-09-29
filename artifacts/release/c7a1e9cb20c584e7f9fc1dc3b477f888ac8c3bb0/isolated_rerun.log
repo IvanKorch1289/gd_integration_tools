@@ -1,0 +1,588 @@
+2026-09-29 18:53:23 [warning  ] Vault недоступен (HTTPConnectionPool(host='127.0.0.1', port=8200): Max retries exceeded with url: /v1/auth/token/lookup-self (Caused by NewConnectionError("HTTPConnection(host='127.0.0.1', port=8200): Failed to establish a new connection: [Errno 111] Connection refused"))) — secrets-источник пропущен. Установите vault.enabled=false или поднимите Vault, чтобы убрать это сообщение.
+............s..............................FF....FFFFFF................. [ 51%]
+.....F....................................................F.EEEEEE.      [100%]
+==================================== ERRORS ====================================
+__________ ERROR at setup of test_aggregator_command_uses_venv_python __________
+
+    @pytest.fixture(scope="module")
+    def aggregator_result() -> dict[str, Any]:
+        """Один прогон aggregator на весь модуль.
+    
+        Aggregator выполняет ~10 gates и занимает ~95 секунд. Раньше КАЖДЫЙ
+        тест модуля запускал его заново, из-за чего 6 тестов занимали ~10 минут
+        и не укладывались в разумный лимит. Результат детерминирован в рамках
+        одного прогона, поэтому одного запуска достаточно.
+    
+        Exit code проверяется здесь же: иначе тесты читали бы STALE
+        ``quality-results.json`` от предыдущего прогона и проходили бы
+        при упавшем aggregator — ровно тот false-green, который audit W3 запрещает.
+        """
+        cmd = [sys.executable, "tools/checks/quality_results_aggregator.py"]
+>       result = subprocess.run(
+            cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=600
+        )
+
+tests/unit/tools/test_quality_results_aggregator.py:42: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/subprocess.py:556: in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/subprocess.py:1220: in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/subprocess.py:2126: in _communicate
+    ready = selector.select(timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <selectors.PollSelector object at 0x75360320f230>, timeout = 600000
+
+    def select(self, timeout=None):
+        # This is shared between poll() and epoll().
+        # epoll() has a different signature and handling of timeout parameter.
+        if timeout is None:
+            timeout = None
+        elif timeout <= 0:
+            timeout = 0
+        else:
+            # poll() has a resolution of 1 millisecond, round away from
+            # zero to wait *at least* timeout seconds.
+            timeout = math.ceil(timeout * 1e3)
+        ready = []
+        try:
+>           fd_event_list = self._selector.poll(timeout)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: Timeout (>120.0s) from pytest-timeout.
+
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/selectors.py:398: Failed
+_________ ERROR at setup of test_aggregator_counts_parsed_from_output __________
+
+    @pytest.fixture(scope="module")
+    def aggregator_result() -> dict[str, Any]:
+        """Один прогон aggregator на весь модуль.
+    
+        Aggregator выполняет ~10 gates и занимает ~95 секунд. Раньше КАЖДЫЙ
+        тест модуля запускал его заново, из-за чего 6 тестов занимали ~10 минут
+        и не укладывались в разумный лимит. Результат детерминирован в рамках
+        одного прогона, поэтому одного запуска достаточно.
+    
+        Exit code проверяется здесь же: иначе тесты читали бы STALE
+        ``quality-results.json`` от предыдущего прогона и проходили бы
+        при упавшем aggregator — ровно тот false-green, который audit W3 запрещает.
+        """
+        cmd = [sys.executable, "tools/checks/quality_results_aggregator.py"]
+>       result = subprocess.run(
+            cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=600
+        )
+
+tests/unit/tools/test_quality_results_aggregator.py:42: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/subprocess.py:556: in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/subprocess.py:1220: in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/subprocess.py:2126: in _communicate
+    ready = selector.select(timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <selectors.PollSelector object at 0x75360320f230>, timeout = 600000
+
+    def select(self, timeout=None):
+        # This is shared between poll() and epoll().
+        # epoll() has a different signature and handling of timeout parameter.
+        if timeout is None:
+            timeout = None
+        elif timeout <= 0:
+            timeout = 0
+        else:
+            # poll() has a resolution of 1 millisecond, round away from
+            # zero to wait *at least* timeout seconds.
+            timeout = math.ceil(timeout * 1e3)
+        ready = []
+        try:
+>           fd_event_list = self._selector.poll(timeout)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: Timeout (>120.0s) from pytest-timeout.
+
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/selectors.py:398: Failed
+_____ ERROR at setup of test_aggregator_gate_records_have_audit_w3_schema ______
+
+    @pytest.fixture(scope="module")
+    def aggregator_result() -> dict[str, Any]:
+        """Один прогон aggregator на весь модуль.
+    
+        Aggregator выполняет ~10 gates и занимает ~95 секунд. Раньше КАЖДЫЙ
+        тест модуля запускал его заново, из-за чего 6 тестов занимали ~10 минут
+        и не укладывались в разумный лимит. Результат детерминирован в рамках
+        одного прогона, поэтому одного запуска достаточно.
+    
+        Exit code проверяется здесь же: иначе тесты читали бы STALE
+        ``quality-results.json`` от предыдущего прогона и проходили бы
+        при упавшем aggregator — ровно тот false-green, который audit W3 запрещает.
+        """
+        cmd = [sys.executable, "tools/checks/quality_results_aggregator.py"]
+>       result = subprocess.run(
+            cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=600
+        )
+
+tests/unit/tools/test_quality_results_aggregator.py:42: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/subprocess.py:556: in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/subprocess.py:1220: in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/subprocess.py:2126: in _communicate
+    ready = selector.select(timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <selectors.PollSelector object at 0x75360320f230>, timeout = 600000
+
+    def select(self, timeout=None):
+        # This is shared between poll() and epoll().
+        # epoll() has a different signature and handling of timeout parameter.
+        if timeout is None:
+            timeout = None
+        elif timeout <= 0:
+            timeout = 0
+        else:
+            # poll() has a resolution of 1 millisecond, round away from
+            # zero to wait *at least* timeout seconds.
+            timeout = math.ceil(timeout * 1e3)
+        ready = []
+        try:
+>           fd_event_list = self._selector.poll(timeout)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: Timeout (>120.0s) from pytest-timeout.
+
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/selectors.py:398: Failed
+____________ ERROR at setup of test_aggregator_overall_status_logic ____________
+
+    @pytest.fixture(scope="module")
+    def aggregator_result() -> dict[str, Any]:
+        """Один прогон aggregator на весь модуль.
+    
+        Aggregator выполняет ~10 gates и занимает ~95 секунд. Раньше КАЖДЫЙ
+        тест модуля запускал его заново, из-за чего 6 тестов занимали ~10 минут
+        и не укладывались в разумный лимит. Результат детерминирован в рамках
+        одного прогона, поэтому одного запуска достаточно.
+    
+        Exit code проверяется здесь же: иначе тесты читали бы STALE
+        ``quality-results.json`` от предыдущего прогона и проходили бы
+        при упавшем aggregator — ровно тот false-green, который audit W3 запрещает.
+        """
+        cmd = [sys.executable, "tools/checks/quality_results_aggregator.py"]
+>       result = subprocess.run(
+            cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=600
+        )
+
+tests/unit/tools/test_quality_results_aggregator.py:42: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/subprocess.py:556: in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/subprocess.py:1220: in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/subprocess.py:2126: in _communicate
+    ready = selector.select(timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <selectors.PollSelector object at 0x75360320f230>, timeout = 600000
+
+    def select(self, timeout=None):
+        # This is shared between poll() and epoll().
+        # epoll() has a different signature and handling of timeout parameter.
+        if timeout is None:
+            timeout = None
+        elif timeout <= 0:
+            timeout = 0
+        else:
+            # poll() has a resolution of 1 millisecond, round away from
+            # zero to wait *at least* timeout seconds.
+            timeout = math.ceil(timeout * 1e3)
+        ready = []
+        try:
+>           fd_event_list = self._selector.poll(timeout)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: Timeout (>120.0s) from pytest-timeout.
+
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/selectors.py:398: Failed
+_______ ERROR at setup of test_aggregator_produces_machine_readable_json _______
+
+    @pytest.fixture(scope="module")
+    def aggregator_result() -> dict[str, Any]:
+        """Один прогон aggregator на весь модуль.
+    
+        Aggregator выполняет ~10 gates и занимает ~95 секунд. Раньше КАЖДЫЙ
+        тест модуля запускал его заново, из-за чего 6 тестов занимали ~10 минут
+        и не укладывались в разумный лимит. Результат детерминирован в рамках
+        одного прогона, поэтому одного запуска достаточно.
+    
+        Exit code проверяется здесь же: иначе тесты читали бы STALE
+        ``quality-results.json`` от предыдущего прогона и проходили бы
+        при упавшем aggregator — ровно тот false-green, который audit W3 запрещает.
+        """
+        cmd = [sys.executable, "tools/checks/quality_results_aggregator.py"]
+>       result = subprocess.run(
+            cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=600
+        )
+
+tests/unit/tools/test_quality_results_aggregator.py:42: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/subprocess.py:556: in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/subprocess.py:1220: in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/subprocess.py:2126: in _communicate
+    ready = selector.select(timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <selectors.PollSelector object at 0x75360320f230>, timeout = 600000
+
+    def select(self, timeout=None):
+        # This is shared between poll() and epoll().
+        # epoll() has a different signature and handling of timeout parameter.
+        if timeout is None:
+            timeout = None
+        elif timeout <= 0:
+            timeout = 0
+        else:
+            # poll() has a resolution of 1 millisecond, round away from
+            # zero to wait *at least* timeout seconds.
+            timeout = math.ceil(timeout * 1e3)
+        ready = []
+        try:
+>           fd_event_list = self._selector.poll(timeout)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: Timeout (>120.0s) from pytest-timeout.
+
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/selectors.py:398: Failed
+__________ ERROR at setup of test_aggregator_status_counts_aggregate ___________
+
+    @pytest.fixture(scope="module")
+    def aggregator_result() -> dict[str, Any]:
+        """Один прогон aggregator на весь модуль.
+    
+        Aggregator выполняет ~10 gates и занимает ~95 секунд. Раньше КАЖДЫЙ
+        тест модуля запускал его заново, из-за чего 6 тестов занимали ~10 минут
+        и не укладывались в разумный лимит. Результат детерминирован в рамках
+        одного прогона, поэтому одного запуска достаточно.
+    
+        Exit code проверяется здесь же: иначе тесты читали бы STALE
+        ``quality-results.json`` от предыдущего прогона и проходили бы
+        при упавшем aggregator — ровно тот false-green, который audit W3 запрещает.
+        """
+        cmd = [sys.executable, "tools/checks/quality_results_aggregator.py"]
+>       result = subprocess.run(
+            cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=600
+        )
+
+tests/unit/tools/test_quality_results_aggregator.py:42: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/subprocess.py:556: in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/subprocess.py:1220: in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/subprocess.py:2126: in _communicate
+    ready = selector.select(timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <selectors.PollSelector object at 0x75360320f230>, timeout = 600000
+
+    def select(self, timeout=None):
+        # This is shared between poll() and epoll().
+        # epoll() has a different signature and handling of timeout parameter.
+        if timeout is None:
+            timeout = None
+        elif timeout <= 0:
+            timeout = 0
+        else:
+            # poll() has a resolution of 1 millisecond, round away from
+            # zero to wait *at least* timeout seconds.
+            timeout = math.ceil(timeout * 1e3)
+        ready = []
+        try:
+>           fd_event_list = self._selector.poll(timeout)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: Timeout (>120.0s) from pytest-timeout.
+
+../../.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/selectors.py:398: Failed
+=================================== FAILURES ===================================
+__________________________ test_translate_csv_to_dict __________________________
+
+    @pytest.mark.asyncio
+    async def test_translate_csv_to_dict() -> None:
+        proc = MessageTranslatorProcessor(from_format="csv", to_format="dict")
+        e = _ex(body="a,b\n1,2\n")
+>       await proc.process(e, AsyncMock())
+
+tests/unit/dsl/engine/processors/eip/test_transformation.py:369: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/backend/dsl/engine/processors/eip/transformation.py:41: in process
+    converted = self._convert(body)
+                ^^^^^^^^^^^^^^^^^^^
+src/backend/dsl/engine/processors/eip/transformation.py:57: in _convert
+    return self._csv_to_dict_list(body if isinstance(body, str) else str(body))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+csv_str = 'a,b\n1,2\n'
+
+    @staticmethod
+    def _csv_to_dict_list(csv_str: str) -> list[dict[str, str]]:
+        try:
+            import io
+    
+            import polars as pl
+    
+>           df = pl.read_csv(io.StringIO(csv_str))
+                 ^^^^^^^^^^^
+E           AttributeError: module 'polars' has no attribute 'read_csv'
+
+src/backend/dsl/engine/processors/eip/transformation.py:114: AttributeError
+__________________________ test_translate_dict_to_csv __________________________
+
+    @pytest.mark.asyncio
+    async def test_translate_dict_to_csv() -> None:
+        proc = MessageTranslatorProcessor(from_format="dict", to_format="csv")
+        e = _ex(body=[{"a": 1, "b": 2}])
+        await proc.process(e, AsyncMock())
+>       assert "a,b" in e.out_message.body
+E       AssertionError: assert 'a,b' in <MagicMock name='mock().write_csv()' id='128874961536736'>
+E        +  where <MagicMock name='mock().write_csv()' id='128874961536736'> = Message(headers={}, body=<MagicMock name='mock().write_csv()' id='128874961536736'>, data_kind=<DataKind.SINGLE: 'single'>, watermark=None).body
+E        +    where Message(headers={}, body=<MagicMock name='mock().write_csv()' id='128874961536736'>, data_kind=<DataKind.SINGLE: 'single'>, watermark=None) = Exchange(meta=ExchangeMeta(exchange_id='308cb1ac-7904-45bf-9b85-8d699eb995f2', route_id=None, correlation_id='65c3ec41...nd=<DataKind.SINGLE: 'single'>, watermark=None), properties={}, status=<ExchangeStatus.pending: 'pending'>, error=None).out_message
+
+tests/unit/dsl/engine/processors/eip/test_transformation.py:361: AssertionError
+__________________ TestConversionStrategies.test_csv_to_dict ___________________
+
+self = <dsl.engine.processors.test_converters.TestConversionStrategies object at 0x75360f0ce810>
+
+    def test_csv_to_dict(self) -> None:
+        pytest.importorskip("polars")
+        strategy = CsvToDict()
+        data = "name,age\nAlice,30\nBob,25"
+>       result = strategy.convert(data)
+                 ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/dsl/engine/processors/test_converters.py:133: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <src.backend.dsl.engine.processors.converters.CsvToDict object at 0x753612fb4550>
+data = 'name,age\nAlice,30\nBob,25'
+
+    def convert(self, data: Any) -> Any:
+        """Выполнить операцию convert."""
+        if not isinstance(data, str):
+            return data
+        try:
+            import io
+    
+            import polars as pl
+    
+>           df = pl.read_csv(io.StringIO(data))
+                 ^^^^^^^^^^^
+E           AttributeError: module 'polars' has no attribute 'read_csv'
+
+src/backend/dsl/engine/processors/converters.py:248: AttributeError
+____________ TestConversionStrategies.test_csv_to_dict_single_line _____________
+
+self = <dsl.engine.processors.test_converters.TestConversionStrategies object at 0x75360ee710d0>
+
+    def test_csv_to_dict_single_line(self) -> None:
+        strategy = CsvToDict()
+>       result = strategy.convert("single line")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/dsl/engine/processors/test_converters.py:146: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <src.backend.dsl.engine.processors.converters.CsvToDict object at 0x753612e48180>
+data = 'single line'
+
+    def convert(self, data: Any) -> Any:
+        """Выполнить операцию convert."""
+        if not isinstance(data, str):
+            return data
+        try:
+            import io
+    
+            import polars as pl
+    
+>           df = pl.read_csv(io.StringIO(data))
+                 ^^^^^^^^^^^
+E           AttributeError: module 'polars' has no attribute 'read_csv'
+
+src/backend/dsl/engine/processors/converters.py:248: AttributeError
+__________________ TestConversionStrategies.test_dict_to_csv ___________________
+
+self = <dsl.engine.processors.test_converters.TestConversionStrategies object at 0x75360efe27b0>
+
+    def test_dict_to_csv(self) -> None:
+        pytest.importorskip("polars")
+        strategy = DictToCsv()
+        data = [{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]
+        result = strategy.convert(data)
+>       assert "name,age" in result
+E       AssertionError: assert 'name,age' in <MagicMock name='mock().write_csv()' id='128874961536736'>
+
+tests/unit/dsl/engine/processors/test_converters.py:113: AssertionError
+____________ TestConversionStrategies.test_dict_to_csv_single_dict _____________
+
+self = <dsl.engine.processors.test_converters.TestConversionStrategies object at 0x75360f0ce750>
+
+    def test_dict_to_csv_single_dict(self) -> None:
+        pytest.importorskip("polars")
+        strategy = DictToCsv()
+        data = [{"name": "Alice"}]
+        result = strategy.convert(data)
+>       assert "name" in result
+E       AssertionError: assert 'name' in <MagicMock name='mock().write_csv()' id='128874961536736'>
+
+tests/unit/dsl/engine/processors/test_converters.py:127: AssertionError
+_____________ TestConvertProcessorProcess.test_convert_csv_to_dict _____________
+
+self = <dsl.engine.processors.test_converters.TestConvertProcessorProcess object at 0x75360f123020>
+
+    @pytest.mark.asyncio
+    async def test_convert_csv_to_dict(self) -> None:
+        pytest.importorskip("polars")
+        proc = ConvertProcessor(from_format="csv", to_format="dict")
+        ex = _make_exchange(body="name,age\nAlice,30")
+>       await proc.process(ex, MagicMock())
+
+tests/unit/dsl/engine/processors/test_converters.py:230: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/backend/dsl/engine/processors/converters.py:312: in process
+    converted = strategy.convert(body)
+                ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <src.backend.dsl.engine.processors.converters.CsvToDict object at 0x75360fa2d7f0>
+data = 'name,age\nAlice,30'
+
+    def convert(self, data: Any) -> Any:
+        """Выполнить операцию convert."""
+        if not isinstance(data, str):
+            return data
+        try:
+            import io
+    
+            import polars as pl
+    
+>           df = pl.read_csv(io.StringIO(data))
+                 ^^^^^^^^^^^
+E           AttributeError: module 'polars' has no attribute 'read_csv'
+
+src/backend/dsl/engine/processors/converters.py:248: AttributeError
+_____________ TestConvertProcessorProcess.test_convert_dict_to_csv _____________
+
+self = <dsl.engine.processors.test_converters.TestConvertProcessorProcess object at 0x75360f122be0>
+
+    @pytest.mark.asyncio
+    async def test_convert_dict_to_csv(self) -> None:
+        pytest.importorskip("polars")
+        proc = ConvertProcessor(from_format="dict", to_format="csv")
+        ex = _make_exchange(body=[{"name": "Alice", "age": 30}])
+        await proc.process(ex, MagicMock())
+>       assert "name,age" in str(ex.out_message.body)
+E       assert 'name,age' in "<MagicMock name='mock().write_csv()' id='128874961536736'>"
+E        +  where "<MagicMock name='mock().write_csv()' id='128874961536736'>" = str(<MagicMock name='mock().write_csv()' id='128874961536736'>)
+E        +    where <MagicMock name='mock().write_csv()' id='128874961536736'> = Message(headers={}, body=<MagicMock name='mock().write_csv()' id='128874961536736'>, data_kind=<DataKind.SINGLE: 'single'>, watermark=None).body
+E        +      where Message(headers={}, body=<MagicMock name='mock().write_csv()' id='128874961536736'>, data_kind=<DataKind.SINGLE: 'single'>, watermark=None) = Exchange(meta=ExchangeMeta(exchange_id='e73a92ed-f232-418b-b39e-8a86a4b793f5', route_id=None, correlation_id='1415dc82...'>, watermark=None), properties={'convert_format': 'dict→csv'}, status=<ExchangeStatus.pending: 'pending'>, error=None).out_message
+
+tests/unit/dsl/engine/processors/test_converters.py:223: AssertionError
+_________________ test_p0_2_action_not_in_registry_returns_404 _________________
+
+    def test_p0_2_action_not_in_registry_returns_404() -> None:
+        """Action not in registry → 404 (KeyError → JSONResponse 404)."""
+        app = _build_test_app_with_aliases()
+        client = TestClient(app)
+    
+        mock_reg = MagicMock()
+        mock_reg.dispatch = AsyncMock(side_effect=KeyError("orders.get"))
+    
+        with patch(
+            "src.backend.dsl.commands.action_registry.action_handler_registry", mock_reg
+        ):
+            r = client.get("/api/v1/orders/all/")
+    
+>       assert r.status_code == 404
+E       assert 200 == 404
+E        +  where 200 = <Response [200 OK]>.status_code
+
+tests/unit/entrypoints/api/v1/endpoints/test_p0_fixes_cycle_241.py:243: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     src.backend.core.resilience.breaker:structlog_backend.py:105 {'event': 'Circuit breaker created: redis.cache@localhost:6379', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'src.backend.core.resilience.breaker', 'level': 'info', 'timestamp': '2026-09-29T15:53:44.143902Z'}
+INFO     src.backend.core.resilience.breaker:structlog_backend.py:105 {'event': 'Circuit breaker created: redis.queue@localhost:6379', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'src.backend.core.resilience.breaker', 'level': 'info', 'timestamp': '2026-09-29T15:53:44.144153Z'}
+INFO     src.backend.core.resilience.breaker:structlog_backend.py:105 {'event': 'Circuit breaker created: redis.limits@localhost:6379', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'src.backend.core.resilience.breaker', 'level': 'info', 'timestamp': '2026-09-29T15:53:44.144304Z'}
+WARNING  redis:structlog_backend.py:117 {'event': 'Redis cache недоступен, fallback chain activated: AUTH <password> called without any password configured for the default user. Are you sure your configuration is correct?', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'redis', 'level': 'warning', 'timestamp': '2026-09-29T15:53:44.146685Z'}
+INFO     httpx2:_client.py:1085 HTTP Request: GET http://testserver/api/v1/orders/all/ "HTTP/1.1 200 OK"
+_______________ test_populate_from_actions_registry_unavailable ________________
+
+    @pytest.mark.asyncio
+    async def test_populate_from_actions_registry_unavailable() -> None:
+        reg = ServiceSchemaRegistry()
+        with patch(
+            "src.backend.core.api.extensions",
+            SimpleNamespace(),  # нет action_handler_registry
+        ):
+>           assert populator.populate_from_actions(reg) == 0
+E           assert 24 == 0
+E            +  where 24 = <function populate_from_actions at 0x75360a5d6b90>(<src.backend.services.schema_registry.registry.ServiceSchemaRegistry object at 0x753602fb8680>)
+E            +    where <function populate_from_actions at 0x75360a5d6b90> = populator.populate_from_actions
+
+tests/unit/services/schema_registry/test_populator.py:103: AssertionError
+=============================== warnings summary ===============================
+.venv/lib/python3.14/site-packages/starlette/testclient.py:53
+  /home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette/testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+tests/unit/clients/test_base_client.py::test_http_client_auth_token_sets_authorization
+tests/unit/clients/test_base_client.py::test_http_client_circuit_breaker_opens_after_threshold
+tests/unit/clients/test_base_client.py::test_http_client_circuit_breaker_resets_on_success
+tests/unit/clients/test_base_client.py::test_http_client_does_not_retry_on_non_retryable_status
+tests/unit/clients/test_base_client.py::test_http_client_passes_custom_headers
+  /home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/asyncio/events.py:94: RuntimeWarning: coroutine 'TaskRegistry.create_task.<locals>._runner' was never awaited
+    self._context.run(self._callback, *self._args)
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/unit/core/di/providers/test_correlation_id_provider.py::TestCorrelationIdProvider::test_returns_default_when_no_context
+  /home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/_pytest/assertion/rewrite.py:188: DeprecationWarning: src.backend.core.di.providers.infrastructure_facade is DEPRECATED (renamed to infrastructure_locator in S31 Task 5 — module is a service locator, not a capability-checked facade). Update your imports to infrastructure_locator.
+    exec(co, module.__dict__)
+
+tests/unit/dsl/test_action_metadata_contract.py::TestRegisteredActionMetadata::test_transports_is_non_empty_tuple_of_strings
+  /home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/_pytest/assertion/rewrite.py:188: DeprecationWarning: src.backend.services.io.files устарел; используйте extensions.core_entities.files.services.files (R-V15-16).
+    exec(co, module.__dict__)
+
+tests/unit/dsl/test_action_metadata_contract.py::TestRegisteredActionMetadata::test_transports_is_non_empty_tuple_of_strings
+  /home/user/dev/gd_integration_tools/extensions/core_entities/users/schemas/route.py:33: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.13/migration/
+    class UserSchemaOut(BaseSchema):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/unit/dsl/engine/processors/eip/test_transformation.py::test_translate_csv_to_dict
+FAILED tests/unit/dsl/engine/processors/eip/test_transformation.py::test_translate_dict_to_csv
+FAILED tests/unit/dsl/engine/processors/test_converters.py::TestConversionStrategies::test_csv_to_dict
+FAILED tests/unit/dsl/engine/processors/test_converters.py::TestConversionStrategies::test_csv_to_dict_single_line
+FAILED tests/unit/dsl/engine/processors/test_converters.py::TestConversionStrategies::test_dict_to_csv
+FAILED tests/unit/dsl/engine/processors/test_converters.py::TestConversionStrategies::test_dict_to_csv_single_dict
+FAILED tests/unit/dsl/engine/processors/test_converters.py::TestConvertProcessorProcess::test_convert_csv_to_dict
+FAILED tests/unit/dsl/engine/processors/test_converters.py::TestConvertProcessorProcess::test_convert_dict_to_csv
+FAILED tests/unit/entrypoints/api/v1/endpoints/test_p0_fixes_cycle_241.py::test_p0_2_action_not_in_registry_returns_404
+FAILED tests/unit/services/schema_registry/test_populator.py::test_populate_from_actions_registry_unavailable
+10 failed, 122 passed, 1 skipped, 9 warnings, 6 errors in 141.17s (0:02:21)
+EXIT=123

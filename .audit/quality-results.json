@@ -1,11 +1,10 @@
 {
   "audit": "GD Integration Tools 25.09.2026",
-  "head": "e59534f88",
-  "timestamp": "2026-09-29T13:24:57.788304+00:00",
-  "overall_status": "FAIL",
+  "head": "c5faa2687",
+  "timestamp": "2026-09-29T16:00:26.908372+00:00",
+  "overall_status": "PASS",
   "status_counts": {
-    "PASS": 10,
-    "FAIL": 1
+    "PASS": 11
   },
   "gate_count": 11,
   "gates": [
@@ -13,8 +12,8 @@
       "gate": "compileall",
       "command": "/home/user/dev/gd_integration_tools/.venv/bin/python -m compileall -q src/backend",
       "exit_code": 0,
-      "duration_seconds": 5.022,
-      "head": "e59534f88",
+      "duration_seconds": 0.083,
+      "head": "c5faa2687",
       "tool_version": "python Python 3.14.0",
       "status": "PASS",
       "counts": {},
@@ -22,14 +21,14 @@
       "message": null,
       "stdout_tail": "",
       "stderr_tail": "",
-      "timestamp": "2026-09-29T13:23:21.578369+00:00"
+      "timestamp": "2026-09-29T15:58:44.908132+00:00"
     },
     {
       "gate": "check_layers",
       "command": "/home/user/dev/gd_integration_tools/.venv/bin/python tools/check_layers.py",
       "exit_code": 0,
-      "duration_seconds": 30.284,
-      "head": "e59534f88",
+      "duration_seconds": 25.701,
+      "head": "c5faa2687",
       "tool_version": null,
       "status": "PASS",
       "counts": {},
@@ -37,14 +36,14 @@
       "message": null,
       "stdout_tail": "Нарушений: 0 новых  (файлов: 2554; baseline: 22 legacy)\n",
       "stderr_tail": "",
-      "timestamp": "2026-09-29T13:23:51.865413+00:00"
+      "timestamp": "2026-09-29T15:59:10.610522+00:00"
     },
     {
       "gate": "check_docstrings",
       "command": "/home/user/dev/gd_integration_tools/.venv/bin/python tools/check_docstrings.py",
       "exit_code": 0,
-      "duration_seconds": 1.416,
-      "head": "e59534f88",
+      "duration_seconds": 1.426,
+      "head": "c5faa2687",
       "tool_version": null,
       "status": "PASS",
       "counts": {
@@ -54,32 +53,32 @@
       "message": null,
       "stdout_tail": "Total: 0 missing docstrings in 0 files\nFiles scanned: 2554",
       "stderr_tail": "",
-      "timestamp": "2026-09-29T13:23:53.282696+00:00"
+      "timestamp": "2026-09-29T15:59:12.038274+00:00"
     },
     {
       "gate": "classify_object_authorization",
       "command": "/home/user/dev/gd_integration_tools/.venv/bin/python tools/classify_object_authorization.py --strict",
       "exit_code": 0,
-      "duration_seconds": 3.444,
-      "head": "e59534f88",
+      "duration_seconds": 4.539,
+      "head": "c5faa2687",
       "tool_version": null,
       "status": "PASS",
       "counts": {
         "unknown_callsites": 0,
         "user_data_callsites": 9
       },
-      "artifact_hash": "sha256:371f822e88af0c86",
+      "artifact_hash": "sha256:d657ce23a2b8da98",
       "message": null,
       "stdout_tail": "             102  infra-registry  self._configs.get(route_id)             \nsrc/backend/core/canary_deploy/controller.py                   111  infra-registry  self._configs.get(route_id)             \n",
       "stderr_tail": "\nv6 W1 strict gate OK: 9 user-data, 0 unknown, 117 total.\n",
-      "timestamp": "2026-09-29T13:23:56.728801+00:00"
+      "timestamp": "2026-09-29T15:59:16.579220+00:00"
     },
     {
       "gate": "check_tenant_isolation",
       "command": "/home/user/dev/gd_integration_tools/.venv/bin/python tools/checks/check_tenant_isolation.py --strict",
       "exit_code": 0,
-      "duration_seconds": 2.67,
-      "head": "e59534f88",
+      "duration_seconds": 3.66,
+      "head": "c5faa2687",
       "tool_version": null,
       "status": "PASS",
       "counts": {
@@ -90,29 +89,29 @@
       "message": null,
       "stdout_tail": "lowlisted (false positives): 552\n  ℹ️  Unclassified (need attention): 0\n  ℹ️  Total findings: 558; allowlisted: 558 (100%); unclassified: 0\n\n✅ All findings classified (allowlist covers system infra)\n\n",
       "stderr_tail": "",
-      "timestamp": "2026-09-29T13:23:59.400490+00:00"
+      "timestamp": "2026-09-29T15:59:20.241186+00:00"
     },
     {
       "gate": "check_privacy_lifecycle",
       "command": "/home/user/dev/gd_integration_tools/.venv/bin/python tools/checks/check_privacy_lifecycle.py --strict",
       "exit_code": 0,
-      "duration_seconds": 2.212,
-      "head": "e59534f88",
+      "duration_seconds": 4.053,
+      "head": "c5faa2687",
       "tool_version": null,
       "status": "PASS",
       "counts": {},
-      "artifact_hash": "sha256:2c108a09042d5998",
+      "artifact_hash": "sha256:b6e23c758fe70db8",
       "message": null,
       "stdout_tail": "MemErasureAdapter.execute()\n  Tombstone publication: ✅\n  Legal hold support: ✅\n  Reconciliation check: ✅\n  Orchestration command: ✅ src/backend/core/privacy/__init__.py\n\n✅ Privacy lifecycle complete\n\n",
-      "stderr_tail": "enarioProcessor остаются — миграция в Sprint 180+.', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'dsl.legacy.web', 'level': 'warning', 'timestamp': '2026-09-29T13:24:00.527699Z'}\n",
-      "timestamp": "2026-09-29T13:24:01.613478+00:00"
+      "stderr_tail": "enarioProcessor остаются — миграция в Sprint 180+.', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'dsl.legacy.web', 'level': 'warning', 'timestamp': '2026-09-29T15:59:21.639917Z'}\n",
+      "timestamp": "2026-09-29T15:59:24.295729+00:00"
     },
     {
       "gate": "check_dsl_processors_imports",
       "command": "/home/user/dev/gd_integration_tools/.venv/bin/python tools/checks/check_dsl_processors_imports.py --strict",
       "exit_code": 0,
-      "duration_seconds": 1.767,
-      "head": "e59534f88",
+      "duration_seconds": 2.039,
+      "head": "c5faa2687",
       "tool_version": null,
       "status": "PASS",
       "counts": {},
@@ -120,14 +119,14 @@
       "message": null,
       "stdout_tail": "✅ AST-gate: no new imports of legacy src.backend.dsl.processors outside allowlist.\n\n",
       "stderr_tail": "",
-      "timestamp": "2026-09-29T13:24:03.382004+00:00"
+      "timestamp": "2026-09-29T15:59:26.337687+00:00"
     },
     {
       "gate": "verify_test_profiles",
       "command": "/home/user/dev/gd_integration_tools/.venv/bin/python tools/checks/verify_test_profiles.py --strict",
       "exit_code": 0,
-      "duration_seconds": 0.04,
-      "head": "e59534f88",
+      "duration_seconds": 0.063,
+      "head": "c5faa2687",
       "tool_version": null,
       "status": "PASS",
       "counts": {},
@@ -135,14 +134,14 @@
       "message": null,
       "stdout_tail": "4 deps\n  test-core              4 deps\n  test-frontend          3 deps\n  test-messaging         3 deps\n  test-rpa               4 deps\n  test-scheduler         4 deps\n  test-workflow          4 deps\n\n",
       "stderr_tail": "",
-      "timestamp": "2026-09-29T13:24:03.423289+00:00"
+      "timestamp": "2026-09-29T15:59:26.403273+00:00"
     },
     {
       "gate": "mypy_budget",
       "command": "/home/user/dev/gd_integration_tools/.venv/bin/python tools/checks/mypy_budget.py --max 5",
       "exit_code": 0,
-      "duration_seconds": 54.173,
-      "head": "e59534f88",
+      "duration_seconds": 58.706,
+      "head": "c5faa2687",
       "tool_version": "python Python 3.14.0",
       "status": "PASS",
       "counts": {
@@ -152,14 +151,14 @@
       "message": null,
       "stdout_tail": "Running mypy...\nmypy errors: 0 (max=5, baseline=30)\nOK\n",
       "stderr_tail": "",
-      "timestamp": "2026-09-29T13:24:57.598643+00:00"
+      "timestamp": "2026-09-29T16:00:25.115267+00:00"
     },
     {
       "gate": "ruff",
       "command": "ruff check src tests",
       "exit_code": 0,
-      "duration_seconds": 0.117,
-      "head": "e59534f88",
+      "duration_seconds": 0.174,
+      "head": "c5faa2687",
       "tool_version": "ruff 0.16.5",
       "status": "PASS",
       "counts": {},
@@ -167,22 +166,22 @@
       "message": null,
       "stdout_tail": "All checks passed!\n",
       "stderr_tail": "",
-      "timestamp": "2026-09-29T13:24:57.744723+00:00"
+      "timestamp": "2026-09-29T16:00:26.783483+00:00"
     },
     {
       "gate": "ruff_format",
       "command": "ruff format --check src tests",
-      "exit_code": 1,
-      "duration_seconds": 0.039,
-      "head": "e59534f88",
+      "exit_code": 0,
+      "duration_seconds": 0.115,
+      "head": "c5faa2687",
       "tool_version": "ruff 0.16.5",
-      "status": "FAIL",
+      "status": "PASS",
       "counts": {},
-      "artifact_hash": "sha256:b5c18f923a60f182",
+      "artifact_hash": "sha256:37a09d483587d33d",
       "message": null,
-      "stdout_tail": "\n277 +     assert mod.main([\"--samples\", \"3\"]) == 1, (\n278 +         \"медиана обязана ловить устойчивую деградацию\"\n279 +     )\n280 |\n    |\n\n2 files would be reformatted, 4758 files already formatted\n",
+      "stdout_tail": "4761 files already formatted\n",
       "stderr_tail": "",
-      "timestamp": "2026-09-29T13:24:57.787034+00:00"
+      "timestamp": "2026-09-29T16:00:26.904922+00:00"
     }
   ]
 }
