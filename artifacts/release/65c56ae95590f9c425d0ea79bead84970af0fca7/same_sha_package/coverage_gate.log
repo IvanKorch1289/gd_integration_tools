@@ -1,0 +1,5 @@
+Coverage: 75.83%
+Threshold: 70.00%
+Baseline: 52.25%
+OK: coverage gate passed (75.83% >= 70.00%)
+COVGATE_EXIT=0
