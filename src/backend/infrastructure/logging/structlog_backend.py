@@ -42,12 +42,22 @@ class StructlogLogger(LoggerProtocol):
     @property
     def name(self) -> str:
         """Sprint 60 W2 — обратная совместимость: ``logger.name`` → structlog logger name."""
-        # structlog.BoundLogger хранит имя в self._inner._logger.name (stdlib обёртка)
+        # Приоритет — собственный ``.name`` объекта. Раньше первой шла проверка
+        # ``_logger``, но у ``structlog.BoundLoggerLazyProxy`` этот атрибут
+        # существует и равен ``None`` до биндинга, поэтому
+        # ``getattr(inner._logger, "name", default)`` молча возвращал имя класса
+        # прокси ('BoundLoggerLazyProxy') вместо настоящего имени логгера —
+        # хотя ``inner.name`` содержал корректное значение.
         inner = self._inner
-        if hasattr(inner, "_logger"):
-            return getattr(inner._logger, "name", inner.__class__.__name__)
-        if hasattr(inner, "name"):
-            return inner.name
+        direct = getattr(inner, "name", None)
+        if isinstance(direct, str) and direct:
+            return direct
+        # structlog.BoundLogger хранит имя в self._inner._logger.name (stdlib обёртка)
+        inner_logger = getattr(inner, "_logger", None)
+        if inner_logger is not None:
+            nested = getattr(inner_logger, "name", None)
+            if isinstance(nested, str) and nested:
+                return nested
         return inner.__class__.__name__
 
     @staticmethod
