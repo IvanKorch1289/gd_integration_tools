@@ -260,3 +260,74 @@ def test_cli_runs_via_subprocess() -> None:
 
     assert result.returncode == 0, f"stderr: {result.stderr}"
     assert "Audit Deprecation Check" in result.stdout
+
+
+# ---------------------------------------------------------------------------
+# Резолвинг вызовов: S106 W5 (унаследованный миксин) и S121 W1 (свой helper)
+# не являются legacy-callsite, а нерезолвящийся и module-level — являются.
+# ---------------------------------------------------------------------------
+
+
+def _write_probe(root: Path) -> None:
+    """Разложить синтетические случаи для проверки резолвинга."""
+    (root / "base_mod.py").write_text(
+        "class BaseWithEmit:\n    def _emit_audit(self, **kw) -> None: ...\n",
+        encoding="utf-8",
+    )
+    (root / "c1_inherited.py").write_text(
+        "from base_mod import BaseWithEmit\n\n\n"
+        "class Child(BaseWithEmit):\n"
+        "    def run(self) -> None:\n"
+        "        self._emit_audit(event='x')\n",
+        encoding="utf-8",
+    )
+    (root / "c2_self_defined.py").write_text(
+        "class Own:\n"
+        "    async def _emit_audit(self, **kw) -> None: ...\n\n"
+        "    def run(self) -> None:\n"
+        "        self._emit_audit(event='x')\n",
+        encoding="utf-8",
+    )
+    (root / "c3_unresolved.py").write_text(
+        "class Orphan:\n"
+        "    def run(self) -> None:\n"
+        "        self._emit_audit(event='x')\n",
+        encoding="utf-8",
+    )
+    (root / "c4_module_level.py").write_text(
+        "def run() -> None:\n    _emit_audit(event='x')\n", encoding="utf-8"
+    )
+
+
+def test_resolver_exempts_inherited_dual_emit_but_still_flags_genuine_legacy(
+    tmp_path: Path,
+) -> None:
+    """Структурный резолвинг не должен маскировать настоящий техдолг.
+
+    Regex срабатывает на ИМЯ ``_emit_audit``, поэтому 8 вызовов в
+    ``check_tenant_mixin.py`` (унаследованный dual-emit миксин) ошибочно
+    считались legacy. Вызов, который нигде не резолвится, и module-level вызов
+    обязаны остаться видны.
+
+    Определение метода в классе (``def _emit_audit``) резолвингом НЕ
+    закрывается намеренно: это самостоятельная legacy-поверхность, и проект
+    закрывает такие случаи allowlist'ом, а не правилом детектора.
+    """
+    _write_probe(tmp_path)
+    results = AuditDeprecationChecker(root=tmp_path).scan()
+    flagged = set(results)
+    assert "c1_inherited.py" not in flagged, "S106 W5: унаследованный dual-emit миксин"
+    assert "c2_self_defined.py" in flagged, "определение метода остаётся legacy"
+    assert "c3_unresolved.py" in flagged, "Нерезолвящийся вызов — настоящий legacy"
+    assert "c4_module_level.py" in flagged, "Module-level вызов — настоящий legacy"
+
+
+def test_resolver_handles_missing_and_unparsable_sources(tmp_path: Path) -> None:
+    """Синтаксически битый файл не должен ронять сканер и не должен глушить остальное."""
+    (tmp_path / "broken.py").write_text("class Oops(:\n", encoding="utf-8")
+    (tmp_path / "ok.py").write_text(
+        "class Orphan:\n    def run(self) -> None:\n        self._emit_audit()\n",
+        encoding="utf-8",
+    )
+    results = AuditDeprecationChecker(root=tmp_path).scan()
+    assert "ok.py" in results, "битый соседний файл не должен скрывать legacy"
