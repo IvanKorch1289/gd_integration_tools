@@ -103,8 +103,9 @@ wrong; an incomplete environment is never reported as `PASS`.
 | MCP surface (mount + auth wrap) | PASS | `44d7ae4c2`: `/mcp` mounted in the live app, chain `McpAuthMiddleware -> StarletteWithLifespan`, inner route `/` (D-AUDIT-20812). Cluster 106 passed / 0 failed |
 | MCP protocol round-trip | **NOT VERIFIED** | the outer `AuthRequiredMiddleware` answers 401 before `McpAuthMiddleware` runs; an authenticated `initialize` / `tools/list` needs an API key this environment cannot mint |
 | Browser / Playwright | PASS with caveat | Playwright run: 7 PASS, 1 PARTIAL, 0 FAIL, zero console errors. `/docs` loads and Authorize works; `/redoc` renders all 443 operations. Swagger UI alone renders 14 — third-party limit, diagnosed |
-| Container image + SBOM | NOT VERIFIED | not built for this SHA |
-| Signature / cosign | NOT VERIFIED | no image to sign |
+| Container image + SBOM | PASS | `make sbom-diff-gate` exit 0, "No known vulnerabilities found", `RESULT: PASS` at `e6ad492fe` (measured again on `abeb41dd5`). The gate now regenerates its pip-audit input and rejects a report older than the dependency list, so a stale file can no longer fabricate CVEs |
+| Signature / cosign | PARTIAL | `cosign verify-blob` on the SBOM reported Verified OK for `24c02ab06`; the mechanism is proven but nothing is signed **in a registry** (no registry :5000 available) |
+| OWASP ZAP | **PARTIAL** | scan ran against the HEAD app, but the summary "FAIL-NEW 0, WARN-NEW 7, PASS 60" is not reproducible: the raw report has no `failNew` field, holds 12 alerts (4 Medium/High CSP + SRI) with empty `nodes`, and no gate in the tree computes that framing. See the measurement note |
 
 > **Port 8000 in this environment is a container running `/app`, started
 > 2026-09-11.** It answers 200 on `/health` and serves its own `openapi.json`.
@@ -363,6 +364,29 @@ installed — for the same wrong reason. Green is not the same as checked.
 ---
 
 ## Measurement notes and staleness
+
+- **OWASP ZAP: the "FAIL-NEW 0, PASS 60" summary is not reproducible from the
+  report it cites. Status: PARTIAL, not VERIFIED.**
+  `wave_evidence.json` at `c066786fb` records
+  `zap_baseline.verdict = "PASS: FAIL-NEW 0, WARN-NEW 7 (hardening-заголовки:
+  COEP и пр.), PASS 60"` and points at `zap/zap_report.json` +
+  `zap_report.html`. Reading the raw report instead of the summary:
+  - it has **no** `failNew` field, and no gate in `tools/` or `make/` computes
+    one, so the "FAIL-NEW" framing has no producing code in the tree;
+  - it contains **12 alerts**, not 60 — 4 with `riskcode "2"`
+    (`Medium (High)`), 4 with `"1"` (Low), 4 with `"0"` (Informational);
+  - the 4 Medium/High ones are CSP (`script-src unsafe-inline`,
+    `style-src unsafe-inline`, `Failure to Define Directive with No Fallback`)
+    and `Sub Resource Integrity Attribute Missing`;
+  - every alert's `nodes` list is **empty**, so no alert can be attributed to a
+    URL and none can be diffed against a baseline. A baseline comparison
+    cannot be reconstructed from this artifact.
+
+  The CSP findings are plausibly the documented `/docs` + `/redoc` relaxation
+  (see the CSP row above) rather than new defects, but "plausibly" is not
+  evidence and this audit does not claim otherwise. What the artifact
+  supports is: a scan ran against the HEAD app on :8081, and 12 alerts were
+  recorded. The counts in the summary are not reproducible.
 
 - **Coverage: 75.22% over the runnable subset, NOT over the whole tree.**
   - The ~52% figures below were whole-`tests/unit` numbers. A segmented run at
