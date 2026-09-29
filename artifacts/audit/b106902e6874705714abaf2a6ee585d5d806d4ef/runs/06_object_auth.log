@@ -1,0 +1,43 @@
+
+v6 W1 strict gate OK: 9 user-data, 0 unknown, 117 total.
+Object authorization callsites classifier — 117 callsites
+Generated: 2026-09-29T13:32:17.998231+00:00
+
+Summary:
+  user-data: 9 (7.7%)
+  infra-registry: 102 (87.2%)
+  unknown: 0 (0.0%)
+
+Sample (first 30):
+File                                                          Line  Type            Snippet                                 
+----------------------------------------------------------------------------------------------------------------------------------
+src/backend/cli/info.py                                         41  infra-registry  route_registry.get(route_id)            
+src/backend/dsl/audit_versioning.py                            151  user-data       session.query(VersionModel).filter_by(...
+src/backend/dsl/audit_versioning.py                            151  user-data       session.query(VersionModel).filter_by(...
+src/backend/entrypoints/_action_bridge.py                      211  infra-registry  _route_semaphores.get(route_id)         
+src/backend/entrypoints/filewatcher/watcher_manager.py         153  infra-registry  self._watchers.get(watcher_id)          
+src/backend/entrypoints/filewatcher/watcher_manager.py         165  infra-registry  self._watchers.get(watcher_id)          
+src/backend/entrypoints/websocket/ws_manager.py                151  infra-registry  self._connections.get(client_id)        
+src/backend/entrypoints/websocket/ws_manager.py                124  infra-registry  self._connections_by_action.get(action...
+src/backend/entrypoints/websocket/ws_manager.py                173  infra-registry  self._connections.get(client_id)        
+src/backend/entrypoints/webhook/sources_router.py               57  infra-registry  registry.get(source_id)                 
+src/backend/entrypoints/webhook/redis_registry.py               68  infra-registry  self._store.get(sub_id)                 
+src/backend/entrypoints/mcp/workflow_tools.py                  236  infra-registry  store.get(instance_id)                  
+src/backend/entrypoints/mcp/workflow_tools.py                  330  infra-registry  store.get(uid)                          
+src/backend/entrypoints/http3/_protocol.py                     148  infra-registry  self._handlers.get(stream_id)           
+src/backend/entrypoints/grpc/auto_servicer.py                  258  infra-registry  response_cls_by_action.get(action_id)   
+src/backend/entrypoints/graphql/schema.py                      313  infra-registry  route_registry.get(route_id)            
+src/backend/entrypoints/mcp/mcp_server/tools_route.py           70  infra-registry  route_registry.get(route_id)            
+src/backend/entrypoints/mcp/mcp_server/tools_template.py        52  infra-registry  templates.get(template_id)              
+src/backend/entrypoints/api/v1/endpoints/ai_tools.py            42  infra-registry  registry.get(tool_id)                   
+src/backend/entrypoints/api/v1/endpoints/imports.py            325  infra-registry  route_registry.get(route_id)            
+src/backend/entrypoints/api/v1/endpoints/hitl.py               164  user-data       svc.get(signal_id)                      
+src/backend/entrypoints/api/v1/endpoints/hitl.py               185  user-data       svc.get(signal_id)                      
+src/backend/entrypoints/api/v1/endpoints/notebooks.py          156  user-data       get_notebook_service().get(notebook_id) 
+src/backend/entrypoints/api/v1/endpoints/ai_feedback.py        168  user-data       get_ai_feedback_service().get(doc_id)   
+src/backend/core/lineage_graph/graph.py                        119  infra-registry  self._nodes.get(node_id)                
+src/backend/core/outbox_verify/service.py                      117  infra-registry  self._store.get(event_id)               
+src/backend/core/outbox_verify/service.py                      109  infra-registry  self._store.get(event_id)               
+src/backend/core/api_graph/graph.py                            142  infra-registry  self._nodes.get(node_id)                
+src/backend/core/canary_deploy/controller.py                   102  infra-registry  self._configs.get(route_id)             
+src/backend/core/canary_deploy/controller.py                   111  infra-registry  self._configs.get(route_id)             

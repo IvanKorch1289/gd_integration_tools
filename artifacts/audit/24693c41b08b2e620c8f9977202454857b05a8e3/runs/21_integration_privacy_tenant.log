@@ -1,0 +1,66 @@
+...FF.                                                                   [100%]
+=================================== FAILURES ===================================
+___________________ test_tenant_middleware_propagates_header ___________________
+
+    def test_tenant_middleware_propagates_header() -> None:
+        """``TenantMiddleware`` извлекает ``X-Tenant-ID`` и кладёт в state."""
+    
+        app = FastAPI()
+        app.add_middleware(TenantMiddleware)
+    
+        captured: dict[str, str | None] = {}
+    
+        @app.get("/probe")
+        async def probe(request: Request) -> dict[str, str | None]:
+            captured["tenant_id"] = getattr(request.state, "tenant_id", None)
+            captured["structlog_tenant"] = structlog.contextvars.get_contextvars().get(
+                "tenant_id"
+            )
+            return {"ok": "1"}
+    
+        client = TestClient(app)
+        response = client.get("/probe", headers={"X-Tenant-ID": "t1"})
+    
+        assert response.status_code == 200
+        assert response.headers.get("X-Tenant-ID") == "t1"
+>       assert captured["tenant_id"] == "t1"
+E       AssertionError: assert None == 't1'
+
+tests/integration/test_tenant_middleware.py:39: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx2:_client.py:1085 HTTP Request: GET http://testserver/probe "HTTP/1.1 200 OK"
+____________________ test_tenant_middleware_default_tenant _____________________
+
+    def test_tenant_middleware_default_tenant() -> None:
+        """Без ``X-Tenant-ID`` middleware подставляет ``default``."""
+    
+        app = FastAPI()
+        app.add_middleware(TenantMiddleware)
+    
+        captured: dict[str, str | None] = {}
+    
+        @app.get("/probe")
+        async def probe(request: Request) -> dict[str, str | None]:
+            captured["tenant_id"] = getattr(request.state, "tenant_id", None)
+            return {"ok": "1"}
+    
+        client = TestClient(app)
+        response = client.get("/probe")
+    
+        assert response.status_code == 200
+>       assert captured["tenant_id"] == "default"
+E       AssertionError: assert None == 'default'
+
+tests/integration/test_tenant_middleware.py:60: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx2:_client.py:1085 HTTP Request: GET http://testserver/probe "HTTP/1.1 200 OK"
+=============================== warnings summary ===============================
+../../home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette/testclient.py:53
+  /home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette/testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/integration/test_tenant_middleware.py::test_tenant_middleware_propagates_header
+FAILED tests/integration/test_tenant_middleware.py::test_tenant_middleware_default_tenant
+2 failed, 4 passed, 255 deselected, 1 warning in 17.04s

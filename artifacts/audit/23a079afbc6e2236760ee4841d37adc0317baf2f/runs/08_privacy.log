@@ -1,0 +1,18 @@
+============================================================
+Privacy Lifecycle Coverage (P1 audit 2026-09-22)
+============================================================
+
+  Storage coverage: 0/5 backends have erasure
+    - postgresql: ❌ UNVERIFIED: ORM models not importable — cannot resolve adapter attribute references (fail-closed)
+    - redis: ❌ UNVERIFIED: ORM models not importable — cannot resolve adapter attribute references (fail-closed)
+    - s3: ❌ UNVERIFIED: ORM models not importable — cannot resolve adapter attribute references (fail-closed)
+    - qdrant: ❌ UNVERIFIED: ORM models not importable — cannot resolve adapter attribute references (fail-closed)
+    - ai_memory: ❌ UNVERIFIED: ORM models not importable — cannot resolve adapter attribute references (fail-closed)
+  Tombstone publication: ✅
+  Legal hold support: ✅
+  Reconciliation check: ✅
+  Orchestration command: ✅ src/backend/core/privacy/__init__.py
+
+Issues:
+  ❌ Storage backends without erasure coverage: postgresql, redis, s3, qdrant, ai_memory
+

@@ -13,3 +13,6 @@
 25_unit_rpa_agent | exit=1 | 6 failed/916 passed — тот же класс (agent_run/agent_parallel входят в 24-й набор, изолированно PASS)
 20_privacy_unit | exit=0 | 21_integration_privacy_tenant | exit=0 (после фикса TenantMiddleware 973f0650b) | 22_unit_scheduler | exit=0 | 23_integration_scheduler_temporal | exit=0
 08_privacy_lifecycle | ENV-bound (см. 08c_privacy_env_analysis.md в audit/24693c41b*)
+01_compileall | exit=0 | 0.1s | flags=[] | py=Python 3.14.0
+02_ruff_check | exit=0 | 0.1s | flags=[] | py=Python 3.14.0
+03_ruff_format | exit=0 | 0.1s | flags=[] | py=Python 3.14.0

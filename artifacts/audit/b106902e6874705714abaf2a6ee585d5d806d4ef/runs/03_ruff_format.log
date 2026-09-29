@@ -1,0 +1,46 @@
+unformatted: File would be reformatted
+   --> tests/unit/tools/test_ci_runs_layer_gate.py:90:20
+    |
+89  |     )
+    -     assert not any(
+    -         step for step in recipe if re.search(r"pytest\b.*--co", step)
+    -     ), "pytest --co в самой цели ci больше не нужен — шаг вынесен в отдельную цель"
+90  +     assert not any(step for step in recipe if re.search(r"pytest\b.*--co", step)), (
+91  +         "pytest --co в самой цели ci больше не нужен — шаг вынесен в отдельную цель"
+92  +     )
+93  |
+--------------------------------------------------------------------------------
+114 |     pytest_lines = [ln for ln in body.splitlines() if "pytest" in ln]
+    -     assert pytest_lines, "цель unit-tests не запускает pytest — шаг в ci будет декоративным"
+115 +     assert pytest_lines, (
+116 +         "цель unit-tests не запускает pytest — шаг в ci будет декоративным"
+117 +     )
+118 |     assert any("tests/unit" in ln for ln in pytest_lines), (
+    |
+
+unformatted: File would be reformatted
+   --> tests/unit/tools/test_startup_time_gate.py:231:40
+    |
+230 |
+    - def test_steady_regression_still_fails(
+    -     isolated_baseline, monkeypatch, capsys
+    - ) -> None:
+231 + def test_steady_regression_still_fails(isolated_baseline, monkeypatch, capsys) -> None:
+232 |     """Устойчивая деградация (все прогоны медленные) всё ещё роняет гейт.
+--------------------------------------------------------------------------------
+237 |     per_module = mod.MAX_STARTUP_SECONDS_PER_MODULE + 0.5
+    -     monkeypatch.setattr(
+    -         mod, "measure_import", lambda module: per_module
+    -     )
+238 +     monkeypatch.setattr(mod, "measure_import", lambda module: per_module)
+239 |     rc = mod.main(["--samples", "3"])
+--------------------------------------------------------------------------------
+276 |     capsys.readouterr()
+    -     assert mod.main(["--samples", "3"]) == 1, "медиана обязана ловить устойчивую деградацию"
+277 +     assert mod.main(["--samples", "3"]) == 1, (
+278 +         "медиана обязана ловить устойчивую деградацию"
+279 +     )
+280 |
+    |
+
+2 files would be reformatted, 4758 files already formatted

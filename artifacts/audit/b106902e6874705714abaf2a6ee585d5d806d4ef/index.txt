@@ -1,0 +1,7 @@
+# Audit re-run on HEAD b106902e6874705714abaf2a6ee585d5d806d4ef
+01_compileall | exit=0 | 0.9s | flags=[] | py=Python 3.14.0
+02_ruff_check | exit=0 | 0.2s | flags=[] | py=Python 3.14.0
+03_ruff_format | exit=1 | 0.1s | flags=[] | py=Python 3.14.0
+04_layers | exit=0 | 60.5s | flags=[] | py=Python 3.14.0
+05_docstrings | exit=0 | 2.9s | flags=[] | py=Python 3.14.0
+06_object_auth | exit=0 | 5.6s | flags=[] | py=Python 3.14.0
