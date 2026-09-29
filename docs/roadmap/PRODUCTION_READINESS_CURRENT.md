@@ -368,6 +368,19 @@ installed — for the same wrong reason. Green is not the same as checked.
   found" rather than a number, because the file is a build artifact that the
   failed re-measurement removed.
 - `make readiness-check` was last run at `cee4c33e5`.
+- **SBOM gate: verdict and exit code disagreed.** `_format_report()` took a
+  `new_cves` argument and never used it, so a CVE-only failure printed
+  `RESULT: PASS` while `main()` returned 1. Fixed at `15479d1c9`; the mask was
+  hiding 6 CVE/advisory IDs absent from the 2026-09-14 baseline
+  (CVE-2026-61632, CVE-2026-67422, GHSA-9xwg-3r6f-jcx2, GHSA-gm37-52c6-37mw,
+  PYSEC-2026-3609, PYSEC-2026-3654). They are **not triaged**: the baseline is
+  from 2026-09-14 and `dist/pip-audit.json` from 2026-09-22, so the input data
+  is itself stale. Refreshing baseline and audit data is a separate decision.
+- **`sbom-diff-gate` is not invoked by `make ci`.** The composite runs
+  format-check, lint-strict, type-check-strict, deps-check-strict,
+  secrets-check, check-waf-coverage-strict, check-ai-safety and
+  check-python3-syntax. CLAUDE.md V4 declares SBOM + pip-audit + cosign
+  *mandatory* CI gates, so this one exists and works but never runs in CI.
 - **`test_quality_results_aggregator.py` is slow, not hung.** An earlier note
   here called it a hang on the strength of a 90 s per-file cap. Re-measured
   with an adequate timeout: `6 passed in 91.83s`, matching its own docstring
