@@ -1,0 +1,41 @@
+{
+  "sha": "8efd5a8d26f0a4fc6eb415db20e033ea56ee0cfa",
+  "generated_utc": "2026-09-29T12:26:12.211397+00:00",
+  "finding": "pre-prod gate #19 'startup-time <3s' is load-sensitive and flakes; it cannot be quoted as a deterministic verdict",
+  "mechanism": {
+    "gate": "tools/checks/pre_prod_check.py:764 -> _check_python_script('startup-time', 'startup_time.py')",
+    "limits": "tools/checks/startup_time.py:35 MAX_TOTAL_STARTUP_SECONDS=3.0 is an ABSOLUTE limit, but the effective verdict comes from the baseline branch at line 181: regression_limit = baseline * (1 + REGRESSION_TOLERANCE)",
+    "baseline": "1.65s from .baselines/startup-time.json (refreshed 2026-09-28)",
+    "effective_limit_s": 2.145
+  },
+  "measurement": {
+    "command": "uv run python tools/checks/startup_time.py",
+    "n": 13,
+    "samples_s": [
+      1.993,
+      1.865,
+      2.263,
+      1.822,
+      1.967,
+      2.086,
+      2.138,
+      2.139,
+      2.082,
+      2.119,
+      1.968,
+      1.782,
+      1.893
+    ],
+    "min_s": 1.782,
+    "max_s": 2.263,
+    "median_s": 1.993,
+    "exceeds_limit": [
+      2.263
+    ],
+    "failure_rate": "1/13 = 8%",
+    "log": "startup_time_flake_measurements.log"
+  },
+  "consequence": "The same SHA produced pre-prod-check 25/37 with 1 FAIL and 26/37 with 0 FAILED. Observed by an independent verifier and by the owner within minutes of each other. The baseline justification in .baselines/startup-time.json itself notes 'inside pre-prod suite 1.7-1.9s from the load of the previous 18 gates', i.e. the author knew the in-suite figure runs higher than standalone.",
+  "not_done": "No budget was loosened. MAX_TOTAL_STARTUP_SECONDS and REGRESSION_TOLERANCE, and the stored baseline, are performance budgets; changing them is a product decision, not an audit action. Recorded with measurements so the decision can be made on evidence.",
+  "verdict": "NOT production-ready"
+}
