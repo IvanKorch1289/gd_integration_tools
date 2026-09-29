@@ -9,7 +9,15 @@
 Done criteria:
 - entry_class каждого из 3 плагинов совпадает с ожидаемым dotted-path;
 - класс по этому dotted-path реально импортируется;
-- ``plugin.toml`` парсится через stdlib ``tomllib`` без ошибок.
+- ``plugin.toml`` загружается каноническим ``load_plugin_manifest`` —
+  то есть соответствует схеме ``PluginManifest``, а не предположению теста.
+
+Схема манифеста — flat top-level (ADR-0343: миграция от вложенных
+``[plugin]``/``[dependencies]`` таблиц к top-level scalars ради
+соответствия канонической ``PluginManifest`` в
+``src/backend/core/plugin_runtime/manifest_toml.py``). Раньше тест читал
+``manifest["plugin"]["entry_class"]``, то есть до-ADR-0343 структуру, и
+падал на KeyError с момента миграции.
 
 Strict-test policy per D-LESSON-11: NO lax assertions.
 """
@@ -22,14 +30,20 @@ from pathlib import Path
 
 import pytest
 
+from src.backend.core.plugin_runtime.manifest_toml import load_plugin_manifest
+
 EXTENSIONS: tuple[str, ...] = ("core_admin", "dadata", "skb")
 REPO_ROOT: Path = Path(__file__).resolve().parents[3]
 
 
+def _manifest_path(name: str) -> Path:
+    """Путь к plugin.toml расширения."""
+    return REPO_ROOT / "extensions" / name / "plugin.toml"
+
+
 def _load_plugin_toml(name: str) -> dict:
     """Загрузить extensions/<name>/plugin.toml через stdlib tomllib."""
-    path = REPO_ROOT / "extensions" / name / "plugin.toml"
-    return tomllib.loads(path.read_text(encoding="utf-8"))
+    return tomllib.loads(_manifest_path(name).read_text(encoding="utf-8"))
 
 
 def _resolve_entry_class(entry_class: str) -> type:
@@ -59,8 +73,8 @@ class TestSchemasOnlyEntry:
         это легитимный plugin pattern (плагин содержит только Pydantic-схемы,
         runtime entry-point класс — пустышка).
         """
-        manifest = _load_plugin_toml(name)
-        entry_class: str = manifest["plugin"]["entry_class"]
+        manifest = load_plugin_manifest(_manifest_path(name))
+        entry_class: str = manifest.entry_class
         assert entry_class == f"extensions.{name}.schemas_only:SchemasOnlyEntry", (
             f"D-A10-100: {name}/plugin.toml entry_class должен указывать на "
             f"extensions.{name}.schemas_only:SchemasOnlyEntry, got {entry_class!r}"
@@ -73,8 +87,8 @@ class TestSchemasOnlyEntry:
         Sanity-check после fix: SchemasOnlyEntry существует в
         ``extensions/<name>/schemas_only.py``.
         """
-        manifest = _load_plugin_toml(name)
-        entry_class: str = manifest["plugin"]["entry_class"]
+        manifest = load_plugin_manifest(_manifest_path(name))
+        entry_class: str = manifest.entry_class
         cls = _resolve_entry_class(entry_class)
         assert cls.__name__ == "SchemasOnlyEntry", (
             f"{name}: ожидался SchemasOnlyEntry, got {cls.__name__!r}"
@@ -94,13 +108,17 @@ class TestSchemasOnlyEntry:
         Smoke test на валидность TOML-синтаксиса.
         """
         for name in EXTENSIONS:
-            manifest = _load_plugin_toml(name)
-            assert "plugin" in manifest, (
-                f"D-A10-100: {name}/plugin.toml не содержит секцию [plugin]"
+            # Канонический загрузчик — сильнее проверки «есть секция»:
+            # он валидирует манифест по схеме PluginManifest (ADR-0343,
+            # flat top-level). Раньше здесь проверялась вложенная секция
+            # [plugin], которой в схеме нет вовсе.
+            manifest = load_plugin_manifest(_manifest_path(name))
+            assert manifest.entry_class, f"{name}: entry_class пуст"
+            assert manifest.name == name, (
+                f"{name}: manifest.name={manifest.name!r} не совпадает с каталогом"
             )
-            assert "entry_class" in manifest["plugin"], (
-                f"D-A10-100: {name}/plugin.toml не содержит entry_class"
-            )
-            assert "name" in manifest["plugin"], (
-                f"D-A10-100: {name}/plugin.toml не содержит name"
+            raw = _load_plugin_toml(name)
+            assert "plugin" not in raw, (
+                f"{name}: вложенная секция [plugin] удалена ADR-0343; "
+                f"вернувшийся ключ означает откат схемы"
             )
