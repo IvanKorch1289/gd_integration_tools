@@ -1,0 +1,379 @@
+SEG 1/0 tests/auth/ exit=0 | passed=7 failed=0 skipped=1 xpassed=0 | 7 passed,  1 skipped,  
+SEG 2/0 tests/cache/ exit=0 | passed=15 failed=0 skipped=0 xpassed=0 | 15 passed 
+SEG 3/0 tests/chaos/ exit=1 | passed=43 failed=0 skipped=0 xpassed=0 | 43 passed,  
+ERROR tests/chaos/test_clickhouse_chain.py::test_clickhouse_latency
+ERROR tests/chaos/test_clickhouse_chain.py::test_clickhouse_disconnect
+ERROR tests/chaos/test_clickhouse_chain.py::test_clickhouse_data_corruption
+ERROR tests/chaos/test_elasticsearch_chain.py::test_elasticsearch_latency
+ERROR tests/chaos/test_elasticsearch_chain.py::test_elasticsearch_disconnect
+ERROR tests/chaos/test_elasticsearch_chain.py::test_elasticsearch_data_corruption
+ERROR tests/chaos/test_graylog_chain.py::test_graylog_latency
+ERROR tests/chaos/test_graylog_chain.py::test_graylog_disconnect
+ERROR tests/chaos/test_graylog_chain.py::test_graylog_data_corruption
+ERROR tests/chaos/test_kafka_chain.py::test_kafka_latency
+ERROR tests/chaos/test_kafka_chain.py::test_kafka_disconnect
+ERROR tests/chaos/test_kafka_chain.py::test_kafka_data_corruption
+ERROR tests/chaos/test_nats_chain.py::test_nats_latency
+ERROR tests/chaos/test_nats_chain.py::test_nats_disconnect
+ERROR tests/chaos/test_nats_chain.py::test_nats_data_corruption
+ERROR tests/chaos/test_postgresql_chain.py::test_postgresql_latency
+ERROR tests/chaos/test_postgresql_chain.py::test_postgresql_disconnect
+ERROR tests/chaos/test_postgresql_chain.py::test_postgresql_data_corruption
+ERROR tests/chaos/test_rabbitmq_chain.py::test_rabbitmq_latency
+ERROR tests/chaos/test_rabbitmq_chain.py::test_rabbitmq_disconnect
+SEG 4/0 tests/core/ exit=0 | passed=8 failed=0 skipped=0 xpassed=0 | 8 passed 
+SEG 5/0 tests/e2e/ exit=0 | passed=12 failed=0 skipped=0 xpassed=0 | 12 passed 
+SEG 6/0 tests/factories/ exit=5 | passed=0 failed=0 skipped=0 xpassed=0 | 
+SEG 7/0 tests/fixtures/ exit=5 | passed=0 failed=0 skipped=0 xpassed=0 | 
+SEG 8/0 tests/integration/ exit=1 | passed=225 failed=15 skipped=21 xpassed=0 | 15 failed,  225 passed,  21 skipped,  
+FAILED tests/integration/sources/test_mq_redis_streams.py::test_mq_source_redis_streams_e2e_dispatches_event
+FAILED tests/integration/sources/test_mq_redis_streams.py::test_mq_source_redis_streams_e2e_no_group
+FAILED tests/integration/test_alembic_pg_upgrade.py::TestAlembicPgUpgrade::test_alembic_upgrade_on_postgres
+FAILED tests/integration/test_eventbus_e2e.py::test_subscribe_with_lifecycle_registers_handler
+FAILED tests/integration/test_eventbus_e2e.py::test_subscribe_with_lifecycle_error_raises_service_error
+FAILED tests/integration/test_mcp_tool_authz.py::test_authz_deny_when_enabled_and_not_in_allowlist
+FAILED tests/integration/test_mcp_tool_authz.py::test_authz_allow_when_namespace_is_public
+FAILED tests/integration/test_s19_k3_w2_composition.py::TestS19CompositionSmoke::test_composition_demo_dsl_loads_with_flag_on
+FAILED tests/integration/test_tenant_middleware.py::test_tenant_middleware_propagates_header
+FAILED tests/integration/test_tenant_middleware.py::test_tenant_middleware_default_tenant
+FAILED tests/integration/test_testcontainers_smoke.py::TestTestcontainersSmoke::test_postgres_container_starts
+FAILED tests/integration/test_testcontainers_smoke.py::TestTestcontainersSmoke::test_redis_container_starts
+FAILED tests/integration/test_testcontainers_smoke.py::TestTestcontainersSmoke::test_postgres_can_execute_query
+FAILED tests/integration/test_testcontainers_smoke.py::TestTestcontainersSmoke::test_redis_can_ping
+FAILED tests/integration/test_testcontainers_smoke.py::TestTestcontainersSmoke::test_kafka_container_starts
+SEG 9/0 tests/mcp/ exit=5 | passed=0 failed=0 skipped=0 xpassed=0 | 
+SEG 10/0 tests/observability/ exit=0 | passed=3 failed=0 skipped=0 xpassed=0 | 3 passed 
+SEG 11/0 tests/perf/ exit=1 | passed=1 failed=0 skipped=0 xpassed=0 | 1 passed,  
+ERROR tests/perf/test_msgspec_benchmark.py::test_pydantic_response_dto_serialize
+ERROR tests/perf/test_msgspec_benchmark.py::test_msgspec_response_dto_serialize
+ERROR tests/perf/test_msgspec_benchmark.py::test_pydantic_event_batch_serialize
+ERROR tests/perf/test_msgspec_benchmark.py::test_msgspec_event_batch_serialize
+ERROR tests/perf/test_msgspec_benchmark.py::test_pydantic_response_dto_parse
+ERROR tests/perf/test_msgspec_benchmark.py::test_msgspec_response_dto_parse
+ERROR tests/perf/test_plugin_sandbox_overhead.py::test_baseline_no_sandbox
+ERROR tests/perf/test_plugin_sandbox_overhead.py::test_sandbox_overhead_no_op
+ERROR tests/perf/test_plugin_sandbox_overhead.py::test_sandbox_overhead_cpu_bound
+SEG 12/0 tests/property/ exit=1 | passed=5 failed=1 skipped=2 xpassed=0 | 1 failed,  5 passed,  2 skipped 
+FAILED tests/property/test_dsl_processor_invariants.py::TestExchangeRoundTrip::test_exchange_payload_clone_roundtrip
+SEG 13/0 tests/__pycache__/ exit=5 | passed=0 failed=0 skipped=0 xpassed=0 | 
+SEG 14/0 tests/resilience/ exit=0 | passed=8 failed=0 skipped=0 xpassed=0 | 8 passed 
+SEG 15/0 tests/rpa/ exit=1 | passed=9 failed=4 skipped=0 xpassed=0 | 4 failed,  9 passed,  
+ERROR tests/rpa/test_browser_cookies.py::test_save_and_restore_round_trip - R...
+ERROR tests/rpa/test_browser_cookies.py::test_restore_empty_when_no_session
+ERROR tests/rpa/test_browser_cookies.py::test_multi_tenant_isolation - Runtim...
+ERROR tests/rpa/test_browser_cookies.py::test_clear_deletes_session - Runtime...
+ERROR tests/rpa/test_browser_cookies.py::test_ttl_passed_to_redis - RuntimeEr...
+ERROR tests/rpa/test_browser_cookies.py::test_empty_cookies_skipped - Runtime...
+FAILED tests/rpa/test_browser_cookies.py::test_worker_restart_simulation - Ru...
+FAILED tests/rpa/test_browser_cookies.py::test_malformed_json_returns_empty
+FAILED tests/rpa/test_desktop_pool.py::test_acquire_creates_session - Asserti...
+FAILED tests/rpa/test_desktop_pool.py::test_reconnect_on_stale_handle - Asser...
+SEG 16/0 tests/scheduler/ exit=0 | passed=8 failed=0 skipped=0 xpassed=0 | 8 passed 
+SEG 17/0 tests/security/ exit=0 | passed=12 failed=0 skipped=5 xpassed=0 | 12 passed,  5 skipped 
+SEG 18/0 tests/smoke/ exit=1 | passed=52 failed=8 skipped=2 xpassed=0 | 8 failed,  52 passed,  2 skipped,  
+FAILED tests/smoke/test_admin_and_mcp.py::test_schemas_router_mounts - assert...
+FAILED tests/smoke/test_admin_and_mcp.py::test_schemas_router_rejects_non_json
+FAILED tests/smoke/test_admin_and_mcp.py::test_admin_capabilities_router_mounts
+FAILED tests/smoke/test_granian_runtime.py::test_run_granian_configures_granian_correctly
+FAILED tests/smoke/test_granian_runtime.py::test_run_granian_st_mode - TypeEr...
+FAILED tests/smoke/test_granian_runtime.py::test_run_granian_blocking_threads_optional
+FAILED tests/smoke/test_granian_runtime.py::test_run_granian_blocking_threads_when_set
+FAILED tests/smoke/test_websocket_endpoints.py::test_ws_endpoint_accepts_websocket_connection
+SEG 19/0 tests/tools/ exit=1 | passed=4 failed=1 skipped=0 xpassed=0 | 1 failed,  4 passed 
+FAILED tests/tools/test_pip_audit_gate_allowlist.py::test_load_allowlist_returns_nonempty_set
+SEG 20/0 tests/webhook/ exit=0 | passed=4 failed=0 skipped=0 xpassed=0 | 4 passed 
+SEG 21/0 tests/workflow/ exit=0 | passed=17 failed=0 skipped=0 xpassed=0 | 17 passed,  
+SEG 22/0 tests/unit/ai/ exit=0 | passed=22 failed=0 skipped=0 xpassed=0 | 22 passed 
+SEG 23/0 tests/unit/api/ exit=0 | passed=65 failed=0 skipped=0 xpassed=0 | 65 passed,  
+SEG 24/0 tests/unit/cache/ exit=0 | passed=129 failed=0 skipped=1 xpassed=0 | 129 passed,  1 skipped,  
+SEG 25/0 tests/unit/clients/ exit=0 | passed=21 failed=0 skipped=0 xpassed=0 | 21 passed,  
+SEG 26/0 tests/unit/codegen/ exit=0 | passed=54 failed=0 skipped=0 xpassed=0 | 54 passed 
+SEG 27/0 tests/unit/core/ exit=0 | passed=6074 failed=0 skipped=30 xpassed=13 | 6074 passed,  30 skipped,  1 xfailed,  13 xpassed,  
+SEG 28/0 tests/unit/deploy/ exit=1 | passed=32 failed=1 skipped=0 xpassed=0 | 1 failed,  32 passed,  
+ERROR tests/unit/deploy/test_deploy_manifests.py::test_compose_light_worker_command
+ERROR tests/unit/deploy/test_deploy_manifests.py::test_compose_light_healthcheck_uses_real_module
+FAILED tests/unit/deploy/test_deploy_manifests.py::test_k8s_app_runasuser_matches_values
+SEG 29/0 tests/unit/docs/ exit=1 | passed=20 failed=3 skipped=0 xpassed=0 | 3 failed,  20 passed 
+FAILED tests/unit/docs/test_doc_references.py::TestDocReferences::test_no_unexpected_missing_src_backend
+FAILED tests/unit/docs/test_doc_references.py::TestDocReferences::test_no_unexpected_missing_extensions
+FAILED tests/unit/docs/test_docs_scaffold.py::test_conf_py_loadable - Asserti...
+SEG 30/0 tests/unit/dsl/ exit=0 | passed=4791 failed=0 skipped=44 xpassed=25 | 4791 passed,  44 skipped,  32 xfailed,  25 xpassed,  
+SEG 31 tests/auth/ exit=0 | passed=7 failed=0 skipped=1 xpassed=0 | 7 passed,  1 skipped,  
+SEG 32 tests/cache/ exit=0 | passed=15 failed=0 skipped=0 xpassed=0 | 15 passed 
+SEG 33 tests/chaos/ exit=1 | passed=43 failed=0 skipped=0 xpassed=0 | 43 passed,  
+ERROR tests/chaos/test_clickhouse_chain.py::test_clickhouse_latency
+ERROR tests/chaos/test_clickhouse_chain.py::test_clickhouse_disconnect
+ERROR tests/chaos/test_clickhouse_chain.py::test_clickhouse_data_corruption
+ERROR tests/chaos/test_elasticsearch_chain.py::test_elasticsearch_latency
+ERROR tests/chaos/test_elasticsearch_chain.py::test_elasticsearch_disconnect
+ERROR tests/chaos/test_elasticsearch_chain.py::test_elasticsearch_data_corruption
+ERROR tests/chaos/test_graylog_chain.py::test_graylog_latency
+ERROR tests/chaos/test_graylog_chain.py::test_graylog_disconnect
+ERROR tests/chaos/test_graylog_chain.py::test_graylog_data_corruption
+ERROR tests/chaos/test_kafka_chain.py::test_kafka_latency
+ERROR tests/chaos/test_kafka_chain.py::test_kafka_disconnect
+ERROR tests/chaos/test_kafka_chain.py::test_kafka_data_corruption
+ERROR tests/chaos/test_nats_chain.py::test_nats_latency
+ERROR tests/chaos/test_nats_chain.py::test_nats_disconnect
+ERROR tests/chaos/test_nats_chain.py::test_nats_data_corruption
+ERROR tests/chaos/test_postgresql_chain.py::test_postgresql_latency
+ERROR tests/chaos/test_postgresql_chain.py::test_postgresql_disconnect
+ERROR tests/chaos/test_postgresql_chain.py::test_postgresql_data_corruption
+ERROR tests/chaos/test_rabbitmq_chain.py::test_rabbitmq_latency
+ERROR tests/chaos/test_rabbitmq_chain.py::test_rabbitmq_disconnect
+SEG 34 tests/core/ exit=0 | passed=8 failed=0 skipped=0 xpassed=0 | 8 passed 
+SEG 35 tests/e2e/ exit=0 | passed=12 failed=0 skipped=0 xpassed=0 | 12 passed 
+SEG 36 tests/factories/ exit=5 | passed=0 failed=0 skipped=0 xpassed=0 | 
+SEG 37 tests/fixtures/ exit=5 | passed=0 failed=0 skipped=0 xpassed=0 | 
+SEG 38 tests/integration/ exit=1 | passed=225 failed=15 skipped=21 xpassed=0 | 15 failed,  225 passed,  21 skipped,  
+FAILED tests/integration/sources/test_mq_redis_streams.py::test_mq_source_redis_streams_e2e_dispatches_event
+FAILED tests/integration/sources/test_mq_redis_streams.py::test_mq_source_redis_streams_e2e_no_group
+FAILED tests/integration/test_alembic_pg_upgrade.py::TestAlembicPgUpgrade::test_alembic_upgrade_on_postgres
+FAILED tests/integration/test_eventbus_e2e.py::test_subscribe_with_lifecycle_registers_handler
+FAILED tests/integration/test_eventbus_e2e.py::test_subscribe_with_lifecycle_error_raises_service_error
+FAILED tests/integration/test_mcp_tool_authz.py::test_authz_deny_when_enabled_and_not_in_allowlist
+FAILED tests/integration/test_mcp_tool_authz.py::test_authz_allow_when_namespace_is_public
+FAILED tests/integration/test_s19_k3_w2_composition.py::TestS19CompositionSmoke::test_composition_demo_dsl_loads_with_flag_on
+FAILED tests/integration/test_tenant_middleware.py::test_tenant_middleware_propagates_header
+FAILED tests/integration/test_tenant_middleware.py::test_tenant_middleware_default_tenant
+FAILED tests/integration/test_testcontainers_smoke.py::TestTestcontainersSmoke::test_postgres_container_starts
+FAILED tests/integration/test_testcontainers_smoke.py::TestTestcontainersSmoke::test_redis_container_starts
+FAILED tests/integration/test_testcontainers_smoke.py::TestTestcontainersSmoke::test_postgres_can_execute_query
+FAILED tests/integration/test_testcontainers_smoke.py::TestTestcontainersSmoke::test_redis_can_ping
+FAILED tests/integration/test_testcontainers_smoke.py::TestTestcontainersSmoke::test_kafka_container_starts
+SEG 39 tests/mcp/ exit=5 | passed=0 failed=0 skipped=0 xpassed=0 | 
+SEG 40 tests/observability/ exit=0 | passed=3 failed=0 skipped=0 xpassed=0 | 3 passed 
+SEG 41 tests/perf/ exit=1 | passed=1 failed=0 skipped=0 xpassed=0 | 1 passed,  
+ERROR tests/perf/test_msgspec_benchmark.py::test_pydantic_response_dto_serialize
+ERROR tests/perf/test_msgspec_benchmark.py::test_msgspec_response_dto_serialize
+ERROR tests/perf/test_msgspec_benchmark.py::test_pydantic_event_batch_serialize
+ERROR tests/perf/test_msgspec_benchmark.py::test_msgspec_event_batch_serialize
+ERROR tests/perf/test_msgspec_benchmark.py::test_pydantic_response_dto_parse
+ERROR tests/perf/test_msgspec_benchmark.py::test_msgspec_response_dto_parse
+ERROR tests/perf/test_plugin_sandbox_overhead.py::test_baseline_no_sandbox
+ERROR tests/perf/test_plugin_sandbox_overhead.py::test_sandbox_overhead_no_op
+ERROR tests/perf/test_plugin_sandbox_overhead.py::test_sandbox_overhead_cpu_bound
+SEG 42 tests/property/ exit=1 | passed=5 failed=1 skipped=2 xpassed=0 | 1 failed,  5 passed,  2 skipped 
+FAILED tests/property/test_dsl_processor_invariants.py::TestExchangeRoundTrip::test_exchange_payload_clone_roundtrip
+SEG 43 tests/__pycache__/ exit=5 | passed=0 failed=0 skipped=0 xpassed=0 | 
+SEG 44 tests/resilience/ exit=0 | passed=8 failed=0 skipped=0 xpassed=0 | 8 passed 
+SEG 45 tests/rpa/ exit=1 | passed=9 failed=4 skipped=0 xpassed=0 | 4 failed,  9 passed,  
+ERROR tests/rpa/test_browser_cookies.py::test_save_and_restore_round_trip - R...
+ERROR tests/rpa/test_browser_cookies.py::test_restore_empty_when_no_session
+ERROR tests/rpa/test_browser_cookies.py::test_multi_tenant_isolation - Runtim...
+ERROR tests/rpa/test_browser_cookies.py::test_clear_deletes_session - Runtime...
+ERROR tests/rpa/test_browser_cookies.py::test_ttl_passed_to_redis - RuntimeEr...
+ERROR tests/rpa/test_browser_cookies.py::test_empty_cookies_skipped - Runtime...
+FAILED tests/rpa/test_browser_cookies.py::test_worker_restart_simulation - Ru...
+FAILED tests/rpa/test_browser_cookies.py::test_malformed_json_returns_empty
+FAILED tests/rpa/test_desktop_pool.py::test_acquire_creates_session - Asserti...
+FAILED tests/rpa/test_desktop_pool.py::test_reconnect_on_stale_handle - Asser...
+SEG 46 tests/scheduler/ exit=0 | passed=8 failed=0 skipped=0 xpassed=0 | 8 passed 
+SEG 47 tests/security/ exit=0 | passed=12 failed=0 skipped=5 xpassed=0 | 12 passed,  5 skipped 
+SEG 48 tests/smoke/ exit=1 | passed=52 failed=8 skipped=2 xpassed=0 | 8 failed,  52 passed,  2 skipped,  
+FAILED tests/smoke/test_admin_and_mcp.py::test_schemas_router_mounts - assert...
+FAILED tests/smoke/test_admin_and_mcp.py::test_schemas_router_rejects_non_json
+FAILED tests/smoke/test_admin_and_mcp.py::test_admin_capabilities_router_mounts
+FAILED tests/smoke/test_granian_runtime.py::test_run_granian_configures_granian_correctly
+FAILED tests/smoke/test_granian_runtime.py::test_run_granian_st_mode - TypeEr...
+FAILED tests/smoke/test_granian_runtime.py::test_run_granian_blocking_threads_optional
+FAILED tests/smoke/test_granian_runtime.py::test_run_granian_blocking_threads_when_set
+FAILED tests/smoke/test_websocket_endpoints.py::test_ws_endpoint_accepts_websocket_connection
+SEG 49 tests/tools/ exit=1 | passed=4 failed=1 skipped=0 xpassed=0 | 1 failed,  4 passed 
+FAILED tests/tools/test_pip_audit_gate_allowlist.py::test_load_allowlist_returns_nonempty_set
+SEG 50 tests/webhook/ exit=0 | passed=4 failed=0 skipped=0 xpassed=0 | 4 passed 
+SEG 51 tests/workflow/ exit=0 | passed=17 failed=0 skipped=0 xpassed=0 | 17 passed,  
+SEG 52 tests/unit/ai/ exit=0 | passed=22 failed=0 skipped=0 xpassed=0 | 22 passed 
+SEG 53 tests/unit/api/ exit=0 | passed=65 failed=0 skipped=0 xpassed=0 | 65 passed,  
+SEG 54 tests/unit/cache/ exit=0 | passed=129 failed=0 skipped=1 xpassed=0 | 129 passed,  1 skipped,  
+SEG 55 tests/unit/clients/ exit=0 | passed=21 failed=0 skipped=0 xpassed=0 | 21 passed,  
+SEG 56 tests/unit/codegen/ exit=0 | passed=54 failed=0 skipped=0 xpassed=0 | 54 passed 
+SEG 57 tests/unit/core/ exit=0 | passed=6074 failed=0 skipped=30 xpassed=13 | 6074 passed,  30 skipped,  1 xfailed,  13 xpassed,  
+SEG 58 tests/unit/deploy/ exit=1 | passed=32 failed=1 skipped=0 xpassed=0 | 1 failed,  32 passed,  
+ERROR tests/unit/deploy/test_deploy_manifests.py::test_compose_light_worker_command
+ERROR tests/unit/deploy/test_deploy_manifests.py::test_compose_light_healthcheck_uses_real_module
+FAILED tests/unit/deploy/test_deploy_manifests.py::test_k8s_app_runasuser_matches_values
+SEG 59 tests/unit/docs/ exit=1 | passed=20 failed=3 skipped=0 xpassed=0 | 3 failed,  20 passed 
+FAILED tests/unit/docs/test_doc_references.py::TestDocReferences::test_no_unexpected_missing_src_backend
+FAILED tests/unit/docs/test_doc_references.py::TestDocReferences::test_no_unexpected_missing_extensions
+FAILED tests/unit/docs/test_docs_scaffold.py::test_conf_py_loadable - Asserti...
+SEG 60 tests/unit/dsl/ exit=0 | passed=4791 failed=0 skipped=44 xpassed=25 | 4791 passed,  44 skipped,  32 xfailed,  25 xpassed,  
+SEG 61 tests/auth/ exit=0 | passed=7 failed=0 skipped=1 xpassed=0 | 7 passed,  1 skipped,  
+SEG 62 tests/cache/ exit=0 | passed=15 failed=0 skipped=0 xpassed=0 | 15 passed 
+SEG 63 tests/chaos/ exit=1 | passed=43 failed=0 skipped=0 xpassed=0 | 43 passed,  
+ERROR tests/chaos/test_clickhouse_chain.py::test_clickhouse_latency
+ERROR tests/chaos/test_clickhouse_chain.py::test_clickhouse_disconnect
+ERROR tests/chaos/test_clickhouse_chain.py::test_clickhouse_data_corruption
+ERROR tests/chaos/test_elasticsearch_chain.py::test_elasticsearch_latency
+ERROR tests/chaos/test_elasticsearch_chain.py::test_elasticsearch_disconnect
+ERROR tests/chaos/test_elasticsearch_chain.py::test_elasticsearch_data_corruption
+ERROR tests/chaos/test_graylog_chain.py::test_graylog_latency
+ERROR tests/chaos/test_graylog_chain.py::test_graylog_disconnect
+ERROR tests/chaos/test_graylog_chain.py::test_graylog_data_corruption
+ERROR tests/chaos/test_kafka_chain.py::test_kafka_latency
+ERROR tests/chaos/test_kafka_chain.py::test_kafka_disconnect
+ERROR tests/chaos/test_kafka_chain.py::test_kafka_data_corruption
+ERROR tests/chaos/test_nats_chain.py::test_nats_latency
+ERROR tests/chaos/test_nats_chain.py::test_nats_disconnect
+ERROR tests/chaos/test_nats_chain.py::test_nats_data_corruption
+ERROR tests/chaos/test_postgresql_chain.py::test_postgresql_latency
+ERROR tests/chaos/test_postgresql_chain.py::test_postgresql_disconnect
+ERROR tests/chaos/test_postgresql_chain.py::test_postgresql_data_corruption
+ERROR tests/chaos/test_rabbitmq_chain.py::test_rabbitmq_latency
+ERROR tests/chaos/test_rabbitmq_chain.py::test_rabbitmq_disconnect
+SEG 64 tests/core/ exit=0 | passed=8 failed=0 skipped=0 xpassed=0 | 8 passed 
+SEG 65 tests/e2e/ exit=0 | passed=12 failed=0 skipped=0 xpassed=0 | 12 passed 
+SEG 66 tests/factories/ exit=5 | passed=0 failed=0 skipped=0 xpassed=0 | 
+SEG 67 tests/fixtures/ exit=5 | passed=0 failed=0 skipped=0 xpassed=0 | 
+SEG 68 tests/integration/ exit=1 | passed=225 failed=15 skipped=21 xpassed=0 | 15 failed,  225 passed,  21 skipped,  
+FAILED tests/integration/sources/test_mq_redis_streams.py::test_mq_source_redis_streams_e2e_dispatches_event
+FAILED tests/integration/sources/test_mq_redis_streams.py::test_mq_source_redis_streams_e2e_no_group
+FAILED tests/integration/test_alembic_pg_upgrade.py::TestAlembicPgUpgrade::test_alembic_upgrade_on_postgres
+FAILED tests/integration/test_eventbus_e2e.py::test_subscribe_with_lifecycle_registers_handler
+FAILED tests/integration/test_eventbus_e2e.py::test_subscribe_with_lifecycle_error_raises_service_error
+FAILED tests/integration/test_mcp_tool_authz.py::test_authz_deny_when_enabled_and_not_in_allowlist
+FAILED tests/integration/test_mcp_tool_authz.py::test_authz_allow_when_namespace_is_public
+FAILED tests/integration/test_s19_k3_w2_composition.py::TestS19CompositionSmoke::test_composition_demo_dsl_loads_with_flag_on
+FAILED tests/integration/test_tenant_middleware.py::test_tenant_middleware_propagates_header
+FAILED tests/integration/test_tenant_middleware.py::test_tenant_middleware_default_tenant
+FAILED tests/integration/test_testcontainers_smoke.py::TestTestcontainersSmoke::test_postgres_container_starts
+FAILED tests/integration/test_testcontainers_smoke.py::TestTestcontainersSmoke::test_redis_container_starts
+FAILED tests/integration/test_testcontainers_smoke.py::TestTestcontainersSmoke::test_postgres_can_execute_query
+FAILED tests/integration/test_testcontainers_smoke.py::TestTestcontainersSmoke::test_redis_can_ping
+FAILED tests/integration/test_testcontainers_smoke.py::TestTestcontainersSmoke::test_kafka_container_starts
+SEG 69 tests/mcp/ exit=5 | passed=0 failed=0 skipped=0 xpassed=0 | 
+SEG 70 tests/observability/ exit=0 | passed=3 failed=0 skipped=0 xpassed=0 | 3 passed 
+SEG 71 tests/perf/ exit=1 | passed=1 failed=0 skipped=0 xpassed=0 | 1 passed,  
+ERROR tests/perf/test_msgspec_benchmark.py::test_pydantic_response_dto_serialize
+ERROR tests/perf/test_msgspec_benchmark.py::test_msgspec_response_dto_serialize
+ERROR tests/perf/test_msgspec_benchmark.py::test_pydantic_event_batch_serialize
+ERROR tests/perf/test_msgspec_benchmark.py::test_msgspec_event_batch_serialize
+ERROR tests/perf/test_msgspec_benchmark.py::test_pydantic_response_dto_parse
+ERROR tests/perf/test_msgspec_benchmark.py::test_msgspec_response_dto_parse
+ERROR tests/perf/test_plugin_sandbox_overhead.py::test_baseline_no_sandbox
+ERROR tests/perf/test_plugin_sandbox_overhead.py::test_sandbox_overhead_no_op
+ERROR tests/perf/test_plugin_sandbox_overhead.py::test_sandbox_overhead_cpu_bound
+SEG 72 tests/property/ exit=1 | passed=5 failed=1 skipped=2 xpassed=0 | 1 failed,  5 passed,  2 skipped 
+FAILED tests/property/test_dsl_processor_invariants.py::TestExchangeRoundTrip::test_exchange_payload_clone_roundtrip
+SEG 73 tests/__pycache__/ exit=5 | passed=0 failed=0 skipped=0 xpassed=0 | 
+SEG 74 tests/resilience/ exit=0 | passed=8 failed=0 skipped=0 xpassed=0 | 8 passed 
+SEG 75 tests/rpa/ exit=1 | passed=9 failed=4 skipped=0 xpassed=0 | 4 failed,  9 passed,  
+ERROR tests/rpa/test_browser_cookies.py::test_save_and_restore_round_trip - R...
+ERROR tests/rpa/test_browser_cookies.py::test_restore_empty_when_no_session
+ERROR tests/rpa/test_browser_cookies.py::test_multi_tenant_isolation - Runtim...
+ERROR tests/rpa/test_browser_cookies.py::test_clear_deletes_session - Runtime...
+ERROR tests/rpa/test_browser_cookies.py::test_ttl_passed_to_redis - RuntimeEr...
+ERROR tests/rpa/test_browser_cookies.py::test_empty_cookies_skipped - Runtime...
+FAILED tests/rpa/test_browser_cookies.py::test_worker_restart_simulation - Ru...
+FAILED tests/rpa/test_browser_cookies.py::test_malformed_json_returns_empty
+FAILED tests/rpa/test_desktop_pool.py::test_acquire_creates_session - Asserti...
+FAILED tests/rpa/test_desktop_pool.py::test_reconnect_on_stale_handle - Asser...
+SEG 76 tests/scheduler/ exit=0 | passed=8 failed=0 skipped=0 xpassed=0 | 8 passed 
+SEG 77 tests/security/ exit=0 | passed=12 failed=0 skipped=5 xpassed=0 | 12 passed,  5 skipped 
+SEG 78 tests/smoke/ exit=1 | passed=52 failed=8 skipped=2 xpassed=0 | 8 failed,  52 passed,  2 skipped,  
+FAILED tests/smoke/test_admin_and_mcp.py::test_schemas_router_mounts - assert...
+FAILED tests/smoke/test_admin_and_mcp.py::test_schemas_router_rejects_non_json
+FAILED tests/smoke/test_admin_and_mcp.py::test_admin_capabilities_router_mounts
+FAILED tests/smoke/test_granian_runtime.py::test_run_granian_configures_granian_correctly
+FAILED tests/smoke/test_granian_runtime.py::test_run_granian_st_mode - TypeEr...
+FAILED tests/smoke/test_granian_runtime.py::test_run_granian_blocking_threads_optional
+FAILED tests/smoke/test_granian_runtime.py::test_run_granian_blocking_threads_when_set
+FAILED tests/smoke/test_websocket_endpoints.py::test_ws_endpoint_accepts_websocket_connection
+SEG 79 tests/tools/ exit=1 | passed=4 failed=1 skipped=0 xpassed=0 | 1 failed,  4 passed 
+FAILED tests/tools/test_pip_audit_gate_allowlist.py::test_load_allowlist_returns_nonempty_set
+SEG 80 tests/webhook/ exit=0 | passed=4 failed=0 skipped=0 xpassed=0 | 4 passed 
+SEG 81 tests/workflow/ exit=0 | passed=17 failed=0 skipped=0 xpassed=0 | 17 passed,  
+SEG 82 tests/unit/ai/ exit=0 | passed=22 failed=0 skipped=0 xpassed=0 | 22 passed 
+SEG 83 tests/unit/api/ exit=0 | passed=65 failed=0 skipped=0 xpassed=0 | 65 passed,  
+SEG 84 tests/unit/cache/ exit=0 | passed=129 failed=0 skipped=1 xpassed=0 | 129 passed,  1 skipped,  
+SEG 85 tests/unit/clients/ exit=0 | passed=21 failed=0 skipped=0 xpassed=0 | 21 passed,  
+SEG 86 tests/unit/codegen/ exit=0 | passed=54 failed=0 skipped=0 xpassed=0 | 54 passed 
+SEG 87 tests/unit/core/ exit=0 | passed=6074 failed=0 skipped=30 xpassed=13 | 6074 passed,  30 skipped,  1 xfailed,  13 xpassed,  
+SEG 88 tests/unit/deploy/ exit=1 | passed=32 failed=1 skipped=0 xpassed=0 | 1 failed,  32 passed,  
+ERROR tests/unit/deploy/test_deploy_manifests.py::test_compose_light_worker_command
+ERROR tests/unit/deploy/test_deploy_manifests.py::test_compose_light_healthcheck_uses_real_module
+FAILED tests/unit/deploy/test_deploy_manifests.py::test_k8s_app_runasuser_matches_values
+SEG 89 tests/unit/docs/ exit=1 | passed=20 failed=3 skipped=0 xpassed=0 | 3 failed,  20 passed 
+FAILED tests/unit/docs/test_doc_references.py::TestDocReferences::test_no_unexpected_missing_src_backend
+FAILED tests/unit/docs/test_doc_references.py::TestDocReferences::test_no_unexpected_missing_extensions
+FAILED tests/unit/docs/test_docs_scaffold.py::test_conf_py_loadable - Asserti...
+SEG 90 tests/unit/dsl/ exit=1 | passed=4789 failed=2 skipped=44 xpassed=25 | 2 failed,  4789 passed,  44 skipped,  32 xfailed,  25 xpassed,  
+FAILED tests/unit/dsl/engine/test_exchange_snapshot.py::TestRealWorldBenchmarks::test_msgspec_speedup_nested_dict
+FAILED tests/unit/dsl/engine/test_exchange_snapshot.py::TestRealWorldBenchmarks::test_msgspec_speedup_large_payload
+SEG 91 tests/unit/entrypoints/ exit=124 | passed=0 failed=0 skipped=0 xpassed=0 | auto
+SEG 92 tests/unit/express/ exit=0 | passed=22 failed=0 skipped=0 xpassed=0 | auto
+SEG 93 tests/unit/extensions/ exit=1 | passed=59 failed=10 skipped=0 xpassed=0 | auto
+FAILED tests/unit/extensions/test_broken_yaml_refs_fixed.py::TestBrokenYAMLRefsFixed::test_credit_assessment_fetch_uses_existing_function
+FAILED tests/unit/extensions/test_broken_yaml_refs_fixed.py::TestBrokenYAMLRefsFixed::test_credit_assessment_publish_uses_existing_function
+FAILED tests/unit/extensions/test_broken_yaml_refs_fixed.py::TestBrokenYAMLRefsFixed::test_target_functions_exist
+FAILED tests/unit/extensions/test_schemas_only_entry.py::TestSchemasOnlyEntry::test_entry_class_matches_schemas_only_pattern[core_admin]
+FAILED tests/unit/extensions/test_schemas_only_entry.py::TestSchemasOnlyEntry::test_entry_class_matches_schemas_only_pattern[dadata]
+FAILED tests/unit/extensions/test_schemas_only_entry.py::TestSchemasOnlyEntry::test_entry_class_matches_schemas_only_pattern[skb]
+FAILED tests/unit/extensions/test_schemas_only_entry.py::TestSchemasOnlyEntry::test_entry_class_is_importable[core_admin]
+FAILED tests/unit/extensions/test_schemas_only_entry.py::TestSchemasOnlyEntry::test_entry_class_is_importable[dadata]
+FAILED tests/unit/extensions/test_schemas_only_entry.py::TestSchemasOnlyEntry::test_entry_class_is_importable[skb]
+FAILED tests/unit/extensions/test_schemas_only_entry.py::TestSchemasOnlyEntry::test_plugin_toml_parses_for_all_three
+SEG 94 tests/unit/fallbacks/ exit=0 | passed=42 failed=0 skipped=0 xpassed=0 | auto
+SEG 95 tests/unit/frontend/ exit=1 | passed=426 failed=23 skipped=6 xpassed=0 | auto
+FAILED tests/unit/frontend/streamlit_app/shared/test_components.py::test_setup_page_basic
+FAILED tests/unit/frontend/streamlit_app/shared/test_components.py::test_setup_page_centered_layout
+FAILED tests/unit/frontend/streamlit_app/shared/test_components.py::test_setup_page_collapsed_sidebar
+FAILED tests/unit/frontend/streamlit_app/shared/test_components.py::test_metric_row_three_columns
+FAILED tests/unit/frontend/streamlit_app/shared/test_components.py::test_metric_row_with_delta
+FAILED tests/unit/frontend/streamlit_app/shared/test_components.py::test_metric_row_single
+FAILED tests/unit/frontend/streamlit_app/shared/test_components.py::test_dataframe_view_default_width_stretch
+FAILED tests/unit/frontend/streamlit_app/shared/test_components.py::test_dataframe_view_respects_explicit_width
+FAILED tests/unit/frontend/streamlit_app/shared/test_components.py::test_dataframe_view_forwards_extra_kwargs
+FAILED tests/unit/frontend/streamlit_app/test_90_registry_explorer_imports.py::test_seed_explorer_populates_registry
+SEG 96 tests/unit/import_gateway/ exit=0 | passed=16 failed=0 skipped=0 xpassed=0 | auto
+SEG 97 tests/unit/integration/ exit=0 | passed=10 failed=0 skipped=0 xpassed=0 | auto
+SEG 98 tests/unit/log_sinks/ exit=0 | passed=24 failed=0 skipped=0 xpassed=0 | auto
+SEG 99 tests/unit/mcp/ exit=0 | passed=13 failed=0 skipped=0 xpassed=0 | auto
+SEG 100 tests/unit/messaging/ exit=0 | passed=37 failed=0 skipped=0 xpassed=0 | auto
+SEG 101 tests/unit/notebooks/ exit=0 | passed=34 failed=0 skipped=0 xpassed=0 | auto
+SEG 102 tests/unit/notifications/ exit=0 | passed=7 failed=0 skipped=0 xpassed=0 | auto
+SEG 103 tests/unit/plugins/ exit=0 | passed=166 failed=0 skipped=2 xpassed=1 | auto
+SEG 104 tests/unit/schemas/ exit=0 | passed=8 failed=0 skipped=0 xpassed=0 | auto
+SEG 105 tests/unit/sdk/ exit=0 | passed=6 failed=0 skipped=0 xpassed=0 | auto
+SEG 106 tests/unit/security/ exit=0 | passed=43 failed=0 skipped=0 xpassed=0 | auto
+SEG 107 tests/unit/infrastructure/ exit=1 | passed=2407 failed=15 skipped=30 xpassed=0 | auto
+FAILED tests/unit/infrastructure/cache/test_factory.py::test_module_logger - ...
+FAILED tests/unit/infrastructure/database/test_smart_session_manager.py::test_read_routes_to_replica
+FAILED tests/unit/infrastructure/database/test_smart_session_manager.py::test_write_routes_to_primary
+FAILED tests/unit/infrastructure/database/test_smart_session_manager.py::test_no_replica_falls_back_to_primary
+FAILED tests/unit/infrastructure/database/test_smart_session_manager.py::test_breaker_opens_on_consecutive_failures
+FAILED tests/unit/infrastructure/database/test_smart_session_manager.py::test_breaker_recovers_on_success
+FAILED tests/unit/infrastructure/database/test_smart_session_manager.py::test_breaker_cooldown_blocks_replica
+FAILED tests/unit/infrastructure/database/test_smart_session_manager.py::test_session_closed_on_exit_and_on_exception
+FAILED tests/unit/infrastructure/database/test_smart_session_manager_wire.py::test_smart_session_manager_uses_bundle_replica
+FAILED tests/unit/infrastructure/database/test_smart_session_manager_wire.py::test_smart_session_manager_without_replica_falls_back
+FAILED tests/unit/infrastructure/database/test_smart_session_manager_wire.py::test_smart_session_manager_singleton_uses_bundle
+FAILED tests/unit/infrastructure/database/test_smart_session_manager_wire.py::test_smart_read_write_depends_resolve
+FAILED tests/unit/infrastructure/di_bridge/test_dlq_moved.py::TestPiiEraseMigrated::test_pii_erase_imports_from_new_path
+FAILED tests/unit/infrastructure/messaging/test_dlq_lazy_init.py::TestLazyInitProxy::test_attribute_access_triggers_lazy_import
+FAILED tests/unit/infrastructure/security/test_cert_prometheus_exporter.py::TestCertPrometheusExporter::test_export_returns_text
+SEG 108 tests/unit/services/ exit=1 | passed=2671 failed=1 skipped=55 xpassed=0 | auto
+ERROR    src.backend.services.integrations.webhook_relay:structlog_backend.py:119 {'event': 'DLQ Redis remove failed; entry remains in queue until next retry: redis is down', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'src.backend.services.integrations.webhook_relay', 'level': 'error', 'timestamp': '2026-09-29T06:18:17.392064Z', 'exception': 'Traceback (most recent call last):\n  File "/home/user/dev/gd_integration_tools/src/backend/services/integrations/webhook_relay.py", line 352, in _dlq_remove\n    items = await raw.lrange(_DLQ_KEY, 0, -1)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/unittest/mock.py", line 2326, in _execute_mock_call\n    raise effect\nRuntimeError: redis is down'}
+FAILED tests/unit/services/integrations/test_webhook_relay.py::test_dlq_remove_logs_error_on_lrem_failure
+SEG 109 tests/unit/sources/ exit=0 | passed=59 failed=0 skipped=0 xpassed=0 | auto
+SEG 110 tests/unit/storage/ exit=0 | passed=30 failed=0 skipped=1 xpassed=0 | auto
+SEG 111 tests/unit/telegram/ exit=1 | passed=21 failed=1 skipped=0 xpassed=0 | auto
+FAILED tests/unit/telegram/test_client.py::TestContextManager::test_http_property_lazy_init
+SEG 112 tests/unit/tenancy/ exit=0 | passed=18 failed=0 skipped=0 xpassed=0 | auto
+SEG 113 tests/unit/testkit_pkg/ exit=0 | passed=46 failed=0 skipped=0 xpassed=0 | auto
+SEG 114 tests/unit/tools/ exit=124 | passed=0 failed=0 skipped=0 xpassed=0 | auto
+SEG 115 tests/unit/utilities/ exit=0 | passed=4 failed=0 skipped=0 xpassed=0 | auto
+SEG 116 tests/unit/workflows/ exit=0 | passed=38 failed=0 skipped=1 xpassed=0 | auto
+SEG 117 tests/unit/entrypoints/ exit=1 | passed=1485 failed=1 skipped=27 xpassed=3 | auto-retry
+FAILED tests/unit/entrypoints/test_mypy_contract_regressions.py::test_authenticate_jwt_awaits_async_decode
+SEG 118 tests/unit/tools/ exit=1 | passed=930 failed=11 skipped=1 xpassed=0 | auto-retry
+FAILED tests/unit/tools/test_check_audit_deprecation.py::test_real_codebase_finds_legacy_callsites
+FAILED tests/unit/tools/test_check_audit_deprecation_allowlist.py::test_audit_deprecation_checker_exits_zero_in_strict
+FAILED tests/unit/tools/test_check_audit_deprecation_allowlist.py::test_audit_deprecation_checker_json_includes_allowlist_count
+FAILED tests/unit/tools/test_check_audit_deprecation_allowlist.py::test_audit_deprecation_checker_scan_returns_zero_results
+FAILED tests/unit/tools/test_check_privacy_lifecycle_strict_gate.py::test_default_mode_exits_0_when_no_issues
+FAILED tests/unit/tools/test_check_routebuilder_mro.py::TestCLIMain::test_cli_default_fails
+FAILED tests/unit/tools/test_fix_except_bug_no_remaining.py::test_codemod_idempotent
+FAILED tests/unit/tools/test_plugin_and_route_scaffolds.py::test_test_plug_plugin_module_resolves_base_plugin_via_core_interfaces
+FAILED tests/unit/tools/test_sbom_canonical_path.py::TestSBOMRegeneratedCurrent::test_legacy_sbom_cdx_json_does_not_exist
+FAILED tests/unit/tools/test_sbom_canonical_path.py::TestSBOMRegeneratedCurrent::test_canonical_sbom_has_current_cryptography

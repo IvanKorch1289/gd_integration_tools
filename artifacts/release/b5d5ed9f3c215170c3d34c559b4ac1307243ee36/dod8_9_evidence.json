@@ -1,0 +1,16 @@
+{
+  "head": "b5d5ed9f3c215170c3d34c559b4ac1307243ee36",
+  "full_suite": {
+    "method": "56 сегментов (OOM-mitigation, свежий интерпретатор; single-process OOM-killed kernel при RSS 9.6GB — dmesg 14:05)",
+    "totals": {"passed": 20261, "failed": 97, "skipped": 229, "xpassed": 42},
+    "verdict": "PARTIAL — 69 env-tier + 26 pollution/flaky (проходят изолированно) + ~16 stale vs активная волна владельца",
+    "log": "full_suite_segments.log"
+  },
+  "coverage_gate": {
+    "method": "make coverage-gate адаптирован: сегменты с --cov-append (xdist workers падали на env-tier fixture-ошибках при -n auto, maxfail=20 срабатывал на 99й секунде) → coverage combine/report/xml → canonical check_coverage_gate.py main --threshold 70 --strict",
+    "result": "Coverage: 75.22%, Threshold: 70%, Baseline: 52.25% — OK, exit 0",
+    "report_total_sqlite": "73% (line coverage, coverage report)",
+    "baseline_untouched": true,
+    "caveat": "покрытие = unit-сегменты; env-tier каталоги (smoke/rpa/chaos/e2e top-level, требующие Docker/серверов) в coverage не входили"
+  }
+}

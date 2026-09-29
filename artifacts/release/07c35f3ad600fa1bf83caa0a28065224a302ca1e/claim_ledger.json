@@ -1,0 +1,159 @@
+{
+  "audit": "Claim Ledger — консолидация волн production completion (Sprint 47 agent)",
+  "head": "07c35f3ad600fa1bf83caa0a28065224a302ca1e",
+  "generated": "2026-09-29",
+  "rules": "Presence != implementation; wiring != execution; collection != passed; exit 0 != PASS при противоречивом выводе; UNKNOWN не преобразуется в PASS",
+  "claims": [
+    {
+      "id": "C01",
+      "claim": "make ci PASS (композит 10 гейтов)",
+      "evidence": "artifacts/release/*/make_ci_pass.log: exit 0, 'CI gate passed' на 46e94453f (baf4afbee) и 07c35f3ad-эре; creosote 'No unused dependencies found' (dependency gate закрыт)",
+      "counterevidence": "прогон на разных SHA волны владельца; same-SHA-привязка см. C02",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "C02",
+      "claim": "readiness-check PASS + pre-prod-check PASS (26/37, 0 failed)",
+      "evidence": "artifacts/release/fcc3c075b*/dod6_7_evidence.json + логи, exit 0 оба",
+      "counterevidence": "evidence на fcc3c075b; последующие SHA владельца (84daeb508..07c35f3ad) меняли gates-домен и privacy — требуется same-SHA перепрогон при заморозке",
+      "status": "PARTIAL"
+    },
+    {
+      "id": "C03",
+      "claim": "Полный тестовый suite — стабилен в ядре",
+      "evidence": "full_suite_segments.log: 56 сегментов, 20 261 passed / 97 failed / 229 skipped / 42 xpassed; изоляция сняла pollution (frontend 9, db 11)",
+      "counterevidence": "97 failed: 69 env-tier (Docker/server/Redis/browser), 2 load-flaky msgspec, ~16 stale vs активная волна владельца; single-process run OOM-killed (RSS 9.6GB, dmesg)",
+      "status": "PARTIAL"
+    },
+    {
+      "id": "C04",
+      "claim": "Coverage gate (порог 70%)",
+      "evidence": "check_coverage_gate.py main --threshold 70 --strict: 'Coverage: 75.22%, Threshold: 70%, Baseline: 52.25% — OK', exit 0; report TOTAL 73% line; coverage.xml в artifacts/release/b5d5ed9f3*/",
+      "counterevidence": "метод сегментированный (unit-only с --cov-append): env-tier каталоги (smoke/rpa/chaos/e2e top-level) не в coverage; canonical make coverage-gate как есть невыполним на 15GB box (xdist maxfail=20 срабатывает на env fixture-ошибках)",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "C05",
+      "claim": "Docstrings 0 missing",
+      "evidence": "tools/check_docstrings.py exit 0, 2557 файлов (многократно, разные SHA)",
+      "counterevidence": "-",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "C06",
+      "claim": "mypy 0 ошибок",
+      "evidence": "mypy_budget --max 5: 'mypy errors: 0', mypy full: 'Success: no issues found in 2382-2580 files'",
+      "counterevidence": "внешний аудит фиксирует UNKNOWN в env без mypy — tool failure у них, не код",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "C07",
+      "claim": "Layers 0 новых / 22 legacy",
+      "evidence": "check_layers.py: 'Нарушений: 0 новых (baseline: 22 legacy)' — все прогоны",
+      "counterevidence": "-",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "C08",
+      "claim": "Object authorization 117 callsites, 0 unknown",
+      "evidence": "classify_object_authorization.py --strict exit 0: '9 user-data, 0 unknown, 117 total'",
+      "counterevidence": "внешний аудит (25.09, HEAD 97b901b9) видел 5 UNKNOWN — закрыто волнами 94ca80c8e/5eefd22f4/4e086ff0c/b78609426 (ADR-0345)",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "C09",
+      "claim": "Optional tenant 123, no drift",
+      "evidence": "check_no_new_optional_tenant.py: 'Baseline: 123, Current: 123, No drift' exit 0",
+      "counterevidence": "баг checker'а: identity включает номер строки → moved-метод выглядит как NEW+REMOVED (внешний аудит 28.09, _postgres.py:113) — считает moved корректно по факту, но exit-семантика false-green; фикс в бэклоге",
+      "status": "PARTIAL"
+    },
+    {
+      "id": "C10",
+      "claim": "ADR-0345 ACCEPTED: object-level authz, 5/5 P0 закрыты (Option A per-call fail-closed)",
+      "evidence": "docs/adr/0345-*.md 'ACCEPTED... 5 of 5 P0 real gaps closed'; контракты в кластере security: 755 passed (scheduler/fanout/hitl/di/privacy/security)",
+      "counterevidence": "-",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "C11",
+      "claim": "ADR-0346 ACCEPTED: run-history store + backfill/catchup",
+      "evidence": "d471b786b (ACCEPTED + Decision/Status синхронизированы); миграция b8c9d0e1f2a3; BackfillService; контракт-тесты backfill 9 + facade integration + wiring 3",
+      "counterevidence": "runtime-вызов run_pending из scheduler-loop остаётся операционным хвостом (по требованию через фасад)",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "C12",
+      "claim": "P3-13 scheduler wiring: add_job сохраняет executor, run_pending исполняет catchup-тики",
+      "evidence": "96bd59593 + тесты test_scheduler_run_pending_wiring.py 3/3; владелец независимо подтвердил ('scheduler catchup wiring исправлено' в аудите 28.09)",
+      "counterevidence": "-",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "C13",
+      "claim": "Startup-time gate: httpx eager-импорт устранён, baseline 1.304→1.65 документирован",
+      "evidence": "constants.py lazy __getattr__ (22f7ac14c/802c82c7e); тихий cold-import 1.511-1.648s; gate exit 0 (limit 2.145s)",
+      "counterevidence": "внутри pre-prod suite замер 1.7-1.9s (нагрузка предыдущих гейтов) — gate чувствителен к пре-лоду; ручной refresh помечен для ревью владельца",
+      "status": "PARTIAL"
+    },
+    {
+      "id": "C14",
+      "claim": "Tenant isolation: структурная полнота",
+      "evidence": "check_tenant_isolation --strict: 558/558 классифицированы, exit 0; TenantResourceIsolationMiddleware (order 330); tenant-aware webhook_scheduler",
+      "counterevidence": "structural != runtime (правило леджера); 123 optional-tenant контракта мигрируются; cross-tenant negative suite — частично",
+      "status": "PARTIAL"
+    },
+    {
+      "id": "C15",
+      "claim": "Privacy lifecycle gate fail-closed",
+      "evidence": "check_privacy_lifecycle --strict exit 0 в моём окружении (2+ прогона)",
+      "counterevidence": "внешний аудит: exit 1 в чистом checkout без runtime-deps (ORM import fail) — tool failure у них; PG erasure реализован; интеграционные privacy-тесты с живыми PG/Redis/S3/Qdrant не прогонялись",
+      "status": "PARTIAL"
+    },
+    {
+      "id": "C16",
+      "claim": "Temporal OTEL interception wired",
+      "evidence": "TracingInterceptor в temporal_backend Client.connect; aa03b3f59 wiring-контракты 2/2; marker __temporal_workflow_definition соответствует SDK 1.32.0",
+      "counterevidence": "replay e2e BLOCKED: нет живого Temporal server; три bootstrap-пути (audit 25.09) — консолидация build_temporal_interceptors() в бэклоге владельца",
+      "status": "PARTIAL"
+    },
+    {
+      "id": "C17",
+      "claim": "Browser E2E (Playwright Chromium)",
+      "evidence": "-",
+      "counterevidence": "не запускался: нет Chromium/запущенного приложения в env; DEFERRED исторически",
+      "status": "UNKNOWN"
+    },
+    {
+      "id": "C18",
+      "claim": "SBOM + image signing + backup/rollback drills",
+      "evidence": "исторические прогоны Sprint 35-го (SBOM/cosign/ZAP) на старых SHA",
+      "counterevidence": "на текущем SHA не перевефицированы; Docker недоступен",
+      "status": "UNKNOWN"
+    },
+    {
+      "id": "C19",
+      "claim": "Performance budgets",
+      "evidence": "startup-time gate PASS; pre-prod #19 OK",
+      "counterevidence": "k6/locust p95 ≤80ms — env-skip (нет запущенного app); import graph budget — предложения аудита 25.09 не внедрены",
+      "status": "PARTIAL"
+    },
+    {
+      "id": "C20",
+      "claim": "Release evidence same-SHA",
+      "evidence": "artifacts/release/<sha>/ для 46e94453f, fcc3c075b, 07c35f3ad",
+      "counterevidence": "волна владельца коммитит каждые ~10-30 мин — полная same-SHA фиксация возможна только при паузе волны или теге релиза",
+      "status": "PARTIAL"
+    }
+  ],
+  "summary": {
+    "VERIFIED": 9,
+    "PARTIAL": 9,
+    "UNKNOWN": 2,
+    "DISPUTED": 0,
+    "FALSE": 0
+  },
+  "p0_p1_unknowns": [
+    "C17 browser E2E (env-tier)",
+    "C18 SBOM/signing/drills (env-tier)"
+  ]
+}

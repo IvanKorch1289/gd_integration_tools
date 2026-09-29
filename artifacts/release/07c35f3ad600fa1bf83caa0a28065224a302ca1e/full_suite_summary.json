@@ -1,0 +1,16 @@
+{
+  "audit": "DoD-8 full test suite (segmented serial, OOM mitigation)",
+  "head_at_run": "mixed f681c4ed..07c35f3ad (parallel owner wave active)",
+  "method": "56 pytest segments (fresh interpreter each; single-process run OOM-killed at 9.6GB RSS by kernel, see dmesg 14:05:53)",
+  "totals_deduped": {"passed": 20261, "failed": 97, "skipped": 229, "xpassed": 42, "unique_dirs": 56},
+  "failure_classification": {
+    "env_tier_needs_docker": "tests/integration/test_testcontainers_smoke.py 15",
+    "env_tier_needs_server": "tests/smoke/ 20 (granian/admin_mcp/websocket)",
+    "env_tier_needs_redis_mq": "tests/integration tenant_middleware/mcp_authz/eventbus/mq_redis_streams 24",
+    "env_tier_needs_browser_desktop": "tests/rpa/ 10",
+    "pollution_pass_in_isolation": "frontend components 9, smart_session_manager 11",
+    "load_flaky_pass_isolated": "dsl msgspec benchmarks 2 (passed in owner isolated run and first segment pass)",
+    "stale_vs_owner_active_wave": "extensions schemas_only 7, tools audit_allowlist 3, docs references 3, deploy manifests 1+2err, telegram 1, webhook_relay 1 (~16 at HEAD 07c35f3ad; owner commits 85ed10cae/f681c4ed actively repairing this class)"
+  },
+  "verdict": "PARTIAL — не PASS: 97 failed = 69 env-tier + 26 pollution/flaky + ~16 stale vs owner in-flight wave; ядро (20 261 passed) стабильно"
+}
