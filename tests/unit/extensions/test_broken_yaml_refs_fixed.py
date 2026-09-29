@@ -64,17 +64,23 @@ class TestBrokenYAMLRefsFixed:
         D-AUDIT-A10 carry-over (cycle 1, follow-up 2026-08-12): get_result
         заменён на module-level fetch_result wrapper (skb.py:152-181),
         matching call_function contract fn(payload) -> Any.
+
+        Схема шага изменилась: было ``activities[].function``, стало
+        ``steps[]`` с ``type`` ("activity") и ``name``, где ``name`` несёт
+        dotted-ссылку ``module:function``. Охраняемый инвариант прежний.
         """
-        activities = {a["name"]: a for a in credit_assessment_yaml["activities"]}
-        for activity_name in ("fetch_skb_report", "fetch_nbki_report"):
-            fn = activities[activity_name]["function"]
+        refs = [s["name"] for s in credit_assessment_yaml["steps"]]
+        fetch_refs = [r for r in refs if r.endswith(":fetch_result")]
+        assert len(fetch_refs) == 2, (
+            f"ожидались 2 fetch-шага на :fetch_result, найдено {len(fetch_refs)}: {refs}"
+        )
+        for fn in fetch_refs:
             assert "fetch_for_workflow" not in fn, (
-                f"{activity_name} всё ещё ссылается на несуществующую fetch_for_workflow"
+                f"fetch-шаг всё ещё ссылается на несуществующую fetch_for_workflow: {fn}"
             )
-            assert ":fetch_result" in fn, (
-                f"{activity_name} должен использовать :fetch_result "
-                "(module-level wrapper вокруг CreditSKBClient.get_result)"
-            )
+        assert not any("fetch_for_workflow" in r for r in refs), (
+            f"credit_assessment всё ещё ссылается на fetch_for_workflow: {refs}"
+        )
 
     def test_credit_assessment_publish_uses_existing_function(
         self, credit_assessment_yaml: dict
@@ -85,15 +91,14 @@ class TestBrokenYAMLRefsFixed:
         emit_decision (НЕ существует). Заменено на extensions.credit_pipeline.
         functions.normalize:apply_rules (placeholder).
         """
-        activities = {a["name"]: a for a in credit_assessment_yaml["activities"]}
-        publish_fn = activities["publish_decision"]["function"]
-        assert "emit_decision" not in publish_fn, (
-            "publish_decision всё ещё ссылается на несуществующую emit_decision"
+        refs = [s["name"] for s in credit_assessment_yaml["steps"]]
+        assert not any("emit_decision" in r for r in refs), (
+            f"workflow всё ещё ссылается на несуществующую emit_decision: {refs}"
         )
         # Новая цель — extensions.credit_pipeline.functions.normalize:apply_rules
-        assert publish_fn == (
-            "extensions.credit_pipeline.functions.normalize:apply_rules"
-        ), f"publish_decision function должен быть apply_rules, got {publish_fn}"
+        assert "extensions.credit_pipeline.functions.normalize:apply_rules" in refs, (
+            f"publish-шаг должен ссылаться на normalize:apply_rules, шаги: {refs}"
+        )
 
     def test_hello_route_no_broken_normalizer_ref(self, hello_route_yaml: dict) -> None:
         """routes/hello_route/main.dsl.yaml НЕ содержит broken normalizer ref.
