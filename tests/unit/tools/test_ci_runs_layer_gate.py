@@ -87,9 +87,9 @@ def test_ci_executes_the_unit_suite() -> None:
         f"цель ci не вызывает unit-tests — тесты снова не будут выполняться. "
         f"Текущие шаги: {recipe}"
     )
-    assert not any(step for step in recipe if re.search(r"pytest\b.*--co", step)), (
-        "pytest --co в самой цели ci больше не нужен — шаг вынесен в отдельную цель"
-    )
+    assert not any(
+        step for step in recipe if re.search(r"pytest\b.*--co", step)
+    ), "pytest --co в самой цели ci больше не нужен — шаг вынесен в отдельную цель"
 
 
 def test_unit_tests_step_precedes_success_echo() -> None:
@@ -112,9 +112,7 @@ def test_unit_tests_target_actually_runs_pytest_on_unit_suite() -> None:
     assert match, "цель unit-tests не найдена в make/pipelines.mk"
     body = match.group(1)
     pytest_lines = [ln for ln in body.splitlines() if "pytest" in ln]
-    assert pytest_lines, (
-        "цель unit-tests не запускает pytest — шаг в ci будет декоративным"
-    )
+    assert pytest_lines, "цель unit-tests не запускает pytest — шаг в ci будет декоративным"
     assert any("tests/unit" in ln for ln in pytest_lines), (
         f"pytest вызывается не по tests/unit: {pytest_lines}. Подмена на tests/ "
         "затянет в CI интеграционные тесты, которым нужны PG/Redis/MinIO"

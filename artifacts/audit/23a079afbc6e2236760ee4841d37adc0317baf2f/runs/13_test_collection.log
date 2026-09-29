@@ -1,5 +1,0 @@
-[34mChecking test collection (catches circular imports, missing modules)...[0m
-SKIPPED [1] tests/unit/storage/test_s3_object_storage.py:31: moto not in test deps; S124 W2 honest skip (TD-0244)
-SKIPPED [1] tests/unit/workflows/test_orders_saga.py:9: orders_saga demo removed — S168 W14
-20790 tests collected in 37.05s
-[32mTest collection OK[0m

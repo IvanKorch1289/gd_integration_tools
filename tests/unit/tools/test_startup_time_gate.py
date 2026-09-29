@@ -228,14 +228,18 @@ def test_median_survives_single_outlier_pass(
     assert "median of 3" in out
 
 
-def test_steady_regression_still_fails(isolated_baseline, monkeypatch, capsys) -> None:
+def test_steady_regression_still_fails(
+    isolated_baseline, monkeypatch, capsys
+) -> None:
     """Устойчивая деградация (все прогоны медленные) всё ещё роняет гейт.
 
     Страховка от «сглаживания всего подряд»: медиана не должна превращать
     гейт в warn-only.
     """
     per_module = mod.MAX_STARTUP_SECONDS_PER_MODULE + 0.5
-    monkeypatch.setattr(mod, "measure_import", lambda module: per_module)
+    monkeypatch.setattr(
+        mod, "measure_import", lambda module: per_module
+    )
     rc = mod.main(["--samples", "3"])
     captured = capsys.readouterr()
     assert rc == 1, "медиана не должна скрывать устойчивую деградацию"
@@ -274,9 +278,7 @@ def test_regression_limit_uses_median_not_best_pass(
 
     monkeypatch.setattr(mod, "measure_import", slow_two_passes)
     capsys.readouterr()
-    assert mod.main(["--samples", "3"]) == 1, (
-        "медиана обязана ловить устойчивую деградацию"
-    )
+    assert mod.main(["--samples", "3"]) == 1, "медиана обязана ловить устойчивую деградацию"
 
 
 def test_samples_must_be_positive() -> None:

@@ -1,6 +1,0 @@
-[32muv virtual environment detected[0m
-[34mRunning mypy budget gate (max 5 errors)...[0m
-Running mypy...
-mypy errors: 0 (max=5, baseline=30)
-OK
-[32mMypy budget OK[0m
