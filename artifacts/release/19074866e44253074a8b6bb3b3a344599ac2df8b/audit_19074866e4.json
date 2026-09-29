@@ -1,0 +1,108 @@
+{
+  "sha": "19074866e44253074a8b6bb3b3a344599ac2df8b",
+  "branch": "master",
+  "in_sync_with_origin_master": "0 ahead / 0 behind (git rev-list --left-right --count origin/master...HEAD)",
+  "generated_utc": "2026-09-29T12:05:41.459933+00:00",
+  "python": {
+    "system": "Python 3.14.4",
+    "uv_venv": "Python 3.14.0"
+  },
+  "inventory": {
+    "tracked_files": 6668,
+    "tracked_py": 5105,
+    "tracked_test_py": 2211,
+    "src_backend_py": 2400,
+    "test_files": 1971
+  },
+  "gates_measured": {
+    "classifier": {
+      "exit": 0
+    },
+    "compileall": {
+      "exit": 0
+    },
+    "docstrings": {
+      "exit": 0
+    },
+    "layers": {
+      "exit": 0
+    },
+    "make_ci": {
+      "exit": 0
+    },
+    "optional_tenant": {
+      "exit": 0
+    },
+    "pre_prod_check": {
+      "exit": 0
+    },
+    "privacy_strict": {
+      "exit": 0
+    },
+    "readiness": {
+      "exit": 0
+    },
+    "ruff_check": {
+      "exit": 0
+    },
+    "ruff_format": {
+      "exit": 0
+    },
+    "tenant_strict": {
+      "exit": 0
+    }
+  },
+  "all_gates_exit_zero": true,
+  "contradicting_markers_in_exit0_logs": 0,
+  "key_numbers_verified": {
+    "layers": "0 new violations, 22 legacy allowlist entries, 2554 files",
+    "object_authorization_classifier": "117 callsites, unknown: 0 (0.0%)",
+    "optional_tenant": "baseline 123 = current 123, no drift",
+    "privacy_lifecycle": "storage coverage 5/5 backends",
+    "pre_prod_check": "PASSED 26/37, WARN 8, SKIPPED 3, FAILED 0"
+  },
+  "refuted_premise": "The prior verdict stated a fresh checkout could not be obtained due to environment limits. REFUTED: `git fetch --all --tags --prune` exits 0 against a real origin remote, and a pristine `git clone` of origin/master to /tmp succeeds (exit 0) and resolves to the identical SHA 19074866e4.",
+  "stale_commands": "make test does not exist (verified absent from Makefile and make/*.mk). type-check-budget, dsl-stubs-check, vulture-gate, test-collection-check, readiness-check, pre-prod-check all exist.",
+  "worktree_not_clean": "10 entries: 5 modified (.audit/quality-results.json, config_profiles/prod.yml, config_profiles/staging.yml, docs/adr/WIKI.md, src/backend/infrastructure/database/database/initializer.py) + 5 untracked artifact dirs. HEAD equals origin/master, but the release criterion 'clean worktree' is NOT met.",
+  "new_defects_found": [
+    {
+      "id": "pre-prod #21 ConfigValidator is a dead check",
+      "severity": "high",
+      "evidence": "tools/checks/pre_prod_check.py:158 tests `(ROOT/'src'/'backend'/'core'/'config'/'validator.py').exists()`. That path does not exist; ConfigValidator was moved to the package `src/backend/core/config/validator/__init__.py:51`. The check therefore always returns the WARN 'ConfigValidator module not found (S17 K-ARCH-1 scaffold)' branch and has never validated anything.",
+      "impact": "A CRITICAL-seeming check (waf.strict_required_in_prod) is never executed for the prod profile, so a permissive production WAF would ship undetected. The committed prod.yml is currently correct (waf.strict true, allow_hosts explicit), so there is no live exposure today — the gap is that nothing would catch a regression."
+    },
+    {
+      "id": "pre-prod gate #19 is a wall-clock gate inside a release gate",
+      "severity": "medium",
+      "evidence": "tools/checks/startup_time.py:34-35 MAX_STARTUP_SECONDS_PER_MODULE=3.0 and MAX_TOTAL_STARTUP_SECONDS=3.0; pre_prod_check.py:764 wires it as blocking check 19. Observed 2.193s (FAIL) and 2.6s (OK) on the same SHA minutes apart.",
+      "impact": "pre-prod-check flips between 25/37 and 26/37 purely on machine load, so 'pre-prod-check passes' is not a reproducible claim. It already has a REGRESSION_TOLERANCE=0.30 baseline mode that would be the stable signal."
+    }
+  ],
+  "verdict": "NOT production-ready",
+  "independent_fact_check": {
+    "agent": "separate verifier agent, read-only, re-ran all 12 claims independently",
+    "confirmed": [
+      "layers 0/22",
+      "docstrings 0",
+      "privacy 5/5",
+      "tenant 0 unclassified",
+      "optional-tenant 123=123",
+      "classifier 117/0 unknown",
+      "make ci exit 0",
+      "make ci ends at pytest --co",
+      "check_layers absent from ci chain",
+      "readiness-check exit 0",
+      "HEAD == origin/master",
+      "make test absent"
+    ],
+    "refuted": [
+      "pre-prod-check: agent run FAILED (exit 2)",
+      "sbom gate exit 3 stale audit report",
+      "worktree clean: 10 entries dirty"
+    ],
+    "reconciled": {
+      "pre_prod_check": "FLAKY, not a real failure. Gate #19 'startup-time <3s' is a wall-clock measurement (MAX_TOTAL_STARTUP_SECONDS = 3.0, tools/checks/startup_time.py:35). Three observations: agent 2.193s -> FAIL; owner run A OK; owner run B 2.6s -> OK. Both PASSED tallies seen (25/37 with 1 FAIL, 26/37 with 0). The gate is load-sensitive and must not be treated as a deterministic verdict.",
+      "sbom_gate": "exit 3 came from the staleness guard added in e6ad492fe: dist/pip-audit.json (12:34) older than dist/audit-requirements.txt (13:20). The guard is working as designed. The vulnerability CONTENT claim is UNKNOWN until the report is regenerated, not disproven."
+    }
+  }
+}
