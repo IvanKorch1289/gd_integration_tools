@@ -41,7 +41,11 @@ def upgrade() -> None:
         batch.add_column(sa.Column("subject_id", sa.String(length=256), nullable=True))
         # Глобальная уникальность name снимается: иначе процедура одного
         # тенанта блокирует одноимённую процедуру другого.
-        batch.drop_constraint("langmem_procedural_name_key", type_="unique")
+        # Имя констрейнта — из naming-convention (uq_<table>_<col>,
+        # фактическое имя в PG после d0e1f2a3b4c5: uq_langmem_procedural_name),
+        # а не PG-дефолт <table>_<col>_key — иначе UndefinedObjectError
+        # на чистой цепочке (найдено DoD-13 PG-drill, 2026-09-29).
+        batch.drop_constraint("uq_langmem_procedural_name", type_="unique")
         batch.create_index(
             "ix_langmem_procedural_subject_tenant",
             ["subject_id", "tenant"],
@@ -57,7 +61,7 @@ def downgrade() -> None:
     with op.batch_alter_table("langmem_procedural") as batch:
         batch.drop_index("uq_langmem_procedural_name_tenant")
         batch.drop_index("ix_langmem_procedural_subject_tenant")
-        batch.create_unique_constraint("langmem_procedural_name_key", ["name"])
+        batch.create_unique_constraint("uq_langmem_procedural_name", ["name"])
         batch.drop_column("subject_id")
 
     with op.batch_alter_table("langmem_episodic") as batch:

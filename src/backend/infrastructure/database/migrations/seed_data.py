@@ -51,7 +51,11 @@ _DEFAULT_ORDER_KINDS: list[dict[str, Any]] = [
 
 def apply_reference_seed(bind: sa.Connection) -> None:
     """Вставить базовые orderkinds (идемпотентно, PG и sqlite)."""
-    now = datetime.now(UTC)
+    # Naive-UTC: колонки created_at/updated_at — sa.DateTime() без
+    # timezone=True; asyncpg отвергает tz-aware datetime в TIMESTAMP
+    # («can't subtract offset-naive and offset-aware datetimes»).
+    # SQLite это не ловил — типы там нестрогие.
+    now = datetime.now(UTC).replace(tzinfo=None)
     for kind in _DEFAULT_ORDER_KINDS:
         bind.execute(
             sa.text(
