@@ -450,3 +450,153 @@ class TestRealisticExample:
         diff = diff_sboms(current=current, baseline=[])
         assert len(diff.license_violations) == 1
         assert diff.license_violations[0][1].name == "bad"
+
+
+class TestAuditReportStaleness:
+    """pip-audit отчёт старше SBOM — гейт не должен верить ему (W1).
+
+    Регрессия: make-цель пересобирала ``dist/pip-audit.json`` только при его
+    отсутствии, поэтому отчёт из прошлого окружения молча сравнивался с
+    baseline и давал CVE для пакетов, которых нет ни в venv, ни в SBOM.
+    """
+
+    @staticmethod
+    def _write_audit(path: Path, vuln_ids: list[str]) -> Path:
+        deps = []
+        if vuln_ids:
+            deps = [
+                {
+                    "name": "ghost-package",
+                    "version": "1.0.0",
+                    "vulns": [{"id": vuln_ids[0], "aliases": vuln_ids[1:]}],
+                }
+            ]
+        path.write_text(json.dumps({"dependencies": deps}), encoding="utf-8")
+        return path
+
+    def test_helper_flags_older_report(self, tmp_path: Path) -> None:
+        """Отчёт старше списка зависимостей → helper возвращает True."""
+        import os
+
+        from tools.checks.sbom_diff_gate import _audit_report_is_stale
+
+        audit = tmp_path / "audit.json"
+        audit.write_text("{}", encoding="utf-8")
+        reqs = tmp_path / "requirements.txt"
+        reqs.write_text("pkg==1", encoding="utf-8")
+        os.utime(audit, (1000, 1000))
+        os.utime(reqs, (2000, 2000))
+        assert _audit_report_is_stale(audit, reqs) is True
+
+    def test_helper_allows_newer_report(self, tmp_path: Path) -> None:
+        """Отчёт новее списка зависимостей → False (false-positive guard)."""
+        import os
+
+        from tools.checks.sbom_diff_gate import _audit_report_is_stale
+
+        audit = tmp_path / "audit.json"
+        audit.write_text("{}", encoding="utf-8")
+        reqs = tmp_path / "requirements.txt"
+        reqs.write_text("pkg==1", encoding="utf-8")
+        os.utime(audit, (2000, 2000))
+        os.utime(reqs, (1000, 1000))
+        assert _audit_report_is_stale(audit, reqs) is False
+
+    def test_helper_tolerates_missing_file(self, tmp_path: Path) -> None:
+        """Недоступный файл → False: гейт не блокируется по не связанной причине."""
+        from tools.checks.sbom_diff_gate import _audit_report_is_stale
+
+        reqs = tmp_path / "requirements.txt"
+        reqs.write_text("pkg==1", encoding="utf-8")
+        assert _audit_report_is_stale(tmp_path / "absent.json", reqs) is False
+
+    def test_requirements_path_points_at_dist(self) -> None:
+        """Эталон свежести — dist/audit-requirements.txt, а не SBOM."""
+        from tools.checks.sbom_diff_gate import _requirements_path
+
+        assert _requirements_path().name == "audit-requirements.txt"
+        assert _requirements_path().parent.name == "dist"
+
+    def test_stale_report_fails_before_diffing(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """main() падает с exit 3, не печатая phantom CVE."""
+        import os
+        import sys
+
+        import tools.checks.sbom_diff_gate as gate_mod
+
+        current = _write_sbom(
+            tmp_path / "current.cdx.json", [{"name": "a", "version": "1"}]
+        )
+        baseline = _write_sbom(tmp_path / "baseline.cdx.json", [])
+        audit = self._write_audit(tmp_path / "audit.json", ["CVE-2026-99999"])
+        reqs = tmp_path / "requirements.txt"
+        reqs.write_text("pkg==1", encoding="utf-8")
+        os.utime(audit, (1000, 1000))
+        os.utime(reqs, (2000, 2000))
+        # Эталон свежести фиксируем в tmp, чтобы тест не зависел от mtime
+        # реального dist/audit-requirements.txt в рабочем дереве.
+        monkeypatch.setattr(gate_mod, "_requirements_path", lambda: reqs)
+
+        old_argv = sys.argv
+        sys.argv = [
+            "sbom_diff_gate",
+            "--current",
+            str(current),
+            "--baseline",
+            str(baseline),
+            "--audit-current",
+            str(audit),
+            "--audit-baseline",
+            str(tmp_path / "audit_baseline.json"),
+        ]
+        try:
+            rc = main()
+        finally:
+            sys.argv = old_argv
+        assert rc == 3, "устаревший отчёт обязан давать exit 3, а не вердикт по CVE"
+
+    def test_fresh_report_is_not_rejected(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Свежий отчёт проходит: гейт не падает на собственном нормальном входе.
+
+        Регрессия первой версии фикса: эталоном был SBOM, который make
+        пересоздаёт ДО pip-audit, поэтому корректный отчёт всегда оказывался
+        «старше» и гейт падал бы при каждом штатном прогоне.
+        """
+        import os
+        import sys
+
+        import tools.checks.sbom_diff_gate as gate_mod
+
+        current = _write_sbom(
+            tmp_path / "current.cdx.json", [{"name": "a", "version": "1"}]
+        )
+        baseline = _write_sbom(tmp_path / "baseline.cdx.json", [])
+        audit = self._write_audit(tmp_path / "audit.json", [])
+        reqs = tmp_path / "requirements.txt"
+        reqs.write_text("pkg==1", encoding="utf-8")
+        # Отчёт новее списка зависимостей — обычная последовательность make.
+        os.utime(audit, (2000, 2000))
+        os.utime(reqs, (1000, 1000))
+        monkeypatch.setattr(gate_mod, "_requirements_path", lambda: reqs)
+
+        old_argv = sys.argv
+        sys.argv = [
+            "sbom_diff_gate",
+            "--current",
+            str(current),
+            "--baseline",
+            str(baseline),
+            "--audit-current",
+            str(audit),
+            "--audit-baseline",
+            str(tmp_path / "audit_baseline.json"),
+        ]
+        try:
+            rc = main()
+        finally:
+            sys.argv = old_argv
+        assert rc == 0, "свежий отчёт обязан проходить, а не отвергаться"

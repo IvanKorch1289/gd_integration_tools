@@ -86,7 +86,11 @@ sbom-diff-gate: ## OP-3: SBOM diff gate — fail on new copyleft; unknown licens
 	# P0/P1 (2026-09-14): baseline трекается в .baselines/ (без self-copy);
 	# приём нового baseline — явный make sbom-baseline-accept.
 	@test -f .baselines/sbom.baseline.json || { $(ERROR) ".baselines/sbom.baseline.json отсутствует — make sbom-baseline-accept"; exit 2; }
-	@test -f dist/pip-audit.json || $(UV_RUN) pip-audit --format json --output dist/pip-audit.json -r dist/audit-requirements.txt $$ALLOW || true
+	# Отчёт pip-audit ПЕРЕСОБИРАЕТСЯ на каждом прогоне. Раньше строка была
+	# `test -f ... ||` — файл, созданный в прошлом окружении, молча переиспользовался,
+	# и гейт рапортовал CVE для пакетов, которых нет ни в venv, ни в SBOM.
+	$(UV_RUN) pip-audit --format json --output dist/pip-audit.json -r dist/audit-requirements.txt $(ALLOW) \
+		|| { $(ERROR) "pip-audit не выполнился — свежий отчёт обязателен"; exit 2; }
 	@$(UV_RUN) python tools/checks/sbom_diff_gate.py \
 		--current dist/sbom/sbom.cdx.json \
 		--baseline .baselines/sbom.baseline.json \

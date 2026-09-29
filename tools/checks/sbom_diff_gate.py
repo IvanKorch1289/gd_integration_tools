@@ -93,6 +93,42 @@ def _extract_vuln_ids(audit_path: Path) -> set[str]:
     return ids
 
 
+def _requirements_path() -> Path:
+    """Путь к списку зависимостей, подаваемому в pip-audit.
+
+    Returns:
+        Путь к ``dist/audit-requirements.txt`` относительно корня репозитория.
+    """
+    return Path(__file__).resolve().parents[2] / "dist" / "audit-requirements.txt"
+
+
+def _audit_report_is_stale(
+    audit_path: Path, requirements_path: Path
+) -> bool:
+    """True, если pip-audit JSON старше списка зависимостей, который сканировался.
+
+    Эталон свежести — не SBOM, а ``dist/audit-requirements.txt``: именно он
+    является входом pip-audit и пересобирается из живого venv. SBOM как
+    эталон не годится: он пересоздаётся каждым прогоном гейта, поэтому
+    корректный свежий отчёт почти всегда оказывался бы «старше» и гейт
+    падал бы на собственном нормальном входе.
+
+    Args:
+        audit_path: путь к отчёту pip-audit.
+        requirements_path: путь к списку зависимостей (вход сканирования).
+
+    Returns:
+        ``True``, если отчёт старше списка зависимостей; ``False``, если он не
+        старше либо любой из файлов недоступен (гейт по этому не блокируется).
+    """
+    try:
+        audit_mtime = audit_path.stat().st_mtime
+        req_mtime = requirements_path.stat().st_mtime
+    except OSError:
+        return False
+    return audit_mtime < req_mtime
+
+
 def _parse_components(sbom_path: Path) -> list[SBOMComponent]:
     """Parse CycloneDX JSON → list of SBOMComponent."""
     if not sbom_path.exists():
@@ -327,6 +363,21 @@ def main() -> int:
     # CVE diff (P1-дополнение): новые vuln ID vs baseline, минус allowlist.
     new_cves: list[str] = []
     if args.audit_current:
+        if _audit_report_is_stale(args.audit_current, _requirements_path()):
+            # Отчёт старше списка зависимостей: он описывает прошлое
+            # окружение. Раньше гейт молча сравнивал такой отчёт с baseline и
+            # рапортовал CVE для пакетов, которых нет ни в venv, ни в SBOM —
+            # phantom FAIL, который вводит в заблуждение так же, как
+            # phantom PASS.
+            print(
+                f"[FAIL] {args.audit_current} старше списка зависимостей "
+                f"{_requirements_path()}: отчёт не описывает текущее "
+                "окружение. Пересоберите его (make sbom-diff-gate "
+                "перегенерирует) и повторите.",
+                file=sys.stderr,
+            )
+            print("RESULT: FAIL (stale audit report)", file=sys.stderr)
+            return 3
         current_vulns = _extract_vuln_ids(args.audit_current)
         baseline_vulns = (
             _extract_vuln_ids(args.audit_baseline)
