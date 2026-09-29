@@ -14,7 +14,7 @@ from __future__ import annotations
 import polars as pl
 import streamlit as st
 
-from src.backend.core.cost_attribution import (
+from src.backend.core.frontend_facade import (
     CostAttribution,
     CostRecord,
     get_cost_registry,
@@ -63,8 +63,7 @@ if not records:
         "Нет записей. Используйте ``@track_cost`` decorator на function "
         "для автоматической регистрации. Пример:\n\n"
         "```python\n"
-        "from src.backend.core.cost_attribution import track_cost, "
-        "ResourceType\n\n"
+        "from src.backend.core.api import track_cost, ResourceType\n\n"
         "@track_cost(ResourceType.LLM_TOKENS, cost_per_unit=0.0001, "
         "tenant_id_arg='tenant_id')\n"
         "async def my_api_call(tenant_id: str, tokens: int):\n"
@@ -181,7 +180,7 @@ with tab_export:
         "records": [r.to_dict() for r in records],
     }
     # Simpler: use to_dict from registry-style aggregation.
-    from src.backend.core.cost_attribution import CostReport
+    from src.backend.core.frontend_facade import CostReport
 
     rep = CostReport(timestamp=__import__("time").time(), records=records)
     st.json(rep.to_dict())

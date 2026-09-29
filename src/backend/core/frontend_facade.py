@@ -11,6 +11,12 @@ from __future__ import annotations
 from src.backend.core.audit.facade import emit_audit_safe
 from src.backend.core.config.express import express_settings
 from src.backend.core.config.features import feature_flags
+from src.backend.core.cost_attribution import (
+    CostAttribution,
+    CostRecord,
+    CostReport,
+    get_cost_registry,
+)
 from src.backend.core.di.providers import (
     get_express_bot_client_factory_provider,
     get_express_botx_message_class_provider,
@@ -22,6 +28,12 @@ from src.backend.core.messaging import (
     OutboxBackend,
     OutboxEvent,
     OutboxEventStatus,
+)
+from src.backend.core.registry_explorer import (
+    ConnectorEntry,
+    RegistryExplorer,
+    RouteEntry,
+    get_registry_explorer,
 )
 from src.backend.services.dsl_portal import (
     Pipeline,
@@ -45,10 +57,16 @@ from src.backend.services.dsl_portal import (
 )
 
 __all__ = (
+    "ConnectorEntry",
+    "CostAttribution",
+    "CostRecord",
+    "CostReport",
     "FakeOutbox",
     # G1_FRONTEND: import_gateway
     "ImportSource",
     "ImportSourceKind",
+    "RegistryExplorer",
+    "RouteEntry",
     "OutboxBackend",
     "OutboxEvent",
     "OutboxEventStatus",
@@ -61,12 +79,14 @@ __all__ = (
     "express_settings",
     "feature_flags",
     "get_ai_cost_snapshot",
+    "get_cost_registry",
     "get_default_stuck_monitor",
     "get_dsl_builder_service",
     "get_express_bot_client_factory_provider",
     "get_express_botx_message_class_provider",
     "get_global_registry",
     "get_import_service",
+    "get_registry_explorer",
     "get_logger",
     "get_saga_history",
     "get_saga_stats",

@@ -18,7 +18,7 @@ from __future__ import annotations
 import polars as pl
 import streamlit as st
 
-from src.backend.core.registry_explorer import (
+from src.backend.core.frontend_facade import (
     ConnectorEntry,
     RegistryExplorer,
     RouteEntry,

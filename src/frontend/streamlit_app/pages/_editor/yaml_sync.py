@@ -20,7 +20,7 @@ import yaml as _yaml
 
 # S170 Phase B CL-12-3/9: миграция с core.frontend_facade на services.dsl_portal
 # (canonical layer-compliant путь, re-exports Pipeline + load_pipeline_from_yaml).
-from src.backend.services.dsl_portal import Pipeline, load_pipeline_from_yaml
+from src.backend.core.frontend_facade import Pipeline, load_pipeline_from_yaml
 
 __all__ = ("build_yaml_from_steps", "sync_yaml", "try_load", "yaml_to_steps")
 

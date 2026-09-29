@@ -10,7 +10,7 @@ import streamlit as st
 
 # S170 Phase B CL-12-2/9: миграция с core.frontend_facade на services.dsl_portal
 # (canonical layer-compliant путь, re-exports load_pipeline_from_yaml).
-from src.backend.services.dsl_portal import load_pipeline_from_yaml
+from src.backend.core.frontend_facade import load_pipeline_from_yaml
 from src.frontend.streamlit_app.pages._editor.constants import (
     PROCESSOR_ICONS,
     VISUAL_PROCESSORS,

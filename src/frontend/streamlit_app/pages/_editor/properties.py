@@ -109,7 +109,7 @@ def render_properties_panel(client: Any) -> None:
     try:
         # S170 Phase B CL-12: миграция с core.frontend_facade на services.dsl_portal
         # (canonical layer-compliant путь, re-exports load_pipeline_from_yaml).
-        from src.backend.services.dsl_portal import load_pipeline_from_yaml
+        from src.backend.core.frontend_facade import load_pipeline_from_yaml
 
         pipeline = load_pipeline_from_yaml(st.session_state.yaml_output)
         with st.expander("JSON спецификация"):

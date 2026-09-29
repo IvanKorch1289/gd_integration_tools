@@ -56,7 +56,7 @@ def render_workflow_templates(client: APIClient) -> None:
     # S170 CL-12-5/9: миграция с core.frontend_facade на services.dsl_portal
     # (canonical layer-compliant путь, re-exports list_workflow_templates,
     # search_workflow_templates).
-    from src.backend.services.dsl_portal import (
+    from src.backend.core.frontend_facade import (
         list_workflow_templates,
         search_workflow_templates,
     )
@@ -112,7 +112,7 @@ def _render_template_card(tmpl, client: APIClient) -> None:  # type: ignore[no-u
             # S170 CL-12-5/9: миграция с core.frontend_facade на services.dsl_portal
             # (canonical layer-compliant путь, re-exports WorkflowDeclaration,
             # to_mermaid).
-            from src.backend.services.dsl_portal import WorkflowDeclaration, to_mermaid
+            from src.backend.core.frontend_facade import WorkflowDeclaration, to_mermaid
 
             decl = WorkflowDeclaration.model_validate(tmpl.raw)
             mermaid = to_mermaid(decl)

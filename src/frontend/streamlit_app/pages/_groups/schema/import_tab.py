@@ -55,11 +55,11 @@ def render_import_tab() -> None:
         # ImportSource/Kind живут в core.interfaces (frontend→core ALLOWED per layer policy);
         # get_import_service — в services.dsl_portal (frontend→services ALLOWED).
         # См. ADR-0296 для миграционного паттерна.
-        from src.backend.core.interfaces.import_gateway import (
+        from src.backend.core.frontend_facade import (
             ImportSource,
             ImportSourceKind,
+            get_import_service,
         )
-        from src.backend.services.dsl_portal import get_import_service
 
         content = uploaded.getvalue()
         source = ImportSource(

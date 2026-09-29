@@ -58,6 +58,9 @@ __all__ = [
     "AIGateway",
     # === Base classes for extension clients ===
     "BaseExternalAPIClient",
+    # === Cost attribution ===
+    "ResourceType",
+    "track_cost",
     # === AI Tool Policy (re-exported) ===
     "AgentToolPolicy",
     # === Errors (re-exported) ===
@@ -167,6 +170,14 @@ def __getattr__(name: str) -> Any:
         from src.backend.core.services.base_external_api import BaseExternalAPIClient
 
         return BaseExternalAPIClient
+    # Cost attribution primitives. Экспортируются, потому что UI-страница
+    # «Операционные затраты» показывает backend-разработчикам пример
+    # использования @track_cost; пример должен указывать на реально
+    # существующий публичный путь, иначе он учит неверному импорту.
+    if name in ("track_cost", "ResourceType"):
+        from src.backend.core.cost_attribution import ResourceType, track_cost
+
+        return {"track_cost": track_cost, "ResourceType": ResourceType}[name]
     # === Domain Facades (Cycle 31 P2.1) ===
     if name == "get_storage_facade_provider":
         from src.backend.core.di.providers.storage import get_storage_facade_provider
@@ -310,6 +321,8 @@ def __dir__() -> list[str]:
             "get_clickhouse_client_class",
             "AIGateway",
             "BaseExternalAPIClient",
+            "ResourceType",
+            "track_cost",
             "get_storage_facade_provider",
             "get_external_db_facade",
             "get_auth_facade",
