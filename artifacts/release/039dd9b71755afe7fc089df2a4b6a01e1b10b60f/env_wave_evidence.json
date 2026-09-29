@@ -1,0 +1,28 @@
+{
+  "audit": "env-tier волна: окружение поднято, гейты пере-прогнаны",
+  "head": "039dd9b71755afe7fc089df2a4b6a01e1b10b60f",
+  "environment_raised": [
+    "docker.sock ACL для пользователя (setfacl) — docker ps от user работает",
+    "playwright + системный google-chrome (/usr/bin/google-chrome)",
+    "cosign binary (sigstore latest, /tmp/cosign)"
+  ],
+  "results": {
+    "pip_audit": {"exit": 0, "verdict": "pip-audit clean; en-core-web-lg skip (не на PyPI) — pre-prod гейт #07 закрыт"},
+    "sbom": {"exit": 0, "verdict": "No known vulnerabilities; dist/sbom/sbom.cdx.json (canonical, pip-audit cyclonedx) — DoD-17"},
+    "cosign": {"exit": 0, "verdict": "SBOM подписан тестовым ключом (.cosign-test), verify-blob Verified OK — DoD-18 механизм доказан; in-registry image signing требует registry на :5000 (не запущен)"},
+    "testcontainers": {"passed": 5, "skipped": 3, "verdict": "docker-доступ решает; 15 прошлых FAIL были чисто permission"},
+    "browser_e2e": {"verdict": "PASS на HEAD-приложении :8081 (dev_light): /docs Swagger UI + /redoc рендер, 0 console errors, скриншоты в artifacts/e2e/039dd9b71755afe7fc089df2a4b6a01e1b10b60f/"},
+    "old_image_finding": "образ gd-app-light (5 недель) отдаёт /docs с CDN+inline при CSP default-src 'self' → Swagger UI мёртв в браузере; в HEAD уже исправлено (security_headers.py docs-aware CSP, найдено владельцем на bbadf108a)",
+    "functional_8000": {"health": "alive", "docs": 200, "redoc": 200, "graphql_anonymous": 403 (WAF fail-closed, корректно), "openapi_paths": 411, "caveat": "образ 5-недельный"},
+    "perf_gate": {"exit": 0, "verdict": "warn-only: locust не установлен; замер против старого образа был бы невалиден"}
+  },
+  "integration_triage": {
+    "fixed": "eventbus subscribe_with_lifecycle: проброс handle + ServiceError (039dd9b71), 5/5",
+    "owner_domain_documented": [
+      "test_tenant_middleware x2: tenant-контекст None после запроса — домен ADR-0345 волны",
+      "test_mcp_tool_authz x2: deny-reason 'capability_denied:...' vs ожидаемый 'not_in_allowlist_or_public_ns' — порядок проверок MCP-gateway",
+      "test_mq_redis_streams x2: TestRedisBroker+StreamSub group e2e не диспетчеризует — faststream-домен W23.4"
+    ]
+  },
+  "remaining_env_tier": ["Temporal server + replay gate (gate-инструмента в tools/ нет — W4 scope)", "OWASP ZAP baseline (требует zaproxy образ)", "k6/locust p95", "backup/rollback drill", "in-registry image signing"]
+}

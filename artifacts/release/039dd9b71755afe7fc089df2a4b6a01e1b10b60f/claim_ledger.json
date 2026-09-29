@@ -1,0 +1,102 @@
+{
+  "sha": "039dd9b71755afe7fc089df2a4b6a01e1b10b60f",
+  "generated_utc": "2026-09-29T08:53:10.661626+00:00",
+  "principle": "PASS is not transferable between SHAs. Every row below was produced on this exact SHA.",
+  "claims": [
+    {
+      "claim": "Architecture layers: 0 new violations",
+      "command": "uv run python tools/check_layers.py",
+      "exit": 0,
+      "evidence": "check_layers.log",
+      "status": "VERIFIED",
+      "counterevidence": "none; 22 legacy allowlist entries unchanged"
+    },
+    {
+      "claim": "Tenant isolation (static)",
+      "command": "check_tenant_isolation.py --strict",
+      "exit": 0,
+      "evidence": "tenant_isolation_strict.log",
+      "status": "VERIFIED"
+    },
+    {
+      "claim": "Privacy lifecycle gate fail-closed",
+      "command": "check_privacy_lifecycle.py --strict",
+      "exit": 0,
+      "evidence": "privacy_lifecycle_strict.log",
+      "status": "VERIFIED",
+      "counterevidence": "5/5 backends by static+contract-test inspection; live PG/Redis/MinIO/Qdrant still NOT VERIFIED (backends absent)"
+    },
+    {
+      "claim": "Object authorization classifier completeness",
+      "command": "classify_object_authorization.py",
+      "exit": 0,
+      "evidence": "object_auth_classifier.log",
+      "status": "VERIFIED",
+      "note": "117 callsites, 0 unknown"
+    },
+    {
+      "claim": "Object authorization COVERAGE is adequate",
+      "command": "check_object_authorization.py --strict",
+      "exit": 1,
+      "evidence": "object_auth_strict.log",
+      "status": "FALSE",
+      "counterevidence": "ownership coverage 17/159 = 10.7% (threshold 50%); 127 service .get(id) without tenant filter. Honest only under --strict; make/quality.mk:293 and :319 omit it"
+    },
+    {
+      "claim": "Scheduler catchup wiring (W0, all 5 items)",
+      "command": "pytest tests/unit/services/scheduler tests/unit/infrastructure/scheduler",
+      "exit": 0,
+      "evidence": "affected_tests.log",
+      "status": "VERIFIED",
+      "counterevidence": "none; test_pending_tick_executes_executor asserts a real pending tick ran"
+    },
+    {
+      "claim": "DSLBuilderService layer compliance + identity",
+      "command": "check_layers.py + tests/unit/services/dsl",
+      "exit": 0,
+      "evidence": "affected_tests.log, check_layers.log",
+      "status": "VERIFIED",
+      "note": "88cf0f37d: imports via sanctioned core.api.extensions facade; identity preserved"
+    },
+    {
+      "claim": "eventbus facade subscription (other agent)",
+      "command": "pytest tests/unit/core/messaging tests/unit/services/integrations",
+      "exit": 0,
+      "evidence": "affected_tests.log",
+      "status": "VERIFIED"
+    },
+    {
+      "claim": "webhook_relay DLQ error carries a traceback",
+      "command": "pytest test_webhook_relay.py",
+      "exit": 0,
+      "evidence": "affected_tests.log",
+      "status": "VERIFIED",
+      "note": "stale assertion fixed; mutation-verified (removing exc_info=True makes it fail)"
+    },
+    {
+      "claim": "Supply chain: no new CVEs",
+      "command": "make sbom-diff-gate",
+      "exit": 1,
+      "evidence": "sbom_diff_gate.log",
+      "status": "FALSE",
+      "counterevidence": "2 vulns x 3 IDs, all pymdown-extensions 10.21.3 in the [docs] extra; blocked by our own cap <11.0.0; not installed in this venv"
+    },
+    {
+      "claim": "make ci runs the test suite",
+      "command": "make -n ci | grep pytest",
+      "exit": 0,
+      "evidence": "make_ci.log",
+      "status": "FALSE",
+      "counterevidence": "ends at pytest --co; does not execute tests, and does not run check_layers"
+    }
+  ],
+  "not_verified": [
+    "authenticated MCP JSON-RPC round-trip (no API key available)",
+    "container image build + cosign signature",
+    "privacy integration against live PG/Redis/MinIO/Qdrant/LangMem"
+  ],
+  "env_failures": [
+    "alembic upgrade head (aborts in config load: redis AuthenticationError)"
+  ],
+  "verdict": "NOT production-ready"
+}
