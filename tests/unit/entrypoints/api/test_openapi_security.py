@@ -18,8 +18,8 @@ from fastapi import FastAPI
 
 from src.backend.entrypoints.api.openapi_security import (
     SECURITY_SCHEMES,
-    apply_security_to_openapi,
     annotate_openapi,
+    apply_security_to_openapi,
 )
 from src.backend.entrypoints.middlewares.auth_required import (
     DEFAULT_PUBLIC_PATH_PREFIXES,
@@ -33,7 +33,9 @@ def _schema_with(paths: dict[str, list[str]]) -> dict[str, Any]:
     """Минимальная OpenAPI-схема: path → список HTTP-методов."""
     return {
         "openapi": "3.1.0",
-        "paths": {p: {m: {"responses": {}} for m in methods} for p, methods in paths.items()},
+        "paths": {
+            p: {m: {"responses": {}} for m in methods} for p, methods in paths.items()
+        },
     }
 
 
@@ -149,8 +151,9 @@ class TestApplyToApp:
         first = app.openapi()
         second = app.openapi()
         assert set(second["components"]["securitySchemes"]) == set(SECURITY_SCHEMES)
-        assert first["paths"]["/api/v1/thing"]["get"]["security"] == (
-            second["paths"]["/api/v1/thing"]["get"]["security"]
+        assert (
+            first["paths"]["/api/v1/thing"]["get"]["security"]
+            == (second["paths"]["/api/v1/thing"]["get"]["security"])
         )
 
     def test_non_http_keys_are_ignored(self) -> None:
