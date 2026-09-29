@@ -1,0 +1,88 @@
+........................................................................ [ 34%]
+...................................................................xXxXx [ 68%]
+x................................................................        [100%]
+=============================== warnings summary ===============================
+../../home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette/testclient.py:53
+  /home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette/testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+tests/unit/core/di/providers/test_infrastructure_facade_exports.py:7
+  /tmp/audit-checkout/tests/unit/core/di/providers/test_infrastructure_facade_exports.py:7: DeprecationWarning: src.backend.core.di.providers.infrastructure_facade is DEPRECATED (renamed to infrastructure_locator in S31 Task 5 — module is a service locator, not a capability-checked facade). Update your imports to infrastructure_locator.
+    from src.backend.core.di.providers import infrastructure_facade
+
+src/backend/infrastructure/database/tenant_filter.py:55
+  /tmp/audit-checkout/src/backend/infrastructure/database/tenant_filter.py:55: DeprecationWarning: src.backend.infrastructure.database.tenant_filter is deprecated; use src.backend.core.tenancy.sqlalchemy_filter (S107 W1, TD-002).
+    _warn_deprecation_once()
+
+tests/unit/core/test_facades_shim.py:23
+  /tmp/audit-checkout/tests/unit/core/test_facades_shim.py:23: DeprecationWarning: src.backend.core.facades is deprecated; use src.backend.core.api instead. See ADR-0307 (W3 P0-4 shim cleanup). Removal planned: cycle 156.
+    import src.backend.core.facades as facades_shim
+
+tests/unit/dsl/processors/test_batch_processor.py:15
+  /tmp/audit-checkout/tests/unit/dsl/processors/test_batch_processor.py:15: DeprecationWarning: src.backend.dsl.processors.batch_processor — legacy путь, DEPRECATED (ADR-0313). Используйте canonical src.backend.dsl.engine.processors.batch_processor. Remove date: cycle 156 (telemetry audit).
+    from src.backend.dsl.processors.batch_processor import BatchProcessor
+
+src/backend/infrastructure/external_apis/logging_service.py:265
+  /tmp/audit-checkout/src/backend/infrastructure/external_apis/logging_service.py:265: DeprecationWarning: logging_service is deprecated. Use infrastructure.logging.factory instead.
+    return getattr(get_log_manager(), _LOGGER_ATTR_MAP[name])
+
+tests/unit/services/ops/test_notification_hub_deprecation.py:28
+  /tmp/audit-checkout/tests/unit/services/ops/test_notification_hub_deprecation.py:28: DeprecationWarning: `app.services.ops.notification_hub` deprecated in IL2.2 (ADR-023). Migration target: src.backend.infrastructure.notifications.gateway..get_gateway() — 5 consumers listed in M1 W17 roadmap.Hard removal: после M1 W17 (4h estimate).
+    from src.backend.services.ops.notification_hub import (
+
+src/backend/entrypoints/api/v1/endpoints/files.py:20
+  /tmp/audit-checkout/src/backend/entrypoints/api/v1/endpoints/files.py:20: DeprecationWarning: src.backend.services.io.files устарел; используйте extensions.core_entities.files.services.files (R-V15-16).
+    from src.backend.services.io.files import get_file_service
+
+extensions/core_entities/users/schemas/route.py:33
+  /tmp/audit-checkout/extensions/core_entities/users/schemas/route.py:33: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.13/migration/
+    class UserSchemaOut(BaseSchema):
+
+tests/unit/infrastructure/observability/test_audit_verify_lifecycle_focused.py::test_scheduler_loop_survives_verify_error
+  /home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/asyncio/events.py:94: RuntimeWarning: coroutine 'TaskRegistry.create_task.<locals>._runner' was never awaited
+    self._context.run(self._callback, *self._args)
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/unit/infrastructure/scheduler/test_dlq.py::TestAttachSchedulerDLQ::test_listener_no_running_loop
+  /home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/unittest/mock.py:2252: RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited
+    def __init__(self, name, parent):
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/unit/services/ai/test_dspy_dataset.py::test_feedback_cron_registration_uses_apscheduler
+  /tmp/audit-checkout/src/backend/infrastructure/scheduler/feedback_cron.py:50: RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited
+    scheduler.add_job(
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=================================== XPASSES ====================================
+____________ test_leader_election_lock_not_acquired_skips_scheduler ____________
+----------------------------- Captured stderr call -----------------------------
+2026-09-29 16:37:45,798 - redis - INFO - {'event': 'Инициализирован Redis-клиент kind=cache db=2', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'redis', 'level': 'info', 'timestamp': '2026-09-29T13:37:45.798560Z'} [development@URAS-92727] User:system Action:none
+2026-09-29 16:37:45,800 - application - INFO - {'extra': {'lock_key': 'scheduler:leader:v1', 'ttl_seconds': 300}, 'event': 'Scheduler leader election: lock NOT acquired — another instance holds it. Skipping scheduler.start() on this instance.', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'application', 'level': 'info', 'timestamp': '2026-09-29T13:37:45.800037Z'} [development@URAS-92727] User:system Action:none
+------------------------------ Captured log call -------------------------------
+INFO     redis:structlog_backend.py:95 {'event': 'Инициализирован Redis-клиент kind=cache db=2', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'redis', 'level': 'info', 'timestamp': '2026-09-29T13:37:45.798560Z'}
+INFO     application:structlog_backend.py:95 {'extra': {'lock_key': 'scheduler:leader:v1', 'ttl_seconds': 300}, 'event': 'Scheduler leader election: lock NOT acquired — another instance holds it. Skipping scheduler.start() on this instance.', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'application', 'level': 'info', 'timestamp': '2026-09-29T13:37:45.800037Z'}
+_________________ test_stop_if_non_leader_skips_scheduler_stop _________________
+----------------------------- Captured stderr call -----------------------------
+2026-09-29 16:37:45,813 - application - INFO - {'event': 'Scheduler leader election: this instance was NOT leader — skipping scheduler.stop().', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'application', 'level': 'info', 'timestamp': '2026-09-29T13:37:45.813142Z'} [development@URAS-92727] User:system Action:none
+------------------------------ Captured log call -------------------------------
+INFO     application:structlog_backend.py:95 {'event': 'Scheduler leader election: this instance was NOT leader — skipping scheduler.stop().', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'application', 'level': 'info', 'timestamp': '2026-09-29T13:37:45.813142Z'}
+=========================== short test summary info ============================
+SKIPPED [1] tests/unit/cache/backends/test_memcached.py:15: could not import 'aiomcache': No module named 'aiomcache'
+SKIPPED [1] tests/unit/core/di/test_app_state.py:38: AppStateRegistry import not available (pre-existing baseline)
+SKIPPED [1] tests/unit/core/security/test_vault_cipher.py:12: src.backend.core.security.vault_cipher not implemented
+SKIPPED [1] tests/unit/core/security/test_vault_cipher_sqlalchemy.py:11: src.backend.core.security.vault_cipher_sqlalchemy not implemented
+SKIPPED [1] tests/unit/dsl/transforms/test_dataframes.py:10: could not import 'polars': No module named 'polars'
+SKIPPED [1] tests/unit/services/test_facades.py:32: S48 W1: secrets facade не реализован (см. retro/S48-W1-retro.md); 23 tests skipped
+SKIPPED [1] tests/unit/storage/test_s3_object_storage.py:31: moto not in test deps; S124 W2 honest skip (TD-0244)
+SKIPPED [1] tests/unit/workflows/test_orders_saga.py:9: orders_saga demo removed — S168 W14
+XFAIL tests/unit/plugins/composition/test_scheduler_leader_election.py::test_leader_election_lock_acquired_starts_scheduler - TD-0247: redis_lock.acquire refactor broke importlib-hack; needs contract rewrite
+XFAIL tests/unit/plugins/composition/test_scheduler_leader_election.py::test_stop_if_leader_calls_scheduler_stop - TD-0247: redis_lock.acquire refactor broke importlib-hack; needs contract rewrite
+XFAIL tests/unit/plugins/composition/test_scheduler_leader_election.py::test_symmetric_lifecycle_leader - TD-0247: redis_lock.acquire refactor broke importlib-hack; needs contract rewrite
+XFAIL tests/unit/plugins/composition/test_scheduler_leader_election.py::test_symmetric_lifecycle_non_leader - TD-0247: redis_lock.acquire refactor broke importlib-hack; needs contract rewrite
+XPASS tests/unit/plugins/composition/test_scheduler_leader_election.py::test_leader_election_lock_not_acquired_skips_scheduler - TD-0247: redis_lock.acquire refactor broke importlib-hack; needs contract rewrite
+XPASS tests/unit/plugins/composition/test_scheduler_leader_election.py::test_stop_if_non_leader_skips_scheduler_stop - TD-0247: redis_lock.acquire refactor broke importlib-hack; needs contract rewrite
+203 passed, 8 skipped, 20038 deselected, 4 xfailed, 2 xpassed, 12 warnings in 38.94s

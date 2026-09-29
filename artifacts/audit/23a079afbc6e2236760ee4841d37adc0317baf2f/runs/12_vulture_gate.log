@@ -1,0 +1,3 @@
+[32muv virtual environment detected[0m
+[34mRunning vulture dead code gate (min-confidence 80)...[0m
+[32mVulture gate passed![0m

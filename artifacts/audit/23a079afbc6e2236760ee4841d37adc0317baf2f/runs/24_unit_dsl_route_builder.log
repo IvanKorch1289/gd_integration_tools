@@ -1,0 +1,1011 @@
+.........................................................sssss.......... [  1%]
+........................................................................ [  2%]
+........................................................................ [  4%]
+........................................................................ [  5%]
+........................................................................ [  6%]
+..............................................ssss...................... [  8%]
+........................................................................ [  9%]
+........................................................................ [ 10%]
+..........................ss..s......................................... [ 12%]
+........................................................................ [ 13%]
+........................................................................ [ 14%]
+........................................................................ [ 16%]
+........................................................................ [ 17%]
+........................................................................ [ 18%]
+........................................................................ [ 20%]
+........................................................................ [ 21%]
+....................................FF...................F.FF........... [ 22%]
+........................................................................ [ 24%]
+........................................................................ [ 25%]
+............................................s.sssss..................... [ 27%]
+........................................................................ [ 28%]
+........................................................................ [ 29%]
+........................................................................ [ 31%]
+........................................................................ [ 32%]
+.......................................................................F [ 33%]
+F....................................................................... [ 35%]
+........................................................................ [ 36%]
+..................................................s..................... [ 37%]
+........................................................................ [ 39%]
+........................................................................ [ 40%]
+....................................................................FFFF [ 41%]
+................................F.FF.F.........FF....................... [ 43%]
+........................................................................ [ 44%]
+........................................................................ [ 45%]
+........................................................................ [ 47%]
+......s................................................................. [ 48%]
+......................................................s................. [ 49%]
+........................................................................ [ 51%]
+......ss..........................F..................................... [ 52%]
+........................................................................ [ 54%]
+..............ss...............................................ss....... [ 55%]
+........................................................................ [ 56%]
+........................................................................ [ 58%]
+........................................................................ [ 59%]
+...............................s..s..................................... [ 60%]
+..........................................................ss............ [ 62%]
+..........................F............................................. [ 63%]
+........................................................................ [ 64%]
+........................................................................ [ 66%]
+........................................................................ [ 67%]
+........................................................................ [ 68%]
+........................................................................ [ 70%]
+........................................................................ [ 71%]
+........................................................................ [ 72%]
+........................................................................ [ 74%]
+........................................................................ [ 75%]
+........................................................................ [ 76%]
+........................................................................ [ 78%]
+...........X...........xxxxXXXXXXXXXXXXXXXXXXXXXXXXx....xxxxxxxxxxxxxx.. [ 79%]
+......................xxxxxxxxxxxxx..................................... [ 81%]
+........................................................................ [ 82%]
+...............F........................................................ [ 83%]
+........................................................................ [ 85%]
+........................................................................ [ 86%]
+........................................................................ [ 87%]
+...................s.s.................................................. [ 89%]
+........................................................................ [ 90%]
+........................................................................ [ 91%]
+.....................sssss.......s...................................... [ 93%]
+........................................................................ [ 94%]
+........................................................................ [ 95%]
+.................................s...................................s.. [ 97%]
+...................................................s..s................. [ 98%]
+........................................................................ [ 99%]
+.....                                                                    [100%]
+=================================== FAILURES ===================================
+_____________________ test_fan_out_collects_results_by_key _____________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7b1df93eb770>
+context = ExecutionContext(action_registry=<src.backend.dsl.commands.action_registry.ActionHandlerRegistry object at 0x7b1e06353380>, logger=None, route_id='', state={}, principal='', permissions=())
+
+    @pytest.mark.asyncio
+    async def test_fan_out_collects_results_by_key(
+        monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    ) -> None:
+        from src.backend.core.config.features import feature_flags
+    
+        monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
+        gw = _FakeAIGateway(
+            {
+                "scoring": AIResponse(content="80", model_used="m1"),
+                "antifraud": AIResponse(content="low", model_used="m2"),
+            }
+        )
+        monkeypatch.setattr(AgentRunProcessor, "_resolve_gateway", staticmethod(lambda: gw))
+    
+        ex: Exchange[Any] = Exchange(in_message=Message(body={}))
+        ex.meta.tenant_id = "acme"
+        proc = AgentParallelProcessor(
+            agents=[
+                {"key": "scoring", "workflow_id": "scoring", "prompt_inline": "x"},
+                {"key": "antifraud", "workflow_id": "antifraud", "prompt_inline": "y"},
+            ]
+        )
+        await proc.process(ex, context)
+    
+        results = ex.get_property("agent_parallel_results")
+        assert isinstance(results, dict)
+>       assert results["scoring"]["content"] == "80"
+E       AssertionError: assert '' == '80'
+E         
+E         - 80
+
+tests/unit/dsl/engine/processors/agent_dsl/test_agent_parallel.py:81: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  services.audit.clickhouse:structlog_backend.py:107 {'event': "ClickHouseAuditService.emit failed: event_type=ai.agent.run error=No module named 'clickhouse_connect'", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'warning', 'timestamp': '2026-09-29T13:38:46.607315Z'}
+CRITICAL services.audit.clickhouse:structlog_backend.py:145 {'extra': {'transport': 'clickhouse_audit', 'reason': 'no_dlq_configured', 'lost_count': 1, 'event_ids': ['a702be17-cae9-4de8-85c3-361f7e07502d'], 'tenant_ids': [None], 'error_class': 'ModuleNotFoundError', 'error_message': "No module named 'clickhouse_connect'"}, 'event': "audit_silent_loss: 1 event(s) lost (transport=clickhouse_audit reason=no_dlq_configured error=No module named 'clickhouse_connect')", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'critical', 'timestamp': '2026-09-29T13:38:46.607503Z'}
+WARNING  services.audit.clickhouse:structlog_backend.py:107 {'event': "ClickHouseAuditService.emit failed: event_type=ai.agent.run error=No module named 'clickhouse_connect'", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'warning', 'timestamp': '2026-09-29T13:38:46.609207Z'}
+CRITICAL services.audit.clickhouse:structlog_backend.py:145 {'extra': {'transport': 'clickhouse_audit', 'reason': 'no_dlq_configured', 'lost_count': 1, 'event_ids': ['98465d4d-8454-4bcb-960e-ee9c331623c4'], 'tenant_ids': [None], 'error_class': 'ModuleNotFoundError', 'error_message': "No module named 'clickhouse_connect'"}, 'event': "audit_silent_loss: 1 event(s) lost (transport=clickhouse_audit reason=no_dlq_configured error=No module named 'clickhouse_connect')", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'critical', 'timestamp': '2026-09-29T13:38:46.609362Z'}
+WARNING  services.audit.clickhouse:structlog_backend.py:107 {'event': "ClickHouseAuditService.emit failed: event_type=ai.agent.parallel error=No module named 'clickhouse_connect'", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'warning', 'timestamp': '2026-09-29T13:38:46.609821Z'}
+CRITICAL services.audit.clickhouse:structlog_backend.py:145 {'extra': {'transport': 'clickhouse_audit', 'reason': 'no_dlq_configured', 'lost_count': 1, 'event_ids': ['b4ad385f-a9ac-40ba-b4cb-83ed4bef7130'], 'tenant_ids': ['acme'], 'error_class': 'ModuleNotFoundError', 'error_message': "No module named 'clickhouse_connect'"}, 'event': "audit_silent_loss: 1 event(s) lost (transport=clickhouse_audit reason=no_dlq_configured error=No module named 'clickhouse_connect')", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'critical', 'timestamp': '2026-09-29T13:38:46.609966Z'}
+___________________ test_continue_on_error_captures_failure ____________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7b1df95180c0>
+context = ExecutionContext(action_registry=<src.backend.dsl.commands.action_registry.ActionHandlerRegistry object at 0x7b1e06353380>, logger=None, route_id='', state={}, principal='', permissions=())
+
+    @pytest.mark.asyncio
+    async def test_continue_on_error_captures_failure(
+        monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    ) -> None:
+        from src.backend.core.config.features import feature_flags
+    
+        monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
+        gw = _FakeAIGateway({"ok_one": AIResponse(content="ok", model_used="m")})
+        monkeypatch.setattr(AgentRunProcessor, "_resolve_gateway", staticmethod(lambda: gw))
+    
+        ex: Exchange[Any] = Exchange()
+        proc = AgentParallelProcessor(
+            agents=[
+                {"key": "ok", "workflow_id": "ok_one", "prompt_inline": "x"},
+                {"key": "bad", "workflow_id": "fail_me", "prompt_inline": "y"},
+            ],
+            continue_on_error=True,
+        )
+        await proc.process(ex, context)
+    
+        results = ex.get_property("agent_parallel_results")
+>       assert results["ok"]["content"] == "ok"
+E       AssertionError: assert '' == 'ok'
+E         
+E         - ok
+
+tests/unit/dsl/engine/processors/agent_dsl/test_agent_parallel.py:107: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  services.audit.clickhouse:structlog_backend.py:107 {'event': "ClickHouseAuditService.emit failed: event_type=ai.agent.run error=No module named 'clickhouse_connect'", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'warning', 'timestamp': '2026-09-29T13:38:46.952133Z'}
+CRITICAL services.audit.clickhouse:structlog_backend.py:145 {'extra': {'transport': 'clickhouse_audit', 'reason': 'no_dlq_configured', 'lost_count': 1, 'event_ids': ['a7480a65-0db5-47f0-841e-169d3a7f0603'], 'tenant_ids': [None], 'error_class': 'ModuleNotFoundError', 'error_message': "No module named 'clickhouse_connect'"}, 'event': "audit_silent_loss: 1 event(s) lost (transport=clickhouse_audit reason=no_dlq_configured error=No module named 'clickhouse_connect')", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'critical', 'timestamp': '2026-09-29T13:38:46.952357Z'}
+WARNING  services.audit.clickhouse:structlog_backend.py:107 {'event': "ClickHouseAuditService.emit failed: event_type=ai.agent.run error=No module named 'clickhouse_connect'", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'warning', 'timestamp': '2026-09-29T13:38:46.957277Z'}
+CRITICAL services.audit.clickhouse:structlog_backend.py:145 {'extra': {'transport': 'clickhouse_audit', 'reason': 'no_dlq_configured', 'lost_count': 1, 'event_ids': ['3b72994f-f9d7-4009-b3ec-e479766cd772'], 'tenant_ids': [None], 'error_class': 'ModuleNotFoundError', 'error_message': "No module named 'clickhouse_connect'"}, 'event': "audit_silent_loss: 1 event(s) lost (transport=clickhouse_audit reason=no_dlq_configured error=No module named 'clickhouse_connect')", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'critical', 'timestamp': '2026-09-29T13:38:46.957505Z'}
+WARNING  services.audit.clickhouse:structlog_backend.py:107 {'event': "ClickHouseAuditService.emit failed: event_type=ai.agent.parallel error=No module named 'clickhouse_connect'", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'warning', 'timestamp': '2026-09-29T13:38:46.958097Z'}
+CRITICAL services.audit.clickhouse:structlog_backend.py:145 {'extra': {'transport': 'clickhouse_audit', 'reason': 'no_dlq_configured', 'lost_count': 1, 'event_ids': ['73c27e26-7ae4-411f-b194-6bb1ab4331e8'], 'tenant_ids': [None], 'error_class': 'ModuleNotFoundError', 'error_message': "No module named 'clickhouse_connect'"}, 'event': "audit_silent_loss: 1 event(s) lost (transport=clickhouse_audit reason=no_dlq_configured error=No module named 'clickhouse_connect')", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'critical', 'timestamp': '2026-09-29T13:38:46.958252Z'}
+_____________________ test_happy_path_writes_agent_result ______________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7b1df93e89f0>
+exchange = Exchange(meta=ExchangeMeta(exchange_id='3ef30604-a3ae-4151-9eda-e54f8f3b00a3', route_id=None, correlation_id='req-abc-...tected': False, 'guardrails_verdict': {}, 'policy_ref': None}}, status=<ExchangeStatus.pending: 'pending'>, error=None)
+context = ExecutionContext(action_registry=<src.backend.dsl.commands.action_registry.ActionHandlerRegistry object at 0x7b1e06353380>, logger=None, route_id='', state={}, principal='', permissions=())
+fake_response = AIResponse(content='approved', structured={'verdict': 'approve', 'score': 0.85}, tokens_prompt=10, tokens_completion=5, cost_usd=0.001, model_used='gpt-4o', pii_detected=False, guardrails_verdict={'input': 'safe', 'output': 'safe'})
+
+    @pytest.mark.asyncio
+    async def test_happy_path_writes_agent_result(
+        monkeypatch: pytest.MonkeyPatch,
+        exchange: Exchange[Any],
+        context: ExecutionContext,
+        fake_response: AIResponse,
+    ) -> None:
+        from src.backend.core.config.features import feature_flags
+    
+        monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
+        gw = _FakeAIGateway(fake_response)
+        monkeypatch.setattr(AgentRunProcessor, "_resolve_gateway", staticmethod(lambda: gw))
+    
+        proc = AgentRunProcessor(workflow_id="credit_check", prompt_inline="check it")
+        await proc.process(exchange, context)
+    
+        result = exchange.get_property("agent_result")
+        assert result is not None
+>       assert result["content"] == "approved"
+E       AssertionError: assert '' == 'approved'
+E         
+E         - approved
+
+tests/unit/dsl/engine/processors/agent_dsl/test_agent_run.py:115: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  services.audit.clickhouse:structlog_backend.py:107 {'event': "ClickHouseAuditService.emit failed: event_type=ai.agent.run error=No module named 'clickhouse_connect'", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'warning', 'timestamp': '2026-09-29T13:38:47.041877Z'}
+CRITICAL services.audit.clickhouse:structlog_backend.py:145 {'extra': {'transport': 'clickhouse_audit', 'reason': 'no_dlq_configured', 'lost_count': 1, 'event_ids': ['f45febe3-2fc6-461a-a36d-d94acf60241f'], 'tenant_ids': ['acme'], 'error_class': 'ModuleNotFoundError', 'error_message': "No module named 'clickhouse_connect'"}, 'event': "audit_silent_loss: 1 event(s) lost (transport=clickhouse_audit reason=no_dlq_configured error=No module named 'clickhouse_connect')", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'critical', 'timestamp': '2026-09-29T13:38:47.042107Z'}
+________________________ test_extract_context_body_path ________________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7b1d62057150>
+context = ExecutionContext(action_registry=<src.backend.dsl.commands.action_registry.ActionHandlerRegistry object at 0x7b1e06353380>, logger=None, route_id='', state={}, principal='', permissions=())
+fake_response = AIResponse(content='approved', structured={'verdict': 'approve', 'score': 0.85}, tokens_prompt=10, tokens_completion=5, cost_usd=0.001, model_used='gpt-4o', pii_detected=False, guardrails_verdict={'input': 'safe', 'output': 'safe'})
+
+    @pytest.mark.asyncio
+    async def test_extract_context_body_path(
+        monkeypatch: pytest.MonkeyPatch,
+        context: ExecutionContext,
+        fake_response: AIResponse,
+    ) -> None:
+        """``context_property="body.subkey"`` извлекает nested dict."""
+        from src.backend.core.config.features import feature_flags
+    
+        monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
+        gw = _FakeAIGateway(fake_response)
+        monkeypatch.setattr(AgentRunProcessor, "_resolve_gateway", staticmethod(lambda: gw))
+    
+        ex: Exchange[Any] = Exchange(in_message=Message(body={"context": {"key": "value"}}))
+        proc = AgentRunProcessor(
+            workflow_id="x", prompt_inline="x", context_property="body.context"
+        )
+        await proc.process(ex, context)
+>       assert gw.calls[0].context == {"key": "value"}
+               ^^^^^^^^^^^
+E       IndexError: list index out of range
+
+tests/unit/dsl/engine/processors/agent_dsl/test_agent_run.py:167: IndexError
+------------------------------ Captured log call -------------------------------
+WARNING  services.audit.clickhouse:structlog_backend.py:107 {'event': "ClickHouseAuditService.emit failed: event_type=ai.agent.run error=No module named 'clickhouse_connect'", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'warning', 'timestamp': '2026-09-29T13:38:47.058652Z'}
+CRITICAL services.audit.clickhouse:structlog_backend.py:145 {'extra': {'transport': 'clickhouse_audit', 'reason': 'no_dlq_configured', 'lost_count': 1, 'event_ids': ['43e2676d-c7a1-48d9-b7e7-0d41526d7eb9'], 'tenant_ids': [None], 'error_class': 'ModuleNotFoundError', 'error_message': "No module named 'clickhouse_connect'"}, 'event': "audit_silent_loss: 1 event(s) lost (transport=clickhouse_audit reason=no_dlq_configured error=No module named 'clickhouse_connect')", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'critical', 'timestamp': '2026-09-29T13:38:47.058885Z'}
+______________________ test_extract_context_property_path ______________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7b1d62057a10>
+context = ExecutionContext(action_registry=<src.backend.dsl.commands.action_registry.ActionHandlerRegistry object at 0x7b1e06353380>, logger=None, route_id='', state={}, principal='', permissions=())
+fake_response = AIResponse(content='approved', structured={'verdict': 'approve', 'score': 0.85}, tokens_prompt=10, tokens_completion=5, cost_usd=0.001, model_used='gpt-4o', pii_detected=False, guardrails_verdict={'input': 'safe', 'output': 'safe'})
+
+    @pytest.mark.asyncio
+    async def test_extract_context_property_path(
+        monkeypatch: pytest.MonkeyPatch,
+        context: ExecutionContext,
+        fake_response: AIResponse,
+    ) -> None:
+        """``context_property="property:my_prop"`` извлекает из properties."""
+        from src.backend.core.config.features import feature_flags
+    
+        monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
+        gw = _FakeAIGateway(fake_response)
+        monkeypatch.setattr(AgentRunProcessor, "_resolve_gateway", staticmethod(lambda: gw))
+    
+        ex: Exchange[Any] = Exchange()
+        ex.set_property("my_prop", {"alpha": 1})
+        proc = AgentRunProcessor(
+            workflow_id="x", prompt_inline="x", context_property="property:my_prop"
+        )
+        await proc.process(ex, context)
+>       assert gw.calls[0].context == {"alpha": 1}
+               ^^^^^^^^^^^
+E       IndexError: list index out of range
+
+tests/unit/dsl/engine/processors/agent_dsl/test_agent_run.py:189: IndexError
+------------------------------ Captured log call -------------------------------
+WARNING  services.audit.clickhouse:structlog_backend.py:107 {'event': "ClickHouseAuditService.emit failed: event_type=ai.agent.run error=No module named 'clickhouse_connect'", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'warning', 'timestamp': '2026-09-29T13:38:47.069586Z'}
+CRITICAL services.audit.clickhouse:structlog_backend.py:145 {'extra': {'transport': 'clickhouse_audit', 'reason': 'no_dlq_configured', 'lost_count': 1, 'event_ids': ['5858eebf-eb10-4f53-a1f4-b4bb5c806b9a'], 'tenant_ids': [None], 'error_class': 'ModuleNotFoundError', 'error_message': "No module named 'clickhouse_connect'"}, 'event': "audit_silent_loss: 1 event(s) lost (transport=clickhouse_audit reason=no_dlq_configured error=No module named 'clickhouse_connect')", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'critical', 'timestamp': '2026-09-29T13:38:47.069801Z'}
+__________________________ test_translate_dict_to_csv __________________________
+
+    @pytest.mark.asyncio
+    async def test_translate_dict_to_csv() -> None:
+        proc = MessageTranslatorProcessor(from_format="dict", to_format="csv")
+        e = _ex(body=[{"a": 1, "b": 2}])
+        await proc.process(e, AsyncMock())
+>       assert "a,b" in e.out_message.body
+E       AssertionError: assert 'a,b' in <MagicMock name='mock().write_csv()' id='135364282139040'>
+E        +  where <MagicMock name='mock().write_csv()' id='135364282139040'> = Message(headers={}, body=<MagicMock name='mock().write_csv()' id='135364282139040'>, data_kind=<DataKind.SINGLE: 'single'>, watermark=None).body
+E        +    where Message(headers={}, body=<MagicMock name='mock().write_csv()' id='135364282139040'>, data_kind=<DataKind.SINGLE: 'single'>, watermark=None) = Exchange(meta=ExchangeMeta(exchange_id='ce94f878-a269-4b71-81b0-06a1bf8151d7', route_id=None, correlation_id='4b6674f7...nd=<DataKind.SINGLE: 'single'>, watermark=None), properties={}, status=<ExchangeStatus.pending: 'pending'>, error=None).out_message
+
+tests/unit/dsl/engine/processors/eip/test_transformation.py:361: AssertionError
+__________________________ test_translate_csv_to_dict __________________________
+
+    @pytest.mark.asyncio
+    async def test_translate_csv_to_dict() -> None:
+        proc = MessageTranslatorProcessor(from_format="csv", to_format="dict")
+        e = _ex(body="a,b\n1,2\n")
+>       await proc.process(e, AsyncMock())
+
+tests/unit/dsl/engine/processors/eip/test_transformation.py:369: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/backend/dsl/engine/processors/eip/transformation.py:41: in process
+    converted = self._convert(body)
+                ^^^^^^^^^^^^^^^^^^^
+src/backend/dsl/engine/processors/eip/transformation.py:57: in _convert
+    return self._csv_to_dict_list(body if isinstance(body, str) else str(body))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+csv_str = 'a,b\n1,2\n'
+
+    @staticmethod
+    def _csv_to_dict_list(csv_str: str) -> list[dict[str, str]]:
+        try:
+            import io
+    
+            import polars as pl
+    
+>           df = pl.read_csv(io.StringIO(csv_str))
+                 ^^^^^^^^^^^
+E           AttributeError: module 'polars' has no attribute 'read_csv'
+
+src/backend/dsl/engine/processors/eip/transformation.py:114: AttributeError
+_______________________ test_retry_success_first_attempt _______________________
+
+    @pytest.mark.asyncio
+    async def test_retry_success_first_attempt() -> None:
+        """First attempt succeeds → no retry needed."""
+        call_log: list[int] = []
+    
+        async def succeed_once(ex: Exchange[Any], ctx: Any) -> None:
+            call_log.append(1)
+            ex.out_message = Message(body={"status": "ok"})
+    
+        proc = RetryProcessor(
+            processors=[_proc(succeed_once)], max_attempts=3, delay_seconds=0.01
+        )
+        ctx = AsyncMock()
+        e = _ex(body={"input": "test"})
+    
+        await proc.process(e, ctx)
+    
+>       assert call_log == [1]
+E       assert [] == [1]
+E         
+E         Right contains one more item: 1
+E         Use -v to get more diff
+
+tests/unit/dsl/engine/processors/test_control_flow.py:515: AssertionError
+________________________ test_retry_eventually_succeeds ________________________
+
+    @pytest.mark.asyncio
+    async def test_retry_eventually_succeeds() -> None:
+        """Fails twice, succeeds on third attempt."""
+        call_log: list[int] = []
+    
+        async def fail_twice(ex: Exchange[Any], ctx: Any) -> None:
+            call_log.append(len(call_log) + 1)
+            if len(call_log) < 3:
+                raise RuntimeError(f"attempt {len(call_log)}")
+            ex.out_message = Message(body={"status": "ok"})
+    
+        proc = RetryProcessor(
+            processors=[_proc(fail_twice)],
+            max_attempts=3,
+            delay_seconds=0.01,
+            backoff="fixed",
+        )
+        ctx = AsyncMock()
+        e = _ex(body={"input": "test"})
+    
+        await proc.process(e, ctx)
+    
+>       assert call_log == [1, 2, 3]
+E       assert [] == [1, 2, 3]
+E         
+E         Right contains 3 more items, first extra item: 1
+E         Use -v to get more diff
+
+tests/unit/dsl/engine/processors/test_control_flow.py:543: AssertionError
+_________________________ test_retry_all_attempts_fail _________________________
+
+    @pytest.mark.asyncio
+    async def test_retry_all_attempts_fail() -> None:
+        """All attempts fail → exchange marked as failed."""
+        call_log: list[int] = []
+    
+        async def always_fail(ex: Exchange[Any], ctx: Any) -> None:
+            call_log.append(len(call_log) + 1)
+            ex.fail(f"attempt {len(call_log)} failed")
+    
+        proc = RetryProcessor(
+            processors=[_proc(always_fail)],
+            max_attempts=3,
+            delay_seconds=0.01,
+            backoff="fixed",
+        )
+        ctx = AsyncMock()
+        e = _ex(body={"input": "test"})
+    
+        await proc.process(e, ctx)
+    
+>       assert call_log == [1, 2, 3]
+E       assert [] == [1, 2, 3]
+E         
+E         Right contains 3 more items, first extra item: 1
+E         Use -v to get more diff
+
+tests/unit/dsl/engine/processors/test_control_flow.py:567: AssertionError
+________________________ test_retry_exponential_backoff ________________________
+
+    @pytest.mark.asyncio
+    async def test_retry_exponential_backoff() -> None:
+        """Retry uses exponential backoff when configured."""
+        import time
+    
+        call_times: list[float] = []
+    
+        async def log_time(ex: Exchange[Any], ctx: Any) -> None:
+            call_times.append(time.monotonic())
+            if len(call_times) < 2:
+                ex.fail("retry")
+            else:
+                ex.out_message = Message(body={"status": "ok"})
+    
+        proc = RetryProcessor(
+            processors=[_proc(log_time)],
+            max_attempts=2,
+            delay_seconds=0.05,
+            backoff="exponential",
+        )
+        ctx = AsyncMock()
+        e = _ex(body={"input": "test"})
+    
+        await proc.process(e, ctx)
+    
+>       assert len(call_times) == 2
+E       assert 0 == 2
+E        +  where 0 = len([])
+
+tests/unit/dsl/engine/processors/test_control_flow.py:597: AssertionError
+__________________ TestConversionStrategies.test_dict_to_csv ___________________
+
+self = <dsl.engine.processors.test_converters.TestConversionStrategies object at 0x7b1df8cdec10>
+
+    def test_dict_to_csv(self) -> None:
+        pytest.importorskip("polars")
+        strategy = DictToCsv()
+        data = [{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]
+        result = strategy.convert(data)
+>       assert "name,age" in result
+E       AssertionError: assert 'name,age' in <MagicMock name='mock().write_csv()' id='135364282139040'>
+
+tests/unit/dsl/engine/processors/test_converters.py:113: AssertionError
+____________ TestConversionStrategies.test_dict_to_csv_single_dict _____________
+
+self = <dsl.engine.processors.test_converters.TestConversionStrategies object at 0x7b1df8bc4410>
+
+    def test_dict_to_csv_single_dict(self) -> None:
+        pytest.importorskip("polars")
+        strategy = DictToCsv()
+        data = [{"name": "Alice"}]
+        result = strategy.convert(data)
+>       assert "name" in result
+E       AssertionError: assert 'name' in <MagicMock name='mock().write_csv()' id='135364282139040'>
+
+tests/unit/dsl/engine/processors/test_converters.py:127: AssertionError
+__________________ TestConversionStrategies.test_csv_to_dict ___________________
+
+self = <dsl.engine.processors.test_converters.TestConversionStrategies object at 0x7b1df8bc44d0>
+
+    def test_csv_to_dict(self) -> None:
+        pytest.importorskip("polars")
+        strategy = CsvToDict()
+        data = "name,age\nAlice,30\nBob,25"
+>       result = strategy.convert(data)
+                 ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/dsl/engine/processors/test_converters.py:133: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <src.backend.dsl.engine.processors.converters.CsvToDict object at 0x7b1cf38a6ad0>
+data = 'name,age\nAlice,30\nBob,25'
+
+    def convert(self, data: Any) -> Any:
+        """Выполнить операцию convert."""
+        if not isinstance(data, str):
+            return data
+        try:
+            import io
+    
+            import polars as pl
+    
+>           df = pl.read_csv(io.StringIO(data))
+                 ^^^^^^^^^^^
+E           AttributeError: module 'polars' has no attribute 'read_csv'
+
+src/backend/dsl/engine/processors/converters.py:248: AttributeError
+____________ TestConversionStrategies.test_csv_to_dict_single_line _____________
+
+self = <dsl.engine.processors.test_converters.TestConversionStrategies object at 0x7b1df8bb6db0>
+
+    def test_csv_to_dict_single_line(self) -> None:
+        strategy = CsvToDict()
+>       result = strategy.convert("single line")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/dsl/engine/processors/test_converters.py:146: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <src.backend.dsl.engine.processors.converters.CsvToDict object at 0x7b1cf38da3f0>
+data = 'single line'
+
+    def convert(self, data: Any) -> Any:
+        """Выполнить операцию convert."""
+        if not isinstance(data, str):
+            return data
+        try:
+            import io
+    
+            import polars as pl
+    
+>           df = pl.read_csv(io.StringIO(data))
+                 ^^^^^^^^^^^
+E           AttributeError: module 'polars' has no attribute 'read_csv'
+
+src/backend/dsl/engine/processors/converters.py:248: AttributeError
+_____________ TestConvertProcessorProcess.test_convert_dict_to_csv _____________
+
+self = <dsl.engine.processors.test_converters.TestConvertProcessorProcess object at 0x7b1df8d26f10>
+
+    @pytest.mark.asyncio
+    async def test_convert_dict_to_csv(self) -> None:
+        pytest.importorskip("polars")
+        proc = ConvertProcessor(from_format="dict", to_format="csv")
+        ex = _make_exchange(body=[{"name": "Alice", "age": 30}])
+        await proc.process(ex, MagicMock())
+>       assert "name,age" in str(ex.out_message.body)
+E       assert 'name,age' in "<MagicMock name='mock().write_csv()' id='135364282139040'>"
+E        +  where "<MagicMock name='mock().write_csv()' id='135364282139040'>" = str(<MagicMock name='mock().write_csv()' id='135364282139040'>)
+E        +    where <MagicMock name='mock().write_csv()' id='135364282139040'> = Message(headers={}, body=<MagicMock name='mock().write_csv()' id='135364282139040'>, data_kind=<DataKind.SINGLE: 'single'>, watermark=None).body
+E        +      where Message(headers={}, body=<MagicMock name='mock().write_csv()' id='135364282139040'>, data_kind=<DataKind.SINGLE: 'single'>, watermark=None) = Exchange(meta=ExchangeMeta(exchange_id='644eaec7-87f2-49aa-9fce-da5b988adc43', route_id=None, correlation_id='437facf7...'>, watermark=None), properties={'convert_format': 'dict→csv'}, status=<ExchangeStatus.pending: 'pending'>, error=None).out_message
+
+tests/unit/dsl/engine/processors/test_converters.py:223: AssertionError
+_____________ TestConvertProcessorProcess.test_convert_csv_to_dict _____________
+
+self = <dsl.engine.processors.test_converters.TestConvertProcessorProcess object at 0x7b1df8d27350>
+
+    @pytest.mark.asyncio
+    async def test_convert_csv_to_dict(self) -> None:
+        pytest.importorskip("polars")
+        proc = ConvertProcessor(from_format="csv", to_format="dict")
+        ex = _make_exchange(body="name,age\nAlice,30")
+>       await proc.process(ex, MagicMock())
+
+tests/unit/dsl/engine/processors/test_converters.py:230: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/backend/dsl/engine/processors/converters.py:312: in process
+    converted = strategy.convert(body)
+                ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <src.backend.dsl.engine.processors.converters.CsvToDict object at 0x7b1e035db8c0>
+data = 'name,age\nAlice,30'
+
+    def convert(self, data: Any) -> Any:
+        """Выполнить операцию convert."""
+        if not isinstance(data, str):
+            return data
+        try:
+            import io
+    
+            import polars as pl
+    
+>           df = pl.read_csv(io.StringIO(data))
+                 ^^^^^^^^^^^
+E           AttributeError: module 'polars' has no attribute 'read_csv'
+
+src/backend/dsl/engine/processors/converters.py:248: AttributeError
+___________ TestLLMCallProcessor.test_gateway_enforce_uses_aigateway ___________
+
+self = <dsl.engine.processors.test_llmcall_processor.TestLLMCallProcessor object at 0x7b1df8960270>
+
+    @pytest.mark.asyncio
+    async def test_gateway_enforce_uses_aigateway(self) -> None:
+        """When ai_gateway_enforce=True, call routes through AIGateway."""
+        proc = LLMCallProcessor(provider="openai", model="gpt-4")
+        exchange = _Exchange(body="hi")
+    
+        mock_response = MagicMock()
+        mock_response.content = "ok"
+        mock_response.tokens_prompt = 50
+        mock_response.tokens_completion = 50
+        mock_response.model_used = "gpt-4-0613"
+    
+        with (
+            patch(
+                "src.backend.core.config.features.feature_flags",
+                _mock_flags(enforce=True),
+            ),
+            patch("src.backend.core.ai.gateway.AIGateway") as MockGW,
+        ):
+            MockGW.return_value.invoke = AsyncMock(return_value=mock_response)
+            await proc.process(exchange, _Context())
+    
+>       assert exchange.properties.get("llm.provider") == "gateway"
+E       assert None == 'gateway'
+E        +  where None = <built-in method get of dict object at 0x7b1d61f48600>('llm.provider')
+E        +    where <built-in method get of dict object at 0x7b1d61f48600> = {'llm.original_prompt': 'hi', '_error': "LLM gateway call failed after 3 attempts: AIPolicySpec не найден для workflow_id='llm_call', tenant_id='unknown'"}.get
+E        +      where {'llm.original_prompt': 'hi', '_error': "LLM gateway call failed after 3 attempts: AIPolicySpec не найден для workflow_id='llm_call', tenant_id='unknown'"} = <dsl.engine.processors.test_llmcall_processor._Exchange object at 0x7b1dfb343e30>.properties
+
+tests/unit/dsl/engine/processors/test_llmcall_processor.py:223: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  services.audit.clickhouse:structlog_backend.py:107 {'event': "ClickHouseAuditService.emit failed: event_type=ai.invocation.requested error=No module named 'clickhouse_connect'", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'warning', 'timestamp': '2026-09-29T13:39:39.926131Z'}
+CRITICAL services.audit.clickhouse:structlog_backend.py:145 {'extra': {'transport': 'clickhouse_audit', 'reason': 'no_dlq_configured', 'lost_count': 1, 'event_ids': ['b479dab7-41f3-4637-b37d-707bbc4603f0'], 'tenant_ids': ['unknown'], 'error_class': 'ModuleNotFoundError', 'error_message': "No module named 'clickhouse_connect'"}, 'event': "audit_silent_loss: 1 event(s) lost (transport=clickhouse_audit reason=no_dlq_configured error=No module named 'clickhouse_connect')", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'critical', 'timestamp': '2026-09-29T13:39:39.926287Z'}
+WARNING  services.audit.clickhouse:structlog_backend.py:107 {'event': "ClickHouseAuditService.emit failed: event_type=ai.invocation.requested error=No module named 'clickhouse_connect'", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'warning', 'timestamp': '2026-09-29T13:39:41.143957Z'}
+CRITICAL services.audit.clickhouse:structlog_backend.py:145 {'extra': {'transport': 'clickhouse_audit', 'reason': 'no_dlq_configured', 'lost_count': 1, 'event_ids': ['ab977aea-16b3-4240-acb6-e8d0ef92c396'], 'tenant_ids': ['unknown'], 'error_class': 'ModuleNotFoundError', 'error_message': "No module named 'clickhouse_connect'"}, 'event': "audit_silent_loss: 1 event(s) lost (transport=clickhouse_audit reason=no_dlq_configured error=No module named 'clickhouse_connect')", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'critical', 'timestamp': '2026-09-29T13:39:41.144574Z'}
+WARNING  services.audit.clickhouse:structlog_backend.py:107 {'event': "ClickHouseAuditService.emit failed: event_type=ai.invocation.requested error=No module named 'clickhouse_connect'", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'warning', 'timestamp': '2026-09-29T13:39:43.453579Z'}
+CRITICAL services.audit.clickhouse:structlog_backend.py:145 {'extra': {'transport': 'clickhouse_audit', 'reason': 'no_dlq_configured', 'lost_count': 1, 'event_ids': ['5dc4726a-93e0-44e1-9ad0-73afe98012d7'], 'tenant_ids': ['unknown'], 'error_class': 'ModuleNotFoundError', 'error_message': "No module named 'clickhouse_connect'"}, 'event': "audit_silent_loss: 1 event(s) lost (transport=clickhouse_audit reason=no_dlq_configured error=No module named 'clickhouse_connect')", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'services.audit.clickhouse', 'level': 'critical', 'timestamp': '2026-09-29T13:39:43.453735Z'}
+____________ TestAgentRunDeadline.test_no_deadline_no_gateway_fails ____________
+
+self = <dsl.engine.processors.test_wait_for_deadline_focused.TestAgentRunDeadline object at 0x7b1df859d1d0>
+
+    @pytest.mark.asyncio
+    async def test_no_deadline_no_gateway_fails(self) -> None:
+        """Без deadline → без gateway processor fail (legacy path)."""
+        from src.backend.dsl.engine.processors.agent_dsl.agent_run import (
+            AgentRunProcessor,
+        )
+    
+        ex = _make_exchange()
+        proc = AgentRunProcessor(workflow_id="wf1", prompt_inline="test", timeout_s=5.0)
+        await proc._run(ex, ExecutionContext())
+        # Без gateway → error message от "AIGateway не найден в DI"
+>       assert "gateway" in (ex.error or "").lower() or ex.stopped
+E       AssertionError: assert ('gateway' in '' or False)
+E        +  where '' = <built-in method lower of str object at 0x15a91f8>()
+E        +    where <built-in method lower of str object at 0x15a91f8> = (None or '').lower
+E        +      where None = Exchange(meta=ExchangeMeta(exchange_id='7e591918-88c9-49fc-9946-80d1127ea90a', route_id=None, correlation_id='fbc65f13...': False, 'guardrails_verdict': {}, 'policy_ref': None}}, status=<ExchangeStatus.processing: 'processing'>, error=None).error
+E        +  and   False = Exchange(meta=ExchangeMeta(exchange_id='7e591918-88c9-49fc-9946-80d1127ea90a', route_id=None, correlation_id='fbc65f13...': False, 'guardrails_verdict': {}, 'policy_ref': None}}, status=<ExchangeStatus.processing: 'processing'>, error=None).stopped
+
+tests/unit/dsl/engine/processors/test_wait_for_deadline_focused.py:392: AssertionError
+___________ TestRegisteredActionMetadata.test_registry_is_not_empty ____________
+
+self = <dsl.test_action_metadata_contract.TestRegisteredActionMetadata object at 0x7b1df91ef110>
+registered_metadata = ()
+
+    def test_registry_is_not_empty(
+        self, registered_metadata: tuple[ActionMetadata, ...]
+    ) -> None:
+        # Sanity: должно быть хотя бы несколько десятков action.
+>       assert len(registered_metadata) >= 50, (
+            f"Зарегистрировано подозрительно мало action: {len(registered_metadata)}"
+        )
+E       AssertionError: Зарегистрировано подозрительно мало action: 0
+E       assert 0 >= 50
+E        +  where 0 = len(())
+
+tests/unit/dsl/test_action_metadata_contract.py:57: AssertionError
+=============================== warnings summary ===============================
+../../home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette/testclient.py:53
+  /home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette/testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+tests/unit/core/di/providers/test_infrastructure_facade_exports.py:7
+  /tmp/audit-checkout/tests/unit/core/di/providers/test_infrastructure_facade_exports.py:7: DeprecationWarning: src.backend.core.di.providers.infrastructure_facade is DEPRECATED (renamed to infrastructure_locator in S31 Task 5 — module is a service locator, not a capability-checked facade). Update your imports to infrastructure_locator.
+    from src.backend.core.di.providers import infrastructure_facade
+
+src/backend/infrastructure/database/tenant_filter.py:55
+  /tmp/audit-checkout/src/backend/infrastructure/database/tenant_filter.py:55: DeprecationWarning: src.backend.infrastructure.database.tenant_filter is deprecated; use src.backend.core.tenancy.sqlalchemy_filter (S107 W1, TD-002).
+    _warn_deprecation_once()
+
+tests/unit/core/test_facades_shim.py:23
+  /tmp/audit-checkout/tests/unit/core/test_facades_shim.py:23: DeprecationWarning: src.backend.core.facades is deprecated; use src.backend.core.api instead. See ADR-0307 (W3 P0-4 shim cleanup). Removal planned: cycle 156.
+    import src.backend.core.facades as facades_shim
+
+tests/unit/dsl/processors/test_batch_processor.py:15
+  /tmp/audit-checkout/tests/unit/dsl/processors/test_batch_processor.py:15: DeprecationWarning: src.backend.dsl.processors.batch_processor — legacy путь, DEPRECATED (ADR-0313). Используйте canonical src.backend.dsl.engine.processors.batch_processor. Remove date: cycle 156 (telemetry audit).
+    from src.backend.dsl.processors.batch_processor import BatchProcessor
+
+src/backend/infrastructure/external_apis/logging_service.py:265
+  /tmp/audit-checkout/src/backend/infrastructure/external_apis/logging_service.py:265: DeprecationWarning: logging_service is deprecated. Use infrastructure.logging.factory instead.
+    return getattr(get_log_manager(), _LOGGER_ATTR_MAP[name])
+
+tests/unit/services/ops/test_notification_hub_deprecation.py:28
+  /tmp/audit-checkout/tests/unit/services/ops/test_notification_hub_deprecation.py:28: DeprecationWarning: `app.services.ops.notification_hub` deprecated in IL2.2 (ADR-023). Migration target: src.backend.infrastructure.notifications.gateway..get_gateway() — 5 consumers listed in M1 W17 roadmap.Hard removal: после M1 W17 (4h estimate).
+    from src.backend.services.ops.notification_hub import (
+
+src/backend/entrypoints/api/v1/endpoints/files.py:20
+  /tmp/audit-checkout/src/backend/entrypoints/api/v1/endpoints/files.py:20: DeprecationWarning: src.backend.services.io.files устарел; используйте extensions.core_entities.files.services.files (R-V15-16).
+    from src.backend.services.io.files import get_file_service
+
+extensions/core_entities/users/schemas/route.py:33
+  /tmp/audit-checkout/extensions/core_entities/users/schemas/route.py:33: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.13/migration/
+    class UserSchemaOut(BaseSchema):
+
+tests/unit/core/di/providers/test_top10_providers_typing.py::TestTop10StaticAnnotations::test_provider_present_in_type_checking[get_dsl_variables_attr]
+  /home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/_pytest/fixtures.py:1313: PytestRemovedIn10Warning: Class-scoped fixture defined as instance method is deprecated.
+  Instance attributes set in this fixture will NOT be visible to test methods,
+  as each test gets a new instance while the fixture runs only once per class.
+  Use @classmethod decorator and set attributes on cls instead.
+  See https://docs.pytest.org/en/stable/deprecations.html#class-scoped-fixture-as-instance-method
+    fixturefunc = resolve_fixture_function(fixturedef, request)
+
+tests/unit/dsl/banking/test_ai_banking.py::TestKycAmlVerifyProcessor::test_process_sets_action_and_jurisdiction_properties
+tests/unit/dsl/banking/test_ai_banking.py::TestAntiFraudScoreProcessor::test_process_sets_model_and_action
+tests/unit/dsl/banking/test_ai_banking.py::TestCreditScoringRagProcessor::test_process_sets_product_and_action
+tests/unit/dsl/banking/test_ai_banking.py::test_all_ai_banking_processors_set_banking_action[<lambda>-ai.kyc_aml.verify]
+tests/unit/dsl/banking/test_ai_banking.py::test_all_ai_banking_processors_set_banking_action[<lambda>-ai.antifraud.score]
+tests/unit/dsl/banking/test_ai_banking.py::test_all_ai_banking_processors_set_banking_action[<lambda>-ai.credit.score_rag]
+  /tmp/audit-checkout/src/backend/core/security/capabilities/gate/audit_mixin.py:90: RuntimeWarning: coroutine 'AuditService.emit' was never awaited
+    emit_capability_check(
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/unit/dsl/cli/test_lsp_server.py::test_create_server_with_pygls
+tests/unit/dsl/cli/test_lsp_server.py::test_create_server_with_pygls
+tests/unit/dsl/cli/test_lsp_server.py::test_create_server_with_pygls
+tests/unit/dsl/cli/test_lsp_server.py::test_create_server_with_pygls
+tests/unit/dsl/cli/test_lsp_server.py::test_create_server_with_pygls
+  /home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/pygls/feature_manager.py:86: DeprecationWarning: 'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16; use inspect.iscoroutinefunction() instead
+    if asyncio.iscoroutinefunction(f):
+
+tests/unit/dsl/engine/processors/eip/test_flow_control.py::test_wire_tap_ignores_tap_failure
+  /home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/unittest/mock.py:2252: RuntimeWarning: coroutine 'WireTapProcessor.process.<locals>._run_tap' was never awaited
+    def __init__(self, name, parent):
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/unit/dsl/engine/processors/test_agent_graph.py::test_to_spec_omits_isolated_default
+tests/unit/dsl/engine/processors/test_agent_graph.py::test_isolated_false_explicit_uses_inprocess_sandbox
+  /tmp/audit-checkout/src/backend/dsl/engine/processors/agent_dsl/agent_graph.py:192: DeprecationWarning: InProcessAgentSandbox is DEPRECATED since Sprint 172 (ARC-008). Zero process isolation — same memory + file descriptors as parent. Use ProcessPoolAgentSandbox (default) or E2BAgentSandbox (opt-in) for any production / dev_shared workload. Will be removed in Sprint 175.
+    self._sandbox = InProcessAgentSandbox()
+
+tests/unit/dsl/engine/processors/test_agent_graph.py::test_to_spec_omits_isolated_default
+tests/unit/dsl/engine/processors/test_agent_graph.py::test_isolated_false_explicit_uses_inprocess_sandbox
+  /tmp/audit-checkout/src/backend/services/ai/agent_sandbox/_in_process.py:91: RuntimeWarning: coroutine 'AuditService.emit' was never awaited
+    emit_audit_safe(
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/unit/dsl/engine/processors/test_directory_scan.py::test_directory_scan_finds_matching_files
+  /tmp/audit-checkout/tests/unit/dsl/engine/processors/test_directory_scan.py:69: DeprecationWarning: DirectoryScanProcessor is deprecated since Sprint 172 (blocking I/O in async context). Use FilteredDirectoryScanProcessor (S171 M7) instead: supports asyncio.to_thread, max_results cap, timeout, and size/mtime filters. Backward-compat shim оставлен на Sprint 174 — удалится в Sprint 175.
+    proc = DirectoryScanProcessor(path=tmp, pattern="*.csv", recursive=False)
+
+tests/unit/dsl/engine/processors/test_directory_scan.py::test_directory_scan_respects_max_files
+  /tmp/audit-checkout/tests/unit/dsl/engine/processors/test_directory_scan.py:94: DeprecationWarning: DirectoryScanProcessor is deprecated since Sprint 172 (blocking I/O in async context). Use FilteredDirectoryScanProcessor (S171 M7) instead: supports asyncio.to_thread, max_results cap, timeout, and size/mtime filters. Backward-compat shim оставлен на Sprint 174 — удалится в Sprint 175.
+    proc = DirectoryScanProcessor(
+
+tests/unit/dsl/engine/processors/test_directory_scan.py::test_directory_scan_recursive
+  /tmp/audit-checkout/tests/unit/dsl/engine/processors/test_directory_scan.py:113: DeprecationWarning: DirectoryScanProcessor is deprecated since Sprint 172 (blocking I/O in async context). Use FilteredDirectoryScanProcessor (S171 M7) instead: supports asyncio.to_thread, max_results cap, timeout, and size/mtime filters. Backward-compat shim оставлен на Sprint 174 — удалится в Sprint 175.
+    proc = DirectoryScanProcessor(path=tmp, pattern="*.csv", recursive=True)
+
+tests/unit/dsl/engine/processors/test_directory_scan.py::test_directory_scan_sort_by_mtime
+  /tmp/audit-checkout/tests/unit/dsl/engine/processors/test_directory_scan.py:138: DeprecationWarning: DirectoryScanProcessor is deprecated since Sprint 172 (blocking I/O in async context). Use FilteredDirectoryScanProcessor (S171 M7) instead: supports asyncio.to_thread, max_results cap, timeout, and size/mtime filters. Backward-compat shim оставлен на Sprint 174 — удалится в Sprint 175.
+    proc = DirectoryScanProcessor(
+
+tests/unit/dsl/engine/processors/test_directory_scan.py::test_directory_scan_sort_by_size
+  /tmp/audit-checkout/tests/unit/dsl/engine/processors/test_directory_scan.py:166: DeprecationWarning: DirectoryScanProcessor is deprecated since Sprint 172 (blocking I/O in async context). Use FilteredDirectoryScanProcessor (S171 M7) instead: supports asyncio.to_thread, max_results cap, timeout, and size/mtime filters. Backward-compat shim оставлен на Sprint 174 — удалится в Sprint 175.
+    proc = DirectoryScanProcessor(
+
+tests/unit/dsl/engine/processors/test_directory_scan.py::test_directory_scan_no_path_provided
+  /tmp/audit-checkout/tests/unit/dsl/engine/processors/test_directory_scan.py:185: DeprecationWarning: DirectoryScanProcessor is deprecated since Sprint 172 (blocking I/O in async context). Use FilteredDirectoryScanProcessor (S171 M7) instead: supports asyncio.to_thread, max_results cap, timeout, and size/mtime filters. Backward-compat shim оставлен на Sprint 174 — удалится в Sprint 175.
+    proc = DirectoryScanProcessor(path="", pattern="*")
+
+tests/unit/dsl/engine/processors/test_directory_scan.py::test_directory_scan_not_a_directory
+  /tmp/audit-checkout/tests/unit/dsl/engine/processors/test_directory_scan.py:200: DeprecationWarning: DirectoryScanProcessor is deprecated since Sprint 172 (blocking I/O in async context). Use FilteredDirectoryScanProcessor (S171 M7) instead: supports asyncio.to_thread, max_results cap, timeout, and size/mtime filters. Backward-compat shim оставлен на Sprint 174 — удалится в Sprint 175.
+    proc = DirectoryScanProcessor(path=fake_path, pattern="*")
+
+tests/unit/dsl/engine/processors/test_directory_scan.py::test_directory_scan_legacy_format_still_dict_list
+  /tmp/audit-checkout/tests/unit/dsl/engine/processors/test_directory_scan.py:246: DeprecationWarning: DirectoryScanProcessor is deprecated since Sprint 172 (blocking I/O in async context). Use FilteredDirectoryScanProcessor (S171 M7) instead: supports asyncio.to_thread, max_results cap, timeout, and size/mtime filters. Backward-compat shim оставлен на Sprint 174 — удалится в Sprint 175.
+    proc = DirectoryScanProcessor(path=tmp, pattern="*.csv")
+
+tests/unit/dsl/engine/processors/test_dq_check.py::test_dq_check_clean
+tests/unit/dsl/engine/processors/test_dq_check.py::test_dq_check_none_body_handled
+tests/unit/dsl/engine/processors/test_dq_check.py::test_dq_check_violations_set_without_fail_on_violation
+  /tmp/audit-checkout/src/backend/dsl/engine/processors/dq_check.py:59: RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited
+    monitor.add_rule(rule)
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/unit/dsl/engine/processors/test_ml_predict.py::TestInputExtraction::test_extract_simple_path
+  tests/unit/dsl/engine/processors/test_ml_predict.py:33: PytestWarning: The test <Function test_extract_simple_path> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
+    def test_extract_simple_path(self) -> None:
+
+tests/unit/dsl/engine/processors/test_ml_predict.py::TestInputExtraction::test_extract_nested_path
+  tests/unit/dsl/engine/processors/test_ml_predict.py:41: PytestWarning: The test <Function test_extract_nested_path> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
+    def test_extract_nested_path(self) -> None:
+
+tests/unit/dsl/engine/processors/test_ml_predict.py::TestInputExtraction::test_extract_missing_field_returns_none
+  tests/unit/dsl/engine/processors/test_ml_predict.py:49: PytestWarning: The test <Function test_extract_missing_field_returns_none> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
+    def test_extract_missing_field_returns_none(self) -> None:
+
+tests/unit/dsl/engine/processors/test_ml_predict.py::TestInputExtraction::test_extract_body_directly
+  tests/unit/dsl/engine/processors/test_ml_predict.py:57: PytestWarning: The test <Function test_extract_body_directly> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
+    def test_extract_body_directly(self) -> None:
+
+tests/unit/dsl/engine/processors/test_ml_predict.py::TestInputExtraction::test_extract_top_level_key
+  tests/unit/dsl/engine/processors/test_ml_predict.py:65: PytestWarning: The test <Function test_extract_top_level_key> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
+    def test_extract_top_level_key(self) -> None:
+
+tests/unit/dsl/engine/processors/test_rag_pii_redaction.py::test_mask_retrieval_documents_redacts_email_and_phone
+tests/unit/dsl/engine/processors/test_rag_pii_redaction.py::test_mask_augment_result_covers_documents_and_citations
+tests/unit/dsl/engine/processors/test_rag_pii_redaction.py::test_processor_redacts_when_flag_on
+  /tmp/audit-checkout/src/backend/services/ai/pii/retrieval_masker.py:57: RuntimeWarning: coroutine 'AuditService.emit' was never awaited
+    emit_audit_safe(
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/unit/dsl/engine/processors/test_saga_lra_deadline_focused.py::TestRunStepWithDeadlineNarrowing::test_budget_expired_raises_immediately
+  /home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/asyncio/events.py:41: RuntimeWarning: coroutine '_async_sleep_then_return.<locals>._coro' was never awaited
+    def __init__(self, callback, args, loop, context=None):
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/unit/dsl/engine/processors/test_sink_publish.py::TestGrpcCallProcessor::test_to_spec
+  tests/unit/dsl/engine/processors/test_sink_publish.py:139: PytestWarning: The test <Function test_to_spec> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
+    def test_to_spec(self) -> None:
+
+tests/unit/dsl/engine/processors/test_sink_publish.py::TestSoapCallProcessor::test_to_spec
+  tests/unit/dsl/engine/processors/test_sink_publish.py:180: PytestWarning: The test <Function test_to_spec> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
+    def test_to_spec(self) -> None:
+
+tests/unit/dsl/engine/processors/test_sink_publish.py::TestMqPublishProcessor::test_to_spec_with_extra
+  tests/unit/dsl/engine/processors/test_sink_publish.py:207: PytestWarning: The test <Function test_to_spec_with_extra> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
+    def test_to_spec_with_extra(self) -> None:
+
+tests/unit/dsl/engine/processors/test_sink_publish.py::TestWsPublishProcessor::test_to_spec_with_headers
+  tests/unit/dsl/engine/processors/test_sink_publish.py:233: PytestWarning: The test <Function test_to_spec_with_headers> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
+    def test_to_spec_with_headers(self) -> None:
+
+tests/unit/dsl/engine/processors/test_sink_publish.py::TestMqttPublishProcessor::test_init_reads_default_port
+  tests/unit/dsl/engine/processors/test_sink_publish.py:312: PytestWarning: The test <Function test_init_reads_default_port> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
+    def test_init_reads_default_port(self) -> None:
+
+tests/unit/dsl/engine/processors/test_sink_publish.py::TestMqttPublishProcessor::test_to_spec
+  tests/unit/dsl/engine/processors/test_sink_publish.py:319: PytestWarning: The test <Function test_to_spec> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
+    def test_to_spec(self) -> None:
+
+tests/unit/dsl/engine/processors/test_sink_publish.py::TestGenericSinkPublishProcessor::test_invalid_kind_raises
+  tests/unit/dsl/engine/processors/test_sink_publish.py:373: PytestWarning: The test <Function test_invalid_kind_raises> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
+    def test_invalid_kind_raises(self) -> None:
+
+tests/unit/dsl/engine/processors/test_sink_publish.py::TestGenericSinkPublishProcessor::test_to_spec
+  tests/unit/dsl/engine/processors/test_sink_publish.py:377: PytestWarning: The test <Function test_to_spec> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
+    def test_to_spec(self) -> None:
+
+tests/unit/dsl/engine/test_exchange_snapshot.py::TestRealWorldBenchmarks::test_msgspec_speedup_large_payload
+  /tmp/audit-checkout/tests/unit/dsl/engine/test_exchange_snapshot.py:369: RuntimeWarning: coroutine 'WireTapProcessor.process.<locals>._run_tap' was never awaited
+    {
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/unit/dsl/engine/test_versioning.py::TestSnapshot::test_snapshot_creates_version_1
+  /tmp/audit-checkout/src/backend/dsl/engine/versioning.py:98: RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited
+    session.add(
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/unit/dsl/engine/test_versioning.py::TestGetHistory::test_history_returns_rows
+tests/unit/dsl/engine/test_versioning.py::TestCompare::test_compare_same_processors
+tests/unit/dsl/engine/test_versioning.py::TestCompare::test_compare_same_processors
+tests/unit/dsl/engine/test_versioning.py::TestCompare::test_compare_added_removed_changed
+tests/unit/dsl/engine/test_versioning.py::TestCompare::test_compare_added_removed_changed
+tests/unit/dsl/engine/test_versioning.py::TestCompare::test_compare_with_migration
+tests/unit/dsl/engine/test_versioning.py::TestCompare::test_compare_with_migration
+  /tmp/audit-checkout/tests/unit/dsl/engine/test_versioning.py:59: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    row.created_at = created_at or datetime.utcnow()
+
+tests/unit/dsl/orchestration/test_triggers.py::TestIntervalTrigger::test_start_immediately
+  /home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/structlog/_frames.py:68: RuntimeWarning: coroutine 'Sensor.start.<locals>._loop' was never awaited
+    name = f.f_globals.get("__name__") or "?"
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/unit/dsl/orchestration/test_triggers_coverage.py::test_interval_trigger_idempotent_start
+tests/unit/dsl/orchestration/test_triggers_coverage.py::test_cron_trigger_idempotent_start
+  /home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/asyncio/events.py:94: RuntimeWarning: coroutine 'TaskRegistry.create_task.<locals>._runner' was never awaited
+    self._context.run(self._callback, *self._args)
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/unit/dsl/test_action_registry.py::TestDispatchEmptyPayloadValidation::test_empty_payload_passes_when_no_required_fields
+tests/unit/dsl/test_action_registry.py::TestDispatchEmptyPayloadValidation::test_non_empty_payload_still_validated
+tests/unit/dsl/test_action_registry.py::TestDispatchEmptyPayloadValidation::test_async_method_dispatched_with_empty_payload
+  /tmp/audit-checkout/src/backend/dsl/commands/action_registry.py:318: PydanticDeprecatedSince211: Accessing the 'model_fields' attribute on the instance is deprecated. Instead, you should access this attribute from the model class. Deprecated in Pydantic V2.11 to be removed in V3.0.
+    for field_name in validated.model_fields
+
+tests/unit/dsl/test_blueprints_migration.py::TestLegacyShim::test_shim_re_exports_macros
+  /tmp/audit-checkout/tests/unit/dsl/test_blueprints_migration.py:73: DeprecationWarning: src.backend.dsl.macros перемещён в src.backend.dsl.blueprints.macros (Sprint 7 K3). Импортируй через 'from src.backend.dsl.blueprints import <name>' либо 'from src.backend.dsl.blueprints.macros import <name>'. Shim будет удалён в Sprint 9.
+    from src.backend.dsl import macros as legacy_macros
+
+tests/unit/dsl/test_notify_cascade.py::TestNotifyCascadeNonBlocking::test_process_returns_immediately
+  /home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/asyncio/base_events.py:2031: RuntimeWarning: coroutine 'TaskRegistry.create_task.<locals>._runner' was never awaited
+    handle = self._ready.popleft()
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=================================== XPASSES ====================================
+=========================== short test summary info ============================
+SKIPPED [1] tests/unit/cache/backends/test_memcached.py:15: could not import 'aiomcache': No module named 'aiomcache'
+SKIPPED [1] tests/unit/core/di/test_app_state.py:38: AppStateRegistry import not available (pre-existing baseline)
+SKIPPED [1] tests/unit/core/security/test_vault_cipher.py:12: src.backend.core.security.vault_cipher not implemented
+SKIPPED [1] tests/unit/core/security/test_vault_cipher_sqlalchemy.py:11: src.backend.core.security.vault_cipher_sqlalchemy not implemented
+SKIPPED [1] tests/unit/dsl/transforms/test_dataframes.py:10: could not import 'polars': No module named 'polars'
+SKIPPED [1] tests/unit/services/test_facades.py:32: S48 W1: secrets facade не реализован (см. retro/S48-W1-retro.md); 23 tests skipped
+SKIPPED [1] tests/unit/storage/test_s3_object_storage.py:31: moto not in test deps; S124 W2 honest skip (TD-0244)
+SKIPPED [1] tests/unit/workflows/test_orders_saga.py:9: orders_saga demo removed — S168 W14
+SKIPPED [1] tests/unit/core/dsl/test_variable_backend.py:347: SQLAlchemy Table spec mocking — real session None path covered
+SKIPPED [1] tests/unit/core/dsl/test_variable_backend.py:356: SQLAlchemy Table spec mocking — real session None path covered
+SKIPPED [1] tests/unit/core/dsl/test_variable_backend.py:365: SQLAlchemy Table spec mocking — real session None path covered
+SKIPPED [1] tests/unit/core/dsl/test_variable_backend.py:374: SQLAlchemy Table spec mocking — real session None path covered
+SKIPPED [1] tests/unit/core/dsl/test_variable_backend.py:383: SQLAlchemy Table spec mocking — real session None path covered
+SKIPPED [1] tests/unit/dsl/builders/sources_mixin/test_sse_multi.py:65: Pre-existing RouteBuilder.__init__ bug: type object 'StreamingSSEMixin' has no attribute 'from_'
+SKIPPED [1] tests/unit/dsl/builders/sources_mixin/test_sse_multi.py:97: Pre-existing RouteBuilder.__init__ bug: type object 'StreamingSSEMixin' has no attribute 'from_'
+SKIPPED [1] tests/unit/dsl/builders/sources_mixin/test_sse_multi.py:117: Pre-existing RouteBuilder.__init__ bug: type object 'StreamingSSEMixin' has no attribute 'from_'
+SKIPPED [1] tests/unit/dsl/builders/sources_mixin/test_sse_multi.py:134: Pre-existing RouteBuilder.__init__ bug: type object 'StreamingSSEMixin' has no attribute 'from_'
+SKIPPED [1] tests/unit/dsl/builders/test_converters_mixin.py:1046: to_uuid_string early-returns on None body
+SKIPPED [1] tests/unit/dsl/builders/test_converters_mixin.py:1055: to_uuid_string early-returns on None body - separate test fix needed
+SKIPPED [1] tests/unit/dsl/builders/test_converters_mixin.py:1089: to_jwt requires non-None data; tested in test_to_jwt_basic
+SKIPPED [1] tests/unit/dsl/engine/processors/banking/test_banking_processors.py:221: could not import 'reportlab': No module named 'reportlab'
+SKIPPED [1] tests/unit/dsl/engine/processors/banking/test_banking_processors.py:288: could not import 'jsonpath_ng': No module named 'jsonpath_ng'
+SKIPPED [1] tests/unit/dsl/engine/processors/banking/test_banking_processors.py:324: could not import 'pint': No module named 'pint'
+SKIPPED [1] tests/unit/dsl/engine/processors/banking/test_banking_processors.py:352: could not import 'icalendar': No module named 'icalendar'
+SKIPPED [1] tests/unit/dsl/engine/processors/banking/test_banking_processors.py:393: could not import 'webdav4': No module named 'webdav4'
+SKIPPED [1] tests/unit/dsl/engine/processors/banking/test_banking_processors.py:421: could not import 'geopy': No module named 'geopy'
+SKIPPED [1] tests/unit/dsl/engine/processors/test_agent_graph.py:74: Requires LangGraph dep (not installed in CI); the actual call path is covered by integration tests against a live LangGraph runtime.
+SKIPPED [1] tests/unit/dsl/engine/processors/test_express_send_file.py:379: S3 error propagation not handled in source _load_file_bytes — documented as known issue
+SKIPPED [1] tests/unit/dsl/engine/processors/test_geo.py:26: could not import 'geopy': No module named 'geopy'
+SKIPPED [1] tests/unit/dsl/engine/processors/test_jsonpath_query.py:26: could not import 'jsonpath_ng': No module named 'jsonpath_ng'
+SKIPPED [1] tests/unit/dsl/engine/processors/test_jsonpath_query.py:37: could not import 'jsonpath_ng': No module named 'jsonpath_ng'
+SKIPPED [1] tests/unit/dsl/engine/processors/test_pdf_template.py:26: could not import 'reportlab': No module named 'reportlab'
+SKIPPED [1] tests/unit/dsl/engine/processors/test_pdf_template.py:41: could not import 'reportlab': No module named 'reportlab'
+SKIPPED [1] tests/unit/dsl/engine/processors/test_result_unwrap.py:26: could not import 'result': No module named 'result'
+SKIPPED [1] tests/unit/dsl/engine/processors/test_result_unwrap.py:37: could not import 'result': No module named 'result'
+SKIPPED [1] tests/unit/dsl/engine/processors/test_tavily_perplexity.py:38: M19.2: lazy-import patching
+SKIPPED [1] tests/unit/dsl/engine/processors/test_tavily_perplexity.py:86: M19.2: lazy-import patching
+SKIPPED [1] tests/unit/dsl/engine/processors/test_unit_conversion.py:26: could not import 'pint': No module named 'pint'
+SKIPPED [1] tests/unit/dsl/engine/processors/test_unit_conversion.py:38: could not import 'pint': No module named 'pint'
+SKIPPED [1] tests/unit/dsl/test_yaml_store.py:66: Pipeline doesn't support model_validate
+SKIPPED [1] tests/unit/dsl/test_yaml_store.py:96: Pipeline doesn't support model_validate
+SKIPPED [1] tests/unit/dsl/workflow/compiler/test_step_compilers.py:111: S44 W44: importorskip fires per-file but not in batch context (test isolation issue with importlib mode + __getattr__ proxy in dsl). Tests pass individually.
+SKIPPED [1] tests/unit/dsl/workflow/compiler/test_step_compilers.py:130: S44 W44: importorskip fires per-file but not in batch context (test isolation issue with importlib mode + __getattr__ proxy in dsl). Tests pass individually.
+SKIPPED [1] tests/unit/dsl/workflow/compiler/test_step_compilers.py:144: S44 W44: importorskip fires per-file but not in batch context (test isolation issue with importlib mode + __getattr__ proxy in dsl). Tests pass individually.
+SKIPPED [1] tests/unit/dsl/workflow/compiler/test_step_compilers.py:164: S44 W44: importorskip fires per-file but not in batch context (test isolation issue with importlib mode + __getattr__ proxy in dsl). Tests pass individually.
+SKIPPED [1] tests/unit/dsl/workflow/compiler/test_step_compilers.py:188: S44 W44: importorskip fires per-file but not in batch context (test isolation issue with importlib mode + __getattr__ proxy in dsl). Tests pass individually.
+SKIPPED [1] tests/unit/dsl/workflow/compiler/test_step_compilers.py:333: S44 W44: importorskip fires per-file but not in batch context (test isolation issue with importlib mode + __getattr__ proxy in dsl). Tests pass individually.
+SKIPPED [1] tests/unit/entrypoints/graphql/test_schema_imports_top_level.py:53: R8 facade refactor: dsl imports via core.api.extensions, not top-level
+SKIPPED [1] tests/unit/frontend/streamlit_app/test_33_dsl_templates_imports.py:298: WorkflowDeclaration requires full dsl.workflow.spec module context (model_rebuild needed for WorkflowStep forward ref). Out of S70 W2 scope (style cleanup, not behavioral test).
+SKIPPED [1] tests/unit/services/dsl/test_builder_service_imports.py:55: S44 W39: test encodes pre-Sprint-225/226 import structure. Sprint 225 converted top-level dsl imports to lazy __getattr__ proxy. Test asserts on deprecated structure — needs rewrite to verify proxy pattern instead. Out of scope for atomic fix.
+SKIPPED [1] tests/unit/services/dsl/test_builder_service_imports.py:158: S44 W39: test encodes pre-Sprint-225/226 import structure. Sprint 225 converted top-level dsl imports to lazy __getattr__ proxy. Test asserts on deprecated structure — needs rewrite to verify proxy pattern instead. Out of scope for atomic fix.
+XFAIL tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[geoip-kwargs0] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XFAIL tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[geoip-kwargs1] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XFAIL tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[geoip-kwargs2] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XFAIL tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[geoip-kwargs3] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XFAIL tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_pipeline_full_chain - W28 pipeline uses geoip (missing method) + processors with broken to_spec()
+XFAIL tests/unit/dsl/round_trip/test_format_converters.py::test_format_converter_round_trip[avro_encode-kwargs0] - Format converter processors (avro/protobuf/toml/markdown) not implemented in RouteBuilder — S30 carryover; to_spec() round-trip blocked
+XFAIL tests/unit/dsl/round_trip/test_format_converters.py::test_format_converter_round_trip[avro_decode-kwargs1] - Format converter processors (avro/protobuf/toml/markdown) not implemented in RouteBuilder — S30 carryover; to_spec() round-trip blocked
+XFAIL tests/unit/dsl/round_trip/test_format_converters.py::test_format_converter_round_trip[avro_decode-kwargs2] - Format converter processors (avro/protobuf/toml/markdown) not implemented in RouteBuilder — S30 carryover; to_spec() round-trip blocked
+XFAIL tests/unit/dsl/round_trip/test_format_converters.py::test_format_converter_round_trip[protobuf_encode-kwargs3] - Format converter processors (avro/protobuf/toml/markdown) not implemented in RouteBuilder — S30 carryover; to_spec() round-trip blocked
+XFAIL tests/unit/dsl/round_trip/test_format_converters.py::test_format_converter_round_trip[protobuf_decode-kwargs4] - Format converter processors (avro/protobuf/toml/markdown) not implemented in RouteBuilder — S30 carryover; to_spec() round-trip blocked
+XFAIL tests/unit/dsl/round_trip/test_format_converters.py::test_format_converter_round_trip[toml_encode-kwargs5] - Format converter processors (avro/protobuf/toml/markdown) not implemented in RouteBuilder — S30 carryover; to_spec() round-trip blocked
+XFAIL tests/unit/dsl/round_trip/test_format_converters.py::test_format_converter_round_trip[toml_decode-kwargs6] - Format converter processors (avro/protobuf/toml/markdown) not implemented in RouteBuilder — S30 carryover; to_spec() round-trip blocked
+XFAIL tests/unit/dsl/round_trip/test_format_converters.py::test_format_converter_round_trip[markdown_to_html-kwargs7] - Format converter processors (avro/protobuf/toml/markdown) not implemented in RouteBuilder — S30 carryover; to_spec() round-trip blocked
+XFAIL tests/unit/dsl/round_trip/test_format_converters.py::test_format_converter_round_trip[markdown_to_html-kwargs8] - Format converter processors (avro/protobuf/toml/markdown) not implemented in RouteBuilder — S30 carryover; to_spec() round-trip blocked
+XFAIL tests/unit/dsl/round_trip/test_format_converters.py::test_format_converter_round_trip[html_to_markdown-kwargs9] - Format converter processors (avro/protobuf/toml/markdown) not implemented in RouteBuilder — S30 carryover; to_spec() round-trip blocked
+XFAIL tests/unit/dsl/round_trip/test_format_converters.py::test_format_converter_round_trip[jsonl_encode-kwargs10] - Format converter processors (avro/protobuf/toml/markdown) not implemented in RouteBuilder — S30 carryover; to_spec() round-trip blocked
+XFAIL tests/unit/dsl/round_trip/test_format_converters.py::test_format_converter_round_trip[jsonl_decode-kwargs11] - Format converter processors (avro/protobuf/toml/markdown) not implemented in RouteBuilder — S30 carryover; to_spec() round-trip blocked
+XFAIL tests/unit/dsl/round_trip/test_format_converters.py::test_format_converter_round_trip[jsonl_decode-kwargs12] - Format converter processors (avro/protobuf/toml/markdown) not implemented in RouteBuilder — S30 carryover; to_spec() round-trip blocked
+XFAIL tests/unit/dsl/round_trip/test_format_converters.py::test_format_converters_full_pipeline - Format converter processors (avro/protobuf/toml/markdown) not implemented in RouteBuilder — S30 carryover; to_spec() round-trip blocked
+XFAIL tests/unit/dsl/round_trip/test_pilot_batch_s5_round_trip.py::test_pilot_batch_s5_round_trip[webhook_verify-kwargs0] - S5 pilot processors (webhook_verify/jsonpath/convert_units/parse_ics) not fully implemented — to_spec() missing, round-trip blocked; S30 carryover
+XFAIL tests/unit/dsl/round_trip/test_pilot_batch_s5_round_trip.py::test_pilot_batch_s5_round_trip[webhook_verify-kwargs1] - S5 pilot processors (webhook_verify/jsonpath/convert_units/parse_ics) not fully implemented — to_spec() missing, round-trip blocked; S30 carryover
+XFAIL tests/unit/dsl/round_trip/test_pilot_batch_s5_round_trip.py::test_pilot_batch_s5_round_trip[webhook_verify-kwargs2] - S5 pilot processors (webhook_verify/jsonpath/convert_units/parse_ics) not fully implemented — to_spec() missing, round-trip blocked; S30 carryover
+XFAIL tests/unit/dsl/round_trip/test_pilot_batch_s5_round_trip.py::test_pilot_batch_s5_round_trip[jsonpath-kwargs3] - S5 pilot processors (webhook_verify/jsonpath/convert_units/parse_ics) not fully implemented — to_spec() missing, round-trip blocked; S30 carryover
+XFAIL tests/unit/dsl/round_trip/test_pilot_batch_s5_round_trip.py::test_pilot_batch_s5_round_trip[jsonpath-kwargs4] - S5 pilot processors (webhook_verify/jsonpath/convert_units/parse_ics) not fully implemented — to_spec() missing, round-trip blocked; S30 carryover
+XFAIL tests/unit/dsl/round_trip/test_pilot_batch_s5_round_trip.py::test_pilot_batch_s5_round_trip[jsonpath-kwargs5] - S5 pilot processors (webhook_verify/jsonpath/convert_units/parse_ics) not fully implemented — to_spec() missing, round-trip blocked; S30 carryover
+XFAIL tests/unit/dsl/round_trip/test_pilot_batch_s5_round_trip.py::test_pilot_batch_s5_round_trip[jsonpath-kwargs6] - S5 pilot processors (webhook_verify/jsonpath/convert_units/parse_ics) not fully implemented — to_spec() missing, round-trip blocked; S30 carryover
+XFAIL tests/unit/dsl/round_trip/test_pilot_batch_s5_round_trip.py::test_pilot_batch_s5_round_trip[convert_units-kwargs7] - S5 pilot processors (webhook_verify/jsonpath/convert_units/parse_ics) not fully implemented — to_spec() missing, round-trip blocked; S30 carryover
+XFAIL tests/unit/dsl/round_trip/test_pilot_batch_s5_round_trip.py::test_pilot_batch_s5_round_trip[convert_units-kwargs8] - S5 pilot processors (webhook_verify/jsonpath/convert_units/parse_ics) not fully implemented — to_spec() missing, round-trip blocked; S30 carryover
+XFAIL tests/unit/dsl/round_trip/test_pilot_batch_s5_round_trip.py::test_pilot_batch_s5_round_trip[parse_ics-kwargs9] - S5 pilot processors (webhook_verify/jsonpath/convert_units/parse_ics) not fully implemented — to_spec() missing, round-trip blocked; S30 carryover
+XFAIL tests/unit/dsl/round_trip/test_pilot_batch_s5_round_trip.py::test_pilot_batch_s5_round_trip[parse_ics-kwargs10] - S5 pilot processors (webhook_verify/jsonpath/convert_units/parse_ics) not fully implemented — to_spec() missing, round-trip blocked; S30 carryover
+XFAIL tests/unit/dsl/round_trip/test_pilot_batch_s5_round_trip.py::test_pilot_batch_s5_round_trip[parse_ics-kwargs11] - S5 pilot processors (webhook_verify/jsonpath/convert_units/parse_ics) not fully implemented — to_spec() missing, round-trip blocked; S30 carryover
+XFAIL tests/unit/dsl/round_trip/test_pilot_batch_s5_round_trip.py::test_pilot_batch_s5_full_chain - S5 pilot processors (webhook_verify/jsonpath/convert_units/parse_ics) not fully implemented — to_spec() missing, round-trip blocked; S30 carryover
+XPASS tests/unit/dsl/round_trip/test_banking_ai.py::test_w29_ai_banking_pipeline_full_chain - W29 banking pipeline: KycAmlVerifyProcessor et al. have broken to_spec() — pipeline.to_dict() drops processors without proper to_spec(); S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[jwt_sign-kwargs4] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[jwt_sign-kwargs5] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[jwt_verify-kwargs6] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[jwt_verify-kwargs7] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[compress-kwargs8] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[compress-kwargs9] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[decompress-kwargs10] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[decompress-kwargs11] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[webhook_sign-kwargs12] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[webhook_sign-kwargs13] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[deadline-kwargs14] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[deadline-kwargs15] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[deadline-kwargs16] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[tenant_scope-kwargs17] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[tenant_scope-kwargs18] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[tenant_scope-kwargs19] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[cost_tracker-kwargs20] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[outbox-kwargs21] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[outbox-kwargs22] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[mask-kwargs23] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[mask-kwargs24] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[mask-kwargs25] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[compliance_labels-kwargs26] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+XPASS tests/unit/dsl/round_trip/test_enrichment_business.py::test_w28_processor_round_trip[compliance_labels-kwargs27] - W28 processors: geoip method missing (RouteBuilder has no geoip), other processors have incomplete to_spec() — S30 carryover
+FAILED tests/unit/dsl/engine/processors/agent_dsl/test_agent_parallel.py::test_fan_out_collects_results_by_key
+FAILED tests/unit/dsl/engine/processors/agent_dsl/test_agent_parallel.py::test_continue_on_error_captures_failure
+FAILED tests/unit/dsl/engine/processors/agent_dsl/test_agent_run.py::test_happy_path_writes_agent_result
+FAILED tests/unit/dsl/engine/processors/agent_dsl/test_agent_run.py::test_extract_context_body_path
+FAILED tests/unit/dsl/engine/processors/agent_dsl/test_agent_run.py::test_extract_context_property_path
+FAILED tests/unit/dsl/engine/processors/eip/test_transformation.py::test_translate_dict_to_csv
+FAILED tests/unit/dsl/engine/processors/eip/test_transformation.py::test_translate_csv_to_dict
+FAILED tests/unit/dsl/engine/processors/test_control_flow.py::test_retry_success_first_attempt
+FAILED tests/unit/dsl/engine/processors/test_control_flow.py::test_retry_eventually_succeeds
+FAILED tests/unit/dsl/engine/processors/test_control_flow.py::test_retry_all_attempts_fail
+FAILED tests/unit/dsl/engine/processors/test_control_flow.py::test_retry_exponential_backoff
+FAILED tests/unit/dsl/engine/processors/test_converters.py::TestConversionStrategies::test_dict_to_csv
+FAILED tests/unit/dsl/engine/processors/test_converters.py::TestConversionStrategies::test_dict_to_csv_single_dict
+FAILED tests/unit/dsl/engine/processors/test_converters.py::TestConversionStrategies::test_csv_to_dict
+FAILED tests/unit/dsl/engine/processors/test_converters.py::TestConversionStrategies::test_csv_to_dict_single_line
+FAILED tests/unit/dsl/engine/processors/test_converters.py::TestConvertProcessorProcess::test_convert_dict_to_csv
+FAILED tests/unit/dsl/engine/processors/test_converters.py::TestConvertProcessorProcess::test_convert_csv_to_dict
+FAILED tests/unit/dsl/engine/processors/test_llmcall_processor.py::TestLLMCallProcessor::test_gateway_enforce_uses_aigateway
+FAILED tests/unit/dsl/engine/processors/test_wait_for_deadline_focused.py::TestAgentRunDeadline::test_no_deadline_no_gateway_fails
+FAILED tests/unit/dsl/test_action_metadata_contract.py::TestRegisteredActionMetadata::test_registry_is_not_empty
+20 failed, 5213 passed, 51 skipped, 14914 deselected, 32 xfailed, 25 xpassed, 71 warnings in 117.91s (0:01:57)
