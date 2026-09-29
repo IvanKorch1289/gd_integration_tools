@@ -111,7 +111,10 @@ def main(argv: list[str] | None = None) -> int:
         return asyncio.run(_run(args.host, args.history_out))
     except OSError as exc:
         # ENV_FAILURE: сервер не поднят — не смешивать с code failure (W1).
-        print(f"ENV_FAILURE: temporal server unreachable at {args.host}: {exc}", file=sys.stderr)
+        print(
+            f"ENV_FAILURE: temporal server unreachable at {args.host}: {exc}",
+            file=sys.stderr,
+        )
         return 2
 
 
