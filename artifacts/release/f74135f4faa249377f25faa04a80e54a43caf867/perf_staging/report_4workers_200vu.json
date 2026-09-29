@@ -1,0 +1,26 @@
+{
+  "timestamp": 1790700535,
+  "scenario": "tests/perf/locust_baseline.py",
+  "metrics": {
+    "rps": 659.8715221592447,
+    "p50_ms": 150.0,
+    "p95_ms": 310.0,
+    "p99_ms": 510.0,
+    "fail_rate": 0.0,
+    "total_requests": 39439
+  },
+  "thresholds": {
+    "mode": "args",
+    "rps_floor": 1000.0,
+    "p95_max_ms": 200.0,
+    "p99_max_ms": 500.0
+  },
+  "passed": false,
+  "violations": [
+    "RPS 659.9 < floor 1000.0",
+    "p95 310.0ms > max 200.0ms",
+    "p99 510.0ms > max 500.0ms"
+  ],
+  "strict": true,
+  "feature_flag": "perf_gate_strict"
+}

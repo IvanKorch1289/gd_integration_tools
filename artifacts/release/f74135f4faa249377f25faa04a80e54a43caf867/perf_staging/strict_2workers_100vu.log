@@ -1,0 +1,7 @@
+[32muv virtual environment detected[0m
+[34mRunning BLOCKING python perf-gate against baseline tests/perf/baseline.json...[0m
+ starting locust (100 users, 60s)...
+ report → dist/perf-report.json
+ FAIL (strict) — violations: ['RPS 582.0 < floor 1000.0']
+make: *** [make/k5.mk:56: perf-gate-py-strict] Ошибка 1
+STRICT_EXIT=2

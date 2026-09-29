@@ -1,0 +1,898 @@
+Starting backend (server=granian)...
+{'event': 'Vault недоступен (HTTPConnectionPool(host=\'127.0.0.1\', port=8200): Max retries exceeded with url: /v1/auth/token/lookup-self (Caused by NewConnectionError("HTTPConnection(host=\'127.0.0.1\', port=8200): Failed to establish a new connection: [Errno 111] Connection refused"))) — secrets-источник пропущен. Установите vault.enabled=false или поднимите Vault, чтобы убрать это сообщение.', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'src.backend.core.config.config_loader', 'level': 'warning', 'timestamp': '2026-09-29T16:19:51.477015Z'}
+{'event': 'dsl.engine.processors.web is DEPRECATED since 2026-08-27 (P4-A cycle 21). Используйте rpa_browser (Playwright) для navigate/click/extract/screenshot. FillFormProcessor/RunScenarioProcessor остаются — миграция в Sprint 180+.', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'dsl.legacy.web', 'level': 'warning', 'timestamp': '2026-09-29T16:19:53.343272Z'}
+D-AUDIT-20810 _mount_mcp_http ENTRY
+D-AUDIT-20810 mcp_settings: http_enabled=False, bind_path=/mcp
+D-AUDIT-20810 mount skipped: http_enabled=False
+{'event': 'graypy не установлен — Graylog-обработчик отключён (установите: pip install graypy для активации)', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'src.backend.infrastructure.clients.external.logger', 'level': 'warning', 'timestamp': '2026-09-29T16:19:55.806666Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/code_interpreter_loop.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:19:55.820315Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/credit_assessment.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:19:55.820540Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/multi_agent_supervisor.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:19:55.820676Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/rag_augmented_saga.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:19:55.820802Z'}
+[INFO] Starting granian (main PID: 850949)
+[INFO] Listening at: http://0.0.0.0:8081
+[INFO] Spawning worker-1 with PID: 851013
+[INFO] Spawning worker-2 with PID: 851015
+{'event': 'Vault недоступен (HTTPConnectionPool(host=\'127.0.0.1\', port=8200): Max retries exceeded with url: /v1/auth/token/lookup-self (Caused by NewConnectionError("HTTPConnection(host=\'127.0.0.1\', port=8200): Failed to establish a new connection: [Errno 111] Connection refused"))) — secrets-источник пропущен. Установите vault.enabled=false или поднимите Vault, чтобы убрать это сообщение.', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'src.backend.core.config.config_loader', 'level': 'warning', 'timestamp': '2026-09-29T16:19:56.315399Z'}
+{'event': 'Vault недоступен (HTTPConnectionPool(host=\'127.0.0.1\', port=8200): Max retries exceeded with url: /v1/auth/token/lookup-self (Caused by NewConnectionError("HTTPConnection(host=\'127.0.0.1\', port=8200): Failed to establish a new connection: [Errno 111] Connection refused"))) — secrets-источник пропущен. Установите vault.enabled=false или поднимите Vault, чтобы убрать это сообщение.', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'src.backend.core.config.config_loader', 'level': 'warning', 'timestamp': '2026-09-29T16:19:56.335360Z'}
+{'event': 'dsl.engine.processors.web is DEPRECATED since 2026-08-27 (P4-A cycle 21). Используйте rpa_browser (Playwright) для navigate/click/extract/screenshot. FillFormProcessor/RunScenarioProcessor остаются — миграция в Sprint 180+.', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'dsl.legacy.web', 'level': 'warning', 'timestamp': '2026-09-29T16:19:58.391971Z'}
+{'event': 'dsl.engine.processors.web is DEPRECATED since 2026-08-27 (P4-A cycle 21). Используйте rpa_browser (Playwright) для navigate/click/extract/screenshot. FillFormProcessor/RunScenarioProcessor остаются — миграция в Sprint 180+.', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'dsl.legacy.web', 'level': 'warning', 'timestamp': '2026-09-29T16:19:58.452267Z'}
+D-AUDIT-20810 _mount_mcp_http ENTRY
+D-AUDIT-20810 _mount_mcp_http ENTRY
+D-AUDIT-20810 mcp_settings: http_enabled=False, bind_path=/mcp
+D-AUDIT-20810 mount skipped: http_enabled=False
+D-AUDIT-20810 mcp_settings: http_enabled=False, bind_path=/mcp
+D-AUDIT-20810 mount skipped: http_enabled=False
+{'event': 'graypy не установлен — Graylog-обработчик отключён (установите: pip install graypy для активации)', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'src.backend.infrastructure.clients.external.logger', 'level': 'warning', 'timestamp': '2026-09-29T16:20:01.479679Z'}
+{'event': 'graypy не установлен — Graylog-обработчик отключён (установите: pip install graypy для активации)', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'src.backend.infrastructure.clients.external.logger', 'level': 'warning', 'timestamp': '2026-09-29T16:20:01.481943Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/code_interpreter_loop.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:01.496946Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/credit_assessment.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:01.497255Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/multi_agent_supervisor.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:01.497464Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/rag_augmented_saga.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:01.497663Z'}
+{'event': 'set_app_ref вызван повторно без reset_app_state — предыдущая ссылка перезаписывается. Это может привести к flaky-тестам, если декораторные кэши не очищены.', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'src.backend.core.di.app_state', 'level': 'warning', 'timestamp': '2026-09-29T16:20:01.499709Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/code_interpreter_loop.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:01.500786Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/credit_assessment.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:01.501071Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/multi_agent_supervisor.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:01.501292Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/rag_augmented_saga.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:01.501480Z'}
+{'event': 'set_app_ref вызван повторно без reset_app_state — предыдущая ссылка перезаписывается. Это может привести к flaky-тестам, если декораторные кэши не очищены.', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'src.backend.core.di.app_state', 'level': 'warning', 'timestamp': '2026-09-29T16:20:01.503448Z'}
+D-AUDIT-20810 _mount_mcp_http ENTRY
+D-AUDIT-20810 mcp_settings: http_enabled=False, bind_path=/mcp
+D-AUDIT-20810 mount skipped: http_enabled=False
+D-AUDIT-20810 _mount_mcp_http ENTRY
+D-AUDIT-20810 mcp_settings: http_enabled=False, bind_path=/mcp
+D-AUDIT-20810 mount skipped: http_enabled=False
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/code_interpreter_loop.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:01.646930Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/credit_assessment.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:01.647166Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/multi_agent_supervisor.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:01.647362Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/rag_augmented_saga.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:01.647553Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/code_interpreter_loop.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:01.650958Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/credit_assessment.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:01.651166Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/multi_agent_supervisor.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:01.651307Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/rag_augmented_saga.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:01.651432Z'}
+{'event': 'AgentMemory: ensure_indexes failed: MongoDBClient not started', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'src.backend.services.ai.agent_memory', 'level': 'warning', 'timestamp': '2026-09-29T16:20:02.203684Z'}
+{'event': 'MongoConnectorConfigStore: ensure_indexes failed: MongoDBClient not started', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'src.backend.infrastructure.repositories.connector_configs_mongo', 'level': 'warning', 'timestamp': '2026-09-29T16:20:02.204309Z'}
+{'event': 'MongoExpressDialogStore: ensure_indexes failed: MongoDBClient not started', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'src.backend.infrastructure.repositories.express_dialogs_mongo', 'level': 'warning', 'timestamp': '2026-09-29T16:20:02.205448Z'}
+{'event': 'MongoExpressSessionStore: ensure_indexes failed: MongoDBClient not started', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'src.backend.infrastructure.repositories.express_sessions_mongo', 'level': 'warning', 'timestamp': '2026-09-29T16:20:02.205641Z'}
+{'event': 'AgentMemory: ensure_indexes failed: MongoDBClient not started', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'src.backend.services.ai.agent_memory', 'level': 'warning', 'timestamp': '2026-09-29T16:20:02.233605Z'}
+{'event': 'MongoConnectorConfigStore: ensure_indexes failed: MongoDBClient not started', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'src.backend.infrastructure.repositories.connector_configs_mongo', 'level': 'warning', 'timestamp': '2026-09-29T16:20:02.234177Z'}
+{'event': 'MongoExpressDialogStore: ensure_indexes failed: MongoDBClient not started', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'src.backend.infrastructure.repositories.express_dialogs_mongo', 'level': 'warning', 'timestamp': '2026-09-29T16:20:02.234862Z'}
+{'event': 'MongoExpressSessionStore: ensure_indexes failed: MongoDBClient not started', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'src.backend.infrastructure.repositories.express_sessions_mongo', 'level': 'warning', 'timestamp': '2026-09-29T16:20:02.235056Z'}
+{'event': 'ensure_indices: ES недоступен (Connection error caused by: ConnectionError(Connection error caused by: ConnectError(All connection attempts failed)))', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'src.backend.infrastructure.clients.storage.elasticsearch', 'level': 'warning', 'timestamp': '2026-09-29T16:20:02.372312Z'}
+{'event': 'ensure_indices: ES недоступен (Connection error caused by: ConnectionError(Connection error caused by: ConnectError(All connection attempts failed)))', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'src.backend.infrastructure.clients.storage.elasticsearch', 'level': 'warning', 'timestamp': '2026-09-29T16:20:02.374984Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/code_interpreter_loop.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:02.426125Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/credit_assessment.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:02.426344Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/multi_agent_supervisor.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:02.426484Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/rag_augmented_saga.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:02.426613Z'}
+{'extra': {'replica_id': '47da911d073c4e50'}, 'event': "feature_flag.broadcast.start_failed: 'coroutine' object has no attribute 'subscribe'", 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'core.feature_flags.redis_broadcaster', 'level': 'warning', 'timestamp': '2026-09-29T16:20:02.428096Z'}
+/home/user/dev/gd_integration_tools/src/backend/plugins/composition/lifecycle/startup_phases/services.py:230: RuntimeWarning: coroutine 'RedisClient.pubsub' was never awaited
+  broadcaster = await maybe_start_broadcaster(
+RuntimeWarning: Enable tracemalloc to get the object allocation traceback
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/code_interpreter_loop.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:02.431235Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/credit_assessment.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:02.431489Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/multi_agent_supervisor.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:02.431668Z'}
+{'event': 'workflow.auto_register FAIL: extensions/credit_pipeline/workflows/rag_augmented_saga.workflow.yaml (FeatureDisabledError: Feature workflow_yaml_round_trip disabled. Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.)', 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'workflow.setup', 'level': 'warning', 'timestamp': '2026-09-29T16:20:02.431852Z'}
+{'extra': {'replica_id': '<phone>c'}, 'event': "feature_flag.broadcast.start_failed: 'coroutine' object has no attribute 'subscribe'", 'hostname': 'URAS-92727', 'environment': 'production', 'logger': 'core.feature_flags.redis_broadcaster', 'level': 'warning', 'timestamp': '2026-09-29T16:20:02.433839Z'}
+/home/user/dev/gd_integration_tools/src/backend/plugins/composition/lifecycle/startup_phases/services.py:230: RuntimeWarning: coroutine 'RedisClient.pubsub' was never awaited
+  broadcaster = await maybe_start_broadcaster(
+RuntimeWarning: Enable tracemalloc to get the object allocation traceback
+error when creating transport: <AMQPConnectionError: (111, 'Connection refused')>
+error when creating transport: <AMQPConnectionError: (111, 'Connection refused')>
+[ERROR] Traceback (most recent call last):
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/connection.py", line 326, in create
+    return await asyncio.open_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        host=url.host, port=url.port, ssl=None, **kwargs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/asyncio/streams.py", line 48, in open_connection
+    transport, _ = await loop.create_connection(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        lambda: protocol, host, port, **kwds)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 2043, in create_connection
+  File "uvloop/loop.pyx", line 2020, in uvloop.loop.Loop.create_connection
+ConnectionRefusedError: [Errno 111] Connection refused
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette/routing.py", line 648, in lifespan
+    async with self.lifespan_context(app) as maybe_state:
+               ~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 241, in merged_lifespan
+    async with nested_context(app) as maybe_nested_state:
+               ~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/faststream/_internal/fastapi/router.py", line 298, in start_broker_lifespan
+    await self._start_broker()
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/faststream/_internal/application.py", line 96, in _start_broker
+    await b.start()
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/faststream/rabbit/broker/broker.py", line 277, in start
+    await self.connect()
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/faststream/_internal/broker/broker.py", line 111, in connect
+    self._connection = await self._connect()
+                       ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/faststream/rabbit/broker/broker.py", line 246, in _connect
+    await connect_robust(**self._connection_kwargs),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/robust_connection.py", line 377, in connect_robust
+    await connection.connect(timeout=timeout)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/robust_connection.py", line 218, in connect
+    await self.__fail_fast_future
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/robust_connection.py", line 155, in __connection_factory
+    await Connection.connect(self, self.__connect_timeout)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/connection.py", line 146, in connect
+    self.transport = await UnderlayConnection.connect(
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/abc.py", line 731, in connect
+    connection = await cls.make_connection(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/abc.py", line 715, in make_connection
+    connection: aiormq.abc.AbstractConnection = await asyncio.wait_for(
+                                                ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/asyncio/tasks.py", line 488, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/connection.py", line 1014, in connect
+    await connection.connect(client_properties or {})
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/base.py", line 164, in wrap
+    return await self.create_task(func(self, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/abc.py", line 44, in __inner
+    return await self.task
+           ^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/connection.py", line 551, in connect
+    raise e
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/connection.py", line 540, in connect
+    reader, writer = await self._transport_factory.create(
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+    )
+    ^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/connection.py", line 330, in create
+    raise AMQPConnectionError(*e.args) from e
+aiormq.exceptions.AMQPConnectionError: [Errno 111] Connection refused
+
+[ERROR] ASGI lifespan startup failed
+Traceback (most recent call last):
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/connection.py", line 326, in create
+    return await asyncio.open_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        host=url.host, port=url.port, ssl=None, **kwargs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/asyncio/streams.py", line 48, in open_connection
+    transport, _ = await loop.create_connection(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        lambda: protocol, host, port, **kwds)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 2043, in create_connection
+  File "uvloop/loop.pyx", line 2020, in uvloop.loop.Loop.create_connection
+ConnectionRefusedError: [Errno 111] Connection refused
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/granian/asgi.py", line 26, in handle
+    await self.callable(
+    ...<3 lines>...
+    )
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette/applications.py", line 96, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette/middleware/errors.py", line 151, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/infrastructure/application/monitoring.py", line 69, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/graceful_shutdown.py", line 63, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/security_headers.py", line 135, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette_exporter/middleware.py", line 369, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/otel_middleware.py", line 107, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/request_log.py", line 68, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/audit_replay.py", line 81, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/audit_log.py", line 59, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/csrf.py", line 98, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/rpa_policy.py", line 81, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/pii_masking_response.py", line 83, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/webhook_signature.py", line 142, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/ws_rate_limit.py", line 35, in __call__
+    await self._app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/login_step_up.py", line 240, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/ai_tool_whitelist.py", line 71, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/auth_required.py", line 143, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/auth_method_header.py", line 67, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/data_masking.py", line 123, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/gzip_compression_excluding.py", line 54, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/response_cache.py", line 68, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/timeout.py", line 93, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/request_body_cache.py", line 101, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/degradation.py", line 109, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/idempotency_header_middleware/middleware.py", line 42, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/tenant_resource_isolation.py", line 186, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/request_context.py", line 127, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/tenant.py", line 68, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/asgi_correlation_id/middleware.py", line 60, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/request_id.py", line 61, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/circuit_breaker.py", line 349, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/api_key.py", line 68, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/admin_ip.py", line 68, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/blocked_routes.py", line 70, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette/middleware/trustedhost.py", line 36, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette/middleware/cors.py", line 80, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/global_ratelimit.py", line 403, in __call__
+    await self._app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/exception_handler.py", line 67, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette/middleware/exceptions.py", line 49, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette/routing.py", line 670, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 2726, in app
+    await self.lifespan(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette/routing.py", line 648, in lifespan
+    async with self.lifespan_context(app) as maybe_state:
+               ~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 241, in merged_lifespan
+    async with nested_context(app) as maybe_nested_state:
+               ~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/faststream/_internal/fastapi/router.py", line 298, in start_broker_lifespan
+    await self._start_broker()
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/faststream/_internal/application.py", line 96, in _start_broker
+    await b.start()
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/faststream/rabbit/broker/broker.py", line 277, in start
+    await self.connect()
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/faststream/_internal/broker/broker.py", line 111, in connect
+    self._connection = await self._connect()
+                       ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/faststream/rabbit/broker/broker.py", line 246, in _connect
+    await connect_robust(**self._connection_kwargs),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/robust_connection.py", line 377, in connect_robust
+    await connection.connect(timeout=timeout)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/robust_connection.py", line 218, in connect
+    await self.__fail_fast_future
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/robust_connection.py", line 155, in __connection_factory
+    await Connection.connect(self, self.__connect_timeout)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/connection.py", line 146, in connect
+    self.transport = await UnderlayConnection.connect(
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/abc.py", line 731, in connect
+    connection = await cls.make_connection(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/abc.py", line 715, in make_connection
+    connection: aiormq.abc.AbstractConnection = await asyncio.wait_for(
+                                                ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/asyncio/tasks.py", line 488, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/connection.py", line 1014, in connect
+    await connection.connect(client_properties or {})
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/base.py", line 164, in wrap
+    return await self.create_task(func(self, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/abc.py", line 44, in __inner
+    return await self.task
+           ^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/connection.py", line 551, in connect
+    raise e
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/connection.py", line 540, in connect
+    reader, writer = await self._transport_factory.create(
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+    )
+    ^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/connection.py", line 330, in create
+    raise AMQPConnectionError(*e.args) from e
+aiormq.exceptions.AMQPConnectionError: [Errno 111] Connection refused
+[ERROR] Traceback (most recent call last):
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/connection.py", line 326, in create
+    return await asyncio.open_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        host=url.host, port=url.port, ssl=None, **kwargs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/asyncio/streams.py", line 48, in open_connection
+    transport, _ = await loop.create_connection(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        lambda: protocol, host, port, **kwds)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 2043, in create_connection
+  File "uvloop/loop.pyx", line 2020, in uvloop.loop.Loop.create_connection
+ConnectionRefusedError: [Errno 111] Connection refused
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette/routing.py", line 648, in lifespan
+    async with self.lifespan_context(app) as maybe_state:
+               ~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 241, in merged_lifespan
+    async with nested_context(app) as maybe_nested_state:
+               ~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/faststream/_internal/fastapi/router.py", line 298, in start_broker_lifespan
+    await self._start_broker()
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/faststream/_internal/application.py", line 96, in _start_broker
+    await b.start()
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/faststream/rabbit/broker/broker.py", line 277, in start
+    await self.connect()
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/faststream/_internal/broker/broker.py", line 111, in connect
+    self._connection = await self._connect()
+                       ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/faststream/rabbit/broker/broker.py", line 246, in _connect
+    await connect_robust(**self._connection_kwargs),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/robust_connection.py", line 377, in connect_robust
+    await connection.connect(timeout=timeout)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/robust_connection.py", line 218, in connect
+    await self.__fail_fast_future
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/robust_connection.py", line 155, in __connection_factory
+    await Connection.connect(self, self.__connect_timeout)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/connection.py", line 146, in connect
+    self.transport = await UnderlayConnection.connect(
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/abc.py", line 731, in connect
+    connection = await cls.make_connection(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/abc.py", line 715, in make_connection
+    connection: aiormq.abc.AbstractConnection = await asyncio.wait_for(
+                                                ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/asyncio/tasks.py", line 488, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/connection.py", line 1014, in connect
+    await connection.connect(client_properties or {})
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/base.py", line 164, in wrap
+    return await self.create_task(func(self, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/abc.py", line 44, in __inner
+    return await self.task
+           ^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/connection.py", line 551, in connect
+    raise e
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/connection.py", line 540, in connect
+    reader, writer = await self._transport_factory.create(
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+    )
+    ^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/connection.py", line 330, in create
+    raise AMQPConnectionError(*e.args) from e
+aiormq.exceptions.AMQPConnectionError: [Errno 111] Connection refused
+
+[ERROR] ASGI lifespan startup failed
+Traceback (most recent call last):
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/connection.py", line 326, in create
+    return await asyncio.open_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        host=url.host, port=url.port, ssl=None, **kwargs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/asyncio/streams.py", line 48, in open_connection
+    transport, _ = await loop.create_connection(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        lambda: protocol, host, port, **kwds)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 2043, in create_connection
+  File "uvloop/loop.pyx", line 2020, in uvloop.loop.Loop.create_connection
+ConnectionRefusedError: [Errno 111] Connection refused
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/granian/asgi.py", line 26, in handle
+    await self.callable(
+    ...<3 lines>...
+    )
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette/applications.py", line 96, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette/middleware/errors.py", line 151, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/infrastructure/application/monitoring.py", line 69, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/graceful_shutdown.py", line 63, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/security_headers.py", line 135, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette_exporter/middleware.py", line 369, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/otel_middleware.py", line 107, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/request_log.py", line 68, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/audit_replay.py", line 81, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/audit_log.py", line 59, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/csrf.py", line 98, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/rpa_policy.py", line 81, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/pii_masking_response.py", line 83, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/webhook_signature.py", line 142, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/ws_rate_limit.py", line 35, in __call__
+    await self._app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/login_step_up.py", line 240, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/ai_tool_whitelist.py", line 71, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/auth_required.py", line 143, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/auth_method_header.py", line 67, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/data_masking.py", line 123, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/gzip_compression_excluding.py", line 54, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/response_cache.py", line 68, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/timeout.py", line 93, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/request_body_cache.py", line 101, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/degradation.py", line 109, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/idempotency_header_middleware/middleware.py", line 42, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/tenant_resource_isolation.py", line 186, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/request_context.py", line 127, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/tenant.py", line 68, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/asgi_correlation_id/middleware.py", line 60, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/request_id.py", line 61, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/circuit_breaker.py", line 349, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/api_key.py", line 68, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/admin_ip.py", line 68, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/blocked_routes.py", line 70, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette/middleware/trustedhost.py", line 36, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette/middleware/cors.py", line 80, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/global_ratelimit.py", line 403, in __call__
+    await self._app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/exception_handler.py", line 67, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette/middleware/exceptions.py", line 49, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette/routing.py", line 670, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 2726, in app
+    await self.lifespan(scope, receive, send)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/starlette/routing.py", line 648, in lifespan
+    async with self.lifespan_context(app) as maybe_state:
+               ~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 240, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 241, in merged_lifespan
+    async with nested_context(app) as maybe_nested_state:
+               ~~~~~~~~~~~~~~^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/faststream/_internal/fastapi/router.py", line 298, in start_broker_lifespan
+    await self._start_broker()
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/faststream/_internal/application.py", line 96, in _start_broker
+    await b.start()
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/faststream/rabbit/broker/broker.py", line 277, in start
+    await self.connect()
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/faststream/_internal/broker/broker.py", line 111, in connect
+    self._connection = await self._connect()
+                       ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/faststream/rabbit/broker/broker.py", line 246, in _connect
+    await connect_robust(**self._connection_kwargs),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/robust_connection.py", line 377, in connect_robust
+    await connection.connect(timeout=timeout)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/robust_connection.py", line 218, in connect
+    await self.__fail_fast_future
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/robust_connection.py", line 155, in __connection_factory
+    await Connection.connect(self, self.__connect_timeout)
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/connection.py", line 146, in connect
+    self.transport = await UnderlayConnection.connect(
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/abc.py", line 731, in connect
+    connection = await cls.make_connection(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aio_pika/abc.py", line 715, in make_connection
+    connection: aiormq.abc.AbstractConnection = await asyncio.wait_for(
+                                                ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "/home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/asyncio/tasks.py", line 488, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/connection.py", line 1014, in connect
+    await connection.connect(client_properties or {})
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/base.py", line 164, in wrap
+    return await self.create_task(func(self, *args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/abc.py", line 44, in __inner
+    return await self.task
+           ^^^^^^^^^^^^^^^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/connection.py", line 551, in connect
+    raise e
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/connection.py", line 540, in connect
+    reader, writer = await self._transport_factory.create(
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+    )
+    ^
+  File "/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/aiormq/connection.py", line 330, in create
+    raise AMQPConnectionError(*e.args) from e
+aiormq.exceptions.AMQPConnectionError: [Errno 111] Connection refused
+[ERROR] Unexpected exit from worker-2
+[INFO] Shutting down granian
+[INFO] Stopped worker-1
+[INFO] Stopped worker-2
+[INFO] Granian shutdown completed, see ya!

@@ -1,0 +1,53 @@
+{
+  "audit": "DoD-19/22: staging-профиль поднят локально (end-to-end), блокирующие замеры выполнены",
+  "head": "f74135f4faa249377f25faa04a80e54a43caf867",
+  "boot_chain_fixed_sequentially": [
+    "1. streams/queues отсутствовали в staging.yml (c8cca810f-эра)",
+    "2. hosts-алиасы staging-хостов",
+    "3. ProductionConfigValidator: waf.strict/admin_ips/features (24693c41b)",
+    "4. psycopg2 connect_args (24693c41b)",
+    "5. REDIS_USE_SSL=false: TLS-handshake к не-TLS redis съедал fail_after(3.0) faststream-подписчика",
+    "6. QUEUE_USERNAME/PASSWORD=guest (staging.yml не задаёт креды)",
+    "7. SEC_ALLOWED_HOSTS + Host-заголовок (WAF allowed_hosts *.staging.local)"
+  ],
+  "measurements_multiworker_granian_staging": [
+    {
+      "workers": 2,
+      "vu": 100,
+      "rps": 582.0,
+      "p95": 100,
+      "p99": 280,
+      "fail": 0.0,
+      "violations": [
+        "rps<1000"
+      ]
+    },
+    {
+      "workers": 4,
+      "vu": 100,
+      "rps": 598.8,
+      "p95": 96,
+      "p99": 140,
+      "fail": 0.0,
+      "violations": [
+        "rps<1000"
+      ]
+    },
+    {
+      "workers": 4,
+      "vu": 200,
+      "rps": 659.9,
+      "p95": 310,
+      "p99": 510,
+      "fail": 0.0,
+      "violations": [
+        "rps<1000",
+        "p95>200",
+        "p99>500"
+      ]
+    }
+  ],
+  "conclusion": "Потолок dev-box ~660 RPS (не масштабируется воркерами — узкое место машина/генератор). Порог S6 (1000 RPS sustained, p95<200) требует staging-стенда. Латенции при 100 VU отличные (p95 96-100ms, p99 140-280ms), fail_rate 0.0 во всех замерах",
+  "dod_19_22": "PARTIAL подтверждён с максимально строгой evidence; приложение теперь МОЖЕТ быть замерено владельцем на staging-стенде той же командой (boot-цепочка задокументирована)",
+  "app_left_running": "нет — granian остановлен после замеров (см. git status чистоту)"
+}
