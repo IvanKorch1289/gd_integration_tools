@@ -74,11 +74,13 @@ wrong; an incomplete environment is never reported as `PASS`.
 | Architecture layers (backend) | PASS with debt | `check_layers.py`: **0 new**, 22 legacy |
 | Architecture layers (frontend) | **FAIL** | 12–13 Streamlit pages imported `src.backend.services`; 6 fixed in `f681c4ed7`, remainder open. `make check_layers` does **not** cover the frontend |
 | Privacy lifecycle gate | PASS | `check_privacy_lifecycle.py --strict` exit 0, 5/5 backends have executing contract tests |
+| Scheduler catchup wiring (W0) | **PASS** | all 5 W0 items verified at `12ead1617`: `add_job` present, `catchup*` keyword-only and never passed to APScheduler, `await materialize_window`, real executor via `run_pending`, facade integration against a real `AsyncIOScheduler` + SQLite. 147 tests pass. P3-13 closed by `test_pending_tick_executes_executor`, which asserts a real pending tick ran and fails with "P3-13 НЕ закрыт" otherwise |
 | Optional-tenant gate | PASS | `check_no_new_optional_tenant.py --strict` exit 0, 123 baseline = 123 current |
 | Tenant isolation (static) | PASS | `check_tenant_isolation.py --strict` exit 0 |
 | Tenant isolation (runtime) | **FAIL (negative)** | live run at `f013e7317`: empty/`null` `X-Tenant-Id` → 401, no data returned |
-| Object authorization | PASS | 117 callsites, 0 unknown |
-| CI composite | PASS with caveat | `make ci` exit 0 at `98698dd51` — but it does not execute tests |
+| Object authorization (classifier) | PASS | 117 callsites, 0 unknown (`classify_object_authorization.py` exit 0) |
+| Object authorization (coverage gate) | **FAIL** | `check_object_authorization.py` prints 2 ❌ — ownership coverage 17/159 (10.7%, threshold 50%) and 127 service `.get(id)` without tenant filter. The gate is honest only under `--strict` (exit 1); `make check-object-auth` and `audit-2026-09-22` call it **without** `--strict`, so both report success. The classifier counts *classification completeness*, the gate measures *authorization coverage* — they are different properties |
+| CI composite | **FAIL (composite)** | `make ci` exit 0 at `98698dd51`, but it neither executes tests (ends at `pytest --co`) nor runs `check_layers.py`. Measured at `12ead1617`: `check_layers` reported **2 new** `services→dsl` violations with exit 1 while `make ci` stayed green — the two gates are not connected |
 | Application starts and serves | PASS | live uvicorn, `dev_light` profile, `/health` → 200 |
 | Unauthenticated data access | PASS | 12 endpoints → 401/403, no payload returned |
 | Login credential enforcement | PASS | 2 wrong-password probes → 401, identical message (no user enumeration) |
@@ -285,7 +287,31 @@ installed — for the same wrong reason. Green is not the same as checked.
   Russian text that passes through a response masker. Not narrowed here,
   because narrowing weakens privacy; it needs a proper design decision.
 - **`make ci` does not execute tests** — `make/pipelines.mk:22` ends at
-  `test-collection-check`, which runs `pytest --co` only.
+  `test-collection-check`, which runs `pytest --co` only. It also does not run
+  `check_layers.py`, so a green `make ci` says nothing about layer compliance;
+  measured at `12ead1617` the two gates disagreed (layers exit 1, ci exit 0).
+- **`check_object_authorization.py` is wired without `--strict`.**
+  `make/quality.mk:293` (`check-object-auth`) and `make/quality.mk:319`
+  (`audit-2026-09-22`) call the gate in its default mode, which prints the ❌
+  issues and still returns 0. Under `--strict` the same input returns 1
+  (coverage 17/159 = 10.7%, and 127 service `.get(id)` without tenant filter).
+  Both are advisory today — the target is not in the `ci` composite.
+- **`DeferredMixin` reaches past the backend Protocol into APScheduler.**
+  `src/backend/services/execution/invoker/deferred_mixin.py:142` and `:161` call
+  `scheduler_manager.scheduler.add_job(...)` directly. `SchedulerBackend`
+  (`src/backend/core/interfaces/scheduler.py:118`) already declares
+  `schedule_oneshot`, so the protocol is being bypassed. Three tests in
+  `tests/unit/services/execution/test_invoker.py` pin the current shape through
+  a `_StubScheduler.add_job`, so fixing this changes the test contract. Not
+  fixed here: it is a production edit that needs an explicit decision.
+- **`test_builder_service_proxy.py` identity tests fail after `12ead1617`.**
+  `DSLBuilderService` moved to the Sprint-225 lazy proxy, which no longer binds
+  `route_registry` / `YAMLStore` as module attributes, so
+  `from src.backend.services.dsl.builder_service import route_registry` raises
+  `ImportError`. Importing the two names from the sanctioned facade
+  `src.backend.core.api.extensions` (already exempt in `check_layers.py:136`)
+  satisfies the layer gate, keeps object identity, and restores both tests —
+  verified in isolation, not applied because another agent owns the file.
 - `/api/v1/auth/step-up-request` issues a token with no credential check. Not an authz
   bypass (login still verifies the password) — it is a CSRF/session guard, and the
   token is not single-use.
