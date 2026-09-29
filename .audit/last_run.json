@@ -1,10 +1,10 @@
 {
   "audit": "GD Integration Tools — current readiness status",
-  "head": "44d7ae4c2",
-  "timestamp": "2026-09-29T09:26:00+00:00",
+  "head": "3e1ff82ed",
+  "timestamp": "2026-09-29T09:45:00+00:00",
   "status": "not_production_ready",
   "canonical_doc": "docs/roadmap/PRODUCTION_READINESS_CURRENT.md",
-  "per_sha_evidence": "artifacts/release/44d7ae4c2d332442a9753f16ccc9e3b9acb658c5/EVIDENCE.md",
+  "per_sha_evidence": "artifacts/release/3e1ff82ed420f7568968c46d08e92e371cf2686a/EVIDENCE.md",
   "superseded_docs": [
     "docs/roadmap/PRODUCTION_READINESS.md (snapshot 2026-09-01)",
     "docs/roadmap/PRODUCTION_READINESS_FINAL.md (snapshot 2026-09-02)"
@@ -14,7 +14,7 @@
   "blocking": [
     "coverage ~52% vs 70% threshold (two independent measurements, 0.36 p.p. apart)",
     "gzip responses were invalid ASGI (str headers) so uvicorn dropped every response over 500 bytes with no reply; fixed in 2a347ee70, browsers could not load the spec at all",
-    "test suite is not isolation-safe: gRPC cluster fixed in 9227f6ded; frontend shared/test_components.py cluster still fails only in combined runs",
+    "no whole-tree test run has completed on this machine (RAM-bound OOM), so a \"suite is green\" claim is still not possible; the two known isolation clusters are fixed (gRPC 9227f6ded, frontend 3e1ff82ed)",
     "make ci does not execute tests — it ends at test-collection-check which runs pytest --co only",
     "no container image, SBOM or signature for this SHA",
     "10 tooling-test failures in tests/unit/tools/",
@@ -104,5 +104,11 @@
   "environment_notes": [
     "fastmcp 4.0.3 (the uv.lock pin) was installed with `uv pip install fastmcp==4.0.3`; `uv sync --all-extras` was deliberately not run because it rewrites the whole venv. The MCP cluster is now 106 passed / 0 failed.",
     "MCP is mounted at /mcp (verified in the live app: McpAuthMiddleware -> StarletteWithLifespan, inner route \"/\"). An authenticated JSON-RPC round-trip is still NOT VERIFIED: the outer AuthRequiredMiddleware answers 401 first and this environment cannot mint an API key (Redis is reachable but not configured for auth)."
-  ]
+  ],
+  "status_by_area": {
+    "frontend_unit_cluster": {
+      "status": "FAIL",
+      "detail": "5 failures remain at 3e1ff82ed, all layer-boundary ratchets (test_layer_boundary x3, test_arch_ratchet x2): 6 files import from src.backend.services, 12 facade-boundary violations. These are real violations in frontend production code, not test defects, and the gates are left failing deliberately. Down from 23 failures at session start."
+    }
+  }
 }

@@ -1,0 +1,578 @@
+make[1]: вход в каталог «/home/user/dev/gd_integration_tools»
+[32muv virtual environment detected[0m
+[34mChecking formatting...[0m
+2546 files already formatted
+[32mFormatting check passed![0m
+make[1]: выход из каталога «/home/user/dev/gd_integration_tools»
+make[1]: вход в каталог «/home/user/dev/gd_integration_tools»
+[32muv virtual environment detected[0m
+[34mChecking formatting...[0m
+2546 files already formatted
+[32mFormatting check passed![0m
+[34mRunning strict lint...[0m
+uv run ruff check ./src 
+All checks passed!
+[32mStrict lint passed![0m
+make[1]: выход из каталога «/home/user/dev/gd_integration_tools»
+make[1]: вход в каталог «/home/user/dev/gd_integration_tools»
+[32muv virtual environment detected[0m
+[34mRunning strict mypy type check...[0m
+src/backend/core/cdc/source.py:126: note: Consider declaring "subscribe" in supertype "CDCSource" without "async"
+src/backend/core/cdc/source.py:126: note: See https://mypy.readthedocs.io/en/stable/more_types.html#asynchronous-iterators
+src/backend/core/cdc/source.py:149: note: Consider declaring "replay" in supertype "CDCSource" without "async"
+src/backend/core/cdc/source.py:149: note: See https://mypy.readthedocs.io/en/stable/more_types.html#asynchronous-iterators
+src/backend/infrastructure/cdc/poll_backend.py:85: note: Consider declaring "subscribe" in supertype "src.backend.core.cdc.source.CDCSource" without "async"
+src/backend/infrastructure/cdc/poll_backend.py:85: note: Error code "misc" not covered by "type: ignore" comment
+src/backend/infrastructure/cdc/poll_backend.py:85: note: See https://mypy.readthedocs.io/en/stable/more_types.html#asynchronous-iterators
+src/backend/infrastructure/cdc/poll_backend.py:196: note: Consider declaring "replay" in supertype "src.backend.core.cdc.source.CDCSource" without "async"
+src/backend/infrastructure/cdc/poll_backend.py:196: note: Error code "misc" not covered by "type: ignore" comment
+src/backend/infrastructure/cdc/poll_backend.py:196: note: See https://mypy.readthedocs.io/en/stable/more_types.html#asynchronous-iterators
+src/backend/infrastructure/cdc/listen_notify_backend.py:51: note: Consider declaring "subscribe" in supertype "src.backend.core.cdc.source.CDCSource" without "async"
+src/backend/infrastructure/cdc/listen_notify_backend.py:51: note: Error code "misc" not covered by "type: ignore" comment
+src/backend/infrastructure/cdc/listen_notify_backend.py:51: note: See https://mypy.readthedocs.io/en/stable/more_types.html#asynchronous-iterators
+src/backend/infrastructure/cdc/listen_notify_backend.py:81: note: Consider declaring "replay" in supertype "src.backend.core.cdc.source.CDCSource" without "async"
+src/backend/infrastructure/cdc/listen_notify_backend.py:81: note: Error code "misc" not covered by "type: ignore" comment
+src/backend/infrastructure/cdc/listen_notify_backend.py:81: note: See https://mypy.readthedocs.io/en/stable/more_types.html#asynchronous-iterators
+src/backend/infrastructure/cdc/debezium_events_backend.py:186: note: Consider declaring "subscribe" in supertype "src.backend.core.cdc.source.CDCSource" without "async"
+src/backend/infrastructure/cdc/debezium_events_backend.py:186: note: Error code "misc" not covered by "type: ignore" comment
+src/backend/infrastructure/cdc/debezium_events_backend.py:186: note: See https://mypy.readthedocs.io/en/stable/more_types.html#asynchronous-iterators
+src/backend/infrastructure/cdc/debezium_events_backend.py:274: note: Consider declaring "replay" in supertype "src.backend.core.cdc.source.CDCSource" without "async"
+src/backend/infrastructure/cdc/debezium_events_backend.py:274: note: Error code "misc" not covered by "type: ignore" comment
+src/backend/infrastructure/cdc/debezium_events_backend.py:274: note: See https://mypy.readthedocs.io/en/stable/more_types.html#asynchronous-iterators
+Success: no issues found in 2577 source files
+[32mStrict type check passed![0m
+make[1]: выход из каталога «/home/user/dev/gd_integration_tools»
+make[1]: вход в каталог «/home/user/dev/gd_integration_tools»
+[32muv virtual environment detected[0m
+[34mRunning strict dependency checks...[0m
+[1mFound dependencies in pyproject.toml: aio-pika, aiofiles, aioimaplib, aiokafka, aiomqtt, aiosmtplib, alembic, apscheduler, asgi-correlation-id, asgi-idempotency-header, asyncpg, beautifulsoup4, cachetools, casbin, click, cloudevents, croniter, cryptography, elasticsearch, fastapi, fastapi-filter, fastapi-limiter, fastapi-pagination, fastavro, faststream, glom, granian, grpcio, hishel, httpx, httpx-retries, hvac, jmespath, joserfc, lxml, markitdown, msgpack, msgspec, nats-py, openapi-pydantic, openpyxl, opentelemetry-api, opentelemetry-exporter-otlp-proto-grpc, opentelemetry-instrumentation-aio-pika, opentelemetry-instrumentation-aiokafka, opentelemetry-instrumentation-asyncpg, opentelemetry-instrumentation-fastapi, opentelemetry-instrumentation-grpc, opentelemetry-instrumentation-pymongo, opentelemetry-sdk, orjson, pendulum, presidio-analyzer, presidio-anonymizer, protobuf, purgatory, pydantic, pydantic-settings, pydash, pymongo, pypdf, python-docx, python-dotenv, python-multipart, pyyaml, qdrant-client, rank-bm25, redis, sentry-sdk, sqladmin, sqlalchemy, sqlalchemy-continuum, sqlalchemy-utils, starlette, starlette-exporter, strawberry-graphql, streamlit, structlog, tenacity, typer, uvicorn, watchfiles, whoosh-reloaded, xmltodict, zeep[0m
+[33m[1mExcluded dependencies not found in virtual environment: aiocache[0m
+[33m[1mRedundant exclusion 'aiocache': not found in pyproject.toml (transitive dependency or typo)[0m
+[33m[1mRedundant exclusion 'argon2-cffi': import detected in source code[0m
+[1mNo unused dependencies found! ✨[0m
+[32mStrict dependency checks passed![0m
+make[1]: выход из каталога «/home/user/dev/gd_integration_tools»
+make[1]: вход в каталог «/home/user/dev/gd_integration_tools»
+[32muv virtual environment detected[0m
+[34mScanning for secrets...[0m
+{
+  "version": "1.5.0",
+  "plugins_used": [
+    {
+      "name": "ArtifactoryDetector"
+    },
+    {
+      "name": "AWSKeyDetector"
+    },
+    {
+      "name": "AzureStorageKeyDetector"
+    },
+    {
+      "name": "Base64HighEntropyString",
+      "limit": 4.5
+    },
+    {
+      "name": "BasicAuthDetector"
+    },
+    {
+      "name": "CloudantDetector"
+    },
+    {
+      "name": "DiscordBotTokenDetector"
+    },
+    {
+      "name": "GitHubTokenDetector"
+    },
+    {
+      "name": "GitLabTokenDetector"
+    },
+    {
+      "name": "HexHighEntropyString",
+      "limit": 3.0
+    },
+    {
+      "name": "IbmCloudIamDetector"
+    },
+    {
+      "name": "IbmCosHmacDetector"
+    },
+    {
+      "name": "IPPublicDetector"
+    },
+    {
+      "name": "JwtTokenDetector"
+    },
+    {
+      "name": "KeywordDetector",
+      "keyword_exclude": ""
+    },
+    {
+      "name": "MailchimpDetector"
+    },
+    {
+      "name": "NpmDetector"
+    },
+    {
+      "name": "OpenAIDetector"
+    },
+    {
+      "name": "PrivateKeyDetector"
+    },
+    {
+      "name": "PypiTokenDetector"
+    },
+    {
+      "name": "SendGridDetector"
+    },
+    {
+      "name": "SlackDetector"
+    },
+    {
+      "name": "SoftlayerDetector"
+    },
+    {
+      "name": "SquareOAuthDetector"
+    },
+    {
+      "name": "StripeDetector"
+    },
+    {
+      "name": "TelegramBotTokenDetector"
+    },
+    {
+      "name": "TwilioKeyDetector"
+    }
+  ],
+  "filters_used": [
+    {
+      "path": "detect_secrets.filters.allowlist.is_line_allowlisted"
+    },
+    {
+      "path": "detect_secrets.filters.common.is_ignored_due_to_verification_policies",
+      "min_level": 2
+    },
+    {
+      "path": "detect_secrets.filters.heuristic.is_indirect_reference"
+    },
+    {
+      "path": "detect_secrets.filters.heuristic.is_likely_id_string"
+    },
+    {
+      "path": "detect_secrets.filters.heuristic.is_lock_file"
+    },
+    {
+      "path": "detect_secrets.filters.heuristic.is_not_alphanumeric_string"
+    },
+    {
+      "path": "detect_secrets.filters.heuristic.is_potential_uuid"
+    },
+    {
+      "path": "detect_secrets.filters.heuristic.is_prefixed_with_dollar_sign"
+    },
+    {
+      "path": "detect_secrets.filters.heuristic.is_sequential_string"
+    },
+    {
+      "path": "detect_secrets.filters.heuristic.is_swagger_file"
+    },
+    {
+      "path": "detect_secrets.filters.heuristic.is_templated_secret"
+    },
+    {
+      "path": "detect_secrets.filters.regex.should_exclude_file",
+      "pattern": [
+        ".*migrations/versions/.*\\.py$"
+      ]
+    }
+  ],
+  "results": {
+    "src/backend/core/auth/__init__.py": [
+      {
+        "type": "Secret Keyword",
+        "filename": "src/backend/core/auth/__init__.py",
+        "hashed_secret": "665b1e3851eefefa3fb878654292f16597d25155",
+        "is_verified": false,
+        "line_number": 91
+      }
+    ],
+    "src/backend/core/config/database.py": [
+      {
+        "type": "Basic Auth Credentials",
+        "filename": "src/backend/core/config/database.py",
+        "hashed_secret": "37fa265330ad83eaa879efb1e2db6380896cf639",
+        "is_verified": false,
+        "line_number": 201
+      }
+    ],
+    "src/backend/core/config/external_databases/connection.py": [
+      {
+        "type": "Basic Auth Credentials",
+        "filename": "src/backend/core/config/external_databases/connection.py",
+        "hashed_secret": "37fa265330ad83eaa879efb1e2db6380896cf639",
+        "is_verified": false,
+        "line_number": 127
+      }
+    ],
+    "src/backend/core/config/integration_base.py": [
+      {
+        "type": "Basic Auth Credentials",
+        "filename": "src/backend/core/config/integration_base.py",
+        "hashed_secret": "35675e68f4b5af7b995d9205ad0fc43842f16450",
+        "is_verified": false,
+        "line_number": 291
+      }
+    ],
+    "src/backend/core/connector/manifest.py": [
+      {
+        "type": "Secret Keyword",
+        "filename": "src/backend/core/connector/manifest.py",
+        "hashed_secret": "665b1e3851eefefa3fb878654292f16597d25155",
+        "is_verified": false,
+        "line_number": 47
+      }
+    ],
+    "src/backend/core/connectors/base.py": [
+      {
+        "type": "Secret Keyword",
+        "filename": "src/backend/core/connectors/base.py",
+        "hashed_secret": "665b1e3851eefefa3fb878654292f16597d25155",
+        "is_verified": false,
+        "line_number": 15
+      }
+    ],
+    "src/backend/core/models/connector_spec.py": [
+      {
+        "type": "Secret Keyword",
+        "filename": "src/backend/core/models/connector_spec.py",
+        "hashed_secret": "665b1e3851eefefa3fb878654292f16597d25155",
+        "is_verified": false,
+        "line_number": 29
+      }
+    ],
+    "src/backend/dsl/builders/notify.py": [
+      {
+        "type": "Secret Keyword",
+        "filename": "src/backend/dsl/builders/notify.py",
+        "hashed_secret": "9ed19152c3b14e61e625ae4c5c8f37e4b43093f1",
+        "is_verified": false,
+        "line_number": 215
+      }
+    ],
+    "src/backend/dsl/builders/sources_mixin/cdc_sources_mixin.py": [
+      {
+        "type": "Basic Auth Credentials",
+        "filename": "src/backend/dsl/builders/sources_mixin/cdc_sources_mixin.py",
+        "hashed_secret": "9d4e1e23bd5b727046a9e3b4b7db57bd8d6ee684",
+        "is_verified": false,
+        "line_number": 35
+      }
+    ],
+    "src/backend/dsl/builders/sources_mixin/messaging_sources_mixin.py": [
+      {
+        "type": "Basic Auth Credentials",
+        "filename": "src/backend/dsl/builders/sources_mixin/messaging_sources_mixin.py",
+        "hashed_secret": "9d4e1e23bd5b727046a9e3b4b7db57bd8d6ee684",
+        "is_verified": false,
+        "line_number": 80
+      },
+      {
+        "type": "Basic Auth Credentials",
+        "filename": "src/backend/dsl/builders/sources_mixin/messaging_sources_mixin.py",
+        "hashed_secret": "35675e68f4b5af7b995d9205ad0fc43842f16450",
+        "is_verified": false,
+        "line_number": 92
+      }
+    ],
+    "src/backend/dsl/builders/sources_mixin/webhook_sources_mixin.py": [
+      {
+        "type": "Secret Keyword",
+        "filename": "src/backend/dsl/builders/sources_mixin/webhook_sources_mixin.py",
+        "hashed_secret": "5c5a15a8b0b3e154d77746945e563ba40100681b",
+        "is_verified": false,
+        "line_number": 37
+      }
+    ],
+    "src/backend/dsl/engine/processors/eip/glom_ops.py": [
+      {
+        "type": "Secret Keyword",
+        "filename": "src/backend/dsl/engine/processors/eip/glom_ops.py",
+        "hashed_secret": "e5e9fa1ba31ecd1ae84f75caaa474f3a663f05f4",
+        "is_verified": false,
+        "line_number": 163
+      }
+    ],
+    "src/backend/dsl/engine/processors/enrichment/jwt.py": [
+      {
+        "type": "Secret Keyword",
+        "filename": "src/backend/dsl/engine/processors/enrichment/jwt.py",
+        "hashed_secret": "576956b5291ac38d04ef5f82cc974286a857f0b2",
+        "is_verified": false,
+        "line_number": 22
+      }
+    ],
+    "src/backend/dsl/engine/processors/enrichment/webhook.py": [
+      {
+        "type": "Secret Keyword",
+        "filename": "src/backend/dsl/engine/processors/enrichment/webhook.py",
+        "hashed_secret": "dd65c1b4b3e66e765523873bd29cf5d6d6838189",
+        "is_verified": false,
+        "line_number": 24
+      },
+      {
+        "type": "Secret Keyword",
+        "filename": "src/backend/dsl/engine/processors/enrichment/webhook.py",
+        "hashed_secret": "d6949396727adbec13d141b52cbd1efee66c32c4",
+        "is_verified": false,
+        "line_number": 81
+      }
+    ],
+    "src/backend/dsl/engine/processors/ssh_command.py": [
+      {
+        "type": "Secret Keyword",
+        "filename": "src/backend/dsl/engine/processors/ssh_command.py",
+        "hashed_secret": "02083f4579e08a612425c0c1a17ee47add783b94",
+        "is_verified": false,
+        "line_number": 104
+      },
+      {
+        "type": "Secret Keyword",
+        "filename": "src/backend/dsl/engine/processors/ssh_command.py",
+        "hashed_secret": "d0449e86077449843777d1958aff83cf086dbcba",
+        "is_verified": false,
+        "line_number": 109
+      }
+    ],
+    "src/backend/dsl/engine/processors/webhook_signature.py": [
+      {
+        "type": "Secret Keyword",
+        "filename": "src/backend/dsl/engine/processors/webhook_signature.py",
+        "hashed_secret": "d6949396727adbec13d141b52cbd1efee66c32c4",
+        "is_verified": false,
+        "line_number": 11
+      }
+    ],
+    "src/backend/entrypoints/api/v1/endpoints/auth_methods.py": [
+      {
+        "type": "Secret Keyword",
+        "filename": "src/backend/entrypoints/api/v1/endpoints/auth_methods.py",
+        "hashed_secret": "1924520d36a854e39998d7a8d315193ca8e84067",
+        "is_verified": false,
+        "line_number": 16
+      }
+    ],
+    "src/backend/entrypoints/websocket/ws_auth.py": [
+      {
+        "type": "Secret Keyword",
+        "filename": "src/backend/entrypoints/websocket/ws_auth.py",
+        "hashed_secret": "c239bd7492a28dd435d0f146f53d171809a98bb9",
+        "is_verified": false,
+        "line_number": 246
+      }
+    ],
+    "src/backend/infrastructure/secrets/long_running_rotation.py": [
+      {
+        "type": "Secret Keyword",
+        "filename": "src/backend/infrastructure/secrets/long_running_rotation.py",
+        "hashed_secret": "53141d1c36096c5a7ddafdbc49624c49cd7587d9",
+        "is_verified": false,
+        "line_number": 27
+      }
+    ],
+    "src/backend/infrastructure/sources/cdc.py": [
+      {
+        "type": "Basic Auth Credentials",
+        "filename": "src/backend/infrastructure/sources/cdc.py",
+        "hashed_secret": "9d4e1e23bd5b727046a9e3b4b7db57bd8d6ee684",
+        "is_verified": false,
+        "line_number": 38
+      }
+    ],
+    "src/backend/infrastructure/sources/cdc_oracle.py": [
+      {
+        "type": "Basic Auth Credentials",
+        "filename": "src/backend/infrastructure/sources/cdc_oracle.py",
+        "hashed_secret": "9d4e1e23bd5b727046a9e3b4b7db57bd8d6ee684",
+        "is_verified": false,
+        "line_number": 64
+      }
+    ],
+    "src/backend/infrastructure/sources/mq.py": [
+      {
+        "type": "Basic Auth Credentials",
+        "filename": "src/backend/infrastructure/sources/mq.py",
+        "hashed_secret": "35675e68f4b5af7b995d9205ad0fc43842f16450",
+        "is_verified": false,
+        "line_number": 123
+      }
+    ],
+    "src/backend/services/ai/agents/langgraph_postgres_saver.py": [
+      {
+        "type": "Basic Auth Credentials",
+        "filename": "src/backend/services/ai/agents/langgraph_postgres_saver.py",
+        "hashed_secret": "9d4e1e23bd5b727046a9e3b4b7db57bd8d6ee684",
+        "is_verified": false,
+        "line_number": 67
+      }
+    ],
+    "src/backend/services/jupyter/execution_service/e2b_backend.py": [
+      {
+        "type": "Secret Keyword",
+        "filename": "src/backend/services/jupyter/execution_service/e2b_backend.py",
+        "hashed_secret": "fff92aed9affadede5da4fb1886f92ac0bdc8972",
+        "is_verified": false,
+        "line_number": 32
+      }
+    ],
+    "src/backend/services/ops/dlq_replay_governance.py": [
+      {
+        "type": "Secret Keyword",
+        "filename": "src/backend/services/ops/dlq_replay_governance.py",
+        "hashed_secret": "e5e9fa1ba31ecd1ae84f75caaa474f3a663f05f4",
+        "is_verified": false,
+        "line_number": 103
+      }
+    ]
+  },
+  "generated_at": "2026-09-29T06:45:41Z"
+}
+[32mSecrets check completed![0m
+make[1]: выход из каталога «/home/user/dev/gd_integration_tools»
+make[1]: вход в каталог «/home/user/dev/gd_integration_tools»
+[34mПроверка WAF coverage (strict, без allowlist)...[0m
+WAF coverage OK: 0 violations
+[32mWAF coverage strict-check passed[0m
+make[1]: выход из каталога «/home/user/dev/gd_integration_tools»
+make[1]: вход в каталог «/home/user/dev/gd_integration_tools»
+[34mПроверка AI Safety (workspace + sandbox + fs.create_new)...[0m
+2026-09-29 09:45:47 [warning  ] Vault недоступен (HTTPConnectionPool(host='127.0.0.1', port=8200): Max retries exceeded with url: /v1/auth/token/lookup-self (Caused by NewConnectionError("HTTPConnection(host='127.0.0.1', port=8200): Failed to establish a new connection: [Errno 111] Connection refused"))) — secrets-источник пропущен. Установите vault.enabled=false или поднимите Vault, чтобы убрать это сообщение.
+............................................s......sssss................ [ 10%]
+........................................................................ [ 20%]
+........................................................................ [ 30%]
+........................................................................ [ 40%]
+........................................................................ [ 50%]
+........................................................s............... [ 60%]
+...........................................x..................sss....... [ 70%]
+...........................................................s............ [ 80%]
+........................................................................ [ 90%]
+...................................................................      [100%]/home/user/dev/gd_integration_tools/.venv/lib/python3.14/site-packages/_pytest/unraisableexception.py:33: RuntimeWarning: coroutine 'AIWorkspaceCleaner._cleanup_loop' was never awaited
+  gc.collect()
+RuntimeWarning: Enable tracemalloc to get the object allocation traceback
+
+=============================== warnings summary ===============================
+tests/unit/core/ai/policy/test_handle_mixin.py::TestPublishDLQWithWriter::test_writer_called_with_envelope
+  /home/user/dev/gd_integration_tools/src/backend/core/di/providers/infrastructure_locator.py:203: RuntimeWarning: coroutine 'HandleMixin._publish_dlq' was never awaited
+    def _make_provider_getter(name: str, module_path: str, attr: str) -> Callable[[], Any]:
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/unit/core/ai/policy/test_output_guard_mixin.py::TestGuardOutputNormal::test_unsafe_content_returns_blocked_verdict
+  /home/user/dev/gd_integration_tools/src/backend/core/ai/policy/enforcer/output_guard_mixin.py:87: RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited
+    self._handle_guard_block(
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/unit/core/ai/test_agent_sandbox.py::test_in_process_delegates_to_build_and_run_agent
+  /home/user/dev/gd_integration_tools/tests/unit/core/ai/test_agent_sandbox.py:49: DeprecationWarning: InProcessAgentSandbox is DEPRECATED since Sprint 172 (ARC-008). Zero process isolation — same memory + file descriptors as parent. Use ProcessPoolAgentSandbox (default) or E2BAgentSandbox (opt-in) for any production / dev_shared workload. Will be removed in Sprint 175.
+    sandbox = InProcessAgentSandbox()
+
+tests/unit/core/ai/test_agent_sandbox.py::test_in_process_delegates_to_build_and_run_agent
+tests/unit/core/ai/test_agent_sandbox.py::test_in_process_reports_error
+  /home/user/dev/gd_integration_tools/src/backend/services/ai/agent_sandbox/_in_process.py:91: RuntimeWarning: coroutine 'AuditService.emit' was never awaited
+    emit_audit_safe(
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/unit/core/ai/test_agent_sandbox.py::test_in_process_reports_error
+  /home/user/dev/gd_integration_tools/tests/unit/core/ai/test_agent_sandbox.py:80: DeprecationWarning: InProcessAgentSandbox is DEPRECATED since Sprint 172 (ARC-008). Zero process isolation — same memory + file descriptors as parent. Use ProcessPoolAgentSandbox (default) or E2BAgentSandbox (opt-in) for any production / dev_shared workload. Will be removed in Sprint 175.
+    sandbox = InProcessAgentSandbox()
+
+tests/unit/core/ai/test_audit_fixes_cycle31.py::TestInProcessAgentSandboxAudit::test_construction_emits_audit_event
+  /home/user/dev/gd_integration_tools/tests/unit/core/ai/test_audit_fixes_cycle31.py:121: RuntimeWarning: coroutine 'AuditService.emit' was never awaited
+    real_emit(*args, **kwargs)
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/unit/core/ai/test_audit_fixes_cycle31.py::TestRedisBatchLimits::test_mget_at_limit_succeeds
+  /home/user/dev/gd_integration_tools/src/backend/infrastructure/cache/backends/redis.py:175: RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited
+    pipe.get(key)
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/unit/core/ai/test_token_budget_integration.py::TestBudgetEnforced::test_empty_tenant_id_skips
+  /home/user/dev/gd_integration_tools/src/backend/core/ai/gateway_orchestrator_mixin.py:199: RuntimeWarning: coroutine 'AuditService.emit' was never awaited
+    emit_audit_safe(
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/unit/core/ai/test_workspace_cleaner.py::test_start_idempotent
+  /home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/unittest/mock.py:503: RuntimeWarning: coroutine 'AIWorkspaceCleaner._cleanup_loop' was never awaited
+    _safe_super(NonCallableMock, self).__init__(
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/unit/core/ai/test_workspace_manager.py::test_shutdown_cancels_cleanup_loop
+tests/integration/test_ai_safety_lifecycle.py::test_start_ai_safety_creates_workspace_root
+tests/integration/test_ai_safety_lifecycle.py::test_stop_cancels_cleanup_task
+  /home/user/.local/share/uv/python/cpython-3.14-linux-x86_64-gnu/lib/python3.14/asyncio/events.py:94: RuntimeWarning: coroutine 'TaskRegistry.create_task.<locals>._runner' was never awaited
+    self._context.run(self._callback, *self._args)
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [1] tests/unit/core/ai/policy/test_enforcer.py:272: archived 2026 — see research/agent-framework/REPORT.md F4.2
+SKIPPED [1] tests/unit/core/ai/policy/test_enforcer.py:448: archived 2026 — see research/agent-framework/REPORT.md F4.1
+SKIPPED [1] tests/unit/core/ai/policy/test_enforcer.py:466: archived 2026 — see research/agent-framework/REPORT.md F4.1
+SKIPPED [1] tests/unit/core/ai/policy/test_enforcer.py:484: archived 2026 — see research/agent-framework/REPORT.md F4.1
+SKIPPED [1] tests/unit/core/ai/policy/test_enforcer.py:507: archived 2026 — see research/agent-framework/REPORT.md F4.1
+SKIPPED [1] tests/unit/core/ai/policy/test_enforcer.py:532: archived 2026 — see research/agent-framework/REPORT.md F4.1
+SKIPPED [1] tests/unit/core/ai/test_gateway_pipeline.py:285: S44 W26 (agent audit S85 follow-up): ai_gateway_enforce=False no longer supported (AIGatewayEnforcementRequiredError raised in S85). Pre-existing test for deprecated pass-through-scaffold mode — skip until proper capability-gate test exists.
+SKIPPED [1] tests/unit/core/ai/test_ml_model_loader.py:122: could not import 'joblib': No module named 'joblib'
+SKIPPED [1] tests/unit/core/ai/test_ml_model_loader.py:135: could not import 'joblib': No module named 'joblib'
+SKIPPED [1] tests/unit/core/ai/test_ml_model_loader.py:149: could not import 'joblib': No module named 'joblib'
+SKIPPED [1] tests/unit/core/ai/test_skill_registry.py:192: S171 M11 R2: hot_reload не реализован — sync test
+XFAIL tests/unit/core/ai/test_gateway_scaffold.py::test_invoke_pass_through_when_flag_off - S162 W8: S85 changed contract — ai_gateway_enforce=False no longer supported (raises AIGatewayEnforcementRequiredError). Test was for deprecated scaffold path.
+703 passed, 11 skipped, 1 xfailed, 13 warnings in 18.21s
+[32mAI Safety checks passed[0m
+make[1]: выход из каталога «/home/user/dev/gd_integration_tools»
+make[1]: вход в каталог «/home/user/dev/gd_integration_tools»
+[32muv virtual environment detected[0m
+uv run python tools/checks/check_python3_syntax.py --root src/backend
+make[1]: выход из каталога «/home/user/dev/gd_integration_tools»
+make[1]: вход в каталог «/home/user/dev/gd_integration_tools»
+[32muv virtual environment detected[0m
+uv run python tools/checks/check_task_registry.py --root src/backend
+OK: no orphan asyncio.create_task / ensure_future calls.
+make[1]: выход из каталога «/home/user/dev/gd_integration_tools»
+make[1]: вход в каталог «/home/user/dev/gd_integration_tools»
+[32muv virtual environment detected[0m
+[34mChecking tenant isolation...[0m
+============================================================
+Tenant Isolation Check (P0 audit 2026-09-22 + W3.5 allowlist)
+============================================================
+
+  ℹ️  Files scanned: 2551
+  ℹ️  Missing tenant filter candidates: 552
+  ℹ️  Direct TenantContext.get() usages: 0
+  ℹ️  ORM models without tenant_id column: 6
+  ℹ️  Allowlisted (false positives): 552
+  ℹ️  Unclassified (need attention): 0
+  ℹ️  Total findings: 558; allowlisted: 558 (100%); unclassified: 0
+
+✅ All findings classified (allowlist covers system infra)
+
+Optional tenant_id AST gate (audit W0)
+  Baseline: 123 параметров
+  Current:  123 параметров
+  ✅ No drift
+[32mNo cross-tenant access patterns detected![0m
+make[1]: выход из каталога «/home/user/dev/gd_integration_tools»
+make[1]: вход в каталог «/home/user/dev/gd_integration_tools»
+[34mChecking test collection (catches circular imports, missing modules)...[0m
+SKIPPED [1] tests/unit/storage/test_s3_object_storage.py:31: moto not in test deps; S124 W2 honest skip (TD-0244)
+SKIPPED [1] tests/unit/workflows/test_orders_saga.py:9: orders_saga demo removed — S168 W14
+20760 tests collected in 23.91s
+[32mTest collection OK[0m
+make[1]: выход из каталога «/home/user/dev/gd_integration_tools»
+[32mCI gate passed[0m
+MAKE_CI_EXIT=0

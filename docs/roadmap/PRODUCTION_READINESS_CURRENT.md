@@ -38,9 +38,10 @@ Blocking items, in priority order:
 4. **Coverage is far below the project's own bar** — ~52% measured against a
    70% threshold. The gate reports this honestly instead of silently passing.
    Two independent measurements agree within 0.36 p.p.
-5. **The test suite is not isolation-safe** — the gRPC cluster is fixed
-   (`9227f6ded`), but the frontend `shared/test_components.py` cluster still
-   fails only in combined runs, so no "suite is green" claim is possible yet.
+5. **The test suite is not isolation-safe** — the gRPC cluster (`9227f6ded`)
+   and the frontend cluster (`3e1ff82ed`) are both fixed, but no whole-tree
+   run has been completed on this machine, so no "suite is green" claim is
+   possible yet.
 6. **`make ci` never runs the tests.** It ends at `test-collection-check`, which
    calls `pytest --co`. Exit 0 means "tests import", not "tests pass".
 7. **No release artifact for this SHA** — no container image, no SBOM, no
@@ -302,9 +303,16 @@ installed — for the same wrong reason. Green is not the same as checked.
   Before `3 failed, 63 passed` (3 random seeds at HEAD) → after `66 passed`
   (5 random seeds), and each of the 7 files also passes standalone.
   Only the poisoning fixture changed; no assertion was edited.
-- Test isolation, frontend cluster — still open. The
-  `shared/test_components.py` cluster fails only in combined runs. Needs
-  fixtures, not test edits.
+- Test isolation, frontend cluster — **fixed at `3e1ff82ed`**.
+  `test_components.py` installed `streamlit` and `pandas` mocks at module
+  level, i.e. during collection, and never restored them. Two leaks followed:
+  `sys.modules` stayed poisoned (so `api_clients/cached.py` died on
+  `@st.cache_data(...)` with `AttributeError`), and `components` itself was
+  cached against the mock. Both are now scoped by a fixture.
+  Cluster `tests/unit/frontend`: **23 failed → 5**. The remaining 5 are
+  layer-boundary ratchets, left failing deliberately — see below.
+  This corrects an earlier note here: the cluster failed in isolation too,
+  not only in combined runs.
 - ~~`tests/unit/entrypoints/mcp` failures~~ — **resolved at `44d7ae4c2`**.
   The four remaining failures were `ImportError: fastmcp is not installed`;
   `fastmcp 4.0.3` (the version `uv.lock` pins) is now installed and the
