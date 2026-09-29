@@ -14,12 +14,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.config.settings import settings as app_settings
 from src.backend.core.logging import get_logger
-from src.backend.dsl.commands.registry import route_registry
-from src.backend.dsl.yaml_store import YAMLStore
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.pipeline import Pipeline
@@ -27,6 +25,29 @@ if TYPE_CHECKING:
 __all__ = ("DSLBuilderService", "SaveResult", "get_dsl_builder_service")
 
 _logger = get_logger("services.dsl.builder")
+
+# Sprint 225 pattern (см. services/core/admin.py): services → dsl прямым
+# импортом запрещён layers-гейтом; DSL-singleton'ы резолвятся лениво
+# строковыми ссылками. noop-f821: имена кэшируются в module globals.
+_LAZY_MAP: dict[str, tuple[str, str]] = {
+    "route_registry": ("src.backend.dsl.commands.registry", "route_registry"),
+    "YAMLStore": ("src.backend.dsl.yaml_store", "YAMLStore"),
+}
+
+
+def _lazy(name: str) -> Any:
+    """Ленивый резолв DSL-символа по строковой ссылке (Sprint 225)."""
+    if name in globals():
+        return globals()[name]
+    if name in _LAZY_MAP:
+        import importlib
+
+        mod_path, attr = _LAZY_MAP[name]
+        value = getattr(importlib.import_module(mod_path), attr)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 _DEV_ENVIRONMENT = "development"
 
@@ -66,17 +87,17 @@ class DSLBuilderService:
     ) -> None:
         self._dir = Path(store_dir) if store_dir else Path(app_settings.dsl.routes_dir)
         self._env = environment or app_settings.app.environment
-        self._store = YAMLStore(self._dir)
+        self._store = _lazy("YAMLStore")(self._dir)
 
     # ── Read API ────────────────────────────────────────────
 
     def list_routes(self) -> tuple[str, ...]:
         """Возвращает все route_id, известные runtime'у."""
-        return route_registry.list_routes()
+        return _lazy("route_registry").list_routes()
 
     def get_pipeline(self, route_id: str) -> Pipeline | None:
         """Возвращает Pipeline или None, если не зарегистрирован."""
-        return route_registry.get_optional(route_id)
+        return _lazy("route_registry").get_optional(route_id)
 
     def render_yaml(self, route_id: str) -> str:
         """Сериализует Pipeline в YAML.
