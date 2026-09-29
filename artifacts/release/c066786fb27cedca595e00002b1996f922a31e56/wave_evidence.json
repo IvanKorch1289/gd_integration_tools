@@ -1,0 +1,35 @@
+{
+  "audit": "env-tier волна 2: Temporal replay (DoD-12), backup/restore+rollback drills (DoD-13/14/15), ZAP baseline, gates package",
+  "head": "c066786fb27cedca595e00002b1996f922a31e56",
+  "temporal_replay_dod12": {
+    "server": "temporal CLI v1.9.1, server start-dev (embedded sqlite), port 7233",
+    "gate": "tools/checks/temporal_replay_gate.py (новый): compile_workflow(WorkflowBuilder) -> registry -> Worker execute на живом server -> fetch_history -> TemporalWorkflowBackend.replay() (Replayer)",
+    "result": "OK: workflow=replay.gate.flow executed + replayed, events=11; exit 0",
+    "history": "temporal/replay_gate_history.json",
+    "fix": "Replayer -> UnsandboxedWorkflowRunner: детерминизм даёт replay-фаза; песочница рвётся на динамических классах emitter+beartype.claw (0133f83fe)",
+    "exit_codes": "0=PASS, 1=FAIL, 2=ENV_FAILURE (отличим, per W1)"
+  },
+  "migrations_dod13": {
+    "verdict": "PASS после 2 реальных фиксов (68c0dd68c): seed naive-UTC (asyncpg vs tz-aware в sa.DateTime()); langmem uq_-имя констрейнта (UndefinedObjectError на чистой цепочке)",
+    "evidence": "чистый docker postgres:16-alpine: upgrade head -> f1a2b3c4d5e6"
+  },
+  "backup_restore_dod14": {
+    "verdict": "PASS: канонические ops/backup/backup_pg.sh + restore_pg.sh; dump 1241 bytes (гард >=1024 отверг 1020-байтную первую попытку), verify-smoke OK, parity 50/50 строк",
+    "evidence": "drill_transcript.txt + pg_gd_integration_tools_20260929T090002Z.sql.gz"
+  },
+  "rollback_dod15": {
+    "verdict": "PASS: alembic downgrade -1 -> upgrade head на PG, current=f1a2b3c4d5e6"
+  },
+  "zap_baseline": {
+    "verdict": "PASS: FAIL-NEW 0, WARN-NEW 7 (hardening-заголовки: COEP и пр.), PASS 60; root / -> 401 fail-closed",
+    "target": "HEAD-app :8081 (dev_light)",
+    "evidence": "zap/zap_report.html + zap_report.json"
+  },
+  "gates_package_on_this_sha": {
+    "make_ci": "PASS exit 0",
+    "readiness_check": "PASS exit 0",
+    "pre_prod_check": "PASS 26/37, 0 failed, exit 0 (3 env-skip: pip-audit-сеть — снят ранее отдельным прогоном, ZAP — закрыт выше, perf-gate — locust)",
+    "logs": ["make_ci_pass.log", "readiness_check_pass.log", "pre_prod_check_pass.log"]
+  },
+  "remaining_env_tier": ["k6/locust p95 (locust не в venv; целевой образ 5-недельный)", "in-registry image signing (нет registry :5000)", "replay histories накопление как release evidence (гейт создан, corpus — по мере деплоев)"]
+}

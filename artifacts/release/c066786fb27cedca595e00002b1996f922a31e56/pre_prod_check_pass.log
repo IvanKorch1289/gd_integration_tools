@@ -1,0 +1,52 @@
+[34mRunning pre-prod-check (30+ gates)...[0m
+uv run python tools/checks/pre_prod_check.py
+======================================================================
+ pre-prod-check gate (S17 K-OPS-3 / DoD-13)
+======================================================================
+
+  01 coverage ≥50%               OK     (0.3s)
+  02 mypy ≤30                    OK     (62.3s)
+  03a migration-preview          OK     (0.1s)
+  04 layers                      OK     (32.1s)
+  04 ruff strict                 OK     (0.1s)
+  05 secrets                     OK     (28.3s)
+  06 SBOM                        OK     (17.8s)
+  07 pip-audit                   SKIP   (requires network access for vulnerability DB)
+  08 bandit-tls                  OK     (10.2s)
+  09 OWASP ZAP                   SKIP   (requires running ZAP container)
+  10 codeclone strict            OK     (1.8s)
+  11 docstring coverage          OK     (0.6s)
+  12 docs Vale                   OK     (6.1s)
+  13 WAF coverage strict         OK     (2.4s)
+  15 feature-flags audit         OK     (0.5s)
+  16 team-ownership              OK     (0.0s)
+  17 side-effect audit           OK     (0.0s)
+  18 perf-gate                   SKIP   (requires running app at localhost:8000)
+  19 startup-time <3s            OK     (2.3s)
+  20 Streamlit pages             OK     (0.0s)
+  21 ConfigValidator             WARN   (0.0s) — ConfigValidator module not found (S17 K-ARCH-1 scaffold)
+  22 TaskRegistry orphans        WARN   (scaffold; runtime-проверка orphans в S20 (memory-leak-check))
+  23 OTel route coverage         WARN   (scaffold; coverage метрика появится после S20 OTel sweep)
+  24 APScheduler metrics         OK     (0.0s)
+  25 Authz audit emit            WARN   (scaffold; full audit-emit покрытие — S20)
+  26 Metrics labels cov          WARN   (scaffold; D11 sweep 52 callsites в работе (s17/k2-w2-metrics-migrate))
+  27 FF default-OFF              WARN   (scaffold; check_feature_flags returned non-zero (S17 baseline))
+  28 Numeric perf p95            WARN   (scaffold; k6/locust p95 ≤80ms gate — S20)
+  30 DR backup fresh             OK     (0.0s)
+  31 chaos-suite                 OK     (0.0s)
+  32 ADR freshness               OK     (0.0s)
+  33 plugin trust-tier           OK     (0.0s)
+  34 semantic-cache hit-rate     2026-09-29 12:32:51 [warning  ] Vault недоступен (HTTPConnectionPool(host='127.0.0.1', port=8200): Max retries exceeded with url: /v1/auth/token/lookup-self (Caused by NewConnectionError("HTTPConnection(host='127.0.0.1', port=8200): Failed to establish a new connection: [Errno 111] Connection refused"))) — secrets-источник пропущен. Установите vault.enabled=false или поднимите Vault, чтобы убрать это сообщение.
+WARN   (scaffold; no cache traffic yet (scaffold; will gate on first traffic))
+  35 RCA coverage                OK     (0.0s)
+  36 capability-gate coverage    OK     (0.0s)
+  37 mypy strict                 OK     (0.0s)
+  38 p95 perf-blocking           OK     (0.0s)
+
+======================================================================
+  PASSED: 26/37, WARN: 8, SKIPPED: 3, FAILED: 0
+======================================================================
+
+OK: pre-prod-check 26/37 passed (8 warn-only scaffold)
+PREPROD_EXIT=0
+PACKAGE_SHA=c066786fb27cedca595e00002b1996f922a31e56

@@ -1,0 +1,5 @@
+DoD-14 backup/restore drill + DoD-15 rollback drill (2026-09-29)
+BACKUP: ops/backup/backup_pg.sh -> dump complete 1241 bytes, exit 0 (гард >=1024; первая попытка 1020b честно отвергнута)
+RESTORE: ops/backup/restore_pg.sh -> verify-smoke OK: 2 tables restored into gd_restore; parity 50/50; payload 'alpha' OK
+ROLLBACK: alembic downgrade -1 -> c1d2e3f4a5b6 OK; upgrade head -> f1a2b3c4d5e6 OK
+FIXES: 68c0dd68c (seed naive-UTC; langmem uq_ имя констрейнта) — цепочка теперь проходится на чистом PostgreSQL
