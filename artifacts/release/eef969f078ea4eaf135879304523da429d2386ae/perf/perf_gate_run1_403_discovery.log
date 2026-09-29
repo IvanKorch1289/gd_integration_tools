@@ -1,0 +1,21 @@
+[34mRunning python perf-gate against baseline tests/perf/baseline.json...[0m
+ starting locust (100 users, 60s)...
+ERROR: locust exit 1: [2026-09-29 12:36:58,056] URAS-92727/INFO/locust.main: 
+Starting Locust 2.46.6
+[2026-09-29 12:36:58,056] URAS-92727/INFO/locust.main: Run time limit set to 60 
+seconds
+[2026-09-29 12:36:58,057] URAS-92727/INFO/locust.runners: Ramping to 100 users 
+at a rate of 10.00 per second
+[2026-09-29 12:37:07,091] URAS-92727/INFO/locust.runners: All users spawned: 
+{"BaselineUser": 50, "HealthcheckOnlyUser": 50} (100 total users)
+[2026-09-29 12:37:57,741] URAS-92727/INFO/locust.main: --run-time limit reached,
+shutting down
+[2026-09-29 12:37:57,788] URAS-92727/INFO/locust.main: Shutting down (exit code 
+1)
+Type     Name                                                                   
+# reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|-----------------------------------------------------------------------
+-----|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      /api/v1/readiness                                                      
+[33m[perf-gate-py] warn-only: thresholds not met (будет block в S3)[0m
+PERF_EXIT=0

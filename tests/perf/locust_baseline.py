@@ -78,8 +78,12 @@ class BaselineUser(HttpUser):
             json=payload,
             catch_response=True,
         ) as resp:
-            # 202 (async-api accepted), 200, 401 (без auth) — допустимы.
-            if resp.status_code in (200, 202, 401):
+            # 202 (async-api accepted), 200, 401/403 (denial-path без auth)
+            # — допустимы. 403 добавлен 2026-09-29: fail-closed стэк отвечает
+            # Forbidden (а не 401) на анонимный POST к бизнес-эндпоинту;
+            # для perf-цели важно, что запрос проходит полную middleware-
+            # цепочку, а не код отказа.
+            if resp.status_code in (200, 202, 401, 403):
                 resp.success()
             else:
                 resp.failure(f"unexpected status {resp.status_code}")
