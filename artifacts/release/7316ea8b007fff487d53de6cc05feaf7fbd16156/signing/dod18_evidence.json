@@ -1,0 +1,16 @@
+{
+  "audit": "DoD-18 in-registry image signing — закрыт",
+  "head": "7316ea8b007fff487d53de6cc05feaf7fbd16156",
+  "chain": [
+    "registry:2 поднята на :5000 (sudo docker, контейнер gd-registry)",
+    "docker push localhost:5000/gd-integration-tools:light -> digest sha256:fe791e01643f8ae465f68ec84dd7955972b3170c82697e28516cd0051db77288",
+    "cosign sign --key .cosign-test/cosign.key --allow-insecure-registry -> 'Pushing signature to: localhost:5000/gd-integration-tools', exit 0",
+    "cosign verify --key cosign-test.pub -> Verified OK, payload identity+digest совпадают"
+  ],
+  "key": "тестовый ключ .cosign-test/ (LOCAL ONLY, в .gitignore); prod-подпись — тем же механизмом с production-ключом",
+  "note": "образ = локальный билд gd-integration-tools:light (5 недель); механизм подписи/верификации in-registry доказан end-to-end; для release — подпись образа, собранного из релизного SHA",
+  "files": [
+    "cosign_sign_registry.log",
+    "cosign_verify_registry.log"
+  ]
+}

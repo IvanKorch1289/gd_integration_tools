@@ -1,0 +1,9 @@
+WARNING: Image reference localhost:5000/gd-integration-tools:light uses a tag, not a digest, to identify the image to sign.
+    This can lead you to sign a different image than the intended one. Please use a
+    digest (example.com/ubuntu@sha256:abc123...) rather than tag
+    (example.com/ubuntu:latest) for the input to cosign. The ability to refer to
+    images by tag will be removed in a future release.
+
+Signing artifact...
+Pushing signature to: localhost:5000/gd-integration-tools
+SIGN_EXIT=0

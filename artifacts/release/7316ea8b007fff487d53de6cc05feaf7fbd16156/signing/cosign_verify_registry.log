@@ -1,0 +1,9 @@
+
+Verification for localhost:5000/gd-integration-tools:light --
+The following checks were performed on each of these signatures:
+  - The cosign claims were validated
+  - Existence of the claims in the transparency log was verified offline
+  - The signatures were verified against the specified public key
+
+[{"critical":{"identity":{"docker-reference":"localhost:5000/gd-integration-tools:light"},"image":{"docker-manifest-digest":"sha256:fe791e01643f8ae465f68ec84dd7955972b3170c82697e28516cd0051db77288"},"type":"https://sigstore.dev/cosign/sign/v1"},"optional":{}}]
+VERIFY_EXIT=0
