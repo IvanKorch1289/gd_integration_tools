@@ -35,9 +35,10 @@ Blocking items, in priority order:
    a defect here — and not a regression from the CSP/gzip fixes, which moved
    `/docs` from 0 rendered operations to 14. `/redoc` renders the full
    specification and is the working browser view.
-4. **Coverage is far below the project's own bar** — ~52% measured against a
-   70% threshold. The gate reports this honestly instead of silently passing.
-   Two independent measurements agree within 0.36 p.p.
+4. **Coverage passes, but only for the subset that can run here** — 75.22%
+   over unit segments (90988 / 120968), gate exit 0. The env-tier directories
+   needing Docker/live servers are excluded, so no whole-tree figure exists
+   yet. The old ~52% number was whole-`tests/unit` and is not comparable.
 5. **The test suite is not isolation-safe** — the gRPC cluster (`9227f6ded`)
    and the frontend cluster (`3e1ff82ed`) are both fixed, but no whole-tree
    run has been completed on this machine, so no "suite is green" claim is
@@ -86,7 +87,7 @@ wrong; an incomplete environment is never reported as `PASS`.
 | CSP scoping | PASS | relaxed only for `/docs` and `/redoc`; `/openapi.json` and API responses keep `default-src 'self'` |
 | Readiness guards | PASS | `make readiness-check` exit 0 |
 | Pre-production | **FAIL** | `make pre-prod-check` exit 2 — 25/37 PASS, 1 FAIL (coverage), 8 WARN, 3 SKIP |
-| Coverage gate | **FAIL** | ~52% vs 70% threshold; gate correctly reports FAIL (exit 2) |
+| Coverage gate | **PASS (partial)** | 75.22% vs 70% threshold, gate exit 0 — measured over unit segments only; env-tier dirs (smoke/rpa/chaos/e2e) excluded because they need Docker/live servers |
 | Migration chain integrity | PASS | `alembic heads` single head, `alembic history` 25 linear revisions |
 | Migration apply / rollback | ENV_FAILURE | `alembic upgrade head` aborts in config load (`redis AuthenticationError`); no Redis/Vault here |
 | Privacy integration (PG/Redis/MinIO/Qdrant/LangMem) | NOT VERIFIED | backends not running |
@@ -332,11 +333,20 @@ installed — for the same wrong reason. Green is not the same as checked.
 
 ## Measurement notes and staleness
 
-- **Coverage ~52%, measured twice, ~18 p.p. below the 70% bar.**
-  - `52.25%` — full run on `tests/unit` at `cee4c33e5` (62374 / 119376 lines).
-  - `51.89%` — a later run on essentially this code, stopped at ~97% and
-    combined with `coverage combine`.
-  The 0.36 p.p. spread means the ~52% figure is stable, not a one-off.
+- **Coverage: 75.22% over the runnable subset, NOT over the whole tree.**
+  - The ~52% figures below were whole-`tests/unit` numbers. A segmented run at
+    `b5d5ed9f3` (56 segments, `--cov-append`, then `coverage combine` and
+    `xml`) reports `lines-covered="90988" lines-valid="120968"
+    line-rate="0.7522"` — the canonical gate passes at exit 0.
+  - **The caveat is material and is recorded in the artifact itself:** the
+    env-tier directories that need Docker / live servers (top-level `smoke`,
+    `rpa`, `chaos`, `e2e`) did not take part, because they cannot run here.
+    So 75.22% answers "how much of what can run, is covered", not "how much of
+    the repository is covered". A whole-tree number is still not available.
+  - Historical whole-tree figures, for comparison:
+    `52.25%` — full run on `tests/unit` at `cee4c33e5` (62374 / 119376 lines);
+    `51.89%` — a later run, combined. The 0.36 p.p. spread means the ~52%
+    figure is stable, not a one-off.
 
   **Correction of an earlier claim in this document.** The aborted runs were
   previously attributed to a repository defect ("pytest aborts in
@@ -358,6 +368,12 @@ installed — for the same wrong reason. Green is not the same as checked.
   found" rather than a number, because the file is a build artifact that the
   failed re-measurement removed.
 - `make readiness-check` was last run at `cee4c33e5`.
+- **`test_quality_results_aggregator.py` is slow, not hung.** An earlier note
+  here called it a hang on the strength of a 90 s per-file cap. Re-measured
+  with an adequate timeout: `6 passed in 91.83s`, matching its own docstring
+  (~95 s, aggregator runs ~10 gates). The cap was the defect, not the test.
+  Note it *writes* `.audit/quality-results.json`, so it must not be run while
+  another agent has uncommitted edits to that file.
 
 ---
 
