@@ -240,7 +240,10 @@ async def test_correlation_context_setter_called_with_resolved_tenant() -> None:
             send,
         )
 
-    mock_setter.assert_called_once_with(tenant_id="auth-tenant")
+    # 2026-09-29: добавлен request-time set (интеграционный контракт:
+    # хендлеры читают structlog tenant до ответа) — контракт теперь
+    # «последний вызов несёт авторитарное значение после auth».
+    mock_setter.assert_called_with(tenant_id="auth-tenant")
 
 
 @pytest.mark.asyncio

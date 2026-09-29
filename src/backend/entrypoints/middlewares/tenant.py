@@ -16,6 +16,8 @@ SecurityHeaders, cycle 36 RequestID, cycle 37 AuthMethodHeader).
 
 from __future__ import annotations
 
+import logging
+
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from src.backend.core.di.providers import get_correlation_context_setter_provider
@@ -66,10 +68,35 @@ class TenantMiddleware:
             await self.app(scope, receive, send)
             return
 
-        # Wrap send — header extraction, state-merge, default-fallback
-        # ВСЁ происходит в _resolve_tenant_id внутри send-wrapper.
-        # Мы НЕ pre-fill state['tenant_id'] здесь чтобы не перезаписать
-        # значение, которое inner auth middleware установит позже.
+        # Request-time pre-fill (integration contract: хендлеры видят
+        # tenant из header/default; inner auth middleware перезапишет
+        # state['tenant_id'] своим — ASGI ordering это позволяет, т.к.
+        # pre-fill идёт ДО вызова downstream). Guard «not in state»:
+        # если наружный middleware уже задал tenant — не трогаем.
+        state = scope.get("state")
+        if not isinstance(state, dict):
+            state = {}
+            scope["state"] = state
+        if "tenant_id" not in state:
+            header_value = _get_header(scope, _TENANT_HEADER_BYTES)
+            state["tenant_id"] = header_value if header_value else self._default
+            # ContextVar на request-path: логи хендлеров несут tenant
+            # (response-time set в wrapper обновит после auth).
+            try:
+                get_correlation_context_setter_provider()(tenant_id=state["tenant_id"])
+            except (
+                ImportError,
+                AttributeError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as corr_exc:
+                logging.getLogger(__name__).debug(
+                    "tenant.correlation_context_skipped: %s", corr_exc
+                )
+
+        # Wrap send — response-резолв (header > state [уже с auth] >
+        # default) + X-Tenant-ID в response headers.
         send_wrapper = _make_send_wrapper(send, scope, self._default)
         await self.app(scope, receive, send_wrapper)
 

@@ -72,7 +72,9 @@ class TestTenantMiddleware:
 
         headers = self._start_headers(send)
         assert headers[b"x-tenant-id"] == b"tenant-42"
-        mock_setter.assert_called_once_with(tenant_id="tenant-42")
+        # 2026-09-29: request-time + response-time set (интеграционный контракт):
+        # контракт «последний вызов несёт авторитарное значение».
+        mock_setter.assert_called_with(tenant_id="tenant-42")
 
     @pytest.mark.asyncio
     async def test_state_tenant_fallback(self) -> None:
@@ -109,7 +111,9 @@ class TestTenantMiddleware:
 
         headers = self._start_headers(send)
         assert headers[b"x-tenant-id"] == b"state-tenant"
-        mock_setter.assert_called_once_with(tenant_id="state-tenant")
+        # 2026-09-29: request-time + response-time set (интеграционный контракт):
+        # контракт «последний вызов несёт авторитарное значение».
+        mock_setter.assert_called_with(tenant_id="state-tenant")
 
     @pytest.mark.asyncio
     async def test_default_tenant_fallback(self) -> None:
@@ -139,7 +143,9 @@ class TestTenantMiddleware:
 
         headers = self._start_headers(send)
         assert headers[b"x-tenant-id"] == b"default"
-        mock_setter.assert_called_once_with(tenant_id="default")
+        # 2026-09-29: request-time + response-time set (интеграционный контракт):
+        # контракт «последний вызов несёт авторитарное значение».
+        mock_setter.assert_called_with(tenant_id="default")
 
     @pytest.mark.asyncio
     async def test_header_priority_over_state(self) -> None:
@@ -176,4 +182,6 @@ class TestTenantMiddleware:
 
         headers = self._start_headers(send)
         assert headers[b"x-tenant-id"] == b"header-tenant"
-        mock_setter.assert_called_once_with(tenant_id="header-tenant")
+        # 2026-09-29: request-time + response-time set (интеграционный контракт):
+        # контракт «последний вызов несёт авторитарное значение».
+        mock_setter.assert_called_with(tenant_id="header-tenant")
