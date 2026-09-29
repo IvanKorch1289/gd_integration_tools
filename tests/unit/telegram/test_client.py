@@ -22,6 +22,8 @@ from typing import Any
 import httpx
 import pytest
 
+from src.backend.core.net.migration_helper import _flag_enabled
+from src.backend.core.net.outbound_http import OutboundHttpClient
 from src.backend.infrastructure.clients.external.telegram_bot import (
     TelegramBotClient,
     TelegramBotConfig,
@@ -337,8 +339,27 @@ class TestContextManager:
         assert client._http is None
 
     def test_http_property_lazy_init(self, bot_config: TelegramBotConfig) -> None:
-        """``client.http`` создаёт временный AsyncClient если не открыт."""
+        """``client.http`` создаёт клиент через WAF-фасад, если флаг включён.
+
+        ``make_http_client`` возвращает ``OutboundHttpClient | httpx.AsyncClient``
+        в зависимости от ``feature_flags.waf_outbound_via_facade``. Тест раньше
+        утверждал ``isinstance(http, httpx.AsyncClient)`` — то есть legacy-путь,
+        и падал ровно тогда, когда WAF-обвязка активна (сейчас флаг = True).
+        Это было обратно проверке: успех означал обход WAF.
+
+        Теперь проверяется контракт по флагу, что дополнительно ловит
+        регрессию безопасности: флаг включён, а клиент вернулся «сырым»
+        httpx — то есть WAF молча обойдён.
+        """
         client = TelegramBotClient(bot_config)
         http = client.http
-        assert isinstance(http, httpx.AsyncClient)
+        if _flag_enabled():
+            assert isinstance(http, OutboundHttpClient), (
+                "waf_outbound_via_facade включён, но client.http вернул "
+                f"{type(http).__name__} — WAF-обвязка обойдена"
+            )
+        else:
+            assert isinstance(http, httpx.AsyncClient), (
+                f"флаг выключен, ожидался legacy httpx, получено {type(http).__name__}"
+            )
         assert client.http is http
