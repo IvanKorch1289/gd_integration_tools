@@ -10,6 +10,7 @@ M14.3: fix path bug.
 
 from __future__ import annotations
 
+import os
 import subprocess
 
 
@@ -30,6 +31,10 @@ class TestScaffoldPaths:
             capture_output=True,
             text=True,
             cwd="/home/user/dev/gd_integration_tools",
+            # Rich переносит длинные строки по ширине терминала, из-за чего
+            # путь в stdout разрывался как ".../testproc.p\ny" и проверка
+            # падала на корректном выводе. Фиксируем широкую «консоль».
+            env={**os.environ, "COLUMNS": "400", "TERM": "dumb"},
         )
         # dry-run output должен указывать правильный путь
         assert "src/backend/dsl/engine/processors/testproc.py" in result.stdout, (

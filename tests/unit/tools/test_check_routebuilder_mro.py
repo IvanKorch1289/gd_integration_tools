@@ -105,16 +105,33 @@ class TestFilterTopLevelBases:
 class TestCLIMain:
     """CLI integration: tool runs end-to-end via subprocess."""
 
-    def test_cli_default_fails(self) -> None:
-        """Default budget (50) fails because current MRO is 82."""
+    def test_cli_fails_below_budget(self) -> None:
+        """Ветка FAIL: бюджет ниже текущей глубины MRO даёт exit 1.
+
+        Раньше тест опирался на дефолтный бюджет 50 и ждал провала. Бюджет
+        поднят до DEFAULT_MAX_MRO_DEPTH = 100 (tools/checks/
+        check_routebuilder_mro.py:34), поэтому дефолт теперь проходит, и
+        проверять ветку отказа нужно на ЯВНО заданном бюджете — иначе тест
+        зависит от настройки, а не от поведения.
+        """
         result = subprocess.run(
-            [sys.executable, "tools/checks/check_routebuilder_mro.py"],
+            [sys.executable, "tools/checks/check_routebuilder_mro.py", "--max", "50"],
             capture_output=True,
             text=True,
         )
         assert result.returncode == 1
         assert "FAIL" in result.stdout
         assert "82" in result.stdout
+
+    def test_cli_default_budget_passes(self) -> None:
+        """Дефолтный бюджет — ratchet: текущая глубина MRO должна в него укладываться."""
+        result = subprocess.run(
+            [sys.executable, "tools/checks/check_routebuilder_mro.py"],
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, result.stdout
+        assert "OK" in result.stdout
 
     def test_cli_max_100_passes(self) -> None:
         result = subprocess.run(

@@ -24,13 +24,21 @@ def test_test_plug_manifest_compatible_with_project_core() -> None:
     assert "0.21.0" not in spec
 
 
-def test_test_plug_plugin_module_resolves_base_plugin_via_core_interfaces() -> None:
-    """extensions/test_plug/plugin.py использует канонический ``BasePlugin``."""
+def test_test_plug_plugin_module_resolves_base_plugin_via_core_api() -> None:
+    """extensions/test_plug/plugin.py импортирует ``BasePlugin`` из core.api.
+
+    Канонический путь — ``core.api``, а не прямой ``core.interfaces.plugin``:
+    canonical-module-map.md указывает «plugin.toml + BasePlugin из core.api»,
+    а ``core.api`` реэкспортирует BasePlugin из core.interfaces.plugin.
+    Все 13 существующих extensions импортируют именно так. Тест раньше
+    требовал прямой импорт из core.interfaces.plugin — это до-фасадный путь,
+    который расходится и с картой модулей, и с реальными плагинами.
+    """
     source = (_PROJECT_ROOT / "extensions/test_plug/plugin.py").read_text(
         encoding="utf-8"
     )
     compile(source, "extensions/test_plug/plugin.py", "exec")
-    assert "from src.backend.core.interfaces.plugin import BasePlugin" in source
+    assert "from src.backend.core.api import BasePlugin" in source
 
 
 def test_plugin_wizard_default_requires_core_matches_project() -> None:

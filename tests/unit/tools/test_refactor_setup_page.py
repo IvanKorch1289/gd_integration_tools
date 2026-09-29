@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
-import sys
+import tempfile
 from pathlib import Path
 
-# Add tools/ to path for direct import
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
-
-import tempfile
-
-from refactor_setup_page import (  # type: ignore[import-not-found]
+# Раньше здесь был sys.path.insert(... / "scripts") — хак, оставшийся от
+# времён, когда инструмент лежал в scripts/. Сейчас он в tools/, поэтому
+# путь указывал не туда, и модуль не импортировался: collection падал с
+# ModuleNotFoundError, что прерывало ВЕСЬ прогон tests/unit/tools.
+# Корень проекта уже добавляет tests/unit/tools/conftest.py, поэтому
+# канонический импорт — tools.refactor_setup_page, без sys.path-хака
+# (проект его запрещает, см. test_no_sys_path_hacks.py).
+from tools.refactor_setup_page import (  # type: ignore[import-not-found]
     RE_SET_PAGE_CONFIG,
     extract_kwargs,
     refactor_file,
