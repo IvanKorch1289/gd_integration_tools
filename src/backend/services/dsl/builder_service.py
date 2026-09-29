@@ -1,9 +1,10 @@
-# ruff: noqa: F821 — `__getattr__` proxy uses lazy module-level imports (Sprint 226)
 """W25.2 — DSLBuilderService: фасад для просмотра/сохранения DSL-маршрутов.
 
 Используется Streamlit-страницей ``32_DSL_Builder`` и dev-CLI
 ``manage.py dsl write-yaml``. Обращается к ``RouteRegistry`` и
-``YAMLStore`` через core-API; никаких прямых impl-импортов.
+``YAMLStore`` через core-API (``core.api.extensions`` — санкционированный
+фасад, re-export dsl-символов); никаких прямых impl-импортов, поэтому
+check_layers не считает это нарушением ``services → dsl``.
 
 Сохранение в YAML защищено environment-guard'ом: запись разрешена
 только когда ``settings.app.environment == "development"``. На staging
@@ -14,40 +15,24 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
+from src.backend.core.api.extensions import YAMLStore, route_registry
 from src.backend.core.config.settings import settings as app_settings
 from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.pipeline import Pipeline
 
-__all__ = ("DSLBuilderService", "SaveResult", "get_dsl_builder_service")
+__all__ = (
+    "DSLBuilderService",
+    "SaveResult",
+    "get_dsl_builder_service",
+    "route_registry",
+    "YAMLStore",
+)
 
 _logger = get_logger("services.dsl.builder")
-
-# Sprint 225 pattern (см. services/core/admin.py): services → dsl прямым
-# импортом запрещён layers-гейтом; DSL-singleton'ы резолвятся лениво
-# строковыми ссылками. noop-f821: имена кэшируются в module globals.
-_LAZY_MAP: dict[str, tuple[str, str]] = {
-    "route_registry": ("src.backend.dsl.commands.registry", "route_registry"),
-    "YAMLStore": ("src.backend.dsl.yaml_store", "YAMLStore"),
-}
-
-
-def _lazy(name: str) -> Any:
-    """Ленивый резолв DSL-символа по строковой ссылке (Sprint 225)."""
-    if name in globals():
-        return globals()[name]
-    if name in _LAZY_MAP:
-        import importlib
-
-        mod_path, attr = _LAZY_MAP[name]
-        value = getattr(importlib.import_module(mod_path), attr)
-        globals()[name] = value
-        return value
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
 
 _DEV_ENVIRONMENT = "development"
 
@@ -87,17 +72,17 @@ class DSLBuilderService:
     ) -> None:
         self._dir = Path(store_dir) if store_dir else Path(app_settings.dsl.routes_dir)
         self._env = environment or app_settings.app.environment
-        self._store = _lazy("YAMLStore")(self._dir)
+        self._store = YAMLStore(self._dir)
 
     # ── Read API ────────────────────────────────────────────
 
     def list_routes(self) -> tuple[str, ...]:
         """Возвращает все route_id, известные runtime'у."""
-        return _lazy("route_registry").list_routes()
+        return route_registry.list_routes()
 
     def get_pipeline(self, route_id: str) -> Pipeline | None:
         """Возвращает Pipeline или None, если не зарегистрирован."""
-        return _lazy("route_registry").get_optional(route_id)
+        return route_registry.get_optional(route_id)
 
     def render_yaml(self, route_id: str) -> str:
         """Сериализует Pipeline в YAML.
