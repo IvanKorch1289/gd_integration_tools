@@ -56,6 +56,8 @@ from src.backend.sdk import (
 
 __all__ = [
     "AIGateway",
+    # === Base classes for extension clients ===
+    "BaseExternalAPIClient",
     # === AI Tool Policy (re-exported) ===
     "AgentToolPolicy",
     # === Errors (re-exported) ===
@@ -155,6 +157,16 @@ def __getattr__(name: str) -> Any:
         from src.backend.core.ai.gateway.gateway import AIGateway
 
         return AIGateway
+    # BaseExternalAPIClient — базовая класса для external-API клиентов.
+    # Добавлен 2026-09-29: extensions/credit_pipeline импортировал его отсюда,
+    # но символ не был в __all__ и не резолвился в __getattr__ — расширение
+    # падало с ImportError и не импортировалось вообще.
+    # Канонический путь — core (контракт), не services: это базовый класс,
+    # а не реализация инфраструктуры.
+    if name == "BaseExternalAPIClient":
+        from src.backend.core.services.base_external_api import BaseExternalAPIClient
+
+        return BaseExternalAPIClient
     # === Domain Facades (Cycle 31 P2.1) ===
     if name == "get_storage_facade_provider":
         from src.backend.core.di.providers.storage import get_storage_facade_provider
@@ -297,6 +309,7 @@ def __dir__() -> list[str]:
             "get_elasticsearch_client_class",
             "get_clickhouse_client_class",
             "AIGateway",
+            "BaseExternalAPIClient",
             "get_storage_facade_provider",
             "get_external_db_facade",
             "get_auth_facade",

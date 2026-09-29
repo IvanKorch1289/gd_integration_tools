@@ -87,6 +87,11 @@ LEGITIMATE_MIXIN_FILES = (
     "src/backend/dsl/engine/processors/security/card_tokenize.py",
     "src/backend/dsl/engine/processors/security/pii_erase.py",
     "src/backend/services/pii/facade.py",
+    # Тот же class-internal pattern: класс определяет `_emit_audit`
+    # (hitl_service.py:240) и вызывает `self._emit_audit(...)` из своего
+    # же метода (строка 180). Добавлен 2026-09-29 — файл отсутствовал в
+    # списке, хотя структурно идентичен четырём записям выше.
+    "src/backend/services/workflows/hitl_service.py",
 )
 
 

@@ -39,15 +39,16 @@ def _load_module():
 
 
 def test_legitimate_mixin_files_constant_exists() -> None:
-    """``LEGITIMATE_MIXIN_FILES`` — constant с 13 mixin/stub файлами (S111 W3 + S155 + S121 W1).
+    """``LEGITIMATE_MIXIN_FILES`` — constant с 14 mixin/stub файлами (S111 W3 + S155 + S121 W1).
 
-    S121 W1: расширен 4 class-internal dual-emit (observability middleware,
-    card_tokenize/pii_erase DSL processors, pii/facade service).
+    S121 W1: расширен 5 class-internal dual-emit (observability middleware,
+    card_tokenize/pii_erase DSL processors, pii/facade service, hitl_service
+    workflow service).
     """
     mod = _load_module()
     assert hasattr(mod, "LEGITIMATE_MIXIN_FILES")
     assert isinstance(mod.LEGITIMATE_MIXIN_FILES, tuple)
-    assert len(mod.LEGITIMATE_MIXIN_FILES) == 13
+    assert len(mod.LEGITIMATE_MIXIN_FILES) == 14
 
     # S111 W3: файлы могут быть в core/security, core/net, или
     # class-internal dual-emit (S121 W1: middleware/dsl/services).
@@ -67,11 +68,12 @@ def test_legitimate_mixin_files_constant_exists() -> None:
 def test_legitimate_mixin_files_contain_expected_dual_emit_files() -> None:
     """Allowlist содержит известные dual-emit файлы (TD-004 audit).
 
-    S121 W1: расширен 4 класса с class-internal dual-emit pattern
+    S121 W1: расширен 5 классов с class-internal dual-emit pattern
     (self._emit_audit внутри собственного class):
     - observability.py — middleware
     - card_tokenize.py + pii_erase.py — DSL processors
     - pii/facade.py — service facade
+    - workflows/hitl_service.py — workflow service (добавлен 2026-09-29)
     """
     mod = _load_module()
     expected = {
@@ -88,6 +90,7 @@ def test_legitimate_mixin_files_contain_expected_dual_emit_files() -> None:
         "src/backend/dsl/engine/processors/security/card_tokenize.py",
         "src/backend/dsl/engine/processors/security/pii_erase.py",
         "src/backend/services/pii/facade.py",
+        "src/backend/services/workflows/hitl_service.py",
     }
     actual = set(mod.LEGITIMATE_MIXIN_FILES)
     assert actual == expected
@@ -112,7 +115,7 @@ def test_audit_deprecation_checker_exits_zero_in_strict() -> None:
 
 
 def test_audit_deprecation_checker_json_includes_allowlist_count() -> None:
-    """``--json`` вывод содержит ``allowlisted_files`` field = 13 (S121 W1)."""
+    """``--json`` вывод содержит ``allowlisted_files`` field = 14 (S121 W1)."""
     result = subprocess.run(
         [".venv/bin/python", str(_TOOL_PATH), "--json"],
         cwd=_REPO_ROOT,
@@ -123,7 +126,7 @@ def test_audit_deprecation_checker_json_includes_allowlist_count() -> None:
     assert result.returncode == 0
     data = json.loads(result.stdout)
     assert "allowlisted_files" in data
-    assert data["allowlisted_files"] == 13
+    assert data["allowlisted_files"] == 14
     # После allowlist: 0 files with legacy, 0 callsites.
     assert data["total_callsites"] == 0
     assert data["files_with_legacy"] == 0
@@ -139,7 +142,7 @@ def test_audit_deprecation_checker_show_allowlist_flag() -> None:
         timeout=60,
     )
     assert result.returncode == 0
-    assert "LEGITIMATE_MIXIN_FILES (13 files)" in result.stdout
+    assert "LEGITIMATE_MIXIN_FILES (14 files)" in result.stdout
     # Все 9 файлов перечислены.
     for path in (
         "src/backend/core/net/outbound_http.py",
