@@ -1,0 +1,13 @@
+{
+  "audit": "MANIFEST_23 PARTIAL re-measure #1 (мониторинговый цикл)",
+  "head": "16869b22807e3616c37eb34105a12a39a57c52a7",
+  "window_check": "новых инкрементов владельца нет (HEAD = манифест 16869b228); worktree 13 dirty (их WIP) -> окно 02-worktree НЕ открыто, 23/23 VERIFIED недостижимо в этом цикле — PARTIAL не launderится",
+  "item_19_strict": {
+    "command": "make perf-gate-py-strict BASE_URL=http://localhost:8081 (blocking, --strict)",
+    "result": "FAIL exit 2: rps 386.7 < 1000, p99 580ms > 500; p95 170ms — порог ПРОЙДЕН (машина тише, чем в прошлом замере 310ms); fail_rate 0.0",
+    "verdict": "PARTIAL подтверждён: blocking-пороги требуют staging/prod-профиля (dev_light 1 uvicorn-worker)"
+  },
+  "items_02_22": {
+    "status": "PARTIAL без изменений: worktree WIP владельца; warn-only флаг до staging"
+  }
+}
