@@ -161,7 +161,9 @@ def test_check_coverage_gate_missing_xml(tmp_path: Path) -> None:
     """
     from tools.check_coverage_gate import app
 
-    result = runner.invoke(app, ["main", "--coverage-xml", str(tmp_path / "no_such.xml")])
+    result = runner.invoke(
+        app, ["main", "--coverage-xml", str(tmp_path / "no_such.xml")]
+    )
     assert result.exit_code == 2
 
 
