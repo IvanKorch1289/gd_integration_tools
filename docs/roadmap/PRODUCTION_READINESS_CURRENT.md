@@ -421,6 +421,14 @@ installed — for the same wrong reason. Green is not the same as checked.
   excludes both fixes (11.0.0 and 11.0.1). `mkdocs-material` itself pins no
   upper bound, so the cap is removable. Anyone installing `[docs]` today gets
   the vulnerable version with no in-range upgrade.
+
+  Re-measured at `3bc8a25f5`: `make sbom-diff-gate` exits **1** and prints
+  `RESULT: FAIL (new CVEs vs baseline)` — the verdict and the exit code agree,
+  so the `15479d1c9` fix holds. `dist/pip-audit.json` attributes both PYSEC IDs
+  to `pymdown-extensions 10.21.3` and nothing else. `import pymdownx` fails in
+  both the system interpreter and the `uv` venv (364 packages, none of them
+  mkdocs/pymdown), confirming the `[docs]` extra is not installed and the
+  exposure is docs-tooling only, not a runtime dependency.
 - **`sbom-diff-gate` is not invoked by `make ci`.** The composite runs
   format-check, lint-strict, type-check-strict, deps-check-strict,
   secrets-check, check-waf-coverage-strict, check-ai-safety and
