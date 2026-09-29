@@ -121,7 +121,7 @@ class EventBusFacade:
         *,
         topic_pattern: str | None = None,
         ack_mode: str = "auto",
-    ) -> None:
+    ) -> Any:
         """Подписаться с автоматическим unsubscribe через facade.shutdown().
 
         Args:
@@ -130,12 +130,20 @@ class EventBusFacade:
             topic_pattern: Опциональный glob-pattern (для topic-based routing).
             ack_mode: ``"auto"`` (auto-ack) / ``"manual"`` (handler должен ack).
 
+        Returns:
+            Handle от ``bus.subscribe`` (subscription id/bus-specific), либо
+            ``None`` если транспорт handle не возвращает. Проброс аддитивен:
+            прежние callers, игнорировавшие результат, совместимы.
+
         Raises:
             CapabilityDeniedError: недостаточно прав.
 
         """
         self._assert_subscribe(channel)
-        await self._bus.subscribe(channel, handler)
+        try:
+            handle = await self._bus.subscribe(channel, handler)
+        except Exception as exc:
+            raise ServiceError(f"eventbus subscribe failed: {exc}") from exc
         self._subscriptions.append(
             _SubscriptionRecord(
                 channel=channel,
@@ -144,6 +152,7 @@ class EventBusFacade:
                 ack_mode=ack_mode,
             )
         )
+        return handle
 
     async def unsubscribe_all(self) -> None:
         """Отписаться от всех зарегистрированных подписок (lifecycle)."""
