@@ -121,9 +121,13 @@ def list_plugins(status_filter: str = "all") -> list[dict[str, Any]]:
         routes_count, actions_count, tenant_aware, description.
 
     """
-    try:
-        import httpx
+    # import ДО try: имя ``httpx`` используется в except-кортеже ниже. При
+    # import внутри try исключение из самого import привело бы к NameError
+    # при вычислении кортежа (httpx ещё не связан). Такой же дефект был в
+    # get_plugin_manifest / toggle_plugin.
+    import httpx
 
+    try:
         with httpx.Client(timeout=5.0) as client:
             response = client.get(f"{_BASE_URL}/api/v1/admin/plugins/list")
             response.raise_for_status()
@@ -139,8 +143,14 @@ def list_plugins(status_filter: str = "all") -> list[dict[str, Any]]:
         RuntimeError,
         ValueError,
         TypeError,
+        httpx.HTTPError,
     ) as plugins_exc:
         # cycle-9/D-AUDIT-1077: narrow exceptions + observability.
+        # httpx.HTTPError обязателен: httpx.ConnectError НЕ является
+        # подклассом builtin ConnectionError (MRO: ConnectError → NetworkError
+        # → TransportError → RequestError → HTTPError → Exception). Без него
+        # docstring-обещанный mock-fallback при недоступном backend был
+        # недостижим, и httpx.ConnectError всплывал наружу.
         # ConnectionError/TimeoutError — server unreachable, RuntimeError
         # — API failure, ValueError — invalid response, TypeError — wrong.
         import logging
@@ -170,9 +180,10 @@ def get_plugin_manifest(name: str) -> dict[str, Any] | None:
         Словарь manifest плагина или None если плагин не найден.
 
     """
-    try:
-        import httpx
+    # import до try — см. комментарий в list_plugins.
+    import httpx
 
+    try:
         with httpx.Client(timeout=5.0) as client:
             response = client.get(f"{_BASE_URL}/api/v1/admin/plugins/{name}/manifest")
             if response.status_code == 404:
@@ -214,9 +225,10 @@ def toggle_plugin(name: str, active: bool) -> bool:
 
     """
     body: dict[str, Any] = {"name": name, "active": active}
-    try:
-        import httpx
+    # import до try — см. комментарий в list_plugins.
+    import httpx
 
+    try:
         with httpx.Client(timeout=10.0) as client:
             response = client.post(
                 f"{_BASE_URL}/api/v1/admin/plugins/{name}/toggle", json=body

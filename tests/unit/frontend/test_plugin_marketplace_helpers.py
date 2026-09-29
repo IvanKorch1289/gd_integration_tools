@@ -143,3 +143,84 @@ def test_list_plugins_filter_by_status() -> None:
             f"Плагин '{plugin.get('name')}' имеет статус '{plugin.get('status')}', "
             "ожидался 'active'"
         )
+
+
+# ---------------------------------------------------------------------------
+# Регресс-тесты: httpx.HTTPError в except-кортеже и позиция import httpx
+# ---------------------------------------------------------------------------
+
+
+def test_list_plugins_falls_back_on_http_status_error() -> None:
+    """raise_for_status() бросает httpx.HTTPStatusError — fallback тоже обязан сработать.
+
+    Раньше httpx.HTTPError стоял в кортеже у get_plugin_manifest и
+    toggle_plugin, но был забыт у list_plugins, поэтому 5xx от backend
+    всплывал наружу вместо mock-списка.
+    """
+    import httpx
+
+    with patch("httpx.Client") as mock_client_cls:
+        mock_client = MagicMock()
+        mock_client.__enter__ = MagicMock(return_value=mock_client)
+        mock_client.__exit__ = MagicMock(return_value=False)
+        response = MagicMock()
+        response.raise_for_status.side_effect = httpx.HTTPStatusError(
+            "500 Server Error", request=MagicMock(), response=MagicMock()
+        )
+        mock_client.get.return_value = response
+        mock_client_cls.return_value = mock_client
+
+        from src.frontend.streamlit_app.services.plugin_marketplace_client import (
+            list_plugins,
+        )
+
+        result = list_plugins()
+
+    assert isinstance(result, list)
+    assert len(result) > 0, "HTTP 5xx должен приводить к mock-fallback"
+
+
+def test_functions_raise_importerror_not_unboundlocal_without_httpx() -> None:
+    """Без httpx функции обязаны давать ImportError, а не UnboundLocalError.
+
+    Если ``import httpx`` стоит ВНУТРИ try, а ``httpx.HTTPError`` упоминается
+    в except-кортеже, то при провале самого import Python вычисляет кортеж с
+    ещё не связанным локальным именем и бросает UnboundLocalError — имя
+    ошибки вводит в заблуждение и противоречит docstring модуля ("модуль не
+    требует httpx").
+    """
+    import builtins
+    import sys
+
+    from src.frontend.streamlit_app.services import plugin_marketplace_client as m
+
+    real_import = builtins.__import__
+
+    def _fake_import(name, *args, **kwargs):
+        if name == "httpx" or name.startswith("httpx."):
+            raise ImportError("No module named 'httpx'")
+        return real_import(name, *args, **kwargs)
+
+    saved = {
+        k: v for k, v in sys.modules.items() if k == "httpx" or k.startswith("httpx.")
+    }
+    for key in saved:
+        sys.modules.pop(key, None)
+    builtins.__import__ = _fake_import
+    try:
+        for call in (
+            lambda: m.list_plugins(),
+            lambda: m.get_plugin_manifest("core_entities"),
+            lambda: m.toggle_plugin("core_entities", True),
+        ):
+            try:
+                call()
+            except UnboundLocalError as exc:  # pragma: no cover - регресс
+                raise AssertionError(
+                    f"UnboundLocalError вместо ImportError: {exc}"
+                ) from exc
+            except ImportError:
+                pass  # ожидаемое и честное поведение
+    finally:
+        builtins.__import__ = real_import
+        sys.modules.update(saved)
