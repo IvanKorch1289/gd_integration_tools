@@ -373,9 +373,28 @@ installed — for the same wrong reason. Green is not the same as checked.
   `RESULT: PASS` while `main()` returned 1. Fixed at `15479d1c9`; the mask was
   hiding 6 CVE/advisory IDs absent from the 2026-09-14 baseline
   (CVE-2026-61632, CVE-2026-67422, GHSA-9xwg-3r6f-jcx2, GHSA-gm37-52c6-37mw,
-  PYSEC-2026-3609, PYSEC-2026-3654). They are **not triaged**: the baseline is
-  from 2026-09-14 and `dist/pip-audit.json` from 2026-09-22, so the input data
-  is itself stale. Refreshing baseline and audit data is a separate decision.
+  PYSEC-2026-3609, PYSEC-2026-3654). **Correction after triage:** those are
+  **2 vulnerabilities, not 6** — `_extract_vuln_ids` adds each advisory's
+  aliases, so every finding is counted as PYSEC + GHSA + CVE.
+
+  Both are in `pymdown-extensions 10.21.3`, which is pinned in `uv.lock`:
+
+  | advisory | aliases | fix | class |
+  |---|---|---|---|
+  | PYSEC-2026-3609 | CVE-2026-61632, GHSA-9xwg-3r6f-jcx2 | 11.0.0 | path traversal in `pymdownx/b64.py` — reads image-extension files outside `base_path` (targeted file read, not arbitrary read) |
+  | PYSEC-2026-3654 | CVE-2026-67422, GHSA-gm37-52c6-37mw | 11.0.1 | ReDoS / CWE-1333 in four inline processors, reachable in the **default** configuration |
+
+  **Not live in this environment:** `pymdown-extensions` is not installed
+  (`PackageNotFoundError`), and `mkdocs-material` / `mkdocstrings` /
+  `markdown` are absent too, so a fresh `pip-audit` correctly reports "No
+  known vulnerabilities found". The 6 IDs came from the stale
+  `dist/pip-audit.json` of 2026-09-22.
+
+  **The blocker is ours.** `pyproject.toml:519` declares
+  `pymdown-extensions>=10.7.0,<11.0.0` in the `docs` extra, and that cap
+  excludes both fixes (11.0.0 and 11.0.1). `mkdocs-material` itself pins no
+  upper bound, so the cap is removable. Anyone installing `[docs]` today gets
+  the vulnerable version with no in-range upgrade.
 - **`sbom-diff-gate` is not invoked by `make ci`.** The composite runs
   format-check, lint-strict, type-check-strict, deps-check-strict,
   secrets-check, check-waf-coverage-strict, check-ai-safety and
