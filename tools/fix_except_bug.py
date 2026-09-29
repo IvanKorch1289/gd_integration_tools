@@ -1,8 +1,24 @@
-"""S60 W3 codemod: fix 'except A, B:' (semantic bug) → 'except (A, B):'.
+"""S60 W3 codemod: 'except A, B:' → 'except (A, B):' (COSMETIC, см. ADR-0304).
 
-Background: in Python 3.x, ``except A, B:`` is NOT a syntax error.
-It means "catch A, bind to name B" — NOT "catch A or B".
-When the developer intended multiple types, they forgot parens.
+!! DEPRECATED ПО ПРЕМПОЗЫЦИИ !!
+
+Исходное обоснование («except A, B: ловит ТОЛЬКО A») было верно для Python
+< 3.14, где такая запись означала «поймать A и связать исключение с именем B».
+С **PEP 758** (Python 3.14) форма без скобок легальна и семантически
+ЭКВИВАЛЕНТНА ``except (A, B):`` — ловит все перечисленные типы.
+
+Проект требует ``requires-python = ">=3.14,<3.15"``, поэтому описываемый
+здесь «семантический баг» невозможен ни на одной поддерживаемой версии.
+Проверено на 3.14.0: ``except TypeError, ValueError:`` ловит ValueError.
+
+Запуск этого codemoda — чисто косметическая правка 194 sites в 155 файлах
+БЕЗ изменения поведения, и она противоречит ADR-0304, где безскобочная форма
+объявлена каноничной. Оставлен для исторической справки; гейт, требовавший
+обнулить эти sites, снят в том же ADR.
+
+Реальный (и единственный оставшийся) хазард — биндинг ``except A, B as e:``,
+это SyntaxError; его проверяет
+``tests/unit/tools/test_fix_except_bug_no_remaining.py``.
 
 Examples (all REAL bugs found in src/):
 - ``except TypeError, ValueError:``        → catches ONLY TypeError
