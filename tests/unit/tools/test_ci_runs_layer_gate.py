@@ -139,3 +139,43 @@ def test_unit_tests_timeout_is_defined_and_not_disabled() -> None:
     assert int(match.group(1)) > 0, (
         f"UNIT_TEST_TIMEOUT={match.group(1)} отключает таймер pytest-timeout"
     )
+
+
+def test_unit_tests_jobs_is_bounded_not_auto() -> None:
+    """UNIT_TEST_JOBS ограничен явным числом, а не ``-n auto``.
+
+    Измерено 2026-09-29: ``-n auto`` (4 воркера на 15 ГБ) доводит прогон до
+    99% и упирается в OOM — воркеры убиты kernel'ом, становятся зомби, а
+    xdist-контроллер бесконечно ждёт мёртвый воркер. Прогон ВИСИТ, а не
+    падает, поэтому pytest-timeout не помогает: он ограничивает зависший
+    тест, тогда как здесь процесс убит снаружи.
+
+    Именно поэтому значение должно быть явным: ``-n auto`` масштабируется по
+    числу ядер игнорируя доступную память.
+    """
+    body = re.search(
+        r"^unit-tests:.*?\n((?:\t.*\n)+)",
+        PIPELINES.read_text(encoding="utf-8"),
+        re.MULTILINE,
+    )
+    assert body, "цель unit-tests не найдена"
+    recipe = body.group(1)
+    assert "-n auto" not in recipe, (
+        "unit-tests не должен использовать `-n auto`: число воркеров должно "
+        "ограничиваться UNIT_TEST_JOBS, иначе OOM-kill оставляет xdist-"
+        "контроллер висеть на мёртвом воркере"
+    )
+    assert "-n $(UNIT_TEST_JOBS)" in recipe, (
+        f"ожидался `-n $(UNIT_TEST_JOBS)` в рецепте, получено:\n{recipe}"
+    )
+
+
+def test_unit_tests_jobs_default_is_small() -> None:
+    """Дефолт UNIT_TEST_JOBS невелик и подтверждён прогоном без OOM."""
+    makefile = (REPO_ROOT / "Makefile").read_text(encoding="utf-8")
+    match = re.search(r"^UNIT_TEST_JOBS\s*\??=\s*(\S+)", makefile, re.MULTILINE)
+    assert match, "UNIT_TEST_JOBS не определён в Makefile"
+    assert int(match.group(1)) <= 2, (
+        f"UNIT_TEST_JOBS={match.group(1)}: на 15 ГБ / 4 ядра 4 воркера "
+        "приводят к OOM-kill воркеров и зависанию контроллера"
+    )
