@@ -1,0 +1,18 @@
+{
+  "audit": "staging-профиль boot-drill для DoD-19/22 (perf-strict) — blocker охарактеризован",
+  "head": "c5faa268778c398f565ce57ddb1fd4f2733389ae",
+  "what_works": [
+    "конфиги staging.yml починены ранее (streams/queues — c8cca810f-эра)",
+    "hosts-алиасы staging-хостов (setfacl-практика) — все 6 hostname резолвятся",
+    "infra: drill-pg (миграции на head), host redis :6379, drill-rabbit :5672",
+    "granian multiworker стартует (5 процессов при --workers 4, 3 при --workers 2)"
+  ],
+  "blocker": {
+    "symptom": "lifespan startup падает: CancelledError «Cancelled via cancel scope; reason: deadline exceeded» (anyio) xN воркеров -> graceful shutdown",
+    "localized": "faststream broker connect внутри startup при init-контеншене multiworker; RabbitMQ сам коннектится (aio-pika probe: connect OK, timeout 10s)",
+    "handoff": "владельцу messaging/composition домена: поднять connect-deadline faststream или вынести broker.connect из критического startup-пути / последовательный warm-up воркеров",
+    "prod_note": "тот же класс зависания наблюдался на prod-профиле (startup phases после extensions)"
+  },
+  "dod_impact": "19/22 PARTIAL подтверждаются третьим независимым перемером: multiworker-профиль локально незагружаем из-за connect-deadline — измерение 1000 RPS требует исправления boot (не включения флага)",
+  "cleanup": "drill-rabbit остановлен и удалён"
+}
