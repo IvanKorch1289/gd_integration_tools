@@ -89,7 +89,7 @@ wrong; an incomplete environment is never reported as `PASS`.
 | OpenAPI integrity | PASS | 0 masking artifacts in the served spec (was 16) |
 | CSP scoping | PASS | relaxed only for `/docs` and `/redoc`; `/openapi.json` and API responses keep `default-src 'self'` |
 | Readiness guards | PASS | `make readiness-check` exit 0 |
-| Pre-production | **FAIL** | `make pre-prod-check` exit 2 — 25/37 PASS, 1 FAIL (coverage), 8 WARN, 3 SKIP |
+| Pre-production | **FLAKY — not a deterministic verdict** | `make pre-prod-check` has produced 25/37 with 1 FAIL and 26/37 with 0 FAILED on one unchanged SHA, observed by an independent verifier and by the owner minutes apart. Cause is check #19 `startup-time <3s`: the gate looks absolute (3.0s) but with a baseline present the verdict is `baseline × 1.30` = **2.145s** (`tools/checks/startup_time.py:181`, baseline 1.65s). 13 standalone measurements span 1.782–2.263s and exceed the limit on 1 of 13 (8%). After `08115534f` the tally is 27/37, 7 WARN, 3 SKIP. The startup gate is the flake, not the rest of the suite |
 | Coverage gate | **PASS (partial)** | 75.22% vs 70% threshold, gate exit 0 — measured over unit segments only; env-tier dirs (smoke/rpa/chaos/e2e) excluded because they need Docker/live servers |
 | Migration chain integrity | PASS | `alembic heads` single head, `alembic history` 25 linear revisions |
 | Migration apply / rollback | ENV_FAILURE | `alembic upgrade head` aborts in config load (`redis AuthenticationError`); no Redis/Vault here |
