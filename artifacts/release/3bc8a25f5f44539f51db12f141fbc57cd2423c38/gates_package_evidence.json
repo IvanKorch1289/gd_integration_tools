@@ -1,0 +1,15 @@
+{
+  "audit": "Gates package на замороженном SHA + optional-tenant checker fix verification",
+  "base_sha": "8f07f83f57a24749efe0fa5776c22fe32eb086e9",
+  "final_sha": "3bc8a25f5f44539f51db12f141fbc57cd2423c38",
+  "sha_note": "make ci + readiness-check выполнены на 8f07f83f5; pre-prod-check изначально FAIL (layers: 2 новых нарушения в services/dsl/builder_service.py от волны владельца f681c4ed) → исправлены 12ead1617 (lazy-proxy Sprint 225) → pre-prod PASS. Финальный SHA = base + только этот фикс",
+  "make_ci": {"exit_code": 0, "verdict": "CI gate passed", "log": "make_ci_pass.log"},
+  "readiness_check": {"exit_code": 0, "verdict": "All guards passed! (fallback matrix 11 components)", "log": "readiness_check_pass.log"},
+  "pre_prod_check": {"exit_code": 0, "verdict": "26/37 passed, 8 warn-only scaffold, 3 env-tier skip, 0 failed", "log": "pre_prod_check_pass.log"},
+  "optional_tenant_checker": {
+    "fix_commit": "993dfefcd (identity=(file, qualified_name, arg), moved/changed/new разделены)",
+    "verification": "11/11 regression-тестов; live exit 0; --strict exit 0; No drift 123=123",
+    "claim_ledger": "C09 PARTIAL→VERIFIED; итог: 10 VERIFIED / 8 PARTIAL / 2 UNKNOWN (env-tier)"
+  },
+  "layers_fix": {"commit": "12ead1617", "before": "2 новых нарушения (builder_service.py)", "after": "0 новых / 22 legacy"}
+}
