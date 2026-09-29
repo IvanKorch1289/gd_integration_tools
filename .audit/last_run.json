@@ -1,10 +1,10 @@
 {
   "audit": "GD Integration Tools — current readiness status",
-  "head": "3fa6cd206",
-  "timestamp": "2026-09-28T20:20:00+00:00",
+  "head": "44d7ae4c2",
+  "timestamp": "2026-09-29T09:26:00+00:00",
   "status": "not_production_ready",
   "canonical_doc": "docs/roadmap/PRODUCTION_READINESS_CURRENT.md",
-  "per_sha_evidence": "artifacts/release/3fa6cd206afc0950722d325fefed28d20c2c0de5/EVIDENCE.md",
+  "per_sha_evidence": "artifacts/release/44d7ae4c2d332442a9753f16ccc9e3b9acb658c5/EVIDENCE.md",
   "superseded_docs": [
     "docs/roadmap/PRODUCTION_READINESS.md (snapshot 2026-09-01)",
     "docs/roadmap/PRODUCTION_READINESS_FINAL.md (snapshot 2026-09-02)"
@@ -102,6 +102,7 @@
     "Swagger UI 5 renders only 14 of 443 operations past ~72 operations; bisected between 71 and 72, ruled out slow rendering, truncated download, specific requestBody, and the application itself (reproduced on a static server with no app and no CSP) — third-party limitation, not a service defect"
   ],
   "environment_notes": [
-    "MCP is not served in this environment: mcp_settings.http_enabled is False AND fastmcp is not importable. GET /mcp returns 401, but a control request to a nonexistent path returns a byte-identical 401/36-byte body, so that status proves nothing about the MCP route."
+    "fastmcp 4.0.3 (the uv.lock pin) was installed with `uv pip install fastmcp==4.0.3`; `uv sync --all-extras` was deliberately not run because it rewrites the whole venv. The MCP cluster is now 106 passed / 0 failed.",
+    "MCP is mounted at /mcp (verified in the live app: McpAuthMiddleware -> StarletteWithLifespan, inner route \"/\"). An authenticated JSON-RPC round-trip is still NOT VERIFIED: the outer AuthRequiredMiddleware answers 401 first and this environment cannot mint an API key (Redis is reachable but not configured for auth)."
   ]
 }

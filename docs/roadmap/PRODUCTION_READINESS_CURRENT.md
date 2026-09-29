@@ -90,12 +90,14 @@ wrong; an incomplete environment is never reported as `PASS`.
 | Migration apply / rollback | ENV_FAILURE | `alembic upgrade head` aborts in config load (`redis AuthenticationError`); no Redis/Vault here |
 | Privacy integration (PG/Redis/MinIO/Qdrant/LangMem) | NOT VERIFIED | backends not running |
 | Tooling test suite | **FAIL** | `tests/unit/tools/`: 10 failures, all reproduce on a clean `HEAD` worktree |
-| Unit test suite (per-directory) | **FAIL** | all 16 clusters under `tests/unit/entrypoints/` re-measured: green except `mcp`, which is down to 4 failures at `3fa6cd206` — all four are the missing `fastmcp` |
+| Unit test suite (per-directory) | **PASS** | at `44d7ae4c2` every cluster under `tests/unit/entrypoints/` is green: grpc 66, api 338, mcp 106, middlewares 575, websocket 65, scheduler 15, sse 36, stream 16, webhook 12 (run separately to stay under the RAM ceiling) |
 | Unit test suite (whole-tree) | **FAIL** | reports failures that do not reproduce in isolation; gRPC half fixed at `9227f6ded`, frontend `shared/test_components.py` half still open |
 | HTTP / cURL matrix | PASS | `artifacts/release/98698dd51.../curl_matrix.txt`, 8 groups |
 | Route inventory | PASS | 414 paths / 443 operations, from the live `openapi.json` |
 | gzip / ASGI response validity | PASS | `openapi.json` + gzip → 200 / 58 150 B with `content-encoding: gzip` (was 000 / 0 B) |
 | Per-operation auth (runtime) | **PARTIAL** | 10 endpoints probed → 401/403; the other 433 verified only through the spec |
+| MCP surface (mount + auth wrap) | PASS | `44d7ae4c2`: `/mcp` mounted in the live app, chain `McpAuthMiddleware -> StarletteWithLifespan`, inner route `/` (D-AUDIT-20812). Cluster 106 passed / 0 failed |
+| MCP protocol round-trip | **NOT VERIFIED** | the outer `AuthRequiredMiddleware` answers 401 before `McpAuthMiddleware` runs; an authenticated `initialize` / `tools/list` needs an API key this environment cannot mint |
 | Browser / Playwright | PASS with caveat | Playwright run: 7 PASS, 1 PARTIAL, 0 FAIL, zero console errors. `/docs` loads and Authorize works; `/redoc` renders all 443 operations. Swagger UI alone renders 14 — third-party limit, diagnosed |
 | Container image + SBOM | NOT VERIFIED | not built for this SHA |
 | Signature / cosign | NOT VERIFIED | no image to sign |
@@ -237,6 +239,31 @@ had been deliberately replaced.
 Result: MCP cluster `8 failed / 305.74 s` → `4 failed / 1.75 s`; combined
 affected set 15 failed → 4. The 87× speedup is itself evidence — it is the
 removed 300 s spin.
+
+### Installing fastmcp exposed a test that was green for the wrong reason
+
+`44d7ae4c2`. `fastmcp 4.0.3` — the version `uv.lock` pins — is now installed,
+so the MCP cluster is `106 passed, 0 failed` and `/mcp` is genuinely mounted
+in the live app (`McpAuthMiddleware -> StarletteWithLifespan`, inner route
+`/`).
+
+Making that library available also let two previously-unrunnable tests execute,
+and one of them was asserting nothing:
+
+```python
+patch("...ai_stack.mcp_settings", side_effect=ImportError)
+```
+
+`side_effect` fires only when the mock is **called**, and
+`from ... import mcp_settings` merely binds a name — so no `ImportError` was
+ever raised. The test was green only because `create_mcp_http_app()` happened
+to fail for an unrelated reason and a broad `except` skipped the mount. It now
+uses `patch.dict("sys.modules", {..., None})`, which makes the import really
+raise.
+
+The lesson generalises: **a test that asserts the right thing can still verify
+nothing**, and this one would have kept passing in CI where fastmcp *is*
+installed — for the same wrong reason. Green is not the same as checked.
 ---
 
 ## Known open defects
@@ -278,15 +305,16 @@ removed 300 s spin.
 - Test isolation, frontend cluster — still open. The
   `shared/test_components.py` cluster fails only in combined runs. Needs
   fixtures, not test edits.
-- `tests/unit/entrypoints/mcp` is down to 4 failures at `3fa6cd206`
-  (`8 failed, 98 passed, 305.74 s` → `4 failed, 102 passed, 1.75 s`). All four
-  are `test_http_server_auth_wrap.py` and all four are **ENV_FAILURE**:
-  `ImportError: fastmcp is not installed`. `fastmcp>=3.2.4` is declared in the
-  `mcp` and `dev-light` extras and pinned at 4.0.3 in `uv.lock`, but the venv
-  does not contain it — it is stale against `make/setup.mk`'s
-  `uv sync --all-extras`. Deliberately **not** converted into a skip: these
-  tests guard that the MCP HTTP app is wrapped in auth middleware, and a skip
-  would hide exactly that.
+- ~~`tests/unit/entrypoints/mcp` failures~~ — **resolved at `44d7ae4c2`**.
+  The four remaining failures were `ImportError: fastmcp is not installed`;
+  `fastmcp 4.0.3` (the version `uv.lock` pins) is now installed and the
+  cluster is `106 passed, 1 xfailed, 0 failed`. `/mcp` is now genuinely
+  mounted — verified in the live app as
+  `McpAuthMiddleware -> StarletteWithLifespan` with inner route `/`, which is
+  the D-AUDIT-20812 contract. A full authenticated JSON-RPC round-trip is
+  still **NOT VERIFIED**: the outer `AuthRequiredMiddleware` returns 401
+  before `McpAuthMiddleware` runs, and completing it needs an API key that
+  this environment cannot mint.
 - 10 tooling-test failures (audit-deprecation ×4, SBOM ×2, scaffold, routebuilder
   MRO, codemod idempotency, plugin scaffold) — all reproduce at clean `HEAD`.
 - 123 optional `tenant_id` contracts remain tracked, not removed.
