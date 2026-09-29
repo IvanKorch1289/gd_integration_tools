@@ -304,14 +304,19 @@ installed — for the same wrong reason. Green is not the same as checked.
   `tests/unit/services/execution/test_invoker.py` pin the current shape through
   a `_StubScheduler.add_job`, so fixing this changes the test contract. Not
   fixed here: it is a production edit that needs an explicit decision.
-- **`test_builder_service_proxy.py` identity tests fail after `12ead1617`.**
-  `DSLBuilderService` moved to the Sprint-225 lazy proxy, which no longer binds
-  `route_registry` / `YAMLStore` as module attributes, so
-  `from src.backend.services.dsl.builder_service import route_registry` raises
-  `ImportError`. Importing the two names from the sanctioned facade
-  `src.backend.core.api.extensions` (already exempt in `check_layers.py:136`)
-  satisfies the layer gate, keeps object identity, and restores both tests —
-  verified in isolation, not applied because another agent owns the file.
+- **Fixed at `88cf0f37d` — `test_builder_service_proxy.py` identity tests.**
+  `12ead1617` had moved `route_registry` / `YAMLStore` behind a string-keyed
+  lazy proxy to keep `services → dsl` off the layer gate. The gate went green
+  and two tests went red, which is a trade rather than a fix. The proxy was
+  unnecessary: `src.backend.core.api.extensions` re-exports both symbols and is
+  listed in `check_layers.py:136` `CORE_LAZY_PROXY_EXCEPTIONS` as an intentional
+  facade, so importing from there is `services → core`, which `ALLOWED` permits
+  outright. Identity is preserved because the facade re-exports the same
+  objects — verified at runtime, `route_registry is route_registry` and
+  `YAMLStore is YAMLStore`. `tests/unit/services/dsl` now 8 passed / 0 failed
+  (was 2 failed), `check_layers` exit 0, `make ci` exit 0. The 2 tests in
+  `test_builder_service_imports.py` remain skipped on purpose: they assert the
+  pre-Sprint-225 import shape.
 - `/api/v1/auth/step-up-request` issues a token with no credential check. Not an authz
   bypass (login still verifies the password) — it is a CSRF/session guard, and the
   token is not single-use.
