@@ -221,9 +221,21 @@ def _format_report(diff: SBOMDiff, *, new_cves: list[str] | None = None) -> str:
             lines.append(f"  ... and {len(diff.unknown_licenses) - 20} more")
         lines.append("")
 
+    # Новые CVE обязаны попадать и в отчёт, и в вердикт. Раньше параметр
+    # new_cves принимался, но не использовался: при единственных новых CVE
+    # отчёт печатал "RESULT: PASS", а решение ниже возвращало 1. Лог в CI
+    # врал в сторону «всё хорошо» ровно тогда, когда сборка падала.
+    if new_cves:
+        lines.append("--- NEW CVEs (не в baseline) ---")
+        for cve_id in new_cves:
+            lines.append(f"  ! {cve_id}")
+        lines.append("")
+
     lines.append("=" * 70)
     if diff.license_violations:
         lines.append("RESULT: FAIL (license violations)")
+    elif new_cves:
+        lines.append("RESULT: FAIL (new CVEs vs baseline)")
     elif diff.has_violations:
         lines.append("RESULT: FAIL (unknown licenses, --fail-on-unknown)")
     else:

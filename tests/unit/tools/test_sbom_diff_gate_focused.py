@@ -214,6 +214,24 @@ class TestDiffReport:
         assert "RESULT: FAIL" in report
         assert "GPL-3.0" in report
 
+    def test_report_fails_on_new_cves_only(self) -> None:
+        """Новые CVE обязаны менять ВЕРДИКТ, а не только exit code.
+
+        Регресс: ``_format_report`` принимал ``new_cves``, но не использовал
+        его. При единственных новых CVE отчёт печатал "RESULT: PASS", пока
+        решение в ``main()`` возвращало 1 — лог в CI врал в сторону «всё
+        хорошо» ровно тогда, когда сборка падала.
+        """
+        from tools.checks.sbom_diff_gate import _format_report
+
+        diff = SBOMDiff(total_components=1)
+        report = _format_report(diff, new_cves=["CVE-2026-61632", "PYSEC-2026-3609"])
+        assert "RESULT: PASS" not in report
+        assert "RESULT: FAIL" in report
+        assert "new CVEs" in report
+        assert "CVE-2026-61632" in report
+        assert "PYSEC-2026-3609" in report
+
     def test_report_added_components(self) -> None:
         from tools.checks.sbom_diff_gate import _format_report
 
