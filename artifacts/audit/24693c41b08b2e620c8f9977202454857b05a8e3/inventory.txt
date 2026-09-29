@@ -1,0 +1,19 @@
+## Inventory (git ls-files)
+tracked_total: 6668
+py_total: 5105
+tests_py_glob: 2211
+src_backend_py: 2400
+test_files: 1971
+
+## Versions
+python: Python 3.14.0
+uv: uv 0.11.7 (x86_64-unknown-linux-gnu)
+ruff: ruff 0.16.7
+mypy: mypy 1.20.2 (compiled: yes)
+pytest: pytest 9.1.1
+granian: granian 2.8.2
+temporalio: 1.32.0
+
+## Dependency profile
+uv_lock_sha256: 54737b2a59cbba82ae509e73a435809145b23b041dabe409b2579bb975044b9e
+venv: main repo .venv (synced from this lock; uv pip list count: 384)

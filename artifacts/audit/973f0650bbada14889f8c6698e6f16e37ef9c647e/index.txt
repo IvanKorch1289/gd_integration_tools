@@ -1,0 +1,1 @@
+# Audit run index (SHA 973f0650bbada14889f8c6698e6f16e37ef9c647e; предыдущий прогон статики валиден: diff = tenant.py + 2 тест-файла)

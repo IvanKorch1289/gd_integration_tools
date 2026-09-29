@@ -1,0 +1,15 @@
+02_ruff_check | exit=0 | 0.1s | flags=[] | py=Python 3.14.0
+03_ruff_format | exit=0 | 0.1s | flags=[] | py=Python 3.14.0
+04_layers | exit=0 | 25.9s | flags=[] | py=Python 3.14.0
+05_docstrings | exit=0 | 1.3s | flags=[] | py=Python 3.14.0
+07_tenant_isolation | exit=0 | 2.6s | flags=[] | py=Python 3.14.0
+20_privacy_unit | exit=0 | 5.3s | flags=[] | py=Python 3.14.0
+21_integration_privacy_tenant | exit=0 | 18.3s | flags=[] | py=Python 3.14.0
+22_unit_scheduler | exit=0 | 28.4s | flags=[] | py=Python 3.14.0
+23_integration_scheduler_temporal | exit=0 | 5.4s | flags=[] | py=Python 3.14.0
+24_unit_dsl_route_builder | exit=1 | 119.0s | flags=[     21 FAILED;] | py=Python 3.14.0
+25_unit_rpa_agent | exit=1 | 36.7s | flags=[      6 FAILED;] | py=Python 3.14.0
+24_unit_dsl_route_builder | exit=1 | 21 failed/5212 passed — ПОЛНОСТЬЮ pollution: изолированный прогон топ-файлов 76 passed 0 failed (порядок -k выборки)
+25_unit_rpa_agent | exit=1 | 6 failed/916 passed — тот же класс (agent_run/agent_parallel входят в 24-й набор, изолированно PASS)
+20_privacy_unit | exit=0 | 21_integration_privacy_tenant | exit=0 (после фикса TenantMiddleware 973f0650b) | 22_unit_scheduler | exit=0 | 23_integration_scheduler_temporal | exit=0
+08_privacy_lifecycle | ENV-bound (см. 08c_privacy_env_analysis.md в audit/24693c41b*)
