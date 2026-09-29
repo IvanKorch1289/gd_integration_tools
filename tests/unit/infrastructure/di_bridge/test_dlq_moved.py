@@ -10,8 +10,12 @@
 from __future__ import annotations
 
 import importlib
+import inspect
+import re
 import sys
 from pathlib import Path
+
+from src.backend.core.di.providers import resolve_module
 
 
 class TestDlqBridgeMoved:
@@ -65,10 +69,17 @@ class TestPiiEraseMigrated:
     """Verify pii_erase.py (the SECOND caller) uses new dlq location."""
 
     def test_pii_erase_imports_from_new_path(self) -> None:
-        """pii_erase ходит в new dlq location через DI-провайдер (S87).
+        """pii_erase ходит в dlq через DI-провайдер (S87).
 
-        Прямой импорт заменён на ``get_dlq_envelope_class_provider`` из
-        ``core.di.providers.cache``, который резолвит ``di_bridge.dlq``.
+        Прямой импорт заменён на ``get_dlq_envelope_class_provider``. Провайдер
+        доступен через публичный фасад ``core.di.providers.cache``, а его
+        определение переехало в ``core/di/providers/workflow/_dlq.py``
+        (W9 P2-13 Phase 7) — ``cache.py`` теперь только реэкспортирует его.
+
+        Раньше тест матчил строку ``resolve_module("di_bridge.dlq")`` именно в
+        ``cache.py``, что ломалось на каждом переезсе провайдера. Теперь
+        проверяется сам контракт: символ доступен через фасад, определение
+        резолвит нужный модуль, и модуль отдаёт accessor-функции.
         """
         text = Path(
             "src/backend/dsl/engine/processors/security/pii_erase.py"
@@ -76,13 +87,45 @@ class TestPiiEraseMigrated:
         assert "get_dlq_envelope_class_provider" in text, (
             "pii_erase.py должна ходить в dlq через DI-провайдер (S87 M2-#11 migration)"
         )
-        assert "from src.backend.core.di.providers.dlq_bridge" not in text
-        provider = Path("src/backend/core/di/providers/cache.py").read_text(
+        # Архитектурное правило S87: конкретный DLQ-модуль доступен ТОЛЬКО
+        # через DI-провайдер. Проверяются ПУТИ ИМПОРТА, а не имена символов:
+        # проверка по имени не ловит возврат к прямому импорту, т.к. символ
+        # провайдера всё равно остаётся в точке вызова (и может быть заaliасен).
+        concrete_dlq = re.compile(
+            r"(?:infrastructure\.di_bridge\.dlq|messaging\.dlq_base|di_bridge\.dlq)"
+        )
+        offenders = [
+            f"{i}: {line.strip()}"
+            for i, line in enumerate(text.splitlines(), 1)
+            if re.match(r"\s*(from|import)\s", line) and concrete_dlq.search(line)
+        ]
+        assert not offenders, (
+            f"pii_erase.py импортирует конкретный DLQ-модуль напрямую, минуя "
+            f"DI-провайдер: {offenders}"
+        )
+
+        # 1. Символ доступен через канонический публичный фасад.
+        from src.backend.core.di.providers import cache as cache_providers
+
+        provider = cache_providers.get_dlq_envelope_class_provider
+        assert callable(provider), (
+            "core.di.providers.cache обязан реэкспортировать "
+            "get_dlq_envelope_class_provider"
+        )
+
+        # 2. Его определение резолвит di_bridge.dlq (путь мог смениться,
+        #    но резолвимый модуль — тот же).
+        source_file = Path(inspect.getsourcefile(provider) or "")
+        assert 'resolve_module("di_bridge.dlq")' in source_file.read_text(
             encoding="utf-8"
-        )
-        assert 'resolve_module("di_bridge.dlq")' in provider, (
-            "провайдер должен резолвить new dlq location (di_bridge.dlq)"
-        )
+        ), f"{source_file.name} должен резолвить di_bridge.dlq"
+
+        # 3. Резолвимый модуль реально отдаёт accessor-функции.
+        dlq_module = resolve_module("di_bridge.dlq")
+        for accessor in ("get_dlq_envelope_class", "get_dlq_reason_class"):
+            assert hasattr(dlq_module, accessor), (
+                f"di_bridge.dlq должен экспортировать {accessor}"
+            )
 
 
 class TestAllowlistReduction:
