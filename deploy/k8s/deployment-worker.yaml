@@ -45,9 +45,13 @@ spec:
       automountServiceAccountToken: true
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
+        # S204 retro-audit B03: выровнено с ops/compose/Dockerfile
+        # (appuser uid 10001) и deploy/helm/.../values.yaml. Раньше тут
+        # было 1000 — не совпадало с owner'ом /app/logs, /app/.run, что
+        # вызывало permission-failures при readOnlyRootFilesystem: true.
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
         seccompProfile:
           type: RuntimeDefault
       # Workflow-в-процессе может выполняться долго; даём 5 минут graceful.

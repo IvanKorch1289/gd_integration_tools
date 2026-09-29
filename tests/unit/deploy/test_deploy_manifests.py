@@ -189,34 +189,59 @@ def compose_light() -> dict[str, Any]:
 
 
 def test_compose_light_worker_command(compose_light: dict[str, Any]) -> None:
-    """Light-worker command ссылается на реальный worker module path."""
+    """Light-worker ссылается на реальный worker module path через entrypoint.
+
+    Module path обязан быть в ``entrypoint``, а не только в ``command``:
+    ``command`` дописывается к ENTRYPOINT образа (tini + manage.py), из-за
+    чего ``command: ["python", "-m", ...]`` даёт ``python manage.py python
+    -m ...`` → ``No such command python`` и бесконечный рестарт воркера
+    (D-AUDIT-15901). Каноническая форма закреплена в
+    ``ops/compose/docker-compose.yml``: entrypoint = module, command = ["run"].
+    """
     worker = compose_light["services"]["workflow-worker"]
+    entrypoint = worker.get("entrypoint") or []
     command = worker.get("command") or []
-    flat: list[str] = []
-    for item in command:
-        if isinstance(item, str):
-            flat.append(item)
+    flat = [item for item in (*entrypoint, *command) if isinstance(item, str)]
     joined = " ".join(flat)
-    assert joined.strip(), "workflow-worker must declare command"
+    assert joined.strip(), "workflow-worker must declare entrypoint or command"
     assert WORKER_MODULE in joined, (
-        f"workflow-worker command '{joined}' must reference {WORKER_MODULE}"
+        f"workflow-worker invocation '{joined}' must reference {WORKER_MODULE}"
     )
     for deprecated in DEPRECATED_WORKER_PATHS:
         assert deprecated not in joined, (
-            f"workflow-worker command still uses deprecated path {deprecated}"
+            f"workflow-worker invocation still uses deprecated path {deprecated}"
         )
+    # Guard D-AUDIT-15901: module обязан быть в entrypoint, иначе 'command'
+    # склеится с ENTRYPOINT образа и воркер уйдёт в бесконечный рестарт.
+    assert any(WORKER_MODULE in str(item) for item in entrypoint), (
+        "workflow-worker must declare entrypoint referencing "
+        f"{WORKER_MODULE}; a command-only form crash-loops (D-AUDIT-15901)"
+    )
+    assert "run" in [str(item) for item in command], (
+        f"workflow-worker must keep the 'run' subcommand, got {command}"
+    )
 
 
 def test_compose_light_healthcheck_uses_real_module(
     compose_light: dict[str, Any],
 ) -> None:
-    """Light-worker healthcheck grep'ает актуальный module path."""
+    """Light-worker healthcheck — TCP-проба порта 9100, а не ps-grep.
+
+    ``ps`` отсутствует в $PATH slim-образа, поэтому ps-grep healthcheck
+    всегда был unhealthy (D-AUDIT-20701). Воркер слушает K8s probes на
+    :9100 (WorkerProbesServer) — единственная universal-проверка.
+    """
     worker = compose_light["services"]["workflow-worker"]
     healthcheck = worker.get("healthcheck") or {}
     test_list = healthcheck.get("test") or []
     joined = " ".join(str(t) for t in test_list)
-    assert "workflows.worker" not in joined or WORKER_MODULE in joined, (
-        f"healthcheck '{joined}' greps stale 'workflows.worker' substring"
+    assert joined.strip(), "workflow-worker must declare a healthcheck"
+    assert "ps aux" not in joined and "pgrep" not in joined, (
+        f"healthcheck '{joined}' uses ps/pgrep, which is absent from the "
+        "slim image $PATH and stays unhealthy (D-AUDIT-20701)"
+    )
+    assert "9100" in joined, (
+        f"healthcheck '{joined}' must probe the worker probes port 9100"
     )
 
 
@@ -389,6 +414,33 @@ def helm_security_ctx() -> dict[str, Any]:
         f"{HELM_VALUES_FILE} must declare top-level securityContext"
     )
     return values["securityContext"]
+
+
+def test_k8s_worker_runasuser_matches_values(
+    k8s_worker: dict[str, Any], helm_security_ctx: dict[str, Any]
+) -> None:
+    """``runAsUser/Group/fsGroup`` в raw k8s worker совпадают с values.yaml.
+
+    Тот же класс дефекта, что и в ``test_k8s_app_runasuser_matches_values``,
+    но для worker-манифеста. Гейт покрывал только ``deployment-app.yaml``,
+    поэтому идентичный дрейф ``1000`` в ``deployment-worker.yaml`` прошёл
+    незамеченным (audit 2026-09-29, находка из whole-tree прогона).
+    """
+    pod_security = k8s_worker["spec"]["template"]["spec"]["securityContext"]
+    for key in ("runAsUser", "runAsGroup", "fsGroup"):
+        raw_value = pod_security.get(key)
+        values_value = helm_security_ctx.get(key)
+        assert raw_value is not None, (
+            f"k8s deployment-worker.yaml pod.securityContext must declare {key}"
+        )
+        assert values_value is not None, (
+            f"values.yaml securityContext must declare {key}"
+        )
+        assert raw_value == values_value, (
+            f"drift между deployment-worker.yaml ({raw_value}) и "
+            f"values.yaml ({values_value}) по ключу {key}; "
+            f"values.yaml + Dockerfile (appuser uid 10001) — source of truth"
+        )
 
 
 def test_k8s_app_runasuser_matches_values(
