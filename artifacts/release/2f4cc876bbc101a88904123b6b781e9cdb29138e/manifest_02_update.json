@@ -1,0 +1,25 @@
+{
+  "audit": "MANIFEST_23 позиция 02 — re-measure на чистом worktree",
+  "sha": "2f4cc876bbc101a88904123b6b781e9cdb29138e",
+  "prior": "MANIFEST_23 (пакет 5985a9faa, artifacts/release/65c56ae95*/same_sha_package/): 02 PARTIAL — 10 dirty WIP владельца",
+  "event": "владелец остановил волну (WIP стабилен 3+ часа); автогенераты (ADR WIKI, quality-results) закоммичены c8cca810f с атрибуцией; untracked evidence довыдовые 2f4cc876b",
+  "measurement": {
+    "git_status_entries": 0,
+    "tracked_modified": 0,
+    "untracked": 0,
+    "verdict": "worktree ПОЛНОСТЬЮ чист"
+  },
+  "dod_02": {
+    "status": "VERIFIED",
+    "evidence": "wt_snapshot.txt (пустой вывод git status --short) + данный манифест"
+  },
+  "updated_summary": {
+    "VERIFIED": 21,
+    "PARTIAL": 2,
+    "UNKNOWN": 0
+  },
+  "remaining_partials": {
+    "19": "perf-пороги S6 — требует staging/prod-профиля (dev-box физически не даёт 1000 RPS)",
+    "22": "warn-only perf gate — включается флагом perf_gate_strict при staging"
+  }
+}
