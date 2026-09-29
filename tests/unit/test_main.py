@@ -23,14 +23,16 @@ def test_mount_mcp_http_skipped_when_disabled() -> None:
 
 
 def test_mount_mcp_http_skipped_on_import_error() -> None:
-    # S146 W2: patch source location, not consumer.
-    # ``_mount_mcp_http`` does ``from src.backend.core.config.ai_stack import mcp_settings``
-    # inside the function body, so ``app_factory.mcp_settings`` is not
-    # an importable attribute. Patch the source module instead.
+    # Чтобы ``from src.backend.core.config.ai_stack import mcp_settings``
+    # действительно бросил ImportError, модуль надо убрать из sys.modules
+    # значением None (тогда import падает: "import of X halted; None in
+    # sys.modules"). Раньше здесь стоял patch(..., side_effect=ImportError),
+    # но side_effect срабатывает только при ВЫЗОВЕ мока, а ``from ... import``
+    # лишь связывает имя — ImportError не возникал, и тест проходил только
+    # потому, что fastmcp не был установлен и create_mcp_http_app() падал
+    # по другой причине. Проверка была зелёной не по той причине, что думали.
     mock_app = MagicMock()
-    with patch(
-        "src.backend.core.config.ai_stack.mcp_settings", side_effect=ImportError
-    ):
+    with patch.dict("sys.modules", {"src.backend.core.config.ai_stack": None}):
         app_factory._mount_mcp_http(mock_app)
     mock_app.mount.assert_not_called()
 

@@ -102,6 +102,13 @@ def test_mcp_http_app_routes_exist() -> None:
     from src.backend.entrypoints.mcp.http_server import create_mcp_http_app
 
     app, _lifespan = create_mcp_http_app()
-    routes = [r.path for r in app.routes]
-    # FastMCP mounts /tools and /resources under its prefix
-    assert any("/tools" in r or r == "/mcp" or "/mcp/" in r for r in routes)
+    # S49 W1: create_mcp_http_app() возвращает McpAuthMiddleware, обёрнутый
+    # вокруг ASGI-приложения FastMCP, а не сам FastAPI/Starlette app —
+    # поэтому ``.routes`` есть только у внутреннего приложения.
+    inner = getattr(app, "_app", app)
+    routes = [getattr(r, "path", "") for r in inner.routes]
+    # D-AUDIT-20812 (cycle 218): внутренний путь намеренно "/" — Starlette
+    # Mount re-root'ит входящий запрос в "/", и внутренний route обязан
+    # совпасть, иначе /mcp отдаёт 404. Ожидание "/tools" или "/mcp" было
+    # написано до этого фикса и проверяло уже несуществующий контракт.
+    assert "/" in routes, routes
