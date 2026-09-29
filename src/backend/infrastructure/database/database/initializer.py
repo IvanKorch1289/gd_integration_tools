@@ -55,7 +55,7 @@ class DatabaseInitializer:
         replica_dsn = getattr(self.settings, "replica_dsn", None)
         if replica_dsn:
             self.replica_engine = create_async_engine(
-                url=replica_dsn, **self._engine_kwargs()
+                url=replica_dsn, **self._engine_kwargs(is_async=True)
             )
             self.replica_session_maker = async_sessionmaker(
                 bind=self.replica_engine, autoflush=False, expire_on_commit=False
@@ -125,7 +125,7 @@ class DatabaseInitializer:
             replica_session_maker=self.replica_session_maker,
         )
 
-    def _engine_kwargs(self) -> dict[str, Any]:
+    def _engine_kwargs(self, *, is_async: bool) -> dict[str, Any]:
         """Базовые kwargs для create_engine / create_async_engine.
 
         Для SQLite отключается pool — у него нет параметров pool_size/recycle,
@@ -133,7 +133,11 @@ class DatabaseInitializer:
         """
         kwargs: dict[str, Any] = {
             "echo": self.settings.echo,
-            "connect_args": self._get_connect_args(),
+            # connect_args зависят от драйвера: asyncpg и psycopg2 имеют
+            # РАЗНЫЕ имена таймаут-опций (найдено prod-drill 2026-09-29:
+            # psycopg2 отвергает asyncpg-овский command_timeout как
+            # «invalid connection option»).
+            "connect_args": self._get_connect_args(is_async=is_async),
         }
         if self.settings.type != DatabaseTypeChoices.sqlite:
             kwargs.update(
@@ -152,26 +156,38 @@ class DatabaseInitializer:
         """Создаёт и настраивает асинхронный engine SQLAlchemy."""
         return create_async_engine(
             url=self.settings.async_connection_url,  # type: ignore[arg-type]  # R2.MYPY: Callable[[],str] → str|URL
-            **self._engine_kwargs(),
+            **self._engine_kwargs(is_async=True),
         )
 
     def _create_sync_engine(self) -> Engine:
         """Создаёт и настраивает синхронный engine SQLAlchemy."""
         return create_engine(  # type: ignore[call-overload]
-            url=self.settings.sync_connection_url, **self._engine_kwargs()
+            url=self.settings.sync_connection_url, **self._engine_kwargs(is_async=False)
         )
 
-    def _get_connect_args(self) -> dict[str, Any]:
-        """Генерирует driver-level параметры подключения."""
+    def _get_connect_args(self, *, is_async: bool) -> dict[str, Any]:
+        """Генерирует driver-level параметры подключения.
+
+        Опции зависят от драйвера: asyncpg принимает ``command_timeout`` /
+        ``timeout`` (секунды); psycopg2 — ``connect_timeout`` (секунды) и
+        statement_timeout через ``options='-c statement_timeout=...'``.
+        """
         connect_args: dict[str, Any] = {}
 
         if self.settings.type == DatabaseTypeChoices.postgresql:
-            connect_args.update(
-                {
-                    "command_timeout": self.settings.command_timeout,
-                    "timeout": self.settings.connect_timeout,
-                }
-            )
+            if is_async:
+                connect_args.update(
+                    {
+                        "command_timeout": self.settings.command_timeout,
+                        "timeout": self.settings.connect_timeout,
+                    }
+                )
+            else:
+                connect_args["connect_timeout"] = self.settings.connect_timeout
+                if self.settings.command_timeout:
+                    connect_args["options"] = (
+                        f"-c statement_timeout={int(self.settings.command_timeout) * 1000}"
+                    )
 
             if self.settings.ca_bundle:
                 ssl_context = ssl.create_default_context(cafile=self.settings.ca_bundle)
