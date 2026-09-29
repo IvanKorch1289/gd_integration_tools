@@ -1,0 +1,4 @@
+[34mRunning pip-audit (dist/pip-audit.json)...[0m
+ERROR:pip_audit._cli:en_core_web_lg: Dependency not found on PyPI and could not be audited: en-core-web-lg (3.8.0)
+[32mpip-audit clean (dist/pip-audit.json)[0m
+PIPAUDIT_EXIT=0

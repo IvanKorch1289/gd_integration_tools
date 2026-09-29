@@ -1,0 +1,8 @@
+[34mRunning python perf-gate against baseline tests/perf/baseline.json...[0m
+ starting locust (100 users, 60s)...
+{'event': 'Vault недоступен (HTTPConnectionPool(host=\'127.0.0.1\', port=8200): Max retries exceeded with url: /v1/auth/token/lookup-self (Caused by NewConnectionError("HTTPConnection(host=\'127.0.0.1\', port=8200): Failed to establish a new connection: [Errno 111] Connection refused"))) — secrets-источник пропущен. Установите vault.enabled=false или поднимите Vault, чтобы убрать это сообщение.', 'environment': 'production', 'hostname': 'URAS-92727', 'logger': 'src.backend.core.config.config_loader', 'level': 'warning', 'timestamp': '2026-09-29T10:13:56.084933Z'}
+ report → dist/perf-report.json
+ FAIL (strict) — violations: ['RPS 307.6 < floor 1000.0', 'p95 350.0ms > max 
+200.0ms']
+[33m[perf-gate-py] warn-only: thresholds not met (будет block в S3)[0m
+PERF_EXIT=0
