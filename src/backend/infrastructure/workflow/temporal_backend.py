@@ -311,7 +311,16 @@ class TemporalWorkflowBackend(WorkflowBackend):
             raise RuntimeError("temporalio SDK not installed") from exc
 
         workflows = self._resolve_workflows_for_replay(workflow_name)
-        replayer = Replayer(workflows=workflows)
+        # Unsandboxed: детерминизм обеспечивается самой replay-фазой
+        # (событие-за-событием против текущего кода); SandboxedWorkflowRunner
+        # дополнительно валидирует AST и реимпортирует модуль workflow в
+        # изолированном namespace, где динамически скомпилированные классы
+        # (DSL emitter) + beartype.claw дают ложный circular import.
+        from temporalio.worker import UnsandboxedWorkflowRunner
+
+        replayer = Replayer(
+            workflows=workflows, workflow_runner=UnsandboxedWorkflowRunner()
+        )
         wf_history = WorkflowHistory.from_json(workflow_name, history.decode("utf-8"))
         await replayer.replay_workflow(wf_history)
 
