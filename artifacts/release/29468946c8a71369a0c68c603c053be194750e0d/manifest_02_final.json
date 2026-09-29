@@ -1,0 +1,12 @@
+{
+  "audit": "MANIFEST_23 позиция 02 — финальное подтверждение чистого worktree",
+  "sha": "29468946c8a71369a0c68c603c053be194750e0d",
+  "sequence": "c8cca810f (автогенераты владельца) -> 2f4cc876b (довыдов untracked evidence) -> 29468946c (02-update манифест) -> 29468946c8a71369a0c68c603c053be194750e0d (снапшот)",
+  "git_status_lines": 0,
+  "dod_02": "VERIFIED — worktree 100% чист",
+  "summary": {
+    "VERIFIED": 21,
+    "PARTIAL": 2,
+    "UNKNOWN": 0
+  }
+}
