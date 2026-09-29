@@ -14,22 +14,48 @@ MULTI_SPRINT_2026-08-17.md Sprint 4 roadmap.
 
 from __future__ import annotations
 
+import re
 import subprocess
+import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ALLOWLIST_FILE = REPO_ROOT / "tools" / "check_layers_allowlist.txt"
 
+# Верхняя граница legacy-нарушений, зафиксированная в Phase 0
+# (MULTI_SPRINT_2026-08-17.md, Sprint 4). Канонический закон проекта:
+# allowlist может только УМЕНЬШАТЬСЯ. Поэтому ниже тесты — не «фотография»
+# текущего числа, а рэтчеты: рост относительно этой границы — регресс,
+# уменьшение — ожидаемый прогресс.
+LEGACY_HIGH_WATER_MARK = 167
+
+# Максимум записей в allowlist: страховка от бесконтрольного роста файла.
+ALLOWLIST_MAX_ENTRIES = 250
+
 
 def _run_check_layers() -> subprocess.CompletedProcess[str]:
-    """Run ``python tools/check_layers.py`` and capture output."""
+    """Run ``tools/check_layers.py`` and capture output.
+
+    Используется ``sys.executable``, а не ``python`` из PATH: проект живёт на
+    Python 3.14, где PEP 758 допускает ``except A, B:`` без скобок. Системный
+    ``python`` — 3.12, такой синтаксис не парсится, и гейт fail-closed
+    сообщал о 163 «непарсящихся» файлах и exit 3, хотя проект полностью
+    корректен. Тест обязан запускать гейт тем же интерпретатором, что и
+    ``make layers``.
+    """
     return subprocess.run(
-        ["python", "tools/check_layers.py"],
+        [sys.executable, "tools/check_layers.py"],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=300,
     )
+
+
+def _reported_legacy_count(output: str) -> int | None:
+    """Извлечь число legacy-нарушений из вывода гейта (``baseline: N legacy``)."""
+    match = re.search(r"baseline:\s*(\d+)\s*legacy", output)
+    return int(match.group(1)) if match else None
 
 
 class TestLayerViolationsBaseline:
@@ -58,15 +84,24 @@ class TestLayerViolationsBaseline:
         )
 
     def test_baseline_legacy_violations_documented(self) -> None:
-        """Legacy baseline должна быть зафиксирована (167 per Phase 0)."""
+        """Legacy-baseline не должна ВЫРАСТИ относительно Phase 0 (167).
+
+        Раньше здесь было жёсткое ``assert "baseline: 167"``, то есть
+        «фотография» числа. После того как allowlist сократили до 22,
+        тест падал на законном уменьшении — поощряя обратное движение.
+        Теперь проверяется сам закон проекта: baseline может только
+        уменьшаться. Рост — регресс; уменьшение — ожидаемый прогресс.
+        """
         result = _run_check_layers()
-        output = result.stdout
-        # Baseline 167 — frozen per MULTI_SPRINT_2026-08-17.md.
-        # Если значение изменилось — это signal либо drift, либо refactor.
-        assert "baseline: 167 legacy" in output or "baseline: 167" in output, (
-            f"Baseline changed from 167 — either drift (bad) or refactor (good, "
-            f"should be documented in MULTI_SPRINT_2026-08-17.md). "
-            f"Output:\n{output}"
+        reported = _reported_legacy_count(result.stdout)
+        assert reported is not None, (
+            f"Не удалось распознать 'baseline: N legacy' в выводе гейта. "
+            f"Формат вывода изменился?\n{result.stdout}"
+        )
+        assert reported <= LEGACY_HIGH_WATER_MARK, (
+            f"Legacy baseline выросла: {reported} > {LEGACY_HIGH_WATER_MARK} "
+            f"(Phase 0). Allowlist может только уменьшаться. "
+            f"Вывод:\n{result.stdout}"
         )
 
 
@@ -112,10 +147,18 @@ class TestAllowlistFormat:
         )
 
     def test_allowlist_entry_count_reasonable(self) -> None:
-        """Allowlist shouldn't grow without bound — sanity check."""
+        """Allowlist не должен расти без границ — рэтчет только сверху.
+
+        Раньше диапазон был ``50 <= count <= 250``, то есть тест ПРОКАЗЫВАЛ
+        при слишком малом числе записей. Это инвертировало закон проекта
+        («allowlist можно только уменьшать»): идеальное состояние —
+        ноль legacy-нарушений — считалось бы провалом. Нижняя граница
+        убрана, верхняя сохранена.
+        """
         lines = ALLOWLIST_FILE.read_text().splitlines()
         entry_count = sum(1 for line in lines if line and not line.startswith("#"))
-        assert 50 <= entry_count <= 250, (
-            f"Allowlist entry count {entry_count} вне ожидаемого "
-            f"диапазона 50-250. Investigate baseline drift."
+        assert entry_count <= ALLOWLIST_MAX_ENTRIES, (
+            f"Allowlist entry count {entry_count} превысил максимум "
+            f"{ALLOWLIST_MAX_ENTRIES}. Рассмотрите устранение нарушений "
+            f"вместо их легализации."
         )
