@@ -1,0 +1,19 @@
+{
+  "sha": "eef969f078ea4eaf135879304523da429d2386ae",
+  "generated_utc": "2026-09-29T10:48:53.321069+00:00",
+  "run": {
+    "command": "uv run pytest -q -p no:randomly tests/unit/",
+    "status": "INCOMPLETE — process terminated at 99%, no pytest summary line emitted",
+    "why_incomplete": "killed during the final 1%; a concurrent pytest run from another agent was competing for the 15 GB box, and the OTel exporter was retrying against a non-resolvable otel-collector:4317 (DNS failure) throughout",
+    "tests_reported": 20022,
+    "passed": 19647,
+    "failed": 97,
+    "errors": 7,
+    "skipped": 180,
+    "xfailed": 49,
+    "xpassed": 42,
+    "log": "full_unit_suite.log",
+    "caveat": "counts are derived from the progress glyph stream because pytest never printed its summary line; they are therefore trustworthy for classification but were not confirmed by pytest's own tally"
+  },
+  "verdict": "NOT production-ready"
+}

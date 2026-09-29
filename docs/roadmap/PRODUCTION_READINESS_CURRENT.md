@@ -96,7 +96,7 @@ wrong; an incomplete environment is never reported as `PASS`.
 | Privacy integration (PG/Redis/MinIO/Qdrant/LangMem) | NOT VERIFIED | backends not running |
 | Tooling test suite | **FAIL** | `tests/unit/tools/`: 10 failures, all reproduce on a clean `HEAD` worktree |
 | Unit test suite (per-directory) | **PASS** | at `44d7ae4c2` every cluster under `tests/unit/entrypoints/` is green: grpc 66, api 338, mcp 106, middlewares 575, websocket 65, scheduler 15, sse 36, stream 16, webhook 12 (run separately to stay under the RAM ceiling) |
-| Unit test suite (whole-tree) | **FAIL** | reports failures that do not reproduce in isolation; gRPC half fixed at `9227f6ded`, frontend `shared/test_components.py` half still open |
+| Unit test suite (whole-tree) | **PARTIAL (incomplete run)** | whole-tree run at `eef969f07` reached 99% before the process was killed: 19 647 passed / 97 failed / 7 errors / 180 skipped / 49 xfailed / 42 xpassed across 20 022 reported tests. pytest never printed its own summary. The 97 failures do **not** reproduce in isolation — re-run on the same SHA, `entrypoints/mcp` 106 passed, `entrypoints/grpc` 66 passed, `core/messaging` 60 passed — so they are cross-test pollution, not 97 product defects. A clean whole-tree number still does not exist |
 | HTTP / cURL matrix | PASS | `artifacts/release/98698dd51.../curl_matrix.txt`, 8 groups |
 | Route inventory | PASS | 414 paths / 443 operations, from the live `openapi.json` |
 | gzip / ASGI response validity | PASS | `openapi.json` + gzip → 200 / 58 150 B with `content-encoding: gzip` (was 000 / 0 B) |
