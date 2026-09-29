@@ -75,6 +75,7 @@ wrong; an incomplete environment is never reported as `PASS`.
 | Architecture layers (frontend) | **FAIL** | 12–13 Streamlit pages imported `src.backend.services`; 6 fixed in `f681c4ed7`, remainder open. `make check_layers` does **not** cover the frontend |
 | Privacy lifecycle gate | PASS | `check_privacy_lifecycle.py --strict` exit 0, 5/5 backends have executing contract tests |
 | Scheduler catchup wiring (W0) | **PASS** | all 5 W0 items verified at `12ead1617`: `add_job` present, `catchup*` keyword-only and never passed to APScheduler, `await materialize_window`, real executor via `run_pending`, facade integration against a real `AsyncIOScheduler` + SQLite. 147 tests pass. P3-13 closed by `test_pending_tick_executes_executor`, which asserts a real pending tick ran and fails with "P3-13 НЕ закрыт" otherwise |
+| Scheduler backend contract | **FAIL** | `TemporalSchedulerBackend` declares `schedule_cron` / `schedule_oneshot` / `cancel` / `list_jobs` as `async` while `SchedulerBackend` declares them sync. The `isinstance` conformance test cannot detect it (`@runtime_checkable` checks names only, not signatures). With `scheduler_backend="temporal"`, `remove_job` discards an un-awaited coroutine and never cancels. Latent on the default `apscheduler` path. See the known-defects entry |
 | Optional-tenant gate | PASS | `check_no_new_optional_tenant.py --strict` exit 0, 123 baseline = 123 current |
 | Tenant isolation (static) | PASS | `check_tenant_isolation.py --strict` exit 0 |
 | Tenant isolation (runtime) | **FAIL (negative)** | live run at `f013e7317`: empty/`null` `X-Tenant-Id` → 401, no data returned |
@@ -272,6 +273,54 @@ installed — for the same wrong reason. Green is not the same as checked.
 ---
 
 ## Known open defects
+
+- **`TemporalSchedulerBackend` violates the `SchedulerBackend` Protocol on 4 of
+  6 methods, and the conformance test cannot see it.** `SchedulerBackend`
+  (`src/backend/core/interfaces/scheduler.py:81`) declares `schedule_cron`,
+  `schedule_oneshot`, `cancel` and `list_jobs` as **sync**, and only `start` /
+  `stop` as `async`. `APSchedulerBackend` matches that exactly.
+  `TemporalSchedulerBackend` declares **all six** as `async`.
+
+  The test that is supposed to catch this —
+  `tests/unit/core/interfaces/test_scheduler_protocol.py:162`
+  `assert isinstance(backend, SchedulerBackend)` — passes, because
+  `@runtime_checkable` protocols verify only that the attribute *names* exist.
+  They never compare signatures or coroutine-ness. Measured with
+  `inspect.iscoroutinefunction`:
+
+  | method | protocol | APSchedulerBackend | TemporalSchedulerBackend |
+  |---|---|---|---|
+  | `start` | async | async | async |
+  | `stop` | async | async | async |
+  | `schedule_cron` | sync | sync | **async** |
+  | `schedule_oneshot` | sync | sync | **async** |
+  | `cancel` | sync | sync | **async** |
+  | `list_jobs` | sync | sync | **async** |
+
+  Both classes report `issubclass(..., SchedulerBackend) is True`.
+
+  **This is reachable in production.** `settings.scheduler.scheduler_backend`
+  is `Literal["apscheduler", "temporal"]` with default `apscheduler`
+  (`src/backend/core/config/features/__init__.py:258`). With `temporal`
+  selected, `SchedulerFacade.remove_job` calls `backend.cancel(job_id)`
+  synchronously and discards the result
+  (`src/backend/services/scheduler/facade.py:283`). Verified at runtime: that
+  call returns a coroutine that is never awaited, so the job is **never
+  cancelled** and the caller receives no error. A silent no-op on a
+  cancellation path, plus a coroutine that is dropped on the floor.
+
+  Two decisions are needed and neither is made here: whether the Protocol
+  should declare the mutating methods `async` (they are I/O and both real
+  backends already are, for Temporal) or whether the Temporal backend should
+  become sync; and whether `remove_job` should `await` defensively. Changing a
+  public contract needs an ADR.
+
+  Mitigating factor, stated plainly: `apscheduler` is the default and the
+  documented production path, and the config description still calls
+  `temporal` a stub. So the defect is latent on the default configuration, not
+  firing in the current production path. It is recorded because the switch is
+  a config value, not a code change, and the guard that should catch a bad
+  backend is demonstrably blind.
 
 - **Swagger UI renders 14 of 443 operations across 3 of 92 tag sections.**
   Diagnosed by bisection: the break is between 71 and 72 operations. Ruled out
