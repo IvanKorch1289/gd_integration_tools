@@ -32,7 +32,16 @@ ci: ## К1 V15 — composite CI gate (lint + type + tests + security + WAF stric
 	@$(MAKE) check-tenant-isolation
 	@$(MAKE) layers
 	@$(MAKE) test-collection-check
+	@$(MAKE) unit-tests
 	@$(SUCCESS) "CI gate passed"
+
+unit-tests: ## К1 V15 — реальный прогогон tests/unit (не только collection)
+	@$(INFO) "Running unit tests (tests/unit), per-test timeout $(UNIT_TEST_TIMEOUT)s..."
+	@$(UV_RUN) python -m pytest tests/unit -q \
+		--timeout=$(UNIT_TEST_TIMEOUT) \
+		-n auto --dist loadfile \
+		--no-header
+	@$(SUCCESS) "Unit tests passed"
 
 pr: ## К1 V15 — composite PR gate (ci + docs)
 	@$(MAKE) ci

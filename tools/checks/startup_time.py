@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import statistics
 import subprocess
 import sys
 from pathlib import Path
@@ -34,6 +35,12 @@ BASELINE_FILE = ROOT / ".baselines" / "startup-time.json"
 MAX_STARTUP_SECONDS_PER_MODULE = 3.0
 MAX_TOTAL_STARTUP_SECONDS = 3.0
 REGRESSION_TOLERANCE = 0.30  # 30% медленнее baseline → FAIL
+
+# Число полных прогонов, результат которых сводится к медиане.
+# Audit 2026-09-29: одиночный холодный прогон флейкал ~8% (13 замеров
+# 1.782–2.263s при лимите 2.145s) — из-за нагрузки на машину и прогрева
+# FS-кэша. Медиана снимает флейк по природе; бюджеты НЕ ослаблены.
+SAMPLE_COUNT = 3
 
 CRITICAL_MODULES = (
     "src.backend.core.config.features",
@@ -122,6 +129,28 @@ def _extract_elapsed_from_stdout(stdout: str) -> float:
         return float("inf")
 
 
+def measure_pass() -> list[float]:
+    """Один полный прогон по ``CRITICAL_MODULES``.
+
+    Returns:
+        Список замеров на модуль в порядке ``CRITICAL_MODULES``.
+    """
+    return [measure_import(module) for module in CRITICAL_MODULES]
+
+
+def median_of(samples: list[float]) -> float:
+    """Медиана списка замеров.
+
+    Args:
+        samples: непустой список значений.
+
+    Returns:
+        Медиана. Для чётного N — среднее двух центральных значений, что
+        и делает оценку устойчивой к одиночному выбросу холодного прогона.
+    """
+    return statistics.median(samples)
+
+
 def load_baseline() -> float | None:
     if not BASELINE_FILE.exists():
         return None
@@ -154,26 +183,51 @@ def main(argv: list[str] | None = None) -> int:
         default=MAX_TOTAL_STARTUP_SECONDS,
         help=f"абсолютный лимит на total time (default {MAX_TOTAL_STARTUP_SECONDS}s)",
     )
+    parser.add_argument(
+        "--samples",
+        type=int,
+        default=SAMPLE_COUNT,
+        help=(
+            f"число прогонов, сводимых к медиане (default {SAMPLE_COUNT}). "
+            "1 = старое поведение (одиночный холодный замер)"
+        ),
+    )
     args = parser.parse_args(argv)
+    if args.samples < 1:
+        parser.error("--samples должен быть >= 1")
 
     print(f"Startup-time gate: PER-MODULE MAX={MAX_STARTUP_SECONDS_PER_MODULE}s")
     print(f"                    TOTAL MAX={args.max_total}s")
     print(f"                    REGRESSION TOLERANCE={REGRESSION_TOLERANCE * 100:.0f}%")
+    print(f"                    SAMPLES={args.samples} (judged on median)")
     print(f"Modules: {len(CRITICAL_MODULES)}")
     print()
 
-    per_module_fail: list[tuple[str, float]] = []
-    total: float = 0.0
-    for module in CRITICAL_MODULES:
-        elapsed = measure_import(module)
-        status = "OK" if elapsed < MAX_STARTUP_SECONDS_PER_MODULE else "FAIL"
-        print(f"  [{status}] {module}: {elapsed:.3f}s")
-        total += elapsed
-        if elapsed >= MAX_STARTUP_SECONDS_PER_MODULE:
-            per_module_fail.append((module, elapsed))
+    # samples[pass_index][module_index] — сырые замеры всех прогонов.
+    passes = [measure_pass() for _ in range(args.samples)]
+    totals = [sum(p) for p in passes]
+
+    # Медиана по каждому модулю и по total: вердикт выносится на медиану,
+    # одиночный выброс холодного прогона больше не роняет гейт.
+    per_module_median = [median_of([p[i] for p in passes]) for i in range(len(CRITICAL_MODULES))]
+    total = median_of(totals)
+
+    for idx, module in enumerate(CRITICAL_MODULES):
+        samples_txt = ", ".join(f"{p[idx]:.3f}" for p in passes)
+        status = "OK" if per_module_median[idx] < MAX_STARTUP_SECONDS_PER_MODULE else "FAIL"
+        print(f"  [{status}] {module}: median={per_module_median[idx]:.3f}s  [{samples_txt}]")
+
+    per_module_fail = [
+        (module, per_module_median[idx])
+        for idx, module in enumerate(CRITICAL_MODULES)
+        if per_module_median[idx] >= MAX_STARTUP_SECONDS_PER_MODULE
+    ]
 
     print()
-    print(f"TOTAL: {total:.3f}s")
+    print(f"TOTAL: {total:.3f}s (median of {args.samples})")
+    print(f"SAMPLES: {', '.join(f'{t:.3f}' for t in totals)}")
+    if args.samples > 1:
+        print(f"        min={min(totals):.3f}s max={max(totals):.3f}s spread={max(totals) - min(totals):.3f}s")
 
     baseline = load_baseline()
     if baseline is not None:

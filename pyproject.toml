@@ -657,6 +657,16 @@ dev = [
     "pytest>=9.0.0,<10.0.0",
     "pytest-asyncio>=1.0.0,<2.0.0",
     "pytest-cov>=6.0.0,<7.0.0",
+    # Audit 2026-09-29: pytest-timeout. До этого 12 @pytest.mark.timeout(N)
+    # были no-op (Round 76), т.е. в CI не было верхней границы времени
+    # теста — зависший тест подвешивал пайплайн. Проверено на Python 3.14.0:
+    # маркер срабатывает и без глобального --timeout, глобальный флаг
+    # обрывает зависшие тесты (2 failed / 1 passed за 2.2s вместо 60s).
+    # Верхняя граница <2.5.0 намеренная: 2.5.0 (2026-08-16) отозван
+    # автором на PyPI — yanked, "accidental breaking change (probably)".
+    # 2.4.0 формально не декларирует 3.14 в classifiers, но работает
+    # (проверено фактически, не по метаданным).
+    "pytest-timeout>=2.4.0,<2.5.0",
     "libcst>=1.5.0,<2.0.0",
     "ruamel-yaml>=0.18.0,<1.0.0",
     # P0-S6 (audit 2026-08-19): B314 fix — defusedxml для XXE protection.
@@ -1198,11 +1208,13 @@ markers = [
     "e2e: end-to-end multi-protocol action tests",
     "perf: performance benchmarks (msgspec, plugin_sandbox)",
     "property: hypothesis property-based tests",
-    # Round 76: pytest-timeout НЕ установлен, но @pytest.mark.timeout(N) используется
-    # в test_file_watcher.py (5 вызовов). Без регистрации marker'а --strict-markers
-    # блокирует collection всей test-file (35 tests). Регистрируем как no-op
-    # marker — Ponytail-минимальное изменение (1 строка) без добавления deps.
-    "timeout: per-test timeout marker (no-op: pytest-timeout not in dev deps)",
+    # Round 76: pytest-timeout НЕ был установлен, но @pytest.mark.timeout(N)
+    # использовался в test_file_watcher.py (5 вызовов). Marker зарегистрирован
+    # ниже, чтобы --strict-markers не блокировал collection.
+    # Audit 2026-09-29: pytest-timeout УСТАНОВЛЕН (dev extra) — маркер больше
+    # не no-op, значения N реально применяются. Плагин ничего не меняет сам
+    # по себе: без --timeout/--session-timeout глобального таймера нет.
+    "timeout: per-test timeout marker (pytest-timeout, см. dev-зависимости)",
     # Round 77: pytest-benchmark НЕ установлен, но @pytest.mark.benchmark
     # используется в tests/perf/*.py (2 файла). Без регистрации блокирует
     # collection всего tests/perf/ (15+ tests). Регистрируем как no-op.

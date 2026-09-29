@@ -188,3 +188,108 @@ def test_main_fails_when_per_module_budget_exceeded(
     captured = capsys.readouterr()
     assert rc == 1
     assert "FAIL" in captured.err or "FAIL" in captured.out
+
+
+# ──────────── Медиана вместо одиночного холодного прогона (audit 2026-09-29) ──
+#
+# Гейт флейкал ~8%: 13 замеров разбросались 1.782–2.263s при лимите 2.145s
+# (baseline 1.65 × 1.30). Причина — одиночный холодный замер. Решение: N
+# прогонов + медиана. Бюджеты НЕ ослаблены, поэтому тесты ниже проверяют
+# обе стороны: выброс сглаживается, а настоящая деградация всё ещё падает.
+
+
+def test_median_of_sorts_and_averages_even_count() -> None:
+    """Медиана нечувствительна к порядку и усредняет центр при чётном N."""
+    assert mod.median_of([3.0, 1.0, 2.0]) == pytest.approx(2.0)
+    assert mod.median_of([1.0, 2.0, 3.0, 4.0]) == pytest.approx(2.5)
+
+
+def test_median_survives_single_outlier_pass(
+    isolated_baseline, monkeypatch, capsys
+) -> None:
+    """Один медленный прогон среди трёх не должен ронять гейт.
+
+    Именно это и наблюдалось: холодный замер 2.26s при лимите 2.145s.
+    """
+    fast = mod.MAX_STARTUP_SECONDS_PER_MODULE / (len(mod.CRITICAL_MODULES) * 4)
+    calls = {"n": 0}
+
+    def flaky_measure(module: str) -> float:
+        calls["n"] += 1
+        # Первый полный проход (7 вызовов) — аномально медленный.
+        if calls["n"] <= len(mod.CRITICAL_MODULES):
+            return fast * 4
+        return fast
+
+    monkeypatch.setattr(mod, "measure_import", flaky_measure)
+    rc = mod.main(["--samples", "3"])
+    out = capsys.readouterr().out
+    assert rc == 0, f"медиана должна сгладить одиночный выброс:\n{out}"
+    assert "median of 3" in out
+
+
+def test_steady_regression_still_fails(
+    isolated_baseline, monkeypatch, capsys
+) -> None:
+    """Устойчивая деградация (все прогоны медленные) всё ещё роняет гейт.
+
+    Страховка от «сглаживания всего подряд»: медиана не должна превращать
+    гейт в warn-only.
+    """
+    per_module = mod.MAX_STARTUP_SECONDS_PER_MODULE + 0.5
+    monkeypatch.setattr(
+        mod, "measure_import", lambda module: per_module
+    )
+    rc = mod.main(["--samples", "3"])
+    captured = capsys.readouterr()
+    assert rc == 1, "медиана не должна скрывать устойчивую деградацию"
+    assert "FAIL" in captured.err or "FAIL" in captured.out
+
+
+def test_regression_limit_uses_median_not_best_pass(
+    isolated_baseline, monkeypatch, capsys
+) -> None:
+    """Вердикт выносится на медиану, а не на лучший/первый прогон.
+
+    baseline = 1.0 → лимит регрессии 1.3. Три прогона по 0.7s и один
+    аномально медленный 6.3s: медиана = 0.7 → PASS. Если бы гейт смотрел
+    на худший прогон, он бы упал — а это ровно тот ложный фейл, который
+    наблюдался в 8% прогонов.
+    """
+    mod.save_baseline(1.0)
+    n_modules = len(mod.CRITICAL_MODULES)
+    calls = {"n": 0}
+
+    def slow_last_pass(module: str) -> float:
+        calls["n"] += 1
+        pass_index = (calls["n"] - 1) // n_modules
+        return 0.9 if pass_index == 2 else 0.1  # 6.3s на третьем прогоне
+
+    monkeypatch.setattr(mod, "measure_import", slow_last_pass)
+    assert mod.main(["--samples", "3"]) == 0
+
+    # Контроль: два медленных прогона из трёх → медиана 6.3 → FAIL.
+    calls2 = {"n": 0}
+
+    def slow_two_passes(module: str) -> float:
+        calls2["n"] += 1
+        pass_index = (calls2["n"] - 1) // n_modules
+        return 0.9 if pass_index >= 1 else 0.1
+
+    monkeypatch.setattr(mod, "measure_import", slow_two_passes)
+    capsys.readouterr()
+    assert mod.main(["--samples", "3"]) == 1, "медиана обязана ловить устойчивую деградацию"
+
+
+def test_samples_must_be_positive() -> None:
+    """--samples 0 — ошибка использования, а не молчаливый PASS."""
+    with pytest.raises(SystemExit) as exc:
+        mod.main(["--samples", "0"])
+    assert exc.value.code != 0
+
+
+def test_default_samples_is_median_based() -> None:
+    """По умолчанию гейт снимает несколько прогонов, а не один."""
+    assert mod.SAMPLE_COUNT >= 3, (
+        "одиночный замер флейкает; дефолт должен усреднять >=3 прогона"
+    )

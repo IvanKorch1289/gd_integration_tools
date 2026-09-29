@@ -31,6 +31,12 @@ MANAGE_LIGHT := $(UV_RUN) --extra dev-light python manage.py
 
 CONFIG_FILE ?= ./config_profiles/dev.yml
 RUN_DIR ?= ./.run
+
+# Верхняя граница времени одного unit-теста (секунды). pytest-timeout
+# обязателен: без него зависший тест подвешивает пайплайн без границы
+# (12 @pytest.mark.timeout(N) были no-op до audit 2026-09-29).
+# Существующие маркеры в сьюте: 5s / 15s / 30s / 120s / 180s.
+UNIT_TEST_TIMEOUT ?= 120
 LOG_DIR ?= ./logs
 
 UVICORN_APP ?= src.backend.main:app

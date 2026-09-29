@@ -73,17 +73,67 @@ def test_layer_target_invoke_script_is_the_real_gate() -> None:
     )
 
 
-def test_ci_still_does_not_execute_tests() -> None:
-    """Фиксирует известный долг: ci проверяет коллекцию, а не выполнение.
+def test_ci_executes_the_unit_suite() -> None:
+    """`make ci` обязан реально выполнять тесты, а не только собирать их.
 
-    Тест назван явно «долг», потому что это не PASS: `pytest --co` доказывает,
-    что тесты импортируются, но не что они проходят. Когда цепочка начнёт
-    реально выполнять тесты, этот тест упадёт — и это правильно, его нужно будет
-    удалить осознанно.
+    Долг закрыт 2026-09-29. До этого `ci` заканчивалась на `pytest --co` и
+    выполняла 715 тестов из 20 780 (3.4%) — только подмножество
+    `check-ai-safety`. Остальные 96.6% не запускались никогда, и именно там
+    лежали неисполняемые дефекты: merge-конфликты в
+    `ops/compose/docker-compose.light.yml` и дрейф `runAsUser` в k8s-манифестах.
     """
     recipe = _ci_recipe()
-    assert any("test-collection-check" in step for step in recipe)
-    assert not any(re.search(r"\bpytest\b(?!.*--co)", step) for step in recipe), (
-        "если make ci начал выполнять тесты, обновите статус CI в "
-        "PRODUCTION_READINESS_CURRENT.md и удалите этот тест"
+    assert any("unit-tests" in step for step in recipe), (
+        f"цель ci не вызывает unit-tests — тесты снова не будут выполняться. "
+        f"Текущие шаги: {recipe}"
+    )
+    assert not any(
+        step for step in recipe if re.search(r"pytest\b.*--co", step)
+    ), "pytest --co в самой цели ci больше не нужен — шаг вынесен в отдельную цель"
+
+
+def test_unit_tests_step_precedes_success_echo() -> None:
+    """Шаг unit-tests стоит до терминального $(SUCCESS), иначе он не влияет на exit code."""
+    recipe = _ci_recipe()
+    unit_idx = next(i for i, s in enumerate(recipe) if "unit-tests" in s)
+    success_idx = next(
+        (i for i, s in enumerate(recipe) if "$(SUCCESS)" in s), len(recipe)
+    )
+    assert unit_idx < success_idx, (
+        f"шаг unit-tests (позиция {unit_idx}) должен идти раньше $(SUCCESS) "
+        f"(позиция {success_idx})"
+    )
+
+
+def test_unit_tests_target_actually_runs_pytest_on_unit_suite() -> None:
+    """Цель `unit-tests` действительно зовёт pytest по tests/unit, а не заглушку."""
+    text = PIPELINES.read_text(encoding="utf-8")
+    match = re.search(r"^unit-tests:.*?\n((?:\t.*\n)+)", text, re.MULTILINE)
+    assert match, "цель unit-tests не найдена в make/pipelines.mk"
+    body = match.group(1)
+    pytest_lines = [ln for ln in body.splitlines() if "pytest" in ln]
+    assert pytest_lines, "цель unit-tests не запускает pytest — шаг в ci будет декоративным"
+    assert any("tests/unit" in ln for ln in pytest_lines), (
+        f"pytest вызывается не по tests/unit: {pytest_lines}. Подмена на tests/ "
+        "затянет в CI интеграционные тесты, которым нужны PG/Redis/MinIO"
+    )
+    # --timeout может лежать на строке-продолжении (обратный слэш), поэтому
+    # здесь проверяется весь рецепт, а не строка с pytest.
+    assert "--timeout=" in body, (
+        f"unit-tests обязан передавать --timeout. Рецепт: {body!r}. Без "
+        "pytest-timeout зависший тест подвесит пайплайн без верхней границы"
+    )
+
+
+def test_unit_tests_timeout_is_defined_and_not_disabled() -> None:
+    """UNIT_TEST_TIMEOUT определён в Makefile и не обнулён.
+
+    Обнуление (0) отключает таймер и возвращает поведение, ради которого
+    шаг добавлен, поэтому значение проверяется явно.
+    """
+    makefile = (REPO_ROOT / "Makefile").read_text(encoding="utf-8")
+    match = re.search(r"^UNIT_TEST_TIMEOUT\s*\??=\s*(\S+)", makefile, re.MULTILINE)
+    assert match, "UNIT_TEST_TIMEOUT не определён в Makefile"
+    assert int(match.group(1)) > 0, (
+        f"UNIT_TEST_TIMEOUT={match.group(1)} отключает таймер pytest-timeout"
     )
