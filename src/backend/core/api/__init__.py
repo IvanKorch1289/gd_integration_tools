@@ -167,7 +167,7 @@ def __getattr__(name: str) -> Any:
     # Канонический путь — core (контракт), не services: это базовый класс,
     # а не реализация инфраструктуры.
     if name == "BaseExternalAPIClient":
-        from src.backend.core.services.base_external_api import BaseExternalAPIClient
+        from src.backend.services.core.base_external_api import BaseExternalAPIClient
 
         return BaseExternalAPIClient
     # Cost attribution primitives. Экспортируются, потому что UI-страница
