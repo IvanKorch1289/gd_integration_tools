@@ -87,7 +87,10 @@ class NotebookService:
 
         effective_tenant = tenant_id if tenant_id is not None else get_tenant_id()
         if effective_tenant == "":
-            return await self._repo.get(notebook_id, tenant_id=None)
+            # P0 fix (audit a2bd6f294): пустой tenant — fail-closed
+            # (ADR-0345): без контекста вернуть NotFound вместо
+            # cross-tenant чтения (repo при tenant_id=None не фильтрует).
+            return None  # notebook_id скрыт (fail-closed, без утечки существования)
         return await self._repo.get(notebook_id, tenant_id=effective_tenant)
 
     async def get_version(

@@ -125,13 +125,11 @@ class TestAIFeedbackTenantEnforcement:
         )
 
     @pytest.mark.asyncio
-    async def test_service_get_no_tenant_legacy_compat(self) -> None:
-        """No TenantContext AND no param — legacy behavior pass-through.
-
-        Per v4 §10 P1 backwards-compat: existing callers without
-        tenant setup continue working.
-        """
-        # Reset any prior context.
+    async def test_service_get_no_tenant_now_fail_closed(self) -> None:
+        """No TenantContext AND no param — P0 fix (audit a2bd6f294):
+        legacy pass-through ЗАМЕНЁН fail-closed (контракт изменён
+        осознанно: cross-tenant чтение приоритетнее backwards-compat).
+        Обновлено 2026-09-30; прежнее поведение — pass-through."""
         try:
             from src.backend.core.tenancy import _current
 
@@ -143,6 +141,5 @@ class TestAIFeedbackTenantEnforcement:
         await repo.save(_make_doc(doc_id="d-1", tenant="t-a"))
         svc = AIFeedbackService(repository=repo)
 
-        # No context, no param → legacy pass-through.
         got = await svc.get("d-1")
-        assert got is not None
+        assert got is None

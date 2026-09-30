@@ -110,13 +110,11 @@ class TestNotebookTenantEnforcement:
         assert got_cross is None
 
     @pytest.mark.asyncio
-    async def test_service_get_no_tenant_legacy_compat(self) -> None:
-        """No TenantContext AND no param — legacy behavior pass-through.
-
-        Per v4 §10 P1 backwards-compat: existing callers without
-        tenant setup continue working.
-        """
-        # Reset any prior context (best-effort).
+    async def test_service_get_no_tenant_now_fail_closed(self) -> None:
+        """No TenantContext AND no param — P0 fix (audit a2bd6f294):
+        legacy pass-through ЗАМЕНЁН fail-closed (контракт изменён
+        осознанно: cross-tenant чтение приоритетнее backwards-compat).
+        Обновлено 2026-09-30; прежнее поведение — pass-through."""
         from src.backend.core.tenancy import _current
 
         try:
@@ -128,6 +126,49 @@ class TestNotebookTenantEnforcement:
         await repo.create(_make_notebook(notebook_id="nb-1", tenant="t-a"))
         svc = NotebookService(repository=repo)
 
-        # No context, no param → legacy pass-through.
         got = await svc.get("nb-1")
-        assert got is not None
+        assert got is None
+
+
+class TestEmptyTenantFailClosed:
+    """P0 (audit a2bd6f294): пустой tenant-контекст — fail-closed.
+
+    Раньше: service.get() при effective_tenant == "" уходил в
+    repo.get(tenant_id=None) → без фильтра → cross-tenant чтение.
+    """
+
+    @pytest.mark.asyncio
+    async def test_service_get_without_tenant_context_returns_none(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from src.backend.core.tenancy import get_tenant_id
+
+        repo = InMemoryNotebookRepository()
+        service = NotebookService(repository=repo)
+        nb = _make_notebook("nb-x", tenant="tenant-b")
+        await repo.create(nb)
+
+        # Никакого tenant-контекста в этом тесте → get_tenant_id() == ""
+        monkeypatch.setattr("src.backend.core.tenancy.get_tenant_id", lambda: "")
+        assert get_tenant_id() == ""
+
+        result = await service.get("nb-x")
+        assert result is None, (
+            "fail-closed: без tenant-контекста чужой документ не должен быть виден"
+        )
+
+    @pytest.mark.asyncio
+    async def test_service_get_with_tenant_context_still_works(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        repo = InMemoryNotebookRepository()
+        service = NotebookService(repository=repo)
+        nb = _make_notebook("nb-ok", tenant="tenant-b")
+        await repo.create(nb)
+
+        monkeypatch.setattr(
+            "src.backend.core.tenancy.get_tenant_id", lambda: "tenant-b"
+        )
+        result = await service.get("nb-ok")
+        assert result is not None
+        assert result.id == "nb-ok"
