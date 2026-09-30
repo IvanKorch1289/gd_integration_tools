@@ -286,3 +286,45 @@ class TestMaybeStart:
         overrides = RuntimeFeatureFlagOverrides()
         result = await maybe_start_broadcaster(redis_client=None, overrides=overrides)
         assert result is None
+
+
+class _WrapperLikeRedis:
+    """Mimic DI wiring: wrapper RedisClient с ASYNC pubsub() (D-AUDIT-20815).
+
+    Реальный клиент из startup_phases/services.py — wrapper RedisClient,
+    чей pubsub() — coroutine (get_client → native pubsub). Raw-async клиенты
+    возвращают PubSub синхронно; broadcaster обязан толерировать оба.
+    """
+
+    def __init__(self, pubsub_instance: _FakePubSub) -> None:
+        self._pubsub_instance = pubsub_instance
+        self.published: list[tuple[str, bytes]] = []
+
+    async def pubsub(self) -> _FakePubSub:
+        return self._pubsub_instance
+
+    async def publish(self, channel: str, payload: bytes) -> int:
+        self.published.append((channel, payload))
+        return 1
+
+
+@pytest.mark.asyncio
+async def test_start_supports_wrapper_async_pubsub_client() -> None:
+    """Regression D-AUDIT-20815: wrapper client (async pubsub) не должен
+    приводить к AttributeError на .subscribe (coroutine не awaited)."""
+    from src.backend.core.feature_flags.redis_broadcaster import (
+        RedisFeatureFlagBroadcaster,
+    )
+
+    pubsub = _FakePubSub()
+    wrapper = _WrapperLikeRedis(pubsub)
+    overrides = RuntimeFeatureFlagOverrides()
+    broadcaster = RedisFeatureFlagBroadcaster(
+        redis_client=wrapper, overrides=overrides
+    )
+
+    await broadcaster.start(task_factory=asyncio.create_task)
+    try:
+        assert pubsub.subscribed_channels == ["feature-flags:toggle"]
+    finally:
+        await broadcaster.stop()

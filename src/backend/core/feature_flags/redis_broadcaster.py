@@ -27,6 +27,7 @@ DoD S17 #11 — propagation latency p95 ≤ 100ms (carryover к perf-wave).
 from __future__ import annotations
 
 import asyncio
+import inspect
 import os
 import uuid
 from dataclasses import dataclass
@@ -176,7 +177,15 @@ class RedisFeatureFlagBroadcaster:
         if self._task is not None and not self._task.done():
             return
         self._stop_event.clear()
-        self._pubsub = self._redis.pubsub()
+        # D-AUDIT-20815: wiring подаёт wrapper RedisClient, чей pubsub() —
+        # coroutine (get_client → native pubsub); raw redis.asyncio.Redis
+        # возвращает PubSub синхронно. Tolerant к обоим контрактам.
+        # Раньше: coroutine не awaited → AttributeError на .subscribe →
+        # maybe_start_broadcaster глотал → broadcaster молча не стартовал.
+        pubsub_obj = self._redis.pubsub()
+        if inspect.iscoroutine(pubsub_obj):
+            pubsub_obj = await pubsub_obj
+        self._pubsub = pubsub_obj
         await self._pubsub.subscribe(self._channel)
         if task_factory is None:
             from src.backend.core.utils.task_registry import get_task_registry
