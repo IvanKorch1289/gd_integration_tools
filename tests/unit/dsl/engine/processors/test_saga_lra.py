@@ -233,3 +233,106 @@ async def test_to_spec_returns_none_when_not_serializable() -> None:
     proc = SagaLRAProcessor(steps)
     spec = proc.to_spec()
     assert spec is None
+
+
+@pytest.mark.asyncio
+async def test_resume_compensating_state_replays_compensations() -> None:
+    """P0 (audit a2bd6f294): stuck state='compensating' при re-entry —
+    компенсации доигрываются reverse, финал rolled_back (не потеря)."""
+    steps = [
+        SagaStep(forward=_FakeProcessor("f0"), compensate=_FakeProcessor("c0")),
+        SagaStep(forward=_FakeProcessor("f1"), compensate=_FakeProcessor("c1")),
+    ]
+    proc = SagaLRAProcessor(steps, workflow_id="wf1", run_id="r1")
+
+    mock_state = MagicMock()
+    mock_state.state = "compensating"
+    mock_state.step_index = 1
+    mock_state.compensating_actions = [
+        {"step_index": 0, "forward_name": "f0", "compensate_name": "c0"},
+        {"step_index": 1, "forward_name": "f1", "compensate_name": "c1"},
+    ]
+
+    mock_repo = MagicMock()
+    mock_repo.load = AsyncMock(return_value=mock_state)
+    mock_repo.save = AsyncMock(return_value=mock_state)
+
+    with patch.object(proc, "_get_repo", new=AsyncMock(return_value=mock_repo)):
+        ex = _ex()
+        await proc.process(ex, AsyncMock())
+
+    # Обе компенсации переиграны (reverse: c1, затем c0)
+    assert steps[1].compensate.called  # type: ignore[union-attr]
+    assert steps[0].compensate.called  # type: ignore[union-attr]
+    # Forward-шаги НЕ переисполнялись
+    assert not steps[0].forward.called  # type: ignore[union-attr]
+    assert not steps[1].forward.called  # type: ignore[union-attr]
+    # Финал — rolled_back
+    final_call = mock_repo.save.call_args_list[-1]
+    assert final_call.kwargs["state"] == "rolled_back"
+    assert ex.status == ExchangeStatus.failed
+
+
+@pytest.mark.asyncio
+async def test_resume_compensating_failure_stays_compensating() -> None:
+    """Компенсация падает при переигрывании — state остаётся compensating."""
+    steps = [
+        SagaStep(
+            forward=_FakeProcessor("f0"),
+            compensate=_FakeProcessor("c0", raise_exc=True),
+        ),
+        SagaStep(forward=_FakeProcessor("f1"), compensate=_FakeProcessor("c1")),
+    ]
+    proc = SagaLRAProcessor(steps, workflow_id="wf1", run_id="r1")
+
+    mock_state = MagicMock()
+    mock_state.state = "compensating"
+    mock_state.step_index = 1
+    mock_state.compensating_actions = [
+        {"step_index": 1, "forward_name": "f1", "compensate_name": "c1"},
+        {"step_index": 0, "forward_name": "f0", "compensate_name": "c0"},
+    ]
+
+    mock_repo = MagicMock()
+    mock_repo.load = AsyncMock(return_value=mock_state)
+    mock_repo.save = AsyncMock(return_value=mock_state)
+
+    with patch.object(proc, "_get_repo", new=AsyncMock(return_value=mock_repo)):
+        ex = _ex()
+        await proc.process(ex, AsyncMock())
+
+    final_call = mock_repo.save.call_args_list[-1]
+    assert final_call.kwargs["state"] == "compensating"
+    assert ex.status == ExchangeStatus.failed
+
+
+@pytest.mark.asyncio
+async def test_resume_compensating_skips_mismatched_route() -> None:
+    """Изменённый маршрут (index вне диапазона) — пропуск без падения,
+    доступные компенсации всё равно переигрываются."""
+    steps = [
+        SagaStep(forward=_FakeProcessor("f0"), compensate=_FakeProcessor("c0")),
+        SagaStep(forward=_FakeProcessor("f1"), compensate=_FakeProcessor("c1")),
+    ]
+    proc = SagaLRAProcessor(steps, workflow_id="wf1", run_id="r1")
+
+    mock_state = MagicMock()
+    mock_state.state = "compensating"
+    mock_state.step_index = 5
+    # Шаг 5 не существует; шаг 1 — валиден
+    mock_state.compensating_actions = [
+        {"step_index": 5, "forward_name": "fx", "compensate_name": "c5"},
+        {"step_index": 1, "forward_name": "f1", "compensate_name": "c1"},
+    ]
+
+    mock_repo = MagicMock()
+    mock_repo.load = AsyncMock(return_value=mock_state)
+    mock_repo.save = AsyncMock(return_value=mock_state)
+
+    with patch.object(proc, "_get_repo", new=AsyncMock(return_value=mock_repo)):
+        ex = _ex()
+        await proc.process(ex, AsyncMock())
+
+    assert steps[1].compensate.called  # type: ignore[union-attr]
+    final_call = mock_repo.save.call_args_list[-1]
+    assert final_call.kwargs["state"] == "rolled_back"

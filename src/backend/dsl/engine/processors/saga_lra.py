@@ -215,11 +215,24 @@ class SagaLRAProcessor(BaseProcessor):
         if repo is None:
             return await self._run_in_memory(exchange, context)
 
-        # Cycle 19 P1.4 fix: if previous run left state in 'compensating'
-        # or terminal-failure state, do NOT resume forward — would
-        # re-execute already-compensated side effects. Fall through to
-        # in-memory (no persistent resume) which will surface the error.
-        terminal_states = {"compensating", "rolled_back", "compensation_failed"}
+        # P0 fix (audit a2bd6f294): stuck "compensating" при re-entry —
+        # доиграть компенсации из compensating_actions (reverse), а не
+        # уходить в in-memory с молчаливой потерей компенсаций (которую
+        # CompensatingDriverWorker затем фиксировал молчаливым
+        # rolled_back). Компенсации обязаны быть идемпотентными —
+        # переигрываются ВСЕ записанные (частично исполненные отличить
+        # нечем: step_index хранит forward-позицию).
+        if state_record.state == "compensating":  # type: ignore[union-attr]
+            return await self._resume_compensating(
+                exchange, context, repo, workflow_id, run_id, state_record
+            )
+
+        # Cycle 19 P1.4 fix: if previous run left state in
+        # 'rolled_back'/'compensation_failed' (terminal-failure), do NOT
+        # resume forward — would re-execute already-compensated side
+        # effects. Fall through to in-memory (no persistent resume) which
+        # will surface the error.
+        terminal_states = {"rolled_back", "compensation_failed"}
         if state_record.state in terminal_states:  # type: ignore[union-attr]
             # Cycle 75: use module-level canonical logger.
             _lra_logger.warning(
@@ -335,6 +348,85 @@ class SagaLRAProcessor(BaseProcessor):
             _lra_logger.error("Failed to save completed saga state: %s", db_exc)
 
         exchange.set_property("saga_completed", True)
+        return None
+
+    async def _resume_compensating(
+        self,
+        exchange: Exchange[Any],
+        context: Any,
+        repo: Any,
+        workflow_id: uuid.UUID,
+        run_id: str,
+        state_record: Any,
+    ) -> None:
+        """P0 fix: доиграть компенсации stuck-саги при re-entry.
+
+        Раньше state='compensating' считался terminal — процессор уходил
+        в in-memory с молчаливой потерей компенсаций, а
+        CompensatingDriverWorker финализировал rolled_back без исполнения.
+        Теперь: re-entry исполняет компенсирующие шаги в обратном порядке
+        (компенсации обязаны быть идемпотентными — переигрываются ВСЕ
+        записанные: частично исполненные отличить нечем, step_index
+        хранит forward-позицию), затем rolled_back. Шаги сверяются с
+        записанными именами — изменённый маршрут безопасно пропускается.
+        """
+        actions = list(state_record.compensating_actions or [])
+        actions_sorted = sorted(
+            actions, key=lambda a: a.get("step_index", -1), reverse=True
+        )
+        any_failed = False
+        for action in actions_sorted:
+            idx = action.get("step_index")
+            comp_name = action.get("compensate_name")
+            if not isinstance(idx, int) or idx < 0 or idx >= len(self._steps):
+                _lra_logger.warning(
+                    "SagaLRA resume: action index %r вне диапазона — пропущено", idx
+                )
+                continue
+            step = self._steps[idx]
+            if step.compensate is None or step.compensate.name != comp_name:
+                _lra_logger.warning(
+                    "SagaLRA resume: компенсация шага %d не совпадает с "
+                    "записанной %r (маршрут изменён) — пропущено",
+                    idx,
+                    comp_name,
+                )
+                continue
+            try:
+                exchange.status = ExchangeStatus.processing
+                exchange.error = None
+                await self._run_step_with_deadline(
+                    step.compensate,
+                    exchange,
+                    context,
+                    step_name=comp_name or "compensation",
+                    kind="compensation",
+                )
+            except Exception as comp_exc:
+                any_failed = True
+                _lra_logger.error(
+                    "SagaLRA resume compensation failed (step %d): %s", idx, comp_exc
+                )
+
+        final_state = "compensating" if any_failed else "rolled_back"
+        try:
+            await repo.save(
+                workflow_id=workflow_id,
+                run_id=run_id,
+                step_index=state_record.step_index,
+                state=final_state,
+            )
+        except Exception as db_exc:
+            _lra_logger.error("Failed to save resumed saga state: %s", db_exc)
+
+        exchange.fail(
+            "Saga resumed in compensating state: "
+            + (
+                "compensations replayed"
+                if not any_failed
+                else "compensation failures remain"
+            )
+        )
         return None
 
     async def _get_repo(self) -> Any | None:
