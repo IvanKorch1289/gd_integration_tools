@@ -1,0 +1,1 @@
+Отчёты агентов получены в ответах Agent tool; сводка в AUDIT_REPORT/финальных артефактах. Волна 1: гипотезы 1-6,8,9,12 (9 CONFIRMED, 1 FALSE). Волна 2: DSL/workflow/entrypoints/security/dead-code домены.
