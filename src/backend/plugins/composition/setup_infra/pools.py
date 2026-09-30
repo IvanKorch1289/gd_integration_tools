@@ -327,6 +327,25 @@ async def _register_pools_in_unified_manager() -> None:
     app_logger.info("UnifiedPoolManager registered %d pools", len(manager.list_pools()))
 
 
+async def _start_mongo_client() -> None:
+    """P0 fix (audit a2bd6f294): стартовать MongoDBClient в connect-фазе.
+
+    Раньше MongoDBClient.start() не вызывался никем: register-фаза
+    (protocols.py ensure_indexes) падала в «MongoDBClient not started»,
+    ошибки глотались debug-логами — TTL/unique индексы не создавались.
+    Идемпотентно (is_started guard); skip при mongo.enabled=false.
+    """
+    from src.backend.core.config.settings import settings
+
+    if not _mongo_enabled():
+        app_logger.debug("Mongo client start skipped (disabled)")
+        return
+    client = get_mongo_client()
+    if client.is_started():
+        return
+    await client.start()
+
+
 async def _warmup_connection_pools() -> None:
     """Pre-spin connection pools после initialize-фазы (S9 K2 W3, wired S10).
 

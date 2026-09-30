@@ -20,6 +20,7 @@ from src.backend.plugins.composition.setup_infra.pools import (
     _clickhouse_enabled,
     _redis_enabled,
     _register_pools_in_unified_manager,
+    _start_mongo_client,
     _warmup_connection_pools,
 )
 from src.backend.plugins.composition.setup_infra.scheduler_leader import (
@@ -319,6 +320,7 @@ starting_operations: list[OperationItem] = [
     ),
     ("register_health_checks", _register_health_checks, None),
     ("register_pools_in_unified_manager", _register_pools_in_unified_manager, None),
+    ("start_mongo_client", _start_mongo_client, None),  # P0: до ensure_indexes
     ("warmup_connection_pools", _warmup_connection_pools, None),
     ("start_pool_monitors", _start_pool_monitors, None),  # S173: critical fix
     # S189: register AgentSecurityFramework workflow hooks (banking/rpa/code/data)

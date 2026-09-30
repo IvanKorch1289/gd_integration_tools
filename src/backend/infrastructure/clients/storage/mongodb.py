@@ -103,6 +103,12 @@ class MongoDBClient:
             raise RuntimeError("MongoDBClient not started")
         return self._db
 
+    def is_started(self) -> bool:
+        """Был ли клиент стартован (P0 fix audit a2bd6f294: lifecycle
+        startup-фаза стартует клиента до ensure_indexes; guard нужен
+        для идемпотентности операции)."""
+        return self._db is not None
+
     def collection(self, name: str) -> Any:
         """Get MongoDB collection by name.
 

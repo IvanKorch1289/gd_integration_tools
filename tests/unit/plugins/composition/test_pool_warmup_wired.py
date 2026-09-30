@@ -140,3 +140,74 @@ async def test_warmup_noop_when_all_backends_disabled(
     await setup_infra._warmup_connection_pools()
 
     assert called is False
+
+
+def test_mongo_client_start_registered_before_pools_warmup() -> None:
+    """P0 (audit a2bd6f294): MongoDBClient.start() должен быть в
+    starting_operations РАНЬШЕ warmup и register-фазы (ensure_indexes),
+    иначе индексы создаются на не-стартованном клиенте (молча ignored)."""
+
+    from src.backend.plugins.composition.setup_infra import lifecycle
+
+    ops = [name for name, _, _ in lifecycle.starting_operations]
+    assert "start_mongo_client" in ops
+    assert ops.index("start_mongo_client") < ops.index("warmup_connection_pools")
+
+
+@pytest.mark.asyncio
+async def test_start_mongo_client_invokes_start_when_not_started(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.backend.plugins.composition.setup_infra.pools import _start_mongo_client
+
+    calls: list[str] = []
+
+    class _FakeMongo:
+        def is_started(self) -> bool:
+            return False
+
+        async def start(self) -> None:
+            calls.append("start")
+
+    monkeypatch.setattr(
+        "src.backend.plugins.composition.setup_infra.pools.get_mongo_client",
+        lambda: _FakeMongo(),
+    )
+    monkeypatch.setattr(
+        "src.backend.plugins.composition.setup_infra.pools._mongo_enabled", lambda: True
+    )
+    await _start_mongo_client()
+    assert calls == ["start"]
+
+
+@pytest.mark.asyncio
+async def test_start_mongo_client_skips_when_started_or_disabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.backend.plugins.composition.setup_infra.pools import _start_mongo_client
+
+    calls: list[str] = []
+
+    class _StartedMongo:
+        def is_started(self) -> bool:
+            return True
+
+        async def start(self) -> None:
+            calls.append("start")
+
+    monkeypatch.setattr(
+        "src.backend.plugins.composition.setup_infra.pools.get_mongo_client",
+        lambda: _StartedMongo(),
+    )
+    monkeypatch.setattr(
+        "src.backend.plugins.composition.setup_infra.pools._mongo_enabled", lambda: True
+    )
+    await _start_mongo_client()
+    assert calls == []  # идемпотентно
+
+    monkeypatch.setattr(
+        "src.backend.plugins.composition.setup_infra.pools._mongo_enabled",
+        lambda: False,
+    )
+    await _start_mongo_client()
+    assert calls == []  # disabled — skip
