@@ -139,6 +139,8 @@ def build_auto_strawberry_schema(metadatas: Any | None = None) -> AutoSchemaResu
     """
     import strawberry
 
+    from src.backend.entrypoints.graphql.graphql_guards import build_graphql_extensions
+
     if metadatas is None:
         from src.backend.core.api.extensions import action_handler_registry
 
@@ -202,9 +204,11 @@ def build_auto_strawberry_schema(metadatas: Any | None = None) -> AutoSchemaResu
         Mutation = strawberry.type(name="AutoMutation")(
             type("AutoMutation", (), mutation_attrs)
         )
-        schema = strawberry.Schema(query=Query, mutation=Mutation)
+        schema = strawberry.Schema(
+            query=Query, mutation=Mutation, extensions=build_graphql_extensions()
+        )
     else:
-        schema = strawberry.Schema(query=Query)
+        schema = strawberry.Schema(query=Query, extensions=build_graphql_extensions())
 
     # Используем AutoActionResult, чтобы Strawberry зарегистрировал тип
     # (даже если ни один резолвер ещё не возвращает его явно).

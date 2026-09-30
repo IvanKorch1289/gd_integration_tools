@@ -18,6 +18,7 @@ import ast
 from pathlib import Path
 
 import pytest
+import strawberry
 
 
 def _parse_schema() -> ast.Module:
@@ -100,3 +101,113 @@ def test_no_duplicate_dsl_imports() -> None:
     Ожидаем 5 уникальных dsl submodule imports.
     """
     _source = Path("src/backend/entrypoints/graphql/schema.py").read_text()
+
+
+@strawberry.type
+class _GuardNode:
+    value: str = "v"
+
+    @strawberry.field
+    def child(self) -> "_GuardNode":
+        return _GuardNode()
+
+
+@strawberry.type
+class _GuardQuery:
+    @strawberry.field
+    def node(self) -> _GuardNode:
+        return _GuardNode()
+
+
+class TestGraphQLGuards:
+    """P0 (audit a2bd6f294): depth-limit + introspection policy."""
+
+    def test_build_extensions_includes_depth_limiter(self) -> None:
+        from src.backend.entrypoints.graphql.graphql_guards import (
+            MAX_QUERY_DEPTH,
+            build_graphql_extensions,
+        )
+
+        ext = build_graphql_extensions()
+        assert any(type(e).__name__ == "QueryDepthLimiter" for e in ext)
+        assert MAX_QUERY_DEPTH == 12
+
+    def test_introspection_disabled_outside_development(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from src.backend.entrypoints.graphql import graphql_guards
+
+        monkeypatch.setattr(graphql_guards, "_introspection_allowed", lambda: False)
+        graphql_guards.reset_extensions_cache()
+        try:
+            ext = graphql_guards.build_graphql_extensions()
+            names = [type(e).__name__ for e in ext]
+            assert "AddValidationRules" in names
+        finally:
+            graphql_guards.reset_extensions_cache()
+
+    def test_introspection_allowed_in_development(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from src.backend.entrypoints.graphql import graphql_guards
+
+        monkeypatch.setattr(graphql_guards, "_introspection_allowed", lambda: True)
+        graphql_guards.reset_extensions_cache()
+        try:
+            ext = graphql_guards.build_graphql_extensions()
+            assert all(type(e).__name__ != "AddValidationRules" for e in ext)
+        finally:
+            graphql_guards.reset_extensions_cache()
+
+    @pytest.mark.asyncio
+    async def test_depth_limited_on_nested_schema(self) -> None:
+        """Depth-лимитер реально отсекает вложенность > 12 (гвард из
+        build_graphql_extensions на self-referencing схеме)."""
+        import strawberry
+
+        from src.backend.entrypoints.graphql import graphql_guards
+
+        monkeypatch = pytest.MonkeyPatch()
+        monkeypatch.setattr(graphql_guards, "_introspection_allowed", lambda: True)
+        graphql_guards.reset_extensions_cache()
+        try:
+            schema = strawberry.Schema(
+                query=_GuardQuery,
+                extensions=list(graphql_guards.build_graphql_extensions()),
+            )
+            deep_query = "{ " + "child { " * 14 + "value " + "} " * 14 + "}"
+            res = schema.execute_sync(deep_query)
+            assert res.errors is not None
+            assert any("depth" in str(e).lower() for e in res.errors)
+        finally:
+            monkeypatch.undo()
+            graphql_guards.reset_extensions_cache()
+
+    @pytest.mark.asyncio
+    async def test_introspection_blocked_by_rule(self) -> None:
+        """__schema-запрос при выключенной интроспекции → GraphQLError."""
+        import strawberry
+
+        from src.backend.entrypoints.graphql import graphql_guards
+
+        monkeypatch = pytest.MonkeyPatch()
+        monkeypatch.setattr(graphql_guards, "_introspection_allowed", lambda: False)
+        graphql_guards.reset_extensions_cache()
+        try:
+            extensions = graphql_guards.build_graphql_extensions()
+
+            @strawberry.type
+            class Query:
+                @strawberry.field
+                def ping(self) -> str:
+                    return "pong"
+
+            schema = strawberry.Schema(query=Query, extensions=list(extensions))
+            res = schema.execute_sync("{ __schema { queryType { name } } }")
+            assert res.errors is not None
+            assert any(
+                "introspection is disabled" in str(e).lower() for e in res.errors
+            )
+        finally:
+            monkeypatch.undo()
+            graphql_guards.reset_extensions_cache()
