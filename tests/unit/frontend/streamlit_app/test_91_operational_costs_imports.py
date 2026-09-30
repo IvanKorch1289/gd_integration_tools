@@ -138,12 +138,29 @@ def _build_streamlit_mock() -> ModuleType:
     return st
 
 
+def _build_polars_mock() -> ModuleType:
+    """Fresh polars mock (для test isolation).
+
+    ``polars`` — опциональный extra «dataframes», в дефолтной установке его
+    нет, а страница импортирует его на верхнем уровне. Мок ставится именно
+    здесь, а не только на уровне модуля: pytest собирает ВСЕ модули до
+    запуска первого теста, а ``tests/unit/conftest.py`` вычищает подмены из
+    ``sys.modules`` между коллекторами. Установка только при импорте теста
+    означала, что к моменту выполнения мок уже удалён и страница падала с
+    ``ModuleNotFoundError: No module named 'polars'``.
+    """
+    polars = ModuleType("polars")
+    polars.DataFrame = MagicMock()
+    return polars
+
+
 def _load_page_module() -> object:
     """Load page module via spec_from_file_location (Cyrillic name)."""
     global _load_counter
     _load_counter += 1
     module_name = f"_operational_costs_page_{_load_counter}"
     sys.modules["streamlit"] = _build_streamlit_mock()
+    sys.modules["polars"] = _build_polars_mock()
     spec = importlib.util.spec_from_file_location(module_name, _page_path())
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module

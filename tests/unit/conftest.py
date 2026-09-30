@@ -108,6 +108,24 @@ _POLLUTED_MODULE_KEYS = (
     # в sys.modules и ломает tests/unit/infrastructure/messaging/outbox/
     # тесты, которым нужен реальный ALLOWED_TRANSPORTS, claim_pending и т.п.
     "src.backend.infrastructure.repositories.outbox",
+    # Фронтенд-тесты подменяют сторонние пакеты голыми
+    # ``types.ModuleType`` на уровне модуля теста (например
+    # tests/unit/frontend/streamlit_app/test_91_operational_costs_imports.py
+    # делает ``sys.modules["polars"] = ModuleType("polars")``) и не восстанавливают
+    # их. Два изолированных следствия, оба доказаны прогоном:
+    #
+    #   1. ``polars`` — опциональный extra «dataframes», в дефолтной
+    #      установке его нет. Подмена делает ``pytest.importorskip("polars")``
+    #      бесполезным: модуль найден в sys.modules, поэтому guard срабатывает
+    #      «успешно» и тест идёт против MagicMock. Проверено:
+    #      ``test_converters.py::TestConversionStrategies::test_dict_to_csv``
+    #      сам по себе → SKIPPED, но сразу после test_91_operational_costs_imports
+    #      → FAILED («'name,age' in <MagicMock … write_csv()>»).
+    #   2. ``streamlit`` установлен реально (1.63.0), но 7 фронтенд-тестов
+    #      подменяют его пустым модулем, из-за чего ``import streamlit.emojis``
+    #      в других сьютах падает с «'streamlit' is not a package».
+    "polars",
+    "streamlit",
 )
 
 
@@ -204,3 +222,38 @@ def _restore_workflow_registry():
     yield
     _wr._classes.clear()
     _wr._classes.update(snapshot)
+
+
+# ── sys.modules-подмены: cleanup до и после КАЖДОГО теста ──
+# Хук ``pytest_collectstart`` выше ловит только загрязнение, возникшее на
+# этапе collection. Но pytest собирает ВСЕ модули до запуска первого теста,
+# а часть фронтенд-тестов ставит моки прямо во время выполнения
+# (``_load_page_module()`` в test_91_operational_costs_imports.py). Такие
+# моки переживают collection и достаются следующим сьютам уже на этапе run:
+# без этого фикстуры polars-мок из фронтенд-теста ломал
+# ``importorskip("polars")`` в dsl-тестах, и они падали вместо skip.
+@_pytest.fixture(autouse=True)
+def _purge_polluted_modules():
+    _cleanup_polluted_modules()
+    yield
+    _cleanup_polluted_modules()
+
+
+# ── TaskRegistry: снятие «закрыт» после каждого теста (fix test pollution) ──
+# ``TaskRegistry.shutdown_all()`` выставляет ``_closed = True`` НАВСЕГДА, а
+# ``get_task_registry()`` возвращает тот же синглтон. В проде это корректно:
+# shutdown зовётся только на выходе процесса
+# (plugins/composition/lifecycle/shutdown.py:245), и новых задач после него
+# быть не должно — fail-closed.
+#
+# В тестах тот же вызов (lifespan/app-shutdown) навсегда оставлял глобал
+# закрытым для всего процесса, и каждый последующий ``create_task`` падал с
+# «TaskRegistry уже закрыт» — каскадом 31 падения в whole-tree прогоне.
+# Восстановление выполняет уже существующий публичный метод
+# ``reset_for_tests()``; новый API в продукт не добавлялся.
+@_pytest.fixture(autouse=True)
+def _restore_task_registry():
+    from src.backend.core.utils.task_registry import get_task_registry as _get_reg
+
+    yield
+    _get_reg().reset_for_tests()

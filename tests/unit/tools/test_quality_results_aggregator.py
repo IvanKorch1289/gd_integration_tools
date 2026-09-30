@@ -24,6 +24,15 @@ import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
+# Модульная фикстура ниже оборачивает subprocess, которому самому выдан
+# ``timeout=600``. Глобальный ``--timeout=120`` (см. Makefile UNIT_TEST_TIMEOUT)
+# убивал её на 120-й секунде: замер в простое — 102 с, запас 15%, а под
+# нагрузкой (unit-tests идёт с двумя xdist-воркерами) лимит превышается
+# стабильно. Симптом — 6 «ERROR at setup … Failed: Timeout (>120.0s)».
+# Лимит модуля обязан быть не меньше бюджета оборачиваемого subprocess;
+# глобальные 120 с при этом не ослабляются и продолжают ловить зависания.
+pytestmark = pytest.mark.timeout(660)
+
 
 @pytest.fixture(scope="module")
 def aggregator_result() -> dict[str, Any]:
