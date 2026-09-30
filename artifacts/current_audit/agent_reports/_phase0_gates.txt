@@ -1,0 +1,52 @@
+SHA=69c406f33e1480bf429421c84e554be432ab8471
+date=2026-09-30T10:09:01+03:00
+python=Python 3.14.0
+
+########## make check-task-registry ##########
+[32muv virtual environment detected[0m
+uv run python tools/checks/check_task_registry.py --root src/backend
+OK: no orphan asyncio.create_task / ensure_future calls.
+>>> EXIT=0
+
+########## make check-tenant-isolation ##########
+
+Optional tenant_id AST gate (audit W0)
+  Baseline: 123 параметров
+  Current:  123 параметров
+  ✅ No drift
+[32mNo cross-tenant access patterns detected![0m
+>>> EXIT=0
+
+########## make check-privacy-lifecycle ##########
+  Legal hold support: ✅
+  Reconciliation check: ✅
+  Orchestration command: ✅ src/backend/core/privacy/__init__.py
+
+✅ Privacy lifecycle complete
+
+>>> EXIT=0
+
+########## make check-waf-coverage-strict ##########
+[34mПроверка WAF coverage (strict, без allowlist)...[0m
+WAF coverage OK: 0 violations
+[32mWAF coverage strict-check passed[0m
+>>> EXIT=0
+
+########## make deps-check-strict ##########
+[1mFound dependencies in pyproject.toml: aio-pika, aiofiles, aioimaplib, aiokafka, aiomqtt, aiosmtplib, alembic, apscheduler, asgi-correlation-id, asgi-idempotency-header, asyncpg, beautifulsoup4, cachetools, casbin, click, cloudevents, croniter, cryptography, elasticsearch, fastapi, fastapi-filter, fastapi-limiter, fastapi-pagination, fastavro, faststream, glom, granian, grpcio, hishel, httpx, httpx-retries, hvac, jmespath, joserfc, lxml, markitdown, msgpack, msgspec, nats-py, openapi-pydantic, openpyxl, opentelemetry-api, opentelemetry-exporter-otlp-proto-grpc, opentelemetry-instrumentation-aio-pika, opentelemetry-instrumentation-aiokafka, opentelemetry-instrumentation-asyncpg, opentelemetry-instrumentation-fastapi, opentelemetry-instrumentation-grpc, opentelemetry-instrumentation-pymongo, opentelemetry-sdk, orjson, pendulum, presidio-analyzer, presidio-anonymizer, protobuf, purgatory, pydantic, pydantic-settings, pydash, pymongo, pypdf, python-docx, python-dotenv, python-multipart, pyyaml, qdrant-client, rank-bm25, redis, sentry-sdk, sqladmin, sqlalchemy, sqlalchemy-continuum, sqlalchemy-utils, starlette, starlette-exporter, strawberry-graphql, streamlit, structlog, tenacity, typer, uvicorn, watchfiles, whoosh-reloaded, xmltodict, zeep[0m
+[33m[1mExcluded dependencies not found in virtual environment: aiocache[0m
+[33m[1mRedundant exclusion 'aiocache': not found in pyproject.toml (transitive dependency or typo)[0m
+[33m[1mRedundant exclusion 'argon2-cffi': import detected in source code[0m
+[1mNo unused dependencies found! ✨[0m
+[32mStrict dependency checks passed![0m
+>>> EXIT=0
+
+########## make secrets-check ##########
+      }
+    ]
+  },
+  "generated_at": "2026-09-30T07:10:27Z"
+}
+[32mSecrets check completed![0m
+>>> EXIT=0
+

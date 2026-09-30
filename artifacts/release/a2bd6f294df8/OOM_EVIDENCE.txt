@@ -1,0 +1,7 @@
+=== OOM evidence for a2bd6f294 whole-tree run ===
+date: 2026-09-30T09:55:32+03:00
+command: pytest tests/unit -q --timeout=120 -n 2 --dist loadfile --no-header
+symptom: reached 99%, then '[gw0] node down: Not properly terminated', controller waits forever
+
+сен 30 09:39:01 URAS-92727 kernel: oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=rsyslog.service,mems_allowed=0,global_oom,task_memcg=/user.slice/user-1000.slice/user@1000.service/session.slice/vte-spawn-7f0e9474-1ce8-4b96-a595-5c097d5fab94.scope,task=[pytest-xdist r,pid=855390,uid=1000
+сен 30 09:39:01 URAS-92727 kernel: Out of memory: Killed process 855390 ([pytest-xdist r) total-vm:10426296kB, anon-rss:6952480kB, file-rss:52kB, shmem-rss:8kB, UID:1000 pgtables:14576kB oom_score_adj:200
