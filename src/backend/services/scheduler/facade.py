@@ -94,6 +94,44 @@ class SchedulerFacade:
 
         return get_scheduler_manager()
 
+    async def _call_backend(self, method: str, /, *args: Any, **kwargs: Any) -> Any:
+        """Вызвать метод backend'а, поддерживая sync и async реализации.
+
+        P0 fix (audit a2bd6f294): SchedulerBackend Protocol исторически
+        sync, а TemporalSchedulerBackend реализует методы async. Раньше
+        безусловный ``asyncio.to_thread`` возвращал never-awaited
+        coroutine → ``registered=True`` без реальной задачи (silent
+        no-op). Теперь: async-метод await'ится напрямую, sync — уходит
+        в thread (не блокирует loop).
+        """
+        backend = self._get_backend()
+        func = getattr(backend, method)
+        if inspect.iscoroutinefunction(func):
+            return await func(*args, **kwargs)
+        return await asyncio.to_thread(func, *args, **kwargs)
+
+    def _run_backend_call(self, method: str, /, *args: Any, **kwargs: Any) -> None:
+        """Sync-контекст (remove_job): запустить backend-метод.
+
+        Async-реализация: при живом loop — задача через TaskRegistry
+        (cancel идемпотентен, fire-and-forget допустим); без loop —
+        блокирующий asyncio.run. Sync — прямой вызов.
+        """
+        func = getattr(self._get_backend(), method)
+        if not inspect.iscoroutinefunction(func):
+            func(*args, **kwargs)
+            return
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            asyncio.run(func(*args, **kwargs))
+            return
+        from src.backend.core.utils.task_registry import get_task_registry
+
+        get_task_registry().create_task(
+            func(*args, **kwargs), name=f"scheduler.facade.{method}"
+        )
+
     def get_run_history_store(self) -> Any:
         """RunHistoryStore для backfill/catchup (ADR-0346, P3-13 wiring).
 
@@ -152,11 +190,11 @@ class SchedulerFacade:
         self._assert("scheduler.add_job", job_id)
 
         # 1. Регистрация через injected SchedulerBackend (25.09 audit: DI).
-        #    ``schedule_cron`` — sync, offload в thread чтобы не блокировать loop.
+        #    P0 fix: sync (APScheduler) — to_thread; async (Temporal) —
+        #    прямое ожидание (см. _call_backend).
         try:
-            backend = self._get_backend()
-            registered_job_id = await asyncio.to_thread(
-                backend.schedule_cron,
+            registered_job_id = await self._call_backend(
+                "schedule_cron",
                 name=job_id,
                 cron_expr=cron_expr,
                 callable_ref=func,
@@ -275,20 +313,21 @@ class SchedulerFacade:
         """
         self._assert("scheduler.remove_job", job_id)
         try:
+            # P0 fix: удаление через backend-адаптер (async Temporal cancel —
+            # task при живом loop / asyncio.run вне его; sync APScheduler —
+            # прямой вызов). Fallback chain: cancel → remove_job → legacy.
             backend = self._get_backend()
-            # SchedulerBackend Protocol имеет ``cancel``; SchedulerManager
-            # — legacy без cancel, но ``scheduler.remove_job`` доступен
-            # через ``self.scheduler`` (APScheduler). Fallback chain:
             if hasattr(backend, "cancel"):
-                backend.cancel(job_id)
+                self._run_backend_call("cancel", job_id)
             elif hasattr(backend, "remove_job"):
-                backend.remove_job(job_id)
-            elif hasattr(backend, "scheduler"):
-                backend.scheduler.remove_job(job_id)
+                self._run_backend_call("remove_job", job_id)
             else:
-                raise ServiceError(
-                    f"Backend {type(backend).__name__} не поддерживает remove_job"
-                )
+                legacy = getattr(backend, "scheduler", None)
+                if legacy is None:
+                    raise ServiceError(
+                        f"Backend {type(backend).__name__} не поддерживает remove_job"
+                    )
+                legacy.remove_job(job_id)
         except ServiceError:
             raise
         except Exception as exc:
