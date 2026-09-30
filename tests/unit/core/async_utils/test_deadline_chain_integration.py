@@ -30,7 +30,7 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.engine.processors.control_flow.parallel import ParallelProcessor
-from src.backend.dsl.processors.saga_lra_processor.core_mixin import (
+from src.backend.dsl.engine.processors.saga_lra_processor.core_mixin import (
     CoreMixin,
     SagaStepTimeoutError,
 )
