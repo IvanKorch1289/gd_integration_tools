@@ -319,9 +319,7 @@ async def test_start_supports_wrapper_async_pubsub_client() -> None:
     pubsub = _FakePubSub()
     wrapper = _WrapperLikeRedis(pubsub)
     overrides = RuntimeFeatureFlagOverrides()
-    broadcaster = RedisFeatureFlagBroadcaster(
-        redis_client=wrapper, overrides=overrides
-    )
+    broadcaster = RedisFeatureFlagBroadcaster(redis_client=wrapper, overrides=overrides)
 
     await broadcaster.start(task_factory=asyncio.create_task)
     try:
