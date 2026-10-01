@@ -46,19 +46,37 @@ def aggregator_result() -> dict[str, Any]:
     Exit code проверяется здесь же: иначе тесты читали бы STALE
     ``quality-results.json`` от предыдущего прогона и проходили бы
     при упавшем aggregator — ровно тот false-green, который audit W3 запрещает.
+
+    F-Y (аудит 2026-10-01): aggregator пишет в TRACKED-файл
+    ``.audit/quality-results.json`` абсолютным путём от ``PROJECT_ROOT``.
+    Из-за этого прогон тестов портил репозиторий: в коммите оказывались
+    чужой ``head``, чужие пути venv и чужие счётчики гейтов. Здесь файл
+    снимается побайтово до запуска и восстанавливается в ``finally`` —
+    тест получает реальный вывод aggregator'а, но репозиторий не меняется.
     """
-    cmd = [sys.executable, "tools/checks/quality_results_aggregator.py"]
-    result = subprocess.run(
-        cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=600
-    )
-    assert result.returncode in (0, 1), (
-        f"Aggregator должен exit 0 (все PASS) или 1 (есть FAIL). "
-        f"Got {result.returncode}. stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
-    )
     output_path = PROJECT_ROOT / ".audit" / "quality-results.json"
-    assert output_path.is_file(), f"quality-results.json не создан: {output_path}"
-    data: dict[str, Any] = json.loads(output_path.read_text(encoding="utf-8"))
-    return data
+    tracked_snapshot: bytes | None = None
+    if output_path.is_file():
+        tracked_snapshot = output_path.read_bytes()
+    try:
+        cmd = [sys.executable, "tools/checks/quality_results_aggregator.py"]
+        result = subprocess.run(
+            cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=600
+        )
+        assert result.returncode in (0, 1), (
+            f"Aggregator должен exit 0 (все PASS) или 1 (есть FAIL). "
+            f"Got {result.returncode}. stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+        )
+        assert output_path.is_file(), f"quality-results.json не создан: {output_path}"
+        data: dict[str, Any] = json.loads(output_path.read_text(encoding="utf-8"))
+        return data
+    finally:
+        # Восстанавливаем tracked-файл: тест не имеет права оставлять
+        # в репозитории артефакт своего прогона.
+        if tracked_snapshot is not None:
+            output_path.write_bytes(tracked_snapshot)
+        elif output_path.exists():
+            output_path.unlink()
 
 
 def test_aggregator_produces_machine_readable_json(

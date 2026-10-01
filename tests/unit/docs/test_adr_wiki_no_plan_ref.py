@@ -97,23 +97,36 @@ class TestBuilderScriptNoPlanRef:
     def test_builder_runs_and_output_has_no_plan_md(self) -> None:
         """End-to-end: запускаем build_adr_wiki.py, проверяем что PLAN.md не появился.
 
-        Subprocess изолирует side-effects (запись WIKI.md) от тестов — скрипт пишет
-        в свой нормальный OUT path, после чего мы проверяем результат.
+        F-Y (аудит 2026-10-01): прежний docstring утверждал, что subprocess
+        «изолирует side-effects (запись WIKI.md) от тестов». Это было неверно:
+        ``build_adr_wiki.py:25`` пишет в tracked ``docs/adr/WIKI.md``
+        абсолютным путём от ``ROOT``, и прогон теста реально портил репозиторий
+        (в diff попадала сгенерированная дата). Теперь файл снимается побайтово
+        до запуска и восстанавливается в ``finally``: проверка результата
+        сохраняется, состояние репозитория — нет.
         """
-        result = subprocess.run(
-            [sys.executable, str(_BUILDER_PATH)],
-            check=False,
-            capture_output=True,
-            text=True,
-            cwd=_PROJECT_ROOT,
-        )
-        assert result.returncode == 0, (
-            f"build_adr_wiki.py завершился с ошибкой:\n"
-            f"stdout: {result.stdout}\nstderr: {result.stderr}"
-        )
-        # После прогона скрипт перезаписал WIKI.md — читаем заново и проверяем
-        regenerated = _WIKI_PATH.read_text(encoding="utf-8")
-        assert "PLAN.md" not in regenerated, (
-            "После прогона build_adr_wiki.py WIKI.md содержит 'PLAN.md' — "
-            "root-cause fix не сработал."
-        )
+        snapshot = _WIKI_PATH.read_bytes() if _WIKI_PATH.is_file() else None
+        try:
+            result = subprocess.run(
+                [sys.executable, str(_BUILDER_PATH)],
+                check=False,
+                capture_output=True,
+                text=True,
+                cwd=_PROJECT_ROOT,
+            )
+            assert result.returncode == 0, (
+                f"build_adr_wiki.py завершился с ошибкой:\n"
+                f"stdout: {result.stdout}\nstderr: {result.stderr}"
+            )
+            # После прогона скрипт перезаписал WIKI.md — читаем заново и проверяем
+            regenerated = _WIKI_PATH.read_text(encoding="utf-8")
+            assert "PLAN.md" not in regenerated, (
+                "После прогона build_adr_wiki.py WIKI.md содержит 'PLAN.md' — "
+                "root-cause fix не сработал."
+            )
+        finally:
+            # Прогон теста не имеет права оставлять изменения в репозитории.
+            if snapshot is not None:
+                _WIKI_PATH.write_bytes(snapshot)
+            elif _WIKI_PATH.exists():
+                _WIKI_PATH.unlink()
