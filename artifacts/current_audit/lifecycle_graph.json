@@ -1,0 +1,246 @@
+{
+  "source": "извлечено из кода, HEAD 3b509542e, интерпретатор .venv/bin/python 3.14.0",
+  "typed_lifecycle_operation": {
+    "exists": false,
+    "evidence": "grep -rn 'LifecycleOperation' по репо -> 0 совпадений",
+    "required_fields_per_objective": [
+      "name",
+      "phase",
+      "start",
+      "stop",
+      "enabled",
+      "criticality",
+      "timeout",
+      "dependencies"
+    ]
+  },
+  "operation_structures": {
+    "STARTUP_PHASES": {
+      "file": "src/backend/plugins/composition/lifecycle/startup_phases/__init__.py",
+      "type": "tuple[Phase, ...]",
+      "phase_alias": "Callable[[FastAPI], Awaitable[None]]",
+      "actual_fields": [
+        "callable"
+      ],
+      "missing_fields": [
+        "name",
+        "phase",
+        "start",
+        "stop",
+        "enabled",
+        "criticality",
+        "timeout",
+        "dependencies"
+      ]
+    },
+    "starting_operations/ending_operations": {
+      "file": "src/backend/plugins/composition/setup_infra/lifecycle.py",
+      "alias_line": 37,
+      "operation_item": "str, Callable[[",
+      "missing_fields": [
+        "criticality",
+        "timeout",
+        "dependencies",
+        "stop"
+      ]
+    },
+    "run_shutdown": {
+      "file": "src/backend/plugins/composition/lifecycle/shutdown.py:45-247",
+      "actual_fields": [],
+      "note": "не структура данных, а 14 ручных последовательных try/except блоков"
+    }
+  },
+  "startup_phases": [
+    {
+      "module": "observability",
+      "phase": "phase_otel_traces"
+    },
+    {
+      "module": "observability",
+      "phase": "phase_otel_metrics"
+    },
+    {
+      "module": "observability",
+      "phase": "phase_config_validator"
+    },
+    {
+      "module": "observability",
+      "phase": "phase_sentry_init"
+    },
+    {
+      "module": "observability",
+      "phase": "phase_logsink_router"
+    },
+    {
+      "module": "observability",
+      "phase": "phase_audit_hmac_verify"
+    },
+    {
+      "module": "infrastructure",
+      "phase": "phase_redis_cluster"
+    },
+    {
+      "module": "infrastructure",
+      "phase": "phase_setup_infra"
+    },
+    {
+      "module": "infrastructure",
+      "phase": "phase_eventbus_startup"
+    },
+    {
+      "module": "services",
+      "phase": "phase_service_registration"
+    },
+    {
+      "module": "services",
+      "phase": "phase_ai_gateway_singleton"
+    },
+    {
+      "module": "services",
+      "phase": "phase_dsl_commands"
+    },
+    {
+      "module": "services",
+      "phase": "phase_watchers"
+    },
+    {
+      "module": "services",
+      "phase": "phase_plugin_loader"
+    },
+    {
+      "module": "services",
+      "phase": "phase_v11_loaders"
+    },
+    {
+      "module": "services",
+      "phase": "phase_outbox_dispatcher"
+    },
+    {
+      "module": "services",
+      "phase": "phase_workflow_runtime"
+    },
+    {
+      "module": "services",
+      "phase": "phase_schema_registry"
+    },
+    {
+      "module": "services",
+      "phase": "phase_feature_flag_broadcaster"
+    }
+  ],
+  "starting_operations": [
+    "register_default_degradation_features",
+    "register_health_checks",
+    "register_pools_in_unified_manager",
+    "start_mongo_client",
+    "warmup_connection_pools",
+    "start_pool_monitors",
+    "register_agent_security_workflow_hooks",
+    "start_config_hot_reload",
+    "init_workflow_audit_sink",
+    "start_temporal_worker_runtime",
+    "start_scheduler_with_leader_election"
+  ],
+  "ending_operations": [
+    "close_workflow_audit_sink",
+    "stop_scheduler_if_leader",
+    "stop_config_hot_reload",
+    "stop_temporal_worker_runtime"
+  ],
+  "execution_model": {
+    "startup": {
+      "order": "sequential",
+      "topological": false,
+      "per_operation_timeout": false,
+      "evidence": [
+        "lifecycle/startup.py:224-225 'for phase in STARTUP_PHASES: await phase(app)'",
+        "setup_infra/lifecycle.py:101-123 'for name, operation, enabled_check in components:'",
+        "единственный таймаут — asyncio.timeout(5.0) на EventBus (startup.py:69)"
+      ]
+    },
+    "rollback": {
+      "reverse_order": false,
+      "evidence": "lifecycle/lifespan.py:102-105 'finally: if startup_completed: await run_shutdown(...)' — при False блок пропускается целиком",
+      "runtime_measured": "ROLLBACK ran: False (start:phase1-OK, start:phase2-OK, start:phase3-BOOM)"
+    },
+    "shutdown_isolation": {
+      "continues_after_failure": false,
+      "evidence": "setup_infra/lifecycle.py:117-123 raise внутри цикла; runtime: close_workflow_audit_sink RAN->raising, stop_scheduler_if_leader/stop_config_hot_reload/stop_temporal_worker_runtime НЕ вызваны, при этом shutdown.py:160 логирует 'Приложение остановлено'"
+    },
+    "shutdown_idempotency": {
+      "plugin_loader_shutdown_all_idempotent": false,
+      "evidence": "services/plugins/loader/__init__.py:208-218 не сбрасывает status и не удаляет из _loaded; runtime: on_shutdown_total=1 после первого вызова, =2 после второго. Для сравнения shutdown_one (:233) идемпотентен."
+    }
+  },
+  "readiness_endpoints": [
+    {
+      "path": "/health/ready",
+      "impl": "app_factory.py:454-471",
+      "blocks_on_infrastructure_ready": false,
+      "in_production_manifests": [
+        "deploy/k8s/deployment-app.yaml:85,91",
+        "deploy/helm/gd-integration-tools/templates/deployment-app.yaml:70,76"
+      ],
+      "status": "FAIL_OPEN",
+      "measured_without_lifespan": "HTTP 200 {'status':'ok','message':'No health checks registered'}"
+    },
+    {
+      "path": "/readiness",
+      "impl": "entrypoints/api/v1/endpoints/health.py:95-100",
+      "blocks_on_infrastructure_ready": true,
+      "in_production_manifests": [],
+      "status": "FAIL_CLOSED",
+      "measured_without_lifespan": "HTTP 503 {'status':'initializing'}"
+    },
+    {
+      "path": "/readyz",
+      "impl": "app_factory.py",
+      "blocks_on_infrastructure_ready": false,
+      "in_production_manifests": [],
+      "status": "FAIL_OPEN"
+    },
+    {
+      "path": "/probe/ready",
+      "impl": "ОТСУТСТВУЕТ В src/",
+      "in_production_manifests": [
+        "deploy/k8s/deployment-worker.yaml:103-106"
+      ],
+      "status": "MANIFEST_REFERENCES_MISSING_ROUTE"
+    }
+  ],
+  "readiness_contradiction": {
+    "measured": "/health/ready -> 503 degraded (компонент payments_db degraded); /readiness -> 200 {'degraded': false}",
+    "cause": "app_factory.py:467-471 читает агрегатор (ok только при status=='ok'); health.py:106 читает ResilienceCoordinator, которому компонент не зарегистрирован (registered components: 0)"
+  },
+  "agent_security_hooks": {
+    "registration_fail_open": {
+      "file": "setup_infra/lifecycle.py:143-153",
+      "evidence": "except Exception -> app_logger.debug('AgentSecurityFramework hooks registration skipped') — startup продолжается, уровень лога не виден при INFO"
+    },
+    "enforcement_fail_open": {
+      "file": "core/ai/security/agent_security_framework.py:294-310",
+      "evidence": "for hook in self._hooks: ... except Exception -> _logger.warning(...); continue — бросивший hook приводит к allow; пустой _hooks также даёт allow"
+    }
+  },
+  "degradation_placeholders": {
+    "expected_state": "UNBOUND",
+    "reported_state": "HEALTHY",
+    "files": [
+      "setup_infra/lifecycle.py:59-65,76-82",
+      "core/resilience/graceful_degradation.py:112,272"
+    ],
+    "measured_snapshot": {
+      "features": 4,
+      "state": "healthy",
+      "samples": 0,
+      "error_rate": 0.0
+    },
+    "note": "вызов заглушки fail-closed (NotImplementedError), но snapshot и UI (78_Плавная_деградация.py:53) показывают healthy — implicit success вместо UNBOUND"
+  },
+  "startup_phase_groups": {
+    "observability": 6,
+    "infrastructure": 3,
+    "services": 10
+  },
+  "startup_phase_total": 19
+}

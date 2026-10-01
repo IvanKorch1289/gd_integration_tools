@@ -1,0 +1,32 @@
+{
+  "spoof_auth_tenant_a__header_tenant_b": {
+    "http_status": 200,
+    "response_x_tenant_id": "tenant-b",
+    "state_tenant_id": "tenant-b",
+    "auth_tenant_id": "tenant-a",
+    "auth_subject": "user-of-tenant-a"
+  },
+  "control_auth_only": {
+    "http_status": 200,
+    "response_x_tenant_id": "default",
+    "state_tenant_id": "default",
+    "auth_tenant_id": "tenant-a",
+    "auth_subject": "user-of-tenant-a"
+  },
+  "control_header_only": {
+    "http_status": 401,
+    "response_x_tenant_id": null
+  },
+  "control_no_tenant_at_all": {
+    "http_status": 401,
+    "response_x_tenant_id": null
+  },
+  "verdict": {
+    "expected_status": 403,
+    "expected_error": "tenant_mismatch",
+    "actual_status": 200,
+    "authenticated_tenant": "tenant-a",
+    "resolved_request_tenant": "tenant-b",
+    "spoof_succeeded": true
+  }
+}
