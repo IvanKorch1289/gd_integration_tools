@@ -152,9 +152,20 @@ def build_default_registry() -> MiddlewareRegistry:
     # S17 ADR-NEW-3: unified RequestContext snapshot (после tenant).
     registry.register_builtin("request_context", RequestContextMiddleware, order=320)
     # Sprint 5 (audit 2026-09-22 P0): framework-level ownership check.
-    # Без зарегистрированных checker'ов — pass-through (zero-cost); checker'ы
-    # подключаются через register_ownership_checker в production wiring.
-    # Порядок: после tenant (300) — tenant-идентичность уже в scope/state.
+    # Без зарегистрированных checker'ов — pass-through (zero-cost).
+    #
+    # ВАЖНО (аудит 2026-10-01, runtime-замер middleware_actual_order.json):
+    # из-за LIFO-семантики add_middleware ВЫСОКИЙ order = ВНЕШНИЙ, поэтому
+    # при order=330 этот middleware выполняется РАНЬше tenant (order=300),
+    # а не «после него». Прежний комментарий «Порядок: после tenant (300) —
+    # tenant-идентичность уже в scope/state» описывал порядок РЕГИСТРАЦИИ,
+    # а не порядок ВЫПОЛНЕНИЯ, и был противоречив фактическому поведению.
+    # Поэтому tenant-идентичность берётся напрямую из
+    # AuthContext.metadata['tenant_id'] (SECURITY-P0-002), а не из state.
+    #
+    # Статус: checker'ы не регистрируются НИ ОДНИМ production-вызовом
+    # (0 совпадений register_ownership_checker в src/extensions/routes),
+    # то есть в production этот middleware — pass-through.
     registry.register_builtin(
         "tenant_resource_isolation", TenantResourceIsolationMiddleware, order=330
     )

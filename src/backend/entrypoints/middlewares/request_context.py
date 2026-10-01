@@ -49,6 +49,32 @@ def _get_header(headers: list[tuple[bytes, bytes]], name: bytes) -> str | None:
     return None
 
 
+def _authenticated_tenant(scope: dict[str, Any]) -> str | None:
+    """Достать tenant из ``AuthContext.metadata`` — доверенный источник.
+
+    Используется вместо заголовка ``X-Tenant-ID``, который задаётся
+    клиентом (SECURITY-P0-002). Fall-closed: при отсутствии
+    аутентификации возвращается ``None`` и вызывающий код решает сам
+    (путь без аутентификации сохраняет прежнее поведение).
+
+    Args:
+        scope: ASGI scope.
+
+    Returns:
+        Аутентифицированный tenant_id или ``None``.
+
+    """
+    state = scope.get("state")
+    if not isinstance(state, dict):
+        return None
+    auth = state.get("auth")
+    if auth is None:
+        return None
+    from src.backend.core.auth.auth_context_helpers import extract_tenant_id
+
+    return extract_tenant_id(auth)
+
+
 def _otel_ids() -> tuple[str | None, str | None]:
     """Извлечь ``trace_id`` / ``span_id`` из активного OTel span."""
     try:
@@ -130,7 +156,15 @@ class RequestContextMiddleware:
         headers = scope.get("headers", []) or []
         correlation_id = _get_header(headers, b"x-correlation-id") or str(uuid.uuid4())
         request_id = _get_header(headers, b"x-request-id") or str(uuid.uuid4())
-        tenant_id = _get_header(headers, b"x-tenant-id")
+        # SECURITY-P0-002 (аудит 2026-10-01): аутентифицированный tenant
+        # авторитетен. Этот middleware зарегистрирован с order=320, то есть
+        # из-за LIFO-семантики add_middleware выполняется РАНЬШЕ
+        # TenantMiddleware (order=300) — взять tenant из state['tenant_id']
+        # здесь нельзя, его ещё нет. Поэтому источник — AuthContext.
+        # Без этого заголовок подделанного tenant попадал в RequestContext,
+        # а DSL-движок (dsl/engine/execution_engine.py:26-40) берёт tenant
+        # именно из RequestContext ПЕРВЫМ источником.
+        tenant_id = _authenticated_tenant(scope) or _get_header(headers, b"x-tenant-id")
         trace_id, span_id = _otel_ids()
         state = scope.setdefault("state", {})
         auth_value = state.get("auth") if isinstance(state, dict) else None

@@ -68,11 +68,27 @@ class MiddlewareSpec:
         middleware_cls: ASGI middleware-класс (Starlette/FastAPI совместимый).
         options: Параметры конструктора middleware (``**options`` идут
             в ``app.add_middleware``).
-        order: Целочисленный порядок слоя (низкий = наружный).
+        order: Целочисленный порядок слоя. Из-за LIFO-семантики
+            ``add_middleware`` (``user_middleware.insert(0, ...)``)
+            **высокий order = внешний (outermost)**: последний
+            зарегистрированный обрабатывает запрос первым, а ответ —
+            последним. Runtime-доказательство порядка:
+            ``artifacts/current_audit/middleware_actual_order.json``
+            (замер 2026-10-01 на 3b509542e: order=880 graceful_shutdown →
+            stack_index 1, order=10 exception_handler → stack_index 36,
+            то есть ровно обратный порядок регистрации).
+
             * 0–249 — Layer 1: early exit (CORS, TrustedHost, blocked, IPs);
             * 250–499 — Layer 2: request management (ID, tenant, context, idempotency);
             * 500–749 — Layer 3: body/auth (cache, compression, masking, auth);
             * 750–999 — Layer 4: logging/metrics (audit, OTel, Prometheus).
+
+            ⚠️ Следствие для безопасности: ``auth_required`` (620)
+            выполняется РАНЬше ``tenant`` (300), а
+            ``tenant_resource_isolation`` (330) — тоже раньше ``tenant``.
+            Поэтому аутентифицированный tenant берётся из
+            ``AuthContext.metadata['tenant_id']`` напрямую, а не из
+            ``state['tenant_id']`` (см. SECURITY-P0-002 в ``tenant.py``).
         enabled_routes: Optional shell-glob паттерны путей, для которых
             middleware **должен** применяться (per-route gate). Пусто →
             middleware применяется ко всем путям.

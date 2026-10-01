@@ -163,9 +163,26 @@ class TenantResourceIsolationMiddleware:
     def _resolve_tenant_id(scope: Scope) -> str:
         """Резолвит tenant_id: header ``X-Tenant-ID`` → ``state['tenant_id']``.
 
-        Приоритет сознательно совпадает с TenantMiddleware (Sprint 1 V16) —
-        у запроса должна быть ЕДИНАЯ tenant-идентичность во всех слоях.
-        Пустая строка = идентичности нет (fail-closed в __call__).
+        Пустая строка = идентичности нет (fail-closed в ``__call__``).
+
+        SECURITY-P0-002 (аудит 2026-10-01) — зафиксированное расхождение,
+        НЕ исправленное здесь намеренно:
+
+        * после фикса ``TenantMiddleware`` аутентифицированный tenant
+          (``AuthContext.metadata['tenant_id']``) авторитетен, а расхождение
+          с заголовком даёт 403 tenant_mismatch;
+        * здесь приоритет остаётся ``header → state``, потому что пустой
+          заголовок обязан давать fail-closed 403, а не тихо подставляться
+          значением из state (иначе теряется deny-путь). Проверено мутацией:
+          при ``state → header`` порядке тест
+          ``test_empty_tenant_header_deny_fail_closed`` падает, то есть
+          такой «выравнивающий» диф ослабляет защиту;
+        * безопасность держится на том, что этот middleware в production
+          является pass-through: ``register_ownership_checker`` не вызывается
+          ни одним production-сайтом (0 совпадений в src/ extensions/ routes/).
+          Как только checker'ы будут подключены, этот резолв ОБЯЗАН быть
+          переведён на ``AuthContext.metadata['tenant_id']`` — отдельная
+          задача, привязанная к подключению checker'ов, а не к этому аудиту.
         """
         for header_name, header_value in scope.get("headers", []):
             if header_name == _TENANT_HEADER_BYTES:
