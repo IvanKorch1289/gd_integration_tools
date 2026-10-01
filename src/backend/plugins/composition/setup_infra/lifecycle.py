@@ -272,6 +272,14 @@ async def _build_temporal_activities() -> list[Any]:
         модуля (graceful degradation — Worker всё равно стартует, но
         checkpoint activities не зарегистрированы).
 
+    .. note::
+       F-AT3 (re-audit 2026-10-01): возврат ``[]`` больше **не** является
+       «мягкой деградацией». ``start_temporal_worker_runtime`` при
+       ``workflow_use_temporal=true`` трактует пустой список как
+       ``RuntimeError`` и валит REQUIRED-операцию. Поэтому пустой список
+       здесь означает «воркер не поднимется», а не «воркер без
+       checkpoint-activities».
+
     """
     try:
         from src.backend.dsl.workflow.compiler.activity_bridge import (
@@ -279,7 +287,11 @@ async def _build_temporal_activities() -> list[Any]:
             register_langgraph_checkpoint_activities,
         )
     except ImportError as exc:
-        app_logger.debug("temporal_activities: activity_bridge import skipped: %s", exc)
+        app_logger.error(
+            "temporal_activities: activity_bridge import FAILED — worker "
+            "не поднимется при workflow_use_temporal=true: %s",
+            exc,
+        )
         return []
 
     bridge = ActivityBridge()
@@ -287,11 +299,16 @@ async def _build_temporal_activities() -> list[Any]:
     try:
         bridge.decorate()
     except RuntimeError as exc:
-        # temporalio SDK не установлен — checkpoint activities остаются
-        # как raw Python функции (Temporal не сможет их маршрутизировать
-        # по имени), поэтому возвращаем [], чтобы Worker не получил
-        # «мёртвый» registration.
-        app_logger.debug("temporal_activities: bridge.decorate skipped: %s", exc)
+        # F-AT4: temporalio SDK не установлен — bridge.decorate() бросает
+        # именно RuntimeError (НЕ ImportError), поэтому заявленный в
+        # docstring ImportError-путь тут не срабатывал. Уровень лога
+        # повышен warning→error: пустой список ниже приведёт к отказу
+        # REQUIRED-операции worker'а.
+        app_logger.error(
+            "temporal_activities: bridge.decorate FAILED — worker не "
+            "поднимется при workflow_use_temporal=true: %s",
+            exc,
+        )
         return []
 
     activities = list(bridge._cache.values())

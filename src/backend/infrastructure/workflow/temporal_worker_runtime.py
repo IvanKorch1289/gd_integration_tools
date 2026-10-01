@@ -221,13 +221,39 @@ async def start_temporal_worker_runtime(*, activities: list[Any] | None = None) 
     D-A8-03 fix (cycle 28): kw-only ``activities`` — список activity-callables,
     decorated через ActivityBridge.decorate() в composition layer (см.
     ``_start_temporal_worker_runtime_with_activities`` wrapper в
-    plugins/composition/setup_infra/lifecycle.py). Если ``activities=None``
-    — backward-compat: Worker стартует с activities=[] (cycle 1 поведение).
+    plugins/composition/setup_infra/lifecycle.py).
+
+    F-AT1/F-AT2/F-AT3 (re-audit 2026-10-01, HEAD 2037f9d59) — fail-closed.
+    До фикса все пять точек выхода делали ``return`` + ``_logger.warning``,
+    поэтому REQUIRED-операция ``start_temporal_worker_runtime`` рапортовала
+    ``STARTED`` даже когда воркер физически не работал:
+
+        * ``temporalio`` SDK отсутствует        → STARTED, activities=[];
+        * Temporal-кластер недоступен            → STARTED, activities=[];
+        * ``TemporalWorkerPool`` не импортируется → STARTED, activities=[];
+        * ``register_worker`` упал               → STARTED, activities=[];
+        * ``activities=[]`` (мост не собрался)  → STARTED.
+
+    Пустой воркер — это ``ActivityNotRegisteredError`` в рантайме каждого
+    workflow, то есть отказ «в рантайме» вместо отказа на старте. Обёртка
+    ``LifecycleRunner._handle_failure`` уже умеет делать reverse-order
+    rollback + ``LifecycleStartupError``; фикс просто перестаёт мешать ей
+    сработать.
+
+    Разделение контрактов:
+
+        * feature-flag выключен → легитимный no-op, ``return`` (фича
+          выключена осознанно, worker не должен существовать);
+        * feature-flag включён, но воркер не поднялся → ``raise
+          RuntimeError``,REQUIRED-операция падает, приложение не стартует.
 
     Используется в ``setup_infra/lifecycle.starting_operations``.
 
     Raises:
-        RuntimeError: если feature-flag выключен или SDK не установлен.
+        RuntimeError: если feature-flag включён, но воркер не удалось
+            поднять: SDK не установлен, кластер недоступен, pool не
+            импортируется, ``register_worker`` упал или список
+            ``activities`` пуст. Feature-flag выключен — не бросает.
 
     """
     from src.backend.core.config.features import FeatureFlags
@@ -247,10 +273,15 @@ async def start_temporal_worker_runtime(*, activities: list[Any] | None = None) 
             TemporalClientFactory,
         )
     except ImportError as exc:
-        _logger.warning(
+        # F-AT1: SDK/factory недоступен при ВКЛЮЧЁННОМ флаге — fail-closed.
+        _logger.error(
             "temporal.worker_runtime.import_failed", extra={"error": str(exc)}
         )
-        return
+        raise RuntimeError(
+            "temporal.worker_runtime: TemporalClientFactory недоступен при "
+            "workflow_use_temporal=true (установите extra 'workflow' с "
+            f"temporalio). import error: {exc}"
+        ) from exc
 
     try:
         from src.backend.core.config.settings import settings
@@ -263,22 +294,42 @@ async def start_temporal_worker_runtime(*, activities: list[Any] | None = None) 
         namespace = "default"
         task_queue = "default"
 
+    # D-A8-03 fix (cycle 28): kw-only activities параметр.
+    # F-AT3: пустой список activity-callable'ов означает воркер, который
+    # гарантированно падает на первом же execute_activity. Fail-closed.
+    #
+    # Проверка идёт ДО подключения к кластеру: (1) не тратим сетевой dial
+    # на заведомо нерабочий воркер; (2) причина отказа детерминирована и не
+    # зависит от доступности Temporal-кластера, что делает её тестируемой.
+    activities_to_use = list(activities or [])
+    if not activities_to_use:
+        _logger.error(
+            "temporal.worker_runtime.activities_empty",
+            extra={"task_queue": task_queue, "namespace": namespace},
+        )
+        raise RuntimeError(
+            "temporal.worker_runtime: activities пуст — воркер не может "
+            "обслуживать ни один workflow (ActivityNotRegisteredError на "
+            "первом execute_activity). Проверьте ActivityBridge/"
+            "register_langgraph_checkpoint_activities в composition-слое."
+        )
+
     factory = TemporalClientFactory(target_host=target)
     try:
         client = await factory.get_client(namespace)
-    except (ImportError, Exception) as exc:
-        _logger.warning(
+    except Exception as exc:
+        # F-AT1: кластер недоступен — fail-closed вместо тихой деградации.
+        _logger.error(
             "temporal.worker_runtime.client_unavailable",
             extra={
                 "error": str(exc),
                 "hint": "temporalio SDK install или cluster недоступен",
             },
         )
-        return
-
-    # D-A8-03 fix (cycle 28): kw-only activities параметр.
-    # Default — [] (backward-compat когда wrapper не передал activities).
-    activities_to_use = activities or []
+        raise RuntimeError(
+            "temporal.worker_runtime: не удалось подключиться к Temporal "
+            f"(target={target}, namespace={namespace}): {exc}"
+        ) from exc
 
     # D-AUDIT-808 fix (cycle 8): wire TemporalWorkerPool в production lifespan.
     # Раньше (cycle 1 D-A8-04) Worker создавался напрямую через
@@ -297,10 +348,14 @@ async def start_temporal_worker_runtime(*, activities: list[Any] | None = None) 
             _ClientCacheEntry,
         )
     except ImportError as exc:
-        _logger.warning(
+        # F-AT1: pool не импортируется — fail-closed.
+        _logger.error(
             "temporal.worker_runtime.pool_import_failed", extra={"error": str(exc)}
         )
-        return
+        raise RuntimeError(
+            "temporal.worker_runtime: TemporalWorkerPool недоступен при "
+            f"workflow_use_temporal=true. import error: {exc}"
+        ) from exc
 
     import time as _time
 
@@ -315,11 +370,15 @@ async def start_temporal_worker_runtime(*, activities: list[Any] | None = None) 
             activities=activities_to_use,
         )
     except (ImportError, RuntimeError, OSError, AttributeError) as exc:
-        _logger.warning(
+        # F-AT1: регистрация воркера упала — fail-closed.
+        _logger.error(
             "temporal.worker_runtime.register_worker_failed",
             extra={"error": str(exc), "task_queue": task_queue},
         )
-        return
+        raise RuntimeError(
+            "temporal.worker_runtime: register_worker не удался "
+            f"(task_queue={task_queue}): {exc}"
+        ) from exc
 
     runtime = get_temporal_worker_runtime()
     runtime.bind_pool(pool)

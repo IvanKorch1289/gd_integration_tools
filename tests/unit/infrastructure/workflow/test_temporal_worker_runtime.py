@@ -174,10 +174,19 @@ class TestStartTemporalWorkerRuntimeFeatureFlag:
 
     @pytest.mark.asyncio
     async def test_feature_flag_enabled_starts_worker(self) -> None:
-        """workflow_use_temporal=True → worker стартует (TemporalClient mocked).
+        """workflow_use_temporal=True + activities → worker стартует (TemporalClient mocked).
 
-        D-A8-03 fix (cycle 1): activities=[] — ActivityBridge.decorate wire
-        отдельно через composition layer (cross-layer concern).
+        F-AT3 (re-audit 2026-10-01): контракт изменён ОСОЗНАННО. Раньше тест
+        звал ``start_temporal_worker_runtime()`` без activities и закреплял
+        ``activities == []`` как успешный старт. Это ровно тот silent-degradation,
+        который objective-требование «отсутствие required Temporal activities
+        должно останавливать worker» запрещает: воркер без activities падает
+        на первом же ``execute_activity``, то есть отказ в рантайме вместо
+        отказа на старте. Fail-closed приоритетнее backwards-compat — тот же
+        подход, что в ADR-0345 (GDPR erasure).
+
+        Пустой ``activities=[]`` теперь проверяется отдельным тестом
+        ``test_empty_activities_raises`` в test_temporal_fail_closed_reaudit.py.
         """
         from src.backend.infrastructure.workflow import temporal_worker_runtime as mod
 
@@ -185,6 +194,9 @@ class TestStartTemporalWorkerRuntimeFeatureFlag:
         fake_factory = MagicMock()
         fake_client = MagicMock()
         fake_factory.get_client = AsyncMock(return_value=fake_client)
+
+        async def _activity() -> str:  # pragma: no cover - заглушка
+            return "ok"
 
         fake_flags = MagicMock()
         fake_flags.workflow_use_temporal = True
@@ -205,14 +217,14 @@ class TestStartTemporalWorkerRuntimeFeatureFlag:
                 },
             ),
         ):
-            await mod.start_temporal_worker_runtime()
+            await mod.start_temporal_worker_runtime(activities=[_activity])
 
         runtime = mod.get_temporal_worker_runtime()
         assert runtime.is_running
         fake_factory.get_client.assert_awaited()
-        # D-A8-03 fix: activities=[] (ActivityBridge wire вне scope cycle 1)
+        # F-AT3: activities передаются дальше (не пустой список).
         kwargs = fake_worker_mod.Worker.call_args.kwargs
-        assert kwargs["activities"] == []
+        assert kwargs["activities"] == [_activity]
 
 
 class TestTemporalWorkerPoolProductionWire:
@@ -231,6 +243,11 @@ class TestTemporalWorkerPoolProductionWire:
 
         До cycle-8: pool не создавался. После: pool.register_worker() вызван,
         runtime.bind_pool() связан, runtime._pool is not None.
+
+        F-AT3 (re-audit 2026-10-01): вызову передан непустой список
+        activities. Раньше тест звал ``start_temporal_worker_runtime()`` без
+        activities и закреплял silent-degradation; теперь такой вызов
+        fail-closed (см. test_temporal_fail_closed_reaudit.py).
         """
         from src.backend.infrastructure.workflow import temporal_worker_runtime as mod
 
@@ -239,6 +256,9 @@ class TestTemporalWorkerPoolProductionWire:
         fake_client = MagicMock()
         fake_factory.get_client = AsyncMock(return_value=fake_client)
         fake_factory._cache = {}  # Mutable для pre-seed проверки
+
+        async def _activity() -> str:  # pragma: no cover - заглушка
+            return "ok"
 
         fake_flags = MagicMock()
         fake_flags.workflow_use_temporal = True
@@ -272,7 +292,7 @@ class TestTemporalWorkerPoolProductionWire:
                 },
             ),
         ):
-            await mod.start_temporal_worker_runtime()
+            await mod.start_temporal_worker_runtime(activities=[_activity])
 
         # D-AUDIT-808 verify: pool реально instantiated + register_worker вызван.
         pool_instance.register_worker.assert_awaited_once()
