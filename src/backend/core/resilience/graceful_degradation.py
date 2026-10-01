@@ -68,13 +68,23 @@ _DEFAULT_WINDOW_SIZE: Final[int] = 100
 class FeatureState(Enum):
     """Текущее состояние feature.
 
+    * :attr:`UNBOUND` — feature зарегистрирован, но **real-handler не подменён
+      владельцем**; текущий full/degraded handler — заглушка. До явной
+      регистрации реальной реализации feature считается неготовым к работе.
     * :attr:`HEALTHY` — feature работает на full_handler.
     * :attr:`DEGRADED` — переключён на degraded_handler из-за высокого
       error rate.
     * :attr:`RECOVERING` — error rate упал ниже recovery_threshold, идёт
       повторное окно стабильности перед возвращением в HEALTHY.
+
+    SECURITY-P0-005 (аудит 2026-10-01): до этого состояния не существовало.
+    Зарегистрированная заглушка имитировала работу: ``/tech/degradation/snapshot``
+    отдавал ``{"state": "healthy", "samples": 0, "error_rate": 0.0}``, то есть
+    «успех» без единого выполнения. Теперь такое состояние называется UNBOUND
+    явно.
     """
 
+    UNBOUND = "unbound"
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     RECOVERING = "recovering"
@@ -103,6 +113,12 @@ class DegradationFeature:
     error_threshold: float = 0.3
     recovery_threshold: float = 0.05
     window_size: int = _DEFAULT_WINDOW_SIZE
+    #: SECURITY-P0-005: ``False`` означает, что обработчики — заглушки и
+    #: реальная реализация ещё не подменена владельцем feature'а.
+    #: Такой feature стартует в состоянии :attr:`FeatureState.UNBOUND`,
+    #: а не HEALTHY. По умолчанию ``True`` — обратная совместимость для
+    #: существующих регистраций с настоящими обработчиками.
+    bound: bool = True
 
 
 @dataclass(slots=True)
@@ -139,8 +155,12 @@ class GracefulDegradationRegistry:
             feature: декларация :class:`DegradationFeature`.
 
         """
+        # SECURITY-P0-005: заглушка не должна выглядеть работающей.
+        initial_state = FeatureState.HEALTHY if feature.bound else FeatureState.UNBOUND
         self._features[feature.name] = _FeatureRuntime(
-            feature=feature, outcomes=deque(maxlen=feature.window_size)
+            feature=feature,
+            state=initial_state,
+            outcomes=deque(maxlen=feature.window_size),
         )
         _logger.debug(
             "graceful_degradation.register",
@@ -187,14 +207,23 @@ class GracefulDegradationRegistry:
             success: ``True`` если вызов прошёл успешно, ``False`` иначе.
 
         Returns:
-            Актуальный state после пересчёта. Если feature не
-            зарегистрирован — :attr:`FeatureState.HEALTHY` (fallback).
+            Актуальный state после пересчёта. Если feature **не зарегистрирован**
+            — :attr:`FeatureState.HEALTHY` (no-op-путь, контракт закреплён
+            тестом ``test_record_outcome_unknown_feature_returns_healthy``).
+
+            SECURITY-P0-005: зарегистрированные **заглушки** теперь стартуют в
+            :attr:`FeatureState.UNBOUND` вместо HEALTHY — именно этот случай
+            и был ложным «успехом». Для незарегистрированного feature
+            возвращается HEALTHY сознательно: ничего не зарегистрировано,
+            значит и ничего не исполняется; менять этот контракт в рамках
+            данной правки было бы расширением scope с риском регрессий.
+            Оставшийся implicit-success зафиксирован как finding F-AI.
 
         """
         async with self._lock:
             runtime = self._features.get(name)
             if runtime is None:
-                # Неизвестный feature — full handler по умолчанию.
+                # Неизвестный feature — no-op (контракт сохранён).
                 return FeatureState.HEALTHY
             runtime.outcomes.append(bool(success))
             self._recompute_state(runtime)
@@ -273,15 +302,27 @@ class GracefulDegradationRegistry:
         """Возвращает dict-снимок всех зарегистрированных features.
 
         Полезно для admin-endpoint /tech/degradation.
+
+        SECURITY-P0-005: для непривязанных (UNBOUND) features ``error_rate``
+        возвращается как ``None``, а не ``0.0``. Ноль ошибок у того, что ни разу
+        не выполнялось, — это утверждение об успехе без единого наблюдения.
+        Дополнительно снимок содержит явный флаг ``bound``.
         """
         return {
             name: {
                 "state": rt.state.value,
+                "bound": rt.feature.bound,
                 "samples": len(rt.outcomes),
                 "error_rate": (
-                    round(sum(1 for o in rt.outcomes if not o) / len(rt.outcomes), 4)
-                    if rt.outcomes
-                    else 0.0
+                    None
+                    if rt.state is FeatureState.UNBOUND
+                    else (
+                        round(
+                            sum(1 for o in rt.outcomes if not o) / len(rt.outcomes), 4
+                        )
+                        if rt.outcomes
+                        else 0.0
+                    )
                 ),
             }
             for name, rt in self._features.items()
